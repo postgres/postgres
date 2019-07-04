@@ -1248,9 +1248,6 @@ Datum
 pg_stats_ext_mcvlist_items(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
-	int			call_cntr;
-	int			max_calls;
-	AttInMetadata *attinmeta;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -1280,13 +1277,13 @@ pg_stats_ext_mcvlist_items(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("function returning record called in context "
 							"that cannot accept type record")));
+		tupdesc = BlessTupleDesc(tupdesc);
 
 		/*
 		 * generate attribute metadata needed later to produce tuples from raw
 		 * C strings
 		 */
-		attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funcctx->attinmeta = attinmeta;
+		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -1294,110 +1291,77 @@ pg_stats_ext_mcvlist_items(PG_FUNCTION_ARGS)
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
 
-	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	attinmeta = funcctx->attinmeta;
-
-	if (call_cntr < max_calls)	/* do when there is more left to send */
+	if (funcctx->call_cntr < funcctx->max_calls)	/* do when there is more left to send */
 	{
-		char	  **values;
+		Datum		values[5];
+		bool		nulls[5];
 		HeapTuple	tuple;
 		Datum		result;
-
-		StringInfoData itemValues;
-		StringInfoData itemNulls;
+		ArrayBuildState *astate_values = NULL;
+		ArrayBuildState *astate_nulls = NULL;
 
 		int			i;
-
-		Oid		   *outfuncs;
-		FmgrInfo   *fmgrinfo;
-
 		MCVList    *mcvlist;
 		MCVItem    *item;
 
 		mcvlist = (MCVList *) funcctx->user_fctx;
 
-		Assert(call_cntr < mcvlist->nitems);
+		Assert(funcctx->call_cntr < mcvlist->nitems);
 
-		item = &mcvlist->items[call_cntr];
-
-		/*
-		 * Prepare a values array for building the returned tuple. This should
-		 * be an array of C strings which will be processed later by the type
-		 * input functions.
-		 */
-		values = (char **) palloc0(5 * sizeof(char *));
-
-		values[0] = (char *) palloc(64 * sizeof(char)); /* item index */
-		values[3] = (char *) palloc(64 * sizeof(char)); /* frequency */
-		values[4] = (char *) palloc(64 * sizeof(char)); /* base frequency */
-
-		outfuncs = (Oid *) palloc0(sizeof(Oid) * mcvlist->ndimensions);
-		fmgrinfo = (FmgrInfo *) palloc0(sizeof(FmgrInfo) * mcvlist->ndimensions);
+		item = &mcvlist->items[funcctx->call_cntr];
 
 		for (i = 0; i < mcvlist->ndimensions; i++)
 		{
-			bool		isvarlena;
 
-			getTypeOutputInfo(mcvlist->types[i], &outfuncs[i], &isvarlena);
+			astate_nulls = accumArrayResult(astate_nulls,
+								  BoolGetDatum(item->isnull[i]),
+								  false,
+								  BOOLOID,
+								  CurrentMemoryContext);
 
-			fmgr_info(outfuncs[i], &fmgrinfo[i]);
-		}
-
-		/* build the arrays of values / nulls */
-		initStringInfo(&itemValues);
-		initStringInfo(&itemNulls);
-
-		appendStringInfoChar(&itemValues, '{');
-		appendStringInfoChar(&itemNulls, '{');
-
-		for (i = 0; i < mcvlist->ndimensions; i++)
-		{
-			Datum		val,
-						valout;
-
-			if (i > 0)
+			if (!item->isnull[i])
 			{
-				appendStringInfoString(&itemValues, ", ");
-				appendStringInfoString(&itemNulls, ", ");
-			}
+				bool		isvarlena;
+				Oid			outfunc;
+				FmgrInfo	fmgrinfo;
+				Datum		val;
+				text	   *txt;
 
-			if (item->isnull[i])
-				valout = CStringGetDatum("NULL");
+				/* lookup output func for the type */
+				getTypeOutputInfo(mcvlist->types[i], &outfunc, &isvarlena);
+				fmgr_info(outfunc, &fmgrinfo);
+
+				val = FunctionCall1(&fmgrinfo, item->values[i]);
+				txt = cstring_to_text(DatumGetPointer(val));
+
+				astate_values = accumArrayResult(astate_values,
+								  PointerGetDatum(txt),
+								  false,
+								  TEXTOID,
+								  CurrentMemoryContext);
+			}
 			else
-			{
-				val = item->values[i];
-				valout = FunctionCall1(&fmgrinfo[i], val);
-			}
-
-			appendStringInfoString(&itemValues, DatumGetCString(valout));
-			appendStringInfoString(&itemNulls, item->isnull[i] ? "t" : "f");
+				astate_values = accumArrayResult(astate_values,
+								  (Datum) 0,
+								  true,
+								  TEXTOID,
+								  CurrentMemoryContext);
 		}
 
-		appendStringInfoChar(&itemValues, '}');
-		appendStringInfoChar(&itemNulls, '}');
+		values[0] = Int32GetDatum(funcctx->call_cntr);
+		values[1] = PointerGetDatum(makeArrayResult(astate_values, CurrentMemoryContext));
+		values[2] = PointerGetDatum(makeArrayResult(astate_nulls, CurrentMemoryContext));
+		values[3] = Float8GetDatum(item->frequency);
+		values[4] = Float8GetDatum(item->base_frequency);
 
-		snprintf(values[0], 64, "%d", call_cntr);
-		snprintf(values[3], 64, "%f", item->frequency);
-		snprintf(values[4], 64, "%f", item->base_frequency);
-
-		values[1] = itemValues.data;
-		values[2] = itemNulls.data;
+		/* no NULLs in the tuple */
+		memset(nulls, 0, sizeof(nulls));
 
 		/* build a tuple */
-		tuple = BuildTupleFromCStrings(attinmeta, values);
+		tuple = heap_form_tuple(funcctx->attinmeta->tupdesc, values, nulls);
 
 		/* make the tuple into a datum */
 		result = HeapTupleGetDatum(tuple);
-
-		/* clean up (this is not really necessary) */
-		pfree(itemValues.data);
-		pfree(itemNulls.data);
-
-		pfree(values[0]);
-		pfree(values[3]);
-		pfree(values[4]);
-		pfree(values);
 
 		SRF_RETURN_NEXT(funcctx, result);
 	}

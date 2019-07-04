@@ -5019,7 +5019,7 @@
 { oid => '3427', descr => 'details about MCV list items',
   proname => 'pg_mcv_list_items', prorows => '1000', proretset => 't',
   provolatile => 's', prorettype => 'record', proargtypes => 'pg_mcv_list',
-  proallargtypes => '{pg_mcv_list,int4,text,_bool,float8,float8}',
+  proallargtypes => '{pg_mcv_list,int4,_text,_bool,float8,float8}',
   proargmodes => '{i,o,o,o,o,o}',
   proargnames => '{mcv_list,index,values,nulls,frequency,base_frequency}',
   prosrc => 'pg_stats_ext_mcvlist_items' },
