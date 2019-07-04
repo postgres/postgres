@@ -171,21 +171,19 @@ $node->command_ok(
 system_log('cat', $plain);
 my ($stderr, $result);
 my $restore_super = qq{regress_a'b\\c=d\\ne"f};
+$restore_super =~ s/"//g
+  if $TestLib::windows_os;    # IPC::Run mishandles '"' on Windows
 
 
 # Restore full dump through psql using environment variables for
 # dbname/user connection parameters
 
 my $envar_node = get_new_node('destination_envar');
-$envar_node->init(extra =>
-	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ]);
-$envar_node->run_log(
-	[
-		$ENV{PG_REGRESS},      '--config-auth',
-		$envar_node->data_dir, '--user',
-		$dst_bootstrap_super,  '--create-role',
-		$restore_super
-	]);
+$envar_node->init(
+	extra =>
+	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ],
+	auth_extra =>
+	  [ '--user', $dst_bootstrap_super, '--create-role', $restore_super ]);
 $envar_node->start;
 
 # make superuser for restore
@@ -207,18 +205,12 @@ is($stderr, '', 'no dump errors');
 # dbname/user connection parameters.  "\connect dbname=" forgets
 # user/port from command line.
 
-$restore_super =~ s/"//g
-  if $TestLib::windows_os;    # IPC::Run mishandles '"' on Windows
 my $cmdline_node = get_new_node('destination_cmdline');
-$cmdline_node->init(extra =>
-	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ]);
-$cmdline_node->run_log(
-	[
-		$ENV{PG_REGRESS},        '--config-auth',
-		$cmdline_node->data_dir, '--user',
-		$dst_bootstrap_super,    '--create-role',
-		$restore_super
-	]);
+$cmdline_node->init(
+	extra =>
+	  [ '-U', $dst_bootstrap_super, '--locale=C', '--encoding=LATIN1' ],
+	auth_extra =>
+	  [ '--user', $dst_bootstrap_super, '--create-role', $restore_super ]);
 $cmdline_node->start;
 $cmdline_node->run_log(
 	[ 'createuser', '-U', $dst_bootstrap_super, '-s', $restore_super ]);
