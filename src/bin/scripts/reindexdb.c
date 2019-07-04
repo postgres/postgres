@@ -420,7 +420,7 @@ reindex_all_databases(const char *maintenance_db,
 		}
 
 		resetPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
+		appendPQExpBufferStr(&connstr, "dbname=");
 		appendConnStrVal(&connstr, dbname);
 
 		reindex_one_database(NULL, connstr.data, REINDEX_DATABASE, host,

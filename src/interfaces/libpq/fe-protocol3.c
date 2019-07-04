@@ -996,7 +996,7 @@ pqBuildErrorMessage3(PQExpBuffer msg, const PGresult *res,
 	/* If we couldn't allocate a PGresult, just say "out of memory" */
 	if (res == NULL)
 	{
-		appendPQExpBuffer(msg, libpq_gettext("out of memory\n"));
+		appendPQExpBufferStr(msg, libpq_gettext("out of memory\n"));
 		return;
 	}
 
@@ -1009,7 +1009,7 @@ pqBuildErrorMessage3(PQExpBuffer msg, const PGresult *res,
 		if (res->errMsg && res->errMsg[0])
 			appendPQExpBufferStr(msg, res->errMsg);
 		else
-			appendPQExpBuffer(msg, libpq_gettext("no error message available\n"));
+			appendPQExpBufferStr(msg, libpq_gettext("no error message available\n"));
 		return;
 	}
 

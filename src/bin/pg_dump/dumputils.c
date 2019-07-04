@@ -425,7 +425,7 @@ buildDefaultACLCommands(const char *type, const char *nspname,
 
 	if (strlen(initacls) != 0 || strlen(initracls) != 0)
 	{
-		appendPQExpBuffer(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\n");
+		appendPQExpBufferStr(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(true);\n");
 		if (!buildACLCommands("", NULL, NULL, type,
 							  initacls, initracls, owner,
 							  prefix->data, remoteVersion, sql))
@@ -433,7 +433,7 @@ buildDefaultACLCommands(const char *type, const char *nspname,
 			destroyPQExpBuffer(prefix);
 			return false;
 		}
-		appendPQExpBuffer(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\n");
+		appendPQExpBufferStr(sql, "SELECT pg_catalog.binary_upgrade_set_record_init_privs(false);\n");
 	}
 
 	if (!buildACLCommands("", NULL, NULL, type,

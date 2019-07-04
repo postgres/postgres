@@ -500,19 +500,19 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	/* Build query */
 	appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\"", slot_name);
 	if (is_temporary)
-		appendPQExpBuffer(query, " TEMPORARY");
+		appendPQExpBufferStr(query, " TEMPORARY");
 	if (is_physical)
 	{
-		appendPQExpBuffer(query, " PHYSICAL");
+		appendPQExpBufferStr(query, " PHYSICAL");
 		if (reserve_wal)
-			appendPQExpBuffer(query, " RESERVE_WAL");
+			appendPQExpBufferStr(query, " RESERVE_WAL");
 	}
 	else
 	{
 		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
 		if (PQserverVersion(conn) >= 100000)
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
-			appendPQExpBuffer(query, " NOEXPORT_SNAPSHOT");
+			appendPQExpBufferStr(query, " NOEXPORT_SNAPSHOT");
 	}
 
 	res = PQexec(conn, query->data);

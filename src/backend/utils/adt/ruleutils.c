@@ -1723,7 +1723,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 	{
 		case PARTITION_STRATEGY_HASH:
 			if (!attrsOnly)
-				appendStringInfo(&buf, "HASH");
+				appendStringInfoString(&buf, "HASH");
 			break;
 		case PARTITION_STRATEGY_LIST:
 			if (!attrsOnly)

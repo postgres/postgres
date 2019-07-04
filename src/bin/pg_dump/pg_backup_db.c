@@ -149,7 +149,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	}
 
 	initPQExpBuffer(&connstr);
-	appendPQExpBuffer(&connstr, "dbname=");
+	appendPQExpBufferStr(&connstr, "dbname=");
 	appendConnStrVal(&connstr, newdb);
 
 	do

@@ -702,7 +702,7 @@ sepgsql_audit_log(bool denied,
 			appendStringInfo(&buf, " %s", av_name);
 		}
 	}
-	appendStringInfo(&buf, " }");
+	appendStringInfoString(&buf, " }");
 
 	/*
 	 * Call external audit module, if loaded

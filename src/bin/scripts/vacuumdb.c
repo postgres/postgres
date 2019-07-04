@@ -477,16 +477,16 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 
 		if (!tables_listed)
 		{
-			appendPQExpBuffer(&catalog_query,
-							  "WITH listed_tables (table_oid, column_list) "
-							  "AS (\n  VALUES (");
+			appendPQExpBufferStr(&catalog_query,
+								 "WITH listed_tables (table_oid, column_list) "
+								 "AS (\n  VALUES (");
 			tables_listed = true;
 		}
 		else
-			appendPQExpBuffer(&catalog_query, ",\n  (");
+			appendPQExpBufferStr(&catalog_query, ",\n  (");
 
 		appendStringLiteralConn(&catalog_query, just_table, conn);
-		appendPQExpBuffer(&catalog_query, "::pg_catalog.regclass, ");
+		appendPQExpBufferStr(&catalog_query, "::pg_catalog.regclass, ");
 
 		if (just_columns && just_columns[0] != '\0')
 			appendStringLiteralConn(&catalog_query, just_columns, conn);
@@ -500,24 +500,24 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 
 	/* Finish formatting the CTE */
 	if (tables_listed)
-		appendPQExpBuffer(&catalog_query, "\n)\n");
+		appendPQExpBufferStr(&catalog_query, "\n)\n");
 
-	appendPQExpBuffer(&catalog_query, "SELECT c.relname, ns.nspname");
+	appendPQExpBufferStr(&catalog_query, "SELECT c.relname, ns.nspname");
 
 	if (tables_listed)
-		appendPQExpBuffer(&catalog_query, ", listed_tables.column_list");
+		appendPQExpBufferStr(&catalog_query, ", listed_tables.column_list");
 
-	appendPQExpBuffer(&catalog_query,
-					  " FROM pg_catalog.pg_class c\n"
-					  " JOIN pg_catalog.pg_namespace ns"
-					  " ON c.relnamespace OPERATOR(pg_catalog.=) ns.oid\n"
-					  " LEFT JOIN pg_catalog.pg_class t"
-					  " ON c.reltoastrelid OPERATOR(pg_catalog.=) t.oid\n");
+	appendPQExpBufferStr(&catalog_query,
+						 " FROM pg_catalog.pg_class c\n"
+						 " JOIN pg_catalog.pg_namespace ns"
+						 " ON c.relnamespace OPERATOR(pg_catalog.=) ns.oid\n"
+						 " LEFT JOIN pg_catalog.pg_class t"
+						 " ON c.reltoastrelid OPERATOR(pg_catalog.=) t.oid\n");
 
 	/* Used to match the tables listed by the user */
 	if (tables_listed)
-		appendPQExpBuffer(&catalog_query, " JOIN listed_tables"
-						  " ON listed_tables.table_oid OPERATOR(pg_catalog.=) c.oid\n");
+		appendPQExpBufferStr(&catalog_query, " JOIN listed_tables"
+							 " ON listed_tables.table_oid OPERATOR(pg_catalog.=) c.oid\n");
 
 	/*
 	 * If no tables were listed, filter for the relevant relation types.  If
@@ -527,9 +527,9 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	 */
 	if (!tables_listed)
 	{
-		appendPQExpBuffer(&catalog_query, " WHERE c.relkind OPERATOR(pg_catalog.=) ANY (array["
-						  CppAsString2(RELKIND_RELATION) ", "
-						  CppAsString2(RELKIND_MATVIEW) "])\n");
+		appendPQExpBufferStr(&catalog_query, " WHERE c.relkind OPERATOR(pg_catalog.=) ANY (array["
+							 CppAsString2(RELKIND_RELATION) ", "
+							 CppAsString2(RELKIND_MATVIEW) "])\n");
 		has_where = true;
 	}
 
@@ -568,7 +568,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	 * Execute the catalog query.  We use the default search_path for this
 	 * query for consistency with table lookups done elsewhere by the user.
 	 */
-	appendPQExpBuffer(&catalog_query, " ORDER BY c.relpages DESC;");
+	appendPQExpBufferStr(&catalog_query, " ORDER BY c.relpages DESC;");
 	executeCommand(conn, "RESET search_path;", progname, echo);
 	res = executeQuery(conn, catalog_query.data, progname, echo);
 	termPQExpBuffer(&catalog_query);
@@ -775,7 +775,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 			for (i = 0; i < PQntuples(result); i++)
 			{
 				resetPQExpBuffer(&connstr);
-				appendPQExpBuffer(&connstr, "dbname=");
+				appendPQExpBufferStr(&connstr, "dbname=");
 				appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
 
 				vacuum_one_database(connstr.data, vacopts,
@@ -792,7 +792,7 @@ vacuum_all_databases(vacuumingOptions *vacopts,
 		for (i = 0; i < PQntuples(result); i++)
 		{
 			resetPQExpBuffer(&connstr);
-			appendPQExpBuffer(&connstr, "dbname=");
+			appendPQExpBufferStr(&connstr, "dbname=");
 			appendConnStrVal(&connstr, PQgetvalue(result, i, 0));
 
 			vacuum_one_database(connstr.data, vacopts,

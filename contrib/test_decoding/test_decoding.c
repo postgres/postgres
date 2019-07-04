@@ -518,9 +518,9 @@ pg_decode_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		|| change->data.truncate.cascade)
 	{
 		if (change->data.truncate.restart_seqs)
-			appendStringInfo(ctx->out, " restart_seqs");
+			appendStringInfoString(ctx->out, " restart_seqs");
 		if (change->data.truncate.cascade)
-			appendStringInfo(ctx->out, " cascade");
+			appendStringInfoString(ctx->out, " cascade");
 	}
 	else
 		appendStringInfoString(ctx->out, " (no-flags)");

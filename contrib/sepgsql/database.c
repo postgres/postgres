@@ -63,7 +63,7 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	 * check db_database:{getattr} permission
 	 */
 	initStringInfo(&audit_name);
-	appendStringInfo(&audit_name, "%s", quote_identifier(dtemplate));
+	appendStringInfoString(&audit_name, quote_identifier(dtemplate));
 	sepgsql_avc_check_perms_label(tcontext,
 								  SEPG_CLASS_DB_DATABASE,
 								  SEPG_DB_DATABASE__GETATTR,
@@ -101,8 +101,8 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	 * check db_database:{create} permission
 	 */
 	resetStringInfo(&audit_name);
-	appendStringInfo(&audit_name, "%s",
-					 quote_identifier(NameStr(datForm->datname)));
+	appendStringInfoString(&audit_name,
+						   quote_identifier(NameStr(datForm->datname)));
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_DATABASE,
 								  SEPG_DB_DATABASE__CREATE,

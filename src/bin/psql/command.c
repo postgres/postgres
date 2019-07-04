@@ -2992,7 +2992,7 @@ do_connect(enum trivalue reuse_previous_specification,
 	if (!dbname && reuse_previous)
 	{
 		initPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
+		appendPQExpBufferStr(&connstr, "dbname=");
 		appendConnStrVal(&connstr, PQdb(o_conn));
 		dbname = connstr.data;
 		/* has_connection_string=true would be a dead store */
@@ -4576,7 +4576,7 @@ lookup_object_oid(EditableObjectType obj_type, const char *desc,
 			 */
 			appendPQExpBufferStr(query, "SELECT ");
 			appendStringLiteralConn(query, desc, pset.db);
-			appendPQExpBuffer(query, "::pg_catalog.regclass::pg_catalog.oid");
+			appendPQExpBufferStr(query, "::pg_catalog.regclass::pg_catalog.oid");
 			break;
 	}
 

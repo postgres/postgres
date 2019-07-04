@@ -624,10 +624,10 @@ appendPsqlMetaConnect(PQExpBuffer buf, const char *dbname)
 		PQExpBufferData connstr;
 
 		initPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
+		appendPQExpBufferStr(&connstr, "dbname=");
 		appendConnStrVal(&connstr, dbname);
 
-		appendPQExpBuffer(buf, "-reuse-previous=on ");
+		appendPQExpBufferStr(buf, "-reuse-previous=on ");
 
 		/*
 		 * As long as the name does not contain a newline, SQL identifier

@@ -254,7 +254,7 @@ cluster_all_databases(bool verbose, const char *maintenance_db,
 		}
 
 		resetPQExpBuffer(&connstr);
-		appendPQExpBuffer(&connstr, "dbname=");
+		appendPQExpBufferStr(&connstr, "dbname=");
 		appendConnStrVal(&connstr, dbname);
 
 		cluster_one_database(connstr.data, verbose, NULL,

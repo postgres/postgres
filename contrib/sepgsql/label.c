@@ -676,7 +676,7 @@ quote_object_name(const char *src1, const char *src2,
 	if (src1)
 	{
 		temp = quote_identifier(src1);
-		appendStringInfo(&result, "%s", temp);
+		appendStringInfoString(&result, temp);
 		if (src1 != temp)
 			pfree((void *) temp);
 	}

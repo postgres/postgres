@@ -346,7 +346,7 @@ build_client_first_message(fe_scram_state *state)
 	if (strcmp(state->sasl_mechanism, SCRAM_SHA_256_PLUS_NAME) == 0)
 	{
 		Assert(conn->ssl_in_use);
-		appendPQExpBuffer(&buf, "p=tls-server-end-point");
+		appendPQExpBufferStr(&buf, "p=tls-server-end-point");
 	}
 #ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 	else if (conn->ssl_in_use)
@@ -354,7 +354,7 @@ build_client_first_message(fe_scram_state *state)
 		/*
 		 * Client supports channel binding, but thinks the server does not.
 		 */
-		appendPQExpBuffer(&buf, "y");
+		appendPQExpBufferChar(&buf, 'y');
 	}
 #endif
 	else
@@ -362,7 +362,7 @@ build_client_first_message(fe_scram_state *state)
 		/*
 		 * Client does not support channel binding.
 		 */
-		appendPQExpBuffer(&buf, "n");
+		appendPQExpBufferChar(&buf, 'n');
 	}
 
 	if (PQExpBufferDataBroken(buf))
@@ -437,7 +437,7 @@ build_client_final_message(fe_scram_state *state)
 			return NULL;
 		}
 
-		appendPQExpBuffer(&buf, "c=");
+		appendPQExpBufferStr(&buf, "c=");
 
 		/* p=type,, */
 		cbind_header_len = strlen("p=tls-server-end-point,,");
@@ -475,10 +475,10 @@ build_client_final_message(fe_scram_state *state)
 	}
 #ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
 	else if (conn->ssl_in_use)
-		appendPQExpBuffer(&buf, "c=eSws");	/* base64 of "y,," */
+		appendPQExpBufferStr(&buf, "c=eSws");	/* base64 of "y,," */
 #endif
 	else
-		appendPQExpBuffer(&buf, "c=biws");	/* base64 of "n,," */
+		appendPQExpBufferStr(&buf, "c=biws");	/* base64 of "n,," */
 
 	if (PQExpBufferDataBroken(buf))
 		goto oom_error;
@@ -496,7 +496,7 @@ build_client_final_message(fe_scram_state *state)
 						   state->client_final_message_without_proof,
 						   client_proof);
 
-	appendPQExpBuffer(&buf, ",p=");
+	appendPQExpBufferStr(&buf, ",p=");
 	if (!enlargePQExpBuffer(&buf, pg_b64_enc_len(SCRAM_KEY_LEN)))
 		goto oom_error;
 	buf.len += pg_b64_encode((char *) client_proof,
