@@ -198,6 +198,10 @@ scram_build_verifier(const char *salt, int saltlen, int iterations,
 	char	   *result;
 	char	   *p;
 	int			maxlen;
+	int			encoded_salt_len;
+	int			encoded_stored_len;
+	int			encoded_server_len;
+	int			encoded_result;
 
 	if (iterations <= 0)
 		iterations = SCRAM_DEFAULT_ITERATIONS;
@@ -215,11 +219,15 @@ scram_build_verifier(const char *salt, int saltlen, int iterations,
 	 * SCRAM-SHA-256$<iteration count>:<salt>$<StoredKey>:<ServerKey>
 	 *----------
 	 */
+	encoded_salt_len = pg_b64_enc_len(saltlen);
+	encoded_stored_len = pg_b64_enc_len(SCRAM_KEY_LEN);
+	encoded_server_len = pg_b64_enc_len(SCRAM_KEY_LEN);
+
 	maxlen = strlen("SCRAM-SHA-256") + 1
 		+ 10 + 1				/* iteration count */
-		+ pg_b64_enc_len(saltlen) + 1	/* Base64-encoded salt */
-		+ pg_b64_enc_len(SCRAM_KEY_LEN) + 1 /* Base64-encoded StoredKey */
-		+ pg_b64_enc_len(SCRAM_KEY_LEN) + 1;	/* Base64-encoded ServerKey */
+		+ encoded_salt_len + 1	/* Base64-encoded salt */
+		+ encoded_stored_len + 1	/* Base64-encoded StoredKey */
+		+ encoded_server_len + 1;	/* Base64-encoded ServerKey */
 
 #ifdef FRONTEND
 	result = malloc(maxlen);
@@ -231,11 +239,50 @@ scram_build_verifier(const char *salt, int saltlen, int iterations,
 
 	p = result + sprintf(result, "SCRAM-SHA-256$%d:", iterations);
 
-	p += pg_b64_encode(salt, saltlen, p);
+	/* salt */
+	encoded_result = pg_b64_encode(salt, saltlen, p, encoded_salt_len);
+	if (encoded_result < 0)
+	{
+#ifdef FRONTEND
+		free(result);
+		return NULL;
+#else
+		elog(ERROR, "could not encode salt");
+#endif
+	}
+	p += encoded_result;
 	*(p++) = '$';
-	p += pg_b64_encode((char *) stored_key, SCRAM_KEY_LEN, p);
+
+	/* stored key */
+	encoded_result = pg_b64_encode((char *) stored_key, SCRAM_KEY_LEN, p,
+								   encoded_stored_len);
+	if (encoded_result < 0)
+	{
+#ifdef FRONTEND
+		free(result);
+		return NULL;
+#else
+		elog(ERROR, "could not encode stored key");
+#endif
+	}
+
+	p += encoded_result;
 	*(p++) = ':';
-	p += pg_b64_encode((char *) server_key, SCRAM_KEY_LEN, p);
+
+	/* server key */
+	encoded_result = pg_b64_encode((char *) server_key, SCRAM_KEY_LEN, p,
+								   encoded_server_len);
+	if (encoded_result < 0)
+	{
+#ifdef FRONTEND
+		free(result);
+		return NULL;
+#else
+		elog(ERROR, "could not encode server key");
+#endif
+	}
+
+	p += encoded_result;
 	*(p++) = '\0';
 
 	Assert(p - result <= maxlen);
