@@ -78,6 +78,9 @@ static MultiSortSupport build_mss(VacAttrStats **stats, int numattrs);
 static SortItem *build_distinct_groups(int numrows, SortItem *items,
 									   MultiSortSupport mss, int *ndistinct);
 
+static SortItem **build_column_frequencies(SortItem *groups, int ngroups,
+										   MultiSortSupport mss, int *ncounts);
+
 static int	count_distinct_groups(int numrows, SortItem *items,
 								  MultiSortSupport mss);
 
@@ -242,6 +245,20 @@ statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 	if (nitems > 0)
 	{
 		int			j;
+		SortItem	key;
+		MultiSortSupport	tmp;
+
+		/* frequencies for values in each attribute */
+		SortItem  **freqs;
+		int		   *nfreqs;
+
+		/* used to search values */
+		tmp = (MultiSortSupport) palloc(offsetof(MultiSortSupportData, ssup)
+										+ sizeof(SortSupportData));
+
+		/* compute frequencies for values in each column */
+		nfreqs = (int *) palloc0(sizeof(int) * numattrs);
+		freqs = build_column_frequencies(groups, ngroups, mss, nfreqs);
 
 		/*
 		 * Allocate the MCV list structure, set the global parameters.
@@ -281,18 +298,26 @@ statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 			item->base_frequency = 1.0;
 			for (j = 0; j < numattrs; j++)
 			{
-				int			count = 0;
-				int			k;
+				SortItem   *freq;
 
-				for (k = 0; k < ngroups; k++)
-				{
-					if (multi_sort_compare_dim(j, &groups[i], &groups[k], mss) == 0)
-						count += groups[k].count;
-				}
+				/* single dimension */
+				tmp->ndims = 1;
+				tmp->ssup[0] = mss->ssup[j];
 
-				item->base_frequency *= (double) count / numrows;
+				/* fill search key */
+				key.values = &groups[i].values[j];
+				key.isnull = &groups[i].isnull[j];
+
+				freq = (SortItem *) bsearch_arg(&key, freqs[j], nfreqs[j],
+												sizeof(SortItem),
+												multi_sort_compare, tmp);
+
+				item->base_frequency *= ((double) freq->count) / numrows;
 			}
 		}
+
+		pfree(nfreqs);
+		pfree(freqs);
 	}
 
 	pfree(items);
@@ -419,6 +444,95 @@ build_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss,
 	return groups;
 }
 
+/* compare sort items (single dimension) */
+static int
+sort_item_compare(const void *a, const void *b, void *arg)
+{
+	SortSupport	ssup = (SortSupport) arg;
+	SortItem   *ia = (SortItem *) a;
+	SortItem   *ib = (SortItem *) b;
+
+	return ApplySortComparator(ia->values[0], ia->isnull[0],
+							   ib->values[0], ib->isnull[0],
+							   ssup);
+}
+
+/*
+ * build_column_frequencies
+ *	compute frequencies of values in each column
+ *
+ * This returns an array of SortItems for each attibute the MCV is built
+ * on, with a frequency (number of occurrences) for each value. This is
+ * then used to compute "base" frequency of MCV items.
+ *
+ * All the memory is allocated in a single chunk, so that a single pfree
+ * is enough to release it. We do not allocate space for values/isnull
+ * arrays in the SortItems, because we can simply point into the input
+ * groups directly.
+ */
+static SortItem **
+build_column_frequencies(SortItem *groups, int ngroups,
+						 MultiSortSupport mss, int *ncounts)
+{
+	int			i,
+				dim;
+	SortItem  **result;
+	char	   *ptr;
+
+	Assert(groups);
+	Assert(ncounts);
+
+	/* allocate arrays for all columns as a single chunk */
+	ptr = palloc(MAXALIGN(sizeof(SortItem *) * mss->ndims) +
+		  mss->ndims * MAXALIGN(sizeof(SortItem) * ngroups));
+
+	/* initial array of pointers */
+	result = (SortItem **) ptr;
+	ptr += MAXALIGN(sizeof(SortItem *) * mss->ndims);
+
+	for (dim = 0; dim < mss->ndims; dim++)
+	{
+		SortSupport	ssup = &mss->ssup[dim];
+
+		/* array of values for a single column */
+		result[dim] = (SortItem *) ptr;
+		ptr += MAXALIGN(sizeof(SortItem) * ngroups);
+
+		/* extract data for the dimension */
+		for (i = 0; i < ngroups; i++)
+		{
+			/* point into the input groups */
+			result[dim][i].values = &groups[i].values[dim];
+			result[dim][i].isnull = &groups[i].isnull[dim];
+			result[dim][i].count = groups[i].count;
+		}
+
+		/* sort the values, deduplicate */
+		qsort_arg((void *) result[dim], ngroups, sizeof(SortItem),
+				  sort_item_compare, ssup);
+
+		/*
+		 * Identify distinct values, compute frequency (there might be
+		 * multiple MCV items containing this value, so we need to sum
+		 * counts from all of them.
+		 */
+		ncounts[dim] = 1;
+		for (i = 1; i < ngroups; i++)
+		{
+			if (sort_item_compare(&result[dim][i-1], &result[dim][i], ssup) == 0)
+			{
+				result[dim][ncounts[dim]-1].count += result[dim][i].count;
+				continue;
+			}
+
+			result[dim][ncounts[dim]] = result[dim][i];
+
+			ncounts[dim]++;
+		}
+	}
+
+	return result;
+}
 
 /*
  * statext_mcv_load
