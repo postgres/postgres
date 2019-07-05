@@ -60,8 +60,6 @@ extern void SetRelationHasSubclass(Oid relationId, bool relhassubclass);
 
 extern ObjectAddress renameatt(RenameStmt *stmt);
 
-extern ObjectAddress renameatt_type(RenameStmt *stmt);
-
 extern ObjectAddress RenameConstraint(RenameStmt *stmt);
 
 extern ObjectAddress RenameRelation(RenameStmt *stmt);
