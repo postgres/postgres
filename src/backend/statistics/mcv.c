@@ -911,10 +911,9 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 	for (i = 0; i < mcvlist->nitems; i++)
 	{
 		MCVItem    *mcvitem = &mcvlist->items[i];
-		int			itemlen = ITEM_SIZE(dim);
 
 		/* don't write beyond the allocated space */
-		Assert(ptr <= (endptr - itemlen));
+		Assert(ptr <= (endptr - ITEM_SIZE(dim)));
 
 		/* copy NULL and frequency flags into the serialized MCV */
 		memcpy(ptr, mcvitem->isnull, sizeof(bool) * ndims);
