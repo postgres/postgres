@@ -73,6 +73,18 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 						to_encoding_name)));
 
 	/*
+	 * We consider conversions to or from SQL_ASCII to be meaningless.  (If
+	 * you wish to change this, note that pg_do_encoding_conversion() and its
+	 * sister functions have hard-wired fast paths for any conversion in which
+	 * the source or target encoding is SQL_ASCII, so that an encoding
+	 * conversion function declared for such a case will never be used.)
+	 */
+	if (from_encoding == PG_SQL_ASCII || to_encoding == PG_SQL_ASCII)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("encoding conversion to or from \"SQL_ASCII\" is not supported")));
+
+	/*
 	 * Check the existence of the conversion function. Function name could be
 	 * a qualified name.
 	 */

@@ -28,12 +28,15 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
 
   <para>
    <command>CREATE CONVERSION</command> defines a new conversion between
-   character set encodings.  Also, conversions that
-   are marked <literal>DEFAULT</literal> can be used for automatic encoding
-   conversion between
-   client and server. For this purpose, two conversions, from encoding A to
-   B <emphasis>and</emphasis> from encoding B to A, must be defined.
- </para>
+   two character set encodings.
+  </para>
+
+  <para>
+   Conversions that are marked <literal>DEFAULT</literal> can be used for
+   automatic encoding conversion between client and server.  To support that
+   usage, two conversions, from encoding A to B <emphasis>and</emphasis>
+   from encoding B to A, must be defined.
+  </para>
 
   <para>
    To be able to create a conversion, you must have <literal>EXECUTE</literal> privilege
@@ -121,6 +124,13 @@ conv_proc(
 
  <refsect1 id="sql-createconversion-notes">
   <title>Notes</title>
+
+  <para>
+   Neither the source nor the destination encoding can
+   be <literal>SQL_ASCII</literal>, as the server's behavior for cases
+   involving the <literal>SQL_ASCII</literal> <quote>encoding</quote> is
+   hard-wired.
+  </para>
 
   <para>
    Use <command>DROP CONVERSION</command> to remove user-defined conversions.

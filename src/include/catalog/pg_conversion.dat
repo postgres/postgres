@@ -15,12 +15,6 @@
 
 [
 
-{ oid => '4400', descr => 'conversion for SQL_ASCII to MULE_INTERNAL',
-  conname => 'ascii_to_mic', conforencoding => 'PG_SQL_ASCII',
-  contoencoding => 'PG_MULE_INTERNAL', conproc => 'ascii_to_mic' },
-{ oid => '4401', descr => 'conversion for MULE_INTERNAL to SQL_ASCII',
-  conname => 'mic_to_ascii', conforencoding => 'PG_MULE_INTERNAL',
-  contoencoding => 'PG_SQL_ASCII', conproc => 'mic_to_ascii' },
 { oid => '4402', descr => 'conversion for KOI8R to MULE_INTERNAL',
   conname => 'koi8_r_to_mic', conforencoding => 'PG_KOI8R',
   contoencoding => 'PG_MULE_INTERNAL', conproc => 'koi8r_to_mic' },
@@ -165,12 +159,6 @@
 { oid => '4449', descr => 'conversion for MULE_INTERNAL to LATIN4',
   conname => 'mic_to_iso_8859_4', conforencoding => 'PG_MULE_INTERNAL',
   contoencoding => 'PG_LATIN4', conproc => 'mic_to_latin4' },
-{ oid => '4450', descr => 'conversion for SQL_ASCII to UTF8',
-  conname => 'ascii_to_utf8', conforencoding => 'PG_SQL_ASCII',
-  contoencoding => 'PG_UTF8', conproc => 'ascii_to_utf8' },
-{ oid => '4451', descr => 'conversion for UTF8 to SQL_ASCII',
-  conname => 'utf8_to_ascii', conforencoding => 'PG_UTF8',
-  contoencoding => 'PG_SQL_ASCII', conproc => 'utf8_to_ascii' },
 { oid => '4452', descr => 'conversion for BIG5 to UTF8',
   conname => 'big5_to_utf8', conforencoding => 'PG_BIG5',
   contoencoding => 'PG_UTF8', conproc => 'big5_to_utf8' },

@@ -1735,7 +1735,7 @@ create operator alter1.=(procedure = alter1.same, leftarg  = alter1.ctype, right
 create operator class alter1.ctype_hash_ops default for type alter1.ctype using hash as
   operator 1 alter1.=(alter1.ctype, alter1.ctype);
 
-create conversion alter1.ascii_to_utf8 for 'sql_ascii' to 'utf8' from ascii_to_utf8;
+create conversion alter1.latin1_to_utf8 for 'latin1' to 'utf8' from iso8859_1_to_utf8;
 
 create text search parser alter1.prs(start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
 create text search configuration alter1.cfg(parser = alter1.prs);
@@ -1756,7 +1756,7 @@ alter operator alter1.=(alter1.ctype, alter1.ctype) set schema alter2;
 alter function alter1.same(alter1.ctype, alter1.ctype) set schema alter2;
 alter type alter1.ctype set schema alter1; -- no-op, same schema
 alter type alter1.ctype set schema alter2;
-alter conversion alter1.ascii_to_utf8 set schema alter2;
+alter conversion alter1.latin1_to_utf8 set schema alter2;
 alter text search parser alter1.prs set schema alter2;
 alter text search configuration alter1.cfg set schema alter2;
 alter text search template alter1.tmpl set schema alter2;

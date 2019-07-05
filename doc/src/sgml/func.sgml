@@ -2497,18 +2497,6 @@
 
      <tbody>
       <row>
-       <entry><literal>ascii_to_mic</literal></entry>
-       <entry><literal>SQL_ASCII</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>ascii_to_utf8</literal></entry>
-       <entry><literal>SQL_ASCII</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
        <entry><literal>big5_to_euc_tw</literal></entry>
        <entry><literal>BIG5</literal></entry>
        <entry><literal>EUC_TW</literal></entry>
@@ -2779,12 +2767,6 @@
       </row>
 
       <row>
-       <entry><literal>mic_to_ascii</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>SQL_ASCII</literal></entry>
-      </row>
-
-      <row>
        <entry><literal>mic_to_big5</literal></entry>
        <entry><literal>MULE_INTERNAL</literal></entry>
        <entry><literal>BIG5</literal></entry>
@@ -2902,12 +2884,6 @@
        <entry><literal>uhc_to_utf8</literal></entry>
        <entry><literal>UHC</literal></entry>
        <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_ascii</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>SQL_ASCII</literal></entry>
       </row>
 
       <row>

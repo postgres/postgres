@@ -614,8 +614,6 @@ extern void report_untranslatable_char(int src_encoding, int dest_encoding,
 
 extern void local2local(const unsigned char *l, unsigned char *p, int len,
 						int src_encoding, int dest_encoding, const unsigned char *tab);
-extern void pg_ascii2mic(const unsigned char *l, unsigned char *p, int len);
-extern void pg_mic2ascii(const unsigned char *mic, unsigned char *p, int len);
 extern void latin2mic(const unsigned char *l, unsigned char *p, int len,
 					  int lc, int encoding);
 extern void mic2latin(const unsigned char *mic, unsigned char *p, int len,

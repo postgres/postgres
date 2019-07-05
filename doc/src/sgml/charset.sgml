@@ -1896,7 +1896,11 @@ RESET client_encoding;
     <para>
      If the client character set is defined as <literal>SQL_ASCII</literal>,
      encoding conversion is disabled, regardless of the server's character
-     set.  Just as for the server, use of <literal>SQL_ASCII</literal> is unwise
+     set.  (However, if the server's character set is
+     not <literal>SQL_ASCII</literal>, the server will still check that
+     incoming data is valid for that encoding; so the net effect is as
+     though the client character set were the same as the server's.)
+     Just as for the server, use of <literal>SQL_ASCII</literal> is unwise
      unless you are working with all-ASCII data.
     </para>
    </sect2>

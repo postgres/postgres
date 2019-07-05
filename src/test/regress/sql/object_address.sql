@@ -164,7 +164,7 @@ WITH objects (type, name, args) AS (VALUES
 				('collation', '{default}', '{}'),
 				('table constraint', '{addr_nsp, gentable, a_chk}', '{}'),
 				('domain constraint', '{addr_nsp.gendomain}', '{domconstr}'),
-				('conversion', '{pg_catalog, ascii_to_mic}', '{}'),
+				('conversion', '{pg_catalog, koi8_r_to_mic}', '{}'),
 				('default value', '{addr_nsp, gentable, b}', '{}'),
 				('language', '{plpgsql}', '{}'),
 				-- large object
