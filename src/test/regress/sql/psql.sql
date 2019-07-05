@@ -771,6 +771,22 @@ drop table psql_serial_tab;
 \pset expanded off
 \pset border 1
 
+-- \echo and allied features
+
+\echo this is a test
+\echo -n without newline
+\echo with -n newline
+\echo '-n' with newline
+
+\set foo bar
+\echo foo = :foo
+
+\qecho this is a test
+\qecho foo = :foo
+
+\warn this is a test
+\warn foo = :foo
+
 -- tests for \if ... \endif
 
 \if true

@@ -1863,22 +1863,22 @@ testdb=&gt;
         <term><literal>\echo <replaceable class="parameter">text</replaceable> [ ... ]</literal></term>
         <listitem>
         <para>
-        Prints the arguments to the standard output, separated by one
-        space and followed by a newline. This can be useful to
+        Prints the evaluated arguments to standard output, separated by
+        spaces and followed by a newline. This can be useful to
         intersperse information in the output of scripts. For example:
 <programlisting>
 =&gt; <userinput>\echo `date`</userinput>
 Tue Oct 26 21:40:57 CEST 1999
 </programlisting>
         If the first argument is an unquoted <literal>-n</literal> the trailing
-        newline is not written.
+        newline is not written (nor is the first argument).
         </para>
 
         <tip>
         <para>
         If you use the <command>\o</command> command to redirect your
         query output you might wish to use <command>\qecho</command>
-        instead of this command.
+        instead of this command.  See also <command>\warn</command>.
         </para>
         </tip>
         </listitem>
@@ -3221,6 +3221,18 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         and neither variable interpolation nor backquote expansion are
         performed in it.  The rest of the line is simply passed literally to
         the shell.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\warn <replaceable class="parameter">text</replaceable> [ ... ]</literal></term>
+        <listitem>
+        <para>
+        This command is identical to <command>\echo</command> except
+        that the output will be written to <application>psql</application>'s
+        standard error channel, rather than standard output.
         </para>
         </listitem>
       </varlistentry>

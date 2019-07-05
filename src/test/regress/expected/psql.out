@@ -4180,6 +4180,25 @@ drop table psql_serial_tab;
 \pset format aligned
 \pset expanded off
 \pset border 1
+-- \echo and allied features
+\echo this is a test
+this is a test
+\echo -n without newline
+without newline\echo with -n newline
+with -n newline
+\echo '-n' with newline
+-n with newline
+\set foo bar
+\echo foo = :foo
+foo = bar
+\qecho this is a test
+this is a test
+\qecho foo = :foo
+foo = bar
+\warn this is a test
+this is a test
+\warn foo = :foo
+foo = bar
 -- tests for \if ... \endif
 \if true
   select 'okay';
