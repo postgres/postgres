@@ -885,7 +885,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Allow <literal>IS NOT NULL</literal> with mis-matching types to
+        Allow <literal>IS NOT NULL</literal> with mismatching types to
         use partial indexes more frequently (Tom Lane)
        </para>
       </listitem>
@@ -2910,7 +2910,7 @@ Author: Andres Freund <andres@anarazel.de>
 -->
 
       <para>
-       Reserve a range of oids (9000-9999) to be used for external
+       Reserve a range of OIDs (9000-9999) to be used for external
        extensions (Andres Freund)
       </para>
      </listitem>

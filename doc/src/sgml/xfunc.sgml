@@ -1083,10 +1083,10 @@ SELECT x, g FROM tab, LATERAL generate_series(1,5) AS g;
 </programlisting>
      It would be exactly the same, except that in this specific example,
      the planner could choose to put <structname>g</structname> on the outside of the
-     nestloop join, since <structname>g</structname> has no actual lateral dependency
+     nested-loop join, since <structname>g</structname> has no actual lateral dependency
      on <structname>tab</structname>.  That would result in a different output row
      order.  Set-returning functions in the select list are always evaluated
-     as though they are on the inside of a nestloop join with the rest of
+     as though they are on the inside of a nested-loop join with the rest of
      the <literal>FROM</literal> clause, so that the function(s) are run to
      completion before the next row from the <literal>FROM</literal> clause is
      considered.
@@ -3441,14 +3441,14 @@ supportfn(internal) returns internal
    </para>
 
    <para>
-    For target functions that return boolean, it is often useful to estimate
-    the fraction of rows that will be selected by a WHERE clause using that
+    For target functions that return <type>boolean</type>, it is often useful to estimate
+    the fraction of rows that will be selected by a <literal>WHERE</literal> clause using that
     function.  This can be done by a support function that implements
     the <literal>SupportRequestSelectivity</literal> request type.
    </para>
 
    <para>
-    If the target function's runtime is highly dependent on its inputs,
+    If the target function's run time is highly dependent on its inputs,
     it may be useful to provide a non-constant cost estimate for it.
     This can be done by a support function that implements
     the <literal>SupportRequestCost</literal> request type.
@@ -3462,15 +3462,15 @@ supportfn(internal) returns internal
    </para>
 
    <para>
-    For target functions that return boolean, it may be possible to
-    convert a function call appearing in WHERE into an indexable operator
+    For target functions that return <type>boolean</type>, it may be possible to
+    convert a function call appearing in <literal>WHERE</literal> into an indexable operator
     clause or clauses.  The converted clauses might be exactly equivalent
     to the function's condition, or they could be somewhat weaker (that is,
     they might accept some values that the function condition does not).
     In the latter case the index condition is said to
     be <firstterm>lossy</firstterm>; it can still be used to scan an index,
     but the function call will have to be executed for each row returned by
-    the index to see if it really passes the WHERE condition or not.
+    the index to see if it really passes the <literal>WHERE</literal> condition or not.
     To create such conditions, the support function must implement
     the <literal>SupportRequestIndexCondition</literal> request type.
    </para>

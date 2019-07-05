@@ -213,7 +213,7 @@
   The <literal>quad_point_ops</literal>, <literal>kd_point_ops</literal> and
   <literal>poly_ops</literal> operator classes support the <literal>&lt;-&gt;</literal>
   ordering operator, which enables the k-nearest neighbor (<literal>k-NN</literal>)
-  search over indexed point or polygon datasets.
+  search over indexed point or polygon data sets.
  </para>
 
 </sect1>
