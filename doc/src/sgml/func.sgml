@@ -14804,7 +14804,7 @@ NULL baz</literallayout>(3 rows)</entry>
        </indexterm>
        <function>max(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
-      <entry>any numeric, string, date/time, network, or enum type,
+      <entry>any numeric, string, date/time, network, pg_lsn, or enum type,
              or arrays of these types</entry>
       <entry>same as argument type</entry>
       <entry>Yes</entry>
@@ -14822,7 +14822,7 @@ NULL baz</literallayout>(3 rows)</entry>
        </indexterm>
        <function>min(<replaceable class="parameter">expression</replaceable>)</function>
       </entry>
-      <entry>any numeric, string, date/time, network, or enum type,
+      <entry>any numeric, string, date/time, network, pg_lsn, or enum type,
              or arrays of these types</entry>
       <entry>same as argument type</entry>
       <entry>Yes</entry>

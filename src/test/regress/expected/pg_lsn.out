@@ -26,6 +26,13 @@ INSERT INTO PG_LSN_TBL VALUES ('/ABCD');
 ERROR:  invalid input syntax for type pg_lsn: "/ABCD"
 LINE 1: INSERT INTO PG_LSN_TBL VALUES ('/ABCD');
                                        ^
+-- Min/Max aggregation
+SELECT MIN(f1), MAX(f1) FROM PG_LSN_TBL;
+ min |        max        
+-----+-------------------
+ 0/0 | FFFFFFFF/FFFFFFFF
+(1 row)
+
 DROP TABLE PG_LSN_TBL;
 -- Operators
 SELECT '0/16AE7F8' = '0/16AE7F8'::pg_lsn;

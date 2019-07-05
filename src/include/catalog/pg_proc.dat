@@ -6219,6 +6219,9 @@
 { oid => '3564', descr => 'maximum value of all inet input values',
   proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'inet',
   proargtypes => 'inet', prosrc => 'aggregate_dummy' },
+{ oid => '4189', descr => 'maximum value of all pg_lsn input values',
+  proname => 'max', prokind => 'a', proisstrict => 'f', prorettype => 'pg_lsn',
+  proargtypes => 'pg_lsn', prosrc => 'aggregate_dummy' },
 
 { oid => '2131', descr => 'minimum value of all bigint input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'int8',
@@ -6283,6 +6286,9 @@
 { oid => '3565', descr => 'minimum value of all inet input values',
   proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'inet',
   proargtypes => 'inet', prosrc => 'aggregate_dummy' },
+{ oid => '4190', descr => 'minimum value of all pg_lsn input values',
+  proname => 'min', prokind => 'a', proisstrict => 'f', prorettype => 'pg_lsn',
+  proargtypes => 'pg_lsn', prosrc => 'aggregate_dummy' },
 
 # count has two forms: count(any) and count(*)
 { oid => '2147',
@@ -8385,6 +8391,12 @@
 { oid => '3413', descr => 'hash',
   proname => 'pg_lsn_hash_extended', prorettype => 'int8',
   proargtypes => 'pg_lsn int8', prosrc => 'pg_lsn_hash_extended' },
+{ oid => '4187', descr => 'larger of two',
+  proname => 'pg_lsn_larger', prorettype => 'pg_lsn',
+  proargtypes => 'pg_lsn pg_lsn', prosrc => 'pg_lsn_larger' },
+{ oid => '4188', descr => 'smaller of two',
+  proname => 'pg_lsn_smaller', prorettype => 'pg_lsn',
+  proargtypes => 'pg_lsn pg_lsn', prosrc => 'pg_lsn_smaller' },
 
 # enum related procs
 { oid => '3504', descr => 'I/O',

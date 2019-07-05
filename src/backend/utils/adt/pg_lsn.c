@@ -171,6 +171,24 @@ pg_lsn_ge(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(lsn1 >= lsn2);
 }
 
+Datum
+pg_lsn_larger(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr	lsn2 = PG_GETARG_LSN(1);
+
+	PG_RETURN_LSN((lsn1 > lsn2) ? lsn1 : lsn2);
+}
+
+Datum
+pg_lsn_smaller(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	lsn1 = PG_GETARG_LSN(0);
+	XLogRecPtr	lsn2 = PG_GETARG_LSN(1);
+
+	PG_RETURN_LSN((lsn1 < lsn2) ? lsn1 : lsn2);
+}
+
 /* btree index opclass support */
 Datum
 pg_lsn_cmp(PG_FUNCTION_ARGS)

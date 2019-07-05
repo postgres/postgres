@@ -146,6 +146,9 @@
 { aggfnoid => 'max(inet)', aggtransfn => 'network_larger',
   aggcombinefn => 'network_larger', aggsortop => '>(inet,inet)',
   aggtranstype => 'inet' },
+{ aggfnoid => 'max(pg_lsn)', aggtransfn => 'pg_lsn_larger',
+  aggcombinefn => 'pg_lsn_larger', aggsortop => '>(pg_lsn,pg_lsn)',
+  aggtranstype => 'pg_lsn' },
 
 # min
 { aggfnoid => 'min(int8)', aggtransfn => 'int8smaller',
@@ -208,6 +211,9 @@
 { aggfnoid => 'min(inet)', aggtransfn => 'network_smaller',
   aggcombinefn => 'network_smaller', aggsortop => '<(inet,inet)',
   aggtranstype => 'inet' },
+{ aggfnoid => 'min(pg_lsn)', aggtransfn => 'pg_lsn_smaller',
+  aggcombinefn => 'pg_lsn_smaller', aggsortop => '<(pg_lsn,pg_lsn)',
+  aggtranstype => 'pg_lsn' },
 
 # count
 { aggfnoid => 'count(any)', aggtransfn => 'int8inc_any',
