@@ -298,7 +298,7 @@ returns bool
 
  <para>
   The essential semantics of an <function>in_range</function> function
-  depend on the two boolean flag parameters.  It should add or
+  depend on the two Boolean flag parameters.  It should add or
   subtract <replaceable>base</replaceable>
   and <replaceable>offset</replaceable>, then
   compare <replaceable>val</replaceable> to the result, as follows:

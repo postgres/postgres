@@ -3624,9 +3624,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <listitem>
        <para>
         If set to <literal>on</literal> (the default), this option causes new
-        WAL files to be filled with zeroes.  On some filesystems, this ensures
+        WAL files to be filled with zeroes.  On some file systems, this ensures
         that space is allocated before we need to write WAL records.  However,
-        <firstterm>Copy-On-Write</firstterm> (COW) filesystems may not benefit
+        <firstterm>Copy-On-Write</firstterm> (COW) file systems may not benefit
         from this technique, so the option is given to skip the unnecessary
         work.  If set to <literal>off</literal>, only the final byte is written
         when the file is created so that it has the expected size.
@@ -3644,7 +3644,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         If set to <literal>on</literal> (the default), this option causes WAL
         files to be recycled by renaming them, avoiding the need to create new
-        ones.  On COW filesystems, it may be faster to create new ones, so the
+        ones.  On COW file systems, it may be faster to create new ones, so the
         option is given to disable this behavior.
        </para>
       </listitem>
@@ -8930,7 +8930,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         When set to off, which is the default, <productname>PostgreSQL</productname>
         will raise a PANIC-level error on failure to flush modified data files
-        to the filesystem.  This causes the database server to crash.  This
+        to the file system.  This causes the database server to crash.  This
         parameter can only be set at server start.
        </para>
        <para>

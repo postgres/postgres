@@ -227,7 +227,7 @@
       <para>
        <literal>pmatch</literal> is an output argument for use when partial match
        is supported.  To use it, <function>extractQuery</function> must allocate
-       an array of <literal>*nkeys</literal> bools and store its address at
+       an array of <literal>*nkeys</literal> <type>bool</type>s and store its address at
        <literal>*pmatch</literal>.  Each element of the array should be set to true
        if the corresponding key requires partial match, false if not.
        If <literal>*pmatch</literal> is set to <symbol>NULL</symbol> then GIN assumes partial match
@@ -255,12 +255,12 @@
   </variablelist>
 
   An operator class must also provide a function to check if an indexed item
-  matches the query. It comes in two flavors, a boolean <function>consistent</function>
+  matches the query. It comes in two flavors, a Boolean <function>consistent</function>
   function, and a ternary <function>triConsistent</function> function.
   <function>triConsistent</function> covers the functionality of both, so providing
-  <function>triConsistent</function> alone is sufficient. However, if the boolean
+  <function>triConsistent</function> alone is sufficient. However, if the Boolean
   variant is significantly cheaper to calculate, it can be advantageous to
-  provide both.  If only the boolean variant is provided, some optimizations
+  provide both.  If only the Boolean variant is provided, some optimizations
   that depend on refuting index items before fetching all the keys are
   disabled.
 
@@ -323,11 +323,11 @@
      <listitem>
       <para>
        <function>triConsistent</function> is similar to <function>consistent</function>,
-       but instead of booleans in the <literal>check</literal> vector, there are
+       but instead of Booleans in the <literal>check</literal> vector, there are
        three possible values for each
        key: <literal>GIN_TRUE</literal>, <literal>GIN_FALSE</literal> and
        <literal>GIN_MAYBE</literal>. <literal>GIN_FALSE</literal> and <literal>GIN_TRUE</literal>
-       have the same meaning as regular boolean values, while
+       have the same meaning as regular Boolean values, while
        <literal>GIN_MAYBE</literal> means that the presence of that key is not known.
        When <literal>GIN_MAYBE</literal> values are present, the function should only
        return <literal>GIN_TRUE</literal> if the item certainly matches whether or
@@ -342,7 +342,7 @@
        When there are no <literal>GIN_MAYBE</literal> values in the <literal>check</literal>
        vector, a <literal>GIN_MAYBE</literal> return value is the equivalent of
        setting the <literal>recheck</literal> flag in the
-       boolean <function>consistent</function> function.
+       Boolean <function>consistent</function> function.
       </para>
      </listitem>
     </varlistentry>

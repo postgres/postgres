@@ -849,8 +849,8 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
         corresponds to the first array element.
        </para>
        <para>
-        Expression inside subscript may consititue an integer,
-        numeric expression or any other <literal>jsonpath</literal> expression
+        An expression in the subscript may be an integer,
+        numeric expression, or any other <literal>jsonpath</literal> expression
         returning single numeric value.  The <literal>last</literal> keyword
         can be used in the expression denoting the last subscript in an array.
         That's helpful for handling arrays of unknown length.
