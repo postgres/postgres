@@ -74,7 +74,7 @@
 					# (change requires restart)
 
 # - TCP settings -
-# see "man 7 tcp" for details
+# see "man tcp" for details
 
 #tcp_keepalives_idle = 0		# TCP_KEEPIDLE, in seconds;
 					# 0 selects the system default
