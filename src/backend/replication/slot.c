@@ -1315,7 +1315,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	}
 	pgstat_report_wait_end();
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 	{
 		ereport(elevel,
 				(errcode_for_file_access(),
@@ -1472,7 +1472,7 @@ RestoreSlotFromDisk(const char *name)
 							path, readBytes, (Size) cp.length)));
 	}
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", path)));

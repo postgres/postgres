@@ -106,13 +106,13 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 	}
 
 #ifndef FRONTEND
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m",
 						ControlFilePath)));
 #else
-	if (close(fd))
+	if (close(fd) != 0)
 	{
 		pg_log_fatal("could not close file \"%s\": %m", ControlFilePath);
 		exit(EXIT_FAILURE);
@@ -248,7 +248,7 @@ update_controlfile(const char *DataDir,
 #endif
 	}
 
-	if (close(fd) < 0)
+	if (close(fd) != 0)
 	{
 #ifndef FRONTEND
 		ereport(PANIC,

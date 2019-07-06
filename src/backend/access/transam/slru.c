@@ -621,7 +621,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
 
 	result = endpos >= (off_t) (offset + BLCKSZ);
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 	{
 		slru_errcause = SLRU_CLOSE_FAILED;
 		slru_errno = errno;
@@ -697,7 +697,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	}
 	pgstat_report_wait_end();
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 	{
 		slru_errcause = SLRU_CLOSE_FAILED;
 		slru_errno = errno;
@@ -869,7 +869,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 	if (!fdata)
 	{
 		pgstat_report_wait_start(WAIT_EVENT_SLRU_SYNC);
-		if (ctl->do_fsync && pg_fsync(fd))
+		if (ctl->do_fsync && pg_fsync(fd) != 0)
 		{
 			pgstat_report_wait_end();
 			slru_errcause = SLRU_FSYNC_FAILED;
@@ -879,7 +879,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		}
 		pgstat_report_wait_end();
 
-		if (CloseTransientFile(fd))
+		if (CloseTransientFile(fd) != 0)
 		{
 			slru_errcause = SLRU_CLOSE_FAILED;
 			slru_errno = errno;
@@ -1146,7 +1146,7 @@ SimpleLruFlush(SlruCtl ctl, bool allow_redirtied)
 	for (i = 0; i < fdata.num_files; i++)
 	{
 		pgstat_report_wait_start(WAIT_EVENT_SLRU_FLUSH_SYNC);
-		if (ctl->do_fsync && pg_fsync(fdata.fd[i]))
+		if (ctl->do_fsync && pg_fsync(fdata.fd[i]) != 0)
 		{
 			slru_errcause = SLRU_FSYNC_FAILED;
 			slru_errno = errno;
@@ -1155,7 +1155,7 @@ SimpleLruFlush(SlruCtl ctl, bool allow_redirtied)
 		}
 		pgstat_report_wait_end();
 
-		if (CloseTransientFile(fdata.fd[i]))
+		if (CloseTransientFile(fdata.fd[i]) != 0)
 		{
 			slru_errcause = SLRU_CLOSE_FAILED;
 			slru_errno = errno;

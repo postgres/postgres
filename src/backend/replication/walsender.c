@@ -522,7 +522,7 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 		bytesleft -= nread;
 	}
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", path)));

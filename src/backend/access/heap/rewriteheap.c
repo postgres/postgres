@@ -1202,7 +1202,7 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 				 errmsg("could not fsync file \"%s\": %m", path)));
 	pgstat_report_wait_end();
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", path)));
@@ -1304,7 +1304,7 @@ CheckPointLogicalRewriteHeap(void)
 						 errmsg("could not fsync file \"%s\": %m", path)));
 			pgstat_report_wait_end();
 
-			if (CloseTransientFile(fd))
+			if (CloseTransientFile(fd) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not close file \"%s\": %m", path)));

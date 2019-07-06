@@ -1992,7 +1992,7 @@ qtext_load_file(Size *buffer_size)
 		return NULL;
 	}
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", PGSS_TEXT_FILE)));

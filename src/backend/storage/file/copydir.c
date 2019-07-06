@@ -212,12 +212,12 @@ copy_file(char *fromfile, char *tofile)
 	if (offset > flush_offset)
 		pg_flush_data(dstfd, flush_offset, offset - flush_offset);
 
-	if (CloseTransientFile(dstfd))
+	if (CloseTransientFile(dstfd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tofile)));
 
-	if (CloseTransientFile(srcfd))
+	if (CloseTransientFile(srcfd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", fromfile)));

@@ -1299,7 +1299,7 @@ ReadTwoPhaseFile(TransactionId xid, bool missing_ok)
 
 	pgstat_report_wait_end();
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", path)));

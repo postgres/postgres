@@ -917,7 +917,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 	*mapped_address = address;
 	*mapped_size = request_size;
 
-	if (CloseTransientFile(fd))
+	if (CloseTransientFile(fd) != 0)
 	{
 		ereport(elevel,
 				(errcode_for_file_access(),
