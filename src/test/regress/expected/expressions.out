@@ -1,5 +1,5 @@
 --
--- expression evaluated tests that don't fit into a more specific file
+-- expression evaluation tests that don't fit into a more specific file
 --
 --
 -- Tests for SQLVAlueFunction
@@ -18,7 +18,19 @@ SELECT now()::timetz::text = current_time::text;
  t
 (1 row)
 
+SELECT now()::timetz(4)::text = current_time(4)::text;
+ ?column? 
+----------
+ t
+(1 row)
+
 SELECT now()::time::text = localtime::text;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT now()::time(3)::text = localtime(3)::text;
  ?column? 
 ----------
  t
@@ -75,3 +87,74 @@ SELECT current_schema;
 (1 row)
 
 RESET search_path;
+--
+-- Tests for BETWEEN
+--
+explain (costs off)
+select count(*) from date_tbl
+  where f1 between '1997-01-01' and '1998-01-01';
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: ((f1 >= '01-01-1997'::date) AND (f1 <= '01-01-1998'::date))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 between '1997-01-01' and '1998-01-01';
+ count 
+-------
+     3
+(1 row)
+
+explain (costs off)
+select count(*) from date_tbl
+  where f1 not between '1997-01-01' and '1998-01-01';
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: ((f1 < '01-01-1997'::date) OR (f1 > '01-01-1998'::date))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 not between '1997-01-01' and '1998-01-01';
+ count 
+-------
+    12
+(1 row)
+
+explain (costs off)
+select count(*) from date_tbl
+  where f1 between symmetric '1997-01-01' and '1998-01-01';
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: (((f1 >= '01-01-1997'::date) AND (f1 <= '01-01-1998'::date)) OR ((f1 >= '01-01-1998'::date) AND (f1 <= '01-01-1997'::date)))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 between symmetric '1997-01-01' and '1998-01-01';
+ count 
+-------
+     3
+(1 row)
+
+explain (costs off)
+select count(*) from date_tbl
+  where f1 not between symmetric '1997-01-01' and '1998-01-01';
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: (((f1 < '01-01-1997'::date) OR (f1 > '01-01-1998'::date)) AND ((f1 < '01-01-1998'::date) OR (f1 > '01-01-1997'::date)))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 not between symmetric '1997-01-01' and '1998-01-01';
+ count 
+-------
+    12
+(1 row)
+
