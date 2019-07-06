@@ -437,6 +437,7 @@ error:
 	 */
 	else
 	{
+		pg_logging_config(PG_LOG_FLAG_TERSE);
 		connection_warnings(true);
 		if (!pset.quiet)
 			printf(_("Type \"help\" for help.\n\n"));
