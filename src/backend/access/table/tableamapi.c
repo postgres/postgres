@@ -51,6 +51,7 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->scan_begin != NULL);
 	Assert(routine->scan_end != NULL);
 	Assert(routine->scan_rescan != NULL);
+	Assert(routine->scan_getnextslot != NULL);
 
 	Assert(routine->parallelscan_estimate != NULL);
 	Assert(routine->parallelscan_initialize != NULL);
@@ -62,7 +63,10 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->index_fetch_tuple != NULL);
 
 	Assert(routine->tuple_fetch_row_version != NULL);
+	Assert(routine->tuple_tid_valid != NULL);
+	Assert(routine->tuple_get_latest_tid != NULL);
 	Assert(routine->tuple_satisfies_snapshot != NULL);
+	Assert(routine->compute_xid_horizon_for_tuples != NULL);
 
 	Assert(routine->tuple_insert != NULL);
 
@@ -89,6 +93,7 @@ GetTableAmRoutine(Oid amhandler)
 	Assert(routine->index_validate_scan != NULL);
 
 	Assert(routine->relation_size != NULL);
+	Assert(routine->relation_needs_toast_table != NULL);
 
 	Assert(routine->relation_estimate_size != NULL);
 
