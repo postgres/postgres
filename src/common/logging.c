@@ -216,6 +216,8 @@ pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list a
 
 	buf = pg_malloc_extended(required_len, MCXT_ALLOC_NO_OOM);
 
+	errno = save_errno;			/* malloc might change errno */
+
 	if (!buf)
 	{
 		/* memory trouble, just print what we can and get out of here */
