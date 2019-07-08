@@ -19,9 +19,9 @@
 #include <math.h>
 #include <signal.h>
 
+#include "access/detoast.h"
 #include "access/htup_details.h"
 #include "access/transam.h"
-#include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"

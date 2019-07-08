@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/tuptoaster.h"
+#include "access/detoast.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"

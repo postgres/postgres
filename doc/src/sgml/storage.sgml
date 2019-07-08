@@ -382,7 +382,7 @@ The oldest and most common type is a pointer to out-of-line data stored in
 a <firstterm><acronym>TOAST</acronym> table</firstterm> that is separate from, but
 associated with, the table containing the <acronym>TOAST</acronym> pointer datum
 itself.  These <firstterm>on-disk</firstterm> pointer datums are created by the
-<acronym>TOAST</acronym> management code (in <filename>access/heap/tuptoaster.c</filename>)
+<acronym>TOAST</acronym> management code (in <filename>access/common/toast_internals.c</filename>)
 when a tuple to be stored on disk is too large to be stored as-is.
 Further details appear in <xref linkend="storage-toast-ondisk"/>.
 Alternatively, a <acronym>TOAST</acronym> pointer datum can contain a pointer to

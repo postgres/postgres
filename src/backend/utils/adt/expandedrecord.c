@@ -18,8 +18,9 @@
  */
 #include "postgres.h"
 
+#include "access/detoast.h"
+#include "access/heaptoast.h"
 #include "access/htup_details.h"
-#include "access/tuptoaster.h"
 #include "catalog/heap.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"

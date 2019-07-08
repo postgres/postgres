@@ -17,10 +17,10 @@
 
 #include <ctype.h>
 
+#include "access/detoast.h"
 #include "access/htup_details.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
-#include "access/tuptoaster.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"

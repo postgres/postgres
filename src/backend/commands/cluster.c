@@ -23,7 +23,7 @@
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/transam.h"
-#include "access/tuptoaster.h"
+#include "access/toast_internals.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/pg_am.h"

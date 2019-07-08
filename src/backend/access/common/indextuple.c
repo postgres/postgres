@@ -16,10 +16,17 @@
 
 #include "postgres.h"
 
+#include "access/detoast.h"
+#include "access/heaptoast.h"
 #include "access/htup_details.h"
 #include "access/itup.h"
-#include "access/tuptoaster.h"
+#include "access/toast_internals.h"
 
+/*
+ * This enables de-toasting of index entries.  Needed until VACUUM is
+ * smart enough to rebuild indexes from scratch.
+ */
+#define TOAST_INDEX_HACK
 
 /* ----------------------------------------------------------------
  *				  index_ tuple interface routines

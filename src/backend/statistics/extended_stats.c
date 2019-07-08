@@ -16,10 +16,10 @@
  */
 #include "postgres.h"
 
+#include "access/detoast.h"
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/table.h"
-#include "access/tuptoaster.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_statistic_ext.h"

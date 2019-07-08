@@ -16,8 +16,8 @@
 
 #include <ctype.h>
 
+#include "access/detoast.h"
 #include "access/htup_details.h"
-#include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "libpq/pqformat.h"

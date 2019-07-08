@@ -56,10 +56,10 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "access/detoast.h"
 #include "access/heapam.h"
 #include "access/rewriteheap.h"
 #include "access/transam.h"
-#include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "catalog/catalog.h"

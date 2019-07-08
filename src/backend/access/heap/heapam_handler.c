@@ -23,11 +23,11 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/heaptoast.h"
 #include "access/multixact.h"
 #include "access/rewriteheap.h"
 #include "access/tableam.h"
 #include "access/tsmapi.h"
-#include "access/tuptoaster.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "catalog/index.h"

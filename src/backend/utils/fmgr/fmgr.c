@@ -15,7 +15,7 @@
 
 #include "postgres.h"
 
-#include "access/tuptoaster.h"
+#include "access/detoast.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "executor/functions.h"

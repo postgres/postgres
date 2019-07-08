@@ -15,7 +15,7 @@
 #include "postgres.h"
 
 #include "access/gist.h"
-#include "access/tuptoaster.h"
+#include "access/heaptoast.h"
 #include "port/pg_bitutils.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"

@@ -19,11 +19,11 @@
 
 #include "access/gist_private.h"
 #include "access/hash.h"
+#include "access/heaptoast.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/spgist.h"
-#include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablespace.h"

@@ -45,7 +45,7 @@
 #include <unistd.h>
 
 #include "access/transam.h"
-#include "access/tuptoaster.h"
+#include "access/heaptoast.h"
 #include "access/multixact.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"

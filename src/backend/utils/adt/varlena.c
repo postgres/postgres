@@ -17,7 +17,7 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include "access/tuptoaster.h"
+#include "access/detoast.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"

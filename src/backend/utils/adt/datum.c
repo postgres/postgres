@@ -42,7 +42,7 @@
 
 #include "postgres.h"
 
-#include "access/tuptoaster.h"
+#include "access/detoast.h"
 #include "fmgr.h"
 #include "utils/datum.h"
 #include "utils/expandeddatum.h"
