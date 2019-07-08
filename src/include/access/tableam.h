@@ -1728,6 +1728,20 @@ extern void table_block_parallelscan_startblock_init(Relation rel,
 
 
 /* ----------------------------------------------------------------------------
+ * Helper functions to implement relation sizing for block oriented AMs.
+ * ----------------------------------------------------------------------------
+ */
+
+extern uint64 table_block_relation_size(Relation rel, ForkNumber forkNumber);
+extern void table_block_relation_estimate_size(Relation rel,
+											   int32 *attr_widths,
+											   BlockNumber *pages,
+											   double *tuples,
+											   double *allvisfrac,
+											   Size overhead_bytes_per_tuple,
+											   Size usable_bytes_per_page);
+
+/* ----------------------------------------------------------------------------
  * Functions in tableamapi.c
  * ----------------------------------------------------------------------------
  */
