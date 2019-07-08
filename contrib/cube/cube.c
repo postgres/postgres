@@ -590,7 +590,7 @@ g_cube_picksplit(PG_FUNCTION_ARGS)
 			v->spl_nright++;
 		}
 	}
-	*left = *right = FirstOffsetNumber; /* sentinel value, see dosplit() */
+	*left = *right = FirstOffsetNumber; /* sentinel value */
 
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);

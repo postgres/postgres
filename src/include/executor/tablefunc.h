@@ -20,11 +20,11 @@ struct TableFuncScanState;
  * TableFuncRoutine holds function pointers used for generating content of
  * table-producer functions, such as XMLTABLE.
  *
- * InitBuilder initialize table builder private objects.  The output tuple
+ * InitOpaque initializes table builder private objects.  The output tuple
  * descriptor, input functions for the columns, and typioparams are passed
  * from executor state.
  *
- * SetDoc is called to define the input document.  The table builder may
+ * SetDocument is called to define the input document.  The table builder may
  * apply additional transformations not exposed outside the table builder
  * context.
  *
@@ -45,7 +45,7 @@ struct TableFuncScanState;
  * builder context such that each subsequent GetValue call returns the values
  * for the indicated column for the row being processed.
  *
- * DestroyBuilder shall release all resources associated with a table builder
+ * DestroyOpaque shall release all resources associated with a table builder
  * context.  It may be called either because all rows have been consumed, or
  * because an error occurred while processing the table expression.
  */

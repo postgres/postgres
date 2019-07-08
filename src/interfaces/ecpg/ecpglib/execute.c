@@ -1899,7 +1899,7 @@ ecpg_process_output(struct statement *stmt, bool clear_result)
 
 			/*
 			 * execution should never reach this code because it is already
-			 * handled in ECPGcheck_PQresult()
+			 * handled in ecpg_check_PQresult()
 			 */
 			ecpg_log("ecpg_process_output on line %d: unknown execution status type\n",
 					 stmt->lineno);

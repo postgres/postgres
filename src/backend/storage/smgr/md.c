@@ -1163,9 +1163,6 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			 * replaying WAL data that has a write into a high-numbered
 			 * segment of a relation that was later deleted. We want to go
 			 * ahead and create the segments so we can finish out the replay.
-			 * However if the caller has specified
-			 * EXTENSION_REALLY_RETURN_NULL, then extension is not desired
-			 * even in recovery; we won't reach this point in that case.
 			 *
 			 * We have to maintain the invariant that segments before the last
 			 * active segment are of size RELSEG_SIZE; therefore, if

@@ -1428,10 +1428,11 @@ GetOldestXmin(Relation rel, int flags)
 		result = replication_slot_xmin;
 
 	/*
-	 * After locks have been released and defer_cleanup_age has been applied,
-	 * check whether we need to back up further to make logical decoding
-	 * possible. We need to do so if we're computing the global limit (rel =
-	 * NULL) or if the passed relation is a catalog relation of some kind.
+	 * After locks have been released and vacuum_defer_cleanup_age has been
+	 * applied, check whether we need to back up further to make logical
+	 * decoding possible. We need to do so if we're computing the global limit
+	 * (rel = NULL) or if the passed relation is a catalog relation of some
+	 * kind.
 	 */
 	if (!(flags & PROCARRAY_SLOTS_XMIN) &&
 		(rel == NULL ||

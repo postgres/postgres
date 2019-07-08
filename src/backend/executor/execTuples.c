@@ -1148,7 +1148,7 @@ ExecAllocTableSlot(List **tupleTable, TupleDesc desc,
  *		This releases any resources (buffer pins, tupdesc refcounts)
  *		held by the tuple table, and optionally releases the memory
  *		occupied by the tuple table data structure.
- *		It is expected that this routine be called by EndPlan().
+ *		It is expected that this routine be called by ExecEndPlan().
  * --------------------------------
  */
 void

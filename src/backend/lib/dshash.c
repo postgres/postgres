@@ -409,7 +409,7 @@ dshash_find(dshash_table *hash_table, const void *key, bool exclusive)
 	}
 	else
 	{
-		/* The caller will free the lock by calling dshash_release. */
+		/* The caller will free the lock by calling dshash_release_lock. */
 		hash_table->find_locked = true;
 		hash_table->find_exclusively_locked = exclusive;
 		return ENTRY_FROM_ITEM(item);

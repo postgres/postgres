@@ -1641,7 +1641,7 @@ expand_all_col_privileges(Oid table_oid, Form_pg_class classForm,
 
 /*
  *	This processes attributes, but expects to be called from
- *	ExecGrant_Relation, not directly from ExecGrantStmt.
+ *	ExecGrant_Relation, not directly from ExecuteGrantStmt.
  */
 static void
 ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,

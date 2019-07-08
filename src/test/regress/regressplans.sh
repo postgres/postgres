@@ -72,7 +72,7 @@ mv -f regression.out planregress/out.in
 mv -f regression.diffs planregress/diffs.in
 PGOPTIONS="$PGOPTIONS      -fi -fn     -fh" $MAKE runtest
 mv -f regression.out planregress/out.inh
-mv -f regression.diffsregression.planregress/inh
+mv -f regression.diffs planregress/diffs.inh
 PGOPTIONS="$PGOPTIONS      -fi -fn -fm    " $MAKE runtest
 mv -f regression.out planregress/out.inm
 mv -f regression.diffs planregress/diffs.inm

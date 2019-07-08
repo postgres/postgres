@@ -361,7 +361,7 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
  *		This function removes from the buffer pool all pages of all forks
  *		of the specified relation.
  *
- *		See DropRelFileNodeAllBuffers in bufmgr.c for more notes.
+ *		See DropRelFileNodesAllBuffers in bufmgr.c for more notes.
  */
 void
 DropRelFileNodeAllLocalBuffers(RelFileNode rnode)

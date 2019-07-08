@@ -196,8 +196,8 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 	Assert(hassrf);
 
 	/*
-	 * If all the SRFs returned EndResult, we consider that as no row being
-	 * produced.
+	 * If all the SRFs returned ExprEndResult, we consider that as no row
+	 * being produced.
 	 */
 	if (hasresult)
 	{

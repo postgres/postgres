@@ -53,8 +53,7 @@ validateTzEntry(tzEntry *tzentry)
 	unsigned char *p;
 
 	/*
-	 * Check restrictions imposed by datetkntbl storage format (see
-	 * datetime.c)
+	 * Check restrictions imposed by datetktbl storage format (see datetime.c)
 	 */
 	if (strlen(tzentry->abbrev) > TOKMAXLEN)
 	{

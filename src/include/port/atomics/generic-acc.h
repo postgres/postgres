@@ -68,7 +68,7 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 	_Asm_mf();
 	/*
 	 * Notes:
-	 * DOWN_MEM_FENCE | _UP_MEM_FENCE prevents reordering by the compiler
+	 * _DOWN_MEM_FENCE | _UP_MEM_FENCE prevents reordering by the compiler
 	 */
 	current =  _Asm_cmpxchg(_SZ_W, /* word */
 							_SEM_REL,

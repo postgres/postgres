@@ -309,7 +309,6 @@ sub mkvcbuild
 	$ecpg->AddIncludeDir('src/interfaces/libpq');
 	$ecpg->AddPrefixInclude('src/interfaces/ecpg/preproc');
 	$ecpg->AddFiles('src/interfaces/ecpg/preproc', 'pgc.l', 'preproc.y');
-	$ecpg->AddDefine('ECPG_COMPILE');
 	$ecpg->AddReference($libpgcommon, $libpgport);
 
 	my $pgregress_ecpg =

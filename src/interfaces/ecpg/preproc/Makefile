@@ -19,7 +19,6 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I. -I$(srcdir) \
 	-I$(top_srcdir)/src/interfaces/ecpg/ecpglib \
 	-I$(libpq_srcdir) \
-	-DECPG_COMPILE \
 	$(CPPFLAGS)
 
 override CFLAGS += $(PTHREAD_CFLAGS)

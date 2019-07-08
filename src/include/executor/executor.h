@@ -314,7 +314,7 @@ ExecEvalExprSwitchContext(ExprState *state,
  * ExecProject
  *
  * Projects a tuple based on projection info and stores it in the slot passed
- * to ExecBuildProjectInfo().
+ * to ExecBuildProjectionInfo().
  *
  * Note: the result is always a virtual tuple; therefore it may reference
  * the contents of the exprContext's scan tuples and/or temporary results

@@ -504,9 +504,9 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
  * permission on the target namespace, this function will instead signal
  * an ERROR.
  *
- * If non-NULL, *existing_oid is set to the OID of any existing relation with
- * the same name which already exists in that namespace, or to InvalidOid if
- * no such relation exists.
+ * If non-NULL, *existing_relation_id is set to the OID of any existing relation
+ * with the same name which already exists in that namespace, or to InvalidOid
+ * if no such relation exists.
  *
  * If lockmode != NoLock, the specified lock mode is acquired on the existing
  * relation, if any, provided that the current user owns the target relation.

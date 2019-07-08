@@ -4360,7 +4360,7 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 	/*
 	 * If we found one of our own SIREAD locks to remove, remove it now.
 	 *
-	 * At this point our transaction already has an ExclusiveRowLock on the
+	 * At this point our transaction already has a RowExclusiveLock on the
 	 * relation, so we are OK to drop the predicate lock on the tuple, if
 	 * found, without fearing that another write against the tuple will occur
 	 * before the MVCC information makes it to the buffer.

@@ -378,7 +378,7 @@ notice_processor(void *arg, const char *message)
 	pg_log_generic(PG_LOG_INFO, "%s", message);
 }
 
-/* Like exit_fatal(), but with a complaint about a particular query. */
+/* Like fatal(), but with a complaint about a particular query. */
 static void
 die_on_query_failure(ArchiveHandle *AH, const char *query)
 {

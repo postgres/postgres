@@ -1069,7 +1069,7 @@ rebuild_database_list(Oid newdb)
 		current_time = GetCurrentTimestamp();
 
 		/*
-		 * move the elements from the array into the dllist, setting the
+		 * move the elements from the array into the dlist, setting the
 		 * next_worker while walking the array
 		 */
 		for (i = 0; i < nelems; i++)

@@ -63,8 +63,6 @@ char	   *ECPGprepared_statement(const char *, const char *, int);
 PGconn	   *ECPGget_PGconn(const char *);
 PGTransactionStatusType ECPGtransactionStatus(const char *);
 
-char	   *ECPGerrmsg(void);
-
  /* print an error message */
 void		sqlprint(void);
 

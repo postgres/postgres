@@ -1074,7 +1074,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		 * error in that case. The error handler further up will call
 		 * do_pg_abort_backup() for us. Also check that if the backup was
 		 * started while still in recovery, the server wasn't promoted.
-		 * dp_pg_stop_backup() will check that too, but it's better to stop
+		 * do_pg_stop_backup() will check that too, but it's better to stop
 		 * the backup early than continue to the end and fail there.
 		 */
 		CHECK_FOR_INTERRUPTS();

@@ -738,7 +738,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
 
 	/*
-	 * Iterate through query to make DocRepresentaion for words and it's
+	 * Iterate through query to make DocRepresentation for words and it's
 	 * entries satisfied by query
 	 */
 	for (i = 0; i < qr->query->size; i++)

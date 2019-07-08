@@ -1,5 +1,5 @@
 # src/interfaces/ecpg/compatlib/exports.txt
-# Functions to be exported by ecpg_compatlib DLL
+# Functions to be exported by libecpg_compat DLL
 ECPG_informix_get_var   1
 ECPG_informix_set_var   2
 decadd                  3

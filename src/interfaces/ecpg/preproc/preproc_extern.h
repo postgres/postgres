@@ -30,7 +30,6 @@ extern int	braces_open,
 			struct_level,
 			ecpg_internal_var;
 extern char *current_function;
-extern char *descriptor_index;
 extern char *descriptor_name;
 extern char *connection;
 extern char *input_filename;
