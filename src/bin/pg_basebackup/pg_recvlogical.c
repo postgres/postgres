@@ -1020,12 +1020,11 @@ prepareToTerminate(PGconn *conn, XLogRecPtr endpos, bool keepalive, XLogRecPtr l
 	if (verbose)
 	{
 		if (keepalive)
-			pg_log_info("endpos %X/%X reached by keepalive",
+			pg_log_info("end position %X/%X reached by keepalive",
 						(uint32) (endpos >> 32), (uint32) endpos);
 		else
-			pg_log_info("endpos %X/%X reached by record at %X/%X",
+			pg_log_info("end position %X/%X reached by WAL record at %X/%X",
 						(uint32) (endpos >> 32), (uint32) (endpos),
 						(uint32) (lsn >> 32), (uint32) lsn);
-
 	}
 }

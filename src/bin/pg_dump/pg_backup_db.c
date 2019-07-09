@@ -176,7 +176,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 		newConn = PQconnectdbParams(keywords, values, true);
 
 		if (!newConn)
-			fatal("failed to reconnect to database");
+			fatal("could not reconnect to database");
 
 		if (PQstatus(newConn) == CONNECTION_BAD)
 		{
@@ -287,7 +287,7 @@ ConnectDatabase(Archive *AHX,
 		AH->connection = PQconnectdbParams(keywords, values, true);
 
 		if (!AH->connection)
-			fatal("failed to connect to database");
+			fatal("could not connect to database");
 
 		if (PQstatus(AH->connection) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(AH->connection) &&
