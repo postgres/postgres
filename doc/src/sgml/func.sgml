@@ -6420,20 +6420,20 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
       </para>
       <para>
        If <literal>FX</literal> is specified, a separator in the template string
-       matches exactly one character in input string.  Notice we don't insist the
-       input string character be the same as the template string separator.
+       matches exactly one character in the input string.  But note that the
+       input string character is not required to be the same as the separator from the template string.
        For example, <literal>to_timestamp('2000/JUN', 'FXYYYY MON')</literal>
        works, but <literal>to_timestamp('2000/JUN', 'FXYYYY&nbsp;&nbsp;MON')</literal>
-       returns an error because the second template string space is consumed
-       by the letter <literal>J</literal> in the input string.
+       returns an error because the second space in the template string consumes
+       the letter <literal>J</literal> from the input string.
       </para>
      </listitem>
 
      <listitem>
       <para>
        A <literal>TZH</literal> template pattern can match a signed number.
-       Without the <literal>FX</literal> option, it can lead to ambiguity in
-       interpretation of the minus sign, which can also be interpreted as a separator.
+       Without the <literal>FX</literal> option, minus signs may be ambiguous,
+       and could be interpreted as a separator.
        This ambiguity is resolved as follows:  If the number of separators before
        <literal>TZH</literal> in the template string is less than the number of
        separators before the minus sign in the input string, the minus sign
