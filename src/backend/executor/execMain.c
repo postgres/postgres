@@ -3112,6 +3112,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_snapshot = parentestate->es_snapshot;
 	estate->es_crosscheck_snapshot = parentestate->es_crosscheck_snapshot;
 	estate->es_range_table = parentestate->es_range_table;
+	estate->es_queryEnv = parentestate->es_queryEnv;
 	estate->es_plannedstmt = parentestate->es_plannedstmt;
 	estate->es_junkFilter = parentestate->es_junkFilter;
 	estate->es_output_cid = parentestate->es_output_cid;
