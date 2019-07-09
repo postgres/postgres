@@ -1153,7 +1153,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			 */
 			childStmt = (CreateTrigStmt *) copyObject(stmt);
 			childStmt->funcname = NIL;
-			childStmt->args = NIL;
 			childStmt->whenClause = NULL;
 
 			/* If there is a WHEN clause, create a modified copy of it */
