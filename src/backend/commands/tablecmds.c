@@ -15271,6 +15271,7 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		if (trigForm->tgnargs > 0)
 		{
 			char	   *p;
+			int			i;
 
 			value = heap_getattr(tuple, Anum_pg_trigger_tgargs,
 								 RelationGetDescr(pg_trigger), &isnull);
@@ -15280,7 +15281,7 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 
 			p = (char *) VARDATA_ANY(DatumGetByteaPP(value));
 
-			for (int i = 0; i < trigForm->tgnargs; i++)
+			for (i = 0; i < trigForm->tgnargs; i++)
 			{
 				trigargs = lappend(trigargs, makeString(pstrdup(p)));
 				p += strlen(p) + 1;
