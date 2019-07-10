@@ -138,6 +138,7 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		nodeBuffer->pageBlocknum = InvalidBlockNumber;
 		nodeBuffer->pageBuffer = NULL;
 		nodeBuffer->queuedForEmptying = false;
+		nodeBuffer->isTemp = false;
 		nodeBuffer->level = level;
 
 		/*
@@ -186,8 +187,8 @@ gistAllocateNewPageBuffer(GISTBuildBuffers *gfbb)
 {
 	GISTNodeBufferPage *pageBuffer;
 
-	pageBuffer = (GISTNodeBufferPage *) MemoryContextAlloc(gfbb->context,
-														   BLCKSZ);
+	pageBuffer = (GISTNodeBufferPage *) MemoryContextAllocZero(gfbb->context,
+															   BLCKSZ);
 	pageBuffer->prev = InvalidBlockNumber;
 
 	/* Set page free space */
