@@ -4005,6 +4005,15 @@ ALTER INDEX measurement_city_id_logdate_key
 
      <listitem>
       <para>
+       Unique constraints on partitioned tables must include all the
+       partition key columns.  This limitation exists because
+       <productname>PostgreSQL</productname> can only enforce
+       uniqueness in each partition individually.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        <literal>BEFORE ROW</literal> triggers, if necessary, must be defined
        on individual partitions, not the partitioned table.
       </para>
