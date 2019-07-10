@@ -717,8 +717,20 @@ execute_sql_string(const char *sql)
 	foreach(lc1, raw_parsetree_list)
 	{
 		RawStmt    *parsetree = lfirst_node(RawStmt, lc1);
+		MemoryContext per_parsetree_context,
+					oldcontext;
 		List	   *stmt_list;
 		ListCell   *lc2;
+
+		/*
+		 * We do the work for each parsetree in a short-lived context, to
+		 * limit the memory used when there are many commands in the string.
+		 */
+		per_parsetree_context =
+			AllocSetContextCreate(CurrentMemoryContext,
+								  "execute_sql_string per-statement context",
+								  ALLOCSET_DEFAULT_SIZES);
+		oldcontext = MemoryContextSwitchTo(per_parsetree_context);
 
 		/* Be sure parser can see any DDL done so far */
 		CommandCounterIncrement();
@@ -772,6 +784,10 @@ execute_sql_string(const char *sql)
 
 			PopActiveSnapshot();
 		}
+
+		/* Clean up per-parsetree context. */
+		MemoryContextSwitchTo(oldcontext);
+		MemoryContextDelete(per_parsetree_context);
 	}
 
 	/* Be sure to advance the command counter after the last script command */
