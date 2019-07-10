@@ -815,21 +815,18 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
         <literal>.**{<replaceable>level</replaceable>}</literal>
        </para>
        <para>
-        <literal>.**{<replaceable>lower_level</replaceable> to
-        <replaceable>upper_level</replaceable>}</literal>
-       </para>
-       <para>
-        <literal>.**{<replaceable>lower_level</replaceable> to
-        last}</literal>
+        <literal>.**{<replaceable>start_level</replaceable> to
+        <replaceable>end_level</replaceable>}</literal>
        </para>
       </entry>
       <entry>
        <para>
-        Same as <literal>.**</literal>, but with filter over nesting
-        level of JSON hierarchy.  Levels are specified as integers.
-        Zero level corresponds to current object.  This is a
-        <productname>PostgreSQL</productname> extension of the SQL/JSON
-        standard.
+        Same as <literal>.**</literal>, but with a filter over nesting
+        levels of JSON hierarchy. Nesting levels are specified as integers.
+        Zero level corresponds to the current object. To access the lowest
+        nesting level, you can use the <literal>last</literal> keyword.
+        This is a <productname>PostgreSQL</productname> extension of
+        the SQL/JSON standard.
        </para>
       </entry>
      </row>
@@ -841,19 +838,22 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
       </entry>
       <entry>
        <para>
-        Array element accessor.  <literal><replaceable>subscript</replaceable></literal>
-        might be given in two forms: <literal><replaceable>expr</replaceable></literal>
-        or <literal><replaceable>lower_expr</replaceable> to <replaceable>upper_expr</replaceable></literal>.
-        The first form specifies single array element by its index.  The second
-        form specified array slice by the range of indexes.  Zero index
-        corresponds to the first array element.
+        Array element accessor.
+        <literal><replaceable>subscript</replaceable></literal> can be
+        given in two forms: <literal><replaceable>index</replaceable></literal>
+        or <literal><replaceable>start_index</replaceable> to <replaceable>end_index</replaceable></literal>.
+        The first form returns a single array element by its index. The second
+        form returns an array slice by the range of indexes, including the
+        elements that correspond to the provided
+        <replaceable>start_index</replaceable> and <replaceable>end_index</replaceable>.
        </para>
        <para>
-        An expression in the subscript may be an integer,
-        numeric expression, or any other <literal>jsonpath</literal> expression
-        returning single numeric value.  The <literal>last</literal> keyword
-        can be used in the expression denoting the last subscript in an array.
-        That's helpful for handling arrays of unknown length.
+        The specified <replaceable>index</replaceable> can be an integer, as
+        well as an expression returning a single numeric value, which is
+        automatically cast to integer. Zero index corresponds to the first
+        array element. You can also use the <literal>last</literal> keyword
+        to denote the last array element, which is useful for handling arrays
+        of unknown length.
        </para>
       </entry>
      </row>

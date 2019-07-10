@@ -11514,7 +11514,8 @@ table2-mapping
    from the JSON data, similar to XPath expressions used
    for SQL access to XML. In <productname>PostgreSQL</productname>,
    path expressions are implemented as the <type>jsonpath</type>
-   data type, described in <xref linkend="datatype-jsonpath"/>.
+   data type and can use any elements described in
+   <xref linkend="datatype-jsonpath"/>.
   </para>
 
   <para>JSON query functions and operators
@@ -11561,7 +11562,7 @@ table2-mapping
       },
       { "location":   [ 47.706, 13.2635 ],
         "start time": "2018-10-14 10:39:21",
-        "HR": 130
+        "HR": 135
       } ]
   }
 }
@@ -11613,23 +11614,33 @@ table2-mapping
 
   <para>
    When defining the path, you can also use one or more
-   <firstterm>filter expressions</firstterm>, which work similar to
-   the <literal>WHERE</literal> clause in SQL. Each filter expression
-   can provide one or more filtering conditions that are applied
-   to the result of the path evaluation. Each filter expression must
-   be enclosed in parentheses and preceded by a question mark.
-   Filter expressions are evaluated from left to right and can be nested.
-   The <literal>@</literal> variable denotes the current path evaluation
-   result to be filtered, and can be followed by one or more accessor
-   operators to define the JSON element by which to filter the result.
-   Functions and operators that can be used in the filtering condition
-   are listed in <xref linkend="functions-sqljson-filter-ex-table"/>.
-   SQL/JSON defines three-valued logic, so the result of the filter
-   expression may be <literal>true</literal>, <literal>false</literal>,
+   <firstterm>filter expressions</firstterm> that work similar to the
+   <literal>WHERE</literal> clause in SQL. A filter expression begins with
+   a question mark and provides a condition in parentheses:
+
+    <programlisting>
+? (<replaceable>condition</replaceable>)
+    </programlisting>
+  </para>
+
+  <para>
+   Filter expressions must be specified right after the path evaluation step
+   to which they are applied. The result of this step is filtered to include
+   only those items that satisfy the provided condition. SQL/JSON defines
+   three-valued logic, so the condition can be <literal>true</literal>, <literal>false</literal>,
    or <literal>unknown</literal>. The <literal>unknown</literal> value
-   plays the same role as SQL <literal>NULL</literal>. Further path
+   plays the same role as SQL <literal>NULL</literal> and can be tested
+   for with the <literal>is unknown</literal> predicate. Further path
    evaluation steps use only those items for which filter expressions
-   return true.
+   return <literal>true</literal>.
+  </para>
+
+  <para>
+   Functions and operators that can be used in filter expressions are listed
+   in <xref linkend="functions-sqljson-filter-ex-table"/>. The path
+   evaluation result to be filtered is denoted by the <literal>@</literal>
+   variable. To refer to a JSON element stored at a lower nesting level,
+   add one or more accessor operators after <literal>@</literal>.
   </para>
 
   <para>
@@ -11643,8 +11654,8 @@ table2-mapping
   <para>
    To get the start time of segments with such values instead, you have to
    filter out irrelevant segments before returning the start time, so the
-   filter is applied to the previous step and the path in the filtering
-   condition is different:
+   filter expression is applied to the previous step, and the path used
+   in the condition is different:
 <programlisting>
 '$.track.segments[*] ? (@.HR &gt; 130)."start time"'
 </programlisting>
@@ -11669,9 +11680,9 @@ table2-mapping
   </para>
 
   <para>
-   You can also nest filters within each other:
+   You can also nest filter expressions within each other:
 <programlisting>
-'$.track ? (@.segments[*] ? (@.HR &gt; 130)).segments.size()'
+'$.track ? (exists(@.segments[*] ? (@.HR &gt; 130))).segments.size()'
 </programlisting>
    This expression returns the size of the track if it contains any
    segments with high heart rate values, or an empty sequence otherwise.
@@ -12261,7 +12272,7 @@ table2-mapping
        <row>
         <entry><literal>@?</literal></entry>
         <entry><type>jsonpath</type></entry>
-        <entry>Does JSON path returns any item for the specified JSON value?</entry>
+        <entry>Does JSON path return any item for the specified JSON value?</entry>
         <entry><literal>'{"a":[1,2,3,4,5]}'::jsonb @? '$.a[*] ? (@ > 2)'</literal></entry>
        </row>
        <row>
@@ -12289,8 +12300,8 @@ table2-mapping
   <note>
    <para>
     The <literal>@?</literal> and <literal>@@</literal> operators suppress
-    errors including: lacking object field or array element, unexpected JSON
-    item type and numeric errors.
+    the following errors: lacking object field or array element, unexpected
+    JSON item type, and numeric errors.
     This behavior might be helpful while searching over JSON document
     collections of varying structure.
    </para>
@@ -13146,17 +13157,17 @@ table2-mapping
     <literal>jsonb_path_query</literal>, <literal>jsonb_path_query_array</literal> and
     <literal>jsonb_path_query_first</literal>
     functions have optional <literal>vars</literal> and <literal>silent</literal>
-    argument.
+    arguments.
    </para>
    <para>
-    When <literal>vars</literal> argument is specified, it constitutes an object
-    contained variables to be substituted into <literal>jsonpath</literal>
-    expression.
+    If the <literal>vars</literal> argument is specified, it provides an
+    object containing named variables to be substituted into a
+    <literal>jsonpath</literal> expression.
    </para>
    <para>
-    When <literal>silent</literal> argument is specified and has
-    <literal>true</literal> value, the same errors are suppressed as it is in
-    the <literal>@?</literal> and <literal>@@</literal> operators.
+    If the <literal>silent</literal> argument is specified and has the
+    <literal>true</literal> value, these functions suppress the same errors
+    as the <literal>@?</literal> and <literal>@@</literal> operators.
    </para>
   </note>
 
