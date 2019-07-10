@@ -9995,11 +9995,6 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    that blanks out the password field.
   </para>
 
-  <para>
-   This view explicitly exposes the OID column of the underlying table,
-   since that is needed to do joins to other catalogs.
-  </para>
-
   <table>
    <title><structname>pg_roles</structname> Columns</title>
 
