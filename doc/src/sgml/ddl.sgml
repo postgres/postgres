@@ -3388,6 +3388,15 @@ ALTER INDEX measurement_city_id_logdate_key
 
      <listitem>
       <para>
+       Unique constraints on partitioned tables must include all the
+       partition key columns.  This limitation exists because
+       <productname>PostgreSQL</productname> can only enforce
+       uniqueness in each partition individually.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        While primary keys are supported on partitioned tables, foreign
        keys referencing partitioned tables are not supported.  (Foreign key
        references from a partitioned table to some other table are supported.)
