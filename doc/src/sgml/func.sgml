@@ -11965,14 +11965,14 @@ table2-mapping
         <entry>Less-than operator</entry>
         <entry><literal>[1, 2, 3]</literal></entry>
         <entry><literal>$[*] ? (@ &lt; 2)</literal></entry>
-        <entry><literal>1, 2</literal></entry>
+        <entry><literal>1</literal></entry>
        </row>
        <row>
         <entry><literal>&lt;=</literal></entry>
         <entry>Less-than-or-equal-to operator</entry>
         <entry><literal>[1, 2, 3]</literal></entry>
-        <entry><literal>$[*] ? (@ &lt; 2)</literal></entry>
-        <entry><literal>1</literal></entry>
+        <entry><literal>$[*] ? (@ &lt;= 2)</literal></entry>
+        <entry><literal>1, 2</literal></entry>
        </row>
        <row>
         <entry><literal>&gt;</literal></entry>
@@ -11982,7 +11982,7 @@ table2-mapping
         <entry><literal>3</literal></entry>
        </row>
        <row>
-        <entry><literal>&gt;</literal></entry>
+        <entry><literal>&gt;=</literal></entry>
         <entry>Greater-than-or-equal-to operator</entry>
         <entry><literal>[1, 2, 3]</literal></entry>
         <entry><literal>$[*] ? (@ &gt;= 2)</literal></entry>
