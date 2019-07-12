@@ -103,17 +103,14 @@
 
 #include "access/brin.h"
 #include "access/gin.h"
-#include "access/htup_details.h"
-#include "access/sysattr.h"
 #include "access/table.h"
 #include "access/tableam.h"
-#include "catalog/index.h"
+#include "access/visibilitymap.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_statistic_ext.h"
-#include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -127,12 +124,14 @@
 #include "parser/parse_clause.h"
 #include "parser/parsetree.h"
 #include "statistics/statistics.h"
+#include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
 #include "utils/index_selfuncs.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
@@ -198,6 +197,15 @@ static bool get_actual_variable_range(PlannerInfo *root,
 									  VariableStatData *vardata,
 									  Oid sortop,
 									  Datum *min, Datum *max);
+static bool get_actual_variable_endpoint(Relation heapRel,
+										 Relation indexRel,
+										 ScanDirection indexscandir,
+										 ScanKey scankeys,
+										 int16 typLen,
+										 bool typByVal,
+										 TupleTableSlot *tableslot,
+										 MemoryContext outercontext,
+										 Datum *endpointDatum);
 static RelOptInfo *find_join_input_rel(PlannerInfo *root, Relids relids);
 
 
@@ -5180,30 +5188,23 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 		}
 
 		/*
-		 * Found a suitable index to extract data from.  We'll need an EState
-		 * and a bunch of other infrastructure.
+		 * Found a suitable index to extract data from.  Set up some data that
+		 * can be used by both invocations of get_actual_variable_endpoint.
 		 */
 		{
-			EState	   *estate;
-			ExprContext *econtext;
 			MemoryContext tmpcontext;
 			MemoryContext oldcontext;
 			Relation	heapRel;
 			Relation	indexRel;
-			IndexInfo  *indexInfo;
 			TupleTableSlot *slot;
 			int16		typLen;
 			bool		typByVal;
 			ScanKeyData scankeys[1];
-			IndexScanDesc index_scan;
-			Datum		values[INDEX_MAX_KEYS];
-			bool		isnull[INDEX_MAX_KEYS];
-			SnapshotData SnapshotNonVacuumable;
 
-			estate = CreateExecutorState();
-			econtext = GetPerTupleExprContext(estate);
-			/* Make sure any cruft is generated in the econtext's memory */
-			tmpcontext = econtext->ecxt_per_tuple_memory;
+			/* Make sure any cruft gets recycled when we're done */
+			tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
+											   "get_actual_variable_range workspace",
+											   ALLOCSET_DEFAULT_SIZES);
 			oldcontext = MemoryContextSwitchTo(tmpcontext);
 
 			/*
@@ -5213,14 +5214,9 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			heapRel = table_open(rte->relid, NoLock);
 			indexRel = index_open(index->indexoid, NoLock);
 
-			/* extract index key information from the index's pg_index info */
-			indexInfo = BuildIndexInfo(indexRel);
-
-			/* some other stuff */
+			/* build some stuff needed for indexscan execution */
 			slot = table_slot_create(heapRel, NULL);
-			econtext->ecxt_scantuple = slot;
 			get_typlenbyval(vardata->atttype, &typLen, &typByVal);
-			InitNonVacuumableSnapshot(SnapshotNonVacuumable, RecentGlobalXmin);
 
 			/* set up an IS NOT NULL scan key so that we ignore nulls */
 			ScanKeyEntryInitialize(&scankeys[0],
@@ -5232,94 +5228,38 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 								   InvalidOid,	/* no reg proc for this */
 								   (Datum) 0);	/* constant */
 
-			have_data = true;
-
 			/* If min is requested ... */
 			if (min)
 			{
-				/*
-				 * In principle, we should scan the index with our current
-				 * active snapshot, which is the best approximation we've got
-				 * to what the query will see when executed.  But that won't
-				 * be exact if a new snap is taken before running the query,
-				 * and it can be very expensive if a lot of recently-dead or
-				 * uncommitted rows exist at the beginning or end of the index
-				 * (because we'll laboriously fetch each one and reject it).
-				 * Instead, we use SnapshotNonVacuumable.  That will accept
-				 * recently-dead and uncommitted rows as well as normal
-				 * visible rows.  On the other hand, it will reject known-dead
-				 * rows, and thus not give a bogus answer when the extreme
-				 * value has been deleted (unless the deletion was quite
-				 * recent); that case motivates not using SnapshotAny here.
-				 *
-				 * A crucial point here is that SnapshotNonVacuumable, with
-				 * RecentGlobalXmin as horizon, yields the inverse of the
-				 * condition that the indexscan will use to decide that index
-				 * entries are killable (see heap_hot_search_buffer()).
-				 * Therefore, if the snapshot rejects a tuple and we have to
-				 * continue scanning past it, we know that the indexscan will
-				 * mark that index entry killed.  That means that the next
-				 * get_actual_variable_range() call will not have to visit
-				 * that heap entry.  In this way we avoid repetitive work when
-				 * this function is used a lot during planning.
-				 */
-				index_scan = index_beginscan(heapRel, indexRel,
-											 &SnapshotNonVacuumable,
-											 1, 0);
-				index_rescan(index_scan, scankeys, 1, NULL, 0);
-
-				/* Fetch first tuple in sortop's direction */
-				if (index_getnext_slot(index_scan, indexscandir, slot))
-				{
-					/* Extract the index column values from the slot */
-					FormIndexDatum(indexInfo, slot, estate,
-								   values, isnull);
-
-					/* Shouldn't have got a null, but be careful */
-					if (isnull[0])
-						elog(ERROR, "found unexpected null value in index \"%s\"",
-							 RelationGetRelationName(indexRel));
-
-					/* Copy the index column value out to caller's context */
-					MemoryContextSwitchTo(oldcontext);
-					*min = datumCopy(values[0], typByVal, typLen);
-					MemoryContextSwitchTo(tmpcontext);
-				}
-				else
-					have_data = false;
-
-				index_endscan(index_scan);
+				have_data = get_actual_variable_endpoint(heapRel,
+														 indexRel,
+														 indexscandir,
+														 scankeys,
+														 typLen,
+														 typByVal,
+														 slot,
+														 oldcontext,
+														 min);
+			}
+			else
+			{
+				/* If min not requested, assume index is nonempty */
+				have_data = true;
 			}
 
 			/* If max is requested, and we didn't find the index is empty */
 			if (max && have_data)
 			{
-				index_scan = index_beginscan(heapRel, indexRel,
-											 &SnapshotNonVacuumable,
-											 1, 0);
-				index_rescan(index_scan, scankeys, 1, NULL, 0);
-
-				/* Fetch first tuple in reverse direction */
-				if (index_getnext_slot(index_scan, -indexscandir, slot))
-				{
-					/* Extract the index column values from the slot */
-					FormIndexDatum(indexInfo, slot, estate,
-								   values, isnull);
-
-					/* Shouldn't have got a null, but be careful */
-					if (isnull[0])
-						elog(ERROR, "found unexpected null value in index \"%s\"",
-							 RelationGetRelationName(indexRel));
-
-					/* Copy the index column value out to caller's context */
-					MemoryContextSwitchTo(oldcontext);
-					*max = datumCopy(values[0], typByVal, typLen);
-					MemoryContextSwitchTo(tmpcontext);
-				}
-				else
-					have_data = false;
-
-				index_endscan(index_scan);
+				/* scan in the opposite direction; all else is the same */
+				have_data = get_actual_variable_endpoint(heapRel,
+														 indexRel,
+														 -indexscandir,
+														 scankeys,
+														 typLen,
+														 typByVal,
+														 slot,
+														 oldcontext,
+														 max);
 			}
 
 			/* Clean everything up */
@@ -5329,12 +5269,145 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			table_close(heapRel, NoLock);
 
 			MemoryContextSwitchTo(oldcontext);
-			FreeExecutorState(estate);
+			MemoryContextDelete(tmpcontext);
 
 			/* And we're done */
 			break;
 		}
 	}
+
+	return have_data;
+}
+
+/*
+ * Get one endpoint datum (min or max depending on indexscandir) from the
+ * specified index.  Return true if successful, false if index is empty.
+ * On success, endpoint value is stored to *endpointDatum (and copied into
+ * outercontext).
+ *
+ * scankeys is a 1-element scankey array set up to reject nulls.
+ * typLen/typByVal describe the datatype of the index's first column.
+ * tableslot is a slot suitable to hold table tuples, in case we need
+ * to probe the heap.
+ * (We could compute these values locally, but that would mean computing them
+ * twice when get_actual_variable_range needs both the min and the max.)
+ */
+static bool
+get_actual_variable_endpoint(Relation heapRel,
+							 Relation indexRel,
+							 ScanDirection indexscandir,
+							 ScanKey scankeys,
+							 int16 typLen,
+							 bool typByVal,
+							 TupleTableSlot *tableslot,
+							 MemoryContext outercontext,
+							 Datum *endpointDatum)
+{
+	bool		have_data = false;
+	SnapshotData SnapshotNonVacuumable;
+	IndexScanDesc index_scan;
+	Buffer		vmbuffer = InvalidBuffer;
+	ItemPointer tid;
+	Datum		values[INDEX_MAX_KEYS];
+	bool		isnull[INDEX_MAX_KEYS];
+	MemoryContext oldcontext;
+
+	/*
+	 * We use the index-only-scan machinery for this.  With mostly-static
+	 * tables that's a win because it avoids a heap visit.  It's also a win
+	 * for dynamic data, but the reason is less obvious; read on for details.
+	 *
+	 * In principle, we should scan the index with our current active
+	 * snapshot, which is the best approximation we've got to what the query
+	 * will see when executed.  But that won't be exact if a new snap is taken
+	 * before running the query, and it can be very expensive if a lot of
+	 * recently-dead or uncommitted rows exist at the beginning or end of the
+	 * index (because we'll laboriously fetch each one and reject it).
+	 * Instead, we use SnapshotNonVacuumable.  That will accept recently-dead
+	 * and uncommitted rows as well as normal visible rows.  On the other
+	 * hand, it will reject known-dead rows, and thus not give a bogus answer
+	 * when the extreme value has been deleted (unless the deletion was quite
+	 * recent); that case motivates not using SnapshotAny here.
+	 *
+	 * A crucial point here is that SnapshotNonVacuumable, with
+	 * RecentGlobalXmin as horizon, yields the inverse of the condition that
+	 * the indexscan will use to decide that index entries are killable (see
+	 * heap_hot_search_buffer()).  Therefore, if the snapshot rejects a tuple
+	 * (or more precisely, all tuples of a HOT chain) and we have to continue
+	 * scanning past it, we know that the indexscan will mark that index entry
+	 * killed.  That means that the next get_actual_variable_endpoint() call
+	 * will not have to re-consider that index entry.  In this way we avoid
+	 * repetitive work when this function is used a lot during planning.
+	 *
+	 * But using SnapshotNonVacuumable creates a hazard of its own.  In a
+	 * recently-created index, some index entries may point at "broken" HOT
+	 * chains in which not all the tuple versions contain data matching the
+	 * index entry.  The live tuple version(s) certainly do match the index,
+	 * but SnapshotNonVacuumable can accept recently-dead tuple versions that
+	 * don't match.  Hence, if we took data from the selected heap tuple, we
+	 * might get a bogus answer that's not close to the index extremal value,
+	 * or could even be NULL.  We avoid this hazard because we take the data
+	 * from the index entry not the heap.
+	 */
+	InitNonVacuumableSnapshot(SnapshotNonVacuumable, RecentGlobalXmin);
+
+	index_scan = index_beginscan(heapRel, indexRel,
+								 &SnapshotNonVacuumable,
+								 1, 0);
+	/* Set it up for index-only scan */
+	index_scan->xs_want_itup = true;
+	index_rescan(index_scan, scankeys, 1, NULL, 0);
+
+	/* Fetch first/next tuple in specified direction */
+	while ((tid = index_getnext_tid(index_scan, indexscandir)) != NULL)
+	{
+		if (!VM_ALL_VISIBLE(heapRel,
+							ItemPointerGetBlockNumber(tid),
+							&vmbuffer))
+		{
+			/* Rats, we have to visit the heap to check visibility */
+			if (!index_fetch_heap(index_scan, tableslot))
+				continue;		/* no visible tuple, try next index entry */
+
+			/* We don't actually need the heap tuple for anything */
+			ExecClearTuple(tableslot);
+
+			/*
+			 * We don't care whether there's more than one visible tuple in
+			 * the HOT chain; if any are visible, that's good enough.
+			 */
+		}
+
+		/*
+		 * We expect that btree will return data in IndexTuple not HeapTuple
+		 * format.  It's not lossy either.
+		 */
+		if (!index_scan->xs_itup)
+			elog(ERROR, "no data returned for index-only scan");
+		if (index_scan->xs_recheck)
+			elog(ERROR, "unexpected recheck indication from btree");
+
+		/* OK to deconstruct the index tuple */
+		index_deform_tuple(index_scan->xs_itup,
+						   index_scan->xs_itupdesc,
+						   values, isnull);
+
+		/* Shouldn't have got a null, but be careful */
+		if (isnull[0])
+			elog(ERROR, "found unexpected null value in index \"%s\"",
+				 RelationGetRelationName(indexRel));
+
+		/* Copy the index column value out to caller's context */
+		oldcontext = MemoryContextSwitchTo(outercontext);
+		*endpointDatum = datumCopy(values[0], typByVal, typLen);
+		MemoryContextSwitchTo(oldcontext);
+		have_data = true;
+		break;
+	}
+
+	if (vmbuffer != InvalidBuffer)
+		ReleaseBuffer(vmbuffer);
+	index_endscan(index_scan);
 
 	return have_data;
 }
