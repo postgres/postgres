@@ -796,21 +796,13 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		RangeTblEntry *rte = root->simple_rte_array[relid];
 		OpExpr	   *expr = (OpExpr *) clause;
 		Var		   *var;
-		bool		varonleft = true;
-		bool		ok;
 
 		/* Only expressions with two arguments are considered compatible. */
 		if (list_length(expr->args) != 2)
 			return false;
 
-		/* see if it actually has the right shape (one Var, one Const) */
-		ok = (NumRelids((Node *) expr) == 1) &&
-			(is_pseudo_constant_clause(lsecond(expr->args)) ||
-			 (varonleft = false,
-			  is_pseudo_constant_clause(linitial(expr->args))));
-
-		/* unsupported structure (two variables or so) */
-		if (!ok)
+		/* Check if the expression the right shape (one Var, one Const) */
+		if (!examine_opclause_expression(expr, &var, NULL, NULL))
 			return false;
 
 		/*
@@ -849,8 +841,6 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		if (rte->securityQuals != NIL &&
 			!get_func_leakproof(get_opcode(expr->opno)))
 			return false;
-
-		var = (varonleft) ? linitial(expr->args) : lsecond(expr->args);
 
 		return statext_is_compatible_clause_internal(root, (Node *) var,
 													 relid, attnums);
@@ -1195,4 +1185,66 @@ statext_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
 											   estimatedclauses);
 
 	return sel;
+}
+
+/*
+ * examine_operator_expression
+ *		Split expression into Var and Const parts.
+ *
+ * Attempts to match the arguments to either (Var op Const) or (Const op Var),
+ * possibly with a RelabelType on top. When the expression matches this form,
+ * returns true, otherwise returns false.
+ *
+ * Optionally returns pointers to the extracted Var/Const nodes, when passed
+ * non-null pointers (varp, cstp and isgtp). The isgt flag specifies whether
+ * the Var node is on the left (false) or right (true) side of the operator.
+ */
+bool
+examine_opclause_expression(OpExpr *expr, Var **varp, Const **cstp, bool *isgtp)
+{
+	Var	   *var;
+	Const  *cst;
+	bool	isgt;
+	Node   *leftop,
+		   *rightop;
+
+	/* enforced by statext_is_compatible_clause_internal */
+	Assert(list_length(expr->args) == 2);
+
+	leftop = linitial(expr->args);
+	rightop = lsecond(expr->args);
+
+	/* strip RelabelType from either side of the expression */
+	if (IsA(leftop, RelabelType))
+		leftop = (Node *) ((RelabelType *) leftop)->arg;
+
+	if (IsA(rightop, RelabelType))
+		rightop = (Node *) ((RelabelType *) rightop)->arg;
+
+	if (IsA(leftop, Var) && IsA(rightop, Const))
+	{
+		var = (Var *) leftop;
+		cst = (Const *) rightop;
+		isgt = false;
+	}
+	else if (IsA(leftop, Const) && IsA(rightop, Var))
+	{
+		var = (Var *) rightop;
+		cst = (Const *) leftop;
+		isgt = true;
+	}
+	else
+		return false;
+
+	/* return pointers to the extracted parts if requested */
+	if (varp)
+		*varp = var;
+
+	if (cstp)
+		*cstp = cst;
+
+	if (isgtp)
+		*isgtp = isgt;
+
+	return true;
 }

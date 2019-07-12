@@ -1561,35 +1561,22 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 		if (is_opclause(clause))
 		{
 			OpExpr	   *expr = (OpExpr *) clause;
-			bool		varonleft = true;
-			bool		ok;
 			FmgrInfo	opproc;
 
 			/* get procedure computing operator selectivity */
 			RegProcedure oprrest = get_oprrest(expr->opno);
 
+			/* valid only after examine_opclause_expression returns true */
+			Var		   *var;
+			Const	   *cst;
+			bool		isgt;
+
 			fmgr_info(get_opcode(expr->opno), &opproc);
 
-			ok = (NumRelids(clause) == 1) &&
-				(is_pseudo_constant_clause(lsecond(expr->args)) ||
-				 (varonleft = false,
-				  is_pseudo_constant_clause(linitial(expr->args))));
-
-			if (ok)
+			/* extract the var and const from the expression */
+			if (examine_opclause_expression(expr, &var, &cst, &isgt))
 			{
-				Var		   *var;
-				Const	   *cst;
-				bool		isgt;
 				int			idx;
-
-				/* extract the var and const from the expression */
-				var = (varonleft) ? linitial(expr->args) : lsecond(expr->args);
-				cst = (varonleft) ? lsecond(expr->args) : linitial(expr->args);
-				isgt = (!varonleft);
-
-				/* strip binary-compatible relabeling */
-				if (IsA(var, RelabelType))
-					var = (Var *) ((RelabelType *) var)->arg;
 
 				/* match the attribute to a dimension of the statistic */
 				idx = bms_member_index(keys, var->varattno);
