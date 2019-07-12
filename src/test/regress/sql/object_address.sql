@@ -45,7 +45,10 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user REVOKE DELETE ON TABLES FROM
 CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION prsd_lextype(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
+-- suppress warning that depends on wal_level
+SET client_min_messages = 'ERROR';
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
+RESET client_min_messages;
 CREATE SUBSCRIPTION regress_addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
 CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
 
