@@ -2686,6 +2686,45 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("CREATE", "ROLE|USER|GROUP", MatchAny, "IN"))
 		COMPLETE_WITH("GROUP", "ROLE");
 
+/* CREATE TYPE */
+	else if (Matches("CREATE", "TYPE", MatchAny))
+		COMPLETE_WITH("(", "AS");
+	else if (Matches("CREATE", "TYPE", MatchAny, "AS"))
+		COMPLETE_WITH("ENUM", "RANGE", "(");
+	else if (HeadMatches("CREATE", "TYPE", MatchAny, "AS", "("))
+	{
+		if (TailMatches("(|*,", MatchAny))
+			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_datatypes, NULL);
+		else if (TailMatches("(|*,", MatchAny, MatchAnyExcept("*)")))
+			COMPLETE_WITH("COLLATE", ",", ")");
+	}
+	else if (Matches("CREATE", "TYPE", MatchAny, "AS", "ENUM|RANGE"))
+		COMPLETE_WITH("(");
+	else if (HeadMatches("CREATE", "TYPE", MatchAny, "("))
+	{
+		if (TailMatches("(|*,"))
+			COMPLETE_WITH("INPUT", "OUTPUT", "RECEIVE", "SEND",
+						  "TYPMOD_IN", "TYPMOD_OUT", "ANALYZE",
+						  "INTERNALLENGTH", "PASSBYVALUE", "ALIGNMENT",
+						  "STORAGE", "LIKE", "CATEGORY", "PREFERRED",
+						  "DEFAULT", "ELEMENT", "DELIMITER",
+						  "COLLATABLE");
+		else if (TailMatches("(*|*,", MatchAnyExcept("*=")))
+			COMPLETE_WITH("=");
+		else if (TailMatches("=", MatchAnyExcept("*)")))
+			COMPLETE_WITH(",", ")");
+	}
+	else if (HeadMatches("CREATE", "TYPE", MatchAny, "AS", "RANGE", "("))
+	{
+		if (TailMatches("(|*,"))
+			COMPLETE_WITH("SUBTYPE", "SUBTYPE_OPCLASS", "COLLATION",
+						  "CANONICAL", "SUBTYPE_DIFF");
+		else if (TailMatches("(*|*,", MatchAnyExcept("*=")))
+			COMPLETE_WITH("=");
+		else if (TailMatches("=", MatchAnyExcept("*)")))
+			COMPLETE_WITH(",", ")");
+	}
+
 /* CREATE VIEW --- is allowed inside CREATE SCHEMA, so use TailMatches */
 	/* Complete CREATE VIEW <name> with AS */
 	else if (TailMatches("CREATE", "VIEW", MatchAny))
