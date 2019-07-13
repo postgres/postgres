@@ -18,10 +18,10 @@ our $config = {
 	nls       => undef,    # --enable-nls=<path>
 	tap_tests => undef,    # --enable-tap-tests
 	tcl       => undef,    # --with-tcl=<path>
-	perl      => undef,    # --with-perl
+	perl      => undef,    # --with-perl=<path>
 	python    => undef,    # --with-python=<path>
 	openssl   => undef,    # --with-openssl=<path>
-	uuid      => undef,    # --with-ossp-uuid
+	uuid      => undef,    # --with-uuid=<path>
 	xml       => undef,    # --with-libxml=<path>
 	xslt      => undef,    # --with-libxslt=<path>
 	iconv     => undef,    # (not in configure, path to iconv)
