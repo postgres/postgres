@@ -245,6 +245,7 @@ void
 ConditionVariableCancelSleep(void)
 {
 	ConditionVariable *cv = cv_sleep_target;
+	bool		signaled = false;
 
 	if (cv == NULL)
 		return;
@@ -252,7 +253,17 @@ ConditionVariableCancelSleep(void)
 	SpinLockAcquire(&cv->mutex);
 	if (proclist_contains(&cv->wakeup, MyProc->pgprocno, cvWaitLink))
 		proclist_delete(&cv->wakeup, MyProc->pgprocno, cvWaitLink);
+	else
+		signaled = true;
 	SpinLockRelease(&cv->mutex);
+
+	/*
+	 * If we've received a signal, pass it on to another waiting process, if
+	 * there is one.  Otherwise a call to ConditionVariableSignal() might get
+	 * lost, despite there being another process ready to handle it.
+	 */
+	if (signaled)
+		ConditionVariableSignal(cv);
 
 	cv_sleep_target = NULL;
 }
