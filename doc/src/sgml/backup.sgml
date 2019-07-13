@@ -962,10 +962,10 @@ SELECT * FROM pg_stop_backup(false, true);
      The process for an exclusive backup is mostly the same as for a
      non-exclusive one, but it differs in a few key steps. This type of
      backup can only be taken on a primary and does not allow concurrent
-     backups.  Moreover, because it writes a backup_label file on the
-     master, it can cause the master to fail to restart automatically after
-     a crash.  On the other hand, the erroneous removal of a backup_label
-     file from a backup or standby is a common mistake which can result
+     backups.  Moreover, because it creates a backup label file, as
+     described below, it can block automatic restart of the master server
+     after a crash.  On the other hand, the erroneous removal of this
+     file from a backup or standby is a common mistake, which can result
      in serious data corruption.  If it is necessary to use this method,
      the following steps may be used.
     </para>
@@ -1025,10 +1025,10 @@ SELECT pg_start_backup('label', true);
     </para>
     <para>
      As noted above, if the server crashes during the backup it may not be
-     possible to restart until the <literal>backup_label</literal> file has
+     possible to restart until the <filename>backup_label</filename> file has
      been manually deleted from the <envar>PGDATA</envar> directory.  Note
      that it is very important to never remove the
-     <literal>backup_label</literal> file when restoring a backup, because
+     <filename>backup_label</filename> file when restoring a backup, because
      this will result in corruption.  Confusion about when it is appropriate
      to remove this file is a common cause of data corruption when using this
      method; be very certain that you remove the file only on an existing
@@ -1075,7 +1075,7 @@ SELECT pg_stop_backup();
      lack of disk space, failure to call <function>pg_stop_backup</function>
      will leave the server in backup mode indefinitely, causing future backups
      to fail and increasing the risk of a restart failure during the time that
-     <literal>backup_label</literal> exists.
+     <filename>backup_label</filename> exists.
     </para>
    </listitem>
   </orderedlist>

@@ -156,7 +156,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
      <para>
       When this option is used, <productname>PostgreSQL</productname> will rebuild the
       index without taking any locks that prevent concurrent inserts,
-      updates, or deletes on the table; whereas a standard reindex build
+      updates, or deletes on the table; whereas a standard index rebuild
       locks out writes (but not reads) on the table until it's done.
       There are several caveats to be aware of when using this option
       &mdash; see <xref linkend="sql-reindex-concurrently"
@@ -280,12 +280,12 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURR
     of writes.  This method is invoked by specifying the
     <literal>CONCURRENTLY</literal> option of <command>REINDEX</command>. When this option
     is used, <productname>PostgreSQL</productname> must perform two scans of the table
-    for each index that needs to be rebuild and in addition it must wait for
-    all existing transactions that could potentially use the index to
-    terminate. This method requires more total work than a standard index
+    for each index that needs to be rebuilt and wait for termination of
+    all existing transactions that could potentially use the index.
+    This method requires more total work than a standard index
     rebuild and takes significantly longer to complete as it needs to wait
     for unfinished transactions that might modify the index. However, since
-    it allows normal operations to continue while the index is rebuilt, this
+    it allows normal operations to continue while the index is being rebuilt, this
     method is useful for rebuilding indexes in a production environment. Of
     course, the extra CPU, memory and I/O load imposed by the index rebuild
     may slow down other operations.
@@ -442,8 +442,8 @@ broken_db=&gt; \q
 </programlisting></para>
 
   <para>
-   Rebuild a table while authorizing read and write operations on involved
-   relations when performed:
+   Rebuild indexes for a table, without blocking read and write operations
+   on involved relations while reindexing is in progress:
 
 <programlisting>
 REINDEX TABLE CONCURRENTLY my_broken_table;

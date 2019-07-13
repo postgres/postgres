@@ -120,7 +120,7 @@ PostgreSQL documentation
         to be written safely to disk.  This option causes
         <command>pg_checksums</command> to return without waiting, which is
         faster, but means that a subsequent operating system crash can leave
-        the updated data folder corrupt.  Generally, this option is useful
+        the updated data directory corrupt.  Generally, this option is useful
         for testing but should not be used on a production installation.
         This option has no effect when using <literal>--check</literal>.
        </para>
