@@ -474,10 +474,10 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
            </listitem>
           </itemizedlist>
 
-        Because in "prepared" mode <application>pgbench</application> reuses
-        the parse analysis result for the second and subsequent query
-        iteration, <application>pgbench</application> runs faster in the
-        prepared mode than in other modes.
+        In the <literal>prepared</literal> mode, <application>pgbench</application>
+        reuses the parse analysis result starting from the second query
+        iteration, so <application>pgbench</application> runs faster
+        than in other modes.
        </para>
        <para>
         The default is simple query protocol.  (See <xref linkend="protocol"/>

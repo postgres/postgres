@@ -749,7 +749,7 @@ PostgreSQL documentation
       <term><option>--extra-float-digits=<replaceable class="parameter">ndigits</replaceable></option></term>
       <listitem>
        <para>
-        Use the specified value of extra_float_digits when dumping
+        Use the specified value of <option>extra_float_digits</option> when dumping
         floating-point data, instead of the maximum available precision.
         Routine dumps made for backup purposes should not use this option.
        </para>

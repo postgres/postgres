@@ -227,8 +227,8 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       Backward compatibility syntax for removing the <literal>oid</literal>
-      system column. As oid system columns cannot be added anymore, this never
-      has an effect.
+      system column. As <literal>oid</literal> system columns cannot be added
+      anymore, this never has an effect.
      </para>
     </listitem>
    </varlistentry>
