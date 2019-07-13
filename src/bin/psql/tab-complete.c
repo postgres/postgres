@@ -3487,7 +3487,7 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches("UPDATE", MatchAny, "SET"))
 		COMPLETE_WITH_ATTR(prev2_wd, "");
 	/* UPDATE <table> SET <attr> = */
-	else if (TailMatches("UPDATE", MatchAny, "SET", MatchAny))
+	else if (TailMatches("UPDATE", MatchAny, "SET", MatchAnyExcept("*=")))
 		COMPLETE_WITH("=");
 
 /* USER MAPPING */
