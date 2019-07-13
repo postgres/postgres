@@ -58,26 +58,19 @@ sub pgbench
 	return;
 }
 
-# Test concurrent insertion into table with serial column.  This
-# indirectly exercises LWLock and spinlock concurrency.  This test
-# makes a 5-MiB table.
-
-$node->safe_psql('postgres',
-	'CREATE UNLOGGED TABLE insert_tbl (id serial primary key); ');
-
+# Test concurrent OID generation via pg_enum_oid_index.  This indirectly
+# exercises LWLock and spinlock concurrency.
+my $labels = join ',', map { "'l$_'" } 1 .. 1000;
 pgbench(
 	'--no-vacuum --client=5 --protocol=prepared --transactions=25',
 	0,
 	[qr{processed: 125/125}],
 	[qr{^$}],
-	'concurrent insert workload',
+	'concurrent OID generation',
 	{
 		'001_pgbench_concurrent_insert' =>
-		  'INSERT INTO insert_tbl SELECT FROM generate_series(1,1000);'
+		  "CREATE TYPE pg_temp.e AS ENUM ($labels); DROP TYPE pg_temp.e;"
 	});
-
-# cleanup
-$node->safe_psql('postgres', 'DROP TABLE insert_tbl;');
 
 # Trigger various connection errors
 pgbench(
