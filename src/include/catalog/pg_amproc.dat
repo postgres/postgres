@@ -419,6 +419,8 @@
   amprocrighttype => 'box', amprocnum => '6', amproc => 'gist_box_picksplit' },
 { amprocfamily => 'gist/box_ops', amproclefttype => 'box',
   amprocrighttype => 'box', amprocnum => '7', amproc => 'gist_box_same' },
+{ amprocfamily => 'gist/box_ops', amproclefttype => 'box',
+  amprocrighttype => 'box', amprocnum => '8', amproc => 'gist_box_distance' },
 { amprocfamily => 'gist/poly_ops', amproclefttype => 'polygon',
   amprocrighttype => 'polygon', amprocnum => '1',
   amproc => 'gist_poly_consistent' },

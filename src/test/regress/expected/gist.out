@@ -203,6 +203,82 @@ select b from gist_tbl where b <@ box(point(5,5), point(6,6));
  (6,6),(6,6)
 (21 rows)
 
+-- Also test an index-only knn-search
+explain (costs off)
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by b <-> point(5.2, 5.91);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Index Only Scan using gist_tbl_box_index on gist_tbl
+   Index Cond: (b <@ '(6,6),(5,5)'::box)
+   Order By: (b <-> '(5.2,5.91)'::point)
+(3 rows)
+
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by b <-> point(5.2, 5.91);
+            b            
+-------------------------
+ (5.55,5.55),(5.55,5.55)
+ (5.6,5.6),(5.6,5.6)
+ (5.5,5.5),(5.5,5.5)
+ (5.65,5.65),(5.65,5.65)
+ (5.45,5.45),(5.45,5.45)
+ (5.7,5.7),(5.7,5.7)
+ (5.4,5.4),(5.4,5.4)
+ (5.75,5.75),(5.75,5.75)
+ (5.35,5.35),(5.35,5.35)
+ (5.8,5.8),(5.8,5.8)
+ (5.3,5.3),(5.3,5.3)
+ (5.85,5.85),(5.85,5.85)
+ (5.25,5.25),(5.25,5.25)
+ (5.9,5.9),(5.9,5.9)
+ (5.2,5.2),(5.2,5.2)
+ (5.95,5.95),(5.95,5.95)
+ (5.15,5.15),(5.15,5.15)
+ (6,6),(6,6)
+ (5.1,5.1),(5.1,5.1)
+ (5.05,5.05),(5.05,5.05)
+ (5,5),(5,5)
+(21 rows)
+
+-- Check commuted case as well
+explain (costs off)
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by point(5.2, 5.91) <-> b;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Index Only Scan using gist_tbl_box_index on gist_tbl
+   Index Cond: (b <@ '(6,6),(5,5)'::box)
+   Order By: (b <-> '(5.2,5.91)'::point)
+(3 rows)
+
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by point(5.2, 5.91) <-> b;
+            b            
+-------------------------
+ (5.55,5.55),(5.55,5.55)
+ (5.6,5.6),(5.6,5.6)
+ (5.5,5.5),(5.5,5.5)
+ (5.65,5.65),(5.65,5.65)
+ (5.45,5.45),(5.45,5.45)
+ (5.7,5.7),(5.7,5.7)
+ (5.4,5.4),(5.4,5.4)
+ (5.75,5.75),(5.75,5.75)
+ (5.35,5.35),(5.35,5.35)
+ (5.8,5.8),(5.8,5.8)
+ (5.3,5.3),(5.3,5.3)
+ (5.85,5.85),(5.85,5.85)
+ (5.25,5.25),(5.25,5.25)
+ (5.9,5.9),(5.9,5.9)
+ (5.2,5.2),(5.2,5.2)
+ (5.95,5.95),(5.95,5.95)
+ (5.15,5.15),(5.15,5.15)
+ (6,6),(6,6)
+ (5.1,5.1),(5.1,5.1)
+ (5.05,5.05),(5.05,5.05)
+ (5,5),(5,5)
+(21 rows)
+
 drop index gist_tbl_box_index;
 -- Test that an index-only scan is not chosen, when the query involves the
 -- circle column (the circle opclass does not support index-only scans).

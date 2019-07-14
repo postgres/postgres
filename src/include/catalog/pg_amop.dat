@@ -1081,6 +1081,9 @@
   amopstrategy => '13', amopopr => '~(box,box)', amopmethod => 'gist' },
 { amopfamily => 'gist/box_ops', amoplefttype => 'box', amoprighttype => 'box',
   amopstrategy => '14', amopopr => '@(box,box)', amopmethod => 'gist' },
+{ amopfamily => 'gist/box_ops', amoplefttype => 'box', amoprighttype => 'point',
+  amopstrategy => '15', amoppurpose => 'o', amopopr => '<->(box,point)',
+  amopmethod => 'gist', amopsortfamily => 'btree/float_ops' },
 
 # gist point_ops
 { amopfamily => 'gist/point_ops', amoplefttype => 'point',

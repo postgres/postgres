@@ -109,6 +109,22 @@ select b from gist_tbl where b <@ box(point(5,5), point(6,6));
 -- execute the same
 select b from gist_tbl where b <@ box(point(5,5), point(6,6));
 
+-- Also test an index-only knn-search
+explain (costs off)
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by b <-> point(5.2, 5.91);
+
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by b <-> point(5.2, 5.91);
+
+-- Check commuted case as well
+explain (costs off)
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by point(5.2, 5.91) <-> b;
+
+select b from gist_tbl where b <@ box(point(5,5), point(6,6))
+order by point(5.2, 5.91) <-> b;
+
 drop index gist_tbl_box_index;
 
 -- Test that an index-only scan is not chosen, when the query involves the
