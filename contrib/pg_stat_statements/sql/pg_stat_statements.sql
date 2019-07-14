@@ -178,6 +178,37 @@ SELECT PLUS_ONE(1);
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --
+-- queries with locking clauses
+--
+CREATE TABLE pgss_a (id integer PRIMARY KEY);
+CREATE TABLE pgss_b (id integer PRIMARY KEY, a_id integer REFERENCES pgss_a);
+
+SELECT pg_stat_statements_reset();
+
+-- control query
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id;
+
+-- test range tables
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE;
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE OF pgss_a;
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE OF pgss_b;
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE OF pgss_a, pgss_b; -- matches plain "FOR UPDATE"
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE OF pgss_b, pgss_a;
+
+-- test strengths
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR NO KEY UPDATE;
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR SHARE;
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR KEY SHARE;
+
+-- test wait policies
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE NOWAIT;
+SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE SKIP LOCKED;
+
+SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+
+DROP TABLE pgss_a, pgss_b CASCADE;
+
+--
 -- utility commands
 --
 SET pg_stat_statements.track_utility = TRUE;
