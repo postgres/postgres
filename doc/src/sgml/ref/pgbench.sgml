@@ -704,7 +704,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <para>
    The default built-in transaction script (also invoked with <option>-b tpcb-like</>)
    issues seven commands per transaction over randomly chosen <literal>aid</>,
-   <literal>tid</>, <literal>bid</> and <literal>balance</>.
+   <literal>tid</>, <literal>bid</> and <literal>delta</>.
    The scenario is inspired by the TPC-B benchmark, but is not actually TPC-B,
    hence the name.
   </para>
