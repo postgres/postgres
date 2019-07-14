@@ -1546,6 +1546,10 @@
   amopstrategy => '11', amopopr => '|>>(box,box)', amopmethod => 'spgist' },
 { amopfamily => 'spgist/box_ops', amoplefttype => 'box', amoprighttype => 'box',
   amopstrategy => '12', amopopr => '|&>(box,box)', amopmethod => 'spgist' },
+{ amopfamily => 'spgist/box_ops', amoplefttype => 'box',
+  amoprighttype => 'point', amopstrategy => '15', amoppurpose => 'o',
+  amopopr => '<->(box,point)', amopmethod => 'spgist',
+  amopsortfamily => 'btree/float_ops' },
 
 # SP-GiST poly_ops (supports polygons)
 { amopfamily => 'spgist/poly_ops', amoplefttype => 'polygon',

@@ -165,6 +165,8 @@ pg_user_mapping|t
 point_tbl|t
 polygon_tbl|t
 quad_box_tbl|t
+quad_box_tbl_ord_seq1|f
+quad_box_tbl_ord_seq2|f
 quad_point_tbl|t
 quad_poly_tbl|t
 radix_text_tbl|t
