@@ -416,3 +416,23 @@ uuid_hash_extended(PG_FUNCTION_ARGS)
 
 	return hash_any_extended(key->data, UUID_LEN, PG_GETARG_INT64(1));
 }
+
+Datum
+gen_random_uuid(PG_FUNCTION_ARGS)
+{
+	pg_uuid_t  *uuid = palloc(UUID_LEN);
+
+	if (!pg_strong_random(uuid, UUID_LEN))
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate random values")));
+
+	/*
+	 * Set magic numbers for a "version 4" (pseudorandom) UUID, see
+	 * http://tools.ietf.org/html/rfc4122#section-4.4
+	 */
+	uuid->data[6] = (uuid->data[6] & 0x0f) | 0x40;	/* time_hi_and_version */
+	uuid->data[8] = (uuid->data[8] & 0x3f) | 0x80;	/* clock_seq_hi_and_reserved */
+
+	PG_RETURN_UUID_P(uuid);
+}

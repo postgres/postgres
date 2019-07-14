@@ -11,6 +11,9 @@
   The <filename>uuid-ossp</filename> module provides functions to generate universally
   unique identifiers (UUIDs) using one of several standard algorithms.  There
   are also functions to produce certain special UUID constants.
+  This module is only necessary for special requirements beyond what is
+  available in core <productname>PostgreSQL</productname>.  See <xref
+  linkend="functions-uuid"/> for built-in ways to generate UUIDs.
  </para>
 
  <sect2>
@@ -181,14 +184,6 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
    More than one of these libraries might be available on a particular
    machine, so <filename>configure</filename> does not automatically choose one.
   </para>
-
-  <note>
-   <para>
-    If you only need randomly-generated (version 4) UUIDs,
-    consider using the <function>gen_random_uuid()</function> function
-    from the <xref linkend="pgcrypto"/> module instead.
-   </para>
-  </note>
  </sect2>
 
  <sect2>

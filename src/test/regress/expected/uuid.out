@@ -145,5 +145,15 @@ SELECT COUNT(*) FROM guid1 g1 LEFT JOIN guid2 g2 ON g1.guid_field = g2.guid_fiel
      1
 (1 row)
 
+-- generation test
+TRUNCATE guid1;
+INSERT INTO guid1 (guid_field) VALUES (gen_random_uuid());
+INSERT INTO guid1 (guid_field) VALUES (gen_random_uuid());
+SELECT count(DISTINCT guid_field) FROM guid1;
+ count 
+-------
+     2
+(1 row)
+
 -- clean up
 DROP TABLE guid1, guid2 CASCADE;

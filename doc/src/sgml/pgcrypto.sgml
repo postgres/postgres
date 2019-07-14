@@ -1132,7 +1132,8 @@ gen_random_bytes(count integer) returns bytea
 gen_random_uuid() returns uuid
 </synopsis>
   <para>
-   Returns a version 4 (random) UUID.
+   Returns a version 4 (random) UUID. (Obsolete, this function is now also
+   included in core <productname>PostgreSQL</productname>.)
   </para>
  </sect2>
 

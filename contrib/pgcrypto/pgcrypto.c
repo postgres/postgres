@@ -446,20 +446,8 @@ PG_FUNCTION_INFO_V1(pg_random_uuid);
 Datum
 pg_random_uuid(PG_FUNCTION_ARGS)
 {
-	uint8	   *buf = (uint8 *) palloc(UUID_LEN);
-
-	/* Generate random bits. */
-	if (!pg_strong_random(buf, UUID_LEN))
-		px_THROW_ERROR(PXE_NO_RANDOM);
-
-	/*
-	 * Set magic numbers for a "version 4" (pseudorandom) UUID, see
-	 * http://tools.ietf.org/html/rfc4122#section-4.4
-	 */
-	buf[6] = (buf[6] & 0x0f) | 0x40;	/* "version" field */
-	buf[8] = (buf[8] & 0x3f) | 0x80;	/* "variant" field */
-
-	PG_RETURN_UUID_P((pg_uuid_t *) buf);
+	/* redirect to built-in function */
+	return gen_random_uuid(fcinfo);
 }
 
 static void *
