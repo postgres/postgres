@@ -71,19 +71,19 @@ SELECT p1.f1, p2.f1, p1.f1 / p2.f1 FROM POINT_TBL p1, POINT_TBL p2 WHERE p2.f1[0
 SELECT p1.f1, p2.f1, p1.f1 / p2.f1 FROM POINT_TBL p1, POINT_TBL p2 WHERE p2.f1 ~= '(0,0)'::point;
 
 -- Distance to line
-SELECT p.f1, l.s, p.f1 <-> l.s FROM POINT_TBL p, LINE_TBL l;
+SELECT p.f1, l.s, p.f1 <-> l.s AS dist_pl, l.s <-> p.f1 AS dist_lp FROM POINT_TBL p, LINE_TBL l;
 
 -- Distance to line segment
-SELECT p.f1, l.s, p.f1 <-> l.s FROM POINT_TBL p, LSEG_TBL l;
+SELECT p.f1, l.s, p.f1 <-> l.s AS dist_ps, l.s <-> p.f1 AS dist_sp FROM POINT_TBL p, LSEG_TBL l;
 
 -- Distance to box
-SELECT p.f1, b.f1, p.f1 <-> b.f1 FROM POINT_TBL p, BOX_TBL b;
+SELECT p.f1, b.f1, p.f1 <-> b.f1 AS dist_pb, b.f1 <-> p.f1 AS dist_bp FROM POINT_TBL p, BOX_TBL b;
 
 -- Distance to path
-SELECT p.f1, p1.f1, p.f1 <-> p1.f1 FROM POINT_TBL p, PATH_TBL p1;
+SELECT p.f1, p1.f1, p.f1 <-> p1.f1 AS dist_ppath, p1.f1 <-> p.f1 AS dist_pathp FROM POINT_TBL p, PATH_TBL p1;
 
 -- Distance to polygon
-SELECT p.f1, p1.f1, p.f1 <-> p1.f1 FROM POINT_TBL p, POLYGON_TBL p1;
+SELECT p.f1, p1.f1, p.f1 <-> p1.f1 AS dist_ppoly, p1.f1 <-> p.f1 AS dist_polyp FROM POINT_TBL p, POLYGON_TBL p1;
 
 -- Closest point to line
 SELECT p.f1, l.s, p.f1 ## l.s FROM POINT_TBL p, LINE_TBL l;
@@ -127,6 +127,7 @@ SELECT l1.s, l2.s, l1.s <-> l2.s FROM LINE_TBL l1, LINE_TBL l2;
 
 -- Distance to box
 SELECT l.s, b.f1, l.s <-> b.f1 FROM LINE_TBL l, BOX_TBL b;
+SELECT l.s, b.f1, b.f1 <-> l.s FROM LINE_TBL l, BOX_TBL b;
 
 -- Intersect with line
 SELECT l1.s, l2.s FROM LINE_TBL l1, LINE_TBL l2 WHERE l1.s ?# l2.s;
@@ -191,13 +192,13 @@ SELECT l1.s, l2.s FROM LSEG_TBL l1, LSEG_TBL l2 WHERE l1.s ?|| l2.s;
 SELECT l1.s, l2.s FROM LSEG_TBL l1, LSEG_TBL l2 WHERE l1.s ?-| l2.s;
 
 -- Distance to line
-SELECT l.s, l1.s, l.s <-> l1.s FROM LSEG_TBL l, LINE_TBL l1;
+SELECT l.s, l1.s, l.s <-> l1.s AS dist_sl, l1.s <-> l.s AS dist_ls FROM LSEG_TBL l, LINE_TBL l1;
 
 -- Distance to line segment
 SELECT l1.s, l2.s, l1.s <-> l2.s FROM LSEG_TBL l1, LSEG_TBL l2;
 
 -- Distance to box
-SELECT l.s, b.f1, l.s <-> b.f1 FROM LSEG_TBL l, BOX_TBL b;
+SELECT l.s, b.f1, l.s <-> b.f1 AS dist_sb, b.f1 <-> l.s AS dist_bs FROM LSEG_TBL l, BOX_TBL b;
 
 -- Intersect with line segment
 SELECT l.s, l1.s FROM LSEG_TBL l, LINE_TBL l1 WHERE l.s ?# l1.s;
