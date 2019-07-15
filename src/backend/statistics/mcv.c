@@ -1593,12 +1593,18 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 					MCVItem    *item = &mcvlist->items[i];
 
 					/*
-					 * For AND-lists, we can also mark NULL items as 'no
-					 * match' (and then skip them). For OR-lists this is not
-					 * possible.
+					 * When the MCV item or the Const value is NULL we can treat
+					 * this as a mismatch. We must not call the operator because
+					 * of strictness.
 					 */
-					if ((!is_or) && item->isnull[idx])
-						matches[i] = false;
+					if (item->isnull[idx] || cst->constisnull)
+					{
+						/* we only care about AND, because OR can't change */
+						if (!is_or)
+							matches[i] = false;
+
+						continue;
+					}
 
 					/* skip MCV items that were already ruled out */
 					if ((!is_or) && (matches[i] == false))

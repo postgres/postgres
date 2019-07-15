@@ -619,6 +619,32 @@ SELECT m.*
      0 | {1,2,3} | {f,f,f} |         1 |              1
 (1 row)
 
+-- 2 distinct combinations with NULL values, all in the MCV list
+TRUNCATE mcv_lists;
+DROP STATISTICS mcv_lists_stats;
+INSERT INTO mcv_lists (a, b, c, d)
+     SELECT
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 0 END),
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 'x' END),
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 0 END),
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 'x' END)
+     FROM generate_series(1,5000) s(i);
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE b = ''x'' OR d = ''x''');
+ estimated | actual 
+-----------+--------
+      3750 |   2500
+(1 row)
+
+-- create statistics
+CREATE STATISTICS mcv_lists_stats (mcv) ON b, d FROM mcv_lists;
+ANALYZE mcv_lists;
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE b = ''x'' OR d = ''x''');
+ estimated | actual 
+-----------+--------
+      2500 |   2500
+(1 row)
+
 -- mcv with arrays
 CREATE TABLE mcv_lists_arrays (
     a TEXT[],
