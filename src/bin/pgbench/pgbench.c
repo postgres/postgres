@@ -3931,32 +3931,48 @@ checkInitSteps(const char *initialize_steps)
 static void
 runInitSteps(const char *initialize_steps)
 {
+	PQExpBufferData stats;
 	PGconn	   *con;
 	const char *step;
+	double		run_time = 0.0;
+	bool		first = true;
+
+	initPQExpBuffer(&stats);
 
 	if ((con = doConnect()) == NULL)
 		exit(1);
 
 	for (step = initialize_steps; *step != '\0'; step++)
 	{
+		instr_time	start;
+		char	   *op = NULL;
+
+		INSTR_TIME_SET_CURRENT(start);
+
 		switch (*step)
 		{
 			case 'd':
+				op = "drop tables";
 				initDropTables(con);
 				break;
 			case 't':
+				op = "create tables";
 				initCreateTables(con);
 				break;
 			case 'g':
+				op = "generate";
 				initGenerateData(con);
 				break;
 			case 'v':
+				op = "vacuum";
 				initVacuum(con);
 				break;
 			case 'p':
+				op = "primary keys";
 				initCreatePKeys(con);
 				break;
 			case 'f':
+				op = "foreign keys";
 				initCreateFKeys(con);
 				break;
 			case ' ':
@@ -3967,10 +3983,30 @@ runInitSteps(const char *initialize_steps)
 				PQfinish(con);
 				exit(1);
 		}
+
+		if (op != NULL)
+		{
+			instr_time	diff;
+			double		elapsed_sec;
+
+			INSTR_TIME_SET_CURRENT(diff);
+			INSTR_TIME_SUBTRACT(diff, start);
+			elapsed_sec = INSTR_TIME_GET_DOUBLE(diff);
+
+			if (!first)
+				appendPQExpBufferStr(&stats, ", ");
+			else
+				first = false;
+
+			appendPQExpBuffer(&stats, "%s %.2f s", op, elapsed_sec);
+
+			run_time += elapsed_sec;
+		}
 	}
 
-	fprintf(stderr, "done.\n");
+	fprintf(stderr, "done in %.2f s (%s).\n", run_time, stats.data);
 	PQfinish(con);
+	termPQExpBuffer(&stats);
 }
 
 /*

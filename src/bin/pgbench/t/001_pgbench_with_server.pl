@@ -94,7 +94,7 @@ pgbench(
 	[qr{^$}],
 	[
 		qr{creating tables},       qr{vacuuming},
-		qr{creating primary keys}, qr{done\.}
+		qr{creating primary keys}, qr{done in \d+\.\d\d s }
 	],
 	'pgbench scale 1 initialization',);
 
@@ -109,7 +109,8 @@ pgbench(
 		qr{vacuuming},
 		qr{creating primary keys},
 		qr{creating foreign keys},
-		qr{done\.}
+		qr{(?!vacuuming)}, # no vacuum
+		qr{done in \d+\.\d\d s }
 	],
 	'pgbench scale 1 initialization');
 
@@ -124,7 +125,8 @@ pgbench(
 		qr{creating primary keys},
 		qr{.* of .* tuples \(.*\) done},
 		qr{creating foreign keys},
-		qr{done\.}
+		qr{(?!vacuuming)}, # no vacuum
+		qr{done in \d+\.\d\d s }
 	],
 	'pgbench --init-steps');
 
