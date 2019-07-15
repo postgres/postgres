@@ -3704,7 +3704,7 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 													 paramvalue,
 													 paramtypeid);
 				appendStringInfoString(&ds, extval);
-				current_param = lnext(current_param);
+				current_param = lnext(stmt->params, current_param);
 				exec_eval_cleanup(estate);
 			}
 			else

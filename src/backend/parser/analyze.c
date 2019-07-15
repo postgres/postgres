@@ -2341,7 +2341,7 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 		target_rte->updatedCols = bms_add_member(target_rte->updatedCols,
 												 attrno - FirstLowInvalidHeapAttributeNumber);
 
-		orig_tl = lnext(orig_tl);
+		orig_tl = lnext(origTlist, orig_tl);
 	}
 	if (orig_tl != NULL)
 		elog(ERROR, "UPDATE target count mismatch --- internal error");

@@ -3204,7 +3204,7 @@ compare_tlist_datatypes(List *tlist, List *colTypes,
 			elog(ERROR, "wrong number of tlist entries");
 		if (exprType((Node *) tle->expr) != lfirst_oid(colType))
 			safetyInfo->unsafeColumns[tle->resno] = true;
-		colType = lnext(colType);
+		colType = lnext(colTypes, colType);
 	}
 	if (colType != NULL)
 		elog(ERROR, "wrong number of tlist entries");
@@ -3761,7 +3761,7 @@ print_restrictclauses(PlannerInfo *root, List *clauses)
 		RestrictInfo *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->parse->rtable);
-		if (lnext(l))
+		if (lnext(clauses, l))
 			printf(", ");
 	}
 }

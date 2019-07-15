@@ -181,7 +181,7 @@ create_ctas_nodata(List *tlist, IntoClause *into)
 			if (lc)
 			{
 				colname = strVal(lfirst(lc));
-				lc = lnext(lc);
+				lc = lnext(into->colNames, lc);
 			}
 			else
 				colname = tle->resname;
@@ -465,7 +465,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		if (lc)
 		{
 			colname = strVal(lfirst(lc));
-			lc = lnext(lc);
+			lc = lnext(into->colNames, lc);
 		}
 		else
 			colname = NameStr(attribute->attname);

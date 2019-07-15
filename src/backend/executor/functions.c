@@ -1181,7 +1181,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		es = es->next;
 		while (!es)
 		{
-			eslc = lnext(eslc);
+			eslc = lnext(eslist, eslc);
 			if (!eslc)
 				break;			/* end of function */
 

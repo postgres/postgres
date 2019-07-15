@@ -5255,7 +5255,7 @@ tlist_matches_coltypelist(List *tlist, List *coltypelist)
 			return false;		/* too many tlist items */
 
 		coltype = lfirst_oid(clistitem);
-		clistitem = lnext(clistitem);
+		clistitem = lnext(coltypelist, clistitem);
 
 		if (exprType((Node *) tle->expr) != coltype)
 			return false;		/* column type mismatch */

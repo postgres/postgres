@@ -174,6 +174,7 @@ static List *get_steps_using_prefix_recurse(GeneratePruningStepsContext *context
 											Oid step_lastcmpfn,
 											int step_lastkeyno,
 											Bitmapset *step_nullkeys,
+											List *prefix,
 											ListCell *start,
 											List *step_exprs,
 											List *step_cmpfns);
@@ -1521,7 +1522,7 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 					 * of expressions of different keys, which
 					 * get_steps_using_prefix will take care of for us.
 					 */
-					for_each_cell(lc1, lc)
+					for_each_cell(lc1, eq_clauses, lc)
 					{
 						pc = lfirst(lc1);
 
@@ -2213,6 +2214,7 @@ get_steps_using_prefix(GeneratePruningStepsContext *context,
 										  step_lastcmpfn,
 										  step_lastkeyno,
 										  step_nullkeys,
+										  prefix,
 										  list_head(prefix),
 										  NIL, NIL);
 }
@@ -2224,6 +2226,7 @@ get_steps_using_prefix(GeneratePruningStepsContext *context,
  *		column that is less than the one for which we're currently generating
  *		steps (that is, step_lastkeyno)
  *
+ * 'prefix' is the list of PartClauseInfos.
  * 'start' is where we should start iterating for the current invocation.
  * 'step_exprs' and 'step_cmpfns' each contains the expressions and cmpfns
  * we've generated so far from the clauses for the previous part keys.
@@ -2236,6 +2239,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 							   Oid step_lastcmpfn,
 							   int step_lastkeyno,
 							   Bitmapset *step_nullkeys,
+							   List *prefix,
 							   ListCell *start,
 							   List *step_exprs,
 							   List *step_cmpfns)
@@ -2261,7 +2265,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		 * next_start to the ListCell of the first clause for the next
 		 * partition key.
 		 */
-		for_each_cell(lc, start)
+		for_each_cell(lc, prefix, start)
 		{
 			pc = lfirst(lc);
 
@@ -2270,7 +2274,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		}
 		next_start = lc;
 
-		for_each_cell(lc, start)
+		for_each_cell(lc, prefix, start)
 		{
 			List	   *moresteps;
 
@@ -2304,6 +2308,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 													   step_lastcmpfn,
 													   step_lastkeyno,
 													   step_nullkeys,
+													   prefix,
 													   next_start,
 													   step_exprs,
 													   step_cmpfns);
@@ -2318,7 +2323,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		 * till the end of the list.
 		 */
 		Assert(list_length(step_exprs) == cur_keyno);
-		for_each_cell(lc, start)
+		for_each_cell(lc, prefix, start)
 		{
 			PartClauseInfo *pc = lfirst(lc);
 			PartitionPruneStep *step;
@@ -3263,8 +3268,8 @@ perform_pruning_base_step(PartitionPruneContext *context,
 			values[keyno] = datum;
 			nvalues++;
 
-			lc1 = lnext(lc1);
-			lc2 = lnext(lc2);
+			lc1 = lnext(opstep->exprs, lc1);
+			lc2 = lnext(opstep->cmpfns, lc2);
 		}
 	}
 

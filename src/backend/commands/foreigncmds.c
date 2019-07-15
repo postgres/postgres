@@ -120,11 +120,10 @@ transformGenericOptions(Oid catalogId,
 	{
 		DefElem    *od = lfirst(optcell);
 		ListCell   *cell;
-		ListCell   *prev = NULL;
 
 		/*
 		 * Find the element in resultOptions.  We need this for validation in
-		 * all cases.  Also identify the previous element.
+		 * all cases.
 		 */
 		foreach(cell, resultOptions)
 		{
@@ -132,8 +131,6 @@ transformGenericOptions(Oid catalogId,
 
 			if (strcmp(def->defname, od->defname) == 0)
 				break;
-			else
-				prev = cell;
 		}
 
 		/*
@@ -150,7 +147,7 @@ transformGenericOptions(Oid catalogId,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
 							 errmsg("option \"%s\" not found",
 									od->defname)));
-				resultOptions = list_delete_cell(resultOptions, cell, prev);
+				resultOptions = list_delete_cell(resultOptions, cell);
 				break;
 
 			case DEFELEM_SET:

@@ -58,7 +58,7 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("no security label providers have been loaded")));
-		if (lnext(list_head(label_provider_list)) != NULL)
+		if (list_length(label_provider_list) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("must specify provider when multiple security label providers have been loaded")));

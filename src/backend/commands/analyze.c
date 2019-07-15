@@ -455,7 +455,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 						if (indexpr_item == NULL)	/* shouldn't happen */
 							elog(ERROR, "too few entries in indexprs list");
 						indexkey = (Node *) lfirst(indexpr_item);
-						indexpr_item = lnext(indexpr_item);
+						indexpr_item = lnext(indexInfo->ii_Expressions,
+											 indexpr_item);
 						thisdata->vacattrstats[tcnt] =
 							examine_attribute(Irel[ind], i + 1, indexkey);
 						if (thisdata->vacattrstats[tcnt] != NULL)

@@ -3402,7 +3402,7 @@ OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
 	if (path->addTemp)
 	{
 		if (lc && lfirst_oid(lc) == myTempNamespace)
-			lc = lnext(lc);
+			lc = lnext(activeSearchPath, lc);
 		else
 			return false;
 	}
@@ -3410,7 +3410,7 @@ OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
 	if (path->addCatalog)
 	{
 		if (lc && lfirst_oid(lc) == PG_CATALOG_NAMESPACE)
-			lc = lnext(lc);
+			lc = lnext(activeSearchPath, lc);
 		else
 			return false;
 	}
@@ -3421,7 +3421,7 @@ OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
 	foreach(lcp, path->schemas)
 	{
 		if (lc && lfirst_oid(lc) == lfirst_oid(lcp))
-			lc = lnext(lc);
+			lc = lnext(activeSearchPath, lc);
 		else
 			return false;
 	}

@@ -481,7 +481,6 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 	char	   *pubname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Publication *publication;
 	List	   *tables;
-	ListCell  **lcp;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -499,22 +498,19 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			tables = GetAllTablesPublicationRelations();
 		else
 			tables = GetPublicationRelations(publication->oid);
-		lcp = (ListCell **) palloc(sizeof(ListCell *));
-		*lcp = list_head(tables);
-		funcctx->user_fctx = (void *) lcp;
+		funcctx->user_fctx = (void *) tables;
 
 		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
-	lcp = (ListCell **) funcctx->user_fctx;
+	tables = (List *) funcctx->user_fctx;
 
-	while (*lcp != NULL)
+	if (funcctx->call_cntr < list_length(tables))
 	{
-		Oid			relid = lfirst_oid(*lcp);
+		Oid			relid = list_nth_oid(tables, funcctx->call_cntr);
 
-		*lcp = lnext(*lcp);
 		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(relid));
 	}
 

@@ -100,7 +100,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	Oid			rettype;
 	Oid			funcid;
 	ListCell   *l;
-	ListCell   *nextl;
 	Node	   *first_arg = NULL;
 	int			nargs;
 	int			nargsplusdefs;
@@ -147,21 +146,18 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * to distinguish "input" and "output" parameter symbols while parsing
 	 * function-call constructs.  Don't do this if dealing with column syntax,
 	 * nor if we had WITHIN GROUP (because in that case it's critical to keep
-	 * the argument count unchanged).  We can't use foreach() because we may
-	 * modify the list ...
+	 * the argument count unchanged).
 	 */
 	nargs = 0;
-	for (l = list_head(fargs); l != NULL; l = nextl)
+	foreach(l, fargs)
 	{
 		Node	   *arg = lfirst(l);
 		Oid			argtype = exprType(arg);
 
-		nextl = lnext(l);
-
 		if (argtype == VOIDOID && IsA(arg, Param) &&
 			!is_column && !agg_within_group)
 		{
-			fargs = list_delete_ptr(fargs, arg);
+			fargs = foreach_delete_current(fargs, l);
 			continue;
 		}
 
@@ -1683,8 +1679,8 @@ func_get_detail(List *funcname,
 				int			ndelete;
 
 				ndelete = list_length(defaults) - best_candidate->ndargs;
-				while (ndelete-- > 0)
-					defaults = list_delete_first(defaults);
+				if (ndelete > 0)
+					defaults = list_copy_tail(defaults, ndelete);
 				*argdefaults = defaults;
 			}
 		}
@@ -2009,7 +2005,7 @@ funcname_signature_string(const char *funcname, int nargs,
 		if (i >= numposargs)
 		{
 			appendStringInfo(&argbuf, "%s => ", (char *) lfirst(lc));
-			lc = lnext(lc);
+			lc = lnext(argnames, lc);
 		}
 		appendStringInfoString(&argbuf, format_type_be(argtypes[i]));
 	}

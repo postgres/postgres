@@ -347,7 +347,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			if (indexpr_item == NULL)	/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");
 			indexkey = (Node *) lfirst(indexpr_item);
-			indexpr_item = lnext(indexpr_item);
+			indexpr_item = lnext(indexInfo->ii_Expressions, indexpr_item);
 
 			/*
 			 * Lookup the expression type in pg_type for the type length etc.
@@ -397,7 +397,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 		if (colnames_item == NULL)	/* shouldn't happen */
 			elog(ERROR, "too few entries in colnames list");
 		namestrcpy(&to->attname, (const char *) lfirst(colnames_item));
-		colnames_item = lnext(colnames_item);
+		colnames_item = lnext(indexColNames, colnames_item);
 
 		/*
 		 * Check the opclass and index AM to see if either provides a keytype
@@ -2465,7 +2465,7 @@ FormIndexDatum(IndexInfo *indexInfo,
 			iDatum = ExecEvalExprSwitchContext((ExprState *) lfirst(indexpr_item),
 											   GetPerTupleExprContext(estate),
 											   &isNull);
-			indexpr_item = lnext(indexpr_item);
+			indexpr_item = lnext(indexInfo->ii_ExpressionsState, indexpr_item);
 		}
 		values[i] = iDatum;
 		isnull[i] = isNull;

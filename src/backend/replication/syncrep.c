@@ -887,17 +887,13 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 	while (priority <= lowest_priority)
 	{
 		ListCell   *cell;
-		ListCell   *prev = NULL;
-		ListCell   *next;
 
 		next_highest_priority = lowest_priority + 1;
 
-		for (cell = list_head(pending); cell != NULL; cell = next)
+		foreach(cell, pending)
 		{
 			i = lfirst_int(cell);
 			walsnd = &WalSndCtl->walsnds[i];
-
-			next = lnext(cell);
 
 			this_priority = walsnd->sync_standby_priority;
 			if (this_priority == priority)
@@ -921,15 +917,13 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 				 * Remove the entry for this sync standby from the list to
 				 * prevent us from looking at the same entry again.
 				 */
-				pending = list_delete_cell(pending, cell, prev);
+				pending = foreach_delete_current(pending, cell);
 
-				continue;
+				continue;		/* don't adjust next_highest_priority */
 			}
 
 			if (this_priority < next_highest_priority)
 				next_highest_priority = this_priority;
-
-			prev = cell;
 		}
 
 		priority = next_highest_priority;

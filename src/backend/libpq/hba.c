@@ -1060,7 +1060,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}
 
 	/* Get the databases. */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	if (!field)
 	{
 		ereport(elevel,
@@ -1080,7 +1080,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}
 
 	/* Get the roles. */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	if (!field)
 	{
 		ereport(elevel,
@@ -1102,7 +1102,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	if (parsedline->conntype != ctLocal)
 	{
 		/* Read the IP address field. (with or without CIDR netmask) */
-		field = lnext(field);
+		field = lnext(tok_line->fields, field);
 		if (!field)
 		{
 			ereport(elevel,
@@ -1222,7 +1222,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 			{
 				/* Read the mask field. */
 				pfree(str);
-				field = lnext(field);
+				field = lnext(tok_line->fields, field);
 				if (!field)
 				{
 					ereport(elevel,
@@ -1283,7 +1283,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}							/* != ctLocal */
 
 	/* Get the authentication method */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	if (!field)
 	{
 		ereport(elevel,
@@ -1488,7 +1488,7 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 	}
 
 	/* Parse remaining arguments */
-	while ((field = lnext(field)) != NULL)
+	while ((field = lnext(tok_line->fields, field)) != NULL)
 	{
 		tokens = lfirst(field);
 		foreach(tokencell, tokens)
@@ -2729,7 +2729,7 @@ parse_ident_line(TokenizedLine *tok_line)
 	parsedline->usermap = pstrdup(token->string);
 
 	/* Get the ident user token */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	IDENT_FIELD_ABSENT(field);
 	tokens = lfirst(field);
 	IDENT_MULTI_VALUE(tokens);
@@ -2737,7 +2737,7 @@ parse_ident_line(TokenizedLine *tok_line)
 	parsedline->ident_user = pstrdup(token->string);
 
 	/* Get the PG rolename token */
-	field = lnext(field);
+	field = lnext(tok_line->fields, field);
 	IDENT_FIELD_ABSENT(field);
 	tokens = lfirst(field);
 	IDENT_MULTI_VALUE(tokens);

@@ -416,18 +416,18 @@ makeItemList(List *list)
 {
 	JsonPathParseItem  *head,
 					   *end;
-	ListCell		   *cell = list_head(list);
+	ListCell		   *cell;
 
-	head = end = (JsonPathParseItem *) lfirst(cell);
+	head = end = (JsonPathParseItem *) linitial(list);
 
-	if (!lnext(cell))
+	if (list_length(list) == 1)
 		return head;
 
 	/* append items to the end of already existing list */
 	while (end->next)
 		end = end->next;
 
-	for_each_cell(cell, lnext(cell))
+	for_each_cell(cell, list, list_second_cell(list))
 	{
 		JsonPathParseItem *c = (JsonPathParseItem *) lfirst(cell);
 

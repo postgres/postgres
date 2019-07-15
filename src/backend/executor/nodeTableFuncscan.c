@@ -514,7 +514,7 @@ tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext)
 
 			/* advance list of default expressions */
 			if (cell != NULL)
-				cell = lnext(cell);
+				cell = lnext(tstate->coldefexprs, cell);
 		}
 
 		tuplestore_putvalues(tstate->tupstore, tupdesc, values, nulls);

@@ -257,7 +257,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 							queryString, params, queryEnv);
 
 			/* Separate plans with an appropriate separator */
-			if (lnext(l) != NULL)
+			if (lnext(rewritten, l) != NULL)
 				ExplainSeparatePlans(es);
 		}
 	}

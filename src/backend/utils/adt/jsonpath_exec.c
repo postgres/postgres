@@ -146,6 +146,7 @@ typedef struct JsonValueList
 typedef struct JsonValueListIterator
 {
 	JsonbValue *value;
+	List	   *list;
 	ListCell   *next;
 } JsonValueListIterator;
 
@@ -2182,16 +2183,19 @@ JsonValueListInitIterator(const JsonValueList *jvl, JsonValueListIterator *it)
 	if (jvl->singleton)
 	{
 		it->value = jvl->singleton;
+		it->list = NIL;
 		it->next = NULL;
 	}
-	else if (list_head(jvl->list) != NULL)
+	else if (jvl->list != NIL)
 	{
 		it->value = (JsonbValue *) linitial(jvl->list);
-		it->next = lnext(list_head(jvl->list));
+		it->list = jvl->list;
+		it->next = list_second_cell(jvl->list);
 	}
 	else
 	{
 		it->value = NULL;
+		it->list = NIL;
 		it->next = NULL;
 	}
 }
@@ -2207,7 +2211,7 @@ JsonValueListNext(const JsonValueList *jvl, JsonValueListIterator *it)
 	if (it->next)
 	{
 		it->value = lfirst(it->next);
-		it->next = lnext(it->next);
+		it->next = lnext(it->list, it->next);
 	}
 	else
 	{

@@ -1529,7 +1529,7 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
 			if (!lop)
 				elog(ERROR, "too few pathkeys for mergeclauses");
 			opathkey = (PathKey *) lfirst(lop);
-			lop = lnext(lop);
+			lop = lnext(outer_pathkeys, lop);
 			lastoeclass = opathkey->pk_eclass;
 			if (oeclass != lastoeclass)
 				elog(ERROR, "outer pathkeys do not match mergeclause");
@@ -1609,7 +1609,7 @@ trim_mergeclauses_for_inner_pathkeys(PlannerInfo *root,
 	lip = list_head(pathkeys);
 	pathkey = (PathKey *) lfirst(lip);
 	pathkey_ec = pathkey->pk_eclass;
-	lip = lnext(lip);
+	lip = lnext(pathkeys, lip);
 	matched_pathkey = false;
 
 	/* Scan mergeclauses to see how many we can use */
@@ -1636,7 +1636,7 @@ trim_mergeclauses_for_inner_pathkeys(PlannerInfo *root,
 				break;
 			pathkey = (PathKey *) lfirst(lip);
 			pathkey_ec = pathkey->pk_eclass;
-			lip = lnext(lip);
+			lip = lnext(pathkeys, lip);
 			matched_pathkey = false;
 		}
 

@@ -173,7 +173,7 @@ ExecInitJunkFilterConversion(List *targetList,
 			{
 				TargetEntry *tle = lfirst(t);
 
-				t = lnext(t);
+				t = lnext(targetList, t);
 				if (!tle->resjunk)
 				{
 					cleanMap[i] = tle->resno;

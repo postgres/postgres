@@ -2937,14 +2937,9 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
 
 	ndistinct = get_variable_numdistinct(vardata, &isdefault);
 
-	/* cannot use foreach here because of possible list_delete */
-	lc = list_head(varinfos);
-	while (lc)
+	foreach(lc, varinfos)
 	{
 		varinfo = (GroupVarInfo *) lfirst(lc);
-
-		/* must advance lc before list_delete possibly pfree's it */
-		lc = lnext(lc);
 
 		/* Drop exact duplicates */
 		if (equal(var, varinfo->var))
@@ -2965,7 +2960,7 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
 			else
 			{
 				/* Delete the older item */
-				varinfos = list_delete_ptr(varinfos, varinfo);
+				varinfos = foreach_delete_current(varinfos, lc);
 			}
 		}
 	}
@@ -3207,7 +3202,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		 * for remaining Vars on other rels.
 		 */
 		relvarinfos = lcons(varinfo1, relvarinfos);
-		for_each_cell(l, lnext(list_head(varinfos)))
+		for_each_cell(l, varinfos, list_second_cell(varinfos))
 		{
 			GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
 
@@ -4631,7 +4626,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 						if (vardata->statsTuple)
 							break;
 					}
-					indexpr_item = lnext(indexpr_item);
+					indexpr_item = lnext(index->indexprs, indexpr_item);
 				}
 			}
 			if (vardata->statsTuple)

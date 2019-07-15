@@ -1334,7 +1334,7 @@ PortalRunMulti(Portal portal,
 		 * Increment command counter between queries, but not after the last
 		 * one.
 		 */
-		if (lnext(stmtlist_item) != NULL)
+		if (lnext(portal->stmts, stmtlist_item) != NULL)
 			CommandCounterIncrement();
 
 		/*

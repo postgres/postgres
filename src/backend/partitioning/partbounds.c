@@ -2046,7 +2046,7 @@ get_qual_for_hash(Relation parent, PartitionBoundSpec *spec)
 		else
 		{
 			keyCol = (Node *) copyObject(lfirst(partexprs_item));
-			partexprs_item = lnext(partexprs_item);
+			partexprs_item = lnext(key->partexprs, partexprs_item);
 		}
 
 		args = lappend(args, keyCol);
@@ -2491,19 +2491,20 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 		j = i;
 		partexprs_item = partexprs_item_saved;
 
-		for_both_cell(cell1, lower_or_start_datum, cell2, upper_or_start_datum)
+		for_both_cell(cell1, spec->lowerdatums, lower_or_start_datum,
+					  cell2, spec->upperdatums, upper_or_start_datum)
 		{
 			PartitionRangeDatum *ldatum_next = NULL,
 					   *udatum_next = NULL;
 
 			ldatum = castNode(PartitionRangeDatum, lfirst(cell1));
-			if (lnext(cell1))
+			if (lnext(spec->lowerdatums, cell1))
 				ldatum_next = castNode(PartitionRangeDatum,
-									   lfirst(lnext(cell1)));
+									   lfirst(lnext(spec->lowerdatums, cell1)));
 			udatum = castNode(PartitionRangeDatum, lfirst(cell2));
-			if (lnext(cell2))
+			if (lnext(spec->upperdatums, cell2))
 				udatum_next = castNode(PartitionRangeDatum,
-									   lfirst(lnext(cell2)));
+									   lfirst(lnext(spec->upperdatums, cell2)));
 			get_range_key_properties(key, j, ldatum, udatum,
 									 &partexprs_item,
 									 &keyCol,
@@ -2668,7 +2669,7 @@ get_range_key_properties(PartitionKey key, int keynum,
 		if (*partexprs_item == NULL)
 			elog(ERROR, "wrong number of partition key expressions");
 		*keyCol = copyObject(lfirst(*partexprs_item));
-		*partexprs_item = lnext(*partexprs_item);
+		*partexprs_item = lnext(key->partexprs, *partexprs_item);
 	}
 
 	/* Get appropriate Const nodes for the bounds */
@@ -2716,7 +2717,7 @@ get_range_nulltest(PartitionKey key)
 			if (partexprs_item == NULL)
 				elog(ERROR, "wrong number of partition key expressions");
 			keyCol = copyObject(lfirst(partexprs_item));
-			partexprs_item = lnext(partexprs_item);
+			partexprs_item = lnext(key->partexprs, partexprs_item);
 		}
 
 		nulltest = makeNode(NullTest);

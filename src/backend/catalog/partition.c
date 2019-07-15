@@ -275,7 +275,7 @@ has_partition_attrs(Relation rel, Bitmapset *attnums, bool *used_in_expr)
 
 			/* Find all attributes referenced */
 			pull_varattnos(expr, 1, &expr_attrs);
-			partexprs_item = lnext(partexprs_item);
+			partexprs_item = lnext(partexprs, partexprs_item);
 
 			if (bms_overlap(attnums, expr_attrs))
 			{

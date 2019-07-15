@@ -1137,10 +1137,10 @@ process_startup_options(Port *port, bool am_superuser)
 		char	   *value;
 
 		name = lfirst(gucopts);
-		gucopts = lnext(gucopts);
+		gucopts = lnext(port->guc_options, gucopts);
 
 		value = lfirst(gucopts);
-		gucopts = lnext(gucopts);
+		gucopts = lnext(port->guc_options, gucopts);
 
 		SetConfigOption(name, value, gucctx, PGC_S_CLIENT);
 	}

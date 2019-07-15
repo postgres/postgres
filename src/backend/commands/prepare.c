@@ -682,7 +682,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into, ExplainState *es,
 		/* No need for CommandCounterIncrement, as ExplainOnePlan did it */
 
 		/* Separate plans with an appropriate separator */
-		if (lnext(p) != NULL)
+		if (lnext(plan_list, p) != NULL)
 			ExplainSeparatePlans(es);
 	}
 

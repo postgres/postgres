@@ -946,7 +946,7 @@ assign_hypothetical_collations(Aggref *aggref,
 	while (extra_args-- > 0)
 	{
 		(void) assign_collations_walker((Node *) lfirst(h_cell), loccontext);
-		h_cell = lnext(h_cell);
+		h_cell = lnext(aggref->aggdirectargs, h_cell);
 	}
 
 	/* Scan hypothetical args and aggregated args in parallel */
@@ -1027,8 +1027,8 @@ assign_hypothetical_collations(Aggref *aggref,
 								  paircontext.location2,
 								  loccontext);
 
-		h_cell = lnext(h_cell);
-		s_cell = lnext(s_cell);
+		h_cell = lnext(aggref->aggdirectargs, h_cell);
+		s_cell = lnext(aggref->args, s_cell);
 	}
 	Assert(h_cell == NULL && s_cell == NULL);
 }

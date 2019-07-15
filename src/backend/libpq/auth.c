@@ -3031,11 +3031,11 @@ CheckRADIUSAuth(Port *port)
 		 * don't and will then reuse the correct value.
 		 */
 		if (list_length(port->hba->radiussecrets) > 1)
-			secrets = lnext(secrets);
+			secrets = lnext(port->hba->radiussecrets, secrets);
 		if (list_length(port->hba->radiusports) > 1)
-			radiusports = lnext(radiusports);
+			radiusports = lnext(port->hba->radiusports, radiusports);
 		if (list_length(port->hba->radiusidentifiers) > 1)
-			identifiers = lnext(identifiers);
+			identifiers = lnext(port->hba->radiusidentifiers, identifiers);
 	}
 
 	/* No servers left to try, so give up */

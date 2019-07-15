@@ -2791,8 +2791,6 @@ void
 remove_useless_result_rtes(PlannerInfo *root)
 {
 	ListCell   *cell;
-	ListCell   *prev;
-	ListCell   *next;
 
 	/* Top level of jointree must always be a FromExpr */
 	Assert(IsA(root->parse->jointree, FromExpr));
@@ -2813,16 +2811,12 @@ remove_useless_result_rtes(PlannerInfo *root)
 	 * RTE_RESULT RTE; otherwise we'll generate a whole-row Var for the
 	 * RTE_RESULT, which the executor has no support for.
 	 */
-	prev = NULL;
-	for (cell = list_head(root->rowMarks); cell; cell = next)
+	foreach(cell, root->rowMarks)
 	{
 		PlanRowMark *rc = (PlanRowMark *) lfirst(cell);
 
-		next = lnext(cell);
 		if (rt_fetch(rc->rti, root->parse->rtable)->rtekind == RTE_RESULT)
-			root->rowMarks = list_delete_cell(root->rowMarks, cell, prev);
-		else
-			prev = cell;
+			root->rowMarks = foreach_delete_current(root->rowMarks, cell);
 	}
 }
 
@@ -2845,17 +2839,14 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 		FromExpr   *f = (FromExpr *) jtnode;
 		Relids		result_relids = NULL;
 		ListCell   *cell;
-		ListCell   *prev;
-		ListCell   *next;
 
 		/*
 		 * We can drop RTE_RESULT rels from the fromlist so long as at least
 		 * one child remains, since joining to a one-row table changes
 		 * nothing.  The easiest way to mechanize this rule is to modify the
-		 * list in-place, using list_delete_cell.
+		 * list in-place.
 		 */
-		prev = NULL;
-		for (cell = list_head(f->fromlist); cell; cell = next)
+		foreach(cell, f->fromlist)
 		{
 			Node	   *child = (Node *) lfirst(cell);
 			int			varno;
@@ -2864,7 +2855,6 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 			child = remove_useless_results_recurse(root, child);
 			/* ... and stick it back into the tree */
 			lfirst(cell) = child;
-			next = lnext(cell);
 
 			/*
 			 * If it's an RTE_RESULT with at least one sibling, we can drop
@@ -2874,11 +2864,9 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 			if (list_length(f->fromlist) > 1 &&
 				(varno = get_result_relid(root, child)) != 0)
 			{
-				f->fromlist = list_delete_cell(f->fromlist, cell, prev);
+				f->fromlist = foreach_delete_current(f->fromlist, cell);
 				result_relids = bms_add_member(result_relids, varno);
 			}
-			else
-				prev = cell;
 		}
 
 		/*

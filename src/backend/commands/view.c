@@ -522,7 +522,7 @@ DefineView(ViewStmt *stmt, const char *queryString,
 			if (te->resjunk)
 				continue;
 			te->resname = pstrdup(strVal(lfirst(alist_item)));
-			alist_item = lnext(alist_item);
+			alist_item = lnext(stmt->aliases, alist_item);
 			if (alist_item == NULL)
 				break;			/* done assigning aliases */
 		}

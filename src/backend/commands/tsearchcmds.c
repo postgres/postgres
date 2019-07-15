@@ -575,22 +575,16 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 		ListCell   *cell;
-		ListCell   *prev;
-		ListCell   *next;
 
 		/*
 		 * Remove any matches ...
 		 */
-		prev = NULL;
-		for (cell = list_head(dictoptions); cell; cell = next)
+		foreach(cell, dictoptions)
 		{
 			DefElem    *oldel = (DefElem *) lfirst(cell);
 
-			next = lnext(cell);
 			if (strcmp(oldel->defname, defel->defname) == 0)
-				dictoptions = list_delete_cell(dictoptions, cell, prev);
-			else
-				prev = cell;
+				dictoptions = foreach_delete_current(dictoptions, cell);
 		}
 
 		/*
@@ -1558,7 +1552,7 @@ serialize_deflist(List *deflist)
 			appendStringInfoChar(&buf, ch);
 		}
 		appendStringInfoChar(&buf, '\'');
-		if (lnext(l) != NULL)
+		if (lnext(deflist, l) != NULL)
 			appendStringInfoString(&buf, ", ");
 	}
 

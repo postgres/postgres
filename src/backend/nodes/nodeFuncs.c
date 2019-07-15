@@ -442,7 +442,7 @@ exprTypmod(const Node *expr)
 				typmod = exprTypmod((Node *) linitial(cexpr->args));
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
-				for_each_cell(arg, lnext(list_head(cexpr->args)))
+				for_each_cell(arg, cexpr->args, list_second_cell(cexpr->args))
 				{
 					Node	   *e = (Node *) lfirst(arg);
 
@@ -470,7 +470,7 @@ exprTypmod(const Node *expr)
 				typmod = exprTypmod((Node *) linitial(mexpr->args));
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
-				for_each_cell(arg, lnext(list_head(mexpr->args)))
+				for_each_cell(arg, mexpr->args, list_second_cell(mexpr->args))
 				{
 					Node	   *e = (Node *) lfirst(arg);
 

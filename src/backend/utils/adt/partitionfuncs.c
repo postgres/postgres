@@ -67,14 +67,13 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 #define PG_PARTITION_TREE_COLS	4
 	Oid			rootrelid = PG_GETARG_OID(0);
 	FuncCallContext *funcctx;
-	ListCell  **next;
+	List	   *partitions;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
 		MemoryContext oldcxt;
 		TupleDesc	tupdesc;
-		List	   *partitions;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -103,29 +102,27 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
-		/* allocate memory for user context */
-		next = (ListCell **) palloc(sizeof(ListCell *));
-		*next = list_head(partitions);
-		funcctx->user_fctx = (void *) next;
+		/* The only state we need is the partition list */
+		funcctx->user_fctx = (void *) partitions;
 
 		MemoryContextSwitchTo(oldcxt);
 	}
 
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
-	next = (ListCell **) funcctx->user_fctx;
+	partitions = (List *) funcctx->user_fctx;
 
-	if (*next != NULL)
+	if (funcctx->call_cntr < list_length(partitions))
 	{
 		Datum		result;
 		Datum		values[PG_PARTITION_TREE_COLS];
 		bool		nulls[PG_PARTITION_TREE_COLS];
 		HeapTuple	tuple;
 		Oid			parentid = InvalidOid;
-		Oid			relid = lfirst_oid(*next);
+		Oid			relid = list_nth_oid(partitions, funcctx->call_cntr);
 		char		relkind = get_rel_relkind(relid);
 		int			level = 0;
-		List	   *ancestors = get_partition_ancestors(lfirst_oid(*next));
+		List	   *ancestors = get_partition_ancestors(relid);
 		ListCell   *lc;
 
 		/*
@@ -160,8 +157,6 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 			}
 		}
 		values[3] = Int32GetDatum(level);
-
-		*next = lnext(*next);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
@@ -221,12 +216,11 @@ pg_partition_ancestors(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	FuncCallContext *funcctx;
-	ListCell  **next;
+	List	   *ancestors;
 
 	if (SRF_IS_FIRSTCALL())
 	{
 		MemoryContext oldcxt;
-		List	   *ancestors;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 
@@ -238,21 +232,19 @@ pg_partition_ancestors(PG_FUNCTION_ARGS)
 		ancestors = get_partition_ancestors(relid);
 		ancestors = lcons_oid(relid, ancestors);
 
-		next = (ListCell **) palloc(sizeof(ListCell *));
-		*next = list_head(ancestors);
-		funcctx->user_fctx = (void *) next;
+		/* The only state we need is the ancestors list */
+		funcctx->user_fctx = (void *) ancestors;
 
 		MemoryContextSwitchTo(oldcxt);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
-	next = (ListCell **) funcctx->user_fctx;
+	ancestors = (List *) funcctx->user_fctx;
 
-	if (*next != NULL)
+	if (funcctx->call_cntr < list_length(ancestors))
 	{
-		Oid			relid = lfirst_oid(*next);
+		Oid			relid = list_nth_oid(ancestors, funcctx->call_cntr);
 
-		*next = lnext(*next);
 		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(relid));
 	}
 

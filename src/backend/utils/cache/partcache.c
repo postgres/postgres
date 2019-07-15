@@ -222,7 +222,7 @@ RelationBuildPartitionKey(Relation relation)
 			key->parttypmod[i] = exprTypmod(lfirst(partexprs_item));
 			key->parttypcoll[i] = exprCollation(lfirst(partexprs_item));
 
-			partexprs_item = lnext(partexprs_item);
+			partexprs_item = lnext(key->partexprs, partexprs_item);
 		}
 		get_typlenbyvalalign(key->parttypid[i],
 							 &key->parttyplen[i],

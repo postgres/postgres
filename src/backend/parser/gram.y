@@ -15579,7 +15579,7 @@ makeColumnRef(char *colname, List *indirection,
 		else if (IsA(lfirst(l), A_Star))
 		{
 			/* We only allow '*' at the end of a ColumnRef */
-			if (lnext(l) != NULL)
+			if (lnext(indirection, l) != NULL)
 				parser_yyerror("improper use of \"*\"");
 		}
 		nfields++;
@@ -15768,7 +15768,7 @@ check_indirection(List *indirection, core_yyscan_t yyscanner)
 	{
 		if (IsA(lfirst(l), A_Star))
 		{
-			if (lnext(l) != NULL)
+			if (lnext(indirection, l) != NULL)
 				parser_yyerror("improper use of \"*\"");
 		}
 	}
@@ -16181,20 +16181,15 @@ SplitColQualList(List *qualList,
 				 core_yyscan_t yyscanner)
 {
 	ListCell   *cell;
-	ListCell   *prev;
-	ListCell   *next;
 
 	*collClause = NULL;
-	prev = NULL;
-	for (cell = list_head(qualList); cell; cell = next)
+	foreach(cell, qualList)
 	{
 		Node   *n = (Node *) lfirst(cell);
 
-		next = lnext(cell);
 		if (IsA(n, Constraint))
 		{
 			/* keep it in list */
-			prev = cell;
 			continue;
 		}
 		if (IsA(n, CollateClause))
@@ -16211,7 +16206,7 @@ SplitColQualList(List *qualList,
 		else
 			elog(ERROR, "unexpected node type %d", (int) n->type);
 		/* remove non-Constraint nodes from qualList */
-		qualList = list_delete_cell(qualList, cell, prev);
+		qualList = foreach_delete_current(qualList, cell);
 	}
 	*constraintList = qualList;
 }

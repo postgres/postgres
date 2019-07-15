@@ -93,24 +93,20 @@ static void
 sepgsql_avc_reclaim(void)
 {
 	ListCell   *cell;
-	ListCell   *next;
-	ListCell   *prev;
 	int			index;
 
 	while (avc_num_caches >= avc_threshold - AVC_NUM_RECLAIM)
 	{
 		index = avc_lru_hint;
 
-		prev = NULL;
-		for (cell = list_head(avc_slots[index]); cell; cell = next)
+		foreach(cell, avc_slots[index])
 		{
 			avc_cache  *cache = lfirst(cell);
 
-			next = lnext(cell);
 			if (!cache->hot_cache)
 			{
 				avc_slots[index]
-					= list_delete_cell(avc_slots[index], cell, prev);
+					= foreach_delete_current(avc_slots[index], cell);
 
 				pfree(cache->scontext);
 				pfree(cache->tcontext);
@@ -123,7 +119,6 @@ sepgsql_avc_reclaim(void)
 			else
 			{
 				cache->hot_cache = false;
-				prev = cell;
 			}
 		}
 		avc_lru_hint = (avc_lru_hint + 1) % AVC_NUM_SLOTS;

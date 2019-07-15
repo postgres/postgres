@@ -689,7 +689,6 @@ Datum
 pg_listening_channels(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
-	ListCell  **lcp;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -702,23 +701,17 @@ pg_listening_channels(PG_FUNCTION_ARGS)
 		/* switch to memory context appropriate for multiple function calls */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		/* allocate memory for user context */
-		lcp = (ListCell **) palloc(sizeof(ListCell *));
-		*lcp = list_head(listenChannels);
-		funcctx->user_fctx = (void *) lcp;
-
 		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
-	lcp = (ListCell **) funcctx->user_fctx;
 
-	while (*lcp != NULL)
+	if (funcctx->call_cntr < list_length(listenChannels))
 	{
-		char	   *channel = (char *) lfirst(*lcp);
+		char	   *channel = (char *) list_nth(listenChannels,
+												funcctx->call_cntr);
 
-		*lcp = lnext(*lcp);
 		SRF_RETURN_NEXT(funcctx, CStringGetTextDatum(channel));
 	}
 
@@ -1035,23 +1028,20 @@ static void
 Exec_UnlistenCommit(const char *channel)
 {
 	ListCell   *q;
-	ListCell   *prev;
 
 	if (Trace_notify)
 		elog(DEBUG1, "Exec_UnlistenCommit(%s,%d)", channel, MyProcPid);
 
-	prev = NULL;
 	foreach(q, listenChannels)
 	{
 		char	   *lchan = (char *) lfirst(q);
 
 		if (strcmp(lchan, channel) == 0)
 		{
-			listenChannels = list_delete_cell(listenChannels, q, prev);
+			listenChannels = foreach_delete_current(listenChannels, q);
 			pfree(lchan);
 			break;
 		}
-		prev = q;
 	}
 
 	/*
@@ -1311,9 +1301,9 @@ asyncQueueNotificationToEntry(Notification *n, AsyncQueueEntry *qe)
  * database OID in order to fill the page. So every page is always used up to
  * the last byte which simplifies reading the page later.
  *
- * We are passed the list cell containing the next notification to write
- * and return the first still-unwritten cell back.  Eventually we will return
- * NULL indicating all is done.
+ * We are passed the list cell (in pendingNotifies) containing the next
+ * notification to write and return the first still-unwritten cell back.
+ * Eventually we will return NULL indicating all is done.
  *
  * We are holding AsyncQueueLock already from the caller and grab AsyncCtlLock
  * locally in this function.
@@ -1362,7 +1352,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 		if (offset + qe.length <= QUEUE_PAGESIZE)
 		{
 			/* OK, so advance nextNotify past this item */
-			nextNotify = lnext(nextNotify);
+			nextNotify = lnext(pendingNotifies, nextNotify);
 		}
 		else
 		{

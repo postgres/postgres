@@ -4659,48 +4659,6 @@ _copyDropSubscriptionStmt(const DropSubscriptionStmt *from)
 }
 
 /* ****************************************************************
- *					pg_list.h copy functions
- * ****************************************************************
- */
-
-/*
- * Perform a deep copy of the specified list, using copyObject(). The
- * list MUST be of type T_List; T_IntList and T_OidList nodes don't
- * need deep copies, so they should be copied via list_copy()
- */
-#define COPY_NODE_CELL(new, old)					\
-	(new) = (ListCell *) palloc(sizeof(ListCell));	\
-	lfirst(new) = copyObjectImpl(lfirst(old));
-
-static List *
-_copyList(const List *from)
-{
-	List	   *new;
-	ListCell   *curr_old;
-	ListCell   *prev_new;
-
-	Assert(list_length(from) >= 1);
-
-	new = makeNode(List);
-	new->length = from->length;
-
-	COPY_NODE_CELL(new->head, from->head);
-	prev_new = new->head;
-	curr_old = lnext(from->head);
-
-	while (curr_old)
-	{
-		COPY_NODE_CELL(prev_new->next, curr_old);
-		prev_new = prev_new->next;
-		curr_old = curr_old->next;
-	}
-	prev_new->next = NULL;
-	new->tail = prev_new;
-
-	return new;
-}
-
-/* ****************************************************************
  *					extensible.h copy functions
  * ****************************************************************
  */
@@ -5140,7 +5098,7 @@ copyObjectImpl(const void *from)
 			 * LIST NODES
 			 */
 		case T_List:
-			retval = _copyList(from);
+			retval = list_copy_deep(from);
 			break;
 
 			/*

@@ -203,8 +203,6 @@ SetClientEncoding(int encoding)
 	int			current_server_encoding;
 	bool		found;
 	ListCell   *lc;
-	ListCell   *prev;
-	ListCell   *next;
 
 	if (!PG_VALID_FE_ENCODING(encoding))
 		return -1;
@@ -238,12 +236,9 @@ SetClientEncoding(int encoding)
 	 * leak memory.
 	 */
 	found = false;
-	prev = NULL;
-	for (lc = list_head(ConvProcList); lc; lc = next)
+	foreach(lc, ConvProcList)
 	{
 		ConvProcInfo *convinfo = (ConvProcInfo *) lfirst(lc);
-
-		next = lnext(lc);
 
 		if (convinfo->s_encoding == current_server_encoding &&
 			convinfo->c_encoding == encoding)
@@ -259,13 +254,10 @@ SetClientEncoding(int encoding)
 			else
 			{
 				/* Duplicate entry, release it */
-				ConvProcList = list_delete_cell(ConvProcList, lc, prev);
+				ConvProcList = foreach_delete_current(ConvProcList, lc);
 				pfree(convinfo);
-				continue;		/* prev mustn't advance */
 			}
 		}
-
-		prev = lc;
 	}
 
 	if (found)

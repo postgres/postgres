@@ -1793,7 +1793,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			indexInfo->ii_ExclusionOps[attn] = opid;
 			indexInfo->ii_ExclusionProcs[attn] = get_opcode(opid);
 			indexInfo->ii_ExclusionStrats[attn] = strat;
-			nextExclOp = lnext(nextExclOp);
+			nextExclOp = lnext(exclusionOpNames, nextExclOp);
 		}
 
 		/*

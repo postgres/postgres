@@ -122,7 +122,7 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
 		ListCell   *rest;
 
-		for_each_cell(rest, lnext(lc))
+		for_each_cell(rest, withClause->ctes, lnext(withClause->ctes, lc))
 		{
 			CommonTableExpr *cte2 = (CommonTableExpr *) lfirst(rest);
 
@@ -327,9 +327,9 @@ analyzeCTE(ParseState *pstate, CommonTableExpr *cte)
 								get_collation_name(exprCollation(texpr))),
 						 errhint("Use the COLLATE clause to set the collation of the non-recursive term."),
 						 parser_errposition(pstate, exprLocation(texpr))));
-			lctyp = lnext(lctyp);
-			lctypmod = lnext(lctypmod);
-			lccoll = lnext(lccoll);
+			lctyp = lnext(cte->ctecoltypes, lctyp);
+			lctypmod = lnext(cte->ctecoltypmods, lctypmod);
+			lccoll = lnext(cte->ctecolcollations, lccoll);
 		}
 		if (lctyp != NULL || lctypmod != NULL || lccoll != NULL)	/* shouldn't happen */
 			elog(ERROR, "wrong number of output columns in WITH");

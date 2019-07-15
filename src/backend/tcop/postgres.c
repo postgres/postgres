@@ -1142,7 +1142,7 @@ exec_simple_query(const char *query_string)
 		 * reset shortly after completion anyway.  In event of an error, the
 		 * per_parsetree_context will be deleted when MessageContext is reset.
 		 */
-		if (lnext(parsetree_item) != NULL)
+		if (lnext(parsetree_list, parsetree_item) != NULL)
 		{
 			per_parsetree_context =
 				AllocSetContextCreate(MessageContext,
@@ -1240,7 +1240,7 @@ exec_simple_query(const char *query_string)
 
 		PortalDrop(portal, false);
 
-		if (lnext(parsetree_item) == NULL)
+		if (lnext(parsetree_list, parsetree_item) == NULL)
 		{
 			/*
 			 * If this is the last parsetree of the query string, close down

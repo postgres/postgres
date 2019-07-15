@@ -238,11 +238,9 @@ static List *
 merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 			bool force)
 {
-	ListCell   *prev;
 	ListCell   *lc;
 
 	/* Look for a clump that new_clump can join to */
-	prev = NULL;
 	foreach(lc, clumps)
 	{
 		Clump	   *old_clump = (Clump *) lfirst(lc);
@@ -286,7 +284,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 				pfree(new_clump);
 
 				/* Remove old_clump from list */
-				clumps = list_delete_cell(clumps, lc, prev);
+				clumps = foreach_delete_current(clumps, lc);
 
 				/*
 				 * Recursively try to merge the enlarged old_clump with
@@ -296,7 +294,6 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 				return merge_clump(root, clumps, old_clump, num_gene, force);
 			}
 		}
-		prev = lc;
 	}
 
 	/*
@@ -315,7 +312,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 	/* Else search for the place to insert it */
 	for (;;)
 	{
-		ListCell   *nxt = lnext(lc);
+		ListCell   *nxt = lnext(clumps, lc);
 
 		if (nxt == NULL || new_clump->size > ((Clump *) lfirst(nxt))->size)
 			break;				/* it belongs after 'lc', before 'nxt' */

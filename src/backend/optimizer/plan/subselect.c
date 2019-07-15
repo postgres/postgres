@@ -567,7 +567,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 		{
 			ptr += sprintf(ptr, "$%d%s",
 						   lfirst_int(lc),
-						   lnext(lc) ? "," : ")");
+						   lnext(splan->setParam, lc) ? "," : ")");
 		}
 	}
 

@@ -1547,7 +1547,7 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
 			indexkey = (Node *) lfirst(indexpr_item);
-			indexpr_item = lnext(indexpr_item);
+			indexpr_item = lnext(indexprs, indexpr_item);
 
 			/* Adjust Vars to match new table's column numbering */
 			indexkey = map_variable_attnos(indexkey,

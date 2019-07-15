@@ -4536,7 +4536,7 @@ insert_ordered_oid(List *list, Oid datum)
 	prev = list_head(list);
 	for (;;)
 	{
-		ListCell   *curr = lnext(prev);
+		ListCell   *curr = lnext(list, prev);
 
 		if (curr == NULL || datum < lfirst_oid(curr))
 			break;				/* it belongs after 'prev', before 'curr' */

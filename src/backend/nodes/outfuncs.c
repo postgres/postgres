@@ -218,7 +218,7 @@ _outList(StringInfo str, const List *node)
 		if (IsA(node, List))
 		{
 			outNode(str, lfirst(lc));
-			if (lnext(lc))
+			if (lnext(node, lc))
 				appendStringInfoChar(str, ' ');
 		}
 		else if (IsA(node, IntList))

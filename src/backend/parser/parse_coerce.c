@@ -1085,7 +1085,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 					 parser_coercion_errposition(pstate, location, expr)));
 		newargs = lappend(newargs, cexpr);
 		ucolno++;
-		arg = lnext(arg);
+		arg = lnext(args, arg);
 	}
 	if (arg != NULL)
 		ereport(ERROR,
@@ -1283,7 +1283,7 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 
 	Assert(exprs != NIL);
 	pexpr = (Node *) linitial(exprs);
-	lc = lnext(list_head(exprs));
+	lc = list_second_cell(exprs);
 	ptype = exprType(pexpr);
 
 	/*
@@ -1293,7 +1293,7 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 	 */
 	if (ptype != UNKNOWNOID)
 	{
-		for_each_cell(lc, lc)
+		for_each_cell(lc, exprs, lc)
 		{
 			Node	   *nexpr = (Node *) lfirst(lc);
 			Oid			ntype = exprType(nexpr);
@@ -1317,7 +1317,7 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 	ptype = getBaseType(ptype);
 	get_type_category_preferred(ptype, &pcategory, &pispreferred);
 
-	for_each_cell(lc, lc)
+	for_each_cell(lc, exprs, lc)
 	{
 		Node	   *nexpr = (Node *) lfirst(lc);
 		Oid			ntype = getBaseType(exprType(nexpr));

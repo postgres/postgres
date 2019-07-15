@@ -285,7 +285,7 @@ expand_targetlist(List *tlist, int command_type,
 			if (!old_tle->resjunk && old_tle->resno == attrno)
 			{
 				new_tle = old_tle;
-				tlist_item = lnext(tlist_item);
+				tlist_item = lnext(tlist, tlist_item);
 			}
 		}
 
@@ -410,7 +410,7 @@ expand_targetlist(List *tlist, int command_type,
 		}
 		new_tlist = lappend(new_tlist, old_tle);
 		attrno++;
-		tlist_item = lnext(tlist_item);
+		tlist_item = lnext(tlist, tlist_item);
 	}
 
 	return new_tlist;

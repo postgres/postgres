@@ -1349,7 +1349,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
 			indexkey = (Node *) lfirst(indexpr_item);
-			indexpr_item = lnext(indexpr_item);
+			indexpr_item = lnext(indexprs, indexpr_item);
 			/* Deparse */
 			str = deparse_expression_pretty(indexkey, context, false, false,
 											prettyFlags, 0);
@@ -1770,7 +1770,7 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 			if (partexpr_item == NULL)
 				elog(ERROR, "too few entries in partexprs list");
 			partkey = (Node *) lfirst(partexpr_item);
-			partexpr_item = lnext(partexpr_item);
+			partexpr_item = lnext(partexprs, partexpr_item);
 
 			/* Deparse */
 			str = deparse_expression_pretty(partkey, context, false, false,
@@ -2764,7 +2764,7 @@ pg_get_functiondef(PG_FUNCTION_ARGS)
 						char	   *curname = (char *) lfirst(lc);
 
 						simple_quote_literal(&buf, curname);
-						if (lnext(lc))
+						if (lnext(namelist, lc))
 							appendStringInfoString(&buf, ", ");
 					}
 				}
@@ -2953,6 +2953,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	int			argsprinted;
 	int			inputargno;
 	int			nlackdefaults;
+	List	   *argdefaults = NIL;
 	ListCell   *nextargdefault = NULL;
 	int			i;
 
@@ -2971,7 +2972,6 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		if (!isnull)
 		{
 			char	   *str;
-			List	   *argdefaults;
 
 			str = TextDatumGetCString(proargdefaults);
 			argdefaults = castNode(List, stringToNode(str));
@@ -3061,7 +3061,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 
 			Assert(nextargdefault != NULL);
 			expr = (Node *) lfirst(nextargdefault);
-			nextargdefault = lnext(nextargdefault);
+			nextargdefault = lnext(argdefaults, nextargdefault);
 
 			appendStringInfo(buf, " DEFAULT %s",
 							 deparse_expression(expr, NIL, false, false));
@@ -4763,16 +4763,14 @@ push_ancestor_plan(deparse_namespace *dpns, ListCell *ancestor_cell,
 				   deparse_namespace *save_dpns)
 {
 	PlanState  *ps = (PlanState *) lfirst(ancestor_cell);
-	List	   *ancestors;
 
 	/* Save state for restoration later */
 	*save_dpns = *dpns;
 
 	/* Build a new ancestor list with just this node's ancestors */
-	ancestors = NIL;
-	while ((ancestor_cell = lnext(ancestor_cell)) != NULL)
-		ancestors = lappend(ancestors, lfirst(ancestor_cell));
-	dpns->ancestors = ancestors;
+	dpns->ancestors =
+		list_copy_tail(dpns->ancestors,
+					   list_cell_number(dpns->ancestors, ancestor_cell) + 1);
 
 	/* Set attention on selected ancestor */
 	set_deparse_planstate(dpns, ps);
@@ -6511,7 +6509,7 @@ get_update_query_targetlist_def(Query *query, List *targetList,
 				((Param *) expr)->paramkind == PARAM_MULTIEXPR)
 			{
 				cur_ma_sublink = (SubLink *) lfirst(next_ma_cell);
-				next_ma_cell = lnext(next_ma_cell);
+				next_ma_cell = lnext(ma_sublinks, next_ma_cell);
 				remaining_ma_columns = count_nonjunk_tlist_entries(
 																   ((Query *) cur_ma_sublink->subselect)->targetList);
 				Assert(((Param *) expr)->paramid ==
@@ -8034,7 +8032,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				BoolExpr   *expr = (BoolExpr *) node;
 				Node	   *first_arg = linitial(expr->args);
-				ListCell   *arg = lnext(list_head(expr->args));
+				ListCell   *arg = list_second_cell(expr->args);
 
 				switch (expr->boolop)
 				{
@@ -8048,7 +8046,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							appendStringInfoString(buf, " AND ");
 							get_rule_expr_paren((Node *) lfirst(arg), context,
 												false, node);
-							arg = lnext(arg);
+							arg = lnext(expr->args, arg);
 						}
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, ')');
@@ -8064,7 +8062,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							appendStringInfoString(buf, " OR ");
 							get_rule_expr_paren((Node *) lfirst(arg), context,
 												false, node);
-							arg = lnext(arg);
+							arg = lnext(expr->args, arg);
 						}
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, ')');
@@ -8123,7 +8121,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfo(buf, "hashed %s", splan->plan_name);
 					else
 						appendStringInfoString(buf, splan->plan_name);
-					if (lnext(lc))
+					if (lnext(asplan->subplans, lc))
 						appendStringInfoString(buf, " or ");
 				}
 				appendStringInfoChar(buf, ')');
@@ -9231,7 +9229,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	{
 		if (nargs++ > 0)
 			appendStringInfoString(buf, ", ");
-		if (use_variadic && lnext(l) == NULL)
+		if (use_variadic && lnext(expr->args, l) == NULL)
 			appendStringInfoString(buf, "VARIADIC ");
 		get_rule_expr((Node *) lfirst(l), context, true);
 	}
@@ -10604,7 +10602,7 @@ printSubscripts(SubscriptingRef *sbsref, deparse_context *context)
 			/* If subexpression is NULL, get_rule_expr prints nothing */
 			get_rule_expr((Node *) lfirst(lowlist_item), context, false);
 			appendStringInfoChar(buf, ':');
-			lowlist_item = lnext(lowlist_item);
+			lowlist_item = lnext(sbsref->reflowerindexpr, lowlist_item);
 		}
 		/* If subexpression is NULL, get_rule_expr prints nothing */
 		get_rule_expr((Node *) lfirst(uplist_item), context, false);

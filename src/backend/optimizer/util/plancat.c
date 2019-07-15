@@ -1742,7 +1742,7 @@ build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 			if (indexpr_item == NULL)
 				elog(ERROR, "wrong number of index expressions");
 			indexvar = (Expr *) lfirst(indexpr_item);
-			indexpr_item = lnext(indexpr_item);
+			indexpr_item = lnext(index->indexprs, indexpr_item);
 		}
 
 		tlist = lappend(tlist,
@@ -2301,7 +2301,7 @@ set_baserel_partition_key_exprs(Relation relation,
 			/* Re-stamp the expression with given varno. */
 			partexpr = (Expr *) copyObject(lfirst(lc));
 			ChangeVarNodes((Node *) partexpr, 1, varno, 0);
-			lc = lnext(lc);
+			lc = lnext(partkey->partexprs, lc);
 		}
 
 		partexprs[cnt] = list_make1(partexpr);

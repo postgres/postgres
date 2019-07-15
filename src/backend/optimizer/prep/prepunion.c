@@ -1310,7 +1310,7 @@ generate_append_tlist(List *colTypes, List *colCollations,
 				/* types disagree, so force typmod to -1 */
 				colTypmods[colindex] = -1;
 			}
-			curColType = lnext(curColType);
+			curColType = lnext(colTypes, curColType);
 			colindex++;
 		}
 		Assert(curColType == NULL);
@@ -1410,7 +1410,7 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 		/* non-resjunk columns should have grouping clauses */
 		Assert(lg != NULL);
 		sgc = (SortGroupClause *) lfirst(lg);
-		lg = lnext(lg);
+		lg = lnext(grouplist, lg);
 		Assert(sgc->tleSortGroupRef == 0);
 
 		sgc->tleSortGroupRef = tle->ressortgroupref;

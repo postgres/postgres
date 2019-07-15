@@ -355,7 +355,7 @@ perform_base_backup(basebackup_options *opt)
 			 */
 			if (opt->includewal && ti->path == NULL)
 			{
-				Assert(lnext(lc) == NULL);
+				Assert(lnext(tablespaces, lc) == NULL);
 			}
 			else
 				pq_putemptymessage('c');	/* CopyDone */
