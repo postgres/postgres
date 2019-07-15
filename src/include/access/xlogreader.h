@@ -25,6 +25,10 @@
 #ifndef XLOGREADER_H
 #define XLOGREADER_H
 
+#ifndef FRONTEND
+#include "access/transam.h"
+#endif
+
 #include "access/xlogrecord.h"
 
 typedef struct XLogReaderState XLogReaderState;
@@ -239,6 +243,10 @@ extern bool DecodeXLogRecord(XLogReaderState *state, XLogRecord *record,
 	((decoder)->blocks[block_id].has_image)
 #define XLogRecBlockImageApply(decoder, block_id) \
 	((decoder)->blocks[block_id].apply_image)
+
+#ifndef FRONTEND
+extern FullTransactionId XLogRecGetFullXid(XLogReaderState *record);
+#endif
 
 extern bool RestoreBlockImage(XLogReaderState *recoder, uint8 block_id, char *dst);
 extern char *XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *len);
