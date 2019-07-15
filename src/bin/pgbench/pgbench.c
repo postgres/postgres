@@ -651,6 +651,7 @@ usage(void)
 		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "  --random-seed=SEED       set random seed (\"time\", \"rand\", integer)\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g., 0.01 for 1%%)\n"
+		   "  --show-script=NAME       show builtin script code, then exit\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
 		   "  -h, --host=HOSTNAME      database server host or socket directory\n"
@@ -4684,7 +4685,7 @@ listAvailableScripts(void)
 
 	fprintf(stderr, "Available builtin scripts:\n");
 	for (i = 0; i < lengthof(builtin_script); i++)
-		fprintf(stderr, "\t%s\n", builtin_script[i].name);
+		fprintf(stderr, "  %13s: %s\n", builtin_script[i].name, builtin_script[i].desc);
 	fprintf(stderr, "\n");
 }
 
@@ -5124,6 +5125,7 @@ main(int argc, char **argv)
 		{"log-prefix", required_argument, NULL, 7},
 		{"foreign-keys", no_argument, NULL, 8},
 		{"random-seed", required_argument, NULL, 9},
+		{"show-script", required_argument, NULL, 10},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -5474,6 +5476,14 @@ main(int argc, char **argv)
 				{
 					fprintf(stderr, "error while setting random seed from --random-seed option\n");
 					exit(1);
+				}
+				break;
+			case 10:			/* list */
+				{
+					const BuiltinScript *s = findBuiltin(optarg);
+
+					fprintf(stderr, "-- %s: %s\n%s\n", s->name, s->desc, s->script);
+					exit(0);
 				}
 				break;
 			default:

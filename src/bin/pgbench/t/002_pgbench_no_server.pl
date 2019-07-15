@@ -218,6 +218,15 @@ pgbench(
 	],
 	'pgbench builtin list');
 
+# builtin listing
+pgbench(
+	'--show-script se',
+	0,
+	[qr{^$}],
+	[ qr{select-only: }, qr{SELECT abalance FROM pgbench_accounts WHERE},
+	  qr{(?!UPDATE)}, qr{(?!INSERT)} ],
+	'pgbench builtin listing');
+
 my @script_tests = (
 
 	# name, err, { file => contents }

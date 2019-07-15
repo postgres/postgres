@@ -355,7 +355,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       </listitem>
      </varlistentry>
 
-
      <varlistentry>
       <term><option>-c</option> <replaceable>clients</replaceable></term>
       <term><option>--client=</option><replaceable>clients</replaceable></term>
@@ -613,6 +612,16 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <para>
         Run built-in select-only script.
         Shorthand for <option>-b select-only</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--show-script</option><replaceable>scriptname</replaceable></term>
+      <listitem>
+       <para>
+        Show the actual code of builtin script <replaceable>scriptname</replaceable>
+        on stderr, and exit immediately.
        </para>
       </listitem>
      </varlistentry>
