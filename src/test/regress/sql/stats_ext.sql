@@ -393,6 +393,29 @@ SELECT m.*
  WHERE s.stxname = 'mcv_lists_stats'
    AND d.stxoid = s.oid;
 
+-- 2 distinct combinations with NULL values, all in the MCV list
+TRUNCATE mcv_lists;
+DROP STATISTICS mcv_lists_stats;
+
+INSERT INTO mcv_lists (a, b, c, d)
+     SELECT
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 0 END),
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 'x' END),
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 0 END),
+         (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 'x' END)
+     FROM generate_series(1,5000) s(i);
+
+ANALYZE mcv_lists;
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE b = ''x'' OR d = ''x''');
+
+-- create statistics
+CREATE STATISTICS mcv_lists_stats (mcv) ON b, d FROM mcv_lists;
+
+ANALYZE mcv_lists;
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE b = ''x'' OR d = ''x''');
+
 -- mcv with arrays
 CREATE TABLE mcv_lists_arrays (
     a TEXT[],
