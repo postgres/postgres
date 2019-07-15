@@ -74,7 +74,7 @@ static bool _bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
 								int leaffillfactor, bool *usemult);
 static bool _bt_adjacenthtid(ItemPointer lowhtid, ItemPointer highhtid);
 static OffsetNumber _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
-									 bool *newitemonleft);
+									 bool *newitemonleft, FindSplitStrat strategy);
 static int	_bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 						 SplitPoint *rightpage, FindSplitStrat *strategy);
 static void _bt_interval_edges(FindSplitData *state,
@@ -214,7 +214,7 @@ _bt_findsplitloc(Relation rel,
 		 * split can be newitem.  Record a split after the previous data item
 		 * from original page, but before the current data item from original
 		 * page. (_bt_recsplitloc() will reject the split when there are no
-		 * previous data items, which we rely on.)
+		 * previous items, which we rely on.)
 		 */
 		if (offnum < newitemoff)
 			_bt_recsplitloc(&state, offnum, false, olddataitemstoleft, itemsz);
@@ -361,10 +361,11 @@ _bt_findsplitloc(Relation rel,
 	 * fillfactormult, in order to deal with pages with a large number of
 	 * duplicates gracefully.
 	 *
-	 * Pass low and high splits for the entire page (including even newitem).
-	 * These are used when the initial split interval encloses split points
-	 * that are full of duplicates, and we need to consider if it's even
-	 * possible to avoid appending a heap TID.
+	 * Pass low and high splits for the entire page (actually, they're for an
+	 * imaginary version of the page that includes newitem).  These are used
+	 * when the initial split interval encloses split points that are full of
+	 * duplicates, and we need to consider if it's even possible to avoid
+	 * appending a heap TID.
 	 */
 	perfectpenalty = _bt_strategy(&state, &leftpage, &rightpage, &strategy);
 
@@ -381,12 +382,15 @@ _bt_findsplitloc(Relation rel,
 	 * appended, but the page isn't completely full of logical duplicates.
 	 *
 	 * The split interval is widened to include all legal candidate split
-	 * points.  There may be a few as two distinct values in the whole-page
-	 * split interval.  Many duplicates strategy has no hard requirements for
-	 * space utilization, though it still keeps the use of space balanced as a
-	 * non-binding secondary goal (perfect penalty is set so that the
-	 * first/lowest delta split points that avoids appending a heap TID is
-	 * used).
+	 * points.  There might be a few as two distinct values in the whole-page
+	 * split interval, though it's also possible that most of the values on
+	 * the page are unique.  The final split point will either be to the
+	 * immediate left or to the immediate right of the group of duplicate
+	 * tuples that enclose the first/delta-optimal split point (perfect
+	 * penalty was set so that the lowest delta split point that avoids
+	 * appending a heap TID will be chosen).  Maximizing the number of
+	 * attributes that can be truncated away is not a goal of the many
+	 * duplicates strategy.
 	 *
 	 * Single value strategy is used when it is impossible to avoid appending
 	 * a heap TID.  It arranges to leave the left page very full.  This
@@ -399,6 +403,9 @@ _bt_findsplitloc(Relation rel,
 	else if (strategy == SPLIT_MANY_DUPLICATES)
 	{
 		Assert(state.is_leaf);
+		/* Shouldn't try to truncate away extra user attributes */
+		Assert(perfectpenalty ==
+			   IndexRelationGetNumberOfKeyAttributes(state.rel));
 		/* No need to resort splits -- no change in fillfactormult/deltas */
 		state.interval = state.nsplits;
 	}
@@ -419,7 +426,8 @@ _bt_findsplitloc(Relation rel,
 	 * the entry that has the lowest penalty, and is therefore expected to
 	 * maximize fan-out.  Sets *newitemonleft for us.
 	 */
-	foundfirstright = _bt_bestsplitloc(&state, perfectpenalty, newitemonleft);
+	foundfirstright = _bt_bestsplitloc(&state, perfectpenalty, newitemonleft,
+									   strategy);
 	pfree(state.splits);
 
 	return foundfirstright;
@@ -753,11 +761,13 @@ _bt_adjacenthtid(ItemPointer lowhtid, ItemPointer highhtid)
  * page, plus a boolean indicating if new item is on left of split point.
  */
 static OffsetNumber
-_bt_bestsplitloc(FindSplitData *state, int perfectpenalty, bool *newitemonleft)
+_bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
+				 bool *newitemonleft, FindSplitStrat strategy)
 {
 	int			bestpenalty,
 				lowsplit;
 	int			highsplit = Min(state->interval, state->nsplits);
+	SplitPoint *final;
 
 	bestpenalty = INT_MAX;
 	lowsplit = 0;
@@ -781,8 +791,37 @@ _bt_bestsplitloc(FindSplitData *state, int perfectpenalty, bool *newitemonleft)
 		}
 	}
 
-	*newitemonleft = state->splits[lowsplit].newitemonleft;
-	return state->splits[lowsplit].firstoldonright;
+	final = &state->splits[lowsplit];
+
+	/*
+	 * There is a risk that the "many duplicates" strategy will repeatedly do
+	 * the wrong thing when there are monotonically decreasing insertions to
+	 * the right of a large group of duplicates.   Repeated splits could leave
+	 * a succession of right half pages with free space that can never be
+	 * used.  This must be avoided.
+	 *
+	 * Consider the example of the leftmost page in a single integer attribute
+	 * NULLS FIRST index which is almost filled with NULLs.  Monotonically
+	 * decreasing integer insertions might cause the same leftmost page to
+	 * split repeatedly at the same point.  Each split derives its new high
+	 * key from the lowest current value to the immediate right of the large
+	 * group of NULLs, which will always be higher than all future integer
+	 * insertions, directing all future integer insertions to the same
+	 * leftmost page.
+	 */
+	if (strategy == SPLIT_MANY_DUPLICATES && !state->is_rightmost &&
+		!final->newitemonleft && final->firstoldonright >= state->newitemoff &&
+		final->firstoldonright < state->newitemoff + MAX_LEAF_INTERVAL)
+	{
+		/*
+		 * Avoid the problem by peforming a 50:50 split when the new item is
+		 * just to the left of the would-be "many duplicates" split point.
+		 */
+		final = &state->splits[0];
+	}
+
+	*newitemonleft = final->newitemonleft;
+	return final->firstoldonright;
 }
 
 /*
@@ -859,17 +898,16 @@ _bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 		*strategy = SPLIT_MANY_DUPLICATES;
 
 		/*
-		 * Caller should choose the lowest delta split that avoids appending a
-		 * heap TID.  Maximizing the number of attributes that can be
-		 * truncated away (returning perfectpenalty when it happens to be less
-		 * than the number of key attributes in index) can result in continual
-		 * unbalanced page splits.
+		 * Many duplicates strategy should split at either side the group of
+		 * duplicates that enclose the delta-optimal split point.  Return
+		 * indnkeyatts rather than the true perfect penalty to make that
+		 * happen.  (If perfectpenalty was returned here then low cardinality
+		 * composite indexes could have continual unbalanced splits.)
 		 *
-		 * Just avoiding appending a heap TID can still make splits very
-		 * unbalanced, but this is self-limiting.  When final split has a very
-		 * high delta, one side of the split will likely consist of a single
-		 * value.  If that page is split once again, then that split will
-		 * likely use the single value strategy.
+		 * Note that caller won't go through with a many duplicates split in
+		 * rare cases where it looks like there are ever-decreasing insertions
+		 * to the immediate right of the split point.  This must happen just
+		 * before a final decision is made, within _bt_bestsplitloc().
 		 */
 		return indnkeyatts;
 	}
