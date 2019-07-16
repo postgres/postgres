@@ -514,10 +514,6 @@ extern List *list_insert_nth(List *list, int pos, void *datum);
 extern List *list_insert_nth_int(List *list, int pos, int datum);
 extern List *list_insert_nth_oid(List *list, int pos, Oid datum);
 
-extern void lappend_cell(List *list, ListCell *prev, void *datum);
-extern void lappend_cell_int(List *list, ListCell *prev, int datum);
-extern void lappend_cell_oid(List *list, ListCell *prev, Oid datum);
-
 extern List *lcons(void *datum, List *list);
 extern List *lcons_int(int datum, List *list);
 extern List *lcons_oid(Oid datum, List *list);

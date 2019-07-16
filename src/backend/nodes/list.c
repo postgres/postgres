@@ -439,53 +439,6 @@ list_insert_nth_oid(List *list, int pos, Oid datum)
 }
 
 /*
- * Add a new cell to the list, in the position after 'prev_cell'. The
- * data in the cell is left undefined, and must be filled in by the
- * caller. 'list' is assumed to be non-NIL, and 'prev_cell' is assumed
- * to be non-NULL and a member of 'list'. Returns address of new cell.
- *
- * Caution: prev_cell might no longer point into the list after this!
- */
-static ListCell *
-add_new_cell_after(List *list, ListCell *prev_cell)
-{
-	/* insert_new_cell will assert that this is in-range: */
-	int			pos = prev_cell - list->elements;
-
-	return insert_new_cell(list, pos + 1);
-}
-
-/*
- * Add a new cell to the specified list (which must be non-NIL);
- * it will be placed after the list cell 'prev' (which must be
- * non-NULL and a member of 'list'). The data placed in the new cell
- * is 'datum'.
- */
-void
-lappend_cell(List *list, ListCell *prev, void *datum)
-{
-	Assert(IsPointerList(list));
-	lfirst(add_new_cell_after(list, prev)) = datum;
-	check_list_invariants(list);
-}
-
-void
-lappend_cell_int(List *list, ListCell *prev, int datum)
-{
-	Assert(IsIntegerList(list));
-	lfirst_int(add_new_cell_after(list, prev)) = datum;
-	check_list_invariants(list);
-}
-
-void
-lappend_cell_oid(List *list, ListCell *prev, Oid datum)
-{
-	Assert(IsOidList(list));
-	lfirst_oid(add_new_cell_after(list, prev)) = datum;
-	check_list_invariants(list);
-}
-
-/*
  * Prepend a new element to the list. A pointer to the modified list
  * is returned. Note that this function may or may not destructively
  * modify the list; callers should always use this function's return
