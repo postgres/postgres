@@ -7927,7 +7927,6 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 							new_castfunc == old_castfunc &&
 							(!IsPolymorphicType(pfeqop_right) ||
 							 new_fktype == old_fktype));
-
 		}
 
 		pfeqoperators[i] = pfeqop;
@@ -11479,7 +11478,7 @@ TryReuseForeignKey(Oid oldId, Constraint *con)
 
 	/* stash a List of the operator Oids in our Constraint node */
 	for (i = 0; i < numkeys; i++)
-		con->old_conpfeqop = lcons_oid(rawarr[i], con->old_conpfeqop);
+		con->old_conpfeqop = lappend_oid(con->old_conpfeqop, rawarr[i]);
 
 	ReleaseSysCache(tup);
 }
