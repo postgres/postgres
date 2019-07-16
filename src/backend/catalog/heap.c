@@ -125,7 +125,6 @@ static void SetRelationNumChecks(Relation rel, int numchecks);
 static Node *cookConstraint(ParseState *pstate,
 							Node *raw_constraint,
 							char *relname);
-static List *insert_ordered_unique_oid(List *list, Oid datum);
 
 
 /* ----------------------------------------------------------------
@@ -3384,55 +3383,19 @@ heap_truncate_find_FKs(List *relationIds)
 		if (!list_member_oid(relationIds, con->confrelid))
 			continue;
 
-		/* Add referencer unless already in input or result list */
+		/* Add referencer to result, unless present in input list */
 		if (!list_member_oid(relationIds, con->conrelid))
-			result = insert_ordered_unique_oid(result, con->conrelid);
+			result = lappend_oid(result, con->conrelid);
 	}
 
 	systable_endscan(fkeyScan);
 	table_close(fkeyRel, AccessShareLock);
 
+	/* Now sort and de-duplicate the result list */
+	list_sort(result, list_oid_cmp);
+	list_deduplicate_oid(result);
+
 	return result;
-}
-
-/*
- * insert_ordered_unique_oid
- *		Insert a new Oid into a sorted list of Oids, preserving ordering,
- *		and eliminating duplicates
- *
- * Building the ordered list this way is O(N^2), but with a pretty small
- * constant, so for the number of entries we expect it will probably be
- * faster than trying to apply qsort().  It seems unlikely someone would be
- * trying to truncate a table with thousands of dependent tables ...
- */
-static List *
-insert_ordered_unique_oid(List *list, Oid datum)
-{
-	ListCell   *prev;
-
-	/* Does the datum belong at the front? */
-	if (list == NIL || datum < linitial_oid(list))
-		return lcons_oid(datum, list);
-	/* Does it match the first entry? */
-	if (datum == linitial_oid(list))
-		return list;			/* duplicate, so don't insert */
-	/* No, so find the entry it belongs after */
-	prev = list_head(list);
-	for (;;)
-	{
-		ListCell   *curr = lnext(list, prev);
-
-		if (curr == NULL || datum < lfirst_oid(curr))
-			break;				/* it belongs after 'prev', before 'curr' */
-
-		if (datum == lfirst_oid(curr))
-			return list;		/* duplicate, so don't insert */
-
-		prev = curr;
-	}
-	/* Insert datum into list after 'prev' */
-	lappend_cell_oid(list, prev, datum);
-	return list;
 }
 
 /*

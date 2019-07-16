@@ -563,6 +563,8 @@ extern List *list_concat_unique_ptr(List *list1, const List *list2);
 extern List *list_concat_unique_int(List *list1, const List *list2);
 extern List *list_concat_unique_oid(List *list1, const List *list2);
 
+extern void list_deduplicate_oid(List *list);
+
 extern void list_free(List *list);
 extern void list_free_deep(List *list);
 
@@ -572,5 +574,7 @@ extern List *list_copy_deep(const List *oldlist);
 
 typedef int (*list_sort_comparator) (const ListCell *a, const ListCell *b);
 extern void list_sort(List *list, list_sort_comparator cmp);
+
+extern int	list_oid_cmp(const ListCell *p1, const ListCell *p2);
 
 #endif							/* PG_LIST_H */

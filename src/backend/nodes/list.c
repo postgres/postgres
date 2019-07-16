@@ -1298,6 +1298,34 @@ list_concat_unique_oid(List *list1, const List *list2)
 }
 
 /*
+ * Remove adjacent duplicates in a list of OIDs.
+ *
+ * It is caller's responsibility to have sorted the list to bring duplicates
+ * together, perhaps via list_sort(list, list_oid_cmp).
+ */
+void
+list_deduplicate_oid(List *list)
+{
+	int			len;
+
+	Assert(IsOidList(list));
+	len = list_length(list);
+	if (len > 1)
+	{
+		ListCell   *elements = list->elements;
+		int			i = 0;
+
+		for (int j = 1; j < len; j++)
+		{
+			if (elements[i].oid_value != elements[j].oid_value)
+				elements[++i].oid_value = elements[j].oid_value;
+		}
+		list->length = i + 1;
+	}
+	check_list_invariants(list);
+}
+
+/*
  * Free all storage in a list, and optionally the pointed-to elements
  */
 static void
@@ -1443,4 +1471,20 @@ list_sort(List *list, list_sort_comparator cmp)
 	len = list_length(list);
 	if (len > 1)
 		qsort(list->elements, len, sizeof(ListCell), (qsort_comparator) cmp);
+}
+
+/*
+ * list_sort comparator for sorting a list into ascending OID order.
+ */
+int
+list_oid_cmp(const ListCell *p1, const ListCell *p2)
+{
+	Oid			v1 = lfirst_oid(p1);
+	Oid			v2 = lfirst_oid(p2);
+
+	if (v1 < v2)
+		return -1;
+	if (v1 > v2)
+		return 1;
+	return 0;
 }
