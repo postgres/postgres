@@ -1013,7 +1013,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 	/*
 	 * As pending list pages can have a high churn rate, it is desirable to
-	 * recycle them immediately to the FreeSpace Map when ordinary backends
+	 * recycle them immediately to the FreeSpaceMap when ordinary backends
 	 * clean the list.
 	 */
 	if (fsm_vac && fill_fsm)

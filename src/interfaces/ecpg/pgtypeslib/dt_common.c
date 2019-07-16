@@ -172,7 +172,7 @@ static const datetkn datetktbl[] = {
 	ghst
 #endif
 	{"gilt", TZ, 43200},		/* Gilbert Islands Time */
-	{"gmt", TZ, 0},				/* Greenwish Mean Time */
+	{"gmt", TZ, 0},				/* Greenwich Mean Time */
 	{"gst", TZ, 36000},			/* Guam Std Time, USSR Zone 9 */
 	{"gyt", TZ, -14400},		/* Guyana Time */
 	{"h", UNITS, DTK_HOUR},		/* "hour" */

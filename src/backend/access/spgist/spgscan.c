@@ -146,11 +146,6 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
 {
 	MemoryContext oldCtx;
 
-	/*
-	 * clear traversal context before proceeding to the next scan; this must
-	 * not happen before the freeScanStack above, else we get double-free
-	 * crashes.
-	 */
 	MemoryContextReset(so->traversalCxt);
 
 	oldCtx = MemoryContextSwitchTo(so->traversalCxt);

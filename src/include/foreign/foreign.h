@@ -21,17 +21,6 @@
 	(OidIsValid(userid) ? GetUserNameFromId(userid, false) : "public")
 
 
-/*
- * Generic option types for validation.
- * NB! These are treated as flags, so use only powers of two here.
- */
-typedef enum
-{
-	ServerOpt = 1,				/* options applicable to SERVER */
-	UserMappingOpt = 2,			/* options for USER MAPPING */
-	FdwOpt = 4					/* options for FOREIGN DATA WRAPPER */
-} GenericOptionFlags;
-
 typedef struct ForeignDataWrapper
 {
 	Oid			fdwid;			/* FDW Oid */

@@ -146,7 +146,7 @@ emsgsize:
 
 /*
  * static char *
- * inet_cidr_ntop_ipv6(src, bits, fakebits, dst, size)
+ * inet_cidr_ntop_ipv6(src, bits, dst, size)
  *	convert IPv6 network number from network to presentation format.
  *	generates CIDR style result always. Picks the shortest representation
  *	unless the IP is really IPv4.

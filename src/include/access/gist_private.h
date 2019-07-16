@@ -400,7 +400,7 @@ extern void freeGISTstate(GISTSTATE *giststate);
 extern void gistdoinsert(Relation r,
 						 IndexTuple itup,
 						 Size freespace,
-						 GISTSTATE *GISTstate,
+						 GISTSTATE *giststate,
 						 Relation heapRel,
 						 bool is_build);
 

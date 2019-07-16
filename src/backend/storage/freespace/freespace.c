@@ -223,7 +223,7 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 }
 
 /*
- * GetRecordedFreePage - return the amount of free space on a particular page,
+ * GetRecordedFreeSpace - return the amount of free space on a particular page,
  *		according to the FSM.
  */
 Size
@@ -417,7 +417,7 @@ fsm_space_cat_to_avail(uint8 cat)
 
 /*
  * Which category does a page need to have, to accommodate x bytes of data?
- * While fsm_size_to_avail_cat() rounds down, this needs to round up.
+ * While fsm_space_avail_to_cat() rounds down, this needs to round up.
  */
 static uint8
 fsm_space_needed_to_cat(Size needed)

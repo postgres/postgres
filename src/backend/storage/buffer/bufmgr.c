@@ -438,7 +438,8 @@ static void PinBuffer_Locked(BufferDesc *buf);
 static void UnpinBuffer(BufferDesc *buf, bool fixOwner);
 static void BufferSync(int flags);
 static uint32 WaitBufHdrUnlocked(BufferDesc *buf);
-static int	SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *flush_context);
+static int	SyncOneBuffer(int buf_id, bool skip_recently_used,
+						  WritebackContext *wb_context);
 static void WaitIO(BufferDesc *buf);
 static bool StartBufferIO(BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(BufferDesc *buf, bool clear_dirty,
@@ -2346,7 +2347,7 @@ BgBufferSync(WritebackContext *wb_context)
  *	BUF_REUSABLE: buffer is available for replacement, ie, it has
  *		pin count 0 and usage count 0.
  *
- * (BUF_WRITTEN could be set in error if FlushBuffers finds the buffer clean
+ * (BUF_WRITTEN could be set in error if FlushBuffer finds the buffer clean
  * after locking it, but we don't care all that much.)
  *
  * Note: caller must have done ResourceOwnerEnlargeBuffers.

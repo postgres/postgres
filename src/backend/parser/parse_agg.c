@@ -58,7 +58,7 @@ static int	check_agg_arguments(ParseState *pstate,
 static bool check_agg_arguments_walker(Node *node,
 									   check_agg_arguments_context *context);
 static void check_ungrouped_columns(Node *node, ParseState *pstate, Query *qry,
-									List *groupClauses, List *groupClauseVars,
+									List *groupClauses, List *groupClauseCommonVars,
 									bool have_non_var_grouping,
 									List **func_grouped_rels);
 static bool check_ungrouped_columns_walker(Node *node,

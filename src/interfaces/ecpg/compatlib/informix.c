@@ -811,7 +811,7 @@ rfmtlong(long lng_val, const char *fmt, char *outbuf)
 	/* and fill the temp-string wit '0's up to there. */
 	dotpos = getRightMostDot(fmt);
 
-	/* start to parse the formatstring */
+	/* start to parse the format-string */
 	temp[0] = '\0';
 	k = value.digits - 1;		/* position in the value_string */
 	for (i = fmt_len - 1, j = 0; i >= 0; i--, j++)

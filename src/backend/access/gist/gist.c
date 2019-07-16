@@ -821,7 +821,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			/*
 			 * Leaf page. Insert the new key. We've already updated all the
 			 * parents on the way down, but we might have to split the page if
-			 * it doesn't fit. gistinserthere() will take care of that.
+			 * it doesn't fit. gistinserttuple() will take care of that.
 			 */
 
 			/*

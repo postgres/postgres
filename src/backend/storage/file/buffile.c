@@ -664,7 +664,7 @@ BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 
 			/*
 			 * Relative seek considers only the signed offset, ignoring
-			 * fileno. Note that large offsets (> 1 gig) risk overflow in this
+			 * fileno. Note that large offsets (> 1 GB) risk overflow in this
 			 * add, unless we have 64-bit off_t.
 			 */
 			newFile = file->curFile;

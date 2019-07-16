@@ -922,7 +922,7 @@ my_fetch(PG_FUNCTION_ARGS)
      * Convert 'fetched_data' into the a Datum of the original datatype.
      */
 
-    /* fill *retval from fetch_data. */
+    /* fill *retval from fetched_data. */
     gistentryinit(*retval, PointerGetDatum(converted_datum),
                   entry->rel, entry->page, entry->offset, FALSE);
 

@@ -897,7 +897,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 
 /*
  * set_max_safe_fds
- *		Determine number of filedescriptors that fd.c is allowed to use
+ *		Determine number of file descriptors that fd.c is allowed to use
  */
 void
 set_max_safe_fds(void)

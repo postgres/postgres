@@ -882,7 +882,7 @@ process_ordered_aggregate_multi(AggState *aggstate,
  * This function handles only one grouping set (already set in
  * aggstate->current_set).
  *
- * The finalfunction will be run, and the result delivered, in the
+ * The finalfn will be run, and the result delivered, in the
  * output-tuple context; caller's CurrentMemoryContext does not matter.
  *
  * The finalfn uses the state as set in the transno. This also might be

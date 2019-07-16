@@ -368,7 +368,7 @@ queryin(char *buf)
 		state.str = tmp;
 	}
 
-	/* set user friendly-operand view */
+	/* set user-friendly operand view */
 	memcpy((void *) GETOPERAND(query), (void *) state.op, state.sumlen);
 	pfree(state.op);
 

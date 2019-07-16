@@ -637,9 +637,6 @@ typedef struct _extensionMemberId
 	ExtensionInfo *ext;			/* owning extension */
 } ExtensionMemberId;
 
-/* global decls */
-extern bool force_quotes;		/* double-quotes for identifiers flag */
-
 /* placeholders for comment starting and ending delimiters */
 extern char g_comment_start[10];
 extern char g_comment_end[10];

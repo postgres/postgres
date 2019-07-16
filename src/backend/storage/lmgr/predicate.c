@@ -3405,8 +3405,8 @@ ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
 	 *
 	 * If this value is changing, we don't care that much whether we get the
 	 * old or new value -- it is just used to determine how far
-	 * GlobalSerializableXmin must advance before this transaction can be
-	 * fully cleaned up.  The worst that could happen is we wait for one more
+	 * SxactGlobalXmin must advance before this transaction can be fully
+	 * cleaned up.  The worst that could happen is we wait for one more
 	 * transaction to complete before freeing some RAM; correctness of visible
 	 * behavior is not affected.
 	 */
@@ -4820,7 +4820,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
  *
  * If a dangerous structure is found, the pivot (the near conflict) is
  * marked for death, because rolling back another transaction might mean
- * that we flail without ever making progress.  This transaction is
+ * that we fail without ever making progress.  This transaction is
  * committing writes, so letting it commit ensures progress.  If we
  * canceled the far conflict, it might immediately fail again on retry.
  */

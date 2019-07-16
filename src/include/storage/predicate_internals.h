@@ -52,7 +52,7 @@ typedef uint64 SerCommitSeqNo;
  *
  * Eligibility for cleanup of committed transactions is generally determined
  * by comparing the transaction's finishedBefore field to
- * SerializableGlobalXmin.
+ * SxactGlobalXmin.
  */
 typedef struct SERIALIZABLEXACT
 {

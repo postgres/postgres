@@ -2399,7 +2399,7 @@ TSParserIsVisible(Oid prsId)
 /*
  * get_ts_dict_oid - find a TS dictionary by possibly qualified name
  *
- * If not found, returns InvalidOid if failOK, else throws error
+ * If not found, returns InvalidOid if missing_ok, else throws error
  */
 Oid
 get_ts_dict_oid(List *names, bool missing_ok)

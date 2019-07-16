@@ -2235,8 +2235,8 @@ check_for_freed_segments(dsa_area *area)
 
 	/*
 	 * Any other process that has freed a segment has incremented
-	 * free_segment_counter while holding an LWLock, and that must precede any
-	 * backend creating a new segment in the same slot while holding an
+	 * freed_segment_counter while holding an LWLock, and that must precede
+	 * any backend creating a new segment in the same slot while holding an
 	 * LWLock, and that must precede the creation of any dsa_pointer pointing
 	 * into the new segment which might reach us here, and the caller must
 	 * have sent the dsa_pointer to this process using appropriate memory

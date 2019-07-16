@@ -163,7 +163,7 @@ algorithms.
 
 * The posting list can be accessed with GinGetPosting(itup)
 
-* If GinITupIsCompressed(itup), the posting list is stored in compressed
+* If GinItupIsCompressed(itup), the posting list is stored in compressed
   format. Otherwise it is just an array of ItemPointers. New tuples are always
   stored in compressed format, uncompressed items can be present if the
   database was migrated from 9.3 or earlier version.

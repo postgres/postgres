@@ -155,7 +155,7 @@ static void TransactionIdSetPageStatusInternal(TransactionId xid, int nsubxids,
  * NB: this is a low-level routine and is NOT the preferred entry point
  * for most uses; functions in transam.c are the intended callers.
  *
- * XXX Think about issuing FADVISE_WILLNEED on pages that we will need,
+ * XXX Think about issuing POSIX_FADV_WILLNEED on pages that we will need,
  * but aren't yet in cache, as well as hinting pages not to fall out of
  * cache yet.
  */

@@ -457,7 +457,7 @@ right sibling's left-link --- followed by a second WAL entry for the
 insertion on the parent level (which might itself be a page split, requiring
 an additional insertion above that, etc).
 
-For a root split, the followon WAL entry is a "new root" entry rather than
+For a root split, the follow-on WAL entry is a "new root" entry rather than
 an "insertion" entry, but details are otherwise much the same.
 
 Because splitting involves multiple atomic actions, it's possible that the

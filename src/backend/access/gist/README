@@ -170,7 +170,7 @@ it splits the page, and constructs the new downlink tuples for the split
 pages. The caller must then call gistplacetopage() on the parent page to
 insert the downlink tuples. The parent page that holds the downlink to
 the child might have migrated as a result of concurrent splits of the
-parent, gistfindCorrectParent() is used to find the parent page.
+parent, gistFindCorrectParent() is used to find the parent page.
 
 Splitting the root page works slightly differently. At root split,
 gistplacetopage() allocates the new child pages and replaces the old root

@@ -282,8 +282,6 @@ static const char *const numth[] = {"st", "nd", "rd", "th", NULL};
 #define ALL_UPPER		2		/* NAME */
 #define ALL_LOWER		3		/* name */
 
-#define FULL_SIZ		0
-
 #define MAX_MONTH_LEN	9
 #define MAX_MON_LEN		3
 #define MAX_DAY_LEN		9

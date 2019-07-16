@@ -430,7 +430,7 @@ sub command_exit_is
 	# header file). IPC::Run's result function always returns exit code >> 8,
 	# assuming the Unix convention, which will always return 0 on Windows as
 	# long as the process was not terminated by an exception. To work around
-	# that, use $h->full_result on Windows instead.
+	# that, use $h->full_results on Windows instead.
 	my $result =
 	    ($Config{osname} eq "MSWin32")
 	  ? ($h->full_results)[0]

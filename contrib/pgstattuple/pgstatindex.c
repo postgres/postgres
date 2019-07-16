@@ -727,7 +727,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 }
 
 /* -------------------------------------------------
- * GetHashPageStatis()
+ * GetHashPageStats()
  *
  * Collect statistics of single hash page
  * -------------------------------------------------

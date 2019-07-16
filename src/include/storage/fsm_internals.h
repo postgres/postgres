@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * fsm_internal.h
+ * fsm_internals.h
  *	  internal functions for free space map
  *
  *

@@ -216,9 +216,9 @@ static PROCLOCK *FastPathGetRelationLockEntry(LOCALLOCK *locallock);
 
 /*
  * To make the fast-path lock mechanism work, we must have some way of
- * preventing the use of the fast-path when a conflicting lock might be
- * present.  We partition* the locktag space into FAST_PATH_HASH_BUCKETS
- * partitions, and maintain an integer count of the number of "strong" lockers
+ * preventing the use of the fast-path when a conflicting lock might be present.
+ * We partition* the locktag space into FAST_PATH_STRONG_LOCK_HASH_PARTITIONS,
+ * and maintain an integer count of the number of "strong" lockers
  * in each partition.  When any "strong" lockers are present (which is
  * hopefully not very often), the fast-path mechanism can't be used, and we
  * must fall back to the slower method of pushing matching locks directly
@@ -2709,7 +2709,7 @@ FastPathTransferRelationLocks(LockMethod lockMethodTable, const LOCKTAG *locktag
 }
 
 /*
- * FastPathGetLockEntry
+ * FastPathGetRelationLockEntry
  *		Return the PROCLOCK for a lock originally taken via the fast-path,
  *		transferring it to the primary lock table if necessary.
  *
@@ -2896,8 +2896,8 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 			 * the lock, then we needn't examine the individual relation IDs
 			 * at all; none of them can be relevant.
 			 *
-			 * See FastPathTransferLocks() for discussion of why we do this
-			 * test after acquiring the lock.
+			 * See FastPathTransferRelationLocks() for discussion of why we do
+			 * this test after acquiring the lock.
 			 */
 			if (proc->databaseId != locktag->locktag_field1)
 			{

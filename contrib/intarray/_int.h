@@ -86,12 +86,6 @@ typedef struct
 #define GETSIGN(x)		( (BITVECP)( (char*)x+GTHDRSIZE ) )
 
 /*
- * types for functions
- */
-typedef ArrayType *(*formarray) (ArrayType *, ArrayType *);
-typedef void (*formfloat) (ArrayType *, float *);
-
-/*
  * useful functions
  */
 bool		isort(int32 *a, int len);

@@ -716,7 +716,7 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 
 	namestrcpy(&attrtypes[attnum]->attname, name);
 	elog(DEBUG4, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
-	attrtypes[attnum]->attnum = attnum + 1; /* fillatt */
+	attrtypes[attnum]->attnum = attnum + 1;
 
 	typeoid = gettype(type);
 

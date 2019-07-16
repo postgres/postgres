@@ -52,7 +52,6 @@ extern void InitProcessGlobals(void);
 
 extern int	MaxLivePostmasterChildren(void);
 
-extern int	GetNumShmemAttachedBgworkers(void);
 extern bool PostmasterMarkPIDForWorkerNotify(int);
 
 #ifdef EXEC_BACKEND

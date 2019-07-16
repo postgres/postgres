@@ -6772,9 +6772,7 @@ getInherits(Archive *fout, int *numInherits)
 
 	/*
 	 * Find all the inheritance information, excluding implicit inheritance
-	 * via partitioning.  We handle that case using getPartitions(), because
-	 * we want more information about partitions than just the parent-child
-	 * relationship.
+	 * via partitioning.
 	 */
 	appendPQExpBufferStr(query, "SELECT inhrelid, inhparent FROM pg_inherits");
 

@@ -264,7 +264,7 @@ prepare_new_cluster(void)
 {
 	/*
 	 * It would make more sense to freeze after loading the schema, but that
-	 * would cause us to lose the frozenids restored by the load. We use
+	 * would cause us to lose the frozenxids restored by the load. We use
 	 * --analyze so autovacuum doesn't update statistics later
 	 */
 	prep_status("Analyzing all rows in the new cluster");

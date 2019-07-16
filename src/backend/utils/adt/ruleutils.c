@@ -474,7 +474,7 @@ static char *flatten_reloptions(Oid relid);
 
 
 /* ----------
- * get_ruledef			- Do it all and return a text
+ * pg_get_ruledef		- Do it all and return a text
  *				  that could be used as a statement
  *				  to recreate the rule
  * ----------
@@ -594,7 +594,7 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 
 
 /* ----------
- * get_viewdef			- Mainly the same thing, but we
+ * pg_get_viewdef		- Mainly the same thing, but we
  *				  only return the SELECT part of a view
  * ----------
  */
@@ -789,7 +789,7 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags, int wrapColumn)
 }
 
 /* ----------
- * get_triggerdef			- Get the definition of a trigger
+ * pg_get_triggerdef		- Get the definition of a trigger
  * ----------
  */
 Datum
@@ -1083,7 +1083,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 }
 
 /* ----------
- * get_indexdef			- Get the definition of an index
+ * pg_get_indexdef			- Get the definition of an index
  *
  * In the extended version, there is a colno argument as well as pretty bool.
  *	if colno == 0, we want a complete index definition.
@@ -2342,7 +2342,7 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 
 
 /* ----------
- * get_expr			- Decompile an expression tree
+ * pg_get_expr			- Decompile an expression tree
  *
  * Input: an expression tree in nodeToString form, and a relation OID
  *
@@ -2440,7 +2440,7 @@ pg_get_expr_worker(text *expr, Oid relid, const char *relname, int prettyFlags)
 
 
 /* ----------
- * get_userbyid			- Get a user name by roleid and
+ * pg_get_userbyid		- Get a user name by roleid and
  *				  fallback to 'unknown (OID=n)'
  * ----------
  */
@@ -6811,8 +6811,8 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 
 /*
  * Deparse a Var which references OUTER_VAR, INNER_VAR, or INDEX_VAR.  This
- * routine is actually a callback for get_special_varno, which handles finding
- * the correct TargetEntry.  We get the expression contained in that
+ * routine is actually a callback for resolve_special_varno, which handles
+ * finding the correct TargetEntry.  We get the expression contained in that
  * TargetEntry and just need to deparse it, a job we can throw back on
  * get_rule_expr.
  */
@@ -11254,7 +11254,7 @@ flatten_reloptions(Oid relid)
 }
 
 /*
- * get_one_range_partition_bound_string
+ * get_range_partbound_string
  *		A C string representation of one range partition bound
  */
 char *
