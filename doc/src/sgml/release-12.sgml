@@ -2115,7 +2115,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <para>
        This adds stemming for Arabic, Indonesian, Irish, Lithuanian, Nepali,
-       and Tami to <link linkend="textsearch">full text search</link>.
+       and Tamil to <link linkend="textsearch">full text search</link>.
       </para>
      </listitem>
 
