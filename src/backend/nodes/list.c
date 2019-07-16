@@ -1419,45 +1419,28 @@ list_copy_deep(const List *oldlist)
 }
 
 /*
- * Sort a list as though by qsort.
+ * Sort a list according to the specified comparator function.
  *
- * A new list is built and returned.  Like list_copy, this doesn't make
- * fresh copies of any pointed-to data.
+ * The list is sorted in-place.
  *
- * The comparator function receives arguments of type ListCell **.
- * (XXX that's really inefficient now, but changing it seems like
- * material for a standalone patch.)
+ * The comparator function is declared to receive arguments of type
+ * const ListCell *; this allows it to use lfirst() and variants
+ * without casting its arguments.  Otherwise it behaves the same as
+ * the comparator function for standard qsort().
+ *
+ * Like qsort(), this provides no guarantees about sort stability
+ * for equal keys.
  */
-List *
-list_qsort(const List *list, list_qsort_comparator cmp)
+void
+list_sort(List *list, list_sort_comparator cmp)
 {
-	int			len = list_length(list);
-	ListCell  **list_arr;
-	List	   *newlist;
-	ListCell   *cell;
-	int			i;
+	typedef int (*qsort_comparator) (const void *a, const void *b);
+	int			len;
 
-	/* Empty list is easy */
-	if (len == 0)
-		return NIL;
+	check_list_invariants(list);
 
-	/* We have to make an array of pointers to satisfy the API */
-	list_arr = (ListCell **) palloc(sizeof(ListCell *) * len);
-	i = 0;
-	foreach(cell, list)
-		list_arr[i++] = cell;
-
-	qsort(list_arr, len, sizeof(ListCell *), cmp);
-
-	/* Construct new list (this code is much like list_copy) */
-	newlist = new_list(list->type, len);
-
-	for (i = 0; i < len; i++)
-		newlist->elements[i] = *list_arr[i];
-
-	/* Might as well free the workspace array */
-	pfree(list_arr);
-
-	check_list_invariants(newlist);
-	return newlist;
+	/* Nothing to do if there's less than two elements */
+	len = list_length(list);
+	if (len > 1)
+		qsort(list->elements, len, sizeof(ListCell), (qsort_comparator) cmp);
 }

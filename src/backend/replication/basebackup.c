@@ -70,7 +70,7 @@ static void base_backup_cleanup(int code, Datum arg);
 static void perform_base_backup(basebackup_options *opt);
 static void parse_basebackup_options(List *options, basebackup_options *opt);
 static void SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli);
-static int	compareWalFileNames(const void *a, const void *b);
+static int	compareWalFileNames(const ListCell *a, const ListCell *b);
 static void throttle(size_t increment);
 static bool is_checksummed_file(const char *fullpath, const char *filename);
 
@@ -379,13 +379,10 @@ perform_base_backup(basebackup_options *opt)
 		struct stat statbuf;
 		List	   *historyFileList = NIL;
 		List	   *walFileList = NIL;
-		char	  **walFiles;
-		int			nWalFiles;
 		char		firstoff[MAXFNAMELEN];
 		char		lastoff[MAXFNAMELEN];
 		DIR		   *dir;
 		struct dirent *de;
-		int			i;
 		ListCell   *lc;
 		TimeLineID	tli;
 
@@ -428,24 +425,17 @@ perform_base_backup(basebackup_options *opt)
 		CheckXLogRemoved(startsegno, ThisTimeLineID);
 
 		/*
-		 * Put the WAL filenames into an array, and sort. We send the files in
-		 * order from oldest to newest, to reduce the chance that a file is
-		 * recycled before we get a chance to send it over.
+		 * Sort the WAL filenames.  We want to send the files in order from
+		 * oldest to newest, to reduce the chance that a file is recycled
+		 * before we get a chance to send it over.
 		 */
-		nWalFiles = list_length(walFileList);
-		walFiles = palloc(nWalFiles * sizeof(char *));
-		i = 0;
-		foreach(lc, walFileList)
-		{
-			walFiles[i++] = lfirst(lc);
-		}
-		qsort(walFiles, nWalFiles, sizeof(char *), compareWalFileNames);
+		list_sort(walFileList, compareWalFileNames);
 
 		/*
 		 * There must be at least one xlog file in the pg_wal directory, since
 		 * we are doing backup-including-xlog.
 		 */
-		if (nWalFiles < 1)
+		if (walFileList == NIL)
 			ereport(ERROR,
 					(errmsg("could not find any WAL files")));
 
@@ -453,7 +443,8 @@ perform_base_backup(basebackup_options *opt)
 		 * Sanity check: the first and last segment should cover startptr and
 		 * endptr, with no gaps in between.
 		 */
-		XLogFromFileName(walFiles[0], &tli, &segno, wal_segment_size);
+		XLogFromFileName((char *) linitial(walFileList),
+						 &tli, &segno, wal_segment_size);
 		if (segno != startsegno)
 		{
 			char		startfname[MAXFNAMELEN];
@@ -463,12 +454,13 @@ perform_base_backup(basebackup_options *opt)
 			ereport(ERROR,
 					(errmsg("could not find WAL file \"%s\"", startfname)));
 		}
-		for (i = 0; i < nWalFiles; i++)
+		foreach(lc, walFileList)
 		{
+			char	   *walFileName = (char *) lfirst(lc);
 			XLogSegNo	currsegno = segno;
 			XLogSegNo	nextsegno = segno + 1;
 
-			XLogFromFileName(walFiles[i], &tli, &segno, wal_segment_size);
+			XLogFromFileName(walFileName, &tli, &segno, wal_segment_size);
 			if (!(nextsegno == segno || currsegno == segno))
 			{
 				char		nextfname[MAXFNAMELEN];
@@ -489,15 +481,16 @@ perform_base_backup(basebackup_options *opt)
 		}
 
 		/* Ok, we have everything we need. Send the WAL files. */
-		for (i = 0; i < nWalFiles; i++)
+		foreach(lc, walFileList)
 		{
+			char	   *walFileName = (char *) lfirst(lc);
 			FILE	   *fp;
 			char		buf[TAR_SEND_SIZE];
 			size_t		cnt;
 			pgoff_t		len = 0;
 
-			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", walFiles[i]);
-			XLogFromFileName(walFiles[i], &tli, &segno, wal_segment_size);
+			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", walFileName);
+			XLogFromFileName(walFileName, &tli, &segno, wal_segment_size);
 
 			fp = AllocateFile(pathbuf, "rb");
 			if (fp == NULL)
@@ -527,7 +520,7 @@ perform_base_backup(basebackup_options *opt)
 				CheckXLogRemoved(segno, tli);
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
+						 errmsg("unexpected WAL file size \"%s\"", walFileName)));
 			}
 
 			/* send the WAL file itself */
@@ -555,7 +548,7 @@ perform_base_backup(basebackup_options *opt)
 				CheckXLogRemoved(segno, tli);
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("unexpected WAL file size \"%s\"", walFiles[i])));
+						 errmsg("unexpected WAL file size \"%s\"", walFileName)));
 			}
 
 			/* wal_segment_size is a multiple of 512, so no need for padding */
@@ -568,7 +561,7 @@ perform_base_backup(basebackup_options *opt)
 			 * walreceiver.c always doing an XLogArchiveForceDone() after a
 			 * complete segment.
 			 */
-			StatusFilePath(pathbuf, walFiles[i], ".done");
+			StatusFilePath(pathbuf, walFileName, ".done");
 			sendFileWithContent(pathbuf, "");
 		}
 
@@ -618,14 +611,14 @@ perform_base_backup(basebackup_options *opt)
 }
 
 /*
- * qsort comparison function, to compare log/seg portion of WAL segment
+ * list_sort comparison function, to compare log/seg portion of WAL segment
  * filenames, ignoring the timeline portion.
  */
 static int
-compareWalFileNames(const void *a, const void *b)
+compareWalFileNames(const ListCell *a, const ListCell *b)
 {
-	char	   *fna = *((char **) a);
-	char	   *fnb = *((char **) b);
+	char	   *fna = (char *) lfirst(a);
+	char	   *fnb = (char *) lfirst(b);
 
 	return strcmp(fna + 8, fnb + 8);
 }

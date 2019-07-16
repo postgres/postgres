@@ -3236,7 +3236,7 @@ ReorderBufferToastReset(ReorderBuffer *rb, ReorderBufferTXN *txn)
  * -------------------------------------------------------------------------
  */
 
-/* struct for qsort()ing mapping files by lsn somewhat efficiently */
+/* struct for sorting mapping files by LSN efficiently */
 typedef struct RewriteMappingFile
 {
 	XLogRecPtr	lsn;
@@ -3378,13 +3378,13 @@ TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)
 }
 
 /*
- * qsort() comparator for sorting RewriteMappingFiles in LSN order.
+ * list_sort() comparator for sorting RewriteMappingFiles in LSN order.
  */
 static int
-file_sort_by_lsn(const void *a_p, const void *b_p)
+file_sort_by_lsn(const ListCell *a_p, const ListCell *b_p)
 {
-	RewriteMappingFile *a = *(RewriteMappingFile **) a_p;
-	RewriteMappingFile *b = *(RewriteMappingFile **) b_p;
+	RewriteMappingFile *a = (RewriteMappingFile *) lfirst(a_p);
+	RewriteMappingFile *b = (RewriteMappingFile *) lfirst(b_p);
 
 	if (a->lsn < b->lsn)
 		return -1;
@@ -3404,8 +3404,6 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 	struct dirent *mapping_de;
 	List	   *files = NIL;
 	ListCell   *file;
-	RewriteMappingFile **files_a;
-	size_t		off;
 	Oid			dboid = IsSharedRelation(relid) ? InvalidOid : MyDatabaseId;
 
 	mapping_dir = AllocateDir("pg_logical/mappings");
@@ -3459,21 +3457,12 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 	}
 	FreeDir(mapping_dir);
 
-	/* build array we can easily sort */
-	files_a = palloc(list_length(files) * sizeof(RewriteMappingFile *));
-	off = 0;
+	/* sort files so we apply them in LSN order */
+	list_sort(files, file_sort_by_lsn);
+
 	foreach(file, files)
 	{
-		files_a[off++] = lfirst(file);
-	}
-
-	/* sort files so we apply them in LSN order */
-	qsort(files_a, list_length(files), sizeof(RewriteMappingFile *),
-		  file_sort_by_lsn);
-
-	for (off = 0; off < list_length(files); off++)
-	{
-		RewriteMappingFile *f = files_a[off];
+		RewriteMappingFile *f = (RewriteMappingFile *) lfirst(file);
 
 		elog(DEBUG1, "applying mapping: \"%s\" in %u", f->fname,
 			 snapshot->subxip[0]);

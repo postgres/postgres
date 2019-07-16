@@ -570,7 +570,7 @@ extern List *list_copy(const List *list);
 extern List *list_copy_tail(const List *list, int nskip);
 extern List *list_copy_deep(const List *oldlist);
 
-typedef int (*list_qsort_comparator) (const void *a, const void *b);
-extern List *list_qsort(const List *list, list_qsort_comparator cmp);
+typedef int (*list_sort_comparator) (const ListCell *a, const ListCell *b);
+extern void list_sort(List *list, list_sort_comparator cmp);
 
 #endif							/* PG_LIST_H */

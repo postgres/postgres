@@ -63,9 +63,9 @@ static void get_policies_for_relation(Relation relation,
 									  List **permissive_policies,
 									  List **restrictive_policies);
 
-static List *sort_policies_by_name(List *policies);
+static void sort_policies_by_name(List *policies);
 
-static int	row_security_policy_cmp(const void *a, const void *b);
+static int	row_security_policy_cmp(const ListCell *a, const ListCell *b);
 
 static void add_security_quals(int rt_index,
 							   List *permissive_policies,
@@ -470,7 +470,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 	 * We sort restrictive policies by name so that any WCOs they generate are
 	 * checked in a well-defined order.
 	 */
-	*restrictive_policies = sort_policies_by_name(*restrictive_policies);
+	sort_policies_by_name(*restrictive_policies);
 
 	/*
 	 * Then add any permissive or restrictive policies defined by extensions.
@@ -488,7 +488,7 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
 		 * always check all built-in restrictive policies, in name order,
 		 * before checking restrictive policies added by hooks, in name order.
 		 */
-		hook_policies = sort_policies_by_name(hook_policies);
+		sort_policies_by_name(hook_policies);
 
 		foreach(item, hook_policies)
 		{
@@ -522,43 +522,20 @@ get_policies_for_relation(Relation relation, CmdType cmd, Oid user_id,
  * This is not necessary for permissive policies, since they are all combined
  * together using OR into a single WithCheckOption check.
  */
-static List *
+static void
 sort_policies_by_name(List *policies)
 {
-	int			npol = list_length(policies);
-	RowSecurityPolicy *pols;
-	ListCell   *item;
-	int			ii = 0;
-
-	if (npol <= 1)
-		return policies;
-
-	pols = (RowSecurityPolicy *) palloc(sizeof(RowSecurityPolicy) * npol);
-
-	foreach(item, policies)
-	{
-		RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
-
-		pols[ii++] = *policy;
-	}
-
-	qsort(pols, npol, sizeof(RowSecurityPolicy), row_security_policy_cmp);
-
-	policies = NIL;
-	for (ii = 0; ii < npol; ii++)
-		policies = lappend(policies, &pols[ii]);
-
-	return policies;
+	list_sort(policies, row_security_policy_cmp);
 }
 
 /*
- * qsort comparator to sort RowSecurityPolicy entries by name
+ * list_sort comparator to sort RowSecurityPolicy entries by name
  */
 static int
-row_security_policy_cmp(const void *a, const void *b)
+row_security_policy_cmp(const ListCell *a, const ListCell *b)
 {
-	const RowSecurityPolicy *pa = (const RowSecurityPolicy *) a;
-	const RowSecurityPolicy *pb = (const RowSecurityPolicy *) b;
+	const RowSecurityPolicy *pa = (const RowSecurityPolicy *) lfirst(a);
+	const RowSecurityPolicy *pb = (const RowSecurityPolicy *) lfirst(b);
 
 	/* Guard against NULL policy names from extensions */
 	if (pa->policy_name == NULL)
