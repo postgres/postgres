@@ -28,6 +28,7 @@
 #include "miscadmin.h"
 #include "access/xlogutils.h"
 #include "access/xlog.h"
+#include "commands/tablespace.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
@@ -120,7 +121,7 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 /* local routines */
 static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
 						 bool isRedo);
-static MdfdVec *mdopen(SMgrRelation reln, ForkNumber forknum, int behavior);
+static MdfdVec *mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
 								   MdfdVec *seg);
 static void register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
@@ -165,7 +166,7 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
 	 */
 	mdclose(reln, forkNum);
 
-	return (mdopen(reln, forkNum, EXTENSION_RETURN_NULL) != NULL);
+	return (mdopenfork(reln, forkNum, EXTENSION_RETURN_NULL) != NULL);
 }
 
 /*
@@ -184,6 +185,19 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 		return;					/* created and opened already... */
 
 	Assert(reln->md_num_open_segs[forkNum] == 0);
+
+	/*
+	 * We may be using the target table space for the first time in this
+	 * database, so create a per-database subdirectory if needed.
+	 *
+	 * XXX this is a fairly ugly violation of module layering, but this seems
+	 * to be the best place to put the check.  Maybe TablespaceCreateDbspace
+	 * should be here and not in commands/tablespace.c?  But that would imply
+	 * importing a lot of stuff that smgr.c oughtn't know, either.
+	 */
+	TablespaceCreateDbspace(reln->smgr_rnode.node.spcNode,
+							reln->smgr_rnode.node.dbNode,
+							isRedo);
 
 	path = relpath(reln->smgr_rnode, forkNum);
 
@@ -425,7 +439,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 /*
- *	mdopen() -- Open the specified relation.
+ *	mdopenfork() -- Open one fork of the specified relation.
  *
  * Note we only open the first segment, when there are multiple segments.
  *
@@ -435,7 +449,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  * invent one out of whole cloth.
  */
 static MdfdVec *
-mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
+mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior)
 {
 	MdfdVec    *mdfd;
 	char	   *path;
@@ -472,6 +486,17 @@ mdopen(SMgrRelation reln, ForkNumber forknum, int behavior)
 	Assert(_mdnblocks(reln, forknum, mdfd) <= ((BlockNumber) RELSEG_SIZE));
 
 	return mdfd;
+}
+
+/*
+ *  mdopen() -- Initialize newly-opened relation.
+ */
+void
+mdopen(SMgrRelation reln)
+{
+	/* mark it not open */
+	for (int forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		reln->md_num_open_segs[forknum] = 0;
 }
 
 /*
@@ -713,7 +738,7 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 BlockNumber
 mdnblocks(SMgrRelation reln, ForkNumber forknum)
 {
-	MdfdVec    *v = mdopen(reln, forknum, EXTENSION_FAIL);
+	MdfdVec    *v = mdopenfork(reln, forknum, EXTENSION_FAIL);
 	BlockNumber nblocks;
 	BlockNumber segno = 0;
 
@@ -1137,7 +1162,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 		v = &reln->md_seg_fds[forknum][reln->md_num_open_segs[forknum] - 1];
 	else
 	{
-		v = mdopen(reln, forknum, behavior);
+		v = mdopenfork(reln, forknum, behavior);
 		if (!v)
 			return NULL;		/* if behavior & EXTENSION_RETURN_NULL */
 	}
