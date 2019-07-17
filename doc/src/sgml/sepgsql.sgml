@@ -175,6 +175,9 @@ $ for DBNAME in template0 template1 postgres; do
    <command>make</command> with a Makefile supplied by SELinux.
    You will need to locate the appropriate
    Makefile on your system; the path shown below is only an example.
+   (This Makefile is usually supplied by the
+   <filename>selinux-policy-devel</filename> or
+   <filename>selinux-policy</filename> RPM.)
    Once built, install this policy package using the
    <command>semodule</command> command, which loads supplied policy packages
    into the kernel.  If the package is correctly installed,
