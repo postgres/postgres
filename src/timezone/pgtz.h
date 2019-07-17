@@ -25,11 +25,11 @@
 
 struct ttinfo
 {								/* time type information */
-	int32		tt_gmtoff;		/* UT offset in seconds */
+	int32		tt_utoff;		/* UT offset in seconds */
 	bool		tt_isdst;		/* used to set tm_isdst */
-	int			tt_abbrind;		/* abbreviation list index */
+	int			tt_desigidx;	/* abbreviation list index */
 	bool		tt_ttisstd;		/* transition is std time */
-	bool		tt_ttisgmt;		/* transition is UT */
+	bool		tt_ttisut;		/* transition is UT */
 };
 
 struct lsinfo

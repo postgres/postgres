@@ -107,15 +107,15 @@ static bool typesequiv(struct state const *, int, int);
 
 static struct pg_tm tm;
 
-/* Initialize *S to a value based on GMTOFF, ISDST, and ABBRIND.  */
+/* Initialize *S to a value based on UTOFF, ISDST, and DESIGIDX.  */
 static void
-init_ttinfo(struct ttinfo *s, int32 gmtoff, bool isdst, int abbrind)
+init_ttinfo(struct ttinfo *s, int32 utoff, bool isdst, int desigidx)
 {
-	s->tt_gmtoff = gmtoff;
+	s->tt_utoff = utoff;
 	s->tt_isdst = isdst;
-	s->tt_abbrind = abbrind;
+	s->tt_desigidx = desigidx;
 	s->tt_ttisstd = false;
-	s->tt_ttisgmt = false;
+	s->tt_ttisut = false;
 }
 
 static int32
@@ -251,7 +251,7 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 	for (stored = 4; stored <= 8; stored *= 2)
 	{
 		int32		ttisstdcnt = detzcode(up->tzhead.tzh_ttisstdcnt);
-		int32		ttisgmtcnt = detzcode(up->tzhead.tzh_ttisgmtcnt);
+		int32		ttisutcnt = detzcode(up->tzhead.tzh_ttisutcnt);
 		int64		prevtr = 0;
 		int32		prevcorr = 0;
 		int32		leapcnt = detzcode(up->tzhead.tzh_leapcnt);
@@ -270,7 +270,7 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			  && 0 <= timecnt && timecnt < TZ_MAX_TIMES
 			  && 0 <= charcnt && charcnt < TZ_MAX_CHARS
 			  && (ttisstdcnt == typecnt || ttisstdcnt == 0)
-			  && (ttisgmtcnt == typecnt || ttisgmtcnt == 0)))
+			  && (ttisutcnt == typecnt || ttisutcnt == 0)))
 			return EINVAL;
 		if (nread
 			< (tzheadsize		/* struct tzhead */
@@ -280,7 +280,7 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			   + charcnt		/* chars */
 			   + leapcnt * (stored + 4) /* lsinfos */
 			   + ttisstdcnt		/* ttisstds */
-			   + ttisgmtcnt))	/* ttisgmts */
+			   + ttisutcnt))	/* ttisuts */
 			return EINVAL;
 		sp->leapcnt = leapcnt;
 		sp->timecnt = timecnt;
@@ -332,19 +332,19 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 		{
 			struct ttinfo *ttisp;
 			unsigned char isdst,
-						abbrind;
+						desigidx;
 
 			ttisp = &sp->ttis[i];
-			ttisp->tt_gmtoff = detzcode(p);
+			ttisp->tt_utoff = detzcode(p);
 			p += 4;
 			isdst = *p++;
 			if (!(isdst < 2))
 				return EINVAL;
 			ttisp->tt_isdst = isdst;
-			abbrind = *p++;
-			if (!(abbrind < sp->charcnt))
+			desigidx = *p++;
+			if (!(desigidx < sp->charcnt))
 				return EINVAL;
-			ttisp->tt_abbrind = abbrind;
+			ttisp->tt_desigidx = desigidx;
 		}
 		for (i = 0; i < sp->charcnt; ++i)
 			sp->chars[i] = *p++;
@@ -398,13 +398,13 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 			struct ttinfo *ttisp;
 
 			ttisp = &sp->ttis[i];
-			if (ttisgmtcnt == 0)
-				ttisp->tt_ttisgmt = false;
+			if (ttisutcnt == 0)
+				ttisp->tt_ttisut = false;
 			else
 			{
 				if (*p != true && *p != false)
 					return EINVAL;
-				ttisp->tt_ttisgmt = *p++;
+				ttisp->tt_ttisut = *p++;
 			}
 		}
 
@@ -438,13 +438,13 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 
 			for (i = 0; i < ts->typecnt; i++)
 			{
-				char	   *tsabbr = ts->chars + ts->ttis[i].tt_abbrind;
+				char	   *tsabbr = ts->chars + ts->ttis[i].tt_desigidx;
 				int			j;
 
 				for (j = 0; j < charcnt; j++)
 					if (strcmp(sp->chars + j, tsabbr) == 0)
 					{
-						ts->ttis[i].tt_abbrind = j;
+						ts->ttis[i].tt_desigidx = j;
 						gotabbr++;
 						break;
 					}
@@ -456,7 +456,7 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 					{
 						strcpy(sp->chars + j, tsabbr);
 						charcnt = j + tsabbrlen + 1;
-						ts->ttis[i].tt_abbrind = j;
+						ts->ttis[i].tt_desigidx = j;
 						gotabbr++;
 					}
 				}
@@ -614,12 +614,13 @@ typesequiv(const struct state *sp, int a, int b)
 		const struct ttinfo *ap = &sp->ttis[a];
 		const struct ttinfo *bp = &sp->ttis[b];
 
-		result = ap->tt_gmtoff == bp->tt_gmtoff &&
-			ap->tt_isdst == bp->tt_isdst &&
-			ap->tt_ttisstd == bp->tt_ttisstd &&
-			ap->tt_ttisgmt == bp->tt_ttisgmt &&
-			strcmp(&sp->chars[ap->tt_abbrind],
-				   &sp->chars[bp->tt_abbrind]) == 0;
+		result = (ap->tt_utoff == bp->tt_utoff
+				  && ap->tt_isdst == bp->tt_isdst
+				  && ap->tt_ttisstd == bp->tt_ttisstd
+				  && ap->tt_ttisut == bp->tt_ttisut
+				  && (strcmp(&sp->chars[ap->tt_desigidx],
+							 &sp->chars[bp->tt_desigidx])
+					  == 0));
 	}
 	return result;
 }
@@ -1176,7 +1177,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 				if (!sp->ttis[j].tt_isdst)
 				{
 					theirstdoffset =
-						-sp->ttis[j].tt_gmtoff;
+						-sp->ttis[j].tt_utoff;
 					break;
 				}
 			}
@@ -1187,7 +1188,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 				if (sp->ttis[j].tt_isdst)
 				{
 					theirdstoffset =
-						-sp->ttis[j].tt_gmtoff;
+						-sp->ttis[j].tt_utoff;
 					break;
 				}
 			}
@@ -1206,7 +1207,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 			{
 				j = sp->types[i];
 				sp->types[i] = sp->ttis[j].tt_isdst;
-				if (sp->ttis[j].tt_ttisgmt)
+				if (sp->ttis[j].tt_ttisut)
 				{
 					/* No adjustment to transition time */
 				}
@@ -1234,7 +1235,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 							theirstdoffset;
 					}
 				}
-				theiroffset = -sp->ttis[j].tt_gmtoff;
+				theiroffset = -sp->ttis[j].tt_utoff;
 				if (sp->ttis[j].tt_isdst)
 					theirdstoffset = theiroffset;
 				else
@@ -1357,14 +1358,14 @@ localsub(struct state const *sp, pg_time_t const *timep,
 
 	/*
 	 * To get (wrong) behavior that's compatible with System V Release 2.0
-	 * you'd replace the statement below with t += ttisp->tt_gmtoff;
+	 * you'd replace the statement below with t += ttisp->tt_utoff;
 	 * timesub(&t, 0L, sp, tmp);
 	 */
-	result = timesub(&t, ttisp->tt_gmtoff, sp, tmp);
+	result = timesub(&t, ttisp->tt_utoff, sp, tmp);
 	if (result)
 	{
 		result->tm_isdst = ttisp->tt_isdst;
-		result->tm_zone = (char *) &sp->chars[ttisp->tt_abbrind];
+		result->tm_zone = (char *) &sp->chars[ttisp->tt_desigidx];
 	}
 	return result;
 }
@@ -1647,7 +1648,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 				break;
 			}
 		ttisp = &sp->ttis[i];
-		*before_gmtoff = ttisp->tt_gmtoff;
+		*before_gmtoff = ttisp->tt_utoff;
 		*before_isdst = ttisp->tt_isdst;
 		return 0;
 	}
@@ -1700,7 +1701,7 @@ pg_next_dst_boundary(const pg_time_t *timep,
 		/* No known transition > t, so use last known segment's type */
 		i = sp->types[sp->timecnt - 1];
 		ttisp = &sp->ttis[i];
-		*before_gmtoff = ttisp->tt_gmtoff;
+		*before_gmtoff = ttisp->tt_utoff;
 		*before_isdst = ttisp->tt_isdst;
 		return 0;
 	}
@@ -1715,13 +1716,13 @@ pg_next_dst_boundary(const pg_time_t *timep,
 				break;
 			}
 		ttisp = &sp->ttis[i];
-		*before_gmtoff = ttisp->tt_gmtoff;
+		*before_gmtoff = ttisp->tt_utoff;
 		*before_isdst = ttisp->tt_isdst;
 		*boundary = sp->ats[0];
 		/* And for "after", use the first segment's type */
 		i = sp->types[0];
 		ttisp = &sp->ttis[i];
-		*after_gmtoff = ttisp->tt_gmtoff;
+		*after_gmtoff = ttisp->tt_utoff;
 		*after_isdst = ttisp->tt_isdst;
 		return 1;
 	}
@@ -1743,12 +1744,12 @@ pg_next_dst_boundary(const pg_time_t *timep,
 	}
 	j = sp->types[i - 1];
 	ttisp = &sp->ttis[j];
-	*before_gmtoff = ttisp->tt_gmtoff;
+	*before_gmtoff = ttisp->tt_utoff;
 	*before_isdst = ttisp->tt_isdst;
 	*boundary = sp->ats[i];
 	j = sp->types[i];
 	ttisp = &sp->ttis[j];
-	*after_gmtoff = ttisp->tt_gmtoff;
+	*after_gmtoff = ttisp->tt_utoff;
 	*after_isdst = ttisp->tt_isdst;
 	return 1;
 }
@@ -1832,9 +1833,9 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 	for (i = cutoff - 1; i >= 0; i--)
 	{
 		ttisp = &sp->ttis[sp->types[i]];
-		if (ttisp->tt_abbrind == abbrind)
+		if (ttisp->tt_desigidx == abbrind)
 		{
-			*gmtoff = ttisp->tt_gmtoff;
+			*gmtoff = ttisp->tt_utoff;
 			*isdst = ttisp->tt_isdst;
 			return true;
 		}
@@ -1846,9 +1847,9 @@ pg_interpret_timezone_abbrev(const char *abbrev,
 	for (i = cutoff; i < sp->timecnt; i++)
 	{
 		ttisp = &sp->ttis[sp->types[i]];
-		if (ttisp->tt_abbrind == abbrind)
+		if (ttisp->tt_desigidx == abbrind)
 		{
-			*gmtoff = ttisp->tt_gmtoff;
+			*gmtoff = ttisp->tt_utoff;
 			*isdst = ttisp->tt_isdst;
 			return true;
 		}
@@ -1875,10 +1876,10 @@ pg_get_timezone_offset(const pg_tz *tz, long int *gmtoff)
 	sp = &tz->state;
 	for (i = 1; i < sp->typecnt; i++)
 	{
-		if (sp->ttis[i].tt_gmtoff != sp->ttis[0].tt_gmtoff)
+		if (sp->ttis[i].tt_utoff != sp->ttis[0].tt_utoff)
 			return false;
 	}
-	*gmtoff = sp->ttis[0].tt_gmtoff;
+	*gmtoff = sp->ttis[0].tt_utoff;
 	return true;
 }
 
