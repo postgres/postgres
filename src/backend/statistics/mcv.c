@@ -84,6 +84,24 @@ static int	count_distinct_groups(int numrows, SortItem *items,
 								  MultiSortSupport mss);
 
 /*
+ * Compute new value for bitmap item, considering whether it's used for
+ * clauses connected by AND/OR.
+ */
+#define RESULT_MERGE(value, is_or, match) \
+	((is_or) ? ((value) || (match)) : ((value) && (match)))
+
+/*
+ * When processing a list of clauses, the bitmap item may get set to a value
+ * such that additional clauses can't change it. For example, when processing
+ * a list of clauses connected to AND, as soon as the item gets set to 'false'
+ * then it'll remain like that. Similarly clauses connected by OR and 'true'.
+ *
+ * Returns true when the value in the bitmap can't change no matter how the
+ * remaining clauses are evaluated.
+ */
+#define RESULT_IS_FINAL(value, is_or)	((is_or) ? (value) : (!(value)))
+
+/*
  * get_mincount_for_mcv_list
  * 		Determine the minimum number of times a value needs to appear in
  * 		the sample for it to be included in the MCV list.
@@ -1589,7 +1607,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 				 */
 				for (i = 0; i < mcvlist->nitems; i++)
 				{
-					bool		mismatch = false;
+					bool		match = true;
 					MCVItem    *item = &mcvlist->items[i];
 
 					/*
@@ -1599,17 +1617,16 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 					 */
 					if (item->isnull[idx] || cst->constisnull)
 					{
-						/* we only care about AND, because OR can't change */
-						if (!is_or)
-							matches[i] = false;
-
+						matches[i] = RESULT_MERGE(matches[i], is_or, false);
 						continue;
 					}
 
-					/* skip MCV items that were already ruled out */
-					if ((!is_or) && (matches[i] == false))
-						continue;
-					else if (is_or && (matches[i] == true))
+					/*
+					 * Skip MCV items that can't change result in the bitmap.
+					 * Once the value gets false for AND-lists, or true for
+					 * OR-lists, we don't need to look at more clauses.
+					 */
+					if (RESULT_IS_FINAL(matches[i], is_or))
 						continue;
 
 					switch (oprrest)
@@ -1622,10 +1639,10 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 							 * it does not matter whether it's (var op const)
 							 * or (const op var).
 							 */
-							mismatch = !DatumGetBool(FunctionCall2Coll(&opproc,
-																	   DEFAULT_COLLATION_OID,
-																	   cst->constvalue,
-																	   item->values[idx]));
+							match = DatumGetBool(FunctionCall2Coll(&opproc,
+																   DEFAULT_COLLATION_OID,
+																   cst->constvalue,
+																   item->values[idx]));
 
 							break;
 
@@ -1640,39 +1657,21 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 							 * bucket, because there's no overlap).
 							 */
 							if (isgt)
-								mismatch = !DatumGetBool(FunctionCall2Coll(&opproc,
-																		   DEFAULT_COLLATION_OID,
-																		   cst->constvalue,
-																		   item->values[idx]));
+								match = DatumGetBool(FunctionCall2Coll(&opproc,
+																	   DEFAULT_COLLATION_OID,
+																	   cst->constvalue,
+																	   item->values[idx]));
 							else
-								mismatch = !DatumGetBool(FunctionCall2Coll(&opproc,
-																		   DEFAULT_COLLATION_OID,
-																		   item->values[idx],
-																		   cst->constvalue));
+								match = DatumGetBool(FunctionCall2Coll(&opproc,
+																	   DEFAULT_COLLATION_OID,
+																	   item->values[idx],
+																	   cst->constvalue));
 
 							break;
 					}
 
-					/*
-					 * XXX The conditions on matches[i] are not needed, as we
-					 * skip MCV items that can't become true/false, depending
-					 * on the current flag. See beginning of the loop over MCV
-					 * items.
-					 */
-
-					if ((is_or) && (!mismatch))
-					{
-						/* OR - was not a match before, matches now */
-						matches[i] = true;
-						continue;
-					}
-					else if ((!is_or) && mismatch)
-					{
-						/* AND - was a match before, does not match anymore */
-						matches[i] = false;
-						continue;
-					}
-
+					/* update the match bitmap with the result */
+					matches[i] = RESULT_MERGE(matches[i], is_or, match);
 				}
 			}
 		}
@@ -1707,10 +1706,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 				}
 
 				/* now, update the match bitmap, depending on OR/AND type */
-				if (is_or)
-					matches[i] = Max(matches[i], match);
-				else
-					matches[i] = Min(matches[i], match);
+				matches[i] = RESULT_MERGE(matches[i], is_or, match);
 			}
 		}
 		else if (is_orclause(clause) || is_andclause(clause))
@@ -1737,13 +1733,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			 * condition when merging the results.
 			 */
 			for (i = 0; i < mcvlist->nitems; i++)
-			{
-				/* Is this OR or AND clause? */
-				if (is_or)
-					matches[i] = Max(matches[i], bool_matches[i]);
-				else
-					matches[i] = Min(matches[i], bool_matches[i]);
-			}
+				matches[i] = RESULT_MERGE(matches[i], is_or, bool_matches[i]);
 
 			pfree(bool_matches);
 		}
@@ -1767,25 +1757,11 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 
 			/*
 			 * Merge the bitmap produced by mcv_get_match_bitmap into the
-			 * current one.
+			 * current one. We're handling a NOT clause, so invert the result
+			 * before merging it into the global bitmap.
 			 */
 			for (i = 0; i < mcvlist->nitems; i++)
-			{
-				/*
-				 * When handling a NOT clause, we need to invert the result
-				 * before merging it into the global result.
-				 */
-				if (not_matches[i] == false)
-					not_matches[i] = true;
-				else
-					not_matches[i] = false;
-
-				/* Is this OR or AND clause? */
-				if (is_or)
-					matches[i] = Max(matches[i], not_matches[i]);
-				else
-					matches[i] = Min(matches[i], not_matches[i]);
-			}
+				matches[i] = RESULT_MERGE(matches[i], is_or, !not_matches[i]);
 
 			pfree(not_matches);
 		}
@@ -1814,17 +1790,12 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 				if (!item->isnull[idx] && DatumGetBool(item->values[idx]))
 					match = true;
 
-				/* now, update the match bitmap, depending on OR/AND type */
-				if (is_or)
-					matches[i] = Max(matches[i], match);
-				else
-					matches[i] = Min(matches[i], match);
+				/* update the result bitmap */
+				matches[i] = RESULT_MERGE(matches[i], is_or, match);
 			}
 		}
 		else
-		{
 			elog(ERROR, "unknown clause type: %d", clause->type);
-		}
 	}
 
 	return matches;
