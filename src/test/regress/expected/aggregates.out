@@ -2030,10 +2030,10 @@ NOTICE:  avg_transfn called with 3
 
 -- this should not share the state due to different input columns.
 select my_avg(one),my_sum(two) from (values(1,2),(3,4)) t(one,two);
-NOTICE:  avg_transfn called with 2
 NOTICE:  avg_transfn called with 1
-NOTICE:  avg_transfn called with 4
+NOTICE:  avg_transfn called with 2
 NOTICE:  avg_transfn called with 3
+NOTICE:  avg_transfn called with 4
  my_avg | my_sum 
 --------+--------
       2 |      6

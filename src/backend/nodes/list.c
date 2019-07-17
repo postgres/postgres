@@ -827,6 +827,30 @@ list_delete_first(List *list)
 }
 
 /*
+ * Delete the last element of the list.
+ *
+ * This is the opposite of list_delete_first(), but is noticeably cheaper
+ * with a long list, since no data need be moved.
+ */
+List *
+list_delete_last(List *list)
+{
+	check_list_invariants(list);
+
+	if (list == NIL)
+		return NIL;				/* would an error be better? */
+
+	/* list_truncate won't free list if it goes to empty, but this should */
+	if (list_length(list) <= 1)
+	{
+		list_free(list);
+		return NIL;
+	}
+
+	return list_truncate(list, list_length(list) - 1);
+}
+
+/*
  * Generate the union of two lists. This is calculated by copying
  * list1 via list_copy(), then adding to it all the members of list2
  * that aren't already in list1.

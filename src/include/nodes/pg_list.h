@@ -531,6 +531,7 @@ extern List *list_delete_ptr(List *list, void *datum);
 extern List *list_delete_int(List *list, int datum);
 extern List *list_delete_oid(List *list, Oid datum);
 extern List *list_delete_first(List *list);
+extern List *list_delete_last(List *list);
 extern List *list_delete_nth_cell(List *list, int n);
 extern List *list_delete_cell(List *list, ListCell *cell);
 

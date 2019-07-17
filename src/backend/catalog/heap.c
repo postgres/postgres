@@ -633,7 +633,7 @@ CheckAttributeType(const char *attname,
 					 errmsg("composite type %s cannot be made a member of itself",
 							format_type_be(atttypid))));
 
-		containing_rowtypes = lcons_oid(atttypid, containing_rowtypes);
+		containing_rowtypes = lappend_oid(containing_rowtypes, atttypid);
 
 		relation = relation_open(get_typ_typrelid(atttypid), AccessShareLock);
 
@@ -653,7 +653,7 @@ CheckAttributeType(const char *attname,
 
 		relation_close(relation, AccessShareLock);
 
-		containing_rowtypes = list_delete_first(containing_rowtypes);
+		containing_rowtypes = list_delete_last(containing_rowtypes);
 	}
 	else if (OidIsValid((att_typelem = get_element_type(atttypid))))
 	{

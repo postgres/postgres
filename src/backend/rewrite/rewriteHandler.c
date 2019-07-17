@@ -1973,7 +1973,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							 errmsg("infinite recursion detected in rules for relation \"%s\"",
 									RelationGetRelationName(rel))));
-				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
+				activeRIRs = lappend_oid(activeRIRs, RelationGetRelid(rel));
 
 				foreach(l, locks)
 				{
@@ -1986,7 +1986,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 												  activeRIRs);
 				}
 
-				activeRIRs = list_delete_first(activeRIRs);
+				activeRIRs = list_delete_last(activeRIRs);
 			}
 		}
 
@@ -2059,7 +2059,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 							 errmsg("infinite recursion detected in policy for relation \"%s\"",
 									RelationGetRelationName(rel))));
 
-				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
+				activeRIRs = lappend_oid(activeRIRs, RelationGetRelid(rel));
 
 				/*
 				 * get_row_security_policies just passed back securityQuals
@@ -2084,7 +2084,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 				expression_tree_walker((Node *) withCheckOptions,
 									   fireRIRonSubLink, (void *) activeRIRs);
 
-				activeRIRs = list_delete_first(activeRIRs);
+				activeRIRs = list_delete_last(activeRIRs);
 			}
 
 			/*
@@ -3711,7 +3711,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			rev = (rewrite_event *) palloc(sizeof(rewrite_event));
 			rev->relation = RelationGetRelid(rt_entry_relation);
 			rev->event = event;
-			rewrite_events = lcons(rev, rewrite_events);
+			rewrite_events = lappend(rewrite_events, rev);
 
 			foreach(n, product_queries)
 			{
@@ -3722,7 +3722,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 				rewritten = list_concat(rewritten, newstuff);
 			}
 
-			rewrite_events = list_delete_first(rewrite_events);
+			rewrite_events = list_delete_last(rewrite_events);
 		}
 
 		/*

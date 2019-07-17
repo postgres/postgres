@@ -419,6 +419,13 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 			index_close(indexRelation, NoLock);
 
+			/*
+			 * We've historically used lcons() here.  It'd make more sense to
+			 * use lappend(), but that causes the planner to change behavior
+			 * in cases where two indexes seem equally attractive.  For now,
+			 * stick with lcons() --- few tables should have so many indexes
+			 * that the O(N^2) behavior of lcons() is really a problem.
+			 */
 			indexinfos = lcons(info, indexinfos);
 		}
 
@@ -1339,7 +1346,7 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 			info->kind = STATS_EXT_NDISTINCT;
 			info->keys = bms_copy(keys);
 
-			stainfos = lcons(info, stainfos);
+			stainfos = lappend(stainfos, info);
 		}
 
 		if (statext_is_kind_built(dtup, STATS_EXT_DEPENDENCIES))
@@ -1351,7 +1358,7 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 			info->kind = STATS_EXT_DEPENDENCIES;
 			info->keys = bms_copy(keys);
 
-			stainfos = lcons(info, stainfos);
+			stainfos = lappend(stainfos, info);
 		}
 
 		if (statext_is_kind_built(dtup, STATS_EXT_MCV))
@@ -1363,7 +1370,7 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 			info->kind = STATS_EXT_MCV;
 			info->keys = bms_copy(keys);
 
-			stainfos = lcons(info, stainfos);
+			stainfos = lappend(stainfos, info);
 		}
 
 		ReleaseSysCache(htup);

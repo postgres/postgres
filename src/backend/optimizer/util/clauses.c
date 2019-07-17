@@ -881,11 +881,9 @@ is_parallel_safe(PlannerInfo *root, Node *node)
 		foreach(l, proot->init_plans)
 		{
 			SubPlan    *initsubplan = (SubPlan *) lfirst(l);
-			ListCell   *l2;
 
-			foreach(l2, initsubplan->setParam)
-				context.safe_param_ids = lcons_int(lfirst_int(l2),
-												   context.safe_param_ids);
+			context.safe_param_ids = list_concat(context.safe_param_ids,
+												 initsubplan->setParam);
 		}
 	}
 
@@ -1015,6 +1013,7 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 											  context->safe_param_ids);
 		if (max_parallel_hazard_walker(subplan->testexpr, context))
 			return true;		/* no need to restore safe_param_ids */
+		list_free(context->safe_param_ids);
 		context->safe_param_ids = save_safe_param_ids;
 		/* we must also check args, but no special Param treatment there */
 		if (max_parallel_hazard_walker((Node *) subplan->args, context))
@@ -4185,8 +4184,8 @@ add_function_defaults(List *args, HeapTuple func_tuple)
 	ndelete = nargsprovided + list_length(defaults) - funcform->pronargs;
 	if (ndelete < 0)
 		elog(ERROR, "not enough default arguments");
-	while (ndelete-- > 0)
-		defaults = list_delete_first(defaults);
+	if (ndelete > 0)
+		defaults = list_copy_tail(defaults, ndelete);
 
 	/* And form the combined argument list, not modifying the input list */
 	return list_concat(list_copy(args), defaults);
@@ -4701,9 +4700,9 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 * Recursively try to simplify the modified expression.  Here we must add
 	 * the current function to the context list of active functions.
 	 */
-	context->active_fns = lcons_oid(funcid, context->active_fns);
+	context->active_fns = lappend_oid(context->active_fns, funcid);
 	newexpr = eval_const_expressions_mutator(newexpr, context);
-	context->active_fns = list_delete_first(context->active_fns);
+	context->active_fns = list_delete_last(context->active_fns);
 
 	error_context_stack = sqlerrcontext.previous;
 

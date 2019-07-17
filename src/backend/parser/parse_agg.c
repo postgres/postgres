@@ -1132,7 +1132,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		if (expr == NULL)
 			continue;			/* probably cannot happen */
 
-		groupClauses = lcons(expr, groupClauses);
+		groupClauses = lappend(groupClauses, expr);
 	}
 
 	/*

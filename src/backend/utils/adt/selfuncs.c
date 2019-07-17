@@ -3201,7 +3201,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 		 * Split the list of varinfos in two - one for the current rel, one
 		 * for remaining Vars on other rels.
 		 */
-		relvarinfos = lcons(varinfo1, relvarinfos);
+		relvarinfos = lappend(relvarinfos, varinfo1);
 		for_each_cell(l, varinfos, list_second_cell(varinfos))
 		{
 			GroupVarInfo *varinfo2 = (GroupVarInfo *) lfirst(l);
@@ -3209,12 +3209,12 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 			if (varinfo2->rel == varinfo1->rel)
 			{
 				/* varinfos on current rel */
-				relvarinfos = lcons(varinfo2, relvarinfos);
+				relvarinfos = lappend(relvarinfos, varinfo2);
 			}
 			else
 			{
 				/* not time to process varinfo2 yet */
-				newvarinfos = lcons(varinfo2, newvarinfos);
+				newvarinfos = lappend(newvarinfos, varinfo2);
 			}
 		}
 

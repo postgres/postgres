@@ -786,7 +786,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				{
 					AggState   *aggstate = (AggState *) state->parent;
 
-					aggstate->aggs = lcons(astate, aggstate->aggs);
+					aggstate->aggs = lappend(aggstate->aggs, astate);
 					aggstate->numaggs++;
 				}
 				else
@@ -834,7 +834,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					WindowAggState *winstate = (WindowAggState *) state->parent;
 					int			nfuncs;
 
-					winstate->funcs = lcons(wfstate, winstate->funcs);
+					winstate->funcs = lappend(winstate->funcs, wfstate);
 					nfuncs = ++winstate->numfuncs;
 					if (wfunc->winagg)
 						winstate->numaggs++;

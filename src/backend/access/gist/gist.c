@@ -1323,8 +1323,6 @@ static void
 gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 				GISTSTATE *giststate, List *splitinfo, bool unlockbuf)
 {
-	ListCell   *lc;
-	List	   *reversed;
 	GISTPageSplitInfo *right;
 	GISTPageSplitInfo *left;
 	IndexTuple	tuples[2];
@@ -1339,14 +1337,6 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 	 * left. Finally insert the downlink for the last new page and update the
 	 * downlink for the original page as one operation.
 	 */
-
-	/* for convenience, create a copy of the list in reverse order */
-	reversed = NIL;
-	foreach(lc, splitinfo)
-	{
-		reversed = lcons(lfirst(lc), reversed);
-	}
-
 	LockBuffer(stack->parent->buffer, GIST_EXCLUSIVE);
 	gistFindCorrectParent(state->r, stack);
 
@@ -1354,10 +1344,10 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 	 * insert downlinks for the siblings from right to left, until there are
 	 * only two siblings left.
 	 */
-	while (list_length(reversed) > 2)
+	for (int pos = list_length(splitinfo) - 1; pos > 1; pos--)
 	{
-		right = (GISTPageSplitInfo *) linitial(reversed);
-		left = (GISTPageSplitInfo *) lsecond(reversed);
+		right = (GISTPageSplitInfo *) list_nth(splitinfo, pos);
+		left = (GISTPageSplitInfo *) list_nth(splitinfo, pos - 1);
 
 		if (gistinserttuples(state, stack->parent, giststate,
 							 &right->downlink, 1,
@@ -1371,11 +1361,10 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 			gistFindCorrectParent(state->r, stack);
 		}
 		/* gistinserttuples() released the lock on right->buf. */
-		reversed = list_delete_first(reversed);
 	}
 
-	right = (GISTPageSplitInfo *) linitial(reversed);
-	left = (GISTPageSplitInfo *) lsecond(reversed);
+	right = (GISTPageSplitInfo *) lsecond(splitinfo);
+	left = (GISTPageSplitInfo *) linitial(splitinfo);
 
 	/*
 	 * Finally insert downlink for the remaining right page and update the

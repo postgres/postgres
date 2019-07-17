@@ -281,11 +281,11 @@ LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait, List *ancestor_views
 	context.nowait = nowait;
 	context.viewowner = view->rd_rel->relowner;
 	context.viewoid = reloid;
-	context.ancestor_views = lcons_oid(reloid, ancestor_views);
+	context.ancestor_views = lappend_oid(ancestor_views, reloid);
 
 	LockViewRecurse_walker((Node *) viewquery, &context);
 
-	ancestor_views = list_delete_oid(ancestor_views, reloid);
+	(void) list_delete_last(context.ancestor_views);
 
 	table_close(view, NoLock);
 }

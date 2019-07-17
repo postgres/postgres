@@ -2999,7 +2999,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			rtc->rel = rel;
 			rtc->natts = 0;
 			rtc->atts = (int *) palloc(sizeof(int) * RelationGetNumberOfAttributes(rel));
-			result = lcons(rtc, result);
+			result = lappend(result, rtc);
 		}
 
 		/*

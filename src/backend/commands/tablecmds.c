@@ -14480,6 +14480,11 @@ register_on_commit_action(Oid relid, OnCommitAction action)
 	oc->creating_subid = GetCurrentSubTransactionId();
 	oc->deleting_subid = InvalidSubTransactionId;
 
+	/*
+	 * We use lcons() here so that ON COMMIT actions are processed in reverse
+	 * order of registration.  That might not be essential but it seems
+	 * reasonable.
+	 */
 	on_commits = lcons(oc, on_commits);
 
 	MemoryContextSwitchTo(oldcxt);
