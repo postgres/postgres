@@ -318,21 +318,26 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar RETURNING *", false, 5);
    The structure <structname>SPITupleTable</structname> is defined
    thus:
 <programlisting>
-typedef struct
+typedef struct SPITupleTable
 {
+    /* Public members */
+    TupleDesc   tupdesc;        /* tuple descriptor */
+    HeapTuple  *vals;           /* array of tuples */
+
+    /* Private members, not intended for external callers */
     MemoryContext tuptabcxt;    /* memory context of result table */
-    uint64      alloced;        /* number of alloced vals */
-    uint64      free;           /* number of free vals */
-    TupleDesc   tupdesc;        /* row descriptor */
-    HeapTuple  *vals;           /* rows */
+    uint64      alloced;        /* # of alloced vals */
+    uint64      free;           /* # of free vals */
+    slist_node  next;           /* link for internal bookkeeping */
+    SubTransactionId subid;     /* subxact in which tuptable was created */
 } SPITupleTable;
 </programlisting>
+   <structfield>vals</structfield> and <structfield>tupdesc</structfield> can
+   be used by SPI callers, the remaining fields are internal.
    <structfield>vals</structfield> is an array of pointers to rows.  (The number
    of valid entries is given by <varname>SPI_processed</varname>.)
    <structfield>tupdesc</structfield> is a row descriptor which you can pass to
-   SPI functions dealing with rows.  <structfield>tuptabcxt</structfield>,
-   <structfield>alloced</structfield>, and <structfield>free</structfield> are internal
-   fields not intended for use by SPI callers.
+   SPI functions dealing with rows.
   </para>
 
   <para>
