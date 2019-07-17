@@ -1577,8 +1577,6 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 
 			if (ok)
 			{
-				TypeCacheEntry *typecache;
-				FmgrInfo	gtproc;
 				Var		   *var;
 				Const	   *cst;
 				bool		isgt;
@@ -1595,10 +1593,6 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 
 				/* match the attribute to a dimension of the statistic */
 				idx = bms_member_index(keys, var->varattno);
-
-				/* get information about the >= procedure */
-				typecache = lookup_type_cache(var->vartype, TYPECACHE_GT_OPR);
-				fmgr_info(get_opcode(typecache->gt_opr), &gtproc);
 
 				/*
 				 * Walk through the MCV items and evaluate the current clause.
