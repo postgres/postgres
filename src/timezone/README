@@ -55,7 +55,7 @@ match properly on the old version.
 Time Zone code
 ==============
 
-The code in this directory is currently synced with tzcode release 2019a.
+The code in this directory is currently synced with tzcode release 2019b.
 There are many cosmetic (and not so cosmetic) differences from the
 original tzcode library, but diffs in the upstream version should usually
 be propagated to our version.  Here are some notes about that.
@@ -127,4 +127,7 @@ and then run them through pgindent.  (The first three sed patterns deal
 with conversion of their block comment style to something pgindent
 won't make a hash of; the remainder address other points noted above.)
 After that, the files can be diff'd directly against our corresponding
-files.
+files.  Also, it's typically helpful to diff against the previous tzcode
+release (after processing that the same way), and then try to apply the
+diff to our files.  This will take care of most of the changes
+mechanically.
