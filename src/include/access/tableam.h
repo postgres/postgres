@@ -294,7 +294,7 @@ typedef struct TableAmRoutine
 	 *
 	 * *all_dead, if all_dead is not NULL, should be set to true by
 	 * index_fetch_tuple iff it is guaranteed that no backend needs to see
-	 * that tuple. Index AMs can use that do avoid returning that tid in
+	 * that tuple. Index AMs can use that to avoid returning that tid in
 	 * future searches.
 	 */
 	bool		(*index_fetch_tuple) (struct IndexFetchTableData *scan,
@@ -482,9 +482,9 @@ typedef struct TableAmRoutine
 											  double *tups_recently_dead);
 
 	/*
-	 * React to VACUUM command on the relation. The VACUUM might be user
-	 * triggered or by autovacuum. The specific actions performed by the AM
-	 * will depend heavily on the individual AM.
+	 * React to VACUUM command on the relation. The VACUUM can be
+	 * triggered by a user or by autovacuum. The specific actions
+	 * performed by the AM will depend heavily on the individual AM.
 	 *
 	 * On entry a transaction is already established, and the relation is
 	 * locked with a ShareUpdateExclusive lock.
@@ -661,7 +661,7 @@ typedef struct TableAmRoutine
 	 * false if the sample scan is finished, true otherwise. `scan` was
 	 * started via table_beginscan_sampling().
 	 *
-	 * Typically this will first determine the target block by call the
+	 * Typically this will first determine the target block by calling the
 	 * TsmRoutine's NextSampleBlock() callback if not NULL, or alternatively
 	 * perform a sequential scan over all blocks.  The determined block is
 	 * then typically read and pinned.
@@ -679,7 +679,7 @@ typedef struct TableAmRoutine
 	 *
 	 * Currently it is required to implement this interface, as there's no
 	 * alternative way (contrary e.g. to bitmap scans) to implement sample
-	 * scans. If infeasible to implement the AM may raise an error.
+	 * scans. If infeasible to implement, the AM may raise an error.
 	 */
 	bool		(*scan_sample_next_block) (TableScanDesc scan,
 										   struct SampleScanState *scanstate);
@@ -1084,9 +1084,8 @@ table_compute_xid_horizon_for_tuples(Relation rel,
 /*
  * Insert a tuple from a slot into table AM routine.
  *
- * The options bitmask allows to specify options that allow to change the
- * behaviour of the AM. Several options might be ignored by AMs not supporting
- * them.
+ * The options bitmask allows the caller to specify options that may change the
+ * behaviour of the AM. The AM will ignore options that it does not support.
  *
  * If the TABLE_INSERT_SKIP_WAL option is specified, the new tuple doesn't
  * need to be logged to WAL, even for a non-temp relation. It is the AMs
@@ -1094,8 +1093,9 @@ table_compute_xid_horizon_for_tuples(Relation rel,
  *
  * If the TABLE_INSERT_SKIP_FSM option is specified, AMs are free to not reuse
  * free space in the relation. This can save some cycles when we know the
- * relation is new and doesn't contain useful amounts of free space.  It's
- * commonly passed directly to RelationGetBufferForTuple, see for more info.
+ * relation is new and doesn't contain useful amounts of free space.
+ * TABLE_INSERT_SKIP_FSM is commonly passed directly to
+ * RelationGetBufferForTuple. See that method for more information.
  *
  * TABLE_INSERT_FROZEN should only be specified for inserts into
  * relfilenodes created during the current subtransaction and when
@@ -1110,7 +1110,6 @@ table_compute_xid_horizon_for_tuples(Relation rel,
  *
  * Note that most of these options will be applied when inserting into the
  * heap's TOAST table, too, if the tuple requires any out-of-line data.
- *
  *
  * The BulkInsertState object (if any; bistate can be NULL for default
  * behavior) is also just passed through to RelationGetBufferForTuple. If
@@ -1383,13 +1382,13 @@ table_relation_copy_data(Relation rel, const RelFileNode *newrnode)
  * Additional Input parameters:
  * - use_sort - if true, the table contents are sorted appropriate for
  *   `OldIndex`; if false and OldIndex is not InvalidOid, the data is copied
- *   in that index's order; if false and OidIndex is InvalidOid, no sorting is
+ *   in that index's order; if false and OldIndex is InvalidOid, no sorting is
  *   performed
- * - OidIndex - see use_sort
+ * - OldIndex - see use_sort
  * - OldestXmin - computed by vacuum_set_xid_limits(), even when
  *   not needed for the relation's AM
- * - *xid_cutoff - dito
- * - *multi_cutoff - dito
+ * - *xid_cutoff - ditto
+ * - *multi_cutoff - ditto
  *
  * Output parameters:
  * - *xid_cutoff - rel's new relfrozenxid value, may be invalid
@@ -1416,10 +1415,10 @@ table_relation_copy_for_cluster(Relation OldTable, Relation NewTable,
 }
 
 /*
- * Perform VACUUM on the relation. The VACUUM can be user-triggered or by
+ * Perform VACUUM on the relation. The VACUUM can be triggered by a user or by
  * autovacuum. The specific actions performed by the AM will depend heavily on
  * the individual AM.
-
+ *
  * On entry a transaction needs to already been established, and the
  * table is locked with a ShareUpdateExclusive lock.
  *
