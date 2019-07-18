@@ -366,7 +366,7 @@ build_mss(VacAttrStats **stats, int numattrs)
 			elog(ERROR, "cache lookup failed for ordering operator for type %u",
 				 colstat->attrtypid);
 
-		multi_sort_add_dimension(mss, i, type->lt_opr, type->typcollation);
+		multi_sort_add_dimension(mss, i, type->lt_opr, colstat->attrcollid);
 	}
 
 	return mss;
@@ -686,7 +686,7 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 
 		/* sort and deduplicate the data */
 		ssup[dim].ssup_cxt = CurrentMemoryContext;
-		ssup[dim].ssup_collation = DEFAULT_COLLATION_OID;
+		ssup[dim].ssup_collation = stats[dim]->attrcollid;
 		ssup[dim].ssup_nulls_first = false;
 
 		PrepareSortSupportFromOrderingOp(typentry->lt_opr, &ssup[dim]);
@@ -1630,15 +1630,22 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 					 * First check whether the constant is below the lower
 					 * boundary (in that case we can skip the bucket, because
 					 * there's no overlap).
+					 *
+					 * We don't store collations used to build the statistics,
+					 * but we can use the collation for the attribute itself,
+					 * as stored in varcollid. We do reset the statistics after
+					 * a type change (including collation change), so this is
+					 * OK. We may need to relax this after allowing extended
+					 * statistics on expressions.
 					 */
 					if (varonleft)
 						match = DatumGetBool(FunctionCall2Coll(&opproc,
-															   DEFAULT_COLLATION_OID,
+															   var->varcollid,
 															   item->values[idx],
 															   cst->constvalue));
 					else
 						match = DatumGetBool(FunctionCall2Coll(&opproc,
-															   DEFAULT_COLLATION_OID,
+															   var->varcollid,
 															   cst->constvalue,
 															   item->values[idx]));
 

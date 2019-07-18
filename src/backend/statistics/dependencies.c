@@ -273,7 +273,7 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 				 colstat->attrtypid);
 
 		/* prepare the sort function for this dimension */
-		multi_sort_add_dimension(mss, i, type->lt_opr, type->typcollation);
+		multi_sort_add_dimension(mss, i, type->lt_opr, colstat->attrcollid);
 	}
 
 	/*
