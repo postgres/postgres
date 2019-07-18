@@ -165,6 +165,10 @@ select daterange('2000-01-10'::date, '2000-01-20'::date, '(]');
 select daterange('2000-01-10'::date, '2000-01-20'::date, '()');
 select daterange('2000-01-10'::date, '2000-01-11'::date, '()');
 select daterange('2000-01-10'::date, '2000-01-11'::date, '(]');
+select daterange('-infinity'::date, '2000-01-01'::date, '()');
+select daterange('-infinity'::date, '2000-01-01'::date, '[)');
+select daterange('2000-01-01'::date, 'infinity'::date, '[)');
+select daterange('2000-01-01'::date, 'infinity'::date, '[]');
 
 -- test GiST index that's been built incrementally
 create table test_range_gist(ir int4range);
