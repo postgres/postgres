@@ -652,6 +652,30 @@ select daterange('2000-01-10'::date, '2000-01-11'::date, '(]');
  [01-11-2000,01-12-2000)
 (1 row)
 
+select daterange('-infinity'::date, '2000-01-01'::date, '()');
+       daterange        
+------------------------
+ (-infinity,01-01-2000)
+(1 row)
+
+select daterange('-infinity'::date, '2000-01-01'::date, '[)');
+       daterange        
+------------------------
+ [-infinity,01-01-2000)
+(1 row)
+
+select daterange('2000-01-01'::date, 'infinity'::date, '[)');
+       daterange       
+-----------------------
+ [01-01-2000,infinity)
+(1 row)
+
+select daterange('2000-01-01'::date, 'infinity'::date, '[]');
+       daterange       
+-----------------------
+ [01-01-2000,infinity]
+(1 row)
+
 -- test GiST index that's been built incrementally
 create table test_range_gist(ir int4range);
 create index test_range_gist_idx on test_range_gist using gist (ir);
