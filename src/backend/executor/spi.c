@@ -1872,8 +1872,9 @@ spi_dest_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	slist_push_head(&_SPI_current->tuptables, &tuptable->next);
 
 	/* set up initial allocations */
-	tuptable->alloced = tuptable->free = 128;
+	tuptable->alloced = 128;
 	tuptable->vals = (HeapTuple *) palloc(tuptable->alloced * sizeof(HeapTuple));
+	tuptable->numvals = 0;
 	tuptable->tupdesc = CreateTupleDescCopy(typeinfo);
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1899,18 +1900,18 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 
 	oldcxt = MemoryContextSwitchTo(tuptable->tuptabcxt);
 
-	if (tuptable->free == 0)
+	if (tuptable->numvals >= tuptable->alloced)
 	{
 		/* Double the size of the pointer array */
-		tuptable->free = tuptable->alloced;
-		tuptable->alloced += tuptable->free;
+		uint64		newalloced = tuptable->alloced * 2;
+
 		tuptable->vals = (HeapTuple *) repalloc_huge(tuptable->vals,
-													 tuptable->alloced * sizeof(HeapTuple));
+													 newalloced * sizeof(HeapTuple));
+		tuptable->alloced = newalloced;
 	}
 
-	tuptable->vals[tuptable->alloced - tuptable->free] =
-		ExecCopySlotHeapTuple(slot);
-	(tuptable->free)--;
+	tuptable->vals[tuptable->numvals] = ExecCopySlotHeapTuple(slot);
+	(tuptable->numvals)++;
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -2324,8 +2325,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 
 				/* Update "processed" if stmt returned tuples */
 				if (_SPI_current->tuptable)
-					_SPI_current->processed = _SPI_current->tuptable->alloced -
-						_SPI_current->tuptable->free;
+					_SPI_current->processed = _SPI_current->tuptable->numvals;
 
 				res = SPI_OK_UTILITY;
 
@@ -2694,7 +2694,7 @@ _SPI_checktuples(void)
 
 	if (tuptable == NULL)		/* spi_dest_startup was not called */
 		failed = true;
-	else if (processed != (tuptable->alloced - tuptable->free))
+	else if (processed != tuptable->numvals)
 		failed = true;
 
 	return failed;
