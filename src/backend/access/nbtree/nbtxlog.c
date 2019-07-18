@@ -108,6 +108,8 @@ _bt_restore_meta(XLogReaderState *record, uint8 block_id)
 	md->btm_level = xlrec->level;
 	md->btm_fastroot = xlrec->fastroot;
 	md->btm_fastlevel = xlrec->fastlevel;
+	/* Cannot log BTREE_MIN_VERSION index metapage without upgrade */
+	Assert(md->btm_version == BTREE_VERSION);
 	md->btm_oldest_btpo_xact = xlrec->oldest_btpo_xact;
 	md->btm_last_cleanup_num_heap_tuples = xlrec->last_cleanup_num_heap_tuples;
 
