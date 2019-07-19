@@ -2398,7 +2398,7 @@ writezone(const char *const name, const char *const string, char version,
 		if (pass == 1 && !want_bloat())
 		{
 			utcnt = stdcnt = thisleapcnt = 0;
-			thistimecnt = -locut - hicut;
+			thistimecnt = -(locut + hicut);
 			thistypecnt = thischarcnt = 1;
 			thistimelim = thistimei;
 		}
