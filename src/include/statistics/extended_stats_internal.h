@@ -98,7 +98,7 @@ extern SortItem *build_sorted_items(int numrows, int *nitems, HeapTuple *rows,
 									int numattrs, AttrNumber *attnums);
 
 extern bool examine_opclause_expression(OpExpr *expr, Var **varp,
-										Const **cstp, bool *isgtp);
+										Const **cstp, bool *varonleftp);
 
 extern Selectivity mcv_clauselist_selectivity(PlannerInfo *root,
 											  StatisticExtInfo *stat,

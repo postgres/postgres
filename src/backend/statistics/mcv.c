@@ -1581,18 +1581,15 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			OpExpr	   *expr = (OpExpr *) clause;
 			FmgrInfo	opproc;
 
-			/* get procedure computing operator selectivity */
-			RegProcedure oprrest = get_oprrest(expr->opno);
-
 			/* valid only after examine_opclause_expression returns true */
 			Var		   *var;
 			Const	   *cst;
-			bool		isgt;
+			bool		varonleft;
 
 			fmgr_info(get_opcode(expr->opno), &opproc);
 
 			/* extract the var and const from the expression */
-			if (examine_opclause_expression(expr, &var, &cst, &isgt))
+			if (examine_opclause_expression(expr, &var, &cst, &varonleft))
 			{
 				int			idx;
 
@@ -1629,46 +1626,21 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 					if (RESULT_IS_FINAL(matches[i], is_or))
 						continue;
 
-					switch (oprrest)
-					{
-						case F_EQSEL:
-						case F_NEQSEL:
-
-							/*
-							 * We don't care about isgt in equality, because
-							 * it does not matter whether it's (var op const)
-							 * or (const op var).
-							 */
-							match = DatumGetBool(FunctionCall2Coll(&opproc,
-																   DEFAULT_COLLATION_OID,
-																   cst->constvalue,
-																   item->values[idx]));
-
-							break;
-
-						case F_SCALARLTSEL: /* column < constant */
-						case F_SCALARLESEL: /* column <= constant */
-						case F_SCALARGTSEL: /* column > constant */
-						case F_SCALARGESEL: /* column >= constant */
-
-							/*
-							 * First check whether the constant is below the
-							 * lower boundary (in that case we can skip the
-							 * bucket, because there's no overlap).
-							 */
-							if (isgt)
-								match = DatumGetBool(FunctionCall2Coll(&opproc,
-																	   DEFAULT_COLLATION_OID,
-																	   cst->constvalue,
-																	   item->values[idx]));
-							else
-								match = DatumGetBool(FunctionCall2Coll(&opproc,
-																	   DEFAULT_COLLATION_OID,
-																	   item->values[idx],
-																	   cst->constvalue));
-
-							break;
-					}
+					/*
+					 * First check whether the constant is below the lower
+					 * boundary (in that case we can skip the bucket, because
+					 * there's no overlap).
+					 */
+					if (varonleft)
+						match = DatumGetBool(FunctionCall2Coll(&opproc,
+															   DEFAULT_COLLATION_OID,
+															   item->values[idx],
+															   cst->constvalue));
+					else
+						match = DatumGetBool(FunctionCall2Coll(&opproc,
+															   DEFAULT_COLLATION_OID,
+															   cst->constvalue,
+															   item->values[idx]));
 
 					/* update the match bitmap with the result */
 					matches[i] = RESULT_MERGE(matches[i], is_or, match);
