@@ -1431,13 +1431,15 @@ daterange_canonical(PG_FUNCTION_ARGS)
 	if (empty)
 		PG_RETURN_RANGE_P(r);
 
-	if (!lower.infinite && !DATE_NOT_FINITE(lower.val) && !lower.inclusive)
+	if (!lower.infinite && !DATE_NOT_FINITE(DatumGetDateADT(lower.val)) &&
+		!lower.inclusive)
 	{
 		lower.val = DirectFunctionCall2(date_pli, lower.val, Int32GetDatum(1));
 		lower.inclusive = true;
 	}
 
-	if (!upper.infinite && !DATE_NOT_FINITE(upper.val) && upper.inclusive)
+	if (!upper.infinite && !DATE_NOT_FINITE(DatumGetDateADT(upper.val)) &&
+		upper.inclusive)
 	{
 		upper.val = DirectFunctionCall2(date_pli, upper.val, Int32GetDatum(1));
 		upper.inclusive = false;
