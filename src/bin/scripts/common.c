@@ -22,6 +22,8 @@
 #include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
 
+#define ERRCODE_UNDEFINED_TABLE  "42P01"
+
 
 static PGcancel *volatile cancelConn = NULL;
 bool		CancelRequested = false;
@@ -146,8 +148,7 @@ connectDatabase(const char *dbname, const char *pghost,
 		exit(1);
 	}
 
-	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
-						 progname, echo));
+	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL, echo));
 
 	return conn;
 }
@@ -179,10 +180,34 @@ connectMaintenanceDatabase(const char *maintenance_db,
 }
 
 /*
+ * Disconnect the given connection, canceling any statement if one is active.
+ */
+void
+disconnectDatabase(PGconn *conn)
+{
+	char		errbuf[256];
+
+	Assert(conn != NULL);
+
+	if (PQtransactionStatus(conn) == PQTRANS_ACTIVE)
+	{
+		PGcancel   *cancel;
+
+		if ((cancel = PQgetCancel(conn)))
+		{
+			(void) PQcancel(cancel, errbuf, sizeof(errbuf));
+			PQfreeCancel(cancel);
+		}
+	}
+
+	PQfinish(conn);
+}
+
+/*
  * Run a query, return the results, exit program on failure.
  */
 PGresult *
-executeQuery(PGconn *conn, const char *query, const char *progname, bool echo)
+executeQuery(PGconn *conn, const char *query, bool echo)
 {
 	PGresult   *res;
 
@@ -207,8 +232,7 @@ executeQuery(PGconn *conn, const char *query, const char *progname, bool echo)
  * As above for a SQL command (which returns nothing).
  */
 void
-executeCommand(PGconn *conn, const char *query,
-			   const char *progname, bool echo)
+executeCommand(PGconn *conn, const char *query, bool echo)
 {
 	PGresult   *res;
 
@@ -255,6 +279,57 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 	return r;
 }
 
+/*
+ * Consume all the results generated for the given connection until
+ * nothing remains.  If at least one error is encountered, return false.
+ * Note that this will block if the connection is busy.
+ */
+bool
+consumeQueryResult(PGconn *conn)
+{
+	bool		ok = true;
+	PGresult   *result;
+
+	SetCancelConn(conn);
+	while ((result = PQgetResult(conn)) != NULL)
+	{
+		if (!processQueryResult(conn, result))
+			ok = false;
+	}
+	ResetCancelConn();
+	return ok;
+}
+
+/*
+ * Process (and delete) a query result.  Returns true if there's no error,
+ * false otherwise -- but errors about trying to work on a missing relation
+ * are reported and subsequently ignored.
+ */
+bool
+processQueryResult(PGconn *conn, PGresult *result)
+{
+	/*
+	 * If it's an error, report it.  Errors about a missing table are harmless
+	 * so we continue processing; but die for other errors.
+	 */
+	if (PQresultStatus(result) != PGRES_COMMAND_OK)
+	{
+		char	   *sqlState = PQresultErrorField(result, PG_DIAG_SQLSTATE);
+
+		pg_log_error("processing of database \"%s\" failed: %s",
+					 PQdb(conn), PQerrorMessage(conn));
+
+		if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) != 0)
+		{
+			PQclear(result);
+			return false;
+		}
+	}
+
+	PQclear(result);
+	return true;
+}
+
 
 /*
  * Split TABLE[(COLUMNS)] into TABLE and [(COLUMNS)] portions.  When you
@@ -299,7 +374,7 @@ splitTableColumnsSpec(const char *spec, int encoding,
  */
 void
 appendQualifiedRelation(PQExpBuffer buf, const char *spec,
-						PGconn *conn, const char *progname, bool echo)
+						PGconn *conn, bool echo)
 {
 	char	   *table;
 	const char *columns;
@@ -324,7 +399,7 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	appendStringLiteralConn(&sql, table, conn);
 	appendPQExpBufferStr(&sql, "::pg_catalog.regclass;");
 
-	executeCommand(conn, "RESET search_path;", progname, echo);
+	executeCommand(conn, "RESET search_path;", echo);
 
 	/*
 	 * One row is a typical result, as is a nonexistent relation ERROR.
@@ -332,7 +407,7 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	 * relation has that OID; this query returns no rows.  Catalog corruption
 	 * might elicit other row counts.
 	 */
-	res = executeQuery(conn, sql.data, progname, echo);
+	res = executeQuery(conn, sql.data, echo);
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
@@ -351,8 +426,7 @@ appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 	termPQExpBuffer(&sql);
 	pg_free(table);
 
-	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL,
-						 progname, echo));
+	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL, echo));
 }
 
 

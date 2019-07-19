@@ -206,7 +206,7 @@ cluster_one_database(const char *dbname, bool verbose, const char *table,
 	if (table)
 	{
 		appendPQExpBufferChar(&sql, ' ');
-		appendQualifiedRelation(&sql, table, conn, progname, echo);
+		appendQualifiedRelation(&sql, table, conn, echo);
 	}
 	appendPQExpBufferChar(&sql, ';');
 
@@ -239,7 +239,7 @@ cluster_all_databases(bool verbose, const char *maintenance_db,
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
 									  prompt_password, progname, echo);
-	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
+	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", echo);
 	PQfinish(conn);
 
 	initPQExpBuffer(&connstr);

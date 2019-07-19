@@ -348,7 +348,7 @@ reindex_one_database(const char *name, const char *dbname, ReindexType type,
 			break;
 		case REINDEX_INDEX:
 		case REINDEX_TABLE:
-			appendQualifiedRelation(&sql, name, conn, progname, echo);
+			appendQualifiedRelation(&sql, name, conn, echo);
 			break;
 		case REINDEX_SCHEMA:
 			appendPQExpBufferStr(&sql, name);
@@ -405,7 +405,7 @@ reindex_all_databases(const char *maintenance_db,
 
 	conn = connectMaintenanceDatabase(maintenance_db, host, port, username,
 									  prompt_password, progname, echo);
-	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
+	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", echo);
 	PQfinish(conn);
 
 	initPQExpBuffer(&connstr);
