@@ -1301,6 +1301,29 @@ ALTER TABLE products ADD COLUMN description text;
     value is given (null if you don't specify a <literal>DEFAULT</literal> clause).
    </para>
 
+   <tip>
+    <para>
+     From <productname>PostgreSQL</productname> 11, adding a column with
+     a constant default value no longer means that each row of the table
+     needs to be updated when the <command>ALTER TABLE</command> statement
+     is executed. Instead, the default value will be returned the next time
+     the row is accessed, and applied when the table is rewritten, making
+     the <command>ALTER TABLE</command> very fast even on large tables.
+    </para>
+
+    <para>
+     However, if the default value is volatile (e.g.
+     <function>clock_timestamp()</function>)
+     each row will need to be updated with the value calculated at the time
+     <command>ALTER TABLE</command> is executed. To avoid a potentially
+     lengthy update operation, particularly if you intend to fill the column
+     with mostly nondefault values anyway, it may be preferable to add the
+     column with no default, insert the correct values using
+     <command>UPDATE</command>, and then add any desired default as described
+     below.
+    </para>
+   </tip>
+
    <para>
     You can also define constraints on the column at the same time,
     using the usual syntax:
@@ -1315,17 +1338,6 @@ ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '')
     correctly.
    </para>
 
-  <tip>
-   <para>
-    Adding a column with a default requires updating each row of the
-    table (to store the new column value).  However, if no default is
-    specified, <productname>PostgreSQL</productname> is able to avoid
-    the physical update.  So if you intend to fill the column with
-    mostly nondefault values, it's best to add the column with no default,
-    insert the correct values using <command>UPDATE</command>, and then add any
-    desired default as described below.
-   </para>
-  </tip>
   </sect2>
 
   <sect2 id="ddl-alter-removing-a-column">
