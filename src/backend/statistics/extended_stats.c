@@ -1196,15 +1196,15 @@ statext_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
  * returns true, otherwise returns false.
  *
  * Optionally returns pointers to the extracted Var/Const nodes, when passed
- * non-null pointers (varp, cstp and isgtp). The isgt flag specifies whether
- * the Var node is on the left (false) or right (true) side of the operator.
+ * non-null pointers (varp, cstp and varonleftp). The varonleftp flag specifies
+ * on which side of the operator we found the Var node.
  */
 bool
-examine_opclause_expression(OpExpr *expr, Var **varp, Const **cstp, bool *isgtp)
+examine_opclause_expression(OpExpr *expr, Var **varp, Const **cstp, bool *varonleftp)
 {
 	Var	   *var;
 	Const  *cst;
-	bool	isgt;
+	bool	varonleft;
 	Node   *leftop,
 		   *rightop;
 
@@ -1225,13 +1225,13 @@ examine_opclause_expression(OpExpr *expr, Var **varp, Const **cstp, bool *isgtp)
 	{
 		var = (Var *) leftop;
 		cst = (Const *) rightop;
-		isgt = false;
+		varonleft = true;
 	}
 	else if (IsA(leftop, Const) && IsA(rightop, Var))
 	{
 		var = (Var *) rightop;
 		cst = (Const *) leftop;
-		isgt = true;
+		varonleft = false;
 	}
 	else
 		return false;
@@ -1243,8 +1243,8 @@ examine_opclause_expression(OpExpr *expr, Var **varp, Const **cstp, bool *isgtp)
 	if (cstp)
 		*cstp = cst;
 
-	if (isgtp)
-		*isgtp = isgt;
+	if (varonleftp)
+		*varonleftp = varonleft;
 
 	return true;
 }
