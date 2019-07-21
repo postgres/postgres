@@ -121,6 +121,15 @@ plan_set_operations(PlannerInfo *root)
 	Assert(parse->distinctClause == NIL);
 
 	/*
+	 * In the outer query level, we won't have any true equivalences to deal
+	 * with; but we do want to be able to make pathkeys, which will require
+	 * single-member EquivalenceClasses.  Indicate that EC merging is complete
+	 * so that pathkeys.c won't complain.
+	 */
+	Assert(root->eq_classes == NIL);
+	root->ec_merging_done = true;
+
+	/*
 	 * We'll need to build RelOptInfos for each of the leaf subqueries, which
 	 * are RTE_SUBQUERY rangetable entries in this Query.  Prepare the index
 	 * arrays for that.

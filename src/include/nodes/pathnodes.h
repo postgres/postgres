@@ -265,6 +265,8 @@ struct PlannerInfo
 
 	List	   *eq_classes;		/* list of active EquivalenceClasses */
 
+	bool		ec_merging_done;	/* set true once ECs are canonical */
+
 	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
 
 	List	   *left_join_clauses;	/* list of RestrictInfos for mergejoinable
@@ -505,6 +507,8 @@ typedef struct PartitionSchemeData *PartitionScheme;
  *		pages - number of disk pages in relation (zero if not a table)
  *		tuples - number of tuples in relation (not considering restrictions)
  *		allvisfrac - fraction of disk pages that are marked all-visible
+ *		eclass_indexes - EquivalenceClasses that mention this rel (filled
+ *						 only after EC merging is complete)
  *		subroot - PlannerInfo for subquery (NULL if it's not a subquery)
  *		subplan_params - list of PlannerParamItems to be passed to subquery
  *
@@ -678,6 +682,8 @@ typedef struct RelOptInfo
 	BlockNumber pages;			/* size estimates derived from pg_class */
 	double		tuples;
 	double		allvisfrac;
+	Bitmapset  *eclass_indexes; /* Indexes in PlannerInfo's eq_classes list of
+								 * ECs that mention this rel */
 	PlannerInfo *subroot;		/* if subquery */
 	List	   *subplan_params; /* if subquery */
 	int			rel_parallel_workers;	/* wanted number of parallel workers */

@@ -140,6 +140,12 @@ query_planner(PlannerInfo *root,
 				set_cheapest(final_rel);
 
 				/*
+				 * We don't need to run generate_base_implied_equalities, but
+				 * we do need to pretend that EC merging is complete.
+				 */
+				root->ec_merging_done = true;
+
+				/*
 				 * We still are required to call qp_callback, in case it's
 				 * something like "SELECT 2+2 ORDER BY 1".
 				 */
