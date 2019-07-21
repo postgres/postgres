@@ -1445,7 +1445,9 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 		if (file == NULL)
 		{
+#ifndef WIN32
 			int			filemode;
+#endif
 
 			/*
 			 * No current file, so this must be the header for a new file
@@ -1459,8 +1461,10 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 
 			current_len_left = read_tar_number(&copybuf[124], 12);
 
+#ifndef WIN32
 			/* Set permissions on the file */
 			filemode = read_tar_number(&copybuf[100], 8);
+#endif
 
 			/*
 			 * All files are padded up to 512 bytes
