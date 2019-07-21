@@ -1734,11 +1734,9 @@ unify_hypothetical_args(ParseState *pstate,
 						Oid *actual_arg_types,
 						Oid *declared_arg_types)
 {
-	Node	   *args[FUNC_MAX_ARGS];
 	int			numDirectArgs,
 				numNonHypotheticalArgs;
-	int			i;
-	ListCell   *lc;
+	int			hargpos;
 
 	numDirectArgs = list_length(fargs) - numAggregatedArgs;
 	numNonHypotheticalArgs = numDirectArgs - numAggregatedArgs;
@@ -1746,25 +1744,20 @@ unify_hypothetical_args(ParseState *pstate,
 	if (numNonHypotheticalArgs < 0)
 		elog(ERROR, "incorrect number of arguments to hypothetical-set aggregate");
 
-	/* Deconstruct fargs into an array for ease of subscripting */
-	i = 0;
-	foreach(lc, fargs)
-	{
-		args[i++] = (Node *) lfirst(lc);
-	}
-
 	/* Check each hypothetical arg and corresponding aggregated arg */
-	for (i = numNonHypotheticalArgs; i < numDirectArgs; i++)
+	for (hargpos = numNonHypotheticalArgs; hargpos < numDirectArgs; hargpos++)
 	{
-		int			aargpos = numDirectArgs + (i - numNonHypotheticalArgs);
+		int			aargpos = numDirectArgs + (hargpos - numNonHypotheticalArgs);
+		ListCell   *harg = list_nth_cell(fargs, hargpos);
+		ListCell   *aarg = list_nth_cell(fargs, aargpos);
 		Oid			commontype;
 
 		/* A mismatch means AggregateCreate didn't check properly ... */
-		if (declared_arg_types[i] != declared_arg_types[aargpos])
+		if (declared_arg_types[hargpos] != declared_arg_types[aargpos])
 			elog(ERROR, "hypothetical-set aggregate has inconsistent declared argument types");
 
 		/* No need to unify if make_fn_arguments will coerce */
-		if (declared_arg_types[i] != ANYOID)
+		if (declared_arg_types[hargpos] != ANYOID)
 			continue;
 
 		/*
@@ -1773,7 +1766,7 @@ unify_hypothetical_args(ParseState *pstate,
 		 * the aggregated values).
 		 */
 		commontype = select_common_type(pstate,
-										list_make2(args[aargpos], args[i]),
+										list_make2(lfirst(aarg), lfirst(harg)),
 										"WITHIN GROUP",
 										NULL);
 
@@ -1781,29 +1774,22 @@ unify_hypothetical_args(ParseState *pstate,
 		 * Perform the coercions.  We don't need to worry about NamedArgExprs
 		 * here because they aren't supported with aggregates.
 		 */
-		args[i] = coerce_type(pstate,
-							  args[i],
-							  actual_arg_types[i],
-							  commontype, -1,
-							  COERCION_IMPLICIT,
-							  COERCE_IMPLICIT_CAST,
-							  -1);
-		actual_arg_types[i] = commontype;
-		args[aargpos] = coerce_type(pstate,
-									args[aargpos],
-									actual_arg_types[aargpos],
-									commontype, -1,
-									COERCION_IMPLICIT,
-									COERCE_IMPLICIT_CAST,
-									-1);
+		lfirst(harg) = coerce_type(pstate,
+								   (Node *) lfirst(harg),
+								   actual_arg_types[hargpos],
+								   commontype, -1,
+								   COERCION_IMPLICIT,
+								   COERCE_IMPLICIT_CAST,
+								   -1);
+		actual_arg_types[hargpos] = commontype;
+		lfirst(aarg) = coerce_type(pstate,
+								   (Node *) lfirst(aarg),
+								   actual_arg_types[aargpos],
+								   commontype, -1,
+								   COERCION_IMPLICIT,
+								   COERCE_IMPLICIT_CAST,
+								   -1);
 		actual_arg_types[aargpos] = commontype;
-	}
-
-	/* Reconstruct fargs from array */
-	i = 0;
-	foreach(lc, fargs)
-	{
-		lfirst(lc) = args[i++];
 	}
 }
 
