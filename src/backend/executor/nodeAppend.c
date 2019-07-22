@@ -107,7 +107,6 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	int			firstvalid;
 	int			i,
 				j;
-	ListCell   *lc;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
@@ -211,24 +210,20 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	 *
 	 * While at it, find out the first valid partial plan.
 	 */
-	j = i = 0;
+	j = 0;
 	firstvalid = nplans;
-	foreach(lc, node->appendplans)
+	i = -1;
+	while ((i = bms_next_member(validsubplans, i)) >= 0)
 	{
-		if (bms_is_member(i, validsubplans))
-		{
-			Plan	   *initNode = (Plan *) lfirst(lc);
+		Plan	   *initNode = (Plan *) list_nth(node->appendplans, i);
 
-			/*
-			 * Record the lowest appendplans index which is a valid partial
-			 * plan.
-			 */
-			if (i >= node->first_partial_plan && j < firstvalid)
-				firstvalid = j;
+		/*
+		 * Record the lowest appendplans index which is a valid partial plan.
+		 */
+		if (i >= node->first_partial_plan && j < firstvalid)
+			firstvalid = j;
 
-			appendplanstates[j++] = ExecInitNode(initNode, estate, eflags);
-		}
-		i++;
+		appendplanstates[j++] = ExecInitNode(initNode, estate, eflags);
 	}
 
 	appendstate->as_first_partial_plan = firstvalid;

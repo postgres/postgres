@@ -70,7 +70,6 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	int			nplans;
 	int			i,
 				j;
-	ListCell   *lc;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
@@ -177,16 +176,13 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	 * call ExecInitNode on each of the valid plans to be executed and save
 	 * the results into the mergeplanstates array.
 	 */
-	j = i = 0;
-	foreach(lc, node->mergeplans)
+	j = 0;
+	i = -1;
+	while ((i = bms_next_member(validsubplans, i)) >= 0)
 	{
-		if (bms_is_member(i, validsubplans))
-		{
-			Plan	   *initNode = (Plan *) lfirst(lc);
+		Plan	   *initNode = (Plan *) list_nth(node->mergeplans, i);
 
-			mergeplanstates[j++] = ExecInitNode(initNode, estate, eflags);
-		}
-		i++;
+		mergeplanstates[j++] = ExecInitNode(initNode, estate, eflags);
 	}
 
 	mergestate->ps.ps_ProjInfo = NULL;
