@@ -361,6 +361,11 @@ extern int	fls(int mask);
 extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
 #endif
 
+/* must match src/port/getpeereid.c */
+#if defined(HAVE_GETPEEREID) || defined(SO_PEERCRED) || defined(LOCAL_PEERCRED) || defined(HAVE_GETPEERUCRED)
+#define HAVE_AUTH_PEER 1
+#endif
+
 #ifndef HAVE_ISINF
 extern int	isinf(double x);
 #else

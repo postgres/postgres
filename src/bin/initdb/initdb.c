@@ -185,7 +185,6 @@ static const char *default_timezone = NULL;
 "# allows any local user to connect as any PostgreSQL user, including\n" \
 "# the database superuser.  If you do not trust all your local users,\n" \
 "# use another authentication method.\n"
-static bool authwarning = false;
 
 /*
  * Centralized knowledge of switches to pass to backend
@@ -2392,16 +2391,6 @@ usage(const char *progname)
 }
 
 static void
-check_authmethod_unspecified(const char **authmethod)
-{
-	if (*authmethod == NULL)
-	{
-		authwarning = true;
-		*authmethod = "trust";
-	}
-}
-
-static void
 check_authmethod_valid(const char *authmethod, const char *const *valid_methods, const char *conntype)
 {
 	const char *const *p;
@@ -3248,8 +3237,16 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	check_authmethod_unspecified(&authmethodlocal);
-	check_authmethod_unspecified(&authmethodhost);
+	if (authmethodlocal == NULL)
+	{
+#ifdef HAVE_AUTH_PEER
+			authmethodlocal = "peer";
+#else
+			authmethodlocal = "md5";
+#endif
+	}
+	if (authmethodhost == NULL)
+		authmethodhost = "md5";
 
 	check_authmethod_valid(authmethodlocal, auth_methods_local, "local");
 	check_authmethod_valid(authmethodhost, auth_methods_host, "host");
@@ -3331,14 +3328,6 @@ main(int argc, char *argv[])
 	}
 	else
 		printf(_("\nSync to disk skipped.\nThe data directory might become corrupt if the operating system crashes.\n"));
-
-	if (authwarning)
-	{
-		printf("\n");
-		pg_log_warning("enabling \"trust\" authentication for local connections");
-		fprintf(stderr, _("You can change this by editing pg_hba.conf or using the option -A, or\n"
-						  "--auth-local and --auth-host, the next time you run initdb.\n"));
-	}
 
 	/*
 	 * Build up a shell command to tell the user how to start the server

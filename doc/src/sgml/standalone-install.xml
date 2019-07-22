@@ -65,15 +65,6 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</useri
 
    <step>
     <para>
-     At this point, if you did not use the <command>initdb</command> <literal>-A</literal>
-     option, you might want to modify <filename>pg_hba.conf</filename> to control
-     local access to the server before you start it.  The default is to
-     trust all local users.
-    </para>
-   </step>
-
-   <step>
-    <para>
      The previous <command>initdb</command> step should have told you how to
      start up the database server. Do so now. The command should look
      something like:

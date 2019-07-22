@@ -137,8 +137,23 @@ PostgreSQL documentation
        </para>
 
        <para>
+        The default is <literal>peer</literal> for Unix-domain socket
+        connections on operating systems that support it, otherwise
+        <literal>md5</literal>, and <literal>md5</literal> for TCP/IP
+        connections.
+       </para>
+
+       <para>
+        When running <command>initdb</command> on a platform that does not
+        support <literal>peer</literal> authentication, either a password must
+        be provided (see <option>-W</option> and other options) or a different
+        authentication method must be chosen, otherwise
+        <command>initdb</command> will error.
+       </para>
+
+       <para>
         Do not use <literal>trust</literal> unless you trust all local users on your
-        system.  <literal>trust</literal> is the default for ease of installation.
+        system.
        </para>
       </listitem>
      </varlistentry>
