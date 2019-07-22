@@ -891,7 +891,7 @@ ExtendCLOG(TransactionId newestXact)
  * Remove all CLOG segments before the one holding the passed transaction ID
  *
  * Before removing any CLOG data, we must flush XLOG to disk, to ensure
- * that any recently-emitted HEAP_FREEZE records have reached disk; otherwise
+ * that any recently-emitted FREEZE_PAGE records have reached disk; otherwise
  * a crash and restart might leave us with some unfrozen tuples referencing
  * removed CLOG data.  We choose to emit a special TRUNCATE XLOG record too.
  * Replaying the deletion from XLOG is not critical, since the files could

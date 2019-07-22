@@ -328,7 +328,7 @@ typedef struct SpGistLeafTupleData
 {
 	unsigned int tupstate:2,	/* LIVE/REDIRECT/DEAD/PLACEHOLDER */
 				size:30;		/* large enough for any palloc'able value */
-	OffsetNumber nextOffset;	/* next tuple in chain, or InvalidOffset */
+	OffsetNumber nextOffset;	/* next tuple in chain, or InvalidOffsetNumber */
 	ItemPointerData heapPtr;	/* TID of represented heap tuple */
 	/* leaf datum follows */
 } SpGistLeafTupleData;

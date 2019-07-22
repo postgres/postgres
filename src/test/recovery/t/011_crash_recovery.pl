@@ -51,7 +51,7 @@ my $xid = $stdout;
 chomp($xid);
 
 is($node->safe_psql('postgres', qq[SELECT txid_status('$xid');]),
-	'in progress', 'own xid is in-progres');
+	'in progress', 'own xid is in-progress');
 
 # Crash and restart the postmaster
 $node->stop('immediate');

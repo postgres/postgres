@@ -69,7 +69,7 @@
  * currently executing.
  *
  * Fillfactor can be set because it applies only to subsequent changes made to
- * data blocks, as documented in heapio.c
+ * data blocks, as documented in hio.c
  *
  * n_distinct options can be set at ShareUpdateExclusiveLock because they
  * are only used during ANALYZE, which uses a ShareUpdateExclusiveLock,

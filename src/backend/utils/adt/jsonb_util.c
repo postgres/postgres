@@ -510,7 +510,7 @@ fillJsonbValue(JsonbContainer *container, int index,
  * "raw scalar" pseudo array to append it - the actual scalar should be passed
  * next and it will be added as the only member of the array.
  *
- * Values of type jvbBinary, which are rolled up arrays and objects,
+ * Values of type jbvBinary, which are rolled up arrays and objects,
  * are unpacked before being added to the result.
  */
 JsonbValue *

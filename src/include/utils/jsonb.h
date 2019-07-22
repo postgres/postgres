@@ -367,7 +367,7 @@ extern JsonbValue *findJsonbValueFromContainer(JsonbContainer *sheader,
 extern JsonbValue *getIthJsonbValueFromContainer(JsonbContainer *sheader,
 												 uint32 i);
 extern JsonbValue *pushJsonbValue(JsonbParseState **pstate,
-								  JsonbIteratorToken seq, JsonbValue *jbVal);
+								  JsonbIteratorToken seq, JsonbValue *jbval);
 extern JsonbIterator *JsonbIteratorInit(JsonbContainer *container);
 extern JsonbIteratorToken JsonbIteratorNext(JsonbIterator **it, JsonbValue *val,
 											bool skipNested);

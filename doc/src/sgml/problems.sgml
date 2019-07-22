@@ -252,7 +252,7 @@
       C library, processor, memory information, and so on. In most
       cases it is sufficient to report the vendor and version, but do
       not assume everyone knows what exactly <quote>Debian</quote>
-      contains or that everyone runs on i386s. If you have
+      contains or that everyone runs on x86_64. If you have
       installation problems then information about the toolchain on
       your machine (compiler, <application>make</application>, and so
       on) is also necessary.

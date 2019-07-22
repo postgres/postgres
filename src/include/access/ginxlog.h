@@ -127,7 +127,7 @@ typedef struct ginxlogSplit
 
 /*
  * Vacuum simply WAL-logs the whole page, when anything is modified. This
- * is functionally identical to heap_newpage records, but is kept separate for
+ * is functionally identical to XLOG_FPI records, but is kept separate for
  * debugging purposes. (When inspecting the WAL stream, it's easier to see
  * what's going on when GIN vacuum records are marked as such, not as heap
  * records.) This is currently only used for entry tree leaf pages.

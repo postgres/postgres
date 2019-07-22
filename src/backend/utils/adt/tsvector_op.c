@@ -1152,7 +1152,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 /*
  * Compare two strings by tsvector rules.
  *
- * if isPrefix = true then it returns zero value iff b has prefix a
+ * if prefix = true then it returns zero value iff b has prefix a
  */
 int32
 tsCompareString(char *a, int lena, char *b, int lenb, bool prefix)

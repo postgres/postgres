@@ -171,9 +171,6 @@ typedef struct GinMetaPageData
 	 GinItemPointerGetBlockNumber(p) == (BlockNumber)0)
 #define ItemPointerSetMax(p)  \
 	ItemPointerSet((p), InvalidBlockNumber, (OffsetNumber)0xffff)
-#define ItemPointerIsMax(p)  \
-	(GinItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff && \
-	 GinItemPointerGetBlockNumber(p) == InvalidBlockNumber)
 #define ItemPointerSetLossyPage(p, b)  \
 	ItemPointerSet((p), (b), (OffsetNumber)0xffff)
 #define ItemPointerIsLossyPage(p)  \

@@ -217,7 +217,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 
 			/*
 			 * For an ordinary builtin function, we should never get here
-			 * because the isbuiltin() search above will have succeeded.
+			 * because the fmgr_isbuiltin() search above will have succeeded.
 			 * However, if the user has done a CREATE FUNCTION to create an
 			 * alias for a builtin function, we can end up here.  In that case
 			 * we have to look up the function by name.  The name of the

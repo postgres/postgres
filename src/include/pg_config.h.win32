@@ -159,14 +159,8 @@
 /* Define to 1 if you have the <editline/readline.h> header file. */
 /* #undef HAVE_EDITLINE_READLINE_H */
 
-/* Define to 1 if you have the `fcvt' function. */
-#define HAVE_FCVT 1
-
 /* Define to 1 if you have the `fdatasync' function. */
 /* #undef HAVE_FDATASYNC */
-
-/* Define to 1 if you have finite(). */
-#define HAVE_FINITE 1
 
 /* Define to 1 if you have the `fpclass' function. */
 /* #undef HAVE_FPCLASS */
@@ -469,9 +463,6 @@
 /* Define to 1 if `__ss_len' is member of `struct sockaddr_storage'. */
 /* #undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN */
 
-/* Define to 1 if the system has the type `struct sockaddr_un'. */
-/* #undef HAVE_STRUCT_SOCKADDR_UN */
-
 /* Define to 1 if `tm_zone' is member of `struct tm'. */
 /* #undef HAVE_STRUCT_TM_TM_ZONE */
 
@@ -480,9 +471,6 @@
 
 /* Define to 1 if you have the `sync_file_range' function. */
 /* #undef HAVE_SYNC_FILE_RANGE */
-
-/* Define to 1 if you have the `sysconf' function. */
-/* #undef HAVE_SYSCONF */
 
 /* Define to 1 if you have the syslog interface. */
 /* #undef HAVE_SYSLOG */

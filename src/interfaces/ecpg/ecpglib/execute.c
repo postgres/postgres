@@ -2073,9 +2073,9 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 	 * offset - offset between ith and (i+1)th entry in an array, normally
 	 * that means sizeof(type)
 	 * ind_type - type of indicator variable
-	 * ind_value - pointer to indicator variable
+	 * ind_pointer - pointer to indicator variable
 	 * ind_varcharsize - empty
-	 * ind_arraysize - arraysize of indicator array
+	 * ind_arrsize - arraysize of indicator array
 	 * ind_offset - indicator offset
 	 *------
 	 */

@@ -793,7 +793,7 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
  *	be confused into returning the same tuple more than once or some tuples
  *	not at all by the rearrangement we are performing here.  To prevent
  *	any concurrent scan to cross the squeeze scan we use lock chaining
- *	similar to hasbucketcleanup.  Refer comments atop hashbucketcleanup.
+ *	similar to hashbucketcleanup.  Refer comments atop hashbucketcleanup.
  *
  *	We need to retain a pin on the primary bucket to ensure that no concurrent
  *	split can start.

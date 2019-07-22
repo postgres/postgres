@@ -509,7 +509,7 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 	 * Choose the number of initial bucket pages to match the fill factor
 	 * given the estimated number of tuples.  We round up the result to the
 	 * total number of buckets which has to be allocated before using its
-	 * _hashm_spare element. However always force at least 2 bucket pages. The
+	 * hashm_spares element. However always force at least 2 bucket pages. The
 	 * upper limit is determined by considerations explained in
 	 * _hash_expandtable().
 	 */

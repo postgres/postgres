@@ -127,7 +127,6 @@ PGSemaphoreReset(PGSemaphore sema)
  * PGSemaphoreLock
  *
  * Lock a semaphore (decrement count), blocking if count would be < 0.
- * Serve the interrupt if interruptOK is true.
  */
 void
 PGSemaphoreLock(PGSemaphore sema)

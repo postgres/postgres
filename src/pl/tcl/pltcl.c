@@ -1634,7 +1634,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid,
 
 		/************************************************************
 		 * prefix procedure body with
-		 * upvar #0 <internal_procname> GD
+		 * upvar #0 <internal_proname> GD
 		 * and with appropriate setting of arguments
 		 ************************************************************/
 		Tcl_DStringAppend(&proc_internal_body, "upvar #0 ", -1);

@@ -120,7 +120,7 @@ gistjoinvector(IndexTuple *itvec, int *len, IndexTuple *additvec, int addlen)
 }
 
 /*
- * make plain IndexTupleVector
+ * make plain IndexTuple vector
  */
 
 IndexTupleData *

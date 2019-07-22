@@ -256,7 +256,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 		MarkBufferDirty(buffer);
 
 		/*
-		 * Emit a WAL HEAP_CLEAN record showing what we did
+		 * Emit a WAL XLOG_HEAP2_CLEAN record showing what we did
 		 */
 		if (RelationNeedsWAL(relation))
 		{

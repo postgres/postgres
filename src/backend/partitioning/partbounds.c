@@ -2835,7 +2835,7 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 		PartitionKey key;
 		int			j;
 
-		/* Open parent relation and fetch partition keyinfo */
+		/* Open parent relation and fetch partition key info */
 		parent = try_relation_open(parentId, AccessShareLock);
 		if (parent == NULL)
 			PG_RETURN_NULL();

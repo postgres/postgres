@@ -1855,7 +1855,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 				/*
 				 * Was this an "ISO time" with embedded field labels? An
-				 * example is "h04m05s06" - thomas 2001-02-04
+				 * example is "h04mm05s06" - thomas 2001-02-04
 				 */
 				if (ptype != 0)
 				{

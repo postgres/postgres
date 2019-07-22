@@ -277,7 +277,7 @@ bytesToHex(uint8 b[16], char *s)
  *
  *	OUTPUT		  hexsum  the MD5 sum as a '\0'-terminated string of
  *						  hexadecimal digits.  an MD5 sum is 16 bytes long.
- *						  each byte is represented by two heaxadecimal
+ *						  each byte is represented by two hexadecimal
  *						  characters.  you thus need to provide an array
  *						  of 33 characters, including the trailing '\0'.
  *

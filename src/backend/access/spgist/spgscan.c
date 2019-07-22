@@ -643,7 +643,7 @@ spgInnerTest(SpGistScanOpaque so, SpGistSearchItem *item,
 				continue;
 
 			/*
-			 * Use infinity distances if innerConsistent() failed to return
+			 * Use infinity distances if innerConsistentFn() failed to return
 			 * them or if is a NULL item (their distances are really unused).
 			 */
 			distances = out.distances ? out.distances[i] : so->infDistances;

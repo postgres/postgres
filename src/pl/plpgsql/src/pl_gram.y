@@ -3691,7 +3691,7 @@ plpgsql_sql_error_callback(void *arg)
 			internalerrposition(myerrpos + errpos - cbarg->leaderlen - 1);
 	}
 
-	/* In any case, flush errposition --- we want internalerrpos only */
+	/* In any case, flush errposition --- we want internalerrposition only */
 	errposition(0);
 }
 

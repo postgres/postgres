@@ -308,7 +308,7 @@ oidvectorsend(PG_FUNCTION_ARGS)
 }
 
 /*
- *		oidparse				- get OID from IConst/FConst node
+ *		oidparse				- get OID from ICONST/FCONST node
  */
 Oid
 oidparse(Node *node)

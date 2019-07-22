@@ -275,8 +275,8 @@ PGTYPEStimestamp_to_asc(timestamp tstamp)
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 	fsec_t		fsec;
-	int			DateStyle = 1;	/* this defaults to ISO_DATES, shall we make
-								 * it an option? */
+	int			DateStyle = 1;	/* this defaults to USE_ISO_DATES, shall we
+								 * make it an option? */
 
 	if (TIMESTAMP_NOT_FINITE(tstamp))
 		EncodeSpecialTimestamp(tstamp, buf);

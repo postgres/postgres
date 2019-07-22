@@ -102,7 +102,7 @@ static void MultiXactIdWait(MultiXactId multi, MultiXactStatus status, uint16 in
 static bool ConditionalMultiXactIdWait(MultiXactId multi, MultiXactStatus status,
 									   uint16 infomask, Relation rel, int *remaining);
 static XLogRecPtr log_heap_new_cid(Relation relation, HeapTuple tup);
-static HeapTuple ExtractReplicaIdentity(Relation rel, HeapTuple tup, bool key_modified,
+static HeapTuple ExtractReplicaIdentity(Relation rel, HeapTuple tup, bool key_changed,
 										bool *copy);
 
 

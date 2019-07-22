@@ -2369,7 +2369,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			/*
 			 * The last canSetTag query sets the status values returned to the
 			 * caller.  Be careful to free any tuptables not returned, to
-			 * avoid intratransaction memory leak.
+			 * avoid intra-transaction memory leak.
 			 */
 			if (canSetTag)
 			{

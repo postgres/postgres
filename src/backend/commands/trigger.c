@@ -775,7 +775,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											  NULL,
 											  true, /* islocal */
 											  0,	/* inhcount */
-											  true, /* isnoinherit */
+											  true, /* noinherit */
 											  isInternal);	/* is_internal */
 	}
 

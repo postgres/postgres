@@ -1,4 +1,4 @@
-/* contrib/json_plperl/jsonb_plperl--1.0.sql */
+/* contrib/jsonb_plperl/jsonb_plperlu--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION jsonb_plperlu" to load this file. \quit

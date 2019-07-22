@@ -195,14 +195,14 @@ typedef struct xl_multi_insert_tuple
  *
  * Backup blk 0: new page
  *
- * If XLOG_HEAP_PREFIX_FROM_OLD or XLOG_HEAP_SUFFIX_FROM_OLD flags are set,
+ * If XLH_UPDATE_PREFIX_FROM_OLD or XLH_UPDATE_SUFFIX_FROM_OLD flags are set,
  * the prefix and/or suffix come first, as one or two uint16s.
  *
  * After that, xl_heap_header and new tuple data follow.  The new tuple
  * data doesn't include the prefix and suffix, which are copied from the
  * old tuple on replay.
  *
- * If HEAP_CONTAINS_NEW_TUPLE_DATA flag is given, the tuple data is
+ * If XLH_UPDATE_CONTAINS_NEW_TUPLE flag is given, the tuple data is
  * included even if a full-page image was taken.
  *
  * Backup blk 1: old page, if different. (no data, just a reference to the blk)
@@ -217,8 +217,8 @@ typedef struct xl_heap_update
 	OffsetNumber new_offnum;	/* new tuple's offset */
 
 	/*
-	 * If XLOG_HEAP_CONTAINS_OLD_TUPLE or XLOG_HEAP_CONTAINS_OLD_KEY flags are
-	 * set, a xl_heap_header struct and tuple data for the old tuple follows.
+	 * If XLH_UPDATE_CONTAINS_OLD_TUPLE or XLH_UPDATE_CONTAINS_OLD_KEY flags
+	 * are set, xl_heap_header and tuple data for the old tuple follow.
 	 */
 } xl_heap_update;
 
