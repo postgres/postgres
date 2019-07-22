@@ -86,4 +86,15 @@
   <xsl:text>?</xsl:text>
 </xsl:template>
 
+
+<!-- Support for generating xref link text to additional elements -->
+
+<xsl:template match="command" mode="xref-to">
+  <xsl:apply-templates select="." mode="xref"/>
+</xsl:template>
+
+<xsl:template match="function" mode="xref-to">
+  <xsl:apply-templates select="." mode="xref"/>
+</xsl:template>
+
 </xsl:stylesheet>
