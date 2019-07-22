@@ -461,6 +461,42 @@ Partition of: partitioned2 FOR VALUES FROM ('-1', 'aaaaa') TO (100, 'ccccc')
 Partition constraint: (((a + 1) IS NOT NULL) AND (substr(b, 1, 5) IS NOT NULL) AND (((a + 1) > '-1'::integer) OR (((a + 1) = '-1'::integer) AND (substr(b, 1, 5) >= 'aaaaa'::text))) AND (((a + 1) < 100) OR (((a + 1) = 100) AND (substr(b, 1, 5) < 'ccccc'::text))))
 
 DROP TABLE partitioned, partitioned2;
+-- check that dependencies of partition columns are handled correctly
+create domain intdom1 as int;
+create table partitioned (
+	a intdom1,
+	b text
+) partition by range (a);
+alter table partitioned drop column a;  -- fail
+ERROR:  cannot drop column "a" because it is part of the partition key of relation "partitioned"
+drop domain intdom1;  -- fail, requires cascade
+ERROR:  cannot drop type intdom1 because other objects depend on it
+DETAIL:  table partitioned depends on type intdom1
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop domain intdom1 cascade;
+NOTICE:  drop cascades to table partitioned
+table partitioned;  -- gone
+ERROR:  relation "partitioned" does not exist
+LINE 1: table partitioned;
+              ^
+-- likewise for columns used in partition expressions
+create domain intdom1 as int;
+create table partitioned (
+	a intdom1,
+	b text
+) partition by range (plusone(a));
+alter table partitioned drop column a;  -- fail
+ERROR:  cannot drop column "a" because it is part of the partition key of relation "partitioned"
+drop domain intdom1;  -- fail, requires cascade
+ERROR:  cannot drop type intdom1 because other objects depend on it
+DETAIL:  table partitioned depends on type intdom1
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+drop domain intdom1 cascade;
+NOTICE:  drop cascades to table partitioned
+table partitioned;  -- gone
+ERROR:  relation "partitioned" does not exist
+LINE 1: table partitioned;
+              ^
 --
 -- Partitions
 --
