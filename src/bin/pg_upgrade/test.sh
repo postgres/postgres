@@ -20,7 +20,8 @@ unset MAKELEVEL
 # Run a given "initdb" binary and overlay the regression testing
 # authentication configuration.
 standard_initdb() {
-	"$1" -N
+	# Specify "-A trust" explicitly to suppress initdb's warning.
+	"$1" -N -A trust
 	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
 	then
 		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
@@ -160,9 +161,6 @@ done
 EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --port=$PGPORT"
 export EXTRA_REGRESS_OPTS
 
-# enable echo so the user can see what is being executed
-set -x
-
 standard_initdb "$oldbindir"/initdb
 "$oldbindir"/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 
@@ -247,10 +245,6 @@ esac
 
 pg_dumpall --no-sync -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
-
-# no need to echo commands anymore
-set +x
-echo
 
 if [ -n "$pg_dumpall2_status" ]; then
 	echo "pg_dumpall of post-upgrade database cluster failed"
