@@ -1406,7 +1406,7 @@ ExecBuildSlotPartitionKeyDescription(Relation rel,
 		/* truncate if needed */
 		vallen = strlen(val);
 		if (vallen <= maxfieldlen)
-			appendStringInfoString(&buf, val);
+			appendBinaryStringInfo(&buf, val, vallen);
 		else
 		{
 			vallen = pg_mbcliplen(val, vallen, maxfieldlen);

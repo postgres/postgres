@@ -559,7 +559,7 @@ xmlconcat(List *args)
 					   0,
 					   global_standalone);
 
-		appendStringInfoString(&buf2, buf.data);
+		appendBinaryStringInfo(&buf2, buf.data, buf.len);
 		buf = buf2;
 	}
 
@@ -1879,7 +1879,8 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	if (xmlerrcxt->strictness == PG_XML_STRICTNESS_LEGACY)
 	{
 		appendStringInfoLineSeparator(&xmlerrcxt->err_buf);
-		appendStringInfoString(&xmlerrcxt->err_buf, errorBuf->data);
+		appendBinaryStringInfo(&xmlerrcxt->err_buf, errorBuf->data,
+							   errorBuf->len);
 
 		pfree(errorBuf->data);
 		pfree(errorBuf);
@@ -1897,7 +1898,8 @@ xml_errorHandler(void *data, xmlErrorPtr error)
 	if (level >= XML_ERR_ERROR)
 	{
 		appendStringInfoLineSeparator(&xmlerrcxt->err_buf);
-		appendStringInfoString(&xmlerrcxt->err_buf, errorBuf->data);
+		appendBinaryStringInfo(&xmlerrcxt->err_buf, errorBuf->data,
+							   errorBuf->len);
 
 		xmlerrcxt->err_occurred = true;
 	}
@@ -2874,7 +2876,7 @@ schema_to_xml_internal(Oid nspid, const char *xmlschema, bool nulls,
 		subres = table_to_xml_internal(relid, NULL, nulls, tableforest,
 									   targetns, false);
 
-		appendStringInfoString(result, subres->data);
+		appendBinaryStringInfo(result, subres->data, subres->len);
 		appendStringInfoChar(result, '\n');
 	}
 
@@ -3049,7 +3051,7 @@ database_to_xml_internal(const char *xmlschema, bool nulls,
 		subres = schema_to_xml_internal(nspid, NULL, nulls,
 										tableforest, targetns, false);
 
-		appendStringInfoString(result, subres->data);
+		appendBinaryStringInfo(result, subres->data, subres->len);
 		appendStringInfoChar(result, '\n');
 	}
 

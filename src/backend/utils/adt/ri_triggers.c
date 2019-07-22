@@ -927,7 +927,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			queryoids[i] = pk_type;
 			queryoids[j] = pk_type;
 		}
-		appendStringInfoString(&querybuf, qualbuf.data);
+		appendBinaryStringInfo(&querybuf, qualbuf.data, qualbuf.len);
 
 		/* Prepare and save the plan */
 		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys * 2, queryoids,
@@ -1106,7 +1106,7 @@ ri_set(TriggerData *trigdata, bool is_set_null)
 			qualsep = "AND";
 			queryoids[i] = pk_type;
 		}
-		appendStringInfoString(&querybuf, qualbuf.data);
+		appendBinaryStringInfo(&querybuf, qualbuf.data, qualbuf.len);
 
 		/* Prepare and save the plan */
 		qplan = ri_PlanCheck(querybuf.data, riinfo->nkeys, queryoids,

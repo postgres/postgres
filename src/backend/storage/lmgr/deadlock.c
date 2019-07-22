@@ -1115,7 +1115,7 @@ DeadLockReport(void)
 	}
 
 	/* Duplicate all the above for the server ... */
-	appendStringInfoString(&logbuf, clientbuf.data);
+	appendBinaryStringInfo(&logbuf, clientbuf.data, clientbuf.len);
 
 	/* ... and add info about query strings */
 	for (i = 0; i < nDeadlockDetails; i++)

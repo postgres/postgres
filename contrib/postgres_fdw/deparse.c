@@ -1531,7 +1531,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 			{
 				Assert(fpinfo->jointype == JOIN_INNER);
 				Assert(fpinfo->joinclauses == NIL);
-				appendStringInfoString(buf, join_sql_o.data);
+				appendBinaryStringInfo(buf, join_sql_o.data, join_sql_o.len);
 				return;
 			}
 		}
@@ -1552,7 +1552,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 			{
 				Assert(fpinfo->jointype == JOIN_INNER);
 				Assert(fpinfo->joinclauses == NIL);
-				appendStringInfoString(buf, join_sql_i.data);
+				appendBinaryStringInfo(buf, join_sql_i.data, join_sql_i.len);
 				return;
 			}
 		}

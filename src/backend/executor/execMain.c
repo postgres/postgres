@@ -2290,7 +2290,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 			/* truncate if needed */
 			vallen = strlen(val);
 			if (vallen <= maxfieldlen)
-				appendStringInfoString(&buf, val);
+				appendBinaryStringInfo(&buf, val, vallen);
 			else
 			{
 				vallen = pg_mbcliplen(val, vallen, maxfieldlen);
@@ -2309,7 +2309,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 	if (!table_perm)
 	{
 		appendStringInfoString(&collist, ") = ");
-		appendStringInfoString(&collist, buf.data);
+		appendBinaryStringInfo(&collist, buf.data, buf.len);
 
 		return collist.data;
 	}
