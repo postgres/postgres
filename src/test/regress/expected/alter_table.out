@@ -3446,13 +3446,13 @@ LINE 1: ALTER TABLE partitioned ADD EXCLUDE USING gist (a WITH &&);
                                     ^
 -- cannot drop column that is part of the partition key
 ALTER TABLE partitioned DROP COLUMN a;
-ERROR:  cannot drop column named in partition key
+ERROR:  cannot drop column "a" because it is part of the partition key of relation "partitioned"
 ALTER TABLE partitioned ALTER COLUMN a TYPE char(5);
-ERROR:  cannot alter type of column named in partition key
+ERROR:  cannot alter column "a" because it is part of the partition key of relation "partitioned"
 ALTER TABLE partitioned DROP COLUMN b;
-ERROR:  cannot drop column referenced in partition key expression
+ERROR:  cannot drop column "b" because it is part of the partition key of relation "partitioned"
 ALTER TABLE partitioned ALTER COLUMN b TYPE char(5);
-ERROR:  cannot alter type of column referenced in partition key expression
+ERROR:  cannot alter column "b" because it is part of the partition key of relation "partitioned"
 -- partitioned table cannot participate in regular inheritance
 CREATE TABLE nonpartitioned (
 	a int,
@@ -3945,9 +3945,9 @@ ERROR:  cannot change inheritance of a partition
 -- partitioned tables; for example, part_5, which is list_parted2's
 -- partition, is partitioned on b;
 ALTER TABLE list_parted2 DROP COLUMN b;
-ERROR:  cannot drop column named in partition key
+ERROR:  cannot drop column "b" because it is part of the partition key of relation "part_5"
 ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
-ERROR:  cannot alter type of column named in partition key
+ERROR:  cannot alter column "b" because it is part of the partition key of relation "part_5"
 -- dropping non-partition key columns should be allowed on the parent table.
 ALTER TABLE list_parted DROP COLUMN b;
 SELECT * FROM list_parted;

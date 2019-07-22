@@ -543,6 +543,7 @@ findDependentObjects(const ObjectAddress *object,
 				ObjectIdGetDatum(object->objectId));
 	if (object->objectSubId != 0)
 	{
+		/* Consider only dependencies of this sub-object */
 		ScanKeyInit(&key[2],
 					Anum_pg_depend_objsubid,
 					BTEqualStrategyNumber, F_INT4EQ,
@@ -550,7 +551,10 @@ findDependentObjects(const ObjectAddress *object,
 		nkeys = 3;
 	}
 	else
+	{
+		/* Consider dependencies of this object and any sub-objects it has */
 		nkeys = 2;
+	}
 
 	scan = systable_beginscan(*depRel, DependDependerIndexId, true,
 							  NULL, nkeys, key);
@@ -566,6 +570,18 @@ findDependentObjects(const ObjectAddress *object,
 		otherObject.classId = foundDep->refclassid;
 		otherObject.objectId = foundDep->refobjid;
 		otherObject.objectSubId = foundDep->refobjsubid;
+
+		/*
+		 * When scanning dependencies of a whole object, we may find rows
+		 * linking sub-objects of the object to the object itself.  (Normally,
+		 * such a dependency is implicit, but we must make explicit ones in
+		 * some cases involving partitioning.)  We must ignore such rows to
+		 * avoid infinite recursion.
+		 */
+		if (otherObject.classId == object->classId &&
+			otherObject.objectId == object->objectId &&
+			object->objectSubId == 0)
+			continue;
 
 		switch (foundDep->deptype)
 		{
@@ -853,6 +869,16 @@ findDependentObjects(const ObjectAddress *object,
 		otherObject.classId = foundDep->classid;
 		otherObject.objectId = foundDep->objid;
 		otherObject.objectSubId = foundDep->objsubid;
+
+		/*
+		 * If what we found is a sub-object of the current object, just ignore
+		 * it.  (Normally, such a dependency is implicit, but we must make
+		 * explicit ones in some cases involving partitioning.)
+		 */
+		if (otherObject.classId == object->classId &&
+			otherObject.objectId == object->objectId &&
+			object->objectSubId == 0)
+			continue;
 
 		/*
 		 * Must lock the dependent object before recursing to it.
@@ -1588,8 +1614,10 @@ recordDependencyOnExpr(const ObjectAddress *depender,
  * As above, but only one relation is expected to be referenced (with
  * varno = 1 and varlevelsup = 0).  Pass the relation OID instead of a
  * range table.  An additional frammish is that dependencies on that
- * relation (or its component columns) will be marked with 'self_behavior',
- * whereas 'behavior' is used for everything else.
+ * relation's component columns will be marked with 'self_behavior',
+ * whereas 'behavior' is used for everything else; also, if 'reverse_self'
+ * is true, those dependencies are reversed so that the columns are made
+ * to depend on the table not vice versa.
  *
  * NOTE: the caller should ensure that a whole-table dependency on the
  * specified relation is created separately, if one is needed.  In particular,
@@ -1602,7 +1630,7 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 								Node *expr, Oid relId,
 								DependencyType behavior,
 								DependencyType self_behavior,
-								bool ignore_self)
+								bool reverse_self)
 {
 	find_expr_references_context context;
 	RangeTblEntry rte;
@@ -1626,7 +1654,8 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 	eliminate_duplicate_dependencies(context.addrs);
 
 	/* Separate self-dependencies if necessary */
-	if (behavior != self_behavior && context.addrs->numrefs > 0)
+	if ((behavior != self_behavior || reverse_self) &&
+		context.addrs->numrefs > 0)
 	{
 		ObjectAddresses *self_addrs;
 		ObjectAddress *outobj;
@@ -1657,11 +1686,23 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 		}
 		context.addrs->numrefs = outrefs;
 
-		/* Record the self-dependencies */
-		if (!ignore_self)
+		/* Record the self-dependencies with the appropriate direction */
+		if (!reverse_self)
 			recordMultipleDependencies(depender,
 									   self_addrs->refs, self_addrs->numrefs,
 									   self_behavior);
+		else
+		{
+			/* Can't use recordMultipleDependencies, so do it the hard way */
+			int			selfref;
+
+			for (selfref = 0; selfref < self_addrs->numrefs; selfref++)
+			{
+				ObjectAddress *thisobj = self_addrs->refs + selfref;
+
+				recordDependencyOn(thisobj, depender, self_behavior);
+			}
+		}
 
 		free_object_addresses(self_addrs);
 	}

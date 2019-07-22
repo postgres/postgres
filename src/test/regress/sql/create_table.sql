@@ -449,6 +449,39 @@ CREATE TABLE part2_1 PARTITION OF partitioned2 FOR VALUES FROM (-1, 'aaaaa') TO 
 
 DROP TABLE partitioned, partitioned2;
 
+-- check that dependencies of partition columns are handled correctly
+create domain intdom1 as int;
+
+create table partitioned (
+	a intdom1,
+	b text
+) partition by range (a);
+
+alter table partitioned drop column a;  -- fail
+
+drop domain intdom1;  -- fail, requires cascade
+
+drop domain intdom1 cascade;
+
+table partitioned;  -- gone
+
+-- likewise for columns used in partition expressions
+create domain intdom1 as int;
+
+create table partitioned (
+	a intdom1,
+	b text
+) partition by range (plusone(a));
+
+alter table partitioned drop column a;  -- fail
+
+drop domain intdom1;  -- fail, requires cascade
+
+drop domain intdom1 cascade;
+
+table partitioned;  -- gone
+
+
 --
 -- Partitions
 --
