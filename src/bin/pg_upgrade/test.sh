@@ -22,7 +22,8 @@ unset MAKELEVEL
 standard_initdb() {
 	# To increase coverage of non-standard segment size and group access
 	# without increasing test runtime, run these tests with a custom setting.
-	"$1" -N --wal-segsize 1 -g
+	# Also, specify "-A trust" explicitly to suppress initdb's warning.
+	"$1" -N --wal-segsize 1 -g -A trust
 	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
 	then
 		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"
@@ -162,9 +163,6 @@ done
 EXTRA_REGRESS_OPTS="$EXTRA_REGRESS_OPTS --port=$PGPORT"
 export EXTRA_REGRESS_OPTS
 
-# enable echo so the user can see what is being executed
-set -x
-
 standard_initdb "$oldbindir"/initdb
 "$oldbindir"/pg_ctl start -l "$logdir/postmaster1.log" -o "$POSTMASTER_OPTS" -w
 
@@ -267,10 +265,6 @@ esac
 
 pg_dumpall --no-sync -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
-
-# no need to echo commands anymore
-set +x
-echo
 
 if [ -n "$pg_dumpall2_status" ]; then
 	echo "pg_dumpall of post-upgrade database cluster failed"
