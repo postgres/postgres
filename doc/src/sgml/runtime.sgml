@@ -156,19 +156,24 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   </para>
 
   <para>
-   The default client authentication setup is such that users can connect over
-   the Unix-domain socket to the same database user name as their operating
-   system user names (on operating systems that support this, which are most
-   modern Unix-like systems, but not Windows) and otherwise with a password.
-   To assign a password to the initial database superuser, use one of
+   However, while the directory contents are secure, the default
+   client authentication setup allows any local user to connect to the
+   database and even become the database superuser. If you do not
+   trust other local users, we recommend you use one of
    <command>initdb</command>'s <option>-W</option>, <option>--pwprompt</option>
-   or <option>--pwfile</option> options.<indexterm>
+   or <option>--pwfile</option> options to assign a password to the
+   database superuser.<indexterm>
      <primary>password</primary>
      <secondary>of the superuser</secondary>
    </indexterm>
-   This configuration is secure and sufficient to get started.  Later, see
-   <xref linkend="client-authentication"/> for more information about setting
-   up client authentication.
+   Also, specify <option>-A md5</option> or
+   <option>-A password</option> so that the default <literal>trust</literal> authentication
+   mode is not used; or modify the generated <filename>pg_hba.conf</filename>
+   file after running <command>initdb</command>, but
+   <emphasis>before</emphasis> you start the server for the first time. (Other
+   reasonable approaches include using <literal>peer</literal> authentication
+   or file system permissions to restrict connections. See <xref
+   linkend="client-authentication"/> for more information.)
   </para>
 
   <para>
