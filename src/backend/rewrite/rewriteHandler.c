@@ -1130,7 +1130,7 @@ build_column_default(Relation rel, int attrno)
 	{
 		NextValueExpr *nve = makeNode(NextValueExpr);
 
-		nve->seqid = getOwnedSequence(RelationGetRelid(rel), attrno);
+		nve->seqid = getIdentitySequence(RelationGetRelid(rel), attrno, false);
 		nve->typeId = att_tup->atttypid;
 
 		return (Node *) nve;

@@ -209,8 +209,8 @@ extern long changeDependenciesOn(Oid refClassId, Oid oldRefObjectId,
 extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 
 extern bool sequenceIsOwned(Oid seqId, char deptype, Oid *tableId, int32 *colId);
-extern List *getOwnedSequences(Oid relid, AttrNumber attnum);
-extern Oid	getOwnedSequence(Oid relid, AttrNumber attnum);
+extern List *getOwnedSequences(Oid relid);
+extern Oid	getIdentitySequence(Oid relid, AttrNumber attnum, bool missing_ok);
 
 extern Oid	get_constraint_index(Oid constraintId);
 
