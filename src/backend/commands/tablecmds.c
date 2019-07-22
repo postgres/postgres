@@ -7021,27 +7021,28 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 				 errmsg("cannot drop system column \"%s\"",
 						colName)));
 
-	/* Don't drop inherited columns */
+	/*
+	 * Don't drop inherited columns, unless recursing (presumably from a drop
+	 * of the parent column)
+	 */
 	if (targetatt->attinhcount > 0 && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot drop inherited column \"%s\"",
 						colName)));
 
-	/* Don't drop columns used in the partition key */
+	/*
+	 * Don't drop columns used in the partition key, either.  (If we let this
+	 * go through, the key column's dependencies would cause a cascaded drop
+	 * of the whole table, which is surely not what the user expected.)
+	 */
 	if (has_partition_attrs(rel,
 							bms_make_singleton(attnum - FirstLowInvalidHeapAttributeNumber),
 							&is_expr))
-	{
-		if (!is_expr)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot drop column named in partition key")));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot drop column referenced in partition key expression")));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot drop column \"%s\" because it is part of the partition key of relation \"%s\"",
+						colName, RelationGetRelationName(rel))));
 
 	ReleaseSysCache(tuple);
 
@@ -10255,16 +10256,10 @@ ATPrepAlterColumnType(List **wqueue,
 	if (has_partition_attrs(rel,
 							bms_make_singleton(attnum - FirstLowInvalidHeapAttributeNumber),
 							&is_expr))
-	{
-		if (!is_expr)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot alter type of column named in partition key")));
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("cannot alter type of column referenced in partition key expression")));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("cannot alter column \"%s\" because it is part of the partition key of relation \"%s\"",
+						colName, RelationGetRelationName(rel))));
 
 	/* Look up the target type */
 	typenameTypeIdAndMod(NULL, typeName, &targettype, &targettypmod);

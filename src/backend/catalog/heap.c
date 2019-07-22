@@ -3491,16 +3491,36 @@ StorePartitionKey(Relation rel,
 	}
 
 	/*
-	 * Anything mentioned in the expressions.  We must ignore the column
-	 * references, which will depend on the table itself; there is no separate
-	 * partition key object.
+	 * The partitioning columns are made internally dependent on the table,
+	 * because we cannot drop any of them without dropping the whole table.
+	 * (ATExecDropColumn independently enforces that, but it's not bulletproof
+	 * so we need the dependencies too.)
+	 */
+	for (i = 0; i < partnatts; i++)
+	{
+		if (partattrs[i] == 0)
+			continue;			/* ignore expressions here */
+
+		referenced.classId = RelationRelationId;
+		referenced.objectId = RelationGetRelid(rel);
+		referenced.objectSubId = partattrs[i];
+
+		recordDependencyOn(&referenced, &myself, DEPENDENCY_INTERNAL);
+	}
+
+	/*
+	 * Also consider anything mentioned in partition expressions.  External
+	 * references (e.g. functions) get NORMAL dependencies.  Table columns
+	 * mentioned in the expressions are handled the same as plain partitioning
+	 * columns, i.e. they become internally dependent on the whole table.
 	 */
 	if (partexprs)
 		recordDependencyOnSingleRelExpr(&myself,
 										(Node *) partexprs,
 										RelationGetRelid(rel),
 										DEPENDENCY_NORMAL,
-										DEPENDENCY_AUTO, true);
+										DEPENDENCY_INTERNAL,
+										true /* reverse the self-deps */ );
 
 	/*
 	 * We must invalidate the relcache so that the next
