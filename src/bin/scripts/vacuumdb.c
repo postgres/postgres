@@ -57,7 +57,7 @@ static void prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 								   vacuumingOptions *vacopts, const char *table);
 
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
-							   const char *table, const char *progname);
+							   const char *table);
 
 static void help(const char *progname);
 
@@ -646,7 +646,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		 * through ParallelSlotsGetIdle.
 		 */
 		run_vacuum_command(free_slot->connection, sql.data,
-						   echo, tabname, progname);
+						   echo, tabname);
 
 		cell = cell->next;
 	} while (cell != NULL);
@@ -855,7 +855,7 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
  */
 static void
 run_vacuum_command(PGconn *conn, const char *sql, bool echo,
-				   const char *table, const char *progname)
+				   const char *table)
 {
 	bool		status;
 
