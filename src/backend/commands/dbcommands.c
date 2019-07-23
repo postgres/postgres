@@ -124,6 +124,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	DefElem    *downer = NULL;
 	DefElem    *dtemplate = NULL;
 	DefElem    *dencoding = NULL;
+	DefElem    *dlocale = NULL;
 	DefElem    *dcollate = NULL;
 	DefElem    *dctype = NULL;
 	DefElem    *distemplate = NULL;
@@ -183,6 +184,15 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 						 errmsg("conflicting or redundant options"),
 						 parser_errposition(pstate, defel->location)));
 			dencoding = defel;
+		}
+		else if (strcmp(defel->defname, "locale") == 0)
+		{
+			if (dlocale)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options"),
+						 parser_errposition(pstate, defel->location)));
+			dlocale = defel;
 		}
 		else if (strcmp(defel->defname, "lc_collate") == 0)
 		{
@@ -244,6 +254,12 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 					 parser_errposition(pstate, defel->location)));
 	}
 
+	if (dlocale && (dcollate || dctype))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("conflicting or redundant options"),
+				 errdetail("LOCALE cannot be specified together with LC_COLLATE or LC_CTYPE.")));
+
 	if (downer && downer->arg)
 		dbowner = defGetString(downer);
 	if (dtemplate && dtemplate->arg)
@@ -275,6 +291,11 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 								encoding_name),
 						 parser_errposition(pstate, dencoding->location)));
 		}
+	}
+	if (dlocale && dlocale->arg)
+	{
+		dbcollate = defGetString(dlocale);
+		dbctype = defGetString(dlocale);
 	}
 	if (dcollate && dcollate->arg)
 		dbcollate = defGetString(dcollate);

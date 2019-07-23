@@ -25,6 +25,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
+           [ LOCALE [=] <replaceable class="parameter">locale</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
@@ -109,6 +110,26 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         <xref linkend="multibyte-charset-supported"/>. See below for
         additional restrictions.
        </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">locale</replaceable></term>
+      <listitem>
+       <para>
+        This is a shortcut for setting <symbol>LC_COLLATE</symbol>
+        and <symbol>LC_CTYPE</symbol> at once.  If you specify this,
+        you cannot specify either of those parameters.
+       </para>
+       <tip>
+        <para>
+         The other locale settings <xref linkend="guc-lc-messages"/>, <xref
+         linkend="guc-lc-monetary"/>, <xref linkend="guc-lc-numeric"/>, and
+         <xref linkend="guc-lc-time"/> are not fixed per database and are not
+         set by this command.  If you want to make them the default for a
+         specific database, you can use <literal>ALTER DATABASE
+         ... SET</literal>.
+        </para>
+       </tip>
       </listitem>
      </varlistentry>
      <varlistentry>
@@ -287,7 +308,7 @@ CREATE DATABASE sales OWNER salesapp TABLESPACE salesspace;
    To create a database <literal>music</literal> with a different locale:
 <programlisting>
 CREATE DATABASE music
-    LC_COLLATE 'sv_SE.utf8' LC_CTYPE 'sv_SE.utf8'
+    LOCALE 'sv_SE.utf8'
     TEMPLATE template0;
 </programlisting>
     In this example, the <literal>TEMPLATE template0</literal> clause is required if
@@ -300,7 +321,7 @@ CREATE DATABASE music
    different character set encoding:
 <programlisting>
 CREATE DATABASE music2
-    LC_COLLATE 'sv_SE.iso885915' LC_CTYPE 'sv_SE.iso885915'
+    LOCALE 'sv_SE.iso885915'
     ENCODING LATIN9
     TEMPLATE template0;
 </programlisting>

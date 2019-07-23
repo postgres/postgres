@@ -1407,6 +1407,15 @@ my %tests = (
 		like => { pg_dumpall_dbprivs => 1, },
 	},
 
+	"CREATE DATABASE dump_test2 LOCALE = 'C'" => {
+		create_order => 47,
+		create_sql   => "CREATE DATABASE dump_test2 LOCALE = 'C' TEMPLATE = template0;",
+		regexp       => qr/^
+			\QCREATE DATABASE dump_test2 \E.*\QLOCALE = 'C';\E
+			/xm,
+		like => { pg_dumpall_dbprivs => 1, },
+	},
+
 	'CREATE EXTENSION ... plpgsql' => {
 		regexp => qr/^
 			\QCREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;\E
