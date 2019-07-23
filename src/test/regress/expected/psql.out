@@ -4748,3 +4748,15 @@ drop schema testpart;
 set search_path to default;
 set role to default;
 drop role regress_partitioning_role;
+-- \d on toast table (use pg_statistic's toast table, which has a known name)
+\d pg_toast.pg_toast_2619
+TOAST table "pg_toast.pg_toast_2619"
+   Column   |  Type   
+------------+---------
+ chunk_id   | oid
+ chunk_seq  | integer
+ chunk_data | bytea
+Owning table: "pg_catalog.pg_statistic"
+Indexes:
+    "pg_toast_2619_index" PRIMARY KEY, btree (chunk_id, chunk_seq)
+

@@ -2172,6 +2172,33 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result);
 	}
 
+	if (tableinfo.relkind == RELKIND_TOASTVALUE)
+	{
+		/* For a TOAST table, print name of owning table */
+		PGresult   *result;
+
+		printfPQExpBuffer(&buf,
+						  "SELECT n.nspname, c.relname\n"
+						  "FROM pg_catalog.pg_class c"
+						  " JOIN pg_catalog.pg_namespace n"
+						  " ON n.oid = c.relnamespace\n"
+						  "WHERE reltoastrelid = '%s';", oid);
+		result = PSQLexec(buf.data);
+		if (!result)
+			goto error_return;
+
+		if (PQntuples(result) == 1)
+		{
+			char	   *schemaname = PQgetvalue(result, 0, 0);
+			char	   *relname = PQgetvalue(result, 0, 1);
+
+			printfPQExpBuffer(&tmpbuf, _("Owning table: \"%s.%s\""),
+							  schemaname, relname);
+			printTableAddFooter(&cont, tmpbuf.data);
+		}
+		PQclear(result);
+	}
+
 	if (tableinfo.relkind == RELKIND_INDEX ||
 		tableinfo.relkind == RELKIND_PARTITIONED_INDEX)
 	{
@@ -2272,10 +2299,12 @@ describeOneTableDetails(const char *schemaname,
 
 		PQclear(result);
 	}
+	/* If you add relkinds here, see also "Finish printing..." stanza below */
 	else if (tableinfo.relkind == RELKIND_RELATION ||
 			 tableinfo.relkind == RELKIND_MATVIEW ||
 			 tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
-			 tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
+			 tableinfo.relkind == RELKIND_PARTITIONED_TABLE ||
+			 tableinfo.relkind == RELKIND_TOASTVALUE)
 	{
 		/* Footer information about a table */
 		PGresult   *result = NULL;
@@ -3040,7 +3069,8 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == RELKIND_RELATION ||
 		tableinfo.relkind == RELKIND_MATVIEW ||
 		tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
-		tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
+		tableinfo.relkind == RELKIND_PARTITIONED_TABLE ||
+		tableinfo.relkind == RELKIND_TOASTVALUE)
 	{
 		PGresult   *result;
 		int			tuples;
@@ -3308,7 +3338,8 @@ add_tablespace_footer(printTableContent *const cont, char relkind,
 		relkind == RELKIND_MATVIEW ||
 		relkind == RELKIND_INDEX ||
 		relkind == RELKIND_PARTITIONED_TABLE ||
-		relkind == RELKIND_PARTITIONED_INDEX)
+		relkind == RELKIND_PARTITIONED_INDEX ||
+		relkind == RELKIND_TOASTVALUE)
 	{
 		/*
 		 * We ignore the database default tablespace so that users not using
