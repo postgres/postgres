@@ -2379,3 +2379,18 @@ DROP SCHEMA fkpart7 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to table fkpart7.pkpart
 drop cascades to table fkpart7.fk
+-- ensure we check partitions are "not used" when dropping constraints
+CREATE SCHEMA fkpart8
+  CREATE TABLE tbl1(f1 int PRIMARY KEY)
+  CREATE TABLE tbl2(f1 int REFERENCES tbl1 DEFERRABLE INITIALLY DEFERRED) PARTITION BY RANGE(f1)
+  CREATE TABLE tbl2_p1 PARTITION OF tbl2 FOR VALUES FROM (minvalue) TO (maxvalue);
+INSERT INTO fkpart8.tbl1 VALUES(1);
+BEGIN;
+INSERT INTO fkpart8.tbl2 VALUES(1);
+ALTER TABLE fkpart8.tbl2 DROP CONSTRAINT tbl2_f1_fkey;
+ERROR:  cannot ALTER TABLE "tbl2_p1" because it has pending trigger events
+COMMIT;
+DROP SCHEMA fkpart8 CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table fkpart8.tbl1
+drop cascades to table fkpart8.tbl2
