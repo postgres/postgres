@@ -512,7 +512,7 @@ pgbench(
 		qr{processed: 1/1},
 		qr{shell-echo-output}
 	],
-	[qr{command=8.: int 2\b}],
+	[qr{command=8.: int 1\b}],
 	'pgbench backslash commands',
 	{
 		'001_pgbench_backslash_commands' => q{-- run set
@@ -524,10 +524,10 @@ pgbench(
 \sleep 0 s
 \sleep :zero
 -- setshell and continuation
-\setshell two\
-  expr \
-    1 + :one
-\set n debug(:two)
+\setshell another_one\
+  echo \
+    :one
+\set n debug(:another_one)
 -- shell
 \shell echo shell-echo-output
 }
