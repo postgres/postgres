@@ -2102,37 +2102,32 @@ describeOneTableDetails(const char *schemaname,
 	}
 
 	/* Make footers */
-	if (pset.sversion >= 100000)
+
+	if (tableinfo.ispartition)
 	{
-		/* Get the partition information */
+		/* Footer information for a partition child table */
 		PGresult   *result;
-		char	   *parent_name;
-		char	   *partdef;
-		char	   *partconstraintdef = NULL;
 
 		printfPQExpBuffer(&buf,
 						  "SELECT inhparent::pg_catalog.regclass,\n"
-						  "  pg_catalog.pg_get_expr(c.relpartbound, inhrelid)");
+						  "  pg_catalog.pg_get_expr(c.relpartbound, c.oid)");
 		/* If verbose, also request the partition constraint definition */
 		if (verbose)
 			appendPQExpBufferStr(&buf,
-								 ",\n  pg_catalog.pg_get_partition_constraintdef(inhrelid)");
+								 ",\n  pg_catalog.pg_get_partition_constraintdef(c.oid)");
 		appendPQExpBuffer(&buf,
 						  "\nFROM pg_catalog.pg_class c"
 						  " JOIN pg_catalog.pg_inherits i"
 						  " ON c.oid = inhrelid"
-						  "\nWHERE c.oid = '%s' AND c.relispartition;", oid);
+						  "\nWHERE c.oid = '%s';", oid);
 		result = PSQLexec(buf.data);
 		if (!result)
 			goto error_return;
 
 		if (PQntuples(result) > 0)
 		{
-			parent_name = PQgetvalue(result, 0, 0);
-			partdef = PQgetvalue(result, 0, 1);
-
-			if (PQnfields(result) == 3 && !PQgetisnull(result, 0, 2))
-				partconstraintdef = PQgetvalue(result, 0, 2);
+			char	   *parent_name = PQgetvalue(result, 0, 0);
+			char	   *partdef = PQgetvalue(result, 0, 1);
 
 			printfPQExpBuffer(&tmpbuf, _("Partition of: %s %s"), parent_name,
 							  partdef);
@@ -2140,6 +2135,10 @@ describeOneTableDetails(const char *schemaname,
 
 			if (verbose)
 			{
+				char	   *partconstraintdef = NULL;
+
+				if (!PQgetisnull(result, 0, 2))
+					partconstraintdef = PQgetvalue(result, 0, 2);
 				/* If there isn't any constraint, show that explicitly */
 				if (partconstraintdef == NULL || partconstraintdef[0] == '\0')
 					printfPQExpBuffer(&tmpbuf, _("No partition constraint"));
@@ -2148,27 +2147,29 @@ describeOneTableDetails(const char *schemaname,
 									  partconstraintdef);
 				printTableAddFooter(&cont, tmpbuf.data);
 			}
-
-			PQclear(result);
 		}
+		PQclear(result);
 	}
 
 	if (tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		/* Get the partition key information  */
+		/* Footer information for a partitioned table (partitioning parent) */
 		PGresult   *result;
-		char	   *partkeydef;
 
 		printfPQExpBuffer(&buf,
 						  "SELECT pg_catalog.pg_get_partkeydef('%s'::pg_catalog.oid);",
 						  oid);
 		result = PSQLexec(buf.data);
-		if (!result || PQntuples(result) != 1)
+		if (!result)
 			goto error_return;
 
-		partkeydef = PQgetvalue(result, 0, 0);
-		printfPQExpBuffer(&tmpbuf, _("Partition key: %s"), partkeydef);
-		printTableAddFooter(&cont, tmpbuf.data);
+		if (PQntuples(result) == 1)
+		{
+			char	   *partkeydef = PQgetvalue(result, 0, 0);
+
+			printfPQExpBuffer(&tmpbuf, _("Partition key: %s"), partkeydef);
+			printTableAddFooter(&cont, tmpbuf.data);
+		}
 		PQclear(result);
 	}
 
