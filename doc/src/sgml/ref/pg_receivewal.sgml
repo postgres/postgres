@@ -52,7 +52,17 @@ PostgreSQL documentation
    Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivewal</application>
    by default flushes WAL data only when a WAL file is closed.
    The option <option>--synchronous</option> must be specified to flush WAL data
-   in real time.
+   in real time. Since <application>pg_receivewal</application> does not
+   apply WAL, you should not allow it to become a synchronous standby when
+   <xref linkend="guc-synchronous-commit"/> equals
+   <literal>remote_apply</literal>. If it does, it will appear to be a
+   standby that never catches up, and will cause transaction commits to
+   block. To avoid this, you should either configure an appropriate value
+   for <xref linkend="guc-synchronous-standby-names"/>, or specify
+   <varname>application_name</varname> for
+   <application>pg_receivewal</application> that does not match it, or
+   change the value of <varname>synchronous_commit</varname> to
+   something other than <literal>remote_apply</literal>.
   </para>
 
   <para>
