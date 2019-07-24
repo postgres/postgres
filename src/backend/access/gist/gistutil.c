@@ -882,9 +882,27 @@ gistNewBuffer(Relation r)
 bool
 gistPageRecyclable(Page page)
 {
-	return PageIsNew(page) ||
-		(GistPageIsDeleted(page) &&
-		 TransactionIdPrecedes(GistPageGetDeleteXid(page), RecentGlobalXmin));
+	if (PageIsNew(page))
+		return true;
+	if (GistPageIsDeleted(page))
+	{
+		/*
+		 * The page was deleted, but when? If it was just deleted, a scan
+		 * might have seen the downlink to it, and will read the page later.
+		 * As long as that can happen, we must keep the deleted page around as
+		 * a tombstone.
+		 *
+		 * Compare the deletion XID with RecentGlobalXmin. If deleteXid <
+		 * RecentGlobalXmin, then no scan that's still in progress could have
+		 * seen its downlink, and we can recycle it.
+		 */
+		FullTransactionId deletexid_full = GistPageGetDeleteXid(page);
+		FullTransactionId recentxmin_full = GetFullRecentGlobalXmin();
+
+		if (FullTransactionIdPrecedes(deletexid_full, recentxmin_full))
+			return true;
+	}
+	return false;
 }
 
 bytea *

@@ -13,6 +13,7 @@
 #ifndef SNAPMGR_H
 #define SNAPMGR_H
 
+#include "access/transam.h"
 #include "fmgr.h"
 #include "utils/relcache.h"
 #include "utils/resowner.h"
@@ -121,6 +122,8 @@ extern Snapshot RegisterSnapshot(Snapshot snapshot);
 extern void UnregisterSnapshot(Snapshot snapshot);
 extern Snapshot RegisterSnapshotOnOwner(Snapshot snapshot, ResourceOwner owner);
 extern void UnregisterSnapshotFromOwner(Snapshot snapshot, ResourceOwner owner);
+
+extern FullTransactionId GetFullRecentGlobalXmin(void);
 
 extern void AtSubCommit_Snapshot(int level);
 extern void AtSubAbort_Snapshot(int level);
