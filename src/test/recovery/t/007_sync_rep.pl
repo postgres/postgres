@@ -27,6 +27,23 @@ sub test_sync_state
 	return;
 }
 
+# Start a standby and check that it is registered within the WAL sender
+# array of the given primary.  This polls the primary's pg_stat_replication
+# until the standby is confirmed as registered.
+sub start_standby_and_wait
+{
+	my ($master, $standby) = @_;
+	my $master_name  = $master->name;
+	my $standby_name = $standby->name;
+	my $query =
+	  "SELECT count(1) = 1 FROM pg_stat_replication WHERE application_name = '$standby_name'";
+
+	$standby->start;
+
+	print("### Waiting for standby \"$standby_name\" on \"$master_name\"\n");
+	$master->poll_query_until('postgres', $query);
+}
+
 # Initialize master node
 my $node_master = get_new_node('master');
 $node_master->init(allows_streaming => 1);
@@ -36,23 +53,26 @@ my $backup_name = 'master_backup';
 # Take backup
 $node_master->backup($backup_name);
 
+# Create all the standbys.  Their status on the primary is checked to ensure
+# the ordering of each one of them in the WAL sender array of the primary.
+
 # Create standby1 linking to master
 my $node_standby_1 = get_new_node('standby1');
 $node_standby_1->init_from_backup($node_master, $backup_name,
 	has_streaming => 1);
-$node_standby_1->start;
+start_standby_and_wait($node_master, $node_standby_1);
 
 # Create standby2 linking to master
 my $node_standby_2 = get_new_node('standby2');
 $node_standby_2->init_from_backup($node_master, $backup_name,
 	has_streaming => 1);
-$node_standby_2->start;
+start_standby_and_wait($node_master, $node_standby_2);
 
 # Create standby3 linking to master
 my $node_standby_3 = get_new_node('standby3');
 $node_standby_3->init_from_backup($node_master, $backup_name,
 	has_streaming => 1);
-$node_standby_3->start;
+start_standby_and_wait($node_master, $node_standby_3);
 
 # Check that sync_state is determined correctly when
 # synchronous_standby_names is specified in old syntax.
@@ -82,8 +102,10 @@ $node_standby_1->stop;
 $node_standby_2->stop;
 $node_standby_3->stop;
 
-$node_standby_2->start;
-$node_standby_3->start;
+# Make sure that each standby reports back to the primary in the wanted
+# order.
+start_standby_and_wait($node_master, $node_standby_2);
+start_standby_and_wait($node_master, $node_standby_3);
 
 # Specify 2 as the number of sync standbys.
 # Check that two standbys are in 'sync' state.
@@ -94,7 +116,7 @@ standby3|3|sync),
 	'2(standby1,standby2,standby3)');
 
 # Start standby1
-$node_standby_1->start;
+start_standby_and_wait($node_master, $node_standby_1);
 
 # Create standby4 linking to master
 my $node_standby_4 = get_new_node('standby4');
@@ -126,14 +148,16 @@ standby4|1|sync),
 
 # The setting that * comes before another standby name is acceptable
 # but does not make sense in most cases. Check that sync_state is
-# chosen properly even in case of that setting.
-# The priority of standby2 should be 2 because it matches * first.
+# chosen properly even in case of that setting. standby1 is selected
+# as synchronous as it has the highest priority, and is followed by a
+# second standby listed first in the WAL sender array, which is
+# standby2 in this case.
 test_sync_state(
 	$node_master, qq(standby1|1|sync
 standby2|2|sync
 standby3|2|potential
 standby4|2|potential),
-	'asterisk comes before another standby name',
+	'asterisk before another standby name',
 	'2(standby1,*,standby2)');
 
 # Check that the setting of '2(*)' chooses standby2 and standby3 that are stored
