@@ -26,10 +26,11 @@ out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
 static void
 out_gistxlogPageReuse(StringInfo buf, gistxlogPageReuse *xlrec)
 {
-	appendStringInfo(buf, "rel %u/%u/%u; blk %u; latestRemovedXid %u",
+	appendStringInfo(buf, "rel %u/%u/%u; blk %u; latestRemovedXid %u:%u",
 					 xlrec->node.spcNode, xlrec->node.dbNode,
 					 xlrec->node.relNode, xlrec->block,
-					 xlrec->latestRemovedXid);
+					 EpochFromFullTransactionId(xlrec->latestRemovedFullXid),
+					 XidFromFullTransactionId(xlrec->latestRemovedFullXid));
 }
 
 static void
@@ -50,8 +51,10 @@ out_gistxlogPageSplit(StringInfo buf, gistxlogPageSplit *xlrec)
 static void
 out_gistxlogPageDelete(StringInfo buf, gistxlogPageDelete *xlrec)
 {
-	appendStringInfo(buf, "deleteXid %u; downlink %u",
-					 xlrec->deleteXid, xlrec->downlinkOffset);
+	appendStringInfo(buf, "deleteXid %u:%u; downlink %u",
+					 EpochFromFullTransactionId(xlrec->deleteXid),
+					 XidFromFullTransactionId(xlrec->deleteXid),
+					 xlrec->downlinkOffset);
 }
 
 void

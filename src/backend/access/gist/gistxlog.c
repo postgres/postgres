@@ -356,8 +356,7 @@ gistRedoPageDelete(XLogReaderState *record)
 	{
 		Page		page = (Page) BufferGetPage(leafBuffer);
 
-		GistPageSetDeleteXid(page, xldata->deleteXid);
-		GistPageSetDeleted(page);
+		GistPageSetDeleted(page, xldata->deleteXid);
 
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(leafBuffer);
@@ -396,8 +395,27 @@ gistRedoPageReuse(XLogReaderState *record)
 	 */
 	if (InHotStandby)
 	{
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid,
-											xlrec->node);
+		FullTransactionId latestRemovedFullXid = xlrec->latestRemovedFullXid;
+		FullTransactionId nextFullXid = ReadNextFullTransactionId();
+		uint64		diff;
+
+		/*
+		 * ResolveRecoveryConflictWithSnapshot operates on 32-bit
+		 * TransactionIds, so truncate the logged FullTransactionId. If the
+		 * logged value is very old, so that XID wrap-around already happened
+		 * on it, there can't be any snapshots that still see it.
+		 */
+		nextFullXid = ReadNextFullTransactionId();
+		diff = U64FromFullTransactionId(nextFullXid) -
+			U64FromFullTransactionId(latestRemovedFullXid);
+		if (diff < MaxTransactionId / 2)
+		{
+			TransactionId latestRemovedXid;
+
+			latestRemovedXid = XidFromFullTransactionId(latestRemovedFullXid);
+			ResolveRecoveryConflictWithSnapshot(latestRemovedXid,
+												xlrec->node);
+		}
 	}
 }
 
@@ -554,7 +572,7 @@ gistXLogSplit(bool page_is_leaf,
  * downlink from the parent page.
  */
 XLogRecPtr
-gistXLogPageDelete(Buffer buffer, TransactionId xid,
+gistXLogPageDelete(Buffer buffer, FullTransactionId xid,
 				   Buffer parentBuffer, OffsetNumber downlinkOffset)
 {
 	gistxlogPageDelete xlrec;
@@ -578,7 +596,7 @@ gistXLogPageDelete(Buffer buffer, TransactionId xid,
  * Write XLOG record about reuse of a deleted page.
  */
 void
-gistXLogPageReuse(Relation rel, BlockNumber blkno, TransactionId latestRemovedXid)
+gistXLogPageReuse(Relation rel, BlockNumber blkno, FullTransactionId latestRemovedXid)
 {
 	gistxlogPageReuse xlrec_reuse;
 
@@ -591,7 +609,7 @@ gistXLogPageReuse(Relation rel, BlockNumber blkno, TransactionId latestRemovedXi
 	/* XLOG stuff */
 	xlrec_reuse.node = rel->rd_node;
 	xlrec_reuse.block = blkno;
-	xlrec_reuse.latestRemovedXid = latestRemovedXid;
+	xlrec_reuse.latestRemovedFullXid = latestRemovedXid;
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec_reuse, SizeOfGistxlogPageReuse);
