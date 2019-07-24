@@ -1989,9 +1989,8 @@ describeOneTableDetails(const char *schemaname,
 								  partconstraintdef);
 				printTableAddFooter(&cont, tmpbuf.data);
 			}
-
-			PQclear(result);
 		}
+		PQclear(result);
 	}
 
 	if (tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
@@ -2004,12 +2003,15 @@ describeOneTableDetails(const char *schemaname,
 						  "SELECT pg_catalog.pg_get_partkeydef('%s'::pg_catalog.oid);",
 						  oid);
 		result = PSQLexec(buf.data);
-		if (!result || PQntuples(result) != 1)
+		if (!result)
 			goto error_return;
 
-		partkeydef = PQgetvalue(result, 0, 0);
-		printfPQExpBuffer(&tmpbuf, _("Partition key: %s"), partkeydef);
-		printTableAddFooter(&cont, tmpbuf.data);
+		if (PQntuples(result) == 1)
+		{
+			partkeydef = PQgetvalue(result, 0, 0);
+			printfPQExpBuffer(&tmpbuf, _("Partition key: %s"), partkeydef);
+			printTableAddFooter(&cont, tmpbuf.data);
+		}
 		PQclear(result);
 	}
 
