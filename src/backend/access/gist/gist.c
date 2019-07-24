@@ -709,14 +709,15 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			continue;
 		}
 
-		if (stack->blkno != GIST_ROOT_BLKNO &&
-			stack->parent->lsn < GistPageGetNSN(stack->page))
+		if ((stack->blkno != GIST_ROOT_BLKNO &&
+			 stack->parent->lsn < GistPageGetNSN(stack->page)) ||
+			GistPageIsDeleted(stack->page))
 		{
 			/*
-			 * Concurrent split detected. There's no guarantee that the
-			 * downlink for this page is consistent with the tuple we're
-			 * inserting anymore, so go back to parent and rechoose the best
-			 * child.
+			 * Concurrent split or page deletion detected. There's no
+			 * guarantee that the downlink for this page is consistent with
+			 * the tuple we're inserting anymore, so go back to parent and
+			 * rechoose the best child.
 			 */
 			UnlockReleaseBuffer(stack->buffer);
 			xlocked = false;
@@ -734,9 +735,6 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			IndexTuple	newtup;
 			GISTInsertStack *item;
 			OffsetNumber downlinkoffnum;
-
-			/* currently, internal pages are never deleted */
-			Assert(!GistPageIsDeleted(stack->page));
 
 			downlinkoffnum = gistchoose(state.r, stack->page, itup, giststate);
 			iid = PageGetItemId(stack->page, downlinkoffnum);
@@ -858,30 +856,19 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 					 * leaf/inner is enough to recognize split for root
 					 */
 				}
-				else if (GistFollowRight(stack->page) ||
-						 stack->parent->lsn < GistPageGetNSN(stack->page))
+				else if ((GistFollowRight(stack->page) ||
+						  stack->parent->lsn < GistPageGetNSN(stack->page)) &&
+						 GistPageIsDeleted(stack->page))
 				{
 					/*
-					 * The page was split while we momentarily unlocked the
-					 * page. Go back to parent.
+					 * The page was split or deleted while we momentarily
+					 * unlocked the page. Go back to parent.
 					 */
 					UnlockReleaseBuffer(stack->buffer);
 					xlocked = false;
 					state.stack = stack = stack->parent;
 					continue;
 				}
-			}
-
-			/*
-			 * The page might have been deleted after we scanned the parent
-			 * and saw the downlink.
-			 */
-			if (GistPageIsDeleted(stack->page))
-			{
-				UnlockReleaseBuffer(stack->buffer);
-				xlocked = false;
-				state.stack = stack = stack->parent;
-				continue;
 			}
 
 			/* now state.stack->(page, buffer and blkno) points to leaf page */
@@ -946,6 +933,9 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 			UnlockReleaseBuffer(buffer);
 			break;
 		}
+
+		/* currently, internal pages are never deleted */
+		Assert(!GistPageIsDeleted(page));
 
 		top->lsn = BufferGetLSNAtomic(buffer);
 
