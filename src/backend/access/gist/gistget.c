@@ -377,6 +377,20 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		MemoryContextSwitchTo(oldcxt);
 	}
 
+	/*
+	 * Check if the page was deleted after we saw the downlink. There's
+	 * nothing of interest on a deleted page. Note that we must do this
+	 * after checking the NSN for concurrent splits! It's possible that
+	 * the page originally contained some tuples that are visible to us,
+	 * but was split so that all the visible tuples were moved to another
+	 * page, and then this page was deleted.
+	 */
+	if (GistPageIsDeleted(page))
+	{
+		UnlockReleaseBuffer(buffer);
+		return;
+	}
+
 	so->nPageData = so->curPageData = 0;
 	scan->xs_hitup = NULL;		/* might point into pageDataCxt */
 	if (so->pageDataCxt)
