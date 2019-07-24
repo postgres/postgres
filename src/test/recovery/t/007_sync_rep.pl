@@ -41,6 +41,7 @@ sub start_standby_and_wait
 
 	print("### Waiting for standby \"$standby_name\" on \"$master_name\"\n");
 	$master->poll_query_until('postgres', $query);
+	return;
 }
 
 # Initialize master node
