@@ -144,9 +144,11 @@ simple_prompt(const char *prompt, char *destination, size_t destlen, bool echo)
 		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
 
-	if (length > 0 && destination[length - 1] == '\n')
-		/* remove trailing newline */
-		destination[length - 1] = '\0';
+	/* strip trailing newline, including \r in case we're on Windows */
+	while (length > 0 &&
+		   (destination[length - 1] == '\n' ||
+			destination[length - 1] == '\r'))
+		destination[--length] = '\0';
 
 	if (!echo)
 	{

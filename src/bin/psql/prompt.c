@@ -264,6 +264,7 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						FILE	   *fd;
 						char	   *file = pg_strdup(p + 1);
 						int			cmdend;
+						int			buflen;
 
 						cmdend = strcspn(file, "`");
 						file[cmdend] = '\0';
@@ -274,8 +275,10 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 								buf[0] = '\0';
 							pclose(fd);
 						}
-						if (strlen(buf) > 0 && buf[strlen(buf) - 1] == '\n')
-							buf[strlen(buf) - 1] = '\0';
+						buflen = strlen(buf);
+						while (buflen > 0 && (buf[buflen - 1] == '\n' ||
+											  buf[buflen - 1] == '\r'))
+							buf[--buflen] = '\0';
 						free(file);
 						p += cmdend + 1;
 						break;

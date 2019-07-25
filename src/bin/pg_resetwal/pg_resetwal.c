@@ -559,12 +559,10 @@ CheckDataVersion(void)
 
 	/* remove trailing newline, handling Windows newlines as well */
 	len = strlen(rawline);
-	if (len > 0 && rawline[len - 1] == '\n')
-	{
+	while (len > 0 &&
+		   (rawline[len - 1] == '\n' ||
+			rawline[len - 1] == '\r'))
 		rawline[--len] = '\0';
-		if (len > 0 && rawline[len - 1] == '\r')
-			rawline[--len] = '\0';
-	}
 
 	if (strcmp(rawline, PG_MAJORVERSION) != 0)
 	{
