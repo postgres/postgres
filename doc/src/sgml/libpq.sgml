@@ -1249,7 +1249,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-tcp-user-timeout" xreflabel="libpq_tcp_user_timeout">
+     <varlistentry id="libpq-tcp-user-timeout" xreflabel="tcp_user_timeout">
       <term><literal>tcp_user_timeout</literal></term>
       <listitem>
        <para>
