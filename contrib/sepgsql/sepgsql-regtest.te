@@ -31,6 +31,9 @@ userdom_base_user_template(sepgsql_regtest_superuser)
 userdom_manage_home_role(sepgsql_regtest_superuser_r, sepgsql_regtest_superuser_t)
 userdom_exec_user_home_content_files(sepgsql_regtest_superuser_t)
 userdom_write_user_tmp_sockets(sepgsql_regtest_superuser_t)
+
+auth_read_passwd(sepgsql_regtest_superuser_t)
+
 optional_policy(`
 	postgresql_stream_connect(sepgsql_regtest_superuser_t)
 	postgresql_unconfined(sepgsql_regtest_superuser_t)
@@ -60,6 +63,9 @@ userdom_base_user_template(sepgsql_regtest_dba)
 userdom_manage_home_role(sepgsql_regtest_dba_r, sepgsql_regtest_dba_t)
 userdom_exec_user_home_content_files(sepgsql_regtest_dba_t)
 userdom_write_user_tmp_sockets(sepgsql_regtest_user_t)
+
+auth_read_passwd(sepgsql_regtest_dba_t)
+
 optional_policy(`
 	postgresql_admin(sepgsql_regtest_dba_t, sepgsql_regtest_dba_r)
 	postgresql_stream_connect(sepgsql_regtest_dba_t)
@@ -98,6 +104,9 @@ userdom_base_user_template(sepgsql_regtest_user)
 userdom_manage_home_role(sepgsql_regtest_user_r, sepgsql_regtest_user_t)
 userdom_exec_user_home_content_files(sepgsql_regtest_user_t)
 userdom_write_user_tmp_sockets(sepgsql_regtest_user_t)
+
+auth_read_passwd(sepgsql_regtest_user_t)
+
 optional_policy(`
 	postgresql_role(sepgsql_regtest_user_r, sepgsql_regtest_user_t)
 	postgresql_stream_connect(sepgsql_regtest_user_t)
@@ -125,6 +134,8 @@ userdom_base_user_template(sepgsql_regtest_pool)
 userdom_manage_home_role(sepgsql_regtest_pool_r, sepgsql_regtest_pool_t)
 userdom_exec_user_home_content_files(sepgsql_regtest_pool_t)
 userdom_write_user_tmp_sockets(sepgsql_regtest_pool_t)
+
+auth_read_passwd(sepgsql_regtest_pool_t)
 
 type sepgsql_regtest_foo_t;
 type sepgsql_regtest_var_t;
