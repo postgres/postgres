@@ -5915,7 +5915,7 @@ ECPG = ecpg
      <para>
        <function>ECPGtransactionStatus(const char *<replaceable>connection_name</replaceable>)</function>
        returns the current transaction status of the given connection identified by <replaceable>connection_name</replaceable>.
-       See <xref linkend="libpq-status"/> and libpq's <function>PQtransactionStatus()</function> for details about the returned status codes.
+       See <xref linkend="libpq-status"/> and libpq's <xref linkend="libpq-PQtransactionStatus"/> for details about the returned status codes.
      </para>
    </listitem>
 
@@ -8418,7 +8418,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      <term><literal>sqlformat</literal></term>
       <listitem>
        <para>
-        Reserved in Informix, value of <function>PQfformat()</function> for the field.
+        Reserved in Informix, value of <xref linkend="libpq-PQfformat"/> for the field.
        </para>
       </listitem>
      </varlistentry>
@@ -8447,7 +8447,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      <term><literal>sqlxid</literal></term>
       <listitem>
        <para>
-        Extended type of the field, result of <function>PQftype()</function>.
+        Extended type of the field, result of <xref linkend="libpq-PQftype"/>.
        </para>
       </listitem>
      </varlistentry>

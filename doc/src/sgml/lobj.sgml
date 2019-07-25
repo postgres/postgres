@@ -121,7 +121,7 @@
     If an error occurs while executing any one of these functions, the
     function will return an otherwise-impossible value, typically 0 or -1.
     A message describing the error is stored in the connection object and
-    can be retrieved with <function>PQerrorMessage</function>.
+    can be retrieved with <xref linkend="libpq-PQerrorMessage"/>.
    </para>
 
    <para>
