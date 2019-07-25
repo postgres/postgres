@@ -112,9 +112,10 @@ run_ssl_passphrase_command(const char *prompt, bool is_server_start, char *buf, 
 		goto error;
 	}
 
-	/* strip trailing newline */
+	/* strip trailing newline, including \r in case we're on Windows */
 	len = strlen(buf);
-	if (len > 0 && buf[len - 1] == '\n')
+	while (len > 0 && (buf[len - 1] == '\n' ||
+					   buf[len - 1] == '\r'))
 		buf[--len] = '\0';
 
 error:
