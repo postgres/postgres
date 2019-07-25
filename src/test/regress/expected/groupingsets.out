@@ -1365,19 +1365,19 @@ explain (costs off)
 -- e.g. due to an index scan.
 BEGIN;
 SET LOCAL enable_hashagg = false;
-EXPLAIN SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,()) ORDER BY a, b;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Sort  (cost=1.20..1.21 rows=5 width=24)
+EXPLAIN (COSTS OFF) SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,()) ORDER BY a, b;
+              QUERY PLAN               
+---------------------------------------
+ Sort
    Sort Key: a, b
-   ->  GroupAggregate  (cost=1.03..1.14 rows=5 width=24)
+   ->  GroupAggregate
          Group Key: a
          Group Key: ()
          Sort Key: b
            Group Key: b
-         ->  Sort  (cost=1.03..1.03 rows=2 width=8)
+         ->  Sort
                Sort Key: a
-               ->  Seq Scan on gstest3  (cost=0.00..1.02 rows=2 width=8)
+               ->  Seq Scan on gstest3
 (10 rows)
 
 SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,()) ORDER BY a, b;
@@ -1391,17 +1391,17 @@ SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,(
 (5 rows)
 
 SET LOCAL enable_seqscan = false;
-EXPLAIN SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,()) ORDER BY a, b;
-                                       QUERY PLAN                                        
------------------------------------------------------------------------------------------
- Sort  (cost=12.32..12.33 rows=5 width=24)
+EXPLAIN (COSTS OFF) SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,()) ORDER BY a, b;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Sort
    Sort Key: a, b
-   ->  GroupAggregate  (cost=0.13..12.26 rows=5 width=24)
+   ->  GroupAggregate
          Group Key: a
          Group Key: ()
          Sort Key: b
            Group Key: b
-         ->  Index Scan using gstest3_pkey on gstest3  (cost=0.13..12.16 rows=2 width=8)
+         ->  Index Scan using gstest3_pkey on gstest3
 (8 rows)
 
 SELECT a, b, count(*), max(a), max(b) FROM gstest3 GROUP BY GROUPING SETS(a, b,()) ORDER BY a, b;
