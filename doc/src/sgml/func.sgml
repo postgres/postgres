@@ -17518,7 +17518,7 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
     get this information from <xref linkend="guc-server-version"/> or
     for a machine-readable version, <xref linkend="guc-server-version-num"/>.
     Software developers should use <literal>server_version_num</literal>
-    (available since 8.2) or <xref linkend="libpq-pqserverversion"/> instead
+    (available since 8.2) or <xref linkend="libpq-PQserverVersion"/> instead
     of parsing the text version.
    </para>
 

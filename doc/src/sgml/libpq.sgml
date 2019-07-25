@@ -107,7 +107,7 @@
    </note>
 
    <variablelist>
-    <varlistentry id="libpq-pqconnectdbparams">
+    <varlistentry id="libpq-PQconnectdbParams">
      <term><function>PQconnectdbParams</function><indexterm><primary>PQconnectdbParams</primary></indexterm></term>
      <listitem>
       <para>
@@ -172,7 +172,7 @@ PGconn *PQconnectdbParams(const char * const *keywords,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqconnectdb">
+    <varlistentry id="libpq-PQconnectdb">
      <term><function>PQconnectdb</function><indexterm><primary>PQconnectdb</primary></indexterm></term>
      <listitem>
       <para>
@@ -199,7 +199,7 @@ PGconn *PQconnectdb(const char *conninfo);
     </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsetdblogin">
+    <varlistentry id="libpq-PQsetdbLogin">
      <term><function>PQsetdbLogin</function><indexterm><primary>PQsetdbLogin</primary></indexterm></term>
      <listitem>
       <para>
@@ -232,7 +232,7 @@ PGconn *PQsetdbLogin(const char *pghost,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsetdb">
+    <varlistentry id="libpq-PQsetdb">
      <term><function>PQsetdb</function><indexterm><primary>PQsetdb</primary></indexterm></term>
      <listitem>
       <para>
@@ -254,7 +254,7 @@ PGconn *PQsetdb(char *pghost,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqconnectstartparams">
+    <varlistentry id="libpq-PQconnectStartParams">
      <term><function>PQconnectStartParams</function><indexterm><primary>PQconnectStartParams</primary></indexterm></term>
      <term><function>PQconnectStart</function><indexterm><primary>PQconnectStart</primary></indexterm></term>
      <term><function>PQconnectPoll</function><indexterm><primary>PQconnectPoll</primary></indexterm></term>
@@ -491,7 +491,7 @@ switch(PQstatus(conn))
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqconndefaults">
+    <varlistentry id="libpq-PQconndefaults">
      <term><function>PQconndefaults</function><indexterm><primary>PQconndefaults</primary></indexterm></term>
      <listitem>
       <para>
@@ -538,7 +538,7 @@ typedef struct
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqconninfo">
+    <varlistentry id="libpq-PQconninfo">
      <term><function>PQconninfo</function><indexterm><primary>PQconninfo</primary></indexterm></term>
      <listitem>
       <para>
@@ -562,7 +562,7 @@ PQconninfoOption *PQconninfo(PGconn *conn);
     </varlistentry>
 
 
-    <varlistentry id="libpq-pqconninfoparse">
+    <varlistentry id="libpq-PQconninfoParse">
      <term><function>PQconninfoParse</function><indexterm><primary>PQconninfoParse</primary></indexterm></term>
      <listitem>
       <para>
@@ -609,7 +609,7 @@ PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);
    </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfinish">
+    <varlistentry id="libpq-PQfinish">
      <term><function>PQfinish</function><indexterm><primary>PQfinish</primary></indexterm></term>
      <listitem>
       <para>
@@ -630,7 +630,7 @@ void PQfinish(PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqreset">
+    <varlistentry id="libpq-PQreset">
      <term><function>PQreset</function><indexterm><primary>PQreset</primary></indexterm></term>
      <listitem>
       <para>
@@ -650,7 +650,7 @@ void PQreset(PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqresetstart">
+    <varlistentry id="libpq-PQresetStart">
      <term><function>PQresetStart</function><indexterm><primary>PQresetStart</primary></indexterm></term>
      <term><function>PQresetPoll</function><indexterm><primary>PQresetPoll</primary></indexterm></term>
      <listitem>
@@ -684,7 +684,7 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqpingparams">
+    <varlistentry id="libpq-PQpingParams">
      <term><function>PQpingParams</function><indexterm><primary>PQpingParams</primary></indexterm></term>
      <listitem>
       <para>
@@ -704,7 +704,7 @@ PGPing PQpingParams(const char * const *keywords,
        The function returns one of the following values:
 
        <variablelist>
-        <varlistentry id="libpq-pqpingparams-pqping-ok">
+        <varlistentry id="libpq-PQpingParams-PQPING_OK">
          <term><literal>PQPING_OK</literal></term>
          <listitem>
           <para>
@@ -713,7 +713,7 @@ PGPing PQpingParams(const char * const *keywords,
          </listitem>
         </varlistentry>
 
-        <varlistentry id="libpq-pqpingparams-pqping-reject">
+        <varlistentry id="libpq-PQpingParams-PQPING_REJECT">
          <term><literal>PQPING_REJECT</literal></term>
          <listitem>
           <para>
@@ -723,7 +723,7 @@ PGPing PQpingParams(const char * const *keywords,
          </listitem>
         </varlistentry>
 
-        <varlistentry id="libpq-pqpingparams-pqping-no-response">
+        <varlistentry id="libpq-PQpingParams-PQPING_NO_RESPONSE">
          <term><literal>PQPING_NO_RESPONSE</literal></term>
          <listitem>
           <para>
@@ -736,7 +736,7 @@ PGPing PQpingParams(const char * const *keywords,
          </listitem>
         </varlistentry>
 
-        <varlistentry id="libpq-pqpingparams-pqping-no-attempt">
+        <varlistentry id="libpq-PQpingParams-PQPING_NO_ATTEMPT">
          <term><literal>PQPING_NO_ATTEMPT</literal></term>
          <listitem>
           <para>
@@ -753,7 +753,7 @@ PGPing PQpingParams(const char * const *keywords,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqping">
+    <varlistentry id="libpq-PQping">
      <term><function>PQping</function><indexterm><primary>PQping</primary></indexterm></term>
      <listitem>
       <para>
@@ -1695,7 +1695,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
    are fixed for the lifetime of the <structname>PGconn</structname> object.
 
    <variablelist>
-    <varlistentry id="libpq-pqdb">
+    <varlistentry id="libpq-PQdb">
      <term>
       <function>PQdb</function>
       <indexterm>
@@ -1713,7 +1713,7 @@ char *PQdb(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pquser">
+    <varlistentry id="libpq-PQuser">
      <term>
       <function>PQuser</function>
       <indexterm>
@@ -1731,7 +1731,7 @@ char *PQuser(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqpass">
+    <varlistentry id="libpq-PQpass">
      <term>
       <function>PQpass</function>
       <indexterm>
@@ -1760,7 +1760,7 @@ char *PQpass(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqhost">
+    <varlistentry id="libpq-PQhost">
      <term>
       <function>PQhost</function>
       <indexterm>
@@ -1807,7 +1807,7 @@ char *PQhost(const PGconn *conn);
     </varlistentry>
 
 
-    <varlistentry id="libpq-pqhostaddr">
+    <varlistentry id="libpq-PQhostaddr">
      <term>
       <function>PQhostaddr</function>
       <indexterm>
@@ -1836,7 +1836,7 @@ char *PQhostaddr(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqport">
+    <varlistentry id="libpq-PQport">
      <term>
       <function>PQport</function>
       <indexterm>
@@ -1875,7 +1875,7 @@ char *PQport(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqtty">
+    <varlistentry id="libpq-PQtty">
      <term>
       <function>PQtty</function>
       <indexterm>
@@ -1897,7 +1897,7 @@ char *PQtty(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqoptions">
+    <varlistentry id="libpq-PQoptions">
      <term>
       <function>PQoptions</function>
       <indexterm>
@@ -1922,7 +1922,7 @@ char *PQoptions(const PGconn *conn);
    are executed on the <structname>PGconn</structname> object.
 
    <variablelist>
-    <varlistentry id="libpq-pqstatus">
+    <varlistentry id="libpq-PQstatus">
      <term>
       <function>PQstatus</function>
       <indexterm>
@@ -1961,7 +1961,7 @@ ConnStatusType PQstatus(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqtransactionstatus">
+    <varlistentry id="libpq-PQtransactionStatus">
      <term>
       <function>PQtransactionStatus</function>
       <indexterm>
@@ -1988,7 +1988,7 @@ PGTransactionStatusType PQtransactionStatus(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqparameterstatus">
+    <varlistentry id="libpq-PQparameterStatus">
      <term>
       <function>PQparameterStatus</function>
       <indexterm>
@@ -2067,7 +2067,7 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqprotocolversion">
+    <varlistentry id="libpq-PQprotocolVersion">
      <term>
       <function>PQprotocolVersion</function>
       <indexterm>
@@ -2095,7 +2095,7 @@ int PQprotocolVersion(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqserverversion">
+    <varlistentry id="libpq-PQserverVersion">
      <term>
       <function>PQserverVersion</function>
       <indexterm>
@@ -2139,7 +2139,7 @@ int PQserverVersion(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqerrormessage">
+    <varlistentry id="libpq-PQerrorMessage">
      <term>
       <function>PQerrorMessage</function>
       <indexterm>
@@ -2173,7 +2173,7 @@ char *PQerrorMessage(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsocket">
+    <varlistentry id="libpq-PQsocket">
      <term><function>PQsocket</function><indexterm><primary>PQsocket</primary></indexterm></term>
      <listitem>
       <para>
@@ -2191,7 +2191,7 @@ int PQsocket(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqbackendpid">
+    <varlistentry id="libpq-PQbackendPID">
      <term><function>PQbackendPID</function><indexterm><primary>PQbackendPID</primary></indexterm></term>
      <listitem>
       <para>
@@ -2218,7 +2218,7 @@ int PQbackendPID(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqconnectionneedspassword">
+    <varlistentry id="libpq-PQconnectionNeedsPassword">
      <term><function>PQconnectionNeedsPassword</function><indexterm><primary>PQconnectionNeedsPassword</primary></indexterm></term>
      <listitem>
       <para>
@@ -2238,7 +2238,7 @@ int PQconnectionNeedsPassword(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqconnectionusedpassword">
+    <varlistentry id="libpq-PQconnectionUsedPassword">
      <term><function>PQconnectionUsedPassword</function><indexterm><primary>PQconnectionUsedPassword</primary></indexterm></term>
      <listitem>
       <para>
@@ -2264,7 +2264,7 @@ int PQconnectionUsedPassword(const PGconn *conn);
     usually doesn't change after a connection is established.
 
     <variablelist>
-    <varlistentry id="libpq-pqsslinuse">
+    <varlistentry id="libpq-PQsslInUse">
      <term><function>PQsslInUse</function><indexterm><primary>PQsslInUse</primary></indexterm></term>
      <listitem>
       <para>
@@ -2278,7 +2278,7 @@ int PQsslInUse(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsslattribute">
+    <varlistentry id="libpq-PQsslAttribute">
      <term><function>PQsslAttribute</function><indexterm><primary>PQsslAttribute</primary></indexterm></term>
      <listitem>
       <para>
@@ -2351,7 +2351,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsslattributenames">
+    <varlistentry id="libpq-PQsslAttributeNames">
      <term><function>PQsslAttributeNames</function><indexterm><primary>PQsslAttributeNames</primary></indexterm></term>
      <listitem>
       <para>
@@ -2363,7 +2363,7 @@ const char * const * PQsslAttributeNames(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsslstruct">
+    <varlistentry id="libpq-PQsslStruct">
      <term><function>PQsslStruct</function><indexterm><primary>PQsslStruct</primary></indexterm></term>
      <listitem>
       <para>
@@ -2404,7 +2404,7 @@ void *PQsslStruct(const PGconn *conn, const char *struct_name);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqgetssl">
+    <varlistentry id="libpq-PQgetssl">
      <term><function>PQgetssl</function><indexterm><primary>PQgetssl</primary></indexterm></term>
      <listitem>
       <para>
@@ -2447,7 +2447,7 @@ void *PQgetssl(const PGconn *conn);
 
    <para>
     <variablelist>
-     <varlistentry id="libpq-pqexec">
+     <varlistentry id="libpq-PQexec">
       <term>
        <function>PQexec</function>
        <indexterm>
@@ -2495,7 +2495,7 @@ PGresult *PQexec(PGconn *conn, const char *command);
 
    <para>
     <variablelist>
-     <varlistentry id="libpq-pqexecparams">
+     <varlistentry id="libpq-PQexecParams">
       <term>
        <function>PQexecParams</function>
        <indexterm>
@@ -2682,7 +2682,7 @@ SELECT * FROM mytable WHERE x = $1::bigint;
 
    <para>
     <variablelist>
-     <varlistentry id="libpq-pqprepare">
+     <varlistentry id="libpq-PQprepare">
       <term><function>PQprepare</function>
        <indexterm>
         <primary>PQprepare</primary>
@@ -2757,7 +2757,7 @@ PGresult *PQprepare(PGconn *conn,
 
    <para>
     <variablelist>
-     <varlistentry id="libpq-pqexecprepared">
+     <varlistentry id="libpq-PQexecPrepared">
       <term>
        <function>PQexecPrepared</function>
        <indexterm>
@@ -2801,7 +2801,7 @@ PGresult *PQexecPrepared(PGconn *conn,
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-pqdescribeprepared">
+     <varlistentry id="libpq-PQdescribePrepared">
       <term>
        <function>PQdescribePrepared</function>
        <indexterm>
@@ -2841,7 +2841,7 @@ PGresult *PQdescribePrepared(PGconn *conn, const char *stmtName);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-pqdescribeportal">
+     <varlistentry id="libpq-PQdescribePortal">
       <term>
        <function>PQdescribePortal</function>
        <indexterm>
@@ -2894,7 +2894,7 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
     are subject to change in the future.
 
     <variablelist>
-     <varlistentry id="libpq-pqresultstatus">
+     <varlistentry id="libpq-PQresultStatus">
       <term>
        <function>PQresultStatus</function>
        <indexterm>
@@ -3034,7 +3034,7 @@ ExecStatusType PQresultStatus(const PGresult *res);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-pqresstatus">
+     <varlistentry id="libpq-PQresStatus">
       <term>
        <function>PQresStatus</function>
        <indexterm>
@@ -3055,7 +3055,7 @@ char *PQresStatus(ExecStatusType status);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-pqresulterrormessage">
+     <varlistentry id="libpq-PQresultErrorMessage">
       <term>
        <function>PQresultErrorMessage</function>
        <indexterm>
@@ -3093,7 +3093,7 @@ char *PQresultErrorMessage(const PGresult *res);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-pqresultverboseerrormessage">
+     <varlistentry id="libpq-PQresultVerboseErrorMessage">
       <term>
        <function>PQresultVerboseErrorMessage</function>
        <indexterm>
@@ -3135,7 +3135,7 @@ char *PQresultVerboseErrorMessage(const PGresult *res,
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-pqresulterrorfield">
+     <varlistentry id="libpq-PQresultErrorField">
       <term><function>PQresultErrorField</function><indexterm><primary>PQresultErrorField</primary></indexterm></term>
       <listitem>
        <para>
@@ -3169,7 +3169,7 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
           </listitem>
          </varlistentry>
 
-         <varlistentry id="libpq-pg-diag-severity-nonlocalized">
+         <varlistentry id="libpq-PG-diag-severity-nonlocalized">
           <term><symbol>PG_DIAG_SEVERITY_NONLOCALIZED</symbol></term>
           <listitem>
            <para>
@@ -3409,7 +3409,7 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-pqclear">
+     <varlistentry id="libpq-PQclear">
       <term><function>PQclear</function><indexterm><primary>PQclear</primary></indexterm></term>
       <listitem>
        <para>
@@ -3452,7 +3452,7 @@ void PQclear(PGresult *res);
    </para>
 
    <variablelist>
-    <varlistentry id="libpq-pqntuples">
+    <varlistentry id="libpq-PQntuples">
      <term>
       <function>PQntuples</function>
       <indexterm>
@@ -3475,7 +3475,7 @@ int PQntuples(const PGresult *res);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqnfields">
+    <varlistentry id="libpq-PQnfields">
      <term>
       <function>PQnfields</function>
       <indexterm>
@@ -3495,7 +3495,7 @@ int PQnfields(const PGresult *res);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfname">
+    <varlistentry id="libpq-PQfname">
      <term>
       <function>PQfname</function>
       <indexterm>
@@ -3522,7 +3522,7 @@ char *PQfname(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfnumber">
+    <varlistentry id="libpq-PQfnumber">
      <term>
       <function>PQfnumber</function>
       <indexterm>
@@ -3563,7 +3563,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqftable">
+    <varlistentry id="libpq-PQftable">
      <term>
       <function>PQftable</function>
       <indexterm>
@@ -3598,7 +3598,7 @@ Oid PQftable(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqftablecol">
+    <varlistentry id="libpq-PQftablecol">
      <term>
       <function>PQftablecol</function>
       <indexterm>
@@ -3625,7 +3625,7 @@ int PQftablecol(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfformat">
+    <varlistentry id="libpq-PQfformat">
      <term>
       <function>PQfformat</function>
       <indexterm>
@@ -3651,7 +3651,7 @@ int PQfformat(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqftype">
+    <varlistentry id="libpq-PQftype">
      <term>
       <function>PQftype</function>
       <indexterm>
@@ -3680,7 +3680,7 @@ Oid PQftype(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfmod">
+    <varlistentry id="libpq-PQfmod">
      <term>
       <function>PQfmod</function>
       <indexterm>
@@ -3708,7 +3708,7 @@ int PQfmod(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfsize">
+    <varlistentry id="libpq-PQfsize">
      <term>
       <function>PQfsize</function>
       <indexterm>
@@ -3736,7 +3736,7 @@ int PQfsize(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqbinarytuples">
+    <varlistentry id="libpq-PQbinaryTuples">
      <term>
       <function>PQbinaryTuples</function>
       <indexterm>
@@ -3764,7 +3764,7 @@ int PQbinaryTuples(const PGresult *res);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqgetvalue">
+    <varlistentry id="libpq-PQgetvalue">
      <term>
       <function>PQgetvalue</function>
        <indexterm>
@@ -3814,7 +3814,7 @@ char *PQgetvalue(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqgetisnull">
+    <varlistentry id="libpq-PQgetisnull">
      <term>
       <function>PQgetisnull</function>
       <indexterm>
@@ -3846,7 +3846,7 @@ int PQgetisnull(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqgetlength">
+    <varlistentry id="libpq-PQgetlength">
      <term>
      <function>PQgetlength</function>
      <indexterm>
@@ -3876,7 +3876,7 @@ int PQgetlength(const PGresult *res,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqnparams">
+    <varlistentry id="libpq-PQnparams">
      <term>
       <function>PQnparams</function>
       <indexterm>
@@ -3900,7 +3900,7 @@ int PQnparams(const PGresult *res);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqparamtype">
+    <varlistentry id="libpq-PQparamtype">
      <term>
       <function>PQparamtype</function>
       <indexterm>
@@ -3925,7 +3925,7 @@ Oid PQparamtype(const PGresult *res, int param_number);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqprint">
+    <varlistentry id="libpq-PQprint">
      <term>
       <function>PQprint</function>
       <indexterm>
@@ -3976,7 +3976,7 @@ typedef struct
    </para>
 
    <variablelist>
-    <varlistentry id="libpq-pqcmdstatus">
+    <varlistentry id="libpq-PQcmdStatus">
      <term>
       <function>PQcmdStatus</function>
       <indexterm>
@@ -4003,7 +4003,7 @@ char *PQcmdStatus(PGresult *res);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqcmdtuples">
+    <varlistentry id="libpq-PQcmdTuples">
      <term>
       <function>PQcmdTuples</function>
       <indexterm>
@@ -4037,7 +4037,7 @@ char *PQcmdTuples(PGresult *res);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqoidvalue">
+    <varlistentry id="libpq-PQoidValue">
      <term>
       <function>PQoidValue</function>
       <indexterm>
@@ -4062,7 +4062,7 @@ Oid PQoidValue(const PGresult *res);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqoidstatus">
+    <varlistentry id="libpq-PQoidStatus">
      <term>
       <function>PQoidStatus</function>
       <indexterm>
@@ -4096,7 +4096,7 @@ char *PQoidStatus(const PGresult *res);
    </indexterm>
 
    <variablelist>
-    <varlistentry id="libpq-pqescapeliteral">
+    <varlistentry id="libpq-PQescapeLiteral">
      <term>
       <function>PQescapeLiteral</function>
       <indexterm>
@@ -4160,7 +4160,7 @@ char *PQescapeLiteral(PGconn *conn, const char *str, size_t length);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqescapeidentifier">
+    <varlistentry id="libpq-PQescapeIdentifier">
      <term>
       <function>PQescapeIdentifier</function>
       <indexterm>
@@ -4215,7 +4215,7 @@ char *PQescapeIdentifier(PGconn *conn, const char *str, size_t length);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqescapestringconn">
+    <varlistentry id="libpq-PQescapeStringConn">
      <term>
       <function>PQescapeStringConn</function>
       <indexterm>
@@ -4270,7 +4270,7 @@ size_t PQescapeStringConn(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqescapestring">
+    <varlistentry id="libpq-PQescapeString">
      <term>
       <function>PQescapeString</function>
       <indexterm>
@@ -4308,7 +4308,7 @@ size_t PQescapeString (char *to, const char *from, size_t length);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqescapebyteaconn">
+    <varlistentry id="libpq-PQescapeByteaConn">
      <term>
       <function>PQescapeByteaConn</function>
       <indexterm>
@@ -4369,7 +4369,7 @@ unsigned char *PQescapeByteaConn(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqescapebytea">
+    <varlistentry id="libpq-PQescapeBytea">
      <term>
       <function>PQescapeBytea</function>
       <indexterm>
@@ -4402,7 +4402,7 @@ unsigned char *PQescapeBytea(const unsigned char *from,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqunescapebytea">
+    <varlistentry id="libpq-PQunescapeBytea">
      <term>
       <function>PQunescapeBytea</function>
       <indexterm>
@@ -4520,7 +4520,7 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
    respectively.
 
    <variablelist>
-    <varlistentry id="libpq-pqsendquery">
+    <varlistentry id="libpq-PQsendQuery">
      <term>
       <function>PQsendQuery</function>
       <indexterm>
@@ -4547,7 +4547,7 @@ int PQsendQuery(PGconn *conn, const char *command);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsendqueryparams">
+    <varlistentry id="libpq-PQsendQueryParams">
      <term>
       <function>PQsendQueryParams</function>
       <indexterm>
@@ -4580,7 +4580,7 @@ int PQsendQueryParams(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsendprepare">
+    <varlistentry id="libpq-PQsendPrepare">
      <term>
       <function>PQsendPrepare</function>
       <indexterm>
@@ -4612,7 +4612,7 @@ int PQsendPrepare(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsendqueryprepared">
+    <varlistentry id="libpq-PQsendQueryPrepared">
      <term>
       <function>PQsendQueryPrepared</function>
       <indexterm>
@@ -4645,7 +4645,7 @@ int PQsendQueryPrepared(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsenddescribeprepared">
+    <varlistentry id="libpq-PQsendDescribePrepared">
      <term>
       <function>PQsendDescribePrepared</function>
       <indexterm>
@@ -4672,7 +4672,7 @@ int PQsendDescribePrepared(PGconn *conn, const char *stmtName);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsenddescribeportal">
+    <varlistentry id="libpq-PQsendDescribePortal">
      <term>
       <function>PQsendDescribePortal</function>
       <indexterm>
@@ -4699,7 +4699,7 @@ int PQsendDescribePortal(PGconn *conn, const char *portalName);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqgetresult">
+    <varlistentry id="libpq-PQgetResult">
      <term>
       <function>PQgetResult</function>
       <indexterm>
@@ -4777,7 +4777,7 @@ PGresult *PQgetResult(PGconn *conn);
    use of two more functions:
 
    <variablelist>
-    <varlistentry id="libpq-pqconsumeinput">
+    <varlistentry id="libpq-PQconsumeInput">
      <term>
       <function>PQconsumeInput</function>
       <indexterm>
@@ -4817,7 +4817,7 @@ int PQconsumeInput(PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqisbusy">
+    <varlistentry id="libpq-PQisBusy">
      <term>
       <function>PQisBusy</function>
       <indexterm>
@@ -4886,7 +4886,7 @@ int PQisBusy(PGconn *conn);
    can be used.
 
    <variablelist>
-    <varlistentry id="libpq-pqsetnonblocking">
+    <varlistentry id="libpq-PQsetnonblocking">
      <term>
       <function>PQsetnonblocking</function>
       <indexterm>
@@ -4923,7 +4923,7 @@ int PQsetnonblocking(PGconn *conn, int arg);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqisnonblocking">
+    <varlistentry id="libpq-PQisnonblocking">
      <term>
       <function>PQisnonblocking</function>
       <indexterm>
@@ -4946,7 +4946,7 @@ int PQisnonblocking(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqflush">
+    <varlistentry id="libpq-PQflush">
      <term>
       <function>PQflush</function>
        <indexterm>
@@ -5029,7 +5029,7 @@ int PQflush(PGconn *conn);
 
   <para>
    <variablelist>
-    <varlistentry id="libpq-pqsetsinglerowmode">
+    <varlistentry id="libpq-PQsetSingleRowMode">
      <term>
       <function>PQsetSingleRowMode</function>
       <indexterm>
@@ -5093,7 +5093,7 @@ int PQsetSingleRowMode(PGconn *conn);
    this section.
 
    <variablelist>
-    <varlistentry id="libpq-pqgetcancel">
+    <varlistentry id="libpq-PQgetCancel">
      <term>
       <function>PQgetCancel</function>
       <indexterm>
@@ -5123,7 +5123,7 @@ PGcancel *PQgetCancel(PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfreecancel">
+    <varlistentry id="libpq-PQfreeCancel">
      <term>
       <function>PQfreeCancel</function>
       <indexterm>
@@ -5146,7 +5146,7 @@ void PQfreeCancel(PGcancel *cancel);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqcancel">
+    <varlistentry id="libpq-PQcancel">
      <term>
       <function>PQcancel</function>
       <indexterm>
@@ -5192,7 +5192,7 @@ int PQcancel(PGcancel *cancel, char *errbuf, int errbufsize);
    </variablelist>
 
    <variablelist>
-    <varlistentry id="libpq-pqrequestcancel">
+    <varlistentry id="libpq-PQrequestCancel">
      <term>
       <function>PQrequestCancel</function>
       <indexterm>
@@ -5471,7 +5471,7 @@ typedef struct pgNotify
    that are also used in connection with query results:
 
    <variablelist>
-    <varlistentry id="libpq-pqnfields-1">
+    <varlistentry id="libpq-PQnfields-1">
      <term>
       <function>PQnfields</function>
       <indexterm>
@@ -5487,7 +5487,7 @@ typedef struct pgNotify
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqbinarytuples-1">
+    <varlistentry id="libpq-PQbinaryTuples-1">
      <term>
       <function>PQbinaryTuples</function>
       <indexterm>
@@ -5506,7 +5506,7 @@ typedef struct pgNotify
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqfformat-1">
+    <varlistentry id="libpq-PQfformat-1">
      <term>
       <function>PQfformat</function>
       <indexterm>
@@ -5547,7 +5547,7 @@ typedef struct pgNotify
    </para>
 
    <variablelist>
-    <varlistentry id="libpq-pqputcopydata">
+    <varlistentry id="libpq-PQputCopyData">
      <term>
       <function>PQputCopyData</function>
       <indexterm>
@@ -5586,7 +5586,7 @@ int PQputCopyData(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqputcopyend">
+    <varlistentry id="libpq-PQputCopyEnd">
      <term>
       <function>PQputCopyEnd</function>
       <indexterm>
@@ -5652,7 +5652,7 @@ int PQputCopyEnd(PGconn *conn,
    </para>
 
    <variablelist>
-    <varlistentry id="libpq-pqgetcopydata">
+    <varlistentry id="libpq-PQgetCopyData">
      <term>
       <function>PQgetCopyData</function>
       <indexterm>
@@ -5729,7 +5729,7 @@ int PQgetCopyData(PGconn *conn,
    </para>
 
    <variablelist>
-    <varlistentry id="libpq-pqgetline">
+    <varlistentry id="libpq-PQgetline">
      <term>
       <function>PQgetline</function>
       <indexterm>
@@ -5768,7 +5768,7 @@ int PQgetline(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqgetlineasync">
+    <varlistentry id="libpq-PQgetlineAsync">
      <term>
       <function>PQgetlineAsync</function>
       <indexterm>
@@ -5827,7 +5827,7 @@ int PQgetlineAsync(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqputline">
+    <varlistentry id="libpq-PQputline">
      <term>
       <function>PQputline</function>
       <indexterm>
@@ -5868,7 +5868,7 @@ int PQputline(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqputnbytes">
+    <varlistentry id="libpq-PQputnbytes">
      <term>
       <function>PQputnbytes</function>
       <indexterm>
@@ -5895,7 +5895,7 @@ int PQputnbytes(PGconn *conn,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqendcopy">
+    <varlistentry id="libpq-PQendcopy">
      <term>
       <function>PQendcopy</function>
       <indexterm>
@@ -5960,7 +5960,7 @@ int PQendcopy(PGconn *conn);
   </para>
 
   <variablelist>
-   <varlistentry id="libpq-pqclientencoding">
+   <varlistentry id="libpq-PQclientEncoding">
     <term>
      <function>PQclientEncoding</function>
      <indexterm>
@@ -5987,7 +5987,7 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqsetclientencoding">
+   <varlistentry id="libpq-PQsetClientEncoding">
     <term>
      <function>PQsetClientEncoding</function>
      <indexterm>
@@ -6011,7 +6011,7 @@ int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<re
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqseterrorverbosity">
+   <varlistentry id="libpq-PQsetErrorVerbosity">
     <term>
      <function>PQsetErrorVerbosity</function>
      <indexterm>
@@ -6058,7 +6058,7 @@ PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqseterrorcontextvisibility">
+   <varlistentry id="libpq-PQsetErrorContextVisibility">
     <term>
      <function>PQsetErrorContextVisibility</function>
      <indexterm>
@@ -6106,7 +6106,7 @@ PGContextVisibility PQsetErrorContextVisibility(PGconn *conn, PGContextVisibilit
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqtrace">
+   <varlistentry id="libpq-PQtrace">
     <term>
      <function>PQtrace</function>
      <indexterm>
@@ -6136,7 +6136,7 @@ void PQtrace(PGconn *conn, FILE *stream);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pquntrace">
+   <varlistentry id="libpq-PQuntrace">
     <term>
      <function>PQuntrace</function>
      <indexterm>
@@ -6165,7 +6165,7 @@ void PQuntrace(PGconn *conn);
   </para>
 
   <variablelist>
-   <varlistentry id="libpq-pqfreemem">
+   <varlistentry id="libpq-PQfreemem">
     <term>
      <function>PQfreemem</function>
      <indexterm>
@@ -6198,7 +6198,7 @@ void PQfreemem(void *ptr);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqconninfofree">
+   <varlistentry id="libpq-PQconninfoFree">
     <term>
      <function>PQconninfoFree</function>
      <indexterm>
@@ -6222,7 +6222,7 @@ void PQconninfoFree(PQconninfoOption *connOptions);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqencryptpasswordconn">
+   <varlistentry id="libpq-PQencryptPasswordConn">
     <term>
      <function>PQencryptPasswordConn</function>
      <indexterm>
@@ -6276,7 +6276,7 @@ char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, 
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqencryptpassword">
+   <varlistentry id="libpq-PQencryptPassword">
     <term>
      <function>PQencryptPassword</function>
      <indexterm>
@@ -6299,7 +6299,7 @@ char *PQencryptPassword(const char *passwd, const char *user);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqmakeemptypgresult">
+   <varlistentry id="libpq-PQmakeEmptyPGresult">
     <term>
      <function>PQmakeEmptyPGresult</function>
      <indexterm>
@@ -6336,7 +6336,7 @@ PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqfireresultcreateevents">
+   <varlistentry id="libpq-PQfireResultCreateEvents">
     <term>
      <function>PQfireResultCreateEvents</function>
      <indexterm>
@@ -6376,7 +6376,7 @@ int PQfireResultCreateEvents(PGconn *conn, PGresult *res);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqcopyresult">
+   <varlistentry id="libpq-PQcopyResult">
     <term>
      <function>PQcopyResult</function>
      <indexterm>
@@ -6415,7 +6415,7 @@ PGresult *PQcopyResult(const PGresult *src, int flags);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqsetresultattrs">
+   <varlistentry id="libpq-PQsetResultAttrs">
     <term>
      <function>PQsetResultAttrs</function>
      <indexterm>
@@ -6443,7 +6443,7 @@ int PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqsetvalue">
+   <varlistentry id="libpq-PQsetvalue">
     <term>
      <function>PQsetvalue</function>
      <indexterm>
@@ -6477,7 +6477,7 @@ int PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqresultalloc">
+   <varlistentry id="libpq-PQresultAlloc">
     <term>
      <function>PQresultAlloc</function>
      <indexterm>
@@ -6503,7 +6503,7 @@ void *PQresultAlloc(PGresult *res, size_t nBytes);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqresultmemorysize">
+   <varlistentry id="libpq-PQresultMemorySize">
     <term>
      <function>PQresultMemorySize</function>
      <indexterm>
@@ -6529,7 +6529,7 @@ size_t PQresultMemorySize(const PGresult *res);
     </listitem>
    </varlistentry>
 
-   <varlistentry id="libpq-pqlibversion">
+   <varlistentry id="libpq-PQlibVersion">
     <term>
      <function>PQlibVersion</function>
      <indexterm>
@@ -6945,7 +6945,7 @@ typedef struct
    <title>Event Callback Procedure</title>
 
    <variablelist>
-    <varlistentry id="libpq-pgeventproc">
+    <varlistentry id="libpq-PGEventProc">
      <term>
       <literal>PGEventProc</literal>
       <indexterm>
@@ -7000,7 +7000,7 @@ int eventproc(PGEventId evtId, void *evtInfo, void *passThrough)
    <title>Event Support Functions</title>
 
     <variablelist>
-    <varlistentry id="libpq-pqregistereventproc">
+    <varlistentry id="libpq-PQregisterEventProc">
      <term>
       <function>PQregisterEventProc</function>
       <indexterm>
@@ -7040,7 +7040,7 @@ int PQregisterEventProc(PGconn *conn, PGEventProc proc,
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsetinstancedata">
+    <varlistentry id="libpq-PQsetInstanceData">
      <term>
       <function>PQsetInstanceData</function>
       <indexterm>
@@ -7062,7 +7062,7 @@ int PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqinstancedata">
+    <varlistentry id="libpq-PQinstanceData">
      <term>
       <function>PQinstanceData</function>
       <indexterm>
@@ -7083,7 +7083,7 @@ void *PQinstanceData(const PGconn *conn, PGEventProc proc);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqresultsetinstancedata">
+    <varlistentry id="libpq-PQresultSetInstanceData">
      <term>
       <function>PQresultSetInstanceData</function>
       <indexterm>
@@ -7113,7 +7113,7 @@ int PQresultSetInstanceData(PGresult *res, PGEventProc proc, void *data);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqresultinstancedata">
+    <varlistentry id="libpq-PQresultInstanceData">
      <term>
       <function>PQresultInstanceData</function>
       <indexterm>
@@ -8232,7 +8232,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
   <para>
    <variablelist>
-    <varlistentry id="libpq-pqinitopenssl">
+    <varlistentry id="libpq-PQinitOpenSSL">
      <term>
       <function>PQinitOpenSSL</function>
       <indexterm>
@@ -8268,7 +8268,7 @@ void PQinitOpenSSL(int do_ssl, int do_crypto);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqinitssl">
+    <varlistentry id="libpq-PQinitSSL">
      <term>
       <function>PQinitSSL</function>
       <indexterm>
@@ -8327,7 +8327,7 @@ void PQinitSSL(int do_ssl);
   </para>
 
   <variablelist>
-   <varlistentry id="libpq-pqisthreadsafe">
+   <varlistentry id="libpq-PQisthreadsafe">
     <term>
      <function>PQisthreadsafe</function>
      <indexterm>
