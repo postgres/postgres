@@ -120,6 +120,22 @@ END
 append_to_file($ldap_pwfile, $ldap_rootpw);
 chmod 0600, $ldap_pwfile or die;
 
+# wait until slapd accepts requests
+my $retries = 0;
+while (1)
+{
+	last
+	  if (
+		system_log(
+			"ldapsearch", "-h", $ldap_server, "-p",
+			$ldap_port,   "-s", "base",       "-b",
+			$ldap_basedn, "-D", $ldap_rootdn, "-y",
+			$ldap_pwfile, "-n", "'objectclass=*'") == 0);
+	die "cannot connect to slapd" if ++$retries >= 300;
+	note "waiting for slapd to accept requests...";
+	Time::HiRes::usleep(1000000);
+}
+
 $ENV{'LDAPURI'}    = $ldap_url;
 $ENV{'LDAPBINDDN'} = $ldap_rootdn;
 $ENV{'LDAPCONF'}   = $ldap_conf;
