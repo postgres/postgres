@@ -47,7 +47,7 @@ EOF
 	if (defined($sdkVersion))
 	{
 		# remove trailing backslash if necessary.
-		$sdkVersion, =~  s/\\$//;
+		$sdkVersion =~ s/\\$//;
 		print $f <<EOF
     <WindowsTargetPlatformVersion>$sdkVersion</WindowsTargetPlatformVersion>
 EOF
