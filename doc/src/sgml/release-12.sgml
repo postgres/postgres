@@ -3228,6 +3228,18 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <listitem>
 <!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2019-03-20 [c1afd175b] Allow amcheck to re-find tuples using new search.
+-->
+
+      <para>
+       Add a parameter to a <xref linkend="amcheck"/> function to check
+       each index tuple from the root of the tree.
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2018-08-28 [1aaf532de] Rework option set of oid2name
 Author: Michael Paquier <michael@paquier.xyz>
