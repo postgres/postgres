@@ -2443,13 +2443,10 @@ writezone(const char *const name, const char *const string, char version,
 					unsigned char tm = types[i];
 					char	   *thisabbrev = &thischars[indmap[desigidx[tm]]];
 
-					/* filter out assorted junk entries */
-					if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&
-						strcmp(thisabbrev, "zzz") != 0)
-						fprintf(stdout, "%s\t" INT64_FORMAT "%s\n",
-								thisabbrev,
-								utoffs[tm],
-								isdsts[tm] ? "\tD" : "");
+					fprintf(stdout, "%s\t" INT64_FORMAT "%s\n",
+							thisabbrev,
+							utoffs[tm],
+							isdsts[tm] ? "\tD" : "");
 				}
 			}
 			/* Print the default type if we have no transitions at all */
@@ -2458,13 +2455,10 @@ writezone(const char *const name, const char *const string, char version,
 				unsigned char tm = defaulttype;
 				char	   *thisabbrev = &thischars[indmap[desigidx[tm]]];
 
-				/* filter out assorted junk entries */
-				if (strcmp(thisabbrev, GRANDPARENTED) != 0 &&
-					strcmp(thisabbrev, "zzz") != 0)
-					fprintf(stdout, "%s\t" INT64_FORMAT "%s\n",
-							thisabbrev,
-							utoffs[tm],
-							isdsts[tm] ? "\tD" : "");
+				fprintf(stdout, "%s\t" INT64_FORMAT "%s\n",
+						thisabbrev,
+						utoffs[tm],
+						isdsts[tm] ? "\tD" : "");
 			}
 		}
 
