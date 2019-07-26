@@ -1,6 +1,8 @@
 --
 -- MONEY
 --
+-- Note that we assume lc_monetary has been set to C.
+--
 CREATE TABLE money_data (m money);
 INSERT INTO money_data VALUES ('123');
 SELECT * FROM money_data;
@@ -476,7 +478,7 @@ SELECT (-12345678901234567)::numeric::money;
  -$12,345,678,901,234,567.00
 (1 row)
 
--- Cast from money
+-- Cast from money to numeric
 SELECT '12345678901234567'::money::numeric;
        numeric        
 ----------------------
@@ -487,5 +489,17 @@ SELECT '-12345678901234567'::money::numeric;
         numeric        
 -----------------------
  -12345678901234567.00
+(1 row)
+
+SELECT '92233720368547758.07'::money::numeric;
+       numeric        
+----------------------
+ 92233720368547758.07
+(1 row)
+
+SELECT '-92233720368547758.08'::money::numeric;
+        numeric        
+-----------------------
+ -92233720368547758.08
 (1 row)
 
