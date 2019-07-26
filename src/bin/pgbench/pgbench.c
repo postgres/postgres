@@ -5765,6 +5765,10 @@ threadRun(void *arg)
 			}
 		}
 
+		/* under throttling we may have finished the last client above */
+		if (remains == 0)
+			break;
+
 		/* also wake up to print the next progress report on time */
 		if (progress && min_usec > 0 && thread->tid == 0)
 		{
