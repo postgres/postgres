@@ -608,22 +608,28 @@ check_system_link_file(const char *linkname, struct tztry *tt,
 /*
  * Given a timezone name, determine whether it should be preferred over other
  * names which are equally good matches. The output is arbitrary but we will
- * use 0 for "neutral" default preference.
- *
- * Ideally we'd prefer the zone.tab/zone1970.tab names, since in general those
- * are the ones offered to the user to select from. But for the moment, to
- * minimize changes in behaviour, simply prefer UTC over alternative spellings
- * such as UCT that otherwise cause confusion. The existing "shortest first"
- * rule would prefer "UTC" over "Etc/UTC" so keep that the same way (while
- * still preferring Etc/UTC over Etc/UCT).
+ * use 0 for "neutral" default preference; larger values are more preferred.
  */
 static int
 zone_name_pref(const char *zonename)
 {
+	/*
+	 * Prefer UTC over alternatives such as UCT.  Also prefer Etc/UTC over
+	 * Etc/UCT; but UTC is preferred to Etc/UTC.
+	 */
 	if (strcmp(zonename, "UTC") == 0)
 		return 50;
 	if (strcmp(zonename, "Etc/UTC") == 0)
 		return 40;
+
+	/*
+	 * We don't want to pick "localtime" or "posixrules", unless we can find
+	 * no other name for the prevailing zone.  Those aren't real zone names.
+	 */
+	if (strcmp(zonename, "localtime") == 0 ||
+		strcmp(zonename, "posixrules") == 0)
+		return -50;
+
 	return 0;
 }
 
