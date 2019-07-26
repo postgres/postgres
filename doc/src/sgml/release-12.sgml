@@ -2833,6 +2833,20 @@ Author: Andrew Dunstan <andrew@dunslane.net>
        </para>
       </listitem>
 
+     <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2018-09-14 [0ba06e0bf] Allow concurrent-safe open() and fopen() in frontend
+2018-09-20 [40cfe8606] Enforce translation mode for Windows frontends to text
+-->
+
+      <para>
+       Fix <xref linkend="pgtestfsync"/> to report accurate
+       <literal>open_datasync</literal> durations on
+       <productname>Windows</productname> (Laurenz Albe)
+      </para>
+     </listitem>
+
      </itemizedlist>
 
     </sect4>
