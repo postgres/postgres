@@ -89,6 +89,7 @@
       <term><option>-B</option> <replaceable>bindir</replaceable></term>
       <term><option>--new-bindir=</option><replaceable>bindir</replaceable></term>
       <listitem><para>the new PostgreSQL executable directory;
+      default is the directory where <application>pg_upgrade</application> resides;
       environment variable <envar>PGBINNEW</envar></para></listitem>
      </varlistentry>
 

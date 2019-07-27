@@ -314,7 +314,6 @@ typedef struct
 typedef struct
 {
 	const char *progname;		/* complete pathname for this program */
-	char	   *exec_path;		/* full path to my executable */
 	char	   *user;			/* username for clusters */
 	bool		user_specified; /* user specified on command-line */
 	char	  **old_tablespaces;	/* tablespaces */
