@@ -207,8 +207,7 @@
         systems.  If it is selected but not supported, the
         <application>pg_upgrade</application> run will error.  At present, it
         is supported on Linux (kernel 4.5 or later) with Btrfs and XFS (on
-        file systems created with reflink support, which is not the default
-        for XFS at this writing), and on macOS with APFS.
+        file systems created with reflink support), and on macOS with APFS.
        </para>
       </listitem>
      </varlistentry>
