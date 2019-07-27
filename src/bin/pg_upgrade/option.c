@@ -1,5 +1,5 @@
 /*
- *	opt.c
+ *	option.c
  *
  *	options functions
  *
