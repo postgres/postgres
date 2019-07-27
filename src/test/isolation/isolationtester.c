@@ -187,18 +187,6 @@ main(int argc, char **argv)
 								 blackholeNoticeProcessor,
 								 NULL);
 
-		/*
-		 * Suppress NOTIFY messages, which otherwise pop into results at odd
-		 * places.
-		 */
-		res = PQexec(conns[i], "SET client_min_messages = warning;");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "message level setup failed: %s", PQerrorMessage(conns[i]));
-			exit(1);
-		}
-		PQclear(res);
-
 		/* Get the backend pid for lock wait checking. */
 		res = PQexec(conns[i], "SELECT pg_catalog.pg_backend_pid()");
 		if (PQresultStatus(res) == PGRES_TUPLES_OK)
@@ -899,7 +887,7 @@ printResultSet(PGresult *res)
 static void
 isotesterNoticeProcessor(void *arg, const char *message)
 {
-	fprintf(stderr, "%s: %s", (char *) arg, message);
+	printf("%s: %s", (char *) arg, message);
 }
 
 /* notice processor, hides the message */

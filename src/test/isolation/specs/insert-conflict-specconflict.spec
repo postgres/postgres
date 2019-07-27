@@ -51,6 +51,9 @@ session "s1"
 setup
 {
   SET default_transaction_isolation = 'read committed';
+  -- on very slow machines, the notices come out in unpredictable order,
+  -- so hide them
+  SET client_min_messages = warning;
   SET spec.session = 1;
 }
 step "s1_begin"  { BEGIN; }
@@ -61,6 +64,9 @@ session "s2"
 setup
 {
   SET default_transaction_isolation = 'read committed';
+  -- on very slow machines, the notices come out in unpredictable order,
+  -- so hide them
+  SET client_min_messages = warning;
   SET spec.session = 2;
 }
 step "s2_begin"  { BEGIN; }
