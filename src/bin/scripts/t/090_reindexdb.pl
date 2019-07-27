@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 34;
+use Test::More tests => 44;
 
 program_help_ok('reindexdb');
 program_version_ok('reindexdb');
@@ -77,3 +77,45 @@ $node->command_ok(
 $node->command_ok(
 	[qw(reindexdb --echo --system dbname=template1)],
 	'reindexdb system with connection string');
+
+# parallel processing
+$node->safe_psql(
+	'postgres', q|
+	CREATE SCHEMA s1;
+	CREATE TABLE s1.t1(id integer);
+	CREATE INDEX ON s1.t1(id);
+	CREATE SCHEMA s2;
+	CREATE TABLE s2.t2(id integer);
+	CREATE INDEX ON s2.t2(id);
+	-- empty schema
+	CREATE SCHEMA s3;
+|);
+
+$node->command_fails(
+	[ 'reindexdb', '-j', '2', '-s', 'postgres' ],
+	'parallel reindexdb cannot process system catalogs');
+$node->command_fails(
+	[ 'reindexdb', '-j', '2', '-i', 'i1', 'postgres' ],
+	'parallel reindexdb cannot process indexes');
+$node->issues_sql_like(
+	[ 'reindexdb', '-j', '2', 'postgres' ],
+	qr/statement:\ REINDEX SYSTEM postgres;
+.*statement:\ REINDEX TABLE public\.test1/s,
+	'parallel reindexdb for database issues REINDEX SYSTEM first');
+# Note that the ordering of the commands is not stable, so the second
+# command for s2.t2 is not checked after.
+$node->issues_sql_like(
+	[ 'reindexdb', '-j', '2', '-S', 's1', '-S', 's2', 'postgres' ],
+	qr/statement:\ REINDEX TABLE s1.t1;/,
+	'parallel reindexdb for schemas does a per-table REINDEX');
+$node->command_ok(
+	['reindexdb', '-j', '2', '-S', 's3'],
+	'parallel reindexdb with empty schema');
+$node->command_checks_all(
+	[ 'reindexdb', '-j', '2', '--concurrently', '-d', 'postgres' ],
+	0,
+	[qr/^$/],
+	[
+		qr/^reindexdb: warning: cannot reindex system catalogs concurrently, skipping all/s
+	],
+	'parallel reindexdb for system with --concurrently skips catalogs');
