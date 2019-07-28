@@ -148,6 +148,12 @@
         <entry align="center"><literal>-</literal></entry>
        </row>
        <row>
+        <entry align="left"><literal>ALTER DEFAULT PRIVILEGES</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+       </row>
+       <row>
         <entry align="left"><literal>ALTER EXTENSION</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
@@ -173,6 +179,18 @@
        </row>
        <row>
         <entry align="left"><literal>ALTER LANGUAGE</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>ALTER LARGE OBJECT</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>ALTER MATERIALIZED VIEW</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>-</literal></entry>
@@ -329,6 +347,12 @@
        </row>
        <row>
         <entry align="left"><literal>CREATE LANGUAGE</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>CREATE MATERIALIZED VIEW</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>-</literal></entry>
@@ -497,6 +521,12 @@
        </row>
        <row>
         <entry align="left"><literal>DROP LANGUAGE</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>DROP MATERIALIZED VIEW</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
