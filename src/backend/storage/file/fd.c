@@ -3208,7 +3208,8 @@ SyncDataDirectory(void)
  *
  * Errors are reported at level elevel, which might be ERROR or less.
  *
- * See also walkdir in initdb.c, which is a frontend version of this logic.
+ * See also walkdir in file_utils.c, which is a frontend version of this
+ * logic.
  */
 static void
 walkdir(const char *path,
