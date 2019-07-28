@@ -752,6 +752,28 @@ try_complete_step(Step *step, int flags)
 
 				if (waiting)	/* waiting to acquire a lock */
 				{
+					/*
+					 * Since it takes time to perform the lock-check query,
+					 * some data --- notably, NOTICE messages --- might have
+					 * arrived since we looked.  We must call PQconsumeInput
+					 * and then PQisBusy to collect and process any such
+					 * messages.  In the (unlikely) case that PQisBusy then
+					 * returns false, we might as well go examine the
+					 * available result.
+					 */
+					if (!PQconsumeInput(conn))
+					{
+						fprintf(stderr, "PQconsumeInput failed: %s\n",
+								PQerrorMessage(conn));
+						exit(1);
+					}
+					if (!PQisBusy(conn))
+						break;
+
+					/*
+					 * conn is still busy, so conclude that the step really is
+					 * waiting.
+					 */
 					if (!(flags & STEP_RETRY))
 						printf("step %s: %s <waiting ...>\n",
 							   step->name, step->sql);
