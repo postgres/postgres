@@ -864,7 +864,7 @@ tar_close(Walfile f, WalCloseMethod method)
 
 	/* Always fsync on close, so the padding gets fsynced */
 	if (tar_sync(f) < 0)
-		return -1;
+		exit(1);
 
 	/* Clean up and done */
 	pg_free(tf->pathname);

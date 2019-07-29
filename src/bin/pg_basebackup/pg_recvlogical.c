@@ -192,8 +192,8 @@ OutputFsync(TimestampTz now)
 
 	if (fsync(outfd) != 0)
 	{
-		pg_log_error("could not fsync file \"%s\": %m", outfile);
-		return false;
+		pg_log_fatal("could not fsync file \"%s\": %m", outfile);
+		exit(1);
 	}
 
 	return true;
