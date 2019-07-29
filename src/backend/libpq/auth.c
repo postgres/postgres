@@ -1796,14 +1796,9 @@ interpret_ident_response(const char *ident_response,
 
 
 /*
- *	Talk to the ident server on host "remote_ip_addr" and find out who
- *	owns the tcp connection from his port "remote_port" to port
- *	"local_port_addr" on host "local_ip_addr".  Return the user name the
- *	ident server gives as "*ident_user".
- *
- *	IP addresses and port numbers are in network byte order.
- *
- *	But iff we're unable to get the information from ident, return false.
+ *	Talk to the ident server on "remote_addr" and find out who
+ *	owns the tcp connection to "local_addr"
+ *	It the username successfully retrieved, check the usermap.
  *
  *	XXX: Using WaitLatchOrSocket() and doing a CHECK_FOR_INTERRUPTS() if the
  *	latch was set would improve the responsiveness to timeouts/cancellations.

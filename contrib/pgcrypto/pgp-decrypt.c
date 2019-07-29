@@ -355,7 +355,7 @@ mdc_finish(PGP_Context *ctx, PullFilter *src, int len)
 	if (len != 20)
 		return PXE_PGP_CORRUPT_DATA;
 
-	/* mdc_read should not call md_update */
+	/* mdc_read should not call px_md_update */
 	ctx->in_mdc_pkt = 1;
 
 	/* read data */

@@ -731,7 +731,7 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  *	mdnblocks() -- Get the number of blocks stored in a relation.
  *
  *		Important side effect: all active segments of the relation are opened
- *		and added to the mdfd_seg_fds array.  If this routine has not been
+ *		and added to the md_seg_fds array.  If this routine has not been
  *		called, then only segments up to the last one actually touched
  *		are present in the array.
  */

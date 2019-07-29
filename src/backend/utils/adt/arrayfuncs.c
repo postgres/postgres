@@ -139,7 +139,7 @@ static void array_insert_slice(ArrayType *destArray, ArrayType *origArray,
 							   int *st, int *endp,
 							   int typlen, bool typbyval, char typalign);
 static int	array_cmp(FunctionCallInfo fcinfo);
-static ArrayType *create_array_envelope(int ndims, int *dimv, int *lbv, int nbytes,
+static ArrayType *create_array_envelope(int ndims, int *dimv, int *lbsv, int nbytes,
 										Oid elmtype, int dataoffset);
 static ArrayType *array_fill_internal(ArrayType *dims, ArrayType *lbs,
 									  Datum value, bool isnull, Oid elmtype,

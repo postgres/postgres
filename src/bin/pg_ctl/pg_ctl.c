@@ -1725,7 +1725,7 @@ pgwin32_doRunAsService(void)
 /*
  * Mingw headers are incomplete, and so are the libraries. So we have to load
  * a whole lot of API functions dynamically. Since we have to do this anyway,
- * also load the couple of functions that *do* exist in minwg headers but not
+ * also load the couple of functions that *do* exist in mingw headers but not
  * on NT4. That way, we don't break on NT4.
  */
 typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);

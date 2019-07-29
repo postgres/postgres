@@ -237,7 +237,7 @@ static void logical_end_heap_rewrite(RewriteState state);
  * new_heap		new, locked heap relation to insert tuples to
  * oldest_xmin	xid used by the caller to determine which tuples are dead
  * freeze_xid	xid before which tuples will be frozen
- * min_multi	multixact before which multis will be removed
+ * cutoff_multi	multixact before which multis will be removed
  * use_wal		should the inserts to the new heap be WAL-logged?
  *
  * Returns an opaque RewriteState, allocated in current memory context,
@@ -787,7 +787,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
  * Instead we simply write the mapping files out to disk, *before* the
  * XLogInsert() is performed. That guarantees that either the XLogInsert() is
  * inserted after the checkpoint's redo pointer or that the checkpoint (via
- * LogicalRewriteHeapCheckpoint()) has flushed the (partial) mapping file to
+ * CheckPointLogicalRewriteHeap()) has flushed the (partial) mapping file to
  * disk. That leaves the tail end that has not yet been flushed open to
  * corruption, which is solved by including the current offset in the
  * xl_heap_rewrite_mapping records and truncating the mapping file to it

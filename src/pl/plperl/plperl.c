@@ -2091,7 +2091,7 @@ plperlu_validator(PG_FUNCTION_ARGS)
 
 
 /*
- * Uses mksafefunc/mkunsafefunc to create a subroutine whose text is
+ * Uses mkfunc to create a subroutine whose text is
  * supplied in s, and returns a reference to it
  */
 static void

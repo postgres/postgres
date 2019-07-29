@@ -20,7 +20,7 @@
 #include "access/bufmask.h"
 
 /*
- * mask_page_lsn
+ * mask_page_lsn_and_checksum
  *
  * In consistency checks, the LSN of the two pages compared will likely be
  * different because of concurrent operations when the WAL is generated and

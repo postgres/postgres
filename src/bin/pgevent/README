@@ -3,7 +3,7 @@ src/bin/pgevent/README
 pgevent
 =======
 
-MSG000001.bin is a binary file, result of Microsoft MC compiler. MC compiler
+MSG00001.bin is a binary file, result of Microsoft MC compiler. MC compiler
 can be downloaded for free with MS Core SDK but it is not included with MSYS
 tools and I didn't find an alternative way to compile MC file.
 

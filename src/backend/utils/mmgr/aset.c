@@ -915,7 +915,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 
 		/*
 		 * We could be asking for pretty big blocks here, so cope if malloc
-		 * fails.  But give up if there's less than a meg or so available...
+		 * fails.  But give up if there's less than 1 MB or so available...
 		 */
 		while (block == NULL && blksize > 1024 * 1024)
 		{

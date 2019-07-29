@@ -56,4 +56,4 @@ typedef struct xl_standby_lock
 	Oid			relOid;			/* OID of table */
 } xl_standby_lock;
 
-#endif							/* LOCKDEF_H_ */
+#endif							/* LOCKDEFS_H_ */

@@ -3169,7 +3169,7 @@ DisplayXidCache(void)
  *
  * When we throw away subXIDs from KnownAssignedXids, we need to keep track of
  * that, similarly to tracking overflow of a PGPROC's subxids array.  We do
- * that by remembering the lastOverflowedXID, ie the last thrown-away subXID.
+ * that by remembering the lastOverflowedXid, ie the last thrown-away subXID.
  * As long as that is within the range of interesting XIDs, we have to assume
  * that subXIDs are missing from snapshots.  (Note that subXID overflow occurs
  * on primary when 65th subXID arrives, whereas on standby it occurs when 64th

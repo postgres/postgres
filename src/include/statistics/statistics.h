@@ -22,7 +22,7 @@
 #define STATS_NDISTINCT_MAGIC		0xA352BFA4	/* struct identifier */
 #define STATS_NDISTINCT_TYPE_BASIC	1	/* struct version */
 
-/* MVDistinctItem represents a single combination of columns */
+/* MVNDistinctItem represents a single combination of columns */
 typedef struct MVNDistinctItem
 {
 	double		ndistinct;		/* ndistinct value for this combination */

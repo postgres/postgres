@@ -291,10 +291,10 @@ BackgroundWriterMain(void)
 		 * significantly bigger than BgWriterDelay, so we don't complicate the
 		 * overall timeout handling but just assume we're going to get called
 		 * often enough even if hibernation mode is active. It's not that
-		 * important that log_snap_interval_ms is met strictly. To make sure
-		 * we're not waking the disk up unnecessarily on an idle system we
-		 * check whether there has been any WAL inserted since the last time
-		 * we've logged a running xacts.
+		 * important that LOG_SNAPSHOT_INTERVAL_MS is met strictly. To make
+		 * sure we're not waking the disk up unnecessarily on an idle system
+		 * we check whether there has been any WAL inserted since the last
+		 * time we've logged a running xacts.
 		 *
 		 * We do this logging in the bgwriter as it is the only process that
 		 * is run regularly and returns to its mainloop all the time. E.g.

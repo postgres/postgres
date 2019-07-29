@@ -178,7 +178,7 @@ recompose_code(uint32 start, uint32 code, uint32 *result)
 			 ((start - SBASE) % TCOUNT) == 0 &&
 			 code >= TBASE && code < (TBASE + TCOUNT))
 	{
-		/* make syllable of from LVT */
+		/* make syllable of form LVT */
 		uint32		tindex = code - TBASE;
 
 		*result = start + tindex;

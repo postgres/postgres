@@ -842,7 +842,7 @@ spgvacuumscan(spgBulkDeleteState *bds)
 		}
 	}
 
-	/* Propagate local lastUsedPage cache to metablock */
+	/* Propagate local lastUsedPages cache to metablock */
 	SpGistUpdateMetaPage(index);
 
 	/*

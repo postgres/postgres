@@ -4,7 +4,7 @@
  * reads the data from $PGDATA/global/pg_control
  *
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
- * licence: BSD
+ * license: BSD
  *
  * src/bin/pg_controldata/pg_controldata.c
  */

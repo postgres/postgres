@@ -1988,7 +1988,7 @@ StartTransaction(void)
 
 	/*
 	 * Advertise it in the proc array.  We assume assignment of
-	 * LocalTransactionID is atomic, and the backendId should be set already.
+	 * localTransactionId is atomic, and the backendId should be set already.
 	 */
 	Assert(MyProc->backendId == vxid.backendId);
 	MyProc->lxid = vxid.localTransactionId;

@@ -26,7 +26,7 @@ extern Oid	AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTop
 extern Oid	AlterDatabaseSet(AlterDatabaseSetStmt *stmt);
 extern ObjectAddress AlterDatabaseOwner(const char *dbname, Oid newOwnerId);
 
-extern Oid	get_database_oid(const char *dbname, bool missingok);
+extern Oid	get_database_oid(const char *dbname, bool missing_ok);
 extern char *get_database_name(Oid dbid);
 
 extern void check_encoding_locale_matches(int encoding, const char *collate, const char *ctype);

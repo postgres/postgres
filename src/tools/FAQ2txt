@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# src/tools/FAQ2txt:
-
-# Converts doc/src/FAQ/FAQ.html to text file doc/FAQ
-
-lynx -force_html -dont_wrap_pre -dump -hiddenlinks=ignore -nolist "$@"

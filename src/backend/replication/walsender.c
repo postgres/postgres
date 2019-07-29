@@ -2259,7 +2259,7 @@ WalSndLoop(WalSndSendDataCallback send_data)
 				WL_SOCKET_READABLE;
 
 			/*
-			 * Use fresh timestamp, not last_processed, to reduce the chance
+			 * Use fresh timestamp, not last_processing, to reduce the chance
 			 * of reaching wal_sender_timeout before sending a keepalive.
 			 */
 			sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
@@ -2666,7 +2666,7 @@ XLogSendPhysical(void)
 	 * very close to together here so that we'll get a later position if it is
 	 * still moving.
 	 *
-	 * Because LagTrackerWriter ignores samples when the LSN hasn't advanced,
+	 * Because LagTrackerWrite ignores samples when the LSN hasn't advanced,
 	 * this gives us a cheap approximation for the WAL flush time for this
 	 * LSN.
 	 *

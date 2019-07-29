@@ -232,7 +232,7 @@ LOG_LWDEBUG(const char *where, LWLock *lock, const char *msg)
 
 static void init_lwlock_stats(void);
 static void print_lwlock_stats(int code, Datum arg);
-static lwlock_stats * get_lwlock_stats_entry(LWLock *lockid);
+static lwlock_stats * get_lwlock_stats_entry(LWLock *lock);
 
 static void
 init_lwlock_stats(void)

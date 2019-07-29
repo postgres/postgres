@@ -733,7 +733,7 @@ AggregateCreate(const char *aggName,
 	 * Create dependencies for the aggregate (above and beyond those already
 	 * made by ProcedureCreate).  Note: we don't need an explicit dependency
 	 * on aggTransType since we depend on it indirectly through transfn.
-	 * Likewise for aggmTransType using the mtransfunc, if it exists.
+	 * Likewise for aggmTransType using the mtransfn, if it exists.
 	 *
 	 * If we're replacing an existing definition, ProcedureCreate deleted all
 	 * our existing dependencies, so we have to do the same things here either

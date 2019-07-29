@@ -1796,11 +1796,11 @@ WaitXLogInsertionsToFinish(XLogRecPtr upto)
 		do
 		{
 			/*
-			 * See if this insertion is in progress. LWLockWait will wait for
-			 * the lock to be released, or for the 'value' to be set by a
-			 * LWLockUpdateVar call.  When a lock is initially acquired, its
-			 * value is 0 (InvalidXLogRecPtr), which means that we don't know
-			 * where it's inserting yet.  We will have to wait for it.  If
+			 * See if this insertion is in progress.  LWLockWaitForVar will
+			 * wait for the lock to be released, or for the 'value' to be set
+			 * by a LWLockUpdateVar call.  When a lock is initially acquired,
+			 * its value is 0 (InvalidXLogRecPtr), which means that we don't
+			 * know where it's inserting yet.  We will have to wait for it. If
 			 * it's a small insertion, the record will most likely fit on the
 			 * same page and the inserter will release the lock without ever
 			 * calling LWLockUpdateVar.  But if it has to sleep, it will
@@ -6024,7 +6024,10 @@ recoveryApplyDelay(XLogReaderState *record)
 		TimestampDifference(GetCurrentTimestamp(), recoveryDelayUntilTime,
 							&secs, &microsecs);
 
-		/* NB: We're ignoring waits below min_apply_delay's resolution. */
+		/*
+		 * NB: We're ignoring waits below recovery_min_apply_delay's
+		 * resolution.
+		 */
 		if (secs <= 0 && microsecs / 1000 <= 0)
 			break;
 
