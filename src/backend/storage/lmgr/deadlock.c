@@ -922,6 +922,12 @@ TopoSort(LOCK *lock,
 		 * in the same lock group on the queue, set their number of
 		 * beforeConstraints to -1 to indicate that they should be emitted
 		 * with their groupmates rather than considered separately.
+		 *
+		 * In this loop and the similar one just below, it's critical that we
+		 * consistently select the same representative member of any one lock
+		 * group, so that all the constraints are associated with the same
+		 * proc, and the -1's are only associated with not-representative
+		 * members.  We select the last one in the topoProcs array.
 		 */
 		proc = constraints[i].waiter;
 		Assert(proc != NULL);
@@ -940,7 +946,6 @@ TopoSort(LOCK *lock,
 					Assert(beforeConstraints[j] <= 0);
 					beforeConstraints[j] = -1;
 				}
-				break;
 			}
 		}
 
@@ -977,6 +982,7 @@ TopoSort(LOCK *lock,
 		if (kk < 0)
 			continue;
 
+		Assert(beforeConstraints[jj] >= 0);
 		beforeConstraints[jj]++;	/* waiter must come before */
 		/* add this constraint to list of after-constraints for blocker */
 		constraints[i].pred = jj;
