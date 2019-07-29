@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * makefuncs.h
- *	  prototypes for the creator functions (for primitive nodes)
+ *	  prototypes for the creator functions of various nodes
  *
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
@@ -14,6 +14,7 @@
 #ifndef MAKEFUNC_H
 #define MAKEFUNC_H
 
+#include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
 
 
@@ -91,6 +92,10 @@ extern Expr *make_notclause(Expr *notclause);
 extern Node *make_and_qual(Node *qual1, Node *qual2);
 extern Expr *make_ands_explicit(List *andclauses);
 extern List *make_ands_implicit(Expr *clause);
+
+extern IndexInfo *makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid,
+								List *expressions, List *predicates,
+								bool unique, bool isready, bool concurrent);
 
 extern DefElem *makeDefElem(char *name, Node *arg, int location);
 extern DefElem *makeDefElemExtended(char *nameSpace, char *name, Node *arg,
