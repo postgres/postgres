@@ -872,6 +872,34 @@ REINDEX INDEX CONCURRENTLY concur_reindex_ind5;
 \d concur_reindex_tab4
 DROP TABLE concur_reindex_tab4;
 
+-- Check handling of indexes with expressions and predicates.  The
+-- definitions of the rebuilt indexes should match the original
+-- definitions.
+CREATE TABLE concur_exprs_tab (c1 int , c2 boolean);
+INSERT INTO concur_exprs_tab (c1, c2) VALUES (1369652450, FALSE),
+  (414515746, TRUE),
+  (897778963, FALSE);
+CREATE UNIQUE INDEX concur_exprs_index_expr
+  ON concur_exprs_tab ((c1::text COLLATE "C"));
+CREATE UNIQUE INDEX concur_exprs_index_pred ON concur_exprs_tab (c1)
+  WHERE (c1::text > 500000000::text COLLATE "C");
+CREATE UNIQUE INDEX concur_exprs_index_pred_2
+  ON concur_exprs_tab ((1 / c1))
+  WHERE ('-H') >= (c2::TEXT) COLLATE "C";
+SELECT pg_get_indexdef('concur_exprs_index_expr'::regclass);
+SELECT pg_get_indexdef('concur_exprs_index_pred'::regclass);
+SELECT pg_get_indexdef('concur_exprs_index_pred_2'::regclass);
+REINDEX TABLE CONCURRENTLY concur_exprs_tab;
+SELECT pg_get_indexdef('concur_exprs_index_expr'::regclass);
+SELECT pg_get_indexdef('concur_exprs_index_pred'::regclass);
+SELECT pg_get_indexdef('concur_exprs_index_pred_2'::regclass);
+-- ALTER TABLE recreates the indexes, which should keep their collations.
+ALTER TABLE concur_exprs_tab ALTER c2 TYPE TEXT;
+SELECT pg_get_indexdef('concur_exprs_index_expr'::regclass);
+SELECT pg_get_indexdef('concur_exprs_index_pred'::regclass);
+SELECT pg_get_indexdef('concur_exprs_index_pred_2'::regclass);
+DROP TABLE concur_exprs_tab;
+
 --
 -- REINDEX SCHEMA
 --
