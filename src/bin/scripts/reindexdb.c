@@ -473,6 +473,12 @@ reindex_one_database(const char *dbname, ReindexType type,
 		failed = true;
 
 finish:
+	if (process_list != user_list)
+	{
+		simple_string_list_destroy(process_list);
+		pg_free(process_list);
+	}
+
 	ParallelSlotsTerminate(slots, concurrentCons);
 	pfree(slots);
 
