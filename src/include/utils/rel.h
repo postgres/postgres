@@ -152,13 +152,6 @@ typedef struct RelationData
 	 * those with lefttype and righttype equal to the opclass's opcintype. The
 	 * arrays are indexed by support function number, which is a sufficient
 	 * identifier given that restriction.
-	 *
-	 * Note: rd_amcache is available for index AMs to cache private data about
-	 * an index.  This must be just a cache since it may get reset at any time
-	 * (in particular, it will get reset by a relcache inval message for the
-	 * index).  If used, it must point to a single memory chunk palloc'd in
-	 * rd_indexcxt.  A relcache reset will include freeing that chunk and
-	 * setting rd_amcache = NULL.
 	 */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
 	/* use "struct" here to avoid needing to include amapi.h: */
@@ -173,8 +166,18 @@ typedef struct RelationData
 	Oid		   *rd_exclops;		/* OIDs of exclusion operators, if any */
 	Oid		   *rd_exclprocs;	/* OIDs of exclusion ops' procs, if any */
 	uint16	   *rd_exclstrats;	/* exclusion ops' strategy numbers, if any */
-	void	   *rd_amcache;		/* available for use by index AM */
 	Oid		   *rd_indcollation;	/* OIDs of index collations */
+
+	/*
+	 * rd_amcache is available for index and table AMs to cache private data
+	 * about the relation.  This must be just a cache since it may get reset
+	 * at any time (in particular, it will get reset by a relcache inval
+	 * message for the relation).  If used, it must point to a single memory
+	 * chunk palloc'd in CacheMemoryContext, or in rd_indexcxt for an index
+	 * relation.  A relcache reset will include freeing that chunk and setting
+	 * rd_amcache = NULL.
+	 */
+	void	   *rd_amcache;		/* available for use by index/table AM */
 
 	/*
 	 * foreign-table support
