@@ -55,6 +55,14 @@ ANALYZE ab1 (a);
 ANALYZE ab1;
 DROP TABLE ab1;
 
+-- Ensure we can build statistics for tables with inheritance.
+CREATE TABLE ab1 (a INTEGER, b INTEGER);
+CREATE TABLE ab1c () INHERITS (ab1);
+INSERT INTO ab1 VALUES (1,1);
+CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
+ANALYZE ab1;
+DROP TABLE ab1 CASCADE;
+
 -- Verify supported object types for extended statistics
 CREATE schema tststats;
 
