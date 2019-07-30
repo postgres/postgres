@@ -2358,6 +2358,10 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		pfree(relation->rd_options);
 	if (relation->rd_indextuple)
 		pfree(relation->rd_indextuple);
+	if (relation->rd_amcache)
+		pfree(relation->rd_amcache);
+	if (relation->rd_fdwroutine)
+		pfree(relation->rd_fdwroutine);
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
 	if (relation->rd_rulescxt)
@@ -2370,8 +2374,6 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 		MemoryContextDelete(relation->rd_pdcxt);
 	if (relation->rd_partcheckcxt)
 		MemoryContextDelete(relation->rd_partcheckcxt);
-	if (relation->rd_fdwroutine)
-		pfree(relation->rd_fdwroutine);
 	pfree(relation);
 }
 
@@ -2415,6 +2417,11 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * truncation.
 	 */
 	RelationCloseSmgr(relation);
+
+	/* Free AM cached data, if any */
+	if (relation->rd_amcache)
+		pfree(relation->rd_amcache);
+	relation->rd_amcache = NULL;
 
 	/*
 	 * Treat nailed-in system relations separately, they always need to be
