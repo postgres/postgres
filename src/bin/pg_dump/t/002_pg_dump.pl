@@ -1571,6 +1571,35 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+    # verify that a custom operator/opclass/range type is dumped in right order
+	'CREATE OPERATOR CLASS dump_test.op_class_custom' => {
+		create_order => 74,
+		create_sql   => 'CREATE OPERATOR dump_test.~~ (
+							 PROCEDURE = int4eq,
+							 LEFTARG = int,
+							 RIGHTARG = int);
+						 CREATE OPERATOR CLASS dump_test.op_class_custom
+							 FOR TYPE int USING btree AS
+							 OPERATOR 3 dump_test.~~;
+						 CREATE TYPE dump_test.range_type_custom AS RANGE (
+							 subtype = int,
+							 subtype_opclass = dump_test.op_class_custom);',
+		regexp => qr/^
+			\QCREATE OPERATOR dump_test.~~ (\E\n.+
+			\QCREATE OPERATOR FAMILY dump_test.op_class_custom USING btree;\E\n.+
+			\QCREATE OPERATOR CLASS dump_test.op_class_custom\E\n\s+
+			\QFOR TYPE integer USING btree FAMILY dump_test.op_class_custom AS\E\n\s+
+			\QOPERATOR 3 dump_test.~~(integer,integer);\E\n.+
+			\QCREATE TYPE dump_test.range_type_custom AS RANGE (\E\n\s+
+			\Qsubtype = integer,\E\n\s+
+			\Qsubtype_opclass = dump_test.op_class_custom\E\n
+			\Q);\E
+			/xms,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE OPERATOR CLASS dump_test.op_class_empty' => {
 		create_order => 89,
 		create_sql   => 'CREATE OPERATOR CLASS dump_test.op_class_empty
