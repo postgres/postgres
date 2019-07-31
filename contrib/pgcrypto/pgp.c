@@ -54,7 +54,6 @@ struct digest_info
 {
 	const char *name;
 	int			code;
-	const char *int_name;
 };
 
 struct cipher_info
