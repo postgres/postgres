@@ -185,11 +185,9 @@ static JsonPathExecResult executeItemUnwrapTargetArray(JsonPathExecContext *cxt,
 static JsonPathExecResult executeNextItem(JsonPathExecContext *cxt,
 										  JsonPathItem *cur, JsonPathItem *next,
 										  JsonbValue *v, JsonValueList *found, bool copy);
-static JsonPathExecResult executeItemOptUnwrapResult(
-													 JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
+static JsonPathExecResult executeItemOptUnwrapResult(JsonPathExecContext *cxt, JsonPathItem *jsp, JsonbValue *jb,
 													 bool unwrap, JsonValueList *found);
-static JsonPathExecResult executeItemOptUnwrapResultNoThrow(
-															JsonPathExecContext *cxt, JsonPathItem *jsp,
+static JsonPathExecResult executeItemOptUnwrapResultNoThrow(JsonPathExecContext *cxt, JsonPathItem *jsp,
 															JsonbValue *jb, bool unwrap, JsonValueList *found);
 static JsonPathBool executeBoolItem(JsonPathExecContext *cxt,
 									JsonPathItem *jsp, JsonbValue *jb, bool canHaveNext);

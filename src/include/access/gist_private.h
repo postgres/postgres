@@ -473,8 +473,7 @@ extern bool gistPageRecyclable(Page page);
 extern void gistfillbuffer(Page page, IndexTuple *itup, int len,
 						   OffsetNumber off);
 extern IndexTuple *gistextractpage(Page page, int *len /* out */ );
-extern IndexTuple *gistjoinvector(
-								  IndexTuple *itvec, int *len,
+extern IndexTuple *gistjoinvector(IndexTuple *itvec, int *len,
 								  IndexTuple *additvec, int addlen);
 extern IndexTupleData *gistfillitupvec(IndexTuple *vec, int veclen, int *memlen);
 

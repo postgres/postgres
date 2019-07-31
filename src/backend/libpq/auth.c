@@ -133,8 +133,7 @@ static int	CheckBSDAuth(Port *port, char *user);
 
 /* Correct header from the Platform SDK */
 typedef
-ULONG		(*__ldap_start_tls_sA) (
-									IN PLDAP ExternalHandle,
+ULONG		(*__ldap_start_tls_sA) (IN PLDAP ExternalHandle,
 									OUT PULONG ServerReturnValue,
 									OUT LDAPMessage **result,
 									IN PLDAPControlA * ServerControls,

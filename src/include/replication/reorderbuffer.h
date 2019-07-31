@@ -292,34 +292,29 @@ typedef struct ReorderBufferTXN
 typedef struct ReorderBuffer ReorderBuffer;
 
 /* change callback signature */
-typedef void (*ReorderBufferApplyChangeCB) (
-											ReorderBuffer *rb,
+typedef void (*ReorderBufferApplyChangeCB) (ReorderBuffer *rb,
 											ReorderBufferTXN *txn,
 											Relation relation,
 											ReorderBufferChange *change);
 
 /* truncate callback signature */
-typedef void (*ReorderBufferApplyTruncateCB) (
-											  ReorderBuffer *rb,
+typedef void (*ReorderBufferApplyTruncateCB) (ReorderBuffer *rb,
 											  ReorderBufferTXN *txn,
 											  int nrelations,
 											  Relation relations[],
 											  ReorderBufferChange *change);
 
 /* begin callback signature */
-typedef void (*ReorderBufferBeginCB) (
-									  ReorderBuffer *rb,
+typedef void (*ReorderBufferBeginCB) (ReorderBuffer *rb,
 									  ReorderBufferTXN *txn);
 
 /* commit callback signature */
-typedef void (*ReorderBufferCommitCB) (
-									   ReorderBuffer *rb,
+typedef void (*ReorderBufferCommitCB) (ReorderBuffer *rb,
 									   ReorderBufferTXN *txn,
 									   XLogRecPtr commit_lsn);
 
 /* message callback signature */
-typedef void (*ReorderBufferMessageCB) (
-										ReorderBuffer *rb,
+typedef void (*ReorderBufferMessageCB) (ReorderBuffer *rb,
 										ReorderBufferTXN *txn,
 										XLogRecPtr message_lsn,
 										bool transactional,
