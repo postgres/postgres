@@ -133,11 +133,13 @@ test: misc_functions
 test: sysviews
 test: tsrf
 test: tidscan
+test: collate.icu.utf8
 test: rules
 test: psql
 test: psql_crosstab
 test: amutils
 test: stats_ext
+test: collate.linux.utf8
 test: select_parallel
 test: write_parallel
 test: publication
