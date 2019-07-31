@@ -1475,6 +1475,6 @@ XLogRecGetFullXid(XLogReaderState *record)
 		--epoch;
 
 	return FullTransactionIdFromEpochAndXid(epoch, xid);
-};
+}
 
 #endif
