@@ -68,8 +68,7 @@ SendSharedInvalidMessages(const SharedInvalidationMessage *msgs, int n)
  * sucked out of sinvaladt.c.
  */
 void
-ReceiveSharedInvalidMessages(
-							 void (*invalFunction) (SharedInvalidationMessage *msg),
+ReceiveSharedInvalidMessages(void (*invalFunction) (SharedInvalidationMessage *msg),
 							 void (*resetFunction) (void))
 {
 #define MAXINVALMSGS 32
