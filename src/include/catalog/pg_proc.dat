@@ -3954,6 +3954,9 @@
 { oid => '3551',
   proname => 'network_overlap', prorettype => 'bool',
   proargtypes => 'inet inet', prosrc => 'network_overlap' },
+{ oid => '8190', descr => 'sort support',
+  proname => 'network_sortsupport', prorettype => 'void',
+  proargtypes => 'internal', prosrc => 'network_sortsupport' },
 
 # inet/cidr functions
 { oid => '598', descr => 'abbreviated display of inet value',
