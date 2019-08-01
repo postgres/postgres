@@ -74,8 +74,10 @@
 #define SH_DESTROY SH_MAKE_NAME(destroy)
 #define SH_RESET SH_MAKE_NAME(reset)
 #define SH_INSERT SH_MAKE_NAME(insert)
+#define SH_INSERT_HASH SH_MAKE_NAME(insert_hash)
 #define SH_DELETE SH_MAKE_NAME(delete)
 #define SH_LOOKUP SH_MAKE_NAME(lookup)
+#define SH_LOOKUP_HASH SH_MAKE_NAME(lookup_hash)
 #define SH_GROW SH_MAKE_NAME(grow)
 #define SH_START_ITERATE SH_MAKE_NAME(start_iterate)
 #define SH_START_ITERATE_AT SH_MAKE_NAME(start_iterate_at)
@@ -91,6 +93,8 @@
 #define SH_DISTANCE_FROM_OPTIMAL SH_MAKE_NAME(distance)
 #define SH_INITIAL_BUCKET SH_MAKE_NAME(initial_bucket)
 #define SH_ENTRY_HASH SH_MAKE_NAME(entry_hash)
+#define SH_INSERT_HASH_INTERNAL SH_MAKE_NAME(insert_hash_internal)
+#define SH_LOOKUP_HASH_INTERNAL SH_MAKE_NAME(lookup_hash_internal)
 
 /* generate forward declarations necessary to use the hash table */
 #ifdef SH_DECLARE
@@ -144,7 +148,11 @@ SH_SCOPE void SH_DESTROY(SH_TYPE * tb);
 SH_SCOPE void SH_RESET(SH_TYPE * tb);
 SH_SCOPE void SH_GROW(SH_TYPE * tb, uint32 newsize);
 SH_SCOPE	SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found);
+SH_SCOPE	SH_ELEMENT_TYPE *SH_INSERT_HASH(SH_TYPE * tb, SH_KEY_TYPE key,
+											uint32 hash, bool *found);
 SH_SCOPE	SH_ELEMENT_TYPE *SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key);
+SH_SCOPE	SH_ELEMENT_TYPE *SH_LOOKUP_HASH(SH_TYPE * tb, SH_KEY_TYPE key,
+											uint32 hash);
 SH_SCOPE bool SH_DELETE(SH_TYPE * tb, SH_KEY_TYPE key);
 SH_SCOPE void SH_START_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
 SH_SCOPE void SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at);
@@ -492,14 +500,12 @@ SH_GROW(SH_TYPE * tb, uint32 newsize)
 }
 
 /*
- * Insert the key key into the hash-table, set *found to true if the key
- * already exists, false otherwise. Returns the hash-table entry in either
- * case.
+ * This is a separate static inline function, so it can be reliably be inlined
+ * into its wrapper functions even if SH_SCOPE is extern.
  */
-SH_SCOPE	SH_ELEMENT_TYPE *
-SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found)
+static inline	SH_ELEMENT_TYPE *
+SH_INSERT_HASH_INTERNAL(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash, bool *found)
 {
-	uint32		hash = SH_HASH_KEY(tb, key);
 	uint32		startelem;
 	uint32		curelem;
 	SH_ELEMENT_TYPE *data;
@@ -664,12 +670,36 @@ restart:
 }
 
 /*
- * Lookup up entry in hash table.  Returns NULL if key not present.
+ * Insert the key key into the hash-table, set *found to true if the key
+ * already exists, false otherwise. Returns the hash-table entry in either
+ * case.
  */
 SH_SCOPE	SH_ELEMENT_TYPE *
-SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key)
+SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found)
 {
-	uint32		hash = SH_HASH_KEY(tb, key);
+	uint32 hash = SH_HASH_KEY(tb, key);
+
+	return SH_INSERT_HASH_INTERNAL(tb, key, hash, found);
+}
+
+/*
+ * Insert the key key into the hash-table using an already-calculated
+ * hash. Set *found to true if the key already exists, false
+ * otherwise. Returns the hash-table entry in either case.
+ */
+SH_SCOPE	SH_ELEMENT_TYPE *
+SH_INSERT_HASH(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash, bool *found)
+{
+	return SH_INSERT_HASH_INTERNAL(tb, key, hash, found);
+}
+
+/*
+ * This is a separate static inline function, so it can be reliably be inlined
+ * into its wrapper functions even if SH_SCOPE is extern.
+ */
+static inline	SH_ELEMENT_TYPE *
+SH_LOOKUP_HASH_INTERNAL(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash)
+{
 	const uint32 startelem = SH_INITIAL_BUCKET(tb, hash);
 	uint32		curelem = startelem;
 
@@ -696,6 +726,28 @@ SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key)
 
 		curelem = SH_NEXT(tb, curelem, startelem);
 	}
+}
+
+/*
+ * Lookup up entry in hash table.  Returns NULL if key not present.
+ */
+SH_SCOPE	SH_ELEMENT_TYPE *
+SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key)
+{
+	uint32 hash = SH_HASH_KEY(tb, key);
+
+	return SH_LOOKUP_HASH_INTERNAL(tb, key, hash);
+}
+
+/*
+ * Lookup up entry in hash table using an already-calculated hash.
+ *
+ * Returns NULL if key not present.
+ */
+SH_SCOPE	SH_ELEMENT_TYPE *
+SH_LOOKUP_HASH(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash)
+{
+	return SH_LOOKUP_HASH_INTERNAL(tb, key, hash);
 }
 
 /*
@@ -971,8 +1023,10 @@ SH_STAT(SH_TYPE * tb)
 #undef SH_DESTROY
 #undef SH_RESET
 #undef SH_INSERT
+#undef SH_INSERT_HASH
 #undef SH_DELETE
 #undef SH_LOOKUP
+#undef SH_LOOKUP_HASH
 #undef SH_GROW
 #undef SH_START_ITERATE
 #undef SH_START_ITERATE_AT
@@ -989,3 +1043,5 @@ SH_STAT(SH_TYPE * tb)
 #undef SH_PREV
 #undef SH_DISTANCE_FROM_OPTIMAL
 #undef SH_ENTRY_HASH
+#undef SH_INSERT_HASH_INTERNAL
+#undef SH_LOOKUP_HASH_INTERNAL
