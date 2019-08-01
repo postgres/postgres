@@ -26,10 +26,14 @@
 
 PG_MODULE_MAGIC;
 
+/* Saved hook value in case of unload */
+static check_password_hook_type prev_check_password_hook = NULL;
+
 /* passwords shorter than this will be rejected */
 #define MIN_PWD_LENGTH 8
 
 extern void _PG_init(void);
+extern void _PG_fini(void);
 
 /*
  * check_password
@@ -61,6 +65,11 @@ check_password(const char *username,
 	int			i;
 	bool		pwd_has_letter,
 				pwd_has_nonletter;
+
+	if (prev_check_password_hook)
+		prev_check_password_hook(username, password,
+								 password_type, validuntil_time,
+								 validuntil_null);
 
 	switch (password_type)
 	{
@@ -143,5 +152,16 @@ void
 _PG_init(void)
 {
 	/* activate password checks when the module is loaded */
+	prev_check_password_hook = check_password_hook;
 	check_password_hook = check_password;
+}
+
+/*
+ * Module unload function
+ */
+void
+_PG_fini(void)
+{
+	/* uninstall hook */
+	check_password_hook = prev_check_password_hook;
 }
