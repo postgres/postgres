@@ -2113,8 +2113,10 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost,
 		if (opaque->btpo.level == level)
 			break;
 		if (opaque->btpo.level < level)
-			elog(ERROR, "btree level %u not found in index \"%s\"",
-				 level, RelationGetRelationName(rel));
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("btree level %u not found in index \"%s\"",
+									 level, RelationGetRelationName(rel))));
 
 		/* Descend to leftmost or rightmost child page */
 		if (rightmost)

@@ -1192,8 +1192,10 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	stack->bts_btentry = child;
 	pbuf = _bt_getstackbuf(rel, stack);
 	if (pbuf == InvalidBuffer)
-		elog(ERROR, "failed to re-find parent key in index \"%s\" for deletion target page %u",
-			 RelationGetRelationName(rel), child);
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("failed to re-find parent key in index \"%s\" for deletion target page %u",
+								 RelationGetRelationName(rel), child)));
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
 
@@ -1611,9 +1613,11 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	itemid = PageGetItemId(page, nextoffset);
 	itup = (IndexTuple) PageGetItem(page, itemid);
 	if (BTreeInnerTupleGetDownLink(itup) != rightsib)
-		elog(ERROR, "right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
-			 rightsib, target, BTreeInnerTupleGetDownLink(itup),
-			 BufferGetBlockNumber(topparent), RelationGetRelationName(rel));
+		ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
+									 rightsib, target, BTreeInnerTupleGetDownLink(itup),
+					 BufferGetBlockNumber(topparent), RelationGetRelationName(rel))));
 
 	/*
 	 * Any insert which would have gone on the leaf block will now go to its
@@ -1878,8 +1882,10 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 			 target, RelationGetRelationName(rel));
 	}
 	if (opaque->btpo_prev != leftsib)
-		elog(ERROR, "left link changed unexpectedly in block %u of index \"%s\"",
-			 target, RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("left link changed unexpectedly in block %u of index \"%s\"",
+								 target, RelationGetRelationName(rel))));
 
 	if (target == leafblkno)
 	{
@@ -1911,10 +1917,12 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	page = BufferGetPage(rbuf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (opaque->btpo_prev != target)
-		elog(ERROR, "right sibling's left-link doesn't match: "
-			 "block %u links to %u instead of expected %u in index \"%s\"",
-			 rightsib, opaque->btpo_prev, target,
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("right sibling's left-link doesn't match: "
+								 "block %u links to %u instead of expected %u in index \"%s\"",
+								 rightsib, opaque->btpo_prev, target,
+								 RelationGetRelationName(rel))));
 	rightsib_is_rightmost = P_RIGHTMOST(opaque);
 	*rightsib_empty = (P_FIRSTDATAKEY(opaque) > PageGetMaxOffsetNumber(page));
 

@@ -1966,35 +1966,43 @@ toast_fetch_datum(struct varlena *attr)
 		 * Some checks on the data we've found
 		 */
 		if (residx != nextidx)
-			elog(ERROR, "unexpected chunk number %d (expected %d) for toast value %u in %s",
-				 residx, nextidx,
-				 toast_pointer.va_valueid,
-				 RelationGetRelationName(toastrel));
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg_internal("unexpected chunk number %d (expected %d) for toast value %u in %s",
+									 residx, nextidx,
+									 toast_pointer.va_valueid,
+									 RelationGetRelationName(toastrel))));
 		if (residx < numchunks - 1)
 		{
 			if (chunksize != TOAST_MAX_CHUNK_SIZE)
-				elog(ERROR, "unexpected chunk size %d (expected %d) in chunk %d of %d for toast value %u in %s",
-					 chunksize, (int) TOAST_MAX_CHUNK_SIZE,
-					 residx, numchunks,
-					 toast_pointer.va_valueid,
-					 RelationGetRelationName(toastrel));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_CORRUPTED),
+						 errmsg_internal("unexpected chunk size %d (expected %d) in chunk %d of %d for toast value %u in %s",
+										 chunksize, (int) TOAST_MAX_CHUNK_SIZE,
+										 residx, numchunks,
+										 toast_pointer.va_valueid,
+										 RelationGetRelationName(toastrel))));
 		}
 		else if (residx == numchunks - 1)
 		{
 			if ((residx * TOAST_MAX_CHUNK_SIZE + chunksize) != ressize)
-				elog(ERROR, "unexpected chunk size %d (expected %d) in final chunk %d for toast value %u in %s",
-					 chunksize,
-					 (int) (ressize - residx * TOAST_MAX_CHUNK_SIZE),
-					 residx,
-					 toast_pointer.va_valueid,
-					 RelationGetRelationName(toastrel));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_CORRUPTED),
+						 errmsg_internal("unexpected chunk size %d (expected %d) in final chunk %d for toast value %u in %s",
+										 chunksize,
+										 (int) (ressize - residx * TOAST_MAX_CHUNK_SIZE),
+										 residx,
+										 toast_pointer.va_valueid,
+										 RelationGetRelationName(toastrel))));
 		}
 		else
-			elog(ERROR, "unexpected chunk number %d (out of range %d..%d) for toast value %u in %s",
-				 residx,
-				 0, numchunks - 1,
-				 toast_pointer.va_valueid,
-				 RelationGetRelationName(toastrel));
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg_internal("unexpected chunk number %d (out of range %d..%d) for toast value %u in %s",
+									 residx,
+									 0, numchunks - 1,
+									 toast_pointer.va_valueid,
+									 RelationGetRelationName(toastrel))));
 
 		/*
 		 * Copy the data into proper place in our result
@@ -2010,10 +2018,12 @@ toast_fetch_datum(struct varlena *attr)
 	 * Final checks that we successfully fetched the datum
 	 */
 	if (nextidx != numchunks)
-		elog(ERROR, "missing chunk number %d for toast value %u in %s",
-			 nextidx,
-			 toast_pointer.va_valueid,
-			 RelationGetRelationName(toastrel));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg_internal("missing chunk number %d for toast value %u in %s",
+								 nextidx,
+								 toast_pointer.va_valueid,
+								 RelationGetRelationName(toastrel))));
 
 	/*
 	 * End scan and close relations

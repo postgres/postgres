@@ -423,7 +423,9 @@ tuple_lock_retry:
 
 					/* otherwise xmin should not be dirty... */
 					if (TransactionIdIsValid(SnapshotDirty.xmin))
-						elog(ERROR, "t_xmin is uncommitted in tuple to be updated");
+						ereport(ERROR,
+								(errcode(ERRCODE_DATA_CORRUPTED),
+								 errmsg_internal("t_xmin is uncommitted in tuple to be updated")));
 
 					/*
 					 * If tuple is being updated by other transaction then we
