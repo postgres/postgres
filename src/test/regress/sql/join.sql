@@ -914,18 +914,21 @@ select * from int4_tbl a full join int4_tbl b on false;
 -- test for ability to use a cartesian join when necessary
 --
 
+create temp table q1 as select 1 as q1;
+create temp table q2 as select 0 as q2;
+analyze q1;
+analyze q2;
+
 explain (costs off)
 select * from
   tenk1 join int4_tbl on f1 = twothousand,
-  int4(sin(1)) q1,
-  int4(sin(0)) q2
+  q1, q2
 where q1 = thousand or q2 = thousand;
 
 explain (costs off)
 select * from
   tenk1 join int4_tbl on f1 = twothousand,
-  int4(sin(1)) q1,
-  int4(sin(0)) q2
+  q1, q2
 where thousand = (q1 + q2);
 
 --
@@ -1014,6 +1017,60 @@ select t1.unique2, t1.stringu1, t2.unique1, t2.stringu2 from
   left join tenk1 t2
   on (subq1.y1 = t2.unique1)
 where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
+
+--
+-- test inlining of immutable functions
+--
+create function f_immutable_int4(i integer) returns integer as
+$$ begin return i; end; $$ language plpgsql immutable;
+
+-- check optimization of function scan with join
+explain (costs off)
+select unique1 from tenk1, (select * from f_immutable_int4(1) x) x
+where x = unique1;
+
+explain (verbose, costs off)
+select unique1, x.*
+from tenk1, (select *, random() from f_immutable_int4(1) x) x
+where x = unique1;
+
+explain (costs off)
+select unique1 from tenk1, f_immutable_int4(1) x where x = unique1;
+
+explain (costs off)
+select unique1 from tenk1, lateral f_immutable_int4(1) x where x = unique1;
+
+explain (costs off)
+select unique1, x from tenk1 join f_immutable_int4(1) x on unique1 = x;
+
+explain (costs off)
+select unique1, x from tenk1 left join f_immutable_int4(1) x on unique1 = x;
+
+explain (costs off)
+select unique1, x from tenk1 right join f_immutable_int4(1) x on unique1 = x;
+
+explain (costs off)
+select unique1, x from tenk1 full join f_immutable_int4(1) x on unique1 = x;
+
+-- check that pullup of a const function allows further const-folding
+explain (costs off)
+select unique1 from tenk1, f_immutable_int4(1) x where x = 42;
+
+-- test inlining of immutable functions with PlaceHolderVars
+explain (costs off)
+select nt3.id
+from nt3 as nt3
+  left join
+    (select nt2.*, (nt2.b1 or i4 = 42) AS b3
+     from nt2 as nt2
+       left join
+         f_immutable_int4(0) i4
+         on i4 = nt2.nt1_id
+    ) as ss2
+    on ss2.id = nt3.nt2_id
+where nt3.id = 1 and ss2.b3;
+
+drop function f_immutable_int4(int);
 
 --
 -- test extraction of restriction OR clauses from join OR clause

@@ -520,6 +520,17 @@ INSERT INTO test_tsvector (t) VALUES ('345 qwerty');
 
 SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
 
+-- Test inlining of immutable constant functions
+
+-- to_tsquery(text) is not immutable, so it won't be inlined
+explain (costs off)
+select * from test_tsquery, to_tsquery('new') q where txtsample @@ q;
+
+-- to_tsquery(regconfig, text) is an immutable function.
+-- That allows us to get rid of using function scan and join at all.
+explain (costs off)
+select * from test_tsquery, to_tsquery('english', 'new') q where txtsample @@ q;
+
 -- test finding items in GIN's pending list
 create temp table pendtest (ts tsvector);
 create index pendtest_idx on pendtest using gin(ts);
