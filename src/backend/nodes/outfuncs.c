@@ -761,6 +761,9 @@ _outHashJoin(StringInfo str, const HashJoin *node)
 	_outJoinPlanInfo(str, (const Join *) node);
 
 	WRITE_NODE_FIELD(hashclauses);
+	WRITE_NODE_FIELD(hashoperators);
+	WRITE_NODE_FIELD(hashcollations);
+	WRITE_NODE_FIELD(hashkeys);
 }
 
 static void
@@ -863,6 +866,7 @@ _outHash(StringInfo str, const Hash *node)
 
 	_outPlanInfo(str, (const Plan *) node);
 
+	WRITE_NODE_FIELD(hashkeys);
 	WRITE_OID_FIELD(skewTable);
 	WRITE_INT_FIELD(skewColumn);
 	WRITE_BOOL_FIELD(skewInherit);

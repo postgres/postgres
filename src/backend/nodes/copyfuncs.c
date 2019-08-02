@@ -899,6 +899,9 @@ _copyHashJoin(const HashJoin *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(hashclauses);
+	COPY_NODE_FIELD(hashoperators);
+	COPY_NODE_FIELD(hashcollations);
+	COPY_NODE_FIELD(hashkeys);
 
 	return newnode;
 }
@@ -1066,6 +1069,7 @@ _copyHash(const Hash *from)
 	/*
 	 * copy remainder of node
 	 */
+	COPY_NODE_FIELD(hashkeys);
 	COPY_SCALAR_FIELD(skewTable);
 	COPY_SCALAR_FIELD(skewColumn);
 	COPY_SCALAR_FIELD(skewInherit);
