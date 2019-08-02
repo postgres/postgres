@@ -156,7 +156,7 @@ main (void)
 	ECPGdebug(1, stderr);
 
 	for (j = 0; j < 10; j++) {
-		char str[20];
+		char str[28];
 		numeric *value;
 		interval *inter;
 
