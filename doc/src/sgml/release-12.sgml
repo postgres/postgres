@@ -1133,20 +1133,17 @@ Author: Thomas Munro <tmunro@postgresql.org>
       <listitem>
 <!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2018-11-29 [88bdbd3f7] Add log_statement_sample_rate parameter
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2019-04-03 [799e22034] Log all statements from a sample of transactions
 -->
 
        <para>
-        Allow logging of only a percentage of statements and transactions
-        meeting <xref linkend="guc-log-min-duration-statement"/> criteria
+        Allow logging of statements from only a percentage of transactions
         (Adrien Nayrat)
        </para>
 
        <para>
-        The parameters <xref linkend="guc-log-statement-sample-rate"/>
-        and <xref linkend="guc-log-transaction-sample-rate"/> control this.
+        The parameter <xref linkend="guc-log-transaction-sample-rate"/>
+        controls this.
        </para>
       </listitem>
 
