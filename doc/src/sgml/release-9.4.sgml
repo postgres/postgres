@@ -1,6 +1,419 @@
 <!-- doc/src/sgml/release-9.4.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-4-24">
+  <title>Release 9.4.24</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2019-08-08</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.4.23.
+   For information about new features in the 9.4 major release, see
+   <xref linkend="release-9-4">.
+  </para>
+
+  <para>
+   The <productname>PostgreSQL</productname> community will stop
+   releasing updates for the 9.4.X release series in February 2020.
+   Users are encouraged to update to a newer release branch soon.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.4.24</title>
+
+   <para>
+    A dump/restore is not required for those running 9.4.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.4.18,
+    see <xref linkend="release-9-4-18">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_12_BR [f946a4091] 2019-06-24 16:43:21 -0400
+Branch: REL_11_STABLE [afaf48afb] 2019-06-24 16:43:05 -0400
+Branch: REL_10_STABLE [cb8962ce8] 2019-06-24 16:43:05 -0400
+Branch: REL9_6_STABLE [da1041fc3] 2019-06-24 16:43:05 -0400
+Branch: REL9_5_STABLE [316f68932] 2019-06-24 16:43:05 -0400
+Branch: REL9_4_STABLE [ddfb1b2ee] 2019-06-24 16:43:05 -0400
+-->
+     <para>
+      Fix failure of <command>ALTER TABLE ... ALTER COLUMN TYPE</command>
+      when altering multiple columns' types in one command (Tom Lane)
+     </para>
+
+     <para>
+      This fixes a regression introduced in the most recent minor releases:
+      indexes using the altered columns were not processed correctly,
+      leading to strange failures during <command>ALTER TABLE</command>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3093eb2b8] 2019-07-16 18:17:47 -0400
+Branch: REL_12_STABLE [e0d13dc6f] 2019-07-16 18:17:47 -0400
+Branch: REL_11_STABLE [46e2a18d0] 2019-07-16 18:17:47 -0400
+Branch: REL_10_STABLE [583025c3c] 2019-07-16 18:17:47 -0400
+Branch: REL9_6_STABLE [a6e7eb42d] 2019-07-16 18:17:47 -0400
+Branch: REL9_5_STABLE [f9208f246] 2019-07-16 18:17:47 -0400
+Branch: REL9_4_STABLE [67bd6adcb] 2019-07-16 18:17:47 -0400
+-->
+     <para>
+      Fix mishandling of multi-column foreign keys when rebuilding a
+      foreign key constraint (Tom Lane)
+     </para>
+
+     <para>
+      <command>ALTER TABLE</command> could make an incorrect decision about
+      whether revalidation of a foreign key is necessary, if not all
+      columns of the key are of the same type.  It seems likely that the
+      error would always have been in the conservative direction, that is
+      revalidating unnecessarily.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Jeff Davis <jdavis@postgresql.org>
+Branch: master [e6feef571] 2019-07-18 13:41:10 -0700
+Branch: REL_12_STABLE [613eabcd5] 2019-07-18 17:26:47 -0700
+Branch: REL_11_STABLE [f5f20deda] 2019-07-18 14:01:17 -0700
+Branch: REL_10_STABLE [955089d4d] 2019-07-18 16:49:10 -0700
+Branch: REL9_6_STABLE [56afeb765] 2019-07-18 16:53:17 -0700
+Branch: REL9_5_STABLE [8af1fccba] 2019-07-18 16:55:59 -0700
+Branch: REL9_4_STABLE [2be355498] 2019-07-18 17:01:44 -0700
+Branch: master [b538c90b1] 2019-07-18 17:04:50 -0700
+Branch: REL_12_STABLE [5245552dd] 2019-07-18 17:26:56 -0700
+Branch: REL_11_STABLE [477ebfc96] 2019-07-18 16:45:03 -0700
+Branch: REL_10_STABLE [b0a7e0f07] 2019-07-18 16:49:25 -0700
+Branch: REL9_6_STABLE [390bf90f7] 2019-07-18 16:53:25 -0700
+Branch: REL9_5_STABLE [f1c72294b] 2019-07-18 16:56:18 -0700
+Branch: REL9_4_STABLE [812623b69] 2019-07-18 17:01:58 -0700
+-->
+     <para>
+      Prevent incorrect canonicalization of date ranges
+      with <literal>infinity</literal> endpoints (Laurenz Albe)
+     </para>
+
+     <para>
+      It's incorrect to try to convert an open range to a closed one or
+      vice versa by incrementing or decrementing the endpoint value, if
+      the endpoint is infinite; so leave the range alone in such cases.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b9d2c5c7a] 2019-07-26 11:59:00 -0400
+Branch: REL_12_STABLE [01e0538e8] 2019-07-26 11:59:00 -0400
+Branch: REL_11_STABLE [ca918f99a] 2019-07-26 11:59:00 -0400
+Branch: REL_10_STABLE [fa854112f] 2019-07-26 11:59:00 -0400
+Branch: REL9_6_STABLE [30bed9f63] 2019-07-26 11:59:00 -0400
+Branch: REL9_5_STABLE [13e493cf6] 2019-07-26 11:59:00 -0400
+Branch: REL9_4_STABLE [81b29c871] 2019-07-26 11:59:00 -0400
+-->
+     <para>
+      Fix loss of fractional digits when converting very
+      large <type>money</type> values to <type>numeric</type> (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_12_BR [1323bfce5] 2019-06-22 20:31:50 -0400
+Branch: REL_11_STABLE [40dde8290] 2019-06-22 20:31:50 -0400
+Branch: REL_10_STABLE [05399b148] 2019-06-22 20:31:50 -0400
+Branch: REL9_6_STABLE [9895e3a36] 2019-06-22 20:31:50 -0400
+Branch: REL9_5_STABLE [36d2c3ad3] 2019-06-22 20:31:50 -0400
+Branch: REL9_4_STABLE [2854e2ab6] 2019-06-22 20:31:50 -0400
+-->
+     <para>
+      Fix spinlock assembly code for MIPS CPUs so that it works on
+      MIPS r6 (YunQiang Su)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b654714f9] 2019-07-25 12:11:17 -0400
+Branch: REL_12_STABLE [c58cf97f2] 2019-07-25 12:11:18 -0400
+Branch: REL_11_STABLE [11a0a4db3] 2019-07-25 12:11:19 -0400
+Branch: REL_10_STABLE [cb65b454f] 2019-07-25 12:11:21 -0400
+Branch: REL9_6_STABLE [ba27151d1] 2019-07-25 12:11:22 -0400
+Branch: REL9_5_STABLE [6266654db] 2019-07-25 12:11:23 -0400
+Branch: REL9_4_STABLE [8c52b77dd] 2019-07-25 12:11:24 -0400
+-->
+     <para>
+      Make <application>libpq</application> ignore carriage return
+      (<literal>\r</literal>) in connection service files
+      (Tom Lane, Michael Paquier)
+     </para>
+
+     <para>
+      In some corner cases, service files containing Windows-style
+      newlines could be mis-parsed, resulting in connection failures.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [07b39083c] 2019-07-31 15:42:49 -0400
+Branch: REL_12_STABLE [408f75938] 2019-07-31 15:42:50 -0400
+Branch: REL_11_STABLE [c64e29705] 2019-07-31 15:42:50 -0400
+Branch: REL_10_STABLE [7615afa48] 2019-07-31 15:42:50 -0400
+Branch: REL9_6_STABLE [b31a98022] 2019-07-31 15:42:50 -0400
+Branch: REL9_5_STABLE [9dd74ba5a] 2019-07-31 15:42:50 -0400
+Branch: REL9_4_STABLE [4e10b6f82] 2019-07-31 15:42:50 -0400
+-->
+     <para>
+      Fix <application>pg_dump</application> to ensure that custom operator
+      classes are dumped in the right order (Tom Lane)
+     </para>
+
+     <para>
+      If a user-defined opclass is the subtype opclass of a user-defined
+      range type, related objects were dumped in the wrong order,
+      producing an unrestorable dump.  (The underlying failure to handle
+      opclass dependencies might manifest in other cases too, but this is
+      the only known case.)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [b2a3d706b] 2019-08-01 09:37:28 +0900
+Branch: REL_12_STABLE [20f5cb195] 2019-08-01 09:37:48 +0900
+Branch: REL_11_STABLE [a7eb28d0c] 2019-08-01 09:38:02 +0900
+Branch: REL_10_STABLE [cb0074417] 2019-08-01 09:38:14 +0900
+Branch: REL9_6_STABLE [957b822b5] 2019-08-01 09:38:20 +0900
+Branch: REL9_5_STABLE [4536e494f] 2019-08-01 09:38:25 +0900
+Branch: REL9_4_STABLE [eea28a3cb] 2019-08-01 09:38:29 +0900
+-->
+     <para>
+      Fix <filename>contrib/passwordcheck</filename> to coexist with other
+      users of <varname>check_password_hook</varname> (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f5a4ab23e] 2019-07-25 11:02:43 -0400
+Branch: REL_12_STABLE [665329abe] 2019-07-25 11:02:57 -0400
+Branch: REL_11_STABLE [5a1c61bdf] 2019-07-25 11:03:08 -0400
+Branch: REL_10_STABLE [5c3d47287] 2019-07-25 11:03:13 -0400
+Branch: REL9_6_STABLE [0a9ba5baa] 2019-07-25 11:03:21 -0400
+Branch: REL9_5_STABLE [b22e24983] 2019-07-25 11:03:30 -0400
+Branch: REL9_4_STABLE [0e259d4bc] 2019-07-25 11:03:37 -0400
+-->
+     <para>
+      Fix <filename>contrib/sepgsql</filename> tests to work under recent
+      SELinux releases (Mike Palmiotto)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_12_BR [eb9812f27] 2019-05-21 13:11:57 -0400
+Branch: REL_11_STABLE [8d21512dc] 2019-07-22 17:14:22 -0400
+Branch: REL_10_STABLE [7ac7bf50c] 2019-07-22 17:14:22 -0400
+Branch: REL9_6_STABLE [75348a733] 2019-07-22 17:14:22 -0400
+Branch: REL9_5_STABLE [69c3d5191] 2019-07-22 17:14:22 -0400
+Branch: REL9_4_STABLE [19f9a5aed] 2019-07-22 17:14:22 -0400
+-->
+     <para>
+      Reduce <systemitem>stderr</systemitem> output
+      from <application>pg_upgrade</application>'s test script (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [2b1394fc2] 2019-07-02 14:02:33 +0900
+Branch: REL_12_STABLE [f2d069ce9] 2019-07-03 08:57:22 +0900
+Branch: REL_11_STABLE [721963f24] 2019-07-03 08:57:39 +0900
+Branch: REL_10_STABLE [0ce8e49b2] 2019-07-03 08:58:04 +0900
+Branch: REL9_6_STABLE [78aaffd28] 2019-07-03 08:58:17 +0900
+Branch: REL9_5_STABLE [3337fd192] 2019-07-03 08:58:28 +0900
+Branch: REL9_4_STABLE [d49c127d9] 2019-07-03 08:58:34 +0900
+-->
+     <para>
+      Support building Postgres with Microsoft Visual Studio 2019
+      (Haribabu Kommi)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [20e99cddd] 2019-07-25 11:38:43 -0400
+Branch: REL_12_STABLE [6e5417d77] 2019-07-25 11:39:26 -0400
+Branch: REL_11_STABLE [fe9e63284] 2019-07-25 11:39:34 -0400
+Branch: REL_10_STABLE [165f4eecf] 2019-07-25 11:39:45 -0400
+Branch: REL9_6_STABLE [09fa17160] 2019-07-25 11:40:09 -0400
+Branch: REL9_5_STABLE [4f435f78d] 2019-07-25 11:40:23 -0400
+Branch: REL9_4_STABLE [53fd0f04b] 2019-07-25 11:40:34 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [cb9bb1578] 2019-07-25 14:42:02 -0400
+Branch: REL_12_STABLE [b24537046] 2019-07-25 14:42:08 -0400
+Branch: REL_11_STABLE [e465d9d40] 2019-07-25 14:42:12 -0400
+Branch: REL_10_STABLE [ed304d1e2] 2019-07-25 14:42:16 -0400
+Branch: REL9_6_STABLE [3f1c6d048] 2019-07-25 14:42:21 -0400
+Branch: REL9_5_STABLE [4583605e6] 2019-07-25 14:42:25 -0400
+Branch: REL9_4_STABLE [7ea91ae19] 2019-07-25 14:42:30 -0400
+-->
+     <para>
+      In Visual Studio builds, honor <literal>WindowsSDKVersion</literal>
+      environment variable, if that's set (Peifeng Qiu)
+     </para>
+
+     <para>
+      This fixes build failures in some configurations.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master Release: REL_12_BR [d993e0fb8] 2019-06-26 10:44:46 +0900
+Branch: REL_11_STABLE [0e08a3a1f] 2019-06-26 23:04:32 +0900
+Branch: REL_10_STABLE [a55980559] 2019-06-26 23:05:06 +0900
+Branch: REL9_6_STABLE [532960669] 2019-06-26 23:05:34 +0900
+Branch: REL9_5_STABLE [d908a0087] 2019-06-26 23:05:54 +0900
+Branch: REL9_4_STABLE [05b2758c3] 2019-06-26 23:06:14 +0900
+-->
+     <para>
+      Support OpenSSL 1.1.0 and newer in Visual Studio builds
+      (Juan Jos&eacute; Santamar&iacute;a Flecha, Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3754113f3] 2019-07-26 12:45:32 -0400
+Branch: REL_12_STABLE [e31dfe99c] 2019-07-26 12:45:52 -0400
+Branch: REL_11_STABLE [4459266bf] 2019-07-26 12:45:57 -0400
+Branch: REL_10_STABLE [ae9b91be7] 2019-07-26 12:46:03 -0400
+Branch: REL9_6_STABLE [51b47471f] 2019-07-26 12:46:10 -0400
+Branch: REL9_5_STABLE [9ef811742] 2019-07-26 12:46:15 -0400
+Branch: REL9_4_STABLE [6c4ffab76] 2019-07-26 12:46:20 -0400
+-->
+     <para>
+      Avoid choosing <literal>localtime</literal>
+      or <literal>posixrules</literal> as <varname>TimeZone</varname>
+      during <application>initdb</application> (Tom Lane)
+     </para>
+
+     <para>
+      In some cases <application>initdb</application> would choose one of
+      these artificial zone names over the <quote>real</quote> zone name.
+      Prefer any other match to the C library's timezone behavior over
+      these two.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8ab66081c] 2019-07-26 13:07:08 -0400
+Branch: REL_12_STABLE [d095b2fe6] 2019-07-26 13:07:08 -0400
+Branch: REL_11_STABLE [d304313b0] 2019-07-26 13:07:08 -0400
+Branch: REL_10_STABLE [55862b2e9] 2019-07-26 13:07:08 -0400
+Branch: REL9_6_STABLE [f6c7c64e9] 2019-07-26 13:07:08 -0400
+Branch: REL9_5_STABLE [f227aecb9] 2019-07-26 13:07:08 -0400
+Branch: REL9_4_STABLE [e49132e63] 2019-07-26 13:07:08 -0400
+-->
+     <para>
+      Adjust <structname>pg_timezone_names</structname> view to show
+      the <literal>Factory</literal> time zone if and only if it has a
+      short abbreviation (Tom Lane)
+     </para>
+
+     <para>
+      Historically, IANA set up this artificial zone with
+      an <quote>abbreviation</quote> like <literal>Local time zone must be
+      set--see zic manual page</literal>.  Modern versions of the tzdb
+      database show <literal>-00</literal> instead, but some platforms
+      alter the data to show one or another of the historical phrases.
+      Show this zone only if it uses the modern abbreviation.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f285322f9] 2019-07-17 18:26:23 -0400
+Branch: REL_12_STABLE [59cea8f36] 2019-07-17 18:26:23 -0400
+Branch: REL_11_STABLE [1d1ff50d2] 2019-07-17 18:26:23 -0400
+Branch: REL_10_STABLE [ccc323b57] 2019-07-17 18:26:24 -0400
+Branch: REL9_6_STABLE [22e73dea3] 2019-07-17 18:26:24 -0400
+Branch: REL9_5_STABLE [417845646] 2019-07-17 18:26:24 -0400
+Branch: REL9_4_STABLE [6db29a8fc] 2019-07-17 18:26:24 -0400
+Branch: master [421466863] 2019-07-19 14:48:57 -0400
+Branch: REL_12_STABLE [533522846] 2019-07-19 14:49:05 -0400
+Branch: REL_11_STABLE [ee9417a04] 2019-07-19 14:49:10 -0400
+Branch: REL_10_STABLE [8a4fa297a] 2019-07-19 14:49:15 -0400
+Branch: REL9_6_STABLE [e480d8350] 2019-07-19 14:49:21 -0400
+Branch: REL9_5_STABLE [caa22d72a] 2019-07-19 14:49:26 -0400
+Branch: REL9_4_STABLE [847561c1d] 2019-07-19 14:49:31 -0400
+-->
+     <para>
+      Sync our copy of the timezone library with IANA tzcode release 2019b
+      (Tom Lane)
+     </para>
+
+     <para>
+      This adds support for <application>zic</application>'s new <option>-b
+      slim</option> option to reduce the size of the installed zone files.
+      We are not currently using that, but may enable it in future.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [93907478e] 2019-07-17 19:15:21 -0400
+Branch: REL_12_STABLE [d4f283162] 2019-07-17 19:15:35 -0400
+Branch: REL_11_STABLE [bcafb675a] 2019-07-17 19:15:42 -0400
+Branch: REL_10_STABLE [53256e892] 2019-07-17 19:15:48 -0400
+Branch: REL9_6_STABLE [e3441b2a2] 2019-07-17 19:15:55 -0400
+Branch: REL9_5_STABLE [a0c905f23] 2019-07-17 19:16:01 -0400
+Branch: REL9_4_STABLE [8474656d9] 2019-07-17 19:16:13 -0400
+-->
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2019b for DST law changes in Brazil, plus
+      historical corrections for Hong Kong, Italy, and Palestine.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-4-23">
   <title>Release 9.4.23</title>
 
