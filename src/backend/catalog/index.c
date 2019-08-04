@@ -2229,7 +2229,7 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 IndexInfo *
 BuildIndexInfo(Relation index)
 {
-	IndexInfo  *ii = makeNode(IndexInfo);
+	IndexInfo  *ii;
 	Form_pg_index indexStruct = index->rd_index;
 	int			i;
 	int			numAtts;
@@ -2239,21 +2239,23 @@ BuildIndexInfo(Relation index)
 	if (numAtts < 1 || numAtts > INDEX_MAX_KEYS)
 		elog(ERROR, "invalid indnatts %d for index %u",
 			 numAtts, RelationGetRelid(index));
-	ii->ii_NumIndexAttrs = numAtts;
-	ii->ii_NumIndexKeyAttrs = indexStruct->indnkeyatts;
-	Assert(ii->ii_NumIndexKeyAttrs != 0);
-	Assert(ii->ii_NumIndexKeyAttrs <= ii->ii_NumIndexAttrs);
 
+	/*
+	 * Create the node, fetching any expressions needed for expressional
+	 * indexes and index predicate if any.
+	 */
+	ii = makeIndexInfo(indexStruct->indnatts,
+					   indexStruct->indnkeyatts,
+					   index->rd_rel->relam,
+					   RelationGetIndexExpressions(index),
+					   RelationGetIndexPredicate(index),
+					   indexStruct->indisunique,
+					   indexStruct->indisready,
+					   false);
+
+	/* fill in attribute numbers */
 	for (i = 0; i < numAtts; i++)
 		ii->ii_IndexAttrNumbers[i] = indexStruct->indkey.values[i];
-
-	/* fetch any expressions needed for expressional indexes */
-	ii->ii_Expressions = RelationGetIndexExpressions(index);
-	ii->ii_ExpressionsState = NIL;
-
-	/* fetch index predicate if any */
-	ii->ii_Predicate = RelationGetIndexPredicate(index);
-	ii->ii_PredicateState = NULL;
 
 	/* fetch exclusion constraint info if any */
 	if (indexStruct->indisexclusion)
@@ -2263,30 +2265,6 @@ BuildIndexInfo(Relation index)
 								 &ii->ii_ExclusionProcs,
 								 &ii->ii_ExclusionStrats);
 	}
-	else
-	{
-		ii->ii_ExclusionOps = NULL;
-		ii->ii_ExclusionProcs = NULL;
-		ii->ii_ExclusionStrats = NULL;
-	}
-
-	/* other info */
-	ii->ii_Unique = indexStruct->indisunique;
-	ii->ii_ReadyForInserts = indexStruct->indisready;
-	/* assume not doing speculative insertion for now */
-	ii->ii_UniqueOps = NULL;
-	ii->ii_UniqueProcs = NULL;
-	ii->ii_UniqueStrats = NULL;
-
-	/* initialize index-build state to default */
-	ii->ii_Concurrent = false;
-	ii->ii_BrokenHotChain = false;
-	ii->ii_ParallelWorkers = 0;
-
-	/* set up for possible use by index AM */
-	ii->ii_Am = index->rd_rel->relam;
-	ii->ii_AmCache = NULL;
-	ii->ii_Context = CurrentMemoryContext;
 
 	return ii;
 }
