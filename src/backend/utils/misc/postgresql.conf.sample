@@ -488,14 +488,10 @@
 					#   fatal
 					#   panic (effectively off)
 
-#log_min_duration_statement = -1	# logs statements and their durations
-					# according to log_statement_sample_rate. -1 is disabled,
-					# 0 logs all statements, > 0 logs only statements running
-					# at least this number of milliseconds.
-
-#log_statement_sample_rate = 1.0	# Fraction of logged statements exceeding
-					# log_min_duration_statement to be logged.
-					# 1.0 logs all such statements, 0.0 never logs.
+#log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
+					# and their durations, > 0 logs only
+					# statements running at least this number
+					# of milliseconds
 
 #log_transaction_sample_rate = 0.0	# Fraction of transactions whose statements
 					# are logged regardless of their duration. 1.0 logs all
