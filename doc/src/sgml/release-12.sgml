@@ -1159,7 +1159,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
        <para>
-        Report progress of <command>CREATE INDEX</command> and
+        Add progress reporting to <command>CREATE INDEX</command> and
         <command>REINDEX</command> operations (Álvaro Herrera, Peter
         Eisentraut)
        </para>
