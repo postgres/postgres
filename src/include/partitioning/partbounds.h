@@ -56,7 +56,6 @@
  * pointed by remainder produced when hash value of the datum-tuple is divided
  * by the greatest modulus.
  */
-
 typedef struct PartitionBoundInfoData
 {
 	char		strategy;		/* hash, list or range? */

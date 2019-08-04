@@ -517,15 +517,13 @@ explain (costs off) select * from rlp where a <= 31;
          Filter: (a <= 31)
    ->  Seq Scan on rlp5_1
          Filter: (a <= 31)
-   ->  Seq Scan on rlp5_default
-         Filter: (a <= 31)
    ->  Seq Scan on rlp_default_10
          Filter: (a <= 31)
    ->  Seq Scan on rlp_default_30
          Filter: (a <= 31)
    ->  Seq Scan on rlp_default_default
          Filter: (a <= 31)
-(29 rows)
+(27 rows)
 
 explain (costs off) select * from rlp where a = 1 or a = 7;
               QUERY PLAN              
@@ -573,11 +571,7 @@ explain (costs off) select * from rlp where a > 20 and a < 27;
          Filter: ((a > 20) AND (a < 27))
    ->  Seq Scan on rlp4_2
          Filter: ((a > 20) AND (a < 27))
-   ->  Seq Scan on rlp4_default
-         Filter: ((a > 20) AND (a < 27))
-   ->  Seq Scan on rlp_default_default
-         Filter: ((a > 20) AND (a < 27))
-(9 rows)
+(5 rows)
 
 explain (costs off) select * from rlp where a = 29;
            QUERY PLAN           
@@ -602,6 +596,16 @@ explain (costs off) select * from rlp where a >= 29;
    ->  Seq Scan on rlp_default_default
          Filter: (a >= 29)
 (11 rows)
+
+explain (costs off) select * from rlp where a < 1 or (a > 20 and a < 25);
+                      QUERY PLAN                      
+------------------------------------------------------
+ Append
+   ->  Seq Scan on rlp1
+         Filter: ((a < 1) OR ((a > 20) AND (a < 25)))
+   ->  Seq Scan on rlp4_1
+         Filter: ((a < 1) OR ((a > 20) AND (a < 25)))
+(5 rows)
 
 -- redundant clauses are eliminated
 explain (costs off) select * from rlp where a > 1 and a = 10;	/* only default */
