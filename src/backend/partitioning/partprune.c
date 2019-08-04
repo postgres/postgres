@@ -735,6 +735,7 @@ get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
 	PruneStepResult **results,
 			   *final_result;
 	ListCell   *lc;
+	bool		scan_default;
 
 	/* If there are no pruning steps then all partitions match. */
 	if (num_steps == 0)
@@ -786,30 +787,39 @@ get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
 	Assert(final_result != NULL);
 	i = -1;
 	result = NULL;
+	scan_default = final_result->scan_default;
 	while ((i = bms_next_member(final_result->bound_offsets, i)) >= 0)
 	{
 		int			partindex = context->boundinfo->indexes[i];
 
-		/*
-		 * In range and hash partitioning cases, some slots may contain -1,
-		 * indicating that no partition has been defined to accept a given
-		 * range of data or for a given remainder, respectively. The default
-		 * partition, if any, in case of range partitioning, will be added to
-		 * the result, because the specified range still satisfies the query's
-		 * conditions.
-		 */
-		if (partindex >= 0)
-			result = bms_add_member(result, partindex);
+		if (partindex < 0)
+		{
+			/*
+			 * In range partitioning cases, if a partition index is -1 it
+			 * means that the bound at the offset is the upper bound for a
+			 * range not covered by any partition (other than a possible
+			 * default partition).  In hash partitioning, the same means no
+			 * partition has been defined for the corresponding remainder
+			 * value.
+			 *
+			 * In either case, the value is still part of the queried range of
+			 * values, so mark to scan the default partition if one exists.
+			 */
+			scan_default |= partition_bound_has_default(context->boundinfo);
+			continue;
+		}
+
+		result = bms_add_member(result, partindex);
 	}
 
-	/* Add the null and/or default partition if needed and if present. */
+	/* Add the null and/or default partition if needed and present. */
 	if (final_result->scan_null)
 	{
 		Assert(context->strategy == PARTITION_STRATEGY_LIST);
 		Assert(partition_bound_accepts_nulls(context->boundinfo));
 		result = bms_add_member(result, context->boundinfo->null_index);
 	}
-	if (final_result->scan_default)
+	if (scan_default)
 	{
 		Assert(context->strategy == PARTITION_STRATEGY_LIST ||
 			   context->strategy == PARTITION_STRATEGY_RANGE);
@@ -2438,6 +2448,11 @@ get_matching_hash_bounds(PartitionPruneContext *context,
  * get_matching_list_bounds
  *		Determine the offsets of list bounds matching the specified value,
  *		according to the semantics of the given operator strategy
+ *
+ * scan_default will be set in the returned struct, if the default partition
+ * needs to be scanned, provided one exists at all.  scan_null will be set if
+ * the special null-accepting partition needs to be scanned.
+ *
  * 'opstrategy' if non-zero must be a btree strategy number.
  *
  * 'value' contains the value to use for pruning.
@@ -2640,8 +2655,13 @@ get_matching_list_bounds(PartitionPruneContext *context,
  * Each datum whose offset is in result is to be treated as the upper bound of
  * the partition that will contain the desired values.
  *
- * If default partition needs to be scanned for given values, set scan_default
- * in result if present.
+ * scan_default is set in the returned struct if a default partition exists
+ * and we're absolutely certain that it needs to be scanned.  We do *not* set
+ * it just because values match portions of the key space uncovered by
+ * partitions other than default (space which we normally assume to belong to
+ * the default partition): the final set of bounds obtained after combining
+ * multiple pruning steps might exclude it, so we infer its inclusion
+ * elsewhere.
  *
  * 'opstrategy' if non-zero must be a btree strategy number.
  *
@@ -2667,8 +2687,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 	int		   *partindices = boundinfo->indexes;
 	int			off,
 				minoff,
-				maxoff,
-				i;
+				maxoff;
 	bool		is_equal;
 	bool		inclusive = false;
 
@@ -2698,13 +2717,15 @@ get_matching_range_bounds(PartitionPruneContext *context,
 	 */
 	if (nvalues == 0)
 	{
+		/* ignore key space not covered by any partitions */
 		if (partindices[minoff] < 0)
 			minoff++;
 		if (partindices[maxoff] < 0)
 			maxoff--;
 
 		result->scan_default = partition_bound_has_default(boundinfo);
-		Assert(minoff >= 0 && maxoff >= 0);
+		Assert(partindices[minoff] >= 0 &&
+			   partindices[maxoff] >= 0);
 		result->bound_offsets = bms_add_range(NULL, minoff, maxoff);
 
 		return result;
@@ -2732,11 +2753,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 				if (nvalues == partnatts)
 				{
 					/* There can only be zero or one matching partition. */
-					if (partindices[off + 1] >= 0)
-						result->bound_offsets = bms_make_singleton(off + 1);
-					else
-						result->scan_default =
-							partition_bound_has_default(boundinfo);
+					result->bound_offsets = bms_make_singleton(off + 1);
 					return result;
 				}
 				else
@@ -2824,57 +2841,21 @@ get_matching_range_bounds(PartitionPruneContext *context,
 					maxoff = off + 1;
 				}
 
-				/*
-				 * Skip if minoff/maxoff are actually the upper bound of a
-				 * un-assigned portion of values.
-				 */
-				if (partindices[minoff] < 0 && minoff < boundinfo->ndatums)
-					minoff++;
-				if (partindices[maxoff] < 0 && maxoff >= 1)
-					maxoff--;
-
-				/*
-				 * There may exist a range of values unassigned to any
-				 * non-default partition between the datums at minoff and
-				 * maxoff.  Add the default partition in that case.
-				 */
-				if (partition_bound_has_default(boundinfo))
-				{
-					for (i = minoff; i <= maxoff; i++)
-					{
-						if (partindices[i] < 0)
-						{
-							result->scan_default = true;
-							break;
-						}
-					}
-				}
-
 				Assert(minoff >= 0 && maxoff >= 0);
 				result->bound_offsets = bms_add_range(NULL, minoff, maxoff);
 			}
-			else if (off >= 0)	/* !is_equal */
+			else
 			{
 				/*
 				 * The lookup value falls in the range between some bounds in
 				 * boundinfo.  'off' would be the offset of the greatest bound
 				 * that is <= lookup value, so add off + 1 to the result
 				 * instead as the offset of the upper bound of the only
-				 * partition that may contain the lookup value.
+				 * partition that may contain the lookup value.  If 'off' is
+				 * -1 indicating that all bounds are greater, then we simply
+				 * end up adding the first bound's offset, that is, 0.
 				 */
-				if (partindices[off + 1] >= 0)
-					result->bound_offsets = bms_make_singleton(off + 1);
-				else
-					result->scan_default =
-						partition_bound_has_default(boundinfo);
-			}
-			else
-			{
-				/*
-				 * off < 0: the lookup value is smaller than all bounds, so
-				 * only the default partition qualifies, if there is one.
-				 */
-				result->scan_default = partition_bound_has_default(boundinfo);
+				result->bound_offsets = bms_make_singleton(off + 1);
 			}
 
 			return result;
@@ -2945,16 +2926,18 @@ get_matching_range_bounds(PartitionPruneContext *context,
 
 					minoff = inclusive ? off : off + 1;
 				}
-
-				/*
-				 * lookup value falls in the range between some bounds in
-				 * boundinfo.  off would be the offset of the greatest bound
-				 * that is <= lookup value, so add off + 1 to the result
-				 * instead as the offset of the upper bound of the smallest
-				 * partition that may contain the lookup value.
-				 */
 				else
+				{
+
+					/*
+					 * lookup value falls in the range between some bounds in
+					 * boundinfo.  off would be the offset of the greatest
+					 * bound that is <= lookup value, so add off + 1 to the
+					 * result instead as the offset of the upper bound of the
+					 * smallest partition that may contain the lookup value.
+					 */
 					minoff = off + 1;
+				}
 			}
 			break;
 
@@ -2972,16 +2955,7 @@ get_matching_range_bounds(PartitionPruneContext *context,
 												boundinfo,
 												nvalues, values,
 												&is_equal);
-			if (off < 0)
-			{
-				/*
-				 * All bounds are greater than the key, so we could only
-				 * expect to find the lookup key in the default partition.
-				 */
-				result->scan_default = partition_bound_has_default(boundinfo);
-				return result;
-			}
-			else
+			if (off >= 0)
 			{
 				/*
 				 * See the comment above.
@@ -3029,6 +3003,14 @@ get_matching_range_bounds(PartitionPruneContext *context,
 				else
 					maxoff = off;
 			}
+			else
+			{
+				/*
+				 * 'off' is -1 indicating that all bounds are greater, so just
+				 * set the first bound's offset as maxoff.
+				 */
+				maxoff = off + 1;
+			}
 			break;
 
 		default:
@@ -3036,58 +3018,43 @@ get_matching_range_bounds(PartitionPruneContext *context,
 			break;
 	}
 
+	Assert(minoff >= 0 && minoff <= boundinfo->ndatums);
+	Assert(maxoff >= 0 && maxoff <= boundinfo->ndatums);
+
 	/*
-	 * Skip a gap and when doing so, check if the bound contains a finite
-	 * value to decide if we need to add the default partition.  If it's an
-	 * infinite bound, we need not add the default partition, as having an
-	 * infinite bound means the partition in question catches any values that
-	 * would otherwise be in the default partition.
+	 * If the smallest partition to return has MINVALUE (negative infinity) as
+	 * its lower bound, increment it to point to the next finite bound
+	 * (supposedly its upper bound), so that we don't advertently end up
+	 * scanning the default partition.
 	 */
-	if (partindices[minoff] < 0)
+	if (minoff < boundinfo->ndatums && partindices[minoff] < 0)
 	{
 		int			lastkey = nvalues - 1;
 
-		if (minoff >= 0 &&
-			minoff < boundinfo->ndatums &&
-			boundinfo->kind[minoff][lastkey] ==
-			PARTITION_RANGE_DATUM_VALUE)
-			result->scan_default = partition_bound_has_default(boundinfo);
-
-		minoff++;
+		if (boundinfo->kind[minoff][lastkey] ==
+			PARTITION_RANGE_DATUM_MINVALUE)
+		{
+			minoff++;
+			Assert(boundinfo->indexes[minoff] >= 0);
+		}
 	}
 
 	/*
-	 * Skip a gap.  See the above comment about how we decide whether or not
-	 * to scan the default partition based whether the datum that will become
-	 * the maximum datum is finite or not.
+	 * If the previous greatest partition has MAXVALUE (positive infinity) as
+	 * its upper bound (something only possible to do with multi-column range
+	 * partitioning), we scan switch to it as the greatest partition to
+	 * return.  Again, so that we don't advertently end up scanning the
+	 * default partition.
 	 */
 	if (maxoff >= 1 && partindices[maxoff] < 0)
 	{
 		int			lastkey = nvalues - 1;
 
-		if (maxoff >= 0 &&
-			maxoff <= boundinfo->ndatums &&
-			boundinfo->kind[maxoff - 1][lastkey] ==
-			PARTITION_RANGE_DATUM_VALUE)
-			result->scan_default = partition_bound_has_default(boundinfo);
-
-		maxoff--;
-	}
-
-	if (partition_bound_has_default(boundinfo))
-	{
-		/*
-		 * There may exist a range of values unassigned to any non-default
-		 * partition between the datums at minoff and maxoff.  Add the default
-		 * partition in that case.
-		 */
-		for (i = minoff; i <= maxoff; i++)
+		if (boundinfo->kind[maxoff - 1][lastkey] ==
+			PARTITION_RANGE_DATUM_MAXVALUE)
 		{
-			if (partindices[i] < 0)
-			{
-				result->scan_default = true;
-				break;
-			}
+			maxoff--;
+			Assert(boundinfo->indexes[maxoff] >= 0);
 		}
 	}
 
@@ -3332,14 +3299,24 @@ perform_pruning_combine_step(PartitionPruneContext *context,
 
 	/*
 	 * A combine step without any source steps is an indication to not perform
-	 * any partition pruning, we just return all partitions.
+	 * any partition pruning.  Return all datum indexes in that case.
 	 */
 	result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
 	if (list_length(cstep->source_stepids) == 0)
 	{
 		PartitionBoundInfo boundinfo = context->boundinfo;
+		int			rangemax;
 
-		result->bound_offsets = bms_add_range(NULL, 0, boundinfo->ndatums - 1);
+		/*
+		 * Add all valid offsets into the boundinfo->indexes array.  For range
+		 * partitioning, boundinfo->indexes contains (boundinfo->ndatums + 1)
+		 * valid entries; otherwise there are boundinfo->ndatums.
+		 */
+		rangemax = context->strategy == PARTITION_STRATEGY_RANGE ?
+			boundinfo->ndatums : boundinfo->ndatums - 1;
+
+		result->bound_offsets =
+			bms_add_range(result->bound_offsets, 0, rangemax);
 		result->scan_default = partition_bound_has_default(boundinfo);
 		result->scan_null = partition_bound_accepts_nulls(boundinfo);
 		return result;
