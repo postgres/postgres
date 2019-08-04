@@ -49,9 +49,9 @@ Branch: REL9_4_STABLE [ddfb1b2ee] 2019-06-24 16:43:05 -0400
      </para>
 
      <para>
-      This fixes a regression introduced in June's minor releases: indexes
-      using the altered columns were not processed correctly, leading to
-      strange failures during <command>ALTER TABLE</command>.
+      This fixes a regression introduced in the most recent minor releases:
+      indexes using the altered columns were not processed correctly,
+      leading to strange failures during <command>ALTER TABLE</command>.
      </para>
     </listitem>
 
@@ -162,19 +162,28 @@ Branch: REL_11_STABLE [e4f2d4fe9] 2019-06-27 11:57:10 -0400
 
     <listitem>
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [489247b0e] 2019-08-04 11:18:45 -0400
+Branch: REL_12_STABLE [865440714] 2019-08-04 11:18:45 -0400
+Branch: REL_11_STABLE [e3967a16d] 2019-08-04 11:18:45 -0400
+-->
+     <para>
+      Prune a partitioned table's default partition (that is, avoid
+      uselessly scanning it) in more cases (Yuzuko Hosoya)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: David Rowley <drowley@postgresql.org>
 Branch: master [cfde23493] 2019-07-12 19:12:38 +1200
 Branch: REL_12_STABLE [30a268ed2] 2019-07-12 19:11:45 +1200
 Branch: REL_11_STABLE [757f1baa8] 2019-07-12 19:10:12 +1200
 -->
      <para>
-      Fix possible failure to prune away partitions when there are
+      Fix possible failure to prune partitions when there are
       multiple partition key columns of <type>boolean</type> type
       (David Rowley)
-     </para>
-
-     <para>
-      This led to inefficient queries, though not any wrong answers.
      </para>
     </listitem>
 
@@ -571,6 +580,19 @@ Branch: REL_11_STABLE [577c8802d] 2019-07-20 11:11:52 -0700
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e0f504885] 2019-08-04 14:05:34 -0400
+Branch: REL_12_STABLE [df521ab79] 2019-08-04 14:05:35 -0400
+Branch: REL_11_STABLE [e8b639357] 2019-08-04 14:05:35 -0400
+-->
+     <para>
+      Fix handling of Perl <literal>undef</literal> values
+      in <filename>contrib/jsonb_plperl</filename> (Ivan Panchenko)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [b2a3d706b] 2019-08-01 09:37:28 +0900
 Branch: REL_12_STABLE [20f5cb195] 2019-08-01 09:37:48 +0900
@@ -609,10 +631,15 @@ Author: Thomas Munro <tmunro@postgresql.org>
 Branch: master [27cd521e6] 2019-07-26 10:01:18 +1200
 Branch: REL_12_STABLE [3964d3bce] 2019-07-26 10:09:31 +1200
 Branch: REL_11_STABLE [77d5dea38] 2019-07-26 10:09:54 +1200
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [803466b6f] 2019-08-04 13:07:12 -0400
+Branch: REL_12_STABLE [4844c6303] 2019-08-04 13:07:12 -0400
+Branch: REL_11_STABLE [45d6789e7] 2019-08-04 13:07:12 -0400
 -->
      <para>
-      Improve stability of <filename>src/test/ldap</filename> regression
-      tests (Thomas Munro)
+      Improve stability of <filename>src/test/kerberos</filename>
+      and <filename>src/test/ldap</filename> regression tests
+      (Thomas Munro, Tom Lane)
      </para>
     </listitem>
 
