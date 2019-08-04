@@ -57,6 +57,19 @@ $$;
 SELECT testRegexpResultToJsonb();
 
 
+-- this revealed a different bug
+CREATE FUNCTION testTextToJsonbObject(text) RETURNS jsonb
+LANGUAGE plperl
+TRANSFORM FOR TYPE jsonb
+AS $$
+my $x = shift;
+return {a => $x};
+$$;
+
+SELECT testTextToJsonbObject('abc');
+SELECT testTextToJsonbObject(NULL);
+
+
 CREATE FUNCTION roundtrip(val jsonb, ref text = '') RETURNS jsonb
 LANGUAGE plperl
 TRANSFORM FOR TYPE jsonb
