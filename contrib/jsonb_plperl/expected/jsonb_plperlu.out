@@ -66,6 +66,26 @@ SELECT testRegexpResultToJsonb();
  0
 (1 row)
 
+-- this revealed a different bug
+CREATE FUNCTION testTextToJsonbObject(text) RETURNS jsonb
+LANGUAGE plperlu
+TRANSFORM FOR TYPE jsonb
+AS $$
+my $x = shift;
+return {a => $x};
+$$;
+SELECT testTextToJsonbObject('abc');
+ testtexttojsonbobject 
+-----------------------
+ {"a": "abc"}
+(1 row)
+
+SELECT testTextToJsonbObject(NULL);
+ testtexttojsonbobject 
+-----------------------
+ {"a": null}
+(1 row)
+
 CREATE FUNCTION roundtrip(val jsonb, ref text = '') RETURNS jsonb
 LANGUAGE plperlu
 TRANSFORM FOR TYPE jsonb
@@ -257,4 +277,4 @@ INFO:  $VAR1 = {'1' => {'2' => ['3','4','5']},'2' => '3'};
 
 \set VERBOSITY terse \\ -- suppress cascade details
 DROP EXTENSION plperlu CASCADE;
-NOTICE:  drop cascades to 7 other objects
+NOTICE:  drop cascades to 8 other objects

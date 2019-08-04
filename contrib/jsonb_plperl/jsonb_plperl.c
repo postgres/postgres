@@ -189,12 +189,12 @@ SV_to_JsonbValue(SV *in, JsonbParseState **jsonb_state, bool is_elem)
 		case SVt_PVHV:
 			return HV_to_JsonbValue((HV *) in, jsonb_state);
 
-		case SVt_NULL:
-			out.type = jbvNull;
-			break;
-
 		default:
-			if (SvUOK(in))
+			if (!SvOK(in))
+			{
+				out.type = jbvNull;
+			}
+			else if (SvUOK(in))
 			{
 				/*
 				 * If UV is >=64 bits, we have no better way to make this
