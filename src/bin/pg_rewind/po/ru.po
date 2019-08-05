@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-10 17:44+0300\n"
+"POT-Creation-Date: 2019-08-05 09:12+0300\n"
 "PO-Revision-Date: 2019-02-08 12:19+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:126 parsexlog.c:178
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -401,42 +401,42 @@ msgstr "Ошибка, выполняется выход\n"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s КБ (%d%%) скопировано"
 
-#: parsexlog.c:87 parsexlog.c:133
+#: parsexlog.c:87 parsexlog.c:132
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X: %s\n"
 
-#: parsexlog.c:91 parsexlog.c:136
+#: parsexlog.c:91 parsexlog.c:135
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X\n"
 
-#: parsexlog.c:191
+#: parsexlog.c:190
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X: %s\n"
 
-#: parsexlog.c:195
+#: parsexlog.c:194
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X\n"
 
-#: parsexlog.c:283
+#: parsexlog.c:282
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не удалось открыть файл \"%s\": %s\n"
 
-#: parsexlog.c:297
+#: parsexlog.c:296
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "не удалось переместиться в файле \"%s\": %s\n"
 
-#: parsexlog.c:304
+#: parsexlog.c:303
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "не удалось прочитать файл \"%s\": %s\n"
 
-#: parsexlog.c:372
+#: parsexlog.c:371
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"

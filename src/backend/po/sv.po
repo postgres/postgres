@@ -17,8 +17,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-10 23:23+0000\n"
-"PO-Revision-Date: 2019-04-11 18:10+0200\n"
+"POT-Creation-Date: 2019-07-25 19:29+0000\n"
+"PO-Revision-Date: 2019-07-26 09:19+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -191,18 +191,18 @@ msgstr "kunde inte stänga katalog \"%s\": %s\n"
 #: lib/stringinfo.c:258 libpq/auth.c:1130 libpq/auth.c:1501 libpq/auth.c:1569
 #: libpq/auth.c:2087 postmaster/bgworker.c:337 postmaster/bgworker.c:901
 #: postmaster/postmaster.c:2440 postmaster/postmaster.c:2462
-#: postmaster/postmaster.c:4024 postmaster/postmaster.c:4732
-#: postmaster/postmaster.c:4807 postmaster/postmaster.c:5485
-#: postmaster/postmaster.c:5822
-#: replication/libpqwalreceiver/libpqwalreceiver.c:256
+#: postmaster/postmaster.c:4020 postmaster/postmaster.c:4728
+#: postmaster/postmaster.c:4803 postmaster/postmaster.c:5490
+#: postmaster/postmaster.c:5837
+#: replication/libpqwalreceiver/libpqwalreceiver.c:257
 #: replication/logical/logical.c:175 storage/buffer/localbuf.c:436
 #: storage/file/fd.c:791 storage/file/fd.c:1220 storage/file/fd.c:1338
 #: storage/file/fd.c:2076 storage/ipc/procarray.c:1069
 #: storage/ipc/procarray.c:1557 storage/ipc/procarray.c:1564
 #: storage/ipc/procarray.c:1987 storage/ipc/procarray.c:2598
 #: utils/adt/formatting.c:1579 utils/adt/formatting.c:1703
-#: utils/adt/formatting.c:1828 utils/adt/pg_locale.c:468
-#: utils/adt/pg_locale.c:652 utils/adt/regexp.c:223 utils/adt/varlena.c:4701
+#: utils/adt/formatting.c:1828 utils/adt/pg_locale.c:469
+#: utils/adt/pg_locale.c:633 utils/adt/regexp.c:223 utils/adt/varlena.c:4701
 #: utils/adt/varlena.c:4722 utils/fmgr/dfmgr.c:221 utils/hash/dynahash.c:444
 #: utils/hash/dynahash.c:553 utils/hash/dynahash.c:1065 utils/mb/mbutils.c:376
 #: utils/mb/mbutils.c:709 utils/misc/guc.c:4007 utils/misc/guc.c:4023
@@ -703,7 +703,7 @@ msgstr "ogiltigt argument till \"buffering\"-flaggan"
 msgid "Valid values are \"on\", \"off\", and \"auto\"."
 msgstr "Giltiga värden är \"on\", \"off\" och \"auto\"."
 
-#: access/gist/gistbuildbuffers.c:778 utils/sort/logtape.c:230
+#: access/gist/gistbuildbuffers.c:779 utils/sort/logtape.c:230
 #, c-format
 msgid "could not write block %ld of temporary file: %m"
 msgstr "kunde inte skriva block %ld i temporär fil: %m"
@@ -793,8 +793,8 @@ msgid "\"%s\" is an index"
 msgstr "\"%s\" är ett index"
 
 #: access/heap/heapam.c:1298 access/heap/heapam.c:1326
-#: access/heap/heapam.c:1358 catalog/aclchk.c:1779 commands/tablecmds.c:9957
-#: commands/tablecmds.c:13205
+#: access/heap/heapam.c:1358 catalog/aclchk.c:1779 commands/tablecmds.c:10001
+#: commands/tablecmds.c:13249
 #, c-format
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\" är en composite-typ"
@@ -814,18 +814,18 @@ msgstr "kan inte radera tupler under en parallell operation"
 msgid "attempted to delete invisible tuple"
 msgstr "försökte ta bort en osynlig tuple"
 
-#: access/heap/heapam.c:3514 access/heap/heapam.c:6256
+#: access/heap/heapam.c:3519 access/heap/heapam.c:6284
 #, c-format
 msgid "cannot update tuples during a parallel operation"
 msgstr "kan inte uppdatera tupler under en parallell operation"
 
-#: access/heap/heapam.c:3662
+#: access/heap/heapam.c:3667
 #, c-format
 msgid "attempted to update invisible tuple"
 msgstr "försökte uppdatera en osynlig tuple"
 
-#: access/heap/heapam.c:4938 access/heap/heapam.c:4976
-#: access/heap/heapam.c:5228 executor/execMain.c:2640
+#: access/heap/heapam.c:4966 access/heap/heapam.c:5004
+#: access/heap/heapam.c:5256 executor/execMain.c:2640
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "kunde inte låsa rad i relationen \"%s\""
@@ -855,7 +855,7 @@ msgstr "kunde inte fsync:a fil \"%s\": %m"
 #: access/transam/timeline.c:315 access/transam/timeline.c:467
 #: access/transam/xlog.c:3236 access/transam/xlog.c:3388
 #: access/transam/xlog.c:10656 access/transam/xlog.c:10694
-#: access/transam/xlog.c:11098 postmaster/postmaster.c:4499
+#: access/transam/xlog.c:11098 postmaster/postmaster.c:4495
 #: replication/logical/origin.c:576 replication/slot.c:1256
 #: storage/file/copydir.c:176 storage/smgr/md.c:328 utils/time/snapmgr.c:1297
 #, c-format
@@ -876,7 +876,7 @@ msgstr "kunde inte söka (seek) till slutet av filen \"%s\": %m"
 #: access/heap/rewriteheap.c:1191 access/transam/timeline.c:370
 #: access/transam/timeline.c:405 access/transam/timeline.c:484
 #: access/transam/xlog.c:3268 access/transam/xlog.c:3441
-#: postmaster/postmaster.c:4509 postmaster/postmaster.c:4519
+#: postmaster/postmaster.c:4505 postmaster/postmaster.c:4515
 #: replication/logical/origin.c:591 replication/logical/origin.c:636
 #: replication/logical/origin.c:658 replication/logical/snapbuild.c:1629
 #: replication/slot.c:1290 storage/file/copydir.c:217
@@ -911,7 +911,7 @@ msgstr "kunde inte ta bort fil \"%s\": %m"
 #: replication/logical/reorderbuffer.c:3226
 #: replication/logical/snapbuild.c:1615 replication/logical/snapbuild.c:1715
 #: replication/slot.c:1384 replication/walsender.c:483
-#: replication/walsender.c:2408 storage/file/copydir.c:169
+#: replication/walsender.c:2411 storage/file/copydir.c:169
 #: storage/file/fd.c:632 storage/file/fd.c:3151 storage/file/fd.c:3218
 #: storage/smgr/md.c:609 utils/error/elog.c:1872 utils/init/miscinit.c:1177
 #: utils/init/miscinit.c:1312 utils/init/miscinit.c:1389 utils/misc/guc.c:7255
@@ -932,7 +932,7 @@ msgstr "indexaccessmetod \"%s\" har ingen hanterare"
 
 #: access/index/indexam.c:160 catalog/objectaddress.c:1222
 #: commands/indexcmds.c:1837 commands/tablecmds.c:247
-#: commands/tablecmds.c:13196
+#: commands/tablecmds.c:13240
 #, c-format
 msgid "\"%s\" is not an index"
 msgstr "\"%s\" är inte ett index"
@@ -1625,7 +1625,7 @@ msgid "could not close log file %s: %m"
 msgstr "kunde inte stänga loggfil %s: %m"
 
 #: access/transam/xlog.c:3820 access/transam/xlogutils.c:701
-#: replication/walsender.c:2403
+#: replication/walsender.c:2406
 #, c-format
 msgid "requested WAL segment %s has already been removed"
 msgstr "efterfrågat WAL-segment %s har redan tagits bort"
@@ -1911,12 +1911,12 @@ msgstr "parameter \"%s\" kräver ett boolskt värde"
 msgid "parameter \"%s\" requires a temporal value"
 msgstr "parameter \"%s\" kräver ett temporärt värde"
 
-#: access/transam/xlog.c:5438 catalog/dependency.c:961 catalog/dependency.c:962
-#: catalog/dependency.c:968 catalog/dependency.c:969 catalog/dependency.c:980
-#: catalog/dependency.c:981 commands/tablecmds.c:946 commands/tablecmds.c:10413
-#: commands/user.c:1064 commands/view.c:504 libpq/auth.c:328
-#: replication/syncrep.c:1164 storage/lmgr/deadlock.c:1139
-#: storage/lmgr/proc.c:1319 utils/adt/acl.c:5328 utils/misc/guc.c:5785
+#: access/transam/xlog.c:5438 catalog/dependency.c:987 catalog/dependency.c:988
+#: catalog/dependency.c:994 catalog/dependency.c:995 catalog/dependency.c:1006
+#: catalog/dependency.c:1007 commands/tablecmds.c:949
+#: commands/tablecmds.c:10457 commands/user.c:1064 commands/view.c:504
+#: libpq/auth.c:328 replication/syncrep.c:1164 storage/lmgr/deadlock.c:1139
+#: storage/lmgr/proc.c:1318 utils/adt/acl.c:5328 utils/misc/guc.c:5785
 #: utils/misc/guc.c:5878 utils/misc/guc.c:9854 utils/misc/guc.c:9888
 #: utils/misc/guc.c:9922 utils/misc/guc.c:9956 utils/misc/guc.c:9991
 #, c-format
@@ -2607,7 +2607,7 @@ msgid "File \"%s\" was renamed to \"%s\", but file \"%s\" could not be renamed t
 msgstr "Filen \"%s\" dötes om till \"%s\", men filen \"%s\" kunde inte döpas om till \"%s\": %m."
 
 #: access/transam/xlog.c:11687 access/transam/xlogutils.c:726
-#: replication/walreceiver.c:1005 replication/walsender.c:2420
+#: replication/walreceiver.c:973 replication/walsender.c:2423
 #, c-format
 msgid "could not seek in log segment %s to offset %u: %m"
 msgstr "kunde inte söka i loggsegment %s till offset %u: %m"
@@ -2709,10 +2709,10 @@ msgstr "Menade du att använda pg_stop_backup('f')?"
 #: executor/execExpr.c:2121 executor/execSRF.c:690 executor/functions.c:1029
 #: foreign/foreign.c:488 libpq/hba.c:2568 replication/logical/launcher.c:1126
 #: replication/logical/logicalfuncs.c:176 replication/logical/origin.c:1461
-#: replication/slotfuncs.c:197 replication/walsender.c:3199
+#: replication/slotfuncs.c:197 replication/walsender.c:3202
 #: utils/adt/jsonfuncs.c:1689 utils/adt/jsonfuncs.c:1819
 #: utils/adt/jsonfuncs.c:2007 utils/adt/jsonfuncs.c:2134
-#: utils/adt/jsonfuncs.c:3489 utils/adt/pgstatfuncs.c:456
+#: utils/adt/jsonfuncs.c:3484 utils/adt/pgstatfuncs.c:456
 #: utils/adt/pgstatfuncs.c:557 utils/fmgr/funcapi.c:62 utils/misc/guc.c:8587
 #: utils/mmgr/portalmem.c:1067
 #, c-format
@@ -2724,7 +2724,7 @@ msgstr "en funktion som returnerar en mängd anropades i kontext som inte godtar
 #: commands/extension.c:2015 commands/extension.c:2239 commands/prepare.c:725
 #: foreign/foreign.c:493 libpq/hba.c:2572 replication/logical/launcher.c:1130
 #: replication/logical/logicalfuncs.c:180 replication/logical/origin.c:1465
-#: replication/slotfuncs.c:201 replication/walsender.c:3203
+#: replication/slotfuncs.c:201 replication/walsender.c:3206
 #: utils/adt/pgstatfuncs.c:460 utils/adt/pgstatfuncs.c:561
 #: utils/misc/guc.c:8591 utils/misc/pg_config.c:44 utils/mmgr/portalmem.c:1071
 #, c-format
@@ -2909,7 +2909,7 @@ msgstr "post med ogiltig längd vid %X/%X"
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "ogiltig komprimerad image vid %X/%X, block %d"
 
-#: access/transam/xlogutils.c:751 replication/walsender.c:2439
+#: access/transam/xlogutils.c:751 replication/walsender.c:2442
 #, c-format
 msgid "could not read from log segment %s, offset %u, length %lu: %m"
 msgstr "kunde inte läsa från loggsegment %s, offset %u, längd %lu: %m"
@@ -3077,7 +3077,7 @@ msgstr "stort objekt %u existerar inte"
 #: commands/subscriptioncmds.c:110 commands/subscriptioncmds.c:120
 #: commands/subscriptioncmds.c:130 commands/subscriptioncmds.c:140
 #: commands/subscriptioncmds.c:154 commands/subscriptioncmds.c:165
-#: commands/subscriptioncmds.c:179 commands/tablecmds.c:6022
+#: commands/subscriptioncmds.c:179 commands/tablecmds.c:6025
 #: commands/typecmds.c:298 commands/typecmds.c:1396 commands/typecmds.c:1405
 #: commands/typecmds.c:1413 commands/typecmds.c:1421 commands/typecmds.c:1429
 #: commands/user.c:134 commands/user.c:148 commands/user.c:157
@@ -3106,13 +3106,13 @@ msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "kan inte använda IN SCHEMA-klausul samtidigt som GRANT/REVOKE ON SCHEMAS"
 
 #: catalog/aclchk.c:1521 catalog/objectaddress.c:1389 commands/analyze.c:399
-#: commands/copy.c:4827 commands/sequence.c:1699 commands/tablecmds.c:5670
-#: commands/tablecmds.c:5817 commands/tablecmds.c:5874
-#: commands/tablecmds.c:5947 commands/tablecmds.c:6041
-#: commands/tablecmds.c:6100 commands/tablecmds.c:6225
-#: commands/tablecmds.c:6279 commands/tablecmds.c:6371
-#: commands/tablecmds.c:6527 commands/tablecmds.c:8756
-#: commands/tablecmds.c:9032 commands/tablecmds.c:9467 commands/trigger.c:817
+#: commands/copy.c:4827 commands/sequence.c:1699 commands/tablecmds.c:5673
+#: commands/tablecmds.c:5820 commands/tablecmds.c:5877
+#: commands/tablecmds.c:5950 commands/tablecmds.c:6044
+#: commands/tablecmds.c:6103 commands/tablecmds.c:6228
+#: commands/tablecmds.c:6282 commands/tablecmds.c:6374
+#: commands/tablecmds.c:6530 commands/tablecmds.c:8759
+#: commands/tablecmds.c:9029 commands/tablecmds.c:9511 commands/trigger.c:817
 #: parser/analyze.c:2342 parser/parse_relation.c:2733
 #: parser/parse_relation.c:2795 parser/parse_target.c:1002
 #: parser/parse_type.c:127 utils/adt/acl.c:2871 utils/adt/ruleutils.c:2373
@@ -3121,7 +3121,7 @@ msgid "column \"%s\" of relation \"%s\" does not exist"
 msgstr "kolumn \"%s\" i relation \"%s\" existerar inte"
 
 #: catalog/aclchk.c:1787 catalog/objectaddress.c:1229 commands/sequence.c:1137
-#: commands/tablecmds.c:229 commands/tablecmds.c:13170 utils/adt/acl.c:2061
+#: commands/tablecmds.c:229 commands/tablecmds.c:13214 utils/adt/acl.c:2061
 #: utils/adt/acl.c:2091 utils/adt/acl.c:2123 utils/adt/acl.c:2155
 #: utils/adt/acl.c:2183 utils/adt/acl.c:2213
 #, c-format
@@ -3531,37 +3531,37 @@ msgstr "prenumeration med OID %u existerar inte"
 msgid "statistics object with OID %u does not exist"
 msgstr "statistikobjekt med OID %u finns inte"
 
-#: catalog/dependency.c:613
+#: catalog/dependency.c:629
 #, c-format
 msgid "cannot drop %s because %s requires it"
 msgstr "kan inte ta bort %s eftersom %s behöver den"
 
-#: catalog/dependency.c:616
+#: catalog/dependency.c:632
 #, c-format
 msgid "You can drop %s instead."
 msgstr "Du kan ta bort %s i stället."
 
-#: catalog/dependency.c:779 catalog/pg_shdepend.c:574
+#: catalog/dependency.c:805 catalog/pg_shdepend.c:574
 #, c-format
 msgid "cannot drop %s because it is required by the database system"
 msgstr "kan inte ta bort %s eftersom den krävs av databassystemet"
 
-#: catalog/dependency.c:897
+#: catalog/dependency.c:923
 #, c-format
 msgid "drop auto-cascades to %s"
 msgstr "drop svämmar automatiskt över (cascades) till %s"
 
-#: catalog/dependency.c:909 catalog/dependency.c:918
+#: catalog/dependency.c:935 catalog/dependency.c:944
 #, c-format
 msgid "%s depends on %s"
 msgstr "%s beror på %s"
 
-#: catalog/dependency.c:930 catalog/dependency.c:939
+#: catalog/dependency.c:956 catalog/dependency.c:965
 #, c-format
 msgid "drop cascades to %s"
 msgstr "drop svämmar över (cascades) till %s"
 
-#: catalog/dependency.c:947 catalog/pg_shdepend.c:685
+#: catalog/dependency.c:973 catalog/pg_shdepend.c:685
 #, c-format
 msgid ""
 "\n"
@@ -3576,30 +3576,30 @@ msgstr[1] ""
 "\n"
 "och %d andra objekt (se serverloggen för en lista)"
 
-#: catalog/dependency.c:959
+#: catalog/dependency.c:985
 #, c-format
 msgid "cannot drop %s because other objects depend on it"
 msgstr "kan inte ta bort %s eftersom andra objekt beror på den"
 
-#: catalog/dependency.c:963 catalog/dependency.c:970
+#: catalog/dependency.c:989 catalog/dependency.c:996
 #, c-format
 msgid "Use DROP ... CASCADE to drop the dependent objects too."
 msgstr "Använd DROP ... CASCADE för att ta bort de beroende objekten också."
 
-#: catalog/dependency.c:967
+#: catalog/dependency.c:993
 #, c-format
 msgid "cannot drop desired object(s) because other objects depend on them"
 msgstr "kan inte ta bort önskade objekt eftersom andra objekt beror på dem"
 
 #. translator: %d always has a value larger than 1
-#: catalog/dependency.c:976
+#: catalog/dependency.c:1002
 #, c-format
 msgid "drop cascades to %d other object"
 msgid_plural "drop cascades to %d other objects"
 msgstr[0] "drop svämmar över (cascades) till %d andra objekt"
 msgstr[1] "drop svämmar över (cascades) till %d andra objekt"
 
-#: catalog/dependency.c:1635
+#: catalog/dependency.c:1676
 #, c-format
 msgid "constant of the type %s cannot be used here"
 msgstr "konstant av typen %s kan inte användas här"
@@ -3614,13 +3614,13 @@ msgstr "rättighet saknas för att skapa \"%s.%s\""
 msgid "System catalog modifications are currently disallowed."
 msgstr "Systemkatalogändringar är för tillfället inte tillåtna."
 
-#: catalog/heap.c:421 commands/tablecmds.c:1669 commands/tablecmds.c:2201
-#: commands/tablecmds.c:5260
+#: catalog/heap.c:421 commands/tablecmds.c:1672 commands/tablecmds.c:2204
+#: commands/tablecmds.c:5263
 #, c-format
 msgid "tables can have at most %d columns"
 msgstr "tabeller kan ha som mest %d kolumner"
 
-#: catalog/heap.c:438 commands/tablecmds.c:5533
+#: catalog/heap.c:438 commands/tablecmds.c:5536
 #, c-format
 msgid "column name \"%s\" conflicts with a system column name"
 msgstr "kolumnnamn \"%s\" står i konflikt med ett systemkolumnnamn"
@@ -3646,15 +3646,15 @@ msgid "no collation was derived for column \"%s\" with collatable type %s"
 msgstr "ingen jämförelse kunde härledas för kolumn \"%s\" med jämförelsetyp %s"
 
 #: catalog/heap.c:581 commands/createas.c:204 commands/createas.c:501
-#: commands/indexcmds.c:1164 commands/tablecmds.c:13451 commands/view.c:105
+#: commands/indexcmds.c:1164 commands/tablecmds.c:13495 commands/view.c:105
 #: regex/regc_pg_locale.c:263 utils/adt/formatting.c:1546
 #: utils/adt/formatting.c:1670 utils/adt/formatting.c:1795 utils/adt/like.c:184
-#: utils/adt/selfuncs.c:5619 utils/adt/varlena.c:1417 utils/adt/varlena.c:1854
+#: utils/adt/selfuncs.c:5640 utils/adt/varlena.c:1417 utils/adt/varlena.c:1854
 #, c-format
 msgid "Use the COLLATE clause to set the collation explicitly."
 msgstr "Använd en COLLATE-klausul för att sätta jämförelsen explicit."
 
-#: catalog/heap.c:1067 catalog/index.c:812 commands/tablecmds.c:2978
+#: catalog/heap.c:1067 catalog/index.c:812 commands/tablecmds.c:2981
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "relationen \"%s\" finns redan"
@@ -3686,7 +3686,7 @@ msgstr "kan inte lägga till NO INHERIT-villkor till partitionerad tabell \"%s\"
 msgid "check constraint \"%s\" already exists"
 msgstr "check-villkor \"%s\" finns redan"
 
-#: catalog/heap.c:2497 catalog/pg_constraint.c:649 commands/tablecmds.c:6887
+#: catalog/heap.c:2497 catalog/pg_constraint.c:649 commands/tablecmds.c:6891
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "integritetsvillkor \"%s\" för relation \"%s\" finns redan"
@@ -3809,7 +3809,7 @@ msgstr "bygger index \"%s\" på tabell \"%s\""
 msgid "cannot reindex temporary tables of other sessions"
 msgstr "kan inte omindexera temporära tabeller som tillhör andra sessioner"
 
-#: catalog/index.c:3483
+#: catalog/index.c:3484
 #, c-format
 msgid "index \"%s\" was reindexed"
 msgstr "index \"%s\" omindexerades"
@@ -3888,7 +3888,7 @@ msgid "text search template \"%s\" does not exist"
 msgstr "textsökmall \"%s\" finns inte"
 
 #: catalog/namespace.c:2683 commands/tsearchcmds.c:1185
-#: utils/cache/ts_cache.c:612
+#: utils/cache/ts_cache.c:614
 #, c-format
 msgid "text search configuration \"%s\" does not exist"
 msgstr "textsökkonfiguration \"%s\" finns inte"
@@ -3915,7 +3915,7 @@ msgid "cannot move objects into or out of TOAST schema"
 msgstr "kan inte flytta objekt in eller ut från TOAST-schema"
 
 #: catalog/namespace.c:3010 commands/schemacmds.c:256 commands/schemacmds.c:334
-#: commands/tablecmds.c:891
+#: commands/tablecmds.c:894
 #, c-format
 msgid "schema \"%s\" does not exist"
 msgstr "schema \"%s\" existerar inte"
@@ -3950,7 +3950,7 @@ msgstr "kan inte skapa temptabeller under återställning"
 msgid "cannot create temporary tables during a parallel operation"
 msgstr "kan inte skapa temporära tabeller under en parallell operation"
 
-#: catalog/namespace.c:4120 commands/tablespace.c:1169 commands/variable.c:64
+#: catalog/namespace.c:4120 commands/tablespace.c:1170 commands/variable.c:64
 #: utils/misc/guc.c:10023 utils/misc/guc.c:10101
 #, c-format
 msgid "List syntax is invalid."
@@ -3959,26 +3959,26 @@ msgstr "List-syntaxen är ogiltig."
 #: catalog/objectaddress.c:1237 catalog/pg_publication.c:66
 #: commands/lockcmds.c:95 commands/policy.c:94 commands/policy.c:391
 #: commands/policy.c:481 commands/tablecmds.c:223 commands/tablecmds.c:265
-#: commands/tablecmds.c:1527 commands/tablecmds.c:4757
-#: commands/tablecmds.c:8872
+#: commands/tablecmds.c:1530 commands/tablecmds.c:4760
+#: commands/tablecmds.c:8869
 #, c-format
 msgid "\"%s\" is not a table"
 msgstr "\"%s\" är inte en tabell"
 
 #: catalog/objectaddress.c:1244 commands/tablecmds.c:235
-#: commands/tablecmds.c:4787 commands/tablecmds.c:13175 commands/view.c:138
+#: commands/tablecmds.c:4790 commands/tablecmds.c:13219 commands/view.c:138
 #, c-format
 msgid "\"%s\" is not a view"
 msgstr "\"%s\" är inte en vy"
 
 #: catalog/objectaddress.c:1251 commands/matview.c:172 commands/tablecmds.c:241
-#: commands/tablecmds.c:13180
+#: commands/tablecmds.c:13224
 #, c-format
 msgid "\"%s\" is not a materialized view"
 msgstr "\"%s\" är inte en materialiserad vy"
 
 #: catalog/objectaddress.c:1258 commands/tablecmds.c:259
-#: commands/tablecmds.c:4790 commands/tablecmds.c:13185
+#: commands/tablecmds.c:4793 commands/tablecmds.c:13229
 #, c-format
 msgid "\"%s\" is not a foreign table"
 msgstr "\"%s\" är inte en främmande tabell"
@@ -4085,97 +4085,97 @@ msgstr "namnlistlängden måste vara minst %d"
 msgid "argument list length must be exactly %d"
 msgstr "argumentlistans längd måste vara exakt %d"
 
-#: catalog/objectaddress.c:2320 libpq/be-fsstubs.c:350
+#: catalog/objectaddress.c:2342 libpq/be-fsstubs.c:350
 #, c-format
 msgid "must be owner of large object %u"
 msgstr "måste vara ägaren till stort objekt %u"
 
-#: catalog/objectaddress.c:2335 commands/functioncmds.c:1440
+#: catalog/objectaddress.c:2357 commands/functioncmds.c:1440
 #, c-format
 msgid "must be owner of type %s or type %s"
 msgstr "måste vara ägaren till typ %s eller typ %s"
 
-#: catalog/objectaddress.c:2385 catalog/objectaddress.c:2402
+#: catalog/objectaddress.c:2407 catalog/objectaddress.c:2424
 #, c-format
 msgid "must be superuser"
 msgstr "måste vara superanvändare"
 
-#: catalog/objectaddress.c:2392
+#: catalog/objectaddress.c:2414
 #, c-format
 msgid "must have CREATEROLE privilege"
 msgstr "måste ha rättigheten CREATEROLE"
 
-#: catalog/objectaddress.c:2471
+#: catalog/objectaddress.c:2493
 #, c-format
 msgid "unrecognized object type \"%s\""
 msgstr "okänd objekttyp \"%s\""
 
-#: catalog/objectaddress.c:2666
+#: catalog/objectaddress.c:2688
 #, c-format
 msgid " column %s"
 msgstr " kolumn %s"
 
-#: catalog/objectaddress.c:2672
+#: catalog/objectaddress.c:2694
 #, c-format
 msgid "function %s"
 msgstr "funktion %s"
 
-#: catalog/objectaddress.c:2677
+#: catalog/objectaddress.c:2699
 #, c-format
 msgid "type %s"
 msgstr "typ %s"
 
-#: catalog/objectaddress.c:2707
+#: catalog/objectaddress.c:2729
 #, c-format
 msgid "cast from %s to %s"
 msgstr "typomvandling från %s till %s"
 
-#: catalog/objectaddress.c:2735
+#: catalog/objectaddress.c:2757
 #, c-format
 msgid "collation %s"
 msgstr "jämförelse %s"
 
-#: catalog/objectaddress.c:2760
+#: catalog/objectaddress.c:2782
 #, c-format
 msgid "constraint %s on %s"
 msgstr "villkor %s på %s"
 
-#: catalog/objectaddress.c:2766
+#: catalog/objectaddress.c:2788
 #, c-format
 msgid "constraint %s"
 msgstr "villkor %s"
 
-#: catalog/objectaddress.c:2793
+#: catalog/objectaddress.c:2815
 #, c-format
 msgid "conversion %s"
 msgstr "konvertering %s"
 
-#: catalog/objectaddress.c:2831
+#: catalog/objectaddress.c:2853
 #, c-format
 msgid "default for %s"
 msgstr "default för %s"
 
-#: catalog/objectaddress.c:2840
+#: catalog/objectaddress.c:2862
 #, c-format
 msgid "language %s"
 msgstr "språk %s"
 
-#: catalog/objectaddress.c:2845
+#: catalog/objectaddress.c:2867
 #, c-format
 msgid "large object %u"
 msgstr "stort objekt %u"
 
-#: catalog/objectaddress.c:2850
+#: catalog/objectaddress.c:2872
 #, c-format
 msgid "operator %s"
 msgstr "operator %s"
 
-#: catalog/objectaddress.c:2882
+#: catalog/objectaddress.c:2904
 #, c-format
 msgid "operator class %s for access method %s"
 msgstr "operatorklass %s för accessmetod %s"
 
-#: catalog/objectaddress.c:2905
+#: catalog/objectaddress.c:2927
 #, c-format
 msgid "access method %s"
 msgstr "accessmetod %s"
@@ -4184,7 +4184,7 @@ msgstr "accessmetod %s"
 #. first two %s's are data type names, the third %s is the
 #. description of the operator family, and the last %s is the
 #. textual form of the operator with arguments.
-#: catalog/objectaddress.c:2947
+#: catalog/objectaddress.c:2969
 #, c-format
 msgid "operator %d (%s, %s) of %s: %s"
 msgstr "operator %d (%s, %s) för %s: %s"
@@ -4193,222 +4193,222 @@ msgstr "operator %d (%s, %s) för %s: %s"
 #. are data type names, the third %s is the description of the
 #. operator family, and the last %s is the textual form of the
 #. function with arguments.
-#: catalog/objectaddress.c:2997
+#: catalog/objectaddress.c:3019
 #, c-format
 msgid "function %d (%s, %s) of %s: %s"
 msgstr "funktion %d (%s, %s) för %s: %s"
 
-#: catalog/objectaddress.c:3037
+#: catalog/objectaddress.c:3059
 #, c-format
 msgid "rule %s on "
 msgstr "regel %s på "
 
-#: catalog/objectaddress.c:3072
+#: catalog/objectaddress.c:3094
 #, c-format
 msgid "trigger %s on "
 msgstr "utlösare %s på "
 
-#: catalog/objectaddress.c:3089
+#: catalog/objectaddress.c:3111
 #, c-format
 msgid "schema %s"
 msgstr "schema %s"
 
-#: catalog/objectaddress.c:3112
+#: catalog/objectaddress.c:3134
 #, c-format
 msgid "statistics object %s"
 msgstr "statistikobjekt %s"
 
-#: catalog/objectaddress.c:3139
+#: catalog/objectaddress.c:3161
 #, c-format
 msgid "text search parser %s"
 msgstr "textsökparser %s"
 
-#: catalog/objectaddress.c:3165
+#: catalog/objectaddress.c:3187
 #, c-format
 msgid "text search dictionary %s"
 msgstr "textsökordlista %s"
 
-#: catalog/objectaddress.c:3191
+#: catalog/objectaddress.c:3213
 #, c-format
 msgid "text search template %s"
 msgstr "textsökmall %s"
 
-#: catalog/objectaddress.c:3217
+#: catalog/objectaddress.c:3239
 #, c-format
 msgid "text search configuration %s"
 msgstr "textsökkonfiguration %s"
 
-#: catalog/objectaddress.c:3226
+#: catalog/objectaddress.c:3248
 #, c-format
 msgid "role %s"
 msgstr "roll %s"
 
-#: catalog/objectaddress.c:3239
+#: catalog/objectaddress.c:3261
 #, c-format
 msgid "database %s"
 msgstr "databas %s"
 
-#: catalog/objectaddress.c:3251
+#: catalog/objectaddress.c:3273
 #, c-format
 msgid "tablespace %s"
 msgstr "tabellutrymme %s"
 
-#: catalog/objectaddress.c:3260
+#: catalog/objectaddress.c:3282
 #, c-format
 msgid "foreign-data wrapper %s"
 msgstr "främmande data-omvandlare %s"
 
-#: catalog/objectaddress.c:3269
+#: catalog/objectaddress.c:3291
 #, c-format
 msgid "server %s"
 msgstr "server %s"
 
-#: catalog/objectaddress.c:3297
+#: catalog/objectaddress.c:3319
 #, c-format
 msgid "user mapping for %s on server %s"
 msgstr "användarmappning för %s på server %s"
 
-#: catalog/objectaddress.c:3332
+#: catalog/objectaddress.c:3354
 #, c-format
 msgid "default privileges on new relations belonging to role %s"
 msgstr "standardrättigheter för nya relationer som tillhör rollen %s"
 
-#: catalog/objectaddress.c:3337
+#: catalog/objectaddress.c:3359
 #, c-format
 msgid "default privileges on new sequences belonging to role %s"
 msgstr "standardrättigheter för nya sekvenser som tillhör rollen %s"
 
-#: catalog/objectaddress.c:3342
+#: catalog/objectaddress.c:3364
 #, c-format
 msgid "default privileges on new functions belonging to role %s"
 msgstr "standardrättigheter för nya funktioner som tillhör rollen %s"
 
-#: catalog/objectaddress.c:3347
+#: catalog/objectaddress.c:3369
 #, c-format
 msgid "default privileges on new types belonging to role %s"
 msgstr "standardrättigheter för nya typer som tillhör rollen %s"
 
-#: catalog/objectaddress.c:3352
+#: catalog/objectaddress.c:3374
 #, c-format
 msgid "default privileges on new schemas belonging to role %s"
 msgstr "<standardrättigheter för nya scheman som tillhör rollen %s"
 
-#: catalog/objectaddress.c:3358
+#: catalog/objectaddress.c:3380
 #, c-format
 msgid "default privileges belonging to role %s"
 msgstr "standardrättigheter som tillhör rollen %s"
 
-#: catalog/objectaddress.c:3366
+#: catalog/objectaddress.c:3388
 #, c-format
 msgid " in schema %s"
 msgstr "i schema %s"
 
-#: catalog/objectaddress.c:3383
+#: catalog/objectaddress.c:3405
 #, c-format
 msgid "extension %s"
 msgstr "utökning %s"
 
-#: catalog/objectaddress.c:3396
+#: catalog/objectaddress.c:3418
 #, c-format
 msgid "event trigger %s"
 msgstr "händelseutösare %s"
 
-#: catalog/objectaddress.c:3428
+#: catalog/objectaddress.c:3450
 #, c-format
 msgid "policy %s on "
 msgstr "policy %s på "
 
-#: catalog/objectaddress.c:3439
+#: catalog/objectaddress.c:3461
 #, c-format
 msgid "publication %s"
 msgstr "publicering %s"
 
 #. translator: first %s is, e.g., "table %s"
-#: catalog/objectaddress.c:3464
+#: catalog/objectaddress.c:3486
 #, c-format
 msgid "publication of %s in publication %s"
 msgstr "publicering av %s i publicering %s"
 
-#: catalog/objectaddress.c:3473
+#: catalog/objectaddress.c:3495
 #, c-format
 msgid "subscription %s"
 msgstr "prenumeration %s"
 
-#: catalog/objectaddress.c:3491
+#: catalog/objectaddress.c:3513
 #, c-format
 msgid "transform for %s language %s"
 msgstr "transform för %s språk %s"
 
-#: catalog/objectaddress.c:3554
+#: catalog/objectaddress.c:3576
 #, c-format
 msgid "table %s"
 msgstr "tabell %s"
 
-#: catalog/objectaddress.c:3558
+#: catalog/objectaddress.c:3580
 #, c-format
 msgid "index %s"
 msgstr "index %s"
 
-#: catalog/objectaddress.c:3562
+#: catalog/objectaddress.c:3584
 #, c-format
 msgid "sequence %s"
 msgstr "sekvens %s"
 
-#: catalog/objectaddress.c:3566
+#: catalog/objectaddress.c:3588
 #, c-format
 msgid "toast table %s"
 msgstr "toast-tabell %s"
 
-#: catalog/objectaddress.c:3570
+#: catalog/objectaddress.c:3592
 #, c-format
 msgid "view %s"
 msgstr "vy %s"
 
-#: catalog/objectaddress.c:3574
+#: catalog/objectaddress.c:3596
 #, c-format
 msgid "materialized view %s"
 msgstr "materialiserad vy %s"
 
-#: catalog/objectaddress.c:3578
+#: catalog/objectaddress.c:3600
 #, c-format
 msgid "composite type %s"
 msgstr "composite-typ %s"
 
-#: catalog/objectaddress.c:3582
+#: catalog/objectaddress.c:3604
 #, c-format
 msgid "foreign table %s"
 msgstr "främmande tabell %s"
 
-#: catalog/objectaddress.c:3587
+#: catalog/objectaddress.c:3609
 #, c-format
 msgid "relation %s"
 msgstr "relation %s"
 
-#: catalog/objectaddress.c:3624
+#: catalog/objectaddress.c:3646
 #, c-format
 msgid "operator family %s for access method %s"
 msgstr "operatorfamilj %s för accessmetod %s"
 
-#: catalog/partition.c:728
+#: catalog/partition.c:743
 #, c-format
 msgid "empty range bound specified for partition \"%s\""
 msgstr "tom intervallsgräns angiven för partition \"%s\""
 
-#: catalog/partition.c:730
+#: catalog/partition.c:745
 #, c-format
 msgid "Specified lower bound %s is greater than or equal to upper bound %s."
 msgstr "Angiven lägre gräns %s är större än eller lika med övre gräns %s."
 
-#: catalog/partition.c:814
+#: catalog/partition.c:829
 #, c-format
 msgid "partition \"%s\" would overlap partition \"%s\""
 msgstr "partition \"%s\" skulle överlappa partition \"%s\""
 
-#: catalog/partition.c:927 catalog/partition.c:1120 commands/analyze.c:1480
-#: commands/copy.c:2562 commands/tablecmds.c:8934
+#: catalog/partition.c:942 catalog/partition.c:1135 commands/analyze.c:1480
+#: commands/copy.c:2562 commands/tablecmds.c:8931
 #: executor/execExprInterp.c:2853 executor/execMain.c:1916
 #: executor/execMain.c:1994 executor/execMain.c:2042 executor/execMain.c:2152
-#: executor/execMain.c:3377 executor/nodeModifyTable.c:1437
+#: executor/execMain.c:3378 executor/nodeModifyTable.c:1437
 msgid "could not convert row type"
 msgstr "kunde inte konvertera radtypen"
 
@@ -4469,7 +4469,7 @@ msgstr "slutfunktion med extra argument får inte deklareras STRICT"
 msgid "return type of combine function %s is not %s"
 msgstr "returtyp från sammansätt-funktion %s är inte %s"
 
-#: catalog/pg_aggregate.c:438 executor/nodeAgg.c:3559
+#: catalog/pg_aggregate.c:438 executor/nodeAgg.c:3574
 #, c-format
 msgid "combine function with transition type %s must not be declared STRICT"
 msgstr "kombineringsfunktion med övergångstyp %s får inte deklareras STRICT"
@@ -4519,7 +4519,7 @@ msgstr "sorteringsoperator kan bara anges för aggregatfunktioner med ett argume
 #: commands/typecmds.c:1872 commands/typecmds.c:1899 commands/typecmds.c:1976
 #: commands/typecmds.c:2018 parser/parse_func.c:369 parser/parse_func.c:398
 #: parser/parse_func.c:423 parser/parse_func.c:437 parser/parse_func.c:512
-#: parser/parse_func.c:523 parser/parse_func.c:1977
+#: parser/parse_func.c:523 parser/parse_func.c:1983
 #, c-format
 msgid "function %s does not exist"
 msgstr "funktionen %s finns inte"
@@ -4704,7 +4704,7 @@ msgstr "operator %s existerar redan"
 msgid "operator cannot be its own negator or sort operator"
 msgstr "operator kan inte vara sin egen negerare eller sorteringsoperator"
 
-#: catalog/pg_proc.c:131 parser/parse_func.c:2001 parser/parse_func.c:2041
+#: catalog/pg_proc.c:131 parser/parse_func.c:2007 parser/parse_func.c:2047
 #, c-format
 msgid "functions cannot have more than %d argument"
 msgid_plural "functions cannot have more than %d arguments"
@@ -4958,8 +4958,8 @@ msgstr "typer med fast storlek måste lagras som PLAIN"
 msgid "could not form array type name for type \"%s\""
 msgstr "kunde inte skapa array-typnamn för typ \"%s\""
 
-#: catalog/toasting.c:105 commands/indexcmds.c:400 commands/tablecmds.c:4769
-#: commands/tablecmds.c:13063
+#: catalog/toasting.c:105 commands/indexcmds.c:400 commands/tablecmds.c:4772
+#: commands/tablecmds.c:13107
 #, c-format
 msgid "\"%s\" is not a table or materialized view"
 msgstr "\"%s\" är inte en tabell eller materialiserad vy"
@@ -5277,7 +5277,7 @@ msgstr "kan inte klustra temporära tabeller för andra sessioner"
 msgid "there is no previously clustered index for table \"%s\""
 msgstr "det finns inget tidigare klustrat index för tabell \"%s\""
 
-#: commands/cluster.c:173 commands/tablecmds.c:10253 commands/tablecmds.c:12125
+#: commands/cluster.c:173 commands/tablecmds.c:10297 commands/tablecmds.c:12169
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "index \"%s\" för tabell \"%s\" finns inte"
@@ -5292,7 +5292,7 @@ msgstr "kan inte klustra en delad katalog"
 msgid "cannot vacuum temporary tables of other sessions"
 msgstr "kan inte städa temporära tabeller för andra sessioner"
 
-#: commands/cluster.c:431 commands/tablecmds.c:12135
+#: commands/cluster.c:431 commands/tablecmds.c:12179
 #, c-format
 msgid "\"%s\" is not an index for table \"%s\""
 msgstr "\"%s\" är inte ett index för tabell \"%s\""
@@ -5409,8 +5409,8 @@ msgstr "inga användbara systemlokaler hittades"
 #: commands/comment.c:61 commands/dbcommands.c:808 commands/dbcommands.c:996
 #: commands/dbcommands.c:1100 commands/dbcommands.c:1290
 #: commands/dbcommands.c:1513 commands/dbcommands.c:1627
-#: commands/dbcommands.c:2043 utils/init/postinit.c:846
-#: utils/init/postinit.c:951 utils/init/postinit.c:968
+#: commands/dbcommands.c:2043 utils/init/postinit.c:848
+#: utils/init/postinit.c:953 utils/init/postinit.c:970
 #, c-format
 msgid "database \"%s\" does not exist"
 msgstr "databasen \"%s\" existerar inte"
@@ -5974,14 +5974,14 @@ msgid "incorrect binary data format"
 msgstr "felaktigt binärt dataformat"
 
 #: commands/copy.c:4832 commands/indexcmds.c:1085 commands/statscmds.c:204
-#: commands/tablecmds.c:1695 commands/tablecmds.c:2251
-#: commands/tablecmds.c:2647 parser/parse_relation.c:3287
+#: commands/tablecmds.c:1698 commands/tablecmds.c:2254
+#: commands/tablecmds.c:2650 parser/parse_relation.c:3287
 #: parser/parse_relation.c:3307 utils/adt/tsvector_op.c:2561
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "kolumnen \"%s\" existerar inte"
 
-#: commands/copy.c:4839 commands/tablecmds.c:1722 commands/trigger.c:826
+#: commands/copy.c:4839 commands/tablecmds.c:1725 commands/trigger.c:826
 #: parser/parse_target.c:1018 parser/parse_target.c:1029
 #, c-format
 msgid "column \"%s\" specified more than once"
@@ -6277,14 +6277,14 @@ msgstr "\"%s\" är en aggreagatfunktion"
 msgid "Use DROP AGGREGATE to drop aggregate functions."
 msgstr "Använd DROP AGGREGATE för att ta bort aggregatfunktioner."
 
-#: commands/dropcmds.c:165 commands/sequence.c:441 commands/tablecmds.c:2731
-#: commands/tablecmds.c:2889 commands/tablecmds.c:2932
-#: commands/tablecmds.c:12508 tcop/utility.c:1171
+#: commands/dropcmds.c:165 commands/sequence.c:441 commands/tablecmds.c:2734
+#: commands/tablecmds.c:2892 commands/tablecmds.c:2935
+#: commands/tablecmds.c:12552 tcop/utility.c:1178
 #, c-format
 msgid "relation \"%s\" does not exist, skipping"
 msgstr "relation \"%s\" finns inte, hoppar över"
 
-#: commands/dropcmds.c:195 commands/dropcmds.c:294 commands/tablecmds.c:896
+#: commands/dropcmds.c:195 commands/dropcmds.c:294 commands/tablecmds.c:899
 #, c-format
 msgid "schema \"%s\" does not exist, skipping"
 msgstr "schema \"%s\" finns inte, hoppar över"
@@ -7194,7 +7194,7 @@ msgstr "kan inte skapa index för partitionerad tabell \"%s\""
 msgid "cannot create indexes on temporary tables of other sessions"
 msgstr "kan inte skapa index till temporära tabeller som tillhör andra sessioner"
 
-#: commands/indexcmds.c:475 commands/tablecmds.c:593 commands/tablecmds.c:10561
+#: commands/indexcmds.c:475 commands/tablecmds.c:596 commands/tablecmds.c:10605
 #, c-format
 msgid "only shared relations can be placed in pg_global tablespace"
 msgstr "bara delade relationer kan placeras i tablespace:et pg_global"
@@ -7249,7 +7249,7 @@ msgstr "funktioner i indexuttryck måste vara markerade IMMUTABLE"
 msgid "could not determine which collation to use for index expression"
 msgstr "kunde inte bestämma vilken jämförelse (collation) som skulle användas för indexuttryck"
 
-#: commands/indexcmds.c:1171 commands/tablecmds.c:13458 commands/typecmds.c:831
+#: commands/indexcmds.c:1171 commands/tablecmds.c:13502 commands/typecmds.c:831
 #: parser/parse_expr.c:2763 parser/parse_type.c:549 parser/parse_utilcmd.c:3267
 #: utils/adt/misc.c:661
 #, c-format
@@ -7560,10 +7560,10 @@ msgid "operator attribute \"%s\" cannot be changed"
 msgstr "operatorattribut \"%s\" kan inte ändras"
 
 #: commands/policy.c:87 commands/policy.c:397 commands/policy.c:487
-#: commands/tablecmds.c:1150 commands/tablecmds.c:1540
-#: commands/tablecmds.c:2541 commands/tablecmds.c:4739
-#: commands/tablecmds.c:7103 commands/tablecmds.c:13096
-#: commands/tablecmds.c:13131 commands/trigger.c:259 commands/trigger.c:1320
+#: commands/tablecmds.c:1153 commands/tablecmds.c:1543
+#: commands/tablecmds.c:2544 commands/tablecmds.c:4742
+#: commands/tablecmds.c:7107 commands/tablecmds.c:13140
+#: commands/tablecmds.c:13175 commands/trigger.c:259 commands/trigger.c:1320
 #: commands/trigger.c:1429 rewrite/rewriteDefine.c:272
 #: rewrite/rewriteDefine.c:925
 #, c-format
@@ -7892,8 +7892,8 @@ msgstr "tabellen måste vara i samma schema som tabellen den är länkad till"
 msgid "cannot change ownership of identity sequence"
 msgstr "kan inte byta ägare på identitetssekvens"
 
-#: commands/sequence.c:1715 commands/tablecmds.c:9947
-#: commands/tablecmds.c:12528
+#: commands/sequence.c:1715 commands/tablecmds.c:9991
+#: commands/tablecmds.c:12572
 #, c-format
 msgid "Sequence \"%s\" is linked to table \"%s\"."
 msgstr "Sekvens \"%s\" är länkad till tabell \"%s\""
@@ -8179,8 +8179,8 @@ msgstr "\"%s\" är inte en typ"
 msgid "Use DROP TYPE to remove a type."
 msgstr "Använd DROP TYPE för att ta bort en typ."
 
-#: commands/tablecmds.c:257 commands/tablecmds.c:9453
-#: commands/tablecmds.c:12308
+#: commands/tablecmds.c:257 commands/tablecmds.c:9497
+#: commands/tablecmds.c:12352
 #, c-format
 msgid "foreign table \"%s\" does not exist"
 msgstr "främmande tabell \"%s\" finns inte"
@@ -8194,108 +8194,108 @@ msgstr "främmande tabell \"%s\" finns inte, hoppar över"
 msgid "Use DROP FOREIGN TABLE to remove a foreign table."
 msgstr "Använd DROP FOREIGN TABLE för att ta bort en främmande tabell."
 
-#: commands/tablecmds.c:533
+#: commands/tablecmds.c:536
 #, c-format
 msgid "ON COMMIT can only be used on temporary tables"
 msgstr "ON COMMIT kan bara användas på temporära tabeller"
 
-#: commands/tablecmds.c:561
+#: commands/tablecmds.c:564
 #, c-format
 msgid "cannot create temporary table within security-restricted operation"
 msgstr "kan inte skapa temporär tabell i en säkerhetsbegränsad operation"
 
-#: commands/tablecmds.c:662
+#: commands/tablecmds.c:665
 #, c-format
 msgid "cannot create table with OIDs as partition of table without OIDs"
 msgstr "kan inte skapa tabell med OID:er som partition till tabell utan OID:er"
 
-#: commands/tablecmds.c:783 parser/parse_utilcmd.c:3434
+#: commands/tablecmds.c:786 parser/parse_utilcmd.c:3434
 #, c-format
 msgid "\"%s\" is not partitioned"
 msgstr "\"%s\" är inte partitionerad"
 
-#: commands/tablecmds.c:831
+#: commands/tablecmds.c:834
 #, c-format
 msgid "cannot partition using more than %d columns"
 msgstr "kan inte partitionera med fler än %d kolumner"
 
-#: commands/tablecmds.c:972
+#: commands/tablecmds.c:975
 #, c-format
 msgid "DROP INDEX CONCURRENTLY does not support dropping multiple objects"
 msgstr "DROP INDEX CONCURRENTLY stöder inte att slänga flera objekt"
 
-#: commands/tablecmds.c:976
+#: commands/tablecmds.c:979
 #, c-format
 msgid "DROP INDEX CONCURRENTLY does not support CASCADE"
 msgstr "DROP INDEX CONCURRENTLY stöder inte CASCADE"
 
-#: commands/tablecmds.c:1270
+#: commands/tablecmds.c:1273
 #, c-format
 msgid "cannot truncate only a partitioned table"
 msgstr "kan inte trunkera enbart en partitionerad tabell"
 
-#: commands/tablecmds.c:1271
+#: commands/tablecmds.c:1274
 #, c-format
 msgid "Do not specify the ONLY keyword, or use truncate only on the partitions directly."
 msgstr "Ange inte nyckelordet ONLY eller använd truncate direkt på partitionerna."
 
-#: commands/tablecmds.c:1299
+#: commands/tablecmds.c:1302
 #, c-format
 msgid "truncate cascades to table \"%s\""
 msgstr "truncate svämmar över (cascades) till \"%s\""
 
-#: commands/tablecmds.c:1550
+#: commands/tablecmds.c:1553
 #, c-format
 msgid "cannot truncate temporary tables of other sessions"
 msgstr "kan inte trunkera temporära tabeller tillhörande andra sessioner"
 
-#: commands/tablecmds.c:1791 commands/tablecmds.c:11035
+#: commands/tablecmds.c:1794 commands/tablecmds.c:11079
 #, c-format
 msgid "cannot inherit from partitioned table \"%s\""
 msgstr "kan inte ärva från partitionerad tabell \"%s\""
 
-#: commands/tablecmds.c:1796
+#: commands/tablecmds.c:1799
 #, c-format
 msgid "cannot inherit from partition \"%s\""
 msgstr "kan inte ärva från partition \"%s\""
 
-#: commands/tablecmds.c:1804 parser/parse_utilcmd.c:2176
+#: commands/tablecmds.c:1807 parser/parse_utilcmd.c:2176
 #, c-format
 msgid "inherited relation \"%s\" is not a table or foreign table"
 msgstr "ärvd relation \"%s\" är inte en tabell eller främmande tabell"
 
-#: commands/tablecmds.c:1816
+#: commands/tablecmds.c:1819
 #, c-format
 msgid "cannot create a temporary relation as partition of permanent relation \"%s\""
 msgstr "kan inte skapa en temporär relation som partition till en permanent relation \"%s\""
 
-#: commands/tablecmds.c:1825 commands/tablecmds.c:11014
+#: commands/tablecmds.c:1828 commands/tablecmds.c:11058
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "kan inte ärva från en temporär relation \"%s\""
 
-#: commands/tablecmds.c:1835 commands/tablecmds.c:11022
+#: commands/tablecmds.c:1838 commands/tablecmds.c:11066
 #, c-format
 msgid "cannot inherit from temporary relation of another session"
 msgstr "kan inte ärva från en temporär relation i en annan session"
 
-#: commands/tablecmds.c:1852 commands/tablecmds.c:11146
+#: commands/tablecmds.c:1855 commands/tablecmds.c:11190
 #, c-format
 msgid "relation \"%s\" would be inherited from more than once"
 msgstr "relationen \"%s\" skulle ärvas mer än en gång"
 
-#: commands/tablecmds.c:1900
+#: commands/tablecmds.c:1903
 #, c-format
 msgid "merging multiple inherited definitions of column \"%s\""
 msgstr "slår samman multipla ärvda definitioner av kolumn \"%s\""
 
-#: commands/tablecmds.c:1908
+#: commands/tablecmds.c:1911
 #, c-format
 msgid "inherited column \"%s\" has a type conflict"
 msgstr "ärvd kolumn \"%s\" har en typkonflikt"
 
-#: commands/tablecmds.c:1910 commands/tablecmds.c:1933
-#: commands/tablecmds.c:2138 commands/tablecmds.c:2168
+#: commands/tablecmds.c:1913 commands/tablecmds.c:1936
+#: commands/tablecmds.c:2141 commands/tablecmds.c:2171
 #: parser/parse_coerce.c:1650 parser/parse_coerce.c:1670
 #: parser/parse_coerce.c:1690 parser/parse_coerce.c:1736
 #: parser/parse_coerce.c:1775 parser/parse_param.c:218
@@ -8303,1027 +8303,1017 @@ msgstr "ärvd kolumn \"%s\" har en typkonflikt"
 msgid "%s versus %s"
 msgstr "%s kontra %s"
 
-#: commands/tablecmds.c:1919
+#: commands/tablecmds.c:1922
 #, c-format
 msgid "inherited column \"%s\" has a collation conflict"
 msgstr "ärvd kolumn \"%s\" har en jämförelsekonflikt"
 
-#: commands/tablecmds.c:1921 commands/tablecmds.c:2150
-#: commands/tablecmds.c:5197
+#: commands/tablecmds.c:1924 commands/tablecmds.c:2153
+#: commands/tablecmds.c:5200
 #, c-format
 msgid "\"%s\" versus \"%s\""
 msgstr "\"%s\" kontra \"%s\""
 
-#: commands/tablecmds.c:1931
+#: commands/tablecmds.c:1934
 #, c-format
 msgid "inherited column \"%s\" has a storage parameter conflict"
 msgstr "ärvd kolumn \"%s\" har en lagringsparameterkonflikt"
 
-#: commands/tablecmds.c:2044 commands/tablecmds.c:8943
+#: commands/tablecmds.c:2047 commands/tablecmds.c:8940
 #: parser/parse_utilcmd.c:1153 parser/parse_utilcmd.c:1532
 #: parser/parse_utilcmd.c:1608
 #, c-format
 msgid "cannot convert whole-row table reference"
 msgstr "kan inte konvertera hela-raden-tabellreferens"
 
-#: commands/tablecmds.c:2045 parser/parse_utilcmd.c:1154
+#: commands/tablecmds.c:2048 parser/parse_utilcmd.c:1154
 #, c-format
 msgid "Constraint \"%s\" contains a whole-row reference to table \"%s\"."
 msgstr "Villkor \"%s\" innehåller en hela-raden-referens på tabellen \"%s\"."
 
-#: commands/tablecmds.c:2124
+#: commands/tablecmds.c:2127
 #, c-format
 msgid "merging column \"%s\" with inherited definition"
 msgstr "slår samman kolumn \"%s\" med ärvd definition"
 
-#: commands/tablecmds.c:2128
+#: commands/tablecmds.c:2131
 #, c-format
 msgid "moving and merging column \"%s\" with inherited definition"
 msgstr "flyttar och slår samman kolumn \"%s\" med ärvd definition"
 
-#: commands/tablecmds.c:2129
+#: commands/tablecmds.c:2132
 #, c-format
 msgid "User-specified column moved to the position of the inherited column."
 msgstr "Användarangiven kolumn flyttad till den ärvda kolumnens position."
 
-#: commands/tablecmds.c:2136
+#: commands/tablecmds.c:2139
 #, c-format
 msgid "column \"%s\" has a type conflict"
 msgstr "kolumnen \"%s\" har en typkonflikt"
 
-#: commands/tablecmds.c:2148
+#: commands/tablecmds.c:2151
 #, c-format
 msgid "column \"%s\" has a collation conflict"
 msgstr "kolumn \"%s\" har en jämförelsekonflikt"
 
-#: commands/tablecmds.c:2166
+#: commands/tablecmds.c:2169
 #, c-format
 msgid "column \"%s\" has a storage parameter conflict"
 msgstr "kolumnen \"%s\" har en lagringsparameterkonflikt"
 
-#: commands/tablecmds.c:2269
+#: commands/tablecmds.c:2272
 #, c-format
 msgid "column \"%s\" inherits conflicting default values"
 msgstr "kolumnen \"%s\" ärver motstridiga default-värden"
 
-#: commands/tablecmds.c:2271
+#: commands/tablecmds.c:2274
 #, c-format
 msgid "To resolve the conflict, specify a default explicitly."
 msgstr "För att lösa konflikten, ange ett explicit default-värde."
 
-#: commands/tablecmds.c:2318
+#: commands/tablecmds.c:2321
 #, c-format
 msgid "check constraint name \"%s\" appears multiple times but with different expressions"
 msgstr "check-villkor \"%s\" finns med flera gånger men med olika uttryck"
 
-#: commands/tablecmds.c:2511
+#: commands/tablecmds.c:2514
 #, c-format
 msgid "cannot rename column of typed table"
 msgstr "kan inte byta namn på kolumn i typad tabell"
 
-#: commands/tablecmds.c:2529
+#: commands/tablecmds.c:2532
 #, c-format
 msgid "\"%s\" is not a table, view, materialized view, composite type, index, or foreign table"
 msgstr "\"%s\" är inte en tabell, vy, materialiserad vy, composite-typ, index eller främmande tabell"
 
-#: commands/tablecmds.c:2623
+#: commands/tablecmds.c:2626
 #, c-format
 msgid "inherited column \"%s\" must be renamed in child tables too"
 msgstr "ärvd kolumn \"%s\" måste döpas om i barntabellerna också"
 
-#: commands/tablecmds.c:2655
+#: commands/tablecmds.c:2658
 #, c-format
 msgid "cannot rename system column \"%s\""
 msgstr "kan inte ändra döpa om systemkolumn \"%s\""
 
-#: commands/tablecmds.c:2670
+#: commands/tablecmds.c:2673
 #, c-format
 msgid "cannot rename inherited column \"%s\""
 msgstr "kan inte döpa om ärvd kolumn \"%s\""
 
-#: commands/tablecmds.c:2822
+#: commands/tablecmds.c:2825
 #, c-format
 msgid "inherited constraint \"%s\" must be renamed in child tables too"
 msgstr "ärvt villkor \"%s\" måste döpas om i barntabellerna också"
 
-#: commands/tablecmds.c:2829
+#: commands/tablecmds.c:2832
 #, c-format
 msgid "cannot rename inherited constraint \"%s\""
 msgstr "kan inte döpa om ärvt villkor \"%s\""
 
 #. translator: first %s is a SQL command, eg ALTER TABLE
-#: commands/tablecmds.c:3054
+#: commands/tablecmds.c:3057
 #, c-format
 msgid "cannot %s \"%s\" because it is being used by active queries in this session"
 msgstr "kan inte %s \"%s\" då den används av aktiva frågor i denna session"
 
 #. translator: first %s is a SQL command, eg ALTER TABLE
-#: commands/tablecmds.c:3063
+#: commands/tablecmds.c:3066
 #, c-format
 msgid "cannot %s \"%s\" because it has pending trigger events"
 msgstr "kan inte %s \"%s\" då den har utlösarhändelser som väntar"
 
-#: commands/tablecmds.c:4182
+#: commands/tablecmds.c:4185
 #, c-format
 msgid "cannot rewrite system relation \"%s\""
 msgstr "kan inte skriva om systemkolumn \"%s\""
 
-#: commands/tablecmds.c:4188
+#: commands/tablecmds.c:4191
 #, c-format
 msgid "cannot rewrite table \"%s\" used as a catalog table"
 msgstr "kan inte skriva om tabell \"%s\" som används som katalogtabell"
 
-#: commands/tablecmds.c:4198
+#: commands/tablecmds.c:4201
 #, c-format
 msgid "cannot rewrite temporary tables of other sessions"
 msgstr "kan inte skriva om temporära tabeller som tillhör andra sessioner"
 
-#: commands/tablecmds.c:4474
+#: commands/tablecmds.c:4477
 #, c-format
 msgid "rewriting table \"%s\""
 msgstr "skriver om tabell \"%s\""
 
-#: commands/tablecmds.c:4478
+#: commands/tablecmds.c:4481
 #, c-format
 msgid "verifying table \"%s\""
 msgstr "verifierar tabell \"%s\""
 
-#: commands/tablecmds.c:4591
+#: commands/tablecmds.c:4594
 #, c-format
 msgid "column \"%s\" contains null values"
 msgstr "kolumn \"%s\" innehåller null-värden"
 
-#: commands/tablecmds.c:4606 commands/tablecmds.c:8212
+#: commands/tablecmds.c:4609 commands/tablecmds.c:8215
 #, c-format
 msgid "check constraint \"%s\" is violated by some row"
 msgstr "check-villkor \"%s\" bryts av någon rad"
 
-#: commands/tablecmds.c:4622
+#: commands/tablecmds.c:4625
 #, c-format
 msgid "partition constraint is violated by some row"
 msgstr "partitionsvillkor bryts mot av någon rad"
 
-#: commands/tablecmds.c:4760 commands/trigger.c:253 rewrite/rewriteDefine.c:266
+#: commands/tablecmds.c:4763 commands/trigger.c:253 rewrite/rewriteDefine.c:266
 #: rewrite/rewriteDefine.c:920
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\" är inte en tabell eller vy"
 
-#: commands/tablecmds.c:4763 commands/trigger.c:1314 commands/trigger.c:1420
+#: commands/tablecmds.c:4766 commands/trigger.c:1314 commands/trigger.c:1420
 #, c-format
 msgid "\"%s\" is not a table, view, or foreign table"
 msgstr "\"%s\" är inte en tabell, vy eller främmande tabell"
 
-#: commands/tablecmds.c:4766
+#: commands/tablecmds.c:4769
 #, c-format
 msgid "\"%s\" is not a table, view, materialized view, or index"
 msgstr "\"%s\" är inte en tabell, vy, materialiserad vy eller ett index"
 
-#: commands/tablecmds.c:4772
+#: commands/tablecmds.c:4775
 #, c-format
 msgid "\"%s\" is not a table, materialized view, or index"
 msgstr "\"%s\" är inte en tabell, materialiserad vy eller ett index"
 
-#: commands/tablecmds.c:4775
+#: commands/tablecmds.c:4778
 #, c-format
 msgid "\"%s\" is not a table, materialized view, or foreign table"
 msgstr "\"%s\" är inte en tabell, materialiserad vy eller en främmande tabell"
 
-#: commands/tablecmds.c:4778
+#: commands/tablecmds.c:4781
 #, c-format
 msgid "\"%s\" is not a table or foreign table"
 msgstr "\"%s\" är inte en tabell eller främmande tabell"
 
-#: commands/tablecmds.c:4781
+#: commands/tablecmds.c:4784
 #, c-format
 msgid "\"%s\" is not a table, composite type, or foreign table"
 msgstr "\"%s\" är inte en tabell, composite-typ eller en främmande tabell"
 
-#: commands/tablecmds.c:4784 commands/tablecmds.c:6174
+#: commands/tablecmds.c:4787 commands/tablecmds.c:6177
 #, c-format
 msgid "\"%s\" is not a table, materialized view, index, or foreign table"
 msgstr "\"%s\" är inte en tabell, materialiserad vy, index eller en främmande tabell"
 
-#: commands/tablecmds.c:4794
+#: commands/tablecmds.c:4797
 #, c-format
 msgid "\"%s\" is of the wrong type"
 msgstr "\"%s\" har fel typ"
 
-#: commands/tablecmds.c:4969 commands/tablecmds.c:4976
+#: commands/tablecmds.c:4972 commands/tablecmds.c:4979
 #, c-format
 msgid "cannot alter type \"%s\" because column \"%s.%s\" uses it"
 msgstr "kan inte ändra typen \"%s\" eftersom kolumn \"%s.%s\" använder den"
 
-#: commands/tablecmds.c:4983
+#: commands/tablecmds.c:4986
 #, c-format
 msgid "cannot alter foreign table \"%s\" because column \"%s.%s\" uses its row type"
 msgstr "kan inte ändra främmande tabell \"%s\" eftersom kolumn \"%s.%s\" använder dess radtyp"
 
-#: commands/tablecmds.c:4990
+#: commands/tablecmds.c:4993
 #, c-format
 msgid "cannot alter table \"%s\" because column \"%s.%s\" uses its row type"
 msgstr "kan inte ändra tabell \"%s\" eftersom kolumn \"%s.%s\" använder dess radtyp"
 
-#: commands/tablecmds.c:5044
+#: commands/tablecmds.c:5047
 #, c-format
 msgid "cannot alter type \"%s\" because it is the type of a typed table"
 msgstr "kan inte ändra typ \"%s\" eftersom det är typen för en typad tabell"
 
-#: commands/tablecmds.c:5046
+#: commands/tablecmds.c:5049
 #, c-format
 msgid "Use ALTER ... CASCADE to alter the typed tables too."
 msgstr "Använd ALTER ... CASCADE för att ändra på de typade tabellerna också."
 
-#: commands/tablecmds.c:5090
+#: commands/tablecmds.c:5093
 #, c-format
 msgid "type %s is not a composite type"
 msgstr "typen %s är inte en composite-typ"
 
-#: commands/tablecmds.c:5116
+#: commands/tablecmds.c:5119
 #, c-format
 msgid "cannot add column to typed table"
 msgstr "kan inte lägga till kolumn till typad tabell"
 
-#: commands/tablecmds.c:5160
+#: commands/tablecmds.c:5163
 #, c-format
 msgid "cannot add column to a partition"
 msgstr "kan inte lägga till kolumn till partition"
 
-#: commands/tablecmds.c:5189 commands/tablecmds.c:11272
+#: commands/tablecmds.c:5192 commands/tablecmds.c:11316
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "barntabell \"%s\" har annan typ på kolumn \"%s\""
 
-#: commands/tablecmds.c:5195 commands/tablecmds.c:11279
+#: commands/tablecmds.c:5198 commands/tablecmds.c:11323
 #, c-format
 msgid "child table \"%s\" has different collation for column \"%s\""
 msgstr "barntabell \"%s\" har annan jämförelse (collation) på kolumn \"%s\""
 
-#: commands/tablecmds.c:5205
+#: commands/tablecmds.c:5208
 #, c-format
 msgid "child table \"%s\" has a conflicting \"%s\" column"
 msgstr "barntabell \"%s\" har en motstridig kolumn \"%s\""
 
-#: commands/tablecmds.c:5216
+#: commands/tablecmds.c:5219
 #, c-format
 msgid "merging definition of column \"%s\" for child \"%s\""
 msgstr "slår samman definitionen av kolumn \"%s\" för barn \"%s\""
 
-#: commands/tablecmds.c:5240
+#: commands/tablecmds.c:5243
 #, c-format
 msgid "cannot recursively add identity column to table that has child tables"
 msgstr "kan inte rekursivt lägga till identitetskolumn till tabell som har barntabeller"
 
-#: commands/tablecmds.c:5466
+#: commands/tablecmds.c:5469
 #, c-format
 msgid "column must be added to child tables too"
 msgstr "kolumnen måste läggas till i barntabellerna också"
 
-#: commands/tablecmds.c:5541
+#: commands/tablecmds.c:5544
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists, skipping"
 msgstr "kolumn \"%s\" i relation \"%s\" finns redan, hoppar över"
 
-#: commands/tablecmds.c:5548
+#: commands/tablecmds.c:5551
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "kolumn \"%s\" i relation \"%s\" finns redan"
 
-#: commands/tablecmds.c:5646 commands/tablecmds.c:8625
+#: commands/tablecmds.c:5649 commands/tablecmds.c:8628
 #, c-format
 msgid "cannot remove constraint from only the partitioned table when partitions exist"
 msgstr "kan inte ta bort villkor från bara den partitionerade tabellen när partitioner finns"
 
-#: commands/tablecmds.c:5647 commands/tablecmds.c:5794
-#: commands/tablecmds.c:6591 commands/tablecmds.c:8626
+#: commands/tablecmds.c:5650 commands/tablecmds.c:5797
+#: commands/tablecmds.c:6595 commands/tablecmds.c:8629
 #, c-format
 msgid "Do not specify the ONLY keyword."
 msgstr "Ange inte nyckelordet ONLY."
 
-#: commands/tablecmds.c:5679 commands/tablecmds.c:5826
-#: commands/tablecmds.c:5881 commands/tablecmds.c:5956
-#: commands/tablecmds.c:6050 commands/tablecmds.c:6109
-#: commands/tablecmds.c:6233 commands/tablecmds.c:6287
-#: commands/tablecmds.c:6379 commands/tablecmds.c:8765
-#: commands/tablecmds.c:9476
+#: commands/tablecmds.c:5682 commands/tablecmds.c:5829
+#: commands/tablecmds.c:5884 commands/tablecmds.c:5959
+#: commands/tablecmds.c:6053 commands/tablecmds.c:6112
+#: commands/tablecmds.c:6236 commands/tablecmds.c:6290
+#: commands/tablecmds.c:6382 commands/tablecmds.c:8768
+#: commands/tablecmds.c:9520
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "kan inte ändra systemkolumn \"%s\""
 
-#: commands/tablecmds.c:5685 commands/tablecmds.c:5887
+#: commands/tablecmds.c:5688 commands/tablecmds.c:5890
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is an identity column"
 msgstr "kolumn \"%s\" i relation \"%s\" är en identitetskolumn"
 
-#: commands/tablecmds.c:5721
+#: commands/tablecmds.c:5724
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "kolumn \"%s\" är del av en primärnyckel"
 
-#: commands/tablecmds.c:5743
+#: commands/tablecmds.c:5746
 #, c-format
 msgid "column \"%s\" is marked NOT NULL in parent table"
 msgstr "kolumn \"%s\" är markerad NOT NULL i föräldratabellen"
 
-#: commands/tablecmds.c:5793
+#: commands/tablecmds.c:5796
 #, c-format
 msgid "cannot add constraint to only the partitioned table when partitions exist"
 msgstr "kan inte lägga till villkor bara till den partitionerade tabellen när partitioner existerar"
 
-#: commands/tablecmds.c:5889
+#: commands/tablecmds.c:5892
 #, c-format
 msgid "Use ALTER TABLE ... ALTER COLUMN ... DROP IDENTITY instead."
 msgstr "Använd ALTER TABLE ... ALTER COLUMN ... DROP IDENTITY istället."
 
-#: commands/tablecmds.c:5967
+#: commands/tablecmds.c:5970
 #, c-format
 msgid "column \"%s\" of relation \"%s\" must be declared NOT NULL before identity can be added"
 msgstr "kolumn \"%s\" i relation \"%s\" måste deklareras NOT NULL innan identitet kan läggas till"
 
-#: commands/tablecmds.c:5973
+#: commands/tablecmds.c:5976
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is already an identity column"
 msgstr "kolumn \"%s\" i relation \"%s\" är redan en identitetskolumn"
 
-#: commands/tablecmds.c:5979
+#: commands/tablecmds.c:5982
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already has a default value"
 msgstr "kolumn \"%s\" i relation \"%s\" har redan ett standardvärde"
 
-#: commands/tablecmds.c:6056 commands/tablecmds.c:6117
+#: commands/tablecmds.c:6059 commands/tablecmds.c:6120
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not an identity column"
 msgstr "kolumn \"%s\" i relation \"%s\" är inte en identitetkolumn"
 
-#: commands/tablecmds.c:6122
+#: commands/tablecmds.c:6125
 #, c-format
 msgid "column \"%s\" of relation \"%s\" is not an identity column, skipping"
 msgstr "kolumn \"%s\" i relation \"%s\" är inte en identitetkolumn, hoppar över"
 
-#: commands/tablecmds.c:6206
+#: commands/tablecmds.c:6209
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "statistikmålet %d är för lågt"
 
-#: commands/tablecmds.c:6214
+#: commands/tablecmds.c:6217
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "minskar statistikmålet till %d"
 
-#: commands/tablecmds.c:6359
+#: commands/tablecmds.c:6362
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr "ogiltig lagringstyp \"%s\""
 
-#: commands/tablecmds.c:6391
+#: commands/tablecmds.c:6394
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr "kolumndatatyp %s kan bara ha lagringsmetod PLAIN"
 
-#: commands/tablecmds.c:6426
+#: commands/tablecmds.c:6429
 #, c-format
 msgid "cannot drop column from typed table"
 msgstr "kan inte ta bort kolumn från typad tabell"
 
-#: commands/tablecmds.c:6533
+#: commands/tablecmds.c:6536
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist, skipping"
 msgstr "kolumn \"%s\" i relation \"%s\" finns inte, hoppar över"
 
-#: commands/tablecmds.c:6546
+#: commands/tablecmds.c:6549
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "kan inte ta bort systemkolumn \"%s\""
 
-#: commands/tablecmds.c:6553
+#: commands/tablecmds.c:6559
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "kan inte ta bort ärvd kolumn \"%s\""
 
-#: commands/tablecmds.c:6562
+#: commands/tablecmds.c:6570
 #, c-format
-msgid "cannot drop column named in partition key"
-msgstr "kan inte slänga kolumn som finns med i partitionsnyckel"
+msgid "cannot drop column \"%s\" because it is part of the partition key of relation \"%s\""
+msgstr "kan inte slänga kolumnen \"%s\" då den är del av partitionsnyckeln för relationen \"%s\""
 
-#: commands/tablecmds.c:6566
-#, c-format
-msgid "cannot drop column referenced in partition key expression"
-msgstr "kan inte slänga kolumn som refereras till från partitionsnyckeluttryck"
-
-#: commands/tablecmds.c:6590
+#: commands/tablecmds.c:6594
 #, c-format
 msgid "cannot drop column from only the partitioned table when partitions exist"
 msgstr "kan inte slänga kolumn från bara den partitionerade tabellen när partitioner finns"
 
-#: commands/tablecmds.c:6808
+#: commands/tablecmds.c:6812
 #, c-format
 msgid "ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index \"%s\" to \"%s\""
 msgstr "ALTER TABLE / ADD CONSTRAINT USING INDEX kommer byta namn på index \"%s\" till \"%s\""
 
-#: commands/tablecmds.c:7020
+#: commands/tablecmds.c:7024
 #, c-format
 msgid "constraint must be added to child tables too"
 msgstr "villkoret måste läggas till i barntabellerna också"
 
-#: commands/tablecmds.c:7091
+#: commands/tablecmds.c:7095
 #, c-format
 msgid "cannot reference partitioned table \"%s\""
 msgstr "kan inte referera partitionerad tabell \"%s\""
 
-#: commands/tablecmds.c:7097
+#: commands/tablecmds.c:7101
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr "refererad relation \"%s\" är inte en tabell"
 
-#: commands/tablecmds.c:7120
+#: commands/tablecmds.c:7124
 #, c-format
 msgid "constraints on permanent tables may reference only permanent tables"
 msgstr "villkor på permanenta tabeller får bara referera till permanenta tabeller"
 
-#: commands/tablecmds.c:7127
+#: commands/tablecmds.c:7131
 #, c-format
 msgid "constraints on unlogged tables may reference only permanent or unlogged tables"
 msgstr "villkor på ologgade tabeller får bara referera till permanenta eller ologgade tabeller"
 
-#: commands/tablecmds.c:7133
+#: commands/tablecmds.c:7137
 #, c-format
 msgid "constraints on temporary tables may reference only temporary tables"
 msgstr "villkor på temporära tabeller får bara referera till temporära tabeller"
 
-#: commands/tablecmds.c:7137
+#: commands/tablecmds.c:7141
 #, c-format
 msgid "constraints on temporary tables must involve temporary tables of this session"
 msgstr "villkor på temporära tabeller får bara ta med temporära tabeller från denna session"
 
-#: commands/tablecmds.c:7197
+#: commands/tablecmds.c:7201
 #, c-format
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr "antalet refererande och refererade kolumner för främmande nyckel stämmer ej överens"
 
-#: commands/tablecmds.c:7304
+#: commands/tablecmds.c:7308
 #, c-format
 msgid "foreign key constraint \"%s\" cannot be implemented"
 msgstr "främmande nyckelvillkor \"%s\" kan inte implementeras"
 
-#: commands/tablecmds.c:7307
+#: commands/tablecmds.c:7311
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "Nyckelkolumner \"%s\" och \"%s\" har inkompatibla typer %s och %s."
 
-#: commands/tablecmds.c:7512 commands/tablecmds.c:7678
-#: commands/tablecmds.c:8593 commands/tablecmds.c:8661
+#: commands/tablecmds.c:7515 commands/tablecmds.c:7681
+#: commands/tablecmds.c:8596 commands/tablecmds.c:8664
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist"
 msgstr "villkor \"%s\" i relation \"%s\" finns inte"
 
-#: commands/tablecmds.c:7518
+#: commands/tablecmds.c:7521
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key constraint"
 msgstr "villkor \"%s\" i relation \"%s\" är inte ett främmande nyckelvillkor"
 
-#: commands/tablecmds.c:7685
+#: commands/tablecmds.c:7688
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key or check constraint"
 msgstr "villkor \"%s\" i relation \"%s\" är inte en främmande nyckel eller ett check-villkor"
 
-#: commands/tablecmds.c:7755
+#: commands/tablecmds.c:7758
 #, c-format
 msgid "constraint must be validated on child tables too"
 msgstr "villkoret måste valideras för barntabellerna också"
 
-#: commands/tablecmds.c:7823
+#: commands/tablecmds.c:7826
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr "kolumn \"%s\" som refereras till i främmande nyckelvillkor finns inte"
 
-#: commands/tablecmds.c:7828
+#: commands/tablecmds.c:7831
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "kan inte ha mer än %d nycklar i en främmande nyckel"
 
-#: commands/tablecmds.c:7893
+#: commands/tablecmds.c:7896
 #, c-format
 msgid "cannot use a deferrable primary key for referenced table \"%s\""
 msgstr "kan inte använda en \"deferrable\" primärnyckel för refererad tabell \"%s\""
 
-#: commands/tablecmds.c:7910
+#: commands/tablecmds.c:7913
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "det finns ingen primärnyckel för refererad tabell \"%s\""
 
-#: commands/tablecmds.c:7975
+#: commands/tablecmds.c:7978
 #, c-format
 msgid "foreign key referenced-columns list must not contain duplicates"
 msgstr "främmande nyckel-refererade kolumnlistor får inte innehålla duplikat"
 
-#: commands/tablecmds.c:8069
+#: commands/tablecmds.c:8072
 #, c-format
 msgid "cannot use a deferrable unique constraint for referenced table \"%s\""
 msgstr "kan inte använda ett \"deferrable\" unikt integritetsvillkor för refererad tabell \"%s\""
 
-#: commands/tablecmds.c:8074
+#: commands/tablecmds.c:8077
 #, c-format
 msgid "there is no unique constraint matching given keys for referenced table \"%s\""
 msgstr "finns inget unique-villkor som matchar de givna nycklarna i den refererade tabellen \"%s\""
 
-#: commands/tablecmds.c:8245
+#: commands/tablecmds.c:8248
 #, c-format
 msgid "validating foreign key constraint \"%s\""
 msgstr "validerar främmande nyckelvillkor \"%s\""
 
-#: commands/tablecmds.c:8547
+#: commands/tablecmds.c:8550
 #, c-format
 msgid "cannot drop inherited constraint \"%s\" of relation \"%s\""
 msgstr "kan inte ta bort ärvt villkor \"%s\" i relation \"%s\""
 
-#: commands/tablecmds.c:8599
+#: commands/tablecmds.c:8602
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" does not exist, skipping"
 msgstr "villkor \"%s\" i relation \"%s\" finns inte, hoppar över"
 
-#: commands/tablecmds.c:8749
+#: commands/tablecmds.c:8752
 #, c-format
 msgid "cannot alter column type of typed table"
 msgstr "kan inte ändra kolumntyp på typad tabell"
 
-#: commands/tablecmds.c:8772
+#: commands/tablecmds.c:8775
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "kan inte ändra ärvd kolumn \"%s\""
 
-#: commands/tablecmds.c:8781
+#: commands/tablecmds.c:8782
 #, c-format
-msgid "cannot alter type of column named in partition key"
-msgstr "kan inte ändra typ på kolumn som nämns i partitionsnyckel"
+msgid "cannot alter column \"%s\" because it is part of the partition key of relation \"%s\""
+msgstr "kan inte ändra kolumnen \"%s\" då den är del av partitionsnyckeln för relationen \"%s\""
 
-#: commands/tablecmds.c:8785
-#, c-format
-msgid "cannot alter type of column referenced in partition key expression"
-msgstr "kan inte ändra type på kolumn som refereras till från partitionsnyckeluttryck"
-
-#: commands/tablecmds.c:8835
+#: commands/tablecmds.c:8832
 #, c-format
 msgid "result of USING clause for column \"%s\" cannot be cast automatically to type %s"
 msgstr "resultatet av USING-klausul för kolumn \"%s\" kan inte automatiskt typomvandlas till typen %s"
 
-#: commands/tablecmds.c:8838
+#: commands/tablecmds.c:8835
 #, c-format
 msgid "You might need to add an explicit cast."
 msgstr "Du kan behöva lägga till en explicit typomvandling."
 
-#: commands/tablecmds.c:8842
+#: commands/tablecmds.c:8839
 #, c-format
 msgid "column \"%s\" cannot be cast automatically to type %s"
 msgstr "kolumn \"%s\" kan inte automatiskt typomvandlas till typ %s"
 
 #. translator: USING is SQL, don't translate it
-#: commands/tablecmds.c:8845
+#: commands/tablecmds.c:8842
 #, c-format
 msgid "You might need to specify \"USING %s::%s\"."
 msgstr "Du kan behöva ange \"USING %s::%s\"."
 
-#: commands/tablecmds.c:8944
+#: commands/tablecmds.c:8941
 #, c-format
 msgid "USING expression contains a whole-row table reference."
 msgstr "USING-uttryck innehåller en hela-raden-tabellreferens."
 
-#: commands/tablecmds.c:8955
+#: commands/tablecmds.c:8952
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr "typen av den ärvda kolumnen \"%s\" måste ändras i barntabellerna också"
 
-#: commands/tablecmds.c:9042
+#: commands/tablecmds.c:9039
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "kan inte ändra typen på kolumn \"%s\" två gånger"
 
-#: commands/tablecmds.c:9078
+#: commands/tablecmds.c:9075
 #, c-format
 msgid "default for column \"%s\" cannot be cast automatically to type %s"
 msgstr "\"default\" för kolumn \"%s\" kan inte automatiskt typomvandlas till typ \"%s\""
 
-#: commands/tablecmds.c:9204
+#: commands/tablecmds.c:9159
 #, c-format
 msgid "cannot alter type of a column used by a view or rule"
 msgstr "kan inte ändra typ på en kolumn som används av en vy eller en regel"
 
-#: commands/tablecmds.c:9205 commands/tablecmds.c:9224
-#: commands/tablecmds.c:9242
+#: commands/tablecmds.c:9160 commands/tablecmds.c:9179
+#: commands/tablecmds.c:9197
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%s beror på kolumn \"%s\""
 
-#: commands/tablecmds.c:9223
+#: commands/tablecmds.c:9178
 #, c-format
 msgid "cannot alter type of a column used in a trigger definition"
 msgstr "kan inte ändra typ på en kolumn som används i en utlösardefinition"
 
-#: commands/tablecmds.c:9241
+#: commands/tablecmds.c:9196
 #, c-format
 msgid "cannot alter type of a column used in a policy definition"
 msgstr "kan inte ändra typ på en kolumn som används av i en policydefinition"
 
-#: commands/tablecmds.c:9926
+#: commands/tablecmds.c:9970
 #, c-format
 msgid "cannot change owner of index \"%s\""
 msgstr "kan inte byta ägare på index \"%s\""
 
-#: commands/tablecmds.c:9928
+#: commands/tablecmds.c:9972
 #, c-format
 msgid "Change the ownership of the index's table, instead."
 msgstr "Byt ägare på indexets tabell istället."
 
-#: commands/tablecmds.c:9945
+#: commands/tablecmds.c:9989
 #, c-format
 msgid "cannot change owner of sequence \"%s\""
 msgstr "kan inte byta ägare på sekvens \"%s\""
 
-#: commands/tablecmds.c:9959 commands/tablecmds.c:13206
+#: commands/tablecmds.c:10003 commands/tablecmds.c:13250
 #, c-format
 msgid "Use ALTER TYPE instead."
 msgstr "Använd ALTER TYPE istället."
 
-#: commands/tablecmds.c:9968
+#: commands/tablecmds.c:10012
 #, c-format
 msgid "\"%s\" is not a table, view, sequence, or foreign table"
 msgstr "\"%s\" är inte en tabell, vy, sekvens eller främmande tabell"
 
-#: commands/tablecmds.c:10305
+#: commands/tablecmds.c:10349
 #, c-format
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "kan inte ha flera underkommandon SET TABLESPACE"
 
-#: commands/tablecmds.c:10379
+#: commands/tablecmds.c:10423
 #, c-format
 msgid "\"%s\" is not a table, view, materialized view, index, or TOAST table"
 msgstr "\"%s\" är inte en tabell, vy, materialiserad vy eller en TOAST-tabell"
 
-#: commands/tablecmds.c:10412 commands/view.c:503
+#: commands/tablecmds.c:10456 commands/view.c:503
 #, c-format
 msgid "WITH CHECK OPTION is supported only on automatically updatable views"
 msgstr "WITH CHECK OPTION stöds bara på automatiskt uppdateringsbara vyer"
 
-#: commands/tablecmds.c:10554
+#: commands/tablecmds.c:10598
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "kan inte flytta systemrelation \"%s\""
 
-#: commands/tablecmds.c:10570
+#: commands/tablecmds.c:10614
 #, c-format
 msgid "cannot move temporary tables of other sessions"
 msgstr "kan inte flytta temporära tabeller tillhörande andra sessioner"
 
-#: commands/tablecmds.c:10706
+#: commands/tablecmds.c:10750
 #, c-format
 msgid "only tables, indexes, and materialized views exist in tablespaces"
 msgstr "bara tabeller, index och materialiserade vyer finns i tablespace:er"
 
-#: commands/tablecmds.c:10718
+#: commands/tablecmds.c:10762
 #, c-format
 msgid "cannot move relations in to or out of pg_global tablespace"
 msgstr "kan inte flytta relationer in eller ut från tablespace pg_global"
 
-#: commands/tablecmds.c:10810
+#: commands/tablecmds.c:10854
 #, c-format
 msgid "aborting because lock on relation \"%s.%s\" is not available"
 msgstr "avbryter då lås på relation \"%s.%s\" inte är tillgängligt"
 
-#: commands/tablecmds.c:10826
+#: commands/tablecmds.c:10870
 #, c-format
 msgid "no matching relations in tablespace \"%s\" found"
 msgstr "inga matchande relationer i tablespace \"%s\" hittades"
 
-#: commands/tablecmds.c:10893 storage/buffer/bufmgr.c:915
+#: commands/tablecmds.c:10937 storage/buffer/bufmgr.c:915
 #, c-format
 msgid "invalid page in block %u of relation %s"
 msgstr "ogiltig sida i block %u i relation %s"
 
-#: commands/tablecmds.c:10973
+#: commands/tablecmds.c:11017
 #, c-format
 msgid "cannot change inheritance of typed table"
 msgstr "kan inte ändra arv på en typad tabell"
 
-#: commands/tablecmds.c:10978 commands/tablecmds.c:11520
+#: commands/tablecmds.c:11022 commands/tablecmds.c:11564
 #, c-format
 msgid "cannot change inheritance of a partition"
 msgstr "kan inte ändra arv på en partition"
 
-#: commands/tablecmds.c:10983
+#: commands/tablecmds.c:11027
 #, c-format
 msgid "cannot change inheritance of partitioned table"
 msgstr "kan inte ändra arv på en partitionerad tabell"
 
-#: commands/tablecmds.c:11029
+#: commands/tablecmds.c:11073
 #, c-format
 msgid "cannot inherit to temporary relation of another session"
 msgstr "kan inte ärva av en temporär tabell för en annan session"
 
-#: commands/tablecmds.c:11042
+#: commands/tablecmds.c:11086
 #, c-format
 msgid "cannot inherit from a partition"
 msgstr "kan inte ärva från en partition"
 
-#: commands/tablecmds.c:11064 commands/tablecmds.c:13585
+#: commands/tablecmds.c:11108 commands/tablecmds.c:13629
 #, c-format
 msgid "circular inheritance not allowed"
 msgstr "cirkulärt arv är inte tillåtet"
 
-#: commands/tablecmds.c:11065 commands/tablecmds.c:13586
+#: commands/tablecmds.c:11109 commands/tablecmds.c:13630
 #, c-format
 msgid "\"%s\" is already a child of \"%s\"."
 msgstr "\"%s\" är redan ett barn till \"%s\""
 
-#: commands/tablecmds.c:11073
+#: commands/tablecmds.c:11117
 #, c-format
 msgid "table \"%s\" without OIDs cannot inherit from table \"%s\" with OIDs"
 msgstr "tabell\"%s\" utan OID:er kan inte ärva från tabell \"%s\" med OID:er"
 
-#: commands/tablecmds.c:11086
+#: commands/tablecmds.c:11130
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming an inheritance child"
 msgstr "utlösare \"%s\" förhindrar tabell \"%s\" från att bli ett arvsbarn"
 
-#: commands/tablecmds.c:11088
+#: commands/tablecmds.c:11132
 #, c-format
 msgid "ROW triggers with transition tables are not supported in inheritance hierarchies"
 msgstr "ROW-utlösare med övergångstabeller stöds inte i arvshierarkier"
 
-#: commands/tablecmds.c:11290
+#: commands/tablecmds.c:11334
 #, c-format
 msgid "column \"%s\" in child table must be marked NOT NULL"
 msgstr "kolumn \"%s\" i barntabell måste vara markerad NOT NULL"
 
-#: commands/tablecmds.c:11317 commands/tablecmds.c:11356
+#: commands/tablecmds.c:11361 commands/tablecmds.c:11400
 #, c-format
 msgid "child table is missing column \"%s\""
 msgstr "barntabell saknar kolumn \"%s\""
 
-#: commands/tablecmds.c:11444
+#: commands/tablecmds.c:11488
 #, c-format
 msgid "child table \"%s\" has different definition for check constraint \"%s\""
 msgstr "barntabell \"%s\" har annan definition av check-villkor \"%s\""
 
-#: commands/tablecmds.c:11452
+#: commands/tablecmds.c:11496
 #, c-format
 msgid "constraint \"%s\" conflicts with non-inherited constraint on child table \"%s\""
 msgstr "villkor \"%s\" står i konflikt med icke-ärvt villkor på barntabell \"%s\""
 
-#: commands/tablecmds.c:11463
+#: commands/tablecmds.c:11507
 #, c-format
 msgid "constraint \"%s\" conflicts with NOT VALID constraint on child table \"%s\""
 msgstr "villkor \"%s\" står i konflikt med NOT VALID-villkor på barntabell \"%s\""
 
-#: commands/tablecmds.c:11498
+#: commands/tablecmds.c:11542
 #, c-format
 msgid "child table is missing constraint \"%s\""
 msgstr "barntabell saknar riktighetsvillkor \"%s\""
 
-#: commands/tablecmds.c:11614
+#: commands/tablecmds.c:11658
 #, c-format
 msgid "relation \"%s\" is not a partition of relation \"%s\""
 msgstr "relationen \"%s\" är inte partition av relationen \"%s\""
 
-#: commands/tablecmds.c:11620
+#: commands/tablecmds.c:11664
 #, c-format
 msgid "relation \"%s\" is not a parent of relation \"%s\""
 msgstr "relationen \"%s\" är inte en förälder till relationen \"%s\""
 
-#: commands/tablecmds.c:11846
+#: commands/tablecmds.c:11890
 #, c-format
 msgid "typed tables cannot inherit"
 msgstr "typade tabeller kan inte ärva"
 
-#: commands/tablecmds.c:11877
+#: commands/tablecmds.c:11921
 #, c-format
 msgid "table is missing column \"%s\""
 msgstr "tabell saknar kolumn \"%s\""
 
-#: commands/tablecmds.c:11887
+#: commands/tablecmds.c:11931
 #, c-format
 msgid "table has column \"%s\" where type requires \"%s\""
 msgstr "tabell har kolumn \"%s\" där typen kräver \"%s\""
 
-#: commands/tablecmds.c:11896
+#: commands/tablecmds.c:11940
 #, c-format
 msgid "table \"%s\" has different type for column \"%s\""
 msgstr "tabell \"%s\" har annan typ på kolumn \"%s\""
 
-#: commands/tablecmds.c:11909
+#: commands/tablecmds.c:11953
 #, c-format
 msgid "table has extra column \"%s\""
 msgstr "tabell har extra kolumn \"%s\""
 
-#: commands/tablecmds.c:11961
+#: commands/tablecmds.c:12005
 #, c-format
 msgid "\"%s\" is not a typed table"
 msgstr "\"%s\" är inte en typad tabell"
 
-#: commands/tablecmds.c:12143
+#: commands/tablecmds.c:12187
 #, c-format
 msgid "cannot use non-unique index \"%s\" as replica identity"
 msgstr "kan inte använda icke-unikt index \"%s\" som replikaidentitet"
 
-#: commands/tablecmds.c:12149
+#: commands/tablecmds.c:12193
 #, c-format
 msgid "cannot use non-immediate index \"%s\" as replica identity"
 msgstr "kan inte använda icke-immediate-index \"%s\" som replikaidentitiet"
 
-#: commands/tablecmds.c:12155
+#: commands/tablecmds.c:12199
 #, c-format
 msgid "cannot use expression index \"%s\" as replica identity"
 msgstr "kan inte använda uttrycksindex \"%s\" som replikaidentitiet"
 
-#: commands/tablecmds.c:12161
+#: commands/tablecmds.c:12205
 #, c-format
 msgid "cannot use partial index \"%s\" as replica identity"
 msgstr "kan inte använda partiellt index \"%s\" som replikaidentitiet"
 
-#: commands/tablecmds.c:12167
+#: commands/tablecmds.c:12211
 #, c-format
 msgid "cannot use invalid index \"%s\" as replica identity"
 msgstr "kan inte använda ogiltigt index \"%s\" som replikaidentitiet"
 
-#: commands/tablecmds.c:12188
+#: commands/tablecmds.c:12232
 #, c-format
 msgid "index \"%s\" cannot be used as replica identity because column %d is a system column"
 msgstr "index \"%s\" kan inte användas som replikaidentitet då kolumn %d är en systemkolumn"
 
-#: commands/tablecmds.c:12195
+#: commands/tablecmds.c:12239
 #, c-format
 msgid "index \"%s\" cannot be used as replica identity because column \"%s\" is nullable"
 msgstr "index \"%s\" kan inte användas som replikaidentitet då kolumn \"%s\" kan vare null"
 
-#: commands/tablecmds.c:12388
+#: commands/tablecmds.c:12432
 #, c-format
 msgid "cannot change logged status of table \"%s\" because it is temporary"
 msgstr "kan inte ändra loggningsstatus för tabell \"%s\" då den är temporär"
 
-#: commands/tablecmds.c:12412
+#: commands/tablecmds.c:12456
 #, c-format
 msgid "cannot change table \"%s\" to unlogged because it is part of a publication"
 msgstr "kan inte ändra tabell \"%s\" till ologgad då den är del av en publicering"
 
-#: commands/tablecmds.c:12414
+#: commands/tablecmds.c:12458
 #, c-format
 msgid "Unlogged relations cannot be replicated."
 msgstr "Ologgade relatrioner kan inte replikeras."
 
-#: commands/tablecmds.c:12459
+#: commands/tablecmds.c:12503
 #, c-format
 msgid "could not change table \"%s\" to logged because it references unlogged table \"%s\""
 msgstr "kunde inte ändra tabell \"%s\" till loggad då den refererar till ologgad tabell \"%s\""
 
-#: commands/tablecmds.c:12469
+#: commands/tablecmds.c:12513
 #, c-format
 msgid "could not change table \"%s\" to unlogged because it references logged table \"%s\""
 msgstr "kunde inte ändra tabell \"%s\" till ologgad då den refererar till loggad tabell \"%s\""
 
-#: commands/tablecmds.c:12527
+#: commands/tablecmds.c:12571
 #, c-format
 msgid "cannot move an owned sequence into another schema"
 msgstr "kan inte flytta en ägd sekvens till ett annan schema."
 
-#: commands/tablecmds.c:12633
+#: commands/tablecmds.c:12677
 #, c-format
 msgid "relation \"%s\" already exists in schema \"%s\""
 msgstr "relationen \"%s\" finns redan i schema \"%s\""
 
-#: commands/tablecmds.c:13190
+#: commands/tablecmds.c:13234
 #, c-format
 msgid "\"%s\" is not a composite type"
 msgstr "\"%s\" är inte en composite-typ"
 
-#: commands/tablecmds.c:13221
+#: commands/tablecmds.c:13265
 #, c-format
 msgid "\"%s\" is not a table, view, materialized view, sequence, or foreign table"
 msgstr "\"%s\" är inte en tabell, vy, materialiserad vy, sekvens eller främmande tabell"
 
-#: commands/tablecmds.c:13254
+#: commands/tablecmds.c:13298
 #, c-format
 msgid "unrecognized partitioning strategy \"%s\""
 msgstr "okänd partitioneringsstrategi \"%s\""
 
-#: commands/tablecmds.c:13262
+#: commands/tablecmds.c:13306
 #, c-format
 msgid "cannot use \"list\" partition strategy with more than one column"
 msgstr "kan inte använda list-partioneringsstrategi med mer än en kolumn"
 
-#: commands/tablecmds.c:13325
+#: commands/tablecmds.c:13369
 #, c-format
 msgid "column \"%s\" named in partition key does not exist"
 msgstr "kolumn \"%s\" angiven i partitioneringsnyckel existerar inte"
 
-#: commands/tablecmds.c:13332
+#: commands/tablecmds.c:13376
 #, c-format
 msgid "cannot use system column \"%s\" in partition key"
 msgstr "kan inte använda systemkolumn \"%s\" i partitioneringsnyckel"
 
-#: commands/tablecmds.c:13395
+#: commands/tablecmds.c:13439
 #, c-format
 msgid "functions in partition key expression must be marked IMMUTABLE"
 msgstr "funktioner i partitioneringsuttryck måste vara markerade IMMUTABLE"
 
-#: commands/tablecmds.c:13412
+#: commands/tablecmds.c:13456
 #, c-format
 msgid "partition key expressions cannot contain whole-row references"
 msgstr "partitioneringsnyckeluttrycḱ kan inte innehålla hela-raden-referernser"
 
-#: commands/tablecmds.c:13419
+#: commands/tablecmds.c:13463
 #, c-format
 msgid "partition key expressions cannot contain system column references"
 msgstr "partitioneringsnyckeluttryck kan inte innehålla systemkolumnreferenser"
 
-#: commands/tablecmds.c:13429
+#: commands/tablecmds.c:13473
 #, c-format
 msgid "cannot use constant expression as partition key"
 msgstr "kan inte använda konstant uttryck som partitioneringsnyckel"
 
-#: commands/tablecmds.c:13450
+#: commands/tablecmds.c:13494
 #, c-format
 msgid "could not determine which collation to use for partition expression"
 msgstr "kunde inte lista vilken jämförelse (collation) som skulle användas för partitionsuttryck"
 
-#: commands/tablecmds.c:13475
+#: commands/tablecmds.c:13519
 #, c-format
 msgid "data type %s has no default btree operator class"
 msgstr "datatyp %s har ingen default btree-operatorklass"
 
-#: commands/tablecmds.c:13477
+#: commands/tablecmds.c:13521
 #, c-format
 msgid "You must specify a btree operator class or define a default btree operator class for the data type."
 msgstr "Du måste ange en btree-operatorklass eller definiera en default btree-operatorklass för datatypen."
 
-#: commands/tablecmds.c:13525
+#: commands/tablecmds.c:13569
 #, c-format
 msgid "\"%s\" is already a partition"
 msgstr "\"%s\" är redan en partition"
 
-#: commands/tablecmds.c:13531
+#: commands/tablecmds.c:13575
 #, c-format
 msgid "cannot attach a typed table as partition"
 msgstr "kan inte ansluta en typad tabell som partition"
 
-#: commands/tablecmds.c:13547
+#: commands/tablecmds.c:13591
 #, c-format
 msgid "cannot attach inheritance child as partition"
 msgstr "kan inte ansluta ett arvsbarn som partition"
 
-#: commands/tablecmds.c:13561
+#: commands/tablecmds.c:13605
 #, c-format
 msgid "cannot attach inheritance parent as partition"
 msgstr "kan inte ansluta en arvsförälder som partition"
 
-#: commands/tablecmds.c:13595
+#: commands/tablecmds.c:13639
 #, c-format
 msgid "cannot attach a temporary relation as partition of permanent relation \"%s\""
 msgstr "kan inte ansluta en temporär relation som partition till en permanent relation \"%s\""
 
-#: commands/tablecmds.c:13603
+#: commands/tablecmds.c:13647
 #, c-format
 msgid "cannot attach a permanent relation as partition of temporary relation \"%s\""
 msgstr "kan inte ansluta en permanent relation som partition till en temporär relation \"%s\""
 
-#: commands/tablecmds.c:13611
+#: commands/tablecmds.c:13655
 #, c-format
 msgid "cannot attach as partition of temporary relation of another session"
 msgstr "kan inte ansluta en partition från en temporär relation som tillhör en annan session"
 
-#: commands/tablecmds.c:13618
+#: commands/tablecmds.c:13662
 #, c-format
 msgid "cannot attach temporary relation of another session as partition"
 msgstr "kan inte ansluta en temporär relation tillhörande en annan session som partition"
 
-#: commands/tablecmds.c:13624
+#: commands/tablecmds.c:13668
 #, c-format
 msgid "cannot attach table \"%s\" without OIDs as partition of table \"%s\" with OIDs"
 msgstr "kan inte ansluta tabell\"%s\" utan OID:er som partition till tabell \"%s\" med OID:er"
 
-#: commands/tablecmds.c:13632
+#: commands/tablecmds.c:13676
 #, c-format
 msgid "cannot attach table \"%s\" with OIDs as partition of table \"%s\" without OIDs"
 msgstr "kan inte ansluta tabell\"%s\" med OID:er som partition till tabell \"%s\" utan OID:er"
 
-#: commands/tablecmds.c:13654
+#: commands/tablecmds.c:13698
 #, c-format
 msgid "table \"%s\" contains column \"%s\" not found in parent \"%s\""
 msgstr "tabell \"%s\" innehåller kolumn \"%s\" som inte finns i föräldern \"%s\""
 
-#: commands/tablecmds.c:13657
+#: commands/tablecmds.c:13701
 #, c-format
 msgid "The new partition may contain only the columns present in parent."
 msgstr "Den nya partitionen får bara innehålla kolumner som finns i föräldern."
 
-#: commands/tablecmds.c:13669
+#: commands/tablecmds.c:13713
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming a partition"
 msgstr "utlösare \"%s\" förhindrar att tabell \"%s\" blir en partition"
 
-#: commands/tablecmds.c:13671 commands/trigger.c:393
+#: commands/tablecmds.c:13715 commands/trigger.c:393
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitions"
 msgstr "ROW-utlösare med övergångstabeller stöds inte för partitioner"
 
-#: commands/tablecmds.c:13802
+#: commands/tablecmds.c:13846
 #, c-format
 msgid "partition constraint for table \"%s\" is implied by existing constraints"
 msgstr "partitionsvillkor för tabell \"%s\" är implicit pga existerande villkor"
@@ -9391,8 +9381,8 @@ msgid "tablespace \"%s\" already exists"
 msgstr "tabellutrymmet \"%s\" finns redan"
 
 #: commands/tablespace.c:428 commands/tablespace.c:933
-#: commands/tablespace.c:1013 commands/tablespace.c:1081
-#: commands/tablespace.c:1214 commands/tablespace.c:1414
+#: commands/tablespace.c:1013 commands/tablespace.c:1082
+#: commands/tablespace.c:1216 commands/tablespace.c:1416
 #, c-format
 msgid "tablespace \"%s\" does not exist"
 msgstr "tabellutrymme \"%s\" existerar inte"
@@ -9443,17 +9433,17 @@ msgstr "kan inte ta bort symbolisk länk \"%s\": %m"
 msgid "\"%s\" is not a directory or symbolic link"
 msgstr "\"%s\" är inte en katalog eller symbolisk länk"
 
-#: commands/tablespace.c:1086
+#: commands/tablespace.c:1087
 #, c-format
 msgid "Tablespace \"%s\" does not exist."
 msgstr "Tabellutrymme \"%s\" finns inte."
 
-#: commands/tablespace.c:1513
+#: commands/tablespace.c:1515
 #, c-format
 msgid "directories for tablespace %u could not be removed"
 msgstr "kataloger för %u kan inte tas bort"
 
-#: commands/tablespace.c:1515
+#: commands/tablespace.c:1517
 #, c-format
 msgid "You can remove the directories manually if necessary."
 msgstr "Du kan ta bort dessa kataloger på egen hand om nödvändigt."
@@ -10938,12 +10928,12 @@ msgstr "ny rad bryter mot radsäkerhetspolicy \"%s\" (USING-uttryck) i tabell \"
 msgid "new row violates row-level security policy (USING expression) for table \"%s\""
 msgstr "ny rad bryter mot radsäkerhetspolicy (USING-uttryck) i tabell \"%s\""
 
-#: executor/execMain.c:3454
+#: executor/execMain.c:3455
 #, c-format
 msgid "no partition of relation \"%s\" found for row"
 msgstr "ingen partition av relation \"%s\" kunde hittas för raden"
 
-#: executor/execMain.c:3456
+#: executor/execMain.c:3457
 #, c-format
 msgid "Partition key of the failing row contains %s."
 msgstr "Partitioneringsnyckel för den trasiga raden innehåller %s."
@@ -11112,12 +11102,12 @@ msgstr "Sista satsen returnerar för få kolumner."
 msgid "return type %s is not supported for SQL functions"
 msgstr "returtup %s stöds inte för SQL-funktioner"
 
-#: executor/nodeAgg.c:3470 parser/parse_agg.c:618 parser/parse_agg.c:648
+#: executor/nodeAgg.c:3485 parser/parse_agg.c:618 parser/parse_agg.c:648
 #, c-format
 msgid "aggregate function calls cannot be nested"
 msgstr "aggregatfunktionsanrop kan inte nästlas"
 
-#: executor/nodeAgg.c:3604 executor/nodeWindowAgg.c:2282
+#: executor/nodeAgg.c:3619 executor/nodeWindowAgg.c:2282
 #, c-format
 msgid "aggregate %u needs to have compatible input type and transition type"
 msgstr "aggregat %u måste ha kompatibel indatatyp och övergångstyp"
@@ -11724,115 +11714,115 @@ msgstr "kunde inte öppna konfigureringskatalog \"%s\": %m"
 msgid "Cannot enlarge string buffer containing %d bytes by %d more bytes."
 msgstr "Kan inte utöka strängbuffer som innehåller %d byte med ytterligare %d bytes."
 
-#: libpq/auth-scram.c:201 libpq/auth-scram.c:441 libpq/auth-scram.c:450
+#: libpq/auth-scram.c:199 libpq/auth-scram.c:439 libpq/auth-scram.c:448
 #, c-format
 msgid "invalid SCRAM verifier for user \"%s\""
 msgstr "ogiltig SCRAM-verifierare för användare \"%s\""
 
-#: libpq/auth-scram.c:212
+#: libpq/auth-scram.c:210
 #, c-format
 msgid "User \"%s\" does not have a valid SCRAM verifier."
 msgstr "Användare \"%s\" har inte en giltig SCRAM-verifierare."
 
-#: libpq/auth-scram.c:290 libpq/auth-scram.c:295 libpq/auth-scram.c:589
-#: libpq/auth-scram.c:597 libpq/auth-scram.c:678 libpq/auth-scram.c:688
-#: libpq/auth-scram.c:807 libpq/auth-scram.c:814 libpq/auth-scram.c:829
-#: libpq/auth-scram.c:1062 libpq/auth-scram.c:1070
+#: libpq/auth-scram.c:288 libpq/auth-scram.c:293 libpq/auth-scram.c:606
+#: libpq/auth-scram.c:614 libpq/auth-scram.c:695 libpq/auth-scram.c:705
+#: libpq/auth-scram.c:824 libpq/auth-scram.c:831 libpq/auth-scram.c:846
+#: libpq/auth-scram.c:1079 libpq/auth-scram.c:1087
 #, c-format
 msgid "malformed SCRAM message"
 msgstr "trasigt SCRAM-meddelande"
 
-#: libpq/auth-scram.c:291
+#: libpq/auth-scram.c:289
 #, c-format
 msgid "The message is empty."
 msgstr "Meddelandet är tomt."
 
-#: libpq/auth-scram.c:296
+#: libpq/auth-scram.c:294
 #, c-format
 msgid "Message length does not match input length."
 msgstr "Meddelandelängden matchar inte indatalängden."
 
-#: libpq/auth-scram.c:328
+#: libpq/auth-scram.c:326
 #, c-format
 msgid "invalid SCRAM response"
 msgstr "ogiltigt SCRAM-svar"
 
-#: libpq/auth-scram.c:329
+#: libpq/auth-scram.c:327
 #, c-format
 msgid "Nonce does not match."
 msgstr "Engångsnummer matchar inte."
 
-#: libpq/auth-scram.c:403
+#: libpq/auth-scram.c:401
 #, c-format
 msgid "could not generate random salt"
 msgstr "kunde inte generera slumpat salt"
 
-#: libpq/auth-scram.c:590
+#: libpq/auth-scram.c:607
 #, c-format
 msgid "Expected attribute \"%c\" but found \"%s\"."
 msgstr "Förväntade attribut \"%c\" men hittade \"%s\"."
 
-#: libpq/auth-scram.c:598 libpq/auth-scram.c:689
+#: libpq/auth-scram.c:615 libpq/auth-scram.c:706
 #, c-format
 msgid "Expected character \"=\" for attribute \"%c\"."
 msgstr "Förväntade tecken \"=\" för attribut \"%c\"."
 
-#: libpq/auth-scram.c:679
+#: libpq/auth-scram.c:696
 #, c-format
 msgid "Attribute expected, but found invalid character \"%s\"."
 msgstr "Attribut förväntades men hittade ogiltigt tecken \"%s\"."
 
-#: libpq/auth-scram.c:803
+#: libpq/auth-scram.c:820
 #, c-format
 msgid "client requires SCRAM channel binding, but it is not supported"
 msgstr "klient kräver SCRAM-kanalbindning, men det stöds inte"
 
-#: libpq/auth-scram.c:808
+#: libpq/auth-scram.c:825
 #, c-format
 msgid "Unexpected channel-binding flag \"%s\"."
 msgstr "Oväntad kanalbindningsflagga \"%s\"."
 
-#: libpq/auth-scram.c:815
+#: libpq/auth-scram.c:832
 #, c-format
 msgid "Comma expected, but found character \"%s\"."
 msgstr "Komma förväntades men hittade tecken \"%s\"."
 
-#: libpq/auth-scram.c:825
+#: libpq/auth-scram.c:842
 #, c-format
 msgid "client uses authorization identity, but it is not supported"
 msgstr "klient använder auktorisationsidentitet, men det stöds inte"
 
-#: libpq/auth-scram.c:830
+#: libpq/auth-scram.c:847
 #, c-format
 msgid "Unexpected attribute \"%s\" in client-first-message."
 msgstr "Oväntat attribut \"%s\" i klient-först-meddelande."
 
-#: libpq/auth-scram.c:846
+#: libpq/auth-scram.c:863
 #, c-format
 msgid "client requires an unsupported SCRAM extension"
 msgstr "klient kräven en icke stödd SCRAM-utökning"
 
-#: libpq/auth-scram.c:860
+#: libpq/auth-scram.c:877
 #, c-format
 msgid "non-printable characters in SCRAM nonce"
 msgstr "icke-skrivbara tecken i SCRAM-engångsnummer"
 
-#: libpq/auth-scram.c:977
+#: libpq/auth-scram.c:994
 #, c-format
 msgid "could not generate random nonce"
 msgstr "kunde inte slumpa fram engångsnummer"
 
-#: libpq/auth-scram.c:1048
+#: libpq/auth-scram.c:1065
 #, c-format
 msgid "unexpected SCRAM channel-binding attribute in client-final-message"
 msgstr "oväntat SCRAM kanalbindningsattribut i klient-slut-meddelande"
 
-#: libpq/auth-scram.c:1063
+#: libpq/auth-scram.c:1080
 #, c-format
 msgid "Malformed proof in client-final-message."
 msgstr "Trasigt bevis i klient-slut-meddelande."
 
-#: libpq/auth-scram.c:1071
+#: libpq/auth-scram.c:1088
 #, c-format
 msgid "Garbage found at the end of client-final-message."
 msgstr "Hittade skräp i slutet av klient-slut-meddelande."
@@ -12625,32 +12615,32 @@ msgstr "SSL-felkod %lu"
 msgid "terminating connection due to unexpected postmaster exit"
 msgstr "avslutar anslutning på grund av att postmaster stängde oväntat ner"
 
-#: libpq/crypt.c:51
+#: libpq/crypt.c:52
 #, c-format
 msgid "Role \"%s\" does not exist."
 msgstr "Rollen \"%s\" finns inte."
 
-#: libpq/crypt.c:61
+#: libpq/crypt.c:62
 #, c-format
 msgid "User \"%s\" has no password assigned."
 msgstr "Användaren \"%s\" har inget lösenord satt."
 
-#: libpq/crypt.c:79
+#: libpq/crypt.c:80
 #, c-format
 msgid "User \"%s\" has an expired password."
 msgstr "Användaren \"%s\" har ett utgånget lösenord."
 
-#: libpq/crypt.c:173
+#: libpq/crypt.c:182
 #, c-format
 msgid "User \"%s\" has a password that cannot be used with MD5 authentication."
 msgstr "Användaren \"%s\" har ett lösenord som inte kan användas med MD5-autentisering."
 
-#: libpq/crypt.c:197 libpq/crypt.c:238 libpq/crypt.c:262
+#: libpq/crypt.c:206 libpq/crypt.c:247 libpq/crypt.c:271
 #, c-format
 msgid "Password does not match for user \"%s\"."
 msgstr "Lösenordet matchar inte för användare \"%s\"."
 
-#: libpq/crypt.c:281
+#: libpq/crypt.c:290
 #, c-format
 msgid "Password of user \"%s\" is in unrecognized format."
 msgstr "Lösenordet för användare \"%s\" är på ett okänt format."
@@ -13484,38 +13474,38 @@ msgstr "%s kan inte appliceras på den nullbara sidan av en outer join"
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "%s tillåẗs inte med UNION/INTERSECT/EXCEPT"
 
-#: optimizer/plan/planner.c:2191 optimizer/plan/planner.c:4149
+#: optimizer/plan/planner.c:2191 optimizer/plan/planner.c:4154
 #, c-format
 msgid "could not implement GROUP BY"
 msgstr "kunde inte implementera GROUP BY"
 
-#: optimizer/plan/planner.c:2192 optimizer/plan/planner.c:4150
-#: optimizer/plan/planner.c:4911 optimizer/prep/prepunion.c:935
+#: optimizer/plan/planner.c:2192 optimizer/plan/planner.c:4155
+#: optimizer/plan/planner.c:4916 optimizer/prep/prepunion.c:935
 #, c-format
 msgid "Some of the datatypes only support hashing, while others only support sorting."
 msgstr "Några av datatyperna stöder bara hash:ning medan andra bara stöder sortering."
 
-#: optimizer/plan/planner.c:4910
+#: optimizer/plan/planner.c:4915
 #, c-format
 msgid "could not implement DISTINCT"
 msgstr "kunde inte implementera DISTINCT"
 
-#: optimizer/plan/planner.c:5590
+#: optimizer/plan/planner.c:5595
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "kunde inte implementera fönster-PARTITION BY"
 
-#: optimizer/plan/planner.c:5591
+#: optimizer/plan/planner.c:5596
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "Fönsterpartitionskolumner måsta ha en sorterbar datatyp."
 
-#: optimizer/plan/planner.c:5595
+#: optimizer/plan/planner.c:5600
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "kunde inte implementera fönster-ORDER BY"
 
-#: optimizer/plan/planner.c:5596
+#: optimizer/plan/planner.c:5601
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "Fönsterordningskolumner måste ha en sorterbar datatyp."
@@ -14032,7 +14022,7 @@ msgstr "argument till GROUPING måste vare grupputtryck på den tillhörande fr�
 msgid "relation \"%s\" cannot be the target of a modifying statement"
 msgstr "relationen \"%s\" kan inte vara målet för en modifierande sats"
 
-#: parser/parse_clause.c:608 parser/parse_clause.c:636 parser/parse_func.c:2153
+#: parser/parse_clause.c:608 parser/parse_clause.c:636 parser/parse_func.c:2159
 #, c-format
 msgid "set-returning functions must appear at top level of FROM"
 msgstr "mängdreturnerande funktioner måste vara på toppnivå i FROM"
@@ -14544,7 +14534,7 @@ msgid "source for a multiple-column UPDATE item must be a sub-SELECT or ROW() ex
 msgstr "källa till en multiple-kolumn-UPDATE-post måste vara en sub-SELECT eller ROW()-uttryck"
 
 #. translator: %s is name of a SQL construct, eg GROUP BY
-#: parser/parse_expr.c:1759 parser/parse_expr.c:2235 parser/parse_func.c:2256
+#: parser/parse_expr.c:1759 parser/parse_expr.c:2235 parser/parse_func.c:2262
 #, c-format
 msgid "set-returning functions are not allowed in %s"
 msgstr "mängdreturnerande funktioner tillåts inte i %s"
@@ -14831,67 +14821,67 @@ msgstr "funktionsnamn \"%s\" är inte unikt"
 msgid "Specify the argument list to select the function unambiguously."
 msgstr "Ange argumentlistan för att välja funktionen entydigt."
 
-#: parser/parse_func.c:1962
+#: parser/parse_func.c:1963
 #, c-format
 msgid "could not find a function named \"%s\""
 msgstr "kunde inte hitta funktion med namn \"%s\""
 
-#: parser/parse_func.c:2064
+#: parser/parse_func.c:2070
 #, c-format
 msgid "aggregate %s(*) does not exist"
 msgstr "aggregatfunktion %s(*) existerar inte"
 
-#: parser/parse_func.c:2069
+#: parser/parse_func.c:2075
 #, c-format
 msgid "aggregate %s does not exist"
 msgstr "aggregatfunktion %s existerar inte"
 
-#: parser/parse_func.c:2088
+#: parser/parse_func.c:2094
 #, c-format
 msgid "function %s is not an aggregate"
 msgstr "funktionen %s är inte en aggregatfunktion"
 
-#: parser/parse_func.c:2140
+#: parser/parse_func.c:2146
 msgid "set-returning functions are not allowed in JOIN conditions"
 msgstr "mängdreturnerande funktioner tillåts inte i JOIN-villkor"
 
-#: parser/parse_func.c:2161
+#: parser/parse_func.c:2167
 msgid "set-returning functions are not allowed in policy expressions"
 msgstr "mängdreturnerande funktioner tillåts inte i policy-uttryck"
 
-#: parser/parse_func.c:2176
+#: parser/parse_func.c:2182
 msgid "set-returning functions are not allowed in window definitions"
 msgstr "mängdreturnerande funktioner tillåts inte i fönsterdefinitioner"
 
-#: parser/parse_func.c:2214
+#: parser/parse_func.c:2220
 msgid "set-returning functions are not allowed in check constraints"
 msgstr "mängdreturnerande funktioner tillåts inte i check-villkor"
 
-#: parser/parse_func.c:2218
+#: parser/parse_func.c:2224
 msgid "set-returning functions are not allowed in DEFAULT expressions"
 msgstr "mängdreturnerande funktioner tillåts inte i DEFAULT-uttryck"
 
-#: parser/parse_func.c:2221
+#: parser/parse_func.c:2227
 msgid "set-returning functions are not allowed in index expressions"
 msgstr "mängdreturnerande funktioner tillåts inte i indexuttryck"
 
-#: parser/parse_func.c:2224
+#: parser/parse_func.c:2230
 msgid "set-returning functions are not allowed in index predicates"
 msgstr "mängdreturnerande funktioner tillåts inte i indexpredukat"
 
-#: parser/parse_func.c:2227
+#: parser/parse_func.c:2233
 msgid "set-returning functions are not allowed in transform expressions"
 msgstr "mängdreturnerande funktioner tillåts inte i transformuttryck"
 
-#: parser/parse_func.c:2230
+#: parser/parse_func.c:2236
 msgid "set-returning functions are not allowed in EXECUTE parameters"
 msgstr "mängdreturnerande funktioner tillåts inte i EXECUTE-parametrar"
 
-#: parser/parse_func.c:2233
+#: parser/parse_func.c:2239
 msgid "set-returning functions are not allowed in trigger WHEN conditions"
 msgstr "mängdreturnerande funktioner tillåts inte i WHEN-utlösarvillkor"
 
-#: parser/parse_func.c:2236
+#: parser/parse_func.c:2242
 msgid "set-returning functions are not allowed in partition key expressions"
 msgstr "mängdreturnerande funktioner tillåts inte i partitionsnyckeluttryck"
 
@@ -15470,17 +15460,17 @@ msgstr "Försöka att sätta literalen inom enkelcitattecken."
 msgid "identifier \"%s\" will be truncated to \"%s\""
 msgstr "identifierare \"%s\" kommer trunkeras till \"%s\""
 
-#: port/pg_shmem.c:196 port/sysv_shmem.c:196
+#: port/pg_shmem.c:217 port/sysv_shmem.c:217
 #, c-format
 msgid "could not create shared memory segment: %m"
 msgstr "kunde inte skapa delat minnessegment: %m"
 
-#: port/pg_shmem.c:197 port/sysv_shmem.c:197
+#: port/pg_shmem.c:218 port/sysv_shmem.c:218
 #, c-format
 msgid "Failed system call was shmget(key=%lu, size=%zu, 0%o)."
 msgstr "Misslyckade systemanropet var semget(key=%lu, size=%zu, 0%o)."
 
-#: port/pg_shmem.c:201 port/sysv_shmem.c:201
+#: port/pg_shmem.c:222 port/sysv_shmem.c:222
 #, c-format
 msgid ""
 "This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMMAX parameter, or possibly that it is less than your kernel's SHMMIN parameter.\n"
@@ -15489,7 +15479,7 @@ msgstr ""
 "Felet betyder vanligen att PostgreSQLs begäran av delat minnessegment överskred kärnans SHMMAX-parameter eller möjligen att det är lägre än kärnans SHMMIN-parameter.\n"
 "PostgreSQLs dokumentation innehåller mer information om konfigueration av delat minne."
 
-#: port/pg_shmem.c:208 port/sysv_shmem.c:208
+#: port/pg_shmem.c:229 port/sysv_shmem.c:229
 #, c-format
 msgid ""
 "This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMALL parameter.  You might need to reconfigure the kernel with larger SHMALL.\n"
@@ -15498,7 +15488,7 @@ msgstr ""
 "Felet betyder vanligen att PostgreSQLs begäran av delat minnessegment överskred kärnans SHMALL-parameter. Du kan behöva rekonfigurera kärnan med ett större SHMALL.\n"
 "PostgreSQLs dokumentation innehåller mer information om konfigueration av delat minne."
 
-#: port/pg_shmem.c:214 port/sysv_shmem.c:214
+#: port/pg_shmem.c:235 port/sysv_shmem.c:235
 #, c-format
 msgid ""
 "This error does *not* mean that you have run out of disk space.  It occurs either if all available shared memory IDs have been taken, in which case you need to raise the SHMMNI parameter in your kernel, or because the system's overall limit for shared memory has been reached.\n"
@@ -15507,22 +15497,32 @@ msgstr ""
 "Felet betyder *inte* att diskutrymmet tagit slut. Felet sker aningen om alla tillgängliga ID-nummer för delat minne tagit slut och då behöver du öka kärnans SHMMNI-parameter eller för att systemets totala gräns för delat minne ha nåtts.\n"
 "PostgreSQLs dokumentation innehåller mer information om konfigueration av delat minne."
 
-#: port/pg_shmem.c:505 port/sysv_shmem.c:505
+#: port/pg_shmem.c:580 port/sysv_shmem.c:580
 #, c-format
 msgid "could not map anonymous shared memory: %m"
 msgstr "kunde inte mappa anonymt delat minne: %m"
 
-#: port/pg_shmem.c:507 port/sysv_shmem.c:507
+#: port/pg_shmem.c:582 port/sysv_shmem.c:582
 #, c-format
 msgid "This error usually means that PostgreSQL's request for a shared memory segment exceeded available memory, swap space, or huge pages. To reduce the request size (currently %zu bytes), reduce PostgreSQL's shared memory usage, perhaps by reducing shared_buffers or max_connections."
 msgstr "Detta fel betyder vanligtvis att PostgreSQL:s begäran av delat minnessegment överskrider mängden tillgängligt minne, swap eller stora sidor. För att minska begärd storlek (nu %zu byte) minska PostgreSQL:s användning av delat minne t.ex. genom att dra ner på shared_buffers eller max_connections."
 
-#: port/pg_shmem.c:573 port/sysv_shmem.c:573 port/win32_shmem.c:156
+#: port/pg_shmem.c:644 port/sysv_shmem.c:644 port/win32_shmem.c:151
 #, c-format
 msgid "huge pages not supported on this platform"
 msgstr "stora sidor stöds inte på denna plattform"
 
-#: port/pg_shmem.c:668 port/sysv_shmem.c:668
+#: port/pg_shmem.c:704 port/sysv_shmem.c:704 utils/init/miscinit.c:977
+#, c-format
+msgid "pre-existing shared memory block (key %lu, ID %lu) is still in use"
+msgstr "redan existerande delat minnesblock (nyckel %lu, ID %lu) används fortfarande"
+
+#: port/pg_shmem.c:707 port/sysv_shmem.c:707 utils/init/miscinit.c:979
+#, c-format
+msgid "Terminate any old server processes associated with data directory \"%s\"."
+msgstr "Stäng ner gamla serverprocesser som hör ihop med datakatalogen \"%s\"."
+
+#: port/pg_shmem.c:758 port/sysv_shmem.c:758
 #, c-format
 msgid "could not stat data directory \"%s\": %m"
 msgstr "kunde inte göra stat() på datakatalog \"%s\": %m"
@@ -15609,32 +15609,32 @@ msgstr "kunde inte låsa upp semafor: felkod %lu"
 msgid "could not try-lock semaphore: error code %lu"
 msgstr "kunde inte utföra \"try-lock\" på semafor: felkod %lu"
 
-#: port/win32_shmem.c:201 port/win32_shmem.c:236 port/win32_shmem.c:254
+#: port/win32_shmem.c:196 port/win32_shmem.c:231 port/win32_shmem.c:249
 #, c-format
 msgid "could not create shared memory segment: error code %lu"
 msgstr "kunde inte skapa delat minnessegment: felkod %lu"
 
-#: port/win32_shmem.c:202
+#: port/win32_shmem.c:197
 #, c-format
 msgid "Failed system call was CreateFileMapping(size=%zu, name=%s)."
 msgstr "Misslyckade systemanropet var CreateFileMapping(size=%zu, name=%s)."
 
-#: port/win32_shmem.c:226
+#: port/win32_shmem.c:221
 #, c-format
 msgid "pre-existing shared memory block is still in use"
 msgstr "redan existerande delat minnesblock används fortfarande"
 
-#: port/win32_shmem.c:227
+#: port/win32_shmem.c:222
 #, c-format
 msgid "Check if there are any old server processes still running, and terminate them."
 msgstr "Kontrollera om det finns några gamla serverprocesser som fortfarande kör och stäng ner dem."
 
-#: port/win32_shmem.c:237
+#: port/win32_shmem.c:232
 #, c-format
 msgid "Failed system call was DuplicateHandle."
 msgstr "Misslyckat systemanrop var DuplicateHandle."
 
-#: port/win32_shmem.c:255
+#: port/win32_shmem.c:250
 #, c-format
 msgid "Failed system call was MapViewOfFileEx."
 msgstr "Misslyckat systemanrop var MapViewOfFileEx."
@@ -15919,52 +15919,52 @@ msgstr "okänt återställningsmål \"%s\""
 msgid "Target must be \"archiver\" or \"bgwriter\"."
 msgstr "Målet måste vara \"archiver\" eller \"bgwriter\"."
 
-#: postmaster/pgstat.c:4307
+#: postmaster/pgstat.c:4350
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "kunde inte läsa statistikmeddelande: %m"
 
-#: postmaster/pgstat.c:4639 postmaster/pgstat.c:4796
+#: postmaster/pgstat.c:4682 postmaster/pgstat.c:4839
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "kunde inte öppna temporär statistikfil \"%s\": %m"
 
-#: postmaster/pgstat.c:4706 postmaster/pgstat.c:4841
+#: postmaster/pgstat.c:4749 postmaster/pgstat.c:4884
 #, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "kunde inte skriva temporär statistikfil \"%s\": %m"
 
-#: postmaster/pgstat.c:4715 postmaster/pgstat.c:4850
+#: postmaster/pgstat.c:4758 postmaster/pgstat.c:4893
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "kunde inte stänga temporär statistikfil \"%s\": %m"
 
-#: postmaster/pgstat.c:4723 postmaster/pgstat.c:4858
+#: postmaster/pgstat.c:4766 postmaster/pgstat.c:4901
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr "kunde inte döpa om temporär statistikfil \"%s\" till \"%s\": %m"
 
-#: postmaster/pgstat.c:4947 postmaster/pgstat.c:5153 postmaster/pgstat.c:5306
+#: postmaster/pgstat.c:4990 postmaster/pgstat.c:5196 postmaster/pgstat.c:5349
 #, c-format
 msgid "could not open statistics file \"%s\": %m"
 msgstr "kunde inte öppna statistikfil \"%s\": %m"
 
-#: postmaster/pgstat.c:4959 postmaster/pgstat.c:4969 postmaster/pgstat.c:4990
-#: postmaster/pgstat.c:5012 postmaster/pgstat.c:5027 postmaster/pgstat.c:5090
-#: postmaster/pgstat.c:5165 postmaster/pgstat.c:5185 postmaster/pgstat.c:5203
-#: postmaster/pgstat.c:5219 postmaster/pgstat.c:5237 postmaster/pgstat.c:5253
-#: postmaster/pgstat.c:5318 postmaster/pgstat.c:5330 postmaster/pgstat.c:5342
-#: postmaster/pgstat.c:5367 postmaster/pgstat.c:5389
+#: postmaster/pgstat.c:5002 postmaster/pgstat.c:5012 postmaster/pgstat.c:5033
+#: postmaster/pgstat.c:5055 postmaster/pgstat.c:5070 postmaster/pgstat.c:5133
+#: postmaster/pgstat.c:5208 postmaster/pgstat.c:5228 postmaster/pgstat.c:5246
+#: postmaster/pgstat.c:5262 postmaster/pgstat.c:5280 postmaster/pgstat.c:5296
+#: postmaster/pgstat.c:5361 postmaster/pgstat.c:5373 postmaster/pgstat.c:5385
+#: postmaster/pgstat.c:5410 postmaster/pgstat.c:5432
 #, c-format
 msgid "corrupted statistics file \"%s\""
 msgstr "korrupt statistikfil \"%s\""
 
-#: postmaster/pgstat.c:5518
+#: postmaster/pgstat.c:5561
 #, c-format
 msgid "using stale statistics instead of current ones because stats collector is not responding"
 msgstr "använder gammal statistik istället för aktuell data då statistikinsamlaren inte svarar"
 
-#: postmaster/pgstat.c:5845
+#: postmaster/pgstat.c:5888
 #, c-format
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "databasens hashtabell har blivit korrupt vid uppstädning --- avbryter"
@@ -16365,167 +16365,167 @@ msgstr "%s (PID %d) terminerades av signal %d"
 msgid "%s (PID %d) exited with unrecognized status %d"
 msgstr "%s (PID %d) avslutade med okänd status %d"
 
-#: postmaster/postmaster.c:3832
+#: postmaster/postmaster.c:3828
 #, c-format
 msgid "abnormal database system shutdown"
 msgstr "ej normal databasnedstängning"
 
-#: postmaster/postmaster.c:3872
+#: postmaster/postmaster.c:3868
 #, c-format
 msgid "all server processes terminated; reinitializing"
 msgstr "alla serverprocesser är avslutade; initierar på nytt"
 
-#: postmaster/postmaster.c:4038 postmaster/postmaster.c:5449
-#: postmaster/postmaster.c:5813
+#: postmaster/postmaster.c:4034 postmaster/postmaster.c:5454
+#: postmaster/postmaster.c:5828
 #, c-format
 msgid "could not generate random cancel key"
 msgstr "kunde inte skapa slumpad avbrytningsnyckel"
 
-#: postmaster/postmaster.c:4092
+#: postmaster/postmaster.c:4088
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "kunde inte fork():a ny process for uppkoppling: %m"
 
-#: postmaster/postmaster.c:4134
+#: postmaster/postmaster.c:4130
 msgid "could not fork new process for connection: "
 msgstr "kunde inte fork():a ny process for uppkoppling: "
 
-#: postmaster/postmaster.c:4248
+#: postmaster/postmaster.c:4244
 #, c-format
 msgid "connection received: host=%s port=%s"
 msgstr "ansluting mottagen: värd=%s port=%s"
 
-#: postmaster/postmaster.c:4253
+#: postmaster/postmaster.c:4249
 #, c-format
 msgid "connection received: host=%s"
 msgstr "ansluting mottagen: värd=%s"
 
-#: postmaster/postmaster.c:4538
+#: postmaster/postmaster.c:4534
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "kunde inte köra serverprocess \"%s\": %m"
 
-#: postmaster/postmaster.c:4691
+#: postmaster/postmaster.c:4687
 #, c-format
 msgid "giving up after too many tries to reserve shared memory"
 msgstr "ger upp efter för många försök att reservera delat minne"
 
-#: postmaster/postmaster.c:4692
+#: postmaster/postmaster.c:4688
 #, c-format
 msgid "This might be caused by ASLR or antivirus software."
 msgstr "Detta kan orsakas av ASLR eller antivirusprogram."
 
-#: postmaster/postmaster.c:4889
+#: postmaster/postmaster.c:4885
 #, c-format
 msgid "SSL configuration could not be loaded in child process"
 msgstr "SSL-konfigurering kunde inte laddas i barnprocess"
 
-#: postmaster/postmaster.c:5021
+#: postmaster/postmaster.c:5017
 #, c-format
 msgid "Please report this to <pgsql-bugs@postgresql.org>."
 msgstr "Vänligen rapportera detta till <pgsql-bugs@postgresql.org>."
 
-#: postmaster/postmaster.c:5108
+#: postmaster/postmaster.c:5104
 #, c-format
 msgid "database system is ready to accept read only connections"
 msgstr "databassystemet är redo att ta emot read-only-anslutningar"
 
-#: postmaster/postmaster.c:5377
+#: postmaster/postmaster.c:5382
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "kunde inte starta startup-processen: %m"
 
-#: postmaster/postmaster.c:5381
+#: postmaster/postmaster.c:5386
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "kunde inte starta process för bakgrundsskrivare: %m"
 
-#: postmaster/postmaster.c:5385
+#: postmaster/postmaster.c:5390
 #, c-format
 msgid "could not fork checkpointer process: %m"
 msgstr "kunde inte fork:a bakgrundsprocess: %m"
 
-#: postmaster/postmaster.c:5389
+#: postmaster/postmaster.c:5394
 #, c-format
 msgid "could not fork WAL writer process: %m"
 msgstr "kunde inte fork:a WAL-skrivprocess: %m"
 
-#: postmaster/postmaster.c:5393
+#: postmaster/postmaster.c:5398
 #, c-format
 msgid "could not fork WAL receiver process: %m"
 msgstr "kunde inte fork:a WAL-mottagarprocess: %m"
 
-#: postmaster/postmaster.c:5397
+#: postmaster/postmaster.c:5402
 #, c-format
 msgid "could not fork process: %m"
 msgstr "kunde inte fork:a process: %m"
 
-#: postmaster/postmaster.c:5584 postmaster/postmaster.c:5607
+#: postmaster/postmaster.c:5599 postmaster/postmaster.c:5622
 #, c-format
 msgid "database connection requirement not indicated during registration"
 msgstr "krav på databasanslutning fanns inte med vid registering"
 
-#: postmaster/postmaster.c:5591 postmaster/postmaster.c:5614
+#: postmaster/postmaster.c:5606 postmaster/postmaster.c:5629
 #, c-format
 msgid "invalid processing mode in background worker"
 msgstr "ogiltigt processläge i bakgrundsarbetare"
 
-#: postmaster/postmaster.c:5686
+#: postmaster/postmaster.c:5701
 #, c-format
 msgid "starting background worker process \"%s\""
 msgstr "startar bakgrundsarbetarprocess \"%s\""
 
-#: postmaster/postmaster.c:5698
+#: postmaster/postmaster.c:5713
 #, c-format
 msgid "could not fork worker process: %m"
 msgstr "kunde inte starta (fork) arbetarprocess: %m"
 
-#: postmaster/postmaster.c:6134
+#: postmaster/postmaster.c:6149
 #, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "kunde inte duplicera uttag (socket) %d för att använda i backend: felkod %d"
 
-#: postmaster/postmaster.c:6166
+#: postmaster/postmaster.c:6181
 #, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "kunde inte skapa ärvt uttag (socket): felkod %d\n"
 
-#: postmaster/postmaster.c:6195
+#: postmaster/postmaster.c:6210
 #, c-format
 msgid "could not open backend variables file \"%s\": %s\n"
 msgstr "kunde inte öppna bakändans variabelfil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6202
+#: postmaster/postmaster.c:6217
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "kunde inte läsa från bakändans variabelfil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6211
+#: postmaster/postmaster.c:6226
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "kunde inte ta bort fil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:6228
+#: postmaster/postmaster.c:6243
 #, c-format
 msgid "could not map view of backend variables: error code %lu\n"
 msgstr "kunde inte mappa in vy för bakgrundsvariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6237
+#: postmaster/postmaster.c:6252
 #, c-format
 msgid "could not unmap view of backend variables: error code %lu\n"
 msgstr "kunde inte avmappa vy för bakgrundsvariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6244
+#: postmaster/postmaster.c:6259
 #, c-format
 msgid "could not close handle to backend parameter variables: error code %lu\n"
 msgstr "kunde inte stänga \"handle\" till backend:ens parametervariabler: felkod %lu\n"
 
-#: postmaster/postmaster.c:6408
+#: postmaster/postmaster.c:6423
 #, c-format
 msgid "could not read exit code for process\n"
 msgstr "kunde inte läsa avslutningskod för process\n"
 
-#: postmaster/postmaster.c:6413
+#: postmaster/postmaster.c:6428
 #, c-format
 msgid "could not post child completion status\n"
 msgstr "kunde inte skicka barnets avslutningsstatus\n"
@@ -16662,108 +16662,108 @@ msgstr "filnamnet är för långt för tar-format: \"%s\""
 msgid "symbolic link target too long for tar format: file name \"%s\", target \"%s\""
 msgstr "mål för symbolisk länk är för långt för tar-format: filnamn \"%s\", mål \"%s\""
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:231
+#: replication/libpqwalreceiver/libpqwalreceiver.c:232
 #, c-format
 msgid "invalid connection string syntax: %s"
 msgstr "ogiltig anslutningssträngsyntax %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:255
+#: replication/libpqwalreceiver/libpqwalreceiver.c:256
 #, c-format
 msgid "could not parse connection string: %s"
 msgstr "kunde inte parsa anslutningssträng: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:305
+#: replication/libpqwalreceiver/libpqwalreceiver.c:306
 #, c-format
 msgid "could not receive database system identifier and timeline ID from the primary server: %s"
 msgstr "kunde inte hämta databassystemidentifierare och tidslinje-ID från primära servern: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:316
-#: replication/libpqwalreceiver/libpqwalreceiver.c:523
+#: replication/libpqwalreceiver/libpqwalreceiver.c:317
+#: replication/libpqwalreceiver/libpqwalreceiver.c:528
 #, c-format
 msgid "invalid response from primary server"
 msgstr "ogiltigt svar från primär server"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:317
+#: replication/libpqwalreceiver/libpqwalreceiver.c:318
 #, c-format
 msgid "Could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields."
 msgstr "Kunde inte identifiera system: fick %d rader och %d fält, förväntade %d rader och %d eller fler fält."
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:383
-#: replication/libpqwalreceiver/libpqwalreceiver.c:389
-#: replication/libpqwalreceiver/libpqwalreceiver.c:414
+#: replication/libpqwalreceiver/libpqwalreceiver.c:384
+#: replication/libpqwalreceiver/libpqwalreceiver.c:390
+#: replication/libpqwalreceiver/libpqwalreceiver.c:415
 #, c-format
 msgid "could not start WAL streaming: %s"
 msgstr "kunde inte starta WAL-strömning: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:433
+#: replication/libpqwalreceiver/libpqwalreceiver.c:438
 #, c-format
 msgid "could not send end-of-streaming message to primary: %s"
 msgstr "kunde inte skicka meddelandet end-of-streaming till primären: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:455
+#: replication/libpqwalreceiver/libpqwalreceiver.c:460
 #, c-format
 msgid "unexpected result set after end-of-streaming"
 msgstr "oväntad resultatmängd efter end-of-streaming"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:469
+#: replication/libpqwalreceiver/libpqwalreceiver.c:474
 #, c-format
 msgid "error while shutting down streaming COPY: %s"
 msgstr "fel vid nestängning av strömmande COPY: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:478
+#: replication/libpqwalreceiver/libpqwalreceiver.c:483
 #, c-format
 msgid "error reading result of streaming command: %s"
 msgstr "fel vid läsning av resultat från strömmningskommando: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:486
-#: replication/libpqwalreceiver/libpqwalreceiver.c:714
+#: replication/libpqwalreceiver/libpqwalreceiver.c:491
+#: replication/libpqwalreceiver/libpqwalreceiver.c:729
 #, c-format
 msgid "unexpected result after CommandComplete: %s"
 msgstr "oväntat resultat efter CommandComplete: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:512
+#: replication/libpqwalreceiver/libpqwalreceiver.c:517
 #, c-format
 msgid "could not receive timeline history file from the primary server: %s"
 msgstr "kan inte ta emot fil med tidslinjehistorik från primära servern: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:524
+#: replication/libpqwalreceiver/libpqwalreceiver.c:529
 #, c-format
 msgid "Expected 1 tuple with 2 fields, got %d tuples with %d fields."
 msgstr "Förväntade 1 tupel med 2 fält, fick %d tupler med %d fält."
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:678
-#: replication/libpqwalreceiver/libpqwalreceiver.c:729
-#: replication/libpqwalreceiver/libpqwalreceiver.c:735
+#: replication/libpqwalreceiver/libpqwalreceiver.c:693
+#: replication/libpqwalreceiver/libpqwalreceiver.c:744
+#: replication/libpqwalreceiver/libpqwalreceiver.c:750
 #, c-format
 msgid "could not receive data from WAL stream: %s"
 msgstr "kunde inte ta emot data från WAL-ström: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:754
+#: replication/libpqwalreceiver/libpqwalreceiver.c:769
 #, c-format
 msgid "could not send data to WAL stream: %s"
 msgstr "kunde inte skicka data till WAL-ström: %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:803
+#: replication/libpqwalreceiver/libpqwalreceiver.c:818
 #, c-format
 msgid "could not create replication slot \"%s\": %s"
 msgstr "kunde inte skapa replikeringsslot \"%s\": %s"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:837
+#: replication/libpqwalreceiver/libpqwalreceiver.c:852
 #, c-format
 msgid "invalid query response"
 msgstr "ogiltigt frågerespons"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:838
+#: replication/libpqwalreceiver/libpqwalreceiver.c:853
 #, c-format
 msgid "Expected %d fields, got %d fields."
 msgstr "Förväntade %d fält, fick %d fält."
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:907
+#: replication/libpqwalreceiver/libpqwalreceiver.c:922
 #, c-format
 msgid "the query interface requires a database connection"
 msgstr "frågeinterface:et kräver en databasanslutning"
 
-#: replication/libpqwalreceiver/libpqwalreceiver.c:938
+#: replication/libpqwalreceiver/libpqwalreceiver.c:953
 msgid "empty query"
 msgstr "tom fråga"
 
@@ -17406,77 +17406,77 @@ msgstr "synchronous_standby_names-parser misslyckades"
 msgid "number of synchronous standbys (%d) must be greater than zero"
 msgstr "antal synkrona standbys (%d) måste vara fler än noll"
 
-#: replication/walreceiver.c:168
+#: replication/walreceiver.c:159
 #, c-format
 msgid "terminating walreceiver process due to administrator command"
 msgstr "avslutar wal-mottagarprocessen på grund av ett administratörskommando"
 
-#: replication/walreceiver.c:306
+#: replication/walreceiver.c:283
 #, c-format
 msgid "could not connect to the primary server: %s"
 msgstr "kunde inte ansluta till primärserver: %s"
 
-#: replication/walreceiver.c:345
+#: replication/walreceiver.c:320
 #, c-format
 msgid "database system identifier differs between the primary and standby"
 msgstr "databassystemets identifierare skiljer sig åt mellan primären och standby:en"
 
-#: replication/walreceiver.c:346
+#: replication/walreceiver.c:321
 #, c-format
 msgid "The primary's identifier is %s, the standby's identifier is %s."
 msgstr "Primärens identifierare är %s, standby:ens identifierare är %s."
 
-#: replication/walreceiver.c:357
+#: replication/walreceiver.c:331
 #, c-format
 msgid "highest timeline %u of the primary is behind recovery timeline %u"
 msgstr "högsta tidslinjen %u i primären är efter återställningstidslinjen %u"
 
-#: replication/walreceiver.c:393
+#: replication/walreceiver.c:367
 #, c-format
 msgid "started streaming WAL from primary at %X/%X on timeline %u"
 msgstr "startade strömning av WAL från primären vid %X/%X på tidslinje %u"
 
-#: replication/walreceiver.c:398
+#: replication/walreceiver.c:372
 #, c-format
 msgid "restarted WAL streaming at %X/%X on timeline %u"
 msgstr "återstartade WAL-strömning vid %X/%X på tidslinje %u"
 
-#: replication/walreceiver.c:427
+#: replication/walreceiver.c:401
 #, c-format
 msgid "cannot continue WAL streaming, recovery has already ended"
 msgstr "kan inte fortsätta WAL-strömning, återställning har redan avslutats"
 
-#: replication/walreceiver.c:464
+#: replication/walreceiver.c:438
 #, c-format
 msgid "replication terminated by primary server"
 msgstr "replikering avslutad av primär server"
 
-#: replication/walreceiver.c:465
+#: replication/walreceiver.c:439
 #, c-format
 msgid "End of WAL reached on timeline %u at %X/%X."
 msgstr "Slut på WAL nådd på tidslinje %u vid %X/%X."
 
-#: replication/walreceiver.c:560
+#: replication/walreceiver.c:536
 #, c-format
 msgid "terminating walreceiver due to timeout"
 msgstr "avslutar wal-mottagare på grund av timeout"
 
-#: replication/walreceiver.c:600
+#: replication/walreceiver.c:574
 #, c-format
 msgid "primary server contains no more WAL on requested timeline %u"
 msgstr "primär server har ingen mer WAL på efterfrågad tidslinje %u"
 
-#: replication/walreceiver.c:615 replication/walreceiver.c:968
+#: replication/walreceiver.c:589 replication/walreceiver.c:936
 #, c-format
 msgid "could not close log segment %s: %m"
 msgstr "kunde inte stänga loggsegment %s: %m"
 
-#: replication/walreceiver.c:740
+#: replication/walreceiver.c:714
 #, c-format
 msgid "fetching timeline history file for timeline %u from primary server"
 msgstr "hämtar tidslinjehistorikfil för tidslinje %u från primära servern"
 
-#: replication/walreceiver.c:1022
+#: replication/walreceiver.c:990
 #, c-format
 msgid "could not write to log segment %s at offset %u, length %lu: %m"
 msgstr "kunde inte skriva till loggfilsegment %s på offset %u, längd %lu: %m"
@@ -17558,42 +17558,42 @@ msgstr "tog emot replikeringskommando: %s"
 msgid "current transaction is aborted, commands ignored until end of transaction block"
 msgstr "aktuella transaktionen har avbrutits, alla kommandon ignoreras tills slutet på transaktionen"
 
-#: replication/walsender.c:1558
+#: replication/walsender.c:1561
 #, c-format
 msgid "cannot execute SQL commands in WAL sender for physical replication"
 msgstr "kan inte köra SQL-kommandon i WAL-sändare för fysisk replikering"
 
-#: replication/walsender.c:1606 replication/walsender.c:1622
+#: replication/walsender.c:1609 replication/walsender.c:1625
 #, c-format
 msgid "unexpected EOF on standby connection"
 msgstr "oväntat EOF från standby-anslutning"
 
-#: replication/walsender.c:1636
+#: replication/walsender.c:1639
 #, c-format
 msgid "unexpected standby message type \"%c\", after receiving CopyDone"
 msgstr "oväntat standby-meddelandetyp \"%c\" efter att vi tagit emot CopyDone"
 
-#: replication/walsender.c:1674
+#: replication/walsender.c:1677
 #, c-format
 msgid "invalid standby message type \"%c\""
 msgstr "ogiltigt standby-meddelandetyp \"%c\""
 
-#: replication/walsender.c:1715
+#: replication/walsender.c:1718
 #, c-format
 msgid "unexpected message type \"%c\""
 msgstr "oväntad meddelandetyp \"%c\""
 
-#: replication/walsender.c:2093
+#: replication/walsender.c:2096
 #, c-format
 msgid "terminating walsender process due to replication timeout"
 msgstr "avslutar walsender-process på grund av replikerings-timeout"
 
-#: replication/walsender.c:2177
+#: replication/walsender.c:2180
 #, c-format
 msgid "\"%s\" has now caught up with upstream server"
 msgstr "\"%s\" har nu kommit ikapp servern uppströms"
 
-#: replication/walsender.c:2286
+#: replication/walsender.c:2289
 #, c-format
 msgid "number of requested standby connections exceeds max_wal_senders (currently %d)"
 msgstr "antalet efterfrågade standby-anslutningar överskrider max_wal_senders (nu %d)"
@@ -18142,13 +18142,8 @@ msgstr "okänd Snowball-parameter: \"%s\""
 msgid "missing Language parameter"
 msgstr "saknar parameter \"Language\""
 
-#: statistics/dependencies.c:534
-#, c-format
-msgid "invalid zero-length item array in MVDependencies"
-msgstr "ogiltig array med storlek noll i MVDependencies"
-
-#: statistics/dependencies.c:672 statistics/dependencies.c:725
-#: statistics/mvdistinct.c:341 statistics/mvdistinct.c:394
+#: statistics/dependencies.c:670 statistics/dependencies.c:723
+#: statistics/mvdistinct.c:333 statistics/mvdistinct.c:386
 #: utils/adt/pseudotypes.c:94 utils/adt/pseudotypes.c:122
 #: utils/adt/pseudotypes.c:147 utils/adt/pseudotypes.c:171
 #: utils/adt/pseudotypes.c:282 utils/adt/pseudotypes.c:307
@@ -18162,26 +18157,6 @@ msgstr "kan inte acceptera ett värde av type %s"
 #, c-format
 msgid "statistics object \"%s.%s\" could not be computed for relation \"%s.%s\""
 msgstr "statistikobjekt \"%s.%s\" kunde inte beräknas för relation \"%s.%s\""
-
-#: statistics/mvdistinct.c:262
-#, c-format
-msgid "invalid ndistinct magic %08x (expected %08x)"
-msgstr "ogiltig magiskt värde %08x för ndistinct (förväntade %08x)"
-
-#: statistics/mvdistinct.c:267
-#, c-format
-msgid "invalid ndistinct type %d (expected %d)"
-msgstr "ogiltig typ %d för ndistinct (förväntade %d)"
-
-#: statistics/mvdistinct.c:272
-#, c-format
-msgid "invalid zero-length item array in MVNDistinct"
-msgstr "ogiltig array med storlek noll i MVNDistinct"
-
-#: statistics/mvdistinct.c:281
-#, c-format
-msgid "invalid MVNDistinct size %zd (expected at least %zd)"
-msgstr "ogiltig MVNDistinct-storlek %zd (förväntade minst %zd)"
 
 #: storage/buffer/bufmgr.c:544 storage/buffer/bufmgr.c:657
 #, c-format
@@ -18677,42 +18652,42 @@ msgstr "kunde inte serialisera åtkomst på grund av läs/skriv-beroenden bland 
 msgid "The transaction might succeed if retried."
 msgstr "Transaktionen kan lyckas om den körs igen."
 
-#: storage/lmgr/proc.c:1306
+#: storage/lmgr/proc.c:1305
 #, c-format
 msgid "Process %d waits for %s on %s."
 msgstr "Process %d väntar på %s för %s."
 
-#: storage/lmgr/proc.c:1317
+#: storage/lmgr/proc.c:1316
 #, c-format
 msgid "sending cancel to blocking autovacuum PID %d"
 msgstr "skickar avbryt till blockerande autovacuum-PID %d"
 
-#: storage/lmgr/proc.c:1335 utils/adt/misc.c:269
+#: storage/lmgr/proc.c:1334 utils/adt/misc.c:269
 #, c-format
 msgid "could not send signal to process %d: %m"
 msgstr "kunde inte skicka signal till process %d: %m"
 
-#: storage/lmgr/proc.c:1437
+#: storage/lmgr/proc.c:1436
 #, c-format
 msgid "process %d avoided deadlock for %s on %s by rearranging queue order after %ld.%03d ms"
 msgstr "process %d undvek deadlock på %s för %s genom att kasta om köordningen efter %ld.%03d ms"
 
-#: storage/lmgr/proc.c:1452
+#: storage/lmgr/proc.c:1451
 #, c-format
 msgid "process %d detected deadlock while waiting for %s on %s after %ld.%03d ms"
 msgstr "process %d upptäckte deadlock medan den väntade på %s för %s efter %ld.%03d ms"
 
-#: storage/lmgr/proc.c:1461
+#: storage/lmgr/proc.c:1460
 #, c-format
 msgid "process %d still waiting for %s on %s after %ld.%03d ms"
 msgstr "process %d väntar fortfarande på %s för %s efter %ld.%03d ms"
 
-#: storage/lmgr/proc.c:1468
+#: storage/lmgr/proc.c:1467
 #, c-format
 msgid "process %d acquired %s on %s after %ld.%03d ms"
 msgstr "process %d fick %s på %s efter %ld.%03d ms"
 
-#: storage/lmgr/proc.c:1484
+#: storage/lmgr/proc.c:1483
 #, c-format
 msgid "process %d failed to acquire %s on %s after %ld.%03d ms"
 msgstr "process %d misslyckades att ta %s på %s efter %ld.%03d ms"
@@ -19673,7 +19648,7 @@ msgid "Specified array dimensions do not match array contents."
 msgstr "Angivna array-dimensioner matchar inte array-innehållet."
 
 #: utils/adt/arrayfuncs.c:489 utils/adt/arrayfuncs.c:516
-#: utils/adt/rangetypes.c:2114 utils/adt/rangetypes.c:2122
+#: utils/adt/rangetypes.c:2116 utils/adt/rangetypes.c:2124
 #: utils/adt/rowtypes.c:208 utils/adt/rowtypes.c:216
 #, c-format
 msgid "Unexpected end of input."
@@ -19748,8 +19723,8 @@ msgstr "slice av fixlängd-array är inte implementerat"
 #: utils/adt/arrayfuncs.c:2860 utils/adt/arrayfuncs.c:5750
 #: utils/adt/arrayfuncs.c:5776 utils/adt/arrayfuncs.c:5787
 #: utils/adt/json.c:2259 utils/adt/json.c:2334 utils/adt/jsonb.c:1327
-#: utils/adt/jsonb.c:1413 utils/adt/jsonfuncs.c:4158 utils/adt/jsonfuncs.c:4309
-#: utils/adt/jsonfuncs.c:4354 utils/adt/jsonfuncs.c:4401
+#: utils/adt/jsonb.c:1413 utils/adt/jsonfuncs.c:4153 utils/adt/jsonfuncs.c:4304
+#: utils/adt/jsonfuncs.c:4349 utils/adt/jsonfuncs.c:4396
 #, c-format
 msgid "wrong number of array subscripts"
 msgstr "fel antal array-indexeringar"
@@ -20844,13 +20819,13 @@ msgstr "total storlek på element i jsonb-objekt överskrider maximum på %u byt
 
 #: utils/adt/jsonfuncs.c:511 utils/adt/jsonfuncs.c:676
 #: utils/adt/jsonfuncs.c:2263 utils/adt/jsonfuncs.c:2699
-#: utils/adt/jsonfuncs.c:3393 utils/adt/jsonfuncs.c:3694
+#: utils/adt/jsonfuncs.c:3388 utils/adt/jsonfuncs.c:3689
 #, c-format
 msgid "cannot call %s on a scalar"
 msgstr "kan inte anropa %s på en skalär"
 
 #: utils/adt/jsonfuncs.c:516 utils/adt/jsonfuncs.c:663
-#: utils/adt/jsonfuncs.c:2701 utils/adt/jsonfuncs.c:3382
+#: utils/adt/jsonfuncs.c:2701 utils/adt/jsonfuncs.c:3377
 #, c-format
 msgid "cannot call %s on an array"
 msgstr "kan inte anropa %s på en array"
@@ -20870,8 +20845,8 @@ msgstr "kan inte hämta array-längd på icke-array"
 msgid "cannot call %s on a non-object"
 msgstr "kan inte anropa %s på ett icke-objekt"
 
-#: utils/adt/jsonfuncs.c:1697 utils/adt/jsonfuncs.c:3208
-#: utils/adt/jsonfuncs.c:3510
+#: utils/adt/jsonfuncs.c:1697 utils/adt/jsonfuncs.c:3203
+#: utils/adt/jsonfuncs.c:3505
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "en funktion med post som värde anropades i sammanhang där poster inte kan godtagas."
@@ -20896,7 +20871,7 @@ msgstr "kan inte extrahera element från en skalär"
 msgid "cannot extract elements from an object"
 msgstr "kan inte extrahera element från ett objekt"
 
-#: utils/adt/jsonfuncs.c:2250 utils/adt/jsonfuncs.c:3583
+#: utils/adt/jsonfuncs.c:2250 utils/adt/jsonfuncs.c:3578
 #, c-format
 msgid "cannot call %s on a non-array"
 msgstr "kan inte anropa %s på icke-array"
@@ -20927,68 +20902,68 @@ msgstr "Se array-element %s."
 msgid "malformed json array"
 msgstr "felaktig json-array"
 
-#: utils/adt/jsonfuncs.c:3168 utils/adt/jsonfuncs.c:3478
+#: utils/adt/jsonfuncs.c:3163 utils/adt/jsonfuncs.c:3473
 #, c-format
 msgid "first argument of %s must be a row type"
 msgstr "första argumentet till %s måste vara en radtyp"
 
-#: utils/adt/jsonfuncs.c:3210
+#: utils/adt/jsonfuncs.c:3205
 #, c-format
 msgid "Try calling the function in the FROM clause using a column definition list."
 msgstr "Försök att anropa funktionen i FROM-klausulen med en kolumndefinitionslista."
 
-#: utils/adt/jsonfuncs.c:3600 utils/adt/jsonfuncs.c:3676
+#: utils/adt/jsonfuncs.c:3595 utils/adt/jsonfuncs.c:3671
 #, c-format
 msgid "argument of %s must be an array of objects"
 msgstr "argumentet till %s måste vara en array med objekt"
 
-#: utils/adt/jsonfuncs.c:3628
+#: utils/adt/jsonfuncs.c:3623
 #, c-format
 msgid "cannot call %s on an object"
 msgstr "kan inte anropa %s på ett objekt"
 
-#: utils/adt/jsonfuncs.c:4104 utils/adt/jsonfuncs.c:4163
-#: utils/adt/jsonfuncs.c:4243
+#: utils/adt/jsonfuncs.c:4099 utils/adt/jsonfuncs.c:4158
+#: utils/adt/jsonfuncs.c:4238
 #, c-format
 msgid "cannot delete from scalar"
 msgstr "kan inte radera från en skalär"
 
-#: utils/adt/jsonfuncs.c:4248
+#: utils/adt/jsonfuncs.c:4243
 #, c-format
 msgid "cannot delete from object using integer index"
 msgstr "kan inte radera från objekt genom att använda heltalsindex"
 
-#: utils/adt/jsonfuncs.c:4314 utils/adt/jsonfuncs.c:4406
+#: utils/adt/jsonfuncs.c:4309 utils/adt/jsonfuncs.c:4401
 #, c-format
 msgid "cannot set path in scalar"
 msgstr "kan inte sätta sökväg i skalär"
 
-#: utils/adt/jsonfuncs.c:4359
+#: utils/adt/jsonfuncs.c:4354
 #, c-format
 msgid "cannot delete path in scalar"
 msgstr "kan inte radera sökväg i skalär"
 
-#: utils/adt/jsonfuncs.c:4529
+#: utils/adt/jsonfuncs.c:4524
 #, c-format
 msgid "invalid concatenation of jsonb objects"
 msgstr "ogiltig sammanslagning av jsonb-objekt"
 
-#: utils/adt/jsonfuncs.c:4563
+#: utils/adt/jsonfuncs.c:4558
 #, c-format
 msgid "path element at position %d is null"
 msgstr "sökvägselement vid position %d är null"
 
-#: utils/adt/jsonfuncs.c:4649
+#: utils/adt/jsonfuncs.c:4644
 #, c-format
 msgid "cannot replace existing key"
 msgstr "kan inte ersätta befintlig nyckel"
 
-#: utils/adt/jsonfuncs.c:4650
+#: utils/adt/jsonfuncs.c:4645
 #, c-format
 msgid "Try using the function jsonb_set to replace key value."
 msgstr "Försök använda funktionen jsonb_set för att ersätta nyckelvärde."
 
-#: utils/adt/jsonfuncs.c:4732
+#: utils/adt/jsonfuncs.c:4727
 #, c-format
 msgid "path element at position %d is not an integer: \"%s\""
 msgstr "sökvägselement vid position %d är inte ett heltal: \"%s\""
@@ -20998,7 +20973,7 @@ msgstr "sökvägselement vid position %d är inte ett heltal: \"%s\""
 msgid "levenshtein argument exceeds maximum length of %d characters"
 msgstr "levenshtein-argument överskrider maximala längden på %d tecken"
 
-#: utils/adt/like.c:183 utils/adt/selfuncs.c:5618
+#: utils/adt/like.c:183 utils/adt/selfuncs.c:5639
 #, c-format
 msgid "could not determine which collation to use for ILIKE"
 msgstr "kunde inte bestämma vilken jämförelse (collation) som skall användas för ILIKE"
@@ -21347,92 +21322,92 @@ msgstr "nolltecken tillåts inte"
 msgid "percentile value %g is not between 0 and 1"
 msgstr "percentil-värde %g är inte mellan 0 och  1"
 
-#: utils/adt/pg_locale.c:1034
+#: utils/adt/pg_locale.c:1093
 #, c-format
 msgid "Apply system library package updates."
 msgstr "Applicera paketuppdateringar för systembibliotek."
 
-#: utils/adt/pg_locale.c:1249
+#: utils/adt/pg_locale.c:1308
 #, c-format
 msgid "could not create locale \"%s\": %m"
 msgstr "kunde inte skapa locale \"%s\": %m"
 
-#: utils/adt/pg_locale.c:1252
+#: utils/adt/pg_locale.c:1311
 #, c-format
 msgid "The operating system could not find any locale data for the locale name \"%s\"."
 msgstr "Operativsystemet kunde inte hitta någon lokaldata för lokalnamnet \"%s\"."
 
-#: utils/adt/pg_locale.c:1353
+#: utils/adt/pg_locale.c:1412
 #, c-format
 msgid "collations with different collate and ctype values are not supported on this platform"
 msgstr "jämförelser (collations) med olika collate- och ctype-värden stöds inte på denna plattform"
 
-#: utils/adt/pg_locale.c:1362
+#: utils/adt/pg_locale.c:1421
 #, c-format
 msgid "collation provider LIBC is not supported on this platform"
 msgstr "leverantören LIBC för jämförelse (collation) stöds inte på denna plattform"
 
-#: utils/adt/pg_locale.c:1374
+#: utils/adt/pg_locale.c:1433
 #, c-format
 msgid "collations with different collate and ctype values are not supported by ICU"
 msgstr "jämförelser (collation) med olika collate- och ctype-värden stöds inte av ICU"
 
-#: utils/adt/pg_locale.c:1380 utils/adt/pg_locale.c:1468
+#: utils/adt/pg_locale.c:1439 utils/adt/pg_locale.c:1527
 #, c-format
 msgid "could not open collator for locale \"%s\": %s"
 msgstr "kunde inte öppna jämförelse för lokal \"%s\": %s"
 
-#: utils/adt/pg_locale.c:1391
+#: utils/adt/pg_locale.c:1450
 #, c-format
 msgid "ICU is not supported in this build"
 msgstr "ICU stöds inte av detta bygge"
 
-#: utils/adt/pg_locale.c:1392
+#: utils/adt/pg_locale.c:1451
 #, c-format
 msgid "You need to rebuild PostgreSQL using --with-icu."
 msgstr "Du behöver bygga om PostgreSQL med --with-icu."
 
-#: utils/adt/pg_locale.c:1412
+#: utils/adt/pg_locale.c:1471
 #, c-format
 msgid "collation \"%s\" has no actual version, but a version was specified"
 msgstr "jämförelse (collation) \"%s\" har ingen version men en version angavs"
 
-#: utils/adt/pg_locale.c:1419
+#: utils/adt/pg_locale.c:1478
 #, c-format
 msgid "collation \"%s\" has version mismatch"
 msgstr "jämförelse (collation) \"%s\" har en version som inte matchar"
 
-#: utils/adt/pg_locale.c:1421
+#: utils/adt/pg_locale.c:1480
 #, c-format
 msgid "The collation in the database was created using version %s, but the operating system provides version %s."
 msgstr "Jämförelsen (collation) i databasen har skapats med version %s men operativsystemet har version %s."
 
-#: utils/adt/pg_locale.c:1424
+#: utils/adt/pg_locale.c:1483
 #, c-format
 msgid "Rebuild all objects affected by this collation and run ALTER COLLATION %s REFRESH VERSION, or build PostgreSQL with the right library version."
 msgstr "Bygg om alla objekt som påverkas av denna jämförelse (collation) och kör ALTER COLLATION %s REFRESH VERSION eller bygg PostgreSQL med rätt bibliotekversion."
 
-#: utils/adt/pg_locale.c:1508
+#: utils/adt/pg_locale.c:1567
 #, c-format
 msgid "could not open ICU converter for encoding \"%s\": %s"
 msgstr "kunde inte öppna ICU-konverterare för kodning \"%s\": %s"
 
-#: utils/adt/pg_locale.c:1539 utils/adt/pg_locale.c:1548
+#: utils/adt/pg_locale.c:1598 utils/adt/pg_locale.c:1607
 #, c-format
 msgid "ucnv_toUChars failed: %s"
 msgstr "ucnv_toUChars misslyckades: %s"
 
-#: utils/adt/pg_locale.c:1577 utils/adt/pg_locale.c:1586
+#: utils/adt/pg_locale.c:1636 utils/adt/pg_locale.c:1645
 #, c-format
 msgid "ucnv_fromUChars failed: %s"
 msgstr "ucnv_fromUChars misslyckades: %s"
 
-#: utils/adt/pg_locale.c:1759
+#: utils/adt/pg_locale.c:1818
 #, c-format
 msgid "invalid multibyte character for locale"
 msgstr "ogiltigt multibyte-tecken för lokalen"
 
-#: utils/adt/pg_locale.c:1760
+#: utils/adt/pg_locale.c:1819
 #, c-format
 msgid "The server's LC_CTYPE locale is probably incompatible with the database encoding."
 msgstr "Serverns LC_CTYPE-lokal är troligen inkompatibel med databasens teckenkodning."
@@ -21482,52 +21457,52 @@ msgstr "resultatet av range-skillnad skulle inte vara angränsande"
 msgid "result of range union would not be contiguous"
 msgstr "resultatet av range-union skulle inte vara angränsande"
 
-#: utils/adt/rangetypes.c:1533
+#: utils/adt/rangetypes.c:1535
 #, c-format
 msgid "range lower bound must be less than or equal to range upper bound"
 msgstr "lägre gräns för range måste vara lägre eller lika med övre gräns för range"
 
-#: utils/adt/rangetypes.c:1916 utils/adt/rangetypes.c:1929
-#: utils/adt/rangetypes.c:1943
+#: utils/adt/rangetypes.c:1918 utils/adt/rangetypes.c:1931
+#: utils/adt/rangetypes.c:1945
 #, c-format
 msgid "invalid range bound flags"
 msgstr "ogiltig gränsflagga för range"
 
-#: utils/adt/rangetypes.c:1917 utils/adt/rangetypes.c:1930
-#: utils/adt/rangetypes.c:1944
+#: utils/adt/rangetypes.c:1919 utils/adt/rangetypes.c:1932
+#: utils/adt/rangetypes.c:1946
 #, c-format
 msgid "Valid values are \"[]\", \"[)\", \"(]\", and \"()\"."
 msgstr "Giltiga värden är \"[]\", \"[)\", \"(]\" och \"()\"."
 
-#: utils/adt/rangetypes.c:2009 utils/adt/rangetypes.c:2026
-#: utils/adt/rangetypes.c:2039 utils/adt/rangetypes.c:2057
-#: utils/adt/rangetypes.c:2068 utils/adt/rangetypes.c:2112
-#: utils/adt/rangetypes.c:2120
+#: utils/adt/rangetypes.c:2011 utils/adt/rangetypes.c:2028
+#: utils/adt/rangetypes.c:2041 utils/adt/rangetypes.c:2059
+#: utils/adt/rangetypes.c:2070 utils/adt/rangetypes.c:2114
+#: utils/adt/rangetypes.c:2122
 #, c-format
 msgid "malformed range literal: \"%s\""
 msgstr "trasig range-litteral: \"%s\""
 
-#: utils/adt/rangetypes.c:2011
+#: utils/adt/rangetypes.c:2013
 #, c-format
 msgid "Junk after \"empty\" key word."
 msgstr "Skräp efter nyckelordet \"empty\"."
 
-#: utils/adt/rangetypes.c:2028
+#: utils/adt/rangetypes.c:2030
 #, c-format
 msgid "Missing left parenthesis or bracket."
 msgstr "Saknar vänster parentes eller hakparentes."
 
-#: utils/adt/rangetypes.c:2041
+#: utils/adt/rangetypes.c:2043
 #, c-format
 msgid "Missing comma after lower bound."
 msgstr "Saknar komma efter lägre gräns."
 
-#: utils/adt/rangetypes.c:2059
+#: utils/adt/rangetypes.c:2061
 #, c-format
 msgid "Too many commas."
 msgstr "För många komman."
 
-#: utils/adt/rangetypes.c:2070
+#: utils/adt/rangetypes.c:2072
 #, c-format
 msgid "Junk after right parenthesis or bracket."
 msgstr "Skräp efter höger parentes eller hakparentes."
@@ -21749,12 +21724,12 @@ msgstr "kan inte jämföra record-typer med olika antal kolumner"
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr "regel \"%s\" har en icke stödd händelsetyp %d"
 
-#: utils/adt/selfuncs.c:5603
+#: utils/adt/selfuncs.c:5624
 #, c-format
 msgid "case insensitive matching not supported on type bytea"
 msgstr "matchning utan skiftlägeskänslighet stöds inte för typen bytea"
 
-#: utils/adt/selfuncs.c:5705
+#: utils/adt/selfuncs.c:5726
 #, c-format
 msgid "regular-expression matching not supported on type bytea"
 msgstr "matching med reguljär-uttryck stöds inte för typen bytea"
@@ -22433,17 +22408,17 @@ msgstr "ingen utmatningsfunktion finns för typ %s"
 msgid "cached plan must not change result type"
 msgstr "cache:ad plan får inte ändra resultattyp"
 
-#: utils/cache/relcache.c:5844
+#: utils/cache/relcache.c:5889
 #, c-format
 msgid "could not create relation-cache initialization file \"%s\": %m"
 msgstr "kunde inte skapa initieringsfil \"%s\" för relations-cache: %m"
 
-#: utils/cache/relcache.c:5846
+#: utils/cache/relcache.c:5891
 #, c-format
 msgid "Continuing anyway, but there's something wrong."
 msgstr "Fortsätter ändå, trots att något är fel."
 
-#: utils/cache/relcache.c:6208
+#: utils/cache/relcache.c:6253
 #, c-format
 msgid "could not remove cache file \"%s\": %m"
 msgstr "kunde inte ta bort cache-fil \"%s\": %m"
@@ -22830,16 +22805,6 @@ msgstr "Använder en annan postgres (PID %d) uttagesfilen (socket) \"%s\"?"
 msgid "Is another postmaster (PID %d) using socket file \"%s\"?"
 msgstr "Använder en annan postmaster (PID %d) uttagesfilen (socket) \"%s\"?"
 
-#: utils/init/miscinit.c:977
-#, c-format
-msgid "pre-existing shared memory block (key %lu, ID %lu) is still in use"
-msgstr "redan existerande delat minnesblock (nyckel %lu, ID %lu) används fortfarande"
-
-#: utils/init/miscinit.c:979
-#, c-format
-msgid "Terminate any old server processes associated with data directory \"%s\"."
-msgstr "Stäng ner gamla serverprocesser som hör ihop med datakatalogen \"%s\"."
-
 #: utils/init/miscinit.c:992
 #, c-format
 msgid "could not remove old lock file \"%s\": %m"
@@ -22979,57 +22944,57 @@ msgstr "Återskapa databasen med en annan lokal eller installera den saknade lok
 msgid "The database was initialized with LC_CTYPE \"%s\",  which is not recognized by setlocale()."
 msgstr "Databasen initierades med LC_CTYPE \"%s\", vilket inte känns igen av setlocale()."
 
-#: utils/init/postinit.c:719
+#: utils/init/postinit.c:721
 #, c-format
 msgid "no roles are defined in this database system"
 msgstr "inga roller är definierade i detta databassystem"
 
-#: utils/init/postinit.c:720
+#: utils/init/postinit.c:722
 #, c-format
 msgid "You should immediately run CREATE USER \"%s\" SUPERUSER;."
 msgstr "Du borde direkt köra CREATE USER \"%s\" SUPERUSER;."
 
-#: utils/init/postinit.c:756
+#: utils/init/postinit.c:758
 #, c-format
 msgid "new replication connections are not allowed during database shutdown"
 msgstr "nya replikeringsanslutningar tillåts inte under databasnedstängning"
 
-#: utils/init/postinit.c:760
+#: utils/init/postinit.c:762
 #, c-format
 msgid "must be superuser to connect during database shutdown"
 msgstr "måste vara superanvändare för att ansluta när databasen håller på att stängas ner"
 
-#: utils/init/postinit.c:770
+#: utils/init/postinit.c:772
 #, c-format
 msgid "must be superuser to connect in binary upgrade mode"
 msgstr "måste vara superanvändare för att ansluta i binärt uppgraderingsläger"
 
-#: utils/init/postinit.c:784
+#: utils/init/postinit.c:786
 #, c-format
 msgid "remaining connection slots are reserved for non-replication superuser connections"
 msgstr "resterande anslutningsslottar är reserverade för superanvändaranslutningar utan replikering"
 
-#: utils/init/postinit.c:794
+#: utils/init/postinit.c:796
 #, c-format
 msgid "must be superuser or replication role to start walsender"
 msgstr "måste vara superanvändare eller replikeringsroll för att starta \"walsender\""
 
-#: utils/init/postinit.c:863
+#: utils/init/postinit.c:865
 #, c-format
 msgid "database %u does not exist"
 msgstr "databasen %u existerar inte"
 
-#: utils/init/postinit.c:952
+#: utils/init/postinit.c:954
 #, c-format
 msgid "It seems to have just been dropped or renamed."
 msgstr "Det verkar precis ha tagits bort eller döpts om."
 
-#: utils/init/postinit.c:970
+#: utils/init/postinit.c:972
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
 msgstr "Databasens underbibliotek \"%s\" saknas."
 
-#: utils/init/postinit.c:975
+#: utils/init/postinit.c:977
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "kunde inte komma åt katalog \"%s\": %m"
@@ -25087,17 +25052,44 @@ msgstr "en serialiserbar transaktion som inte är read-only kan inte importera e
 msgid "cannot import a snapshot from a different database"
 msgstr "kan inte importera en snapshot från en annan databas"
 
-#~ msgid "view must have at least one column"
-#~ msgstr "en vy måste ha minst en kolumn"
-
-#~ msgid "could not read file \"%s\": read %d bytes, expected %d"
-#~ msgstr "kunde inte läsa fil \"%s\": läste %d byte, förväntade %d"
-
-#~ msgid "%s: could not read file \"%s\": read %d bytes, expected %d\n"
-#~ msgstr "%s: kunde inte läsa fil \"%s\": läste %d byte, förväntade %d\n"
+#~ msgid "If you're sure there are no old server processes still running, remove the shared memory block or just delete the file \"%s\"."
+#~ msgstr "Om du är säker på att ingen gammal serverprocess forfarande kör, så ta bort det delade minnesblocket eller radera helt enkelt filen \"%s\"."
 
 #~ msgid "column \"%s\" appears more than once in partition key"
 #~ msgstr "kolumn \"%s\" angivet mer än en gång i partitioneringsnyckel"
 
-#~ msgid "If you're sure there are no old server processes still running, remove the shared memory block or just delete the file \"%s\"."
-#~ msgstr "Om du är säker på att ingen gammal serverprocess forfarande kör, så ta bort det delade minnesblocket eller radera helt enkelt filen \"%s\"."
+#~ msgid "%s: could not read file \"%s\": read %d bytes, expected %d\n"
+#~ msgstr "%s: kunde inte läsa fil \"%s\": läste %d byte, förväntade %d\n"
+
+#~ msgid "could not read file \"%s\": read %d bytes, expected %d"
+#~ msgstr "kunde inte läsa fil \"%s\": läste %d byte, förväntade %d"
+
+#~ msgid "view must have at least one column"
+#~ msgstr "en vy måste ha minst en kolumn"
+
+#~ msgid "invalid MVNDistinct size %zd (expected at least %zd)"
+#~ msgstr "ogiltig MVNDistinct-storlek %zd (förväntade minst %zd)"
+
+#~ msgid "invalid zero-length item array in MVNDistinct"
+#~ msgstr "ogiltig array med storlek noll i MVNDistinct"
+
+#~ msgid "invalid ndistinct type %d (expected %d)"
+#~ msgstr "ogiltig typ %d för ndistinct (förväntade %d)"
+
+#~ msgid "invalid ndistinct magic %08x (expected %08x)"
+#~ msgstr "ogiltig magiskt värde %08x för ndistinct (förväntade %08x)"
+
+#~ msgid "invalid zero-length item array in MVDependencies"
+#~ msgstr "ogiltig array med storlek noll i MVDependencies"
+
+#~ msgid "cannot alter type of column referenced in partition key expression"
+#~ msgstr "kan inte ändra type på kolumn som refereras till från partitionsnyckeluttryck"
+
+#~ msgid "cannot alter type of column named in partition key"
+#~ msgstr "kan inte ändra typ på kolumn som nämns i partitionsnyckel"
+
+#~ msgid "cannot drop column referenced in partition key expression"
+#~ msgstr "kan inte slänga kolumn som refereras till från partitionsnyckeluttryck"
+
+#~ msgid "cannot drop column named in partition key"
+#~ msgstr "kan inte slänga kolumn som finns med i partitionsnyckel"

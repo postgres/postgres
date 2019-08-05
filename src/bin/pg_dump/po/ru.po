@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-29 07:27+0300\n"
-"PO-Revision-Date: 2019-04-29 10:25+0300\n"
+"POT-Creation-Date: 2019-08-05 09:12+0300\n"
+"PO-Revision-Date: 2019-06-17 21:51+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -1074,12 +1074,12 @@ msgstr "архиватор (БД)"
 msgid "could not get server_version from libpq\n"
 msgstr "не удалось получить версию сервера из libpq\n"
 
-#: pg_backup_db.c:57 pg_dumpall.c:2092
+#: pg_backup_db.c:57 pg_dumpall.c:2128
 #, c-format
 msgid "server version: %s; %s version: %s\n"
 msgstr "версия сервера: %s; версия %s: %s\n"
 
-#: pg_backup_db.c:59 pg_dumpall.c:2094
+#: pg_backup_db.c:59 pg_dumpall.c:2130
 #, c-format
 msgid "aborting because of server version mismatch\n"
 msgstr "продолжение работы с другой версией сервера невозможно\n"
@@ -1090,7 +1090,7 @@ msgid "connecting to database \"%s\" as user \"%s\"\n"
 msgstr "подключение к базе \"%s\" с именем пользователя \"%s\"\n"
 
 #: pg_backup_db.c:160 pg_backup_db.c:209 pg_backup_db.c:270 pg_backup_db.c:311
-#: pg_dumpall.c:1915 pg_dumpall.c:2029
+#: pg_dumpall.c:1951 pg_dumpall.c:2065
 msgid "Password: "
 msgstr "Пароль: "
 
@@ -2103,7 +2103,7 @@ msgstr "ПРЕДУПРЕЖДЕНИЕ: у функции \"%s\" по-видимо
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: у таблицы \"%s\" по-видимому неправильный владелец\n"
 
-#: pg_dump.c:6329 pg_dump.c:16295
+#: pg_dump.c:6329 pg_dump.c:16314
 #, c-format
 msgid ""
 "failed sanity check, parent table with OID %u of sequence with OID %u not "
@@ -2336,27 +2336,27 @@ msgstr ""
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "определение представления \"%s\" пустое (длина равна нулю)\n"
 
-#: pg_dump.c:15279
+#: pg_dump.c:15298
 #, c-format
-msgid "invalid number of parents %d for table \"%s\""
-msgstr "неверное число родителей (%d) для таблицы \"%s\""
+msgid "invalid number of parents %d for table \"%s\"\n"
+msgstr "неверное число родителей (%d) для таблицы \"%s\"\n"
 
-#: pg_dump.c:15612
+#: pg_dump.c:15631
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "неверный номер столбца %d для таблицы \"%s\"\n"
 
-#: pg_dump.c:15807
+#: pg_dump.c:15826
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "отсутствует индекс для ограничения \"%s\"\n"
 
-#: pg_dump.c:16003
+#: pg_dump.c:16022
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "нераспознанный тип ограничения: %c\n"
 
-#: pg_dump.c:16139 pg_dump.c:16360
+#: pg_dump.c:16158 pg_dump.c:16379
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural ""
@@ -2371,22 +2371,22 @@ msgstr[2] ""
 "запрос на получение данных последовательности \"%s\" вернул %d строк "
 "(ожидалась 1)\n"
 
-#: pg_dump.c:16173
+#: pg_dump.c:16192
 #, c-format
 msgid "unrecognized sequence type: %s\n"
 msgstr "нераспознанный тип последовательности: %s\n"
 
-#: pg_dump.c:16456
+#: pg_dump.c:16475
 #, c-format
 msgid "unexpected tgtype value: %d\n"
 msgstr "неожиданное значение tgtype: %d\n"
 
-#: pg_dump.c:16530
+#: pg_dump.c:16549
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "неверная строка аргументов (%s) для триггера \"%s\" таблицы \"%s\"\n"
 
-#: pg_dump.c:16760
+#: pg_dump.c:16779
 #, c-format
 msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
@@ -2395,12 +2395,12 @@ msgstr ""
 "запрос на получение правила \"%s\" для таблицы \"%s\" возвратил неверное "
 "число строк\n"
 
-#: pg_dump.c:17141
+#: pg_dump.c:17160
 #, c-format
 msgid "reading dependency data\n"
 msgstr "чтение данных о зависимостях\n"
 
-#: pg_dump.c:17571
+#: pg_dump.c:17621
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: не удалось разобрать массив reloptions\n"
@@ -2425,7 +2425,7 @@ msgstr "неверная зависимость %d\n"
 msgid "could not identify dependency loop\n"
 msgstr "не удалось определить цикл зависимостей\n"
 
-#: pg_dump_sort.c:1188
+#: pg_dump_sort.c:1206
 #, c-format
 msgid "NOTICE: there are circular foreign-key constraints on this table:\n"
 msgid_plural ""
@@ -2437,12 +2437,12 @@ msgstr[1] ""
 msgstr[2] ""
 "ЗАМЕЧАНИЕ: в следующих таблицах зациклены ограничения внешних ключей:\n"
 
-#: pg_dump_sort.c:1192 pg_dump_sort.c:1212
+#: pg_dump_sort.c:1210 pg_dump_sort.c:1230
 #, c-format
 msgid "  %s\n"
 msgstr "  %s\n"
 
-#: pg_dump_sort.c:1193
+#: pg_dump_sort.c:1211
 #, c-format
 msgid ""
 "You might not be able to restore the dump without using --disable-triggers "
@@ -2451,7 +2451,7 @@ msgstr ""
 "Возможно для восстановления базы вам потребуется использовать --disable-"
 "triggers или временно удалить ограничения.\n"
 
-#: pg_dump_sort.c:1194
+#: pg_dump_sort.c:1212
 #, c-format
 msgid ""
 "Consider using a full dump instead of a --data-only dump to avoid this "
@@ -2460,7 +2460,7 @@ msgstr ""
 "Во избежание этой проблемы, вам вероятно стоит выгружать всю базу данных, а "
 "не только данные (--data-only).\n"
 
-#: pg_dump_sort.c:1206
+#: pg_dump_sort.c:1224
 #, c-format
 msgid "WARNING: could not resolve dependency loop among these items:\n"
 msgstr ""
@@ -2518,7 +2518,7 @@ msgid ""
 msgstr ""
 "%s: параметры -r/--roles-only и -t/--tablespaces-only исключают друг друга\n"
 
-#: pg_dumpall.c:414 pg_dumpall.c:2018
+#: pg_dumpall.c:414 pg_dumpall.c:2054
 #, c-format
 msgid "%s: could not connect to database \"%s\"\n"
 msgstr "%s: не удалось подключиться к базе данных: \"%s\"\n"
@@ -2631,66 +2631,66 @@ msgstr ""
 msgid "%s: role name starting with \"pg_\" skipped (%s)\n"
 msgstr "%s: имя роли, начинающееся с \"pg_\", пропущено (%s)\n"
 
-#: pg_dumpall.c:1212
+#: pg_dumpall.c:1231
 #, c-format
 msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
 msgstr ""
 "%s: не удалось разобрать список управления доступом (%s) для табл. "
 "пространства \"%s\"\n"
 
-#: pg_dumpall.c:1530
+#: pg_dumpall.c:1566
 #, c-format
 msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
 msgstr ""
 "%s: не удалось разобрать список управления доступом (%s) для базы данных \"%s"
 "\"\n"
 
-#: pg_dumpall.c:1770
+#: pg_dumpall.c:1806
 #, c-format
 msgid "%s: dumping database \"%s\"...\n"
 msgstr "%s: выгрузка базы данных \"%s\"...\n"
 
-#: pg_dumpall.c:1794
+#: pg_dumpall.c:1830
 #, c-format
 msgid "%s: pg_dump failed on database \"%s\", exiting\n"
 msgstr "%s: ошибка pg_dump для базы данных \"%s\", выход...\n"
 
-#: pg_dumpall.c:1803
+#: pg_dumpall.c:1839
 #, c-format
 msgid "%s: could not re-open the output file \"%s\": %s\n"
 msgstr "%s: не удалось повторно открыть выходной файл \"%s\": %s\n"
 
-#: pg_dumpall.c:1848
+#: pg_dumpall.c:1884
 #, c-format
 msgid "%s: running \"%s\"\n"
 msgstr "%s: выполняется \"%s\"\n"
 
-#: pg_dumpall.c:2041
+#: pg_dumpall.c:2077
 #, c-format
 msgid "%s: could not connect to database \"%s\": %s"
 msgstr "%s: не удалось подключиться к базе \"%s\": %s"
 
-#: pg_dumpall.c:2071
+#: pg_dumpall.c:2107
 #, c-format
 msgid "%s: could not get server version\n"
 msgstr "%s: не удалось узнать версию сервера\n"
 
-#: pg_dumpall.c:2077
+#: pg_dumpall.c:2113
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
 msgstr "%s: не удалось разобрать строку версии сервера \"%s\"\n"
 
-#: pg_dumpall.c:2150 pg_dumpall.c:2176
+#: pg_dumpall.c:2186 pg_dumpall.c:2212
 #, c-format
 msgid "%s: executing %s\n"
 msgstr "%s: выполняется %s\n"
 
-#: pg_dumpall.c:2156 pg_dumpall.c:2182
+#: pg_dumpall.c:2192 pg_dumpall.c:2218
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: ошибка при выполнении запроса: %s"
 
-#: pg_dumpall.c:2158 pg_dumpall.c:2184
+#: pg_dumpall.c:2194 pg_dumpall.c:2220
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: запрос: %s\n"
