@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-05-03 17:27+0300\n"
+"POT-Creation-Date: 2019-06-17 21:38+0300\n"
 "PO-Revision-Date: 2018-04-27 16:14+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -246,17 +246,17 @@ msgstr "%s: не удалось подключиться к базе %s\n"
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: не удалось подключиться к базе %s: %s"
 
-#: common.c:187 common.c:215
+#: common.c:186 common.c:214
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: ошибка при выполнении запроса: %s"
 
-#: common.c:189 common.c:217
+#: common.c:188 common.c:216
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: запрос: %s\n"
 
-#: common.c:342
+#: common.c:334
 #, c-format
 msgid "%s: query returned %d row instead of one: %s\n"
 msgid_plural "%s: query returned %d rows instead of one: %s\n"
@@ -265,33 +265,33 @@ msgstr[1] "%s: запрос вернул %d строки вместо одной
 msgstr[2] "%s: запрос вернул %d строк вместо одной: %s\n"
 
 #. translator: abbreviation for "yes"
-#: common.c:368
+#: common.c:360
 msgid "y"
 msgstr "y"
 
 #. translator: abbreviation for "no"
-#: common.c:370
+#: common.c:362
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:380
+#: common.c:372
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s - да/%s - нет) "
 
-#: common.c:401
+#: common.c:393
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Пожалуйста, введите \"%s\" или \"%s\".\n"
 
-#: common.c:479 common.c:512
+#: common.c:471 common.c:504
 #, c-format
 msgid "Cancel request sent\n"
 msgstr "Сигнал отмены отправлен\n"
 
-#: common.c:481 common.c:514
+#: common.c:473 common.c:506
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Отправить сигнал отмены не удалось: %s"
