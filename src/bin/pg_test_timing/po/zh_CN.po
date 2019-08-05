@@ -1,0 +1,78 @@
+# LANGUAGE message translation file for pg_test_timing
+# Copyright (C) 2019 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
+# FIRST AUTHOR <zhangjie2@cn.fujitsu.com>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_test_timing (PostgreSQL) 12\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-05-22 17:56+0800\n"
+"PO-Revision-Date: 2019-05-31 18:50+0800\n"
+"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
+"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: pg_test_timing.c:55
+#, c-format
+msgid "Usage: %s [-d DURATION]\n"
+msgstr "用法: %s [-d 持续时间]\n"
+
+#: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#: pg_test_timing.c:85
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
+
+#: pg_test_timing.c:94
+#, c-format
+msgid "Testing timing overhead for %d second.\n"
+msgid_plural "Testing timing overhead for %d seconds.\n"
+msgstr[0] "测试%d秒的计时开销.\n"
+msgstr[1] "测试%d秒的计时开销.\n"
+
+#: pg_test_timing.c:102
+#, c-format
+msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
+msgstr "%s: 持续时间必须是正整数(持续时间是 \"%d\")\n"
+
+#: pg_test_timing.c:140
+#, c-format
+msgid "Detected clock going backwards in time.\n"
+msgstr "检测到时钟时间倒转.\n"
+
+#: pg_test_timing.c:141
+#, c-format
+msgid "Time warp: %d ms\n"
+msgstr "时间错位: %d 毫秒\n"
+
+#: pg_test_timing.c:164
+#, c-format
+msgid "Per loop time including overhead: %0.2f ns\n"
+msgstr "每次循环的平均开销: %0.2f 纳秒\n"
+
+#: pg_test_timing.c:175
+msgid "< us"
+msgstr "< 微秒"
+
+#: pg_test_timing.c:176
+#, no-c-format
+msgid "% of total"
+msgstr "总计的 %"
+
+#: pg_test_timing.c:177
+msgid "count"
+msgstr "计数"
+
+#: pg_test_timing.c:186
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "持续时间的柱状图:\n"

@@ -633,7 +633,7 @@ msgstr ""
 #: fe-connect.c:6981
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
-msgstr "mot de passe récupéré dans le fichier fichier « %s »\n"
+msgstr "mot de passe récupéré dans le fichier « %s »\n"
 
 #: fe-exec.c:445 fe-exec.c:2822
 #, c-format

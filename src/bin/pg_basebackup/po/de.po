@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-05-16 16:16+0000\n"
-"PO-Revision-Date: 2019-06-16 22:49+0200\n"
+"PO-Revision-Date: 2019-07-07 16:28+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -1268,7 +1268,7 @@ msgstr "inkompatible Serverversion %s; Client unterstützt Streaming nicht mit S
 #: receivelog.c:491 streamutil.c:430 streamutil.c:467
 #, c-format
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
-msgstr "Konnte System nicht identifizieren: %d Zeilen und %d Felder erhalten, %d Zeilen und %d oder mehr Felder erwartet."
+msgstr "Konnte System nicht identifizieren: %d Zeilen und %d Felder erhalten, %d Zeilen und %d oder mehr Felder erwartet"
 
 #: receivelog.c:498
 #, c-format

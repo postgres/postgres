@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-04-29 20:47+0000\n"
-"PO-Revision-Date: 2019-05-20 15:55+0200\n"
+"POT-Creation-Date: 2019-07-03 22:45+0000\n"
+"PO-Revision-Date: 2019-07-04 21:56+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:188
 #, c-format
 msgid "fatal: "
 msgstr "fatalt: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:195
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:202
 #, c-format
 msgid "warning: "
 msgstr "varning: "
@@ -78,342 +78,337 @@ msgstr "kunde inte köra igen med token för begränsad åtkomst: felkod %lu"
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "kunde inte hämta statuskod för underprocess: felkod %lu"
 
-#: copy_fetch.c:60
+#: copy_fetch.c:59
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: copy_fetch.c:89 filemap.c:189 filemap.c:350
+#: copy_fetch.c:88 filemap.c:187 filemap.c:348
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: copy_fetch.c:118
+#: copy_fetch.c:117
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "kan inte läsa symbolisk länk \"%s\": %m"
 
-#: copy_fetch.c:121
+#: copy_fetch.c:120
 #, c-format
 msgid "symbolic link \"%s\" target is too long"
 msgstr "mål för symbolisk länk \"%s\" är för lång"
 
-#: copy_fetch.c:136
+#: copy_fetch.c:135
 #, c-format
 msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform"
 msgstr "\"%s\" är en symbolisk länk men symboliska länkar stöds inte på denna plattform"
 
-#: copy_fetch.c:143
+#: copy_fetch.c:142
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "kunde inte läsa katalog \"%s\": %m"
 
-#: copy_fetch.c:147
+#: copy_fetch.c:146
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "kunde inte stänga katalog \"%s\": %m"
 
-#: copy_fetch.c:167
+#: copy_fetch.c:166
 #, c-format
 msgid "could not open source file \"%s\": %m"
 msgstr "kunde inte öppna källfil \"%s\": %m"
 
-#: copy_fetch.c:171
+#: copy_fetch.c:170
 #, c-format
 msgid "could not seek in source file: %m"
 msgstr "kunde inte söka i källfil: %m"
 
-#: copy_fetch.c:188 file_ops.c:312 parsexlog.c:316
+#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:315
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
 
-#: copy_fetch.c:191
+#: copy_fetch.c:190
 #, c-format
 msgid "unexpected EOF while reading file \"%s\""
 msgstr "oväntad EOF under läsning av fil \"%s\""
 
-#: copy_fetch.c:198
+#: copy_fetch.c:197
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "kunde inte stänga fil \"%s\": %m"
 
-#: file_ops.c:63
+#: file_ops.c:62
 #, c-format
 msgid "could not open target file \"%s\": %m"
 msgstr "kunde inte öppna målfil \"%s\": %m"
 
-#: file_ops.c:77
+#: file_ops.c:76
 #, c-format
 msgid "could not close target file \"%s\": %m"
 msgstr "kunde inte stänga målfil \"%s\": %m"
 
-#: file_ops.c:97
+#: file_ops.c:96
 #, c-format
 msgid "could not seek in target file \"%s\": %m"
 msgstr "kunde inte söka i målfil \"%s\": %m"
 
-#: file_ops.c:113
+#: file_ops.c:112
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "kunde inte skriva fil \"%s\": %m"
 
-#: file_ops.c:163
+#: file_ops.c:162
 #, c-format
 msgid "invalid action (CREATE) for regular file"
 msgstr "ogiltig aktion (CREATE) för vanlig fil"
 
-#: file_ops.c:186
+#: file_ops.c:185
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "kunde inte ta bort fil \"%s\": %m"
 
-#: file_ops.c:204
+#: file_ops.c:203
 #, c-format
 msgid "could not open file \"%s\" for truncation: %m"
 msgstr "kunde inte öppna fil \"%s\" för trunkering: %m"
 
-#: file_ops.c:208
+#: file_ops.c:207
 #, c-format
 msgid "could not truncate file \"%s\" to %u: %m"
 msgstr "kunde inte trunkera fil \"%s\" till %u: %m"
 
-#: file_ops.c:224
+#: file_ops.c:223
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "kunde inte skapa katalog \"%s\": %m"
 
-#: file_ops.c:238
+#: file_ops.c:237
 #, c-format
 msgid "could not remove directory \"%s\": %m"
 msgstr "kunde inte ta bort katalog \"%s\": %m"
 
-#: file_ops.c:252
+#: file_ops.c:251
 #, c-format
 msgid "could not create symbolic link at \"%s\": %m"
 msgstr "kunde inte skapa en symnbolisk länk vid \"%s\": %m"
 
-#: file_ops.c:266
+#: file_ops.c:265
 #, c-format
 msgid "could not remove symbolic link \"%s\": %m"
 msgstr "kan inte ta bort symbolisk länk \"%s\": %m"
 
-#: file_ops.c:297 file_ops.c:301
+#: file_ops.c:296 file_ops.c:300
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
-#: file_ops.c:315 parsexlog.c:318
+#: file_ops.c:314 parsexlog.c:317
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
 
-#: filemap.c:181
+#: filemap.c:179
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "datafil \"%s\" i källan är inte en vanlig fil"
 
-#: filemap.c:203
+#: filemap.c:201
 #, c-format
 msgid "\"%s\" is not a directory"
 msgstr "\"%s\" är inte en katalog"
 
-#: filemap.c:226
+#: filemap.c:224
 #, c-format
 msgid "\"%s\" is not a symbolic link"
 msgstr "\"%s\" är inte en symbolisk länk"
 
-#: filemap.c:238
+#: filemap.c:236
 #, c-format
 msgid "\"%s\" is not a regular file"
 msgstr "\"%s\" är inte en vanlig fil"
 
-#: filemap.c:362
+#: filemap.c:360
 #, c-format
 msgid "source file list is empty"
 msgstr "källfillistan är tom"
 
-#: filemap.c:477
+#: filemap.c:475
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr "oväntad sidmodifiering för katalog eller symbolisk länk \"%s\""
 
-#: libpq_fetch.c:53
+#: libpq_fetch.c:51
 #, c-format
 msgid "could not connect to server: %s"
 msgstr "kunde inte ansluta till server: %s"
 
-#: libpq_fetch.c:57
+#: libpq_fetch.c:55
 #, c-format
 msgid "connected to server"
 msgstr "ansluten till server"
 
-#: libpq_fetch.c:61
+#: libpq_fetch.c:59
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "kunde inte nollställa search_path: %s"
 
-#: libpq_fetch.c:73
+#: libpq_fetch.c:71
 #, c-format
 msgid "source server must not be in recovery mode"
 msgstr "källserver får inte vara i återställningsläge"
 
-#: libpq_fetch.c:83
+#: libpq_fetch.c:81
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
 msgstr "full_page_writes måste vara påslagen i källservern"
 
-#: libpq_fetch.c:95
+#: libpq_fetch.c:93
 #, c-format
 msgid "could not set up connection context: %s"
 msgstr "kunde inte sätta upp anslutningskontext: %s"
 
-#: libpq_fetch.c:113
+#: libpq_fetch.c:111
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "fel vid körande av fråga (%s) i källserver: %s"
 
-#: libpq_fetch.c:118
+#: libpq_fetch.c:116
 #, c-format
 msgid "unexpected result set from query"
 msgstr "oväntad resultatmängd från fråga"
 
-#: libpq_fetch.c:141
+#: libpq_fetch.c:139
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr "oväntat resultat \"%s\" för nuvarande WAL-insättningsposition"
 
-#: libpq_fetch.c:191
+#: libpq_fetch.c:189
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "kunde inte hämta fillista: %s"
 
-#: libpq_fetch.c:196
+#: libpq_fetch.c:194
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "oväntad resultatmängd vid hämtning av fillista"
 
-#: libpq_fetch.c:244
+#: libpq_fetch.c:242
 #, c-format
 msgid "could not send query: %s"
 msgstr "kunde inte skicka fråga: %s"
 
-#: libpq_fetch.c:249
+#: libpq_fetch.c:247
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "kunde inte sätta libpq-anslutning till enradsläge"
 
-#: libpq_fetch.c:270
+#: libpq_fetch.c:268
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "oväntat resultat vid hämtning av extern fil: %s"
 
-#: libpq_fetch.c:276
+#: libpq_fetch.c:274
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "oväntad resultatmängdstorlek vid hämtning av externa filer"
 
-#: libpq_fetch.c:282
+#: libpq_fetch.c:280
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "oväntade datayper i resultatmängd vid hämtning av externa filer: %u %u %u"
 
-#: libpq_fetch.c:290
+#: libpq_fetch.c:288
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "oväntat resultatformat vid hämtning av externa filer"
 
-#: libpq_fetch.c:296
+#: libpq_fetch.c:294
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "oväntade null-värden i resultat vid hämtning av externa filer"
 
-#: libpq_fetch.c:300
+#: libpq_fetch.c:298
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "oväntad resultatlängd vid hämtning av externa filer"
 
-#: libpq_fetch.c:366
+#: libpq_fetch.c:364
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "kunde inte hämta extern fil \"%s\": %s"
 
-#: libpq_fetch.c:371
+#: libpq_fetch.c:369
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "oväntat resultatmängd vid hämtning av extern fil \"%s\""
 
-#: libpq_fetch.c:415
+#: libpq_fetch.c:413
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "kunde inte skicka COPY-data: %s"
 
-#: libpq_fetch.c:441
+#: libpq_fetch.c:439
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "kunde inte skapa temporär tabell: %s"
 
-#: libpq_fetch.c:449
+#: libpq_fetch.c:447
 #, c-format
 msgid "could not send file list: %s"
 msgstr "kunde inte skicka fillista: %s"
 
-#: libpq_fetch.c:491
+#: libpq_fetch.c:489
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "kunde inte skicka slut-på-COPY: %s"
 
-#: libpq_fetch.c:497
+#: libpq_fetch.c:495
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "oväntat resultat vid skickande av fillista: %s"
 
-#: logging.c:72
-#, c-format
-msgid "%*s/%s kB (%d%%) copied"
-msgstr "%*s/%s kB (%d%%) kopierad"
-
-#: parsexlog.c:75 parsexlog.c:129 parsexlog.c:187
+#: parsexlog.c:74 parsexlog.c:128 parsexlog.c:186
 #, c-format
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: parsexlog.c:88 parsexlog.c:135
+#: parsexlog.c:87 parsexlog.c:134
 #, c-format
 msgid "could not read WAL record at %X/%X: %s"
 msgstr "kunde inte läsa WAL-post vid %X/%X: %s"
 
-#: parsexlog.c:92 parsexlog.c:138
+#: parsexlog.c:91 parsexlog.c:137
 #, c-format
 msgid "could not read WAL record at %X/%X"
 msgstr "kunde inte läsa WAL-post vid %X/%X"
 
-#: parsexlog.c:199
+#: parsexlog.c:198
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "kunde inte hitta föregående WAL-post vid %X/%X: %s"
 
-#: parsexlog.c:203
+#: parsexlog.c:202
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "kunde inte hitta förgående WAL-post vid %X/%X"
 
-#: parsexlog.c:294
+#: parsexlog.c:293
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: parsexlog.c:307
+#: parsexlog.c:306
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "kunde inte söka (seek) i fil \"%s\": %m"
 
-#: parsexlog.c:387
+#: parsexlog.c:386
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmgr: %s, info: %02X"
 msgstr "WAL-post modifierar en relation, men posttypen känns inte igen: lsn: %X/%X, rmgr: %s, info: %02X"
 
-#: pg_rewind.c:69
+#: pg_rewind.c:72
 #, c-format
 msgid ""
 "%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
@@ -422,7 +417,7 @@ msgstr ""
 "%s resynkroniserar ett PostgreSQL-kluster med en annan kopia av klustret.\n"
 "\n"
 
-#: pg_rewind.c:70
+#: pg_rewind.c:73
 #, c-format
 msgid ""
 "Usage:\n"
@@ -433,32 +428,32 @@ msgstr ""
 "  %s [FLAGGA]...\n"
 "\n"
 
-#: pg_rewind.c:71
+#: pg_rewind.c:74
 #, c-format
 msgid "Options:\n"
 msgstr "Flaggor:\n"
 
-#: pg_rewind.c:72
+#: pg_rewind.c:75
 #, c-format
 msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
 msgstr "  -D, --target-pgdata=KATALOG    existerande datakatalog att modifiera\n"
 
-#: pg_rewind.c:73
+#: pg_rewind.c:76
 #, c-format
 msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
 msgstr "      --source-pgdata=KATALOG    källdatakatalog att synkronisera med\n"
 
-#: pg_rewind.c:74
+#: pg_rewind.c:77
 #, c-format
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
 msgstr "      --source-server=ANSLSTR    källserver att synkronisera med\n"
 
-#: pg_rewind.c:75
+#: pg_rewind.c:78
 #, c-format
 msgid "  -n, --dry-run                  stop before modifying anything\n"
 msgstr "  -n, --dry-run                  stoppa innan något modifieras\n"
 
-#: pg_rewind.c:76
+#: pg_rewind.c:79
 #, c-format
 msgid ""
 "  -N, --no-sync                  do not wait for changes to be written\n"
@@ -467,27 +462,27 @@ msgstr ""
 "  -N, --no-sync                  vänta inte på att ändingar säkert\n"
 "                                 skrivits till disk\n"
 
-#: pg_rewind.c:78
+#: pg_rewind.c:81
 #, c-format
 msgid "  -P, --progress                 write progress messages\n"
 msgstr "  -P, --progress                 skriv ut förloppmeddelanden\n"
 
-#: pg_rewind.c:79
+#: pg_rewind.c:82
 #, c-format
 msgid "      --debug                    write a lot of debug messages\n"
 msgstr "      --debug                    skriv ut en massa debugmeddelanden\n"
 
-#: pg_rewind.c:80
+#: pg_rewind.c:83
 #, c-format
 msgid "  -V, --version                  output version information, then exit\n"
 msgstr "  -V, --version                  skriv ut versioninformation och avsluta sedan\n"
 
-#: pg_rewind.c:81
+#: pg_rewind.c:84
 #, c-format
 msgid "  -?, --help                     show this help, then exit\n"
 msgstr "  -?, --help                     visa denna hjälp och avsluta sedan\n"
 
-#: pg_rewind.c:82
+#: pg_rewind.c:85
 #, c-format
 msgid ""
 "\n"
@@ -496,190 +491,195 @@ msgstr ""
 "\n"
 "Rapportera fel till <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: pg_rewind.c:139 pg_rewind.c:175 pg_rewind.c:182 pg_rewind.c:189
-#: pg_rewind.c:197
+#: pg_rewind.c:142 pg_rewind.c:178 pg_rewind.c:185 pg_rewind.c:192
+#: pg_rewind.c:200
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: pg_rewind.c:174
+#: pg_rewind.c:177
 #, c-format
 msgid "no source specified (--source-pgdata or --source-server)"
 msgstr "ingen källa angavs (--source-pgdata eller --source-server)"
 
-#: pg_rewind.c:181
+#: pg_rewind.c:184
 #, c-format
 msgid "only one of --source-pgdata or --source-server can be specified"
 msgstr "bara en av --source-pgdata och --source-server får anges"
 
-#: pg_rewind.c:188
+#: pg_rewind.c:191
 #, c-format
 msgid "no target data directory specified (--target-pgdata)"
 msgstr "ingen måldatakatalog angiven (--target-pgdata)"
 
-#: pg_rewind.c:195
+#: pg_rewind.c:198
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
 
-#: pg_rewind.c:210
+#: pg_rewind.c:213
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "kan inte köras av \"root\""
 
-#: pg_rewind.c:211
+#: pg_rewind.c:214
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Du måste köra %s som PostgreSQL:s superanvändare.\n"
 
-#: pg_rewind.c:222
+#: pg_rewind.c:225
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "kunde inte läsa rättigheter på katalog \"%s\": %m"
 
-#: pg_rewind.c:253
+#: pg_rewind.c:256
 #, c-format
 msgid "source and target cluster are on the same timeline"
 msgstr "källa och målkluster är på samma tidslinje"
 
-#: pg_rewind.c:259
+#: pg_rewind.c:262
 #, c-format
 msgid "servers diverged at WAL location %X/%X on timeline %u"
 msgstr "servrarna divergerade vid WAL-position %X/%X på tidslinje %u"
 
-#: pg_rewind.c:296
+#: pg_rewind.c:299
 #, c-format
 msgid "no rewind required"
 msgstr "ingen rewind krävs"
 
-#: pg_rewind.c:303
+#: pg_rewind.c:306
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
 msgstr "rewind från senaste gemensamma checkpoint vid %X/%X på tidslinje %u"
 
-#: pg_rewind.c:312
+#: pg_rewind.c:315
 #, c-format
 msgid "reading source file list"
 msgstr "läser källfillista"
 
-#: pg_rewind.c:315
+#: pg_rewind.c:318
 #, c-format
 msgid "reading target file list"
 msgstr "läser målfillista"
 
-#: pg_rewind.c:326
+#: pg_rewind.c:329
 #, c-format
 msgid "reading WAL in target"
 msgstr "läser WAL i målet"
 
-#: pg_rewind.c:343
+#: pg_rewind.c:346
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "behöver kopiera %lu MB (total källkatalogstorlek är %lu MB)"
 
-#: pg_rewind.c:362
+#: pg_rewind.c:365
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "skapar backupetikett och uppdaterar kontrollfil"
 
-#: pg_rewind.c:391
+#: pg_rewind.c:394
 #, c-format
 msgid "syncing target data directory"
 msgstr "synkar måldatakatalog"
 
-#: pg_rewind.c:394
+#: pg_rewind.c:397
 #, c-format
 msgid "Done!"
 msgstr "Klar!"
 
-#: pg_rewind.c:406
+#: pg_rewind.c:409
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "källa och målkluster är från olika system"
 
-#: pg_rewind.c:414
+#: pg_rewind.c:417
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "klustren är inte kompatibla med denna version av pg_rewind"
 
-#: pg_rewind.c:424
+#: pg_rewind.c:427
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "målservern behöver använda antingen datachecksums eller \"wal_log_hints = on\""
 
-#: pg_rewind.c:435
+#: pg_rewind.c:438
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "målserver måste stängas ner utan fel"
 
-#: pg_rewind.c:445
+#: pg_rewind.c:448
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "måldatakatalog måste stängas ner utan fel"
 
-#: pg_rewind.c:500
+#: pg_rewind.c:497
 #, c-format
-msgid "invalid control file\n"
-msgstr "ogiltig kontrollfil\n"
+msgid "%*s/%s kB (%d%%) copied"
+msgstr "%*s/%s kB (%d%%) kopierad"
 
-#: pg_rewind.c:584
+#: pg_rewind.c:558
+#, c-format
+msgid "invalid control file"
+msgstr "ogiltig kontrollfil"
+
+#: pg_rewind.c:642
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "kunde inte finna en gemensam anfader av källa och målklusterets tidslinjer"
 
-#: pg_rewind.c:625
+#: pg_rewind.c:683
 #, c-format
 msgid "backup label buffer too small"
 msgstr "backupetikett-buffer för liten"
 
-#: pg_rewind.c:648
+#: pg_rewind.c:706
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "oväntad kontrollfil-CRC"
 
-#: pg_rewind.c:658
+#: pg_rewind.c:716
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "oväntad kontrollfilstorlek %d, förväntade %d"
 
-#: pg_rewind.c:667
+#: pg_rewind.c:725
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
 msgstr[0] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte"
 msgstr[1] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte"
 
-#: timeline.c:77 timeline.c:83
+#: timeline.c:76 timeline.c:82
 #, c-format
 msgid "syntax error in history file: %s"
 msgstr "syntaxfel i history-fil: %s"
 
-#: timeline.c:78
+#: timeline.c:77
 #, c-format
 msgid "Expected a numeric timeline ID."
 msgstr "Förväntade ett numeriskt tidslinje-ID."
 
-#: timeline.c:84
+#: timeline.c:83
 #, c-format
 msgid "Expected a write-ahead log switchpoint location."
 msgstr "Förväntade en write-ahead-logg:s switchpoint-position."
 
-#: timeline.c:89
+#: timeline.c:88
 #, c-format
 msgid "invalid data in history file: %s"
 msgstr "felaktig data i history-fil: %s"
 
-#: timeline.c:90
+#: timeline.c:89
 #, c-format
 msgid "Timeline IDs must be in increasing sequence."
 msgstr "Tidslinje-ID måste komma i en stigande sekvens."
 
-#: timeline.c:110
+#: timeline.c:109
 #, c-format
 msgid "invalid data in history file"
 msgstr "ogiltig data i historikfil"
 
-#: timeline.c:111
+#: timeline.c:110
 #, c-format
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "Tidslinje-ID:er måste vara mindre än barnens tidslinje-ID:er."
@@ -819,143 +819,32 @@ msgstr "post med ogiltig längd vid %X/%X"
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "ogiltig komprimerad image vid %X/%X, block %d"
 
-#~ msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-#~ msgstr "%s: VARNING: \"restricted Token\" stöds inte av plattformen.\n"
+#~ msgid "%s: unable to read permissions from \"%s\"\n"
+#~ msgstr "%s: kunde inte läsa rättigheter från \"%s\"\n"
 
-#~ msgid "%s: could not open process token: error code %lu\n"
-#~ msgstr "%s: kunde inte öppna process-token: felkod %lu\n"
+#~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
+#~ msgstr "WAL-fil är från ett annat databassystem: felaktig XLOG_SEG_SIZE i sidhuvud"
 
-#~ msgid "%s: could not allocate SIDs: error code %lu\n"
-#~ msgstr "%s: kunde inte tilldela SID: felkod %lu\n"
+#~ msgid "Timeline IDs must be less than child timeline's ID.\n"
+#~ msgstr "Tidslinje-ID:er måste vara mindre än barnets tidslinjes ID.\n"
 
-#~ msgid "%s: could not create restricted token: error code %lu\n"
-#~ msgstr "%s: kunde inte skapa restriktivt styrmärke (token): felkod %lu\n"
+#~ msgid "Timeline IDs must be in increasing sequence.\n"
+#~ msgstr "Tidslinje-ID:er måste komma i en ökande sekvens.\n"
 
-#~ msgid "%s: could not start process for command \"%s\": error code %lu\n"
-#~ msgstr "%s: kunde inte starta process för kommando \"%s\": felkod %lu\n"
+#~ msgid "invalid data in history file: %s\n"
+#~ msgstr "ogiltig data i historikfil: %s\n"
 
-#~ msgid "%s: could not re-execute with restricted token: error code %lu\n"
-#~ msgstr "%s: kunde inte upprepa med restriktivt styrmärke (token): felkod %lu\n"
+#~ msgid "Expected a write-ahead log switchpoint location.\n"
+#~ msgstr "Förväntade en write-ahead-log brytpunktposition.\n"
 
-#~ msgid "%s: could not get exit code from subprocess: error code %lu\n"
-#~ msgstr "%s: kunde inte utvinna statuskod för underprocess: felkod %lu\n"
+#~ msgid "Expected a numeric timeline ID.\n"
+#~ msgstr "Förväntade ett numeriskt tidslinje-ID.\n"
 
-#~ msgid "could not open directory \"%s\": %s\n"
-#~ msgstr "kunde inte öppna katalog \"%s\": %s\n"
+#~ msgid "syntax error in history file: %s\n"
+#~ msgstr "syntaxfel i historikfil: %s\n"
 
-#~ msgid "could not stat file \"%s\": %s\n"
-#~ msgstr "kunde inte göra stat() på fil \"%s\": %s\n"
-
-#~ msgid "could not read symbolic link \"%s\": %s\n"
-#~ msgstr "kunde inte läsa symbolisk länk \"%s\": %s\n"
-
-#~ msgid "symbolic link \"%s\" target is too long\n"
-#~ msgstr "mål för symbolisk länk \"%s\" är för lång\n"
-
-#~ msgid "could not read directory \"%s\": %s\n"
-#~ msgstr "kunde inte läsa katalog \"%s\": %s\n"
-
-#~ msgid "could not close directory \"%s\": %s\n"
-#~ msgstr "kunde inte stänga katalog \"%s\": %s\n"
-
-#~ msgid "could not read file \"%s\": %s\n"
-#~ msgstr "kunde inte läsa fil \"%s\": %s\n"
-
-#~ msgid "could not close file \"%s\": %s\n"
-#~ msgstr "kunde inte stänga fil \"%s\": %s\n"
-
-#~ msgid "  block %u\n"
-#~ msgstr "  block %u\n"
-
-#~ msgid "could not write file \"%s\": %s\n"
-#~ msgstr "kunde inte skriva fil \"%s\": %s\n"
-
-#~ msgid "could not remove file \"%s\": %s\n"
-#~ msgstr "kunde inte ta bort fil \"%s\": %s\n"
-
-#~ msgid "could not truncate file \"%s\" to %u: %s\n"
-#~ msgstr "kunde inte trunkera fil \"%s\" till %u: %s\n"
-
-#~ msgid "could not create directory \"%s\": %s\n"
-#~ msgstr "kunde inte skapa katalog \"%s\": %s\n"
-
-#~ msgid "could not remove directory \"%s\": %s\n"
-#~ msgstr "kunde inte radera katalog \"%s\": %s\n"
-
-#~ msgid "could not remove symbolic link \"%s\": %s\n"
-#~ msgstr "kunde inte radera symbolisk länk \"%s\": %s\n"
-
-#~ msgid "could not open file \"%s\" for reading: %s\n"
-#~ msgstr "kunde inte öppna fil \"%s\" för läsning: %s\n"
-
-#~ msgid "entry \"%s\" excluded from source file list\n"
-#~ msgstr "post \"%s\" utesluten från källfillista\n"
-
-#~ msgid "entry \"%s\" excluded from target file list\n"
-#~ msgstr "post \"%s\" utesluten från målfillista\n"
-
-#~ msgid "%s (%s)\n"
-#~ msgstr "%s (%s)\n"
-
-#~ msgid "getting file chunks\n"
-#~ msgstr "hämtar fildelar\n"
-
-#~ msgid "received null value for chunk for file \"%s\", file has been deleted\n"
-#~ msgstr "mottog null-värde som del av fil \"%s\", filen har blivit raderad\n"
-
-#~ msgid "received chunk for file \"%s\", offset %s, size %d\n"
-#~ msgstr "mottog del för fil \"%s\", offset %s, storlek %d\n"
-
-#~ msgid "fetched file \"%s\", length %d\n"
-#~ msgstr "hämtade fil \"%s\", längd %d\n"
-
-#~ msgid "Failure, exiting\n"
-#~ msgstr "Misslyckades, avslutar\n"
-
-#~ msgid "could not open file \"%s\": %s\n"
-#~ msgstr "kan inte öppna fil \"%s\": %s\n"
-
-#~ msgid "could not seek in file \"%s\": %s\n"
-#~ msgstr "kunde inte söka i fil \"%s\": %s\n"
-
-#~ msgid "could not read from file \"%s\": %s\n"
-#~ msgstr "kunde inte läsa från fil \"%s\": %s\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
-
-#~ msgid "%s: could not read permissions of directory \"%s\": %s\n"
-#~ msgstr "%s: kunde inte läsa rättigheter på katalog \"%s\": %s\n"
-
-#~ msgid "Source timeline history:\n"
-#~ msgstr "Källans tidslinjehistorik:\n"
-
-#~ msgid "Target timeline history:\n"
-#~ msgstr "Målets tidslinjehistorik:\n"
-
-#~ msgid "%d: %X/%X - %X/%X\n"
-#~ msgstr "%d: %X/%X - %X/%X\n"
-
-#~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte\n"
-#~ msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes\n"
-#~ msgstr[0] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte\n"
-#~ msgstr[1] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte\n"
-
-#~ msgid ""
-#~ "The program \"initdb\" is needed by %s but was\n"
-#~ "not found in the same directory as \"%s\".\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "Programmet \"initdb\" krävs av %s men\n"
-#~ "hittades inte i samma katalog som \"%s\".\n"
-#~ "Kontrollera din installation.\n"
+#~ msgid "sync of target directory failed\n"
+#~ msgstr "synk av målkatalog misslyckades\n"
 
 #~ msgid ""
 #~ "The program \"initdb\" was found by \"%s\"\n"
@@ -966,29 +855,140 @@ msgstr "ogiltig komprimerad image vid %X/%X, block %d"
 #~ "men var inte av samma version som %s.\n"
 #~ "Kontrollera din installation.\n"
 
-#~ msgid "sync of target directory failed\n"
-#~ msgstr "synk av målkatalog misslyckades\n"
+#~ msgid ""
+#~ "The program \"initdb\" is needed by %s but was\n"
+#~ "not found in the same directory as \"%s\".\n"
+#~ "Check your installation.\n"
+#~ msgstr ""
+#~ "Programmet \"initdb\" krävs av %s men\n"
+#~ "hittades inte i samma katalog som \"%s\".\n"
+#~ "Kontrollera din installation.\n"
 
-#~ msgid "syntax error in history file: %s\n"
-#~ msgstr "syntaxfel i historikfil: %s\n"
+#~ msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte\n"
+#~ msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes\n"
+#~ msgstr[0] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte\n"
+#~ msgstr[1] "WAL-segmentstorlek måste vara en tvåpotens mellan 1MB och 1GB men kontrollfilen anger %d byte\n"
 
-#~ msgid "Expected a numeric timeline ID.\n"
-#~ msgstr "Förväntade ett numeriskt tidslinje-ID.\n"
+#~ msgid "%d: %X/%X - %X/%X\n"
+#~ msgstr "%d: %X/%X - %X/%X\n"
 
-#~ msgid "Expected a write-ahead log switchpoint location.\n"
-#~ msgstr "Förväntade en write-ahead-log brytpunktposition.\n"
+#~ msgid "Target timeline history:\n"
+#~ msgstr "Målets tidslinjehistorik:\n"
 
-#~ msgid "invalid data in history file: %s\n"
-#~ msgstr "ogiltig data i historikfil: %s\n"
+#~ msgid "Source timeline history:\n"
+#~ msgstr "Källans tidslinjehistorik:\n"
 
-#~ msgid "Timeline IDs must be in increasing sequence.\n"
-#~ msgstr "Tidslinje-ID:er måste komma i en ökande sekvens.\n"
+#~ msgid "%s: could not read permissions of directory \"%s\": %s\n"
+#~ msgstr "%s: kunde inte läsa rättigheter på katalog \"%s\": %s\n"
 
-#~ msgid "Timeline IDs must be less than child timeline's ID.\n"
-#~ msgstr "Tidslinje-ID:er måste vara mindre än barnets tidslinjes ID.\n"
+#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
+#~ msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
 
-#~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
-#~ msgstr "WAL-fil är från ett annat databassystem: felaktig XLOG_SEG_SIZE i sidhuvud"
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
 
-#~ msgid "%s: unable to read permissions from \"%s\"\n"
-#~ msgstr "%s: kunde inte läsa rättigheter från \"%s\"\n"
+#~ msgid "could not read from file \"%s\": %s\n"
+#~ msgstr "kunde inte läsa från fil \"%s\": %s\n"
+
+#~ msgid "could not seek in file \"%s\": %s\n"
+#~ msgstr "kunde inte söka i fil \"%s\": %s\n"
+
+#~ msgid "could not open file \"%s\": %s\n"
+#~ msgstr "kan inte öppna fil \"%s\": %s\n"
+
+#~ msgid "Failure, exiting\n"
+#~ msgstr "Misslyckades, avslutar\n"
+
+#~ msgid "fetched file \"%s\", length %d\n"
+#~ msgstr "hämtade fil \"%s\", längd %d\n"
+
+#~ msgid "received chunk for file \"%s\", offset %s, size %d\n"
+#~ msgstr "mottog del för fil \"%s\", offset %s, storlek %d\n"
+
+#~ msgid "received null value for chunk for file \"%s\", file has been deleted\n"
+#~ msgstr "mottog null-värde som del av fil \"%s\", filen har blivit raderad\n"
+
+#~ msgid "getting file chunks\n"
+#~ msgstr "hämtar fildelar\n"
+
+#~ msgid "%s (%s)\n"
+#~ msgstr "%s (%s)\n"
+
+#~ msgid "entry \"%s\" excluded from target file list\n"
+#~ msgstr "post \"%s\" utesluten från målfillista\n"
+
+#~ msgid "entry \"%s\" excluded from source file list\n"
+#~ msgstr "post \"%s\" utesluten från källfillista\n"
+
+#~ msgid "could not open file \"%s\" for reading: %s\n"
+#~ msgstr "kunde inte öppna fil \"%s\" för läsning: %s\n"
+
+#~ msgid "could not remove symbolic link \"%s\": %s\n"
+#~ msgstr "kunde inte radera symbolisk länk \"%s\": %s\n"
+
+#~ msgid "could not remove directory \"%s\": %s\n"
+#~ msgstr "kunde inte radera katalog \"%s\": %s\n"
+
+#~ msgid "could not create directory \"%s\": %s\n"
+#~ msgstr "kunde inte skapa katalog \"%s\": %s\n"
+
+#~ msgid "could not truncate file \"%s\" to %u: %s\n"
+#~ msgstr "kunde inte trunkera fil \"%s\" till %u: %s\n"
+
+#~ msgid "could not remove file \"%s\": %s\n"
+#~ msgstr "kunde inte ta bort fil \"%s\": %s\n"
+
+#~ msgid "could not write file \"%s\": %s\n"
+#~ msgstr "kunde inte skriva fil \"%s\": %s\n"
+
+#~ msgid "  block %u\n"
+#~ msgstr "  block %u\n"
+
+#~ msgid "could not close file \"%s\": %s\n"
+#~ msgstr "kunde inte stänga fil \"%s\": %s\n"
+
+#~ msgid "could not read file \"%s\": %s\n"
+#~ msgstr "kunde inte läsa fil \"%s\": %s\n"
+
+#~ msgid "could not close directory \"%s\": %s\n"
+#~ msgstr "kunde inte stänga katalog \"%s\": %s\n"
+
+#~ msgid "could not read directory \"%s\": %s\n"
+#~ msgstr "kunde inte läsa katalog \"%s\": %s\n"
+
+#~ msgid "symbolic link \"%s\" target is too long\n"
+#~ msgstr "mål för symbolisk länk \"%s\" är för lång\n"
+
+#~ msgid "could not read symbolic link \"%s\": %s\n"
+#~ msgstr "kunde inte läsa symbolisk länk \"%s\": %s\n"
+
+#~ msgid "could not stat file \"%s\": %s\n"
+#~ msgstr "kunde inte göra stat() på fil \"%s\": %s\n"
+
+#~ msgid "could not open directory \"%s\": %s\n"
+#~ msgstr "kunde inte öppna katalog \"%s\": %s\n"
+
+#~ msgid "%s: could not get exit code from subprocess: error code %lu\n"
+#~ msgstr "%s: kunde inte utvinna statuskod för underprocess: felkod %lu\n"
+
+#~ msgid "%s: could not re-execute with restricted token: error code %lu\n"
+#~ msgstr "%s: kunde inte upprepa med restriktivt styrmärke (token): felkod %lu\n"
+
+#~ msgid "%s: could not start process for command \"%s\": error code %lu\n"
+#~ msgstr "%s: kunde inte starta process för kommando \"%s\": felkod %lu\n"
+
+#~ msgid "%s: could not create restricted token: error code %lu\n"
+#~ msgstr "%s: kunde inte skapa restriktivt styrmärke (token): felkod %lu\n"
+
+#~ msgid "%s: could not allocate SIDs: error code %lu\n"
+#~ msgstr "%s: kunde inte tilldela SID: felkod %lu\n"
+
+#~ msgid "%s: could not open process token: error code %lu\n"
+#~ msgstr "%s: kunde inte öppna process-token: felkod %lu\n"
+
+#~ msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+#~ msgstr "%s: VARNING: \"restricted Token\" stöds inte av plattformen.\n"

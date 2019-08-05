@@ -3,16 +3,17 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL 9.0)\n"
+"Project-Id-Version: pg_controldata (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-04 12:15+0000\n"
-"PO-Revision-Date: 2016-05-19 20:40+0800\n"
-"Last-Translator: Yuwei Peng <ywpeng@whu.edu.cn>\n"
-"Language-Team: Chinese (Simplified) <ywpeng@whu.edu.cn>\n"
-"Language: zh_CN\n"
+"POT-Creation-Date: 2019-05-22 17:56+0800\n"
+"PO-Revision-Date: 2019-06-14 18:00+0800\n"
+"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
+"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.5.7\n"
 
 #: ../../common/controldata_utils.c:73
@@ -40,22 +41,17 @@ msgid "byte ordering mismatch"
 msgstr "字节排序不匹配"
 
 #: ../../common/controldata_utils.c:137
-#, fuzzy, c-format
-#| msgid ""
-#| "WARNING: possible byte ordering mismatch\n"
-#| "The byte ordering used to store the pg_control file might not match the one\n"
-#| "used by this program.  In that case the results below would be incorrect, and\n"
-#| "the PostgreSQL installation would be incompatible with this data directory.\n"
+#, c-format
 msgid ""
 "possible byte ordering mismatch\n"
 "The byte ordering used to store the pg_control file might not match the one\n"
 "used by this program.  In that case the results below would be incorrect, and\n"
 "the PostgreSQL installation would be incompatible with this data directory."
 msgstr ""
-"警告: 可能字节顺序不匹配\n"
+"可能字节顺序不匹配\n"
 "用于存储文件pg_control的字节顺序可能与程序使用的不匹配\n"
 "在那种情况下结果将会是不正确的,并且所安装的PostgreSQL\n"
-"将会与这个数据目录不兼容\n"
+"将会与这个数据目录不兼容"
 
 #: ../../common/controldata_utils.c:203
 #, c-format
@@ -89,7 +85,7 @@ msgstr "使用方法:\n"
 #: pg_controldata.c:38
 #, c-format
 msgid "  %s [OPTION] [DATADIR]\n"
-msgstr "  %s [选项][DATADIR]\n"
+msgstr "  %s [选项][数据目录]\n"
 
 #: pg_controldata.c:39
 #, c-format
@@ -113,7 +109,7 @@ msgstr "  -V, --version          输出版本信息, 然后退出\n"
 #: pg_controldata.c:42
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help             显示帮助, 然后退出\n"
+msgstr "  -?, --help             显示此帮助, 然后退出\n"
 
 #: pg_controldata.c:43
 #, c-format
@@ -129,10 +125,9 @@ msgstr ""
 "\n"
 
 #: pg_controldata.c:45
-#, fuzzy, c-format
-#| msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#, c-format
 msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-msgstr "报告错误至 <pgsql-bugs@postgresql.org>.\n"
+msgstr "报告错误至 <pgsql-bugs@lists.postgresql.org>.\n"
 
 #: pg_controldata.c:55
 msgid "starting up"
@@ -176,16 +171,14 @@ msgid "Try \"%s --help\" for more information.\n"
 msgstr "用 \"%s --help\" 显示更多的信息.\n"
 
 #: pg_controldata.c:154
-#, fuzzy, c-format
-#| msgid "%s: too many command-line arguments (first is \"%s\")\n"
+#, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
+msgstr "命令行参数太多 (第一个是 \"%s\")"
 
 #: pg_controldata.c:163
-#, fuzzy, c-format
-#| msgid "%s: no data directory specified\n"
+#, c-format
 msgid "no data directory specified"
-msgstr "%s: 没有指定数据目录\n"
+msgstr "没有指定数据目录"
 
 #: pg_controldata.c:171
 #, c-format
@@ -218,7 +211,11 @@ msgid_plural ""
 "untrustworthy.\n"
 "\n"
 msgstr[0] ""
+"WAL段的大小保存在文件中，%d字节不是2的幂次方（在1MB至1BG之间）\n"
+"文件已损坏，下面的结果不可信.\n"
 msgstr[1] ""
+"WAL段的大小保存在文件中，%d字节不是2的幂次方（在1MB至1BG之间）\n"
+"文件已损坏，下面的结果不可信.\n"
 
 #: pg_controldata.c:223
 msgid "???"
@@ -279,12 +276,10 @@ msgstr "最新检查点的PrevTimeLineID: %u\n"
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "最新检查点的full_page_writes: %s\n"
 
-# help.c:48
 #: pg_controldata.c:259 pg_controldata.c:304 pg_controldata.c:316
 msgid "off"
 msgstr "关闭"
 
-# help.c:48
 #: pg_controldata.c:259 pg_controldata.c:304 pg_controldata.c:316
 msgid "on"
 msgstr "开启"
@@ -408,10 +403,9 @@ msgid "max_worker_processes setting:         %d\n"
 msgstr "max_worker_processes设置：   %d\n"
 
 #: pg_controldata.c:309
-#, fuzzy, c-format
-#| msgid "max_connections setting:              %d\n"
+#, c-format
 msgid "max_wal_senders setting:              %d\n"
-msgstr "max_connections设置：   %d\n"
+msgstr "max_wal_senders设置:              %d\n"
 
 #: pg_controldata.c:311
 #, c-format

@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-04-27 01:47+0000\n"
-"PO-Revision-Date: 2019-04-27 14:46+0200\n"
+"POT-Creation-Date: 2019-07-10 06:44+0000\n"
+"PO-Revision-Date: 2019-07-10 11:23+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -19,17 +19,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:188
 #, c-format
 msgid "fatal: "
 msgstr "fatalt: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:195
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:202
 #, c-format
 msgid "warning: "
 msgstr "varning: "
@@ -351,8 +351,8 @@ msgstr "sätter förvalt värde för shared_buffers ... "
 
 #: initdb.c:1052
 #, c-format
-msgid "selecting default timezone ... "
-msgstr "sätter förvalt värde för timezone ... "
+msgid "selecting default time zone ... "
+msgstr "sätter förvalt värde för tidszon ... "
 
 #: initdb.c:1086
 msgid "creating configuration files ... "
@@ -653,7 +653,9 @@ msgstr ""
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-msgstr "\nRapportera fel till <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr ""
+"\n"
+"Rapportera fel till <pgsql-bugs@lists.postgresql.org>.\n"
 
 #: initdb.c:2417
 #, c-format
@@ -777,20 +779,18 @@ msgstr "Förvald teckenkodning för databaser är satt till \"%s\".\n"
 
 #: initdb.c:2666
 #, c-format
-msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
-msgstr "%s: kunde inte hitta en lämplig textsökningskonfiguration för lokalnamn \"%s\".\n"
+msgid "could not find suitable text search configuration for locale \"%s\""
+msgstr "kunde inte hitta en lämplig textsökningskonfiguration för lokalnamn \"%s\""
 
 #: initdb.c:2677
 #, c-format
-msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
-msgstr "%s: Varning: Ingen lämplig textsökningskonfiguration för lokalnamn \"%s\".\n"
+msgid "suitable text search configuration for locale \"%s\" is unknown"
+msgstr "ingen lämplig textsökningskonfiguration för lokalnamn \"%s\""
 
 #: initdb.c:2682
 #, c-format
-msgid "%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"
-msgstr ""
-"%s: Varning: Uppgiven textsökningskonfiguration \"%s\" passar\n"
-"kanske inte till lokalnamn \"%s\".\n"
+msgid "specified text search configuration \"%s\" might not match locale \"%s\""
+msgstr "uppgiven textsökningskonfiguration \"%s\" passar kanske inte till lokalnamn \"%s\""
 
 #: initdb.c:2687
 #, c-format
