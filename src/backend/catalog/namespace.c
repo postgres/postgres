@@ -738,13 +738,23 @@ RelationIsVisible(Oid relid)
 
 /*
  * TypenameGetTypid
+ *		Wrapper for binary compatibility.
+ */
+Oid
+TypenameGetTypid(const char *typname)
+{
+	return TypenameGetTypidExtended(typname, true);
+}
+
+/*
+ * TypenameGetTypidExtended
  *		Try to resolve an unqualified datatype name.
  *		Returns OID if type found in search path, else InvalidOid.
  *
  * This is essentially the same as RelnameGetRelid.
  */
 Oid
-TypenameGetTypid(const char *typname)
+TypenameGetTypidExtended(const char *typname, bool temp_ok)
 {
 	Oid			typid;
 	ListCell   *l;
@@ -754,6 +764,9 @@ TypenameGetTypid(const char *typname)
 	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
+
+		if (!temp_ok && namespaceId == myTempNamespace)
+			continue;			/* do not look in temp namespace */
 
 		typid = GetSysCacheOid2(TYPENAMENSP,
 								PointerGetDatum(typname),
