@@ -152,6 +152,17 @@ select pg_temp.whoami();
 
 drop table public.whereami;
 
+-- types in temp schema
+set search_path = pg_temp, public;
+create domain pg_temp.nonempty as text check (value <> '');
+-- function-syntax invocation of types matches rules for functions
+select nonempty('');
+select pg_temp.nonempty('');
+-- other syntax matches rules for tables
+select ''::nonempty;
+
+reset search_path;
+
 -- For partitioned temp tables, ON COMMIT actions ignore storage-less
 -- partitioned tables.
 begin;

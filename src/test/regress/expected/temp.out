@@ -199,6 +199,21 @@ select pg_temp.whoami();
 (1 row)
 
 drop table public.whereami;
+-- types in temp schema
+set search_path = pg_temp, public;
+create domain pg_temp.nonempty as text check (value <> '');
+-- function-syntax invocation of types matches rules for functions
+select nonempty('');
+ERROR:  function nonempty(unknown) does not exist
+LINE 1: select nonempty('');
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+select pg_temp.nonempty('');
+ERROR:  value for domain nonempty violates check constraint "nonempty_check"
+-- other syntax matches rules for tables
+select ''::nonempty;
+ERROR:  value for domain nonempty violates check constraint "nonempty_check"
+reset search_path;
 -- For partitioned temp tables, ON COMMIT actions ignore storage-less
 -- partitioned tables.
 begin;
