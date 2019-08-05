@@ -1877,7 +1877,12 @@ FuncNameAsType(List *funcname)
 	Oid			result;
 	Type		typtup;
 
-	typtup = LookupTypeName(NULL, makeTypeNameFromNameList(funcname), NULL, false);
+	/*
+	 * temp_ok=false protects the <refsect1 id="sql-createfunction-security">
+	 * contract for writing SECURITY DEFINER functions safely.
+	 */
+	typtup = LookupTypeNameExtended(NULL, makeTypeNameFromNameList(funcname),
+									NULL, false, false);
 	if (typtup == NULL)
 		return InvalidOid;
 
