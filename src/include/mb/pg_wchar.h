@@ -289,7 +289,7 @@ typedef enum pg_enc
 #define PG_ENCODING_BE_LAST PG_KOI8U
 
 /*
- * Please use these tests before access to pg_encconv_tbl[]
+ * Please use these tests before access to pg_enc2name_tbl[]
  * or to other places...
  */
 #define PG_VALID_BE_ENCODING(_enc) \

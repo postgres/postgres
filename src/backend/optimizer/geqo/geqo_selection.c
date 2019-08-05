@@ -91,7 +91,7 @@ geqo_selection(PlannerInfo *root, Chromosome *momma, Chromosome *daddy,
 static int
 linear_rand(PlannerInfo *root, int pool_size, double bias)
 {
-	double		index;			/* index between 0 and pop_size */
+	double		index;			/* index between 0 and pool_size */
 	double		max = (double) pool_size;
 
 	/*

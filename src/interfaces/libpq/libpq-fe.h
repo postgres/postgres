@@ -565,10 +565,10 @@ extern void PQdisplayTuples(const PGresult *res,
 
 extern void PQprintTuples(const PGresult *res,
 						  FILE *fout,	/* output stream */
-						  int printAttName, /* print attribute names */
-						  int terseOutput,	/* delimiter bars */
-						  int width);	/* width of column, if 0, use variable
-										 * width */
+						  int PrintAttNames,	/* print attribute names */
+						  int TerseOutput,	/* delimiter bars */
+						  int colWidth);	/* width of column, if 0, use
+											 * variable width */
 
 
 /* === in fe-lobj.c === */

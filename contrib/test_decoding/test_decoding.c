@@ -24,7 +24,7 @@
 
 PG_MODULE_MAGIC;
 
-/* These must be available to pg_dlsym() */
+/* These must be available to dlsym() */
 extern void _PG_init(void);
 extern void _PG_output_plugin_init(OutputPluginCallbacks *cb);
 

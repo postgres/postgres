@@ -169,7 +169,7 @@ struct pg_result
 	int			ntups;
 	int			numAttributes;
 	PGresAttDesc *attDescs;
-	PGresAttValue **tuples;		/* each PGresTuple is an array of
+	PGresAttValue **tuples;		/* each PGresult tuple is an array of
 								 * PGresAttValue's */
 	int			tupArrSize;		/* allocated size of tuples array */
 	int			numParameters;
@@ -232,7 +232,8 @@ typedef enum
 	PGQUERY_DESCRIBE			/* Describe Statement or Portal */
 } PGQueryClass;
 
-/* PGSetenvStatusType defines the state of the PQSetenv state machine */
+/* PGSetenvStatusType defines the state of the pqSetenv state machine */
+
 /* (this is used only for 2.0-protocol connections) */
 typedef enum
 {

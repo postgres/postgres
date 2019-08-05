@@ -48,10 +48,6 @@ CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
                                         pg_catalog.array_upper($1,1),
                                         1) as g(s)';
 
-CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
-    LANGUAGE sql IMMUTABLE PARALLEL SAFE  -- intentionally not STRICT, to allow inlining
-    AS 'select $1 operator(pg_catalog.<@) $2 and $2 operator(pg_catalog.<@) $1';
-
 /* Given an index's OID and an underlying-table column number, return the
  * column's position in the index (NULL if not there) */
 CREATE FUNCTION _pg_index_position(oid, smallint) RETURNS int

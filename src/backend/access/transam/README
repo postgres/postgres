@@ -530,7 +530,7 @@ void XLogResetInsertion(void)
     construction workspace.  This is only needed if you have already called
     XLogBeginInsert(), but decide to not insert the record after all.
 
-void XLogEnsureRecordSpace(int max_block_id, int nrdatas)
+void XLogEnsureRecordSpace(int max_block_id, int ndatas)
 
     Normally, the WAL record construction buffers have the following limits:
 

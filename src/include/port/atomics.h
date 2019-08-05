@@ -178,7 +178,7 @@ pg_atomic_init_flag(volatile pg_atomic_flag *ptr)
 }
 
 /*
- * pg_atomic_test_and_set_flag - TAS()
+ * pg_atomic_test_set_flag - TAS()
  *
  * Returns true if the flag has successfully been set, false otherwise.
  *

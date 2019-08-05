@@ -706,7 +706,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 		/*
 		 * if the page on which are adding tuples is a page previous to freed
-		 * overflow page, then update its nextblno.
+		 * overflow page, then update its nextblkno.
 		 */
 		if (xldata->is_prev_bucket_same_wrt)
 		{

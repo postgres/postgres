@@ -471,7 +471,7 @@ PLy_procedure_munge_source(const char *name, const char *src)
 	*mp = '\0';
 
 	if (mp > (mrc + mlen))
-		elog(FATAL, "buffer overrun in PLy_munge_source");
+		elog(FATAL, "buffer overrun in PLy_procedure_munge_source");
 
 	return mrc;
 }

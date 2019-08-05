@@ -70,7 +70,7 @@ RESET ROLE
    effectively drops all the privileges assigned directly to the session user
    and to the other roles it is a member of, leaving only the privileges
    available to the named role.  On the other hand, if the session user role
-   has the <literal>NOINHERITS</literal> attribute, <command>SET ROLE</command> drops the
+   has the <literal>NOINHERIT</literal> attribute, <command>SET ROLE</command> drops the
    privileges assigned directly to the session user and instead acquires the
    privileges available to the named role.
   </para>

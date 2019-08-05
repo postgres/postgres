@@ -288,7 +288,6 @@ struct vars
 #define NWBDRY	'W'				/* non-word-boundary constraint */
 #define SBEGIN	'A'				/* beginning of string (even if not BOL) */
 #define SEND	'Z'				/* end of string (even if not EOL) */
-#define PREFER	'P'				/* length preference */
 
 /* is an arc colored, and hence on a color chain? */
 #define COLORED(a) \

@@ -25,8 +25,8 @@
  *
  * The rule for developers is: if you commit a change that requires
  * an initdb, you should update the catalog version number (as well as
- * notifying the pghackers mailing list, which has been the informal
- * practice for a long time).
+ * notifying the pgsql-hackers mailing list, which has been the
+ * informal practice for a long time).
  *
  * The catalog version number is placed here since modifying files in
  * include/catalog is the most common kind of initdb-forcing change.

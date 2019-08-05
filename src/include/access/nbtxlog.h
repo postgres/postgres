@@ -259,4 +259,4 @@ extern void btree_desc(StringInfo buf, XLogReaderState *record);
 extern const char *btree_identify(uint8 info);
 extern void btree_mask(char *pagedata, BlockNumber blkno);
 
-#endif							/* NBXLOG_H */
+#endif							/* NBTXLOG_H */

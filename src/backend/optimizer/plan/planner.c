@@ -4242,7 +4242,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 		 * 2) If there are no empty sets and only unsortable sets, then the
 		 * rollups list will be empty (and thus l_start == NULL), and
 		 * group_pathkeys will be NIL; we must ensure that the vacuously-true
-		 * pathkeys_contain_in test doesn't cause us to crash.
+		 * pathkeys_contained_in test doesn't cause us to crash.
 		 */
 		if (l_start != NULL &&
 			pathkeys_contained_in(root->group_pathkeys, path->pathkeys))
@@ -5177,7 +5177,7 @@ make_group_input_target(PlannerInfo *root, PathTarget *final_target)
  * a regular aggregation node would, plus any aggregates used in HAVING;
  * except that the Aggref nodes should be marked as partial aggregates.
  *
- * In addition, we'd better emit any Vars and PlaceholderVars that are
+ * In addition, we'd better emit any Vars and PlaceHolderVars that are
  * used outside of Aggrefs in the aggregation tlist and HAVING.  (Presumably,
  * these would be Vars that are grouped by or used in grouping expressions.)
  *

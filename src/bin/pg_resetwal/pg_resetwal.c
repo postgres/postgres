@@ -934,8 +934,8 @@ RewriteControlFile(void)
  *
  * On entry, ControlFile.checkPointCopy.redo and ControlFile.xlog_seg_size
  * are assumed valid (note that we allow the old xlog seg size to differ
- * from what we're using).  On exit, newXlogId and newXlogSeg are set to
- * suitable values for the beginning of replacement WAL (in our seg size).
+ * from what we're using).  On exit, newXlogSegNo is set to suitable
+ * value for the beginning of replacement WAL (in our seg size).
  */
 static void
 FindEndOfXLOG(void)

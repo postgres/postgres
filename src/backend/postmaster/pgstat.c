@@ -6122,7 +6122,7 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 }
 
 /* ----------
- * pgstat_recv_resetshared() -
+ * pgstat_recv_resetsharedcounter() -
  *
  *	Reset some shared statistics of the cluster.
  * ----------

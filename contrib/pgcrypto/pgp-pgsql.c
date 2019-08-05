@@ -761,7 +761,7 @@ pgp_pub_decrypt_text(PG_FUNCTION_ARGS)
  */
 
 /*
- * Helper function for pgp_armor. Converts arrays of keys and values into
+ * Helper function for pg_armor. Converts arrays of keys and values into
  * plain C arrays, and checks that they don't contain invalid characters.
  */
 static int

@@ -59,16 +59,6 @@ static uint32 _K[] = {0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6};
 #define BCOUNT	(ctxt->c.b64[0] / 8)
 #define W(n)	(ctxt->m.b32[(n)])
 
-#define PUTBYTE(x) \
-do { \
-	ctxt->m.b8[(COUNT % 64)] = (x);		\
-	COUNT++;				\
-	COUNT %= 64;				\
-	ctxt->c.b64[0] += 8;			\
-	if (COUNT % 64 == 0)			\
-		sha1_step(ctxt);		\
-} while (0)
-
 #define PUTPAD(x) \
 do { \
 	ctxt->m.b8[(COUNT % 64)] = (x);		\

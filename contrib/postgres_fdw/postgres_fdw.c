@@ -2794,7 +2794,7 @@ estimate_path_cost_size(PlannerInfo *root,
 
 			/*
 			 * Back into an estimate of the number of retrieved rows.  Just in
-			 * case this is nuts, clamp to at most nrow.
+			 * case this is nuts, clamp to at most nrows.
 			 */
 			retrieved_rows = clamp_row_est(rows / fpinfo->local_conds_sel);
 			retrieved_rows = Min(retrieved_rows, nrows);

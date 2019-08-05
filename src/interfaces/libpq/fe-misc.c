@@ -7,7 +7,7 @@
  *		 miscellaneous useful functions
  *
  * The communication routines here are analogous to the ones in
- * backend/libpq/pqcomm.c and backend/libpq/pqcomprim.c, but operate
+ * backend/libpq/pqcomm.c and backend/libpq/pqformat.c, but operate
  * in the considerably different environment of the frontend libpq.
  * In particular, we work with a bare nonblock-mode socket, rather than
  * a stdio stream, so that we can avoid unwanted blocking of the application.

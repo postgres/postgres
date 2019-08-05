@@ -685,7 +685,7 @@ typedef struct PLpgSQL_stmt_fori
 /*
  * PLpgSQL_stmt_forq represents a FOR statement running over a SQL query.
  * It is the common supertype of PLpgSQL_stmt_fors, PLpgSQL_stmt_forc
- * and PLpgSQL_dynfors.
+ * and PLpgSQL_stmt_dynfors.
  */
 typedef struct PLpgSQL_stmt_forq
 {

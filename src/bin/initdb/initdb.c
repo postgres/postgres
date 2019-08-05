@@ -1295,7 +1295,7 @@ setup_config(void)
 		err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 #endif
 
-		/* for best results, this code should match parse_hba() */
+		/* for best results, this code should match parse_hba_line() */
 		hints.ai_flags = AI_NUMERICHOST;
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = 0;

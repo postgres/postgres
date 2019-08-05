@@ -265,7 +265,6 @@ CreateSharedProcArray(void)
 							&found);
 	}
 
-	/* Register and initialize fields of ProcLWLockTranche */
 	LWLockRegisterTranche(LWTRANCHE_PROC, "proc");
 }
 

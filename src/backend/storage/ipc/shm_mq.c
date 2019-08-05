@@ -1251,7 +1251,7 @@ shm_mq_inc_bytes_written(shm_mq *mq, Size n)
 						pg_atomic_read_u64(&mq->mq_bytes_written) + n);
 }
 
-/* Shim for on_dsm_callback. */
+/* Shim for on_dsm_detach callback. */
 static void
 shm_mq_detach_callback(dsm_segment *seg, Datum arg)
 {

@@ -74,7 +74,7 @@ gistkillitems(IndexScanDesc scan)
 
 	/*
 	 * Mark all killedItems as dead. We need no additional recheck, because,
-	 * if page was modified, pageLSN must have changed.
+	 * if page was modified, curPageLSN must have changed.
 	 */
 	for (i = 0; i < so->numKilled; i++)
 	{
@@ -379,11 +379,11 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 
 	/*
 	 * Check if the page was deleted after we saw the downlink. There's
-	 * nothing of interest on a deleted page. Note that we must do this
-	 * after checking the NSN for concurrent splits! It's possible that
-	 * the page originally contained some tuples that are visible to us,
-	 * but was split so that all the visible tuples were moved to another
-	 * page, and then this page was deleted.
+	 * nothing of interest on a deleted page. Note that we must do this after
+	 * checking the NSN for concurrent splits! It's possible that the page
+	 * originally contained some tuples that are visible to us, but was split
+	 * so that all the visible tuples were moved to another page, and then
+	 * this page was deleted.
 	 */
 	if (GistPageIsDeleted(page))
 	{

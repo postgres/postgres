@@ -3291,7 +3291,7 @@ PQflush(PGconn *conn)
  *		PQfreemem - safely frees memory allocated
  *
  * Needed mostly by Win32, unless multithreaded DLL (/MD in VC6)
- * Used for freeing memory from PQescapeByte()a/PQunescapeBytea()
+ * Used for freeing memory from PQescapeBytea()/PQunescapeBytea()
  */
 void
 PQfreemem(void *ptr)

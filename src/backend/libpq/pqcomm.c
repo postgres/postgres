@@ -44,8 +44,8 @@
  *		StreamClose			- Close a client/backend connection
  *		TouchSocketFiles	- Protect socket files against /tmp cleaners
  *		pq_init			- initialize libpq at backend startup
- *		pq_comm_reset	- reset libpq during error recovery
- *		pq_close		- shutdown libpq at backend exit
+ *		socket_comm_reset	- reset libpq during error recovery
+ *		socket_close		- shutdown libpq at backend exit
  *
  * low-level I/O:
  *		pq_getbytes		- get a known number of bytes from connection

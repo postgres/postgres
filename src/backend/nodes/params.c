@@ -144,7 +144,7 @@ EstimateParamListSpace(ParamListInfo paramLI)
 }
 
 /*
- * Serialize a paramListInfo structure into caller-provided storage.
+ * Serialize a ParamListInfo structure into caller-provided storage.
  *
  * We write the number of parameters first, as a 4-byte integer, and then
  * write details for each parameter in turn.  The details for each parameter

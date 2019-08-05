@@ -576,7 +576,7 @@ typedef struct ExprEvalStep
 		/* for EEOP_WINDOW_FUNC */
 		struct
 		{
-			/* out-of-line state, modified by nodeWindowFunc.c */
+			/* out-of-line state, modified by nodeWindowAgg.c */
 			WindowFuncExprState *wfstate;
 		}			window_func;
 

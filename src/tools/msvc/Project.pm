@@ -230,8 +230,7 @@ sub AddDir
 				if ($filter eq "LIBOBJS")
 				{
 					no warnings qw(once);
-					if (grep(/$p/, @main::pgportfiles, @main::pgcommonfiles)
-						== 1)
+					if (grep(/$p/, @main::pgportfiles) == 1)
 					{
 						$p =~ s/\.c/\.o/;
 						$matches .= $p . " ";

@@ -124,7 +124,7 @@
 
 /* prototypes for internal routines */
 static Buffer vm_readbuf(Relation rel, BlockNumber blkno, bool extend);
-static void vm_extend(Relation rel, BlockNumber nvmblocks);
+static void vm_extend(Relation rel, BlockNumber vm_nblocks);
 
 
 /*

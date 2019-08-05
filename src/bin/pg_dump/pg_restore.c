@@ -54,8 +54,6 @@
 
 static void usage(const char *progname);
 
-typedef struct option optType;
-
 int
 main(int argc, char **argv)
 {

@@ -11,8 +11,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef PARSER_FUNC_H
-#define PARSER_FUNC_H
+#ifndef PARSE_FUNC_H
+#define PARSE_FUNC_H
 
 #include "catalog/namespace.h"
 #include "parser/parse_node.h"

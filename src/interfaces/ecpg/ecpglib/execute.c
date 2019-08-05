@@ -2062,8 +2062,9 @@ ecpg_do_prologue(int lineno, const int compat, const int force_indicator,
 	/*------
 	 * create a list of variables
 	 *
-	 * The variables are listed with input variables preceding outputvariables
-	 * The end of each group is marked by an end marker. per variable we list:
+	 * The variables are listed with input variables preceding output
+	 * variables.  The end of each group is marked by an end marker.
+	 * Per variable we list:
 	 *
 	 * type - as defined in ecpgtype.h
 	 * value - where to store the data

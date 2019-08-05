@@ -4114,7 +4114,7 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 		return mask;
 
 	/*
-	 * Get the largeobject's ACL from pg_language_metadata
+	 * Get the largeobject's ACL from pg_largeobject_metadata
 	 */
 	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
 							AccessShareLock);

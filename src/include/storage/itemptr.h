@@ -22,8 +22,8 @@
  *
  * This is a pointer to an item within a disk page of a known file
  * (for example, a cross-link from an index to its parent table).
- * blkid tells us which block, posid tells us which entry in the linp
- * (ItemIdData) array we want.
+ * ip_blkid tells us which block, ip_posid tells us which entry in
+ * the linp (ItemIdData) array we want.
  *
  * Note: because there is an item pointer in each tuple header and index
  * tuple header on disk, it's very important not to waste space with

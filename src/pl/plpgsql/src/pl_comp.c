@@ -2452,7 +2452,7 @@ delete_function(PLpgSQL_function *func)
 		plpgsql_free_function_memory(func);
 }
 
-/* exported so we can call it from plpgsql_init() */
+/* exported so we can call it from _PG_init() */
 void
 plpgsql_HashTableInit(void)
 {

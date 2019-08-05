@@ -282,7 +282,7 @@ typedef struct MultiXactStateData
 } MultiXactStateData;
 
 /*
- * Last element of OldestMemberMXactID and OldestVisibleMXactId arrays.
+ * Last element of OldestMemberMXactId and OldestVisibleMXactId arrays.
  * Valid elements are (1..MaxOldestSlot); element 0 is never used.
  */
 #define MaxOldestSlot	(MaxBackends + max_prepared_xacts)

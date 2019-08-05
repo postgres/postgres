@@ -996,8 +996,8 @@ LockAcquireExtended(const LOCKTAG *locktag,
 
 		/*
 		 * We can't acquire the lock immediately.  If caller specified no
-		 * blocking, remove useless table entries and return NOT_AVAIL without
-		 * waiting.
+		 * blocking, remove useless table entries and return
+		 * LOCKACQUIRE_NOT_AVAIL without waiting.
 		 */
 		if (dontWait)
 		{

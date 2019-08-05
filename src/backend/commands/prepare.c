@@ -143,7 +143,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString,
 	}
 
 	/*
-	 * grammar only allows OptimizableStmt, so this check should be redundant
+	 * grammar only allows PreparableStmt, so this check should be redundant
 	 */
 	switch (query->commandType)
 	{

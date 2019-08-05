@@ -364,7 +364,7 @@ static SERIALIZABLEXACT *OldCommittedSxact;
  * These configuration variables are used to set the predicate lock table size
  * and to control promotion of predicate locks to coarser granularity in an
  * attempt to degrade performance (mostly as false positive serialization
- * failure) gracefully in the face of memory pressurel
+ * failure) gracefully in the face of memory pressure.
  */
 int			max_predicate_locks_per_xact;	/* set by guc.c */
 int			max_predicate_locks_per_relation;	/* set by guc.c */
@@ -4809,7 +4809,7 @@ OnConflict_CheckForSerializationFailure(const SERIALIZABLEXACT *reader,
 }
 
 /*
- * PreCommit_CheckForSerializableConflicts
+ * PreCommit_CheckForSerializationFailure
  *		Check for dangerous structures in a serializable transaction
  *		at commit.
  *

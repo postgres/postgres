@@ -54,7 +54,7 @@ typedef struct GinState
 	bool		oneCol;			/* true if single-column index */
 
 	/*
-	 * origTupDesc is the nominal tuple descriptor of the index, ie, the i'th
+	 * origTupdesc is the nominal tuple descriptor of the index, ie, the i'th
 	 * attribute shows the key type (not the input data type!) of the i'th
 	 * index column.  In a single-column index this describes the actual leaf
 	 * index tuples.  In a multi-column index, the actual leaf tuples contain
@@ -443,7 +443,7 @@ extern void ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 /* ginpostinglist.c */
 
-extern GinPostingList *ginCompressPostingList(const ItemPointer ptrs, int nptrs,
+extern GinPostingList *ginCompressPostingList(const ItemPointer ipd, int nipd,
 											  int maxsize, int *nwritten);
 extern int	ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int totalsize, TIDBitmap *tbm);
 

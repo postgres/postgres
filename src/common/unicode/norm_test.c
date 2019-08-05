@@ -66,7 +66,7 @@ main(int argc, char **argv)
 
 		if (pg_wcscmp(test->output, result) != 0)
 		{
-			printf("FAILURE (Normalizationdata.txt line %d):\n", test->linenum);
+			printf("FAILURE (NormalizationTest.txt line %d):\n", test->linenum);
 			printf("input:\t%s\n", print_wchar_str(test->input));
 			printf("expected:\t%s\n", print_wchar_str(test->output));
 			printf("got\t%s\n", print_wchar_str(result));

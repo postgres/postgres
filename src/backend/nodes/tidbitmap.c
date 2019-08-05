@@ -1021,7 +1021,7 @@ tbm_iterate(TBMIterator *iterator)
 		PagetableEntry *page;
 		int			ntuples;
 
-		/* In ONE_PAGE state, we don't allocate an spages[] array */
+		/* In TBM_ONE_PAGE state, we don't allocate an spages[] array */
 		if (tbm->status == TBM_ONE_PAGE)
 			page = &tbm->entry1;
 		else

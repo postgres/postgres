@@ -530,7 +530,7 @@ static const ObjectPropertyType ObjectProperty[] =
 
 /*
  * This struct maps the string object types as returned by
- * getObjectTypeDescription into ObjType enum values.  Note that some enum
+ * getObjectTypeDescription into ObjectType enum values.  Note that some enum
  * values can be obtained by different names, and that some string object types
  * do not have corresponding values in the output enum.  The user of this map
  * must be careful to test for invalid values being returned.

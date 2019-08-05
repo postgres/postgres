@@ -139,7 +139,7 @@ defGetBoolean(DefElem *def)
 
 				/*
 				 * The set of strings accepted here should match up with the
-				 * grammar's opt_boolean production.
+				 * grammar's opt_boolean_or_string production.
 				 */
 				if (pg_strcasecmp(sval, "true") == 0)
 					return true;

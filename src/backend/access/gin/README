@@ -270,7 +270,7 @@ is stored in the higher bits. That requires 43 bits in total, which
 conveniently fits in at most 6 bytes.
 
 A compressed posting list is passed around and stored on disk in a
-PackedPostingList struct. The first item in the list is stored uncompressed
+GinPostingList struct. The first item in the list is stored uncompressed
 as a regular ItemPointerData, followed by the length of the list in bytes,
 followed by the packed items.
 
