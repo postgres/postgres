@@ -38,7 +38,8 @@ my $FirstGenbkiObjectId =
 push @{$oids}, $FirstGenbkiObjectId;
 
 my $prev_oid = 0;
-foreach my $oid (sort { $a <=> $b } @{$oids})
+my @sortedoids = sort { $a <=> $b } @{$oids};
+foreach my $oid (@sortedoids)
 {
 	if ($oid > $prev_oid + 1)
 	{
@@ -53,3 +54,25 @@ foreach my $oid (sort { $a <=> $b } @{$oids})
 	}
 	$prev_oid = $oid;
 }
+
+my $suggestion;
+do
+{
+	$suggestion = int(8000 + rand(2000));
+} while (grep(/^$suggestion$/, @{$oids}));
+
+my $navailable = 0;
+foreach my $oid (@sortedoids)
+{
+	if ($oid > $suggestion)
+	{
+		$navailable = $oid - $suggestion;
+		last;
+	}
+}
+
+printf "Patches should use a more-or-less consecutive range of OIDs.\n";
+printf
+  "Best practice is to start with a random choice in the range 8000-9999.\n";
+printf
+  "Suggested random unused OID: $suggestion ($navailable consecutive OID(s) available starting here)\n";
