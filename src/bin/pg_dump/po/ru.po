@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-29 07:28+0300\n"
+"POT-Creation-Date: 2019-06-17 21:33+0300\n"
 "PO-Revision-Date: 2018-05-16 14:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -1065,12 +1065,12 @@ msgstr "архиватор (БД)"
 msgid "could not get server_version from libpq\n"
 msgstr "не удалось получить версию сервера из libpq\n"
 
-#: pg_backup_db.c:59 pg_dumpall.c:2103
+#: pg_backup_db.c:59 pg_dumpall.c:2141
 #, c-format
 msgid "server version: %s; %s version: %s\n"
 msgstr "версия сервера: %s; версия %s: %s\n"
 
-#: pg_backup_db.c:61 pg_dumpall.c:2105
+#: pg_backup_db.c:61 pg_dumpall.c:2143
 #, c-format
 msgid "aborting because of server version mismatch\n"
 msgstr "продолжение работы с другой версией сервера невозможно\n"
@@ -1081,7 +1081,7 @@ msgid "connecting to database \"%s\" as user \"%s\"\n"
 msgstr "подключение к базе \"%s\" с именем пользователя \"%s\"\n"
 
 #: pg_backup_db.c:162 pg_backup_db.c:214 pg_backup_db.c:276 pg_backup_db.c:318
-#: pg_dumpall.c:1929 pg_dumpall.c:2041
+#: pg_dumpall.c:1967 pg_dumpall.c:2079
 msgid "Password: "
 msgstr "Пароль: "
 
@@ -2454,7 +2454,7 @@ msgid ""
 msgstr ""
 "%s: параметры -r/--roles-only и -t/--tablespaces-only исключают друг друга\n"
 
-#: pg_dumpall.c:386 pg_dumpall.c:2030
+#: pg_dumpall.c:386 pg_dumpall.c:2068
 #, c-format
 msgid "%s: could not connect to database \"%s\"\n"
 msgstr "%s: не удалось подключиться к базе данных: \"%s\"\n"
@@ -2562,66 +2562,66 @@ msgstr ""
 msgid "%s: role name starting with \"pg_\" skipped (%s)\n"
 msgstr "%s: имя роли, начинающееся с \"pg_\", пропущено (%s)\n"
 
-#: pg_dumpall.c:1173
+#: pg_dumpall.c:1192
 #, c-format
 msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
 msgstr ""
 "%s: не удалось разобрать список управления доступом (%s) для табл. "
 "пространства \"%s\"\n"
 
-#: pg_dumpall.c:1542
+#: pg_dumpall.c:1580
 #, c-format
 msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
 msgstr ""
 "%s: не удалось разобрать список управления доступом (%s) для базы данных \"%s"
 "\"\n"
 
-#: pg_dumpall.c:1786
+#: pg_dumpall.c:1824
 #, c-format
 msgid "%s: dumping database \"%s\"...\n"
 msgstr "%s: выгрузка базы данных \"%s\"...\n"
 
-#: pg_dumpall.c:1810
+#: pg_dumpall.c:1848
 #, c-format
 msgid "%s: pg_dump failed on database \"%s\", exiting\n"
 msgstr "%s: ошибка pg_dump для базы данных \"%s\", выход...\n"
 
-#: pg_dumpall.c:1819
+#: pg_dumpall.c:1857
 #, c-format
 msgid "%s: could not re-open the output file \"%s\": %s\n"
 msgstr "%s: не удалось повторно открыть выходной файл \"%s\": %s\n"
 
-#: pg_dumpall.c:1864
+#: pg_dumpall.c:1902
 #, c-format
 msgid "%s: running \"%s\"\n"
 msgstr "%s: выполняется \"%s\"\n"
 
-#: pg_dumpall.c:2052
+#: pg_dumpall.c:2090
 #, c-format
 msgid "%s: could not connect to database \"%s\": %s"
 msgstr "%s: не удалось подключиться к базе \"%s\": %s"
 
-#: pg_dumpall.c:2082
+#: pg_dumpall.c:2120
 #, c-format
 msgid "%s: could not get server version\n"
 msgstr "%s: не удалось узнать версию сервера\n"
 
-#: pg_dumpall.c:2088
+#: pg_dumpall.c:2126
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
 msgstr "%s: не удалось разобрать строку версии сервера \"%s\"\n"
 
-#: pg_dumpall.c:2162 pg_dumpall.c:2188
+#: pg_dumpall.c:2200 pg_dumpall.c:2226
 #, c-format
 msgid "%s: executing %s\n"
 msgstr "%s: выполняется %s\n"
 
-#: pg_dumpall.c:2168 pg_dumpall.c:2194
+#: pg_dumpall.c:2206 pg_dumpall.c:2232
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: ошибка при выполнении запроса: %s"
 
-#: pg_dumpall.c:2170 pg_dumpall.c:2196
+#: pg_dumpall.c:2208 pg_dumpall.c:2234
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: запрос: %s\n"
