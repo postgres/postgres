@@ -34,6 +34,9 @@ pg_lsn_in_internal(const char *str, bool *have_error)
 				off;
 	XLogRecPtr	result;
 
+	Assert(have_error != NULL);
+	*have_error = false;
+
 	/* Sanity check input format. */
 	len1 = strspn(str, "0123456789abcdefABCDEF");
 	if (len1 < 1 || len1 > MAXPG_LSNCOMPONENT || str[len1] != '/')
