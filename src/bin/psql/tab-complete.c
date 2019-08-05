@@ -1676,7 +1676,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER LANGUAGE <name> */
 	else if (Matches3("ALTER", "LANGUAGE", MatchAny))
-		COMPLETE_WITH_LIST2("OWNER_TO", "RENAME TO");
+		COMPLETE_WITH_LIST2("OWNER TO", "RENAME TO");
 
 	/* ALTER LARGE OBJECT <oid> */
 	else if (Matches4("ALTER", "LARGE", "OBJECT", MatchAny))
