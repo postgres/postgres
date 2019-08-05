@@ -453,6 +453,16 @@ insert into inner_text values ('a', null);
 select * from outer_text where (f1, f2) not in (select * from inner_text);
 
 --
+-- Another test case for cross-type hashed subplans: comparison of
+-- inner-side values must be done with appropriate operator
+--
+
+explain (verbose, costs off)
+select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
+
+select 'foo'::text in (select 'bar'::name union all select 'bar'::name);
+
+--
 -- Test case for premature memory release during hashing of subplan output
 --
 
