@@ -50,8 +50,8 @@ msgstr "%s: не удалось прочитать каталог \"%s\": %s\n"
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
 
-#: ../../common/file_utils.c:304 ../../common/file_utils.c:376
-#: receivelog.c:788 receivelog.c:1045
+#: ../../common/file_utils.c:304 ../../common/file_utils.c:376 receivelog.c:788
+#: receivelog.c:1045
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: не удалось синхронизировать с ФС файл \"%s\": %s\n"
@@ -185,8 +185,8 @@ msgstr "  -D, --pgdata=КАТАЛОГ   сохранить базовую коп
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
 msgstr ""
-"  -F, --format=p|t       формат вывода (p (по умолчанию) - простой, t - tar)"
-"\n"
+"  -F, --format=p|t       формат вывода (p (по умолчанию) - простой, t - "
+"tar)\n"
 
 #: pg_basebackup.c:346
 #, c-format
@@ -377,8 +377,8 @@ msgstr "  -w, --no-password      не запрашивать пароль\n"
 #: pg_basebackup.c:380 pg_receivewal.c:101 pg_recvlogical.c:108
 #, c-format
 msgid ""
-"  -W, --password         force password prompt (should happen automatically)"
-"\n"
+"  -W, --password         force password prompt (should happen "
+"automatically)\n"
 msgstr ""
 "  -W, --password         запрашивать пароль всегда (обычно не требуется)\n"
 
@@ -1098,8 +1098,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  -F  --fsync-interval=SECS\n"
-"                         time between fsyncs to the output file (default: %d)"
-"\n"
+"                         time between fsyncs to the output file (default: "
+"%d)\n"
 msgstr ""
 "  -F  --fsync-interval=СЕК\n"
 "                         периодичность сброса на диск выходного файла (по "
@@ -1585,8 +1585,8 @@ msgstr "не удалось закрыть поток сжатых данных"
 #~ msgstr "%s: не удалось открыть файл журнала транзакций \"%s\": %s\n"
 
 #~ msgid ""
-#~ "  -x, --xlog             include required WAL files in backup (fetch mode)"
-#~ "\n"
+#~ "  -x, --xlog             include required WAL files in backup (fetch "
+#~ "mode)\n"
 #~ msgstr ""
 #~ "  -x, --xlog             включить в копию требуемые файлы WAL (режим "
 #~ "fetch)\n"

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-08 11:42+0300\n"
+"POT-Creation-Date: 2019-08-05 09:11+0300\n"
 "PO-Revision-Date: 2019-02-08 12:19+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:75 parsexlog.c:129 parsexlog.c:187
+#: ../../common/fe_memutils.c:98 parsexlog.c:75 parsexlog.c:128 parsexlog.c:186
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -70,7 +70,7 @@ msgstr "%s: не удалось получить код выхода от под
 msgid "could not open directory \"%s\": %s\n"
 msgstr "не удалось открыть каталог \"%s\": %s\n"
 
-#: copy_fetch.c:89 filemap.c:185 filemap.c:348
+#: copy_fetch.c:89 filemap.c:188 filemap.c:349
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "не удалось получить информацию о файле \"%s\": %s\n"
@@ -199,50 +199,50 @@ msgstr "ошибка при удалении символической ссыл
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "не удалось открыть файл \"%s\" для чтения: %s\n"
 
-#: filemap.c:177
+#: filemap.c:180
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
 msgstr "файл данных \"%s\" в источнике не является обычным файлом\n"
 
-#: filemap.c:199
+#: filemap.c:202
 #, c-format
 msgid "\"%s\" is not a directory\n"
 msgstr "\"%s\" не является каталогом\n"
 
-#: filemap.c:222
+#: filemap.c:225
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
 msgstr "\"%s\" не является символической ссылкой\n"
 
-#: filemap.c:234
+#: filemap.c:237
 #, c-format
 msgid "\"%s\" is not a regular file\n"
 msgstr "\"%s\" не является обычным файлом\n"
 
-#: filemap.c:360
+#: filemap.c:361
 #, c-format
 msgid "source file list is empty\n"
 msgstr "список файлов в источнике пуст\n"
 
-#: filemap.c:475
+#: filemap.c:476
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr ""
-"неожиданная модификация страницы для каталога или символической ссылки \""
-"%s\"\n"
+"неожиданная модификация страницы для каталога или символической ссылки \"%s"
+"\"\n"
 
-#: filemap.c:510 filemap.c:530
+#: filemap.c:511 filemap.c:531
 #, c-format
 msgid "entry \"%s\" excluded from source file list\n"
 msgstr "\"%s\" исключён из списка исходных файлов\n"
 
-#: filemap.c:513 filemap.c:533
+#: filemap.c:514 filemap.c:534
 #, c-format
 msgid "entry \"%s\" excluded from target file list\n"
 msgstr "\"%s\" исключён из списка целевых файлов\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:664
+#: filemap.c:665
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
@@ -411,42 +411,42 @@ msgstr "Ошибка, выполняется выход\n"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s КБ (%d%%) скопировано"
 
-#: parsexlog.c:88 parsexlog.c:135
+#: parsexlog.c:88 parsexlog.c:134
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X: %s\n"
 
-#: parsexlog.c:92 parsexlog.c:138
+#: parsexlog.c:92 parsexlog.c:137
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X\n"
 
-#: parsexlog.c:199
+#: parsexlog.c:198
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X: %s\n"
 
-#: parsexlog.c:203
+#: parsexlog.c:202
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X\n"
 
-#: parsexlog.c:293
+#: parsexlog.c:292
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не удалось открыть файл \"%s\": %s\n"
 
-#: parsexlog.c:307
+#: parsexlog.c:306
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "не удалось переместиться в файле \"%s\": %s\n"
 
-#: parsexlog.c:314
+#: parsexlog.c:313
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "не удалось прочитать файл \"%s\": %s\n"
 
-#: parsexlog.c:382
+#: parsexlog.c:381
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"
@@ -795,8 +795,8 @@ msgstr "неверные данные в файле истории\n"
 #, c-format
 msgid "Timeline IDs must be less than child timeline's ID.\n"
 msgstr ""
-"Идентификаторы линий времени должны быть меньше идентификатора линии-потомка."
-"\n"
+"Идентификаторы линий времени должны быть меньше идентификатора линии-"
+"потомка.\n"
 
 #: xlogreader.c:299
 #, c-format

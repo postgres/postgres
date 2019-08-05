@@ -2021,7 +2021,7 @@ msgstr "リカバリは一時停止中です"
 #: access/transam/xlog.c:6057
 #, c-format
 msgid "Execute pg_wal_replay_resume() to continue."
-msgstr "再開するには pg_xlog_replay_resume() を実行してください"
+msgstr "再開するには pg_wal_replay_resume() を実行してください"
 
 #: access/transam/xlog.c:6265
 #, c-format

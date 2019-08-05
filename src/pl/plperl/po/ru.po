@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-05 21:51+0300\n"
+"POT-Creation-Date: 2019-06-17 21:28+0300\n"
 "PO-Revision-Date: 2017-03-29 13:41+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -229,17 +229,17 @@ msgstr ""
 "функция PL/Perl, возвращающая составное множество, должна вызывать "
 "return_next со ссылкой на хеш"
 
-#: plperl.c:4117
+#: plperl.c:4113
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "функция PL/Perl \"%s\""
 
-#: plperl.c:4129
+#: plperl.c:4125
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "компиляция функции PL/Perl \"%s\""
 
-#: plperl.c:4138
+#: plperl.c:4134
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "анонимный блок кода PL/Perl"

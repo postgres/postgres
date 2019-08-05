@@ -667,8 +667,8 @@ msgstr "  -c, --core-files       неприменимо на этой платф
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
-"  -l, --log=ФАЙЛ         записывать (или добавлять) протокол сервера в ФАЙЛ."
-"\n"
+"  -l, --log=ФАЙЛ         записывать (или добавлять) протокол сервера в "
+"ФАЙЛ.\n"
 
 #: pg_ctl.c:1951
 #, c-format
@@ -784,8 +784,8 @@ msgstr ""
 msgid ""
 "  auto       start service automatically during system startup (default)\n"
 msgstr ""
-"  auto       запускать службу автоматически при старте системы (по умолчанию)"
-"\n"
+"  auto       запускать службу автоматически при старте системы (по "
+"умолчанию)\n"
 
 #: pg_ctl.c:1974
 #, c-format
@@ -892,8 +892,8 @@ msgstr ""
 #~ msgstr "%s: не удалось дождаться сервера вследствие ошибки конфигурации\n"
 
 #~ msgid ""
-#~ "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o "
-#~ "\"OPTIONS\"]\n"
+#~ "  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
+#~ "\"]\n"
 #~ msgstr ""
 #~ "  %s start   [-w] [-t СЕК] [-D КАТАЛОГ-ДАННЫХ] [-s] [-l ИМЯ-ФАЙЛА]\n"
 #~ "                 [-o \"ПАРАМЕТРЫ\"]\n"
@@ -905,8 +905,8 @@ msgstr ""
 #~ "(The default is to wait for shutdown, but not for start or restart.)\n"
 #~ "\n"
 #~ msgstr ""
-#~ "(По умолчанию ожидание имеет место при остановке, но не при (пере)"
-#~ "запуске.)\n"
+#~ "(По умолчанию ожидание имеет место при остановке, но не при "
+#~ "(пере)запуске.)\n"
 #~ "\n"
 
 #~ msgid ""

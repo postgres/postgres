@@ -6742,7 +6742,7 @@ msgstr "la version FROM doit être différente de la version cible d'installatio
 #: commands/extension.c:1391
 #, c-format
 msgid "extension \"%s\" has no installation script nor update path for version \"%s\""
-msgstr "l'extension « %s » n'a pas de script d'installation ou de chemin de de mise à jour pour la version « %s »"
+msgstr "l'extension « %s » n'a pas de script d'installation ou de chemin de mise à jour pour la version « %s »"
 
 #: commands/extension.c:1426
 #, c-format
@@ -7698,7 +7698,7 @@ msgstr "les fonctions in_range btree doivent avoir cinq arguments"
 #: commands/opclasscmds.c:1184
 #, c-format
 msgid "btree in_range functions must return boolean"
-msgstr "les fonctions in_range btree doivent doivent retourner un booléen"
+msgstr "les fonctions in_range btree doivent retourner un booléen"
 
 #: commands/opclasscmds.c:1203
 #, c-format
@@ -10632,7 +10632,7 @@ msgstr "%s ne peut pas être exécuté dans un VACUUM ou un ANALYZE"
 #, c-format
 msgid "VACUUM option DISABLE_PAGE_SKIPPING cannot be used with FULL"
 msgstr ""
-"l'option DISABLE_PAGE_SKIPPING de la commande VACUUM ne pas pas être utilisée\n"
+"l'option DISABLE_PAGE_SKIPPING de la commande VACUUM ne pas être utilisée\n"
 "en même temps que l'option FULL"
 
 #: commands/vacuum.c:657
@@ -15507,7 +15507,7 @@ msgstr "la procédure %s n'existe pas"
 msgid "No procedure matches the given name and argument types. You might need to add explicit type casts."
 msgstr ""
 "Aucune procédure ne correspond au nom donné et aux types d'arguments.\n"
-"Vous pourriez avoir avoir besoin d'ajouter des conversions de type explicites."
+"Vous pourriez avoir besoin d'ajouter des conversions de type explicites."
 
 #: parser/parse_func.c:619
 #, c-format
@@ -21137,7 +21137,7 @@ msgstr "« = » inattendu lors du décodage de la séquence en base64"
 #: utils/adt/encode.c:307
 #, c-format
 msgid "invalid symbol \"%c\" while decoding base64 sequence"
-msgstr "symbole « %c » invalide invalide lors du décodage de la séquence en base64"
+msgstr "symbole « %c » invalide lors du décodage de la séquence en base64"
 
 #: utils/adt/encode.c:327
 #, c-format
@@ -22138,7 +22138,7 @@ msgstr "la chaîne n'est pas un identifiant valide : « %s »"
 #: utils/adt/misc.c:814
 #, c-format
 msgid "String has unclosed double quotes."
-msgstr "La chaîne des des guillements doubles non fermés."
+msgstr "La chaîne des guillements doubles non fermés."
 
 #: utils/adt/misc.c:828
 #, c-format

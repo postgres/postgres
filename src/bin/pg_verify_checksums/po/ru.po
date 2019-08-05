@@ -1,10 +1,10 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2018.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-08 11:42+0300\n"
-"PO-Revision-Date: 2018-10-05 13:14+0300\n"
+"POT-Creation-Date: 2019-06-17 21:28+0300\n"
+"PO-Revision-Date: 2019-06-17 21:48+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -154,37 +154,57 @@ msgstr "%s: слишком много аргументов командной с
 msgid "%s: pg_control CRC value is incorrect\n"
 msgstr "%s: ошибка контрольного значения в pg_control\n"
 
-#: pg_verify_checksums.c:322
+#: pg_verify_checksums.c:321
+#, c-format
+msgid ""
+"%s: cluster is not compatible with this version of pg_verify_checksums\n"
+msgstr "%s: кластер несовместим с этой версией pg_verify_checksums\n"
+
+#: pg_verify_checksums.c:328
+#, c-format
+msgid "%s: database cluster is not compatible\n"
+msgstr "%s: несовместимый кластер баз данных\n"
+
+#: pg_verify_checksums.c:330
+#, c-format
+msgid ""
+"The database cluster was initialized with block size %u, but "
+"pg_verify_checksums was compiled with block size %u.\n"
+msgstr ""
+"Кластер баз данных был инициализирован с размером блока %u, а утилита "
+"pg_verify_checksums скомпилирована для размера блока %u.\n"
+
+#: pg_verify_checksums.c:338
 #, c-format
 msgid "%s: cluster must be shut down to verify checksums\n"
 msgstr "%s: для проверки контрольных сумм кластер должен быть отключён\n"
 
-#: pg_verify_checksums.c:328
+#: pg_verify_checksums.c:344
 #, c-format
 msgid "%s: data checksums are not enabled in cluster\n"
 msgstr "%s: контрольные суммы в кластере не включены\n"
 
-#: pg_verify_checksums.c:337
+#: pg_verify_checksums.c:353
 #, c-format
 msgid "Checksum scan completed\n"
 msgstr "Проверка контрольных сумм завершена\n"
 
-#: pg_verify_checksums.c:338
+#: pg_verify_checksums.c:354
 #, c-format
 msgid "Data checksum version: %d\n"
 msgstr "Версия контрольных сумм данных: %d\n"
 
-#: pg_verify_checksums.c:339
+#: pg_verify_checksums.c:355
 #, c-format
 msgid "Files scanned:  %s\n"
 msgstr "Просканировано файлов: %s\n"
 
-#: pg_verify_checksums.c:340
+#: pg_verify_checksums.c:356
 #, c-format
 msgid "Blocks scanned: %s\n"
 msgstr "Просканировано блоков: %s\n"
 
-#: pg_verify_checksums.c:341
+#: pg_verify_checksums.c:357
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "Неверные контрольные суммы: %s\n"
