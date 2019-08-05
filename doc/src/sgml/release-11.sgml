@@ -35,6 +35,62 @@
 
     <listitem>
 <!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [ffa2d37e5] 2019-08-05 07:48:41 -0700
+Branch: REL_12_STABLE [9993fa9dd] 2019-08-05 07:48:45 -0700
+Branch: REL_11_STABLE [21f94c51f] 2019-08-05 07:48:45 -0700
+Branch: REL_10_STABLE [2062007cb] 2019-08-05 07:48:45 -0700
+Branch: REL9_6_STABLE [7da46192d] 2019-08-05 07:48:45 -0700
+Branch: REL9_5_STABLE [752fa3dbf] 2019-08-05 07:48:45 -0700
+Branch: REL9_4_STABLE [86737438b] 2019-08-05 07:48:46 -0700
+-->
+     <para>
+      Require schema qualification to cast to a temporary type when using
+      functional cast syntax (Noah Misch)
+     </para>
+
+     <para>
+      We have long required invocations of temporary functions to
+      explicitly specify the temporary schema, that
+      is <literal>pg_temp.<replaceable>func_name</replaceable>(<replaceable>args</replaceable>)</literal>.
+      Require this as well for casting to temporary types using functional
+      notation, for
+      example <literal>pg_temp.<replaceable>type_name</replaceable>(<replaceable>arg</replaceable>)</literal>.
+      Otherwise it's possible to capture a function call using a temporary
+      object, allowing privilege escalation in much the same ways that we
+      blocked in CVE-2007-2138.
+      (CVE-2019-10208)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4766dce0d] 2019-08-05 11:20:31 -0400
+Branch: REL_12_STABLE [de4b75c15] 2019-08-05 11:20:33 -0400
+Branch: REL_11_STABLE [a034418cf] 2019-08-05 11:20:34 -0400
+-->
+     <para>
+      Fix execution of hashed subplans that require cross-type comparison
+      (Tom Lane, Andreas Seltenreich)
+     </para>
+
+     <para>
+      Hashed subplans used the outer query's original comparison operator
+      to compare entries of the hash table.  This is the wrong thing if
+      that operator is cross-type, since all the hash table entries will
+      be of the subquery's output type.  For the set of hashable
+      cross-type operators in core <productname>PostgreSQL</productname>,
+      this mistake seems nearly harmless on 64-bit machines, but it can
+      result in crashes or perhaps unauthorized disclosure of server
+      memory on 32-bit machines.  Extensions might provide hashable
+      cross-type operators that create larger risks.
+      (CVE-2019-10209)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master Release: REL_12_BR [f946a4091] 2019-06-24 16:43:21 -0400
 Branch: REL_11_STABLE [afaf48afb] 2019-06-24 16:43:05 -0400
