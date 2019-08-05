@@ -77,6 +77,7 @@ extern Oid	RelnameGetRelid(const char *relname);
 extern bool RelationIsVisible(Oid relid);
 
 extern Oid	TypenameGetTypid(const char *typname);
+extern Oid	TypenameGetTypidExtended(const char *typname, bool temp_ok);
 extern bool TypeIsVisible(Oid typid);
 
 extern FuncCandidateList FuncnameGetCandidates(List *names,

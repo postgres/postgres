@@ -7236,6 +7236,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         be searched <emphasis>before</emphasis> searching any of the path items.
        </para>
 
+       <!-- To further split hairs, funcname('foo') does not use the temporary
+            schema, even when it considers typname='funcname'.  This paragraph
+            refers to function names in a loose sense, "pg_proc.proname or
+            func_name grammar production". -->
        <para>
         Likewise, the current session's temporary-table schema,
         <literal>pg_temp_<replaceable>nnn</replaceable></literal>, is always searched if it

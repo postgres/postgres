@@ -9475,6 +9475,14 @@ get_coercion_expr(Node *arg, deparse_context *context,
 		if (!PRETTY_PAREN(context))
 			appendStringInfoChar(buf, ')');
 	}
+
+	/*
+	 * Never emit resulttype(arg) functional notation. A pg_proc entry could
+	 * take precedence, and a resulttype in pg_temp would require schema
+	 * qualification that format_type_with_typemod() would usually omit. We've
+	 * standardized on arg::resulttype, but CAST(arg AS resulttype) notation
+	 * would work fine.
+	 */
 	appendStringInfo(buf, "::%s",
 					 format_type_with_typemod(resulttype, resulttypmod));
 }
