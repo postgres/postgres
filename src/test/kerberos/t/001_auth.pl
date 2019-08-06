@@ -54,8 +54,8 @@ my $realm = 'EXAMPLE.COM';
 
 my $krb5_conf   = "${TestLib::tmp_check}/krb5.conf";
 my $kdc_conf    = "${TestLib::tmp_check}/kdc.conf";
-my $krb5_log    = "${TestLib::tmp_check}/krb5libs.log";
-my $kdc_log     = "${TestLib::tmp_check}/krb5kdc.log";
+my $krb5_log    = "${TestLib::log_path}/krb5libs.log";
+my $kdc_log     = "${TestLib::log_path}/krb5kdc.log";
 my $kdc_port    = get_free_port();
 my $kdc_datadir = "${TestLib::tmp_check}/krb5kdc";
 my $kdc_pidfile = "${TestLib::tmp_check}/krb5kdc.pid";
