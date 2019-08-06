@@ -256,7 +256,7 @@ resize_intArrayType(ArrayType *a, int num)
 	if (num <= 0)
 	{
 		Assert(num == 0);
-		ARR_NDIM(a) = 0;
+		a = construct_empty_array(INT4OID);
 		return a;
 	}
 
