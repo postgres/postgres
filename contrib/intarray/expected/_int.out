@@ -398,6 +398,18 @@ SELECT count(*) from test__int WHERE a @> '{20,23}';
     12
 (1 row)
 
+SELECT count(*) from test__int WHERE a <@ '{73,23,20}';
+ count 
+-------
+    10
+(1 row)
+
+SELECT count(*) from test__int WHERE a = '{73,23,20}';
+ count 
+-------
+     1
+(1 row)
+
 SELECT count(*) from test__int WHERE a @@ '50&68';
  count 
 -------
@@ -416,6 +428,19 @@ SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
     21
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '20 | !21';
+ count 
+-------
+  6566
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!20 & !21';
+ count 
+-------
+  6343
+(1 row)
+
+SET enable_seqscan = off;  -- not all of these would use index by default
 CREATE INDEX text_idx on test__int using gist ( a gist__int_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
  count 
@@ -447,6 +472,18 @@ SELECT count(*) from test__int WHERE a @> '{20,23}';
     12
 (1 row)
 
+SELECT count(*) from test__int WHERE a <@ '{73,23,20}';
+ count 
+-------
+    10
+(1 row)
+
+SELECT count(*) from test__int WHERE a = '{73,23,20}';
+ count 
+-------
+     1
+(1 row)
+
 SELECT count(*) from test__int WHERE a @@ '50&68';
  count 
 -------
@@ -463,6 +500,18 @@ SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
  count 
 -------
     21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '20 | !21';
+ count 
+-------
+  6566
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!20 & !21';
+ count 
+-------
+  6343
 (1 row)
 
 DROP INDEX text_idx;
@@ -497,6 +546,18 @@ SELECT count(*) from test__int WHERE a @> '{20,23}';
     12
 (1 row)
 
+SELECT count(*) from test__int WHERE a <@ '{73,23,20}';
+ count 
+-------
+    10
+(1 row)
+
+SELECT count(*) from test__int WHERE a = '{73,23,20}';
+ count 
+-------
+     1
+(1 row)
+
 SELECT count(*) from test__int WHERE a @@ '50&68';
  count 
 -------
@@ -513,6 +574,18 @@ SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
  count 
 -------
     21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '20 | !21';
+ count 
+-------
+  6566
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!20 & !21';
+ count 
+-------
+  6343
 (1 row)
 
 DROP INDEX text_idx;
@@ -547,6 +620,18 @@ SELECT count(*) from test__int WHERE a @> '{20,23}';
     12
 (1 row)
 
+SELECT count(*) from test__int WHERE a <@ '{73,23,20}';
+ count 
+-------
+    10
+(1 row)
+
+SELECT count(*) from test__int WHERE a = '{73,23,20}';
+ count 
+-------
+     1
+(1 row)
+
 SELECT count(*) from test__int WHERE a @@ '50&68';
  count 
 -------
@@ -565,3 +650,16 @@ SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
     21
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '20 | !21';
+ count 
+-------
+  6566
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!20 & !21';
+ count 
+-------
+  6343
+(1 row)
+
+RESET enable_seqscan;
