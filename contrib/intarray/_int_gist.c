@@ -96,8 +96,13 @@ g_int_consistent(PG_FUNCTION_ARGS)
 				retval = inner_int_contains(query,
 											(ArrayType *) DatumGetPointer(entry->key));
 			else
-				retval = inner_int_overlap((ArrayType *) DatumGetPointer(entry->key),
-										   query);
+			{
+				/*
+				 * Unfortunately, because empty arrays could be anywhere in
+				 * the index, we must search the whole tree.
+				 */
+				retval = true;
+			}
 			break;
 		default:
 			retval = false;

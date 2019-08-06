@@ -567,7 +567,13 @@ g_intbig_consistent(PG_FUNCTION_ARGS)
 				}
 			}
 			else
-				retval = _intbig_overlap((GISTTYPE *) DatumGetPointer(entry->key), query);
+			{
+				/*
+				 * Unfortunately, because empty arrays could be anywhere in
+				 * the index, we must search the whole tree.
+				 */
+				retval = true;
+			}
 			break;
 		default:
 			retval = false;
