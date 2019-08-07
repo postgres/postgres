@@ -19,6 +19,16 @@ INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
 ERROR:  invalid input syntax for type time with time zone: "15:36:39 America/New_York"
 LINE 1: INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
                                        ^
+-- this should fail (timezone not specified without a date)
+INSERT INTO TIMETZ_TBL VALUES ('15:36:39 m2');
+ERROR:  invalid input syntax for type time with time zone: "15:36:39 m2"
+LINE 1: INSERT INTO TIMETZ_TBL VALUES ('15:36:39 m2');
+                                       ^
+-- this should fail (dynamic timezone abbreviation without a date)
+INSERT INTO TIMETZ_TBL VALUES ('15:36:39 MSK m2');
+ERROR:  invalid input syntax for type time with time zone: "15:36:39 MSK m2"
+LINE 1: INSERT INTO TIMETZ_TBL VALUES ('15:36:39 MSK m2');
+                                       ^
 SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
     Time TZ     
 ----------------
