@@ -1529,6 +1529,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 {
 	Page		dp = (Page) BufferGetPage(buffer);
 	TransactionId prev_xmax = InvalidTransactionId;
+	BlockNumber blkno;
 	OffsetNumber offnum;
 	bool		at_chain_start;
 	bool		valid;
@@ -1538,14 +1539,13 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	if (all_dead)
 		*all_dead = first_call;
 
-	Assert(TransactionIdIsValid(RecentGlobalXmin));
-
-	Assert(ItemPointerGetBlockNumber(tid) == BufferGetBlockNumber(buffer));
+	blkno = ItemPointerGetBlockNumber(tid);
 	offnum = ItemPointerGetOffsetNumber(tid);
 	at_chain_start = first_call;
 	skip = !first_call;
 
-	heapTuple->t_self = *tid;
+	Assert(TransactionIdIsValid(RecentGlobalXmin));
+	Assert(BufferGetBlockNumber(buffer) == blkno);
 
 	/* Scan through possible multiple members of HOT-chain */
 	for (;;)
@@ -1573,10 +1573,16 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 			break;
 		}
 
+		/*
+		 * Update heapTuple to point to the element of the HOT chain we're
+		 * currently investigating. Having t_self set correctly is important
+		 * because the SSI checks and the *Satisfies routine for historical
+		 * MVCC snapshots need the correct tid to decide about the visibility.
+		 */
 		heapTuple->t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 		heapTuple->t_len = ItemIdGetLength(lp);
 		heapTuple->t_tableOid = RelationGetRelid(relation);
-		ItemPointerSetOffsetNumber(&heapTuple->t_self, offnum);
+		ItemPointerSet(&heapTuple->t_self, blkno, offnum);
 
 		/*
 		 * Shouldn't see a HEAP_ONLY tuple at chain start.
@@ -1602,21 +1608,10 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 */
 		if (!skip)
 		{
-			/*
-			 * For the benefit of logical decoding, have t_self point at the
-			 * element of the HOT chain we're currently investigating instead
-			 * of the root tuple of the HOT chain. This is important because
-			 * the *Satisfies routine for historical mvcc snapshots needs the
-			 * correct tid to decide about the visibility in some cases.
-			 */
-			ItemPointerSet(&(heapTuple->t_self), BufferGetBlockNumber(buffer), offnum);
-
 			/* If it's visible per the snapshot, we must return it */
 			valid = HeapTupleSatisfiesVisibility(heapTuple, snapshot, buffer);
 			CheckForSerializableConflictOut(valid, relation, heapTuple,
 											buffer, snapshot);
-			/* reset to original, non-redirected, tid */
-			heapTuple->t_self = *tid;
 
 			if (valid)
 			{
@@ -1648,7 +1643,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		if (HeapTupleIsHotUpdated(heapTuple))
 		{
 			Assert(ItemPointerGetBlockNumber(&heapTuple->t_data->t_ctid) ==
-				   ItemPointerGetBlockNumber(tid));
+				   blkno);
 			offnum = ItemPointerGetOffsetNumber(&heapTuple->t_data->t_ctid);
 			at_chain_start = false;
 			prev_xmax = HeapTupleHeaderGetUpdateXid(heapTuple->t_data);

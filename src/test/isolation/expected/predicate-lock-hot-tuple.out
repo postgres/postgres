@@ -1,0 +1,20 @@
+Parsed test spec with 2 sessions
+
+starting permutation: b1 b2 r1 r2 w1 w2 c1 c2
+step b1: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step b2: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step r1: SELECT * FROM test WHERE i IN (5, 7)
+i              t              
+
+5              apple          
+7              pear_hot_updated
+step r2: SELECT * FROM test WHERE i IN (5, 7)
+i              t              
+
+5              apple          
+7              pear_hot_updated
+step w1: UPDATE test SET t = 'pear_xact1' WHERE i = 7
+step w2: UPDATE test SET t = 'apple_xact2' WHERE i = 5
+step c1: COMMIT;
+step c2: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
