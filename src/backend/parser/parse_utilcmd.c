@@ -3727,6 +3727,12 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 
 	if (spec->is_default)
 	{
+		/*
+		 * Hash partitioning does not support a default partition; there's no
+		 * use case for it (since the set of partitions to create is perfectly
+		 * defined), and if users do get into it accidentally, it's hard to
+		 * back out from it afterwards.
+		 */
 		if (strategy == PARTITION_STRATEGY_HASH)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
