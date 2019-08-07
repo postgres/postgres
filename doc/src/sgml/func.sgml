@@ -11735,7 +11735,7 @@ table2-mapping
      A path expression can be a Boolean predicate, although the SQL/JSON
      standard allows predicates only in filters.  This is necessary for
      implementation of the <literal>@@</literal> operator. For example,
-     the following<type>jsonpath</type> expression is valid in
+     the following <type>jsonpath</type> expression is valid in
      <productname>PostgreSQL</productname>:
 <programlisting>
 '$.track.segments[*].HR &lt; 70'
@@ -12997,7 +12997,7 @@ table2-mapping
         </entry>
         <entry>
          <para><literal>
-           select * jsonb_path_query('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2,"max":4}');
+           select * from jsonb_path_query('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2,"max":4}');
          </literal></para>
         </entry>
         <entry>
