@@ -508,7 +508,7 @@ RelationBuildPartitionDesc(Relation rel)
 						boundinfo->null_index = mapping[null_index];
 					}
 
-					/* All partition must now have a valid mapping */
+					/* All partitions must now have a valid mapping */
 					Assert(next_index == nparts);
 					break;
 				}
