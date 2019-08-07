@@ -19,6 +19,11 @@ INSERT INTO TIMETZ_TBL VALUES ('2003-03-07 15:36:39 America/New_York');
 INSERT INTO TIMETZ_TBL VALUES ('2003-07-07 15:36:39 America/New_York');
 -- this should fail (the timezone offset is not known)
 INSERT INTO TIMETZ_TBL VALUES ('15:36:39 America/New_York');
+-- this should fail (timezone not specified without a date)
+INSERT INTO TIMETZ_TBL VALUES ('15:36:39 m2');
+-- this should fail (dynamic timezone abbreviation without a date)
+INSERT INTO TIMETZ_TBL VALUES ('15:36:39 MSK m2');
+
 
 SELECT f1 AS "Time TZ" FROM TIMETZ_TBL;
 
