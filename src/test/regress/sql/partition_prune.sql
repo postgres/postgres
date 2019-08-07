@@ -85,6 +85,10 @@ explain (costs off) select * from rlp where a = 29;
 explain (costs off) select * from rlp where a >= 29;
 explain (costs off) select * from rlp where a < 1 or (a > 20 and a < 25);
 
+-- where clause contradicts sub-partition's constraint
+explain (costs off) select * from rlp where a = 20 or a = 40;
+explain (costs off) select * from rlp3 where a = 20;   /* empty */
+
 -- redundant clauses are eliminated
 explain (costs off) select * from rlp where a > 1 and a = 10;	/* only default */
 explain (costs off) select * from rlp where a > 1 and a >=15;	/* rlp3 onwards, including default */

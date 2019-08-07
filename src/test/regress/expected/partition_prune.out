@@ -592,6 +592,24 @@ explain (costs off) select * from rlp where a < 1 or (a > 20 and a < 25);
          Filter: ((a < 1) OR ((a > 20) AND (a < 25)))
 (5 rows)
 
+-- where clause contradicts sub-partition's constraint
+explain (costs off) select * from rlp where a = 20 or a = 40;
+               QUERY PLAN               
+----------------------------------------
+ Append
+   ->  Seq Scan on rlp4_1
+         Filter: ((a = 20) OR (a = 40))
+   ->  Seq Scan on rlp5_default
+         Filter: ((a = 20) OR (a = 40))
+(5 rows)
+
+explain (costs off) select * from rlp3 where a = 20;   /* empty */
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
 -- redundant clauses are eliminated
 explain (costs off) select * from rlp where a > 1 and a = 10;	/* only default */
             QUERY PLAN            

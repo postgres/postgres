@@ -849,10 +849,11 @@ get_matching_partitions(PartitionPruneContext *context, List *pruning_steps)
  * the context's steps list.  Each step is assigned a step identifier, unique
  * even across recursive calls.
  *
- * If we find clauses that are mutually contradictory, or a pseudoconstant
- * clause that contains false, we set context->contradictory to true and
- * return NIL (that is, no pruning steps).  Caller should consider all
- * partitions as pruned in that case.
+ * If we find clauses that are mutually contradictory, or contradictory with
+ * the partitioning constraint, or a pseudoconstant clause that contains
+ * false, we set context->contradictory to true and return NIL (that is, no
+ * pruning steps).  Caller should consider all partitions as pruned in that
+ * case.
  */
 static List *
 gen_partprune_steps_internal(GeneratePruningStepsContext *context,
@@ -942,35 +943,15 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 					}
 					else
 					{
+						PartitionPruneStep *orstep;
+
 						/*
 						 * The arg didn't contain a clause matching this
 						 * partition key.  We cannot prune using such an arg.
 						 * To indicate that to the pruning code, we must
 						 * construct a dummy PartitionPruneStepCombine whose
 						 * source_stepids is set to an empty List.
-						 *
-						 * However, if we can prove using constraint exclusion
-						 * that the clause refutes the table's partition
-						 * constraint (if it's sub-partitioned), we need not
-						 * bother with that.  That is, we effectively ignore
-						 * this OR arm.
 						 */
-						List	   *partconstr = context->rel->partition_qual;
-						PartitionPruneStep *orstep;
-
-						if (partconstr)
-						{
-							partconstr = (List *)
-								expression_planner((Expr *) partconstr);
-							if (context->rel->relid != 1)
-								ChangeVarNodes((Node *) partconstr, 1,
-											   context->rel->relid, 0);
-							if (predicate_refuted_by(partconstr,
-													 list_make1(arg),
-													 false))
-								continue;
-						}
-
 						orstep = gen_prune_step_combine(context, NIL,
 														PARTPRUNE_COMBINE_UNION);
 						arg_stepids = lappend_int(arg_stepids, orstep->step_id);
@@ -1036,6 +1017,29 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 			 * currently don't perform any pruning for more complex NOT
 			 * clauses.
 			 */
+		}
+
+		/*
+		 * If the clause contradicts the partition constraint, mark the clause
+		 * as contradictory and we're done.  This is particularly helpful to
+		 * prune the default partition.
+		 */
+		if (context->rel->partition_qual)
+		{
+			List	   *partconstr;
+
+			partconstr = (List *)
+				expression_planner((Expr *) context->rel->partition_qual);
+			if (context->rel->relid != 1)
+				ChangeVarNodes((Node *) partconstr, 1,
+							   context->rel->relid, 0);
+			if (predicate_refuted_by(partconstr,
+									 list_make1(clause),
+									 false))
+			{
+				context->contradictory = true;
+				return NIL;
+			}
 		}
 
 		/*
