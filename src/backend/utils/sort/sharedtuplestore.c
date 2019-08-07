@@ -29,8 +29,6 @@
 #include "storage/sharedfileset.h"
 #include "utils/sharedtuplestore.h"
 
-#include <limits.h>
-
 /*
  * The size of chunks, in pages.  This is somewhat arbitrarily set to match
  * the size of HASH_CHUNK, so that Parallel Hash obtains new chunks of tuples
