@@ -453,7 +453,7 @@ create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
 		boundinfo->default_index = (*mapping)[default_index];
 	}
 
-	/* All partition must now have been assigned canonical indexes. */
+	/* All partitions must now have been assigned canonical indexes. */
 	Assert(next_index == nparts);
 	return boundinfo;
 }
@@ -651,7 +651,7 @@ create_range_bounds(PartitionBoundSpec **boundspecs, int nparts,
 	Assert(i == ndatums);
 	boundinfo->indexes[i] = -1;
 
-	/* All partition must now have been assigned canonical indexes. */
+	/* All partitions must now have been assigned canonical indexes. */
 	Assert(next_index == nparts);
 	return boundinfo;
 }
