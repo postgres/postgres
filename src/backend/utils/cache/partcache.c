@@ -709,7 +709,7 @@ RelationBuildPartitionDesc(Relation rel)
 						boundinfo->default_index = mapping[default_index];
 					}
 
-					/* All partition must now have a valid mapping */
+					/* All partitions must now have a valid mapping */
 					Assert(next_index == nparts);
 					break;
 				}
