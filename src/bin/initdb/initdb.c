@@ -307,21 +307,9 @@ do { \
 		output_failed = true, output_errno = errno; \
 } while (0)
 
-#define PG_CMD_PRINTF1(fmt, arg1) \
+#define PG_CMD_PRINTF(fmt, ...) \
 do { \
-	if (fprintf(cmdfd, fmt, arg1) < 0 || fflush(cmdfd) < 0) \
-		output_failed = true, output_errno = errno; \
-} while (0)
-
-#define PG_CMD_PRINTF2(fmt, arg1, arg2) \
-do { \
-	if (fprintf(cmdfd, fmt, arg1, arg2) < 0 || fflush(cmdfd) < 0) \
-		output_failed = true, output_errno = errno; \
-} while (0)
-
-#define PG_CMD_PRINTF3(fmt, arg1, arg2, arg3)		\
-do { \
-	if (fprintf(cmdfd, fmt, arg1, arg2, arg3) < 0 || fflush(cmdfd) < 0) \
+	if (fprintf(cmdfd, fmt, __VA_ARGS__) < 0 || fflush(cmdfd) < 0) \
 		output_failed = true, output_errno = errno; \
 } while (0)
 
@@ -1490,7 +1478,7 @@ setup_auth(FILE *cmdfd)
 		PG_CMD_PUTS(*line);
 
 	if (superuser_password)
-		PG_CMD_PRINTF2("ALTER USER \"%s\" WITH PASSWORD E'%s';\n\n",
+		PG_CMD_PRINTF("ALTER USER \"%s\" WITH PASSWORD E'%s';\n\n",
 					   username, escape_quotes(superuser_password));
 }
 
@@ -1684,7 +1672,7 @@ setup_description(FILE *cmdfd)
 				"	objsubid int4, "
 				"	description text);\n\n");
 
-	PG_CMD_PRINTF1("COPY tmp_pg_description FROM E'%s';\n\n",
+	PG_CMD_PRINTF("COPY tmp_pg_description FROM E'%s';\n\n",
 				   escape_quotes(desc_file));
 
 	PG_CMD_PUTS("INSERT INTO pg_description "
@@ -1697,7 +1685,7 @@ setup_description(FILE *cmdfd)
 				" classname name, "
 				" description text);\n\n");
 
-	PG_CMD_PRINTF1("COPY tmp_pg_shdescription FROM E'%s';\n\n",
+	PG_CMD_PRINTF("COPY tmp_pg_shdescription FROM E'%s';\n\n",
 				   escape_quotes(shdesc_file));
 
 	PG_CMD_PUTS("INSERT INTO pg_shdescription "
@@ -1738,7 +1726,7 @@ setup_collation(FILE *cmdfd)
 	 * in pg_collation.h.  But add it before reading system collations, so
 	 * that it wins if libc defines a locale named ucs_basic.
 	 */
-	PG_CMD_PRINTF3("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collisdeterministic, collencoding, collcollate, collctype)"
+	PG_CMD_PRINTF("INSERT INTO pg_collation (oid, collname, collnamespace, collowner, collprovider, collisdeterministic, collencoding, collcollate, collctype)"
 				   "VALUES (pg_nextoid('pg_catalog.pg_collation', 'oid', 'pg_catalog.pg_collation_oid_index'), 'ucs_basic', 'pg_catalog'::regnamespace, %u, '%c', true, %d, 'C', 'C');\n\n",
 				   BOOTSTRAP_SUPERUSERID, COLLPROVIDER_LIBC, PG_UTF8);
 
@@ -1982,12 +1970,12 @@ setup_schema(FILE *cmdfd)
 
 	free(lines);
 
-	PG_CMD_PRINTF1("UPDATE information_schema.sql_implementation_info "
+	PG_CMD_PRINTF("UPDATE information_schema.sql_implementation_info "
 				   "  SET character_value = '%s' "
 				   "  WHERE implementation_info_name = 'DBMS VERSION';\n\n",
 				   infoversion);
 
-	PG_CMD_PRINTF1("COPY information_schema.sql_features "
+	PG_CMD_PRINTF("COPY information_schema.sql_features "
 				   "  (feature_id, feature_name, sub_feature_id, "
 				   "  sub_feature_name, is_supported, comments) "
 				   " FROM E'%s';\n\n",
