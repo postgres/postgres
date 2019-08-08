@@ -399,8 +399,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Creates the table as a <firstterm>partition</firstterm> of the specified
       parent table. The table can be created either as a partition for specific
       values using <literal>FOR VALUES</literal> or as a default partition
-      using <literal>DEFAULT</literal>.  This option is not available for
-      hash-partitioned tables.
+      using <literal>DEFAULT</literal>.
      </para>
 
      <para>
@@ -491,16 +490,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       If <literal>DEFAULT</literal> is specified, the table will be
-      created as a default partition of the parent table. The parent can
-      either be a list or range partitioned table. A partition key value
+      created as the default partition of the parent table.  This option
+      is not available for hash-partitioned tables.  A partition key value
       not fitting into any other partition of the given parent will be
-      routed to the default partition. There can be only one default
-      partition for a given parent table.
+      routed to the default partition.
      </para>
 
      <para>
       When a table has an existing <literal>DEFAULT</literal> partition and
-      a new partition is added to it, the existing default partition must
+      a new partition is added to it, the default partition must
       be scanned to verify that it does not contain any rows which properly
       belong in the new partition.  If the default partition contains a
       large number of rows, this may be slow.  The scan will be skipped if
