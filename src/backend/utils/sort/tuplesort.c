@@ -574,10 +574,12 @@ struct Sharedsort
  * a lot better than what we were doing before 7.3.  As of 9.6, a
  * separate memory context is used for caller passed tuples.  Resetting
  * it at certain key increments significantly ameliorates fragmentation.
- * Note that this places a responsibility on readtup and copytup routines
- * to use the right memory context for these tuples (and to not use the
- * reset context for anything whose lifetime needs to span multiple
- * external sort runs).
+ * Note that this places a responsibility on copytup routines to use the
+ * correct memory context for these tuples (and to not use the reset
+ * context for anything whose lifetime needs to span multiple external
+ * sort runs).  readtup routines use the slab allocator (they cannot use
+ * the reset context because it gets deleted at the point that merging
+ * begins).
  */
 
 /* When using this macro, beware of double evaluation of len */
@@ -1148,7 +1150,7 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	 * Abbreviation is possible here only for by-reference types.  In theory,
 	 * a pass-by-value datatype could have an abbreviated form that is cheaper
 	 * to compare.  In a tuple sort, we could support that, because we can
-	 * always extract the original datum from the tuple is needed.  Here, we
+	 * always extract the original datum from the tuple as needed.  Here, we
 	 * can't, because a datum sort only stores a single copy of the datum; the
 	 * "tuple" field of each sortTuple is NULL.
 	 */
@@ -2821,7 +2823,6 @@ mergeonerun(Tuplesortstate *state)
 		{
 			stup.tupindex = srcTape;
 			tuplesort_heap_replace_top(state, &stup);
-
 		}
 		else
 			tuplesort_heap_delete_top(state);
