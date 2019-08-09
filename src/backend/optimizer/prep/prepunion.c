@@ -132,15 +132,9 @@ plan_set_operations(PlannerInfo *root)
 	/*
 	 * We'll need to build RelOptInfos for each of the leaf subqueries, which
 	 * are RTE_SUBQUERY rangetable entries in this Query.  Prepare the index
-	 * arrays for that.
+	 * arrays for those, and for AppendRelInfos in case they're needed.
 	 */
 	setup_simple_rel_arrays(root);
-
-	/*
-	 * Populate append_rel_array with each AppendRelInfo to allow direct
-	 * lookups by child relid.
-	 */
-	setup_append_rel_array(root);
 
 	/*
 	 * Find the leftmost component Query.  We need to use its column names for

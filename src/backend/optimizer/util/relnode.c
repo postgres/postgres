@@ -67,24 +67,30 @@ static void build_child_join_reltarget(PlannerInfo *root,
 
 /*
  * setup_simple_rel_arrays
- *	  Prepare the arrays we use for quickly accessing base relations.
+ *	  Prepare the arrays we use for quickly accessing base relations
+ *	  and AppendRelInfos.
  */
 void
 setup_simple_rel_arrays(PlannerInfo *root)
 {
+	int			size;
 	Index		rti;
 	ListCell   *lc;
 
 	/* Arrays are accessed using RT indexes (1..N) */
-	root->simple_rel_array_size = list_length(root->parse->rtable) + 1;
+	size = list_length(root->parse->rtable) + 1;
+	root->simple_rel_array_size = size;
 
-	/* simple_rel_array is initialized to all NULLs */
+	/*
+	 * simple_rel_array is initialized to all NULLs, since no RelOptInfos
+	 * exist yet.  It'll be filled by later calls to build_simple_rel().
+	 */
 	root->simple_rel_array = (RelOptInfo **)
-		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
+		palloc0(size * sizeof(RelOptInfo *));
 
 	/* simple_rte_array is an array equivalent of the rtable list */
 	root->simple_rte_array = (RangeTblEntry **)
-		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
+		palloc0(size * sizeof(RangeTblEntry *));
 	rti = 1;
 	foreach(lc, root->parse->rtable)
 	{
@@ -92,21 +98,8 @@ setup_simple_rel_arrays(PlannerInfo *root)
 
 		root->simple_rte_array[rti++] = rte;
 	}
-}
 
-/*
- * setup_append_rel_array
- *		Populate the append_rel_array to allow direct lookups of
- *		AppendRelInfos by child relid.
- *
- * The array remains unallocated if there are no AppendRelInfos.
- */
-void
-setup_append_rel_array(PlannerInfo *root)
-{
-	ListCell   *lc;
-	int			size = list_length(root->parse->rtable) + 1;
-
+	/* append_rel_array is not needed if there are no AppendRelInfos */
 	if (root->append_rel_list == NIL)
 	{
 		root->append_rel_array = NULL;
@@ -116,6 +109,12 @@ setup_append_rel_array(PlannerInfo *root)
 	root->append_rel_array = (AppendRelInfo **)
 		palloc0(size * sizeof(AppendRelInfo *));
 
+	/*
+	 * append_rel_array is filled with any already-existing AppendRelInfos,
+	 * which currently could only come from UNION ALL flattening.  We might
+	 * add more later during inheritance expansion, but it's the
+	 * responsibility of the expansion code to update the array properly.
+	 */
 	foreach(lc, root->append_rel_list)
 	{
 		AppendRelInfo *appinfo = lfirst_node(AppendRelInfo, lc);
@@ -135,6 +134,10 @@ setup_append_rel_array(PlannerInfo *root)
  * expand_planner_arrays
  *		Expand the PlannerInfo's per-RTE arrays by add_size members
  *		and initialize the newly added entries to NULLs
+ *
+ * Note: this causes the append_rel_array to become allocated even if
+ * it was not before.  This is okay for current uses, because we only call
+ * this when adding child relations, which always have AppendRelInfos.
  */
 void
 expand_planner_arrays(PlannerInfo *root, int add_size)
@@ -145,17 +148,17 @@ expand_planner_arrays(PlannerInfo *root, int add_size)
 
 	new_size = root->simple_rel_array_size + add_size;
 
-	root->simple_rte_array = (RangeTblEntry **)
-		repalloc(root->simple_rte_array,
-				 sizeof(RangeTblEntry *) * new_size);
-	MemSet(root->simple_rte_array + root->simple_rel_array_size,
-		   0, sizeof(RangeTblEntry *) * add_size);
-
 	root->simple_rel_array = (RelOptInfo **)
 		repalloc(root->simple_rel_array,
 				 sizeof(RelOptInfo *) * new_size);
 	MemSet(root->simple_rel_array + root->simple_rel_array_size,
 		   0, sizeof(RelOptInfo *) * add_size);
+
+	root->simple_rte_array = (RangeTblEntry **)
+		repalloc(root->simple_rte_array,
+				 sizeof(RangeTblEntry *) * new_size);
+	MemSet(root->simple_rte_array + root->simple_rel_array_size,
+		   0, sizeof(RangeTblEntry *) * add_size);
 
 	if (root->append_rel_array)
 	{

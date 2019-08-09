@@ -79,9 +79,7 @@ query_planner(PlannerInfo *root,
 	root->initial_rels = NIL;
 
 	/*
-	 * Make a flattened version of the rangetable for faster access (this is
-	 * OK because the rangetable won't change any more), and set up an empty
-	 * array for indexing base relations.
+	 * Set up arrays for accessing base relations and AppendRelInfos.
 	 */
 	setup_simple_rel_arrays(root);
 
@@ -155,12 +153,6 @@ query_planner(PlannerInfo *root,
 			}
 		}
 	}
-
-	/*
-	 * Populate append_rel_array with each AppendRelInfo to allow direct
-	 * lookups by child relid.
-	 */
-	setup_append_rel_array(root);
 
 	/*
 	 * Construct RelOptInfo nodes for all base relations used in the query.

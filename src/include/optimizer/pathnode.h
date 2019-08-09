@@ -277,7 +277,6 @@ extern Path *reparameterize_path_by_child(PlannerInfo *root, Path *path,
  * prototypes for relnode.c
  */
 extern void setup_simple_rel_arrays(PlannerInfo *root);
-extern void setup_append_rel_array(PlannerInfo *root);
 extern void expand_planner_arrays(PlannerInfo *root, int add_size);
 extern RelOptInfo *build_simple_rel(PlannerInfo *root, int relid,
 									RelOptInfo *parent);
