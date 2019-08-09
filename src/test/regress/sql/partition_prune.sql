@@ -184,6 +184,13 @@ explain (costs off) select * from coercepart where a ~ any ('{ab}');
 explain (costs off) select * from coercepart where a !~ all ('{ab}');
 explain (costs off) select * from coercepart where a ~ any ('{ab,bc}');
 explain (costs off) select * from coercepart where a !~ all ('{ab,bc}');
+explain (costs off) select * from coercepart where a = any ('{ab,bc}');
+explain (costs off) select * from coercepart where a = any ('{ab,null}');
+explain (costs off) select * from coercepart where a = any (null::text[]);
+explain (costs off) select * from coercepart where a = all ('{ab}');
+explain (costs off) select * from coercepart where a = all ('{ab,bc}');
+explain (costs off) select * from coercepart where a = all ('{ab,null}');
+explain (costs off) select * from coercepart where a = all (null::text[]);
 
 drop table coercepart;
 
@@ -803,6 +810,9 @@ select * from stable_qual_pruning
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning
   where a = any(array['2000-02-01', '2010-01-01']::timestamptz[]);
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning
+  where a = any(null::timestamptz[]);
 
 drop table stable_qual_pruning;
 

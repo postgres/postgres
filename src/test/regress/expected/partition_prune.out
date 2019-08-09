@@ -1186,6 +1186,58 @@ explain (costs off) select * from coercepart where a !~ all ('{ab,bc}');
          Filter: ((a)::text !~ ALL ('{ab,bc}'::text[]))
 (7 rows)
 
+explain (costs off) select * from coercepart where a = any ('{ab,bc}');
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Append
+   ->  Seq Scan on coercepart_ab
+         Filter: ((a)::text = ANY ('{ab,bc}'::text[]))
+   ->  Seq Scan on coercepart_bc
+         Filter: ((a)::text = ANY ('{ab,bc}'::text[]))
+(5 rows)
+
+explain (costs off) select * from coercepart where a = any ('{ab,null}');
+                    QUERY PLAN                     
+---------------------------------------------------
+ Seq Scan on coercepart_ab
+   Filter: ((a)::text = ANY ('{ab,NULL}'::text[]))
+(2 rows)
+
+explain (costs off) select * from coercepart where a = any (null::text[]);
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from coercepart where a = all ('{ab}');
+                  QUERY PLAN                  
+----------------------------------------------
+ Seq Scan on coercepart_ab
+   Filter: ((a)::text = ALL ('{ab}'::text[]))
+(2 rows)
+
+explain (costs off) select * from coercepart where a = all ('{ab,bc}');
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from coercepart where a = all ('{ab,null}');
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from coercepart where a = all (null::text[]);
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
 drop table coercepart;
 CREATE TABLE part (a INT, b INT) PARTITION BY LIST (a);
 CREATE TABLE part_p1 PARTITION OF part FOR VALUES IN (-2,-1,0,1,2);
@@ -3156,6 +3208,20 @@ select * from stable_qual_pruning
    ->  Seq Scan on stable_qual_pruning2 (actual rows=0 loops=1)
          Filter: (a = ANY ('{"Tue Feb 01 00:00:00 2000 PST","Fri Jan 01 00:00:00 2010 PST"}'::timestamp with time zone[]))
 (4 rows)
+
+explain (analyze, costs off, summary off, timing off)
+select * from stable_qual_pruning
+  where a = any(null::timestamptz[]);
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Append (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning1 (actual rows=0 loops=1)
+         Filter: (a = ANY (NULL::timestamp with time zone[]))
+   ->  Seq Scan on stable_qual_pruning2 (actual rows=0 loops=1)
+         Filter: (a = ANY (NULL::timestamp with time zone[]))
+   ->  Seq Scan on stable_qual_pruning3 (actual rows=0 loops=1)
+         Filter: (a = ANY (NULL::timestamp with time zone[]))
+(7 rows)
 
 drop table stable_qual_pruning;
 --
