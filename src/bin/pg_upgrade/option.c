@@ -15,6 +15,7 @@
 #endif
 
 #include "getopt_long.h"
+#include "common/string.h"
 #include "utils/pidfile.h"
 
 #include "pg_upgrade.h"
@@ -411,7 +412,6 @@ adjust_data_dir(ClusterInfo *cluster)
 				cmd_output[MAX_STRING];
 	FILE	   *fp,
 			   *output;
-	int			len;
 
 	/* Initially assume config dir and data dir are the same */
 	cluster->pgconfig = pg_strdup(cluster->pgdata);
@@ -452,12 +452,8 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	pclose(output);
 
-	/* Remove trailing newline, handling Windows newlines as well */
-	len = strlen(cmd_output);
-	while (len > 0 &&
-		   (cmd_output[len - 1] == '\n' ||
-			cmd_output[len - 1] == '\r'))
-		cmd_output[--len] = '\0';
+	/* strip trailing newline and carriage return */
+	(void) pg_strip_crlf(cmd_output);
 
 	cluster->pgdata = pg_strdup(cmd_output);
 
@@ -518,15 +514,9 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 					sscanf(line, "%hu", &old_cluster.port);
 				if (lineno == LOCK_FILE_LINE_SOCKET_DIR)
 				{
-					int			len;
-
+					/* strip trailing newline and carriage return */
 					cluster->sockdir = pg_strdup(line);
-					/* strip off newline, handling Windows newlines as well */
-					len = strlen(cluster->sockdir);
-					while (len > 0 &&
-						   (cluster->sockdir[len - 1] == '\n' ||
-							cluster->sockdir[len - 1] == '\r'))
-						cluster->sockdir[--len] = '\0';
+					(void) pg_strip_crlf(cluster->sockdir);
 				}
 			}
 			fclose(fp);

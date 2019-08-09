@@ -22,6 +22,7 @@
 #include "prompt.h"
 #include "settings.h"
 
+#include "common/string.h"
 
 /*--------------------------
  * get_prompt
@@ -264,7 +265,6 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 						FILE	   *fd;
 						char	   *file = pg_strdup(p + 1);
 						int			cmdend;
-						int			buflen;
 
 						cmdend = strcspn(file, "`");
 						file[cmdend] = '\0';
@@ -275,10 +275,10 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 								buf[0] = '\0';
 							pclose(fd);
 						}
-						buflen = strlen(buf);
-						while (buflen > 0 && (buf[buflen - 1] == '\n' ||
-											  buf[buflen - 1] == '\r'))
-							buf[--buflen] = '\0';
+
+						/* strip trailing newline and carriage return */
+						(void) pg_strip_crlf(buf);
+
 						free(file);
 						p += cmdend + 1;
 						break;

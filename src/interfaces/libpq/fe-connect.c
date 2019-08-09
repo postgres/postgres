@@ -73,6 +73,7 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #include "common/ip.h"
 #include "common/link-canary.h"
 #include "common/scram-common.h"
+#include "common/string.h"
 #include "mb/pg_wchar.h"
 #include "port/pg_bswap.h"
 
@@ -6911,12 +6912,8 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 		if (fgets(buf, sizeof(buf), fp) == NULL)
 			break;
 
-		len = strlen(buf);
-
-		/* Remove trailing newline, including \r in case we're on Windows */
-		while (len > 0 && (buf[len - 1] == '\n' ||
-						   buf[len - 1] == '\r'))
-			buf[--len] = '\0';
+		/* strip trailing newline and carriage return */
+		len = pg_strip_crlf(buf);
 
 		if (len == 0)
 			continue;

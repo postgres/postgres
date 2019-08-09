@@ -27,6 +27,7 @@
 #include "common/controldata_utils.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
+#include "common/string.h"
 #include "getopt_long.h"
 #include "utils/pidfile.h"
 
@@ -2176,7 +2177,6 @@ adjust_data_dir(void)
 				filename[MAXPGPATH],
 			   *my_exec_path;
 	FILE	   *fd;
-	int			len;
 
 	/* do nothing if we're working without knowledge of data dir */
 	if (pg_config == NULL)
@@ -2219,12 +2219,8 @@ adjust_data_dir(void)
 	pclose(fd);
 	free(my_exec_path);
 
-	/* Remove trailing newline, handling Windows newlines as well */
-	len = strlen(filename);
-	while (len > 0 &&
-		   (filename[len - 1] == '\n' ||
-			filename[len - 1] == '\r'))
-		filename[--len] = '\0';
+	/* strip trailing newline and carriage return */
+	(void) pg_strip_crlf(filename);
 
 	free(pg_data);
 	pg_data = pg_strdup(filename);
