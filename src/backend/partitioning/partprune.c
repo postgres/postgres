@@ -2034,7 +2034,7 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 			 * nodes, one for each array element (excepting nulls).
 			 */
 			Const	   *arr = (Const *) rightop;
-			ArrayType  *arrval = DatumGetArrayTypeP(arr->constvalue);
+			ArrayType  *arrval;
 			int16		elemlen;
 			bool		elembyval;
 			char		elemalign;
@@ -2043,6 +2043,11 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 			int			num_elems,
 						i;
 
+			/* If the array itself is null, the saop returns null */
+			if (arr->constisnull)
+				return PARTCLAUSE_MATCH_CONTRADICT;
+
+			arrval = DatumGetArrayTypeP(arr->constvalue);
 			get_typlenbyvalalign(ARR_ELEMTYPE(arrval),
 								 &elemlen, &elembyval, &elemalign);
 			deconstruct_array(arrval,
