@@ -418,6 +418,15 @@ vacuum(List *relations, VacuumParams *params,
 					PopActiveSnapshot();
 					CommitTransactionCommand();
 				}
+				else
+				{
+					/*
+					 * If we're not using separate xacts, better separate the
+					 * ANALYZE actions with CCIs.  This avoids trouble if user
+					 * says "ANALYZE t, t".
+					 */
+					CommandCounterIncrement();
+				}
 			}
 		}
 	}
