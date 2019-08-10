@@ -141,7 +141,8 @@ bool		optimize_bounded_sort = true;
  * which is a separate palloc chunk --- we assume it is just one chunk and
  * can be freed by a simple pfree() (except during merge, when we use a
  * simple slab allocator).  SortTuples also contain the tuple's first key
- * column in Datum/nullflag format, and an index integer.
+ * column in Datum/nullflag format, and a source/input tape number that
+ * tracks which tape each heap element/slot belongs to during merging.
  *
  * Storing the first key column lets us save heap_getattr or index_getattr
  * calls during tuple comparisons.  We could extract and save all the key
@@ -162,16 +163,13 @@ bool		optimize_bounded_sort = true;
  * either the same pointer as "tuple", or is an abbreviated key value as
  * described above.  Accordingly, "tuple" is always used in preference to
  * datum1 as the authoritative value for pass-by-reference cases.
- *
- * tupindex holds the input tape number that each tuple in the heap was read
- * from during merge passes.
  */
 typedef struct
 {
 	void	   *tuple;			/* the tuple itself */
 	Datum		datum1;			/* value of first key column */
 	bool		isnull1;		/* is first key column NULL? */
-	int			tupindex;		/* see notes above */
+	int			srctape;		/* source tape number */
 } SortTuple;
 
 /*
@@ -2093,7 +2091,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 			 */
 			if (state->memtupcount > 0)
 			{
-				int			srcTape = state->memtuples[0].tupindex;
+				int			srcTape = state->memtuples[0].srctape;
 				SortTuple	newtup;
 
 				*stup = state->memtuples[0];
@@ -2124,7 +2122,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 					LogicalTapeRewindForWrite(state->tapeset, srcTape);
 					return true;
 				}
-				newtup.tupindex = srcTape;
+				newtup.srctape = srcTape;
 				tuplesort_heap_replace_top(state, &newtup);
 				return true;
 			}
@@ -2808,7 +2806,7 @@ mergeonerun(Tuplesortstate *state)
 		SortTuple	stup;
 
 		/* write the tuple to destTape */
-		srcTape = state->memtuples[0].tupindex;
+		srcTape = state->memtuples[0].srctape;
 		WRITETUP(state, destTape, &state->memtuples[0]);
 
 		/* recycle the slot of the tuple we just wrote out, for the next read */
@@ -2821,7 +2819,7 @@ mergeonerun(Tuplesortstate *state)
 		 */
 		if (mergereadnext(state, srcTape, &stup))
 		{
-			stup.tupindex = srcTape;
+			stup.srctape = srcTape;
 			tuplesort_heap_replace_top(state, &stup);
 		}
 		else
@@ -2886,7 +2884,7 @@ beginmerge(Tuplesortstate *state)
 
 		if (mergereadnext(state, srcTape, &tup))
 		{
-			tup.tupindex = srcTape;
+			tup.srctape = srcTape;
 			tuplesort_heap_insert(state, &tup);
 		}
 	}
