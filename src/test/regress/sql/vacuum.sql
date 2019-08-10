@@ -54,6 +54,19 @@ CREATE INDEX ON vaccluster(wrap_do_analyze(i));
 INSERT INTO vaccluster VALUES (1), (2);
 ANALYZE vaccluster;
 
+-- Test ANALYZE in transaction, where the transaction surrounding
+-- analyze performed modifications. This tests for the bug at
+-- https://postgr.es/m/c7988239-d42c-ddc4-41db-171b23b35e4f%40ssinger.info
+-- (which hopefully is unlikely to be reintroduced), but also seems
+-- independently worthwhile to cover.
+INSERT INTO vactst SELECT generate_series(1, 300);
+DELETE FROM vactst WHERE i % 7 = 0; -- delete a few rows outside
+BEGIN;
+INSERT INTO vactst SELECT generate_series(301, 400);
+DELETE FROM vactst WHERE i % 5 <> 0; -- delete a few rows inside
+ANALYZE vactst;
+COMMIT;
+
 VACUUM FULL pg_am;
 VACUUM FULL pg_class;
 VACUUM FULL pg_database;
@@ -88,6 +101,10 @@ ANALYZE vactst, vacparted;
 ANALYZE vacparted (b), vactst;
 ANALYZE vactst, does_not_exist, vacparted;
 ANALYZE vactst (i), vacparted (does_not_exist);
+ANALYZE vactst, vactst;
+BEGIN;  -- ANALYZE behaves differently inside a transaction block
+ANALYZE vactst, vactst;
+COMMIT;
 
 -- parenthesized syntax for ANALYZE
 ANALYZE (VERBOSE) does_not_exist;
