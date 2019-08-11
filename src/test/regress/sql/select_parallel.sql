@@ -40,9 +40,6 @@ select round(avg(aa)), sum(aa) from a_star a3;
 select relname, relpages, reltuples
 from pg_class
 where relname like '__star' order by relname;
-select relname, vacuum_count, analyze_count, autovacuum_count, autoanalyze_count
-from pg_stat_all_tables
-where relname like '__star' order by relname;
 
 -- Disable Parallel Append
 alter table a_star reset (parallel_workers);
