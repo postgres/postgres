@@ -1437,8 +1437,9 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
  * Check whether char is a letter (and, hence, subject to case-folding)
  *
  * In multibyte character sets or with ICU, we can't use isalpha, and it does
- * not seem worth trying to convert to wchar_t to use iswalpha.  Instead, just
- * assume any multibyte char is potentially case-varying.
+ * not seem worth trying to convert to wchar_t to use iswalpha or u_isalpha.
+ * Instead, just assume any non-ASCII char is potentially case-varying, and
+ * hard-wire knowledge of which ASCII chars are letters.
  */
 static int
 pattern_char_isalpha(char c, bool is_multibyte,
@@ -1449,7 +1450,8 @@ pattern_char_isalpha(char c, bool is_multibyte,
 	else if (is_multibyte && IS_HIGHBIT_SET(c))
 		return true;
 	else if (locale && locale->provider == COLLPROVIDER_ICU)
-		return IS_HIGHBIT_SET(c) ? true : false;
+		return IS_HIGHBIT_SET(c) ||
+			(c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 #ifdef HAVE_LOCALE_T
 	else if (locale && locale->provider == COLLPROVIDER_LIBC)
 		return isalpha_l((unsigned char) c, locale->info.lt);
