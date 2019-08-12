@@ -113,7 +113,6 @@ CreateExecutorState(void)
 	estate->es_snapshot = InvalidSnapshot;	/* caller must initialize this */
 	estate->es_crosscheck_snapshot = InvalidSnapshot;	/* no crosscheck */
 	estate->es_range_table = NIL;
-	estate->es_range_table_array = NULL;
 	estate->es_range_table_size = 0;
 	estate->es_relations = NULL;
 	estate->es_rowmarks = NULL;
@@ -720,29 +719,17 @@ ExecOpenScanRelation(EState *estate, Index scanrelid, int eflags)
  * ExecInitRangeTable
  *		Set up executor's range-table-related data
  *
- * We build an array from the range table list to allow faster lookup by RTI.
- * (The es_range_table field is now somewhat redundant, but we keep it to
- * avoid breaking external code unnecessarily.)
- * This is also a convenient place to set up the parallel es_relations array.
+ * In addition to the range table proper, initialize arrays that are
+ * indexed by rangetable index.
  */
 void
 ExecInitRangeTable(EState *estate, List *rangeTable)
 {
-	Index		rti;
-	ListCell   *lc;
-
 	/* Remember the range table List as-is */
 	estate->es_range_table = rangeTable;
 
-	/* Set up the equivalent array representation */
+	/* Set size of associated arrays */
 	estate->es_range_table_size = list_length(rangeTable);
-	estate->es_range_table_array = (RangeTblEntry **)
-		palloc(estate->es_range_table_size * sizeof(RangeTblEntry *));
-	rti = 0;
-	foreach(lc, rangeTable)
-	{
-		estate->es_range_table_array[rti++] = lfirst_node(RangeTblEntry, lc);
-	}
 
 	/*
 	 * Allocate an array to store an open Relation corresponding to each
@@ -753,8 +740,8 @@ ExecInitRangeTable(EState *estate, List *rangeTable)
 		palloc0(estate->es_range_table_size * sizeof(Relation));
 
 	/*
-	 * es_rowmarks is also parallel to the es_range_table_array, but it's
-	 * allocated only if needed.
+	 * es_rowmarks is also parallel to the es_range_table, but it's allocated
+	 * only if needed.
 	 */
 	estate->es_rowmarks = NULL;
 }

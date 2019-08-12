@@ -535,8 +535,7 @@ extern void ExecInitRangeTable(EState *estate, List *rangeTable);
 static inline RangeTblEntry *
 exec_rt_fetch(Index rti, EState *estate)
 {
-	Assert(rti > 0 && rti <= estate->es_range_table_size);
-	return estate->es_range_table_array[rti - 1];
+	return (RangeTblEntry *) list_nth(estate->es_range_table, rti - 1);
 }
 
 extern Relation ExecGetRangeTableRelation(EState *estate, Index rti);
