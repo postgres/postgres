@@ -25,6 +25,7 @@
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
+#include "storage/smgr.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 
@@ -94,6 +95,7 @@ PG_FUNCTION_INFO_V1(bt_index_parent_check);
 
 static void bt_index_check_internal(Oid indrelid, bool parentcheck);
 static inline void btree_index_checkable(Relation rel);
+static inline bool btree_index_mainfork_expected(Relation rel);
 static void bt_check_every_level(Relation rel, bool readonly);
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
 							 BtreeLevel level);
@@ -204,8 +206,18 @@ bt_index_check_internal(Oid indrelid, bool parentcheck)
 	/* Relation suitable for checking as B-Tree? */
 	btree_index_checkable(indrel);
 
-	/* Check index */
-	bt_check_every_level(indrel, parentcheck);
+	if (btree_index_mainfork_expected(indrel))
+	{
+		RelationOpenSmgr(indrel);
+		if (!smgrexists(indrel->rd_smgr, MAIN_FORKNUM))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" lacks a main relation fork",
+							RelationGetRelationName(indrel))));
+
+		/* Check index */
+		bt_check_every_level(indrel, parentcheck);
+	}
 
 	/*
 	 * Release locks early. That's ok here because nothing in the called
@@ -249,6 +261,28 @@ btree_index_checkable(Relation rel)
 				 errmsg("cannot check index \"%s\"",
 						RelationGetRelationName(rel)),
 				 errdetail("Index is not valid")));
+}
+
+/*
+ * Check if B-Tree index relation should have a file for its main relation
+ * fork.  Verification uses this to skip unlogged indexes when in hot standby
+ * mode, where there is simply nothing to verify.
+ *
+ * NB: Caller should call btree_index_checkable() before calling here.
+ */
+static inline bool
+btree_index_mainfork_expected(Relation rel)
+{
+	if (rel->rd_rel->relpersistence != RELPERSISTENCE_UNLOGGED ||
+		!RecoveryInProgress())
+		return true;
+
+	ereport(NOTICE,
+			(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+			 errmsg("cannot verify unlogged index \"%s\" during recovery, skipping",
+					RelationGetRelationName(rel))));
+
+	return false;
 }
 
 /*
