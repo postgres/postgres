@@ -2020,16 +2020,37 @@ compareStrings(const char *mbstr1, int mblen1,
 	}
 	else
 	{
-		/* We have to convert other encodings to UTF-8 first, then compare. */
-		char	   *utf8str1 = pg_server_to_any(mbstr1, mblen1, PG_UTF8),
-				   *utf8str2 = pg_server_to_any(mbstr2, mblen2, PG_UTF8);
-		int			cmp;
+		char	   *utf8str1,
+				   *utf8str2;
+		int			cmp,
+					utf8len1,
+					utf8len2;
 
-		cmp = binaryCompareStrings(utf8str1, strlen(utf8str1),
-								   utf8str2, strlen(utf8str2));
+		/*
+		 * We have to convert other encodings to UTF-8 first, then compare.
+		 * Input strings may be not null-terminated and pg_server_to_any() may
+		 * return them "as is".  So, use strlen() only if there is real
+		 * conversion.
+		 */
+		utf8str1 = pg_server_to_any(mbstr1, mblen1, PG_UTF8);
+		utf8str2 = pg_server_to_any(mbstr2, mblen2, PG_UTF8);
+		utf8len1 = (mbstr1 == utf8str1) ? mblen1 : strlen(utf8str1);
+		utf8len2 = (mbstr2 == utf8str2) ? mblen2 : strlen(utf8str2);
 
-		pfree(utf8str1);
-		pfree(utf8str2);
+		cmp = binaryCompareStrings(utf8str1, utf8len1, utf8str2, utf8len2);
+
+		/*
+		 * If pg_server_to_any() did no real conversion, then we actually
+		 * compared original strings.  So, we already done.
+		 */
+		if (mbstr1 == utf8str1 && mbstr2 == utf8str2)
+			return cmp;
+
+		/* Free memory if needed */
+		if (mbstr1 != utf8str1)
+			pfree(utf8str1);
+		if (mbstr2 != utf8str2)
+			pfree(utf8str2);
 
 		/*
 		 * When all Unicode codepoints are equal, return result of binary
