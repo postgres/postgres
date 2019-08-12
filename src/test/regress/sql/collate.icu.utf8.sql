@@ -333,6 +333,15 @@ CREATE INDEX collate_test1_idx6 ON collate_test1 ((a COLLATE "C")); -- fail
 
 SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_test%_idx%' ORDER BY 1;
 
+set enable_seqscan = off;
+explain (costs off)
+select * from collate_test1 where b ilike 'abc';
+select * from collate_test1 where b ilike 'abc';
+explain (costs off)
+select * from collate_test1 where b ilike 'ABC';
+select * from collate_test1 where b ilike 'ABC';
+reset enable_seqscan;
+
 
 -- schema manipulation commands
 

@@ -976,6 +976,38 @@ SELECT relname, pg_get_indexdef(oid) FROM pg_class WHERE relname LIKE 'collate_t
  collate_test1_idx4 | CREATE INDEX collate_test1_idx4 ON collate_tests.collate_test1 USING btree (((b || 'foo'::text)) COLLATE "POSIX")
 (4 rows)
 
+set enable_seqscan = off;
+explain (costs off)
+select * from collate_test1 where b ilike 'abc';
+          QUERY PLAN           
+-------------------------------
+ Seq Scan on collate_test1
+   Filter: (b ~~* 'abc'::text)
+(2 rows)
+
+select * from collate_test1 where b ilike 'abc';
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+(2 rows)
+
+explain (costs off)
+select * from collate_test1 where b ilike 'ABC';
+          QUERY PLAN           
+-------------------------------
+ Seq Scan on collate_test1
+   Filter: (b ~~* 'ABC'::text)
+(2 rows)
+
+select * from collate_test1 where b ilike 'ABC';
+ a |  b  
+---+-----
+ 1 | abc
+ 4 | ABC
+(2 rows)
+
+reset enable_seqscan;
 -- schema manipulation commands
 CREATE ROLE regress_test_role;
 CREATE SCHEMA test_schema;
