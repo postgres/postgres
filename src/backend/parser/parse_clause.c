@@ -1214,9 +1214,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 *
 		 * Notice that we don't require the merged namespace list to be
 		 * conflict-free.  See the comments for scanNameSpaceForRefname().
-		 *
-		 * NB: this coding relies on the fact that list_concat is not
-		 * destructive to its second argument.
 		 */
 		lateral_ok = (j->jointype == JOIN_INNER || j->jointype == JOIN_LEFT);
 		setNamespaceLateralState(l_namespace, true, lateral_ok);
@@ -2116,9 +2113,7 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 
 					if (IsA(n1, GroupingSet) &&
 						((GroupingSet *) n1)->kind == GROUPING_SET_SETS)
-					{
 						result_set = list_concat(result_set, (List *) n2);
-					}
 					else
 						result_set = lappend(result_set, n2);
 				}

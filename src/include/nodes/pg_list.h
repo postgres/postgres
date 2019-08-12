@@ -519,6 +519,8 @@ extern List *lcons_int(int datum, List *list);
 extern List *lcons_oid(Oid datum, List *list);
 
 extern List *list_concat(List *list1, const List *list2);
+extern List *list_concat_copy(const List *list1, const List *list2);
+
 extern List *list_truncate(List *list, int new_size);
 
 extern bool list_member(const List *list, const void *datum);

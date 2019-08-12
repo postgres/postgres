@@ -1649,9 +1649,8 @@ expand_groupingset_node(GroupingSet *gs)
 
 						Assert(gs_current->kind == GROUPING_SET_SIMPLE);
 
-						current_result
-							= list_concat(current_result,
-										  list_copy(gs_current->content));
+						current_result = list_concat(current_result,
+													 gs_current->content);
 
 						/* If we are done with making the current group, break */
 						if (--i == 0)
@@ -1691,11 +1690,8 @@ expand_groupingset_node(GroupingSet *gs)
 						Assert(gs_current->kind == GROUPING_SET_SIMPLE);
 
 						if (mask & i)
-						{
-							current_result
-								= list_concat(current_result,
-											  list_copy(gs_current->content));
-						}
+							current_result = list_concat(current_result,
+														 gs_current->content);
 
 						mask <<= 1;
 					}

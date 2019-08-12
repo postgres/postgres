@@ -642,8 +642,8 @@ gen_partprune_steps(RelOptInfo *rel, List *clauses, PartClauseTarget target,
 		if (rel->relid != 1)
 			ChangeVarNodes((Node *) partqual, 1, rel->relid, 0);
 
-		/* Use list_copy to avoid modifying the passed-in List */
-		clauses = list_concat(list_copy(clauses), partqual);
+		/* Make a copy to avoid modifying the passed-in List */
+		clauses = list_concat_copy(clauses, partqual);
 	}
 
 	/* Down into the rabbit-hole. */
@@ -1485,7 +1485,7 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 														  pc->keyno,
 														  NULL,
 														  prefix);
-						opsteps = list_concat(opsteps, list_copy(pc_steps));
+						opsteps = list_concat(opsteps, pc_steps);
 					}
 				}
 				break;
@@ -1556,7 +1556,7 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 												   pc->keyno,
 												   nullkeys,
 												   prefix);
-						opsteps = list_concat(opsteps, list_copy(pc_steps));
+						opsteps = list_concat(opsteps, pc_steps);
 					}
 				}
 				break;

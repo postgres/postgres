@@ -236,7 +236,7 @@ extract_or_clause(RestrictInfo *or_rinfo, RelOptInfo *rel)
 		subclause = (Node *) make_ands_explicit(subclauses);
 		if (is_orclause(subclause))
 			clauselist = list_concat(clauselist,
-									 list_copy(((BoolExpr *) subclause)->args));
+									 ((BoolExpr *) subclause)->args);
 		else
 			clauselist = lappend(clauselist, subclause);
 	}

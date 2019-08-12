@@ -719,8 +719,7 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 														  fcache->pinfo,
 														  NULL);
 		queryTree_list = lappend(queryTree_list, queryTree_sublist);
-		flat_query_list = list_concat(flat_query_list,
-									  list_copy(queryTree_sublist));
+		flat_query_list = list_concat(flat_query_list, queryTree_sublist);
 	}
 
 	check_sql_fn_statements(flat_query_list);

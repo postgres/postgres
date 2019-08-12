@@ -516,8 +516,8 @@ DefineIndex(Oid relationId,
 	 * is part of the key columns, and anything equal to and over is part of
 	 * the INCLUDE columns.
 	 */
-	allIndexParams = list_concat(list_copy(stmt->indexParams),
-								 list_copy(stmt->indexIncludingParams));
+	allIndexParams = list_concat_copy(stmt->indexParams,
+									  stmt->indexIncludingParams);
 	numberOfAttributes = list_length(allIndexParams);
 
 	if (numberOfAttributes <= 0)

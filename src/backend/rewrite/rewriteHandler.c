@@ -1041,11 +1041,11 @@ process_matched_tle(TargetEntry *src_tle,
 			/* combine the two */
 			memcpy(fstore, prior_expr, sizeof(FieldStore));
 			fstore->newvals =
-				list_concat(list_copy(((FieldStore *) prior_expr)->newvals),
-							list_copy(((FieldStore *) src_expr)->newvals));
+				list_concat_copy(((FieldStore *) prior_expr)->newvals,
+								 ((FieldStore *) src_expr)->newvals);
 			fstore->fieldnums =
-				list_concat(list_copy(((FieldStore *) prior_expr)->fieldnums),
-							list_copy(((FieldStore *) src_expr)->fieldnums));
+				list_concat_copy(((FieldStore *) prior_expr)->fieldnums,
+								 ((FieldStore *) src_expr)->fieldnums);
 		}
 		else
 		{

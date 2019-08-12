@@ -973,7 +973,6 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				*postponed_qual_list = lappend(*postponed_qual_list, pq);
 			}
 		}
-		/* list_concat is nondestructive of its second argument */
 		my_quals = list_concat(my_quals, (List *) j->quals);
 
 		/*

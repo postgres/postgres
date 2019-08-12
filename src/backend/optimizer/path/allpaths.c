@@ -1266,7 +1266,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		if (rel->part_scheme)
 			rel->partitioned_child_rels =
 				list_concat(rel->partitioned_child_rels,
-							list_copy(childrel->partitioned_child_rels));
+							childrel->partitioned_child_rels);
 
 		/*
 		 * Child is live, so add it to the live_childrels list for use below.
@@ -1347,9 +1347,8 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 				component = root->simple_rel_array[relid];
 				Assert(component->part_scheme != NULL);
 				Assert(list_length(component->partitioned_child_rels) >= 1);
-				partrels =
-					list_concat(partrels,
-								list_copy(component->partitioned_child_rels));
+				partrels = list_concat(partrels,
+									   component->partitioned_child_rels);
 			}
 
 			partitioned_rels = list_make1(partrels);
@@ -2048,8 +2047,7 @@ accumulate_append_subpath(Path *path, List **subpaths, List **special_subpaths)
 
 		if (!apath->path.parallel_aware || apath->first_partial_path == 0)
 		{
-			/* list_copy is important here to avoid sharing list substructure */
-			*subpaths = list_concat(*subpaths, list_copy(apath->subpaths));
+			*subpaths = list_concat(*subpaths, apath->subpaths);
 			return;
 		}
 		else if (special_subpaths != NULL)
@@ -2072,8 +2070,7 @@ accumulate_append_subpath(Path *path, List **subpaths, List **special_subpaths)
 	{
 		MergeAppendPath *mpath = (MergeAppendPath *) path;
 
-		/* list_copy is important here to avoid sharing list substructure */
-		*subpaths = list_concat(*subpaths, list_copy(mpath->subpaths));
+		*subpaths = list_concat(*subpaths, mpath->subpaths);
 		return;
 	}
 

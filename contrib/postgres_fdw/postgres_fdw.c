@@ -2667,7 +2667,7 @@ estimate_path_cost_size(PlannerInfo *root,
 		 * baserestrictinfo plus any extra join_conds relevant to this
 		 * particular path.
 		 */
-		remote_conds = list_concat(list_copy(remote_param_join_conds),
+		remote_conds = list_concat(remote_param_join_conds,
 								   fpinfo->remote_conds);
 
 		/*
@@ -5102,23 +5102,23 @@ foreign_join_ok(PlannerInfo *root, RelOptInfo *joinrel, JoinType jointype,
 	{
 		case JOIN_INNER:
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_i->remote_conds));
+											   fpinfo_i->remote_conds);
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_o->remote_conds));
+											   fpinfo_o->remote_conds);
 			break;
 
 		case JOIN_LEFT:
 			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  list_copy(fpinfo_i->remote_conds));
+											  fpinfo_i->remote_conds);
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_o->remote_conds));
+											   fpinfo_o->remote_conds);
 			break;
 
 		case JOIN_RIGHT:
 			fpinfo->joinclauses = list_concat(fpinfo->joinclauses,
-											  list_copy(fpinfo_o->remote_conds));
+											  fpinfo_o->remote_conds);
 			fpinfo->remote_conds = list_concat(fpinfo->remote_conds,
-											   list_copy(fpinfo_i->remote_conds));
+											   fpinfo_i->remote_conds);
 			break;
 
 		case JOIN_FULL:

@@ -893,7 +893,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				splan->resultRelIndex = list_length(root->glob->resultRelations);
 				root->glob->resultRelations =
 					list_concat(root->glob->resultRelations,
-								list_copy(splan->resultRelations));
+								splan->resultRelations);
 
 				/*
 				 * If the main target relation is a partitioned table, also

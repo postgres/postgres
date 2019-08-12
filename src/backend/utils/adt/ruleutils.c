@@ -10097,7 +10097,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 							RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
 							List	   *args = ((FuncExpr *) rtfunc->funcexpr)->args;
 
-							allargs = list_concat(allargs, list_copy(args));
+							allargs = list_concat(allargs, args);
 						}
 
 						appendStringInfoString(buf, "UNNEST(");

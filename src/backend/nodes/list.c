@@ -501,12 +501,15 @@ lcons_oid(Oid datum, List *list)
 }
 
 /*
- * Concatenate list2 to the end of list1, and return list1. list1 is
- * destructively changed, list2 is not. (However, in the case of pointer
- * lists, list1 and list2 will point to the same structures.) Callers
- * should be sure to use the return value as the new pointer to the
- * concatenated list: the 'list1' input pointer may or may not be the
- * same as the returned pointer.
+ * Concatenate list2 to the end of list1, and return list1.
+ *
+ * This is equivalent to lappend'ing each element of list2, in order, to list1.
+ * list1 is destructively changed, list2 is not.  (However, in the case of
+ * pointer lists, list1 and list2 will point to the same structures.)
+ *
+ * Callers should be sure to use the return value as the new pointer to the
+ * concatenated list: the 'list1' input pointer may or may not be the same
+ * as the returned pointer.
  */
 List *
 list_concat(List *list1, const List *list2)
@@ -532,6 +535,41 @@ list_concat(List *list1, const List *list2)
 
 	check_list_invariants(list1);
 	return list1;
+}
+
+/*
+ * Form a new list by concatenating the elements of list1 and list2.
+ *
+ * Neither input list is modified.  (However, if they are pointer lists,
+ * the output list will point to the same structures.)
+ *
+ * This is equivalent to, but more efficient than,
+ * list_concat(list_copy(list1), list2).
+ * Note that some pre-v13 code might list_copy list2 as well, but that's
+ * pointless now.
+ */
+List *
+list_concat_copy(const List *list1, const List *list2)
+{
+	List	   *result;
+	int			new_len;
+
+	if (list1 == NIL)
+		return list_copy(list2);
+	if (list2 == NIL)
+		return list_copy(list1);
+
+	Assert(list1->type == list2->type);
+
+	new_len = list1->length + list2->length;
+	result = new_list(list1->type, new_len);
+	memcpy(result->elements, list1->elements,
+		   list1->length * sizeof(ListCell));
+	memcpy(result->elements + list1->length, list2->elements,
+		   list2->length * sizeof(ListCell));
+
+	check_list_invariants(result);
+	return result;
 }
 
 /*

@@ -5768,7 +5768,6 @@ add_predicate_to_index_quals(IndexOptInfo *index, List *indexQuals)
 		if (!predicate_implied_by(oneQual, indexQuals, false))
 			predExtraQuals = list_concat(predExtraQuals, oneQual);
 	}
-	/* list_concat avoids modifying the passed-in indexQuals list */
 	return list_concat(predExtraQuals, indexQuals);
 }
 

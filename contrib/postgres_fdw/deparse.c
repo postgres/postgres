@@ -1497,7 +1497,7 @@ deparseFromExprForRel(StringInfo buf, PlannerInfo *root, RelOptInfo *foreignrel,
 			if (fpinfo->jointype == JOIN_INNER)
 			{
 				*ignore_conds = list_concat(*ignore_conds,
-											list_copy(fpinfo->joinclauses));
+											fpinfo->joinclauses);
 				fpinfo->joinclauses = NIL;
 			}
 

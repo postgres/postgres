@@ -865,8 +865,6 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 	 */
 	if (list_length(result) + list_length(pending) <= SyncRepConfig->num_sync)
 	{
-		bool		needfree = (result != NIL && pending != NIL);
-
 		/*
 		 * Set *am_sync to true if this walsender is in the pending list
 		 * because all pending standbys are considered as sync.
@@ -875,8 +873,7 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 			*am_sync = am_in_pending;
 
 		result = list_concat(result, pending);
-		if (needfree)
-			pfree(pending);
+		list_free(pending);
 		return result;
 	}
 

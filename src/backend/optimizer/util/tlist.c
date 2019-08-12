@@ -665,9 +665,8 @@ make_tlist_from_pathtarget(PathTarget *target)
  * copy_pathtarget
  *	  Copy a PathTarget.
  *
- * The new PathTarget has its own List cells, but shares the underlying
- * target expression trees with the old one.  We duplicate the List cells
- * so that items can be added to one target without damaging the other.
+ * The new PathTarget has its own exprs List, but shares the underlying
+ * target expression trees with the old one.
  */
 PathTarget *
 copy_pathtarget(PathTarget *src)

@@ -4443,8 +4443,7 @@ get_parameterized_baserel_size(PlannerInfo *root, RelOptInfo *rel,
 	 * restriction clauses.  Note that we force the clauses to be treated as
 	 * non-join clauses during selectivity estimation.
 	 */
-	allclauses = list_concat(list_copy(param_clauses),
-							 rel->baserestrictinfo);
+	allclauses = list_concat_copy(param_clauses, rel->baserestrictinfo);
 	nrows = rel->tuples *
 		clauselist_selectivity(root,
 							   allclauses,

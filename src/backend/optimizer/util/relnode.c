@@ -1718,43 +1718,39 @@ build_joinrel_partition_info(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 	 */
 	for (cnt = 0; cnt < partnatts; cnt++)
 	{
-		List	   *outer_expr;
-		List	   *outer_null_expr;
-		List	   *inner_expr;
-		List	   *inner_null_expr;
+		/* mark these const to enforce that we copy them properly */
+		const List *outer_expr = outer_rel->partexprs[cnt];
+		const List *outer_null_expr = outer_rel->nullable_partexprs[cnt];
+		const List *inner_expr = inner_rel->partexprs[cnt];
+		const List *inner_null_expr = inner_rel->nullable_partexprs[cnt];
 		List	   *partexpr = NIL;
 		List	   *nullable_partexpr = NIL;
-
-		outer_expr = list_copy(outer_rel->partexprs[cnt]);
-		outer_null_expr = list_copy(outer_rel->nullable_partexprs[cnt]);
-		inner_expr = list_copy(inner_rel->partexprs[cnt]);
-		inner_null_expr = list_copy(inner_rel->nullable_partexprs[cnt]);
 
 		switch (jointype)
 		{
 			case JOIN_INNER:
-				partexpr = list_concat(outer_expr, inner_expr);
-				nullable_partexpr = list_concat(outer_null_expr,
-												inner_null_expr);
+				partexpr = list_concat_copy(outer_expr, inner_expr);
+				nullable_partexpr = list_concat_copy(outer_null_expr,
+													 inner_null_expr);
 				break;
 
 			case JOIN_SEMI:
 			case JOIN_ANTI:
-				partexpr = outer_expr;
-				nullable_partexpr = outer_null_expr;
+				partexpr = list_copy(outer_expr);
+				nullable_partexpr = list_copy(outer_null_expr);
 				break;
 
 			case JOIN_LEFT:
-				partexpr = outer_expr;
-				nullable_partexpr = list_concat(inner_expr,
-												outer_null_expr);
+				partexpr = list_copy(outer_expr);
+				nullable_partexpr = list_concat_copy(inner_expr,
+													 outer_null_expr);
 				nullable_partexpr = list_concat(nullable_partexpr,
 												inner_null_expr);
 				break;
 
 			case JOIN_FULL:
-				nullable_partexpr = list_concat(outer_expr,
-												inner_expr);
+				nullable_partexpr = list_concat_copy(outer_expr,
+													 inner_expr);
 				nullable_partexpr = list_concat(nullable_partexpr,
 												outer_null_expr);
 				nullable_partexpr = list_concat(nullable_partexpr,

@@ -1009,8 +1009,8 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 			max_parallel_hazard_test(PROPARALLEL_RESTRICTED, context))
 			return true;
 		save_safe_param_ids = context->safe_param_ids;
-		context->safe_param_ids = list_concat(list_copy(subplan->paramIds),
-											  context->safe_param_ids);
+		context->safe_param_ids = list_concat_copy(context->safe_param_ids,
+												   subplan->paramIds);
 		if (max_parallel_hazard_walker(subplan->testexpr, context))
 			return true;		/* no need to restore safe_param_ids */
 		list_free(context->safe_param_ids);
@@ -3697,18 +3697,12 @@ simplify_or_arguments(List *args,
 		/* flatten nested ORs as per above comment */
 		if (is_orclause(arg))
 		{
-			List	   *subargs = list_copy(((BoolExpr *) arg)->args);
+			List	   *subargs = ((BoolExpr *) arg)->args;
+			List	   *oldlist = unprocessed_args;
 
-			/* overly tense code to avoid leaking unused list header */
-			if (!unprocessed_args)
-				unprocessed_args = subargs;
-			else
-			{
-				List	   *oldhdr = unprocessed_args;
-
-				unprocessed_args = list_concat(subargs, unprocessed_args);
-				pfree(oldhdr);
-			}
+			unprocessed_args = list_concat_copy(subargs, unprocessed_args);
+			/* perhaps-overly-tense code to avoid leaking old lists */
+			list_free(oldlist);
 			continue;
 		}
 
@@ -3718,14 +3712,14 @@ simplify_or_arguments(List *args,
 		/*
 		 * It is unlikely but not impossible for simplification of a non-OR
 		 * clause to produce an OR.  Recheck, but don't be too tense about it
-		 * since it's not a mainstream case. In particular we don't worry
-		 * about const-simplifying the input twice.
+		 * since it's not a mainstream case.  In particular we don't worry
+		 * about const-simplifying the input twice, nor about list leakage.
 		 */
 		if (is_orclause(arg))
 		{
-			List	   *subargs = list_copy(((BoolExpr *) arg)->args);
+			List	   *subargs = ((BoolExpr *) arg)->args;
 
-			unprocessed_args = list_concat(subargs, unprocessed_args);
+			unprocessed_args = list_concat_copy(subargs, unprocessed_args);
 			continue;
 		}
 
@@ -3799,18 +3793,12 @@ simplify_and_arguments(List *args,
 		/* flatten nested ANDs as per above comment */
 		if (is_andclause(arg))
 		{
-			List	   *subargs = list_copy(((BoolExpr *) arg)->args);
+			List	   *subargs = ((BoolExpr *) arg)->args;
+			List	   *oldlist = unprocessed_args;
 
-			/* overly tense code to avoid leaking unused list header */
-			if (!unprocessed_args)
-				unprocessed_args = subargs;
-			else
-			{
-				List	   *oldhdr = unprocessed_args;
-
-				unprocessed_args = list_concat(subargs, unprocessed_args);
-				pfree(oldhdr);
-			}
+			unprocessed_args = list_concat_copy(subargs, unprocessed_args);
+			/* perhaps-overly-tense code to avoid leaking old lists */
+			list_free(oldlist);
 			continue;
 		}
 
@@ -3820,14 +3808,14 @@ simplify_and_arguments(List *args,
 		/*
 		 * It is unlikely but not impossible for simplification of a non-AND
 		 * clause to produce an AND.  Recheck, but don't be too tense about it
-		 * since it's not a mainstream case. In particular we don't worry
-		 * about const-simplifying the input twice.
+		 * since it's not a mainstream case.  In particular we don't worry
+		 * about const-simplifying the input twice, nor about list leakage.
 		 */
 		if (is_andclause(arg))
 		{
-			List	   *subargs = list_copy(((BoolExpr *) arg)->args);
+			List	   *subargs = ((BoolExpr *) arg)->args;
 
-			unprocessed_args = list_concat(subargs, unprocessed_args);
+			unprocessed_args = list_concat_copy(subargs, unprocessed_args);
 			continue;
 		}
 
@@ -4188,7 +4176,7 @@ add_function_defaults(List *args, HeapTuple func_tuple)
 		defaults = list_copy_tail(defaults, ndelete);
 
 	/* And form the combined argument list, not modifying the input list */
-	return list_concat(list_copy(args), defaults);
+	return list_concat_copy(args, defaults);
 }
 
 /*

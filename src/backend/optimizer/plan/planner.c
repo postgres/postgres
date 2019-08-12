@@ -3572,10 +3572,6 @@ reorder_grouping_sets(List *groupingsets, List *sortclause)
 			}
 		}
 
-		/*
-		 * Safe to use list_concat (which shares cells of the second arg)
-		 * because we know that new_elems does not share cells with anything.
-		 */
 		previous = list_concat(previous, new_elems);
 
 		gs->set = list_copy(previous);
@@ -4287,8 +4283,8 @@ consider_groupingsets_paths(PlannerInfo *root,
 			 */
 			if (!rollup->hashable)
 				return;
-			else
-				sets_data = list_concat(sets_data, list_copy(rollup->gsets_data));
+
+			sets_data = list_concat(sets_data, rollup->gsets_data);
 		}
 		foreach(lc, sets_data)
 		{
@@ -4473,7 +4469,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 					{
 						if (bms_is_member(i, hash_items))
 							hash_sets = list_concat(hash_sets,
-													list_copy(rollup->gsets_data));
+													rollup->gsets_data);
 						else
 							rollups = lappend(rollups, rollup);
 						++i;
@@ -5642,8 +5638,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
 				 errdetail("Window ordering columns must be of sortable datatypes.")));
 
 	/* Okay, make the combined pathkeys */
-	window_sortclauses = list_concat(list_copy(wc->partitionClause),
-									 list_copy(wc->orderClause));
+	window_sortclauses = list_concat_copy(wc->partitionClause, wc->orderClause);
 	window_pathkeys = make_pathkeys_for_sortclauses(root,
 													window_sortclauses,
 													tlist);
