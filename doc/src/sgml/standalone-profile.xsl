@@ -16,8 +16,8 @@ variant without links and references to the main documentation.
 -->
 
 <xsl:output
-    doctype-public="-//OASIS//DTD DocBook XML V4.2//EN"
-    doctype-system="http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"/>
+    doctype-public="-//OASIS//DTD DocBook XML V4.5//EN"
+    doctype-system="http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd"/>
 
 <!-- copy everything by default -->
 

@@ -84,7 +84,7 @@
      <listitem>
       <para>
        This is the definition of DocBook itself.  We currently use version
-       4.2; you cannot use later or earlier versions.  You need
+       4.5; you cannot use later or earlier versions.  You need
        the <acronym>XML</acronym> variant of the DocBook DTD, not
        the <acronym>SGML</acronym> variant.
       </para>
@@ -214,7 +214,7 @@ apt-get install docbook-xml docbook-xsl fop libxml2-utils xsltproc
    <para>
     If you use MacPorts, the following will get you set up:
 <programlisting>
-sudo port install docbook-xml-4.2 docbook-xsl fop
+sudo port install docbook-xml-4.5 docbook-xsl fop
 </programlisting>
     If you use Homebrew, use this:
 <programlisting>
@@ -234,7 +234,7 @@ brew install docbook docbook-xsl fop
    like this:
 <screen>
 checking for xmllint... xmllint
-checking for DocBook XML V4.2... yes
+checking for DocBook XML V4.5... yes
 checking for dbtoepub... dbtoepub
 checking for xsltproc... xsltproc
 checking for fop... fop
