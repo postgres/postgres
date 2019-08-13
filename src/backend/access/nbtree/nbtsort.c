@@ -943,7 +943,6 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		{
 			IndexTuple	lastleft;
 			IndexTuple	truncated;
-			Size		truncsz;
 
 			/*
 			 * Truncate away any unneeded attributes from high key on leaf
@@ -961,26 +960,18 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			 * choosing a split point here for a benefit that is bound to be
 			 * much smaller.
 			 *
-			 * Since the truncated tuple is often smaller than the original
-			 * tuple, it cannot just be copied in place (besides, we want to
-			 * actually save space on the leaf page).  We delete the original
-			 * high key, and add our own truncated high key at the same
-			 * offset.
-			 *
-			 * Note that the page layout won't be changed very much.  oitup is
-			 * already located at the physical beginning of tuple space, so we
-			 * only shift the line pointer array back and forth, and overwrite
-			 * the tuple space previously occupied by oitup.  This is fairly
-			 * cheap.
+			 * Overwrite the old item with new truncated high key directly.
+			 * oitup is already located at the physical beginning of tuple
+			 * space, so this should directly reuse the existing tuple space.
 			 */
 			ii = PageGetItemId(opage, OffsetNumberPrev(last_off));
 			lastleft = (IndexTuple) PageGetItem(opage, ii);
 
 			truncated = _bt_truncate(wstate->index, lastleft, oitup,
 									 wstate->inskey);
-			truncsz = IndexTupleSize(truncated);
-			PageIndexTupleDelete(opage, P_HIKEY);
-			_bt_sortaddtup(opage, truncsz, truncated, P_HIKEY);
+			if (!PageIndexTupleOverwrite(opage, P_HIKEY, (Item) truncated,
+										 IndexTupleSize(truncated)))
+				elog(ERROR, "failed to add high key to the index page");
 			pfree(truncated);
 
 			/* oitup should continue to point to the page's high key */
