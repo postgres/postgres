@@ -246,7 +246,7 @@ create temp table temp_parted_oncommit_test2
 insert into temp_parted_oncommit_test values (1), (2);
 commit;
 -- no relations remain in this case.
-select relname from pg_class where relname like 'temp_parted_oncommit_test%';
+select relname from pg_class where relname ~ '^temp_parted_oncommit_test';
  relname 
 ---------
 (0 rows)
@@ -273,7 +273,8 @@ select * from temp_parted_oncommit_test;
 (1 row)
 
 -- two relations remain in this case.
-select relname from pg_class where relname like 'temp_parted_oncommit_test%';
+select relname from pg_class where relname ~ '^temp_parted_oncommit_test'
+  order by relname;
           relname           
 ----------------------------
  temp_parted_oncommit_test
@@ -290,7 +291,7 @@ create temp table temp_inh_oncommit_test1 ()
 insert into temp_inh_oncommit_test1 values (1);
 commit;
 -- no relations remain in this case
-select relname from pg_class where relname like 'temp_inh_oncommit_test%';
+select relname from pg_class where relname ~ '^temp_inh_oncommit_test';
  relname 
 ---------
 (0 rows)
@@ -309,7 +310,7 @@ select * from temp_inh_oncommit_test;
 (0 rows)
 
 -- one relation remains
-select relname from pg_class where relname like 'temp_inh_oncommit_test%';
+select relname from pg_class where relname ~ '^temp_inh_oncommit_test';
         relname         
 ------------------------
  temp_inh_oncommit_test
