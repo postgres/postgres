@@ -1971,10 +1971,6 @@ retry:
 	{
 		/*
 		 * Maintain fileSize and temporary_files_size if it's a temp file.
-		 *
-		 * If seekPos is -1 (unknown), this will do nothing; but we could only
-		 * get here in that state if we're not enforcing temporary_files_size,
-		 * so we don't care.
 		 */
 		if (vfdP->fdstate & FD_TEMP_FILE_LIMIT)
 		{

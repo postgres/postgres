@@ -29,7 +29,7 @@ permutation "s1alter" "s1commit" "s2nv"
 # change, but now it waits.
 permutation "s1alter" "s2nv" "s1commit"
 
-# Prior to PG10, the s2nv step would see the uncommitted s1reset
+# Prior to PG10, the s2nv step would see the uncommitted s1restart
 # change, but now it waits.
 permutation "s1restart" "s2nv" "s1commit"
 

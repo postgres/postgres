@@ -237,7 +237,7 @@ typedef struct
 
 /*
  * For use by code reading options already parsed: get a pointer to the string
- * value itself.  "optstruct" is the StdRdOption struct or equivalent, "member"
+ * value itself.  "optstruct" is the StdRdOptions struct or equivalent, "member"
  * is the struct member corresponding to the string option
  */
 #define GET_STRING_RELOPTION(optstruct, member) \

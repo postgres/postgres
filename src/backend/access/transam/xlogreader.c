@@ -702,7 +702,7 @@ ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
  * We assume all of the record (that is, xl_tot_len bytes) has been read
  * into memory at *record.  Also, ValidXLogRecordHeader() has accepted the
  * record's header, which means in particular that xl_tot_len is at least
- * SizeOfXlogRecord.
+ * SizeOfXLogRecord.
  */
 static bool
 ValidXLogRecord(XLogReaderState *state, XLogRecord *record, XLogRecPtr recptr)

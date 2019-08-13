@@ -3987,7 +3987,7 @@ xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 /*
  * Common code for xpath() and xmlexists()
  *
- * Evaluate XPath expression and return number of nodes in res_items
+ * Evaluate XPath expression and return number of nodes in res_nitems
  * and array of XML values in astate.  Either of those pointers can be
  * NULL if the corresponding result isn't wanted.
  *

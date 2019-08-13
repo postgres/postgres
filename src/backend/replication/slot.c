@@ -108,7 +108,7 @@ static void CreateSlotOnDisk(ReplicationSlot *slot);
 static void SaveSlotToPath(ReplicationSlot *slot, const char *path, int elevel);
 
 /*
- * Report shared-memory space needed by ReplicationSlotShmemInit.
+ * Report shared-memory space needed by ReplicationSlotsShmemInit.
  */
 Size
 ReplicationSlotsShmemSize(void)
@@ -298,7 +298,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	 * We need to briefly prevent any other backend from iterating over the
 	 * slots while we flip the in_use flag. We also need to set the active
 	 * flag while holding the ControlLock as otherwise a concurrent
-	 * SlotAcquire() could acquire the slot as well.
+	 * ReplicationSlotAcquire() could acquire the slot as well.
 	 */
 	LWLockAcquire(ReplicationSlotControlLock, LW_EXCLUSIVE);
 

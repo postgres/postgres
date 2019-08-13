@@ -52,19 +52,6 @@
 #define XLH_SPLIT_META_UPDATE_SPLITPOINT		(1<<1)
 
 /*
- * This is what we need to know about a HASH index create.
- *
- * Backup block 0: metapage
- */
-typedef struct xl_hash_createidx
-{
-	double		num_tuples;
-	RegProcedure procid;
-	uint16		ffactor;
-}			xl_hash_createidx;
-#define SizeOfHashCreateIdx (offsetof(xl_hash_createidx, ffactor) + sizeof(uint16))
-
-/*
  * This is what we need to know about simple (without split) insert.
  *
  * This data record is used for XLOG_HASH_INSERT

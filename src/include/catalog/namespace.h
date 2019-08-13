@@ -105,7 +105,7 @@ extern Oid	ConversionGetConid(const char *conname);
 extern bool ConversionIsVisible(Oid conid);
 
 extern Oid	get_statistics_object_oid(List *names, bool missing_ok);
-extern bool StatisticsObjIsVisible(Oid stxid);
+extern bool StatisticsObjIsVisible(Oid relid);
 
 extern Oid	get_ts_parser_oid(List *names, bool missing_ok);
 extern bool TSParserIsVisible(Oid prsId);

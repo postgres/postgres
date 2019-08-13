@@ -618,7 +618,7 @@ pgp_encrypt(PGP_Context *ctx, MBuf *src, MBuf *dst)
 		goto out;
 
 	/*
-	 * initialize symkey
+	 * initialize sym_key
 	 */
 	if (ctx->sym_key)
 	{

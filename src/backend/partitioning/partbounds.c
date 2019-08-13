@@ -1514,7 +1514,7 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
 /*
  * partition_rbound_datum_cmp
  *
- * Return whether range bound (specified in rb_datums, rb_kind, and rb_lower)
+ * Return whether range bound (specified in rb_datums and rb_kind)
  * is <, =, or > partition key of tuple (tuple_datums)
  *
  * n_tuple_datums, partsupfunc and partcollation give number of attributes in

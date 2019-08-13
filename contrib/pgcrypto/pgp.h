@@ -279,7 +279,7 @@ int			pgp_s2k_process(PGP_S2K *s2k, int cipher, const uint8 *key, int klen);
 
 typedef struct PGP_CFB PGP_CFB;
 int			pgp_cfb_create(PGP_CFB **ctx_p, int algo,
-						   const uint8 *key, int key_len, int recync, uint8 *iv);
+						   const uint8 *key, int key_len, int resync, uint8 *iv);
 void		pgp_cfb_free(PGP_CFB *ctx);
 int			pgp_cfb_encrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);
 int			pgp_cfb_decrypt(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);

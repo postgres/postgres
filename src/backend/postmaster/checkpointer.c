@@ -750,7 +750,7 @@ IsCheckpointOnSchedule(double progress)
 	 * We compare the current WAL insert location against the location
 	 * computed before calling CreateCheckPoint. The code in XLogInsert that
 	 * actually triggers a checkpoint when CheckPointSegments is exceeded
-	 * compares against RedoRecptr, so this is not completely accurate.
+	 * compares against RedoRecPtr, so this is not completely accurate.
 	 * However, it's good enough for our purposes, we're only calculating an
 	 * estimate anyway.
 	 *

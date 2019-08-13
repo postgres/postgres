@@ -705,7 +705,7 @@ txid_snapshot_xip(PG_FUNCTION_ARGS)
 	TxidSnapshot *snap;
 	txid		value;
 
-	/* on first call initialize snap_state and get copy of snapshot */
+	/* on first call initialize fctx and get copy of snapshot */
 	if (SRF_IS_FIRSTCALL())
 	{
 		TxidSnapshot *arg = (TxidSnapshot *) PG_GETARG_VARLENA_P(0);

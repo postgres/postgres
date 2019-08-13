@@ -664,7 +664,7 @@ _bt_restore_array_keys(IndexScanDesc scan)
  * scan->numberOfKeys is the number of input keys, so->numberOfKeys gets
  * the number of output keys (possibly less, never greater).
  *
- * The output keys are marked with additional sk_flag bits beyond the
+ * The output keys are marked with additional sk_flags bits beyond the
  * system-standard bits supplied by the caller.  The DESC and NULLS_FIRST
  * indoption bits for the relevant index attribute are copied into the flags.
  * Also, for a DESC column, we commute (flip) all the sk_strategy numbers

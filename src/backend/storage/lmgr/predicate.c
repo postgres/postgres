@@ -849,7 +849,7 @@ OldSerXidInit(void)
 /*
  * Record a committed read write serializable xid and the minimum
  * commitSeqNo of any transactions to which this xid had a rw-conflict out.
- * An invalid seqNo means that there were no conflicts out from xid.
+ * An invalid commitSeqNo means that there were no conflicts out from xid.
  */
 static void
 OldSerXidAdd(TransactionId xid, SerCommitSeqNo minConflictCommitSeqNo)
@@ -1685,7 +1685,7 @@ SetSerializableTransactionSnapshot(Snapshot snapshot,
 /*
  * Guts of GetSerializableTransactionSnapshot
  *
- * If sourcexid is valid, this is actually an import operation and we should
+ * If sourcevxid is valid, this is actually an import operation and we should
  * skip calling GetSnapshotData, because the snapshot contents are already
  * loaded up.  HOWEVER: to avoid race conditions, we must check that the
  * source xact is still running after we acquire SerializableXactHashLock.

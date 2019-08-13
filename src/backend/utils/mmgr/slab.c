@@ -182,7 +182,7 @@ static const MemoryContextMethods SlabMethods = {
  * chunkSize: allocation chunk size
  *
  * The chunkSize may not exceed:
- *		MAXALIGN_DOWN(SIZE_MAX) - MAXALIGN(sizeof(SlabBlock)) - SLAB_CHUNKHDRSZ
+ *		MAXALIGN_DOWN(SIZE_MAX) - MAXALIGN(sizeof(SlabBlock)) - sizeof(SlabChunk)
  */
 MemoryContext
 SlabContextCreate(MemoryContext parent,

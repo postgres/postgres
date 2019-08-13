@@ -191,7 +191,7 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 					  (v = (t*)repalloc((v),((n)*sizeof(t))))
 
 /*
- * Don't do pfree - it seems to cause a segv sometimes - which might have just
+ * Don't do pfree - it seems to cause a SIGSEGV sometimes - which might have just
  * been caused by reloading the module in development.
  * So we rely on context cleanup - Tom Lane says pfree shouldn't be necessary
  * in a case like this.

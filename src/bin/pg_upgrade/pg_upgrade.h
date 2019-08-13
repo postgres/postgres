@@ -138,7 +138,7 @@ typedef struct
 	char	   *nspname;		/* namespace name */
 	char	   *relname;		/* relation name */
 	Oid			reloid;			/* relation OID */
-	Oid			relfilenode;	/* relation relfile node */
+	Oid			relfilenode;	/* relation file node */
 	Oid			indtable;		/* if index, OID of its table, else 0 */
 	Oid			toastheap;		/* if toast table, OID of base table, else 0 */
 	char	   *tablespace;		/* tablespace path; "" for cluster default */

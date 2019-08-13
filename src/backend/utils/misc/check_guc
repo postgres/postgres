@@ -18,7 +18,7 @@
 ## can be ignored
 INTENTIONALLY_NOT_INCLUDED="debug_deadlocks \
 is_superuser lc_collate lc_ctype lc_messages lc_monetary lc_numeric lc_time \
-pre_auth_delay role seed server_encoding server_version server_version_int \
+pre_auth_delay role seed server_encoding server_version server_version_num \
 session_authorization trace_lock_oidmin trace_lock_table trace_locks trace_lwlocks \
 trace_notify trace_userlocks transaction_isolation transaction_read_only \
 zero_damaged_pages"

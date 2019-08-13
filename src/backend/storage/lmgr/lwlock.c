@@ -1075,8 +1075,8 @@ LWLockDequeueSelf(LWLock *lock)
 		 */
 
 		/*
-		 * Reset releaseOk if somebody woke us before we removed ourselves -
-		 * they'll have set it to false.
+		 * Reset RELEASE_OK flag if somebody woke us before we removed
+		 * ourselves - they'll have set it to false.
 		 */
 		pg_atomic_fetch_or_u32(&lock->state, LW_FLAG_RELEASE_OK);
 

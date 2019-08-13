@@ -166,7 +166,7 @@ pushquery(QPRS_STATE *state, int32 type, int32 val, int32 distance, int32 lenval
 }
 
 /*
- * This function is used for query_txt parsing
+ * This function is used for query text parsing
  */
 static void
 pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)

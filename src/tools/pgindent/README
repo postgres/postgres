@@ -31,7 +31,7 @@ DOING THE INDENT RUN:
 
 	wget -O src/tools/pgindent/typedefs.list https://buildfarm.postgresql.org/cgi-bin/typedefs.pl
 
-   (See https://www.pgbuildfarm.org/cgi-bin/typedefs.pl?show_list for a full
+   (See https://buildfarm.postgresql.org/cgi-bin/typedefs.pl?show_list for a full
    list of typedef files, if you want to indent some back branch.)
 
 3) Run pgindent on the C files:

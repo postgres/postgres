@@ -75,7 +75,7 @@ typedef struct RelationData
 	 * when a relation has multiple new relfilenodes within a single
 	 * transaction, with one of them occurring in a subsequently aborted
 	 * subtransaction, e.g. BEGIN; TRUNCATE t; SAVEPOINT save; TRUNCATE t;
-	 * ROLLBACK TO save; -- rd_newRelfilenode is now forgotten
+	 * ROLLBACK TO save; -- rd_newRelfilenodeSubid is now forgotten
 	 */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
 	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in

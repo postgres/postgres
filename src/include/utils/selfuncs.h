@@ -109,7 +109,7 @@ typedef struct
 	double		numIndexPages;	/* number of leaf pages visited */
 	double		numIndexTuples; /* number of leaf tuples visited */
 	double		spc_random_page_cost;	/* relevant random_page_cost value */
-	double		num_sa_scans;	/* # indexscans from ScalarArrayOps */
+	double		num_sa_scans;	/* # indexscans from ScalarArrayOpExprs */
 } GenericCosts;
 
 /* Hooks for plugins to get control when we ask for stats */

@@ -485,10 +485,10 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		 * error on TCP ports.
 		 *
 		 * On win32, however, this behavior only happens if the
-		 * SO_EXLUSIVEADDRUSE is set. With SO_REUSEADDR, win32 allows multiple
-		 * servers to listen on the same address, resulting in unpredictable
-		 * behavior. With no flags at all, win32 behaves as Unix with
-		 * SO_REUSEADDR.
+		 * SO_EXCLUSIVEADDRUSE is set. With SO_REUSEADDR, win32 allows
+		 * multiple servers to listen on the same address, resulting in
+		 * unpredictable behavior. With no flags at all, win32 behaves as Unix
+		 * with SO_REUSEADDR.
 		 */
 		if (!IS_AF_UNIX(addr->ai_family))
 		{

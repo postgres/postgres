@@ -884,7 +884,7 @@ BETTER: unrecognized node type: 42
      features can be used, if a fallback is provided.
     </para>
     <para>
-     For example <literal>_StaticAssert()</literal> and
+     For example <literal>_Static_assert()</literal> and
      <literal>__builtin_constant_p</literal> are currently used, even though
      they are from newer revisions of the C standard and a
      <productname>GCC</productname> extension respectively. If not available

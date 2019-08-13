@@ -102,7 +102,7 @@ pgwin32_signal_initialize(void)
 /*
  * Dispatch all signals currently queued and not blocked
  * Blocked signals are ignored, and will be fired at the time of
- * the sigsetmask() call.
+ * the pqsigsetmask() call.
  */
 void
 pgwin32_dispatch_queued_signals(void)

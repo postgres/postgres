@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * standbydef.h
+ * standbydefs.h
  *	   Frontend exposed definitions for hot standby mode.
  *
  *

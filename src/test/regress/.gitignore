@@ -6,6 +6,6 @@
 /results/
 /log/
 
-# Note: regreesion.* are only left behind on a failure; that's why they're not ignored
+# Note: regression.* are only left behind on a failure; that's why they're not ignored
 #/regression.diffs
 #/regression.out

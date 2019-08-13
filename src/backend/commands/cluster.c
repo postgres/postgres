@@ -1522,7 +1522,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 
 /*
  * Get a list of tables that the current user owns and
- * have indisclustered set.  Return the list in a List * of rvsToCluster
+ * have indisclustered set.  Return the list in a List * of RelToCluster
  * with the tableOid and the indexOid on which the table is already
  * clustered.
  */

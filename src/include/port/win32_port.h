@@ -451,7 +451,7 @@ int			pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen);
 int			pgwin32_listen(SOCKET s, int backlog);
 SOCKET		pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen);
 int			pgwin32_connect(SOCKET s, const struct sockaddr *name, int namelen);
-int			pgwin32_select(int nfds, fd_set *readfs, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout);
+int			pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout);
 int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
 int			pgwin32_send(SOCKET s, const void *buf, int len, int flags);
 int			pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);

@@ -653,7 +653,7 @@ sepgsql_mcstrans_out(PG_FUNCTION_ARGS)
 }
 
 /*
- * quote_object_names
+ * quote_object_name
  *
  * It tries to quote the supplied identifiers
  */

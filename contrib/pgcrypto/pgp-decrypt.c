@@ -423,7 +423,7 @@ static struct PullFilterOps mdc_filter = {
 /*
  * Combined Pkt reader and MDC hasher.
  *
- * For the case of SYMENCRYPTED_MDC packet, where
+ * For the case of SYMENCRYPTED_DATA_MDC packet, where
  * the data part has 'context length', which means
  * that data packet ends 22 bytes before end of parent
  * packet, which is silly.
@@ -894,7 +894,10 @@ process_data_packets(PGP_Context *ctx, MBuf *dst, PullFilter *src,
 			break;
 		}
 
-		/* context length inside SYMENC_MDC needs special handling */
+		/*
+		 * Context length inside SYMENCRYPTED_DATA_MDC packet needs special
+		 * handling.
+		 */
 		if (need_mdc && res == PKT_CONTEXT)
 			res = pullf_create(&pkt, &mdcbuf_filter, ctx, src);
 		else

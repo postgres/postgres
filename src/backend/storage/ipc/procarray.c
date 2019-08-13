@@ -734,8 +734,6 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	Assert(standbyState == STANDBY_INITIALIZED);
 
 	/*
-	 * OK, we need to initialise from the RunningTransactionsData record.
-	 *
 	 * NB: this can be reached at least twice, so make sure new code can deal
 	 * with that.
 	 */
@@ -750,11 +748,11 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * sort them first.
 	 *
 	 * Some of the new xids are top-level xids and some are subtransactions.
-	 * We don't call SubtransSetParent because it doesn't matter yet. If we
+	 * We don't call SubTransSetParent because it doesn't matter yet. If we
 	 * aren't overflowed then all xids will fit in snapshot and so we don't
 	 * need subtrans. If we later overflow, an xid assignment record will add
-	 * xids to subtrans. If RunningXacts is overflowed then we don't have
-	 * enough information to correctly update subtrans anyway.
+	 * xids to subtrans. If RunningTransactionsData is overflowed then we
+	 * don't have enough information to correctly update subtrans anyway.
 	 */
 
 	/*

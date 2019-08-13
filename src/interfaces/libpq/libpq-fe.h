@@ -287,7 +287,7 @@ extern PQconninfoOption *PQconninfo(PGconn *conn);
 extern void PQconninfoFree(PQconninfoOption *connOptions);
 
 /*
- * close the current connection and restablish a new one with the same
+ * close the current connection and reestablish a new one with the same
  * parameters
  */
 /* Asynchronous (non-blocking) */

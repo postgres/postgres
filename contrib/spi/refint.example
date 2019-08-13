@@ -5,7 +5,7 @@ CREATE TABLE A (
 );
 CREATE UNIQUE INDEX AI ON A (ID);
 
---Columns REFB of table B and REFC of C are foreign keys referenting ID of A:
+--Columns REFB of table B and REFC of C are foreign keys referencing ID of A:
 
 CREATE TABLE B (
 	REFB	int4

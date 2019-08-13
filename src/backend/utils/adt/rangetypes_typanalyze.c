@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * ragetypes_typanalyze.c
+ * rangetypes_typanalyze.c
  *	  Functions for gathering statistics from range columns
  *
  * For a range type column, histograms of lower and upper bounds, and

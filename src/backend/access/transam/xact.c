@@ -1232,7 +1232,7 @@ RecordTransactionCommit(void)
 	if (!markXidCommitted)
 	{
 		/*
-		 * We expect that every smgrscheduleunlink is followed by a catalog
+		 * We expect that every RelationDropStorage is followed by a catalog
 		 * update, and hence XID assignment, so we shouldn't get here with any
 		 * pending deletes.  Use a real test not just an Assert to check this,
 		 * since it's a bit fragile.

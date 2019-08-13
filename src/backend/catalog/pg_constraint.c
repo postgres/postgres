@@ -580,7 +580,7 @@ RemoveConstraintById(Oid conId)
 		rel = table_open(con->conrelid, AccessExclusiveLock);
 
 		/*
-		 * We need to update the relcheck count if it is a check constraint
+		 * We need to update the relchecks count if it is a check constraint
 		 * being dropped.  This update will force backends to rebuild relcache
 		 * entries when we commit.
 		 */

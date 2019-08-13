@@ -76,7 +76,7 @@ is($psql_out, '6', "Check nextXid handling for prepared subtransactions");
 
 ###############################################################################
 # Check that replay will correctly set 2PC with more than
-# PGPROC_MAX_CACHED_SUBXIDS subtransations and also show data properly
+# PGPROC_MAX_CACHED_SUBXIDS subtransactions and also show data properly
 # on promotion
 ###############################################################################
 $node_master->psql('postgres', "DELETE FROM t_012_tbl");

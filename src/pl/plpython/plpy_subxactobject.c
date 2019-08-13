@@ -132,7 +132,7 @@ PLy_subtransaction_enter(PyObject *self, PyObject *unused)
  *
  * Exit an explicit subtransaction. exc_type is an exception type, exc
  * is the exception object, tb is the traceback.  If exc_type is None,
- * commit the subtransactiony, if not abort it.
+ * commit the subtransaction, if not abort it.
  *
  * The method signature is chosen to allow subtransaction objects to
  * be used as context managers as described in

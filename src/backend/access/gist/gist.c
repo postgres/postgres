@@ -37,7 +37,7 @@ static bool gistinserttuples(GISTInsertState *state, GISTInsertStack *stack,
 							 Buffer leftchild, Buffer rightchild,
 							 bool unlockbuf, bool unlockleftchild);
 static void gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
-							GISTSTATE *giststate, List *splitinfo, bool releasebuf);
+							GISTSTATE *giststate, List *splitinfo, bool unlockbuf);
 static void gistprunepage(Relation rel, Page page, Buffer buffer,
 						  Relation heapRel);
 
@@ -1047,7 +1047,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 			{
 				/*
 				 * End of chain and still didn't find parent. It's a very-very
-				 * rare situation when root splited.
+				 * rare situation when root splitted.
 				 */
 				break;
 			}

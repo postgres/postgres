@@ -2603,7 +2603,7 @@ _SPI_cursor_operation(Portal portal, FetchDirection direction, long count,
 
 	/*
 	 * Think not to combine this store with the preceding function call. If
-	 * the portal contains calls to functions that use SPI, then SPI_stack is
+	 * the portal contains calls to functions that use SPI, then _SPI_stack is
 	 * likely to move around while the portal runs.  When control returns,
 	 * _SPI_current will point to the correct stack entry... but the pointer
 	 * may be different than it was beforehand. So we must be sure to re-fetch
@@ -2733,7 +2733,7 @@ _SPI_make_plan_non_temp(SPIPlanPtr plan)
 									ALLOCSET_SMALL_SIZES);
 	oldcxt = MemoryContextSwitchTo(plancxt);
 
-	/* Copy the SPI_plan struct and subsidiary data into the new context */
+	/* Copy the _SPI_plan struct and subsidiary data into the new context */
 	newplan = (SPIPlanPtr) palloc0(sizeof(_SPI_plan));
 	newplan->magic = _SPI_PLAN_MAGIC;
 	newplan->plancxt = plancxt;

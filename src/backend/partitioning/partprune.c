@@ -2127,7 +2127,7 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
 
 		/*
 		 * Now generate a list of clauses, one for each array element, of the
-		 * form saop_leftop saop_op elem_expr
+		 * form leftop saop_op elem_expr
 		 */
 		elem_clauses = NIL;
 		foreach(lc1, elem_exprs)

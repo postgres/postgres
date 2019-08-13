@@ -1364,7 +1364,7 @@ SlruScanDirCbDeleteAll(SlruCtl ctl, char *filename, int segpage, void *data)
 }
 
 /*
- * Scan the SimpleLRU directory and apply a callback to each file found in it.
+ * Scan the SimpleLru directory and apply a callback to each file found in it.
  *
  * If the callback returns true, the scan is stopped.  The last return value
  * from the callback is returned.

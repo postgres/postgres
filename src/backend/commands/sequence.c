@@ -1115,7 +1115,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 	/*
 	 * Initialize the new hash table entry if it did not exist already.
 	 *
-	 * NOTE: seqtable entries are stored for the life of a backend (unless
+	 * NOTE: seqhashtab entries are stored for the life of a backend (unless
 	 * explicitly discarded with DISCARD). If the sequence itself is deleted
 	 * then the entry becomes wasted memory, but it's small enough that this
 	 * should not matter.

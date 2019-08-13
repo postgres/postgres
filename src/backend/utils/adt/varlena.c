@@ -2052,7 +2052,7 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 
 	/*
 	 * If we're using abbreviated keys, or if we're using a locale-aware
-	 * comparison, we need to initialize a StringSortSupport object.  Both
+	 * comparison, we need to initialize a VarStringSortSupport object. Both
 	 * cases will make use of the temporary buffers we initialize here for
 	 * scratch space (and to detect requirement for BpChar semantics from
 	 * caller), and the abbreviation case requires additional state.

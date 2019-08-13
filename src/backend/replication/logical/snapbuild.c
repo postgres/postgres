@@ -269,7 +269,7 @@ static void SnapBuildSnapIncRefcount(Snapshot snap);
 
 static void SnapBuildDistributeNewCatalogSnapshot(SnapBuild *builder, XLogRecPtr lsn);
 
-/* xlog reading helper functions for SnapBuildProcessRecord */
+/* xlog reading helper functions for SnapBuildProcessRunningXacts */
 static bool SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *running);
 static void SnapBuildWaitSnapshot(xl_running_xacts *running, TransactionId cutoff);
 

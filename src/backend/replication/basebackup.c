@@ -792,7 +792,7 @@ SendBackupHeader(List *tablespaces)
 	pq_sendint32(&buf, 0);		/* typmod */
 	pq_sendint16(&buf, 0);		/* format code */
 
-	/* Second field - spcpath */
+	/* Second field - spclocation */
 	pq_sendstring(&buf, "spclocation");
 	pq_sendint32(&buf, 0);
 	pq_sendint16(&buf, 0);

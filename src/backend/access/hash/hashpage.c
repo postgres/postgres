@@ -1510,7 +1510,7 @@ _hash_getcachedmetap(Relation rel, Buffer *metabuf, bool force_refresh)
 		 * It's important that we don't set rd_amcache to an invalid value.
 		 * Either MemoryContextAlloc or _hash_getbuf could fail, so don't
 		 * install a pointer to the newly-allocated storage in the actual
-		 * relcache entry until both have succeeeded.
+		 * relcache entry until both have succeeded.
 		 */
 		if (rel->rd_amcache == NULL)
 			cache = MemoryContextAlloc(rel->rd_indexcxt,

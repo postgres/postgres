@@ -395,9 +395,10 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	 */
 
 	/*
-	 * Because of SUE lock, this function shouldn't run concurrently with
-	 * summarization.  Placeholder tuples can only exist as leftovers from
-	 * crashed summarization, so if we detect any, we complain but proceed.
+	 * Because of ShareUpdateExclusive lock, this function shouldn't run
+	 * concurrently with summarization.  Placeholder tuples can only exist as
+	 * leftovers from crashed summarization, so if we detect any, we complain
+	 * but proceed.
 	 */
 	if (BrinTupleIsPlaceholder(tup))
 		ereport(WARNING,

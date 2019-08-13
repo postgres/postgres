@@ -189,7 +189,7 @@ PGSemaphoreShmemSize(int maxSemas)
  * maxSemas parameter is just used to size the arrays.  For unnamed
  * semaphores, there is an array of PGSemaphoreData structs in shared memory.
  * For named semaphores, we keep a postmaster-local array of sem_t pointers,
- * which we use for releasing the semphores when done.
+ * which we use for releasing the semaphores when done.
  * (This design minimizes the dependency of postmaster shutdown on the
  * contents of shared memory, which a failed backend might have clobbered.
  * We can't do much about the possibility of sem_destroy() crashing, but

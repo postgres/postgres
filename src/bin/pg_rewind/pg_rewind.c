@@ -404,7 +404,7 @@ sanityChecks(void)
 {
 	/* TODO Check that there's no backup_label in either cluster */
 
-	/* Check system_id match */
+	/* Check system_identifier match */
 	if (ControlFile_target.system_identifier != ControlFile_source.system_identifier)
 		pg_fatal("source and target clusters are from different systems");
 

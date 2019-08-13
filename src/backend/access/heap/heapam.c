@@ -3029,7 +3029,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	 * the value ends up being the same, this test will fail and we will use
 	 * the stronger lock.  This is acceptable; the important case to optimize
 	 * is updates that don't manipulate key columns, not those that
-	 * serendipitiously arrive at the same key values.
+	 * serendipitously arrive at the same key values.
 	 */
 	if (!bms_overlap(modified_attrs, key_attrs))
 	{

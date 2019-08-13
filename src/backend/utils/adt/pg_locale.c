@@ -79,7 +79,7 @@
 #undef StrNCpy
 #include <shlwapi.h>
 #ifdef StrNCpy
-#undef STrNCpy
+#undef StrNCpy
 #endif
 #endif
 

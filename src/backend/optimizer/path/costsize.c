@@ -1811,7 +1811,7 @@ append_nonpartial_cost(List *subpaths, int numpaths, int parallel_workers)
 		return 0;
 
 	/*
-	 * Array length is number of workers or number of relevants paths,
+	 * Array length is number of workers or number of relevant paths,
 	 * whichever is less.
 	 */
 	arrlen = Min(parallel_workers, numpaths);

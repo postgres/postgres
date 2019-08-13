@@ -39,25 +39,6 @@
 #include "blf.h"
 #include "rijndael.h"
 
-/*
- * System reseeds should be separated at least this much.
- */
-#define SYSTEM_RESEED_MIN			(20*60) /* 20 min */
-/*
- * How often to roll dice.
- */
-#define SYSTEM_RESEED_CHECK_TIME	(10*60) /* 10 min */
-/*
- * The chance is x/256 that the reseed happens.
- */
-#define SYSTEM_RESEED_CHANCE		(4) /* 256/4 * 10min ~ 10h */
-
-/*
- * If this much time has passed, force reseed.
- */
-#define SYSTEM_RESEED_MAX			(12*60*60)	/* 12h */
-
-
 #ifndef MD5_DIGEST_LENGTH
 #define MD5_DIGEST_LENGTH 16
 #endif

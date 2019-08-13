@@ -1150,7 +1150,7 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	 * to compare.  In a tuple sort, we could support that, because we can
 	 * always extract the original datum from the tuple as needed.  Here, we
 	 * can't, because a datum sort only stores a single copy of the datum; the
-	 * "tuple" field of each sortTuple is NULL.
+	 * "tuple" field of each SortTuple is NULL.
 	 */
 	state->sortKeys->abbreviate = !typbyval;
 

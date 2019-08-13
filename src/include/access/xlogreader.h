@@ -248,7 +248,7 @@ extern bool DecodeXLogRecord(XLogReaderState *state, XLogRecord *record,
 extern FullTransactionId XLogRecGetFullXid(XLogReaderState *record);
 #endif
 
-extern bool RestoreBlockImage(XLogReaderState *recoder, uint8 block_id, char *dst);
+extern bool RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page);
 extern char *XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *len);
 extern bool XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 							   RelFileNode *rnode, ForkNumber *forknum,
