@@ -224,7 +224,13 @@ it, but it's still linked to its siblings.
 
 (Note: Lanin and Shasha prefer to make the key space move left, but their
 argument for doing so hinges on not having left-links, which we have
-anyway.  So we simplify the algorithm by moving key space right.)
+anyway.  So we simplify the algorithm by moving the key space right.  Note
+also that Lanin and Shasha optimistically avoid holding multiple locks as
+the tree is ascended.  They're willing to release all locks and retry in
+"rare" cases where the correct location for a new downlink cannot be found
+immediately.  We prefer to stick with Lehman and Yao's approach of
+pessimistically coupling buffer locks when ascending the tree, since it's
+far simpler.)
 
 To preserve consistency on the parent level, we cannot merge the key space
 of a page into its right sibling unless the right sibling is a child of

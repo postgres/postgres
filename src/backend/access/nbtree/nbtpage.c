@@ -1189,8 +1189,7 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	 * non-unique high keys in leaf level pages.  Even heapkeyspace indexes
 	 * can have a stale stack due to insertions into the parent.
 	 */
-	stack->bts_btentry = child;
-	pbuf = _bt_getstackbuf(rel, stack);
+	pbuf = _bt_getstackbuf(rel, stack, child);
 	if (pbuf == InvalidBuffer)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
