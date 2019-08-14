@@ -1417,20 +1417,6 @@ bootstrap_template1(void)
 	bki_lines = replace_token(bki_lines, "LC_CTYPE",
 							  escape_quotes_bki(lc_ctype));
 
-	/*
-	 * Pass correct LC_xxx environment to bootstrap.
-	 *
-	 * The shell script arranged to restore the LC settings afterwards, but
-	 * there doesn't seem to be any compelling reason to do that.
-	 */
-	snprintf(cmd, sizeof(cmd), "LC_COLLATE=%s", lc_collate);
-	putenv(pg_strdup(cmd));
-
-	snprintf(cmd, sizeof(cmd), "LC_CTYPE=%s", lc_ctype);
-	putenv(pg_strdup(cmd));
-
-	unsetenv("LC_ALL");
-
 	/* Also ensure backend isn't confused by this environment var: */
 	unsetenv("PGCLIENTENCODING");
 
