@@ -1651,14 +1651,16 @@ SELECT relname FROM pg_class WHERE 'PG_CLASS'::text = relname COLLATE case_insen
  pg_class
 (1 row)
 
-SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND typname <> 'INT2'::text COLLATE case_insensitive;
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND typname <> 'INT2'::text
+  COLLATE case_insensitive ORDER BY typname;
  typname 
 ---------
  int4
  int8
 (2 rows)
 
-SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND 'INT2'::text <> typname COLLATE case_insensitive;;
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND 'INT2'::text <> typname
+  COLLATE case_insensitive ORDER BY typname;
  typname 
 ---------
  int4

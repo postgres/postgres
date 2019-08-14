@@ -603,8 +603,10 @@ SELECT 'ὀδυσσεύς' = 'ὈΔΥΣΣΕΎΣ' COLLATE case_insensitive;
 SELECT relname FROM pg_class WHERE relname = 'PG_CLASS'::text COLLATE case_insensitive;
 SELECT relname FROM pg_class WHERE 'PG_CLASS'::text = relname COLLATE case_insensitive;
 
-SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND typname <> 'INT2'::text COLLATE case_insensitive;
-SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND 'INT2'::text <> typname COLLATE case_insensitive;;
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND typname <> 'INT2'::text
+  COLLATE case_insensitive ORDER BY typname;
+SELECT typname FROM pg_type WHERE typname LIKE 'int_' AND 'INT2'::text <> typname
+  COLLATE case_insensitive ORDER BY typname;
 
 -- test case adapted from subselect.sql
 CREATE TEMP TABLE outer_text (f1 text COLLATE case_insensitive, f2 text);
