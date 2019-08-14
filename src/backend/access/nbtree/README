@@ -65,10 +65,7 @@ copies of tree pages are unshared.  Postgres shares in-memory buffers
 among backends.  As a result, we do page-level read locking on btree
 pages in order to guarantee that no record is modified while we are
 examining it.  This reduces concurrency but guarantees correct
-behavior.  An advantage is that when trading in a read lock for a
-write lock, we need not re-read the page after getting the write lock.
-Since we're also holding a pin on the shared buffer containing the
-page, we know that buffer still contains the page and is up-to-date.
+behavior.
 
 We support the notion of an ordered "scan" of an index as well as
 insertions, deletions, and simple lookups.  A scan in the forward
