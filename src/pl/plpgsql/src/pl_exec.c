@@ -32,6 +32,7 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -382,6 +383,7 @@ static void plpgsql_param_eval_generic_ro(ExprState *state, ExprEvalStep *op,
 static void exec_move_row(PLpgSQL_execstate *estate,
 						  PLpgSQL_variable *target,
 						  HeapTuple tup, TupleDesc tupdesc);
+static void revalidate_rectypeid(PLpgSQL_rec *rec);
 static ExpandedRecordHeader *make_expanded_record_for_rec(PLpgSQL_execstate *estate,
 														  PLpgSQL_rec *rec,
 														  TupleDesc srctupdesc,
@@ -2520,7 +2522,8 @@ exec_stmt_case(PLpgSQL_execstate *estate, PLpgSQL_stmt_case *stmt)
 			t_var->datatype->atttypmod != t_typmod)
 			t_var->datatype = plpgsql_build_datatype(t_typoid,
 													 t_typmod,
-													 estate->func->fn_input_collation);
+													 estate->func->fn_input_collation,
+													 NULL);
 
 		/* now we can assign to the variable */
 		exec_assign_value(estate,
@@ -6837,6 +6840,67 @@ exec_move_row(PLpgSQL_execstate *estate,
 }
 
 /*
+ * Verify that a PLpgSQL_rec's rectypeid is up-to-date.
+ */
+static void
+revalidate_rectypeid(PLpgSQL_rec *rec)
+{
+	PLpgSQL_type *typ = rec->datatype;
+	TypeCacheEntry *typentry;
+
+	if (rec->rectypeid == RECORDOID)
+		return;					/* it's RECORD, so nothing to do */
+	Assert(typ != NULL);
+	if (typ->tcache &&
+		typ->tcache->tupDesc_identifier == typ->tupdesc_id)
+		return;					/* known up-to-date */
+
+	/*
+	 * typcache entry has suffered invalidation, so re-look-up the type name
+	 * if possible, and then recheck the type OID.  If we don't have a
+	 * TypeName, then we just have to soldier on with the OID we've got.
+	 */
+	if (typ->origtypname != NULL)
+	{
+		/* this bit should match parse_datatype() in pl_gram.y */
+		typenameTypeIdAndMod(NULL, typ->origtypname,
+							 &typ->typoid,
+							 &typ->atttypmod);
+	}
+
+	/* this bit should match build_datatype() in pl_comp.c */
+	typentry = lookup_type_cache(typ->typoid,
+								 TYPECACHE_TUPDESC |
+								 TYPECACHE_DOMAIN_BASE_INFO);
+	if (typentry->typtype == TYPTYPE_DOMAIN)
+		typentry = lookup_type_cache(typentry->domainBaseType,
+									 TYPECACHE_TUPDESC);
+	if (typentry->tupDesc == NULL)
+	{
+		/*
+		 * If we get here, user tried to replace a composite type with a
+		 * non-composite one.  We're not gonna support that.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("type %s is not composite",
+						format_type_be(typ->typoid))));
+	}
+
+	/*
+	 * Update tcache and tupdesc_id.  Since we don't support changing to a
+	 * non-composite type, none of the rest of *typ needs to change.
+	 */
+	typ->tcache = typentry;
+	typ->tupdesc_id = typentry->tupDesc_identifier;
+
+	/*
+	 * Update *rec, too.  (We'll deal with subsidiary RECFIELDs as needed.)
+	 */
+	rec->rectypeid = typ->typoid;
+}
+
+/*
  * Build an expanded record object suitable for assignment to "rec".
  *
  * Caller must supply either a source tuple descriptor or a source expanded
@@ -6860,6 +6924,11 @@ make_expanded_record_for_rec(PLpgSQL_execstate *estate,
 
 	if (rec->rectypeid != RECORDOID)
 	{
+		/*
+		 * Make sure rec->rectypeid is up-to-date before using it.
+		 */
+		revalidate_rectypeid(rec);
+
 		/*
 		 * New record must be of desired type, but maybe srcerh has already
 		 * done all the same lookups.
@@ -7332,6 +7401,11 @@ exec_move_row_from_datum(PLpgSQL_execstate *estate,
 				return;
 
 			/*
+			 * Make sure rec->rectypeid is up-to-date before using it.
+			 */
+			revalidate_rectypeid(rec);
+
+			/*
 			 * If we have a R/W pointer, we're allowed to just commandeer
 			 * ownership of the expanded record.  If it's of the right type to
 			 * put into the record variable, do that.  (Note we don't accept
@@ -7542,6 +7616,9 @@ instantiate_empty_record_variable(PLpgSQL_execstate *estate, PLpgSQL_rec *rec)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("record \"%s\" is not assigned yet", rec->refname),
 				 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+
+	/* Make sure rec->rectypeid is up-to-date before using it */
+	revalidate_rectypeid(rec);
 
 	/* OK, do it */
 	rec->erh = make_expanded_record_from_typeid(rec->rectypeid, -1,

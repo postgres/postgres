@@ -288,6 +288,22 @@ alter table mutable drop column f3;
 select getf3(null::mutable);  -- fails again
 \set SHOW_CONTEXT errors
 
+-- check behavior with creating/dropping a named rowtype
+set check_function_bodies = off;  -- else reference to nonexistent type fails
+
+create function sillyaddtwo(int) returns int language plpgsql as
+$$ declare r mutable2; begin r.f1 := $1; return r.f1 + 2; end $$;
+
+reset check_function_bodies;
+
+select sillyaddtwo(42);  -- fail
+create table mutable2(f1 int, f2 text);
+select sillyaddtwo(42);
+drop table mutable2;
+select sillyaddtwo(42);  -- fail
+create table mutable2(f0 text, f1 int, f2 text);
+select sillyaddtwo(42);
+
 -- check access to system columns in a record variable
 
 create function sillytrig() returns trigger language plpgsql as
