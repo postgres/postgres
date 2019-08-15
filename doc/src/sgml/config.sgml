@@ -153,6 +153,8 @@ shared_buffers = 128MB
      identifiers or numbers must be single-quoted.  To embed a single
      quote in a parameter value, write either two quotes (preferred)
      or backslash-quote.
+     If the file contains multiple entries for the same parameter,
+     all but the last one are ignored.
     </para>
 
     <para>
@@ -185,18 +187,29 @@ shared_buffers = 128MB
      In addition to <filename>postgresql.conf</filename>,
      a <productname>PostgreSQL</productname> data directory contains a file
      <filename>postgresql.auto.conf</filename><indexterm><primary>postgresql.auto.conf</primary></indexterm>,
-     which has the same format as <filename>postgresql.conf</filename> but should
-     never be edited manually.  This file holds settings provided through
-     the <xref linkend="sql-altersystem"/> command.  This file is automatically
-     read whenever <filename>postgresql.conf</filename> is, and its settings take
-     effect in the same way.  Settings in <filename>postgresql.auto.conf</filename>
-     override those in <filename>postgresql.conf</filename>.
+     which has the same format as <filename>postgresql.conf</filename> but
+     is intended to be edited automatically not manually.  This file holds
+     settings provided through the <xref linkend="sql-altersystem"/> command.
+     This file is read whenever <filename>postgresql.conf</filename> is,
+     and its settings take effect in the same way.  Settings
+     in <filename>postgresql.auto.conf</filename> override those
+     in <filename>postgresql.conf</filename>.
+    </para>
+
+    <para>
+     External tools may also
+     modify <filename>postgresql.auto.conf</filename>.  It is not
+     recommended to do this while the server is running, since a
+     concurrent <command>ALTER SYSTEM</command> command could overwrite
+     such changes.  Such tools might simply append new settings to the end,
+     or they might choose to remove duplicate settings and/or comments
+     (as <command>ALTER SYSTEM</command> will).
     </para>
 
     <para>
      The system view
      <link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link>
-     can be helpful for pre-testing changes to the configuration file, or for
+     can be helpful for pre-testing changes to the configuration files, or for
      diagnosing problems if a <systemitem>SIGHUP</systemitem> signal did not have the
      desired effects.
     </para>
