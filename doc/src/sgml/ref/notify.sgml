@@ -94,9 +94,9 @@ NOTIFY <replaceable class="parameter">channel</replaceable> [ , <replaceable cla
   </para>
 
   <para>
-   If the same channel name is signaled multiple times from the same
-   transaction with identical payload strings, the
-   database server can decide to deliver a single notification only.
+   If the same channel name is signaled multiple times with identical
+   payload strings within the same transaction, only one instance of the
+   notification event is delivered to listeners.
    On the other hand, notifications with distinct payload strings will
    always be delivered as distinct notifications. Similarly, notifications from
    different transactions will never get folded into one notification.

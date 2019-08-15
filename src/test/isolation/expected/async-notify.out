@@ -42,8 +42,6 @@ step notifys1:
 
 notifier: NOTIFY "c1" with payload "payload" from notifier
 notifier: NOTIFY "c2" with payload "payload" from notifier
-notifier: NOTIFY "c1" with payload "payload" from notifier
-notifier: NOTIFY "c2" with payload "payload" from notifier
 notifier: NOTIFY "c1" with payload "payloads" from notifier
 notifier: NOTIFY "c2" with payload "payloads" from notifier
 
