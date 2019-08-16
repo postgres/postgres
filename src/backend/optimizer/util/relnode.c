@@ -858,11 +858,8 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 
 	/*
 	 * Lateral relids referred in child join will be same as that referred in
-	 * the parent relation. Throw any partial result computed while building
-	 * the targetlist.
+	 * the parent relation.
 	 */
-	bms_free(joinrel->direct_lateral_relids);
-	bms_free(joinrel->lateral_relids);
 	joinrel->direct_lateral_relids = (Relids) bms_copy(parent_joinrel->direct_lateral_relids);
 	joinrel->lateral_relids = (Relids) bms_copy(parent_joinrel->lateral_relids);
 
