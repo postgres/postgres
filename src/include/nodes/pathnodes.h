@@ -15,7 +15,6 @@
 #define PATHNODES_H
 
 #include "access/sdir.h"
-#include "fmgr.h"
 #include "lib/stringinfo.h"
 #include "nodes/params.h"
 #include "nodes/parsenodes.h"
@@ -400,7 +399,7 @@ typedef struct PartitionSchemeData
 	bool	   *parttypbyval;
 
 	/* Cached information about partition comparison functions. */
-	FmgrInfo   *partsupfunc;
+	struct FmgrInfo *partsupfunc;
 }			PartitionSchemeData;
 
 typedef struct PartitionSchemeData *PartitionScheme;

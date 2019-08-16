@@ -17,7 +17,6 @@
 #include "access/amapi.h"
 #include "access/gist.h"
 #include "access/itup.h"
-#include "fmgr.h"
 #include "lib/pairingheap.h"
 #include "storage/bufmgr.h"
 #include "storage/buffile.h"

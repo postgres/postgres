@@ -9,7 +9,6 @@
 #ifndef SLOT_H
 #define SLOT_H
 
-#include "fmgr.h"
 #include "access/xlog.h"
 #include "access/xlogreader.h"
 #include "storage/condition_variable.h"

@@ -12,7 +12,6 @@
 #define PGSTAT_H
 
 #include "datatype/timestamp.h"
-#include "fmgr.h"
 #include "libpq/pqcomm.h"
 #include "port/atomics.h"
 #include "portability/instr_time.h"
@@ -1402,7 +1401,8 @@ extern void pgstat_count_heap_delete(Relation rel);
 extern void pgstat_count_truncate(Relation rel);
 extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);
 
-extern void pgstat_init_function_usage(FunctionCallInfo fcinfo,
+struct FunctionCallInfoBaseData;
+extern void pgstat_init_function_usage(struct FunctionCallInfoBaseData *fcinfo,
 									   PgStat_FunctionCallUsage *fcu);
 extern void pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu,
 									  bool finalize);

@@ -14,8 +14,6 @@
 
 #include <signal.h>
 
-#include "fmgr.h"
-
 /*
  * What to do with a snapshot in create replication slot command.
  */

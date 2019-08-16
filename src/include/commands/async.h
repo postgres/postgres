@@ -15,8 +15,6 @@
 
 #include <signal.h>
 
-#include "fmgr.h"
-
 /*
  * The number of SLRU page buffers we use for the notification queue.
  */

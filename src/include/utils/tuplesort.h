@@ -23,7 +23,6 @@
 
 #include "access/itup.h"
 #include "executor/tuptable.h"
-#include "fmgr.h"
 #include "storage/dsm.h"
 #include "utils/relcache.h"
 

@@ -14,7 +14,6 @@
 #define SNAPMGR_H
 
 #include "access/transam.h"
-#include "fmgr.h"
 #include "utils/relcache.h"
 #include "utils/resowner.h"
 #include "utils/snapshot.h"

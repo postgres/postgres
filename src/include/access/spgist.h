@@ -16,7 +16,6 @@
 
 #include "access/amapi.h"
 #include "access/xlogreader.h"
-#include "fmgr.h"
 #include "lib/stringinfo.h"
 
 

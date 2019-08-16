@@ -10,7 +10,6 @@
 #ifndef PG_ORIGIN_H
 #define PG_ORIGIN_H
 
-#include "fmgr.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
 #include "access/xlogreader.h"

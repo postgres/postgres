@@ -14,7 +14,6 @@
 
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
-#include "fmgr.h"
 #include "getaddrinfo.h"		/* for NI_MAXHOST */
 #include "replication/logicalproto.h"
 #include "replication/walsender.h"

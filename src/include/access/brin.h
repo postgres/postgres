@@ -10,7 +10,6 @@
 #ifndef BRIN_H
 #define BRIN_H
 
-#include "fmgr.h"
 #include "nodes/execnodes.h"
 #include "utils/relcache.h"
 

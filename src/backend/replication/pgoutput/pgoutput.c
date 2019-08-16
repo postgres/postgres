@@ -14,6 +14,8 @@
 
 #include "catalog/pg_publication.h"
 
+#include "fmgr.h"
+
 #include "replication/logical.h"
 #include "replication/logicalproto.h"
 #include "replication/origin.h"

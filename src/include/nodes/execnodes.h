@@ -16,6 +16,7 @@
 
 #include "access/tupconvert.h"
 #include "executor/instrument.h"
+#include "fmgr.h"
 #include "lib/pairingheap.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"

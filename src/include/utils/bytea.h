@@ -14,7 +14,6 @@
 #ifndef BYTEA_H
 #define BYTEA_H
 
-#include "fmgr.h"
 
 
 typedef enum
