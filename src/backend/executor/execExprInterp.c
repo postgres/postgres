@@ -62,6 +62,7 @@
 #include "executor/execExpr.h"
 #include "executor/nodeSubplan.h"
 #include "funcapi.h"
+#include "utils/array.h"
 #include "utils/memutils.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"

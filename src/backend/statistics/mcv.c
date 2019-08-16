@@ -26,6 +26,7 @@
 #include "optimizer/clauses.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/fmgroids.h"

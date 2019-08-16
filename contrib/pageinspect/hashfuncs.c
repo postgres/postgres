@@ -18,6 +18,7 @@
 #include "catalog/pg_am.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
 

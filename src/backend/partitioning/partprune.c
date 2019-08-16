@@ -53,6 +53,7 @@
 #include "partitioning/partbounds.h"
 #include "partitioning/partprune.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/array.h"
 #include "utils/lsyscache.h"
 
 

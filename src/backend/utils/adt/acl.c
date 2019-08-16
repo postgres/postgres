@@ -30,6 +30,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/hashutils.h"

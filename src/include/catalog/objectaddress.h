@@ -77,7 +77,7 @@ extern char *getObjectTypeDescription(const ObjectAddress *object);
 extern char *getObjectIdentity(const ObjectAddress *address);
 extern char *getObjectIdentityParts(const ObjectAddress *address,
 									List **objname, List **objargs);
-extern ArrayType *strlist_to_textarray(List *list);
+extern struct ArrayType *strlist_to_textarray(List *list);
 
 extern ObjectType get_relkind_objtype(char relkind);
 

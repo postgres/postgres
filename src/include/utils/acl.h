@@ -35,7 +35,6 @@
 #include "access/htup.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_node.h"
-#include "utils/array.h"
 #include "utils/snapshot.h"
 
 
@@ -104,7 +103,7 @@ typedef struct AclItem
 /*
  * Acl			a one-dimensional array of AclItem
  */
-typedef ArrayType Acl;
+typedef struct ArrayType Acl;
 
 #define ACL_NUM(ACL)			(ARR_DIMS(ACL)[0])
 #define ACL_DAT(ACL)			((AclItem *) ARR_DATA_PTR(ACL))
