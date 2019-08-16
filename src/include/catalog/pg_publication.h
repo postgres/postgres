@@ -92,6 +92,5 @@ extern ObjectAddress publication_add_relation(Oid pubid, Relation targetrel,
 extern Oid	get_publication_oid(const char *pubname, bool missing_ok);
 extern char *get_publication_name(Oid pubid, bool missing_ok);
 
-extern Datum pg_get_publication_tables(PG_FUNCTION_ARGS);
 
 #endif							/* PG_PUBLICATION_H */
