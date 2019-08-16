@@ -13,6 +13,7 @@
 #include "postgres.h"
 
 #include "commands/seclabel.h"
+#include "fmgr.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
 
