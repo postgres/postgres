@@ -622,6 +622,7 @@
 #default_tablespace = ''		# a tablespace name, '' uses the default
 #temp_tablespaces = ''			# a list of tablespace names, '' uses
 					# only default tablespace
+#default_table_access_method = 'heap'
 #check_function_bodies = on
 #default_transaction_isolation = 'read committed'
 #default_transaction_read_only = off
