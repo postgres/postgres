@@ -12,6 +12,8 @@
 #ifndef SCRIPTS_PARALLEL_H
 #define SCRIPTS_PARALLEL_H
 
+#include "libpq-fe.h"
+
 
 typedef struct ParallelSlot
 {
