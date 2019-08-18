@@ -208,6 +208,15 @@ insert into d values('test','one','two','three');
 alter table a alter column aa type integer using bit_length(aa);
 select * from d;
 
+-- The above verified that we can change the type of a multiply-inherited
+-- column; but we should reject that if any definition was inherited from
+-- an unrelated parent.
+create temp table parent1(f1 int, f2 int);
+create temp table parent2(f1 int, f3 bigint);
+create temp table childtab(f4 int) inherits(parent1, parent2);
+alter table parent1 alter column f1 type bigint;  -- fail, conflict w/parent2
+alter table parent1 alter column f2 type bigint;  -- ok
+
 -- Test non-inheritable parent constraints
 create table p1(ff1 int);
 alter table p1 add constraint p1chk check (ff1 > 0) no inherit;
