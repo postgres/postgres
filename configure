@@ -11700,11 +11700,11 @@ return readline ();
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
 
-      # Older NetBSD, OpenBSD, and Irix have a broken linker that does not
+      # Older NetBSD and OpenBSD have a broken linker that does not
       # recognize dependent libraries; assume curses is needed if we didn't
       # find any dependency.
       case $host_os in
-        netbsd* | openbsd* | irix*)
+        netbsd* | openbsd*)
           if test x"$pgac_lib" = x"" ; then
             pgac_lib=" -lcurses"
           fi ;;

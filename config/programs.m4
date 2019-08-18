@@ -179,11 +179,11 @@ for pgac_rllib in $READLINE_ORDER ; do
   for pgac_lib in "" " -ltermcap" " -lncurses" " -lcurses" ; do
     LIBS="${pgac_rllib}${pgac_lib} $pgac_save_LIBS"
     AC_TRY_LINK_FUNC([readline], [[
-      # Older NetBSD, OpenBSD, and Irix have a broken linker that does not
+      # Older NetBSD and OpenBSD have a broken linker that does not
       # recognize dependent libraries; assume curses is needed if we didn't
       # find any dependency.
       case $host_os in
-        netbsd* | openbsd* | irix*)
+        netbsd* | openbsd*)
           if test x"$pgac_lib" = x"" ; then
             pgac_lib=" -lcurses"
           fi ;;
