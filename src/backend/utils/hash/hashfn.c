@@ -145,9 +145,9 @@
  * well mixed than c, however.
  */
 Datum
-hash_any(register const unsigned char *k, register int keylen)
+hash_any(const unsigned char *k, int keylen)
 {
-	register uint32 a,
+	uint32		a,
 				b,
 				c,
 				len;
@@ -160,7 +160,7 @@ hash_any(register const unsigned char *k, register int keylen)
 	if (((uintptr_t) k & UINT32_ALIGN_MASK) == 0)
 	{
 		/* Code path for aligned source data */
-		register const uint32 *ka = (const uint32 *) k;
+		const uint32 *ka = (const uint32 *) k;
 
 		/* handle most of the key */
 		while (len >= 12)
@@ -371,10 +371,10 @@ hash_any(register const unsigned char *k, register int keylen)
  * Returns a uint64 value.  Otherwise similar to hash_any.
  */
 Datum
-hash_any_extended(register const unsigned char *k, register int keylen,
+hash_any_extended(const unsigned char *k, int keylen,
 				  uint64 seed)
 {
-	register uint32 a,
+	uint32		a,
 				b,
 				c,
 				len;
@@ -400,7 +400,7 @@ hash_any_extended(register const unsigned char *k, register int keylen,
 	if (((uintptr_t) k & UINT32_ALIGN_MASK) == 0)
 	{
 		/* Code path for aligned source data */
-		register const uint32 *ka = (const uint32 *) k;
+		const uint32 *ka = (const uint32 *) k;
 
 		/* handle most of the key */
 		while (len >= 12)
@@ -612,7 +612,7 @@ hash_any_extended(register const unsigned char *k, register int keylen,
 Datum
 hash_uint32(uint32 k)
 {
-	register uint32 a,
+	uint32		a,
 				b,
 				c;
 
@@ -633,7 +633,7 @@ hash_uint32(uint32 k)
 Datum
 hash_uint32_extended(uint32 k, uint64 seed)
 {
-	register uint32 a,
+	uint32		a,
 				b,
 				c;
 
