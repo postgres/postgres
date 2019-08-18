@@ -5,6 +5,8 @@
 
 #include <pgtypes_timestamp.h>
 
+#include <time.h>
+
 #define MAXTZLEN			 10
 
 typedef int32 fsec_t;
