@@ -42,7 +42,7 @@ static int	inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size);
 
 /*
  * int
- * inet_net_pton(af, src, dst, size)
+ * pg_inet_net_pton(af, src, dst, size)
  *	convert network number from presentation to network format.
  *	accepts hex octets, hex strings, decimal octets, and /CIDR.
  *	"size" is in bytes and describes "dst".
@@ -59,7 +59,7 @@ static int	inet_cidr_pton_ipv6(const char *src, u_char *dst, size_t size);
  *
  */
 int
-inet_net_pton(int af, const char *src, void *dst, size_t size)
+pg_inet_net_pton(int af, const char *src, void *dst, size_t size)
 {
 	switch (af)
 	{
@@ -241,7 +241,7 @@ emsgsize:
 
 /*
  * int
- * inet_net_pton(af, src, dst, *bits)
+ * inet_net_pton_ipv4(af, src, dst, *bits)
  *	convert network address from presentation to network format.
  *	accepts inet_pton()'s input for this "af" plus trailing "/CIDR".
  *	"dst" is assumed large enough for its "af".  "bits" is set to the

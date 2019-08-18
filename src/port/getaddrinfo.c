@@ -387,9 +387,10 @@ getnameinfo(const struct sockaddr *sa, int salen,
 	{
 		if (sa->sa_family == AF_INET)
 		{
-			if (inet_net_ntop(AF_INET, &((struct sockaddr_in *) sa)->sin_addr,
-							  sa->sa_family == AF_INET ? 32 : 128,
-							  node, nodelen) == NULL)
+			if (pg_inet_net_ntop(AF_INET,
+								 &((struct sockaddr_in *) sa)->sin_addr,
+								 sa->sa_family == AF_INET ? 32 : 128,
+								 node, nodelen) == NULL)
 				return EAI_MEMORY;
 		}
 		else

@@ -87,12 +87,12 @@ extern void text_to_cstring_buffer(const text *src, char *dst, size_t dst_len);
 extern int	xidComparator(const void *arg1, const void *arg2);
 
 /* inet_cidr_ntop.c */
-extern char *inet_cidr_ntop(int af, const void *src, int bits,
-							char *dst, size_t size);
+extern char *pg_inet_cidr_ntop(int af, const void *src, int bits,
+							   char *dst, size_t size);
 
 /* inet_net_pton.c */
-extern int	inet_net_pton(int af, const char *src,
-						  void *dst, size_t size);
+extern int	pg_inet_net_pton(int af, const char *src,
+							 void *dst, size_t size);
 
 /* network.c */
 extern double convert_network_to_scalar(Datum value, Oid typid, bool *failure);

@@ -44,7 +44,7 @@ static char *inet_cidr_ntop_ipv6(const u_char *src, int bits,
 
 /*
  * char *
- * inet_cidr_ntop(af, src, bits, dst, size)
+ * pg_inet_cidr_ntop(af, src, bits, dst, size)
  *	convert network number from network to presentation format.
  *	generates CIDR style result always.
  * return:
@@ -53,7 +53,7 @@ static char *inet_cidr_ntop_ipv6(const u_char *src, int bits,
  *	Paul Vixie (ISC), July 1996
  */
 char *
-inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
+pg_inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{

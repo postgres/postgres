@@ -91,8 +91,8 @@ network_in(char *src, bool is_cidr)
 	else
 		ip_family(dst) = PGSQL_AF_INET;
 
-	bits = inet_net_pton(ip_family(dst), src, ip_addr(dst),
-						 is_cidr ? ip_addrsize(dst) : -1);
+	bits = pg_inet_net_pton(ip_family(dst), src, ip_addr(dst),
+							is_cidr ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > ip_maxbits(dst)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -145,8 +145,8 @@ network_out(inet *src, bool is_cidr)
 	char	   *dst;
 	int			len;
 
-	dst = inet_net_ntop(ip_family(src), ip_addr(src), ip_bits(src),
-						tmp, sizeof(tmp));
+	dst = pg_inet_net_ntop(ip_family(src), ip_addr(src), ip_bits(src),
+						   tmp, sizeof(tmp));
 	if (dst == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
@@ -1192,8 +1192,8 @@ network_host(PG_FUNCTION_ARGS)
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
 	/* force display of max bits, regardless of masklen... */
-	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
-					  tmp, sizeof(tmp)) == NULL)
+	if (pg_inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
+						 tmp, sizeof(tmp)) == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
@@ -1217,8 +1217,8 @@ network_show(PG_FUNCTION_ARGS)
 	int			len;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	if (inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
-					  tmp, sizeof(tmp)) == NULL)
+	if (pg_inet_net_ntop(ip_family(ip), ip_addr(ip), ip_maxbits(ip),
+						 tmp, sizeof(tmp)) == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("could not format inet value: %m")));
@@ -1240,8 +1240,8 @@ inet_abbrev(PG_FUNCTION_ARGS)
 	char	   *dst;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	dst = inet_net_ntop(ip_family(ip), ip_addr(ip),
-						ip_bits(ip), tmp, sizeof(tmp));
+	dst = pg_inet_net_ntop(ip_family(ip), ip_addr(ip),
+						   ip_bits(ip), tmp, sizeof(tmp));
 
 	if (dst == NULL)
 		ereport(ERROR,
@@ -1258,8 +1258,8 @@ cidr_abbrev(PG_FUNCTION_ARGS)
 	char	   *dst;
 	char		tmp[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
 
-	dst = inet_cidr_ntop(ip_family(ip), ip_addr(ip),
-						 ip_bits(ip), tmp, sizeof(tmp));
+	dst = pg_inet_cidr_ntop(ip_family(ip), ip_addr(ip),
+							ip_bits(ip), tmp, sizeof(tmp));
 
 	if (dst == NULL)
 		ereport(ERROR,

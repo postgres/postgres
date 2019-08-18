@@ -503,8 +503,8 @@ extern int	pg_codepage_to_encoding(UINT cp);
 #endif
 
 /* port/inet_net_ntop.c */
-extern char *inet_net_ntop(int af, const void *src, int bits,
-						   char *dst, size_t size);
+extern char *pg_inet_net_ntop(int af, const void *src, int bits,
+							  char *dst, size_t size);
 
 /* port/pg_strong_random.c */
 extern bool pg_strong_random(void *buf, size_t len);
