@@ -2433,11 +2433,19 @@ SELECT rec FROM jsonb_populate_record(
 
 -- anonymous record type
 SELECT jsonb_populate_record(null::record, '{"x": 0, "y": 1}');
-ERROR:  record type has not been registered
+ERROR:  could not determine row type for result of jsonb_populate_record
+HINT:  Provide a non-null record argument, or call the function in the FROM clause using a column definition list.
 SELECT jsonb_populate_record(row(1,2), '{"f1": 0, "f2": 1}');
  jsonb_populate_record 
 -----------------------
  (0,1)
+(1 row)
+
+SELECT * FROM
+  jsonb_populate_record(null::record, '{"x": 776}') AS (x int, y int);
+  x  | y 
+-----+---
+ 776 |  
 (1 row)
 
 -- composite domain
@@ -2516,7 +2524,8 @@ SELECT * FROM jsonb_populate_recordset(row('def',99,NULL)::jbpop,'[{"a":[100,200
 
 -- anonymous record type
 SELECT jsonb_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
-ERROR:  record type has not been registered
+ERROR:  could not determine row type for result of jsonb_populate_recordset
+HINT:  Provide a non-null record argument, or call the function in the FROM clause using a column definition list.
 SELECT jsonb_populate_recordset(row(1,2), '[{"f1": 0, "f2": 1}]');
  jsonb_populate_recordset 
 --------------------------
@@ -2533,9 +2542,17 @@ FROM (VALUES (1),(2)) v(i);
  2 | (2,43)
 (4 rows)
 
+SELECT * FROM
+  jsonb_populate_recordset(null::record, '[{"x": 776}]') AS (x int, y int);
+  x  | y 
+-----+---
+ 776 |  
+(1 row)
+
 -- empty array is a corner case
 SELECT jsonb_populate_recordset(null::record, '[]');
-ERROR:  record type has not been registered
+ERROR:  could not determine row type for result of jsonb_populate_recordset
+HINT:  Provide a non-null record argument, or call the function in the FROM clause using a column definition list.
 SELECT jsonb_populate_recordset(row(1,2), '[]');
  jsonb_populate_recordset 
 --------------------------
@@ -2544,6 +2561,12 @@ SELECT jsonb_populate_recordset(row(1,2), '[]');
 SELECT * FROM jsonb_populate_recordset(NULL::jbpop,'[]') q;
  a | b | c 
 ---+---+---
+(0 rows)
+
+SELECT * FROM
+  jsonb_populate_recordset(null::record, '[]') AS (x int, y int);
+ x | y 
+---+---
 (0 rows)
 
 -- composite domain

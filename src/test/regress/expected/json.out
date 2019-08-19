@@ -1744,11 +1744,19 @@ SELECT rec FROM json_populate_record(
 
 -- anonymous record type
 SELECT json_populate_record(null::record, '{"x": 0, "y": 1}');
-ERROR:  record type has not been registered
+ERROR:  could not determine row type for result of json_populate_record
+HINT:  Provide a non-null record argument, or call the function in the FROM clause using a column definition list.
 SELECT json_populate_record(row(1,2), '{"f1": 0, "f2": 1}');
  json_populate_record 
 ----------------------
  (0,1)
+(1 row)
+
+SELECT * FROM
+  json_populate_record(null::record, '{"x": 776}') AS (x int, y int);
+  x  | y 
+-----+---
+ 776 |  
 (1 row)
 
 -- composite domain
@@ -1834,7 +1842,8 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,3
 
 -- anonymous record type
 SELECT json_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
-ERROR:  record type has not been registered
+ERROR:  could not determine row type for result of json_populate_recordset
+HINT:  Provide a non-null record argument, or call the function in the FROM clause using a column definition list.
 SELECT json_populate_recordset(row(1,2), '[{"f1": 0, "f2": 1}]');
  json_populate_recordset 
 -------------------------
@@ -1851,9 +1860,17 @@ FROM (VALUES (1),(2)) v(i);
  2 | (2,43)
 (4 rows)
 
+SELECT * FROM
+  json_populate_recordset(null::record, '[{"x": 776}]') AS (x int, y int);
+  x  | y 
+-----+---
+ 776 |  
+(1 row)
+
 -- empty array is a corner case
 SELECT json_populate_recordset(null::record, '[]');
-ERROR:  record type has not been registered
+ERROR:  could not determine row type for result of json_populate_recordset
+HINT:  Provide a non-null record argument, or call the function in the FROM clause using a column definition list.
 SELECT json_populate_recordset(row(1,2), '[]');
  json_populate_recordset 
 -------------------------
@@ -1862,6 +1879,12 @@ SELECT json_populate_recordset(row(1,2), '[]');
 SELECT * FROM json_populate_recordset(NULL::jpop,'[]') q;
  a | b | c 
 ---+---+---
+(0 rows)
+
+SELECT * FROM
+  json_populate_recordset(null::record, '[]') AS (x int, y int);
+ x | y 
+---+---
 (0 rows)
 
 -- composite domain
