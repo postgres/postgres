@@ -682,8 +682,8 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * we don't use uniquePairs here because we know that the pairs list is
-	 * already sorted and uniq'ed.
+	 * we don't use hstoreUniquePairs here because we know that the pairs list
+	 * is already sorted and uniq'ed.
 	 */
 
 	out = hstorePairs(out_pairs, out_count, bufsiz);

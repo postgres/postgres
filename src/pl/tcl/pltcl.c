@@ -3027,7 +3027,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 	const char *nullname = NULL;
 
 	/************************************************************
-	 * Prepare pointers for Tcl_SetVar2() below
+	 * Prepare pointers for Tcl_SetVar2Ex() below
 	 ************************************************************/
 	if (arrayname == NULL)
 	{

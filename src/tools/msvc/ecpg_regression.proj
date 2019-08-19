@@ -54,7 +54,7 @@
 
   <!-- Run ECPG and the Visual C++ compiler on the files. Don't bother with dependency check between the steps -->
   <Exec WorkingDirectory="%(Pgc.RelativeDir)" Command="$(OUTDIR)ecpg\ecpg -I ../../include --regression $(ECPGPARAM) -o %(Pgc.Filename).c %(Pgc.Filename).pgc" />
-  <Exec WorkingDirectorY="%(Pgc.RelativeDir)" Command="cl /nologo %(Pgc.FileName).c /TC /MD$(DEBUGLIB) /DENABLE_THREAD_SAFETY /DWIN32 /I. /I..\..\include /I..\..\..\libpq /I..\..\..\..\include /link /defaultlib:$(OUTDIR)libecpg\libecpg.lib /defaultlib:$(OUTDIR)libecpg_compat\libecpg_compat.lib /defaultlib:$(OUTDIR)libpgtypes\libpgtypes.lib" />
+  <Exec WorkingDirectory="%(Pgc.RelativeDir)" Command="cl /nologo %(Pgc.FileName).c /TC /MD$(DEBUGLIB) /DENABLE_THREAD_SAFETY /DWIN32 /I. /I..\..\include /I..\..\..\libpq /I..\..\..\..\include /link /defaultlib:$(OUTDIR)libecpg\libecpg.lib /defaultlib:$(OUTDIR)libecpg_compat\libecpg_compat.lib /defaultlib:$(OUTDIR)libpgtypes\libpgtypes.lib" />
  </Target>
 
  <!-- Clean up all output files -->

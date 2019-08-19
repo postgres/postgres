@@ -52,7 +52,7 @@
 /*
  * Flags for buffer descriptors
  *
- * Note: TAG_VALID essentially means that there is a buffer hashtable
+ * Note: BM_TAG_VALID essentially means that there is a buffer hashtable
  * entry associated with the buffer's tag.
  */
 #define BM_LOCKED				(1U << 22)	/* buffer header is locked */

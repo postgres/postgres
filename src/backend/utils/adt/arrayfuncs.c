@@ -1997,7 +1997,7 @@ array_get_element_expanded(Datum arraydatum,
 
 /*
  * array_get_slice :
- *		   This routine takes an array and a range of indices (upperIndex and
+ *		   This routine takes an array and a range of indices (upperIndx and
  *		   lowerIndx), creates a new array structure for the referred elements
  *		   and returns a pointer to it.
  *

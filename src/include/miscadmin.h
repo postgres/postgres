@@ -25,7 +25,7 @@
 
 #include <signal.h>
 
-#include "datatype/timestamp.h" /* for TimestampTZ */
+#include "datatype/timestamp.h" /* for TimestampTz */
 #include "pgtime.h"				/* for pg_time_t */
 
 

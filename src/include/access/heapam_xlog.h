@@ -168,7 +168,7 @@ typedef struct xl_heap_insert
  *
  * In block 0's data portion, there is an xl_multi_insert_tuple struct,
  * followed by the tuple data for each tuple. There is padding to align
- * each xl_multi_insert struct.
+ * each xl_multi_insert_tuple struct.
  */
 typedef struct xl_heap_multi_insert
 {

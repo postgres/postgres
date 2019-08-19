@@ -187,7 +187,7 @@ typedef enum
 } WalRcvExecStatus;
 
 /*
- * Return value for walrcv_query, returns the status of the execution and
+ * Return value for walrcv_exec, returns the status of the execution and
  * tuples if any.
  */
 typedef struct WalRcvExecResult

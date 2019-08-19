@@ -1189,7 +1189,7 @@ statext_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
 }
 
 /*
- * examine_operator_expression
+ * examine_opclause_expression
  *		Split expression into Var and Const parts.
  *
  * Attempts to match the arguments to either (Var op Const) or (Const op Var),

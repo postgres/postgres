@@ -317,8 +317,8 @@ pqParseInput3(PGconn *conn)
 					 *
 					 * If we're doing a Describe, we have to pass something
 					 * back to the client, so set up a COMMAND_OK result,
-					 * instead of TUPLES_OK.  Otherwise we can just ignore
-					 * this message.
+					 * instead of PGRES_TUPLES_OK.  Otherwise we can just
+					 * ignore this message.
 					 */
 					if (conn->queryclass == PGQUERY_DESCRIBE)
 					{

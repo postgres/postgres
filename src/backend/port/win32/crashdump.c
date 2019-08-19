@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * win32_crashdump.c
+ * crashdump.c
  *		   Automatic crash dump creation for PostgreSQL on Windows
  *
  * The crashdump feature traps unhandled win32 exceptions produced by the

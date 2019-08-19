@@ -233,7 +233,7 @@ struct HeapTupleHeaderData
 
 /*
  * A tuple that has HEAP_XMAX_IS_MULTI and HEAP_XMAX_LOCK_ONLY but neither of
- * XMAX_EXCL_LOCK and XMAX_KEYSHR_LOCK must come from a tuple that was
+ * HEAP_XMAX_EXCL_LOCK and HEAP_XMAX_KEYSHR_LOCK must come from a tuple that was
  * share-locked in 9.2 or earlier and then pg_upgrade'd.
  *
  * In 9.2 and prior, HEAP_XMAX_IS_MULTI was only set when there were multiple

@@ -579,7 +579,7 @@ network_abbrev_abort(int memtupcount, SortSupport ssup)
  * IPv4 addresses have a maximum of 32 bits compared to IPv6's 64 bits, so in
  * IPv6 each part may be larger.
  *
- * inet/cdir types compare using these sorting rules. If inequality is detected
+ * inet/cidr types compare using these sorting rules. If inequality is detected
  * at any step, comparison is finished. If any rule is a tie, the algorithm
  * drops through to the next to break it:
  *

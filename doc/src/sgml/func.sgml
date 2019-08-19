@@ -2875,7 +2875,7 @@
       </row>
 
       <row>
-       <entry><literal>tcvn_to_utf8</literal></entry>
+       <entry><literal>windows_1258_to_utf8</literal></entry>
        <entry><literal>WIN1258</literal></entry>
        <entry><literal>UTF8</literal></entry>
       </row>
@@ -3037,7 +3037,7 @@
       </row>
 
       <row>
-       <entry><literal>utf8_to_tcvn</literal></entry>
+       <entry><literal>utf8_to_windows_1258</literal></entry>
        <entry><literal>UTF8</literal></entry>
        <entry><literal>WIN1258</literal></entry>
       </row>

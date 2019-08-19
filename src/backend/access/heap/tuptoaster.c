@@ -44,8 +44,6 @@
 #include "utils/typcache.h"
 
 
-#undef TOAST_DEBUG
-
 /*
  *	The information at the start of the compressed toast data.
  */

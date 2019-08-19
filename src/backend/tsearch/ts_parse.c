@@ -282,7 +282,7 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 				if (!dictExists)
 				{
 					/*
-					 * Dictionary can't work with current tpe of lexeme,
+					 * Dictionary can't work with current type of lexeme,
 					 * return to basic mode and redo all stored lexemes
 					 */
 					ld->curDictId = InvalidOid;

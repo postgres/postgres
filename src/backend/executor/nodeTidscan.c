@@ -432,7 +432,7 @@ TidRecheck(TidScanState *node, TupleTableSlot *slot)
  *		Initial States:
  *		  -- the relation indicated is opened for scanning so that the
  *			 "cursor" is positioned before the first qualifying tuple.
- *		  -- tidPtr is -1.
+ *		  -- tss_TidPtr is -1.
  * ----------------------------------------------------------------
  */
 static TupleTableSlot *
@@ -498,7 +498,7 @@ ExecEndTidScan(TidScanState *node)
  *		scan keys, and opens the base and tid relations.
  *
  *		Parameters:
- *		  node: TidNode node produced by the planner.
+ *		  node: TidScan node produced by the planner.
  *		  estate: the execution state initialized in InitPlan.
  * ----------------------------------------------------------------
  */

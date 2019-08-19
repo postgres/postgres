@@ -697,8 +697,8 @@ my_picksplit(PG_FUNCTION_ARGS)
 
         /*
          * Choose where to put the index entries and update unionL and unionR
-         * accordingly. Append the entries to either v_spl_left or
-         * v_spl_right, and care about the counters.
+         * accordingly. Append the entries to either v-&gt;spl_left or
+         * v-&gt;spl_right, and care about the counters.
          */
 
         if (my_choice_is_left(unionL, curl, unionR, curr))

@@ -37,7 +37,7 @@ typedef struct
  * Finds the next whitespace-delimited word within the 'in' string.
  * Returns a pointer to the first character of the word, and a pointer
  * to the next byte after the last character in the word (in *end).
- * Character '*' at the end of word will not be threated as word
+ * Character '*' at the end of word will not be treated as word
  * character if flags is not null.
  */
 static char *

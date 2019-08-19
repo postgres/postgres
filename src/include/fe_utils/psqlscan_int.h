@@ -27,7 +27,7 @@
  * is the start state number, which is easy enough to manage --- usually,
  * in fact, we just need to set it to INITIAL when changing lexers.  But to
  * make that work at all, we must use re-entrant lexers, so that all the
- * relevant state is in the yyscanner_t attached to the PsqlScanState;
+ * relevant state is in the yyscan_t attached to the PsqlScanState;
  * if we were using lexers with separate static state we would soon end up
  * with dangling buffer pointers in one or the other.  Also note that this
  * is unlikely to work very nicely if the lexers aren't all built with the

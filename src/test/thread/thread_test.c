@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * test_thread_funcs.c
+ * thread_test.c
  *		libc thread test program
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group

@@ -792,7 +792,7 @@ SpeculativeInsertionWait(TransactionId xid, uint32 token)
 }
 
 /*
- * XactLockTableWaitErrorContextCb
+ * XactLockTableWaitErrorCb
  *		Error context callback for transaction lock waits.
  */
 static void

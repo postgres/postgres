@@ -2,7 +2,7 @@
 # isolation"[1].
 #
 # Here we test that serializable snapshot isolation can avoid the anomaly
-# without aborting any tranasctions, by instead causing s3 to be deferred
+# without aborting any transactions, by instead causing s3 to be deferred
 # until a safe snapshot can be taken.
 #
 # [1] http://www.cs.umb.edu/~poneil/ROAnom.pdf

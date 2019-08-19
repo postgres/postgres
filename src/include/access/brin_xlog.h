@@ -77,7 +77,7 @@ typedef struct xl_brin_insert
  * A cross-page update is the same as an insert, but also stores information
  * about the old tuple.
  *
- * Like in xlog_brin_update:
+ * Like in xl_brin_insert:
  * Backup block 0: new page, block data includes the new BrinTuple.
  * Backup block 1: revmap page
  *

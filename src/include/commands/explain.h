@@ -84,7 +84,7 @@ extern void ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc);
 
 extern void ExplainPrintJITSummary(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainPrintJIT(ExplainState *es, int jit_flags,
-							struct JitInstrumentation *jit_instr, int worker_i);
+							struct JitInstrumentation *jit_instr, int worker_num);
 
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
 

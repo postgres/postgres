@@ -42,7 +42,7 @@ step "s3_key_share"	{ SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE; }
 step "s3_commit"	{ COMMIT; }
 step "s3_vacuum"	{ VACUUM FREEZE tab_freeze; }
 
-# This permutation verfies that a previous bug
+# This permutation verifies that a previous bug
 #     https://postgr.es/m/E5711E62-8FDF-4DCA-A888-C200BF6B5742@amazon.com
 #     https://postgr.es/m/20171102112019.33wb7g5wp4zpjelu@alap3.anarazel.de
 # is not reintroduced. We used to make wrong pruning / freezing

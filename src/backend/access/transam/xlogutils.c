@@ -523,7 +523,7 @@ XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
 }
 
 /*
- * Struct actually returned by XLogFakeRelcacheEntry, though the declared
+ * Struct actually returned by CreateFakeRelcacheEntry, though the declared
  * return type is Relation.
  */
 typedef struct

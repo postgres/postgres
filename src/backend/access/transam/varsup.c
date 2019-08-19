@@ -488,7 +488,7 @@ ForceTransactionIdLimitUpdate(void)
 	if (!TransactionIdIsValid(xidVacLimit))
 		return true;			/* this shouldn't happen anymore either */
 	if (TransactionIdFollowsOrEquals(nextXid, xidVacLimit))
-		return true;			/* past VacLimit, don't delay updating */
+		return true;			/* past xidVacLimit, don't delay updating */
 	if (!SearchSysCacheExists1(DATABASEOID, ObjectIdGetDatum(oldestXidDB)))
 		return true;			/* could happen, per comments above */
 	return false;

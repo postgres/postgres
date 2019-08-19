@@ -893,7 +893,7 @@ pgstat_report_stat(bool force)
 				this_msg->m_nentries = 0;
 			}
 		}
-		/* zero out TableStatus structs after use */
+		/* zero out PgStat_TableStatus structs after use */
 		MemSet(tsa->tsa_entries, 0,
 			   tsa->tsa_used * sizeof(PgStat_TableStatus));
 		tsa->tsa_used = 0;

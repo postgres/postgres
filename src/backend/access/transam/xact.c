@@ -92,8 +92,8 @@ int			synchronous_commit = SYNCHRONOUS_COMMIT_ON;
  * in the user backend, so we need some additional bookkeeping.
  *
  * XactTopFullTransactionId stores the XID of our toplevel transaction, which
- * will be the same as TopTransactionState.fullTransactionId in an ordinary
- * backend; but in a parallel backend, which does not have the entire
+ * will be the same as TopTransactionStateData.fullTransactionId in an
+ * ordinary backend; but in a parallel backend, which does not have the entire
  * transaction state, it will instead be copied from the backend that started
  * the parallel operation.
  *

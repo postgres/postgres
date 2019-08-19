@@ -45,7 +45,7 @@ typedef struct XLogPageHeaderData
 	 * continue on the next page.  xlp_rem_len is the number of bytes
 	 * remaining from a previous page.
 	 *
-	 * Note that xl_rem_len includes backup-block data; that is, it tracks
+	 * Note that xlp_rem_len includes backup-block data; that is, it tracks
 	 * xl_tot_len not xl_len in the initial header.  Also note that the
 	 * continuation data isn't necessarily aligned.
 	 */

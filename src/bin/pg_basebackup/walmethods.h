@@ -81,7 +81,7 @@ struct WalWriteMethod
 /*
  * Available WAL methods:
  *	- WalDirectoryMethod - write WAL to regular files in a standard pg_wal
- *	- TarDirectoryMethod - write WAL to a tarfile corresponding to pg_wal
+ *	- WalTarMethod       - write WAL to a tarfile corresponding to pg_wal
  *						   (only implements the methods required for pg_basebackup,
  *						   not all those required for pg_receivewal)
  */
