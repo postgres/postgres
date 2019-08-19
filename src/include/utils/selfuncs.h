@@ -16,6 +16,7 @@
 #define SELFUNCS_H
 
 #include "access/htup.h"
+#include "fmgr.h"
 #include "nodes/pathnodes.h"
 
 
