@@ -3,6 +3,7 @@
 # see README in this directory about image handling
 
 ALL_IMAGES = \
+	genetic-algorithm.svg \
 	gin.svg \
 	pagelayout.svg
 

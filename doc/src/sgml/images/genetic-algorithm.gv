@@ -1,0 +1,48 @@
+digraph {
+	layout=dot;
+
+	// default values
+	node  [shape=box, label="", fontname="sans-serif", style=filled, fillcolor=white, fontsize=8];
+	graph [fontname="sans-serif"]; // must be specified separately
+	edge  [fontname="sans-serif"]; // must be specified separately
+
+	// an unobtrusive background color
+	pad="1.0, 0.5";
+	bgcolor=whitesmoke;
+
+	// layout of edges and nodes
+	splines=ortho;
+	nodesep=0.3;
+	ranksep=0.3;
+
+	// nodes
+	a1[label="INITIALIZE t := 0"];
+	a2[label="INITIALIZE P(t)"];
+	a3[label="evaluate FITNESS of P(t)"];
+	a4[shape="diamond", label="STOPPING CRITERION"; width=4];
+
+	// connect 'end' node with 'a9' node (bottom of figure)
+	{
+	  rank=same;
+	  a9[label="t := t + 1"];
+	  // end-symbol similar to UML notation
+	  end[shape=doublecircle, label="end", width=0.5];
+	}
+
+	a5[label="P'(t) := RECOMBINATION{P(t)}"];
+	a6[label="P''(t) := MUTATION{P'(t)}"];
+	a7[label="P(t+1) := SELECTION{P''(t) + P(t)}"];
+	a8[label="evaluate FITNESS of P''(t)"];
+
+	// edges
+	a1 -> a2 -> a3 -> a4;
+	a4 -> a5[xlabel="false   ", fontsize=10];
+	a4 -> end[xlabel="true  ",  fontsize=10];
+	a5 -> a6 -> a7 -> a8 -> a9;
+	a4 -> a9 [dir=back];
+
+	// explain the notation
+	expl [shape=plaintext, fontsize=10, width=3.2, fillcolor=whitesmoke,
+	      label="P(t): generation of ancestors at a time t\lP''(t): generation of descendants at a time t\l"];
+
+}

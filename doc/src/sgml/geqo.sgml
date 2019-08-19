@@ -84,8 +84,18 @@
     Through simulation of the evolutionary operations <firstterm>recombination</firstterm>,
     <firstterm>mutation</firstterm>, and
     <firstterm>selection</firstterm> new generations of search points are found
-    that show a higher average fitness than their ancestors.
+    that show a higher average fitness than their ancestors. <xref linkend="geqo-figure"/>
+    illustrates these steps.
    </para>
+
+   <figure id="geqo-figure">
+    <title>Structure of a Genetic Algorithm</title>
+    <mediaobject>
+     <imageobject>
+      <imagedata fileref="images/genetic-algorithm.svg" format="SVG" width="100%"/>
+     </imageobject>
+    </mediaobject>
+   </figure>
 
    <para>
     According to the <systemitem class="resource">comp.ai.genetic</systemitem> <acronym>FAQ</acronym> it cannot be stressed too
@@ -94,49 +104,6 @@
     non-random (better than random).
    </para>
 
-   <figure id="geqo-diagram">
-    <title>Structured Diagram of a Genetic Algorithm</title>
-
-    <informaltable frame="none">
-     <tgroup cols="2">
-      <tbody>
-       <row>
-        <entry>P(t)</entry>
-        <entry>generation of ancestors at a time t</entry>
-       </row>
-
-       <row>
-        <entry>P''(t)</entry>
-        <entry>generation of descendants at a time t</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </informaltable>
-
-<literallayout class="monospaced">
-+=========================================+
-|&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;  Algorithm GA  &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;|
-+=========================================+
-| INITIALIZE t := 0                       |
-+=========================================+
-| INITIALIZE P(t)                         |
-+=========================================+
-| evaluate FITNESS of P(t)                |
-+=========================================+
-| while not STOPPING CRITERION do         |
-|   +-------------------------------------+
-|   | P'(t)  := RECOMBINATION{P(t)}       |
-|   +-------------------------------------+
-|   | P''(t) := MUTATION{P'(t)}           |
-|   +-------------------------------------+
-|   | P(t+1) := SELECTION{P''(t) + P(t)}  |
-|   +-------------------------------------+
-|   | evaluate FITNESS of P''(t)          |
-|   +-------------------------------------+
-|   | t := t + 1                          |
-+===+=====================================+
-</literallayout>
-   </figure>
   </sect1>
 
   <sect1 id="geqo-pg-intro">
