@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Check (almost) all PostgreSQL include files for C++ compatibility.
+# Check (almost) all PostgreSQL include files for standalone build.
 #
 # Argument 1 is the top-level source directory, argument 2 the
 # top-level build directory (they might be the same). If not set, they
@@ -12,7 +12,7 @@
 #
 # No output if everything is OK, else compiler errors.
 #
-# src/tools/pginclude/cpluspluscheck
+# src/tools/pginclude/headerscheck
 # Copyright (c) 2009-2019, PostgreSQL Global Development Group
 
 if [ -z "$1" ]; then
@@ -29,23 +29,19 @@ fi
 
 me=`basename $0`
 
-# These switches are g++ specific, you may override if necessary.
-CXXFLAGS=${CXXFLAGS:- -fsyntax-only -Wall}
-
 # Pull some info from configure's results.
 MGLOB="$builddir/src/Makefile.global"
 CPPFLAGS=`sed -n 's/^CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
-CXX=`sed -n 's/^CXX[ 	]*=[ 	]*//p' "$MGLOB"`
+CFLAGS=`sed -n 's/^CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
+CC=`sed -n 's/^CC[ 	]*=[ 	]*//p' "$MGLOB"`
+PG_SYSROOT=`sed -n 's/^PG_SYSROOT[ 	]*=[ 	]*//p' "$MGLOB"`
 perl_includespec=`sed -n 's/^perl_includespec[ 	]*=[ 	]*//p' "$MGLOB"`
 python_includespec=`sed -n 's/^python_includespec[ 	]*=[ 	]*//p' "$MGLOB"`
 
-# Extract any -I and -D switches from CPPFLAGS.
-# (If necessary, user can pass more switches by presetting EXTRAFLAGS.)
-for flag in $CPPFLAGS; do
-  case $flag in
-    -I*|-D*) EXTRAFLAGS="$EXTRAFLAGS $flag";;
-  esac
-done
+# needed on Darwin
+CPPFLAGS=`echo "$CPPFLAGS" | sed "s|\\\$(PG_SYSROOT)|$PG_SYSROOT|g"`
+
+# (EXTRAFLAGS is not set here, but user can pass it in if need be.)
 
 # Create temp directory.
 tmp=`mktemp -d /tmp/$me.XXXXXX`
@@ -119,6 +115,9 @@ do
 	test "$f" = src/pl/plpgsql/src/pl_gram.h && continue
 	test "$f" = src/interfaces/ecpg/preproc/preproc.h && continue
 
+	# This produces a "no previous prototype" warning.
+	test "$f" = src/include/storage/checksum_impl.h && continue
+
 	# ppport.h is not under our control, so we can't make it standalone.
 	test "$f" = src/pl/plperl/ppport.h && continue
 
@@ -127,26 +126,11 @@ do
 	# printf_hack.h produces "unused function" warnings.
 	test "$f" = src/interfaces/ecpg/test/printf_hack.h && continue
 
-	# pg_trace.h and utils/probes.h can include sys/sdt.h from SystemTap,
-	# which itself contains C++ code and so won't compile with a C++
-	# compiler under extern "C" linkage.
-	test "$f" = src/include/pg_trace.h && continue
-	test "$f" = src/include/utils/probes.h && continue
-
-	# pg_dump is not C++-clean because it uses "public" and "namespace"
-	# as field names, which is unfortunate but we won't change it now.
-	test "$f" = src/bin/pg_dump/compress_io.h && continue
-	test "$f" = src/bin/pg_dump/parallel.h && continue
-	test "$f" = src/bin/pg_dump/pg_backup_archiver.h && continue
-	test "$f" = src/bin/pg_dump/pg_dump.h && continue
-
 	# OK, create .c file to include this .h file.
 	{
-	    echo 'extern "C" {'
 	    test "$f" != src/include/postgres_fe.h && echo '#include "postgres.h"'
 	    echo "#include \"$f\""
-	    echo '};'
-	} >$tmp/test.cpp
+	} >$tmp/test.c
 
 	# Some subdirectories need extra -I switches.
 	case "$f" in
@@ -161,9 +145,9 @@ do
 	esac
 
 	# Run the test.
-	${CXX:-g++} -I $builddir -I $srcdir \
+	${CC:-gcc} $CPPFLAGS $CFLAGS -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
-		$EXTRAINCLUDES $EXTRAFLAGS $CXXFLAGS -c $tmp/test.cpp
+		$EXTRAINCLUDES $EXTRAFLAGS -c $tmp/test.c -o $tmp/test.o
 
 done
