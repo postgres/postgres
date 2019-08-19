@@ -2705,7 +2705,7 @@ psql_completion(const char *text, int start, int end)
 		if (TailMatches("(|*,"))
 			COMPLETE_WITH("INPUT", "OUTPUT", "RECEIVE", "SEND",
 						  "TYPMOD_IN", "TYPMOD_OUT", "ANALYZE",
-						  "INTERNALLENGTH", "PASSBYVALUE", "ALIGNMENT",
+						  "INTERNALLENGTH", "PASSEDBYVALUE", "ALIGNMENT",
 						  "STORAGE", "LIKE", "CATEGORY", "PREFERRED",
 						  "DEFAULT", "ELEMENT", "DELIMITER",
 						  "COLLATABLE");
