@@ -2239,9 +2239,9 @@ CREATE TABLE cities_partdef
     Typed tables implement a subset of the SQL standard.  According to
     the standard, a typed table has columns corresponding to the
     underlying composite type as well as one other column that is
-    the <quote>self-referencing column</quote>.  PostgreSQL does not
-    support these self-referencing columns explicitly, but the same
-    effect can be had using the OID feature.
+    the <quote>self-referencing column</quote>.
+    <productname>PostgreSQL</productname> does not support self-referencing
+    columns explicitly.
    </para>
   </refsect2>
 

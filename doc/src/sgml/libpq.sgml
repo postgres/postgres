@@ -5620,13 +5620,13 @@ PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
       returning the connection's previous setting.
       In <firstterm>TERSE</firstterm> mode, returned messages include
       severity, primary text, and position only; this will normally fit on a
-      single line.  The default mode produces messages that include the above
-      plus any detail, hint, or context fields (these might span multiple
-      lines).  The <firstterm>VERBOSE</firstterm> mode includes all available
-      fields.  The <firstterm>SQLSTATE</firstterm> mode includes only the
-      error severity and the <symbol>SQLSTATE</symbol> error code, if one is
-      available (if not, the output is like <firstterm>TERSE</firstterm>
-      mode).
+      single line.  The <firstterm>DEFAULT</firstterm> mode produces messages
+      that include the above plus any detail, hint, or context fields (these
+      might span multiple lines).  The <firstterm>VERBOSE</firstterm> mode
+      includes all available fields.  The <firstterm>SQLSTATE</firstterm>
+      mode includes only the error severity and the <symbol>SQLSTATE</symbol>
+      error code, if one is available (if not, the output is like
+      <firstterm>TERSE</firstterm> mode).
      </para>
 
      <para>

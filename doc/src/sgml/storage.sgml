@@ -957,7 +957,8 @@ data. Empty in ordinary tables.</entry>
   only present if the <firstterm>HEAP_HASNULL</firstterm> bit is set in
   <structfield>t_infomask</structfield>. If it is present it begins just after
   the fixed header and occupies enough bytes to have one bit per data column
-  (that is, <structfield>t_natts</structfield> bits altogether). In this list of bits, a
+  (that is, the number of bits that equals the attribute count in
+  <structfield>t_infomask2</structfield>). In this list of bits, a
   1 bit indicates not-null, a 0 bit is a null.  When the bitmap is not
   present, all columns are assumed not-null.
   The object ID is only present if the <firstterm>HEAP_HASOID_OLD</firstterm> bit

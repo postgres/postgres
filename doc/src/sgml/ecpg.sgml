@@ -312,14 +312,14 @@ current=testdb1 (should be testdb1)
   </para>
 
   <para>
-   The third option is to declare a sql identifier linked to
+   The third option is to declare a SQL identifier linked to
    the connection, for example:
 <programlisting>
 EXEC SQL AT <replaceable>connection-name</replaceable> DECLARE <replaceable>statement-name</replaceable> STATEMENT;
 EXEC SQL PREPARE <replaceable>statement-name</replaceable> FROM :<replaceable>dyn-string</replaceable>;
 </programlisting>
-   Once you link a sql identifier to a connection, you execute a dynamic SQL
-   without AT clause.
+   Once you link a SQL identifier to a connection, execute dynamic SQL
+   statements using this identifier without the <literal>AT</literal> clause.
   </para>
   </sect2>
 
@@ -1209,8 +1209,8 @@ EXEC SQL END DECLARE SECTION;
      <title id="ecpg-type-bytea">bytea</title>
 
      <para>
-      The handling of the <type>bytea</type> type is also similar to
-      the <type>VARCHAR</type>. The definition on an array of type
+      The handling of the <type>bytea</type> type is similar to
+      that of <type>VARCHAR</type>. The definition on an array of type
       <type>bytea</type> is converted into a named struct for every
       variable. A declaration like:
 <programlisting>
@@ -1221,8 +1221,8 @@ bytea var[180];
 struct bytea_var { int len; char arr[180]; } var;
 </programlisting>
       The member <structfield>arr</structfield> hosts binary format
-      data. It also can handle even <literal>'\0'</literal> as part of
-      data unlike <type>VARCHAR</type>.
+      data. It can also handle <literal>'\0'</literal> as part of
+      data, unlike <type>VARCHAR</type>.
       The data is converted from/to hex format and sent/received by
       ecpglib.
      </para>
@@ -6810,7 +6810,7 @@ EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
   <refentry id="ecpg-sql-declare-statement">
    <refnamediv>
     <refname>DECLARE STATEMENT</refname>
-    <refpurpose>declares SQL statement identifier associated with connection</refpurpose>
+    <refpurpose>declares a SQL statement identifier associated with connection</refpurpose>
    </refnamediv>
 
    <refsynopsisdiv>
@@ -6823,12 +6823,13 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
     <title>Description</title>
 
     <para>
-     <command>DECLARE STATEMENT</command> declares SQL statement identifier.
-     SQL statement identifier is associated with connection.
+     <command>DECLARE STATEMENT</command> declares a SQL statement identifier
+     to be associated with connection.
     </para>
 
     <para>
-     <command>DECLARE CURSOR</command> with a SQL statement identifier can be written before PREPARE.
+     <command>DECLARE CURSOR</command> with an SQL statement identifier
+     can be written before <command>PREPARE</command>.
     </para>
    </refsect1>
 
@@ -6843,7 +6844,8 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
         A database connection name established by the <command>CONNECT</command> command.
        </para>
        <para>
-        If AT clause is omitted, an SQL statement identifier is associated with the DEFAULT connection.
+        If the <literal>AT</literal> clause is omitted, the SQL statement
+        identifier is associated with the <literal>DEFAULT</literal> connection.
        </para>
       </listitem>
      </varlistentry>
@@ -6854,7 +6856,8 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
       <term><replaceable class="parameter">statement_name</replaceable></term>
       <listitem>
        <para>
-        The name of a SQL statement identifier, either as an SQL identifier or a host variable.
+        The name of the SQL statement identifier, either as an SQL identifier
+        or a host variable.
        </para>
       </listitem>
      </varlistentry>
@@ -6864,9 +6867,10 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
    <refsect1>
     <title>Notes</title>
     <para>
-     AT clause can be used at other dynamic SQL statements. The following table
-     gives the connected database when AT clause is used at DECLARE STATEMENT
-     and other dynamic statements.
+     The <literal>AT</literal> clause can be used with both
+     <command>DECLARE STATEMENT</command> and other dynamic SQL statements.
+     The following table illustrates how it affects the selected database
+     connection.
     </para>
     <table tocentry="1" id="ecpg-declare-statement-table">
      <title>Scenario</title>
@@ -6874,16 +6878,16 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
       <thead>
        <row>
         <entry>
-         Using Scenario
+         Usage Scenario
         </entry>
         <entry>
-         Declare Statement
+         DECLARE STATEMENT
         </entry>
         <entry>
          Other Dynamic Statements
         </entry>
         <entry>
-         Executed Database
+         Target Database
         </entry>
        </row>
       </thead>
@@ -6893,10 +6897,10 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
          1
         </entry>
         <entry>
-         Without AT clause
+         Without <literal>AT</literal>
         </entry>
         <entry>
-         Without AT clause
+         Without <literal>AT</literal>
         </entry>
         <entry>
          Default connection
@@ -6907,10 +6911,10 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
          2
         </entry>
         <entry>
-         Using AT clause connecting at con1
+         With <literal>AT</literal> that connects to <literal>con1</literal>
         </entry>
         <entry>
-         Without AT clause
+         Without <literal>AT</literal>
         </entry>
         <entry>
          con1
@@ -6921,10 +6925,10 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
          3
         </entry>
         <entry>
-         Using AT clause connecting at con1
+         With <literal>AT</literal> that connects to <literal>con1</literal>
         </entry>
         <entry>
-         Using AT clause connecting at con2
+         With <literal>AT</literal> that connects to <literal>con2</literal>
         </entry>
         <entry>
          con1
@@ -6935,10 +6939,10 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
          4
         </entry>
         <entry>
-         Without AT clause
+         Without <literal>AT</literal>
         </entry>
         <entry>
-         Using AT clause connecting at con2
+         With <literal>AT</literal> that connects to <literal>con2</literal>
         </entry>
         <entry>
          con2
@@ -6948,7 +6952,7 @@ EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DEC
      </tgroup>
     </table>
     <para>
-     In scenario 4, DECLARE STATEMENT will be ignored.
+     In scenario 4, <command>DECLARE STATEMENT</command> will be ignored.
     </para>
    </refsect1>
 

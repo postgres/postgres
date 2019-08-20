@@ -681,8 +681,8 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
 </programlisting>
 
     Secondly, <acronym>MCV</acronym> lists handle a wider range of clause types,
-    not just equality clauses like functional dependencies. See for example the
-    example range query, presented earlier:
+    not just equality clauses like functional dependencies. For example,
+    consider the following range query for the same table:
 
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a &lt;= 49 AND b &gt; 49;

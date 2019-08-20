@@ -871,7 +871,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <xref linkend="sql-reindex"/> can be used safely and easily in all cases.
    This command requires an <literal>ACCESS EXCLUSIVE</literal> lock by
    default, hence it is often preferable to execute it with its
-   <literal>CONCURRENTLY</literal> option which requires only a
+   <literal>CONCURRENTLY</literal> option, which requires only a
    <literal>SHARE UPDATE EXCLUSIVE</literal> lock.
   </para>
  </sect1>
