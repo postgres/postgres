@@ -95,6 +95,20 @@ select_loop(int maxFd, fd_set *workerset, bool *aborting)
 }
 
 /*
+ * ParallelSlotsMax
+ *		Returns the maximum number of parallel slots supported.
+ *
+ * Note that this is included here as FD_SETSIZE is declared in sys/select.h
+ * per POSIX.
+ */
+int
+ParallelSlotsMax(void)
+{
+	/* leave some room for pre-existing fds */
+	return FD_SETSIZE - 10;
+}
+
+/*
  * ParallelSlotsGetIdle
  *		Return a connection slot that is ready to execute a command.
  *

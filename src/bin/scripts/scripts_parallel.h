@@ -21,6 +21,8 @@ typedef struct ParallelSlot
 	bool		isFree;			/* Is it known to be idle? */
 } ParallelSlot;
 
+extern int	ParallelSlotsMax(void);
+
 extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlot *slots, int numslots);
 
 extern ParallelSlot *ParallelSlotsSetup(const char *dbname, const char *host,
