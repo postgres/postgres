@@ -3165,9 +3165,10 @@ l2:
 			 * Note that the multixact may not be done by now.  It could have
 			 * surviving members; our own xact or other subxacts of this
 			 * backend, and also any other concurrent transaction that locked
-			 * the tuple with KeyShare if we only got TupleLockUpdate.  If
-			 * this is the case, we have to be careful to mark the updated
-			 * tuple with the surviving members in Xmax.
+			 * the tuple with LockTupleKeyShare if we only got
+			 * LockTupleNoKeyExclusive.  If this is the case, we have to be
+			 * careful to mark the updated tuple with the surviving members in
+			 * Xmax.
 			 *
 			 * Note that there could have been another update in the
 			 * MultiXact. In that case, we need to check whether it committed
