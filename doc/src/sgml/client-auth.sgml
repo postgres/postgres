@@ -196,7 +196,8 @@ hostnogssenc <replaceable>database</replaceable>  <replaceable>user</replaceable
       </para>
 
       <para>
-        Note that the only supported <xref linkend="auth-methods"/> for use
+        Note that the only supported
+        <link linkend="auth-methods">authentication methods</link> for use
         with <acronym>GSSAPI</acronym> encryption
         are <literal>gss</literal>, <literal>reject</literal>,
         and <literal>trust</literal>.
@@ -489,7 +490,7 @@ hostnogssenc <replaceable>database</replaceable>  <replaceable>user</replaceable
         <listitem>
          <para>
           Use GSSAPI to authenticate the user. This is only
-          available for TCP/IP connections . See <xref
+          available for TCP/IP connections. See <xref
           linkend="gssapi-auth"/> for details.  It can be used in conjunction
           with GSSAPI encryption.
          </para>
@@ -610,8 +611,8 @@ hostnogssenc <replaceable>database</replaceable>  <replaceable>user</replaceable
        <literal>verify-full</literal> additionally enforces that the
        <literal>cn</literal> (Common Name) in the certificate matches
        the username or an applicable mapping.
-       This behavior is similar to the cert authentication method
-       (see <xref linkend="auth-cert"/> ) but enables pairing
+       This behavior is similar to the <literal>cert</literal> authentication
+       method (see <xref linkend="auth-cert"/>) but enables pairing
        the verification of client certificates with any authentication
        method that supports <literal>hostssl</literal> entries.
       </para>

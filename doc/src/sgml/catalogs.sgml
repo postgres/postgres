@@ -3017,9 +3017,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        A <command>DROP</command> of the referenced object will result in
        automatically dropping the dependent object
        whether <literal>CASCADE</literal> is specified or not.  If the
-       dependent object is reached due to a dependency on some other object,
-       the drop is converted to a drop of the referenced object, so
-       that <literal>NORMAL</literal> and <literal>AUTO</literal>
+       dependent object has to be dropped due to a dependency on some other
+       object being removed, its drop is converted to a drop of the referenced
+       object, so that <literal>NORMAL</literal> and <literal>AUTO</literal>
        dependencies of the dependent object behave much like they were
        dependencies of the referenced object.
        Example: a view's <literal>ON SELECT</literal> rule is made
@@ -10967,7 +10967,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    <structname>pg_stats_ext</structname> is also designed to present the
-   information in a more readable format than the underlying catalog
+   information in a more readable format than the underlying catalogs
    &mdash; at the cost that its schema must be extended whenever new types
    of extended statistics are added to <structname>pg_statistic_ext</structname>.
   </para>
@@ -11024,7 +11024,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>attnames</structfield></entry>
       <entry><type>name[]</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attname</literal></entry>
-      <entry>Names of the column the extended statistics is defined on</entry>
+      <entry>Names of the columns the extended statistics is defined on</entry>
      </row>
 
      <row>
@@ -11038,9 +11038,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>n_distinct</structfield></entry>
       <entry><type>pg_ndistinct</type></entry>
       <entry></entry>
-      <entry>N-distinct counts for combinations of columns. If greater than
-       zero, the estimated number of distinct values in the combination.  If
-       less than zero, the negative of the number of distinct values divided
+      <entry>N-distinct counts for combinations of column values. If greater
+       than zero, the estimated number of distinct values in the combination.
+       If less than zero, the negative of the number of distinct values divided
        by the number of rows.
        (The negated form is used when <command>ANALYZE</command> believes that
        the number of distinct values is likely to increase as the table grows;
@@ -11063,8 +11063,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>anyarray</type></entry>
       <entry></entry>
       <entry>
-       A list of the most common combinations in the columns. (Null if
-       no values seem to be more common than any others.)
+       A list of the most common combinations of values in the columns.
+       (Null if no combinations seem to be more common than any others.)
       </entry>
      </row>
 
