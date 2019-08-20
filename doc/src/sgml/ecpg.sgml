@@ -5011,7 +5011,7 @@ struct
 
    <para>
     The fields <structfield>sqlcaid</structfield>,
-    <structfield>sqlcabc</structfield>,
+    <structfield>sqlabc</structfield>,
     <structfield>sqlerrp</structfield>, and the remaining elements of
     <structfield>sqlerrd</structfield> and
     <structfield>sqlwarn</structfield> currently contain no useful

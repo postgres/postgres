@@ -3740,9 +3740,9 @@ RAISE unique_violation USING MESSAGE = 'Duplicate user ID: ' || user_id;
    <para>
     If no condition name nor SQLSTATE is specified in a
     <command>RAISE EXCEPTION</command> command, the default is to use
-    <literal>RAISE_EXCEPTION</literal> (<literal>P0001</literal>).  If no message
-    text is specified, the default is to use the condition name or
-    SQLSTATE as message text.
+    <literal>ERRCODE_RAISE_EXCEPTION</literal> (<literal>P0001</literal>).
+    If no message text is specified, the default is to use the condition
+    name or SQLSTATE as message text.
    </para>
 
    <note>
@@ -5626,7 +5626,7 @@ BEGIN
     INSERT INTO cs_active_job(job_id) VALUES (v_job_id);
 
     BEGIN
-        INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, sysdate);
+        INSERT INTO cs_jobs (job_id, start_stamp) VALUES (v_job_id, now());
     EXCEPTION
         WHEN dup_val_on_index THEN NULL; -- don't worry if it already exists
     END;

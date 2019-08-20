@@ -696,8 +696,8 @@ my_picksplit(PG_FUNCTION_ARGS)
 
         /*
          * Choose where to put the index entries and update unionL and unionR
-         * accordingly. Append the entries to either v_spl_left or
-         * v_spl_right, and care about the counters.
+         * accordingly. Append the entries to either v-&gt;spl_left or
+         * v-&gt;spl_right, and care about the counters.
          */
 
         if (my_choice_is_left(unionL, curl, unionR, curr))
@@ -910,7 +910,7 @@ Datum
 my_fetch(PG_FUNCTION_ARGS)
 {
     GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-    input_data_type *in = DatumGetP(entry->key);
+    input_data_type *in = DatumGetPointer(entry->key);
     fetched_data_type *fetched_data;
     GISTENTRY  *retval;
 
@@ -921,7 +921,7 @@ my_fetch(PG_FUNCTION_ARGS)
      * Convert 'fetched_data' into the a Datum of the original datatype.
      */
 
-    /* fill *retval from fetch_data. */
+    /* fill *retval from fetched_data. */
     gistentryinit(*retval, PointerGetDatum(converted_datum),
                   entry->rel, entry->page, entry->offset, FALSE);
 
