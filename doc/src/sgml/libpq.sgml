@@ -5812,7 +5812,7 @@ int PQendcopy(PGconn *conn);
        It should either be issued when the  last  string  has  been sent
        to  the  server using <function>PQputline</function> or when the
        last string has been  received  from  the  server using
-       <function>PGgetline</function>.  It must be issued or the server
+       <function>PQgetline</function>.  It must be issued or the server
        will get <quote>out of sync</quote> with  the client.   Upon return
        from this function, the server is ready to receive the next SQL
        command.  The return value is 0  on  successful  completion,

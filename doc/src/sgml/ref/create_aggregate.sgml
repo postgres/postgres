@@ -202,7 +202,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
    as described in <xref linkend="xaggr-moving-aggregates"/>.  This requires
    specifying the <literal>MSFUNC</literal>, <literal>MINVFUNC</literal>,
    and <literal>MSTYPE</literal> parameters, and optionally
-   the <literal>MSPACE</literal>, <literal>MFINALFUNC</literal>,
+   the <literal>MSSPACE</literal>, <literal>MFINALFUNC</literal>,
    <literal>MFINALFUNC_EXTRA</literal>, <literal>MFINALFUNC_MODIFY</literal>,
    and <literal>MINITCOND</literal> parameters.  Except for <literal>MINVFUNC</literal>,
    these parameters work like the corresponding simple-aggregate parameters

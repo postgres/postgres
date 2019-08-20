@@ -137,7 +137,7 @@ CREATE FUNCTION <replaceable>validator_function_name</replaceable>(oid)
      <para>
       Finally, the PL must be declared with the command
 <synopsis>
-CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language-name</replaceable>
+CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <replaceable>language_name</replaceable>
     HANDLER <replaceable>handler_function_name</replaceable>
     <optional>INLINE <replaceable>inline_function_name</replaceable></optional>
     <optional>VALIDATOR <replaceable>validator_function_name</replaceable></optional> ;

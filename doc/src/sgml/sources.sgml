@@ -875,7 +875,7 @@ BETTER: unrecognized node type: 42
     </para>
     <para>
      For example <literal>static inline</literal> and
-     <literal>_StaticAssert()</literal> are currently used, even
+     <literal>_Static_assert()</literal> are currently used, even
      though they are from newer revisions of the C standard. If not
      available we respectively fall back to defining the functions
      without inline, and to using a C89 compatible replacement that
