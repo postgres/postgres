@@ -180,7 +180,7 @@ countryName (alias C)
 localityName (alias L)
 stateOrProvinceName (alias ST)
 organizationName (alias O)
-organizationUnitName (alias OU)
+organizationalUnitName (alias OU)
 title
 description
 initials
