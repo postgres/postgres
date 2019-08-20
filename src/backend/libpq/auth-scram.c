@@ -790,7 +790,8 @@ sanitize_str(const char *s)
 /*
  * Read the next attribute and value in a SCRAM exchange message.
  *
- * Returns NULL if there is attribute.
+ * The attribute character is set in *attr_p, the attribute value is the
+ * return value.
  */
 static char *
 read_any_attr(char **input, char *attr_p)
@@ -798,6 +799,12 @@ read_any_attr(char **input, char *attr_p)
 	char	   *begin = *input;
 	char	   *end;
 	char		attr = *begin;
+
+	if (attr == '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("malformed SCRAM message"),
+				 errdetail("Attribute expected, but found end of string.")));
 
 	/*------
 	 * attr-val		   = ALPHA "=" value
@@ -1298,7 +1305,7 @@ read_client_final_message(scram_state *state, const char *input)
 
 	state->client_final_nonce = read_attr_value(&p, 'r');
 
-	/* ignore optional extensions */
+	/* ignore optional extensions, read until we find "p" attribute */
 	do
 	{
 		proof = p - 1;
