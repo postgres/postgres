@@ -127,18 +127,18 @@ select test_variable_storage();
 -- test foreign key error trapping
 --
 
-create temp table master(f1 int primary key);
+create temp table root(f1 int primary key);
 
-create temp table slave(f1 int references master deferrable);
+create temp table leaf(f1 int references root deferrable);
 
-insert into master values(1);
-insert into slave values(1);
-insert into slave values(2);	-- fails
+insert into root values(1);
+insert into leaf values(1);
+insert into leaf values(2);	-- fails
 
 create function trap_foreign_key(int) returns int as $$
 begin
 	begin	-- start a subtransaction
-		insert into slave values($1);
+		insert into leaf values($1);
 	exception
 		when foreign_key_violation then
 			raise notice 'caught foreign_key_violation';
