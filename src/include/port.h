@@ -330,9 +330,6 @@ extern int	gettimeofday(struct timeval *tp, struct timezone *tzp);
  * Default "extern" declarations or macro substitutes for library routines.
  * When necessary, these routines are provided by files in src/port/.
  */
-#ifndef HAVE_CRYPT
-extern char *crypt(const char *key, const char *setting);
-#endif
 
 /* WIN32 handled in port/win32_port.h */
 #ifndef WIN32

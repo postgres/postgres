@@ -14,9 +14,6 @@
 #include "postgres.h"
 
 #include <unistd.h>
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
-#endif
 
 #include "catalog/pg_authid.h"
 #include "common/md5.h"

@@ -1118,7 +1118,6 @@ AC_SEARCH_LIBS(dlopen, dl)
 AC_SEARCH_LIBS(socket, [socket ws2_32])
 AC_SEARCH_LIBS(shl_load, dld)
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
-AC_SEARCH_LIBS(crypt, crypt)
 AC_SEARCH_LIBS(shm_open, rt)
 AC_SEARCH_LIBS(shm_unlink, rt)
 AC_SEARCH_LIBS(clock_gettime, [rt posix4])
@@ -1273,7 +1272,6 @@ AC_HEADER_STDBOOL
 AC_CHECK_HEADERS(m4_normalize([
 	atomic.h
 	copyfile.h
-	crypt.h
 	fp_class.h
 	getopt.h
 	ieeefp.h
@@ -1692,7 +1690,6 @@ else
 fi
 
 AC_REPLACE_FUNCS(m4_normalize([
-	crypt
 	dlopen
 	fls
 	getopt

@@ -11209,62 +11209,6 @@ if test "$ac_res" != no; then :
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing crypt" >&5
-$as_echo_n "checking for library containing crypt... " >&6; }
-if ${ac_cv_search_crypt+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char crypt ();
-int
-main ()
-{
-return crypt ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' crypt; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_crypt=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_crypt+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_crypt+:} false; then :
-
-else
-  ac_cv_search_crypt=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_crypt" >&5
-$as_echo "$ac_cv_search_crypt" >&6; }
-ac_res=$ac_cv_search_crypt
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing shm_open" >&5
 $as_echo_n "checking for library containing shm_open... " >&6; }
 if ${ac_cv_search_shm_open+:} false; then :
@@ -12760,7 +12704,7 @@ $as_echo "#define HAVE_STDBOOL_H 1" >>confdefs.h
 fi
 
 
-for ac_header in atomic.h copyfile.h crypt.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/ipc.h sys/prctl.h sys/procctl.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h
+for ac_header in atomic.h copyfile.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/ipc.h sys/prctl.h sys/procctl.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -15779,19 +15723,6 @@ _ACEOF
  break
 fi
 done
-
-fi
-
-ac_fn_c_check_func "$LINENO" "crypt" "ac_cv_func_crypt"
-if test "x$ac_cv_func_crypt" = xyes; then :
-  $as_echo "#define HAVE_CRYPT 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" crypt.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS crypt.$ac_objext"
- ;;
-esac
 
 fi
 
