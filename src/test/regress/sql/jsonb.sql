@@ -64,9 +64,17 @@ SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
 
 -- anyarray column
 
-select to_jsonb(histogram_bounds) histogram_bounds
+CREATE TEMP TABLE rows AS
+SELECT x, 'txt' || x as y
+FROM generate_series(1,3) AS x;
+
+analyze rows;
+
+select attname, to_jsonb(histogram_bounds) histogram_bounds
 from pg_stats
-where attname = 'tmplname' and tablename = 'pg_pltemplate';
+where tablename = 'rows' and
+      schemaname = pg_my_temp_schema()::regnamespace::text
+order by 1;
 
 -- to_jsonb, timestamps
 
@@ -89,10 +97,6 @@ select to_jsonb(timestamptz 'Infinity');
 select to_jsonb(timestamptz '-Infinity');
 
 --jsonb_agg
-
-CREATE TEMP TABLE rows AS
-SELECT x, 'txt' || x as y
-FROM generate_series(1,3) AS x;
 
 SELECT jsonb_agg(q)
   FROM ( SELECT $$a$$ || x AS b, y AS c,

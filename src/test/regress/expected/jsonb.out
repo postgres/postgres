@@ -280,13 +280,20 @@ SELECT array_to_json(ARRAY [jsonb '{"a":1}', jsonb '{"b":[2,3]}']);
 (1 row)
 
 -- anyarray column
-select to_jsonb(histogram_bounds) histogram_bounds
+CREATE TEMP TABLE rows AS
+SELECT x, 'txt' || x as y
+FROM generate_series(1,3) AS x;
+analyze rows;
+select attname, to_jsonb(histogram_bounds) histogram_bounds
 from pg_stats
-where attname = 'tmplname' and tablename = 'pg_pltemplate';
-                                       histogram_bounds                                       
-----------------------------------------------------------------------------------------------
- ["plperl", "plperlu", "plpgsql", "plpython2u", "plpython3u", "plpythonu", "pltcl", "pltclu"]
-(1 row)
+where tablename = 'rows' and
+      schemaname = pg_my_temp_schema()::regnamespace::text
+order by 1;
+ attname |     histogram_bounds     
+---------+--------------------------
+ x       | [1, 2, 3]
+ y       | ["txt1", "txt2", "txt3"]
+(2 rows)
 
 -- to_jsonb, timestamps
 select to_jsonb(timestamp '2014-05-28 12:22:35.614298');
@@ -354,9 +361,6 @@ select to_jsonb(timestamptz '-Infinity');
 (1 row)
 
 --jsonb_agg
-CREATE TEMP TABLE rows AS
-SELECT x, 'txt' || x as y
-FROM generate_series(1,3) AS x;
 SELECT jsonb_agg(q)
   FROM ( SELECT $$a$$ || x AS b, y AS c,
                ARRAY[ROW(x.*,ARRAY[1,2,3]),
