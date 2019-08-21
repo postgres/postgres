@@ -10555,7 +10555,7 @@
   prosrc => 'pg_replication_origin_xact_reset' },
 
 { oid => '6012',
-  descr => 'advance replication identifier to specific location',
+  descr => 'advance replication origin to specific location',
   proname => 'pg_replication_origin_advance', provolatile => 'v',
   proparallel => 'u', prorettype => 'void', proargtypes => 'text pg_lsn',
   prosrc => 'pg_replication_origin_advance' },
