@@ -406,8 +406,11 @@ typedef struct BTMetaPageData
  * BTStackData -- As we descend a tree, we push the location of pivot
  * tuples whose downlink we are about to follow onto a private stack.  If
  * we split a leaf, we use this stack to walk back up the tree and insert
- * data into its parent page at the correct location.  We may also have to
- * recursively split a grandparent of the leaf page (and so on).
+ * data into its parent page at the correct location.  We also have to
+ * recursively insert into the grandparent page if and when the parent page
+ * splits.  Our private stack can become stale due to concurrent page
+ * splits and page deletions, but it should never give us an irredeemably
+ * bad picture.
  */
 typedef struct BTStackData
 {

@@ -953,7 +953,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			 *
 			 * We don't try to bias our choice of split point to make it more
 			 * likely that _bt_truncate() can truncate away more attributes,
-			 * whereas the split point passed to _bt_split() is chosen much
+			 * whereas the split point used within _bt_split() is chosen much
 			 * more delicately.  Suffix truncation is mostly useful because it
 			 * improves space utilization for workloads with random
 			 * insertions.  It doesn't seem worthwhile to add logic for

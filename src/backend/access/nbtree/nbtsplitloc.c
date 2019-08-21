@@ -1060,7 +1060,7 @@ _bt_split_penalty(FindSplitData *state, SplitPoint *split)
 }
 
 /*
- * Subroutine to get a lastleft IndexTuple for a spit point from page
+ * Subroutine to get a lastleft IndexTuple for a split point from page
  */
 static inline IndexTuple
 _bt_split_lastleft(FindSplitData *state, SplitPoint *split)
@@ -1076,7 +1076,7 @@ _bt_split_lastleft(FindSplitData *state, SplitPoint *split)
 }
 
 /*
- * Subroutine to get a firstright IndexTuple for a spit point from page
+ * Subroutine to get a firstright IndexTuple for a split point from page
  */
 static inline IndexTuple
 _bt_split_firstright(FindSplitData *state, SplitPoint *split)
