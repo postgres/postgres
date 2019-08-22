@@ -208,19 +208,19 @@ Section: Class 22 - Data Exception
 2200T    E    ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION                     invalid_xml_processing_instruction
 22030    E    ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE                        duplicate_json_object_key_value
 22032    E    ERRCODE_INVALID_JSON_TEXT                                      invalid_json_text
-22033    E    ERRCODE_INVALID_JSON_SUBSCRIPT                                 invalid_json_subscript
-22034    E    ERRCODE_MORE_THAN_ONE_JSON_ITEM                                more_than_one_json_item
-22035    E    ERRCODE_NO_JSON_ITEM                                           no_json_item
-22036    E    ERRCODE_NON_NUMERIC_JSON_ITEM                                  non_numeric_json_item
-22037    E    ERRCODE_NON_UNIQUE_KEYS_IN_JSON_OBJECT                         non_unique_keys_in_json_object
-22038    E    ERRCODE_SINGLETON_JSON_ITEM_REQUIRED                           singleton_json_item_required
-22039    E    ERRCODE_JSON_ARRAY_NOT_FOUND                                   json_array_not_found
-2203A    E    ERRCODE_JSON_MEMBER_NOT_FOUND                                  json_member_not_found
-2203B    E    ERRCODE_JSON_NUMBER_NOT_FOUND                                  json_number_not_found
-2203C    E    ERRCODE_JSON_OBJECT_NOT_FOUND                                  object_not_found
-2203F    E    ERRCODE_JSON_SCALAR_REQUIRED                                   json_scalar_required
+22033    E    ERRCODE_INVALID_SQL_JSON_SUBSCRIPT                             invalid_sql_json_subscript
+22034    E    ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM                            more_than_one_sql_json_item
+22035    E    ERRCODE_NO_SQL_JSON_ITEM                                       no_sql_json_item
+22036    E    ERRCODE_NON_NUMERIC_SQL_JSON_ITEM                              non_numeric_sql_json_item
+22037    E    ERRCODE_NON_UNIQUE_KEYS_IN_A_JSON_OBJECT                       non_unique_keys_in_a_json_object
+22038    E    ERRCODE_SINGLETON_SQL_JSON_ITEM_REQUIRED                       singleton_sql_json_item_required
+22039    E    ERRCODE_SQL_JSON_ARRAY_NOT_FOUND                               sql_json_array_not_found
+2203A    E    ERRCODE_SQL_JSON_MEMBER_NOT_FOUND                              sql_json_member_not_found
+2203B    E    ERRCODE_SQL_JSON_NUMBER_NOT_FOUND                              sql_json_number_not_found
+2203C    E    ERRCODE_SQL_JSON_OBJECT_NOT_FOUND                              sql_json_object_not_found
 2203D    E    ERRCODE_TOO_MANY_JSON_ARRAY_ELEMENTS                           too_many_json_array_elements
 2203E    E    ERRCODE_TOO_MANY_JSON_OBJECT_MEMBERS                           too_many_json_object_members
+2203F    E    ERRCODE_SQL_JSON_SCALAR_REQUIRED                               sql_json_scalar_required
 
 Section: Class 23 - Integrity Constraint Violation
 
