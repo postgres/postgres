@@ -508,7 +508,7 @@ T581	Regular expression substring function			YES
 T591	UNIQUE constraints of possibly null columns			YES	
 T601	Local cursor references			NO	
 T611	Elementary OLAP operations			YES	
-T612	Advanced OLAP operations			NO	some forms supported
+T612	Advanced OLAP operations			YES	
 T613	Sampling			YES	
 T614	NTILE function			YES	
 T615	LEAD and LAG functions			YES	
