@@ -561,7 +561,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
        <para>
         Add <application>psql</application> command <command>\dP</command>
-        to list partitioned tables and indexes (Pavel Stěhule)
+        to list partitioned tables and indexes (Pavel Stehule)
        </para>
       </listitem>
 
@@ -578,7 +578,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
        <para>
         Improve <application>psql</application> <command>\d</command>
         and <command>\z</command> display of partitioned tables (Pavel
-        Stěhule, Michaël Paquier, Álvaro Herrera)
+        Stehule, Michaël Paquier, Álvaro Herrera)
        </para>
       </listitem>
 
@@ -817,7 +817,7 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 
        <para>
         Allow control over when generic plans are used for prepared
-        statements (Pavel Stěhule)
+        statements (Pavel Stehule)
        </para>
 
        <para>
@@ -2253,7 +2253,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
       <para>
        Improve node detection and escaping of <link
        linkend="functions-xml"><acronym>XML</acronym> functions</link>
-       (Pavel Stěhule, Markus Winand, Chapman Flack)
+       (Pavel Stehule, Markus Winand, Chapman Flack)
       </para>
 
       <para>
@@ -2325,7 +2325,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
       <para>
        Add new optional warning and error checks to PL/pgSQL (Pavel
-       Stěhule)
+       Stehule)
       </para>
 
       <para>
