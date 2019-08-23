@@ -1227,7 +1227,7 @@ Author: Magnus Hagander <magnus@hagander.net>
 
        <para>
         Global objects have a <link
-        linkend="pg-stat-database-view"><structname>pg_stat_database</structname></link>.<structfield>datoid</structfield>
+        linkend="pg-stat-database-view"><structname>pg_stat_database</structname></link>.<structfield>datid</structfield>
         value of zero.
        </para>
       </listitem>
