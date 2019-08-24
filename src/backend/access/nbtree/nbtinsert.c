@@ -2019,6 +2019,9 @@ _bt_getstackbuf(Relation rel, BTStack stack, BlockNumber child)
 
 		/*
 		 * The item we're looking for moved right at least one page.
+		 *
+		 * Lehman and Yao couple/chain locks when moving right here, which we
+		 * can avoid.  See nbtree/README.
 		 */
 		if (P_RIGHTMOST(opaque))
 		{

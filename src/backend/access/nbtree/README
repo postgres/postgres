@@ -136,6 +136,25 @@ since we saw the root.  We can identify the correct tree level by means of
 the level numbers stored in each page.  The situation is rare enough that
 we do not need a more efficient solution.)
 
+Lehman and Yao must couple/chain locks as part of moving right when
+relocating a child page's downlink during an ascent of the tree.  This is
+the only point where Lehman and Yao have to simultaneously hold three
+locks (a lock on the child, the original parent, and the original parent's
+right sibling).  We don't need to couple internal page locks for pages on
+the same level, though.  We match a child's block number to a downlink
+from a pivot tuple one level up, whereas Lehman and Yao match on the
+separator key associated with the downlink that was followed during the
+initial descent.  We can release the lock on the original parent page
+before acquiring a lock on its right sibling, since there is never any
+need to deal with the case where the separator key that we must relocate
+becomes the original parent's high key.  Lanin and Shasha don't couple
+locks here either, though they also don't couple locks between levels
+during ascents.  They are willing to "wait and try again" to avoid races.
+Their algorithm is optimistic, which means that "an insertion holds no
+more than one write lock at a time during its ascent".  We more or less
+stick with Lehman and Yao's approach of conservatively coupling parent and
+child locks when ascending the tree, since it's far simpler.
+
 Lehman and Yao assume fixed-size keys, but we must deal with
 variable-size keys.  Therefore there is not a fixed maximum number of
 keys per page; we just stuff in as many as will fit.  When we split a
@@ -224,13 +243,7 @@ it, but it's still linked to its siblings.
 
 (Note: Lanin and Shasha prefer to make the key space move left, but their
 argument for doing so hinges on not having left-links, which we have
-anyway.  So we simplify the algorithm by moving the key space right.  Note
-also that Lanin and Shasha optimistically avoid holding multiple locks as
-the tree is ascended.  They're willing to release all locks and retry in
-"rare" cases where the correct location for a new downlink cannot be found
-immediately.  We prefer to stick with Lehman and Yao's approach of
-pessimistically coupling buffer locks when ascending the tree, since it's
-far simpler.)
+anyway.  So we simplify the algorithm by moving the key space right.)
 
 To preserve consistency on the parent level, we cannot merge the key space
 of a page into its right sibling unless the right sibling is a child of
