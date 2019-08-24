@@ -30,7 +30,6 @@ setup
 step "insert2" { INSERT INTO upsert(key, val) VALUES(1, 'insert2') ON CONFLICT (key) DO UPDATE set val = upsert.val || ' updated by insert2'; }
 step "select2" { SELECT * FROM upsert; }
 step "c2" { COMMIT; }
-step "a2" { ABORT; }
 
 # One session (session 2) block-waits on another (session 1) to determine if it
 # should proceed with an insert or update.  Notably, this entails updating a

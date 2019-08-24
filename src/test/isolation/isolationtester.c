@@ -81,7 +81,7 @@ main(int argc, char **argv)
 				puts("isolationtester (PostgreSQL) " PG_VERSION);
 				exit(0);
 			default:
-				fprintf(stderr, "Usage: isolationtester [-n] [CONNINFO]\n");
+				fprintf(stderr, "Usage: isolationtester [CONNINFO]\n");
 				return EXIT_FAILURE;
 		}
 	}
@@ -235,10 +235,23 @@ static int *piles;
 static void
 run_testspec(TestSpec *testspec)
 {
+	int			i;
+
 	if (testspec->permutations)
 		run_named_permutations(testspec);
 	else
 		run_all_permutations(testspec);
+
+	/*
+	 * Verify that all steps have been used, complaining about anything
+	 * defined but not used.
+	 */
+	for (i = 0; i < testspec->nallsteps; i++)
+	{
+		if (!testspec->allsteps[i]->used)
+			fprintf(stderr, "unused step name: %s\n",
+					testspec->allsteps[i]->name);
+	}
 }
 
 /*
@@ -438,7 +451,11 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)
+	{
+		/* Track the permutation as in-use */
+		steps[i]->used = true;
 		printf(" %s", steps[i]->name);
+	}
 	printf("\n");
 
 	/* Perform setup */
