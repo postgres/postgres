@@ -31,9 +31,6 @@ static int *backend_pids = NULL;
 static const char **backend_pid_strs = NULL;
 static int	nconns = 0;
 
-/* In dry run only output permutations to be run by the tester. */
-static int	dry_run = false;
-
 static void run_testspec(TestSpec *testspec);
 static void run_all_permutations(TestSpec *testspec);
 static void run_all_permutations_recurse(TestSpec *testspec, int nsteps,
@@ -76,13 +73,10 @@ main(int argc, char **argv)
 	int			nallsteps;
 	Step	  **allsteps;
 
-	while ((opt = getopt(argc, argv, "nV")) != -1)
+	while ((opt = getopt(argc, argv, "V")) != -1)
 	{
 		switch (opt)
 		{
-			case 'n':
-				dry_run = true;
-				break;
 			case 'V':
 				puts("isolationtester (PostgreSQL) " PG_VERSION);
 				exit(0);
@@ -142,16 +136,6 @@ main(int argc, char **argv)
 					testspec->allsteps[i]->name);
 			exit(1);
 		}
-	}
-
-	/*
-	 * In dry-run mode, just print the permutations that would be run, and
-	 * exit.
-	 */
-	if (dry_run)
-	{
-		run_testspec(testspec);
-		return 0;
 	}
 
 	printf("Parsed test spec with %d sessions\n", testspec->nsessions);
@@ -448,19 +432,6 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 	int			nerrorstep = 0;
 	Step	  **waiting;
 	Step	  **errorstep;
-
-	/*
-	 * In dry run mode, just display the permutation in the same format used
-	 * by spec files, and return.
-	 */
-	if (dry_run)
-	{
-		printf("permutation");
-		for (i = 0; i < nsteps; i++)
-			printf(" \"%s\"", steps[i]->name);
-		printf("\n");
-		return;
-	}
 
 	waiting = pg_malloc(sizeof(Step *) * testspec->nsessions);
 	errorstep = pg_malloc(sizeof(Step *) * testspec->nsessions);
