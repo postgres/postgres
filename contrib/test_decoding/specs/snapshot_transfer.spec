@@ -26,7 +26,6 @@ step "s0_sub_get_base_snap" { INSERT INTO dummy VALUES (0); }
 step "s0_insert" { INSERT INTO harvest VALUES (1, 2, 3); }
 step "s0_end_sub0" { RELEASE SAVEPOINT s0; }
 step "s0_end_sub1" { RELEASE SAVEPOINT s1; }
-step "s0_insert2" { INSERT INTO harvest VALUES (1, 2, 3, 4); }
 step "s0_commit" { COMMIT; }
 step "s0_get_changes" { SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1'); }
 
