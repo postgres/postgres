@@ -174,7 +174,7 @@ llvm_inline(LLVMModuleRef M)
 static std::unique_ptr<ImportMapTy>
 llvm_build_inline_plan(llvm::Module *mod)
 {
-	std::unique_ptr<ImportMapTy> globalsToInline = llvm::make_unique<ImportMapTy>();
+	std::unique_ptr<ImportMapTy> globalsToInline(new ImportMapTy());
 	FunctionInlineStates functionStates;
 	InlineWorkList worklist;
 
