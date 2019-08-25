@@ -634,15 +634,18 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts *options)
 				options->single_txn = true;
 				break;
 			case '?':
-				/* Actual help option given */
-				if (strcmp(argv[optind - 1], "-?") == 0)
+				if (optind <= argc &&
+					strcmp(argv[optind - 1], "-?") == 0)
 				{
+					/* actual help option given */
 					usage(NOPAGER);
 					exit(EXIT_SUCCESS);
 				}
-				/* unknown option reported by getopt */
 				else
+				{
+					/* getopt error (unknown option or missing argument) */
 					goto unknown_option;
+				}
 				break;
 			case 1:
 				{
