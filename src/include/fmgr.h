@@ -489,7 +489,8 @@ extern int no_such_variable
 
 /* These are for invocation of a specifically named function with a
  * directly-computed parameter list.  Note that neither arguments nor result
- * are allowed to be NULL.
+ * are allowed to be NULL.  Also, the function cannot be one that needs to
+ * look at FmgrInfo, since there won't be any.
  */
 extern Datum DirectFunctionCall1Coll(PGFunction func, Oid collation,
 									 Datum arg1);
