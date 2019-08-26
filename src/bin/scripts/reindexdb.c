@@ -153,12 +153,6 @@ main(int argc, char *argv[])
 					pg_log_error("number of parallel jobs must be at least 1");
 					exit(1);
 				}
-				if (concurrentCons > ParallelSlotsMax())
-				{
-					pg_log_error("too many parallel jobs requested (maximum: %d)",
-								 ParallelSlotsMax());
-					exit(1);
-				}
 				break;
 			case 'v':
 				verbose = true;
