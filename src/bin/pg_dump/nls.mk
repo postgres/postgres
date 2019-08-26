@@ -12,7 +12,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    ../../common/wait_error.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
                    fatal simple_prompt \
-                   ExecuteSqlCommand:3 warn_or_exit_horribly:3
+                   ExecuteSqlCommand:3 warn_or_exit_horribly:2
 GETTEXT_FLAGS    = $(FRONTEND_COMMON_GETTEXT_FLAGS) \
     fatal:1:c-format \
     warn_or_exit_horribly:2:c-format
