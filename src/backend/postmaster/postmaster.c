@@ -2920,7 +2920,9 @@ reaper(SIGNAL_ARGS)
 			 * during PM_STARTUP is treated as catastrophic. There are no
 			 * other processes running yet, so we can just exit.
 			 */
-			if (pmState == PM_STARTUP && !EXIT_STATUS_0(exitstatus))
+			if (pmState == PM_STARTUP &&
+				StartupStatus != STARTUP_SIGNALED &&
+				!EXIT_STATUS_0(exitstatus))
 			{
 				LogChildExit(LOG, _("startup process"),
 							 pid, exitstatus);
@@ -2937,11 +2939,24 @@ reaper(SIGNAL_ARGS)
 			 * then we previously sent the startup process a SIGQUIT; so
 			 * that's probably the reason it died, and we do want to try to
 			 * restart in that case.
+			 *
+			 * This stanza also handles the case where we sent a SIGQUIT
+			 * during PM_STARTUP due to some dead_end child crashing: in that
+			 * situation, if the startup process dies on the SIGQUIT, we need
+			 * to transition to PM_WAIT_BACKENDS state which will allow
+			 * PostmasterStateMachine to restart the startup process.  (On the
+			 * other hand, the startup process might complete normally, if we
+			 * were too late with the SIGQUIT.  In that case we'll fall
+			 * through and commence normal operations.)
 			 */
 			if (!EXIT_STATUS_0(exitstatus))
 			{
 				if (StartupStatus == STARTUP_SIGNALED)
+				{
 					StartupStatus = STARTUP_NOT_RUNNING;
+					if (pmState == PM_STARTUP)
+						pmState = PM_WAIT_BACKENDS;
+				}
 				else
 					StartupStatus = STARTUP_CRASHED;
 				HandleChildCrash(pid, exitstatus,
@@ -2954,7 +2969,7 @@ reaper(SIGNAL_ARGS)
 			 */
 			StartupStatus = STARTUP_NOT_RUNNING;
 			FatalError = false;
-			Assert(AbortStartTime == 0);
+			AbortStartTime = 0;
 			ReachedNormalRunning = true;
 			pmState = PM_RUN;
 
@@ -3504,7 +3519,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 	if (pid == StartupPID)
 	{
 		StartupPID = 0;
-		StartupStatus = STARTUP_CRASHED;
+		/* Caller adjusts StartupStatus, so don't touch it here */
 	}
 	else if (StartupPID != 0 && take_action)
 	{
@@ -5100,7 +5115,7 @@ sigusr1_handler(SIGNAL_ARGS)
 	{
 		/* WAL redo has started. We're out of reinitialization. */
 		FatalError = false;
-		Assert(AbortStartTime == 0);
+		AbortStartTime = 0;
 
 		/*
 		 * Crank up the background tasks.  It doesn't matter if this fails,
