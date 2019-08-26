@@ -207,12 +207,6 @@ main(int argc, char *argv[])
 					pg_log_error("number of parallel jobs must be at least 1");
 					exit(1);
 				}
-				if (concurrentCons > FD_SETSIZE - 1)
-				{
-					pg_log_error("too many parallel jobs requested (maximum: %d)",
-								 FD_SETSIZE - 1);
-					exit(1);
-				}
 				break;
 			case 2:
 				maintenance_db = pg_strdup(optarg);
@@ -633,6 +627,18 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		{
 			conn = connectDatabase(dbname, host, port, username, prompt_password,
 								   progname, echo, false, true);
+
+			/*
+			 * Fail and exit immediately if trying to use a socket in an
+			 * unsupported range.  POSIX requires open(2) to use the lowest
+			 * unused file descriptor and the hint given relies on that.
+			 */
+			if (PQsocket(conn) >= FD_SETSIZE)
+			{
+				pg_log_fatal("too many jobs for this platform -- try %d", i);
+				exit(1);
+			}
+
 			init_slot(slots + i, conn);
 		}
 	}
