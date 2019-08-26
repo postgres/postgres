@@ -5,7 +5,7 @@ use PostgresNode;
 use TestLib;
 use Test::More;
 
-if ($^O eq 'msys' && `uname -or` =~ /^2.*Msys/)
+if ($^O eq 'msys' && `uname -or` =~ /^[2-9].*Msys/)
 {
 	plan skip_all => 'High bit name tests fail on Msys2';
 }
