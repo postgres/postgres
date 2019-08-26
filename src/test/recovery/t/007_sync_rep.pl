@@ -18,7 +18,7 @@ sub test_sync_state
 
 	if (defined($setting))
 	{
-		$self->psql('postgres',
+		$self->safe_psql('postgres',
 			"ALTER SYSTEM SET synchronous_standby_names = '$setting';");
 		$self->reload;
 	}
