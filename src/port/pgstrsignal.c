@@ -32,6 +32,11 @@
  *
  * This version guarantees to return a non-NULL pointer, although
  * some platforms' versions of strsignal() reputedly do not.
+ *
+ * Note that the fallback cases just return constant strings such as
+ * "unrecognized signal".  Project style is for callers to print the
+ * numeric signal value along with the result of this function, so
+ * there's no need to work harder than that.
  */
 const char *
 pg_strsignal(int signum)
@@ -43,8 +48,8 @@ pg_strsignal(int signum)
 	 */
 #ifdef HAVE_STRSIGNAL
 	result = strsignal(signum);
-	if (result)
-		return result;
+	if (result == NULL)
+		result = "unrecognized signal";
 #else
 
 	/*
@@ -52,13 +57,8 @@ pg_strsignal(int signum)
 	 * However, it seems that all platforms with sys_siglist[] have also had
 	 * strsignal() for many years now, so that was just a waste of code.
 	 */
+	result = "(signal names not available on this platform)";
 #endif
 
-	/*
-	 * Fallback case: just return "unrecognized signal".  Project style is for
-	 * callers to print the numeric signal value along with the result of this
-	 * function, so there's no need to work harder than this.
-	 */
-	result = "unrecognized signal";
 	return result;
 }
