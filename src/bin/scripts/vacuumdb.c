@@ -10,6 +10,10 @@
  *-------------------------------------------------------------------------
  */
 
+#ifdef WIN32
+#define FD_SETSIZE 1024			/* must set before winsock2.h is included */
+#endif
+
 #include "postgres_fe.h"
 
 #ifdef HAVE_SYS_SELECT_H
@@ -440,7 +444,7 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 			if (PQsocket(conn) >= FD_SETSIZE)
 			{
 				fprintf(stderr,
-						_("%s: too many jobs for this platform -- try %d"),
+						_("%s: too many jobs for this platform -- try %d\n"),
 						progname, i);
 				exit(1);
 			}
