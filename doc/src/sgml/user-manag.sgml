@@ -531,15 +531,15 @@ DROP ROLE doomed_role;
        potentially for a long time.</entry>
       </row>
       <row>
-       <entry>pg_signal_backend</entry>
-       <entry>Send signals to other backends (eg: cancel query, terminate).</entry>
-      </row>
-      <row>
        <entry>pg_monitor</entry>
        <entry>Read/execute various monitoring views and functions.
        This role is a member of <literal>pg_read_all_settings</literal>,
        <literal>pg_read_all_stats</literal> and
        <literal>pg_stat_scan_tables</literal>.</entry>
+      </row>
+      <row>
+       <entry>pg_signal_backend</entry>
+       <entry>Signal another backend to cancel a query or terminate its session.</entry>
       </row>
      </tbody>
     </tgroup>
@@ -555,13 +555,22 @@ DROP ROLE doomed_role;
   </para>
 
   <para>
+  The <literal>pg_signal_backend</literal> role is intended to allow
+  administrators to enable trusted, but non-superuser, roles to send signals
+  to other backends. Currently this role enables sending of signals for
+  canceling a query on another backend or terminating its session. A user
+  granted this role cannot however send signals to a backend owned by a
+  superuser.  See <xref linkend="functions-admin-signal">.
+  </para>
+
+  <para>
   Care should be taken when granting these roles to ensure they are only used where
   needed to perform the desired monitoring.
   </para>
 
   <para>
-   Administrators can grant access to these roles to users using the GRANT
-   command:
+   Administrators can grant access to these roles to users using the
+   <xref linkend="sql-grant"> command, for example:
 
 <programlisting>
 GRANT pg_signal_backend TO admin_user;
