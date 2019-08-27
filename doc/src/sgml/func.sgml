@@ -12200,7 +12200,7 @@ NULL baz</literallayout>(3 rows)</entry>
        <type>double precision</type> for a floating-point argument,
        otherwise the same as the argument data type
       </entry>
-      <entry>the average (arithmetic mean) of all input values</entry>
+      <entry>the average (arithmetic mean) of all non-null input values</entry>
      </row>
 
      <row>
@@ -12320,7 +12320,7 @@ NULL baz</literallayout>(3 rows)</entry>
       <entry>
        <type>json</type>
       </entry>
-      <entry>aggregates values as a JSON array</entry>
+      <entry>aggregates values, including nulls, as a JSON array</entry>
      </row>
 
      <row>
@@ -12336,7 +12336,8 @@ NULL baz</literallayout>(3 rows)</entry>
       <entry>
        <type>json</type>
       </entry>
-      <entry>aggregates name/value pairs as a JSON object</entry>
+      <entry>aggregates name/value pairs as a JSON object; values can be
+       null, but not names</entry>
      </row>
 
      <row>
@@ -12350,7 +12351,7 @@ NULL baz</literallayout>(3 rows)</entry>
       <entry>same as argument type</entry>
       <entry>
        maximum value of <replaceable
-       class="parameter">expression</replaceable> across all input
+       class="parameter">expression</replaceable> across all non-null input
        values
       </entry>
      </row>
@@ -12366,7 +12367,7 @@ NULL baz</literallayout>(3 rows)</entry>
       <entry>same as argument type</entry>
       <entry>
        minimum value of <replaceable
-       class="parameter">expression</replaceable> across all input
+       class="parameter">expression</replaceable> across all non-null input
        values
       </entry>
      </row>
@@ -12387,7 +12388,7 @@ NULL baz</literallayout>(3 rows)</entry>
       <entry>
        same as argument types
       </entry>
-      <entry>input values concatenated into a string, separated by delimiter</entry>
+      <entry>non-null input values concatenated into a string, separated by delimiter</entry>
      </row>
 
      <row>
@@ -12409,7 +12410,8 @@ NULL baz</literallayout>(3 rows)</entry>
        <type>bigint</type> arguments, otherwise the same as the
        argument data type
       </entry>
-      <entry>sum of <replaceable class="parameter">expression</replaceable> across all input values</entry>
+      <entry>sum of <replaceable class="parameter">expression</replaceable>
+       across all non-null input values</entry>
      </row>
 
      <row>
@@ -12425,7 +12427,8 @@ NULL baz</literallayout>(3 rows)</entry>
       <entry>
        <type>xml</type>
       </entry>
-      <entry>concatenation of XML values (see also <xref linkend="functions-xml-xmlagg">)</entry>
+      <entry>concatenation of non-null XML values
+       (see also <xref linkend="functions-xml-xmlagg">)</entry>
      </row>
     </tbody>
    </tgroup>
