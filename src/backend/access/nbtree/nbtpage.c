@@ -1930,9 +1930,6 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 * might be possible to push the fast root even further down, but the odds
 	 * of doing so are slim, and the locking considerations daunting.)
 	 *
-	 * We don't support handling this in the case where the parent is becoming
-	 * half-dead, even though it theoretically could occur.
-	 *
 	 * We can safely acquire a lock on the metapage here --- see comments for
 	 * _bt_newroot().
 	 */
