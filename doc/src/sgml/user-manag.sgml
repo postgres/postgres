@@ -531,8 +531,15 @@ DROP ROLE doomed_role;
        potentially for a long time.</entry>
       </row>
       <row>
+       <entry>pg_monitor</entry>
+       <entry>Read/execute various monitoring views and functions.
+       This role is a member of <literal>pg_read_all_settings</literal>,
+       <literal>pg_read_all_stats</literal> and
+       <literal>pg_stat_scan_tables</literal>.</entry>
+      </row>
+      <row>
        <entry>pg_signal_backend</entry>
-       <entry>Send signals to other backends (eg: cancel query, terminate).</entry>
+       <entry>Signal another backend to cancel a query or terminate its session.</entry>
       </row>
       <row>
        <entry>pg_read_server_files</entry>
@@ -549,26 +556,9 @@ DROP ROLE doomed_role;
        <entry>Allow executing programs on the database server as the user the database runs as with
        COPY and other functions which allow executing a server-side program.</entry>
       </row>
-      <row>
-       <entry>pg_monitor</entry>
-       <entry>Read/execute various monitoring views and functions.
-       This role is a member of <literal>pg_read_all_settings</literal>,
-       <literal>pg_read_all_stats</literal> and
-       <literal>pg_stat_scan_tables</literal>.</entry>
-      </row>
      </tbody>
     </tgroup>
    </table>
-
-  <para>
-  The <literal>pg_read_server_files</literal>, <literal>pg_write_server_files</literal> and
-  <literal>pg_execute_server_program</literal> roles are intended to allow administrators to have
-  trusted, but non-superuser, roles which are able to access files and run programs on the
-  database server as the user the database runs as.  As these roles are able to access any file on
-  the server file system, they bypass all database-level permission checks when accessing files
-  directly and they could be used to gain superuser-level access, therefore care should be taken
-  when granting these roles to users.
-  </para>
 
   <para>
   The <literal>pg_monitor</literal>, <literal>pg_read_all_settings</literal>,
@@ -580,14 +570,33 @@ DROP ROLE doomed_role;
   </para>
 
   <para>
+  The <literal>pg_signal_backend</literal> role is intended to allow
+  administrators to enable trusted, but non-superuser, roles to send signals
+  to other backends. Currently this role enables sending of signals for
+  canceling a query on another backend or terminating its session. A user
+  granted this role cannot however send signals to a backend owned by a
+  superuser.  See <xref linkend="functions-admin-signal"/>.
+  </para>
+
+  <para>
+  The <literal>pg_read_server_files</literal>, <literal>pg_write_server_files</literal> and
+  <literal>pg_execute_server_program</literal> roles are intended to allow administrators to have
+  trusted, but non-superuser, roles which are able to access files and run programs on the
+  database server as the user the database runs as.  As these roles are able to access any file on
+  the server file system, they bypass all database-level permission checks when accessing files
+  directly and they could be used to gain superuser-level access, therefore
+  great care should be taken when granting these roles to users.
+  </para>
+
+  <para>
   Care should be taken when granting these roles to ensure they are only used where
   needed and with the understanding that these roles grant access to privileged
   information.
   </para>
 
   <para>
-   Administrators can grant access to these roles to users using the GRANT
-   command:
+   Administrators can grant access to these roles to users using the
+   <xref linkend="sql-grant"/> command, for example:
 
 <programlisting>
 GRANT pg_signal_backend TO admin_user;
