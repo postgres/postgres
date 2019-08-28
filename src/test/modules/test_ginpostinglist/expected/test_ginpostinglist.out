@@ -1,0 +1,19 @@
+CREATE EXTENSION test_ginpostinglist;
+--
+-- All the logic is in the test_ginpostinglist() function. It will throw
+-- a error if something fails.
+--
+SELECT test_ginpostinglist();
+NOTICE:  testing with (0, 1), (0, 2), max 14 bytes
+NOTICE:  encoded 2 item pointers to 10 bytes
+NOTICE:  testing with (0, 1), (0, 291), max 14 bytes
+NOTICE:  encoded 2 item pointers to 10 bytes
+NOTICE:  testing with (0, 1), (4294967294, 291), max 14 bytes
+NOTICE:  encoded 1 item pointers to 8 bytes
+NOTICE:  testing with (0, 1), (4294967294, 291), max 16 bytes
+NOTICE:  encoded 2 item pointers to 16 bytes
+ test_ginpostinglist 
+---------------------
+ 
+(1 row)
+
