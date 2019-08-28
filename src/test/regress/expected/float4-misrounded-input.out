@@ -24,6 +24,14 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-70');
 ERROR:  "-10e-70" is out of range for type real
 LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-70');
                                            ^
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e70'::float8);
+ERROR:  value out of range: overflow
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e70'::float8);
+ERROR:  value out of range: overflow
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-70'::float8);
+ERROR:  value out of range: underflow
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-70'::float8);
+ERROR:  value out of range: underflow
 INSERT INTO FLOAT4_TBL(f1) VALUES ('10e400');
 ERROR:  "10e400" is out of range for type real
 LINE 1: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e400');
