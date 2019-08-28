@@ -45,6 +45,7 @@ static PGconn *conn = NULL;
 static void receiveFileChunks(const char *sql);
 static void execute_pagemap(datapagemap_t *pagemap, const char *path);
 static char *run_simple_query(const char *sql);
+static void run_simple_command(const char *sql);
 
 void
 libpqConnect(const char *connstr)
@@ -58,6 +59,11 @@ libpqConnect(const char *connstr)
 				 PQerrorMessage(conn));
 
 	pg_log(PG_PROGRESS, "connected to server\n");
+
+	/* disable all types of timeouts */
+	run_simple_command("SET statement_timeout = 0");
+	run_simple_command("SET lock_timeout = 0");
+	run_simple_command("SET idle_in_transaction_session_timeout = 0");
 
 	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -93,11 +99,7 @@ libpqConnect(const char *connstr)
 	 * replication, and replication isn't working for some reason, we don't
 	 * want to get stuck, waiting for it to start working again.
 	 */
-	res = PQexec(conn, "SET synchronous_commit = off");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pg_fatal("could not set up connection context: %s",
-				 PQresultErrorMessage(res));
-	PQclear(res);
+	run_simple_command("SET synchronous_commit = off");
 }
 
 /*
@@ -125,6 +127,24 @@ run_simple_query(const char *sql)
 	PQclear(res);
 
 	return result;
+}
+
+/*
+ * Runs a command.
+ * In the event of a failure, exit immediately.
+ */
+static void
+run_simple_command(const char *sql)
+{
+	PGresult   *res;
+
+	res = PQexec(conn, sql);
+
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		pg_fatal("error running query (%s) in source server: %s",
+				 sql, PQresultErrorMessage(res));
+
+	PQclear(res);
 }
 
 /*
@@ -461,12 +481,7 @@ libpq_executeFileMap(filemap_t *map)
 	 * need to fetch.
 	 */
 	sql = "CREATE TEMPORARY TABLE fetchchunks(path text, begin int8, len int4);";
-	res = PQexec(conn, sql);
-
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pg_fatal("could not create temporary table: %s",
-				 PQresultErrorMessage(res));
-	PQclear(res);
+	run_simple_command(sql);
 
 	sql = "COPY fetchchunks FROM STDIN";
 	res = PQexec(conn, sql);
