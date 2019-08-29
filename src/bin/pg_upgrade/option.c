@@ -218,6 +218,9 @@ parseCommandLine(int argc, char *argv[])
 		}
 	}
 
+	if (optind < argc)
+		pg_fatal("too many command-line arguments (first is \"%s\")\n", argv[optind]);
+
 	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
 		pg_fatal("could not open log file \"%s\": %m\n", INTERNAL_LOG_FILE);
 

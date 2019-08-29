@@ -185,6 +185,14 @@ get_opts(int argc, char **argv, struct options *my_opts)
 				exit(1);
 		}
 	}
+
+	if (optind < argc)
+	{
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		exit(1);
+	}
 }
 
 static void

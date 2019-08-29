@@ -5540,7 +5540,7 @@ main(int argc, char **argv)
 	throttle_delay *= nthreads;
 
 	if (argc > optind)
-		dbName = argv[optind];
+		dbName = argv[optind++];
 	else
 	{
 		if ((env = getenv("PGDATABASE")) != NULL && *env != '\0')
@@ -5549,6 +5549,14 @@ main(int argc, char **argv)
 			dbName = login;
 		else
 			dbName = "";
+	}
+
+	if (optind < argc)
+	{
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		exit(1);
 	}
 
 	if (is_init_mode)
