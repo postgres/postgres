@@ -178,6 +178,19 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
   </para>
 
   <para>
+   If the connection target includes any <replaceable>options</replaceable>,
+   those consist of
+   <literal><replaceable>keyword</replaceable>=<replaceable>value</replaceable></literal>
+   specifications separated by ampersands (<literal>&amp;</literal>).
+   The allowed key words are the same ones recognized
+   by <application>libpq</application> (see
+   <xref linkend="libpq-paramkeywords"/>).  Spaces are ignored before
+   any <replaceable>keyword</replaceable> or <replaceable>value</replaceable>,
+   though not within or after one.  Note that there is no way to
+   write <literal>&amp;</literal> within a <replaceable>value</replaceable>.
+  </para>
+
+  <para>
    The <replaceable>connection-name</replaceable> is used to handle
    multiple connections in one program.  It can be omitted if a
    program uses only one connection.  The most recently opened
@@ -191,7 +204,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
    <link linkend="ddl-schemas-patterns">secure schema usage pattern</link>,
    begin each session by removing publicly-writable schemas
    from <varname>search_path</varname>.  For example,
-   add <literal>options=-csearch_path=</literal>
+   add <literal>options=-c search_path=</literal>
    to <literal><replaceable>options</replaceable></literal>, or
    issue <literal>EXEC SQL SELECT pg_catalog.set_config('search_path', '',
    false);</literal> after connecting.  This consideration is not specific to
