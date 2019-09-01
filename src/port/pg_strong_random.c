@@ -27,11 +27,11 @@
 #ifdef USE_OPENSSL
 #include <openssl/rand.h>
 #endif
-#ifdef WIN32
+#ifdef USE_WIN32_RANDOM
 #include <wincrypt.h>
 #endif
 
-#ifdef WIN32
+#ifdef USE_WIN32_RANDOM
 /*
  * Cache a global crypto provider that only gets freed when the process
  * exits, in case we need random numbers more than once.
