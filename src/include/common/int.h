@@ -20,10 +20,28 @@
 #ifndef COMMON_INT_H
 #define COMMON_INT_H
 
-/*
- * If a + b overflows, return true, otherwise store the result of a + b into
- * *result. The content of *result is implementation defined in case of
+
+/*---------
+ * The following guidelines apply to all the routines:
+ * - If a + b overflows, return true, otherwise store the result of a + b
+ * into *result. The content of *result is implementation defined in case of
  * overflow.
+ * - If a - b overflows, return true, otherwise store the result of a - b
+ * into *result. The content of *result is implementation defined in case of
+ * overflow.
+ * - If a * b overflows, return true, otherwise store the result of a * b
+ * into *result. The content of *result is implementation defined in case of
+ * overflow.
+ *---------
+ */
+
+/*------------------------------------------------------------------------
+ * Overflow routines for signed integers
+ *------------------------------------------------------------------------
+ */
+
+/*
+ * INT16
  */
 static inline bool
 pg_add_s16_overflow(int16 a, int16 b, int16 *result)
@@ -43,11 +61,6 @@ pg_add_s16_overflow(int16 a, int16 b, int16 *result)
 #endif
 }
 
-/*
- * If a - b overflows, return true, otherwise store the result of a - b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
- */
 static inline bool
 pg_sub_s16_overflow(int16 a, int16 b, int16 *result)
 {
@@ -66,11 +79,6 @@ pg_sub_s16_overflow(int16 a, int16 b, int16 *result)
 #endif
 }
 
-/*
- * If a * b overflows, return true, otherwise store the result of a * b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
- */
 static inline bool
 pg_mul_s16_overflow(int16 a, int16 b, int16 *result)
 {
@@ -90,9 +98,7 @@ pg_mul_s16_overflow(int16 a, int16 b, int16 *result)
 }
 
 /*
- * If a + b overflows, return true, otherwise store the result of a + b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
+ * INT32
  */
 static inline bool
 pg_add_s32_overflow(int32 a, int32 b, int32 *result)
@@ -112,11 +118,6 @@ pg_add_s32_overflow(int32 a, int32 b, int32 *result)
 #endif
 }
 
-/*
- * If a - b overflows, return true, otherwise store the result of a - b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
- */
 static inline bool
 pg_sub_s32_overflow(int32 a, int32 b, int32 *result)
 {
@@ -135,11 +136,6 @@ pg_sub_s32_overflow(int32 a, int32 b, int32 *result)
 #endif
 }
 
-/*
- * If a * b overflows, return true, otherwise store the result of a * b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
- */
 static inline bool
 pg_mul_s32_overflow(int32 a, int32 b, int32 *result)
 {
@@ -159,9 +155,7 @@ pg_mul_s32_overflow(int32 a, int32 b, int32 *result)
 }
 
 /*
- * If a + b overflows, return true, otherwise store the result of a + b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
+ * INT64
  */
 static inline bool
 pg_add_s64_overflow(int64 a, int64 b, int64 *result)
@@ -190,11 +184,6 @@ pg_add_s64_overflow(int64 a, int64 b, int64 *result)
 #endif
 }
 
-/*
- * If a - b overflows, return true, otherwise store the result of a - b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
- */
 static inline bool
 pg_sub_s64_overflow(int64 a, int64 b, int64 *result)
 {
@@ -222,11 +211,6 @@ pg_sub_s64_overflow(int64 a, int64 b, int64 *result)
 #endif
 }
 
-/*
- * If a * b overflows, return true, otherwise store the result of a * b into
- * *result. The content of *result is implementation defined in case of
- * overflow.
- */
 static inline bool
 pg_mul_s64_overflow(int64 a, int64 b, int64 *result)
 {
@@ -266,6 +250,186 @@ pg_mul_s64_overflow(int64 a, int64 b, int64 *result)
 		return true;
 	}
 	*result = a * b;
+	return false;
+#endif
+}
+
+/*------------------------------------------------------------------------
+ * Overflow routines for unsigned integers
+ *------------------------------------------------------------------------
+ */
+
+/*
+ * UINT16
+ */
+static inline bool
+pg_add_u16_overflow(uint16 a, uint16 b, uint16 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_add_overflow(a, b, result);
+#else
+	uint16		res = a + b;
+
+	if (res < a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
+	return false;
+#endif
+}
+
+static inline bool
+pg_sub_u16_overflow(uint16 a, uint16 b, uint16 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(a, b, result);
+#else
+	if (b > a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = a - b;
+	return false;
+#endif
+}
+
+static inline bool
+pg_mul_u16_overflow(uint16 a, uint16 b, uint16 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_mul_overflow(a, b, result);
+#else
+	uint32		res = (uint32) a * (uint32) b;
+
+	if (res > PG_UINT16_MAX)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = (uint16) res;
+	return false;
+#endif
+}
+
+/*
+ * INT32
+ */
+static inline bool
+pg_add_u32_overflow(uint32 a, uint32 b, uint32 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_add_overflow(a, b, result);
+#else
+	uint32		res = a + b;
+
+	if (res < a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
+	return false;
+#endif
+}
+
+static inline bool
+pg_sub_u32_overflow(uint32 a, uint32 b, uint32 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(a, b, result);
+#else
+	if (b > a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = a - b;
+	return false;
+#endif
+}
+
+static inline bool
+pg_mul_u32_overflow(uint32 a, uint32 b, uint32 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_mul_overflow(a, b, result);
+#else
+	uint64		res = (uint64) a * (uint64) b;
+
+	if (res > PG_UINT32_MAX)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = (uint32) res;
+	return false;
+#endif
+}
+
+/*
+ * UINT64
+ */
+static inline bool
+pg_add_u64_overflow(uint64 a, uint64 b, uint64 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_add_overflow(a, b, result);
+#else
+	uint64		res = a + b;
+
+	if (res < a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
+	return false;
+#endif
+}
+
+static inline bool
+pg_sub_u64_overflow(uint64 a, uint64 b, uint64 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_sub_overflow(a, b, result);
+#else
+	if (b > a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = a - b;
+	return false;
+#endif
+}
+
+static inline bool
+pg_mul_u64_overflow(uint64 a, uint64 b, uint64 *result)
+{
+#if defined(HAVE__BUILTIN_OP_OVERFLOW)
+	return __builtin_mul_overflow(a, b, result);
+#elif defined(HAVE_INT128)
+	uint128		res = (uint128) a * (uint128) b;
+
+	if (res > PG_UINT64_MAX)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = (uint64) res;
+	return false;
+#else
+	uint64		res = a * b;
+
+	if (a != 0 && b != res / a)
+	{
+		*result = 0x5EED;		/* to avoid spurious warnings */
+		return true;
+	}
+	*result = res;
 	return false;
 #endif
 }
