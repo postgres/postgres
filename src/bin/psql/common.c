@@ -423,13 +423,27 @@ CheckConnection(void)
 		if (!OK)
 		{
 			psql_error("Failed.\n");
+
+			/*
+			 * Transition to having no connection.  Keep this bit in sync with
+			 * do_connect().
+			 */
 			PQfinish(pset.db);
 			pset.db = NULL;
 			ResetCancelConn();
 			UnsyncVariables();
 		}
 		else
+		{
 			psql_error("Succeeded.\n");
+
+			/*
+			 * Re-sync, just in case anything changed.  Keep this in sync with
+			 * do_connect().
+			 */
+			SyncVariables();
+			connection_warnings(false); /* Must be after SyncVariables */
+		}
 	}
 
 	return OK;
