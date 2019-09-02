@@ -1811,8 +1811,14 @@ do_connect(enum trivalue reuse_previous_specification,
 			psql_error("\\connect: %s", PQerrorMessage(n_conn));
 			if (o_conn)
 			{
+				/*
+				 * Transition to having no connection.  Keep this bit in sync
+				 * with CheckConnection().
+				 */
 				PQfinish(o_conn);
 				pset.db = NULL;
+				ResetCancelConn();
+				UnsyncVariables();
 			}
 		}
 
@@ -1826,7 +1832,8 @@ do_connect(enum trivalue reuse_previous_specification,
 
 	/*
 	 * Replace the old connection with the new one, and update
-	 * connection-dependent variables.
+	 * connection-dependent variables.  Keep the resynchronization logic in
+	 * sync with CheckConnection().
 	 */
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
 	pset.db = n_conn;
@@ -1903,7 +1910,8 @@ connection_warnings(bool in_startup)
 										 sverbuf, sizeof(sverbuf)));
 
 #ifdef WIN32
-		checkWin32Codepage();
+		if (in_startup)
+			checkWin32Codepage();
 #endif
 		printSSLInfo();
 	}
