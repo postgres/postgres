@@ -402,13 +402,27 @@ CheckConnection(void)
 		if (!OK)
 		{
 			fprintf(stderr, _("Failed.\n"));
+
+			/*
+			 * Transition to having no connection.  Keep this bit in sync with
+			 * do_connect().
+			 */
 			PQfinish(pset.db);
 			pset.db = NULL;
 			ResetCancelConn();
 			UnsyncVariables();
 		}
 		else
+		{
 			fprintf(stderr, _("Succeeded.\n"));
+
+			/*
+			 * Re-sync, just in case anything changed.  Keep this in sync with
+			 * do_connect().
+			 */
+			SyncVariables();
+			connection_warnings(false); /* Must be after SyncVariables */
+		}
 	}
 
 	return OK;
