@@ -7593,19 +7593,24 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
  * the old tuple in a UPDATE or DELETE.
  *
  * Returns NULL if there's no need to log an identity or if there's no suitable
- * key in the Relation relation.
+ * key defined.
+ *
+ * key_changed should be false if caller knows that no replica identity
+ * columns changed value.  It's always true in the DELETE case.
+ *
+ * *copy is set to true if the returned tuple is a modified copy rather than
+ * the same tuple that was passed in.
  */
 static HeapTuple
-ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *copy)
+ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed,
+					   bool *copy)
 {
 	TupleDesc	desc = RelationGetDescr(relation);
-	Oid			replidindex;
-	Relation	idx_rel;
 	char		replident = relation->rd_rel->relreplident;
-	HeapTuple	key_tuple = NULL;
+	Bitmapset  *idattrs;
+	HeapTuple	key_tuple;
 	bool		nulls[MaxHeapAttributeNumber];
 	Datum		values[MaxHeapAttributeNumber];
-	int			natt;
 
 	*copy = false;
 
@@ -7624,7 +7629,7 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 		if (HeapTupleHasExternal(tp))
 		{
 			*copy = true;
-			tp = toast_flatten_tuple(tp, RelationGetDescr(relation));
+			tp = toast_flatten_tuple(tp, desc);
 		}
 		return tp;
 	}
@@ -7633,41 +7638,39 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	if (!key_changed)
 		return NULL;
 
-	/* find the replica identity index */
-	replidindex = RelationGetReplicaIndex(relation);
-	if (!OidIsValid(replidindex))
-	{
-		elog(DEBUG4, "could not find configured replica identity for table \"%s\"",
-			 RelationGetRelationName(relation));
-		return NULL;
-	}
-
-	idx_rel = RelationIdGetRelation(replidindex);
-
-	Assert(CheckRelationLockedByMe(idx_rel, AccessShareLock, true));
-
-	/* deform tuple, so we have fast access to columns */
-	heap_deform_tuple(tp, desc, values, nulls);
-
-	/* set all columns to NULL, regardless of whether they actually are */
-	memset(nulls, 1, sizeof(nulls));
+	/* find out the replica identity columns */
+	idattrs = RelationGetIndexAttrBitmap(relation,
+										 INDEX_ATTR_BITMAP_IDENTITY_KEY);
 
 	/*
-	 * Now set all columns contained in the index to NOT NULL, they cannot
-	 * currently be NULL.
+	 * If there's no defined replica identity columns, treat as !key_changed.
+	 * (This case should not be reachable from heap_update, since that should
+	 * calculate key_changed accurately.  But heap_delete just passes constant
+	 * true for key_changed, so we can hit this case in deletes.)
 	 */
-	for (natt = 0; natt < IndexRelationGetNumberOfKeyAttributes(idx_rel); natt++)
-	{
-		int			attno = idx_rel->rd_index->indkey.values[natt];
+	if (bms_is_empty(idattrs))
+		return NULL;
 
-		if (attno < 0)
-			elog(ERROR, "system column in index");
-		nulls[attno - 1] = false;
+	/*
+	 * Construct a new tuple containing only the replica identity columns,
+	 * with nulls elsewhere.  While we're at it, assert that the replica
+	 * identity columns aren't null.
+	 */
+	heap_deform_tuple(tp, desc, values, nulls);
+
+	for (int i = 0; i < desc->natts; i++)
+	{
+		if (bms_is_member(i + 1 - FirstLowInvalidHeapAttributeNumber,
+						  idattrs))
+			Assert(!nulls[i]);
+		else
+			nulls[i] = true;
 	}
 
 	key_tuple = heap_form_tuple(desc, values, nulls);
 	*copy = true;
-	RelationClose(idx_rel);
+
+	bms_free(idattrs);
 
 	/*
 	 * If the tuple, which by here only contains indexed columns, still has
@@ -7680,7 +7683,7 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	{
 		HeapTuple	oldtup = key_tuple;
 
-		key_tuple = toast_flatten_tuple(oldtup, RelationGetDescr(relation));
+		key_tuple = toast_flatten_tuple(oldtup, desc);
 		heap_freetuple(oldtup);
 	}
 
