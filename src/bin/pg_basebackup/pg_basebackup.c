@@ -115,7 +115,7 @@ static bool made_tablespace_dirs = false;
 static bool found_tablespace_dirs = false;
 
 /* Progress counters */
-static uint64 totalsize;
+static uint64 totalsize_kb;
 static uint64 totaldone;
 static int	tablespacecount;
 
@@ -722,7 +722,7 @@ progress_report(int tablespacenum, const char *filename, bool force)
 		return;					/* Max once per second */
 
 	last_progress_report = now;
-	percent = totalsize ? (int) ((totaldone / 1024) * 100 / totalsize) : 0;
+	percent = totalsize_kb ? (int) ((totaldone / 1024) * 100 / totalsize_kb) : 0;
 
 	/*
 	 * Avoid overflowing past 100% or the full size. This may make the total
@@ -732,8 +732,8 @@ progress_report(int tablespacenum, const char *filename, bool force)
 	 */
 	if (percent > 100)
 		percent = 100;
-	if (totaldone / 1024 > totalsize)
-		totalsize = totaldone / 1024;
+	if (totaldone / 1024 > totalsize_kb)
+		totalsize_kb = totaldone / 1024;
 
 	/*
 	 * Separate step to keep platform-dependent format code out of
@@ -742,7 +742,7 @@ progress_report(int tablespacenum, const char *filename, bool force)
 	 */
 	snprintf(totaldone_str, sizeof(totaldone_str), INT64_FORMAT,
 			 totaldone / 1024);
-	snprintf(totalsize_str, sizeof(totalsize_str), INT64_FORMAT, totalsize);
+	snprintf(totalsize_str, sizeof(totalsize_str), INT64_FORMAT, totalsize_kb);
 
 #define VERBOSE_FILENAME_LENGTH 35
 	if (verbose)
@@ -1942,11 +1942,11 @@ BaseBackup(void)
 	/*
 	 * Sum up the total size, for progress reporting
 	 */
-	totalsize = totaldone = 0;
+	totalsize_kb = totaldone = 0;
 	tablespacecount = PQntuples(res);
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		totalsize += atol(PQgetvalue(res, i, 2));
+		totalsize_kb += atol(PQgetvalue(res, i, 2));
 
 		/*
 		 * Verify tablespace directories are empty. Don't bother with the

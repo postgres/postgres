@@ -2615,8 +2615,8 @@ The commands accepted in replication mode are:
         <term><literal>size</literal> (<type>int8</type>)</term>
         <listitem>
          <para>
-          The approximate size of the tablespace, if progress report has
-          been requested; otherwise it's null.
+          The approximate size of the tablespace, in kilobytes (1024 bytes),
+          if progress report has been requested; otherwise it's null.
          </para>
         </listitem>
        </varlistentry>
