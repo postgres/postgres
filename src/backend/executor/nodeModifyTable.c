@@ -1959,8 +1959,7 @@ ExecSetupChildParentMapForSubplan(ModifyTableState *mtstate)
 	{
 		mtstate->mt_per_subplan_tupconv_maps[i] =
 			convert_tuples_by_name(RelationGetDescr(resultRelInfos[i].ri_RelationDesc),
-								   outdesc,
-								   gettext_noop("could not convert row type"));
+								   outdesc);
 	}
 }
 

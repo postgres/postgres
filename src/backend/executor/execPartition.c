@@ -586,8 +586,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		 */
 		part_attnos =
 			convert_tuples_by_name_map(RelationGetDescr(partrel),
-									   RelationGetDescr(firstResultRel),
-									   gettext_noop("could not convert row type"));
+									   RelationGetDescr(firstResultRel));
 		wcoList = (List *)
 			map_variable_attnos((Node *) wcoList,
 								firstVarno, 0,
@@ -646,8 +645,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		if (part_attnos == NULL)
 			part_attnos =
 				convert_tuples_by_name_map(RelationGetDescr(partrel),
-										   RelationGetDescr(firstResultRel),
-										   gettext_noop("could not convert row type"));
+										   RelationGetDescr(firstResultRel));
 		returningList = (List *)
 			map_variable_attnos((Node *) returningList,
 								firstVarno, 0,
@@ -790,8 +788,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				if (part_attnos == NULL)
 					part_attnos =
 						convert_tuples_by_name_map(RelationGetDescr(partrel),
-												   RelationGetDescr(firstResultRel),
-												   gettext_noop("could not convert row type"));
+												   RelationGetDescr(firstResultRel));
 				onconflset = (List *)
 					map_variable_attnos((Node *) onconflset,
 										INNER_VAR, 0,
@@ -904,8 +901,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 	 */
 	partrouteinfo->pi_RootToPartitionMap =
 		convert_tuples_by_name(RelationGetDescr(partRelInfo->ri_PartitionRoot),
-							   RelationGetDescr(partRelInfo->ri_RelationDesc),
-							   gettext_noop("could not convert row type"));
+							   RelationGetDescr(partRelInfo->ri_RelationDesc));
 
 	/*
 	 * If a partition has a different rowtype than the root parent, initialize
@@ -937,8 +933,7 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 	{
 		partrouteinfo->pi_PartitionToRootMap =
 			convert_tuples_by_name(RelationGetDescr(partRelInfo->ri_RelationDesc),
-								   RelationGetDescr(partRelInfo->ri_PartitionRoot),
-								   gettext_noop("could not convert row type"));
+								   RelationGetDescr(partRelInfo->ri_PartitionRoot));
 	}
 	else
 		partrouteinfo->pi_PartitionToRootMap = NULL;
@@ -1042,8 +1037,7 @@ ExecInitPartitionDispatchInfo(EState *estate,
 		 * routing.
 		 */
 		pd->tupmap = convert_tuples_by_name_map_if_req(RelationGetDescr(parent_pd->reldesc),
-													   tupdesc,
-													   gettext_noop("could not convert row type"));
+													   tupdesc);
 		pd->tupslot = pd->tupmap ?
 			MakeSingleTupleTableSlot(tupdesc, &TTSOpsVirtual) : NULL;
 	}

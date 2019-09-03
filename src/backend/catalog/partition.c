@@ -210,8 +210,7 @@ map_partition_varattnos(List *expr, int fromrel_varno,
 		AttrNumber *part_attnos;
 
 		part_attnos = convert_tuples_by_name_map(RelationGetDescr(to_rel),
-												 RelationGetDescr(from_rel),
-												 gettext_noop("could not convert row type"));
+												 RelationGetDescr(from_rel));
 		expr = (List *) map_variable_attnos((Node *) expr,
 											fromrel_varno, 0,
 											part_attnos,

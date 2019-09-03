@@ -203,15 +203,14 @@ convert_tuples_by_position(TupleDesc indesc,
  */
 TupleConversionMap *
 convert_tuples_by_name(TupleDesc indesc,
-					   TupleDesc outdesc,
-					   const char *msg)
+					   TupleDesc outdesc)
 {
 	TupleConversionMap *map;
 	AttrNumber *attrMap;
 	int			n = outdesc->natts;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = convert_tuples_by_name_map_if_req(indesc, outdesc, msg);
+	attrMap = convert_tuples_by_name_map_if_req(indesc, outdesc);
 
 	if (attrMap == NULL)
 	{
@@ -244,8 +243,7 @@ convert_tuples_by_name(TupleDesc indesc,
  */
 AttrNumber *
 convert_tuples_by_name_map(TupleDesc indesc,
-						   TupleDesc outdesc,
-						   const char *msg)
+						   TupleDesc outdesc)
 {
 	AttrNumber *attrMap;
 	int			outnatts;
@@ -299,7 +297,7 @@ convert_tuples_by_name_map(TupleDesc indesc,
 				if (atttypid != inatt->atttypid || atttypmod != inatt->atttypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg_internal("%s", _(msg)),
+							 errmsg("could not convert row type"),
 							 errdetail("Attribute \"%s\" of type %s does not match corresponding attribute of type %s.",
 									   attname,
 									   format_type_be(outdesc->tdtypeid),
@@ -311,7 +309,7 @@ convert_tuples_by_name_map(TupleDesc indesc,
 		if (attrMap[i] == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg_internal("%s", _(msg)),
+					 errmsg("could not convert row type"),
 					 errdetail("Attribute \"%s\" of type %s does not exist in type %s.",
 							   attname,
 							   format_type_be(outdesc->tdtypeid),
@@ -327,8 +325,7 @@ convert_tuples_by_name_map(TupleDesc indesc,
  */
 AttrNumber *
 convert_tuples_by_name_map_if_req(TupleDesc indesc,
-								  TupleDesc outdesc,
-								  const char *msg)
+								  TupleDesc outdesc)
 {
 	AttrNumber *attrMap;
 	int			n = outdesc->natts;
@@ -336,7 +333,7 @@ convert_tuples_by_name_map_if_req(TupleDesc indesc,
 	bool		same;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = convert_tuples_by_name_map(indesc, outdesc, msg);
+	attrMap = convert_tuples_by_name_map(indesc, outdesc);
 
 	/*
 	 * Check to see if the map is one-to-one, in which case we need not do a
