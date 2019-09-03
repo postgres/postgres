@@ -198,8 +198,12 @@ scan_file(const char *fn, BlockNumber segmentno)
 			break;
 		if (r != BLCKSZ)
 		{
-			pg_log_error("could not read block %u in file \"%s\": read %d of %d",
-						 blockno, fn, r, BLCKSZ);
+			if (r < 0)
+				pg_log_error("could not read block %u in file \"%s\": %m",
+							 blockno, fn);
+			else
+				pg_log_error("could not read block %u in file \"%s\": read %d of %d",
+							 blockno, fn, r, BLCKSZ);
 			exit(1);
 		}
 		blocks++;
@@ -222,6 +226,8 @@ scan_file(const char *fn, BlockNumber segmentno)
 		}
 		else if (mode == PG_MODE_ENABLE)
 		{
+			int		w;
+
 			/* Set checksum in page header */
 			header->pd_checksum = csum;
 
@@ -233,10 +239,15 @@ scan_file(const char *fn, BlockNumber segmentno)
 			}
 
 			/* Write block with checksum */
-			if (write(f, buf.data, BLCKSZ) != BLCKSZ)
+			w = write(f, buf.data, BLCKSZ);
+			if (w != BLCKSZ)
 			{
-				pg_log_error("could not write block %u in file \"%s\": %m",
-							 blockno, fn);
+				if (w < 0)
+					pg_log_error("could not write block %u in file \"%s\": %m",
+								 blockno, fn);
+				else
+					pg_log_error("could not write block %u in file \"%s\": wrote %d of %d",
+								 blockno, fn, w, BLCKSZ);
 				exit(1);
 			}
 		}
