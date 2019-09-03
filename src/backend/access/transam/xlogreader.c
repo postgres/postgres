@@ -30,16 +30,17 @@
 #include "utils/memutils.h"
 #endif
 
-static bool allocate_recordbuf(XLogReaderState *state, uint32 reclength);
 
+static void report_invalid_record(XLogReaderState *state, const char *fmt,...)
+			pg_attribute_printf(2, 3);
+static bool allocate_recordbuf(XLogReaderState *state, uint32 reclength);
+static int	ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr,
+							 int reqLen);
+static void XLogReaderInvalReadState(XLogReaderState *state);
 static bool ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 								  XLogRecPtr PrevRecPtr, XLogRecord *record, bool randAccess);
 static bool ValidXLogRecord(XLogReaderState *state, XLogRecord *record,
 							XLogRecPtr recptr);
-static int	ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr,
-							 int reqLen);
-static void report_invalid_record(XLogReaderState *state, const char *fmt,...) pg_attribute_printf(2, 3);
-
 static void ResetDecoder(XLogReaderState *state);
 
 /* size of the buffer allocated for error message. */
@@ -621,7 +622,7 @@ err:
 /*
  * Invalidate the xlogreader's read state to force a re-read.
  */
-void
+static void
 XLogReaderInvalReadState(XLogReaderState *state)
 {
 	state->readSegNo = 0;
