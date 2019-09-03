@@ -375,17 +375,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-n <replaceable class="parameter">schema</replaceable></option></term>
-      <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>-n <replaceable class="parameter">pattern</replaceable></option></term>
+      <term><option>--schema=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>
         Dump only schemas matching <replaceable
-        class="parameter">schema</replaceable>; this selects both the
+        class="parameter">pattern</replaceable>; this selects both the
         schema itself, and all its contained objects.  When this option is
         not specified, all non-system schemas in the target database will be
         dumped.  Multiple schemas can be
-        selected by writing multiple <option>-n</option> switches.  Also, the
-        <replaceable class="parameter">schema</replaceable> parameter is
+        selected by writing multiple <option>-n</option> switches.  The
+        <replaceable class="parameter">pattern</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal> commands (see <xref
         linkend="app-psql-patterns" endterm="app-psql-patterns-title"/>),
@@ -417,12 +417,12 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-N <replaceable class="parameter">schema</replaceable></option></term>
-      <term><option>--exclude-schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <term><option>-N <replaceable class="parameter">pattern</replaceable></option></term>
+      <term><option>--exclude-schema=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>
-        Do not dump any schemas matching the <replaceable
-        class="parameter">schema</replaceable> pattern.  The pattern is
+        Do not dump any schemas matching <replaceable
+        class="parameter">pattern</replaceable>.  The pattern is
         interpreted according to the same rules as for <option>-n</option>.
         <option>-N</option> can be given more than once to exclude schemas
         matching any of several patterns.
@@ -513,16 +513,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-t <replaceable class="parameter">table</replaceable></option></term>
-      <term><option>--table=<replaceable class="parameter">table</replaceable></option></term>
+      <term><option>-t <replaceable class="parameter">pattern</replaceable></option></term>
+      <term><option>--table=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>
         Dump only tables with names matching
-        <replaceable class="parameter">table</replaceable>.
+        <replaceable class="parameter">pattern</replaceable>.
         For this purpose, <quote>table</quote> includes views, materialized views,
         sequences, and foreign tables.  Multiple tables
-        can be selected by writing multiple <option>-t</option> switches.  Also, the
-        <replaceable class="parameter">table</replaceable> parameter is
+        can be selected by writing multiple <option>-t</option> switches.  The
+        <replaceable class="parameter">pattern</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal> commands (see <xref
         linkend="app-psql-patterns" endterm="app-psql-patterns-title"/>),
@@ -565,12 +565,12 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-T <replaceable class="parameter">table</replaceable></option></term>
-      <term><option>--exclude-table=<replaceable class="parameter">table</replaceable></option></term>
+      <term><option>-T <replaceable class="parameter">pattern</replaceable></option></term>
+      <term><option>--exclude-table=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>
-        Do not dump any tables matching the <replaceable
-        class="parameter">table</replaceable> pattern.  The pattern is
+        Do not dump any tables matching <replaceable
+        class="parameter">pattern</replaceable>.  The pattern is
         interpreted according to the same rules as for <option>-t</option>.
         <option>-T</option> can be given more than once to exclude tables
         matching any of several patterns.
@@ -728,11 +728,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--exclude-table-data=<replaceable class="parameter">table</replaceable></option></term>
+      <term><option>--exclude-table-data=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>
-        Do not dump data for any tables matching the <replaceable
-        class="parameter">table</replaceable> pattern. The pattern is
+        Do not dump data for any tables matching <replaceable
+        class="parameter">pattern</replaceable>. The pattern is
         interpreted according to the same rules as for <option>-t</option>.
         <option>--exclude-table-data</option> can be given more than once to
         exclude tables matching any of several patterns. This option is
