@@ -486,15 +486,18 @@ LogStreamerMain(logstreamer_param *param)
 #endif
 	stream.standby_message_timeout = standby_message_timeout;
 	stream.synchronous = false;
-	stream.do_sync = do_sync;
+	/* fsync happens at the end of pg_basebackup for all data */
+	stream.do_sync = false;
 	stream.mark_done = true;
 	stream.partial_suffix = NULL;
 	stream.replication_slot = replication_slot;
 
 	if (format == 'p')
-		stream.walmethod = CreateWalDirectoryMethod(param->xlog, 0, do_sync);
+		stream.walmethod = CreateWalDirectoryMethod(param->xlog, 0,
+													stream.do_sync);
 	else
-		stream.walmethod = CreateWalTarMethod(param->xlog, compresslevel, do_sync);
+		stream.walmethod = CreateWalTarMethod(param->xlog, compresslevel,
+											  stream.do_sync);
 
 	if (!ReceiveXlogStream(param->bgconn, &stream))
 
@@ -1346,9 +1349,10 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (copybuf != NULL)
 		PQfreemem(copybuf);
 
-	/* sync the resulting tar file, errors are not considered fatal */
-	if (do_sync && strcmp(basedir, "-") != 0)
-		(void) fsync_fname(filename, false);
+	/*
+	 * Do not sync the resulting tar file yet, all files are synced once at
+	 * the end.
+	 */
 }
 
 
@@ -2138,9 +2142,9 @@ BaseBackup(void)
 
 	/*
 	 * Make data persistent on disk once backup is completed. For tar format
-	 * once syncing the parent directory is fine, each tar file created per
-	 * tablespace has been already synced. In plain format, all the data of
-	 * the base directory is synced, taking into account all the tablespaces.
+	 * sync the parent directory and all its contents as each tar file was not
+	 * synced after being completed.  In plain format, all the data of the
+	 * base directory is synced, taking into account all the tablespaces.
 	 * Errors are not considered fatal.
 	 */
 	if (do_sync)
@@ -2150,7 +2154,7 @@ BaseBackup(void)
 		if (format == 't')
 		{
 			if (strcmp(basedir, "-") != 0)
-				(void) fsync_fname(basedir, true);
+				(void) fsync_dir_recurse(basedir);
 		}
 		else
 		{
