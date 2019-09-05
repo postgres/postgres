@@ -198,9 +198,9 @@ extern void ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 extern LockTupleMode ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo);
 extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti, bool missing_ok);
 extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
-extern TupleTableSlot *EvalPlanQual(EState *estate, EPQState *epqstate,
-									Relation relation, Index rti, TupleTableSlot *testslot);
-extern void EvalPlanQualInit(EPQState *epqstate, EState *estate,
+extern TupleTableSlot *EvalPlanQual(EPQState *epqstate, Relation relation,
+									Index rti, TupleTableSlot *testslot);
+extern void EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
 							 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
 								Plan *subplan, List *auxrowmarks);
@@ -208,9 +208,9 @@ extern TupleTableSlot *EvalPlanQualSlot(EPQState *epqstate,
 										Relation relation, Index rti);
 
 #define EvalPlanQualSetSlot(epqstate, slot)  ((epqstate)->origslot = (slot))
-extern void EvalPlanQualFetchRowMarks(EPQState *epqstate);
+extern bool EvalPlanQualFetchRowMark(EPQState *epqstate, Index rti, TupleTableSlot *slot);
 extern TupleTableSlot *EvalPlanQualNext(EPQState *epqstate);
-extern void EvalPlanQualBegin(EPQState *epqstate, EState *parentestate);
+extern void EvalPlanQualBegin(EPQState *epqstate);
 extern void EvalPlanQualEnd(EPQState *epqstate);
 
 /*

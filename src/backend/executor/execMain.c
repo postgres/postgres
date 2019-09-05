@@ -98,8 +98,7 @@ static char *ExecBuildSlotValueDescription(Oid reloid,
 										   TupleDesc tupdesc,
 										   Bitmapset *modifiedCols,
 										   int maxfieldlen);
-static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
-							  Plan *planTree);
+static void EvalPlanQualStart(EPQState *epqstate, Plan *planTree);
 
 /*
  * Note that GetAllUpdatedColumns() also exists in commands/trigger.c.  There does
@@ -979,9 +978,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 */
 	estate->es_tupleTable = NIL;
 
-	/* mark EvalPlanQual not active */
-	estate->es_epqTupleSlot = NULL;
-	estate->es_epqScanDone = NULL;
+	/* signal that this EState is not used for EPQ */
+	estate->es_epq_active = NULL;
 
 	/*
 	 * Initialize private state information for each SubPlan.  We must do this
@@ -2421,7 +2419,6 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
  * Check the updated version of a tuple to see if we want to process it under
  * READ COMMITTED rules.
  *
- *	estate - outer executor state data
  *	epqstate - state for EvalPlanQual rechecking
  *	relation - table containing tuple
  *	rti - rangetable index of table containing tuple
@@ -2439,8 +2436,8 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
  * NULL if we determine we shouldn't process the row.
  */
 TupleTableSlot *
-EvalPlanQual(EState *estate, EPQState *epqstate,
-			 Relation relation, Index rti, TupleTableSlot *inputslot)
+EvalPlanQual(EPQState *epqstate, Relation relation,
+			 Index rti, TupleTableSlot *inputslot)
 {
 	TupleTableSlot *slot;
 	TupleTableSlot *testslot;
@@ -2450,7 +2447,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	/*
 	 * Need to run a recheck subquery.  Initialize or reinitialize EPQ state.
 	 */
-	EvalPlanQualBegin(epqstate, estate);
+	EvalPlanQualBegin(epqstate);
 
 	/*
 	 * Callers will often use the EvalPlanQualSlot to store the tuple to avoid
@@ -2459,11 +2456,6 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	testslot = EvalPlanQualSlot(epqstate, relation, rti);
 	if (testslot != inputslot)
 		ExecCopySlot(testslot, inputslot);
-
-	/*
-	 * Fetch any non-locked source rows
-	 */
-	EvalPlanQualFetchRowMarks(epqstate);
 
 	/*
 	 * Run the EPQ query.  We assume it will return at most one tuple.
@@ -2498,17 +2490,36 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
  * with EvalPlanQualSetPlan.
  */
 void
-EvalPlanQualInit(EPQState *epqstate, EState *estate,
+EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
 				 Plan *subplan, List *auxrowmarks, int epqParam)
 {
-	/* Mark the EPQ state inactive */
-	epqstate->estate = NULL;
-	epqstate->planstate = NULL;
-	epqstate->origslot = NULL;
+	Index		rtsize = parentestate->es_range_table_size;
+
+	/* initialize data not changing over EPQState's lifetime */
+	epqstate->parentestate = parentestate;
+	epqstate->epqParam = epqParam;
+
+	/*
+	 * Allocate space to reference a slot for each potential rti - do so now
+	 * rather than in EvalPlanQualBegin(), as done for other dynamically
+	 * allocated resources, so EvalPlanQualSlot() can be used to hold tuples
+	 * that *may* need EPQ later, without forcing the overhead of
+	 * EvalPlanQualBegin().
+	 */
+	epqstate->tuple_table = NIL;
+	epqstate->relsubs_slot = (TupleTableSlot **)
+		palloc0(rtsize * sizeof(TupleTableSlot *));
+
 	/* ... and remember data that EvalPlanQualBegin will need */
 	epqstate->plan = subplan;
 	epqstate->arowMarks = auxrowmarks;
-	epqstate->epqParam = epqParam;
+
+	/* ... and mark the EPQ state inactive */
+	epqstate->origslot = NULL;
+	epqstate->recheckestate = NULL;
+	epqstate->recheckplanstate = NULL;
+	epqstate->relsubs_rowmark = NULL;
+	epqstate->relsubs_done = NULL;
 }
 
 /*
@@ -2529,6 +2540,9 @@ EvalPlanQualSetPlan(EPQState *epqstate, Plan *subplan, List *auxrowmarks)
 
 /*
  * Return, and create if necessary, a slot for an EPQ test tuple.
+ *
+ * Note this only requires EvalPlanQualInit() to have been called,
+ * EvalPlanQualBegin() is not necessary.
  */
 TupleTableSlot *
 EvalPlanQualSlot(EPQState *epqstate,
@@ -2536,23 +2550,16 @@ EvalPlanQualSlot(EPQState *epqstate,
 {
 	TupleTableSlot **slot;
 
-	Assert(rti > 0 && rti <= epqstate->estate->es_range_table_size);
-	slot = &epqstate->estate->es_epqTupleSlot[rti - 1];
+	Assert(relation);
+	Assert(rti > 0 && rti <= epqstate->parentestate->es_range_table_size);
+	slot = &epqstate->relsubs_slot[rti - 1];
 
 	if (*slot == NULL)
 	{
 		MemoryContext oldcontext;
 
-		oldcontext = MemoryContextSwitchTo(epqstate->estate->es_query_cxt);
-
-		if (relation)
-			*slot = table_slot_create(relation,
-									  &epqstate->estate->es_tupleTable);
-		else
-			*slot = ExecAllocTableSlot(&epqstate->estate->es_tupleTable,
-									   epqstate->origslot->tts_tupleDescriptor,
-									   &TTSOpsVirtual);
-
+		oldcontext = MemoryContextSwitchTo(epqstate->parentestate->es_query_cxt);
+		*slot = table_slot_create(relation, &epqstate->tuple_table);
 		MemoryContextSwitchTo(oldcontext);
 	}
 
@@ -2560,116 +2567,112 @@ EvalPlanQualSlot(EPQState *epqstate,
 }
 
 /*
- * Fetch the current row values for any non-locked relations that need
- * to be scanned by an EvalPlanQual operation.  origslot must have been set
- * to contain the current result row (top-level row) that we need to recheck.
+ * Fetch the current row value for a non-locked relation, identified by rti,
+ * that needs to be scanned by an EvalPlanQual operation.  origslot must have
+ * been set to contain the current result row (top-level row) that we need to
+ * recheck.  Returns true if a substitution tuple was found, false if not.
  */
-void
-EvalPlanQualFetchRowMarks(EPQState *epqstate)
+bool
+EvalPlanQualFetchRowMark(EPQState *epqstate, Index rti, TupleTableSlot *slot)
 {
-	ListCell   *l;
+	ExecAuxRowMark *earm = epqstate->relsubs_rowmark[rti - 1];
+	ExecRowMark *erm = earm->rowmark;
+	Datum		datum;
+	bool		isNull;
 
+	Assert(earm != NULL);
 	Assert(epqstate->origslot != NULL);
 
-	foreach(l, epqstate->arowMarks)
+	if (RowMarkRequiresRowShareLock(erm->markType))
+		elog(ERROR, "EvalPlanQual doesn't support locking rowmarks");
+
+	/* if child rel, must check whether it produced this row */
+	if (erm->rti != erm->prti)
 	{
-		ExecAuxRowMark *aerm = (ExecAuxRowMark *) lfirst(l);
-		ExecRowMark *erm = aerm->rowmark;
-		Datum		datum;
-		bool		isNull;
-		TupleTableSlot *slot;
+		Oid			tableoid;
 
-		if (RowMarkRequiresRowShareLock(erm->markType))
-			elog(ERROR, "EvalPlanQual doesn't support locking rowmarks");
+		datum = ExecGetJunkAttribute(epqstate->origslot,
+									 earm->toidAttNo,
+									 &isNull);
+		/* non-locked rels could be on the inside of outer joins */
+		if (isNull)
+			return false;
 
-		/* clear any leftover test tuple for this rel */
-		slot = EvalPlanQualSlot(epqstate, erm->relation, erm->rti);
-		ExecClearTuple(slot);
+		tableoid = DatumGetObjectId(datum);
 
-		/* if child rel, must check whether it produced this row */
-		if (erm->rti != erm->prti)
+		Assert(OidIsValid(erm->relid));
+		if (tableoid != erm->relid)
 		{
-			Oid			tableoid;
-
-			datum = ExecGetJunkAttribute(epqstate->origslot,
-										 aerm->toidAttNo,
-										 &isNull);
-			/* non-locked rels could be on the inside of outer joins */
-			if (isNull)
-				continue;
-			tableoid = DatumGetObjectId(datum);
-
-			Assert(OidIsValid(erm->relid));
-			if (tableoid != erm->relid)
-			{
-				/* this child is inactive right now */
-				continue;
-			}
+			/* this child is inactive right now */
+			return false;
 		}
+	}
 
-		if (erm->markType == ROW_MARK_REFERENCE)
+	if (erm->markType == ROW_MARK_REFERENCE)
+	{
+		Assert(erm->relation != NULL);
+
+		/* fetch the tuple's ctid */
+		datum = ExecGetJunkAttribute(epqstate->origslot,
+									 earm->ctidAttNo,
+									 &isNull);
+		/* non-locked rels could be on the inside of outer joins */
+		if (isNull)
+			return false;
+
+		/* fetch requests on foreign tables must be passed to their FDW */
+		if (erm->relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		{
-			Assert(erm->relation != NULL);
+			FdwRoutine *fdwroutine;
+			bool		updated = false;
 
-			/* fetch the tuple's ctid */
-			datum = ExecGetJunkAttribute(epqstate->origslot,
-										 aerm->ctidAttNo,
-										 &isNull);
-			/* non-locked rels could be on the inside of outer joins */
-			if (isNull)
-				continue;
+			fdwroutine = GetFdwRoutineForRelation(erm->relation, false);
+			/* this should have been checked already, but let's be safe */
+			if (fdwroutine->RefetchForeignRow == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot lock rows in foreign table \"%s\"",
+								RelationGetRelationName(erm->relation))));
 
-			/* fetch requests on foreign tables must be passed to their FDW */
-			if (erm->relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-			{
-				FdwRoutine *fdwroutine;
-				bool		updated = false;
+			fdwroutine->RefetchForeignRow(epqstate->recheckestate,
+										  erm,
+										  datum,
+										  slot,
+										  &updated);
+			if (TupIsNull(slot))
+				elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
 
-				fdwroutine = GetFdwRoutineForRelation(erm->relation, false);
-				/* this should have been checked already, but let's be safe */
-				if (fdwroutine->RefetchForeignRow == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("cannot lock rows in foreign table \"%s\"",
-									RelationGetRelationName(erm->relation))));
-
-				fdwroutine->RefetchForeignRow(epqstate->estate,
-											  erm,
-											  datum,
-											  slot,
-											  &updated);
-				if (TupIsNull(slot))
-					elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
-
-				/*
-				 * Ideally we'd insist on updated == false here, but that
-				 * assumes that FDWs can track that exactly, which they might
-				 * not be able to.  So just ignore the flag.
-				 */
-			}
-			else
-			{
-				/* ordinary table, fetch the tuple */
-				if (!table_tuple_fetch_row_version(erm->relation,
-												   (ItemPointer) DatumGetPointer(datum),
-												   SnapshotAny, slot))
-					elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
-			}
+			/*
+			 * Ideally we'd insist on updated == false here, but that assumes
+			 * that FDWs can track that exactly, which they might not be able
+			 * to.  So just ignore the flag.
+			 */
+			return true;
 		}
 		else
 		{
-			Assert(erm->markType == ROW_MARK_COPY);
-
-			/* fetch the whole-row Var for the relation */
-			datum = ExecGetJunkAttribute(epqstate->origslot,
-										 aerm->wholeAttNo,
-										 &isNull);
-			/* non-locked rels could be on the inside of outer joins */
-			if (isNull)
-				continue;
-
-			ExecStoreHeapTupleDatum(datum, slot);
+			/* ordinary table, fetch the tuple */
+			if (!table_tuple_fetch_row_version(erm->relation,
+											   (ItemPointer) DatumGetPointer(datum),
+											   SnapshotAny, slot))
+				elog(ERROR, "failed to fetch tuple for EvalPlanQual recheck");
+			return true;
 		}
+	}
+	else
+	{
+		Assert(erm->markType == ROW_MARK_COPY);
+
+		/* fetch the whole-row Var for the relation */
+		datum = ExecGetJunkAttribute(epqstate->origslot,
+									 earm->wholeAttNo,
+									 &isNull);
+		/* non-locked rels could be on the inside of outer joins */
+		if (isNull)
+			return false;
+
+		ExecStoreHeapTupleDatum(datum, slot);
+		return true;
 	}
 }
 
@@ -2684,8 +2687,8 @@ EvalPlanQualNext(EPQState *epqstate)
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 
-	oldcontext = MemoryContextSwitchTo(epqstate->estate->es_query_cxt);
-	slot = ExecProcNode(epqstate->planstate);
+	oldcontext = MemoryContextSwitchTo(epqstate->recheckestate->es_query_cxt);
+	slot = ExecProcNode(epqstate->recheckplanstate);
 	MemoryContextSwitchTo(oldcontext);
 
 	return slot;
@@ -2695,14 +2698,15 @@ EvalPlanQualNext(EPQState *epqstate)
  * Initialize or reset an EvalPlanQual state tree
  */
 void
-EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
+EvalPlanQualBegin(EPQState *epqstate)
 {
-	EState	   *estate = epqstate->estate;
+	EState	   *parentestate = epqstate->parentestate;
+	EState	   *recheckestate = epqstate->recheckestate;
 
-	if (estate == NULL)
+	if (recheckestate == NULL)
 	{
 		/* First time through, so create a child EState */
-		EvalPlanQualStart(epqstate, parentestate, epqstate->plan);
+		EvalPlanQualStart(epqstate, epqstate->plan);
 	}
 	else
 	{
@@ -2710,9 +2714,9 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 		 * We already have a suitable child EPQ tree, so just reset it.
 		 */
 		Index		rtsize = parentestate->es_range_table_size;
-		PlanState  *planstate = epqstate->planstate;
+		PlanState  *rcplanstate = epqstate->recheckplanstate;
 
-		MemSet(estate->es_epqScanDone, 0, rtsize * sizeof(bool));
+		MemSet(epqstate->relsubs_done, 0, rtsize * sizeof(bool));
 
 		/* Recopy current values of parent parameters */
 		if (parentestate->es_plannedstmt->paramExecTypes != NIL)
@@ -2724,7 +2728,7 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 			 * by the subplan, just in case they got reset since
 			 * EvalPlanQualStart (see comments therein).
 			 */
-			ExecSetParamPlanMulti(planstate->plan->extParam,
+			ExecSetParamPlanMulti(rcplanstate->plan->extParam,
 								  GetPerTupleExprContext(parentestate));
 
 			i = list_length(parentestate->es_plannedstmt->paramExecTypes);
@@ -2732,9 +2736,9 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 			while (--i >= 0)
 			{
 				/* copy value if any, but not execPlan link */
-				estate->es_param_exec_vals[i].value =
+				recheckestate->es_param_exec_vals[i].value =
 					parentestate->es_param_exec_vals[i].value;
-				estate->es_param_exec_vals[i].isnull =
+				recheckestate->es_param_exec_vals[i].isnull =
 					parentestate->es_param_exec_vals[i].isnull;
 			}
 		}
@@ -2743,8 +2747,8 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 		 * Mark child plan tree as needing rescan at all scan nodes.  The
 		 * first ExecProcNode will take care of actually doing the rescan.
 		 */
-		planstate->chgParam = bms_add_member(planstate->chgParam,
-											 epqstate->epqParam);
+		rcplanstate->chgParam = bms_add_member(rcplanstate->chgParam,
+											   epqstate->epqParam);
 	}
 }
 
@@ -2755,18 +2759,20 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
  * the top-level estate rather than initializing it fresh.
  */
 static void
-EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
+EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 {
-	EState	   *estate;
-	Index		rtsize;
+	EState	   *parentestate = epqstate->parentestate;
+	Index		rtsize = parentestate->es_range_table_size;
+	EState	   *rcestate;
 	MemoryContext oldcontext;
 	ListCell   *l;
 
-	rtsize = parentestate->es_range_table_size;
+	epqstate->recheckestate = rcestate = CreateExecutorState();
 
-	epqstate->estate = estate = CreateExecutorState();
+	oldcontext = MemoryContextSwitchTo(rcestate->es_query_cxt);
 
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+	/* signal that this is an EState for executing EPQ */
+	rcestate->es_epq_active = epqstate;
 
 	/*
 	 * Child EPQ EStates share the parent's copy of unchanging state such as
@@ -2782,17 +2788,17 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * state must *not* propagate back to the parent.  (For one thing, the
 	 * pointed-to data is in a memory context that won't last long enough.)
 	 */
-	estate->es_direction = ForwardScanDirection;
-	estate->es_snapshot = parentestate->es_snapshot;
-	estate->es_crosscheck_snapshot = parentestate->es_crosscheck_snapshot;
-	estate->es_range_table = parentestate->es_range_table;
-	estate->es_range_table_size = parentestate->es_range_table_size;
-	estate->es_relations = parentestate->es_relations;
-	estate->es_queryEnv = parentestate->es_queryEnv;
-	estate->es_rowmarks = parentestate->es_rowmarks;
-	estate->es_plannedstmt = parentestate->es_plannedstmt;
-	estate->es_junkFilter = parentestate->es_junkFilter;
-	estate->es_output_cid = parentestate->es_output_cid;
+	rcestate->es_direction = ForwardScanDirection;
+	rcestate->es_snapshot = parentestate->es_snapshot;
+	rcestate->es_crosscheck_snapshot = parentestate->es_crosscheck_snapshot;
+	rcestate->es_range_table = parentestate->es_range_table;
+	rcestate->es_range_table_size = parentestate->es_range_table_size;
+	rcestate->es_relations = parentestate->es_relations;
+	rcestate->es_queryEnv = parentestate->es_queryEnv;
+	rcestate->es_rowmarks = parentestate->es_rowmarks;
+	rcestate->es_plannedstmt = parentestate->es_plannedstmt;
+	rcestate->es_junkFilter = parentestate->es_junkFilter;
+	rcestate->es_output_cid = parentestate->es_output_cid;
 	if (parentestate->es_num_result_relations > 0)
 	{
 		int			numResultRelations = parentestate->es_num_result_relations;
@@ -2803,8 +2809,8 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 			palloc(numResultRelations * sizeof(ResultRelInfo));
 		memcpy(resultRelInfos, parentestate->es_result_relations,
 			   numResultRelations * sizeof(ResultRelInfo));
-		estate->es_result_relations = resultRelInfos;
-		estate->es_num_result_relations = numResultRelations;
+		rcestate->es_result_relations = resultRelInfos;
+		rcestate->es_num_result_relations = numResultRelations;
 
 		/* Also transfer partitioned root result relations. */
 		if (numRootResultRels > 0)
@@ -2813,14 +2819,14 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 				palloc(numRootResultRels * sizeof(ResultRelInfo));
 			memcpy(resultRelInfos, parentestate->es_root_result_relations,
 				   numRootResultRels * sizeof(ResultRelInfo));
-			estate->es_root_result_relations = resultRelInfos;
-			estate->es_num_root_result_relations = numRootResultRels;
+			rcestate->es_root_result_relations = resultRelInfos;
+			rcestate->es_num_root_result_relations = numRootResultRels;
 		}
 	}
 	/* es_result_relation_info must NOT be copied */
 	/* es_trig_target_relations must NOT be copied */
-	estate->es_top_eflags = parentestate->es_top_eflags;
-	estate->es_instrument = parentestate->es_instrument;
+	rcestate->es_top_eflags = parentestate->es_top_eflags;
+	rcestate->es_instrument = parentestate->es_instrument;
 	/* es_auxmodifytables must NOT be copied */
 
 	/*
@@ -2829,7 +2835,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * from the parent, so as to have access to any param values that were
 	 * already set from other parts of the parent's plan tree.
 	 */
-	estate->es_param_list_info = parentestate->es_param_list_info;
+	rcestate->es_param_list_info = parentestate->es_param_list_info;
 	if (parentestate->es_plannedstmt->paramExecTypes != NIL)
 	{
 		int			i;
@@ -2857,40 +2863,18 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 
 		/* now make the internal param workspace ... */
 		i = list_length(parentestate->es_plannedstmt->paramExecTypes);
-		estate->es_param_exec_vals = (ParamExecData *)
+		rcestate->es_param_exec_vals = (ParamExecData *)
 			palloc0(i * sizeof(ParamExecData));
 		/* ... and copy down all values, whether really needed or not */
 		while (--i >= 0)
 		{
 			/* copy value if any, but not execPlan link */
-			estate->es_param_exec_vals[i].value =
+			rcestate->es_param_exec_vals[i].value =
 				parentestate->es_param_exec_vals[i].value;
-			estate->es_param_exec_vals[i].isnull =
+			rcestate->es_param_exec_vals[i].isnull =
 				parentestate->es_param_exec_vals[i].isnull;
 		}
 	}
-
-	/*
-	 * Each EState must have its own es_epqScanDone state, but if we have
-	 * nested EPQ checks they should share es_epqTupleSlot arrays.  This
-	 * allows sub-rechecks to inherit the values being examined by an outer
-	 * recheck.
-	 */
-	estate->es_epqScanDone = (bool *) palloc0(rtsize * sizeof(bool));
-	if (parentestate->es_epqTupleSlot != NULL)
-	{
-		estate->es_epqTupleSlot = parentestate->es_epqTupleSlot;
-	}
-	else
-	{
-		estate->es_epqTupleSlot = (TupleTableSlot **)
-			palloc0(rtsize * sizeof(TupleTableSlot *));
-	}
-
-	/*
-	 * Each estate also has its own tuple table.
-	 */
-	estate->es_tupleTable = NIL;
 
 	/*
 	 * Initialize private state information for each SubPlan.  We must do this
@@ -2900,15 +2884,49 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * run, but since it's not easy to tell which, we just initialize them
 	 * all.
 	 */
-	Assert(estate->es_subplanstates == NIL);
+	Assert(rcestate->es_subplanstates == NIL);
 	foreach(l, parentestate->es_plannedstmt->subplans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(l);
 		PlanState  *subplanstate;
 
-		subplanstate = ExecInitNode(subplan, estate, 0);
-		estate->es_subplanstates = lappend(estate->es_subplanstates,
-										   subplanstate);
+		subplanstate = ExecInitNode(subplan, rcestate, 0);
+		rcestate->es_subplanstates = lappend(rcestate->es_subplanstates,
+											 subplanstate);
+	}
+
+	/*
+	 * These arrays are reused across different plans set with
+	 * EvalPlanQualSetPlan(), which is safe because they all use the same
+	 * parent EState. Therefore we can reuse if already allocated.
+	 */
+	if (epqstate->relsubs_rowmark == NULL)
+	{
+		Assert(epqstate->relsubs_done == NULL);
+		epqstate->relsubs_rowmark = (ExecAuxRowMark **)
+			palloc0(rtsize * sizeof(ExecAuxRowMark *));
+		epqstate->relsubs_done = (bool *)
+			palloc0(rtsize * sizeof(bool));
+	}
+	else
+	{
+		Assert(epqstate->relsubs_done != NULL);
+		memset(epqstate->relsubs_rowmark, 0,
+			   sizeof(rtsize * sizeof(ExecAuxRowMark *)));
+		memset(epqstate->relsubs_done, 0,
+			   rtsize * sizeof(bool));
+	}
+
+	/*
+	 * Build an RTI indexed array of rowmarks, so that
+	 * EvalPlanQualFetchRowMark() can efficiently access the to be fetched
+	 * rowmark.
+	 */
+	foreach(l, epqstate->arowMarks)
+	{
+		ExecAuxRowMark *earm = (ExecAuxRowMark *) lfirst(l);
+
+		epqstate->relsubs_rowmark[earm->rowmark->rti - 1] = earm;
 	}
 
 	/*
@@ -2916,7 +2934,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * of the plan tree we need to run.  This opens files, allocates storage
 	 * and leaves us ready to start processing tuples.
 	 */
-	epqstate->planstate = ExecInitNode(planTree, estate, 0);
+	epqstate->recheckplanstate = ExecInitNode(planTree, rcestate, 0);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -2934,16 +2952,32 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 void
 EvalPlanQualEnd(EPQState *epqstate)
 {
-	EState	   *estate = epqstate->estate;
+	EState	   *estate = epqstate->recheckestate;
+	Index		rtsize;
 	MemoryContext oldcontext;
 	ListCell   *l;
 
+	rtsize = epqstate->parentestate->es_range_table_size;
+
+	/*
+	 * We may have a tuple table, even if EPQ wasn't started, because we allow
+	 * use of EvalPlanQualSlot() without calling EvalPlanQualBegin().
+	 */
+	if (epqstate->tuple_table != NIL)
+	{
+		memset(epqstate->relsubs_slot, 0,
+			   sizeof(rtsize * sizeof(TupleTableSlot *)));
+		ExecResetTupleTable(epqstate->tuple_table, true);
+		epqstate->tuple_table = NIL;
+	}
+
+	/* EPQ wasn't started, nothing further to do */
 	if (estate == NULL)
-		return;					/* idle, so nothing to do */
+		return;
 
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
-	ExecEndNode(epqstate->planstate);
+	ExecEndNode(epqstate->recheckplanstate);
 
 	foreach(l, estate->es_subplanstates)
 	{
@@ -2952,7 +2986,7 @@ EvalPlanQualEnd(EPQState *epqstate)
 		ExecEndNode(subplanstate);
 	}
 
-	/* throw away the per-estate tuple table */
+	/* throw away the per-estate tuple table, some node may have used it */
 	ExecResetTupleTable(estate->es_tupleTable, false);
 
 	/* close any trigger target relations attached to this EState */
@@ -2963,7 +2997,7 @@ EvalPlanQualEnd(EPQState *epqstate)
 	FreeExecutorState(estate);
 
 	/* Mark EPQState idle */
-	epqstate->estate = NULL;
-	epqstate->planstate = NULL;
+	epqstate->recheckestate = NULL;
+	epqstate->recheckplanstate = NULL;
 	epqstate->origslot = NULL;
 }

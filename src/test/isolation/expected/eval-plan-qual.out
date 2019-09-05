@@ -258,6 +258,273 @@ accountid      balance
 checking       1050           
 savings        600            
 
+starting permutation: wnested2 c1 c2 read
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+s2: NOTICE:  upid: text savings = text checking: f
+step wnested2: 
+    UPDATE accounts SET balance = balance - 1200
+    WHERE noisy_oper('upid', accountid, '=', 'checking')
+    AND noisy_oper('up', balance, '>', 200.0)
+    AND EXISTS (
+        SELECT accountid
+        FROM accounts_ext ae
+        WHERE noisy_oper('lock_id', ae.accountid, '=', accounts.accountid)
+            AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
+        FOR UPDATE
+    );
+
+step c1: COMMIT;
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       -600           
+savings        600            
+
+starting permutation: wx1 wxext1 wnested2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+step wnested2: 
+    UPDATE accounts SET balance = balance - 1200
+    WHERE noisy_oper('upid', accountid, '=', 'checking')
+    AND noisy_oper('up', balance, '>', 200.0)
+    AND EXISTS (
+        SELECT accountid
+        FROM accounts_ext ae
+        WHERE noisy_oper('lock_id', ae.accountid, '=', accounts.accountid)
+            AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
+        FOR UPDATE
+    );
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 400 > numeric 200.0: t
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 400 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 400 > numeric 200.0: t
+s2: NOTICE:  upid: text savings = text checking: f
+step wnested2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       -800           
+savings        600            
+
+starting permutation: wx1 wx1 wxext1 wnested2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+200            
+step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+step wnested2: 
+    UPDATE accounts SET balance = balance - 1200
+    WHERE noisy_oper('upid', accountid, '=', 'checking')
+    AND noisy_oper('up', balance, '>', 200.0)
+    AND EXISTS (
+        SELECT accountid
+        FROM accounts_ext ae
+        WHERE noisy_oper('lock_id', ae.accountid, '=', accounts.accountid)
+            AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
+        FOR UPDATE
+    );
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 400 > numeric 200.0: t
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 200 > numeric 200.0: f
+s2: NOTICE:  upid: text savings = text checking: f
+step wnested2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       200            
+savings        600            
+
+starting permutation: wx1 wx1 wxext1 wxext1 wnested2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+200            
+step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+200            
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+step wnested2: 
+    UPDATE accounts SET balance = balance - 1200
+    WHERE noisy_oper('upid', accountid, '=', 'checking')
+    AND noisy_oper('up', balance, '>', 200.0)
+    AND EXISTS (
+        SELECT accountid
+        FROM accounts_ext ae
+        WHERE noisy_oper('lock_id', ae.accountid, '=', accounts.accountid)
+            AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
+        FOR UPDATE
+    );
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 200 > numeric 200.0: f
+s2: NOTICE:  lock_id: text savings = text checking: f
+s2: NOTICE:  upid: text savings = text checking: f
+step wnested2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       200            
+savings        600            
+
+starting permutation: wx1 wxext1 wxext1 wnested2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step wxext1: UPDATE accounts_ext SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+200            
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+step wnested2: 
+    UPDATE accounts SET balance = balance - 1200
+    WHERE noisy_oper('upid', accountid, '=', 'checking')
+    AND noisy_oper('up', balance, '>', 200.0)
+    AND EXISTS (
+        SELECT accountid
+        FROM accounts_ext ae
+        WHERE noisy_oper('lock_id', ae.accountid, '=', accounts.accountid)
+            AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
+        FOR UPDATE
+    );
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 200 > numeric 200.0: f
+s2: NOTICE:  lock_id: text savings = text checking: f
+s2: NOTICE:  upid: text savings = text checking: f
+step wnested2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       400            
+savings        600            
+
+starting permutation: wx1 tocds1 wnested2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step tocds1: UPDATE accounts SET accountid = 'cds' WHERE accountid = 'checking';
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+step wnested2: 
+    UPDATE accounts SET balance = balance - 1200
+    WHERE noisy_oper('upid', accountid, '=', 'checking')
+    AND noisy_oper('up', balance, '>', 200.0)
+    AND EXISTS (
+        SELECT accountid
+        FROM accounts_ext ae
+        WHERE noisy_oper('lock_id', ae.accountid, '=', accounts.accountid)
+            AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
+        FOR UPDATE
+    );
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  upid: text cds = text checking: f
+s2: NOTICE:  upid: text savings = text checking: f
+step wnested2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+cds            400            
+savings        600            
+
+starting permutation: wx1 tocdsext1 wnested2 c1 c2 read
+step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
+balance        
+
+400            
+step tocdsext1: UPDATE accounts_ext SET accountid = 'cds' WHERE accountid = 'checking';
+s2: NOTICE:  upid: text checking = text checking: t
+s2: NOTICE:  up: numeric 600 > numeric 200.0: t
+s2: NOTICE:  lock_id: text checking = text checking: t
+s2: NOTICE:  lock_bal: numeric 600 > numeric 200.0: t
+step wnested2: 
+    UPDATE accounts SET balance = balance - 1200
+    WHERE noisy_oper('upid', accountid, '=', 'checking')
+    AND noisy_oper('up', balance, '>', 200.0)
+    AND EXISTS (
+        SELECT accountid
+        FROM accounts_ext ae
+        WHERE noisy_oper('lock_id', ae.accountid, '=', accounts.accountid)
+            AND noisy_oper('lock_bal', ae.balance, '>', 200.0)
+        FOR UPDATE
+    );
+ <waiting ...>
+step c1: COMMIT;
+s2: NOTICE:  lock_id: text cds = text checking: f
+s2: NOTICE:  lock_id: text savings = text checking: f
+s2: NOTICE:  upid: text savings = text checking: f
+step wnested2: <... completed>
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid      balance        
+
+checking       400            
+savings        600            
+
 starting permutation: wx1 updwcte c1 c2 read
 step wx1: UPDATE accounts SET balance = balance - 200 WHERE accountid = 'checking' RETURNING balance;
 balance        
@@ -435,8 +702,10 @@ balance
 
 1050           
 step lockwithvalues: 
-	SELECT * FROM accounts a1, (values('checking'),('savings')) v(id)
-	  WHERE a1.accountid = v.id
+	-- Reference rowmark column that differs in type from targetlist at some attno.
+	-- See CAHU7rYZo_C4ULsAx_LAj8az9zqgrD8WDd4hTegDTMM1LMqrBsg@mail.gmail.com
+	SELECT a1.*, v.id FROM accounts a1, (values('checking'::text, 'nan'::text),('savings', 'nan')) v(id, notnumeric)
+	WHERE a1.accountid = v.id AND v.notnumeric != 'einszwei'
 	  FOR UPDATE OF a1;
  <waiting ...>
 step c2: COMMIT;

@@ -65,12 +65,6 @@ lnext:
 	epq_needed = false;
 
 	/*
-	 * Initialize EPQ machinery. Need to do that early because source tuples
-	 * are stored in slots initialized therein.
-	 */
-	EvalPlanQualBegin(&node->lr_epqstate, estate);
-
-	/*
 	 * Attempt to lock the source tuple(s).  (Note we only have locking
 	 * rowmarks in lr_arowMarks.)
 	 */
@@ -259,12 +253,14 @@ lnext:
 	 */
 	if (epq_needed)
 	{
+		/* Initialize EPQ machinery */
+		EvalPlanQualBegin(&node->lr_epqstate);
+
 		/*
-		 * Now fetch any non-locked source rows --- the EPQ logic knows how to
-		 * do that.
+		 * To fetch non-locked source rows the EPQ logic needs to access junk
+		 * columns from the tuple being tested.
 		 */
 		EvalPlanQualSetSlot(&node->lr_epqstate, slot);
-		EvalPlanQualFetchRowMarks(&node->lr_epqstate);
 
 		/*
 		 * And finally we can re-evaluate the tuple.
