@@ -385,7 +385,7 @@ static void getInstallationPaths(const char *argv0);
 static void checkControlFile(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
-static void reset_shared(int port);
+static void reset_shared(void);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
@@ -1175,7 +1175,7 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Set up shared memory and semaphores.
 	 */
-	reset_shared(PostPortNumber);
+	reset_shared();
 
 	/*
 	 * Estimate number of openable files.  This must happen after setting up
@@ -2599,17 +2599,16 @@ InitProcessGlobals(void)
  * reset_shared -- reset shared memory and semaphores
  */
 static void
-reset_shared(int port)
+reset_shared(void)
 {
 	/*
 	 * Create or re-create shared memory and semaphores.
 	 *
 	 * Note: in each "cycle of life" we will normally assign the same IPC keys
-	 * (if using SysV shmem and/or semas), since the port number is used to
-	 * determine IPC keys.  This helps ensure that we will clean up dead IPC
-	 * objects if the postmaster crashes and is restarted.
+	 * (if using SysV shmem and/or semas).  This helps ensure that we will
+	 * clean up dead IPC objects if the postmaster crashes and is restarted.
 	 */
-	CreateSharedMemoryAndSemaphores(port);
+	CreateSharedMemoryAndSemaphores();
 }
 
 
@@ -3934,7 +3933,7 @@ PostmasterStateMachine(void)
 		/* re-read control file into local memory */
 		LocalProcessControlFile(true);
 
-		reset_shared(PostPortNumber);
+		reset_shared();
 
 		StartupPID = StartupDataBase();
 		Assert(StartupPID != 0);
@@ -4962,7 +4961,7 @@ SubPostmasterMain(int argc, char *argv[])
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(0);
+		CreateSharedMemoryAndSemaphores();
 
 		/* And run the backend */
 		BackendRun(&port);		/* does not return */
@@ -4976,7 +4975,7 @@ SubPostmasterMain(int argc, char *argv[])
 		InitAuxiliaryProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(0);
+		CreateSharedMemoryAndSemaphores();
 
 		AuxiliaryProcessMain(argc - 2, argv + 2);	/* does not return */
 	}
@@ -4989,7 +4988,7 @@ SubPostmasterMain(int argc, char *argv[])
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(0);
+		CreateSharedMemoryAndSemaphores();
 
 		AutoVacLauncherMain(argc - 2, argv + 2);	/* does not return */
 	}
@@ -5002,7 +5001,7 @@ SubPostmasterMain(int argc, char *argv[])
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(0);
+		CreateSharedMemoryAndSemaphores();
 
 		AutoVacWorkerMain(argc - 2, argv + 2);	/* does not return */
 	}
@@ -5020,7 +5019,7 @@ SubPostmasterMain(int argc, char *argv[])
 		InitProcess();
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(0);
+		CreateSharedMemoryAndSemaphores();
 
 		/* Fetch MyBgworkerEntry from shared memory */
 		shmem_slot = atoi(argv[1] + 15);

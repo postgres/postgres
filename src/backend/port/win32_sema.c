@@ -44,7 +44,7 @@ PGSemaphoreShmemSize(int maxSemas)
  * process exits.
  */
 void
-PGReserveSemaphores(int maxSemas, int port)
+PGReserveSemaphores(int maxSemas)
 {
 	mySemSet = (HANDLE *) malloc(maxSemas * sizeof(HANDLE));
 	if (mySemSet == NULL)

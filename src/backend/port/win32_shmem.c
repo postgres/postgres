@@ -194,7 +194,7 @@ EnableLockPagesPrivilege(int elevel)
  * standard header.
  */
 PGShmemHeader *
-PGSharedMemoryCreate(Size size, int port,
+PGSharedMemoryCreate(Size size,
 					 PGShmemHeader **shim)
 {
 	void	   *memAddress;

@@ -41,7 +41,7 @@ typedef HANDLE PGSemaphore;
 extern Size PGSemaphoreShmemSize(int maxSemas);
 
 /* Module initialization (called during postmaster start or shmem reinit) */
-extern void PGReserveSemaphores(int maxSemas, int port);
+extern void PGReserveSemaphores(int maxSemas);
 
 /* Allocate a PGSemaphore structure with initial count 1 */
 extern PGSemaphore PGSemaphoreCreate(void);

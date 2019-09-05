@@ -445,12 +445,10 @@ InitCommunication(void)
 	if (!IsUnderPostmaster)		/* postmaster already did this */
 	{
 		/*
-		 * We're running a postgres bootstrap process or a standalone backend.
-		 * Though we won't listen on PostPortNumber, use it to select a shmem
-		 * key.  This increases the chance of detecting a leftover live
-		 * backend of this DataDir.
+		 * We're running a postgres bootstrap process or a standalone backend,
+		 * so we need to set up shmem.
 		 */
-		CreateSharedMemoryAndSemaphores(PostPortNumber);
+		CreateSharedMemoryAndSemaphores();
 	}
 }
 

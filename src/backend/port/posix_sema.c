@@ -29,6 +29,7 @@
 #include <semaphore.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "miscadmin.h"
 #include "storage/ipc.h"
@@ -181,10 +182,6 @@ PGSemaphoreShmemSize(int maxSemas)
  * are acquired here or in PGSemaphoreCreate, register an on_shmem_exit
  * callback to release them.
  *
- * The port number is passed for possible use as a key (for Posix, we use
- * it to generate the starting semaphore name).  In a standalone backend,
- * zero will be passed.
- *
  * In the Posix implementation, we acquire semaphores on-demand; the
  * maxSemas parameter is just used to size the arrays.  For unnamed
  * semaphores, there is an array of PGSemaphoreData structs in shared memory.
@@ -196,8 +193,22 @@ PGSemaphoreShmemSize(int maxSemas)
  * we don't have to expose the counters to other processes.)
  */
 void
-PGReserveSemaphores(int maxSemas, int port)
+PGReserveSemaphores(int maxSemas)
 {
+	struct stat statbuf;
+
+	/*
+	 * We use the data directory's inode number to seed the search for free
+	 * semaphore keys.  This minimizes the odds of collision with other
+	 * postmasters, while maximizing the odds that we will detect and clean up
+	 * semaphores left over from a crashed postmaster in our own directory.
+	 */
+	if (stat(DataDir, &statbuf) < 0)
+		ereport(FATAL,
+				(errcode_for_file_access(),
+				 errmsg("could not stat data directory \"%s\": %m",
+						DataDir)));
+
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 	mySemPointers = (sem_t **) malloc(maxSemas * sizeof(sem_t *));
 	if (mySemPointers == NULL)
@@ -215,7 +226,7 @@ PGReserveSemaphores(int maxSemas, int port)
 
 	numSems = 0;
 	maxSems = maxSemas;
-	nextSemKey = port * 1000;
+	nextSemKey = statbuf.st_ino;
 
 	on_shmem_exit(ReleaseSemaphores, 0);
 }
