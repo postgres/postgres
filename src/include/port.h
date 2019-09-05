@@ -378,6 +378,10 @@ extern int	isinf(double x);
 #endif							/* __clang__ && !__cplusplus */
 #endif							/* !HAVE_ISINF */
 
+#ifndef HAVE_EXPLICIT_BZERO
+extern void explicit_bzero(void *buf, size_t len);
+#endif
+
 #ifndef HAVE_STRTOF
 extern float strtof(const char *nptr, char **endptr);
 #endif

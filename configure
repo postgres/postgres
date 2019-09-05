@@ -15087,7 +15087,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in cbrt clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink sync_file_range uselocale utime utimes wcstombs_l
+for ac_func in cbrt clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memset_s memmove poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink sync_file_range uselocale utime utimes wcstombs_l
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -15734,6 +15734,19 @@ else
   case " $LIBOBJS " in
   *" dlopen.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS dlopen.$ac_objext"
+ ;;
+esac
+
+fi
+
+ac_fn_c_check_func "$LINENO" "explicit_bzero" "ac_cv_func_explicit_bzero"
+if test "x$ac_cv_func_explicit_bzero" = xyes; then :
+  $as_echo "#define HAVE_EXPLICIT_BZERO 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" explicit_bzero.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS explicit_bzero.$ac_objext"
  ;;
 esac
 

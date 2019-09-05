@@ -195,6 +195,9 @@
 /* Define to 1 if you have the <editline/readline.h> header file. */
 #undef HAVE_EDITLINE_READLINE_H
 
+/* Define to 1 if you have the `explicit_bzero' function. */
+#undef HAVE_EXPLICIT_BZERO
+
 /* Define to 1 if you have the `fdatasync' function. */
 #undef HAVE_FDATASYNC
 
@@ -394,6 +397,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memset_s' function. */
+#undef HAVE_MEMSET_S
 
 /* Define to 1 if the system has the type `MINIDUMP_TYPE'. */
 #undef HAVE_MINIDUMP_TYPE

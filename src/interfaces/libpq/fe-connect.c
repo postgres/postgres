@@ -3885,7 +3885,10 @@ freePGconn(PGconn *conn)
 			if (conn->connhost[i].port != NULL)
 				free(conn->connhost[i].port);
 			if (conn->connhost[i].password != NULL)
+			{
+				explicit_bzero(conn->connhost[i].password, strlen(conn->connhost[i].password));
 				free(conn->connhost[i].password);
+			}
 		}
 		free(conn->connhost);
 	}
@@ -3919,7 +3922,10 @@ freePGconn(PGconn *conn)
 	if (conn->pguser)
 		free(conn->pguser);
 	if (conn->pgpass)
+	{
+		explicit_bzero(conn->pgpass, strlen(conn->pgpass));
 		free(conn->pgpass);
+	}
 	if (conn->pgpassfile)
 		free(conn->pgpassfile);
 	if (conn->keepalives)
@@ -6931,6 +6937,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 		if (!ret)
 		{
 			/* Out of memory. XXX: an error message would be nice. */
+			explicit_bzero(buf, sizeof(buf));
 			return NULL;
 		}
 
@@ -6947,6 +6954,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 	}
 
 	fclose(fp);
+	explicit_bzero(buf, sizeof(buf));
 	return NULL;
 
 #undef LINELEN
