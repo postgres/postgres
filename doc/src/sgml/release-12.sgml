@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2019-??-?? AS OF 2019-05-09</para>
+   <para>2019-??-??, CURRENT AS OF 2019-09-06</para>
   </formalpara>
 
   <sect2>
@@ -21,7 +21,143 @@
    <itemizedlist>
 
     <listitem>
-     <para>big item</para>
+     <para>
+      General performance improvements, including:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Optimizations to space utilization and read/write performance for
+         B-tree indexes
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Partitioning performance enhancements, including improved query
+         performance on tables with thousands of partitions, improved
+         insertion performance with <xref linkend="sql-insert"/> and
+         <xref linkend="sql-copy"/>, and the ability to
+         execute <link linkend="sql-altertable"><command>ALTER TABLE ATTACH
+         PARTITION</command></link> without blocking queries
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Automatic (but overridable) inlining
+         of <link linkend="queries-with">common table expressions</link>
+         (<acronym>CTEs</acronym>)
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Reduction of <acronym>WAL</acronym> overhead for updates of
+         <link linkend="gist">GiST</link>, <link linkend="gin">GIN</link>, and
+         <link linkend="spgist">SP-GiST</link> indexes
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Support for covering <link linkend="gist">GiST</link> indexes, via
+         the <link linkend="sql-createindex"> <literal>INCLUDE</literal></link>
+         clause
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Multi-column most-common-value (MCV) statistics can be defined
+         via <xref linkend="sql-createstatistics"/>, to support better
+         plans for queries that test several non-uniformly-distributed
+         columns
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Enhancements to administrative functionality, including:
+      <itemizedlist>
+       <listitem>
+        <para>
+         <link linkend="sql-reindex"><command>REINDEX
+         CONCURRENTLY</command></link> can rebuild an index without
+         blocking writes to its table
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         <xref linkend="app-pgchecksums"/> can enable/disable page checksums
+         (used for detecting data corruption) in an offline cluster
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Progress reporting statistics for <xref linkend="sql-createindex"/>,
+         <xref linkend="sql-reindex"/>, <xref linkend="sql-cluster"/>,
+         <link linkend="sql-vacuum">VACUUM FULL</link>, and
+         <xref linkend="app-pgchecksums"/>
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+       Support for the <acronym>SQL/JSON</acronym>
+       <link linkend="functions-json-processing-table">path</link> language
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+       Stored <link linkend="sql-createtable">generated columns</link>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+       Nondeterministic ICU
+       <link linkend="sql-createcollation">collations</link>, enabling
+       case-insensitive and accent-insensitive grouping and ordering
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New authentication features, including:
+      <itemizedlist>
+       <listitem>
+        <para>
+         Client- and server-side encryption for authentication using
+         <link linkend="gssapi-auth"><acronym>GSSAPI</acronym></link>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Discovery of LDAP servers if <productname>PostgreSQL</productname> is
+         built with <productname>OpenLDAP</productname>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         Multi-factor authentication, using the <link linkend="auth-cert">
+         <literal>clientcert=verify-full</literal></link> option combined
+         with an additional authentication method in
+         <filename>pg_hba.conf</filename>
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
     </listitem>
 
    </itemizedlist>
@@ -183,7 +319,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
     <listitem>
 <!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
-2018-08-16 [c4c340088] Use the built-in float datatypes to implement geometric 
+2018-08-16 [c4c340088] Use the built-in float datatypes to implement geometric
 -->
 
      <para>
@@ -222,6 +358,26 @@ Author: Andrew Gierth <rhodiumtoad@postgresql.org>
       by default.  Now, only the number of digits required to preserve
       the exact binary value is output.  The previous  behavior can be
       restored by setting <xref linkend="guc-extra-float-digits"/> to zero.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2019-05-14 [7c850320d] Fix SQL-style substring() to have spec-compliant greedin
+-->
+
+     <para>
+      Change SQL-style <function>substring()</function> to have
+      standard-compliant greediness behavior (Tom Lane)
+     </para>
+
+     <para>
+      In cases where the pattern can be matched in more than one way, the
+      initial sub-pattern is now treated as matching the least possible
+      amount of text rather than the greatest; for example, a pattern such
+      as <literal>%#"aa*#"%</literal> now selects the first group
+      of <literal>a</literal>'s from the input, not the last group.
      </para>
     </listitem>
 
@@ -299,8 +455,8 @@ This is caused by adding the tid to the btree entry, as listed later.
 -->
 
      <para>
-      The maximum btree index length is now reduced by eight bytes;
-      a <xref linkend="sql-reindex"/> operation could potentially fail.
+      The maximum btree index entry length is now reduced by eight bytes;
+      thus a <xref linkend="sql-reindex"/> operation could potentially fail.
      </para>
     </listitem>
 
@@ -342,6 +498,25 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       Also improve the error message in such cases.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tomas Vondra <tomas.vondra@postgresql.org>
+2019-06-16 [6cbfb784c] Rework the pg_statistic_ext catalog
+2019-06-16 [aa087ec64] Add pg_stats_ext view for extended statistics
+-->
+
+     <para>
+      Split the <structname>pg_statistic_ext</structname> catalog into two
+      catalogs, and add the <structname>pg_stats_ext</structname> view of
+      it (Dean Rasheed, Tomas Vondra)
+     </para>
+
+     <para>
+      This change supports hiding potentially-sensitive statistics data
+      from unprivileged users.
      </para>
     </listitem>
 
@@ -420,7 +595,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Author: Robert Haas <rhaas@postgresql.org>
 2019-02-21 [9eefba181] Delay lock acquisition for partitions until we route a t
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-03-30 [428b260f8] Speed up planning when partitions can be pruned at plan 
+2019-03-30 [428b260f8] Speed up planning when partitions can be pruned at plan
 -->
 
        <para>
@@ -492,7 +667,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
       <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-04-05 [959d00e9d] Use Append rather than MergeAppend for scanning ordered 
+2019-04-05 [959d00e9d] Use Append rather than MergeAppend for scanning ordered
 -->
 
        <para>
@@ -658,7 +833,7 @@ see commits above
       <listitem>
 <!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
-2018-07-28 [d2086b08b] Reduce path length for locking leaf B-tree pages during 
+2018-07-28 [d2086b08b] Reduce path length for locking leaf B-tree pages during
 -->
 
        <para>
@@ -711,7 +886,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
       <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-03-03 [80b9e9c46] Improve performance of index-only scans with many index 
+2019-03-03 [80b9e9c46] Improve performance of index-only scans with many index
 -->
 
        <para>
@@ -789,7 +964,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2019-02-16 [608b167f9] Allow user control of CTE materialization, and change th
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-04-09 [947613127] Prevent inlining of multiply-referenced CTEs with outer 
+2019-04-09 [947613127] Prevent inlining of multiply-referenced CTEs with outer
 -->
 
        <para>
@@ -1941,9 +2116,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
 
       <para>
-       This allows case and accent-agnostic equality comparisons using
-       "nondeterministic" collations.  This is only supported for
-       <acronym>ICU</acronym> collations.  MENTION ITS AFFECT ON ORDERING?
+       This feature supports <quote>nondeterministic</quote> collations
+       that can define case- and accent-agnostic equality comparisons.
+       Thus, for example, a case-insensitive uniqueness constraint on a
+       text column can be made more easily than before.  This is only
+       supported for <acronym>ICU</acronym> collations.
       </para>
      </listitem>
 
@@ -1972,6 +2149,8 @@ Author: Fujii Masao <fujii@postgresql.org>
 <!--
 Author: Robert Haas <rhaas@postgresql.org>
 2019-04-04 [a96c41fee] Allow VACUUM to be run with index cleanup disabled.
+Author: Michael Paquier <michael@paquier.xyz>
+2019-06-25 [ce59b75d4] Add toast-level reloption for vacuum_index_cleanup
 -->
 
       <para>
@@ -2046,7 +2225,7 @@ Author: Andrew Gierth <rhodiumtoad@postgresql.org>
      <listitem>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
-2019-03-19 [590a87025] Ignore attempts to add TOAST table to shared or catalog 
+2019-03-19 [590a87025] Ignore attempts to add TOAST table to shared or catalog
 -->
 
       <para>
@@ -2380,6 +2559,18 @@ Author: Michael Meskes <meskes@postgresql.org>
 
      <listitem>
 <!--
+Author: Michael Meskes <meskes@postgresql.org>
+2019-05-22 [a1dc6ab46] Implement PREPARE AS statement for ECPG.
+-->
+
+      <para>
+       Add <command>PREPARE AS</command> support to
+       <productname>ECPG</productname> (Matsumura Ryo)
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2019-04-06 [249d64999] Add support TCP user timeout in libpq and the backend se
 -->
@@ -2478,8 +2669,13 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
 
       <para>
-       This is enabled with by setting environment variable
-       <envar>PG_COLORS</envar>.  EXAMPLE?
+       This is enabled by setting the environment variable
+       <envar>PG_COLOR</envar> to <literal>always</literal>
+       or <literal>auto</literal>.  The specific colors used can be
+       adjusted by setting the environment variable
+       <envar>PG_COLORS</envar>, using ANSI escape codes for colors.
+       For example, the default behavior is equivalent to
+       <literal>PG_COLORS="error=01;31:warning=01;35:locus=01"</literal>
       </para>
      </listitem>
 
@@ -2524,6 +2720,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2018-11-19 [6e5f8d489] psql: Show IP address in \conninfo
+2019-06-14 [313f56ce2] Tweak libpq's PQhost, PQhostaddr, and psql's \connect
 -->
 
        <para>
@@ -2752,6 +2949,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 <!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2019-03-07 [7e413a0f8] pg_dump: allow multiple rows per insert
+2019-06-14 [a193cbec1] Add pg_dumpall rows-per-insert
 -->
 
        <para>
@@ -2957,7 +3155,7 @@ Author: Michael Paquier <michael@paquier.xyz>
      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2018-09-26 [26e9d4d4e] Convert elog.c's useful_strerror() into a globally-used 
+2018-09-26 [26e9d4d4e] Convert elog.c's useful_strerror() into a globally-used
 -->
 
       <para>
@@ -3100,7 +3298,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
      <listitem>
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
-2018-07-08 [a45adc747] Fix WITH CHECK OPTION on views referencing postgres_fdw 
+2018-07-08 [a45adc747] Fix WITH CHECK OPTION on views referencing postgres_fdw
 -->
 
       <para>
