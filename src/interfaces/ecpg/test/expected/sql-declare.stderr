@@ -92,7 +92,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 86: name stmt_1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGdeclare on line 98: declared name stmt_2 on connection: "con1"
+[NO_PID]: ECPGdeclare on line 98: declared name "stmt_2" on connection: "con1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 99: name stmt_2; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -142,7 +142,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: deallocate_one on line 111: name stmt_2
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGdeclare on line 122: declared name stmt_3 on connection: "con1"
+[NO_PID]: ECPGdeclare on line 122: declared name "stmt_3" on connection: "con1"
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: prepare_common on line 123: name stmt_3; query: "SELECT f1,f2,f3 FROM source"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -280,9 +280,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection con2 closed
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_release_declared_statement: declared name stmt_3 is released
+[NO_PID]: ecpg_release_declared_statement: declared name "stmt_3" is released
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ecpg_release_declared_statement: declared name stmt_2 is released
+[NO_PID]: ecpg_release_declared_statement: declared name "stmt_2" is released
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: connection con1 closed
 [NO_PID]: sqlca: code: 0, state: 00000
