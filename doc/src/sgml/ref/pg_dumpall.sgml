@@ -52,7 +52,8 @@ PostgreSQL documentation
 
   <para>
    The SQL script will be written to the standard output.  Use the
-   [-f|file] option or shell operators to redirect it into a file.
+   <option>-f</option>/<option>--file</option> option or shell operators to
+   redirect it into a file.
   </para>
 
   <para>
