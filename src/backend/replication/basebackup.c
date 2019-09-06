@@ -90,6 +90,18 @@ static char *statrelpath = NULL;
  */
 #define THROTTLING_FREQUENCY	8
 
+/*
+ * Checks whether we encountered any error in fread().  fread() doesn't give
+ * any clue what has happened, so we check with ferror().  Also, neither
+ * fread() nor ferror() set errno, so we just throw a generic error.
+ */
+#define CHECK_FREAD_ERROR(fp, filename) \
+do { \
+	if (ferror(fp)) \
+		ereport(ERROR, \
+				(errmsg("could not read from file \"%s\"", filename))); \
+} while (0)
+
 /* The actual number of bytes, transfer of which may cause sleep. */
 static uint64 throttling_sample;
 
@@ -542,6 +554,8 @@ perform_base_backup(basebackup_options *opt)
 				if (len == wal_segment_size)
 					break;
 			}
+
+			CHECK_FREAD_ERROR(fp, pathbuf);
 
 			if (len != wal_segment_size)
 			{
@@ -1478,6 +1492,20 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 
 							if (fread(buf + BLCKSZ * i, 1, BLCKSZ, fp) != BLCKSZ)
 							{
+								/*
+								 * If we hit end-of-file, a concurrent
+								 * truncation must have occurred, so break out
+								 * of this loop just as if the initial fread()
+								 * returned 0. We'll drop through to the same
+								 * code that handles that case. (We must fix
+								 * up cnt first, though.)
+								 */
+								if (feof(fp))
+								{
+									cnt = BLCKSZ * i;
+									break;
+								}
+
 								ereport(ERROR,
 										(errcode_for_file_access(),
 										 errmsg("could not reread block %d of file \"%s\": %m",
@@ -1529,7 +1557,7 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 		len += cnt;
 		throttle(cnt);
 
-		if (len >= statbuf->st_size)
+		if (feof(fp) || len >= statbuf->st_size)
 		{
 			/*
 			 * Reached end of file. The file could be longer, if it was
@@ -1539,6 +1567,8 @@ sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf
 			break;
 		}
 	}
+
+	CHECK_FREAD_ERROR(fp, readfilename);
 
 	/* If the file was truncated while we were sending it, pad it with zeros */
 	if (len < statbuf->st_size)
