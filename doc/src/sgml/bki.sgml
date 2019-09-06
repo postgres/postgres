@@ -65,7 +65,7 @@
  </para>
 
  <para>
-  Most Postgres developers don't need to be directly concerned with
+  Most PostgreSQL developers don't need to be directly concerned with
   the <acronym>BKI</acronym> file, but almost any nontrivial feature
   addition in the backend will require modifying the catalog header files
   and/or initial data files.  The rest of this chapter gives some

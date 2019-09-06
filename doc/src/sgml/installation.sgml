@@ -2469,7 +2469,7 @@ xcodebuild -version -sdk macosx Path
     of <literal>DYLD_LIBRARY_PATH</literal> down to the executables being
     tested.  You can work around that by doing <literal>make
     install</literal> before <literal>make check</literal>.
-    Most Postgres developers just turn off SIP, though.
+    Most PostgreSQL developers just turn off SIP, though.
    </para>
   </sect2>
 
