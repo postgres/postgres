@@ -11,6 +11,7 @@
 
 #include "catalog/pg_class_d.h"
 
+#include "common/logging.h"
 #include "fe_utils/connect.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
@@ -85,6 +86,7 @@ get_opts(int argc, char **argv, struct options *my_opts)
 	const char *progname;
 	int			optindex;
 
+	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
 
 	/* set the defaults */
@@ -328,8 +330,8 @@ sql_conn(struct options *my_opts)
 
 		if (!conn)
 		{
-			fprintf(stderr, "%s: could not connect to database %s\n",
-					"oid2name", my_opts->dbname);
+			pg_log_error("could not connect to database %s",
+						 my_opts->dbname);
 			exit(1);
 		}
 
@@ -347,8 +349,8 @@ sql_conn(struct options *my_opts)
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "%s: could not connect to database %s: %s",
-				"oid2name", my_opts->dbname, PQerrorMessage(conn));
+		pg_log_error("could not connect to database %s: %s",
+					 my_opts->dbname, PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}
@@ -356,8 +358,8 @@ sql_conn(struct options *my_opts)
 	res = PQexec(conn, ALWAYS_SECURE_SEARCH_PATH_SQL);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		fprintf(stderr, "oid2name: could not clear search_path: %s\n",
-				PQerrorMessage(conn));
+		pg_log_error("could not clear search_path: %s",
+					 PQerrorMessage(conn));
 		PQclear(res);
 		PQfinish(conn);
 		exit(-1);
@@ -390,8 +392,8 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
 	/* check and deal with errors */
 	if (!res || PQresultStatus(res) > 2)
 	{
-		fprintf(stderr, "oid2name: query failed: %s\n", PQerrorMessage(conn));
-		fprintf(stderr, "oid2name: query was: %s\n", todo);
+		pg_log_error("query failed: %s", PQerrorMessage(conn));
+		pg_log_error("query was: %s", todo);
 
 		PQclear(res);
 		PQfinish(conn);
