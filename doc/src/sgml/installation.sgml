@@ -15,16 +15,20 @@ documentation.  See standalone-profile.xsl for details.
   <primary>installation</primary>
  </indexterm>
 
+ <!-- See also the version of this text in standalone-install.xml -->
  <para>
   This chapter describes the installation of
   <productname>PostgreSQL</productname> using the source code
   distribution.  If you are installing a pre-packaged distribution,
   such as an RPM or Debian package, ignore this chapter
   and read the packager's instructions instead.
-  Also, this chapter does not describe the preferred way to install
-  <productname>PostgreSQL</productname> on Microsoft
-  Windows<phrase condition="standalone-ignore"> (for that, see
-  <xref linkend="install-windows"/>)</phrase>.
+ </para>
+
+ <para>
+  If you are building <productname>PostgreSQL</productname> for Microsoft
+  Windows, read this chapter if you intend to build with MinGW or Cygwin;
+  but if you intend to build with Microsoft's <productname>Visual
+  C++</productname>, see <xref linkend="install-windows"/> instead.
  </para>
 
  <sect1 id="install-short">
@@ -2484,9 +2488,6 @@ xcodebuild -version -sdk macosx Path
     The MinGW build procedure uses the normal build system described in
     this chapter; the Visual C++ build works completely differently
     and is described in <xref linkend="install-windows"/>.
-    The Visual C++ build is recommended, as it is fully native and uses no
-    additional software like MinGW.  A ready-made installer is available on
-    the main PostgreSQL web site.
    </para>
 
    <para>

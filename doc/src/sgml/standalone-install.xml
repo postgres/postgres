@@ -9,9 +9,17 @@ in the stand-alone version.
 <article id="installation">
  <title><productname>PostgreSQL</productname> Installation from Source Code</title>
 
+ <!-- This text replaces the introductory text of installation.sgml -->
  <para>
   This document describes the installation of
   <productname>PostgreSQL</productname> using this source code distribution.
+ </para>
+
+ <para>
+  If you are building <productname>PostgreSQL</productname> for Microsoft
+  Windows, read this document if you intend to build with MinGW or Cygwin;
+  but if you intend to build with Microsoft's <productname>Visual
+  C++</productname>, see the main documentation instead.
  </para>
 
  <xi:include href="postgres.sgml" xpointer="install-short" xmlns:xi="http://www.w3.org/2001/XInclude"/>
