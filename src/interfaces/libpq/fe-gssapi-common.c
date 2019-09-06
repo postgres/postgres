@@ -58,7 +58,7 @@ pg_GSS_error(const char *mprefix, PGconn *conn,
  * Check if we can acquire credentials at all (and yield them if so).
  */
 bool
-pg_GSS_have_ccache(gss_cred_id_t *cred_out)
+pg_GSS_have_cred_cache(gss_cred_id_t *cred_out)
 {
 	OM_uint32	major,
 				minor;
