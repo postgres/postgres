@@ -84,6 +84,18 @@ static char *statrelpath = NULL;
  */
 #define THROTTLING_FREQUENCY	8
 
+/*
+ * Checks whether we encountered any error in fread().  fread() doesn't give
+ * any clue what has happened, so we check with ferror().  Also, neither
+ * fread() nor ferror() set errno, so we just throw a generic error.
+ */
+#define CHECK_FREAD_ERROR(fp, filename) \
+do { \
+	if (ferror(fp)) \
+		ereport(ERROR, \
+				(errmsg("could not read from file \"%s\"", filename))); \
+} while (0)
+
 /* The actual number of bytes, transfer of which may cause sleep. */
 static uint64 throttling_sample;
 
@@ -433,6 +445,8 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 				if (len == XLogSegSize)
 					break;
 			}
+
+			CHECK_FREAD_ERROR(fp, pathbuf);
 
 			if (len != XLogSegSize)
 			{
@@ -1172,6 +1186,8 @@ sendFile(char *readfilename, char *tarfilename, struct stat * statbuf,
 			break;
 		}
 	}
+
+	CHECK_FREAD_ERROR(fp, readfilename);
 
 	/* If the file was truncated while we were sending it, pad it with zeros */
 	if (len < statbuf->st_size)
