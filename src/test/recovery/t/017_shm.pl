@@ -18,7 +18,7 @@ eval {
 	require IPC::SysV;
 	IPC::SysV->import(qw(IPC_CREAT IPC_EXCL S_IRUSR S_IWUSR));
 };
-if ($@)
+if ($@ || $windows_os)
 {
 	plan skip_all => 'SysV shared memory not supported by this platform';
 }
