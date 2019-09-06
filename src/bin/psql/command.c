@@ -3281,7 +3281,7 @@ printGSSInfo(void)
 	if (!PQgssEncInUse(pset.db))
 		return;					/* no GSSAPI encryption in use */
 
-	printf(_("GSSAPI Encrypted connection\n"));
+	printf(_("GSSAPI-encrypted connection\n"));
 }
 
 

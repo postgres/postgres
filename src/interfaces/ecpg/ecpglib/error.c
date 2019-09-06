@@ -204,7 +204,7 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------
 				translator: this string will be truncated at 149 characters expanded.  */
-					 ecpg_gettext("The cursor is invalid on line %d"), line);
+					 ecpg_gettext("cursor is invalid on line %d"), line);
 			break;
 
 		default:

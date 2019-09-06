@@ -696,7 +696,7 @@ ECPGdeclare(int lineno, const char *connection_name, const char *name)
 
 	memset(p, 0, sizeof(struct declared_statement));
 
-	ecpg_log("ECPGdeclare on line %d: declared name %s on connection: \"%s\"\n", lineno, name, connection_name);
+	ecpg_log("ECPGdeclare on line %d: declared name \"%s\" on connection: \"%s\"\n", lineno, name, connection_name);
 
 	p->name = ecpg_strdup(name, lineno);
 	p->connection_name = ecpg_strdup(connection_name, lineno);
@@ -831,7 +831,7 @@ ecpg_release_declared_statement(const char *connection_name)
 			else
 				g_declared_list = cur->next;
 
-			ecpg_log("ecpg_release_declared_statement: declared name %s is released\n", cur->name);
+			ecpg_log("ecpg_release_declared_statement: declared name \"%s\" is released\n", cur->name);
 
 			ecpg_free(cur->name);
 			ecpg_free(cur->connection_name);

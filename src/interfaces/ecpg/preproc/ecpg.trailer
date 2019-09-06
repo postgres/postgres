@@ -303,7 +303,7 @@ ECPGDeclareStmt: DECLARE prepared_name STATEMENT
 				if (strcmp($2, ptr->name) == 0)
 				{
 					/* re-definition is a bug */
-					mmerror(PARSE_ERROR, ET_ERROR, "declared name %s is already defined", ptr->name);
+					mmerror(PARSE_ERROR, ET_ERROR, "declared name \"%s\" is already defined", ptr->name);
 				}
 			}
 
