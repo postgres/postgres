@@ -47,8 +47,9 @@ my @contrib_excludes = (
 	'jsonb_plperl',     'jsonb_plpython',
 	'ltree_plpython',   'pgcrypto',
 	'sepgsql',          'brin',
-	'test_extensions',  'test_pg_dump',
-	'snapshot_too_old', 'unsafe_tests');
+	'test_extensions',  'test_misc',
+	'test_pg_dump',     'snapshot_too_old',
+	'unsafe_tests');
 
 # Set of variables for frontend modules
 my $frontend_defines = { 'initdb' => 'FRONTEND' };

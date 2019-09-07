@@ -1163,7 +1163,6 @@ alter table defcheck_def drop c;
 alter table defcheck attach partition defcheck_def default;
 alter table defcheck_def add check (b <= 0 and b is not null);
 create table defcheck_1 partition of defcheck for values in (1, null);
-INFO:  updated partition constraint for default partition "defcheck_def" is implied by existing constraints
 -- test that complex default partition constraints are enforced correctly
 insert into defcheck_def values (0, 0);
 create table defcheck_0 partition of defcheck for values in (0);
