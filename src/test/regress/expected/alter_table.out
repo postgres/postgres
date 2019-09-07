@@ -3633,11 +3633,9 @@ ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
 ALTER TABLE list_parted2 DETACH PARTITION part_3_4;
 ALTER TABLE part_3_4 ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
-INFO:  partition constraint for table "part_3_4" is implied by existing constraints
 -- check if default partition scan skipped
 ALTER TABLE list_parted2_def ADD CONSTRAINT check_a CHECK (a IN (5, 6));
 CREATE TABLE part_55_66 PARTITION OF list_parted2 FOR VALUES IN (55, 66);
-INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
 -- check validation when attaching range partitions
 CREATE TABLE range_parted (
 	a int,
@@ -3662,7 +3660,6 @@ CREATE TABLE part2 (
 	b int NOT NULL CHECK (b >= 10 AND b < 18)
 );
 ALTER TABLE range_parted ATTACH PARTITION part2 FOR VALUES FROM (1, 10) TO (1, 20);
-INFO:  partition constraint for table "part2" is implied by existing constraints
 -- Create default partition
 CREATE TABLE partr_def1 PARTITION OF range_parted DEFAULT;
 -- Only one default partition is allowed, hence, following should give error
@@ -3690,13 +3687,11 @@ ERROR:  partition constraint is violated by some row
 DELETE FROM part_5_a WHERE a NOT IN (3);
 ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 5);
 ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
-INFO:  partition constraint for table "part_5" is implied by existing constraints
 ALTER TABLE list_parted2 DETACH PARTITION part_5;
 ALTER TABLE part_5 DROP CONSTRAINT check_a;
 -- scan should again be skipped, even though NOT NULL is now a column property
 ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IN (5)), ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
-INFO:  partition constraint for table "part_5" is implied by existing constraints
 -- Check the case where attnos of the partitioning columns in the table being
 -- attached differs from the parent.  It should not affect the constraint-
 -- checking logic that allows to skip the scan.
@@ -3707,7 +3702,6 @@ CREATE TABLE part_6 (
 );
 ALTER TABLE part_6 DROP c;
 ALTER TABLE list_parted2 ATTACH PARTITION part_6 FOR VALUES IN (6);
-INFO:  partition constraint for table "part_6" is implied by existing constraints
 -- Similar to above, but the table being attached is a partitioned table
 -- whose partition has still different attnos for the root partitioning
 -- columns.
@@ -3725,10 +3719,7 @@ CREATE TABLE part_7_a_null (
 );
 ALTER TABLE part_7_a_null DROP c, DROP d, DROP e;
 ALTER TABLE part_7 ATTACH PARTITION part_7_a_null FOR VALUES IN ('a', null);
-INFO:  partition constraint for table "part_7_a_null" is implied by existing constraints
 ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
-INFO:  partition constraint for table "part_7" is implied by existing constraints
-INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
 -- Same example, but check this time that the constraint correctly detects
 -- violating rows
 ALTER TABLE list_parted2 DETACH PARTITION part_7;
@@ -3742,7 +3733,6 @@ SELECT tableoid::regclass, a, b FROM part_7 order by a;
 (2 rows)
 
 ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
-INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
 ERROR:  partition constraint is violated by some row
 -- check that leaf partitions of default partition are scanned when
 -- attaching a partitioned table.
@@ -3779,12 +3769,10 @@ CREATE TABLE quuux1 (a int, b text);
 ALTER TABLE quuux ATTACH PARTITION quuux1 FOR VALUES IN (1); -- validate!
 CREATE TABLE quuux2 (a int, b text);
 ALTER TABLE quuux ATTACH PARTITION quuux2 FOR VALUES IN (2); -- skip validation
-INFO:  updated partition constraint for default partition "quuux_default1" is implied by existing constraints
 DROP TABLE quuux1, quuux2;
 -- should validate for quuux1, but not for quuux2
 CREATE TABLE quuux1 PARTITION OF quuux FOR VALUES IN (1);
 CREATE TABLE quuux2 PARTITION OF quuux FOR VALUES IN (2);
-INFO:  updated partition constraint for default partition "quuux_default1" is implied by existing constraints
 DROP TABLE quuux;
 -- check validation when attaching hash partitions
 -- Use hand-rolled hash functions and operator class to get predictable result
@@ -4019,7 +4007,6 @@ delete from defpart_attach_test_d where a = 1;
 alter table defpart_attach_test_d add check (a > 1);
 -- should be attached successfully and without needing to be scanned
 alter table defpart_attach_test attach partition defpart_attach_test_d default;
-INFO:  partition constraint for table "defpart_attach_test_d" is implied by existing constraints
 -- check that attaching a partition correctly reports any rows in the default
 -- partition that should not be there for the new partition to be attached
 -- successfully

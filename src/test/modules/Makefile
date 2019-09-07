@@ -13,6 +13,7 @@ SUBDIRS = \
 		  test_ddl_deparse \
 		  test_extensions \
 		  test_integerset \
+		  test_misc \
 		  test_parser \
 		  test_pg_dump \
 		  test_predtest \
