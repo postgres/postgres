@@ -410,7 +410,56 @@ SELECT SUBSTRING('abcdefg' FROM 'b(.*)f') AS "cde";
  cde
 (1 row)
 
--- PostgreSQL extension to allow using back reference in replace string;
+-- Check behavior of SIMILAR TO, which uses largely the same regexp variant
+SELECT 'abcdefg' SIMILAR TO '_bcd%' AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT 'abcdefg' SIMILAR TO 'bcd%' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'abcdefg' SIMILAR TO '_bcd#%' ESCAPE '#' AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'abcd%' SIMILAR TO '_bcd#%' ESCAPE '#' AS true;
+ true 
+------
+ t
+(1 row)
+
+-- Postgres uses '\' as the default escape character, which is not per spec
+SELECT 'abcdefg' SIMILAR TO '_bcd\%' AS false;
+ false 
+-------
+ f
+(1 row)
+
+-- and an empty string to mean "no escape", which is also not per spec
+SELECT 'abcd\efg' SIMILAR TO '_bcd\%' ESCAPE '' AS true;
+ true 
+------
+ t
+(1 row)
+
+-- these behaviors are per spec, though:
+SELECT 'abcdefg' SIMILAR TO '_bcd%' ESCAPE NULL AS null;
+ null 
+------
+ 
+(1 row)
+
+SELECT 'abcdefg' SIMILAR TO '_bcd#%' ESCAPE '##' AS error;
+ERROR:  invalid escape string
+HINT:  Escape string must be empty or one character.
+-- Test back reference in regexp_replace
 SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
  regexp_replace 
 ----------------

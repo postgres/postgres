@@ -654,15 +654,18 @@ textregexreplace(PG_FUNCTION_ARGS)
 }
 
 /*
- * similar_escape()
- * Convert a SQL:2008 regexp pattern to POSIX style, so it can be used by
- * our regexp engine.
+ * similar_to_escape(), similar_escape()
+ *
+ * Convert a SQL "SIMILAR TO" regexp pattern to POSIX style, so it can be
+ * used by our regexp engine.
+ *
+ * similar_escape_internal() is the common workhorse for three SQL-exposed
+ * functions.  esc_text can be passed as NULL to select the default escape
+ * (which is '\'), or as an empty string to select no escape character.
  */
-Datum
-similar_escape(PG_FUNCTION_ARGS)
+static text *
+similar_escape_internal(text *pat_text, text *esc_text)
 {
-	text	   *pat_text;
-	text	   *esc_text;
 	text	   *result;
 	char	   *p,
 			   *e,
@@ -673,13 +676,9 @@ similar_escape(PG_FUNCTION_ARGS)
 	bool		incharclass = false;
 	int			nquotes = 0;
 
-	/* This function is not strict, so must test explicitly */
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-	pat_text = PG_GETARG_TEXT_PP(0);
 	p = VARDATA_ANY(pat_text);
 	plen = VARSIZE_ANY_EXHDR(pat_text);
-	if (PG_ARGISNULL(1))
+	if (esc_text == NULL)
 	{
 		/* No ESCAPE clause provided; default to backslash as escape */
 		e = "\\";
@@ -687,12 +686,11 @@ similar_escape(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		esc_text = PG_GETARG_TEXT_PP(1);
 		e = VARDATA_ANY(esc_text);
 		elen = VARSIZE_ANY_EXHDR(esc_text);
 		if (elen == 0)
 			e = NULL;			/* no escape character */
-		else
+		else if (elen > 1)
 		{
 			int			escape_mblen = pg_mbstrlen_with_len(e, elen);
 
@@ -897,6 +895,65 @@ similar_escape(PG_FUNCTION_ARGS)
 	*r++ = '$';
 
 	SET_VARSIZE(result, r - ((char *) result));
+
+	return result;
+}
+
+/*
+ * similar_to_escape(pattern, escape)
+ */
+Datum
+similar_to_escape_2(PG_FUNCTION_ARGS)
+{
+	text	   *pat_text = PG_GETARG_TEXT_PP(0);
+	text	   *esc_text = PG_GETARG_TEXT_PP(1);
+	text	   *result;
+
+	result = similar_escape_internal(pat_text, esc_text);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ * similar_to_escape(pattern)
+ * Inserts a default escape character.
+ */
+Datum
+similar_to_escape_1(PG_FUNCTION_ARGS)
+{
+	text	   *pat_text = PG_GETARG_TEXT_PP(0);
+	text	   *result;
+
+	result = similar_escape_internal(pat_text, NULL);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ * similar_escape(pattern, escape)
+ *
+ * Legacy function for compatibility with views stored using the
+ * pre-v13 expansion of SIMILAR TO.  Unlike the above functions, this
+ * is non-strict, which leads to not-per-spec handling of "ESCAPE NULL".
+ */
+Datum
+similar_escape(PG_FUNCTION_ARGS)
+{
+	text	   *pat_text;
+	text	   *esc_text;
+	text	   *result;
+
+	/* This function is not strict, so must test explicitly */
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+	pat_text = PG_GETARG_TEXT_PP(0);
+
+	if (PG_ARGISNULL(1))
+		esc_text = NULL;		/* use default escape character */
+	else
+		esc_text = PG_GETARG_TEXT_PP(1);
+
+	result = similar_escape_internal(pat_text, esc_text);
 
 	PG_RETURN_TEXT_P(result);
 }
