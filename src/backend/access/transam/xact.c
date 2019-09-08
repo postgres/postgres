@@ -3721,13 +3721,21 @@ EndTransactionBlock(bool chain)
 			break;
 
 			/*
-			 * In an implicit transaction block, commit, but issue a warning
+			 * We are in an implicit transaction block.  If AND CHAIN was
+			 * specified, error.  Otherwise commit, but issue a warning
 			 * because there was no explicit BEGIN before this.
 			 */
 		case TBLOCK_IMPLICIT_INPROGRESS:
-			ereport(WARNING,
-					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-					 errmsg("there is no transaction in progress")));
+			if (chain)
+				ereport(ERROR,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 /* translator: %s represents an SQL statement name */
+						 errmsg("%s can only be used in transaction blocks",
+								"COMMIT AND CHAIN")));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 errmsg("there is no transaction in progress")));
 			s->blockState = TBLOCK_END;
 			result = true;
 			break;
@@ -3789,15 +3797,24 @@ EndTransactionBlock(bool chain)
 			break;
 
 			/*
-			 * The user issued COMMIT when not inside a transaction.  Issue a
-			 * WARNING, staying in TBLOCK_STARTED state.  The upcoming call to
+			 * The user issued COMMIT when not inside a transaction.  For
+			 * COMMIT without CHAIN, issue a WARNING, staying in
+			 * TBLOCK_STARTED state.  The upcoming call to
 			 * CommitTransactionCommand() will then close the transaction and
-			 * put us back into the default state.
+			 * put us back into the default state.  For COMMIT AND CHAIN,
+			 * error.
 			 */
 		case TBLOCK_STARTED:
-			ereport(WARNING,
-					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-					 errmsg("there is no transaction in progress")));
+			if (chain)
+				ereport(ERROR,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 /* translator: %s represents an SQL statement name */
+						 errmsg("%s can only be used in transaction blocks",
+								"COMMIT AND CHAIN")));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 errmsg("there is no transaction in progress")));
 			result = true;
 			break;
 
@@ -3899,10 +3916,10 @@ UserAbortTransactionBlock(bool chain)
 			break;
 
 			/*
-			 * The user issued ABORT when not inside a transaction. Issue a
-			 * WARNING and go to abort state.  The upcoming call to
-			 * CommitTransactionCommand() will then put us back into the
-			 * default state.
+			 * The user issued ABORT when not inside a transaction.  For
+			 * ROLLBACK without CHAIN, issue a WARNING and go to abort state.
+			 * The upcoming call to CommitTransactionCommand() will then put
+			 * us back into the default state.  For ROLLBACK AND CHAIN, error.
 			 *
 			 * We do the same thing with ABORT inside an implicit transaction,
 			 * although in this case we might be rolling back actual database
@@ -3911,9 +3928,16 @@ UserAbortTransactionBlock(bool chain)
 			 */
 		case TBLOCK_STARTED:
 		case TBLOCK_IMPLICIT_INPROGRESS:
-			ereport(WARNING,
-					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-					 errmsg("there is no transaction in progress")));
+			if (chain)
+				ereport(ERROR,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 /* translator: %s represents an SQL statement name */
+						 errmsg("%s can only be used in transaction blocks",
+								"ROLLBACK AND CHAIN")));
+			else
+				ereport(WARNING,
+						(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+						 errmsg("there is no transaction in progress")));
 			s->blockState = TBLOCK_ABORT_PENDING;
 			break;
 

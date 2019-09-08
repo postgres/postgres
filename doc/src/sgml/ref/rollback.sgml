@@ -76,7 +76,8 @@ ROLLBACK [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
 
   <para>
    Issuing <command>ROLLBACK</command> outside of a transaction
-   block emits a warning and otherwise has no effect.
+   block emits a warning and otherwise has no effect.  <command>ROLLBACK AND
+   CHAIN</command> outside of a transaction block is an error.
   </para>
  </refsect1>
 

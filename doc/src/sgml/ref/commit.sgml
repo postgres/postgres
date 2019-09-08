@@ -77,7 +77,8 @@ COMMIT [ WORK | TRANSACTION ] [ AND [ NO ] CHAIN ]
 
   <para>
    Issuing <command>COMMIT</command> when not inside a transaction does
-   no harm, but it will provoke a warning message.
+   no harm, but it will provoke a warning message.  <command>COMMIT AND
+   CHAIN</command> when not inside a transaction is an error.
   </para>
  </refsect1>
 
