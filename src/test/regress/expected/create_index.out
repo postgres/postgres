@@ -523,16 +523,16 @@ SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
 SELECT * FROM point_tbl ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (10,10)
- (NaN,NaN)
  (0,0)
  (1e-300,-1e-300)
  (-3,4)
  (-10,0)
+ (10,10)
  (-5,-12)
  (5.1,34.5)
- 
  (1e+300,Infinity)
+ 
+ (NaN,NaN)
 (10 rows)
 
 EXPLAIN (COSTS OFF)
@@ -561,15 +561,15 @@ SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
 SELECT * FROM point_tbl WHERE f1 IS NOT NULL ORDER BY f1 <-> '0,1';
         f1         
 -------------------
- (10,10)
- (NaN,NaN)
  (0,0)
  (1e-300,-1e-300)
  (-3,4)
  (-10,0)
+ (10,10)
  (-5,-12)
  (5.1,34.5)
  (1e+300,Infinity)
+ (NaN,NaN)
 (9 rows)
 
 EXPLAIN (COSTS OFF)
