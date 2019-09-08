@@ -929,6 +929,7 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 			if (so->numberOfOrderBys > 0)
 				index_store_float8_orderby_distances(scan, so->orderByTypes,
 													 so->distances[so->iPtr],
+													 NULL,
 													 so->recheckDistances[so->iPtr]);
 			so->iPtr++;
 			return true;
