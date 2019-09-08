@@ -450,7 +450,7 @@ pg_upgrade.exe
    </step>
 
    <step id="pgupgrade-step-replicas">
-    <title>Upgrade Streaming Replication and Log-Shipping standby servers</title>
+    <title>Upgrade streaming replication and log-shipping standby servers</title>
 
     <para>
      If you used link mode and have Streaming Replication (see <xref
@@ -617,7 +617,7 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tb
    </step>
 
    <step>
-    <title>Post-Upgrade processing</title>
+    <title>Post-upgrade processing</title>
 
     <para>
      If any post-upgrade processing is required, pg_upgrade will issue

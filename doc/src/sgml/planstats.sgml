@@ -587,7 +587,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
   </sect2>
 
   <sect2 id="mcv-lists">
-   <title>MCV lists</title>
+   <title>MCV Lists</title>
 
    <para>
     As explained in <xref linkend="functional-dependencies"/>, functional

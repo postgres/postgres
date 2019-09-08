@@ -961,7 +961,7 @@ my_fetch(PG_FUNCTION_ARGS)
  <title>Implementation</title>
 
  <sect2 id="gist-buffering-build">
-  <title>GiST buffering build</title>
+  <title>GiST Buffering Build</title>
   <para>
    Building large GiST indexes by simply inserting all the tuples tends to be
    slow, because if the index tuples are scattered across the index and the

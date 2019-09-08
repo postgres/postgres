@@ -333,7 +333,7 @@ SELECT 'foo'      'bar';
    </sect3>
 
    <sect3 id="sql-syntax-strings-escape">
-    <title>String Constants with C-style Escapes</title>
+    <title>String Constants with C-Style Escapes</title>
 
      <indexterm zone="sql-syntax-strings-escape">
       <primary>escape string syntax</primary>
@@ -554,7 +554,7 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
    </sect3>
 
    <sect3 id="sql-syntax-dollar-quoting">
-    <title>Dollar-quoted String Constants</title>
+    <title>Dollar-Quoted String Constants</title>
 
      <indexterm>
       <primary>dollar quoting</primary>
@@ -634,7 +634,7 @@ $function$
    </sect3>
 
    <sect3 id="sql-syntax-bit-strings">
-    <title>Bit-string Constants</title>
+    <title>Bit-String Constants</title>
 
     <indexterm zone="sql-syntax-bit-strings">
      <primary>bit string</primary>

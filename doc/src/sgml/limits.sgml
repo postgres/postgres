@@ -11,7 +11,7 @@
  </para>
 
  <table id="limits-table">
-  <title><productname>PostgreSQL</productname> limitations</title>
+  <title><productname>PostgreSQL</productname> Limitations</title>
   <tgroup cols="3">
    <thead>
     <row>

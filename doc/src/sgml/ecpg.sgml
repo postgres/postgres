@@ -1720,7 +1720,7 @@ while (1)
    </sect3>
 
    <sect3>
-    <title>User-defined Base Types</title>
+    <title>User-Defined Base Types</title>
 
     <para>
      New user-defined base types are not directly supported by ECPG.

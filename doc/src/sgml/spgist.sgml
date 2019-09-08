@@ -969,7 +969,7 @@ typedef struct spgLeafConsistentOut
  </sect2>
 
  <sect2 id="spgist-all-the-same">
-  <title><quote>All-the-same</quote> Inner Tuples</title>
+  <title><quote>All-the-Same</quote> Inner Tuples</title>
 
   <para>
    The <acronym>SP-GiST</acronym> core can override the results of the

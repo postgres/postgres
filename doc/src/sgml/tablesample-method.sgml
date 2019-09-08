@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/tablesample-method.sgml -->
 
 <chapter id="tablesample-method">
- <title>Writing A Table Sampling Method</title>
+ <title>Writing a Table Sampling Method</title>
 
  <indexterm zone="tablesample-method">
   <primary>table sampling method</primary>

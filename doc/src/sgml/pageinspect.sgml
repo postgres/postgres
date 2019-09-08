@@ -240,7 +240,7 @@ test=# SELECT * FROM heap_page_item_attrs(get_raw_page('pg_class', 0), 'pg_class
  </sect2>
 
  <sect2>
-  <title>B-tree Functions</title>
+  <title>B-Tree Functions</title>
 
   <variablelist>
    <varlistentry>

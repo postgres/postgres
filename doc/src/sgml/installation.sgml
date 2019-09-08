@@ -342,7 +342,7 @@ su - postgres
  </sect1>
 
  <sect1 id="install-getsource">
-  <title>Getting The Source</title>
+  <title>Getting the Source</title>
 
   <para>
    The <productname>PostgreSQL</productname> &version; sources can be obtained from the
@@ -2136,7 +2136,7 @@ export MANPATH
  </sect1>
 
  <sect1 id="installation-platform-notes">
-  <title>Platform-specific Notes</title>
+  <title>Platform-Specific Notes</title>
 
   <para>
    This section documents additional platform-specific issues

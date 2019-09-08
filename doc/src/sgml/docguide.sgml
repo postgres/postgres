@@ -247,7 +247,7 @@ checking for fop... fop
  </sect1>
 
  <sect1 id="docguide-build">
-  <title>Building The Documentation</title>
+  <title>Building the Documentation</title>
 
   <para>
    Once you have everything set up, change to the directory

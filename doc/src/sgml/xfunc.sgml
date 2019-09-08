@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/xfunc.sgml -->
 
  <sect1 id="xfunc">
-  <title>User-defined Functions</title>
+  <title>User-Defined Functions</title>
 
   <indexterm zone="xfunc">
    <primary>function</primary>
@@ -73,7 +73,7 @@
   </sect1>
 
   <sect1 id="xproc">
-   <title>User-defined Procedures</title>
+   <title>User-Defined Procedures</title>
 
   <indexterm zone="xproc">
    <primary>procedure</primary>
@@ -2572,7 +2572,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 &dfunc;
 
    <sect2>
-    <title>Composite-type Arguments</title>
+    <title>Composite-Type Arguments</title>
 
     <para>
      Composite types do not have a fixed layout like C structures.

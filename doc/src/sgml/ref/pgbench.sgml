@@ -836,7 +836,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   <title>Notes</title>
 
  <refsect2>
-  <title>What is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
+  <title>What Is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
    <application>pgbench</application> executes test scripts chosen randomly
@@ -1151,7 +1151,7 @@ SELECT 2 AS two, 3 AS three \gset p_
  </refsect2>
 
  <refsect2 id="pgbench-builtin-operators">
-  <title>Built-In Operators</title>
+  <title>Built-in Operators</title>
 
   <para>
    The arithmetic, bitwise, comparison and logical operators listed in
@@ -1161,7 +1161,7 @@ SELECT 2 AS two, 3 AS three \gset p_
   </para>
 
   <table id="pgbench-operators">
-   <title>pgbench Operators by increasing precedence</title>
+   <title>pgbench Operators by Increasing Precedence</title>
    <tgroup cols="4">
     <thead>
      <row>

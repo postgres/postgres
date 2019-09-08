@@ -131,7 +131,7 @@
  </para>
 
   <table id="json-type-mapping-table">
-     <title>JSON primitive types and corresponding <productname>PostgreSQL</productname> types</title>
+     <title>JSON Primitive Types and Corresponding <productname>PostgreSQL</productname> Types</title>
      <tgroup cols="3">
       <thead>
        <row>
@@ -233,7 +233,7 @@ SELECT '{"reading": 1.230e-5}'::json, '{"reading": 1.230e-5}'::jsonb;
  </sect2>
 
  <sect2 id="json-doc-design">
-  <title>Designing JSON documents effectively</title>
+  <title>Designing JSON Documents Effectively</title>
   <para>
    Representing data as JSON can be considerably more flexible than
    the traditional relational data model, which is compelling in

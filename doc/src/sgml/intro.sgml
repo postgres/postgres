@@ -82,7 +82,7 @@
  </para>
 
  <sect1 id="intro-whatis">
-  <title> What is <productname>PostgreSQL</productname>?</title>
+  <title> What Is <productname>PostgreSQL</productname>?</title>
 
   <para>
    <productname>PostgreSQL</productname> is an object-relational

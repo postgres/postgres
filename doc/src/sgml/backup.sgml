@@ -824,8 +824,9 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     way. The non-exclusive method is recommended and the exclusive one is
     deprecated and will eventually be removed.
    </para>
+
    <sect3 id="backup-lowlevel-base-backup-nonexclusive">
-    <title>Making a non-exclusive low level backup</title>
+    <title>Making a Non-Exclusive Low-Level Backup</title>
     <para>
      A non-exclusive low level backup is one that allows other
      concurrent backups to be running (both those started using
@@ -947,7 +948,7 @@ SELECT * FROM pg_stop_backup(false, true);
     </para>
    </sect3>
    <sect3 id="backup-lowlevel-base-backup-exclusive">
-    <title>Making an exclusive low level backup</title>
+    <title>Making an Exclusive Low-Level Backup</title>
 
     <note>
      <para>
@@ -1082,7 +1083,7 @@ SELECT pg_stop_backup();
     </para>
    </sect3>
    <sect3 id="backup-lowlevel-base-backup-data">
-   <title>Backing up the data directory</title>
+   <title>Backing Up the Data Directory</title>
    <para>
     Some file system backup tools emit warnings or errors
     if the files they are trying to copy change while the copy proceeds.

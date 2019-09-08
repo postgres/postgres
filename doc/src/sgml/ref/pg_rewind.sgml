@@ -273,7 +273,7 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
   </para>
 
   <refsect2>
-   <title>How it works</title>
+   <title>How It Works</title>
 
    <para>
     The basic idea is to copy all file system-level changes from the source

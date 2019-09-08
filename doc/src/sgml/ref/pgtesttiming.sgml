@@ -86,7 +86,7 @@
   <title>Usage</title>
 
  <refsect2>
-  <title>Interpreting results</title>
+  <title>Interpreting Results</title>
 
   <para>
    Good results will show most (>90%) individual timing calls take less than
@@ -116,7 +116,7 @@ Histogram of timing durations:
 
  </refsect2>
  <refsect2>
-  <title>Measuring executor timing overhead</title>
+  <title>Measuring Executor Timing Overhead</title>
 
   <para>
    When the query executor is running a statement using
@@ -145,7 +145,7 @@ EXPLAIN ANALYZE SELECT COUNT(*) FROM t;
  </refsect2>
 
  <refsect2>
-  <title>Changing time sources</title>
+  <title>Changing Time Sources</title>
   <para>
    On some newer Linux systems, it's possible to change the clock source used
    to collect timing data at any time.  A second example shows the slowdown
@@ -223,7 +223,7 @@ Histogram of timing durations:
  </refsect2>
 
  <refsect2>
-  <title>Clock hardware and timing accuracy</title>
+  <title>Clock Hardware and Timing Accuracy</title>
 
   <para>
    Collecting accurate timing information is normally done on computers using

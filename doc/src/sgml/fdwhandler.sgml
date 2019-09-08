@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/fdwhandler.sgml -->
 
  <chapter id="fdwhandler">
-   <title>Writing A Foreign Data Wrapper</title>
+   <title>Writing a Foreign Data Wrapper</title>
 
    <indexterm zone="fdwhandler">
     <primary>foreign data wrapper</primary>
@@ -96,7 +96,7 @@
     </para>
 
    <sect2 id="fdw-callbacks-scan">
-    <title>FDW Routines For Scanning Foreign Tables</title>
+    <title>FDW Routines for Scanning Foreign Tables</title>
 
     <para>
 <programlisting>
@@ -286,7 +286,7 @@ EndForeignScan(ForeignScanState *node);
    </sect2>
 
    <sect2 id="fdw-callbacks-join-scan">
-    <title>FDW Routines For Scanning Foreign Joins</title>
+    <title>FDW Routines for Scanning Foreign Joins</title>
 
     <para>
      If an FDW supports performing foreign joins remotely (rather than
@@ -348,7 +348,7 @@ GetForeignJoinPaths(PlannerInfo *root,
    </sect2>
 
    <sect2 id="fdw-callbacks-upper-planning">
-    <title>FDW Routines For Planning Post-Scan/Join Processing</title>
+    <title>FDW Routines for Planning Post-Scan/Join Processing</title>
 
     <para>
      If an FDW supports performing remote post-scan/join processing, such as
@@ -404,7 +404,7 @@ GetForeignUpperPaths(PlannerInfo *root,
    </sect2>
 
    <sect2 id="fdw-callbacks-update">
-    <title>FDW Routines For Updating Foreign Tables</title>
+    <title>FDW Routines for Updating Foreign Tables</title>
 
     <para>
      If an FDW supports writable foreign tables, it should provide
@@ -967,7 +967,7 @@ EndDirectModify(ForeignScanState *node);
    </sect2>
 
    <sect2 id="fdw-callbacks-row-locking">
-    <title>FDW Routines For Row Locking</title>
+    <title>FDW Routines for Row Locking</title>
 
     <para>
      If an FDW wishes to support <firstterm>late row locking</firstterm> (as described
@@ -1231,7 +1231,7 @@ AcquireSampleRowsFunc(Relation relation,
    </sect2>
 
    <sect2 id="fdw-callbacks-import">
-    <title>FDW Routines For <command>IMPORT FOREIGN SCHEMA</command></title>
+    <title>FDW Routines for <command>IMPORT FOREIGN SCHEMA</command></title>
 
     <para>
 <programlisting>
@@ -1394,7 +1394,7 @@ ShutdownForeignScan(ForeignScanState *node);
    </sect2>
 
    <sect2 id="fdw-callbacks-reparameterize-paths">
-    <title>FDW Routines For reparameterization of paths</title>
+    <title>FDW Routines for Reparameterization of Paths</title>
 
     <para>
 <programlisting>

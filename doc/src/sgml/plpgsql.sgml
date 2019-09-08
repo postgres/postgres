@@ -913,7 +913,7 @@ my_record.user_id := 20;
    </sect2>
 
    <sect2 id="plpgsql-statements-sql-noresult">
-    <title>Executing a Command With No Result</title>
+    <title>Executing a Command with No Result</title>
 
     <para>
      For any SQL command that does not return rows, for example
@@ -984,7 +984,7 @@ PERFORM create_mv('cs_session_page_requests_mv', my_query);
    </sect2>
 
    <sect2 id="plpgsql-statements-sql-onerow">
-    <title>Executing a Query with a Single-row Result</title>
+    <title>Executing a Query with a Single-Row Result</title>
 
     <indexterm zone="plpgsql-statements-sql-onerow">
      <primary>SELECT INTO</primary>
@@ -1286,7 +1286,7 @@ EXECUTE format('SELECT count(*) FROM %I '
    </note>
 
    <example id="plpgsql-quote-literal-example">
-   <title>Quoting Values In Dynamic Queries</title>
+   <title>Quoting Values in Dynamic Queries</title>
 
     <indexterm>
      <primary>quote_ident</primary>
@@ -1852,7 +1852,7 @@ SELECT * FROM get_available_flightid(CURRENT_DATE);
    </sect2>
 
    <sect2 id="plpgsql-statements-returning-procedure">
-    <title>Returning From a Procedure</title>
+    <title>Returning from a Procedure</title>
 
     <para>
      A procedure does not have a return value.  A procedure can therefore end
@@ -2419,7 +2419,7 @@ END LOOP;
    </sect2>
 
    <sect2 id="plpgsql-records-iterating">
-    <title>Looping Through Query Results</title>
+    <title>Looping through Query Results</title>
 
     <para>
      Using a different type of <literal>FOR</literal> loop, you can iterate through
@@ -2504,7 +2504,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
    </sect2>
 
    <sect2 id="plpgsql-foreach-array">
-    <title>Looping Through Arrays</title>
+    <title>Looping through Arrays</title>
 
     <para>
      The <literal>FOREACH</literal> loop is much like a <literal>FOR</literal> loop,
@@ -2751,7 +2751,7 @@ SELECT merge_db(1, 'dennis');
     </example>
 
    <sect3 id="plpgsql-exception-diagnostics">
-    <title>Obtaining Information About an Error</title>
+    <title>Obtaining Information about an Error</title>
 
     <para>
      Exception handlers frequently need to identify the specific error that
@@ -3420,7 +3420,7 @@ COMMIT;
    </sect2>
 
    <sect2 id="plpgsql-cursor-for-loop">
-    <title>Looping Through a Cursor's Result</title>
+    <title>Looping through a Cursor's Result</title>
 
     <para>
      There is a variant of the <command>FOR</command> statement that allows
@@ -4107,7 +4107,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
    </para>
 
    <example id="plpgsql-trigger-audit-example">
-    <title>A <application>PL/pgSQL</application> Trigger Function For Auditing</title>
+    <title>A <application>PL/pgSQL</application> Trigger Function for Auditing</title>
 
     <para>
      This example trigger ensures that any insert, update or delete of a row
@@ -4164,7 +4164,7 @@ AFTER INSERT OR UPDATE OR DELETE ON emp
    </para>
 
    <example id="plpgsql-view-trigger-audit-example">
-    <title>A <application>PL/pgSQL</application> View Trigger Function For Auditing</title>
+    <title>A <application>PL/pgSQL</application> View Trigger Function for Auditing</title>
 
     <para>
      This example uses a trigger on the view to make it updatable, and
@@ -4246,7 +4246,7 @@ INSTEAD OF INSERT OR UPDATE OR DELETE ON emp_view
 
 
    <example id="plpgsql-trigger-summary-example">
-    <title>A <application>PL/pgSQL</application> Trigger Function For Maintaining A Summary Table</title>
+    <title>A <application>PL/pgSQL</application> Trigger Function for Maintaining a Summary Table</title>
 
     <para>
      The schema detailed here is partly based on the <emphasis>Grocery Store
@@ -4531,7 +4531,7 @@ CREATE EVENT TRIGGER snitch ON ddl_command_start EXECUTE FUNCTION snitch();
   </sect1>
 
   <sect1 id="plpgsql-implementation">
-   <title><application>PL/pgSQL</application> Under the Hood</title>
+   <title><application>PL/pgSQL</application> under the Hood</title>
 
    <para>
     This section discusses some implementation details that are
@@ -5059,7 +5059,7 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
 
   </sect2>
   <sect2 id="plpgsql-extra-checks">
-   <title>Additional Compile-time and Run-time Checks</title>
+   <title>Additional Compile-Time and Run-Time Checks</title>
 
    <para>
     To aid the user in finding instances of simple but common problems before

@@ -5206,7 +5206,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
    </para>
 
    <table id="posix-character-entry-escapes-table">
-    <title>Regular Expression Character-entry Escapes</title>
+    <title>Regular Expression Character-Entry Escapes</title>
 
     <tgroup cols="2">
      <thead>
@@ -5347,7 +5347,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
    </para>
 
    <table id="posix-class-shorthand-escapes-table">
-    <title>Regular Expression Class-shorthand Escapes</title>
+    <title>Regular Expression Class-Shorthand Escapes</title>
 
     <tgroup cols="2">
      <thead>
@@ -5541,7 +5541,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
    </para>
 
    <table id="posix-embedded-options-table">
-    <title>ARE Embedded-option Letters</title>
+    <title>ARE Embedded-Option Letters</title>
 
     <tgroup cols="2">
      <thead>
@@ -16425,7 +16425,7 @@ WHERE EXISTS (SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
   </sect2>
 
   <sect2>
-   <title>Single-row Comparison</title>
+   <title>Single-Row Comparison</title>
 
    <indexterm zone="functions-subquery">
     <primary>comparison</primary>
@@ -19336,7 +19336,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </para>
 
    <table id="functions-commit-timestamp">
-    <title>Committed transaction information</title>
+    <title>Committed Transaction Information</title>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
@@ -22351,7 +22351,7 @@ CREATE EVENT TRIGGER test_event_trigger_for_drops
    </para>
 
    <table id="functions-event-trigger-table-rewrite">
-    <title>Table Rewrite information</title>
+    <title>Table Rewrite Information</title>
     <tgroup cols="3">
      <thead>
       <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
@@ -22419,7 +22419,7 @@ CREATE EVENT TRIGGER test_table_rewrite_oid
    </para>
 
   <sect2 id="functions-statistics-mcv">
-   <title>Inspecting MCV lists</title>
+   <title>Inspecting MCV Lists</title>
 
    <indexterm>
      <primary>pg_mcv_list_items</primary>

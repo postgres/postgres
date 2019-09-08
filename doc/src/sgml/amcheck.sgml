@@ -169,7 +169,7 @@ ORDER BY c.relpages DESC LIMIT 10;
  </sect2>
 
  <sect2>
-  <title>Optional <parameter>heapallindexed</parameter> verification</title>
+  <title>Optional <parameter>heapallindexed</parameter> Verification</title>
  <para>
   When the <parameter>heapallindexed</parameter> argument to
   verification functions is <literal>true</literal>, an additional
@@ -210,7 +210,7 @@ ORDER BY c.relpages DESC LIMIT 10;
  </sect2>
 
  <sect2>
-  <title>Using <filename>amcheck</filename> effectively</title>
+  <title>Using <filename>amcheck</filename> Effectively</title>
 
  <para>
   <filename>amcheck</filename> can be effective at detecting various types of
@@ -319,7 +319,7 @@ ORDER BY c.relpages DESC LIMIT 10;
 
  </sect2>
  <sect2>
-  <title>Repairing corruption</title>
+  <title>Repairing Corruption</title>
  <para>
   No error concerning corruption raised by <filename>amcheck</filename> should
   ever be a false positive.  <filename>amcheck</filename> raises

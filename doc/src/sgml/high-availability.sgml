@@ -938,7 +938,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     protection.  Replication slots overcome these disadvantages.
    </para>
    <sect3 id="streaming-replication-slots-manipulation">
-    <title>Querying and manipulating replication slots</title>
+    <title>Querying and Manipulating Replication Slots</title>
     <para>
      Each replication slot has a name, which can contain lower-case letters,
      numbers, and the underscore character.
@@ -1357,7 +1357,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
   </sect2>
 
   <sect2 id="continuous-archiving-in-standby">
-   <title>Continuous archiving in standby</title>
+   <title>Continuous Archiving in Standby</title>
 
    <indexterm>
      <primary>continuous archiving</primary>
@@ -1626,7 +1626,7 @@ if (!triggered)
   </sect2>
 
   <sect2 id="warm-standby-record">
-   <title>Record-based Log Shipping</title>
+   <title>Record-Based Log Shipping</title>
 
    <para>
     It is also possible to implement record-based log shipping using this

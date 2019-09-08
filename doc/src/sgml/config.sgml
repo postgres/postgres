@@ -5351,7 +5351,7 @@ SELECT * FROM parent WHERE key = 2400;
     </indexterm>
 
     <sect2 id="runtime-config-logging-where">
-     <title>Where To Log</title>
+     <title>Where to Log</title>
 
      <indexterm zone="runtime-config-logging-where">
       <primary>where to log</primary>
@@ -5795,7 +5795,7 @@ local0.*    /var/log/postgresql
       </variablelist>
     </sect2>
      <sect2 id="runtime-config-logging-when">
-     <title>When To Log</title>
+     <title>When to Log</title>
 
      <variablelist>
 
@@ -6011,7 +6011,7 @@ local0.*    /var/log/postgresql
 
     </sect2>
      <sect2 id="runtime-config-logging-what">
-     <title>What To Log</title>
+     <title>What to Log</title>
 
      <variablelist>
 

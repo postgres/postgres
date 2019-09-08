@@ -18,7 +18,7 @@
  </para>
 
  <sect1 id="jit-reason">
-  <title>What is <acronym>JIT</acronym> compilation?</title>
+  <title>What Is <acronym>JIT</acronym> compilation?</title>
 
   <para>
    Just-in-Time (<acronym>JIT</acronym>) compilation is the process of turning

@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/dfunc.sgml -->
 
 <sect2 id="dfunc">
- <title>Compiling and Linking Dynamically-loaded Functions</title>
+ <title>Compiling and Linking Dynamically-Loaded Functions</title>
 
  <para>
   Before you are able to use your

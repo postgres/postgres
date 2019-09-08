@@ -4664,7 +4664,7 @@ int PQflush(PGconn *conn);
  </sect1>
 
  <sect1 id="libpq-single-row-mode">
-  <title>Retrieving Query Results Row-By-Row</title>
+  <title>Retrieving Query Results Row-by-Row</title>
 
   <indexterm zone="libpq-single-row-mode">
    <primary>libpq</primary>

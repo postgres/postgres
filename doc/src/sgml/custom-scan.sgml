@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/custom-scan.sgml -->
 
 <chapter id="custom-scan">
- <title>Writing A Custom Scan Provider</title>
+ <title>Writing a Custom Scan Provider</title>
 
  <indexterm zone="custom-scan">
   <primary>custom scan provider</primary>

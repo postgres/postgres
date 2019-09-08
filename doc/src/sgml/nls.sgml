@@ -433,7 +433,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
   </sect2>
 
   <sect2 id="nls-guidelines">
-   <title>Message-writing Guidelines</title>
+   <title>Message-Writing Guidelines</title>
 
   <para>
    Here are some guidelines for writing messages that are easily
