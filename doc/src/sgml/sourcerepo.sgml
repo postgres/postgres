@@ -26,7 +26,7 @@
   </para>
 
  <sect1 id="git">
-  <title>Getting The Source via <productname>Git</productname></title>
+  <title>Getting the Source via <productname>Git</productname></title>
 
   <para>
    With <productname>Git</productname> you will make a copy of the entire code repository

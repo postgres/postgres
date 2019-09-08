@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/plhandler.sgml -->
 
  <chapter id="plhandler">
-   <title>Writing A Procedural Language Handler</title>
+   <title>Writing a Procedural Language Handler</title>
 
    <indexterm zone="plhandler">
     <primary>procedural language</primary>

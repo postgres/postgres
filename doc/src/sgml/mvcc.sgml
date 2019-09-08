@@ -815,7 +815,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
    </para>
 
   <sect2 id="locking-tables">
-   <title>Table-level Locks</title>
+   <title>Table-Level Locks</title>
 
    <indexterm zone="locking-tables">
     <primary>LOCK</primary>
@@ -847,7 +847,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
    </para>
 
      <variablelist>
-      <title>Table-level Lock Modes</title>
+      <title>Table-Level Lock Modes</title>
       <varlistentry>
        <term>
         <literal>ACCESS SHARE</literal>
@@ -1167,7 +1167,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
    </sect2>
 
    <sect2 id="locking-rows">
-    <title>Row-level Locks</title>
+    <title>Row-Level Locks</title>
 
     <para>
      In addition to table-level locks, there are row-level locks, which
@@ -1182,7 +1182,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     </para>
 
      <variablelist>
-      <title>Row-level Lock Modes</title>
+      <title>Row-Level Lock Modes</title>
       <varlistentry>
        <term>
         <literal>FOR UPDATE</literal>
@@ -1284,7 +1284,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     </para>
 
     <table tocentry="1" id="row-lock-compatibility">
-     <title>Conflicting Row-level Locks</title>
+     <title>Conflicting Row-Level Locks</title>
      <tgroup cols="5">
       <colspec colnum="2" colname="lockst"/>
       <colspec colnum="5" colname="lockend"/>
@@ -1336,7 +1336,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
    </sect2>
 
    <sect2 id="locking-pages">
-    <title>Page-level Locks</title>
+    <title>Page-Level Locks</title>
 
     <para>
      In addition to table and row locks, page-level share/exclusive locks are
@@ -1574,7 +1574,7 @@ SELECT pg_advisory_lock(q.id) FROM
    </para>
 
    <sect2 id="serializable-consistency">
-    <title>Enforcing Consistency With Serializable Transactions</title>
+    <title>Enforcing Consistency with Serializable Transactions</title>
 
     <para>
      If the Serializable transaction isolation level is used for all writes
@@ -1612,7 +1612,7 @@ SELECT pg_advisory_lock(q.id) FROM
    </sect2>
 
    <sect2 id="non-serializable-consistency">
-    <title>Enforcing Consistency With Explicit Blocking Locks</title>
+    <title>Enforcing Consistency with Explicit Blocking Locks</title>
 
     <para>
      When non-serializable writes are possible,

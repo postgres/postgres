@@ -535,7 +535,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
 </sect1>
 
 <sect1 id="lo-funcs">
-<title>Server-side Functions</title>
+<title>Server-Side Functions</title>
 
   <para>
    Server-side functions tailored for manipulating large objects from SQL are
@@ -543,7 +543,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
   </para>
 
   <table id="lo-funcs-table">
-   <title>SQL-oriented Large Object Functions</title>
+   <title>SQL-Oriented Large Object Functions</title>
    <tgroup cols="5">
     <thead>
      <row>

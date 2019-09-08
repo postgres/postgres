@@ -2078,7 +2078,7 @@ CREATE TABLE cities_partdef
   </refsect2>
 
   <refsect2>
-   <title>Non-deferred Uniqueness Constraints</title>
+   <title>Non-Deferred Uniqueness Constraints</title>
 
    <para>
     When a <literal>UNIQUE</literal> or <literal>PRIMARY KEY</literal> constraint is
@@ -2166,7 +2166,7 @@ CREATE TABLE cities_partdef
   </refsect2>
 
   <refsect2>
-   <title>Zero-column Tables</title>
+   <title>Zero-Column Tables</title>
 
    <para>
     <productname>PostgreSQL</productname> allows a table of no columns

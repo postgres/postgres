@@ -2621,7 +2621,7 @@ openssl x509 -req -in server.csr -text -days 365 \
  </sect1>
 
  <sect1 id="gssapi-enc">
-  <title>Secure TCP/IP Connections with GSSAPI encryption</title>
+  <title>Secure TCP/IP Connections with GSSAPI Encryption</title>
 
   <indexterm zone="gssapi-enc">
    <primary>gssapi</primary>

@@ -1610,7 +1610,7 @@ ErrorMessage.
 </para>
 
  <sect2 id="sasl-scram-sha-256">
-  <title>SCRAM-SHA-256 authentication</title>
+  <title>SCRAM-SHA-256 Authentication</title>
 
   <para>
    The implemented SASL mechanisms at the moment

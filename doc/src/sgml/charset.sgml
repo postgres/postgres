@@ -580,7 +580,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    </para>
 
   <sect4>
-   <title>libc collations</title>
+   <title>libc Collations</title>
 
    <para>
     For example, the operating system might
@@ -637,7 +637,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
   </sect4>
 
   <sect4>
-   <title>ICU collations</title>
+   <title>ICU Collations</title>
 
    <para>
     With ICU, it is not sensible to enumerate all possible locale names.  ICU
@@ -713,7 +713,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
    </para>
 
    <sect4>
-    <title>libc collations</title>
+    <title>libc Collations</title>
 
     <para>
      New libc collations can be created like this:
@@ -737,7 +737,7 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
    </sect4>
 
    <sect4>
-    <title>ICU collations</title>
+    <title>ICU Collations</title>
 
    <para>
     ICU allows collations to be customized beyond the basic language+country

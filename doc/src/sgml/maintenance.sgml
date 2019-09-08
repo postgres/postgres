@@ -347,7 +347,7 @@
   </sect2>
 
   <sect2 id="vacuum-for-visibility-map">
-   <title>Updating The Visibility Map</title>
+   <title>Updating the Visibility Map</title>
 
    <para>
     Vacuum maintains a <link linkend="storage-vm">visibility map</link> for each

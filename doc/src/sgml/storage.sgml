@@ -400,7 +400,7 @@ of the LZ family of compression techniques.  See
 </para>
 
 <sect2 id="storage-toast-ondisk">
- <title>Out-of-line, on-disk TOAST storage</title>
+ <title>Out-of-Line, On-Disk TOAST Storage</title>
 
 <para>
 If any of the columns of a table are <acronym>TOAST</acronym>-able, the table will
@@ -516,7 +516,7 @@ comparison table, in which all the HTML pages were cut down to 7 kB to fit.
 </sect2>
 
 <sect2 id="storage-toast-inmemory">
- <title>Out-of-line, in-memory TOAST storage</title>
+ <title>Out-of-Line, In-Memory TOAST Storage</title>
 
 <para>
 <acronym>TOAST</acronym> pointers can point to data that is not on disk, but is

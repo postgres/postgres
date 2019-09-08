@@ -953,7 +953,7 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
    </sect2>
 
    <sect2>
-    <title>Installing Extensions using Update Scripts</title>
+    <title>Installing Extensions Using Update Scripts</title>
 
     <para>
      An extension that has been around for awhile will probably exist in

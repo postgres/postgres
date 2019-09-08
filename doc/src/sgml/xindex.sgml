@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/xindex.sgml -->
 
 <sect1 id="xindex">
- <title>Interfacing Extensions To Indexes</title>
+ <title>Interfacing Extensions to Indexes</title>
 
  <indexterm zone="xindex">
   <primary>index</primary>
@@ -105,7 +105,7 @@
   </para>
 
    <table tocentry="1" id="xindex-btree-strat-table">
-    <title>B-tree Strategies</title>
+    <title>B-Tree Strategies</title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -410,7 +410,7 @@
   </para>
 
    <table tocentry="1" id="xindex-btree-support-table">
-    <title>B-tree Support Functions</title>
+    <title>B-Tree Support Functions</title>
     <tgroup cols="2">
      <thead>
       <row>

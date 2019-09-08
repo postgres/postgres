@@ -114,7 +114,7 @@
   </sect1>
 
   <sect1 id="connect-estab">
-   <title>How Connections are Established</title>
+   <title>How Connections Are Established</title>
 
    <para>
     <productname>PostgreSQL</productname> is implemented using a

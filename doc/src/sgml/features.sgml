@@ -200,7 +200,7 @@
    </para>
 
    <sect2 id="functions-xml-limits-xpath1">
-    <title>Queries are restricted to XPath 1.0</title>
+    <title>Queries Are Restricted to XPath 1.0</title>
 
     <para>
      The <productname>PostgreSQL</productname>-specific functions
@@ -383,7 +383,7 @@
     </sect3>
 
     <sect3 id="functions-xml-limits-casts">
-     <title>Mappings between SQL and XML data types and values</title>
+     <title>Mappings between SQL and XML Data Types and Values</title>
 
      <para>
       In SQL:2006 and later, both directions of conversion between standard SQL
@@ -424,7 +424,7 @@
     </para>
 
     <sect3>
-     <title>Only <literal>BY VALUE</literal> passing mechanism is supported</title>
+     <title>Only <literal>BY VALUE</literal> Passing Mechanism Is Supported</title>
 
      <para>
       The SQL standard defines two <firstterm>passing mechanisms</firstterm>
@@ -460,7 +460,7 @@ SELECT XMLQUERY('$a is $b' PASSING BY VALUE <replaceable>x</replaceable> AS a, <
     </sect3>
 
     <sect3>
-     <title>Cannot pass named parameters to queries</title>
+     <title>Cannot Pass Named Parameters to Queries</title>
 
      <para>
       The XPath-based functions support passing one parameter to serve as the
@@ -470,7 +470,7 @@ SELECT XMLQUERY('$a is $b' PASSING BY VALUE <replaceable>x</replaceable> AS a, <
     </sect3>
 
     <sect3>
-     <title>No <type>XML(SEQUENCE)</type> type</title>
+     <title>No <type>XML(SEQUENCE)</type> Type</title>
 
      <para>
       The <productname>PostgreSQL</productname> <type>xml</type> data type
