@@ -1554,7 +1554,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 
 					relation = RelationIdGetRelation(reloid);
 
-					if (relation == NULL)
+					if (!RelationIsValid(relation))
 						elog(ERROR, "could not open relation with OID %u (for filenode \"%s\")",
 							 reloid,
 							 relpathperm(change->data.tp.relnode,
@@ -2882,6 +2882,10 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	desc = RelationGetDescr(relation);
 
 	toast_rel = RelationIdGetRelation(relation->rd_rel->reltoastrelid);
+	if (!RelationIsValid(toast_rel))
+		elog(ERROR, "could not open relation with OID %u",
+			 relation->rd_rel->reltoastrelid);
+
 	toast_desc = RelationGetDescr(toast_rel);
 
 	/* should we allocate from stack instead? */

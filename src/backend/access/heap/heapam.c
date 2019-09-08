@@ -7541,6 +7541,10 @@ ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_changed, bool *
 	}
 
 	idx_rel = RelationIdGetRelation(replidindex);
+
+	if (!RelationIsValid(idx_rel))
+		elog(ERROR, "could not open relation with OID %u", replidindex);
+
 	idx_desc = RelationGetDescr(idx_rel);
 
 	/* deform tuple, so we have fast access to columns */
