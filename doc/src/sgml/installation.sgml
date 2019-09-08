@@ -1438,7 +1438,8 @@ su - postgres
          <![%standalone-include[the <application>PL/Python</>
          documentation]]>
          <![%standalone-ignore[<xref linkend="plpython-python23">]]>
-         for more information.
+         for more information.  If this is not set, the following are probed
+         in this order: <literal>python python3 python2</literal>.
         </para>
        </listitem>
       </varlistentry>
