@@ -110,8 +110,9 @@ gistkillitems(IndexScanDesc scan)
  * Similarly, *recheck_distances_p is set to indicate whether the distances
  * need to be rechecked, and it is also ignored for non-leaf entries.
  *
- * If we are doing an ordered scan, so->distances[] is filled with distance
- * data from the distance() functions before returning success.
+ * If we are doing an ordered scan, so->distancesValues[] and
+ * so->distancesNulls[] is filled with distance data from the distance()
+ * functions before returning success.
  *
  * We must decompress the key in the IndexTuple before passing it to the
  * sk_funcs (which actually are the opclass Consistent or Distance methods).
@@ -132,7 +133,8 @@ gistindex_keytest(IndexScanDesc scan,
 	GISTSTATE  *giststate = so->giststate;
 	ScanKey		key = scan->keyData;
 	int			keySize = scan->numberOfKeys;
-	double	   *distance_p;
+	double	   *distance_value_p;
+	bool	   *distance_null_p;
 	Relation	r = scan->indexRelation;
 
 	*recheck_p = false;
@@ -150,7 +152,10 @@ gistindex_keytest(IndexScanDesc scan,
 		if (GistPageIsLeaf(page))		/* shouldn't happen */
 			elog(ERROR, "invalid GiST tuple found on leaf page");
 		for (i = 0; i < scan->numberOfOrderBys; i++)
-			so->distances[i] = -get_float8_infinity();
+		{
+			so->distanceValues[i] = -get_float8_infinity();
+			so->distanceNulls[i] = false;
+		}
 		return true;
 	}
 
@@ -233,7 +238,8 @@ gistindex_keytest(IndexScanDesc scan,
 
 	/* OK, it passes --- now let's compute the distances */
 	key = scan->orderByData;
-	distance_p = so->distances;
+	distance_value_p = so->distanceValues;
+	distance_null_p = so->distanceNulls;
 	keySize = scan->numberOfOrderBys;
 	while (keySize > 0)
 	{
@@ -247,8 +253,9 @@ gistindex_keytest(IndexScanDesc scan,
 
 		if ((key->sk_flags & SK_ISNULL) || isNull)
 		{
-			/* Assume distance computes as null and sorts to the end */
-			*distance_p = get_float8_infinity();
+			/* Assume distance computes as null */
+			*distance_value_p = 0.0;
+			*distance_null_p = true;
 		}
 		else
 		{
@@ -285,11 +292,13 @@ gistindex_keytest(IndexScanDesc scan,
 									 ObjectIdGetDatum(key->sk_subtype),
 									 PointerGetDatum(&recheck));
 			*recheck_distances_p |= recheck;
-			*distance_p = DatumGetFloat8(dist);
+			*distance_value_p = DatumGetFloat8(dist);
+			*distance_null_p = false;
 		}
 
 		key++;
-		distance_p++;
+		distance_value_p++;
+		distance_null_p++;
 		keySize--;
 	}
 
@@ -302,7 +311,8 @@ gistindex_keytest(IndexScanDesc scan,
  *
  * scan: index scan we are executing
  * pageItem: search queue item identifying an index page to scan
- * myDistances: distances array associated with pageItem, or NULL at the root
+ * myDistanceValues: distances array associated with pageItem, or NULL at the root
+ * myDistanceNulls: null flags for myDistanceValues array, or NULL at the root
  * tbm: if not NULL, gistgetbitmap's output bitmap
  * ntids: if not NULL, gistgetbitmap's output tuple counter
  *
@@ -319,7 +329,8 @@ gistindex_keytest(IndexScanDesc scan,
  * sibling will be processed next.
  */
 static void
-gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
+gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
+			 double *myDistanceValues, bool *myDistanceNulls,
 			 TIDBitmap *tbm, int64 *ntids)
 {
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
@@ -356,7 +367,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		GISTSearchItem *item;
 
 		/* This can't happen when starting at the root */
-		Assert(myDistances != NULL);
+		Assert(myDistanceValues != NULL && myDistanceNulls != NULL);
 
 		oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
@@ -366,8 +377,10 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		item->data.parentlsn = pageItem->data.parentlsn;
 
 		/* Insert it into the queue using same distances as for this page */
-		memcpy(item->distances, myDistances,
-			   sizeof(double) * scan->numberOfOrderBys);
+		memcpy(GISTSearchItemDistanceValues(item, scan->numberOfOrderBys),
+			   myDistanceValues, sizeof(double) * scan->numberOfOrderBys);
+		memcpy(GISTSearchItemDistanceNulls(item, scan->numberOfOrderBys),
+			   myDistanceNulls, sizeof(bool) * scan->numberOfOrderBys);
 
 		pairingheap_add(so->queue, &item->phNode);
 
@@ -461,6 +474,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			 * search.
 			 */
 			GISTSearchItem *item;
+			int			nOrderBys = scan->numberOfOrderBys;
 
 			oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
@@ -495,8 +509,10 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			}
 
 			/* Insert it into the queue using new distance data */
-			memcpy(item->distances, so->distances,
-				   sizeof(double) * scan->numberOfOrderBys);
+			memcpy(GISTSearchItemDistanceValues(item, nOrderBys),
+				   so->distanceValues, sizeof(double) * nOrderBys);
+			memcpy(GISTSearchItemDistanceNulls(item, nOrderBys),
+				   so->distanceNulls, sizeof(bool) * nOrderBys);
 
 			pairingheap_add(so->queue, &item->phNode);
 
@@ -551,6 +567,8 @@ getNextNearest(IndexScanDesc scan)
 	do
 	{
 		GISTSearchItem *item = getNextGISTSearchItem(so);
+		float8 *distanceValues = GISTSearchItemDistanceValues(item, scan->numberOfOrderBys);
+		bool *distanceNulls = GISTSearchItemDistanceNulls(item, scan->numberOfOrderBys);
 
 		if (!item)
 			break;
@@ -570,8 +588,8 @@ getNextNearest(IndexScanDesc scan)
 					if (!scan->xs_orderbynulls[i])
 						pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
 #endif
-					scan->xs_orderbyvals[i] = Float8GetDatum(item->distances[i]);
-					scan->xs_orderbynulls[i] = false;
+					scan->xs_orderbyvals[i] = Float8GetDatum(distanceValues[i]);
+					scan->xs_orderbynulls[i] = distanceNulls[i];
 				}
 				else if (so->orderByTypes[i] == FLOAT4OID)
 				{
@@ -581,8 +599,8 @@ getNextNearest(IndexScanDesc scan)
 					if (!scan->xs_orderbynulls[i])
 						pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
 #endif
-					scan->xs_orderbyvals[i] = Float4GetDatum((float4) item->distances[i]);
-					scan->xs_orderbynulls[i] = false;
+					scan->xs_orderbyvals[i] = Float4GetDatum(distanceValues[i]);
+					scan->xs_orderbynulls[i] = distanceNulls[i];
 				}
 				else
 				{
@@ -610,7 +628,10 @@ getNextNearest(IndexScanDesc scan)
 			/* visit an index page, extract its items into queue */
 			CHECK_FOR_INTERRUPTS();
 
-			gistScanPage(scan, item, item->distances, NULL, NULL);
+			gistScanPage(scan, item,
+						 GISTSearchItemDistanceValues(item, scan->numberOfOrderBys),
+						 GISTSearchItemDistanceNulls(item, scan->numberOfOrderBys),
+						 NULL, NULL);
 		}
 
 		pfree(item);
@@ -648,7 +669,7 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 
 		fakeItem.blkno = GIST_ROOT_BLKNO;
 		memset(&fakeItem.data.parentlsn, 0, sizeof(GistNSN));
-		gistScanPage(scan, &fakeItem, NULL, NULL, NULL);
+		gistScanPage(scan, &fakeItem, NULL, NULL, NULL, NULL);
 	}
 
 	if (scan->numberOfOrderBys > 0)
@@ -742,7 +763,10 @@ gistgettuple(IndexScanDesc scan, ScanDirection dir)
 				 * this page, we fall out of the inner "do" and loop around to
 				 * return them.
 				 */
-				gistScanPage(scan, item, item->distances, NULL, NULL);
+				gistScanPage(scan, item,
+							 GISTSearchItemDistanceValues(item, scan->numberOfOrderBys),
+							 GISTSearchItemDistanceNulls(item, scan->numberOfOrderBys),
+							 NULL, NULL);
 
 				pfree(item);
 			} while (so->nPageData == 0);
@@ -773,7 +797,7 @@ gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 	fakeItem.blkno = GIST_ROOT_BLKNO;
 	memset(&fakeItem.data.parentlsn, 0, sizeof(GistNSN));
-	gistScanPage(scan, &fakeItem, NULL, tbm, &ntids);
+	gistScanPage(scan, &fakeItem, NULL, NULL, tbm, &ntids);
 
 	/*
 	 * While scanning a leaf page, ItemPointers of matching heap tuples will
@@ -788,7 +812,10 @@ gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 		CHECK_FOR_INTERRUPTS();
 
-		gistScanPage(scan, item, item->distances, tbm, &ntids);
+		gistScanPage(scan, item,
+					 GISTSearchItemDistanceValues(item, scan->numberOfOrderBys),
+					 GISTSearchItemDistanceNulls(item, scan->numberOfOrderBys),
+					 tbm, &ntids);
 
 		pfree(item);
 	}
