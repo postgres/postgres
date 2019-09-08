@@ -33,14 +33,30 @@ GISTSearchTreeItemComparator(const RBNode *a, const RBNode *b, void *arg)
 	const GISTSearchTreeItem *sb = (const GISTSearchTreeItem *) b;
 	IndexScanDesc scan = (IndexScanDesc) arg;
 	int			i;
+	double	   *da = GISTSearchTreeItemDistanceValues(sa, scan->numberOfOrderBys),
+			   *db = GISTSearchTreeItemDistanceValues(sb, scan->numberOfOrderBys);
+	bool	   *na = GISTSearchTreeItemDistanceNulls(sa, scan->numberOfOrderBys),
+			   *nb = GISTSearchTreeItemDistanceNulls(sb, scan->numberOfOrderBys);
 
 	/* Order according to distance comparison */
 	for (i = 0; i < scan->numberOfOrderBys; i++)
 	{
-		int			cmp = float8_cmp_internal(sa->distances[i], sb->distances[i]);
+		if (na[i])
+		{
+			if (!nb[i])
+				return 1;
+		}
+		else if (nb[i])
+		{
+			return -1;
+		}
+		else
+		{
+			int			cmp = float8_cmp_internal(da[i], db[i]);
 
-		if (cmp != 0)
-			return cmp;
+			if (cmp != 0)
+				return cmp;
+		}
 	}
 
 	return 0;
@@ -86,7 +102,7 @@ GISTSearchTreeItemAllocator(void *arg)
 {
 	IndexScanDesc scan = (IndexScanDesc) arg;
 
-	return palloc(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys);
+	return palloc(SizeOfGISTSearchTreeItem(scan->numberOfOrderBys));
 }
 
 static void
@@ -130,8 +146,9 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	so->queueCxt = giststate->scanCxt;	/* see gistrescan */
 
 	/* workspaces with size dependent on numberOfOrderBys: */
-	so->tmpTreeItem = palloc(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys);
-	so->distances = palloc(sizeof(double) * scan->numberOfOrderBys);
+	so->tmpTreeItem = palloc(SizeOfGISTSearchTreeItem(scan->numberOfOrderBys));
+	so->distanceValues = palloc(sizeof(double) * scan->numberOfOrderBys);
+	so->distanceNulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
 	so->qual_ok = true;			/* in case there are zero keys */
 
 	scan->opaque = so;
@@ -191,7 +208,7 @@ gistrescan(PG_FUNCTION_ARGS)
 
 	/* create new, empty RBTree for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);
-	so->queue = rb_create(GSTIHDRSZ + sizeof(double) * scan->numberOfOrderBys,
+	so->queue = rb_create(SizeOfGISTSearchTreeItem(scan->numberOfOrderBys),
 						  GISTSearchTreeItemComparator,
 						  GISTSearchTreeItemCombiner,
 						  GISTSearchTreeItemAllocator,
