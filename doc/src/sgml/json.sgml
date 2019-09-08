@@ -23,7 +23,7 @@
 
  <para>
   <productname>PostgreSQL</productname> offers two types for storing JSON
-  data: <type>json</type> and <type>jsonb</type>. To implement effective query
+  data: <type>json</type> and <type>jsonb</type>. To implement efficient query
   mechanisms for these data types, <productname>PostgreSQL</productname>
   also provides the <type>jsonpath</type> data type described in
   <xref linkend="datatype-jsonpath"/>.
@@ -233,7 +233,7 @@ SELECT '{"reading": 1.230e-5}'::json, '{"reading": 1.230e-5}'::jsonb;
  </sect2>
 
  <sect2 id="json-doc-design">
-  <title>Designing JSON Documents Effectively</title>
+  <title>Designing JSON Documents</title>
   <para>
    Representing data as JSON can be considerably more flexible than
    the traditional relational data model, which is compelling in
@@ -633,7 +633,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
 
   <para>
    The <type>jsonpath</type> type implements support for the SQL/JSON path language
-   in <productname>PostgreSQL</productname> to effectively query JSON data.
+   in <productname>PostgreSQL</productname> to efficiently query JSON data.
    It provides a binary representation of the parsed SQL/JSON path
    expression that specifies the items to be retrieved by the path
    engine from the JSON data for further processing with the
