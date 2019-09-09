@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-04-27 01:38+0000\n"
-"PO-Revision-Date: 2019-04-27 14:15+0200\n"
+"POT-Creation-Date: 2019-09-06 22:08+0000\n"
+"PO-Revision-Date: 2019-09-07 15:50+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>, 2017\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -24,7 +24,7 @@ msgstr "tom meddelandetext"
 msgid "<DEFAULT>"
 msgstr "<DEFAULT>"
 
-#: descriptor.c:888 misc.c:120
+#: cursor.c:195 descriptor.c:887 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
@@ -181,8 +181,8 @@ msgstr "kunde inte ansluta till databas \"%s\" på rad %d"
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:207
 #, c-format
-msgid "The cursor is invalid on line %d"
-msgstr "Markören är ogiltig på rad %d"
+msgid "cursor is invalid on line %d"
+msgstr "markören är ogiltig på rad %d"
 
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:214
@@ -199,6 +199,6 @@ msgstr "anslutningen till servern tappades"
 msgid "SQL error: %s\n"
 msgstr "SQL-fel: %s\n"
 
-#: execute.c:2103
+#: execute.c:2187 execute.c:2194
 msgid "<empty>"
 msgstr "<tom>"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-14 07:47+0000\n"
-"PO-Revision-Date: 2019-05-14 15:49+0200\n"
+"POT-Creation-Date: 2019-08-26 12:14+0000\n"
+"PO-Revision-Date: 2019-08-26 14:43+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:188
 #, c-format
 msgid "fatal: "
 msgstr "Fatal: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:195
 #, c-format
 msgid "error: "
 msgstr "Fehler: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:202
 #, c-format
 msgid "warning: "
 msgstr "Warnung: "
@@ -87,13 +87,13 @@ msgstr "ungültiges Ausgabeformat (interner Fehler): %d"
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:121 createdb.c:140
 #: createuser.c:168 createuser.c:183 dropdb.c:96 dropdb.c:105 dropdb.c:113
 #: dropuser.c:92 dropuser.c:107 dropuser.c:122 pg_isready.c:95 pg_isready.c:109
-#: reindexdb.c:139 reindexdb.c:158 vacuumdb.c:246 vacuumdb.c:265
+#: reindexdb.c:139 reindexdb.c:158 vacuumdb.c:240 vacuumdb.c:259
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: clusterdb.c:130 createdb.c:138 createuser.c:181 dropdb.c:111 dropuser.c:105
-#: pg_isready.c:107 reindexdb.c:156 vacuumdb.c:263
+#: pg_isready.c:107 reindexdb.c:156 vacuumdb.c:257
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "zu viele Kommandozeilenargumente (das erste ist »%s«)"
@@ -133,18 +133,18 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:274 createdb.c:250 createuser.c:344 dropdb.c:157 dropuser.c:163
-#: pg_isready.c:224 reindexdb.c:425 vacuumdb.c:1216
+#: pg_isready.c:224 reindexdb.c:425 vacuumdb.c:1222
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: clusterdb.c:275 reindexdb.c:426 vacuumdb.c:1217
+#: clusterdb.c:275 reindexdb.c:426 vacuumdb.c:1223
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
 #: clusterdb.c:276 createdb.c:252 createuser.c:346 dropdb.c:159 dropuser.c:165
-#: pg_isready.c:227 reindexdb.c:427 vacuumdb.c:1218
+#: pg_isready.c:227 reindexdb.c:427 vacuumdb.c:1224
 #, c-format
 msgid ""
 "\n"
@@ -196,7 +196,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 
 #: clusterdb.c:285 createdb.c:263 createuser.c:368 dropdb.c:165 dropuser.c:172
-#: pg_isready.c:233 reindexdb.c:440 vacuumdb.c:1238
+#: pg_isready.c:233 reindexdb.c:440 vacuumdb.c:1244
 #, c-format
 msgid ""
 "\n"
@@ -206,35 +206,35 @@ msgstr ""
 "Verbindungsoptionen:\n"
 
 #: clusterdb.c:286 createuser.c:369 dropdb.c:166 dropuser.c:173 reindexdb.c:441
-#: vacuumdb.c:1239
+#: vacuumdb.c:1245
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME       Name des Datenbankservers oder Socket-Verzeichnis\n"
 
 #: clusterdb.c:287 createuser.c:370 dropdb.c:167 dropuser.c:174 reindexdb.c:442
-#: vacuumdb.c:1240
+#: vacuumdb.c:1246
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           Port des Datenbankservers\n"
 
-#: clusterdb.c:288 dropdb.c:168 reindexdb.c:443 vacuumdb.c:1241
+#: clusterdb.c:288 dropdb.c:168 reindexdb.c:443 vacuumdb.c:1247
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=NAME       Datenbankbenutzername\n"
 
 #: clusterdb.c:289 createuser.c:372 dropdb.c:169 dropuser.c:176 reindexdb.c:444
-#: vacuumdb.c:1242
+#: vacuumdb.c:1248
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         niemals nach Passwort fragen\n"
 
 #: clusterdb.c:290 createuser.c:373 dropdb.c:170 dropuser.c:177 reindexdb.c:445
-#: vacuumdb.c:1243
+#: vacuumdb.c:1249
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            Passwortfrage erzwingen\n"
 
-#: clusterdb.c:291 dropdb.c:171 reindexdb.c:446 vacuumdb.c:1244
+#: clusterdb.c:291 dropdb.c:171 reindexdb.c:446 vacuumdb.c:1250
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME   alternative Wartungsdatenbank\n"
@@ -250,7 +250,7 @@ msgstr ""
 "SQL-Befehls CLUSTER.\n"
 
 #: clusterdb.c:293 createdb.c:271 createuser.c:374 dropdb.c:172 dropuser.c:178
-#: pg_isready.c:238 reindexdb.c:448 vacuumdb.c:1246
+#: pg_isready.c:238 reindexdb.c:448 vacuumdb.c:1252
 #, c-format
 msgid ""
 "\n"
@@ -824,7 +824,7 @@ msgstr "kann nicht bestimmte Tabelle(n) und Systemkataloge gleichzeitig reindizi
 msgid "cannot reindex specific index(es) and system catalogs at the same time"
 msgstr "kann nicht bestimmte Indexe und Systemkataloge gleichzeitig reindizieren"
 
-#: reindexdb.c:298 vacuumdb.c:412 vacuumdb.c:420 vacuumdb.c:427 vacuumdb.c:434
+#: reindexdb.c:298 vacuumdb.c:406 vacuumdb.c:414 vacuumdb.c:421 vacuumdb.c:428
 #, c-format
 msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "Option »%s« kann nicht mit Serverversionen älter als PostgreSQL %s verwendet werden"
@@ -918,69 +918,69 @@ msgstr ""
 msgid "number of parallel jobs must be at least 1"
 msgstr "Anzahl paralleler Jobs muss mindestens 1 sein"
 
-#: vacuumdb.c:212
-#, c-format
-msgid "too many parallel jobs requested (maximum: %d)"
-msgstr "zu viele parallele Jobs angefordert (Maximum: %d)"
-
-#: vacuumdb.c:233
+#: vacuumdb.c:227
 #, c-format
 msgid "minimum transaction ID age must be at least 1"
 msgstr "minimales Transaktions-ID-Alter muss mindestens 1 sein"
 
-#: vacuumdb.c:241
+#: vacuumdb.c:235
 #, c-format
 msgid "minimum multixact ID age must be at least 1"
 msgstr "minimales Multixact-ID-Alter muss mindestens 1 sein"
 
-#: vacuumdb.c:273 vacuumdb.c:279 vacuumdb.c:285
+#: vacuumdb.c:267 vacuumdb.c:273 vacuumdb.c:279
 #, c-format
 msgid "cannot use the \"%s\" option when performing only analyze"
 msgstr "kann Option »%s« nicht verwenden, wenn nur Analyze durchgeführt wird"
 
-#: vacuumdb.c:302
+#: vacuumdb.c:296
 #, c-format
 msgid "cannot vacuum all databases and a specific one at the same time"
 msgstr "kann nicht alle Datenbanken und eine bestimmte gleichzeitig vacuumen"
 
-#: vacuumdb.c:307
+#: vacuumdb.c:301
 #, c-format
 msgid "cannot vacuum specific table(s) in all databases"
 msgstr "kann nicht bestimmte Tabelle(n) in allen Datenbanken vacuumen"
 
-#: vacuumdb.c:398
+#: vacuumdb.c:392
 msgid "Generating minimal optimizer statistics (1 target)"
 msgstr "Erzeuge minimale Optimierer-Statistiken (1 Ziel)"
 
-#: vacuumdb.c:399
+#: vacuumdb.c:393
 msgid "Generating medium optimizer statistics (10 targets)"
 msgstr "Erzeuge mittlere Optimierer-Statistiken (10 Ziele)"
 
-#: vacuumdb.c:400
+#: vacuumdb.c:394
 msgid "Generating default (full) optimizer statistics"
 msgstr "Erzeuge volle Optimierer-Statistiken"
 
-#: vacuumdb.c:442
+#: vacuumdb.c:436
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
 msgstr "%s: bearbeite Datenbank »%s«: %s\n"
 
-#: vacuumdb.c:445
+#: vacuumdb.c:439
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: führe Vacuum in Datenbank »%s« aus\n"
 
-#: vacuumdb.c:942
+#: vacuumdb.c:638
+#, c-format
+msgid "too many jobs for this platform -- try %d"
+msgstr "zu viele Jobs für diese Plattform -- versuchen Sie %d"
+
+#: vacuumdb.c:948
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "Vacuum der Tabelle »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
-#: vacuumdb.c:945 vacuumdb.c:1080
+#: vacuumdb.c:951 vacuumdb.c:1086
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "Vacuum der Datenbank »%s« fehlgeschlagen: %s"
 
-#: vacuumdb.c:1215
+#: vacuumdb.c:1221
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -989,101 +989,101 @@ msgstr ""
 "%s säubert und analysiert eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: vacuumdb.c:1219
+#: vacuumdb.c:1225
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       führe Vacuum in allen Datenbanken aus\n"
 
-#: vacuumdb.c:1220
+#: vacuumdb.c:1226
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAME             führe Vacuum in dieser Datenbank aus\n"
 
-#: vacuumdb.c:1221
+#: vacuumdb.c:1227
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
 msgstr "      --disable-page-skipping     Page-Skipping-Verhalten abschalten\n"
 
-#: vacuumdb.c:1222
+#: vacuumdb.c:1228
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr ""
 "  -e, --echo                      zeige die Befehle, die an den Server\n"
 "                                  gesendet werden\n"
 
-#: vacuumdb.c:1223
+#: vacuumdb.c:1229
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      führe volles Vacuum durch\n"
 
-#: vacuumdb.c:1224
+#: vacuumdb.c:1230
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    Zeilentransaktionsinformationen einfrieren\n"
 
-#: vacuumdb.c:1225
+#: vacuumdb.c:1231
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
 msgstr ""
 "  -j, --jobs=NUM                  so viele parallele Verbindungen zum Vacuum\n"
 "                                  verwenden\n"
 
-#: vacuumdb.c:1226
+#: vacuumdb.c:1232
 #, c-format
 msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
 msgstr ""
 "      --min-mxid-age=MXID-ALTER   minimales Multixact-ID-Alter zu bearbeitender\n"
 "                                  Tabellen\n"
 
-#: vacuumdb.c:1227
+#: vacuumdb.c:1233
 #, c-format
 msgid "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"
 msgstr ""
 "      --min-xid-age=XID-ALTER     minimales Transaktions-ID-Alter zu bearbeitender\n"
 "                                  Tabellen\n"
 
-#: vacuumdb.c:1228
+#: vacuumdb.c:1234
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     unterdrücke alle Mitteilungen\n"
 
-#: vacuumdb.c:1229
+#: vacuumdb.c:1235
 #, c-format
 msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
 msgstr ""
 "      --skip-locked               Relationen überspringen, die nicht sofort\n"
 "                                  gesperrt werden können\n"
 
-#: vacuumdb.c:1230
+#: vacuumdb.c:1236
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr ""
 "  -t, --table='TABELLE[(SPALTEN)]'\n"
 "                                  führe Vacuum für bestimmte Tabelle(n) aus\n"
 
-#: vacuumdb.c:1231
+#: vacuumdb.c:1237
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   erzeuge viele Meldungen\n"
 
-#: vacuumdb.c:1232
+#: vacuumdb.c:1238
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   Versionsinformationen anzeigen, dann beenden\n"
 
-#: vacuumdb.c:1233
+#: vacuumdb.c:1239
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   aktualisiere Statistiken für den Optimierer\n"
 
-#: vacuumdb.c:1234
+#: vacuumdb.c:1240
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
 msgstr ""
 "  -Z, --analyze-only              aktualisiere nur Statistiken für den Optimierer;\n"
 "                                  kein Vacuum\n"
 
-#: vacuumdb.c:1235
+#: vacuumdb.c:1241
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
@@ -1093,12 +1093,12 @@ msgstr ""
 "                                  in mehreren Phasen für schnellere Ergebnisse;\n"
 "                                  kein Vacuum\n"
 
-#: vacuumdb.c:1237
+#: vacuumdb.c:1243
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      diese Hilfe anzeigen, dann beenden\n"
 
-#: vacuumdb.c:1245
+#: vacuumdb.c:1251
 #, c-format
 msgid ""
 "\n"

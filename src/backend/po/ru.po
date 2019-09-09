@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: postgres (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-05-04 06:52+0300\n"
-"PO-Revision-Date: 2019-04-29 10:21+0300\n"
+"PO-Revision-Date: 2019-09-02 12:39+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -2972,8 +2972,7 @@ msgstr ""
 msgid ""
 "pg_stop_backup cleanup done, waiting for required WAL segments to be archived"
 msgstr ""
-"очистка в pg_stop_backup выполнена, ожидаются требуемые сегменты WAL для "
-"архивации"
+"очистка в pg_stop_backup выполнена, ожидается архивация нужных сегментов WAL"
 
 #: access/transam/xlog.c:11215
 #, c-format
@@ -2981,8 +2980,8 @@ msgid ""
 "pg_stop_backup still waiting for all required WAL segments to be archived ("
 "%d seconds elapsed)"
 msgstr ""
-"pg_stop_backup всё ещё ждёт все требуемые сегменты WAL для архивации (прошло "
-"%d сек.)"
+"pg_stop_backup всё ещё ждёт архивации всех нужных сегментов WAL (прошло %d "
+"сек.)"
 
 #: access/transam/xlog.c:11217
 #, c-format
@@ -7605,7 +7604,7 @@ msgid ""
 "CREATE EXTENSION"
 msgstr ""
 "функцию pg_extension_config_dump() можно вызывать только из SQL-скрипта, "
-"запускаемого в CREATE EXTENSION"
+"запускаемого командой CREATE EXTENSION"
 
 #: commands/extension.c:2368
 #, c-format
@@ -8367,7 +8366,7 @@ msgstr ""
 #: commands/indexcmds.c:2331
 #, c-format
 msgid "table \"%s\" has no indexes"
-msgstr "таблица \"%s\" не имеет индексов"
+msgstr "в таблице \"%s\" нет индексов"
 
 #: commands/indexcmds.c:2386
 #, c-format
@@ -9956,12 +9955,12 @@ msgid "cannot drop inherited column \"%s\""
 msgstr "нельзя удалить наследованный столбец \"%s\""
 
 #: commands/tablecmds.c:6825
-#, c-format
+#, fuzzy, c-format
 msgid "cannot drop column named in partition key"
 msgstr "нельзя удалить столбец, входящий в ключ секционирования"
 
 #: commands/tablecmds.c:6829
-#, c-format
+#, fuzzy, c-format
 msgid "cannot drop column referenced in partition key expression"
 msgstr ""
 "нельзя удалить столбец, задействованный в выражении ключа секционирования"
@@ -10166,12 +10165,12 @@ msgid "cannot alter inherited column \"%s\""
 msgstr "изменить наследованный столбец \"%s\" нельзя"
 
 #: commands/tablecmds.c:9544
-#, c-format
+#, fuzzy, c-format
 msgid "cannot alter type of column named in partition key"
 msgstr "нельзя изменить тип столбца, составляющего ключ секционирования"
 
 #: commands/tablecmds.c:9548
-#, c-format
+#, fuzzy, c-format
 msgid "cannot alter type of column referenced in partition key expression"
 msgstr ""
 "нельзя изменить тип столбца, задействованного в выражении ключа "
@@ -17256,7 +17255,7 @@ msgstr ""
 #: parser/parse_utilcmd.c:2100
 #, c-format
 msgid "index \"%s\" does not have default sorting behavior"
-msgstr "для индекса \"%s\" не определено поведение при сортировке по умолчанию"
+msgstr "в индексе \"%s\" не определено поведение сортировки по умолчанию"
 
 #: parser/parse_utilcmd.c:2249
 #, c-format
@@ -19103,7 +19102,7 @@ msgid ""
 "cannot create logical replication slot in transaction that has performed "
 "writes"
 msgstr ""
-"нельзя создать логический слот репликации в транзакции, осуществляющей запись"
+"нельзя создать слот логической репликации в транзакции, осуществляющей запись"
 
 #: replication/logical/logical.c:431
 #, c-format
@@ -19261,7 +19260,7 @@ msgid "cannot setup replication origin when one is already setup"
 msgstr "нельзя настроить источник репликации, когда он уже настроен"
 
 #: replication/logical/origin.c:1094
-#, c-format
+#, fuzzy, c-format
 msgid "replication identifier %d is already active for PID %d"
 msgstr "идентификатор репликации %d уже занят процессом с PID %d"
 
@@ -19906,7 +19905,7 @@ msgstr "Команда IDENTIFY_SYSTEM не выполнялась до START_RE
 #, c-format
 msgid "cannot use a logical replication slot for physical replication"
 msgstr ""
-"логический слот репликации нельзя использовать для физической репликации"
+"слот логической репликации нельзя использовать для физической репликации"
 
 #: replication/walsender.c:615
 #, c-format
@@ -19960,8 +19959,8 @@ msgstr ""
 msgid ""
 "CREATE_REPLICATION_SLOT ... USE_SNAPSHOT must be called before any query"
 msgstr ""
-"Команда CREATE_REPLICATION_SLOT ... USE_SNAPSHOT должна вызываться перед "
-"любыми другими запросами"
+"Команда CREATE_REPLICATION_SLOT ... USE_SNAPSHOT должна вызываться до каких-"
+"либо запросов"
 
 #: replication/walsender.c:917
 #, c-format
@@ -20550,7 +20549,7 @@ msgid "missing Language parameter"
 msgstr "отсутствует параметр Language"
 
 #: statistics/dependencies.c:534
-#, c-format
+#, fuzzy, c-format
 msgid "invalid zero-length item array in MVDependencies"
 msgstr "недопустимый массив нулевой длины в MVDependencies"
 
@@ -20573,22 +20572,22 @@ msgstr ""
 "объект статистики \"%s.%s\" не может быть вычислен для отношения \"%s.%s\""
 
 #: statistics/mvdistinct.c:262
-#, c-format
+#, fuzzy, c-format
 msgid "invalid ndistinct magic %08x (expected %08x)"
 msgstr "неверное магическое число ndistinct: %08x (ожидалось: %08x)"
 
 #: statistics/mvdistinct.c:267
-#, c-format
+#, fuzzy, c-format
 msgid "invalid ndistinct type %d (expected %d)"
 msgstr "неверный тип ndistinct: %d (ожидался: %d)"
 
 #: statistics/mvdistinct.c:272
-#, c-format
+#, fuzzy, c-format
 msgid "invalid zero-length item array in MVNDistinct"
 msgstr "недопустимый массив нулевой длины в MVNDistinct"
 
 #: statistics/mvdistinct.c:281
-#, c-format
+#, fuzzy, c-format
 msgid "invalid MVNDistinct size %zd (expected at least %zd)"
 msgstr "неправильный размер MVNDistinct: %zd (ожидался не меньше %zd)"
 
@@ -23418,8 +23417,7 @@ msgstr "в списке аргументов должно быть чётное 
 msgid ""
 "The arguments of json_build_object() must consist of alternating keys and "
 "values."
-msgstr ""
-"Аргументы json_build_object() должны состоять из пар ключей и значений."
+msgstr "Аргументы json_build_object() должны состоять из пар ключ-значение."
 
 #: utils/adt/json.c:2210
 #, c-format
@@ -26654,7 +26652,7 @@ msgid ""
 "otherwise it is taken literally."
 msgstr ""
 "Когда этот параметр включён, NULL без кавычек при вводе в массив "
-"воспринимается как значение NULL, иначе - как строка."
+"воспринимается как значение NULL, иначе — как строка."
 
 #: utils/misc/guc.c:1502
 msgid "Create new tables with OIDs by default."
@@ -26924,12 +26922,13 @@ msgstr ""
 #: utils/misc/guc.c:1973
 msgid ""
 "Sets the maximum interval between WAL receiver status reports to the primary."
-msgstr "Задаёт максимальный интервал для отчётов о состоянии получателей WAL."
+msgstr ""
+"Задаёт максимальный интервал между отчётами о состоянии приёмника WAL, "
+"отправляемыми ведущему."
 
 #: utils/misc/guc.c:1984
 msgid "Sets the maximum wait time to receive data from the primary."
-msgstr ""
-"Задаёт предельное время ожидания для получения данных с главного сервера."
+msgstr "Задаёт предельное время ожидания для получения данных от ведущего."
 
 #: utils/misc/guc.c:1995
 msgid "Sets the maximum number of concurrent connections."

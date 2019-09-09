@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-17 20:47+0000\n"
-"PO-Revision-Date: 2019-06-16 22:39+0200\n"
+"POT-Creation-Date: 2019-08-26 12:14+0000\n"
+"PO-Revision-Date: 2019-08-26 15:02+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -348,8 +348,8 @@ msgstr "wähle Vorgabewert für shared_buffers ... "
 
 #: initdb.c:1052
 #, c-format
-msgid "selecting default timezone ... "
-msgstr "wähle Vorgabewert für timezone ... "
+msgid "selecting default time zone ... "
+msgstr "wähle Vorgabewert für Zeitzone ... "
 
 #: initdb.c:1086
 msgid "creating configuration files ... "
@@ -784,18 +784,18 @@ msgstr "Die Standarddatenbankkodierung wurde entsprechend auf »%s« gesetzt.\n"
 
 #: initdb.c:2666
 #, c-format
-msgid "%s: could not find suitable text search configuration for locale \"%s\"\n"
-msgstr "%s: konnte keine passende Textsuchekonfiguration für Locale »%s« finden\n"
+msgid "could not find suitable text search configuration for locale \"%s\""
+msgstr "konnte keine passende Textsuchekonfiguration für Locale »%s« finden"
 
 #: initdb.c:2677
 #, c-format
-msgid "%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"
-msgstr "%s: Warnung: passende Textsuchekonfiguration für Locale »%s« ist unbekannt\n"
+msgid "suitable text search configuration for locale \"%s\" is unknown"
+msgstr "passende Textsuchekonfiguration für Locale »%s« ist unbekannt"
 
 #: initdb.c:2682
 #, c-format
-msgid "%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"
-msgstr "%s: Warnung: angegebene Textsuchekonfiguration »%s« passt möglicherweise nicht zur Locale »%s«\n"
+msgid "specified text search configuration \"%s\" might not match locale \"%s\""
+msgstr "angegebene Textsuchekonfiguration »%s« passt möglicherweise nicht zur Locale »%s«"
 
 #: initdb.c:2687
 #, c-format

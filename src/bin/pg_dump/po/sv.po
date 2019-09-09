@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-07-10 06:44+0000\n"
-"PO-Revision-Date: 2019-07-10 11:26+0200\n"
+"POT-Creation-Date: 2019-09-06 22:15+0000\n"
+"PO-Revision-Date: 2019-09-07 15:45+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -791,6 +791,21 @@ msgstr "utlösare \"%s\" hittades inte"
 msgid "could not set session user to \"%s\": %s"
 msgstr "kunde inte sätta sessionsanvändare till \"%s\": %s"
 
+#: pg_backup_archiver.c:3334
+#, c-format
+msgid "could not set search_path to \"%s\": %s"
+msgstr "kunde inte sätta search_path till \"%s\": %s"
+
+#: pg_backup_archiver.c:3396
+#, c-format
+msgid "could not set default_tablespace to %s: %s"
+msgstr "kunde inte sätta default_tablespace till %s: %s"
+
+#: pg_backup_archiver.c:3441
+#, c-format
+msgid "could not set default_table_access_method: %s"
+msgstr "kunde inte sätta default_table_access_method: %s"
+
 #: pg_backup_archiver.c:3533 pg_backup_archiver.c:3691
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
@@ -1029,6 +1044,11 @@ msgid_plural "query returned %d rows instead of one: %s"
 msgstr[0] "fråga gav %d rad istället för en: %s"
 msgstr[1] "fråga gav %d rader istället för en: %s"
 
+#: pg_backup_db.c:464
+#, c-format
+msgid "%s: %sCommand was: %s"
+msgstr "%s: %sKommandot var: %s"
+
 #: pg_backup_db.c:520 pg_backup_db.c:594 pg_backup_db.c:601
 msgid "could not execute query"
 msgstr "kunde inte utföra fråga"
@@ -1042,6 +1062,11 @@ msgstr "fel returnerat av PQputCopyData: %s"
 #, c-format
 msgid "error returned by PQputCopyEnd: %s"
 msgstr "fel returnerat av PQputCopyEnd: %s"
+
+#: pg_backup_db.c:628
+#, c-format
+msgid "COPY failed for table \"%s\": %s"
+msgstr "COPY misslyckades för tabell \"%s\": %s"
 
 #: pg_backup_db.c:634 pg_dump.c:1924
 #, c-format
@@ -1436,13 +1461,13 @@ msgstr "  -E, --encoding=KODNING       dumpa data i teckenkodning KODNING\n"
 
 #: pg_dump.c:1003
 #, c-format
-msgid "  -n, --schema=SCHEMA          dump the named schema(s) only\n"
-msgstr "  -n, --schema=SCHEMA          dumpa bara namngivna scheman\n"
+msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
+msgstr "  -n, --schema=MALL            dumpa bara de angivna scheman\n"
 
 #: pg_dump.c:1004
 #, c-format
-msgid "  -N, --exclude-schema=SCHEMA  do NOT dump the named schema(s)\n"
-msgstr "  -N, --exclude-schema=SCHEMA  dumpa INTE de namngivna scheman\n"
+msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
+msgstr "  -N, --exclude-schema=MALL    dumpa INTE de angivna scheman\n"
 
 #: pg_dump.c:1005
 #, c-format
@@ -1465,13 +1490,13 @@ msgstr "  -S, --superuser=NAME         superanvändarens namn för textformatdum
 
 #: pg_dump.c:1009
 #, c-format
-msgid "  -t, --table=TABLE            dump the named table(s) only\n"
-msgstr "  -t, --table=TABELL           dumpa bara de namngivna tabellerna\n"
+msgid "  -t, --table=PATTERN          dump the specified table(s) only\n"
+msgstr "  -t, --table=MALL             dumpa bara de angivna tabellerna\n"
 
 #: pg_dump.c:1010
 #, c-format
-msgid "  -T, --exclude-table=TABLE    do NOT dump the named table(s)\n"
-msgstr "  -T, --exclude-table=TABELL   dumpa INTE de namngivna tabellerna\n"
+msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
+msgstr "  -T, --exclude-table=MALL     dumpa INTE de angivna tabellerna\n"
 
 #: pg_dump.c:1011 pg_dumpall.c:637
 #, c-format
@@ -1509,8 +1534,8 @@ msgstr ""
 
 #: pg_dump.c:1018
 #, c-format
-msgid "  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"
-msgstr "  --exclude-table-data=TABELL  dumpa INTE data för de namngivna tabellerna\n"
+msgid "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
+msgstr "  --exclude-table-data=MALL    dumpa INTE data för de angivna tabellerna\n"
 
 #: pg_dump.c:1019 pg_dumpall.c:643
 #, c-format
@@ -2129,17 +2154,17 @@ msgstr "kunde inte hitta refererad utökning %u"
 msgid "reading dependency data"
 msgstr "läser beroendedata"
 
-#: pg_dump.c:17958
+#: pg_dump.c:17996
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "inget refererande objekt %u %u"
 
-#: pg_dump.c:17969
+#: pg_dump.c:18007
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "inget refererat objekt %u %u"
 
-#: pg_dump.c:18337
+#: pg_dump.c:18375
 #, c-format
 msgid "could not parse reloptions array"
 msgstr "kunde inte parsa arrayen reloptions"
@@ -2159,29 +2184,29 @@ msgstr "ogiltigt beroende %d"
 msgid "could not identify dependency loop"
 msgstr "kunde inte fastställa beroendeloop"
 
-#: pg_dump_sort.c:1129
+#: pg_dump_sort.c:1137
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
 msgstr[0] "det finns cirkulära främmande nyckelberoenden för denna tabell:"
 msgstr[1] "det finns cirkulära främmande nyckelberoenden för dessa tabeller:"
 
-#: pg_dump_sort.c:1133 pg_dump_sort.c:1153
+#: pg_dump_sort.c:1141 pg_dump_sort.c:1161
 #, c-format
 msgid "  %s"
 msgstr "  %s"
 
-#: pg_dump_sort.c:1134
+#: pg_dump_sort.c:1142
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
 msgstr "Du kan eventiellt inte återställa dumpen utan att använda --disable-triggers eller temporärt droppa vilkoren."
 
-#: pg_dump_sort.c:1135
+#: pg_dump_sort.c:1143
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem."
 msgstr "Överväg att göra en full dump istället för --data-only för att undvika detta problem."
 
-#: pg_dump_sort.c:1147
+#: pg_dump_sort.c:1155
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "kunde inte räta ut beroendeloopen för dessa saker:"
@@ -2696,12 +2721,6 @@ msgstr ""
 #~ msgid "directory archiver"
 #~ msgstr "katalogarkiverare"
 
-#~ msgid "COPY failed for table \"%s\": %s"
-#~ msgstr "COPY misslyckades för tabell \"%s\": %s"
-
-#~ msgid "%s: %s    Command was: %s\n"
-#~ msgstr "%s: %s    Kommandot var: %s\n"
-
 #~ msgid "archiver (db)"
 #~ msgstr "arkiverare (db)"
 
@@ -2725,12 +2744,6 @@ msgstr ""
 
 #~ msgid "entering restore_toc_entries_prefork\n"
 #~ msgstr "går in i restore_toc_entries_prefork\n"
-
-#~ msgid "could not set default_tablespace to %s: %s"
-#~ msgstr "kunde inte sätta default_tablespace till %s: %s"
-
-#~ msgid "could not set search_path to \"%s\": %s"
-#~ msgstr "kunde inte sätta search_path till \"%s\": %s"
 
 #~ msgid "could not set default_with_oids: %s"
 #~ msgstr "kunde inte sätta default_with_oids: %s"

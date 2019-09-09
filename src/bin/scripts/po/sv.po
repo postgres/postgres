@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-04-29 18:47+0000\n"
-"PO-Revision-Date: 2019-04-29 20:55+0200\n"
+"POT-Creation-Date: 2019-08-30 17:14+0000\n"
+"PO-Revision-Date: 2019-08-31 18:14+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../../src/fe_utils/logging.c:182
+#: ../../../src/common/logging.c:188
 #, c-format
 msgid "fatal: "
 msgstr "fatalt: "
 
-#: ../../../src/fe_utils/logging.c:189
+#: ../../../src/common/logging.c:195
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/fe_utils/logging.c:196
+#: ../../../src/common/logging.c:202
 #, c-format
 msgid "warning: "
 msgstr "varning: "
@@ -87,13 +87,13 @@ msgstr "ogiltigt utdataformat (internt fel): %d"
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:121 createdb.c:140
 #: createuser.c:168 createuser.c:183 dropdb.c:96 dropdb.c:105 dropdb.c:113
 #: dropuser.c:92 dropuser.c:107 dropuser.c:122 pg_isready.c:95 pg_isready.c:109
-#: reindexdb.c:139 reindexdb.c:158 vacuumdb.c:246 vacuumdb.c:265
+#: reindexdb.c:139 reindexdb.c:158 vacuumdb.c:244 vacuumdb.c:263
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
 #: clusterdb.c:130 createdb.c:138 createuser.c:181 dropdb.c:111 dropuser.c:105
-#: pg_isready.c:107 reindexdb.c:156 vacuumdb.c:263
+#: pg_isready.c:107 reindexdb.c:156 vacuumdb.c:261
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
@@ -133,18 +133,18 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:274 createdb.c:250 createuser.c:344 dropdb.c:157 dropuser.c:163
-#: pg_isready.c:224 reindexdb.c:425 vacuumdb.c:1213
+#: pg_isready.c:224 reindexdb.c:425 vacuumdb.c:1226
 #, c-format
 msgid "Usage:\n"
 msgstr "Användning:\n"
 
-#: clusterdb.c:275 reindexdb.c:426 vacuumdb.c:1214
+#: clusterdb.c:275 reindexdb.c:426 vacuumdb.c:1227
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN]\n"
 
 #: clusterdb.c:276 createdb.c:252 createuser.c:346 dropdb.c:159 dropuser.c:165
-#: pg_isready.c:227 reindexdb.c:427 vacuumdb.c:1215
+#: pg_isready.c:227 reindexdb.c:427 vacuumdb.c:1228
 #, c-format
 msgid ""
 "\n"
@@ -194,7 +194,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
 
 #: clusterdb.c:285 createdb.c:263 createuser.c:368 dropdb.c:165 dropuser.c:172
-#: pg_isready.c:233 reindexdb.c:440 vacuumdb.c:1235
+#: pg_isready.c:233 reindexdb.c:440 vacuumdb.c:1248
 #, c-format
 msgid ""
 "\n"
@@ -204,35 +204,35 @@ msgstr ""
 "Flaggor för anslutning:\n"
 
 #: clusterdb.c:286 createuser.c:369 dropdb.c:166 dropuser.c:173 reindexdb.c:441
-#: vacuumdb.c:1236
+#: vacuumdb.c:1249
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=VÄRDNAMN       databasens värdnamn eller socketkatalog\n"
 
 #: clusterdb.c:287 createuser.c:370 dropdb.c:167 dropuser.c:174 reindexdb.c:442
-#: vacuumdb.c:1237
+#: vacuumdb.c:1250
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           databasserverns port\n"
 
-#: clusterdb.c:288 dropdb.c:168 reindexdb.c:443 vacuumdb.c:1238
+#: clusterdb.c:288 dropdb.c:168 reindexdb.c:443 vacuumdb.c:1251
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=ANVÄNDARE  användarnamn att ansluta som\n"
 
 #: clusterdb.c:289 createuser.c:372 dropdb.c:169 dropuser.c:176 reindexdb.c:444
-#: vacuumdb.c:1239
+#: vacuumdb.c:1252
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         fråga ej efter lösenord\n"
 
 #: clusterdb.c:290 createuser.c:373 dropdb.c:170 dropuser.c:177 reindexdb.c:445
-#: vacuumdb.c:1240
+#: vacuumdb.c:1253
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            framtvinga fråga om lösenord\n"
 
-#: clusterdb.c:291 dropdb.c:171 reindexdb.c:446 vacuumdb.c:1241
+#: clusterdb.c:291 dropdb.c:171 reindexdb.c:446 vacuumdb.c:1254
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAMN   annat val av underhållsdatabas\n"
@@ -247,7 +247,7 @@ msgstr ""
 "Läs beskrivningen av SQL-kommandot CLUSTER för detaljer.\n"
 
 #: clusterdb.c:293 createdb.c:271 createuser.c:374 dropdb.c:172 dropuser.c:178
-#: pg_isready.c:238 reindexdb.c:448 vacuumdb.c:1243
+#: pg_isready.c:238 reindexdb.c:448 vacuumdb.c:1256
 #, c-format
 msgid ""
 "\n"
@@ -270,17 +270,17 @@ msgstr "kunde inte ansluta till databas %s: slut på minne"
 msgid "could not connect to database %s: %s"
 msgstr "kunde inte ansluta till databas %s: %s"
 
-#: common.c:197 common.c:223
+#: common.c:196 common.c:222
 #, c-format
 msgid "query failed: %s"
 msgstr "fråga misslyckades: %s"
 
-#: common.c:198 common.c:224
+#: common.c:197 common.c:223
 #, c-format
 msgid "query was: %s"
 msgstr "frågan var: %s"
 
-#: common.c:347
+#: common.c:339
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
@@ -288,33 +288,33 @@ msgstr[0] "fråga gav %d rad istället för en: %s"
 msgstr[1] "fråga gav %d rader istället för en: %s"
 
 #. translator: abbreviation for "yes"
-#: common.c:372
+#: common.c:364
 msgid "y"
 msgstr "j"
 
 #. translator: abbreviation for "no"
-#: common.c:374
+#: common.c:366
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:384
+#: common.c:376
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:398
+#: common.c:390
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Var vänlig att svara \"%s\" eller \"%s\".\n"
 
-#: common.c:477 common.c:514
+#: common.c:469 common.c:506
 #, c-format
 msgid "Cancel request sent\n"
 msgstr "Avbrottsbegäran skickad.\n"
 
-#: common.c:480 common.c:518
+#: common.c:472 common.c:510
 #, c-format
 msgid "Could not send cancel request: %s"
 msgstr "Kunde inte skicka avbrottsbegäran: %s"
@@ -810,7 +810,7 @@ msgstr "kan inte omindexera specifik tabell och systemkatalogerna samtidigt"
 msgid "cannot reindex specific index(es) and system catalogs at the same time"
 msgstr "kan inte omindexera angivna index och systemkatalogerna samtidigt."
 
-#: reindexdb.c:298 vacuumdb.c:412 vacuumdb.c:420 vacuumdb.c:427 vacuumdb.c:434
+#: reindexdb.c:298 vacuumdb.c:410 vacuumdb.c:418 vacuumdb.c:425 vacuumdb.c:432
 #, c-format
 msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "flaggan \"%s\" kan inte användas på serverversioner äldre än PostgreSQL %s"
@@ -898,74 +898,74 @@ msgstr ""
 "\n"
 "Läs beskrivningen av SQL-kommandot REINDEX för detaljer.\n"
 
-#: vacuumdb.c:207
+#: vacuumdb.c:211
 #, c-format
 msgid "number of parallel jobs must be at least 1"
 msgstr "antalet parallella jobb måste vara minst 1"
 
-#: vacuumdb.c:212
-#, c-format
-msgid "too many parallel jobs requested (maximum: %d)"
-msgstr "för många parallella job (maximum: %d)"
-
-#: vacuumdb.c:233
+#: vacuumdb.c:231
 #, c-format
 msgid "minimum transaction ID age must be at least 1"
 msgstr "minimal transaktions-ID-ålder måste vara minst 1"
 
-#: vacuumdb.c:241
+#: vacuumdb.c:239
 #, c-format
 msgid "minimum multixact ID age must be at least 1"
 msgstr "minimal multixact-ID-ålder måste vara minst 1"
 
-#: vacuumdb.c:273 vacuumdb.c:279 vacuumdb.c:285
+#: vacuumdb.c:271 vacuumdb.c:277 vacuumdb.c:283
 #, c-format
 msgid "cannot use the \"%s\" option when performing only analyze"
 msgstr "flaggan \"%s\" kan inte användas vid enbart analys"
 
-#: vacuumdb.c:302
+#: vacuumdb.c:300
 #, c-format
 msgid "cannot vacuum all databases and a specific one at the same time"
 msgstr "kan inte städa alla databaser och endast en angiven på samma gång"
 
-#: vacuumdb.c:307
+#: vacuumdb.c:305
 #, c-format
 msgid "cannot vacuum specific table(s) in all databases"
 msgstr "kan inte städa en specifik tabell i alla databaser."
 
-#: vacuumdb.c:398
+#: vacuumdb.c:396
 msgid "Generating minimal optimizer statistics (1 target)"
 msgstr "Skapar minimal optimeringsstatistik (1 mål)"
 
-#: vacuumdb.c:399
+#: vacuumdb.c:397
 msgid "Generating medium optimizer statistics (10 targets)"
 msgstr "Skapar medium optimeringsstatistik (10 mål)"
 
-#: vacuumdb.c:400
+#: vacuumdb.c:398
 msgid "Generating default (full) optimizer statistics"
 msgstr "Skapar förvald (full) optimeringsstatistik"
 
-#: vacuumdb.c:442
+#: vacuumdb.c:440
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
 msgstr "%s: processar databasen \"%s\": %s\n"
 
-#: vacuumdb.c:445
+#: vacuumdb.c:443
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: städar databasen \"%s\".\n"
 
-#: vacuumdb.c:939
+#: vacuumdb.c:642
+#, c-format
+msgid "too many jobs for this platform -- try %d"
+msgstr "för många jobb för denna plattform -- försök med %d"
+
+#: vacuumdb.c:952
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "städning av tabell \"%s\" i databasen \"%s\" misslyckades: %s"
 
-#: vacuumdb.c:942 vacuumdb.c:1077
+#: vacuumdb.c:955 vacuumdb.c:1090
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "städning av databasen \"%s\" misslyckades: %s"
 
-#: vacuumdb.c:1212
+#: vacuumdb.c:1225
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -974,87 +974,87 @@ msgstr ""
 "%s städar och analyserar en PostgreSQL-databas.\n"
 "\n"
 
-#: vacuumdb.c:1216
+#: vacuumdb.c:1229
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       städa i alla databaser\n"
 
-#: vacuumdb.c:1217
+#: vacuumdb.c:1230
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAMN             databas att städa i\n"
 
-#: vacuumdb.c:1218
+#: vacuumdb.c:1231
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
 msgstr "      --disable-page-skipping     stäng av alla sidöverhoppande beteeenden\n"
 
-#: vacuumdb.c:1219
+#: vacuumdb.c:1232
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      visa kommandon som skickas till servern\n"
 
-#: vacuumdb.c:1220
+#: vacuumdb.c:1233
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      utför full städning\n"
 
-#: vacuumdb.c:1221
+#: vacuumdb.c:1234
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    frys information om radtransaktioner\n"
 
-#: vacuumdb.c:1222
+#: vacuumdb.c:1235
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
 msgstr "  -j, --jobs=NUM                  använd så här många samtida anslutningar för städning\n"
 
-#: vacuumdb.c:1223
+#: vacuumdb.c:1236
 #, c-format
 msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
 msgstr "      --min-mxid-age=MXID_ÅLDER   minimal multixact-ID-ålder i tabeller som skall städas\n"
 
-#: vacuumdb.c:1224
+#: vacuumdb.c:1237
 #, c-format
 msgid "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"
 msgstr "      --min-xid-age=XID_ÅLDER     minimal transaktions-ID-ålder i tabeller som skall städas\n"
 
-#: vacuumdb.c:1225
+#: vacuumdb.c:1238
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     skriv inte ut några meddelanden\n"
 
-#: vacuumdb.c:1226
+#: vacuumdb.c:1239
 #, c-format
 msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
 msgstr "      --skip-locked               hoppa äver relationer som inte kan låsas direkt\n"
 
-#: vacuumdb.c:1227
+#: vacuumdb.c:1240
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr "  -t, --table='TABELL[(KOLUMNER)]' städa enbart i dessa tabeller\n"
 
-#: vacuumdb.c:1228
+#: vacuumdb.c:1241
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   skriv massor med utdata\n"
 
-#: vacuumdb.c:1229
+#: vacuumdb.c:1242
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   visa versionsinformation, avsluta sedan\n"
 
-#: vacuumdb.c:1230
+#: vacuumdb.c:1243
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   uppdatera optimeringsstatistik\n"
 
-#: vacuumdb.c:1231
+#: vacuumdb.c:1244
 #, c-format
 msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
 msgstr "  -Z, --analyze-only              uppdatera bara optimeringsstatistik; ingen städning\n"
 
-#: vacuumdb.c:1232
+#: vacuumdb.c:1245
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in multiple\n"
@@ -1063,12 +1063,12 @@ msgstr ""
 "      --analyze-in-stages         uppdatera bara optimeringsstatistik, men i\n"
 "                                  flera steg för snabbare resultat; ingen städning\n"
 
-#: vacuumdb.c:1234
+#: vacuumdb.c:1247
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      visa denna hjälp, avsluta sedan\n"
 
-#: vacuumdb.c:1242
+#: vacuumdb.c:1255
 #, c-format
 msgid ""
 "\n"
@@ -1077,87 +1077,17 @@ msgstr ""
 "\n"
 "Läs beskrivningen av SQL-kommandot VACUUM för detaljer.\n"
 
-#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
+#~ msgid "cannot use the \"%s\" option on server versions older than PostgreSQL 9.6"
+#~ msgstr "flaggan \"%s\" kan inte användas på serverversioner äldre än PostgreSQL 9.6"
 
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
+#~ msgid "cannot use the \"%s\" option on server versions older than PostgreSQL 12"
+#~ msgstr "flaggan \"%s\" kan inte användas på serverversioner äldre än PostgresSQL 12"
 
-#~ msgid "%s: query failed: %s"
-#~ msgstr "%s: fråga misslyckades: %s"
+#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
+#~ msgstr "%s: Växeln \"freeze\" kan inte utföras med enbart analys.\n"
 
-#~ msgid "%s: query was: %s\n"
-#~ msgstr "%s: frågan var: %s\n"
-
-#~ msgid "%s: query returned %d row instead of one: %s\n"
-#~ msgid_plural "%s: query returned %d rows instead of one: %s\n"
-#~ msgstr[0] "%s: fråga gav %d rad istället för en: %s\n"
-#~ msgstr[1] "%s: fråga gav %d rader istället för en: %s\n"
-
-#~ msgid "%s: \"%s\" is not a valid encoding name\n"
-#~ msgstr "%s: \"%s\" är inte en giltig teckenkodning.\n"
-
-#~ msgid "%s: %s"
-#~ msgstr "%s: %s"
-
-#~ msgid "%s: invalid socket: %s"
-#~ msgstr "%s: ogiltigt uttag: %s"
-
-#~ msgid "Name"
-#~ msgstr "Namn"
-
-#~ msgid "no"
-#~ msgstr "nej"
-
-#~ msgid "yes"
-#~ msgstr "ja"
-
-#~ msgid "Trusted?"
-#~ msgstr "Tillförlitligt?"
-
-#~ msgid "Procedural Languages"
-#~ msgstr "Procedurspråk"
-
-#~ msgid "%s: missing required argument language name\n"
-#~ msgstr "%s: Saknar nödvändigt språknamnsargument.\n"
-
-#~ msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
-#~ msgstr "%s: Språket \"%s\" är redan installerat i databasen \"%s\".\n"
-
-#~ msgid "%s: language installation failed: %s"
-#~ msgstr "%s: Språkinstallation misslyckades: %s"
-
-#~ msgid ""
-#~ "%s installs a procedural language into a PostgreSQL database.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "%s installerar ett procedurspråk i en PostgreSQL-databas.\n"
-#~ "\n"
-
-#~ msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
-#~ msgstr "  %s [FLAGGA]... SPRÅK [DBNAMN]\n"
-
-#~ msgid "  -d, --dbname=DBNAME       database to install language in\n"
-#~ msgstr "  -d, --dbname=DBNAMN       databas där språket installeras\n"
-
-#~ msgid "  -l, --list                show a list of currently installed languages\n"
-#~ msgstr "  -l, --list                lista alla nu installerade språk\n"
-
-#~ msgid "  -E, --encrypted           encrypt stored password\n"
-#~ msgstr "  -E, --encrypted           lösenordet skall sparas krypterat\n"
-
-#~ msgid "  -N, --unencrypted         do not encrypt stored password\n"
-#~ msgstr "  -N, --unencrypted         lösenordet sparas okrypterat\n"
-
-#~ msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-#~ msgstr "%s: Språk \"%s\" är inte installerat i databasen \"%s\".\n"
-
-#~ msgid "%s: language removal failed: %s"
-#~ msgstr "%s: Borttagning av språk misslyckades: %s"
+#~ msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
+#~ msgstr "  -d, --dbname=DBNAMN       databas från vilken språket skall tas bort\n"
 
 #~ msgid ""
 #~ "%s removes a procedural language from a database.\n"
@@ -1166,14 +1096,87 @@ msgstr ""
 #~ "%s tar bort ett procedurspråk från en databas.\n"
 #~ "\n"
 
-#~ msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
-#~ msgstr "  -d, --dbname=DBNAMN       databas från vilken språket skall tas bort\n"
+#~ msgid "%s: language removal failed: %s"
+#~ msgstr "%s: Borttagning av språk misslyckades: %s"
 
-#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
-#~ msgstr "%s: Växeln \"freeze\" kan inte utföras med enbart analys.\n"
+#~ msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
+#~ msgstr "%s: Språk \"%s\" är inte installerat i databasen \"%s\".\n"
 
-#~ msgid "cannot use the \"%s\" option on server versions older than PostgreSQL 12"
-#~ msgstr "flaggan \"%s\" kan inte användas på serverversioner äldre än PostgresSQL 12"
+#~ msgid "  -N, --unencrypted         do not encrypt stored password\n"
+#~ msgstr "  -N, --unencrypted         lösenordet sparas okrypterat\n"
 
-#~ msgid "cannot use the \"%s\" option on server versions older than PostgreSQL 9.6"
-#~ msgstr "flaggan \"%s\" kan inte användas på serverversioner äldre än PostgreSQL 9.6"
+#~ msgid "  -E, --encrypted           encrypt stored password\n"
+#~ msgstr "  -E, --encrypted           lösenordet skall sparas krypterat\n"
+
+#~ msgid "  -l, --list                show a list of currently installed languages\n"
+#~ msgstr "  -l, --list                lista alla nu installerade språk\n"
+
+#~ msgid "  -d, --dbname=DBNAME       database to install language in\n"
+#~ msgstr "  -d, --dbname=DBNAMN       databas där språket installeras\n"
+
+#~ msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
+#~ msgstr "  %s [FLAGGA]... SPRÅK [DBNAMN]\n"
+
+#~ msgid ""
+#~ "%s installs a procedural language into a PostgreSQL database.\n"
+#~ "\n"
+#~ msgstr ""
+#~ "%s installerar ett procedurspråk i en PostgreSQL-databas.\n"
+#~ "\n"
+
+#~ msgid "%s: language installation failed: %s"
+#~ msgstr "%s: Språkinstallation misslyckades: %s"
+
+#~ msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
+#~ msgstr "%s: Språket \"%s\" är redan installerat i databasen \"%s\".\n"
+
+#~ msgid "%s: missing required argument language name\n"
+#~ msgstr "%s: Saknar nödvändigt språknamnsargument.\n"
+
+#~ msgid "Procedural Languages"
+#~ msgstr "Procedurspråk"
+
+#~ msgid "Trusted?"
+#~ msgstr "Tillförlitligt?"
+
+#~ msgid "yes"
+#~ msgstr "ja"
+
+#~ msgid "no"
+#~ msgstr "nej"
+
+#~ msgid "Name"
+#~ msgstr "Namn"
+
+#~ msgid "%s: invalid socket: %s"
+#~ msgstr "%s: ogiltigt uttag: %s"
+
+#~ msgid "%s: %s"
+#~ msgstr "%s: %s"
+
+#~ msgid "%s: \"%s\" is not a valid encoding name\n"
+#~ msgstr "%s: \"%s\" är inte en giltig teckenkodning.\n"
+
+#~ msgid "%s: query returned %d row instead of one: %s\n"
+#~ msgid_plural "%s: query returned %d rows instead of one: %s\n"
+#~ msgstr[0] "%s: fråga gav %d rad istället för en: %s\n"
+#~ msgstr[1] "%s: fråga gav %d rader istället för en: %s\n"
+
+#~ msgid "%s: query was: %s\n"
+#~ msgstr "%s: frågan var: %s\n"
+
+#~ msgid "%s: query failed: %s"
+#~ msgstr "%s: fråga misslyckades: %s"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Rapportera fel till <pgsql-bugs@postgresql.org>.\n"
+
+#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
+#~ msgstr "%s: för många kommandoradsargument (första är \"%s\")\n"
+
+#~ msgid "too many parallel jobs requested (maximum: %d)"
+#~ msgstr "för många parallella job (maximum: %d)"

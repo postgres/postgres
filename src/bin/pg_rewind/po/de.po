@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-26 22:15+0000\n"
-"PO-Revision-Date: 2019-05-27 13:02-0400\n"
+"POT-Creation-Date: 2019-08-23 00:45+0000\n"
+"PO-Revision-Date: 2019-08-23 08:44+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -123,7 +123,7 @@ msgstr "konnte Quelldatei »%s« nicht öffnen: %m"
 msgid "could not seek in source file: %m"
 msgstr "konnte Positionszeiger in Quelldatei nicht setzen: %m"
 
-#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:315
+#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:314
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht lesen: %m"
@@ -203,7 +203,7 @@ msgstr "konnte symbolische Verknüpfung »%s« nicht löschen: %m"
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
 
-#: file_ops.c:314 parsexlog.c:317
+#: file_ops.c:314 parsexlog.c:316
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
@@ -368,42 +368,42 @@ msgstr "konnte COPY-Ende nicht senden: %s"
 msgid "unexpected result while sending file list: %s"
 msgstr "unerwartetes Ergebnis beim Senden der Dateiliste: %s"
 
-#: parsexlog.c:74 parsexlog.c:128 parsexlog.c:186
+#: parsexlog.c:74 parsexlog.c:127 parsexlog.c:185
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: parsexlog.c:87 parsexlog.c:134
+#: parsexlog.c:87 parsexlog.c:133
 #, c-format
 msgid "could not read WAL record at %X/%X: %s"
 msgstr "konnte WAL-Eintrag bei %X/%X nicht lesen: %s"
 
-#: parsexlog.c:91 parsexlog.c:137
+#: parsexlog.c:91 parsexlog.c:136
 #, c-format
 msgid "could not read WAL record at %X/%X"
 msgstr "konnte WAL-Eintrag bei %X/%X nicht lesen"
 
-#: parsexlog.c:198
+#: parsexlog.c:197
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "konnte vorangegangenen WAL-Eintrag bei %X/%X nicht finden: %s"
 
-#: parsexlog.c:202
+#: parsexlog.c:201
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "konnte vorangegangenen WAL-Eintrag bei %X/%X nicht finden"
 
-#: parsexlog.c:293
+#: parsexlog.c:292
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: parsexlog.c:306
+#: parsexlog.c:305
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "konnte Positionszeiger in Datei »%s« nicht setzen: %m"
 
-#: parsexlog.c:386
+#: parsexlog.c:385
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmgr: %s, info: %02X"
 msgstr "WAL-Eintrag modifiziert eine Relation, aber Typ des Eintrags wurde nicht erkannt: lsn: %X/%X, rmgr: %s, info: %02X"
@@ -621,8 +621,8 @@ msgstr "%*s/%s kB (%d%%) kopiert"
 
 #: pg_rewind.c:558
 #, c-format
-msgid "invalid control file\n"
-msgstr "ungültige Kontrolldatei\n"
+msgid "invalid control file"
+msgstr "ungültige Kontrolldatei"
 
 #: pg_rewind.c:642
 #, c-format
