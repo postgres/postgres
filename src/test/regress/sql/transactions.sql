@@ -542,10 +542,10 @@ SELECT 1\; BEGIN\; SAVEPOINT sp\; ROLLBACK TO SAVEPOINT sp\; COMMIT;
 
 -- Tests for AND CHAIN in implicit transaction blocks
 
-SET TRANSACTION READ WRITE\; COMMIT AND CHAIN;  -- error
+SET TRANSACTION READ ONLY\; COMMIT AND CHAIN;  -- error
 SHOW transaction_read_only;
 
-SET TRANSACTION READ WRITE\; ROLLBACK AND CHAIN;  -- error
+SET TRANSACTION READ ONLY\; ROLLBACK AND CHAIN;  -- error
 SHOW transaction_read_only;
 
 CREATE TABLE abc (a int);
