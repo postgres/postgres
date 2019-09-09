@@ -940,7 +940,7 @@ ERROR:  RELEASE SAVEPOINT can only be used in transaction blocks
 -- but this is OK, because the BEGIN converts it to a regular xact
 SELECT 1\; BEGIN\; SAVEPOINT sp\; ROLLBACK TO SAVEPOINT sp\; COMMIT;
 -- Tests for AND CHAIN in implicit transaction blocks
-SET TRANSACTION READ WRITE\; COMMIT AND CHAIN;  -- error
+SET TRANSACTION READ ONLY\; COMMIT AND CHAIN;  -- error
 ERROR:  COMMIT AND CHAIN can only be used in transaction blocks
 SHOW transaction_read_only;
  transaction_read_only 
@@ -948,7 +948,7 @@ SHOW transaction_read_only;
  off
 (1 row)
 
-SET TRANSACTION READ WRITE\; ROLLBACK AND CHAIN;  -- error
+SET TRANSACTION READ ONLY\; ROLLBACK AND CHAIN;  -- error
 ERROR:  ROLLBACK AND CHAIN can only be used in transaction blocks
 SHOW transaction_read_only;
  transaction_read_only 
