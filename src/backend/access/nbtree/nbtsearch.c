@@ -347,11 +347,13 @@ _bt_binsrch(Relation rel,
 	int32		result,
 				cmpval;
 
-	/* Requesting nextkey semantics while using scantid seems nonsensical */
-	Assert(!key->nextkey || key->scantid == NULL);
-
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	/* Requesting nextkey semantics while using scantid seems nonsensical */
+	Assert(!key->nextkey || key->scantid == NULL);
+	/* scantid-set callers must use _bt_binsrch_insert() on leaf pages */
+	Assert(!P_ISLEAF(opaque) || key->scantid == NULL);
 
 	low = P_FIRSTDATAKEY(opaque);
 	high = PageGetMaxOffsetNumber(page);
