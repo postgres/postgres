@@ -157,8 +157,6 @@ CreateExecutorState(void)
 
 	estate->es_per_tuple_exprcontext = NULL;
 
-	estate->es_epqTupleSlot = NULL;
-	estate->es_epqScanDone = NULL;
 	estate->es_sourceText = NULL;
 
 	estate->es_use_parallel_mode = false;
