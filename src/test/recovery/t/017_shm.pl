@@ -10,7 +10,14 @@ use Test::More;
 use TestLib;
 use Time::HiRes qw(usleep);
 
-plan tests => 5;
+if ($windows_os)
+{
+	plan skip_all => 'SysV shared memory not supported by this platform';
+}
+else
+{
+	plan tests => 5;
+}
 
 my $tempdir = TestLib::tempdir;
 my $port;
@@ -124,7 +131,7 @@ my $slow_pid = $gnat->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_activity WHERE query = '$slow_query'");
 $gnat->kill9;
 unlink($gnat->data_dir . '/postmaster.pid');
-$gnat->rotate_logfile;    # on Windows, can't open old log for writing
+$gnat->rotate_logfile;
 log_ipcs();
 # Reject ordinary startup.  Retry for the same reasons poll_start() does.
 my $pre_existing_msg = qr/pre-existing shared memory block/;
@@ -153,13 +160,10 @@ like($single_stderr, $pre_existing_msg,
 	'single-user mode detected live backend via shared memory');
 log_ipcs();
 # Fail to reject startup if shm key N has become available and we crash while
-# using key N+1.  This is unwanted, but expected.  Windows is immune, because
-# its GetSharedMemName() use DataDir strings, not numeric keys.
+# using key N+1.  This is unwanted, but expected.
 $flea->stop;    # release first key
-is( $gnat->start(fail_ok => 1),
-	$TestLib::windows_os ? 0 : 1,
-	'key turnover fools only sysv_shmem.c');
-$gnat->stop;     # release first key (no-op on $TestLib::windows_os)
+is($gnat->start(fail_ok => 1), 1, 'key turnover fools only sysv_shmem.c');
+$gnat->stop;     # release first key
 $flea->start;    # grab first key
 # cleanup
 TestLib::system_log('pg_ctl', 'kill', 'QUIT', $slow_pid);
