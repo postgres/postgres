@@ -56,7 +56,7 @@ my $slapd_logfile = "${TestLib::log_path}/slapd.log";
 my $ldap_conf     = "${TestLib::tmp_check}/ldap.conf";
 my $ldap_server   = 'localhost';
 my $ldap_port     = get_free_port();
-my $ldaps_port    = $ldap_port + 1;
+my $ldaps_port    = get_free_port();
 my $ldap_url      = "ldap://$ldap_server:$ldap_port";
 my $ldaps_url     = "ldaps://$ldap_server:$ldaps_port";
 my $ldap_basedn   = 'dc=example,dc=net';
