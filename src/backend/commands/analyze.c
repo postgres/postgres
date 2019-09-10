@@ -307,7 +307,8 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	VacAttrStats **vacattrstats;
 	AnlIndexData *indexdata;
 	int			targrows,
-				numrows;
+				numrows,
+				minrows;
 	double		totalrows,
 				totaldeadrows;
 	HeapTuple  *rows;
@@ -490,6 +491,16 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 				targrows = thisdata->vacattrstats[i]->minrows;
 		}
 	}
+
+	/*
+	 * Look at extended statistics objects too, as those may define custom
+	 * statistics target. So we may need to sample more rows and then build
+	 * the statistics with enough detail.
+	 */
+	minrows = ComputeExtStatisticsRows(onerel, attr_cnt, vacattrstats);
+
+	if (targrows < minrows)
+		targrows = minrows;
 
 	/*
 	 * Acquire the sample rows

@@ -62,6 +62,7 @@ typedef struct StatExtEntry
 	char	   *name;			/* statistics object's name */
 	Bitmapset  *columns;		/* attribute numbers covered by the object */
 	List	   *types;			/* 'char' list of enabled statistic kinds */
+	int			stattarget;		/* statistics target (-1 for default) */
 } StatExtEntry;
 
 
@@ -71,7 +72,8 @@ static VacAttrStats **lookup_var_attr_stats(Relation rel, Bitmapset *attrs,
 static void statext_store(Oid relid,
 						  MVNDistinct *ndistinct, MVDependencies *dependencies,
 						  MCVList *mcv, VacAttrStats **stats);
-
+static int statext_compute_stattarget(int stattarget,
+									  int natts, VacAttrStats **stats);
 
 /*
  * Compute requested extended stats, using the rows sampled for the plain
@@ -107,6 +109,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		MCVList    *mcv = NULL;
 		VacAttrStats **stats;
 		ListCell   *lc2;
+		int			stattarget;
 
 		/*
 		 * Check if we can build these stats based on the column analyzed. If
@@ -131,6 +134,19 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 		Assert(bms_num_members(stat->columns) >= 2 &&
 			   bms_num_members(stat->columns) <= STATS_MAX_DIMENSIONS);
 
+		/* compute statistics target for this statistics */
+		stattarget = statext_compute_stattarget(stat->stattarget,
+												bms_num_members(stat->columns),
+												stats);
+
+		/*
+		 * Don't rebuild statistics objects with statistics target set to 0 (we
+		 * just leave the existing values around, just like we do for regular
+		 * per-column statistics).
+		 */
+		if (stattarget == 0)
+			continue;
+
 		/* compute statistic of each requested type */
 		foreach(lc2, stat->types)
 		{
@@ -144,7 +160,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 														  stat->columns, stats);
 			else if (t == STATS_EXT_MCV)
 				mcv = statext_mcv_build(numrows, rows, stat->columns, stats,
-										totalrows);
+										totalrows, stattarget);
 		}
 
 		/* store the statistics in the catalog */
@@ -155,6 +171,135 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(cxt);
+}
+
+/*
+ * ComputeExtStatisticsRows
+ *		Compute number of rows required by extended statistics on a table.
+ *
+ * Computes number of rows we need to sample to build extended statistics on a
+ * table. This only looks at statistics we can actually build - for example
+ * when analyzing only some of the columns, this will skip statistics objects
+ * that would require additional columns.
+ *
+ * See statext_compute_stattarget for details about how we compute statistics
+ * target for a statistics objects (from the object target, attribute targets
+ * and default statistics target).
+ */
+int
+ComputeExtStatisticsRows(Relation onerel,
+						 int natts, VacAttrStats **vacattrstats)
+{
+	Relation	pg_stext;
+	ListCell   *lc;
+	List	   *lstats;
+	MemoryContext cxt;
+	MemoryContext oldcxt;
+	int			result = 0;
+
+	cxt = AllocSetContextCreate(CurrentMemoryContext,
+								"ComputeExtStatisticsRows",
+								ALLOCSET_DEFAULT_SIZES);
+	oldcxt = MemoryContextSwitchTo(cxt);
+
+	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
+	lstats = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
+
+	foreach(lc, lstats)
+	{
+		StatExtEntry   *stat = (StatExtEntry *) lfirst(lc);
+		int				stattarget = stat->stattarget;
+		VacAttrStats  **stats;
+		int				nattrs = bms_num_members(stat->columns);
+
+		/*
+		 * Check if we can build this statistics object based on the columns
+		 * analyzed. If not, ignore it (don't report anything, we'll do that
+		 * during the actual build BuildRelationExtStatistics).
+		 */
+		stats = lookup_var_attr_stats(onerel, stat->columns,
+									  natts, vacattrstats);
+
+		if (!stats)
+			continue;
+
+		/*
+		 * Compute statistics target, based on what's set for the statistic
+		 * object itself, and for its attributes.
+		 */
+		stattarget = statext_compute_stattarget(stat->stattarget,
+												nattrs, stats);
+
+		/* Use the largest value for all statistics objects. */
+		if (stattarget > result)
+			result = stattarget;
+	}
+
+	table_close(pg_stext, RowExclusiveLock);
+
+	MemoryContextSwitchTo(oldcxt);
+	MemoryContextDelete(cxt);
+
+	/* compute sample size based on the statistics target */
+	return (300 * result);
+}
+
+/*
+ * statext_compute_stattarget
+ *		compute statistics target for an extended statistic
+ *
+ * When computing target for extended statistics objects, we consider three
+ * places where the target may be set - the statistics object itself,
+ * attributes the statistics is defined on, and then the default statistics
+ * target.
+ *
+ * First we look at what's set for the statistics object itself, using the
+ * ALTER STATISTICS ... SET STATISTICS command. If we find a valid value
+ * there (i.e. not -1) we're done. Otherwise we look at targets set for any
+ * of the attributes the statistic is defined on, and if there are columns
+ * with defined target, we use the maximum value. We do this mostly for
+ * backwards compatibility, because this is what we did before having
+ * statistics target for extended statistics.
+ *
+ * And finally, if we still don't have a statistics target, we use the value
+ * set in default_statistics_target.
+ */
+static int
+statext_compute_stattarget(int stattarget, int nattrs, VacAttrStats **stats)
+{
+	int	i;
+
+	/*
+	 * If there's statistics target set for the statistics object, use it.
+	 * It may be set to 0 which disables building of that statistic.
+	 */
+	if (stattarget >= 0)
+		return stattarget;
+
+	/*
+	 * The target for the statistics object is set to -1, in which case we
+	 * look at the maximum target set for any of the attributes the object
+	 * is defined on.
+	 */
+	for (i = 0; i < nattrs; i++)
+	{
+		/* keep the maximmum statistics target */
+		if (stats[i]->attr->attstattarget > stattarget)
+			stattarget = stats[i]->attr->attstattarget;
+	}
+
+	/*
+	 * If the value is still negative (so neither the statistics object nor
+	 * any of the columns have custom statistics target set), use the global
+	 * default target.
+	 */
+	if (stattarget < 0)
+		stattarget = default_statistics_target;
+
+	/* As this point we should have a valid statistics target. */
+	Assert((stattarget >= 0) && (stattarget <= 10000));
+
+	return stattarget;
 }
 
 /*
@@ -225,6 +370,7 @@ fetch_statentries_for_relation(Relation pg_statext, Oid relid)
 		entry->statOid = staForm->oid;
 		entry->schema = get_namespace_name(staForm->stxnamespace);
 		entry->name = pstrdup(NameStr(staForm->stxname));
+		entry->stattarget = staForm->stxstattarget;
 		for (i = 0; i < staForm->stxkeys.dim1; i++)
 		{
 			entry->columns = bms_add_member(entry->columns,

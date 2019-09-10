@@ -41,6 +41,7 @@ CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
 	Oid			stxnamespace;	/* OID of statistics object's namespace */
 
 	Oid			stxowner;		/* statistics object's owner */
+	int32		stxstattarget BKI_DEFAULT(-1);		/* statistics target */
 
 	/*
 	 * variable-length fields start here, but we allow direct access to

@@ -1840,7 +1840,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER STATISTICS <name> */
 	else if (Matches("ALTER", "STATISTICS", MatchAny))
-		COMPLETE_WITH("OWNER TO", "RENAME TO", "SET SCHEMA");
+		COMPLETE_WITH("OWNER TO", "RENAME TO", "SET SCHEMA", "SET STATISTICS");
 
 	/* ALTER TRIGGER <name>, add ON */
 	else if (Matches("ALTER", "TRIGGER", MatchAny))

@@ -26,6 +26,7 @@ PostgreSQL documentation
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET STATISTICS <replaceable class="parameter">new_target</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -89,6 +90,22 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
       <listitem>
        <para>
         The new schema for the statistics object.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">new_target</replaceable></term>
+      <listitem>
+       <para>
+        The statistic-gathering target for this statistics object for subsequent
+        <xref linkend="sql-analyze"/> operations.
+        The target can be set in the range 0 to 10000; alternatively, set it
+        to -1 to revert to using the system default statistics
+        target (<xref linkend="guc-default-statistics-target"/>).
+        For more information on the use of statistics by the
+        <productname>PostgreSQL</productname> query planner, refer to
+        <xref linkend="planner-stats"/>.
        </para>
       </listitem>
      </varlistentry>

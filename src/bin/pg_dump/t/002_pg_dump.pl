@@ -2542,6 +2542,17 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'ALTER STATISTICS extended_stats_options' => {
+		create_order => 98,
+		create_sql   => 'ALTER STATISTICS dump_test.test_ext_stats_opts SET STATISTICS 1000',
+		regexp => qr/^
+			\QALTER STATISTICS dump_test.test_ext_stats_opts SET STATISTICS 1000;\E
+		    /xms,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_post_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE SEQUENCE test_table_col1_seq' => {
 		regexp => qr/^
 			\QCREATE SEQUENCE dump_test.test_table_col1_seq\E

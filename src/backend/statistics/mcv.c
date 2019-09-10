@@ -181,7 +181,7 @@ get_mincount_for_mcv_list(int samplerows, double totalrows)
  */
 MCVList *
 statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
-				  VacAttrStats **stats, double totalrows)
+				  VacAttrStats **stats, double totalrows, int stattarget)
 {
 	int			i,
 				numattrs,
@@ -210,15 +210,12 @@ statext_mcv_build(int numrows, HeapTuple *rows, Bitmapset *attrs,
 	groups = build_distinct_groups(nitems, items, mss, &ngroups);
 
 	/*
-	 * Maximum number of MCV items to store, based on the attribute with the
-	 * largest stats target (and the number of groups we have available).
+	 * Maximum number of MCV items to store, based on the statistics target
+	 * we computed for the statistics object (from target set for the object
+	 * itself, attributes and the system default). In any case, we can't keep
+	 * more groups than we have available.
 	 */
-	nitems = stats[0]->attr->attstattarget;
-	for (i = 1; i < numattrs; i++)
-	{
-		if (stats[i]->attr->attstattarget > nitems)
-			nitems = stats[i]->attr->attstattarget;
-	}
+	nitems = stattarget;
 	if (nitems > ngroups)
 		nitems = ngroups;
 

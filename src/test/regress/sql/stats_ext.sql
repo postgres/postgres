@@ -68,10 +68,20 @@ INSERT INTO ab1 SELECT a, a%23 FROM generate_series(1, 1000) a;
 CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 ANALYZE ab1;
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
+-- setting statistics target 0 skips the statistics, without printing any message, so check catalog
+ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
+ANALYZE ab1;
+SELECT stxname, stxdndistinct, stxddependencies, stxdmcv
+  FROM pg_statistic_ext s, pg_statistic_ext_data d
+ WHERE s.stxname = 'ab1_a_b_stats'
+   AND d.stxoid = s.oid;
+ALTER STATISTICS ab1_a_b_stats SET STATISTICS -1;
 -- partial analyze doesn't build stats either
 ANALYZE ab1 (a);
 ANALYZE ab1;
 DROP TABLE ab1;
+ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
+ALTER STATISTICS IF EXISTS ab1_a_b_stats SET STATISTICS 0;
 
 -- Ensure we can build statistics for tables with inheritance.
 CREATE TABLE ab1 (a INTEGER, b INTEGER);

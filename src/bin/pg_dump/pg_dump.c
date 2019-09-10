@@ -7178,6 +7178,7 @@ getExtendedStatistics(Archive *fout)
 	int			i_stxname;
 	int			i_stxnamespace;
 	int			i_rolname;
+	int			i_stattarget;
 	int			i;
 
 	/* Extended statistics were new in v10 */
@@ -7186,10 +7187,16 @@ getExtendedStatistics(Archive *fout)
 
 	query = createPQExpBuffer();
 
-	appendPQExpBuffer(query, "SELECT tableoid, oid, stxname, "
-					  "stxnamespace, (%s stxowner) AS rolname "
-					  "FROM pg_catalog.pg_statistic_ext",
-					  username_subquery);
+	if (fout->remoteVersion < 130000)
+		appendPQExpBuffer(query, "SELECT tableoid, oid, stxname, "
+						  "stxnamespace, (%s stxowner) AS rolname, (-1) AS stxstattarget "
+						  "FROM pg_catalog.pg_statistic_ext",
+						  username_subquery);
+	else
+		appendPQExpBuffer(query, "SELECT tableoid, oid, stxname, "
+						  "stxnamespace, (%s stxowner) AS rolname, stxstattarget "
+						  "FROM pg_catalog.pg_statistic_ext",
+						  username_subquery);
 
 	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 
@@ -7200,6 +7207,7 @@ getExtendedStatistics(Archive *fout)
 	i_stxname = PQfnumber(res, "stxname");
 	i_stxnamespace = PQfnumber(res, "stxnamespace");
 	i_rolname = PQfnumber(res, "rolname");
+	i_stattarget = PQfnumber(res, "stxstattarget");
 
 	statsextinfo = (StatsExtInfo *) pg_malloc(ntups * sizeof(StatsExtInfo));
 
@@ -7214,6 +7222,7 @@ getExtendedStatistics(Archive *fout)
 			findNamespace(fout,
 						  atooid(PQgetvalue(res, i, i_stxnamespace)));
 		statsextinfo[i].rolname = pg_strdup(PQgetvalue(res, i, i_rolname));
+		statsextinfo[i].stattarget = atoi(PQgetvalue(res, i, i_stattarget));
 
 		/* Decide whether we want to dump it */
 		selectDumpableObject(&(statsextinfo[i].dobj), fout);
@@ -16500,6 +16509,19 @@ dumpStatisticsExt(Archive *fout, StatsExtInfo *statsextinfo)
 
 	/* Result of pg_get_statisticsobjdef is complete except for semicolon */
 	appendPQExpBuffer(q, "%s;\n", stxdef);
+
+	/*
+	 * We only issue an ALTER STATISTICS statement if the stxstattarget entry
+	 * for this statictics object is non-negative (i.e. it's not the default
+	 * value).
+	 */
+	if (statsextinfo->stattarget >= 0)
+	{
+		appendPQExpBuffer(q, "ALTER STATISTICS %s ",
+						  fmtQualifiedDumpable(statsextinfo));
+		appendPQExpBuffer(q, "SET STATISTICS %d;\n",
+						  statsextinfo->stattarget);
+	}
 
 	appendPQExpBuffer(delq, "DROP STATISTICS %s;\n",
 					  fmtQualifiedDumpable(statsextinfo));

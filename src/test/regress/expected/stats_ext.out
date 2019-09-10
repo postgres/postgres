@@ -98,11 +98,28 @@ CREATE STATISTICS ab1_a_b_stats ON a, b FROM ab1;
 ANALYZE ab1;
 WARNING:  statistics object "public.ab1_a_b_stats" could not be computed for relation "public.ab1"
 ALTER TABLE ab1 ALTER a SET STATISTICS -1;
+-- setting statistics target 0 skips the statistics, without printing any message, so check catalog
+ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
+ANALYZE ab1;
+SELECT stxname, stxdndistinct, stxddependencies, stxdmcv
+  FROM pg_statistic_ext s, pg_statistic_ext_data d
+ WHERE s.stxname = 'ab1_a_b_stats'
+   AND d.stxoid = s.oid;
+    stxname    | stxdndistinct | stxddependencies | stxdmcv 
+---------------+---------------+------------------+---------
+ ab1_a_b_stats |               |                  | 
+(1 row)
+
+ALTER STATISTICS ab1_a_b_stats SET STATISTICS -1;
 -- partial analyze doesn't build stats either
 ANALYZE ab1 (a);
 WARNING:  statistics object "public.ab1_a_b_stats" could not be computed for relation "public.ab1"
 ANALYZE ab1;
 DROP TABLE ab1;
+ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
+ERROR:  statistics object "ab1_a_b_stats" does not exist
+ALTER STATISTICS IF EXISTS ab1_a_b_stats SET STATISTICS 0;
+NOTICE:  statistics object "ab1_a_b_stats" does not exist, skipping
 -- Ensure we can build statistics for tables with inheritance.
 CREATE TABLE ab1 (a INTEGER, b INTEGER);
 CREATE TABLE ab1c () INHERITS (ab1);

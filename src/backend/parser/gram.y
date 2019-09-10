@@ -252,7 +252,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		AlterOperatorStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
 		AlterTblSpcStmt AlterExtensionStmt AlterExtensionContentsStmt AlterForeignTableStmt
 		AlterCompositeTypeStmt AlterUserMappingStmt
-		AlterRoleStmt AlterRoleSetStmt AlterPolicyStmt
+		AlterRoleStmt AlterRoleSetStmt AlterPolicyStmt AlterStatsStmt
 		AlterDefaultPrivilegesStmt DefACLAction
 		AnalyzeStmt CallStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
@@ -852,6 +852,7 @@ stmt :
 			| AlterRoleSetStmt
 			| AlterRoleStmt
 			| AlterSubscriptionStmt
+			| AlterStatsStmt
 			| AlterTSConfigurationStmt
 			| AlterTSDictionaryStmt
 			| AlterUserMappingStmt
@@ -3980,6 +3981,34 @@ CreateStatsStmt:
 					n->relations = $11;
 					n->stxcomment = NULL;
 					n->if_not_exists = true;
+					$$ = (Node *)n;
+				}
+			;
+
+
+/*****************************************************************************
+ *
+ *		QUERY :
+ *				ALTER STATISTICS [IF EXISTS] stats_name
+ *					SET STATISTICS  <SignedIconst>
+ *
+ *****************************************************************************/
+
+AlterStatsStmt:
+			ALTER STATISTICS any_name SET STATISTICS SignedIconst
+				{
+					AlterStatsStmt *n = makeNode(AlterStatsStmt);
+					n->defnames = $3;
+					n->missing_ok = false;
+					n->stxstattarget = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER STATISTICS IF_P EXISTS any_name SET STATISTICS SignedIconst
+				{
+					AlterStatsStmt *n = makeNode(AlterStatsStmt);
+					n->defnames = $5;
+					n->missing_ok = true;
+					n->stxstattarget = $8;
 					$$ = (Node *)n;
 				}
 			;

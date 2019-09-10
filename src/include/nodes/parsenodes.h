@@ -2790,6 +2790,18 @@ typedef struct CreateStatsStmt
 } CreateStatsStmt;
 
 /* ----------------------
+ *		Alter Statistics Statement
+ * ----------------------
+ */
+typedef struct AlterStatsStmt
+{
+	NodeTag		type;
+	List	   *defnames;		/* qualified name (list of Value strings) */
+	int			stxstattarget;	/* statistics target */
+	bool		missing_ok;		/* skip error if statistics object is missing */
+} AlterStatsStmt;
+
+/* ----------------------
  *		Create Function Statement
  * ----------------------
  */

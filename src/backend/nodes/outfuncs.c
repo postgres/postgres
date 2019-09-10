@@ -2669,6 +2669,16 @@ _outCreateStatsStmt(StringInfo str, const CreateStatsStmt *node)
 }
 
 static void
+_outAlterStatsStmt(StringInfo str, const AlterStatsStmt *node)
+{
+	WRITE_NODE_TYPE("ALTERSTATSSTMT");
+
+	WRITE_NODE_FIELD(defnames);
+	WRITE_INT_FIELD(stxstattarget);
+	WRITE_BOOL_FIELD(missing_ok);
+}
+
+static void
 _outNotifyStmt(StringInfo str, const NotifyStmt *node)
 {
 	WRITE_NODE_TYPE("NOTIFY");
@@ -4129,6 +4139,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_CreateStatsStmt:
 				_outCreateStatsStmt(str, obj);
+				break;
+			case T_AlterStatsStmt:
+				_outAlterStatsStmt(str, obj);
 				break;
 			case T_NotifyStmt:
 				_outNotifyStmt(str, obj);
