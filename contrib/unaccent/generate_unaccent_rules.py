@@ -32,9 +32,15 @@
 # The approach is to be Python3 compatible with Python2 "backports".
 from __future__ import print_function
 from __future__ import unicode_literals
-import codecs
-import sys
+# END: Python 2/3 compatibility - remove when Python 2 compatibility dropped
 
+import argparse
+import codecs
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+# BEGIN: Python 2/3 compatibility - remove when Python 2 compatibility dropped
 if sys.version_info[0] <= 2:
     # Encode stdout as UTF-8, so we can just print to it
     sys.stdout = codecs.getwriter('utf8')(sys.stdout)
@@ -45,12 +51,9 @@ if sys.version_info[0] <= 2:
     # Python 2 and 3 compatible bytes call
     def bytes(source, encoding='ascii', errors='strict'):
         return source.encode(encoding=encoding, errors=errors)
+else:
 # END: Python 2/3 compatibility - remove when Python 2 compatibility dropped
-
-import re
-import argparse
-import sys
-import xml.etree.ElementTree as ET
+    sys.stdout = codecs.getwriter('utf8')(sys.stdout.buffer)
 
 # The ranges of Unicode characters that we consider to be "plain letters".
 # For now we are being conservative by including only Latin and Greek.  This
@@ -233,21 +236,22 @@ def main(args):
     charactersSet = set()
 
     # read file UnicodeData.txt
-    unicodeDataFile = open(args.unicodeDataFilePath, 'r')
-
-    # read everything we need into memory
-    for line in unicodeDataFile:
-        fields = line.split(";")
-        if len(fields) > 5:
-            # http://www.unicode.org/reports/tr44/tr44-14.html#UnicodeData.txt
-            general_category = fields[2]
-            decomposition = fields[5]
-            decomposition = re.sub(decomposition_type_pattern, ' ', decomposition)
-            id = int(fields[0], 16)
-            combining_ids = [int(s, 16) for s in decomposition.split(" ") if s != ""]
-            codepoint = Codepoint(id, general_category, combining_ids)
-            table[id] = codepoint
-            all.append(codepoint)
+    with codecs.open(
+      args.unicodeDataFilePath, mode='r', encoding='UTF-8',
+      ) as unicodeDataFile:
+        # read everything we need into memory
+        for line in unicodeDataFile:
+            fields = line.split(";")
+            if len(fields) > 5:
+                # http://www.unicode.org/reports/tr44/tr44-14.html#UnicodeData.txt
+                general_category = fields[2]
+                decomposition = fields[5]
+                decomposition = re.sub(decomposition_type_pattern, ' ', decomposition)
+                id = int(fields[0], 16)
+                combining_ids = [int(s, 16) for s in decomposition.split(" ") if s != ""]
+                codepoint = Codepoint(id, general_category, combining_ids)
+                table[id] = codepoint
+                all.append(codepoint)
 
     # walk through all the codepoints looking for interesting mappings
     for codepoint in all:
