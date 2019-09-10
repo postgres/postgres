@@ -40,7 +40,7 @@ do $$
     delete from test1;
     commit;
     perform pg_advisory_lock(1);
-    raise notice 'x = %', x;
+    raise notice 'length(x) = %', length(x);
   end;
 $$;
 }
@@ -56,7 +56,7 @@ do $$
     delete from test1;
     commit;
     perform pg_advisory_lock(1);
-    raise notice 'x = %', x;
+    raise notice 'length(x) = %', length(x);
   end;
 $$;
 }
@@ -73,7 +73,7 @@ do $$
     delete from test1;
     commit;
     perform pg_advisory_lock(1);
-    raise notice 'r = %', r;
+    raise notice 'length(r) = %', length(r::text);
   end;
 $$;
 }
@@ -89,7 +89,7 @@ do $$
     delete from test1;
     commit;
     perform pg_advisory_lock(1);
-    raise notice 'r = %', r;
+    raise notice 'length(r) = %', length(r::text);
   end;
 $$;
 }
@@ -107,7 +107,7 @@ do $$
     delete from test1;
     commit;
     perform pg_advisory_lock(1);
-    raise notice 'r = %', r;
+    raise notice 'length(r) = %', length(r::text);
   end;
 $$;
 }
