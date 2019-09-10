@@ -48,6 +48,8 @@ static int	step_qsort_cmp(const void *a, const void *b);
 static int	step_bsearch_cmp(const void *a, const void *b);
 
 static void printResultSet(PGresult *res);
+static void isotesterNoticeProcessor(void *arg, const char *message);
+static void blackholeNoticeProcessor(void *arg, const char *message);
 
 /* close all connections and exit */
 static void
@@ -172,16 +174,19 @@ main(int argc, char **argv)
 		}
 
 		/*
-		 * Suppress NOTIFY messages, which otherwise pop into results at odd
-		 * places.
+		 * Set up notice processors for the user-defined connections, so that
+		 * messages can get printed prefixed with the session names.  The
+		 * control connection gets a "blackhole" processor instead (hides all
+		 * messages).
 		 */
-		res = PQexec(conns[i], "SET client_min_messages = warning;");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "message level setup failed: %s", PQerrorMessage(conns[i]));
-			exit_nicely();
-		}
-		PQclear(res);
+		if (i != 0)
+			PQsetNoticeProcessor(conns[i],
+								 isotesterNoticeProcessor,
+								 (void *) (testspec->sessions[i - 1]->name));
+		else
+			PQsetNoticeProcessor(conns[i],
+								 blackholeNoticeProcessor,
+								 NULL);
 
 		/* Get the backend pid for lock wait checking. */
 		res = PQexec(conns[i], "SELECT pg_backend_pid()");
@@ -751,6 +756,28 @@ try_complete_step(Step *step, int flags)
 
 				if (waiting)	/* waiting to acquire a lock */
 				{
+					/*
+					 * Since it takes time to perform the lock-check query,
+					 * some data --- notably, NOTICE messages --- might have
+					 * arrived since we looked.  We must call PQconsumeInput
+					 * and then PQisBusy to collect and process any such
+					 * messages.  In the (unlikely) case that PQisBusy then
+					 * returns false, we might as well go examine the
+					 * available result.
+					 */
+					if (!PQconsumeInput(conn))
+					{
+						fprintf(stderr, "PQconsumeInput failed: %s\n",
+								PQerrorMessage(conn));
+						exit(1);
+					}
+					if (!PQisBusy(conn))
+						break;
+
+					/*
+					 * conn is still busy, so conclude that the step really is
+					 * waiting.
+					 */
 					if (!(flags & STEP_RETRY))
 						printf("step %s: %s <waiting ...>\n",
 							   step->name, step->sql);
@@ -880,4 +907,18 @@ printResultSet(PGresult *res)
 			printf("%-15s", PQgetvalue(res, i, j));
 		printf("\n");
 	}
+}
+
+/* notice processor, prefixes each message with the session name */
+static void
+isotesterNoticeProcessor(void *arg, const char *message)
+{
+	printf("%s: %s", (char *) arg, message);
+}
+
+/* notice processor, hides the message */
+static void
+blackholeNoticeProcessor(void *arg, const char *message)
+{
+	/* do nothing */
 }
