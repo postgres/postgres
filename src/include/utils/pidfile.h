@@ -28,7 +28,8 @@
  *
  * Lines 6 and up are added via AddToDataDirLockFile() after initial file
  * creation; also, line 5 is initially empty and is changed after the first
- * Unix socket is opened.
+ * Unix socket is opened.  Onlookers should not assume that lines 4 and up
+ * are filled in any particular order.
  *
  * Socket lock file(s), if used, have the same contents as lines 1-5, with
  * line 5 being their own directory.
