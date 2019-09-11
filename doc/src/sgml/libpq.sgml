@@ -993,10 +993,14 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         your machine supports IPv6, you can also use those addresses.
         TCP/IP communication is
         always used when a nonempty string is specified for this parameter.
+        If this parameter is not specified, the value of <literal>host</literal>
+        will be looked up to find the corresponding IP address &mdash; or, if
+        <literal>host</literal> specifies an IP address, that value will be
+        used directly.
        </para>
 
        <para>
-        Using <literal>hostaddr</literal> instead of <literal>host</literal> allows the
+        Using <literal>hostaddr</literal> allows the
         application to avoid a host name look-up, which might be important
         in applications with time constraints. However, a host name is
         required for GSSAPI or SSPI authentication
