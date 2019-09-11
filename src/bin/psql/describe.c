@@ -307,6 +307,7 @@ describeTablespaces(const char *pattern, bool verbose)
  *
  * a for aggregates
  * n for normal
+ * p for procedure
  * t for trigger
  * w for window
  *
