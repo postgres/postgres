@@ -207,7 +207,7 @@ sub tap_check
 	my $dir = shift;
 	chdir $dir;
 
-	my @args = ("prove", @flags, "t/*.pl");
+	my @args = ("prove", @flags, glob("t/*.pl"));
 
 	# adjust the environment for just this test
 	local %ENV = %ENV;
