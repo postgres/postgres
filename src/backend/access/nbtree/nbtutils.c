@@ -2092,25 +2092,20 @@ btbuildphasename(int64 phasenum)
  * Caller's insertion scankey is used to compare the tuples; the scankey's
  * argument values are not considered here.
  *
- * Sometimes this routine will return a new pivot tuple that takes up more
- * space than firstright, because a new heap TID attribute had to be added to
- * distinguish lastleft from firstright.  This should only happen when the
- * caller is in the process of splitting a leaf page that has many logical
- * duplicates, where it's unavoidable.
- *
  * Note that returned tuple's t_tid offset will hold the number of attributes
  * present, so the original item pointer offset is not represented.  Caller
  * should only change truncated tuple's downlink.  Note also that truncated
  * key attributes are treated as containing "minus infinity" values by
  * _bt_compare().
  *
- * In the worst case (when a heap TID is appended) the size of the returned
- * tuple is the size of the first right tuple plus an additional MAXALIGN()'d
- * item pointer.  This guarantee is important, since callers need to stay
- * under the 1/3 of a page restriction on tuple size.  If this routine is ever
- * taught to truncate within an attribute/datum, it will need to avoid
- * returning an enlarged tuple to caller when truncation + TOAST compression
- * ends up enlarging the final datum.
+ * In the worst case (when a heap TID must be appended to distinguish lastleft
+ * from firstright), the size of the returned tuple is the size of firstright
+ * plus the size of an additional MAXALIGN()'d item pointer.  This guarantee
+ * is important, since callers need to stay under the 1/3 of a page
+ * restriction on tuple size.  If this routine is ever taught to truncate
+ * within an attribute/datum, it will need to avoid returning an enlarged
+ * tuple to caller when truncation + TOAST compression ends up enlarging the
+ * final datum.
  */
 IndexTuple
 _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
