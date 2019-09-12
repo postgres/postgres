@@ -1186,8 +1186,8 @@ void
 tuplesort_set_bound(Tuplesortstate *state, int64 bound)
 {
 	/* Assert we're called before loading any tuples */
-	Assert(state->status == TSS_INITIAL);
-	Assert(state->memtupcount == 0);
+	Assert(state->status == TSS_INITIAL && state->memtupcount == 0);
+
 	Assert(!state->bounded);
 	Assert(!WORKER(state));
 
