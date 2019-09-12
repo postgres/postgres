@@ -16,7 +16,8 @@
   Language SQL</quote>.  A revised version of the standard is released
   from time to time; the most recent update appearing in 2011.
   The 2011 version is referred to as ISO/IEC 9075:2011, or simply as SQL:2011.
-  The versions prior to that were SQL:2008, SQL:2003, SQL:1999, and SQL-92.  Each version
+  The versions prior to that were SQL:2008, SQL:2006, SQL:2003, SQL:1999,
+  and SQL-92.  Each version
   replaces the previous one, so claims of conformance to earlier
   versions have no official merit.
   <productname>PostgreSQL</productname> development aims for
@@ -153,6 +154,384 @@
      </tgroup>
     </informaltable>
    </para>
+  </sect1>
+
+  <sect1 id="xml-limits-conformance">
+   <title>XML Limits and Conformance to SQL/XML</title>
+
+   <indexterm>
+    <primary>SQL/XML</primary>
+    <secondary>limits and conformance</secondary>
+   </indexterm>
+
+   <para>
+    Significant revisions to the XML-related specifications in ISO/IEC 9075-14
+    (SQL/XML) were introduced with SQL:2006.
+    <productname>PostgreSQL</productname>'s implementation of the XML data
+    type and related functions largely follows the earlier 2003 edition,
+    with some borrowing from later editions.  In particular:
+    <itemizedlist>
+     <listitem>
+      <para>
+       Where the current standard provides a family of XML data types
+       to hold <quote>document</quote> or <quote>content</quote> in
+       untyped or XML Schema-typed variants, and a type
+       <type>XML(SEQUENCE)</type> to hold arbitrary pieces of XML content,
+       <productname>PostgreSQL</productname> provides the single
+       <type>xml</type> type, which can hold <quote>document</quote> or
+       <quote>content</quote>.  There is no equivalent of the
+       standard's <quote>sequence</quote> type.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <productname>PostgreSQL</productname> provides two functions
+       introduced in SQL:2006, but in variants that use the XPath 1.0
+       language, rather than XML Query as specified for them in the
+       standard.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    This section presents some of the resulting differences you may encounter.
+   </para>
+
+   <sect2 id="functions-xml-limits-xpath1">
+    <title>Queries are restricted to XPath 1.0</title>
+
+    <para>
+     The <productname>PostgreSQL</productname>-specific functions
+     <function>xpath()</function> and <function>xpath_exists()</function>
+     query XML documents using the XPath language.
+     <productname>PostgreSQL</productname> also provides XPath-only variants
+     of the standard functions <function>XMLEXISTS</function> and
+     <function>XMLTABLE</function>, which officially use
+     the XQuery language. For all of these functions,
+     <productname>PostgreSQL</productname> relies on the
+     <application>libxml2</application> library, which provides only XPath 1.0.
+    </para>
+
+    <para>
+     There is a strong connection between the XQuery language and XPath
+     versions 2.0 and later: any expression that is syntactically valid and
+     executes successfully in both produces the same result (with a minor
+     exception for expressions containing numeric character references or
+     predefined entity references, which XQuery replaces with the
+     corresponding character while XPath leaves them alone).  But there is
+     no such connection between these languages and XPath 1.0; it was an
+     earlier language and differs in many respects.
+    </para>
+
+    <para>
+     There are two categories of limitation to keep in mind: the restriction
+     from XQuery to XPath for the functions specified in the SQL standard, and
+     the restriction of XPath to version 1.0 for both the standard and the
+     <productname>PostgreSQL</productname>-specific functions.
+    </para>
+
+    <sect3>
+     <title>Restriction of XQuery to XPath</title>
+
+     <para>
+      Features of XQuery beyond those of XPath include:
+
+      <itemizedlist>
+       <listitem>
+        <para>
+         XQuery expressions can construct and return new XML nodes, in
+         addition to all possible XPath values.  XPath can create and return
+         values of the atomic types (numbers, strings, and so on) but can
+         only return XML nodes that were already present in documents
+         supplied as input to the expression.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         XQuery has control constructs for iteration, sorting, and grouping.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         XQuery allows declaration and use of local functions.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+
+     <para>
+      Recent XPath versions begin to offer capabilities overlapping with
+      these (such as functional-style <function>for-each</function> and
+      <function>sort</function>, anonymous functions, and
+      <function>parse-xml</function> to create a node from a string),
+      but such features were not available before XPath 3.0.
+     </para>
+    </sect3>
+
+    <sect3 id="xml-xpath-1-specifics">
+     <title>Restriction of XPath to 1.0</title>
+
+     <para>
+      For developers familiar with XQuery and XPath 2.0 or later, XPath 1.0
+      presents a number of differences to contend with:
+
+      <itemizedlist>
+       <listitem>
+        <para>
+         The fundamental type of an XQuery/XPath expression, the
+         <type>sequence</type>, which can contain XML nodes, atomic values,
+         or both, does not exist in XPath 1.0. A 1.0 expression can only
+         produce a node-set (containing zero or more XML nodes), or a single
+         atomic value.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+          Unlike an XQuery/XPath sequence, which can contain any desired
+          items in any desired order, an XPath 1.0 node-set has no
+          guaranteed order and, like any set, does not allow multiple
+          appearances of the same item.
+         <note>
+          <para>
+           The <application>libxml2</application> library does seem to
+           always return node-sets to <productname>PostgreSQL</productname>
+           with their members in the same relative order they had in the
+           input document.  Its documentation does not commit to this
+           behavior, and an XPath 1.0 expression cannot control it.
+          </para>
+         </note>
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         While XQuery/XPath provides all of the types defined in XML Schema
+         and many operators and functions over those types, XPath 1.0 has only
+         node-sets and the three atomic types <type>boolean</type>,
+         <type>double</type>, and <type>string</type>.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         XPath 1.0 has no conditional operator. An XQuery/XPath expression
+         such as <literal>if ( hat ) then hat/@size else "no hat"</literal>
+         has no XPath 1.0 equivalent.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         XPath 1.0 has no ordering comparison operator for strings. Both
+         <literal>"cat" &lt; "dog"</literal> and
+         <literal>"cat" &gt; "dog"</literal> are false, because each is a
+         numeric comparison of two <literal>NaN</literal>s. In contrast,
+         <literal>=</literal> and <literal>!=</literal> do compare the strings
+         as strings.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         XPath 1.0 blurs the distinction between
+         <firstterm>value comparisons</firstterm> and
+         <firstterm>general comparisons</firstterm> as XQuery/XPath define
+         them.  Both <literal>sale/@hatsize = 7</literal> and
+         <literal>sale/@customer = "alice"</literal> are existentially
+         quantified comparisons, true if there is
+         any <literal>sale</literal> with the given value for the
+         attribute, but <literal>sale/@taxable = false()</literal> is a
+         value comparison to the
+         <firstterm>effective boolean value</firstterm> of a whole node-set.
+         It is true only if no <literal>sale</literal> has
+         a <literal>taxable</literal> attribute at all.
+        </para>
+       </listitem>
+
+       <listitem>
+        <para>
+         In the XQuery/XPath data model, a <firstterm>document
+         node</firstterm> can have either document form (i.e., exactly one
+         top-level element, with only comments and processing instructions
+         outside of it) or content form (with those constraints
+         relaxed). Its equivalent in XPath 1.0, the
+         <firstterm>root node</firstterm>, can only be in document form.
+         This is part of the reason an <type>xml</type> value passed as the
+         context item to any <productname>PostgreSQL</productname>
+         XPath-based function must be in document form.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+
+     <para>
+      The differences highlighted here are not all of them. In XQuery and
+      the 2.0 and later versions of XPath, there is an XPath 1.0 compatibility
+      mode, and the W3C lists of
+      <ulink url='https://www.w3.org/TR/2010/REC-xpath-functions-20101214/#xpath1-compatibility'>function library changes</ulink>
+      and
+      <ulink url='https://www.w3.org/TR/xpath20/#id-backwards-compatibility'>language changes</ulink>
+      applied in that mode offer a more complete (but still not exhaustive)
+      account of the differences.  The compatibility mode cannot make the
+      later languages exactly equivalent to XPath 1.0.
+     </para>
+    </sect3>
+
+    <sect3 id="functions-xml-limits-casts">
+     <title>Mappings between SQL and XML data types and values</title>
+
+     <para>
+      In SQL:2006 and later, both directions of conversion between standard SQL
+      data types and the XML Schema types are specified precisely. However, the
+      rules are expressed using the types and semantics of XQuery/XPath, and
+      have no direct application to the different data model of XPath 1.0.
+     </para>
+
+     <para>
+      When <productname>PostgreSQL</productname> maps SQL data values to XML
+      (as in <function>xmlelement</function>), or XML to SQL (as in the output
+      columns of <function>xmltable</function>), except for a few cases
+      treated specially, <productname>PostgreSQL</productname> simply assumes
+      that the XML data type's XPath 1.0 string form will be valid as the
+      text-input form of the SQL datatype, and conversely. This rule has the
+      virtue of simplicity while producing, for many data types, results similar
+      to the mappings specified in the standard. In this release,
+      an explicit cast is needed if an <function>xmltable</function> column
+      expression produces a boolean or double value; see
+      <xref linkend="functions-xml-limits-postgresql"/>.
+     </para>
+
+     <para>
+      Where interoperability with other systems is a concern, for some data
+      types, it may be necessary to use data type formatting functions (such
+      as those in <xref linkend="functions-formatting"/>) explicitly to
+      produce the standard mappings.
+     </para>
+    </sect3>
+   </sect2>
+
+   <sect2 id="functions-xml-limits-postgresql">
+    <title>
+     Incidental limits of the implementation
+    </title>
+
+    <para>
+     This section concerns limits that are not inherent in the
+     <application>libxml2</application> library, but apply to the current
+     implementation in <productname>PostgreSQL</productname>.
+    </para>
+
+    <sect3>
+     <title>
+      Cast needed for <function>xmltable</function> column
+      of boolean or double type
+     </title>
+
+     <para>
+      An <function>xmltable</function> column expression evaluating to an XPath
+      boolean or number result will produce an <quote>unexpected XPath object
+      type</quote> error. The workaround is to rewrite the column expression to
+      be inside the XPath <function>string</function> function;
+      <productname>PostgreSQL</productname> will then assign the string value
+      successfully to an SQL output column of boolean or double type.
+     </para>
+    </sect3>
+
+    <sect3>
+     <title>
+      Column path result or SQL result column of XML type
+     </title>
+
+     <para>
+      In this release, a <function>xmltable</function> column expression
+      that evaluates to an XML node-set can be assigned to an SQL result
+      column of XML type, producing a concatenation of: for most types of
+      node in the node-set, a text node containing the XPath 1.0
+      <firstterm>string-value</firstterm> of the node, but for an element node,
+      a copy of the node itself. Such a node-set may be assigned to an SQL
+      column of non-XML type only if the node-set has a single node, with the
+      string-value of most node types replaced with an empty string, the
+      string-value of an element node replaced with a concatenation of only its
+      direct text-node children (excluding those of descendants), and the
+      string-value of a text or attribute node being as defined in XPath 1.0.
+      An XPath string value assigned to a result column of XML type must be
+      parsable as XML.
+     </para>
+
+     <para>
+      It is best not to develop code that relies on these behaviors, which have
+      little resemblance to the spec, and are changed in
+      <productname>PostgreSQL 12</productname>.
+     </para>
+    </sect3>
+
+    <sect3>
+     <title>Only <literal>BY VALUE</literal> passing mechanism is supported</title>
+
+     <para>
+      The SQL standard defines two <firstterm>passing mechanisms</firstterm>
+      that apply when passing an XML argument from SQL to an XML function or
+      receiving a result: <literal>BY REF</literal>, in which a particular XML
+      value retains its node identity, and <literal>BY VALUE</literal>, in which
+      the content of the XML is passed but node identity is not preserved. A
+      mechanism can be specified before a list of parameters, as the default
+      mechanism for all of them, or after any parameter, to override the
+      default.
+     </para>
+
+     <para>
+      To illustrate the difference, if
+      <replaceable>x</replaceable> is an XML value, these two queries in
+      an SQL:2006 environment would produce true and false, respectively:
+
+<programlisting>
+SELECT XMLQUERY('$a is $b' PASSING BY REF <replaceable>x</replaceable> AS a, <replaceable>x</replaceable> AS b NULL ON EMPTY);
+SELECT XMLQUERY('$a is $b' PASSING BY VALUE <replaceable>x</replaceable> AS a, <replaceable>x</replaceable> AS b NULL ON EMPTY);
+</programlisting>
+     </para>
+
+     <para>
+      In this release, <productname>PostgreSQL</productname> will accept
+      <literal>BY REF</literal> in an
+      <function>XMLEXISTS</function> or <function>XMLTABLE</function>
+      construct, but will ignore it.  The <type>xml</type> data type holds
+      a character-string serialized representation, so there is no node
+      identity to preserve, and passing is always effectively <literal>BY
+      VALUE</literal>.
+     </para>
+    </sect3>
+
+    <sect3>
+     <title>Cannot pass named parameters to queries</title>
+
+     <para>
+      The XPath-based functions support passing one parameter to serve as the
+      XPath expression's context item, but do not support passing additional
+      values to be available to the expression as named parameters.
+     </para>
+    </sect3>
+
+    <sect3>
+     <title>No <type>XML(SEQUENCE)</type> type</title>
+
+     <para>
+      The <productname>PostgreSQL</productname> <type>xml</type> data type
+      can only hold a value in <literal>DOCUMENT</literal>
+      or <literal>CONTENT</literal> form.  An XQuery/XPath expression
+      context item must be a single XML node or atomic value, but XPath 1.0
+      further restricts it to be only an XML node, and has no node type
+      allowing <literal>CONTENT</literal>.  The upshot is that a
+      well-formed <literal>DOCUMENT</literal> is the only form of XML value
+      that <productname>PostgreSQL</productname> can supply as an XPath
+      context item.
+     </para>
+    </sect3>
+   </sect2>
   </sect1>
 
  </appendix>

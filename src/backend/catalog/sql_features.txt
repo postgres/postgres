@@ -593,7 +593,7 @@ X085	Predefined namespace prefixes			NO
 X086	XML namespace declarations in XMLTable			NO	
 X090	XML document predicate			YES	
 X091	XML content predicate			NO	
-X096	XMLExists			NO	XPath only
+X096	XMLExists			NO	XPath 1.0 only
 X100	Host language support for XML: CONTENT option			NO	
 X101	Host language support for XML: DOCUMENT option			NO	
 X110	Host language support for XML: VARCHAR mapping			NO	
@@ -661,11 +661,11 @@ X282	XMLValidate with CONTENT option			NO
 X283	XMLValidate with SEQUENCE option			NO	
 X284	XMLValidate: NAMESPACE without ELEMENT clause			NO	
 X286	XMLValidate: NO NAMESPACE with ELEMENT clause			NO	
-X300	XMLTable			NO	XPath only
+X300	XMLTable			NO	XPath 1.0 only
 X301	XMLTable: derived column list option			YES	
 X302	XMLTable: ordinality column option			YES	
 X303	XMLTable: column default option			YES	
-X304	XMLTable: passing a context item			YES	
+X304	XMLTable: passing a context item			YES	must be XML DOCUMENT
 X305	XMLTable: initializing an XQuery variable			NO	
 X400	Name and identifier mapping			YES	
 X410	Alter column data type: XML type			YES	
