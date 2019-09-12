@@ -9903,17 +9903,26 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
 
  <sect1 id="functions-xml">
+
   <title>XML Functions</title>
+
+  <indexterm>
+   <primary>XML Functions</primary>
+  </indexterm>
 
   <para>
    The functions and function-like expressions described in this
-   section operate on values of type <type>xml</type>.  Check <xref
+   section operate on values of type <type>xml</type>.  See <xref
    linkend="datatype-xml"> for information about the <type>xml</type>
    type.  The function-like expressions <function>xmlparse</function>
    and <function>xmlserialize</function> for converting to and from
-   type <type>xml</type> are not repeated here.  Use of most of these
-   functions requires the installation to have been built
-   with <command>configure --with-libxml</>.
+   type <type>xml</type> are documented there, not in this section.
+  </para>
+
+  <para>
+   Use of most of these functions
+   requires <productname>PostgreSQL</productname> to have been built
+   with <command>configure --with-libxml</command>.
   </para>
 
   <sect2 id="functions-producing-xml">
@@ -10107,8 +10116,8 @@ SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
      encoding, depending on the setting of the configuration parameter
      <xref linkend="guc-xmlbinary">.  The particular behavior for
      individual data types is expected to evolve in order to align the
-     SQL and PostgreSQL data types with the XML Schema specification,
-     at which point a more precise description will appear.
+     PostgreSQL mappings with those specified in SQL:2006 and later,
+     as discussed in <xref linkend="functions-xml-limits-casts">.
     </para>
    </sect3>
 
@@ -10350,10 +10359,13 @@ SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
 </synopsis>
 
     <para>
-     The function <function>xmlexists</function> returns true if the
-     XPath expression in the first argument returns any nodes, and
-     false otherwise.  (If either argument is null, the result is
-     null.)
+     The function <function>xmlexists</function> evaluates an XPath 1.0
+     expression (the first argument), with the passed XML value as its context
+     item.  The function returns false if the result of that evaluation
+     yields an empty node-set, true if it yields any other value.  The
+     function returns null if any argument is null.  A nonnull value
+     passed as the context item must be an XML document, not a content
+     fragment or any non-XML value.
     </para>
 
     <para>
@@ -10369,14 +10381,14 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '<towns><town>Tor
     </para>
 
     <para>
-     The <literal>BY REF</literal> clauses have no effect in
-     PostgreSQL, but are allowed for SQL conformance and compatibility
-     with other implementations.  Per SQL standard, the
-     first <literal>BY REF</literal> is required, the second is
-     optional.  Also note that the SQL standard specifies
-     the <function>xmlexists</function> construct to take an XQuery
-     expression as first argument, but PostgreSQL currently only
-     supports XPath, which is a subset of XQuery.
+     The <literal>BY REF</literal> clauses
+     are accepted in <productname>PostgreSQL</productname>, but are ignored,
+     as discussed in <xref linkend="functions-xml-limits-postgresql">.
+     In the SQL standard, the <function>xmlexists</function> function
+     evaluates an expression in the XML Query language,
+     but <productname>PostgreSQL</productname> allows only an XPath 1.0
+     expression, as discussed in
+     <xref linkend="functions-xml-limits-xpath1">.
     </para>
    </sect3>
 
@@ -10482,12 +10494,12 @@ SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuf
 </synopsis>
 
     <para>
-     The function <function>xpath</function> evaluates the XPath
-     expression <replaceable>xpath</replaceable> (a <type>text</> value)
+     The function <function>xpath</function> evaluates the XPath 1.0
+     expression <replaceable>xpath</replaceable> (a <type>text</type> value)
      against the XML value
      <replaceable>xml</replaceable>.  It returns an array of XML values
-     corresponding to the node set produced by the XPath expression.
-     If the XPath expression returns a scalar value rather than a node set,
+     corresponding to the node-set produced by the XPath expression.
+     If the XPath expression returns a scalar value rather than a node-set,
      a single-element array is returned.
     </para>
 
@@ -10549,9 +10561,10 @@ SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a
     <para>
      The function <function>xpath_exists</function> is a specialized form
      of the <function>xpath</function> function.  Instead of returning the
-     individual XML values that satisfy the XPath, this function returns a
-     Boolean indicating whether the query was satisfied or not.  This
-     function is equivalent to the standard <literal>XMLEXISTS</> predicate,
+     individual XML values that satisfy the XPath 1.0 expression, this function
+     returns a Boolean indicating whether the query was satisfied or not
+     (specifically, whether it produced any value other than an empty node-set).
+     This function is equivalent to the <literal>XMLEXISTS</literal> predicate,
      except that it also offers support for a namespace mapping argument.
     </para>
 
@@ -10592,8 +10605,8 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
 
     <para>
      The <function>xmltable</function> function produces a table based
-     on the given XML value, an XPath filter to extract rows, and an
-     optional set of column definitions.
+     on the given XML value, an XPath filter to extract rows, and a
+     set of column definitions.
     </para>
 
     <para>
@@ -10604,30 +10617,34 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
     </para>
 
     <para>
-     The required <replaceable>row_expression</> argument is an XPath
-     expression that is evaluated against the supplied XML document to
-     obtain an ordered sequence of XML nodes. This sequence is what
-     <function>xmltable</> transforms into output rows.
+     The required <replaceable>row_expression</replaceable> argument is
+     an XPath 1.0 expression that is evaluated, passing the
+     <replaceable>document_expression</replaceable> as its context item, to
+     obtain a set of XML nodes. These nodes are what
+     <function>xmltable</function> transforms into output rows. No rows
+     will be produced if the <replaceable>document_expression</replaceable>
+     is null, nor if the <replaceable>row_expression</replaceable> produces
+     an empty node-set or any value other than a node-set.
     </para>
 
     <para>
-     <replaceable>document_expression</> provides the XML document to
-     operate on.
-     The <literal>BY REF</literal> clauses have no effect in PostgreSQL,
-     but are allowed for SQL conformance and compatibility with other
-     implementations.
-     The argument must be a well-formed XML document; fragments/forests
-     are not accepted.
+     <replaceable>document_expression</replaceable> provides the context
+     item for the <replaceable>row_expression</replaceable>. It must be a
+     well-formed XML document; fragments/forests are not accepted.
+     The <literal>BY REF</literal> clause
+     is accepted but ignored, as discussed in
+     <xref linkend="functions-xml-limits-postgresql">.
+     In the SQL standard, the <function>xmltable</function> function
+     evaluates expressions in the XML Query language,
+     but <productname>PostgreSQL</productname> allows only XPath 1.0
+     expressions, as discussed in
+     <xref linkend="functions-xml-limits-xpath1">.
     </para>
 
     <para>
      The mandatory <literal>COLUMNS</literal> clause specifies the list
      of columns in the output table.
-     If the <literal>COLUMNS</> clause is omitted, the rows in the result
-     set contain a single column of type <literal>xml</> containing the
-     data matched by <replaceable>row_expression</>.
-     If <literal>COLUMNS</literal> is specified, each entry describes a
-     single column.
+     Each entry describes a single column.
      See the syntax summary above for the format.
      The column name and type are required; the path, default and
      nullability clauses are optional.
@@ -10635,48 +10652,57 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
 
     <para>
      A column marked <literal>FOR ORDINALITY</literal> will be populated
-     with row numbers matching the order in which the
-     output rows appeared in the original input XML document.
+     with row numbers, starting with 1, in the order of nodes retrieved from
+     the <replaceable>row_expression</replaceable>'s result node-set.
      At most one column may be marked <literal>FOR ORDINALITY</literal>.
     </para>
 
+    <note>
+     <para>
+      XPath 1.0 does not specify an order for nodes in a node-set, so code
+      that relies on a particular order of the results will be
+      implementation-dependent.  Details can be found in
+      <xref linkend="xml-xpath-1-specifics">.
+     </para>
+    </note>
+
     <para>
-     The <literal>column_expression</> for a column is an XPath expression
-     that is evaluated for each row, relative to the result of the
-     <replaceable>row_expression</>, to find the value of the column.
-     If no <literal>column_expression</> is given, then the column name
-     is used as an implicit path.
+     The <replaceable>column_expression</replaceable> for a column is an
+     XPath 1.0 expression that is evaluated for each row, with the current
+     node from the <replaceable>row_expression</replaceable> result as its
+     context item, to find the value of the column.  If
+     no <replaceable>column_expression</replaceable> is given, then the
+     column name is used as an implicit path.
     </para>
 
     <para>
-     If a column's XPath expression returns multiple elements, an error
-     is raised.
-     If the expression matches an empty tag, the result is an
-     empty string (not <literal>NULL</>).
-     Any <literal>xsi:nil</> attributes are ignored.
+     If a column's XPath expression returns a non-XML value (limited to
+     string, boolean, or double in XPath 1.0) and the column has a
+     PostgreSQL type other than <type>xml</type>, the column will be set
+     as if by assigning the value's string representation to the PostgreSQL
+     type. In this release, an XPath boolean or double result must be explicitly
+     cast to string (that is, the XPath 1.0 <function>string</function> function
+     wrapped around the original column expression);
+     <productname>PostgreSQL</productname> can then successfully assign the
+     string to an SQL result column of boolean or double type.
+     These conversion rules differ from those of the SQL
+     standard, as discussed in <xref linkend="functions-xml-limits-casts">.
     </para>
 
     <para>
-     The text body of the XML matched by the <replaceable>column_expression</>
-     is used as the column value. Multiple <literal>text()</literal> nodes
-     within an element are concatenated in order. Any child elements,
-     processing instructions, and comments are ignored, but the text contents
-     of child elements are concatenated to the result.
-     Note that the whitespace-only <literal>text()</> node between two non-text
-     elements is preserved, and that leading whitespace on a <literal>text()</>
-     node is not flattened.
+     In this release, SQL result columns of <type>xml</type> type, or
+     column XPath expressions evaluating to an XML type, regardless of the
+     output column SQL type, are handled as described in
+     <xref linkend="functions-xml-limits-postgresql">; the behavior
+     changes significantly in <productname>PostgreSQL 12</productname>.
     </para>
 
     <para>
-     If the path expression does not match for a given row but
-     <replaceable>default_expression</> is specified, the value resulting
-     from evaluating that expression is used.
-     If no <literal>DEFAULT</> clause is given for the column,
-     the field will be set to <literal>NULL</>.
-     It is possible for a <replaceable>default_expression</> to reference
-     the value of output columns that appear prior to it in the column list,
-     so the default of one column may be based on the value of another
-     column.
+     If the path expression returns an empty node-set
+     (typically, when it does not match)
+     for a given row, the column will be set to <literal>NULL</literal>, unless
+     a <replaceable>default_expression</replaceable> is specified; then the
+     value resulting from evaluating that expression is used.
     </para>
 
     <para>
@@ -10688,20 +10714,14 @@ SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</m
     </para>
 
     <para>
-     Unlike regular PostgreSQL functions, <replaceable>column_expression</>
-     and <replaceable>default_expression</> are not evaluated to a simple
-     value before calling the function.
-     <replaceable>column_expression</> is normally evaluated
-     exactly once per input row, and <replaceable>default_expression</>
-     is evaluated each time a default is needed for a field.
-     If the expression qualifies as stable or immutable the repeat
+     A <replaceable>default_expression</replaceable>, rather than being
+     evaluated immediately when <function>xmltable</function> is called,
+     is evaluated each time a default is needed for the column.
+     If the expression qualifies as stable or immutable, the repeat
      evaluation may be skipped.
-     Effectively <function>xmltable</> behaves more like a subquery than a
-     function call.
      This means that you can usefully use volatile functions like
-     <function>nextval</> in <replaceable>default_expression</>, and
-     <replaceable>column_expression</> may depend on other parts of the
-     XML document.
+     <function>nextval</function> in
+     <replaceable>default_expression</replaceable>.
     </para>
 
     <para>

@@ -4228,6 +4228,11 @@ a0ee-bc99-9c0b-4ef8-bb6d-6bb9-bd38-0a11
     value is a full document or only a content fragment.
    </para>
 
+   <para>
+    Limits and compatibility notes for the <type>xml</type> data type
+    can be found in <xref linkend="xml-limits-conformance">.
+   </para>
+
    <sect2>
     <title>Creating XML Values</title>
    <para>
