@@ -3959,6 +3959,40 @@ DROP OPERATOR <<< (int, int);
 DROP FUNCTION op_leak(int, int);
 RESET SESSION AUTHORIZATION;
 DROP TABLE rls_tbl;
+-- Bug #16006: whole-row Vars in a policy don't play nice with sub-selects
+SET SESSION AUTHORIZATION regress_rls_alice;
+CREATE TABLE rls_tbl (a int, b int, c int);
+CREATE POLICY p1 ON rls_tbl USING (rls_tbl >= ROW(1,1,1));
+ALTER TABLE rls_tbl ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rls_tbl FORCE ROW LEVEL SECURITY;
+INSERT INTO rls_tbl SELECT 10, 20, 30;
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO rls_tbl
+  SELECT * FROM (SELECT b, c FROM rls_tbl ORDER BY a) ss;
+                             QUERY PLAN                             
+--------------------------------------------------------------------
+ Insert on regress_rls_schema.rls_tbl
+   ->  Subquery Scan on ss
+         Output: ss.b, ss.c, NULL::integer
+         ->  Sort
+               Output: rls_tbl_1.b, rls_tbl_1.c, rls_tbl_1.a
+               Sort Key: rls_tbl_1.a
+               ->  Seq Scan on regress_rls_schema.rls_tbl rls_tbl_1
+                     Output: rls_tbl_1.b, rls_tbl_1.c, rls_tbl_1.a
+                     Filter: (rls_tbl_1.* >= '(1,1,1)'::record)
+(9 rows)
+
+INSERT INTO rls_tbl
+  SELECT * FROM (SELECT b, c FROM rls_tbl ORDER BY a) ss;
+SELECT * FROM rls_tbl;
+ a  | b  | c  
+----+----+----
+ 10 | 20 | 30
+ 20 | 30 |   
+(2 rows)
+
+DROP TABLE rls_tbl;
+RESET SESSION AUTHORIZATION;
 --
 -- Clean up objects
 --

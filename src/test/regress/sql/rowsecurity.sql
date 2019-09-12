@@ -1813,6 +1813,25 @@ DROP FUNCTION op_leak(int, int);
 RESET SESSION AUTHORIZATION;
 DROP TABLE rls_tbl;
 
+-- Bug #16006: whole-row Vars in a policy don't play nice with sub-selects
+SET SESSION AUTHORIZATION regress_rls_alice;
+CREATE TABLE rls_tbl (a int, b int, c int);
+CREATE POLICY p1 ON rls_tbl USING (rls_tbl >= ROW(1,1,1));
+
+ALTER TABLE rls_tbl ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rls_tbl FORCE ROW LEVEL SECURITY;
+
+INSERT INTO rls_tbl SELECT 10, 20, 30;
+EXPLAIN (VERBOSE, COSTS OFF)
+INSERT INTO rls_tbl
+  SELECT * FROM (SELECT b, c FROM rls_tbl ORDER BY a) ss;
+INSERT INTO rls_tbl
+  SELECT * FROM (SELECT b, c FROM rls_tbl ORDER BY a) ss;
+SELECT * FROM rls_tbl;
+
+DROP TABLE rls_tbl;
+RESET SESSION AUTHORIZATION;
+
 --
 -- Clean up objects
 --

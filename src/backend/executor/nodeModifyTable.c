@@ -2375,7 +2375,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		{
 			WithCheckOption *wco = (WithCheckOption *) lfirst(ll);
 			ExprState  *wcoExpr = ExecInitQual((List *) wco->qual,
-											   mtstate->mt_plans[i]);
+											   &mtstate->ps);
 
 			wcoExprs = lappend(wcoExprs, wcoExpr);
 		}
