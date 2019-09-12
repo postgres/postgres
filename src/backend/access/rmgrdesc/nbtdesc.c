@@ -40,8 +40,8 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-				appendStringInfo(buf, "level %u, firstright %d",
-								 xlrec->level, xlrec->firstright);
+				appendStringInfo(buf, "level %u, firstright %d, newitemoff %d",
+								 xlrec->level, xlrec->firstright, xlrec->newitemoff);
 				break;
 			}
 		case XLOG_BTREE_VACUUM:
