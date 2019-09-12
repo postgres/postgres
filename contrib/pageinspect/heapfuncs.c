@@ -33,6 +33,7 @@
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
@@ -493,4 +494,112 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		pfree(t_bits);
 
 	PG_RETURN_ARRAYTYPE_P(res);
+}
+
+/*
+ * heap_tuple_infomask_flags
+ *
+ * Decode into a human-readable format t_infomask and t_infomask2 associated
+ * to a tuple.  All the flags are described in access/htup_details.h.
+ */
+PG_FUNCTION_INFO_V1(heap_tuple_infomask_flags);
+
+Datum
+heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
+{
+	uint16		t_infomask = PG_GETARG_INT16(0);
+	uint16		t_infomask2 = PG_GETARG_INT16(1);
+	bool		decode_combined = PG_GETARG_BOOL(2);
+	int			cnt = 0;
+	ArrayType  *a;
+	int			bitcnt;
+	Datum	   *d;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to use raw page functions")));
+
+	bitcnt = pg_popcount((const char *) &t_infomask, sizeof(uint16)) +
+		pg_popcount((const char *) &t_infomask2, sizeof(uint16));
+
+	/* If no flags, return an empty array */
+	if (bitcnt <= 0)
+		PG_RETURN_POINTER(construct_empty_array(TEXTOID));
+
+	d = (Datum *) palloc0(sizeof(Datum) * bitcnt);
+
+	/* decode t_infomask */
+	if ((t_infomask & HEAP_HASNULL) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_HASNULL");
+	if ((t_infomask & HEAP_HASVARWIDTH) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_HASVARWIDTH");
+	if ((t_infomask & HEAP_HASEXTERNAL) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_HASEXTERNAL");
+	if ((t_infomask & HEAP_HASOID_OLD) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_HASOID_OLD");
+	if ((t_infomask & HEAP_COMBOCID) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_COMBOCID");
+	if ((t_infomask & HEAP_XMAX_COMMITTED) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_XMAX_COMMITTED");
+	if ((t_infomask & HEAP_XMAX_INVALID) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_XMAX_INVALID");
+	if ((t_infomask & HEAP_UPDATED) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_UPDATED");
+
+	/* decode combined masks of t_infomaks */
+	if (decode_combined && (t_infomask & HEAP_XMAX_SHR_LOCK) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_XMAX_SHR_LOCK");
+	else
+	{
+		if ((t_infomask & HEAP_XMAX_EXCL_LOCK) != 0)
+			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_EXCL_LOCK");
+		if ((t_infomask & HEAP_XMAX_KEYSHR_LOCK) != 0)
+			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_KEYSHR_LOCK");
+	}
+
+	if (decode_combined && (t_infomask & HEAP_XMIN_FROZEN) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_XMIN_FROZEN");
+	else
+	{
+		if ((t_infomask & HEAP_XMIN_COMMITTED) != 0)
+			d[cnt++] = CStringGetTextDatum("HEAP_XMIN_COMMITTED");
+		if ((t_infomask & HEAP_XMIN_INVALID) != 0)
+			d[cnt++] = CStringGetTextDatum("HEAP_XMIN_INVALID");
+	}
+
+	if (decode_combined && (t_infomask & HEAP_MOVED) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_MOVED");
+	else
+	{
+		if ((t_infomask & HEAP_MOVED_IN) != 0)
+			d[cnt++] = CStringGetTextDatum("HEAP_MOVED_IN");
+		if ((t_infomask & HEAP_MOVED_OFF) != 0)
+			d[cnt++] = CStringGetTextDatum("HEAP_MOVED_OFF");
+	}
+
+	if (decode_combined && HEAP_LOCKED_UPGRADED(t_infomask))
+		d[cnt++] = CStringGetTextDatum("HEAP_LOCKED_UPGRADED");
+	else
+	{
+		if (HEAP_XMAX_IS_LOCKED_ONLY(t_infomask))
+			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_LOCK_ONLY");
+		if ((t_infomask & HEAP_XMAX_IS_MULTI) != 0)
+			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_IS_MULTI");
+	}
+
+	/* decode t_infomask2 */
+	if ((t_infomask2 & HEAP_KEYS_UPDATED) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_KEYS_UPDATED");
+	if ((t_infomask2 & HEAP_HOT_UPDATED) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_HOT_UPDATED");
+	if ((t_infomask2 & HEAP_ONLY_TUPLE) != 0)
+		d[cnt++] = CStringGetTextDatum("HEAP_ONLY_TUPLE");
+
+	Assert(cnt <= bitcnt);
+	a = construct_array(d, cnt, TEXTOID, -1, false, 'i');
+
+	pfree(d);
+
+	PG_RETURN_POINTER(a);
 }

@@ -184,6 +184,11 @@ test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
       <filename>src/include/access/htup_details.h</filename> for explanations of the fields
       returned.
      </para>
+     <para>
+      The <function>heap_tuple_infomask_flags</function> function can be
+      used to unpack the flag bits of <structfield>t_infomask</structfield>
+      and <structfield>t_infomask2</structfield> for heap tuples.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -233,6 +238,42 @@ test=# SELECT tuple_data_split('pg_class'::regclass, t_data, t_infomask, t_infom
 <screen>
 test=# SELECT * FROM heap_page_item_attrs(get_raw_page('pg_class', 0), 'pg_class'::regclass);
 </screen>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>heap_tuple_infomask_flags(t_infomask integer, t_infomask2 integer, decode_combined bool) returns text[]</function>
+     <indexterm>
+      <primary>heap_tuple_infomask_flags</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <function>heap_tuple_infomask_flags</function> decodes the
+      <structfield>t_infomask</structfield> and
+      <structfield>t_infomask2</structfield> returned by
+      <function>heap_page_items</function> into a human-readable
+      array of flag names.  For example:
+<screen>
+test=# SELECT t_ctid, heap_tuple_infomask_flags(t_infomask, t_infomask2) AS flags
+         FROM heap_page_items(get_raw_page('pg_class', 0))
+         WHERE t_infomask IS NOT NULL OR t_infomask2 IS NOT NULL;
+</screen>
+      This function should be called with the same arguments as the return
+      attributes of <function>heap_page_items</function>.
+     </para>
+     <para>
+      If <parameter>decode_combined</parameter> is <literal>true</literal>,
+      combined flags like <literal>HEAP_XMIN_FROZEN</literal> are
+      returned instead of raw flags (<literal>HEAP_XMIN_COMMITTED</literal>
+      and <literal>HEAP_XMIN_INVALID</literal> in this case). Default value
+      is <literal>false</literal>.
+     </para>
+     <para>
+      See <filename>src/include/access/htup_details.h</filename> for
+      explanations of the flag names returned.
      </para>
     </listitem>
    </varlistentry>

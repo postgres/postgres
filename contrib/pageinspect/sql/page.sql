@@ -31,6 +31,48 @@ SELECT tuple_data_split('test1'::regclass, t_data, t_infomask, t_infomask2, t_bi
 
 SELECT * FROM fsm_page_contents(get_raw_page('test1', 'fsm', 0));
 
+-- If we freeze the only tuple on test1, the infomask should
+-- always be the same in all test runs. we show raw flags by
+-- default: HEAP_XMIN_COMMITTED and HEAP_XMIN_INVALID.
+VACUUM FREEZE test1;
+
+SELECT t_infomask, t_infomask2, flags
+FROM heap_page_items(get_raw_page('test1', 0)),
+     LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2) m(flags);
+
+-- output the decoded flag HEAP_XMIN_FROZEN instead
+SELECT t_infomask, t_infomask2, flags
+FROM heap_page_items(get_raw_page('test1', 0)),
+     LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2, true) m(flags);
+
+-- tests for decoding of combined flags
+-- HEAP_XMAX_SHR_LOCK = (HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_KEYSHR_LOCK)
+SELECT heap_tuple_infomask_flags(x'0050'::int, 0, true);
+SELECT heap_tuple_infomask_flags(x'0050'::int, 0, false);
+-- HEAP_XMIN_FROZEN = (HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID)
+SELECT heap_tuple_infomask_flags(x'0300'::int, 0, true);
+SELECT heap_tuple_infomask_flags(x'0300'::int, 0, false);
+-- HEAP_MOVED = (HEAP_MOVED_IN | HEAP_MOVED_OFF)
+SELECT heap_tuple_infomask_flags(x'C000'::int, 0, true);
+SELECT heap_tuple_infomask_flags(x'C000'::int, 0, false);
+-- HEAP_LOCKED_UPGRADED = (HEAP_XMAX_IS_MULTI | HEAP_XMAX_LOCK_ONLY)
+SELECT heap_tuple_infomask_flags(x'1080'::int, 0, true);
+SELECT heap_tuple_infomask_flags(x'1080'::int, 0, false);
+
+-- test all flags of t_infomask and t_infomask2
+SELECT unnest(heap_tuple_infomask_flags(x'FFFF'::int, x'FFFF'::int, false))
+  AS flags ORDER BY 1;
+SELECT unnest(heap_tuple_infomask_flags(x'FFFF'::int, x'FFFF'::int, true))
+  AS flags ORDER BY 1;
+SELECT unnest(heap_tuple_infomask_flags(-1, -1, false))
+  AS flags ORDER BY 1;
+SELECT unnest(heap_tuple_infomask_flags(-1, -1, true))
+  AS flags ORDER BY 1;
+
+-- no flags
+SELECT unnest(heap_tuple_infomask_flags(0, 0, false));
+SELECT unnest(heap_tuple_infomask_flags(0, 0, true));
+
 DROP TABLE test1;
 
 -- check that using any of these functions with a partitioned table or index
