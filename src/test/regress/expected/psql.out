@@ -4275,6 +4275,17 @@ all true
 	\echo 'all false'
 all false
 \endif
+-- test true-false elif after initial true branch
+\if true
+	\echo 'should print #2-5'
+should print #2-5
+\elif true
+	\echo 'should not print #2-6'
+\elif false
+	\echo 'should not print #2-7'
+\else
+	\echo 'should not print #2-8'
+\endif
 -- test simple true-then-else
 \if true
 	\echo 'first thing true'
@@ -4348,22 +4359,60 @@ bar 'bar' "bar"
 	:try_to_quit
 	\echo `nosuchcommand` :foo :'foo' :"foo"
 	\pset fieldsep | `nosuchcommand` :foo :'foo' :"foo"
-	\a \C arg1 \c arg1 arg2 arg3 arg4 \cd arg1 \conninfo
+	\a
+	\C arg1
+	\c arg1 arg2 arg3 arg4
+	\cd arg1
+	\conninfo
 	\copy arg1 arg2 arg3 arg4 arg5 arg6
-	\copyright \dt arg1 \e arg1 arg2
+	\copyright
+	SELECT 1 as one, 2, 3 \crosstabview
+	\dt arg1
+	\e arg1 arg2
 	\ef whole_line
 	\ev whole_line
-	\echo arg1 arg2 arg3 arg4 arg5 \echo arg1 \encoding arg1 \errverbose
-	\g arg1 \gx arg1 \gexec \h \html \i arg1 \ir arg1 \l arg1 \lo arg1 arg2
-	\o arg1 \p \password arg1 \prompt arg1 arg2 \pset arg1 arg2 \q
-	\reset \s arg1 \set arg1 arg2 arg3 arg4 arg5 arg6 arg7 \setenv arg1 arg2
+	\echo arg1 arg2 arg3 arg4 arg5
+	\echo arg1
+	\encoding arg1
+	\errverbose
+	\f arg1
+	\g arg1
+	\gx arg1
+	\gexec
+	SELECT 1 AS one \gset
+	\h
+	\?
+	\html
+	\i arg1
+	\ir arg1
+	\l arg1
+	\lo arg1 arg2
+invalid command \lo
+	\lo_list
+	\o arg1
+	\p
+	\password arg1
+	\prompt arg1 arg2
+	\pset arg1 arg2
+	\q
+	\reset
+	\s arg1
+	\set arg1 arg2 arg3 arg4 arg5 arg6 arg7
+	\setenv arg1 arg2
 	\sf whole_line
 	\sv whole_line
-	\t arg1 \T arg1 \timing arg1 \unset arg1 \w arg1 \watch arg1 \x arg1
+	\t arg1
+	\T arg1
+	\timing arg1
+	\unset arg1
+	\w arg1
+	\watch arg1
+	\x arg1
 	-- \else here is eaten as part of OT_FILEPIPE argument
 	\w |/no/such/file \else
 	-- \endif here is eaten as part of whole-line argument
 	\! whole_line \endif
+	\z
 \else
 	\echo 'should print #8-1'
 should print #8-1
