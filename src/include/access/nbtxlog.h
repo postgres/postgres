@@ -82,12 +82,12 @@ typedef struct xl_btree_insert
  *
  * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
  * The _L and _R variants indicate whether the inserted tuple went into the
- * left or right split page (and thus, whether newitemoff and the new item
- * are stored or not).  The _HIGHKEY variants indicate that we've logged
- * explicitly left page high key value, otherwise redo should use right page
- * leftmost key as a left page high key.  _HIGHKEY is specified for internal
- * pages where right page leftmost key is suppressed, and for leaf pages
- * of covering indexes where high key have non-key attributes truncated.
+ * left or right split page (and thus, whether the new item is stored or not).
+ * The _HIGHKEY variants indicate that we've logged explicitly left page high
+ * key value, otherwise redo should use right page leftmost key as a left page
+ * high key.  _HIGHKEY is specified for internal pages where right page
+ * leftmost key is suppressed, and for leaf pages of covering indexes where
+ * high key have non-key attributes truncated.
  *
  * Backup Blk 0: original page / new left page
  *
@@ -109,7 +109,7 @@ typedef struct xl_btree_split
 {
 	uint32		level;			/* tree level of page being split */
 	OffsetNumber firstright;	/* first item moved to right page */
-	OffsetNumber newitemoff;	/* new item's offset (if placed on left page) */
+	OffsetNumber newitemoff;	/* new item's offset (useful for _L variant) */
 } xl_btree_split;
 
 #define SizeOfBtreeSplit	(offsetof(xl_btree_split, newitemoff) + sizeof(OffsetNumber))
