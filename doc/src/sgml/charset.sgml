@@ -887,7 +887,7 @@ CREATE COLLATION french FROM "fr-x-icu";
    </sect3>
 
    <sect3 id="collation-nondeterministic">
-    <title>Nondeterminstic Collations</title>
+    <title>Nondeterministic Collations</title>
 
     <para>
      A collation is either <firstterm>deterministic</firstterm> or
