@@ -1187,19 +1187,20 @@ tuplesort_set_bound(Tuplesortstate *state, int64 bound)
 {
 	/* Assert we're called before loading any tuples */
 	Assert(state->status == TSS_INITIAL && state->memtupcount == 0);
-
+	/* Can't set the bound twice, either */
 	Assert(!state->bounded);
+	/* Also, this shouldn't be called in a parallel worker */
 	Assert(!WORKER(state));
+
+	/* Parallel leader allows but ignores hint */
+	if (LEADER(state))
+		return;
 
 #ifdef DEBUG_BOUNDED_SORT
 	/* Honor GUC setting that disables the feature (for easy testing) */
 	if (!optimize_bounded_sort)
 		return;
 #endif
-
-	/* Parallel leader ignores hint */
-	if (LEADER(state))
-		return;
 
 	/* We want to be able to compute bound * 2, so limit the setting */
 	if (bound > (int64) (INT_MAX / 2))
