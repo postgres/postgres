@@ -490,11 +490,11 @@ SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] == "qui"';
 SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] ? (@ == "qui")';
 </programlisting>
     GIN index extracts statements of following form out of
-    <literal>jsonpath</literal>: <literal>accessors_chain = const</literal>.
+    <literal>jsonpath</literal>: <replaceable>accessors_chain</replaceable> = <replaceable>const</replaceable>.
     Accessors chain may consist of <literal>.key</literal>,
-    <literal>[*]</literal> and <literal>[index]</literal> accessors.
+    <literal>[*]</literal>, and <literal>[<replaceable>index</replaceable>]</literal> accessors.
     <literal>jsonb_ops</literal> additionally supports <literal>.*</literal>
-    and <literal>.**</literal> statements.
+    and <literal>.**</literal> accessors.
   </para>
   <para>
     Another approach to querying is to exploit containment, for example:
@@ -650,12 +650,12 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   <itemizedlist>
    <listitem>
     <para>
-     Dot <literal>.</literal> is used for member access.
+     Dot (<literal>.</literal>) is used for member access.
     </para>
    </listitem>
    <listitem>
     <para>
-     Square brackets <literal>[]</literal> are used for array access.
+     Square brackets (<literal>[]</literal>) are used for array access.
     </para>
    </listitem>
    <listitem>

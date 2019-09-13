@@ -11574,7 +11574,7 @@ table2-mapping
 
   <para>JSON query functions and operators
    pass the provided path expression to the <firstterm>path engine</firstterm>
-   for evaluation. If the expression matches the JSON data to be queried,
+   for evaluation. If the expression matches the queried JSON data,
    the corresponding SQL/JSON item is returned.
    Path expressions are written in the SQL/JSON path language
    and can also include arithmetic expressions and functions.
@@ -11634,7 +11634,7 @@ table2-mapping
 
   <para>
    If the item to retrieve is an element of an array, you have
-   to unnest this array using the [*] operator. For example,
+   to unnest this array using the <literal>[*]</literal> operator. For example,
    the following path will return location coordinates for all
    the available track segments:
 <programlisting>
@@ -11655,8 +11655,7 @@ table2-mapping
    The result of each path evaluation step can be processed
    by one or more <type>jsonpath</type> operators and methods
    listed in <xref linkend="functions-sqljson-path-operators"/>.
-   Each method must be preceded by a dot, while arithmetic and Boolean
-   operators are separated from the operands by spaces. For example,
+   Each method name must be preceded by a dot. For example,
    you can get an array size:
 <programlisting>
 '$.track.segments.size()'
@@ -11937,7 +11936,7 @@ table2-mapping
        </row>
        <row>
         <entry><literal>double()</literal></entry>
-        <entry>Approximate numeric value converted from a string</entry>
+        <entry>Approximate floating-point number converted from an SQL/JSON number or a string</entry>
         <entry><literal>{"len": "1.9"}</literal></entry>
         <entry><literal>$.len.double() * 2</literal></entry>
         <entry><literal>3.8</literal></entry>
@@ -11966,10 +11965,10 @@ table2-mapping
        <row>
         <entry><literal>keyvalue()</literal></entry>
         <entry>
-          Sequence of object's key-value pairs represented as array of objects
+          Sequence of object's key-value pairs represented as array of items
           containing three fields (<literal>"key"</literal>,
           <literal>"value"</literal>, and <literal>"id"</literal>).
-          <literal>"id"</literal> is an unique identifier of the object
+          <literal>"id"</literal> is a unique identifier of the object
           key-value pair belongs to.
         </entry>
         <entry><literal>{"x": "20", "y": 32}</literal></entry>
@@ -12091,9 +12090,9 @@ table2-mapping
         <entry><literal>like_regex</literal></entry>
         <entry>
           Tests pattern matching with POSIX regular expressions
-          (<xref linkend="functions-posix-regexp"/>).  Supported flags
+          (see <xref linkend="functions-posix-regexp"/>).  Supported flags
           are <literal>i</literal>, <literal>s</literal>, <literal>m</literal>,
-          <literal>x</literal> and <literal>q</literal>.</entry>
+          <literal>x</literal>, and <literal>q</literal>.</entry>
         <entry><literal>["abc", "abd", "aBdC", "abdacb", "babc"]</literal></entry>
         <entry><literal>$[*] ? (@ like_regex "^ab.*c" flag "i")</literal></entry>
         <entry><literal>"abc", "aBdC", "abdacb"</literal></entry>
@@ -12107,7 +12106,7 @@ table2-mapping
        </row>
        <row>
         <entry><literal>exists</literal></entry>
-        <entry>Tests whether a path expression has at least one SQL/JSON item</entry>
+        <entry>Tests whether a path expression matches at least one SQL/JSON item</entry>
         <entry><literal>{"x": [1, 2], "y": [2, 4]}</literal></entry>
         <entry><literal>strict $.* ? (exists (@ ? (@[*] > 2)))</literal></entry>
         <entry><literal>2, 4</literal></entry>
@@ -12332,10 +12331,9 @@ table2-mapping
        <row>
         <entry><literal>@@</literal></entry>
         <entry><type>jsonpath</type></entry>
-        <entry>JSON path predicate check result for the specified JSON value.
-        Only first result item is taken into account.  If there are no results
-        or the first result item is not Boolean, then null
-        is returned.</entry>
+        <entry>Returns the result of JSON path predicate check for the specified JSON value.
+        Only the first item of the result is taken into account.  If the
+        result is not Boolean, then <literal>null</literal> is returned.</entry>
         <entry><literal>'{"a":[1,2,3,4,5]}'::jsonb @@ '$.a[*] > 2'</literal></entry>
        </row>
       </tbody>
@@ -12973,7 +12971,7 @@ table2-mapping
        <row>
         <entry>
          <para><literal>
-           jsonb_path_exists(target jsonb, path jsonpath [, vars jsonb, silent bool])
+           jsonb_path_exists(target jsonb, path jsonpath [, vars jsonb [, silent bool]])
          </literal></para>
         </entry>
         <entry><type>boolean</type></entry>
@@ -12998,10 +12996,9 @@ table2-mapping
         </entry>
         <entry><type>boolean</type></entry>
         <entry>
-          Returns JSON path predicate result for the specified JSON value.
-          Only first result item is taken into account.  If there are no results
-          or the first result item is not Boolean, then null
-          is returned.
+          Returns the result of JSON path predicate check for the specified JSON value.
+          Only the first item of the result is taken into account.  If the
+          result is not Boolean, then <literal>null</literal> is returned.
         </entry>
         <entry>
          <para><literal>
@@ -13208,18 +13205,18 @@ table2-mapping
   <note>
    <para>
     The <literal>jsonb_path_exists</literal>, <literal>jsonb_path_match</literal>,
-    <literal>jsonb_path_query</literal>, <literal>jsonb_path_query_array</literal> and
+    <literal>jsonb_path_query</literal>, <literal>jsonb_path_query_array</literal>, and
     <literal>jsonb_path_query_first</literal>
     functions have optional <literal>vars</literal> and <literal>silent</literal>
     arguments.
    </para>
    <para>
-    If the <literal>vars</literal> argument is specified, it provides an
+    If the <parameter>vars</parameter> argument is specified, it provides an
     object containing named variables to be substituted into a
     <literal>jsonpath</literal> expression.
    </para>
    <para>
-    If the <literal>silent</literal> argument is specified and has the
+    If the <parameter>silent</parameter> argument is specified and has the
     <literal>true</literal> value, these functions suppress the same errors
     as the <literal>@?</literal> and <literal>@@</literal> operators.
    </para>
