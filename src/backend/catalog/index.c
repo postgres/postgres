@@ -3306,6 +3306,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	IndexInfo  *indexInfo;
 	volatile bool skipped_constraint = false;
 	PGRUsage	ru0;
+	bool		progress = (options & REINDEXOPT_REPORT_PROGRESS) != 0;
 
 	pg_rusage_init(&ru0);
 
@@ -3316,12 +3317,15 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	heapId = IndexGetRelation(indexId, false);
 	heapRelation = table_open(heapId, ShareLock);
 
-	pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
-								  heapId);
-	pgstat_progress_update_param(PROGRESS_CREATEIDX_COMMAND,
-								 PROGRESS_CREATEIDX_COMMAND_REINDEX);
-	pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
-								 indexId);
+	if (progress)
+	{
+		pgstat_progress_start_command(PROGRESS_COMMAND_CREATE_INDEX,
+									  heapId);
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_COMMAND,
+									 PROGRESS_CREATEIDX_COMMAND_REINDEX);
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_INDEX_OID,
+									 indexId);
+	}
 
 	/*
 	 * Open the target index relation and get an exclusive lock on it, to
@@ -3329,8 +3333,9 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 */
 	iRel = index_open(indexId, AccessExclusiveLock);
 
-	pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,
-								 iRel->rd_rel->relam);
+	if (progress)
+		pgstat_progress_update_param(PROGRESS_CREATEIDX_ACCESS_METHOD_OID,
+									 iRel->rd_rel->relam);
 
 	/*
 	 * The case of reindexing partitioned tables and indexes is handled
@@ -3483,7 +3488,8 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 				 errdetail_internal("%s",
 									pg_rusage_show(&ru0))));
 
-	pgstat_progress_end_command();
+	if (progress)
+		pgstat_progress_end_command();
 
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);
