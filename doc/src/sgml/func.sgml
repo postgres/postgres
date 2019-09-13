@@ -20585,7 +20585,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         (<parameter>slot_name</parameter> <type>name</type>, <parameter>lsn</parameter> <type>pg_lsn</type>)
        </entry>
        <entry>
-        Copies an existing physical replication slot name <parameter>src_slot_name</parameter>
+        Copies an existing physical replication slot named <parameter>src_slot_name</parameter>
         to a physical replication slot named <parameter>dst_slot_name</parameter>.
         The copied physical slot starts to reserve WAL from the same <acronym>LSN</acronym> as the
         source slot.
@@ -21692,7 +21692,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    <para>
     <function>pg_ls_archive_statusdir</function> returns the name, size, and
     last modified time (mtime) of each file in the WAL archive status
-    directory <literal>pg_wal/archive_status</literal>. By default only
+    directory <filename>pg_wal/archive_status</filename>. By default only
     superusers and members of the <literal>pg_monitor</literal> role can
     use this function. Access may be granted to others using
     <command>GRANT</command>.
