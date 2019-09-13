@@ -217,12 +217,15 @@ DecodeXactOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	uint8		info = XLogRecGetInfo(r) & XLOG_XACT_OPMASK;
 
 	/*
-	 * No point in doing anything yet, data could not be decoded anyway. It's
-	 * ok not to call ReorderBufferProcessXid() in that case, except in the
-	 * assignment case there'll not be any later records with the same xid;
-	 * and in the assignment case we'll not decode those xacts.
+	 * If the snapshot isn't yet fully built, we cannot decode anything, so
+	 * bail out.
+	 *
+	 * However, it's critical to process XLOG_XACT_ASSIGNMENT records even
+	 * when the snapshot is being built: it is possible to get later records
+	 * that require subxids to be properly assigned.
 	 */
-	if (SnapBuildCurrentState(builder) < SNAPBUILD_FULL_SNAPSHOT)
+	if (SnapBuildCurrentState(builder) < SNAPBUILD_FULL_SNAPSHOT &&
+		info != XLOG_XACT_ASSIGNMENT)
 		return;
 
 	switch (info)
