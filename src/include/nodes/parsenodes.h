@@ -2893,7 +2893,7 @@ typedef struct ConstraintsSetStmt
  */
 
 /* Reindex options */
-#define REINDEXOPT_VERBOSE 1 << 0		/* print progress info */
+#define REINDEXOPT_VERBOSE (1 << 0)		/* print progress info */
 
 typedef enum ReindexObjectType
 {
