@@ -329,6 +329,9 @@
 /* Define to 1 if you have isinf(). */
 #undef HAVE_ISINF
 
+/* Define to 1 if __builtin_constant_p(x) implies "i"(x) acceptance. */
+#undef HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P
+
 /* Define to 1 if you have the <langinfo.h> header file. */
 #undef HAVE_LANGINFO_H
 
