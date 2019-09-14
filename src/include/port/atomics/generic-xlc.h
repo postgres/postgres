@@ -73,11 +73,27 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
+	uint32 _t;
+	uint32 res;
+
 	/*
-	 * __fetch_and_add() emits a leading "sync" and trailing "isync", thereby
-	 * providing sequential consistency.  This is undocumented.
+	 * xlc has a no-longer-documented __fetch_and_add() intrinsic.  In xlc
+	 * 12.01.0000.0000, it emits a leading "sync" and trailing "isync".  In
+	 * xlc 13.01.0003.0004, it emits neither.  Hence, using the intrinsic
+	 * would add redundant syncs on xlc 12.
 	 */
-	return __fetch_and_add((volatile int *)&ptr->value, add_);
+	__asm__ __volatile__(
+		"	sync				\n"
+		"	lwarx   %1,0,%4		\n"
+		"	add     %0,%1,%3	\n"
+		"	stwcx.  %0,0,%4		\n"
+		"	bne     $-12		\n"		/* branch to lwarx */
+		"	isync				\n"
+:		"=&r"(_t), "=&r"(res), "+m"(ptr->value)
+:		"r"(add_), "r"(&ptr->value)
+:		"memory", "cc");
+
+	return res;
 }
 
 #ifdef PG_HAVE_ATOMIC_U64_SUPPORT
@@ -103,7 +119,22 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 static inline uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
-	return __fetch_and_addlp((volatile long *)&ptr->value, add_);
+	uint64 _t;
+	uint64 res;
+
+	/* Like u32, but s/lwarx/ldarx/; s/stwcx/stdcx/ */
+	__asm__ __volatile__(
+		"	sync				\n"
+		"	ldarx   %1,0,%4		\n"
+		"	add     %0,%1,%3	\n"
+		"	stdcx.  %0,0,%4		\n"
+		"	bne     $-12		\n"		/* branch to ldarx */
+		"	isync				\n"
+:		"=&r"(_t), "=&r"(res), "+m"(ptr->value)
+:		"r"(add_), "r"(&ptr->value)
+:		"memory", "cc");
+
+	return res;
 }
 
 #endif /* PG_HAVE_ATOMIC_U64_SUPPORT */
