@@ -687,7 +687,7 @@ test_atomic_uint32(void)
 	if (pg_atomic_read_u32(&var) != 3)
 		elog(ERROR, "atomic_read_u32() #2 wrong");
 
-	if (pg_atomic_fetch_add_u32(&var, 1) != 3)
+	if (pg_atomic_fetch_add_u32(&var, pg_atomic_read_u32(&var) - 2) != 3)
 		elog(ERROR, "atomic_fetch_add_u32() #1 wrong");
 
 	if (pg_atomic_fetch_sub_u32(&var, 1) != 4)
@@ -711,6 +711,20 @@ test_atomic_uint32(void)
 
 	if (pg_atomic_fetch_add_u32(&var, INT_MAX) != INT_MAX)
 		elog(ERROR, "pg_atomic_add_fetch_u32() #3 wrong");
+
+	pg_atomic_fetch_add_u32(&var, 2);	/* wrap to 0 */
+
+	if (pg_atomic_fetch_add_u32(&var, PG_INT16_MAX) != 0)
+		elog(ERROR, "pg_atomic_fetch_add_u32() #3 wrong");
+
+	if (pg_atomic_fetch_add_u32(&var, PG_INT16_MAX + 1) != PG_INT16_MAX)
+		elog(ERROR, "pg_atomic_fetch_add_u32() #4 wrong");
+
+	if (pg_atomic_fetch_add_u32(&var, PG_INT16_MIN) != 2 * PG_INT16_MAX + 1)
+		elog(ERROR, "pg_atomic_fetch_add_u32() #5 wrong");
+
+	if (pg_atomic_fetch_add_u32(&var, PG_INT16_MIN - 1) != PG_INT16_MAX)
+		elog(ERROR, "pg_atomic_fetch_add_u32() #6 wrong");
 
 	pg_atomic_fetch_add_u32(&var, 1);	/* top up to UINT_MAX */
 
@@ -787,7 +801,7 @@ test_atomic_uint64(void)
 	if (pg_atomic_read_u64(&var) != 3)
 		elog(ERROR, "atomic_read_u64() #2 wrong");
 
-	if (pg_atomic_fetch_add_u64(&var, 1) != 3)
+	if (pg_atomic_fetch_add_u64(&var, pg_atomic_read_u64(&var) - 2) != 3)
 		elog(ERROR, "atomic_fetch_add_u64() #1 wrong");
 
 	if (pg_atomic_fetch_sub_u64(&var, 1) != 4)
