@@ -1539,26 +1539,6 @@ case $host_cpu in
     if test x"$pgac_cv_have_ppc_mutex_hint" = xyes ; then
 	AC_DEFINE(HAVE_PPC_LWARX_MUTEX_HINT, 1, [Define to 1 if the assembler supports PPC's LWARX mutex hint bit.])
     fi
-    # Check if compiler accepts "i"(x) when __builtin_constant_p(x).
-    AC_CACHE_CHECK([whether __builtin_constant_p(x) implies "i"(x) acceptance],
-                   [pgac_cv_have_i_constraint__builtin_constant_p],
-    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-    [static inline int
-     addi(int ra, int si)
-     {
-         int res = 0;
-         if (__builtin_constant_p(si))
-             __asm__ __volatile__(
-                 " addi %0,%1,%2\n" : "=r"(res) : "r"(ra), "i"(si));
-         return res;
-     }
-     int test_adds(int x) { return addi(3, x) + addi(x, 5); }], [])],
-    [pgac_cv_have_i_constraint__builtin_constant_p=yes],
-    [pgac_cv_have_i_constraint__builtin_constant_p=no])])
-    if test x"$pgac_cv_have_i_constraint__builtin_constant_p" = xyes ; then
-      AC_DEFINE(HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P, 1,
-                [Define to 1 if __builtin_constant_p(x) implies "i"(x) acceptance.])
-    fi
   ;;
 esac
 
