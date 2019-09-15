@@ -2912,7 +2912,7 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 	{
 		Assert(epqstate->relsubs_done != NULL);
 		memset(epqstate->relsubs_rowmark, 0,
-			   sizeof(rtsize * sizeof(ExecAuxRowMark *)));
+			   rtsize * sizeof(ExecAuxRowMark *));
 		memset(epqstate->relsubs_done, 0,
 			   rtsize * sizeof(bool));
 	}
@@ -2966,7 +2966,7 @@ EvalPlanQualEnd(EPQState *epqstate)
 	if (epqstate->tuple_table != NIL)
 	{
 		memset(epqstate->relsubs_slot, 0,
-			   sizeof(rtsize * sizeof(TupleTableSlot *)));
+			   rtsize * sizeof(TupleTableSlot *));
 		ExecResetTupleTable(epqstate->tuple_table, true);
 		epqstate->tuple_table = NIL;
 	}
