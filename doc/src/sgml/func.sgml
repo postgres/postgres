@@ -6175,7 +6175,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry>microsecond (000000-999999)</entry>
        </row>
        <row>
-        <entry><literal>SSSS</literal></entry>
+        <entry><literal>SSSS</literal>, <literal>SSSSS</literal></entry>
         <entry>seconds past midnight (0-86399)</entry>
        </row>
        <row>

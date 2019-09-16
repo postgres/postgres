@@ -626,6 +626,7 @@ typedef enum
 	DCH_PM,
 	DCH_Q,
 	DCH_RM,
+	DCH_SSSSS,
 	DCH_SSSS,
 	DCH_SS,
 	DCH_TZH,
@@ -678,6 +679,7 @@ typedef enum
 	DCH_pm,
 	DCH_q,
 	DCH_rm,
+	DCH_sssss,
 	DCH_ssss,
 	DCH_ss,
 	DCH_tz,
@@ -787,7 +789,8 @@ static const KeyWord DCH_keywords[] = {
 	{"PM", 2, DCH_PM, false, FROM_CHAR_DATE_NONE},
 	{"Q", 1, DCH_Q, true, FROM_CHAR_DATE_NONE}, /* Q */
 	{"RM", 2, DCH_RM, false, FROM_CHAR_DATE_GREGORIAN}, /* R */
-	{"SSSS", 4, DCH_SSSS, true, FROM_CHAR_DATE_NONE},	/* S */
+	{"SSSSS", 5, DCH_SSSS, true, FROM_CHAR_DATE_NONE},	/* S */
+	{"SSSS", 4, DCH_SSSS, true, FROM_CHAR_DATE_NONE},
 	{"SS", 2, DCH_SS, true, FROM_CHAR_DATE_NONE},
 	{"TZH", 3, DCH_TZH, false, FROM_CHAR_DATE_NONE},	/* T */
 	{"TZM", 3, DCH_TZM, true, FROM_CHAR_DATE_NONE},
@@ -839,7 +842,8 @@ static const KeyWord DCH_keywords[] = {
 	{"pm", 2, DCH_pm, false, FROM_CHAR_DATE_NONE},
 	{"q", 1, DCH_Q, true, FROM_CHAR_DATE_NONE}, /* q */
 	{"rm", 2, DCH_rm, false, FROM_CHAR_DATE_GREGORIAN}, /* r */
-	{"ssss", 4, DCH_SSSS, true, FROM_CHAR_DATE_NONE},	/* s */
+	{"sssss", 5, DCH_SSSS, true, FROM_CHAR_DATE_NONE},	/* s */
+	{"ssss", 4, DCH_SSSS, true, FROM_CHAR_DATE_NONE},
 	{"ss", 2, DCH_SS, true, FROM_CHAR_DATE_NONE},
 	{"tz", 2, DCH_tz, false, FROM_CHAR_DATE_NONE},	/* t */
 	{"us", 2, DCH_US, true, FROM_CHAR_DATE_NONE},	/* u */
@@ -920,10 +924,10 @@ static const int DCH_index[KeyWord_INDEX_SIZE] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 	-1, -1, -1, -1, -1, DCH_A_D, DCH_B_C, DCH_CC, DCH_DAY, -1,
 	DCH_FF1, -1, DCH_HH24, DCH_IDDD, DCH_J, -1, -1, DCH_MI, -1, DCH_OF,
-	DCH_P_M, DCH_Q, DCH_RM, DCH_SSSS, DCH_TZH, DCH_US, -1, DCH_WW, -1, DCH_Y_YYY,
+	DCH_P_M, DCH_Q, DCH_RM, DCH_SSSSS, DCH_TZH, DCH_US, -1, DCH_WW, -1, DCH_Y_YYY,
 	-1, -1, -1, -1, -1, -1, -1, DCH_a_d, DCH_b_c, DCH_cc,
 	DCH_day, -1, DCH_ff1, -1, DCH_hh24, DCH_iddd, DCH_j, -1, -1, DCH_mi,
-	-1, -1, DCH_p_m, DCH_q, DCH_rm, DCH_ssss, DCH_tz, DCH_us, -1, DCH_ww,
+	-1, -1, DCH_p_m, DCH_q, DCH_rm, DCH_sssss, DCH_tz, DCH_us, -1, DCH_ww,
 	-1, DCH_y_yyy, -1, -1, -1, -1
 
 	/*---- chars over 126 are skipped ----*/

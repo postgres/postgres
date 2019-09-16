@@ -3077,6 +3077,14 @@ SELECT to_timestamp('2015-02-11 86000', 'YYYY-MM-DD SSSS');  -- ok
 
 SELECT to_timestamp('2015-02-11 86400', 'YYYY-MM-DD SSSS');
 ERROR:  date/time field value out of range: "2015-02-11 86400"
+SELECT to_timestamp('2015-02-11 86000', 'YYYY-MM-DD SSSSS');  -- ok
+         to_timestamp         
+------------------------------
+ Wed Feb 11 23:53:20 2015 PST
+(1 row)
+
+SELECT to_timestamp('2015-02-11 86400', 'YYYY-MM-DD SSSSS');
+ERROR:  date/time field value out of range: "2015-02-11 86400"
 SELECT to_date('2016-13-10', 'YYYY-MM-DD');
 ERROR:  date/time field value out of range: "2016-13-10"
 SELECT to_date('2016-02-30', 'YYYY-MM-DD');
@@ -3138,6 +3146,18 @@ SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD HH:MI:SS TZ');
           to_char           
 ----------------------------
  2012-12-12 12:00:00 -01:30
+(1 row)
+
+SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD SSSS');
+     to_char      
+------------------
+ 2012-12-12 43200
+(1 row)
+
+SELECT to_char('2012-12-12 12:00'::timestamptz, 'YYYY-MM-DD SSSSS');
+     to_char      
+------------------
+ 2012-12-12 43200
 (1 row)
 
 RESET TIME ZONE;
