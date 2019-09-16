@@ -70,7 +70,6 @@ typedef struct
 
 static TimeOffset time2t(const int hour, const int min, const int sec, const fsec_t fsec);
 static Timestamp dt2local(Timestamp dt, int timezone);
-static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
 static TimestampTz timestamp2timestamptz(Timestamp timestamp);
 static Timestamp timestamptz2timestamp(TimestampTz timestamp);
@@ -333,7 +332,7 @@ timestamp_scale(PG_FUNCTION_ARGS)
  * AdjustTimestampForTypmod --- round off a timestamp to suit given typmod
  * Works for either timestamp or timestamptz.
  */
-static void
+void
 AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 {
 	static const int64 TimestampScales[MAX_TIMESTAMP_PRECISION + 1] = {

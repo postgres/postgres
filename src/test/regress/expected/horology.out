@@ -2786,6 +2786,85 @@ SELECT to_timestamp('2011-12-18 11:38 20',     'YYYY-MM-DD HH12:MI TZM');
  Sun Dec 18 03:18:00 2011 PST
 (1 row)
 
+SELECT i, to_timestamp('2018-11-02 12:34:56', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ i |         to_timestamp         
+---+------------------------------
+ 1 | Fri Nov 02 12:34:56 2018 PDT
+ 2 | Fri Nov 02 12:34:56 2018 PDT
+ 3 | Fri Nov 02 12:34:56 2018 PDT
+ 4 | Fri Nov 02 12:34:56 2018 PDT
+ 5 | Fri Nov 02 12:34:56 2018 PDT
+ 6 | Fri Nov 02 12:34:56 2018 PDT
+(6 rows)
+
+SELECT i, to_timestamp('2018-11-02 12:34:56.1', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ i |          to_timestamp          
+---+--------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.1 2018 PDT
+ 3 | Fri Nov 02 12:34:56.1 2018 PDT
+ 4 | Fri Nov 02 12:34:56.1 2018 PDT
+ 5 | Fri Nov 02 12:34:56.1 2018 PDT
+ 6 | Fri Nov 02 12:34:56.1 2018 PDT
+(6 rows)
+
+SELECT i, to_timestamp('2018-11-02 12:34:56.12', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ i |          to_timestamp           
+---+---------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.12 2018 PDT
+ 3 | Fri Nov 02 12:34:56.12 2018 PDT
+ 4 | Fri Nov 02 12:34:56.12 2018 PDT
+ 5 | Fri Nov 02 12:34:56.12 2018 PDT
+ 6 | Fri Nov 02 12:34:56.12 2018 PDT
+(6 rows)
+
+SELECT i, to_timestamp('2018-11-02 12:34:56.123', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ i |           to_timestamp           
+---+----------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.12 2018 PDT
+ 3 | Fri Nov 02 12:34:56.123 2018 PDT
+ 4 | Fri Nov 02 12:34:56.123 2018 PDT
+ 5 | Fri Nov 02 12:34:56.123 2018 PDT
+ 6 | Fri Nov 02 12:34:56.123 2018 PDT
+(6 rows)
+
+SELECT i, to_timestamp('2018-11-02 12:34:56.1234', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ i |           to_timestamp            
+---+-----------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.12 2018 PDT
+ 3 | Fri Nov 02 12:34:56.123 2018 PDT
+ 4 | Fri Nov 02 12:34:56.1234 2018 PDT
+ 5 | Fri Nov 02 12:34:56.1234 2018 PDT
+ 6 | Fri Nov 02 12:34:56.1234 2018 PDT
+(6 rows)
+
+SELECT i, to_timestamp('2018-11-02 12:34:56.12345', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ i |            to_timestamp            
+---+------------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.12 2018 PDT
+ 3 | Fri Nov 02 12:34:56.123 2018 PDT
+ 4 | Fri Nov 02 12:34:56.1235 2018 PDT
+ 5 | Fri Nov 02 12:34:56.12345 2018 PDT
+ 6 | Fri Nov 02 12:34:56.12345 2018 PDT
+(6 rows)
+
+SELECT i, to_timestamp('2018-11-02 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ i |            to_timestamp             
+---+-------------------------------------
+ 1 | Fri Nov 02 12:34:56.1 2018 PDT
+ 2 | Fri Nov 02 12:34:56.12 2018 PDT
+ 3 | Fri Nov 02 12:34:56.123 2018 PDT
+ 4 | Fri Nov 02 12:34:56.1235 2018 PDT
+ 5 | Fri Nov 02 12:34:56.12346 2018 PDT
+ 6 | Fri Nov 02 12:34:56.123456 2018 PDT
+(6 rows)
+
+SELECT i, to_timestamp('2018-11-02 12:34:56.123456789', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+ERROR:  date/time field value out of range: "2018-11-02 12:34:56.123456789"
 --
 -- Check handling of multiple spaces in format and/or input
 --

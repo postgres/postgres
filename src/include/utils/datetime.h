@@ -336,4 +336,6 @@ extern TimeZoneAbbrevTable *ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs,
 												   int n);
 extern void InstallTimeZoneAbbrevs(TimeZoneAbbrevTable *tbl);
 
+extern void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
+
 #endif							/* DATETIME_H */

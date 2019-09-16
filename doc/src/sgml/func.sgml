@@ -6151,6 +6151,30 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
         <entry>microsecond (000000-999999)</entry>
        </row>
        <row>
+        <entry><literal>FF1</literal></entry>
+        <entry>tenth of second (0-9)</entry>
+       </row>
+       <row>
+        <entry><literal>FF2</literal></entry>
+        <entry>hundredth of second (00-99)</entry>
+       </row>
+       <row>
+        <entry><literal>FF3</literal></entry>
+        <entry>millisecond (000-999)</entry>
+       </row>
+       <row>
+        <entry><literal>FF4</literal></entry>
+        <entry>tenth of a millisecond (0000-9999)</entry>
+       </row>
+       <row>
+        <entry><literal>FF5</literal></entry>
+        <entry>hundredth of a millisecond (00000-99999)</entry>
+       </row>
+       <row>
+        <entry><literal>FF6</literal></entry>
+        <entry>microsecond (000000-999999)</entry>
+       </row>
+       <row>
         <entry><literal>SSSS</literal></entry>
         <entry>seconds past midnight (0-86399)</entry>
        </row>
