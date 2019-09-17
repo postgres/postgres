@@ -88,9 +88,9 @@ typedef enum JsonPathItemType
 
 /* XQuery regex mode flags for LIKE_REGEX predicate */
 #define JSP_REGEX_ICASE		0x01	/* i flag, case insensitive */
-#define JSP_REGEX_SLINE		0x02	/* s flag, single-line mode */
-#define JSP_REGEX_MLINE		0x04	/* m flag, multi-line mode */
-#define JSP_REGEX_WSPACE	0x08	/* x flag, expanded syntax */
+#define JSP_REGEX_DOTALL	0x02	/* s flag, dot matches newline */
+#define JSP_REGEX_MLINE		0x04	/* m flag, ^/$ match at newlines */
+#define JSP_REGEX_WSPACE	0x08	/* x flag, ignore whitespace in pattern */
 #define JSP_REGEX_QUOTE		0x10	/* q flag, no special characters */
 
 /*
@@ -244,5 +244,7 @@ typedef struct JsonPathParseResult
 } JsonPathParseResult;
 
 extern JsonPathParseResult *parsejsonpath(const char *str, int len);
+
+extern int	jspConvertRegexFlags(uint32 xflags);
 
 #endif

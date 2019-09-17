@@ -1592,14 +1592,14 @@ select jsonb_path_query('[null, 1, "abd", "abdabc"]', 'lax $[*] ? ((@ starts wit
  1
 (2 rows)
 
-select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^ab.*c")');
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "babc", "adc\nabc", "ab\nadc"]', 'lax $[*] ? (@ like_regex "^ab.*c")');
  jsonb_path_query 
 ------------------
  "abc"
  "abdacb"
 (2 rows)
 
-select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^a  b.*  c " flag "ix")');
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "babc", "adc\nabc", "ab\nadc"]', 'lax $[*] ? (@ like_regex "^ab.*c" flag "i")');
  jsonb_path_query 
 ------------------
  "abc"
@@ -1607,7 +1607,7 @@ select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "
  "abdacb"
 (3 rows)
 
-select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^ab.*c" flag "m")');
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "babc", "adc\nabc", "ab\nadc"]', 'lax $[*] ? (@ like_regex "^ab.*c" flag "m")');
  jsonb_path_query 
 ------------------
  "abc"
@@ -1615,12 +1615,13 @@ select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "
  "adc\nabc"
 (3 rows)
 
-select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "adc\nabc", "babc"]', 'lax $[*] ? (@ like_regex "^ab.*c" flag "s")');
+select jsonb_path_query('[null, 1, "abc", "abd", "aBdC", "abdacb", "babc", "adc\nabc", "ab\nadc"]', 'lax $[*] ? (@ like_regex "^ab.*c" flag "s")');
  jsonb_path_query 
 ------------------
  "abc"
  "abdacb"
-(2 rows)
+ "ab\nadc"
+(3 rows)
 
 select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ like_regex "a\\b" flag "q")');
  jsonb_path_query 

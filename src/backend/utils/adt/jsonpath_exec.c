@@ -1646,34 +1646,10 @@ executeLikeRegex(JsonPathItem *jsp, JsonbValue *str, JsonbValue *rarg,
 	/* Cache regex text and converted flags. */
 	if (!cxt->regex)
 	{
-		uint32		flags = jsp->content.like_regex.flags;
-
 		cxt->regex =
 			cstring_to_text_with_len(jsp->content.like_regex.pattern,
 									 jsp->content.like_regex.patternlen);
-
-		/* Convert regex flags. */
-		cxt->cflags = REG_ADVANCED;
-
-		if (flags & JSP_REGEX_ICASE)
-			cxt->cflags |= REG_ICASE;
-		if (flags & JSP_REGEX_MLINE)
-			cxt->cflags |= REG_NEWLINE;
-		if (flags & JSP_REGEX_SLINE)
-			cxt->cflags &= ~REG_NEWLINE;
-		if (flags & JSP_REGEX_WSPACE)
-			cxt->cflags |= REG_EXPANDED;
-
-		/*
-		 * 'q' flag can work together only with 'i'.  When other is specified,
-		 * then 'q' has no effect.
-		 */
-		if ((flags & JSP_REGEX_QUOTE) &&
-			!(flags & (JSP_REGEX_MLINE | JSP_REGEX_SLINE | JSP_REGEX_WSPACE)))
-		{
-			cxt->cflags &= ~REG_ADVANCED;
-			cxt->cflags |= REG_QUOTE;
-		}
+		cxt->cflags = jspConvertRegexFlags(jsp->content.like_regex.flags);
 	}
 
 	if (RE_compile_and_execute(cxt->regex, str->val.string.val,

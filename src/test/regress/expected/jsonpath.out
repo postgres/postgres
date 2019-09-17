@@ -442,17 +442,15 @@ select '$ ? (@ like_regex "pattern" flag "is")'::jsonpath;
 (1 row)
 
 select '$ ? (@ like_regex "pattern" flag "isim")'::jsonpath;
-               jsonpath               
---------------------------------------
- $?(@ like_regex "pattern" flag "im")
+               jsonpath                
+---------------------------------------
+ $?(@ like_regex "pattern" flag "ism")
 (1 row)
 
 select '$ ? (@ like_regex "pattern" flag "xsms")'::jsonpath;
-               jsonpath               
---------------------------------------
- $?(@ like_regex "pattern" flag "sx")
-(1 row)
-
+ERROR:  XQuery "x" flag (expanded regular expressions) is not implemented
+LINE 1: select '$ ? (@ like_regex "pattern" flag "xsms")'::jsonpath;
+               ^
 select '$ ? (@ like_regex "pattern" flag "q")'::jsonpath;
               jsonpath               
 -------------------------------------
@@ -466,9 +464,9 @@ select '$ ? (@ like_regex "pattern" flag "iq")'::jsonpath;
 (1 row)
 
 select '$ ? (@ like_regex "pattern" flag "smixq")'::jsonpath;
-                jsonpath                
-----------------------------------------
- $?(@ like_regex "pattern" flag "imxq")
+                jsonpath                 
+-----------------------------------------
+ $?(@ like_regex "pattern" flag "ismxq")
 (1 row)
 
 select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;

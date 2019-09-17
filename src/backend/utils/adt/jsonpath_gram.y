@@ -481,42 +481,32 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 {
 	JsonPathParseItem  *v = makeItemType(jpiLikeRegex);
 	int					i;
-	int					cflags = REG_ADVANCED;
+	int					cflags;
 
 	v->value.like_regex.expr = expr;
 	v->value.like_regex.pattern = pattern->val;
 	v->value.like_regex.patternlen = pattern->len;
-	v->value.like_regex.flags = 0;
 
+	/* Parse the flags string, convert to bitmask.  Duplicate flags are OK. */
+	v->value.like_regex.flags = 0;
 	for (i = 0; flags && i < flags->len; i++)
 	{
 		switch (flags->val[i])
 		{
 			case 'i':
 				v->value.like_regex.flags |= JSP_REGEX_ICASE;
-				cflags |= REG_ICASE;
 				break;
 			case 's':
-				v->value.like_regex.flags &= ~JSP_REGEX_MLINE;
-				v->value.like_regex.flags |= JSP_REGEX_SLINE;
-				cflags |= REG_NEWLINE;
+				v->value.like_regex.flags |= JSP_REGEX_DOTALL;
 				break;
 			case 'm':
-				v->value.like_regex.flags &= ~JSP_REGEX_SLINE;
 				v->value.like_regex.flags |= JSP_REGEX_MLINE;
-				cflags &= ~REG_NEWLINE;
 				break;
 			case 'x':
 				v->value.like_regex.flags |= JSP_REGEX_WSPACE;
-				cflags |= REG_EXPANDED;
 				break;
 			case 'q':
 				v->value.like_regex.flags |= JSP_REGEX_QUOTE;
-				if (!(v->value.like_regex.flags & (JSP_REGEX_MLINE | JSP_REGEX_SLINE | JSP_REGEX_WSPACE)))
-				{
-					cflags &= ~REG_ADVANCED;
-					cflags |= REG_QUOTE;
-				}
 				break;
 			default:
 				ereport(ERROR,
@@ -528,12 +518,58 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 		}
 	}
 
+	/* Convert flags to what RE_compile_and_cache needs */
+	cflags = jspConvertRegexFlags(v->value.like_regex.flags);
+
 	/* check regex validity */
 	(void) RE_compile_and_cache(cstring_to_text_with_len(pattern->val,
 														 pattern->len),
 								cflags, DEFAULT_COLLATION_OID);
 
 	return v;
+}
+
+/*
+ * Convert from XQuery regex flags to those recognized by our regex library.
+ */
+int
+jspConvertRegexFlags(uint32 xflags)
+{
+	/* By default, XQuery is very nearly the same as Spencer's AREs */
+	int			cflags = REG_ADVANCED;
+
+	/* Ignore-case means the same thing, too, modulo locale issues */
+	if (xflags & JSP_REGEX_ICASE)
+		cflags |= REG_ICASE;
+
+	/* Per XQuery spec, if 'q' is specified then 'm', 's', 'x' are ignored */
+	if (xflags & JSP_REGEX_QUOTE)
+	{
+		cflags &= ~REG_ADVANCED;
+		cflags |= REG_QUOTE;
+	}
+	else
+	{
+		/* Note that dotall mode is the default in POSIX */
+		if (!(xflags & JSP_REGEX_DOTALL))
+			cflags |= REG_NLSTOP;
+		if (xflags & JSP_REGEX_MLINE)
+			cflags |= REG_NLANCH;
+
+		/*
+		 * XQuery's 'x' mode is related to Spencer's expanded mode, but it's
+		 * not really enough alike to justify treating JSP_REGEX_WSPACE as
+		 * REG_EXPANDED.  For now we treat 'x' as unimplemented; perhaps in
+		 * future we'll modify the regex library to have an option for
+		 * XQuery-style ignore-whitespace mode.
+		 */
+		if (xflags & JSP_REGEX_WSPACE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("XQuery \"x\" flag (expanded regular expressions) is not implemented")));
+	}
+
+	return cflags;
 }
 
 /*
