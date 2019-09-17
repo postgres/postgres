@@ -131,7 +131,7 @@ static bool noverify_checksums = false;
  * Note: this list should be kept in sync with the filter lists in pg_rewind's
  * filemap.c.
  */
-static const char *excludeDirContents[] =
+static const char *const excludeDirContents[] =
 {
 	/*
 	 * Skip temporary statistics files. PG_STAT_TMP_DIR must be skipped even
@@ -172,7 +172,7 @@ static const char *excludeDirContents[] =
 /*
  * List of files excluded from backups.
  */
-static const char *excludeFiles[] =
+static const char *const excludeFiles[] =
 {
 	/* Skip auto conf temporary file. */
 	PG_AUTOCONF_FILENAME ".tmp",
