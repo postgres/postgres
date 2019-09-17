@@ -557,7 +557,7 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 
 				if (v->content.like_regex.flags & JSP_REGEX_ICASE)
 					appendStringInfoChar(buf, 'i');
-				if (v->content.like_regex.flags & JSP_REGEX_SLINE)
+				if (v->content.like_regex.flags & JSP_REGEX_DOTALL)
 					appendStringInfoChar(buf, 's');
 				if (v->content.like_regex.flags & JSP_REGEX_MLINE)
 					appendStringInfoChar(buf, 'm');
