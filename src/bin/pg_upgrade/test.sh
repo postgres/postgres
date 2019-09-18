@@ -33,7 +33,7 @@ standard_initdb() {
 
 # What flavor of host are we on?
 # Treat MINGW* (msys1) and MSYS* (msys2) the same.
-testhost=`uname -s | sed s/^MSYS/MINGW/`
+testhost=`uname -s | sed 's/^MSYS/MINGW/'`
 
 # Establish how the server will listen for connections
 case $testhost in
