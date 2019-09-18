@@ -810,9 +810,11 @@ IsForeignRelUpdatable(Relation rel);
      row-by-row approach is necessary, but it can be inefficient.  If it is
      possible for the foreign server to determine which rows should be
      modified without actually retrieving them, and if there are no local
-     triggers which would affect the operation, then it is possible to
-     arrange things so that the entire operation is performed on the remote
-     server.  The interfaces described below make this possible.
+     structures which would affect the operation (row-level local triggers
+     or <literal>WITH CHECK OPTION</literal> constraints from parent views),
+     then it is possible to arrange things so that the entire operation is
+     performed on the remote server.  The interfaces described below make
+     this possible.
     </para>
 
     <para>
