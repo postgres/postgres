@@ -504,9 +504,9 @@
    sending the whole query to the remote server if there are no query
    <literal>WHERE</literal> clauses that cannot be sent to the remote server,
    no local joins for the query, no row-level local <literal>BEFORE</literal> or
-   <literal>AFTER</literal> triggers on the target table, and no
-   <literal>CHECK OPTION</literal> constraints from parent views.
-   In <command>UPDATE</command>,
+   <literal>AFTER</literal> triggers or stored generated columns on the target
+   table, and no <literal>CHECK OPTION</literal> constraints from parent
+   views.  In <command>UPDATE</command>,
    expressions to assign to target columns must use only built-in data types,
    <literal>IMMUTABLE</literal> operators, or <literal>IMMUTABLE</literal> functions,
    to reduce the risk of misexecution of the query.
