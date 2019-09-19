@@ -169,8 +169,12 @@ typedef struct SpGistScanOpaqueData
 	int			numberOfKeys;	/* number of index qualifier conditions */
 	ScanKey		keyData;		/* array of index qualifier descriptors */
 	int			numberOfOrderBys;	/* number of ordering operators */
+	int			numberOfNonNullOrderBys;	/* number of ordering operators
+											 * with non-NULL arguments */
 	ScanKey		orderByData;	/* array of ordering op descriptors */
 	Oid		   *orderByTypes;	/* array of ordering op return types */
+	int		   *nonNullOrderByOffsets;	/* array of offset of non-NULL
+										 * ordering keys in the original array */
 	Oid			indexCollation; /* collation of index column */
 
 	/* Opclass defined functions: */
@@ -195,7 +199,9 @@ typedef struct SpGistScanOpaqueData
 	bool		recheckDistances[MaxIndexTuplesPerPage];	/* distance recheck
 															 * flags */
 	HeapTuple	reconTups[MaxIndexTuplesPerPage];	/* reconstructed tuples */
-	double	   *distances[MaxIndexTuplesPerPage];	/* distances (for recheck) */
+
+	/* distances (for recheck) */
+	IndexOrderByDistance *distances[MaxIndexTuplesPerPage];
 
 	/*
 	 * Note: using MaxIndexTuplesPerPage above is a bit hokey since
