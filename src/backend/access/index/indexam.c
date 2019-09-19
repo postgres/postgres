@@ -852,28 +852,12 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 {
 	int			i;
 
+	Assert(distances || !recheckOrderBy);
+
 	scan->xs_recheckorderby = recheckOrderBy;
-
-	if (!distances)
-	{
-		Assert(!scan->xs_recheckorderby);
-
-		for (i = 0; i < scan->numberOfOrderBys; i++)
-		{
-			scan->xs_orderbyvals[i] = (Datum) 0;
-			scan->xs_orderbynulls[i] = true;
-		}
-
-		return;
-	}
 
 	for (i = 0; i < scan->numberOfOrderBys; i++)
 	{
-		scan->xs_orderbynulls[i] = distances[i].isnull;
-
-		if (scan->xs_orderbynulls[i])
-			scan->xs_orderbyvals[i] = (Datum) 0;
-
 		if (orderByTypes[i] == FLOAT8OID)
 		{
 #ifndef USE_FLOAT8_BYVAL
@@ -881,8 +865,16 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 			if (!scan->xs_orderbynulls[i])
 				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
 #endif
-			if (!scan->xs_orderbynulls[i])
+			if (distances && !distances[i].isnull)
+			{
 				scan->xs_orderbyvals[i] = Float8GetDatum(distances[i].value);
+				scan->xs_orderbynulls[i] = false;
+			}
+			else
+			{
+				scan->xs_orderbyvals[i] = (Datum) 0;
+				scan->xs_orderbynulls[i] = true;
+			}
 		}
 		else if (orderByTypes[i] == FLOAT4OID)
 		{
@@ -892,8 +884,16 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 			if (!scan->xs_orderbynulls[i])
 				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
 #endif
-			if (!scan->xs_orderbynulls[i])
+			if (distances && !distances[i].isnull)
+			{
 				scan->xs_orderbyvals[i] = Float4GetDatum((float4) distances[i].value);
+				scan->xs_orderbynulls[i] = false;
+			}
+			else
+			{
+				scan->xs_orderbyvals[i] = (Datum) 0;
+				scan->xs_orderbynulls[i] = true;
+			}
 		}
 		else
 		{
