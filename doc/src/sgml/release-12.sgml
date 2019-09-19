@@ -2360,12 +2360,13 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Add support for <acronym>ICU</acronym> collation attributes
-       (Peter Eisentraut)
+       Add support for <acronym>ICU</acronym> collation attributes on older
+       ICU versions (Peter Eisentraut)
       </para>
 
       <para>
-       This allows customization of the collation rules.
+       This allows customization of the collation rules in a consistent way
+       across all ICU versions.
       </para>
      </listitem>
 
