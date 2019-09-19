@@ -666,13 +666,32 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   </itemizedlist>
 
   <para>
-   An SQL/JSON path expression is an SQL character string literal,
-   so it must be enclosed in single quotes when passed to an SQL/JSON
-   query function. Following the JavaScript
-   conventions, character string literals within the path expression
-   must be enclosed in double quotes. Any single quotes within this
-   character string literal must be escaped with a single quote
-   by the SQL convention.
+   An SQL/JSON path expression is typically written in an SQL query as an
+   SQL character string literal, so it must be enclosed in single quotes,
+   and any single quotes desired within the value must be doubled
+   (see <xref linkend="sql-syntax-strings"/>).
+   Some forms of path expressions require string literals within them.
+   These embedded string literals follow JavaScript/ECMAScript conventions:
+   they must be surrounded by double quotes, and backslash escapes may be
+   used within them to represent otherwise-hard-to-type characters.
+   In particular, the way to write a double quote within an embedded string
+   literal is <literal>\"</literal>, and to write a backslash itself, you
+   must write <literal>\\</literal>.  Other special backslash sequences
+   include those recognized in JSON strings:
+   <literal>\b</literal>,
+   <literal>\f</literal>,
+   <literal>\n</literal>,
+   <literal>\r</literal>,
+   <literal>\t</literal>,
+   <literal>\v</literal>
+   for various ASCII control characters, and
+   <literal>\u<replaceable>NNNN</replaceable></literal> for a Unicode
+   character identified by its 4-hex-digit code point.  The backslash
+   syntax also includes two cases not allowed by JSON:
+   <literal>\x<replaceable>NN</replaceable></literal> for a character code
+   written with only two hex digits, and
+   <literal>\u{<replaceable>N...</replaceable>}</literal> for a character
+   code written with 1 to 6 hex digits.
   </para>
 
   <para>
