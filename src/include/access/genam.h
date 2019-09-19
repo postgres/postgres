@@ -118,6 +118,13 @@ typedef enum IndexUniqueCheck
 } IndexUniqueCheck;
 
 
+/* Nullable "ORDER BY col op const" distance */
+typedef struct IndexOrderByDistance
+{
+	double		value;
+	bool		isnull;
+} IndexOrderByDistance;
+
 /*
  * generalized index_ interface routines (in indexam.c)
  */
@@ -179,8 +186,7 @@ extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
 								   uint16 procnum);
 extern void index_store_float8_orderby_distances(IndexScanDesc scan,
 												 Oid *orderByTypes,
-												 double *distanceValues,
-												 bool *distanceNulls,
+												 IndexOrderByDistance *distances,
 												 bool recheckOrderBy);
 
 /*
