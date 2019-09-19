@@ -143,8 +143,7 @@
 
        <listitem>
         <para>
-         Discovery of LDAP servers if <productname>PostgreSQL</productname> is
-         built with <productname>OpenLDAP</productname>
+         Discovery of LDAP servers using <acronym>DNS SRV</acronym> records
         </para>
        </listitem>
 
@@ -1722,7 +1721,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 
        <para>
         This avoids the requirement of specifying
-        <literal>ldapserver</literal>, and is only supported if
+        <literal>ldapserver</literal>.  It is only supported if
         <productname>PostgreSQL</productname> is compiled with
         <productname>OpenLDAP</productname>.
        </para>
