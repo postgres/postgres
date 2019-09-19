@@ -146,7 +146,6 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       clause for a table can also include <literal>OIDS=FALSE</literal> to
       specify that rows of the new table should contain no OIDs (object
       identifiers), <literal>OIDS=TRUE</literal> is not supported anymore.
-      OIDs.
      </para>
     </listitem>
    </varlistentry>
