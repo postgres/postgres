@@ -117,6 +117,13 @@ typedef enum IndexUniqueCheck
 } IndexUniqueCheck;
 
 
+/* Nullable "ORDER BY col op const" distance */
+typedef struct IndexOrderByDistance
+{
+	double		value;
+	bool		isnull;
+} IndexOrderByDistance;
+
 /*
  * generalized index_ interface routines (in indexam.c)
  */

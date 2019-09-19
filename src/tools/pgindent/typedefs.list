@@ -991,6 +991,7 @@ IndexList
 IndexOnlyScan
 IndexOnlyScanState
 IndexOptInfo
+IndexOrderByDistance
 IndexPath
 IndexQualInfo
 IndexRuntimeKeyInfo
