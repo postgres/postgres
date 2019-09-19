@@ -14,6 +14,7 @@
 #ifndef GIST_PRIVATE_H
 #define GIST_PRIVATE_H
 
+#include "access/genam.h"
 #include "access/gist.h"
 #include "access/itup.h"
 #include "fmgr.h"
@@ -145,27 +146,13 @@ typedef struct GISTSearchTreeItem
 	GISTSearchItem *head;		/* first chain member */
 	GISTSearchItem *lastHeap;	/* last heap-tuple member, if any */
 
-	/*
-	 * This data structure is followed by arrays of distance values and
-	 * distance null flags.  Size of both arrays is
-	 * IndexScanDesc->numberOfOrderBys. See macros below for accessing those
-	 * arrays.
-	 */
+	/* numberOfOrderBys entries */
+	IndexOrderByDistance distances[FLEXIBLE_ARRAY_MEMBER];
 } GISTSearchTreeItem;
 
-#define SizeOfGISTSearchTreeItem(n_distances) (DOUBLEALIGN(sizeof(GISTSearchTreeItem)) + \
-	(sizeof(double) + sizeof(bool)) * (n_distances))
-
-/*
- * We actually don't need n_distances compute pointer to distance values.
- * Nevertheless take n_distances as argument to have same arguments list for
- * GISTSearchItemDistanceValues() and GISTSearchItemDistanceNulls().
- */
-#define GISTSearchTreeItemDistanceValues(item, n_distances) \
-	((double *) ((Pointer) (item) + DOUBLEALIGN(sizeof(GISTSearchTreeItem))))
-
-#define GISTSearchTreeItemDistanceNulls(item, n_distances) \
-	((bool *) ((Pointer) (item) + DOUBLEALIGN(sizeof(GISTSearchTreeItem)) + sizeof(double) * (n_distances)))
+#define SizeOfGISTSearchTreeItem(n_distances) \
+	(offsetof(GISTSearchTreeItem, distances) + \
+	 sizeof(IndexOrderByDistance) * (n_distances))
 
 /*
  * GISTScanOpaqueData: private state for a scan of a GiST index
@@ -182,8 +169,7 @@ typedef struct GISTScanOpaqueData
 
 	/* pre-allocated workspace arrays */
 	GISTSearchTreeItem *tmpTreeItem;	/* workspace to pass to rb_insert */
-	double	   *distanceValues; /* output area for gistindex_keytest */
-	bool	   *distanceNulls;
+	IndexOrderByDistance *distances;	/* output area for gistindex_keytest */
 
 	/* In a non-ordered search, returnable heap items are stored here: */
 	GISTSearchHeapItem pageData[BLCKSZ / sizeof(IndexTupleData)];

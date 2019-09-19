@@ -34,9 +34,8 @@
  * request it.  recheck is not interesting when examining a non-leaf entry,
  * since we must visit the lower index page if there's any doubt.
  *
- * If we are doing an ordered scan, so->distancesValues[] and
- * so->distancesNulls[] is filled with distance data from the distance()
- * functions before returning success.
+ * If we are doing an ordered scan, so->distances[] is filled with distance
+ * data from the distance() functions before returning success.
  *
  * We must decompress the key in the IndexTuple before passing it to the
  * sk_funcs (which actually are the opclass Consistent or Distance methods).
@@ -56,8 +55,7 @@ gistindex_keytest(IndexScanDesc scan,
 	GISTSTATE  *giststate = so->giststate;
 	ScanKey		key = scan->keyData;
 	int			keySize = scan->numberOfKeys;
-	double	   *distance_value_p;
-	bool	   *distance_null_p;
+	IndexOrderByDistance *distance_p;
 	Relation	r = scan->indexRelation;
 
 	*recheck_p = false;
@@ -75,8 +73,8 @@ gistindex_keytest(IndexScanDesc scan,
 			elog(ERROR, "invalid GiST tuple found on leaf page");
 		for (i = 0; i < scan->numberOfOrderBys; i++)
 		{
-			so->distanceValues[i] = -get_float8_infinity();
-			so->distanceNulls[i] = false;
+			so->distances[i].value = -get_float8_infinity();
+			so->distances[i].isnull = false;
 		}
 		return true;
 	}
@@ -160,8 +158,7 @@ gistindex_keytest(IndexScanDesc scan,
 
 	/* OK, it passes --- now let's compute the distances */
 	key = scan->orderByData;
-	distance_value_p = so->distanceValues;
-	distance_null_p = so->distanceNulls;
+	distance_p = so->distances;
 	keySize = scan->numberOfOrderBys;
 	while (keySize > 0)
 	{
@@ -176,8 +173,8 @@ gistindex_keytest(IndexScanDesc scan,
 		if ((key->sk_flags & SK_ISNULL) || isNull)
 		{
 			/* Assume distance computes as null */
-			*distance_value_p = 0.0;
-			*distance_null_p = true;
+			distance_p->value = 0.0;
+			distance_p->isnull = true;
 		}
 		else
 		{
@@ -208,13 +205,12 @@ gistindex_keytest(IndexScanDesc scan,
 									 key->sk_argument,
 									 Int16GetDatum(key->sk_strategy),
 									 ObjectIdGetDatum(key->sk_subtype));
-			*distance_value_p = DatumGetFloat8(dist);
-			*distance_null_p = false;
+			distance_p->value = DatumGetFloat8(dist);
+			distance_p->isnull = false;
 		}
 
 		key++;
-		distance_value_p++;
-		distance_null_p++;
+		distance_p++;
 		keySize--;
 	}
 
@@ -227,8 +223,7 @@ gistindex_keytest(IndexScanDesc scan,
  *
  * scan: index scan we are executing
  * pageItem: search queue item identifying an index page to scan
- * myDistanceValues: distances array associated with pageItem, or NULL at the root
- * myDistanceNulls: null flags for myDistanceValues array, or NULL at the root
+ * myDistances: distances array associated with pageItem, or NULL at the root
  * tbm: if not NULL, gistgetbitmap's output bitmap
  * ntids: if not NULL, gistgetbitmap's output tuple counter
  *
@@ -244,8 +239,7 @@ gistindex_keytest(IndexScanDesc scan,
  */
 static void
 gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
-			 double *myDistanceValues, bool *myDistanceNulls,
-			 TIDBitmap *tbm, int64 *ntids)
+			 IndexOrderByDistance *myDistances, TIDBitmap *tbm, int64 *ntids)
 {
 	GISTScanOpaque so = (GISTScanOpaque) scan->opaque;
 	Buffer		buffer;
@@ -280,7 +274,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 		GISTSearchItem *item;
 
 		/* This can't happen when starting at the root */
-		Assert(myDistanceValues != NULL && myDistanceNulls != NULL);
+		Assert(myDistances != NULL);
 
 		oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
@@ -293,10 +287,8 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 		/* Insert it into the queue using same distances as for this page */
 		tmpItem->head = item;
 		tmpItem->lastHeap = NULL;
-		memcpy(GISTSearchTreeItemDistanceValues(tmpItem, scan->numberOfOrderBys),
-			   myDistanceValues, sizeof(double) * scan->numberOfOrderBys);
-		memcpy(GISTSearchTreeItemDistanceNulls(tmpItem, scan->numberOfOrderBys),
-			   myDistanceNulls, sizeof(bool) * scan->numberOfOrderBys);
+		memcpy(tmpItem->distances, myDistances,
+			   sizeof(tmpItem->distances[0]) * scan->numberOfOrderBys);
 
 		(void) rb_insert(so->queue, (RBNode *) tmpItem, &isNew);
 
@@ -387,10 +379,8 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 			/* Insert it into the queue using new distance data */
 			tmpItem->head = item;
 			tmpItem->lastHeap = GISTSearchItemIsHeap(*item) ? item : NULL;
-			memcpy(GISTSearchTreeItemDistanceValues(tmpItem, nOrderBys),
-				   so->distanceValues, sizeof(double) * nOrderBys);
-			memcpy(GISTSearchTreeItemDistanceNulls(tmpItem, nOrderBys),
-				   so->distanceNulls, sizeof(bool) * nOrderBys);
+			memcpy(tmpItem->distances, so->distances,
+				   sizeof(tmpItem->distances[0]) * nOrderBys);
 
 			(void) rb_insert(so->queue, (RBNode *) tmpItem, &isNew);
 
@@ -473,10 +463,7 @@ getNextNearest(IndexScanDesc scan)
 			/* visit an index page, extract its items into queue */
 			CHECK_FOR_INTERRUPTS();
 
-			gistScanPage(scan, item,
-						 GISTSearchTreeItemDistanceValues(so->curTreeItem, scan->numberOfOrderBys),
-						 GISTSearchTreeItemDistanceNulls(so->curTreeItem, scan->numberOfOrderBys),
-						 NULL, NULL);
+			gistScanPage(scan, item, so->curTreeItem->distances, NULL, NULL);
 		}
 
 		pfree(item);
@@ -514,7 +501,7 @@ gistgettuple(PG_FUNCTION_ARGS)
 
 		fakeItem.blkno = GIST_ROOT_BLKNO;
 		memset(&fakeItem.data.parentlsn, 0, sizeof(GistNSN));
-		gistScanPage(scan, &fakeItem, NULL, NULL, NULL, NULL);
+		gistScanPage(scan, &fakeItem, NULL, NULL, NULL);
 	}
 
 	if (scan->numberOfOrderBys > 0)
@@ -552,10 +539,7 @@ gistgettuple(PG_FUNCTION_ARGS)
 				 * this page, we fall out of the inner "do" and loop around to
 				 * return them.
 				 */
-				gistScanPage(scan, item,
-							 GISTSearchTreeItemDistanceValues(so->curTreeItem, scan->numberOfOrderBys),
-							 GISTSearchTreeItemDistanceNulls(so->curTreeItem, scan->numberOfOrderBys),
-							 NULL, NULL);
+				gistScanPage(scan, item, so->curTreeItem->distances, NULL, NULL);
 
 				pfree(item);
 			} while (so->nPageData == 0);
@@ -586,7 +570,7 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 
 	fakeItem.blkno = GIST_ROOT_BLKNO;
 	memset(&fakeItem.data.parentlsn, 0, sizeof(GistNSN));
-	gistScanPage(scan, &fakeItem, NULL, NULL, tbm, &ntids);
+	gistScanPage(scan, &fakeItem, NULL, tbm, &ntids);
 
 	/*
 	 * While scanning a leaf page, ItemPointers of matching heap tuples will
@@ -601,10 +585,7 @@ gistgetbitmap(PG_FUNCTION_ARGS)
 
 		CHECK_FOR_INTERRUPTS();
 
-		gistScanPage(scan, item,
-					 GISTSearchTreeItemDistanceValues(so->curTreeItem, scan->numberOfOrderBys),
-					 GISTSearchTreeItemDistanceNulls(so->curTreeItem, scan->numberOfOrderBys),
-					 tbm, &ntids);
+		gistScanPage(scan, item, so->curTreeItem->distances, tbm, &ntids);
 
 		pfree(item);
 	}

@@ -33,26 +33,23 @@ GISTSearchTreeItemComparator(const RBNode *a, const RBNode *b, void *arg)
 	const GISTSearchTreeItem *sb = (const GISTSearchTreeItem *) b;
 	IndexScanDesc scan = (IndexScanDesc) arg;
 	int			i;
-	double	   *da = GISTSearchTreeItemDistanceValues(sa, scan->numberOfOrderBys),
-			   *db = GISTSearchTreeItemDistanceValues(sb, scan->numberOfOrderBys);
-	bool	   *na = GISTSearchTreeItemDistanceNulls(sa, scan->numberOfOrderBys),
-			   *nb = GISTSearchTreeItemDistanceNulls(sb, scan->numberOfOrderBys);
 
 	/* Order according to distance comparison */
 	for (i = 0; i < scan->numberOfOrderBys; i++)
 	{
-		if (na[i])
+		if (sa->distances[i].isnull)
 		{
-			if (!nb[i])
+			if (!sb->distances[i].isnull)
 				return 1;
 		}
-		else if (nb[i])
+		else if (sb->distances[i].isnull)
 		{
 			return -1;
 		}
 		else
 		{
-			int			cmp = float8_cmp_internal(da[i], db[i]);
+			int			cmp = float8_cmp_internal(sa->distances[i].value,
+												  sb->distances[i].value);
 
 			if (cmp != 0)
 				return cmp;
@@ -147,8 +144,7 @@ gistbeginscan(PG_FUNCTION_ARGS)
 
 	/* workspaces with size dependent on numberOfOrderBys: */
 	so->tmpTreeItem = palloc(SizeOfGISTSearchTreeItem(scan->numberOfOrderBys));
-	so->distanceValues = palloc(sizeof(double) * scan->numberOfOrderBys);
-	so->distanceNulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
+	so->distances = palloc(sizeof(so->distances[0]) * scan->numberOfOrderBys);
 	so->qual_ok = true;			/* in case there are zero keys */
 
 	scan->opaque = so;
