@@ -244,7 +244,7 @@ test=# SELECT * FROM heap_page_item_attrs(get_raw_page('pg_class', 0), 'pg_class
 
    <varlistentry>
     <term>
-     <function>heap_tuple_infomask_flags(t_infomask integer, t_infomask2 integer, decode_combined bool) returns text[]</function>
+     <function>heap_tuple_infomask_flags(t_infomask integer, t_infomask2 integer) returns record</function>
      <indexterm>
       <primary>heap_tuple_infomask_flags</primary>
      </indexterm>
@@ -255,21 +255,21 @@ test=# SELECT * FROM heap_page_item_attrs(get_raw_page('pg_class', 0), 'pg_class
       <structfield>t_infomask</structfield> and
       <structfield>t_infomask2</structfield> returned by
       <function>heap_page_items</function> into a human-readable
-      array of flag names.  For example:
+      set of arrays made of flag names, with one column for all
+      the flags and one column for combined flags. For example:
 <screen>
-test=# SELECT t_ctid, heap_tuple_infomask_flags(t_infomask, t_infomask2) AS flags
-         FROM heap_page_items(get_raw_page('pg_class', 0))
+test=# SELECT t_ctid, raw_flags, combined_flags
+         FROM heap_page_items(get_raw_page('pg_class', 0)),
+           LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2)
          WHERE t_infomask IS NOT NULL OR t_infomask2 IS NOT NULL;
 </screen>
       This function should be called with the same arguments as the return
       attributes of <function>heap_page_items</function>.
      </para>
      <para>
-      If <parameter>decode_combined</parameter> is <literal>true</literal>,
-      combined flags like <literal>HEAP_XMIN_FROZEN</literal> are
-      returned instead of raw flags (<literal>HEAP_XMIN_COMMITTED</literal>
-      and <literal>HEAP_XMIN_INVALID</literal> in this case). Default value
-      is <literal>false</literal>.
+      Combined flags are displayed for source-level macros that take into
+      account the value of more than one raw bit, such as
+      <literal>HEAP_XMIN_FROZEN</literal>.
      </para>
      <para>
       See <filename>src/include/access/htup_details.h</filename> for

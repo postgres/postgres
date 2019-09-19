@@ -86,80 +86,55 @@ SELECT * FROM fsm_page_contents(get_raw_page('test1', 'fsm', 0));
 -- always be the same in all test runs. we show raw flags by
 -- default: HEAP_XMIN_COMMITTED and HEAP_XMIN_INVALID.
 VACUUM FREEZE test1;
-SELECT t_infomask, t_infomask2, flags
+SELECT t_infomask, t_infomask2, raw_flags, combined_flags
 FROM heap_page_items(get_raw_page('test1', 0)),
-     LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2) m(flags);
- t_infomask | t_infomask2 |                           flags                           
-------------+-------------+-----------------------------------------------------------
-       2816 |           2 | {HEAP_XMAX_INVALID,HEAP_XMIN_COMMITTED,HEAP_XMIN_INVALID}
+     LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2);
+ t_infomask | t_infomask2 |                         raw_flags                         |   combined_flags   
+------------+-------------+-----------------------------------------------------------+--------------------
+       2816 |           2 | {HEAP_XMIN_COMMITTED,HEAP_XMIN_INVALID,HEAP_XMAX_INVALID} | {HEAP_XMIN_FROZEN}
 (1 row)
 
 -- output the decoded flag HEAP_XMIN_FROZEN instead
-SELECT t_infomask, t_infomask2, flags
+SELECT t_infomask, t_infomask2, raw_flags, combined_flags
 FROM heap_page_items(get_raw_page('test1', 0)),
-     LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2, true) m(flags);
- t_infomask | t_infomask2 |                flags                 
-------------+-------------+--------------------------------------
-       2816 |           2 | {HEAP_XMAX_INVALID,HEAP_XMIN_FROZEN}
+     LATERAL heap_tuple_infomask_flags(t_infomask, t_infomask2);
+ t_infomask | t_infomask2 |                         raw_flags                         |   combined_flags   
+------------+-------------+-----------------------------------------------------------+--------------------
+       2816 |           2 | {HEAP_XMIN_COMMITTED,HEAP_XMIN_INVALID,HEAP_XMAX_INVALID} | {HEAP_XMIN_FROZEN}
 (1 row)
 
 -- tests for decoding of combined flags
 -- HEAP_XMAX_SHR_LOCK = (HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_KEYSHR_LOCK)
-SELECT heap_tuple_infomask_flags(x'0050'::int, 0, true);
- heap_tuple_infomask_flags 
----------------------------
- {HEAP_XMAX_SHR_LOCK}
-(1 row)
-
-SELECT heap_tuple_infomask_flags(x'0050'::int, 0, false);
-          heap_tuple_infomask_flags          
----------------------------------------------
- {HEAP_XMAX_EXCL_LOCK,HEAP_XMAX_KEYSHR_LOCK}
+SELECT * FROM heap_tuple_infomask_flags(x'0050'::int, 0);
+                  raw_flags                  |    combined_flags    
+---------------------------------------------+----------------------
+ {HEAP_XMAX_KEYSHR_LOCK,HEAP_XMAX_EXCL_LOCK} | {HEAP_XMAX_SHR_LOCK}
 (1 row)
 
 -- HEAP_XMIN_FROZEN = (HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID)
-SELECT heap_tuple_infomask_flags(x'0300'::int, 0, true);
- heap_tuple_infomask_flags 
----------------------------
- {HEAP_XMIN_FROZEN}
-(1 row)
-
-SELECT heap_tuple_infomask_flags(x'0300'::int, 0, false);
-        heap_tuple_infomask_flags        
------------------------------------------
- {HEAP_XMIN_COMMITTED,HEAP_XMIN_INVALID}
+SELECT * FROM heap_tuple_infomask_flags(x'0300'::int, 0);
+                raw_flags                |   combined_flags   
+-----------------------------------------+--------------------
+ {HEAP_XMIN_COMMITTED,HEAP_XMIN_INVALID} | {HEAP_XMIN_FROZEN}
 (1 row)
 
 -- HEAP_MOVED = (HEAP_MOVED_IN | HEAP_MOVED_OFF)
-SELECT heap_tuple_infomask_flags(x'C000'::int, 0, true);
- heap_tuple_infomask_flags 
----------------------------
- {HEAP_MOVED}
+SELECT * FROM heap_tuple_infomask_flags(x'C000'::int, 0);
+           raw_flags            | combined_flags 
+--------------------------------+----------------
+ {HEAP_MOVED_OFF,HEAP_MOVED_IN} | {HEAP_MOVED}
 (1 row)
 
-SELECT heap_tuple_infomask_flags(x'C000'::int, 0, false);
-   heap_tuple_infomask_flags    
---------------------------------
- {HEAP_MOVED_IN,HEAP_MOVED_OFF}
-(1 row)
-
--- HEAP_LOCKED_UPGRADED = (HEAP_XMAX_IS_MULTI | HEAP_XMAX_LOCK_ONLY)
-SELECT heap_tuple_infomask_flags(x'1080'::int, 0, true);
- heap_tuple_infomask_flags 
----------------------------
- {HEAP_LOCKED_UPGRADED}
-(1 row)
-
-SELECT heap_tuple_infomask_flags(x'1080'::int, 0, false);
-        heap_tuple_infomask_flags         
-------------------------------------------
- {HEAP_XMAX_LOCK_ONLY,HEAP_XMAX_IS_MULTI}
+SELECT * FROM heap_tuple_infomask_flags(x'C000'::int, 0);
+           raw_flags            | combined_flags 
+--------------------------------+----------------
+ {HEAP_MOVED_OFF,HEAP_MOVED_IN} | {HEAP_MOVED}
 (1 row)
 
 -- test all flags of t_infomask and t_infomask2
-SELECT unnest(heap_tuple_infomask_flags(x'FFFF'::int, x'FFFF'::int, false))
-  AS flags ORDER BY 1;
-         flags         
+SELECT unnest(raw_flags)
+  FROM heap_tuple_infomask_flags(x'FFFF'::int, x'FFFF'::int) ORDER BY 1;
+        unnest         
 -----------------------
  HEAP_COMBOCID
  HEAP_HASEXTERNAL
@@ -182,85 +157,28 @@ SELECT unnest(heap_tuple_infomask_flags(x'FFFF'::int, x'FFFF'::int, false))
  HEAP_XMIN_INVALID
 (19 rows)
 
-SELECT unnest(heap_tuple_infomask_flags(x'FFFF'::int, x'FFFF'::int, true))
-  AS flags ORDER BY 1;
-        flags        
----------------------
- HEAP_COMBOCID
- HEAP_HASEXTERNAL
- HEAP_HASNULL
- HEAP_HASOID_OLD
- HEAP_HASVARWIDTH
- HEAP_HOT_UPDATED
- HEAP_KEYS_UPDATED
+SELECT unnest(combined_flags)
+  FROM heap_tuple_infomask_flags(x'FFFF'::int, x'FFFF'::int) ORDER BY 1;
+       unnest       
+--------------------
  HEAP_MOVED
- HEAP_ONLY_TUPLE
- HEAP_UPDATED
- HEAP_XMAX_COMMITTED
- HEAP_XMAX_INVALID
- HEAP_XMAX_IS_MULTI
- HEAP_XMAX_LOCK_ONLY
  HEAP_XMAX_SHR_LOCK
  HEAP_XMIN_FROZEN
-(16 rows)
+(3 rows)
 
-SELECT unnest(heap_tuple_infomask_flags(-1, -1, false))
-  AS flags ORDER BY 1;
-         flags         
------------------------
- HEAP_COMBOCID
- HEAP_HASEXTERNAL
- HEAP_HASNULL
- HEAP_HASOID_OLD
- HEAP_HASVARWIDTH
- HEAP_HOT_UPDATED
- HEAP_KEYS_UPDATED
- HEAP_MOVED_IN
- HEAP_MOVED_OFF
- HEAP_ONLY_TUPLE
- HEAP_UPDATED
- HEAP_XMAX_COMMITTED
- HEAP_XMAX_EXCL_LOCK
- HEAP_XMAX_INVALID
- HEAP_XMAX_IS_MULTI
- HEAP_XMAX_KEYSHR_LOCK
- HEAP_XMAX_LOCK_ONLY
- HEAP_XMIN_COMMITTED
- HEAP_XMIN_INVALID
-(19 rows)
+-- no flags at all
+SELECT * FROM heap_tuple_infomask_flags(0, 0);
+ raw_flags | combined_flags 
+-----------+----------------
+ {}        | {}
+(1 row)
 
-SELECT unnest(heap_tuple_infomask_flags(-1, -1, true))
-  AS flags ORDER BY 1;
-        flags        
----------------------
- HEAP_COMBOCID
- HEAP_HASEXTERNAL
- HEAP_HASNULL
- HEAP_HASOID_OLD
- HEAP_HASVARWIDTH
- HEAP_HOT_UPDATED
- HEAP_KEYS_UPDATED
- HEAP_MOVED
- HEAP_ONLY_TUPLE
- HEAP_UPDATED
- HEAP_XMAX_COMMITTED
- HEAP_XMAX_INVALID
- HEAP_XMAX_IS_MULTI
- HEAP_XMAX_LOCK_ONLY
- HEAP_XMAX_SHR_LOCK
- HEAP_XMIN_FROZEN
-(16 rows)
-
--- no flags
-SELECT unnest(heap_tuple_infomask_flags(0, 0, false));
- unnest 
---------
-(0 rows)
-
-SELECT unnest(heap_tuple_infomask_flags(0, 0, true));
- unnest 
---------
-(0 rows)
+-- no combined flags
+SELECT * FROM heap_tuple_infomask_flags(x'0010'::int, 0);
+        raw_flags        | combined_flags 
+-------------------------+----------------
+ {HEAP_XMAX_KEYSHR_LOCK} | {}
+(1 row)
 
 DROP TABLE test1;
 -- check that using any of these functions with a partitioned table or index

@@ -507,99 +507,117 @@ PG_FUNCTION_INFO_V1(heap_tuple_infomask_flags);
 Datum
 heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 {
+#define HEAP_TUPLE_INFOMASK_COLS 2
+	Datum		values[HEAP_TUPLE_INFOMASK_COLS];
+	bool		nulls[HEAP_TUPLE_INFOMASK_COLS];
 	uint16		t_infomask = PG_GETARG_INT16(0);
 	uint16		t_infomask2 = PG_GETARG_INT16(1);
-	bool		decode_combined = PG_GETARG_BOOL(2);
 	int			cnt = 0;
 	ArrayType  *a;
 	int			bitcnt;
-	Datum	   *d;
+	Datum	   *flags;
+	TupleDesc	tupdesc;
+	HeapTuple	tuple;
 
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
 	bitcnt = pg_popcount((const char *) &t_infomask, sizeof(uint16)) +
 		pg_popcount((const char *) &t_infomask2, sizeof(uint16));
 
-	/* If no flags, return an empty array */
-	if (bitcnt <= 0)
-		PG_RETURN_POINTER(construct_empty_array(TEXTOID));
+	/* Initialize values and NULL flags arrays */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, 0, sizeof(nulls));
 
-	d = (Datum *) palloc0(sizeof(Datum) * bitcnt);
+	/* If no flags, return a set of empty arrays */
+	if (bitcnt <= 0)
+	{
+		values[0] = PointerGetDatum(construct_empty_array(TEXTOID));
+		values[1] = PointerGetDatum(construct_empty_array(TEXTOID));
+		tuple = heap_form_tuple(tupdesc, values, nulls);
+		PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
+	}
+
+	/* build set of raw flags */
+	flags = (Datum *) palloc0(sizeof(Datum) * bitcnt);
 
 	/* decode t_infomask */
 	if ((t_infomask & HEAP_HASNULL) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_HASNULL");
+		flags[cnt++] = CStringGetTextDatum("HEAP_HASNULL");
 	if ((t_infomask & HEAP_HASVARWIDTH) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_HASVARWIDTH");
+		flags[cnt++] = CStringGetTextDatum("HEAP_HASVARWIDTH");
 	if ((t_infomask & HEAP_HASEXTERNAL) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_HASEXTERNAL");
+		flags[cnt++] = CStringGetTextDatum("HEAP_HASEXTERNAL");
 	if ((t_infomask & HEAP_HASOID_OLD) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_HASOID_OLD");
+		flags[cnt++] = CStringGetTextDatum("HEAP_HASOID_OLD");
+	if ((t_infomask & HEAP_XMAX_KEYSHR_LOCK) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMAX_KEYSHR_LOCK");
 	if ((t_infomask & HEAP_COMBOCID) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_COMBOCID");
+		flags[cnt++] = CStringGetTextDatum("HEAP_COMBOCID");
+	if ((t_infomask & HEAP_XMAX_EXCL_LOCK) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMAX_EXCL_LOCK");
+	if ((t_infomask & HEAP_XMAX_LOCK_ONLY) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMAX_LOCK_ONLY");
+	if ((t_infomask & HEAP_XMIN_COMMITTED) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMIN_COMMITTED");
+	if ((t_infomask & HEAP_XMIN_INVALID) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMIN_INVALID");
 	if ((t_infomask & HEAP_XMAX_COMMITTED) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_XMAX_COMMITTED");
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMAX_COMMITTED");
 	if ((t_infomask & HEAP_XMAX_INVALID) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_XMAX_INVALID");
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMAX_INVALID");
+	if ((t_infomask & HEAP_XMAX_IS_MULTI) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMAX_IS_MULTI");
 	if ((t_infomask & HEAP_UPDATED) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_UPDATED");
-
-	/* decode combined masks of t_infomaks */
-	if (decode_combined && (t_infomask & HEAP_XMAX_SHR_LOCK) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_XMAX_SHR_LOCK");
-	else
-	{
-		if ((t_infomask & HEAP_XMAX_EXCL_LOCK) != 0)
-			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_EXCL_LOCK");
-		if ((t_infomask & HEAP_XMAX_KEYSHR_LOCK) != 0)
-			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_KEYSHR_LOCK");
-	}
-
-	if (decode_combined && (t_infomask & HEAP_XMIN_FROZEN) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_XMIN_FROZEN");
-	else
-	{
-		if ((t_infomask & HEAP_XMIN_COMMITTED) != 0)
-			d[cnt++] = CStringGetTextDatum("HEAP_XMIN_COMMITTED");
-		if ((t_infomask & HEAP_XMIN_INVALID) != 0)
-			d[cnt++] = CStringGetTextDatum("HEAP_XMIN_INVALID");
-	}
-
-	if (decode_combined && (t_infomask & HEAP_MOVED) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_MOVED");
-	else
-	{
-		if ((t_infomask & HEAP_MOVED_IN) != 0)
-			d[cnt++] = CStringGetTextDatum("HEAP_MOVED_IN");
-		if ((t_infomask & HEAP_MOVED_OFF) != 0)
-			d[cnt++] = CStringGetTextDatum("HEAP_MOVED_OFF");
-	}
-
-	if (decode_combined && HEAP_LOCKED_UPGRADED(t_infomask))
-		d[cnt++] = CStringGetTextDatum("HEAP_LOCKED_UPGRADED");
-	else
-	{
-		if (HEAP_XMAX_IS_LOCKED_ONLY(t_infomask))
-			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_LOCK_ONLY");
-		if ((t_infomask & HEAP_XMAX_IS_MULTI) != 0)
-			d[cnt++] = CStringGetTextDatum("HEAP_XMAX_IS_MULTI");
-	}
+		flags[cnt++] = CStringGetTextDatum("HEAP_UPDATED");
+	if ((t_infomask & HEAP_MOVED_OFF) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_MOVED_OFF");
+	if ((t_infomask & HEAP_MOVED_IN) != 0)
+		flags[cnt++] = CStringGetTextDatum("HEAP_MOVED_IN");
 
 	/* decode t_infomask2 */
 	if ((t_infomask2 & HEAP_KEYS_UPDATED) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_KEYS_UPDATED");
+		flags[cnt++] = CStringGetTextDatum("HEAP_KEYS_UPDATED");
 	if ((t_infomask2 & HEAP_HOT_UPDATED) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_HOT_UPDATED");
+		flags[cnt++] = CStringGetTextDatum("HEAP_HOT_UPDATED");
 	if ((t_infomask2 & HEAP_ONLY_TUPLE) != 0)
-		d[cnt++] = CStringGetTextDatum("HEAP_ONLY_TUPLE");
+		flags[cnt++] = CStringGetTextDatum("HEAP_ONLY_TUPLE");
 
+	/* build value */
 	Assert(cnt <= bitcnt);
-	a = construct_array(d, cnt, TEXTOID, -1, false, 'i');
+	a = construct_array(flags, cnt, TEXTOID, -1, false, 'i');
+	values[0] = PointerGetDatum(a);
 
-	pfree(d);
+	/*
+	 * Build set of combined flags.  Use the same array as previously, this
+	 * keeps the code simple.
+	 */
+	cnt = 0;
+	MemSet(flags, 0, sizeof(Datum) * bitcnt);
 
-	PG_RETURN_POINTER(a);
+	/* decode combined masks of t_infomask */
+	if ((t_infomask & HEAP_XMAX_SHR_LOCK) == HEAP_XMAX_SHR_LOCK)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMAX_SHR_LOCK");
+	if ((t_infomask & HEAP_XMIN_FROZEN) == HEAP_XMIN_FROZEN)
+		flags[cnt++] = CStringGetTextDatum("HEAP_XMIN_FROZEN");
+	if ((t_infomask & HEAP_MOVED) == HEAP_MOVED)
+		flags[cnt++] = CStringGetTextDatum("HEAP_MOVED");
+
+	/* Build an empty array if there are no combined flags */
+	if (cnt == 0)
+		a = construct_empty_array(TEXTOID);
+	else
+		a = construct_array(flags, cnt, TEXTOID, -1, false, 'i');
+	pfree(flags);
+	values[1] = PointerGetDatum(a);
+
+	/* Returns the record as Datum */
+	tuple = heap_form_tuple(tupdesc, values, nulls);
+	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
 }
