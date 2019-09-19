@@ -6512,7 +6512,7 @@ DATABASE <replaceable>connection_target</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">connection_object</replaceable></term>
+      <term><replaceable class="parameter">connection_name</replaceable></term>
       <listitem>
        <para>
         An optional identifier for the connection, so that it can be
