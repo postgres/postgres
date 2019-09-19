@@ -138,29 +138,15 @@ typedef struct GISTSearchItem
 		GISTSearchHeapItem heap;	/* heap info, if heap tuple */
 	}			data;
 
-	/*
-	 * This data structure is followed by arrays of distance values and
-	 * distance null flags.  Size of both arrays is
-	 * IndexScanDesc->numberOfOrderBys. See macros below for accessing those
-	 * arrays.
-	 */
+	/* numberOfOrderBys entries */
+	IndexOrderByDistance distances[FLEXIBLE_ARRAY_MEMBER];
 } GISTSearchItem;
 
 #define GISTSearchItemIsHeap(item)	((item).blkno == InvalidBlockNumber)
 
-#define SizeOfGISTSearchItem(n_distances) (DOUBLEALIGN(sizeof(GISTSearchItem)) + \
-	(sizeof(double) + sizeof(bool)) * (n_distances))
-
-/*
- * We actually don't need n_distances compute pointer to distance values.
- * Nevertheless take n_distances as argument to have same arguments list for
- * GISTSearchItemDistanceValues() and GISTSearchItemDistanceNulls().
- */
-#define GISTSearchItemDistanceValues(item, n_distances) \
-	((double *) ((Pointer) (item) + DOUBLEALIGN(sizeof(GISTSearchItem))))
-
-#define GISTSearchItemDistanceNulls(item, n_distances) \
-	((bool *) ((Pointer) (item) + DOUBLEALIGN(sizeof(GISTSearchItem)) + sizeof(double) * (n_distances)))
+#define SizeOfGISTSearchItem(n_distances) \
+	(offsetof(GISTSearchItem, distances) + \
+	 sizeof(IndexOrderByDistance) * (n_distances))
 
 /*
  * GISTScanOpaqueData: private state for a scan of a GiST index
@@ -176,8 +162,7 @@ typedef struct GISTScanOpaqueData
 	bool		firstCall;		/* true until first gistgettuple call */
 
 	/* pre-allocated workspace arrays */
-	double	   *distanceValues; /* output area for gistindex_keytest */
-	bool	   *distanceNulls;
+	IndexOrderByDistance *distances;	/* output area for gistindex_keytest */
 
 	/* info about killed items if any (killedItems is NULL if never used) */
 	OffsetNumber *killedItems;	/* offset numbers of killed items */
