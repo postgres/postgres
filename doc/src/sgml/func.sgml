@@ -5970,6 +5970,145 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
 <!-- end re_syntax.n man page -->
 
+   <sect3 id="posix-vs-xquery">
+   <title>Differences From XQuery (<literal>LIKE_REGEX</literal>)</title>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary><literal>LIKE_REGEX</literal></primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>XQuery regular expressions</primary>
+   </indexterm>
+
+    <para>
+     Since SQL:2008, the SQL standard includes
+     a <literal>LIKE_REGEX</literal> operator that performs pattern
+     matching according to the XQuery regular expression
+     standard.  <productname>PostgreSQL</productname> does not yet
+     implement this operator, but you can get very similar behavior using
+     the <function>regexp_match()</function> function, since XQuery
+     regular expressions are quite close to the ARE syntax described above.
+    </para>
+
+    <para>
+     Notable differences between the existing POSIX-based
+     regular-expression feature and XQuery regular expressions include:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+        XQuery character class subtraction is not supported.  An example of
+        this feature is using the following to match only English
+        consonants: <literal>[a-z-[aeiou]]</literal>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery character class shorthands <literal>\c</literal>,
+        <literal>\C</literal>, <literal>\i</literal>,
+        and <literal>\I</literal> are not supported.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery character class elements
+        using <literal>\p{UnicodeProperty}</literal> or the
+        inverse <literal>\P{UnicodeProperty}</literal> are not supported.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        POSIX interprets character classes such as <literal>\w</literal>
+        (see <xref linkend="posix-class-shorthand-escapes-table"/>)
+        according to the prevailing locale (which you can control by
+        attaching a <literal>COLLATE</literal> clause to the operator or
+        function).  XQuery specifies these classes by reference to Unicode
+        character properties, so equivalent behavior is obtained only with
+        a locale that follows the Unicode rules.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The SQL standard (not XQuery itself) attempts to cater for more
+        variants of <quote>newline</quote> than POSIX does.  The
+        newline-sensitive matching options described above consider only
+        ASCII NL (<literal>\n</literal>) to be a newline, but SQL would have
+        us treat CR (<literal>\r</literal>), CRLF (<literal>\r\n</literal>)
+        (a Windows-style newline), and some Unicode-only characters like
+        LINE SEPARATOR (U+2028) as newlines as well.
+        Notably, <literal>.</literal> and <literal>\s</literal> should
+        count <literal>\r\n</literal> as one character not two according to
+        SQL.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Of the character-entry escapes described in
+        <xref linkend="posix-character-entry-escapes-table"/>,
+        XQuery supports only <literal>\n</literal>, <literal>\r</literal>,
+        and <literal>\t</literal>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery does not support
+        the <literal>[:<replaceable>name</replaceable>:]</literal> syntax
+        for character classes within bracket expressions.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery does not have lookahead or lookbehind constraints,
+        nor any of the constraint escapes described in
+        <xref linkend="posix-constraint-escapes-table"/>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The metasyntax forms described in <xref linkend="posix-metasyntax"/>
+        do not exist in XQuery.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The regular expression flag letters defined by XQuery are
+        related to but not the same as the option letters for POSIX
+        (<xref linkend="posix-embedded-options-table"/>).  While the
+        <literal>i</literal> and <literal>q</literal> options behave the
+        same, others do not:
+        <itemizedlist>
+         <listitem>
+          <para>
+           XQuery's <literal>s</literal> (allow dot to match newline)
+           and <literal>m</literal> (allow <literal>^</literal>
+           and <literal>$</literal> to match at newlines) flags provide
+           access to the same behaviors as
+           POSIX's <literal>n</literal>, <literal>p</literal>
+           and <literal>w</literal> flags, but they
+           do <emphasis>not</emphasis> match the behavior of
+           POSIX's <literal>s</literal> and <literal>m</literal> flags.
+           Note in particular that dot-matches-newline is the default
+           behavior in POSIX but not XQuery.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           XQuery's <literal>x</literal> (ignore whitespace in pattern) flag
+           is noticeably different from POSIX's expanded-mode flag.
+           POSIX's <literal>x</literal> flag also
+           allows <literal>#</literal> to begin a comment in the pattern,
+           and POSIX will not ignore a whitespace character after a
+           backslash.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+   </sect3>
   </sect2>
  </sect1>
 
@@ -11793,6 +11932,14 @@ table2-mapping
 </programlisting>
     </para>
    </listitem>
+
+   <listitem>
+    <para>
+     There are minor differences in the interpretation of regular
+     expression patterns used in <literal>like_regex</literal> filters, as
+     described in <xref linkend="jsonpath-regular-expressions"/>.
+    </para>
+   </listitem>
   </itemizedlist>
 
    <sect3 id="strict-and-lax-modes">
@@ -11869,6 +12016,63 @@ table2-mapping
 'strict $.track.segments[*].location'
 </programlisting>
    </para>
+
+   </sect3>
+
+   <sect3 id="jsonpath-regular-expressions">
+    <title>Regular Expressions</title>
+
+    <indexterm zone="jsonpath-regular-expressions">
+     <primary><literal>LIKE_REGEX</literal></primary>
+     <secondary>in SQL/JSON</secondary>
+    </indexterm>
+
+    <para>
+     SQL/JSON path expressions allow matching text to a regular expression
+     with the <literal>like_regex</literal> filter.  For example, the
+     following SQL/JSON path query would case-insensitively match all
+     strings in an array that start with an English vowel:
+<programlisting>
+'$[*] ? (@ like_regex "^[aeiou]" flag "i")'
+</programlisting>
+    </para>
+
+    <para>
+     The optional <literal>flag</literal> string may include one or more of
+     the characters
+     <literal>i</literal> for case-insensitive match,
+     <literal>m</literal> to allow <literal>^</literal>
+     and <literal>$</literal> to match at newlines,
+     <literal>s</literal> to allow <literal>.</literal> to match a newline,
+     and <literal>q</literal> to quote the whole pattern (reducing the
+     behavior to a simple substring match).
+    </para>
+
+    <para>
+     The SQL/JSON standard borrows its definition for regular expressions
+     from the <literal>LIKE_REGEX</literal> operator, which in turn uses the
+     XQuery standard.  PostgreSQL does not currently support the
+     <literal>LIKE_REGEX</literal> operator.  Therefore,
+     the <literal>like_regex</literal> filter is implemented using the
+     POSIX regular expression engine described in
+     <xref linkend="functions-posix-regexp"/>.  This leads to various minor
+     discrepancies from standard SQL/JSON behavior, which are cataloged in
+     <xref linkend="posix-vs-xquery"/>.
+     Note, however, that the flag-letter incompatibilities described there
+     do not apply to SQL/JSON, as it translates the XQuery flag letters to
+     match what the POSIX engine expects.
+    </para>
+
+    <para>
+     Keep in mind that the pattern argument of <literal>like_regex</literal>
+     is a JSON path string literal, written according to the rules given in
+     <xref linkend="datatype-jsonpath"/>.  This means in particular that any
+     backslashes you want to use in the regular expression must be doubled.
+     For example, to match strings that contain only digits:
+<programlisting>
+'$ ? (@ like_regex "^\\d+$")'
+</programlisting>
+    </para>
 
    </sect3>
 
@@ -12113,10 +12317,11 @@ table2-mapping
        <row>
         <entry><literal>like_regex</literal></entry>
         <entry>
-          Tests pattern matching with POSIX regular expressions
-          (see <xref linkend="functions-posix-regexp"/>).  Supported flags
-          are <literal>i</literal>, <literal>s</literal>, <literal>m</literal>,
-          <literal>x</literal>, and <literal>q</literal>.</entry>
+          Tests whether the first operand matches the regular expression
+          given by the second operand, optionally with modifications
+          described by a string of <literal>flag</literal> characters (see
+          <xref linkend="jsonpath-regular-expressions"/>)
+        </entry>
         <entry><literal>["abc", "abd", "aBdC", "abdacb", "babc"]</literal></entry>
         <entry><literal>$[*] ? (@ like_regex "^ab.*c" flag "i")</literal></entry>
         <entry><literal>"abc", "aBdC", "abdacb"</literal></entry>
