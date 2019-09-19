@@ -825,6 +825,26 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     <literal>autovacuum_vacuum_cost_limit</literal> storage parameters have been set
     are not considered in the balancing algorithm.
    </para>
+
+   <para>
+    Autovacuum workers generally don't block other commands.  If a process
+    attempts to acquire a lock that conficts with the
+    <literal>SHARE UPDATE EXCLUSIVE</literal> lock held by autovacuum, lock
+    acquisition will interrupt the autovacuum.  For conflicting lock modes,
+    see <xref linkend="table-lock-compatibility"/>.  However, if the autovacuum
+    is running to prevent transaction ID wraparound (i.e., the autovacuum query
+    name in the <structname>pg_stat_activity</structname> view ends with
+    <literal>(to prevent wraparound)</literal>), the autovacuum is not
+    automatically interrupted.
+   </para>
+
+   <warning>
+    <para>
+     Regularly running commands that acquire locks conflicting with a
+     <literal>SHARE UPDATE EXCLUSIVE</literal> lock (e.g., ANALYZE) can
+     effectively prevent autovacuums from ever completing.
+    </para>
+   </warning>
   </sect2>
  </sect1>
 
