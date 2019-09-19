@@ -485,7 +485,7 @@ getNextNearest(IndexScanDesc scan)
 					if (!scan->xs_orderbynulls[i])
 						pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
 #endif
-					scan->xs_orderbyvals[i] = item->distances[i].value;
+					scan->xs_orderbyvals[i] = Float8GetDatum(item->distances[i].value);
 					scan->xs_orderbynulls[i] = item->distances[i].isnull;
 				}
 				else if (so->orderByTypes[i] == FLOAT4OID)
