@@ -99,7 +99,7 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 					minor;
 		gss_buffer_desc input,
 					output;
-		int			conf = 0;
+		int			conf_state = 0;
 		uint32		netlen;
 		pg_gssinfo *gss = port->gss;
 
@@ -172,18 +172,19 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 
 		/* Create the next encrypted packet */
 		major = gss_wrap(&minor, gss->ctx, 1, GSS_C_QOP_DEFAULT,
-						 &input, &conf, &output);
+						 &input, &conf_state, &output);
 		if (major != GSS_S_COMPLETE)
 			pg_GSS_error(FATAL, gettext_noop("GSSAPI wrap error"), major, minor);
 
-		if (conf == 0)
+		if (conf_state == 0)
 			ereport(FATAL,
-					(errmsg("GSSAPI did not provide confidentiality")));
+					(errmsg("outgoing GSSAPI message would not use confidentiality")));
 
 		if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
 			ereport(FATAL,
-					(errmsg("server tried to send oversize GSSAPI packet: %zu bytes",
-							(size_t) output.length)));
+					(errmsg("server tried to send oversize GSSAPI packet (%zu > %zu)",
+							(size_t) output.length,
+							PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))));
 
 		bytes_encrypted += input.length;
 		bytes_to_encrypt -= input.length;
@@ -216,7 +217,7 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 	ssize_t		ret;
 	size_t		bytes_to_return = len;
 	size_t		bytes_returned = 0;
-	int			conf = 0;
+	int			conf_state = 0;
 	pg_gssinfo *gss = port->gss;
 
 	/*
@@ -299,8 +300,9 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 		/* Check for over-length packet */
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
 			ereport(FATAL,
-					(errmsg("oversize GSSAPI packet sent by the client: %zu bytes",
-							(size_t) input.length)));
+					(errmsg("oversize GSSAPI packet sent by the client (%zu > %zu)",
+							(size_t) input.length,
+							PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))));
 
 		/*
 		 * Read as much of the packet as we are able to on this call into
@@ -338,14 +340,14 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 		output.length = 0;
 		input.value = PqGSSRecvBuffer + sizeof(uint32);
 
-		major = gss_unwrap(&minor, gss->ctx, &input, &output, &conf, NULL);
+		major = gss_unwrap(&minor, gss->ctx, &input, &output, &conf_state, NULL);
 		if (major != GSS_S_COMPLETE)
 			pg_GSS_error(FATAL, gettext_noop("GSSAPI unwrap error"),
 						 major, minor);
 
-		if (conf == 0)
+		if (conf_state == 0)
 			ereport(FATAL,
-					(errmsg("GSSAPI did not provide confidentiality")));
+					(errmsg("incoming GSSAPI message did not use confidentiality")));
 
 		memcpy(PqGSSResultBuffer, output.value, output.length);
 
@@ -497,8 +499,9 @@ secure_open_gssapi(Port *port)
 		 */
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE)
 			ereport(FATAL,
-					(errmsg("oversize GSSAPI packet sent by the client: %zu bytes",
-							(size_t) input.length)));
+					(errmsg("oversize GSSAPI packet sent by the client (%zu > %d)",
+							(size_t) input.length,
+							PQ_GSS_RECV_BUFFER_SIZE)));
 
 		/*
 		 * Get the rest of the packet so we can pass it to GSSAPI to accept
@@ -518,7 +521,7 @@ secure_open_gssapi(Port *port)
 									   NULL, NULL);
 		if (GSS_ERROR(major))
 		{
-			pg_GSS_error(ERROR, gettext_noop("GSSAPI context error"),
+			pg_GSS_error(ERROR, gettext_noop("could not accept GSSAPI security context"),
 						 major, minor);
 			gss_release_buffer(&minor, &output);
 			return -1;
@@ -545,8 +548,9 @@ secure_open_gssapi(Port *port)
 
 			if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
 				ereport(FATAL,
-						(errmsg("server tried to send oversize GSSAPI packet: %zu bytes",
-								(size_t) output.length)));
+						(errmsg("server tried to send oversize GSSAPI packet (%zu > %zu)",
+								(size_t) output.length,
+								PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))));
 
 			memcpy(PqGSSSendBuffer, (char *) &netlen, sizeof(uint32));
 			PqGSSSendPointer += sizeof(uint32);
