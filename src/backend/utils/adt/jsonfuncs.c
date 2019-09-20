@@ -454,12 +454,6 @@ static Datum populate_array(ArrayIOData *aio, const char *colname,
 static Datum populate_domain(DomainIOData *io, Oid typid, const char *colname,
 							 MemoryContext mcxt, JsValue *jsv, bool isnull);
 
-/* Worker that takes care of common setup for us */
-static JsonbValue *findJsonbValueFromContainerLen(JsonbContainer *container,
-												  uint32 flags,
-												  char *key,
-												  uint32 keylen);
-
 /* functions supporting jsonb_delete, jsonb_set and jsonb_concat */
 static JsonbValue *IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 								  JsonbParseState **state);
@@ -718,13 +712,15 @@ jsonb_object_field(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	JsonbValue *v;
+	JsonbValue	vbuf;
 
 	if (!JB_ROOT_IS_OBJECT(jb))
 		PG_RETURN_NULL();
 
-	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
-									   VARDATA_ANY(key),
-									   VARSIZE_ANY_EXHDR(key));
+	v = getKeyJsonValueFromContainer(&jb->root,
+									 VARDATA_ANY(key),
+									 VARSIZE_ANY_EXHDR(key),
+									 &vbuf);
 
 	if (v != NULL)
 		PG_RETURN_JSONB_P(JsonbValueToJsonb(v));
@@ -754,14 +750,15 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	JsonbValue *v;
+	JsonbValue	vbuf;
 
 	if (!JB_ROOT_IS_OBJECT(jb))
 		PG_RETURN_NULL();
 
-	v = findJsonbValueFromContainerLen(&jb->root, JB_FOBJECT,
-									   VARDATA_ANY(key),
-									   VARSIZE_ANY_EXHDR(key));
-
+	v = getKeyJsonValueFromContainer(&jb->root,
+									 VARDATA_ANY(key),
+									 VARSIZE_ANY_EXHDR(key),
+									 &vbuf);
 
 	if (v != NULL && v->type != jbvNull)
 		PG_RETURN_TEXT_P(JsonbValueAsText(v));
@@ -1336,6 +1333,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	bool		have_object = false,
 				have_array = false;
 	JsonbValue *jbvp = NULL;
+	JsonbValue	jbvbuf;
 	JsonbContainer *container;
 
 	/*
@@ -1393,10 +1391,10 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	{
 		if (have_object)
 		{
-			jbvp = findJsonbValueFromContainerLen(container,
-												  JB_FOBJECT,
-												  VARDATA(pathtext[i]),
-												  VARSIZE(pathtext[i]) - VARHDRSZ);
+			jbvp = getKeyJsonValueFromContainer(container,
+												VARDATA(pathtext[i]),
+												VARSIZE(pathtext[i]) - VARHDRSZ,
+												&jbvbuf);
 		}
 		else if (have_array)
 		{
@@ -3023,8 +3021,8 @@ JsObjectGetField(JsObject *obj, char *field, JsValue *jsv)
 	else
 	{
 		jsv->val.jsonb = !obj->val.jsonb_cont ? NULL :
-			findJsonbValueFromContainerLen(obj->val.jsonb_cont, JB_FOBJECT,
-										   field, strlen(field));
+			getKeyJsonValueFromContainer(obj->val.jsonb_cont, field, strlen(field),
+										 NULL);
 
 		return jsv->val.jsonb != NULL;
 	}
@@ -3846,22 +3844,6 @@ populate_recordset_object_field_end(void *state, char *fname, bool isnull)
 		/* must have had a scalar instead */
 		hashentry->val = _state->saved_scalar;
 	}
-}
-
-/*
- * findJsonbValueFromContainer() wrapper that sets up JsonbValue key string.
- */
-static JsonbValue *
-findJsonbValueFromContainerLen(JsonbContainer *container, uint32 flags,
-							   char *key, uint32 keylen)
-{
-	JsonbValue	k;
-
-	k.type = jbvString;
-	k.val.string.val = key;
-	k.val.string.len = keylen;
-
-	return findJsonbValueFromContainer(container, flags, &k);
 }
 
 /*
