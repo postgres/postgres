@@ -828,7 +828,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 
    <para>
     Autovacuum workers generally don't block other commands.  If a process
-    attempts to acquire a lock that conficts with the
+    attempts to acquire a lock that conflicts with the
     <literal>SHARE UPDATE EXCLUSIVE</literal> lock held by autovacuum, lock
     acquisition will interrupt the autovacuum.  For conflicting lock modes,
     see <xref linkend="table-lock-compatibility"/>.  However, if the autovacuum
