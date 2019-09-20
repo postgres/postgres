@@ -1329,7 +1329,6 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	ArrayType  *path = PG_GETARG_ARRAYTYPE_P(1);
-	Jsonb	   *res;
 	Datum	   *pathtext;
 	bool	   *pathnulls;
 	int			npath;
@@ -1337,7 +1336,6 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	bool		have_object = false,
 				have_array = false;
 	JsonbValue *jbvp = NULL;
-	JsonbValue	tv;
 	JsonbContainer *container;
 
 	/*
@@ -1449,41 +1447,30 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 
 		if (jbvp->type == jbvBinary)
 		{
-			JsonbIterator *it = JsonbIteratorInit((JsonbContainer *) jbvp->val.binary.data);
-			JsonbIteratorToken r;
-
-			r = JsonbIteratorNext(&it, &tv, true);
-			container = (JsonbContainer *) jbvp->val.binary.data;
-			have_object = r == WJB_BEGIN_OBJECT;
-			have_array = r == WJB_BEGIN_ARRAY;
+			container = jbvp->val.binary.data;
+			have_object = JsonContainerIsObject(container);
+			have_array = JsonContainerIsArray(container);
+			Assert(!JsonContainerIsScalar(container));
 		}
 		else
 		{
-			have_object = jbvp->type == jbvObject;
-			have_array = jbvp->type == jbvArray;
+			Assert(IsAJsonbScalar(jbvp));
+			have_object = false;
+			have_array = false;
 		}
 	}
 
 	if (as_text)
 	{
-		/* special-case outputs for string and null values */
-		if (jbvp->type == jbvString)
-			PG_RETURN_TEXT_P(cstring_to_text_with_len(jbvp->val.string.val,
-													  jbvp->val.string.len));
 		if (jbvp->type == jbvNull)
 			PG_RETURN_NULL();
-	}
 
-	res = JsonbValueToJsonb(jbvp);
-
-	if (as_text)
-	{
-		PG_RETURN_TEXT_P(cstring_to_text(JsonbToCString(NULL,
-														&res->root,
-														VARSIZE(res))));
+		PG_RETURN_TEXT_P(JsonbValueAsText(jbvp));
 	}
 	else
 	{
+		Jsonb	   *res = JsonbValueToJsonb(jbvp);
+
 		/* not text mode - just hand back the jsonb */
 		PG_RETURN_JSONB_P(res);
 	}
