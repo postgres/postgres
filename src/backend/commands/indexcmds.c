@@ -2351,7 +2351,8 @@ ReindexIndex(RangeVar *indexRelation, int options, bool concurrent)
 	if (concurrent)
 		ReindexRelationConcurrently(indOid, options);
 	else
-		reindex_index(indOid, false, persistence, options);
+		reindex_index(indOid, false, persistence,
+					  options | REINDEXOPT_REPORT_PROGRESS);
 }
 
 /*
