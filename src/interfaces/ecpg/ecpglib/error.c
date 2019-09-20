@@ -200,13 +200,6 @@ ecpg_raise(int line, int code, const char *sqlstate, const char *str)
 					 ecpg_gettext("could not connect to database \"%s\" on line %d"), str, line);
 			break;
 
-		case ECPG_INVALID_CURSOR:
-			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-			/*------
-				translator: this string will be truncated at 149 characters expanded.  */
-					 ecpg_gettext("cursor is invalid on line %d"), line);
-			break;
-
 		default:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
 			/*------

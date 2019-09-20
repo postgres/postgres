@@ -1,6 +1,22 @@
 /* src/interfaces/ecpg/preproc/ecpg.addons */
 ECPG: stmtClosePortalStmt block
-	{ $$ = $1;}
+	{
+		if (INFORMIX_MODE)
+		{
+			if (pg_strcasecmp($1+strlen("close "), "database") == 0)
+			{
+				if (connection)
+					mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in CLOSE DATABASE statement");
+
+				fprintf(base_yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
+				whenever_action(2);
+				free($1);
+				break;
+			}
+		}
+
+		output_statement($1, 0, ECPGst_normal);
+	}
 ECPG: stmtDeallocateStmt block
 	{
 		output_deallocate_prepare_statement($1);
@@ -9,11 +25,7 @@ ECPG: stmtDeclareCursorStmt block
 	{ output_simple_statement($1, (strncmp($1, "ECPGset_var", strlen("ECPGset_var")) == 0) ? 4 : 0); }
 ECPG: stmtDiscardStmt block
 ECPG: stmtFetchStmt block
-	{
-		/* g_cursor_name is set in the fetch_args block and freed in the output_cursor_statement */
-		output_cursor_statement(ECPGcst_fetch, g_cursor_name, NULL, $1, 1, ECPGst_normal);
-		g_cursor_name = NULL;
-	}
+	{ output_statement($1, 1, ECPGst_normal); }
 ECPG: stmtDeleteStmt block
 ECPG: stmtInsertStmt block
 ECPG: stmtSelectStmt block
@@ -92,10 +104,6 @@ ECPG: stmtViewStmt rule
 		whenever_action(2);
 		free($1);
 	}
-	| ECPGDeclareStmt
-	{
-		output_declare_statement($1);
-	}
 	| ECPGCursorStmt
 	{
 		 output_simple_statement($1, (strncmp($1, "ECPGset_var", strlen("ECPGset_var")) == 0) ? 4 : 0);
@@ -165,14 +173,7 @@ ECPG: stmtViewStmt rule
 		if ((ptr = add_additional_variables($1, true)) != NULL)
 		{
 			connection = ptr->connection ? mm_strdup(ptr->connection) : NULL;
-			if (ptr->prepared_name)
-			{
-				output_cursor_statement(ECPGcst_open, $1, mm_strdup(ptr->prepared_name), mm_strdup(ptr->command), 0, ECPGst_normal);
-			}
-			else
-			{
-				output_cursor_statement(ECPGcst_open, $1, NULL, mm_strdup(ptr->command), 0, ECPGst_normal);
-			}
+			output_statement(mm_strdup(ptr->command), 0, ECPGst_normal);
 			ptr->opened = true;
 		}
 	}
@@ -244,7 +245,6 @@ ECPG: var_valueNumericOnly addon
 		}
 ECPG: fetch_argscursor_name addon
 		add_additional_variables($1, false);
-		g_cursor_name = mm_strdup($1);
 		if ($1[0] == ':')
 		{
 			free($1);
@@ -252,7 +252,6 @@ ECPG: fetch_argscursor_name addon
 		}
 ECPG: fetch_argsfrom_incursor_name addon
 		add_additional_variables($2, false);
-		g_cursor_name = mm_strdup($2);
 		if ($2[0] == ':')
 		{
 			free($2);
@@ -264,7 +263,6 @@ ECPG: fetch_argsFIRST_Popt_from_incursor_name addon
 ECPG: fetch_argsLAST_Popt_from_incursor_name addon
 ECPG: fetch_argsALLopt_from_incursor_name addon
 		add_additional_variables($3, false);
-		g_cursor_name = mm_strdup($3);
 		if ($3[0] == ':')
 		{
 			free($3);
@@ -272,7 +270,6 @@ ECPG: fetch_argsALLopt_from_incursor_name addon
 		}
 ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
 		add_additional_variables($3, false);
-		g_cursor_name = mm_strdup($3);
 		if ($3[0] == ':')
 		{
 			free($3);
@@ -286,7 +283,6 @@ ECPG: fetch_argsSignedIconstopt_from_incursor_name addon
 ECPG: fetch_argsFORWARDALLopt_from_incursor_name addon
 ECPG: fetch_argsBACKWARDALLopt_from_incursor_name addon
 		add_additional_variables($4, false);
-		g_cursor_name = mm_strdup($4);
 		if ($4[0] == ':')
 		{
 			free($4);
@@ -297,7 +293,6 @@ ECPG: fetch_argsRELATIVE_PSignedIconstopt_from_incursor_name addon
 ECPG: fetch_argsFORWARDSignedIconstopt_from_incursor_name addon
 ECPG: fetch_argsBACKWARDSignedIconstopt_from_incursor_name addon
 		add_additional_variables($4, false);
-		g_cursor_name = mm_strdup($4);
 		if ($4[0] == ':')
 		{
 			free($4);
@@ -365,7 +360,6 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 		}
 
 		this = (struct cursor *) mm_alloc(sizeof(struct cursor));
-		memset(this, 0 ,sizeof(struct cursor));
 
 		this->next = cur;
 		this->name = $2;
@@ -393,31 +387,8 @@ ECPG: DeclareCursorStmtDECLAREcursor_namecursor_optionsCURSORopt_holdFORSelectSt
 	}
 ECPG: ClosePortalStmtCLOSEcursor_name block
 	{
-		char *stmt = NULL;
-		char *cursor_name = NULL;
 		char *cursor_marker = $2[0] == ':' ? mm_strdup("$0") : $2;
-
-		cursor_name = mm_strdup($2);
-
-		stmt = cat2_str(mm_strdup("close"), cursor_marker);
-
-		if (INFORMIX_MODE)
-		{
-			if (pg_strcasecmp(stmt+strlen("close "), "database") == 0)
-			{
-				if (connection)
-					mmerror(PARSE_ERROR, ET_ERROR, "AT option not allowed in CLOSE DATABASE statement");
-
-				fprintf(base_yyout, "{ ECPGdisconnect(__LINE__, \"CURRENT\");");
-				whenever_action(2);
-				free(stmt);
-				break;
-			}
-		}
-
-		output_cursor_statement(ECPGcst_close, cursor_name, NULL, stmt, 0, ECPGst_normal);
-
-		$$ = EMPTY;
+		$$ = cat2_str(mm_strdup("close"), cursor_marker);
 	}
 ECPG: opt_hold block
 	{
@@ -496,56 +467,48 @@ ECPG: FetchStmtMOVEfetch_args rule
 	{
 		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		g_cursor_name = mm_strdup($3);
 		$$ = cat_str(2, mm_strdup("fetch forward"), cursor_marker);
 	}
 	| FETCH FORWARD from_in cursor_name opt_ecpg_fetch_into
 	{
 		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		g_cursor_name = mm_strdup($4);
 		$$ = cat_str(2, mm_strdup("fetch forward from"), cursor_marker);
 	}
 	| FETCH BACKWARD cursor_name opt_ecpg_fetch_into
 	{
 		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		g_cursor_name = mm_strdup($3);
 		$$ = cat_str(2, mm_strdup("fetch backward"), cursor_marker);
 	}
 	| FETCH BACKWARD from_in cursor_name opt_ecpg_fetch_into
 	{
 		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		g_cursor_name = mm_strdup($4);
 		$$ = cat_str(2, mm_strdup("fetch backward from"), cursor_marker);
 	}
 	| MOVE FORWARD cursor_name
 	{
 		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		g_cursor_name = mm_strdup($3);
 		$$ = cat_str(2, mm_strdup("move forward"), cursor_marker);
 	}
 	| MOVE FORWARD from_in cursor_name
 	{
 		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		g_cursor_name = mm_strdup($4);
 		$$ = cat_str(2, mm_strdup("move forward from"), cursor_marker);
 	}
 	| MOVE BACKWARD cursor_name
 	{
 		char *cursor_marker = $3[0] == ':' ? mm_strdup("$0") : $3;
 		add_additional_variables($3, false);
-		g_cursor_name = mm_strdup($3);
 		$$ = cat_str(2, mm_strdup("move backward"), cursor_marker);
 	}
 	| MOVE BACKWARD from_in cursor_name
 	{
 		char *cursor_marker = $4[0] == ':' ? mm_strdup("$0") : $4;
 		add_additional_variables($4, false);
-		g_cursor_name = mm_strdup($4);
 		$$ = cat_str(2, mm_strdup("move backward from"), cursor_marker);
 	}
 ECPG: limit_clauseLIMITselect_limit_value','select_offset_value block

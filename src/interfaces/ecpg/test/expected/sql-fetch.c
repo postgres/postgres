@@ -99,7 +99,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 26 "fetch.pgc"
 
 
-  { ECPGopen("C", NULL, __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select * from My_Table", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C cursor for select * from My_Table", ECPGt_EOIT, ECPGt_EORT);
 #line 28 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -113,7 +113,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 30 "fetch.pgc"
 
   for (loopcount = 0; loopcount < 100; loopcount++) {
-	{ ECPGfetch("C", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in C", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in C", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(str),(long)25,(long)1,(25)*sizeof(char), 
@@ -135,7 +135,7 @@ if (sqlca.sqlcode < 0) exit (1);}
   /* exec sql whenever not found  continue ; */
 #line 36 "fetch.pgc"
 
-  { ECPGfetch("C", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "move backward 2 in C", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "move backward 2 in C", ECPGt_EOIT, ECPGt_EORT);
 #line 37 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -145,7 +145,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 37 "fetch.pgc"
 
 
-  { ECPGfetch("C", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch $0 in C", 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch $0 in C", 
 	ECPGt_int,&(count),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
@@ -162,7 +162,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
   printf("%d: %s\n", i, str);
 
-  { ECPGclose("C", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close C", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close C", ECPGt_EOIT, ECPGt_EORT);
 #line 42 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -176,7 +176,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 44 "fetch.pgc"
 
 
-  { ECPGopen("D", NULL, __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare D cursor for select * from My_Table where Item1 = $1", 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare D cursor for select * from My_Table where Item1 = $1", 
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 46 "fetch.pgc"
@@ -188,7 +188,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 46 "fetch.pgc"
 
 
-  { ECPGfetch("D", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch 1 in D", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(str),(long)25,(long)1,(25)*sizeof(char), 
@@ -203,7 +203,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
   printf("%d: %s\n", i, str);
 
-  { ECPGclose("D", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close D", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close D", ECPGt_EOIT, ECPGt_EORT);
 #line 51 "fetch.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

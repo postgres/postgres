@@ -141,7 +141,7 @@ if (sqlca.sqlcode < 0) exit (1);}
   /* declare C cursor for select strval , strval from strdbase */
 #line 41 "char_array.pgc"
 
-  { ECPGopen("C", NULL, __LINE__, 3, 1, NULL, 0, ECPGst_normal, "declare C cursor for select strval , strval from strdbase", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "declare C cursor for select strval , strval from strdbase", ECPGt_EOIT, ECPGt_EORT);
 #line 42 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );
@@ -159,7 +159,7 @@ if (sqlca.sqlcode < 0) exit (1);}
   for (loopcount = 0; loopcount < 100; loopcount++) {
     strncpy(shortstr, ppppp, sizeof shortstr);
     memset(bigstr, 0, sizeof bigstr);
-    { ECPGfetch("C", __LINE__, 3, 1, NULL, 0, ECPGst_normal, "fetch C", ECPGt_EOIT, 
+    { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "fetch C", ECPGt_EOIT, 
 	ECPGt_char,(bigstr),(long)11,(long)1,(11)*sizeof(char), 
 	ECPGt_short,&(bigstr_ind),(long)1,(long)1,sizeof(short), 
 	ECPGt_char,(shortstr),(long)5,(long)1,(5)*sizeof(char), 
@@ -178,7 +178,7 @@ if (sqlca.sqlcode < 0) exit (1);}
     printf("\"%s\": \"%s\"  %d\n", bigstr, shortstr, shstr_ind);
   }
 
-  { ECPGclose("C", __LINE__, 3, 1, NULL, 0, ECPGst_normal, "close C", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 3, 1, NULL, 0, ECPGst_normal, "close C", ECPGt_EOIT, ECPGt_EORT);
 #line 54 "char_array.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') warn ( );

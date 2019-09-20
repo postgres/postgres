@@ -9,7 +9,6 @@
 %type <str> ECPGDeallocateDescr
 %type <str> ECPGDeclaration
 %type <str> ECPGDeclare
-%type <str> ECPGDeclareStmt
 %type <str> ECPGDescribe
 %type <str> ECPGDisconnect
 %type <str> ECPGExecuteImmediateStmt
