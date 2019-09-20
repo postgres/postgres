@@ -349,6 +349,7 @@ static Datum get_path_all(FunctionCallInfo fcinfo, bool as_text);
 static text *get_worker(text *json, char **tpath, int *ipath, int npath,
 						bool normalize_results);
 static Datum get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text);
+static text *JsonbValueAsText(JsonbValue *v);
 
 /* semantic action functions for json_array_length */
 static void alen_object_start(void *state);
@@ -761,39 +762,9 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 									   VARDATA_ANY(key),
 									   VARSIZE_ANY_EXHDR(key));
 
-	if (v != NULL)
-	{
-		text	   *result = NULL;
 
-		switch (v->type)
-		{
-			case jbvNull:
-				break;
-			case jbvBool:
-				result = cstring_to_text(v->val.boolean ? "true" : "false");
-				break;
-			case jbvString:
-				result = cstring_to_text_with_len(v->val.string.val, v->val.string.len);
-				break;
-			case jbvNumeric:
-				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
-																			 PointerGetDatum(v->val.numeric))));
-				break;
-			case jbvBinary:
-				{
-					StringInfo	jtext = makeStringInfo();
-
-					(void) JsonbToCString(jtext, v->val.binary.data, -1);
-					result = cstring_to_text_with_len(jtext->data, jtext->len);
-				}
-				break;
-			default:
-				elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
-		}
-
-		if (result)
-			PG_RETURN_TEXT_P(result);
-	}
+	if (v != NULL && v->type != jbvNull)
+		PG_RETURN_TEXT_P(JsonbValueAsText(v));
 
 	PG_RETURN_NULL();
 }
@@ -878,39 +849,9 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 	}
 
 	v = getIthJsonbValueFromContainer(&jb->root, element);
-	if (v != NULL)
-	{
-		text	   *result = NULL;
 
-		switch (v->type)
-		{
-			case jbvNull:
-				break;
-			case jbvBool:
-				result = cstring_to_text(v->val.boolean ? "true" : "false");
-				break;
-			case jbvString:
-				result = cstring_to_text_with_len(v->val.string.val, v->val.string.len);
-				break;
-			case jbvNumeric:
-				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
-																			 PointerGetDatum(v->val.numeric))));
-				break;
-			case jbvBinary:
-				{
-					StringInfo	jtext = makeStringInfo();
-
-					(void) JsonbToCString(jtext, v->val.binary.data, -1);
-					result = cstring_to_text_with_len(jtext->data, jtext->len);
-				}
-				break;
-			default:
-				elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
-		}
-
-		if (result)
-			PG_RETURN_TEXT_P(result);
-	}
+	if (v != NULL && v->type != jbvNull)
+		PG_RETURN_TEXT_P(JsonbValueAsText(v));
 
 	PG_RETURN_NULL();
 }
@@ -1549,6 +1490,53 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 }
 
 /*
+ * Return the text representation of the given JsonbValue.
+ */
+static text *
+JsonbValueAsText(JsonbValue *v)
+{
+	switch (v->type)
+	{
+		case jbvNull:
+			return NULL;
+
+		case jbvBool:
+			return v->val.boolean ?
+				cstring_to_text_with_len("true", 4) :
+				cstring_to_text_with_len("false", 5);
+
+		case jbvString:
+			return cstring_to_text_with_len(v->val.string.val,
+											v->val.string.len);
+
+		case jbvNumeric:
+			{
+				Datum		cstr;
+
+				cstr = DirectFunctionCall1(numeric_out,
+										   PointerGetDatum(v->val.numeric));
+
+				return cstring_to_text(DatumGetCString(cstr));
+			}
+
+		case jbvBinary:
+			{
+				StringInfoData jtext;
+
+				initStringInfo(&jtext);
+				(void) JsonbToCString(&jtext, v->val.binary.data,
+									  v->val.binary.len);
+
+				return cstring_to_text_with_len(jtext.data, jtext.len);
+			}
+
+		default:
+			elog(ERROR, "unrecognized jsonb type: %d", (int) v->type);
+			return NULL;
+	}
+}
+
+/*
  * SQL function json_array_length(json) -> int
  */
 Datum
@@ -1758,26 +1746,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 					values[1] = (Datum) NULL;
 				}
 				else
-				{
-					text	   *sv;
-
-					if (v.type == jbvString)
-					{
-						/* In text mode, scalar strings should be dequoted */
-						sv = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
-					}
-					else
-					{
-						/* Turn anything else into a json string */
-						StringInfo	jtext = makeStringInfo();
-						Jsonb	   *jb = JsonbValueToJsonb(&v);
-
-						(void) JsonbToCString(jtext, &jb->root, 0);
-						sv = cstring_to_text_with_len(jtext->data, jtext->len);
-					}
-
-					values[1] = PointerGetDatum(sv);
-				}
+					values[1] = PointerGetDatum(JsonbValueAsText(&v));
 			}
 			else
 			{
@@ -2053,13 +2022,7 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
 			/* use the tmp context so we can clean up after each tuple is done */
 			old_cxt = MemoryContextSwitchTo(tmp_cxt);
 
-			if (!as_text)
-			{
-				Jsonb	   *val = JsonbValueToJsonb(&v);
-
-				values[0] = PointerGetDatum(val);
-			}
-			else
+			if (as_text)
 			{
 				if (v.type == jbvNull)
 				{
@@ -2068,26 +2031,14 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
 					values[0] = (Datum) NULL;
 				}
 				else
-				{
-					text	   *sv;
+					values[0] = PointerGetDatum(JsonbValueAsText(&v));
+			}
+			else
+			{
+				/* Not in text mode, just return the Jsonb */
+				Jsonb	   *val = JsonbValueToJsonb(&v);
 
-					if (v.type == jbvString)
-					{
-						/* in text mode scalar strings should be dequoted */
-						sv = cstring_to_text_with_len(v.val.string.val, v.val.string.len);
-					}
-					else
-					{
-						/* turn anything else into a json string */
-						StringInfo	jtext = makeStringInfo();
-						Jsonb	   *jb = JsonbValueToJsonb(&v);
-
-						(void) JsonbToCString(jtext, &jb->root, 0);
-						sv = cstring_to_text_with_len(jtext->data, jtext->len);
-					}
-
-					values[0] = PointerGetDatum(sv);
-				}
+				values[0] = PointerGetDatum(val);
 			}
 
 			tuple = heap_form_tuple(ret_tdesc, values, nulls);
@@ -4430,7 +4381,6 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 
 /*
  * SQL function jsonb_set(jsonb, text[], jsonb, boolean)
- *
  */
 Datum
 jsonb_set(PG_FUNCTION_ARGS)
@@ -4522,7 +4472,6 @@ jsonb_delete_path(PG_FUNCTION_ARGS)
 
 /*
  * SQL function jsonb_insert(jsonb, text[], jsonb, boolean)
- *
  */
 Datum
 jsonb_insert(PG_FUNCTION_ARGS)
