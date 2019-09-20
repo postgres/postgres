@@ -1,4 +1,4 @@
-# version 2019b
+# version 2019c
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -535,7 +535,7 @@ R HK 1979 o - O 21 3:30 0 -
 Z Asia/Hong_Kong 7:36:42 - LMT 1904 O 30 0:36:42
 8 - HKT 1941 Jun 15 3
 8 1 HKST 1941 O 1 4
-8:30 - HKT 1941 D 25
+8 0:30 HKWT 1941 D 25
 9 - JST 1945 N 18 2
 8 HK HK%sT
 R f 1946 o - May 15 0 1 D
@@ -995,7 +995,7 @@ R KR 1987 1988 - O Su>=8 3 0 S
 Z Asia/Seoul 8:27:52 - LMT 1908 Ap
 8:30 - KST 1912
 9 - JST 1945 S 8
-9 - KST 1954 Mar 21
+9 KR K%sT 1954 Mar 21
 8:30 KR K%sT 1961 Au 10
 9 KR K%sT
 Z Asia/Pyongyang 8:23 - LMT 1908 Ap
@@ -1411,8 +1411,9 @@ R FJ 2010 2013 - O Su>=21 2 1 -
 R FJ 2011 o - Mar Su>=1 3 0 -
 R FJ 2012 2013 - Ja Su>=18 3 0 -
 R FJ 2014 o - Ja Su>=18 2 0 -
-R FJ 2014 ma - N Su>=1 2 1 -
-R FJ 2015 ma - Ja Su>=13 3 0 -
+R FJ 2014 2018 - N Su>=1 2 1 -
+R FJ 2015 ma - Ja Su>=12 3 0 -
+R FJ 2019 ma - N Su>=8 2 1 -
 Z Pacific/Fiji 11:55:44 - LMT 1915 O 26
 12 FJ +12/+13
 Z Pacific/Gambier -8:59:48 - LMT 1912 O
@@ -1547,10 +1548,11 @@ Z Pacific/Niue -11:19:40 - LMT 1901
 -11 - -11
 Z Pacific/Norfolk 11:11:52 - LMT 1901
 11:12 - +1112 1951
-11:30 - +1130 1974 O 27 2
-11:30 1 +1230 1975 Mar 2 2
-11:30 - +1130 2015 O 4 2
-11 - +11
+11:30 - +1130 1974 O 27 2s
+11:30 1 +1230 1975 Mar 2 2s
+11:30 - +1130 2015 O 4 2s
+11 - +11 2019 Jul
+11 AN +11/+12
 Z Pacific/Palau -15:2:4 - LMT 1844 D 31
 8:57:56 - LMT 1901
 9 - +09
@@ -1791,7 +1793,8 @@ Z Europe/Andorra 0:6:4 - LMT 1901
 R a 1920 o - Ap 5 2s 1 S
 R a 1920 o - S 13 2s 0 -
 R a 1946 o - Ap 14 2s 1 S
-R a 1946 1948 - O Su>=1 2s 0 -
+R a 1946 o - O 7 2s 0 -
+R a 1947 1948 - O Su>=1 2s 0 -
 R a 1947 o - Ap 6 2s 1 S
 R a 1948 o - Ap 18 2s 1 S
 R a 1980 o - Ap 6 0 1 S
@@ -1848,7 +1851,7 @@ R b 1945 o - S 16 2s 0 -
 R b 1946 o - May 19 2s 1 S
 R b 1946 o - O 7 2s 0 -
 Z Europe/Brussels 0:17:30 - LMT 1880
-0:17:30 - BMT 1892 May 1 12
+0:17:30 - BMT 1892 May 1 0:17:30
 0 - WET 1914 N 8
 1 - CET 1916 May
 1 c CE%sT 1918 N 11 11u
@@ -2394,8 +2397,8 @@ Z Europe/Bucharest 1:44:24 - LMT 1891 O
 2 e EE%sT 1997
 2 E EE%sT
 Z Europe/Kaliningrad 1:22 - LMT 1893 Ap
-1 c CE%sT 1945
-2 O CE%sT 1946
+1 c CE%sT 1945 Ap 10
+2 O EE%sT 1946 Ap 7
 3 R MSK/MSD 1989 Mar 26 2s
 2 R EE%sT 2011 Mar 27 2s
 3 - +03 2014 O 26 2s
@@ -2718,44 +2721,35 @@ R T 1922 o - O 8 0 0 -
 R T 1924 o - May 13 0 1 S
 R T 1924 1925 - O 1 0 0 -
 R T 1925 o - May 1 0 1 S
-R T 1940 o - Jun 30 0 1 S
-R T 1940 o - O 5 0 0 -
+R T 1940 o - Jul 1 0 1 S
+R T 1940 o - O 6 0 0 -
 R T 1940 o - D 1 0 1 S
 R T 1941 o - S 21 0 0 -
 R T 1942 o - Ap 1 0 1 S
-R T 1942 o - N 1 0 0 -
-R T 1945 o - Ap 2 0 1 S
 R T 1945 o - O 8 0 0 -
 R T 1946 o - Jun 1 0 1 S
 R T 1946 o - O 1 0 0 -
 R T 1947 1948 - Ap Su>=16 0 1 S
-R T 1947 1950 - O Su>=2 0 0 -
+R T 1947 1951 - O Su>=2 0 0 -
 R T 1949 o - Ap 10 0 1 S
-R T 1950 o - Ap 19 0 1 S
+R T 1950 o - Ap 16 0 1 S
 R T 1951 o - Ap 22 0 1 S
-R T 1951 o - O 8 0 0 -
 R T 1962 o - Jul 15 0 1 S
-R T 1962 o - O 8 0 0 -
+R T 1963 o - O 30 0 0 -
 R T 1964 o - May 15 0 1 S
 R T 1964 o - O 1 0 0 -
-R T 1970 1972 - May Su>=2 0 1 S
-R T 1970 1972 - O Su>=2 0 0 -
 R T 1973 o - Jun 3 1 1 S
-R T 1973 o - N 4 3 0 -
+R T 1973 1976 - O Su>=31 2 0 -
 R T 1974 o - Mar 31 2 1 S
-R T 1974 o - N 3 5 0 -
-R T 1975 o - Mar 30 0 1 S
-R T 1975 1976 - O lastSu 0 0 -
-R T 1976 o - Jun 1 0 1 S
-R T 1977 1978 - Ap Su>=1 0 1 S
-R T 1977 o - O 16 0 0 -
-R T 1979 1980 - Ap Su>=1 3 1 S
-R T 1979 1982 - O M>=11 0 0 -
-R T 1981 1982 - Mar lastSu 3 1 S
-R T 1983 o - Jul 31 0 1 S
-R T 1983 o - O 2 0 0 -
-R T 1985 o - Ap 20 0 1 S
-R T 1985 o - S 28 0 0 -
+R T 1975 o - Mar 22 2 1 S
+R T 1976 o - Mar 21 2 1 S
+R T 1977 1978 - Ap Su>=1 2 1 S
+R T 1977 1978 - O Su>=15 2 0 -
+R T 1978 o - Jun 29 0 0 -
+R T 1983 o - Jul 31 2 1 S
+R T 1983 o - O 2 2 0 -
+R T 1985 o - Ap 20 1s 1 S
+R T 1985 o - S 28 1s 0 -
 R T 1986 1993 - Mar lastSu 1s 1 S
 R T 1986 1995 - S lastSu 1s 0 -
 R T 1994 o - Mar 20 1s 1 S
@@ -2763,8 +2757,8 @@ R T 1995 2006 - Mar lastSu 1s 1 S
 R T 1996 2006 - O lastSu 1s 0 -
 Z Europe/Istanbul 1:55:52 - LMT 1880
 1:56:56 - IMT 1910 O
-2 T EE%sT 1978 O 15
-3 T +03/+04 1985 Ap 20
+2 T EE%sT 1978 Jun 29
+3 T +03/+04 1984 N 1 2
 2 T EE%sT 2007
 2 E EE%sT 2011 Mar 27 1u
 2 - EET 2011 Mar 28 1u
@@ -2999,19 +2993,15 @@ Z America/Indiana/Vincennes -5:50:7 - LMT 1883 N 18 12:9:53
 -5 - EST 2006 Ap 2 2
 -6 u C%sT 2007 N 4 2
 -5 u E%sT
-R Pe 1946 o - Ap lastSu 2 1 D
-R Pe 1946 o - S lastSu 2 0 S
-R Pe 1953 1954 - Ap lastSu 2 1 D
-R Pe 1953 1959 - S lastSu 2 0 S
 R Pe 1955 o - May 1 0 1 D
+R Pe 1955 1960 - S lastSu 2 0 S
 R Pe 1956 1963 - Ap lastSu 2 1 D
-R Pe 1960 o - O lastSu 2 0 S
-R Pe 1961 o - S lastSu 2 0 S
-R Pe 1962 1963 - O lastSu 2 0 S
+R Pe 1961 1963 - O lastSu 2 0 S
 Z America/Indiana/Tell_City -5:47:3 - LMT 1883 N 18 12:12:57
 -6 u C%sT 1946
 -6 Pe C%sT 1964 Ap 26 2
--5 - EST 1969
+-5 - EST 1967 O 29 2
+-6 u C%sT 1969 Ap 27 2
 -5 u E%sT 1971
 -5 - EST 2006 Ap 2 2
 -6 u C%sT
@@ -3059,11 +3049,13 @@ Z America/Indiana/Vevay -5:40:16 - LMT 1883 N 18 12:19:44
 -5 u E%sT
 R v 1921 o - May 1 2 1 D
 R v 1921 o - S 1 2 0 S
-R v 1941 1961 - Ap lastSu 2 1 D
+R v 1941 o - Ap lastSu 2 1 D
 R v 1941 o - S lastSu 2 0 S
+R v 1946 o - Ap lastSu 0:1 1 D
 R v 1946 o - Jun 2 2 0 S
+R v 1950 1961 - Ap lastSu 2 1 D
 R v 1950 1955 - S lastSu 2 0 S
-R v 1956 1960 - O lastSu 2 0 S
+R v 1956 1961 - O lastSu 2 0 S
 Z America/Kentucky/Louisville -5:43:2 - LMT 1883 N 18 12:16:58
 -6 u C%sT 1921
 -6 v C%sT 1942
@@ -3084,7 +3076,9 @@ Z America/Detroit -5:32:11 - LMT 1905
 -6 - CST 1915 May 15 2
 -5 - EST 1942
 -5 u E%sT 1946
--5 Dt E%sT 1973
+-5 Dt E%sT 1967 Jun 14 0:1
+-5 u E%sT 1969
+-5 - EST 1973
 -5 u E%sT 1975
 -5 - EST 1975 Ap 27 2
 -5 u E%sT
@@ -3339,10 +3333,6 @@ R Ed 1945 o - Au 14 23u 1 P
 R Ed 1945 o - S lastSu 2 0 S
 R Ed 1947 o - Ap lastSu 2 1 D
 R Ed 1947 o - S lastSu 2 0 S
-R Ed 1967 o - Ap lastSu 2 1 D
-R Ed 1967 o - O lastSu 2 0 S
-R Ed 1969 o - Ap lastSu 2 1 D
-R Ed 1969 o - O lastSu 2 0 S
 R Ed 1972 1986 - Ap lastSu 2 1 D
 R Ed 1972 2006 - O lastSu 2 0 S
 Z America/Edmonton -7:33:52 - LMT 1906 S
@@ -3354,7 +3344,7 @@ R Va 1942 o - F 9 2 1 W
 R Va 1945 o - Au 14 23u 1 P
 R Va 1945 o - S 30 2 0 S
 R Va 1946 1986 - Ap lastSu 2 1 D
-R Va 1946 o - O 13 2 0 S
+R Va 1946 o - S 29 2 0 S
 R Va 1947 1961 - S lastSu 2 0 S
 R Va 1962 2006 - O lastSu 2 0 S
 Z America/Vancouver -8:12:28 - LMT 1884
