@@ -59,25 +59,24 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 %option noyyfree
 
 /*
- * We use exclusive states for quoted, signle-quoted and non-quoted strings,
- * quoted variable names and C-tyle comments.
+ * We use exclusive states for quoted and non-quoted strings,
+ * quoted variable names and C-style comments.
  * Exclusive states:
  *  <xq> - quoted strings
  *  <xnq> - non-quoted strings
  *  <xvq> - quoted variable names
- *  <xsq> - single-quoted strings
  *  <xc> - C-style comment
  */
 
 %x xq
 %x xnq
 %x xvq
-%x xsq
 %x xc
 
-special		 [\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/]
-any			[^\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/\\\"\' \t\n\r\f]
+special		[\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/]
 blank		[ \t\n\r\f]
+/* "other" means anything that's not special, blank, or '\' or '"' */
+other		[^\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/\\\" \t\n\r\f]
 
 digit		[0-9]
 integer		(0|[1-9]{digit}*)
@@ -95,7 +94,7 @@ hex_fail	\\x{hex_dig}{0,1}
 
 %%
 
-<xnq>{any}+						{
+<xnq>{other}+					{
 									addstring(false, yytext, yyleng);
 								}
 
@@ -105,13 +104,12 @@ hex_fail	\\x{hex_dig}{0,1}
 									return checkKeyword();
 								}
 
-
 <xnq>\/\*						{
 									yylval->str = scanstring;
 									BEGIN xc;
 								}
 
-<xnq>({special}|\"|\')			{
+<xnq>({special}|\")				{
 									yylval->str = scanstring;
 									yyless(0);
 									BEGIN INITIAL;
@@ -124,39 +122,37 @@ hex_fail	\\x{hex_dig}{0,1}
 									return checkKeyword();
 								}
 
-<xnq,xq,xvq,xsq>\\[\"\'\\]		{ addchar(false, yytext[1]); }
+<xnq,xq,xvq>\\b				{ addchar(false, '\b'); }
 
-<xnq,xq,xvq,xsq>\\b				{ addchar(false, '\b'); }
+<xnq,xq,xvq>\\f				{ addchar(false, '\f'); }
 
-<xnq,xq,xvq,xsq>\\f				{ addchar(false, '\f'); }
+<xnq,xq,xvq>\\n				{ addchar(false, '\n'); }
 
-<xnq,xq,xvq,xsq>\\n				{ addchar(false, '\n'); }
+<xnq,xq,xvq>\\r				{ addchar(false, '\r'); }
 
-<xnq,xq,xvq,xsq>\\r				{ addchar(false, '\r'); }
+<xnq,xq,xvq>\\t				{ addchar(false, '\t'); }
 
-<xnq,xq,xvq,xsq>\\t				{ addchar(false, '\t'); }
+<xnq,xq,xvq>\\v				{ addchar(false, '\v'); }
 
-<xnq,xq,xvq,xsq>\\v				{ addchar(false, '\v'); }
+<xnq,xq,xvq>{unicode}+		{ parseUnicode(yytext, yyleng); }
 
-<xnq,xq,xvq,xsq>{unicode}+		{ parseUnicode(yytext, yyleng); }
+<xnq,xq,xvq>{hex_char}		{ parseHexChar(yytext); }
 
-<xnq,xq,xvq,xsq>{hex_char}		{ parseHexChar(yytext); }
+<xnq,xq,xvq>{unicode}*{unicodefail}	{ yyerror(NULL, "invalid unicode sequence"); }
 
-<xnq,xq,xvq,xsq>{unicode}*{unicodefail}	{ yyerror(NULL, "invalid unicode sequence"); }
+<xnq,xq,xvq>{hex_fail}		{ yyerror(NULL, "invalid hex character sequence"); }
 
-<xnq,xq,xvq,xsq>{hex_fail}		{ yyerror(NULL, "invalid hex character sequence"); }
+<xnq,xq,xvq>{unicode}+\\	{
+								/* throw back the \\, and treat as unicode */
+								yyless(yyleng - 1);
+								parseUnicode(yytext, yyleng);
+							}
 
-<xnq,xq,xvq,xsq>{unicode}+\\	{
-									/* throw back the \\, and treat as unicode */
-									yyless(yyleng - 1);
-									parseUnicode(yytext, yyleng);
-								}
+<xnq,xq,xvq>\\.				{ addchar(false, yytext[1]); }
 
-<xnq,xq,xvq,xsq>\\.				{ yyerror(NULL, "escape sequence is invalid"); }
+<xnq,xq,xvq>\\				{ yyerror(NULL, "unexpected end after backslash"); }
 
-<xnq,xq,xvq,xsq>\\				{ yyerror(NULL, "unexpected end after backslash"); }
-
-<xq,xvq,xsq><<EOF>>				{ yyerror(NULL, "unexpected end of quoted string"); }
+<xq,xvq><<EOF>>				{ yyerror(NULL, "unexpected end of quoted string"); }
 
 <xq>\"							{
 									yylval->str = scanstring;
@@ -170,15 +166,7 @@ hex_fail	\\x{hex_dig}{0,1}
 									return VARIABLE_P;
 								}
 
-<xsq>\'							{
-									yylval->str = scanstring;
-									BEGIN INITIAL;
-									return STRING_P;
-								}
-
 <xq,xvq>[^\\\"]+				{ addstring(false, yytext, yyleng); }
-
-<xsq>[^\\\']+					{ addstring(false, yytext, yyleng); }
 
 <xc>\*\/						{ BEGIN INITIAL; }
 
@@ -210,7 +198,7 @@ hex_fail	\\x{hex_dig}{0,1}
 
 \>								{ return GREATER_P; }
 
-\${any}+						{
+\${other}+						{
 									addstring(true, yytext + 1, yyleng - 1);
 									addchar(false, '\0');
 									yylval->str = scanstring;
@@ -263,24 +251,19 @@ hex_fail	\\x{hex_dig}{0,1}
 
 ({realfail1}|{realfail2})		{ yyerror(NULL, "invalid floating point number"); }
 
-{any}+							{
-									addstring(true, yytext, yyleng);
-									BEGIN xnq;
-								}
-
 \"								{
 									addchar(true, '\0');
 									BEGIN xq;
 								}
 
-\'								{
-									addchar(true, '\0');
-									BEGIN xsq;
-								}
-
 \\								{
 									yyless(0);
 									addchar(true, '\0');
+									BEGIN xnq;
+								}
+
+{other}+						{
+									addstring(true, yytext, yyleng);
 									BEGIN xnq;
 								}
 
