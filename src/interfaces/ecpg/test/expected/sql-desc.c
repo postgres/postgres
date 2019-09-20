@@ -249,7 +249,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	/* declare c1 cursor for $1 */
 #line 58 "desc.pgc"
 
-	{ ECPGopen("c1", "foo2", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c1 cursor for $1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c1 cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo2", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
@@ -260,7 +260,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 59 "desc.pgc"
 
 
-	{ ECPGfetch("c1", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch next from c1", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch next from c1", ECPGt_EOIT, 
 	ECPGt_int,&(val1output),(long)1,(long)1,sizeof(int), 
 	ECPGt_int,&(ind1),(long)1,(long)1,sizeof(int), 
 	ECPGt_char,(val2output),(long)sizeof("AAA"),(long)1,(sizeof("AAA"))*sizeof(char), 
@@ -273,7 +273,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	printf("val1=%d (ind1: %d) val2=%s (ind2: %d)\n",
 		val1output, ind1, val2output, ind2);
 
-	{ ECPGclose("c1", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close c1", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close c1", ECPGt_EOIT, ECPGt_EORT);
 #line 65 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -299,7 +299,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	/* declare c2 cursor for $1 */
 #line 70 "desc.pgc"
 
-	{ ECPGopen("c2", "foo3", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c2 cursor for $1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c2 cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo3", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_descriptor, "indesc", 1L, 1L, 1L, 
@@ -310,7 +310,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 71 "desc.pgc"
 
 
-	{ ECPGfetch("c2", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch next from c2", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch next from c2", ECPGt_EOIT, 
 	ECPGt_int,&(val1output),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(val2output),(long)sizeof("AAA"),(long)1,(sizeof("AAA"))*sizeof(char), 
@@ -322,7 +322,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 	printf("val1=%d val2=%s\n", val1output, val2i ? "null" : val2output);
 
-	{ ECPGclose("c2", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close c2", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close c2", ECPGt_EOIT, ECPGt_EORT);
 #line 76 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

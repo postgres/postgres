@@ -29,7 +29,3 @@ ECPGget_PGconn			 26
 ECPGtransactionStatus		 27
 ECPGset_var			 28
 ECPGget_var			 29
-ECPGdeclare                      30
-ECPGopen                         31
-ECPGfetch                        32
-ECPGclose                        33

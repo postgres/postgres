@@ -241,7 +241,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "open");
-	{ ECPGopen("mycur1", "st_id1", __LINE__, 1, 1, NULL, 0, ECPGst_normal, "declare mycur1 cursor for $1", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "declare mycur1 cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "st_id1", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 101 "sqlda.pgc"
@@ -258,7 +258,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	while (1)
 	{
 		strcpy(msg, "fetch");
-		{ ECPGfetch("mycur1", __LINE__, 1, 1, NULL, 0, ECPGst_normal, "fetch 1 from mycur1", ECPGt_EOIT, 
+		{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "fetch 1 from mycur1", ECPGt_EOIT, 
 	ECPGt_sqlda, &outp_sqlda, 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 109 "sqlda.pgc"
@@ -279,7 +279,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "close");
-	{ ECPGclose("mycur1", __LINE__, 1, 1, NULL, 0, ECPGst_normal, "close mycur1", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "close mycur1", ECPGt_EOIT, ECPGt_EORT);
 #line 118 "sqlda.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -316,7 +316,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "open");
-	{ ECPGopen("mycur2", "st_id2", __LINE__, 1, 1, NULL, 0, ECPGst_normal, "declare mycur2 cursor for $1", 
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "declare mycur2 cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "st_id2", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 138 "sqlda.pgc"
@@ -333,7 +333,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	while (1)
 	{
 		strcpy(msg, "fetch");
-		{ ECPGfetch("mycur2", __LINE__, 1, 1, NULL, 0, ECPGst_normal, "fetch from mycur2", ECPGt_EOIT, 
+		{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "fetch from mycur2", ECPGt_EOIT, 
 	ECPGt_sqlda, &outp_sqlda, 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 146 "sqlda.pgc"
@@ -354,7 +354,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "close");
-	{ ECPGclose("mycur2", __LINE__, 1, 1, NULL, 0, ECPGst_normal, "close mycur2", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, 0, ECPGst_normal, "close mycur2", ECPGt_EOIT, ECPGt_EORT);
 #line 155 "sqlda.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

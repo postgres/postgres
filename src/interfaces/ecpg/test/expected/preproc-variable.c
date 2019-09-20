@@ -190,7 +190,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 
 	strcpy(msg, "open");
-	{ ECPGopen("cur", NULL, __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare cur cursor for select name , born , age , married , children from family", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare cur cursor for select name , born , age , married , children from family", ECPGt_EOIT, ECPGt_EORT);
 #line 63 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -206,7 +206,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	memset(i, 0, sizeof(ind_personal));
 	for (loopcount = 0; loopcount < 100; loopcount++) {
 		strcpy(msg, "fetch");
-		{ ECPGfetch("cur", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch cur", ECPGt_EOIT, 
+		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch cur", ECPGt_EOIT, 
 	ECPGt_varchar,&(p->name),(long)BUFFERSIZ,(long)-1,sizeof( struct birthinfo ), 
 	ECPGt_int,&(i->ind_name),(long)1,(long)-1,sizeof( struct birthinfo ), 
 	ECPGt_long,&(p->birth.born),(long)1,(long)1,sizeof( struct birthinfo ), 
@@ -241,7 +241,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 	}
 
 	strcpy(msg, "close");
-	{ ECPGclose("cur", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close cur", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close cur", ECPGt_EOIT, ECPGt_EORT);
 #line 89 "variable.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

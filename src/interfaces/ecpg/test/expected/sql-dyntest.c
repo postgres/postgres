@@ -261,7 +261,7 @@ if (sqlca.sqlcode < 0) error ( );}
 #line 58 "dyntest.pgc"
 
 
-  { ECPGopen("MYCURS", "myquery", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare MYCURS cursor for $1", 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare MYCURS cursor for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement(NULL, "myquery", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 60 "dyntest.pgc"
@@ -272,7 +272,7 @@ if (sqlca.sqlcode < 0) error ( );}
 
   while (1)
     {
-      { ECPGfetch("MYCURS", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch in MYCURS", ECPGt_EOIT, 
+      { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch in MYCURS", ECPGt_EOIT, 
 	ECPGt_descriptor, "MYDESC", 1L, 1L, 1L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 64 "dyntest.pgc"
@@ -468,7 +468,7 @@ if (sqlca.sqlcode < 0) error ( );}
 	}
     }
 
-  { ECPGclose("MYCURS", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close MYCURS", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close MYCURS", ECPGt_EOIT, ECPGt_EORT);
 #line 194 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error ( );}

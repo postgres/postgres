@@ -134,19 +134,11 @@ struct cursor
 	char	   *command;
 	char	   *connection;
 	bool		opened;
-	char	   *prepared_name;
 	struct arguments *argsinsert;
 	struct arguments *argsinsert_oos;
 	struct arguments *argsresult;
 	struct arguments *argsresult_oos;
 	struct cursor *next;
-};
-
-/* structure to store declared name */
-struct declared_name_st
-{
-	char	   *name;			/* declared name */
-	struct declared_name_st *next;
 };
 
 struct typedefs

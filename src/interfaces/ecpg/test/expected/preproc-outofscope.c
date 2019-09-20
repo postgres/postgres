@@ -208,7 +208,7 @@ if (sqlca.sqlcode < 0) exit (1);
 static void
 open_cur1(void)
 {
-	{ ECPGopen("mycur", NULL, __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare mycur cursor for select * from a1", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare mycur cursor for select * from a1", ECPGt_EOIT, 
 	ECPGt_int,&((*( MYTYPE  *)(ECPGget_var( 0)) ).id),(long)1,(long)1,sizeof( struct mytype ), 
 	ECPGt_int,&((*( MYNULLTYPE  *)(ECPGget_var( 1)) ).id),(long)1,(long)1,sizeof( struct mynulltype ), 
 	ECPGt_char,&((*( MYTYPE  *)(ECPGget_var( 0)) ).t),(long)64,(long)1,sizeof( struct mytype ), 
@@ -229,7 +229,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 static void
 get_record1(void)
 {
-	{ ECPGfetch("mycur", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch mycur", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch mycur", ECPGt_EOIT, 
 	ECPGt_int,&((*( MYTYPE  *)(ECPGget_var( 0)) ).id),(long)1,(long)1,sizeof( struct mytype ), 
 	ECPGt_int,&((*( MYNULLTYPE  *)(ECPGget_var( 1)) ).id),(long)1,(long)1,sizeof( struct mynulltype ), 
 	ECPGt_char,&((*( MYTYPE  *)(ECPGget_var( 0)) ).t),(long)64,(long)1,sizeof( struct mytype ), 
@@ -250,7 +250,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 static void
 close_cur1(void)
 {
-	{ ECPGclose("mycur", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close mycur", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close mycur", ECPGt_EOIT, ECPGt_EORT);
 #line 52 "outofscope.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}

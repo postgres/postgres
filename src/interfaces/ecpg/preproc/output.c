@@ -5,7 +5,6 @@
 #include "preproc_extern.h"
 
 static void output_escaped_str(char *cmd, bool quoted);
-static void output_cursor_name(char *str);
 
 void
 output_line_number(void)
@@ -210,16 +209,7 @@ static void
 output_escaped_str(char *str, bool quoted)
 {
 	int			i = 0;
-	int			len = 0;
-
-	if (str == NULL)
-	{
-		fputs("NULL", base_yyout);
-
-		return;
-	}
-
-	len = strlen(str);
+	int			len = strlen(str);
 
 	if (quoted && str[0] == '"' && str[len - 1] == '"') /* do not escape quotes
 														 * at beginning and end
@@ -267,149 +257,4 @@ output_escaped_str(char *str, bool quoted)
 
 	if (quoted && str[0] == '"' && str[len] == '"')
 		fputs("\"", base_yyout);
-}
-
-/*
- * This is a tool function used by the output_cursor_statement function to print
- * cursor name after the string such as "ECPGopen(","ECPGfetch(","ECPGclose(".
- * This function filters escaped sequences such as \t, \n, \r to print cursor name cleanly
- */
-static void
-output_cursor_name(char *str)
-{
-	int			i = 0;
-	int			len = 0;
-
-	if (str == NULL)
-	{
-		fputs("NULL", base_yyout);
-
-		return;
-	}
-
-	len = strlen(str);
-	fputs("\"", base_yyout);
-	if (str[0] == '\"' && str[len - 1] == '\"')
-	{
-		i = 1;
-		len--;
-		fputs("\\\"", base_yyout);
-
-		/* output this char by char as we have to filter " and \n */
-		for (; i < len; i++)
-		{
-			if (str[i] == '"')
-				fputs("\\\"", base_yyout);
-			else if (str[i] == '\n')
-				fputs("\\\n", base_yyout);
-			else if (str[i] == '\\')
-			{
-				int			j = i;
-
-				/*
-				 * check whether this is a continuation line if it is, do not
-				 * output anything because newlines are escaped anyway
-				 */
-
-				/* accept blanks after the '\' as some other compilers do too */
-				do
-				{
-					j++;
-				} while (str[j] == ' ' || str[j] == '\t');
-
-				if ((str[j] != '\n') && (str[j] != '\r' || str[j + 1] != '\n')) /* not followed by a
-																				 * newline */
-					fputs("\\\\", base_yyout);
-			}
-			else if (str[i] == '\r' && str[i + 1] == '\n')
-			{
-				fputs("\\\r\n", base_yyout);
-				i++;
-			}
-			else
-				fputc(str[i], base_yyout);
-		}
-
-		fputs("\\\"", base_yyout);
-	}
-	else
-		fputs(str, base_yyout);
-
-	fputs("\"", base_yyout);
-}
-
-/*
- * Transform the EXEC SQL DECLARE STATEMENT into ECPGdeclare function
- */
-void
-output_declare_statement(char *name)
-{
-	/* connection is set in "at:" token in ecpg.trailer file */
-	fprintf(base_yyout, "{ ECPGdeclare(__LINE__, %s, ", connection ? connection : "NULL");
-	output_escaped_str(name, true);
-	fputs(");", base_yyout);
-
-	whenever_action(2);
-	free(name);
-	if (connection != NULL)
-		free(connection);
-}
-
-/*
- * Transform the EXEC SQL CURSOR STATEMENT such as OPEN/FETCH/CLOSE cursor into
- * ECPGopen/ECPGfetch/ECPGclose function
- */
-void
-output_cursor_statement(int cursor_stmt, char *cursor_name, char *prepared_name, char *stmt, int whenever_mode, enum ECPG_statement_type st)
-{
-	switch (cursor_stmt)
-	{
-		case ECPGcst_open:
-			fprintf(base_yyout, "{ ECPGopen(");
-			output_cursor_name(cursor_name);
-			fprintf(base_yyout, ", ");
-			output_escaped_str(prepared_name, true);
-			fprintf(base_yyout, ", __LINE__, %d, %d, %s, %d, ",
-					compat, force_indicator, connection ? connection : "NULL", questionmarks);
-			break;
-		case ECPGcst_fetch:
-			fprintf(base_yyout, "{ ECPGfetch(");
-			output_cursor_name(cursor_name);
-			fprintf(base_yyout, ", __LINE__, %d, %d, %s, %d, ",
-					compat, force_indicator, connection ? connection : "NULL", questionmarks);
-			break;
-		case ECPGcst_close:
-			fprintf(base_yyout, "{ ECPGclose(");
-			output_cursor_name(cursor_name);
-			fprintf(base_yyout, ", __LINE__, %d, %d, %s, %d, ",
-					compat, force_indicator, connection ? connection : "NULL", questionmarks);
-			break;
-	}
-
-	if (st == ECPGst_execute || st == ECPGst_exec_immediate)
-		fprintf(base_yyout, "%s, %s, ", ecpg_statement_type_name[st], stmt);
-	else
-	{
-		if (st == ECPGst_prepnormal && auto_prepare)
-			fputs("ECPGst_prepnormal, \"", base_yyout);
-		else
-			fputs("ECPGst_normal, \"", base_yyout);
-
-		output_escaped_str(stmt, false);
-		fputs("\", ", base_yyout);
-	}
-
-	/* dump variables to C file */
-	dump_variables(argsinsert, 1);
-	fputs("ECPGt_EOIT, ", base_yyout);
-	dump_variables(argsresult, 1);
-	fputs("ECPGt_EORT);", base_yyout);
-	reset_variables();
-
-	whenever_action(whenever_mode | 2);
-	free(cursor_name);
-	free(prepared_name);
-	free(stmt);
-	if (connection != NULL)
-		free(connection);
 }

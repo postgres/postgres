@@ -105,7 +105,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 34 "whenever_do_continue.pgc"
 
 
-	{ ECPGopen("c", NULL, __LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c cursor for select ename , sal , comm from emp order by ename collate \"C\" asc", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c cursor for select ename , sal , comm from emp order by ename collate \"C\" asc", ECPGt_EOIT, ECPGt_EORT);
 #line 36 "whenever_do_continue.pgc"
 
 if (sqlca.sqlcode < 0) exit (1);}
@@ -124,7 +124,7 @@ if (sqlca.sqlcode < 0) exit (1);}
 
 	for (loopcount = 0; loopcount < 100; loopcount++)
 	{
-		{ ECPGfetch("c", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch c", ECPGt_EOIT, 
+		{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch c", ECPGt_EOIT, 
 	ECPGt_char,&(emp.ename),(long)12,(long)1,(12)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_float,&(emp.sal),(long)1,(long)1,sizeof(float), 
@@ -151,7 +151,7 @@ if (sqlca.sqlcode < 0) continue;}
 #line 55 "whenever_do_continue.pgc"
 
 
-	{ ECPGclose("c", __LINE__, 0, 1, NULL, 0, ECPGst_normal, "close c", ECPGt_EOIT, ECPGt_EORT);}
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "close c", ECPGt_EOIT, ECPGt_EORT);}
 #line 57 "whenever_do_continue.pgc"
 
 

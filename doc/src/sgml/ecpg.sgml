@@ -249,7 +249,7 @@ EXEC SQL CONNECT TO :target USER :user USING :passwd;
    SQL statements in embedded SQL programs are by default executed on
    the current connection, that is, the most recently opened one.  If
    an application needs to manage multiple connections, then there are
-   three ways to handle this.
+   two ways to handle this.
   </para>
 
   <para>
@@ -322,17 +322,6 @@ current=testdb3 (should be testdb3)
 current=testdb2 (should be testdb2)
 current=testdb1 (should be testdb1)
 </screen>
-  </para>
-
-  <para>
-   The third option is to declare a SQL identifier linked to
-   the connection, for example:
-<programlisting>
-EXEC SQL AT <replaceable>connection-name</replaceable> DECLARE <replaceable>statement-name</replaceable> STATEMENT;
-EXEC SQL PREPARE <replaceable>statement-name</replaceable> FROM :<replaceable>dyn-string</replaceable>;
-</programlisting>
-   Once you link a SQL identifier to a connection, execute dynamic SQL
-   statements using this identifier without the <literal>AT</literal> clause.
   </para>
   </sect2>
 
@@ -6816,189 +6805,6 @@ EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
      <member><xref linkend="ecpg-sql-open"/></member>
      <member><xref linkend="sql-close"/></member>
      <member><xref linkend="sql-declare"/></member>
-    </simplelist>
-   </refsect1>
-  </refentry>
-
-  <refentry id="ecpg-sql-declare-statement">
-   <refnamediv>
-    <refname>DECLARE STATEMENT</refname>
-    <refpurpose>declares a SQL statement identifier associated with connection</refpurpose>
-   </refnamediv>
-
-   <refsynopsisdiv>
-<synopsis>
-EXEC SQL [ AT <replaceable class="parameter">connection_name</replaceable> ] DECLARE <replaceable class="parameter">statement_name</replaceable> STATEMENT
-</synopsis>
-   </refsynopsisdiv>
-
-   <refsect1>
-    <title>Description</title>
-
-    <para>
-     <command>DECLARE STATEMENT</command> declares a SQL statement identifier
-     to be associated with connection.
-    </para>
-
-    <para>
-     <command>DECLARE CURSOR</command> with an SQL statement identifier
-     can be written before <command>PREPARE</command>.
-    </para>
-   </refsect1>
-
-   <refsect1>
-    <title>Parameters</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">connection_name</replaceable></term>
-      <listitem>
-       <para>
-        A database connection name established by the <command>CONNECT</command> command.
-       </para>
-       <para>
-        If the <literal>AT</literal> clause is omitted, the SQL statement
-        identifier is associated with the <literal>DEFAULT</literal> connection.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">statement_name</replaceable></term>
-      <listitem>
-       <para>
-        The name of the SQL statement identifier, either as an SQL identifier
-        or a host variable.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </refsect1>
-
-   <refsect1>
-    <title>Notes</title>
-    <para>
-     The <literal>AT</literal> clause can be used with both
-     <command>DECLARE STATEMENT</command> and other dynamic SQL statements.
-     The following table illustrates how it affects the selected database
-     connection.
-    </para>
-    <table tocentry="1" id="ecpg-declare-statement-table">
-     <title>Scenario</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-        <entry>
-         Usage Scenario
-        </entry>
-        <entry>
-         DECLARE STATEMENT
-        </entry>
-        <entry>
-         Other Dynamic Statements
-        </entry>
-        <entry>
-         Target Database
-        </entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>
-         1
-        </entry>
-        <entry>
-         Without <literal>AT</literal>
-        </entry>
-        <entry>
-         Without <literal>AT</literal>
-        </entry>
-        <entry>
-         Default connection
-        </entry>
-       </row>
-       <row>
-        <entry>
-         2
-        </entry>
-        <entry>
-         With <literal>AT</literal> that connects to <literal>con1</literal>
-        </entry>
-        <entry>
-         Without <literal>AT</literal>
-        </entry>
-        <entry>
-         con1
-        </entry>
-       </row>
-       <row>
-        <entry>
-         3
-        </entry>
-        <entry>
-         With <literal>AT</literal> that connects to <literal>con1</literal>
-        </entry>
-        <entry>
-         With <literal>AT</literal> that connects to <literal>con2</literal>
-        </entry>
-        <entry>
-         con1
-        </entry>
-       </row>
-       <row>
-        <entry>
-         4
-        </entry>
-        <entry>
-         Without <literal>AT</literal>
-        </entry>
-        <entry>
-         With <literal>AT</literal> that connects to <literal>con2</literal>
-        </entry>
-        <entry>
-         con2
-        </entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-    <para>
-     In scenario 4, <command>DECLARE STATEMENT</command> will be ignored.
-    </para>
-   </refsect1>
-
-   <refsect1>
-    <title>Examples</title>
-
-<programlisting>
-EXEC SQL CONNECT TO postgres AS con1;
-EXEC SQL AT con1 DECLARE sql_stmt STATEMENT;
-EXEC SQL DECLARE cursor_name CURSOR FOR sql_stmt;
-EXEC SQL PREPARE sql_stmt FROM :dyn_string;
-EXEC SQL OPEN cursor_name;
-EXEC SQL FETCH cursor_name INTO :column1;
-EXEC SQL CLOSE cursor_name;
-</programlisting>
-   </refsect1>
-
-   <refsect1>
-    <title>Compatibility</title>
-
-    <para>
-     <command>DECLARE STATEMENT</command> is a PostgreSQL extension of the SQL standard,
-     but can be used in Oracle and DB2.
-    </para>
-   </refsect1>
-
-   <refsect1>
-    <title>See Also</title>
-
-    <simplelist type="inline">
-     <member><xref linkend="ecpg-sql-connect"/></member>
-     <member><xref linkend="ecpg-sql-declare"/></member>
-     <member><xref linkend="ecpg-sql-open"/></member>
     </simplelist>
    </refsect1>
   </refentry>
