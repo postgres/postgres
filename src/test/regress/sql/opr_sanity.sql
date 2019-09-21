@@ -806,8 +806,6 @@ WHERE o1.oprnegate = o2.oid AND p1.oid = o1.oprcode AND p2.oid = o2.oprcode AND
 
 -- Btree comparison operators' functions should have the same volatility
 -- and leakproofness markings as the associated comparison support function.
--- As of Postgres 12, the only exceptions are that textual equality functions
--- are marked leakproof but textual comparison/inequality functions are not.
 SELECT pp.oid::regprocedure as proc, pp.provolatile as vp, pp.proleakproof as lp,
        po.oid::regprocedure as opr, po.provolatile as vo, po.proleakproof as lo
 FROM pg_proc pp, pg_proc po, pg_operator o, pg_amproc ap, pg_amop ao
