@@ -1105,22 +1105,11 @@ hashbpcharextended(PG_FUNCTION_ARGS)
  */
 
 static int
-internal_bpchar_pattern_compare(BpChar *arg1, BpChar *arg2, Oid collid)
+internal_bpchar_pattern_compare(BpChar *arg1, BpChar *arg2)
 {
 	int			result;
 	int			len1,
 				len2;
-
-	check_collation_set(collid);
-
-	/*
-	 * see internal_text_pattern_compare()
-	 */
-	if (!get_collation_isdeterministic(collid))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("nondeterministic collations are not supported for operator class \"%s\"",
-						"bpchar_pattern_ops")));
 
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
@@ -1144,7 +1133,7 @@ bpchar_pattern_lt(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2, PG_GET_COLLATION());
+	result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1160,7 +1149,7 @@ bpchar_pattern_le(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2, PG_GET_COLLATION());
+	result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1176,7 +1165,7 @@ bpchar_pattern_ge(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2, PG_GET_COLLATION());
+	result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1192,7 +1181,7 @@ bpchar_pattern_gt(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2, PG_GET_COLLATION());
+	result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1208,7 +1197,7 @@ btbpchar_pattern_cmp(PG_FUNCTION_ARGS)
 	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			result;
 
-	result = internal_bpchar_pattern_compare(arg1, arg2, PG_GET_COLLATION());
+	result = internal_bpchar_pattern_compare(arg1, arg2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -1221,16 +1210,7 @@ Datum
 btbpchar_pattern_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
-	Oid			collid = ssup->ssup_collation;
 	MemoryContext oldcontext;
-
-	check_collation_set(collid);
-
-	if (!get_collation_isdeterministic(collid))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("nondeterministic collations are not supported for operator class \"%s\"",
-						"bpchar_pattern_ops")));
 
 	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
