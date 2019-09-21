@@ -1634,7 +1634,7 @@ Author: Michael Paquier <michael@paquier.xyz>
        <para>
         Add the timestamp of the last received standby message to <link
         linkend="pg-stat-replication-view"><structname>pg_stat_replication</structname></link>
-        (Lim MyungKyu)
+        (Lim Myungkyu)
        </para>
       </listitem>
 
@@ -3621,6 +3621,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Fabien Coelho</member>
     <member>Fabrízio de Royes Mello</member>
     <member>Feike Steenbergen</member>
+    <member>Filip Rembialkowski</member>
     <member>Fujii Masao</member>
     <member>Gaby Schilders</member>
     <member>Geert Lobbestael</member>
@@ -3667,6 +3668,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Jean-Marc Voillequin</member>
     <member>Jean-Pierre Pelletier</member>
     <member>Jeevan Chalke</member>
+    <member>Jeevan Ladhe</member>
     <member>Jeff Davis</member>
     <member>Jeff Janes</member>
     <member>Jeremy Evans</member>
@@ -3798,6 +3800,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Pavel Raiskup</member>
     <member>Pavel Stehule</member>
     <member>Peifeng Qiu</member>
+    <member>Peter Billen</member>
     <member>Peter Eisentraut</member>
     <member>Peter Geoghegan</member>
     <member>Peter Neave</member>
@@ -3813,6 +3816,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Piotr Stefaniak</member>
     <member>Piotr Wlodarczyk</member>
     <member>Prabhat Sahu</member>
+    <member>Quentin Rameau</member>
     <member>Rafael Castro</member>
     <member>Rafia Sabih</member>
     <member>Rahila Syed</member>
@@ -3836,6 +3840,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Rushabh Lathia</member>
     <member>Ryan Lambert</member>
     <member>Ryohei Nagaura</member>
+    <member>Ryohei Takahashi</member>
     <member>Samuel Williams</member>
     <member>Sand Stone</member>
     <member>Sanyo Capobiango</member>
@@ -3865,6 +3870,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Suresh Kumar R</member>
     <member>Takayuki Tsunakawa</member>
     <member>Takeshi Ideriha</member>
+    <member>Takuma Hoshiai</member>
     <member>Tasos Maschalidis</member>
     <member>Tatsuo Ishii</member>
     <member>Tatsuro Yamada</member>
@@ -3873,6 +3879,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Thomas Munro</member>
     <member>Thomas Poty</member>
     <member>Tillmann Schulz</member>
+    <member>Tim Möhlmann</member>
     <member>Timur Birsh</member>
     <member>Tobias Bussmann</member>
     <member>Tom Cassidy</member>
@@ -3893,12 +3900,14 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Vladimir Kriukov</member>
     <member>Wu Fei</member>
     <member>Yaroslav Schekin</member>
+    <member>Yi Huang</member>
     <member>Yoshikazu Imai</member>
     <member>Yugo Nagata</member>
     <member>Yulian Khodorkovskiy</member>
     <member>Yuming Wang</member>
     <member>YunQiang Su</member>
     <member>Yuri Kurenkov</member>
+    <member>Yusuke Egashita</member>
     <member>Yuzuko Hosoya</member>
     <member>Zhou Digoal</member>
    </simplelist>
