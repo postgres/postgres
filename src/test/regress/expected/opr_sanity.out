@@ -526,9 +526,19 @@ int42ge(integer,smallint)
 oideq(oid,oid)
 oidne(oid,oid)
 nameeqtext(name,text)
+namelttext(name,text)
+nameletext(name,text)
+namegetext(name,text)
+namegttext(name,text)
 namenetext(name,text)
+btnametextcmp(name,text)
 texteqname(text,name)
+textltname(text,name)
+textlename(text,name)
+textgename(text,name)
+textgtname(text,name)
 textnename(text,name)
+bttextnamecmp(text,name)
 float4eq(real,real)
 float4ne(real,real)
 float4lt(real,real)
@@ -559,8 +569,12 @@ btfloat4cmp(real,real)
 btfloat8cmp(double precision,double precision)
 btoidcmp(oid,oid)
 btcharcmp("char","char")
+btnamecmp(name,name)
+bttextcmp(text,text)
 cash_cmp(money,money)
 btoidvectorcmp(oidvector,oidvector)
+text_larger(text,text)
+text_smaller(text,text)
 int8eq(bigint,bigint)
 int8ne(bigint,bigint)
 int8lt(bigint,bigint)
@@ -574,6 +588,10 @@ int84gt(bigint,integer)
 int84le(bigint,integer)
 int84ge(bigint,integer)
 oidvectorne(oidvector,oidvector)
+namelt(name,name)
+namele(name,name)
+namegt(name,name)
+namege(name,name)
 namene(name,name)
 oidvectorlt(oidvector,oidvector)
 oidvectorle(oidvector,oidvector)
@@ -582,6 +600,10 @@ oidvectorge(oidvector,oidvector)
 oidvectorgt(oidvector,oidvector)
 oidlt(oid,oid)
 oidle(oid,oid)
+text_lt(text,text)
+text_le(text,text)
+text_gt(text,text)
+text_ge(text,text)
 macaddr_eq(macaddr,macaddr)
 macaddr_lt(macaddr,macaddr)
 macaddr_le(macaddr,macaddr)
@@ -611,7 +633,14 @@ network_ne(inet,inet)
 network_cmp(inet,inet)
 lseg_eq(lseg,lseg)
 bpchareq(character,character)
+bpcharlt(character,character)
+bpcharle(character,character)
+bpchargt(character,character)
+bpcharge(character,character)
 bpcharne(character,character)
+bpchar_larger(character,character)
+bpchar_smaller(character,character)
+bpcharcmp(character,character)
 date_eq(date,date)
 date_lt(date,date)
 date_le(date,date)
@@ -707,6 +736,16 @@ timestamp_lt(timestamp without time zone,timestamp without time zone)
 timestamp_le(timestamp without time zone,timestamp without time zone)
 timestamp_ge(timestamp without time zone,timestamp without time zone)
 timestamp_gt(timestamp without time zone,timestamp without time zone)
+text_pattern_lt(text,text)
+text_pattern_le(text,text)
+text_pattern_ge(text,text)
+text_pattern_gt(text,text)
+bttext_pattern_cmp(text,text)
+bpchar_pattern_lt(character,character)
+bpchar_pattern_le(character,character)
+bpchar_pattern_ge(character,character)
+bpchar_pattern_gt(character,character)
+btbpchar_pattern_cmp(character,character)
 btint48cmp(integer,bigint)
 btint84cmp(bigint,integer)
 btint24cmp(smallint,integer)
@@ -1322,8 +1361,6 @@ WHERE o1.oprnegate = o2.oid AND p1.oid = o1.oprcode AND p2.oid = o2.oprcode AND
 
 -- Btree comparison operators' functions should have the same volatility
 -- and leakproofness markings as the associated comparison support function.
--- As of Postgres 12, the only exceptions are that textual equality functions
--- are marked leakproof but textual comparison/inequality functions are not.
 SELECT pp.oid::regprocedure as proc, pp.provolatile as vp, pp.proleakproof as lp,
        po.oid::regprocedure as opr, po.provolatile as vo, po.proleakproof as lo
 FROM pg_proc pp, pg_proc po, pg_operator o, pg_amproc ap, pg_amop ao
@@ -1336,16 +1373,9 @@ WHERE pp.oid = ap.amproc AND po.oid = o.oprcode AND o.oid = ao.amopopr AND
     (pp.provolatile != po.provolatile OR
      pp.proleakproof != po.proleakproof)
 ORDER BY 1;
-                   proc                    | vp | lp |              opr              | vo | lo 
--------------------------------------------+----+----+-------------------------------+----+----
- btnametextcmp(name,text)                  | i  | f  | nameeqtext(name,text)         | i  | t
- bttextnamecmp(text,name)                  | i  | f  | texteqname(text,name)         | i  | t
- btnamecmp(name,name)                      | i  | f  | nameeq(name,name)             | i  | t
- bttextcmp(text,text)                      | i  | f  | texteq(text,text)             | i  | t
- bpcharcmp(character,character)            | i  | f  | bpchareq(character,character) | i  | t
- bttext_pattern_cmp(text,text)             | i  | f  | texteq(text,text)             | i  | t
- btbpchar_pattern_cmp(character,character) | i  | f  | bpchareq(character,character) | i  | t
-(7 rows)
+ proc | vp | lp | opr | vo | lo 
+------+----+----+-----+----+----
+(0 rows)
 
 -- **************** pg_aggregate ****************
 -- Look for illegal values in pg_aggregate fields.
