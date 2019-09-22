@@ -244,7 +244,7 @@ tts_virtual_materialize(TupleTableSlot *slot)
 static void
 tts_virtual_copyslot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
-	TupleDesc	srcdesc = dstslot->tts_tupleDescriptor;
+	TupleDesc	srcdesc = srcslot->tts_tupleDescriptor;
 
 	Assert(srcdesc->natts <= dstslot->tts_tupleDescriptor->natts);
 
