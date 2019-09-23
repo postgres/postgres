@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-07 23:09+0000\n"
-"PO-Revision-Date: 2019-09-08 08:51+0200\n"
+"POT-Creation-Date: 2019-09-21 21:39+0000\n"
+"PO-Revision-Date: 2019-09-22 00:04+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -1017,31 +1017,39 @@ msgstr "konnte Hostnamen des Servers nicht aus dem Serverzertifikat ermitteln\n"
 msgid "GSSAPI wrap error"
 msgstr "GSSAPI-Wrap-Fehler"
 
-#: fe-secure-gssapi.c:166 fe-secure-gssapi.c:290 fe-secure-gssapi.c:332
-msgid "GSSAPI did not provide confidentiality\n"
-msgstr "GSSAPI bot keine Vertraulichkeit\n"
+#: fe-secure-gssapi.c:166
+msgid "outgoing GSSAPI message would not use confidentiality\n"
+msgstr "ausgehende GSSAPI-Nachricht würde keine Vertraulichkeit verwenden\n"
 
 #: fe-secure-gssapi.c:173
 #, c-format
-msgid "client tried to send oversize GSSAPI packet: %zu bytes\n"
-msgstr "Client versuchte übergroßes GSSAPI-Paket zu senden: %zu Bytes\n"
+msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
+msgstr "Client versuchte übergroßes GSSAPI-Paket zu senden (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:324
+#: fe-secure-gssapi.c:291 fe-secure-gssapi.c:497
+#, c-format
+msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
+msgstr "übergroßes GSSAPI-Paket vom Server gesendet (%zu > %zu)\n"
+
+#: fe-secure-gssapi.c:327
 msgid "GSSAPI unwrap error"
 msgstr "GSSAPI-Unwrap-Fehler"
 
-#: fe-secure-gssapi.c:494
-#, c-format
-msgid "oversize GSSAPI packet sent by the server: %zu bytes\n"
-msgstr "übergroßes GSSAPI-Paket vom Server gesendet: %zu Bytes\n"
+#: fe-secure-gssapi.c:335
+msgid "incoming GSSAPI message did not use confidentiality\n"
+msgstr "eingehende GSSAPI-Nachricht verwendete keine Vertraulichkeit\n"
 
-#: fe-secure-gssapi.c:539 fe-secure-gssapi.c:573
-msgid "GSSAPI context establishment error"
-msgstr "GSSAPI-Fehler beim Einrichten des Kontexts"
+#: fe-secure-gssapi.c:543
+msgid "could not initiate GSSAPI security context"
+msgstr "konnte GSSAPI-Sicherheitskontext nicht initiieren"
 
-#: fe-secure-gssapi.c:564
+#: fe-secure-gssapi.c:568
 msgid "GSSAPI size check error"
 msgstr "GSSAPI-Fehler bei der Größenprüfung"
+
+#: fe-secure-gssapi.c:577
+msgid "GSSAPI context establishment error"
+msgstr "GSSAPI-Fehler beim Einrichten des Kontexts"
 
 #: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1219
 #, c-format

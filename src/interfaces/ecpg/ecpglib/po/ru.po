@@ -5,9 +5,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL current)\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-08 11:42+0300\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-09-23 06:32+0300\n"
+"PO-Revision-Date: 2019-09-09 13:30+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -25,7 +25,7 @@ msgstr "пустое сообщение"
 msgid "<DEFAULT>"
 msgstr "<ПО_УМОЛЧАНИЮ>"
 
-#: descriptor.c:857 misc.c:120
+#: descriptor.c:876 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
@@ -196,6 +196,9 @@ msgstr "подключение к серверу потеряно"
 msgid "SQL error: %s\n"
 msgstr "ошибка SQL: %s\n"
 
-#: execute.c:1996
+#: execute.c:2187 execute.c:2194
 msgid "<empty>"
 msgstr "<>"
+
+#~ msgid "cursor is invalid on line %d"
+#~ msgstr "некорректный курсор в строке %d"
