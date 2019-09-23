@@ -7690,24 +7690,6 @@ same commits as above
 
       <listitem>
 <!--
-2017-09-19 [f24649976] Add citext_pattern_ops for citext contrib module
--->
-
-       <para>
-        Allow creation of indexes that can be used by <literal>LIKE</literal>
-        comparisons
-        on <link linkend="citext"><filename>citext</filename></link> columns
-        (Alexey Chernyshov)
-       </para>
-
-       <para>
-        To do this, the index must be created using the
-        <literal>citext_pattern_ops</literal> operator class.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2018-04-05 [f4cd7102b] Add support of bool, bpchar, name and uuid to btree_gin
 -->
 
