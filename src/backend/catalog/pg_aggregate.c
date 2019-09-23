@@ -116,7 +116,7 @@ AggregateCreate(const char *aggName,
 		elog(ERROR, "aggregate must have a transition function");
 
 	if (numDirectArgs < 0 || numDirectArgs > numArgs)
-		elog(ERROR, "incorrect number of direct args for aggregate");
+		elog(ERROR, "incorrect number of direct arguments for aggregate");
 
 	/*
 	 * Aggregates can have at most FUNC_MAX_ARGS-1 args, else the transfn
@@ -711,7 +711,7 @@ AggregateCreate(const char *aggName,
 		if (numDirectArgs != oldagg->aggnumdirectargs)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("cannot change number of direct args of an aggregate function")));
+					 errmsg("cannot change number of direct arguments of an aggregate function")));
 
 		replaces[Anum_pg_aggregate_aggfnoid - 1] = false;
 		replaces[Anum_pg_aggregate_aggkind - 1] = false;

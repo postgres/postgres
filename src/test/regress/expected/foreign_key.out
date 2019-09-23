@@ -2167,19 +2167,19 @@ INSERT into dropfk VALUES (1), (1000), (1500), (2000);
 -- these should all fail
 ALTER TABLE droppk DETACH PARTITION droppk_d;
 ERROR:  removing partition "droppk_d" violates foreign key constraint "dropfk_a_fkey5"
-DETAIL:  Key (a)=(2000) still referenced from table "dropfk".
+DETAIL:  Key (a)=(2000) is still referenced from table "dropfk".
 ALTER TABLE droppk2 DETACH PARTITION droppk2_d;
 ERROR:  removing partition "droppk2_d" violates foreign key constraint "dropfk_a_fkey4"
-DETAIL:  Key (a)=(1500) still referenced from table "dropfk".
+DETAIL:  Key (a)=(1500) is still referenced from table "dropfk".
 ALTER TABLE droppk DETACH PARTITION droppk1;
 ERROR:  removing partition "droppk1" violates foreign key constraint "dropfk_a_fkey1"
-DETAIL:  Key (a)=(1) still referenced from table "dropfk".
+DETAIL:  Key (a)=(1) is still referenced from table "dropfk".
 ALTER TABLE droppk DETACH PARTITION droppk2;
 ERROR:  removing partition "droppk2" violates foreign key constraint "dropfk_a_fkey2"
-DETAIL:  Key (a)=(1000) still referenced from table "dropfk".
+DETAIL:  Key (a)=(1000) is still referenced from table "dropfk".
 ALTER TABLE droppk2 DETACH PARTITION droppk21;
 ERROR:  removing partition "droppk21" violates foreign key constraint "dropfk_a_fkey3"
-DETAIL:  Key (a)=(1000) still referenced from table "dropfk".
+DETAIL:  Key (a)=(1000) is still referenced from table "dropfk".
 -- dropping partitions is disallowed
 DROP TABLE droppk_d;
 ERROR:  cannot drop table droppk_d because other objects depend on it

@@ -11297,7 +11297,7 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE),
-					 errdetail("Timeline ID parsed is %u, but expected %u",
+					 errdetail("Timeline ID parsed is %u, but expected %u.",
 							   tli_from_file, tli_from_walseg)));
 
 		ereport(DEBUG1,

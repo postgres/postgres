@@ -2456,7 +2456,7 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 				 errmsg("removing partition \"%s\" violates foreign key constraint \"%s\"",
 						RelationGetRelationName(pk_rel),
 						NameStr(riinfo->conname)),
-				 errdetail("Key (%s)=(%s) still referenced from table \"%s\".",
+				 errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 						   key_names.data, key_values.data,
 						   RelationGetRelationName(fk_rel))));
 	else if (onfk)
