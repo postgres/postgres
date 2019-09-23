@@ -14058,14 +14058,14 @@ SELECT NULLIF(value, '(none)') ...
        <row>
         <entry> <literal>@&gt;</literal> </entry>
         <entry>contains</entry>
-        <entry><literal>ARRAY[1,4,3] @&gt; ARRAY[3,1]</literal></entry>
+        <entry><literal>ARRAY[1,4,3] @&gt; ARRAY[3,1,3]</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
        <row>
         <entry> <literal>&lt;@</literal> </entry>
         <entry>is contained by</entry>
-        <entry><literal>ARRAY[2,7] &lt;@ ARRAY[1,7,4,2,6]</literal></entry>
+        <entry><literal>ARRAY[2,2,7] &lt;@ ARRAY[1,7,4,2,6]</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
@@ -14108,8 +14108,10 @@ SELECT NULLIF(value, '(none)') ...
     </table>
 
   <para>
-   Array comparisons compare the array contents element-by-element,
-   using the default B-tree comparison function for the element data type.
+   The array ordering operators (<literal>&lt;</literal>,
+   <literal>&gt;=</literal>, etc) compare the array contents
+   element-by-element, using the default B-tree comparison function for
+   the element data type, and sort based on the first difference.
    In multidimensional arrays the elements are visited in row-major order
    (last subscript varies most rapidly).
    If the contents of two arrays are equal but the dimensionality is
@@ -14118,6 +14120,15 @@ SELECT NULLIF(value, '(none)') ...
    <productname>PostgreSQL</productname> prior to 8.2: older versions would claim
    that two arrays with the same contents were equal, even if the
    number of dimensions or subscript ranges were different.)
+  </para>
+
+  <para>
+   The array containment operators (<literal>&lt;@</literal>
+   and <literal>@&gt;</literal>) consider one array to be contained in
+   another one if each of its elements appears in the other one.
+   Duplicates are not treated specially, thus <literal>ARRAY[1]</literal>
+   and <literal>ARRAY[1,1]</literal> are each considered to contain the
+   other.
   </para>
 
   <para>
@@ -18277,7 +18288,7 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
        <row>
         <entry> <literal>@&gt;</literal> </entry>
         <entry>contains element</entry>
-        <entry><literal>'{calvin=r*w/hobbes,hobbes=r*w*/postgres}'::aclitem[] @> 'calvin=r*w/hobbes'::aclitem</literal></entry>
+        <entry><literal>'{calvin=r*w/hobbes,hobbes=r*w*/postgres}'::aclitem[] @&gt; 'calvin=r*w/hobbes'::aclitem</literal></entry>
         <entry><literal>t</literal></entry>
        </row>
 
