@@ -726,7 +726,7 @@ pg_promote(PG_FUNCTION_ARGS)
 	if (wait_seconds <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("\"wait_seconds\" cannot be negative or equal zero")));
+				 errmsg("\"wait_seconds\" must not be negative or zero")));
 
 	/* create the promote signal file */
 	promote_file = AllocateFile(PROMOTE_SIGNAL_FILE, "w");

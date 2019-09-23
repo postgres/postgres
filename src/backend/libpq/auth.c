@@ -2864,7 +2864,7 @@ CheckCertAuth(Port *port)
 		if (port->hba->clientcert == clientCertFull && port->hba->auth_method != uaCert)
 		{
 			ereport(LOG,
-					(errmsg("certificate validation (clientcert=verify-full) failed for user \"%s\": cn mismatch",
+					(errmsg("certificate validation (clientcert=verify-full) failed for user \"%s\": CN mismatch",
 							port->user_name)));
 		}
 	}
