@@ -608,7 +608,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      <para>
       Treat object-name columns in
       the <link linkend="information-schema"><structname>information_schema</structname></link>
-      views as being of type <type>name</type> not <type>varchar</type>
+      views as being of type <type>name</type>, not <type>varchar</type>
       (Tom Lane)
      </para>
 
@@ -969,7 +969,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 
        <para>
         Reduce the <acronym>WAL</acronym> write overhead
-        of <acronym>GiST</acronym>, <acronym>GIN</acronym> and
+        of <acronym>GiST</acronym>, <acronym>GIN</acronym>, and
         <acronym>SP-GiST</acronym> index creation (Anastasia Lubennikova,
         Andrey V. Lepikhov)
        </para>
@@ -1288,7 +1288,7 @@ Author: Stephen Frost <sfrost@snowman.net>
 -->
 
        <para>
-        Allow <link linkend="storage-toast"><literal>TOASTed</literal></link>
+        Allow <link linkend="storage-toast">toasted</link>
         values to be minimally decompressed (Paul Ramsey)
        </para>
 
@@ -1305,7 +1305,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
        <para>
-        Allow <link linkend="sql-altertable"><command>ALTER TABLE .. SET
+        Allow <link linkend="sql-altertable"><command>ALTER TABLE ... SET
         NOT NULL</command></link> to avoid unnecessary table scans (Sergei
         Kornilov)
        </para>
@@ -1323,7 +1323,7 @@ Author: Noah Misch <noah@leadboat.com>
 -->
 
        <para>
-        Allow <command>ALTER TABLE .. SET DATA TYPE</command> changing between
+        Allow <command>ALTER TABLE ... SET DATA TYPE</command> changing between
         <type>timestamp</type> and <type>timestamptz</type> to avoid a
         table rewrite when the session time zone is <acronym>UTC</acronym>
         (Noah Misch)
@@ -1438,7 +1438,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
        <para>
         Progress is reported in the <link
         linkend="create-index-progress-reporting"><structname>pg_stat_progress_create_index</structname></link>
-        system view
+        system view.
        </para>
       </listitem>
 
@@ -2235,7 +2235,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
       </para>
 
       <para>
-       This output can also be obtained in <xref linkend="auto-explain"/>
+       This output can also be obtained when using <xref linkend="auto-explain"/>
        by setting <varname>auto_explain.log_settings</varname>.
       </para>
      </listitem>
@@ -2620,7 +2620,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 
       <para>
        Add connection parameter <xref linkend="libpq-tcp-user-timeout"/>
-       to control libpq's <acronym>TCP</acronym> timeout (Ryohei Nagaura)
+       to control <application>libpq</application>'s <acronym>TCP</acronym>
+       timeout (Ryohei Nagaura)
       </para>
      </listitem>
 
@@ -2631,9 +2632,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Allow libpq (and thus psql) to report only
-       the <literal>SQLSTATE</literal> value in error messages (Didier
-       Gautheron)
+       Allow <application>libpq</application> (and thus
+       <application>psql</application>) to report only the
+       <literal>SQLSTATE</literal> value in error messages (Didier Gautheron)
       </para>
      </listitem>
 
@@ -2644,7 +2645,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Add libpq
+       Add <application>libpq</application>
        function <link linkend="libpq-pqresultmemorysize"><function>PQresultMemorySize()</function></link>
        to report the memory used by a query result (Lars Kanis, Tom Lane)
       </para>
@@ -2657,7 +2658,7 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 -->
 
       <para>
-       Remove the no-display/debug flag from libpq's
+       Remove the no-display/debug flag from <application>libpq</application>'s
        <literal>options</literal> connection parameter (Peter Eisentraut)
       </para>
 
@@ -2729,8 +2730,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
       <para>
-       Allow vacuumdb to disable waiting for locks or skipping all-visible
-       pages (Nathan Bossart)
+       Allow <application>vacuumdb</application> to disable waiting for locks
+       or skipping all-visible pages (Nathan Bossart)
       </para>
 
       <para>
@@ -2835,9 +2836,13 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve tab completion of <command>CREATE TABLE, CREATE TRIGGER,
-        CREATE EVENT TRIGGER, ANALYZE, EXPLAIN, VACUUM, ALTER TABLE,
-        ALTER INDEX, ALTER DATABASE, ALTER INDEX ALTER COLUMN</command>
+        Improve tab completion of <command>CREATE TABLE</command>,
+        <command>CREATE TRIGGER</command>,
+        <command>CREATE EVENT TRIGGER</command>,
+        <command>ANALYZE</command>, <command>EXPLAIN</command>,
+        <command>VACUUM</command>, <command>ALTER TABLE</command>,
+        <command>ALTER INDEX</command>, <command>ALTER DATABASE</command>,
+        and <command>ALTER INDEX ALTER COLUMN</command>
         (Dagfinn Ilmari Mannsåker, Tatsuro Yamada, Michaël Paquier,
         Tom Lane, Justin Pryzby)
        </para>
@@ -2878,8 +2883,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve precision of pgbench's <option>--rate</option>
-        option (Tom Lane)
+        Improve precision of <application>pgbench</application>'s
+        <option>--rate</option> option (Tom Lane)
        </para>
       </listitem>
 
@@ -2889,8 +2894,8 @@ Author: Peter Eisentraut <peter_e@gmx.net>
 2018-10-15 [5b75a4f82] pgbench: Report errors during run better
 -->
        <para>
-        Improve pgbench's error reporting with clearer messages and return
-        codes (Peter Eisentraut)
+        Improve <application>pgbench</application>'s error reporting with
+        clearer messages and return codes (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -3160,7 +3165,7 @@ existin
       <para>
        This enables the development of new <link linkend="tableam">table
        access methods</link>, which can optimize storage for different
-       use-cases.  The existing <literal>heap</literal> access method
+       use cases.  The existing <literal>heap</literal> access method
        remains the default.
       </para>
      </listitem>
