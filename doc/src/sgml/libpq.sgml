@@ -1122,6 +1122,28 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-channel-binding" xreflabel="channel_binding">
+      <term><literal>channel_binding</literal></term>
+      <listitem>
+      <para>
+        This option controls the client's use of channel binding. A setting
+        of <literal>require</literal> means that the connection must employ
+        channel binding, <literal>prefer</literal> means that the client will
+        choose channel binding if available, and <literal>disable</literal>
+        prevents the use of channel binding. The default
+        is <literal>prefer</literal> if
+        <productname>PostgreSQL</productname> is compiled with SSL support;
+        otherwise the default is <literal>disable</literal>.
+      </para>
+      <para>
+        Channel binding is a method for the server to authenticate itself to
+        the client. It is only supported over SSL connections
+        with <productname>PostgreSQL</productname> 11 or later servers using
+        the <literal>SCRAM</literal> authentication method.
+      </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-connect-timeout" xreflabel="connect_timeout">
       <term><literal>connect_timeout</literal></term>
       <listitem>
@@ -6861,6 +6883,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGPASSFILE</envar> behaves the same as the <xref
       linkend="libpq-connect-passfile"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGCHANNELBINDING</envar></primary>
+      </indexterm>
+      <envar>PGCHANNELBINDING</envar> behaves the same as the <xref
+      linkend="libpq-connect-channel-binding"/> connection parameter.
      </para>
     </listitem>
 

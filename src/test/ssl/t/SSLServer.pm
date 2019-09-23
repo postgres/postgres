@@ -102,6 +102,7 @@ sub configure_test_server_for_ssl
 
 	# Create test users and databases
 	$node->psql('postgres', "CREATE USER ssltestuser");
+	$node->psql('postgres', "CREATE USER md5testuser");
 	$node->psql('postgres', "CREATE USER anotheruser");
 	$node->psql('postgres', "CREATE USER yetanotheruser");
 	$node->psql('postgres', "CREATE DATABASE trustdb");
@@ -113,6 +114,10 @@ sub configure_test_server_for_ssl
 	{
 		$node->psql('postgres',
 			"SET password_encryption='$password_enc'; ALTER USER ssltestuser PASSWORD '$password';"
+		);
+		# A special user that always has an md5-encrypted password
+		$node->psql('postgres',
+			"SET password_encryption='md5'; ALTER USER md5testuser PASSWORD '$password';"
 		);
 		$node->psql('postgres',
 			"SET password_encryption='$password_enc'; ALTER USER anotheruser PASSWORD '$password';"
@@ -128,7 +133,7 @@ sub configure_test_server_for_ssl
 	print $conf "log_statement=all\n";
 
 	# enable SSL and set up server key
-	print $conf "include 'sslconfig.conf'";
+	print $conf "include 'sslconfig.conf'\n";
 
 	close $conf;
 
@@ -186,6 +191,8 @@ sub configure_hba_for_ssl
 	open my $hba, '>', "$pgdata/pg_hba.conf";
 	print $hba
 	  "# TYPE  DATABASE        USER            ADDRESS                 METHOD             OPTIONS\n";
+	print $hba
+	  "hostssl trustdb         md5testuser     $serverhost/32            md5\n";
 	print $hba
 	  "hostssl trustdb         all             $serverhost/32            $authmethod\n";
 	print $hba

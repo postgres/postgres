@@ -26,6 +26,7 @@ extern char *pg_fe_getauthname(PQExpBuffer errorMessage);
 extern void *pg_fe_scram_init(PGconn *conn,
 							  const char *password,
 							  const char *sasl_mechanism);
+extern bool pg_fe_scram_channel_bound(void *opaq);
 extern void pg_fe_scram_free(void *opaq);
 extern void pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 								 char **output, int *outputlen,

@@ -124,6 +124,11 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define DefaultTty		""
 #define DefaultOption	""
 #define DefaultAuthtype		  ""
+#ifdef USE_SSL
+#define DefaultChannelBinding	"prefer"
+#else
+#define DefaultChannelBinding	"disable"
+#endif
 #define DefaultTargetSessionAttrs	"any"
 #ifdef USE_SSL
 #define DefaultSSLMode "prefer"
@@ -210,6 +215,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	{"passfile", "PGPASSFILE", NULL, NULL,
 		"Database-Password-File", "", 64,
 	offsetof(struct pg_conn, pgpassfile)},
+
+	{"channel_binding", "PGCHANNELBINDING", NULL, NULL,
+		"Channel-Binding", "", 7,	/* sizeof("require") */
+	offsetof(struct pg_conn, channel_binding)},
 
 	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
 		"Connect-timeout", "", 10,	/* strlen(INT32_MAX) == 10 */
@@ -1195,6 +1204,29 @@ connectOptions2(PGconn *conn)
 									 conn->pgpassfile);
 			}
 		}
+	}
+
+	/*
+	 * validate channel_binding option
+	 */
+	if (conn->channel_binding)
+	{
+		if (strcmp(conn->channel_binding, "disable") != 0
+			&& strcmp(conn->channel_binding, "prefer") != 0
+			&& strcmp(conn->channel_binding, "require") != 0)
+		{
+			conn->status = CONNECTION_BAD;
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("invalid channel_binding value: \"%s\"\n"),
+							  conn->channel_binding);
+			return false;
+		}
+	}
+	else
+	{
+		conn->channel_binding = strdup(DefaultChannelBinding);
+		if (!conn->channel_binding)
+			goto oom_error;
 	}
 
 	/*
@@ -3485,10 +3517,11 @@ keep_going:						/* We will come back to here until there is
 		case CONNECTION_SETENV:
 			{
 				/*
-				 * Do post-connection housekeeping (only needed in protocol 2.0).
+				 * Do post-connection housekeeping (only needed in protocol
+				 * 2.0).
 				 *
-				 * We pretend that the connection is OK for the duration of these
-				 * queries.
+				 * We pretend that the connection is OK for the duration of
+				 * these queries.
 				 */
 				conn->status = CONNECTION_OK;
 
@@ -3905,6 +3938,8 @@ freePGconn(PGconn *conn)
 	}
 	if (conn->pgpassfile)
 		free(conn->pgpassfile);
+	if (conn->channel_binding)
+		free(conn->channel_binding);
 	if (conn->keepalives)
 		free(conn->keepalives);
 	if (conn->keepalives_idle)

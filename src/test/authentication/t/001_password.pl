@@ -17,7 +17,7 @@ if ($windows_os)
 }
 else
 {
-	plan tests => 8;
+	plan tests => 10;
 }
 
 
@@ -86,3 +86,13 @@ test_role($node, 'md5_role',   'scram-sha-256', 2);
 reset_pg_hba($node, 'md5');
 test_role($node, 'scram_role', 'md5', 0);
 test_role($node, 'md5_role',   'md5', 0);
+
+# Tests for channel binding without SSL.
+# Using the password authentication method; channel binding can't work
+reset_pg_hba($node, 'password');
+$ENV{"PGCHANNELBINDING"} = 'require';
+test_role($node, 'scram_role', 'scram-sha-256', 2);
+# SSL not in use; channel binding still can't work
+reset_pg_hba($node, 'scram-sha-256');
+$ENV{"PGCHANNELBINDING"} = 'require';
+test_role($node, 'scram_role', 'scram-sha-256', 2);
