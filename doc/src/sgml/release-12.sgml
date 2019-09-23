@@ -3701,12 +3701,10 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Jürgen Purtz</member>
     <member>Jürgen Strobel</member>
     <member>Justin Pryzby</member>
-    <member>KaiGai Kohei</member>
     <member>Kaiting Chen</member>
     <member>Karen Huddleston</member>
     <member>Karl Czajkowski</member>
     <member>Karl O. Pinc</member>
-    <member>Kato Sho</member>
     <member>Keiichi Hirobe</member>
     <member>Keith Fiske</member>
     <member>Ken Tanzer</member>
@@ -3715,6 +3713,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Kevin Hale Boyes</member>
     <member>Kieran McCusker</member>
     <member>Kirk Jamison</member>
+    <member>Kohei KaiGai</member>
     <member>Konstantin Knizhnik</member>
     <member>Konstantin Kuznetsov</member>
     <member>Kristjan Tammekivi</member>
@@ -3855,6 +3854,7 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Sergio Conde Gómez</member>
     <member>Shawn Debnath</member>
     <member>Shay Rojansky</member>
+    <member>Sho Kato</member>
     <member>Shohei Mochizuki</member>
     <member>Shouyu Luo</member>
     <member>Simon Riggs</member>
