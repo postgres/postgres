@@ -254,7 +254,7 @@ Author: Peter Eisentraut <peter_e@gmx.net>
      <para>
       Move <filename>recovery.conf</filename> settings into <link
       linkend="runtime-config-wal-archive-recovery"><filename>postgresql.conf</filename></link>
-      (Fujii Masao, Simon Riggs, Abhijit Menon-Sen, Sergei Kornilov)
+      (Masao Fujii, Simon Riggs, Abhijit Menon-Sen, Sergei Kornilov)
      </para>
 
      <para>
@@ -1939,7 +1939,7 @@ Author: Michael Paquier <michael@paquier.xyz>
       <para>
        Allow the streaming replication timeout (<xref
        linkend="guc-wal-sender-timeout"/>) to be set per connection
-       (Tsunakawa Takayuki)
+       (Takayuki Tsunakawa)
       </para>
 
       <para>
@@ -2140,7 +2140,7 @@ Author: Fujii Masao <fujii@postgresql.org>
       <para>
        Add <xref linkend="sql-vacuum"/> and <command>CREATE
        TABLE</command> options to prevent <command>VACUUM</command>
-       from truncating trailing empty pages (Tsunakawa Takayuki)
+       from truncating trailing empty pages (Takayuki Tsunakawa)
       </para>
 
       <para>
@@ -2675,7 +2675,7 @@ Author: Michael Meskes <meskes@postgresql.org>
 
       <para>
        Allow <xref linkend="app-ecpg"/> to create variables of data type
-       <type>bytea</type> (Matsumura Ryo)
+       <type>bytea</type> (Ryo Matsumura)
       </para>
 
       <para>
@@ -2692,7 +2692,7 @@ Author: Michael Meskes <meskes@postgresql.org>
 
       <para>
        Add <command>PREPARE AS</command> support to
-       <productname>ECPG</productname> (Matsumura Ryo)
+       <productname>ECPG</productname> (Ryo Matsumura)
       </para>
      </listitem>
 
@@ -3575,7 +3575,6 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Christoph Moench-Tegeder</member>
     <member>Clemens Ladisch</member>
     <member>Colm McHugh</member>
-    <member>Constantine Kuznetsov</member>
     <member>Corey Huinker</member>
     <member>Craig Ringer</member>
     <member>Dagfinn Ilmari Mannsåker</member>
@@ -3622,7 +3621,6 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Fabrízio de Royes Mello</member>
     <member>Feike Steenbergen</member>
     <member>Filip Rembialkowski</member>
-    <member>Fujii Masao</member>
     <member>Gaby Schilders</member>
     <member>Geert Lobbestael</member>
     <member>George Tarasov</member>
@@ -3712,7 +3710,6 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Kevin Hale Boyes</member>
     <member>Kieran McCusker</member>
     <member>Kirk Jamison</member>
-    <member>Koizumi Satoru</member>
     <member>Konstantin Knizhnik</member>
     <member>Konstantin Kuznetsov</member>
     <member>Kristjan Tammekivi</member>
@@ -3749,9 +3746,9 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Markus Winand</member>
     <member>Martín Marqués</member>
     <member>Masahiko Sawada</member>
+    <member>Masao Fujii</member>
     <member>Mateusz Guzik</member>
     <member>Mathias Brossard</member>
-    <member>Matsumura Ryo</member>
     <member>Matt Williams</member>
     <member>Matthias Otterbach</member>
     <member>Matvey Arye</member>
@@ -3839,11 +3836,13 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Rui Hai Jiang</member>
     <member>Rushabh Lathia</member>
     <member>Ryan Lambert</member>
+    <member>Ryo Matsumura</member>
     <member>Ryohei Nagaura</member>
     <member>Ryohei Takahashi</member>
     <member>Samuel Williams</member>
     <member>Sand Stone</member>
     <member>Sanyo Capobiango</member>
+    <member>Satoru Koizumi</member>
     <member>Sean Johnston</member>
     <member>Serge Latyntsev</member>
     <member>Sergei Kornilov</member>
@@ -3851,7 +3850,6 @@ Author: Michael Paquier <michael@paquier.xyz>
     <member>Sergio Conde Gómez</member>
     <member>Shawn Debnath</member>
     <member>Shay Rojansky</member>
-    <member>Sho Kato</member>
     <member>Shohei Mochizuki</member>
     <member>Shouyu Luo</member>
     <member>Simon Riggs</member>
