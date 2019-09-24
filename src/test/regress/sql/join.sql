@@ -1072,6 +1072,25 @@ where nt3.id = 1 and ss2.b3;
 
 drop function f_immutable_int4(int);
 
+-- test inlining when function returns composite
+
+create function mki8(bigint, bigint) returns int8_tbl as
+$$select row($1,$2)::int8_tbl$$ language sql;
+
+create function mki4(int) returns int4_tbl as
+$$select row($1)::int4_tbl$$ language sql;
+
+explain (verbose, costs off)
+select * from mki8(1,2);
+select * from mki8(1,2);
+
+explain (verbose, costs off)
+select * from mki4(42);
+select * from mki4(42);
+
+drop function mki8(bigint, bigint);
+drop function mki4(int);
+
 --
 -- test extraction of restriction OR clauses from join OR clause
 -- (we used to only do this for indexable clauses)
