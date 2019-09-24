@@ -31,6 +31,22 @@
 
 #include "access/xlogrecord.h"
 
+/* WALOpenSegment represents a WAL segment being read. */
+typedef struct WALOpenSegment
+{
+	int			ws_file;		/* segment file descriptor */
+	XLogSegNo	ws_segno;		/* segment number */
+	uint32		ws_off;			/* offset in the segment */
+	TimeLineID	ws_tli;			/* timeline ID of the currently open file */
+} WALOpenSegment;
+
+/* WALSegmentContext carries context information about WAL segments to read */
+typedef struct WALSegmentContext
+{
+	char		ws_dir[MAXPGPATH];
+	int			ws_segsize;
+} WALSegmentContext;
+
 typedef struct XLogReaderState XLogReaderState;
 
 /* Function type definition for the read_page callback */
@@ -38,8 +54,7 @@ typedef int (*XLogPageReadCB) (XLogReaderState *xlogreader,
 							   XLogRecPtr targetPagePtr,
 							   int reqLen,
 							   XLogRecPtr targetRecPtr,
-							   char *readBuf,
-							   TimeLineID *pageTLI);
+							   char *readBuf);
 
 typedef struct
 {
@@ -78,11 +93,6 @@ struct XLogReaderState
 	 */
 
 	/*
-	 * Segment size of the to-be-parsed data (mandatory).
-	 */
-	int			wal_segment_size;
-
-	/*
 	 * Data input callback (mandatory).
 	 *
 	 * This callback shall read at least reqLen valid bytes of the xlog page
@@ -99,9 +109,8 @@ struct XLogReaderState
 	 * actual WAL record it's interested in.  In that case, targetRecPtr can
 	 * be used to determine which timeline to read the page from.
 	 *
-	 * The callback shall set *pageTLI to the TLI of the file the page was
-	 * read from.  It is currently used only for error reporting purposes, to
-	 * reconstruct the name of the WAL file where an error occurred.
+	 * The callback shall set ->seg.ws_tli to the TLI of the file the page was
+	 * read from.
 	 */
 	XLogPageReadCB read_page;
 
@@ -156,10 +165,9 @@ struct XLogReaderState
 	char	   *readBuf;
 	uint32		readLen;
 
-	/* last read segment, segment offset, TLI for data currently in readBuf */
-	XLogSegNo	readSegNo;
-	uint32		readOff;
-	TimeLineID	readPageTLI;
+	/* last read XLOG position for data currently in readBuf */
+	WALSegmentContext segcxt;
+	WALOpenSegment seg;
 
 	/*
 	 * beginning of prior page read, and its TLI.  Doesn't necessarily
@@ -202,11 +210,16 @@ struct XLogReaderState
 
 /* Get a new XLogReader */
 extern XLogReaderState *XLogReaderAllocate(int wal_segment_size,
+										   const char *waldir,
 										   XLogPageReadCB pagereadfunc,
 										   void *private_data);
 
 /* Free an XLogReader */
 extern void XLogReaderFree(XLogReaderState *state);
+
+/* Initialize supporting structures */
+extern void WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
+							   int segsize, const char *waldir);
 
 /* Read the next XLog record. Returns NULL on end-of-WAL or failure */
 extern struct XLogRecord *XLogReadRecord(XLogReaderState *state,

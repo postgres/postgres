@@ -802,8 +802,8 @@ XLogRead(char *buf, int segsize, TimeLineID tli, XLogRecPtr startptr,
 void
 XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wantLength)
 {
-	const XLogRecPtr lastReadPage = state->readSegNo *
-	state->wal_segment_size + state->readOff;
+	const XLogRecPtr lastReadPage = state->seg.ws_segno *
+	state->segcxt.ws_segsize + state->seg.ws_off;
 
 	Assert(wantPage != InvalidXLogRecPtr && wantPage % XLOG_BLCKSZ == 0);
 	Assert(wantLength <= XLOG_BLCKSZ);
@@ -847,8 +847,8 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 	if (state->currTLIValidUntil != InvalidXLogRecPtr &&
 		state->currTLI != ThisTimeLineID &&
 		state->currTLI != 0 &&
-		((wantPage + wantLength) / state->wal_segment_size) <
-		(state->currTLIValidUntil / state->wal_segment_size))
+		((wantPage + wantLength) / state->segcxt.ws_segsize) <
+		(state->currTLIValidUntil / state->segcxt.ws_segsize))
 		return;
 
 	/*
@@ -869,12 +869,12 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 		 * by a promotion or replay from a cascaded replica.
 		 */
 		List	   *timelineHistory = readTimeLineHistory(ThisTimeLineID);
+		XLogRecPtr	endOfSegment;
 
-		XLogRecPtr	endOfSegment = (((wantPage / state->wal_segment_size) + 1)
-									* state->wal_segment_size) - 1;
-
-		Assert(wantPage / state->wal_segment_size ==
-			   endOfSegment / state->wal_segment_size);
+		endOfSegment = ((wantPage / state->segcxt.ws_segsize) + 1) *
+			state->segcxt.ws_segsize - 1;
+		Assert(wantPage / state->segcxt.ws_segsize ==
+			   endOfSegment / state->segcxt.ws_segsize);
 
 		/*
 		 * Find the timeline of the last LSN on the segment containing
@@ -909,8 +909,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
  */
 int
 read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
-					 int reqLen, XLogRecPtr targetRecPtr, char *cur_page,
-					 TimeLineID *pageTLI)
+					 int reqLen, XLogRecPtr targetRecPtr, char *cur_page)
 {
 	XLogRecPtr	read_upto,
 				loc;
@@ -933,8 +932,7 @@ read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 			read_upto = GetFlushRecPtr();
 		else
 			read_upto = GetXLogReplayRecPtr(&ThisTimeLineID);
-
-		*pageTLI = ThisTimeLineID;
+		state->seg.ws_tli = ThisTimeLineID;
 
 		/*
 		 * Check which timeline to get the record from.
@@ -984,14 +982,14 @@ read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 			read_upto = state->currTLIValidUntil;
 
 			/*
-			 * Setting pageTLI to our wanted record's TLI is slightly wrong;
+			 * Setting ws_tli to our wanted record's TLI is slightly wrong;
 			 * the page might begin on an older timeline if it contains a
 			 * timeline switch, since its xlog segment will have been copied
 			 * from the prior timeline. This is pretty harmless though, as
 			 * nothing cares so long as the timeline doesn't go backwards.  We
 			 * should read the page header instead; FIXME someday.
 			 */
-			*pageTLI = state->currTLI;
+			state->seg.ws_tli = state->currTLI;
 
 			/* No need to wait on a historical timeline */
 			break;
@@ -1022,7 +1020,7 @@ read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 	 * as 'count', read the whole page anyway. It's guaranteed to be
 	 * zero-padded up to the page boundary if it's incomplete.
 	 */
-	XLogRead(cur_page, state->wal_segment_size, *pageTLI, targetPagePtr,
+	XLogRead(cur_page, state->segcxt.ws_segsize, state->seg.ws_tli, targetPagePtr,
 			 XLOG_BLCKSZ);
 
 	/* number of valid bytes in the buffer */

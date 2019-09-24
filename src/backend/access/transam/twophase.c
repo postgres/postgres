@@ -1377,7 +1377,6 @@ ParsePrepareRecord(uint8 info, char *xlrec, xl_xact_parsed_prepare *parsed)
  *
  * Note clearly that this function can access WAL during normal operation,
  * similarly to the way WALSender or Logical Decoding would do.
- *
  */
 static void
 XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
@@ -1386,8 +1385,8 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 	XLogReaderState *xlogreader;
 	char	   *errormsg;
 
-	xlogreader = XLogReaderAllocate(wal_segment_size, &read_local_xlog_page,
-									NULL);
+	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
+									&read_local_xlog_page, NULL);
 	if (!xlogreader)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),

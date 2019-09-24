@@ -33,7 +33,6 @@ static int	WalSegSz;
 typedef struct XLogDumpPrivate
 {
 	TimeLineID	timeline;
-	char	   *inpath;
 	XLogRecPtr	startptr;
 	XLogRecPtr	endptr;
 	bool		endptr_reached;
@@ -224,7 +223,7 @@ search_directory(const char *directory, const char *fname)
 }
 
 /*
- * Identify the target directory and set WalSegSz.
+ * Identify the target directory.
  *
  * Try to find the file in several places:
  * if directory != NULL:
@@ -235,29 +234,22 @@ search_directory(const char *directory, const char *fname)
  *	 XLOGDIR /
  *	 $PGDATA / XLOGDIR /
  *
- * Set the valid target directory in private->inpath.
+ * The valid target directory is returned.
  */
-static void
-identify_target_directory(XLogDumpPrivate *private, char *directory,
-						  char *fname)
+static char *
+identify_target_directory(char *directory, char *fname)
 {
 	char		fpath[MAXPGPATH];
 
 	if (directory != NULL)
 	{
 		if (search_directory(directory, fname))
-		{
-			private->inpath = pg_strdup(directory);
-			return;
-		}
+			return pg_strdup(directory);
 
 		/* directory / XLOGDIR */
 		snprintf(fpath, MAXPGPATH, "%s/%s", directory, XLOGDIR);
 		if (search_directory(fpath, fname))
-		{
-			private->inpath = pg_strdup(fpath);
-			return;
-		}
+			return pg_strdup(fpath);
 	}
 	else
 	{
@@ -265,16 +257,10 @@ identify_target_directory(XLogDumpPrivate *private, char *directory,
 
 		/* current directory */
 		if (search_directory(".", fname))
-		{
-			private->inpath = pg_strdup(".");
-			return;
-		}
+			return pg_strdup(".");
 		/* XLOGDIR */
 		if (search_directory(XLOGDIR, fname))
-		{
-			private->inpath = pg_strdup(XLOGDIR);
-			return;
-		}
+			return pg_strdup(XLOGDIR);
 
 		datadir = getenv("PGDATA");
 		/* $PGDATA / XLOGDIR */
@@ -282,10 +268,7 @@ identify_target_directory(XLogDumpPrivate *private, char *directory,
 		{
 			snprintf(fpath, MAXPGPATH, "%s/%s", datadir, XLOGDIR);
 			if (search_directory(fpath, fname))
-			{
-				private->inpath = pg_strdup(fpath);
-				return;
-			}
+				return pg_strdup(fpath);
 		}
 	}
 
@@ -294,6 +277,8 @@ identify_target_directory(XLogDumpPrivate *private, char *directory,
 		fatal_error("could not locate WAL file \"%s\"", fname);
 	else
 		fatal_error("could not find any WAL file");
+
+	return NULL;				/* not reached */
 }
 
 /*
@@ -423,7 +408,7 @@ XLogDumpXLogRead(const char *directory, TimeLineID timeline_id,
  */
 static int
 XLogDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
-				 XLogRecPtr targetPtr, char *readBuff, TimeLineID *curFileTLI)
+				 XLogRecPtr targetPtr, char *readBuff)
 {
 	XLogDumpPrivate *private = state->private_data;
 	int			count = XLOG_BLCKSZ;
@@ -441,7 +426,7 @@ XLogDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 		}
 	}
 
-	XLogDumpXLogRead(private->inpath, private->timeline, targetPagePtr,
+	XLogDumpXLogRead(state->segcxt.ws_dir, private->timeline, targetPagePtr,
 					 readBuff, count);
 
 	return count;
@@ -820,6 +805,7 @@ main(int argc, char **argv)
 	XLogDumpStats stats;
 	XLogRecord *record;
 	XLogRecPtr	first_record;
+	char	   *waldir = NULL;
 	char	   *errormsg;
 
 	static struct option long_options[] = {
@@ -912,7 +898,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'p':
-				private.inpath = pg_strdup(optarg);
+				waldir = pg_strdup(optarg);
 				break;
 			case 'r':
 				{
@@ -994,13 +980,13 @@ main(int argc, char **argv)
 		goto bad_argument;
 	}
 
-	if (private.inpath != NULL)
+	if (waldir != NULL)
 	{
 		/* validate path points to directory */
-		if (!verify_directory(private.inpath))
+		if (!verify_directory(waldir))
 		{
 			pg_log_error("path \"%s\" could not be opened: %s",
-						 private.inpath, strerror(errno));
+						 waldir, strerror(errno));
 			goto bad_argument;
 		}
 	}
@@ -1015,17 +1001,17 @@ main(int argc, char **argv)
 
 		split_path(argv[optind], &directory, &fname);
 
-		if (private.inpath == NULL && directory != NULL)
+		if (waldir == NULL && directory != NULL)
 		{
-			private.inpath = directory;
+			waldir = directory;
 
-			if (!verify_directory(private.inpath))
+			if (!verify_directory(waldir))
 				fatal_error("could not open directory \"%s\": %s",
-							private.inpath, strerror(errno));
+							waldir, strerror(errno));
 		}
 
-		identify_target_directory(&private, private.inpath, fname);
-		fd = open_file_in_directory(private.inpath, fname);
+		waldir = identify_target_directory(waldir, fname);
+		fd = open_file_in_directory(waldir, fname);
 		if (fd < 0)
 			fatal_error("could not open file \"%s\"", fname);
 		close(fd);
@@ -1056,7 +1042,7 @@ main(int argc, char **argv)
 			/* ignore directory, already have that */
 			split_path(argv[optind + 1], &directory, &fname);
 
-			fd = open_file_in_directory(private.inpath, fname);
+			fd = open_file_in_directory(waldir, fname);
 			if (fd < 0)
 				fatal_error("could not open file \"%s\"", fname);
 			close(fd);
@@ -1088,7 +1074,7 @@ main(int argc, char **argv)
 		}
 	}
 	else
-		identify_target_directory(&private, private.inpath, NULL);
+		waldir = identify_target_directory(waldir, NULL);
 
 	/* we don't know what to print */
 	if (XLogRecPtrIsInvalid(private.startptr))
@@ -1100,7 +1086,7 @@ main(int argc, char **argv)
 	/* done with argument parsing, do the actual work */
 
 	/* we have everything we need, start reading */
-	xlogreader_state = XLogReaderAllocate(WalSegSz, XLogDumpReadPage,
+	xlogreader_state = XLogReaderAllocate(WalSegSz, waldir, XLogDumpReadPage,
 										  &private);
 	if (!xlogreader_state)
 		fatal_error("out of memory");
