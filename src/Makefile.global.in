@@ -481,11 +481,6 @@ GCOV = @GCOV@
 LCOV = @LCOV@
 GENHTML = @GENHTML@
 
-ifeq ($(enable_coverage),yes)
-# ccache loses .gcno files
-export CCACHE_DISABLE = 1
-endif
-
 # Feature settings
 
 DEF_PGPORT = @default_port@
