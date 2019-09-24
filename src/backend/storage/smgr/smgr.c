@@ -469,6 +469,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	pfree(rnodes);
 }
 
+
 /*
  *	smgrextend() -- Add a new block to a file.
  *
@@ -557,19 +558,25 @@ smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 }
 
 /*
- *	smgrtruncate() -- Truncate supplied relation to the specified number
- *					  of blocks
+ *	smgrtruncate() -- Truncate the given forks of supplied relation to
+ *					  each specified numbers of blocks
  *
  * The truncation is done immediately, so this can't be rolled back.
+ *
+ * The caller must hold AccessExclusiveLock on the relation, to ensure that
+ * other backends receive the smgr invalidation event that this function sends
+ * before they access any forks of the relation again.
  */
 void
-smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
+smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nblocks)
 {
+	int		i;
+
 	/*
 	 * Get rid of any buffers for the about-to-be-deleted blocks. bufmgr will
 	 * just drop them without bothering to write the contents.
 	 */
-	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, nblocks);
+	DropRelFileNodeBuffers(reln->smgr_rnode, forknum, nforks, nblocks);
 
 	/*
 	 * Send a shared-inval message to force other backends to close any smgr
@@ -583,10 +590,24 @@ smgrtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 	 */
 	CacheInvalidateSmgr(reln->smgr_rnode);
 
-	/*
-	 * Do the truncation.
-	 */
-	smgrsw[reln->smgr_which].smgr_truncate(reln, forknum, nblocks);
+	/* Do the truncation */
+	for (i = 0; i < nforks; i++)
+	{
+		smgrsw[reln->smgr_which].smgr_truncate(reln, forknum[i], nblocks[i]);
+
+		/*
+		 * We might as well update the local smgr_fsm_nblocks and
+		 * smgr_vm_nblocks settings. The smgr cache inval message that
+		 * this function sent will cause other backends to invalidate
+		 * their copies of smgr_fsm_nblocks and smgr_vm_nblocks,
+		 * and these ones too at the next command boundary.
+		 * But these ensure they aren't outright wrong until then.
+		 */
+		if (forknum[i] == FSM_FORKNUM)
+			reln->smgr_fsm_nblocks = nblocks[i];
+		if (forknum[i] == VISIBILITYMAP_FORKNUM)
+			reln->smgr_vm_nblocks = nblocks[i];
+	}
 }
 
 /*

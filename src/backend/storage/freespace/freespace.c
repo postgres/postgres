@@ -247,16 +247,18 @@ GetRecordedFreeSpace(Relation rel, BlockNumber heapBlk)
 }
 
 /*
- * FreeSpaceMapTruncateRel - adjust for truncation of a relation.
- *
- * The caller must hold AccessExclusiveLock on the relation, to ensure that
- * other backends receive the smgr invalidation event that this function sends
- * before they access the FSM again.
+ * FreeSpaceMapPrepareTruncateRel - prepare for truncation of a relation.
  *
  * nblocks is the new size of the heap.
+ *
+ * Return the number of blocks of new FSM.
+ * If it's InvalidBlockNumber, there is nothing to truncate;
+ * otherwise the caller is responsible for calling smgrtruncate()
+ * to truncate the FSM pages, and FreeSpaceMapVacuumRange()
+ * to update upper-level pages in the FSM.
  */
-void
-FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
+BlockNumber
+FreeSpaceMapPrepareTruncateRel(Relation rel, BlockNumber nblocks)
 {
 	BlockNumber new_nfsmblocks;
 	FSMAddress	first_removed_address;
@@ -270,7 +272,7 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	 * truncate.
 	 */
 	if (!smgrexists(rel->rd_smgr, FSM_FORKNUM))
-		return;
+		return InvalidBlockNumber;
 
 	/* Get the location in the FSM of the first removed heap block */
 	first_removed_address = fsm_get_location(nblocks, &first_removed_slot);
@@ -285,7 +287,7 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	{
 		buf = fsm_readbuf(rel, first_removed_address, false);
 		if (!BufferIsValid(buf))
-			return;				/* nothing to do; the FSM was already smaller */
+			return InvalidBlockNumber;	/* nothing to do; the FSM was already smaller */
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 		/* NO EREPORT(ERROR) from here till changes are logged */
@@ -315,28 +317,10 @@ FreeSpaceMapTruncateRel(Relation rel, BlockNumber nblocks)
 	{
 		new_nfsmblocks = fsm_logical_to_physical(first_removed_address);
 		if (smgrnblocks(rel->rd_smgr, FSM_FORKNUM) <= new_nfsmblocks)
-			return;				/* nothing to do; the FSM was already smaller */
+			return InvalidBlockNumber;	/* nothing to do; the FSM was already smaller */
 	}
 
-	/* Truncate the unused FSM pages, and send smgr inval message */
-	smgrtruncate(rel->rd_smgr, FSM_FORKNUM, new_nfsmblocks);
-
-	/*
-	 * We might as well update the local smgr_fsm_nblocks setting.
-	 * smgrtruncate sent an smgr cache inval message, which will cause other
-	 * backends to invalidate their copy of smgr_fsm_nblocks, and this one too
-	 * at the next command boundary.  But this ensures it isn't outright wrong
-	 * until then.
-	 */
-	if (rel->rd_smgr)
-		rel->rd_smgr->smgr_fsm_nblocks = new_nfsmblocks;
-
-	/*
-	 * Update upper-level FSM pages to account for the truncation.  This is
-	 * important because the just-truncated pages were likely marked as
-	 * all-free, and would be preferentially selected.
-	 */
-	FreeSpaceMapVacuumRange(rel, nblocks, InvalidBlockNumber);
+	return new_nfsmblocks;
 }
 
 /*

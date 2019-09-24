@@ -17,7 +17,8 @@
  *		visibilitymap_set	 - set a bit in a previously pinned page
  *		visibilitymap_get_status - get status of bits
  *		visibilitymap_count  - count number of bits set in visibility map
- *		visibilitymap_truncate	- truncate the visibility map
+ *		visibilitymap_prepare_truncate -
+ *			prepare for truncation of the visibility map
  *
  * NOTES
  *
@@ -430,16 +431,18 @@ visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_fro
 }
 
 /*
- *	visibilitymap_truncate - truncate the visibility map
- *
- * The caller must hold AccessExclusiveLock on the relation, to ensure that
- * other backends receive the smgr invalidation event that this function sends
- * before they access the VM again.
+ *	visibilitymap_prepare_truncate -
+ *			prepare for truncation of the visibility map
  *
  * nheapblocks is the new size of the heap.
+ *
+ * Return the number of blocks of new visibility map.
+ * If it's InvalidBlockNumber, there is nothing to truncate;
+ * otherwise the caller is responsible for calling smgrtruncate()
+ * to truncate the visibility map pages.
  */
-void
-visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
+BlockNumber
+visibilitymap_prepare_truncate(Relation rel, BlockNumber nheapblocks)
 {
 	BlockNumber newnblocks;
 
@@ -459,7 +462,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	 * nothing to truncate.
 	 */
 	if (!smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
-		return;
+		return InvalidBlockNumber;
 
 	/*
 	 * Unless the new size is exactly at a visibility map page boundary, the
@@ -480,7 +483,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 		if (!BufferIsValid(mapBuffer))
 		{
 			/* nothing to do, the file was already smaller */
-			return;
+			return InvalidBlockNumber;
 		}
 
 		page = BufferGetPage(mapBuffer);
@@ -528,20 +531,10 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 	if (smgrnblocks(rel->rd_smgr, VISIBILITYMAP_FORKNUM) <= newnblocks)
 	{
 		/* nothing to do, the file was already smaller than requested size */
-		return;
+		return InvalidBlockNumber;
 	}
 
-	/* Truncate the unused VM pages, and send smgr inval message */
-	smgrtruncate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, newnblocks);
-
-	/*
-	 * We might as well update the local smgr_vm_nblocks setting. smgrtruncate
-	 * sent an smgr cache inval message, which will cause other backends to
-	 * invalidate their copy of smgr_vm_nblocks, and this one too at the next
-	 * command boundary.  But this ensures it isn't outright wrong until then.
-	 */
-	if (rel->rd_smgr)
-		rel->rd_smgr->smgr_vm_nblocks = newnblocks;
+	return newnblocks;
 }
 
 /*

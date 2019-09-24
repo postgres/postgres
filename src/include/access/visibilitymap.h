@@ -44,6 +44,7 @@ extern void visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 							  uint8 flags);
 extern uint8 visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *vmbuf);
 extern void visibilitymap_count(Relation rel, BlockNumber *all_visible, BlockNumber *all_frozen);
-extern void visibilitymap_truncate(Relation rel, BlockNumber nheapblocks);
+extern BlockNumber visibilitymap_prepare_truncate(Relation rel,
+							  BlockNumber nheapblocks);
 
 #endif							/* VISIBILITYMAP_H */

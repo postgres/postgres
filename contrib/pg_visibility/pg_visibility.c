@@ -383,6 +383,8 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	rel;
+	ForkNumber	fork;
+	BlockNumber	block;
 
 	rel = relation_open(relid, AccessExclusiveLock);
 
@@ -392,7 +394,12 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	RelationOpenSmgr(rel);
 	rel->rd_smgr->smgr_vm_nblocks = InvalidBlockNumber;
 
-	visibilitymap_truncate(rel, 0);
+	block = visibilitymap_prepare_truncate(rel, 0);
+	if (BlockNumberIsValid(block))
+	{
+		fork = VISIBILITYMAP_FORKNUM;
+		smgrtruncate(rel->rd_smgr, &fork, 1, &block);
+	}
 
 	if (RelationNeedsWAL(rel))
 	{
@@ -418,7 +425,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	 * here and when we sent the messages at our eventual commit.  However,
 	 * we're currently only sending a non-transactional smgr invalidation,
 	 * which will have been posted to shared memory immediately from within
-	 * visibilitymap_truncate.  Therefore, there should be no race here.
+	 * smgr_truncate.  Therefore, there should be no race here.
 	 *
 	 * The reason why it's desirable to release the lock early here is because
 	 * of the possibility that someone will need to use this to blow away many
