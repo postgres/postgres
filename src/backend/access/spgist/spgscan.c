@@ -56,7 +56,7 @@ pairingheap_SpGistSearchItem_cmp(const pairingheap_node *a,
 	else
 	{
 		/* Order according to distance comparison */
-		for (i = 0; i < so->numberOfOrderBys; i++)
+		for (i = 0; i < so->numberOfNonNullOrderBys; i++)
 		{
 			if (isnan(sa->distances[i]) && isnan(sb->distances[i]))
 				continue;		/* NaN == NaN */
