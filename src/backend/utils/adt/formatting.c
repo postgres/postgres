@@ -99,11 +99,12 @@
 #include "utils/pg_locale.h"
 
 /* ----------
- * Routines type
+ * Routines flags
  * ----------
  */
-#define DCH_TYPE		1		/* DATE-TIME version	*/
-#define NUM_TYPE		2		/* NUMBER version	*/
+#define DCH_FLAG		0x1		/* DATE-TIME flag	*/
+#define NUM_FLAG		0x2		/* NUMBER flag	*/
+#define STD_FLAG		0x4		/* STANDARD flag	*/
 
 /* ----------
  * KeyWord Index (ascii from position 32 (' ') to 126 (~))
@@ -384,6 +385,7 @@ typedef struct
 {
 	FormatNode	format[DCH_CACHE_SIZE + 1];
 	char		str[DCH_CACHE_SIZE + 1];
+	bool		std;
 	bool		valid;
 	int			age;
 } DCHCacheEntry;
@@ -1000,11 +1002,12 @@ static const KeySuffix *suff_search(const char *str, const KeySuffix *suf, int t
 static bool is_separator_char(const char *str);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, const char *str, const KeyWord *kw,
-						 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
+						 const KeySuffix *suf, const int *index, uint32 flags, NUMDesc *Num);
 
 static void DCH_to_char(FormatNode *node, bool is_interval,
 						TmToChar *in, char *out, Oid collid);
-static void DCH_from_char(FormatNode *node, char *in, TmFromChar *out);
+static void DCH_from_char(FormatNode *node, char *in, TmFromChar *out,
+						  bool std);
 
 #ifdef DEBUG_TO_FROM_CHAR
 static void dump_index(const KeyWord *k, const int *index);
@@ -1021,7 +1024,7 @@ static int	from_char_parse_int_len(int *dest, char **src, const int len, FormatN
 static int	from_char_parse_int(int *dest, char **src, FormatNode *node);
 static int	seq_search(char *name, const char *const *array, int type, int max, int *len);
 static int	from_char_seq_search(int *dest, char **src, const char *const *array, int type, int max, FormatNode *node);
-static void do_to_timestamp(text *date_txt, text *fmt,
+static void do_to_timestamp(text *date_txt, text *fmt, bool std,
 							struct pg_tm *tm, fsec_t *fsec, int *fprec);
 static char *fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree);
@@ -1033,9 +1036,9 @@ static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 						   char *number, int input_len, int to_char_out_pre_spaces,
 						   int sign, bool is_to_char, Oid collid);
-static DCHCacheEntry *DCH_cache_getnew(const char *str);
-static DCHCacheEntry *DCH_cache_search(const char *str);
-static DCHCacheEntry *DCH_cache_fetch(const char *str);
+static DCHCacheEntry *DCH_cache_getnew(const char *str, bool std);
+static DCHCacheEntry *DCH_cache_search(const char *str, bool std);
+static DCHCacheEntry *DCH_cache_fetch(const char *str, bool std);
 static NUMCacheEntry *NUM_cache_getnew(const char *str);
 static NUMCacheEntry *NUM_cache_search(const char *str);
 static NUMCacheEntry *NUM_cache_fetch(const char *str);
@@ -1278,7 +1281,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
  */
 static void
 parse_format(FormatNode *node, const char *str, const KeyWord *kw,
-			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
+			 const KeySuffix *suf, const int *index, uint32 flags, NUMDesc *Num)
 {
 	FormatNode *n;
 
@@ -1296,7 +1299,7 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 		/*
 		 * Prefix
 		 */
-		if (ver == DCH_TYPE &&
+		if ((flags & DCH_FLAG) &&
 			(s = suff_search(str, suf, SUFFTYPE_PREFIX)) != NULL)
 		{
 			suffix |= s->id;
@@ -1317,13 +1320,13 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 			/*
 			 * NUM version: Prepare global NUMDesc struct
 			 */
-			if (ver == NUM_TYPE)
+			if (flags & NUM_FLAG)
 				NUMDesc_prepare(Num, n);
 
 			/*
 			 * Postfix
 			 */
-			if (ver == DCH_TYPE && *str &&
+			if ((flags & DCH_FLAG) && *str &&
 				(s = suff_search(str, suf, SUFFTYPE_POSTFIX)) != NULL)
 			{
 				n->suffix |= s->id;
@@ -1337,11 +1340,34 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 		{
 			int			chlen;
 
-			/*
-			 * Process double-quoted literal string, if any
-			 */
-			if (*str == '"')
+			if (flags & STD_FLAG)
 			{
+				/*
+				 * Standard mode, allow only following separators: "-./,':; "
+				 */
+				if (strchr("-./,':; ", *str) == NULL)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+							 errmsg("invalid datetime format separator: \"%s\"",
+									pnstrdup(str, pg_mblen(str)))));
+
+				if (*str == ' ')
+					n->type = NODE_TYPE_SPACE;
+				else
+					n->type = NODE_TYPE_SEPARATOR;
+
+				n->character[0] = *str;
+				n->character[1] = '\0';
+				n->key = NULL;
+				n->suffix = 0;
+				n++;
+				str++;
+			}
+			else if (*str == '"')
+			{
+				/*
+				 * Process double-quoted literal string, if any
+				 */
 				str++;
 				while (*str)
 				{
@@ -1373,7 +1399,7 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 					str++;
 				chlen = pg_mblen(str);
 
-				if (ver == DCH_TYPE && is_separator_char(str))
+				if ((flags & DCH_FLAG) && is_separator_char(str))
 					n->type = NODE_TYPE_SEPARATOR;
 				else if (isspace((unsigned char) *str))
 					n->type = NODE_TYPE_SPACE;
@@ -3060,13 +3086,13 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
  * ----------
  */
 static void
-DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
+DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std)
 {
 	FormatNode *n;
 	char	   *s;
 	int			len,
 				value;
-	bool		fx_mode = false;
+	bool		fx_mode = std;
 
 	/* number of extra skipped characters (more than given in format string) */
 	int			extra_skip = 0;
@@ -3089,7 +3115,23 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 
 		if (n->type == NODE_TYPE_SPACE || n->type == NODE_TYPE_SEPARATOR)
 		{
-			if (!fx_mode)
+			if (std)
+			{
+				/*
+				 * Standard mode requires strict matching between format
+				 * string separators/spaces and input string.
+				 */
+				Assert(n->character[0] && !n->character[1]);
+
+				if (*s == n->character[0])
+					s++;
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+							 errmsg("unmatched format separator \"%c\"",
+									n->character[0])));
+			}
+			else if (!fx_mode)
 			{
 				/*
 				 * In non FX (fixed format) mode one format string space or
@@ -3434,6 +3476,27 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			}
 		}
 	}
+
+	/*
+	 * Standard parsing mode doesn't allow unmatched format patterns or
+	 * trailing characters in the input string.
+	 */
+	if (std)
+	{
+		if (n->type != NODE_TYPE_END)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("input string is too short for datetime format")));
+
+		while (*s != '\0' && isspace((unsigned char) *s))
+			s++;
+
+		if (*s != '\0')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("trailing characters remain in input string after "
+							"datetime format")));
+	}
 }
 
 /*
@@ -3456,7 +3519,7 @@ DCH_prevent_counter_overflow(void)
 
 /* select a DCHCacheEntry to hold the given format picture */
 static DCHCacheEntry *
-DCH_cache_getnew(const char *str)
+DCH_cache_getnew(const char *str, bool std)
 {
 	DCHCacheEntry *ent;
 
@@ -3506,6 +3569,7 @@ DCH_cache_getnew(const char *str)
 			MemoryContextAllocZero(TopMemoryContext, sizeof(DCHCacheEntry));
 		ent->valid = false;
 		StrNCpy(ent->str, str, DCH_CACHE_SIZE + 1);
+		ent->std = std;
 		ent->age = (++DCHCounter);
 		/* caller is expected to fill format, then set valid */
 		++n_DCHCache;
@@ -3515,7 +3579,7 @@ DCH_cache_getnew(const char *str)
 
 /* look for an existing DCHCacheEntry matching the given format picture */
 static DCHCacheEntry *
-DCH_cache_search(const char *str)
+DCH_cache_search(const char *str, bool std)
 {
 	/* Ensure we can advance DCHCounter below */
 	DCH_prevent_counter_overflow();
@@ -3524,7 +3588,7 @@ DCH_cache_search(const char *str)
 	{
 		DCHCacheEntry *ent = DCHCache[i];
 
-		if (ent->valid && strcmp(ent->str, str) == 0)
+		if (ent->valid && strcmp(ent->str, str) == 0 && ent->std == std)
 		{
 			ent->age = (++DCHCounter);
 			return ent;
@@ -3536,21 +3600,21 @@ DCH_cache_search(const char *str)
 
 /* Find or create a DCHCacheEntry for the given format picture */
 static DCHCacheEntry *
-DCH_cache_fetch(const char *str)
+DCH_cache_fetch(const char *str, bool std)
 {
 	DCHCacheEntry *ent;
 
-	if ((ent = DCH_cache_search(str)) == NULL)
+	if ((ent = DCH_cache_search(str, std)) == NULL)
 	{
 		/*
 		 * Not in the cache, must run parser and save a new format-picture to
 		 * the cache.  Do not mark the cache entry valid until parsing
 		 * succeeds.
 		 */
-		ent = DCH_cache_getnew(str);
+		ent = DCH_cache_getnew(str, std);
 
-		parse_format(ent->format, str, DCH_keywords,
-					 DCH_suff, DCH_index, DCH_TYPE, NULL);
+		parse_format(ent->format, str, DCH_keywords, DCH_suff, DCH_index,
+					 DCH_FLAG | (std ? STD_FLAG : 0), NULL);
 
 		ent->valid = true;
 	}
@@ -3595,14 +3659,14 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval, Oid collid)
 		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
 
 		parse_format(format, fmt_str, DCH_keywords,
-					 DCH_suff, DCH_index, DCH_TYPE, NULL);
+					 DCH_suff, DCH_index, DCH_FLAG, NULL);
 	}
 	else
 	{
 		/*
 		 * Use cache buffers
 		 */
-		DCHCacheEntry *ent = DCH_cache_fetch(fmt_str);
+		DCHCacheEntry *ent = DCH_cache_fetch(fmt_str, false);
 
 		incache = true;
 		format = ent->format;
@@ -3744,7 +3808,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 	fsec_t		fsec;
 	int			fprec;
 
-	do_to_timestamp(date_txt, fmt, &tm, &fsec, &fprec);
+	do_to_timestamp(date_txt, fmt, false, &tm, &fsec, &fprec);
 
 	/* Use the specified time zone, if any. */
 	if (tm.tm_zone)
@@ -3783,7 +3847,7 @@ to_date(PG_FUNCTION_ARGS)
 	struct pg_tm tm;
 	fsec_t		fsec;
 
-	do_to_timestamp(date_txt, fmt, &tm, &fsec, NULL);
+	do_to_timestamp(date_txt, fmt, false, &tm, &fsec, NULL);
 
 	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm.tm_year, tm.tm_mon, tm.tm_mday))
@@ -3818,7 +3882,7 @@ to_date(PG_FUNCTION_ARGS)
  * struct 'tm' and 'fsec'.
  */
 static void
-do_to_timestamp(text *date_txt, text *fmt,
+do_to_timestamp(text *date_txt, text *fmt, bool std,
 				struct pg_tm *tm, fsec_t *fsec, int *fprec)
 {
 	FormatNode *format;
@@ -3853,15 +3917,15 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 			format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
 
-			parse_format(format, fmt_str, DCH_keywords,
-						 DCH_suff, DCH_index, DCH_TYPE, NULL);
+			parse_format(format, fmt_str, DCH_keywords, DCH_suff, DCH_index,
+						 DCH_FLAG | (std ? STD_FLAG : 0), NULL);
 		}
 		else
 		{
 			/*
 			 * Use cache buffers
 			 */
-			DCHCacheEntry *ent = DCH_cache_fetch(fmt_str);
+			DCHCacheEntry *ent = DCH_cache_fetch(fmt_str, std);
 
 			incache = true;
 			format = ent->format;
@@ -3872,7 +3936,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		/* dump_index(DCH_keywords, DCH_index); */
 #endif
 
-		DCH_from_char(format, date_str, &tmfc);
+		DCH_from_char(format, date_str, &tmfc, std);
 
 		pfree(fmt_str);
 
@@ -4241,7 +4305,7 @@ NUM_cache_fetch(const char *str)
 		zeroize_NUM(&ent->Num);
 
 		parse_format(ent->format, str, NUM_keywords,
-					 NULL, NUM_index, NUM_TYPE, &ent->Num);
+					 NULL, NUM_index, NUM_FLAG, &ent->Num);
 
 		ent->valid = true;
 	}
@@ -4273,7 +4337,7 @@ NUM_cache(int len, NUMDesc *Num, text *pars_str, bool *shouldFree)
 		zeroize_NUM(Num);
 
 		parse_format(format, str, NUM_keywords,
-					 NULL, NUM_index, NUM_TYPE, Num);
+					 NULL, NUM_index, NUM_FLAG, Num);
 	}
 	else
 	{
