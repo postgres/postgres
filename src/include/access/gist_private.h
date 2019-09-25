@@ -380,6 +380,14 @@ typedef struct GISTBuildBuffers
 	int			rootlevel;
 } GISTBuildBuffers;
 
+/* GiSTOptions->buffering_mode values */
+typedef enum GistOptBufferingMode
+{
+	GIST_OPTION_BUFFERING_AUTO,
+	GIST_OPTION_BUFFERING_ON,
+	GIST_OPTION_BUFFERING_OFF
+} GistOptBufferingMode;
+
 /*
  * Storage type for GiST's reloptions
  */
@@ -387,7 +395,7 @@ typedef struct GiSTOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
-	int			bufferingModeOffset;	/* use buffering build? */
+	GistOptBufferingMode buffering_mode;	/* buffering build mode */
 } GiSTOptions;
 
 /* gist.c */

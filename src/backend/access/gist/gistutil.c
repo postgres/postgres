@@ -913,7 +913,7 @@ gistoptions(Datum reloptions, bool validate)
 	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"fillfactor", RELOPT_TYPE_INT, offsetof(GiSTOptions, fillfactor)},
-		{"buffering", RELOPT_TYPE_STRING, offsetof(GiSTOptions, bufferingModeOffset)}
+		{"buffering", RELOPT_TYPE_ENUM, offsetof(GiSTOptions, buffering_mode)}
 	};
 
 	options = parseRelOptions(reloptions, validate, RELOPT_KIND_GIST,

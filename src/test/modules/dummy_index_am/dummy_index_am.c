@@ -25,10 +25,15 @@ PG_MODULE_MAGIC;
 void		_PG_init(void);
 
 /* parse table for fillRelOptions */
-relopt_parse_elt di_relopt_tab[5];
+relopt_parse_elt di_relopt_tab[6];
 
 /* Kind of relation options for dummy index */
 relopt_kind di_relopt_kind;
+
+typedef enum DummyAmEnum {
+	DUMMY_AM_ENUM_ONE,
+	DUMMY_AM_ENUM_TWO
+} DummyAmEnum;
 
 /* Dummy index options */
 typedef struct DummyIndexOptions
@@ -37,9 +42,17 @@ typedef struct DummyIndexOptions
 	int			option_int;
 	double		option_real;
 	bool		option_bool;
+	DummyAmEnum	option_enum;
 	int			option_string_val_offset;
 	int			option_string_null_offset;
 } DummyIndexOptions;
+
+relopt_enum_elt_def dummyAmEnumValues[] =
+{
+	{"one", DUMMY_AM_ENUM_ONE},
+	{"two", DUMMY_AM_ENUM_TWO},
+	{(const char *)NULL}		/* list terminator */
+};
 
 /* Handler for index AM */
 PG_FUNCTION_INFO_V1(dihandler);
@@ -85,13 +98,23 @@ create_reloptions_table(void)
 	di_relopt_tab[2].opttype = RELOPT_TYPE_BOOL;
 	di_relopt_tab[2].offset = offsetof(DummyIndexOptions, option_bool);
 
+	add_enum_reloption(di_relopt_kind, "option_enum",
+					   "Enum option for dummy_index_am",
+					   dummyAmEnumValues,
+					   DUMMY_AM_ENUM_ONE,
+					   "Valid values are \"one\" and \"two\".",
+					   AccessExclusiveLock);
+	di_relopt_tab[3].optname = "option_enum";
+	di_relopt_tab[3].opttype = RELOPT_TYPE_ENUM;
+	di_relopt_tab[3].offset = offsetof(DummyIndexOptions, option_enum);
+
 	add_string_reloption(di_relopt_kind, "option_string_val",
 						 "String option for dummy_index_am with non-NULL default",
 						 "DefaultValue", &validate_string_option,
 						 AccessExclusiveLock);
-	di_relopt_tab[3].optname = "option_string_val";
-	di_relopt_tab[3].opttype = RELOPT_TYPE_STRING;
-	di_relopt_tab[3].offset = offsetof(DummyIndexOptions,
+	di_relopt_tab[4].optname = "option_string_val";
+	di_relopt_tab[4].opttype = RELOPT_TYPE_STRING;
+	di_relopt_tab[4].offset = offsetof(DummyIndexOptions,
 									   option_string_val_offset);
 
 	/*
@@ -102,9 +125,9 @@ create_reloptions_table(void)
 						 NULL,	/* description */
 						 NULL, &validate_string_option,
 						 AccessExclusiveLock);
-	di_relopt_tab[4].optname = "option_string_null";
-	di_relopt_tab[4].opttype = RELOPT_TYPE_STRING;
-	di_relopt_tab[4].offset = offsetof(DummyIndexOptions,
+	di_relopt_tab[5].optname = "option_string_null";
+	di_relopt_tab[5].opttype = RELOPT_TYPE_STRING;
+	di_relopt_tab[5].offset = offsetof(DummyIndexOptions,
 									   option_string_null_offset);
 }
 

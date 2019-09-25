@@ -32,12 +32,15 @@ ALTER INDEX dummy_test_idx SET (option_bool = true);
 ALTER INDEX dummy_test_idx SET (option_real = 3.2);
 ALTER INDEX dummy_test_idx SET (option_string_val = 'val2');
 ALTER INDEX dummy_test_idx SET (option_string_null = NULL);
+ALTER INDEX dummy_test_idx SET (option_enum = 'one');
+ALTER INDEX dummy_test_idx SET (option_enum = 'three');
 SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 
 -- ALTER INDEX .. RESET
 ALTER INDEX dummy_test_idx RESET (option_int);
 ALTER INDEX dummy_test_idx RESET (option_bool);
 ALTER INDEX dummy_test_idx RESET (option_real);
+ALTER INDEX dummy_test_idx RESET (option_enum);
 ALTER INDEX dummy_test_idx RESET (option_string_val);
 ALTER INDEX dummy_test_idx RESET (option_string_null);
 SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
@@ -62,6 +65,13 @@ ALTER INDEX dummy_test_idx SET (option_real = true); -- error
 ALTER INDEX dummy_test_idx SET (option_real = 'val5'); -- error
 SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 ALTER INDEX dummy_test_idx RESET (option_real);
+-- Enum
+ALTER INDEX dummy_test_idx SET (option_enum = 'one'); -- ok
+ALTER INDEX dummy_test_idx SET (option_enum = 0); -- error
+ALTER INDEX dummy_test_idx SET (option_enum = true); -- error
+ALTER INDEX dummy_test_idx SET (option_enum = 'three'); -- error
+SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
+ALTER INDEX dummy_test_idx RESET (option_enum);
 -- String
 ALTER INDEX dummy_test_idx SET (option_string_val = 4); -- ok
 ALTER INDEX dummy_test_idx SET (option_string_val = 3.5); -- ok

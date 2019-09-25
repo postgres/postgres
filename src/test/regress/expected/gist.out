@@ -12,7 +12,7 @@ create index gist_pointidx4 on gist_point_tbl using gist(p) with (buffering = au
 drop index gist_pointidx2, gist_pointidx3, gist_pointidx4;
 -- Make sure bad values are refused
 create index gist_pointidx5 on gist_point_tbl using gist(p) with (buffering = invalid_value);
-ERROR:  invalid value for "buffering" option
+ERROR:  invalid value for enum option "buffering": invalid_value
 DETAIL:  Valid values are "on", "off", and "auto".
 create index gist_pointidx5 on gist_point_tbl using gist(p) with (fillfactor=9);
 ERROR:  value 9 out of bounds for option "fillfactor"

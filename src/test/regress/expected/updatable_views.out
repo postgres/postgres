@@ -1733,7 +1733,7 @@ SELECT * FROM base_tbl;
 (2 rows)
 
 ALTER VIEW rw_view1 SET (check_option=here); -- invalid
-ERROR:  invalid value for "check_option" option
+ERROR:  invalid value for enum option "check_option": here
 DETAIL:  Valid values are "local" and "cascaded".
 ALTER VIEW rw_view1 SET (check_option=local);
 INSERT INTO rw_view2 VALUES (-20); -- should fail

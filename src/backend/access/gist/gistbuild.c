@@ -125,15 +125,15 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	buildstate.indexrel = index;
 	buildstate.heaprel = heap;
+
 	if (index->rd_options)
 	{
 		/* Get buffering mode from the options string */
 		GiSTOptions *options = (GiSTOptions *) index->rd_options;
-		char	   *bufferingMode = (char *) options + options->bufferingModeOffset;
 
-		if (strcmp(bufferingMode, "on") == 0)
+		if (options->buffering_mode == GIST_OPTION_BUFFERING_ON)
 			buildstate.bufferingMode = GIST_BUFFERING_STATS;
-		else if (strcmp(bufferingMode, "off") == 0)
+		else if (options->buffering_mode == GIST_OPTION_BUFFERING_OFF)
 			buildstate.bufferingMode = GIST_BUFFERING_DISABLED;
 		else
 			buildstate.bufferingMode = GIST_BUFFERING_AUTO;
@@ -234,25 +234,6 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	result->index_tuples = (double) buildstate.indtuples;
 
 	return result;
-}
-
-/*
- * Validator for "buffering" reloption on GiST indexes. Allows "on", "off"
- * and "auto" values.
- */
-void
-gistValidateBufferingOption(const char *value)
-{
-	if (value == NULL ||
-		(strcmp(value, "on") != 0 &&
-		 strcmp(value, "off") != 0 &&
-		 strcmp(value, "auto") != 0))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid value for \"buffering\" option"),
-				 errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
-	}
 }
 
 /*
