@@ -60,7 +60,8 @@ _PG_init(void)
 	/* Option for length of signature */
 	add_int_reloption(bl_relopt_kind, "length",
 					  "Length of signature in bits",
-					  DEFAULT_BLOOM_LENGTH, 1, MAX_BLOOM_LENGTH);
+					  DEFAULT_BLOOM_LENGTH, 1, MAX_BLOOM_LENGTH,
+					  AccessExclusiveLock);
 	bl_relopt_tab[0].optname = "length";
 	bl_relopt_tab[0].opttype = RELOPT_TYPE_INT;
 	bl_relopt_tab[0].offset = offsetof(BloomOptions, bloomLength);
@@ -71,7 +72,8 @@ _PG_init(void)
 		snprintf(buf, sizeof(buf), "col%d", i + 1);
 		add_int_reloption(bl_relopt_kind, buf,
 						  "Number of bits generated for each index column",
-						  DEFAULT_BLOOM_BITS, 1, MAX_BLOOM_BITS);
+						  DEFAULT_BLOOM_BITS, 1, MAX_BLOOM_BITS,
+						  AccessExclusiveLock);
 		bl_relopt_tab[i + 1].optname = MemoryContextStrdup(TopMemoryContext,
 														   buf);
 		bl_relopt_tab[i + 1].opttype = RELOPT_TYPE_INT;
