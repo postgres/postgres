@@ -26,4 +26,7 @@ extern char *asc_tolower(const char *buff, size_t nbytes);
 extern char *asc_toupper(const char *buff, size_t nbytes);
 extern char *asc_initcap(const char *buff, size_t nbytes);
 
+extern Datum parse_datetime(text *date_txt, text *fmt, bool std,
+							Oid *typid, int32 *typmod, int *tz);
+
 #endif
