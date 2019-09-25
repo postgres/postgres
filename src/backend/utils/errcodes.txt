@@ -207,6 +207,7 @@ Section: Class 22 - Data Exception
 2200S    E    ERRCODE_INVALID_XML_COMMENT                                    invalid_xml_comment
 2200T    E    ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION                     invalid_xml_processing_instruction
 22030    E    ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE                        duplicate_json_object_key_value
+22031    E    ERRCODE_INVALID_ARGUMENT_FOR_JSON_DATETIME_FUNCTION            invalid_argument_for_json_datetime_function
 22032    E    ERRCODE_INVALID_JSON_TEXT                                      invalid_json_text
 22033    E    ERRCODE_INVALID_SQL_JSON_SUBSCRIPT                             invalid_sql_json_subscript
 22034    E    ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM                            more_than_one_sql_json_item

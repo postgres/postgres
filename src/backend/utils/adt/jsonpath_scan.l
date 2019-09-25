@@ -323,6 +323,7 @@ static const JsonPathKeyword keywords[] = {
 	{ 6, false,	STRICT_P,	"strict"},
 	{ 7, false,	CEILING_P,	"ceiling"},
 	{ 7, false,	UNKNOWN_P,	"unknown"},
+	{ 8, false,	DATETIME_P,	"datetime"},
 	{ 8, false,	KEYVALUE_P,	"keyvalue"},
 	{ 10,false, LIKE_REGEX_P, "like_regex"},
 };

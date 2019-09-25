@@ -94,12 +94,14 @@ static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
 %token	<str>		LESS_P LESSEQUAL_P EQUAL_P NOTEQUAL_P GREATEREQUAL_P GREATER_P
 %token	<str>		ANY_P STRICT_P LAX_P LAST_P STARTS_P WITH_P LIKE_REGEX_P FLAG_P
 %token	<str>		ABS_P SIZE_P TYPE_P FLOOR_P DOUBLE_P CEILING_P KEYVALUE_P
+%token	<str>		DATETIME_P
 
 %type	<result>	result
 
 %type	<value>		scalar_value path_primary expr array_accessor
 					any_path accessor_op key predicate delimited_predicate
 					index_elem starts_with_initial expr_or_predicate
+					datetime_template opt_datetime_template
 
 %type	<elems>		accessor_expr
 
@@ -247,7 +249,18 @@ accessor_op:
 	| array_accessor				{ $$ = $1; }
 	| '.' any_path					{ $$ = $2; }
 	| '.' method '(' ')'			{ $$ = makeItemType($2); }
+	| '.' DATETIME_P '(' opt_datetime_template ')'
+									{ $$ = makeItemUnary(jpiDatetime, $4); }
 	| '?' '(' predicate ')'			{ $$ = makeItemUnary(jpiFilter, $3); }
+	;
+
+datetime_template:
+	STRING_P						{ $$ = makeItemString(&$1); }
+	;
+
+opt_datetime_template:
+	datetime_template				{ $$ = $1; }
+	| /* EMPTY */					{ $$ = NULL; }
 	;
 
 key:
@@ -272,6 +285,7 @@ key_name:
 	| FLOOR_P
 	| DOUBLE_P
 	| CEILING_P
+	| DATETIME_P
 	| KEYVALUE_P
 	| LAST_P
 	| STARTS_P

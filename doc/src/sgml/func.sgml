@@ -11912,16 +11912,6 @@ table2-mapping
   <itemizedlist>
    <listitem>
     <para>
-     <literal>.datetime()</literal> item method is not implemented yet
-     mainly because immutable <type>jsonpath</type> functions and operators
-     cannot reference session timezone, which is used in some datetime
-     operations.  Datetime support will be added to <type>jsonpath</type>
-     in future versions of <productname>PostgreSQL</productname>.
-    </para>
-   </listitem>
-
-   <listitem>
-    <para>
      A path expression can be a Boolean predicate, although the SQL/JSON
      standard allows predicates only in filters.  This is necessary for
      implementation of the <literal>@@</literal> operator. For example,
@@ -12191,6 +12181,20 @@ table2-mapping
         <entry><literal>0.3</literal></entry>
        </row>
        <row>
+        <entry><literal>datetime()</literal></entry>
+        <entry>Date/time value converted from a string</entry>
+        <entry><literal>["2015-8-1", "2015-08-12"]</literal></entry>
+        <entry><literal>$[*] ? (@.datetime() &lt; "2015-08-2". datetime())</literal></entry>
+        <entry><literal>2015-8-1</literal></entry>
+       </row>
+       <row>
+        <entry><literal>datetime(<replaceable>template</replaceable>)</literal></entry>
+        <entry>Date/time value converted from a string using the specified template</entry>
+        <entry><literal>["12:30", "18:40"]</literal></entry>
+        <entry><literal>$[*].datetime("HH24:MI")</literal></entry>
+        <entry><literal>"12:30:00", "18:40:00"</literal></entry>
+       </row>
+       <row>
         <entry><literal>keyvalue()</literal></entry>
         <entry>
           Sequence of object's key-value pairs represented as array of items
@@ -12206,6 +12210,37 @@ table2-mapping
       </tbody>
      </tgroup>
     </table>
+
+    <note>
+     <para>
+      The result type of <literal>datetime()</literal> and
+      <literal>datetime(<replaceable>template</replaceable>)</literal>
+      methods can be <type>date</type>, <type>timetz</type>, <type>time</type>,
+      <type>timestamptz</type>, or <type>timestamp</type>.
+      Both methods determine the result type dynamically.
+     </para>
+     <para>
+      The <literal>datetime()</literal> method sequentially tries ISO formats
+      for <type>date</type>, <type>timetz</type>, <type>time</type>,
+      <type>timestamptz</type>, and <type>timestamp</type>. It stops on
+      the first matching format and the corresponding data type.
+     </para>
+     <para>
+      The <literal>datetime(<replaceable>template</replaceable>)</literal>
+      method determines the result type by the provided template string.
+     </para>
+     <para>
+      The <literal>datetime()</literal> and
+      <literal>datetime(<replaceable>template</replaceable>)</literal> methods
+      use the same parsing rules as <literal>to_timestamp</literal> SQL
+      function does (see <xref linkend="functions-formatting"/>) with three
+      exceptions.  At first, these methods doesn't allow unmatched template
+      patterns.  At second, only following separators are allowed in the
+      template string: minus sign, period, solidus, comma, apostrophe,
+      semicolon, colon and space.  At third, separators in the template string
+      must exactly match the input string.
+     </para>
+    </note>
 
     <table id="functions-sqljson-filter-ex-table">
      <title><type>jsonpath</type> Filter Expression Elements</title>
@@ -12350,6 +12385,15 @@ table2-mapping
       </tbody>
      </tgroup>
     </table>
+
+    <note>
+     <para>
+      When different date/time values are compared, an implicit cast is
+      applied. A <type>date</type> value can be cast to <type>timestamp</type>
+      or <type>timestamptz</type>, <type>timestamp</type> can be cast to
+      <type>timestamptz</type>, and <type>time</type> &mdash; to <type>timetz</type>.
+     </para>
+    </note>
    </sect3>
 
   </sect2>
@@ -12582,7 +12626,7 @@ table2-mapping
    <para>
     The <literal>@?</literal> and <literal>@@</literal> operators suppress
     the following errors: lacking object field or array element, unexpected
-    JSON item type, and numeric errors.
+    JSON item type, datetime and numeric errors.
     This behavior might be helpful while searching over JSON document
     collections of varying structure.
    </para>
@@ -12852,16 +12896,31 @@ table2-mapping
    <primary>jsonb_path_exists</primary>
   </indexterm>
   <indexterm>
+   <primary>jsonb_path_exists_tz</primary>
+  </indexterm>
+  <indexterm>
    <primary>jsonb_path_match</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_path_match_tz</primary>
   </indexterm>
   <indexterm>
    <primary>jsonb_path_query</primary>
   </indexterm>
   <indexterm>
+   <primary>jsonb_path_query_tz</primary>
+  </indexterm>
+  <indexterm>
    <primary>jsonb_path_query_array</primary>
   </indexterm>
   <indexterm>
+   <primary>jsonb_path_query_array_tz</primary>
+  </indexterm>
+  <indexterm>
    <primary>jsonb_path_query_first</primary>
+  </indexterm>
+  <indexterm>
+   <primary>jsonb_path_query_first_tz</primary>
   </indexterm>
 
   <table id="functions-json-processing-table">
@@ -13202,6 +13261,9 @@ table2-mapping
          <para><literal>
            jsonb_path_exists(target jsonb, path jsonpath [, vars jsonb [, silent bool]])
          </literal></para>
+         <para><literal>
+           jsonb_path_exists_tz(target jsonb, path jsonpath [, vars jsonb, silent bool])
+         </literal></para>
         </entry>
         <entry><type>boolean</type></entry>
         <entry>
@@ -13221,6 +13283,9 @@ table2-mapping
         <entry>
          <para><literal>
            jsonb_path_match(target jsonb, path jsonpath [, vars jsonb, silent bool])
+         </literal></para>
+         <para><literal>
+           jsonb_path_match_tz(target jsonb, path jsonpath [, vars jsonb, silent bool])
          </literal></para>
         </entry>
         <entry><type>boolean</type></entry>
@@ -13242,6 +13307,9 @@ table2-mapping
         <entry>
          <para><literal>
            jsonb_path_query(target jsonb, path jsonpath [, vars jsonb, silent bool])
+         </literal></para>
+         <para><literal>
+           jsonb_path_query_tz(target jsonb, path jsonpath [, vars jsonb, silent bool])
          </literal></para>
         </entry>
         <entry><type>setof jsonb</type></entry>
@@ -13271,6 +13339,9 @@ table2-mapping
          <para><literal>
            jsonb_path_query_array(target jsonb, path jsonpath [, vars jsonb, silent bool])
          </literal></para>
+         <para><literal>
+           jsonb_path_query_array_tz(target jsonb, path jsonpath [, vars jsonb, silent bool])
+         </literal></para>
         </entry>
         <entry><type>jsonb</type></entry>
         <entry>
@@ -13290,6 +13361,9 @@ table2-mapping
         <entry>
          <para><literal>
            jsonb_path_query_first(target jsonb, path jsonpath [, vars jsonb, silent bool])
+         </literal></para>
+         <para><literal>
+           jsonb_path_query_first_tz(target jsonb, path jsonpath [, vars jsonb, silent bool])
          </literal></para>
         </entry>
         <entry><type>jsonb</type></entry>
@@ -13433,11 +13507,8 @@ table2-mapping
 
   <note>
    <para>
-    The <literal>jsonb_path_exists</literal>, <literal>jsonb_path_match</literal>,
-    <literal>jsonb_path_query</literal>, <literal>jsonb_path_query_array</literal>, and
-    <literal>jsonb_path_query_first</literal>
-    functions have optional <literal>vars</literal> and <literal>silent</literal>
-    arguments.
+    The <literal>jsonb_path_*</literal> functions have optional
+    <literal>vars</literal> and <literal>silent</literal> arguments.
    </para>
    <para>
     If the <parameter>vars</parameter> argument is specified, it provides an
@@ -13448,6 +13519,20 @@ table2-mapping
     If the <parameter>silent</parameter> argument is specified and has the
     <literal>true</literal> value, these functions suppress the same errors
     as the <literal>@?</literal> and <literal>@@</literal> operators.
+   </para>
+  </note>
+
+  <note>
+   <para>
+    Some of the <literal>jsonb_path_*</literal> functions have the
+    <literal>_tz</literal> suffix. These functions have been implemented to
+    support comparison of date/time values that involves implicit
+    timezone-aware casts. Since operations with time zones are not immutable,
+    these functions are qualified as stable. Their counterparts without the
+    suffix do not support such casts, so they are immutable and can be used for
+    such use-cases as expression indexes
+    (see <xref linkend="indexes-expressional"/>). There is no difference
+    between these functions for other <type>jsonpath</type> operations.
    </para>
   </note>
 

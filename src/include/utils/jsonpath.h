@@ -79,6 +79,7 @@ typedef enum JsonPathItemType
 	jpiFloor,					/* .floor() item method */
 	jpiCeiling,					/* .ceiling() item method */
 	jpiDouble,					/* .double() item method */
+	jpiDatetime,				/* .datetime() item method */
 	jpiKeyValue,				/* .keyvalue() item method */
 	jpiSubscript,				/* array subscript: 'expr' or 'expr TO expr' */
 	jpiLast,					/* LAST array subscript */

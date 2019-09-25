@@ -544,7 +544,7 @@ T828	JSON_QUERY			NO
 T829	JSON_QUERY: array wrapper options			NO	
 T830	Enforcing unique keys in SQL/JSON constructor functions			NO	
 T831	SQL/JSON path language: strict mode			YES	
-T832	SQL/JSON path language: item method			NO	datetime() not yet implemented
+T832	SQL/JSON path language: item method			YES	
 T833	SQL/JSON path language: multiple subscripts			YES	
 T834	SQL/JSON path language: wildcard member accessor			YES	
 T835	SQL/JSON path language: filter expressions			YES	

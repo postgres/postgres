@@ -1659,6 +1659,526 @@ select jsonb_path_query('[null, 1, "a\b", "a\\b", "^a\\b$"]', 'lax $[*] ? (@ lik
  "a\b"
 (1 row)
 
+select jsonb_path_query('null', '$.datetime()');
+ERROR:  jsonpath item method .datetime() can only be applied to a string
+select jsonb_path_query('true', '$.datetime()');
+ERROR:  jsonpath item method .datetime() can only be applied to a string
+select jsonb_path_query('1', '$.datetime()');
+ERROR:  jsonpath item method .datetime() can only be applied to a string
+select jsonb_path_query('[]', '$.datetime()');
+ jsonb_path_query 
+------------------
+(0 rows)
+
+select jsonb_path_query('[]', 'strict $.datetime()');
+ERROR:  jsonpath item method .datetime() can only be applied to a string
+select jsonb_path_query('{}', '$.datetime()');
+ERROR:  jsonpath item method .datetime() can only be applied to a string
+select jsonb_path_query('""', '$.datetime()');
+ERROR:  datetime format is not unrecognized
+HINT:  use datetime template argument for explicit format specification
+select jsonb_path_query('"12:34"', '$.datetime("aaa")');
+ERROR:  invalid datetime format separator: "a"
+select jsonb_path_query('"aaaa"', '$.datetime("HH24")');
+ERROR:  invalid value "aa" for "HH24"
+DETAIL:  Value must be an integer.
+select jsonb '"10-03-2017"' @? '$.datetime("dd-mm-yyyy")';
+ ?column? 
+----------
+ t
+(1 row)
+
+select jsonb_path_query('"10-03-2017"', '$.datetime("dd-mm-yyyy")');
+ jsonb_path_query 
+------------------
+ "2017-03-10"
+(1 row)
+
+select jsonb_path_query('"10-03-2017"', '$.datetime("dd-mm-yyyy").type()');
+ jsonb_path_query 
+------------------
+ "date"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy")');
+ERROR:  trailing characters remain in input string after datetime format
+select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy").type()');
+ERROR:  trailing characters remain in input string after datetime format
+select jsonb_path_query('"10-03-2017 12:34"', '       $.datetime("dd-mm-yyyy HH24:MI").type()');
+       jsonb_path_query        
+-------------------------------
+ "timestamp without time zone"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34 +05:20"', '$.datetime("dd-mm-yyyy HH24:MI TZH:TZM").type()');
+      jsonb_path_query      
+----------------------------
+ "timestamp with time zone"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.datetime("HH24:MI:SS").type()');
+     jsonb_path_query     
+--------------------------
+ "time without time zone"
+(1 row)
+
+select jsonb_path_query('"12:34:56 +05:20"', '$.datetime("HH24:MI:SS TZH:TZM").type()');
+   jsonb_path_query    
+-----------------------
+ "time with time zone"
+(1 row)
+
+set time zone '+00';
+select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy HH24:MI")');
+   jsonb_path_query    
+-----------------------
+ "2017-03-10T12:34:00"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy HH24:MI TZH")');
+ERROR:  input string is too short for datetime format
+select jsonb_path_query('"10-03-2017 12:34 +05"', '$.datetime("dd-mm-yyyy HH24:MI TZH")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00+05:00"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34 -05"', '$.datetime("dd-mm-yyyy HH24:MI TZH")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00-05:00"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34 +05:20"', '$.datetime("dd-mm-yyyy HH24:MI TZH:TZM")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00+05:20"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34 -05:20"', '$.datetime("dd-mm-yyyy HH24:MI TZH:TZM")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00-05:20"
+(1 row)
+
+select jsonb_path_query('"12:34"', '$.datetime("HH24:MI")');
+ jsonb_path_query 
+------------------
+ "12:34:00"
+(1 row)
+
+select jsonb_path_query('"12:34"', '$.datetime("HH24:MI TZH")');
+ERROR:  input string is too short for datetime format
+select jsonb_path_query('"12:34 +05"', '$.datetime("HH24:MI TZH")');
+ jsonb_path_query 
+------------------
+ "12:34:00+05:00"
+(1 row)
+
+select jsonb_path_query('"12:34 -05"', '$.datetime("HH24:MI TZH")');
+ jsonb_path_query 
+------------------
+ "12:34:00-05:00"
+(1 row)
+
+select jsonb_path_query('"12:34 +05:20"', '$.datetime("HH24:MI TZH:TZM")');
+ jsonb_path_query 
+------------------
+ "12:34:00+05:20"
+(1 row)
+
+select jsonb_path_query('"12:34 -05:20"', '$.datetime("HH24:MI TZH:TZM")');
+ jsonb_path_query 
+------------------
+ "12:34:00-05:20"
+(1 row)
+
+set time zone '+10';
+select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy HH24:MI")');
+   jsonb_path_query    
+-----------------------
+ "2017-03-10T12:34:00"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34"', '$.datetime("dd-mm-yyyy HH24:MI TZH")');
+ERROR:  input string is too short for datetime format
+select jsonb_path_query('"10-03-2017 12:34 +05"', '$.datetime("dd-mm-yyyy HH24:MI TZH")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00+05:00"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34 -05"', '$.datetime("dd-mm-yyyy HH24:MI TZH")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00-05:00"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34 +05:20"', '$.datetime("dd-mm-yyyy HH24:MI TZH:TZM")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00+05:20"
+(1 row)
+
+select jsonb_path_query('"10-03-2017 12:34 -05:20"', '$.datetime("dd-mm-yyyy HH24:MI TZH:TZM")');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:00-05:20"
+(1 row)
+
+select jsonb_path_query('"12:34"', '$.datetime("HH24:MI")');
+ jsonb_path_query 
+------------------
+ "12:34:00"
+(1 row)
+
+select jsonb_path_query('"12:34"', '$.datetime("HH24:MI TZH")');
+ERROR:  input string is too short for datetime format
+select jsonb_path_query('"12:34 +05"', '$.datetime("HH24:MI TZH")');
+ jsonb_path_query 
+------------------
+ "12:34:00+05:00"
+(1 row)
+
+select jsonb_path_query('"12:34 -05"', '$.datetime("HH24:MI TZH")');
+ jsonb_path_query 
+------------------
+ "12:34:00-05:00"
+(1 row)
+
+select jsonb_path_query('"12:34 +05:20"', '$.datetime("HH24:MI TZH:TZM")');
+ jsonb_path_query 
+------------------
+ "12:34:00+05:20"
+(1 row)
+
+select jsonb_path_query('"12:34 -05:20"', '$.datetime("HH24:MI TZH:TZM")');
+ jsonb_path_query 
+------------------
+ "12:34:00-05:20"
+(1 row)
+
+set time zone default;
+select jsonb_path_query('"2017-03-10"', '$.datetime().type()');
+ jsonb_path_query 
+------------------
+ "date"
+(1 row)
+
+select jsonb_path_query('"2017-03-10"', '$.datetime()');
+ jsonb_path_query 
+------------------
+ "2017-03-10"
+(1 row)
+
+select jsonb_path_query('"2017-03-10 12:34:56"', '$.datetime().type()');
+       jsonb_path_query        
+-------------------------------
+ "timestamp without time zone"
+(1 row)
+
+select jsonb_path_query('"2017-03-10 12:34:56"', '$.datetime()');
+   jsonb_path_query    
+-----------------------
+ "2017-03-10T12:34:56"
+(1 row)
+
+select jsonb_path_query('"2017-03-10 12:34:56 +3"', '$.datetime().type()');
+      jsonb_path_query      
+----------------------------
+ "timestamp with time zone"
+(1 row)
+
+select jsonb_path_query('"2017-03-10 12:34:56 +3"', '$.datetime()');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:56+03:00"
+(1 row)
+
+select jsonb_path_query('"2017-03-10 12:34:56 +3:10"', '$.datetime().type()');
+      jsonb_path_query      
+----------------------------
+ "timestamp with time zone"
+(1 row)
+
+select jsonb_path_query('"2017-03-10 12:34:56 +3:10"', '$.datetime()');
+      jsonb_path_query       
+-----------------------------
+ "2017-03-10T12:34:56+03:10"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.datetime().type()');
+     jsonb_path_query     
+--------------------------
+ "time without time zone"
+(1 row)
+
+select jsonb_path_query('"12:34:56"', '$.datetime()');
+ jsonb_path_query 
+------------------
+ "12:34:56"
+(1 row)
+
+select jsonb_path_query('"12:34:56 +3"', '$.datetime().type()');
+   jsonb_path_query    
+-----------------------
+ "time with time zone"
+(1 row)
+
+select jsonb_path_query('"12:34:56 +3"', '$.datetime()');
+ jsonb_path_query 
+------------------
+ "12:34:56+03:00"
+(1 row)
+
+select jsonb_path_query('"12:34:56 +3:10"', '$.datetime().type()');
+   jsonb_path_query    
+-----------------------
+ "time with time zone"
+(1 row)
+
+select jsonb_path_query('"12:34:56 +3:10"', '$.datetime()');
+ jsonb_path_query 
+------------------
+ "12:34:56+03:10"
+(1 row)
+
+set time zone '+00';
+-- date comparison
+select jsonb_path_query(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
+	'$[*].datetime() ? (@ == "10.03.2017".datetime("dd.mm.yyyy"))');
+ERROR:  cannot convert value from date to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
+	'$[*].datetime() ? (@ >= "10.03.2017".datetime("dd.mm.yyyy"))');
+ERROR:  cannot convert value from date to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
+	'$[*].datetime() ? (@ <  "10.03.2017".datetime("dd.mm.yyyy"))');
+ERROR:  cannot convert value from date to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
+	'$[*].datetime() ? (@ == "10.03.2017".datetime("dd.mm.yyyy"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10"
+ "2017-03-10T00:00:00"
+ "2017-03-10T03:00:00+03:00"
+(3 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
+	'$[*].datetime() ? (@ >= "10.03.2017".datetime("dd.mm.yyyy"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10"
+ "2017-03-11"
+ "2017-03-10T00:00:00"
+ "2017-03-10T12:34:56"
+ "2017-03-10T03:00:00+03:00"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
+	'$[*].datetime() ? (@ <  "10.03.2017".datetime("dd.mm.yyyy"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-09"
+ "2017-03-10T01:02:03+04:00"
+(2 rows)
+
+-- time comparison
+select jsonb_path_query(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
+	'$[*].datetime() ? (@ == "12:35".datetime("HH24:MI"))');
+ERROR:  cannot convert value from time to timetz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
+	'$[*].datetime() ? (@ >= "12:35".datetime("HH24:MI"))');
+ERROR:  cannot convert value from time to timetz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
+	'$[*].datetime() ? (@ <  "12:35".datetime("HH24:MI"))');
+ERROR:  cannot convert value from time to timetz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
+	'$[*].datetime() ? (@ == "12:35".datetime("HH24:MI"))');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00"
+ "12:35:00+00:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
+	'$[*].datetime() ? (@ >= "12:35".datetime("HH24:MI"))');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00"
+ "12:36:00"
+ "12:35:00+00:00"
+(3 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
+	'$[*].datetime() ? (@ <  "12:35".datetime("HH24:MI"))');
+ jsonb_path_query_tz 
+---------------------
+ "12:34:00"
+ "12:35:00+01:00"
+ "13:35:00+01:00"
+(3 rows)
+
+-- timetz comparison
+select jsonb_path_query(
+	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ == "12:35 +1".datetime("HH24:MI TZH"))');
+ERROR:  cannot convert value from time to timetz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ >= "12:35 +1".datetime("HH24:MI TZH"))');
+ERROR:  cannot convert value from time to timetz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ <  "12:35 +1".datetime("HH24:MI TZH"))');
+ERROR:  cannot convert value from time to timetz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query_tz(
+	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ == "12:35 +1".datetime("HH24:MI TZH"))');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00+01:00"
+(1 row)
+
+select jsonb_path_query_tz(
+	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ >= "12:35 +1".datetime("HH24:MI TZH"))');
+ jsonb_path_query_tz 
+---------------------
+ "12:35:00+01:00"
+ "12:36:00+01:00"
+ "12:35:00-02:00"
+ "11:35:00"
+ "12:35:00"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
+	'$[*].datetime() ? (@ <  "12:35 +1".datetime("HH24:MI TZH"))');
+ jsonb_path_query_tz 
+---------------------
+ "12:34:00+01:00"
+ "12:35:00+02:00"
+ "10:35:00"
+(3 rows)
+
+-- timestamp comparison
+select jsonb_path_query(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ == "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
+ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ >= "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
+ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ < "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
+ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ == "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T13:35:00+01:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ >= "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00"
+ "2017-03-10T12:36:00"
+ "2017-03-10T13:35:00+01:00"
+ "2017-03-10T12:35:00-01:00"
+ "2017-03-11"
+(5 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ < "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:34:00"
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10"
+(3 rows)
+
+-- timestamptz comparison
+select jsonb_path_query(
+	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ == "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
+ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ >= "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
+ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query(
+	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ < "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
+ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
+HINT:  use *_tz() function for timezone support
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ == "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T11:35:00"
+(2 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ >= "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:35:00+01:00"
+ "2017-03-10T12:36:00+01:00"
+ "2017-03-10T12:35:00-02:00"
+ "2017-03-10T11:35:00"
+ "2017-03-10T12:35:00"
+ "2017-03-11"
+(6 rows)
+
+select jsonb_path_query_tz(
+	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
+	'$[*].datetime() ? (@ < "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
+     jsonb_path_query_tz     
+-----------------------------
+ "2017-03-10T12:34:00+01:00"
+ "2017-03-10T12:35:00+02:00"
+ "2017-03-10T10:35:00"
+ "2017-03-10"
+(4 rows)
+
+set time zone default;
 -- jsonpath operators
 SELECT jsonb_path_query('[{"a": 1}, {"a": 2}]', '$[*]');
  jsonb_path_query 

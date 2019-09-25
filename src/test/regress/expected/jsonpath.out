@@ -395,6 +395,18 @@ select '$.keyvalue().key'::jsonpath;
  $.keyvalue()."key"
 (1 row)
 
+select '$.datetime()'::jsonpath;
+   jsonpath   
+--------------
+ $.datetime()
+(1 row)
+
+select '$.datetime("datetime template")'::jsonpath;
+            jsonpath             
+---------------------------------
+ $.datetime("datetime template")
+(1 row)
+
 select '$ ? (@ starts with "abc")'::jsonpath;
         jsonpath         
 -------------------------
