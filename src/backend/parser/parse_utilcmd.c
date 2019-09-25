@@ -1023,11 +1023,13 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		attmap[parent_attno - 1] = list_length(cxt->columns);
 
 		/*
-		 * Copy default, if present and the default has been requested
+		 * Copy default, if present and it should be copied.  We have separate
+		 * options for plain default expressions and GENERATED defaults.
 		 */
 		if (attribute->atthasdef &&
-			(table_like_clause->options & CREATE_TABLE_LIKE_DEFAULTS ||
-			 table_like_clause->options & CREATE_TABLE_LIKE_GENERATED))
+			(attribute->attgenerated ?
+			 (table_like_clause->options & CREATE_TABLE_LIKE_GENERATED) :
+			 (table_like_clause->options & CREATE_TABLE_LIKE_DEFAULTS)))
 		{
 			Node	   *this_default = NULL;
 			AttrDefault *attrdef;
@@ -1065,9 +1067,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 								   attributeName,
 								   RelationGetRelationName(relation))));
 
-			if (attribute->attgenerated &&
-				(table_like_clause->options & CREATE_TABLE_LIKE_GENERATED))
-				def->generated = attribute->attgenerated;
+			def->generated = attribute->attgenerated;
 		}
 
 		/*

@@ -159,6 +159,80 @@ SELECT * FROM test_like_gen_3;
 (1 row)
 
 DROP TABLE test_like_gen_1, test_like_gen_2, test_like_gen_3;
+CREATE TABLE test_like_4 (a int, b int DEFAULT 42, c int GENERATED ALWAYS AS (a * 2) STORED);
+\d test_like_4
+                          Table "public.test_like_4"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
+ a      | integer |           |          | 
+ b      | integer |           |          | 42
+ c      | integer |           |          | generated always as (a * 2) stored
+
+CREATE TABLE test_like_4a (LIKE test_like_4);
+CREATE TABLE test_like_4b (LIKE test_like_4 INCLUDING DEFAULTS);
+CREATE TABLE test_like_4c (LIKE test_like_4 INCLUDING GENERATED);
+CREATE TABLE test_like_4d (LIKE test_like_4 INCLUDING DEFAULTS INCLUDING GENERATED);
+\d test_like_4a
+            Table "public.test_like_4a"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | 
+
+INSERT INTO test_like_4a VALUES(11);
+TABLE test_like_4a;
+ a  | b | c 
+----+---+---
+ 11 |   |  
+(1 row)
+
+\d test_like_4b
+            Table "public.test_like_4b"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 42
+ c      | integer |           |          | 
+
+INSERT INTO test_like_4b VALUES(11);
+TABLE test_like_4b;
+ a  | b  | c 
+----+----+---
+ 11 | 42 |  
+(1 row)
+
+\d test_like_4c
+                         Table "public.test_like_4c"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | integer |           |          | generated always as (a * 2) stored
+
+INSERT INTO test_like_4c VALUES(11);
+TABLE test_like_4c;
+ a  | b | c  
+----+---+----
+ 11 |   | 22
+(1 row)
+
+\d test_like_4d
+                         Table "public.test_like_4d"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
+ a      | integer |           |          | 
+ b      | integer |           |          | 42
+ c      | integer |           |          | generated always as (a * 2) stored
+
+INSERT INTO test_like_4d VALUES(11);
+TABLE test_like_4d;
+ a  | b  | c  
+----+----+----
+ 11 | 42 | 22
+(1 row)
+
+DROP TABLE test_like_4, test_like_4a, test_like_4b, test_like_4c, test_like_4d;
 CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, y text); /* copies indexes */
 INSERT INTO inhg VALUES (5, 10);
 INSERT INTO inhg VALUES (20, 10); -- should fail
