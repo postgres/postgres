@@ -3,6 +3,9 @@ CREATE EXTENSION dummy_index_am;
 
 CREATE TABLE dummy_test_tab (i int4);
 
+-- Silence validation checks for strings
+SET client_min_messages TO 'warning';
+
 -- Test with default values.
 CREATE INDEX dummy_test_idx ON dummy_test_tab
   USING dummy_index_am (i);
@@ -10,6 +13,8 @@ SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 DROP INDEX dummy_test_idx;
 
 -- Test with full set of options.
+-- Allow validation checks for strings, just for the index creation
+SET client_min_messages TO 'notice';
 CREATE INDEX dummy_test_idx ON dummy_test_tab
   USING dummy_index_am (i) WITH (
   option_bool = false,
@@ -17,10 +22,9 @@ CREATE INDEX dummy_test_idx ON dummy_test_tab
   option_real = 3.1,
   option_string_val = NULL,
   option_string_null = 'val');
-SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
-
--- Silence validation checks for strings
+-- Silence again validation checks for strings until the end of the test.
 SET client_min_messages TO 'warning';
+SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 
 -- ALTER INDEX .. SET
 ALTER INDEX dummy_test_idx SET (option_int = 10);
