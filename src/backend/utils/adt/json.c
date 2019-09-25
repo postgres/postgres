@@ -1506,7 +1506,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			{
 				char		buf[MAXDATELEN + 1];
 
-				JsonEncodeDateTime(buf, val, DATEOID);
+				JsonEncodeDateTime(buf, val, DATEOID, NULL);
 				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
@@ -1514,7 +1514,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			{
 				char		buf[MAXDATELEN + 1];
 
-				JsonEncodeDateTime(buf, val, TIMESTAMPOID);
+				JsonEncodeDateTime(buf, val, TIMESTAMPOID, NULL);
 				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
@@ -1522,7 +1522,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			{
 				char		buf[MAXDATELEN + 1];
 
-				JsonEncodeDateTime(buf, val, TIMESTAMPTZOID);
+				JsonEncodeDateTime(buf, val, TIMESTAMPTZOID, NULL);
 				appendStringInfo(result, "\"%s\"", buf);
 			}
 			break;
@@ -1550,10 +1550,11 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 
 /*
  * Encode 'value' of datetime type 'typid' into JSON string in ISO format using
- * optionally preallocated buffer 'buf'.
+ * optionally preallocated buffer 'buf'.  Optional 'tzp' determines time-zone
+ * offset (in seconds) in which we want to show timestamptz.
  */
 char *
-JsonEncodeDateTime(char *buf, Datum value, Oid typid)
+JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
 {
 	if (!buf)
 		buf = palloc(MAXDATELEN + 1);
@@ -1630,11 +1631,30 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid)
 				const char *tzn = NULL;
 
 				timestamp = DatumGetTimestampTz(value);
+
+				/*
+				 * If a time zone is specified, we apply the time-zone shift,
+				 * convert timestamptz to pg_tm as if it were without a time
+				 * zone, and then use the specified time zone for converting
+				 * the timestamp into a string.
+				 */
+				if (tzp)
+				{
+					tz = *tzp;
+					timestamp -= (TimestampTz) tz * USECS_PER_SEC;
+				}
+
 				/* Same as timestamptz_out(), but forcing DateStyle */
 				if (TIMESTAMP_NOT_FINITE(timestamp))
 					EncodeSpecialTimestamp(timestamp, buf);
-				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
+				else if (timestamp2tm(timestamp, tzp ? NULL : &tz, &tm, &fsec,
+									  tzp ? NULL : &tzn, NULL) == 0)
+				{
+					if (tzp)
+						tm.tm_isdst = 1;	/* set time-zone presence flag */
+
 					EncodeDateTime(&tm, fsec, true, tz, tzn, USE_XSD_DATES, buf);
+				}
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
