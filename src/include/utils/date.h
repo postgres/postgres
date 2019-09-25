@@ -70,6 +70,8 @@ typedef struct
 /* date.c */
 extern int32 anytime_typmod_check(bool istz, int32 typmod);
 extern double date2timestamp_no_overflow(DateADT dateVal);
+extern Timestamp date2timestamp_opt_error(DateADT dateVal, bool *have_error);
+extern TimestampTz date2timestamptz_opt_error(DateADT dateVal, bool *have_error);
 extern void EncodeSpecialDate(DateADT dt, char *str);
 extern DateADT GetSQLCurrentDate(void);
 extern TimeTzADT *GetSQLCurrentTime(int32 typmod);
