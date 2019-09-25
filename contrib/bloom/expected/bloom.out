@@ -5,6 +5,7 @@ CREATE TABLE tst (
 );
 INSERT INTO tst SELECT i%10, substr(md5(i::text), 1, 1) FROM generate_series(1,2000) i;
 CREATE INDEX bloomidx ON tst USING bloom (i, t) WITH (col1 = 3);
+ALTER INDEX bloomidx SET (length=80);
 SET enable_seqscan=on;
 SET enable_bitmapscan=off;
 SET enable_indexscan=off;
