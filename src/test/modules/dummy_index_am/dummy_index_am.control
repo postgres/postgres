@@ -1,0 +1,5 @@
+# dummy_index_am extension
+comment = 'dummy_index_am - index access method template'
+default_version = '1.0'
+module_pathname = '$libdir/dummy_index_am'
+relocatable = true

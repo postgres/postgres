@@ -535,6 +535,7 @@ DropSubscriptionStmt
 DropTableSpaceStmt
 DropUserMappingStmt
 DropdbStmt
+DummyIndexOptions
 DumpComponents
 DumpId
 DumpOptions
