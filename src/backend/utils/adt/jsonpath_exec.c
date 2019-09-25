@@ -2592,7 +2592,7 @@ compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 					break;
 
 				case TIMESTAMPOID:
-					val1 = date2timestamp_opt_error(val1, have_error);
+					val1 = TimestampGetDatum(date2timestamp_opt_error(DatumGetDateADT(val1), have_error));
 					if (have_error && *have_error)
 						return 0;
 					cmpfunc = timestamp_cmp;
@@ -2606,7 +2606,7 @@ compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 								 errmsg("cannot convert value from %s to %s without timezone usage",
 										"date", "timestamptz"),
 								 errhint("use *_tz() function for timezone support")));
-					val1 = date2timestamptz_opt_error(val1, have_error);
+					val1 = TimestampTzGetDatum(date2timestamptz_opt_error(DatumGetDateADT(val1), have_error));
 					if (have_error && *have_error)
 						return 0;
 					cmpfunc = timestamp_cmp;
@@ -2680,7 +2680,7 @@ compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 			switch (typid2)
 			{
 				case DATEOID:
-					val2 = date2timestamp_opt_error(val2, have_error);
+					val2 = TimestampGetDatum(date2timestamp_opt_error(DatumGetDateADT(val2), have_error));
 					if (have_error && *have_error)
 						return 0;
 					cmpfunc = timestamp_cmp;
@@ -2699,7 +2699,7 @@ compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 								 errmsg("cannot convert value from %s to %s without timezone usage",
 										"timestamp", "timestamptz"),
 								 errhint("use *_tz() function for timezone support")));
-					val1 = timestamp2timestamptz_opt_error(val1, have_error);
+					val1 = TimestampTzGetDatum(timestamp2timestamptz_opt_error(DatumGetTimestamp(val1), have_error));
 					if (have_error && *have_error)
 						return 0;
 					cmpfunc = timestamp_cmp;
@@ -2723,7 +2723,7 @@ compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 								 errmsg("cannot convert value from %s to %s without timezone usage",
 										"date", "timestamptz"),
 								 errhint("use *_tz() function for timezone support")));
-					val2 = date2timestamptz_opt_error(val2, have_error);
+					val2 = TimestampTzGetDatum(date2timestamptz_opt_error(DatumGetDateADT(val2), have_error));
 					if (have_error && *have_error)
 						return 0;
 					cmpfunc = timestamp_cmp;
@@ -2737,7 +2737,7 @@ compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 								 errmsg("cannot convert value from %s to %s without timezone usage",
 										"timestamp", "timestamptz"),
 								 errhint("use *_tz() function for timezone support")));
-					val2 = timestamp2timestamptz_opt_error(val2, have_error);
+					val2 = TimestampTzGetDatum(timestamp2timestamptz_opt_error(DatumGetTimestamp(val2), have_error));
 					if (have_error && *have_error)
 						return 0;
 					cmpfunc = timestamp_cmp;
