@@ -42,6 +42,10 @@ ALTER INDEX dummy_test_idx SET (option_bool = true);
 ALTER INDEX dummy_test_idx SET (option_real = 3.2);
 ALTER INDEX dummy_test_idx SET (option_string_val = 'val2');
 ALTER INDEX dummy_test_idx SET (option_string_null = NULL);
+ALTER INDEX dummy_test_idx SET (option_enum = 'one');
+ALTER INDEX dummy_test_idx SET (option_enum = 'three');
+ERROR:  invalid value for enum option "option_enum": three
+DETAIL:  Valid values are "one" and "two".
 SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
          unnest          
 -------------------------
@@ -50,12 +54,14 @@ SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
  option_real=3.2
  option_string_val=val2
  option_string_null=null
-(5 rows)
+ option_enum=one
+(6 rows)
 
 -- ALTER INDEX .. RESET
 ALTER INDEX dummy_test_idx RESET (option_int);
 ALTER INDEX dummy_test_idx RESET (option_bool);
 ALTER INDEX dummy_test_idx RESET (option_real);
+ALTER INDEX dummy_test_idx RESET (option_enum);
 ALTER INDEX dummy_test_idx RESET (option_string_val);
 ALTER INDEX dummy_test_idx RESET (option_string_null);
 SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
@@ -105,6 +111,24 @@ SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
 (1 row)
 
 ALTER INDEX dummy_test_idx RESET (option_real);
+-- Enum
+ALTER INDEX dummy_test_idx SET (option_enum = 'one'); -- ok
+ALTER INDEX dummy_test_idx SET (option_enum = 0); -- error
+ERROR:  invalid value for enum option "option_enum": 0
+DETAIL:  Valid values are "one" and "two".
+ALTER INDEX dummy_test_idx SET (option_enum = true); -- error
+ERROR:  invalid value for enum option "option_enum": true
+DETAIL:  Valid values are "one" and "two".
+ALTER INDEX dummy_test_idx SET (option_enum = 'three'); -- error
+ERROR:  invalid value for enum option "option_enum": three
+DETAIL:  Valid values are "one" and "two".
+SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
+     unnest      
+-----------------
+ option_enum=one
+(1 row)
+
+ALTER INDEX dummy_test_idx RESET (option_enum);
 -- String
 ALTER INDEX dummy_test_idx SET (option_string_val = 4); -- ok
 ALTER INDEX dummy_test_idx SET (option_string_val = 3.5); -- ok
