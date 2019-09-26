@@ -641,8 +641,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   </para>
 
   <para>
-   The SQL/JSON path language is fully integrated into the SQL engine:
-   the semantics of its predicates and operators generally follow SQL.
+   The semantics of SQL/JSON path predicates and operators generally follow SQL.
    At the same time, to provide a most natural way of working with JSON data,
    SQL/JSON path syntax uses some of the JavaScript conventions:
   </para>
