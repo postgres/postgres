@@ -12983,9 +12983,9 @@ table2-mapping
    <literal>WHERE</literal> clause in SQL. A filter expression begins with
    a question mark and provides a condition in parentheses:
 
-    <programlisting>
+<programlisting>
 ? (<replaceable>condition</replaceable>)
-    </programlisting>
+</programlisting>
   </para>
 
   <para>
