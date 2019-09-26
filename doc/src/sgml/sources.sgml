@@ -26,9 +26,9 @@
    </para>
 
    <para>
-    Do not use C++ style comments (<literal>//</literal> comments).  Strict ANSI C
-    compilers do not accept them.  For the same reason, do not use C++
-    extensions such as declaring new variables mid-block.
+    To maintain a consistent coding style, do not use C++ style comments
+    (<literal>//</literal> comments).  <application>pgindent</application>
+    will replace them with <literal>/* ... */</literal>.
    </para>
 
    <para>
