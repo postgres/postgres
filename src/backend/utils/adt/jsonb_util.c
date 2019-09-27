@@ -247,8 +247,10 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 						break;
 					case jbvBinary:
 						elog(ERROR, "unexpected jbvBinary value");
+						break;
 					case jbvDatetime:
 						elog(ERROR, "unexpected jbvDatetime value");
+						break;
 				}
 			}
 			else
