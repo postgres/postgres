@@ -3156,7 +3156,9 @@ include_dir 'conf.d'
      use parameters in both <xref
      linkend="runtime-config-wal-archive-recovery"/> and <xref
      linkend="runtime-config-replication-standby"/>.  Parameters from
-     <xref linkend="runtime-config-wal-recovery-target"/> will not be used.
+     <xref linkend="runtime-config-wal-recovery-target"/> will not be used,
+     with the exception of <xref linkend="guc-recovery-target-timeline"/>
+     which allows a timeline to be selected for recovery.
     </para>
 
     <para>
