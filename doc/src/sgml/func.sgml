@@ -11933,7 +11933,7 @@ table2-mapping
        <entry><literal>[{"f1":1},2,null,3]</literal></entry>
        </row>
       <row>
-       <entry><para><literal>jsonb_set(target jsonb, path text[], new_value jsonb<optional>, <parameter>create_missing</parameter> <type>boolean</type></optional>)</literal>
+       <entry><para><literal>jsonb_set(target jsonb, path text[], new_value jsonb <optional>, create_missing boolean</optional>)</literal>
          </para></entry>
        <entry><para><type>jsonb</type></para></entry>
        <entry>
@@ -11941,10 +11941,10 @@ table2-mapping
          with the section designated by <replaceable>path</replaceable>
          replaced by <replaceable>new_value</replaceable>, or with
          <replaceable>new_value</replaceable> added if
-         <replaceable>create_missing</replaceable> is true ( default is
+         <replaceable>create_missing</replaceable> is true (default is
          <literal>true</literal>) and the item
          designated by <replaceable>path</replaceable> does not exist.
-         As with the path orientated operators, negative integers that
+         As with the path oriented operators, negative integers that
          appear in <replaceable>path</replaceable> count from the end
          of JSON arrays.
        </entry>
@@ -11958,7 +11958,7 @@ table2-mapping
       <row>
        <entry>
            <para><literal>
-           jsonb_insert(target jsonb, path text[], new_value jsonb, <optional><parameter>insert_after</parameter> <type>boolean</type></optional>)
+           jsonb_insert(target jsonb, path text[], new_value jsonb <optional>, insert_after boolean</optional>)
            </literal></para>
        </entry>
        <entry><para><type>jsonb</type></para></entry>
@@ -11973,7 +11973,7 @@ table2-mapping
          designated by <replaceable>path</replaceable> is in JSONB object,
          <replaceable>new_value</replaceable> will be inserted only if
          <replaceable>target</replaceable> does not exist. As with the path
-         orientated operators, negative integers that appear in
+         oriented operators, negative integers that appear in
          <replaceable>path</replaceable> count from the end of JSON arrays.
        </entry>
        <entry>
