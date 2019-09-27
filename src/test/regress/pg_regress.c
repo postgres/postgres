@@ -862,6 +862,14 @@ initialize_environment(void)
 			doputenv("PGUSER", user);
 
 		/*
+		 * However, we *don't* honor PGDATABASE, since we certainly don't wish
+		 * to connect to whatever database the user might like as default.
+		 * (Most tests override PGDATABASE anyway, but there are some ECPG
+		 * test cases that don't.)
+		 */
+		unsetenv("PGDATABASE");
+
+		/*
 		 * Report what we're connecting to
 		 */
 		pghost = getenv("PGHOST");
