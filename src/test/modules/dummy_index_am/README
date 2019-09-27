@@ -6,6 +6,7 @@ access method, whose code is kept a maximum simple.
 
 This includes tests for all relation option types:
 - boolean
+- enum
 - integer
 - real
 - strings (with and without NULL as default)

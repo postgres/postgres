@@ -20,6 +20,7 @@ CREATE INDEX dummy_test_idx ON dummy_test_tab
   option_bool = false,
   option_int = 5,
   option_real = 3.1,
+  option_enum = 'two',
   option_string_val = NULL,
   option_string_null = 'val');
 NOTICE:  new option value for string parameter null
@@ -32,9 +33,10 @@ SELECT unnest(reloptions) FROM pg_class WHERE relname = 'dummy_test_idx';
  option_bool=false
  option_int=5
  option_real=3.1
+ option_enum=two
  option_string_val=null
  option_string_null=val
-(5 rows)
+(6 rows)
 
 -- ALTER INDEX .. SET
 ALTER INDEX dummy_test_idx SET (option_int = 10);

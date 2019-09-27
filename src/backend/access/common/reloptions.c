@@ -700,13 +700,6 @@ allocate_reloption(bits32 kinds, int type, const char *name, const char *desc,
 	newoption->type = type;
 	newoption->lockmode = lockmode;
 
-	/*
-	 * Set the default lock mode for this option.  There is no actual way
-	 * for a module to enforce it when declaring a custom relation option,
-	 * so just use the highest level, which is safe for all cases.
-	 */
-	newoption->lockmode = AccessExclusiveLock;
-
 	MemoryContextSwitchTo(oldcxt);
 
 	return newoption;

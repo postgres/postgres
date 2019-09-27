@@ -20,6 +20,7 @@ CREATE INDEX dummy_test_idx ON dummy_test_tab
   option_bool = false,
   option_int = 5,
   option_real = 3.1,
+  option_enum = 'two',
   option_string_val = NULL,
   option_string_null = 'val');
 -- Silence again validation checks for strings until the end of the test.
