@@ -89,20 +89,6 @@ select round(avg(aa)), sum(aa) from a_star a3;
     14 | 355
 (1 row)
 
--- Temporary hack to investigate whether extra vacuum/analyze is happening
-select relname, relpages, reltuples
-from pg_class
-where relname like '__star' order by relname;
- relname | relpages | reltuples 
----------+----------+-----------
- a_star  |        1 |         3
- b_star  |        1 |         4
- c_star  |        1 |         4
- d_star  |        1 |        16
- e_star  |        1 |         7
- f_star  |        1 |        16
-(6 rows)
-
 -- Disable Parallel Append
 alter table a_star reset (parallel_workers);
 alter table b_star reset (parallel_workers);

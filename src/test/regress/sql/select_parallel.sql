@@ -36,11 +36,6 @@ explain (costs off)
   select round(avg(aa)), sum(aa) from a_star;
 select round(avg(aa)), sum(aa) from a_star a3;
 
--- Temporary hack to investigate whether extra vacuum/analyze is happening
-select relname, relpages, reltuples
-from pg_class
-where relname like '__star' order by relname;
-
 -- Disable Parallel Append
 alter table a_star reset (parallel_workers);
 alter table b_star reset (parallel_workers);
