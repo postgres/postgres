@@ -869,20 +869,8 @@ initialize_SSL(PGconn *conn)
 			if (fnbuf[0] != '\0' &&
 				X509_STORE_load_locations(cvstore, fnbuf, NULL) == 1)
 			{
-				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
-#ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
 									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-#else
-				char	   *err = SSLerrmessage(ERR_get_error());
-
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("SSL library does not support CRL certificates (file \"%s\")\n"),
-								  fnbuf);
-				SSLerrfree(err);
-				SSL_CTX_free(SSL_context);
-				return -1;
-#endif
 			}
 			/* if not found, silently ignore;  we do not require CRL */
 			ERR_clear_error();

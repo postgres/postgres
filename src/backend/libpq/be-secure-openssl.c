@@ -269,17 +269,8 @@ be_tls_init(bool isServerStart)
 			/* Set the flags to check against the complete CRL chain */
 			if (X509_STORE_load_locations(cvstore, ssl_crl_file, NULL) == 1)
 			{
-				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
-#ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
 									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-#else
-				ereport(LOG,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("SSL certificate revocation list file \"%s\" ignored",
-								ssl_crl_file),
-						 errdetail("SSL library does not support certificate revocation lists.")));
-#endif
 			}
 			else
 			{
