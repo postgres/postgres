@@ -198,7 +198,12 @@ be_tls_init(bool isServerStart)
 
 		if (ssl_ver == -1)
 			goto error;
-		SSL_CTX_set_min_proto_version(context, ssl_ver);
+		if (!SSL_CTX_set_min_proto_version(context, ssl_ver))
+		{
+			ereport(isServerStart ? FATAL : LOG,
+					(errmsg("could not set minimum SSL protocol version")));
+			goto error;
+		}
 	}
 
 	if (ssl_max_protocol_version)
@@ -209,7 +214,12 @@ be_tls_init(bool isServerStart)
 
 		if (ssl_ver == -1)
 			goto error;
-		SSL_CTX_set_max_proto_version(context, ssl_ver);
+		if (!SSL_CTX_set_max_proto_version(context, ssl_ver))
+		{
+			ereport(isServerStart ? FATAL : LOG,
+					(errmsg("could not set maximum SSL protocol version")));
+			goto error;
+		}
 	}
 
 	/* disallow SSL session tickets */
@@ -1335,13 +1345,30 @@ SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version)
 
 	if (version > TLS1_VERSION)
 		ssl_options |= SSL_OP_NO_TLSv1;
+	/*
+	 * Some OpenSSL versions define TLS*_VERSION macros but not the
+	 * corresponding SSL_OP_NO_* macro, so in those cases we have to return
+	 * unsuccessfully here.
+	 */
 #ifdef TLS1_1_VERSION
 	if (version > TLS1_1_VERSION)
+	{
+#ifdef SSL_OP_NO_TLSv1_1
 		ssl_options |= SSL_OP_NO_TLSv1_1;
+#else
+		return 0;
+#endif
+	}
 #endif
 #ifdef TLS1_2_VERSION
 	if (version > TLS1_2_VERSION)
+	{
+#ifdef SSL_OP_NO_TLSv1_2
 		ssl_options |= SSL_OP_NO_TLSv1_2;
+#else
+		return 0;
+#endif
+	}
 #endif
 
 	SSL_CTX_set_options(ctx, ssl_options);
@@ -1356,13 +1383,30 @@ SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version)
 
 	AssertArg(version != 0);
 
+	/*
+	 * Some OpenSSL versions define TLS*_VERSION macros but not the
+	 * corresponding SSL_OP_NO_* macro, so in those cases we have to return
+	 * unsuccessfully here.
+	 */
 #ifdef TLS1_1_VERSION
 	if (version < TLS1_1_VERSION)
+	{
+#ifdef SSL_OP_NO_TLSv1_1
 		ssl_options |= SSL_OP_NO_TLSv1_1;
+#else
+		return 0;
+#endif
+	}
 #endif
 #ifdef TLS1_2_VERSION
 	if (version < TLS1_2_VERSION)
+	{
+#ifdef SSL_OP_NO_TLSv1_2
 		ssl_options |= SSL_OP_NO_TLSv1_2;
+#else
+		return 0;
+#endif
+	}
 #endif
 
 	SSL_CTX_set_options(ctx, ssl_options);
