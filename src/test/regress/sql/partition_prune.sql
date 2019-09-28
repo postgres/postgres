@@ -451,9 +451,14 @@ drop table list_part;
 
 -- Parallel append
 
--- Suppress the number of loops each parallel node runs for.  This is because
--- more than one worker may run the same parallel node if timing conditions
--- are just right, which destabilizes the test.
+-- Parallel queries won't necessarily get as many workers as the planner
+-- asked for.  This affects not only the "Workers Launched:" field of EXPLAIN
+-- results, but also row counts and loop counts for parallel scans, Gathers,
+-- and everything in between.  This function filters out the values we can't
+-- rely on to be stable.
+-- This removes enough info that you might wonder why bother with EXPLAIN
+-- ANALYZE at all.  The answer is that we need to see '(never executed)'
+-- notations because that's the only way to verify runtime pruning.
 create function explain_parallel_append(text) returns setof text
 language plpgsql as
 $$
@@ -464,9 +469,8 @@ begin
         execute format('explain (analyze, costs off, summary off, timing off) %s',
             $1)
     loop
-        if ln like '%Parallel%' then
-            ln := regexp_replace(ln, 'loops=\d*',  'loops=N');
-        end if;
+        ln := regexp_replace(ln, 'Workers Launched: \d+', 'Workers Launched: N');
+        ln := regexp_replace(ln, 'actual rows=\d+ loops=\d+', 'actual rows=N loops=N');
         return next ln;
     end loop;
 end;
