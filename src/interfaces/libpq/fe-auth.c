@@ -502,18 +502,18 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 			selected_mechanism = SCRAM_SHA_256_NAME;
 	}
 
+	if (!selected_mechanism)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("none of the server's SASL authentication mechanisms are supported\n"));
+		goto error;
+	}
+
 	if (conn->channel_binding[0] == 'r' &&	/* require */
 		strcmp(selected_mechanism, SCRAM_SHA_256_PLUS_NAME) != 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("channel binding is required, but server did not offer an authentication method that supports channel binding\n"));
-		goto error;
-	}
-
-	if (!selected_mechanism)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("none of the server's SASL authentication mechanisms are supported\n"));
 		goto error;
 	}
 
