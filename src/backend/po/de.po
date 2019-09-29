@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-23 07:39+0000\n"
-"PO-Revision-Date: 2019-09-23 12:06+0200\n"
+"POT-Creation-Date: 2019-09-25 05:09+0000\n"
+"PO-Revision-Date: 2019-09-27 09:47+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -614,57 +614,57 @@ msgstr "nicht unterstützter Formatcode: %d"
 msgid "user-defined relation parameter types limit exceeded"
 msgstr "Wertebereich des Typs für benutzerdefinierte Relationsparameter überschritten"
 
-#: access/common/reloptions.c:860
+#: access/common/reloptions.c:867
 #, c-format
 msgid "RESET must not include values for parameters"
 msgstr "RESET darf keinen Parameterwert enthalten"
 
-#: access/common/reloptions.c:892
+#: access/common/reloptions.c:899
 #, c-format
 msgid "unrecognized parameter namespace \"%s\""
 msgstr "unbekannter Parameter-Namensraum »%s«"
 
-#: access/common/reloptions.c:929 utils/misc/guc.c:11710
+#: access/common/reloptions.c:936 utils/misc/guc.c:11710
 #, c-format
 msgid "tables declared WITH OIDS are not supported"
 msgstr "Tabellen mit WITH OIDS werden nicht unterstützt"
 
-#: access/common/reloptions.c:1147
+#: access/common/reloptions.c:1154
 #, c-format
 msgid "unrecognized parameter \"%s\""
 msgstr "unbekannter Parameter »%s«"
 
-#: access/common/reloptions.c:1177
+#: access/common/reloptions.c:1184
 #, c-format
 msgid "parameter \"%s\" specified more than once"
 msgstr "Parameter »%s« mehrmals angegeben"
 
-#: access/common/reloptions.c:1193
+#: access/common/reloptions.c:1200
 #, c-format
 msgid "invalid value for boolean option \"%s\": %s"
 msgstr "ungültiger Wert für Boole’sche Option »%s«: »%s«"
 
-#: access/common/reloptions.c:1205
+#: access/common/reloptions.c:1212
 #, c-format
 msgid "invalid value for integer option \"%s\": %s"
 msgstr "ungültiger Wert für ganzzahlige Option »%s«: »%s«"
 
-#: access/common/reloptions.c:1211 access/common/reloptions.c:1231
+#: access/common/reloptions.c:1218 access/common/reloptions.c:1238
 #, c-format
 msgid "value %s out of bounds for option \"%s\""
 msgstr "Wert %s ist außerhalb des gültigen Bereichs für Option »%s«"
 
-#: access/common/reloptions.c:1213
+#: access/common/reloptions.c:1220
 #, c-format
 msgid "Valid values are between \"%d\" and \"%d\"."
 msgstr "Gültige Werte sind zwischen »%d« und »%d«."
 
-#: access/common/reloptions.c:1225
+#: access/common/reloptions.c:1232
 #, c-format
 msgid "invalid value for floating point option \"%s\": %s"
 msgstr "ungültiger Wert für Gleitkommaoption »%s«: »%s«"
 
-#: access/common/reloptions.c:1233
+#: access/common/reloptions.c:1240
 #, c-format
 msgid "Valid values are between \"%f\" and \"%f\"."
 msgstr "Gültige Werte sind zwischen »%f« und »%f«."
@@ -816,10 +816,9 @@ msgstr "Operatorfamilie »%s« für Zugriffsmethode %s enthält ungültige ORDER
 
 #: access/hash/hashfunc.c:255 access/hash/hashfunc.c:311
 #: utils/adt/varchar.c:992 utils/adt/varchar.c:1052
-#, fuzzy, c-format
-#| msgid "could not determine which collation to use for string comparison"
+#, c-format
 msgid "could not determine which collation to use for string hashing"
-msgstr "konnte die für den Zeichenkettenvergleich zu verwendende Sortierfolge nicht bestimmen"
+msgstr "konnte die für das Zeichenketten-Hashing zu verwendende Sortierfolge nicht bestimmen"
 
 #: access/hash/hashfunc.c:256 access/hash/hashfunc.c:312 catalog/heap.c:678
 #: commands/createas.c:207 commands/createas.c:491 commands/indexcmds.c:1694
@@ -1044,10 +1043,9 @@ msgid "%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"
 msgstr "%.0f tote Zeilenversionen können noch nicht entfernt werden, ältestes xmin: %u\n"
 
 #: access/heap/vacuumlazy.c:1488
-#, fuzzy, c-format
-#| msgid "There were %.0f unused item pointers.\n"
+#, c-format
 msgid "There were %.0f unused item identifiers.\n"
-msgstr "Es gab %.0f unbenutzte Itemzeiger.\n"
+msgstr "Es gab %.0f unbenutzte Item-Identifiers.\n"
 
 #: access/heap/vacuumlazy.c:1490
 #, c-format
@@ -1617,22 +1615,19 @@ msgstr[0] "falsche Größe von Datei »%s«: %zu Byte"
 msgstr[1] "falsche Größe von Datei »%s«: %zu Bytes"
 
 #: access/transam/twophase.c:1278
-#, fuzzy, c-format
-#| msgid "incorrectly formed variable \"%s\""
+#, c-format
 msgid "incorrect alignment of CRC offset for file \"%s\""
-msgstr "falsch geformte Variable »%s«"
+msgstr "falsche Ausrichtung des CRC-Offsets für Datei »%s«"
 
 #: access/transam/twophase.c:1311
-#, fuzzy, c-format
-#| msgid "invalid column number %d for table \"%s\"\n"
+#, c-format
 msgid "invalid magic number stored in file \"%s\""
-msgstr "ungültige Spaltennummer %d in Tabelle »%s«\n"
+msgstr "ungültige magische Zahl in Datei »%s gespeichert«"
 
 #: access/transam/twophase.c:1317
-#, fuzzy, c-format
-#| msgid "invalid data in file \"%s\""
+#, c-format
 msgid "invalid size stored in file \"%s\""
-msgstr "ungültige Daten in Datei »%s«"
+msgstr "ungültige Größe in Datei »%s« gespeichert"
 
 #: access/transam/twophase.c:1329
 #, c-format
@@ -1655,10 +1650,9 @@ msgid "expected two-phase state data is not present in WAL at %X/%X"
 msgstr "erwartete Zweiphasen-Status-Daten sind nicht im WAL bei %X/%X vorhanden"
 
 #: access/transam/twophase.c:1689
-#, fuzzy, c-format
-#| msgid "could not create file \"%s\": %m"
+#, c-format
 msgid "could not recreate file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht erstellen: %m"
+msgstr "konnte Datei »%s« nicht neu erzeugen: %m"
 
 #: access/transam/twophase.c:1816
 #, c-format
@@ -1698,10 +1692,9 @@ msgid "corrupted two-phase state file for transaction %u"
 msgstr "verfälschte Zweiphasen-Statusdatei für Transaktion %u"
 
 #: access/transam/twophase.c:2198
-#, fuzzy, c-format
-#| msgid "removing corrupt two-phase state from memory for transaction %u"
+#, c-format
 msgid "corrupted two-phase state in memory for transaction %u"
-msgstr "entferne verfälschten Zweiphasen-Status aus dem Speicher für Transaktion %u"
+msgstr "verfälschter Zweiphasen-Status im Speicher für Transaktion %u"
 
 #: access/transam/varsup.c:127
 #, c-format
@@ -2075,10 +2068,9 @@ msgid "could not close bootstrap write-ahead log file: %m"
 msgstr "konnte Bootstrap-Write-Ahead-Log-Datei nicht schließen: %m"
 
 #: access/transam/xlog.c:5310
-#, fuzzy, c-format
-#| msgid "log format \"%s\" is not supported"
+#, c-format
 msgid "using recovery command file \"%s\" is not supported"
-msgstr "Logformat »%s« wird nicht unterstützt"
+msgstr "Verwendung von Recovery-Befehlsdatei »%s« wird nicht unterstützt"
 
 #: access/transam/xlog.c:5375
 #, c-format
@@ -2086,10 +2078,9 @@ msgid "standby mode is not supported by single-user servers"
 msgstr "Standby-Modus wird von Servern im Einzelbenutzermodus nicht unterstützt"
 
 #: access/transam/xlog.c:5392
-#, fuzzy, c-format
-#| msgid "recovery command file \"%s\" specified neither primary_conninfo nor restore_command"
+#, c-format
 msgid "specified neither primary_conninfo nor restore_command"
-msgstr "Recovery-Kommandodatei »%s« hat weder primary_conninfo noch restore_command angegeben"
+msgstr "weder primary_conninfo noch restore_command angegeben"
 
 #: access/transam/xlog.c:5393
 #, c-format
@@ -2097,10 +2088,9 @@ msgid "The database server will regularly poll the pg_wal subdirectory to check 
 msgstr "Der Datenbankserver prüft das Unterverzeichnis pg_wal regelmäßig auf dort abgelegte Dateien."
 
 #: access/transam/xlog.c:5401
-#, fuzzy, c-format
-#| msgid "recovery command file \"%s\" must specify restore_command when standby mode is not enabled"
+#, c-format
 msgid "must specify restore_command when standby mode is not enabled"
-msgstr "Recovery-Kommandodatei »%s« muss restore_command angeben, wenn der Standby-Modus nicht eingeschaltet ist"
+msgstr "restore_command muss angegeben werden, wenn der Standby-Modus nicht eingeschaltet ist"
 
 #: access/transam/xlog.c:5439
 #, c-format
@@ -2547,10 +2537,9 @@ msgid "could not fsync write-through file \"%s\": %m"
 msgstr "konnte Write-Through-Logdatei »%s« nicht fsyncen: %m"
 
 #: access/transam/xlog.c:10108
-#, fuzzy, c-format
-#| msgid "could not fsync file \"%s\": %m"
+#, c-format
 msgid "could not fdatasync file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht fsyncen: %m"
+msgstr "konnte Datei »%s« nicht fdatasyncen: %m"
 
 #: access/transam/xlog.c:10201 access/transam/xlog.c:10730
 #: access/transam/xlogfuncs.c:290 access/transam/xlogfuncs.c:317
@@ -2648,22 +2637,19 @@ msgid "WAL generated with full_page_writes=off was replayed during online backup
 msgstr "mit full_page_writes=off erzeugtes WAL wurde während der Online-Sicherung zurückgespielt"
 
 #: access/transam/xlog.c:11053
-#, fuzzy, c-format
-#| msgid "pg_stop_backup cleanup done, waiting for required WAL segments to be archived"
+#, c-format
 msgid "base backup done, waiting for required WAL segments to be archived"
-msgstr "Aufräumen nach pg_stop_backup beendet, warte bis die benötigten WAL-Segmente archiviert sind"
+msgstr "Basissicherung beendet, warte bis die benötigten WAL-Segmente archiviert sind"
 
 #: access/transam/xlog.c:11063
-#, fuzzy, c-format
-#| msgid "pg_stop_backup still waiting for all required WAL segments to be archived (%d seconds elapsed)"
+#, c-format
 msgid "still waiting for all required WAL segments to be archived (%d seconds elapsed)"
-msgstr "pg_stop_backup wartet immer noch, bis alle benötigten WAL-Segmente archiviert sind (%d Sekunden abgelaufen)"
+msgstr "warte immer noch, bis alle benötigten WAL-Segmente archiviert sind (%d Sekunden abgelaufen)"
 
 #: access/transam/xlog.c:11065
-#, fuzzy, c-format
-#| msgid "Check that your archive_command is executing properly.  pg_stop_backup can be canceled safely, but the database backup will not be usable without all the WAL segments."
+#, c-format
 msgid "Check that your archive_command is executing properly.  You can safely cancel this backup, but the database backup will not be usable without all the WAL segments."
-msgstr "Prüfen Sie, ob das archive_command korrekt ausgeführt wird. pg_stop_backup kann gefahrlos abgebrochen werden, aber die Datenbanksicherung wird ohne die fehlenden WAL-Segmente nicht benutzbar sein."
+msgstr "Prüfen Sie, ob das archive_command korrekt ausgeführt wird. Dieser Sicherungsvorgang kann gefahrlos abgebrochen werden, aber die Datenbanksicherung wird ohne die fehlenden WAL-Segmente nicht benutzbar sein."
 
 #: access/transam/xlog.c:11072
 #, c-format
@@ -2689,7 +2675,7 @@ msgstr "konnte Block %u in Datei »%s« nicht lesen: %m"
 
 #: access/transam/xlog.c:11297
 #, c-format
-msgid "Timeline ID parsed is %u, but expected %u"
+msgid "Timeline ID parsed is %u, but expected %u."
 msgstr ""
 
 #: access/transam/xlog.c:11301
@@ -2746,16 +2732,14 @@ msgid "received promote request"
 msgstr "Anforderung zum Befördern empfangen"
 
 #: access/transam/xlog.c:12176
-#, fuzzy, c-format
-#| msgid "trigger file found: %s"
+#, c-format
 msgid "promote trigger file found: %s"
-msgstr "Triggerdatei gefunden: %s"
+msgstr "Promote-Triggerdatei gefunden: %s"
 
 #: access/transam/xlog.c:12185
-#, fuzzy, c-format
-#| msgid "could not stat trigger file \"%s\": %m"
+#, c-format
 msgid "could not stat promote trigger file \"%s\": %m"
-msgstr "konnte »stat« für Trigger-Datei »%s« nicht ausführen: %m"
+msgstr "konnte »stat« für Promote-Triggerdatei »%s« nicht ausführen: %m"
 
 #: access/transam/xlogarchive.c:243
 #, c-format
@@ -2877,8 +2861,8 @@ msgstr "Wiederherstellungskontrollfunktionen können nur während der Wiederhers
 
 #: access/transam/xlogfuncs.c:729
 #, c-format
-msgid "\"wait_seconds\" cannot be negative or equal zero"
-msgstr ""
+msgid "\"wait_seconds\" must not be negative or zero"
+msgstr "»wait_seconds« darf nicht negativ oder null sein"
 
 #: access/transam/xlogfuncs.c:749 storage/ipc/signalfuncs.c:164
 #, c-format
@@ -2886,10 +2870,9 @@ msgid "failed to send signal to postmaster: %m"
 msgstr "konnte Signal nicht an Postmaster senden: %m"
 
 #: access/transam/xlogfuncs.c:785
-#, fuzzy, c-format
-#| msgid "%s: server did not promote in time\n"
+#, c-format
 msgid "server did not promote within %d seconds"
-msgstr "%s: Befördern des Servers hat nicht rechtzeitig abgeschlossen\n"
+msgstr "Befördern des Servers wurde nicht innerhalb von %d Sekunden abgeschlossen"
 
 #: access/transam/xlogreader.c:299
 #, c-format
@@ -3767,10 +3750,9 @@ msgid "must be superuser to call pg_nextoid()"
 msgstr "nur Superuser können pg_nextoid() aufrufen"
 
 #: catalog/catalog.c:506
-#, fuzzy, c-format
-#| msgid "ON COMMIT can only be used on temporary tables"
+#, c-format
 msgid "pg_nextoid() can only be used on system catalogs"
-msgstr "ON COMMIT kann nur mit temporären Tabellen verwendet werden"
+msgstr "pg_nextoid() kann nur mit Systemkatalogen verwendet werden"
 
 #: catalog/catalog.c:511 parser/parse_utilcmd.c:2064
 #, c-format
@@ -4041,10 +4023,9 @@ msgid "primary keys cannot be expressions"
 msgstr "Primärschlüssel können keine Ausdrücke sein"
 
 #: catalog/index.c:254
-#, fuzzy, c-format
-#| msgid "column \"%s\" is marked NOT NULL in parent table"
+#, c-format
 msgid "primary key column \"%s\" is not marked NOT NULL"
-msgstr "Spalte »%s« ist in Elterntabelle als NOT NULL markiert"
+msgstr "Primärschlüsselspalte »%s« ist nicht als NOT NULL markiert"
 
 #: catalog/index.c:763 catalog/index.c:1816
 #, c-format
@@ -4062,10 +4043,9 @@ msgid "concurrent index creation on system catalog tables is not supported"
 msgstr "nebenläufige Indexerzeugung für Systemkatalogtabellen wird nicht unterstützt"
 
 #: catalog/index.c:827 catalog/index.c:1272
-#, fuzzy, c-format
-#| msgid "concurrent index creation on system catalog tables is not supported"
+#, c-format
 msgid "concurrent index creation for exclusion constraints is not supported"
-msgstr "nebenläufige Indexerzeugung für Systemkatalogtabellen wird nicht unterstützt"
+msgstr "nebenläufige Indexerzeugung für Exclusion-Constraints wird nicht unterstützt"
 
 #: catalog/index.c:836
 #, c-format
@@ -4856,10 +4836,9 @@ msgid "\"%s\" is a hypothetical-set aggregate."
 msgstr ""
 
 #: catalog/pg_aggregate.c:714
-#, fuzzy, c-format
-#| msgid "change the definition of an aggregate function"
-msgid "cannot change number of direct args of an aggregate function"
-msgstr "ändert die Definition einer Aggregatfunktion"
+#, c-format
+msgid "cannot change number of direct arguments of an aggregate function"
+msgstr "die Anzahl direkter Argumente einer Aggregatfunktion kann nicht geändert werden"
 
 #: catalog/pg_aggregate.c:869 commands/functioncmds.c:665
 #: commands/typecmds.c:1751 commands/typecmds.c:1802 commands/typecmds.c:1833
@@ -7762,10 +7741,9 @@ msgid "table \"%s\" has no indexes that can be reindexed concurrently"
 msgstr ""
 
 #: commands/indexcmds.c:2461
-#, fuzzy, c-format
-#| msgid "table \"%s\" has no indexes"
+#, c-format
 msgid "table \"%s\" has no indexes to reindex"
-msgstr "Tabelle »%s« hat keine Indexe"
+msgstr "Tabelle »%s« hat keine zu reindizierenden Indexe"
 
 #: commands/indexcmds.c:2500 commands/indexcmds.c:2768
 #: commands/indexcmds.c:2861
@@ -10077,6 +10055,7 @@ msgstr "Verzeichnis »%s« ist bereits als Tablespace in Verwendung"
 
 #: commands/tablespace.c:758 commands/tablespace.c:771
 #: commands/tablespace.c:807 commands/tablespace.c:899 storage/file/fd.c:2992
+#: storage/file/fd.c:3331
 #, c-format
 msgid "could not remove directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht löschen: %m"
@@ -11561,10 +11540,9 @@ msgid "concurrent update, retrying"
 msgstr "gleichzeitige Aktualisierung, versuche erneut"
 
 #: executor/execReplication.c:205 executor/execReplication.c:369
-#, fuzzy, c-format
-#| msgid "concurrent update, retrying"
+#, c-format
 msgid "concurrent delete, retrying"
-msgstr "gleichzeitige Aktualisierung, versuche erneut"
+msgstr "gleichzeitiges Löschen, versuche erneut"
 
 #: executor/execReplication.c:263 parser/parse_oper.c:228
 #: utils/adt/array_userfuncs.c:719 utils/adt/array_userfuncs.c:858
@@ -13137,7 +13115,7 @@ msgstr "Zertifikatauthentifizierung für Benutzer »%s« fehlgeschlagen: Client-
 #: libpq/auth.c:2867
 #, fuzzy, c-format
 #| msgid "certificate authentication failed for user \"%s\""
-msgid "certificate validation (clientcert=verify-full) failed for user \"%s\": cn mismatch"
+msgid "certificate validation (clientcert=verify-full) failed for user \"%s\": CN mismatch"
 msgstr "Zertifikatauthentifizierung für Benutzer »%s« fehlgeschlagen"
 
 #: libpq/auth.c:2968
@@ -17973,7 +17951,7 @@ msgstr "ungültige Segmentnummer %d in Datei »%s«"
 
 #: replication/basebackup.c:1457
 #, c-format
-msgid "cannot verify checksum in file \"%s\", block %d: read buffer size %d and page size %d differ"
+msgid "could not verify checksum in file \"%s\", block %d: read buffer size %d and page size %d differ"
 msgstr ""
 
 #: replication/basebackup.c:1501 replication/basebackup.c:1531
@@ -17999,16 +17977,19 @@ msgid "further checksum verification failures in file \"%s\" will not be reporte
 msgstr ""
 
 #: replication/basebackup.c:1614
-#, c-format
-msgid "file \"%s\" has a total of %d checksum verification failures"
-msgstr ""
+#, fuzzy, c-format
+#| msgid "  data checksum version\n"
+msgid "file \"%s\" has a total of %d checksum verification failure"
+msgid_plural "file \"%s\" has a total of %d checksum verification failures"
+msgstr[0] "  Datenprüfsummenversion\n"
+msgstr[1] "  Datenprüfsummenversion\n"
 
-#: replication/basebackup.c:1645
+#: replication/basebackup.c:1647
 #, c-format
 msgid "file name too long for tar format: \"%s\""
 msgstr "Dateiname zu lang für Tar-Format: »%s«"
 
-#: replication/basebackup.c:1650
+#: replication/basebackup.c:1652
 #, c-format
 msgid "symbolic link target too long for tar format: file name \"%s\", target \"%s\""
 msgstr "Ziel der symbolischen Verknüpfung zu lang für Tar-Format: Dateiname »%s«, Ziel »%s«"
@@ -18715,7 +18696,7 @@ msgstr "zu viele aktive Replikations-Slots vor dem Herunterfahren"
 #: replication/slotfuncs.c:526
 #, fuzzy, c-format
 #| msgid "invalid array flags"
-msgid "invalid target wal lsn"
+msgid "invalid target WAL LSN"
 msgstr "ungültige Array-Flags"
 
 #: replication/slotfuncs.c:548
@@ -19685,7 +19666,7 @@ msgstr "konnte temporäre Datei »%s« nicht öffnen: %m"
 #: storage/file/fd.c:1691
 #, fuzzy, c-format
 #| msgid "could not open temporary file \"%s\": %s\n"
-msgid "cannot unlink temporary file \"%s\": %m"
+msgid "could not unlink temporary file \"%s\": %m"
 msgstr "konnte temporäre Datei »%s« nicht öffnen: %s\n"
 
 #: storage/file/fd.c:1955
@@ -19713,12 +19694,6 @@ msgstr "maxAllocatedDescs (%d) überschritten beim Versuch, das Verzeichnis »%s
 #| msgid "could not locate temporary directory: %s\n"
 msgid "unexpected file found in temporary-files directory: \"%s\""
 msgstr "konnte temporäres Verzeichnis nicht finden: %s\n"
-
-#: storage/file/fd.c:3331
-#, fuzzy, c-format
-#| msgid "could not read directory \"%s\": %m"
-msgid "could not rmdir directory \"%s\": %m"
-msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
 
 #: storage/file/sharedfileset.c:95
 #, fuzzy, c-format
@@ -23187,10 +23162,9 @@ msgstr "Das liegt höchstwahrscheinlich daran, dass eine Regel die Anfrage umges
 msgid "removing partition \"%s\" violates foreign key constraint \"%s\""
 msgstr "Einfügen oder Aktualisieren in Tabelle »%s« verletzt Fremdschlüssel-Constraint »%s«"
 
-#: utils/adt/ri_triggers.c:2459
-#, fuzzy, c-format
-#| msgid "Key (%s)=(%s) is still referenced from table \"%s\"."
-msgid "Key (%s)=(%s) still referenced from table \"%s\"."
+#: utils/adt/ri_triggers.c:2459 utils/adt/ri_triggers.c:2483
+#, c-format
+msgid "Key (%s)=(%s) is still referenced from table \"%s\"."
 msgstr "Auf Schlüssel (%s)=(%s) wird noch aus Tabelle »%s« verwiesen."
 
 #: utils/adt/ri_triggers.c:2469
@@ -23207,11 +23181,6 @@ msgstr "Der Schlüssel ist nicht in Tabelle »%s« vorhanden."
 #, c-format
 msgid "update or delete on table \"%s\" violates foreign key constraint \"%s\" on table \"%s\""
 msgstr "Aktualisieren oder Löschen in Tabelle »%s« verletzt Fremdschlüssel-Constraint »%s« von Tabelle »%s«"
-
-#: utils/adt/ri_triggers.c:2483
-#, c-format
-msgid "Key (%s)=(%s) is still referenced from table \"%s\"."
-msgstr "Auf Schlüssel (%s)=(%s) wird noch aus Tabelle »%s« verwiesen."
 
 #: utils/adt/ri_triggers.c:2486
 #, c-format
@@ -24909,7 +24878,7 @@ msgid "Enables the planner's use of parallel hash plans."
 msgstr "Ermöglicht parallele Hash-Pläne im Planer."
 
 #: utils/misc/guc.c:1045
-msgid "Enable plan-time and run-time partition pruning."
+msgid "Enables plan-time and run-time partition pruning."
 msgstr ""
 
 #: utils/misc/guc.c:1046
@@ -26003,11 +25972,11 @@ msgid "Sets the shell command that will be executed once at the end of recovery.
 msgstr "Setzt den Shell-Befehl, der aufgerufen wird, um eine WAL-Datei zu archivieren."
 
 #: utils/misc/guc.c:3496
-msgid "Specifies the timeline to recovery into."
+msgid "Specifies the timeline to recover into."
 msgstr ""
 
 #: utils/misc/guc.c:3506
-msgid "Set to 'immediate' to end recovery as soon as a consistent state is reached."
+msgid "Set to \"immediate\" to end recovery as soon as a consistent state is reached."
 msgstr ""
 
 #: utils/misc/guc.c:3515

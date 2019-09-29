@@ -1,6 +1,6 @@
 # src/bin/scripts/nls.mk
 CATALOG_NAME     = pgscripts
-AVAIL_LANGUAGES  = cs de es fr he it ja ko pl pt_BR ru sv tr zh_CN
+AVAIL_LANGUAGES  = cs de es ja ru sv tr zh_CN
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    createdb.c createuser.c \
                    dropdb.c dropuser.c \

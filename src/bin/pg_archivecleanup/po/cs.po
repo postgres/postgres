@@ -1,0 +1,189 @@
+# LANGUAGE message translation file for pg_archivecleanup
+# Copyright (C) 2018 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 11\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-09-27 08:15+0000\n"
+"PO-Revision-Date: 2019-09-28 11:28+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.3\n"
+
+#: ../../../src/common/logging.c:188
+#, c-format
+#| msgid "fatal\n"
+msgid "fatal: "
+msgstr "fatal: "
+
+#: ../../../src/common/logging.c:195
+#, c-format
+#| msgid "SQL error: %s\n"
+msgid "error: "
+msgstr "error: "
+
+#: ../../../src/common/logging.c:202
+#, c-format
+#| msgid "warning"
+msgid "warning: "
+msgstr "warning: "
+
+#: pg_archivecleanup.c:68
+#, c-format
+msgid "archive location \"%s\" does not exist"
+msgstr "archivní lokace \"%s\" neexistuje"
+
+#: pg_archivecleanup.c:154
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "nelze odstranit soubor \"%s\": %m"
+
+#: pg_archivecleanup.c:162
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "nelze načíst archivní lokaci \"%s\": %m"
+
+#: pg_archivecleanup.c:165
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "nelze uzavřít archivní lokaci \"%s\": %m"
+
+#: pg_archivecleanup.c:169
+#, c-format
+msgid "could not open archive location \"%s\": %m"
+msgstr "nelze otevřít archivní lokaci \"%s\": %m"
+
+#: pg_archivecleanup.c:242
+#, c-format
+msgid "invalid file name argument"
+msgstr "chybný argument jména souboru"
+
+#: pg_archivecleanup.c:243 pg_archivecleanup.c:316 pg_archivecleanup.c:337
+#: pg_archivecleanup.c:349 pg_archivecleanup.c:356
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Zkuste \"%s --help\" pro více informací.\n"
+
+#: pg_archivecleanup.c:256
+#, c-format
+msgid ""
+"%s removes older WAL files from PostgreSQL archives.\n"
+"\n"
+msgstr ""
+"%s odstraní starší WAL soubory z PostgreSQL archivů.\n"
+"\n"
+
+#: pg_archivecleanup.c:257
+#, c-format
+msgid "Usage:\n"
+msgstr "Použití:\n"
+
+#: pg_archivecleanup.c:258
+#, c-format
+msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+
+#: pg_archivecleanup.c:259
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Přepínače:\n"
+
+#: pg_archivecleanup.c:260
+#, c-format
+msgid "  -d             generate debug output (verbose mode)\n"
+msgstr "  -d             vygeneruje debug výstup (více informací)\n"
+
+#: pg_archivecleanup.c:261
+#, c-format
+msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgstr "  -n             zkušební běh, ukazuje jména souborů které by byly odstraněny\n"
+
+#: pg_archivecleanup.c:262
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  vypíše informaci o verzi, pak skončí\n"
+
+#: pg_archivecleanup.c:263
+#, c-format
+msgid "  -x EXT         clean up files if they have this extension\n"
+msgstr "  -x EXT         vyčistí soubory pokud mají tuto příponu\n"
+
+#: pg_archivecleanup.c:264
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     ukáže tuto nápovědu, a skončí\n"
+
+#: pg_archivecleanup.c:265
+#, c-format
+msgid ""
+"\n"
+"For use as archive_cleanup_command in postgresql.conf:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"e.g.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+msgstr ""
+"\n"
+"Pro použití jako archive_cleanup_command v recovery.conf pokud standby_mode = on:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"e.g.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+
+#: pg_archivecleanup.c:270
+#, c-format
+msgid ""
+"\n"
+"Or for use as a standalone archive cleaner:\n"
+"e.g.\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+msgstr ""
+"\n"
+"Nebo jako samostatný čistič archivu:\n"
+"e.g.\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+
+#: pg_archivecleanup.c:274
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr ""
+"\n"
+"Chyby hlaste na adresu <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_archivecleanup.c:336
+#, c-format
+msgid "must specify archive location"
+msgstr "nutno zadat archivní lokaci"
+
+#: pg_archivecleanup.c:348
+#, c-format
+msgid "must specify oldest kept WAL file"
+msgstr "nutno zadat nejstarčí uchovávaný WAL soubor"
+
+#: pg_archivecleanup.c:355
+#, c-format
+msgid "too many command-line arguments"
+msgstr "příliš mnoho argumentů na příkazové řádce"
+
+#~ msgid "%s: keeping WAL file \"%s\" and later\n"
+#~ msgstr "%s: uchovávám WAL soubor \"%s\" a novější\n"
+
+#~ msgid "%s: ERROR: could not remove file \"%s\": %s\n"
+#~ msgstr "%s: ERROR: nelze odstranit soubor \"%s\": %s\n"
+
+#~ msgid "%s: removing file \"%s\"\n"
+#~ msgstr "%s: odstraňuji soubor \"%s\"\n"
+
+#~ msgid "%s: file \"%s\" would be removed\n"
+#~ msgstr "%s: soubor \"%s\" by byl odstraněn\n"

@@ -6,9 +6,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql-cs (PostgreSQL 9.3)\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-07-13 19:38+0000\n"
-"PO-Revision-Date: 2018-07-13 23:52+0200\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-09-27 08:08+0000\n"
+"PO-Revision-Date: 2019-09-27 21:01+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,78 +16,72 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 2.2.3\n"
 
-#: pl_comp.c:434 pl_handler.c:457
+#: pl_comp.c:438 pl_handler.c:461
 #, c-format
 msgid "PL/pgSQL functions cannot accept type %s"
 msgstr "funkce v PL/pgSQL nepodporují typ %s"
 
-#: pl_comp.c:522
+#: pl_comp.c:526
 #, c-format
 msgid "could not determine actual return type for polymorphic function \"%s\""
 msgstr "nelze určit skutečný návratový typ polymorfní funkce \"%s\""
 
-#: pl_comp.c:552
+#: pl_comp.c:556
 #, c-format
 msgid "trigger functions can only be called as triggers"
-msgstr ""
-"funkce pro obsluhu triggerů mohou být volané pouze prostřednictvím triggerů"
+msgstr "funkce pro obsluhu triggerů mohou být volané pouze prostřednictvím triggerů"
 
-#: pl_comp.c:556 pl_handler.c:441
+#: pl_comp.c:560 pl_handler.c:445
 #, c-format
 msgid "PL/pgSQL functions cannot return type %s"
 msgstr "funkce v PL/pgSQL nemohou vracet typ %s"
 
-#: pl_comp.c:595
+#: pl_comp.c:600
 #, c-format
 msgid "trigger functions cannot have declared arguments"
 msgstr "funkce pro obsluhu triggeru nesmí mít argumenty"
 
-#: pl_comp.c:596
+#: pl_comp.c:601
 #, c-format
-msgid ""
-"The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV "
-"instead."
-msgstr ""
-"Parametry triggeru jsou přístupné prostřednictvím proměnných TG_NARGS a "
-"TG_ARGV."
+msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
+msgstr "Parametry triggeru jsou přístupné prostřednictvím proměnných TG_NARGS a TG_ARGV."
 
-#: pl_comp.c:719
+#: pl_comp.c:734
 #, c-format
 msgid "event trigger functions cannot have declared arguments"
 msgstr "funkce pro obsluhu event triggeru nesmí mít argumenty"
 
-#: pl_comp.c:976
+#: pl_comp.c:997
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
 msgstr "překlad PL/pgSQL funkce \"%s\" poblíž řádku %d"
 
-#: pl_comp.c:999
+#: pl_comp.c:1020
 #, c-format
 msgid "parameter name \"%s\" used more than once"
 msgstr "identifikátor parametru \"%s\" není unikátní"
 
-#: pl_comp.c:1109
+#: pl_comp.c:1132
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "nejednoznačný odkaz na sloupec \"%s\""
 
 # přeložil bych spíš asi jako "Identifikátor může odkazovat na proměnnou PL/pgSQL nebo na sloupec v tabulce."
 # ok
-#: pl_comp.c:1111
+#: pl_comp.c:1134
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
-msgstr ""
-"Identifikátor může odkazovat na proměnnou PL/pgSQL nebo na sloupec v tabulce."
+msgstr "Identifikátor může odkazovat na proměnnou PL/pgSQL nebo na sloupec v tabulce."
 
-#: pl_comp.c:1294 pl_exec.c:5048 pl_exec.c:5413 pl_exec.c:5500 pl_exec.c:5591
-#: pl_exec.c:6509
+#: pl_comp.c:1317 pl_exec.c:5134 pl_exec.c:5499 pl_exec.c:5586 pl_exec.c:5677
+#: pl_exec.c:6594
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "záznam \"%s\" nemá položku \"%s\""
 
-#: pl_comp.c:1756
+#: pl_comp.c:1793
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "relace \"%s\" neexistuje"
@@ -95,86 +89,85 @@ msgstr "relace \"%s\" neexistuje"
 # asi spíš jako "proměnná \"%s\" má pseudo-typ \"%s\" (slovo "obsahuje" si vykládám spíš jako že je součástí)
 # podivej se do zdrojaku, hlasi, kdyz zkusis deklarovat promennou s pseudotype - takze jsem to prelozil
 # jeste trochu jinak
-#: pl_comp.c:1848
+#: pl_comp.c:1891
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "proměnná \"%s\" je deklarována jako pseudo-typ \"%s\""
 
 # spíš asi "je jenom obálka (shell)",
 # ok
-#: pl_comp.c:2026
+#: pl_comp.c:2080
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "typ \"%s\" je jen obálkou (shell)"
 
-#: pl_comp.c:2123 pl_comp.c:2176
+#: pl_comp.c:2162 pl_exec.c:6886
+#, c-format
+msgid "type %s is not composite"
+msgstr "typ %s není kompozitní"
+
+#: pl_comp.c:2210 pl_comp.c:2263
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "nedefinovaná výjimka \"%s\""
 
-#: pl_comp.c:2390
+#: pl_comp.c:2477
 #, c-format
-msgid ""
-"could not determine actual argument type for polymorphic function \"%s\""
+msgid "could not determine actual argument type for polymorphic function \"%s\""
 msgstr "nelze určit skutečný typ argumentu polymorfní funkce \"%s\""
 
-#: pl_exec.c:474 pl_exec.c:886 pl_exec.c:1103
+#: pl_exec.c:477 pl_exec.c:914 pl_exec.c:1152
 msgid "during initialization of execution state"
 msgstr "během inicializace proměnné execution state"
 
-#: pl_exec.c:480
+#: pl_exec.c:483
 msgid "while storing call arguments into local variables"
 msgstr "během ukládání parametrů funkce do lokálních proměnných"
 
-#: pl_exec.c:568 pl_exec.c:938
+#: pl_exec.c:571 pl_exec.c:987
 msgid "during function entry"
 msgstr "během vstupu do funkce"
 
-#: pl_exec.c:593
+#: pl_exec.c:596
 #, c-format
 msgid "control reached end of function without RETURN"
 msgstr "funkce skončila, aniž by byl proveden příkaz RETURN"
 
-#: pl_exec.c:600
+#: pl_exec.c:603
 msgid "while casting return value to function's return type"
 msgstr "během konverze vracené hodnoty do návratového typu funkce"
 
-#: pl_exec.c:613 pl_exec.c:3511
+#: pl_exec.c:616 pl_exec.c:3584
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
-msgstr ""
-"funkce vracející tabulku (set-valued) byla zavolána z kontextu, který "
-"neumožňuje přijetí tabulky"
+msgstr "funkce vracející tabulku (set-valued) byla zavolána z kontextu, který neumožňuje přijetí tabulky"
 
-#: pl_exec.c:739 pl_exec.c:967 pl_exec.c:1128
+#: pl_exec.c:742 pl_exec.c:1016 pl_exec.c:1177
 msgid "during function exit"
 msgstr "během ukončování funkce"
 
-#: pl_exec.c:794 pl_exec.c:833 pl_exec.c:3356
+#: pl_exec.c:797 pl_exec.c:861 pl_exec.c:3429
 msgid "returned record type does not match expected record type"
-msgstr ""
-"vracenou hodnotu typu record nelze konvertovat do očekávaného typu record"
+msgstr "vracenou hodnotu typu record nelze konvertovat do očekávaného typu record"
 
-#: pl_exec.c:963 pl_exec.c:1124
+#: pl_exec.c:1012 pl_exec.c:1173
 #, c-format
 msgid "control reached end of trigger procedure without RETURN"
 msgstr "funkce obsluhy triggeru skončila, aniž by byl proveden příkaz RETURN"
 
-#: pl_exec.c:972
+#: pl_exec.c:1021
 #, c-format
 msgid "trigger procedure cannot return a set"
 msgstr "funkce obsluhy triggeru nemůže vrátit tabulku"
 
-#: pl_exec.c:1011 pl_exec.c:1039
-msgid ""
-"returned row structure does not match the structure of the triggering table"
-msgstr ""
-"struktura vrácené hodnoty neodpovídá struktuře tabulky svázané s triggerem"
+#: pl_exec.c:1060 pl_exec.c:1088
+msgid "returned row structure does not match the structure of the triggering table"
+msgstr "struktura vrácené hodnoty neodpovídá struktuře tabulky svázané s triggerem"
 
 #. translator: last %s is a phrase such as "during statement block
 #. local variable initialization"
 #.
-#: pl_exec.c:1176
+#: pl_exec.c:1225
 #, c-format
 msgid "PL/pgSQL function %s line %d %s"
 msgstr "PL/pgSQL funkce %s řádek %d %s"
@@ -182,299 +175,305 @@ msgstr "PL/pgSQL funkce %s řádek %d %s"
 #. translator: last %s is a phrase such as "while storing call
 #. arguments into local variables"
 #.
-#: pl_exec.c:1187
+#: pl_exec.c:1236
 #, c-format
 msgid "PL/pgSQL function %s %s"
 msgstr "PL/pgSQL funkce %s %s"
 
 #. translator: last %s is a plpgsql statement type name
-#: pl_exec.c:1195
+#: pl_exec.c:1244
 #, c-format
 msgid "PL/pgSQL function %s line %d at %s"
 msgstr "PL/pgSQL funkce %s řádek %d na %s"
 
-#: pl_exec.c:1201
+#: pl_exec.c:1250
 #, c-format
 msgid "PL/pgSQL function %s"
 msgstr "PL/pgSQL funkce %s"
 
-#: pl_exec.c:1539
+#: pl_exec.c:1588
 msgid "during statement block local variable initialization"
 msgstr "během inicializace lokálních proměnných bloku"
 
-#: pl_exec.c:1637
+#: pl_exec.c:1686
 msgid "during statement block entry"
 msgstr "během zahájení bloku"
 
-#: pl_exec.c:1669
+#: pl_exec.c:1718
 msgid "during statement block exit"
 msgstr "během ukončování bloku"
 
-#: pl_exec.c:1707
+#: pl_exec.c:1756
 msgid "during exception cleanup"
 msgstr "během čištění po zachycení výjimky"
 
-#: pl_exec.c:2234 pl_exec.c:2248
+#: pl_exec.c:2252
 #, c-format
-msgid "argument %d is an output argument but is not writable"
-msgstr "argument %d je výstupní argument ale není zapisovatelný"
+msgid "procedure parameter \"%s\" is an output parameter but corresponding argument is not writable"
+msgstr "parametr \"%s\" procedury je výstupní argument ale odpovídající argument není zapisovatelný"
 
-#: pl_exec.c:2290
+#: pl_exec.c:2257
+#, c-format
+msgid "procedure parameter %d is an output parameter but corresponding argument is not writable"
+msgstr "parametr %d procedury je výstupní argument ale odpovídající argument není zapisovatelný"
+
+#: pl_exec.c:2368
 #, c-format
 msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
 msgstr "GET STACKED DIAGNOSTICS nelze použít mimo obsluhu výjimky"
 
-#: pl_exec.c:2495
+#: pl_exec.c:2568
 #, c-format
 msgid "case not found"
 msgstr "varianta nenalezena"
 
-#: pl_exec.c:2496
+#: pl_exec.c:2569
 #, c-format
 msgid "CASE statement is missing ELSE part."
 msgstr "V příkazu CASE chybí část ELSE"
 
-#: pl_exec.c:2589
+#: pl_exec.c:2662
 #, c-format
 msgid "lower bound of FOR loop cannot be null"
 msgstr "spodní limit příkazu FOR nesmí být nullL"
 
-#: pl_exec.c:2605
+#: pl_exec.c:2678
 #, c-format
 msgid "upper bound of FOR loop cannot be null"
 msgstr "horní limit příkazu FOR nesmí být null"
 
-#: pl_exec.c:2623
+#: pl_exec.c:2696
 #, c-format
 msgid "BY value of FOR loop cannot be null"
 msgstr "krok příkazu FOR nesmí být null"
 
-#: pl_exec.c:2629
+#: pl_exec.c:2702
 #, c-format
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "krok příkazu FOR musí být větší než nula"
 
-#: pl_exec.c:2763 pl_exec.c:4478
+#: pl_exec.c:2836 pl_exec.c:4558
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "kurzor \"%s\" se již používá"
 
-#: pl_exec.c:2786 pl_exec.c:4543
+#: pl_exec.c:2859 pl_exec.c:4623
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "argumenty pro kurzor bez argumentů"
 
-#: pl_exec.c:2805 pl_exec.c:4562
+#: pl_exec.c:2878 pl_exec.c:4642
 #, c-format
 msgid "arguments required for cursor"
 msgstr "kurzor vyžaduje argumenty"
 
-#: pl_exec.c:2892
+#: pl_exec.c:2965
 #, c-format
 msgid "FOREACH expression must not be null"
 msgstr "výraz ve FOREACH nesmí být null"
 
 # výrazu/příkazu
-#: pl_exec.c:2907
+#: pl_exec.c:2980
 #, c-format
 msgid "FOREACH expression must yield an array, not type %s"
 msgstr "výsledkem výrazu příkazu FOREACH musí být pole, nikoliv %s"
 
-#: pl_exec.c:2924
+#: pl_exec.c:2997
 #, c-format
 msgid "slice dimension (%d) is out of the valid range 0..%d"
 msgstr "dimenze podpole (%d) je mimo validní rozsah 0..%d"
 
-#: pl_exec.c:2951
+#: pl_exec.c:3024
 #, c-format
 msgid "FOREACH ... SLICE loop variable must be of an array type"
 msgstr "FOREACH ... SLICE proměnná cyklu musí být typu pole"
 
-#: pl_exec.c:2955
+#: pl_exec.c:3028
 #, c-format
 msgid "FOREACH loop variable must not be of an array type"
 msgstr "FOREACH proměnná cyklu nesmí být typu pole"
 
-#: pl_exec.c:3117 pl_exec.c:3174 pl_exec.c:3349
+#: pl_exec.c:3190 pl_exec.c:3247 pl_exec.c:3422
 #, c-format
-msgid ""
-"cannot return non-composite value from function returning composite type"
+msgid "cannot return non-composite value from function returning composite type"
 msgstr "z funkce vracející kompozitní typ nelze vracet jednoduchý datový typ"
 
-#: pl_exec.c:3213 pl_gram.y:3266
+#: pl_exec.c:3286 pl_gram.y:3309
 #, c-format
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr "RETURN NEXT nelze použít ve funkci, která nevrací tabulku"
 
-#: pl_exec.c:3254 pl_exec.c:3386
+#: pl_exec.c:3327 pl_exec.c:3459
 #, c-format
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "typ parametru příkazu RETURN NEXT neodpovídá návratovému typu funkce "
 
-#: pl_exec.c:3292 pl_exec.c:3313
+#: pl_exec.c:3365 pl_exec.c:3386
 #, c-format
 msgid "wrong record type supplied in RETURN NEXT"
-msgstr ""
-"obsah parametru příkazu RETURN NEXT nelze převést na návratový typ funkce"
+msgstr "obsah parametru příkazu RETURN NEXT nelze převést na návratový typ funkce"
 
-#: pl_exec.c:3405
+#: pl_exec.c:3478
 #, c-format
 msgid "RETURN NEXT must have a parameter"
 msgstr "RETURN NEXT musí mít parametr"
 
-#: pl_exec.c:3431 pl_gram.y:3329
+#: pl_exec.c:3504 pl_gram.y:3373
 #, c-format
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr "uvnitř funkce, která nevrací tabulku, nelze použít RETURN QUERY"
 
-#: pl_exec.c:3455
+#: pl_exec.c:3528
 msgid "structure of query does not match function result type"
 msgstr "struktura dotazu neodpovídá návratovému typu funkce"
 
-#: pl_exec.c:3539 pl_exec.c:3677
+#: pl_exec.c:3612 pl_exec.c:3750
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "opakované použití volitelného parametru: %s příkazu RAISE"
 
-#: pl_exec.c:3573
+#: pl_exec.c:3646
 #, c-format
 msgid "RAISE without parameters cannot be used outside an exception handler"
 msgstr "RAISE bez parametrů nesmí být použito mimo obsluhu výjimky"
 
-#: pl_exec.c:3667
+#: pl_exec.c:3740
 #, c-format
 msgid "RAISE statement option cannot be null"
 msgstr "volitelný parametr příkazu RAISE nesmí být null"
 
-#: pl_exec.c:3737
+#: pl_exec.c:3810
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:3792
+#: pl_exec.c:3865
 #, c-format
 msgid "assertion failed"
 msgstr "assertion selhalo"
 
-#: pl_exec.c:4129 pl_exec.c:4316
+#: pl_exec.c:4207 pl_exec.c:4397
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "v PL/pgSQL nelze použít COPY to/from klient"
 
-#: pl_exec.c:4135
+#: pl_exec.c:4213
 #, c-format
 msgid "unsupported transaction command in PL/pgSQL"
 msgstr "nepodporovaný transakční příkaz v PL/pgSQL"
 
 # "nevrací" má trochu jiný význam než "nemůže vracet"
-#: pl_exec.c:4159 pl_exec.c:4346
+#: pl_exec.c:4236 pl_exec.c:4426
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO je použito v příkazu, který nevrací data"
 
-#: pl_exec.c:4182 pl_exec.c:4369
+#: pl_exec.c:4259 pl_exec.c:4449
 #, c-format
 msgid "query returned no rows"
 msgstr "dotaz nevrátil žádný řádek"
 
-#: pl_exec.c:4201 pl_exec.c:4388
+#: pl_exec.c:4281 pl_exec.c:4468
 #, c-format
 msgid "query returned more than one row"
 msgstr "dotaz vrátil více než jeden řádek"
 
-#: pl_exec.c:4218
+#: pl_exec.c:4283
+#, c-format
+msgid "Make sure the query returns a single row, or use LIMIT 1."
+msgstr "Ujistěte se že dotaz vrací jediný řádek, nebo použijte LIMIT 1."
+
+#: pl_exec.c:4299
 #, c-format
 msgid "query has no destination for result data"
 msgstr "chybí cíl pro výsledek dotazu"
 
-#: pl_exec.c:4219
+#: pl_exec.c:4300
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Pokud nechcete použít výsledek SELECTu, použijte PERFORM."
 
 # generující? spíš asi "obsahující" nebo jenom "s dynamickým dotazem"
 # ok
-#: pl_exec.c:4252 pl_exec.c:8270
+#: pl_exec.c:4333 pl_exec.c:8518
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "textový argument s dynamickým dotazem příkazu EXECUTE je null"
 
-#: pl_exec.c:4308
+#: pl_exec.c:4389
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "EXECUTE příkazu SELECT ... INTO není implementováno"
 
-#: pl_exec.c:4309
+#: pl_exec.c:4390
 #, c-format
-msgid ""
-"You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS "
-"instead."
+msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
 msgstr "Možná chcete použít EXECUTE ... INTO nebo EXECUTE CREATE TABLE ... AS."
 
-#: pl_exec.c:4322
+#: pl_exec.c:4403
 #, c-format
 msgid "EXECUTE of transaction commands is not implemented"
 msgstr "EXECUTE transakčního příkazu není implementováno"
 
 # myslí se tím proměnná která se předává kurzoru nebo samotný kurzor? Pokud kurzor, tak asi spíš kurzorová proměnná.
 # ok, i kdyz v tom necitim rozdil
-#: pl_exec.c:4624 pl_exec.c:4712
+#: pl_exec.c:4704 pl_exec.c:4792
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "kurzorová proměnná \"%s\" je null"
 
-#: pl_exec.c:4635 pl_exec.c:4723
+#: pl_exec.c:4715 pl_exec.c:4803
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "kurzor \"%s\" neexistuje"
 
-#: pl_exec.c:4648
+#: pl_exec.c:4728
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "relativní nebo absolutní pozice kurzoru je null"
 
-#: pl_exec.c:4898 pl_exec.c:4993
+#: pl_exec.c:4984 pl_exec.c:5079
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "proměnné \"%s\" deklarované jako NOT NULL nelze přiřadit null"
 
 # hodnotU
-#: pl_exec.c:4974
+#: pl_exec.c:5060
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "proměnné složeného typu nelze přiřadit jinou než složenou hodnot"
 
-#: pl_exec.c:5006
+#: pl_exec.c:5092
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "proměnné typu record nelze přiřadit jinou než slouženou hodnotu"
 
-#: pl_exec.c:5057
+#: pl_exec.c:5143
 #, c-format
 msgid "cannot assign to system column \"%s\""
 msgstr "nelze přiřazovat do systémového sloupce \"%s\""
 
-#: pl_exec.c:5121
+#: pl_exec.c:5207
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "počet rozměrů pole (%d) překračuje povolené maximum (%d)"
 
-#: pl_exec.c:5153
+#: pl_exec.c:5239
 #, c-format
 msgid "subscripted object is not an array"
 msgstr "indexovaná proměnná není pole"
 
-#: pl_exec.c:5191
+#: pl_exec.c:5277
 #, c-format
 msgid "array subscript in assignment must not be null"
 msgstr "index pole v přířazovacím příkazu nesmí být null"
 
-#: pl_exec.c:5698
+#: pl_exec.c:5784
 #, c-format
 msgid "query \"%s\" did not return data"
 msgstr "dotaz \"%s\" nevrátil žádná data"
 
-#: pl_exec.c:5706
+#: pl_exec.c:5792
 #, c-format
 msgid "query \"%s\" returned %d column"
 msgid_plural "query \"%s\" returned %d columns"
@@ -482,35 +481,48 @@ msgstr[0] "dotaz \"%s\" vrátil %d sloupec"
 msgstr[1] "dotaz \"%s\" vrátil %d sloupce"
 msgstr[2] "dotaz \"%s\" vrátil %d sloupců"
 
-#: pl_exec.c:5734
+#: pl_exec.c:5820
 #, c-format
 msgid "query \"%s\" returned more than one row"
 msgstr "dotaz \"%s\" vrátil více než jeden řádek"
 
-#: pl_exec.c:5797
+#: pl_exec.c:5883
 #, c-format
 msgid "query \"%s\" is not a SELECT"
 msgstr "dotaz \"%s\" není SELECT"
 
-#: pl_exec.c:6523 pl_exec.c:6563 pl_exec.c:6603
+#: pl_exec.c:6608 pl_exec.c:6648 pl_exec.c:6688
 #, c-format
-msgid ""
-"type of parameter %d (%s) does not match that when preparing the plan (%s)"
+msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr "typ parametru %d (%s) neodpovídá typu při přípravě plánu (%s)"
 
-#: pl_exec.c:7378
+#: pl_exec.c:7090 pl_exec.c:7124 pl_exec.c:7198 pl_exec.c:7224
+#, c-format
+msgid "number of source and target fields in assignment does not match"
+msgstr "počet zdrojových a cílových položek v přiřazení neodpovídá"
+
+#. translator: %s represents a name of an extra check
+#: pl_exec.c:7092 pl_exec.c:7126 pl_exec.c:7200 pl_exec.c:7226
+#, c-format
+msgid "%s check of %s is active."
+msgstr "%s kontrola %s je aktivní."
+
+#: pl_exec.c:7096 pl_exec.c:7130 pl_exec.c:7204 pl_exec.c:7230
+#, c-format
+msgid "Make sure the query returns the exact list of columns."
+msgstr "Ujistěte se že dotaz vrací přesný seznam sloupců."
+
+#: pl_exec.c:7617
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "proměnné \"%s\" typu record ještě nebyla přiřazena hodnota"
 
 # tečka na konci
 # ok
-#: pl_exec.c:7379
+#: pl_exec.c:7618
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
-msgstr ""
-"Proměnná typu record, které ještě nebyla přiřazena hodnota, nemá definovanou "
-"strukturu."
+msgstr "Proměnná typu record, které ještě nebyla přiřazena hodnota, nemá definovanou strukturu."
 
 #: pl_funcs.c:239
 msgid "statement block"
@@ -546,145 +558,131 @@ msgstr "SQL příkaz"
 msgid "FOR over EXECUTE statement"
 msgstr "FOR nad dynamickým výběrem (FOR over EXECUTE)"
 
-#: pl_gram.y:485
+#: pl_gram.y:489
 #, c-format
 msgid "block label must be placed before DECLARE, not after"
 msgstr "návěstí bloku musí být umístěno před klíčové slovo DECLARE, nikoliv za"
 
-#: pl_gram.y:505
+#: pl_gram.y:509
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "typ %s nepodporuje collations"
 
-#: pl_gram.y:524
+#: pl_gram.y:528
 #, c-format
 msgid "variable \"%s\" must have a default value, since it's declared NOT NULL"
-msgstr ""
-"proměnná \"%s\" musí mít implicitní hodnotu, protože je deklarována jako NOT "
-"NULL"
+msgstr "proměnná \"%s\" musí mít implicitní hodnotu, protože je deklarována jako NOT NULL"
 
-#: pl_gram.y:669 pl_gram.y:684 pl_gram.y:710
+#: pl_gram.y:675 pl_gram.y:690 pl_gram.y:716
 #, c-format
 msgid "variable \"%s\" does not exist"
 msgstr "proměnná \"%s\" neexistuje"
 
-#: pl_gram.y:728 pl_gram.y:756
+#: pl_gram.y:734 pl_gram.y:762
 msgid "duplicate declaration"
 msgstr "duplicitní deklarace"
 
-#: pl_gram.y:739 pl_gram.y:767
+#: pl_gram.y:745 pl_gram.y:773
 #, c-format
 msgid "variable \"%s\" shadows a previously defined variable"
 msgstr "proměnná \"%s\" zastiňuje dříve definovanou proměnnou"
 
-#: pl_gram.y:983
+#: pl_gram.y:993
 #, c-format
 msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
-msgstr ""
-"diagnostická položka %s není dostupná v příkazu GET STACKED DIAGNOSTICS"
+msgstr "diagnostická položka %s není dostupná v příkazu GET STACKED DIAGNOSTICS"
 
-#: pl_gram.y:1001
+#: pl_gram.y:1011
 #, c-format
 msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
-msgstr ""
-"diagnostická položka %s není dostupná v příkazu GET CURRENT DIAGNOSTICS"
+msgstr "diagnostická položka %s není dostupná v příkazu GET CURRENT DIAGNOSTICS"
 
-#: pl_gram.y:1099
+#: pl_gram.y:1106
 msgid "unrecognized GET DIAGNOSTICS item"
 msgstr "neznámá položka příkazu GET DIAGNOSTICS"
 
-#: pl_gram.y:1109 pl_gram.y:3508
+#: pl_gram.y:1116 pl_gram.y:3553
 #, c-format
 msgid "\"%s\" is not a scalar variable"
 msgstr "\"%s\" není skalární proměnná"
 
-#: pl_gram.y:1357 pl_gram.y:1550
+#: pl_gram.y:1370 pl_gram.y:1567
 #, c-format
-msgid ""
-"loop variable of loop over rows must be a record variable or list of scalar "
-"variables"
-msgstr ""
-"řídící proměnná cyklu nad řádky musí být typu record nebo seznam skalárních "
-"proměnných"
+msgid "loop variable of loop over rows must be a record variable or list of scalar variables"
+msgstr "řídící proměnná cyklu nad řádky musí být typu record nebo seznam skalárních proměnných"
 
 # asi by tam mělo být i to FOR, neplatí to pro všechny cykly
 # ok
-#: pl_gram.y:1391
+#: pl_gram.y:1405
 #, c-format
 msgid "cursor FOR loop must have only one target variable"
 msgstr "cyklus FOR nad kurzorem musí mít pouze jednu cílovou proměnnou"
 
-#: pl_gram.y:1398
+#: pl_gram.y:1412
 #, c-format
 msgid "cursor FOR loop must use a bound cursor variable"
 msgstr "cyklus FOR nad kurzorem musí použít vázanou proměnnou kurzoru"
 
-#: pl_gram.y:1485
+#: pl_gram.y:1499
 #, c-format
 msgid "integer FOR loop must have only one target variable"
 msgstr "celočiselný cyklus FOR musí mít pouze jednu cílovou proměnnou"
 
-#: pl_gram.y:1521
+#: pl_gram.y:1537
 #, c-format
 msgid "cannot specify REVERSE in query FOR loop"
 msgstr "nelze zadat atribut REVERSE v případě cyklu FOR nad dotazem"
 
-#: pl_gram.y:1652
+#: pl_gram.y:1670
 #, c-format
 msgid "loop variable of FOREACH must be a known variable or list of variables"
-msgstr ""
-"řídící proměnná(é) cyklu FOREACH musí být existující proměnná, případně "
-"seznam existujících proměnných"
+msgstr "řídící proměnná(é) cyklu FOREACH musí být existující proměnná, případně seznam existujících proměnných"
 
-#: pl_gram.y:1693
+#: pl_gram.y:1712
 #, c-format
-msgid ""
-"there is no label \"%s\" attached to any block or loop enclosing this "
-"statement"
-msgstr ""
-"žádné návěstí \"%s\" není přiřazeno k žádnému bloku nebo cyklu obsahujícímu "
-"tento příkaz"
+msgid "there is no label \"%s\" attached to any block or loop enclosing this statement"
+msgstr "žádné návěstí \"%s\" není přiřazeno k žádnému bloku nebo cyklu obsahujícímu tento příkaz"
 
-#: pl_gram.y:1701
+#: pl_gram.y:1720
 #, c-format
 msgid "block label \"%s\" cannot be used in CONTINUE"
 msgstr "návěstí bloku \"%s\" nelze použít v CONTINUE"
 
-#: pl_gram.y:1716
+#: pl_gram.y:1735
 #, c-format
 msgid "EXIT cannot be used outside a loop, unless it has a label"
 msgstr "EXIT nemůže byt použito mimo tělo cyklu, pokud nemá návěstí"
 
-#: pl_gram.y:1717
+#: pl_gram.y:1736
 #, c-format
 msgid "CONTINUE cannot be used outside a loop"
 msgstr "CONTINUE nemůže byt použito mimo tělo cyklu"
 
-#: pl_gram.y:1741 pl_gram.y:1778 pl_gram.y:1826 pl_gram.y:2958 pl_gram.y:3041
-#: pl_gram.y:3152 pl_gram.y:3907
+#: pl_gram.y:1760 pl_gram.y:1798 pl_gram.y:1846 pl_gram.y:2998 pl_gram.y:3083
+#: pl_gram.y:3194 pl_gram.y:3957
 msgid "unexpected end of function definition"
 msgstr "neočekávaný konec definice funkce"
 
-#: pl_gram.y:1846 pl_gram.y:1870 pl_gram.y:1886 pl_gram.y:1892 pl_gram.y:2009
-#: pl_gram.y:2017 pl_gram.y:2031 pl_gram.y:2125 pl_gram.y:2360 pl_gram.y:2454
-#: pl_gram.y:2612 pl_gram.y:3749 pl_gram.y:3810 pl_gram.y:3888
+#: pl_gram.y:1866 pl_gram.y:1890 pl_gram.y:1906 pl_gram.y:1912 pl_gram.y:2031
+#: pl_gram.y:2039 pl_gram.y:2053 pl_gram.y:2148 pl_gram.y:2399 pl_gram.y:2493
+#: pl_gram.y:2652 pl_gram.y:3799 pl_gram.y:3860 pl_gram.y:3938
 msgid "syntax error"
 msgstr "syntaktická chyba"
 
-#: pl_gram.y:1874 pl_gram.y:1876 pl_gram.y:2364 pl_gram.y:2366
+#: pl_gram.y:1894 pl_gram.y:1896 pl_gram.y:2403 pl_gram.y:2405
 msgid "invalid SQLSTATE code"
 msgstr "nevalidní SQLSTATE kód"
 
-#: pl_gram.y:2073
+#: pl_gram.y:2096
 msgid "syntax error, expected \"FOR\""
 msgstr "syntaktická chyba, očekává se \"FOR\""
 
-#: pl_gram.y:2134
+#: pl_gram.y:2157
 #, c-format
 msgid "FETCH statement cannot return multiple rows"
 msgstr "příkaz FETCH nesmí vracet více řádek"
 
-#: pl_gram.y:2244
+#: pl_gram.y:2281
 #, c-format
 msgid "cursor variable must be a simple variable"
 msgstr "proměnná kurzoru musí být skalární proměnná"
@@ -692,244 +690,222 @@ msgstr "proměnná kurzoru musí být skalární proměnná"
 # cursor bych asi nepřekládal, je to přímo název typu, navíc v refcursor to přeloženo není
 # kurzor (cursor) neni typ, a refcursor je fakticky varchar - vyhodil bych type
 # pripadne "promenna musi byt deklarovana jako kurzor nebo jako refcursor"
-#: pl_gram.y:2250
+#: pl_gram.y:2287
 #, c-format
 msgid "variable \"%s\" must be of type cursor or refcursor"
 msgstr "proměnná \"%s\" musí být kurzor nebo referencí na kurzor"
 
-#: pl_gram.y:2583 pl_gram.y:2594
+#: pl_gram.y:2623 pl_gram.y:2634
 #, c-format
 msgid "\"%s\" is not a known variable"
 msgstr "\"%s\" není známou proměnnou"
 
-#: pl_gram.y:2698 pl_gram.y:2708 pl_gram.y:2863
+#: pl_gram.y:2738 pl_gram.y:2748 pl_gram.y:2903
 msgid "mismatched parentheses"
 msgstr "neodpovídající si závorky"
 
-#: pl_gram.y:2712
+#: pl_gram.y:2752
 #, c-format
 msgid "missing \"%s\" at end of SQL expression"
 msgstr "chybějící \"%s\" na konci SQL výrazu"
 
-#: pl_gram.y:2718
+#: pl_gram.y:2758
 #, c-format
 msgid "missing \"%s\" at end of SQL statement"
 msgstr "chybějící \"%s\" na konci SQL příkazu"
 
-#: pl_gram.y:2735
+#: pl_gram.y:2775
 msgid "missing expression"
 msgstr "chybějící výraz"
 
-#: pl_gram.y:2737
+#: pl_gram.y:2777
 msgid "missing SQL statement"
 msgstr "chybějící SQL příkaz"
 
-#: pl_gram.y:2865
+#: pl_gram.y:2905
 msgid "incomplete data type declaration"
 msgstr "neúplná deklarace datového typu"
 
-#: pl_gram.y:2888
+#: pl_gram.y:2928
 msgid "missing data type declaration"
 msgstr "chybějící deklarace datového typu"
 
-#: pl_gram.y:2966
+#: pl_gram.y:3006
 msgid "INTO specified more than once"
 msgstr "opakované použití INTO"
 
-#: pl_gram.y:3133
+#: pl_gram.y:3175
 msgid "expected FROM or IN"
 msgstr "očekáváno FROM nebo IN"
 
-#: pl_gram.y:3193
+#: pl_gram.y:3236
 #, c-format
 msgid "RETURN cannot have a parameter in function returning set"
 msgstr "uvnitř funkce, která vrací tabulku, RETURN nemá parametr"
 
-#: pl_gram.y:3194
+#: pl_gram.y:3237
 #, c-format
 msgid "Use RETURN NEXT or RETURN QUERY."
 msgstr "Použijte RETURN NEXT nebo RETURN QUERY."
 
-#: pl_gram.y:3204
+#: pl_gram.y:3247
 #, c-format
 msgid "RETURN cannot have a parameter in a procedure"
 msgstr "RETURN v proceduře nemůže mít parametr"
 
-#: pl_gram.y:3209
+#: pl_gram.y:3252
 #, c-format
 msgid "RETURN cannot have a parameter in function returning void"
 msgstr "uvnitř funkce s návratovou hodnotou typu void RETURN nemá parametr"
 
-#: pl_gram.y:3218
+#: pl_gram.y:3261
 #, c-format
 msgid "RETURN cannot have a parameter in function with OUT parameters"
 msgstr "uvnitř funkce s OUT parametry RETURN nemá parametr"
 
-#: pl_gram.y:3280
+#: pl_gram.y:3324
 #, c-format
 msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
 msgstr "uvnitř funkce s OUT parametry RETURN NEXT nemá paramet"
 
-#: pl_gram.y:3387
+#: pl_gram.y:3432
 #, c-format
 msgid "variable \"%s\" is declared CONSTANT"
 msgstr "proměnná \"%s\" je deklarována jako konstanta (CONSTANT)"
 
-#: pl_gram.y:3450
+#: pl_gram.y:3495
 #, c-format
 msgid "record variable cannot be part of multiple-item INTO list"
-msgstr ""
-"v seznamu cílových proměnných klauzule INTO není dovoleno použítí proměnné "
-"typu record"
+msgstr "v seznamu cílových proměnných klauzule INTO není dovoleno použítí proměnné typu record"
 
-#: pl_gram.y:3496
+#: pl_gram.y:3541
 #, c-format
 msgid "too many INTO variables specified"
 msgstr "příliš mnoho cílových proměnných v klauzuli INTO"
 
-#: pl_gram.y:3702
+#: pl_gram.y:3752
 #, c-format
 msgid "end label \"%s\" specified for unlabelled block"
 msgstr "použití koncového návěstí \"%s\" k bloku bez návěstí"
 
-#: pl_gram.y:3709
+#: pl_gram.y:3759
 #, c-format
 msgid "end label \"%s\" differs from block's label \"%s\""
 msgstr "koncové návěstí \"%s\" nesouhlasí s návěstím bloku \"%s\""
 
-#: pl_gram.y:3744
+#: pl_gram.y:3794
 #, c-format
 msgid "cursor \"%s\" has no arguments"
 msgstr "kurzor \"%s\" je deklarován bez parametrů"
 
-#: pl_gram.y:3758
+#: pl_gram.y:3808
 #, c-format
 msgid "cursor \"%s\" has arguments"
 msgstr "kurzor \"%s\" vyžaduje parametry"
 
-#: pl_gram.y:3800
+#: pl_gram.y:3850
 #, c-format
 msgid "cursor \"%s\" has no argument named \"%s\""
 msgstr "kurzor \"%s\" nemá žádný argument s názvem \"%s\""
 
-#: pl_gram.y:3820
+#: pl_gram.y:3870
 #, c-format
 msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
 msgstr "hodnota parametru \"%s\" kurzoru \"%s\" zadána více než jednou"
 
-#: pl_gram.y:3845
+#: pl_gram.y:3895
 #, c-format
 msgid "not enough arguments for cursor \"%s\""
 msgstr "nedostatek argumentů pro kurzor \"%s\""
 
-#: pl_gram.y:3852
+#: pl_gram.y:3902
 #, c-format
 msgid "too many arguments for cursor \"%s\""
 msgstr "příliš mnoho argumentů pro kurzor \"%s\""
 
-#: pl_gram.y:3939
+#: pl_gram.y:3989
 msgid "unrecognized RAISE statement option"
 msgstr "neznámý volitelný parametr příkazu RAISE"
 
-#: pl_gram.y:3943
+#: pl_gram.y:3993
 msgid "syntax error, expected \"=\""
 msgstr "syntaktická chyba, očekáváno \"=\""
 
-#: pl_gram.y:3984
+#: pl_gram.y:4034
 #, c-format
 msgid "too many parameters specified for RAISE"
 msgstr "příliš mnoho parametrů příkazu RAISE"
 
-#: pl_gram.y:3988
+#: pl_gram.y:4038
 #, c-format
 msgid "too few parameters specified for RAISE"
 msgstr "příliš málo parametrů příkazu RAISE"
 
-#: pl_handler.c:154
-msgid ""
-"Sets handling of conflicts between PL/pgSQL variable names and table column "
-"names."
-msgstr ""
-"Nastavuje způsob řešení konfliktu mezi názvy PL/pgSQL proměnných a názvy "
-"sloupců tabulek."
+#: pl_handler.c:158
+msgid "Sets handling of conflicts between PL/pgSQL variable names and table column names."
+msgstr "Nastavuje způsob řešení konfliktu mezi názvy PL/pgSQL proměnných a názvy sloupců tabulek."
 
-#: pl_handler.c:163
-msgid ""
-"Print information about parameters in the DETAIL part of the error messages "
-"generated on INTO ... STRICT failures."
-msgstr ""
-"Vypíše informace o parametrech v DETAIL částo chybové zprávy generované "
-"selháním INTO ... STRICT."
+#: pl_handler.c:167
+msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."
+msgstr "Vypíše informace o parametrech v DETAIL částo chybové zprávy generované selháním INTO ... STRICT."
 
-#: pl_handler.c:171
+#: pl_handler.c:175
 msgid "Perform checks given in ASSERT statements."
 msgstr "Vyková kontroly uvedené v ASSERT příkazech."
 
-#: pl_handler.c:179
+#: pl_handler.c:183
 msgid "List of programming constructs that should produce a warning."
 msgstr "Seznam programovacích kontruktů které by měly vygenerovat varování."
 
-#: pl_handler.c:189
+#: pl_handler.c:193
 msgid "List of programming constructs that should produce an error."
 msgstr "Seznam programovacích konstruktů které by měly vygenerovat chybu."
 
 #. translator: %s is typically the translation of "syntax error"
-#: pl_scanner.c:630
+#: pl_scanner.c:508
 #, c-format
 msgid "%s at end of input"
 msgstr "\"%s\" na konci vstupu"
 
 #. translator: first %s is typically the translation of "syntax error"
-#: pl_scanner.c:646
+#: pl_scanner.c:524
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s na nebo blízko \"%s\""
 
-#~ msgid "duplicate value for cursor \"%s\" parameter \"%s\""
-#~ msgstr "duplicitní hodnota pro kurzor \"%s\" parametr \"%s\""
+#~ msgid "relation \"%s\" is not a table"
+#~ msgstr "relace \"%s\" není tabulkou"
 
-#~ msgid ""
-#~ "RETURN NEXT must specify a record or row variable in function returning "
-#~ "row"
-#~ msgstr ""
-#~ "uvnitř funkce, která vrací složenou hodnotu, lze použít RETURN NEXT pouze "
-#~ "s proměnnou typu record nebo složeného typu"
+#~ msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
+#~ msgstr "NULL nemůže být výchozí hodnotou proměnné \"%s\" deklarované jako NOT NULL"
 
-#~ msgid ""
-#~ "RETURN must specify a record or row variable in function returning row"
-#~ msgstr ""
-#~ "uvnitř funkce, která vrací složenou hodnotu, lze použít RETURN pouze s "
-#~ "proměnnou typu record nebo složeného typu"
+#~ msgid "Use a BEGIN block with an EXCEPTION clause instead."
+#~ msgstr "Použijte blok BEGIN .. END s klauzulí EXCEPTION."
 
-#~ msgid "label does not exist"
-#~ msgstr "návěstí neexistuje"
-
-#~ msgid "default value for row or record variable is not supported"
-#~ msgstr ""
-#~ "nelze zadat defaultní hodnotu proměnným typu record nebo složeného typu"
-
-#~ msgid "row or record variable cannot be NOT NULL"
-#~ msgstr ""
-#~ "proměnná typu record nebo složeného typu nemůže být označena jako NOT NULL"
+#~ msgid "EXECUTE statement"
+#~ msgstr "EXECUTE příkaz"
 
 # překládat RECORD jako "proměnná složeného typu" mi přijde divný (resp. spousta lidí nebude vědět o co jde), ale "záznam" se asi často používá pro řádek tabulky ...
 # record neprekladam (je to typ), prekladam row, ktery odpovida castecne zaznamu tabulek, ale take odpovida kompozitnim typum
 # o zaznamu jsem take uvazoval, ale prislo mi divny, kdybych napsal "promenna typu record nebo zaznam" ponevadz jsou to pro
 # pro mnohe z nas synonyma
 #~ msgid "row or record variable cannot be CONSTANT"
-#~ msgstr ""
-#~ "proměnná typu record nebo složeného typu nemůže být označena jako "
-#~ "konstanta"
+#~ msgstr "proměnná typu record nebo složeného typu nemůže být označena jako konstanta"
 
-#~ msgid "EXECUTE statement"
-#~ msgstr "EXECUTE příkaz"
+#~ msgid "row or record variable cannot be NOT NULL"
+#~ msgstr "proměnná typu record nebo složeného typu nemůže být označena jako NOT NULL"
 
-#~ msgid "Use a BEGIN block with an EXCEPTION clause instead."
-#~ msgstr "Použijte blok BEGIN .. END s klauzulí EXCEPTION."
+#~ msgid "default value for row or record variable is not supported"
+#~ msgstr "nelze zadat defaultní hodnotu proměnným typu record nebo složeného typu"
 
-#~ msgid "variable \"%s\" declared NOT NULL cannot default to NULL"
-#~ msgstr ""
-#~ "NULL nemůže být výchozí hodnotou proměnné \"%s\" deklarované jako NOT NULL"
+#~ msgid "label does not exist"
+#~ msgstr "návěstí neexistuje"
 
-#~ msgid "relation \"%s\" is not a table"
-#~ msgstr "relace \"%s\" není tabulkou"
+#~ msgid "RETURN must specify a record or row variable in function returning row"
+#~ msgstr "uvnitř funkce, která vrací složenou hodnotu, lze použít RETURN pouze s proměnnou typu record nebo složeného typu"
+
+#~ msgid "RETURN NEXT must specify a record or row variable in function returning row"
+#~ msgstr "uvnitř funkce, která vrací složenou hodnotu, lze použít RETURN NEXT pouze s proměnnou typu record nebo složeného typu"
+
+#~ msgid "duplicate value for cursor \"%s\" parameter \"%s\""
+#~ msgstr "duplicitní hodnota pro kurzor \"%s\" parametr \"%s\""

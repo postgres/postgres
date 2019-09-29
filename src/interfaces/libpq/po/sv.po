@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-06 22:09+0000\n"
-"PO-Revision-Date: 2019-09-07 15:49+0200\n"
+"POT-Creation-Date: 2019-09-23 20:39+0000\n"
+"PO-Revision-Date: 2019-09-24 22:21+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -1018,31 +1018,39 @@ msgstr "kan inte hämta ut serverns värdnamn från servercertifikatet\n"
 msgid "GSSAPI wrap error"
 msgstr "GSSAPI-fel vid inpackning"
 
-#: fe-secure-gssapi.c:166 fe-secure-gssapi.c:290 fe-secure-gssapi.c:332
-msgid "GSSAPI did not provide confidentiality\n"
-msgstr "GSSAPI erbjuder inte sekretess\n"
+#: fe-secure-gssapi.c:166
+msgid "outgoing GSSAPI message would not use confidentiality\n"
+msgstr "utgående GSSAPI-meddelande skulle inte använda sekretess\n"
 
 #: fe-secure-gssapi.c:173
 #, c-format
-msgid "client tried to send oversize GSSAPI packet: %zu bytes\n"
-msgstr "klienten försöke skicka för stort GSSAPI-paket: %zu byte\n"
+msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
+msgstr "klienten försöke skicka för stort GSSAPI-paket (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:324
+#: fe-secure-gssapi.c:291 fe-secure-gssapi.c:497
+#, c-format
+msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
+msgstr "för stort GSSAPI-paket skickat av servern (%zu > %zu)\n"
+
+#: fe-secure-gssapi.c:327
 msgid "GSSAPI unwrap error"
 msgstr "GSSAPI-fel vid uppackning"
 
-#: fe-secure-gssapi.c:494
-#, c-format
-msgid "oversize GSSAPI packet sent by the server: %zu bytes\n"
-msgstr "för stort GSSAPI-paket skickat av servern: %zu byte\n"
+#: fe-secure-gssapi.c:335
+msgid "incoming GSSAPI message did not use confidentiality\n"
+msgstr "inkommande GSSAPI-meddelande använde inte sekretess\n"
 
-#: fe-secure-gssapi.c:539 fe-secure-gssapi.c:573
-msgid "GSSAPI context establishment error"
-msgstr "GSSAPI-fel vid skapande av kontext"
+#: fe-secure-gssapi.c:543
+msgid "could not initiate GSSAPI security context"
+msgstr "kunde inte initiera GSSAPI-säkerhetskontext"
 
-#: fe-secure-gssapi.c:564
+#: fe-secure-gssapi.c:568
 msgid "GSSAPI size check error"
 msgstr "GSSAPI-fel vid kontroll av storlek"
+
+#: fe-secure-gssapi.c:577
+msgid "GSSAPI context establishment error"
+msgstr "GSSAPI-fel vid skapande av kontext"
 
 #: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1219
 #, c-format
