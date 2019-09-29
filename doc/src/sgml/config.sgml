@@ -3152,13 +3152,11 @@ include_dir 'conf.d'
      recovery when the end of archived WAL is reached, but will keep trying to
      continue recovery by connecting to the sending server as specified by the
      <varname>primary_conninfo</varname> setting and/or by fetching new WAL
-     segments using <varname>restore_command</varname>.  In this mode, you can
-     use parameters in both <xref
-     linkend="runtime-config-wal-archive-recovery"/> and <xref
-     linkend="runtime-config-replication-standby"/>.  Parameters from
-     <xref linkend="runtime-config-wal-recovery-target"/> will not be used,
-     with the exception of <xref linkend="guc-recovery-target-timeline"/>
-     which allows a timeline to be selected for recovery.
+     segments using <varname>restore_command</varname>.  For this mode, the
+     parameters from this section and <xref
+     linkend="runtime-config-replication-standby"/> are of interest.
+     Parameters from <xref linkend="runtime-config-wal-recovery-target"/> will
+     also be applied but are typically not useful in this mode.
     </para>
 
     <para>
@@ -3168,10 +3166,10 @@ include_dir 'conf.d'
      <filename>recovery.signal</filename> files are created, standby mode
      takes precedence.  Targeted recovery mode ends when the archived WAL is
      fully replayed, or when <varname>recovery_target</varname> is reached.
-     In this mode, you can use parameters from both <xref
-     linkend="runtime-config-wal-archive-recovery"/> and <xref
-     linkend="runtime-config-wal-recovery-target"/>.  Parameters from <xref
-     linkend="runtime-config-replication-standby"/> will not be used.
+     In this mode, the parameters from both this section and <xref
+     linkend="runtime-config-wal-recovery-target"/> will be used.  Parameters
+     from <xref linkend="runtime-config-replication-standby"/> will not be
+     used.
     </para>
 
     <variablelist>
