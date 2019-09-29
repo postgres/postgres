@@ -2267,7 +2267,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Modifications of catalogs' <literal>reloptions</literal> and
-       autovacuum settings are now supported.
+       autovacuum settings are now supported.  (Setting <xref
+       linkend="guc-allow-system-table-mods"/> is still required.)
       </para>
      </listitem>
 
