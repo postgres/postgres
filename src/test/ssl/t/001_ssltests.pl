@@ -332,11 +332,16 @@ test_connect_ok(
 	"certificate authorization succeeds with correct client cert");
 
 # client key with wrong permissions
-test_connect_fails(
-	$common_connstr,
-	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
-	qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
-	"certificate authorization fails because of file permissions");
+SKIP:
+{
+	skip "Permissions check not enforced on Windows", 2 if ($windows_os);
+
+	test_connect_fails(
+		$common_connstr,
+		"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
+		qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
+		"certificate authorization fails because of file permissions");
+}
 
 # client cert belonging to another user
 test_connect_fails(
