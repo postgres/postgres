@@ -35,9 +35,9 @@
         <para>
          Partitioning performance enhancements, including improved query
          performance on tables with thousands of partitions, improved
-         insertion performance with <xref linkend="sql-insert"/> and
-         <xref linkend="sql-copy"/>, and the ability to
-         execute <link linkend="sql-altertable"><command>ALTER TABLE ATTACH
+         insertion performance with <xref linkend="sql-insert"/> and <xref
+         linkend="sql-copy"/>, and the ability to execute <link
+         linkend="sql-altertable-attach-partition"><command>ALTER TABLE ATTACH
          PARTITION</command></link> without blocking queries
         </para>
        </listitem>
@@ -84,7 +84,7 @@
       <itemizedlist>
        <listitem>
         <para>
-         <link linkend="sql-reindex"><command>REINDEX
+         <link linkend="sql-reindex-concurrently"><command>REINDEX
          CONCURRENTLY</command></link> can rebuild an index without
          blocking writes to its table
         </para>
@@ -111,8 +111,9 @@
 
     <listitem>
      <para>
-       Support for the <acronym>SQL/JSON</acronym>
-       <link linkend="functions-sqljson-path">path</link> language
+       Support for the <link
+       linkend="functions-sqljson-path"><acronym>SQL/JSON</acronym>
+       path</link> language
      </para>
     </listitem>
 
@@ -124,9 +125,9 @@
 
     <listitem>
      <para>
-       Nondeterministic ICU
-       <link linkend="collation">collations</link>, enabling
-       case-insensitive and accent-insensitive grouping and ordering
+       <link linkend="collation-nondeterministic">Nondeterministic</link> ICU
+       collations, enabling case-insensitive and accent-insensitive grouping
+       and ordering
      </para>
     </listitem>
 
@@ -201,7 +202,7 @@ Author: Andres Freund <andres@anarazel.de>
       Previously, a normally-invisible <structfield>oid</structfield>
       column could be specified during table creation using <literal>WITH
       OIDS</literal>; that ability has been removed.  Columns can still be
-      explicitly declared as type <type>OID</type>.  Operations on tables
+      explicitly declared as type <type>oid</type>.  Operations on tables
       that have columns created using <literal>WITH OIDS</literal> will
       need adjustment.
      </para>
@@ -2198,7 +2199,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
       <para>
        Allow <command>VACUUM</command> and <command>ANALYZE</command>
-       to take optional boolean argument specifications (Masahiko Sawada)
+       to take optional Boolean argument specifications (Masahiko Sawada)
       </para>
      </listitem>
 
