@@ -324,8 +324,8 @@ command_like(
 		"$common_connstr sslrootcert=invalid", '-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_,_null_,_null_$}mx,
+	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_,_null_,_null_\r?$}mx,
 	'pg_stat_ssl view without client certificate');
 
 ### Server-side tests.
@@ -365,16 +365,21 @@ command_like(
 		'-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
-	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\n
-				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser,1,\Q/CN=Test CA for PostgreSQL SSL regression test client certs\E$}mx,
+	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\r?\n
+				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,/CN=ssltestuser,1,\Q/CN=Test CA for PostgreSQL SSL regression test client certs\E\r?$}mx,
 	'pg_stat_ssl with client certificate');
 
 # client key with wrong permissions
-test_connect_fails(
-	$common_connstr,
-	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
-	qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
-	"certificate authorization fails because of file permissions");
+SKIP:
+{
+	skip "Permissions check not enforced on Windows", 2 if ($windows_os);
+
+	test_connect_fails(
+		$common_connstr,
+		"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_wrongperms_tmp.key",
+		qr!\Qprivate key file "ssl/client_wrongperms_tmp.key" has group or world access\E!,
+		"certificate authorization fails because of file permissions");
+}
 
 # client cert belonging to another user
 test_connect_fails(
