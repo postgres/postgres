@@ -1172,7 +1172,7 @@ WHERE tablename = 'road';
     <para>
      Here is an example of collecting functional-dependency statistics:
 <programlisting>
-CREATE STATISTICS stts (dependencies) ON zip, city FROM zipcodes;
+CREATE STATISTICS stts (dependencies) ON city, zip FROM zipcodes;
 
 ANALYZE zipcodes;
 
@@ -1262,7 +1262,7 @@ SELECT * FROM zipcodes WHERE city = 'San Francisco' AND zip = '90210';
      Continuing the previous example, the n-distinct counts in a
      table of ZIP codes might look like the following:
 <programlisting>
-CREATE STATISTICS stts2 (ndistinct) ON zip, state, city FROM zipcodes;
+CREATE STATISTICS stts2 (ndistinct) ON city, state, zip FROM zipcodes;
 
 ANALYZE zipcodes;
 
@@ -1317,7 +1317,7 @@ nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
      a function is required for inspection of MCV contents):
 
 <programlisting>
-CREATE STATISTICS stts3 (mcv) ON state, city FROM zipcodes;
+CREATE STATISTICS stts3 (mcv) ON city, state FROM zipcodes;
 
 ANALYZE zipcodes;
 

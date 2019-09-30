@@ -98,7 +98,8 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
     <listitem>
      <para>
       The name of a table column to be covered by the computed statistics.
-      At least two column names must be given.
+      At least two column names must be given;  the order of the column names
+      is insignificant.
      </para>
     </listitem>
    </varlistentry>
