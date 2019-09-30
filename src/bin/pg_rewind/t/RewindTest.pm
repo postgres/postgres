@@ -149,7 +149,7 @@ sub start_master
 
 	# Create custom role which is used to run pg_rewind, and adjust its
 	# permissions to the minimum necessary.
-	$node_master->psql(
+	$node_master->safe_psql(
 		'postgres', "
 		CREATE ROLE rewind_user LOGIN;
 		GRANT EXECUTE ON function pg_catalog.pg_ls_dir(text, boolean, boolean)
@@ -266,9 +266,19 @@ sub run_pg_rewind
 			[
 				'pg_rewind',                      "--debug",
 				"--source-server",                $standby_connstr,
-				"--target-pgdata=$master_pgdata", "--no-sync"
+				"--target-pgdata=$master_pgdata", "-R",
+				"--no-sync"
 			],
 			'pg_rewind remote');
+
+		# Check that standby.signal has been created.
+		ok(-e "$master_pgdata/standby.signal");
+
+		# Now, when pg_rewind apparently succeeded with minimal permissions,
+		# add REPLICATION privilege.  So we could test that new standby
+		# is able to connect to the new master with generated config.
+		$node_standby->safe_psql('postgres',
+			"ALTER ROLE rewind_user WITH REPLICATION;");
 	}
 	else
 	{
@@ -289,13 +299,15 @@ sub run_pg_rewind
 		"unable to set permissions for $master_pgdata/postgresql.conf");
 
 	# Plug-in rewound node to the now-promoted standby node
-	my $port_standby = $node_standby->port;
-	$node_master->append_conf(
-		'postgresql.conf', qq(
-primary_conninfo='port=$port_standby'
-));
+	if ($test_mode ne "remote")
+	{
+		my $port_standby = $node_standby->port;
+		$node_master->append_conf(
+			'postgresql.conf', qq(
+primary_conninfo='port=$port_standby'));
 
-	$node_master->set_standby_mode();
+		$node_master->set_standby_mode();
+	}
 
 	# Restart the master to check that rewind went correctly
 	$node_master->start;
