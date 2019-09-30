@@ -18,10 +18,14 @@ if ($ENV{with_openssl} ne 'yes')
 	plan skip_all => 'SSL not supported by this build';
 }
 
-my $number_of_tests = 9;
-
 # This is the hostname used to connect to the server.
 my $SERVERHOSTADDR = '127.0.0.1';
+
+# Determine whether build supports tls-server-end-point.
+my $supports_tls_server_end_point =
+  check_pg_config("#define HAVE_X509_GET_SIGNATURE_NID 1");
+
+my $number_of_tests = $supports_tls_server_end_point ? 9 : 10;
 
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
@@ -60,10 +64,21 @@ test_connect_ok(
 	$common_connstr,
 	"user=ssltestuser channel_binding=disable",
 	"SCRAM with SSL and channel_binding=disable");
-test_connect_ok(
-	$common_connstr,
-	"user=ssltestuser channel_binding=require",
-	"SCRAM with SSL and channel_binding=require");
+if ($supports_tls_server_end_point)
+{
+	test_connect_ok(
+		$common_connstr,
+		"user=ssltestuser channel_binding=require",
+		"SCRAM with SSL and channel_binding=require");
+}
+else
+{
+	test_connect_fails(
+		$common_connstr,
+		"user=ssltestuser channel_binding=require",
+		qr/could not connect to server: channel binding is required, but server did not offer an authentication method that supports channel binding/,
+		"SCRAM with SSL and channel_binding=require");
+}
 
 # Now test when the user has an MD5-encrypted password; should fail
 test_connect_fails(
