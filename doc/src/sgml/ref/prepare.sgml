@@ -127,40 +127,49 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   <title>Notes</title>
 
   <para>
-   Prepared statements can use generic plans rather than re-planning with
-   each set of supplied <command>EXECUTE</command> values.  This occurs
-   immediately for prepared statements with no parameters; otherwise
-   it occurs only after five or more executions produce plans whose
-   estimated cost average (including planning overhead) is more expensive
-   than the generic plan cost estimate.  Once a generic plan is chosen,
-   it is used for the remaining lifetime of the prepared statement.
-   Using <command>EXECUTE</command> values which are rare in columns with
-   many duplicates can generate custom plans that are so much cheaper
-   than the generic plan, even after adding planning overhead, that the
-   generic plan might never be used.
+   A prepared statement can be executed with either a <firstterm>generic
+   plan</firstterm> or a <firstterm>custom plan</firstterm>.  A generic
+   plan is the same across all executions, while a custom plan is generated
+   for a specific execution using the parameter values given in that call.
+   Use of a generic plan avoids planning overhead, but in some situations
+   a custom plan will be much more efficient to execute because the planner
+   can make use of knowledge of the parameter values.  (Of course, if the
+   prepared statement has no parameters, then this is moot and a generic
+   plan is always used.)
   </para>
 
   <para>
-   A generic plan assumes that each value supplied to
-   <command>EXECUTE</command> is one of the column's distinct values
-   and that column values are uniformly distributed.  For example,
-   if statistics record three distinct column values, a generic plan
-   assumes a column equality comparison will match 33% of processed rows.
-   Column statistics also allow generic plans to accurately compute the
-   selectivity of unique columns.  Comparisons on non-uniformly-distributed
-   columns and specification of non-existent values affects the average
-   plan cost, and hence if and when a generic plan is chosen.
+   By default (that is, when <xref linkend="guc-plan-cache_mode"/> is set
+   to <literal>auto</literal>), the server will automatically choose
+   whether to use a generic or custom plan for a prepared statement that
+   has parameters.  The current rule for this is that the first five
+   executions are done with custom plans and the average estimated cost of
+   those plans is calculated.  Then a generic plan is created and its
+   estimated cost is compared to the average custom-plan cost.  Subsequent
+   executions use the generic plan if its cost is not so much higher than
+   the average custom-plan cost as to make repeated replanning seem
+   preferable.
+  </para>
+
+  <para>
+   This heuristic can be overridden, forcing the server to use either
+   generic or custom plans, by setting <varname>plan_cache_mode</varname>
+   to <literal>force_generic_plan</literal>
+   or <literal>force_custom_plan</literal> respectively.
+   This setting is primarily useful if the generic plan's cost estimate
+   is badly off for some reason, allowing it to be chosen even though
+   its actual cost is much more than that of a custom plan.
   </para>
 
   <para>
    To examine the query plan <productname>PostgreSQL</productname> is using
-   for a prepared statement, use <xref linkend="sql-explain"/>, e.g.
-   <command>EXPLAIN EXECUTE</command>.
+   for a prepared statement, use <xref linkend="sql-explain"/>, for example
+<programlisting>
+EXPLAIN EXECUTE <replaceable>stmt_name</replaceable>(<replaceable>parameter_values</replaceable>);
+</programlisting>
    If a generic plan is in use, it will contain parameter symbols
-   <literal>$<replaceable>n</replaceable></literal>, while a custom plan will have the
-   supplied parameter values substituted into it.
-   The row estimates in the generic plan reflect the selectivity
-   computed for the parameters.
+   <literal>$<replaceable>n</replaceable></literal>, while a custom plan
+   will have the supplied parameter values substituted into it.
   </para>
 
   <para>
@@ -221,7 +230,7 @@ PREPARE usrrptplan (int) AS
 EXECUTE usrrptplan(1, current_date);
 </programlisting>
 
-   Note that the data type of the second parameter is not specified,
+   In this example, the data type of the second parameter is not specified,
    so it is inferred from the context in which <literal>$2</literal> is used.
   </para>
  </refsect1>

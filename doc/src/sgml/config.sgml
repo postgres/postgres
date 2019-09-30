@@ -5318,23 +5318,21 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Prepared statements (either explicitly prepared or implicitly
-        generated, for example in PL/pgSQL) can be executed using custom or
-        generic plans.  A custom plan is replanned for a new parameter value,
-        a generic plan is reused for repeated executions of the prepared
-        statement.  The choice between them is normally made automatically.
-        This setting overrides the default behavior and forces either a custom
-        or a generic plan.  This can be used to work around performance
-        problems in specific cases.  Note, however, that the plan cache
-        behavior is subject to change, so this setting, like all settings that
-        force the planner's hand, should be reevaluated regularly.
-       </para>
-
-       <para>
-        The allowed values are <literal>auto</literal>,
+        generated, for example by PL/pgSQL) can be executed using custom or
+        generic plans.  Custom plans are made afresh for each execution
+        using its specific set of parameter values, while generic plans do
+        not rely on the parameter values and can be re-used across
+        executions.  Thus, use of a generic plan saves planning time, but if
+        the ideal plan depends strongly on the parameter values then a
+        generic plan may be inefficient.  The choice between these options
+        is normally made automatically, but it can be overridden
+        with <varname>plan_cache_mode</varname>.
+        The allowed values are <literal>auto</literal> (the default),
         <literal>force_custom_plan</literal> and
-        <literal>force_generic_plan</literal>.  The default value is
-        <literal>auto</literal>.  The setting is applied when a cached plan is
-        to be executed, not when it is prepared.
+        <literal>force_generic_plan</literal>.
+        This setting is considered when a cached plan is to be executed,
+        not when it is prepared.
+        For more information see <xref linkend="sql-prepare"/>.
        </para>
       </listitem>
      </varlistentry>
