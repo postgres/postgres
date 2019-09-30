@@ -27,6 +27,7 @@
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/restricted_token.h"
+#include "fe_utils/recovery_gen.h"
 #include "getopt_long.h"
 #include "storage/bufpage.h"
 
@@ -41,6 +42,7 @@ static void syncTargetDirectory(void);
 static void sanityChecks(void);
 static void findCommonAncestorTimeline(XLogRecPtr *recptr, int *tliIndex);
 static void ensureCleanShutdown(const char *argv0);
+static void disconnect_atexit(void);
 
 static ControlFileData ControlFile_target;
 static ControlFileData ControlFile_source;
@@ -76,6 +78,8 @@ usage(const char *progname)
 	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
 	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
 	printf(_("      --source-server=CONNSTR    source server to synchronize with\n"));
+	printf(_("  -R, --write-recovery-conf      write configuration for replication\n"
+			 "                                 (requires --source-server)\n"));
 	printf(_("  -n, --dry-run                  stop before modifying anything\n"));
 	printf(_("  -N, --no-sync                  do not wait for changes to be written\n"
 			 "                                 safely to disk\n"));
@@ -94,6 +98,7 @@ main(int argc, char **argv)
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, '?'},
 		{"target-pgdata", required_argument, NULL, 'D'},
+		{"write-recovery-conf", no_argument, NULL, 'R'},
 		{"source-pgdata", required_argument, NULL, 1},
 		{"source-server", required_argument, NULL, 2},
 		{"no-ensure-shutdown", no_argument, NULL, 44},
@@ -118,6 +123,7 @@ main(int argc, char **argv)
 	XLogRecPtr	endrec;
 	TimeLineID	endtli;
 	ControlFileData ControlFile_new;
+	bool		writerecoveryconf = false;
 
 	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_rewind"));
@@ -138,7 +144,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:nNP", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "D:nNPR", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -156,6 +162,10 @@ main(int argc, char **argv)
 
 			case 'N':
 				do_sync = false;
+				break;
+
+			case 'R':
+				writerecoveryconf = true;
 				break;
 
 			case 3:
@@ -200,6 +210,13 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (writerecoveryconf && connstr_source == NULL)
+	{
+		pg_log_error("no source server information (--source--server) specified for --write-recovery-conf");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		exit(1);
+	}
+
 	if (optind < argc)
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
@@ -235,6 +252,8 @@ main(int argc, char **argv)
 	}
 
 	umask(pg_mode_mask);
+
+	atexit(disconnect_atexit);
 
 	/* Connect to remote server */
 	if (connstr_source)
@@ -322,6 +341,9 @@ main(int argc, char **argv)
 	if (!rewind_needed)
 	{
 		pg_log_info("no rewind required");
+		if (writerecoveryconf)
+			WriteRecoveryConfig(conn, datadir_target,
+								GenerateRecoveryConfig(conn, NULL));
 		exit(0);
 	}
 
@@ -418,6 +440,10 @@ main(int argc, char **argv)
 	if (showprogress)
 		pg_log_info("syncing target data directory");
 	syncTargetDirectory();
+
+	if (writerecoveryconf)
+		WriteRecoveryConfig(conn, datadir_target,
+							GenerateRecoveryConfig(conn, NULL));
 
 	pg_log_info("Done!");
 
@@ -827,4 +853,11 @@ ensureCleanShutdown(const char *argv0)
 		pg_log_error("postgres single-user mode of target instance failed");
 		pg_fatal("Command was: %s", cmd);
 	}
+}
+
+static void
+disconnect_atexit(void)
+{
+	if (conn != NULL)
+		PQfinish(conn);
 }

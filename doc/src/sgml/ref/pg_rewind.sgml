@@ -181,6 +181,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-R</option></term>
+      <term><option>--write-recovery-conf</option></term>
+      <listitem>
+       <para>
+        Create <filename>standby.signal</filename> and append connection
+        settings to <filename>postgresql.auto.conf</filename> in the output
+        directory.  <literal>--source-server</literal> is mandatory with
+        this option.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-n</option></term>
       <term><option>--dry-run</option></term>
       <listitem>
