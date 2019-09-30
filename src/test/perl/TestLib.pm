@@ -382,6 +382,7 @@ sub check_pg_config
 	  \$stdout, '2>', \$stderr
 	  or die "could not execute pg_config";
 	chomp($stdout);
+	$stdout =~ s/\r$//;
 
 	open my $pg_config_h, '<', "$stdout/pg_config.h" or die "$!";
 	my $match = (grep { /^$regexp/ } <$pg_config_h>);
