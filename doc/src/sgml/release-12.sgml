@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2019-??-??, CURRENT AS OF 2019-09-21</para>
+   <para>2019-10-03</para>
   </formalpara>
 
   <sect2>
@@ -1216,16 +1216,18 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2018-07-11 [39a96512b] Mark built-in btree comparison functions as leakproof wh
+2019-09-21 [d9110d7e1] Straighten out leakproofness markings on text comparison
 -->
 
        <para>
-        Fix the leakproofness designations of some btree comparison support
-        functions (Tom Lane)
+        Fix the leakproofness designations of some btree comparison operators
+        and support functions (Tom Lane)
        </para>
 
        <para>
         This allows some optimizations that previously would not have been
-        applied.
+        applied in the presence of security barrier views or row-level
+        security.
        </para>
       </listitem>
 
