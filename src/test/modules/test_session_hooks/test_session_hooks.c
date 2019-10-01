@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/parallel.h"
 #include "access/xact.h"
 #include "commands/dbcommands.h"
 #include "executor/spi.h"
@@ -89,6 +90,10 @@ sample_session_start_hook(void)
 	if (!OidIsValid(MyDatabaseId))
 		return;
 
+	/* no parallel workers */
+	if (IsParallelWorker())
+		return;
+
 	register_session_hook("START");
 }
 
@@ -105,6 +110,10 @@ sample_session_end_hook(void)
 
 	/* consider backends connected to a database */
 	if (!OidIsValid(MyDatabaseId))
+		return;
+
+	/* no parallel workers */
+	if (IsParallelWorker())
 		return;
 
 	register_session_hook("END");
