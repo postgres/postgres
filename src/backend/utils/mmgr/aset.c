@@ -571,7 +571,8 @@ AllocSetReset(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
 	AllocBlock	block;
-	Size		keepersize = set->keeper->endptr - ((char *) set);
+	Size		keepersize PG_USED_FOR_ASSERTS_ONLY
+		= set->keeper->endptr - ((char *) set);
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -638,7 +639,8 @@ AllocSetDelete(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
 	AllocBlock	block = set->blocks;
-	Size		keepersize = set->keeper->endptr - ((char *) set);
+	Size		keepersize PG_USED_FOR_ASSERTS_ONLY
+		= set->keeper->endptr - ((char *) set);
 
 	AssertArg(AllocSetIsValid(set));
 
