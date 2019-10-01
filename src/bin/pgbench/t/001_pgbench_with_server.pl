@@ -58,6 +58,19 @@ sub pgbench
 	return;
 }
 
+# tablespace for testing, because partitioned tables cannot use pg_default
+# explicitly and we want to test that table creation with tablespace works
+# for partitioned tables.
+my $ts = $node->basedir . '/regress_pgbench_tap_1_ts_dir';
+mkdir $ts or die "cannot create directory $ts";
+# this takes care of WIN-specific path issues
+my $ets = TestLib::perl2host($ts);
+
+# the next commands will issue a syntax error if the path contains a "'"
+$node->safe_psql('postgres',
+       "CREATE TABLESPACE regress_pgbench_tap_1_ts LOCATION '$ets';"
+);
+
 # Test concurrent OID generation via pg_enum_oid_index.  This indirectly
 # exercises LWLock and spinlock concurrency.
 my $labels = join ',', map { "'l$_'" } 1 .. 1000;
@@ -100,12 +113,13 @@ pgbench(
 
 # Again, with all possible options
 pgbench(
-	'--initialize --init-steps=dtpvg --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
+	'--initialize --init-steps=dtpvg --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=regress_pgbench_tap_1_ts --index-tablespace=regress_pgbench_tap_1_ts --partitions=2 --partition-method=hash',
 	0,
 	[qr{^$}i],
 	[
 		qr{dropping old tables},
 		qr{creating tables},
+		qr{creating 2 partitions},
 		qr{vacuuming},
 		qr{creating primary keys},
 		qr{creating foreign keys},
@@ -116,12 +130,13 @@ pgbench(
 
 # Test interaction of --init-steps with legacy step-selection options
 pgbench(
-	'--initialize --init-steps=dtpvgvv --no-vacuum --foreign-keys --unlogged-tables',
+	'--initialize --init-steps=dtpvgvv --no-vacuum --foreign-keys --unlogged-tables --partitions=3',
 	0,
 	[qr{^$}],
 	[
 		qr{dropping old tables},
 		qr{creating tables},
+		qr{creating 3 partitions},
 		qr{creating primary keys},
 		qr{.* of .* tuples \(.*\) done},
 		qr{creating foreign keys},
@@ -910,5 +925,6 @@ check_pgbench_logs($bdir, '001_pgbench_log_3', 1, 10, 10,
 	qr{^\d \d{1,2} \d+ \d \d+ \d+$});
 
 # done
+$node->safe_psql('postgres', 'DROP TABLESPACE regress_pgbench_tap_1_ts');
 $node->stop;
 done_testing();

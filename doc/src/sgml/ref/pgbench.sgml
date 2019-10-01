@@ -307,6 +307,31 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
+      <term><option>--partitions=<replaceable>NUM</replaceable></option></term>
+      <listitem>
+       <para>
+        Create a partitioned <literal>pgbench_accounts</literal> table with
+        <replaceable>NUM</replaceable> partitions of nearly equal size for
+        the scaled number of accounts.
+        Default is <literal>0</literal>, meaning no partitioning.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--partition-method=<replaceable>NAME</replaceable></option></term>
+      <listitem>
+       <para>
+        Create a partitioned <literal>pgbench_accounts</literal> table with
+        <replaceable>NAME</replaceable> method.
+        Expected values are <literal>range</literal> or <literal>hash</literal>.
+        This option requires that <option>--partitions</option> is set to non-zero.
+        If unspecified, default is <literal>range</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--tablespace=<replaceable>tablespace</replaceable></option></term>
       <listitem>
        <para>
