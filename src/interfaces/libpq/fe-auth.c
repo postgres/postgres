@@ -471,14 +471,28 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		{
 			if (conn->ssl_in_use)
 			{
-				/*
-				 * The server has offered SCRAM-SHA-256-PLUS, which is only
-				 * supported by the client if a hash of the peer certificate
-				 * can be created, and if channel_binding is not disabled.
-				 */
+				/* The server has offered SCRAM-SHA-256-PLUS. */
+
 #ifdef HAVE_PGTLS_GET_PEER_CERTIFICATE_HASH
+				/*
+				 * The client supports channel binding, which is chosen if
+				 * channel_binding is not disabled.
+				 */
 				if (conn->channel_binding[0] != 'd')	/* disable */
 					selected_mechanism = SCRAM_SHA_256_PLUS_NAME;
+#else
+				/*
+				 * The client does not support channel binding.  If it is
+				 * required, complain immediately instead of the error below
+				 * which would be confusing as the server is publishing
+				 * SCRAM-SHA-256-PLUS.
+				 */
+				if (conn->channel_binding[0] == 'r')	/* require */
+				{
+					printfPQExpBuffer(&conn->errorMessage,
+									  libpq_gettext("channel binding is required, but client does not support it\n"));
+					goto error;
+				}
 #endif
 			}
 			else
