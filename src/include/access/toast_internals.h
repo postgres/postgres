@@ -31,7 +31,7 @@ typedef struct toast_compress_header
  */
 #define TOAST_COMPRESS_HDRSZ		((int32) sizeof(toast_compress_header))
 #define TOAST_COMPRESS_RAWSIZE(ptr) (((toast_compress_header *) (ptr))->rawsize)
-#define TOAST_COMPRESS_SIZE(ptr)	((int32) VARSIZE(ptr) - TOAST_COMPRESS_HDRSZ)
+#define TOAST_COMPRESS_SIZE(ptr)	((int32) VARSIZE_ANY(ptr) - TOAST_COMPRESS_HDRSZ)
 #define TOAST_COMPRESS_RAWDATA(ptr) \
 	(((char *) (ptr)) + TOAST_COMPRESS_HDRSZ)
 #define TOAST_COMPRESS_SET_RAWSIZE(ptr, len) \
