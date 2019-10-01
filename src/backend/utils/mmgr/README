@@ -23,6 +23,10 @@ The basic operations on a memory context are:
 * reset a context (free all memory allocated in the context, but not the
   context object itself)
 
+* inquire about the total amount of memory allocated to the context
+  (the raw memory from which the context allocates chunks; not the
+  chunks themselves)
+
 Given a chunk of memory previously allocated from a context, one can
 free it or reallocate it larger or smaller (corresponding to standard C
 library's free() and realloc() routines).  These operations return memory
@@ -452,3 +456,33 @@ returns the memory when reset/deleted).
 
 These memory contexts were initially developed for ReorderBuffer, but
 may be useful elsewhere as long as the allocation patterns match.
+
+
+Memory Accounting
+-----------------
+
+One of the basic memory context operations is determining the amount of
+memory used in the context (and it's children). We have multiple places
+that implement their own ad hoc memory accounting, and this is meant to
+provide a unified approach. Ad hoc accounting solutions work for places
+with tight control over the allocations or when it's easy to determine
+sizes of allocated chunks (e.g. places that only work with tuples).
+
+The accounting built into the memory contexts is transparent and works
+transparently for all allocations as long as they end up in the right
+memory context subtree.
+
+Consider for example aggregate functions - the aggregate state is often
+represented by an arbitrary structure, allocated from the transition
+function, so the ad hoc accounting is unlikely to work. The built-in
+accounting will however handle such cases just fine.
+
+To minimize overhead, the accounting is done at the block level, not for
+individual allocation chunks.
+
+The accounting is lazy - after a block is allocated (or freed), only the
+context owning that block is updated. This means that when inquiring
+about the memory usage in a given context, we have to walk all children
+contexts recursively. This means the memory accounting is not intended
+for cases with too many memory contexts (in the relevant subtree).
+

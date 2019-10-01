@@ -305,12 +305,14 @@ SlabReset(MemoryContext context)
 #endif
 			free(block);
 			slab->nblocks--;
+			context->mem_allocated -= slab->blockSize;
 		}
 	}
 
 	slab->minFreeChunks = 0;
 
 	Assert(slab->nblocks == 0);
+	Assert(context->mem_allocated == 0);
 }
 
 /*
@@ -388,6 +390,7 @@ SlabAlloc(MemoryContext context, Size size)
 
 		slab->minFreeChunks = slab->chunksPerBlock;
 		slab->nblocks += 1;
+		context->mem_allocated += slab->blockSize;
 	}
 
 	/* grab the block from the freelist (even the new block is there) */
@@ -480,6 +483,9 @@ SlabAlloc(MemoryContext context, Size size)
 #endif
 
 	SlabAllocInfo(slab, chunk);
+
+	Assert(slab->nblocks * slab->blockSize == context->mem_allocated);
+
 	return SlabChunkGetPointer(chunk);
 }
 
@@ -555,11 +561,13 @@ SlabFree(MemoryContext context, void *pointer)
 	{
 		free(block);
 		slab->nblocks--;
+		context->mem_allocated -= slab->blockSize;
 	}
 	else
 		dlist_push_head(&slab->freelist[block->nfree], &block->node);
 
 	Assert(slab->nblocks >= 0);
+	Assert(slab->nblocks * slab->blockSize == context->mem_allocated);
 }
 
 /*
@@ -782,6 +790,8 @@ SlabCheck(MemoryContext context)
 					 name, block->nfree, block, nfree);
 		}
 	}
+
+	Assert(slab->nblocks * slab->blockSize == context->mem_allocated);
 }
 
 #endif							/* MEMORY_CONTEXT_CHECKING */
