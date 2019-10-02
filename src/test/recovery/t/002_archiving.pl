@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 1;
+use Test::More tests => 3;
 use File::Copy;
 
 # Initialize master node, doing archives
@@ -49,3 +49,26 @@ $node_standby->poll_query_until('postgres', $caughtup_query)
 my $result =
   $node_standby->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 is($result, qq(1000), 'check content from archives');
+
+# Check the presence of temporary files specifically generated during
+# archive recovery.  To ensure the presence of the temporary history
+# file, switch to a timeline large enough to allow a standby to recover
+# a history file from an archive.  As this requires at least two timeline
+# switches, promote the existing standby first.  Then create a second
+# standby based on the promoted one.  Finally, the second standby is
+# promoted.
+$node_standby->promote;
+
+my $node_standby2 = get_new_node('standby2');
+$node_standby2->init_from_backup($node_master, $backup_name,
+	has_restoring => 1);
+$node_standby2->start;
+
+# Now promote standby2, and check that temporary files specifically
+# generated during archive recovery are removed by the end of recovery.
+$node_standby2->promote;
+my $node_standby2_data = $node_standby2->data_dir;
+ok( !-f "$node_standby2_data/pg_wal/RECOVERYHISTORY",
+	"RECOVERYHISTORY removed after promotion");
+ok( !-f "$node_standby2_data/pg_wal/RECOVERYXLOG",
+	"RECOVERYXLOG removed after promotion");
