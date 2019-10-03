@@ -24,6 +24,7 @@
 #define QTW_IGNORE_RANGE_TABLE		0x08		/* skip rangetable entirely */
 #define QTW_EXAMINE_RTES			0x10		/* examine RTEs */
 #define QTW_DONT_COPY_QUERY			0x20		/* do not copy top Query */
+#define QTW_EXAMINE_SORTGROUP		0x80	/* include SortGroupNode lists */
 
 
 extern Oid	exprType(const Node *expr);
