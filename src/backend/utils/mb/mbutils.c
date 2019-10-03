@@ -349,16 +349,24 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 						pg_encoding_to_char(dest_encoding))));
 
 	/*
-	 * Allocate space for conversion result, being wary of integer overflow
+	 * Allocate space for conversion result, being wary of integer overflow.
+	 *
+	 * len * MAX_CONVERSION_GROWTH is typically a vast overestimate of the
+	 * required space, so it might exceed MaxAllocSize even though the result
+	 * would actually fit.  We do not want to hand back a result string that
+	 * exceeds MaxAllocSize, because callers might not cope gracefully --- but
+	 * if we just allocate more than that, and don't use it, that's fine.
 	 */
-	if ((Size) len >= (MaxAllocSize / (Size) MAX_CONVERSION_GROWTH))
+	if ((Size) len >= (MaxAllocHugeSize / (Size) MAX_CONVERSION_GROWTH))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("out of memory"),
 				 errdetail("String of %d bytes is too long for encoding conversion.",
 						   len)));
 
-	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
+	result = (unsigned char *)
+		MemoryContextAllocHuge(CurrentMemoryContext,
+							   (Size) len * MAX_CONVERSION_GROWTH + 1);
 
 	OidFunctionCall5(proc,
 					 Int32GetDatum(src_encoding),
@@ -366,6 +374,26 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 					 CStringGetDatum(src),
 					 CStringGetDatum(result),
 					 Int32GetDatum(len));
+
+	/*
+	 * If the result is large, it's worth repalloc'ing to release any extra
+	 * space we asked for.  The cutoff here is somewhat arbitrary, but we
+	 * *must* check when len * MAX_CONVERSION_GROWTH exceeds MaxAllocSize.
+	 */
+	if (len > 1000000)
+	{
+		Size		resultlen = strlen((char *) result);
+
+		if (resultlen >= MaxAllocSize)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("out of memory"),
+					 errdetail("String of %d bytes is too long for encoding conversion.",
+							   len)));
+
+		result = (unsigned char *) repalloc(result, resultlen + 1);
+	}
+
 	return result;
 }
 
@@ -682,16 +710,19 @@ perform_default_encoding_conversion(const char *src, int len,
 		return unconstify(char *, src);
 
 	/*
-	 * Allocate space for conversion result, being wary of integer overflow
+	 * Allocate space for conversion result, being wary of integer overflow.
+	 * See comments in pg_do_encoding_conversion.
 	 */
-	if ((Size) len >= (MaxAllocSize / (Size) MAX_CONVERSION_GROWTH))
+	if ((Size) len >= (MaxAllocHugeSize / (Size) MAX_CONVERSION_GROWTH))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("out of memory"),
 				 errdetail("String of %d bytes is too long for encoding conversion.",
 						   len)));
 
-	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
+	result = (char *)
+		MemoryContextAllocHuge(CurrentMemoryContext,
+							   (Size) len * MAX_CONVERSION_GROWTH + 1);
 
 	FunctionCall5(flinfo,
 				  Int32GetDatum(src_encoding),
@@ -699,6 +730,25 @@ perform_default_encoding_conversion(const char *src, int len,
 				  CStringGetDatum(src),
 				  CStringGetDatum(result),
 				  Int32GetDatum(len));
+
+	/*
+	 * Release extra space if there might be a lot --- see comments in
+	 * pg_do_encoding_conversion.
+	 */
+	if (len > 1000000)
+	{
+		Size		resultlen = strlen(result);
+
+		if (resultlen >= MaxAllocSize)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("out of memory"),
+					 errdetail("String of %d bytes is too long for encoding conversion.",
+							   len)));
+
+		result = (char *) repalloc(result, resultlen + 1);
+	}
+
 	return result;
 }
 
