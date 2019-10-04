@@ -558,7 +558,7 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 
 		/* copy datum, so it still lives later */
 		if (VARATT_IS_EXTERNAL_ONDISK(attr))
-			attr = heap_tuple_fetch_attr(attr);
+			attr = detoast_external_attr(attr);
 		else
 		{
 			struct varlena *oldattr = attr;

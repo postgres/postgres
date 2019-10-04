@@ -2085,7 +2085,7 @@ heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 		return tup;
 	}
 	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
-		return toast_insert_or_update(relation, tup, NULL, options);
+		return heap_toast_insert_or_update(relation, tup, NULL, options);
 	else
 		return tup;
 }
@@ -2809,7 +2809,7 @@ l1:
 		Assert(!HeapTupleHasExternal(&tp));
 	}
 	else if (HeapTupleHasExternal(&tp))
-		toast_delete(relation, &tp, false);
+		heap_toast_delete(relation, &tp, false);
 
 	/*
 	 * Mark tuple for invalidation from system caches at next command
@@ -3504,7 +3504,7 @@ l2:
 		if (need_toast)
 		{
 			/* Note we always use WAL and FSM during updates */
-			heaptup = toast_insert_or_update(relation, newtup, &oldtup, 0);
+			heaptup = heap_toast_insert_or_update(relation, newtup, &oldtup, 0);
 			newtupsize = MAXALIGN(heaptup->t_len);
 		}
 		else
@@ -5673,7 +5673,7 @@ heap_abort_speculative(Relation relation, ItemPointer tid)
 	if (HeapTupleHasExternal(&tp))
 	{
 		Assert(!IsToastRelation(relation));
-		toast_delete(relation, &tp, true);
+		heap_toast_delete(relation, &tp, true);
 	}
 
 	/*

@@ -30,7 +30,7 @@ static struct varlena *toast_decompress_datum(struct varlena *attr);
 static struct varlena *toast_decompress_datum_slice(struct varlena *attr, int32 slicelength);
 
 /* ----------
- * heap_tuple_fetch_attr -
+ * detoast_external_attr -
  *
  *	Public entry point to get back a toasted value from
  *	external source (possibly still in compressed format).
@@ -42,7 +42,7 @@ static struct varlena *toast_decompress_datum_slice(struct varlena *attr, int32 
  * ----------
  */
 struct varlena *
-heap_tuple_fetch_attr(struct varlena *attr)
+detoast_external_attr(struct varlena *attr)
 {
 	struct varlena *result;
 
@@ -68,7 +68,7 @@ heap_tuple_fetch_attr(struct varlena *attr)
 
 		/* recurse if value is still external in some other way */
 		if (VARATT_IS_EXTERNAL(attr))
-			return heap_tuple_fetch_attr(attr);
+			return detoast_external_attr(attr);
 
 		/*
 		 * Copy into the caller's memory context, in case caller tries to
@@ -103,7 +103,7 @@ heap_tuple_fetch_attr(struct varlena *attr)
 
 
 /* ----------
- * heap_tuple_untoast_attr -
+ * detoast_attr -
  *
  *	Public entry point to get back a toasted value from compression
  *	or external storage.  The result is always non-extended varlena form.
@@ -113,7 +113,7 @@ heap_tuple_fetch_attr(struct varlena *attr)
  * ----------
  */
 struct varlena *
-heap_tuple_untoast_attr(struct varlena *attr)
+detoast_attr(struct varlena *attr)
 {
 	if (VARATT_IS_EXTERNAL_ONDISK(attr))
 	{
@@ -144,7 +144,7 @@ heap_tuple_untoast_attr(struct varlena *attr)
 		Assert(!VARATT_IS_EXTERNAL_INDIRECT(attr));
 
 		/* recurse in case value is still extended in some other way */
-		attr = heap_tuple_untoast_attr(attr);
+		attr = detoast_attr(attr);
 
 		/* if it isn't, we'd better copy it */
 		if (attr == (struct varlena *) redirect.pointer)
@@ -161,7 +161,7 @@ heap_tuple_untoast_attr(struct varlena *attr)
 		/*
 		 * This is an expanded-object pointer --- get flat format
 		 */
-		attr = heap_tuple_fetch_attr(attr);
+		attr = detoast_external_attr(attr);
 		/* flatteners are not allowed to produce compressed/short output */
 		Assert(!VARATT_IS_EXTENDED(attr));
 	}
@@ -192,7 +192,7 @@ heap_tuple_untoast_attr(struct varlena *attr)
 
 
 /* ----------
- * heap_tuple_untoast_attr_slice -
+ * detoast_attr_slice -
  *
  *		Public entry point to get back part of a toasted value
  *		from compression or external storage.
@@ -201,7 +201,7 @@ heap_tuple_untoast_attr(struct varlena *attr)
  * ----------
  */
 struct varlena *
-heap_tuple_untoast_attr_slice(struct varlena *attr,
+detoast_attr_slice(struct varlena *attr,
 							  int32 sliceoffset, int32 slicelength)
 {
 	struct varlena *preslice;
@@ -253,13 +253,13 @@ heap_tuple_untoast_attr_slice(struct varlena *attr,
 		/* nested indirect Datums aren't allowed */
 		Assert(!VARATT_IS_EXTERNAL_INDIRECT(redirect.pointer));
 
-		return heap_tuple_untoast_attr_slice(redirect.pointer,
+		return detoast_attr_slice(redirect.pointer,
 											 sliceoffset, slicelength);
 	}
 	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
 	{
-		/* pass it off to heap_tuple_fetch_attr to flatten */
-		preslice = heap_tuple_fetch_attr(attr);
+		/* pass it off to detoast_external_attr to flatten */
+		preslice = detoast_external_attr(attr);
 	}
 	else
 		preslice = attr;
@@ -771,7 +771,7 @@ toast_decompress_datum(struct varlena *attr)
  * toast_decompress_datum_slice -
  *
  * Decompress the front of a compressed version of a varlena datum.
- * offset handling happens in heap_tuple_untoast_attr_slice.
+ * offset handling happens in detoast_attr_slice.
  * Here we just decompress a slice from the front.
  */
 static struct varlena *

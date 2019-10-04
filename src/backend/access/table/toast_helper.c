@@ -135,9 +135,9 @@ toast_tuple_init(ToastTupleContext *ttc)
 			{
 				ttc->ttc_attr[i].tai_oldexternal = new_value;
 				if (att->attstorage == 'p')
-					new_value = heap_tuple_untoast_attr(new_value);
+					new_value = detoast_attr(new_value);
 				else
-					new_value = heap_tuple_fetch_attr(new_value);
+					new_value = detoast_external_attr(new_value);
 				ttc->ttc_values[i] = PointerGetDatum(new_value);
 				ttc->ttc_attr[i].tai_colflags |= TOASTCOL_NEEDS_FREE;
 				ttc->ttc_flags |= (TOAST_NEEDS_CHANGE | TOAST_NEEDS_FREE);

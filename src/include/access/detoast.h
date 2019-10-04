@@ -44,34 +44,34 @@ do { \
 #define INDIRECT_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(varatt_indirect))
 
 /* ----------
- * heap_tuple_fetch_attr() -
+ * detoast_external_attr() -
  *
  *		Fetches an external stored attribute from the toast
  *		relation. Does NOT decompress it, if stored external
  *		in compressed format.
  * ----------
  */
-extern struct varlena *heap_tuple_fetch_attr(struct varlena *attr);
+extern struct varlena *detoast_external_attr(struct varlena *attr);
 
 /* ----------
- * heap_tuple_untoast_attr() -
+ * detoast_attr() -
  *
  *		Fully detoasts one attribute, fetching and/or decompressing
  *		it as needed.
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
+extern struct varlena *detoast_attr(struct varlena *attr);
 
 /* ----------
- * heap_tuple_untoast_attr_slice() -
+ * detoast_attr_slice() -
  *
  *		Fetches only the specified portion of an attribute.
  *		(Handles all cases for attribute storage)
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena *attr,
-							  int32 sliceoffset,
-							  int32 slicelength);
+extern struct varlena *detoast_attr_slice(struct varlena *attr,
+										  int32 sliceoffset,
+										  int32 slicelength);
 
 /* ----------
  * toast_raw_datum_size -

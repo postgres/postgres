@@ -89,22 +89,22 @@
 	 VARHDRSZ)
 
 /* ----------
- * toast_insert_or_update -
+ * heap_toast_insert_or_update -
  *
  *	Called by heap_insert() and heap_update().
  * ----------
  */
-extern HeapTuple toast_insert_or_update(Relation rel,
-										HeapTuple newtup, HeapTuple oldtup,
-										int options);
+extern HeapTuple heap_toast_insert_or_update(Relation rel, HeapTuple newtup,
+											 HeapTuple oldtup, int options);
 
 /* ----------
- * toast_delete -
+ * heap_toast_delete -
  *
  *	Called by heap_delete().
  * ----------
  */
-extern void toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative);
+extern void heap_toast_delete(Relation rel, HeapTuple oldtup,
+							  bool is_speculative);
 
 /* ----------
  * toast_flatten_tuple -

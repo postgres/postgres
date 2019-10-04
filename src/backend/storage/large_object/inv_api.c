@@ -180,7 +180,7 @@ getdatafield(Form_pg_largeobject tuple,
 	if (VARATT_IS_EXTENDED(datafield))
 	{
 		datafield = (bytea *)
-			heap_tuple_untoast_attr((struct varlena *) datafield);
+			detoast_attr((struct varlena *) datafield);
 		freeit = true;
 	}
 	len = VARSIZE(datafield) - VARHDRSZ;
