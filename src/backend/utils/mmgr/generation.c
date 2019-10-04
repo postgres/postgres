@@ -753,7 +753,7 @@ GenerationCheck(MemoryContext context)
 	GenerationContext *gen = (GenerationContext *) context;
 	const char *name = context->name;
 	dlist_iter	iter;
-	int64		total_allocated = 0;
+	Size		total_allocated = 0;
 
 	/* walk all blocks in this context */
 	dlist_foreach(iter, &gen->blocks)

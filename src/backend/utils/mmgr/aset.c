@@ -1154,7 +1154,9 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 			return NULL;
 		}
 
-		context->mem_allocated += blksize - oldblksize;
+		/* updated separately, not to underflow when (oldblksize > blksize) */
+		context->mem_allocated -= oldblksize;
+		context->mem_allocated += blksize;
 
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
@@ -1427,7 +1429,7 @@ AllocSetCheck(MemoryContext context)
 	const char *name = set->header.name;
 	AllocBlock	prevblock;
 	AllocBlock	block;
-	int64		total_allocated = 0;
+	Size		total_allocated = 0;
 
 	for (prevblock = NULL, block = set->blocks;
 		 block != NULL;
