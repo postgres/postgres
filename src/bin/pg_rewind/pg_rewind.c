@@ -101,7 +101,7 @@ main(int argc, char **argv)
 		{"write-recovery-conf", no_argument, NULL, 'R'},
 		{"source-pgdata", required_argument, NULL, 1},
 		{"source-server", required_argument, NULL, 2},
-		{"no-ensure-shutdown", no_argument, NULL, 44},
+		{"no-ensure-shutdown", no_argument, NULL, 4},
 		{"version", no_argument, NULL, 'V'},
 		{"dry-run", no_argument, NULL, 'n'},
 		{"no-sync", no_argument, NULL, 'N'},
@@ -180,9 +180,11 @@ main(int argc, char **argv)
 			case 1:				/* --source-pgdata */
 				datadir_source = pg_strdup(optarg);
 				break;
+
 			case 2:				/* --source-server */
 				connstr_source = pg_strdup(optarg);
 				break;
+
 			case 4:
 				no_ensure_shutdown = true;
 				break;
@@ -341,7 +343,7 @@ main(int argc, char **argv)
 	if (!rewind_needed)
 	{
 		pg_log_info("no rewind required");
-		if (writerecoveryconf)
+		if (writerecoveryconf && !dry_run)
 			WriteRecoveryConfig(conn, datadir_target,
 								GenerateRecoveryConfig(conn, NULL));
 		exit(0);
@@ -442,7 +444,7 @@ main(int argc, char **argv)
 		pg_log_info("syncing target data directory");
 	syncTargetDirectory();
 
-	if (writerecoveryconf)
+	if (writerecoveryconf && !dry_run)
 		WriteRecoveryConfig(conn, datadir_target,
 							GenerateRecoveryConfig(conn, NULL));
 
