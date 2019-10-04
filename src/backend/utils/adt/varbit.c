@@ -1483,6 +1483,7 @@ bitshiftright(PG_FUNCTION_ARGS)
 		/* Special case: we can do a memcpy */
 		len = VARBITBYTES(arg) - byte_shift;
 		memcpy(r, p, len);
+		r += len;
 	}
 	else
 	{
@@ -1494,9 +1495,10 @@ bitshiftright(PG_FUNCTION_ARGS)
 			if ((++r) < VARBITEND(result))
 				*r = (*p << (BITS_PER_BYTE - ishift)) & BITMASK;
 		}
-		/* We may have shifted 1's into the pad bits, so fix that */
-		VARBIT_PAD_LAST(result, r);
 	}
+
+	/* We may have shifted 1's into the pad bits, so fix that */
+	VARBIT_PAD_LAST(result, r);
 
 	PG_RETURN_VARBIT_P(result);
 }
