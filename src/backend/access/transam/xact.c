@@ -4743,7 +4743,6 @@ StartSubTransaction(void)
 	 */
 	AtSubStart_Memory();
 	AtSubStart_ResourceOwner();
-	AtSubStart_Notify();
 	AfterTriggerBeginSubXact();
 
 	s->state = TRANS_INPROGRESS;
