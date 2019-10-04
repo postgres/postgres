@@ -129,8 +129,9 @@ sub GetOpenSSLVersion
 
 	# Attempt to get OpenSSL version and location.  This assumes that
 	# openssl.exe is in the specified directory.
+	# Quote the .exe name in case it has spaces
 	my $opensslcmd =
-	  $self->{options}->{openssl} . "\\bin\\openssl.exe version 2>&1";
+	  qq("$self->{options}->{openssl}\\bin\\openssl.exe" version 2>&1);
 	my $sslout = `$opensslcmd`;
 
 	$? >> 8 == 0
