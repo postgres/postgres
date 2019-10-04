@@ -126,7 +126,8 @@ sub AddLibrary
 {
 	my ($self, $lib, $dbgsuffix) = @_;
 
-	if ($lib =~ m/\s/)
+	# quote lib name if it has spaces and isn't already quoted
+	if ($lib =~ m/\s/ && $lib !~ m/^[&]quot;/)
 	{
 		$lib = '&quot;' . $lib . "&quot;";
 	}
