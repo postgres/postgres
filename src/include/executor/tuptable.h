@@ -476,6 +476,7 @@ static inline TupleTableSlot *
 ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
 	Assert(!TTS_EMPTY(srcslot));
+	AssertArg(srcslot != dstslot);
 
 	dstslot->tts_ops->copyslot(dstslot, srcslot);
 
