@@ -1,4 +1,25 @@
 /pg_waldump
+
 # Source files copied from src/backend/access/rmgrdesc/
-/*desc.c
+/brindesc.c
+/clogdesc.c
+/committsdesc.c
+/dbasedesc.c
+/genericdesc.c
+/gindesc.c
+/gistdesc.c
+/hashdesc.c
+/heapdesc.c
+/logicalmsgdesc.c
+/mxactdesc.c
+/nbtdesc.c
+/relmapdesc.c
+/replorigindesc.c
+/seqdesc.c
+/smgrdesc.c
+/spgdesc.c
+/standbydesc.c
+/tblspcdesc.c
+/xactdesc.c
+/xlogdesc.c
 /xlogreader.c
