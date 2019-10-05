@@ -358,17 +358,17 @@ permutation "s1_trig_rep_b_d" "s1_trig_rep_a_d"
     "s0_rep"
 
 ### Verify EPQ with more than two participants works
-# s1 updates, s2 updates, s3 updates, s1 commits, s2 EPQ, s2 commits, s3 EPQ
-permutation "s1_trig_rep_b_u" "s1_trig_rep_a_u"
-    "s1_ins_a" "s1_ins_b" "s1_b_rc" "s2_b_rc" "s3_b_rc"
-    "s1_upd_a_data" "s2_upd_a_data" "s3_upd_a_data" "s1_c" "s2_c" "s3_c"
-    "s0_rep"
-# s1 updates, s2 updates, s3 updates, s1 commits, s2 EPQ, s2 rolls back, s3 EPQ
-permutation "s1_trig_rep_b_u" "s1_trig_rep_a_u"
-    "s1_ins_a" "s1_ins_b" "s1_b_rc" "s2_b_rc" "s3_b_rc"
-    "s1_upd_a_data" "s2_upd_a_data" "s3_upd_a_data" "s1_c" "s2_r" "s3_c"
-    "s0_rep"
-## XXX: Disable test, there is some potential for instability here that's not yet fully understood
+## XXX: Disable tests, there is some potential for instability here that's not yet fully understood
+## s1 updates, s2 updates, s3 updates, s1 commits, s2 EPQ, s2 commits, s3 EPQ
+#permutation "s1_trig_rep_b_u" "s1_trig_rep_a_u"
+#    "s1_ins_a" "s1_ins_b" "s1_b_rc" "s2_b_rc" "s3_b_rc"
+#    "s1_upd_a_data" "s2_upd_a_data" "s3_upd_a_data" "s1_c" "s2_c" "s3_c"
+#    "s0_rep"
+## s1 updates, s2 updates, s3 updates, s1 commits, s2 EPQ, s2 rolls back, s3 EPQ
+#permutation "s1_trig_rep_b_u" "s1_trig_rep_a_u"
+#    "s1_ins_a" "s1_ins_b" "s1_b_rc" "s2_b_rc" "s3_b_rc"
+#    "s1_upd_a_data" "s2_upd_a_data" "s3_upd_a_data" "s1_c" "s2_r" "s3_c"
+#    "s0_rep"
 ## s1 updates, s3 updates, s2 upserts, s1 updates, s1 commits, s3 EPQ, s3 deletes, s3 commits, s2 inserts without EPQ recheck
 #permutation "s1_trig_rep_b_i" "s1_trig_rep_b_d" "s1_trig_rep_b_u" "s1_trig_rep_a_i" "s1_trig_rep_a_d" "s1_trig_rep_a_u"
 #    "s1_ins_a" "s1_b_rc" "s2_b_rc" "s3_b_rc"
