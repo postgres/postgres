@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "nodes/pg_list.h"
+#include "utils/memdebug.h"
 #include "utils/memutils.h"
 
 
@@ -172,8 +173,6 @@ enlarge_list(List *list, int min_size)
 
 	if (list->elements == list->initial_elements)
 	{
-		List	   *newlist PG_USED_FOR_ASSERTS_ONLY;
-
 		/*
 		 * Replace original in-line allocation with a separate palloc block.
 		 * Ensure it is in the same memory context as the List header.  (The
@@ -188,16 +187,18 @@ enlarge_list(List *list, int min_size)
 			   list->length * sizeof(ListCell));
 
 		/*
-		 * Currently, asking aset.c to reduce the allocated size of the List
-		 * header is pointless in terms of reclaiming space, unless the list
-		 * is very long.  However, it seems worth doing anyway to cause the
-		 * no-longer-needed initial_elements[] space to be cleared in
-		 * debugging builds.
+		 * We must not move the list header, so it's unsafe to try to reclaim
+		 * the initial_elements[] space via repalloc.  In debugging builds,
+		 * however, we can clear that space and/or mark it inaccessible.
+		 * (wipe_mem includes VALGRIND_MAKE_MEM_NOACCESS.)
 		 */
-		newlist = (List *) repalloc(list, offsetof(List, initial_elements));
-
-		/* That better not have failed, nor moved the list header */
-		Assert(newlist == list);
+#ifdef CLOBBER_FREED_MEMORY
+		wipe_mem(list->initial_elements,
+				 list->max_length * sizeof(ListCell));
+#else
+		VALGRIND_MAKE_MEM_NOACCESS(list->initial_elements,
+								   list->max_length * sizeof(ListCell));
+#endif
 	}
 	else
 	{
@@ -736,13 +737,16 @@ list_delete_nth_cell(List *list, int n)
 		else
 		{
 			/*
-			 * As in enlarge_list(), tell palloc code we're not using the
-			 * initial_elements space anymore.
+			 * As in enlarge_list(), clear the initial_elements[] space and/or
+			 * mark it inaccessible.
 			 */
-			List	   *newlist PG_USED_FOR_ASSERTS_ONLY;
-
-			newlist = (List *) repalloc(list, offsetof(List, initial_elements));
-			Assert(newlist == list);
+#ifdef CLOBBER_FREED_MEMORY
+			wipe_mem(list->initial_elements,
+					 list->max_length * sizeof(ListCell));
+#else
+			VALGRIND_MAKE_MEM_NOACCESS(list->initial_elements,
+									   list->max_length * sizeof(ListCell));
+#endif
 		}
 		list->elements = newelems;
 		list->max_length = newmaxlen;
