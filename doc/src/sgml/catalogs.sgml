@@ -6376,28 +6376,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    about those tables that are readable by the current user.
   </para>
 
-  <para>
-   <structname>pg_statistic</structname> should not be readable by the
-   public, since even statistical information about a table's contents
-   might be considered sensitive.  (Example: minimum and maximum values
-   of a salary column might be quite interesting.)
-   <link linkend="view-pg-stats"><structname>pg_stats</structname></link>
-   is a publicly readable view on
-   <structname>pg_statistic</structname> that only exposes information
-   about those tables that are readable by the current user.
-  </para>
-
-  <para>
-   Similarly, <structname>pg_statistic_ext_data</structname> should not be
-   readable by the public, since the contents might be considered sensitive.
-   (Example: most common combination of values in columns might be quite
-   interesting.)
-   <link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link>
-   is a publicly readable view on <structname>pg_statistic_ext_data</structname>
-   (after joining with <structname>pg_statistic_ext</structname>) that only exposes
-   information about those tables and columns that are readable by the current user.
-  </para>
-
   <table>
    <title><structname>pg_statistic</structname> Columns</title>
 
@@ -6616,9 +6594,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </table>
 
   <para>
-   The <structfield>stxkind</structfield> field is filled at creation of the
-   statistics object, indicating which statistic type(s) are desired. The
-   statistics (once computed by <command>ANALYZE</command>) are stored in
+   The <structname>pg_statistic_ext</structname> entry is filled in
+   completely during <command>CREATE STATISTICS</command>, but the actual
+   statistical values are not computed then.
+   Subsequent <command>ANALYZE</command> commands compute the desired values
+   and populate an entry in the
    <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>
    catalog.
   </para>
@@ -6636,6 +6616,20 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    holds data for extended planner statistics defined in <structname>pg_statistic_ext</structname>.
    Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
    created with <xref linkend="sql-createstatistics"/>.
+  </para>
+
+  <para>
+   Like <structname>pg_statistic</structname>,
+   <structname>pg_statistic_ext_data</structname> should not be
+   readable by the public, since the contents might be considered sensitive.
+   (Example: most common combinations of values in columns might be quite
+   interesting.)
+   <link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link>
+   is a publicly readable view
+   on <structname>pg_statistic_ext_data</structname> (after joining
+   with <structname>pg_statistic_ext</structname>) that only exposes
+   information about those tables and columns that are readable by the
+   current user.
   </para>
 
   <table>
@@ -6657,7 +6651,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><structfield>stxoid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-statistic-ext"><structname>pg_statistic_ext</structname></link>.oid</literal></entry>
-      <entry>Extended statistic containing the definition for this data.</entry>
+      <entry>Extended statistic object containing the definition for this data</entry>
      </row>
 
      <row>
@@ -6685,7 +6679,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        MCV (most-common values) list statistics, serialized as
-       <structname>pg_mcv_list</structname> type.
+       <structname>pg_mcv_list</structname> type
       </entry>
      </row>
 
