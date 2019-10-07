@@ -106,6 +106,7 @@ static char promote_file[MAXPGPATH];
 static char logrotate_file[MAXPGPATH];
 
 static volatile pgpid_t postmasterPID = -1;
+static pgpid_t old_postmaster_pid = 0;
 
 #ifdef WIN32
 static DWORD pgctl_start_type = SERVICE_AUTO_START;
@@ -490,16 +491,17 @@ start_postmaster(void)
 
 	/*
 	 * Since there might be quotes to handle here, it is easier simply to pass
-	 * everything to a shell to process them.  Use exec so that the postmaster
-	 * has the same PID as the current child process.
+	 * everything to a shell to process them.
+	 *
+	 * Since we aren't telling the shell to directly exec the postmaster,
+	 * the returned PID is a parent process, the same as on Windows.
 	 */
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" >> \"%s\" 2>&1",
-				 exec_path, pgdata_opt, post_opts,
-				 DEVNULL, log_file);
+		snprintf(cmd, MAXPGPATH, "exec < \"%s\" >> \"%s\" 2>&1; \"%s\" %s%s; echo postmaster exit status is $?",
+				 DEVNULL, log_file, exec_path, pgdata_opt, post_opts);
 	else
-		snprintf(cmd, MAXPGPATH, "exec \"%s\" %s%s < \"%s\" 2>&1",
-				 exec_path, pgdata_opt, post_opts, DEVNULL);
+		snprintf(cmd, MAXPGPATH, "exec < \"%s\" 2>&1; \"%s\" %s%s; echo postmaster exit status is $?",
+				 DEVNULL, exec_path, pgdata_opt, post_opts);
 
 	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
 
@@ -586,12 +588,8 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 			pmpid = atol(optlines[LOCK_FILE_LINE_PID - 1]);
 			pmstart = atol(optlines[LOCK_FILE_LINE_START_TIME - 1]);
 			if (pmstart >= start_time - 2 &&
-#ifndef WIN32
-				pmpid == pm_pid
-#else
-			/* Windows can only reject standalone-backend PIDs */
-				pmpid > 0
-#endif
+			/* If pid is the value we saw before starting, assume it's stale */
+				pmpid > 0 && pmpid != old_postmaster_pid
 				)
 			{
 				/*
@@ -621,7 +619,7 @@ wait_for_postmaster(pgpid_t pm_pid, bool do_checkpoint)
 		 * Check whether the child postmaster process is still alive.  This
 		 * lets us exit early if the postmaster fails during startup.
 		 *
-		 * On Windows, we may be checking the postmaster's parent shell, but
+		 * We may be checking the postmaster's parent shell, but
 		 * that's fine for this purpose.
 		 */
 #ifndef WIN32
@@ -823,13 +821,12 @@ do_init(void)
 static void
 do_start(void)
 {
-	pgpid_t		old_pid = 0;
 	pgpid_t		pm_pid;
 
 	if (ctl_command != RESTART_COMMAND)
 	{
-		old_pid = get_pgpid(false);
-		if (old_pid != 0)
+		old_postmaster_pid = get_pgpid(false);
+		if (old_postmaster_pid != 0)
 			write_stderr(_("%s: another server might be running; "
 						   "trying to start server anyway\n"),
 						 progname);
