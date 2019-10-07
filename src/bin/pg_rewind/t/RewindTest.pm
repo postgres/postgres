@@ -227,8 +227,10 @@ sub run_pg_rewind
 	# Append the rewind-specific role to the connection string.
 	$standby_connstr = "$standby_connstr user=rewind_user";
 
-	# Stop the master and be ready to perform the rewind
-	$node_master->stop;
+	# Stop the master and be ready to perform the rewind.  The cluster
+	# needs recovery to finish once, and pg_rewind makes sure that it
+	# happens automatically.
+	$node_master->stop('immediate');
 
 	# At this point, the rewind processing is ready to run.
 	# We now have a very simple scenario with a few diverged WAL record.
@@ -260,19 +262,21 @@ sub run_pg_rewind
 	}
 	elsif ($test_mode eq "remote")
 	{
-
-		# Do rewind using a remote connection as source
+		# Do rewind using a remote connection as source, generating
+		# recovery configuration automatically.
 		command_ok(
 			[
 				'pg_rewind',                      "--debug",
 				"--source-server",                $standby_connstr,
-				"--target-pgdata=$master_pgdata", "-R",
-				"--no-sync"
+				"--target-pgdata=$master_pgdata", "--no-sync",
+				"--write-recovery-conf"
 			],
 			'pg_rewind remote');
 
-		# Check that standby.signal has been created.
-		ok(-e "$master_pgdata/standby.signal");
+		# Check that standby.signal is here as recovery configuration
+		# was requested.
+		ok( -e "$master_pgdata/standby.signal",
+			'standby.signal created after pg_rewind');
 
 		# Now, when pg_rewind apparently succeeded with minimal permissions,
 		# add REPLICATION privilege.  So we could test that new standby
