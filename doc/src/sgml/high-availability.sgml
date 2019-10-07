@@ -237,7 +237,8 @@ protocol to make nodes agree on a serializable transactional order.
    <listitem>
 
     <para>
-     For servers that are not regularly connected, like laptops or
+     For servers that are not regularly connected or have slow
+     communication links, like laptops or
      remote servers, keeping data consistent among servers is a
      challenge.  Using asynchronous multimaster replication, each
      server works independently, and periodically communicates with
@@ -256,9 +257,8 @@ protocol to make nodes agree on a serializable transactional order.
      In synchronous multimaster replication, each server can accept
      write requests, and modified data is transmitted from the
      original server to every other server before each transaction
-     commits.  Heavy write activity can cause excessive locking,
-     leading to poor performance.  In fact, write performance is
-     often worse than that of a single server.  Read requests can
+     commits.  Heavy write activity can cause excessive locking and
+     commit delays, leading to poor performance.  Read requests can
      be sent to any server.  Some implementations use shared disk
      to reduce the communication overhead.  Synchronous multimaster
      replication is best for mostly read workloads, though its big
