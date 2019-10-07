@@ -100,7 +100,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 	int64		dDate,
 				date0;
 	int64		time;
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+#if defined(HAVE_STRUCT_TM_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	time_t		utime;
 	struct tm  *tx;
 #endif
@@ -134,7 +134,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 		 */
 		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+#if defined(HAVE_STRUCT_TM_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 
 			utime = dt / USECS_PER_SEC +
 				((date0 - date2j(1970, 1, 1)) * INT64CONST(86400));
@@ -147,7 +147,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 			tm->tm_min = tx->tm_min;
 			tm->tm_isdst = tx->tm_isdst;
 
-#if defined(HAVE_TM_ZONE)
+#if defined(HAVE_STRUCT_TM_TM_ZONE)
 			tm->tm_gmtoff = tx->tm_gmtoff;
 			tm->tm_zone = tx->tm_zone;
 
@@ -159,7 +159,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 			if (tzn != NULL)
 				*tzn = TZNAME_GLOBAL[(tm->tm_isdst > 0)];
 #endif
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_STRUCT_TM_TM_ZONE || HAVE_INT_TIMEZONE) */
 			*tzp = 0;
 			/* Mark this as *no* time zone available */
 			tm->tm_isdst = -1;
