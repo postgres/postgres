@@ -508,15 +508,8 @@
 /* Define to 1 if you have the <termios.h> header file. */
 /* #undef HAVE_TERMIOS_H */
 
-/* Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
-   `HAVE_STRUCT_TM_TM_ZONE' instead. */
-/* #undef HAVE_TM_ZONE */
-
 /* Define to 1 if your compiler understands `typeof' or something similar. */
 /* #undef HAVE_TYPEOF */
-
-/* Define to 1 if you have the external array `tzname'. */
-/* #undef HAVE_TZNAME */
 
 /* Define to 1 if the system has the type `uint64'. */
 /* #undef HAVE_UINT64 */
@@ -685,9 +678,6 @@
 
 /* Define to 1 if strerror_r() returns int. */
 /* #undef STRERROR_R_INT */
-
-/* Define to 1 if your <sys/time.h> declares `struct tm'. */
-/* #undef TM_IN_SYS_TIME */
 
 /* Define to 1 to build with assertion checks. (--enable-cassert) */
 /* #undef USE_ASSERT_CHECKING */

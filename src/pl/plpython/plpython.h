@@ -28,7 +28,6 @@
  */
 #undef _POSIX_C_SOURCE
 #undef _XOPEN_SOURCE
-#undef HAVE_TZNAME
 
 /*
  * Sometimes python carefully scribbles on our *printf macros.

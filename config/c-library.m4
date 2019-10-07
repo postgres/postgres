@@ -26,33 +26,14 @@ fi])# PGAC_VAR_INT_TIMEZONE
 # PGAC_STRUCT_TIMEZONE
 # ------------------
 # Figure out how to get the current timezone.  If `struct tm' has a
-# `tm_zone' member, define `HAVE_TM_ZONE'.  Also, if the
-# external array `tzname' is found, define `HAVE_TZNAME'.
-# This is the same as the standard macro AC_STRUCT_TIMEZONE, except that
-# tzname[] is checked for regardless of whether we find tm_zone.
+# `tm_zone' member, define `HAVE_STRUCT_TM_TM_ZONE'.  Unlike the
+# standard macro AC_STRUCT_TIMEZONE, we don't check for `tzname[]' if
+# not found, since we don't use it.  (We use `int timezone' as a
+# fallback.)
 AC_DEFUN([PGAC_STRUCT_TIMEZONE],
-[AC_REQUIRE([AC_STRUCT_TM])dnl
-AC_CHECK_MEMBERS([struct tm.tm_zone],,,[#include <sys/types.h>
-#include <$ac_cv_struct_tm>
-])
-if test "$ac_cv_member_struct_tm_tm_zone" = yes; then
-  AC_DEFINE(HAVE_TM_ZONE, 1,
-            [Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
-             `HAVE_STRUCT_TM_TM_ZONE' instead.])
-fi
-AC_CACHE_CHECK(for tzname, ac_cv_var_tzname,
-[AC_LINK_IFELSE([AC_LANG_PROGRAM(
-[[#include <stdlib.h>
+[AC_CHECK_MEMBERS([struct tm.tm_zone],,,[#include <sys/types.h>
 #include <time.h>
-#ifndef tzname /* For SGI.  */
-extern char *tzname[]; /* RS6000 and others reject char **tzname.  */
-#endif
-]],
-[atoi(*tzname);])], ac_cv_var_tzname=yes, ac_cv_var_tzname=no)])
-if test $ac_cv_var_tzname = yes; then
-    AC_DEFINE(HAVE_TZNAME, 1,
-              [Define to 1 if you have the external array `tzname'.])
-fi
+])
 ])# PGAC_STRUCT_TIMEZONE
 
 
