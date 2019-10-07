@@ -2154,17 +2154,17 @@ January 8 04:05:06 1999 PST
          <row>
           <entry><literal>today</literal></entry>
           <entry><type>date</type>, <type>timestamp</type></entry>
-          <entry>midnight today</entry>
+          <entry>midnight (<literal>00:00</literal>) today</entry>
          </row>
          <row>
           <entry><literal>tomorrow</literal></entry>
           <entry><type>date</type>, <type>timestamp</type></entry>
-          <entry>midnight tomorrow</entry>
+          <entry>midnight (<literal>00:00</literal>) tomorrow</entry>
          </row>
          <row>
           <entry><literal>yesterday</literal></entry>
           <entry><type>date</type>, <type>timestamp</type></entry>
-          <entry>midnight yesterday</entry>
+          <entry>midnight (<literal>00:00</literal>) yesterday</entry>
          </row>
          <row>
           <entry><literal>allballs</literal></entry>
