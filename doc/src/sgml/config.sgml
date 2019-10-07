@@ -7617,9 +7617,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         each lock acquisition attempt.  The limit applies both to explicit
         locking requests (such as <command>LOCK TABLE</command>, or <command>SELECT
         FOR UPDATE</command> without <literal>NOWAIT</literal>) and to implicitly-acquired
-        locks.  If <varname>log_min_error_statement</varname> is set to
-        <literal>ERROR</literal> or lower, the statement that timed out will be
-        logged.  A value of zero (the default) turns this off.
+        locks.  A value of zero (the default) turns this off.
        </para>
 
        <para>
@@ -7627,7 +7625,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         while waiting for locks.  Note that if <varname>statement_timeout</varname>
         is nonzero, it is rather pointless to set <varname>lock_timeout</varname> to
         the same or larger value, since the statement timeout would always
-        trigger first.
+        trigger first.  If <varname>log_min_error_statement</varname> is set to
+        <literal>ERROR</literal> or lower, the statement that timed out will be
+        logged.  
        </para>
 
        <para>
