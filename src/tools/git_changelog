@@ -39,7 +39,7 @@
 # shows the last commit before that branch was made.
 #
 # Note that --master-only is an imperfect filter, since it will not detect
-# cases where a HEAD patch was back-patched awhile later or with a slightly
+# cases where a master patch was back-patched awhile later or with a slightly
 # different commit message.  To find such cases, it's a good idea to look
 # through the output of
 #   git_changelog --non-master-only --oldest-first --since='start-date'

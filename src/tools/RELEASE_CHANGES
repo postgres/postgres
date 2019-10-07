@@ -31,9 +31,9 @@ For Major Releases
 (in addition to the above)
 
 Note that once the release branch has been forked off in git,
-release-note editing happens in that branch, not in HEAD.
+release-note editing happens in that branch, not in master.
 Updates to the rest of the documentation usually need to happen
-in both HEAD and the branch.
+in both master and the branch.
 
 * Release notes
 	o use src/tools/git_changelog
@@ -120,7 +120,7 @@ Creating Back-Branch Release Notes
 
        diff commit-N.N.log commit-O.O.log | grep '^>'
 
-* On the most recent release branch (*not* in HEAD), edit and create SGML
+* On the most recent release branch (*not* in master), edit and create SGML
   markup for relevant changes in that branch's release-NN.sgml file.
   Minor release notes should include more small change details because
   testing is limited.
