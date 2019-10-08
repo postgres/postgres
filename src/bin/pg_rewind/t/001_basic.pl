@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use TestLib;
-use Test::More tests => 11;
+use Test::More tests => 15;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -65,6 +65,71 @@ sub run_test
 	# whole new relfilenode)
 	master_psql("DELETE FROM tail_tbl WHERE id > 10");
 	master_psql("VACUUM tail_tbl");
+
+	# Before running pg_rewind, do a couple of extra tests with several
+	# option combinations.  As the code paths taken by those tests
+	# do not change for the "local" and "remote" modes, just run them
+	# in "local" mode for simplicity's sake.
+	if ($test_mode eq 'local')
+	{
+		my $master_pgdata  = $node_master->data_dir;
+		my $standby_pgdata = $node_standby->data_dir;
+
+		# First check that pg_rewind fails if the target cluster is
+		# not stopped as it fails to start up for the forced recovery
+		# step.
+		command_fails(
+			[
+				'pg_rewind',       '--debug',
+				'--source-pgdata', $standby_pgdata,
+				'--target-pgdata', $master_pgdata,
+				'--no-sync'
+			],
+			'pg_rewind with running target');
+
+		# Again with --no-ensure-shutdown, which should equally fail.
+		# This time pg_rewind complains without attempting to perform
+		# recovery once.
+		command_fails(
+			[
+				'pg_rewind',       '--debug',
+				'--source-pgdata', $standby_pgdata,
+				'--target-pgdata', $master_pgdata,
+				'--no-sync',       '--no-ensure-shutdown'
+			],
+			'pg_rewind --no-ensure-shutdown with running target');
+
+		# Stop the target, and attempt to run with a local source
+		# still running.  This fails as pg_rewind requires to have
+		# a source cleanly stopped.
+		$node_master->stop;
+		command_fails(
+			[
+				'pg_rewind',       '--debug',
+				'--source-pgdata', $standby_pgdata,
+				'--target-pgdata', $master_pgdata,
+				'--no-sync',       '--no-ensure-shutdown'
+			],
+			'pg_rewind with unexpected running source');
+
+		# Stop the target cluster cleanly, and run again pg_rewind
+		# with --dry-run mode.  If anything gets generated in the data
+		# folder, the follow-up run of pg_rewind will most likely fail,
+		# so keep this test as the last one of this subset.
+		$node_standby->stop;
+		command_ok(
+			[
+				'pg_rewind',       '--debug',
+				'--source-pgdata', $standby_pgdata,
+				'--target-pgdata', $master_pgdata,
+				'--no-sync',       '--dry-run'
+			],
+			'pg_rewind --dry-run');
+
+		# Both clusters need to be alive moving forward.
+		$node_standby->start;
+		$node_master->start;
+	}
 
 	RewindTest::run_pg_rewind($test_mode);
 
