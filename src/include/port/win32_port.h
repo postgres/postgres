@@ -103,11 +103,11 @@
  *	For WIN32, there is no wait() call so there are no wait() macros
  *	to interpret the return value of system().  Instead, system()
  *	return values < 0x100 are used for exit() termination, and higher
- *	values are used to indicated non-exit() termination, which is
+ *	values are used to indicate non-exit() termination, which is
  *	similar to a unix-style signal exit (think SIGSEGV ==
  *	STATUS_ACCESS_VIOLATION).  Return values are broken up into groups:
  *
- *	http://msdn2.microsoft.com/en-gb/library/aa489609.aspx
+ *	https://docs.microsoft.com/en-us/windows-hardware/drivers/kernel/using-ntstatus-values
  *
  *		NT_SUCCESS			0 - 0x3FFFFFFF
  *		NT_INFORMATION		0x40000000 - 0x7FFFFFFF
@@ -121,22 +121,13 @@
  *
  *		Wine (URL used in our error messages) -
  *			http://source.winehq.org/source/include/ntstatus.h
- *		Descriptions - http://www.comp.nus.edu.sg/~wuyongzh/my_doc/ntstatus.txt
- *		MS SDK - http://www.nologs.com/ntstatus.html
+ *		Descriptions -
+ *			https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/596a1078-e883-4972-9bbc-49e60bebca55
  *
- *	It seems the exception lists are in both ntstatus.h and winnt.h, but
- *	ntstatus.h has a more comprehensive list, and it only contains
- *	exception values, rather than winnt, which contains lots of other
- *	things:
- *
- *		http://www.microsoft.com/msj/0197/exception/exception.aspx
- *
- *		The ExceptionCode parameter is the number that the operating system
- *		assigned to the exception. You can see a list of various exception codes
- *		in WINNT.H by searching for #defines that start with "STATUS_". For
- *		example, the code for the all-too-familiar STATUS_ACCESS_VIOLATION is
- *		0xC0000005. A more complete set of exception codes can be found in
- *		NTSTATUS.H from the Windows NT DDK.
+ *	The comprehensive exception list is included in ntstatus.h from the
+ *	Windows	Driver Kit (WDK).  A subset of the list is also included in
+ *	winnt.h from the Windows SDK.  Defining WIN32_NO_STATUS before including
+ *	windows.h helps to avoid any conflicts.
  *
  *	Some day we might want to print descriptions for the most common
  *	exceptions, rather than printing an include file name.  We could use
