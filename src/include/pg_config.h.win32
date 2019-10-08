@@ -268,14 +268,10 @@
 /* #undef HAVE_LONG_INT_64 */
 
 /* Define to 1 if the system has the type `long long int'. */
-#if (_MSC_VER > 1200)
 #define HAVE_LONG_LONG_INT 1
-#endif
 
 /* Define to 1 if `long long int' works and is 64 bits. */
-#if (_MSC_VER > 1200)
 #define HAVE_LONG_LONG_INT_64 1
-#endif
 
 /* Define to 1 if you have the `mbstowcs_l' function. */
 #define HAVE_MBSTOWCS_L 1
@@ -347,10 +343,7 @@
 /* #undef HAVE_READLINK */
 
 /* Define to 1 if you have the `rint' function. */
-#if (_MSC_VER >= 1800)
 #define HAVE_RINT 1
-#endif
-
 
 /* Define to 1 if you have the global variable
    'rl_completion_append_character'. */
@@ -387,9 +380,7 @@
 #define HAVE_SSL_GET_CURRENT_COMPRESSION 1
 
 /* Define to 1 if stdbool.h conforms to C99. */
-#if (_MSC_VER >= 1800)
 #define HAVE_STDBOOL_H 1
-#endif
 
 /* Define to 1 if you have the <stdint.h> header file. */
 /* #undef HAVE_STDINT_H */
@@ -415,25 +406,15 @@
 /* Define to 1 if you have the `strtoll' function. */
 #ifdef HAVE_LONG_LONG_INT_64
 #define HAVE_STRTOLL 1
-/* Before VS2013, use Microsoft's nonstandard equivalent function */
-#if (_MSC_VER < 1800)
-#define strtoll _strtoi64
-#endif
 #endif
 
 /* Define to 1 if you have the `strtoull' function. */
 #ifdef HAVE_LONG_LONG_INT_64
 #define HAVE_STRTOULL 1
-/* Before VS2013, use Microsoft's nonstandard equivalent function */
-#if (_MSC_VER < 1800)
-#define strtoull _strtoui64
-#endif
 #endif
 
 /* Define to 1 if the system has the type `struct addrinfo'. */
-#if (_MSC_VER > 1200)
 #define HAVE_STRUCT_ADDRINFO 1
-#endif
 
 /* Define to 1 if the system has the type `struct cmsgcred'. */
 /* #undef HAVE_STRUCT_CMSGCRED */
@@ -445,14 +426,10 @@
 /* #undef HAVE_STRUCT_SOCKADDR_SA_LEN */
 
 /* Define to 1 if the system has the type `struct sockaddr_storage'. */
-#if (_MSC_VER > 1200)
 #define HAVE_STRUCT_SOCKADDR_STORAGE 1
-#endif
 
 /* Define to 1 if `ss_family' is member of `struct sockaddr_storage'. */
-#if (_MSC_VER > 1200)
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY 1
-#endif
 
 /* Define to 1 if `ss_len' is member of `struct sockaddr_storage'. */
 /* #undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN */
@@ -710,17 +687,13 @@
 /* #undef USE_PAM */
 
 /* Define to 1 to use software CRC-32C implementation (slicing-by-8). */
-#if (_MSC_VER < 1500)
-#define USE_SLICING_BY_8_CRC32C 1
-#endif
+/* #undef USE_SLICING_BY_8_CRC32C */
 
 /* Define to 1 use Intel SSE 4.2 CRC instructions. */
 /* #undef USE_SSE42_CRC32C */
 
 /* Define to 1 to use Intel SSE 4.2 CRC instructions with a runtime check. */
-#if (_MSC_VER >= 1500)
 #define USE_SSE42_CRC32C_WITH_RUNTIME_CHECK
-#endif
 
 /* Define to select SysV-style semaphores. */
 /* #undef USE_SYSV_SEMAPHORES */
@@ -758,11 +731,7 @@
 /* Define to keyword to use for C99 restrict support, or to nothing if this is
    not supported */
 /* Works for C and C++ in Visual Studio 2008 and upwards */
-#if (_MSC_VER >= 1500)
 #define pg_restrict __restrict
-#else
-#define pg_restrict
-#endif
 
 /* Define to the equivalent of the C99 'restrict' keyword, or to
    nothing if this is not supported.  Do not define if restrict is

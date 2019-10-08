@@ -212,7 +212,7 @@ win32_langinfo(const char *ctype)
 {
 	char	   *r = NULL;
 
-#if (_MSC_VER >= 1700) && (_MSC_VER < 1900)
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
 	_locale_t	loct = NULL;
 
 	loct = _create_locale(LC_CTYPE, ctype);
@@ -226,7 +226,7 @@ win32_langinfo(const char *ctype)
 #else
 	char	   *codepage;
 
-#if (_MSC_VER >= 1900)
+#if defined(_MSC_VER) && (_MSC_VER >= 1900)
 	uint32		cp;
 	WCHAR		wctype[LOCALE_NAME_MAX_LENGTH];
 

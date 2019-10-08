@@ -63,7 +63,7 @@ extern int	float8_cmp_internal(float8 a, float8 b);
  * long lived bug in the Microsoft compilers.
  * See http://support.microsoft.com/kb/120968/en-us for details
  */
-#if (_MSC_VER >= 1800)
+#ifdef _MSC_VER
 #pragma warning(disable:4756)
 #endif
 static inline float4
@@ -73,7 +73,7 @@ get_float4_infinity(void)
 	/* C99 standard way */
 	return (float4) INFINITY;
 #else
-#if (_MSC_VER >= 1800)
+#ifdef _MSC_VER
 #pragma warning(default:4756)
 #endif
 

@@ -137,12 +137,7 @@ static void print_msg(const char *msg);
 static void adjust_data_dir(void);
 
 #ifdef WIN32
-#if (_MSC_VER >= 1800)
 #include <versionhelpers.h>
-#else
-static bool IsWindowsXPOrGreater(void);
-static bool IsWindows7OrGreater(void);
-#endif
 static bool pgwin32_IsInstalled(SC_HANDLE);
 static char *pgwin32_CommandLine(bool);
 static void pgwin32_doRegister(void);
@@ -1377,32 +1372,6 @@ do_kill(pgpid_t pid)
 }
 
 #ifdef WIN32
-
-#if (_MSC_VER < 1800)
-static bool
-IsWindowsXPOrGreater(void)
-{
-	OSVERSIONINFO osv;
-
-	osv.dwOSVersionInfoSize = sizeof(osv);
-
-	/* Windows XP = Version 5.1 */
-	return (!GetVersionEx(&osv) ||	/* could not get version */
-			osv.dwMajorVersion > 5 || (osv.dwMajorVersion == 5 && osv.dwMinorVersion >= 1));
-}
-
-static bool
-IsWindows7OrGreater(void)
-{
-	OSVERSIONINFO osv;
-
-	osv.dwOSVersionInfoSize = sizeof(osv);
-
-	/* Windows 7 = Version 6.0 */
-	return (!GetVersionEx(&osv) ||	/* could not get version */
-			osv.dwMajorVersion > 6 || (osv.dwMajorVersion == 6 && osv.dwMinorVersion >= 0));
-}
-#endif
 
 static bool
 pgwin32_IsInstalled(SC_HANDLE hSCM)

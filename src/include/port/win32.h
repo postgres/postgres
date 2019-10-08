@@ -35,7 +35,7 @@
  * our errcode() function.  Since it's likely to get included by standard
  * system headers, pre-emptively include it now.
  */
-#if _MSC_VER >= 1400 || defined(HAVE_CRTDEFS_H)
+#if defined(_MSC_VER) || defined(HAVE_CRTDEFS_H)
 #define errcode __msvc_errcode
 #include <crtdefs.h>
 #undef errcode
