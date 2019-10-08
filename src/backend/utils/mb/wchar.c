@@ -571,7 +571,7 @@ pg_utf_mblen(const unsigned char *s)
 /*
  * This is an implementation of wcwidth() and wcswidth() as defined in
  * "The Single UNIX Specification, Version 2, The Open Group, 1997"
- * <http://www.UNIX-systems.org/online.html>
+ * <http://www.unix.org/online.html>
  *
  * Markus Kuhn -- 2001-09-08 -- public domain
  *
