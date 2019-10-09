@@ -70,10 +70,6 @@
 #include <unicode/ucnv.h>
 #endif
 
-#ifdef __GLIBC__
-#include <gnu/libc-version.h>
-#endif
-
 #ifdef WIN32
 /*
  * This Windows file defines StrNCpy. We don't need it here, so we undefine
@@ -1503,7 +1499,7 @@ pg_newlocale_from_collation(Oid collid)
 char *
 get_collation_actual_version(char collprovider, const char *collcollate)
 {
-	char	   *collversion = NULL;
+	char	   *collversion;
 
 #ifdef USE_ICU
 	if (collprovider == COLLPROVIDER_ICU)
@@ -1527,13 +1523,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 	}
 	else
 #endif
-	if (collprovider == COLLPROVIDER_LIBC)
-	{
-#if defined(__GLIBC__)
-		/* Use the glibc version because we don't have anything better. */
-		collversion = pstrdup(gnu_get_libc_version());
-#endif
-	}
+		collversion = NULL;
 
 	return collversion;
 }
