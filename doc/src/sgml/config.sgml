@@ -883,9 +883,9 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies the number of seconds of inactivity after which TCP
-        should send a keepalive message to the client.  A value of 0 uses
-        the system default.
+        Specifies the duration of inactivity after which TCP should
+        send a keepalive message to the client (defaults to seconds).
+        A value of 0 uses the system default.
         This parameter is supported only on systems that support
         <symbol>TCP_KEEPIDLE</symbol> or an equivalent socket option, and on
         Windows; on other systems, it must be zero.
@@ -909,8 +909,9 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies the number of seconds after which a TCP keepalive message
-        that is not acknowledged by the client should be retransmitted.
+        Specifies the duration after which a TCP keepalive message
+        that is not acknowledged by the client should be retransmitted
+        (defaults to seconds).
         A value of 0 uses the system default.
         This parameter is supported only on systems that support
         <symbol>TCP_KEEPINTVL</symbol> or an equivalent socket option, and on
@@ -960,7 +961,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Specifies the number of milliseconds that transmitted data may
+        Specifies duration (defaults to milliseconds) that transmitted data may
         remain unacknowledged before a connection is forcibly closed.
         A value of 0 uses the system default.
         This parameter is supported only on systems that support
@@ -995,7 +996,7 @@ include_dir 'conf.d'
 
       <listitem>
        <para>
-        Maximum time to complete client authentication, in seconds. If a
+        Maximum duration to complete client authentication (defaults to seconds). If a
         would-be client has not completed the authentication protocol in
         this much time, the server closes the connection. This prevents
         hung clients from occupying a connection indefinitely.
@@ -1818,7 +1819,7 @@ include_dir 'conf.d'
         for temporary files, such as sort and hash temporary files, or the
         storage file for a held cursor.  A transaction attempting to exceed
         this limit will be canceled.
-        The value is specified in kilobytes, and <literal>-1</literal> (the
+        The default unit is kilobytes, and <literal>-1</literal> (the
         default) means no limit.
         Only superusers can change this setting.
        </para>
@@ -1906,7 +1907,7 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         The length of time, in milliseconds, that the process will sleep
+         The duration (defaults to milliseconds) that the process will sleep
          when the cost limit has been exceeded.
          The default value is zero, which disables the cost-based vacuum
          delay feature.  Positive values enable cost-based vacuuming.
@@ -2031,11 +2032,11 @@ include_dir 'conf.d'
        </term>
        <listitem>
         <para>
-         Specifies the delay between activity rounds for the
+         Specifies the delay (defaults to milliseconds) between activity rounds for the
          background writer.  In each round the writer issues writes
          for some number of dirty buffers (controllable by the
          following parameters).  It then sleeps for <varname>bgwriter_delay</varname>
-         milliseconds, and repeats.  When there are no dirty buffers in the
+         duration, and repeats.  When there are no dirty buffers in the
          buffer pool, though, it goes into a longer sleep regardless of
          <varname>bgwriter_delay</varname>.  The default value is 200
          milliseconds (<literal>200ms</literal>). Note that on many systems, the
@@ -2794,9 +2795,10 @@ include_dir 'conf.d'
       <listitem>
       <para>
         Specifies how often the WAL writer flushes WAL. After flushing WAL it
-        sleeps for <varname>wal_writer_delay</varname> milliseconds, unless woken up
+        sleeps for <varname>wal_writer_delay</varname> duration (defaults
+        to milliseconds), unless woken up
         by an asynchronously committing transaction. If the last flush
-        happened less than <varname>wal_writer_delay</varname> milliseconds ago and
+        happened less than <varname>wal_writer_delay</varname> duration ago and
         less than <varname>wal_writer_flush_after</varname> bytes of WAL have been
         produced since, then WAL is only written to the operating system, not
         flushed to disk.
@@ -2819,7 +2821,8 @@ include_dir 'conf.d'
       <listitem>
       <para>
         Specifies how often the WAL writer flushes WAL. If the last flush
-        happened less than <varname>wal_writer_delay</varname> milliseconds ago and
+        happened less than <varname>wal_writer_delay</varname> duration ago
+        (defaults to milliseconds) and
         less than <varname>wal_writer_flush_after</varname> bytes of WAL have been
         produced since, then WAL is only written to the operating system, not
         flushed to disk.  If <varname>wal_writer_flush_after</varname> is set
@@ -2897,7 +2900,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Maximum time between automatic WAL checkpoints, in seconds.
+        Maximum duration between automatic WAL checkpoints (defaults to seconds).
         The valid range is between 30 seconds and one day.
         The default is five minutes (<literal>5min</literal>).
         Increasing this parameter can increase the amount of time needed
@@ -3672,7 +3675,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       <listitem>
        <para>
         Terminate replication connections that are inactive longer
-        than the specified number of milliseconds. This is useful for
+        than the specified duration (defaults to milliseconds). This is useful for
         the sending server to detect a standby crash or network outage.
         A value of zero disables the timeout mechanism. The default value
         is 60 seconds. With a cluster distributed across multiple geographic
@@ -4124,7 +4127,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Terminate replication connections that are inactive longer
-        than the specified number of milliseconds. This is useful for
+        than the specified duration (defaults to milliseconds). This is useful for
         the receiving standby server to detect a primary node crash or network
         outage.
         A value of zero disables the timeout mechanism.  This parameter
@@ -5617,7 +5620,7 @@ local0.*    /var/log/postgresql
        <para>
         When <varname>logging_collector</varname> is enabled,
         this parameter determines the maximum size of an individual log file.
-        After this many kilobytes have been emitted into a log file,
+        After this many bytes (default units is kilobytes) have been emitted into a log file,
         a new log file will be created.  Set to zero to disable size-based
         creation of new log files.
         This parameter can only be set in the <filename>postgresql.conf</filename>
@@ -5860,8 +5863,8 @@ local0.*    /var/log/postgresql
        <listitem>
         <para>
          Causes the duration of each completed statement to be logged
-         if the statement ran for at least the specified number of
-         milliseconds.  Setting this to zero prints all statement durations.
+         if the statement ran for at least the specified duration (defaults
+         to milliseconds).  Setting this to zero prints all statement durations.
          Minus-one (the default) disables logging statement durations.
          For example, if you set it to <literal>250ms</literal>
          then all SQL statements that run 250ms or longer will be
@@ -6487,7 +6490,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         A log entry is made for each temporary file when it is deleted.
         A value of zero logs all temporary file information, while positive
         values log only files whose size is greater than or equal to
-        the specified number of kilobytes.  The
+        the specified number of bytes (default units is kilobytes).  The
         default setting is -1, which disables such logging.
         Only superusers can change this setting.
        </para>
@@ -6935,7 +6938,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Causes each action executed by autovacuum to be logged if it ran for at
-        least the specified number of milliseconds.  Setting this to zero logs
+        least the specified duration (defaults to milliseconds).  Setting this to zero logs
         all autovacuum actions. <literal>-1</literal> (the default) disables
         logging autovacuum actions.  For example, if you set this to
         <literal>250ms</literal> then all automatic vacuums and analyzes that run
@@ -7588,8 +7591,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Abort any statement that takes more than the specified number of
-        milliseconds, starting from the time the command arrives at the server
+        Abort any statement that takes more than the specified duration
+        (defaults to milliseconds), starting from the time the command arrives at the server
         from the client.  If <varname>log_min_error_statement</varname> is set to
         <literal>ERROR</literal> or lower, the statement that timed out will also be
         logged.  A value of zero (the default) turns this off.
@@ -7611,8 +7614,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Abort any statement that waits longer than the specified number of
-        milliseconds while attempting to acquire a lock on a table, index,
+        Abort any statement that waits longer than the specified duration
+        (defaults to milliseconds) while attempting to acquire a lock on a table, index,
         row, or other database object.  The time limit applies separately to
         each lock acquisition attempt.  The limit applies both to explicit
         locking requests (such as <command>LOCK TABLE</command>, or <command>SELECT
@@ -7647,7 +7650,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
        Terminate any session with an open transaction that has been idle for
-       longer than the specified duration in milliseconds. This allows any
+       longer than the specified duration (defaults to milliseconds). This allows any
        locks held by that session to be released and the connection slot to be reused;
        it also allows tuples visible only to this transaction to be vacuumed.  See
        <xref linkend="routine-vacuuming"/> for more details about this.
@@ -8484,7 +8487,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        This is the amount of time, in milliseconds, to wait on a lock
+        This is the duration (defaults to milliseconds), to wait on a lock
         before checking to see if there is a deadlock condition. The
         check for deadlock is relatively expensive, so the server doesn't run
         it every time it waits for a lock. We optimistically assume
@@ -8503,7 +8506,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
        <para>
         When <xref linkend="guc-log-lock-waits"/> is set,
-        this parameter also determines the length of time to wait before
+        this parameter also determines the duration to wait before
         a log message is issued about the lock wait.  If you are trying
         to investigate locking delays you might want to set a shorter than
         normal <varname>deadlock_timeout</varname>.
@@ -9321,11 +9324,12 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        If nonzero, a delay of this many seconds occurs when a new
+        If nonzero, a delay of this duration occurs when a new
         server process is started, after it conducts the
         authentication procedure.  This is intended to give developers an
         opportunity to attach to the server process with a debugger.
-        This parameter cannot be changed after session start.
+        This parameter defaults to seconds and cannot be changed after
+        session start.
        </para>
       </listitem>
      </varlistentry>
@@ -9338,13 +9342,14 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        If nonzero, a delay of this many seconds occurs just after a
+        If nonzero, a delay of this duration occurs just after a
         new server process is forked, before it conducts the
         authentication procedure.  This is intended to give developers an
         opportunity to attach to the server process with a debugger to
         trace down misbehavior in authentication.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
+        This parameter defaults to seconds and can only be set in the
+        <filename>postgresql.conf</filename> file or on the server
+        command line.
        </para>
       </listitem>
      </varlistentry>
