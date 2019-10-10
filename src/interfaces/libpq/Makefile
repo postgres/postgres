@@ -29,7 +29,7 @@ endif
 
 OBJS=	fe-auth.o fe-auth-scram.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 	fe-protocol2.o fe-protocol3.o pqexpbuffer.o fe-secure.o \
-	libpq-events.o
+	legacy-pqsignal.o libpq-events.o
 
 # src/backend/utils/mb
 OBJS += encnames.o wchar.o
