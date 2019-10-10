@@ -4890,6 +4890,16 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 											   table_slot_callbacks(oldrel));
 			newslot = MakeSingleTupleTableSlot(newTupDesc,
 											   table_slot_callbacks(newrel));
+
+			/*
+			 * Set all columns in the new slot to NULL initially, to ensure
+			 * columns added as part of the rewrite are initialized to
+			 * NULL. That is necessary as tab->newvals will not contain an
+			 * expression for columns with a NULL default, e.g. when adding a
+			 * column without a default together with a column with a default
+			 * requiring an actual rewrite.
+			 */
+			ExecStoreAllNullTuple(newslot);
 		}
 		else
 		{
