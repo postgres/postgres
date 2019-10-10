@@ -169,18 +169,12 @@ parseCommandLine(int argc, char *argv[])
 				 */
 			case 'p':
 				if ((old_cluster.port = atoi(optarg)) <= 0)
-				{
 					pg_fatal("invalid old port number\n");
-					exit(1);
-				}
 				break;
 
 			case 'P':
 				if ((new_cluster.port = atoi(optarg)) <= 0)
-				{
 					pg_fatal("invalid new port number\n");
-					exit(1);
-				}
 				break;
 
 			case 'r':
