@@ -1,13 +1,14 @@
-# Set appropriate default compiler options if using xlc
-# Note: configure will add -qnoansialias if the compiler accepts it,
-# even if user specifies a non-default CFLAGS setting.
+# Set default options if using xlc.  This formerly included -qsrcmsg, but that
+# option elicits internal compiler errors from xlc v16.1.0.  Note: configure
+# will add -qnoansialias if the compiler accepts it, even if user specifies a
+# non-default CFLAGS setting.
 if test "$GCC" != yes ; then
   case $host_os in
     aix3.2.5 | aix4.1*)
-      CFLAGS="-O -qmaxmem=16384 -qsrcmsg"
+      CFLAGS="-O -qmaxmem=16384"
       ;;
     *)
-      CFLAGS="-O2 -qmaxmem=16384 -qsrcmsg"
+      CFLAGS="-O2 -qmaxmem=16384"
       ;;
   esac
 
