@@ -31,6 +31,6 @@ extern void pg_fe_scram_free(void *opaq);
 extern void pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 								 char **output, int *outputlen,
 								 bool *done, bool *success);
-extern char *pg_fe_scram_build_verifier(const char *password);
+extern char *pg_fe_scram_build_secret(const char *password);
 
 #endif							/* FE_AUTH_H */

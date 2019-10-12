@@ -82,7 +82,7 @@ test_role($node, 'scram_role', 'scram-sha-256', 0);
 test_role($node, 'md5_role',   'scram-sha-256', 2);
 
 # For "md5" method, all users should be able to connect (SCRAM
-# authentication will be performed for the user with a scram verifier.)
+# authentication will be performed for the user with a SCRAM secret.)
 reset_pg_hba($node, 'md5');
 test_role($node, 'scram_role', 'md5', 0);
 test_role($node, 'md5_role',   'md5', 0);

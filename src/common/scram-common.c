@@ -181,7 +181,7 @@ scram_ServerKey(const uint8 *salted_password, uint8 *result)
 
 
 /*
- * Construct a verifier string for SCRAM, stored in pg_authid.rolpassword.
+ * Construct a SCRAM secret, for storing in pg_authid.rolpassword.
  *
  * The password should already have been processed with SASLprep, if necessary!
  *
@@ -189,7 +189,7 @@ scram_ServerKey(const uint8 *salted_password, uint8 *result)
  * palloc'd or malloc'd, so caller is responsible for freeing it.
  */
 char *
-scram_build_verifier(const char *salt, int saltlen, int iterations,
+scram_build_secret(const char *salt, int saltlen, int iterations,
 					 const char *password)
 {
 	uint8		salted_password[SCRAM_KEY_LEN];

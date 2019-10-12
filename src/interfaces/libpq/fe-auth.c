@@ -1251,7 +1251,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 	 */
 	if (strcmp(algorithm, "scram-sha-256") == 0)
 	{
-		crypt_pwd = pg_fe_scram_build_verifier(passwd);
+		crypt_pwd = pg_fe_scram_build_secret(passwd);
 	}
 	else if (strcmp(algorithm, "md5") == 0)
 	{

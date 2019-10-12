@@ -16,7 +16,7 @@
 #include "datatype/timestamp.h"
 
 /*
- * Types of password hashes or verifiers.
+ * Types of password hashes or secrets.
  *
  * Plaintext passwords can be passed in by the user, in a CREATE/ALTER USER
  * command. They will be encrypted to MD5 or SCRAM-SHA-256 format, before
