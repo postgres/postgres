@@ -24,9 +24,9 @@
 # Latin-ASCII.xml, the latest data sets released can be browsed directly
 # via [3].  Note that this script is compatible with at least release 29.
 #
-# [1] http://unicode.org/Public/8.0.0/ucd/UnicodeData.txt
-# [2] http://unicode.org/cldr/trac/export/14746/tags/release-34/common/transforms/Latin-ASCII.xml
-# [3] https://unicode.org/cldr/trac/browser/tags
+# [1] https://www.unicode.org/Public/8.0.0/ucd/UnicodeData.txt
+# [2] https://raw.githubusercontent.com/unicode-org/cldr/release-34/common/transforms/Latin-ASCII.xml
+# [3] https://github.com/unicode-org/cldr/tags
 
 # BEGIN: Python 2/3 compatibility - remove when Python 2 compatibility dropped
 # The approach is to be Python3 compatible with Python2 "backports".
@@ -113,7 +113,7 @@ def is_mark(codepoint):
 
 def is_letter_with_marks(codepoint, table):
     """Returns true for letters combined with one or more marks."""
-    # See http://www.unicode.org/reports/tr44/tr44-14.html#General_Category_Values
+    # See https://www.unicode.org/reports/tr44/tr44-14.html#General_Category_Values
 
     # Letter may have no combining characters, in which case it has
     # no marks.
@@ -226,7 +226,7 @@ def special_cases():
     return charactersSet
 
 def main(args):
-    # http://www.unicode.org/reports/tr44/tr44-14.html#Character_Decomposition_Mappings
+    # https://www.unicode.org/reports/tr44/tr44-14.html#Character_Decomposition_Mappings
     decomposition_type_pattern = re.compile(" *<[^>]*> *")
 
     table = {}
@@ -243,7 +243,7 @@ def main(args):
         for line in unicodeDataFile:
             fields = line.split(";")
             if len(fields) > 5:
-                # http://www.unicode.org/reports/tr44/tr44-14.html#UnicodeData.txt
+                # https://www.unicode.org/reports/tr44/tr44-14.html#UnicodeData.txt
                 general_category = fields[2]
                 decomposition = fields[5]
                 decomposition = re.sub(decomposition_type_pattern, ' ', decomposition)
@@ -281,8 +281,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='This script builds unaccent.rules on standard output when given the contents of UnicodeData.txt and Latin-ASCII.xml given as arguments.')
-    parser.add_argument("--unicode-data-file", help="Path to formatted text file corresponding to UnicodeData.txt. See <http://unicode.org/Public/8.0.0/ucd/UnicodeData.txt>.", type=str, required=True, dest='unicodeDataFilePath')
-    parser.add_argument("--latin-ascii-file", help="Path to XML file from Unicode Common Locale Data Repository (CLDR) corresponding to Latin-ASCII transliterator (Latin-ASCII.xml). See <http://unicode.org/cldr/trac/export/12304/tags/release-28/common/transforms/Latin-ASCII.xml>.", type=str, dest='latinAsciiFilePath')
+    parser.add_argument("--unicode-data-file", help="Path to formatted text file corresponding to UnicodeData.txt.", type=str, required=True, dest='unicodeDataFilePath')
+    parser.add_argument("--latin-ascii-file", help="Path to XML file from Unicode Common Locale Data Repository (CLDR) corresponding to Latin-ASCII transliterator (Latin-ASCII.xml).", type=str, dest='latinAsciiFilePath')
     parser.add_argument("--no-ligatures-expansion", help="Do not expand ligatures and do not use Unicode CLDR Latin-ASCII transliterator. By default, this option is not enabled and \"--latin-ascii-file\" argument is required. If this option is enabled, \"--latin-ascii-file\" argument is optional and ignored.", action="store_true", dest='noLigaturesExpansion')
     args = parser.parse_args()
 

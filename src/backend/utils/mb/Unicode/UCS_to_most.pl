@@ -8,8 +8,8 @@
 # map files provided by Unicode organization.
 # Unfortunately it is prohibited by the organization
 # to distribute the map files. So if you try to use this script,
-# you have to obtain the map files from the organization's ftp site.
-# ftp://www.unicode.org/Public/MAPPINGS/
+# you have to obtain the map files from the organization's download site.
+# https://www.unicode.org/Public/MAPPINGS/
 # We assume the file include three tab-separated columns:
 #		 source character set code in hex
 #		 UCS-2 code in hex

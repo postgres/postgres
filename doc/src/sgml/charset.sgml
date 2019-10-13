@@ -832,12 +832,12 @@ CREATE COLLATION german (provider = libc, locale = 'de_DE');
      </varlistentry>
     </variablelist>
 
-    See <ulink url="http://unicode.org/reports/tr35/tr35-collation.html">Unicode
+    See <ulink url="https://www.unicode.org/reports/tr35/tr35-collation.html">Unicode
     Technical Standard #35</ulink>
     and <ulink url="https://tools.ietf.org/html/bcp47">BCP 47</ulink> for
     details.  The list of possible collation types (<literal>co</literal>
     subtag) can be found in
-    the <ulink url="http://www.unicode.org/repos/cldr/trunk/common/bcp47/collation.xml">CLDR
+    the <ulink url="https://github.com/unicode-org/cldr/blob/master/common/bcp47/collation.xml">CLDR
     repository</ulink>.
     The <ulink url="https://ssl.icu-project.org/icu-bin/locexp">ICU Locale
     Explorer</ulink> can be used to check the details of a particular locale
@@ -900,7 +900,7 @@ CREATE COLLATION french FROM "fr-x-icu";
      different Unicode normal forms.  It is up to the collation provider to
      actually implement such insensitive comparisons; the deterministic flag
      only determines whether ties are to be broken using bytewise comparison.
-     See also <ulink url="https://unicode.org/reports/tr10">Unicode Technical
+     See also <ulink url="https://www.unicode.org/reports/tr10">Unicode Technical
      Standard 10</ulink> for more information on the terminology.
     </para>
 
@@ -1926,7 +1926,7 @@ RESET client_encoding;
       </varlistentry>
 
       <varlistentry>
-       <term><ulink url="http://www.unicode.org/"></ulink></term>
+       <term><ulink url="https://www.unicode.org/"></ulink></term>
 
        <listitem>
         <para>

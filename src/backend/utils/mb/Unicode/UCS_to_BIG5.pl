@@ -8,8 +8,8 @@
 # map files provided by Unicode organization.
 # Unfortunately it is prohibited by the organization
 # to distribute the map files. So if you try to use this script,
-# you have to obtain the map files from the organization's ftp site.
-# ftp://www.unicode.org/Public/MAPPINGS/
+# you have to obtain the map files from the organization's download site.
+# https://www.unicode.org/Public/MAPPINGS/
 #
 # Our "big5" comes from BIG5.TXT, with the addition of the characters
 # in the range 0xf9d6-0xf9dc from CP950.TXT.

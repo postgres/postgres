@@ -23,7 +23,7 @@ DOWNLOAD = wget -O $@ --no-use-server-timestamps
 # These files are part of the Unicode Character Database. Download
 # them on demand.
 UnicodeData.txt CompositionExclusions.txt NormalizationTest.txt:
-	$(DOWNLOAD) http://unicode.org/Public/UNIDATA/$(@F)
+	$(DOWNLOAD) https://www.unicode.org/Public/UNIDATA/$(@F)
 
 # Generation of conversion tables used for string normalization with
 # UTF-8 strings.
