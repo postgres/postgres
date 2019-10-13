@@ -58,33 +58,4 @@ pqsignal(int signo, pqsigfunc func)
 #endif
 }
 
-/*
- * Set up a signal handler, without SA_RESTART, for signal "signo"
- *
- * Returns the previous handler.
- *
- * On Windows, this would be identical to pqsignal(), so don't bother.
- */
-#ifndef WIN32
-
-pqsigfunc
-pqsignal_no_restart(int signo, pqsigfunc func)
-{
-	struct sigaction act,
-				oact;
-
-	act.sa_handler = func;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-#ifdef SA_NOCLDSTOP
-	if (signo == SIGCHLD)
-		act.sa_flags |= SA_NOCLDSTOP;
-#endif
-	if (sigaction(signo, &act, &oact) < 0)
-		return SIG_ERR;
-	return oact.sa_handler;
-}
-
-#endif							/* !WIN32 */
-
 #endif							/* !defined(WIN32) || defined(FRONTEND) */

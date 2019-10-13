@@ -36,4 +36,7 @@ extern sigset_t UnBlockSig,
 
 extern void pqinitmask(void);
 
+/* pqsigfunc is declared in src/include/port.h */
+extern pqsigfunc pqsignal_pm(int signo, pqsigfunc func);
+
 #endif							/* PQSIGNAL_H */
