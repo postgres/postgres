@@ -1258,3 +1258,64 @@ ERROR:  cannot drop inherited constraint "parted_uniq_detach_test1_a_key" of rel
 alter table parted_uniq_detach_test detach partition parted_uniq_detach_test1;
 alter table parted_uniq_detach_test1 drop constraint parted_uniq_detach_test1_a_key;
 drop table parted_uniq_detach_test, parted_uniq_detach_test1;
+-- check that dropping a column takes with it any partitioned indexes
+-- depending on it.
+create table parted_index_col_drop(a int, b int, c int)
+  partition by list (a);
+create table parted_index_col_drop1 partition of parted_index_col_drop
+  for values in (1) partition by list (a);
+-- leave this partition without children.
+create table parted_index_col_drop2 partition of parted_index_col_drop
+  for values in (2) partition by list (a);
+create table parted_index_col_drop11 partition of parted_index_col_drop1
+  for values in (1);
+create index on parted_index_col_drop (b);
+create index on parted_index_col_drop (c);
+create index on parted_index_col_drop (b, c);
+alter table parted_index_col_drop drop column c;
+\d parted_index_col_drop
+ Partitioned table "public.parted_index_col_drop"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Partition key: LIST (a)
+Indexes:
+    "parted_index_col_drop_b_idx" btree (b)
+Number of partitions: 2 (Use \d+ to list them.)
+
+\d parted_index_col_drop1
+ Partitioned table "public.parted_index_col_drop1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Partition of: parted_index_col_drop FOR VALUES IN (1)
+Partition key: LIST (a)
+Indexes:
+    "parted_index_col_drop1_b_idx" btree (b)
+Number of partitions: 1 (Use \d+ to list them.)
+
+\d parted_index_col_drop2
+ Partitioned table "public.parted_index_col_drop2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Partition of: parted_index_col_drop FOR VALUES IN (2)
+Partition key: LIST (a)
+Indexes:
+    "parted_index_col_drop2_b_idx" btree (b)
+Number of partitions: 0
+
+\d parted_index_col_drop11
+      Table "public.parted_index_col_drop11"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Partition of: parted_index_col_drop1 FOR VALUES IN (1)
+Indexes:
+    "parted_index_col_drop11_b_idx" btree (b)
+
+drop table parted_index_col_drop;

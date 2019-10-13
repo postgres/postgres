@@ -703,3 +703,24 @@ alter table parted_uniq_detach_test1 drop constraint parted_uniq_detach_test1_a_
 alter table parted_uniq_detach_test detach partition parted_uniq_detach_test1;
 alter table parted_uniq_detach_test1 drop constraint parted_uniq_detach_test1_a_key;
 drop table parted_uniq_detach_test, parted_uniq_detach_test1;
+
+-- check that dropping a column takes with it any partitioned indexes
+-- depending on it.
+create table parted_index_col_drop(a int, b int, c int)
+  partition by list (a);
+create table parted_index_col_drop1 partition of parted_index_col_drop
+  for values in (1) partition by list (a);
+-- leave this partition without children.
+create table parted_index_col_drop2 partition of parted_index_col_drop
+  for values in (2) partition by list (a);
+create table parted_index_col_drop11 partition of parted_index_col_drop1
+  for values in (1);
+create index on parted_index_col_drop (b);
+create index on parted_index_col_drop (c);
+create index on parted_index_col_drop (b, c);
+alter table parted_index_col_drop drop column c;
+\d parted_index_col_drop
+\d parted_index_col_drop1
+\d parted_index_col_drop2
+\d parted_index_col_drop11
+drop table parted_index_col_drop;
