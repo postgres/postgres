@@ -443,7 +443,7 @@ old_11_check_for_sql_identifier_data_type_usage(ClusterInfo *cluster)
 		res = executeQueryOrDie(conn,
 								"WITH RECURSIVE oids AS ( "
 		/* the sql_identifier type itself */
-								"	SELECT 'information_schema.sql_identifier'::regtype AS oid "
+								"	SELECT 'information_schema.sql_identifier'::pg_catalog.regtype AS oid "
 								"	UNION ALL "
 								"	SELECT * FROM ( "
 		/* domains on the type */
