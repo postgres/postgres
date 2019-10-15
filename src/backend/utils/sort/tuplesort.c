@@ -933,7 +933,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 		 * scantuple has to point to that slot, too.
 		 */
 		state->estate = CreateExecutorState();
-		slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsVirtual);
+		slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsHeapTuple);
 		econtext = GetPerTupleExprContext(state->estate);
 		econtext->ecxt_scantuple = slot;
 	}

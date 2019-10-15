@@ -222,10 +222,47 @@ where row(hundred, thousand, tenthous) <= row(lhundred, lthousand, ltenthous);
 reset enable_indexscan;
 reset maintenance_work_mem;
 
+-- test CLUSTER on expression index
+CREATE TABLE clstr_expression(id serial primary key, a int, b text COLLATE "C");
+INSERT INTO clstr_expression(a, b) SELECT g.i % 42, 'prefix'||g.i FROM generate_series(1, 133) g(i);
+CREATE INDEX clstr_expression_minus_a ON clstr_expression ((-a), b);
+CREATE INDEX clstr_expression_upper_b ON clstr_expression ((upper(b)));
+
+-- verify indexes work before cluster
+BEGIN;
+SET LOCAL enable_seqscan = false;
+EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE upper(b) = 'PREFIX3';
+SELECT * FROM clstr_expression WHERE upper(b) = 'PREFIX3';
+EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
+SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
+COMMIT;
+
+-- and after clustering on clstr_expression_minus_a
+CLUSTER clstr_expression USING clstr_expression_minus_a;
+BEGIN;
+SET LOCAL enable_seqscan = false;
+EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE upper(b) = 'PREFIX3';
+SELECT * FROM clstr_expression WHERE upper(b) = 'PREFIX3';
+EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
+SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
+COMMIT;
+
+-- and after clustering on clstr_expression_upper_b
+CLUSTER clstr_expression USING clstr_expression_upper_b;
+BEGIN;
+SET LOCAL enable_seqscan = false;
+EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE upper(b) = 'PREFIX3';
+SELECT * FROM clstr_expression WHERE upper(b) = 'PREFIX3';
+EXPLAIN (COSTS OFF) SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
+SELECT * FROM clstr_expression WHERE -a = -3 ORDER BY -a, b;
+COMMIT;
+
 -- clean up
 DROP TABLE clustertest;
 DROP TABLE clstr_1;
 DROP TABLE clstr_2;
 DROP TABLE clstr_3;
 DROP TABLE clstr_4;
+DROP TABLE clstr_expression;
+
 DROP USER regress_clstr_user;
