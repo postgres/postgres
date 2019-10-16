@@ -131,14 +131,42 @@ old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
 		DbInfo	   *active_db = &cluster->dbarr.dbs[dbnum];
 		PGconn	   *conn = connectToServer(cluster, active_db->db_name);
 
+		/*
+		 * The pg_catalog.line type may be wrapped in a domain or composite
+		 * type, or both (9.3 did not allow domains on composite types, but
+		 * there may be multi-level composite type). To detect these cases
+		 * we need a recursive CTE.
+		 */
 		res = executeQueryOrDie(conn,
+								"WITH RECURSIVE oids AS ( "
+		/* the pg_catalog.line type itself */
+								"	SELECT 'pg_catalog.line'::pg_catalog.regtype AS oid "
+								"	UNION ALL "
+								"	SELECT * FROM ( "
+		/* domains on the type */
+								"		WITH x AS (SELECT oid FROM oids) "
+								"			SELECT t.oid FROM pg_catalog.pg_type t, x WHERE typbasetype = x.oid AND typtype = 'd' "
+								"			UNION "
+		/* composite types containing the type */
+								"			SELECT t.oid FROM pg_catalog.pg_type t, pg_catalog.pg_class c, pg_catalog.pg_attribute a, x "
+								"			WHERE t.typtype = 'c' AND "
+								"				  t.oid = c.reltype AND "
+								"				  c.oid = a.attrelid AND "
+								"				  NOT a.attisdropped AND "
+								"				  a.atttypid = x.oid "
+								"	) foo "
+								") "
 								"SELECT n.nspname, c.relname, a.attname "
 								"FROM	pg_catalog.pg_class c, "
 								"		pg_catalog.pg_namespace n, "
 								"		pg_catalog.pg_attribute a "
 								"WHERE	c.oid = a.attrelid AND "
 								"		NOT a.attisdropped AND "
-								"		a.atttypid = 'pg_catalog.line'::pg_catalog.regtype AND "
+								"		a.atttypid IN (SELECT oid FROM oids) AND "
+								"		c.relkind IN ("
+								CppAsString2(RELKIND_RELATION) ", "
+								CppAsString2(RELKIND_MATVIEW) ", "
+								CppAsString2(RELKIND_INDEX) ") AND "
 								"		c.relnamespace = n.oid AND "
 		/* exclude possible orphaned temp tables */
 								"		n.nspname !~ '^pg_temp_' AND "
