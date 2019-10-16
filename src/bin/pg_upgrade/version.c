@@ -10,6 +10,8 @@
 #include "postgres_fe.h"
 
 #include "pg_upgrade.h"
+
+#include "catalog/pg_class.h"
 #include "fe_utils/string_utils.h"
 
 
