@@ -11,6 +11,8 @@
 
 #include "pg_upgrade.h"
 
+#include "catalog/pg_class.h"
+
 
 
 /*
