@@ -369,7 +369,6 @@ END
 $$;
 CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail, need lc_ctype
 CREATE COLLATION testx (locale = 'nonsense'); -- fail
-CREATE COLLATION testy (locale = 'en_US.utf8', version = 'foo'); -- fail, no versions for libc
 
 CREATE COLLATION test4 FROM nonsense;
 CREATE COLLATION test5 FROM test0;

@@ -1033,8 +1033,6 @@ ERROR:  parameter "lc_ctype" must be specified
 CREATE COLLATION testx (locale = 'nonsense'); -- fail
 ERROR:  could not create locale "nonsense": No such file or directory
 DETAIL:  The operating system could not find any locale data for the locale name "nonsense".
-CREATE COLLATION testy (locale = 'en_US.utf8', version = 'foo'); -- fail, no versions for libc
-ERROR:  collation "testy" has no actual version, but a version was specified
 CREATE COLLATION test4 FROM nonsense;
 ERROR:  collation "nonsense" for encoding "UTF8" does not exist
 CREATE COLLATION test5 FROM test0;
