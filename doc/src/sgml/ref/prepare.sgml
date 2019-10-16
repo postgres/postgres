@@ -165,7 +165,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    To examine the query plan <productname>PostgreSQL</productname> is using
    for a prepared statement, use <xref linkend="sql-explain"/>, for example
 <programlisting>
-EXPLAIN EXECUTE <replaceable>stmt_name</replaceable>(<replaceable>parameter_values</replaceable>);
+EXPLAIN EXECUTE <replaceable>name</replaceable>(<replaceable>parameter_values</replaceable>);
 </programlisting>
    If a generic plan is in use, it will contain parameter symbols
    <literal>$<replaceable>n</replaceable></literal>, while a custom plan

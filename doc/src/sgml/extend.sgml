@@ -856,7 +856,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      dynamically from one version to the next, you should provide
      <firstterm>update scripts</firstterm> that make the necessary changes to go from
      one version to the next.  Update scripts have names following the pattern
-     <literal><replaceable>extension</replaceable>--<replaceable>oldversion</replaceable>--<replaceable>newversion</replaceable>.sql</literal>
+     <literal><replaceable>extension</replaceable>--<replaceable>old_version</replaceable>--<replaceable>target_version</replaceable>.sql</literal>
      (for example, <literal>foo--1.0--1.1.sql</literal> contains the commands to modify
      version <literal>1.0</literal> of extension <literal>foo</literal> into version
      <literal>1.1</literal>).
