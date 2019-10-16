@@ -5,7 +5,7 @@
  *
  * See Ross Williams' excellent introduction
  * A PAINLESS GUIDE TO CRC ERROR DETECTION ALGORITHMS, available from
- * http://www.ross.net/crc/ or several other net sites.
+ * http://ross.net/crc/ or several other net sites.
  *
  * We have three slightly different variants of a 32-bit CRC calculation:
  * CRC-32C (Castagnoli polynomial), CRC-32 (Ethernet polynomial), and a legacy
