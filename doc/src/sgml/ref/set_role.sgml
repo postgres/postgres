@@ -64,7 +64,7 @@ RESET ROLE
 
   <para>
    Using this command, it is possible to either add privileges or restrict
-   one's privileges.  If the session user role has the <literal>INHERITS</literal>
+   one's privileges.  If the session user role has the <literal>INHERIT</literal>
    attribute, then it automatically has all the privileges of every role that
    it could <command>SET ROLE</command> to; in this case <command>SET ROLE</command>
    effectively drops all the privileges assigned directly to the session user

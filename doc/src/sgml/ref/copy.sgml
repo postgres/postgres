@@ -1002,11 +1002,11 @@ COPY <replaceable class="parameter">table_name</replaceable> [ ( <replaceable cl
     [ [ WITH ]
           [ BINARY ]
           [ OIDS ]
-          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
+          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter_character</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
           [ CSV [ HEADER ]
-                [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ]
-                [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
+                [ QUOTE [ AS ] '<replaceable class="parameter">quote_character</replaceable>' ]
+                [ ESCAPE [ AS ] '<replaceable class="parameter">escape_character</replaceable>' ]
                 [ FORCE NOT NULL <replaceable class="parameter">column_name</replaceable> [, ...] ] ] ]
 
 COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ] | ( <replaceable class="parameter">query</replaceable> ) }
@@ -1014,11 +1014,11 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     [ [ WITH ]
           [ BINARY ]
           [ OIDS ]
-          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
+          [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter_character</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
           [ CSV [ HEADER ]
-                [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ]
-                [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
+                [ QUOTE [ AS ] '<replaceable class="parameter">quote_character</replaceable>' ]
+                [ ESCAPE [ AS ] '<replaceable class="parameter">escape_character</replaceable>' ]
                 [ FORCE QUOTE { <replaceable class="parameter">column_name</replaceable> [, ...] | * } ] ] ]
 </synopsis>
 
@@ -1034,13 +1034,13 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
 <synopsis>
 COPY [ BINARY ] <replaceable class="parameter">table_name</replaceable> [ WITH OIDS ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
-    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
-    [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
+    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter_character</replaceable>' ]
+    [ WITH NULL AS '<replaceable class="parameter">null_string</replaceable>' ]
 
 COPY [ BINARY ] <replaceable class="parameter">table_name</replaceable> [ WITH OIDS ]
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
-    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
-    [ WITH NULL AS '<replaceable class="parameter">null string</replaceable>' ]
+    [ [USING] DELIMITERS '<replaceable class="parameter">delimiter_character</replaceable>' ]
+    [ WITH NULL AS '<replaceable class="parameter">null_string</replaceable>' ]
 </synopsis></para>
  </refsect1>
 </refentry>
