@@ -1376,8 +1376,8 @@ my %tests = (
 	'CREATE COLLATION test0 FROM "C"' => {
 		create_order => 76,
 		create_sql   => 'CREATE COLLATION test0 FROM "C";',
-		regexp       => qr/^
-		  \QCREATE COLLATION public.test0 (provider = libc, locale = 'C');\E/xm,
+		regexp       =>
+		  qr/CREATE COLLATION public.test0 \(provider = libc, locale = 'C'(, version = '[^']*')?\);/m,
 		collation => 1,
 		like      => { %full_runs, section_pre_data => 1, },
 	},

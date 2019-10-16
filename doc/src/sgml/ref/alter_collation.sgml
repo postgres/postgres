@@ -129,6 +129,16 @@ HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg
    does not actually check whether all affected objects have been rebuilt
    correctly.
   </para>
+  <para>
+   When using collations provided by <literal>libc</literal> and
+   <productname>PostgreSQL</productname> was built with the GNU C library, the
+   C library's version is used as a collation version.  Since collation
+   definitions typically change only with GNU C library releases, this provides
+   some defense against corruption, but it is not completely reliable.
+  </para>
+  <para>
+   Currently, there is no version tracking for the database default collation.
+  </para>
 
   <para>
    The following query can be used to identify all collations in the current
