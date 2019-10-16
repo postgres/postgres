@@ -384,12 +384,14 @@ WaitForOlderSnapshots(TransactionId limitXmin, bool progress)
 
 		if (VirtualTransactionIdIsValid(old_snapshots[i]))
 		{
+			/* If requested, publish who we're going to wait for. */
 			if (progress)
 			{
 				PGPROC	   *holder = BackendIdGetProc(old_snapshots[i].backendId);
 
-				pgstat_progress_update_param(PROGRESS_WAITFOR_CURRENT_PID,
-											 holder->pid);
+				if (holder)
+					pgstat_progress_update_param(PROGRESS_WAITFOR_CURRENT_PID,
+												 holder->pid);
 			}
 			VirtualXactLock(old_snapshots[i], true);
 		}
