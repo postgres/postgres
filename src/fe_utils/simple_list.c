@@ -114,3 +114,24 @@ simple_string_list_not_touched(SimpleStringList *list)
 	}
 	return NULL;
 }
+
+/*
+ * Append a pointer to the list.
+ *
+ * Caller must ensure that the pointer remains valid.
+ */
+void
+simple_ptr_list_append(SimplePtrList *list, void *ptr)
+{
+	SimplePtrListCell *cell;
+
+	cell = (SimplePtrListCell *) pg_malloc(sizeof(SimplePtrListCell));
+	cell->next = NULL;
+	cell->ptr = ptr;
+
+	if (list->tail)
+		list->tail->next = cell;
+	else
+		list->head = cell;
+	list->tail = cell;
+}
