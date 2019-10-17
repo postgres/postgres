@@ -169,6 +169,7 @@ gistvacuumscan(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
 	BlockNumber num_pages;
 	bool		needLock;
 	BlockNumber blkno;
+	MemoryContext oldctx;
 
 	/*
 	 * Reset counts that will be incremented during the scan; needed in case
@@ -179,8 +180,17 @@ gistvacuumscan(IndexVacuumInfo *info, GistBulkDeleteResult *stats,
 	stats->stats.pages_deleted = 0;
 	stats->stats.pages_free = 0;
 	MemoryContextReset(stats->page_set_context);
+
+	/*
+	 * Create the integer sets to remember all the internal and the empty leaf
+	 * pages in page_set_context.  Internally, the integer set will remember
+	 * this context so that the subsequent allocations for these integer sets
+	 * will be done from the same context.
+	 */
+	oldctx = MemoryContextSwitchTo(stats->page_set_context);
 	stats->internal_page_set = intset_create();
 	stats->empty_leaf_set = intset_create();
+	MemoryContextSwitchTo(oldctx);
 
 	/* Set up info to pass down to gistvacuumpage */
 	vstate.info = info;
