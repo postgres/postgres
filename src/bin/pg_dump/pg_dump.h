@@ -367,6 +367,8 @@ typedef struct _indxInfo
 	bool		indisclustered;
 	bool		indisreplident;
 	Oid			parentidx;		/* if partitioned, parent index OID */
+	SimplePtrList partattaches;	/* if partitioned, partition attach objects */
+
 	/* if there is an associated constraint object, its dumpId: */
 	DumpId		indexconstraint;
 } IndxInfo;

@@ -412,6 +412,9 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			addObjectDependency(&attachinfo[k].dobj,
 								parentidx->indextable->dobj.dumpId);
 
+			/* keep track of the list of partitions in the parent index */
+			simple_ptr_list_append(&parentidx->partattaches, &attachinfo[k].dobj);
+
 			k++;
 		}
 	}
