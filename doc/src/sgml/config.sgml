@@ -4209,7 +4209,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        </para>
        <para>
         This parameter is intended for use with streaming replication deployments;
-        however, if the parameter is specified it will be honored in all cases.
+        however, if the parameter is specified it will be honored in all cases
+        except crash recovery.
 
         <varname>hot_standby_feedback</varname> will be delayed by use of this feature
         which could lead to bloat on the master; use both together with care.

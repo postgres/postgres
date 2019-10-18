@@ -5977,6 +5977,10 @@ recoveryApplyDelay(XLogReaderState *record)
 	if (!reachedConsistency)
 		return false;
 
+	/* nothing to do if crash recovery is requested */
+	if (!ArchiveRecoveryRequested)
+		return false;
+
 	/*
 	 * Is it a COMMIT record?
 	 *
