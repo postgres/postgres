@@ -2742,7 +2742,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 	/*
 	 * Extract the list of indexes that are going to be rebuilt based on the
-	 * list of relation Oids given by caller.
+	 * relation Oid given by caller.
 	 */
 	switch (relkind)
 	{
