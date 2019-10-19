@@ -480,6 +480,11 @@ typedef unsigned int slock_t;
 #define TAS_SPIN(lock)	(*(lock) ? 1 : TAS(lock))
 
 /*
+ * The second operand of addi can hold a constant zero or a register number,
+ * hence constraint "=&b" to avoid allocating r0.  "b" stands for "address
+ * base register"; most operands having this register-or-zero property are
+ * address bases, e.g. the second operand of lwax.
+ *
  * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
  * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
  * On newer machines, we can use lwsync instead for better performance.
@@ -516,7 +521,7 @@ tas(volatile slock_t *lock)
 #endif
 "	li      %1,0		\n"
 
-:	"=&r"(_t), "=r"(_res), "+m"(*lock)
+:	"=&b"(_t), "=r"(_res), "+m"(*lock)
 :	"r"(lock)
 :	"memory", "cc");
 	return _res;
