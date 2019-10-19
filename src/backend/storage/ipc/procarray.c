@@ -493,9 +493,9 @@ ProcArrayGroupClearXid(PGPROC *proc, TransactionId latestXid)
 	/* Add ourselves to the list of processes needing a group XID clear. */
 	proc->procArrayGroupMember = true;
 	proc->procArrayGroupMemberXid = latestXid;
+	nextidx = pg_atomic_read_u32(&procglobal->procArrayGroupFirst);
 	while (true)
 	{
-		nextidx = pg_atomic_read_u32(&procglobal->procArrayGroupFirst);
 		pg_atomic_write_u32(&proc->procArrayGroupNext, nextidx);
 
 		if (pg_atomic_compare_exchange_u32(&procglobal->procArrayGroupFirst,
