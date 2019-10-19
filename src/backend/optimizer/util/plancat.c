@@ -2103,12 +2103,12 @@ has_stored_generated_columns(PlannerInfo *root, Index rti)
 	bool		result = false;
 
 	/* Assume we already have adequate lock */
-	relation = heap_open(rte->relid, NoLock);
+	relation = table_open(rte->relid, NoLock);
 
 	tupdesc = RelationGetDescr(relation);
 	result = tupdesc->constr && tupdesc->constr->has_generated_stored;
 
-	heap_close(relation, NoLock);
+	table_close(relation, NoLock);
 
 	return result;
 }

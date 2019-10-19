@@ -637,7 +637,7 @@ UpdateStatisticsForTypeChange(Oid statsOid, Oid relationOid, int attnum,
 	replaces[Anum_pg_statistic_ext_data_stxdmcv - 1] = true;
 	nulls[Anum_pg_statistic_ext_data_stxdmcv - 1] = true;
 
-	rel = heap_open(StatisticExtDataRelationId, RowExclusiveLock);
+	rel = table_open(StatisticExtDataRelationId, RowExclusiveLock);
 
 	/* replace the old tuple */
 	stup = heap_modify_tuple(oldtup,
@@ -651,7 +651,7 @@ UpdateStatisticsForTypeChange(Oid statsOid, Oid relationOid, int attnum,
 
 	heap_freetuple(stup);
 
-	heap_close(rel, RowExclusiveLock);
+	table_close(rel, RowExclusiveLock);
 }
 
 /*
