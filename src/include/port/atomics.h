@@ -87,14 +87,11 @@
  * using compiler intrinsics are a good idea.
  */
 /*
- * Given a gcc-compatible xlc compiler, prefer the xlc implementation.  The
- * ppc64le "IBM XL C/C++ for Linux, V13.1.2" implements both interfaces, but
- * __sync_lock_test_and_set() of one-byte types elicits SIGSEGV.
+ * gcc or compatible, including clang and icc.  Exclude xlc.  The ppc64le "IBM
+ * XL C/C++ for Linux, V13.1.2" emulates gcc, but __sync_lock_test_and_set()
+ * of one-byte types elicits SIGSEGV.
  */
-#if defined(__IBMC__) || defined(__IBMCPP__)
-#include "port/atomics/generic-xlc.h"
-/* gcc or compatible, including clang and icc */
-#elif defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if (defined(__GNUC__) || defined(__INTEL_COMPILER)) && !(defined(__IBMC__) || defined(__IBMCPP__))
 #include "port/atomics/generic-gcc.h"
 #elif defined(_MSC_VER)
 #include "port/atomics/generic-msvc.h"

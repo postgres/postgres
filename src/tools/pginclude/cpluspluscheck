@@ -89,7 +89,6 @@ do
 	test "$f" = src/include/port/atomics/generic-gcc.h && continue
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
 	test "$f" = src/include/port/atomics/generic-sunpro.h && continue
-	test "$f" = src/include/port/atomics/generic-xlc.h && continue
 
 	# rusagestub.h is also platform-specific, and will be included
 	# by utils/pg_rusage.h if necessary.
