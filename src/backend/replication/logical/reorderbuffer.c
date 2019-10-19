@@ -3247,7 +3247,7 @@ typedef struct RewriteMappingFile
 	char		fname[MAXPGPATH];
 } RewriteMappingFile;
 
-#if NOT_USED
+#ifdef NOT_USED
 static void
 DisplayMapping(HTAB *tuplecid_data)
 {

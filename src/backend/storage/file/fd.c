@@ -738,7 +738,7 @@ durable_link_or_rename(const char *oldfile, const char *newfile, int elevel)
 	if (fsync_fname_ext(oldfile, false, false, elevel) != 0)
 		return -1;
 
-#if HAVE_WORKING_LINK
+#ifdef HAVE_WORKING_LINK
 	if (link(oldfile, newfile) < 0)
 	{
 		ereport(elevel,

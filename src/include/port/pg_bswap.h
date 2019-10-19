@@ -139,7 +139,14 @@ pg_bswap64(uint64 x)
  * the same result as a memcmp() of the corresponding original Datums, but can
  * be much cheaper.  It's generally safe to do this on big-endian systems
  * without any special transformation occurring first.
+ *
+ * If SIZEOF_DATUM is not defined, then postgres.h wasn't included and these
+ * macros probably shouldn't be used, so we define nothing.  Note that
+ * SIZEOF_DATUM == 8 would evaluate as 0 == 8 in that case, potentially
+ * leading to the wrong implementation being selected and confusing errors, so
+ * defining nothing is safest.
  */
+#ifdef SIZEOF_DATUM
 #ifdef WORDS_BIGENDIAN
 #define		DatumBigEndianToNative(x)	(x)
 #else							/* !WORDS_BIGENDIAN */
@@ -149,5 +156,6 @@ pg_bswap64(uint64 x)
 #define		DatumBigEndianToNative(x)	pg_bswap32(x)
 #endif							/* SIZEOF_DATUM == 8 */
 #endif							/* WORDS_BIGENDIAN */
+#endif							/* SIZEOF_DATUM */
 
 #endif							/* PG_BSWAP_H */

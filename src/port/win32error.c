@@ -188,7 +188,7 @@ _dosmaperr(unsigned long e)
 			ereport(DEBUG5,
 					(errmsg_internal("mapped win32 error code %lu to %d",
 									 e, doserr)));
-#elif FRONTEND_DEBUG
+#elif defined(FRONTEND_DEBUG)
 			fprintf(stderr, "mapped win32 error code %lu to %d", e, doserr);
 #endif
 			errno = doserr;
