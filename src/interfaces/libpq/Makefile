@@ -139,6 +139,6 @@ clean distclean: clean-lib
 # Remove files we (may have) symlinked in from other places
 	rm -f encnames.c wchar.c
 
-maintainer-clean: distclean maintainer-clean-lib
+maintainer-clean: distclean
 	$(MAKE) -C test $@
 	rm -f libpq-dist.rc

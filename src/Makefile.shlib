@@ -49,7 +49,6 @@
 # installdirs-lib       create installation directory $(libdir)
 # uninstall-lib         remove the libraries from $(libdir)
 # clean-lib             delete the static and shared libraries from the build dir
-# maintainer-clean-lib  delete .def files built for win32
 #
 # Typically you would add `all-lib' to the `all' target so that `make all'
 # builds the libraries.  In the most simple case it would look like this:
@@ -374,6 +373,13 @@ DLL_DEFFILE = lib$(NAME)dll.def
 
 $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 	$(CC) $(CFLAGS)  -shared -static-libgcc -o $@  $(OBJS) $(DLL_DEFFILE) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--out-implib=$(stlib)
+
+UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+$(DLL_DEFFILE): $(SHLIB_EXPORTS)
+	echo 'LIBRARY LIB$(UC_NAME).dll' >$@
+	echo 'EXPORTS' >>$@
+	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 endif
 
 endif # PORTNAME == cygwin
@@ -395,32 +401,6 @@ endif # PORTNAME == cygwin || PORTNAME == win32
 # remove duplicates.  Also record the -l flags necessary for static
 # linking, but not those already covered by Requires.private.
 	echo 'Libs.private: $(sort $(filter-out -L.% -L$(top_srcdir)/%,$(filter -L%,$(LDFLAGS) $(SHLIB_LINK)))) $(filter-out $(PKG_CONFIG_REQUIRES_PRIVATE:lib%=-l%),$(filter -l%,$(SHLIB_LINK)))' >>$@
-
-
-# We need several not-quite-identical variants of .DEF files to build
-# DLLs for Windows.  These are made from the single source file
-# exports.txt.  Since we can't assume that Windows boxes will have
-# sed, the .DEF files are always built and included in distribution
-# tarballs.
-
-ifneq (,$(SHLIB_EXPORTS))
-distprep: lib$(NAME)dll.def lib$(NAME)ddll.def
-
-UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
-
-lib$(NAME)dll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for Makefile.shlib (MinGW)' >$@
-	echo 'LIBRARY LIB$(UC_NAME).dll' >>$@
-	echo 'EXPORTS' >>$@
-	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
-
-lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for Makefile.shlib (MinGW)' >$@
-	echo 'LIBRARY LIB$(UC_NAME)D.dll' >>$@
-	echo 'EXPORTS' >>$@
-	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
-
-endif # SHLIB_EXPORTS
 
 
 ##
@@ -505,8 +485,6 @@ endif # no soname
 .PHONY: clean-lib
 clean-lib:
 	rm -f $(shlib) $(shlib_bare) $(shlib_major) $(stlib) $(exports_file) lib$(NAME).pc
-
-ifneq (,$(SHLIB_EXPORTS))
-maintainer-clean-lib:
-	rm -f lib$(NAME)dll.def lib$(NAME)ddll.def
+ifneq (,$(DLL_DEFFILE))
+	rm -f $(DLL_DEFFILE)
 endif
