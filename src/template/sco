@@ -1,1 +1,10 @@
+# src/template/sco
+
 CC="$CC -b elf"
+
+# Extra CFLAGS for code that will go into a shared library
+if test "$GCC" = yes ; then
+  CFLAGS_SL="-fpic"
+else
+  CFLAGS_SL="-K PIC"
+fi
