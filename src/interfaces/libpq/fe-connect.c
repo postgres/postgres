@@ -2025,7 +2025,11 @@ connectDBComplete(PGconn *conn)
 	{
 		if (!parse_int_param(conn->connect_timeout, &timeout, conn,
 							 "connect_timeout"))
+		{
+			/* mark the connection as bad to report the parsing failure */
+			conn->status = CONNECTION_BAD;
 			return 0;
+		}
 
 		if (timeout > 0)
 		{
