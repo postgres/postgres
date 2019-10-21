@@ -17,11 +17,7 @@ endif
 CFLAGS += $(PTHREAD_CFLAGS)
 
 DLSUFFIX = .so
-ifeq ($(GCC), yes)
-CFLAGS_SL = -fpic
-else
-CFLAGS_SL = -K PIC
-endif
+
 ifeq ($(GCC), yes)
 SO_FLAGS = -shared
 else

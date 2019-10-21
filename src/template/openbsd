@@ -1,0 +1,4 @@
+# src/template/openbsd
+
+# Extra CFLAGS for code that will go into a shared library
+CFLAGS_SL="-fPIC -DPIC"

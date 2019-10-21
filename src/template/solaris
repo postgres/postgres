@@ -1,3 +1,12 @@
+# src/template/solaris
+
+# Extra CFLAGS for code that will go into a shared library
+if test "$GCC" = yes ; then
+  CFLAGS_SL="-fPIC"
+else
+  CFLAGS_SL="-KPIC"
+fi
+
 if test "$SUN_STUDIO_CC" = yes ; then
   CC="$CC -Xa"			# relaxed ISO C mode
   CFLAGS="-v"			# -v is like gcc -Wall
