@@ -96,8 +96,12 @@ static const struct locale_map locale_map_result[] = {
 	 *
 	 * It's not clear what encoding setlocale() uses when it returns the
 	 * locale name, so to play it safe, we search for "Norwegian (Bok*l)".
+	 *
+	 * Just to make life even more complicated, some versions of Windows spell
+	 * the locale name without parentheses.  Translate that too.
 	 */
 	{"Norwegian (Bokm", "l)_Norway", "Norwegian_Norway"},
+	{"Norwegian Bokm", "l_Norway", "Norwegian_Norway"},
 	{NULL, NULL, NULL}
 };
 
