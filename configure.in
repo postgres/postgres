@@ -547,7 +547,7 @@ elif test "$PORTNAME" = "hpux"; then
   PGAC_PROG_CXX_CFLAGS_OPT([+Olibmerrno])
 fi
 
-AC_SUBST(CFLAGS_VECTOR, $CFLAGS_VECTOR)
+AC_SUBST(CFLAGS_VECTOR)
 
 # Determine flags used to emit bitcode for JIT inlining. Need to test
 # for behaviour changing compiler flags, to keep compatibility with
@@ -607,8 +607,11 @@ CXXFLAGS="$CXXFLAGS $user_CXXFLAGS"
 BITCODE_CFLAGS="$BITCODE_CFLAGS $user_BITCODE_CFLAGS"
 BITCODE_CXXFLAGS="$BITCODE_CXXFLAGS $user_BITCODE_CXXFLAGS"
 
-AC_SUBST(BITCODE_CFLAGS, $BITCODE_CFLAGS)
-AC_SUBST(BITCODE_CXXFLAGS, $BITCODE_CXXFLAGS)
+AC_SUBST(BITCODE_CFLAGS)
+AC_SUBST(BITCODE_CXXFLAGS)
+
+# The template file must set up CFLAGS_SL; we don't support user override
+AC_SUBST(CFLAGS_SL)
 
 # Check if the compiler still works with the final flag settings
 # (note, we're not checking that for CXX, which is optional)

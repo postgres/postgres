@@ -8,6 +8,13 @@ if test "$GCC" != yes ; then
   CFLAGS="+O2"
 fi
 
+# Extra CFLAGS for code that will go into a shared library
+if test "$GCC" = yes ; then
+  CFLAGS_SL="-fPIC"
+else
+  CFLAGS_SL="+Z"
+fi
+
 # Pick right test-and-set (TAS) code.  We need out-of-line assembler
 # when not using gcc.
 case $host in
