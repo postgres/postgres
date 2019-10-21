@@ -16,6 +16,9 @@ if test x"$PG_SYSROOT" != x"" ; then
   fi
 fi
 
+# Extra CFLAGS for code that will go into a shared library
+CFLAGS_SL=""
+
 # Select appropriate semaphore support.  Darwin 6.0 (macOS 10.2) and up
 # support System V semaphores; before that we have to use named POSIX
 # semaphores, which are less good for our purposes because they eat a

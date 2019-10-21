@@ -1,3 +1,5 @@
+# src/template/aix
+
 # Set default options if using xlc.  This formerly included -qsrcmsg, but that
 # option elicits internal compiler errors from xlc v16.1.0.  Note: configure
 # will add -qnoansialias if the compiler accepts it, even if user specifies a
@@ -16,6 +18,9 @@ if test "$GCC" != yes ; then
   # force restrict not to be used when compiling with xlc.
   FORCE_DISABLE_RESTRICT=yes
 fi
+
+# Extra CFLAGS for code that will go into a shared library
+CFLAGS_SL=""
 
 # Native memset() is faster, tested on:
 # 	AIX 5.1 and 5.2, XLC 6.0 (IBM's cc)

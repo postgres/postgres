@@ -8,6 +8,9 @@ fi
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
 CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 
+# Extra CFLAGS for code that will go into a shared library
+CFLAGS_SL="-fPIC"
+
 # If --enable-profiling is specified, we need -DLINUX_PROFILE
 PLATFORM_PROFILE_FLAGS="-DLINUX_PROFILE"
 

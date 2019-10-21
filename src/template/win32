@@ -1,5 +1,8 @@
 # src/template/win32
 
+# Extra CFLAGS for code that will go into a shared library
+CFLAGS_SL=""
+
 # --allow-multiple-definition is required to link pg_dump because it finds
 # pg_toupper() etc. in both libpq and pgport
 # --disable-auto-import is to ensure we get MSVC-like linking behavior
