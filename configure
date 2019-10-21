@@ -18490,6 +18490,10 @@ fi
   # On most platforms, if perl.h is there then libperl.so will be too, but at
   # this writing Debian packages them separately.  There is no known reason to
   # waste cycles on separate probes for the Tcl or Python libraries, though.
+  # On some Red Hat platforms, the link attempt can fail if we don't use
+  # CFLAGS_SL while building the test program.
+  ac_save_CFLAGS=$CFLAGS
+  CFLAGS="$CFLAGS $CFLAGS_SL"
   pgac_save_LIBS=$LIBS
   LIBS="$perl_embed_ldflags"
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libperl" >&5
@@ -18519,6 +18523,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
   LIBS=$pgac_save_LIBS
+  CFLAGS=$ac_save_CFLAGS
   CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
