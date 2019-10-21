@@ -5210,8 +5210,17 @@ timestamp2timestamptz_opt_error(Timestamp timestamp, bool *have_error)
 	{
 		tz = DetermineTimeZoneOffset(tm, session_timezone);
 
-		if (!tm2timestamp(tm, fsec, &tz, &result))
+		result = dt2local(timestamp, -tz);
+
+		if (IS_VALID_TIMESTAMP(result))
+		{
 			return result;
+		}
+		else if (have_error)
+		{
+			*have_error = true;
+			return (TimestampTz) 0;
+		}
 	}
 
 	if (have_error)
