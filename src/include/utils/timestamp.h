@@ -97,8 +97,8 @@ extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 /* timestamp comparison works for timestamptz also */
 #define timestamptz_cmp_internal(dt1,dt2)	timestamp_cmp_internal(dt1, dt2)
 
-extern TimestampTz timestamp2timestamptz_opt_error(Timestamp timestamp,
-												   bool *have_error);
+extern TimestampTz timestamp2timestamptz_opt_overflow(Timestamp timestamp,
+													  int *overflow);
 
 extern int	isoweek2j(int year, int week);
 extern void isoweek2date(int woy, int *year, int *mon, int *mday);

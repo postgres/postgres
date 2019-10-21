@@ -554,11 +554,12 @@ date_mii(PG_FUNCTION_ARGS)
 /*
  * Promote date to timestamp.
  *
- * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set
- * and zero is returned.
+ * On overflow error is thrown if 'overflow' is NULL.  Otherwise, '*overflow'
+ * is set to -1 (+1) when result value exceed lower (upper) boundary and zero
+ * returned.
  */
 Timestamp
-date2timestamp_opt_error(DateADT dateVal, bool *have_error)
+date2timestamp_opt_overflow(DateADT dateVal, int *overflow)
 {
 	Timestamp	result;
 
@@ -575,9 +576,9 @@ date2timestamp_opt_error(DateADT dateVal, bool *have_error)
 		 */
 		if (dateVal >= (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE))
 		{
-			if (have_error)
+			if (overflow)
 			{
-				*have_error = true;
+				*overflow = 1;
 				return (Timestamp) 0;
 			}
 			else
@@ -596,22 +597,23 @@ date2timestamp_opt_error(DateADT dateVal, bool *have_error)
 }
 
 /*
- * Single-argument version of date2timestamp_opt_error().
+ * Single-argument version of date2timestamp_opt_overflow().
  */
 static TimestampTz
 date2timestamp(DateADT dateVal)
 {
-	return date2timestamp_opt_error(dateVal, NULL);
+	return date2timestamp_opt_overflow(dateVal, NULL);
 }
 
 /*
  * Promote date to timestamp with time zone.
  *
- * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set
- * and zero is returned.
+ * On overflow error is thrown if 'overflow' is NULL.  Otherwise, '*overflow'
+ * is set to -1 (+1) when result value exceed lower (upper) boundary and zero
+ * returned.
  */
 TimestampTz
-date2timestamptz_opt_error(DateADT dateVal, bool *have_error)
+date2timestamptz_opt_overflow(DateADT dateVal, int *overflow)
 {
 	TimestampTz result;
 	struct pg_tm tt,
@@ -631,9 +633,9 @@ date2timestamptz_opt_error(DateADT dateVal, bool *have_error)
 		 */
 		if (dateVal >= (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE))
 		{
-			if (have_error)
+			if (overflow)
 			{
-				*have_error = true;
+				*overflow = 1;
 				return (TimestampTz) 0;
 			}
 			else
@@ -659,9 +661,15 @@ date2timestamptz_opt_error(DateADT dateVal, bool *have_error)
 		 */
 		if (!IS_VALID_TIMESTAMP(result))
 		{
-			if (have_error)
+			if (overflow)
 			{
-				*have_error = true;
+				if (result < MIN_TIMESTAMP)
+					*overflow = -1;
+				else
+				{
+					Assert(result >= END_TIMESTAMP);
+					*overflow = 1;
+				}
 				return (TimestampTz) 0;
 			}
 			else
@@ -677,12 +685,12 @@ date2timestamptz_opt_error(DateADT dateVal, bool *have_error)
 }
 
 /*
- * Single-argument version of date2timestamptz_opt_error().
+ * Single-argument version of date2timestamptz_opt_overflow().
  */
 static TimestampTz
 date2timestamptz(DateADT dateVal)
 {
-	return date2timestamptz_opt_error(dateVal, NULL);
+	return date2timestamptz_opt_overflow(dateVal, NULL);
 }
 
 /*

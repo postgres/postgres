@@ -1949,17 +1949,17 @@ select jsonb_path_query(
 	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
 	'$[*].datetime() ? (@ == "10.03.2017".datetime("dd.mm.yyyy"))');
 ERROR:  cannot convert value from date to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
 	'$[*].datetime() ? (@ >= "10.03.2017".datetime("dd.mm.yyyy"))');
 ERROR:  cannot convert value from date to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
 	'$[*].datetime() ? (@ <  "10.03.2017".datetime("dd.mm.yyyy"))');
 ERROR:  cannot convert value from date to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query_tz(
 	'["2017-03-10", "2017-03-11", "2017-03-09", "12:34:56", "01:02:03 +04", "2017-03-10 00:00:00", "2017-03-10 12:34:56", "2017-03-10 01:02:03 +04", "2017-03-10 03:00:00 +03"]',
 	'$[*].datetime() ? (@ == "10.03.2017".datetime("dd.mm.yyyy"))');
@@ -1996,17 +1996,17 @@ select jsonb_path_query(
 	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
 	'$[*].datetime() ? (@ == "12:35".datetime("HH24:MI"))');
 ERROR:  cannot convert value from time to timetz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
 	'$[*].datetime() ? (@ >= "12:35".datetime("HH24:MI"))');
 ERROR:  cannot convert value from time to timetz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
 	'$[*].datetime() ? (@ <  "12:35".datetime("HH24:MI"))');
 ERROR:  cannot convert value from time to timetz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query_tz(
 	'["12:34:00", "12:35:00", "12:36:00", "12:35:00 +00", "12:35:00 +01", "13:35:00 +01", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +01"]',
 	'$[*].datetime() ? (@ == "12:35".datetime("HH24:MI"))');
@@ -2041,17 +2041,17 @@ select jsonb_path_query(
 	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
 	'$[*].datetime() ? (@ == "12:35 +1".datetime("HH24:MI TZH"))');
 ERROR:  cannot convert value from time to timetz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
 	'$[*].datetime() ? (@ >= "12:35 +1".datetime("HH24:MI TZH"))');
 ERROR:  cannot convert value from time to timetz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
 	'$[*].datetime() ? (@ <  "12:35 +1".datetime("HH24:MI TZH"))');
 ERROR:  cannot convert value from time to timetz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query_tz(
 	'["12:34:00 +01", "12:35:00 +01", "12:36:00 +01", "12:35:00 +02", "12:35:00 -02", "10:35:00", "11:35:00", "12:35:00", "2017-03-10", "2017-03-10 12:35:00", "2017-03-10 12:35:00 +1"]',
 	'$[*].datetime() ? (@ == "12:35 +1".datetime("HH24:MI TZH"))');
@@ -2087,17 +2087,17 @@ select jsonb_path_query(
 	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ == "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
 ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ >= "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
 ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ < "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
 ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query_tz(
 	'["2017-03-10 12:34:00", "2017-03-10 12:35:00", "2017-03-10 12:36:00", "2017-03-10 12:35:00 +01", "2017-03-10 13:35:00 +01", "2017-03-10 12:35:00 -01", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ == "10.03.2017 12:35".datetime("dd.mm.yyyy HH24:MI"))');
@@ -2134,17 +2134,17 @@ select jsonb_path_query(
 	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ == "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
 ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ >= "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
 ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query(
 	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ < "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
 ERROR:  cannot convert value from timestamp to timestamptz without timezone usage
-HINT:  use *_tz() function for timezone support
+HINT:  Use *_tz() function for timezone support.
 select jsonb_path_query_tz(
 	'["2017-03-10 12:34:00 +01", "2017-03-10 12:35:00 +01", "2017-03-10 12:36:00 +01", "2017-03-10 12:35:00 +02", "2017-03-10 12:35:00 -02", "2017-03-10 10:35:00", "2017-03-10 11:35:00", "2017-03-10 12:35:00", "2017-03-10", "2017-03-11", "12:34:56", "12:34:56 +01"]',
 	'$[*].datetime() ? (@ == "10.03.2017 12:35 +1".datetime("dd.mm.yyyy HH24:MI TZH"))');
@@ -2177,6 +2177,13 @@ select jsonb_path_query_tz(
  "2017-03-10T10:35:00"
  "2017-03-10"
 (4 rows)
+
+-- overflow during comparison
+select jsonb_path_query('"1000000-01-01"', '$.datetime() > "2020-01-01 12:00:00".datetime()'::jsonpath);
+ jsonb_path_query 
+------------------
+ true
+(1 row)
 
 set time zone default;
 -- jsonpath operators

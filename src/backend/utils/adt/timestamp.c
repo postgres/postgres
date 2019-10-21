@@ -5190,12 +5190,12 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 /*
  * Convert timestamp to timestamp with time zone.
  *
- * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set
- * and zero is returned.
+ * On overflow error is thrown if 'overflow' is NULL.  Otherwise, '*overflow'
+ * is set to -1 (+1) when result value exceed lower (upper) boundary and zero
+ * returned.
  */
-
 TimestampTz
-timestamp2timestamptz_opt_error(Timestamp timestamp, bool *have_error)
+timestamp2timestamptz_opt_overflow(Timestamp timestamp, int *overflow)
 {
 	TimestampTz result;
 	struct pg_tm tt,
@@ -5216,30 +5216,33 @@ timestamp2timestamptz_opt_error(Timestamp timestamp, bool *have_error)
 		{
 			return result;
 		}
-		else if (have_error)
+		else if (overflow)
 		{
-			*have_error = true;
+			if (result < MIN_TIMESTAMP)
+				*overflow = -1;
+			else
+			{
+				Assert(result >= END_TIMESTAMP);
+				*overflow = 1;
+			}
 			return (TimestampTz) 0;
 		}
 	}
 
-	if (have_error)
-		*have_error = true;
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("timestamp out of range")));
+	ereport(ERROR,
+			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			 errmsg("timestamp out of range")));
 
 	return 0;
 }
 
 /*
- * Single-argument version of timestamp2timestamptz_opt_error().
+ * Single-argument version of timestamp2timestamptz_opt_overflow().
  */
 static TimestampTz
 timestamp2timestamptz(Timestamp timestamp)
 {
-	return timestamp2timestamptz_opt_error(timestamp, NULL);
+	return timestamp2timestamptz_opt_overflow(timestamp, NULL);
 }
 
 /* timestamptz_timestamp()
