@@ -475,7 +475,7 @@ elif test "$PORTNAME" = "hpux"; then
   PGAC_PROG_CC_CFLAGS_OPT([+Olibmerrno])
 fi
 
-AC_SUBST(CFLAGS_VECTOR, $CFLAGS_VECTOR)
+AC_SUBST(CFLAGS_VECTOR)
 
 # supply -g if --enable-debug
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
@@ -511,6 +511,9 @@ fi
 # user-specified flags (if any) at the end.  This lets users override
 # the automatic additions.
 CFLAGS="$CFLAGS $user_CFLAGS"
+
+# The template file must set up CFLAGS_SL; we don't support user override
+AC_SUBST(CFLAGS_SL)
 
 # Check if the compiler still works with the final flag settings
 AC_MSG_CHECKING([whether the C compiler still works])

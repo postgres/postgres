@@ -4,3 +4,6 @@ if test "$GCC" != yes ; then
   CC="$CC -std"
   CFLAGS="-O -ieee"
 fi
+
+# Extra CFLAGS for code that will go into a shared library
+CFLAGS_SL=""

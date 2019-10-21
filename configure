@@ -723,6 +723,7 @@ autodepend
 TAS
 GCC
 CPP
+CFLAGS_SL
 CFLAGS_VECTOR
 SUN_STUDIO_CC
 OBJEXT
@@ -5009,7 +5010,6 @@ fi
 
 fi
 
-CFLAGS_VECTOR=$CFLAGS_VECTOR
 
 
 # supply -g if --enable-debug
@@ -5047,6 +5047,9 @@ fi
 # user-specified flags (if any) at the end.  This lets users override
 # the automatic additions.
 CFLAGS="$CFLAGS $user_CFLAGS"
+
+# The template file must set up CFLAGS_SL; we don't support user override
+
 
 # Check if the compiler still works with the final flag settings
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the C compiler still works" >&5

@@ -1,5 +1,8 @@
 # src/template/freebsd
 
+# Extra CFLAGS for code that will go into a shared library
+CFLAGS_SL="-fPIC -DPIC"
+
 case $host_cpu in
   alpha*)   CFLAGS="-O";;  # alpha has problems with -O2
 esac

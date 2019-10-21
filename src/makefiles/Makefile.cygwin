@@ -12,7 +12,6 @@ LIBS:=$(filter-out -lm -lc, $(LIBS))
 
 AROPT = crs
 DLSUFFIX = .dll
-CFLAGS_SL =
 
 override CPPFLAGS += -DWIN32_STACK_RLIMIT=$(WIN32_STACK_RLIMIT)
 
