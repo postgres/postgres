@@ -30,11 +30,6 @@ ifeq ($(host_cpu), ia64)
 else
    DLSUFFIX = .sl
 endif
-ifeq ($(GCC), yes)
-   CFLAGS_SL = -fPIC
-else
-   CFLAGS_SL = +Z
-endif
 
 # env var name to use in place of LD_LIBRARY_PATH
 ld_library_path_var = SHLIB_PATH

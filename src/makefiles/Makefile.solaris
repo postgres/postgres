@@ -10,11 +10,7 @@ rpath = -Wl,-R'$(rpathdir)'
 endif
 
 DLSUFFIX = .so
-ifeq ($(GCC), yes)
-CFLAGS_SL = -fPIC
-else
-CFLAGS_SL = -KPIC
-endif
+
 
 # Rule for building a shared library from a single .o file
 %.so: %.o
