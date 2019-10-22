@@ -703,10 +703,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 							true);
 
 			/*
-			 * Now write the page. We say isTemp = true even if it's not a
-			 * temp table, because there's no need for smgr to schedule an
-			 * fsync for this write; we'll do it ourselves in
-			 * end_heap_rewrite.
+			 * Now write the page. We say skipFsync = true because there's no
+			 * need for smgr to schedule an fsync for this write; we'll do it
+			 * ourselves in end_heap_rewrite.
 			 */
 			RelationOpenSmgr(state->rs_new_rel);
 

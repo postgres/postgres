@@ -390,9 +390,9 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 		PageSetChecksumInplace(page, blkno);
 
 		/*
-		 * Now write the page.  We say isTemp = true even if it's not a temp
-		 * rel, because there's no need for smgr to schedule an fsync for this
-		 * write; we'll do it ourselves below.
+		 * Now write the page.  We say skipFsync = true because there's no
+		 * need for smgr to schedule an fsync for this write; we'll do it
+		 * ourselves below.
 		 */
 		smgrextend(dst, forkNum, blkno, buf.data, true);
 	}
