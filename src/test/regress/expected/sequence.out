@@ -599,7 +599,6 @@ DROP SEQUENCE seq2;
 -- should fail
 SELECT lastval();
 ERROR:  lastval is not yet defined in this session
-CREATE USER regress_seq_user;
 -- Test sequences in read-only transactions
 CREATE TEMPORARY SEQUENCE sequence_test_temp1;
 START TRANSACTION READ ONLY;
@@ -623,6 +622,7 @@ SELECT setval('sequence_test2', 1);  -- error
 ERROR:  cannot execute setval() in a read-only transaction
 ROLLBACK;
 -- privileges tests
+CREATE USER regress_seq_user;
 -- nextval
 BEGIN;
 SET LOCAL SESSION AUTHORIZATION regress_seq_user;
