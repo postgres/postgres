@@ -1558,6 +1558,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
+		/* since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+
 		/* Prevents interrupts while cleaning up */
 		HOLD_INTERRUPTS();
 
