@@ -94,14 +94,10 @@ encnames.c wchar.c: % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 
 
-distprep: libpq-dist.rc
-
-libpq.rc libpq-dist.rc: libpq.rc.in
+libpq.rc: libpq.rc.in
 	sed -e 's/\(VERSION.*\),0 *$$/\1,'`date '+%y%j' | sed 's/^0*//'`'/' $< >$@
 
 # Depend on Makefile.global to force rebuild on re-run of configure.
-# (But libpq-dist.rc is shipped in the distribution for shell-less
-# installations and is only updated by distprep.)
 libpq.rc: $(top_builddir)/src/Makefile.global
 
 # Make dependencies on pg_config_paths.h visible, too.
@@ -141,4 +137,3 @@ clean distclean: clean-lib
 
 maintainer-clean: distclean
 	$(MAKE) -C test $@
-	rm -f libpq-dist.rc
