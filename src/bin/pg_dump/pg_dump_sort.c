@@ -15,11 +15,10 @@
  */
 #include "postgres_fe.h"
 
+#include "catalog/pg_class_d.h"
 #include "pg_backup_archiver.h"
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
-
-#include "catalog/pg_class_d.h"
 
 /*
  * Sort priority for database object types.

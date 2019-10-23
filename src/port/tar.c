@@ -1,6 +1,8 @@
 #include "c.h"
-#include "pgtar.h"
+
 #include <sys/stat.h>
+
+#include "pgtar.h"
 
 /*
  * Print a numeric field in a tar header.  The field starts at *s and is of

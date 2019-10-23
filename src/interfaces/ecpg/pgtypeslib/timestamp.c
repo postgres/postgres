@@ -11,11 +11,10 @@
 #error -ffast-math is known to break this code
 #endif
 
-#include "pgtypeslib_extern.h"
 #include "dt.h"
-#include "pgtypes_timestamp.h"
 #include "pgtypes_date.h"
-
+#include "pgtypes_timestamp.h"
+#include "pgtypeslib_extern.h"
 
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)

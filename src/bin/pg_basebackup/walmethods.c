@@ -21,10 +21,9 @@
 #include <zlib.h>
 #endif
 
-#include "pgtar.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
-
+#include "pgtar.h"
 #include "receivelog.h"
 #include "streamutil.h"
 

@@ -29,14 +29,13 @@
 #include <sys/resource.h>
 #endif
 
-#include "pg_regress.h"
-
 #include "common/logging.h"
 #include "common/restricted_token.h"
 #include "common/username.h"
 #include "getopt_long.h"
 #include "libpq/pqcomm.h"		/* needed for UNIXSOCK_PATH() */
 #include "pg_config_paths.h"
+#include "pg_regress.h"
 #include "portability/instr_time.h"
 
 /* for resultmap we need a list of pairs of strings */

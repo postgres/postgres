@@ -9,11 +9,9 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
-
 #include "access/transam.h"
 #include "catalog/pg_language_d.h"
-
+#include "pg_upgrade.h"
 
 /*
  * qsort comparator for pointers to library names

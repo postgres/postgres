@@ -61,10 +61,9 @@
 #include <sys/select.h>
 #endif
 
+#include "fe_utils/string_utils.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
-
-#include "fe_utils/string_utils.h"
 #include "port/pg_bswap.h"
 
 /* Mnemonic macros for indexing the fd array returned by pipe(2) */

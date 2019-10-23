@@ -9,10 +9,8 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
-
 #include "fe_utils/string_utils.h"
-
+#include "pg_upgrade.h"
 
 void
 generate_old_dump(void)

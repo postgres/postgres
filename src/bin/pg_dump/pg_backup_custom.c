@@ -25,11 +25,10 @@
  */
 #include "postgres_fe.h"
 
+#include "common/file_utils.h"
 #include "compress_io.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
-#include "common/file_utils.h"
-
 
 /*--------
  * Routines in the format interface

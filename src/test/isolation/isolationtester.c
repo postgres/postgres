@@ -13,11 +13,10 @@
 #endif
 
 #include "datatype/timestamp.h"
-#include "libpq-fe.h"
-#include "pqexpbuffer.h"
-#include "pg_getopt.h"
-
 #include "isolationtester.h"
+#include "libpq-fe.h"
+#include "pg_getopt.h"
+#include "pqexpbuffer.h"
 
 #define PREP_WAITING "isolationtester_waiting"
 

@@ -39,9 +39,8 @@
 #endif
 
 #include "common/shortest_dec.h"
-
-#include "ryu_common.h"
 #include "digit_table.h"
+#include "ryu_common.h"
 
 #define FLOAT_MANTISSA_BITS 23
 #define FLOAT_EXPONENT_BITS 8

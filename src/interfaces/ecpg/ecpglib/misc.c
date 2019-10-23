@@ -5,17 +5,18 @@
 
 #include <limits.h>
 #include <unistd.h>
+
 #include "ecpg-pthread-win32.h"
-#include "ecpgtype.h"
-#include "ecpglib.h"
 #include "ecpgerrno.h"
+#include "ecpglib.h"
 #include "ecpglib_extern.h"
-#include "sqlca.h"
-#include "pgtypes_numeric.h"
+#include "ecpgtype.h"
 #include "pgtypes_date.h"
-#include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
+#include "pgtypes_numeric.h"
+#include "pgtypes_timestamp.h"
 #include "pg_config_paths.h"
+#include "sqlca.h"
 
 #ifdef HAVE_LONG_LONG_INT
 #ifndef LONG_LONG_MIN

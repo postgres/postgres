@@ -19,18 +19,15 @@
 #include <sys/select.h>
 #endif
 
-/* local includes */
-#include "streamutil.h"
-
 #include "access/xlog_internal.h"
-#include "common/file_perm.h"
 #include "common/fe_memutils.h"
+#include "common/file_perm.h"
 #include "common/logging.h"
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "libpq/pqsignal.h"
 #include "pqexpbuffer.h"
-
+#include "streamutil.h"
 
 /* Time to sleep between reconnection attempts */
 #define RECONNECT_SLEEP_TIME 5

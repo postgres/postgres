@@ -9,12 +9,9 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
-
 #include "catalog/pg_class_d.h"
 #include "fe_utils/string_utils.h"
-
-
+#include "pg_upgrade.h"
 
 /*
  * new_9_0_populate_pg_largeobject_metadata()

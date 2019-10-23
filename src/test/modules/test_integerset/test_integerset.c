@@ -14,12 +14,12 @@
 
 #include "fmgr.h"
 #include "lib/integerset.h"
+#include "miscadmin.h"
 #include "nodes/bitmapset.h"
-#include "utils/memutils.h"
-#include "utils/timestamp.h"
 #include "storage/block.h"
 #include "storage/itemptr.h"
-#include "miscadmin.h"
+#include "utils/memutils.h"
+#include "utils/timestamp.h"
 
 /*
  * If you enable this, the "pattern" tests will print information about

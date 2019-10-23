@@ -15,10 +15,8 @@
 
 #include "postgres.h"
 
-#include "utils/memutils.h"
-
 #include "plpgsql.h"
-
+#include "utils/memutils.h"
 
 /* ----------
  * Local variables for namespace handling

@@ -16,7 +16,6 @@
 
 #include "pg_upgrade.h"
 
-
 static int	parallel_jobs;
 
 #ifdef WIN32

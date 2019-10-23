@@ -12,9 +12,8 @@
 
 #include "postgres_fe.h"
 
-#include "datapagemap.h"
-
 #include "common/logging.h"
+#include "datapagemap.h"
 
 struct datapagemap_iterator
 {

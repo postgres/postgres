@@ -18,14 +18,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "getopt_long.h"
-
-#include "dumputils.h"
-#include "pg_backup.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
+#include "dumputils.h"
 #include "fe_utils/connect.h"
 #include "fe_utils/string_utils.h"
+#include "getopt_long.h"
+#include "pg_backup.h"
 
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"

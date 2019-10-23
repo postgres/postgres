@@ -17,12 +17,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 
-#include "libpq-fe.h"
-#include "libpq-int.h"
-
-#include "mb/pg_wchar.h"
-#include "port/pg_bswap.h"
-
 #ifdef WIN32
 #include "win32.h"
 #else
@@ -32,6 +26,10 @@
 #endif
 #endif
 
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "mb/pg_wchar.h"
+#include "port/pg_bswap.h"
 
 /*
  * This macro lists the backend message types that could be "long" (more

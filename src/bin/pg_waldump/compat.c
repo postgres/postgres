@@ -20,8 +20,8 @@
 
 #include <time.h>
 
-#include "utils/datetime.h"
 #include "lib/stringinfo.h"
+#include "utils/datetime.h"
 
 /* copied from timestamp.c */
 pg_time_t

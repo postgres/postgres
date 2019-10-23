@@ -17,10 +17,8 @@
 
 #include <ctype.h>
 
-#include "fe_utils/string_utils.h"
-
 #include "common/keywords.h"
-
+#include "fe_utils/string_utils.h"
 
 static PQExpBuffer defaultGetLocalPQExpBuffer(void);
 

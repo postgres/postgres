@@ -9,12 +9,11 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
-
 #include <sys/stat.h>
-#include "catalog/pg_class_d.h"
-#include "access/transam.h"
 
+#include "access/transam.h"
+#include "catalog/pg_class_d.h"
+#include "pg_upgrade.h"
 
 static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace);
 static void transfer_relfile(FileNameMap *map, const char *suffix, bool vm_must_add_frozenbit);

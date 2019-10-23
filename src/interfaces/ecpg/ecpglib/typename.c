@@ -4,12 +4,11 @@
 #include "postgres_fe.h"
 
 #include "catalog/pg_type_d.h"
-
-#include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpglib_extern.h"
-#include "sqltypes.h"
+#include "ecpgtype.h"
 #include "sql3types.h"
+#include "sqltypes.h"
 
 /*
  * This function is used to generate the correct type names.

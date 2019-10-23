@@ -5,15 +5,15 @@
 
 #include <math.h>
 
-#include "ecpgtype.h"
-#include "ecpglib.h"
 #include "ecpgerrno.h"
+#include "ecpglib.h"
 #include "ecpglib_extern.h"
-#include "sqlca.h"
-#include "pgtypes_numeric.h"
+#include "ecpgtype.h"
 #include "pgtypes_date.h"
-#include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
+#include "pgtypes_numeric.h"
+#include "pgtypes_timestamp.h"
+#include "sqlca.h"
 
 /* returns true if character c is a delimiter for the given array type */
 static bool

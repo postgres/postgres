@@ -21,10 +21,9 @@
 #include <termios.h>
 #endif
 
+#include "common.h"
 #include "common/logging.h"
 #include "common/username.h"
-
-#include "common.h"
 #include "help.h"
 #include "input.h"
 #include "settings.h"

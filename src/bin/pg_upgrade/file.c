@@ -9,13 +9,6 @@
 
 #include "postgres_fe.h"
 
-#include "access/visibilitymap.h"
-#include "common/file_perm.h"
-#include "pg_upgrade.h"
-#include "storage/bufpage.h"
-#include "storage/checksum.h"
-#include "storage/checksum_impl.h"
-
 #include <sys/stat.h>
 #include <fcntl.h>
 #ifdef HAVE_COPYFILE_H
@@ -26,6 +19,12 @@
 #include <linux/fs.h>
 #endif
 
+#include "access/visibilitymap.h"
+#include "common/file_perm.h"
+#include "pg_upgrade.h"
+#include "storage/bufpage.h"
+#include "storage/checksum.h"
+#include "storage/checksum_impl.h"
 
 #ifdef WIN32
 static int	win32_pghardlink(const char *src, const char *dst);

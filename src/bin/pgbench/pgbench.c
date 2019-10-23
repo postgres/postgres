@@ -32,12 +32,6 @@
 #endif
 
 #include "postgres_fe.h"
-#include "common/int.h"
-#include "common/logging.h"
-#include "fe_utils/conditional.h"
-#include "getopt_long.h"
-#include "libpq-fe.h"
-#include "portability/instr_time.h"
 
 #include <ctype.h>
 #include <float.h>
@@ -63,11 +57,18 @@
 #endif
 #endif
 
+#include "common/int.h"
+#include "common/logging.h"
+#include "fe_utils/conditional.h"
+#include "getopt_long.h"
+#include "libpq-fe.h"
+#include "pgbench.h"
+#include "portability/instr_time.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-#include "pgbench.h"
 
 #define ERRCODE_UNDEFINED_TABLE  "42P01"
 

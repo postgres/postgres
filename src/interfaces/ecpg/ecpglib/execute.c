@@ -19,19 +19,18 @@
 #include <math.h>
 
 #include "catalog/pg_type_d.h"
-
-#include "ecpgtype.h"
-#include "ecpglib.h"
 #include "ecpgerrno.h"
+#include "ecpglib.h"
 #include "ecpglib_extern.h"
-#include "sqlca.h"
-#include "sqlda-native.h"
-#include "sqlda-compat.h"
-#include "sql3types.h"
-#include "pgtypes_numeric.h"
+#include "ecpgtype.h"
 #include "pgtypes_date.h"
-#include "pgtypes_timestamp.h"
 #include "pgtypes_interval.h"
+#include "pgtypes_numeric.h"
+#include "pgtypes_timestamp.h"
+#include "sql3types.h"
+#include "sqlca.h"
+#include "sqlda-compat.h"
+#include "sqlda-native.h"
 
 /*
  *	This function returns a newly malloced string that has ' and \

@@ -6,17 +6,15 @@
  * src/bin/psql/mainloop.c
  */
 #include "postgres_fe.h"
-#include "mainloop.h"
 
 #include "command.h"
 #include "common.h"
+#include "common/logging.h"
 #include "input.h"
+#include "mainloop.h"
+#include "mb/pg_wchar.h"
 #include "prompt.h"
 #include "settings.h"
-
-#include "common/logging.h"
-#include "mb/pg_wchar.h"
-
 
 /* callback functions for our flex lexer */
 const PsqlScanCallbacks psqlscan_callbacks = {

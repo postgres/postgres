@@ -18,11 +18,10 @@
 #endif
 
 #include "common.h"
+#include "common/string.h"
 #include "input.h"
 #include "prompt.h"
 #include "settings.h"
-
-#include "common/string.h"
 
 /*--------------------------
  * get_prompt

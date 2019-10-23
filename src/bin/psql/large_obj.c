@@ -6,12 +6,11 @@
  * src/bin/psql/large_obj.c
  */
 #include "postgres_fe.h"
-#include "large_obj.h"
 
-#include "settings.h"
 #include "common.h"
-
 #include "common/logging.h"
+#include "large_obj.h"
+#include "settings.h"
 
 static void print_lo_result(const char *fmt,...) pg_attribute_printf(1, 2);
 

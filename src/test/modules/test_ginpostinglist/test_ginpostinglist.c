@@ -12,10 +12,10 @@
  */
 #include "postgres.h"
 
-#include "fmgr.h"
 #include "access/ginblock.h"
 #include "access/gin_private.h"
 #include "access/htup_details.h"
+#include "fmgr.h"
 
 PG_MODULE_MAGIC;
 

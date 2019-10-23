@@ -6,10 +6,10 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include "pgtypeslib_extern.h"
 #include "dt.h"
-#include "pgtypes_error.h"
 #include "pgtypes_date.h"
+#include "pgtypes_error.h"
+#include "pgtypeslib_extern.h"
 
 date *
 PGTYPESdate_new(void)

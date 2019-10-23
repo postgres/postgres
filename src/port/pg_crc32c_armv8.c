@@ -14,9 +14,9 @@
  */
 #include "c.h"
 
-#include "port/pg_crc32c.h"
-
 #include <arm_acle.h>
+
+#include "port/pg_crc32c.h"
 
 pg_crc32c
 pg_comp_crc32c_armv8(pg_crc32c crc, const void *data, size_t len)

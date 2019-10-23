@@ -30,11 +30,9 @@
 #include <termios.h>
 #endif
 
-#include "fe_utils/print.h"
-
 #include "catalog/pg_type_d.h"
 #include "fe_utils/mbprint.h"
-
+#include "fe_utils/print.h"
 
 /*
  * If the calling program doesn't have any mechanism for setting

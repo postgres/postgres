@@ -1,6 +1,7 @@
 /* src/interfaces/ecpg/pgtypeslib/interval.c */
 
 #include "postgres_fe.h"
+
 #include <time.h>
 #include <math.h>
 #include <limits.h>
@@ -10,11 +11,10 @@
 #endif
 
 #include "common/string.h"
-
-#include "pgtypeslib_extern.h"
 #include "dt.h"
 #include "pgtypes_error.h"
 #include "pgtypes_interval.h"
+#include "pgtypeslib_extern.h"
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  * and changesd struct pg_tm to struct tm

@@ -40,9 +40,8 @@
 
 #include "common/md5.h"
 #include "common/scram-common.h"
-#include "libpq-fe.h"
 #include "fe-auth.h"
-
+#include "libpq-fe.h"
 
 #ifdef ENABLE_GSS
 /*

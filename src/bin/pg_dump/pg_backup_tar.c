@@ -29,17 +29,17 @@
  */
 #include "postgres_fe.h"
 
-#include "pg_backup_archiver.h"
-#include "pg_backup_tar.h"
-#include "pg_backup_utils.h"
-#include "pgtar.h"
-#include "common/file_utils.h"
-#include "fe_utils/string_utils.h"
-
 #include <sys/stat.h>
 #include <ctype.h>
 #include <limits.h>
 #include <unistd.h>
+
+#include "common/file_utils.h"
+#include "fe_utils/string_utils.h"
+#include "pg_backup_archiver.h"
+#include "pg_backup_tar.h"
+#include "pg_backup_utils.h"
+#include "pgtar.h"
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);

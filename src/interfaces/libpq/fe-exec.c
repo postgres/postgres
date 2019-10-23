@@ -18,16 +18,15 @@
 #include <fcntl.h>
 #include <limits.h>
 
-#include "libpq-fe.h"
-#include "libpq-int.h"
-
-#include "mb/pg_wchar.h"
-
 #ifdef WIN32
 #include "win32.h"
 #else
 #include <unistd.h>
 #endif
+
+#include "libpq-fe.h"
+#include "libpq-int.h"
+#include "mb/pg_wchar.h"
 
 /* keep this in same order as ExecStatusType in libpq-fe.h */
 char	   *const pgresStatus[] = {

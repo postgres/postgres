@@ -14,7 +14,6 @@
 #include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
 
-
 static void check_new_cluster_is_empty(void);
 static void check_databases_are_compatible(void);
 static void check_locale_and_encoding(DbInfo *olddb, DbInfo *newdb);

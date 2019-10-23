@@ -37,16 +37,16 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
+#ifdef HAVE_LANGINFO_H
+#include <langinfo.h>
+#endif
+
 #include "catalog/pg_class_d.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "common/restricted_token.h"
 #include "fe_utils/string_utils.h"
-
-#ifdef HAVE_LANGINFO_H
-#include <langinfo.h>
-#endif
+#include "pg_upgrade.h"
 
 static void prepare_new_cluster(void);
 static void prepare_new_globals(void);

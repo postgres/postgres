@@ -36,10 +36,9 @@
 #include "port/atomics.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
-#include "utils/memutils.h"
-
 
 #define EXPECT_TRUE(expr)	\
 	do { \

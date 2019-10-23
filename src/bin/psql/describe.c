@@ -18,17 +18,14 @@
 #include "catalog/pg_cast_d.h"
 #include "catalog/pg_class_d.h"
 #include "catalog/pg_default_acl_d.h"
-
+#include "common.h"
 #include "common/logging.h"
+#include "describe.h"
 #include "fe_utils/mbprint.h"
 #include "fe_utils/print.h"
 #include "fe_utils/string_utils.h"
-
-#include "common.h"
-#include "describe.h"
 #include "settings.h"
 #include "variables.h"
-
 
 static bool describeOneTableDetails(const char *schemaname,
 									const char *relationname,

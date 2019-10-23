@@ -21,10 +21,16 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "common/ip.h"
+#include "common/link-canary.h"
+#include "common/scram-common.h"
+#include "common/string.h"
+#include "fe-auth.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
-#include "fe-auth.h"
+#include "mb/pg_wchar.h"
 #include "pg_config_paths.h"
+#include "port/pg_bswap.h"
 
 #ifdef WIN32
 #include "win32.h"
@@ -69,14 +75,6 @@ typedef struct timeval LDAP_TIMEVAL;
 static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
 							  PQExpBuffer errorMessage);
 #endif
-
-#include "common/ip.h"
-#include "common/link-canary.h"
-#include "common/scram-common.h"
-#include "common/string.h"
-#include "mb/pg_wchar.h"
-#include "port/pg_bswap.h"
-
 
 #ifndef WIN32
 #define PGPASSFILE ".pgpass"

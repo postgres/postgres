@@ -17,10 +17,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-/* local includes */
-#include "receivelog.h"
-#include "streamutil.h"
-
 #include "access/xlog_internal.h"
 #include "common/fe_memutils.h"
 #include "common/file_perm.h"
@@ -29,6 +25,8 @@
 #include "fe_utils/connect.h"
 #include "port/pg_bswap.h"
 #include "pqexpbuffer.h"
+#include "receivelog.h"
+#include "streamutil.h"
 
 #define ERRCODE_DUPLICATE_OBJECT  "42710"
 

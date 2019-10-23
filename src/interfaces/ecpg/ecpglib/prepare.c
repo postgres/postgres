@@ -5,10 +5,10 @@
 
 #include <ctype.h>
 
-#include "ecpgtype.h"
-#include "ecpglib.h"
 #include "ecpgerrno.h"
+#include "ecpglib.h"
 #include "ecpglib_extern.h"
+#include "ecpgtype.h"
 #include "sqlca.h"
 
 #define STMTID_SIZE 32

@@ -9,9 +9,9 @@
 
 #include "postgres_fe.h"
 
-#include "pg_upgrade.h"
-
 #include <ctype.h>
+
+#include "pg_upgrade.h"
 
 /*
  * get_control_data()

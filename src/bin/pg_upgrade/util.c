@@ -9,11 +9,10 @@
 
 #include "postgres_fe.h"
 
-#include "common/username.h"
-#include "pg_upgrade.h"
-
 #include <signal.h>
 
+#include "common/username.h"
+#include "pg_upgrade.h"
 
 LogOpts		log_opts;
 

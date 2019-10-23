@@ -19,10 +19,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "pg_rewind.h"
 #include "fetch.h"
 #include "file_ops.h"
 #include "filemap.h"
+#include "pg_rewind.h"
 
 void
 fetchSourceFileList(void)

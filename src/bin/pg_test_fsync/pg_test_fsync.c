@@ -12,10 +12,9 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "getopt_long.h"
 #include "access/xlogdefs.h"
 #include "common/logging.h"
-
+#include "getopt_long.h"
 
 /*
  * put the temp files in the local directory

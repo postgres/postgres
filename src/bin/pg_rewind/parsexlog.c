@@ -13,16 +13,14 @@
 
 #include <unistd.h>
 
-#include "pg_rewind.h"
-#include "filemap.h"
-
 #include "access/rmgr.h"
 #include "access/xlog_internal.h"
 #include "access/xlogreader.h"
 #include "catalog/pg_control.h"
 #include "catalog/storage_xlog.h"
 #include "commands/dbcommands_xlog.h"
-
+#include "filemap.h"
+#include "pg_rewind.h"
 
 /*
  * RmgrNames is an array of resource manager names, to make error messages

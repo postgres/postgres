@@ -1,12 +1,14 @@
 /* src/interfaces/ecpg/pgtypeslib/numeric.c */
 
 #include "postgres_fe.h"
+
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
 
-#include "pgtypeslib_extern.h"
 #include "pgtypes_error.h"
+#include "pgtypes_numeric.h"
+#include "pgtypeslib_extern.h"
 
 #define Max(x, y)				((x) > (y) ? (x) : (y))
 #define Min(x, y)				((x) < (y) ? (x) : (y))
@@ -20,7 +22,6 @@
 						  free(buf); \
 		  } while (0)
 
-#include "pgtypes_numeric.h"
 
 #if 0
 /* ----------

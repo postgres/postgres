@@ -19,15 +19,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/xlog_internal.h"
 #include "common/file_perm.h"
 #include "common/logging.h"
-#include "libpq-fe.h"
-#include "access/xlog_internal.h"
 #include "getopt_long.h"
-
+#include "libpq-fe.h"
 #include "receivelog.h"
 #include "streamutil.h"
-
 
 /* Time to sleep between reconnection attempts */
 #define RECONNECT_SLEEP_TIME 5

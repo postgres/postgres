@@ -13,11 +13,10 @@
 
 #include <ctype.h>
 
-#include "preproc_extern.h"
-#include "preproc.h"
-
 /* ScanKeywordList lookup data for ECPG keywords */
 #include "ecpg_kwlist_d.h"
+#include "preproc_extern.h"
+#include "preproc.h"
 
 /* Token codes for ECPG keywords */
 #define PG_KEYWORD(kwname, value) value,

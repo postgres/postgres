@@ -4,9 +4,9 @@
 #include "postgres_fe.h"
 
 #include "ecpgerrno.h"
-#include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpglib_extern.h"
+#include "ecpgtype.h"
 #include "sqlca.h"
 
 void

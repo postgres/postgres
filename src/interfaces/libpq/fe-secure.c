@@ -28,10 +28,6 @@
 #include <fcntl.h>
 #include <ctype.h>
 
-#include "libpq-fe.h"
-#include "fe-auth.h"
-#include "libpq-int.h"
-
 #ifdef WIN32
 #include "win32.h"
 #else
@@ -54,6 +50,10 @@
 #include <pthread.h>
 #endif
 #endif
+
+#include "fe-auth.h"
+#include "libpq-fe.h"
+#include "libpq-int.h"
 
 /*
  * Macros to handle disabling and then restoring the state of SIGPIPE handling.

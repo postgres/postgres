@@ -9,10 +9,9 @@
  */
 #include "postgres_fe.h"
 
-#include "pg_rewind.h"
-
 #include "access/timeline.h"
 #include "access/xlog_internal.h"
+#include "pg_rewind.h"
 
 /*
  * This is copy-pasted from the backend readTimeLineHistory, modified to

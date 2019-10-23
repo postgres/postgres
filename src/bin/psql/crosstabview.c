@@ -8,12 +8,11 @@
 #include "postgres_fe.h"
 
 #include "common.h"
+#include "common/logging.h"
 #include "crosstabview.h"
 #include "pqexpbuffer.h"
 #include "psqlscanslash.h"
 #include "settings.h"
-
-#include "common/logging.h"
 
 /*
  * Value/position from the resultset that goes into the horizontal or vertical

@@ -8,10 +8,8 @@
 #include "postgres_fe.h"
 
 #include "common.h"
-#include "variables.h"
-
 #include "common/logging.h"
-
+#include "variables.h"
 
 /*
  * Check whether a variable's name is allowed.

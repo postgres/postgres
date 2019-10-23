@@ -20,15 +20,12 @@
 #include <sys/select.h>
 #endif
 
-/* local includes */
-#include "receivelog.h"
-#include "streamutil.h"
-
-#include "libpq-fe.h"
 #include "access/xlog_internal.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
-
+#include "libpq-fe.h"
+#include "receivelog.h"
+#include "streamutil.h"
 
 /* fd and filename for currently open WAL file */
 static Walfile *walfile = NULL;

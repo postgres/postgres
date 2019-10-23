@@ -44,9 +44,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "access/transam.h"
 #include "access/heaptoast.h"
 #include "access/multixact.h"
+#include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "common/controldata_utils.h"
@@ -55,10 +55,9 @@
 #include "common/logging.h"
 #include "common/restricted_token.h"
 #include "common/string.h"
-#include "storage/large_object.h"
-#include "pg_getopt.h"
 #include "getopt_long.h"
-
+#include "pg_getopt.h"
+#include "storage/large_object.h"
 
 static ControlFileData ControlFile; /* pg_control values */
 static XLogSegNo newXlogSegNo;	/* new XLOG segment # */

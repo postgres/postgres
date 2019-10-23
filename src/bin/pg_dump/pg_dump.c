@@ -38,8 +38,6 @@
 #include <termios.h>
 #endif
 
-#include "getopt_long.h"
-
 #include "access/attnum.h"
 #include "access/sysattr.h"
 #include "access/transam.h"
@@ -54,17 +52,16 @@
 #include "catalog/pg_proc_d.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type_d.h"
-#include "libpq/libpq-fs.h"
-#include "storage/block.h"
-
 #include "dumputils.h"
+#include "fe_utils/connect.h"
+#include "fe_utils/string_utils.h"
+#include "getopt_long.h"
+#include "libpq/libpq-fs.h"
 #include "parallel.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
-#include "fe_utils/connect.h"
-#include "fe_utils/string_utils.h"
-
+#include "storage/block.h"
 
 typedef struct
 {

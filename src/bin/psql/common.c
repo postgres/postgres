@@ -18,17 +18,15 @@
 #include <win32.h>
 #endif
 
+#include "command.h"
+#include "common.h"
 #include "common/logging.h"
+#include "copy.h"
+#include "crosstabview.h"
 #include "fe_utils/mbprint.h"
 #include "fe_utils/string_utils.h"
 #include "portability/instr_time.h"
-
-#include "command.h"
-#include "common.h"
-#include "copy.h"
-#include "crosstabview.h"
 #include "settings.h"
-
 
 static bool DescribeQuery(const char *query, double *elapsed_msec);
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);

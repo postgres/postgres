@@ -13,12 +13,11 @@
 #include <fcntl.h>
 #include <limits.h>
 
+#include "common.h"
+#include "common/logging.h"
 #include "input.h"
 #include "settings.h"
 #include "tab-complete.h"
-#include "common.h"
-
-#include "common/logging.h"
 
 #ifndef WIN32
 #define PSQLHISTORY ".psql_history"
