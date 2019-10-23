@@ -43,9 +43,6 @@ main(int argc, char *argv[])
 		{"replication", no_argument, NULL, 1},
 		{"no-replication", no_argument, NULL, 2},
 		{"interactive", no_argument, NULL, 3},
-		/* adduser is obsolete, undocumented spelling of superuser */
-		{"adduser", no_argument, NULL, 'a'},
-		{"no-adduser", no_argument, NULL, 'A'},
 		{"connection-limit", required_argument, NULL, 'c'},
 		{"pwprompt", no_argument, NULL, 'P'},
 		{"encrypted", no_argument, NULL, 'E'},
@@ -88,7 +85,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createuser", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSaArRiIlLc:PE",
+	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSrRiIlLc:PE",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -121,11 +118,9 @@ main(int argc, char *argv[])
 				createdb = TRI_NO;
 				break;
 			case 's':
-			case 'a':
 				superuser = TRI_YES;
 				break;
 			case 'S':
-			case 'A':
 				superuser = TRI_NO;
 				break;
 			case 'r':
