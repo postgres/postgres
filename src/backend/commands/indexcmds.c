@@ -2960,8 +2960,11 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 													indexId,
 													concurrentName);
 
-		/* Now open the relation of the new index, a lock is also needed on it */
-		newIndexRel = index_open(indexId, ShareUpdateExclusiveLock);
+		/*
+		 * Now open the relation of the new index, a session-level lock is
+		 * also needed on it.
+		 */
+		newIndexRel = index_open(newIndexId, ShareUpdateExclusiveLock);
 
 		/*
 		 * Save the list of OIDs and locks in private context
