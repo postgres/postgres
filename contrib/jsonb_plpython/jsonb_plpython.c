@@ -1,10 +1,10 @@
 #include "postgres.h"
 
-#include "plpython.h"
 #include "plpy_elog.h"
 #include "plpy_typeio.h"
-#include "utils/jsonb.h"
+#include "plpython.h"
 #include "utils/fmgrprotos.h"
+#include "utils/jsonb.h"
 #include "utils/numeric.h"
 
 PG_MODULE_MAGIC;

@@ -16,9 +16,9 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
-#include "executor/spi.h"
 #include "commands/async.h"
 #include "commands/trigger.h"
+#include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"

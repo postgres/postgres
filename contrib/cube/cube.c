@@ -12,10 +12,9 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
+#include "cubedata.h"
 #include "utils/array.h"
 #include "utils/float.h"
-
-#include "cubedata.h"
 
 PG_MODULE_MAGIC;
 

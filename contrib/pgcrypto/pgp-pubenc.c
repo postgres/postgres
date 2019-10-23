@@ -30,8 +30,8 @@
  */
 #include "postgres.h"
 
-#include "px.h"
 #include "pgp.h"
+#include "px.h"
 
 /*
  * padded msg: 02 || non-zero pad bytes || 00 || msg

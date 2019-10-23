@@ -14,15 +14,14 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
-#include "utils/builtins.h"
-
-#include "isn.h"
 #include "EAN13.h"
 #include "ISBN.h"
 #include "ISMN.h"
 #include "ISSN.h"
 #include "UPC.h"
+#include "fmgr.h"
+#include "isn.h"
+#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 

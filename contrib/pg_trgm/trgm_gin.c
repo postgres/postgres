@@ -3,12 +3,10 @@
  */
 #include "postgres.h"
 
-#include "trgm.h"
-
 #include "access/gin.h"
 #include "access/stratnum.h"
 #include "fmgr.h"
-
+#include "trgm.h"
 
 PG_FUNCTION_INFO_V1(gin_extract_trgm);
 PG_FUNCTION_INFO_V1(gin_extract_value_trgm);

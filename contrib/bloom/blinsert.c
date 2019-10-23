@@ -15,6 +15,7 @@
 #include "access/genam.h"
 #include "access/generic_xlog.h"
 #include "access/tableam.h"
+#include "bloom.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -22,8 +23,6 @@
 #include "storage/smgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-
-#include "bloom.h"
 
 PG_MODULE_MAGIC;
 

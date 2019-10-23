@@ -31,9 +31,9 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "mbuf.h"
 #include "pgp.h"
+#include "px.h"
 
 #define NO_CTX_SIZE		0
 #define ALLOW_CTX_SIZE	1

@@ -31,9 +31,8 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "px-crypt.h"
-
+#include "px.h"
 
 static char *
 run_crypt_des(const char *psw, const char *salt,

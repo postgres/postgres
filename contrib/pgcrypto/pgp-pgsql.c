@@ -31,16 +31,15 @@
 
 #include "postgres.h"
 
-#include "lib/stringinfo.h"
 #include "catalog/pg_type.h"
-#include "mb/pg_wchar.h"
-#include "utils/builtins.h"
-#include "utils/array.h"
 #include "funcapi.h"
-
+#include "lib/stringinfo.h"
+#include "mb/pg_wchar.h"
 #include "mbuf.h"
-#include "px.h"
 #include "pgp.h"
+#include "px.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
 
 /*
  * public functions

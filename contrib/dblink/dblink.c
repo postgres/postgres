@@ -34,8 +34,6 @@
 
 #include <limits.h>
 
-#include "libpq-fe.h"
-
 #include "access/htup_details.h"
 #include "access/relation.h"
 #include "access/reloptions.h"
@@ -50,6 +48,7 @@
 #include "foreign/foreign.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
+#include "libpq-fe.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"

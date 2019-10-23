@@ -7,9 +7,9 @@
 
 #include <ctype.h>
 
+#include "crc32.h"
 #include "ltree.h"
 #include "utils/memutils.h"
-#include "crc32.h"
 
 PG_FUNCTION_INFO_V1(ltree_in);
 PG_FUNCTION_INFO_V1(ltree_out);

@@ -12,17 +12,15 @@
  */
 #include "postgres.h"
 
-#include "postgres_fdw.h"
-
 #include "access/reloptions.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/pg_foreign_table.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
 #include "commands/extension.h"
+#include "postgres_fdw.h"
 #include "utils/builtins.h"
 #include "utils/varlena.h"
-
 
 /*
  * Describes the valid options for objects that this wrapper uses.

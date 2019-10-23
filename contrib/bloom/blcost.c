@@ -12,10 +12,9 @@
  */
 #include "postgres.h"
 
+#include "bloom.h"
 #include "fmgr.h"
 #include "utils/selfuncs.h"
-
-#include "bloom.h"
 
 /*
  * Estimate cost of bloom index scan.

@@ -31,9 +31,8 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "pgp.h"
-
+#include "px.h"
 
 static int
 calc_s2k_simple(PGP_S2K *s2k, PX_MD *md, const uint8 *key,

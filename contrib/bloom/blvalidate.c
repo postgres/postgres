@@ -14,6 +14,7 @@
 
 #include "access/amvalidate.h"
 #include "access/htup_details.h"
+#include "bloom.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"
@@ -23,8 +24,6 @@
 #include "utils/lsyscache.h"
 #include "utils/regproc.h"
 #include "utils/syscache.h"
-
-#include "bloom.h"
 
 /*
  * Validator for a bloom opclass.

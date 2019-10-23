@@ -30,8 +30,8 @@
  */
 #include "postgres.h"
 
-#include "px.h"
 #include "pgp.h"
+#include "px.h"
 
 int
 pgp_mpi_alloc(int bits, PGP_MPI **mpi)

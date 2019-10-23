@@ -5,10 +5,8 @@
 
 #include <limits.h>
 
-#include "catalog/pg_type.h"
-
 #include "_int.h"
-
+#include "catalog/pg_type.h"
 
 /* arguments are assumed sorted & unique-ified */
 bool

@@ -20,11 +20,10 @@
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "sepgsql.h"
 #include "tcop/utility.h"
 #include "utils/guc.h"
 #include "utils/queryenvironment.h"
-
-#include "sepgsql.h"
 
 PG_MODULE_MAGIC;
 

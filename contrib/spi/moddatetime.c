@@ -17,8 +17,8 @@ OH, me, I'm Terry Mackintosh <terry@terrym.com>
 
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
-#include "executor/spi.h"
 #include "commands/trigger.h"
+#include "executor/spi.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
 

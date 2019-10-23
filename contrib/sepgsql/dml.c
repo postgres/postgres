@@ -14,8 +14,8 @@
 #include "access/sysattr.h"
 #include "access/tupdesc.h"
 #include "catalog/catalog.h"
-#include "catalog/heap.h"
 #include "catalog/dependency.h"
+#include "catalog/heap.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits.h"
@@ -23,10 +23,9 @@
 #include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "nodes/bitmapset.h"
+#include "sepgsql.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-#include "sepgsql.h"
 
 /*
  * fixup_whole_row_references

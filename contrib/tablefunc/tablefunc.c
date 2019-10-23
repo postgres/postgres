@@ -40,9 +40,8 @@
 #include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
-#include "utils/builtins.h"
-
 #include "tablefunc.h"
+#include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
 

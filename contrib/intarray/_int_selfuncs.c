@@ -13,17 +13,17 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "_int.h"
 
+#include "_int.h"
 #include "access/htup_details.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
-#include "utils/lsyscache.h"
-#include "miscadmin.h"
 
 PG_FUNCTION_INFO_V1(_int_overlap_sel);
 PG_FUNCTION_INFO_V1(_int_contains_sel);

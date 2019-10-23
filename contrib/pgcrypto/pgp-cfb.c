@@ -31,8 +31,8 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "pgp.h"
+#include "px.h"
 
 typedef int (*mix_data_t) (PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst);
 

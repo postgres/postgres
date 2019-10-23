@@ -3,12 +3,10 @@
  */
 #include "postgres.h"
 
-#include "trgm.h"
-
 #include "access/stratnum.h"
 #include "fmgr.h"
 #include "port/pg_bitutils.h"
-
+#include "trgm.h"
 
 typedef struct
 {

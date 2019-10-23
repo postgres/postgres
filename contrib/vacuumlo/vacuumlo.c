@@ -22,12 +22,11 @@
 #endif
 
 #include "catalog/pg_class_d.h"
-
 #include "common/logging.h"
 #include "fe_utils/connect.h"
+#include "getopt_long.h"
 #include "libpq-fe.h"
 #include "pg_getopt.h"
-#include "getopt_long.h"
 
 #define BUFSIZE			1024
 

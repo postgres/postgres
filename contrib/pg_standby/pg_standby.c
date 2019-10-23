@@ -30,9 +30,8 @@
 #include <signal.h>
 #include <sys/time.h>
 
-#include "pg_getopt.h"
-
 #include "access/xlog_internal.h"
+#include "pg_getopt.h"
 
 const char *progname;
 

@@ -12,8 +12,6 @@
  */
 #include "postgres.h"
 
-#include "postgres_fdw.h"
-
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
@@ -35,6 +33,7 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
+#include "postgres_fdw.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"

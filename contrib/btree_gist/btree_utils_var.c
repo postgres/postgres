@@ -3,15 +3,14 @@
  */
 #include "postgres.h"
 
-#include "btree_gist.h"
-
 #include <math.h>
 #include <limits.h>
 #include <float.h>
 
+#include "btree_gist.h"
 #include "btree_utils_var.h"
-#include "utils/pg_locale.h"
 #include "utils/builtins.h"
+#include "utils/pg_locale.h"
 #include "utils/rel.h"
 
 /* used for key sorting */

@@ -34,9 +34,8 @@
 #include <time.h>
 
 #include "mbuf.h"
-#include "px.h"
 #include "pgp.h"
-
+#include "px.h"
 
 #define MDC_DIGEST_LEN 20
 #define STREAM_ID 0xE0

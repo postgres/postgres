@@ -3,10 +3,9 @@
  */
 #include "postgres.h"
 
+#include "_int.h"
 #include "access/gin.h"
 #include "access/stratnum.h"
-
-#include "_int.h"
 
 PG_FUNCTION_INFO_V1(ginint4_queryextract);
 

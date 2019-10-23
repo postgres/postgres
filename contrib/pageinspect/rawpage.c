@@ -15,14 +15,13 @@
 
 #include "postgres.h"
 
-#include "pageinspect.h"
-
 #include "access/htup_details.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "pageinspect.h"
 #include "storage/bufmgr.h"
 #include "storage/checksum.h"
 #include "utils/builtins.h"

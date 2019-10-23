@@ -30,9 +30,9 @@
  */
 #include "postgres.h"
 
-#include "px.h"
 #include "mbuf.h"
 #include "pgp.h"
+#include "px.h"
 
 int
 pgp_key_alloc(PGP_PubKey **pk_p)

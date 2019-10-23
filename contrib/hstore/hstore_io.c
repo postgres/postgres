@@ -8,6 +8,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "hstore.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
@@ -17,8 +18,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/typcache.h"
-
-#include "hstore.h"
 
 PG_MODULE_MAGIC;
 

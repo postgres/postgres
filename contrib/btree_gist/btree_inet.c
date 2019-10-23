@@ -5,9 +5,9 @@
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/inet.h"
-#include "catalog/pg_type.h"
 
 typedef struct inetkey
 {

@@ -1,8 +1,8 @@
 #include "postgres.h"
 
 #include "fmgr.h"
-#include "plpython.h"
 #include "ltree/ltree.h"
+#include "plpython.h"
 
 PG_MODULE_MAGIC;
 

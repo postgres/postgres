@@ -15,17 +15,15 @@
 
 #include "access/amapi.h"
 #include "access/generic_xlog.h"
+#include "access/reloptions.h"
+#include "bloom.h"
 #include "catalog/index.h"
-#include "storage/lmgr.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
-#include "storage/indexfsm.h"
-#include "utils/memutils.h"
-#include "access/reloptions.h"
 #include "storage/freespace.h"
 #include "storage/indexfsm.h"
-
-#include "bloom.h"
+#include "storage/lmgr.h"
+#include "utils/memutils.h"
 
 /* Signature dealing macros - note i is assumed to be of type int */
 #define GETWORD(x,i) ( *( (BloomSignatureWord *)(x) + ( (i) / SIGNWORDBITS ) ) )

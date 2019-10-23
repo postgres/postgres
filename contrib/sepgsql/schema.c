@@ -21,12 +21,11 @@
 #include "commands/seclabel.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
+#include "sepgsql.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/snapmgr.h"
-
-#include "sepgsql.h"
 
 /*
  * sepgsql_schema_post_create

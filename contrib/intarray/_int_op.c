@@ -3,7 +3,6 @@
  */
 #include "postgres.h"
 
-
 #include "_int.h"
 
 PG_MODULE_MAGIC;

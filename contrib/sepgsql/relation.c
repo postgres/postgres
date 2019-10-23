@@ -14,22 +14,21 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "catalog/indexing.h"
 #include "catalog/dependency.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
 #include "commands/seclabel.h"
 #include "lib/stringinfo.h"
+#include "sepgsql.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/catcache.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-
-#include "sepgsql.h"
 
 static void sepgsql_index_modify(Oid indexOid);
 

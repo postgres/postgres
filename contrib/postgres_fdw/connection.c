@@ -12,20 +12,18 @@
  */
 #include "postgres.h"
 
-#include "postgres_fdw.h"
-
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_user_mapping.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postgres_fdw.h"
 #include "storage/latch.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-
 
 /*
  * Connection cache hash table entry

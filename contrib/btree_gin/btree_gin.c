@@ -14,8 +14,8 @@
 #include "utils/inet.h"
 #include "utils/numeric.h"
 #include "utils/timestamp.h"
-#include "utils/varbit.h"
 #include "utils/uuid.h"
+#include "utils/varbit.h"
 
 PG_MODULE_MAGIC;
 

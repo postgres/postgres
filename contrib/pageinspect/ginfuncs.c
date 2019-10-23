@@ -9,8 +9,6 @@
  */
 #include "postgres.h"
 
-#include "pageinspect.h"
-
 #include "access/gin.h"
 #include "access/gin_private.h"
 #include "access/htup_details.h"
@@ -18,6 +16,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "pageinspect.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"

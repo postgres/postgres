@@ -13,12 +13,12 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/htup_details.h"
+#include "access/multixact.h"
 #include "access/relation.h"
 #include "access/transam.h"
 #include "access/visibilitymap.h"
 #include "access/xact.h"
-#include "access/multixact.h"
-#include "access/htup_details.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am_d.h"
 #include "commands/vacuum.h"
@@ -26,8 +26,8 @@
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
-#include "storage/procarray.h"
 #include "storage/lmgr.h"
+#include "storage/procarray.h"
 #include "utils/builtins.h"
 
 PG_FUNCTION_INFO_V1(pgstattuple_approx);

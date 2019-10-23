@@ -6,11 +6,10 @@
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "hstore.h"
 #include "utils/builtins.h"
 #include "utils/hashutils.h"
 #include "utils/memutils.h"
-
-#include "hstore.h"
 
 /* old names for C functions */
 HSTORE_POLLUTE(hstore_fetchval, fetchval);

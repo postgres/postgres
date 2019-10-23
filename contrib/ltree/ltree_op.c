@@ -9,10 +9,10 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_statistic.h"
+#include "ltree.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
-#include "ltree.h"
 
 PG_MODULE_MAGIC;
 

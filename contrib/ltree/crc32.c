@@ -16,8 +16,8 @@
 #define TOLOWER(x)	(x)
 #endif
 
-#include "utils/pg_crc.h"
 #include "crc32.h"
+#include "utils/pg_crc.h"
 
 unsigned int
 ltree_crc32_sz(char *buf, int size)

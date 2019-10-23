@@ -9,24 +9,22 @@
  */
 #include "postgres.h"
 
-#include "pageinspect.h"
-
-#include "access/htup_details.h"
 #include "access/brin.h"
 #include "access/brin_internal.h"
 #include "access/brin_page.h"
 #include "access/brin_revmap.h"
 #include "access/brin_tuple.h"
+#include "access/htup_details.h"
 #include "catalog/index.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
+#include "miscadmin.h"
+#include "pageinspect.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
-#include "miscadmin.h"
-
 
 PG_FUNCTION_INFO_V1(brin_page_type);
 PG_FUNCTION_INFO_V1(brin_page_items);

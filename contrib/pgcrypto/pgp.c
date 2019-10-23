@@ -31,8 +31,8 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "pgp.h"
+#include "px.h"
 
 /*
  * Defaults.

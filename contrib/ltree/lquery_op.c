@@ -8,8 +8,8 @@
 #include <ctype.h>
 
 #include "catalog/pg_collation.h"
-#include "utils/formatting.h"
 #include "ltree.h"
+#include "utils/formatting.h"
 
 PG_FUNCTION_INFO_V1(ltq_regex);
 PG_FUNCTION_INFO_V1(ltq_rregex);

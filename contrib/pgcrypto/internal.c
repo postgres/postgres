@@ -33,11 +33,11 @@
 
 #include <time.h>
 
-#include "px.h"
-#include "md5.h"
-#include "sha1.h"
 #include "blf.h"
+#include "md5.h"
+#include "px.h"
 #include "rijndael.h"
+#include "sha1.h"
 
 #ifndef MD5_DIGEST_LENGTH
 #define MD5_DIGEST_LENGTH 16

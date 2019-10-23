@@ -5,10 +5,9 @@
 
 #include <limits.h>
 
+#include "_int.h"
 #include "access/gist.h"
 #include "access/stratnum.h"
-
-#include "_int.h"
 
 #define GETENTRY(vec,pos) ((ArrayType *) DatumGetPointer((vec)->vector[(pos)].key))
 

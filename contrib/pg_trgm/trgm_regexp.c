@@ -191,13 +191,11 @@
  */
 #include "postgres.h"
 
-#include "trgm.h"
-
 #include "regex/regexport.h"
+#include "trgm.h"
 #include "tsearch/ts_locale.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-
 
 /*
  * Uncomment (or use -DTRGM_REGEXP_DEBUG) to print debug info,

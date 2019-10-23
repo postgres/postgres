@@ -2,11 +2,11 @@
  * contrib/btree_gist/btree_enum.c
  */
 #include "postgres.h"
-#include "fmgr.h"
-#include "utils/builtins.h"
 
 #include "btree_gist.h"
 #include "btree_utils_num.h"
+#include "fmgr.h"
+#include "utils/builtins.h"
 
 /* enums are really Oids, so we just use the same structure */
 

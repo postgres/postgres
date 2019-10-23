@@ -21,8 +21,8 @@
 #endif
 
 #include "commands/user.h"
-#include "libpq/crypt.h"
 #include "fmgr.h"
+#include "libpq/crypt.h"
 
 PG_MODULE_MAGIC;
 

@@ -30,9 +30,9 @@
  */
 #include "postgres.h"
 
-#include "px.h"
 #include "mbuf.h"
 #include "pgp.h"
+#include "px.h"
 
 static int
 read_pubkey_keyid(PullFilter *pkt, uint8 *keyid_buf)

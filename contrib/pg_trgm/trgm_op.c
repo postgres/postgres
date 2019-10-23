@@ -5,9 +5,8 @@
 
 #include <ctype.h>
 
-#include "trgm.h"
-
 #include "catalog/pg_type.h"
+#include "trgm.h"
 #include "tsearch/ts_locale.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"

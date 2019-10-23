@@ -12,8 +12,8 @@
 
 #include <selinux/label.h>
 
-#include "access/htup_details.h"
 #include "access/genam.h"
+#include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
@@ -29,14 +29,13 @@
 #include "libpq/auth.h"
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
+#include "sepgsql.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-
-#include "sepgsql.h"
 
 /*
  * Saved hook entries (if stacked)

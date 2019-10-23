@@ -31,8 +31,8 @@
 
 #include "postgres.h"
 
-#include "px.h"
 #include "mbuf.h"
+#include "px.h"
 
 #define STEP  (16*1024)
 
