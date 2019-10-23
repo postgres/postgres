@@ -1696,6 +1696,8 @@ parse_int_param(const char *value, int *result, PGconn *conn,
 	char	   *end;
 	long		numval;
 
+	Assert(value != NULL);
+
 	*result = 0;
 
 	/* strtol(3) skips leading whitespaces */
@@ -1713,10 +1715,10 @@ parse_int_param(const char *value, int *result, PGconn *conn,
 	 * Skip any trailing whitespace; if anything but whitespace remains before
 	 * the terminating character, fail
 	 */
-	while (*end && *end != '\0' && isspace((unsigned char) *end))
+	while (*end != '\0' && isspace((unsigned char) *end))
 		end++;
 
-	if (*end && *end != '\0')
+	if (*end != '\0')
 		goto error;
 
 	*result = numval;
