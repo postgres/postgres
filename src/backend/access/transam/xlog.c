@@ -3184,7 +3184,7 @@ XLogNeedsFlush(XLogRecPtr record)
 /*
  * Create a new XLOG file segment, or open a pre-existing one.
  *
- * log, seg: identify segment to be created/opened.
+ * logsegno: identify segment to be created/opened.
  *
  * *use_existent: if true, OK to use a pre-existing file (else, any
  * pre-existing file will be deleted).  On return, true if a pre-existing
