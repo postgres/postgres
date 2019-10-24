@@ -63,8 +63,8 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
      <para>
       This option is only allowed if there is at least one
       <literal>UNIQUE</literal> index on the materialized view which uses only
-      column names and includes all rows; that is, it must not index on any
-      expressions nor include a <literal>WHERE</literal> clause.
+      column names and includes all rows;  that is, it must not be an
+      expression index or include a <literal>WHERE</literal> clause.
      </para>
      <para>
       This option may not be used when the materialized view is not already
