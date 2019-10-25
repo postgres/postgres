@@ -4608,6 +4608,12 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 				xmlChar    *str;
 				xmlNodePtr	node;
 
+				node = xpathobj->nodesetval->nodeTab[0];
+				if (node->type == XML_NAMESPACE_DECL)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("XMLTABLE cannot cast a namespace node to a non-XML result type")));
+
 				/*
 				 * Most nodes (elements and even attributes) store their data
 				 * in children nodes. If they don't have children nodes, it
@@ -4615,7 +4621,6 @@ XmlTableGetValue(TableFuncScanState *state, int colnum,
 				 * CDATA sections are an exception: they don't have children
 				 * but have content in the Text/CDATA node itself.
 				 */
-				node = xpathobj->nodesetval->nodeTab[0];
 				if (node->type != XML_CDATA_SECTION_NODE &&
 					node->type != XML_TEXT_NODE)
 					node = node->xmlChildrenNode;
