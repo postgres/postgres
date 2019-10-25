@@ -7,9 +7,9 @@
 #include <math.h>
 
 #include "common/string.h"
-#include "pgtypeslib_extern.h"
 #include "dt.h"
 #include "pgtypes_timestamp.h"
+#include "pgtypeslib_extern.h"
 
 const int	day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
