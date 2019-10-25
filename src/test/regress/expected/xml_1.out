@@ -1048,6 +1048,14 @@ LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
                                       ^
 DETAIL:  This functionality requires the server to be built with libxml support.
 HINT:  You need to rebuild PostgreSQL using --with-libxml.
+SELECT * FROM XMLTABLE('.'
+                       PASSING '<foo/>'
+                       COLUMNS a text PATH 'foo/namespace::node()');
+ERROR:  unsupported XML feature
+LINE 2:                        PASSING '<foo/>'
+                                       ^
+DETAIL:  This functionality requires the server to be built with libxml support.
+HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- used in prepare statements
 PREPARE pp AS
 SELECT  xmltable.*
