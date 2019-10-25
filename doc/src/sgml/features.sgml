@@ -44,10 +44,7 @@
   broad three levels found in <acronym>SQL-92</acronym>.  A large
   subset of these features represents the <quote>Core</quote>
   features, which every conforming SQL implementation must supply.
-  The rest of the features are purely optional.  Some optional
-  features are grouped together to form <quote>packages</quote>, which
-  SQL implementations can claim conformance to, thus claiming
-  conformance to particular groups of features.
+  The rest of the features are purely optional.
  </para>
 
  <para>
@@ -116,7 +113,7 @@
       <thead>
        <row>
         <entry>Identifier</entry>
-        <entry>Package</entry>
+        <entry>Core?</entry>
         <entry>Description</entry>
         <entry>Comment</entry>
        </row>
@@ -143,7 +140,7 @@
       <thead>
        <row>
         <entry>Identifier</entry>
-        <entry>Package</entry>
+        <entry>Core?</entry>
         <entry>Description</entry>
         <entry>Comment</entry>
        </row>

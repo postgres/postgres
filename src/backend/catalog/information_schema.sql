@@ -1649,56 +1649,6 @@ GRANT SELECT ON sql_implementation_info TO PUBLIC;
 
 
 /*
- * SQL_LANGUAGES table
- * apparently removed in SQL:2008
- */
-
-CREATE TABLE sql_languages (
-    sql_language_source         character_data,
-    sql_language_year           character_data,
-    sql_language_conformance    character_data,
-    sql_language_integrity      character_data,
-    sql_language_implementation character_data,
-    sql_language_binding_style  character_data,
-    sql_language_programming_language character_data
-);
-
-INSERT INTO sql_languages VALUES ('ISO 9075', '1999', 'CORE', NULL, NULL, 'DIRECT', NULL);
-INSERT INTO sql_languages VALUES ('ISO 9075', '1999', 'CORE', NULL, NULL, 'EMBEDDED', 'C');
-INSERT INTO sql_languages VALUES ('ISO 9075', '2003', 'CORE', NULL, NULL, 'DIRECT', NULL);
-INSERT INTO sql_languages VALUES ('ISO 9075', '2003', 'CORE', NULL, NULL, 'EMBEDDED', 'C');
-
-GRANT SELECT ON sql_languages TO PUBLIC;
-
-
-/*
- * SQL_PACKAGES table
- * removed in SQL:2011
- */
-
-CREATE TABLE sql_packages (
-    feature_id      character_data,
-    feature_name    character_data,
-    is_supported    yes_or_no,
-    is_verified_by  character_data,
-    comments        character_data
-);
-
-INSERT INTO sql_packages VALUES ('PKG000', 'Core', 'NO', NULL, '');
-INSERT INTO sql_packages VALUES ('PKG001', 'Enhanced datetime facilities', 'YES', NULL, '');
-INSERT INTO sql_packages VALUES ('PKG002', 'Enhanced integrity management', 'NO', NULL, '');
-INSERT INTO sql_packages VALUES ('PKG003', 'OLAP facilities', 'NO', NULL, '');
-INSERT INTO sql_packages VALUES ('PKG004', 'PSM', 'NO', NULL, 'PL/pgSQL is similar.');
-INSERT INTO sql_packages VALUES ('PKG005', 'CLI', 'NO', NULL, 'ODBC is similar.');
-INSERT INTO sql_packages VALUES ('PKG006', 'Basic object support', 'NO', NULL, '');
-INSERT INTO sql_packages VALUES ('PKG007', 'Enhanced object support', 'NO', NULL, '');
-INSERT INTO sql_packages VALUES ('PKG008', 'Active database', 'NO', NULL, '');
-INSERT INTO sql_packages VALUES ('PKG010', 'OLAP', 'NO', NULL, 'NO');
-
-GRANT SELECT ON sql_packages TO PUBLIC;
-
-
-/*
  * 5.59
  * SQL_PARTS table
  */
@@ -1766,26 +1716,6 @@ UPDATE sql_sizing
     WHERE supported_value = 63;
 
 GRANT SELECT ON sql_sizing TO PUBLIC;
-
-
-/*
- * SQL_SIZING_PROFILES table
- * removed in SQL:2011
- */
-
--- The data in this table are defined by various profiles of SQL.
--- Since we don't have any information about such profiles, we provide
--- an empty table.
-
-CREATE TABLE sql_sizing_profiles (
-    sizing_id       cardinal_number,
-    sizing_name     character_data,
-    profile_id      character_data,
-    required_value  cardinal_number,
-    comments        character_data
-);
-
-GRANT SELECT ON sql_sizing_profiles TO PUBLIC;
 
 
 /*
