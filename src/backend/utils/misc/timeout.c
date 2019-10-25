@@ -27,7 +27,8 @@ typedef struct timeout_params
 {
 	TimeoutId	index;			/* identifier of timeout reason */
 
-	/* volatile because it may be changed from the signal handler */
+	/* volatile because these may be changed from the signal handler */
+	volatile bool active;		/* true if timeout is in active_timeouts[] */
 	volatile bool indicator;	/* true if timeout has occurred */
 
 	/* callback function for timeout, or NULL if timeout not registered */
@@ -105,6 +106,9 @@ insert_timeout(TimeoutId id, int index)
 		elog(FATAL, "timeout index %d out of range 0..%d", index,
 			 num_active_timeouts);
 
+	Assert(!all_timeouts[id].active);
+	all_timeouts[id].active = true;
+
 	for (i = num_active_timeouts - 1; i >= index; i--)
 		active_timeouts[i + 1] = active_timeouts[i];
 
@@ -124,6 +128,9 @@ remove_timeout_index(int index)
 	if (index < 0 || index >= num_active_timeouts)
 		elog(FATAL, "timeout index %d out of range 0..%d", index,
 			 num_active_timeouts - 1);
+
+	Assert(active_timeouts[index]->active);
+	active_timeouts[index]->active = false;
 
 	for (i = index + 1; i < num_active_timeouts; i++)
 		active_timeouts[i - 1] = active_timeouts[i];
@@ -147,9 +154,8 @@ enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
 	 * If this timeout was already active, momentarily disable it.  We
 	 * interpret the call as a directive to reschedule the timeout.
 	 */
-	i = find_active_timeout(id);
-	if (i >= 0)
-		remove_timeout_index(i);
+	if (all_timeouts[id].active)
+		remove_timeout_index(find_active_timeout(id));
 
 	/*
 	 * Find out the index where to insert the new timeout.  We sort by
@@ -349,6 +355,7 @@ InitializeTimeouts(void)
 	for (i = 0; i < MAX_TIMEOUTS; i++)
 	{
 		all_timeouts[i].index = i;
+		all_timeouts[i].active = false;
 		all_timeouts[i].indicator = false;
 		all_timeouts[i].timeout_handler = NULL;
 		all_timeouts[i].start_time = 0;
@@ -524,8 +531,6 @@ enable_timeouts(const EnableTimeoutParams *timeouts, int count)
 void
 disable_timeout(TimeoutId id, bool keep_indicator)
 {
-	int			i;
-
 	/* Assert request is sane */
 	Assert(all_timeouts_initialized);
 	Assert(all_timeouts[id].timeout_handler != NULL);
@@ -534,9 +539,8 @@ disable_timeout(TimeoutId id, bool keep_indicator)
 	disable_alarm();
 
 	/* Find the timeout and remove it from the active list. */
-	i = find_active_timeout(id);
-	if (i >= 0)
-		remove_timeout_index(i);
+	if (all_timeouts[id].active)
+		remove_timeout_index(find_active_timeout(id));
 
 	/* Mark it inactive, whether it was active or not. */
 	if (!keep_indicator)
@@ -571,13 +575,11 @@ disable_timeouts(const DisableTimeoutParams *timeouts, int count)
 	for (i = 0; i < count; i++)
 	{
 		TimeoutId	id = timeouts[i].id;
-		int			idx;
 
 		Assert(all_timeouts[id].timeout_handler != NULL);
 
-		idx = find_active_timeout(id);
-		if (idx >= 0)
-			remove_timeout_index(idx);
+		if (all_timeouts[id].active)
+			remove_timeout_index(find_active_timeout(id));
 
 		if (!timeouts[i].keep_indicator)
 			all_timeouts[id].indicator = false;
@@ -595,6 +597,8 @@ disable_timeouts(const DisableTimeoutParams *timeouts, int count)
 void
 disable_all_timeouts(bool keep_indicators)
 {
+	int			i;
+
 	disable_alarm();
 
 	/*
@@ -613,13 +617,24 @@ disable_all_timeouts(bool keep_indicators)
 
 	num_active_timeouts = 0;
 
-	if (!keep_indicators)
+	for (i = 0; i < MAX_TIMEOUTS; i++)
 	{
-		int			i;
-
-		for (i = 0; i < MAX_TIMEOUTS; i++)
+		all_timeouts[i].active = false;
+		if (!keep_indicators)
 			all_timeouts[i].indicator = false;
 	}
+}
+
+/*
+ * Return true if the timeout is active (enabled and not yet fired)
+ *
+ * This is, of course, subject to race conditions, as the timeout could fire
+ * immediately after we look.
+ */
+bool
+get_timeout_active(TimeoutId id)
+{
+	return all_timeouts[id].active;
 }
 
 /*
