@@ -38,16 +38,4 @@ int			pgtypes_fmt_replace(union un_fmt_comb, int, char **, int *);
 char	   *pgtypes_alloc(long);
 char	   *pgtypes_strdup(const char *);
 
-#ifndef bool
-#define bool char
-#endif							/* ndef bool */
-
-#ifndef FALSE
-#define FALSE	0
-#endif							/* FALSE */
-
-#ifndef TRUE
-#define TRUE	   1
-#endif							/* TRUE */
-
 #endif							/* _ECPG_PGTYPESLIB_EXTERN_H */
