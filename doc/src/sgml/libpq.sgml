@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/libpq.sgml -->
 
 <chapter id="libpq">
- <title><application>libpq</application> - C Library</title>
+ <title><application>libpq</application> &mdash; C Library</title>
 
  <indexterm zone="libpq">
   <primary>libpq</primary>

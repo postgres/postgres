@@ -781,7 +781,7 @@ typedef struct BrinOpcInfo
  </table>
 
  <para>
-    Support function numbers 1-10 are reserved for the BRIN internal
+    Support function numbers 1 through 10 are reserved for the BRIN internal
     functions, so the SQL level functions start with number 11.  Support
     function number 11 is the main function required to build the index.
     It should accept two arguments with the same data type as the operator class,

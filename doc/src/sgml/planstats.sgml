@@ -112,7 +112,7 @@ WHERE tablename='tenk1' AND attname='unique1';
    into equal frequency buckets, so all we have to do is locate the bucket
    that our value is in and count <emphasis>part</emphasis> of it and
    <emphasis>all</emphasis> of the ones before. The value 1000 is clearly in
-   the second bucket (993-1997).  Assuming a linear distribution of
+   the second bucket (993&ndash;1997).  Assuming a linear distribution of
    values inside each bucket, we can calculate the selectivity as:
 
 <programlisting>

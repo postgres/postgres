@@ -98,7 +98,7 @@ SELECT * FROM <replaceable>name</replaceable>;
       Do not throw an error if a relation with the same name already exists.
       A notice is issued in this case. Note that there is no guarantee that
       the existing relation is anything like the sequence that would have
-      been created - it might not even be a sequence.
+      been created &mdash; it might not even be a sequence.
      </para>
     </listitem>
    </varlistentry>

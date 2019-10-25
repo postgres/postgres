@@ -2253,7 +2253,7 @@ SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.h
 
     <listitem>
      <para>
-      Linguistic - Ispell dictionaries try to reduce input words to a
+      Linguistic &mdash; Ispell dictionaries try to reduce input words to a
       normalized form; stemmer dictionaries remove word endings
      </para>
     </listitem>

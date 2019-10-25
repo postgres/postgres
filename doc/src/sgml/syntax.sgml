@@ -392,7 +392,7 @@ SELECT 'foo'      'bar';
          <literal>\<replaceable>o</replaceable></literal>,
          <literal>\<replaceable>oo</replaceable></literal>,
          <literal>\<replaceable>ooo</replaceable></literal>
-         (<replaceable>o</replaceable> = 0 - 7)
+         (<replaceable>o</replaceable> = 0&ndash;7)
         </entry>
         <entry>octal byte value</entry>
        </row>
@@ -400,7 +400,7 @@ SELECT 'foo'      'bar';
         <entry>
          <literal>\x<replaceable>h</replaceable></literal>,
          <literal>\x<replaceable>hh</replaceable></literal>
-         (<replaceable>h</replaceable> = 0 - 9, A - F)
+         (<replaceable>h</replaceable> = 0&ndash;9, A&ndash;F)
         </entry>
         <entry>hexadecimal byte value</entry>
        </row>
@@ -408,7 +408,7 @@ SELECT 'foo'      'bar';
         <entry>
          <literal>\u<replaceable>xxxx</replaceable></literal>,
          <literal>\U<replaceable>xxxxxxxx</replaceable></literal>
-         (<replaceable>x</replaceable> = 0 - 9, A - F)
+         (<replaceable>x</replaceable> = 0&ndash;9, A&ndash;F)
         </entry>
         <entry>16 or 32-bit hexadecimal Unicode character value</entry>
        </row>

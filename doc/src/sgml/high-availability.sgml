@@ -1715,22 +1715,22 @@ if (!triggered)
     <itemizedlist>
      <listitem>
       <para>
-       Query access - <command>SELECT</command>, <command>COPY TO</command>
+       Query access: <command>SELECT</command>, <command>COPY TO</command>
       </para>
      </listitem>
      <listitem>
       <para>
-       Cursor commands - <command>DECLARE</command>, <command>FETCH</command>, <command>CLOSE</command>
+       Cursor commands: <command>DECLARE</command>, <command>FETCH</command>, <command>CLOSE</command>
       </para>
      </listitem>
      <listitem>
       <para>
-       Parameters - <command>SHOW</command>, <command>SET</command>, <command>RESET</command>
+       Settings: <command>SHOW</command>, <command>SET</command>, <command>RESET</command>
       </para>
      </listitem>
      <listitem>
       <para>
-       Transaction management commands
+       Transaction management commands:
         <itemizedlist>
          <listitem>
           <para>
@@ -1758,13 +1758,13 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       Plans and resources - <command>PREPARE</command>, <command>EXECUTE</command>,
+       Plans and resources: <command>PREPARE</command>, <command>EXECUTE</command>,
        <command>DEALLOCATE</command>, <command>DISCARD</command>
       </para>
      </listitem>
      <listitem>
       <para>
-       Plugins and extensions - <command>LOAD</command>
+       Plugins and extensions: <command>LOAD</command>
       </para>
      </listitem>
      <listitem>
@@ -1783,7 +1783,7 @@ if (!triggered)
     <itemizedlist>
      <listitem>
       <para>
-       Data Manipulation Language (DML) - <command>INSERT</command>,
+       Data Manipulation Language (DML): <command>INSERT</command>,
        <command>UPDATE</command>, <command>DELETE</command>, <command>COPY FROM</command>,
        <command>TRUNCATE</command>.
        Note that there are no allowed actions that result in a trigger
@@ -1795,7 +1795,7 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       Data Definition Language (DDL) - <command>CREATE</command>,
+       Data Definition Language (DDL): <command>CREATE</command>,
        <command>DROP</command>, <command>ALTER</command>, <command>COMMENT</command>.
        This restriction applies even to temporary tables, because carrying
        out these operations would require updating the system catalog tables.
@@ -1848,7 +1848,7 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       Two-phase commit commands - <command>PREPARE TRANSACTION</command>,
+       Two-phase commit commands: <command>PREPARE TRANSACTION</command>,
        <command>COMMIT PREPARED</command>, <command>ROLLBACK PREPARED</command>
        because even read-only transactions need to write WAL in the
        prepare phase (the first phase of two phase commit).
@@ -1856,7 +1856,7 @@ if (!triggered)
      </listitem>
      <listitem>
       <para>
-       Sequence updates - <function>nextval()</function>, <function>setval()</function>
+       Sequence updates: <function>nextval()</function>, <function>setval()</function>
       </para>
      </listitem>
      <listitem>
@@ -2223,18 +2223,18 @@ LOG:  database system is ready to accept read only connections
       <itemizedlist>
        <listitem>
         <para>
-         Data Definition Language (DDL) - e.g. <command>CREATE INDEX</command>
+         Data Definition Language (DDL): e.g. <command>CREATE INDEX</command>
         </para>
        </listitem>
        <listitem>
         <para>
-         Privilege and Ownership - <command>GRANT</command>, <command>REVOKE</command>,
+         Privilege and Ownership: <command>GRANT</command>, <command>REVOKE</command>,
          <command>REASSIGN</command>
         </para>
        </listitem>
        <listitem>
         <para>
-         Maintenance commands - <command>ANALYZE</command>, <command>VACUUM</command>,
+         Maintenance commands: <command>ANALYZE</command>, <command>VACUUM</command>,
          <command>CLUSTER</command>, <command>REINDEX</command>
         </para>
        </listitem>
@@ -2351,7 +2351,7 @@ LOG:  database system is ready to accept read only connections
    <para>
     In normal (non-recovery) mode, if you issue <command>DROP USER</command> or <command>DROP ROLE</command>
     for a role with login capability while that user is still connected then
-    nothing happens to the connected user - they remain connected. The user cannot
+    nothing happens to the connected user &mdash; they remain connected. The user cannot
     reconnect however. This behavior applies in recovery also, so a
     <command>DROP USER</command> on the primary does not disconnect that user on the standby.
    </para>

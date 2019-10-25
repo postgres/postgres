@@ -309,7 +309,7 @@ ssimkovi@ag.or.at
    </biblioset>
     <confgroup>
      <conftitle>Eleventh International Conference on Data Engineering</conftitle>
-     <confdates>6-10 March 1995</confdates>
+     <confdates>6&ndash;10 March 1995</confdates>
      <address>Taipeh, Taiwan</address>
     </confgroup>
     <pubsnumber>Cat. No.95CH35724</pubsnumber>
@@ -318,7 +318,7 @@ ssimkovi@ag.or.at
      <address>Los Alamitos, California</address>
     </publisher>
     <pubdate>1995</pubdate>
-    <pagenums>420-7</pagenums>
+    <pagenums>420&ndash;7</pagenums>
    </biblioentry>
 
    <biblioentry id="ston86">
@@ -427,7 +427,7 @@ ssimkovi@ag.or.at
    <biblioset relation="journal">
     <title>SIGMOD Record 18(4)</title>
     <date>Dec. 1989</date>
-    <pagenums>4-11</pagenums>
+    <pagenums>4&ndash;11</pagenums>
    </biblioset>
    </biblioentry>
 

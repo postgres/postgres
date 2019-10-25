@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/plpgsql.sgml -->
 
 <chapter id="plpgsql">
-  <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
+  <title><application>PL/pgSQL</application> &mdash; <acronym>SQL</acronym> Procedural Language</title>
 
  <indexterm zone="plpgsql">
   <primary>PL/pgSQL</primary>

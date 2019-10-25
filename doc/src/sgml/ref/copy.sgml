@@ -827,8 +827,8 @@ filters, dropped zero bytes, dropped high bits, or parity changes.)
 are numbered from 0 (<acronym>LSB</acronym>) to 31 (<acronym>MSB</acronym>).  Note that
 this field is stored in network byte order (most significant byte first),
 as are all the integer fields used in the file format.  Bits
-16-31 are reserved to denote critical file format issues; a reader
-should abort if it finds an unexpected bit set in this range. Bits 0-15
+16&ndash;31 are reserved to denote critical file format issues; a reader
+should abort if it finds an unexpected bit set in this range. Bits 0&ndash;15
 are reserved to signal backwards-compatible format issues; a reader
 should simply ignore any unexpected bits set in this range. Currently
 only one flag bit is defined, and the rest must be zero:

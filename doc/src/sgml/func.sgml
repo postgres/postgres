@@ -5331,7 +5331,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
 
    <para>
     Numeric character-entry escapes specifying values outside the ASCII range
-    (0-127) have meanings dependent on the database encoding.  When the
+    (0&ndash;127) have meanings dependent on the database encoding.  When the
     encoding is UTF-8, escape values are equivalent to Unicode code points,
     for example <literal>\u1234</literal> means the character <literal>U+1234</literal>.
     For other multibyte encodings, character-entry escapes usually just
@@ -6263,59 +6263,59 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
       <tbody>
        <row>
         <entry><literal>HH</literal></entry>
-        <entry>hour of day (01-12)</entry>
+        <entry>hour of day (01&ndash;12)</entry>
        </row>
        <row>
         <entry><literal>HH12</literal></entry>
-        <entry>hour of day (01-12)</entry>
+        <entry>hour of day (01&ndash;12)</entry>
        </row>
        <row>
         <entry><literal>HH24</literal></entry>
-        <entry>hour of day (00-23)</entry>
+        <entry>hour of day (00&ndash;23)</entry>
        </row>
        <row>
         <entry><literal>MI</literal></entry>
-        <entry>minute (00-59)</entry>
+        <entry>minute (00&ndash;59)</entry>
        </row>
        <row>
         <entry><literal>SS</literal></entry>
-        <entry>second (00-59)</entry>
+        <entry>second (00&ndash;59)</entry>
        </row>
        <row>
         <entry><literal>MS</literal></entry>
-        <entry>millisecond (000-999)</entry>
+        <entry>millisecond (000&ndash;999)</entry>
        </row>
        <row>
         <entry><literal>US</literal></entry>
-        <entry>microsecond (000000-999999)</entry>
+        <entry>microsecond (000000&ndash;999999)</entry>
        </row>
        <row>
         <entry><literal>FF1</literal></entry>
-        <entry>tenth of second (0-9)</entry>
+        <entry>tenth of second (0&ndash;9)</entry>
        </row>
        <row>
         <entry><literal>FF2</literal></entry>
-        <entry>hundredth of second (00-99)</entry>
+        <entry>hundredth of second (00&ndash;99)</entry>
        </row>
        <row>
         <entry><literal>FF3</literal></entry>
-        <entry>millisecond (000-999)</entry>
+        <entry>millisecond (000&ndash;999)</entry>
        </row>
        <row>
         <entry><literal>FF4</literal></entry>
-        <entry>tenth of a millisecond (0000-9999)</entry>
+        <entry>tenth of a millisecond (0000&ndash;9999)</entry>
        </row>
        <row>
         <entry><literal>FF5</literal></entry>
-        <entry>hundredth of a millisecond (00000-99999)</entry>
+        <entry>hundredth of a millisecond (00000&ndash;99999)</entry>
        </row>
        <row>
         <entry><literal>FF6</literal></entry>
-        <entry>microsecond (000000-999999)</entry>
+        <entry>microsecond (000000&ndash;999999)</entry>
        </row>
        <row>
         <entry><literal>SSSS</literal>, <literal>SSSSS</literal></entry>
-        <entry>seconds past midnight (0-86399)</entry>
+        <entry>seconds past midnight (0&ndash;86399)</entry>
        </row>
        <row>
         <entry><literal>AM</literal>, <literal>am</literal>,
@@ -6399,7 +6399,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>MM</literal></entry>
-        <entry>month number (01-12)</entry>
+        <entry>month number (01&ndash;12)</entry>
        </row>
        <row>
         <entry><literal>DAY</literal></entry>
@@ -6427,15 +6427,15 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>DDD</literal></entry>
-        <entry>day of year (001-366)</entry>
+        <entry>day of year (001&ndash;366)</entry>
        </row>
        <row>
         <entry><literal>IDDD</literal></entry>
-        <entry>day of ISO 8601 week-numbering year (001-371; day 1 of the year is Monday of the first ISO week)</entry>
+        <entry>day of ISO 8601 week-numbering year (001&ndash;371; day 1 of the year is Monday of the first ISO week)</entry>
        </row>
        <row>
         <entry><literal>DD</literal></entry>
-        <entry>day of month (01-31)</entry>
+        <entry>day of month (01&ndash;31)</entry>
        </row>
        <row>
         <entry><literal>D</literal></entry>
@@ -6447,15 +6447,15 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>W</literal></entry>
-        <entry>week of month (1-5) (the first week starts on the first day of the month)</entry>
+        <entry>week of month (1&ndash;5) (the first week starts on the first day of the month)</entry>
        </row>
        <row>
         <entry><literal>WW</literal></entry>
-        <entry>week number of year (1-53) (the first week starts on the first day of the year)</entry>
+        <entry>week number of year (1&ndash;53) (the first week starts on the first day of the year)</entry>
        </row>
        <row>
         <entry><literal>IW</literal></entry>
-        <entry>week number of ISO 8601 week-numbering year (01-53; the first Thursday of the year is in week 1)</entry>
+        <entry>week number of ISO 8601 week-numbering year (01&ndash;53; the first Thursday of the year is in week 1)</entry>
        </row>
        <row>
         <entry><literal>CC</literal></entry>
@@ -6471,11 +6471,11 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>RM</literal></entry>
-        <entry>month in upper case Roman numerals (I-XII; I=January)</entry>
+        <entry>month in upper case Roman numerals (I&ndash;XII; I=January)</entry>
        </row>
        <row>
         <entry><literal>rm</literal></entry>
-        <entry>month in lower case Roman numerals (i-xii; i=January)</entry>
+        <entry>month in lower case Roman numerals (i&ndash;xii; i=January)</entry>
        </row>
        <row>
         <entry><literal>TZ</literal></entry>
@@ -8006,7 +8006,7 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
       <listitem>
        <para>
         For <type>timestamp</type> values, the day (of the month) field
-        (1 - 31) ; for <type>interval</type> values, the number of days
+        (1&ndash;31) ; for <type>interval</type> values, the number of days
        </para>
 
 <screen>
@@ -8016,8 +8016,6 @@ SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
 SELECT EXTRACT(DAY FROM INTERVAL '40 days 1 minute');
 <lineannotation>Result: </lineannotation><computeroutput>40</computeroutput>
 </screen>
-
-
 
       </listitem>
      </varlistentry>
@@ -8061,7 +8059,7 @@ SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>doy</literal></term>
       <listitem>
        <para>
-        The day of the year (1 - 365/366)
+        The day of the year (1&ndash;365/366)
        </para>
 
 <screen>
@@ -8106,7 +8104,7 @@ SELECT to_timestamp(982384720.12);
       <term><literal>hour</literal></term>
       <listitem>
        <para>
-        The hour field (0 - 23)
+        The hour field (0&ndash;23)
        </para>
 
 <screen>
@@ -8217,7 +8215,7 @@ SELECT EXTRACT(MILLISECONDS FROM TIME '17:12:28.5');
       <term><literal>minute</literal></term>
       <listitem>
        <para>
-        The minutes field (0 - 59)
+        The minutes field (0&ndash;59)
        </para>
 
 <screen>
@@ -8232,8 +8230,8 @@ SELECT EXTRACT(MINUTE FROM TIMESTAMP '2001-02-16 20:38:40');
       <listitem>
        <para>
         For <type>timestamp</type> values, the number of the month
-        within the year (1 - 12) ; for <type>interval</type> values,
-        the number of months, modulo 12 (0 - 11)
+        within the year (1&ndash;12) ; for <type>interval</type> values,
+        the number of months, modulo 12 (0&ndash;11)
        </para>
 
 <screen>
@@ -8253,7 +8251,7 @@ SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
       <term><literal>quarter</literal></term>
       <listitem>
        <para>
-        The quarter of the year (1 - 4) that the date is in
+        The quarter of the year (1&ndash;4) that the date is in
        </para>
 
 <screen>
@@ -17541,7 +17539,7 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry><literal><function>pg_notification_queue_usage()</function></literal></entry>
        <entry><type>double</type></entry>
-       <entry>fraction of the asynchronous notification queue currently occupied (0-1)</entry>
+       <entry>fraction of the asynchronous notification queue currently occupied (0&ndash;1)</entry>
       </row>
 
       <row>
@@ -17827,7 +17825,7 @@ SET search_path TO <replaceable>schema</replaceable> <optional>, <replaceable>sc
     to.  <function>pg_notification_queue_usage</function> returns the
     fraction of the total available space for notifications currently
     occupied by notifications that are waiting to be processed, as a
-    <type>double</type> in the range 0-1.
+    <type>double</type> in the range 0&ndash;1.
     See <xref linkend="sql-listen"/> and <xref linkend="sql-notify"/>
     for more information.
    </para>

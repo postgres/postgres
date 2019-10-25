@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/pltcl.sgml -->
 
  <chapter id="pltcl">
-  <title>PL/Tcl - Tcl Procedural Language</title>
+  <title>PL/Tcl &mdash; Tcl Procedural Language</title>
 
   <indexterm zone="pltcl">
    <primary>PL/Tcl</primary>

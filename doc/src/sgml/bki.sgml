@@ -385,8 +385,8 @@
     To find an available OID for a new pre-loaded row, run the
     script <filename>src/include/catalog/unused_oids</filename>.
     It prints inclusive ranges of unused OIDs (e.g., the output
-    line <quote>45-900</quote> means OIDs 45 through 900 have not been
-    allocated yet).  Currently, OIDs 1-9999 are reserved for manual
+    line <literal>45-900</literal> means OIDs 45 through 900 have not been
+    allocated yet).  Currently, OIDs 1&ndash;9999 are reserved for manual
     assignment; the <filename>unused_oids</filename> script simply looks
     through the catalog headers and <filename>.dat</filename> files
     to see which ones do not appear.  You can also use

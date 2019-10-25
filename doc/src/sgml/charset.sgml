@@ -1004,7 +1004,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Traditional Chinese</entry>
          <entry>No</entry>
          <entry>No</entry>
-         <entry>1-2</entry>
+         <entry>1&ndash;2</entry>
          <entry><literal>WIN950</literal>, <literal>Windows950</literal></entry>
         </row>
         <row>
@@ -1013,7 +1013,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Simplified Chinese</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
-         <entry>1-3</entry>
+         <entry>1&ndash;3</entry>
          <entry></entry>
         </row>
         <row>
@@ -1022,7 +1022,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Japanese</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
-         <entry>1-3</entry>
+         <entry>1&ndash;3</entry>
          <entry></entry>
         </row>
         <row>
@@ -1031,7 +1031,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Japanese</entry>
          <entry>Yes</entry>
          <entry>No</entry>
-         <entry>1-3</entry>
+         <entry>1&ndash;3</entry>
          <entry></entry>
         </row>
         <row>
@@ -1040,7 +1040,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Korean</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
-         <entry>1-3</entry>
+         <entry>1&ndash;3</entry>
          <entry></entry>
         </row>
         <row>
@@ -1049,7 +1049,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Traditional Chinese, Taiwanese</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
-         <entry>1-3</entry>
+         <entry>1&ndash;3</entry>
          <entry></entry>
         </row>
         <row>
@@ -1058,7 +1058,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Chinese</entry>
          <entry>No</entry>
          <entry>No</entry>
-         <entry>1-4</entry>
+         <entry>1&ndash;4</entry>
          <entry></entry>
         </row>
         <row>
@@ -1067,7 +1067,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Simplified Chinese</entry>
          <entry>No</entry>
          <entry>No</entry>
-         <entry>1-2</entry>
+         <entry>1&ndash;2</entry>
          <entry><literal>WIN936</literal>, <literal>Windows936</literal></entry>
         </row>
         <row>
@@ -1112,7 +1112,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Korean (Hangul)</entry>
          <entry>No</entry>
          <entry>No</entry>
-         <entry>1-3</entry>
+         <entry>1&ndash;3</entry>
          <entry></entry>
         </row>
         <row>
@@ -1229,7 +1229,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Multilingual Emacs</entry>
          <entry>Yes</entry>
          <entry>No</entry>
-         <entry>1-4</entry>
+         <entry>1&ndash;4</entry>
          <entry></entry>
         </row>
         <row>
@@ -1238,7 +1238,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Japanese</entry>
          <entry>No</entry>
          <entry>No</entry>
-         <entry>1-2</entry>
+         <entry>1&ndash;2</entry>
          <entry><literal>Mskanji</literal>, <literal>ShiftJIS</literal>, <literal>WIN932</literal>, <literal>Windows932</literal></entry>
         </row>
         <row>
@@ -1247,7 +1247,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Japanese</entry>
          <entry>No</entry>
          <entry>No</entry>
-         <entry>1-2</entry>
+         <entry>1&ndash;2</entry>
          <entry></entry>
         </row>
         <row>
@@ -1265,7 +1265,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry>Korean</entry>
          <entry>No</entry>
          <entry>No</entry>
-         <entry>1-2</entry>
+         <entry>1&ndash;2</entry>
          <entry><literal>WIN949</literal>, <literal>Windows949</literal></entry>
         </row>
         <row>
@@ -1274,7 +1274,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
          <entry><emphasis>all</emphasis></entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
-         <entry>1-4</entry>
+         <entry>1&ndash;4</entry>
          <entry><literal>Unicode</literal></entry>
         </row>
         <row>
@@ -1390,8 +1390,8 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
      <para>
       The <literal>SQL_ASCII</literal> setting behaves considerably differently
       from the other settings.  When the server character set is
-      <literal>SQL_ASCII</literal>, the server interprets byte values 0-127
-      according to the ASCII standard, while byte values 128-255 are taken
+      <literal>SQL_ASCII</literal>, the server interprets byte values 0&ndash;127
+      according to the ASCII standard, while byte values 128&ndash;255 are taken
       as uninterpreted characters.  No encoding conversion will be done when
       the setting is <literal>SQL_ASCII</literal>.  Thus, this setting is not so
       much a declaration that a specific encoding is in use, as a declaration

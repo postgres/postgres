@@ -167,7 +167,7 @@
 
       <tip>
        <para>
-        Gregorian years AD 1-99 can be entered by using 4 digits with leading
+        Gregorian years AD 1&ndash;99 can be entered by using 4 digits with leading
         zeros (e.g., <literal>0099</literal> is AD 99).
        </para>
       </tip>
@@ -671,9 +671,9 @@ $ <userinput>cal 9 1752</userinput>
    calendar, unrelated to the Julian calendar though it is confusingly
    named similarly to that calendar.
    The Julian Date system was invented by the French scholar
-   Joseph Justus Scaliger (1540-1609)
+   Joseph Justus Scaliger (1540&ndash;1609)
    and probably takes its name from Scaliger's father,
-   the Italian scholar Julius Caesar Scaliger (1484-1558).
+   the Italian scholar Julius Caesar Scaliger (1484&ndash;1558).
    In the Julian Date system, each day has a sequential number, starting
    from JD 0 (which is sometimes called <emphasis>the</emphasis> Julian Date).
    JD 0 corresponds to 1 January 4713 BC in the Julian calendar, or

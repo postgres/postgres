@@ -9883,7 +9883,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>slot_type</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>The slot type - <literal>physical</literal> or <literal>logical</literal></entry>
+      <entry>The slot type: <literal>physical</literal> or <literal>logical</literal></entry>
      </row>
 
      <row>

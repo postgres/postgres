@@ -1,7 +1,7 @@
 <!-- doc/src/sgml/ecpg.sgml -->
 
 <chapter id="ecpg">
- <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
+ <title><application>ECPG</application> &mdash; Embedded <acronym>SQL</acronym> in C</title>
 
  <indexterm zone="ecpg"><primary>embedded SQL</primary><secondary>in C</secondary></indexterm>
  <indexterm zone="ecpg"><primary>C</primary></indexterm>
@@ -2989,7 +2989,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%d</literal> - is replaced by the day of the month as a
-           decimal number (01-31).
+           decimal number (01&ndash;31).
           </para>
          </listitem>
          <listitem>
@@ -3025,7 +3025,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%e</literal> - is replaced by the day of month as a decimal
-           number (1-31); single digits are preceded by a blank.
+           number (1&ndash;31); single digits are preceded by a blank.
           </para>
          </listitem>
          <listitem>
@@ -3044,13 +3044,13 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
           <para>
            <literal>%g</literal> - is replaced by the same year as in
            <literal>%G</literal>, but as a decimal number without century
-           (00-99).
+           (00&ndash;99).
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%H</literal> - is replaced by the hour (24-hour clock) as a
-           decimal number (00-23).
+           decimal number (00&ndash;23).
           </para>
          </listitem>
          <listitem>
@@ -3061,37 +3061,37 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%I</literal> - is replaced by the hour (12-hour clock) as a
-           decimal number (01-12).
+           decimal number (01&ndash;12).
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%j</literal> - is replaced by the day of the year as a
-           decimal number (001-366).
+           decimal number (001&ndash;366).
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%k</literal> - is replaced by the hour (24-hour clock) as a
-           decimal number (0-23); single digits are preceded by a blank.
+           decimal number (0&ndash;23); single digits are preceded by a blank.
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%l</literal> - is replaced by the hour (12-hour clock) as a
-           decimal number (1-12); single digits are preceded by a blank.
+           decimal number (1&ndash;12); single digits are preceded by a blank.
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%M</literal> - is replaced by the minute as a decimal
-           number (00-59).
+           number (00&ndash;59).
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%m</literal> - is replaced by the month as a decimal number
-           (01-12).
+           (01&ndash;12).
           </para>
          </listitem>
          <listitem>
@@ -3124,7 +3124,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%S</literal> - is replaced by the second as a decimal
-           number (00-60).
+           number (00&ndash;60).
           </para>
          </listitem>
          <listitem>
@@ -3146,19 +3146,19 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%U</literal> - is replaced by the week number of the year
-           (Sunday as the first day of the week) as a decimal number (00-53).
+           (Sunday as the first day of the week) as a decimal number (00&ndash;53).
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%u</literal> - is replaced by the weekday (Monday as the
-           first day of the week) as a decimal number (1-7).
+           first day of the week) as a decimal number (1&ndash;7).
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%V</literal> - is replaced by the week number of the year
-           (Monday as the first day of the week) as a decimal number (01-53).
+           (Monday as the first day of the week) as a decimal number (01&ndash;53).
            If the week containing January 1 has four or more days in the new
            year, then it is week 1; otherwise it is the last week of the
            previous year, and the next week is week 1.
@@ -3173,13 +3173,13 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%W</literal> - is replaced by the week number of the year
-           (Monday as the first day of the week) as a decimal number (00-53).
+           (Monday as the first day of the week) as a decimal number (00&ndash;53).
           </para>
          </listitem>
          <listitem>
           <para>
            <literal>%w</literal> - is replaced by the weekday (Sunday as the
-           first day of the week) as a decimal number (0-6).
+           first day of the week) as a decimal number (0&ndash;6).
           </para>
          </listitem>
          <listitem>
@@ -3203,7 +3203,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
          <listitem>
           <para>
            <literal>%y</literal> - is replaced by the year without century as a
-           decimal number (00-99).
+           decimal number (00&ndash;99).
           </para>
          </listitem>
          <listitem>

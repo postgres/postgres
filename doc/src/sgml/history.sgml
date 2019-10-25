@@ -106,7 +106,7 @@
    and trimmed in size by 25%. Many internal changes improved
    performance and
    maintainability. <productname>Postgres95</productname> release
-   1.0.x ran about 30-50% faster on the Wisconsin Benchmark compared
+   1.0.x ran about 30&ndash;50% faster on the Wisconsin Benchmark compared
    to <productname>POSTGRES</productname>, Version 4.2.  Apart from
    bug fixes, the following were the major enhancements:
 
