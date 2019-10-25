@@ -7592,11 +7592,24 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </term>
       <listitem>
        <para>
-        Abort any statement that takes more than the specified duration
-        (defaults to milliseconds), starting from the time the command arrives at the server
-        from the client.  If <varname>log_min_error_statement</varname> is set to
-        <literal>ERROR</literal> or lower, the statement that timed out will also be
-        logged.  A value of zero (the default) turns this off.
+        Abort any statement that takes more than the specified duration.
+        If <varname>log_min_error_statement</varname> is set
+        to <literal>ERROR</literal> or lower, the statement that timed out
+        will also be logged.
+        If the value is specified without units, it is taken as milliseconds.
+        A value of zero (the default) disables the timeout.
+       </para>
+
+       <para>
+        The timeout is measured from the time a command arrives at the
+        server until it is completed by the server.  If multiple SQL
+        statements appear in a single simple-Query message, the timeout
+        is applied to each statement separately.
+        (<productname>PostgreSQL</productname> versions before 13 usually
+        treated the timeout as applying to the whole query string.)
+        In extended query protocol, the timeout starts running when any
+        query-related message (Parse, Bind, Execute, Describe) arrives, and
+        it is cancelled by completion of an Execute or Sync message.
        </para>
 
        <para>
