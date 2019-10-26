@@ -5363,7 +5363,7 @@ getTables(Archive *fout, int *numTables)
 		else
 			selectDumpableTable(&tblinfo[i], dopt);
 		tblinfo[i].interesting = tblinfo[i].dobj.dump;
-
+		tblinfo[i].dummy_view = false;	/* might get set during sort */
 		tblinfo[i].postponed_def = false;		/* might get set during sort */
 
 		/*
@@ -6165,16 +6165,6 @@ getRules(Archive *fout, int *numRules)
 		}
 		else
 			ruleinfo[i].separate = true;
-
-		/*
-		 * If we're forced to break a dependency loop by dumping a view as a
-		 * table and separate _RETURN rule, we'll move the view's reloptions
-		 * to the rule.  (This is necessary because tables and views have
-		 * different valid reloptions, so we can't apply the options until the
-		 * backend knows it's a view.)  Otherwise the rule's reloptions stay
-		 * NULL.
-		 */
-		ruleinfo[i].reloptions = NULL;
 	}
 
 	PQclear(res);
@@ -13747,6 +13737,50 @@ createViewAsClause(Archive *fout, TableInfo *tbinfo)
 }
 
 /*
+ * Create a dummy AS clause for a view.  This is used when the real view
+ * definition has to be postponed because of circular dependencies.
+ * We must duplicate the view's external properties -- column names and types
+ * (including collation) -- so that it works for subsequent references.
+ *
+ * This returns a new buffer which must be freed by the caller.
+ */
+static PQExpBuffer
+createDummyViewAsClause(Archive *fout, TableInfo *tbinfo)
+{
+	PQExpBuffer result = createPQExpBuffer();
+	int			j;
+
+	appendPQExpBufferStr(result, "SELECT");
+
+	for (j = 0; j < tbinfo->numatts; j++)
+	{
+		if (j > 0)
+			appendPQExpBufferChar(result, ',');
+		appendPQExpBufferStr(result, "\n    ");
+
+		appendPQExpBuffer(result, "NULL::%s", tbinfo->atttypnames[j]);
+
+		/*
+		 * Must add collation if not default for the type, because CREATE OR
+		 * REPLACE VIEW won't change it
+		 */
+		if (OidIsValid(tbinfo->attcollation[j]))
+		{
+			CollInfo   *coll;
+
+			coll = findCollationByOid(tbinfo->attcollation[j]);
+			if (coll)
+				appendPQExpBuffer(result, " COLLATE %s",
+								  fmtQualifiedDumpable(coll));
+		}
+
+		appendPQExpBuffer(result, " AS %s", fmtId(tbinfo->attnames[j]));
+	}
+
+	return result;
+}
+
+/*
  * dumpTableSchema
  *	  write the declaration (not data) of one user-defined table or view
  */
@@ -13780,6 +13814,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 	{
 		PQExpBuffer result;
 
+		/*
+		 * Note: keep this code in sync with the is_view case in dumpRule()
+		 */
+
 		reltypename = "VIEW";
 
 		appendPQExpBuffer(delq, "DROP VIEW %s;\n", qualrelname);
@@ -13790,17 +13828,22 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 		appendPQExpBuffer(q, "CREATE VIEW %s", qualrelname);
 
-		if (nonemptyReloptions(tbinfo->reloptions))
+		if (tbinfo->dummy_view)
+			result = createDummyViewAsClause(fout, tbinfo);
+		else
 		{
-			appendPQExpBufferStr(q, " WITH (");
-			fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
-			appendPQExpBufferChar(q, ')');
+			if (nonemptyReloptions(tbinfo->reloptions))
+			{
+				appendPQExpBufferStr(q, " WITH (");
+				fmtReloptionsArray(fout, q, tbinfo->reloptions, "");
+				appendPQExpBufferChar(q, ')');
+			}
+			result = createViewAsClause(fout, tbinfo);
 		}
-		result = createViewAsClause(fout, tbinfo);
 		appendPQExpBuffer(q, " AS\n%s", result->data);
 		destroyPQExpBuffer(result);
 
-		if (tbinfo->checkoption != NULL)
+		if (tbinfo->checkoption != NULL && !tbinfo->dummy_view)
 			appendPQExpBuffer(q, "\n  WITH %s CHECK OPTION", tbinfo->checkoption);
 		appendPQExpBufferStr(q, ";\n");
 	}
@@ -15426,6 +15469,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 {
 	DumpOptions *dopt = fout->dopt;
 	TableInfo  *tbinfo = rinfo->ruletable;
+	bool		is_view;
 	PQExpBuffer query;
 	PQExpBuffer cmd;
 	PQExpBuffer delcmd;
@@ -15445,6 +15489,12 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	if (!rinfo->separate)
 		return;
 
+	/*
+	 * If it's an ON SELECT rule, we want to print it as a view definition,
+	 * instead of a rule.
+	 */
+	is_view = (rinfo->ev_type == '1' && rinfo->is_instead);
+
 	query = createPQExpBuffer();
 	cmd = createPQExpBuffer();
 	delcmd = createPQExpBuffer();
@@ -15452,30 +15502,60 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 
 	qtabname = pg_strdup(fmtId(tbinfo->dobj.name));
 
-	if (fout->remoteVersion >= 70300)
+	if (is_view)
 	{
-		appendPQExpBuffer(query,
-						  "SELECT pg_catalog.pg_get_ruledef('%u'::pg_catalog.oid) AS definition",
-						  rinfo->dobj.catId.oid);
+		PQExpBuffer result;
+
+		/*
+		 * We need OR REPLACE here because we'll be replacing a dummy view.
+		 * Otherwise this should look largely like the regular view dump code.
+		 */
+		appendPQExpBuffer(cmd, "CREATE OR REPLACE VIEW %s",
+						  fmtQualifiedDumpable(tbinfo));
+		if (nonemptyReloptions(tbinfo->reloptions))
+		{
+			appendPQExpBufferStr(cmd, " WITH (");
+			fmtReloptionsArray(fout, cmd, tbinfo->reloptions, "");
+			appendPQExpBufferChar(cmd, ')');
+		}
+		result = createViewAsClause(fout, tbinfo);
+		appendPQExpBuffer(cmd, " AS\n%s", result->data);
+		destroyPQExpBuffer(result);
+		if (tbinfo->checkoption != NULL)
+			appendPQExpBuffer(cmd, "\n  WITH %s CHECK OPTION",
+							  tbinfo->checkoption);
+		appendPQExpBufferStr(cmd, ";\n");
 	}
 	else
 	{
-		/* Rule name was unique before 7.3 ... */
-		appendPQExpBuffer(query,
-						  "SELECT pg_get_ruledef('%s') AS definition",
-						  rinfo->dobj.name);
+		/* In the rule case, just print pg_get_ruledef's result verbatim */
+		if (fout->remoteVersion >= 70300)
+		{
+			appendPQExpBuffer(query,
+							  "SELECT pg_catalog.pg_get_ruledef('%u'::pg_catalog.oid) AS definition",
+							  rinfo->dobj.catId.oid);
+		}
+		else
+		{
+			/* Rule name was unique before 7.3 ... */
+			appendPQExpBuffer(query,
+							  "SELECT pg_get_ruledef('%s') AS definition",
+							  rinfo->dobj.name);
+		}
+
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+
+		if (PQntuples(res) != 1)
+		{
+			write_msg(NULL, "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n",
+					  rinfo->dobj.name, tbinfo->dobj.name);
+			exit_nicely(1);
+		}
+
+		printfPQExpBuffer(cmd, "%s\n", PQgetvalue(res, 0, 0));
+
+		PQclear(res);
 	}
-
-	res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
-
-	if (PQntuples(res) != 1)
-	{
-		write_msg(NULL, "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n",
-				  rinfo->dobj.name, tbinfo->dobj.name);
-		exit_nicely(1);
-	}
-
-	printfPQExpBuffer(cmd, "%s\n", PQgetvalue(res, 0, 0));
 
 	/*
 	 * Add the command to alter the rules replication firing semantics if it
@@ -15501,21 +15581,28 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 		}
 	}
 
-	/*
-	 * Apply view's reloptions when its ON SELECT rule is separate.
-	 */
-	if (nonemptyReloptions(rinfo->reloptions))
+	if (is_view)
 	{
-		appendPQExpBuffer(cmd, "ALTER VIEW %s SET (",
-						  fmtQualifiedDumpable(tbinfo));
-		fmtReloptionsArray(fout, cmd, rinfo->reloptions, "");
-		appendPQExpBufferStr(cmd, ");\n");
-	}
+		/*
+		 * We can't DROP a view's ON SELECT rule.  Instead, use CREATE OR
+		 * REPLACE VIEW to replace the rule with something with minimal
+		 * dependencies.
+		 */
+		PQExpBuffer result;
 
-	appendPQExpBuffer(delcmd, "DROP RULE %s ",
-					  fmtId(rinfo->dobj.name));
-	appendPQExpBuffer(delcmd, "ON %s;\n",
-					  fmtQualifiedDumpable(tbinfo));
+		appendPQExpBuffer(delcmd, "CREATE OR REPLACE VIEW %s",
+						  fmtQualifiedDumpable(tbinfo));
+		result = createDummyViewAsClause(fout, tbinfo);
+		appendPQExpBuffer(delcmd, " AS\n%s;\n", result->data);
+		destroyPQExpBuffer(result);
+	}
+	else
+	{
+		appendPQExpBuffer(delcmd, "DROP RULE %s ",
+						  fmtId(rinfo->dobj.name));
+		appendPQExpBuffer(delcmd, "ON %s;\n",
+						  fmtQualifiedDumpable(tbinfo));
+	}
 
 	appendPQExpBuffer(ruleprefix, "RULE %s ON",
 					  fmtId(rinfo->dobj.name));
@@ -15537,8 +15624,6 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 				tbinfo->dobj.namespace->dobj.name,
 				tbinfo->rolname,
 				rinfo->dobj.catId, 0, rinfo->dobj.dumpId);
-
-	PQclear(res);
 
 	free(tag);
 	destroyPQExpBuffer(query);
