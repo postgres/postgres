@@ -6687,7 +6687,7 @@ StartupXLOG(void)
 	if (ControlFile->state == DB_SHUTDOWNED)
 		XLogCtl->unloggedLSN = ControlFile->unloggedLSN;
 	else
-		XLogCtl->unloggedLSN = 1;
+		XLogCtl->unloggedLSN = FirstNormalUnloggedLSN;
 
 	/*
 	 * We must replay WAL entries using the same TimeLineID they were created

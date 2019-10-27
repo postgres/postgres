@@ -699,7 +699,7 @@ GuessControlValues(void)
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = (pg_time_t) time(NULL);
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-	ControlFile.unloggedLSN = 1;
+	ControlFile.unloggedLSN = FirstNormalUnloggedLSN;
 
 	/* minRecoveryPoint, backupStartPoint and backupEndPoint can be left zero */
 
