@@ -492,6 +492,12 @@ SELECT strpos('abcdef', 'cd') AS "pos_3";
 
 SELECT strpos('abcdef', 'xy') AS "pos_0";
 
+SELECT strpos('abcdef', '') AS "pos_1";
+
+SELECT strpos('', 'xy') AS "pos_0";
+
+SELECT strpos('', '') AS "pos_1";
+
 --
 -- test replace
 --

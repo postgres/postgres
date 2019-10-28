@@ -1420,6 +1420,24 @@ SELECT strpos('abcdef', 'xy') AS "pos_0";
      0
 (1 row)
 
+SELECT strpos('abcdef', '') AS "pos_1";
+ pos_1 
+-------
+     1
+(1 row)
+
+SELECT strpos('', 'xy') AS "pos_0";
+ pos_0 
+-------
+     0
+(1 row)
+
+SELECT strpos('', '') AS "pos_1";
+ pos_1 
+-------
+     1
+(1 row)
+
 --
 -- test replace
 --
