@@ -436,6 +436,45 @@ where i8 in (row(123,456)::int8_tbl, '(4567890123456789,123)');
  4567890123456789 | 123
 (2 rows)
 
+-- Check ability to select columns from an anonymous rowtype
+select (row(1, 2.0)).f1;
+ f1 
+----
+  1
+(1 row)
+
+select (row(1, 2.0)).f2;
+ f2  
+-----
+ 2.0
+(1 row)
+
+select (row(1, 2.0)).nosuch;  -- fail
+ERROR:  could not identify column "nosuch" in record data type
+LINE 1: select (row(1, 2.0)).nosuch;
+                ^
+select (row(1, 2.0)).*;
+ f1 | f2  
+----+-----
+  1 | 2.0
+(1 row)
+
+select (r).f1 from (select row(1, 2.0) as r) ss;
+ f1 
+----
+  1
+(1 row)
+
+select (r).f3 from (select row(1, 2.0) as r) ss;  -- fail
+ERROR:  could not identify column "f3" in record data type
+LINE 1: select (r).f3 from (select row(1, 2.0) as r) ss;
+                ^
+select (r).* from (select row(1, 2.0) as r) ss;
+ f1 | f2  
+----+-----
+  1 | 2.0
+(1 row)
+
 -- Check some corner cases involving empty rowtypes
 select ROW();
  row 

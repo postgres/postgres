@@ -227,6 +227,38 @@ get_expr_result_type(Node *expr,
 										  NULL,
 										  resultTypeId,
 										  resultTupleDesc);
+	else if (expr && IsA(expr, RowExpr) &&
+			 ((RowExpr *) expr)->row_typeid == RECORDOID)
+	{
+		/* We can resolve the record type by generating the tupdesc directly */
+		RowExpr    *rexpr = (RowExpr *) expr;
+		TupleDesc	tupdesc;
+		AttrNumber	i = 1;
+		ListCell   *lcc,
+				   *lcn;
+
+		tupdesc = CreateTemplateTupleDesc(list_length(rexpr->args));
+		Assert(list_length(rexpr->args) == list_length(rexpr->colnames));
+		forboth(lcc, rexpr->args, lcn, rexpr->colnames)
+		{
+			Node	   *col = (Node *) lfirst(lcc);
+			char	   *colname = strVal(lfirst(lcn));
+
+			TupleDescInitEntry(tupdesc, i,
+							   colname,
+							   exprType(col),
+							   exprTypmod(col),
+							   0);
+			TupleDescInitEntryCollation(tupdesc, i,
+										exprCollation(col));
+			i++;
+		}
+		if (resultTypeId)
+			*resultTypeId = rexpr->row_typeid;
+		if (resultTupleDesc)
+			*resultTupleDesc = BlessTupleDesc(tupdesc);
+		return TYPEFUNC_COMPOSITE;
+	}
 	else
 	{
 		/* handle as a generic expression; no chance to resolve RECORD */
