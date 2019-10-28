@@ -1668,8 +1668,12 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 	}
 
 	/*
-	 * Move all dependencies of and on the old index to the new one
+	 * Move all dependencies of and on the old index to the new one.  First
+	 * remove any dependencies that the new index may have to provide an
+	 * initial clean state for the dependency switch, and then move all the
+	 * dependencies from the old index to the new one.
 	 */
+	deleteDependencyRecordsFor(RelationRelationId, newIndexId, false);
 	changeDependenciesOf(RelationRelationId, oldIndexId, newIndexId);
 	changeDependenciesOn(RelationRelationId, oldIndexId, newIndexId);
 
