@@ -1973,9 +1973,61 @@ ERROR:  conflicting key value violates exclusion constraint "concur_reindex_tab3
 DETAIL:  Key (c2)=([2,5)) conflicts with existing key (c2)=([1,3)).
 -- Check materialized views
 CREATE MATERIALIZED VIEW concur_reindex_matview AS SELECT * FROM concur_reindex_tab;
+-- Dependency lookup before and after the follow-up REINDEX commands.
+-- These should remain consistent.
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid,refobjid,refobjsubid) as objref,
+       deptype
+FROM pg_depend
+WHERE classid = 'pg_class'::regclass AND
+  objid in ('concur_reindex_tab'::regclass,
+            'concur_reindex_ind1'::regclass,
+	    'concur_reindex_ind2'::regclass,
+	    'concur_reindex_ind3'::regclass,
+	    'concur_reindex_ind4'::regclass,
+	    'concur_reindex_matview'::regclass)
+  ORDER BY 1, 2;
+                   obj                    |                           objref                           | deptype 
+------------------------------------------+------------------------------------------------------------+---------
+ index concur_reindex_ind1                | constraint concur_reindex_ind1 on table concur_reindex_tab | i
+ index concur_reindex_ind2                | column c2 of table concur_reindex_tab                      | a
+ index concur_reindex_ind3                | column c1 of table concur_reindex_tab                      | a
+ index concur_reindex_ind3                | table concur_reindex_tab                                   | a
+ index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
+ index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
+ index concur_reindex_ind4                | column c2 of table concur_reindex_tab                      | a
+ materialized view concur_reindex_matview | schema public                                              | n
+ table concur_reindex_tab                 | schema public                                              | n
+(9 rows)
+
 REINDEX INDEX CONCURRENTLY concur_reindex_ind1;
 REINDEX TABLE CONCURRENTLY concur_reindex_tab;
 REINDEX TABLE CONCURRENTLY concur_reindex_matview;
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid,refobjid,refobjsubid) as objref,
+       deptype
+FROM pg_depend
+WHERE classid = 'pg_class'::regclass AND
+  objid in ('concur_reindex_tab'::regclass,
+            'concur_reindex_ind1'::regclass,
+	    'concur_reindex_ind2'::regclass,
+	    'concur_reindex_ind3'::regclass,
+	    'concur_reindex_ind4'::regclass,
+	    'concur_reindex_matview'::regclass)
+  ORDER BY 1, 2;
+                   obj                    |                           objref                           | deptype 
+------------------------------------------+------------------------------------------------------------+---------
+ index concur_reindex_ind1                | constraint concur_reindex_ind1 on table concur_reindex_tab | i
+ index concur_reindex_ind2                | column c2 of table concur_reindex_tab                      | a
+ index concur_reindex_ind3                | column c1 of table concur_reindex_tab                      | a
+ index concur_reindex_ind3                | table concur_reindex_tab                                   | a
+ index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
+ index concur_reindex_ind4                | column c1 of table concur_reindex_tab                      | a
+ index concur_reindex_ind4                | column c2 of table concur_reindex_tab                      | a
+ materialized view concur_reindex_matview | schema public                                              | n
+ table concur_reindex_tab                 | schema public                                              | n
+(9 rows)
+
 -- Check that comments are preserved
 CREATE TABLE testcomment (i int);
 CREATE INDEX testcomment_idx1 ON testcomment (i);
@@ -2059,6 +2111,43 @@ SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_ind
 (5 rows)
 
 -- REINDEX should preserve dependencies of partition tree.
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid,refobjid,refobjsubid) as objref,
+       deptype
+FROM pg_depend
+WHERE classid = 'pg_class'::regclass AND
+  objid in ('concur_reindex_part'::regclass,
+            'concur_reindex_part_0'::regclass,
+            'concur_reindex_part_0_1'::regclass,
+            'concur_reindex_part_0_2'::regclass,
+            'concur_reindex_part_index'::regclass,
+            'concur_reindex_part_index_0'::regclass,
+            'concur_reindex_part_index_0_1'::regclass,
+            'concur_reindex_part_index_0_2'::regclass)
+  ORDER BY 1, 2;
+                   obj                    |                   objref                   | deptype 
+------------------------------------------+--------------------------------------------+---------
+ column c1 of table concur_reindex_part   | table concur_reindex_part                  | i
+ column c2 of table concur_reindex_part_0 | table concur_reindex_part_0                | i
+ index concur_reindex_part_index          | column c1 of table concur_reindex_part     | a
+ index concur_reindex_part_index_0        | column c1 of table concur_reindex_part_0   | a
+ index concur_reindex_part_index_0        | index concur_reindex_part_index            | P
+ index concur_reindex_part_index_0        | table concur_reindex_part_0                | S
+ index concur_reindex_part_index_0_1      | column c1 of table concur_reindex_part_0_1 | a
+ index concur_reindex_part_index_0_1      | index concur_reindex_part_index_0          | P
+ index concur_reindex_part_index_0_1      | table concur_reindex_part_0_1              | S
+ index concur_reindex_part_index_0_2      | column c1 of table concur_reindex_part_0_2 | a
+ index concur_reindex_part_index_0_2      | index concur_reindex_part_index_0          | P
+ index concur_reindex_part_index_0_2      | table concur_reindex_part_0_2              | S
+ table concur_reindex_part                | schema public                              | n
+ table concur_reindex_part_0              | schema public                              | n
+ table concur_reindex_part_0              | table concur_reindex_part                  | a
+ table concur_reindex_part_0_1            | schema public                              | n
+ table concur_reindex_part_0_1            | table concur_reindex_part_0                | a
+ table concur_reindex_part_0_2            | schema public                              | n
+ table concur_reindex_part_0_2            | table concur_reindex_part_0                | a
+(19 rows)
+
 REINDEX INDEX CONCURRENTLY concur_reindex_part_index_0_1;
 REINDEX INDEX CONCURRENTLY concur_reindex_part_index_0_2;
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
@@ -2074,6 +2163,43 @@ SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_ind
 
 REINDEX TABLE CONCURRENTLY concur_reindex_part_0_1;
 REINDEX TABLE CONCURRENTLY concur_reindex_part_0_2;
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid,refobjid,refobjsubid) as objref,
+       deptype
+FROM pg_depend
+WHERE classid = 'pg_class'::regclass AND
+  objid in ('concur_reindex_part'::regclass,
+            'concur_reindex_part_0'::regclass,
+            'concur_reindex_part_0_1'::regclass,
+            'concur_reindex_part_0_2'::regclass,
+            'concur_reindex_part_index'::regclass,
+            'concur_reindex_part_index_0'::regclass,
+            'concur_reindex_part_index_0_1'::regclass,
+            'concur_reindex_part_index_0_2'::regclass)
+  ORDER BY 1, 2;
+                   obj                    |                   objref                   | deptype 
+------------------------------------------+--------------------------------------------+---------
+ column c1 of table concur_reindex_part   | table concur_reindex_part                  | i
+ column c2 of table concur_reindex_part_0 | table concur_reindex_part_0                | i
+ index concur_reindex_part_index          | column c1 of table concur_reindex_part     | a
+ index concur_reindex_part_index_0        | column c1 of table concur_reindex_part_0   | a
+ index concur_reindex_part_index_0        | index concur_reindex_part_index            | P
+ index concur_reindex_part_index_0        | table concur_reindex_part_0                | S
+ index concur_reindex_part_index_0_1      | column c1 of table concur_reindex_part_0_1 | a
+ index concur_reindex_part_index_0_1      | index concur_reindex_part_index_0          | P
+ index concur_reindex_part_index_0_1      | table concur_reindex_part_0_1              | S
+ index concur_reindex_part_index_0_2      | column c1 of table concur_reindex_part_0_2 | a
+ index concur_reindex_part_index_0_2      | index concur_reindex_part_index_0          | P
+ index concur_reindex_part_index_0_2      | table concur_reindex_part_0_2              | S
+ table concur_reindex_part                | schema public                              | n
+ table concur_reindex_part_0              | schema public                              | n
+ table concur_reindex_part_0              | table concur_reindex_part                  | a
+ table concur_reindex_part_0_1            | schema public                              | n
+ table concur_reindex_part_0_1            | table concur_reindex_part_0                | a
+ table concur_reindex_part_0_2            | schema public                              | n
+ table concur_reindex_part_0_2            | table concur_reindex_part_0                | a
+(19 rows)
+
 SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_index')
   ORDER BY relid, level;
              relid             |         parentrelid         | level 
