@@ -513,13 +513,19 @@ start_postmaster(void)
 	 * "exec", so we don't get to find out the postmaster's PID immediately.
 	 */
 	PROCESS_INFORMATION pi;
+	const char *comspec;
+
+	/* Find CMD.EXE location using COMSPEC, if it's set */
+	comspec = getenv("COMSPEC");
+	if (comspec == NULL)
+		comspec = "CMD";
 
 	if (log_file != NULL)
-		snprintf(cmd, MAXPGPATH, "CMD /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
-				 exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
+		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
+				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
 	else
-		snprintf(cmd, MAXPGPATH, "CMD /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
-				 exec_path, pgdata_opt, post_opts, DEVNULL);
+		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
+				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL);
 
 	if (!CreateRestrictedProcess(cmd, &pi, false))
 	{

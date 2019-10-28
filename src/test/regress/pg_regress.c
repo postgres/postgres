@@ -1193,9 +1193,15 @@ spawn_process(const char *cmdline)
 	PROCESS_INFORMATION pi;
 	char	   *cmdline2;
 	HANDLE		restrictedToken;
+	const char *comspec;
+
+	/* Find CMD.EXE location using COMSPEC, if it's set */
+	comspec = getenv("COMSPEC");
+	if (comspec == NULL)
+		comspec = "CMD";
 
 	memset(&pi, 0, sizeof(pi));
-	cmdline2 = psprintf("cmd /c \"%s\"", cmdline);
+	cmdline2 = psprintf("\"%s\" /c \"%s\"", comspec, cmdline);
 
 	if ((restrictedToken =
 		 CreateRestrictedProcess(cmdline2, &pi)) == 0)
