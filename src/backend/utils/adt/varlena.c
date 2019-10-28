@@ -1118,7 +1118,12 @@ text_position(text *t1, text *t2, Oid collid)
 	TextPositionState state;
 	int			result;
 
-	if (VARSIZE_ANY_EXHDR(t1) < 1 || VARSIZE_ANY_EXHDR(t2) < 1)
+	/* Empty needle always matches at position 1 */
+	if (VARSIZE_ANY_EXHDR(t2) < 1)
+		return 1;
+
+	/* Otherwise, can't match if haystack is shorter than needle */
+	if (VARSIZE_ANY_EXHDR(t1) < VARSIZE_ANY_EXHDR(t2))
 		return 0;
 
 	text_position_setup(t1, t2, collid, &state);
@@ -1272,6 +1277,9 @@ text_position_setup(text *t1, text *t2, Oid collid, TextPositionState *state)
  * Advance to the next match, starting from the end of the previous match
  * (or the beginning of the string, on first call).  Returns true if a match
  * is found.
+ *
+ * Note that this refuses to match an empty-string needle.  Most callers
+ * will have handled that case specially and we'll never see it here.
  */
 static bool
 text_position_next(TextPositionState *state)
