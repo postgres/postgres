@@ -41,7 +41,13 @@ dump_sqlda(sqlda_t *sqlda)
 			break;
 #ifdef HAVE_LONG_LONG_INT
 		case ECPGt_long_long:
-			printf("name sqlda descriptor: '%s' value %lld\n", sqlda->sqlvar[i].sqlname.data, *(long long int *)sqlda->sqlvar[i].sqldata);
+			printf(
+#ifdef _WIN32
+				"name sqlda descriptor: '%s' value %I64d\n",
+#else
+				"name sqlda descriptor: '%s' value %lld\n",
+#endif
+				sqlda->sqlvar[i].sqlname.data, *(long long int *)sqlda->sqlvar[i].sqldata);
 			break;
 #endif
 		case ECPGt_double:
