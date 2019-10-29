@@ -1462,6 +1462,7 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 				newIndexTuple;
 	Form_pg_index oldIndexForm,
 				newIndexForm;
+	bool		isPartition;
 	Oid			indexConstraintOid;
 	List	   *constraintOids = NIL;
 	ListCell   *lc;
@@ -1491,8 +1492,10 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 	namestrcpy(&newClassForm->relname, NameStr(oldClassForm->relname));
 	namestrcpy(&oldClassForm->relname, oldName);
 
-	/* Copy partition flag to track inheritance properly */
+	/* Swap the partition flags to track inheritance properly */
+	isPartition = newClassForm->relispartition;
 	newClassForm->relispartition = oldClassForm->relispartition;
+	oldClassForm->relispartition = isPartition;
 
 	CatalogTupleUpdate(pg_class, &oldClassTuple->t_self, oldClassTuple);
 	CatalogTupleUpdate(pg_class, &newClassTuple->t_self, newClassTuple);
