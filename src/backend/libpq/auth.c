@@ -73,6 +73,11 @@ static int	CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail);
 
 static int	ident_inet(hbaPort *port);
 
+
+/*----------------------------------------------------------------
+ * Peer authentication
+ *----------------------------------------------------------------
+ */
 #ifdef HAVE_UNIX_SOCKETS
 static int	auth_peer(hbaPort *port);
 #endif
@@ -1966,6 +1971,12 @@ ident_inet_done:
 		return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
 	return STATUS_ERROR;
 }
+
+
+/*----------------------------------------------------------------
+ * Peer authentication system
+ *----------------------------------------------------------------
+ */
 
 /*
  *	Ask kernel about the credentials of the connecting process,
