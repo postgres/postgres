@@ -654,6 +654,28 @@ Author: Peter Eisentraut <peter_e@gmx.net>
      </para>
     </listitem>
 
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2018-09-12 [e7a221797] Parse more strictly integer parameters from connection s
+-->
+
+     <para>
+      Parse libpq integer connection parameters more strictly (Fabien
+      Coelho)
+     </para> 
+
+     <para>
+      In previous releases, using an incorrect integer value for
+      connection parameters <literal>connect_timeout</literal>,
+      <literal>keepalives</literal>, <literal>keepalives_count</literal>,
+      <literal>keepalives_idle</literal>,
+      <literal>keepalives_interval</literal> and <literal>port</literal>
+      resulted in libpq either ignoring those values or failing with
+      incorrect error messages.
+     </para> 
+    </listitem>
+    
    </itemizedlist>
 
   </sect2>
