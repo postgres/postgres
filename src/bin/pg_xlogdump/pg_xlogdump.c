@@ -509,7 +509,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				if (record->blocks[block_id].bimg_info &
 					BKPIMAGE_IS_COMPRESSED)
 				{
-					printf(" (FPW); hole: offset: %u, length: %u, compression saved: %u\n",
+					printf(" (FPW); hole: offset: %u, length: %u, compression saved: %u",
 						   record->blocks[block_id].hole_offset,
 						   record->blocks[block_id].hole_length,
 						   BLCKSZ -
@@ -518,7 +518,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				}
 				else
 				{
-					printf(" (FPW); hole: offset: %u, length: %u\n",
+					printf(" (FPW); hole: offset: %u, length: %u",
 						   record->blocks[block_id].hole_offset,
 						   record->blocks[block_id].hole_length);
 				}
