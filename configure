@@ -15685,6 +15685,19 @@ esac
 
 fi
 
+ac_fn_c_check_func "$LINENO" "getpeereid" "ac_cv_func_getpeereid"
+if test "x$ac_cv_func_getpeereid" = xyes; then :
+  $as_echo "#define HAVE_GETPEEREID 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" getpeereid.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS getpeereid.$ac_objext"
+ ;;
+esac
+
+fi
+
 ac_fn_c_check_func "$LINENO" "getrusage" "ac_cv_func_getrusage"
 if test "x$ac_cv_func_getrusage" = xyes; then :
   $as_echo "#define HAVE_GETRUSAGE 1" >>confdefs.h
@@ -15863,19 +15876,13 @@ $as_echo "$as_me: On $host_os we will use our strtof wrapper." >&6;}
 esac
 
 case $host_os in
-
         # Windows uses a specialised env handler
-        # and doesn't need a replacement getpeereid because it doesn't use
-        # Unix sockets.
         mingw*)
 
 $as_echo "#define HAVE_UNSETENV 1" >>confdefs.h
 
-
-$as_echo "#define HAVE_GETPEEREID 1" >>confdefs.h
-
                 ac_cv_func_unsetenv=yes
-                ac_cv_func_getpeereid=yes;;
+                ;;
         *)
                 ac_fn_c_check_func "$LINENO" "unsetenv" "ac_cv_func_unsetenv"
 if test "x$ac_cv_func_unsetenv" = xyes; then :
@@ -15890,21 +15897,8 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "getpeereid" "ac_cv_func_getpeereid"
-if test "x$ac_cv_func_getpeereid" = xyes; then :
-  $as_echo "#define HAVE_GETPEEREID 1" >>confdefs.h
 
-else
-  case " $LIBOBJS " in
-  *" getpeereid.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getpeereid.$ac_objext"
- ;;
-esac
-
-fi
-
-
-		;;
+                ;;
 esac
 
 # System's version of getaddrinfo(), if any, may be used only if we found
