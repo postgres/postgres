@@ -814,7 +814,7 @@ _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 		final->firstoldonright < state->newitemoff + MAX_LEAF_INTERVAL)
 	{
 		/*
-		 * Avoid the problem by peforming a 50:50 split when the new item is
+		 * Avoid the problem by performing a 50:50 split when the new item is
 		 * just to the right of the would-be "many duplicates" split point.
 		 */
 		final = &state->splits[0];

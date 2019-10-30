@@ -17,7 +17,7 @@
 #include "pgtypeslib_extern.h"
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
- * and changesd struct pg_tm to struct tm
+ * and changed struct pg_tm to struct tm
  */
 static void
 AdjustFractSeconds(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale)
@@ -35,7 +35,7 @@ AdjustFractSeconds(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale
 
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
- * and changesd struct pg_tm to struct tm
+ * and changed struct pg_tm to struct tm
  */
 static void
 AdjustFractDays(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale)
@@ -88,7 +88,7 @@ ISO8601IntegerWidth(const char *fieldstart)
 
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
- * and changesd struct pg_tm to struct tm
+ * and changed struct pg_tm to struct tm
  */
 static inline void
 ClearPgTm(struct /* pg_ */ tm *tm, fsec_t *fsec)
@@ -104,7 +104,7 @@ ClearPgTm(struct /* pg_ */ tm *tm, fsec_t *fsec)
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  *
- * * changesd struct pg_tm to struct tm
+ * * changed struct pg_tm to struct tm
  *
  * * Made the function static
  */
@@ -311,7 +311,7 @@ DecodeISO8601Interval(char *str,
 /* copy&pasted from .../src/backend/utils/adt/datetime.c
  * with 3 exceptions
  *
- *	* changesd struct pg_tm to struct tm
+ *	* changed struct pg_tm to struct tm
  *
  *	* ECPG code called this without a 'range' parameter
  *	  removed 'int range' from the argument list and

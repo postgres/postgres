@@ -1208,7 +1208,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			LWLockAcquire(newPartitionLock, LW_EXCLUSIVE);
 			/* remember we have no old-partition lock or tag */
 			oldPartitionLock = NULL;
-			/* this just keeps the compiler quiet about uninit variables */
+			/* keep the compiler quiet about uninitialized variables */
 			oldHash = 0;
 		}
 

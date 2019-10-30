@@ -501,8 +501,8 @@ toast_fetch_datum(struct varlena *attr)
  *	in the toast relation
  *
  *	Note that this function supports non-compressed external datums
- *	and compressed external datums (in which case the requrested slice
- *  has to be a prefix, i.e. sliceoffset has to be 0).
+ *	and compressed external datums (in which case the requested slice
+ *	has to be a prefix, i.e. sliceoffset has to be 0).
  * ----------
  */
 static struct varlena *

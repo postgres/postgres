@@ -74,7 +74,7 @@ sepgsql_database_post_create(Oid databaseId, const char *dtemplate)
 	 * Compute a default security label of the newly created database based on
 	 * a pair of security label of client and source database.
 	 *
-	 * XXX - uncoming version of libselinux supports to take object name to
+	 * XXX - upcoming version of libselinux supports to take object name to
 	 * handle special treatment on default security label.
 	 */
 	rel = table_open(DatabaseRelationId, AccessShareLock);

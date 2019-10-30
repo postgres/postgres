@@ -85,7 +85,7 @@ fixup_whole_row_references(Oid relOid, Bitmapset *columns)
  * When user is querying on a table with children, it implicitly accesses
  * child tables also. So, we also need to check security label of child
  * tables and columns, but here is no guarantee attribute numbers are
- * same between the parent ans children.
+ * same between the parent and children.
  * It returns a bitmapset which contains attribute number of the child
  * table based on the given bitmapset of the parent.
  */

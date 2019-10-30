@@ -467,7 +467,7 @@ comp_ptrgm(const void *v1, const void *v2)
  * ulen1: count of unique trigrams of array "trg1".
  * len2: length of array "trg2" and array "trg2indexes".
  * len: length of the array "found".
- * lags: set of boolean flags parametrizing similarity calculation.
+ * lags: set of boolean flags parameterizing similarity calculation.
  * bounds: whether each trigram is left/right bound of word.
  *
  * Returns word similarity.
@@ -632,7 +632,7 @@ iterate_word_similarity(int *trg2indexes,
  *
  * str1: search pattern string, of length slen1 bytes.
  * str2: text in which we are looking for a word, of length slen2 bytes.
- * flags: set of boolean flags parametrizing similarity calculation.
+ * flags: set of boolean flags parameterizing similarity calculation.
  *
  * Returns word similarity.
  */

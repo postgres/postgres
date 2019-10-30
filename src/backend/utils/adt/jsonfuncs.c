@@ -205,7 +205,7 @@ struct ColumnIOData
 	Oid			typid;			/* column type id */
 	int32		typmod;			/* column type modifier */
 	TypeCat		typcat;			/* column type category */
-	ScalarIOData scalar_io;		/* metadata cache for directi conversion
+	ScalarIOData scalar_io;		/* metadata cache for direct conversion
 								 * through input function */
 	union
 	{

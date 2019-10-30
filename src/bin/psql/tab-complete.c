@@ -1490,7 +1490,7 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches("CREATE"))
 		matches = completion_matches(text, create_command_generator);
 
-	/* complete with somthing you can create or replace */
+	/* complete with something you can create or replace */
 	else if (TailMatches("CREATE", "OR", "REPLACE"))
 		COMPLETE_WITH("FUNCTION", "PROCEDURE", "LANGUAGE", "RULE", "VIEW",
 					  "AGGREGATE", "TRANSFORM");

@@ -819,7 +819,7 @@ rfmtlong(long lng_val, const char *fmt, char *outbuf)
 				sign = 1;
 			if (leftalign)
 			{
-				/* can't use strncat(,,0) here, Solaris would freek out */
+				/* can't use strncat(,,0) here, Solaris would freak out */
 				if (sign)
 					if (signdone)
 					{

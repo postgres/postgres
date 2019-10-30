@@ -476,7 +476,7 @@ sort_item_compare(const void *a, const void *b, void *arg)
  * build_column_frequencies
  *	compute frequencies of values in each column
  *
- * This returns an array of SortItems for each attibute the MCV is built
+ * This returns an array of SortItems for each attribute the MCV is built
  * on, with a frequency (number of occurrences) for each value. This is
  * then used to compute "base" frequency of MCV items.
  *

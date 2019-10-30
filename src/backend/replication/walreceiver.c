@@ -1052,7 +1052,7 @@ XLogWalRcvFlush(bool dying)
  * false, this is a no-op.
  *
  * If 'requestReply' is true, requests the server to reply immediately upon
- * receiving this message. This is used for heartbearts, when approaching
+ * receiving this message. This is used for heartbeats, when approaching
  * wal_receiver_timeout.
  */
 static void
