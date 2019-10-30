@@ -584,7 +584,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 					BKPIMAGE_IS_COMPRESSED)
 				{
 					printf(" (FPW%s); hole: offset: %u, length: %u, "
-						   "compression saved: %u\n",
+						   "compression saved: %u",
 						   XLogRecBlockImageApply(record, block_id) ?
 						   "" : " for WAL verification",
 						   record->blocks[block_id].hole_offset,
@@ -595,7 +595,7 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 				}
 				else
 				{
-					printf(" (FPW%s); hole: offset: %u, length: %u\n",
+					printf(" (FPW%s); hole: offset: %u, length: %u",
 						   XLogRecBlockImageApply(record, block_id) ?
 						   "" : " for WAL verification",
 						   record->blocks[block_id].hole_offset,
