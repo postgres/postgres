@@ -65,7 +65,7 @@ static int	CheckSCRAMAuth(Port *port, char *shadow_pass, char **logdetail);
  * Ident authentication
  *----------------------------------------------------------------
  */
-/* Max size of username ident server can return */
+/* Max size of username ident server can return (per RFC 1413) */
 #define IDENT_USERNAME_MAX 512
 
 /* Standard TCP port number for Ident service.  Assigned by IANA */
@@ -1990,10 +1990,11 @@ ident_inet_done:
 static int
 auth_peer(hbaPort *port)
 {
-	char		ident_user[IDENT_USERNAME_MAX + 1];
 	uid_t		uid;
 	gid_t		gid;
 	struct passwd *pw;
+	char	   *peer_user;
+	int			ret;
 
 	if (getpeereid(port->sock, &uid, &gid) != 0)
 	{
@@ -2022,9 +2023,14 @@ auth_peer(hbaPort *port)
 		return STATUS_ERROR;
 	}
 
-	strlcpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
+	/* Make a copy of static getpw*() result area. */
+	peer_user = pstrdup(pw->pw_name);
 
-	return check_usermap(port->hba->usermap, port->user_name, ident_user, false);
+	ret = check_usermap(port->hba->usermap, port->user_name, peer_user, false);
+
+	pfree(peer_user);
+
+	return ret;
 }
 #endif							/* HAVE_UNIX_SOCKETS */
 
