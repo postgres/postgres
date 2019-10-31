@@ -137,10 +137,10 @@ typedef struct
 static RangeType *range_super_union(TypeCacheEntry *typcache, RangeType *r1,
 									RangeType *r2);
 static bool range_gist_consistent_int(TypeCacheEntry *typcache,
-									  StrategyNumber strategy, RangeType *key,
+									  StrategyNumber strategy, const RangeType *key,
 									  Datum query);
 static bool range_gist_consistent_leaf(TypeCacheEntry *typcache,
-									   StrategyNumber strategy, RangeType *key,
+									   StrategyNumber strategy, const RangeType *key,
 									   Datum query);
 static void range_gist_fallback_split(TypeCacheEntry *typcache,
 									  GistEntryVector *entryvec,
@@ -764,7 +764,7 @@ range_super_union(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2)
  */
 static bool
 range_gist_consistent_int(TypeCacheEntry *typcache, StrategyNumber strategy,
-						  RangeType *key, Datum query)
+						  const RangeType *key, Datum query)
 {
 	switch (strategy)
 	{
@@ -836,7 +836,7 @@ range_gist_consistent_int(TypeCacheEntry *typcache, StrategyNumber strategy,
  */
 static bool
 range_gist_consistent_leaf(TypeCacheEntry *typcache, StrategyNumber strategy,
-						   RangeType *key, Datum query)
+						   const RangeType *key, Datum query)
 {
 	switch (strategy)
 	{

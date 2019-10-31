@@ -31,33 +31,33 @@
 #include "utils/typcache.h"
 
 static double calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
-							RangeType *constval, Oid operator);
+							const RangeType *constval, Oid operator);
 static double default_range_selectivity(Oid operator);
 static double calc_hist_selectivity(TypeCacheEntry *typcache,
-									VariableStatData *vardata, RangeType *constval,
+									VariableStatData *vardata, const RangeType *constval,
 									Oid operator);
 static double calc_hist_selectivity_scalar(TypeCacheEntry *typcache,
-										   RangeBound *constbound,
-										   RangeBound *hist, int hist_nvalues,
+										   const RangeBound *constbound,
+										   const RangeBound *hist, int hist_nvalues,
 										   bool equal);
-static int	rbound_bsearch(TypeCacheEntry *typcache, RangeBound *value,
-						   RangeBound *hist, int hist_length, bool equal);
-static float8 get_position(TypeCacheEntry *typcache, RangeBound *value,
-						   RangeBound *hist1, RangeBound *hist2);
+static int rbound_bsearch(TypeCacheEntry *typcache, const RangeBound *value,
+						  const RangeBound *hist, int hist_length, bool equal);
+static float8 get_position(TypeCacheEntry *typcache, const RangeBound *value,
+						   const RangeBound *hist1, const RangeBound *hist2);
 static float8 get_len_position(double value, double hist1, double hist2);
-static float8 get_distance(TypeCacheEntry *typcache, RangeBound *bound1,
-						   RangeBound *bound2);
+static float8 get_distance(TypeCacheEntry *typcache, const RangeBound *bound1,
+						   const RangeBound *bound2);
 static int	length_hist_bsearch(Datum *length_hist_values,
 								int length_hist_nvalues, double value, bool equal);
 static double calc_length_hist_frac(Datum *length_hist_values,
 									int length_hist_nvalues, double length1, double length2, bool equal);
 static double calc_hist_selectivity_contained(TypeCacheEntry *typcache,
-											  RangeBound *lower, RangeBound *upper,
-											  RangeBound *hist_lower, int hist_nvalues,
+											  const RangeBound *lower, RangeBound *upper,
+											  const RangeBound *hist_lower, int hist_nvalues,
 											  Datum *length_hist_values, int length_hist_nvalues);
 static double calc_hist_selectivity_contains(TypeCacheEntry *typcache,
-											 RangeBound *lower, RangeBound *upper,
-											 RangeBound *hist_lower, int hist_nvalues,
+											 const RangeBound *lower, const RangeBound *upper,
+											 const RangeBound *hist_lower, int hist_nvalues,
 											 Datum *length_hist_values, int length_hist_nvalues);
 
 /*
@@ -229,7 +229,7 @@ rangesel(PG_FUNCTION_ARGS)
 
 static double
 calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
-			  RangeType *constval, Oid operator)
+			  const RangeType *constval, Oid operator)
 {
 	double		hist_selec;
 	double		selec;
@@ -371,7 +371,7 @@ calc_rangesel(TypeCacheEntry *typcache, VariableStatData *vardata,
  */
 static double
 calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
-					  RangeType *constval, Oid operator)
+					  const RangeType *constval, Oid operator)
 {
 	AttStatsSlot hslot;
 	AttStatsSlot lslot;
@@ -586,8 +586,8 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
  * is true) a given const in a histogram of range bounds.
  */
 static double
-calc_hist_selectivity_scalar(TypeCacheEntry *typcache, RangeBound *constbound,
-							 RangeBound *hist, int hist_nvalues, bool equal)
+calc_hist_selectivity_scalar(TypeCacheEntry *typcache, const RangeBound *constbound,
+							 const RangeBound *hist, int hist_nvalues, bool equal)
 {
 	Selectivity selec;
 	int			index;
@@ -618,7 +618,7 @@ calc_hist_selectivity_scalar(TypeCacheEntry *typcache, RangeBound *constbound,
  * interpolation of portion of bounds which are less or equal to given bound.
  */
 static int
-rbound_bsearch(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist,
+rbound_bsearch(TypeCacheEntry *typcache, const RangeBound *value, const RangeBound *hist,
 			   int hist_length, bool equal)
 {
 	int			lower = -1,
@@ -673,8 +673,8 @@ length_hist_bsearch(Datum *length_hist_values, int length_hist_nvalues,
  * Get relative position of value in histogram bin in [0,1] range.
  */
 static float8
-get_position(TypeCacheEntry *typcache, RangeBound *value, RangeBound *hist1,
-			 RangeBound *hist2)
+get_position(TypeCacheEntry *typcache, const RangeBound *value, const RangeBound *hist1,
+			 const RangeBound *hist2)
 {
 	bool		has_subdiff = OidIsValid(typcache->rng_subdiff_finfo.fn_oid);
 	float8		position;
@@ -795,7 +795,7 @@ get_len_position(double value, double hist1, double hist2)
  * Measure distance between two range bounds.
  */
 static float8
-get_distance(TypeCacheEntry *typcache, RangeBound *bound1, RangeBound *bound2)
+get_distance(TypeCacheEntry *typcache, const RangeBound *bound1, const RangeBound *bound2)
 {
 	bool		has_subdiff = OidIsValid(typcache->rng_subdiff_finfo.fn_oid);
 
@@ -999,8 +999,8 @@ calc_length_hist_frac(Datum *length_hist_values, int length_hist_nvalues,
  */
 static double
 calc_hist_selectivity_contained(TypeCacheEntry *typcache,
-								RangeBound *lower, RangeBound *upper,
-								RangeBound *hist_lower, int hist_nvalues,
+								const RangeBound *lower, RangeBound *upper,
+								const RangeBound *hist_lower, int hist_nvalues,
 								Datum *length_hist_values, int length_hist_nvalues)
 {
 	int			i,
@@ -1109,8 +1109,8 @@ calc_hist_selectivity_contained(TypeCacheEntry *typcache,
  */
 static double
 calc_hist_selectivity_contains(TypeCacheEntry *typcache,
-							   RangeBound *lower, RangeBound *upper,
-							   RangeBound *hist_lower, int hist_nvalues,
+							   const RangeBound *lower, const RangeBound *upper,
+							   const RangeBound *hist_lower, int hist_nvalues,
 							   Datum *length_hist_values, int length_hist_nvalues)
 {
 	int			i,
