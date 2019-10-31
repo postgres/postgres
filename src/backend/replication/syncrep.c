@@ -1065,8 +1065,8 @@ SyncRepUpdateSyncStandbysDefined(void)
 
 		/*
 		 * If synchronous_standby_names has been reset to empty, it's futile
-		 * for backends to continue to waiting.  Since the user no longer
-		 * wants synchronous replication, we'd better wake them up.
+		 * for backends to continue waiting.  Since the user no longer wants
+		 * synchronous replication, we'd better wake them up.
 		 */
 		if (!sync_standbys_defined)
 		{
