@@ -871,13 +871,11 @@ sepgsql_compute_create(const char *scontext,
 	{
 		result = pstrdup(ncontext);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		freecon(ncontext);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	freecon(ncontext);
 
 	return result;
 }

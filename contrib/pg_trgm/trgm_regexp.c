@@ -555,14 +555,11 @@ createTrgmNFA(text *text_re, Oid collation,
 	{
 		trg = createTrgmNFAInternal(&regex, graph, rcontext);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		pg_regfree(&regex);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	pg_regfree(&regex);
 
 	/* Clean up all the cruft we created */
 	MemoryContextSwitchTo(oldcontext);

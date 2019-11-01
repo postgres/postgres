@@ -631,15 +631,12 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 				 message_context ? errcontext("%s", message_context) : 0,
 				 sql ? errcontext("remote SQL command: %s", sql) : 0));
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (clear)
 			PQclear(res);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	if (clear)
-		PQclear(res);
 }
 
 /*

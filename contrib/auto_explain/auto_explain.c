@@ -320,12 +320,10 @@ explain_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction,
 			prev_ExecutorRun(queryDesc, direction, count, execute_once);
 		else
 			standard_ExecutorRun(queryDesc, direction, count, execute_once);
-		nesting_level--;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		nesting_level--;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 }
@@ -343,12 +341,10 @@ explain_ExecutorFinish(QueryDesc *queryDesc)
 			prev_ExecutorFinish(queryDesc);
 		else
 			standard_ExecutorFinish(queryDesc);
-		nesting_level--;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		nesting_level--;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 }

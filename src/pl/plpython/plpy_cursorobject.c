@@ -228,13 +228,11 @@ PLy_cursor_plan(PyObject *ob, PyObject *args)
 				plan->values[j] = PLy_output_convert(arg, elem, &isnull);
 				nulls[j] = isnull ? 'n' : ' ';
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
 				Py_DECREF(elem);
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			Py_DECREF(elem);
 		}
 
 		portal = SPI_cursor_open(NULL, plan->plan, plan->values, nulls,

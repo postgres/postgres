@@ -141,7 +141,7 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 				 (constraint_name) ? err_generic_string(PG_DIAG_CONSTRAINT_NAME,
 														constraint_name) : 0));
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (fmt)
 			pfree(emsg.data);
@@ -151,19 +151,8 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 			pfree(tbmsg);
 		Py_XDECREF(exc);
 		Py_XDECREF(val);
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	if (fmt)
-		pfree(emsg.data);
-	if (xmsg)
-		pfree(xmsg);
-	if (tbmsg)
-		pfree(tbmsg);
-	Py_XDECREF(exc);
-	Py_XDECREF(val);
 }
 
 /*

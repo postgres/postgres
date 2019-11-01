@@ -925,14 +925,11 @@ PLyObject_ToBytea(PLyObToDatum *arg, PyObject *plrv,
 		memcpy(VARDATA(result), plrv_sc, len);
 		rv = PointerGetDatum(result);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		Py_XDECREF(plrv_so);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	Py_XDECREF(plrv_so);
 
 	return rv;
 }

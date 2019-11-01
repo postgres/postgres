@@ -892,12 +892,10 @@ pgss_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count,
 			prev_ExecutorRun(queryDesc, direction, count, execute_once);
 		else
 			standard_ExecutorRun(queryDesc, direction, count, execute_once);
-		nested_level--;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		nested_level--;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 }
@@ -915,12 +913,10 @@ pgss_ExecutorFinish(QueryDesc *queryDesc)
 			prev_ExecutorFinish(queryDesc);
 		else
 			standard_ExecutorFinish(queryDesc);
-		nested_level--;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		nested_level--;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 }
@@ -1007,12 +1003,10 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 				standard_ProcessUtility(pstmt, queryString,
 										context, params, queryEnv,
 										dest, completionTag);
-			nested_level--;
 		}
-		PG_CATCH();
+		PG_FINALLY();
 		{
 			nested_level--;
-			PG_RE_THROW();
 		}
 		PG_END_TRY();
 

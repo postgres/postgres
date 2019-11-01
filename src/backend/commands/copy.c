@@ -1916,13 +1916,11 @@ BeginCopyTo(ParseState *pstate,
 			{
 				cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_W);
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
 				umask(oumask);
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			umask(oumask);
 			if (cstate->copy_file == NULL)
 			{
 				/* copy errno because ereport subfunctions might change it */

@@ -2431,13 +2431,11 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	{
 		result = FunctionCallInvoke(fcinfo);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		MyTriggerDepth--;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	MyTriggerDepth--;
 
 	pgstat_end_function_usage(&fcusage, true);
 

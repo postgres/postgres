@@ -372,13 +372,11 @@ sepgsql_utility_command(PlannedStmt *pstmt,
 									context, params, queryEnv,
 									dest, completionTag);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		sepgsql_context_info = saved_context_info;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	sepgsql_context_info = saved_context_info;
 }
 
 /*

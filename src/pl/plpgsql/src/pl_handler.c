@@ -264,18 +264,13 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		else
 			retval = plpgsql_exec_function(func, fcinfo, NULL, !nonatomic);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		/* Decrement use-count, restore cur_estate, and propagate error */
+		/* Decrement use-count, restore cur_estate */
 		func->use_count--;
 		func->cur_estate = save_cur_estate;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	func->use_count--;
-
-	func->cur_estate = save_cur_estate;
 
 	/*
 	 * Disconnect from SPI manager

@@ -180,14 +180,11 @@ plpython_to_hstore(PG_FUNCTION_ARGS)
 		pcount = hstoreUniquePairs(pairs, pcount, &buflen);
 		out = hstorePairs(pairs, pcount, buflen);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		Py_DECREF(items);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	Py_DECREF(items);
 
 	PG_RETURN_POINTER(out);
 }

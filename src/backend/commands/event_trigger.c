@@ -934,13 +934,11 @@ EventTriggerSQLDrop(Node *parsetree)
 	{
 		EventTriggerInvoke(runlist, &trigdata);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		currentEventTriggerState->in_sql_drop = false;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	currentEventTriggerState->in_sql_drop = false;
 
 	/* Cleanup. */
 	list_free(runlist);
@@ -1007,16 +1005,12 @@ EventTriggerTableRewrite(Node *parsetree, Oid tableOid, int reason)
 	{
 		EventTriggerInvoke(runlist, &trigdata);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		currentEventTriggerState->table_rewrite_oid = InvalidOid;
 		currentEventTriggerState->table_rewrite_reason = 0;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	currentEventTriggerState->table_rewrite_oid = InvalidOid;
-	currentEventTriggerState->table_rewrite_reason = 0;
 
 	/* Cleanup. */
 	list_free(runlist);

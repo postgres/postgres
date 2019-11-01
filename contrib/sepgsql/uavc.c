@@ -181,14 +181,11 @@ sepgsql_avc_unlabeled(void)
 		{
 			avc_unlabeled = MemoryContextStrdup(avc_mem_cxt, unlabeled);
 		}
-		PG_CATCH();
+		PG_FINALLY();
 		{
 			freecon(unlabeled);
-			PG_RE_THROW();
 		}
 		PG_END_TRY();
-
-		freecon(unlabeled);
 	}
 	return avc_unlabeled;
 }

@@ -3155,15 +3155,11 @@ get_remote_estimate(const char *sql, PGconn *conn,
 				   startup_cost, total_cost, rows, width);
 		if (n != 4)
 			elog(ERROR, "could not interpret EXPLAIN output: \"%s\"", line);
-
-		PQclear(res);
-		res = NULL;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (res)
 			PQclear(res);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 }
@@ -3383,15 +3379,11 @@ fetch_more_data(ForeignScanState *node)
 
 		/* Must be EOF if we didn't get as many tuples as we asked for. */
 		fsstate->eof_reached = (numrows < fsstate->fetch_size);
-
-		PQclear(res);
-		res = NULL;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (res)
 			PQclear(res);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -4404,15 +4396,11 @@ postgresAnalyzeForeignTable(Relation relation,
 		if (PQntuples(res) != 1 || PQnfields(res) != 1)
 			elog(ERROR, "unexpected result from deparseAnalyzeSizeSql query");
 		*totalpages = strtoul(PQgetvalue(res, 0, 0), NULL, 10);
-
-		PQclear(res);
-		res = NULL;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (res)
 			PQclear(res);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -4925,16 +4913,11 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 
 			commands = lappend(commands, pstrdup(buf.data));
 		}
-
-		/* Clean up */
-		PQclear(res);
-		res = NULL;
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (res)
 			PQclear(res);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 

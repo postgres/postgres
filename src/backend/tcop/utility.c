@@ -1514,13 +1514,11 @@ ProcessUtilitySlow(ParseState *pstate,
 					address = ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
 												 queryString, params, completionTag);
 				}
-				PG_CATCH();
+				PG_FINALLY();
 				{
 					EventTriggerUndoInhibitCommandCollection();
-					PG_RE_THROW();
 				}
 				PG_END_TRY();
-				EventTriggerUndoInhibitCommandCollection();
 				break;
 
 			case T_CreateTrigStmt:
@@ -1716,16 +1714,12 @@ ProcessUtilitySlow(ParseState *pstate,
 			EventTriggerDDLCommandEnd(parsetree);
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (needCleanup)
 			EventTriggerEndCompleteQuery();
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	if (needCleanup)
-		EventTriggerEndCompleteQuery();
 }
 
 /*

@@ -430,16 +430,12 @@ vacuum(List *relations, VacuumParams *params,
 			}
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		in_vacuum = false;
 		VacuumCostActive = false;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	in_vacuum = false;
-	VacuumCostActive = false;
 
 	/*
 	 * Finish up processing.

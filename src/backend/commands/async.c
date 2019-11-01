@@ -2028,21 +2028,14 @@ asyncQueueReadAllNotifications(void)
 													   snapshot);
 		} while (!reachedStop);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* Update shared state */
 		LWLockAcquire(AsyncQueueLock, LW_SHARED);
 		QUEUE_BACKEND_POS(MyBackendId) = pos;
 		LWLockRelease(AsyncQueueLock);
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* Update shared state */
-	LWLockAcquire(AsyncQueueLock, LW_SHARED);
-	QUEUE_BACKEND_POS(MyBackendId) = pos;
-	LWLockRelease(AsyncQueueLock);
 
 	/* Done with snapshot */
 	UnregisterSnapshot(snapshot);

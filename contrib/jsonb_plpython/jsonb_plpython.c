@@ -307,14 +307,11 @@ PLyMapping_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state)
 
 		out = pushJsonbValue(jsonb_state, WJB_END_OBJECT, NULL);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		Py_DECREF(items);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	Py_DECREF(items);
 
 	return out;
 }

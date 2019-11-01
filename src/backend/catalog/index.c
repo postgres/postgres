@@ -3449,14 +3449,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		/* Note: we do not need to re-establish pkey setting */
 		index_build(heapRelation, iRel, indexInfo, true, true);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* Make sure flag gets cleared on error exit */
 		ResetReindexProcessing();
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	ResetReindexProcessing();
 
 	/*
 	 * If the index is marked invalid/not-ready/dead (ie, it's from a failed
@@ -3676,14 +3674,12 @@ reindex_relation(Oid relid, int flags, int options)
 			i++;
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* Make sure list gets cleared on error exit */
 		ResetReindexPending();
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	ResetReindexPending();
 
 	/*
 	 * Close rel, but continue to hold the lock.

@@ -776,18 +776,13 @@ dblink_record_internal(FunctionCallInfo fcinfo, bool is_async)
 			}
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* if needed, close the connection to the database */
 		if (freeconn)
 			PQfinish(conn);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* if needed, close the connection to the database */
-	if (freeconn)
-		PQfinish(conn);
 
 	return (Datum) 0;
 }
@@ -952,14 +947,11 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 			/* clean up and return the tuplestore */
 			tuplestore_donestoring(tupstore);
 		}
-
-		PQclear(res);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* be sure to release the libpq result */
 		PQclear(res);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
 }
@@ -1464,18 +1456,13 @@ dblink_exec(PG_FUNCTION_ARGS)
 					 errmsg("statement returning results not allowed")));
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* if needed, close the connection to the database */
 		if (freeconn)
 			PQfinish(conn);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* if needed, close the connection to the database */
-	if (freeconn)
-		PQfinish(conn);
 
 	PG_RETURN_TEXT_P(sql_cmd_status);
 }

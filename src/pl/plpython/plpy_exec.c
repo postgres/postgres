@@ -403,17 +403,12 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			}
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		Py_XDECREF(plargs);
 		Py_XDECREF(plrv);
-
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	Py_DECREF(plargs);
-	Py_DECREF(plrv);
 
 	return rv;
 }
@@ -1052,14 +1047,11 @@ PLy_procedure_call(PLyProcedure *proc, const char *kargs, PyObject *vargs)
 		 */
 		Assert(list_length(explicit_subtransactions) >= save_subxact_level);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		PLy_abort_open_subtransactions(save_subxact_level);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	PLy_abort_open_subtransactions(save_subxact_level);
 
 	/* If the Python code returned an error, propagate it */
 	if (rv == NULL)

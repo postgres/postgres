@@ -942,16 +942,12 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 
 		execute_sql_string(c_sql);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		creating_extension = false;
 		CurrentExtensionObject = InvalidOid;
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	creating_extension = false;
-	CurrentExtensionObject = InvalidOid;
 
 	/*
 	 * Restore the GUC variables we set above.

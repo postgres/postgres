@@ -249,13 +249,11 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 				plan->values[j] = PLy_output_convert(arg, elem, &isnull);
 				nulls[j] = isnull ? 'n' : ' ';
 			}
-			PG_CATCH();
+			PG_FINALLY();
 			{
 				Py_DECREF(elem);
-				PG_RE_THROW();
 			}
 			PG_END_TRY();
-			Py_DECREF(elem);
 		}
 
 		rv = SPI_execute_plan(plan->plan, plan->values, nulls,
