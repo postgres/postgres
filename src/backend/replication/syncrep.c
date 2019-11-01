@@ -361,10 +361,18 @@ SyncRepCancelWait(void)
 void
 SyncRepCleanupAtProcExit(void)
 {
+	/*
+	 * First check if we are removed from the queue without the lock to not
+	 * slow down backend exit.
+	 */
 	if (!SHMQueueIsDetached(&(MyProc->syncRepLinks)))
 	{
 		LWLockAcquire(SyncRepLock, LW_EXCLUSIVE);
-		SHMQueueDelete(&(MyProc->syncRepLinks));
+
+		/* maybe we have just been removed, so recheck */
+		if (!SHMQueueIsDetached(&(MyProc->syncRepLinks)))
+			SHMQueueDelete(&(MyProc->syncRepLinks));
+
 		LWLockRelease(SyncRepLock);
 	}
 }
