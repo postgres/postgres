@@ -458,6 +458,8 @@ IsAffixFlagInUse(IspellDict *Conf, int affix, char *affixflag)
 	if (*affixflag == 0)
 		return true;
 
+	Assert(affix < Conf->nAffixData);
+
 	flagcur = Conf->AffixData[affix];
 
 	while (*flagcur)
@@ -1160,13 +1162,17 @@ getAffixFlagSet(IspellDict *Conf, char *s)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid affix alias \"%s\"", s)));
 
-		if (curaffix > 0 && curaffix <= Conf->nAffixData)
+		if (curaffix > 0 && curaffix < Conf->nAffixData)
 
 			/*
 			 * Do not subtract 1 from curaffix because empty string was added
 			 * in NIImportOOAffixes
 			 */
 			return Conf->AffixData[curaffix];
+		else if (curaffix > Conf->nAffixData)
+			ereport(ERROR,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("invalid affix alias \"%s\"", s)));
 		else
 			return VoidString;
 	}
@@ -1556,6 +1562,8 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 {
 	char	  **ptr;
 
+	Assert(a1 < Conf->nAffixData && a2 < Conf->nAffixData);
+
 	/* Do not merge affix flags if one of affix flags is empty */
 	if (*Conf->AffixData[a1] == '\0')
 		return a2;
@@ -1598,9 +1606,10 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 static uint32
 makeCompoundFlags(IspellDict *Conf, int affix)
 {
-	char	   *str = Conf->AffixData[affix];
+	Assert(affix < Conf->nAffixData);
 
-	return (getCompoundAffixFlagValue(Conf, str) & FF_COMPOUNDFLAGMASK);
+	return (getCompoundAffixFlagValue(Conf, Conf->AffixData[affix]) &
+			FF_COMPOUNDFLAGMASK);
 }
 
 /*
@@ -1716,6 +1725,16 @@ NISortDictionary(IspellDict *Conf)
 			{
 				curaffix = strtol(Conf->Spell[i]->p.flag, &end, 10);
 				if (Conf->Spell[i]->p.flag == end || errno == ERANGE)
+					ereport(ERROR,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid affix alias \"%s\"",
+									Conf->Spell[i]->p.flag)));
+				if (curaffix < 0 || curaffix >= Conf->nAffixData)
+					ereport(ERROR,
+							(errcode(ERRCODE_CONFIG_FILE_ERROR),
+							 errmsg("invalid affix alias \"%s\"",
+									Conf->Spell[i]->p.flag)));
+				if (*end != '\0' && !t_isdigit(end) && !t_isspace(end))
 					ereport(ERROR,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("invalid affix alias \"%s\"",
