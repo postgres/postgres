@@ -101,6 +101,43 @@ SELECT ts_lexize('hunspell_num', 'footballklubber');
 SELECT ts_lexize('hunspell_num', 'ballyklubber');
 SELECT ts_lexize('hunspell_num', 'footballyklubber');
 
+-- Test suitability of affix and dict files
+CREATE TEXT SEARCH DICTIONARY hunspell_err (
+						Template=ispell,
+						DictFile=ispell_sample,
+						AffFile=hunspell_sample_long
+);
+
+CREATE TEXT SEARCH DICTIONARY hunspell_err (
+						Template=ispell,
+						DictFile=ispell_sample,
+						AffFile=hunspell_sample_num
+);
+
+CREATE TEXT SEARCH DICTIONARY hunspell_invalid_1 (
+						Template=ispell,
+						DictFile=hunspell_sample_long,
+						AffFile=ispell_sample
+);
+
+CREATE TEXT SEARCH DICTIONARY hunspell_invalid_2 (
+						Template=ispell,
+						DictFile=hunspell_sample_long,
+						AffFile=hunspell_sample_num
+);
+
+CREATE TEXT SEARCH DICTIONARY hunspell_invalid_3 (
+						Template=ispell,
+						DictFile=hunspell_sample_num,
+						AffFile=ispell_sample
+);
+
+CREATE TEXT SEARCH DICTIONARY hunspell_err (
+						Template=ispell,
+						DictFile=hunspell_sample_num,
+						AffFile=hunspell_sample_long
+);
+
 -- Synonym dictionary
 CREATE TEXT SEARCH DICTIONARY synonym (
 						Template=synonym,
