@@ -814,3 +814,26 @@ create trigger trig_part_create before insert on tab_part_create
 insert into tab_part_create values (1);
 drop table tab_part_create;
 drop function func_part_create();
+
+-- tests of column drop with partition tables and indexes using
+-- predicates and expressions.
+create table part_column_drop (
+  useless_1 int,
+  id int,
+  useless_2 int,
+  d int,
+  b int,
+  useless_3 int
+) partition by range (id);
+alter table part_column_drop drop column useless_1;
+alter table part_column_drop drop column useless_2;
+alter table part_column_drop drop column useless_3;
+create index part_column_drop_b_pred on part_column_drop(b) where b = 1;
+create index part_column_drop_b_expr on part_column_drop((b = 1));
+create index part_column_drop_d_pred on part_column_drop(d) where d = 2;
+create index part_column_drop_d_expr on part_column_drop((d = 2));
+create table part_column_drop_1_10 partition of
+  part_column_drop for values from (1) to (10);
+\d part_column_drop
+\d part_column_drop_1_10
+drop table part_column_drop;
