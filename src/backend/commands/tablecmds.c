@@ -1092,7 +1092,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 												gettext_noop("could not convert row type"));
 			idxstmt =
 				generateClonedIndexStmt(NULL, idxRel,
-										attmap, RelationGetDescr(rel)->natts,
+										attmap, RelationGetDescr(parent)->natts,
 										&constraintOid);
 			DefineIndex(RelationGetRelid(rel),
 						idxstmt,

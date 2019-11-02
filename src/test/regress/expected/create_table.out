@@ -1168,3 +1168,52 @@ insert into defcheck_def values (0, 0);
 create table defcheck_0 partition of defcheck for values in (0);
 ERROR:  updated partition constraint for default partition "defcheck_def" would be violated by some row
 drop table defcheck;
+-- tests of column drop with partition tables and indexes using
+-- predicates and expressions.
+create table part_column_drop (
+  useless_1 int,
+  id int,
+  useless_2 int,
+  d int,
+  b int,
+  useless_3 int
+) partition by range (id);
+alter table part_column_drop drop column useless_1;
+alter table part_column_drop drop column useless_2;
+alter table part_column_drop drop column useless_3;
+create index part_column_drop_b_pred on part_column_drop(b) where b = 1;
+create index part_column_drop_b_expr on part_column_drop((b = 1));
+create index part_column_drop_d_pred on part_column_drop(d) where d = 2;
+create index part_column_drop_d_expr on part_column_drop((d = 2));
+create table part_column_drop_1_10 partition of
+  part_column_drop for values from (1) to (10);
+\d part_column_drop
+    Partitioned table "public.part_column_drop"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ d      | integer |           |          | 
+ b      | integer |           |          | 
+Partition key: RANGE (id)
+Indexes:
+    "part_column_drop_b_expr" btree ((b = 1))
+    "part_column_drop_b_pred" btree (b) WHERE b = 1
+    "part_column_drop_d_expr" btree ((d = 2))
+    "part_column_drop_d_pred" btree (d) WHERE d = 2
+Number of partitions: 1 (Use \d+ to list them.)
+
+\d part_column_drop_1_10
+       Table "public.part_column_drop_1_10"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ d      | integer |           |          | 
+ b      | integer |           |          | 
+Partition of: part_column_drop FOR VALUES FROM (1) TO (10)
+Indexes:
+    "part_column_drop_1_10_b_idx" btree (b) WHERE b = 1
+    "part_column_drop_1_10_d_idx" btree (d) WHERE d = 2
+    "part_column_drop_1_10_expr_idx" btree ((b = 1))
+    "part_column_drop_1_10_expr_idx1" btree ((d = 2))
+
+drop table part_column_drop;
