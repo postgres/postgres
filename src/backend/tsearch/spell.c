@@ -1173,8 +1173,7 @@ getAffixFlagSet(IspellDict *Conf, char *s)
 			ereport(ERROR,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid affix alias \"%s\"", s)));
-		else
-			return VoidString;
+		return VoidString;
 	}
 	else
 		return s;
