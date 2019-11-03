@@ -19,7 +19,7 @@
 
 
 #define DatumGetSegP(X) ((SEG *) DatumGetPointer(X))
-#define PG_GETARG_SEG_P(n) DatumGetSegP(PG_GETARG_POINTER(n))
+#define PG_GETARG_SEG_P(n) DatumGetSegP(PG_GETARG_DATUM(n))
 
 
 /*
