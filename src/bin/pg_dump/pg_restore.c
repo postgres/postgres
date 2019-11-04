@@ -445,7 +445,7 @@ usage(const char *progname)
 
 	printf(_("\nGeneral options:\n"));
 	printf(_("  -d, --dbname=NAME        connect to database name\n"));
-	printf(_("  -f, --file=FILENAME      output file name\n"));
+	printf(_("  -f, --file=FILENAME      output file name (- for stdout)\n"));
 	printf(_("  -F, --format=c|d|t       backup file format (should be automatic)\n"));
 	printf(_("  -l, --list               print summarized TOC of the archive\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
