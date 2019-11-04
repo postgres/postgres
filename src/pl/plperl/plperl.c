@@ -1840,7 +1840,7 @@ PG_FUNCTION_INFO_V1(plperl_call_handler);
 Datum
 plperl_call_handler(PG_FUNCTION_ARGS)
 {
-	Datum		retval;
+	Datum		retval = (Datum) 0;
 	plperl_call_data *volatile save_call_data = current_call_data;
 	plperl_interp_desc *volatile oldinterp = plperl_active_interp;
 	plperl_call_data this_call_data;

@@ -1025,7 +1025,7 @@ plpython_trigger_error_callback(void *arg)
 static PyObject *
 PLy_procedure_call(PLyProcedure *proc, const char *kargs, PyObject *vargs)
 {
-	PyObject   *rv;
+	PyObject   *rv = NULL;
 	int volatile save_subxact_level = list_length(explicit_subtransactions);
 
 	PyDict_SetItemString(proc->globals, kargs, vargs);

@@ -718,7 +718,7 @@ pltclu_call_handler(PG_FUNCTION_ARGS)
 static Datum
 pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 {
-	Datum		retval;
+	Datum		retval = (Datum) 0;
 	pltcl_call_state current_call_state;
 	pltcl_call_state *save_call_state;
 

@@ -3821,7 +3821,7 @@ SPI_sql_row_to_xmlelement(uint64 rownum, StringInfo result, char *tablename,
 static text *
 xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 {
-	xmltype    *result;
+	xmltype    *result = NULL;
 
 	if (cur->type != XML_ATTRIBUTE_NODE && cur->type != XML_TEXT_NODE)
 	{

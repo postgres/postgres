@@ -901,7 +901,7 @@ PLyObject_ToBytea(PLyObToDatum *arg, PyObject *plrv,
 				  bool *isnull, bool inarray)
 {
 	PyObject   *volatile plrv_so = NULL;
-	Datum		rv;
+	Datum		rv = (Datum) 0;
 
 	if (plrv == Py_None)
 	{
