@@ -1443,7 +1443,18 @@ record_image_cmp(FunctionCallInfo fcinfo)
 			}
 
 			/* Compare the pair of elements */
-			if (att1->attlen == -1)
+			if (att1->attbyval)
+			{
+				if (values1[i1] != values2[i2])
+					cmpresult = (values1[i1] < values2[i2]) ? -1 : 1;
+			}
+			else if (att1->attlen > 0)
+			{
+				cmpresult = memcmp(DatumGetPointer(values1[i1]),
+								   DatumGetPointer(values2[i2]),
+								   att1->attlen);
+			}
+			else if (att1->attlen == -1)
 			{
 				Size		len1,
 							len2;
@@ -1466,17 +1477,8 @@ record_image_cmp(FunctionCallInfo fcinfo)
 				if ((Pointer) arg2val != (Pointer) values2[i2])
 					pfree(arg2val);
 			}
-			else if (att1->attbyval)
-			{
-				if (values1[i1] != values2[i2])
-					cmpresult = (values1[i1] < values2[i2]) ? -1 : 1;
-			}
 			else
-			{
-				cmpresult = memcmp(DatumGetPointer(values1[i1]),
-								   DatumGetPointer(values2[i2]),
-								   att1->attlen);
-			}
+				elog(ERROR, "unexpected attlen: %d", att1->attlen);
 
 			if (cmpresult < 0)
 			{
