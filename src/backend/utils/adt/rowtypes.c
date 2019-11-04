@@ -1426,30 +1426,7 @@ record_image_cmp(FunctionCallInfo fcinfo)
 			}
 
 			/* Compare the pair of elements */
-			if (tupdesc1->attrs[i1]->attlen == -1)
-			{
-				Size		len1,
-							len2;
-				struct varlena *arg1val;
-				struct varlena *arg2val;
-
-				len1 = toast_raw_datum_size(values1[i1]);
-				len2 = toast_raw_datum_size(values2[i2]);
-				arg1val = PG_DETOAST_DATUM_PACKED(values1[i1]);
-				arg2val = PG_DETOAST_DATUM_PACKED(values2[i2]);
-
-				cmpresult = memcmp(VARDATA_ANY(arg1val),
-								   VARDATA_ANY(arg2val),
-								   Min(len1, len2) - VARHDRSZ);
-				if ((cmpresult == 0) && (len1 != len2))
-					cmpresult = (len1 < len2) ? -1 : 1;
-
-				if ((Pointer) arg1val != (Pointer) values1[i1])
-					pfree(arg1val);
-				if ((Pointer) arg2val != (Pointer) values2[i2])
-					pfree(arg2val);
-			}
-			else if (tupdesc1->attrs[i1]->attbyval)
+			if (tupdesc1->attrs[i1]->attbyval)
 			{
 				switch (tupdesc1->attrs[i1]->attlen)
 				{
@@ -1491,12 +1468,37 @@ record_image_cmp(FunctionCallInfo fcinfo)
 						Assert(false);	/* cannot happen */
 				}
 			}
-			else
+			else if (tupdesc1->attrs[i1]->attlen > 0)
 			{
 				cmpresult = memcmp(DatumGetPointer(values1[i1]),
 								   DatumGetPointer(values2[i2]),
 								   tupdesc1->attrs[i1]->attlen);
 			}
+			else if (tupdesc1->attrs[i1]->attlen == -1)
+			{
+				Size		len1,
+							len2;
+				struct varlena *arg1val;
+				struct varlena *arg2val;
+
+				len1 = toast_raw_datum_size(values1[i1]);
+				len2 = toast_raw_datum_size(values2[i2]);
+				arg1val = PG_DETOAST_DATUM_PACKED(values1[i1]);
+				arg2val = PG_DETOAST_DATUM_PACKED(values2[i2]);
+
+				cmpresult = memcmp(VARDATA_ANY(arg1val),
+								   VARDATA_ANY(arg2val),
+								   Min(len1, len2) - VARHDRSZ);
+				if ((cmpresult == 0) && (len1 != len2))
+					cmpresult = (len1 < len2) ? -1 : 1;
+
+				if ((Pointer) arg1val != (Pointer) values1[i1])
+					pfree(arg1val);
+				if ((Pointer) arg2val != (Pointer) values2[i2])
+					pfree(arg2val);
+			}
+			else
+				elog(ERROR, "unexpected attlen: %d", tupdesc1->attrs[i1]->attlen);
 
 			if (cmpresult < 0)
 			{
@@ -1687,7 +1689,39 @@ record_image_eq(PG_FUNCTION_ARGS)
 			}
 
 			/* Compare the pair of elements */
-			if (tupdesc1->attrs[i1]->attlen == -1)
+			if (tupdesc1->attrs[i1]->attbyval)
+			{
+				switch (tupdesc1->attrs[i1]->attlen)
+				{
+					case 1:
+						result = (GET_1_BYTE(values1[i1]) ==
+								  GET_1_BYTE(values2[i2]));
+						break;
+					case 2:
+						result = (GET_2_BYTES(values1[i1]) ==
+								  GET_2_BYTES(values2[i2]));
+						break;
+					case 4:
+						result = (GET_4_BYTES(values1[i1]) ==
+								  GET_4_BYTES(values2[i2]));
+						break;
+#if SIZEOF_DATUM == 8
+					case 8:
+						result = (GET_8_BYTES(values1[i1]) ==
+								  GET_8_BYTES(values2[i2]));
+						break;
+#endif
+					default:
+						Assert(false);	/* cannot happen */
+				}
+			}
+			else if (tupdesc1->attrs[i1]->attlen > 0)
+			{
+				result = (memcmp(DatumGetPointer(values1[i1]),
+								 DatumGetPointer(values2[i2]),
+								 tupdesc1->attrs[i1]->attlen) == 0);
+			}
+			else if (tupdesc1->attrs[i1]->attlen == -1)
 			{
 				Size		len1,
 							len2;
@@ -1716,38 +1750,9 @@ record_image_eq(PG_FUNCTION_ARGS)
 						pfree(arg2val);
 				}
 			}
-			else if (tupdesc1->attrs[i1]->attbyval)
-			{
-				switch (tupdesc1->attrs[i1]->attlen)
-				{
-					case 1:
-						result = (GET_1_BYTE(values1[i1]) ==
-								  GET_1_BYTE(values2[i2]));
-						break;
-					case 2:
-						result = (GET_2_BYTES(values1[i1]) ==
-								  GET_2_BYTES(values2[i2]));
-						break;
-					case 4:
-						result = (GET_4_BYTES(values1[i1]) ==
-								  GET_4_BYTES(values2[i2]));
-						break;
-#if SIZEOF_DATUM == 8
-					case 8:
-						result = (GET_8_BYTES(values1[i1]) ==
-								  GET_8_BYTES(values2[i2]));
-						break;
-#endif
-					default:
-						Assert(false);	/* cannot happen */
-				}
-			}
 			else
-			{
-				result = (memcmp(DatumGetPointer(values1[i1]),
-								 DatumGetPointer(values2[i2]),
-								 tupdesc1->attrs[i1]->attlen) == 0);
-			}
+				elog(ERROR, "unexpected attlen: %d", tupdesc1->attrs[i1]->attlen);
+
 			if (!result)
 				break;
 		}
