@@ -5951,6 +5951,12 @@ local0.*    /var/log/postgresql
         </para>
 
         <para>
+         This overrides <xref linkend="guc-log-min-duration-sample"/>,
+         meaning that queries with duration exceeding this setting are not
+         subject to sampling and are always logged.
+        </para>
+
+        <para>
          For clients using extended query protocol, durations of the Parse,
          Bind, and Execute steps are logged independently.
         </para>
@@ -5971,6 +5977,85 @@ local0.*    /var/log/postgresql
        </note>
        </listitem>
       </varlistentry>
+
+     <varlistentry id="guc-log-min-duration-sample" xreflabel="log_min_duration_sample">
+      <term><varname>log_min_duration_sample</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>log_min_duration_sample</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+       <listitem>
+        <para>
+         Allows to sample the logging of the duration of each completed
+         statement if the statement ran for at least the specified amount of
+         time. If this value is specified without units, it is taken as milliseconds.
+         Setting this to zero samples all statement durations.
+         Minus-one (the default) disables sampling statement durations.
+         For example, if you set it to <literal>250ms</literal>
+         then all SQL statements that run 250ms or longer will be considered
+         for sampling, with sample rate is controlled by <xref linkend="guc-log-statement-sample-rate"/>. 
+         Enabling this parameter can be helpful when the traffic too high to
+         sample all queries.
+         Only superusers can change this setting.
+        </para>
+
+        <para>
+         This option has lower priority than <xref linkend="guc-log-min-duration-statement"/>,
+         meaning that statements with durations exceeding <xref linkend="guc-log-min-duration-statement"/>
+         are not subject to sampling and are always logged.
+        </para>
+
+        <para>
+         For clients using extended query protocol, durations of the Parse,
+         Bind, and Execute steps are logged independently.
+        </para>
+
+       <note>
+        <para>
+         When using this option together with
+         <xref linkend="guc-log-statement"/>,
+         the text of statements that are logged because of
+         <varname>log_statement</varname> will not be repeated in the
+         duration log message.
+         If you are not using <application>syslog</application>, it is recommended
+         that you log the PID or session ID using
+         <xref linkend="guc-log-line-prefix"/>
+         so that you can link the statement message to the later
+         duration message using the process ID or session ID.
+        </para>
+       </note>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-statement-sample-rate" xreflabel="log_statement_sample_rate">
+      <term><varname>log_statement_sample_rate</varname> (<type>real</type>)
+      <indexterm>
+       <primary><varname>log_statement_sample_rate</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+       <listitem>
+        <para>
+         Determines the fraction of statements with duration exceeding
+         <xref linkend="guc-log-min-duration-sample"/> to be logged.
+         This is a statistical parameter, for example <literal>0.5</literal>
+         means there is statistically one in two chances to log the statement.
+         The default is <literal>1.0</literal>, meaning log all such
+         statements.
+         Setting this to zero disables sampling logging, same as setting
+         <varname>log_min_duration_sample</varname> to
+         <literal>-1</literal>.
+         <varname>log_statement_sample_rate</varname> is helpful when the
+         traffic is too high to log all queries.
+         Only superusers can change this setting.
+        </para>
+       <note>
+        <para>
+         Like all statement-logging options, this option can add significant
+         overhead.
+        </para>
+       </note>
+       </listitem>
+     </varlistentry>
 
      <varlistentry id="guc-log-transaction-sample-rate" xreflabel="log_transaction_sample_rate">
       <term><varname>log_transaction_sample_rate</varname> (<type>real</type>)
