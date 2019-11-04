@@ -265,7 +265,17 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 {
 	bool		result = true;
 
-	if (typLen == -1)
+	if (typByVal)
+	{
+		result = (value1 == value2);
+	}
+	else if (typLen > 0)
+	{
+		result = (memcmp(DatumGetPointer(value1),
+						 DatumGetPointer(value2),
+						 typLen) == 0);
+	}
+	else if (typLen == -1)
 	{
 		Size		len1,
 					len2;
@@ -294,16 +304,8 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 				pfree(arg2val);
 		}
 	}
-	else if (typByVal)
-	{
-		result = (value1 == value2);
-	}
 	else
-	{
-		result = (memcmp(DatumGetPointer(value1),
-						 DatumGetPointer(value2),
-						 typLen) == 0);
-	}
+		elog(ERROR, "unexpected typLen: %d", typLen);
 
 	return result;
 }
