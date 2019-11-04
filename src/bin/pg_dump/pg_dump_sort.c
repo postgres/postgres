@@ -262,6 +262,7 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		FuncInfo   *fobj2 = *(FuncInfo *const *) p2;
 		int			i;
 
+		/* Sort by number of arguments, then argument type names */
 		cmpval = fobj1->nargs - fobj2->nargs;
 		if (cmpval != 0)
 			return cmpval;
@@ -300,7 +301,30 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		AttrDefInfo *adobj1 = *(AttrDefInfo *const *) p1;
 		AttrDefInfo *adobj2 = *(AttrDefInfo *const *) p2;
 
+		/* Sort by attribute number */
 		cmpval = (adobj1->adnum - adobj2->adnum);
+		if (cmpval != 0)
+			return cmpval;
+	}
+	else if (obj1->objType == DO_POLICY)
+	{
+		PolicyInfo *pobj1 = *(PolicyInfo *const *) p1;
+		PolicyInfo *pobj2 = *(PolicyInfo *const *) p2;
+
+		/* Sort by table name (table namespace was considered already) */
+		cmpval = strcmp(pobj1->poltable->dobj.name,
+						pobj2->poltable->dobj.name);
+		if (cmpval != 0)
+			return cmpval;
+	}
+	else if (obj1->objType == DO_TRIGGER)
+	{
+		TriggerInfo *tobj1 = *(TriggerInfo *const *) p1;
+		TriggerInfo *tobj2 = *(TriggerInfo *const *) p2;
+
+		/* Sort by table name (table namespace was considered already) */
+		cmpval = strcmp(tobj1->tgtable->dobj.name,
+						tobj2->tgtable->dobj.name);
 		if (cmpval != 0)
 			return cmpval;
 	}
