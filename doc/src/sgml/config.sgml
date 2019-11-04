@@ -5988,6 +5988,7 @@ local0.*    /var/log/postgresql
          logs all statements for all transactions.
          <varname>log_transaction_sample_rate</varname> is helpful to track a
          sample of transaction.
+         Only superusers can change this setting.
         </para>
        <note>
         <para>
