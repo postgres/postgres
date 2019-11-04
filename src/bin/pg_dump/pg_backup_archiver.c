@@ -1511,7 +1511,12 @@ SetOutput(ArchiveHandle *AH, const char *filename, int compression)
 	int			fn;
 
 	if (filename)
-		fn = -1;
+	{
+		if (strcmp(filename, "-") == 0)
+			fn = fileno(stdout);
+		else
+			fn = -1;
+	}
 	else if (AH->FH)
 		fn = fileno(AH->FH);
 	else if (AH->fSpec)
