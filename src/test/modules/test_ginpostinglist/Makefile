@@ -1,7 +1,9 @@
 # src/test/modules/test_ginpostinglist/Makefile
 
 MODULE_big = test_ginpostinglist
-OBJS = test_ginpostinglist.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	test_ginpostinglist.o
 PGFILEDESC = "test_ginpostinglist - test code for src/backend/access/gin//ginpostinglist.c"
 
 EXTENSION = test_ginpostinglist

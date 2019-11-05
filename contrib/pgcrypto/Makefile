@@ -14,16 +14,35 @@ CF_SRCS = $(if $(subst no,,$(with_openssl)), $(OSSL_SRCS), $(INT_SRCS))
 CF_TESTS = $(if $(subst no,,$(with_openssl)), $(OSSL_TESTS), $(INT_TESTS))
 CF_PGP_TESTS = $(if $(subst no,,$(with_zlib)), $(ZLIB_TST), $(ZLIB_OFF_TST))
 
-SRCS		= pgcrypto.c px.c px-hmac.c px-crypt.c \
-		crypt-gensalt.c crypt-blowfish.c crypt-des.c \
-		crypt-md5.c $(CF_SRCS) \
-		mbuf.c pgp.c pgp-armor.c pgp-cfb.c pgp-compress.c \
-		pgp-decrypt.c pgp-encrypt.c pgp-info.c pgp-mpi.c \
-		pgp-pubdec.c pgp-pubenc.c pgp-pubkey.c pgp-s2k.c \
-		pgp-pgsql.c
+SRCS = \
+	$(CF_SRCS) \
+	crypt-blowfish.c \
+	crypt-des.c \
+	crypt-gensalt.c \
+	crypt-md5.c \
+	mbuf.c \
+	pgcrypto.c \
+	pgp-armor.c \
+	pgp-cfb.c \
+	pgp-compress.c \
+	pgp-decrypt.c \
+	pgp-encrypt.c \
+	pgp-info.c \
+	pgp-mpi.c \
+	pgp-pgsql.c \
+	pgp-pubdec.c \
+	pgp-pubenc.c \
+	pgp-pubkey.c \
+	pgp-s2k.c \
+	pgp.c \
+	px-crypt.c \
+	px-hmac.c \
+	px.c
 
 MODULE_big	= pgcrypto
-OBJS		= $(SRCS:.c=.o) $(WIN32RES)
+OBJS = \
+	$(SRCS:.c=.o) \
+	$(WIN32RES)
 
 EXTENSION = pgcrypto
 DATA = pgcrypto--1.3.sql pgcrypto--1.2--1.3.sql pgcrypto--1.1--1.2.sql \

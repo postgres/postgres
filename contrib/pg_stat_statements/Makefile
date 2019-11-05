@@ -1,7 +1,9 @@
 # contrib/pg_stat_statements/Makefile
 
 MODULE_big = pg_stat_statements
-OBJS = pg_stat_statements.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_stat_statements.o
 
 EXTENSION = pg_stat_statements
 DATA = pg_stat_statements--1.4.sql pg_stat_statements--1.6--1.7.sql \

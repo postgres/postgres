@@ -12,7 +12,10 @@ subdir = src/backend/port/win32
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = timer.o socket.o signal.o
+OBJS = \
+	signal.o \
+	socket.o \
+	timer.o
 ifeq ($(have_win32_dbghelp), yes)
 OBJS += crashdump.o
 endif

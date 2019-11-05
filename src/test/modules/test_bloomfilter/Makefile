@@ -1,7 +1,9 @@
 # src/test/modules/test_bloomfilter/Makefile
 
 MODULE_big = test_bloomfilter
-OBJS = test_bloomfilter.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	test_bloomfilter.o
 PGFILEDESC = "test_bloomfilter - test code for Bloom filter library"
 
 EXTENSION = test_bloomfilter

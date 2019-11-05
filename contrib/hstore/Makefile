@@ -1,8 +1,13 @@
 # contrib/hstore/Makefile
 
 MODULE_big = hstore
-OBJS = hstore_io.o hstore_op.o hstore_gist.o hstore_gin.o hstore_compat.o \
-	$(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	hstore_compat.o \
+	hstore_gin.o \
+	hstore_gist.o \
+	hstore_io.o \
+	hstore_op.o
 
 EXTENSION = hstore
 DATA = hstore--1.4.sql \

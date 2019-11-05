@@ -23,10 +23,22 @@ DICTFILES=synonym_sample.syn thesaurus_sample.ths \
 # Local paths to dictionaries files
 DICTFILES_PATH=$(addprefix dicts/,$(DICTFILES))
 
-OBJS = ts_locale.o ts_parse.o wparser.o wparser_def.o dict.o \
-	dict_simple.o dict_synonym.o dict_thesaurus.o \
-	dict_ispell.o regis.o spell.o \
-	to_tsany.o ts_selfuncs.o ts_typanalyze.o ts_utils.o
+OBJS = \
+	ts_locale.o \
+	ts_parse.o \
+	wparser.o \
+	wparser_def.o \
+	dict.o \
+	dict_simple.o \
+	dict_synonym.o \
+	dict_thesaurus.o \
+	dict_ispell.o \
+	regis.o \
+	spell.o \
+	to_tsany.o \
+	ts_selfuncs.o \
+	ts_typanalyze.o \
+	ts_utils.o
 
 include $(top_srcdir)/src/backend/common.mk
 

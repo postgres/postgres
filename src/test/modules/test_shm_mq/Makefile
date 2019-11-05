@@ -1,7 +1,11 @@
 # src/test/modules/test_shm_mq/Makefile
 
 MODULE_big = test_shm_mq
-OBJS = test.o setup.o worker.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	setup.o \
+	test.o \
+	worker.o
 PGFILEDESC = "test_shm_mq - example use of shared memory message queue"
 
 EXTENSION = test_shm_mq

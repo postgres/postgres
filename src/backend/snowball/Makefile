@@ -16,7 +16,13 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_srcdir)/src/include/snowball \
 	-I$(top_srcdir)/src/include/snowball/libstemmer $(CPPFLAGS)
 
-OBJS= $(WIN32RES) dict_snowball.o api.o utilities.o \
+OBJS = \
+	$(WIN32RES) \
+	api.o \
+	dict_snowball.o \
+	utilities.o
+
+OBJS += \
 	stem_ISO_8859_1_danish.o \
 	stem_ISO_8859_1_dutch.o \
 	stem_ISO_8859_1_english.o \

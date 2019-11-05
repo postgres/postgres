@@ -1,7 +1,9 @@
 # contrib/tsm_system_rows/Makefile
 
 MODULE_big = tsm_system_rows
-OBJS = tsm_system_rows.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	tsm_system_rows.o
 PGFILEDESC = "tsm_system_rows - TABLESAMPLE method which accepts number of rows as a limit"
 
 EXTENSION = tsm_system_rows

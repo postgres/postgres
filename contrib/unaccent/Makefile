@@ -1,7 +1,9 @@
 # contrib/unaccent/Makefile
 
 MODULE_big = unaccent
-OBJS = unaccent.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	unaccent.o
 
 EXTENSION = unaccent
 DATA = unaccent--1.1.sql unaccent--1.0--1.1.sql unaccent--unpackaged--1.0.sql

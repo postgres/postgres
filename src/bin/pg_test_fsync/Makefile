@@ -7,7 +7,9 @@ subdir = src/bin/pg_test_fsync
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = pg_test_fsync.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_test_fsync.o
 
 all: pg_test_fsync
 

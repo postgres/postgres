@@ -1,7 +1,10 @@
 # contrib/fuzzystrmatch/Makefile
 
 MODULE_big = fuzzystrmatch
-OBJS = fuzzystrmatch.o dmetaphone.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	dmetaphone.o \
+	fuzzystrmatch.o
 
 EXTENSION = fuzzystrmatch
 DATA = fuzzystrmatch--1.1.sql fuzzystrmatch--1.0--1.1.sql \

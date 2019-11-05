@@ -1,7 +1,9 @@
 # contrib/adminpack/Makefile
 
 MODULE_big = adminpack
-OBJS = adminpack.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	adminpack.o
 PG_CPPFLAGS = -I$(libpq_srcdir)
 
 EXTENSION = adminpack

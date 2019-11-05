@@ -1,7 +1,9 @@
 # contrib/pg_buffercache/Makefile
 
 MODULE_big = pg_buffercache
-OBJS = pg_buffercache_pages.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_buffercache_pages.o
 
 EXTENSION = pg_buffercache
 DATA = pg_buffercache--1.2.sql pg_buffercache--1.2--1.3.sql \

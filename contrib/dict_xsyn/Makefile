@@ -1,7 +1,9 @@
 # contrib/dict_xsyn/Makefile
 
 MODULE_big = dict_xsyn
-OBJS = dict_xsyn.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	dict_xsyn.o
 
 EXTENSION = dict_xsyn
 DATA = dict_xsyn--1.0.sql dict_xsyn--unpackaged--1.0.sql

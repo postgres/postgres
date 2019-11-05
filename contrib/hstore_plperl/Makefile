@@ -1,7 +1,9 @@
 # contrib/hstore_plperl/Makefile
 
 MODULE_big = hstore_plperl
-OBJS = hstore_plperl.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	hstore_plperl.o
 PGFILEDESC = "hstore_plperl - hstore transform for plperl"
 
 

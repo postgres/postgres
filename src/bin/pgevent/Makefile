@@ -16,7 +16,9 @@ include $(top_builddir)/src/Makefile.global
 
 ifeq ($(PORTNAME), win32)
 
-OBJS=pgevent.o pgmsgevent.o
+OBJS = \
+	pgevent.o \
+	pgmsgevent.o
 NAME=pgevent
 
 SHLIB_LINK =

@@ -15,7 +15,9 @@ subdir = src/bin/pg_controldata
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS= pg_controldata.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_controldata.o
 
 all: pg_controldata
 

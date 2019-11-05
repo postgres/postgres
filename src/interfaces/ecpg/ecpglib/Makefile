@@ -22,8 +22,18 @@ override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(libpq_srcdir) -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-OBJS= execute.o typename.o descriptor.o sqlda.o data.o error.o prepare.o \
-	memory.o connect.o misc.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	connect.o \
+	data.o \
+	descriptor.o \
+	error.o \
+	execute.o \
+	memory.o \
+	misc.o \
+	prepare.o \
+	sqlda.o \
+	typename.o
 
 SHLIB_LINK_INTERNAL = -L../pgtypeslib -lpgtypes $(libpq_pgport_shlib)
 SHLIB_LINK = $(filter -lintl -lm, $(LIBS)) $(PTHREAD_LIBS)

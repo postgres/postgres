@@ -15,7 +15,9 @@ subdir = src/bin/pg_resetwal
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS= pg_resetwal.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_resetwal.o
 
 all: pg_resetwal
 

@@ -24,7 +24,9 @@ LDFLAGS_INTERNAL += $(libpq_pgport)
 SUBMAKE_LIBPQ := submake-libpq
 endif
 
-OBJS=	pg_ctl.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_ctl.o
 
 all: pg_ctl
 

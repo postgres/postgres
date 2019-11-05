@@ -1,7 +1,9 @@
 # contrib/hstore_plpython/Makefile
 
 MODULE_big = hstore_plpython$(python_majorversion)
-OBJS = hstore_plpython.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	hstore_plpython.o
 PGFILEDESC = "hstore_plpython - hstore transform for plpython"
 
 EXTENSION = hstore_plpythonu hstore_plpython2u hstore_plpython3u

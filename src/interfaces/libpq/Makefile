@@ -27,19 +27,36 @@ endif
 # The MSVC build system scrapes OBJS from this file.  If you change any of
 # the conditional additions of files to OBJS, update Mkvcbuild.pm to match.
 
-OBJS=	fe-auth.o fe-auth-scram.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
-	fe-protocol2.o fe-protocol3.o pqexpbuffer.o fe-secure.o \
-	legacy-pqsignal.o libpq-events.o
+OBJS = \
+	fe-auth-scram.o \
+	fe-connect.o \
+	fe-exec.o \
+	fe-lobj.o \
+	fe-misc.o \
+	fe-print.o \
+	fe-protocol2.o \
+	fe-protocol3.o \
+	fe-secure.o \
+	legacy-pqsignal.o \
+	libpq-events.o \
+	pqexpbuffer.o \
+	fe-auth.o
 
 # src/backend/utils/mb
-OBJS += encnames.o wchar.o
+OBJS += \
+	encnames.o \
+	wchar.o
 
 ifeq ($(with_openssl),yes)
-OBJS += fe-secure-openssl.o fe-secure-common.o
+OBJS += \
+	fe-secure-common.o \
+	fe-secure-openssl.o
 endif
 
 ifeq ($(with_gssapi),yes)
-OBJS += fe-gssapi-common.o fe-secure-gssapi.o
+OBJS += \
+	fe-gssapi-common.o \
+	fe-secure-gssapi.o
 endif
 
 ifeq ($(PORTNAME), cygwin)
@@ -47,7 +64,9 @@ override shlib = cyg$(NAME)$(DLSUFFIX)
 endif
 
 ifeq ($(PORTNAME), win32)
-OBJS += win32.o libpqrc.o
+OBJS += \
+	libpqrc.o \
+	win32.o
 
 libpqrc.o: libpq.rc
 	$(WINDRES) -i $< -o $@

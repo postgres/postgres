@@ -26,7 +26,12 @@ ifneq (,$(with_system_tzdata))
 override CPPFLAGS += '-DSYSTEMTZDIR="$(with_system_tzdata)"'
 endif
 
-OBJS=	initdb.o findtimezone.o localtime.o encnames.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	encnames.o \
+	findtimezone.o \
+	initdb.o \
+	localtime.o
 
 all: initdb
 

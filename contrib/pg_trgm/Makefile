@@ -1,7 +1,12 @@
 # contrib/pg_trgm/Makefile
 
 MODULE_big = pg_trgm
-OBJS = trgm_op.o trgm_gist.o trgm_gin.o trgm_regexp.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	trgm_gin.o \
+	trgm_gist.o \
+	trgm_op.o \
+	trgm_regexp.o
 
 EXTENSION = pg_trgm
 DATA = pg_trgm--1.3--1.4.sql \

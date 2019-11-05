@@ -19,9 +19,18 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
-OBJS=	pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
-	pg_backup_null.o pg_backup_tar.o pg_backup_directory.o \
-	pg_backup_utils.o parallel.o compress_io.o dumputils.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	compress_io.o \
+	dumputils.o \
+	parallel.o \
+	pg_backup_archiver.o \
+	pg_backup_custom.o \
+	pg_backup_db.o \
+	pg_backup_directory.o \
+	pg_backup_null.o \
+	pg_backup_tar.o \
+	pg_backup_utils.o
 
 all: pg_dump pg_restore pg_dumpall
 

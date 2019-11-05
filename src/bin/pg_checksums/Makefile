@@ -15,7 +15,9 @@ subdir = src/bin/pg_checksums
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS= pg_checksums.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_checksums.o
 
 all: pg_checksums
 

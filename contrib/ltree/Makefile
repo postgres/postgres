@@ -1,8 +1,17 @@
 # contrib/ltree/Makefile
 
 MODULE_big = ltree
-OBJS = 	ltree_io.o ltree_op.o lquery_op.o _ltree_op.o crc32.o \
-	ltxtquery_io.o ltxtquery_op.o ltree_gist.o _ltree_gist.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	_ltree_gist.o \
+	_ltree_op.o \
+	crc32.o \
+	lquery_op.o \
+	ltree_gist.o \
+	ltree_io.o \
+	ltree_op.o \
+	ltxtquery_io.o \
+	ltxtquery_op.o
 PG_CPPFLAGS = -DLOWER_NODE
 
 EXTENSION = ltree

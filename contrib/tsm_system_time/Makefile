@@ -1,7 +1,9 @@
 # contrib/tsm_system_time/Makefile
 
 MODULE_big = tsm_system_time
-OBJS = tsm_system_time.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	tsm_system_time.o
 PGFILEDESC = "tsm_system_time - TABLESAMPLE method which accepts time in milliseconds as a limit"
 
 EXTENSION = tsm_system_time

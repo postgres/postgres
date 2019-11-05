@@ -15,7 +15,8 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += $(libpq_pgport)
 
-OBJS= findoidjoins.o
+OBJS = \
+	findoidjoins.o
 
 all: findoidjoins
 

@@ -12,7 +12,9 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
-OBJS= bootparse.o bootstrap.o
+OBJS = \
+	bootparse.o \
+	bootstrap.o
 
 include $(top_srcdir)/src/backend/common.mk
 

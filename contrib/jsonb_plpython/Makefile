@@ -1,7 +1,9 @@
 # contrib/jsonb_plpython/Makefile
 
 MODULE_big = jsonb_plpython$(python_majorversion)
-OBJS = jsonb_plpython.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	jsonb_plpython.o
 PGFILEDESC = "jsonb_plpython - transform between jsonb and plpythonu"
 
 PG_CPPFLAGS = -I$(top_srcdir)/src/pl/plpython $(python_includespec) -DPLPYTHON_LIBNAME='"plpython$(python_majorversion)"'

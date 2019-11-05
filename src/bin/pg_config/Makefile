@@ -15,7 +15,9 @@ subdir = src/bin/pg_config
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS=   pg_config.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_config.o
 
 all: pg_config
 

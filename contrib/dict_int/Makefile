@@ -1,7 +1,9 @@
 # contrib/dict_int/Makefile
 
 MODULE_big = dict_int
-OBJS = dict_int.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	dict_int.o
 
 EXTENSION = dict_int
 DATA = dict_int--1.0.sql dict_int--unpackaged--1.0.sql

@@ -1,7 +1,9 @@
 # contrib/btree_gin/Makefile
 
 MODULE_big = btree_gin
-OBJS = btree_gin.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	btree_gin.o
 
 EXTENSION = btree_gin
 DATA = btree_gin--1.0.sql btree_gin--1.0--1.1.sql btree_gin--1.1--1.2.sql \

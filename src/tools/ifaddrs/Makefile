@@ -16,7 +16,8 @@ libpq_backend_dir = $(top_builddir)/src/backend/libpq
 
 override CPPFLAGS := -I$(libpq_backend_dir) $(CPPFLAGS)
 
-OBJS = test_ifaddrs.o
+OBJS = \
+	test_ifaddrs.o
 
 all: test_ifaddrs
 

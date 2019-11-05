@@ -1,7 +1,13 @@
 # contrib/postgres_fdw/Makefile
 
 MODULE_big = postgres_fdw
-OBJS = postgres_fdw.o option.o deparse.o connection.o shippable.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	connection.o \
+	deparse.o \
+	option.o \
+	postgres_fdw.o \
+	shippable.o
 PGFILEDESC = "postgres_fdw - foreign data wrapper for PostgreSQL"
 
 PG_CPPFLAGS = -I$(libpq_srcdir)

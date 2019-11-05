@@ -1,7 +1,9 @@
 # contrib/dblink/Makefile
 
 MODULE_big = dblink
-OBJS	= dblink.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	dblink.o
 PG_CPPFLAGS = -I$(libpq_srcdir)
 SHLIB_LINK_INTERNAL = $(libpq)
 

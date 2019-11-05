@@ -1,7 +1,9 @@
 # contrib/passwordcheck/Makefile
 
 MODULE_big = passwordcheck
-OBJS = passwordcheck.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	passwordcheck.o
 PGFILEDESC = "passwordcheck - strengthen user password checks"
 
 # uncomment the following two lines to enable cracklib support

@@ -12,8 +12,17 @@ subdir = src/backend/storage/lmgr
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = lmgr.o lock.o proc.o deadlock.o lwlock.o lwlocknames.o spin.o \
-	s_lock.o predicate.o condition_variable.o
+OBJS = \
+	condition_variable.o \
+	deadlock.o \
+	lmgr.o \
+	lock.o \
+	lwlock.o \
+	lwlocknames.o \
+	predicate.o \
+	proc.o \
+	s_lock.o \
+	spin.o
 
 include $(top_srcdir)/src/backend/common.mk
 

@@ -1,7 +1,10 @@
 # contrib/uuid-ossp/Makefile
 
 MODULE_big = uuid-ossp
-OBJS = uuid-ossp.o $(UUID_EXTRA_OBJS) $(WIN32RES)
+OBJS = \
+	$(UUID_EXTRA_OBJS) \
+	$(WIN32RES) \
+	uuid-ossp.o
 
 EXTENSION = uuid-ossp
 DATA = uuid-ossp--1.1.sql uuid-ossp--1.0--1.1.sql uuid-ossp--unpackaged--1.0.sql

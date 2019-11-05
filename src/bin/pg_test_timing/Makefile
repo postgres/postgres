@@ -7,7 +7,9 @@ subdir = src/bin/pg_test_timing
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = pg_test_timing.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pg_test_timing.o
 
 all: pg_test_timing
 

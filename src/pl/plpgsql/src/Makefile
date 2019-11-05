@@ -19,8 +19,14 @@ override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 SHLIB_LINK = $(filter -lintl, $(LIBS))
 rpath =
 
-OBJS = pl_gram.o pl_handler.o pl_comp.o pl_exec.o \
-	pl_funcs.o pl_scanner.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	pl_comp.o \
+	pl_exec.o \
+	pl_funcs.o \
+	pl_gram.o \
+	pl_handler.o \
+	pl_scanner.o
 
 DATA = plpgsql.control plpgsql--1.0.sql plpgsql--unpackaged--1.0.sql
 

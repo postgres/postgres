@@ -1,7 +1,9 @@
 # src/test/modules/test_rbtree/Makefile
 
 MODULE_big = test_rbtree
-OBJS = test_rbtree.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	test_rbtree.o
 PGFILEDESC = "test_rbtree - test code for red-black tree library"
 
 EXTENSION = test_rbtree

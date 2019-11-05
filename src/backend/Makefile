@@ -37,8 +37,11 @@ LOCALOBJS += utils/probes.o
 endif
 endif
 
-OBJS = $(SUBDIROBJS) $(LOCALOBJS) $(top_builddir)/src/port/libpgport_srv.a \
-       $(top_builddir)/src/common/libpgcommon_srv.a
+OBJS = \
+	$(LOCALOBJS) \
+	$(SUBDIROBJS) \
+	$(top_builddir)/src/common/libpgcommon_srv.a \
+	$(top_builddir)/src/port/libpgport_srv.a
 
 # We put libpgport and libpgcommon into OBJS, so remove it from LIBS; also add
 # libldap and ICU

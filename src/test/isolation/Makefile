@@ -11,7 +11,10 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) -I$(srcdir)/../regress $(CPPFLAGS)
 
-OBJS =  specparse.o isolationtester.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	isolationtester.o \
+	specparse.o
 
 all: isolationtester$(X) pg_isolation_regress$(X)
 

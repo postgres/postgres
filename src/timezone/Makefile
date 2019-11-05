@@ -16,10 +16,15 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 # files to build into backend
-OBJS= localtime.o strftime.o pgtz.o
+OBJS = \
+	localtime.o \
+	pgtz.o \
+	strftime.o
 
 # files needed to build zic utility program
-ZICOBJS= zic.o $(WIN32RES)
+ZICOBJS = \
+	$(WIN32RES) \
+	zic.o
 
 # we now distribute the timezone data as a single file
 TZDATAFILES = $(srcdir)/data/tzdata.zi

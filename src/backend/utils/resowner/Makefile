@@ -12,6 +12,7 @@ subdir = src/backend/utils/resowner
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = resowner.o
+OBJS = \
+	resowner.o
 
 include $(top_srcdir)/src/backend/common.mk

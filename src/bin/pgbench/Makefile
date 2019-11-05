@@ -7,7 +7,10 @@ subdir = src/bin/pgbench
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = pgbench.o exprparse.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	exprparse.o \
+	pgbench.o
 
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
