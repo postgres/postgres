@@ -2612,6 +2612,13 @@ get_object_attnum_acl(Oid class_id)
 	return prop->attnum_acl;
 }
 
+/*
+ * get_object_type
+ *
+ * Return the object type associated with a given object.  This routine
+ * is primarily used to determine the object type to mention in ACL check
+ * error messages, so it's desirable for it to avoid failing.
+ */
 ObjectType
 get_object_type(Oid class_id, Oid object_id)
 {
@@ -5333,6 +5340,16 @@ strlist_to_textarray(List *list)
 	return arr;
 }
 
+/*
+ * get_relkind_objtype
+ *
+ * Return the object type for the relkind given by the caller.
+ *
+ * If an unexpected relkind is passed, we say OBJECT_TABLE rather than
+ * failing.  That's because this is mostly used for generating error messages
+ * for failed ACL checks on relations, and we'd rather produce a generic
+ * message saying "table" than fail entirely.
+ */
 ObjectType
 get_relkind_objtype(char relkind)
 {
@@ -5352,13 +5369,10 @@ get_relkind_objtype(char relkind)
 			return OBJECT_MATVIEW;
 		case RELKIND_FOREIGN_TABLE:
 			return OBJECT_FOREIGN_TABLE;
-
-			/*
-			 * other relkinds are not supported here because they don't map to
-			 * OBJECT_* values
-			 */
+		case RELKIND_TOASTVALUE:
+			return OBJECT_TABLE;
 		default:
-			elog(ERROR, "unexpected relkind: %d", relkind);
-			return 0;
+			/* Per above, don't raise an error */
+			return OBJECT_TABLE;
 	}
 }

@@ -1003,8 +1003,15 @@ REINDEX SCHEMA CONCURRENTLY schema_to_reindex;
 CREATE ROLE regress_reindexuser NOLOGIN;
 SET SESSION ROLE regress_reindexuser;
 REINDEX SCHEMA schema_to_reindex;
+-- Permission failures with toast tables and indexes (pg_authid here)
+RESET ROLE;
+GRANT USAGE ON SCHEMA pg_toast TO regress_reindexuser;
+SET SESSION ROLE regress_reindexuser;
+REINDEX TABLE pg_toast.pg_toast_1260;
+REINDEX INDEX pg_toast.pg_toast_1260_index;
 
 -- Clean up
 RESET ROLE;
+REVOKE USAGE ON SCHEMA pg_toast FROM regress_reindexuser;
 DROP ROLE regress_reindexuser;
 DROP SCHEMA schema_to_reindex CASCADE;
