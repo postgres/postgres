@@ -459,6 +459,83 @@ SELECT t1.a, ss.t2a, ss.t2c FROM prt1 t1 LEFT JOIN LATERAL
  550 |     | 
 (12 rows)
 
+-- bug with inadequate sort key representation
+SET enable_partitionwise_aggregate TO true;
+SET enable_hashjoin TO false;
+EXPLAIN (COSTS OFF)
+SELECT a, b FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b)
+  WHERE a BETWEEN 490 AND 510
+  GROUP BY 1, 2 ORDER BY 1, 2;
+                                                    QUERY PLAN                                                     
+-------------------------------------------------------------------------------------------------------------------
+ Group
+   Group Key: (COALESCE(prt1_p1.a, p2.a)), (COALESCE(prt1_p1.b, p2.b))
+   ->  Merge Append
+         Sort Key: (COALESCE(prt1_p1.a, p2.a)), (COALESCE(prt1_p1.b, p2.b))
+         ->  Group
+               Group Key: (COALESCE(prt1_p1.a, p2.a)), (COALESCE(prt1_p1.b, p2.b))
+               ->  Sort
+                     Sort Key: (COALESCE(prt1_p1.a, p2.a)), (COALESCE(prt1_p1.b, p2.b))
+                     ->  Merge Full Join
+                           Merge Cond: ((prt1_p1.a = p2.a) AND (prt1_p1.b = p2.b))
+                           Filter: ((COALESCE(prt1_p1.a, p2.a) >= 490) AND (COALESCE(prt1_p1.a, p2.a) <= 510))
+                           ->  Sort
+                                 Sort Key: prt1_p1.a, prt1_p1.b
+                                 ->  Seq Scan on prt1_p1
+                           ->  Sort
+                                 Sort Key: p2.a, p2.b
+                                 ->  Seq Scan on prt2_p1 p2
+         ->  Group
+               Group Key: (COALESCE(prt1_p2.a, p2_1.a)), (COALESCE(prt1_p2.b, p2_1.b))
+               ->  Sort
+                     Sort Key: (COALESCE(prt1_p2.a, p2_1.a)), (COALESCE(prt1_p2.b, p2_1.b))
+                     ->  Merge Full Join
+                           Merge Cond: ((prt1_p2.a = p2_1.a) AND (prt1_p2.b = p2_1.b))
+                           Filter: ((COALESCE(prt1_p2.a, p2_1.a) >= 490) AND (COALESCE(prt1_p2.a, p2_1.a) <= 510))
+                           ->  Sort
+                                 Sort Key: prt1_p2.a, prt1_p2.b
+                                 ->  Seq Scan on prt1_p2
+                           ->  Sort
+                                 Sort Key: p2_1.a, p2_1.b
+                                 ->  Seq Scan on prt2_p2 p2_1
+         ->  Group
+               Group Key: (COALESCE(prt1_p3.a, p2_2.a)), (COALESCE(prt1_p3.b, p2_2.b))
+               ->  Sort
+                     Sort Key: (COALESCE(prt1_p3.a, p2_2.a)), (COALESCE(prt1_p3.b, p2_2.b))
+                     ->  Merge Full Join
+                           Merge Cond: ((prt1_p3.a = p2_2.a) AND (prt1_p3.b = p2_2.b))
+                           Filter: ((COALESCE(prt1_p3.a, p2_2.a) >= 490) AND (COALESCE(prt1_p3.a, p2_2.a) <= 510))
+                           ->  Sort
+                                 Sort Key: prt1_p3.a, prt1_p3.b
+                                 ->  Seq Scan on prt1_p3
+                           ->  Sort
+                                 Sort Key: p2_2.a, p2_2.b
+                                 ->  Seq Scan on prt2_p3 p2_2
+(43 rows)
+
+SELECT a, b FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b)
+  WHERE a BETWEEN 490 AND 510
+  GROUP BY 1, 2 ORDER BY 1, 2;
+  a  | b  
+-----+----
+ 490 | 15
+ 492 | 17
+ 494 | 19
+ 495 | 20
+ 496 | 21
+ 498 | 23
+ 500 |  0
+ 501 |  1
+ 502 |  2
+ 504 |  4
+ 506 |  6
+ 507 |  7
+ 508 |  8
+ 510 | 10
+(14 rows)
+
+RESET enable_partitionwise_aggregate;
+RESET enable_hashjoin;
 --
 -- partitioned by expression
 --

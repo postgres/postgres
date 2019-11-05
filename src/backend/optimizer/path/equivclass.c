@@ -1132,7 +1132,7 @@ generate_join_implied_equalities(PlannerInfo *root,
 	Relids		inner_relids = inner_rel->relids;
 	Relids		nominal_inner_relids;
 	Relids		nominal_join_relids;
-	Bitmapset * matching_ecs;
+	Bitmapset  *matching_ecs;
 	int			i;
 
 	/* If inner rel is a child, extra setup work is needed */
@@ -2209,7 +2209,7 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
 
 /*
  * add_child_rel_equivalences
- *	  Search for EC members that reference the parent_rel, and
+ *	  Search for EC members that reference the root parent of child_rel, and
  *	  add transformed members referencing the child_rel.
  *
  * Note that this function won't be called at all unless we have at least some
@@ -2217,6 +2217,12 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
  *
  * parent_rel and child_rel could be derived from appinfo, but since the
  * caller has already computed them, we might as well just pass them in.
+ *
+ * The passed-in AppendRelInfo is not used when the parent_rel is not a
+ * top-level baserel, since it shows the mapping from the parent_rel but
+ * we need to translate EC expressions that refer to the top-level parent.
+ * Using it is faster than using adjust_appendrel_attrs_multilevel(), though,
+ * so we prefer it when we can.
  */
 void
 add_child_rel_equivalences(PlannerInfo *root,
@@ -2224,6 +2230,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 						   RelOptInfo *parent_rel,
 						   RelOptInfo *child_rel)
 {
+	Relids		top_parent_relids = child_rel->top_parent_relids;
+	Relids		child_relids = child_rel->relids;
 	int			i;
 
 	/*
@@ -2248,7 +2256,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 			continue;
 
 		/* Sanity check eclass_indexes only contain ECs for parent_rel */
-		Assert(bms_is_subset(child_rel->top_parent_relids, cur_ec->ec_relids));
+		Assert(bms_is_subset(top_parent_relids, cur_ec->ec_relids));
 
 		/*
 		 * We don't use foreach() here because there's no point in scanning
@@ -2268,13 +2276,14 @@ add_child_rel_equivalences(PlannerInfo *root,
 			 * already-transformed child members.  Otherwise, if some original
 			 * member expression references more than one appendrel, we'd get
 			 * an O(N^2) explosion of useless derived expressions for
-			 * combinations of children.
+			 * combinations of children.  (But add_child_join_rel_equivalences
+			 * may add targeted combinations for partitionwise-join purposes.)
 			 */
 			if (cur_em->em_is_child)
 				continue;		/* ignore children here */
 
 			/* Does this member reference child's topmost parent rel? */
-			if (bms_overlap(cur_em->em_relids, child_rel->top_parent_relids))
+			if (bms_overlap(cur_em->em_relids, top_parent_relids))
 			{
 				/* Yes, generate transformed child version */
 				Expr	   *child_expr;
@@ -2295,8 +2304,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 					child_expr = (Expr *)
 						adjust_appendrel_attrs_multilevel(root,
 														  (Node *) cur_em->em_expr,
-														  child_rel->relids,
-														  child_rel->top_parent_relids);
+														  child_relids,
+														  top_parent_relids);
 				}
 
 				/*
@@ -2306,21 +2315,20 @@ add_child_rel_equivalences(PlannerInfo *root,
 				 * don't want the child member to be marked as constant.
 				 */
 				new_relids = bms_difference(cur_em->em_relids,
-											child_rel->top_parent_relids);
-				new_relids = bms_add_members(new_relids, child_rel->relids);
+											top_parent_relids);
+				new_relids = bms_add_members(new_relids, child_relids);
 
 				/*
 				 * And likewise for nullable_relids.  Note this code assumes
 				 * parent and child relids are singletons.
 				 */
 				new_nullable_relids = cur_em->em_nullable_relids;
-				if (bms_overlap(new_nullable_relids,
-								child_rel->top_parent_relids))
+				if (bms_overlap(new_nullable_relids, top_parent_relids))
 				{
 					new_nullable_relids = bms_difference(new_nullable_relids,
-														 child_rel->top_parent_relids);
+														 top_parent_relids);
 					new_nullable_relids = bms_add_members(new_nullable_relids,
-														  child_rel->relids);
+														  child_relids);
 				}
 
 				(void) add_eq_member(cur_ec, child_expr,
@@ -2329,6 +2337,133 @@ add_child_rel_equivalences(PlannerInfo *root,
 
 				/* Record this EC index for the child rel */
 				child_rel->eclass_indexes = bms_add_member(child_rel->eclass_indexes, i);
+			}
+		}
+	}
+}
+
+/*
+ * add_child_join_rel_equivalences
+ *	  Like add_child_rel_equivalences(), but for joinrels
+ *
+ * Here we find the ECs relevant to the top parent joinrel and add transformed
+ * member expressions that refer to this child joinrel.
+ *
+ * Note that this function won't be called at all unless we have at least some
+ * reason to believe that the EC members it generates will be useful.
+ */
+void
+add_child_join_rel_equivalences(PlannerInfo *root,
+								int nappinfos, AppendRelInfo **appinfos,
+								RelOptInfo *parent_joinrel,
+								RelOptInfo *child_joinrel)
+{
+	Relids		top_parent_relids = child_joinrel->top_parent_relids;
+	Relids		child_relids = child_joinrel->relids;
+	Bitmapset  *matching_ecs;
+	int			i;
+
+	Assert(IS_JOIN_REL(child_joinrel) && IS_JOIN_REL(parent_joinrel));
+
+	/* We need consider only ECs that mention the parent joinrel */
+	matching_ecs = get_eclass_indexes_for_relids(root, top_parent_relids);
+
+	i = -1;
+	while ((i = bms_next_member(matching_ecs, i)) >= 0)
+	{
+		EquivalenceClass *cur_ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
+		int			num_members;
+
+		/*
+		 * If this EC contains a volatile expression, then generating child
+		 * EMs would be downright dangerous, so skip it.  We rely on a
+		 * volatile EC having only one EM.
+		 */
+		if (cur_ec->ec_has_volatile)
+			continue;
+
+		/* Sanity check on get_eclass_indexes_for_relids result */
+		Assert(bms_overlap(top_parent_relids, cur_ec->ec_relids));
+
+		/*
+		 * We don't use foreach() here because there's no point in scanning
+		 * newly-added child members, so we can stop after the last
+		 * pre-existing EC member.
+		 */
+		num_members = list_length(cur_ec->ec_members);
+		for (int pos = 0; pos < num_members; pos++)
+		{
+			EquivalenceMember *cur_em = (EquivalenceMember *) list_nth(cur_ec->ec_members, pos);
+
+			if (cur_em->em_is_const)
+				continue;		/* ignore consts here */
+
+			/*
+			 * We consider only original EC members here, not
+			 * already-transformed child members.
+			 */
+			if (cur_em->em_is_child)
+				continue;		/* ignore children here */
+
+			/*
+			 * We may ignore expressions that reference a single baserel,
+			 * because add_child_rel_equivalences should have handled them.
+			 */
+			if (bms_membership(cur_em->em_relids) != BMS_MULTIPLE)
+				continue;
+
+			/* Does this member reference child's topmost parent rel? */
+			if (bms_overlap(cur_em->em_relids, top_parent_relids))
+			{
+				/* Yes, generate transformed child version */
+				Expr	   *child_expr;
+				Relids		new_relids;
+				Relids		new_nullable_relids;
+
+				if (parent_joinrel->reloptkind == RELOPT_JOINREL)
+				{
+					/* Simple single-level transformation */
+					child_expr = (Expr *)
+						adjust_appendrel_attrs(root,
+											   (Node *) cur_em->em_expr,
+											   nappinfos, appinfos);
+				}
+				else
+				{
+					/* Must do multi-level transformation */
+					Assert(parent_joinrel->reloptkind == RELOPT_OTHER_JOINREL);
+					child_expr = (Expr *)
+						adjust_appendrel_attrs_multilevel(root,
+														  (Node *) cur_em->em_expr,
+														  child_relids,
+														  top_parent_relids);
+				}
+
+				/*
+				 * Transform em_relids to match.  Note we do *not* do
+				 * pull_varnos(child_expr) here, as for example the
+				 * transformation might have substituted a constant, but we
+				 * don't want the child member to be marked as constant.
+				 */
+				new_relids = bms_difference(cur_em->em_relids,
+											top_parent_relids);
+				new_relids = bms_add_members(new_relids, child_relids);
+
+				/*
+				 * For nullable_relids, we must selectively replace parent
+				 * nullable relids with child ones.
+				 */
+				new_nullable_relids = cur_em->em_nullable_relids;
+				if (bms_overlap(new_nullable_relids, top_parent_relids))
+					new_nullable_relids =
+						adjust_child_relids_multilevel(root,
+													   new_nullable_relids,
+													   child_relids,
+													   top_parent_relids);
+
+				(void) add_eq_member(cur_ec, child_expr,
+									 new_relids, new_nullable_relids,
+									 true, cur_em->em_datatype);
 			}
 		}
 	}

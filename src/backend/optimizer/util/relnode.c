@@ -843,6 +843,7 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	/* Compute information relevant to foreign relations. */
 	set_foreign_rel_properties(joinrel, outer_rel, inner_rel);
 
+	/* Compute information needed for mapping Vars to the child rel */
 	appinfos = find_appinfos_by_relids(root, joinrel->relids, &nappinfos);
 
 	/* Set up reltarget struct */
@@ -854,7 +855,6 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 														(Node *) parent_joinrel->joininfo,
 														nappinfos,
 														appinfos);
-	pfree(appinfos);
 
 	/*
 	 * Lateral relids referred in child join will be same as that referred in
@@ -885,6 +885,19 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 
 	/* Add the relation to the PlannerInfo. */
 	add_join_rel(root, joinrel);
+
+	/*
+	 * We might need EquivalenceClass members corresponding to the child join,
+	 * so that we can represent sort pathkeys for it.  As with children of
+	 * baserels, we shouldn't need this unless there are relevant eclass joins
+	 * (implying that a merge join might be possible) or pathkeys to sort by.
+	 */
+	if (joinrel->has_eclass_joins || has_useful_pathkeys(root, parent_joinrel))
+		add_child_join_rel_equivalences(root,
+										nappinfos, appinfos,
+										parent_joinrel, joinrel);
+
+	pfree(appinfos);
 
 	return joinrel;
 }
