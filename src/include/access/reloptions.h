@@ -296,6 +296,11 @@ extern void fillRelOptions(void *rdopts, Size basesize,
 						   relopt_value *options, int numoptions,
 						   bool validate,
 						   const relopt_parse_elt *elems, int nelems);
+extern void *build_reloptions(Datum reloptions, bool validate,
+							  relopt_kind kind,
+							  Size relopt_struct_size,
+							  const relopt_parse_elt *relopt_elems,
+							  int num_relopt_elems);
 
 extern bytea *default_reloptions(Datum reloptions, bool validate,
 								 relopt_kind kind);

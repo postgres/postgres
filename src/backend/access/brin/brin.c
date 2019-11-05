@@ -820,29 +820,15 @@ brinvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 bytea *
 brinoptions(Datum reloptions, bool validate)
 {
-	relopt_value *options;
-	BrinOptions *rdopts;
-	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"pages_per_range", RELOPT_TYPE_INT, offsetof(BrinOptions, pagesPerRange)},
 		{"autosummarize", RELOPT_TYPE_BOOL, offsetof(BrinOptions, autosummarize)}
 	};
 
-	options = parseRelOptions(reloptions, validate, RELOPT_KIND_BRIN,
-							  &numoptions);
-
-	/* if none set, we're done */
-	if (numoptions == 0)
-		return NULL;
-
-	rdopts = allocateReloptStruct(sizeof(BrinOptions), options, numoptions);
-
-	fillRelOptions((void *) rdopts, sizeof(BrinOptions), options, numoptions,
-				   validate, tab, lengthof(tab));
-
-	pfree(options);
-
-	return (bytea *) rdopts;
+	return (bytea *) build_reloptions(reloptions, validate,
+									  RELOPT_KIND_BRIN,
+									  sizeof(BrinOptions),
+									  tab, lengthof(tab));
 }
 
 /*

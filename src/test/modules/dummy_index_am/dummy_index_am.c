@@ -222,17 +222,10 @@ dicostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 static bytea *
 dioptions(Datum reloptions, bool validate)
 {
-	relopt_value *options;
-	int			numoptions;
-	DummyIndexOptions *rdopts;
-
-	/* Parse the user-given reloptions */
-	options = parseRelOptions(reloptions, validate, di_relopt_kind, &numoptions);
-	rdopts = allocateReloptStruct(sizeof(DummyIndexOptions), options, numoptions);
-	fillRelOptions((void *) rdopts, sizeof(DummyIndexOptions), options, numoptions,
-				   validate, di_relopt_tab, lengthof(di_relopt_tab));
-
-	return (bytea *) rdopts;
+	return (bytea *) build_reloptions(reloptions, validate,
+									  di_relopt_kind,
+									  sizeof(DummyIndexOptions),
+									  di_relopt_tab, lengthof(di_relopt_tab));
 }
 
 /*

@@ -602,30 +602,16 @@ ginExtractEntries(GinState *ginstate, OffsetNumber attnum,
 bytea *
 ginoptions(Datum reloptions, bool validate)
 {
-	relopt_value *options;
-	GinOptions *rdopts;
-	int			numoptions;
 	static const relopt_parse_elt tab[] = {
 		{"fastupdate", RELOPT_TYPE_BOOL, offsetof(GinOptions, useFastUpdate)},
 		{"gin_pending_list_limit", RELOPT_TYPE_INT, offsetof(GinOptions,
 															 pendingListCleanupSize)}
 	};
 
-	options = parseRelOptions(reloptions, validate, RELOPT_KIND_GIN,
-							  &numoptions);
-
-	/* if none set, we're done */
-	if (numoptions == 0)
-		return NULL;
-
-	rdopts = allocateReloptStruct(sizeof(GinOptions), options, numoptions);
-
-	fillRelOptions((void *) rdopts, sizeof(GinOptions), options, numoptions,
-				   validate, tab, lengthof(tab));
-
-	pfree(options);
-
-	return (bytea *) rdopts;
+	return (bytea *) build_reloptions(reloptions, validate,
+									  RELOPT_KIND_GIN,
+									  sizeof(GinOptions),
+									  tab, lengthof(tab));
 }
 
 /*
