@@ -1126,9 +1126,16 @@ END;
 CREATE ROLE regress_reindexuser NOLOGIN;
 SET SESSION ROLE regress_reindexuser;
 REINDEX SCHEMA schema_to_reindex;
+-- Permission failures with toast tables and indexes (pg_proc's toast here)
+RESET ROLE;
+GRANT USAGE ON SCHEMA pg_toast TO regress_reindexuser;
+SET SESSION ROLE regress_reindexuser;
+REINDEX TABLE pg_toast.pg_toast_1255;
+REINDEX INDEX pg_toast.pg_toast_1255_index;
 
 -- Clean up
 RESET ROLE;
+REVOKE USAGE ON SCHEMA pg_toast FROM regress_reindexuser;
 DROP ROLE regress_reindexuser;
 \set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA schema_to_reindex CASCADE;
