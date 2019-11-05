@@ -901,6 +901,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       the scan of the new partition, it is always skipped when the default
       partition is a foreign table.
      </para>
+
+     <para>
+      Attaching a partition acquires a
+      <literal>SHARE UPDATE EXCLUSIVE</literal> lock on the parent table,
+      in addition to <literal>ACCESS EXCLUSIVE</literal> locks on the table
+      to be attached and on the default partition (if any).
+     </para>
     </listitem>
    </varlistentry>
 
