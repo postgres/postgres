@@ -67,6 +67,7 @@ OBJS_COMMON = \
 	saslprep.o \
 	scram-common.o \
 	string.o \
+	stringinfo.o \
 	unicode_norm.o \
 	username.o \
 	wait_error.o

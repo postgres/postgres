@@ -23,6 +23,5 @@ OBJS = \
 	knapsack.o \
 	pairingheap.o \
 	rbtree.o \
-	stringinfo.o
 
 include $(top_srcdir)/src/backend/common.mk

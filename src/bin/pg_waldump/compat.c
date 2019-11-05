@@ -20,7 +20,6 @@
 
 #include <time.h>
 
-#include "lib/stringinfo.h"
 #include "utils/datetime.h"
 
 /* copied from timestamp.c */
@@ -62,30 +61,4 @@ timestamptz_to_str(TimestampTz dt)
 			 ts, (int) (dt % USECS_PER_SEC), zone);
 
 	return buf;
-}
-
-/*
- * Provide a hacked up compat layer for StringInfos so xlog desc functions can
- * be linked/called.
- */
-void
-appendStringInfo(StringInfo str, const char *fmt,...)
-{
-	va_list		args;
-
-	va_start(args, fmt);
-	vprintf(fmt, args);
-	va_end(args);
-}
-
-void
-appendStringInfoString(StringInfo str, const char *string)
-{
-	appendStringInfo(str, "%s", string);
-}
-
-void
-appendStringInfoChar(StringInfo str, char ch)
-{
-	appendStringInfo(str, "%c", ch);
 }
