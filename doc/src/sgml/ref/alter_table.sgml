@@ -781,23 +781,24 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <literal>FOREIGN KEY</literal> constraints are not considered.
       If any of the <literal>CHECK</literal> constraints of the table being
       attached is marked <literal>NO INHERIT</literal>, the command will fail;
-      such a constraint must be recreated without the <literal>NO INHERIT</literal>
-      clause.
+      such constraints must be recreated without the
+      <literal>NO INHERIT</literal> clause.
      </para>
 
      <para>
       If the new partition is a regular table, a full table scan is performed
-      to check that no existing row in the table violates the partition
-      constraint.  It is possible to avoid this scan by adding a valid
-      <literal>CHECK</literal> constraint to the table that would allow only
-      the rows satisfying the desired partition constraint before running this
-      command.  It will be determined using such a constraint that the table
-      need not be scanned to validate the partition constraint.  This does not
-      work, however, if any of the partition keys is an expression and the
-      partition does not accept <literal>NULL</literal> values.  If attaching
-      a list partition that will not accept <literal>NULL</literal> values,
-      also add <literal>NOT NULL</literal> constraint to the partition key
-      column, unless it's an expression.
+      to check that existing rows in the table do not violate the partition
+      constraint. It is possible to avoid this scan by adding a valid
+      <literal>CHECK</literal> constraint to the table that allows only
+      rows satisfying the desired partition constraint before running this
+      command. The <literal>CHECK</literal> constraint will be used to
+      determine that the table need not be scanned to validate the partition
+      constraint. This does not work, however, if any of the partition keys
+      is an expression and the partition does not accept
+      <literal>NULL</literal> values. If attaching a list partition that will
+      not accept <literal>NULL</literal> values, also add
+      <literal>NOT NULL</literal> constraint to the partition key column,
+      unless it's an expression.
      </para>
 
      <para>
