@@ -132,6 +132,7 @@ static int	pthread_join(pthread_t th, void **thread_return);
  * some configurable parameters */
 
 #define DEFAULT_INIT_STEPS "dtgvp"	/* default -I setting */
+#define ALL_INIT_STEPS "dtgGvpf"	/* all possible steps */
 
 #define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
@@ -627,7 +628,7 @@ usage(void)
 		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
 		   "  -i, --initialize         invokes initialization mode\n"
-		   "  -I, --init-steps=[dtgvpf]+ (default \"dtgvp\")\n"
+		   "  -I, --init-steps=[" ALL_INIT_STEPS "]+ (default \"" DEFAULT_INIT_STEPS "\")\n"
 		   "                           run selected initialization steps\n"
 		   "  -F, --fillfactor=NUM     set fill factor\n"
 		   "  -n, --no-vacuum          do not run VACUUM during initialization\n"
@@ -3803,10 +3804,23 @@ append_fillfactor(char *opts, int len)
 }
 
 /*
- * Fill the standard tables with some data
+ * Truncate away any old data, in one command in case there are foreign keys
  */
 static void
-initGenerateData(PGconn *con)
+initTruncateTables(PGconn *con)
+{
+	executeStatement(con, "truncate table "
+					 "pgbench_accounts, "
+					 "pgbench_branches, "
+					 "pgbench_history, "
+					 "pgbench_tellers");
+}
+
+/*
+ * Fill the standard tables with some data generated and sent from the client
+ */
+static void
+initGenerateDataClientSide(PGconn *con)
 {
 	char		sql[256];
 	PGresult   *res;
@@ -3820,7 +3834,7 @@ initGenerateData(PGconn *con)
 				remaining_sec;
 	int			log_interval = 1;
 
-	fprintf(stderr, "generating data...\n");
+	fprintf(stderr, "generating data (client-side)...\n");
 
 	/*
 	 * we do all of this in one transaction to enable the backend's
@@ -3828,15 +3842,8 @@ initGenerateData(PGconn *con)
 	 */
 	executeStatement(con, "begin");
 
-	/*
-	 * truncate away any old data, in one command in case there are foreign
-	 * keys
-	 */
-	executeStatement(con, "truncate table "
-					 "pgbench_accounts, "
-					 "pgbench_branches, "
-					 "pgbench_history, "
-					 "pgbench_tellers");
+	/* truncate away any old data */
+	initTruncateTables(con);
 
 	/*
 	 * fill branches, tellers, accounts in that order in case foreign keys
@@ -3941,6 +3948,51 @@ initGenerateData(PGconn *con)
 }
 
 /*
+ * Fill the standard tables with some data generated on the server
+ *
+ * As already the case with the client-side data generation, the filler
+ * column defaults to NULL in pgbench_branches and pgbench_tellers,
+ * and is a blank-padded string in pgbench_accounts.
+ */
+static void
+initGenerateDataServerSide(PGconn *con)
+{
+	char		sql[256];
+
+	fprintf(stderr, "generating data (server-side)...\n");
+
+	/*
+	 * we do all of this in one transaction to enable the backend's
+	 * data-loading optimizations
+	 */
+	executeStatement(con, "begin");
+
+	/* truncate away any old data */
+	initTruncateTables(con);
+
+	snprintf(sql, sizeof(sql),
+			 "insert into pgbench_branches(bid,bbalance) "
+			 "select bid, 0 "
+			 "from generate_series(1, %d) as bid", nbranches * scale);
+	executeStatement(con, sql);
+
+	snprintf(sql, sizeof(sql),
+			 "insert into pgbench_tellers(tid,bid,tbalance) "
+			 "select tid, (tid - 1) / %d + 1, 0 "
+			 "from generate_series(1, %d) as tid", ntellers, ntellers * scale);
+	executeStatement(con, sql);
+
+	snprintf(sql, sizeof(sql),
+			 "insert into pgbench_accounts(aid,bid,abalance,filler) "
+			 "select aid, (aid - 1) / %d + 1, 0, '' "
+			 "from generate_series(1, "INT64_FORMAT") as aid",
+			 naccounts, (int64) naccounts * scale);
+	executeStatement(con, sql);
+
+	executeStatement(con, "commit");
+}
+
+/*
  * Invoke vacuum on the standard tables
  */
 static void
@@ -4020,21 +4072,21 @@ initCreateFKeys(PGconn *con)
 static void
 checkInitSteps(const char *initialize_steps)
 {
-	const char *step;
-
 	if (initialize_steps[0] == '\0')
 	{
 		fprintf(stderr, "no initialization steps specified\n");
 		exit(1);
 	}
 
-	for (step = initialize_steps; *step != '\0'; step++)
+	for (const char *step = initialize_steps; *step != '\0'; step++)
 	{
-		if (strchr("dtgvpf ", *step) == NULL)
+		if (strchr(ALL_INIT_STEPS " ", *step) == NULL)
 		{
-			fprintf(stderr, "unrecognized initialization step \"%c\"\n",
+			fprintf(stderr,
+					"unrecognized initialization step \"%c\"\n",
 					*step);
-			fprintf(stderr, "allowed steps are: \"d\", \"t\", \"g\", \"v\", \"p\", \"f\"\n");
+			fprintf(stderr,
+					"Allowed step characters are: \"" ALL_INIT_STEPS "\".\n");
 			exit(1);
 		}
 	}
@@ -4075,8 +4127,12 @@ runInitSteps(const char *initialize_steps)
 				initCreateTables(con);
 				break;
 			case 'g':
-				op = "generate";
-				initGenerateData(con);
+				op = "client-side generate";
+				initGenerateDataClientSide(con);
+				break;
+			case 'G':
+				op = "server-side generate";
+				initGenerateDataServerSide(con);
 				break;
 			case 'v':
 				op = "vacuum";

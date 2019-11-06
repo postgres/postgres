@@ -147,7 +147,7 @@ my @options = (
 	[
 		'invalid init step',
 		'-i -I dta',
-		[ qr{unrecognized initialization step}, qr{allowed steps are} ]
+		[ qr{unrecognized initialization step}, qr{Allowed step characters are} ]
 	],
 	[
 		'bad random seed',

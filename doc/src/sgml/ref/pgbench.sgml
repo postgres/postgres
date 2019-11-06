@@ -193,11 +193,33 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
           </listitem>
          </varlistentry>
          <varlistentry>
-          <term><literal>g</literal> (Generate data)</term>
+          <term><literal>g</literal> or <literal>G</literal> (Generate data, client-side or server-side)</term>
           <listitem>
            <para>
             Generate data and load it into the standard tables,
             replacing any data already present.
+           </para>
+           <para>
+            With <literal>g</literal> (client-side data generation),
+            data is generated in <command>pgbench</command> client and then
+            sent to the server. This uses the client/server bandwidth
+            extensively through a <command>COPY</command>.
+            Using <literal>g</literal> causes logging to print one message
+            every 100,000 rows when generating data into
+            <structname>pgbench_accounts</structname> table.
+           </para>
+           <para>
+            With <literal>G</literal> (server-side data generation),
+            only limited queries are sent from <command>pgbench</command>
+            client and then data is actually generated in the server.
+            No significant bandwidth is required for this variant, but
+            the server will do more work.
+            Using <literal>G</literal> causes logging not to print any progress
+            message when generating data into
+            <structname>pgbench_accounts</structname> table.
+           </para>
+           <para>
+            
            </para>
           </listitem>
          </varlistentry>
@@ -262,8 +284,12 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <listitem>
        <para>
         Switch logging to quiet mode, producing only one progress message per 5
-        seconds. The default logging prints one message each 100000 rows, which
+        seconds. The default logging prints one message each 100,000 rows, which
         often outputs many lines per second (especially on good hardware).
+       </para>
+       <para>
+        This setting has no effect if <literal>G</literal> is specified
+        in <option>-I</option>.
        </para>
       </listitem>
      </varlistentry>

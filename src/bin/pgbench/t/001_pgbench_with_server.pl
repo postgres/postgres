@@ -130,7 +130,7 @@ pgbench(
 
 # Test interaction of --init-steps with legacy step-selection options
 pgbench(
-	'--initialize --init-steps=dtpvgvv --no-vacuum --foreign-keys --unlogged-tables --partitions=3',
+	'--initialize --init-steps=dtpvGvv --no-vacuum --foreign-keys --unlogged-tables --partitions=3',
 	0,
 	[qr{^$}],
 	[
@@ -138,7 +138,7 @@ pgbench(
 		qr{creating tables},
 		qr{creating 3 partitions},
 		qr{creating primary keys},
-		qr{.* of .* tuples \(.*\) done},
+		qr{generating data \(server-side\)},
 		qr{creating foreign keys},
 		qr{(?!vacuuming)}, # no vacuum
 		qr{done in \d+\.\d\d s }
