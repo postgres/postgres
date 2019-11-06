@@ -23,7 +23,7 @@
    There are considerable robustness and security risks in using background
    worker processes because, being written in the <literal>C</literal> language,
    they have unrestricted access to data.  Administrators wishing to enable
-   modules that include background worker process should exercise extreme
+   modules that include background worker processes should exercise extreme
    caution.  Only carefully audited modules should be permitted to run
    background worker processes.
   </para>
