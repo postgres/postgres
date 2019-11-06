@@ -2399,7 +2399,14 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_RenameStmt:
-			tag = AlterObjectTypeCommandTag(((RenameStmt *) parsetree)->renameType);
+			/*
+			 * When the column is renamed, the command tag is created
+			 * from its relation type
+			 */
+			tag = AlterObjectTypeCommandTag(
+				((RenameStmt *) parsetree)->renameType == OBJECT_COLUMN ?
+				((RenameStmt *) parsetree)->relationType :
+				((RenameStmt *) parsetree)->renameType);
 			break;
 
 		case T_AlterObjectDependsStmt:
