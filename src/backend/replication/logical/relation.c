@@ -267,7 +267,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		 */
 		desc = RelationGetDescr(entry->localrel);
 		oldctx = MemoryContextSwitchTo(LogicalRepRelMapContext);
-		entry->attrmap = palloc(desc->natts * sizeof(int));
+		entry->attrmap = palloc(desc->natts * sizeof(AttrNumber));
 		MemoryContextSwitchTo(oldctx);
 
 		found = 0;
