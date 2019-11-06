@@ -4638,7 +4638,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     </row>
     <row>
      <entry><type>bool</type></entry>
-     <entry><type>char</type></entry>
+     <entry><type>unsigned char</type></entry>
     </row>
 
    </tbody>
