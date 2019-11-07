@@ -1216,15 +1216,8 @@ dtoi8(PG_FUNCTION_ARGS)
 	 */
 	num = rint(num);
 
-	/*
-	 * Range check.  We must be careful here that the boundary values are
-	 * expressed exactly in the float domain.  We expect PG_INT64_MIN to be an
-	 * exact power of 2, so it will be represented exactly; but PG_INT64_MAX
-	 * isn't, and might get rounded off, so avoid using it.
-	 */
-	if (unlikely(num < (float8) PG_INT64_MIN ||
-				 num >= -((float8) PG_INT64_MIN) ||
-				 isnan(num)))
+	/* Range check */
+	if (unlikely(isnan(num) || !FLOAT8_FITS_IN_INT64(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));
@@ -1258,15 +1251,8 @@ ftoi8(PG_FUNCTION_ARGS)
 	 */
 	num = rint(num);
 
-	/*
-	 * Range check.  We must be careful here that the boundary values are
-	 * expressed exactly in the float domain.  We expect PG_INT64_MIN to be an
-	 * exact power of 2, so it will be represented exactly; but PG_INT64_MAX
-	 * isn't, and might get rounded off, so avoid using it.
-	 */
-	if (unlikely(num < (float4) PG_INT64_MIN ||
-				 num >= -((float4) PG_INT64_MIN) ||
-				 isnan(num)))
+	/* Range check */
+	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT64(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("bigint out of range")));

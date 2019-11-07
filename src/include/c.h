@@ -1030,6 +1030,30 @@ extern void ExceptionalCondition(const char *conditionName,
 			*_start++ = 0; \
 	} while (0)
 
+/*
+ * Macros for range-checking float values before converting to integer.
+ * We must be careful here that the boundary values are expressed exactly
+ * in the float domain.  PG_INTnn_MIN is an exact power of 2, so it will
+ * be represented exactly; but PG_INTnn_MAX isn't, and might get rounded
+ * off, so avoid using that.
+ * The input must be rounded to an integer beforehand, typically with rint(),
+ * else we might draw the wrong conclusion about close-to-the-limit values.
+ * These macros will do the right thing for Inf, but not necessarily for NaN,
+ * so check isnan(num) first if that's a possibility.
+ */
+#define FLOAT4_FITS_IN_INT16(num) \
+	((num) >= (float4) PG_INT16_MIN && (num) < -((float4) PG_INT16_MIN))
+#define FLOAT4_FITS_IN_INT32(num) \
+	((num) >= (float4) PG_INT32_MIN && (num) < -((float4) PG_INT32_MIN))
+#define FLOAT4_FITS_IN_INT64(num) \
+	((num) >= (float4) PG_INT64_MIN && (num) < -((float4) PG_INT64_MIN))
+#define FLOAT8_FITS_IN_INT16(num) \
+	((num) >= (float8) PG_INT16_MIN && (num) < -((float8) PG_INT16_MIN))
+#define FLOAT8_FITS_IN_INT32(num) \
+	((num) >= (float8) PG_INT32_MIN && (num) < -((float8) PG_INT32_MIN))
+#define FLOAT8_FITS_IN_INT64(num) \
+	((num) >= (float8) PG_INT64_MIN && (num) < -((float8) PG_INT64_MIN))
+
 
 /* ----------------------------------------------------------------
  *				Section 8:	random stuff

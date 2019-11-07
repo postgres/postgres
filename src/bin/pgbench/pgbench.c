@@ -1675,9 +1675,9 @@ coerceToInt(PgBenchValue *pval, int64 *ival)
 	}
 	else if (pval->type == PGBT_DOUBLE)
 	{
-		double		dval = pval->u.dval;
+		double		dval = rint(pval->u.dval);
 
-		if (dval < PG_INT64_MIN || PG_INT64_MAX < dval)
+		if (isnan(dval) || !FLOAT8_FITS_IN_INT64(dval))
 		{
 			fprintf(stderr, "double to int overflow for %f\n", dval);
 			return false;
