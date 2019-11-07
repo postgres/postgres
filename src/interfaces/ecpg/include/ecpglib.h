@@ -12,12 +12,6 @@
 #include "sqlca.h"
 #include <string.h>
 
-#ifdef ENABLE_NLS
-extern char *ecpg_gettext(const char *msgid) pg_attribute_format_arg(1);
-#else
-#define ecpg_gettext(x) (x)
-#endif
-
 #ifndef __cplusplus
 #ifndef bool
 #define bool char
