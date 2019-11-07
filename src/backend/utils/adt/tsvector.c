@@ -41,8 +41,9 @@ compareWordEntryPos(const void *a, const void *b)
 }
 
 /*
- * Removes duplicate pos entries. If there's two entries with same pos
- * but different weight, the higher weight is retained.
+ * Removes duplicate pos entries. If there's two entries with same pos but
+ * different weight, the higher weight is retained, so we can't use
+ * qunique here.
  *
  * Returns new length.
  */

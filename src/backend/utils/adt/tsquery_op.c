@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "lib/qunique.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 
@@ -302,29 +303,6 @@ cmp_string(const void *a, const void *b)
 	return strcmp(sa, sb);
 }
 
-static int
-remove_duplicates(char **strings, int n)
-{
-	if (n <= 1)
-		return n;
-	else
-	{
-		int			i;
-		char	   *prev = strings[0];
-		int			new_n = 1;
-
-		for (i = 1; i < n; i++)
-		{
-			if (strcmp(strings[i], prev) != 0)
-			{
-				strings[new_n++] = strings[i];
-				prev = strings[i];
-			}
-		}
-		return new_n;
-	}
-}
-
 Datum
 tsq_mcontains(PG_FUNCTION_ARGS)
 {
@@ -342,9 +320,10 @@ tsq_mcontains(PG_FUNCTION_ARGS)
 
 	/* Sort and remove duplicates from both arrays */
 	qsort(query_values, query_nvalues, sizeof(char *), cmp_string);
-	query_nvalues = remove_duplicates(query_values, query_nvalues);
+	query_nvalues = qunique(query_values, query_nvalues, sizeof(char *),
+							cmp_string);
 	qsort(ex_values, ex_nvalues, sizeof(char *), cmp_string);
-	ex_nvalues = remove_duplicates(ex_values, ex_nvalues);
+	ex_nvalues = qunique(ex_values, ex_nvalues, sizeof(char *), cmp_string);
 
 	if (ex_nvalues > query_nvalues)
 		result = false;

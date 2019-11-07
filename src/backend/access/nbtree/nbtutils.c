@@ -21,6 +21,7 @@
 #include "access/reloptions.h"
 #include "access/relscan.h"
 #include "commands/progress.h"
+#include "lib/qunique.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/datum.h"
@@ -435,8 +436,6 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 	Oid			elemtype;
 	RegProcedure cmp_proc;
 	BTSortArrayContext cxt;
-	int			last_non_dup;
-	int			i;
 
 	if (nelems <= 1)
 		return nelems;			/* no work to do */
@@ -475,20 +474,8 @@ _bt_sort_array_elements(IndexScanDesc scan, ScanKey skey,
 			  _bt_compare_array_elements, (void *) &cxt);
 
 	/* Now scan the sorted elements and remove duplicates */
-	last_non_dup = 0;
-	for (i = 1; i < nelems; i++)
-	{
-		int32		compare;
-
-		compare = DatumGetInt32(FunctionCall2Coll(&cxt.flinfo,
-												  cxt.collation,
-												  elems[last_non_dup],
-												  elems[i]));
-		if (compare != 0)
-			elems[++last_non_dup] = elems[i];
-	}
-
-	return last_non_dup + 1;
+	return qunique_arg(elems, nelems, sizeof(Datum),
+					   _bt_compare_array_elements, &cxt);
 }
 
 /*

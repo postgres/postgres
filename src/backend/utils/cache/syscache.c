@@ -74,6 +74,7 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
+#include "lib/qunique.h"
 #include "utils/rel.h"
 #include "utils/catcache.h"
 #include "utils/syscache.h"
@@ -1010,8 +1011,6 @@ void
 InitCatalogCache(void)
 {
 	int			cacheId;
-	int			i,
-				j;
 
 	StaticAssertStmt(SysCacheSize == (int) lengthof(cacheinfo),
 					 "SysCacheSize does not match syscache.c's array");
@@ -1048,21 +1047,15 @@ InitCatalogCache(void)
 	/* Sort and de-dup OID arrays, so we can use binary search. */
 	pg_qsort(SysCacheRelationOid, SysCacheRelationOidSize,
 			 sizeof(Oid), oid_compare);
-	for (i = 1, j = 0; i < SysCacheRelationOidSize; i++)
-	{
-		if (SysCacheRelationOid[i] != SysCacheRelationOid[j])
-			SysCacheRelationOid[++j] = SysCacheRelationOid[i];
-	}
-	SysCacheRelationOidSize = j + 1;
+	SysCacheRelationOidSize =
+		qunique(SysCacheRelationOid, SysCacheRelationOidSize, sizeof(Oid),
+				oid_compare);
 
 	pg_qsort(SysCacheSupportingRelOid, SysCacheSupportingRelOidSize,
 			 sizeof(Oid), oid_compare);
-	for (i = 1, j = 0; i < SysCacheSupportingRelOidSize; i++)
-	{
-		if (SysCacheSupportingRelOid[i] != SysCacheSupportingRelOid[j])
-			SysCacheSupportingRelOid[++j] = SysCacheSupportingRelOid[i];
-	}
-	SysCacheSupportingRelOidSize = j + 1;
+	SysCacheSupportingRelOidSize =
+		qunique(SysCacheSupportingRelOid, SysCacheSupportingRelOidSize,
+				sizeof(Oid), oid_compare);
 
 	CacheInitialized = true;
 }

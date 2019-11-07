@@ -6,6 +6,7 @@
 #include <ctype.h>
 
 #include "catalog/pg_type.h"
+#include "lib/qunique.h"
 #include "trgm.h"
 #include "tsearch/ts_locale.h"
 #include "utils/lsyscache.h"
@@ -160,26 +161,6 @@ static int
 comp_trgm(const void *a, const void *b)
 {
 	return CMPTRGM(a, b);
-}
-
-static int
-unique_array(trgm *a, int len)
-{
-	trgm	   *curend,
-			   *tmp;
-
-	curend = tmp = a;
-	while (tmp - a < len)
-		if (CMPTRGM(tmp, curend))
-		{
-			curend++;
-			CPTRGM(curend, tmp);
-			tmp++;
-		}
-		else
-			tmp++;
-
-	return curend + 1 - a;
 }
 
 /*
@@ -394,7 +375,7 @@ generate_trgm(char *str, int slen)
 	if (len > 1)
 	{
 		qsort((void *) GETARR(trg), len, sizeof(trgm), comp_trgm);
-		len = unique_array(GETARR(trg), len);
+		len = qunique(GETARR(trg), len, sizeof(trgm), comp_trgm);
 	}
 
 	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, len));
@@ -942,7 +923,7 @@ generate_wildcard_trgm(const char *str, int slen)
 	if (len > 1)
 	{
 		qsort((void *) GETARR(trg), len, sizeof(trgm), comp_trgm);
-		len = unique_array(GETARR(trg), len);
+		len = qunique(GETARR(trg), len, sizeof(trgm), comp_trgm);
 	}
 
 	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, len));

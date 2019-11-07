@@ -21,6 +21,7 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "lib/qunique.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "parser/parse_coerce.h"
@@ -475,16 +476,9 @@ tsvector_delete_by_indices(TSVector tsv, int *indices_to_delete,
 	 */
 	if (indices_count > 1)
 	{
-		int			kp;
-
 		qsort(indices_to_delete, indices_count, sizeof(int), compare_int);
-		kp = 0;
-		for (k = 1; k < indices_count; k++)
-		{
-			if (indices_to_delete[k] != indices_to_delete[kp])
-				indices_to_delete[++kp] = indices_to_delete[k];
-		}
-		indices_count = ++kp;
+		indices_count = qunique(indices_to_delete, indices_count, sizeof(int),
+								compare_int);
 	}
 
 	/*
@@ -761,7 +755,6 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 	bool	   *nulls;
 	int			nitems,
 				i,
-				j,
 				tslen,
 				datalen = 0;
 	char	   *cur;
@@ -781,13 +774,8 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 	if (nitems > 1)
 	{
 		qsort(dlexemes, nitems, sizeof(Datum), compare_text_lexemes);
-		j = 0;
-		for (i = 1; i < nitems; i++)
-		{
-			if (compare_text_lexemes(&dlexemes[j], &dlexemes[i]) < 0)
-				dlexemes[++j] = dlexemes[i];
-		}
-		nitems = ++j;
+		nitems = qunique(dlexemes, nitems, sizeof(Datum),
+						 compare_text_lexemes);
 	}
 
 	/* Calculate space needed for surviving lexemes. */
@@ -1271,39 +1259,6 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 }
 
 /*
- * Removes duplicate pos entries. We can't use uniquePos() from
- * tsvector.c because array might be longer than MAXENTRYPOS
- *
- * Returns new length.
- */
-static int
-uniqueLongPos(WordEntryPos *pos, int npos)
-{
-	WordEntryPos *pos_iter,
-			   *result;
-
-	if (npos <= 1)
-		return npos;
-
-	qsort((void *) pos, npos, sizeof(WordEntryPos), compareWordEntryPos);
-
-	result = pos;
-	pos_iter = pos + 1;
-	while (pos_iter < pos + npos)
-	{
-		if (WEP_GETPOS(*pos_iter) != WEP_GETPOS(*result))
-		{
-			result++;
-			*result = WEP_GETPOS(*pos_iter);
-		}
-
-		pos_iter++;
-	}
-
-	return result + 1 - pos;
-}
-
-/*
  * is there value 'val' in array or not ?
  */
 static bool
@@ -1397,7 +1352,9 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 		{
 			/* Sort and make unique array of found positions */
 			data->pos = allpos;
-			data->npos = uniqueLongPos(allpos, npos);
+			qsort(data->pos, npos, sizeof(WordEntryPos), compareWordEntryPos);
+			data->npos = qunique(data->pos, npos, sizeof(WordEntryPos),
+								 compareWordEntryPos);
 			data->allocated = true;
 		}
 	}

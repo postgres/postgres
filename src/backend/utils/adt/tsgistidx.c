@@ -16,6 +16,7 @@
 
 #include "access/gist.h"
 #include "access/heaptoast.h"
+#include "lib/qunique.h"
 #include "port/pg_bitutils.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
@@ -122,31 +123,6 @@ compareint(const void *va, const void *vb)
 	return (a > b) ? 1 : -1;
 }
 
-/*
- * Removes duplicates from an array of int32. 'l' is
- * size of the input array. Returns the new size of the array.
- */
-static int
-uniqueint(int32 *a, int32 l)
-{
-	int32	   *ptr,
-			   *res;
-
-	if (l <= 1)
-		return l;
-
-	ptr = res = a;
-
-	qsort((void *) a, l, sizeof(int32), compareint);
-
-	while (ptr - a < l)
-		if (*ptr != *res)
-			*(++res) = *ptr++;
-		else
-			ptr++;
-	return res + 1 - a;
-}
-
 static void
 makesign(BITVECP sign, SignTSVector *a)
 {
@@ -193,7 +169,8 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			ptr++;
 		}
 
-		len = uniqueint(GETARR(res), val->size);
+		qsort(GETARR(res), val->size, sizeof(int), compareint);
+		len = qunique(GETARR(res), val->size, sizeof(int), compareint);
 		if (len != val->size)
 		{
 			/*

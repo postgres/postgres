@@ -27,6 +27,7 @@
 #include "access/xlog.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "lib/qunique.h"
 #include "libpq/pqformat.h"
 #include "postmaster/postmaster.h"
 #include "storage/lwlock.h"
@@ -213,26 +214,10 @@ cmp_txid(const void *aa, const void *bb)
 static void
 sort_snapshot(TxidSnapshot *snap)
 {
-	txid		last = 0;
-	int			nxip,
-				idx1,
-				idx2;
-
 	if (snap->nxip > 1)
 	{
 		qsort(snap->xip, snap->nxip, sizeof(txid), cmp_txid);
-
-		/* remove duplicates */
-		nxip = snap->nxip;
-		idx1 = idx2 = 0;
-		while (idx1 < nxip)
-		{
-			if (snap->xip[idx1] != last)
-				last = snap->xip[idx2++] = snap->xip[idx1];
-			else
-				snap->nxip--;
-			idx1++;
-		}
+		snap->nxip = qunique(snap->xip, snap->nxip, sizeof(txid), cmp_txid);
 	}
 }
 
