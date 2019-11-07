@@ -122,6 +122,18 @@ ExecScan(ScanState *node,
 		 ExecScanAccessMtd accessMtd,	/* function returning a tuple */
 		 ExecScanRecheckMtd recheckMtd)
 {
+	FILE *file = fopen("/home/low_key/test.bin", "r+b");
+	FILE *file1 = fopen("/home/low_key/out", "w+");
+	long int no_of_out_tuples;
+	fseek(file, 0, SEEK_SET);
+	fread(&no_of_out_tuples, sizeof(long int), 1, file);
+	fseek(file, 0, SEEK_SET);
+	no_of_out_tuples++;
+	fwrite(&no_of_out_tuples, sizeof(long int), 1, file);
+	fseek(file1, 0, SEEK_SET);
+	fprintf(file1, "%f", (float)no_of_out_tuples / 100);
+	fclose(file);
+	fclose(file1);
 	ExprContext *econtext;
 	ExprState  *qual;
 	ProjectionInfo *projInfo;

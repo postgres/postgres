@@ -141,6 +141,11 @@ static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	
+	FILE *file = fopen("/home/low_key/test.bin", "wb");
+	long int inp = -1;
+	fwrite(&inp, sizeof(long int), 1, file);
+	fclose(file);
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);
 	else
