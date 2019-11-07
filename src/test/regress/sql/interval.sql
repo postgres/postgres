@@ -73,6 +73,9 @@ INSERT INTO INTERVAL_TBL_OF (f1) VALUES ('-2147483649 days');
 INSERT INTO INTERVAL_TBL_OF (f1) VALUES ('2147483647 years');
 INSERT INTO INTERVAL_TBL_OF (f1) VALUES ('-2147483648 years');
 
+-- Test edge-case overflow detection in interval multiplication
+select extract(epoch from '256 microseconds'::interval * (2^55)::float8);
+
 SELECT r1.*, r2.*
    FROM INTERVAL_TBL_OF r1, INTERVAL_TBL_OF r2
    WHERE r1.f1 > r2.f1
