@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 # Create publisher node
 my $node_publisher = get_new_node('publisher');
@@ -29,7 +29,7 @@ $node_subscriber->safe_psql('postgres',
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub FOR TABLE test_tab");
+	"CREATE PUBLICATION tap_pub FOR ALL TABLES");
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub"
@@ -87,6 +87,39 @@ $result =
 	"SELECT count(*), count(c), count(d = 999), count(e) FROM test_tab");
 is($result, qq(3|3|3|3),
 	'check extra columns contain local defaults after apply');
+
+
+# Check a bug about adding a replica identity column on the subscriber
+# that was not yet mapped to a column on the publisher.  This would
+# result in errors on the subscriber and replication thus not
+# progressing.
+# (https://www.postgresql.org/message-id/flat/a9139c29-7ddd-973b-aa7f-71fed9c38d75%40minerva.info)
+
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE test_tab2 (a int)");
+
+$node_subscriber->safe_psql('postgres',
+	"CREATE TABLE test_tab2 (a int)");
+
+$node_subscriber->safe_psql('postgres',
+	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION");
+
+# Add replica identity column.  (The serial is not necessary, but it's
+# a convenient way to get a default on the new column so that rows
+# from the publisher that don't have the column yet can be inserted.)
+$node_subscriber->safe_psql('postgres',
+	"ALTER TABLE test_tab2 ADD COLUMN b serial PRIMARY KEY");
+
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO test_tab2 VALUES (1)");
+
+$node_publisher->wait_for_catchup('tap_sub');
+
+is($node_subscriber->safe_psql('postgres',
+							   "SELECT count(*), min(a), max(a) FROM test_tab2"),
+   qq(1|1|1),
+   'check replicated inserts on subscriber');
+
 
 $node_subscriber->stop;
 $node_publisher->stop;
