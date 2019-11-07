@@ -338,14 +338,16 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
 		} \
 		else \
 			_do_rethrow = true; \
-		{
+		{ \
+			PG_exception_stack = _save_exception_stack; \
+			error_context_stack = _save_context_stack
 
 #define PG_END_TRY()  \
 		} \
-		PG_exception_stack = _save_exception_stack; \
-		error_context_stack = _save_context_stack; \
 		if (_do_rethrow) \
 				PG_RE_THROW(); \
+		PG_exception_stack = _save_exception_stack; \
+		error_context_stack = _save_context_stack; \
 	} while (0)
 
 /*

@@ -3868,7 +3868,7 @@ xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt)
 
 			result = xmlBuffer_to_xmltype(buf);
 		}
-		PG_FINALLY()
+		PG_FINALLY();
 		{
 			if (nodefree)
 				nodefree(cur_copy);
