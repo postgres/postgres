@@ -2461,8 +2461,12 @@ query_to_oid_list(const char *query)
 {
 	uint64		i;
 	List	   *list = NIL;
+	int			spi_result;
 
-	SPI_execute(query, true, 0);
+	spi_result = SPI_execute(query, true, 0);
+	if (spi_result != SPI_OK_SELECT)
+		elog(ERROR, "SPI_execute returned %s for %s",
+			 SPI_result_code_string(spi_result), query);
 
 	for (i = 0; i < SPI_processed; i++)
 	{
