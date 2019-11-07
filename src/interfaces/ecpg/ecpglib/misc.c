@@ -18,7 +18,6 @@
 #include "pg_config_paths.h"
 #include "sqlca.h"
 
-#ifdef HAVE_LONG_LONG_INT
 #ifndef LONG_LONG_MIN
 #ifdef LLONG_MIN
 #define LONG_LONG_MIN LLONG_MIN
@@ -26,7 +25,6 @@
 #define LONG_LONG_MIN LONGLONG_MIN
 #endif							/* LLONG_MIN */
 #endif							/* LONG_LONG_MIN */
-#endif							/* HAVE_LONG_LONG_INT */
 
 bool		ecpg_internal_regression_mode = false;
 
@@ -340,12 +338,10 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 		case ECPGt_date:
 			*((long *) ptr) = LONG_MIN;
 			break;
-#ifdef HAVE_LONG_LONG_INT
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
 			*((long long *) ptr) = LONG_LONG_MIN;
 			break;
-#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			memset((char *) ptr, 0xff, sizeof(float));
 			break;
@@ -415,13 +411,11 @@ ECPGis_noind_null(enum ECPGttype type, const void *ptr)
 			if (*((const long *) ptr) == LONG_MIN)
 				return true;
 			break;
-#ifdef HAVE_LONG_LONG_INT
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
 			if (*((const long long *) ptr) == LONG_LONG_MIN)
 				return true;
 			break;
-#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			return _check(ptr, sizeof(float));
 			break;

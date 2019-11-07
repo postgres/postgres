@@ -383,9 +383,6 @@
 /* Define to 1 if `long int' works and is 64 bits. */
 #undef HAVE_LONG_INT_64
 
-/* Define to 1 if the system has the type `long long int'. */
-#undef HAVE_LONG_LONG_INT
-
 /* Define to 1 if `long long int' works and is 64 bits. */
 #undef HAVE_LONG_LONG_INT_64
 
@@ -683,9 +680,6 @@
 
 /* Define to 1 if you have the `unsetenv' function. */
 #undef HAVE_UNSETENV
-
-/* Define to 1 if the system has the type `unsigned long long int'. */
-#undef HAVE_UNSIGNED_LONG_LONG_INT
 
 /* Define to 1 if you have the `uselocale' function. */
 #undef HAVE_USELOCALE

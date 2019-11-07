@@ -1203,7 +1203,6 @@ typedef union PGAlignedXLogBlock
 extern int	fdatasync(int fildes);
 #endif
 
-#ifdef HAVE_LONG_LONG_INT
 /* Older platforms may provide strto[u]ll functionality under other names */
 #if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)
 #define strtoll __strtoll
@@ -1232,7 +1231,6 @@ extern long long strtoll(const char *str, char **endptr, int base);
 #if defined(HAVE_STRTOULL) && !HAVE_DECL_STRTOULL
 extern unsigned long long strtoull(const char *str, char **endptr, int base);
 #endif
-#endif							/* HAVE_LONG_LONG_INT */
 
 #if !defined(HAVE_MEMMOVE) && !defined(memmove)
 #define memmove(d, s, c)		bcopy(s, d, c)

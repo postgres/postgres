@@ -134,14 +134,12 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 		case ECPGt_unsigned_long:
 			*(unsigned long *) var = (unsigned long) value;
 			break;
-#ifdef HAVE_LONG_LONG_INT
 		case ECPGt_long_long:
 			*(long long int *) var = (long long int) value;
 			break;
 		case ECPGt_unsigned_long_long:
 			*(unsigned long long int *) var = (unsigned long long int) value;
 			break;
-#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			*(float *) var = (float) value;
 			break;
@@ -179,14 +177,12 @@ set_int_item(int lineno, int *target, const void *var, enum ECPGttype vartype)
 		case ECPGt_unsigned_long:
 			*target = *(const unsigned long *) var;
 			break;
-#ifdef HAVE_LONG_LONG_INT
 		case ECPGt_long_long:
 			*target = *(const long long int *) var;
 			break;
 		case ECPGt_unsigned_long_long:
 			*target = *(const unsigned long long int *) var;
 			break;
-#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			*target = *(const float *) var;
 			break;

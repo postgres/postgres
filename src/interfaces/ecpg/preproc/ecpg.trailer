@@ -796,22 +796,8 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 		| SQL_UNSIGNED INT_P				{ $$ = ECPGt_unsigned_int; }
 		| SQL_UNSIGNED SQL_LONG				{ $$ = ECPGt_unsigned_long; }
 		| SQL_UNSIGNED SQL_LONG INT_P		{ $$ = ECPGt_unsigned_long; }
-		| SQL_UNSIGNED SQL_LONG SQL_LONG
-		{
-#ifdef HAVE_LONG_LONG_INT
-			$$ = ECPGt_unsigned_long_long;
-#else
-			$$ = ECPGt_unsigned_long;
-#endif
-		}
-		| SQL_UNSIGNED SQL_LONG SQL_LONG INT_P
-		{
-#ifdef HAVE_LONG_LONG_INT
-			$$ = ECPGt_unsigned_long_long;
-#else
-			$$ = ECPGt_unsigned_long;
-#endif
-		}
+		| SQL_UNSIGNED SQL_LONG SQL_LONG	{ $$ = ECPGt_unsigned_long_long; }
+		| SQL_UNSIGNED SQL_LONG SQL_LONG INT_P { $$ = ECPGt_unsigned_long_long; }
 		| SQL_UNSIGNED CHAR_P			{ $$ = ECPGt_unsigned_char; }
 		;
 
@@ -820,22 +806,8 @@ signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
 		| INT_P						{ $$ = ECPGt_int; }
 		| SQL_LONG					{ $$ = ECPGt_long; }
 		| SQL_LONG INT_P			{ $$ = ECPGt_long; }
-		| SQL_LONG SQL_LONG
-		{
-#ifdef HAVE_LONG_LONG_INT
-			$$ = ECPGt_long_long;
-#else
-			$$ = ECPGt_long;
-#endif
-		}
-		| SQL_LONG SQL_LONG INT_P
-		{
-#ifdef HAVE_LONG_LONG_INT
-			$$ = ECPGt_long_long;
-#else
-			$$ = ECPGt_long;
-#endif
-		}
+		| SQL_LONG SQL_LONG			{ $$ = ECPGt_long_long; }
+		| SQL_LONG SQL_LONG INT_P	{ $$ = ECPGt_long_long; }
 		| SQL_BOOL					{ $$ = ECPGt_bool; }
 		| CHAR_P					{ $$ = ECPGt_char; }
 		| DOUBLE_P					{ $$ = ECPGt_double; }
