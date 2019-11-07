@@ -956,7 +956,7 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 			 *
 			 * Note that record headers are MAXALIGN'ed
 			 */
-			if (MAXALIGN(header->xlp_rem_len) > (XLOG_BLCKSZ - pageHeaderSize))
+			if (MAXALIGN(header->xlp_rem_len) >= (XLOG_BLCKSZ - pageHeaderSize))
 				tmpRecPtr = targetPagePtr + XLOG_BLCKSZ;
 			else
 			{
