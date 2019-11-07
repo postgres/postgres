@@ -172,7 +172,7 @@
     used to signal that the trigger performed the necessary data
     modifications in the view.  This will cause the count of the number
     of rows affected by the command to be incremented. For
-    <command>INSERT</> and <command>UPDATE</> operations, the trigger
+    <command>INSERT</> and <command>UPDATE</> operations only, the trigger
     may modify the <varname>NEW</> row before returning it.  This will
     change the data returned by
     <command>INSERT RETURNING</> or <command>UPDATE RETURNING</>,
