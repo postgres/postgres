@@ -44,14 +44,6 @@
 
 #define SAMESIGN(a,b)	(((a) < 0) == ((b) < 0))
 
-#ifndef INT64_MAX
-#define INT64_MAX	INT64CONST(0x7FFFFFFFFFFFFFFF)
-#endif
-
-#ifndef INT64_MIN
-#define INT64_MIN	(-INT64CONST(0x7FFFFFFFFFFFFFFF) - 1)
-#endif
-
 /* Set at postmaster start */
 TimestampTz PgStartTime;
 
@@ -3417,7 +3409,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	result->day += (int32) month_remainder_days;
 #ifdef HAVE_INT64_TIMESTAMP
 	result_double = rint(span->time * factor + sec_remainder * USECS_PER_SEC);
-	if (result_double > INT64_MAX || result_double < INT64_MIN)
+	if (isnan(result_double) || !FLOAT8_FITS_IN_INT64(result_double))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("interval out of range")));
