@@ -219,6 +219,12 @@ unsigned	ecpg_hex_dec_len(unsigned srclen);
 unsigned	ecpg_hex_enc_len(unsigned srclen);
 unsigned	ecpg_hex_encode(const char *src, unsigned len, char *dst);
 
+#ifdef ENABLE_NLS
+extern char *ecpg_gettext(const char *msgid) pg_attribute_format_arg(1);
+#else
+#define ecpg_gettext(x) (x)
+#endif
+
 /* SQLSTATE values generated or processed by ecpglib (intentionally
  * not exported -- users should refer to the codes directly) */
 
