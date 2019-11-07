@@ -1380,6 +1380,24 @@ alter table fkpart2.fk_part detach partition fkpart2.fk_part_1;
 alter table fkpart2.fk_part_1 drop constraint fkey;	-- ok
 alter table fkpart2.fk_part_1_1 drop constraint my_fkey;	-- doesn't exist
 
+-- verify constraint deferrability
+create schema fkpart3
+  create table pkey (a int primary key)
+  create table fk_part (a int, constraint fkey foreign key (a) references fkpart3.pkey deferrable initially immediate) partition by list (a)
+  create table fk_part_1 partition of fkpart3.fk_part for values in (1) partition by list (a)
+  create table fk_part_1_1 partition of fkpart3.fk_part_1 for values in (1)
+  create table fk_part_2 partition of fkpart3.fk_part for values in (2);
+begin;
+set constraints fkpart3.fkey deferred;
+insert into fkpart3.fk_part values (1);
+insert into fkpart3.pkey values (1);
+commit;
+begin;
+set constraints fkpart3.fkey deferred;
+delete from fkpart3.pkey;
+delete from fkpart3.fk_part;
+commit;
+
 -- ensure we check partitions are "not used" when dropping constraints
 CREATE SCHEMA fkpart8
   CREATE TABLE tbl1(f1 int PRIMARY KEY)
@@ -1392,5 +1410,5 @@ ALTER TABLE fkpart8.tbl2 DROP CONSTRAINT tbl2_f1_fkey;
 COMMIT;
 
 \set VERBOSITY terse	\\ -- suppress cascade details
-drop schema fkpart0, fkpart1, fkpart2, fkpart8 cascade;
+drop schema fkpart0, fkpart1, fkpart2, fkpart3, fkpart8 cascade;
 \set VERBOSITY default
