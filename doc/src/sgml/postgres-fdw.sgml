@@ -483,6 +483,12 @@
    COMMITTED</literal> local transaction.  A future
    <productname>PostgreSQL</productname> release might modify these rules.
   </para>
+
+  <para>
+   Note that it is currently not supported by
+   <filename>postgres_fdw</filename> to prepare the remote transaction for
+   two-phase commit.
+  </para>
  </sect2>
 
  <sect2>
