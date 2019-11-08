@@ -236,21 +236,12 @@ typedef struct BTBuildState
 /*
  * Status record for a btree page being built.  We have one of these
  * for each active tree level.
- *
- * The reason we need to store a copy of the minimum key is that we'll
- * need to propagate it to the parent node when this page is linked
- * into its parent.  However, if the page is not a leaf page, the first
- * entry on the page doesn't need to contain a key, so we will not have
- * stored the key itself on the page.  (You might think we could skip
- * copying the minimum key on leaf pages, but actually we must have a
- * writable copy anyway because we'll poke the page's address into it
- * before passing it up to the parent...)
  */
 typedef struct BTPageState
 {
 	Page		btps_page;		/* workspace for page building */
 	BlockNumber btps_blkno;		/* block # to write this page at */
-	IndexTuple	btps_minkey;	/* copy of minimum key (first item) on page */
+	IndexTuple	btps_lowkey;	/* page's strict lower bound pivot tuple */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
 	uint32		btps_level;		/* tree level (0 = leaf) */
 	Size		btps_full;		/* "full" if less than this much free space */
@@ -717,7 +708,7 @@ _bt_pagestate(BTWriteState *wstate, uint32 level)
 	/* and assign it a page position */
 	state->btps_blkno = wstate->btws_pages_alloced++;
 
-	state->btps_minkey = NULL;
+	state->btps_lowkey = NULL;
 	/* initialize lastoff so first item goes into P_FIRSTKEY */
 	state->btps_lastoff = P_HIKEY;
 	state->btps_level = level;
@@ -980,28 +971,27 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		}
 
 		/*
-		 * Link the old page into its parent, using its minimum key. If we
-		 * don't have a parent, we have to create one; this adds a new btree
-		 * level.
+		 * Link the old page into its parent, using its low key.  If we don't
+		 * have a parent, we have to create one; this adds a new btree level.
 		 */
 		if (state->btps_next == NULL)
 			state->btps_next = _bt_pagestate(wstate, state->btps_level + 1);
 
-		Assert((BTreeTupleGetNAtts(state->btps_minkey, wstate->index) <=
+		Assert((BTreeTupleGetNAtts(state->btps_lowkey, wstate->index) <=
 				IndexRelationGetNumberOfKeyAttributes(wstate->index) &&
-				BTreeTupleGetNAtts(state->btps_minkey, wstate->index) > 0) ||
+				BTreeTupleGetNAtts(state->btps_lowkey, wstate->index) > 0) ||
 			   P_LEFTMOST((BTPageOpaque) PageGetSpecialPointer(opage)));
-		Assert(BTreeTupleGetNAtts(state->btps_minkey, wstate->index) == 0 ||
+		Assert(BTreeTupleGetNAtts(state->btps_lowkey, wstate->index) == 0 ||
 			   !P_LEFTMOST((BTPageOpaque) PageGetSpecialPointer(opage)));
-		BTreeInnerTupleSetDownLink(state->btps_minkey, oblkno);
-		_bt_buildadd(wstate, state->btps_next, state->btps_minkey);
-		pfree(state->btps_minkey);
+		BTreeInnerTupleSetDownLink(state->btps_lowkey, oblkno);
+		_bt_buildadd(wstate, state->btps_next, state->btps_lowkey);
+		pfree(state->btps_lowkey);
 
 		/*
-		 * Save a copy of the high key from the old page.  It is also used as
-		 * the minimum key for the new page.
+		 * Save a copy of the high key from the old page.  It is also the low
+		 * key for the new page.
 		 */
-		state->btps_minkey = CopyIndexTuple(oitup);
+		state->btps_lowkey = CopyIndexTuple(oitup);
 
 		/*
 		 * Set the sibling links for both pages.
@@ -1032,18 +1022,17 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	 * was created that became the current page.  Either way, the current page
 	 * definitely has space for new item.
 	 *
-	 * If the new item is the first for its page, stash a copy for later. Note
-	 * this will only happen for the first item on a level; on later pages,
-	 * the first item for a page is copied from the prior page in the code
-	 * above.  The minimum key for an entire level is nothing more than a
-	 * minus infinity (downlink only) pivot tuple placeholder.
+	 * If the new item is the first for its page, it must also be the first
+	 * item on its entire level.  On later same-level pages, a low key for a
+	 * page will be copied from the prior page in the code above.  Generate a
+	 * minus infinity low key here instead.
 	 */
 	if (last_off == P_HIKEY)
 	{
-		Assert(state->btps_minkey == NULL);
-		state->btps_minkey = CopyIndexTuple(itup);
-		/* _bt_sortaddtup() will perform full truncation later */
-		BTreeTupleSetNAtts(state->btps_minkey, 0);
+		Assert(state->btps_lowkey == NULL);
+		state->btps_lowkey = palloc0(sizeof(IndexTupleData));
+		state->btps_lowkey->t_info = sizeof(IndexTupleData);
+		BTreeTupleSetNAtts(state->btps_lowkey, 0);
 	}
 
 	/*
@@ -1083,7 +1072,7 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 		 * We have to link the last page on this level to somewhere.
 		 *
 		 * If we're at the top, it's the root, so attach it to the metapage.
-		 * Otherwise, add an entry for it to its parent using its minimum key.
+		 * Otherwise, add an entry for it to its parent using its low key.
 		 * This may cause the last page of the parent level to split, but
 		 * that's not a problem -- we haven't gotten to it yet.
 		 */
@@ -1095,16 +1084,16 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 		}
 		else
 		{
-			Assert((BTreeTupleGetNAtts(s->btps_minkey, wstate->index) <=
+			Assert((BTreeTupleGetNAtts(s->btps_lowkey, wstate->index) <=
 					IndexRelationGetNumberOfKeyAttributes(wstate->index) &&
-					BTreeTupleGetNAtts(s->btps_minkey, wstate->index) > 0) ||
+					BTreeTupleGetNAtts(s->btps_lowkey, wstate->index) > 0) ||
 				   P_LEFTMOST(opaque));
-			Assert(BTreeTupleGetNAtts(s->btps_minkey, wstate->index) == 0 ||
+			Assert(BTreeTupleGetNAtts(s->btps_lowkey, wstate->index) == 0 ||
 				   !P_LEFTMOST(opaque));
-			BTreeInnerTupleSetDownLink(s->btps_minkey, blkno);
-			_bt_buildadd(wstate, s->btps_next, s->btps_minkey);
-			pfree(s->btps_minkey);
-			s->btps_minkey = NULL;
+			BTreeInnerTupleSetDownLink(s->btps_lowkey, blkno);
+			_bt_buildadd(wstate, s->btps_next, s->btps_lowkey);
+			pfree(s->btps_lowkey);
+			s->btps_lowkey = NULL;
 		}
 
 		/*
