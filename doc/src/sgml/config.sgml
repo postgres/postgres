@@ -9489,6 +9489,32 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-backtrace-functions" xreflabel="backtrace_functions">
+      <term><varname>backtrace_functions</varname> (<type>string</type>)
+      <indexterm>
+        <primary><varname>backtrace_functions</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter contains a comma-separated list of C function names.
+        If an error is raised and the name of the internal C function where
+        the error happens matches a value in the list, then a backtrace is
+        written to the server log together with the error message.  This can
+        be used to debug specific areas of the source code.
+       </para>
+
+       <para>
+        Backtrace support is not available on all platforms, and the quality
+        of the backtraces depends on compilation options.
+       </para>
+
+       <para>
+        This parameter can only be set by superusers.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-ignore-system-indexes" xreflabel="ignore_system_indexes">
       <term><varname>ignore_system_indexes</varname> (<type>boolean</type>)
       <indexterm>
