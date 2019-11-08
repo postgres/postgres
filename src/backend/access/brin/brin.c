@@ -597,7 +597,7 @@ brinendscan(IndexScanDesc scan)
  */
 static void
 brinbuildCallback(Relation index,
-				  HeapTuple htup,
+				  ItemPointer tid,
 				  Datum *values,
 				  bool *isnull,
 				  bool tupleIsAlive,
@@ -607,7 +607,7 @@ brinbuildCallback(Relation index,
 	BlockNumber thisblock;
 	int			i;
 
-	thisblock = ItemPointerGetBlockNumber(&htup->t_self);
+	thisblock = ItemPointerGetBlockNumber(tid);
 
 	/*
 	 * If we're in a block that belongs to a future range, summarize what

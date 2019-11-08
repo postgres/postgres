@@ -140,7 +140,7 @@ static BTScanInsert bt_right_page_check_scankey(BtreeCheckState *state);
 static void bt_downlink_check(BtreeCheckState *state, BTScanInsert targetkey,
 							  BlockNumber childblock);
 static void bt_downlink_missing_check(BtreeCheckState *state);
-static void bt_tuple_present_callback(Relation index, HeapTuple htup,
+static void bt_tuple_present_callback(Relation index, ItemPointer tid,
 									  Datum *values, bool *isnull,
 									  bool tupleIsAlive, void *checkstate);
 static IndexTuple bt_normalize_tuple(BtreeCheckState *state,
@@ -1890,7 +1890,7 @@ bt_downlink_missing_check(BtreeCheckState *state)
  * also allows us to detect the corruption in many cases.
  */
 static void
-bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
+bt_tuple_present_callback(Relation index, ItemPointer tid, Datum *values,
 						  bool *isnull, bool tupleIsAlive, void *checkstate)
 {
 	BtreeCheckState *state = (BtreeCheckState *) checkstate;
@@ -1901,7 +1901,7 @@ bt_tuple_present_callback(Relation index, HeapTuple htup, Datum *values,
 
 	/* Generate a normalized index tuple for fingerprinting */
 	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
-	itup->t_tid = htup->t_self;
+	itup->t_tid = *tid;
 	norm = bt_normalize_tuple(state, itup);
 
 	/* Probe Bloom filter -- tuple should be present */

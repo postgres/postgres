@@ -141,7 +141,7 @@ typedef struct TM_FailureData
 
 /* Typedef for callback function for table_index_build_scan */
 typedef void (*IndexBuildCallback) (Relation index,
-									HeapTuple htup,
+									ItemPointer tid,
 									Datum *values,
 									bool *isnull,
 									bool tupleIsAlive,

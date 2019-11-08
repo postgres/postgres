@@ -1636,10 +1636,9 @@ heapam_index_build_range_scan(Relation heapRelation,
 			 * For a heap-only tuple, pretend its TID is that of the root. See
 			 * src/backend/access/heap/README.HOT for discussion.
 			 */
-			HeapTupleData rootTuple;
+			ItemPointerData tid;
 			OffsetNumber offnum;
 
-			rootTuple = *heapTuple;
 			offnum = ItemPointerGetOffsetNumber(&heapTuple->t_self);
 
 			if (!OffsetNumberIsValid(root_offsets[offnum - 1]))
@@ -1650,18 +1649,18 @@ heapam_index_build_range_scan(Relation heapRelation,
 										 offnum,
 										 RelationGetRelationName(heapRelation))));
 
-			ItemPointerSetOffsetNumber(&rootTuple.t_self,
-									   root_offsets[offnum - 1]);
+			ItemPointerSet(&tid, ItemPointerGetBlockNumber(&heapTuple->t_self),
+						   root_offsets[offnum - 1]);
 
 			/* Call the AM's callback routine to process the tuple */
-			callback(indexRelation, &rootTuple, values, isnull, tupleIsAlive,
+			callback(indexRelation, &tid, values, isnull, tupleIsAlive,
 					 callback_state);
 		}
 		else
 		{
 			/* Call the AM's callback routine to process the tuple */
-			callback(indexRelation, heapTuple, values, isnull, tupleIsAlive,
-					 callback_state);
+			callback(indexRelation, &heapTuple->t_self, values, isnull,
+					 tupleIsAlive, callback_state);
 		}
 	}
 
