@@ -1055,7 +1055,7 @@ replorigin_session_setup(RepOriginId node)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-			 errmsg("replication origin %d is already active for PID %d",
+			 errmsg("replication origin with OID %d is already active for PID %d",
 					curstate->roident, curstate->acquired_by)));
 		}
 
