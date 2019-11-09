@@ -104,6 +104,9 @@ $node_subscriber->safe_psql('postgres',
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION");
 
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
 # Add replica identity column.  (The serial is not necessary, but it's
 # a convenient way to get a default on the new column so that rows
 # from the publisher that don't have the column yet can be inserted.)
