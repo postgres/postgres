@@ -32,7 +32,7 @@ CONTEXT:  PL/pgSQL function inline_code_block line 3 at EXECUTE
 -- COPY FROM
 DO LANGUAGE plpgsql $$
 BEGIN
-  COPY copy1 FROM '@abs_builddir@/data/copy1.data';
+  COPY copy1 FROM '@abs_srcdir@/data/copy1.data';
 END;
 $$;
 SELECT * FROM copy1 ORDER BY 1;
@@ -46,7 +46,7 @@ SELECT * FROM copy1 ORDER BY 1;
 TRUNCATE copy1;
 DO LANGUAGE plpgsql $$
 BEGIN
-  EXECUTE 'COPY copy1 FROM ''@abs_builddir@/data/copy1.data''';
+  EXECUTE 'COPY copy1 FROM ''@abs_srcdir@/data/copy1.data''';
 END;
 $$;
 SELECT * FROM copy1 ORDER BY 1;
