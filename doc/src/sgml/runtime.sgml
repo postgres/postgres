@@ -2246,8 +2246,9 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    If the private key is protected with a passphrase, the
    server will prompt for the passphrase and will not start until it has
    been entered.
-   Using a passphrase also disables the ability to change the server's SSL
-   configuration without a server restart.
+   Using a passphrase by default disables the ability to change the server's
+   SSL configuration without a server restart, but see <xref
+   linkend="guc-ssl-passphrase-command-supports-reload"/>.
    Furthermore, passphrase-protected private keys cannot be used at all
    on Windows.
   </para>
