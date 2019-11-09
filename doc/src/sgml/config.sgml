@@ -3217,9 +3217,7 @@ include_dir 'conf.d'
      takes precedence.  Targeted recovery mode ends when the archived WAL is
      fully replayed, or when <varname>recovery_target</varname> is reached.
      In this mode, the parameters from both this section and <xref
-     linkend="runtime-config-wal-recovery-target"/> will be used.  Parameters
-     from <xref linkend="runtime-config-replication-standby"/> will not be
-     used.
+     linkend="runtime-config-wal-recovery-target"/> will be used.
     </para>
 
     <variablelist>
