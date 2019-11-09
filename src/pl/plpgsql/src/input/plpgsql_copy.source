@@ -1,0 +1,62 @@
+CREATE TABLE copy1 (a int, b float);
+
+-- COPY TO/FROM not authorized from client.
+DO LANGUAGE plpgsql $$
+BEGIN
+  COPY copy1 TO stdout;
+END;
+$$;
+DO LANGUAGE plpgsql $$
+BEGIN
+  COPY copy1 FROM stdin;
+END;
+$$;
+DO LANGUAGE plpgsql $$
+BEGIN
+  EXECUTE 'COPY copy1 TO stdout';
+END;
+$$;
+DO LANGUAGE plpgsql $$
+BEGIN
+  EXECUTE 'COPY copy1 FROM stdin';
+END;
+$$;
+
+-- Valid cases
+-- COPY FROM
+DO LANGUAGE plpgsql $$
+BEGIN
+  COPY copy1 FROM '@abs_srcdir@/data/copy1.data';
+END;
+$$;
+SELECT * FROM copy1 ORDER BY 1;
+TRUNCATE copy1;
+DO LANGUAGE plpgsql $$
+BEGIN
+  EXECUTE 'COPY copy1 FROM ''@abs_srcdir@/data/copy1.data''';
+END;
+$$;
+SELECT * FROM copy1 ORDER BY 1;
+
+-- COPY TO
+-- Copy the data externally once, then process it back to the table.
+DO LANGUAGE plpgsql $$
+BEGIN
+  COPY copy1 TO '@abs_builddir@/results/copy1.data';
+END;
+$$;
+TRUNCATE copy1;
+DO LANGUAGE plpgsql $$
+BEGIN
+  COPY copy1 FROM '@abs_builddir@/results/copy1.data';
+END;
+$$;
+DO LANGUAGE plpgsql $$
+BEGIN
+  EXECUTE 'COPY copy1 FROM ''@abs_builddir@/results/copy1.data''';
+END;
+$$;
+
+SELECT * FROM copy1 ORDER BY 1;
+
+DROP TABLE copy1;
