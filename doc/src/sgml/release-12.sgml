@@ -46,56 +46,6 @@ Branch: REL_12_STABLE [3b25de620] 2019-10-16 02:38:13 -0700
     <listitem>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [736b84eed] 2019-09-25 10:07:23 +0900
-Branch: REL_12_STABLE Release: REL_12_0 [707f38e38] 2019-09-25 10:08:26 +0900
-Branch: REL_11_STABLE [d01d4f237] 2019-09-25 10:08:30 +0900
-Branch: REL_10_STABLE [d48168003] 2019-09-25 10:08:36 +0900
-Branch: REL9_6_STABLE [98b5c3785] 2019-09-25 10:08:43 +0900
--->
-     <para>
-      Fix failure of <command>ALTER TABLE SET</command> with a custom
-      relation option (Michael Paquier)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [4d4c66add] 2019-08-18 17:11:57 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [328c3f6f9] 2019-08-18 17:11:57 -0400
-Branch: REL_11_STABLE [909efc449] 2019-08-18 17:11:58 -0400
-Branch: REL_10_STABLE [451432214] 2019-08-18 17:11:58 -0400
-Branch: REL9_6_STABLE [3442235f2] 2019-08-18 17:11:58 -0400
-Branch: REL9_5_STABLE [c511d367a] 2019-08-18 17:11:58 -0400
--->
-     <para>
-      Disallow changing a multiply-inherited column's type if not all
-      parent tables were changed (Tom Lane)
-     </para>
-
-     <para>
-      Previously, this was allowed, whereupon queries on the
-      now-out-of-sync parent would fail.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [cabe0f298] 2019-08-10 11:30:11 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [6ce0366be] 2019-08-10 11:30:11 -0400
-Branch: REL_11_STABLE [ceb850d4a] 2019-08-10 11:30:12 -0400
--->
-     <para>
-      Avoid failure if the same target table is specified twice in
-      an <command>ANALYZE</command> command inside a transaction block
-      (Tom Lane)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [5d3500da7] 2019-10-23 15:04:48 +0900
 Branch: REL_12_STABLE [7668d4847] 2019-10-23 15:05:09 +0900
 Author: Michael Paquier <michael@paquier.xyz>
@@ -268,27 +218,6 @@ Branch: REL_12_STABLE [a9db37a18] 2019-11-05 11:42:25 -0500
 
     <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [03c811a48] 2019-08-12 13:15:47 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [c0c12ce39] 2019-08-12 13:15:47 -0400
-Branch: REL_11_STABLE [c914e74d2] 2019-08-12 13:15:48 -0400
-Branch: REL_10_STABLE [886cf85b5] 2019-08-12 13:15:48 -0400
--->
-     <para>
-      Fix planner's test for case-foldable characters
-      in <literal>ILIKE</literal> with an ICU collation (Tom Lane)
-     </para>
-
-     <para>
-      This mistake caused the planner to treat too much of the pattern as
-      being a fixed prefix, so that indexscans derived from
-      an <literal>ILIKE</literal> clause might miss entries that they
-      should find.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Andrew Gierth <rhodiumtoad@postgresql.org>
 Branch: master [b7a1c5539] 2019-10-03 10:54:52 +0100
 Branch: REL_12_STABLE [0b11dc019] 2019-10-03 11:12:39 +0100
@@ -308,29 +237,6 @@ Branch: REL9_4_STABLE [3473f81dd] 2019-10-03 11:18:20 +0100
       are nontrivial expressions.  One example is that a function
       parameter reference in such an expression would fail if the function
       was inlined.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [7f1f72c44] 2019-09-12 18:29:45 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [5e9b18c78] 2019-09-12 18:29:17 -0400
-Branch: REL_11_STABLE [64d926f2b] 2019-09-12 18:29:48 -0400
-Branch: REL_10_STABLE [b54cff2bf] 2019-09-12 18:29:49 -0400
-Branch: REL9_6_STABLE [b00132b9a] 2019-09-12 18:29:18 -0400
-Branch: REL9_5_STABLE [aee5736f1] 2019-09-12 18:29:18 -0400
-Branch: REL9_4_STABLE [ca08ea52b] 2019-09-12 18:29:18 -0400
--->
-     <para>
-      Fix handling of whole-row variables in <literal>WITH CHECK
-      OPTION</literal> expressions and row-level-security policy expressions
-      (Andres Freund)
-     </para>
-
-     <para>
-      Previously, such usage might result in bogus errors about row type
-      mismatches.
      </para>
     </listitem>
 
@@ -360,38 +266,6 @@ Branch: REL_12_STABLE [60e97d63e] 2019-10-04 13:57:37 -0700
      <para>
       Fix crash triggered by an EvalPlanQual recheck on a table with
       a <literal>BEFORE UPDATE</literal> trigger (Andres Freund)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [1ced082b9] 2019-08-15 20:04:19 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [03813a50e] 2019-08-15 20:04:19 -0400
-Branch: REL_11_STABLE [aed967d69] 2019-08-15 20:04:19 -0400
-Branch: REL_10_STABLE [60886965a] 2019-08-15 20:04:19 -0400
-Branch: REL9_6_STABLE [1fe8d209e] 2019-08-15 20:04:19 -0400
-Branch: REL9_5_STABLE [cb0c79ae6] 2019-08-15 20:04:19 -0400
-Branch: REL9_4_STABLE [afa71d915] 2019-08-15 20:04:19 -0400
--->
-     <para>
-      Prevent possible double-free if a <literal>BEFORE UPDATE</literal>
-      trigger returns the old tuple as-is, and it is not the last such
-      trigger (Thomas Munro)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [0662eb621] 2019-08-09 13:20:28 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [59d378929] 2019-08-09 13:20:28 -0400
-Branch: REL_11_STABLE [2f729d832] 2019-08-09 13:20:28 -0400
--->
-     <para>
-      Fix crash if <literal><replaceable>x</replaceable> = ANY
-      (<replaceable>array</replaceable>)</literal>, or related operations,
-      contains a constant-null array (Tom Lane)
      </para>
     </listitem>
 
@@ -431,30 +305,6 @@ Branch: REL9_5_STABLE [cdbb39213] 2019-10-17 13:50:59 +1300
 
     <listitem>
 <!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [1169fcf12] 2019-08-07 12:40:49 +0300
-Branch: REL_12_STABLE Release: REL_12_0 [f8d30182b] 2019-08-07 12:41:00 +0300
-Branch: REL_11_STABLE [c5b796125] 2019-08-07 12:41:16 +0300
-Branch: REL_10_STABLE [65468cc70] 2019-08-07 12:41:22 +0300
-Branch: REL9_6_STABLE [75774cc22] 2019-08-07 12:41:26 +0300
-Branch: REL9_5_STABLE [fd298cd63] 2019-08-07 12:41:31 +0300
-Branch: REL9_4_STABLE [54c98fa71] 2019-08-07 12:41:37 +0300
--->
-     <para>
-      In serializable mode, ensure that row-level predicate locks are
-      acquired on the correct version of the row (Thomas Munro, Heikki
-      Linnakangas)
-     </para>
-
-     <para>
-      If the visible version of the row is HOT-updated, the lock might be
-      taken on its now-dead predecessor, resulting in subtle failures to
-      guarantee serialization.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Andres Freund <andres@anarazel.de>
 Branch: master [a586cc4b6] 2019-10-04 13:34:28 -0700
 Branch: REL_12_STABLE [c025165da] 2019-10-04 13:34:39 -0700
@@ -474,8 +324,8 @@ Branch: REL9_4_STABLE [59800f7ce] 2019-10-09 13:31:38 +0900
 
      <para>
       Some code paths tried to do this after opening a file read-only,
-      which works on many platforms, but others give <quote>bad file
-      descriptor</quote> or related errors.
+      but on some platforms that causes <quote>bad file descriptor</quote>
+      or similar errors.
      </para>
     </listitem>
 
@@ -503,26 +353,6 @@ Branch: REL9_4_STABLE [6899be289] 2019-10-03 17:34:26 -0400
 
     <listitem>
 <!--
-Author: Thomas Munro <tmunro@postgresql.org>
-Branch: master [720b59b55] 2019-08-28 16:18:29 +1200
-Branch: REL_12_STABLE Release: REL_12_0 [8cc6016a8] 2019-08-28 16:18:39 +1200
-Branch: REL_11_STABLE [b9c4ccfef] 2019-08-28 17:59:27 +1200
-Branch: REL_10_STABLE [eeb68c1cd] 2019-08-28 17:59:50 +1200
--->
-     <para>
-      Avoid an unnecessary catalog lookup during heap page pruning
-      (Thomas Munro)
-     </para>
-
-     <para>
-      It's no longer necessary to check for unlogged indexes here, and the
-      check caused significant performance problems in some workloads.
-      There's also at least a theoretical possibility of deadlock.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Andrew Gierth <rhodiumtoad@postgresql.org>
 Branch: master [a9056cc63] 2019-11-06 04:13:30 +0000
 Branch: REL_12_STABLE [f57c63107] 2019-11-06 04:33:35 +0000
@@ -538,19 +368,6 @@ Branch: REL9_6_STABLE [747aac88f] 2019-11-06 04:33:55 +0000
      <para>
       In some cases the tuple storage would include all columns of the
       source table(s), not just the ones that are needed by the query.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Andres Freund <andres@anarazel.de>
-Branch: master [ac88807f9] 2019-09-29 16:24:32 -0700
-Branch: REL_12_STABLE Release: REL_12_0 [2ce9bca36] 2019-09-29 16:27:18 -0700
-Branch: REL_11_STABLE [51ad5b9bd] 2019-09-29 16:27:08 -0700
--->
-     <para>
-      Fix failure to JIT-compile equality comparisons for grouping hash
-      tables, leading to performance loss (Andres Freund)
      </para>
     </listitem>
 
@@ -636,6 +453,31 @@ Branch: REL_12_STABLE [03666dfa1] 2019-10-18 22:25:42 +0900
 
     <listitem>
 <!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+Branch: master [1c60e40ad] 2019-11-09 08:35:44 +0100
+Branch: REL_12_STABLE [d891d2c89] 2019-11-09 08:35:51 +0100
+Branch: REL_11_STABLE [7961da188] 2019-11-09 08:36:11 +0100
+Branch: REL_10_STABLE [2e00d5976] 2019-11-09 09:15:35 +0100
+Branch: master [ef8fcbff5] 2019-11-09 13:19:27 +0100
+Branch: REL_12_STABLE [f96756304] 2019-11-09 16:00:34 +0100
+Branch: REL_11_STABLE [aa9884578] 2019-11-09 16:01:23 +0100
+Branch: REL_10_STABLE [806f9dc02] 2019-11-09 16:03:00 +0100
+-->
+     <para>
+      Fix logical replication failure when publisher and subscriber have
+      different ideas about a table's replica identity columns
+      (Jehan-Guillaume de Rorthais, Peter Eisentraut)
+     </para>
+
+     <para>
+      Declaring a column as part of the replica identity on the
+      subscriber, when it does not exist at all on the publisher, led
+      to <quote>negative bitmapset member not allowed</quote> errors.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [38ddeab13] 2019-10-17 15:06:06 +0200
 Branch: REL_12_STABLE [1391c13ce] 2019-10-17 15:06:06 +0200
@@ -695,28 +537,6 @@ Branch: REL9_4_STABLE [15d90a02a] 2019-11-06 16:12:56 +0900
 
     <listitem>
 <!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: master [bac2fae05] 2019-09-13 16:36:28 -0300
-Branch: REL_12_STABLE Release: REL_12_0 [96b5033e1] 2019-09-13 16:36:28 -0300
-Branch: REL_11_STABLE [41f3d2626] 2019-09-13 16:36:28 -0300
-Branch: REL_10_STABLE [4f7dbf0ef] 2019-09-13 16:36:28 -0300
-Branch: REL9_6_STABLE [ae4305f6d] 2019-09-13 16:36:28 -0300
-Branch: REL9_5_STABLE [7110f5c37] 2019-09-13 16:36:28 -0300
-Branch: REL9_4_STABLE [e8c7f40a1] 2019-09-13 16:36:28 -0300
--->
-     <para>
-      In logical decoding, ensure that sub-transactions are correctly
-      accounted for when reconstructing a snapshot (Masahiko Sawada)
-     </para>
-
-     <para>
-      This error leads to assertion failures; it's unclear whether any
-      bad effects exist in production builds.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [20345197f] 2019-11-01 22:38:32 +0900
 Branch: REL_12_STABLE [7b8c2de64] 2019-11-01 22:38:45 +0900
@@ -729,47 +549,6 @@ Branch: REL9_4_STABLE [f88f7206e] 2019-11-01 22:39:09 +0900
      <para>
       Fix race condition during backend exit, when the backend process has
       previously waited for synchronous replication to occur (Dongming Liu)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [f1bf619ac] 2019-08-14 15:09:42 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [75b2f011f] 2019-08-14 15:09:20 -0400
-Branch: REL_11_STABLE [32d38f54a] 2019-08-14 15:09:20 -0400
-Branch: REL_10_STABLE [f8c9a0852] 2019-08-14 15:09:20 -0400
-Branch: REL9_6_STABLE [4784ad7a3] 2019-08-14 15:09:20 -0400
-Branch: REL9_5_STABLE [29f9b1819] 2019-08-14 15:09:20 -0400
-Branch: REL9_4_STABLE [a4b0d955b] 2019-08-14 15:09:20 -0400
--->
-     <para>
-      Fix <command>ALTER SYSTEM</command> to cope with duplicate entries
-      in <filename>postgresql.auto.conf</filename> (Ian Barwick)
-     </para>
-
-     <para>
-      <command>ALTER SYSTEM</command> itself will not generate such a state,
-      but external tools that modify <filename>postgresql.auto.conf</filename>
-      could do so.  Duplicate entries for the target variable will now be
-      removed, and then the new setting (if any) will be appended at the end.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [6e4213056] 2019-08-27 14:44:26 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [1510339dc] 2019-08-27 14:44:26 -0400
-Branch: REL_11_STABLE [cf86803e8] 2019-08-27 14:44:26 -0400
-Branch: REL_10_STABLE [771e12701] 2019-08-27 14:44:26 -0400
-Branch: REL9_6_STABLE [465f4ddda] 2019-08-27 14:44:26 -0400
-Branch: REL9_5_STABLE [ef47d284d] 2019-08-27 14:44:26 -0400
--->
-     <para>
-      Reject include directives with empty file names in configuration
-      files, and report include-file recursion more clearly
-      (Ian Barwick, Tom Lane)
      </para>
     </listitem>
 
@@ -797,29 +576,6 @@ Branch: REL9_4_STABLE [762b25653] 2019-11-05 14:27:38 -0500
       closes the connection upon being asked for a password.  However,
       the PAM authentication code hadn't gotten that memo, and would
       generate several messages about a phantom authentication failure.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [64579be64] 2019-08-07 18:16:31 +0900
-Branch: REL_12_STABLE Release: REL_12_0 [d8652ec55] 2019-08-07 18:17:34 +0900
-Branch: REL_11_STABLE [d16d241a5] 2019-08-07 18:17:39 +0900
-Branch: REL_10_STABLE [1ba4d0fe4] 2019-08-07 18:17:46 +0900
-Branch: REL9_6_STABLE [7c64a2cd9] 2019-08-07 18:17:52 +0900
-Branch: REL9_5_STABLE [1de3e0589] 2019-08-07 18:17:57 +0900
-Branch: REL9_4_STABLE [1f7943698] 2019-08-07 18:18:04 +0900
--->
-     <para>
-      Fix some cases where an incomplete date specification is not
-      detected in <type>time with time zone</type> input (Alexander Lakhin)
-     </para>
-
-     <para>
-      If a time zone is provided, a date must be as well (since the UTC
-      offset implied by the zone might be time-varying).  Depending on the
-      syntax used, this check was not enforced in all cases.
      </para>
     </listitem>
 
@@ -885,43 +641,6 @@ Branch: REL_12_STABLE [43e43771b] 2019-10-28 12:21:13 -0400
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [e136a0d8c] 2019-08-19 18:01:09 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [cdc8d371e] 2019-08-19 18:00:57 -0400
-Branch: REL_11_STABLE [2b24cf91a] 2019-08-19 18:00:57 -0400
--->
-     <para>
-      Restore the ability to take type information from
-      an <literal>AS</literal> clause
-      in <function>json[b]_populate_record()</function>
-      and <function>json[b]_populate_recordset()</function>
-      (Tom Lane)
-     </para>
-
-     <para>
-      If the record argument is NULL and has no declared composite type,
-      try to use the <literal>AS</literal> clause instead.  This isn't
-      recommended usage, but it used to work, and now does again.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [592a16321] 2019-10-25 15:22:45 -0400
-Branch: REL_12_STABLE [2bbdf8e2e] 2019-10-25 15:22:40 -0400
-Branch: REL_11_STABLE [9f7a664fe] 2019-10-25 15:22:40 -0400
-Branch: REL_10_STABLE [9bf247686] 2019-10-25 15:22:40 -0400
-note: not a bug in v12/HEAD, the change there is just a test case addition
--->
-     <para>
-      Avoid crash when selecting a namespace node
-      in <literal>XMLTABLE</literal> (Chapman Flack)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [a7145f6bc] 2019-11-07 11:22:58 -0500
 Branch: REL_12_STABLE [f6e72dc9c] 2019-11-07 11:22:59 -0500
 Branch: REL_11_STABLE [b49b7f944] 2019-11-07 11:23:00 -0500
@@ -929,26 +648,13 @@ Branch: REL_10_STABLE [5f794f757] 2019-11-07 11:23:02 -0500
 Branch: REL9_6_STABLE [15783d057] 2019-11-07 11:23:03 -0500
 Branch: REL9_5_STABLE [84780d468] 2019-11-07 11:23:04 -0500
 Branch: REL9_4_STABLE [8d380864a] 2019-11-07 11:23:06 -0500
+Branch: REL9_6_STABLE [a55018760] 2019-11-09 15:50:16 -0500
+Branch: REL9_5_STABLE [30f6998ff] 2019-11-09 15:50:16 -0500
+Branch: REL9_4_STABLE [18622caa3] 2019-11-09 15:50:16 -0500
 -->
      <para>
       Fix detection of edge-case integer overflow in interval
       multiplication (Yuya Watari)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [3a54eb1a3] 2019-09-03 12:30:53 +0900
-Branch: REL_12_STABLE Release: REL_12_0 [5380719f9] 2019-09-03 12:31:03 +0900
-Branch: REL_11_STABLE [f967a1fda] 2019-09-03 12:31:08 +0900
-Branch: REL_10_STABLE [604d20679] 2019-09-03 12:31:14 +0900
--->
-     <para>
-      Fix memory leaks
-      in <function>lower()</function>, <function>upper()</function>,
-      and <function>initcap()</function> functions when using ICU
-      collations (Konstantin Knizhnik)
      </para>
     </listitem>
 
@@ -974,91 +680,12 @@ Branch: REL9_6_STABLE [d43bd9dce] 2019-11-03 16:11:05 -0500
 
     <listitem>
 <!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-Branch: master [bde7493d1] 2019-08-28 12:55:33 +0300
-Branch: REL_12_STABLE Release: REL_12_0 [6b7819a0b] 2019-08-28 12:56:03 +0300
-Branch: REL_11_STABLE [1c99acc6e] 2019-08-28 12:57:10 +0300
-Branch: REL_10_STABLE [756178232] 2019-08-28 13:02:58 +0300
-Branch: REL9_6_STABLE [e2e616579] 2019-08-28 12:58:05 +0300
-Branch: REL9_5_STABLE [cf00ca522] 2019-08-28 12:58:10 +0300
-Branch: REL9_4_STABLE [6292cde1c] 2019-08-28 12:58:55 +0300
-Branch: master [744c848dc] 2019-08-28 12:59:47 -0400
--->
-     <para>
-      Fix incorrect compression logic for GIN posting lists
-      (Heikki Linnakangas)
-     </para>
-
-     <para>
-      A GIN posting list item can require 7 bytes if the distance between
-      adjacent indexed TIDs exceeds 16TB.  One step in the logic was out
-      of sync with that, and might try to write the value into a 6-byte
-      buffer.  In principle this could cause a stack overrun, but on most
-      architectures it's likely that the next byte would be unused
-      alignment padding, making the bug harmless.  In any case the bug
-      would be very difficult to hit.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-Branch: master [e5d8f3596] 2019-09-08 22:08:12 +0300
-Branch: REL_12_STABLE Release: REL_12_0 [bc67f4189] 2019-09-08 21:17:31 +0300
-Branch: REL_11_STABLE [749b04d1d] 2019-09-08 21:41:56 +0300
-Branch: REL_10_STABLE [8f724002e] 2019-09-08 21:47:34 +0300
-Branch: REL9_6_STABLE [b2037afec] 2019-09-08 21:48:44 +0300
-Branch: REL9_5_STABLE [986319d46] 2019-09-08 21:49:15 +0300
-Branch: REL9_4_STABLE [111fb7e42] 2019-09-08 21:58:17 +0300
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-Branch: master [02f90879e] 2019-09-08 22:08:12 +0300
-Branch: REL_12_STABLE Release: REL_12_0 [e6af7b367] 2019-09-08 21:17:37 +0300
-Branch: REL_11_STABLE [d807200b4] 2019-09-08 21:46:58 +0300
-Branch: REL_10_STABLE [92f6b49c4] 2019-09-08 21:47:34 +0300
-Branch: REL9_6_STABLE [a5431b7d5] 2019-09-08 21:48:45 +0300
-Branch: REL9_5_STABLE [3c155bafa] 2019-09-08 21:49:16 +0300
-Branch: REL9_4_STABLE [1df412304] 2019-09-08 22:30:12 +0300
--->
-     <para>
-      Fix handling of infinity, NaN, and NULL values in KNN-GiST
-      (Alexander Korotkov)
-     </para>
-
-     <para>
-      The query's output order could be wrong (different from a plain
-      sort's result) if some distances computed for non-null column values
-      are infinity or NaN.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Amit Kapila <akapila@postgresql.org>
 Branch: master [70a6c37d5] 2019-10-21 08:57:32 +0530
 Branch: REL_12_STABLE [62f4dd379] 2019-10-21 09:04:35 +0530
 -->
      <para>
       Avoid memory leak while vacuuming a GiST index (Dilip Kumar)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Alexander Korotkov <akorotkov@postgresql.org>
-Branch: master [6cae9d2c1] 2019-09-19 21:48:39 +0300
-Branch: REL_12_STABLE Release: REL_12_0 [31cbd7605] 2019-09-19 21:49:07 +0300
-Branch: REL_11_STABLE [d6a90aac5] 2019-09-19 21:49:32 +0300
-Branch: REL_10_STABLE [2da8e56db] 2019-09-19 21:50:00 +0300
-Branch: REL9_6_STABLE [53d9cf2db] 2019-09-19 21:50:44 +0300
-Branch: REL9_5_STABLE [ad458d0cd] 2019-09-19 22:09:51 +0300
-Branch: REL9_4_STABLE [332eda5bd] 2019-09-19 22:10:46 +0300
-Branch: REL_11_STABLE [984b9ba1d] 2019-09-19 23:36:01 +0300
-Branch: REL_10_STABLE [2f0434e8e] 2019-09-19 23:39:26 +0300
-Branch: REL9_6_STABLE [140b7b1f9] 2019-09-19 23:39:31 +0300
-Branch: REL9_5_STABLE [388939748] 2019-09-19 23:39:35 +0300
--->
-     <para>
-      Fix handling of searches for NULL in KNN-SP-GiST (Nikita Glukhov)
      </para>
     </listitem>
 
@@ -1139,84 +766,6 @@ Branch: REL9_4_STABLE [b20233aac] 2019-11-07 14:21:52 -0500
 
     <listitem>
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [aef362385] 2019-09-02 14:03:05 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [90433c38e] 2019-09-02 14:02:45 -0400
-Branch: REL_11_STABLE [5524ef558] 2019-09-02 14:02:46 -0400
-Branch: REL_10_STABLE [3080f8f61] 2019-09-02 14:02:46 -0400
-Branch: REL9_6_STABLE [b0b2ef25e] 2019-09-02 14:02:46 -0400
-Branch: REL9_5_STABLE [62724bd95] 2019-09-02 14:02:46 -0400
-Branch: REL9_4_STABLE [89535db97] 2019-09-02 14:02:46 -0400
--->
-     <para>
-      In <application>psql</application>, resynchronize internal state
-      about the server after an unexpected connection loss and successful
-      reconnection (Peter Billen, Tom Lane)
-     </para>
-
-     <para>
-      Ordinarily this is unnecessary since the state would be the same
-      anyway.  But it can matter in corner cases, such as where the
-      connection might lead to one of several servers.  This change
-      causes <application>psql</application> to re-issue any interactive
-      messages that it would have issued at startup, for example about
-      whether SSL is in use.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [6338fa3e7] 2019-08-25 15:04:04 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [363382521] 2019-08-25 15:04:04 -0400
-Branch: REL_11_STABLE [5fc7b1e93] 2019-08-25 15:04:04 -0400
-Branch: REL_10_STABLE [fb55e9539] 2019-08-25 15:04:04 -0400
-Branch: REL9_6_STABLE [28d2ce3c7] 2019-08-25 15:04:04 -0400
-Branch: REL9_5_STABLE [65b1cad5a] 2019-08-25 15:04:04 -0400
-Branch: REL9_4_STABLE [c693c5c49] 2019-08-25 15:04:04 -0400
--->
-     <para>
-      Avoid platform-specific null pointer dereference
-      in <application>psql</application> (Quentin Rameau)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_6_STABLE [404cbc562] 2019-10-26 17:37:19 -0400
-Branch: REL9_5_STABLE [7fc50a8a7] 2019-10-26 17:37:19 -0400
-Branch: REL9_4_STABLE [ddcc582a4] 2019-10-26 17:37:20 -0400
--->
-     <para>
-      Fix <application>pg_dump</application>'s handling of circular
-      dependencies in views (Tom Lane)
-     </para>
-
-     <para>
-      In some cases a view may depend on an object
-      that <application>pg_dump</application> needs to dump later than the
-      view; the most common example is that a query using <literal>GROUP
-      BY</literal> on a primary-key column may be semantically invalid
-      without the primary key.  This is now handled by emitting a
-      dummy <command>CREATE VIEW</command> command that just establishes
-      the view's column names and types, and then later
-      emitting <command>CREATE OR REPLACE VIEW</command> with the full
-      view definition.  Previously, the dummy definition was actually
-      a <command>CREATE TABLE</command> command, and this was
-      automagically converted to a view by a later <command>CREATE
-      RULE</command> command.  The new approach has been used successfully
-      in <productname>PostgreSQL</productname> version 10 and later.  We
-      are back-patching it into older releases now because of reports that
-      the previous method causes bogus error messages about the view's
-      replica identity status.  This change also avoids problems when
-      trying to use the <option>--clean</option> option during a restore
-      involving such a view.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [1752e3516] 2019-10-17 09:58:01 +0200
 Branch: REL_12_STABLE [b304b2b65] 2019-10-17 09:58:01 +0200
@@ -1254,57 +803,7 @@ Branch: REL9_4_STABLE [da5cd7a68] 2019-11-04 16:25:05 -0500
      <para>
       Previously, if two triggers on different tables had the same names,
       they would be sorted in OID-based order, which is less desirable
-      than sorting by name.  Likewise for RLS policies.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [31d43710f] 2019-08-13 16:58:32 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [6844adba5] 2019-08-13 16:57:58 -0400
-Branch: REL_11_STABLE [4dea8ad56] 2019-08-13 16:57:58 -0400
-Branch: REL_10_STABLE [f2bdfebb9] 2019-08-13 16:57:58 -0400
-Branch: REL9_6_STABLE [2b608ba31] 2019-08-13 16:57:59 -0400
-Branch: REL9_5_STABLE [c56858487] 2019-08-13 16:57:59 -0400
-Branch: REL9_4_STABLE [63ae888a9] 2019-08-13 16:57:59 -0400
--->
-     <para>
-      Fix <application>pg_dump</application> to again work with pre-8.3
-      source servers (Tom Lane)
-     </para>
-
-     <para>
-      A previous fix caused <application>pg_dump</application> to always
-      try to query <structname>pg_opfamily</structname>, but that catalog
-      doesn't exist before 8.3.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-Branch: REL_11_STABLE [3574c0ac0] 2019-11-05 01:23:39 -0300
-Branch: REL_10_STABLE [5ee8f0fe1] 2019-11-05 10:08:55 -0300
-Branch: REL9_6_STABLE [12a51e2eb] 2019-11-05 09:57:36 -0300
-Branch: REL9_5_STABLE [d38635725] 2019-11-05 09:57:36 -0300
-Branch: REL9_4_STABLE [9fb25fda6] 2019-11-05 09:57:35 -0300
--->
-     <para>
-      In <application>pg_restore</application>, treat
-      <option>-f -</option> as meaning <quote>output to stdout</quote>
-      (&Aacute;lvaro Herrera)
-     </para>
-
-     <para>
-      This synchronizes <application>pg_restore</application>'s behavior
-      with some other applications, and in particular makes pre-v12 branches
-      act similarly to v12's <application>pg_restore</application>,
-      simplifying creation of dump/restore scripts that work across
-      multiple <productname>PostgreSQL</productname> versions.  Before this
-      change, <application>pg_restore</application> interpreted such a
-      switch as meaning <quote>output to a file
-      named <filename>-</filename></quote>, but few people would want that.
+      than sorting them by table name.  Likewise for RLS policies.
      </para>
     </listitem>
 
@@ -1319,7 +818,7 @@ Branch: REL_12_STABLE [702fd3b71] 2019-10-15 00:35:51 +0200
      <para>
       In <application>pg_upgrade</application>, reject tables with
       columns of type <type>sql_identifier</type>, as that has changed
-      representation in v12 (Tomas Vondra)
+      representation in version 12 (Tomas Vondra)
      </para>
     </listitem>
 
@@ -1350,42 +849,7 @@ Branch: REL_10_STABLE [e86ece221] 2019-10-16 13:26:56 +0200
 
      <para>
       The previous coding could be fooled by cases where the data type of
-      interest underlies a domain or composite type.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Robert Haas <rhaas@postgresql.org>
-Branch: master [286af0ce1] 2019-09-06 08:22:32 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [ce5542d40] 2019-09-06 08:49:56 -0400
-Branch: REL_11_STABLE [61c65cce4] 2019-09-06 08:53:13 -0400
-Branch: REL_10_STABLE [62fb12d7e] 2019-09-06 08:56:45 -0400
-Branch: REL9_6_STABLE [23df88226] 2019-09-06 09:01:45 -0400
-Branch: REL9_5_STABLE [f697c6396] 2019-09-06 09:05:12 -0400
-Branch: REL9_4_STABLE [fbe897134] 2019-09-06 09:09:09 -0400
--->
-     <para>
-      Detect file read errors
-      during <application>pg_basebackup</application> (Jeevan Chalke)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [522baf148] 2019-09-04 13:21:11 +0900
-Branch: REL_12_STABLE Release: REL_12_0 [64eb426af] 2019-09-04 13:23:41 +0900
-Branch: REL_11_STABLE [996c92b27] 2019-09-04 13:24:06 +0900
-Branch: REL_10_STABLE [dbbae33bc] 2019-09-04 13:24:12 +0900
--->
-     <para>
-      In <application>pg_basebackup</application>, don't fsync output files
-      until the end of backup (Michael Paquier)
-     </para>
-
-     <para>
-      The previous coding could result in timeout failures if fsync was slow.
+      interest underlies a stored column of a domain or composite type.
      </para>
     </listitem>
 
@@ -1410,23 +874,6 @@ Branch: REL_12_STABLE [c2e3b311d] 2019-10-04 09:16:03 +0900
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [be182e4f9] 2019-08-28 11:47:35 +0900
-Branch: REL_12_STABLE Release: REL_12_0 [e96f52443] 2019-08-28 11:48:15 +0900
-Branch: REL_11_STABLE [f51006ea9] 2019-08-28 11:48:19 +0900
-Branch: REL_10_STABLE [19bfa15a8] 2019-08-28 11:48:23 +0900
-Branch: REL9_6_STABLE [d64789e97] 2019-08-28 11:48:29 +0900
-Branch: REL9_5_STABLE [e9dcbc9c3] 2019-08-28 11:48:33 +0900
--->
-     <para>
-      In <application>pg_rewind</application> with an online source
-      cluster, disable timeouts, much
-      as <application>pg_dump</application> does (Alexander Kukushkin)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Fujii Masao <fujii@postgresql.org>
 Branch: master [a0c96856e] 2019-11-07 16:31:36 +0900
 Branch: REL_12_STABLE [e5cfb8cbb] 2019-11-07 16:32:37 +0900
@@ -1440,23 +887,6 @@ Branch: REL9_4_STABLE [1accf9974] 2019-11-07 16:33:58 +0900
       Fix failure in <application>pg_waldump</application> with
       the <option>-s</option> option, when a continuation WAL record ends
       exactly at a page boundary (Andrey Lepikhov)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-Branch: master [3b6b54f17] 2019-09-12 15:45:08 -0700
-Branch: REL_12_STABLE Release: REL_12_0 [3097a0d6e] 2019-09-12 15:45:07 -0700
-Branch: REL_11_STABLE [e87b00b5f] 2019-09-12 15:45:05 -0700
-Branch: REL_10_STABLE [09b236af9] 2019-09-12 15:45:03 -0700
-Branch: REL9_6_STABLE [835646503] 2019-09-12 15:45:01 -0700
-Branch: REL9_5_STABLE [9064cc139] 2019-09-12 15:44:59 -0700
--->
-     <para>
-      In <application>pg_waldump</application>,
-      include the <literal>newitemoff</literal> field in btree page split
-      records (Peter Geoghegan)
      </para>
     </listitem>
 
@@ -1495,117 +925,6 @@ Branch: REL9_5_STABLE [c3882f8b8] 2019-10-29 19:28:34 -0700
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [71d84efba] 2019-08-26 11:14:18 +0900
-Branch: REL_12_STABLE Release: REL_12_0 [63fc3b124] 2019-08-26 11:14:24 +0900
-Branch: REL_11_STABLE [5d76c8037] 2019-08-26 11:14:28 +0900
-Branch: REL_10_STABLE [4fca14600] 2019-08-26 11:14:33 +0900
-Branch: REL9_6_STABLE [eb91b8ee6] 2019-08-26 11:14:39 +0900
-Branch: REL9_5_STABLE [a21ec1a95] 2019-08-26 11:14:44 +0900
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [9acda7311] 2019-08-27 09:11:31 +0900
-Branch: REL_12_STABLE Release: REL_12_0 [b783a38d4] 2019-08-27 09:11:38 +0900
-Branch: REL_11_STABLE [128e9b2cc] 2019-08-27 09:11:43 +0900
-Branch: REL_10_STABLE [c90096009] 2019-08-27 09:11:48 +0900
-Branch: REL9_6_STABLE [c4d75313e] 2019-08-27 09:12:10 +0900
-Branch: REL9_5_STABLE [4ed3bda49] 2019-08-27 09:12:14 +0900
--->
-     <para>
-      Fix <application>vacuumdb</application> with a
-      high <option>--jobs</option> option to handle running out of file
-      descriptors better (Michael Paquier)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [fe9b7b2fe] 2019-08-15 15:21:47 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [a4504696e] 2019-08-15 15:21:47 -0400
-Branch: REL_11_STABLE [6070ccdd1] 2019-08-15 15:21:48 -0400
--->
-     <para>
-      Fix PL/pgSQL to handle replacements of composite types better
-      (Tom Lane)
-     </para>
-
-     <para>
-      Cover the case where a composite type is dropped entirely, and
-      then a new type of the same name is created, between executions
-      of a PL/pgSQL function.  Variables of the composite type will now
-      update to match the new definition.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Peter Geoghegan <pg@bowt.ie>
-Branch: master [6754fe65a] 2019-08-12 15:21:32 -0700
-Branch: REL_12_STABLE Release: REL_12_0 [a05fa2c0e] 2019-08-12 15:21:30 -0700
-Branch: REL_11_STABLE [4f393793f] 2019-08-12 15:21:28 -0700
-Branch: REL_10_STABLE [f8d2cdc12] 2019-08-12 15:21:27 -0700
--->
-     <para>
-      Fix <filename>contrib/amcheck</filename> to skip unlogged indexes
-      during hot standby (Andrey Borodin, Peter Geoghegan)
-     </para>
-
-     <para>
-      An unlogged index won't necessarily contain valid data in this
-      context, so don't try to check it.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [efc77cf5f] 2019-08-06 18:04:51 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [2f76f4182] 2019-08-06 18:04:51 -0400
-Branch: REL_11_STABLE [113b3d903] 2019-08-06 18:04:51 -0400
-Branch: REL_10_STABLE [5b3e6c13f] 2019-08-06 18:04:51 -0400
-Branch: REL9_6_STABLE [e519eded6] 2019-08-06 18:04:51 -0400
-Branch: REL9_5_STABLE [ced272d2d] 2019-08-06 18:04:52 -0400
-Branch: REL9_4_STABLE [614119d00] 2019-08-06 18:04:52 -0400
--->
-     <para>
-      Fix <filename>contrib/intarray</filename>'s GiST opclasses to not
-      fail for empty arrays with <literal>&lt;@</literal> (Tom Lane)
-     </para>
-
-     <para>
-      A clause like <literal><replaceable>array_column</replaceable>
-      &lt;@ <replaceable>constant_array</replaceable></literal> is
-      considered indexable, but the index search may not find index
-      entries for empty arrays in the array column; of course, such
-      entries should trivially match the search.
-     </para>
-
-     <para>
-      The only practical back-patchable fix for this requires
-      making <literal>&lt;@</literal> index searches scan the whole index,
-      which is what this patch does.  This is unfortunate: it means that
-      the query performance is likely worse than a plain sequential scan
-      would be.
-     </para>
-
-     <para>
-      Applications whose performance is adversely impacted by this change
-      have a couple of options.  They could switch to a GIN index, which
-      doesn't have this bug, or they could replace
-      <literal><replaceable>array_column</replaceable>
-      &lt;@ <replaceable>constant_array</replaceable></literal>
-      with <literal><replaceable>array_column</replaceable>
-      &lt;@ <replaceable>constant_array</replaceable>
-      AND <replaceable>array_column</replaceable>
-      &amp;&amp; <replaceable>constant_array</replaceable></literal>.
-      That will provide about the same performance as before, and it will
-      find all non-empty subsets of the given constant array, which is all
-      that could reliably be expected of the query before.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [06a367c38] 2019-10-10 14:24:56 -0400
 Branch: REL_12_STABLE [7ed1bcaed] 2019-10-10 14:24:57 -0400
@@ -1620,32 +939,6 @@ Branch: REL_12_STABLE [7ed1bcaed] 2019-10-10 14:24:57 -0400
       using it, but that turns out to break usage of
       current <application>libpq</application> with very old versions
       of <application>psql</application>, and perhaps other applications.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_6_STABLE [984ee0f6d] 2019-09-08 13:45:13 -0400
-Branch: REL9_5_STABLE [f1a9abe61] 2019-09-08 13:45:13 -0400
-Branch: REL9_4_STABLE [96db9d5e2] 2019-09-08 13:45:13 -0400
--->
-     <para>
-      Allow <literal>configure --with-python</literal> to succeed when
-      only <filename>python3</filename> or
-      only <filename>python2</filename> can be found (Peter Eisentraut,
-      Tom Lane)
-     </para>
-
-     <para>
-      Search for <filename>python</filename>,
-      then <filename>python3</filename>,
-      then <filename>python2</filename>, so
-      that <application>configure</application> will succeed in the
-      increasingly more common situation where no executable named
-      simply <filename>python</filename> exists.  It's still possible to
-      override the choice by setting the <envar>PYTHON</envar> environment
-      variable.
      </para>
     </listitem>
 
@@ -1698,31 +991,8 @@ Branch: REL9_4_STABLE [930787c7f] 2019-10-18 20:20:33 -0700
       zero for use with an assembly instruction that does not accept that
       register, causing a build failure.  We have seen only one long-ago
       report that matches this bug, but it could cause problems for people
-      trying to build modified code or use atypical compiler options.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Noah Misch <noah@leadboat.com>
-Branch: master [dd50f1a43] 2019-09-13 19:34:06 -0700
-Branch: REL_12_STABLE Release: REL_12_0 [1c6b62a7d] 2019-09-13 19:34:18 -0700
-Branch: REL_11_STABLE [40ad42025] 2019-09-13 19:34:18 -0700
-Branch: REL_10_STABLE [8972ac696] 2019-09-13 19:34:19 -0700
-Branch: REL9_6_STABLE [a1df9a015] 2019-09-13 19:34:19 -0700
-Branch: REL9_5_STABLE [75941f257] 2019-09-13 19:34:19 -0700
--->
-     <para>
-      On PowerPC, avoid depending on the xlc
-      compiler's <function>__fetch_and_add()</function> function
-      (Noah Misch)
-     </para>
-
-     <para>
-      xlc 13 and newer interpret this function in a way incompatible with
-      our usage, resulting in an unusable build
-      of <productname>PostgreSQL</productname>.  Fix by using custom
-      assembly code instead.
+      trying to build modified <productname>PostgreSQL</productname> code
+      or use atypical compiler options.
      </para>
     </listitem>
 
@@ -1762,26 +1032,6 @@ Branch: REL9_4_STABLE [8f8809091] 2019-10-04 15:38:36 -0400
      <para>
       Fix MSVC build process to cope with spaces in the file path of
       OpenSSL (Andrew Dunstan)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [df4fbcd89] 2019-09-20 19:53:33 -0400
-Branch: REL_12_STABLE Release: REL_12_0 [2966e30e5] 2019-09-20 19:53:52 -0400
-Branch: REL_11_STABLE [24f64fba0] 2019-09-20 19:54:00 -0400
-Branch: REL_10_STABLE [769802ef9] 2019-09-20 19:54:07 -0400
-Branch: REL9_6_STABLE [0bd64398e] 2019-09-20 19:54:20 -0400
-Branch: REL9_5_STABLE [128abdef7] 2019-09-20 19:54:29 -0400
-Branch: REL9_4_STABLE [29e47f83c] 2019-09-20 19:54:36 -0400
--->
-     <para>
-      Update time zone data files to <application>tzdata</application>
-      release 2019c for DST law changes in Fiji and Norfolk Island, plus
-      historical corrections for Alberta, Austria, Belgium, British
-      Columbia, Cambodia, Hong Kong, Indiana (Perry County), Kaliningrad,
-      Kentucky, Michigan, Norfolk Island, South Korea, and Turkey.
      </para>
     </listitem>
 
