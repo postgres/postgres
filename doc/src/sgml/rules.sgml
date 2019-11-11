@@ -342,17 +342,6 @@ CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
 </para>
 
 <para>
-For the example, we need a little <literal>min</literal> function that
-returns the lower of 2 integer values. We create that as:
-
-<programlisting>
-CREATE FUNCTION min(integer, integer) RETURNS integer AS $$
-    SELECT CASE WHEN $1 &lt; $2 THEN $1 ELSE $2 END
-$$ LANGUAGE SQL STRICT;
-</programlisting>
-</para>
-
-<para>
     The real tables we need in the first two rule system descriptions
     are these:
 
@@ -414,7 +403,7 @@ CREATE VIEW shoe_ready AS
            rsh.sh_avail,
            rsl.sl_name,
            rsl.sl_avail,
-           min(rsh.sh_avail, rsl.sl_avail) AS total_avail
+           least(rsh.sh_avail, rsl.sl_avail) AS total_avail
       FROM shoe rsh, shoelace rsl
      WHERE rsl.sl_color = rsh.slcolor
        AND rsl.sl_len_cm &gt;= rsh.slminlen_cm
@@ -593,7 +582,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
                rsh.sh_avail,
                rsl.sl_name,
                rsl.sl_avail,
-               min(rsh.sh_avail, rsl.sl_avail) AS total_avail
+               least(rsh.sh_avail, rsl.sl_avail) AS total_avail
           FROM shoe rsh, shoelace rsl
          WHERE rsl.sl_color = rsh.slcolor
            AND rsl.sl_len_cm &gt;= rsh.slminlen_cm
@@ -613,7 +602,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
                rsh.sh_avail,
                rsl.sl_name,
                rsl.sl_avail,
-               min(rsh.sh_avail, rsl.sl_avail) AS total_avail
+               least(rsh.sh_avail, rsl.sl_avail) AS total_avail
           FROM (SELECT sh.shoename,
                        sh.sh_avail,
                        sh.slcolor,
@@ -640,16 +629,11 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
    </para>
 
    <para>
-    It turns out that the planner will collapse this tree into a
-    two-level query tree: the bottommost <command>SELECT</command>
-    commands will be <quote>pulled up</quote> into the middle
-    <command>SELECT</command> since there's no need to process them
-    separately.  But the middle <command>SELECT</command> will remain
-    separate from the top, because it contains aggregate functions.
-    If we pulled those up it would change the behavior of the topmost
-    <command>SELECT</command>, which we don't want.  However,
-    collapsing the query tree is an optimization that the rewrite
-    system doesn't have to concern itself with.
+    This might look inefficient, but the planner will collapse this into a
+    single-level query tree by <quote>pulling up</quote> the subqueries,
+    and then it will plan the joins just as if we'd written them out
+    manually.  So collapsing the query tree is an optimization that the
+    rewrite system doesn't have to concern itself with.
    </para>
 </sect2>
 
