@@ -871,6 +871,9 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 	if (!TransactionIdIsNormal(xid))
 		return false;
 
+	if (TransactionIdEquals(xid, GetTopTransactionIdIfAny()))
+		return true;
+
 	/*
 	 * In parallel workers, the XIDs we must consider as current are stored in
 	 * ParallelCurrentXids rather than the transaction-state stack.  Note that
