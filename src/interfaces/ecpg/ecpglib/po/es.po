@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-06 17:08+0000\n"
+"POT-Creation-Date: 2019-09-29 23:38+0000\n"
 "PO-Revision-Date: 2019-06-06 17:20-0400\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -22,11 +22,11 @@ msgstr ""
 msgid "empty message text"
 msgstr "mensaje de texto vacío"
 
-#: connect.c:403 connect.c:432 connect.c:640
+#: connect.c:401 connect.c:430 connect.c:638
 msgid "<DEFAULT>"
 msgstr "<POR OMISIÓN>"
 
-#: descriptor.c:887 misc.c:120
+#: descriptor.c:876 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
@@ -183,20 +183,14 @@ msgstr "no se pudo conectar a la base de datos «%s» en línea %d"
 #. translator: this string will be truncated at 149 characters expanded.
 #: error.c:207
 #, c-format
-msgid "The cursor is invalid on line %d"
-msgstr "el cursor no es válido en línea %d"
-
-#. translator: this string will be truncated at 149 characters expanded.
-#: error.c:214
-#, c-format
 msgid "SQL error %d on line %d"
 msgstr "error SQL %d en línea %d"
 
-#: error.c:261
+#: error.c:254
 msgid "the connection to the server was lost"
 msgstr "se ha perdido la conexión al servidor"
 
-#: error.c:354
+#: error.c:347
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "error SQL: %s\n"
@@ -204,3 +198,6 @@ msgstr "error SQL: %s\n"
 #: execute.c:2187 execute.c:2194
 msgid "<empty>"
 msgstr "<vacío>"
+
+#~ msgid "The cursor is invalid on line %d"
+#~ msgstr "el cursor no es válido en línea %d"

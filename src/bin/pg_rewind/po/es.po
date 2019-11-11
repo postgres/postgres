@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-06 17:15+0000\n"
-"PO-Revision-Date: 2019-06-06 17:24-0400\n"
+"POT-Creation-Date: 2019-09-29 23:45+0000\n"
+"PO-Revision-Date: 2019-09-29 22:26-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -127,7 +127,7 @@ msgstr "no se pudo abrir el archivo de origen «%s»: %m"
 msgid "could not seek in source file: %m"
 msgstr "no se pudo posicionar en archivo de origen: %m"
 
-#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:315
+#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:314
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
@@ -207,7 +207,7 @@ msgstr "no se pudo eliminar el enlace simbólico «%s»: %m"
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
-#: file_ops.c:314 parsexlog.c:317
+#: file_ops.c:314 parsexlog.c:316
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
@@ -242,172 +242,162 @@ msgstr "el listado de archivos de origen está vacío"
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr "modificación de página inesperada para el directorio o link simbólico «%s»"
 
-#: libpq_fetch.c:51
+#: libpq_fetch.c:52
 #, c-format
 msgid "could not connect to server: %s"
 msgstr "no se pudo conectar al servidor: %s"
 
-#: libpq_fetch.c:55
+#: libpq_fetch.c:56
 #, c-format
 msgid "connected to server"
 msgstr "conectado al servidor"
 
-#: libpq_fetch.c:59
+#: libpq_fetch.c:65
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "no se pudo limpiar search_path: %s"
 
-#: libpq_fetch.c:71
+#: libpq_fetch.c:77
 #, c-format
 msgid "source server must not be in recovery mode"
 msgstr "el servidor de origen no debe estar en modo de recuperación"
 
-#: libpq_fetch.c:81
+#: libpq_fetch.c:87
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
 msgstr "full_page_writes debe estar activado en el servidor de origen"
 
-#: libpq_fetch.c:93
-#, c-format
-msgid "could not set up connection context: %s"
-msgstr "no se pudo establecer el contexto de conexión: %s"
-
-#: libpq_fetch.c:111
+#: libpq_fetch.c:113 libpq_fetch.c:139
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "error ejecutando consulta (%s) en el servidor de origen: %s"
 
-#: libpq_fetch.c:116
+#: libpq_fetch.c:118
 #, c-format
 msgid "unexpected result set from query"
 msgstr "conjunto de resultados inesperados de la consulta"
 
-#: libpq_fetch.c:139
+#: libpq_fetch.c:159
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr "resultado «%s» no reconocido para la ubicación de inserción WAL actual"
 
-#: libpq_fetch.c:189
+#: libpq_fetch.c:209
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "no se pudo obtener el listado de archivos: %s"
 
-#: libpq_fetch.c:194
+#: libpq_fetch.c:214
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "conjunto de resultados inesperado mientras se obtenía el listado de archivos"
 
-#: libpq_fetch.c:242
+#: libpq_fetch.c:262
 #, c-format
 msgid "could not send query: %s"
 msgstr "no se pudo enviar la consulta: %s"
 
-#: libpq_fetch.c:247
+#: libpq_fetch.c:267
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "no se pudo establecer la coneción libpq a modo «single row»"
 
-#: libpq_fetch.c:268
+#: libpq_fetch.c:288
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "resultados inesperados mientras se obtenían archivos remotos: %s"
 
-#: libpq_fetch.c:274
+#: libpq_fetch.c:294
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "tamaño del conjunto de resultados inesperado mientras se obtenían archivos remotos"
 
-#: libpq_fetch.c:280
+#: libpq_fetch.c:300
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "tipos de dato inesperados en el conjunto de resultados mientras se obtenían archivos remotos: %u %u %u"
 
-#: libpq_fetch.c:288
+#: libpq_fetch.c:308
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "formato de resultados inesperado mientras se obtenían archivos remotos"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:314
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "valores nulos inesperados en el resultado mientras se obtenían archivos remotos"
 
-#: libpq_fetch.c:298
+#: libpq_fetch.c:318
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "largo del resultado inesperado mientras se obtenían los archivos remotos"
 
-#: libpq_fetch.c:364
+#: libpq_fetch.c:384
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "no se pudo obtener el archivo remoto «%s»: %s"
 
-#: libpq_fetch.c:369
+#: libpq_fetch.c:389
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "conjunto de resultados inesperado mientras se obtenía el archivo remoto «%s»"
 
-#: libpq_fetch.c:413
+#: libpq_fetch.c:433
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "no se pudo enviar datos COPY: %s"
 
-#: libpq_fetch.c:439
-#, c-format
-msgid "could not create temporary table: %s"
-msgstr "no se pudo crear tabla temporal: %s"
-
-#: libpq_fetch.c:447
+#: libpq_fetch.c:462
 #, c-format
 msgid "could not send file list: %s"
 msgstr "no se pudo enviar el listado de archivos: %s"
 
-#: libpq_fetch.c:489
+#: libpq_fetch.c:504
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "no se pudo enviar fin-de-COPY: %s"
 
-#: libpq_fetch.c:495
+#: libpq_fetch.c:510
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "resultados inesperados mientras se enviaba el listado de archivos: %s"
 
-#: parsexlog.c:74 parsexlog.c:128 parsexlog.c:186
+#: parsexlog.c:74 parsexlog.c:127 parsexlog.c:185
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: parsexlog.c:87 parsexlog.c:134
+#: parsexlog.c:87 parsexlog.c:133
 #, c-format
 msgid "could not read WAL record at %X/%X: %s"
 msgstr "no se pudo leer el registro WAL en %X/%X: %s"
 
-#: parsexlog.c:91 parsexlog.c:137
+#: parsexlog.c:91 parsexlog.c:136
 #, c-format
 msgid "could not read WAL record at %X/%X"
 msgstr "no se pudo leer el registro WAL en %X/%X"
 
-#: parsexlog.c:198
+#: parsexlog.c:197
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X: %s"
 
-#: parsexlog.c:202
+#: parsexlog.c:201
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X"
 
-#: parsexlog.c:293
+#: parsexlog.c:292
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: parsexlog.c:306
+#: parsexlog.c:305
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "no se pudo posicionar (seek) el archivo «%s»: %m"
 
-#: parsexlog.c:386
+#: parsexlog.c:385
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmgr: %s, info: %02X"
 msgstr "el registro WAL modifica una relación, pero el tipo de registro no es reconocido lsn: %X/%X, rmgr: %s, info: %02X"
@@ -621,8 +611,8 @@ msgstr "%*s/%s kB (%d%%) copiados"
 
 #: pg_rewind.c:558
 #, c-format
-msgid "invalid control file\n"
-msgstr "archivo de control no válido\n"
+msgid "invalid control file"
+msgstr "archivo de control no válido"
 
 #: pg_rewind.c:642
 #, c-format
@@ -820,3 +810,9 @@ msgstr "registro con largo no válido en %X/%X"
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "imagen comprimida no válida en %X/%X, bloque %d"
+
+#~ msgid "could not create temporary table: %s"
+#~ msgstr "no se pudo crear tabla temporal: %s"
+
+#~ msgid "could not set up connection context: %s"
+#~ msgstr "no se pudo establecer el contexto de conexión: %s"

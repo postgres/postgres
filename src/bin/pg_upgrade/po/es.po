@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-06 17:14+0000\n"
-"PO-Revision-Date: 2019-06-06 17:25-0400\n"
+"POT-Creation-Date: 2019-09-29 23:43+0000\n"
+"PO-Revision-Date: 2019-09-29 22:26-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -175,7 +175,7 @@ msgid "Creating script to analyze new cluster"
 msgstr "Creando un script para analizar el clúster nuevo"
 
 #: check.c:465 check.c:593 check.c:857 check.c:936 check.c:1045 check.c:1136
-#: file.c:341 function.c:246 option.c:493 version.c:57 version.c:156
+#: file.c:341 function.c:246 option.c:495 version.c:57 version.c:156
 #: version.c:257 version.c:339
 #, c-format
 msgid "could not open file \"%s\": %s\n"
@@ -685,10 +685,11 @@ msgstr "orden demasiado larga\n"
 msgid "%s\n"
 msgstr "%s\n"
 
-#: exec.c:149 exec.c:204 option.c:105 option.c:227
+#: exec.c:149 option.c:220
 #, c-format
-msgid "could not write to log file \"%s\"\n"
-msgstr "no se pudo escribir al archivo de log «%s»\n"
+#| msgid "could not open log file \"%s\": %m"
+msgid "could not open log file \"%s\": %m\n"
+msgstr "no se pudo abrir el archivo de registro «%s»: %m\n"
 
 #: exec.c:178
 #, c-format
@@ -721,6 +722,12 @@ msgid ""
 msgstr ""
 "Consulte las últimas líneas de «%s» para saber\n"
 "la causa probable de la falla.\n"
+
+#: exec.c:204 option.c:229
+#, c-format
+#| msgid "could not write to log file \"%s\"\n"
+msgid "could not write to log file \"%s\": %m\n"
+msgstr "no se pudo escribir al archivo de log «%s»\n"
 
 #: exec.c:230
 #, c-format
@@ -1010,71 +1017,71 @@ msgstr "relname: %s.%s: reloid: %u reltblspace: %s\n"
 msgid "%s: cannot be run as root\n"
 msgstr "%s: no puede ejecutarse como root\n"
 
-#: option.c:174
+#: option.c:171
 #, c-format
 msgid "invalid old port number\n"
 msgstr "número de puerto antiguo no válido\n"
 
-#: option.c:182
+#: option.c:179
 #, c-format
 msgid "invalid new port number\n"
 msgstr "número de puerto nuevo no válido\n"
 
-#: option.c:208
-#, c-format
-msgid "Running in verbose mode\n"
-msgstr "Ejecutando en modo verboso\n"
-
-#: option.c:217
+#: option.c:213
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Pruebe «%s --help» para mayor información.\n"
 
-#: option.c:252
+#: option.c:223
+#, c-format
+msgid "Running in verbose mode\n"
+msgstr "Ejecutando en modo verboso\n"
+
+#: option.c:254
 msgid "old cluster binaries reside"
 msgstr "residen los binarios del clúster antiguo"
 
-#: option.c:254
+#: option.c:256
 msgid "new cluster binaries reside"
 msgstr "residen los binarios del clúster nuevo"
 
-#: option.c:256
+#: option.c:258
 msgid "old cluster data resides"
 msgstr "residen los datos del clúster antiguo"
 
-#: option.c:258
+#: option.c:260
 msgid "new cluster data resides"
 msgstr "residen los datos del clúster nuevo"
 
-#: option.c:260
+#: option.c:262
 msgid "sockets will be created"
 msgstr "se crearán los sockets"
 
-#: option.c:277 option.c:371
+#: option.c:279 option.c:373
 #, c-format
 msgid "could not determine current directory\n"
 msgstr "no se pudo identificar el directorio actual\n"
 
-#: option.c:280
+#: option.c:282
 #, c-format
 msgid "cannot run pg_upgrade from inside the new cluster data directory on Windows\n"
 msgstr ""
 "no se puede ejecutar pg_upgrade desde dentro del directorio de datos\n"
 "del clúster nuevo en Windows\n"
 
-#: option.c:289
+#: option.c:291
 #, c-format
 msgid ""
 "pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
 "\n"
 msgstr "pg_upgrado actualiza un clúster PostgreSQL a una versión «mayor» diferente.\n"
 
-#: option.c:290
+#: option.c:292
 #, c-format
 msgid "Usage:\n"
 msgstr "Empleo:\n"
 
-#: option.c:291
+#: option.c:293
 #, c-format
 msgid ""
 "  pg_upgrade [OPTION]...\n"
@@ -1083,102 +1090,103 @@ msgstr ""
 "  pg_upgrade [OPCIÓN]...\n"
 "\n"
 
-#: option.c:292
+#: option.c:294
 #, c-format
 msgid "Options:\n"
 msgstr "Opciones:\n"
 
-#: option.c:293
+#: option.c:295
 #, c-format
 msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
 msgstr "  -b, --old-bindir=BINDIR       directorio de ejecutables del clúster antiguo\n"
 
-#: option.c:294
+#: option.c:296
 #, c-format
 msgid "  -B, --new-bindir=BINDIR       new cluster executable directory\n"
 msgstr "  -B, --new-bindir=BINDIR       directorio de ejecutables del clúster nuevo\n"
 
-#: option.c:295
+#: option.c:297
 #, c-format
 msgid "  -c, --check                   check clusters only, don't change any data\n"
 msgstr "  -c, --check                   sólo verificar clústers, no cambiar datos\n"
 
-#: option.c:296
+#: option.c:298
 #, c-format
 msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
 msgstr "  -d, --old-datadir=DATADIR     directorio de datos del clúster antiguo\n"
 
-#: option.c:297
+#: option.c:299
 #, c-format
 msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
 msgstr "  -D, --new-datadir=DATADIR     directorio de datos del clúster nuevo\n"
 
-#: option.c:298
+#: option.c:300
 #, c-format
 msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
 msgstr "  -j, --jobs                    número de procesos o hilos simultáneos a usar\n"
 
-#: option.c:299
+#: option.c:301
 #, c-format
 msgid "  -k, --link                    link instead of copying files to new cluster\n"
 msgstr "  -k, --link                    enlazar (link) archivos en vez de copiarlos\n"
 
-#: option.c:300
+#: option.c:302
 #, c-format
 msgid "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
 msgstr "  -o, --old-options=OPCIONES    opciones a pasar al servidor antiguo\n"
 
-#: option.c:301
+#: option.c:303
 #, c-format
 msgid "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
 msgstr "  -O, --new-options=OPCIONES    opciones a pasar al servidor nuevo\n"
 
-#: option.c:302
+#: option.c:304
 #, c-format
 msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
 msgstr "  -p, --old-port=PUERTO         número de puerto del clúster antiguo (def. %d)\n"
 
-#: option.c:303
+#: option.c:305
 #, c-format
 msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
 msgstr "  -P, --new-port=PUERTO         número de puerto del clúster nuevo (def. %d)\n"
 
-#: option.c:304
+#: option.c:306
 #, c-format
 msgid "  -r, --retain                  retain SQL and log files after success\n"
 msgstr "  -r, --retain                  preservar archivos SQL y logs en caso de éxito\n"
 
-#: option.c:305
+#: option.c:307
 #, c-format
-msgid "  -s, --socketdir=DIR           socket directory to use (default CWD)\n"
-msgstr "  -s, --socketdir=DIR           directorio de sockets a usar (default CWD)\n"
+#| msgid "  -s, --socketdir=DIR           socket directory to use (default CWD)\n"
+msgid "  -s, --socketdir=DIR           socket directory to use (default current dir.)\n"
+msgstr "  -s, --socketdir=DIR           directorio de sockets a usar (omisión: dir. actual)\n"
 
-#: option.c:306
+#: option.c:308
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
 msgstr "  -U, --username=NOMBRE         superusuario del clúster (def. «%s»)\n"
 
-#: option.c:307
+#: option.c:309
 #, c-format
 msgid "  -v, --verbose                 enable verbose internal logging\n"
 msgstr "  -v, --verbose                 activar registro interno verboso\n"
 
-#: option.c:308
+#: option.c:310
 #, c-format
 msgid "  -V, --version                 display version information, then exit\n"
 msgstr "  -V, --version                 mostrar información de versión y salir\n"
 
-#: option.c:309
+#: option.c:311
 #, c-format
 msgid "  --clone                       clone instead of copying files to new cluster\n"
 msgstr "  --clone                       clonar los archivos en vez de copiarlos\n"
 
-#: option.c:310
+#: option.c:312
 #, c-format
 msgid "  -?, --help                    show this help, then exit\n"
 msgstr "  -?, --help                    mostrar esta ayuda y salir\n"
 
-#: option.c:311
+#: option.c:313
 #, c-format
 msgid ""
 "\n"
@@ -1193,7 +1201,7 @@ msgstr ""
 "  apagar el postmaster que atiende al clúster antiguo\n"
 "  apagar el postmaster que atiende al clúster nuevo\n"
 
-#: option.c:316
+#: option.c:318
 #, c-format
 msgid ""
 "\n"
@@ -1210,7 +1218,7 @@ msgstr ""
 "  el directorio «bin» para la versión antigua (-b BINDIR)\n"
 "  el directorio «bin» para la versión nueva   (-B BINDIR)\n"
 
-#: option.c:322
+#: option.c:324
 #, c-format
 msgid ""
 "\n"
@@ -1223,7 +1231,7 @@ msgstr ""
 "  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n"
 "o\n"
 
-#: option.c:327
+#: option.c:329
 #, c-format
 msgid ""
 "  $ export PGDATAOLD=oldCluster/data\n"
@@ -1238,7 +1246,7 @@ msgstr ""
 "  $ export PGBINNEW=clusterNuevo/bin\n"
 "  $ pg_upgrade\n"
 
-#: option.c:333
+#: option.c:335
 #, c-format
 msgid ""
 "  C:\\> set PGDATAOLD=oldCluster/data\n"
@@ -1253,7 +1261,7 @@ msgstr ""
 "  C:\\> set PGBINNEW=clusterNuevo/bin\n"
 "  C:\\> pg_upgrade\n"
 
-#: option.c:339
+#: option.c:341
 #, c-format
 msgid ""
 "\n"
@@ -1262,7 +1270,7 @@ msgstr ""
 "\n"
 "Reporte errores a <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: option.c:375
+#: option.c:377
 #, c-format
 msgid ""
 "You must identify the directory where the %s.\n"
@@ -1271,27 +1279,27 @@ msgstr ""
 "Debe identificar el directorio donde %s.\n"
 "Por favor use la opción %s o la variable de ambiente %s.\n"
 
-#: option.c:427
+#: option.c:429
 #, c-format
 msgid "Finding the real data directory for the source cluster"
 msgstr "Buscando el directorio de datos real para el clúster de origen"
 
-#: option.c:429
+#: option.c:431
 #, c-format
 msgid "Finding the real data directory for the target cluster"
 msgstr "Buscando el directorio de datos real para el clúster de destino"
 
-#: option.c:441
+#: option.c:443
 #, c-format
 msgid "could not get data directory using %s: %s\n"
 msgstr "no se pudo obtener el directorio de datos usando %s: %s\n"
 
-#: option.c:501
+#: option.c:503
 #, c-format
 msgid "could not read line %d from file \"%s\": %s\n"
 msgstr "no se pudo leer la línea %d del archivo «%s»: %s\n"
 
-#: option.c:519
+#: option.c:521
 #, c-format
 msgid "user-supplied old port number %hu corrected to %hu\n"
 msgstr "número de port entregado por el usuario %hu corregido a %hu\n"
