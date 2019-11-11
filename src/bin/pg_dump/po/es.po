@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-17 22:47+0000\n"
+"POT-Creation-Date: 2019-09-28 11:49+0000\n"
 "PO-Revision-Date: 2019-04-20 22:52-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -2055,7 +2055,7 @@ msgstr "la consulta para obtener la regla «%s» asociada con la tabla «%s» fa
 msgid "reading dependency data\n"
 msgstr "obteniendo datos de dependencias\n"
 
-#: pg_dump.c:15657
+#: pg_dump.c:15695
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo reloptions\n"
@@ -2538,24 +2538,3 @@ msgstr ""
 "\n"
 "Si no se especifica un archivo de entrada, se usa la entrada estándar.\n"
 "\n"
-
-#~ msgid "worker is terminating\n"
-#~ msgstr "el proceso hijo está terminando\n"
-
-#~ msgid "could not get relation name for OID %u: %s\n"
-#~ msgstr "no se pudo obtener un nombre de relación para el OID %u: %s\n"
-
-#~ msgid "unrecognized command on communication channel: %s\n"
-#~ msgstr "orden no reconocida en canal de comunicación: %s\n"
-
-#~ msgid "terminated by user\n"
-#~ msgstr "terminado por el usuario\n"
-
-#~ msgid "error in ListenToWorkers(): %s\n"
-#~ msgstr "error en ListenToWorkers(): %s\n"
-
-#~ msgid "archive member too large for tar format\n"
-#~ msgstr "el miembro de archivador es demasiado grande para el formato tar\n"
-
-#~ msgid "setting owner and privileges for %s %s\n"
-#~ msgstr "estableciendo dueño y privilegios para %s %s\n"

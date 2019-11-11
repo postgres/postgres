@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-29 07:31+0300\n"
+"POT-Creation-Date: 2019-09-09 12:26+0300\n"
 "PO-Revision-Date: 2018-05-16 14:08+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -2187,7 +2187,7 @@ msgstr ""
 msgid "reading dependency data\n"
 msgstr "чтение данных о зависимостях\n"
 
-#: pg_dump.c:15657
+#: pg_dump.c:15695
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: не удалось разобрать массив reloptions\n"
