@@ -15104,7 +15104,7 @@ msgid ""
 "parameter.\n"
 "The PostgreSQL documentation contains more information about configuring your system for PostgreSQL."
 msgstr ""
-"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gel*m*iyor. Bu durum, ya sistemin azami semaphore küme (SEMMNI) sayısı sınırı veya sistem çapında azami semaphore (SEMMNS) sayısının aşılması ile meydana gelmektedir. Belirtilen çekirdek parametrelerinin değerlerini yükseltmelisiniz.  Alternatif olarak PostgerSQL sisteminin semaphore tüketimini max_connections parametresini "
+"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gel*m*iyor. Bu durum, ya sistemin azami semaphore küme (SEMMNI) sayısı sınırı veya sistem çapında azami semaphore (SEMMNS) sayısının aşılması ile meydana gelmektedir. Belirtilen çekirdek parametrelerinin değerlerini yükseltmelisiniz.  Alternatif olarak PostgreSQL sisteminin semaphore tüketimini max_connections parametresini "
 "düşürerek azaltabilirsiniz.\n"
 "PostgreSQL belgeleri sisteminizi PostgreSQL için yapılandırma hakkında daha geniş bilgi içermektedir."
 

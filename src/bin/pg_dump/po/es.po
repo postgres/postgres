@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-24 19:55+0000\n"
+"POT-Creation-Date: 2019-09-28 11:31+0000\n"
 "PO-Revision-Date: 2019-04-20 20:19-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -1041,12 +1041,12 @@ msgstr "archiver (bd)"
 msgid "could not get server_version from libpq\n"
 msgstr "no se pudo obtener server_version desde libpq\n"
 
-#: pg_backup_db.c:57 pg_dumpall.c:2092
+#: pg_backup_db.c:57 pg_dumpall.c:2128
 #, c-format
 msgid "server version: %s; %s version: %s\n"
 msgstr "versión del servidor: %s; versión de %s: %s\n"
 
-#: pg_backup_db.c:59 pg_dumpall.c:2094
+#: pg_backup_db.c:59 pg_dumpall.c:2130
 #, c-format
 msgid "aborting because of server version mismatch\n"
 msgstr "abortando debido a que no coincide la versión del servidor\n"
@@ -1057,7 +1057,7 @@ msgid "connecting to database \"%s\" as user \"%s\"\n"
 msgstr "conectandose a la base de datos \"%s\" como el usuario «%s»\n"
 
 #: pg_backup_db.c:160 pg_backup_db.c:209 pg_backup_db.c:270 pg_backup_db.c:311
-#: pg_dumpall.c:1915 pg_dumpall.c:2029
+#: pg_dumpall.c:1951 pg_dumpall.c:2065
 msgid "Password: "
 msgstr "Contraseña: "
 
@@ -1987,7 +1987,7 @@ msgstr "PRECAUCIÓN: el dueño de la función «%s» parece no ser válido\n"
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "PRECAUCIÓN: el dueño de la tabla «%s» parece no ser válido\n"
 
-#: pg_dump.c:6329 pg_dump.c:16295
+#: pg_dump.c:6329 pg_dump.c:16314
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found\n"
 msgstr "falló la revisión de integridad, no se encontró la tabla padre con OID %u de la secuencia con OID %u\n"
@@ -2183,59 +2183,59 @@ msgstr "la consulta para obtener la definición de la vista «%s» regresó más
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "la definición de la vista «%s» parece estar vacía (tamaño cero)\n"
 
-#: pg_dump.c:15279
+#: pg_dump.c:15298
 #, c-format
 msgid "invalid number of parents %d for table \"%s\"\n"
 msgstr "número de padres %d para la tabla «%s» no es válido\n"
 
-#: pg_dump.c:15612
+#: pg_dump.c:15631
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "el número de columna %d no es válido para la tabla «%s»\n"
 
-#: pg_dump.c:15807
+#: pg_dump.c:15826
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "falta un índice para restricción «%s»\n"
 
-#: pg_dump.c:16003
+#: pg_dump.c:16022
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "tipo de restricción inesperado: %c\n"
 
-#: pg_dump.c:16139 pg_dump.c:16360
+#: pg_dump.c:16158 pg_dump.c:16379
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr[0] "la consulta para obtener los datos de la secuencia «%s» regresó %d entrada, pero se esperaba 1\n"
 msgstr[1] "la consulta para obtener los datos de la secuencia «%s» regresó %d entradas, pero se esperaba 1\n"
 
-#: pg_dump.c:16173
+#: pg_dump.c:16192
 #, c-format
 msgid "unrecognized sequence type: %s\n"
 msgstr "tipo no reconocido de secuencia: %s\n"
 
-#: pg_dump.c:16456
+#: pg_dump.c:16475
 #, c-format
 msgid "unexpected tgtype value: %d\n"
 msgstr "tgtype no esperado: %d\n"
 
-#: pg_dump.c:16530
+#: pg_dump.c:16549
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "argumento de cadena (%s) no válido para el disparador (trigger) «%s» en la tabla «%s»\n"
 
-#: pg_dump.c:16760
+#: pg_dump.c:16779
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n"
 msgstr "la consulta para obtener la regla «%s» asociada con la tabla «%s» falló: retornó un número incorrecto de renglones\n"
 
-#: pg_dump.c:17141
+#: pg_dump.c:17160
 #, c-format
 msgid "reading dependency data\n"
 msgstr "obteniendo datos de dependencias\n"
 
-#: pg_dump.c:17571
+#: pg_dump.c:17628
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo reloptions\n"
@@ -2260,29 +2260,29 @@ msgstr "dependencia %d no válida\n"
 msgid "could not identify dependency loop\n"
 msgstr "no se pudo identificar bucle de dependencia\n"
 
-#: pg_dump_sort.c:1188
+#: pg_dump_sort.c:1206
 #, c-format
 msgid "NOTICE: there are circular foreign-key constraints on this table:\n"
 msgid_plural "NOTICE: there are circular foreign-key constraints among these tables:\n"
 msgstr[0] "NOTA: hay restricciones de llave foránea circulares en la siguiente tabla:\n"
 msgstr[1] "NOTA: hay restricciones de llave foránea circulares entre las siguientes tablas:\n"
 
-#: pg_dump_sort.c:1192 pg_dump_sort.c:1212
+#: pg_dump_sort.c:1210 pg_dump_sort.c:1230
 #, c-format
 msgid "  %s\n"
 msgstr "  %s\n"
 
-#: pg_dump_sort.c:1193
+#: pg_dump_sort.c:1211
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n"
 msgstr "Puede no ser capaz de restaurar el respaldo sin usar --disable-triggers o temporalmente eliminar las restricciones.\n"
 
-#: pg_dump_sort.c:1194
+#: pg_dump_sort.c:1212
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem.\n"
 msgstr "Considere usar un volcado completo en lugar de --data-only para evitar este problema.\n"
 
-#: pg_dump_sort.c:1206
+#: pg_dump_sort.c:1224
 #, c-format
 msgid "WARNING: could not resolve dependency loop among these items:\n"
 msgstr "PRECAUCIÓN: no se pudo resolver el bucle de dependencias entre los siguientes elementos:\n"
@@ -2329,7 +2329,7 @@ msgstr "%s: la opción --if-exists requiere la opción -c/--clean\n"
 msgid "%s: options -r/--roles-only and -t/--tablespaces-only cannot be used together\n"
 msgstr "%s: las opciones -r/--roles-only y -t/--tablespaces-only no pueden usarse juntas\n"
 
-#: pg_dumpall.c:414 pg_dumpall.c:2018
+#: pg_dumpall.c:414 pg_dumpall.c:2054
 #, c-format
 msgid "%s: could not connect to database \"%s\"\n"
 msgstr "%s: no se pudo establecer la conexión a la base de datos «%s»\n"
@@ -2436,62 +2436,62 @@ msgstr ""
 msgid "%s: role name starting with \"pg_\" skipped (%s)\n"
 msgstr "%s: omitido nombre de rol que empieza con «pg_» (%s)\n"
 
-#: pg_dumpall.c:1212
+#: pg_dumpall.c:1231
 #, c-format
 msgid "%s: could not parse ACL list (%s) for tablespace \"%s\"\n"
 msgstr "%s: no se pudo interpretar la lista de control de acceso (%s) del tablespace «%s»\n"
 
-#: pg_dumpall.c:1530
+#: pg_dumpall.c:1566
 #, c-format
 msgid "%s: could not parse ACL list (%s) for database \"%s\"\n"
 msgstr "%s: no se pudo interpretar la lista de control de acceso (%s) de la base de datos «%s»\n"
 
-#: pg_dumpall.c:1770
+#: pg_dumpall.c:1806
 #, c-format
 msgid "%s: dumping database \"%s\"...\n"
 msgstr "%s: extrayendo base de datos «%s»...\n"
 
-#: pg_dumpall.c:1794
+#: pg_dumpall.c:1830
 #, c-format
 msgid "%s: pg_dump failed on database \"%s\", exiting\n"
 msgstr "%s: pg_dump falló en la base de datos «%s», saliendo\n"
 
-#: pg_dumpall.c:1803
+#: pg_dumpall.c:1839
 #, c-format
 msgid "%s: could not re-open the output file \"%s\": %s\n"
 msgstr "%s: no se pudo reabrir el archivo de salida «%s»: %s\n"
 
-#: pg_dumpall.c:1848
+#: pg_dumpall.c:1884
 #, c-format
 msgid "%s: running \"%s\"\n"
 msgstr "%s: ejecutando «%s»\n"
 
-#: pg_dumpall.c:2041
+#: pg_dumpall.c:2077
 #, c-format
 msgid "%s: could not connect to database \"%s\": %s"
 msgstr "%s: no se pudo conectar a la base de datos «%s»: %s"
 
-#: pg_dumpall.c:2071
+#: pg_dumpall.c:2107
 #, c-format
 msgid "%s: could not get server version\n"
 msgstr "%s: no se pudo obtener la versión del servidor\n"
 
-#: pg_dumpall.c:2077
+#: pg_dumpall.c:2113
 #, c-format
 msgid "%s: could not parse server version \"%s\"\n"
 msgstr "%s: no se pudo interpretar la versión del servidor «%s»\n"
 
-#: pg_dumpall.c:2150 pg_dumpall.c:2176
+#: pg_dumpall.c:2186 pg_dumpall.c:2212
 #, c-format
 msgid "%s: executing %s\n"
 msgstr "%s: ejecutando %s\n"
 
-#: pg_dumpall.c:2156 pg_dumpall.c:2182
+#: pg_dumpall.c:2192 pg_dumpall.c:2218
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: falló la consulta: %s"
 
-#: pg_dumpall.c:2158 pg_dumpall.c:2184
+#: pg_dumpall.c:2194 pg_dumpall.c:2220
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: la consulta era: %s\n"

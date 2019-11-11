@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-03-05 23:14+0000\n"
+"POT-Creation-Date: 2019-11-09 09:02+0000\n"
 "PO-Revision-Date: 2018-03-06 18:03+0900\n"
 "Last-Translator: Kyotaro HORIGUCHI <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
@@ -344,13 +344,10 @@ msgid "%s: could not remove promote signal file \"%s\": %s\n"
 msgstr "%s: 昇格指示ファイル\"%s\"の削除に失敗しました: %s\n"
 
 #: pg_ctl.c:1152
-#, c-format
-#| msgid "waiting for server to start..."
 msgid "waiting for server to promote..."
 msgstr "サーバの昇格を待っています..."
 
 #: pg_ctl.c:1166
-#, c-format
 msgid "server promoted\n"
 msgstr "サーバは昇格しました\n"
 
@@ -520,7 +517,6 @@ msgstr "  %s reload   [-D DATADIR] [-s]\n"
 msgid "  %s status   [-D DATADIR]\n"
 msgstr "  %s status   [-D DATADIR]\n"
 
-
 #: pg_ctl.c:1866
 #, c-format
 msgid "  %s promote  [-D DATADIR] [-W] [-t SECS] [-s]\n"
@@ -539,7 +535,6 @@ msgid ""
 msgstr ""
 "  %s register [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
 "                  [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o OPTIONS]\n"
-
 
 #: pg_ctl.c:1871
 #, c-format
@@ -568,7 +563,8 @@ msgstr "  -e SOURCE              サービスとして起動させたときの�
 #: pg_ctl.c:1879
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent           エラーメッセージのみを表示し、情報メッセージは表示しま\n"
+msgstr ""
+"  -s, --silent           エラーメッセージのみを表示し、情報メッセージは表示しま\n"
 "                         せん\n"
 
 #: pg_ctl.c:1880
@@ -701,7 +697,7 @@ msgstr ""
 #: pg_ctl.c:1910
 #, c-format
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N SERVICENAME  PostgreSQLサーバを登録する際ののサービス名です\n"
+msgstr "  -N SERVICENAME  PostgreSQLサーバを登録する際のサービス名です\n"
 
 #: pg_ctl.c:1911
 #, c-format
