@@ -1,13 +1,13 @@
 # Russian message translation file for pg_waldump
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-10-05 21:51+0300\n"
-"PO-Revision-Date: 2018-10-02 17:08+0300\n"
+"PO-Revision-Date: 2019-08-29 15:47+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -285,7 +285,7 @@ msgstr "%s: конечная позиция в WAL %X/%X находится не
 #: pg_waldump.c:1105
 #, c-format
 msgid "%s: no start WAL location given\n"
-msgstr "%s: начальная позиция в WAL не задана.\n"
+msgstr "%s: начальная позиция в WAL не задана\n"
 
 #: pg_waldump.c:1115
 #, c-format

@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-08-05 09:11+0300\n"
-"PO-Revision-Date: 2019-06-17 21:48+0300\n"
+"PO-Revision-Date: 2019-09-02 12:06+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -389,7 +389,7 @@ msgstr "затребовано подключение через SSL, но се�
 #: fe-connect.c:2715
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "получен неверный ответ на согласование SSL: %c\n"
+msgstr "получен неверный ответ при согласовании SSL: %c\n"
 
 #: fe-connect.c:2792 fe-connect.c:2825
 #, c-format

@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-06-17 21:28+0300\n"
-"PO-Revision-Date: 2019-06-17 21:47+0300\n"
+"PO-Revision-Date: 2019-09-02 12:06+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -309,7 +309,7 @@ msgstr ""
 #: initdb.c:704
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr "%s: \"%s\" - неверное имя серверной кодировки\n"
+msgstr "%s: \"%s\" — некорректное имя серверной кодировки\n"
 
 #: initdb.c:824
 #, c-format

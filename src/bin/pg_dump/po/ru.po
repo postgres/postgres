@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-08-05 09:11+0300\n"
-"PO-Revision-Date: 2018-11-16 17:34+0300\n"
+"POT-Creation-Date: 2019-08-28 07:04+0300\n"
+"PO-Revision-Date: 2019-09-09 14:03+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -704,7 +704,7 @@ msgstr "неожиданный флаг смещения данных: %d\n"
 #: pg_backup_archiver.c:1987
 #, c-format
 msgid "file offset in dump file is too large\n"
-msgstr "слишком большое смещение в файле вывода\n"
+msgstr "слишком большое смещение в файле выгрузки\n"
 
 #: pg_backup_archiver.c:2100
 #, c-format
@@ -748,7 +748,7 @@ msgstr "входной файл слишком короткий (прочита�
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql.\n"
 msgstr ""
-"входной файл похоже имеет текстовый формат. Загрузите его с помощью psql.\n"
+"входной файл, видимо, имеет текстовый формат. Загрузите его с помощью psql.\n"
 
 #: pg_backup_archiver.c:2260
 #, c-format
@@ -864,7 +864,7 @@ msgstr ""
 #: pg_backup_archiver.c:3795
 #, c-format
 msgid "did not find magic string in file header\n"
-msgstr "в файле заголовка не найдена магическая строка\n"
+msgstr "в заголовке файла не найдена нужная сигнатура\n"
 
 #: pg_backup_archiver.c:3808
 #, c-format
@@ -1301,7 +1301,7 @@ msgstr "не удалось найти файл \"%s\" в архиве\n"
 #: pg_backup_tar.c:418
 #, c-format
 msgid "could not generate temporary file name: %s\n"
-msgstr "не удалось создать временный файл: %s\n"
+msgstr "не удалось получить имя для временного файла: %s\n"
 
 #: pg_backup_tar.c:429
 #, c-format
@@ -1372,9 +1372,9 @@ msgstr ""
 #, c-format
 msgid "incomplete tar header found (%lu byte)\n"
 msgid_plural "incomplete tar header found (%lu bytes)\n"
-msgstr[0] "найден неполный tar-заголовок (размер %lu байт)\n"
-msgstr[1] "найден неполный tar-заголовок (размер %lu байта)\n"
-msgstr[2] "найден неполный tar-заголовок (размер %lu байтов)\n"
+msgstr[0] "найден неполный заголовок tar (размер %lu байт)\n"
+msgstr[1] "найден неполный заголовок tar (размер %lu байта)\n"
+msgstr[2] "найден неполный заголовок tar (размер %lu байт)\n"
 
 # skip-rule: capital-letter-first
 #: pg_backup_tar.c:1290
@@ -1387,7 +1387,7 @@ msgstr "Запись оглавления %s в %s (длина: %s, контр. 
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
 msgstr ""
-"tar-заголовок в %s повреждён (ожидалось: %d, получено: %d), позиция в файле: "
+"заголовок tar в %s повреждён (ожидалось: %d, получено: %d), позиция в файле: "
 "%s\n"
 
 #: pg_backup_utils.c:54
@@ -1442,7 +1442,7 @@ msgstr "(В INSERT нельзя определять OID.)\n"
 #: pg_dump.c:618
 #, c-format
 msgid "option --if-exists requires option -c/--clean\n"
-msgstr "параметру --if-exists требуется параметр -c/--clean\n"
+msgstr "параметр --if-exists требует указания -c/--clean\n"
 
 #: pg_dump.c:640
 #, c-format
@@ -1730,7 +1730,9 @@ msgstr ""
 #, c-format
 msgid ""
 "  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"
-msgstr "  --exclude-table-data=ТАБЛИЦА НЕ выгружать указанную таблицу(ы)\n"
+msgstr ""
+"  --exclude-table-data=ТАБЛИЦА НЕ выгружать данные указанной таблицы "
+"(таблиц)\n"
 
 #: pg_dump.c:980 pg_dumpall.c:613 pg_restore.c:485
 #, c-format
@@ -1960,7 +1962,7 @@ msgstr "выгрузка содержимого таблицы \"%s.%s\"\n"
 #: pg_dump.c:1862
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
-msgstr "Ошибка выгрузки таблицы \"%s\": сбой в PQendcopy().\n"
+msgstr "Ошибка выгрузки таблицы \"%s\": сбой в PQgetCopyData().\n"
 
 #: pg_dump.c:1863 pg_dump.c:1873
 #, c-format
@@ -2200,7 +2202,7 @@ msgstr[2] ""
 #: pg_dump.c:8572
 #, c-format
 msgid "(The system catalogs might be corrupted.)\n"
-msgstr "(Возможно повреждены системные каталоги.)\n"
+msgstr "(Возможно, повреждены системные каталоги.)\n"
 
 #: pg_dump.c:10133
 #, c-format
@@ -2318,7 +2320,7 @@ msgstr "нераспознанное значение aggmfinalmodify для а�
 #: pg_dump.c:14761
 #, c-format
 msgid "unrecognized object type in default privileges: %d\n"
-msgstr "нераспознанный тип объекта в определении прав по умолчанию: %d)\n"
+msgstr "нераспознанный тип объекта в определении прав по умолчанию: %d\n"
 
 #: pg_dump.c:14779
 #, c-format
@@ -2354,7 +2356,7 @@ msgstr ""
 msgid ""
 "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr ""
-"запрос на получения определения представления \"%s\" возвратил несколько "
+"запрос на получение определения представления \"%s\" возвратил несколько "
 "определений\n"
 
 #: pg_dump.c:15374
@@ -2424,9 +2426,9 @@ msgstr ""
 #: pg_dump.c:17873
 #, c-format
 msgid "reading dependency data\n"
-msgstr "чтение данных о зависимостях\n"
+msgstr "чтение информации о зависимостях\n"
 
-#: pg_dump.c:18335
+#: pg_dump.c:18342
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: не удалось разобрать массив reloptions\n"
@@ -2474,7 +2476,7 @@ msgid ""
 "You might not be able to restore the dump without using --disable-triggers "
 "or temporarily dropping the constraints.\n"
 msgstr ""
-"Возможно для восстановления базы вам потребуется использовать --disable-"
+"Возможно, для восстановления базы потребуется использовать --disable-"
 "triggers или временно удалить ограничения.\n"
 
 #: pg_dump_sort.c:1241
@@ -2483,8 +2485,8 @@ msgid ""
 "Consider using a full dump instead of a --data-only dump to avoid this "
 "problem.\n"
 msgstr ""
-"Во избежание этой проблемы, вам вероятно стоит выгружать всю базу данных, а "
-"не только данные (--data-only).\n"
+"Во избежание этой проблемы, вероятно, стоит выгружать всю базу данных, а не "
+"только данные (--data-only).\n"
 
 #: pg_dump_sort.c:1253
 #, c-format
@@ -2534,7 +2536,7 @@ msgstr ""
 #: pg_dumpall.c:356 pg_restore.c:370
 #, c-format
 msgid "%s: option --if-exists requires option -c/--clean\n"
-msgstr "%s: параметру --if-exists требуется параметр -c/--clean\n"
+msgstr "%s: параметр --if-exists требует указания -c/--clean\n"
 
 #: pg_dumpall.c:363
 #, c-format
@@ -2677,7 +2679,7 @@ msgstr "%s: выгрузка базы данных \"%s\"...\n"
 #: pg_dumpall.c:1436
 #, c-format
 msgid "%s: pg_dump failed on database \"%s\", exiting\n"
-msgstr "%s: ошибка pg_dump для базы данных \"%s\", выход...\n"
+msgstr "%s: ошибка при обработке базы \"%s\", pg_dump завершается\n"
 
 #: pg_dumpall.c:1445
 #, c-format

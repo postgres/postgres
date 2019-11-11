@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-09-14 05:15+0000\n"
-"PO-Revision-Date: 2018-09-14 08:22+0200\n"
+"PO-Revision-Date: 2019-08-29 21:36+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -3705,7 +3705,7 @@ msgstr "%s: nicht mit einer Datenbank verbunden\n"
 #: large_obj.c:83
 #, c-format
 msgid "%s: current transaction is aborted\n"
-msgstr "%s: aktuelle Transaktion is abgebrochen\n"
+msgstr "%s: aktuelle Transaktion ist abgebrochen\n"
 
 #: large_obj.c:86
 #, c-format

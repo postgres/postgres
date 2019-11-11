@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-26 09:44+0000\n"
+"POT-Creation-Date: 2019-09-29 23:51+0000\n"
 "PO-Revision-Date: 2019-05-03 11:52-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -178,7 +178,7 @@ msgstr "no se pudo obtener directorio home para el usuario de ID %ld: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: no se pudo cambiar directorio a «%s»: %s\n"
 
-#: command.c:595 common.c:696 common.c:754 common.c:1337
+#: command.c:595 common.c:710 common.c:768 common.c:1351
 #, c-format
 msgid "You are currently not connected to a database.\n"
 msgstr "No está conectado a una base de datos.\n"
@@ -198,7 +198,7 @@ msgstr "Está conectado a la base de datos «%s» como el usuario «%s» en el s
 msgid "no query buffer\n"
 msgstr "no hay búfer de consulta\n"
 
-#: command.c:928 command.c:4648
+#: command.c:928 command.c:4656
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "número de línea no válido: %s\n"
@@ -224,9 +224,9 @@ msgstr ""
 "%s: nombre de codificación no válido o procedimiento de conversión\n"
 "no encontrado\n"
 
-#: command.c:1179 command.c:1818 command.c:3033 command.c:4750 common.c:174
-#: common.c:245 common.c:542 common.c:1383 common.c:1411 common.c:1519
-#: common.c:1622 common.c:1660 copy.c:492 copy.c:711 large_obj.c:156
+#: command.c:1179 command.c:1818 command.c:3033 command.c:4758 common.c:174
+#: common.c:245 common.c:556 common.c:1397 common.c:1425 common.c:1533
+#: common.c:1636 common.c:1674 copy.c:492 copy.c:711 large_obj.c:156
 #: large_obj.c:191 large_obj.c:253
 #, c-format
 msgid "%s"
@@ -335,9 +335,9 @@ msgstr "El despliegue de duración está activado."
 msgid "Timing is off."
 msgstr "El despliegue de duración está desactivado."
 
-#: command.c:2402 command.c:2430 command.c:3401 command.c:3404 command.c:3407
-#: command.c:3413 command.c:3415 command.c:3423 command.c:3433 command.c:3442
-#: command.c:3456 command.c:3473 command.c:3531 common.c:70 copy.c:332
+#: command.c:2402 command.c:2430 command.c:3409 command.c:3412 command.c:3415
+#: command.c:3421 command.c:3423 command.c:3431 command.c:3441 command.c:3450
+#: command.c:3464 command.c:3481 command.c:3539 common.c:70 copy.c:332
 #: copy.c:392 copy.c:405 psqlscanslash.l:783 psqlscanslash.l:794
 #: psqlscanslash.l:804
 #, c-format
@@ -368,27 +368,27 @@ msgstr "Se ha mantenido la conexión anterior\n"
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:3077
+#: command.c:3084
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
 msgstr "Ahora está conectado a la base de datos «%s» como el usuario «%s» a través del socket en «%s» port «%s».\n"
 
-#: command.c:3080
+#: command.c:3087
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
 msgstr "Ahora está conectado a la base de datos «%s» como el usuario «%s» en el servidor «%s» port «%s».\n"
 
-#: command.c:3084
+#: command.c:3091
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Ahora está conectado a la base de datos «%s» con el usuario «%s».\n"
 
-#: command.c:3117
+#: command.c:3124
 #, c-format
 msgid "%s (%s, server %s)\n"
 msgstr "%s (%s, servidor %s)\n"
 
-#: command.c:3125
+#: command.c:3132
 #, c-format
 msgid ""
 "WARNING: %s major version %s, server major version %s.\n"
@@ -397,24 +397,24 @@ msgstr ""
 "ADVERTENCIA: %s versión mayor %s, servidor versión mayor %s.\n"
 "          Algunas características de psql podrían no funcionar.\n"
 
-#: command.c:3162
+#: command.c:3170
 #, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
 msgstr "conexión SSL (protocolo: %s, cifrado: %s, bits: %s, compresión: %s)\n"
 
-#: command.c:3163 command.c:3164 command.c:3165
+#: command.c:3171 command.c:3172 command.c:3173
 msgid "unknown"
 msgstr "desconocido"
 
-#: command.c:3166 help.c:45
+#: command.c:3174 help.c:45
 msgid "off"
 msgstr "desactivado"
 
-#: command.c:3166 help.c:45
+#: command.c:3174 help.c:45
 msgid "on"
 msgstr "activado"
 
-#: command.c:3186
+#: command.c:3194
 #, c-format
 msgid ""
 "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
@@ -427,239 +427,239 @@ msgstr ""
 "            Vea la página de referencia de psql «Notes for Windows users»\n"
 "            para obtener más detalles.\n"
 
-#: command.c:3290
+#: command.c:3298
 #, c-format
 msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number\n"
 msgstr "la variable de ambiente PSQL_EDITOR_LINENUMBER_SWITCH debe estar definida para poder especificar un número de línea\n"
 
-#: command.c:3319
+#: command.c:3327
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "no se pudo iniciar el editor «%s»\n"
 
-#: command.c:3321
+#: command.c:3329
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "no se pudo iniciar /bin/sh\n"
 
-#: command.c:3359
+#: command.c:3367
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "no se pudo ubicar el directorio temporal: %s\n"
 
-#: command.c:3386
+#: command.c:3394
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "no se pudo abrir archivo temporal «%s»: %s\n"
 
-#: command.c:3660
+#: command.c:3668
 #, c-format
 msgid "\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n"
 msgstr "\\pset: formatos permitidos son unaligned, aligned, wrapped, html, asciidoc, latex, latex-longtable, troff-ms\n"
 
-#: command.c:3678
+#: command.c:3686
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: estilos de línea permitidos son ascii, old-ascii, unicode\n"
 
-#: command.c:3693
+#: command.c:3701
 #, c-format
 msgid "\\pset: allowed Unicode border line styles are single, double\n"
 msgstr "\\pset: estilos de línea Unicode de borde permitidos son single, double\n"
 
-#: command.c:3708
+#: command.c:3716
 #, c-format
 msgid "\\pset: allowed Unicode column line styles are single, double\n"
 msgstr "\\pset: estilos de línea Unicode de columna permitidos son single, double\n"
 
-#: command.c:3723
+#: command.c:3731
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double\n"
 msgstr "\\pset: estilos de línea Unicode de encabezado permitidos son single, double\n"
 
-#: command.c:3888 command.c:4067
+#: command.c:3896 command.c:4075
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: opción desconocida: %s\n"
 
-#: command.c:3906
+#: command.c:3914
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "El estilo de borde es %d.\n"
 
-#: command.c:3912
+#: command.c:3920
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "El ancho no está definido.\n"
 
-#: command.c:3914
+#: command.c:3922
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "El ancho es %d.\n"
 
-#: command.c:3921
+#: command.c:3929
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "Se ha activado el despliegue expandido.\n"
 
-#: command.c:3923
+#: command.c:3931
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "El despliegue expandido se usa automáticamente.\n"
 
-#: command.c:3925
+#: command.c:3933
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "Se ha desactivado el despliegue expandido.\n"
 
-#: command.c:3932 command.c:3940
+#: command.c:3940 command.c:3948
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "El separador de campos es el byte cero.\n"
 
-#: command.c:3934
+#: command.c:3942
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "El separador de campos es «%s».\n"
 
-#: command.c:3947
+#: command.c:3955
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "El pie por omisión está activo.\n"
 
-#: command.c:3949
+#: command.c:3957
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "El pie de página por omisión está desactivado.\n"
 
-#: command.c:3955
+#: command.c:3963
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "El formato de salida es %s.\n"
 
-#: command.c:3961
+#: command.c:3969
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "El estilo de línea es %s.\n"
 
-#: command.c:3968
+#: command.c:3976
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Despliegue de nulos es «%s».\n"
 
-#: command.c:3976
+#: command.c:3984
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "La salida numérica ajustada localmente está habilitada.\n"
 
-#: command.c:3978
+#: command.c:3986
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "La salida numérica ajustada localmente está deshabilitada.\n"
 
-#: command.c:3985
+#: command.c:3993
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "El paginador se usará para salida larga.\n"
 
-#: command.c:3987
+#: command.c:3995
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "El paginador se usará siempre.\n"
 
-#: command.c:3989
+#: command.c:3997
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "El paginador no se usará.\n"
 
-#: command.c:3995
+#: command.c:4003
 #, c-format
 msgid "Pager won't be used for less than %d line.\n"
 msgid_plural "Pager won't be used for less than %d lines.\n"
 msgstr[0] "El paginador no se usará para menos de %d línea.\n"
 msgstr[1] "El paginador no se usará para menos de %d líneas.\n"
 
-#: command.c:4005 command.c:4015
+#: command.c:4013 command.c:4023
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "El separador de filas es el byte cero.\n"
 
-#: command.c:4007
+#: command.c:4015
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "El separador de filas es <salto de línea>.\n"
 
-#: command.c:4009
+#: command.c:4017
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "El separador de filas es «%s».\n"
 
-#: command.c:4022
+#: command.c:4030
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "Los atributos de tabla son «%s».\n"
 
-#: command.c:4025
+#: command.c:4033
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "Los atributos de tabla han sido indefinidos.\n"
 
-#: command.c:4032
+#: command.c:4040
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "El título es «%s».\n"
 
-#: command.c:4034
+#: command.c:4042
 #, c-format
 msgid "Title is unset.\n"
 msgstr "El título ha sido indefinido.\n"
 
-#: command.c:4041
+#: command.c:4049
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "Mostrar sólo filas está activado.\n"
 
-#: command.c:4043
+#: command.c:4051
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "Mostrar sólo filas está desactivado.\n"
 
-#: command.c:4049
+#: command.c:4057
 #, c-format
 msgid "Unicode border line style is \"%s\".\n"
 msgstr "El estilo Unicode de borde es «%s».\n"
 
-#: command.c:4055
+#: command.c:4063
 #, c-format
 msgid "Unicode column line style is \"%s\".\n"
 msgstr "El estilo de línea Unicode de columna es «%s».\n"
 
-#: command.c:4061
+#: command.c:4069
 #, c-format
 msgid "Unicode header line style is \"%s\".\n"
 msgstr "El estilo de línea Unicode de encabezado es «%s».\n"
 
-#: command.c:4221
+#: command.c:4229
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: falló\n"
 
-#: command.c:4246 common.c:802
+#: command.c:4254 common.c:816
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch no puede ser usado con una consulta vacía\n"
 
-#: command.c:4287
+#: command.c:4295
 #, c-format
 msgid "%s\t%s (every %gs)\n"
 msgstr "%s\t%s (cada %gs)\n"
 
-#: command.c:4290
+#: command.c:4298
 #, c-format
 msgid "%s (every %gs)\n"
 msgstr "%s (cada %gs)\n"
 
-#: command.c:4344 command.c:4351 common.c:702 common.c:709 common.c:1366
+#: command.c:4352 command.c:4359 common.c:716 common.c:723 common.c:1380
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -672,12 +672,12 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: command.c:4543
+#: command.c:4551
 #, c-format
 msgid "\"%s.%s\" is not a view\n"
 msgstr "«%s.%s» no es una vista\n"
 
-#: command.c:4559
+#: command.c:4567
 #, c-format
 msgid "could not parse reloptions array\n"
 msgstr "no se pudo interpretar el array reloptions\n"
@@ -707,67 +707,67 @@ msgstr "La conexión al servidor se ha perdido. Intentando reiniciar: "
 msgid "Failed.\n"
 msgstr "falló.\n"
 
-#: common.c:432
+#: common.c:438
 #, c-format
 msgid "Succeeded.\n"
 msgstr "con éxito.\n"
 
-#: common.c:532 common.c:1084 common.c:1301
+#: common.c:546 common.c:1098 common.c:1315
 #, c-format
 msgid "unexpected PQresultStatus: %d\n"
 msgstr "PQresultStatus no esperado: %d\n"
 
-#: common.c:641
+#: common.c:655
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Duración: %.3f ms\n"
 
-#: common.c:656
+#: common.c:670
 #, c-format
 msgid "Time: %.3f ms (%02d:%06.3f)\n"
 msgstr "Duración: %.3f ms (%02d:%06.3f)\n"
 
-#: common.c:665
+#: common.c:679
 #, c-format
 msgid "Time: %.3f ms (%02d:%02d:%06.3f)\n"
 msgstr "Duración: %.3f ms (%02d:%02d:%06.3f)\n"
 
-#: common.c:672
+#: common.c:686
 #, c-format
 msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
 msgstr "Duración: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
 
-#: common.c:809
+#: common.c:823
 #, c-format
 msgid "\\watch cannot be used with COPY\n"
 msgstr "no se puede usar \\watch con COPY\n"
 
-#: common.c:814
+#: common.c:828
 #, c-format
 msgid "unexpected result status for \\watch\n"
 msgstr "Estado de resultado inesperado de \\watch\n"
 
-#: common.c:844
+#: common.c:858
 #, c-format
 msgid "Asynchronous notification \"%s\" with payload \"%s\" received from server process with PID %d.\n"
 msgstr "Notificación asíncrona «%s» con carga «%s» recibida del proceso de servidor con PID %d.\n"
 
-#: common.c:847
+#: common.c:861
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Notificación asíncrona «%s» recibida del proceso de servidor con PID %d.\n"
 
-#: common.c:910
+#: common.c:924
 #, c-format
 msgid "no rows returned for \\gset\n"
 msgstr "\\gset no retornó renglón alguno\n"
 
-#: common.c:915
+#: common.c:929
 #, c-format
 msgid "more than one row returned for \\gset\n"
 msgstr "\\gset retornó más de un renglón\n"
 
-#: common.c:1346
+#: common.c:1360
 #, c-format
 msgid ""
 "***(Single step mode: verify command)*******************************************\n"
@@ -778,33 +778,33 @@ msgstr ""
 "%s\n"
 "***(presione enter para continuar, o x y enter para cancelar)*******************\n"
 
-#: common.c:1401
+#: common.c:1415
 #, c-format
 msgid "The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK.\n"
 msgstr "El servidor (versión %s) no soporta savepoints para ON_ERROR_ROLLBACK.\n"
 
-#: common.c:1464
+#: common.c:1478
 #, c-format
 msgid "STATEMENT:  %s\n"
 msgstr "SENTENCIA:  %s\n"
 
-#: common.c:1507
+#: common.c:1521
 #, c-format
 msgid "unexpected transaction status (%d)\n"
 msgstr "estado de transacción inesperado (%d)\n"
 
-#: common.c:1644 describe.c:1941
+#: common.c:1658 describe.c:1941
 msgid "Column"
 msgstr "Columna"
 
-#: common.c:1645 describe.c:175 describe.c:390 describe.c:408 describe.c:453
+#: common.c:1659 describe.c:175 describe.c:390 describe.c:408 describe.c:453
 #: describe.c:470 describe.c:959 describe.c:1123 describe.c:1664
-#: describe.c:1688 describe.c:1942 describe.c:3529 describe.c:3734
-#: describe.c:4925
+#: describe.c:1688 describe.c:1942 describe.c:3531 describe.c:3736
+#: describe.c:4927
 msgid "Type"
 msgstr "Tipo"
 
-#: common.c:1694
+#: common.c:1708
 #, c-format
 msgid "The command has no result, or the result has no columns.\n"
 msgstr "La orden no tiene resultado, o el resultado no tiene columnas.\n"
@@ -920,20 +920,20 @@ msgid "\\crosstabview: column name not found: \"%s\"\n"
 msgstr "\\crosstabview: nombre de columna «%s» no encontrado\n"
 
 #: describe.c:75 describe.c:370 describe.c:675 describe.c:807 describe.c:951
-#: describe.c:1112 describe.c:1184 describe.c:3518 describe.c:3732
-#: describe.c:3823 describe.c:4090 describe.c:4235 describe.c:4476
-#: describe.c:4551 describe.c:4562 describe.c:4624 describe.c:5049
-#: describe.c:5132
+#: describe.c:1112 describe.c:1184 describe.c:3520 describe.c:3734
+#: describe.c:3825 describe.c:4092 describe.c:4237 describe.c:4478
+#: describe.c:4553 describe.c:4564 describe.c:4626 describe.c:5051
+#: describe.c:5134
 msgid "Schema"
 msgstr "Esquema"
 
 #: describe.c:76 describe.c:173 describe.c:240 describe.c:248 describe.c:371
 #: describe.c:676 describe.c:808 describe.c:869 describe.c:952 describe.c:1185
-#: describe.c:3519 describe.c:3655 describe.c:3733 describe.c:3824
-#: describe.c:3903 describe.c:4091 describe.c:4160 describe.c:4236
-#: describe.c:4477 describe.c:4552 describe.c:4563 describe.c:4625
-#: describe.c:4822 describe.c:4906 describe.c:5130 describe.c:5302
-#: describe.c:5527
+#: describe.c:3521 describe.c:3657 describe.c:3735 describe.c:3826
+#: describe.c:3905 describe.c:4093 describe.c:4162 describe.c:4238
+#: describe.c:4479 describe.c:4554 describe.c:4565 describe.c:4627
+#: describe.c:4824 describe.c:4908 describe.c:5132 describe.c:5304
+#: describe.c:5529
 msgid "Name"
 msgstr "Nombre"
 
@@ -948,11 +948,11 @@ msgstr "Tipos de datos de argumentos"
 
 #: describe.c:110 describe.c:117 describe.c:183 describe.c:271 describe.c:510
 #: describe.c:724 describe.c:823 describe.c:894 describe.c:1187 describe.c:1960
-#: describe.c:3307 describe.c:3554 describe.c:3686 describe.c:3760
-#: describe.c:3833 describe.c:3916 describe.c:3999 describe.c:4103
-#: describe.c:4169 describe.c:4237 describe.c:4378 describe.c:4420
-#: describe.c:4493 describe.c:4555 describe.c:4564 describe.c:4626
-#: describe.c:4848 describe.c:4928 describe.c:5063 describe.c:5133
+#: describe.c:3309 describe.c:3556 describe.c:3688 describe.c:3762
+#: describe.c:3835 describe.c:3918 describe.c:4001 describe.c:4105
+#: describe.c:4171 describe.c:4239 describe.c:4380 describe.c:4422
+#: describe.c:4495 describe.c:4557 describe.c:4566 describe.c:4628
+#: describe.c:4850 describe.c:4930 describe.c:5065 describe.c:5135
 #: large_obj.c:289 large_obj.c:299
 msgid "Description"
 msgstr "Descripción"
@@ -970,7 +970,7 @@ msgstr "El servidor (versión %s) no soporta métodos de acceso.\n"
 msgid "Index"
 msgstr "Indice"
 
-#: describe.c:182 describe.c:4827
+#: describe.c:182 describe.c:4829
 msgid "Handler"
 msgstr "Manejador"
 
@@ -984,9 +984,9 @@ msgid "The server (version %s) does not support tablespaces.\n"
 msgstr "El servidor (versión %s) no soporta tablespaces.\n"
 
 #: describe.c:241 describe.c:249 describe.c:498 describe.c:714 describe.c:870
-#: describe.c:1111 describe.c:3530 describe.c:3659 describe.c:3905
-#: describe.c:4161 describe.c:4823 describe.c:4907 describe.c:5303
-#: describe.c:5429 describe.c:5528 large_obj.c:288
+#: describe.c:1111 describe.c:3532 describe.c:3661 describe.c:3907
+#: describe.c:4163 describe.c:4825 describe.c:4909 describe.c:5305
+#: describe.c:5431 describe.c:5530 large_obj.c:288
 msgid "Owner"
 msgstr "Dueño"
 
@@ -994,11 +994,11 @@ msgstr "Dueño"
 msgid "Location"
 msgstr "Ubicación"
 
-#: describe.c:261 describe.c:3126
+#: describe.c:261 describe.c:3128
 msgid "Options"
 msgstr "Opciones"
 
-#: describe.c:266 describe.c:687 describe.c:886 describe.c:3546 describe.c:3550
+#: describe.c:266 describe.c:687 describe.c:886 describe.c:3548 describe.c:3552
 msgid "Size"
 msgstr "Tamaño"
 
@@ -1008,13 +1008,11 @@ msgstr "Listado de tablespaces"
 
 #: describe.c:330
 #, c-format
-#| msgid "\\df only takes [anptwS+] as options"
 msgid "\\df only takes [anptwS+] as options\n"
 msgstr "\\df sólo acepta las opciones [antpwS+]\n"
 
 #: describe.c:338 describe.c:349
 #, c-format
-#| msgid "\\df does not take a \"%c\" option with server version %s"
 msgid "\\df does not take a \"%c\" option with server version %s\n"
 msgstr "\\df no acepta la opción «%c» en un servidor versión %s\n"
 
@@ -1119,8 +1117,8 @@ msgstr "Tipo arg der"
 msgid "Result type"
 msgstr "Tipo resultado"
 
-#: describe.c:816 describe.c:3911 describe.c:3976 describe.c:3982
-#: describe.c:4377
+#: describe.c:816 describe.c:3913 describe.c:3978 describe.c:3984
+#: describe.c:4379
 msgid "Function"
 msgstr "Función"
 
@@ -1132,11 +1130,11 @@ msgstr "Listado de operadores"
 msgid "Encoding"
 msgstr "Codificación"
 
-#: describe.c:876 describe.c:4092
+#: describe.c:876 describe.c:4094
 msgid "Collate"
 msgstr "Collate"
 
-#: describe.c:877 describe.c:4093
+#: describe.c:877 describe.c:4095
 msgid "Ctype"
 msgstr "Ctype"
 
@@ -1148,24 +1146,24 @@ msgstr "Tablespace"
 msgid "List of databases"
 msgstr "Listado de base de datos"
 
-#: describe.c:953 describe.c:958 describe.c:1114 describe.c:3520
-#: describe.c:3527
+#: describe.c:953 describe.c:958 describe.c:1114 describe.c:3522
+#: describe.c:3529
 msgid "table"
 msgstr "tabla"
 
-#: describe.c:954 describe.c:3521
+#: describe.c:954 describe.c:3523
 msgid "view"
 msgstr "vista"
 
-#: describe.c:955 describe.c:3522
+#: describe.c:955 describe.c:3524
 msgid "materialized view"
 msgstr "vistas materializadas"
 
-#: describe.c:956 describe.c:1116 describe.c:3524
+#: describe.c:956 describe.c:1116 describe.c:3526
 msgid "sequence"
 msgstr "secuencia"
 
-#: describe.c:957 describe.c:3526
+#: describe.c:957 describe.c:3528
 msgid "foreign table"
 msgstr "tabla foránea"
 
@@ -1177,7 +1175,7 @@ msgstr "Privilegios de acceso a columnas"
 msgid "Policies"
 msgstr "Políticas"
 
-#: describe.c:1067 describe.c:5584 describe.c:5588
+#: describe.c:1067 describe.c:5586 describe.c:5590
 msgid "Access privileges"
 msgstr "Privilegios"
 
@@ -1230,12 +1228,12 @@ msgstr "regla"
 msgid "Object descriptions"
 msgstr "Descripciones de objetos"
 
-#: describe.c:1399 describe.c:3618
+#: describe.c:1399 describe.c:3620
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "No se encontró relación llamada «%s».\n"
 
-#: describe.c:1402 describe.c:3621
+#: describe.c:1402 describe.c:3623
 #, c-format
 msgid "Did not find any relations.\n"
 msgstr "No se encontró ninguna relación.\n"
@@ -1261,13 +1259,13 @@ msgstr "Máximo"
 msgid "Increment"
 msgstr "Incremento"
 
-#: describe.c:1669 describe.c:1693 describe.c:1818 describe.c:3827
-#: describe.c:3993
+#: describe.c:1669 describe.c:1693 describe.c:1818 describe.c:3829
+#: describe.c:3995
 msgid "yes"
 msgstr "sí"
 
-#: describe.c:1670 describe.c:1694 describe.c:1819 describe.c:3827
-#: describe.c:3990
+#: describe.c:1670 describe.c:1694 describe.c:1819 describe.c:3829
+#: describe.c:3992
 msgid "no"
 msgstr "no"
 
@@ -1349,15 +1347,15 @@ msgstr "Tipo compuesto «%s.%s»"
 msgid "Foreign table \"%s.%s\""
 msgstr "Tabla foránea «%s.%s»"
 
-#: describe.c:1945 describe.c:3740
+#: describe.c:1945 describe.c:3742
 msgid "Collation"
 msgstr "Ordenamiento"
 
-#: describe.c:1946 describe.c:3747
+#: describe.c:1946 describe.c:3749
 msgid "Nullable"
 msgstr "Nulable"
 
-#: describe.c:1947 describe.c:3748
+#: describe.c:1947 describe.c:3750
 msgid "Default"
 msgstr "Por omisión"
 
@@ -1369,8 +1367,8 @@ msgstr "¿Llave?"
 msgid "Definition"
 msgstr "Definición"
 
-#: describe.c:1954 describe.c:4843 describe.c:4927 describe.c:4998
-#: describe.c:5062
+#: describe.c:1954 describe.c:4845 describe.c:4929 describe.c:5000
+#: describe.c:5064
 msgid "FDW options"
 msgstr "Opciones de FDW"
 
@@ -1396,556 +1394,551 @@ msgstr "Sin restricción de partición"
 msgid "Partition constraint: %s"
 msgstr "Restricción de partición: %s"
 
-#: describe.c:2105
+#: describe.c:2106
 #, c-format
 msgid "Partition key: %s"
 msgstr "Llave de partición: %s"
 
-#: describe.c:2174
+#: describe.c:2176
 msgid "primary key, "
 msgstr "llave primaria, "
 
-#: describe.c:2176
+#: describe.c:2178
 msgid "unique, "
 msgstr "único, "
 
-#: describe.c:2182
+#: describe.c:2184
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "de tabla «%s.%s»"
 
-#: describe.c:2186
+#: describe.c:2188
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", predicado (%s)"
 
-#: describe.c:2189
+#: describe.c:2191
 msgid ", clustered"
 msgstr ", clustered"
 
-#: describe.c:2192
+#: describe.c:2194
 msgid ", invalid"
 msgstr ", no válido"
 
-#: describe.c:2195
+#: describe.c:2197
 msgid ", deferrable"
 msgstr ", postergable"
 
-#: describe.c:2198
+#: describe.c:2200
 msgid ", initially deferred"
 msgstr ", inicialmente postergada"
 
-#: describe.c:2201
+#: describe.c:2203
 msgid ", replica identity"
 msgstr ", identidad de replicación"
 
-#: describe.c:2260
+#: describe.c:2262
 msgid "Indexes:"
 msgstr "Índices:"
 
-#: describe.c:2344
+#: describe.c:2346
 msgid "Check constraints:"
 msgstr "Restricciones CHECK:"
 
-#: describe.c:2380
+#: describe.c:2382
 msgid "Foreign-key constraints:"
 msgstr "Restricciones de llave foránea:"
 
-#: describe.c:2411
+#: describe.c:2413
 msgid "Referenced by:"
 msgstr "Referenciada por:"
 
-#: describe.c:2461
+#: describe.c:2463
 msgid "Policies:"
 msgstr "Políticas:"
 
-#: describe.c:2464
+#: describe.c:2466
 msgid "Policies (forced row security enabled):"
 msgstr "Políticas (seguridad de registros forzada):"
 
-#: describe.c:2467
+#: describe.c:2469
 msgid "Policies (row security enabled): (none)"
 msgstr "Políticas (seguridad de filas activa): (ninguna)"
 
-#: describe.c:2470
+#: describe.c:2472
 msgid "Policies (forced row security enabled): (none)"
 msgstr "Políticas (seguridad de filas forzada): (ninguna)"
 
-#: describe.c:2473
+#: describe.c:2475
 msgid "Policies (row security disabled):"
 msgstr "Políticas (seguridad de filas inactiva):"
 
-#: describe.c:2535
+#: describe.c:2537
 msgid "Statistics objects:"
 msgstr "Objetos de estadísticas:"
 
-#: describe.c:2638 describe.c:2742
+#: describe.c:2640 describe.c:2744
 msgid "Rules:"
 msgstr "Reglas:"
 
-#: describe.c:2641
+#: describe.c:2643
 msgid "Disabled rules:"
 msgstr "Reglas deshabilitadas:"
 
-#: describe.c:2644
+#: describe.c:2646
 msgid "Rules firing always:"
 msgstr "Reglas que se activan siempre:"
 
-#: describe.c:2647
+#: describe.c:2649
 msgid "Rules firing on replica only:"
 msgstr "Reglas que se activan sólo en las réplicas:"
 
-#: describe.c:2687
+#: describe.c:2689
 msgid "Publications:"
 msgstr "Publicaciones:"
 
-#: describe.c:2725
+#: describe.c:2727
 msgid "View definition:"
 msgstr "Definición de vista:"
 
-#: describe.c:2864
+#: describe.c:2866
 msgid "Triggers:"
 msgstr "Triggers:"
 
-#: describe.c:2868
+#: describe.c:2870
 msgid "Disabled user triggers:"
 msgstr "Disparadores de usuario deshabilitados:"
 
-#: describe.c:2870
+#: describe.c:2872
 msgid "Disabled triggers:"
 msgstr "Disparadores deshabilitados:"
 
-#: describe.c:2873
+#: describe.c:2875
 msgid "Disabled internal triggers:"
 msgstr "Disparadores internos deshabilitados:"
 
-#: describe.c:2876
+#: describe.c:2878
 msgid "Triggers firing always:"
 msgstr "Disparadores que siempre se ejecutan:"
 
-#: describe.c:2879
+#: describe.c:2881
 msgid "Triggers firing on replica only:"
 msgstr "Disparadores que se ejecutan sólo en las réplicas:"
 
-#: describe.c:2938
+#: describe.c:2940
 #, c-format
 msgid "Server: %s"
 msgstr "Servidor: %s"
 
-#: describe.c:2946
+#: describe.c:2948
 #, c-format
 msgid "FDW options: (%s)"
 msgstr "Opciones de FDW: (%s)"
 
-#: describe.c:2965
+#: describe.c:2967
 msgid "Inherits"
 msgstr "Hereda"
 
-#: describe.c:3024
+#: describe.c:3026
 #, c-format
 msgid "Number of partitions: %d"
 msgstr "Número de particiones: %d"
 
-#: describe.c:3033
+#: describe.c:3035
 #, c-format
 msgid "Number of child tables: %d (Use \\d+ to list them.)"
 msgstr "Número de tablas hijas: %d (Use \\d+ para listarlas.)"
 
-#: describe.c:3035
+#: describe.c:3037
 #, c-format
 msgid "Number of partitions: %d (Use \\d+ to list them.)"
 msgstr "Número de particiones: %d (Use \\d+ para listarlas.)"
 
-#: describe.c:3043
+#: describe.c:3045
 msgid "Child tables"
 msgstr "Tablas hijas"
 
-#: describe.c:3043
+#: describe.c:3045
 msgid "Partitions"
 msgstr "Particiones"
 
-#: describe.c:3086
+#: describe.c:3088
 #, c-format
 msgid "Typed table of type: %s"
 msgstr "Tabla tipada de tipo: %s"
 
-#: describe.c:3102
+#: describe.c:3104
 msgid "Replica Identity"
 msgstr "Identidad de replicación"
 
-#: describe.c:3115
+#: describe.c:3117
 msgid "Has OIDs: yes"
 msgstr "Tiene OIDs: sí"
 
-#: describe.c:3195
+#: describe.c:3197
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace: «%s»"
 
 #. translator: before this string there's an index description like
 #. '"foo_pkey" PRIMARY KEY, btree (a)'
-#: describe.c:3207
+#: describe.c:3209
 #, c-format
 msgid ", tablespace \"%s\""
 msgstr ", tablespace «%s»"
 
-#: describe.c:3300
+#: describe.c:3302
 msgid "List of roles"
 msgstr "Lista de roles"
 
-#: describe.c:3302
+#: describe.c:3304
 msgid "Role name"
 msgstr "Nombre de rol"
 
-#: describe.c:3303
+#: describe.c:3305
 msgid "Attributes"
 msgstr "Atributos"
 
-#: describe.c:3304
+#: describe.c:3306
 msgid "Member of"
 msgstr "Miembro de"
 
-#: describe.c:3315
+#: describe.c:3317
 msgid "Superuser"
 msgstr "Superusuario"
 
-#: describe.c:3318
+#: describe.c:3320
 msgid "No inheritance"
 msgstr "Sin herencia"
 
-#: describe.c:3321
+#: describe.c:3323
 msgid "Create role"
 msgstr "Crear rol"
 
-#: describe.c:3324
+#: describe.c:3326
 msgid "Create DB"
 msgstr "Crear BD"
 
-#: describe.c:3327
+#: describe.c:3329
 msgid "Cannot login"
 msgstr "No puede conectarse"
 
-#: describe.c:3331
+#: describe.c:3333
 msgid "Replication"
 msgstr "Replicación"
 
-#: describe.c:3335
+#: describe.c:3337
 msgid "Bypass RLS"
 msgstr "Ignora RLS"
 
-#: describe.c:3344
+#: describe.c:3346
 msgid "No connections"
 msgstr "Ninguna conexión"
 
-#: describe.c:3346
+#: describe.c:3348
 #, c-format
 msgid "%d connection"
 msgid_plural "%d connections"
 msgstr[0] "%d conexión"
 msgstr[1] "%d conexiones"
 
-#: describe.c:3356
+#: describe.c:3358
 msgid "Password valid until "
 msgstr "Constraseña válida hasta "
 
-#: describe.c:3406
+#: describe.c:3408
 #, c-format
-#| msgid "The server (version %s) does not support per-database role settings."
 msgid "The server (version %s) does not support per-database role settings.\n"
 msgstr "El servidor (versión %s) no soporta parámetros por base de datos y rol.\n"
 
-#: describe.c:3419
+#: describe.c:3421
 msgid "Role"
 msgstr "Nombre de rol"
 
-#: describe.c:3420
+#: describe.c:3422
 msgid "Database"
 msgstr "Base de Datos"
 
-#: describe.c:3421
+#: describe.c:3423
 msgid "Settings"
 msgstr "Parámetros"
 
-#: describe.c:3442
+#: describe.c:3444
 #, c-format
 msgid "Did not find any settings for role \"%s\" and database \"%s\".\n"
 msgstr "No se encontró ningún parámetro para el rol «%s» y la base de datos «%s».\n"
 
-#: describe.c:3445
+#: describe.c:3447
 #, c-format
-#| msgid "Did not find any settings for role \"%s\"."
 msgid "Did not find any settings for role \"%s\".\n"
 msgstr "No se encontró ningún parámetro para el rol «%s».\n"
 
-#: describe.c:3448
+#: describe.c:3450
 #, c-format
-#| msgid "Did not find any settings."
 msgid "Did not find any settings.\n"
 msgstr "No se encontró ningún parámetro.\n"
 
-#: describe.c:3453
+#: describe.c:3455
 msgid "List of settings"
 msgstr "Listado de parámetros"
 
-#: describe.c:3523 describe.c:3528
+#: describe.c:3525 describe.c:3530
 msgid "index"
 msgstr "índice"
 
-#: describe.c:3525
+#: describe.c:3527
 msgid "special"
 msgstr "especial"
 
-#: describe.c:3535 describe.c:5050
+#: describe.c:3537 describe.c:5052
 msgid "Table"
 msgstr "Tabla"
 
-#: describe.c:3626
+#: describe.c:3628
 msgid "List of relations"
 msgstr "Listado de relaciones"
 
-#: describe.c:3663
+#: describe.c:3665
 msgid "Trusted"
 msgstr "Confiable"
 
-#: describe.c:3671
+#: describe.c:3673
 msgid "Internal language"
 msgstr "Lenguaje interno"
 
-#: describe.c:3672
+#: describe.c:3674
 msgid "Call handler"
 msgstr "Manejador de llamada"
 
-#: describe.c:3673 describe.c:4830
+#: describe.c:3675 describe.c:4832
 msgid "Validator"
 msgstr "Validador"
 
-#: describe.c:3676
+#: describe.c:3678
 msgid "Inline handler"
 msgstr "Manejador en línea"
 
-#: describe.c:3704
+#: describe.c:3706
 msgid "List of languages"
 msgstr "Lista de lenguajes"
 
-#: describe.c:3749
+#: describe.c:3751
 msgid "Check"
 msgstr "Check"
 
-#: describe.c:3791
+#: describe.c:3793
 msgid "List of domains"
 msgstr "Listado de dominios"
 
-#: describe.c:3825
+#: describe.c:3827
 msgid "Source"
 msgstr "Fuente"
 
-#: describe.c:3826
+#: describe.c:3828
 msgid "Destination"
 msgstr "Destino"
 
-#: describe.c:3828
+#: describe.c:3830
 msgid "Default?"
 msgstr "Por omisión?"
 
-#: describe.c:3865
+#: describe.c:3867
 msgid "List of conversions"
 msgstr "Listado de conversiones"
 
-#: describe.c:3904
+#: describe.c:3906
 msgid "Event"
 msgstr "Evento"
 
-#: describe.c:3906
+#: describe.c:3908
 msgid "enabled"
 msgstr "activo"
 
-#: describe.c:3907
+#: describe.c:3909
 msgid "replica"
 msgstr "réplica"
 
-#: describe.c:3908
+#: describe.c:3910
 msgid "always"
 msgstr "siempre"
 
-#: describe.c:3909
+#: describe.c:3911
 msgid "disabled"
 msgstr "inactivo"
 
-#: describe.c:3910 describe.c:5529
+#: describe.c:3912 describe.c:5531
 msgid "Enabled"
 msgstr "Activo"
 
-#: describe.c:3912
+#: describe.c:3914
 msgid "Tags"
 msgstr "Etiquetas"
 
-#: describe.c:3931
+#: describe.c:3933
 msgid "List of event triggers"
 msgstr "Listado de disparadores por eventos"
 
-#: describe.c:3960
+#: describe.c:3962
 msgid "Source type"
 msgstr "Tipo fuente"
 
-#: describe.c:3961
+#: describe.c:3963
 msgid "Target type"
 msgstr "Tipo destino"
 
-#: describe.c:3992
+#: describe.c:3994
 msgid "in assignment"
 msgstr "en asignación"
 
-#: describe.c:3994
+#: describe.c:3996
 msgid "Implicit?"
 msgstr "Implícito?"
 
-#: describe.c:4049
+#: describe.c:4051
 msgid "List of casts"
 msgstr "Listado de conversiones de tipo (casts)"
 
-#: describe.c:4077
+#: describe.c:4079
 #, c-format
 msgid "The server (version %s) does not support collations.\n"
 msgstr "El servidor (versión %s) no soporta «collations».\n"
 
-#: describe.c:4098
+#: describe.c:4100
 msgid "Provider"
 msgstr "Proveedor"
 
-#: describe.c:4133
+#: describe.c:4135
 msgid "List of collations"
 msgstr "Listado de ordenamientos"
 
-#: describe.c:4192
+#: describe.c:4194
 msgid "List of schemas"
 msgstr "Listado de esquemas"
 
-#: describe.c:4217 describe.c:4464 describe.c:4535 describe.c:4606
+#: describe.c:4219 describe.c:4466 describe.c:4537 describe.c:4608
 #, c-format
 msgid "The server (version %s) does not support full text search.\n"
 msgstr "El servidor (versión %s) no soporta búsqueda en texto.\n"
 
-#: describe.c:4252
+#: describe.c:4254
 msgid "List of text search parsers"
 msgstr "Listado de analizadores de búsqueda en texto"
 
-#: describe.c:4297
+#: describe.c:4299
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
 msgstr "No se encontró ningún analizador de búsqueda en texto llamado «%s».\n"
 
-#: describe.c:4300
+#: describe.c:4302
 #, c-format
-#| msgid "Did not find any text search parsers."
 msgid "Did not find any text search parsers.\n"
 msgstr "No se encontró ningún analizador de búsqueda en texto.\n"
 
-#: describe.c:4375
+#: describe.c:4377
 msgid "Start parse"
 msgstr "Inicio de parse"
 
-#: describe.c:4376
+#: describe.c:4378
 msgid "Method"
 msgstr "Método"
 
-#: describe.c:4380
+#: describe.c:4382
 msgid "Get next token"
 msgstr "Obtener siguiente elemento"
 
-#: describe.c:4382
+#: describe.c:4384
 msgid "End parse"
 msgstr "Fin de parse"
 
-#: describe.c:4384
+#: describe.c:4386
 msgid "Get headline"
 msgstr "Obtener encabezado"
 
-#: describe.c:4386
+#: describe.c:4388
 msgid "Get token types"
 msgstr "Obtener tipos de elemento"
 
-#: describe.c:4397
+#: describe.c:4399
 #, c-format
 msgid "Text search parser \"%s.%s\""
 msgstr "Analizador de búsqueda en texto «%s.%s»"
 
-#: describe.c:4400
+#: describe.c:4402
 #, c-format
 msgid "Text search parser \"%s\""
 msgstr "Analizador de búsqueda en texto «%s»"
 
-#: describe.c:4419
+#: describe.c:4421
 msgid "Token name"
 msgstr "Nombre de elemento"
 
-#: describe.c:4430
+#: describe.c:4432
 #, c-format
 msgid "Token types for parser \"%s.%s\""
 msgstr "Tipos de elemento para el analizador «%s.%s»"
 
-#: describe.c:4433
+#: describe.c:4435
 #, c-format
 msgid "Token types for parser \"%s\""
 msgstr "Tipos de elemento para el analizador «%s»"
 
-#: describe.c:4487
+#: describe.c:4489
 msgid "Template"
 msgstr "Plantilla"
 
-#: describe.c:4488
+#: describe.c:4490
 msgid "Init options"
 msgstr "Opciones de inicialización"
 
-#: describe.c:4510
+#: describe.c:4512
 msgid "List of text search dictionaries"
 msgstr "Listado de diccionarios de búsqueda en texto"
 
-#: describe.c:4553
+#: describe.c:4555
 msgid "Init"
 msgstr "Inicializador"
 
-#: describe.c:4554
+#: describe.c:4556
 msgid "Lexize"
 msgstr "Fn. análisis léx."
 
-#: describe.c:4581
+#: describe.c:4583
 msgid "List of text search templates"
 msgstr "Listado de plantillas de búsqueda en texto"
 
-#: describe.c:4641
+#: describe.c:4643
 msgid "List of text search configurations"
 msgstr "Listado de configuraciones de búsqueda en texto"
 
-#: describe.c:4687
+#: describe.c:4689
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
 msgstr "No se encontró una configuración de búsqueda en texto llamada «%s».\n"
 
-#: describe.c:4690
+#: describe.c:4692
 #, c-format
-#| msgid "Did not find any text search configurations."
 msgid "Did not find any text search configurations.\n"
 msgstr "No se encontró una configuración de búsqueda en texto.\n"
 
-#: describe.c:4756
+#: describe.c:4758
 msgid "Token"
 msgstr "Elemento"
 
-#: describe.c:4757
+#: describe.c:4759
 msgid "Dictionaries"
 msgstr "Diccionarios"
 
-#: describe.c:4768
+#: describe.c:4770
 #, c-format
 msgid "Text search configuration \"%s.%s\""
 msgstr "Configuración de búsqueda en texto «%s.%s»"
 
-#: describe.c:4771
+#: describe.c:4773
 #, c-format
 msgid "Text search configuration \"%s\""
 msgstr "Configuración de búsqueda en texto «%s»"
 
-#: describe.c:4775
+#: describe.c:4777
 #, c-format
 msgid ""
 "\n"
@@ -1954,7 +1947,7 @@ msgstr ""
 "\n"
 "Analizador: «%s.%s»"
 
-#: describe.c:4778
+#: describe.c:4780
 #, c-format
 msgid ""
 "\n"
@@ -1963,155 +1956,152 @@ msgstr ""
 "\n"
 "Analizador: «%s»"
 
-#: describe.c:4812
+#: describe.c:4814
 #, c-format
 msgid "The server (version %s) does not support foreign-data wrappers.\n"
 msgstr "El servidor (versión %s) no soporta conectores de datos externos.\n"
 
-#: describe.c:4870
+#: describe.c:4872
 msgid "List of foreign-data wrappers"
 msgstr "Listado de conectores de datos externos"
 
-#: describe.c:4895
+#: describe.c:4897
 #, c-format
 msgid "The server (version %s) does not support foreign servers.\n"
 msgstr "El servidor (versión %s) no soporta servidores foráneos.\n"
 
-#: describe.c:4908
+#: describe.c:4910
 msgid "Foreign-data wrapper"
 msgstr "Conectores de datos externos"
 
-#: describe.c:4926 describe.c:5131
+#: describe.c:4928 describe.c:5133
 msgid "Version"
 msgstr "Versión"
 
-#: describe.c:4952
+#: describe.c:4954
 msgid "List of foreign servers"
 msgstr "Listado de servidores foráneos"
 
-#: describe.c:4977
+#: describe.c:4979
 #, c-format
 msgid "The server (version %s) does not support user mappings.\n"
 msgstr "El servidor (versión %s) no soporta mapeos de usuario.\n"
 
-#: describe.c:4987 describe.c:5051
+#: describe.c:4989 describe.c:5053
 msgid "Server"
 msgstr "Servidor"
 
-#: describe.c:4988
+#: describe.c:4990
 msgid "User name"
 msgstr "Nombre de usuario"
 
-#: describe.c:5013
+#: describe.c:5015
 msgid "List of user mappings"
 msgstr "Listado de mapeos de usuario"
 
-#: describe.c:5038
+#: describe.c:5040
 #, c-format
 msgid "The server (version %s) does not support foreign tables.\n"
 msgstr "El servidor (versión %s) no soporta tablas foráneas.\n"
 
-#: describe.c:5091
+#: describe.c:5093
 msgid "List of foreign tables"
 msgstr "Listado de tablas foráneas"
 
-#: describe.c:5116 describe.c:5173
+#: describe.c:5118 describe.c:5175
 #, c-format
 msgid "The server (version %s) does not support extensions.\n"
 msgstr "El servidor (versión %s) no soporta extensiones.\n"
 
-#: describe.c:5148
+#: describe.c:5150
 msgid "List of installed extensions"
 msgstr "Listado de extensiones instaladas"
 
-#: describe.c:5201
+#: describe.c:5203
 #, c-format
 msgid "Did not find any extension named \"%s\".\n"
 msgstr "No se encontró extensión llamada «%s».\n"
 
-#: describe.c:5204
+#: describe.c:5206
 #, c-format
 msgid "Did not find any extensions.\n"
 msgstr "No se encontró ninguna extensión.\n"
 
-#: describe.c:5248
+#: describe.c:5250
 msgid "Object description"
 msgstr "Descripción de objeto"
 
-#: describe.c:5258
+#: describe.c:5260
 #, c-format
 msgid "Objects in extension \"%s\""
 msgstr "Objetos en extensión «%s»"
 
-#: describe.c:5287 describe.c:5358
+#: describe.c:5289 describe.c:5360
 #, c-format
 msgid "The server (version %s) does not support publications.\n"
 msgstr "El servidor (versión %s) no soporta publicaciones.\n"
 
-#: describe.c:5304 describe.c:5430
+#: describe.c:5306 describe.c:5432
 msgid "All tables"
 msgstr "Todas las tablas"
 
-#: describe.c:5305 describe.c:5431
+#: describe.c:5307 describe.c:5433
 msgid "Inserts"
 msgstr "Inserts"
 
-#: describe.c:5306 describe.c:5432
+#: describe.c:5308 describe.c:5434
 msgid "Updates"
 msgstr "Updates"
 
-#: describe.c:5307 describe.c:5433
+#: describe.c:5309 describe.c:5435
 msgid "Deletes"
 msgstr "Deletes"
 
-#: describe.c:5311 describe.c:5435
+#: describe.c:5313 describe.c:5437
 msgid "Truncates"
 msgstr "Truncates"
 
-#: describe.c:5328
+#: describe.c:5330
 msgid "List of publications"
 msgstr "Listado de publicaciones"
 
-#: describe.c:5396
+#: describe.c:5398
 #, c-format
-#| msgid "Did not find any publication named \"%s\"."
 msgid "Did not find any publication named \"%s\".\n"
 msgstr "No se encontró publicación llamada «%s».\n"
 
-#: describe.c:5399
+#: describe.c:5401
 #, c-format
-#| msgid "Did not find any publications."
 msgid "Did not find any publications.\n"
 msgstr "No se encontró ninguna publicación.\n"
 
-#: describe.c:5426
+#: describe.c:5428
 #, c-format
 msgid "Publication %s"
 msgstr "Publicación %s"
 
-#: describe.c:5470
+#: describe.c:5472
 msgid "Tables:"
 msgstr "Tablas:"
 
-#: describe.c:5514
+#: describe.c:5516
 #, c-format
-#| msgid "The server (version %s) does not support subscriptions."
 msgid "The server (version %s) does not support subscriptions.\n"
 msgstr "El servidor (versión %s) no soporta suscripciones.\n"
 
-#: describe.c:5530
+#: describe.c:5532
 msgid "Publication"
 msgstr "Publicación"
 
-#: describe.c:5537
+#: describe.c:5539
 msgid "Synchronous commit"
 msgstr "Commit síncrono"
 
-#: describe.c:5538
+#: describe.c:5540
 msgid "Conninfo"
 msgstr "Conninfo"
 
-#: describe.c:5560
+#: describe.c:5562
 msgid "List of subscriptions"
 msgstr "Listado de suscripciones"
 
@@ -2861,14 +2851,6 @@ msgstr "  \\H              cambiar modo de salida HTML (actualmente %s)\n"
 
 #: help.c:274
 #, c-format
-#| msgid ""
-#| "  \\pset [NAME [VALUE]]   set table output option\n"
-#| "                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
-#| "                         fieldsep_zero|footer|format|linestyle|null|\n"
-#| "                         numericlocale|pager|pager_min_lines|recordsep|\n"
-#| "                         recordsep_zero|tableattr|title|tuples_only|\n"
-#| "                         unicode_border_linestyle|unicode_column_linestyle|\n"
-#| "                         unicode_header_linestyle)\n"
 msgid ""
 "  \\pset [NAME [VALUE]]   set table output option\n"
 "                         (NAME := {border|columns|expanded|fieldsep|fieldsep_zero|\n"
@@ -3275,9 +3257,6 @@ msgstr "  USER               el usuario actualmente conectado\n"
 
 #: help.c:411
 #, c-format
-#| msgid ""
-#| "  VERBOSITY\n"
-#| "    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"
 msgid ""
 "  VERBOSITY\n"
 "    controls verbosity of error reports [default, verbose, terse]\n"
@@ -4408,7 +4387,6 @@ msgstr "literal_numérico"
 
 #: sql_help.c:1330 sql_help.c:1332 sql_help.c:1334 sql_help.c:2807
 #: sql_help.c:2809 sql_help.c:2811
-#| msgid "numeric_literal"
 msgid "string_literal"
 msgstr "literal_de_cadena"
 
@@ -5986,22 +5964,22 @@ msgstr ""
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s: no se pudo definir parámetro de impresión «%s»\n"
 
-#: startup.c:663
+#: startup.c:666
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Use «%s --help» para obtener más información.\n"
 
-#: startup.c:680
+#: startup.c:683
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: atención: se ignoró argumento extra «%s» en línea de órdenes\n"
 
-#: startup.c:729
+#: startup.c:732
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: no se pudo encontrar el ejecutable propio\n"
 
-#: tab-complete.c:4543
+#: tab-complete.c:4556
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -6014,27 +5992,21 @@ msgstr ""
 
 #: variables.c:139
 #, c-format
-#| msgid "unrecognized value \"%s\" for \"%s\": Boolean expected"
 msgid "unrecognized value \"%s\" for \"%s\": Boolean expected\n"
 msgstr "valor «%s» no reconocido para «%s»: se esperaba booleano\n"
 
 #: variables.c:176
 #, c-format
-#| msgid "invalid value \"%s\" for \"%s\": integer expected"
 msgid "invalid value \"%s\" for \"%s\": integer expected\n"
 msgstr "valor «%s» no válido para «%s»: se esperaba número entero\n"
 
 #: variables.c:224
 #, c-format
-#| msgid "invalid variable name: \"%s\""
 msgid "invalid variable name: \"%s\"\n"
 msgstr "nombre de variable no válido: «%s»\n"
 
 #: variables.c:393
 #, c-format
-#| msgid ""
-#| "unrecognized value \"%s\" for \"%s\"\n"
-#| "Available values are: %s."
 msgid ""
 "unrecognized value \"%s\" for \"%s\"\n"
 "Available values are: %s.\n"

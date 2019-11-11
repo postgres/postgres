@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-06-17 21:28+0300\n"
-"PO-Revision-Date: 2017-05-27 15:01+0300\n"
+"POT-Creation-Date: 2019-08-28 07:04+0300\n"
+"PO-Revision-Date: 2019-09-02 12:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -79,13 +79,13 @@ msgstr "неверный формат вывода (внутренняя оши�
 #: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
 #: createuser.c:166 createuser.c:181 dropdb.c:94 dropdb.c:103 dropdb.c:111
 #: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93 pg_isready.c:107
-#: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:217 vacuumdb.c:236
+#: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:215 vacuumdb.c:234
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
 #: clusterdb.c:128 createdb.c:136 createuser.c:179 dropdb.c:109 dropuser.c:103
-#: pg_isready.c:105 reindexdb.c:148 vacuumdb.c:234
+#: pg_isready.c:105 reindexdb.c:148 vacuumdb.c:232
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
@@ -125,18 +125,18 @@ msgstr ""
 "\n"
 
 #: clusterdb.c:274 createdb.c:252 createuser.c:343 dropdb.c:156 dropuser.c:161
-#: pg_isready.c:222 reindexdb.c:402 vacuumdb.c:1001
+#: pg_isready.c:222 reindexdb.c:402 vacuumdb.c:1013
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: clusterdb.c:275 reindexdb.c:403 vacuumdb.c:1002
+#: clusterdb.c:275 reindexdb.c:403 vacuumdb.c:1014
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
 #: clusterdb.c:276 createdb.c:254 createuser.c:345 dropdb.c:158 dropuser.c:163
-#: pg_isready.c:225 reindexdb.c:404 vacuumdb.c:1003
+#: pg_isready.c:225 reindexdb.c:404 vacuumdb.c:1015
 #, c-format
 msgid ""
 "\n"
@@ -188,7 +188,7 @@ msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
 #: clusterdb.c:285 createdb.c:265 createuser.c:367 dropdb.c:164 dropuser.c:170
-#: pg_isready.c:231 reindexdb.c:416 vacuumdb.c:1019
+#: pg_isready.c:231 reindexdb.c:416 vacuumdb.c:1031
 #, c-format
 msgid ""
 "\n"
@@ -198,37 +198,37 @@ msgstr ""
 "Параметры подключения:\n"
 
 #: clusterdb.c:286 createuser.c:368 dropdb.c:165 dropuser.c:171 reindexdb.c:417
-#: vacuumdb.c:1020
+#: vacuumdb.c:1032
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ            имя сервера баз данных или каталог сокетов\n"
 
 #: clusterdb.c:287 createuser.c:369 dropdb.c:166 dropuser.c:172 reindexdb.c:418
-#: vacuumdb.c:1021
+#: vacuumdb.c:1033
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
 
-#: clusterdb.c:288 dropdb.c:167 reindexdb.c:419 vacuumdb.c:1022
+#: clusterdb.c:288 dropdb.c:167 reindexdb.c:419 vacuumdb.c:1034
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ        имя пользователя для подключения к серверу\n"
 
 #: clusterdb.c:289 createuser.c:371 dropdb.c:168 dropuser.c:174 reindexdb.c:420
-#: vacuumdb.c:1023
+#: vacuumdb.c:1035
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         не запрашивать пароль\n"
 
 #: clusterdb.c:290 createuser.c:372 dropdb.c:169 dropuser.c:175 reindexdb.c:421
-#: vacuumdb.c:1024
+#: vacuumdb.c:1036
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            запросить пароль\n"
 
-#: clusterdb.c:291 dropdb.c:170 reindexdb.c:422 vacuumdb.c:1025
+#: clusterdb.c:291 dropdb.c:170 reindexdb.c:422 vacuumdb.c:1037
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=ИМЯ_БД   выбор другой обслуживаемой базы данных\n"
@@ -243,7 +243,7 @@ msgstr ""
 "Подробнее о кластеризации вы можете узнать в описании SQL-команды CLUSTER.\n"
 
 #: clusterdb.c:293 createdb.c:273 createuser.c:373 dropdb.c:171 dropuser.c:176
-#: pg_isready.c:236 reindexdb.c:424 vacuumdb.c:1027
+#: pg_isready.c:236 reindexdb.c:424 vacuumdb.c:1039
 #, c-format
 msgid ""
 "\n"
@@ -667,7 +667,7 @@ msgstr "Введите имя удаляемой роли: "
 #: dropuser.c:119
 #, c-format
 msgid "%s: missing required argument role name\n"
-msgstr "%s: отсутствует необходимый аргумент: название роли\n"
+msgstr "%s: отсутствует необходимый аргумент: имя роли\n"
 
 #: dropuser.c:127
 #, c-format
@@ -866,7 +866,7 @@ msgstr "%s: переиндексировать таблицу \"%s\" в базе
 #: reindexdb.c:311
 #, c-format
 msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: переиндексировать индекс \"%s\" в базе \"%s\" не удалось: %s"
+msgstr "%s: перестроить индекс \"%s\" в базе \"%s\" не удалось: %s"
 
 #: reindexdb.c:314
 #, c-format
@@ -938,65 +938,66 @@ msgstr ""
 "\n"
 "Подробнее о переиндексации вы можете узнать в описании SQL-команды REINDEX.\n"
 
-#: vacuumdb.c:199
+#: vacuumdb.c:203
 #, c-format
 msgid "%s: number of parallel jobs must be at least 1\n"
 msgstr "%s: число параллельных заданий должно быть не меньше 1\n"
 
-#: vacuumdb.c:205
-#, c-format
-msgid "%s: too many parallel jobs requested (maximum: %d)\n"
-msgstr "%s: запрошено слишком много параллельных заданий (при максимуме: %d)\n"
-
-#: vacuumdb.c:244 vacuumdb.c:250
+#: vacuumdb.c:242 vacuumdb.c:248
 #, c-format
 msgid "%s: cannot use the \"%s\" option when performing only analyze\n"
 msgstr ""
 "%s: при выполнении только анализа нельзя использовать параметр \"%s\"\n"
 
-#: vacuumdb.c:267
+#: vacuumdb.c:265
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s: нельзя очистить все базы данных и одну конкретную одновременно\n"
 
-#: vacuumdb.c:273
+#: vacuumdb.c:271
 #, c-format
 msgid "%s: cannot vacuum specific table(s) in all databases\n"
-msgstr "%s: нельзя очистить одну указанную таблицу(ы) во всех базах\n"
+msgstr "%s: нельзя очистить только указанную таблицу(ы) во всех базах\n"
 
-#: vacuumdb.c:359
+#: vacuumdb.c:357
 msgid "Generating minimal optimizer statistics (1 target)"
 msgstr "Вычисление минимальной статистики для оптимизатора (1 запись)"
 
-#: vacuumdb.c:360
+#: vacuumdb.c:358
 msgid "Generating medium optimizer statistics (10 targets)"
 msgstr "Вычисление средней статистики для оптимизатора (10 записей)"
 
-#: vacuumdb.c:361
+#: vacuumdb.c:359
 msgid "Generating default (full) optimizer statistics"
 msgstr "Вычисление стандартной (полной) статистики для оптимизатора"
 
-#: vacuumdb.c:373
+#: vacuumdb.c:371
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
 msgstr "%s: обработка базы данных \"%s\": %s\n"
 
-#: vacuumdb.c:376
+#: vacuumdb.c:374
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: очистка базы данных \"%s\"\n"
 
-#: vacuumdb.c:727
+#: vacuumdb.c:452
+#, c-format
+msgid "%s: too many jobs for this platform -- try %d\n"
+msgstr ""
+"%s: слишком много заданий для этой платформы — попробуйте уменьшить до %d\n"
+
+#: vacuumdb.c:739
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: очистить таблицу \"%s\" в базе \"%s\" не удалось: %s"
 
-#: vacuumdb.c:730 vacuumdb.c:865
+#: vacuumdb.c:742 vacuumdb.c:877
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: очистить базу данных \"%s\" не удалось: %s"
 
-#: vacuumdb.c:1000
+#: vacuumdb.c:1012
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -1005,17 +1006,17 @@ msgstr ""
 "%s очищает и анализирует базу данных PostgreSQL.\n"
 "\n"
 
-#: vacuumdb.c:1004
+#: vacuumdb.c:1016
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       очистить все базы данных\n"
 
-#: vacuumdb.c:1005
+#: vacuumdb.c:1017
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=ИМЯ_БД             очистить указанную базу данных\n"
 
-#: vacuumdb.c:1006
+#: vacuumdb.c:1018
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
@@ -1023,19 +1024,19 @@ msgid ""
 msgstr ""
 "  -e, --echo                      отображать команды, отправляемые серверу\n"
 
-#: vacuumdb.c:1007
+#: vacuumdb.c:1019
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      произвести полную очистку\n"
 
-#: vacuumdb.c:1008
+#: vacuumdb.c:1020
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr ""
 "  -F, --freeze                    заморозить информацию о транзакциях в "
 "строках\n"
 
-#: vacuumdb.c:1009
+#: vacuumdb.c:1021
 #, c-format
 msgid ""
 "  -j, --jobs=NUM                  use this many concurrent connections to "
@@ -1044,34 +1045,34 @@ msgstr ""
 "  -j, --jobs=ЧИСЛО                запускать для очистки заданное число "
 "заданий\n"
 
-#: vacuumdb.c:1010
+#: vacuumdb.c:1022
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     не выводить сообщения\n"
 
-#: vacuumdb.c:1011
+#: vacuumdb.c:1023
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr ""
 "  -t, --table='ТАБЛ[(СТОЛБЦЫ)]'   очистить только указанную таблицу(ы)\n"
 
-#: vacuumdb.c:1012
+#: vacuumdb.c:1024
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   выводить исчерпывающие сообщения\n"
 
-#: vacuumdb.c:1013
+#: vacuumdb.c:1025
 #, c-format
 msgid ""
 "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   показать версию и выйти\n"
 
-#: vacuumdb.c:1014
+#: vacuumdb.c:1026
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   обновить статистику оптимизатора\n"
 
-#: vacuumdb.c:1015
+#: vacuumdb.c:1027
 #, c-format
 msgid ""
 "  -Z, --analyze-only              only update optimizer statistics; no "
@@ -1080,7 +1081,7 @@ msgstr ""
 "  -Z, --analyze-only              только обновить статистику оптимизатора,\n"
 "                                  не очищать БД\n"
 
-#: vacuumdb.c:1016
+#: vacuumdb.c:1028
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in "
@@ -1092,12 +1093,12 @@ msgstr ""
 "                                  (в несколько проходов для большей "
 "скорости), без очистки\n"
 
-#: vacuumdb.c:1018
+#: vacuumdb.c:1030
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      показать эту справку и выйти\n"
 
-#: vacuumdb.c:1026
+#: vacuumdb.c:1038
 #, c-format
 msgid ""
 "\n"
@@ -1105,6 +1106,10 @@ msgid ""
 msgstr ""
 "\n"
 "Подробнее об очистке вы можете узнать в описании SQL-команды VACUUM.\n"
+
+#~ msgid "%s: too many parallel jobs requested (maximum: %d)\n"
+#~ msgstr ""
+#~ "%s: запрошено слишком много параллельных заданий (при максимуме: %d)\n"
 
 #~ msgid "%s: invalid socket: %s"
 #~ msgstr "%s: неверный сокет: %s"

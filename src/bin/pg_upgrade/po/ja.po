@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-08-31 16:22+0900\n"
+"POT-Creation-Date: 2019-11-09 09:23+0000\n"
 "PO-Revision-Date: 2018-08-27 16:16+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: \n"
@@ -169,8 +169,8 @@ msgstr "新しいクラスターデータベース\"%s\"が空ではありませ
 msgid "Creating script to analyze new cluster"
 msgstr "新しいクラスターを分析するためのスクリプトを作成しています"
 
-#: check.c:446 check.c:574 check.c:838 check.c:941 check.c:1032 function.c:253
-#: option.c:480 version.c:57 version.c:156 version.c:257 version.c:339
+#: check.c:446 check.c:574 check.c:838 check.c:949 check.c:1040 function.c:253
+#: option.c:480 version.c:57 version.c:184 version.c:309 version.c:391
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "ファイル \"%s\" をオープンできませんでした: %s\n"
@@ -258,8 +258,8 @@ msgstr "変換先クラスターに準備済みトランザクションが含ま
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "bigint を渡す際にミスマッチが発生する contrib/isn をチェックしています"
 
-#: check.c:860 check.c:964 check.c:1055 function.c:268 version.c:179
-#: version.c:280
+#: check.c:860 check.c:972 check.c:1063 function.c:268 version.c:207
+#: version.c:332
 #, c-format
 msgid "fatal\n"
 msgstr "致命的\n"
@@ -289,7 +289,7 @@ msgstr ""
 msgid "Checking for reg* data types in user tables"
 msgstr "ユーザーテーブル内の reg * データ型をチェックしています"
 
-#: check.c:965
+#: check.c:973
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -308,12 +308,12 @@ msgstr ""
 "\n"
 "\n"
 
-#: check.c:990
+#: check.c:998
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "互換性のない\"jsonb\"データ型をチェックしています"
 
-#: check.c:1056
+#: check.c:1064
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -330,32 +330,32 @@ msgstr ""
 "問題になる列の一覧はファイル %s に書かれています。\n"
 "\n"
 
-#: check.c:1077
+#: check.c:1085
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "'pg_' で始まるロールをチェックしています"
 
-#: check.c:1087
+#: check.c:1095
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "変換元クラスターに 'pg_' で始まるロールが含まれています\n"
 
-#: check.c:1089
+#: check.c:1097
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "ターゲット クラスターに \"pg_\" で始まるロールが含まれています\n"
 
-#: check.c:1115
+#: check.c:1123
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "現在のロケールを取得できませんでした。\n"
 
-#: check.c:1124
+#: check.c:1132
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "\"%s\"のシステムロケール名を取得できませんでした。\n"
 
-#: check.c:1130
+#: check.c:1138
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "古いロケール\"%s\"を復元できませんでした。\n"
@@ -735,12 +735,12 @@ msgstr "リレーション\"%s.%s\"のコピー中にエラー: ファイル\"%s
 msgid "error while copying relation \"%s.%s\": could not create file \"%s\": %s\n"
 msgstr "リレーション\"%s.%s\"のコピー中にエラー: ファイル\"%s\"を作成できませんでした: %s\n"
 
-#: file.c:63 file.c:187
+#: file.c:63 file.c:180
 #, c-format
 msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %s\n"
 msgstr "リレーション\"%s.%s\"のコピー中にエラー: ファイル\"%s\"を読めませんでした: %s\n"
 
-#: file.c:75 file.c:265
+#: file.c:75 file.c:258
 #, c-format
 msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
 msgstr "リレーション\"%s.%s\"のコピー中にエラー: ファイル\"%s\"に書けませんでした: %s\n"
@@ -760,12 +760,12 @@ msgstr "リレーション\"%s.%s\"へのリンク（\"%s\" -> \"%s\"）作成�
 msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %s\n"
 msgstr "リレーション\"%s.%s\"のコピー中にエラー: ファイル\"%s\"を stat できませんでした: %s\n"
 
-#: file.c:190
+#: file.c:183
 #, c-format
 msgid "error while copying relation \"%s.%s\": partial page found in file \"%s\"\n"
 msgstr "リレーション\"%s.%s\"のコピー中にエラー: ファイル\"%s\"中に不完全なページがありました\n"
 
-#: file.c:293
+#: file.c:284
 #, c-format
 msgid ""
 "could not create hard link between old and new data directories: %s\n"
@@ -1226,7 +1226,19 @@ msgstr "ワーカープロセスを作成できませんでした: %s\n"
 msgid "could not create worker thread: %s\n"
 msgstr "ワーカースレッドを作成できませんでした: %s\n"
 
-#: parallel.c:310 parallel.c:325
+#: parallel.c:305
+#, fuzzy, c-format
+#| msgid "select() failed: %s\n"
+msgid "waitpid() failed: %s\n"
+msgstr "select()が失敗しました: %s\n"
+
+#: parallel.c:309
+#, fuzzy, c-format
+#| msgid "child worker exited abnormally: %s\n"
+msgid "child process exited abnormally: status %d\n"
+msgstr "子ワーカーが異常終了しました: %s\n"
+
+#: parallel.c:324
 #, c-format
 msgid "child worker exited abnormally: %s\n"
 msgstr "子ワーカーが異常終了しました: %s\n"
@@ -1518,7 +1530,7 @@ msgstr "ok"
 msgid "Checking for large objects"
 msgstr "ラージオブジェクトをチェックしています"
 
-#: version.c:80 version.c:382
+#: version.c:80 version.c:434
 #, c-format
 msgid "warning"
 msgstr "警告"
@@ -1566,7 +1578,7 @@ msgstr ""
 msgid "Checking for incompatible \"line\" data type"
 msgstr "非互換の \"line\" データ型を確認しています"
 
-#: version.c:180
+#: version.c:208
 #, c-format
 msgid ""
 "Your installation contains the \"line\" data type in user tables.  This\n"
@@ -1585,12 +1597,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:215
+#: version.c:244
 #, c-format
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "無効な \"unknown\" ユーザ列をチェックしています"
 
-#: version.c:281
+#: version.c:333
 #, c-format
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.  This\n"
@@ -1607,12 +1619,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:304
+#: version.c:356
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "ハッシュインデックスをチェックしています"
 
-#: version.c:384
+#: version.c:436
 #, c-format
 msgid ""
 "\n"
@@ -1629,7 +1641,7 @@ msgstr ""
 "アップグレードが終わったら、REINDEX を使った操作方法が表示されます。\n"
 "\n"
 
-#: version.c:390
+#: version.c:442
 #, c-format
 msgid ""
 "\n"

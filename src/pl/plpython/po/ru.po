@@ -1,13 +1,13 @@
 # Russian message translation file for plpython
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-10-05 21:51+0300\n"
-"PO-Revision-Date: 2018-10-02 16:46+0300\n"
+"PO-Revision-Date: 2019-08-29 15:42+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -183,7 +183,7 @@ msgstr ""
 #: plpy_exec.c:953
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "установить системный атрибут \"%s\" нельзя"
+msgstr "присвоить значение системному атрибуту \"%s\" нельзя"
 
 #: plpy_exec.c:1011
 #, c-format

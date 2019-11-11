@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-07-13 19:45+0000\n"
-"PO-Revision-Date: 2018-08-06 20:03+0200\n"
+"POT-Creation-Date: 2019-09-27 15:22+0000\n"
+"PO-Revision-Date: 2019-09-27 22:29+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 2.2.3\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -131,22 +131,18 @@ msgstr "%s: více \"=\" znaků v tablespace mapování\n"
 
 #: pg_basebackup.c:280
 #, c-format
-msgid ""
-"%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
-msgstr ""
-"%s: chybný formát tablespace mapování \"%s\", musí být \"OLDDIR=NEWDIR\"\n"
+msgid "%s: invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"\n"
+msgstr "%s: chybný formát tablespace mapování \"%s\", musí být \"OLDDIR=NEWDIR\"\n"
 
 #: pg_basebackup.c:293
 #, c-format
 msgid "%s: old directory is not an absolute path in tablespace mapping: %s\n"
-msgstr ""
-"%s: starý adresář v tablespace mapování není zadán jako absolutní cesta: %s\n"
+msgstr "%s: starý adresář v tablespace mapování není zadán jako absolutní cesta: %s\n"
 
 #: pg_basebackup.c:300
 #, c-format
 msgid "%s: new directory is not an absolute path in tablespace mapping: %s\n"
-msgstr ""
-"%s: nový adresář v tablespace mapování není zadán jako absolutní cesta: %s\n"
+msgstr "%s: nový adresář v tablespace mapování není zadán jako absolutní cesta: %s\n"
 
 #: pg_basebackup.c:339
 #, c-format
@@ -234,10 +230,8 @@ msgstr "  -z, --gzip             komprimuj výstup taru\n"
 
 #: pg_basebackup.c:356
 #, c-format
-msgid ""
-"  -Z, --compress=0-9     compress tar output with given compression level\n"
-msgstr ""
-"  -Z, --compress=0-9     komprimuj výstup taru zvolenou úrovní komprese\n"
+msgid "  -Z, --compress=0-9     compress tar output with given compression level\n"
+msgstr "  -Z, --compress=0-9     komprimuj výstup taru zvolenou úrovní komprese\n"
 
 #: pg_basebackup.c:357
 #, c-format
@@ -274,9 +268,7 @@ msgstr "  -n, --no-clean         neuklízet po chybě\n"
 
 #: pg_basebackup.c:363
 #, c-format
-msgid ""
-"  -N, --no-sync          do not wait for changes to be written safely to "
-"disk\n"
+msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync          nečekat na bezpečné zapsání změn na disk\n"
 
 #: pg_basebackup.c:364
@@ -301,10 +293,8 @@ msgstr "  -V, --version          vypiš informace o verzi, potom skonči\n"
 
 #: pg_basebackup.c:368
 #, c-format
-msgid ""
-"      --no-slot          prevent creation of temporary replication slot\n"
-msgstr ""
-"      --no-slot          zamezí vytvoření dočasného replikačního slotu\n"
+msgid "      --no-slot          prevent creation of temporary replication slot\n"
+msgstr "      --no-slot          zamezí vytvoření dočasného replikačního slotu\n"
 
 #: pg_basebackup.c:369
 #, c-format
@@ -337,8 +327,7 @@ msgstr "  -d, --dbname=CONNSTR   connection string\n"
 #: pg_basebackup.c:374 pg_receivewal.c:97 pg_recvlogical.c:104
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
-msgstr ""
-"  -h, --host=HOSTNAME    host databázového serveru nebo adresář se sockety\n"
+msgstr "  -h, --host=HOSTNAME    host databázového serveru nebo adresář se sockety\n"
 
 #: pg_basebackup.c:375 pg_receivewal.c:98 pg_recvlogical.c:105
 #, c-format
@@ -349,12 +338,10 @@ msgstr "  -p, --port=PORT        port databázového serveru\n"
 #, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
-"                         time between status packets sent to server (in "
-"seconds)\n"
+"                         time between status packets sent to server (in seconds)\n"
 msgstr ""
 "  -s, --status-interval=INTERVAL\n"
-"                         čas mezi zasíláním packetů se stavem na server (ve "
-"vteřinách)\n"
+"                         čas mezi zasíláním packetů se stavem na server (ve vteřinách)\n"
 
 #: pg_basebackup.c:378 pg_receivewal.c:99 pg_recvlogical.c:106
 #, c-format
@@ -368,11 +355,8 @@ msgstr "  -w, --no-password      nikdy se neptej na heslo\n"
 
 #: pg_basebackup.c:380 pg_receivewal.c:101 pg_recvlogical.c:108
 #, c-format
-msgid ""
-"  -W, --password         force password prompt (should happen "
-"automatically)\n"
-msgstr ""
-"  -W, --password         vynuť dotaz na heslo (mělo by se dít automaticky)\n"
+msgid "  -W, --password         force password prompt (should happen automatically)\n"
+msgstr "  -W, --password         vynuť dotaz na heslo (mělo by se dít automaticky)\n"
 
 #: pg_basebackup.c:381 pg_receivewal.c:105 pg_recvlogical.c:109
 #, c-format
@@ -388,58 +372,58 @@ msgstr ""
 msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: nelze číst z ready roury: %s\n"
 
-#: pg_basebackup.c:432 pg_basebackup.c:563 pg_basebackup.c:2064
+#: pg_basebackup.c:432 pg_basebackup.c:566 pg_basebackup.c:2068
 #: streamutil.c:460
 #, c-format
 msgid "%s: could not parse write-ahead log location \"%s\"\n"
 msgstr "%s: nelze naparsovat pozici v transakčním logu \"%s\"\n"
 
-#: pg_basebackup.c:526 pg_receivewal.c:443
+#: pg_basebackup.c:529 pg_receivewal.c:443
 #, c-format
 msgid "%s: could not finish writing WAL files: %s\n"
 msgstr "%s: nelze dokončit zápis WAL souborů: %s\n"
 
-#: pg_basebackup.c:576
+#: pg_basebackup.c:579
 #, c-format
 msgid "%s: could not create pipe for background process: %s\n"
 msgstr "%s: nelze vytvořit roury pro background procesy: %s\n"
 
-#: pg_basebackup.c:612
+#: pg_basebackup.c:615
 #, c-format
 msgid "%s: created temporary replication slot \"%s\"\n"
 msgstr "%s: vytvořen dočasný replikační slot \"%s\"\n"
 
-#: pg_basebackup.c:615
+#: pg_basebackup.c:618
 #, c-format
 msgid "%s: created replication slot \"%s\"\n"
 msgstr "%s: vytvořen replikační slot \"%s\"\n"
 
-#: pg_basebackup.c:636 pg_basebackup.c:692 pg_basebackup.c:1462
+#: pg_basebackup.c:639 pg_basebackup.c:695 pg_basebackup.c:1466
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: nelze vytvořít adresář \"%s\": %s\n"
 
-#: pg_basebackup.c:655
+#: pg_basebackup.c:658
 #, c-format
 msgid "%s: could not create background process: %s\n"
 msgstr "%s: nelze vytvořit background procesy: %s\n"
 
-#: pg_basebackup.c:667
+#: pg_basebackup.c:670
 #, c-format
 msgid "%s: could not create background thread: %s\n"
 msgstr "%s: nelze vytvořit background vlákno: %s\n"
 
-#: pg_basebackup.c:715
+#: pg_basebackup.c:718
 #, c-format
 msgid "%s: directory \"%s\" exists but is not empty\n"
 msgstr "%s: adresář \"%s\" existuje, ale není prázdný\n"
 
-#: pg_basebackup.c:723
+#: pg_basebackup.c:726
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: nelze přístoupit k adresáři \"%s\": %s\n"
 
-#: pg_basebackup.c:785
+#: pg_basebackup.c:788
 #, c-format
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
@@ -447,7 +431,7 @@ msgstr[0] "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgstr[1] "%*s/%s kB (100%%), %d/%d tablespacy %*s"
 msgstr[2] "%*s/%s kB (100%%), %d/%d tablespacy %*s"
 
-#: pg_basebackup.c:797
+#: pg_basebackup.c:800
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
@@ -455,7 +439,7 @@ msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgstr[2] "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 
-#: pg_basebackup.c:813
+#: pg_basebackup.c:816
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
@@ -463,296 +447,285 @@ msgstr[0] "%*s/%s kB (%d%%), %d/%d tablespace"
 msgstr[1] "%*s/%s kB (%d%%), %d/%d tablespaces"
 msgstr[2] "%*s/%s kB (%d%%), %d/%d tablespaces"
 
-#: pg_basebackup.c:838
+#: pg_basebackup.c:841
 #, c-format
 msgid "%s: transfer rate \"%s\" is not a valid value\n"
 msgstr "%s: přenosová rychlost \"%s\" není platná hodnota\n"
 
-#: pg_basebackup.c:845
+#: pg_basebackup.c:848
 #, c-format
 msgid "%s: invalid transfer rate \"%s\": %s\n"
 msgstr "%s: chybná přenosová rychlost \"%s\": %s\n"
 
-#: pg_basebackup.c:855
+#: pg_basebackup.c:858
 #, c-format
 msgid "%s: transfer rate must be greater than zero\n"
 msgstr "%s: přenosová rychlost musí být větší než nula\n"
 
-#: pg_basebackup.c:889
+#: pg_basebackup.c:892
 #, c-format
 msgid "%s: invalid --max-rate unit: \"%s\"\n"
 msgstr "%s: neplatná --max-rate jednotka: \"%s\"\n"
 
-#: pg_basebackup.c:898
+#: pg_basebackup.c:901
 #, c-format
 msgid "%s: transfer rate \"%s\" exceeds integer range\n"
 msgstr "%s: přenosová rychlost \"%s\" přečkračuje rozsah typu integer\n"
 
-#: pg_basebackup.c:910
+#: pg_basebackup.c:913
 #, c-format
 msgid "%s: transfer rate \"%s\" is out of range\n"
 msgstr "%s: přenosová rychlost \"%s\" je mimo rozsah\n"
 
-#: pg_basebackup.c:934
+#: pg_basebackup.c:937
 #, c-format
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s: nelze zapsat do komprimovaného souboru \"%s\": %s\n"
 
-#: pg_basebackup.c:944 pg_basebackup.c:1556 pg_basebackup.c:1722
+#: pg_basebackup.c:947 pg_basebackup.c:1560 pg_basebackup.c:1726
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s: nelze zapsat do souboru \"%s\": %s\n"
 
-#: pg_basebackup.c:1003 pg_basebackup.c:1024 pg_basebackup.c:1052
+#: pg_basebackup.c:1006 pg_basebackup.c:1027 pg_basebackup.c:1055
 #, c-format
 msgid "%s: could not set compression level %d: %s\n"
 msgstr "%s: nelze nastavit úroveň komprese %d: %s\n"
 
-#: pg_basebackup.c:1073
+#: pg_basebackup.c:1076
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s: nelze vytvořit komprimovaný soubor \"%s\": %s\n"
 
-#: pg_basebackup.c:1084 pg_basebackup.c:1516 pg_basebackup.c:1715
+#: pg_basebackup.c:1087 pg_basebackup.c:1520 pg_basebackup.c:1719
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s: nelze vytvořit soubor \"%s\": %s\n"
 
-#: pg_basebackup.c:1096 pg_basebackup.c:1369
+#: pg_basebackup.c:1099 pg_basebackup.c:1373
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
 msgstr "%s: nelze získat COPY data stream: %s"
 
-#: pg_basebackup.c:1153
+#: pg_basebackup.c:1156
 #, c-format
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: nelze uzavřít komprimovaný soubor \"%s\": %s\n"
 
-#: pg_basebackup.c:1166 pg_recvlogical.c:632 receivelog.c:224 receivelog.c:309
+#: pg_basebackup.c:1169 pg_recvlogical.c:632 receivelog.c:224 receivelog.c:309
 #: receivelog.c:698
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: nelze uzavřít soubor \"%s\": %s\n"
 
-#: pg_basebackup.c:1177 pg_basebackup.c:1398 pg_recvlogical.c:454
+#: pg_basebackup.c:1180 pg_basebackup.c:1402 pg_recvlogical.c:454
 #: receivelog.c:993
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: nelze číst COPY data: %s"
 
-#: pg_basebackup.c:1412
+#: pg_basebackup.c:1416
 #, c-format
 msgid "%s: invalid tar block header size: %d\n"
 msgstr "%s: neplatná velikost hlavičky tar bloku: %d\n"
 
-#: pg_basebackup.c:1470
+#: pg_basebackup.c:1474
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
 msgstr "%s: nelze nastavit přístupová práva na adresáři \"%s\": %s\n"
 
-#: pg_basebackup.c:1494
+#: pg_basebackup.c:1498
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
 msgstr "%s: nelze vytvořit symbolický odkaz z \"%s\" na \"%s\": %s\n"
 
-#: pg_basebackup.c:1503
+#: pg_basebackup.c:1507
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
 msgstr "%s: nerozpoznaný indikátor odkazu \"%c\"\n"
 
-#: pg_basebackup.c:1523
+#: pg_basebackup.c:1527
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
 msgstr "%s: nelze nastavit přístupová práva na souboru \"%s\": %s\n"
 
-#: pg_basebackup.c:1582
+#: pg_basebackup.c:1586
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s: COPY stream skončil před dokončením posledního souboru\n"
 
-#: pg_basebackup.c:1610 pg_basebackup.c:1630 pg_basebackup.c:1637
-#: pg_basebackup.c:1690
+#: pg_basebackup.c:1614 pg_basebackup.c:1634 pg_basebackup.c:1641
+#: pg_basebackup.c:1694
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: nedostatek paměti\n"
 
-#: pg_basebackup.c:1763
+#: pg_basebackup.c:1767
 #, c-format
 msgid "%s: incompatible server version %s\n"
 msgstr "%s: nekompatibilní verze serveru %s\n"
 
-#: pg_basebackup.c:1778
+#: pg_basebackup.c:1782
 #, c-format
 msgid "HINT: use -X none or -X fetch to disable log streaming\n"
 msgstr "HINT: použijte -X none nebo -X fetch pro vypnutí streamování logu\n"
 
-#: pg_basebackup.c:1804
+#: pg_basebackup.c:1808
 #, c-format
 msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: inicializuji base backup, čekám na dokončení checkpointu\n"
 
-#: pg_basebackup.c:1829 pg_recvlogical.c:271 receivelog.c:493 receivelog.c:546
+#: pg_basebackup.c:1833 pg_recvlogical.c:271 receivelog.c:493 receivelog.c:546
 #: receivelog.c:586 streamutil.c:303 streamutil.c:377 streamutil.c:430
 #: streamutil.c:544 streamutil.c:590
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: nelze zaslat replikační příkaz \"%s\": %s"
 
-#: pg_basebackup.c:1840
+#: pg_basebackup.c:1844
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s: nelze inicializovat base backup: %s"
 
-#: pg_basebackup.c:1847
+#: pg_basebackup.c:1851
 #, c-format
-msgid ""
-"%s: server returned unexpected response to BASE_BACKUP command; got %d rows "
-"and %d fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s: server vrátil neočekávanou odpověď na BASE_BACKUP příkaz; přišlo %d "
-"řádeka %d položek, ořekáváno %d řádek a %d položek\n"
+msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: server vrátil neočekávanou odpověď na BASE_BACKUP příkaz; přišlo %d řádeka %d položek, ořekáváno %d řádek a %d položek\n"
 
-#: pg_basebackup.c:1855
+#: pg_basebackup.c:1859
 #, c-format
 msgid "%s: checkpoint completed\n"
 msgstr "%s: checkpoint dokonče\n"
 
-#: pg_basebackup.c:1870
+#: pg_basebackup.c:1874
 #, c-format
 msgid "%s: write-ahead log start point: %s on timeline %u\n"
 msgstr "%s: počáteční pozice we write-ahead logu: %s na timeline %u\n"
 
-#: pg_basebackup.c:1879
+#: pg_basebackup.c:1883
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s: nelze získat hlavičku zálohy: %s"
 
-#: pg_basebackup.c:1885
+#: pg_basebackup.c:1889
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s: ze serveru nebyla vrácena žádná data\n"
 
-#: pg_basebackup.c:1917
+#: pg_basebackup.c:1921
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
 msgstr "%s: na stdout lze zapsat jen jeden tablespace, databáze má %d\n"
 
-#: pg_basebackup.c:1929
+#: pg_basebackup.c:1933
 #, c-format
 msgid "%s: starting background WAL receiver\n"
 msgstr "%s: starting background WAL receiver\n"
 
-#: pg_basebackup.c:1961
+#: pg_basebackup.c:1965
 #, c-format
 msgid "%s: could not get write-ahead log end position from server: %s"
 msgstr "%s: ze serveru nelze získat koncovou pozici v transakčním logu: %s"
 
-#: pg_basebackup.c:1968
+#: pg_basebackup.c:1972
 #, c-format
 msgid "%s: no write-ahead log end position returned from server\n"
-msgstr ""
-"%s: ze serveru nebyla vrácena žádná koncová pozice v transakčním logu\n"
+msgstr "%s: ze serveru nebyla vrácena žádná koncová pozice v transakčním logu\n"
 
-#: pg_basebackup.c:1974
+#: pg_basebackup.c:1978
 #, c-format
 msgid "%s: write-ahead log end point: %s\n"
 msgstr "%s: koncová pozice ve write-ahead logu: %s\n"
 
-#: pg_basebackup.c:1985
+#: pg_basebackup.c:1989
 #, c-format
-msgid "%s: checksum error occured\n"
+msgid "%s: checksum error occurred\n"
 msgstr "%s: došlo k chybě kontrolního součtu\n"
 
-#: pg_basebackup.c:1991
+#: pg_basebackup.c:1995
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s: závěrečný receive selhal: %s"
 
-#: pg_basebackup.c:2016
+#: pg_basebackup.c:2020
 #, c-format
 msgid "%s: waiting for background process to finish streaming ...\n"
 msgstr "%s: čekám na background proces pro ukočení streamování ...\n"
 
-#: pg_basebackup.c:2022
+#: pg_basebackup.c:2026
 #, c-format
 msgid "%s: could not send command to background pipe: %s\n"
 msgstr "%s: nelze zaslat příkaz přes background rouru: %s\n"
 
-#: pg_basebackup.c:2031
+#: pg_basebackup.c:2035
 #, c-format
 msgid "%s: could not wait for child process: %s\n"
 msgstr "%s: nelze počkat na podřízený (child) proces: %s\n"
 
-#: pg_basebackup.c:2037
+#: pg_basebackup.c:2041
 #, c-format
 msgid "%s: child %d died, expected %d\n"
 msgstr "%s: potomek %d zemřel, očekáváno %d\n"
 
-#: pg_basebackup.c:2043
+#: pg_basebackup.c:2047
 #, c-format
 msgid "%s: child process did not exit normally\n"
 msgstr "%s: podřízený proces neskončil standardně\n"
 
-#: pg_basebackup.c:2049
+#: pg_basebackup.c:2053
 #, c-format
 msgid "%s: child process exited with error %d\n"
 msgstr "%s: podřízený proces skončil s chybou %d\n"
 
-#: pg_basebackup.c:2076
+#: pg_basebackup.c:2080
 #, c-format
 msgid "%s: could not wait for child thread: %s\n"
 msgstr "%s: nelze počkat na podřízené (child) vlákno: %s\n"
 
-#: pg_basebackup.c:2083
+#: pg_basebackup.c:2087
 #, c-format
 msgid "%s: could not get child thread exit status: %s\n"
 msgstr "%s: nelze získat návratový kód podřízeného vlákna: %s\n"
 
-#: pg_basebackup.c:2089
+#: pg_basebackup.c:2093
 #, c-format
 msgid "%s: child thread exited with error %u\n"
 msgstr "%s: podřízené vlákno skončilo s chybou %u\n"
 
-#: pg_basebackup.c:2127
+#: pg_basebackup.c:2131
 #, c-format
 msgid "%s: base backup completed\n"
 msgstr "%s: base backup dokončen\n"
 
-#: pg_basebackup.c:2208
+#: pg_basebackup.c:2212
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
 msgstr "%s: chybný formát výstupu \"%s\", musí být \"plain\" nebo \"tar\"\n"
 
-#: pg_basebackup.c:2253
+#: pg_basebackup.c:2257
 #, c-format
-msgid ""
-"%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or "
-"\"none\"\n"
-msgstr ""
-"%s: neplatná wal-metoda \"%s\", musí být \"fetch\", \"stream\" nebo \"none"
-"\"\n"
+msgid "%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\"\n"
+msgstr "%s: neplatná wal-metoda \"%s\", musí být \"fetch\", \"stream\" nebo \"none\"\n"
 
-#: pg_basebackup.c:2281 pg_receivewal.c:585
+#: pg_basebackup.c:2285 pg_receivewal.c:585
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s: chybná úroveň komprese \"%s\"\n"
 
-#: pg_basebackup.c:2293
+#: pg_basebackup.c:2297
 #, c-format
-msgid ""
-"%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
-msgstr ""
-"%s: chybný checkpoint argument \"%s\", musí být \"fast\" nebo \"spread\"\n"
+msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
+msgstr "%s: chybný checkpoint argument \"%s\", musí být \"fast\" nebo \"spread\"\n"
 
-#: pg_basebackup.c:2320 pg_receivewal.c:557 pg_recvlogical.c:826
+#: pg_basebackup.c:2324 pg_receivewal.c:557 pg_recvlogical.c:826
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s: neplatný interval zasílání stavu \"%s\"\n"
 
-#: pg_basebackup.c:2339 pg_basebackup.c:2353 pg_basebackup.c:2364
-#: pg_basebackup.c:2377 pg_basebackup.c:2387 pg_basebackup.c:2397
-#: pg_basebackup.c:2409 pg_basebackup.c:2423 pg_basebackup.c:2433
-#: pg_basebackup.c:2446 pg_basebackup.c:2457 pg_receivewal.c:611
+#: pg_basebackup.c:2343 pg_basebackup.c:2357 pg_basebackup.c:2368
+#: pg_basebackup.c:2381 pg_basebackup.c:2391 pg_basebackup.c:2401
+#: pg_basebackup.c:2413 pg_basebackup.c:2427 pg_basebackup.c:2437
+#: pg_basebackup.c:2450 pg_basebackup.c:2461 pg_receivewal.c:611
 #: pg_receivewal.c:625 pg_receivewal.c:633 pg_receivewal.c:643
 #: pg_receivewal.c:651 pg_receivewal.c:662 pg_recvlogical.c:853
 #: pg_recvlogical.c:867 pg_recvlogical.c:878 pg_recvlogical.c:886
@@ -762,69 +735,68 @@ msgstr "%s: neplatný interval zasílání stavu \"%s\"\n"
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Zkuste \"%s --help\" pro více informací.\n"
 
-#: pg_basebackup.c:2351 pg_receivewal.c:623 pg_recvlogical.c:865
+#: pg_basebackup.c:2355 pg_receivewal.c:623 pg_recvlogical.c:865
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: příliš mnoho argumentů v příkazové řádce (první je \"%s\")\n"
 
-#: pg_basebackup.c:2363 pg_receivewal.c:661
+#: pg_basebackup.c:2367 pg_receivewal.c:661
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: nebyl zadán cílový adresář\n"
 
-#: pg_basebackup.c:2375
+#: pg_basebackup.c:2379
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s: pouze tar zálohy mohou být komprimované\n"
 
-#: pg_basebackup.c:2385
+#: pg_basebackup.c:2389
 #, c-format
 msgid "%s: cannot stream write-ahead logs in tar mode to stdout\n"
-msgstr ""
-"%s: v tar módu s výstupem na stdout nelze streamovat write-ahead logy\n"
+msgstr "%s: v tar módu s výstupem na stdout nelze streamovat write-ahead logy\n"
 
-#: pg_basebackup.c:2395
+#: pg_basebackup.c:2399
 #, c-format
 msgid "%s: replication slots can only be used with WAL streaming\n"
 msgstr "%s: replikační sloty lze použít pouze s WAL streamováním\n"
 
-#: pg_basebackup.c:2407
+#: pg_basebackup.c:2411
 #, c-format
 msgid "%s: --no-slot cannot be used with slot name\n"
 msgstr "%s: --no-slot nelze použít společně se jménem slotu\n"
 
 #. translator: second %s is an option name
-#: pg_basebackup.c:2421 pg_receivewal.c:641
+#: pg_basebackup.c:2425 pg_receivewal.c:641
 #, c-format
 msgid "%s: %s needs a slot to be specified using --slot\n"
 msgstr "%s: %s vyžaduje aby byl zadán slot pomocí --slot\n"
 
-#: pg_basebackup.c:2431
+#: pg_basebackup.c:2435
 #, c-format
 msgid "%s: --create-slot and --no-slot are incompatible options\n"
 msgstr "%s: --create-slot a --no-slot jsou nekompatibilní volby\n"
 
-#: pg_basebackup.c:2444
+#: pg_basebackup.c:2448
 #, c-format
 msgid "%s: WAL directory location can only be specified in plain mode\n"
 msgstr "%s: umístění WAL adresáře lze zadat pouze v plain módu\n"
 
-#: pg_basebackup.c:2455
+#: pg_basebackup.c:2459
 #, c-format
 msgid "%s: WAL directory location must be an absolute path\n"
 msgstr "%s: cesta k adresáři transakčního logu musí být absolutní\n"
 
-#: pg_basebackup.c:2467 pg_receivewal.c:671
+#: pg_basebackup.c:2471 pg_receivewal.c:671
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: tento build nepodporuje kompresi\n"
 
-#: pg_basebackup.c:2521
+#: pg_basebackup.c:2525
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: nelze vytvořit symbolický link \"%s\": %s\n"
 
-#: pg_basebackup.c:2526
+#: pg_basebackup.c:2530
 #, c-format
 msgid "%s: symlinks are not supported on this platform\n"
 msgstr "%s: symlinks nejsou na této platformě podporovány\n"
@@ -849,11 +821,8 @@ msgstr ""
 
 #: pg_receivewal.c:82
 #, c-format
-msgid ""
-"  -D, --directory=DIR    receive write-ahead log files into this directory\n"
-msgstr ""
-"  -D, --directory=DIR    soubory transakčního logu ukládej do tohoto "
-"adresáře\n"
+msgid "  -D, --directory=DIR    receive write-ahead log files into this directory\n"
+msgstr "  -D, --directory=DIR    soubory transakčního logu ukládej do tohoto adresáře\n"
 
 #: pg_receivewal.c:83 pg_recvlogical.c:85
 #, c-format
@@ -862,43 +831,32 @@ msgstr "  -E, --endpos=LSN       skončí po dosažení zadaného LSN\n"
 
 #: pg_receivewal.c:84 pg_recvlogical.c:89
 #, c-format
-msgid ""
-"      --if-not-exists    do not error if slot already exists when creating a "
-"slot\n"
-msgstr ""
-"      --if-not-exists    vytváření slotu neskončí chybou pokud slot již "
-"existuje\n"
+msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
+msgstr "      --if-not-exists    vytváření slotu neskončí chybou pokud slot již existuje\n"
 
 #: pg_receivewal.c:85 pg_recvlogical.c:91
 #, c-format
 msgid "  -n, --no-loop          do not loop on connection lost\n"
-msgstr ""
-"  -n, --no-loop          neopakovat pokus o spojení v případě selhání\n"
+msgstr "  -n, --no-loop          neopakovat pokus o spojení v případě selhání\n"
 
 #: pg_receivewal.c:86
 #, c-format
-msgid ""
-"      --no-sync          do not wait for changes to be written safely to "
-"disk\n"
+msgid "      --no-sync          do not wait for changes to be written safely to disk\n"
 msgstr "      --no-sync          nečekat na bezpečné zapsání změn na disk\n"
 
 #: pg_receivewal.c:87 pg_recvlogical.c:96
 #, c-format
 msgid ""
 "  -s, --status-interval=SECS\n"
-"                         time between status packets sent to server "
-"(default: %d)\n"
+"                         time between status packets sent to server (default: %d)\n"
 msgstr ""
 "  -s, --status-interval=SECS\n"
-"                         čas mezi zasíláním packetů se stavem na server "
-"(implicitně: %d)\n"
+"                         čas mezi zasíláním packetů se stavem na server (implicitně: %d)\n"
 
 #: pg_receivewal.c:90
 #, c-format
-msgid ""
-"      --synchronous      flush write-ahead log immediately after writing\n"
-msgstr ""
-"      --synchronous      vynutí flush write-ahead logu okamžitě po zapsání\n"
+msgid "      --synchronous      flush write-ahead log immediately after writing\n"
+msgstr "      --synchronous      vynutí flush write-ahead logu okamžitě po zapsání\n"
 
 #: pg_receivewal.c:93
 #, c-format
@@ -916,21 +874,13 @@ msgstr ""
 
 #: pg_receivewal.c:103 pg_recvlogical.c:81
 #, c-format
-msgid ""
-"      --create-slot      create a new replication slot (for the slot's name "
-"see --slot)\n"
-msgstr ""
-"      --create-slot      vytvoří nový replikační slot (pro jméno slotu viz --"
-"slot)\n"
+msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
+msgstr "      --create-slot      vytvoří nový replikační slot (pro jméno slotu viz --slot)\n"
 
 #: pg_receivewal.c:104 pg_recvlogical.c:82
 #, c-format
-msgid ""
-"      --drop-slot        drop the replication slot (for the slot's name see "
-"--slot)\n"
-msgstr ""
-"      --drop-slot        odstraní replikační slot (pro jméno slotu viz --"
-"slot)\n"
+msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
+msgstr "      --drop-slot        odstraní replikační slot (pro jméno slotu viz --slot)\n"
 
 #: pg_receivewal.c:116
 #, c-format
@@ -979,12 +929,8 @@ msgstr "%s: nelze číst komprimovaný soubor \"%s\": %s\n"
 
 #: pg_receivewal.c:317
 #, c-format
-msgid ""
-"%s: compressed segment file \"%s\" has incorrect uncompressed size %d, "
-"skipping\n"
-msgstr ""
-"%s: komprimovaný segment soubor \"%s\" má po dekompresi neplatnou velikost "
-"%d, přeskakuji\n"
+msgid "%s: compressed segment file \"%s\" has incorrect uncompressed size %d, skipping\n"
+msgstr "%s: komprimovaný segment soubor \"%s\" má po dekompresi neplatnou velikost %d, přeskakuji\n"
 
 #: pg_receivewal.c:423
 #, c-format
@@ -1013,12 +959,8 @@ msgstr "%s: nelze použít --synchronous společně s --no-sync\n"
 
 #: pg_receivewal.c:728
 #, c-format
-msgid ""
-"%s: replication connection using slot \"%s\" is unexpectedly database "
-"specific\n"
-msgstr ""
-"%s: replikační spojení používající slot \"%s\" je neočekávaně specifické pro "
-"databázi\n"
+msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
+msgstr "%s: replikační spojení používající slot \"%s\" je neočekávaně specifické pro databázi\n"
 
 #: pg_receivewal.c:740 pg_recvlogical.c:978
 #, c-format
@@ -1061,12 +1003,8 @@ msgstr ""
 
 #: pg_recvlogical.c:83
 #, c-format
-msgid ""
-"      --start            start streaming in a replication slot (for the "
-"slot's name see --slot)\n"
-msgstr ""
-"      --start            start streaming in a replication slot (for the "
-"slot's name see --slot)\n"
+msgid "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
+msgstr "      --start            start streaming in a replication slot (for the slot's name see --slot)\n"
 
 #: pg_recvlogical.c:86
 #, c-format
@@ -1077,20 +1015,15 @@ msgstr "  -f, --file=FILE        log zapisuj do tohoto souboru, - pro stdout\n"
 #, c-format
 msgid ""
 "  -F  --fsync-interval=SECS\n"
-"                         time between fsyncs to the output file (default: "
-"%d)\n"
+"                         time between fsyncs to the output file (default: %d)\n"
 msgstr ""
 "  -F  --fsync-interval=SECS\n"
-"                         interval mezi voláním fsync na výstupním souboru "
-"(implicitně: %d)\n"
+"                         interval mezi voláním fsync na výstupním souboru (implicitně: %d)\n"
 
 #: pg_recvlogical.c:90
 #, c-format
-msgid ""
-"  -I, --startpos=LSN     where in an existing slot should the streaming "
-"start\n"
-msgstr ""
-"  -I, --startpos=LSN     kde v existujícím slotu má začít streamování\n"
+msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
+msgstr "  -I, --startpos=LSN     kde v existujícím slotu má začít streamování\n"
 
 #: pg_recvlogical.c:92
 #, c-format
@@ -1106,8 +1039,7 @@ msgstr ""
 #: pg_recvlogical.c:95
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
-msgstr ""
-"  -P, --plugin=PLUGIN    použije výstupní plugin PLUGIN (implicitně: %s)\n"
+msgstr "  -P, --plugin=PLUGIN    použije výstupní plugin PLUGIN (implicitně: %s)\n"
 
 #: pg_recvlogical.c:98
 #, c-format
@@ -1223,8 +1155,7 @@ msgstr "%s: nelze použít use-slot nebo --start společně s --drop-slot\n"
 #: pg_recvlogical.c:917
 #, c-format
 msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
-msgstr ""
-"%s: nelze použít --create-slot nebo --drop-slot společně s --startpos\n"
+msgstr "%s: nelze použít --create-slot nebo --drop-slot společně s --startpos\n"
 
 #: pg_recvlogical.c:926
 #, c-format
@@ -1254,20 +1185,15 @@ msgstr "%s: nelze otevřít existující soubor transakčního logu \"%s\": %s\n
 #: receivelog.c:139
 #, c-format
 msgid "%s: could not fsync existing write-ahead log file \"%s\": %s\n"
-msgstr ""
-"%s: nelze provést fsync existujícího souboru write-ahead logu \"%s\": %s\n"
+msgstr "%s: nelze provést fsync existujícího souboru write-ahead logu \"%s\": %s\n"
 
 #: receivelog.c:154
 #, c-format
 msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
-msgid_plural ""
-"%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
-msgstr[0] ""
-"%s: soubor transakčního logu \"%s\" má %d bytů, měl by mít 0 nebo %d\n"
-msgstr[1] ""
-"%s: soubor transakčního logu \"%s\" má %d bytů, měl by mít 0 nebo %d\n"
-msgstr[2] ""
-"%s: soubor transakčního logu \"%s\" má %d bytů, měl by mít 0 nebo %d\n"
+msgid_plural "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr[0] "%s: soubor transakčního logu \"%s\" má %d bytů, měl by mít 0 nebo %d\n"
+msgstr[1] "%s: soubor transakčního logu \"%s\" má %d bytů, měl by mít 0 nebo %d\n"
+msgstr[2] "%s: soubor transakčního logu \"%s\" má %d bytů, měl by mít 0 nebo %d\n"
 
 #: receivelog.c:170
 #, c-format
@@ -1287,8 +1213,7 @@ msgstr "%s: nepřejmenovávám \"%s%s\", segment není kompletní.\n"
 #: receivelog.c:281
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
-msgstr ""
-"%s: server ohlásil neočekávané jméno souboru s historií pro timeline %u: %s\n"
+msgstr "%s: server ohlásil neočekávané jméno souboru s historií pro timeline %u: %s\n"
 
 #: receivelog.c:289
 #, c-format
@@ -1302,40 +1227,25 @@ msgstr "%s: nelze zapsat do souboru s timeline historií \"%s\": %s\n"
 
 #: receivelog.c:386
 #, c-format
-msgid ""
-"%s: incompatible server version %s; client does not support streaming from "
-"server versions older than %s\n"
-msgstr ""
-"%s: nekompatibilní verze serveru %s; klient nepodporuje streamování ze "
-"serverů s verzí starší než %s\n"
+msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
+msgstr "%s: nekompatibilní verze serveru %s; klient nepodporuje streamování ze serverů s verzí starší než %s\n"
 
 #: receivelog.c:396
 #, c-format
-msgid ""
-"%s: incompatible server version %s; client does not support streaming from "
-"server versions newer than %s\n"
+msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
 msgstr ""
-"%s: nekompatibilní verze serveru %s; klient nepodporuje streamování ze "
-"serverů s verzí novější než %s\n"
+"%s: nekompatibilní verze serveru %s; klient nepodporuje streamování ze serverů s verzí novější než %s\n"
 "\n"
 
 #: receivelog.c:501 streamutil.c:439 streamutil.c:478
 #, c-format
-msgid ""
-"%s: could not identify system: got %d rows and %d fields, expected %d rows "
-"and %d or more fields\n"
-msgstr ""
-"%s: nelze identifikovat systém, načteno %d řádek a %d položek, očekáváno %d "
-"řádek a %d nebo více položek\n"
+msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: nelze identifikovat systém, načteno %d řádek a %d položek, očekáváno %d řádek a %d nebo více položek\n"
 
 #: receivelog.c:509
 #, c-format
-msgid ""
-"%s: system identifier does not match between base backup and streaming "
-"connection\n"
-msgstr ""
-"%s: identifikátor systému mezi base backupem a streamovacím spojením "
-"neodpovídá\n"
+msgid "%s: system identifier does not match between base backup and streaming connection\n"
+msgstr "%s: identifikátor systému mezi base backupem a streamovacím spojením neodpovídá\n"
 
 #: receivelog.c:517
 #, c-format
@@ -1344,28 +1254,18 @@ msgstr "%s: počáteční timeline %u není přitomna na serveru\n"
 
 #: receivelog.c:559
 #, c-format
-msgid ""
-"%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
-"fields, expected %d rows and %d fields\n"
-msgstr ""
-"%s: neočekávaná odpověď na TIMELINE_HISTORY příkaz: načteno %d řádek a %d "
-"položek, očekáváno %d řádek a %d položek\n"
+msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: neočekávaná odpověď na TIMELINE_HISTORY příkaz: načteno %d řádek a %d položek, očekáváno %d řádek a %d položek\n"
 
 #: receivelog.c:631
 #, c-format
-msgid ""
-"%s: server reported unexpected next timeline %u, following timeline %u\n"
-msgstr ""
-"%s: server ohlásil neočekávanou další timeline %u, následující timeline %u\n"
+msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
+msgstr "%s: server ohlásil neočekávanou další timeline %u, následující timeline %u\n"
 
 #: receivelog.c:638
 #, c-format
-msgid ""
-"%s: server stopped streaming timeline %u at %X/%X, but reported next "
-"timeline %u to begin at %X/%X\n"
-msgstr ""
-"%s: server přestal streamovat timeline %u at %X/%X, ale začátek další "
-"timelineoznámil %u na %X/%X\n"
+msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
+msgstr "%s: server přestal streamovat timeline %u at %X/%X, ale začátek další timelineoznámil %u na %X/%X\n"
 
 #: receivelog.c:680
 #, c-format
@@ -1374,12 +1274,8 @@ msgstr "%s: replikační stream byl ukončen před bodem zastavení (stop point)
 
 #: receivelog.c:729
 #, c-format
-msgid ""
-"%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: neočekávaný výsledek po konci timeline: získáno %d řádek a %d položek, "
-"očekáváno %d řádek a %d položek\n"
+msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: neočekávaný výsledek po konci timeline: získáno %d řádek a %d položek, očekáváno %d řádek a %d položek\n"
 
 #: receivelog.c:739
 #, c-format
@@ -1389,8 +1285,7 @@ msgstr "%s: nelze naparsovat počáteční bod další timeline \"%s\"\n"
 #: receivelog.c:1110
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
-msgstr ""
-"%s: přijat záznam z transakčního logu pro offset %u bez otevřeného souboru\n"
+msgstr "%s: přijat záznam z transakčního logu pro offset %u bez otevřeného souboru\n"
 
 #: receivelog.c:1121
 #, c-format
@@ -1438,12 +1333,8 @@ msgstr "%s: integer_datetimes přepínač kompilace neodpovídá serveru\n"
 
 #: streamutil.c:312
 #, c-format
-msgid ""
-"%s: could not fetch WAL segment size: got %d rows and %d fields, expected %d "
-"rows and %d or more fields\n"
-msgstr ""
-"%s: nelze identifikovat systém, načteno %d řádek a %d položek, očekáváno %d "
-"řádek a %d nebo více položek\n"
+msgid "%s: could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: nelze identifikovat systém, načteno %d řádek a %d položek, očekáváno %d řádek a %d nebo více položek\n"
 
 #: streamutil.c:322
 #, c-format
@@ -1452,30 +1343,16 @@ msgstr "%s: velikost WAL segmentu nelze naparsovat\n"
 
 #: streamutil.c:339
 #, c-format
-msgid ""
-"%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the "
-"remote server reported a value of %d byte\n"
-msgid_plural ""
-"%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the "
-"remote server reported a value of %d bytes\n"
-msgstr[0] ""
-"%s: velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale "
-"vzdálený server vrátil hodnotu %d bytů\n"
-msgstr[1] ""
-"%s: velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale "
-"vzdálený server vrátil hodnotu %d byty\n"
-msgstr[2] ""
-"%s: velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale "
-"vzdálený server vrátil hodnotu %d bytů\n"
+msgid "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte\n"
+msgid_plural "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes\n"
+msgstr[0] "%s: velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale vzdálený server vrátil hodnotu %d bytů\n"
+msgstr[1] "%s: velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale vzdálený server vrátil hodnotu %d byty\n"
+msgstr[2] "%s: velikost WAL segmentu musí být mocnina dvou mezi 1 MB a 1 GB, ale vzdálený server vrátil hodnotu %d bytů\n"
 
 #: streamutil.c:386
 #, c-format
-msgid ""
-"%s: could not fetch group access flag: got %d rows and %d fields, expected "
-"%d rows and %d or more fields\n"
-msgstr ""
-"%s: nelze identifikovat systém, načteno %d řádek a %d položek, očekáváno %d "
-"řádek a %d nebo více položek\n"
+msgid "%s: could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields\n"
+msgstr "%s: nelze identifikovat systém, načteno %d řádek a %d položek, očekáváno %d řádek a %d nebo více položek\n"
 
 #: streamutil.c:395
 #, c-format
@@ -1484,23 +1361,15 @@ msgstr "%s: flag skupinového přístupu nelze naparsovat: %s\n"
 
 #: streamutil.c:556
 #, c-format
-msgid ""
-"%s: could not create replication slot \"%s\": got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: nelze vytvořit replikační slot \"%s\": načteno %d řádek a %d položek, "
-"očekáváno %d řádek a %d položek\n"
+msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: nelze vytvořit replikační slot \"%s\": načteno %d řádek a %d položek, očekáváno %d řádek a %d položek\n"
 
 #: streamutil.c:601
 #, c-format
-msgid ""
-"%s: could not drop replication slot \"%s\": got %d rows and %d fields, "
-"expected %d rows and %d fields\n"
-msgstr ""
-"%s: nelze odstranit replikační slot \"%s\": načteno %d řádek a %d položek, "
-"očekáváno %d řádek a %d položek\n"
+msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
+msgstr "%s: nelze odstranit replikační slot \"%s\": načteno %d řádek a %d položek, očekáváno %d řádek a %d položek\n"
 
-#: walmethods.c:440 walmethods.c:929
+#: walmethods.c:439 walmethods.c:928
 msgid "could not compress data"
 msgstr "nelze komprimovat data"
 
@@ -1508,24 +1377,23 @@ msgstr "nelze komprimovat data"
 msgid "could not reset compression stream"
 msgstr "nelze resetovat kompresní stream"
 
-#: walmethods.c:573
+#: walmethods.c:569
 msgid "could not initialize compression library"
 msgstr "nelze inicializovat kompresní knihovnu"
 
-#: walmethods.c:585
+#: walmethods.c:581
 msgid "implementation error: tar files can't have more than one open file"
-msgstr ""
-"chyba implementace: tar soubory nemohou mít otevřeno více než jeden soubor"
+msgstr "chyba implementace: tar soubory nemohou mít otevřeno více než jeden soubor"
 
-#: walmethods.c:599
+#: walmethods.c:595
 msgid "could not create tar header"
 msgstr "nelze vytvořit tar hlavičku"
 
-#: walmethods.c:613 walmethods.c:652 walmethods.c:846 walmethods.c:857
+#: walmethods.c:609 walmethods.c:649 walmethods.c:844 walmethods.c:855
 msgid "could not change compression parameters"
 msgstr "nelze změnit kompresní stream"
 
-#: walmethods.c:734
+#: walmethods.c:731
 msgid "unlink not supported with compression"
 msgstr "unlink není podporován s kompresí"
 
@@ -1533,84 +1401,77 @@ msgstr "unlink není podporován s kompresí"
 msgid "could not close compression stream"
 msgstr "nelze uzavřít kompresní stream"
 
-#~ msgid "%s: could not read copy data: %s\n"
-#~ msgstr "%s: nelze načíst copy data: %s\n"
-
-#~ msgid "%s: could not close file %s: %s\n"
-#~ msgstr "%s: nelze zavřít soubor %s: %s\n"
-
-#~ msgid "%s: could not get current position in file %s: %s\n"
-#~ msgstr "%s: nelze získat aktuální pozici v souboru %s: %s\n"
-
-#~ msgid "%s: could not pad WAL segment %s: %s\n"
-#~ msgstr "%s: nelze doplnit WAL segment %s: %s\n"
-
-#~ msgid "%s: could not stat WAL segment %s: %s\n"
-#~ msgstr "%s: nelze načíst stav WAL segmentu %s: %s\n"
-
-#~ msgid "%s: Could not open WAL segment %s: %s\n"
-#~ msgstr "%s: nelze otevřít WAL segment %s: %s\n"
-
-#~ msgid "%s: could not parse log start position from value \"%s\"\n"
-#~ msgstr "%s: nelze naparsovat počáteční pozici logu z hodnoty \"%s\"\n"
-
-#~ msgid "%s: could not identify system: %s\n"
-#~ msgstr "%s: nelze identifikovat systém: %s\n"
-
-#~ msgid "  -v, --verbose             output verbose messages\n"
-#~ msgstr "  -v, --verbose             vypisuj podrobnější zprávy\n"
-
-#~ msgid "%s: could not send base backup command: %s"
-#~ msgstr "%s: nelze poslat base backup příkaz: %s"
-
-#~ msgid "%s: could not identify system: %s"
-#~ msgstr "%s: nelze identifikovat systém: %s"
-
-#~ msgid "%s: invalid format of xlog location: %s\n"
-#~ msgstr "%s: neplatný formát xlog pozice: %s\n"
-
-#~ msgid "  --version                output version information, then exit\n"
-#~ msgstr "  --version                zobraz informaci o verzi, poté skonči\n"
-
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help                   zobraz tuto nápovědu, poté skonči\n"
-
-#~ msgid ""
-#~ "%s: timeline does not match between base backup and streaming connection\n"
-#~ msgstr ""
-#~ "%s: timeline mezi base backupem a streamovacím spojením neodpovídá\n"
-
-#~ msgid "%s: no start point returned from server\n"
-#~ msgstr "%s: server nevráti žádný počáteční bod (start point)\n"
-
-#~ msgid "%s: could not rename file \"%s\": %s\n"
-#~ msgstr "%s: nelze přejmenovat soubor \"%s\": %s\n"
-
-#~ msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
-#~ msgstr ""
-#~ "%s: nelze skočit zpět na začátek souboru transakčního logu \"%s\": %s\n"
-
-#~ msgid "%s: could not pad transaction log file \"%s\": %s\n"
-#~ msgstr "%s: nelze doplnit soubor transakčního logu \"%s\": %s\n"
-
-#~ msgid "%s: could not stat transaction log file \"%s\": %s\n"
-#~ msgstr "%s: nelze udělat stat souboru transakčního logu \"%s\": %s\n"
-
-#~ msgid "%s: could not parse transaction log file name \"%s\"\n"
-#~ msgstr "%s: nelze naparsovat jméno souboru transakčního logu \"%s\"\n"
-
-#~ msgid "%s: cannot specify both --xlog and --xlog-method\n"
-#~ msgstr "%s: volby --xlog a --xlog-method nelze zadat společně\n"
-
-#~ msgid "%s: could not parse file mode\n"
-#~ msgstr "%s: nelze načíst mód souboru\n"
+#~ msgid "  -x, --xlog             include required WAL files in backup (fetch mode)\n"
+#~ msgstr "  -x, --xlog             zahrne potřebné WAL soubory do zálohy (fetch mód)\n"
 
 #~ msgid "%s: could not parse file size\n"
 #~ msgstr "%s: nelze načíst velikost souboru\n"
 
-#~ msgid ""
-#~ "  -x, --xlog             include required WAL files in backup (fetch "
-#~ "mode)\n"
-#~ msgstr ""
-#~ "  -x, --xlog             zahrne potřebné WAL soubory do zálohy (fetch "
-#~ "mód)\n"
+#~ msgid "%s: could not parse file mode\n"
+#~ msgstr "%s: nelze načíst mód souboru\n"
+
+#~ msgid "%s: cannot specify both --xlog and --xlog-method\n"
+#~ msgstr "%s: volby --xlog a --xlog-method nelze zadat společně\n"
+
+#~ msgid "%s: could not parse transaction log file name \"%s\"\n"
+#~ msgstr "%s: nelze naparsovat jméno souboru transakčního logu \"%s\"\n"
+
+#~ msgid "%s: could not stat transaction log file \"%s\": %s\n"
+#~ msgstr "%s: nelze udělat stat souboru transakčního logu \"%s\": %s\n"
+
+#~ msgid "%s: could not pad transaction log file \"%s\": %s\n"
+#~ msgstr "%s: nelze doplnit soubor transakčního logu \"%s\": %s\n"
+
+#~ msgid "%s: could not seek to beginning of transaction log file \"%s\": %s\n"
+#~ msgstr "%s: nelze skočit zpět na začátek souboru transakčního logu \"%s\": %s\n"
+
+#~ msgid "%s: could not rename file \"%s\": %s\n"
+#~ msgstr "%s: nelze přejmenovat soubor \"%s\": %s\n"
+
+#~ msgid "%s: no start point returned from server\n"
+#~ msgstr "%s: server nevráti žádný počáteční bod (start point)\n"
+
+#~ msgid "%s: timeline does not match between base backup and streaming connection\n"
+#~ msgstr "%s: timeline mezi base backupem a streamovacím spojením neodpovídá\n"
+
+#~ msgid "  --help                   show this help, then exit\n"
+#~ msgstr "  --help                   zobraz tuto nápovědu, poté skonči\n"
+
+#~ msgid "  --version                output version information, then exit\n"
+#~ msgstr "  --version                zobraz informaci o verzi, poté skonči\n"
+
+#~ msgid "%s: invalid format of xlog location: %s\n"
+#~ msgstr "%s: neplatný formát xlog pozice: %s\n"
+
+#~ msgid "%s: could not identify system: %s"
+#~ msgstr "%s: nelze identifikovat systém: %s"
+
+#~ msgid "%s: could not send base backup command: %s"
+#~ msgstr "%s: nelze poslat base backup příkaz: %s"
+
+#~ msgid "  -v, --verbose             output verbose messages\n"
+#~ msgstr "  -v, --verbose             vypisuj podrobnější zprávy\n"
+
+#~ msgid "%s: could not identify system: %s\n"
+#~ msgstr "%s: nelze identifikovat systém: %s\n"
+
+#~ msgid "%s: could not parse log start position from value \"%s\"\n"
+#~ msgstr "%s: nelze naparsovat počáteční pozici logu z hodnoty \"%s\"\n"
+
+#~ msgid "%s: Could not open WAL segment %s: %s\n"
+#~ msgstr "%s: nelze otevřít WAL segment %s: %s\n"
+
+#~ msgid "%s: could not stat WAL segment %s: %s\n"
+#~ msgstr "%s: nelze načíst stav WAL segmentu %s: %s\n"
+
+#~ msgid "%s: could not pad WAL segment %s: %s\n"
+#~ msgstr "%s: nelze doplnit WAL segment %s: %s\n"
+
+#~ msgid "%s: could not get current position in file %s: %s\n"
+#~ msgstr "%s: nelze získat aktuální pozici v souboru %s: %s\n"
+
+#~ msgid "%s: could not close file %s: %s\n"
+#~ msgstr "%s: nelze zavřít soubor %s: %s\n"
+
+#~ msgid "%s: could not read copy data: %s\n"
+#~ msgstr "%s: nelze načíst copy data: %s\n"

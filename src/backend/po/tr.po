@@ -15856,7 +15856,7 @@ msgid ""
 "The PostgreSQL documentation contains more information about configuring your system for PostgreSQL."
 msgstr ""
 "Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gelmiyor .\n"
-"Bu durum, sistemin semaphore set (SEMMNI) veya semaphore (SEMMNS) sayı sınırlaması aşmasında meydana gelmektedir.  Belirtilen parametrelerin değerleri yükseltmelisiniz.  Başka seçeneğiniz ise PostgerSQL sisteminin semaphore tütekitimini max_connections parametresini şu an %d) düşürerek azaltabilirsiniz.\n"
+"Bu durum, sistemin semaphore set (SEMMNI) veya semaphore (SEMMNS) sayı sınırlaması aşmasında meydana gelmektedir.  Belirtilen parametrelerin değerleri yükseltmelisiniz.  Başka seçeneğiniz ise PostgreSQL sisteminin semaphore tütekitimini max_connections parametresini şu an %d) düşürerek azaltabilirsiniz.\n"
 "PostgreSQL dokümanlarında bu konu ile ilgili daha ayrıntılı açıklama ve konfigurasyon hakkında bilgileri bulabilirsiniz."
 
 #: port/sysv_sema.c:158

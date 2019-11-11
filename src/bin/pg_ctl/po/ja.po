@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.0 beta 3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-08-31 16:21+0900\n"
+"POT-Creation-Date: 2019-11-09 09:23+0000\n"
 "PO-Revision-Date: 2018-08-20 16:31+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horiguchi.kyotaro@lab.ntt.co.jp>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
@@ -714,7 +714,7 @@ msgstr ""
 #: pg_ctl.c:1967
 #, c-format
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N SERVICENAME  PostgreSQLサーバを登録する際ののサービス名です\n"
+msgstr "  -N SERVICENAME  PostgreSQLサーバを登録する際のサービス名です\n"
 
 #: pg_ctl.c:1968
 #, c-format
