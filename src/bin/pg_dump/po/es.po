@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-17 22:40+0000\n"
+"POT-Creation-Date: 2019-09-28 11:43+0000\n"
 "PO-Revision-Date: 2017-08-28 11:49+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -2124,7 +2124,7 @@ msgstr "la consulta para obtener la regla «%s» asociada con la tabla «%s» fa
 msgid "reading dependency data\n"
 msgstr "obteniendo datos de dependencias\n"
 
-#: pg_dump.c:16367
+#: pg_dump.c:16405
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo reloptions\n"

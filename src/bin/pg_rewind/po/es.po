@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-04-17 22:40+0000\n"
+"POT-Creation-Date: 2019-09-28 11:44+0000\n"
 "PO-Revision-Date: 2017-08-28 11:47+0200\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:126 parsexlog.c:178
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
@@ -217,152 +217,142 @@ msgstr "el listado de archivos de origen está vacío\n"
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "modificación de página inesperada para el directorio o link simbólico «%s»\n"
 
-#: libpq_fetch.c:57
+#: libpq_fetch.c:58
 #, c-format
 msgid "could not connect to server: %s"
 msgstr "no se pudo conectar al servidor: %s"
 
-#: libpq_fetch.c:60
+#: libpq_fetch.c:61
 #, c-format
 msgid "connected to server\n"
 msgstr "conectado al servidor\n"
 
-#: libpq_fetch.c:64
+#: libpq_fetch.c:69
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "no se pudo limpiar search_path: %s"
 
-#: libpq_fetch.c:76
+#: libpq_fetch.c:81
 #, c-format
 msgid "source server must not be in recovery mode\n"
 msgstr "el servidor de origen no debe estar en modo de recuperación\n"
 
-#: libpq_fetch.c:86
+#: libpq_fetch.c:91
 #, c-format
 msgid "full_page_writes must be enabled in the source server\n"
 msgstr "full_page_writes debe estar activado en el servidor de origen\n"
 
-#: libpq_fetch.c:98
-#, c-format
-msgid "could not set up connection context: %s"
-msgstr "no se pudo establecer el contexto de conexión: %s"
-
-#: libpq_fetch.c:116
+#: libpq_fetch.c:117 libpq_fetch.c:143
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "error ejecutando consulta (%s) en el servidor de origen: %s"
 
-#: libpq_fetch.c:121
+#: libpq_fetch.c:122
 #, c-format
 msgid "unexpected result set from query\n"
 msgstr "conjunto de resultados inesperados de la consulta\n"
 
-#: libpq_fetch.c:144
+#: libpq_fetch.c:163
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location\n"
 msgstr "resultado «%s» no reconocido para la ubicación de inserción WAL actual\n"
 
-#: libpq_fetch.c:194
+#: libpq_fetch.c:213
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "no se pudo obtener el listado de archivos: %s"
 
-#: libpq_fetch.c:199
+#: libpq_fetch.c:218
 #, c-format
 msgid "unexpected result set while fetching file list\n"
 msgstr "conjunto de resultados inesperado mientras se obtenía el listado de archivos\n"
 
-#: libpq_fetch.c:269
+#: libpq_fetch.c:288
 #, c-format
 msgid "could not send query: %s"
 msgstr "no se pudo enviar la consulta: %s"
 
-#: libpq_fetch.c:271
+#: libpq_fetch.c:290
 #, c-format
 msgid "getting file chunks\n"
 msgstr "obteniendo trozos de archivos\n"
 
-#: libpq_fetch.c:274
+#: libpq_fetch.c:293
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "no se pudo establecer la coneción libpq a modo «single row»\n"
 
-#: libpq_fetch.c:295
+#: libpq_fetch.c:314
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "resultados inesperados mientras se obtenían archivos remotos: %s"
 
-#: libpq_fetch.c:301
+#: libpq_fetch.c:320
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "tamaño del conjunto de resultados inesperado mientras se obtenían archivos remotos\n"
 
-#: libpq_fetch.c:307
+#: libpq_fetch.c:326
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "tipos de dato inesperados en el conjunto de resultados mientras se obtenían archivos remotos: %u %u %u\n"
 
-#: libpq_fetch.c:315
+#: libpq_fetch.c:334
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "formato de resultados inesperado mientras se obtenían archivos remotos\n"
 
-#: libpq_fetch.c:321
+#: libpq_fetch.c:340
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "valores nulos inesperados en el resultado mientras se obtenían archivos remotos\n"
 
-#: libpq_fetch.c:325
+#: libpq_fetch.c:344
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "largo del resultado inesperado mientras se obtenían los archivos remotos\n"
 
-#: libpq_fetch.c:350
+#: libpq_fetch.c:369
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "recibido un valor NULL para un trozo del archivo «%s», el archivo ha sido borrado\n"
 
-#: libpq_fetch.c:363
+#: libpq_fetch.c:382
 #, c-format
 msgid "received chunk for file \"%s\", offset %s, size %d\n"
 msgstr "recibido un trozo para el archivo «%s», posición %s, tamaño %d\n"
 
-#: libpq_fetch.c:392
+#: libpq_fetch.c:411
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "no se pudo obtener el archivo remoto «%s»: %s"
 
-#: libpq_fetch.c:397
+#: libpq_fetch.c:416
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "conjunto de resultados inesperado mientras se obtenía el archivo remoto «%s»\n"
 
-#: libpq_fetch.c:408
+#: libpq_fetch.c:427
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "obtenido archivo «%s», largo %d\n"
 
-#: libpq_fetch.c:441
+#: libpq_fetch.c:460
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "no se pudo enviar datos COPY: %s"
 
-#: libpq_fetch.c:467
-#, c-format
-msgid "could not create temporary table: %s"
-msgstr "no se pudo crear tabla temporal: %s"
-
-#: libpq_fetch.c:475
+#: libpq_fetch.c:489
 #, c-format
 msgid "could not send file list: %s"
 msgstr "no se pudo enviar el listado de archivos: %s"
 
-#: libpq_fetch.c:517
+#: libpq_fetch.c:531
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "no se pudo enviar fin-de-COPY: %s"
 
-#: libpq_fetch.c:523
+#: libpq_fetch.c:537
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "resultados inesperados mientras se enviaba el listado de archivos: %s"
@@ -376,42 +366,42 @@ msgstr "Falló, saliendo\n"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) copiados"
 
-#: parsexlog.c:87 parsexlog.c:133
+#: parsexlog.c:87 parsexlog.c:132
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
 msgstr "no se pudo leer el registro WAL en %X/%X: %s\n"
 
-#: parsexlog.c:91 parsexlog.c:136
+#: parsexlog.c:91 parsexlog.c:135
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
 msgstr "no se pudo leer el registro WAL en %X/%X\n"
 
-#: parsexlog.c:191
+#: parsexlog.c:190
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X: %s\n"
 
-#: parsexlog.c:195
+#: parsexlog.c:194
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X\n"
 
-#: parsexlog.c:268
+#: parsexlog.c:267
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo «%s»: %s\n"
 
-#: parsexlog.c:282
+#: parsexlog.c:281
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "no se pudo posicionar en archivo «%s»: %s\n"
 
-#: parsexlog.c:289
+#: parsexlog.c:288
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "no se pudo leer el archivo «%s»: %s\n"
 
-#: parsexlog.c:357
+#: parsexlog.c:356
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"
