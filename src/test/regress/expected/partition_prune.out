@@ -1908,6 +1908,7 @@ begin
     loop
         ln := regexp_replace(ln, 'Workers Launched: \d+', 'Workers Launched: N');
         ln := regexp_replace(ln, 'actual rows=\d+ loops=\d+', 'actual rows=N loops=N');
+        ln := regexp_replace(ln, 'Rows Removed by Filter: \d+', 'Rows Removed by Filter: N');
         return next ln;
     end loop;
 end;
@@ -2148,7 +2149,7 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                ->  Nested Loop (actual rows=N loops=N)
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
-                           Rows Removed by Filter: 1
+                           Rows Removed by Filter: N
                      ->  Append (actual rows=N loops=N)
                            ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
@@ -2182,7 +2183,7 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                ->  Nested Loop (actual rows=N loops=N)
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
-                           Rows Removed by Filter: 1
+                           Rows Removed by Filter: N
                      ->  Append (actual rows=N loops=N)
                            ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 (never executed)
                                  Index Cond: (a = a.a)
