@@ -485,4 +485,3 @@ context owning that block is updated. This means that when inquiring
 about the memory usage in a given context, we have to walk all children
 contexts recursively. This means the memory accounting is not intended
 for cases with too many memory contexts (in the relevant subtree).
-
