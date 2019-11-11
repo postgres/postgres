@@ -1,7 +1,5 @@
 *		whitespace=space-before-tab,trailing-space
 *.[chly]	whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
-*.dsl		whitespace=space-before-tab,trailing-space,tab-in-indent
-*.patch		-whitespace
 *.pl		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.po		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eof
 *.sgml		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eol
