@@ -652,7 +652,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry><structfield>client_port</structfield></entry>
      <entry><type>integer</type></entry>
      <entry>TCP port number that the client is using for communication
-      with this backend, or <literal>-1</literal> if a Unix socket is used
+      with this backend, or <literal>-1</literal> if a Unix socket is used.
+      If this field is null, it indicates that this is an internal server process.
      </entry>
     </row>
     <row>
