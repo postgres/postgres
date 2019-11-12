@@ -263,6 +263,8 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 bool
 datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 {
+	Size		len1,
+				len2;
 	bool		result = true;
 
 	if (typByVal)
@@ -277,9 +279,6 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 	}
 	else if (typLen == -1)
 	{
-		Size		len1,
-					len2;
-
 		len1 = toast_raw_datum_size(value1);
 		len2 = toast_raw_datum_size(value2);
 		/* No need to de-toast if lengths don't match. */
@@ -303,6 +302,20 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 			if ((Pointer) arg2val != (Pointer) value2)
 				pfree(arg2val);
 		}
+	}
+	else if (typLen == -2)
+	{
+		char	   *s1,
+				   *s2;
+
+		/* Compare cstring datums */
+		s1 = DatumGetCString(value1);
+		s2 = DatumGetCString(value2);
+		len1 = strlen(s1) + 1;
+		len2 = strlen(s2) + 1;
+		if (len1 != len2)
+			return false;
+		result = (memcmp(s1, s2, len1) == 0);
 	}
 	else
 		elog(ERROR, "unexpected typLen: %d", typLen);
