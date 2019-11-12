@@ -23,10 +23,10 @@
 #include "access/tupconvert.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
+#include "executor/execExpr.h"
 #include "executor/execdebug.h"
 #include "executor/nodeAgg.h"
 #include "executor/nodeSubplan.h"
-#include "executor/execExpr.h"
 #include "funcapi.h"
 #include "jit/llvmjit.h"
 #include "jit/llvmjit_emit.h"
@@ -45,7 +45,6 @@
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
 #include "utils/xml.h"
-
 
 typedef struct CompiledExprState
 {

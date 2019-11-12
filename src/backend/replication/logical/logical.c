@@ -28,21 +28,17 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
-#include "miscadmin.h"
-
 #include "access/xact.h"
 #include "access/xlog_internal.h"
-
+#include "fmgr.h"
+#include "miscadmin.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
-#include "replication/reorderbuffer.h"
 #include "replication/origin.h"
+#include "replication/reorderbuffer.h"
 #include "replication/snapbuild.h"
-
 #include "storage/proc.h"
 #include "storage/procarray.h"
-
 #include "utils/memutils.h"
 
 /* data for errcontext callback */

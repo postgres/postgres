@@ -32,9 +32,8 @@
 #include "access/hash_xlog.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
-#include "storage/smgr.h"
 #include "storage/predicate.h"
-
+#include "storage/smgr.h"
 
 static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
 								uint32 nblocks);

@@ -16,11 +16,10 @@
 
 #include "access/gist.h"
 #include "access/stratnum.h"
+#include "utils/datum.h"
 #include "utils/float.h"
 #include "utils/fmgrprotos.h"
-#include "utils/datum.h"
 #include "utils/rangetypes.h"
-
 
 /*
  * Range class properties used to segregate different classes of ranges in

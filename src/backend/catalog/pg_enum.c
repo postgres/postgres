@@ -22,16 +22,15 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_enum.h"
 #include "catalog/pg_type.h"
-#include "storage/lmgr.h"
 #include "miscadmin.h"
 #include "nodes/value.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;

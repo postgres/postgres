@@ -13,17 +13,6 @@
 
 #include "postgres.h"
 
-#include "jit/llvmjit.h"
-#include "jit/llvmjit_emit.h"
-
-#include "miscadmin.h"
-
-#include "utils/memutils.h"
-#include "utils/resowner_private.h"
-#include "portability/instr_time.h"
-#include "storage/ipc.h"
-
-
 #include <llvm-c/Analysis.h>
 #include <llvm-c/BitReader.h>
 #include <llvm-c/BitWriter.h>
@@ -39,6 +28,13 @@
 #include <llvm-c/Transforms/Utils.h>
 #endif
 
+#include "jit/llvmjit.h"
+#include "jit/llvmjit_emit.h"
+#include "miscadmin.h"
+#include "portability/instr_time.h"
+#include "storage/ipc.h"
+#include "utils/memutils.h"
+#include "utils/resowner_private.h"
 
 /* Handle of a module emitted via ORC JIT */
 typedef struct LLVMJitHandle

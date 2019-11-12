@@ -14,15 +14,11 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
-#include "miscadmin.h"
-
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/tableam.h"
 #include "access/xact.h"
-
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/index.h"
@@ -30,10 +26,11 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/objectaddress.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_publication.h"
 #include "catalog/pg_publication_rel.h"
-
+#include "catalog/pg_type.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"

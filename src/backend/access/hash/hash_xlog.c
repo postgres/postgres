@@ -17,11 +17,11 @@
 #include "access/bufmask.h"
 #include "access/hash.h"
 #include "access/hash_xlog.h"
-#include "access/xlogutils.h"
-#include "access/xlog.h"
 #include "access/transam.h"
-#include "storage/procarray.h"
+#include "access/xlog.h"
+#include "access/xlogutils.h"
 #include "miscadmin.h"
+#include "storage/procarray.h"
 
 /*
  * replay a hash index meta page

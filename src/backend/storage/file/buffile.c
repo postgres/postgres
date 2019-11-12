@@ -45,9 +45,9 @@
 #include "executor/instrument.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "storage/fd.h"
-#include "storage/buffile.h"
 #include "storage/buf_internals.h"
+#include "storage/buffile.h"
+#include "storage/fd.h"
 #include "utils/resowner.h"
 
 /*

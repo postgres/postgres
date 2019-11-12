@@ -17,9 +17,9 @@
 #include "access/hash.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
+#include "storage/buf_internals.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
-#include "storage/buf_internals.h"
 
 #define CALC_NEW_BUCKET(old_bucket, lowmask) \
 			old_bucket | (lowmask + 1)

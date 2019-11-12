@@ -31,14 +31,15 @@
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
-#include "executor/nodeIndexscan.h"
 #include "executor/nodeIndexonlyscan.h"
+#include "executor/nodeIndexscan.h"
 #include "executor/nodeSeqscan.h"
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/tqueue.h"
 #include "jit/jit.h"
 #include "nodes/nodeFuncs.h"
+#include "pgstat.h"
 #include "storage/spin.h"
 #include "tcop/tcopprot.h"
 #include "utils/datum.h"
@@ -46,7 +47,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
-#include "pgstat.h"
 
 /*
  * Magic numbers for parallel executor communication.  We use constants

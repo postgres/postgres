@@ -17,8 +17,8 @@
 
 #include "access/htup_details.h"
 #include "access/transam.h"
-#include "access/xlog_internal.h"
 #include "access/xlog.h"
+#include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
 #include "catalog/pg_type.h"
 #include "common/controldata_utils.h"

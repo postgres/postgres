@@ -26,15 +26,14 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "funcapi.h"
-#include "miscadmin.h"
 #include "lib/qunique.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "postmaster/postmaster.h"
 #include "storage/lwlock.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
-
 
 /* txid will be signed int8 in database, so must limit to 63 bits */
 #define MAX_TXID   ((uint64) PG_INT64_MAX)

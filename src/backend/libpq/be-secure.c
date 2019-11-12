@@ -32,11 +32,10 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "tcop/tcopprot.h"
-#include "utils/memutils.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
-
+#include "tcop/tcopprot.h"
+#include "utils/memutils.h"
 
 char	   *ssl_library;
 char	   *ssl_cert_file;

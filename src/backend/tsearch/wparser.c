@@ -13,16 +13,15 @@
  */
 #include "postgres.h"
 
-#include "funcapi.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "funcapi.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/jsonapi.h"
 #include "utils/varlena.h"
-
 
 /******sql-level interface******/
 

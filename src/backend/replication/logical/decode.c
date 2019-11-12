@@ -31,19 +31,16 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
-#include "access/xlogutils.h"
 #include "access/xlogreader.h"
 #include "access/xlogrecord.h"
-
+#include "access/xlogutils.h"
 #include "catalog/pg_control.h"
-
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/message.h"
-#include "replication/reorderbuffer.h"
 #include "replication/origin.h"
+#include "replication/reorderbuffer.h"
 #include "replication/snapbuild.h"
-
 #include "storage/standby.h"
 
 typedef struct XLogRecordBuffer

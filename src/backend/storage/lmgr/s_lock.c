@@ -50,9 +50,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "storage/s_lock.h"
 #include "port/atomics.h"
-
+#include "storage/s_lock.h"
 
 #define MIN_SPINS_PER_DELAY 10
 #define MAX_SPINS_PER_DELAY 1000

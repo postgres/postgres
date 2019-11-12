@@ -28,8 +28,8 @@
 #include "commands/alter.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
-#include "commands/comment.h"
 #include "commands/collationcmds.h"
+#include "commands/comment.h"
 #include "commands/conversioncmds.h"
 #include "commands/copy.h"
 #include "commands/createas.h"
@@ -39,8 +39,8 @@
 #include "commands/event_trigger.h"
 #include "commands/explain.h"
 #include "commands/extension.h"
-#include "commands/matview.h"
 #include "commands/lockcmds.h"
+#include "commands/matview.h"
 #include "commands/policy.h"
 #include "commands/portalcmds.h"
 #include "commands/prepare.h"
@@ -68,9 +68,8 @@
 #include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 #include "utils/rel.h"
-
+#include "utils/syscache.h"
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;

@@ -22,10 +22,9 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_authid.h"
+#include "miscadmin.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
-#include "miscadmin.h"
-
 
 /*
  * In common cases the same roleid (ie, the session or current ID) will

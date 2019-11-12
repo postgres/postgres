@@ -17,9 +17,8 @@
 
 #include <ctype.h>
 
-#include "parser/scansup.h"
 #include "mb/pg_wchar.h"
-
+#include "parser/scansup.h"
 
 /* ----------------
  *		scanstr

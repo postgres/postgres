@@ -14,8 +14,8 @@
 
 #include "postgres.h"
 
-#include "tsearch/ts_utils.h"
 #include "miscadmin.h"
+#include "tsearch/ts_utils.h"
 
 /*
  * Build QTNode tree for a tsquery given in QueryItem array format.

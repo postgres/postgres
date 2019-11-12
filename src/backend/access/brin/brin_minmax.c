@@ -10,18 +10,17 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/brin_internal.h"
 #include "access/brin_tuple.h"
+#include "access/genam.h"
 #include "access/stratnum.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-
 
 typedef struct MinmaxOpaque
 {

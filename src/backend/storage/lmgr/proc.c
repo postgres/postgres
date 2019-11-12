@@ -45,7 +45,6 @@
 #include "replication/syncrep.h"
 #include "replication/walsender.h"
 #include "storage/condition_variable.h"
-#include "storage/standby.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
 #include "storage/pmsignal.h"
@@ -53,9 +52,9 @@
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "storage/spin.h"
+#include "storage/standby.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
-
 
 /* GUC variables */
 int			DeadlockTimeout = 1000;

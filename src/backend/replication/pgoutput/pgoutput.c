@@ -13,16 +13,13 @@
 #include "postgres.h"
 
 #include "catalog/pg_publication.h"
-
 #include "fmgr.h"
-
 #include "replication/logical.h"
 #include "replication/logicalproto.h"
 #include "replication/origin.h"
 #include "replication/pgoutput.h"
-
-#include "utils/inval.h"
 #include "utils/int8.h"
+#include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"

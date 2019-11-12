@@ -17,19 +17,16 @@
  */
 #include "postgres.h"
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-
-#include "fmgr.h"
 #include "executor/execExpr.h"
+#include "fmgr.h"
 #include "jit/jit.h"
 #include "miscadmin.h"
-#include "utils/resowner_private.h"
 #include "utils/fmgrprotos.h"
-
+#include "utils/resowner_private.h"
 
 /* GUCs */
 bool		jit_enabled = true;

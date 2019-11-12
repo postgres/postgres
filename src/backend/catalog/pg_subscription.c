@@ -14,30 +14,24 @@
 
 #include "postgres.h"
 
-#include "miscadmin.h"
-
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/tableam.h"
 #include "access/xact.h"
-
 #include "catalog/indexing.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
-
+#include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
-
 #include "storage/lmgr.h"
-
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-
 
 static List *textarray_to_stringlist(ArrayType *textarray);
 

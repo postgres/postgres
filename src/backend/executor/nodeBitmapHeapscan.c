@@ -49,9 +49,8 @@
 #include "storage/predicate.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-#include "utils/spccache.h"
 #include "utils/snapmgr.h"
-
+#include "utils/spccache.h"
 
 static TupleTableSlot *BitmapHeapNext(BitmapHeapScanState *node);
 static inline void BitmapDoneInitializingSharedState(ParallelBitmapHeapState *pstate);

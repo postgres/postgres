@@ -36,9 +36,9 @@
 #include "executor/executor.h"
 #include "executor/spi.h"
 #include "lib/ilist.h"
+#include "miscadmin.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
-#include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -53,7 +53,6 @@
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-
 
 /*
  * Local definitions

@@ -14,8 +14,8 @@
 
 #include "postgres.h"
 
-#include "access/stratnum.h"
 #include "access/gist.h"
+#include "access/stratnum.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 

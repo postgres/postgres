@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include "access/transam.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
@@ -25,8 +26,6 @@
 #include "storage/shmem.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
-#include "access/transam.h"
-
 
 /*
  * Conceptually, the shared cache invalidation messages are stored in an

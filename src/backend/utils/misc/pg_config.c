@@ -14,12 +14,12 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
-#include "miscadmin.h"
 #include "catalog/pg_type.h"
 #include "common/config_info.h"
-#include "utils/builtins.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "port.h"
+#include "utils/builtins.h"
 
 Datum
 pg_config(PG_FUNCTION_ARGS)

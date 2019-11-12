@@ -23,9 +23,8 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/supportnodes.h"
 #include "optimizer/optimizer.h"
-#include "utils/int8.h"
 #include "utils/builtins.h"
-
+#include "utils/int8.h"
 
 #define MAXINT8LEN		25
 

@@ -20,7 +20,6 @@
 #include "access/multixact.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
-#include "access/tableam.h"
 #include "access/sysattr.h"
 #include "access/tableam.h"
 #include "access/tupconvert.h"
@@ -99,7 +98,6 @@
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
 #include "utils/typcache.h"
-
 
 /*
  * ON COMMIT action list

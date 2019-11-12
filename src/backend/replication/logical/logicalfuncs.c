@@ -17,36 +17,28 @@
 
 #include <unistd.h>
 
-#include "fmgr.h"
-#include "funcapi.h"
-#include "miscadmin.h"
-
+#include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "access/xlogutils.h"
-
-#include "access/xact.h"
-
 #include "catalog/pg_type.h"
-
-#include "nodes/makefuncs.h"
-
+#include "fmgr.h"
+#include "funcapi.h"
 #include "mb/pg_wchar.h"
-
-#include "utils/array.h"
-#include "utils/builtins.h"
-#include "utils/inval.h"
-#include "utils/memutils.h"
-#include "utils/pg_lsn.h"
-#include "utils/regproc.h"
-#include "utils/resowner.h"
-#include "utils/lsyscache.h"
-
+#include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
 #include "replication/logicalfuncs.h"
 #include "replication/message.h"
-
 #include "storage/fd.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
+#include "utils/inval.h"
+#include "utils/lsyscache.h"
+#include "utils/memutils.h"
+#include "utils/pg_lsn.h"
+#include "utils/regproc.h"
+#include "utils/resowner.h"
 
 /* private date for writing out data */
 typedef struct DecodingOutputState

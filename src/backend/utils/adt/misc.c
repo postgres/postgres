@@ -29,17 +29,16 @@
 #include "common/keywords.h"
 #include "funcapi.h"
 #include "miscadmin.h"
-#include "pgstat.h"
 #include "parser/scansup.h"
+#include "pgstat.h"
 #include "postmaster/syslogger.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/fd.h"
-#include "utils/lsyscache.h"
-#include "utils/ruleutils.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
+#include "utils/ruleutils.h"
 #include "utils/timestamp.h"
-
 
 /*
  * Common subroutine for num_nulls() and num_nonnulls().

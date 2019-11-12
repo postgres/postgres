@@ -7,14 +7,14 @@
  */
 #include "postgres.h"
 
+#include "access/brin_xlog.h"
 #include "access/clog.h"
 #include "access/commit_ts.h"
+#include "access/generic_xlog.h"
 #include "access/ginxlog.h"
 #include "access/gistxlog.h"
-#include "access/generic_xlog.h"
 #include "access/hash_xlog.h"
 #include "access/heapam_xlog.h"
-#include "access/brin_xlog.h"
 #include "access/multixact.h"
 #include "access/nbtxlog.h"
 #include "access/spgxlog.h"

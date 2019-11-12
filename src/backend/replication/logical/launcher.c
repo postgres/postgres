@@ -17,43 +17,35 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
-#include "miscadmin.h"
-#include "pgstat.h"
-
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/htup_details.h"
 #include "access/tableam.h"
 #include "access/xact.h"
-
 #include "catalog/pg_subscription.h"
 #include "catalog/pg_subscription_rel.h"
-
+#include "funcapi.h"
 #include "libpq/pqsignal.h"
-
+#include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
-
 #include "replication/logicallauncher.h"
 #include "replication/logicalworker.h"
 #include "replication/slot.h"
 #include "replication/walreceiver.h"
 #include "replication/worker_internal.h"
-
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
-
 #include "tcop/tcopprot.h"
-
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
-#include "utils/timeout.h"
 #include "utils/snapmgr.h"
+#include "utils/timeout.h"
 
 /* max sleep time between cycles (3min) */
 #define DEFAULT_NAPTIME_PER_CYCLE 180000L

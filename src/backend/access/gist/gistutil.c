@@ -22,10 +22,9 @@
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "utils/float.h"
-#include "utils/syscache.h"
-#include "utils/snapmgr.h"
 #include "utils/lsyscache.h"
-
+#include "utils/snapmgr.h"
+#include "utils/syscache.h"
 
 /*
  * Write itup vector to page, has no control of free space.

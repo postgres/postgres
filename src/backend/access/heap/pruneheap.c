@@ -16,15 +16,15 @@
 
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
-#include "access/transam.h"
 #include "access/htup_details.h"
+#include "access/transam.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
-#include "utils/snapmgr.h"
 #include "utils/rel.h"
+#include "utils/snapmgr.h"
 
 /* Working data for heap_page_prune and subroutines */
 typedef struct

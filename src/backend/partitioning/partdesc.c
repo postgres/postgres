@@ -25,13 +25,13 @@
 #include "storage/bufmgr.h"
 #include "storage/sinval.h"
 #include "utils/builtins.h"
-#include "utils/inval.h"
 #include "utils/fmgroids.h"
 #include "utils/hsearch.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/rel.h"
 #include "utils/partcache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 typedef struct PartitionDirectoryData

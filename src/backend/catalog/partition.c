@@ -16,9 +16,9 @@
 
 #include "access/genam.h"
 #include "access/htup_details.h"
+#include "access/sysattr.h"
 #include "access/table.h"
 #include "access/tupconvert.h"
-#include "access/sysattr.h"
 #include "catalog/indexing.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
@@ -31,7 +31,6 @@
 #include "utils/partcache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-
 
 static Oid	get_partition_parent_worker(Relation inhRel, Oid relid);
 static void get_partition_ancestors_worker(Relation inhRel, Oid relid,

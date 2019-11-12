@@ -41,14 +41,13 @@
 
 #include "postgres.h"
 
-#include "miscadmin.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "miscadmin.h"
 #include "storage/shmem.h"
 #include "utils/combocid.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-
 
 /* Hash table to lookup combo cids by cmin and cmax */
 static HTAB *comboHash = NULL;

@@ -14,8 +14,8 @@
 
 #include <unistd.h>
 
-#include "libpq/pqsignal.h"
 #include "access/parallel.h"
+#include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/atomics.h"

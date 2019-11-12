@@ -34,8 +34,8 @@
 
 #include "access/genam.h"
 #include "access/htup_details.h"
-#include "access/table.h"
 #include "access/sysattr.h"
+#include "access/table.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"

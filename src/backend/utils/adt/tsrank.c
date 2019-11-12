@@ -16,11 +16,10 @@
 #include <limits.h>
 #include <math.h>
 
+#include "miscadmin.h"
 #include "tsearch/ts_utils.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-#include "miscadmin.h"
-
 
 static const float weights[] = {0.1f, 0.2f, 0.4f, 1.0f};
 

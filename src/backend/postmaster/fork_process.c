@@ -10,7 +10,6 @@
  *	  src/backend/postmaster/fork_process.c
  */
 #include "postgres.h"
-#include "postmaster/fork_process.h"
 
 #include <fcntl.h>
 #include <time.h>
@@ -20,6 +19,8 @@
 #ifdef USE_OPENSSL
 #include <openssl/rand.h>
 #endif
+
+#include "postmaster/fork_process.h"
 
 #ifndef WIN32
 /*

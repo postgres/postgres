@@ -18,19 +18,19 @@
 #include <fcntl.h>
 #include <sys/file.h>
 
+#include "access/xlog.h"
+#include "access/xlogutils.h"
+#include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "access/xlogutils.h"
-#include "access/xlog.h"
-#include "commands/tablespace.h"
 #include "portability/instr_time.h"
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/md.h"
 #include "utils/hsearch.h"
-#include "utils/memutils.h"
 #include "utils/inval.h"
+#include "utils/memutils.h"
 
 static MemoryContext pendingOpsCxt; /* context for the pending ops state  */
 

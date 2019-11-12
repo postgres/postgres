@@ -27,17 +27,16 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/walreceiver.h"
+#include "storage/fd.h"
+#include "storage/ipc.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/numeric.h"
-#include "utils/guc.h"
 #include "utils/pg_lsn.h"
 #include "utils/timestamp.h"
 #include "utils/tuplestore.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-
 
 /*
  * Store label file and tablespace map during non-exclusive backups.

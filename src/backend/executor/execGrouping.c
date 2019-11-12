@@ -21,8 +21,8 @@
 #include "access/parallel.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "utils/lsyscache.h"
 #include "utils/hashutils.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
 static uint32 TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple);

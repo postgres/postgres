@@ -31,8 +31,6 @@
 #include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/rel.h"
-#include "miscadmin.h"
-
 
 /* Working state for hashbuild and its callback */
 typedef struct

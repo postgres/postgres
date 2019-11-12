@@ -52,10 +52,9 @@
 
 #include "postgres.h"
 
+#include "lib/ilist.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
-#include "lib/ilist.h"
-
 
 /*
  * SlabContext is a specialized implementation of MemoryContext.

@@ -42,15 +42,16 @@
 #include "commands/tablespace.h"
 #include "common/controldata_utils.h"
 #include "miscadmin.h"
+#include "pg_trace.h"
 #include "pgstat.h"
 #include "port/atomics.h"
 #include "postmaster/bgwriter.h"
-#include "postmaster/walwriter.h"
 #include "postmaster/startup.h"
+#include "postmaster/walwriter.h"
 #include "replication/basebackup.h"
 #include "replication/logical.h"
-#include "replication/slot.h"
 #include "replication/origin.h"
+#include "replication/slot.h"
 #include "replication/snapbuild.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
@@ -74,7 +75,6 @@
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
 #include "utils/timestamp.h"
-#include "pg_trace.h"
 
 extern uint32 bootstrap_data_checksum_version;
 

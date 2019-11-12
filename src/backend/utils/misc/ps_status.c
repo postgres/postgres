@@ -28,8 +28,8 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
-#include "utils/ps_status.h"
 #include "utils/guc.h"
+#include "utils/ps_status.h"
 
 extern char **environ;
 bool		update_process_title = true;

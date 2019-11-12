@@ -33,11 +33,12 @@
 #include "commands/extension.h"
 #include "commands/trigger.h"
 #include "funcapi.h"
-#include "parser/parse_func.h"
-#include "pgstat.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
+#include "parser/parse_func.h"
+#include "pgstat.h"
 #include "tcop/deparse_utility.h"
+#include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/evtcache.h"
@@ -46,7 +47,6 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-#include "tcop/utility.h"
 
 typedef struct EventTriggerQueryState
 {

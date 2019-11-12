@@ -18,8 +18,8 @@
 #include "access/relscan.h"
 #include "miscadmin.h"
 #include "pgstat.h"
-#include "utils/rel.h"
 #include "storage/predicate.h"
+#include "utils/rel.h"
 
 static bool _hash_readpage(IndexScanDesc scan, Buffer *bufP,
 						   ScanDirection dir);

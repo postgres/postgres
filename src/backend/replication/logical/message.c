@@ -31,17 +31,12 @@
 
 #include "postgres.h"
 
-#include "miscadmin.h"
-
 #include "access/xact.h"
-
 #include "catalog/indexing.h"
-
+#include "miscadmin.h"
 #include "nodes/execnodes.h"
-
-#include "replication/message.h"
 #include "replication/logical.h"
-
+#include "replication/message.h"
 #include "utils/memutils.h"
 
 /*

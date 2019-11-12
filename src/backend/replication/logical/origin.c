@@ -70,33 +70,29 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "funcapi.h"
-#include "miscadmin.h"
-
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "access/xact.h"
-
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "nodes/execnodes.h"
-
-#include "replication/origin.h"
-#include "replication/logical.h"
 #include "pgstat.h"
+#include "replication/logical.h"
+#include "replication/origin.h"
+#include "storage/condition_variable.h"
+#include "storage/copydir.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
-#include "storage/condition_variable.h"
-#include "storage/copydir.h"
-
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/pg_lsn.h"
 #include "utils/rel.h"
-#include "utils/syscache.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 
 /*
  * Replay progress of a single remote node.

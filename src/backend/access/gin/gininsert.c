@@ -16,17 +16,16 @@
 
 #include "access/gin_private.h"
 #include "access/ginxlog.h"
-#include "access/xloginsert.h"
 #include "access/tableam.h"
+#include "access/xloginsert.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
-#include "storage/smgr.h"
 #include "storage/indexfsm.h"
 #include "storage/predicate.h"
+#include "storage/smgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-
 
 typedef struct
 {

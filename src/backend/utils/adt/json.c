@@ -27,11 +27,11 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
-#include "utils/lsyscache.h"
 #include "utils/json.h"
 #include "utils/jsonapi.h"
-#include "utils/typcache.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 /*
  * The context of the parser is maintained by the recursive descent

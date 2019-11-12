@@ -60,15 +60,14 @@
 #include "access/heaptoast.h"
 #include "access/htup_details.h"
 #include "access/tupdesc_details.h"
-#include "funcapi.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "nodes/nodeFuncs.h"
 #include "storage/bufmgr.h"
 #include "utils/builtins.h"
 #include "utils/expandeddatum.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
-
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
 										bool skipjunk);

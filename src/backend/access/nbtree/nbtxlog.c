@@ -20,8 +20,8 @@
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlogutils.h"
-#include "storage/procarray.h"
 #include "miscadmin.h"
+#include "storage/procarray.h"
 
 /*
  * _bt_restore_page -- re-enter all the index tuples on a page

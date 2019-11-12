@@ -15,8 +15,8 @@
 
 #include "postgres.h"
 
-#include "tsearch/ts_utils.h"
 #include "miscadmin.h"
+#include "tsearch/ts_utils.h"
 
 typedef struct NODE
 {

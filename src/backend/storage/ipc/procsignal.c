@@ -21,13 +21,12 @@
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "replication/walsender.h"
-#include "storage/latch.h"
 #include "storage/ipc.h"
+#include "storage/latch.h"
 #include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
-
 
 /*
  * The SIGUSR1 signal is multiplexed to support signalling multiple event

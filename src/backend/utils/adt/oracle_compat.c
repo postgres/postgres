@@ -16,10 +16,9 @@
 #include "postgres.h"
 
 #include "common/int.h"
+#include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
-#include "mb/pg_wchar.h"
-
 
 static text *dotrim(const char *string, int stringlen,
 					const char *set, int setlen,

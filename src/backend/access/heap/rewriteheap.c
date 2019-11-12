@@ -105,8 +105,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "miscadmin.h"
-
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
 #include "access/heaptoast.h"
@@ -114,24 +112,18 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xloginsert.h"
-
 #include "catalog/catalog.h"
-
 #include "lib/ilist.h"
-
+#include "miscadmin.h"
 #include "pgstat.h"
-
 #include "replication/logical.h"
 #include "replication/slot.h"
-
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
+#include "storage/procarray.h"
 #include "storage/smgr.h"
-
 #include "utils/memutils.h"
 #include "utils/rel.h"
-
-#include "storage/procarray.h"
 
 /*
  * State associated with a rewrite operation. This is opaque to the user
