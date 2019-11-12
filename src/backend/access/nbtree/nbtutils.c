@@ -2303,9 +2303,7 @@ _bt_keep_natts(Relation rel, IndexTuple lastleft, IndexTuple firstright,
  * The approach taken here usually provides the same answer as _bt_keep_natts
  * will (for the same pair of tuples from a heapkeyspace index), since the
  * majority of btree opclasses can never indicate that two datums are equal
- * unless they're bitwise equal (once detoasted).  Similarly, result may
- * differ from the _bt_keep_natts result when either tuple has TOASTed datums,
- * though this is barely possible in practice.
+ * unless they're bitwise equal after detoasting.
  *
  * These issues must be acceptable to callers, typically because they're only
  * concerned about making suffix truncation as effective as possible without
@@ -2337,7 +2335,7 @@ _bt_keep_natts_fast(Relation rel, IndexTuple lastleft, IndexTuple firstright)
 			break;
 
 		if (!isNull1 &&
-			!datumIsEqual(datum1, datum2, att->attbyval, att->attlen))
+			!datum_image_eq(datum1, datum2, att->attbyval, att->attlen))
 			break;
 
 		keepnatts++;
