@@ -113,6 +113,7 @@ extern void CancelDBBackends(Oid databaseid, ProcSignalReason sigmode, bool conf
 extern int	CountUserBackends(Oid roleid);
 extern bool CountOtherDBBackends(Oid databaseId,
 								 int *nbackends, int *nprepared);
+extern void TerminateOtherDBBackends(Oid databaseId);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
 									  int nxids, const TransactionId *xids,

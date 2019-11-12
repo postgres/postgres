@@ -3145,6 +3145,7 @@ typedef struct DropdbStmt
 	NodeTag		type;
 	char	   *dbname;			/* database to drop */
 	bool		missing_ok;		/* skip error if db is missing? */
+	List	   *options;		/* currently only FORCE is supported */
 } DropdbStmt;
 
 /* ----------------------

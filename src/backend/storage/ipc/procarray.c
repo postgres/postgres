@@ -52,6 +52,8 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
+#include "catalog/pg_authid.h"
+#include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/proc.h"
@@ -2968,6 +2970,118 @@ CountOtherDBBackends(Oid databaseId, int *nbackends, int *nprepared)
 	}
 
 	return true;				/* timed out, still conflicts */
+}
+
+/*
+ * Terminate existing connections to the specified database. This routine
+ * is used by the DROP DATABASE command when user has asked to forcefully
+ * drop the database.
+ *
+ * The current backend is always ignored; it is caller's responsibility to
+ * check whether the current backend uses the given DB, if it's important.
+ *
+ * It doesn't allow to terminate the connections even if there is a one
+ * backend with the prepared transaction in the target database.
+ */
+void
+TerminateOtherDBBackends(Oid databaseId)
+{
+	ProcArrayStruct *arrayP = procArray;
+	List	   *pids = NIL;
+	int			nprepared = 0;
+	int			i;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (i = 0; i < procArray->numProcs; i++)
+	{
+		int			pgprocno = arrayP->pgprocnos[i];
+		PGPROC	   *proc = &allProcs[pgprocno];
+
+		if (proc->databaseId != databaseId)
+			continue;
+		if (proc == MyProc)
+			continue;
+
+		if (proc->pid != 0)
+			pids = lappend_int(pids, proc->pid);
+		else
+			nprepared++;
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	if (nprepared > 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("database \"%s\" is being used by prepared transaction",
+						get_database_name(databaseId)),
+				 errdetail_plural("There is %d prepared transaction using the database.",
+								  "There are %d prepared transactions using the database.",
+								  nprepared,
+								  nprepared)));
+
+	if (pids)
+	{
+		ListCell   *lc;
+
+		/*
+		 * Check whether we have the necessary rights to terminate other
+		 * sessions.  We don't terminate any session untill we ensure that we
+		 * have rights on all the sessions to be terminated.  These checks are
+		 * the same as we do in pg_terminate_backend.
+		 *
+		 * In this case we don't raise some warnings - like "PID %d is not a
+		 * PostgreSQL server process", because for us already finished session
+		 * is not a problem.
+		 */
+		foreach(lc, pids)
+		{
+			int			pid = lfirst_int(lc);
+			PGPROC	   *proc = BackendPidGetProc(pid);
+
+			if (proc != NULL)
+			{
+				/* Only allow superusers to signal superuser-owned backends. */
+				if (superuser_arg(proc->roleId) && !superuser())
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 (errmsg("must be a superuser to terminate superuser process"))));
+
+				/* Users can signal backends they have role membership in. */
+				if (!has_privs_of_role(GetUserId(), proc->roleId) &&
+					!has_privs_of_role(GetUserId(), DEFAULT_ROLE_SIGNAL_BACKENDID))
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 (errmsg("must be a member of the role whose process is being terminated or member of pg_signal_backend"))));
+			}
+		}
+
+		/*
+		 * There's a race condition here: once we release the ProcArrayLock,
+		 * it's possible for the session to exit before we issue kill.  That
+		 * race condition possibility seems too unlikely to worry about.  See
+		 * pg_signal_backend.
+		 */
+		foreach(lc, pids)
+		{
+			int			pid = lfirst_int(lc);
+			PGPROC	   *proc = BackendPidGetProc(pid);
+
+			if (proc != NULL)
+			{
+				/*
+				 * If we have setsid(), signal the backend's whole process
+				 * group
+				 */
+#ifdef HAVE_SETSID
+				(void) kill(-pid, SIGTERM);
+#else
+				(void) kill(pid, SIGTERM);
+#endif
+			}
+		}
+	}
 }
 
 /*

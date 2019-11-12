@@ -3868,6 +3868,7 @@ _copyDropdbStmt(const DropdbStmt *from)
 
 	COPY_STRING_FIELD(dbname);
 	COPY_SCALAR_FIELD(missing_ok);
+	COPY_NODE_FIELD(options);
 
 	return newnode;
 }

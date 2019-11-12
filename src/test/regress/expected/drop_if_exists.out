@@ -330,3 +330,13 @@ HINT:  Specify the argument list to select the routine unambiguously.
 -- cleanup
 DROP PROCEDURE test_ambiguous_procname(int);
 DROP PROCEDURE test_ambiguous_procname(text);
+-- This test checks both the functionality of 'if exists' and the syntax
+-- of the drop database command.
+drop database test_database_exists (force);
+ERROR:  database "test_database_exists" does not exist
+drop database test_database_exists with (force);
+ERROR:  database "test_database_exists" does not exist
+drop database if exists test_database_exists (force);
+NOTICE:  database "test_database_exists" does not exist, skipping
+drop database if exists test_database_exists with (force);
+NOTICE:  database "test_database_exists" does not exist, skipping

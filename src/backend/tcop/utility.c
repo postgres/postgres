@@ -595,13 +595,9 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_DropdbStmt:
-			{
-				DropdbStmt *stmt = (DropdbStmt *) parsetree;
-
-				/* no event triggers for global objects */
-				PreventInTransactionBlock(isTopLevel, "DROP DATABASE");
-				dropdb(stmt->dbname, stmt->missing_ok);
-			}
+			/* no event triggers for global objects */
+			PreventInTransactionBlock(isTopLevel, "DROP DATABASE");
+			DropDatabase(pstate, (DropdbStmt *) parsetree);
 			break;
 
 			/* Query-level asynchronous notification */

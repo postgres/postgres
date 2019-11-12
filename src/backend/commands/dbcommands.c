@@ -810,7 +810,7 @@ createdb_failure_callback(int code, Datum arg)
  * DROP DATABASE
  */
 void
-dropdb(const char *dbname, bool missing_ok)
+dropdb(const char *dbname, bool missing_ok, bool force)
 {
 	Oid			db_id;
 	bool		db_istemplate;
@@ -909,6 +909,14 @@ dropdb(const char *dbname, bool missing_ok)
 				 errdetail_plural("There is %d subscription.",
 								  "There are %d subscriptions.",
 								  nsubscriptions, nsubscriptions)));
+
+
+	/*
+	 * Attempt to terminate all existing connections to the target database if
+	 * the user has requested to do so.
+	 */
+	if (force)
+		TerminateOtherDBBackends(db_id);
 
 	/*
 	 * Check for other backends in the target database.  (Because we hold the
@@ -1430,6 +1438,30 @@ movedb_failure_callback(int code, Datum arg)
 	(void) rmtree(dstpath, true);
 }
 
+/*
+ * Process options and call dropdb function.
+ */
+void
+DropDatabase(ParseState *pstate, DropdbStmt *stmt)
+{
+	bool		force = false;
+	ListCell   *lc;
+
+	foreach(lc, stmt->options)
+	{
+		DefElem    *opt = (DefElem *) lfirst(lc);
+
+		if (strcmp(opt->defname, "force") == 0)
+			force = true;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized DROP DATABASE option \"%s\"", opt->defname),
+					 parser_errposition(pstate, opt->location)));
+	}
+
+	dropdb(stmt->dbname, stmt->missing_ok, force);
+}
 
 /*
  * ALTER DATABASE name ...

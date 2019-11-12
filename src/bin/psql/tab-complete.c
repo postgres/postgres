@@ -2844,6 +2844,10 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_FUNCTION_ARG(prev2_wd);
 	else if (Matches("DROP", "FOREIGN"))
 		COMPLETE_WITH("DATA WRAPPER", "TABLE");
+	else if (Matches("DROP", "DATABASE", MatchAny))
+		COMPLETE_WITH("WITH (");
+	else if (HeadMatches("DROP", "DATABASE") && (ends_with(prev_wd, '(')))
+		COMPLETE_WITH("FORCE");
 
 	/* DROP INDEX */
 	else if (Matches("DROP", "INDEX"))

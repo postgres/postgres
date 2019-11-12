@@ -21,7 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ] 
+
+<phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
+
+    FORCE
 </synopsis>
  </refsynopsisdiv>
 
@@ -32,9 +36,11 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
    <command>DROP DATABASE</command> drops a database. It removes the
    catalog entries for the database and deletes the directory
    containing the data.  It can only be executed by the database owner.
-   Also, it cannot be executed while you or anyone else are connected
-   to the target database.  (Connect to <literal>postgres</literal> or any
-   other database to issue this command.)
+   It cannot be executed while you are connected to the target database.
+   (Connect to <literal>postgres</literal> or any other database to issue this
+   command.)
+   Also, if anyone else is connected to the target database, this command will
+   fail unless you use the <literal>FORCE</literal> option described below.
   </para>
 
   <para>
@@ -64,6 +70,25 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>FORCE</literal></term>
+    <listitem>
+     <para>
+      Attempt to terminate all existing connections to the target database.
+      It doesn't terminate if prepared transactions, active logical replication
+      slots or subscriptions are present in the target database.
+     </para>
+     <para>
+      This will fail if the current user has no permissions to terminate other
+      connections. Required permissions are the same as with 
+      <literal>pg_terminate_backend</literal>, described in
+      <xref linkend="functions-admin-signal"/>.  This will also fail if we
+      are not able to terminate connections.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
