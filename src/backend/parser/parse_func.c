@@ -2035,8 +2035,8 @@ LookupFuncNameInternal(List *funcname, int nargs, const Oid *argtypes,
 {
 	FuncCandidateList clist;
 
-	/* Passing NULL for argtypes is no longer allowed */
-	Assert(argtypes);
+	/* NULL argtypes allowed for nullary functions only */
+	Assert(argtypes != NULL || nargs == 0);
 
 	/* Always set *lookupError, to forestall uninitialized-variable warnings */
 	*lookupError = FUNCLOOKUP_NOSUCHFUNC;
@@ -2070,7 +2070,9 @@ LookupFuncNameInternal(List *funcname, int nargs, const Oid *argtypes,
 	 */
 	while (clist)
 	{
-		if (memcmp(argtypes, clist->args, nargs * sizeof(Oid)) == 0)
+		/* if nargs==0, argtypes can be null; don't pass that to memcmp */
+		if (nargs == 0 ||
+			memcmp(argtypes, clist->args, nargs * sizeof(Oid)) == 0)
 			return clist->oid;
 		clist = clist->next;
 	}

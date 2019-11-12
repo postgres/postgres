@@ -592,7 +592,6 @@ call_pltcl_start_proc(Oid prolang, bool pltrusted)
 	const char *gucname;
 	ErrorContextCallback errcallback;
 	List	   *namelist;
-	Oid			fargtypes[1];	/* dummy */
 	Oid			procOid;
 	HeapTuple	procTup;
 	Form_pg_proc procStruct;
@@ -616,7 +615,7 @@ call_pltcl_start_proc(Oid prolang, bool pltrusted)
 
 	/* Parse possibly-qualified identifier and look up the function */
 	namelist = stringToQualifiedNameList(start_proc);
-	procOid = LookupFuncName(namelist, 0, fargtypes, false);
+	procOid = LookupFuncName(namelist, 0, NULL, false);
 
 	/* Current user must have permission to call function */
 	aclresult = pg_proc_aclcheck(procOid, GetUserId(), ACL_EXECUTE);
