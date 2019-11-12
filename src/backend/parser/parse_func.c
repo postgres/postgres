@@ -1397,9 +1397,6 @@ func_get_detail(List *funcname,
 	FuncCandidateList raw_candidates;
 	FuncCandidateList best_candidate;
 
-	/* Passing NULL for argtypes is no longer allowed */
-	Assert(argtypes);
-
 	/* initialize output arguments to silence compiler warnings */
 	*funcid = InvalidOid;
 	*rettype = InvalidOid;
@@ -1423,7 +1420,9 @@ func_get_detail(List *funcname,
 		 best_candidate != NULL;
 		 best_candidate = best_candidate->next)
 	{
-		if (memcmp(argtypes, best_candidate->args, nargs * sizeof(Oid)) == 0)
+		/* if nargs==0, argtypes can be null; don't pass that to memcmp */
+		if (nargs == 0 ||
+			memcmp(argtypes, best_candidate->args, nargs * sizeof(Oid)) == 0)
 			break;
 	}
 

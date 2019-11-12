@@ -833,7 +833,6 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 	char	   *tgname;
 	char	   *tgoldtable;
 	char	   *tgnewtable;
-	Oid			argtypes[1];	/* dummy */
 	Datum		value;
 	bool		isnull;
 
@@ -1045,7 +1044,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	appendStringInfo(&buf, "EXECUTE FUNCTION %s(",
 					 generate_function_name(trigrec->tgfoid, 0,
-											NIL, argtypes,
+											NIL, NULL,
 											false, NULL, EXPR_KIND_NONE));
 
 	if (trigrec->tgnargs > 0)
