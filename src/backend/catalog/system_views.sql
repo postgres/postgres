@@ -826,7 +826,8 @@ CREATE VIEW pg_stat_ssl AS
             S.ssl_client_dn AS client_dn,
             S.ssl_client_serial AS client_serial,
             S.ssl_issuer_dn AS issuer_dn
-    FROM pg_stat_get_activity(NULL) AS S;
+    FROM pg_stat_get_activity(NULL) AS S
+    WHERE S.client_port IS NOT NULL;
 
 CREATE VIEW pg_stat_gssapi AS
     SELECT
@@ -834,7 +835,8 @@ CREATE VIEW pg_stat_gssapi AS
             S.gss_auth AS gss_authenticated,
             S.gss_princ AS principal,
             S.gss_enc AS encrypted
-    FROM pg_stat_get_activity(NULL) AS S;
+    FROM pg_stat_get_activity(NULL) AS S
+    WHERE S.client_port IS NOT NULL;
 
 CREATE VIEW pg_replication_slots AS
     SELECT
