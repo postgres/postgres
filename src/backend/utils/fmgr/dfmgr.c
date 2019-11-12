@@ -23,7 +23,7 @@
  * On macOS, <dlfcn.h> insists on including <stdbool.h>.  If we're not
  * using stdbool, undef bool to undo the damage.
  */
-#ifndef USE_STDBOOL
+#ifndef PG_USE_STDBOOL
 #ifdef bool
 #undef bool
 #endif

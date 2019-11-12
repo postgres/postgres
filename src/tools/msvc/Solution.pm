@@ -513,6 +513,7 @@ sub GenerateFiles
 		print $o <<EOF;
 #define HAVE_LONG_LONG_INT 1
 #define HAVE_LONG_LONG_INT_64 1
+#define PG_USE_STDBOOL 1
 #define ENABLE_THREAD_SAFETY 1
 EOF
 		close($o);

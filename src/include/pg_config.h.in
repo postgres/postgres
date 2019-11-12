@@ -829,6 +829,9 @@
 /* Define to best printf format archetype, usually gnu_printf if available. */
 #undef PG_PRINTF_ATTRIBUTE
 
+/* Define to 1 to use <stdbool.h> to define type bool. */
+#undef PG_USE_STDBOOL
+
 /* PostgreSQL version as a string */
 #undef PG_VERSION
 

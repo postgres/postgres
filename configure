@@ -14786,6 +14786,12 @@ _ACEOF
 
 
 
+if test "$ac_cv_header_stdbool_h" = yes -a "$ac_cv_sizeof_bool" = 1; then
+
+$as_echo "#define PG_USE_STDBOOL 1" >>confdefs.h
+
+fi
+
 
 ##
 ## Functions, global variables

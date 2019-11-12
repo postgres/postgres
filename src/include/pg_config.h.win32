@@ -624,6 +624,9 @@
    (--with-krb-srvnam=NAME) */
 #define PG_KRB_SRVNAM "postgres"
 
+/* Define to 1 to use <stdbool.h> to define type bool. */
+#define PG_USE_STDBOOL 1
+
 /* A string containing the version number, platform, and C compiler */
 #define PG_VERSION_STR "Uninitialized version string (win32)"
 
