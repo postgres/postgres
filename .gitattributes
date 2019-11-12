@@ -17,6 +17,7 @@ src/backend/catalog/sql_features.txt		whitespace=space-before-tab,blank-at-eof,-
 # Test output files that contain extra whitespace
 *.out					-whitespace
 contrib/*/output/*.source		-whitespace
+src/pl/plpgsql/src/output/*.source	-whitespace
 src/test/regress/output/*.source	-whitespace
 src/interfaces/ecpg/test/expected/*	-whitespace
 src/interfaces/libpq/test/expected.out	whitespace=-blank-at-eof
