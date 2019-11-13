@@ -102,6 +102,10 @@ standby_desc_invalidations(StringInfo buf,
 {
 	int			i;
 
+	/* Do nothing if there are no invalidation messages */
+	if (nmsgs <= 0)
+		return;
+
 	if (relcacheInitFileInval)
 		appendStringInfo(buf, "; relcache init file inval dbid %u tsid %u",
 						 dbId, tsId);
