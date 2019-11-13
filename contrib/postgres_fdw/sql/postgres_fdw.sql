@@ -2479,3 +2479,10 @@ SELECT b, avg(a), max(a), count(*) FROM pagg_tab GROUP BY b HAVING sum(a) < 700 
 
 -- Clean-up
 RESET enable_partitionwise_aggregate;
+
+-- Two-phase transactions are not supported.
+BEGIN;
+SELECT count(*) FROM ft1;
+-- error here
+PREPARE TRANSACTION 'fdw_tpc';
+ROLLBACK;

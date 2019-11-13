@@ -8781,3 +8781,16 @@ SELECT b, avg(a), max(a), count(*) FROM pagg_tab GROUP BY b HAVING sum(a) < 700 
 
 -- Clean-up
 RESET enable_partitionwise_aggregate;
+-- Two-phase transactions are not supported.
+BEGIN;
+SELECT count(*) FROM ft1;
+ count 
+-------
+   822
+(1 row)
+
+-- error here
+PREPARE TRANSACTION 'fdw_tpc';
+ERROR:  cannot PREPARE a transaction that has operated on postgres_fdw foreign tables
+ROLLBACK;
+WARNING:  there is no transaction in progress
