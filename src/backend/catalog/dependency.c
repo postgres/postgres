@@ -2256,6 +2256,28 @@ find_expr_references_walker(Node *node,
 								   context->addrs);
 		}
 	}
+	else if (IsA(node, TableFunc))
+	{
+		TableFunc  *tf = (TableFunc *) node;
+		ListCell   *ct;
+
+		/*
+		 * Add refs for the datatypes and collations used in the TableFunc.
+		 */
+		foreach(ct, tf->coltypes)
+		{
+			add_object_address(OCLASS_TYPE, lfirst_oid(ct), 0,
+							   context->addrs);
+		}
+		foreach(ct, tf->colcollations)
+		{
+			Oid			collid = lfirst_oid(ct);
+
+			if (OidIsValid(collid) && collid != DEFAULT_COLLATION_OID)
+				add_object_address(OCLASS_COLLATION, collid, 0,
+								   context->addrs);
+		}
+	}
 	else if (IsA(node, TableSampleClause))
 	{
 		TableSampleClause *tsc = (TableSampleClause *) node;
