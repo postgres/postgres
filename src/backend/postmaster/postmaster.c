@@ -1134,7 +1134,7 @@ PostmasterMain(int argc, char *argv[])
 		rawstring = pstrdup(ListenAddresses);
 
 		/* Parse string into list of hostnames */
-		if (!SplitIdentifierString(rawstring, ',', &elemlist))
+		if (!SplitGUCList(rawstring, ',', &elemlist))
 		{
 			/* syntax error in list */
 			ereport(FATAL,
