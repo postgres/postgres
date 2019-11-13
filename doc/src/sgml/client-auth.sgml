@@ -1824,7 +1824,7 @@ host ... ldap ldapbasedn="dc=example,dc=net"
     <literal>user name</literal>, <literal>password</literal> (encrypted) and
     <literal>NAS Identifier</literal>. The request will be encrypted using
     a secret shared with the server. The RADIUS server will respond to
-    this server with either <literal>Access Accept</literal> or
+    this request with either <literal>Access Accept</literal> or
     <literal>Access Reject</literal>. There is no support for RADIUS accounting.
    </para>
 
@@ -1833,11 +1833,11 @@ host ... ldap ldapbasedn="dc=example,dc=net"
     be tried sequentially. If a negative response is received from
     a server, the authentication will fail. If no response is received,
     the next server in the list will be tried. To specify multiple
-    servers, put the names within quotes and separate the server names
-    with a comma. If multiple servers are specified, all other RADIUS
-    options can also be given as a comma separate list, to apply
-    individual values to each server. They can also be specified as
-    a single value, in which case this value will apply to all servers.
+    servers, separate the server names with commas and surround the list
+    with double quotes. If multiple servers are specified, the other
+    RADIUS options can also be given as comma-separated lists, to provide
+    individual values for each server. They can also be specified as
+    a single value, in which case that value will apply to all servers.
    </para>
 
    <para>
@@ -1847,7 +1847,7 @@ host ... ldap ldapbasedn="dc=example,dc=net"
        <term><literal>radiusservers</literal></term>
        <listitem>
         <para>
-         The name or IP addresses of the RADIUS servers to connect to.
+         The DNS names or IP addresses of the RADIUS servers to connect to.
          This parameter is required.
         </para>
        </listitem>
@@ -1858,7 +1858,7 @@ host ... ldap ldapbasedn="dc=example,dc=net"
        <listitem>
         <para>
          The shared secrets used when talking securely to the RADIUS
-         server. This must have exactly the same value on the PostgreSQL
+         servers. This must have exactly the same value on the PostgreSQL
          and RADIUS servers. It is recommended that this be a string of
          at least 16 characters. This parameter is required.
          <note>
@@ -1878,8 +1878,9 @@ host ... ldap ldapbasedn="dc=example,dc=net"
        <term><literal>radiusports</literal></term>
        <listitem>
         <para>
-         The port number on the RADIUS servers to connect to. If no port
-         is specified, the default port <literal>1812</literal> will be used.
+         The port numbers to connect to on the RADIUS servers. If no port
+         is specified, the default RADIUS port (<literal>1812</literal>)
+         will be used.
         </para>
        </listitem>
       </varlistentry>
@@ -1888,10 +1889,10 @@ host ... ldap ldapbasedn="dc=example,dc=net"
        <term><literal>radiusidentifiers</literal></term>
        <listitem>
         <para>
-         The string used as <literal>NAS Identifier</literal> in the RADIUS
-         requests. This parameter can be used as a second parameter
-         identifying for example which database user the user is attempting
-         to authenticate as, which can be used for policy matching on
+         The strings to be used as <literal>NAS Identifier</literal> in the
+         RADIUS requests. This parameter can be used, for example, to
+         identify which database cluster the user is attempting to connect
+         to, which can be useful for policy matching on
          the RADIUS server. If no identifier is specified, the default
          <literal>postgresql</literal> will be used.
         </para>
@@ -1899,6 +1900,16 @@ host ... ldap ldapbasedn="dc=example,dc=net"
       </varlistentry>
 
      </variablelist>
+   </para>
+
+   <para>
+    If it is necessary to have a comma or whitespace in a RADIUS parameter
+    value, that can be done by putting double quotes around the value, but
+    it is tedious because two layers of double-quoting are now required.
+    An example of putting whitespace into RADIUS secret strings is:
+<programlisting>
+host ... radius radiusservers="server1,server2" radiussecrets="""secret one"",""secret two"""
+</programlisting>
    </para>
   </sect1>
 
