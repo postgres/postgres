@@ -1881,7 +1881,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiusservers", "radius");
 
-		if (!SplitIdentifierString(dupval, ',', &parsed_servers))
+		if (!SplitGUCList(dupval, ',', &parsed_servers))
 		{
 			/* syntax error in list */
 			ereport(elevel,
@@ -1930,7 +1930,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiusports", "radius");
 
-		if (!SplitIdentifierString(dupval, ',', &parsed_ports))
+		if (!SplitGUCList(dupval, ',', &parsed_ports))
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -1965,7 +1965,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiussecrets", "radius");
 
-		if (!SplitIdentifierString(dupval, ',', &parsed_secrets))
+		if (!SplitGUCList(dupval, ',', &parsed_secrets))
 		{
 			/* syntax error in list */
 			ereport(elevel,
@@ -1987,7 +1987,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 
 		REQUIRE_AUTH_OPTION(uaRADIUS, "radiusidentifiers", "radius");
 
-		if (!SplitIdentifierString(dupval, ',', &parsed_identifiers))
+		if (!SplitGUCList(dupval, ',', &parsed_identifiers))
 		{
 			/* syntax error in list */
 			ereport(elevel,
