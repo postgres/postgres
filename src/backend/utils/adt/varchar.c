@@ -784,6 +784,8 @@ bpcharne(PG_FUNCTION_ARGS)
 	bool		result;
 	Oid			collid = PG_GET_COLLATION();
 
+	check_collation_set(collid);
+
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
