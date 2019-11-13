@@ -230,7 +230,7 @@
     used to signal that the trigger performed the necessary data
     modifications in the view.  This will cause the count of the number
     of rows affected by the command to be incremented. For
-    <command>INSERT</command> and <command>UPDATE</command> operations, the trigger
+    <command>INSERT</command> and <command>UPDATE</command> operations only, the trigger
     may modify the <varname>NEW</varname> row before returning it.  This will
     change the data returned by
     <command>INSERT RETURNING</command> or <command>UPDATE RETURNING</command>,
