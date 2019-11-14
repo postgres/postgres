@@ -54,8 +54,10 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    system database <literal>template1</literal>.  A different template can be
    specified by writing <literal>TEMPLATE
    <replaceable class="parameter">name</replaceable></literal>.  In particular,
-   by writing <literal>TEMPLATE template0</literal>, you can create a virgin
-   database containing only the standard objects predefined by your
+   by writing <literal>TEMPLATE template0</literal>, you can create a pristine
+   database (one where no user-defined objects exist and where the system
+   objects have not been altered)
+   containing only the standard objects predefined by your
    version of <productname>PostgreSQL</productname>.  This is useful
    if you wish to avoid copying
    any installation-local objects that might have been added to

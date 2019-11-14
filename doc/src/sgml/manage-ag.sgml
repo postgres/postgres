@@ -199,11 +199,12 @@ createdb -O <replaceable>rolename</replaceable> <replaceable>dbname</replaceable
    should never be changed after the database cluster has been
    initialized.  By instructing
    <command>CREATE DATABASE</command> to copy <literal>template0</literal> instead
-   of <literal>template1</literal>, you can create a <quote>virgin</quote> user
-   database that contains none of the site-local additions in
+   of <literal>template1</literal>, you can create a <quote>pristine</quote> user
+   database (one where no user-defined objects exist and where the system
+   objects have not been altered) that contains none of the site-local additions in
    <literal>template1</literal>.  This is particularly handy when restoring a
    <literal>pg_dump</literal> dump: the dump script should be restored in a
-   virgin database to ensure that one recreates the correct contents
+   pristine database to ensure that one recreates the correct contents
    of the dumped database, without conflicting with objects that
    might have been added to <literal>template1</literal> later on.
   </para>
