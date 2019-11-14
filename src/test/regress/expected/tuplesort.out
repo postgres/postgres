@@ -603,6 +603,7 @@ INSERT INTO test_mark_restore(col1, col2, col12)
 BEGIN;
 SET LOCAL enable_nestloop = off;
 SET LOCAL enable_hashjoin = off;
+SET LOCAL enable_material = off;
 -- set query into variable once, to avoid repetition of the fairly long query
 SELECT $$
     SELECT col12, count(distinct a.col1), count(distinct a.col2), count(distinct b.col1), count(distinct b.col2), count(*)
@@ -664,11 +665,10 @@ EXPLAIN (COSTS OFF) :qry;
                      ->  Sort
                            Sort Key: a.col12 DESC
                            ->  Seq Scan on test_mark_restore a
-                     ->  Materialize
-                           ->  Sort
-                                 Sort Key: b.col12 DESC
-                                 ->  Seq Scan on test_mark_restore b
-(15 rows)
+                     ->  Sort
+                           Sort Key: b.col12 DESC
+                           ->  Seq Scan on test_mark_restore b
+(14 rows)
 
 :qry;
  col12 | count | count | count | count | count 

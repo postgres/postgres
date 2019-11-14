@@ -275,6 +275,7 @@ BEGIN;
 
 SET LOCAL enable_nestloop = off;
 SET LOCAL enable_hashjoin = off;
+SET LOCAL enable_material = off;
 
 -- set query into variable once, to avoid repetition of the fairly long query
 SELECT $$
