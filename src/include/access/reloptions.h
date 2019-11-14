@@ -140,7 +140,7 @@ typedef struct relopt_string
 	char	   *default_val;
 } relopt_string;
 
-/* This is the table datatype for fillRelOptions */
+/* This is the table datatype for build_reloptions() */
 typedef struct
 {
 	const char *optname;		/* option's name */
@@ -148,123 +148,15 @@ typedef struct
 	int			offset;			/* offset of field in result struct */
 } relopt_parse_elt;
 
-
 /*
- * These macros exist for the convenience of amoptions writers (but consider
- * using fillRelOptions, which is a lot simpler).  Beware of multiple
- * evaluation of arguments!
- *
- * The last argument in the HANDLE_*_RELOPTION macros allows the caller to
- * determine whether the option was set (true), or its value acquired from
- * defaults (false); it can be passed as (char *) NULL if the caller does not
- * need this information.
- *
- * optname is the option name (a string), var is the variable
- * on which the value should be stored (e.g. StdRdOptions->fillfactor), and
- * option is a relopt_value pointer.
- *
- * The normal way to use this is to loop on the relopt_value array returned by
- * parseRelOptions:
- * for (i = 0; options[i].gen->name; i++)
- * {
- *		if (HAVE_RELOPTION("fillfactor", options[i])
- *		{
- *			HANDLE_INT_RELOPTION("fillfactor", rdopts->fillfactor, options[i], &isset);
- *			continue;
- *		}
- *		if (HAVE_RELOPTION("default_row_acl", options[i])
- *		{
- *			...
- *		}
- *		...
- *		if (validate)
- *			ereport(ERROR,
- *					(errmsg("unknown option")));
- *	}
- *
- *	Note that this is more or less the same that fillRelOptions does, so only
- *	use this if you need to do something non-standard within some option's
- *	code block.
- */
-#define HAVE_RELOPTION(optname, option) \
-	(strncmp(option.gen->name, optname, option.gen->namelen + 1) == 0)
-
-#define HANDLE_INT_RELOPTION(optname, var, option, wasset)		\
-	do {														\
-		if (option.isset)										\
-			var = option.values.int_val;						\
-		else													\
-			var = ((relopt_int *) option.gen)->default_val;		\
-		(wasset) != NULL ? *(wasset) = option.isset : (dummyret)NULL; \
-	} while (0)
-
-#define HANDLE_BOOL_RELOPTION(optname, var, option, wasset)			\
-	do {															\
-		if (option.isset)										\
-			var = option.values.bool_val;						\
-		else													\
-			var = ((relopt_bool *) option.gen)->default_val;	\
-		(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
-	} while (0)
-
-#define HANDLE_REAL_RELOPTION(optname, var, option, wasset)		\
-	do {														\
-		if (option.isset)										\
-			var = option.values.real_val;						\
-		else													\
-			var = ((relopt_real *) option.gen)->default_val;	\
-		(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
-	} while (0)
-
-/*
- * Note that this assumes that the variable is already allocated at the tail of
- * reloptions structure (StdRdOptions or equivalent).
- *
- * "base" is a pointer to the reloptions structure, and "offset" is an integer
- * variable that must be initialized to sizeof(reloptions structure).  This
- * struct must have been allocated with enough space to hold any string option
- * present, including terminating \0 for every option.  SET_VARSIZE() must be
- * called on the struct with this offset as the second argument, after all the
- * string options have been processed.
- */
-#define HANDLE_STRING_RELOPTION(optname, var, option, base, offset, wasset) \
-	do {														\
-		relopt_string *optstring = (relopt_string *) option.gen;\
-		char *string_val;										\
-		if (option.isset)										\
-			string_val = option.values.string_val;				\
-		else if (!optstring->default_isnull)					\
-			string_val = optstring->default_val;				\
-		else													\
-			string_val = NULL;									\
-		(wasset) != NULL ? *(wasset) = option.isset : (dummyret) NULL; \
-		if (string_val == NULL)									\
-			var = 0;											\
-		else													\
-		{														\
-			strcpy(((char *)(base)) + (offset), string_val);	\
-			var = (offset);										\
-			(offset) += strlen(string_val) + 1;					\
-		}														\
-	} while (0)
-
-/*
- * For use during amoptions: get the strlen of a string option
- * (either default or the user defined value)
- */
-#define GET_STRING_RELOPTION_LEN(option) \
-	((option).isset ? strlen((option).values.string_val) : \
-	 ((relopt_string *) (option).gen)->default_len)
-
-/*
- * For use by code reading options already parsed: get a pointer to the string
- * value itself.  "optstruct" is the StdRdOptions struct or equivalent, "member"
- * is the struct member corresponding to the string option
+ * Utility macro to get a value for a string reloption once the options
+ * are parsed.  This gets a pointer to the string value itself.  "optstruct"
+ * is the StdRdOptions struct or equivalent, "member" is the struct member
+ * corresponding to the string option.
  */
 #define GET_STRING_RELOPTION(optstruct, member) \
 	((optstruct)->member == 0 ? NULL : \
 	 (char *)(optstruct) + (optstruct)->member)
-
 
 extern relopt_kind add_reloption_kind(void);
 extern void add_bool_reloption(bits32 kinds, const char *name, const char *desc,
@@ -288,14 +180,6 @@ extern Datum transformRelOptions(Datum oldOptions, List *defList,
 extern List *untransformRelOptions(Datum options);
 extern bytea *extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
 								amoptions_function amoptions);
-extern relopt_value *parseRelOptions(Datum options, bool validate,
-									 relopt_kind kind, int *numrelopts);
-extern void *allocateReloptStruct(Size base, relopt_value *options,
-								  int numoptions);
-extern void fillRelOptions(void *rdopts, Size basesize,
-						   relopt_value *options, int numoptions,
-						   bool validate,
-						   const relopt_parse_elt *elems, int nelems);
 extern void *build_reloptions(Datum reloptions, bool validate,
 							  relopt_kind kind,
 							  Size relopt_struct_size,

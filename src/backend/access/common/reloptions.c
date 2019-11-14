@@ -497,6 +497,15 @@ static void parse_one_reloption(relopt_value *option, char *text_str,
 								int text_len, bool validate);
 
 /*
+ * Get the length of a string reloption (either default or the user-defined
+ * value).  This is used for allocation purposes when building a set of
+ * relation options.
+ */
+#define GET_STRING_RELOPTION_LEN(option) \
+	((option).isset ? strlen((option).values.string_val) : \
+	 ((relopt_string *) (option).gen)->default_len)
+
+/*
  * initialize_reloptions
  *		initialization routine, must be called before parsing
  *
@@ -1142,7 +1151,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
  * returned array.  Values of type string are allocated separately and must
  * be freed by the caller.
  */
-relopt_value *
+static relopt_value *
 parseRelOptions(Datum options, bool validate, relopt_kind kind,
 				int *numrelopts)
 {
@@ -1367,7 +1376,7 @@ parse_one_reloption(relopt_value *option, char *text_str, int text_len,
  * "base" should be sizeof(struct) of the reloptions struct (StdRdOptions or
  * equivalent).
  */
-void *
+static void *
 allocateReloptStruct(Size base, relopt_value *options, int numoptions)
 {
 	Size		size = base;
@@ -1391,7 +1400,7 @@ allocateReloptStruct(Size base, relopt_value *options, int numoptions)
  * elems, of length numelems, is the table describing the allowed options.
  * When validate is true, it is expected that all options appear in elems.
  */
-void
+static void
 fillRelOptions(void *rdopts, Size basesize,
 			   relopt_value *options, int numoptions,
 			   bool validate,
