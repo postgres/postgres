@@ -1590,6 +1590,16 @@ Author: Peter Eisentraut <peter_e@gmx.net>
       linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.<structfield>consrc</structfield>
       column (Peter Eisentraut)
      </para>
+
+     <para>
+      This column has been deprecated for a long time, because it did not
+      update in response to other catalog changes (such as column renamings).
+      The recommended way to get a text version of a check constraint's
+      expression from <structname>pg_constraint</structname>
+      is <literal>pg_get_expr(conbin, conrelid)</literal>.
+      <function>pg_get_constraintdef()</function> is also a useful
+      alternative.
+     </para>
     </listitem>
 
     <listitem>
@@ -1602,6 +1612,14 @@ Author: Peter Eisentraut <peter_e@gmx.net>
       Remove obsolete <link
       linkend="catalog-pg-attrdef"><structname>pg_attrdef</structname></link>.<structfield>adsrc</structfield>
       column (Peter Eisentraut)
+     </para>
+
+     <para>
+      This column has been deprecated for a long time, because it did not
+      update in response to other catalog changes (such as column renamings).
+      The recommended way to get a text version of a default-value expression
+      from <structname>pg_attrdef</structname> is <literal>pg_get_expr(adbin,
+      adrelid)</literal>.
      </para>
     </listitem>
 
