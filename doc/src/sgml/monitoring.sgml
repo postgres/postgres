@@ -1972,6 +1972,26 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry><type>timestamp with time zone</type></entry>
      <entry>Send time of last reply message received from standby server</entry>
     </row>
+    <row>
+     <entry><structfield>spill_bytes</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Amount of decoded transaction data spilled to disk.</entry>
+    </row>
+    <row>
+     <entry><structfield>spill_txns</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of transactions spilled to disk after the memory used by
+      logical decoding exceeds <literal>logical_decoding_work_mem</literal>. The
+      counter gets incremented both for toplevel transactions and
+      subtransactions.</entry>
+    </row>
+    <row>
+     <entry><structfield>spill_count</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of times transactions were spilled to disk. Transactions
+      may get spilled repeatedly, and this counter gets incremented on every
+      such invocation.</entry>
+    </row>
    </tbody>
    </tgroup>
   </table>
