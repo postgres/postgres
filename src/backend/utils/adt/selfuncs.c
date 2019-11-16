@@ -3587,14 +3587,19 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	foreach(lc, *varinfos)
 	{
 		GroupVarInfo *varinfo = (GroupVarInfo *) lfirst(lc);
+		AttrNumber	attnum;
 
 		Assert(varinfo->rel == rel);
 
-		if (IsA(varinfo->var, Var))
-		{
-			attnums = bms_add_member(attnums,
-									 ((Var *) varinfo->var)->varattno);
-		}
+		if (!IsA(varinfo->var, Var))
+			continue;
+
+		attnum = ((Var *) varinfo->var)->varattno;
+
+		if (!AttrNumberIsForUserDefinedAttr(attnum))
+			continue;
+
+		attnums = bms_add_member(attnums, attnum);
 	}
 
 	/* look for the ndistinct statistics matching the most vars */
@@ -3674,6 +3679,10 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 			}
 
 			attnum = ((Var *) varinfo->var)->varattno;
+
+			if (!AttrNumberIsForUserDefinedAttr(attnum))
+				continue;
+
 			if (!bms_is_member(attnum, matched))
 				newlist = lappend(newlist, varinfo);
 		}
