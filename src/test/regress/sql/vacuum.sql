@@ -158,7 +158,9 @@ ANALYZE (nonexistent-arg) does_not_exist;
 ANALYZE (nonexistentarg) does_not_exit;
 
 -- ensure argument order independence, and that SKIP_LOCKED on non-existing
--- relation still errors out.
+-- relation still errors out.  Suppress WARNING messages caused by concurrent
+-- autovacuums.
+SET client_min_messages TO 'ERROR';
 ANALYZE (SKIP_LOCKED, VERBOSE) does_not_exist;
 ANALYZE (VERBOSE, SKIP_LOCKED) does_not_exist;
 
@@ -166,6 +168,7 @@ ANALYZE (VERBOSE, SKIP_LOCKED) does_not_exist;
 VACUUM (SKIP_LOCKED) vactst;
 VACUUM (SKIP_LOCKED, FULL) vactst;
 ANALYZE (SKIP_LOCKED) vactst;
+RESET client_min_messages;
 
 -- ensure VACUUM and ANALYZE don't have a problem with serializable
 SET default_transaction_isolation = serializable;

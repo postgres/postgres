@@ -7,7 +7,9 @@ setup
 {
 	CREATE TABLE parted (a INT) PARTITION BY LIST (a);
 	CREATE TABLE part1 PARTITION OF parted FOR VALUES IN (1);
+	ALTER TABLE part1 SET (autovacuum_enabled = false);
 	CREATE TABLE part2 PARTITION OF parted FOR VALUES IN (2);
+	ALTER TABLE part2 SET (autovacuum_enabled = false);
 }
 
 teardown
