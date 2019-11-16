@@ -144,6 +144,10 @@ ANALYZE ndistinct;
 SELECT stxkind, stxndistinct
   FROM pg_statistic_ext WHERE stxrelid = 'ndistinct'::regclass;
 
+-- minor improvement, make sure the ctid does not break the matching
+EXPLAIN (COSTS off)
+SELECT COUNT(*) FROM ndistinct GROUP BY ctid, a, b;
+
 -- Hash Aggregate, thanks to estimates improved by the statistic
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b;

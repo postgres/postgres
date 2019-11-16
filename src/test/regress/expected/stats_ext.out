@@ -217,6 +217,18 @@ SELECT stxkind, stxndistinct
  {d,f}   | {"3, 4": 301, "3, 6": 301, "4, 6": 301, "3, 4, 6": 301}
 (1 row)
 
+-- minor improvement, make sure the ctid does not break the matching
+EXPLAIN (COSTS off)
+SELECT COUNT(*) FROM ndistinct GROUP BY ctid, a, b;
+            QUERY PLAN             
+-----------------------------------
+ GroupAggregate
+   Group Key: ctid, a, b
+   ->  Sort
+         Sort Key: ctid, a, b
+         ->  Seq Scan on ndistinct
+(5 rows)
+
 -- Hash Aggregate, thanks to estimates improved by the statistic
 EXPLAIN (COSTS off)
  SELECT COUNT(*) FROM ndistinct GROUP BY a, b;
