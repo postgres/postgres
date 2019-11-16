@@ -233,6 +233,13 @@ SELECT s.stxkind, d.stxdndistinct
  {d,f,m} | {"3, 4": 11, "3, 6": 11, "4, 6": 11, "3, 4, 6": 11}
 (1 row)
 
+-- minor improvement, make sure the ctid does not break the matching
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY ctid, a, b');
+ estimated | actual 
+-----------+--------
+        11 |   1000
+(1 row)
+
 -- Hash Aggregate, thanks to estimates improved by the statistic
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
  estimated | actual 

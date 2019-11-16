@@ -167,6 +167,9 @@ SELECT s.stxkind, d.stxdndistinct
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
 
+-- minor improvement, make sure the ctid does not break the matching
+SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY ctid, a, b');
+
 -- Hash Aggregate, thanks to estimates improved by the statistic
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
 
