@@ -233,7 +233,7 @@ detoast_attr_slice(struct varlena *attr,
 			 * of a given length (after decompression).
 			 */
 			max_size = pglz_maximum_compressed_size(sliceoffset + slicelength,
-													TOAST_COMPRESS_SIZE(attr));
+													toast_pointer.va_extsize);
 
 			/*
 			 * Fetch enough compressed slices (compressed marker will get set
