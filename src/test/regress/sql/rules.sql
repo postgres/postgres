@@ -1013,6 +1013,8 @@ DROP TABLE rule_t1;
 --
 create view rule_v1 as values(1,2);
 \d+ rule_v1
+alter table rule_v1 rename column column2 to q2;
+\d+ rule_v1
 drop view rule_v1;
 create view rule_v1(x) as values(1,2);
 \d+ rule_v1
