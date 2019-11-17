@@ -2907,6 +2907,18 @@ create view rule_v1 as values(1,2);
 View definition:
  VALUES (1,2);
 
+alter table rule_v1 rename column column2 to q2;
+\d+ rule_v1
+                           View "public.rule_v1"
+ Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+---------+---------+-----------+----------+---------+---------+-------------
+ column1 | integer |           |          |         | plain   | 
+ q2      | integer |           |          |         | plain   | 
+View definition:
+ SELECT "*VALUES*".column1,
+    "*VALUES*".column2 AS q2
+   FROM (VALUES (1,2)) "*VALUES*";
+
 drop view rule_v1;
 create view rule_v1(x) as values(1,2);
 \d+ rule_v1
