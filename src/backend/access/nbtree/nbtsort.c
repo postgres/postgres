@@ -756,9 +756,9 @@ _bt_slideleft(Page page)
  * Add an item to a page being built.
  *
  * The main difference between this routine and a bare PageAddItem call
- * is that this code knows that the leftmost data item on a non-leaf
- * btree page doesn't need to have a key.  Therefore, it strips such
- * items down to just the item header.
+ * is that this code knows that the leftmost data item on a non-leaf btree
+ * page has a key that must be treated as minus infinity.  Therefore, it
+ * truncates away all attributes.
  *
  * This is almost like nbtinsert.c's _bt_pgaddtup(), but we can't use
  * that because it assumes that P_RIGHTMOST() will return the correct
@@ -778,7 +778,6 @@ _bt_sortaddtup(Page page,
 	{
 		trunctuple = *itup;
 		trunctuple.t_info = sizeof(IndexTupleData);
-		/* Deliberately zero INDEX_ALT_TID_MASK bits */
 		BTreeTupleSetNAtts(&trunctuple, 0);
 		itup = &trunctuple;
 		itemsize = sizeof(IndexTupleData);

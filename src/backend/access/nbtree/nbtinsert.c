@@ -2230,10 +2230,10 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
  *
  *		The main difference between this routine and a bare PageAddItem call
  *		is that this code knows that the leftmost index tuple on a non-leaf
- *		btree page doesn't need to have a key.  Therefore, it strips such
- *		tuples down to just the tuple header.  CAUTION: this works ONLY if
- *		we insert the tuples in order, so that the given itup_off does
- *		represent the final position of the tuple!
+ *		btree page has a key that must be treated as minus infinity.
+ *		Therefore, it truncates away all attributes.  CAUTION: this works
+ *		ONLY if we insert the tuples in order, so that the given itup_off
+ *		does represent the final position of the tuple!
  */
 static bool
 _bt_pgaddtup(Page page,
@@ -2248,7 +2248,6 @@ _bt_pgaddtup(Page page,
 	{
 		trunctuple = *itup;
 		trunctuple.t_info = sizeof(IndexTupleData);
-		/* Deliberately zero INDEX_ALT_TID_MASK bits */
 		BTreeTupleSetNAtts(&trunctuple, 0);
 		itup = &trunctuple;
 		itemsize = sizeof(IndexTupleData);
