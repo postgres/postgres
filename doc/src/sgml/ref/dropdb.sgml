@@ -87,6 +87,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-f</option></term>
+      <term><option>--force</option></term>
+      <listitem>
+       <para>
+        Attempt to terminate all existing connections to the target database
+        before dropping it.   See <xref linkend="sql-dropdatabase"/> for more
+        information on this option.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>-V</option></term>
        <term><option>--version</option></term>
        <listitem>
