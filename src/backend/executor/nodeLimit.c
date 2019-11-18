@@ -129,19 +129,17 @@ ExecLimit(PlanState *pstate)
 				 * we are at the end of the window, return NULL without
 				 * advancing the subplan or the position variable; but change
 				 * the state machine state to record having done so.
+				 *
+				 * Once at the end, ideally, we can shut down parallel
+				 * resources but that would destroy the parallel context which
+				 * would be required for rescans.  To do that, we need to find
+				 * a way to pass down more information about whether rescans
+				 * are possible.
 				 */
 				if (!node->noCount &&
 					node->position - node->offset >= node->count)
 				{
 					node->lstate = LIMIT_WINDOWEND;
-
-					/*
-					 * If we know we won't need to back up, we can release
-					 * resources at this point.
-					 */
-					if (!(node->ps.state->es_top_eflags & EXEC_FLAG_BACKWARD))
-						(void) ExecShutdownNode(outerPlan);
-
 					return NULL;
 				}
 
