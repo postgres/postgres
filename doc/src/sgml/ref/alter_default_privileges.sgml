@@ -106,9 +106,7 @@ REVOKE [ GRANT OPTION FOR ]
    You can change default privileges only for objects that will be created by
    yourself or by roles that you are a member of.  The privileges can be set
    globally (i.e., for all objects created in the current database),
-   or just for objects created in specified schemas.  Default privileges
-   that are specified per-schema are added to whatever the global default
-   privileges are for the particular object type.
+   or just for objects created in specified schemas.
   </para>
 
   <para>
@@ -118,6 +116,16 @@ REVOKE [ GRANT OPTION FOR ]
    <literal>PUBLIC</literal> as well.  However, this behavior can be changed by
    altering the global default privileges with
    <command>ALTER DEFAULT PRIVILEGES</command>.
+  </para>
+
+  <para>
+   Default privileges that are specified per-schema are added to whatever
+   the global default privileges are for the particular object type.
+   This means you cannot revoke privileges per-schema if they are granted
+   globally (either by default, or according to a previous <command>ALTER
+   DEFAULT PRIVILEGES</command> command that did not specify a schema).
+   Per-schema <literal>REVOKE</literal> is only useful to reverse the
+   effects of a previous per-schema <literal>GRANT</literal>.
   </para>
 
  <refsect2>
@@ -142,8 +150,8 @@ REVOKE [ GRANT OPTION FOR ]
       are altered for objects later created in that schema.
       If <literal>IN SCHEMA</literal> is omitted, the global default privileges
       are altered.
-      <literal>IN SCHEMA</literal> is not allowed when using <literal>ON SCHEMAS</literal>
-      as schemas can't be nested.
+      <literal>IN SCHEMA</literal> is not allowed when setting privileges
+      for schemas, since schemas can't be nested.
      </para>
     </listitem>
    </varlistentry>
@@ -212,10 +220,18 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLES FROM webuser
   <para>
    Remove the public EXECUTE permission that is normally granted on functions,
    for all functions subsequently created by role <literal>admin</literal>:
-
 <programlisting>
 ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
-</programlisting></para>
+</programlisting>
+   Note however that you <emphasis>cannot</emphasis> accomplish that effect
+   with a command limited to a single schema.  This command has no effect,
+   unless it is undoing a matching <literal>GRANT</literal>:
+<programlisting>
+ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
+</programlisting>
+   That's because per-schema default privileges can only add privileges to
+   the global setting, not remove privileges granted by it.
+  </para>
  </refsect1>
 
  <refsect1>
