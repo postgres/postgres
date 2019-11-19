@@ -198,6 +198,74 @@ select proname from pg_proc where proname ilike 'ri%foo' order by 1;
 reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
+-- Also check LIKE optimization with binary-compatible cases
+create temp table btree_bpchar (f1 text collate "C");
+create index on btree_bpchar(f1 bpchar_ops);
+insert into btree_bpchar values ('foo'), ('fool'), ('bar'), ('quux');
+-- doesn't match index:
+explain (costs off)
+select * from btree_bpchar where f1 like 'foo';
+          QUERY PLAN           
+-------------------------------
+ Seq Scan on btree_bpchar
+   Filter: (f1 ~~ 'foo'::text)
+(2 rows)
+
+select * from btree_bpchar where f1 like 'foo';
+ f1  
+-----
+ foo
+(1 row)
+
+explain (costs off)
+select * from btree_bpchar where f1 like 'foo%';
+           QUERY PLAN           
+--------------------------------
+ Seq Scan on btree_bpchar
+   Filter: (f1 ~~ 'foo%'::text)
+(2 rows)
+
+select * from btree_bpchar where f1 like 'foo%';
+  f1  
+------
+ foo
+ fool
+(2 rows)
+
+-- these do match the index:
+explain (costs off)
+select * from btree_bpchar where f1::bpchar like 'foo';
+                     QUERY PLAN                     
+----------------------------------------------------
+ Bitmap Heap Scan on btree_bpchar
+   Filter: ((f1)::bpchar ~~ 'foo'::text)
+   ->  Bitmap Index Scan on btree_bpchar_f1_idx
+         Index Cond: ((f1)::bpchar = 'foo'::bpchar)
+(4 rows)
+
+select * from btree_bpchar where f1::bpchar like 'foo';
+ f1  
+-----
+ foo
+(1 row)
+
+explain (costs off)
+select * from btree_bpchar where f1::bpchar like 'foo%';
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on btree_bpchar
+   Filter: ((f1)::bpchar ~~ 'foo%'::text)
+   ->  Bitmap Index Scan on btree_bpchar_f1_idx
+         Index Cond: (((f1)::bpchar >= 'foo'::bpchar) AND ((f1)::bpchar < 'fop'::bpchar))
+(4 rows)
+
+select * from btree_bpchar where f1::bpchar like 'foo%';
+  f1  
+------
+ foo
+ fool
+(2 rows)
+
 --
 -- Test B-tree fast path (cache rightmost leaf page) optimization.
 --

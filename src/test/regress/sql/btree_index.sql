@@ -83,6 +83,26 @@ reset enable_seqscan;
 reset enable_indexscan;
 reset enable_bitmapscan;
 
+-- Also check LIKE optimization with binary-compatible cases
+
+create temp table btree_bpchar (f1 text collate "C");
+create index on btree_bpchar(f1 bpchar_ops);
+insert into btree_bpchar values ('foo'), ('fool'), ('bar'), ('quux');
+-- doesn't match index:
+explain (costs off)
+select * from btree_bpchar where f1 like 'foo';
+select * from btree_bpchar where f1 like 'foo';
+explain (costs off)
+select * from btree_bpchar where f1 like 'foo%';
+select * from btree_bpchar where f1 like 'foo%';
+-- these do match the index:
+explain (costs off)
+select * from btree_bpchar where f1::bpchar like 'foo';
+select * from btree_bpchar where f1::bpchar like 'foo';
+explain (costs off)
+select * from btree_bpchar where f1::bpchar like 'foo%';
+select * from btree_bpchar where f1::bpchar like 'foo%';
+
 --
 -- Test B-tree fast path (cache rightmost leaf page) optimization.
 --
