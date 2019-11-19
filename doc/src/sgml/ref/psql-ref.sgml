@@ -4310,6 +4310,18 @@ testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%]%# '
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><literal>%w</literal></term>
+        <listitem>
+        <para>
+        Whitespace of the same width as the most recent output of
+        <varname>PROMPT1</varname>.  This can be used as a
+        <varname>PROMPT2</varname> setting, so that multi-line statements are
+        aligned with the first line, but there is no visible secondary prompt.
+        </para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
 
     To insert a percent sign into your prompt, write
