@@ -153,9 +153,6 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	page = BufferGetPage(dBuffer);
 	rightlink = GinPageGetOpaque(page)->rightlink;
 
-	/* For deleted page remember last xid which could knew its address */
-	GinPageSetDeleteXid(page, ReadNewTransactionId());
-
 	/*
 	 * Any insert which would have gone on the leaf block will now go to its
 	 * right sibling.
@@ -167,6 +164,9 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	/* Unlink the page by changing left sibling's rightlink */
 	page = BufferGetPage(lBuffer);
 	GinPageGetOpaque(page)->rightlink = rightlink;
+
+	/* For deleted page remember last xid which could knew its address */
+	GinPageSetDeleteXid(page, ReadNewTransactionId());
 
 	/* Delete downlink from parent */
 	parentPage = BufferGetPage(pBuffer);
