@@ -265,7 +265,7 @@ match_pattern_prefix(Node *leftop,
 	 * pattern-matching is not supported with nondeterministic collations. (We
 	 * could also error out here, but by doing it later we get more precise
 	 * error messages.)  (It should be possible to support at least
-	 * Pattern_Prefix_Exact, but no point as along as the actual
+	 * Pattern_Prefix_Exact, but no point as long as the actual
 	 * pattern-matching implementations don't support it.)
 	 *
 	 * expr_coll is not set for a non-collation-aware data type such as bytea.
@@ -357,13 +357,16 @@ match_pattern_prefix(Node *leftop,
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
+	 *
+	 * (Despite the checks above, we might fail to find a suitable operator in
+	 * some cases with binary-compatible opclasses.  Just punt if so.)
 	 */
 	if (pstatus == Pattern_Prefix_Exact)
 	{
 		oproid = get_opfamily_member(opfamily, ldatatype, rdatatype,
 									 BTEqualStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "no = operator for opfamily %u", opfamily);
+			return NIL;
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix,
 							 InvalidOid, indexcollation);
@@ -379,7 +382,7 @@ match_pattern_prefix(Node *leftop,
 	oproid = get_opfamily_member(opfamily, ldatatype, rdatatype,
 								 BTGreaterEqualStrategyNumber);
 	if (oproid == InvalidOid)
-		elog(ERROR, "no >= operator for opfamily %u", opfamily);
+		return NIL;
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix,
 						 InvalidOid, indexcollation);
@@ -396,7 +399,7 @@ match_pattern_prefix(Node *leftop,
 	oproid = get_opfamily_member(opfamily, ldatatype, rdatatype,
 								 BTLessStrategyNumber);
 	if (oproid == InvalidOid)
-		elog(ERROR, "no < operator for opfamily %u", opfamily);
+		return result;
 	fmgr_info(get_opcode(oproid), &ltproc);
 	greaterstr = make_greater_string(prefix, &ltproc, indexcollation);
 	if (greaterstr)
