@@ -215,6 +215,35 @@ fit on one pending-list page must have those pages to itself, even if this
 results in wasting much of the space on the preceding page and the last
 page for the tuple.)
 
+GIN packs downlinks and pivot keys into internal page tuples in a different way
+than nbtree does.  Lehman & Yao defines it as following.
+
+P_0, K_1, P_1, K_2, P_2, ... , K_n, P_n, K_{n+1}
+
+There P_i is a downlink and K_i is a key.  K_i splits key space between P_{i-1}
+and P_i (0 <= i <= n).  K_{n+1} is high key.
+
+In internal page tuple is key and downlink grouped together.  nbtree packs
+keys and downlinks into tuples as following.
+
+(K_{n+1}, None), (-Inf, P_0), (K_1, P_1), ... , (K_n, P_n)
+
+There tuples are shown in parentheses.  So, highkey is stored separately.  P_i
+is grouped with K_i.  P_0 is grouped with -Inf key.
+
+GIN packs keys and downlinks into tuples in a different way.
+
+(P_0, K_1), (P_1, K_2), ... , (P_n, K_{n+1})
+
+P_i is grouped with K_{i+1}.  -Inf key is not needed.
+
+There are couple of additional notes regarding K_{n+1} key.
+1) In entry tree rightmost page, a key coupled with P_n doesn't really matter.
+Highkey is assumed to be infinity.
+2) In posting tree, a key coupled with P_n always doesn't matter.  Highkey for
+non-rightmost pages is stored separately and accessed via
+GinDataPageGetRightBound().
+
 Posting tree
 ------------
 
@@ -277,50 +306,148 @@ followed by the packed items.
 Concurrency
 -----------
 
-The entry tree and each posting tree is a B-tree, with right-links connecting
-sibling pages at the same level. This is the same structure that is used in
+The entry tree and each posting tree are B-trees, with right-links connecting
+sibling pages at the same level.  This is the same structure that is used in
 the regular B-tree indexam (invented by Lehman & Yao), but we don't support
-scanning a GIN trees backwards, so we don't need left-links.
+scanning a GIN trees backwards, so we don't need left-links.  The entry tree
+leaves don't have dedicated high keys, instead greatest leaf tuple serves as
+high key.  That works because tuples are never deleted from the entry tree.
 
-To avoid deadlocks, B-tree pages must always be locked in the same order:
-left to right, and bottom to top. When searching, the tree is traversed from
-top to bottom, so the lock on the parent page must be released before
-descending to the next level. Concurrent page splits move the keyspace to
-right, so after following a downlink, the page actually containing the key
-we're looking for might be somewhere to the right of the page we landed on.
-In that case, we follow the right-links until we find the page we're looking
-for.
+The algorithms used to operate entry and posting trees are considered below.
 
-To delete a page, the page's left sibling, the target page, and its parent,
-are locked in that order, and the page is marked as deleted. However, a
-concurrent search might already have read a pointer to the page, and might be
-just about to follow it. A page can be reached via the right-link of its left
-sibling, or via its downlink in the parent.
+### Locating the leaf page
 
-To prevent a backend from reaching a deleted page via a right-link, when
-following a right-link the lock on the previous page is not released until
-the lock on next page has been acquired.
+When we search for leaf page in GIN btree to perform a read, we descend from
+the root page to the leaf through using downlinks taking pin and shared lock on
+one page at once.  So, we release pin and shared lock on previous page before
+getting them on the next page.
 
-The downlink is more tricky. A search descending the tree must release the
-lock on the parent page before locking the child, or it could deadlock with
-a concurrent split of the child page; a page split locks the parent, while
-already holding a lock on the child page. So, deleted page cannot be reclaimed
-immediately. Instead, we have to wait for every transaction, which might wait
-to reference this page, to finish. Corresponding processes must observe that
+The picture below shows tree state after finding the leaf page.  Lower case
+letters depicts tree pages.  'S' depicts shared lock on the page.
+
+               a
+           /   |   \
+       b       c       d
+     / | \     | \     | \
+   eS  f   g   h   i   j   k
+
+### Steping right
+
+Concurrent page splits move the keyspace to right, so after following a
+downlink, the page actually containing the key we're looking for might be
+somewhere to the right of the page we landed on.  In that case, we follow the
+right-links until we find the page we're looking for.
+
+During stepping right we take pin and shared lock on the right sibling before
+releasing them from the current page.  This mechanism was designed to protect
+from stepping to delete page.  We step to the right sibling while hold lock on
+the rightlink pointing there.  So, it's guaranteed that nobody updates rightlink
+concurrently and doesn't delete right sibling accordingly.
+
+The picture below shows two pages locked at once during stepping right.
+
+               a
+           /   |   \
+       b       c       d
+     / | \     | \     | \
+   eS  fS  g   h   i   j   k
+
+### Insert
+
+While finding appropriate leaf for insertion we also descend from the root to
+leaf, while shared locking one page at once in.  But during insertion we don't
+release pins from root and internal pages.  That could save us some lookups to
+the buffers hash table for downlinks insertion assuming parents are not changed
+due to concurrent splits.  Once we reach leaf we re-lock the page in exclusive
+mode.
+
+The picture below shows leaf page locked in exclusive mode and ready for
+insertion.  'P' and 'E' depict pin and exclusive lock correspondingly.
+
+
+               aP
+           /   |   \
+       b       cP      d
+     / | \     | \     | \
+   e   f   g   hE  i   j   k
+
+
+If insert causes a page split, the parent is locked in exclusive mode before
+unlocking the left child.  So, insertion algorithm can exclusively lock both
+parent and child pages at once starting from child.
+
+The picture below shows tree state after leaf page split.  'q' is new page
+produced by split.  Parent 'c' is about to have downlink inserted.
+
+                  aP
+            /     |   \
+       b          cE      d
+     / | \      / | \     | \
+   e   f   g  hE  q   i   j   k
+
+
+### Page deletion
+
+Vacuum never deletes tuples or pages from the entry tree. It traverses entry
+tree leafs in logical order by rightlinks and removes deletable TIDs from
+posting lists. Posting trees are processed by links from entry tree leafs. They
+are vacuumed in two stages.
+
+At first stage, ginVacuumPostingTreeLeaves() removes deletable TIDs are removed
+from leafs.  ginVacuumPostingTreeLeaves() traverses the whole tree in depth-first
+manner.  It starts from the super-exclusive lock on the tree root.  This lock
+prevents all the concurrent insertions into this tree while we're deleting
+pages.  However, there are still might be some in-progress readers, who traversed
+root before we locked it.
+
+The picture below shows tree during removing deletable TIDs from leftmost tree
+lead.
+
+               aE
+           /   |   \
+       bE      c       d
+     / | \     | \     | \
+   eE  f   g   h   i   j   k
+
+ginVacuumPostingTreeLeaves() algorithm keeps exclusive locks on pages comprising
+currently investigated path.
+
+If first stage detects at least one empty page, then at the second stage
+ginScanToDelete() deletes empty pages.  ginScanToDelete() keeps lock on the root
+acquired by ginVacuumPostingTreeLeaves().  It also traverses the whole tree in
+depth-first manner, but keeps one page exclusively locked at once.  That's safe
+because root lock guarantees there is no concurrent page modifications.  When
+page is about to be deleted, pages are relocked in following order: left,
+deletable, parent.  This order guarantees no deadlock with concurrent stepping
+right.
+
+The picture below shows tree state before deletion of page 'g'.
+
+               aE
+           /   |   \
+       bE      c       d
+     / | \     | \     | \
+   e   fE  gE  h   i   j   k
+
+A search concurrent to page deletion might already have read a pointer to the
+page to be deleted, and might be just about to follow it.  A page can be reached
+via the right-link of its left sibling, or via its downlink in the parent.
+
+To prevent a backend from reaching a deleted page via a right-link, stepping
+right algorithm doesn't release lock on the current page until lock of the
+right page is acquired.
+
+The downlink is more tricky.  A search descending the tree must release the lock
+on the parent page before locking the child, or it could deadlock with a
+concurrent split of the child page; a page split locks the parent, while already
+holding a lock on the child page.  So, deleted page cannot be reclaimed
+immediately.  Instead, we have to wait for every transaction, which might wait
+to reference this page, to finish.  Corresponding processes must observe that
 the page is marked deleted and recover accordingly.
 
-The previous paragraph's reasoning only applies to searches, and only to
-posting trees. To protect from inserters following a downlink to a deleted
-page, vacuum simply locks out all concurrent insertions to the posting tree,
-by holding a super-exclusive lock on the posting tree root. Inserters hold a
-pin on the root page, but searches do not, so while new searches cannot begin
-while root page is locked, any already-in-progress scans can continue
-concurrently with vacuum. In the entry tree, we never delete pages.
-
-(This is quite different from the mechanism the btree indexam uses to make
-page-deletions safe; it stamps the deleted pages with an XID and keeps the
-deleted pages around with the right-link intact until all concurrent scans
-have finished.)
+During the replay of page deletion at standby, the page's left sibling, the
+target page, and its parent, are locked in that order.  This order guarantees
+no deadlock with concurrent reads.
 
 Compatibility
 -------------
