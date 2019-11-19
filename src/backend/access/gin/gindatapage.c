@@ -238,6 +238,9 @@ dataIsMoveRight(GinBtree btree, Page page)
 	if (GinPageRightMost(page))
 		return false;
 
+	if (GinPageIsDeleted(page))
+		return true;
+
 	return (ginCompareItemPointers(&btree->itemptr, iptr) > 0) ? true : false;
 }
 
