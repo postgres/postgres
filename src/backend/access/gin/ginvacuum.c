@@ -186,7 +186,7 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	 * we shouldn't change rightlink field to save workability of running
 	 * search scan
 	 */
-	GinPageGetOpaque(page)->flags = GIN_DELETED;
+	GinPageSetDeleted(page);
 
 	MarkBufferDirty(pBuffer);
 	MarkBufferDirty(lBuffer);
