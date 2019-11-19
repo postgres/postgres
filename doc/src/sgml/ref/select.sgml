@@ -274,6 +274,14 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
    </para>
 
    <para>
+    When there are multiple queries in the <literal>WITH</literal>
+    clause, <literal>RECURSIVE</literal> should be written only once,
+    immediately after <literal>WITH</literal>.  It applies to all queries
+    in the <literal>WITH</literal> clause, though it has no effect on
+    queries that do not use recursion or forward references.
+   </para>
+
+   <para>
     The primary query and the <literal>WITH</literal> queries are all
     (notionally) executed at the same time.  This implies that the effects of
     a data-modifying statement in <literal>WITH</literal> cannot be seen from
