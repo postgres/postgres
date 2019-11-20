@@ -91,7 +91,8 @@ static Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 												  Selectivity *rest_selec);
 static Selectivity prefix_selectivity(PlannerInfo *root,
 									  VariableStatData *vardata,
-									  Oid vartype, Oid opfamily, Const *prefixcon);
+									  Oid eqopr, Oid ltopr, Oid geopr,
+									  Const *prefixcon);
 static Selectivity like_selectivity(const char *patt, int pattlen,
 									bool case_insensitive);
 static Selectivity regex_selectivity(const char *patt, int pattlen,
@@ -470,7 +471,10 @@ patternsel_common(PlannerInfo *root,
 	Datum		constval;
 	Oid			consttype;
 	Oid			vartype;
-	Oid			opfamily;
+	Oid			rdatatype;
+	Oid			eqopr;
+	Oid			ltopr;
+	Oid			geopr;
 	Pattern_Prefix_Status pstatus;
 	Const	   *patt;
 	Const	   *prefix = NULL;
@@ -527,29 +531,51 @@ patternsel_common(PlannerInfo *root,
 	/*
 	 * Similarly, the exposed type of the left-hand side should be one of
 	 * those we know.  (Do not look at vardata.atttype, which might be
-	 * something binary-compatible but different.)	We can use it to choose
-	 * the index opfamily from which we must draw the comparison operators.
+	 * something binary-compatible but different.)	We can use it to identify
+	 * the comparison operators and the required type of the comparison
+	 * constant, much as in match_pattern_prefix().
 	 *
-	 * NOTE: It would be more correct to use the PATTERN opfamilies than the
-	 * simple ones, but at the moment ANALYZE will not generate statistics for
-	 * the PATTERN operators.  But our results are so approximate anyway that
-	 * it probably hardly matters.
+	 * NOTE: this logic does not consider collations.  Ideally we'd force use
+	 * of "C" collation, but since ANALYZE only generates statistics for the
+	 * column's specified collation, we have little choice but to use those.
+	 * But our results are so approximate anyway that it probably hardly
+	 * matters.
 	 */
 	vartype = vardata.vartype;
 
 	switch (vartype)
 	{
 		case TEXTOID:
+			eqopr = TextEqualOperator;
+			ltopr = TextLessOperator;
+			geopr = TextGreaterEqualOperator;
+			rdatatype = TEXTOID;
+			break;
 		case NAMEOID:
-			opfamily = TEXT_BTREE_FAM_OID;
+
+			/*
+			 * Note that here, we need the RHS type to be text, so that the
+			 * comparison value isn't improperly truncated to NAMEDATALEN.
+			 */
+			eqopr = NameEqualTextOperator;
+			ltopr = NameLessTextOperator;
+			geopr = NameGreaterEqualTextOperator;
+			rdatatype = TEXTOID;
 			break;
 		case BPCHAROID:
-			opfamily = BPCHAR_BTREE_FAM_OID;
+			eqopr = BpcharEqualOperator;
+			ltopr = BpcharLessOperator;
+			geopr = BpcharGreaterEqualOperator;
+			rdatatype = BPCHAROID;
 			break;
 		case BYTEAOID:
-			opfamily = BYTEA_BTREE_FAM_OID;
+			eqopr = ByteaEqualOperator;
+			ltopr = ByteaLessOperator;
+			geopr = ByteaGreaterEqualOperator;
+			rdatatype = BYTEAOID;
 			break;
 		default:
+			/* Can't get here unless we're attached to the wrong operator */
 			ReleaseVariableStats(vardata);
 			return result;
 	}
@@ -579,41 +605,23 @@ patternsel_common(PlannerInfo *root,
 								   &prefix, &rest_selec);
 
 	/*
-	 * If necessary, coerce the prefix constant to the right type.
+	 * If necessary, coerce the prefix constant to the right type.  The only
+	 * case where we need to do anything is when converting text to bpchar.
+	 * Those two types are binary-compatible, so relabeling the Const node is
+	 * sufficient.
 	 */
-	if (prefix && prefix->consttype != vartype)
+	if (prefix && prefix->consttype != rdatatype)
 	{
-		char	   *prefixstr;
-
-		switch (prefix->consttype)
-		{
-			case TEXTOID:
-				prefixstr = TextDatumGetCString(prefix->constvalue);
-				break;
-			case BYTEAOID:
-				prefixstr = DatumGetCString(DirectFunctionCall1(byteaout,
-																prefix->constvalue));
-				break;
-			default:
-				elog(ERROR, "unrecognized consttype: %u",
-					 prefix->consttype);
-				ReleaseVariableStats(vardata);
-				return result;
-		}
-		prefix = string_to_const(prefixstr, vartype);
-		pfree(prefixstr);
+		Assert(prefix->consttype == TEXTOID &&
+			   rdatatype == BPCHAROID);
+		prefix->consttype = rdatatype;
 	}
 
 	if (pstatus == Pattern_Prefix_Exact)
 	{
 		/*
-		 * Pattern specifies an exact match, so pretend operator is '='
+		 * Pattern specifies an exact match, so estimate as for '='
 		 */
-		Oid			eqopr = get_opfamily_member(opfamily, vartype, vartype,
-												BTEqualStrategyNumber);
-
-		if (eqopr == InvalidOid)
-			elog(ERROR, "no = operator for opfamily %u", opfamily);
 		result = var_eq_const(&vardata, eqopr, prefix->constvalue,
 							  false, true, false);
 	}
@@ -656,8 +664,9 @@ patternsel_common(PlannerInfo *root,
 			Selectivity prefixsel;
 
 			if (pstatus == Pattern_Prefix_Partial)
-				prefixsel = prefix_selectivity(root, &vardata, vartype,
-											   opfamily, prefix);
+				prefixsel = prefix_selectivity(root, &vardata,
+											   eqopr, ltopr, geopr,
+											   prefix);
 			else
 				prefixsel = 1.0;
 			heursel = prefixsel * rest_selec;
@@ -1181,15 +1190,14 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
  * Estimate the selectivity of a fixed prefix for a pattern match.
  *
  * A fixed prefix "foo" is estimated as the selectivity of the expression
- * "variable >= 'foo' AND variable < 'fop'" (see also indxpath.c).
+ * "variable >= 'foo' AND variable < 'fop'".
  *
  * The selectivity estimate is with respect to the portion of the column
  * population represented by the histogram --- the caller must fold this
  * together with info about MCVs and NULLs.
  *
- * We use the >= and < operators from the specified btree opfamily to do the
- * estimation.  The given variable and Const must be of the associated
- * datatype.
+ * We use the specified btree comparison operators to do the estimation.
+ * The given variable and Const must be of the associated datatype(s).
  *
  * XXX Note: we make use of the upper bound to estimate operator selectivity
  * even if the locale is such that we cannot rely on the upper-bound string.
@@ -1198,20 +1206,17 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
  */
 static Selectivity
 prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
-				   Oid vartype, Oid opfamily, Const *prefixcon)
+				   Oid eqopr, Oid ltopr, Oid geopr,
+				   Const *prefixcon)
 {
 	Selectivity prefixsel;
-	Oid			cmpopr;
 	FmgrInfo	opproc;
 	AttStatsSlot sslot;
 	Const	   *greaterstrcon;
 	Selectivity eq_sel;
 
-	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-								 BTGreaterEqualStrategyNumber);
-	if (cmpopr == InvalidOid)
-		elog(ERROR, "no >= operator for opfamily %u", opfamily);
-	fmgr_info(get_opcode(cmpopr), &opproc);
+	/* Estimate the selectivity of "x >= prefix" */
+	fmgr_info(get_opcode(geopr), &opproc);
 
 	prefixsel = ineq_histogram_selectivity(root, vardata,
 										   &opproc, true, true,
@@ -1237,11 +1242,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 		 /* sslot.stacoll is set up */ ;
 	else
 		sslot.stacoll = DEFAULT_COLLATION_OID;
-	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-								 BTLessStrategyNumber);
-	if (cmpopr == InvalidOid)
-		elog(ERROR, "no < operator for opfamily %u", opfamily);
-	fmgr_info(get_opcode(cmpopr), &opproc);
+	fmgr_info(get_opcode(ltopr), &opproc);
 	greaterstrcon = make_greater_string(prefixcon, &opproc, sslot.stacoll);
 	if (greaterstrcon)
 	{
@@ -1277,11 +1278,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	 * probably off the end of the histogram, and thus we probably got a very
 	 * small estimate from the >= condition; so we still need to clamp.
 	 */
-	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
-								 BTEqualStrategyNumber);
-	if (cmpopr == InvalidOid)
-		elog(ERROR, "no = operator for opfamily %u", opfamily);
-	eq_sel = var_eq_const(vardata, cmpopr, prefixcon->constvalue,
+	eq_sel = var_eq_const(vardata, eqopr, prefixcon->constvalue,
 						  false, true, false);
 
 	prefixsel = Max(prefixsel, eq_sel);
