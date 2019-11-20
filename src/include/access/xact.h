@@ -239,7 +239,7 @@ typedef struct xl_xact_subxacts
 
 typedef struct xl_xact_relfilenodes
 {
-	int			nrels;			/* number of subtransaction XIDs */
+	int			nrels;			/* number of relations */
 	RelFileNode xnodes[FLEXIBLE_ARRAY_MEMBER];
 } xl_xact_relfilenodes;
 #define MinSizeOfXactRelfilenodes offsetof(xl_xact_relfilenodes, xnodes)
