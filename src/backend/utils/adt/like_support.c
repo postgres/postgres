@@ -39,6 +39,7 @@
 #include "access/htup_details.h"
 #include "access/stratnum.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -240,7 +241,10 @@ match_pattern_prefix(Node *leftop,
 	Pattern_Prefix_Status pstatus;
 	Oid			ldatatype;
 	Oid			rdatatype;
-	Oid			oproid;
+	Oid			eqopr;
+	Oid			ltopr;
+	Oid			geopr;
+	bool		collation_aware;
 	Expr	   *expr;
 	FmgrInfo	ltproc;
 	Const	   *greaterstr;
@@ -284,62 +288,89 @@ match_pattern_prefix(Node *leftop,
 		return NIL;
 
 	/*
-	 * Must also check that index's opfamily supports the operators we will
-	 * want to apply.  (A hash index, for example, will not support ">=".)
-	 * Currently, only btree and spgist support the operators we need.
-	 *
-	 * Note: actually, in the Pattern_Prefix_Exact case, we only need "=" so a
-	 * hash index would work.  Currently it doesn't seem worth checking for
-	 * that, however.
-	 *
-	 * We insist on the opfamily being one of the specific ones we expect,
-	 * else we'd do the wrong thing if someone were to make a reverse-sort
-	 * opfamily with the same operators.
-	 *
-	 * The non-pattern opclasses will not sort the way we need in most non-C
-	 * locales.  We can use such an index anyway for an exact match (simple
-	 * equality), but not for prefix-match cases.  Note that here we are
-	 * looking at the index's collation, not the expression's collation --
-	 * this test is *not* dependent on the LIKE/regex operator's collation.
-	 *
-	 * While we're at it, identify the type the comparison constant(s) should
-	 * have, based on the opfamily.
+	 * Identify the operators we want to use, based on the type of the
+	 * left-hand argument.  Usually these are just the type's regular
+	 * comparison operators, but if we are considering one of the semi-legacy
+	 * "pattern" opclasses, use the "pattern" operators instead.  Those are
+	 * not collation-sensitive but always use C collation, as we want.  The
+	 * selected operators also determine the needed type of the prefix
+	 * constant.
 	 */
-	switch (opfamily)
+	ldatatype = exprType(leftop);
+	switch (ldatatype)
 	{
-		case TEXT_BTREE_FAM_OID:
-			if (!(pstatus == Pattern_Prefix_Exact ||
-				  lc_collate_is_c(indexcollation)))
-				return NIL;
+		case TEXTOID:
+			if (opfamily == TEXT_PATTERN_BTREE_FAM_OID ||
+				opfamily == TEXT_SPGIST_FAM_OID)
+			{
+				eqopr = TextEqualOperator;
+				ltopr = TextPatternLessOperator;
+				geopr = TextPatternGreaterEqualOperator;
+				collation_aware = false;
+			}
+			else
+			{
+				eqopr = TextEqualOperator;
+				ltopr = TextLessOperator;
+				geopr = TextGreaterEqualOperator;
+				collation_aware = true;
+			}
 			rdatatype = TEXTOID;
 			break;
+		case NAMEOID:
 
-		case TEXT_PATTERN_BTREE_FAM_OID:
-		case TEXT_SPGIST_FAM_OID:
+			/*
+			 * Note that here, we need the RHS type to be text, so that the
+			 * comparison value isn't improperly truncated to NAMEDATALEN.
+			 */
+			eqopr = NameEqualTextOperator;
+			ltopr = NameLessTextOperator;
+			geopr = NameGreaterEqualTextOperator;
+			collation_aware = true;
 			rdatatype = TEXTOID;
 			break;
-
-		case BPCHAR_BTREE_FAM_OID:
-			if (!(pstatus == Pattern_Prefix_Exact ||
-				  lc_collate_is_c(indexcollation)))
-				return NIL;
+		case BPCHAROID:
+			if (opfamily == BPCHAR_PATTERN_BTREE_FAM_OID)
+			{
+				eqopr = BpcharEqualOperator;
+				ltopr = BpcharPatternLessOperator;
+				geopr = BpcharPatternGreaterEqualOperator;
+				collation_aware = false;
+			}
+			else
+			{
+				eqopr = BpcharEqualOperator;
+				ltopr = BpcharLessOperator;
+				geopr = BpcharGreaterEqualOperator;
+				collation_aware = true;
+			}
 			rdatatype = BPCHAROID;
 			break;
-
-		case BPCHAR_PATTERN_BTREE_FAM_OID:
-			rdatatype = BPCHAROID;
-			break;
-
-		case BYTEA_BTREE_FAM_OID:
+		case BYTEAOID:
+			eqopr = ByteaEqualOperator;
+			ltopr = ByteaLessOperator;
+			geopr = ByteaGreaterEqualOperator;
+			collation_aware = false;
 			rdatatype = BYTEAOID;
 			break;
-
 		default:
+			/* Can't get here unless we're attached to the wrong operator */
 			return NIL;
 	}
 
-	/* OK, prepare to create the indexqual(s) */
-	ldatatype = exprType(leftop);
+	/*
+	 * If necessary, verify that the index's collation behavior is compatible.
+	 * For an exact-match case, we don't have to be picky.  Otherwise, insist
+	 * that the index collation be "C".  Note that here we are looking at the
+	 * index's collation, not the expression's collation -- this test is *not*
+	 * dependent on the LIKE/regex operator's collation.
+	 */
+	if (collation_aware)
+	{
+		if (!(pstatus == Pattern_Prefix_Exact ||
+			  lc_collate_is_c(indexcollation)))
+			return NIL;
+	}
 
 	/*
 	 * If necessary, coerce the prefix constant to the right type.  The given
@@ -358,16 +389,17 @@ match_pattern_prefix(Node *leftop,
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
 	 *
-	 * (Despite the checks above, we might fail to find a suitable operator in
-	 * some cases with binary-compatible opclasses.  Just punt if so.)
+	 * Here and below, check to see whether the desired operator is actually
+	 * supported by the index opclass, and fail quietly if not.  This allows
+	 * us to not be concerned with specific opclasses (except for the legacy
+	 * "pattern" cases); any index that correctly implements the operators
+	 * will work.
 	 */
 	if (pstatus == Pattern_Prefix_Exact)
 	{
-		oproid = get_opfamily_member(opfamily, ldatatype, rdatatype,
-									 BTEqualStrategyNumber);
-		if (oproid == InvalidOid)
+		if (!op_in_opfamily(eqopr, opfamily))
 			return NIL;
-		expr = make_opclause(oproid, BOOLOID, false,
+		expr = make_opclause(eqopr, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix,
 							 InvalidOid, indexcollation);
 		result = list_make1(expr);
@@ -379,11 +411,9 @@ match_pattern_prefix(Node *leftop,
 	 *
 	 * We can always say "x >= prefix".
 	 */
-	oproid = get_opfamily_member(opfamily, ldatatype, rdatatype,
-								 BTGreaterEqualStrategyNumber);
-	if (oproid == InvalidOid)
+	if (!op_in_opfamily(geopr, opfamily))
 		return NIL;
-	expr = make_opclause(oproid, BOOLOID, false,
+	expr = make_opclause(geopr, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix,
 						 InvalidOid, indexcollation);
 	result = list_make1(expr);
@@ -396,15 +426,13 @@ match_pattern_prefix(Node *leftop,
 	 * using a C-locale index collation.
 	 *-------
 	 */
-	oproid = get_opfamily_member(opfamily, ldatatype, rdatatype,
-								 BTLessStrategyNumber);
-	if (oproid == InvalidOid)
+	if (!op_in_opfamily(ltopr, opfamily))
 		return result;
-	fmgr_info(get_opcode(oproid), &ltproc);
+	fmgr_info(get_opcode(ltopr), &ltproc);
 	greaterstr = make_greater_string(prefix, &ltproc, indexcollation);
 	if (greaterstr)
 	{
-		expr = make_opclause(oproid, BOOLOID, false,
+		expr = make_opclause(ltopr, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr,
 							 InvalidOid, indexcollation);
 		result = lappend(result, expr);
