@@ -7635,7 +7635,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
      <row>
       <entry><literal>verify-ca</literal></entry>
       <entry>Yes</entry>
-      <entry><literal>Depends on CA</literal>-policy</entry>
+      <entry>Depends on CA policy</entry>
       <entry>I want my data encrypted, and I accept the overhead. I want to be
        sure that I connect to a server that I trust.
       </entry>
