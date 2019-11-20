@@ -41,6 +41,9 @@ pg_pread(int fd, void *buf, size_t size, off_t offset)
 	overlapped.Offset = offset;
 	if (!ReadFile(handle, buf, size, &result, &overlapped))
 	{
+		if (GetLastError() == ERROR_HANDLE_EOF)
+			return 0;
+
 		_dosmaperr(GetLastError());
 		return -1;
 	}
