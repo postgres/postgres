@@ -1411,10 +1411,11 @@ movedb(const char *dbname, const char *tblspcname)
 		xl_dbase_drop_rec xlrec;
 
 		xlrec.db_id = db_id;
-		xlrec.tablespace_id = src_tblspcoid;
+		xlrec.ntablespaces = 1;
 
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, sizeof(xl_dbase_drop_rec));
+		XLogRegisterData((char *) &src_tblspcoid, sizeof(Oid));
 
 		(void) XLogInsert(RM_DBASE_ID,
 						  XLOG_DBASE_DROP | XLR_SPECIAL_REL_UPDATE);
@@ -1946,6 +1947,11 @@ remove_dbtablespaces(Oid db_id)
 	Relation	rel;
 	TableScanDesc scan;
 	HeapTuple	tuple;
+	List		*ltblspc = NIL;
+	ListCell	*cell;
+	int		ntblspc;
+	int		i;
+	Oid		*tablespace_ids;
 
 	rel = table_open(TableSpaceRelationId, AccessShareLock);
 	scan = table_beginscan_catalog(rel, 0, NULL);
@@ -1974,22 +1980,40 @@ remove_dbtablespaces(Oid db_id)
 					(errmsg("some useless files may be left behind in old database directory \"%s\"",
 							dstpath)));
 
-		/* Record the filesystem change in XLOG */
-		{
-			xl_dbase_drop_rec xlrec;
-
-			xlrec.db_id = db_id;
-			xlrec.tablespace_id = dsttablespace;
-
-			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec, sizeof(xl_dbase_drop_rec));
-
-			(void) XLogInsert(RM_DBASE_ID,
-							  XLOG_DBASE_DROP | XLR_SPECIAL_REL_UPDATE);
-		}
-
+		ltblspc = lappend_oid(ltblspc, dsttablespace);
 		pfree(dstpath);
 	}
+
+	ntblspc = list_length(ltblspc);
+	if (ntblspc == 0)
+	{
+		table_endscan(scan);
+		table_close(rel, AccessShareLock);
+		return;
+	}
+
+	tablespace_ids = (Oid *) palloc(ntblspc * sizeof(Oid));
+	i = 0;
+	foreach(cell, ltblspc)
+		tablespace_ids[i++] = lfirst_oid(cell);
+
+	/* Record the filesystem change in XLOG */
+	{
+		xl_dbase_drop_rec xlrec;
+
+		xlrec.db_id = db_id;
+		xlrec.ntablespaces = ntblspc;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, MinSizeOfDbaseDropRec);
+		XLogRegisterData((char *) tablespace_ids, ntblspc * sizeof(Oid));
+
+		(void) XLogInsert(RM_DBASE_ID,
+						  XLOG_DBASE_DROP | XLR_SPECIAL_REL_UPDATE);
+	}
+
+	list_free(ltblspc);
+	pfree(tablespace_ids);
 
 	table_endscan(scan);
 	table_close(rel, AccessShareLock);
@@ -2197,8 +2221,7 @@ dbase_redo(XLogReaderState *record)
 	{
 		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) XLogRecGetData(record);
 		char	   *dst_path;
-
-		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
+		int			i;
 
 		if (InHotStandby)
 		{
@@ -2228,11 +2251,17 @@ dbase_redo(XLogReaderState *record)
 		/* Clean out the xlog relcache too */
 		XLogDropDatabase(xlrec->db_id);
 
-		/* And remove the physical files */
-		if (!rmtree(dst_path, true))
-			ereport(WARNING,
-					(errmsg("some useless files may be left behind in old database directory \"%s\"",
-							dst_path)));
+		for (i = 0; i < xlrec->ntablespaces; i++)
+		{
+			dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_ids[i]);
+
+			/* And remove the physical files */
+			if (!rmtree(dst_path, true))
+				ereport(WARNING,
+						(errmsg("some useless files may be left behind in old database directory \"%s\"",
+								dst_path)));
+			pfree(dst_path);
+		}
 
 		if (InHotStandby)
 		{
