@@ -102,6 +102,7 @@
 #include <math.h>
 
 #include "access/brin.h"
+#include "access/brin_page.h"
 #include "access/gin.h"
 #include "access/htup_details.h"
 #include "access/relscan.h"
@@ -8148,11 +8149,31 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 							  &spc_seq_page_cost);
 
 	/*
-	 * Obtain some data from the index itself.
+	 * Obtain some data from the index itself, if possible.  Otherwise invent
+	 * some plausible internal statistics based on the relation page count.
 	 */
-	indexRel = index_open(index->indexoid, AccessShareLock);
-	brinGetStats(indexRel, &statsData);
-	index_close(indexRel, AccessShareLock);
+	if (!index->hypothetical)
+	{
+		indexRel = index_open(index->indexoid, AccessShareLock);
+		brinGetStats(indexRel, &statsData);
+		index_close(indexRel, AccessShareLock);
+
+		/* work out the actual number of ranges in the index */
+		indexRanges = Max(ceil((double) baserel->pages /
+							   statsData.pagesPerRange), 1.0);
+	}
+	else
+	{
+		/*
+		 * Assume default number of pages per range, and estimate the number
+		 * of ranges based on that.
+		 */
+		indexRanges = Max(ceil((double) baserel->pages /
+							   BRIN_DEFAULT_PAGES_PER_RANGE), 1.0);
+
+		statsData.pagesPerRange = BRIN_DEFAULT_PAGES_PER_RANGE;
+		statsData.revmapNumPages = (indexRanges / REVMAP_PAGE_MAXITEMS) + 1;
+	}
 
 	/*
 	 * Compute index correlation
@@ -8252,10 +8273,6 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	qualSelectivity = clauselist_selectivity(root, indexQuals,
 											 baserel->relid,
 											 JOIN_INNER, NULL);
-
-	/* work out the actual number of ranges in the index */
-	indexRanges = Max(ceil((double) baserel->pages / statsData.pagesPerRange),
-					  1.0);
 
 	/*
 	 * Now calculate the minimum possible ranges we could match with if all of
