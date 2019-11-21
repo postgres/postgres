@@ -659,11 +659,7 @@ extern Datum Int64GetDatum(int64 X);
 /*
  * DatumGetFloat4
  *		Returns 4-byte floating point value of a datum.
- *
- * Note: this macro hides whether float4 is pass by value or by reference.
  */
-
-#ifdef USE_FLOAT4_BYVAL
 static inline float4
 DatumGetFloat4(Datum X)
 {
@@ -676,18 +672,11 @@ DatumGetFloat4(Datum X)
 	myunion.value = DatumGetInt32(X);
 	return myunion.retval;
 }
-#else
-#define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
-#endif
 
 /*
  * Float4GetDatum
  *		Returns datum representation for a 4-byte floating point number.
- *
- * Note: if float4 is pass by reference, this function returns a reference
- * to palloc'd space.
  */
-#ifdef USE_FLOAT4_BYVAL
 static inline Datum
 Float4GetDatum(float4 X)
 {
@@ -700,9 +689,6 @@ Float4GetDatum(float4 X)
 	myunion.value = X;
 	return Int32GetDatum(myunion.retval);
 }
-#else
-extern Datum Float4GetDatum(float4 X);
-#endif
 
 /*
  * DatumGetFloat8
@@ -757,10 +743,9 @@ extern Datum Float8GetDatum(float8 X);
 /*
  * Int64GetDatumFast
  * Float8GetDatumFast
- * Float4GetDatumFast
  *
  * These macros are intended to allow writing code that does not depend on
- * whether int64, float8, float4 are pass-by-reference types, while not
+ * whether int64 and float8 are pass-by-reference types, while not
  * sacrificing performance when they are.  The argument must be a variable
  * that will exist and have the same value for as long as the Datum is needed.
  * In the pass-by-ref case, the address of the variable is taken to use as
@@ -774,12 +759,6 @@ extern Datum Float8GetDatum(float8 X);
 #else
 #define Int64GetDatumFast(X)  PointerGetDatum(&(X))
 #define Float8GetDatumFast(X) PointerGetDatum(&(X))
-#endif
-
-#ifdef USE_FLOAT4_BYVAL
-#define Float4GetDatumFast(X) Float4GetDatum(X)
-#else
-#define Float4GetDatumFast(X) PointerGetDatum(&(X))
 #endif
 
 #endif							/* POSTGRES_H */

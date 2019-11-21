@@ -215,7 +215,7 @@
 
 { oid => '700', array_type_oid => '1021',
   descr => 'single-precision floating point number, 4-byte storage',
-  typname => 'float4', typlen => '4', typbyval => 'FLOAT4PASSBYVAL',
+  typname => 'float4', typlen => '4', typbyval => 't',
   typcategory => 'N', typinput => 'float4in', typoutput => 'float4out',
   typreceive => 'float4recv', typsend => 'float4send', typalign => 'i' },
 { oid => '701', array_type_oid => '1022',

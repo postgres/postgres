@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1201
+#define PG_CONTROL_VERSION	1300
 
 /* Nonce key length, see below */
 #define MOCK_AUTH_NONCE_LEN		32
@@ -214,8 +214,6 @@ typedef struct ControlFileData
 	uint32		toast_max_chunk_size;	/* chunk size in TOAST tables */
 	uint32		loblksize;		/* chunk size in pg_largeobject */
 
-	/* flags indicating pass-by-value status of various types */
-	bool		float4ByVal;	/* float4 pass-by-value? */
 	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
 
 	/* Are data pages protected by checksums? Zero if no checksum version */

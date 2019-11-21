@@ -365,15 +365,6 @@ incompatible_module_error(const char *libname,
 						 magic_data.namedatalen,
 						 module_magic_data->namedatalen);
 	}
-	if (module_magic_data->float4byval != magic_data.float4byval)
-	{
-		if (details.len)
-			appendStringInfoChar(&details, '\n');
-		appendStringInfo(&details,
-						 _("Server has FLOAT4PASSBYVAL = %s, library has %s."),
-						 magic_data.float4byval ? "true" : "false",
-						 module_magic_data->float4byval ? "true" : "false");
-	}
 	if (module_magic_data->float8byval != magic_data.float8byval)
 	{
 		if (details.len)

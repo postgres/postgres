@@ -19965,11 +19965,6 @@ SELECT collation for ('foo' COLLATE "de_DE");
       </row>
 
       <row>
-       <entry><literal>float4_pass_by_value</literal></entry>
-       <entry><type>boolean</type></entry>
-      </row>
-
-      <row>
        <entry><literal>float8_pass_by_value</literal></entry>
        <entry><type>boolean</type></entry>
       </row>

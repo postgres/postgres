@@ -4516,7 +4516,6 @@ WriteControlFile(void)
 	ControlFile->toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 	ControlFile->loblksize = LOBLKSIZE;
 
-	ControlFile->float4ByVal = FLOAT4PASSBYVAL;
 	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
 
 	/* Contents are protected with a CRC */
@@ -4719,22 +4718,6 @@ ReadControlFile(void)
 						   " but the server was compiled with LOBLKSIZE %d.",
 						   ControlFile->loblksize, (int) LOBLKSIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
-
-#ifdef USE_FLOAT4_BYVAL
-	if (ControlFile->float4ByVal != true)
-		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized without USE_FLOAT4_BYVAL"
-						   " but the server was compiled with USE_FLOAT4_BYVAL."),
-				 errhint("It looks like you need to recompile or initdb.")));
-#else
-	if (ControlFile->float4ByVal != false)
-		ereport(FATAL,
-				(errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with USE_FLOAT4_BYVAL"
-						   " but the server was compiled without USE_FLOAT4_BYVAL."),
-				 errhint("It looks like you need to recompile or initdb.")));
-#endif
 
 #ifdef USE_FLOAT8_BYVAL
 	if (ControlFile->float8ByVal != true)

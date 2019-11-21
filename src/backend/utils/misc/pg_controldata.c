@@ -264,8 +264,8 @@ pg_control_recovery(PG_FUNCTION_ARGS)
 Datum
 pg_control_init(PG_FUNCTION_ARGS)
 {
-	Datum		values[12];
-	bool		nulls[12];
+	Datum		values[11];
+	bool		nulls[11];
 	TupleDesc	tupdesc;
 	HeapTuple	htup;
 	ControlFileData *ControlFile;
@@ -294,11 +294,9 @@ pg_control_init(PG_FUNCTION_ARGS)
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "large_object_chunk_size",
 					   INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "float4_pass_by_value",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "float8_pass_by_value",
 					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "float8_pass_by_value",
-					   BOOLOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "data_page_checksum_version",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "data_page_checksum_version",
 					   INT4OID, -1, 0);
 	tupdesc = BlessTupleDesc(tupdesc);
 
@@ -335,14 +333,11 @@ pg_control_init(PG_FUNCTION_ARGS)
 	values[8] = Int32GetDatum(ControlFile->loblksize);
 	nulls[8] = false;
 
-	values[9] = BoolGetDatum(ControlFile->float4ByVal);
+	values[9] = BoolGetDatum(ControlFile->float8ByVal);
 	nulls[9] = false;
 
-	values[10] = BoolGetDatum(ControlFile->float8ByVal);
+	values[10] = Int32GetDatum(ControlFile->data_checksum_version);
 	nulls[10] = false;
-
-	values[11] = Int32GetDatum(ControlFile->data_checksum_version);
-	nulls[11] = false;
 
 	htup = heap_form_tuple(tupdesc, values, nulls);
 

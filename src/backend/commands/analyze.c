@@ -1496,7 +1496,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 				/* XXX knows more than it should about type float4: */
 				arry = construct_array(numdatums, nnum,
 									   FLOAT4OID,
-									   sizeof(float4), FLOAT4PASSBYVAL, 'i');
+									   sizeof(float4), true, 'i');
 				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
 			}
 			else

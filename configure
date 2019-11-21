@@ -866,7 +866,6 @@ with_system_tzdata
 with_zlib
 with_gnu_ld
 enable_largefile
-enable_float4_byval
 enable_float8_byval
 '
       ac_precious_vars='build_alias
@@ -1525,7 +1524,6 @@ Optional Features:
   --enable-cassert        enable assertion checks (for debugging)
   --disable-thread-safety disable thread-safety in client libraries
   --disable-largefile     omit support for large files
-  --disable-float4-byval  disable float4 passed by value
   --disable-float8-byval  disable float8 passed by value
 
 Optional Packages:
@@ -16745,46 +16743,6 @@ cat >>confdefs.h <<_ACEOF
 #define SIZEOF_LONG $ac_cv_sizeof_long
 _ACEOF
 
-
-
-# Decide whether float4 is passed by value: user-selectable, enabled by default
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with float4 passed by value" >&5
-$as_echo_n "checking whether to build with float4 passed by value... " >&6; }
-
-
-# Check whether --enable-float4-byval was given.
-if test "${enable_float4_byval+set}" = set; then :
-  enableval=$enable_float4_byval;
-  case $enableval in
-    yes)
-
-$as_echo "#define USE_FLOAT4_BYVAL 1" >>confdefs.h
-
-               float4passbyval=true
-      ;;
-    no)
-      float4passbyval=false
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --enable-float4-byval option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  enable_float4_byval=yes
-
-$as_echo "#define USE_FLOAT4_BYVAL 1" >>confdefs.h
-
-               float4passbyval=true
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_float4_byval" >&5
-$as_echo "$enable_float4_byval" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define FLOAT4PASSBYVAL $float4passbyval
-_ACEOF
 
 
 # Decide whether float8 is passed by value.

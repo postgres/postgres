@@ -1941,16 +1941,6 @@ AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([long])
 
-# Decide whether float4 is passed by value: user-selectable, enabled by default
-AC_MSG_CHECKING([whether to build with float4 passed by value])
-PGAC_ARG_BOOL(enable, float4-byval, yes, [disable float4 passed by value],
-              [AC_DEFINE([USE_FLOAT4_BYVAL], 1,
-                         [Define to 1 if you want float4 values to be passed by value. (--enable-float4-byval)])
-               float4passbyval=true],
-              [float4passbyval=false])
-AC_MSG_RESULT([$enable_float4_byval])
-AC_DEFINE_UNQUOTED([FLOAT4PASSBYVAL], [$float4passbyval], [float4 values are passed by value if 'true', by reference if 'false'])
-
 # Decide whether float8 is passed by value.
 # Note: this setting also controls int8 and related types such as timestamp.
 # If sizeof(Datum) >= 8, this is user-selectable, enabled by default.

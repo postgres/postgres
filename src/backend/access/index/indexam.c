@@ -879,11 +879,6 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 		else if (orderByTypes[i] == FLOAT4OID)
 		{
 			/* convert distance function's result to ORDER BY type */
-#ifndef USE_FLOAT4_BYVAL
-			/* must free any old value to avoid memory leakage */
-			if (!scan->xs_orderbynulls[i])
-				pfree(DatumGetPointer(scan->xs_orderbyvals[i]));
-#endif
 			if (distances && !distances[i].isnull)
 			{
 				scan->xs_orderbyvals[i] = Float4GetDatum((float4) distances[i].value);

@@ -446,7 +446,6 @@ typedef struct
 	int			funcmaxargs;	/* FUNC_MAX_ARGS */
 	int			indexmaxkeys;	/* INDEX_MAX_KEYS */
 	int			namedatalen;	/* NAMEDATALEN */
-	int			float4byval;	/* FLOAT4PASSBYVAL */
 	int			float8byval;	/* FLOAT8PASSBYVAL */
 } Pg_magic_struct;
 
@@ -458,7 +457,6 @@ typedef struct
 	FUNC_MAX_ARGS, \
 	INDEX_MAX_KEYS, \
 	NAMEDATALEN, \
-	FLOAT4PASSBYVAL, \
 	FLOAT8PASSBYVAL \
 }
 

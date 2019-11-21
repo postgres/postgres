@@ -10660,9 +10660,9 @@
   descr => 'pg_controldata init state information as a function',
   proname => 'pg_control_init', provolatile => 'v', prorettype => 'record',
   proargtypes => '',
-  proallargtypes => '{int4,int4,int4,int4,int4,int4,int4,int4,int4,bool,bool,int4}',
-  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o,o}',
-  proargnames => '{max_data_alignment,database_block_size,blocks_per_segment,wal_block_size,bytes_per_wal_segment,max_identifier_length,max_index_columns,max_toast_chunk_size,large_object_chunk_size,float4_pass_by_value,float8_pass_by_value,data_page_checksum_version}',
+  proallargtypes => '{int4,int4,int4,int4,int4,int4,int4,int4,int4,bool,int4}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o,o,o}',
+  proargnames => '{max_data_alignment,database_block_size,blocks_per_segment,wal_block_size,bytes_per_wal_segment,max_identifier_length,max_index_columns,max_toast_chunk_size,large_object_chunk_size,float8_pass_by_value,data_page_checksum_version}',
   prosrc => 'pg_control_init' },
 
 # collation management functions

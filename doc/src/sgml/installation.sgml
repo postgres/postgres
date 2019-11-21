@@ -1205,18 +1205,6 @@ build-postgresql:
       </varlistentry>
 
       <varlistentry>
-       <term><option>--disable-float4-byval</option></term>
-       <listitem>
-        <para>
-         Disable passing float4 values <quote>by value</quote>, causing them
-         to be passed <quote>by reference</quote> instead.  This option costs
-         performance, but may be needed for compatibility with very old
-         user-defined functions written in C.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--disable-float8-byval</option></term>
        <listitem>
         <para>

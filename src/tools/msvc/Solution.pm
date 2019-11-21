@@ -31,8 +31,6 @@ sub _new
 	$self->DeterminePlatform();
 	my $bits = $self->{platform} eq 'Win32' ? 32 : 64;
 
-	$options->{float4byval} = 1
-	  unless exists $options->{float4byval};
 	$options->{float8byval} = ($bits == 64)
 	  unless exists $options->{float8byval};
 	die "float8byval not permitted on 32 bit platforms"
@@ -209,15 +207,6 @@ sub GenerateFiles
 		print $o "#define XLOG_BLCKSZ ",
 		  1024 * $self->{options}->{wal_blocksize}, "\n";
 
-		if ($self->{options}->{float4byval})
-		{
-			print $o "#define USE_FLOAT4_BYVAL 1\n";
-			print $o "#define FLOAT4PASSBYVAL true\n";
-		}
-		else
-		{
-			print $o "#define FLOAT4PASSBYVAL false\n";
-		}
 		if ($self->{options}->{float8byval})
 		{
 			print $o "#define USE_FLOAT8_BYVAL 1\n";

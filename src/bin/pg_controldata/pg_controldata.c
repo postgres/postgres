@@ -327,8 +327,6 @@ main(int argc, char *argv[])
 	/* This is no longer configurable, but users may still expect to see it: */
 	printf(_("Date/time type storage:               %s\n"),
 		   _("64-bit integers"));
-	printf(_("Float4 argument passing:              %s\n"),
-		   (ControlFile->float4ByVal ? _("by value") : _("by reference")));
 	printf(_("Float8 argument passing:              %s\n"),
 		   (ControlFile->float8ByVal ? _("by value") : _("by reference")));
 	printf(_("Data page checksum version:           %u\n"),
