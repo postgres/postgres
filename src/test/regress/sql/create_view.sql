@@ -391,6 +391,12 @@ select pg_get_viewdef('vv1', true);
 alter table tt5 drop column c;
 select pg_get_viewdef('vv1', true);
 
+create view v4 as select * from v1;
+alter view v1 rename column a to x;
+select pg_get_viewdef('v1', true);
+select pg_get_viewdef('v4', true);
+
+
 -- Unnamed FULL JOIN USING is lots of fun too
 
 create table tt7 (x int, xx int, y int);

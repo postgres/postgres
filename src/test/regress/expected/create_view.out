@@ -64,6 +64,7 @@ ERROR:  cannot drop columns from view
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT 1, * FROM viewtest_tbl;
 ERROR:  cannot change name of view column "a" to "?column?"
+HINT:  Use ALTER VIEW ... RENAME COLUMN ... to change name of view column instead.
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT a, b::numeric FROM viewtest_tbl;
@@ -1189,6 +1190,29 @@ select pg_get_viewdef('vv1', true);
       CROSS JOIN tt6) j(aa, bb, cc_1, cc, dd);
 (1 row)
 
+create view v4 as select * from v1;
+alter view v1 rename column a to x;
+select pg_get_viewdef('v1', true);
+                  pg_get_viewdef                   
+---------------------------------------------------
+  SELECT tt2.b,                                   +
+     tt3.c,                                       +
+     tt2.a AS x,                                  +
+     tt3.ax                                       +
+    FROM tt2                                      +
+      JOIN tt3 tt3(ax, b, c, c_1, e) USING (b, c);
+(1 row)
+
+select pg_get_viewdef('v4', true);
+ pg_get_viewdef 
+----------------
+  SELECT v1.b, +
+     v1.c,     +
+     v1.x AS a,+
+     v1.ax     +
+    FROM v1;
+(1 row)
+
 -- Unnamed FULL JOIN USING is lots of fun too
 create table tt7 (x int, xx int, y int);
 alter table tt7 drop column xx;
@@ -1782,7 +1806,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 63 other objects
+NOTICE:  drop cascades to 64 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -1818,6 +1842,7 @@ drop cascades to view v3
 drop cascades to table tt5
 drop cascades to table tt6
 drop cascades to view vv1
+drop cascades to view v4
 drop cascades to table tt7
 drop cascades to table tt8
 drop cascades to view vv2

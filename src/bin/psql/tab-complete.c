@@ -1797,8 +1797,20 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("TO");
 	/* ALTER VIEW <name> */
 	else if (Matches("ALTER", "VIEW", MatchAny))
-		COMPLETE_WITH("ALTER COLUMN", "OWNER TO", "RENAME TO",
+		COMPLETE_WITH("ALTER COLUMN", "OWNER TO", "RENAME",
 					  "SET SCHEMA");
+	/* ALTER VIEW xxx RENAME */
+	else if (Matches("ALTER", "VIEW", MatchAny, "RENAME"))
+		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN' UNION SELECT 'TO'");
+	else if (Matches("ALTER", "VIEW", MatchAny, "ALTER|RENAME", "COLUMN"))
+		COMPLETE_WITH_ATTR(prev3_wd, "");
+	/* ALTER VIEW xxx RENAME yyy */
+	else if (Matches("ALTER", "VIEW", MatchAny, "RENAME", MatchAnyExcept("TO")))
+		COMPLETE_WITH("TO");
+	/* ALTER VIEW xxx RENAME COLUMN yyy */
+	else if (Matches("ALTER", "VIEW", MatchAny, "RENAME", "COLUMN", MatchAnyExcept("TO")))
+		COMPLETE_WITH("TO");
+
 	/* ALTER MATERIALIZED VIEW <name> */
 	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny))
 		COMPLETE_WITH("ALTER COLUMN", "CLUSTER ON", "DEPENDS ON EXTENSION",
