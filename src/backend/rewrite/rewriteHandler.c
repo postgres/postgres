@@ -17,6 +17,7 @@
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "foreign/fdwapi.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
@@ -2517,6 +2518,11 @@ view_cols_are_auto_updatable(Query *viewquery,
  * non-NULL, then only the specified columns are considered when testing for
  * updatability.
  *
+ * Unlike the preceding functions, this does recurse to look at a view's
+ * base relations, so it needs to detect recursion.  To do that, we pass
+ * a list of currently-considered outer relations.  External callers need
+ * only pass NIL.
+ *
  * This is used for the information_schema views, which have separate concepts
  * of "updatable" and "trigger updatable".  A relation is "updatable" if it
  * can be updated without the need for triggers (either because it has a
@@ -2535,6 +2541,7 @@ view_cols_are_auto_updatable(Query *viewquery,
  */
 int
 relation_is_updatable(Oid reloid,
+					  List *outer_reloids,
 					  bool include_triggers,
 					  Bitmapset *include_cols)
 {
@@ -2543,6 +2550,9 @@ relation_is_updatable(Oid reloid,
 	RuleLock   *rulelocks;
 
 #define ALL_EVENTS ((1 << CMD_INSERT) | (1 << CMD_UPDATE) | (1 << CMD_DELETE))
+
+	/* Since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
 
 	rel = try_relation_open(reloid, AccessShareLock);
 
@@ -2554,6 +2564,13 @@ relation_is_updatable(Oid reloid,
 	 */
 	if (rel == NULL)
 		return 0;
+
+	/* If we detect a recursive view, report that it is not updatable */
+	if (list_member_oid(outer_reloids, RelationGetRelid(rel)))
+	{
+		relation_close(rel, AccessShareLock);
+		return 0;
+	}
 
 	/* If the relation is a table, it is always updatable */
 	if (rel->rd_rel->relkind == RELKIND_RELATION)
@@ -2673,11 +2690,15 @@ relation_is_updatable(Oid reloid,
 			if (base_rte->relkind != RELKIND_RELATION)
 			{
 				baseoid = base_rte->relid;
+				outer_reloids = lcons_oid(RelationGetRelid(rel),
+										  outer_reloids);
 				include_cols = adjust_view_column_set(updatable_cols,
 													  viewquery->targetList);
 				auto_events &= relation_is_updatable(baseoid,
+													 outer_reloids,
 													 include_triggers,
 													 include_cols);
+				outer_reloids = list_delete_first(outer_reloids);
 			}
 			events |= auto_events;
 		}
