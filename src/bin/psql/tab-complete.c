@@ -1801,9 +1801,22 @@ psql_completion(const char *text, int start, int end)
 					  "SET SCHEMA");
 	/* ALTER MATERIALIZED VIEW <name> */
 	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny))
-		COMPLETE_WITH("ALTER COLUMN", "OWNER TO", "RENAME TO",
-					  "SET SCHEMA");
-
+		COMPLETE_WITH("ALTER COLUMN", "CLUSTER ON", "DEPENDS ON EXTENSION",
+					  "OWNER TO", "RENAME", "RESET (", "SET");
+	/* ALTER MATERIALIZED VIEW xxx RENAME */
+	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "RENAME"))
+		COMPLETE_WITH_ATTR(prev2_wd, " UNION SELECT 'COLUMN' UNION SELECT 'TO'");
+	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "ALTER|RENAME", "COLUMN"))
+		COMPLETE_WITH_ATTR(prev3_wd, "");
+	/* ALTER MATERIALIZED VIEW xxx RENAME yyy */
+	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "RENAME", MatchAnyExcept("TO")))
+		COMPLETE_WITH("TO");
+	/* ALTER MATERIALIZED VIEW xxx RENAME COLUMN yyy */
+	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "RENAME", "COLUMN", MatchAnyExcept("TO")))
+		COMPLETE_WITH("TO");
+	/* ALTER MATERIALIZED VIEW xxx SET */
+	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "SET"))
+		COMPLETE_WITH("(", "SCHEMA", "TABLESPACE", "WITHOUT CLUSTER");
 	/* ALTER POLICY <name> */
 	else if (Matches("ALTER", "POLICY"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_policies);
