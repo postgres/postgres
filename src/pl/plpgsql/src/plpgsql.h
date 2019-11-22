@@ -234,6 +234,7 @@ typedef struct PLpgSQL_expr
 	int			expr_simple_generation; /* plancache generation we checked */
 	Oid			expr_simple_type;	/* result type Oid, if simple */
 	int32		expr_simple_typmod; /* result typmod, if simple */
+	bool		expr_simple_mutable;	/* true if simple expr is mutable */
 
 	/*
 	 * if expr is simple AND prepared in current transaction,
