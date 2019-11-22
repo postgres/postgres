@@ -363,13 +363,19 @@ slot_store_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 }
 
 /*
- * Modify slot with user data provided as C strings.
+ * Replace selected columns with user data provided as C strings.
  * This is somewhat similar to heap_modify_tuple but also calls the type
- * input function on the user data as the input is the text representation
- * of the types.
+ * input functions on the user data.
+ * "slot" is filled with a copy of the tuple in "srcslot", with
+ * columns selected by the "replaces" array replaced with data values
+ * from "values".
+ * Caution: unreplaced pass-by-ref columns in "slot" will point into the
+ * storage for "srcslot".  This is OK for current usage, but someday we may
+ * need to materialize "slot" at the end to make it independent of "srcslot".
  */
 static void
-slot_modify_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
+slot_modify_cstrings(TupleTableSlot *slot, TupleTableSlot *srcslot,
+					 LogicalRepRelMapEntry *rel,
 					 char **values, bool *replaces)
 {
 	int			natts = slot->tts_tupleDescriptor->natts;
@@ -377,10 +383,19 @@ slot_modify_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 	SlotErrCallbackArg errarg;
 	ErrorContextCallback errcallback;
 
-	slot_getallattrs(slot);
+	/* We'll fill "slot" with a virtual tuple, so we must start with ... */
 	ExecClearTuple(slot);
 
-	/* Push callback + info on the error context stack */
+	/*
+	 * Copy all the column data from srcslot, so that we'll have valid values
+	 * for unreplaced columns.
+	 */
+	Assert(natts == srcslot->tts_tupleDescriptor->natts);
+	slot_getallattrs(srcslot);
+	memcpy(slot->tts_values, srcslot->tts_values, natts * sizeof(Datum));
+	memcpy(slot->tts_isnull, srcslot->tts_isnull, natts * sizeof(bool));
+
+	/* For error reporting, push callback + info on the error context stack */
 	errarg.rel = rel;
 	errarg.local_attnum = -1;
 	errarg.remote_attnum = -1;
@@ -428,6 +443,7 @@ slot_modify_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
 
+	/* And finally, declare that "slot" contains a valid virtual tuple */
 	ExecStoreVirtualTuple(slot);
 }
 
@@ -740,8 +756,8 @@ apply_handle_update(StringInfo s)
 	{
 		/* Process and store remote tuple in the slot */
 		oldctx = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
-		ExecCopySlot(remoteslot, localslot);
-		slot_modify_cstrings(remoteslot, rel, newtup.values, newtup.changed);
+		slot_modify_cstrings(remoteslot, localslot, rel,
+							 newtup.values, newtup.changed);
 		MemoryContextSwitchTo(oldctx);
 
 		EvalPlanQualSetSlot(&epqstate, remoteslot);
