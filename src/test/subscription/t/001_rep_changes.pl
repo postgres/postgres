@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 20;
+use Test::More tests => 22;
 
 # Initialize publisher node
 my $node_publisher = get_new_node('publisher');
@@ -168,9 +168,38 @@ is( $result, qq(local|1.1|baz|1
 local|2.2|bar|2),
 	'update works with different column order and subscriber local values');
 
+# check behavior with toasted values
+
+$node_publisher->safe_psql('postgres',
+	"UPDATE tab_mixed SET b = repeat('xyzzy', 100000) WHERE a = 2");
+
+$node_publisher->wait_for_catchup('tap_sub');
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT a, length(b), c, d FROM tab_mixed ORDER BY a");
+is( $result, qq(1|3|1.1|local
+2|500000|2.2|local),
+	'update transmits large column value');
+
+$node_publisher->safe_psql('postgres',
+	"UPDATE tab_mixed SET c = 3.3 WHERE a = 2");
+
+$node_publisher->wait_for_catchup('tap_sub');
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT a, length(b), c, d FROM tab_mixed ORDER BY a");
+is( $result, qq(1|3|1.1|local
+2|500000|3.3|local),
+	'update with non-transmitted large column value');
+
 # check behavior with dropped columns
 
+# this update should get transmitted before the column goes away
+$node_publisher->safe_psql('postgres',
+	"UPDATE tab_mixed SET b = 'bar', c = 2.2 WHERE a = 2");
+
 $node_publisher->safe_psql('postgres', "ALTER TABLE tab_mixed DROP COLUMN b");
+
 $node_publisher->safe_psql('postgres',
 	"UPDATE tab_mixed SET c = 11.11 WHERE a = 1");
 
