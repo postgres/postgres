@@ -3508,7 +3508,8 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf,
 		{
 			unsigned int ql = query_buf->len;
 
-			if (ql == 0 || query_buf->data[ql - 1] != '\n')
+			/* force newline-termination of what we send to editor */
+			if (ql > 0 && query_buf->data[ql - 1] != '\n')
 			{
 				appendPQExpBufferChar(query_buf, '\n');
 				ql++;

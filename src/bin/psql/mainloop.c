@@ -47,6 +47,7 @@ MainLoop(FILE *source)
 	volatile int successResult = EXIT_SUCCESS;
 	volatile backslashResult slashCmdStatus = PSQL_CMD_UNKNOWN;
 	volatile promptStatus_t prompt_status = PROMPT_READY;
+	volatile bool need_redisplay = false;
 	volatile int count_eof = 0;
 	volatile bool die_on_error = false;
 	FILE	   *prev_cmd_source;
@@ -118,6 +119,7 @@ MainLoop(FILE *source)
 			count_eof = 0;
 			slashCmdStatus = PSQL_CMD_UNKNOWN;
 			prompt_status = PROMPT_READY;
+			need_redisplay = false;
 			pset.stmt_lineno = 1;
 			cancel_pressed = false;
 
@@ -152,6 +154,18 @@ MainLoop(FILE *source)
 			/* May need to reset prompt, eg after \r command */
 			if (query_buf->len == 0)
 				prompt_status = PROMPT_READY;
+			/* If query buffer came from \e, redisplay it with a prompt */
+			if (need_redisplay)
+			{
+				if (query_buf->len > 0)
+				{
+					fputs(get_prompt(PROMPT_READY, cond_stack), stdout);
+					fputs(query_buf->data, stdout);
+					fflush(stdout);
+				}
+				need_redisplay = false;
+			}
+			/* Now we can fetch a line */
 			line = gets_interactive(get_prompt(prompt_status, cond_stack),
 									query_buf);
 		}
@@ -518,6 +532,10 @@ MainLoop(FILE *source)
 				{
 					/* should not see this in inactive branch */
 					Assert(conditional_active(cond_stack));
+					/* ensure what came back from editing ends in a newline */
+					if (query_buf->len > 0 &&
+						query_buf->data[query_buf->len - 1] != '\n')
+						appendPQExpBufferChar(query_buf, '\n');
 					/* rescan query_buf as new input */
 					psql_scan_finish(scan_state);
 					free(line);
@@ -529,6 +547,8 @@ MainLoop(FILE *source)
 									pset.encoding, standard_strings());
 					line_saved_in_history = false;
 					prompt_status = PROMPT_READY;
+					/* we'll want to redisplay after parsing what we have */
+					need_redisplay = true;
 				}
 				else if (slashCmdStatus == PSQL_CMD_TERMINATE)
 					break;

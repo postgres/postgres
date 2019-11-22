@@ -1831,9 +1831,13 @@ testdb=&gt;
         the normal rules of <application>psql</application>, treating the
         whole buffer as a single line.  Any complete queries are immediately
         executed; that is, if the query buffer contains or ends with a
-        semicolon, everything up to that point is executed.  Whatever remains
-        will wait in the query buffer; type semicolon or <literal>\g</literal> to
-        send it, or <literal>\r</literal> to cancel it by clearing the query buffer.
+        semicolon, everything up to that point is executed and removed from
+        the query buffer.  Whatever remains in the query buffer is
+        redisplayed.  Type semicolon or <literal>\g</literal> to send it,
+        or <literal>\r</literal> to cancel it by clearing the query buffer.
+        </para>
+
+        <para>
         Treating the buffer as a single line primarily affects meta-commands:
         whatever is in the buffer after a meta-command will be taken as
         argument(s) to the meta-command, even if it spans multiple lines.
@@ -1893,7 +1897,8 @@ Tue Oct 26 21:40:57 CEST 1999
          in the form of a <command>CREATE OR REPLACE FUNCTION</command> or
          <command>CREATE OR REPLACE PROCEDURE</command> command.
          Editing is done in the same way as for <literal>\edit</literal>.
-         After the editor exits, the updated command waits in the query buffer;
+         After the editor exits, the updated command is executed immediately
+         if you added a semicolon to it.  Otherwise it is redisplayed;
          type semicolon or <literal>\g</literal> to send it, or <literal>\r</literal>
          to cancel.
         </para>
@@ -1969,7 +1974,8 @@ Tue Oct 26 21:40:57 CEST 1999
          This command fetches and edits the definition of the named view,
          in the form of a <command>CREATE OR REPLACE VIEW</command> command.
          Editing is done in the same way as for <literal>\edit</literal>.
-         After the editor exits, the updated command waits in the query buffer;
+         After the editor exits, the updated command is executed immediately
+         if you added a semicolon to it.  Otherwise it is redisplayed;
          type semicolon or <literal>\g</literal> to send it, or <literal>\r</literal>
          to cancel.
         </para>
