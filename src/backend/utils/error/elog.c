@@ -846,8 +846,6 @@ errbacktrace(void)
 	ErrorData   *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
 
-	Assert(false);
-
 	recursion_depth++;
 	CHECK_STACK_DEPTH();
 	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
