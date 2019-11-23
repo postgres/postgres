@@ -37,6 +37,10 @@
  * creation or altering, because OAT_POST_CREATE or OAT_POST_ALTER are
  * sufficient for extensions to track these kind of checks.
  *
+ * OAT_TRUNCATE should be invoked just before truncation of objects. This
+ * event is equivalent to truncate permission on a relation under the
+ * default access control mechanism.
+ *
  * Other types may be added in the future.
  */
 typedef enum ObjectAccessType
@@ -45,7 +49,8 @@ typedef enum ObjectAccessType
 	OAT_DROP,
 	OAT_POST_ALTER,
 	OAT_NAMESPACE_SEARCH,
-	OAT_FUNCTION_EXECUTE
+	OAT_FUNCTION_EXECUTE,
+	OAT_TRUNCATE
 } ObjectAccessType;
 
 /*
@@ -131,6 +136,7 @@ extern void RunObjectPostCreateHook(Oid classId, Oid objectId, int subId,
 									bool is_internal);
 extern void RunObjectDropHook(Oid classId, Oid objectId, int subId,
 							  int dropflags);
+extern void RunObjectTruncateHook(Oid objectId);
 extern void RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
 								   Oid auxiliaryId, bool is_internal);
 extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation);
@@ -158,6 +164,12 @@ extern void RunFunctionExecuteHook(Oid objectId);
 		if (object_access_hook)										\
 			RunObjectDropHook((classId),(objectId),(subId),			\
 							  (dropflags));							\
+	} while(0)
+
+#define InvokeObjectTruncateHook(objectId)							\
+	do {															\
+		if (object_access_hook)										\
+			RunObjectTruncateHook(objectId);						\
 	} while(0)
 
 #define InvokeObjectPostAlterHook(classId,objectId,subId)			\
