@@ -188,6 +188,20 @@ sepgsql_object_access(ObjectAccessType access,
 			}
 			break;
 
+		case OAT_TRUNCATE:
+			{
+				switch (classId)
+				{
+					case RelationRelationId:
+						sepgsql_relation_truncate(objectId);
+						break;
+					default:
+						/* Ignore unsupported object classes */
+						break;
+				}
+			}
+			break;
+
 		case OAT_POST_ALTER:
 			{
 				ObjectAccessPostAlter *pa_arg = arg;

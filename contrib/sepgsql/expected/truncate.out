@@ -1,0 +1,46 @@
+--
+-- Regression Test for TRUNCATE
+--
+--
+-- Setup
+--
+CREATE TABLE julio_claudians (name text, birth_date date);
+SECURITY LABEL ON TABLE julio_claudians IS 'system_u:object_r:sepgsql_regtest_foo_table_t:s0';
+INSERT INTO julio_claudians VALUES ('Augustus', 'September 23, 63 BC'), ('Tiberius', 'November 16, 42 BC'), ('Caligula', 'August 31, 0012'), ('Claudius', 'August 1, 0010'), ('Nero', 'December 15, 0037');
+CREATE TABLE flavians (name text, birth_date date);
+SECURITY LABEL ON TABLE flavians IS 'system_u:object_r:sepgsql_table_t:s0';
+INSERT INTO flavians VALUES ('Vespasian', 'November 17, 0009'), ('Titus', 'December 30, 0039'), ('Domitian', 'October 24, 0051');
+SELECT * from julio_claudians;
+   name   |  birth_date   
+----------+---------------
+ Augustus | 09-23-0063 BC
+ Tiberius | 11-16-0042 BC
+ Caligula | 08-31-0012
+ Claudius | 08-01-0010
+ Nero     | 12-15-0037
+(5 rows)
+
+SELECT * from flavians;
+   name    | birth_date 
+-----------+------------
+ Vespasian | 11-17-0009
+ Titus     | 12-30-0039
+ Domitian  | 10-24-0051
+(3 rows)
+
+TRUNCATE TABLE julio_claudians;			-- ok
+TRUNCATE TABLE flavians;			-- failed
+ERROR:  SELinux: security policy violation
+SELECT * from julio_claudians;
+ name | birth_date 
+------+------------
+(0 rows)
+
+SELECT * from flavians;
+   name    | birth_date 
+-----------+------------
+ Vespasian | 11-17-0009
+ Titus     | 12-30-0039
+ Domitian  | 10-24-0051
+(3 rows)
+

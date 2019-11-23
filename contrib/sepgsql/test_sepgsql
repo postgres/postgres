@@ -287,6 +287,20 @@ echo "found ${NUM}"
 echo
 echo "============== running sepgsql regression tests       =============="
 
-make REGRESS="label dml ddl alter misc" REGRESS_OPTS="--launcher ./launcher" installcheck
+tests="label dml ddl alter misc"
 
+# Check if the truncate permission exists in the loaded policy, and if so,
+# run the truncate test
+#
+# Testing the TRUNCATE regression test can be done by manually adding
+# the permission with CIL if necessary:
+#     sudo semodule -cE base
+#     sudo sed -i -E 's/(class db_table.*?) \)/\1 truncate\)/' base.cil
+#     sudo semodule -i base.cil
+
+if [ -f /sys/fs/selinux/class/db_table/perms/truncate ]; then
+	tests+=" truncate"
+fi
+
+make REGRESS="$tests" REGRESS_OPTS="--launcher ./launcher" installcheck
 # exit with the exit code provided by "make"

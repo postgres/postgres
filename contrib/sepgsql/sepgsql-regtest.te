@@ -152,6 +152,14 @@ allow sepgsql_regtest_var_t sepgsql_regtest_var_table_t:db_tuple { select update
 
 optional_policy(`
 	gen_require(`
+		class db_table { truncate };
+	')
+
+	allow sepgsql_regtest_superuser_t sepgsql_regtest_foo_table_t:db_table { truncate };
+')
+
+optional_policy(`
+	gen_require(`
 		role unconfined_r;
 	')
 	postgresql_role(unconfined_r, sepgsql_regtest_foo_t)

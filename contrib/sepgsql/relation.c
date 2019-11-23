@@ -517,6 +517,46 @@ sepgsql_relation_drop(Oid relOid)
 }
 
 /*
+ * sepgsql_relation_truncate
+ *
+ * Check privileges to TRUNCATE the supplied relation.
+ */
+void
+sepgsql_relation_truncate(Oid relOid)
+{
+	ObjectAddress object;
+	char	   *audit_name;
+	uint16_t	tclass = 0;
+	char		relkind = get_rel_relkind(relOid);
+
+	switch (relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_PARTITIONED_TABLE:
+			tclass = SEPG_CLASS_DB_TABLE;
+			break;
+		default:
+			/* ignore other relkinds */
+			return;
+	}
+
+	/*
+	 * check db_table:{truncate} permission
+	 */
+	object.classId = RelationRelationId;
+	object.objectId = relOid;
+	object.objectSubId = 0;
+	audit_name = getObjectIdentity(&object);
+
+	sepgsql_avc_check_perms(&object,
+							tclass,
+							SEPG_DB_TABLE__TRUNCATE,
+							audit_name,
+							true);
+	pfree(audit_name);
+}
+
+/*
  * sepgsql_relation_relabel
  *
  * It checks privileges to relabel the supplied relation by the `seclabel'.

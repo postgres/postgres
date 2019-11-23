@@ -360,6 +360,9 @@ static struct
 				"lock", SEPG_DB_TABLE__LOCK
 			},
 			{
+				"truncate", SEPG_DB_TABLE__TRUNCATE
+			},
+			{
 				NULL, 0UL
 			},
 		}

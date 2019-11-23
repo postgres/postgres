@@ -145,6 +145,7 @@
 #define SEPG_DB_TABLE__INSERT				(1<<8)
 #define SEPG_DB_TABLE__DELETE				(1<<9)
 #define SEPG_DB_TABLE__LOCK					(1<<10)
+#define SEPG_DB_TABLE__TRUNCATE				(1<<11)
 
 #define SEPG_DB_SEQUENCE__CREATE			(SEPG_DB_DATABASE__CREATE)
 #define SEPG_DB_SEQUENCE__DROP				(SEPG_DB_DATABASE__DROP)
@@ -312,6 +313,7 @@ extern void sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 extern void sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum);
 extern void sepgsql_relation_post_create(Oid relOid);
 extern void sepgsql_relation_drop(Oid relOid);
+extern void sepgsql_relation_truncate(Oid relOid);
 extern void sepgsql_relation_relabel(Oid relOid, const char *seclabel);
 extern void sepgsql_relation_setattr(Oid relOid);
 
