@@ -112,6 +112,11 @@ BEGIN
 
 	# Must be set early
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
+	if ($windows_os)
+	{
+		require Win32API::File;
+		Win32API::File->import(qw(createFile OsFHandleOpen CloseHandle));
+	}
 }
 
 =pod
@@ -394,10 +399,24 @@ sub slurp_file
 {
 	my ($filename) = @_;
 	local $/;
-	open(my $in, '<', $filename)
-	  or die "could not read \"$filename\": $!";
-	my $contents = <$in>;
-	close $in;
+	my $contents;
+	if (!$windows_os)
+	{
+		open(my $in, '<', $filename)
+		  or die "could not read \"$filename\": $!";
+		$contents = <$in>;
+		close $in;
+	}
+	else
+	{
+		my $fHandle = createFile($filename, "r", "rwd")
+		  or die "could not open \"$filename\": $^E";
+		OsFHandleOpen(my $fh = IO::Handle->new(), $fHandle, 'r')
+		  or die "could not read \"$filename\": $^E\n";
+		$contents = <$fh>;
+		CloseHandle($fHandle)
+		  or die "could not close \"$filename\": $^E\n";
+	}
 	$contents =~ s/\r//g if $Config{osname} eq 'msys';
 	return $contents;
 }
