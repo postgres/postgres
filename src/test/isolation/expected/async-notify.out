@@ -1,4 +1,4 @@
-Parsed test spec with 2 sessions
+Parsed test spec with 3 sessions
 
 starting permutation: listenc notify1 notify2 notify3 notifyf
 step listenc: LISTEN c1; LISTEN c2;
@@ -82,6 +82,17 @@ x
 listener: NOTIFY "c1" with payload "" from notifier
 listener: NOTIFY "c2" with payload "payload" from notifier
 listener: NOTIFY "c2" with payload "" from notifier
+
+starting permutation: l2listen l2begin notify1 lbegins llisten lcommit l2commit l2stop
+step l2listen: LISTEN c1;
+step l2begin: BEGIN;
+step notify1: NOTIFY c1;
+step lbegins: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step llisten: LISTEN c1; LISTEN c2;
+step lcommit: COMMIT;
+step l2commit: COMMIT;
+listener2: NOTIFY "c1" with payload "" from notifier
+step l2stop: UNLISTEN *;
 
 starting permutation: llisten lbegin usage bignotify usage
 step llisten: LISTEN c1; LISTEN c2;
