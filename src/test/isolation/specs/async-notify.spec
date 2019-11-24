@@ -41,7 +41,17 @@ session "listener"
 step "llisten"	{ LISTEN c1; LISTEN c2; }
 step "lcheck"	{ SELECT 1 AS x; }
 step "lbegin"	{ BEGIN; }
+step "lbegins"	{ BEGIN ISOLATION LEVEL SERIALIZABLE; }
+step "lcommit"	{ COMMIT; }
 teardown		{ UNLISTEN *; }
+
+# In some tests we need a second listener, just to block the queue.
+
+session "listener2"
+step "l2listen"	{ LISTEN c1; }
+step "l2begin"	{ BEGIN; }
+step "l2commit"	{ COMMIT; }
+step "l2stop"	{ UNLISTEN *; }
 
 
 # Trivial cases.
@@ -58,6 +68,10 @@ permutation "llisten" "notify1" "notify2" "notify3" "notifyf" "lcheck"
 
 # Again, with local delivery too.
 permutation "listenc" "llisten" "notify1" "notify2" "notify3" "notifyf" "lcheck"
+
+# Check for bug when initial listen is only action in a serializable xact,
+# and notify queue is not empty
+permutation "l2listen" "l2begin" "notify1" "lbegins" "llisten" "lcommit" "l2commit" "l2stop"
 
 # Verify that pg_notification_queue_usage correctly reports a non-zero result,
 # after submitting notifications while another connection is listening for
