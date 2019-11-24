@@ -63,13 +63,6 @@ LISTEN <replaceable class="parameter">channel</replaceable>
    <command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
    documentation for the interface you are using for more details.
   </para>
-
-  <para>
-   <xref linkend="sql-notify"/>
-   contains a more extensive
-   discussion of the use of <command>LISTEN</command> and
-   <command>NOTIFY</command>.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -96,9 +89,33 @@ LISTEN <replaceable class="parameter">channel</replaceable>
    within a transaction that later rolls back, the set of notification
    channels being listened to is unchanged.
   </para>
+
   <para>
    A transaction that has executed <command>LISTEN</command> cannot be
    prepared for two-phase commit.
+  </para>
+
+  <para>
+   There is a race condition when first setting up a listening session:
+   if concurrently-committing transactions are sending notify events,
+   exactly which of those will the newly listening session receive?
+   The answer is that the session will receive all events committed after
+   an instant during the transaction's commit step.  But that is slightly
+   later than any database state that the transaction could have observed
+   in queries.  This leads to the following rule for
+   using <command>LISTEN</command>: first execute (and commit!) that
+   command, then in a new transaction inspect the database state as needed
+   by the application logic, then rely on notifications to find out about
+   subsequent changes to the database state.  The first few received
+   notifications might refer to updates already observed in the initial
+   database inspection, but this is usually harmless.
+  </para>
+
+  <para>
+   <xref linkend="sql-notify"/>
+   contains a more extensive
+   discussion of the use of <command>LISTEN</command> and
+   <command>NOTIFY</command>.
   </para>
  </refsect1>
 
