@@ -1227,16 +1227,14 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 		{
 			/* pad before exponent */
 			dostr(convert, epos - convert, target);
-			if (zeropadlen > 0)
-				dopr_outchmulti('0', zeropadlen, target);
+			dopr_outchmulti('0', zeropadlen, target);
 			dostr(epos, vallen - (epos - convert), target);
 		}
 		else
 		{
 			/* no exponent, pad after the digits */
 			dostr(convert, vallen, target);
-			if (zeropadlen > 0)
-				dopr_outchmulti('0', zeropadlen, target);
+			dopr_outchmulti('0', zeropadlen, target);
 		}
 	}
 	else
