@@ -1720,11 +1720,13 @@ HandleNotifyInterrupt(void)
 /*
  * ProcessNotifyInterrupt
  *
- *		This is called just after waiting for a frontend command.  If a
- *		interrupt arrives (via HandleNotifyInterrupt()) while reading, the
- *		read will be interrupted via the process's latch, and this routine
- *		will get called.  If we are truly idle (ie, *not* inside a transaction
- *		block), process the incoming notifies.
+ *		This is called if we see notifyInterruptPending set, just before
+ *		transmitting ReadyForQuery at the end of a frontend command, and
+ *		also if a notify signal occurs while reading from the frontend.
+ *		HandleNotifyInterrupt() will cause the read to be interrupted
+ *		via the process's latch, and this routine will get called.
+ *		If we are truly idle (ie, *not* inside a transaction block),
+ *		process the incoming notifies.
  */
 void
 ProcessNotifyInterrupt(void)
