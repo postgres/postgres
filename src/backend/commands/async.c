@@ -347,7 +347,7 @@ typedef struct
 typedef struct ActionList
 {
 	int			nestingLevel;	/* current transaction nesting depth */
-	List	   *actions;			/* list of ListenAction structs */
+	List	   *actions;		/* list of ListenAction structs */
 	struct ActionList *upper;	/* details for upper transaction levels */
 } ActionList;
 
@@ -393,7 +393,7 @@ typedef struct NotificationList
 	int			nestingLevel;	/* current transaction nesting depth */
 	List	   *events;			/* list of Notification structs */
 	HTAB	   *hashtab;		/* hash of NotificationHash structs, or NULL */
-	struct NotificationList *upper;	/* details for upper transaction levels */
+	struct NotificationList *upper; /* details for upper transaction levels */
 } NotificationList;
 
 #define MIN_HASHABLE_NOTIFIES 16	/* threshold to build hashtab */
@@ -1554,6 +1554,9 @@ pg_notification_queue_usage(PG_FUNCTION_ARGS)
 {
 	double		usage;
 
+	/* Advance the queue tail so we don't report a too-large result */
+	asyncQueueAdvanceTail();
+
 	LWLockAcquire(AsyncQueueLock, LW_SHARED);
 	usage = asyncQueueUsage();
 	LWLockRelease(AsyncQueueLock);
@@ -1834,9 +1837,8 @@ AtSubAbort_Notify(void)
 	 * those are allocated in TopTransactionContext.
 	 *
 	 * Note that there might be no entries at all, or no entries for the
-	 * current subtransaction level, either because none were ever created,
-	 * or because we reentered this routine due to trouble during subxact
-	 * abort.
+	 * current subtransaction level, either because none were ever created, or
+	 * because we reentered this routine due to trouble during subxact abort.
 	 */
 	while (pendingActions != NULL &&
 		   pendingActions->nestingLevel >= my_level)
@@ -2400,9 +2402,9 @@ ClearPendingActionsAndNotifies(void)
 {
 	/*
 	 * Everything's allocated in either TopTransactionContext or the context
-	 * for the subtransaction to which it corresponds. So, there's nothing
-	 * to do here except rest the pointers; the space will be reclaimed when
-	 * the contexts are deleted.
+	 * for the subtransaction to which it corresponds.  So, there's nothing to
+	 * do here except reset the pointers; the space will be reclaimed when the
+	 * contexts are deleted.
 	 */
 	pendingActions = NULL;
 	pendingNotifies = NULL;
