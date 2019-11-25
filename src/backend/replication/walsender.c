@@ -3644,8 +3644,11 @@ UpdateSpillStats(LogicalDecodingContext *ctx)
 	MyWalSnd->spillCount = rb->spillCount;
 	MyWalSnd->spillBytes = rb->spillBytes;
 
-	elog(DEBUG2, "UpdateSpillStats: updating stats %p %ld %ld %ld",
-		 rb, rb->spillTxns, rb->spillCount, rb->spillBytes);
+	elog(DEBUG2, "UpdateSpillStats: updating stats %p %lld %lld %lld",
+		 rb,
+		 (long long) rb->spillTxns,
+		 (long long) rb->spillCount,
+		 (long long) rb->spillBytes);
 
 	SpinLockRelease(&MyWalSnd->mutex);
 }
