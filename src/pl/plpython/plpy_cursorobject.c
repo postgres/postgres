@@ -11,19 +11,15 @@
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
-#include "utils/memutils.h"
-
-#include "plpython.h"
-
 #include "plpy_cursorobject.h"
-
 #include "plpy_elog.h"
 #include "plpy_main.h"
 #include "plpy_planobject.h"
 #include "plpy_procedure.h"
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
-
+#include "plpython.h"
+#include "utils/memutils.h"
 
 static PyObject *PLy_cursor_query(const char *query);
 static void PLy_cursor_dealloc(PyObject *arg);

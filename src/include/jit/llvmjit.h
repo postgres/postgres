@@ -30,12 +30,10 @@ extern "C"
 {
 #endif
 
-
+#include "access/tupdesc.h"
 #include "fmgr.h"
 #include "jit/jit.h"
 #include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-
 
 typedef struct LLVMJitContext
 {

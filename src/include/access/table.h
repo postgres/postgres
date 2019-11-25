@@ -15,9 +15,8 @@
 #define TABLE_H
 
 #include "nodes/primnodes.h"
-#include "utils/relcache.h"
 #include "storage/lockdefs.h"
-
+#include "utils/relcache.h"
 
 extern Relation table_open(Oid relationId, LOCKMODE lockmode);
 extern Relation table_openrv(const RangeVar *relation, LOCKMODE lockmode);

@@ -7,9 +7,8 @@
 
 #include "access/htup.h"
 #include "fmgr.h"
-#include "utils/typcache.h"
-
 #include "plpython.h"
+#include "utils/typcache.h"
 
 struct PLyProcedure;			/* avoid requiring plpy_procedure.h here */
 

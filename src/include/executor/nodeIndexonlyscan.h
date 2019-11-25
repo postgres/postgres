@@ -14,8 +14,8 @@
 #ifndef NODEINDEXONLYSCAN_H
 #define NODEINDEXONLYSCAN_H
 
-#include "nodes/execnodes.h"
 #include "access/parallel.h"
+#include "nodes/execnodes.h"
 
 extern IndexOnlyScanState *ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags);
 extern void ExecEndIndexOnlyScan(IndexOnlyScanState *node);

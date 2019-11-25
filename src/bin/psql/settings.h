@@ -8,9 +8,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-
-#include "variables.h"
 #include "fe_utils/print.h"
+#include "variables.h"
 
 #define DEFAULT_CSV_FIELD_SEP ','
 #define DEFAULT_FIELD_SEP "|"

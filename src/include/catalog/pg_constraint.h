@@ -18,10 +18,9 @@
 #ifndef PG_CONSTRAINT_H
 #define PG_CONSTRAINT_H
 
+#include "catalog/dependency.h"
 #include "catalog/genbki.h"
 #include "catalog/pg_constraint_d.h"
-
-#include "catalog/dependency.h"
 #include "nodes/pg_list.h"
 
 /* ----------------

@@ -14,8 +14,8 @@
 #ifndef REWRITEHANDLER_H
 #define REWRITEHANDLER_H
 
-#include "utils/relcache.h"
 #include "nodes/parsenodes.h"
+#include "utils/relcache.h"
 
 extern List *QueryRewrite(Query *parsetree);
 extern void AcquireRewriteLocks(Query *parsetree,

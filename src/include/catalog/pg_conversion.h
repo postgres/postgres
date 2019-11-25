@@ -18,9 +18,8 @@
 #define PG_CONVERSION_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_conversion_d.h"
-
 #include "catalog/objectaddress.h"
+#include "catalog/pg_conversion_d.h"
 
 /* ----------------
  *		pg_conversion definition.  cpp turns this into

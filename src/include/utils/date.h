@@ -16,9 +16,9 @@
 
 #include <math.h>
 
+#include "datatype/timestamp.h"
 #include "fmgr.h"
 #include "pgtime.h"
-#include "datatype/timestamp.h"
 
 typedef int32 DateADT;
 

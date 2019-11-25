@@ -6,15 +6,12 @@
 
 #include "postgres.h"
 
-#include "plpython.h"
-
-#include "plpy_planobject.h"
-
 #include "plpy_cursorobject.h"
 #include "plpy_elog.h"
+#include "plpy_planobject.h"
 #include "plpy_spi.h"
+#include "plpython.h"
 #include "utils/memutils.h"
-
 
 static void PLy_plan_dealloc(PyObject *arg);
 static PyObject *PLy_plan_cursor(PyObject *self, PyObject *args);

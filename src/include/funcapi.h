@@ -17,11 +17,10 @@
 #ifndef FUNCAPI_H
 #define FUNCAPI_H
 
-#include "fmgr.h"
 #include "access/tupdesc.h"
 #include "executor/executor.h"
 #include "executor/tuptable.h"
-
+#include "fmgr.h"
 
 /*-------------------------------------------------------------------------
  *	Support to ease writing Functions returning composite types

@@ -17,8 +17,8 @@
 #include "access/generic_xlog.h"
 #include "access/itup.h"
 #include "access/xlog.h"
-#include "nodes/pathnodes.h"
 #include "fmgr.h"
+#include "nodes/pathnodes.h"
 
 /* Support procedures numbers */
 #define BLOOM_HASH_PROC			1

@@ -12,8 +12,8 @@
  */
 #include "postgres.h"
 
-#include "access/ginblock.h"
 #include "access/gin_private.h"
+#include "access/ginblock.h"
 #include "access/htup_details.h"
 #include "fmgr.h"
 

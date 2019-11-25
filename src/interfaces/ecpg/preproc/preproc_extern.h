@@ -3,9 +3,8 @@
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
 
-#include "type.h"
-
 #include "common/keywords.h"
+#include "type.h"
 
 #ifndef CHAR_BIT
 #include <limits.h>

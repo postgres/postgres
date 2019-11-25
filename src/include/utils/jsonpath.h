@@ -15,8 +15,8 @@
 #define JSONPATH_H
 
 #include "fmgr.h"
-#include "utils/jsonb.h"
 #include "nodes/pg_list.h"
+#include "utils/jsonb.h"
 
 typedef struct
 {

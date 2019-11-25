@@ -19,9 +19,8 @@
 #define PG_TYPE_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_type_d.h"
-
 #include "catalog/objectaddress.h"
+#include "catalog/pg_type_d.h"
 #include "nodes/nodes.h"
 
 /* ----------------

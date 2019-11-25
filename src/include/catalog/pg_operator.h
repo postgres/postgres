@@ -19,9 +19,8 @@
 #define PG_OPERATOR_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_operator_d.h"
-
 #include "catalog/objectaddress.h"
+#include "catalog/pg_operator_d.h"
 #include "nodes/pg_list.h"
 
 /* ----------------

@@ -15,8 +15,8 @@
 #ifndef PG_LSN_H
 #define PG_LSN_H
 
-#include "fmgr.h"
 #include "access/xlogdefs.h"
+#include "fmgr.h"
 
 #define DatumGetLSN(X) ((XLogRecPtr) DatumGetInt64(X))
 #define LSNGetDatum(X) (Int64GetDatum((int64) (X)))

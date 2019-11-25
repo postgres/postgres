@@ -8,10 +8,9 @@
 #ifndef FILEMAP_H
 #define FILEMAP_H
 
-#include "storage/relfilenode.h"
-#include "storage/block.h"
-
 #include "datapagemap.h"
+#include "storage/block.h"
+#include "storage/relfilenode.h"
 
 /*
  * For every file found in the local or remote system, we have a file entry

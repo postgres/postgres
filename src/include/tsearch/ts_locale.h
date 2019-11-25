@@ -15,8 +15,8 @@
 #include <ctype.h>
 #include <limits.h>
 
-#include "utils/pg_locale.h"
 #include "mb/pg_wchar.h"
+#include "utils/pg_locale.h"
 
 /*
  * towlower() and friends should be in <wctype.h>, but some pre-C99 systems

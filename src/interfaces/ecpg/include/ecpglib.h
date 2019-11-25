@@ -7,11 +7,12 @@
 #ifndef _ECPGLIB_H
 #define _ECPGLIB_H
 
-#include "libpq-fe.h"
+#include <string.h>
+
 #include "ecpg_config.h"
 #include "ecpgtype.h"
+#include "libpq-fe.h"
 #include "sqlca.h"
-#include <string.h>
 
 /*
  * This is a small extract from c.h since we don't want to leak all postgres

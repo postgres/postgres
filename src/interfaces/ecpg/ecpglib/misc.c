@@ -11,11 +11,11 @@
 #include "ecpglib.h"
 #include "ecpglib_extern.h"
 #include "ecpgtype.h"
+#include "pg_config_paths.h"
 #include "pgtypes_date.h"
 #include "pgtypes_interval.h"
 #include "pgtypes_numeric.h"
 #include "pgtypes_timestamp.h"
-#include "pg_config_paths.h"
 #include "sqlca.h"
 
 #ifndef LONG_LONG_MIN

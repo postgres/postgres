@@ -15,10 +15,9 @@
 
 #include "foreign/foreign.h"
 #include "lib/stringinfo.h"
+#include "libpq-fe.h"
 #include "nodes/pathnodes.h"
 #include "utils/relcache.h"
-
-#include "libpq-fe.h"
 
 /*
  * FDW-specific planner information kept in RelOptInfo.fdw_private for a

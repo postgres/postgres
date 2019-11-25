@@ -12,10 +12,9 @@
 #ifndef STREAMUTIL_H
 #define STREAMUTIL_H
 
-#include "libpq-fe.h"
-
 #include "access/xlogdefs.h"
 #include "datatype/timestamp.h"
+#include "libpq-fe.h"
 
 extern const char *progname;
 extern char *connection_string;

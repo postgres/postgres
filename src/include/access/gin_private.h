@@ -16,8 +16,8 @@
 #include "access/itup.h"
 #include "catalog/pg_am_d.h"
 #include "fmgr.h"
-#include "storage/bufmgr.h"
 #include "lib/rbtree.h"
+#include "storage/bufmgr.h"
 
 /*
  * Storage type for GIN's reloptions

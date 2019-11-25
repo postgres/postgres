@@ -6,11 +6,9 @@
 
 #include "postgres.h"
 
-#include "plpython.h"
-
-#include "plpy_resultobject.h"
 #include "plpy_elog.h"
-
+#include "plpy_resultobject.h"
+#include "plpython.h"
 
 static void PLy_result_dealloc(PyObject *arg);
 static PyObject *PLy_result_colnames(PyObject *self, PyObject *unused);

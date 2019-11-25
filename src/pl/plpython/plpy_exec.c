@@ -12,20 +12,16 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
+#include "plpy_elog.h"
+#include "plpy_exec.h"
+#include "plpy_main.h"
+#include "plpy_procedure.h"
+#include "plpy_subxactobject.h"
+#include "plpython.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
-
-#include "plpython.h"
-
-#include "plpy_exec.h"
-
-#include "plpy_elog.h"
-#include "plpy_main.h"
-#include "plpy_procedure.h"
-#include "plpy_subxactobject.h"
-
 
 /* saved state for a set-returning function */
 typedef struct PLySRFState

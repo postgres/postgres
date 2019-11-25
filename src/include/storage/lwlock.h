@@ -18,9 +18,9 @@
 #error "lwlock.h may not be included from frontend code"
 #endif
 
+#include "port/atomics.h"
 #include "storage/proclist_types.h"
 #include "storage/s_lock.h"
-#include "port/atomics.h"
 
 struct PGPROC;
 

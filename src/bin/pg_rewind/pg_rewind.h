@@ -11,14 +11,12 @@
 #ifndef PG_REWIND_H
 #define PG_REWIND_H
 
-#include "datapagemap.h"
-
 #include "access/timeline.h"
 #include "common/logging.h"
+#include "datapagemap.h"
 #include "libpq-fe.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
-
 
 /* Configuration options */
 extern char *datadir_target;

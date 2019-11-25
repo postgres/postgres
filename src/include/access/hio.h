@@ -15,9 +15,8 @@
 #define HIO_H
 
 #include "access/htup.h"
-#include "utils/relcache.h"
 #include "storage/buf.h"
-
+#include "utils/relcache.h"
 
 /*
  * state for bulk inserts --- private to heapam.c and hio.c

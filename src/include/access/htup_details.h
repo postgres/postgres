@@ -15,9 +15,9 @@
 #define HTUP_DETAILS_H
 
 #include "access/htup.h"
+#include "access/transam.h"
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
-#include "access/transam.h"
 #include "storage/bufpage.h"
 
 /*

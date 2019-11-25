@@ -24,12 +24,10 @@
 #ifndef __PG_BACKUP_ARCHIVE__
 #define __PG_BACKUP_ARCHIVE__
 
-
 #include <time.h>
 
-#include "pg_backup.h"
-
 #include "libpq-fe.h"
+#include "pg_backup.h"
 #include "pqexpbuffer.h"
 
 #define LOBBUFSIZE 16384

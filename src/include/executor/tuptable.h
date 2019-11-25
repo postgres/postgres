@@ -15,9 +15,9 @@
 #define TUPTABLE_H
 
 #include "access/htup.h"
+#include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/tupdesc.h"
-#include "access/htup_details.h"
 #include "storage/buf.h"
 
 /*----------

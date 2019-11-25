@@ -33,8 +33,9 @@
  */
 
 #include "postgres_fe.h"
-#include "tab-complete.h"
+
 #include "input.h"
+#include "tab-complete.h"
 
 /* If we don't have this, we might as well forget about the whole thing: */
 #ifdef USE_READLINE
@@ -43,10 +44,9 @@
 
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_class_d.h"
-
+#include "common.h"
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
-#include "common.h"
 #include "settings.h"
 #include "stringutils.h"
 

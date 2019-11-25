@@ -6,7 +6,6 @@
  * src/bin/psql/command.c
  */
 #include "postgres_fe.h"
-#include "command.h"
 
 #include <ctype.h>
 #include <time.h>
@@ -24,22 +23,21 @@
 #endif
 
 #include "catalog/pg_class_d.h"
-#include "portability/instr_time.h"
-
-#include "libpq-fe.h"
-#include "pqexpbuffer.h"
-#include "common/logging.h"
-#include "fe_utils/print.h"
-#include "fe_utils/string_utils.h"
-
+#include "command.h"
 #include "common.h"
+#include "common/logging.h"
 #include "copy.h"
 #include "crosstabview.h"
 #include "describe.h"
+#include "fe_utils/print.h"
+#include "fe_utils/string_utils.h"
 #include "help.h"
 #include "input.h"
 #include "large_obj.h"
+#include "libpq-fe.h"
 #include "mainloop.h"
+#include "portability/instr_time.h"
+#include "pqexpbuffer.h"
 #include "psqlscanslash.h"
 #include "settings.h"
 #include "variables.h"

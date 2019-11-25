@@ -18,10 +18,9 @@
 #ifndef PG_REPLICATION_ORIGIN_H
 #define PG_REPLICATION_ORIGIN_H
 
+#include "access/xlogdefs.h"
 #include "catalog/genbki.h"
 #include "catalog/pg_replication_origin_d.h"
-
-#include "access/xlogdefs.h"
 
 /* ----------------
  *		pg_replication_origin.  cpp turns this into

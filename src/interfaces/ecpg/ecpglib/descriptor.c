@@ -12,9 +12,9 @@
 #include "ecpglib.h"
 #include "ecpglib_extern.h"
 #include "ecpgtype.h"
+#include "sql3types.h"
 #include "sqlca.h"
 #include "sqlda.h"
-#include "sql3types.h"
 
 static void descriptor_free(struct descriptor *desc);
 

@@ -11,20 +11,16 @@
 #include "funcapi.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "plpy_elog.h"
+#include "plpy_main.h"
+#include "plpy_procedure.h"
+#include "plpython.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
-
-#include "plpython.h"
-
-#include "plpy_procedure.h"
-
-#include "plpy_elog.h"
-#include "plpy_main.h"
-
 
 static HTAB *PLy_procedure_cache = NULL;
 

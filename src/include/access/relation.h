@@ -15,9 +15,8 @@
 #define ACCESS_RELATION_H
 
 #include "nodes/primnodes.h"
-#include "utils/relcache.h"
 #include "storage/lockdefs.h"
-
+#include "utils/relcache.h"
 
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);

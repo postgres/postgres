@@ -18,9 +18,8 @@
 #define PG_PUBLICATION_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_publication_d.h"
-
 #include "catalog/objectaddress.h"
+#include "catalog/pg_publication_d.h"
 
 /* ----------------
  *		pg_publication definition.  cpp turns this into

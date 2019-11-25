@@ -4,9 +4,8 @@
 #ifndef __BTREE_UTILS_VAR_H__
 #define __BTREE_UTILS_VAR_H__
 
-#include "btree_gist.h"
-
 #include "access/gist.h"
+#include "btree_gist.h"
 #include "mb/pg_wchar.h"
 
 /* Variable length key */

@@ -15,11 +15,11 @@
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
 #include "getaddrinfo.h"		/* for NI_MAXHOST */
+#include "pgtime.h"
 #include "replication/logicalproto.h"
 #include "replication/walsender.h"
 #include "storage/latch.h"
 #include "storage/spin.h"
-#include "pgtime.h"
 #include "utils/tuplestore.h"
 
 /* user-settable parameters */

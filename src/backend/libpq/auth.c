@@ -39,7 +39,6 @@
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
 
-
 /*----------------------------------------------------------------
  * Global authentication functions
  *----------------------------------------------------------------

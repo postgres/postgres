@@ -12,10 +12,9 @@
 #ifndef RECEIVELOG_H
 #define RECEIVELOG_H
 
+#include "access/xlogdefs.h"
 #include "libpq-fe.h"
 #include "walmethods.h"
-
-#include "access/xlogdefs.h"
 
 /*
  * Called before trying to read more data or when a segment is

@@ -22,8 +22,8 @@
 #ifndef CONDITION_VARIABLE_H
 #define CONDITION_VARIABLE_H
 
-#include "storage/s_lock.h"
 #include "storage/proclist_types.h"
+#include "storage/s_lock.h"
 
 typedef struct
 {

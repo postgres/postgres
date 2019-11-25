@@ -11,8 +11,8 @@
 
 #include "access/xlogreader.h"
 #include "access/xlogrecord.h"
-#include "replication/reorderbuffer.h"
 #include "replication/logical.h"
+#include "replication/reorderbuffer.h"
 
 void		LogicalDecodingProcessRecord(LogicalDecodingContext *ctx,
 										 XLogReaderState *record);

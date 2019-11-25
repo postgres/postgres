@@ -15,10 +15,10 @@
 #ifndef XML_H
 #define XML_H
 
+#include "executor/tablefunc.h"
 #include "fmgr.h"
 #include "nodes/execnodes.h"
 #include "nodes/primnodes.h"
-#include "executor/tablefunc.h"
 
 typedef struct varlena xmltype;
 

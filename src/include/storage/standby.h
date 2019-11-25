@@ -14,10 +14,10 @@
 #ifndef STANDBY_H
 #define STANDBY_H
 
-#include "storage/standbydefs.h"
 #include "storage/lock.h"
 #include "storage/procsignal.h"
 #include "storage/relfilenode.h"
+#include "storage/standbydefs.h"
 
 /* User-settable GUC parameters */
 extern int	vacuum_defer_cleanup_age;

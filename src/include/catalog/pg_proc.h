@@ -18,9 +18,8 @@
 #define PG_PROC_H
 
 #include "catalog/genbki.h"
-#include "catalog/pg_proc_d.h"
-
 #include "catalog/objectaddress.h"
+#include "catalog/pg_proc_d.h"
 #include "nodes/pg_list.h"
 
 /* ----------------

@@ -14,9 +14,8 @@
 #ifndef EXTENDED_STATS_INTERNAL_H
 #define EXTENDED_STATS_INTERNAL_H
 
-#include "utils/sortsupport.h"
 #include "statistics/statistics.h"
-
+#include "utils/sortsupport.h"
 
 typedef struct
 {
