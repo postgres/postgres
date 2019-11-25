@@ -2014,7 +2014,18 @@ BTreeShmemInit(void)
 bytea *
 btoptions(Datum reloptions, bool validate)
 {
-	return default_reloptions(reloptions, validate, RELOPT_KIND_BTREE);
+	static const relopt_parse_elt tab[] = {
+		{"fillfactor", RELOPT_TYPE_INT, offsetof(BTOptions, fillfactor)},
+		{"vacuum_cleanup_index_scale_factor", RELOPT_TYPE_REAL,
+		offsetof(BTOptions, vacuum_cleanup_index_scale_factor)}
+
+	};
+
+	return (bytea *) build_reloptions(reloptions, validate,
+									  RELOPT_KIND_BTREE,
+									  sizeof(BTOptions),
+									  tab, lengthof(tab));
+
 }
 
 /*

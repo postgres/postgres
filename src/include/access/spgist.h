@@ -19,10 +19,6 @@
 #include "lib/stringinfo.h"
 
 
-/* reloption parameters */
-#define SPGIST_MIN_FILLFACTOR			10
-#define SPGIST_DEFAULT_FILLFACTOR		80
-
 /* SPGiST opclass support function numbers */
 #define SPGIST_CONFIG_PROC				1
 #define SPGIST_CHOOSE_PROC				2

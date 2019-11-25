@@ -171,6 +171,7 @@ BTInsertStateData
 BTLeader
 BTMetaPageData
 BTOneVacInfo
+BTOptions
 BTPS_State
 BTPageOpaque
 BTPageOpaqueData
@@ -978,6 +979,7 @@ HashJoinTuple
 HashMemoryChunk
 HashMetaPage
 HashMetaPageData
+HashOptions
 HashPageOpaque
 HashPageOpaqueData
 HashPageStat
@@ -2270,6 +2272,7 @@ SpGistLeafTupleData
 SpGistMetaPageData
 SpGistNodeTuple
 SpGistNodeTupleData
+SpGistOptions
 SpGistPageOpaque
 SpGistPageOpaqueData
 SpGistScanOpaque

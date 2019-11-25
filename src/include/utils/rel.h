@@ -235,7 +235,7 @@ typedef struct ForeignKeyCacheInfo
 
 /*
  * StdRdOptions
- *		Standard contents of rd_options for heaps and generic indexes.
+ *		Standard contents of rd_options for heaps.
  *
  * RelationGetFillFactor() and RelationGetTargetPageFreeSpace() can only
  * be applied to relations that use this format or a superset for
@@ -265,7 +265,6 @@ typedef struct StdRdOptions
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
 	/* fraction of newly inserted tuples prior to trigger index cleanup */
-	float8		vacuum_cleanup_index_scale_factor;
 	int			toast_tuple_target; /* target for tuple toasting */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
 	bool		user_catalog_table; /* use as an additional catalog relation */

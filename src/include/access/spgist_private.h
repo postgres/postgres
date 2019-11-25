@@ -16,10 +16,27 @@
 
 #include "access/itup.h"
 #include "access/spgist.h"
+#include "catalog/pg_am_d.h"
 #include "nodes/tidbitmap.h"
 #include "storage/buf.h"
 #include "utils/geo_decls.h"
 #include "utils/relcache.h"
+
+
+typedef struct SpGistOptions
+{
+	int32		varlena_header_;	/* varlena header (do not touch directly!) */
+	int			fillfactor;		/* page fill factor in percent (0..100) */
+} SpGistOptions;
+
+#define SpGistGetFillFactor(relation) \
+	(AssertMacro(relation->rd_rel->relkind == RELKIND_INDEX && \
+				 relation->rd_rel->relam == SPGIST_AM_OID), \
+	 (relation)->rd_options ? \
+	 ((SpGistOptions *) (relation)->rd_options)->fillfactor : \
+	 SPGIST_DEFAULT_FILLFACTOR)
+#define SpGistGetTargetPageFreeSpace(relation) \
+	(BLCKSZ * (100 - SpGistGetFillFactor(relation)) / 100)
 
 
 /* Page numbers of fixed-location pages */
@@ -423,6 +440,11 @@ typedef SpGistDeadTupleData *SpGistDeadTuple;
 #define GBUF_REQ_NULLS(flags)	((flags) & GBUF_NULLS)
 
 /* spgutils.c */
+
+/* reloption parameters */
+#define SPGIST_MIN_FILLFACTOR			10
+#define SPGIST_DEFAULT_FILLFACTOR		80
+
 extern SpGistCache *spgGetCache(Relation index);
 extern void initSpGistState(SpGistState *state, Relation index);
 extern Buffer SpGistNewBuffer(Relation index);

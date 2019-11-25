@@ -37,11 +37,15 @@ typedef struct BrinStatsData
 
 #define BRIN_DEFAULT_PAGES_PER_RANGE	128
 #define BrinGetPagesPerRange(relation) \
-	((relation)->rd_options ? \
+	(AssertMacro(relation->rd_rel->relkind == RELKIND_INDEX && \
+				 relation->rd_rel->relam == BRIN_AM_OID), \
+	 (relation)->rd_options ? \
 	 ((BrinOptions *) (relation)->rd_options)->pagesPerRange : \
 	  BRIN_DEFAULT_PAGES_PER_RANGE)
 #define BrinGetAutoSummarize(relation) \
-	((relation)->rd_options ? \
+	(AssertMacro(relation->rd_rel->relkind == RELKIND_INDEX && \
+				 relation->rd_rel->relam == BRIN_AM_OID), \
+	 (relation)->rd_options ? \
 	 ((BrinOptions *) (relation)->rd_options)->autosummarize : \
 	  false)
 

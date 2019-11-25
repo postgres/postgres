@@ -14,6 +14,7 @@
 #include "access/gin.h"
 #include "access/ginblock.h"
 #include "access/itup.h"
+#include "catalog/pg_am_d.h"
 #include "fmgr.h"
 #include "storage/bufmgr.h"
 #include "lib/rbtree.h"
@@ -30,10 +31,14 @@ typedef struct GinOptions
 
 #define GIN_DEFAULT_USE_FASTUPDATE	true
 #define GinGetUseFastUpdate(relation) \
-	((relation)->rd_options ? \
+	(AssertMacro(relation->rd_rel->relkind == RELKIND_INDEX && \
+				 relation->rd_rel->relam == GIN_AM_OID), \
+	 (relation)->rd_options ? \
 	 ((GinOptions *) (relation)->rd_options)->useFastUpdate : GIN_DEFAULT_USE_FASTUPDATE)
 #define GinGetPendingListCleanupSize(relation) \
-	((relation)->rd_options && \
+	(AssertMacro(relation->rd_rel->relkind == RELKIND_INDEX && \
+				 relation->rd_rel->relam == GIN_AM_OID), \
+	 (relation)->rd_options && \
 	 ((GinOptions *) (relation)->rd_options)->pendingListCleanupSize != -1 ? \
 	 ((GinOptions *) (relation)->rd_options)->pendingListCleanupSize : \
 	 gin_pending_list_limit)

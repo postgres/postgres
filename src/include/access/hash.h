@@ -20,6 +20,7 @@
 #include "access/amapi.h"
 #include "access/itup.h"
 #include "access/sdir.h"
+#include "catalog/pg_am_d.h"
 #include "lib/stringinfo.h"
 #include "storage/bufmgr.h"
 #include "storage/lockdefs.h"
@@ -262,6 +263,21 @@ typedef struct HashMetaPageData
 } HashMetaPageData;
 
 typedef HashMetaPageData *HashMetaPage;
+
+typedef struct HashOptions
+{
+	int32		varlena_header_;	/* varlena header (do not touch directly!) */
+	int			fillfactor;		/* page fill factor in percent (0..100) */
+} HashOptions;
+
+#define HashGetFillFactor(relation) \
+	(AssertMacro(relation->rd_rel->relkind == RELKIND_INDEX && \
+				 relation->rd_rel->relam == HASH_AM_OID), \
+	 (relation)->rd_options ? \
+	 ((HashOptions *) (relation)->rd_options)->fillfactor :	\
+	 HASH_DEFAULT_FILLFACTOR)
+#define HashGetTargetPageUsage(relation) \
+	(BLCKSZ * HashGetFillFactor(relation) / 100)
 
 /*
  * Maximum size of a hash index item (it's okay to have only one per page)
