@@ -35,7 +35,7 @@
 #define lobits(addr) \
   ((unsigned long)(((addr)->e<<24) | ((addr)->f<<16) | ((addr)->g<<8) | ((addr)->h)))
 
-static unsigned char hex2_to_uchar(const unsigned char *str, const unsigned char *ptr);
+static unsigned char hex2_to_uchar(const unsigned char *ptr, const unsigned char *str);
 
 static const signed char hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
