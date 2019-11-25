@@ -87,6 +87,8 @@ our @EXPORT = qw(
 
 our ($windows_os, $tmp_check, $log_path, $test_logfile);
 
+my @no_stdin;
+
 BEGIN
 {
 
@@ -178,6 +180,21 @@ INIT
 	autoflush STDOUT 1;
 	autoflush STDERR 1;
 	autoflush $testlog 1;
+
+	# Settings to close stdin for certain commands.
+	# On non-Windows, use a pseudo-terminal, so that libraries like openssl
+	# which open the tty if they think stdin isn't one for a password
+	# don't block. Windows doesn't have ptys, so just provide an empty
+	# string for stdin.
+	if ($windows_os)
+	{
+		@no_stdin = ('<', \"");
+	}
+	else
+	{
+		use charnames ':full';
+		@no_stdin = ('<pty<', \"\N{END OF TRANSMISSION}");
+	}
 }
 
 END
@@ -343,7 +360,7 @@ sub run_command
 {
 	my ($cmd) = @_;
 	my ($stdout, $stderr);
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr, @no_stdin;
 	chomp($stdout);
 	chomp($stderr);
 	return ($stdout, $stderr);
@@ -576,7 +593,7 @@ sub check_pg_config
 	my ($regexp) = @_;
 	my ($stdout, $stderr);
 	my $result = IPC::Run::run [ 'pg_config', '--includedir' ], '>',
-	  \$stdout, '2>', \$stderr
+	  \$stdout, '2>', \$stderr, @no_stdin
 	  or die "could not execute pg_config";
 	chomp($stdout);
 	$stdout =~ s/\r$//;
@@ -673,7 +690,7 @@ sub program_help_ok
 	my ($stdout, $stderr);
 	print("# Running: $cmd --help\n");
 	my $result = IPC::Run::run [ $cmd, '--help' ], '>', \$stdout, '2>',
-	  \$stderr;
+	  \$stderr, @no_stdin;
 	ok($result, "$cmd --help exit code 0");
 	isnt($stdout, '', "$cmd --help goes to stdout");
 	is($stderr, '', "$cmd --help nothing to stderr");
@@ -695,7 +712,7 @@ sub program_version_ok
 	my ($stdout, $stderr);
 	print("# Running: $cmd --version\n");
 	my $result = IPC::Run::run [ $cmd, '--version' ], '>', \$stdout, '2>',
-	  \$stderr;
+	  \$stderr, @no_stdin;
 	ok($result, "$cmd --version exit code 0");
 	isnt($stdout, '', "$cmd --version goes to stdout");
 	is($stderr, '', "$cmd --version nothing to stderr");
@@ -718,8 +735,7 @@ sub program_options_handling_ok
 	my ($stdout, $stderr);
 	print("# Running: $cmd --not-a-valid-option\n");
 	my $result = IPC::Run::run [ $cmd, '--not-a-valid-option' ], '>',
-	  \$stdout,
-	  '2>', \$stderr;
+	  \$stdout, '2>', \$stderr, @no_stdin;
 	ok(!$result, "$cmd with invalid option nonzero exit code");
 	isnt($stderr, '', "$cmd with invalid option prints error message");
 	return;
@@ -740,7 +756,7 @@ sub command_like
 	my ($cmd, $expected_stdout, $test_name) = @_;
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr, @no_stdin;
 	ok($result, "$test_name: exit code 0");
 	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
@@ -769,7 +785,8 @@ sub command_like_safe
 	my $stdoutfile = File::Temp->new();
 	my $stderrfile = File::Temp->new();
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', $stdoutfile, '2>', $stderrfile;
+	my $result = IPC::Run::run $cmd, '>', $stdoutfile, '2>', $stderrfile,
+	  @no_stdin;
 	$stdout = slurp_file($stdoutfile);
 	$stderr = slurp_file($stderrfile);
 	ok($result, "$test_name: exit code 0");
@@ -793,7 +810,7 @@ sub command_fails_like
 	my ($cmd, $expected_stderr, $test_name) = @_;
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr, @no_stdin;
 	ok(!$result, "$test_name: exit code not 0");
 	like($stderr, $expected_stderr, "$test_name: matches");
 	return;
@@ -831,7 +848,7 @@ sub command_checks_all
 	# run command
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
-	IPC::Run::run($cmd, '>', \$stdout, '2>', \$stderr);
+	IPC::Run::run($cmd, '>', \$stdout, '2>', \$stderr, @no_stdin);
 
 	# See http://perldoc.perl.org/perlvar.html#%24CHILD_ERROR
 	my $ret = $?;
