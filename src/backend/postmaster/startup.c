@@ -30,6 +30,7 @@
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
+#include "storage/procsignal.h"
 #include "storage/standby.h"
 #include "utils/guc.h"
 #include "utils/timeout.h"
@@ -50,7 +51,6 @@ static volatile sig_atomic_t in_restore_command = false;
 
 /* Signal handlers */
 static void startupproc_quickdie(SIGNAL_ARGS);
-static void StartupProcSigUsr1Handler(SIGNAL_ARGS);
 static void StartupProcTriggerHandler(SIGNAL_ARGS);
 static void StartupProcSigHupHandler(SIGNAL_ARGS);
 
@@ -86,17 +86,6 @@ startupproc_quickdie(SIGNAL_ARGS)
 	_exit(2);
 }
 
-
-/* SIGUSR1: let latch facility handle the signal */
-static void
-StartupProcSigUsr1Handler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	latch_sigusr1_handler();
-
-	errno = save_errno;
-}
 
 /* SIGUSR2: set flag to finish recovery */
 static void
@@ -181,7 +170,7 @@ StartupProcessMain(void)
 	pqsignal(SIGQUIT, startupproc_quickdie);	/* hard crash time */
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, StartupProcSigUsr1Handler);
+	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, StartupProcTriggerHandler);
 
 	/*

@@ -55,6 +55,7 @@
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/proc.h"
+#include "storage/procsignal.h"
 #include "storage/smgr.h"
 #include "utils/guc.h"
 #include "utils/hsearch.h"
@@ -86,7 +87,6 @@ static volatile sig_atomic_t shutdown_requested = false;
 static void wal_quickdie(SIGNAL_ARGS);
 static void WalSigHupHandler(SIGNAL_ARGS);
 static void WalShutdownHandler(SIGNAL_ARGS);
-static void walwriter_sigusr1_handler(SIGNAL_ARGS);
 
 /*
  * Main entry point for walwriter process
@@ -114,7 +114,7 @@ WalWriterMain(void)
 	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, walwriter_sigusr1_handler);
+	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
 	pqsignal(SIGUSR2, SIG_IGN); /* not used */
 
 	/*
@@ -334,17 +334,6 @@ WalShutdownHandler(SIGNAL_ARGS)
 
 	shutdown_requested = true;
 	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
-/* SIGUSR1: used for latch wakeups */
-static void
-walwriter_sigusr1_handler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	latch_sigusr1_handler();
 
 	errno = save_errno;
 }
