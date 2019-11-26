@@ -21,6 +21,7 @@ TestLib - helper module for writing PostgreSQL's C<prove> tests.
 
   # Miscellanea
   print "on Windows" if $TestLib::windows_os;
+  print "IO::Pty is available" if $TestLib::have_io_pty;
   my $path = TestLib::perl2host($backup_dir);
   ok(check_mode_recursive($stream_dir, 0700, 0600),
     "check stream dir permissions");
@@ -83,9 +84,10 @@ our @EXPORT = qw(
   command_checks_all
 
   $windows_os
+  $have_io_pty
 );
 
-our ($windows_os, $tmp_check, $log_path, $test_logfile);
+our ($windows_os, $tmp_check, $log_path, $test_logfile, $have_io_pty);
 
 my @no_stdin;
 
@@ -119,6 +121,9 @@ BEGIN
 		require Win32API::File;
 		Win32API::File->import(qw(createFile OsFHandleOpen CloseHandle));
 	}
+
+	eval { require IO::Pty; };
+	$have_io_pty = 1 unless $@;
 }
 
 =pod
@@ -130,6 +135,12 @@ BEGIN
 =item C<$windows_os>
 
 Set to true when running under Windows, except on Cygwin.
+
+=back
+
+=item C<$have_io_pty>
+
+Set to true when IO::Pty is available.
 
 =back
 
@@ -182,18 +193,17 @@ INIT
 	autoflush $testlog 1;
 
 	# Settings to close stdin for certain commands.
-	# On non-Windows, use a pseudo-terminal, so that libraries like openssl
-	# which open the tty if they think stdin isn't one for a password
-	# don't block. Windows doesn't have ptys, so just provide an empty
-	# string for stdin.
-	if ($windows_os)
-	{
-		@no_stdin = ('<', \"");
-	}
-	else
+	# If IO::Pty is present, use a pseudo-terminal, so that libraries like
+	# openssl which open the tty if they think stdin isn't one for a password
+	# don't block. Elsewhere just provide an empty string for stdin.
+	if ($have_io_pty)
 	{
 		use charnames ':full';
 		@no_stdin = ('<pty<', \"\N{END OF TRANSMISSION}");
+	}
+	else
+	{
+		@no_stdin = ('<', \"");
 	}
 }
 
