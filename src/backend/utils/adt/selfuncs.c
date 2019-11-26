@@ -4613,6 +4613,52 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 									rte->securityQuals == NIL &&
 									(pg_class_aclcheck(rte->relid, userid,
 													   ACL_SELECT) == ACLCHECK_OK);
+
+								/*
+								 * If the user doesn't have permissions to
+								 * access an inheritance child relation, check
+								 * the permissions of the table actually
+								 * mentioned in the query, since most likely
+								 * the user does have that permission.  Note
+								 * that whole-table select privilege on the
+								 * parent doesn't quite guarantee that the
+								 * user could read all columns of the child.
+								 * But in practice it's unlikely that any
+								 * interesting security violation could result
+								 * from allowing access to the expression
+								 * index's stats, so we allow it anyway.  See
+								 * similar code in examine_simple_variable()
+								 * for additional comments.
+								 */
+								if (!vardata->acl_ok &&
+									root->append_rel_array != NULL)
+								{
+									AppendRelInfo *appinfo;
+									Index		varno = index->rel->relid;
+
+									appinfo = root->append_rel_array[varno];
+									while (appinfo &&
+										   planner_rt_fetch(appinfo->parent_relid,
+															root)->rtekind == RTE_RELATION)
+									{
+										varno = appinfo->parent_relid;
+										appinfo = root->append_rel_array[varno];
+									}
+									if (varno != index->rel->relid)
+									{
+										/* Repeat access check on this rel */
+										rte = planner_rt_fetch(varno, root);
+										Assert(rte->rtekind == RTE_RELATION);
+
+										userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+
+										vardata->acl_ok =
+											rte->securityQuals == NIL &&
+											(pg_class_aclcheck(rte->relid,
+															   userid,
+															   ACL_SELECT) == ACLCHECK_OK);
+									}
+								}
 							}
 							else
 							{
@@ -4690,6 +4736,88 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 									ACL_SELECT) == ACLCHECK_OK) ||
 				 (pg_attribute_aclcheck(rte->relid, var->varattno, userid,
 										ACL_SELECT) == ACLCHECK_OK));
+
+			/*
+			 * If the user doesn't have permissions to access an inheritance
+			 * child relation or specifically this attribute, check the
+			 * permissions of the table/column actually mentioned in the
+			 * query, since most likely the user does have that permission
+			 * (else the query will fail at runtime), and if the user can read
+			 * the column there then he can get the values of the child table
+			 * too.  To do that, we must find out which of the root parent's
+			 * attributes the child relation's attribute corresponds to.
+			 */
+			if (!vardata->acl_ok && var->varattno > 0 &&
+				root->append_rel_array != NULL)
+			{
+				AppendRelInfo *appinfo;
+				Index		varno = var->varno;
+				int			varattno = var->varattno;
+				bool		found = false;
+
+				appinfo = root->append_rel_array[varno];
+
+				/*
+				 * Partitions are mapped to their immediate parent, not the
+				 * root parent, so must be ready to walk up multiple
+				 * AppendRelInfos.  But stop if we hit a parent that is not
+				 * RTE_RELATION --- that's a flattened UNION ALL subquery, not
+				 * an inheritance parent.
+				 */
+				while (appinfo &&
+					   planner_rt_fetch(appinfo->parent_relid,
+										root)->rtekind == RTE_RELATION)
+				{
+					int			parent_varattno;
+					ListCell   *l;
+
+					parent_varattno = 1;
+					found = false;
+					foreach(l, appinfo->translated_vars)
+					{
+						Var		   *childvar = lfirst_node(Var, l);
+
+						/* Ignore dropped attributes of the parent. */
+						if (childvar != NULL &&
+							varattno == childvar->varattno)
+						{
+							found = true;
+							break;
+						}
+						parent_varattno++;
+					}
+
+					if (!found)
+						break;
+
+					varno = appinfo->parent_relid;
+					varattno = parent_varattno;
+
+					/* If the parent is itself a child, continue up. */
+					appinfo = root->append_rel_array[varno];
+				}
+
+				/*
+				 * In rare cases, the Var may be local to the child table, in
+				 * which case, we've got to live with having no access to this
+				 * column's stats.
+				 */
+				if (!found)
+					return;
+
+				/* Repeat the access check on this parent rel & column */
+				rte = planner_rt_fetch(varno, root);
+				Assert(rte->rtekind == RTE_RELATION);
+
+				userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+
+				vardata->acl_ok =
+					rte->securityQuals == NIL &&
+					((pg_class_aclcheck(rte->relid, userid,
+										ACL_SELECT) == ACLCHECK_OK) ||
+					 (pg_attribute_aclcheck(rte->relid, varattno, userid,
+											ACL_SELECT) == ACLCHECK_OK));
+			}
 		}
 		else
 		{
