@@ -329,6 +329,44 @@ static int	fsync_parent_path(const char *fname, int elevel);
 int
 pg_fsync(int fd)
 {
+#if !defined(WIN32) && defined(USE_ASSERT_CHECKING)
+	struct stat st;
+
+	/*
+	 * Some operating system implementations of fsync() have requirements
+	 * about the file access modes that were used when their file descriptor
+	 * argument was opened, and these requirements differ depending on whether
+	 * the file descriptor is for a directory.
+	 *
+	 * For any file descriptor that may eventually be handed to fsync(), we
+	 * should have opened it with access modes that are compatible with
+	 * fsync() on all supported systems, otherwise the code may not be
+	 * portable, even if it runs ok on the current system.
+	 *
+	 * We assert here that a descriptor for a file was opened with write
+	 * permissions (either O_RDWR or O_WRONLY) and for a directory without
+	 * write permissions (O_RDONLY).
+	 *
+	 * Ignore any fstat errors and let the follow-up fsync() do its work.
+	 * Doing this sanity check here counts for the case where fsync() is
+	 * disabled.
+	 */
+	if (fstat(fd, &st) == 0)
+	{
+		int			desc_flags = fcntl(fd, F_GETFL);
+
+		/*
+		 * O_RDONLY is historically 0, so just make sure that for directories
+		 * no write flags are used.
+		 */
+		if (S_ISDIR(st.st_mode))
+			Assert((desc_flags & (O_RDWR | O_WRONLY)) == 0);
+		else
+			Assert((desc_flags & (O_RDWR | O_WRONLY)) != 0);
+	}
+	errno = 0;
+#endif
+
 	/* #if is to skip the sync_method test if there's no need for it */
 #if defined(HAVE_FSYNC_WRITETHROUGH) && !defined(FSYNC_WRITETHROUGH_IS_FSYNC)
 	if (sync_method == SYNC_METHOD_FSYNC_WRITETHROUGH)
