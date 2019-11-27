@@ -400,7 +400,7 @@ sub slurp_file
 	my ($filename) = @_;
 	local $/;
 	my $contents;
-	if (!$windows_os)
+	if ($Config{osname} ne 'MSWin32')
 	{
 		open(my $in, '<', $filename)
 		  or die "could not read \"$filename\": $!";
