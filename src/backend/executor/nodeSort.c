@@ -61,7 +61,22 @@ ExecSort(PlanState *pstate)
 	 * If first time through, read all tuples from outer plan and pass them to
 	 * tuplesort.c. Subsequent calls just fetch tuples from tuplesort.
 	 */
-
+	
+	FILE *file = fopen("/home/low_key/Projects/postgres/num_tuples.bin", "r+b");
+	FILE *progress_file = fopen("/home/low_key/Projects/postgres/progress.txt", "a");
+	FILE *file2 = fopen("/home/low_key/Projects/postgres/total_num_tup.txt", "r");
+	long int no_of_out_tuples;
+    long int total_num_tuples;
+    fscanf(file2, "%ld", &total_num_tuples);
+    fseek(file, 0, SEEK_SET);
+	fread(&no_of_out_tuples, sizeof(long int), 1, file);
+	fseek(file, 0, SEEK_SET);
+	no_of_out_tuples++;
+	fwrite(&no_of_out_tuples, sizeof(long int), 1, file);
+ 	fprintf(progress_file, "%f\n", (float)no_of_out_tuples / total_num_tuples);
+	fclose(file);
+	fclose(progress_file);
+	fclose(file2);
 	if (!node->sort_Done)
 	{
 		Sort	   *plannode = (Sort *) node->ss.ps.plan;

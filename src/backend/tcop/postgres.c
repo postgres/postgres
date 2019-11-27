@@ -806,6 +806,40 @@ pg_rewrite_query(Query *query)
 	return querytree_list;
 }
 
+/*
+ * Generate the sum of plan_rows in the driver nodes of a plan.
+ * */
+int
+num_driver_tuples(Plan * plannode){
+    switch(plannode->type)
+    {
+        case T_SeqScan:
+		case T_IndexScan:
+		case T_IndexOnlyScan:
+            return plannode->plan_rows;
+        case T_HashJoin:
+            return num_driver_tuples(plannode->lefttree)
+                 + num_driver_tuples(plannode->righttree)
+                 + plannode->plan_rows;
+        case T_MergeJoin:
+            return num_driver_tuples(plannode->lefttree)
+                 + num_driver_tuples(plannode->righttree);
+        case T_NestLoop:
+        case T_Material:
+            return num_driver_tuples(plannode->lefttree) 
+			     * num_driver_tuples(plannode->righttree);
+        case T_Sort:
+			return 1 + 2 * num_driver_tuples(plannode->lefttree);
+        case T_Agg:
+            return 1 + num_driver_tuples(plannode->lefttree)
+                 + plannode->plan_rows;
+        case T_Invalid:
+        case T_Null:
+            return 0;
+    }
+    return 0;
+}
+
 
 /*
  * Generate a plan for a single already-rewritten query.
@@ -858,6 +892,21 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
 	 */
 	if (Debug_print_plan)
 		elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+	
+	int ntype = (const Plan *)plan->type;
+
+    if (ntype==T_PlannedStmt)       /* is a PlannedStmt */
+    {
+        Plan * plannode = plan->planTree; // get planTree from plannedstmt
+        long int total_num_tuples = num_driver_tuples(plannode);
+
+        FILE * file = fopen("/home/low_key/Projects/postgres/total_num_tup.txt", "w+");
+        fseek(file, 0, SEEK_SET);
+        fprintf(file, "%ld", total_num_tuples);
+        printf("\ntotal:%ld", total_num_tuples);
+        fclose(file);
+
+    }
 
 	TRACE_POSTGRESQL_QUERY_PLAN_DONE();
 

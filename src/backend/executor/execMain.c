@@ -142,10 +142,12 @@ void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	
-	FILE *file = fopen("/home/low_key/test.bin", "wb");
+	FILE *file = fopen("/home/low_key/Projects/postgres/num_tuples.bin", "wb");
+	FILE *file1 = fopen("/home/low_key/Projects/postgres/progress.txt", "w+");
 	long int inp = -1;
 	fwrite(&inp, sizeof(long int), 1, file);
 	fclose(file);
+	fclose(file1);
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);
 	else
