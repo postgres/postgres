@@ -1020,7 +1020,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
  *	  join paths made from this pair of sub-relations.  (It will not need to
  *	  be considered further up the join tree.)
  *
- *	  In many case we will find the same RestrictInfos in both input
+ *	  In many cases we will find the same RestrictInfos in both input
  *	  relations' joinlists, so be careful to eliminate duplicates.
  *	  Pointer equality should be a sufficient test for dups, since all
  *	  the various joinlist entries ultimately refer to RestrictInfos
