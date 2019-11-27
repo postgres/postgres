@@ -1941,29 +1941,6 @@ AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([long])
 
-# Decide whether float8 is passed by value.
-# Note: this setting also controls int8 and related types such as timestamp.
-# If sizeof(Datum) >= 8, this is user-selectable, enabled by default.
-# If not, trying to select it is an error.
-AC_MSG_CHECKING([whether to build with float8 passed by value])
-if test $ac_cv_sizeof_void_p -ge 8 ; then
-  PGAC_ARG_BOOL(enable, float8-byval, yes, [disable float8 passed by value])
-else
-  PGAC_ARG_BOOL(enable, float8-byval, no, [disable float8 passed by value])
-  if test "$enable_float8_byval" = yes ; then
-    AC_MSG_ERROR([--enable-float8-byval is not supported on 32-bit platforms.])
-  fi
-fi
-if test "$enable_float8_byval" = yes ; then
-  AC_DEFINE([USE_FLOAT8_BYVAL], 1,
-            [Define to 1 if you want float8, int8, etc values to be passed by value. (--enable-float8-byval)])
-  float8passbyval=true
-else
-  float8passbyval=false
-fi
-AC_MSG_RESULT([$enable_float8_byval])
-AC_DEFINE_UNQUOTED([FLOAT8PASSBYVAL], [$float8passbyval], [float8, int8, and related values are passed by value if 'true', by reference if 'false'])
-
 # Determine memory alignment requirements for the basic C data types.
 
 AC_CHECK_ALIGNOF(short)

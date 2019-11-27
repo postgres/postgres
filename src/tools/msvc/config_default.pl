@@ -5,9 +5,6 @@ use warnings;
 our $config = {
 	asserts => 0,    # --enable-cassert
 
-	# float8byval=> $platformbits == 64, # --disable-float8-byval,
-	# off by default on 32 bit platforms, on by default on 64 bit platforms
-
 	# blocksize => 8,         # --with-blocksize, 8kB by default
 	# wal_blocksize => 8,     # --with-wal-blocksize, 8kB by default
 	ldap      => 1,        # --with-ldap

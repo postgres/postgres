@@ -491,6 +491,12 @@ typedef signed int Offset;
 typedef float float4;
 typedef double float8;
 
+#ifdef USE_FLOAT8_BYVAL
+#define FLOAT8PASSBYVAL true
+#else
+#define FLOAT8PASSBYVAL false
+#endif
+
 /*
  * Oid, RegProcedure, TransactionId, SubTransactionId, MultiXactId,
  * CommandId

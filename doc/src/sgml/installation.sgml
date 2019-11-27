@@ -1205,22 +1205,6 @@ build-postgresql:
       </varlistentry>
 
       <varlistentry>
-       <term><option>--disable-float8-byval</option></term>
-       <listitem>
-        <para>
-         Disable passing float8 values <quote>by value</quote>, causing them
-         to be passed <quote>by reference</quote> instead.  This option costs
-         performance, but may be needed for compatibility with very old
-         user-defined functions written in C.
-         Note that this option affects not only float8, but also int8 and some
-         related types such as timestamp.
-         On 32-bit platforms, <option>--disable-float8-byval</option> is the default
-         and it is not allowed to select <option>--enable-float8-byval</option>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--disable-spinlocks</option></term>
        <listitem>
         <para>

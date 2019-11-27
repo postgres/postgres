@@ -70,10 +70,6 @@
    MSVC and with C++ compilers. */
 #undef FLEXIBLE_ARRAY_MEMBER
 
-/* float8, int8, and related values are passed by value if 'true', by
-   reference if 'false' */
-#undef FLOAT8PASSBYVAL
-
 /* Define to 1 if gettimeofday() takes only 1 argument. */
 #undef GETTIMEOFDAY_1ARG
 
@@ -897,10 +893,6 @@
 
 /* Define to use /dev/urandom for random number generation */
 #undef USE_DEV_URANDOM
-
-/* Define to 1 if you want float8, int8, etc values to be passed by value.
-   (--enable-float8-byval) */
-#undef USE_FLOAT8_BYVAL
 
 /* Define to build with ICU support. (--with-icu) */
 #undef USE_ICU

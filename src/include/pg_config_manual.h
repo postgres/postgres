@@ -57,6 +57,19 @@
 #define PARTITION_MAX_KEYS	32
 
 /*
+ * Decide whether built-in 8-byte types, including float8, int8, and
+ * timestamp, are passed by value.  This is on by default if sizeof(Datum) >=
+ * 8 (that is, on 64-bit platforms).  If sizeof(Datum) < 8 (32-bit platforms),
+ * this must be off.  We keep this here as an option so that it is easy to
+ * test the pass-by-reference code paths on 64-bit platforms.
+ *
+ * Changing this requires an initdb.
+ */
+#if SIZEOF_VOID_P >= 8
+#define USE_FLOAT8_BYVAL 1
+#endif
+
+/*
  * When we don't have native spinlocks, we use semaphores to simulate them.
  * Decreasing this value reduces consumption of OS resources; increasing it
  * may improve performance, but supplying a real spinlock implementation is
