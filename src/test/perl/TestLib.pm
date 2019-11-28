@@ -860,6 +860,43 @@ sub command_checks_all
 
 =pod
 
+=item pump_until(proc, timeout, stream, untl)
+
+# Pump until string is matched, or timeout occurs
+
+=cut
+
+sub pump_until
+{
+	my ($proc, $timeout, $stream, $untl) = @_;
+	$proc->pump_nb();
+	while (1)
+	{
+		last if $$stream =~ /$untl/;
+		if ($timeout->is_expired)
+		{
+			diag("aborting wait: program timed out");
+			diag("stream contents: >>", $$stream, "<<");
+			diag("pattern searched for: ", $untl);
+
+			return 0;
+		}
+		if (not $proc->pumpable())
+		{
+			diag("aborting wait: program died");
+			diag("stream contents: >>", $$stream, "<<");
+			diag("pattern searched for: ", $untl);
+
+			return 0;
+		}
+		$proc->pump();
+	}
+	return 1;
+
+}
+
+=pod
+
 =back
 
 =cut
