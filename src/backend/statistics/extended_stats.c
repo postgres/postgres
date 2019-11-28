@@ -1059,7 +1059,6 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 								   RelOptInfo *rel, Bitmapset **estimatedclauses)
 {
 	ListCell   *l;
-	Bitmapset  *clauses_attnums = NULL;
 	Bitmapset **list_attnums;
 	int			listidx;
 	StatisticExtInfo *stat;
@@ -1097,10 +1096,7 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 
 		if (!bms_is_member(listidx, *estimatedclauses) &&
 			statext_is_compatible_clause(root, clause, rel->relid, &attnums))
-		{
 			list_attnums[listidx] = attnums;
-			clauses_attnums = bms_add_members(clauses_attnums, attnums);
-		}
 		else
 			list_attnums[listidx] = NULL;
 
