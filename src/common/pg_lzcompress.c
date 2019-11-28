@@ -714,11 +714,13 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 			if (ctrl & 1)
 			{
 				/*
-				 * Otherwise it contains the match length minus 3 and the
-				 * upper 4 bits of the offset. The next following byte
-				 * contains the lower 8 bits of the offset. If the length is
-				 * coded as 18, another extension tag byte tells how much
-				 * longer the match really was (0-255).
+				 * Set control bit means we must read a match tag. The match
+				 * is coded with two bytes. First byte uses lower nibble to
+				 * code length - 3. Higher nibble contains upper 4 bits of the
+				 * offset. The next following byte contains the lower 8 bits
+				 * of the offset. If the length is coded as 18, another
+				 * extension tag byte tells how much longer the match really
+				 * was (0-255).
 				 */
 				int32		len;
 				int32		off;
@@ -731,16 +733,44 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 
 				/*
 				 * Now we copy the bytes specified by the tag from OUTPUT to
-				 * OUTPUT. It is dangerous and platform dependent to use
-				 * memcpy() here, because the copied areas could overlap
-				 * extremely!
+				 * OUTPUT (copy len bytes from dp - off to dp). The copied
+				 * areas could overlap, to preven possible uncertainty, we
+				 * copy only non-overlapping regions.
 				 */
 				len = Min(len, destend - dp);
-				while (len--)
+				while (off < len)
 				{
-					*dp = dp[-off];
-					dp++;
+					/*---------
+					 * When offset is smaller than length - source and
+					 * destination regions overlap. memmove() is resolving
+					 * this overlap in an incompatible way with pglz. Thus we
+					 * resort to memcpy()-ing non-overlapping regions.
+					 *
+					 * Consider input: 112341234123412341234
+					 * At byte 5       here ^ we have match with length 16 and
+					 * offset 4.       11234M(len=16, off=4)
+					 * We are decoding first period of match and rewrite match
+					 *                 112341234M(len=12, off=8)
+					 *
+					 * The same match is now at position 9, it points to the
+					 * same start byte of output, but from another position:
+					 * the offset is doubled.
+					 *
+					 * We iterate through this offset growth until we can
+					 * proceed to usual memcpy(). If we would try to decode
+					 * the match at byte 5 (len=16, off=4) by memmove() we
+					 * would issue memmove(5, 1, 16) which would produce
+					 * 112341234XXXXXXXXXXXX, where series of X is 12
+					 * undefined bytes, that were at bytes [5:17].
+					 *---------
+					 */
+					memcpy(dp, dp - off, off);
+					len -= off;
+					dp += off;
+					off += off;
 				}
+				memcpy(dp, dp - off, len);
+				dp += len;
 			}
 			else
 			{
