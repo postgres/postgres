@@ -116,7 +116,8 @@ extern Selectivity statext_clauselist_selectivity(PlannerInfo *root,
 												  RelOptInfo *rel,
 												  Bitmapset **estimatedclauses);
 extern bool has_stats_of_kind(List *stats, char requiredkind);
-extern StatisticExtInfo *choose_best_statistics(List *stats,
-												Bitmapset *attnums, char requiredkind);
+extern StatisticExtInfo *choose_best_statistics(List *stats, char requiredkind,
+												Bitmapset **clause_attnums,
+												int nclauses);
 
 #endif							/* STATISTICS_H */
