@@ -545,7 +545,6 @@ CheckForExternalTrigger(void)
 
 	fprintf(stderr, "WARNING: invalid content in \"%s\"\n", triggerPath);
 	fflush(stderr);
-	return;
 }
 
 /*

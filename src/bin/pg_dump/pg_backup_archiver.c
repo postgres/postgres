@@ -1045,8 +1045,6 @@ WriteData(Archive *AHX, const void *data, size_t dLen)
 		fatal("internal error -- WriteData cannot be called outside the context of a DataDumper routine");
 
 	AH->WriteDataPtr(AH, data, dLen);
-
-	return;
 }
 
 /*
@@ -1461,7 +1459,6 @@ void
 archputs(const char *s, Archive *AH)
 {
 	WriteData(AH, s, strlen(s));
-	return;
 }
 
 /* Public */
@@ -1736,8 +1733,6 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 
 	if (bytes_written != size * nmemb)
 		WRITE_ERROR_EXIT;
-
-	return;
 }
 
 /* on some error, we may decide to go on... */

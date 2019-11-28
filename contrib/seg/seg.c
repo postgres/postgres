@@ -706,8 +706,6 @@ rt_seg_size(SEG *a, float *size)
 		*size = 0.0;
 	else
 		*size = (float) Abs(a->upper - a->lower);
-
-	return;
 }
 
 Datum

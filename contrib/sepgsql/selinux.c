@@ -809,8 +809,6 @@ sepgsql_compute_avd(const char *scontext,
 		if (avd_ex.auditdeny & av_code_ex)
 			avd->auditdeny |= av_code;
 	}
-
-	return;
 }
 
 /*

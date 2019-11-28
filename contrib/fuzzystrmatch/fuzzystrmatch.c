@@ -698,8 +698,6 @@ _metaphone(char *word,			/* IN */
 	}							/* END FOR */
 
 	End_Phoned_Word;
-
-	return;
 }								/* END metaphone */
 
 

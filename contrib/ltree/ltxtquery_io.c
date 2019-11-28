@@ -192,7 +192,6 @@ pushval_asis(QPRS_STATE *state, int type, char *strval, int lenval, uint16 flag)
 	*(state->curop) = '\0';
 	state->curop++;
 	state->sumlen += lenval + 1;
-	return;
 }
 
 #define STACKDEPTH		32

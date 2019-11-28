@@ -624,8 +624,6 @@ j2date(int jd, int *year, int *month, int *day)
 	quad = julian * 2141 / 65536;
 	*day = julian - 7834 * quad / 256;
 	*month = (quad + 10) % 12 + 1;
-
-	return;
 }								/* j2date() */
 
 /* DecodeSpecial()

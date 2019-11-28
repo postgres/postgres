@@ -2903,7 +2903,6 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 				*found_p = true;
 		}
 	}
-	return;
 }
 
 

@@ -834,8 +834,6 @@ llvm_create_types(void)
 	 * Leave the module alive, otherwise references to function would be
 	 * dangling.
 	 */
-
-	return;
 }
 
 /*

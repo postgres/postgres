@@ -1088,8 +1088,6 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 		LockBuffer(child->parent->buffer, GIST_EXCLUSIVE);
 		gistFindCorrectParent(r, child);
 	}
-
-	return;
 }
 
 /*

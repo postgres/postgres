@@ -86,7 +86,6 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	/* Just send it to output, ahwrite() already errors on failure */
 	ahwrite(data, 1, dLen, AH);
-	return;
 }
 
 /*
@@ -109,7 +108,6 @@ _WriteBlobData(ArchiveHandle *AH, const void *data, size_t dLen)
 
 		destroyPQExpBuffer(buf);
 	}
-	return;
 }
 
 static void
@@ -221,7 +219,6 @@ static void
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	/* Don't do anything */
-	return;
 }
 
 static void

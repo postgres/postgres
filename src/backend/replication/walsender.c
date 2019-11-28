@@ -2301,7 +2301,6 @@ WalSndLoop(WalSndSendDataCallback send_data)
 									 WAIT_EVENT_WAL_SENDER_MAIN);
 		}
 	}
-	return;
 }
 
 /* Initialize a per-walsender data structure for this walsender process */
@@ -2757,8 +2756,6 @@ retry:
 				 (uint32) (sentPtr >> 32), (uint32) sentPtr);
 		set_ps_display(activitymsg, false);
 	}
-
-	return;
 }
 
 /*

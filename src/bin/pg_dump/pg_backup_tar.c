@@ -615,8 +615,6 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 
 	if (tarWrite(data, dLen, tctx->TH) != dLen)
 		WRITE_ERROR_EXIT;
-
-	return;
 }
 
 static void
@@ -818,7 +816,6 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 		fatal("could not read from input file: end of file");
 
 	ctx->filePos += len;
-	return;
 }
 
 static void

@@ -205,5 +205,4 @@ _dosmaperr(unsigned long e)
 #endif
 
 	errno = EINVAL;
-	return;
 }

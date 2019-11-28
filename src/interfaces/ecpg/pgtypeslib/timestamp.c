@@ -297,7 +297,6 @@ PGTYPEStimestamp_current(timestamp * ts)
 	GetCurrentDateTime(&tm);
 	if (errno == 0)
 		tm2timestamp(&tm, 0, NULL, ts);
-	return;
 }
 
 static int

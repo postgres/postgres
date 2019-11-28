@@ -2399,8 +2399,6 @@ expand_tilde(char **filename)
 		}
 	}
 #endif
-
-	return;
 }
 
 /*

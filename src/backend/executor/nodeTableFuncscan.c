@@ -335,8 +335,6 @@ tfuncFetchRows(TableFuncScanState *tstate, ExprContext *econtext)
 
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextReset(tstate->perTableCxt);
-
-	return;
 }
 
 /*

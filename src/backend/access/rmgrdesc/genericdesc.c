@@ -43,8 +43,6 @@ generic_desc(StringInfo buf, XLogReaderState *record)
 		else
 			appendStringInfo(buf, "offset %u, length %u", offset, length);
 	}
-
-	return;
 }
 
 /*

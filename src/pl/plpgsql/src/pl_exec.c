@@ -1189,8 +1189,6 @@ plpgsql_exec_event_trigger(PLpgSQL_function *func, EventTriggerData *trigdata)
 	 * Pop the error context stack
 	 */
 	error_context_stack = plerrcontext.previous;
-
-	return;
 }
 
 /*

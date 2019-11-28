@@ -187,8 +187,6 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 
 	lo_close(conn, lobj_fd);
 	close(fd);
-
-	return;
 }
 
 static void

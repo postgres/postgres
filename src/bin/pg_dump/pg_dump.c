@@ -15416,8 +15416,6 @@ dumpTable(Archive *fout, TableInfo *tbinfo)
 	}
 
 	free(namecopy);
-
-	return;
 }
 
 /*

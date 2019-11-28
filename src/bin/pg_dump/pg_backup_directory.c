@@ -349,9 +349,6 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
 		fatal("could not write to output file: %s",
 			  get_cfp_error(ctx->dataFH));
-
-
-	return;
 }
 
 /*
@@ -517,8 +514,6 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 	if (cfwrite(buf, len, ctx->dataFH) != len)
 		fatal("could not write to output file: %s",
 			  get_cfp_error(ctx->dataFH));
-
-	return;
 }
 
 /*
@@ -537,8 +532,6 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 	 */
 	if (cfread(buf, len, ctx->dataFH) != len)
 		fatal("could not read from input file: end of file");
-
-	return;
 }
 
 /*

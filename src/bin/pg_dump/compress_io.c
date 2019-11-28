@@ -192,7 +192,6 @@ WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 			WriteDataToArchiveNone(AH, cs, data, dLen);
 			break;
 	}
-	return;
 }
 
 /*
@@ -308,8 +307,6 @@ WriteDataToArchiveZlib(ArchiveHandle *AH, CompressorState *cs,
 	cs->zp->next_in = (void *) unconstify(char *, data);
 	cs->zp->avail_in = dLen;
 	DeflateCompressorZlib(AH, cs, false);
-
-	return;
 }
 
 static void
@@ -407,7 +404,6 @@ WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 					   const char *data, size_t dLen)
 {
 	cs->writeF(AH, data, dLen);
-	return;
 }
 
 

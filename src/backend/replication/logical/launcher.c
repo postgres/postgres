@@ -223,8 +223,6 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 			CHECK_FOR_INTERRUPTS();
 		}
 	}
-
-	return;
 }
 
 /*

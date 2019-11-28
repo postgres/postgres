@@ -529,7 +529,6 @@ void
 rtoday(date * d)
 {
 	PGTYPESdate_today(d);
-	return;
 }
 
 int
@@ -959,7 +958,6 @@ rupshift(char *str)
 	for (; *str != '\0'; str++)
 		if (islower((unsigned char) *str))
 			*str = toupper((unsigned char) *str);
-	return;
 }
 
 int

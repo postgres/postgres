@@ -279,7 +279,6 @@ pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
 error:
 	*done = true;
 	*success = false;
-	return;
 }
 
 /*

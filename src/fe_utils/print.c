@@ -3619,8 +3619,6 @@ refresh_utf8format(const printTableOpt *opt)
 	popt->wrap_left = unicode_style.wrap_left;
 	popt->wrap_right = unicode_style.wrap_right;
 	popt->wrap_right_border = unicode_style.wrap_right_border;
-
-	return;
 }
 
 /*

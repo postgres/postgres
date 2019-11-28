@@ -2436,6 +2436,4 @@ PrepareRedoRemove(TransactionId xid, bool giveWarning)
 	if (gxact->ondisk)
 		RemoveTwoPhaseFile(xid, giveWarning);
 	RemoveGXact(gxact);
-
-	return;
 }

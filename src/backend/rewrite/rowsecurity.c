@@ -394,8 +394,6 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 	 * when necessary (eg: role changes)
 	 */
 	*hasRowSecurity = true;
-
-	return;
 }
 
 /*
