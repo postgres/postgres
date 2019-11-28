@@ -951,14 +951,14 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	Bitmapset  *clauses_attnums = NULL;
 	StatisticExtInfo *stat;
 	MVDependencies *dependencies;
-	AttrNumber *list_attnums;
+	Bitmapset **list_attnums;
 	int			listidx;
 
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_DEPENDENCIES))
 		return 1.0;
 
-	list_attnums = (AttrNumber *) palloc(sizeof(AttrNumber) *
+	list_attnums = (Bitmapset **) palloc(sizeof(Bitmapset *) *
 										 list_length(clauses));
 
 	/*
@@ -981,11 +981,11 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 		if (!bms_is_member(listidx, *estimatedclauses) &&
 			dependency_is_compatible_clause(clause, rel->relid, &attnum))
 		{
-			list_attnums[listidx] = attnum;
+			list_attnums[listidx] = bms_make_singleton(attnum);
 			clauses_attnums = bms_add_member(clauses_attnums, attnum);
 		}
 		else
-			list_attnums[listidx] = InvalidAttrNumber;
+			list_attnums[listidx] = NULL;
 
 		listidx++;
 	}
@@ -1002,8 +1002,8 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	}
 
 	/* find the best suited statistics object for these attnums */
-	stat = choose_best_statistics(rel->statlist, clauses_attnums,
-								  STATS_EXT_DEPENDENCIES);
+	stat = choose_best_statistics(rel->statlist, STATS_EXT_DEPENDENCIES,
+								  list_attnums, list_length(clauses));
 
 	/* if no matching stats could be found then we've nothing to do */
 	if (!stat)
@@ -1043,14 +1043,20 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 		foreach(l, clauses)
 		{
 			Node	   *clause;
+			AttrNumber	attnum;
 
 			listidx++;
 
 			/*
 			 * Skip incompatible clauses, and ones we've already estimated on.
 			 */
-			if (list_attnums[listidx] == InvalidAttrNumber)
+			if (!list_attnums[listidx])
 				continue;
+
+			/*
+			 * We expect the bitmaps ton contain a single attribute number.
+			 */
+			attnum = bms_singleton_member(list_attnums[listidx]);
 
 			/*
 			 * Technically we could find more than one clause for a given
@@ -1061,8 +1067,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 			 * anyway. If it happens to be compared to the same Const, then
 			 * ignoring the additional clause is just the thing to do.
 			 */
-			if (dependency_implies_attribute(dependency,
-											 list_attnums[listidx]))
+			if (dependency_implies_attribute(dependency, attnum))
 			{
 				clause = (Node *) lfirst(l);
 
@@ -1077,8 +1082,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 				 * We'll want to ignore this when looking for the next
 				 * strongest dependency above.
 				 */
-				clauses_attnums = bms_del_member(clauses_attnums,
-												 list_attnums[listidx]);
+				clauses_attnums = bms_del_member(clauses_attnums, attnum);
 			}
 		}
 

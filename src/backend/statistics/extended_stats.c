@@ -844,15 +844,20 @@ has_stats_of_kind(List *stats, char requiredkind)
  *		there's no match.
  *
  * The current selection criteria is very simple - we choose the statistics
- * object referencing the most of the requested attributes, breaking ties
- * in favor of objects with fewer keys overall.
+ * object referencing the most attributes in covered (and still unestimated
+ * clauses), breaking ties in favor of objects with fewer keys overall.
+ *
+ * The clause_attnums is an array of bitmaps, storing attnums for individual
+ * clauses. A NULL element means the clause is either incompatible or already
+ * estimated.
  *
  * XXX If multiple statistics objects tie on both criteria, then which object
  * is chosen depends on the order that they appear in the stats list. Perhaps
  * further tiebreakers are needed.
  */
 StatisticExtInfo *
-choose_best_statistics(List *stats, Bitmapset *attnums, char requiredkind)
+choose_best_statistics(List *stats, char requiredkind,
+					   Bitmapset **clause_attnums, int nclauses)
 {
 	ListCell   *lc;
 	StatisticExtInfo *best_match = NULL;
@@ -861,17 +866,33 @@ choose_best_statistics(List *stats, Bitmapset *attnums, char requiredkind)
 
 	foreach(lc, stats)
 	{
+		int			i;
 		StatisticExtInfo *info = (StatisticExtInfo *) lfirst(lc);
+		Bitmapset  *matched = NULL;
 		int			num_matched;
 		int			numkeys;
-		Bitmapset  *matched;
 
 		/* skip statistics that are not of the correct type */
 		if (info->kind != requiredkind)
 			continue;
 
-		/* determine how many attributes of these stats can be matched to */
-		matched = bms_intersect(attnums, info->keys);
+		/*
+		 * Collect attributes in remaining (unestimated) clauses fully covered
+		 * by this statistic object.
+		 */
+		for (i = 0; i < nclauses; i++)
+		{
+			/* ignore incompatible/estimated clauses */
+			if (!clause_attnums[i])
+				continue;
+
+			/* ignore clauses that are not covered by this object */
+			if (!bms_is_subset(clause_attnums[i], info->keys))
+				continue;
+
+			matched = bms_add_members(matched, clause_attnums[i]);
+		}
+
 		num_matched = bms_num_members(matched);
 		bms_free(matched);
 
@@ -1233,12 +1254,9 @@ statext_mcv_clauselist_selectivity(PlannerInfo *root, List *clauses, int varReli
 		listidx++;
 	}
 
-	/* We need at least two attributes for multivariate statistics. */
-	if (bms_membership(clauses_attnums) != BMS_MULTIPLE)
-		return 1.0;
-
 	/* find the best suited statistics object for these attnums */
-	stat = choose_best_statistics(rel->statlist, clauses_attnums, STATS_EXT_MCV);
+	stat = choose_best_statistics(rel->statlist, STATS_EXT_MCV,
+								  list_attnums, list_length(clauses));
 
 	/* if no matching stats could be found then we've nothing to do */
 	if (!stat)
