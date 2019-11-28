@@ -887,9 +887,9 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		pg_fatal("Your installation contains \"contrib/isn\" functions which rely on the\n"
 				 "bigint data type.  Your old and new clusters pass bigint values\n"
 				 "differently so this cluster cannot currently be upgraded.  You can\n"
-				 "manually upgrade databases that use \"contrib/isn\" facilities and remove\n"
-				 "\"contrib/isn\" from the old cluster and restart the upgrade.  A list of\n"
-				 "the problem functions is in the file:\n"
+				 "manually dump databases in the old cluster that use \"contrib/isn\"\n"
+				 "facilities, drop them, perform the upgrade, and then restore them.  A\n"
+				 "list of the problem functions is in the file:\n"
 				 "    %s\n\n", output_path);
 	}
 	else
