@@ -9501,9 +9501,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </term>
       <listitem>
        <para>
-        Allows modification of the structure of system tables.
-        This is used by <command>initdb</command>.
-        This parameter can only be set at server start.
+        Allows modification of the structure of system tables as well as
+        certain other risky actions on system tables.  This is otherwise not
+        allowed even for superusers.  Ill-advised use of this setting can
+        cause irretrievable data loss or seriously corrupt the database
+        system.  Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
