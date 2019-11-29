@@ -381,7 +381,8 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 							i + 1,
 							format_type_be(given_type_id),
 							format_type_be(expected_type_id)),
-					 errhint("You will need to rewrite or cast the expression.")));
+					 errhint("You will need to rewrite or cast the expression."),
+					 parser_errposition(pstate, exprLocation(lfirst(l)))));
 
 		/* Take care of collations in the finished expression. */
 		assign_expr_collations(pstate, expr);

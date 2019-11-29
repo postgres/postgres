@@ -113,6 +113,8 @@ DETAIL:  Expected 5 parameters but got 6.
 -- wrong param types
 EXECUTE q3(5::smallint, 10.5::float, false, 4::bigint, 'bytea');
 ERROR:  parameter $3 of type boolean cannot be coerced to the expected type double precision
+LINE 1: EXECUTE q3(5::smallint, 10.5::float, false, 4::bigint, 'byte...
+                                             ^
 HINT:  You will need to rewrite or cast the expression.
 -- invalid type
 PREPARE q4(nonexistenttype) AS SELECT $1;
