@@ -3309,10 +3309,6 @@ WHERE c.oid IS NOT NULL OR m.mapped_oid IS NOT NULL;
 
 -- Checks on creating and manipulation of user defined relations in
 -- pg_catalog.
---
--- XXX: It would be useful to add checks around trying to manipulate
--- catalog tables, but that might have ugly consequences when run
--- against an existing server with allow_system_table_mods = on.
 SHOW allow_system_table_mods;
  allow_system_table_mods 
 -------------------------
