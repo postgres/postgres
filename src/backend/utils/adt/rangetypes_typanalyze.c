@@ -325,11 +325,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		stats->numvalues[slot_idx] = num_hist;
 		stats->statypid[slot_idx] = FLOAT8OID;
 		stats->statyplen[slot_idx] = sizeof(float8);
-#ifdef USE_FLOAT8_BYVAL
-		stats->statypbyval[slot_idx] = true;
-#else
-		stats->statypbyval[slot_idx] = false;
-#endif
+		stats->statypbyval[slot_idx] = FLOAT8PASSBYVAL;
 		stats->statypalign[slot_idx] = 'd';
 
 		/* Store the fraction of empty ranges */
