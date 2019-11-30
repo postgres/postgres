@@ -48,3 +48,5 @@ timestamp_defmt_asc(  1976, July 14. Time: 9:15am, %Y,   %B %d. Time: %I:%M %p) 
 timestamp_defmt_asc(  1976, July 14. Time: 9:15 am, %Y,   %B %d. Time: %I:%M%p) = 1976-07-14 09:15:00, error: 0
 timestamp_defmt_asc(  1976, P.M. July 14. Time: 9:15, %Y, %P  %B %d. Time: %I:%M) = 1976-07-14 21:15:00, error: 0
 timestamp_defmt_asc(1234567890, %s) = 2009-02-13 23:31:30, error: 0
+timestamp_defmt_asc(Mon Dec 30 17:28:44 2019, %a %b %d %H:%M:%S %Y) = Mon Dec 30 17:28:44 2019, error: 0
+timestamp_defmt_asc(Mon December 30 17:28:44 2019, %a %b %d %H:%M:%S %Y) = Mon Dec 30 17:28:44 2019, error: 0
