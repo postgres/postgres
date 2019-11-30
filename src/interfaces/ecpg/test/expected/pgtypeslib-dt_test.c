@@ -436,17 +436,33 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, text, i);
 	PGTYPESchar_free(text);
 
+	out = (char*) malloc(64);
+	fmt = "%a %b %d %H:%M:%S %Y";
+	in =  "Mon Dec 30 17:28:44 2019";
+	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
+	i = PGTYPEStimestamp_fmt_asc(&ts1, out, 63, fmt);
+	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, out, i);
+	free(out);
+
+	out = (char*) malloc(64);
+	fmt = "%a %b %d %H:%M:%S %Y";
+	in =  "Mon December 30 17:28:44 2019";
+	i = PGTYPEStimestamp_defmt_asc(in, fmt, &ts1);
+	i = PGTYPEStimestamp_fmt_asc(&ts1, out, 63, fmt);
+	printf("timestamp_defmt_asc(%s, %s) = %s, error: %d\n", in, fmt, out, i);
+	free(out);
+
 	{ ECPGtrans(__LINE__, NULL, "rollback");
-#line 365 "dt_test.pgc"
+#line 381 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 365 "dt_test.pgc"
+#line 381 "dt_test.pgc"
 
         { ECPGdisconnect(__LINE__, "CURRENT");
-#line 366 "dt_test.pgc"
+#line 382 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint ( );}
-#line 366 "dt_test.pgc"
+#line 382 "dt_test.pgc"
 
 
 	return 0;

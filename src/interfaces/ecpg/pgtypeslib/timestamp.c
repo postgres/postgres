@@ -336,13 +336,13 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm *tm,
 					/* XXX should be locale aware */
 				case 'b':
 				case 'h':
-					replace_val.str_val = months[tm->tm_mon];
+					replace_val.str_val = months[tm->tm_mon - 1];
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 					/* the full name of the month */
 					/* XXX should be locale aware */
 				case 'B':
-					replace_val.str_val = pgtypes_date_months[tm->tm_mon];
+					replace_val.str_val = pgtypes_date_months[tm->tm_mon - 1];
 					replace_type = PGTYPES_TYPE_STRING_CONSTANT;
 					break;
 
