@@ -72,9 +72,7 @@ CREATE TABLE alive(status text);
 INSERT INTO alive VALUES($$committed-before-sigquit$$);
 SELECT pg_backend_pid();
 ];
-ok(TestLib::pump_until(
-		$killme, $psql_timeout, \$killme_stdout,
-		qr/[[:digit:]]+[\r\n]$/m),
+ok(pump_until($killme, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
 	'acquired pid for SIGQUIT');
 my $pid = $killme_stdout;
 chomp($pid);
@@ -86,9 +84,7 @@ $killme_stdin .= q[
 BEGIN;
 INSERT INTO alive VALUES($$in-progress-before-sigquit$$) RETURNING status;
 ];
-ok(TestLib::pump_until(
-		$killme, $psql_timeout, \$killme_stdout,
-		qr/in-progress-before-sigquit/m),
+ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigquit/m),
 	'inserted in-progress-before-sigquit');
 $killme_stdout = '';
 $killme_stderr = '';
@@ -101,8 +97,7 @@ $monitor_stdin .= q[
 SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);
 ];
-ok(TestLib::pump_until(
-		$monitor, $psql_timeout, \$monitor_stdout, qr/psql-connected/m),
+ok(pump_until($monitor, \$monitor_stdout, qr/psql-connected/m),
 	'monitor connected');
 $monitor_stdout = '';
 $monitor_stderr = '';
@@ -117,9 +112,8 @@ is($ret, 0, "killed process with SIGQUIT");
 $killme_stdin .= q[
 SELECT 1;
 ];
-ok( TestLib::pump_until(
+ok( pump_until(
 		$killme,
-		$psql_timeout,
 		\$killme_stderr,
 		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost/m
 	),
@@ -131,9 +125,8 @@ $killme->finish;
 # Wait till server restarts - we should get the WARNING here, but
 # sometimes the server is unable to send that, if interrupted while
 # sending.
-ok( TestLib::pump_until(
+ok( pump_until(
 		$monitor,
-		$psql_timeout,
 		\$monitor_stderr,
 		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost/m
 	),
@@ -160,8 +153,7 @@ $monitor->run();
 $killme_stdin .= q[
 SELECT pg_backend_pid();
 ];
-ok(TestLib::pump_until(
-		$killme, $psql_timeout, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
+ok(pump_until($killme, \$killme_stdout, qr/[[:digit:]]+[\r\n]$/m),
 	"acquired pid for SIGKILL");
 $pid = $killme_stdout;
 chomp($pid);
@@ -174,9 +166,7 @@ INSERT INTO alive VALUES($$committed-before-sigkill$$) RETURNING status;
 BEGIN;
 INSERT INTO alive VALUES($$in-progress-before-sigkill$$) RETURNING status;
 ];
-ok(TestLib::pump_until(
-		$killme, $psql_timeout, \$killme_stdout,
-		qr/in-progress-before-sigkill/m),
+ok(pump_until($killme, \$killme_stdout, qr/in-progress-before-sigkill/m),
 	'inserted in-progress-before-sigkill');
 $killme_stdout = '';
 $killme_stderr = '';
@@ -188,8 +178,7 @@ $monitor_stdin .= q[
 SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);
 ];
-ok(TestLib::pump_until(
-		$monitor, $psql_timeout, \$monitor_stdout, qr/psql-connected/m),
+ok(pump_until($monitor, \$monitor_stdout, qr/psql-connected/m),
 	'monitor connected');
 $monitor_stdout = '';
 $monitor_stderr = '';
@@ -205,9 +194,8 @@ is($ret, 0, "killed process with KILL");
 $killme_stdin .= q[
 SELECT 1;
 ];
-ok( TestLib::pump_until(
+ok( pump_until(
 		$killme,
-		$psql_timeout,
 		\$killme_stderr,
 		qr/server closed the connection unexpectedly|connection to server was lost/m
 	),
@@ -217,9 +205,8 @@ $killme->finish;
 # Wait till server restarts - we should get the WARNING here, but
 # sometimes the server is unable to send that, if interrupted while
 # sending.
-ok( TestLib::pump_until(
+ok( pump_until(
 		$monitor,
-		$psql_timeout,
 		\$monitor_stderr,
 		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost/m
 	),
@@ -257,3 +244,33 @@ is( $node->safe_psql(
 	'can still write after orderly restart');
 
 $node->stop();
+
+# Pump until string is matched, or timeout occurs
+sub pump_until
+{
+	my ($proc, $stream, $untl) = @_;
+	$proc->pump_nb();
+	while (1)
+	{
+		last if $$stream =~ /$untl/;
+		if ($psql_timeout->is_expired)
+		{
+			diag("aborting wait: program timed out");
+			diag("stream contents: >>", $$stream, "<<");
+			diag("pattern searched for: ", $untl);
+
+			return 0;
+		}
+		if (not $proc->pumpable())
+		{
+			diag("aborting wait: program died");
+			diag("stream contents: >>", $$stream, "<<");
+			diag("pattern searched for: ", $untl);
+
+			return 0;
+		}
+		$proc->pump();
+	}
+	return 1;
+
+}
