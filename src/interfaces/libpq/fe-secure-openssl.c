@@ -70,6 +70,7 @@ static int	initialize_SSL(PGconn *conn);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
 static char *SSLerrmessage(unsigned long ecode);
 static void SSLerrfree(char *buf);
+static int PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 
 static int	my_sock_read(BIO *h, char *buf, int size);
 static int	my_sock_write(BIO *h, const char *buf, int size);
@@ -93,6 +94,7 @@ static long win32_ssl_create_mutex = 0;
 #endif
 #endif							/* ENABLE_THREAD_SAFETY */
 
+static PQsslKeyPassHook_type PQsslKeyPassHook = NULL;
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
@@ -818,6 +820,26 @@ initialize_SSL(PGconn *conn)
 		return -1;
 	}
 
+	/*
+	 * Delegate the client cert password prompt to the libpq wrapper
+	 * callback if any is defined.
+	 *
+	 * If the application hasn't installed its own and the sslpassword
+	 * parameter is non-null, we install ours now to make sure we
+	 * supply PGconn->sslpassword to OpenSSL instead of letting it
+	 * prompt on stdin.
+	 *
+	 * This will replace OpenSSL's default PEM_def_callback (which
+	 * prompts on stdin), but we're only setting it for this SSL
+	 * context so it's harmless.
+	 */
+	if (PQsslKeyPassHook
+		|| (conn->sslpassword && strlen(conn->sslpassword) > 0))
+	{
+		SSL_CTX_set_default_passwd_cb(SSL_context, PQssl_passwd_cb);
+		SSL_CTX_set_default_passwd_cb_userdata(SSL_context, conn);
+	}
+
 	/* Disable old protocol versions */
 	SSL_CTX_set_options(SSL_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
@@ -1123,11 +1145,29 @@ initialize_SSL(PGconn *conn)
 		{
 			char	   *err = SSLerrmessage(ERR_get_error());
 
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not load private key file \"%s\": %s\n"),
-							  fnbuf, err);
+			/*
+			 * We'll try to load the file in DER (binary ASN.1) format, and if
+			 * that fails too, report the original error. This could mask
+			 * issues where there's something wrong with a DER-format cert, but
+			 * we'd have to duplicate openssl's format detection to be smarter
+			 * than this. We can't just probe for a leading -----BEGIN because
+			 * PEM can have leading non-matching lines and blanks. OpenSSL
+			 * doesn't expose its get_name(...) and its PEM routines don't
+			 * differentiate between failure modes in enough detail to let us
+			 * tell the difference between "not PEM, try DER" and "wrong
+			 * password".
+			 */
+			if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_ASN1) != 1)
+			{
+				printfPQExpBuffer(&conn->errorMessage,
+								  libpq_gettext("could not load private key file \"%s\": %s\n"),
+								  fnbuf, err);
+				SSLerrfree(err);
+				return -1;
+			}
+
 			SSLerrfree(err);
-			return -1;
+
 		}
 	}
 
@@ -1579,4 +1619,55 @@ my_SSL_set_fd(PGconn *conn, int fd)
 	ret = 1;
 err:
 	return ret;
+}
+
+/*
+ * This is the default handler to return a client cert password from
+ * conn->sslpassword. Apps may install it explicitly if they want to
+ * prevent openssl from ever prompting on stdin.
+ */
+int
+PQdefaultSSLKeyPassHook(char *buf, int size, PGconn *conn)
+{
+	if (conn->sslpassword)
+	{
+		if (strlen(conn->sslpassword) + 1 > size)
+			fprintf(stderr, libpq_gettext("WARNING: sslpassword truncated"));
+		strncpy(buf, conn->sslpassword, size);
+		buf[size-1] = '\0';
+		return strlen(buf);
+	}
+	else
+	{
+		buf[0] = '\0';
+		return 0;
+	}
+}
+
+PQsslKeyPassHook_type
+PQgetSSLKeyPassHook(void)
+{
+	return PQsslKeyPassHook;
+}
+
+void
+PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook)
+{
+	PQsslKeyPassHook = hook;
+}
+
+/*
+ * Supply a password to decrypt a client certificate.
+ *
+ * This must match OpenSSL type pem_passwd_cb.
+ */
+static int
+PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
+{
+	PGconn *conn = userdata;
+
+	if (PQsslKeyPassHook)
+		return PQsslKeyPassHook(buf, size, conn);
+	else
+		return PQdefaultSSLKeyPassHook(buf, size, conn);
 }

@@ -13,7 +13,7 @@ use SSLServer;
 
 if ($ENV{with_openssl} eq 'yes')
 {
-	plan tests => 75;
+	plan tests => 84;
 }
 else
 {
@@ -32,10 +32,17 @@ my $common_connstr;
 
 # The client's private key must not be world-readable, so take a copy
 # of the key stored in the code tree and update its permissions.
-copy("ssl/client.key", "ssl/client_tmp.key");
-chmod 0600, "ssl/client_tmp.key";
-copy("ssl/client-revoked.key", "ssl/client-revoked_tmp.key");
-chmod 0600, "ssl/client-revoked_tmp.key";
+#
+# This changes ssl/client.key to ssl/client_tmp.key etc for the rest
+# of the tests.
+my @keys = ("client", "client-revoked", "client-der", "client-encrypted-pem", "client-encrypted-der");
+foreach my $key (@keys)
+{
+    copy("ssl/${key}.key", "ssl/${key}_tmp.key")
+        or die "couldn't copy ssl/${key}.key to ssl/${key}_tmp.key for permissions change: $!";
+    chmod 0600, "ssl/${key}_tmp.key"
+        or die "failed to change permissions on ssl/${key}_tmp.key: $!";
+}
 
 # Also make a copy of that explicitly world-readable.  We can't
 # necessarily rely on the file in the source tree having those
@@ -344,11 +351,59 @@ test_connect_fails(
 	qr/connection requires a valid client certificate/,
 	"certificate authorization fails without client cert");
 
-# correct client cert
+# correct client cert in unencrypted PEM
 test_connect_ok(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
-	"certificate authorization succeeds with correct client cert");
+	"certificate authorization succeeds with correct client cert in PEM format");
+
+# correct client cert in unencrypted DER
+test_connect_ok(
+	$common_connstr,
+	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-der_tmp.key",
+	"certificate authorization succeeds with correct client cert in DER format");
+
+# correct client cert in encrypted PEM
+test_connect_ok(
+	$common_connstr,
+	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword='dUmmyP^#+'",
+	"certificate authorization succeeds with correct client cert in encrypted PEM format");
+
+# correct client cert in encrypted DER
+test_connect_ok(
+	$common_connstr,
+	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-der_tmp.key sslpassword='dUmmyP^#+'",
+	"certificate authorization succeeds with correct client cert in encrypted DER format");
+
+# correct client cert in encrypted PEM with wrong password
+test_connect_fails(
+	$common_connstr,
+	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword='wrong'",
+	qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": bad decrypt\E!,
+	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format");
+
+TODO:
+{
+	# these tests are left here waiting on us to get better pty support
+	# so they don't hang. For now they are not performed.
+
+	todo_skip "Need Pty support", 4;
+
+	# correct client cert in encrypted PEM with empty password
+	test_connect_fails(
+		$common_connstr,
+		"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword=''",
+		qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
+		"certificate authorization fails with correct client cert and empty password in encrypted PEM format");
+
+	# correct client cert in encrypted PEM with no password
+	test_connect_fails(
+		$common_connstr,
+		"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key",
+		qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
+		"certificate authorization fails with correct client cert and no password in encrypted PEM format");
+
+}
 
 # pg_stat_ssl
 command_like(
@@ -436,5 +491,7 @@ test_connect_fails($common_connstr, "sslmode=require sslcert=ssl/client.crt",
 	qr/SSL error/, "intermediate client certificate is missing");
 
 # clean up
-unlink("ssl/client_tmp.key", "ssl/client_wrongperms_tmp.key",
-	"ssl/client-revoked_tmp.key");
+foreach my $key (@keys)
+{
+    unlink("ssl/${key}_tmp.key");
+}

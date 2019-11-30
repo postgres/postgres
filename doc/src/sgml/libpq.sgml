@@ -776,6 +776,72 @@ PGPing PQping(const char *conninfo);
      </listitem>
     </varlistentry>
 
+    <varlistentry id="libpq-pqsetsslkeypasshook">
+     <term><function>PQsetSSLKeyPassHook</function><indexterm><primary>PQsetSSLKeyPassHook</primary></indexterm></term>
+     <listitem>
+      <para>
+       <function>PQsetSSLKeyPassHook</function> lets an application override
+       <literal>libpq</literal>'s <link linkend="libpq-ssl-clientcert">default
+       handling of encrypted client certificate key files</link> using
+       <xref linkend="libpq-connect-sslpassword"/> or interactive prompting.
+
+<synopsis>
+void PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook);
+</synopsis>
+
+       The application passes a pointer to a callback function with signature:
+       <programlisting>
+       int callback_fn(char *buf, int size, PGconn *conn);
+       </programlisting>
+       which <literal>libpq</literal> will then call <emphasis>instead of</emphasis>
+       its default <function>PQdefaultSSLKeyPassHook</function> handler. The callback
+       should determine the password for the key and copy it to result-buffer
+       <literal>buf</literal> of size <literal>size</literal>. The string in <literal>
+       buf</literal> must be null-terminated. The calback must return the length of
+       the password stored in <literal>buf</literal> excluding the null terminator.
+       On failure, the callback should set <literal>buf[0] = '\0'</literal> and return 0.
+       See <function>PQdefaultSSLKeyPassHook</function> in <literal>libpq</literal>'s
+       source code for an example.
+      </para>
+       
+      <para>
+       If the user specified an explicit key location,
+       its path will be in <literal>conn->pgsslkey</literal> when the callback
+       is invoked. This will be empty if the default key path is being used.
+       For keys that are engine specifiers, it is up to engine implementations
+       whether they use the OpenSSL password callback or define their own handling.
+      </para>
+
+      <para>
+       The app callback may choose to delegate unhandled cases to
+       <function>PQdefaultSSLKeyPassHook</function>,
+       or call it first and try something else if it returns 0, or completely override it.
+      </para>
+
+      <para>
+       The callback <emphasis>must not</emphasis> escape normal flow control with exceptions,
+       <function>longjmp(...)</function>, etc. It must return normally.
+      </para>
+
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-pqgetsslkeypasshook">
+     <term><function>PQgetSSLKeyPassHook</function><indexterm><primary>PQgetSSLKeyPassHook</primary></indexterm></term>
+     <listitem>
+      <para>
+       <function>PQgetSSLKeyPassHook</function> returns the current
+       client certificate key password hook, or <literal>NULL</literal>
+       if none has been set.
+
+<synopsis>
+PQsslKeyPassHook_type PQgetSSLKeyPassHook(void);
+</synopsis>
+      </para>
+
+     </listitem>
+    </varlistentry>
+
    </variablelist>
   </para>
 
@@ -1586,6 +1652,36 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-sslpassword" xreflabel="sslpassword">
+      <term><literal>sslpassword</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the password for the secret key specified in
+        <literal>sslkey</literal>, allowing client certificate private keys
+        to be stored in encrypted form on disk even when interactive passphrase
+        input is not practical.
+       </para>
+       <para>
+        Specifying this parameter with any non-empty value suppresses the
+        <literal>Enter PEM passphrase:</literal>
+        prompt that OpenSSL will emit by default when an encrypted client
+        certificate key is provided to <literal>libpq</literal>.
+       </para>
+       <para>
+        If the key is not encrypted this parameter is ignored. The parameter has no
+        effect on keys specified by OpenSSL engines unless the engine uses the
+        OpenSSL password callback mechanism for prompts.
+       </para>
+       <para>
+        There is no environment variable equivalent to this option, and no
+        facility for looking it up in <filename>.pgpass</filename>. It can be
+        used in a service file connection definition. Users with
+        more sophisticated uses should consider using openssl engines and
+        tools like PKCS#11 or USB crypto offload devices.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-sslrootcert" xreflabel="sslrootcert">
       <term><literal>sslrootcert</literal></term>
       <listitem>
@@ -1767,6 +1863,24 @@ char *PQpass(const PGconn *conn);
        not possible to rely on the result of <xref linkend="libpq-PQpass"/> until
        the connection is established.  The status of the connection can be
        checked using the function <xref linkend="libpq-PQstatus"/>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="libpq-PQsslpassword">
+     <term><function>PQsslpassword</function><indexterm><primary>PQsslpassword</primary></indexterm></term>
+
+     <listitem>
+      <para>
+       Returns the password for the SSL client key.
+<synopsis>
+char *PQsslpassword(const PGconn *conn);
+</synopsis>
+      </para>
+
+      <para>
+       <xref linkend="libpq-PQsslpassword"/> will return the SSL password specified
+       in the connection parameters.
       </para>
      </listitem>
     </varlistentry>
@@ -7497,6 +7611,26 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    <quote>Intermediate</quote> certificates can be optionally appended
    to the file &mdash; doing so avoids requiring storage of intermediate
    certificates on the server (<xref linkend="guc-ssl-ca-file"/>).
+  </para>
+
+  <para>
+   The certificate and key may be in PEM or ASN.1 DER format.
+  </para>
+
+  <para>
+   The key may be
+   stored in cleartext or encrypted with a passphrase using any algorithm supported
+   by OpenSSL, like AES-128. If the key is stored encrypted, then the passphrase
+   may be provided in the <xref linkend="libpq-connect-sslpassword"/> connection
+   option. If an encrypted key is supplied and the <literal>sslpassword</literal>
+   option is absent or blank, a password will be prompted for interactively by
+   OpenSSL with a
+   <programlisting>
+    Enter PEM Passphrase:
+   </programlisting>
+   prompt if a TTY is available. Applications can override the client certificate
+   prompt and the handling of the <literal>sslpassword</literal> parameter by supplying
+   their own key password callback; see <xref linkend="libpq-pqsetsslkeypasshook"/>.
   </para>
 
   <para>

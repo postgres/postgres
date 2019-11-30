@@ -112,7 +112,7 @@
     <itemizedlist spacing="compact">
      <listitem>
       <para>
-       <literal>user</literal> and <literal>password</literal> (specify these
+       <literal>user</literal>, <literal>password</literal> and <literal>sslpassword</literal> (specify these
        in a user mapping, instead)
       </para>
      </listitem>

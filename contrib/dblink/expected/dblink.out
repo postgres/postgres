@@ -879,7 +879,7 @@ $d$;
 CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 ERROR:  invalid option "server"
-HINT:  Valid options in this context are: user, password
+HINT:  Valid options in this context are: user, password, sslpassword
 CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');
 GRANT USAGE ON FOREIGN SERVER fdtest TO regress_dblink_user;
 GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO regress_dblink_user;
