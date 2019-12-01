@@ -79,6 +79,8 @@ extern void index_drop(Oid indexId, bool concurrent);
 
 extern IndexInfo *BuildIndexInfo(Relation index);
 
+extern IndexInfo *BuildDummyIndexInfo(Relation index);
+
 extern void FormIndexDatum(IndexInfo *indexInfo,
 			   TupleTableSlot *slot,
 			   EState *estate,

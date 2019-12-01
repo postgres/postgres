@@ -55,6 +55,9 @@ SELECT * FROM temptest;
 
 CREATE TEMP TABLE temptest(col int) ON COMMIT DELETE ROWS;
 
+-- while we're here, verify successful truncation of index with SQL function
+CREATE INDEX ON temptest(bit_length(''));
+
 BEGIN;
 INSERT INTO temptest VALUES (1);
 INSERT INTO temptest VALUES (2);
