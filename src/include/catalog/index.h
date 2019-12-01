@@ -82,6 +82,8 @@ extern void index_drop(Oid indexId, bool concurrent);
 
 extern IndexInfo *BuildIndexInfo(Relation index);
 
+extern IndexInfo *BuildDummyIndexInfo(Relation index);
+
 extern void BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii);
 
 extern void FormIndexDatum(IndexInfo *indexInfo,
