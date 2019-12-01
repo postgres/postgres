@@ -1838,6 +1838,75 @@ BuildIndexInfo(Relation index)
 	return ii;
 }
 
+/* ----------------
+ *		BuildDummyIndexInfo
+ *			Construct a dummy IndexInfo record for an open index
+ *
+ * This differs from the real BuildIndexInfo in that it will never run any
+ * user-defined code that might exist in index expressions or predicates.
+ * Instead of the real index expressions, we return null constants that have
+ * the right types/typmods/collations.  Predicates and exclusion clauses are
+ * just ignored.  This is sufficient for the purpose of truncating an index,
+ * since we will not need to actually evaluate the expressions or predicates;
+ * the only thing that's likely to be done with the data is construction of
+ * a tupdesc describing the index's rowtype.
+ * ----------------
+ */
+IndexInfo *
+BuildDummyIndexInfo(Relation index)
+{
+	IndexInfo  *ii = makeNode(IndexInfo);
+	Form_pg_index indexStruct = index->rd_index;
+	int			i;
+	int			numAtts;
+
+	/* check the number of keys, and copy attr numbers into the IndexInfo */
+	numAtts = indexStruct->indnatts;
+	if (numAtts < 1 || numAtts > INDEX_MAX_KEYS)
+		elog(ERROR, "invalid indnatts %d for index %u",
+			 numAtts, RelationGetRelid(index));
+	ii->ii_NumIndexAttrs = numAtts;
+	ii->ii_NumIndexKeyAttrs = indexStruct->indnkeyatts;
+	Assert(ii->ii_NumIndexKeyAttrs != 0);
+	Assert(ii->ii_NumIndexKeyAttrs <= ii->ii_NumIndexAttrs);
+
+	for (i = 0; i < numAtts; i++)
+		ii->ii_IndexAttrNumbers[i] = indexStruct->indkey.values[i];
+
+	/* fetch dummy expressions for expressional indexes */
+	ii->ii_Expressions = RelationGetDummyIndexExpressions(index);
+	ii->ii_ExpressionsState = NIL;
+
+	/* pretend there is no predicate */
+	ii->ii_Predicate = NIL;
+	ii->ii_PredicateState = NULL;
+
+	/* We ignore the exclusion constraint if any */
+	ii->ii_ExclusionOps = NULL;
+	ii->ii_ExclusionProcs = NULL;
+	ii->ii_ExclusionStrats = NULL;
+
+	/* other info */
+	ii->ii_Unique = indexStruct->indisunique;
+	ii->ii_ReadyForInserts = IndexIsReady(indexStruct);
+	/* assume not doing speculative insertion for now */
+	ii->ii_UniqueOps = NULL;
+	ii->ii_UniqueProcs = NULL;
+	ii->ii_UniqueStrats = NULL;
+
+	/* initialize index-build state to default */
+	ii->ii_Concurrent = false;
+	ii->ii_BrokenHotChain = false;
+	ii->ii_ParallelWorkers = 0;
+
+	/* set up for possible use by index AM */
+	ii->ii_Am = index->rd_rel->relam;
+	ii->ii_AmCache = NULL;
+	ii->ii_Context = CurrentMemoryContext;
+
+	return ii;
+}
+
 /*
  * CompareIndexInfo
  *		Return whether the properties of two indexes (in different tables)

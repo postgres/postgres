@@ -91,6 +91,8 @@ extern void index_drop(Oid indexId, bool concurrent);
 
 extern IndexInfo *BuildIndexInfo(Relation index);
 
+extern IndexInfo *BuildDummyIndexInfo(Relation index);
+
 extern bool CompareIndexInfo(IndexInfo *info1, IndexInfo *info2,
 				 Oid *collations1, Oid *collations2,
 				 Oid *opfamilies1, Oid *opfamilies2,
