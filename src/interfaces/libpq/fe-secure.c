@@ -432,6 +432,24 @@ PQsslAttributeNames(PGconn *conn)
 
 	return result;
 }
+
+PQsslKeyPassHook_type
+PQgetSSLKeyPassHook(void)
+{
+	return NULL;
+}
+
+void
+PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook)
+{
+	return;
+}
+
+int
+PQdefaultSSLKeyPassHook(char *buf, int size, PGconn *conn)
+{
+	return 0;
+}
 #endif							/* USE_SSL */
 
 /* Dummy version of GSSAPI information functions, when built without GSS support */
