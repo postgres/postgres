@@ -4769,29 +4769,17 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 										root)->rtekind == RTE_RELATION)
 				{
 					int			parent_varattno;
-					ListCell   *l;
 
-					parent_varattno = 1;
 					found = false;
-					foreach(l, appinfo->translated_vars)
-					{
-						Var		   *childvar = lfirst_node(Var, l);
-
-						/* Ignore dropped attributes of the parent. */
-						if (childvar != NULL &&
-							varattno == childvar->varattno)
-						{
-							found = true;
-							break;
-						}
-						parent_varattno++;
-					}
-
-					if (!found)
-						break;
+					if (varattno <= 0 || varattno > appinfo->num_child_cols)
+						break;	/* safety check */
+					parent_varattno = appinfo->parent_colnos[varattno - 1];
+					if (parent_varattno == 0)
+						break;	/* Var is local to child */
 
 					varno = appinfo->parent_relid;
 					varattno = parent_varattno;
+					found = true;
 
 					/* If the parent is itself a child, continue up. */
 					appinfo = root->append_rel_array[varno];

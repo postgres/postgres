@@ -2509,6 +2509,8 @@ _outAppendRelInfo(StringInfo str, const AppendRelInfo *node)
 	WRITE_OID_FIELD(parent_reltype);
 	WRITE_OID_FIELD(child_reltype);
 	WRITE_NODE_FIELD(translated_vars);
+	WRITE_INT_FIELD(num_child_cols);
+	WRITE_ATTRNUMBER_ARRAY(parent_colnos, node->num_child_cols);
 	WRITE_OID_FIELD(parent_reloid);
 }
 

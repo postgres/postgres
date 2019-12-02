@@ -34,7 +34,7 @@ typedef struct
 static void make_inh_translation_list(Relation oldrelation,
 									  Relation newrelation,
 									  Index newvarno,
-									  List **translated_vars);
+									  AppendRelInfo *appinfo);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 											adjust_appendrel_attrs_context *context);
 static List *adjust_inherited_tlist(List *tlist,
@@ -55,8 +55,7 @@ make_append_rel_info(Relation parentrel, Relation childrel,
 	appinfo->child_relid = childRTindex;
 	appinfo->parent_reltype = parentrel->rd_rel->reltype;
 	appinfo->child_reltype = childrel->rd_rel->reltype;
-	make_inh_translation_list(parentrel, childrel, childRTindex,
-							  &appinfo->translated_vars);
+	make_inh_translation_list(parentrel, childrel, childRTindex, appinfo);
 	appinfo->parent_reloid = RelationGetRelid(parentrel);
 
 	return appinfo;
@@ -65,16 +64,23 @@ make_append_rel_info(Relation parentrel, Relation childrel,
 /*
  * make_inh_translation_list
  *	  Build the list of translations from parent Vars to child Vars for
- *	  an inheritance child.
+ *	  an inheritance child, as well as a reverse-translation array.
+ *
+ * The reverse-translation array has an entry for each child relation
+ * column, which is either the 1-based index of the corresponding parent
+ * column, or 0 if there's no match (that happens for dropped child columns,
+ * as well as child columns beyond those of the parent, which are allowed in
+ * traditional inheritance though not partitioning).
  *
  * For paranoia's sake, we match type/collation as well as attribute name.
  */
 static void
 make_inh_translation_list(Relation oldrelation, Relation newrelation,
 						  Index newvarno,
-						  List **translated_vars)
+						  AppendRelInfo *appinfo)
 {
 	List	   *vars = NIL;
+	AttrNumber *pcolnos;
 	TupleDesc	old_tupdesc = RelationGetDescr(oldrelation);
 	TupleDesc	new_tupdesc = RelationGetDescr(newrelation);
 	Oid			new_relid = RelationGetRelid(newrelation);
@@ -82,6 +88,11 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 	int			newnatts = new_tupdesc->natts;
 	int			old_attno;
 	int			new_attno = 0;
+
+	/* Initialize reverse-translation array with all entries zero */
+	appinfo->num_child_cols = newnatts;
+	appinfo->parent_colnos = pcolnos =
+		(AttrNumber *) palloc0(newnatts * sizeof(AttrNumber));
 
 	for (old_attno = 0; old_attno < oldnatts; old_attno++)
 	{
@@ -115,6 +126,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 										 atttypmod,
 										 attcollation,
 										 0));
+			pcolnos[old_attno] = old_attno + 1;
 			continue;
 		}
 
@@ -138,6 +150,7 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 				elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
 					 attname, RelationGetRelationName(newrelation));
 			new_attno = ((Form_pg_attribute) GETSTRUCT(newtup))->attnum - 1;
+			Assert(new_attno >= 0 && new_attno < newnatts);
 			ReleaseSysCache(newtup);
 
 			att = TupleDescAttr(new_tupdesc, new_attno);
@@ -157,10 +170,11 @@ make_inh_translation_list(Relation oldrelation, Relation newrelation,
 									 atttypmod,
 									 attcollation,
 									 0));
+		pcolnos[new_attno] = old_attno + 1;
 		new_attno++;
 	}
 
-	*translated_vars = vars;
+	appinfo->translated_vars = vars;
 }
 
 /*

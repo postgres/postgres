@@ -3103,6 +3103,7 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, appinfo, AppendRelInfo);
 				MUTATE(newnode->translated_vars, appinfo->translated_vars, List *);
+				/* Assume nothing need be done with parent_colnos[] */
 				return (Node *) newnode;
 			}
 			break;

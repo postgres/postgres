@@ -2327,6 +2327,8 @@ _copyAppendRelInfo(const AppendRelInfo *from)
 	COPY_SCALAR_FIELD(parent_reltype);
 	COPY_SCALAR_FIELD(child_reltype);
 	COPY_NODE_FIELD(translated_vars);
+	COPY_SCALAR_FIELD(num_child_cols);
+	COPY_POINTER_FIELD(parent_colnos, from->num_child_cols * sizeof(AttrNumber));
 	COPY_SCALAR_FIELD(parent_reloid);
 
 	return newnode;

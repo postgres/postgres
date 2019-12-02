@@ -81,7 +81,7 @@ static void pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root,
 									   int parentRTindex, Query *setOpQuery,
 									   int childRToffset);
 static void make_setop_translation_list(Query *query, Index newvarno,
-										List **translated_vars);
+										AppendRelInfo *appinfo);
 static bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 							   JoinExpr *lowest_outer_join);
 static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
@@ -1313,8 +1313,7 @@ pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
 		appinfo->child_relid = childRTindex;
 		appinfo->parent_reltype = InvalidOid;
 		appinfo->child_reltype = InvalidOid;
-		make_setop_translation_list(setOpQuery, childRTindex,
-									&appinfo->translated_vars);
+		make_setop_translation_list(setOpQuery, childRTindex, appinfo);
 		appinfo->parent_reloid = InvalidOid;
 		root->append_rel_list = lappend(root->append_rel_list, appinfo);
 
@@ -1356,13 +1355,21 @@ pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
  *	  a UNION ALL member.  (At this point it's just a simple list of
  *	  referencing Vars, but if we succeed in pulling up the member
  *	  subquery, the Vars will get replaced by pulled-up expressions.)
+ *	  Also create the rather trivial reverse-translation array.
  */
 static void
 make_setop_translation_list(Query *query, Index newvarno,
-							List **translated_vars)
+							AppendRelInfo *appinfo)
 {
 	List	   *vars = NIL;
+	AttrNumber *pcolnos;
 	ListCell   *l;
+
+	/* Initialize reverse-translation array with all entries zero */
+	/* (entries for resjunk columns will stay that way) */
+	appinfo->num_child_cols = list_length(query->targetList);
+	appinfo->parent_colnos = pcolnos =
+		(AttrNumber *) palloc0(appinfo->num_child_cols * sizeof(AttrNumber));
 
 	foreach(l, query->targetList)
 	{
@@ -1372,9 +1379,10 @@ make_setop_translation_list(Query *query, Index newvarno,
 			continue;
 
 		vars = lappend(vars, makeVarFromTargetEntry(newvarno, tle));
+		pcolnos[tle->resno - 1] = tle->resno;
 	}
 
-	*translated_vars = vars;
+	appinfo->translated_vars = vars;
 }
 
 /*
