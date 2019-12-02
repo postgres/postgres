@@ -187,7 +187,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	setup_cancel_handler();
+	setup_cancel_handler(NULL);
 
 	if (alldb)
 	{

@@ -257,7 +257,7 @@ main(int argc, char *argv[])
 		/* allow 'and_analyze' with 'analyze_only' */
 	}
 
-	setup_cancel_handler();
+	setup_cancel_handler(NULL);
 
 	/* Avoid opening extra connections. */
 	if (tbl_count && (concurrentCons > tbl_count))

@@ -29,6 +29,7 @@
 #include "copy.h"
 #include "crosstabview.h"
 #include "describe.h"
+#include "fe_utils/cancel.h"
 #include "fe_utils/print.h"
 #include "fe_utils/string_utils.h"
 #include "help.h"

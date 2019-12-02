@@ -301,7 +301,7 @@ main(int argc, char *argv[])
 		exit(EXIT_BADCONN);
 	}
 
-	setup_cancel_handler();
+	psql_setup_cancel_handler();
 
 	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
 
