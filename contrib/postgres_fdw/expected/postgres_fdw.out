@@ -1348,7 +1348,7 @@ SELECT t1.c1, ss.a, ss.b FROM (SELECT c1 FROM ft4 WHERE c1 between 50 and 60) t1
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Foreign Scan
    Output: ft4.c1, ft4_1.c1, ft5.c1
-   Relations: (public.ft4) FULL JOIN ((public.ft4) FULL JOIN (public.ft5))
+   Relations: (public.ft4) FULL JOIN ((public.ft4 ft4_1) FULL JOIN (public.ft5))
    Remote SQL: SELECT s4.c1, s10.c1, s10.c2 FROM ((SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s4(c1) FULL JOIN (SELECT s8.c1, s9.c1 FROM ((SELECT c1 FROM "S 1"."T 3" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s8(c1) FULL JOIN (SELECT c1 FROM "S 1"."T 4" WHERE ((c1 >= 50)) AND ((c1 <= 60))) s9(c1) ON (((s8.c1 = s9.c1)))) WHERE (((s8.c1 IS NULL) OR (s8.c1 IS NOT NULL)))) s10(c1, c2) ON (((s4.c1 = s10.c1)))) ORDER BY s4.c1 ASC NULLS LAST, s10.c1 ASC NULLS LAST, s10.c2 ASC NULLS LAST
 (4 rows)
 
@@ -2084,7 +2084,7 @@ SELECT t1c1, avg(t1c1 + t2c1) FROM (SELECT t1.c1, t2.c1 FROM ft1 t1 JOIN ft2 t2 
                                  Remote SQL: SELECT r1."C 1", r2."C 1" FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1"))))
                            ->  Foreign Scan
                                  Output: t1_1.c1, t2_1.c1
-                                 Relations: (public.ft1 t1) INNER JOIN (public.ft2 t2)
+                                 Relations: (public.ft1 t1_1) INNER JOIN (public.ft2 t2_1)
                                  Remote SQL: SELECT r1."C 1", r2."C 1" FROM ("S 1"."T 1" r1 INNER JOIN "S 1"."T 1" r2 ON (((r1."C 1" = r2."C 1"))))
 (20 rows)
 
@@ -3230,7 +3230,7 @@ select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x w
                            Output: x.b, x.a
                            ->  Foreign Scan
                                  Output: ft1_1.c2, (sum(ft1_1.c1))
-                                 Relations: Aggregate on (public.ft1)
+                                 Relations: Aggregate on (public.ft1 ft1_1)
                                  Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY 1
 (21 rows)
 
@@ -8480,15 +8480,15 @@ ANALYZE fprt2_p2;
 -- inner join three tables
 EXPLAIN (COSTS OFF)
 SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER JOIN fprt1 t3 ON (t2.b = t3.a) WHERE t1.a % 25 =0 ORDER BY 1,2,3;
-                                                     QUERY PLAN                                                     
---------------------------------------------------------------------------------------------------------------------
+                                                        QUERY PLAN                                                        
+--------------------------------------------------------------------------------------------------------------------------
  Sort
    Sort Key: t1.a, t3.c
    ->  Append
          ->  Foreign Scan
                Relations: ((public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)) INNER JOIN (public.ftprt1_p1 t3)
          ->  Foreign Scan
-               Relations: ((public.ftprt1_p2 t1) INNER JOIN (public.ftprt2_p2 t2)) INNER JOIN (public.ftprt1_p2 t3)
+               Relations: ((public.ftprt1_p2 t1_1) INNER JOIN (public.ftprt2_p2 t2_1)) INNER JOIN (public.ftprt1_p2 t3_1)
 (7 rows)
 
 SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER JOIN fprt1 t3 ON (t2.b = t3.a) WHERE t1.a % 25 =0 ORDER BY 1,2,3;
@@ -8507,7 +8507,7 @@ SELECT t1.a,t2.b,t2.c FROM fprt1 t1 LEFT JOIN (SELECT * FROM fprt2 WHERE a < 10)
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Foreign Scan
    Output: t1.a, ftprt2_p1.b, ftprt2_p1.c
-   Relations: (public.ftprt1_p1 t1) LEFT JOIN (public.ftprt2_p1 fprt2)
+   Relations: (public.ftprt1_p1 t1) LEFT JOIN (public.ftprt2_p1)
    Remote SQL: SELECT r5.a, r6.b, r6.c FROM (public.fprt1_p1 r5 LEFT JOIN public.fprt2_p1 r6 ON (((r5.a = r6.b)) AND ((r5.b = r6.a)) AND ((r6.a < 10)))) WHERE ((r5.a < 10)) ORDER BY r5.a ASC NULLS LAST, r6.b ASC NULLS LAST, r6.c ASC NULLS LAST
 (4 rows)
 
@@ -8561,15 +8561,15 @@ SELECT t1.wr, t2.wr FROM (SELECT t1 wr, a FROM fprt1 t1 WHERE t1.a % 25 = 0) t1 
 -- join with lateral reference
 EXPLAIN (COSTS OFF)
 SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
  Sort
    Sort Key: t1.a, t1.b
    ->  Append
          ->  Foreign Scan
                Relations: (public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)
          ->  Foreign Scan
-               Relations: (public.ftprt1_p2 t1) INNER JOIN (public.ftprt2_p2 t2)
+               Relations: (public.ftprt1_p2 t1_1) INNER JOIN (public.ftprt2_p2 t2_1)
 (7 rows)
 
 SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
@@ -8689,17 +8689,17 @@ SELECT a, sum(b), min(b), count(*) FROM pagg_tab GROUP BY a HAVING avg(b) < 22 O
 SET enable_partitionwise_aggregate TO true;
 EXPLAIN (COSTS OFF)
 SELECT a, sum(b), min(b), count(*) FROM pagg_tab GROUP BY a HAVING avg(b) < 22 ORDER BY 1;
-                              QUERY PLAN                              
-----------------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Sort
    Sort Key: fpagg_tab_p1.a
    ->  Append
          ->  Foreign Scan
-               Relations: Aggregate on (public.fpagg_tab_p1 pagg_tab)
+               Relations: Aggregate on (public.fpagg_tab_p1)
          ->  Foreign Scan
-               Relations: Aggregate on (public.fpagg_tab_p2 pagg_tab)
+               Relations: Aggregate on (public.fpagg_tab_p2)
          ->  Foreign Scan
-               Relations: Aggregate on (public.fpagg_tab_p3 pagg_tab)
+               Relations: Aggregate on (public.fpagg_tab_p3)
 (9 rows)
 
 SELECT a, sum(b), min(b), count(*) FROM pagg_tab GROUP BY a HAVING avg(b) < 22 ORDER BY 1;
