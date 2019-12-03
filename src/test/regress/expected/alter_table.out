@@ -542,9 +542,9 @@ explain (costs off) select * from nv_parent where d between '2011-08-01' and '20
  Append
    ->  Seq Scan on nv_parent
          Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
-   ->  Seq Scan on nv_child_2010
+   ->  Seq Scan on nv_child_2010 nv_parent_1
          Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
-   ->  Seq Scan on nv_child_2011
+   ->  Seq Scan on nv_child_2011 nv_parent_2
          Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
 (7 rows)
 
@@ -555,9 +555,9 @@ explain (costs off) select * from nv_parent where d between '2011-08-01'::date a
  Append
    ->  Seq Scan on nv_parent
          Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
-   ->  Seq Scan on nv_child_2010
+   ->  Seq Scan on nv_child_2010 nv_parent_1
          Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
-   ->  Seq Scan on nv_child_2011
+   ->  Seq Scan on nv_child_2011 nv_parent_2
          Filter: ((d >= '08-01-2011'::date) AND (d <= '08-31-2011'::date))
 (7 rows)
 
@@ -567,11 +567,11 @@ explain (costs off) select * from nv_parent where d between '2009-08-01'::date a
  Append
    ->  Seq Scan on nv_parent
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
-   ->  Seq Scan on nv_child_2010
+   ->  Seq Scan on nv_child_2010 nv_parent_1
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
-   ->  Seq Scan on nv_child_2011
+   ->  Seq Scan on nv_child_2011 nv_parent_2
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
-   ->  Seq Scan on nv_child_2009
+   ->  Seq Scan on nv_child_2009 nv_parent_3
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
 (9 rows)
 
@@ -583,9 +583,9 @@ explain (costs off) select * from nv_parent where d between '2009-08-01'::date a
  Append
    ->  Seq Scan on nv_parent
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
-   ->  Seq Scan on nv_child_2010
+   ->  Seq Scan on nv_child_2010 nv_parent_1
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
-   ->  Seq Scan on nv_child_2009
+   ->  Seq Scan on nv_child_2009 nv_parent_2
          Filter: ((d >= '08-01-2009'::date) AND (d <= '08-31-2009'::date))
 (7 rows)
 

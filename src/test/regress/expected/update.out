@@ -310,29 +310,29 @@ ALTER TABLE part_b_10_b_20 ATTACH PARTITION part_c_1_100 FOR VALUES FROM (1) TO 
 
 -- The order of subplans should be in bound order
 EXPLAIN (costs off) UPDATE range_parted set c = c - 50 WHERE c > 97;
-             QUERY PLAN              
--------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Update on range_parted
-   Update on part_a_1_a_10
-   Update on part_a_10_a_20
-   Update on part_b_1_b_10
-   Update on part_c_1_100
-   Update on part_d_1_15
-   Update on part_d_15_20
-   Update on part_b_20_b_30
-   ->  Seq Scan on part_a_1_a_10
+   Update on part_a_1_a_10 range_parted_1
+   Update on part_a_10_a_20 range_parted_2
+   Update on part_b_1_b_10 range_parted_3
+   Update on part_c_1_100 range_parted_4
+   Update on part_d_1_15 range_parted_5
+   Update on part_d_15_20 range_parted_6
+   Update on part_b_20_b_30 range_parted_7
+   ->  Seq Scan on part_a_1_a_10 range_parted_1
          Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_a_10_a_20
+   ->  Seq Scan on part_a_10_a_20 range_parted_2
          Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_b_1_b_10
+   ->  Seq Scan on part_b_1_b_10 range_parted_3
          Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_c_1_100
+   ->  Seq Scan on part_c_1_100 range_parted_4
          Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_d_1_15
+   ->  Seq Scan on part_d_1_15 range_parted_5
          Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_d_15_20
+   ->  Seq Scan on part_d_15_20 range_parted_6
          Filter: (c > '97'::numeric)
-   ->  Seq Scan on part_b_20_b_30
+   ->  Seq Scan on part_b_20_b_30 range_parted_7
          Filter: (c > '97'::numeric)
 (22 rows)
 

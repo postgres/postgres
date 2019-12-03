@@ -2185,9 +2185,9 @@ DELETE FROM a USING wcte WHERE aa = q2;
 ----------------------------------------------------
  Delete on public.a
    Delete on public.a
-   Delete on public.b
-   Delete on public.c
-   Delete on public.d
+   Delete on public.b a_1
+   Delete on public.c a_2
+   Delete on public.d a_3
    CTE wcte
      ->  Insert on public.int8_tbl
            Output: int8_tbl.q2
@@ -2201,24 +2201,24 @@ DELETE FROM a USING wcte WHERE aa = q2;
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
    ->  Nested Loop
-         Output: b.ctid, wcte.*
-         Join Filter: (b.aa = wcte.q2)
-         ->  Seq Scan on public.b
-               Output: b.ctid, b.aa
+         Output: a_1.ctid, wcte.*
+         Join Filter: (a_1.aa = wcte.q2)
+         ->  Seq Scan on public.b a_1
+               Output: a_1.ctid, a_1.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
    ->  Nested Loop
-         Output: c.ctid, wcte.*
-         Join Filter: (c.aa = wcte.q2)
-         ->  Seq Scan on public.c
-               Output: c.ctid, c.aa
+         Output: a_2.ctid, wcte.*
+         Join Filter: (a_2.aa = wcte.q2)
+         ->  Seq Scan on public.c a_2
+               Output: a_2.ctid, a_2.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
    ->  Nested Loop
-         Output: d.ctid, wcte.*
-         Join Filter: (d.aa = wcte.q2)
-         ->  Seq Scan on public.d
-               Output: d.ctid, d.aa
+         Output: a_3.ctid, wcte.*
+         Join Filter: (a_3.aa = wcte.q2)
+         ->  Seq Scan on public.d a_3
+               Output: a_3.ctid, a_3.aa
          ->  CTE Scan on wcte
                Output: wcte.*, wcte.q2
 (38 rows)

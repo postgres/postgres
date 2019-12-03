@@ -14,18 +14,18 @@ set max_parallel_workers_per_gather=4;
 -- Parallel Append with partial-subplans
 explain (costs off)
   select round(avg(aa)), sum(aa) from a_star;
-                     QUERY PLAN                      
------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Finalize Aggregate
    ->  Gather
          Workers Planned: 3
          ->  Partial Aggregate
                ->  Parallel Append
-                     ->  Parallel Seq Scan on d_star
-                     ->  Parallel Seq Scan on f_star
-                     ->  Parallel Seq Scan on e_star
-                     ->  Parallel Seq Scan on b_star
-                     ->  Parallel Seq Scan on c_star
+                     ->  Parallel Seq Scan on d_star a_star_3
+                     ->  Parallel Seq Scan on f_star a_star_5
+                     ->  Parallel Seq Scan on e_star a_star_4
+                     ->  Parallel Seq Scan on b_star a_star_1
+                     ->  Parallel Seq Scan on c_star a_star_2
                      ->  Parallel Seq Scan on a_star
 (11 rows)
 
@@ -40,18 +40,18 @@ alter table c_star set (parallel_workers = 0);
 alter table d_star set (parallel_workers = 0);
 explain (costs off)
   select round(avg(aa)), sum(aa) from a_star;
-                     QUERY PLAN                      
------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Finalize Aggregate
    ->  Gather
          Workers Planned: 3
          ->  Partial Aggregate
                ->  Parallel Append
-                     ->  Seq Scan on d_star
-                     ->  Seq Scan on c_star
-                     ->  Parallel Seq Scan on f_star
-                     ->  Parallel Seq Scan on e_star
-                     ->  Parallel Seq Scan on b_star
+                     ->  Seq Scan on d_star a_star_3
+                     ->  Seq Scan on c_star a_star_2
+                     ->  Parallel Seq Scan on f_star a_star_5
+                     ->  Parallel Seq Scan on e_star a_star_4
+                     ->  Parallel Seq Scan on b_star a_star_1
                      ->  Parallel Seq Scan on a_star
 (11 rows)
 
@@ -68,18 +68,18 @@ alter table e_star set (parallel_workers = 0);
 alter table f_star set (parallel_workers = 0);
 explain (costs off)
   select round(avg(aa)), sum(aa) from a_star;
-                 QUERY PLAN                 
---------------------------------------------
+                     QUERY PLAN                      
+-----------------------------------------------------
  Finalize Aggregate
    ->  Gather
          Workers Planned: 3
          ->  Partial Aggregate
                ->  Parallel Append
-                     ->  Seq Scan on d_star
-                     ->  Seq Scan on f_star
-                     ->  Seq Scan on e_star
-                     ->  Seq Scan on b_star
-                     ->  Seq Scan on c_star
+                     ->  Seq Scan on d_star a_star_3
+                     ->  Seq Scan on f_star a_star_5
+                     ->  Seq Scan on e_star a_star_4
+                     ->  Seq Scan on b_star a_star_1
+                     ->  Seq Scan on c_star a_star_2
                      ->  Seq Scan on a_star
 (11 rows)
 
@@ -99,19 +99,19 @@ alter table f_star reset (parallel_workers);
 set enable_parallel_append to off;
 explain (costs off)
   select round(avg(aa)), sum(aa) from a_star;
-                     QUERY PLAN                      
------------------------------------------------------
+                          QUERY PLAN                          
+--------------------------------------------------------------
  Finalize Aggregate
    ->  Gather
          Workers Planned: 1
          ->  Partial Aggregate
                ->  Append
                      ->  Parallel Seq Scan on a_star
-                     ->  Parallel Seq Scan on b_star
-                     ->  Parallel Seq Scan on c_star
-                     ->  Parallel Seq Scan on d_star
-                     ->  Parallel Seq Scan on e_star
-                     ->  Parallel Seq Scan on f_star
+                     ->  Parallel Seq Scan on b_star a_star_1
+                     ->  Parallel Seq Scan on c_star a_star_2
+                     ->  Parallel Seq Scan on d_star a_star_3
+                     ->  Parallel Seq Scan on e_star a_star_4
+                     ->  Parallel Seq Scan on f_star a_star_5
 (11 rows)
 
 select round(avg(aa)), sum(aa) from a_star a4;

@@ -421,10 +421,13 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	RangeTblEntry *childrte;
 	Index		childRTindex;
 	AppendRelInfo *appinfo;
+	TupleDesc	child_tupdesc;
+	List	   *parent_colnames;
+	List	   *child_colnames;
 
 	/*
 	 * Build an RTE for the child, and attach to query's rangetable list. We
-	 * copy most fields of the parent's RTE, but replace relation OID,
+	 * copy most scalar fields of the parent's RTE, but replace relation OID,
 	 * relkind, and inh for the child.  Also, set requiredPerms to zero since
 	 * all required permissions checks are done on the original RTE. Likewise,
 	 * set the child's securityQuals to empty, because we only want to apply
@@ -432,10 +435,14 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	 * individual children may have.  (This is an intentional choice to make
 	 * inherited RLS work like regular permissions checks.) The parent
 	 * securityQuals will be propagated to children along with other base
-	 * restriction clauses, so we don't need to do it here.
+	 * restriction clauses, so we don't need to do it here.  Other
+	 * infrastructure of the parent RTE has to be translated to match the
+	 * child table's column ordering, which we do below, so a "flat" copy is
+	 * sufficient to start with.
 	 */
-	childrte = copyObject(parentrte);
-	*childrte_p = childrte;
+	childrte = makeNode(RangeTblEntry);
+	memcpy(childrte, parentrte, sizeof(RangeTblEntry));
+	Assert(parentrte->rtekind == RTE_RELATION); /* else this is dubious */
 	childrte->relid = childOID;
 	childrte->relkind = childrel->rd_rel->relkind;
 	/* A partitioned child will need to be expanded further. */
@@ -448,8 +455,11 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 		childrte->inh = false;
 	childrte->requiredPerms = 0;
 	childrte->securityQuals = NIL;
+
+	/* Link not-yet-fully-filled child RTE into data structures */
 	parse->rtable = lappend(parse->rtable, childrte);
 	childRTindex = list_length(parse->rtable);
+	*childrte_p = childrte;
 	*childRTindex_p = childRTindex;
 
 	/*
@@ -459,10 +469,57 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 								   parentRTindex, childRTindex);
 	root->append_rel_list = lappend(root->append_rel_list, appinfo);
 
+	/* tablesample is probably null, but copy it */
+	childrte->tablesample = copyObject(parentrte->tablesample);
+
+	/*
+	 * Construct an alias clause for the child, which we can also use as eref.
+	 * This is important so that EXPLAIN will print the right column aliases
+	 * for child-table columns.  (Since ruleutils.c doesn't have any easy way
+	 * to reassociate parent and child columns, we must get the child column
+	 * aliases right to start with.  Note that setting childrte->alias forces
+	 * ruleutils.c to use these column names, which it otherwise would not.)
+	 */
+	child_tupdesc = RelationGetDescr(childrel);
+	parent_colnames = parentrte->eref->colnames;
+	child_colnames = NIL;
+	for (int cattno = 0; cattno < child_tupdesc->natts; cattno++)
+	{
+		Form_pg_attribute att = TupleDescAttr(child_tupdesc, cattno);
+		const char *attname;
+
+		if (att->attisdropped)
+		{
+			/* Always insert an empty string for a dropped column */
+			attname = "";
+		}
+		else if (appinfo->parent_colnos[cattno] > 0 &&
+				 appinfo->parent_colnos[cattno] <= list_length(parent_colnames))
+		{
+			/* Duplicate the query-assigned name for the parent column */
+			attname = strVal(list_nth(parent_colnames,
+									  appinfo->parent_colnos[cattno] - 1));
+		}
+		else
+		{
+			/* New column, just use its real name */
+			attname = NameStr(att->attname);
+		}
+		child_colnames = lappend(child_colnames, makeString(pstrdup(attname)));
+	}
+
+	/*
+	 * We just duplicate the parent's table alias name for each child.  If the
+	 * plan gets printed, ruleutils.c has to sort out unique table aliases to
+	 * use, which it can handle.
+	 */
+	childrte->alias = childrte->eref = makeAlias(parentrte->eref->aliasname,
+												 child_colnames);
+
 	/*
 	 * Translate the column permissions bitmaps to the child's attnums (we
 	 * have to build the translated_vars list before we can do this).  But if
-	 * this is the parent table, we can leave copyObject's result alone.
+	 * this is the parent table, we can just duplicate the parent's bitmaps.
 	 *
 	 * Note: we need to do this even though the executor won't run any
 	 * permissions checks on the child RTE.  The insertedCols/updatedCols
@@ -478,6 +535,13 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 													appinfo->translated_vars);
 		childrte->extraUpdatedCols = translate_col_privs(parentrte->extraUpdatedCols,
 														 appinfo->translated_vars);
+	}
+	else
+	{
+		childrte->selectedCols = bms_copy(parentrte->selectedCols);
+		childrte->insertedCols = bms_copy(parentrte->insertedCols);
+		childrte->updatedCols = bms_copy(parentrte->updatedCols);
+		childrte->extraUpdatedCols = bms_copy(parentrte->extraUpdatedCols);
 	}
 
 	/*

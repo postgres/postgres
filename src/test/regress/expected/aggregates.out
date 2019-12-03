@@ -998,8 +998,8 @@ insert into minmaxtest2 values(15), (16);
 insert into minmaxtest3 values(17), (18);
 explain (costs off)
   select min(f1), max(f1) from minmaxtest;
-                                          QUERY PLAN                                          
-----------------------------------------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Result
    InitPlan 1 (returns $0)
      ->  Limit
@@ -1007,22 +1007,22 @@ explain (costs off)
                  Sort Key: minmaxtest.f1
                  ->  Index Only Scan using minmaxtesti on minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest1i on minmaxtest1
+                 ->  Index Only Scan using minmaxtest1i on minmaxtest1 minmaxtest_1
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2
+                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest_2
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest3i on minmaxtest3
+                 ->  Index Only Scan using minmaxtest3i on minmaxtest3 minmaxtest_3
    InitPlan 2 (returns $1)
      ->  Limit
            ->  Merge Append
-                 Sort Key: minmaxtest_1.f1 DESC
-                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
+                 Sort Key: minmaxtest_4.f1 DESC
+                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_4
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1
+                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest_5
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest2_1
+                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest_6
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
+                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest_7
 (23 rows)
 
 select min(f1), max(f1) from minmaxtest;
@@ -1034,8 +1034,8 @@ select min(f1), max(f1) from minmaxtest;
 -- DISTINCT doesn't do anything useful here, but it shouldn't fail
 explain (costs off)
   select distinct min(f1), max(f1) from minmaxtest;
-                                          QUERY PLAN                                          
-----------------------------------------------------------------------------------------------
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
  Unique
    InitPlan 1 (returns $0)
      ->  Limit
@@ -1043,22 +1043,22 @@ explain (costs off)
                  Sort Key: minmaxtest.f1
                  ->  Index Only Scan using minmaxtesti on minmaxtest
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest1i on minmaxtest1
+                 ->  Index Only Scan using minmaxtest1i on minmaxtest1 minmaxtest_1
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2
+                 ->  Index Only Scan Backward using minmaxtest2i on minmaxtest2 minmaxtest_2
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest3i on minmaxtest3
+                 ->  Index Only Scan using minmaxtest3i on minmaxtest3 minmaxtest_3
    InitPlan 2 (returns $1)
      ->  Limit
            ->  Merge Append
-                 Sort Key: minmaxtest_1.f1 DESC
-                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_1
+                 Sort Key: minmaxtest_4.f1 DESC
+                 ->  Index Only Scan Backward using minmaxtesti on minmaxtest minmaxtest_4
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest1_1
+                 ->  Index Only Scan Backward using minmaxtest1i on minmaxtest1 minmaxtest_5
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest2_1
+                 ->  Index Only Scan using minmaxtest2i on minmaxtest2 minmaxtest_6
                        Index Cond: (f1 IS NOT NULL)
-                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest3_1
+                 ->  Index Only Scan Backward using minmaxtest3i on minmaxtest3 minmaxtest_7
    ->  Sort
          Sort Key: ($0), ($1)
          ->  Result
@@ -1156,7 +1156,7 @@ explain (costs off) select * from t1 group by a,b,c,d;
    Group Key: t1.a, t1.b, t1.c, t1.d
    ->  Append
          ->  Seq Scan on t1
-         ->  Seq Scan on t1c
+         ->  Seq Scan on t1c t1_1
 (5 rows)
 
 -- Okay to remove columns if we're only querying the parent.
@@ -1179,13 +1179,13 @@ create temp table p_t1_1 partition of p_t1 for values in(1);
 create temp table p_t1_2 partition of p_t1 for values in(2);
 -- Ensure we can remove non-PK columns for partitioned tables.
 explain (costs off) select * from p_t1 group by a,b,c,d;
-           QUERY PLAN            
----------------------------------
+              QUERY PLAN               
+---------------------------------------
  HashAggregate
-   Group Key: p_t1_1.a, p_t1_1.b
+   Group Key: p_t1.a, p_t1.b
    ->  Append
-         ->  Seq Scan on p_t1_1
-         ->  Seq Scan on p_t1_2
+         ->  Seq Scan on p_t1_1 p_t1
+         ->  Seq Scan on p_t1_2 p_t1_1
 (5 rows)
 
 drop table t1 cascade;

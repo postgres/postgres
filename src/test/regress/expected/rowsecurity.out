@@ -664,9 +664,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1;
  Append
    ->  Seq Scan on t1
          Filter: ((a % 2) = 0)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: ((a % 2) = 0)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: ((a % 2) = 0)
 (7 rows)
 
@@ -691,9 +691,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
  Append
    ->  Seq Scan on t1
          Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: (((a % 2) = 0) AND f_leak(b))
 (7 rows)
 
@@ -714,9 +714,9 @@ EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
  Append
    ->  Seq Scan on t1
          Filter: ((a % 2) = 0)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: ((a % 2) = 0)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: ((a % 2) = 0)
 (7 rows)
 
@@ -737,9 +737,9 @@ EXPLAIN (COSTS OFF) SELECT *, t1 FROM t1;
  Append
    ->  Seq Scan on t1
          Filter: ((a % 2) = 0)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: ((a % 2) = 0)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: ((a % 2) = 0)
 (7 rows)
 
@@ -761,9 +761,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 FOR SHARE;
    ->  Append
          ->  Seq Scan on t1
                Filter: ((a % 2) = 0)
-         ->  Seq Scan on t2
+         ->  Seq Scan on t2 t1_1
                Filter: ((a % 2) = 0)
-         ->  Seq Scan on t3
+         ->  Seq Scan on t3 t1_2
                Filter: ((a % 2) = 0)
 (8 rows)
 
@@ -789,9 +789,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b) FOR SHARE;
    ->  Append
          ->  Seq Scan on t1
                Filter: (((a % 2) = 0) AND f_leak(b))
-         ->  Seq Scan on t2
+         ->  Seq Scan on t2 t1_1
                Filter: (((a % 2) = 0) AND f_leak(b))
-         ->  Seq Scan on t3
+         ->  Seq Scan on t3 t1_2
                Filter: (((a % 2) = 0) AND f_leak(b))
 (8 rows)
 
@@ -851,9 +851,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
  Append
    ->  Seq Scan on t1
          Filter: f_leak(b)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: f_leak(b)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: f_leak(b)
 (7 rows)
 
@@ -893,9 +893,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
  Append
    ->  Seq Scan on t1
          Filter: f_leak(b)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: f_leak(b)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: f_leak(b)
 (7 rows)
 
@@ -985,17 +985,17 @@ NOTICE:  f_leak => my first satire
 (4 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                     QUERY PLAN                      
------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Append
    InitPlan 1 (returns $0)
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
-   ->  Seq Scan on part_document_fiction
+   ->  Seq Scan on part_document_fiction part_document
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_satire
+   ->  Seq Scan on part_document_satire part_document_1
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_nonfiction
+   ->  Seq Scan on part_document_nonfiction part_document_2
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
 (10 rows)
 
@@ -1027,17 +1027,17 @@ NOTICE:  f_leak => awesome technology book
 (10 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                     QUERY PLAN                      
------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Append
    InitPlan 1 (returns $0)
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
-   ->  Seq Scan on part_document_fiction
+   ->  Seq Scan on part_document_fiction part_document
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_satire
+   ->  Seq Scan on part_document_satire part_document_1
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_nonfiction
+   ->  Seq Scan on part_document_nonfiction part_document_2
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
 (10 rows)
 
@@ -1059,7 +1059,7 @@ NOTICE:  f_leak => awesome science fiction
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
                           QUERY PLAN                          
 --------------------------------------------------------------
- Seq Scan on part_document_fiction
+ Seq Scan on part_document_fiction part_document
    Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
    InitPlan 1 (returns $0)
      ->  Index Scan using uaccount_pkey on uaccount
@@ -1137,7 +1137,7 @@ NOTICE:  f_leak => awesome science fiction
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
                           QUERY PLAN                          
 --------------------------------------------------------------
- Seq Scan on part_document_fiction
+ Seq Scan on part_document_fiction part_document
    Filter: ((cid < 55) AND (dlevel <= $0) AND f_leak(dtitle))
    InitPlan 1 (returns $0)
      ->  Index Scan using uaccount_pkey on uaccount
@@ -1174,17 +1174,17 @@ NOTICE:  f_leak => awesome technology book
 (11 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
-                     QUERY PLAN                      
------------------------------------------------------
+                         QUERY PLAN                         
+------------------------------------------------------------
  Append
    InitPlan 1 (returns $0)
      ->  Index Scan using uaccount_pkey on uaccount
            Index Cond: (pguser = CURRENT_USER)
-   ->  Seq Scan on part_document_fiction
+   ->  Seq Scan on part_document_fiction part_document
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_satire
+   ->  Seq Scan on part_document_satire part_document_1
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_nonfiction
+   ->  Seq Scan on part_document_nonfiction part_document_2
          Filter: ((dlevel <= $0) AND f_leak(dtitle))
 (10 rows)
 
@@ -1229,11 +1229,11 @@ EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
                           QUERY PLAN                           
 ---------------------------------------------------------------
  Append
-   ->  Seq Scan on part_document_fiction
+   ->  Seq Scan on part_document_fiction part_document
          Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_satire
+   ->  Seq Scan on part_document_satire part_document_1
          Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
-   ->  Seq Scan on part_document_nonfiction
+   ->  Seq Scan on part_document_nonfiction part_document_2
          Filter: ((dauthor = CURRENT_USER) AND f_leak(dtitle))
 (7 rows)
 
@@ -1511,9 +1511,9 @@ EXPLAIN (COSTS OFF) EXECUTE p1(2);
  Append
    ->  Seq Scan on t1
          Filter: ((a <= 2) AND ((a % 2) = 0))
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: ((a <= 2) AND ((a % 2) = 0))
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: ((a <= 2) AND ((a % 2) = 0))
 (7 rows)
 
@@ -1553,9 +1553,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1 WHERE f_leak(b);
  Append
    ->  Seq Scan on t1
          Filter: f_leak(b)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: f_leak(b)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: f_leak(b)
 (7 rows)
 
@@ -1572,14 +1572,14 @@ EXECUTE p1(2);
 (6 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE p1(2);
-        QUERY PLAN        
---------------------------
+        QUERY PLAN         
+---------------------------
  Append
    ->  Seq Scan on t1
          Filter: (a <= 2)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: (a <= 2)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: (a <= 2)
 (7 rows)
 
@@ -1593,14 +1593,14 @@ EXECUTE p2(2);
 (3 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE p2(2);
-       QUERY PLAN        
--------------------------
+        QUERY PLAN         
+---------------------------
  Append
    ->  Seq Scan on t1
          Filter: (a = 2)
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: (a = 2)
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: (a = 2)
 (7 rows)
 
@@ -1621,9 +1621,9 @@ EXPLAIN (COSTS OFF) EXECUTE p2(2);
  Append
    ->  Seq Scan on t1
          Filter: ((a = 2) AND ((a % 2) = 0))
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: ((a = 2) AND ((a % 2) = 0))
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: ((a = 2) AND ((a % 2) = 0))
 (7 rows)
 
@@ -1636,13 +1636,13 @@ EXPLAIN (COSTS OFF) UPDATE t1 SET b = b || b WHERE f_leak(b);
 -----------------------------------------------
  Update on t1
    Update on t1
-   Update on t2
-   Update on t3
+   Update on t2 t1_1
+   Update on t3 t1_2
    ->  Seq Scan on t1
          Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: (((a % 2) = 0) AND f_leak(b))
 (10 rows)
 
@@ -1726,20 +1726,20 @@ WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
 -----------------------------------------------------------------
  Update on t1
    Update on t1
-   Update on t2 t2_1
-   Update on t3
+   Update on t2 t1_1
+   Update on t3 t1_2
    ->  Nested Loop
          ->  Seq Scan on t1
                Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
          ->  Seq Scan on t2
                Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
-         ->  Seq Scan on t2 t2_1
+         ->  Seq Scan on t2 t1_1
                Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
          ->  Seq Scan on t2
                Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
    ->  Nested Loop
-         ->  Seq Scan on t3
+         ->  Seq Scan on t3 t1_2
                Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
          ->  Seq Scan on t2
                Filter: ((a = 3) AND ((a % 2) = 1) AND f_leak(b))
@@ -1758,9 +1758,9 @@ WHERE t1.a = 3 and t2.a = 3 AND f_leak(t1.b) AND f_leak(t2.b);
          ->  Append
                ->  Seq Scan on t1
                      Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
-               ->  Seq Scan on t2 t2_1
+               ->  Seq Scan on t2 t1_1
                      Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
-               ->  Seq Scan on t3
+               ->  Seq Scan on t3 t1_2
                      Filter: ((a = 3) AND ((a % 2) = 0) AND f_leak(b))
 (11 rows)
 
@@ -1884,13 +1884,13 @@ EXPLAIN (COSTS OFF) DELETE FROM t1 WHERE f_leak(b);
 -----------------------------------------------
  Delete on t1
    Delete on t1
-   Delete on t2
-   Delete on t3
+   Delete on t2 t1_1
+   Delete on t3 t1_2
    ->  Seq Scan on t1
          Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t2
+   ->  Seq Scan on t2 t1_1
          Filter: (((a % 2) = 0) AND f_leak(b))
-   ->  Seq Scan on t3
+   ->  Seq Scan on t3 t1_2
          Filter: (((a % 2) = 0) AND f_leak(b))
 (10 rows)
 
