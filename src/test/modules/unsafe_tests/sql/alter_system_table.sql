@@ -166,7 +166,9 @@ ALTER TABLE pg_description SET SCHEMA public;
 ROLLBACK;
 
 -- reserved tablespace name
+SET client_min_messages = error;  -- disable ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS warning
 CREATE TABLESPACE pg_foo LOCATION '/no/such/location';
+RESET client_min_messages;
 
 -- triggers
 CREATE TRIGGER t1 BEFORE INSERT ON pg_description EXECUTE FUNCTION tf1();

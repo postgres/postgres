@@ -152,8 +152,10 @@ BEGIN;
 ALTER TABLE pg_description SET SCHEMA public;
 ROLLBACK;
 -- reserved tablespace name
+SET client_min_messages = error;  -- disable ENFORCE_REGRESSION_TEST_NAME_RESTRICTIONS warning
 CREATE TABLESPACE pg_foo LOCATION '/no/such/location';
 ERROR:  directory "/no/such/location" does not exist
+RESET client_min_messages;
 -- triggers
 CREATE TRIGGER t1 BEFORE INSERT ON pg_description EXECUTE FUNCTION tf1();
 ALTER TRIGGER t1 ON pg_description RENAME TO t2;
