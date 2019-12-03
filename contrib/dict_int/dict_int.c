@@ -45,6 +45,11 @@ dintdict_init(PG_FUNCTION_ARGS)
 		if (strcmp(defel->defname, "maxlen") == 0)
 		{
 			d->maxlen = atoi(defGetString(defel));
+
+			if (d->maxlen < 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("maxlen value has to be >= 1")));
 		}
 		else if (strcmp(defel->defname, "rejectlong") == 0)
 		{
