@@ -8480,15 +8480,15 @@ ANALYZE fprt2_p2;
 -- inner join three tables
 EXPLAIN (COSTS OFF)
 SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER JOIN fprt1 t3 ON (t2.b = t3.a) WHERE t1.a % 25 =0 ORDER BY 1,2,3;
-                                                        QUERY PLAN                                                        
---------------------------------------------------------------------------------------------------------------------------
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
  Sort
    Sort Key: t1.a, t3.c
    ->  Append
          ->  Foreign Scan
-               Relations: ((public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)) INNER JOIN (public.ftprt1_p1 t3)
+               Relations: ((ftprt1_p1 t1) INNER JOIN (ftprt2_p1 t2)) INNER JOIN (ftprt1_p1 t3)
          ->  Foreign Scan
-               Relations: ((public.ftprt1_p2 t1_1) INNER JOIN (public.ftprt2_p2 t2_1)) INNER JOIN (public.ftprt1_p2 t3_1)
+               Relations: ((ftprt1_p2 t1_1) INNER JOIN (ftprt2_p2 t2_1)) INNER JOIN (ftprt1_p2 t3_1)
 (7 rows)
 
 SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER JOIN fprt1 t3 ON (t2.b = t3.a) WHERE t1.a % 25 =0 ORDER BY 1,2,3;
@@ -8561,15 +8561,15 @@ SELECT t1.wr, t2.wr FROM (SELECT t1 wr, a FROM fprt1 t1 WHERE t1.a % 25 = 0) t1 
 -- join with lateral reference
 EXPLAIN (COSTS OFF)
 SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Sort
    Sort Key: t1.a, t1.b
    ->  Append
          ->  Foreign Scan
-               Relations: (public.ftprt1_p1 t1) INNER JOIN (public.ftprt2_p1 t2)
+               Relations: (ftprt1_p1 t1) INNER JOIN (ftprt2_p1 t2)
          ->  Foreign Scan
-               Relations: (public.ftprt1_p2 t1_1) INNER JOIN (public.ftprt2_p2 t2_1)
+               Relations: (ftprt1_p2 t1_1) INNER JOIN (ftprt2_p2 t2_1)
 (7 rows)
 
 SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
@@ -8689,17 +8689,17 @@ SELECT a, sum(b), min(b), count(*) FROM pagg_tab GROUP BY a HAVING avg(b) < 22 O
 SET enable_partitionwise_aggregate TO true;
 EXPLAIN (COSTS OFF)
 SELECT a, sum(b), min(b), count(*) FROM pagg_tab GROUP BY a HAVING avg(b) < 22 ORDER BY 1;
-                               QUERY PLAN                               
-------------------------------------------------------------------------
+                           QUERY PLAN                            
+-----------------------------------------------------------------
  Sort
    Sort Key: pagg_tab.a
    ->  Append
          ->  Foreign Scan
-               Relations: Aggregate on (public.fpagg_tab_p1 pagg_tab)
+               Relations: Aggregate on (fpagg_tab_p1 pagg_tab)
          ->  Foreign Scan
-               Relations: Aggregate on (public.fpagg_tab_p2 pagg_tab_1)
+               Relations: Aggregate on (fpagg_tab_p2 pagg_tab_1)
          ->  Foreign Scan
-               Relations: Aggregate on (public.fpagg_tab_p3 pagg_tab_2)
+               Relations: Aggregate on (fpagg_tab_p3 pagg_tab_2)
 (9 rows)
 
 SELECT a, sum(b), min(b), count(*) FROM pagg_tab GROUP BY a HAVING avg(b) < 22 ORDER BY 1;

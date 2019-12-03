@@ -2571,7 +2571,6 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 			{
 				int			rti = strtol(ptr, &ptr, 10);
 				RangeTblEntry *rte;
-				char	   *namespace;
 				char	   *relname;
 				char	   *refname;
 
@@ -2580,11 +2579,19 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 				rte = rt_fetch(rti, es->rtable);
 				Assert(rte->rtekind == RTE_RELATION);
 				/* This logic should agree with explain.c's ExplainTargetRel */
-				namespace = get_namespace_name(get_rel_namespace(rte->relid));
 				relname = get_rel_name(rte->relid);
-				appendStringInfo(relations, "%s.%s",
-								 quote_identifier(namespace),
-								 quote_identifier(relname));
+				if (es->verbose)
+				{
+					char	   *namespace;
+
+					namespace = get_namespace_name(get_rel_namespace(rte->relid));
+					appendStringInfo(relations, "%s.%s",
+									 quote_identifier(namespace),
+									 quote_identifier(relname));
+				}
+				else
+					appendStringInfo(relations, "%s",
+									 quote_identifier(relname));
 				refname = (char *) list_nth(es->rtable_names, rti - 1);
 				if (refname == NULL)
 					refname = rte->eref->aliasname;
