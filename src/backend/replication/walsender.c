@@ -2434,10 +2434,17 @@ WalSndSegmentOpen(XLogSegNo nextSegNo, WALSegmentContext *segcxt,
 	 * too old WAL segment that has already been removed or recycled.
 	 */
 	if (errno == ENOENT)
+	{
+		char		xlogfname[MAXFNAMELEN];
+		int			save_errno = errno;
+
+		XLogFileName(xlogfname, *tli_p, nextSegNo, wal_segment_size);
+		errno = save_errno;
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("requested WAL segment %s has already been removed",
-						XLogFileNameP(*tli_p, nextSegNo))));
+						xlogfname)));
+	}
 	else
 		ereport(ERROR,
 				(errcode_for_file_access(),

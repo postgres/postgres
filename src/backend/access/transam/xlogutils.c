@@ -776,7 +776,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 
 /* openSegment callback for WALRead */
 static int
-wal_segment_open(XLogSegNo nextSegNo, WALSegmentContext *segcxt,
+wal_segment_open(XLogSegNo nextSegNo, WALSegmentContext * segcxt,
 				 TimeLineID *tli_p)
 {
 	TimeLineID	tli = *tli_p;
@@ -944,7 +944,9 @@ void
 WALReadRaiseError(WALReadError *errinfo)
 {
 	WALOpenSegment *seg = &errinfo->wre_seg;
-	char	   *fname = XLogFileNameP(seg->ws_tli, seg->ws_segno);
+	char		fname[MAXFNAMELEN];
+
+	XLogFileName(fname, seg->ws_tli, seg->ws_segno, wal_segment_size);
 
 	if (errinfo->wre_read < 0)
 	{

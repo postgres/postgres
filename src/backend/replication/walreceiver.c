@@ -576,17 +576,17 @@ WalReceiverMain(void)
 			char		xlogfname[MAXFNAMELEN];
 
 			XLogWalRcvFlush(false);
+			XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
 			if (close(recvFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not close log segment %s: %m",
-								XLogFileNameP(recvFileTLI, recvSegNo))));
+								xlogfname)));
 
 			/*
 			 * Create .done file forcibly to prevent the streamed segment from
 			 * being archived later.
 			 */
-			XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
 			if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
 				XLogArchiveForceDone(xlogfname);
 			else
@@ -900,6 +900,8 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 
 				XLogWalRcvFlush(false);
 
+				XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
+
 				/*
 				 * XLOG segment files will be re-read by recovery in startup
 				 * process soon, so we don't advise the OS to release cache
@@ -909,13 +911,12 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 					ereport(PANIC,
 							(errcode_for_file_access(),
 							 errmsg("could not close log segment %s: %m",
-									XLogFileNameP(recvFileTLI, recvSegNo))));
+									xlogfname)));
 
 				/*
 				 * Create .done file forcibly to prevent the streamed segment
 				 * from being archived later.
 				 */
-				XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
 				if (XLogArchiveMode != ARCHIVE_MODE_ALWAYS)
 					XLogArchiveForceDone(xlogfname);
 				else
@@ -943,11 +944,18 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		if (recvOff != startoff)
 		{
 			if (lseek(recvFile, (off_t) startoff, SEEK_SET) < 0)
+			{
+				char		xlogfname[MAXFNAMELEN];
+				int			save_errno = errno;
+
+				XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
+				errno = save_errno;
 				ereport(PANIC,
 						(errcode_for_file_access(),
 						 errmsg("could not seek in log segment %s to offset %u: %m",
-								XLogFileNameP(recvFileTLI, recvSegNo),
-								startoff)));
+								xlogfname, startoff)));
+			}
+
 			recvOff = startoff;
 		}
 
@@ -957,15 +965,21 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		byteswritten = write(recvFile, buf, segbytes);
 		if (byteswritten <= 0)
 		{
+			char		xlogfname[MAXFNAMELEN];
+			int			save_errno;
+
 			/* if write didn't set errno, assume no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
+
+			save_errno = errno;
+			XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
+			errno = save_errno;
 			ereport(PANIC,
 					(errcode_for_file_access(),
 					 errmsg("could not write to log segment %s "
 							"at offset %u, length %lu: %m",
-							XLogFileNameP(recvFileTLI, recvSegNo),
-							recvOff, (unsigned long) segbytes)));
+							xlogfname, recvOff, (unsigned long) segbytes)));
 		}
 
 		/* Update state for write */

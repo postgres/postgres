@@ -152,6 +152,10 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 /* Length of XLog file name */
 #define XLOG_FNAME_LEN	   24
 
+/*
+ * Generate a WAL segment file name.  Do not use this macro in a helper
+ * function allocating the result generated.
+ */
 #define XLogFileName(fname, tli, logSegNo, wal_segsz_bytes)	\
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli,		\
 			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
