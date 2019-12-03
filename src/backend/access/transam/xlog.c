@@ -5528,7 +5528,7 @@ exitArchiveRecovery(TimeLineID endTLI, XLogRecPtr endOfLog)
 			char		xlogfname[MAXFNAMELEN];
 			int			save_errno = errno;
 
-			XLogFileName(xlogfname, ThisTimeLineID, openLogSegNo,
+			XLogFileName(xlogfname, ThisTimeLineID, startLogSegNo,
 						 wal_segment_size);
 			errno = save_errno;
 			ereport(ERROR,
@@ -10166,7 +10166,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 		char		xlogfname[MAXFNAMELEN];
 		int			save_errno = errno;
 
-		XLogFileName(xlogfname, ThisTimeLineID, openLogSegNo,
+		XLogFileName(xlogfname, ThisTimeLineID, segno,
 					 wal_segment_size);
 		errno = save_errno;
 		ereport(PANIC,
