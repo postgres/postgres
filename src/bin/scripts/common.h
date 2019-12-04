@@ -10,7 +10,6 @@
 #define COMMON_H
 
 #include "common/username.h"
-#include "fe_utils/cancel.h"
 #include "getopt_long.h"		/* pgrminclude ignore */
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"		/* pgrminclude ignore */
@@ -21,8 +20,6 @@ enum trivalue
 	TRI_NO,
 	TRI_YES
 };
-
-extern bool CancelRequested;
 
 typedef void (*help_handler) (const char *progname);
 

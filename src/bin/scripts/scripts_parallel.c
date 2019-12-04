@@ -24,6 +24,7 @@
 
 #include "common.h"
 #include "common/logging.h"
+#include "fe_utils/cancel.h"
 #include "scripts_parallel.h"
 
 static void init_slot(ParallelSlot *slot, PGconn *conn);
