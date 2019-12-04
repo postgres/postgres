@@ -132,6 +132,10 @@ sub configure_test_server_for_ssl
 	print $conf "listen_addresses='$serverhost'\n";
 	print $conf "log_statement=all\n";
 
+	# Accept even old TLS versions so that builds with older OpenSSL
+	# can run the test suite.
+	print $conf "ssl_min_protocol_version='TLSv1'\n";
+
 	# enable SSL and set up server key
 	print $conf "include 'sslconfig.conf'\n";
 

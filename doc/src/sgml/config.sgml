@@ -1365,10 +1365,8 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        The default is <literal>TLSv1</literal>, mainly to support older
-        versions of the <productname>OpenSSL</productname> library.  You might
-        want to set this to a higher value if all software components can
-        support the newer protocol versions.
+        The default is <literal>TLSv1.2</literal>, which satisfies industry
+        best practices as of this writing.
        </para>
       </listitem>
      </varlistentry>
