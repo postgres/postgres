@@ -411,7 +411,6 @@ ExecInsert(ModifyTableState *mtstate,
 		 * them.
 		 */
 		slot->tts_tableOid = RelationGetRelid(resultRelInfo->ri_RelationDesc);
-
 	}
 	else
 	{
