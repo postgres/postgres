@@ -353,8 +353,7 @@ splitTableColumnsSpec(const char *spec, int encoding,
 		else
 			cp += PQmblen(cp, encoding);
 	}
-	*table = pg_strdup(spec);
-	(*table)[cp - spec] = '\0'; /* no strndup */
+	*table = pnstrdup(spec, cp - spec);
 	*columns = cp;
 }
 

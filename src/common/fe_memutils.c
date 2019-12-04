@@ -142,6 +142,33 @@ pstrdup(const char *in)
 	return pg_strdup(in);
 }
 
+char *
+pnstrdup(const char *in, Size size)
+{
+	char	   *tmp;
+	int			len;
+
+	if (!in)
+	{
+		fprintf(stderr,
+				_("cannot duplicate null pointer (internal error)\n"));
+		exit(EXIT_FAILURE);
+	}
+
+	len = strnlen(in, size);
+	tmp = malloc(len + 1);
+	if (tmp == NULL)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(EXIT_FAILURE);
+	}
+
+	memcpy(tmp, in, len);
+	tmp[len] = '\0';
+
+	return tmp;
+}
+
 void *
 repalloc(void *pointer, Size size)
 {

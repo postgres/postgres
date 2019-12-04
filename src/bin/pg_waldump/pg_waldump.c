@@ -114,8 +114,7 @@ split_path(const char *path, char **dir, char **fname)
 	/* directory path */
 	if (sep != NULL)
 	{
-		*dir = pg_strdup(path);
-		(*dir)[(sep - path) + 1] = '\0';	/* no strndup */
+		*dir = pnstrdup(path, sep - path);
 		*fname = pg_strdup(sep + 1);
 	}
 	/* local directory */

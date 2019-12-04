@@ -270,13 +270,10 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					/* execute command */
 				case '`':
 					{
-						FILE	   *fd;
-						char	   *file = pg_strdup(p + 1);
-						int			cmdend;
+						int			cmdend = strcspn(p + 1, "`");
+						char	   *file = pnstrdup(p + 1, cmdend);
+						FILE	   *fd = popen(file, "r");
 
-						cmdend = strcspn(file, "`");
-						file[cmdend] = '\0';
-						fd = popen(file, "r");
 						if (fd)
 						{
 							if (fgets(buf, sizeof(buf), fd) == NULL)
@@ -295,13 +292,10 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					/* interpolate variable */
 				case ':':
 					{
-						char	   *name;
+						int			nameend = strcspn(p + 1, ":");
+						char	   *name = pnstrdup(p + 1, nameend);
 						const char *val;
-						int			nameend;
 
-						name = pg_strdup(p + 1);
-						nameend = strcspn(name, ":");
-						name[nameend] = '\0';
 						val = GetVariable(pset.vars, name);
 						if (val)
 							strlcpy(buf, val, sizeof(buf));

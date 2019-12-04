@@ -31,6 +31,7 @@ extern void pg_free(void *pointer);
 
 /* Equivalent functions, deliberately named the same as backend functions */
 extern char *pstrdup(const char *in);
+extern char *pnstrdup(const char *in, Size size);
 extern void *palloc(Size size);
 extern void *palloc0(Size size);
 extern void *palloc_extended(Size size, int flags);
