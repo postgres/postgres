@@ -302,7 +302,7 @@ sub mkvcbuild
 	$libecpgcompat->AddIncludeDir('src/interfaces/ecpg/include');
 	$libecpgcompat->AddIncludeDir('src/interfaces/libpq');
 	$libecpgcompat->UseDef('src/interfaces/ecpg/compatlib/compatlib.def');
-	$libecpgcompat->AddReference($pgtypes, $libecpg, $libpgport);
+	$libecpgcompat->AddReference($pgtypes, $libecpg, $libpgport, $libpgcommon);
 
 	my $ecpg = $solution->AddProject('ecpg', 'exe', 'interfaces',
 		'src/interfaces/ecpg/preproc');
