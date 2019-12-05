@@ -48,20 +48,20 @@ typedef struct Instrumentation
 	bool		need_bufusage;	/* true if we need buffer usage data */
 	/* Info about current plan cycle: */
 	bool		running;		/* true if we've completed first tuple */
-	instr_time	starttime;		/* Start time of current iteration of node */
-	instr_time	counter;		/* Accumulated runtime for this node */
-	double		firsttuple;		/* Time for first tuple of this cycle */
-	double		tuplecount;		/* Tuples emitted so far this cycle */
-	BufferUsage bufusage_start; /* Buffer usage at start */
+	instr_time	starttime;		/* start time of current iteration of node */
+	instr_time	counter;		/* accumulated runtime for this node */
+	double		firsttuple;		/* time for first tuple of this cycle */
+	double		tuplecount;		/* # of tuples emitted so far this cycle */
+	BufferUsage bufusage_start; /* buffer usage at start */
 	/* Accumulated statistics across all completed cycles: */
-	double		startup;		/* Total startup time (in seconds) */
-	double		total;			/* Total total time (in seconds) */
-	double		ntuples;		/* Total tuples produced */
-	double		ntuples2;		/* Secondary node-specific tuple counter */
+	double		startup;		/* total startup time (in seconds) */
+	double		total;			/* total time (in seconds) */
+	double		ntuples;		/* total tuples produced */
+	double		ntuples2;		/* secondary node-specific tuple counter */
 	double		nloops;			/* # of run cycles for this node */
-	double		nfiltered1;		/* # tuples removed by scanqual or joinqual */
-	double		nfiltered2;		/* # tuples removed by "other" quals */
-	BufferUsage bufusage;		/* Total buffer usage */
+	double		nfiltered1;		/* # of tuples removed by scanqual or joinqual */
+	double		nfiltered2;		/* # of tuples removed by "other" quals */
+	BufferUsage bufusage;		/* total buffer usage */
 } Instrumentation;
 
 typedef struct WorkerInstrumentation
