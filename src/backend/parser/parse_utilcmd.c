@@ -2147,15 +2147,17 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 			if (i < index_form->indnkeyatts)
 			{
 				/*
-				 * Insist on default opclass and sort options.  While the
-				 * index would still work as a constraint with non-default
-				 * settings, it might not provide exactly the same uniqueness
-				 * semantics as you'd get from a normally-created constraint;
-				 * and there's also the dump/reload problem mentioned above.
+				 * Insist on default opclass, collation, and sort options.
+				 * While the index would still work as a constraint with
+				 * non-default settings, it might not provide exactly the same
+				 * uniqueness semantics as you'd get from a normally-created
+				 * constraint; and there's also the dump/reload problem
+				 * mentioned above.
 				 */
 				defopclass = GetDefaultOpClass(attform->atttypid,
 											   index_rel->rd_rel->relam);
 				if (indclass->values[i] != defopclass ||
+					attform->attcollation != index_rel->rd_indcollation[i] ||
 					index_rel->rd_indoption[i] != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),

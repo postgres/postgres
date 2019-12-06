@@ -538,6 +538,12 @@ ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
 
 DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
 
+-- Check that non-default index options are rejected
+CREATE UNIQUE INDEX cwi_uniq3_idx ON cwi_test(a desc);
+ALTER TABLE cwi_test ADD UNIQUE USING INDEX cwi_uniq3_idx;  -- fail
+CREATE UNIQUE INDEX cwi_uniq4_idx ON cwi_test(b collate "POSIX");
+ALTER TABLE cwi_test ADD UNIQUE USING INDEX cwi_uniq4_idx;  -- fail
+
 DROP TABLE cwi_test;
 
 -- ADD CONSTRAINT USING INDEX is forbidden on partitioned tables

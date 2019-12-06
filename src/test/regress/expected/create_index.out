@@ -1479,6 +1479,19 @@ primary key, btree, for table "public.cwi_test"
 DROP INDEX cwi_replaced_pkey;	-- Should fail; a constraint depends on it
 ERROR:  cannot drop index cwi_replaced_pkey because constraint cwi_replaced_pkey on table cwi_test requires it
 HINT:  You can drop constraint cwi_replaced_pkey on table cwi_test instead.
+-- Check that non-default index options are rejected
+CREATE UNIQUE INDEX cwi_uniq3_idx ON cwi_test(a desc);
+ALTER TABLE cwi_test ADD UNIQUE USING INDEX cwi_uniq3_idx;  -- fail
+ERROR:  index "cwi_uniq3_idx" column number 1 does not have default sorting behavior
+LINE 1: ALTER TABLE cwi_test ADD UNIQUE USING INDEX cwi_uniq3_idx;
+                                 ^
+DETAIL:  Cannot create a primary key or unique constraint using such an index.
+CREATE UNIQUE INDEX cwi_uniq4_idx ON cwi_test(b collate "POSIX");
+ALTER TABLE cwi_test ADD UNIQUE USING INDEX cwi_uniq4_idx;  -- fail
+ERROR:  index "cwi_uniq4_idx" column number 1 does not have default sorting behavior
+LINE 1: ALTER TABLE cwi_test ADD UNIQUE USING INDEX cwi_uniq4_idx;
+                                 ^
+DETAIL:  Cannot create a primary key or unique constraint using such an index.
 DROP TABLE cwi_test;
 -- ADD CONSTRAINT USING INDEX is forbidden on partitioned tables
 CREATE TABLE cwi_test(a int) PARTITION BY hash (a);
