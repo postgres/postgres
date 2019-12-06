@@ -1775,6 +1775,104 @@ select pg_get_ruledef(oid, true) from pg_rewrite
      43 AS col_b;
 (1 row)
 
+-- test extraction of FieldSelect field names (get_name_for_var_field)
+create view tt24v as
+with cte as materialized (select r from (values(1,2),(3,4)) r)
+select (r).column2 as col_a, (rr).column2 as col_b from
+  cte join (select rr from (values(1,7),(3,8)) rr limit 2) ss
+  on (r).column1 = (rr).column1;
+select pg_get_viewdef('tt24v', true);
+                       pg_get_viewdef                       
+------------------------------------------------------------
+  WITH cte AS MATERIALIZED (                               +
+          SELECT r.*::record AS r                          +
+            FROM ( VALUES (1,2), (3,4)) r                  +
+         )                                                 +
+  SELECT (cte.r).column2 AS col_a,                         +
+     (ss.rr).column2 AS col_b                              +
+    FROM cte                                               +
+      JOIN ( SELECT rr.*::record AS rr                     +
+            FROM ( VALUES (1,7), (3,8)) rr                 +
+          LIMIT 2) ss ON (cte.r).column1 = (ss.rr).column1;
+(1 row)
+
+create view tt25v as
+with cte as materialized (select pg_get_keywords() k)
+select (k).word from cte;
+select pg_get_viewdef('tt25v', true);
+             pg_get_viewdef             
+----------------------------------------
+  WITH cte AS MATERIALIZED (           +
+          SELECT pg_get_keywords() AS k+
+         )                             +
+  SELECT (cte.k).word AS word          +
+    FROM cte;
+(1 row)
+
+-- also check cases seen only in EXPLAIN
+explain (verbose, costs off)
+select * from tt24v;
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
+ Hash Join
+   Output: (cte.r).column2, ((ROW("*VALUES*".column1, "*VALUES*".column2))).column2
+   Hash Cond: (((ROW("*VALUES*".column1, "*VALUES*".column2))).column1 = (cte.r).column1)
+   CTE cte
+     ->  Values Scan on "*VALUES*_1"
+           Output: ROW("*VALUES*_1".column1, "*VALUES*_1".column2)
+   ->  Limit
+         Output: (ROW("*VALUES*".column1, "*VALUES*".column2))
+         ->  Values Scan on "*VALUES*"
+               Output: ROW("*VALUES*".column1, "*VALUES*".column2)
+   ->  Hash
+         Output: cte.r
+         ->  CTE Scan on cte
+               Output: cte.r
+(14 rows)
+
+explain (verbose, costs off)
+select (r).column2 from (select r from (values(1,2),(3,4)) r limit 1) ss;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Subquery Scan on ss
+   Output: (ss.r).column2
+   ->  Limit
+         Output: (ROW("*VALUES*".column1, "*VALUES*".column2))
+         ->  Values Scan on "*VALUES*"
+               Output: ROW("*VALUES*".column1, "*VALUES*".column2)
+(6 rows)
+
+-- test pretty-print parenthesization rules, and SubLink deparsing
+create view tt26v as
+select x + y + z as c1,
+       (x * y) + z as c2,
+       x + (y * z) as c3,
+       (x + y) * z as c4,
+       x * (y + z) as c5,
+       x + (y + z) as c6,
+       x + (y # z) as c7,
+       (x > y) AND (y > z OR x > z) as c8,
+       (x > y) OR (y > z AND NOT (x > z)) as c9,
+       (x,y) <> ALL (values(1,2),(3,4)) as c10,
+       (x,y) <= ANY (values(1,2),(3,4)) as c11
+from (values(1,2,3)) v(x,y,z);
+select pg_get_viewdef('tt26v', true);
+                     pg_get_viewdef                     
+--------------------------------------------------------
+  SELECT v.x + v.y + v.z AS c1,                        +
+     v.x * v.y + v.z AS c2,                            +
+     v.x + v.y * v.z AS c3,                            +
+     (v.x + v.y) * v.z AS c4,                          +
+     v.x * (v.y + v.z) AS c5,                          +
+     v.x + (v.y + v.z) AS c6,                          +
+     v.x + (v.y # v.z) AS c7,                          +
+     v.x > v.y AND (v.y > v.z OR v.x > v.z) AS c8,     +
+     v.x > v.y OR v.y > v.z AND NOT v.x > v.z AS c9,   +
+     ((v.x, v.y) <> ALL ( VALUES (1,2), (3,4))) AS c10,+
+     ((v.x, v.y) <= ANY ( VALUES (1,2), (3,4))) AS c11 +
+    FROM ( VALUES (1,2,3)) v(x, y, z);
+(1 row)
+
 -- clean up all the random objects we made above
 DROP SCHEMA temp_view_test CASCADE;
 NOTICE:  drop cascades to 27 other objects
@@ -1806,7 +1904,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 64 other objects
+NOTICE:  drop cascades to 67 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -1871,3 +1969,6 @@ drop cascades to view tt20v
 drop cascades to view tt21v
 drop cascades to view tt22v
 drop cascades to view tt23v
+drop cascades to view tt24v
+drop cascades to view tt25v
+drop cascades to view tt26v
