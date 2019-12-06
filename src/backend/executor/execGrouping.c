@@ -382,12 +382,9 @@ FindTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 /*
  * Compute the hash value for a tuple
  *
- * The passed-in key is a pointer to TupleHashEntryData.  In an actual hash
- * table entry, the firstTuple field points to a tuple (in MinimalTuple
- * format).  LookupTupleHashEntry sets up a dummy TupleHashEntryData with a
- * NULL firstTuple field --- that cues us to look at the inputslot instead.
- * This convention avoids the need to materialize virtual input tuples unless
- * they actually need to get copied into the table.
+ * If tuple is NULL, use the input slot instead. This convention avoids the
+ * need to materialize virtual input tuples unless they actually need to get
+ * copied into the table.
  *
  * Also, the caller must select an appropriate memory context for running
  * the hash functions. (dynahash.c doesn't change CurrentMemoryContext.)
@@ -455,8 +452,6 @@ TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
 
 /*
  * See whether two tuples (presumably of the same hash value) match
- *
- * As above, the passed pointers are pointers to TupleHashEntryData.
  */
 static int
 TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2)

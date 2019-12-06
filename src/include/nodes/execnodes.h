@@ -2248,7 +2248,7 @@ typedef struct HashInstrumentation
 	int			nbuckets_original;	/* planned number of buckets */
 	int			nbatch;			/* number of batches at end of execution */
 	int			nbatch_original;	/* planned number of batches */
-	size_t		space_peak;		/* speak memory usage in bytes */
+	size_t		space_peak;		/* peak memory usage in bytes */
 } HashInstrumentation;
 
 /* ----------------
