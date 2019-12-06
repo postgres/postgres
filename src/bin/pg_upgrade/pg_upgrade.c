@@ -341,10 +341,9 @@ create_new_objects(void)
 		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
 		/*
-		 * template1 and postgres databases will already exist in the target
-		 * installation, so tell pg_restore to drop and recreate them;
-		 * otherwise we would fail to propagate their database-level
-		 * properties.
+		 * template1 database will already exist in the target installation,
+		 * so tell pg_restore to drop and recreate it; otherwise we would fail
+		 * to propagate its database-level properties.
 		 */
 		create_opts = "--clean --create";
 
@@ -378,10 +377,9 @@ create_new_objects(void)
 		snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
 
 		/*
-		 * template1 and postgres databases will already exist in the target
-		 * installation, so tell pg_restore to drop and recreate them;
-		 * otherwise we would fail to propagate their database-level
-		 * properties.
+		 * postgres database will already exist in the target installation, so
+		 * tell pg_restore to drop and recreate it; otherwise we would fail to
+		 * propagate its database-level properties.
 		 */
 		if (strcmp(old_db->db_name, "postgres") == 0)
 			create_opts = "--clean --create";
