@@ -12094,13 +12094,13 @@ else
 fi
 
   fi
-  for ac_func in SSL_clear_options X509_get_signature_nid
+  # Function introduced in OpenSSL 1.0.2.
+  for ac_func in X509_get_signature_nid
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "X509_get_signature_nid" "ac_cv_func_X509_get_signature_nid"
+if test "x$ac_cv_func_X509_get_signature_nid" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE_X509_GET_SIGNATURE_NID 1
 _ACEOF
 
 fi

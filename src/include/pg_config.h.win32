@@ -370,9 +370,6 @@
 /* Define to 1 if you have the `srandom' function. */
 /* #undef HAVE_SRANDOM */
 
-/* Define to 1 if you have the `SSL_clear_options' function. */
-#define HAVE_SSL_CLEAR_OPTIONS 1
-
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
 
