@@ -12130,7 +12130,7 @@ else
 fi
 
   fi
-  for ac_func in SSL_clear_options SSL_get_current_compression X509_get_signature_nid
+  for ac_func in SSL_get_current_compression X509_get_signature_nid
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -12173,6 +12173,43 @@ _ACEOF
 fi
 done
 
+  # SSL_clear_options is a macro in OpenSSL from 0.9.8 to 1.0.2, and
+  # a function from 1.1.0 onwards so we cannot use AC_CHECK_FUNCS.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_clear_options" >&5
+$as_echo_n "checking for SSL_clear_options... " >&6; }
+if ${ac_cv_func_ssl_clear_options+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+  #include <openssl/ssl.h>
+  #include <openssl/bio.h>
+  SSL *ssl;
+
+int
+main ()
+{
+return SSL_clear_options(ssl, 0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_func_ssl_clear_options=yes
+else
+  ac_cv_func_ssl_clear_options=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_ssl_clear_options" >&5
+$as_echo "$ac_cv_func_ssl_clear_options" >&6; }
+  if test $ac_cv_func_ssl_clear_options = yes ; then
+
+$as_echo "#define HAVE_SSL_CLEAR_OPTIONS 1" >>confdefs.h
+
+  fi
 fi
 
 if test "$with_pam" = yes ; then

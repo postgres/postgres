@@ -1209,7 +1209,7 @@ if test "$with_openssl" = yes ; then
      AC_SEARCH_LIBS(CRYPTO_new_ex_data, [eay32 crypto], [], [AC_MSG_ERROR([library 'eay32' or 'crypto' is required for OpenSSL])])
      AC_SEARCH_LIBS(SSL_new, [ssleay32 ssl], [], [AC_MSG_ERROR([library 'ssleay32' or 'ssl' is required for OpenSSL])])
   fi
-  AC_CHECK_FUNCS([SSL_clear_options SSL_get_current_compression X509_get_signature_nid])
+  AC_CHECK_FUNCS([SSL_get_current_compression X509_get_signature_nid])
   # Functions introduced in OpenSSL 1.1.0. We used to check for
   # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
   # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
@@ -1220,6 +1220,20 @@ if test "$with_openssl" = yes ; then
   # thread-safety. In 1.1.0, it's no longer required, and CRYPTO_lock()
   # function was removed.
   AC_CHECK_FUNCS([CRYPTO_lock])
+  # SSL_clear_options is a macro in OpenSSL from 0.9.8 to 1.0.2, and
+  # a function from 1.1.0 onwards so we cannot use AC_CHECK_FUNCS.
+  AC_CACHE_CHECK([for SSL_clear_options], ac_cv_func_ssl_clear_options,
+  [AC_LINK_IFELSE([AC_LANG_PROGRAM([
+  #include <openssl/ssl.h>
+  #include <openssl/bio.h>
+  SSL *ssl;
+  ],
+  [return SSL_clear_options(ssl, 0);])],
+  [ac_cv_func_ssl_clear_options=yes],
+  [ac_cv_func_ssl_clear_options=no])])
+  if test $ac_cv_func_ssl_clear_options = yes ; then
+    AC_DEFINE(HAVE_SSL_CLEAR_OPTIONS, 1, [Define to 1 if you have SSL_clear_options()])
+  fi
 fi
 
 if test "$with_pam" = yes ; then
