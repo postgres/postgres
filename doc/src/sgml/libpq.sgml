@@ -1867,24 +1867,6 @@ char *PQpass(const PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-PQsslpassword">
-     <term><function>PQsslpassword</function><indexterm><primary>PQsslpassword</primary></indexterm></term>
-
-     <listitem>
-      <para>
-       Returns the password for the SSL client key.
-<synopsis>
-char *PQsslpassword(const PGconn *conn);
-</synopsis>
-      </para>
-
-      <para>
-       <xref linkend="libpq-PQsslpassword"/> will return the SSL password specified
-       in the connection parameters.
-      </para>
-     </listitem>
-    </varlistentry>
-
     <varlistentry id="libpq-PQhost">
      <term><function>PQhost</function><indexterm><primary>PQhost</primary></indexterm></term>
 

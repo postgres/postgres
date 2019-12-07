@@ -6551,14 +6551,6 @@ PQport(const PGconn *conn)
 }
 
 char *
-PQsslpassword(const PGconn *conn)
-{
-	if (!conn)
-		return NULL;
-	return conn->sslpassword;
-}
-
-char *
 PQtty(const PGconn *conn)
 {
 	if (!conn)
