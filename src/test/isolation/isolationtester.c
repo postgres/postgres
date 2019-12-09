@@ -34,6 +34,10 @@ static int	nconns = 0;
 /* In dry run only output permutations to be run by the tester. */
 static int	dry_run = false;
 
+/* Maximum time to wait before giving up on a step (in usec) */
+static int64 max_step_wait = 300 * USECS_PER_SEC;
+
+
 static void exit_nicely(void) pg_attribute_noreturn();
 static void run_testspec(TestSpec *testspec);
 static void run_all_permutations(TestSpec *testspec);
@@ -68,6 +72,7 @@ int
 main(int argc, char **argv)
 {
 	const char *conninfo;
+	const char *env_wait;
 	TestSpec   *testspec;
 	int			i,
 				j;
@@ -111,6 +116,14 @@ main(int argc, char **argv)
 		conninfo = argv[optind];
 	else
 		conninfo = "dbname = postgres";
+
+	/*
+	 * If PGISOLATIONTIMEOUT is set in the environment, adopt its value (given
+	 * in seconds) as the max time to wait for any one step to complete.
+	 */
+	env_wait = getenv("PGISOLATIONTIMEOUT");
+	if (env_wait != NULL)
+		max_step_wait = ((int64) atoi(env_wait)) * USECS_PER_SEC;
 
 	/* Read the test spec from stdin */
 	spec_yyparse();
@@ -783,7 +796,7 @@ try_complete_step(TestSpec *testspec, Step *step, int flags)
 			td += (int64) current_time.tv_usec - (int64) start_time.tv_usec;
 
 			/*
-			 * After 180 seconds, try to cancel the query.
+			 * After max_step_wait microseconds, try to cancel the query.
 			 *
 			 * If the user tries to test an invalid permutation, we don't want
 			 * to hang forever, especially when this is running in the
@@ -791,7 +804,7 @@ try_complete_step(TestSpec *testspec, Step *step, int flags)
 			 * failing, but remaining permutations and tests should still be
 			 * OK.
 			 */
-			if (td > 180 * USECS_PER_SEC && !canceled)
+			if (td > max_step_wait && !canceled)
 			{
 				PGcancel   *cancel = PQgetCancel(conn);
 
@@ -800,7 +813,15 @@ try_complete_step(TestSpec *testspec, Step *step, int flags)
 					char		buf[256];
 
 					if (PQcancel(cancel, buf, sizeof(buf)))
+					{
+						/*
+						 * print to stdout not stderr, as this should appear
+						 * in the test case's results
+						 */
+						printf("isolationtester: canceling step %s after %d seconds\n",
+							   step->name, (int) (td / USECS_PER_SEC));
 						canceled = true;
+					}
 					else
 						fprintf(stderr, "PQcancel failed: %s\n", buf);
 					PQfreeCancel(cancel);
@@ -808,16 +829,16 @@ try_complete_step(TestSpec *testspec, Step *step, int flags)
 			}
 
 			/*
-			 * After 200 seconds, just give up and die.
+			 * After twice max_step_wait, just give up and die.
 			 *
 			 * Since cleanup steps won't be run in this case, this may cause
 			 * later tests to fail.  That stinks, but it's better than waiting
 			 * forever for the server to respond to the cancel.
 			 */
-			if (td > 200 * USECS_PER_SEC)
+			if (td > 2 * max_step_wait)
 			{
-				fprintf(stderr, "step %s timed out after 200 seconds\n",
-						step->name);
+				fprintf(stderr, "step %s timed out after %d seconds\n",
+						step->name, (int) (td / USECS_PER_SEC));
 				exit_nicely();
 			}
 		}
