@@ -38,7 +38,7 @@ static pqsigfunc pg_signal_array[PG_SIGNAL_COUNT];
 static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
 
 
-/* Signal handling thread function */
+/* Signal handling thread functions */
 static DWORD WINAPI pg_signal_thread(LPVOID param);
 static BOOL WINAPI pg_console_handler(DWORD dwCtrlType);
 
@@ -208,12 +208,15 @@ pgwin32_create_signal_listener(pid_t pid)
  */
 
 
+/*
+ * Queue a signal for the main thread, by setting the flag bit and event.
+ */
 void
 pg_queue_signal(int signum)
 {
 	Assert(pgwin32_signal_event != NULL);
 	if (signum >= PG_SIGNAL_COUNT || signum <= 0)
-		return;
+		return;					/* ignore any bad signal number */
 
 	EnterCriticalSection(&pg_signal_crit_sec);
 	pg_signal_queue |= sigmask(signum);
@@ -222,7 +225,11 @@ pg_queue_signal(int signum)
 	SetEvent(pgwin32_signal_event);
 }
 
-/* Signal dispatching thread */
+/*
+ * Signal dispatching thread.  This runs after we have received a named
+ * pipe connection from a client (signal sender).   Process the request,
+ * close the pipe, and exit.
+ */
 static DWORD WINAPI
 pg_signal_dispatch_thread(LPVOID param)
 {
@@ -242,13 +249,37 @@ pg_signal_dispatch_thread(LPVOID param)
 		CloseHandle(pipe);
 		return 0;
 	}
+
+	/*
+	 * Queue the signal before responding to the client.  In this way, it's
+	 * guaranteed that once kill() has returned in the signal sender, the next
+	 * CHECK_FOR_INTERRUPTS() in the signal recipient will see the signal.
+	 * (This is a stronger guarantee than POSIX makes; maybe we don't need it?
+	 * But without it, we've seen timing bugs on Windows that do not manifest
+	 * on any known Unix.)
+	 */
+	pg_queue_signal(sigNum);
+
+	/*
+	 * Write something back to the client, allowing its CallNamedPipe() call
+	 * to terminate.
+	 */
 	WriteFile(pipe, &sigNum, 1, &bytes, NULL);	/* Don't care if it works or
 												 * not.. */
+
+	/*
+	 * We must wait for the client to read the data before we can close the
+	 * pipe, else the data will be lost.  (If the WriteFile call failed,
+	 * there'll be nothing in the buffer, so this shouldn't block.)
+	 */
 	FlushFileBuffers(pipe);
+
+	/* This is a formality, since we're about to close the pipe anyway. */
 	DisconnectNamedPipe(pipe);
+
+	/* And we're done. */
 	CloseHandle(pipe);
 
-	pg_queue_signal(sigNum);
 	return 0;
 }
 
@@ -266,6 +297,7 @@ pg_signal_thread(LPVOID param)
 		BOOL		fConnected;
 		HANDLE		hThread;
 
+		/* Create a new pipe instance if we don't have one. */
 		if (pipe == INVALID_HANDLE_VALUE)
 		{
 			pipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,
@@ -280,6 +312,11 @@ pg_signal_thread(LPVOID param)
 			}
 		}
 
+		/*
+		 * Wait for a client to connect.  If something connects before we
+		 * reach here, we'll get back a "failure" with ERROR_PIPE_CONNECTED,
+		 * which is actually a success (way to go, Microsoft).
+		 */
 		fConnected = ConnectNamedPipe(pipe, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 		if (fConnected)
 		{
