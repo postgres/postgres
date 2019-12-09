@@ -822,7 +822,7 @@ GetUserNameFromId(Oid roleid, bool noerr)
  * ($DATADIR/postmaster.pid) and Unix-socket-file lockfiles ($SOCKFILE.lock).
  * Both kinds of files contain the same info initially, although we can add
  * more information to a data-directory lockfile after it's created, using
- * AddToDataDirLockFile().  See miscadmin.h for documentation of the contents
+ * AddToDataDirLockFile().  See pidfile.h for documentation of the contents
  * of these lockfiles.
  *
  * On successful lockfile creation, a proc_exit callback to remove the
@@ -1089,7 +1089,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 	}
 
 	/*
-	 * Successfully created the file, now fill it.  See comment in miscadmin.h
+	 * Successfully created the file, now fill it.  See comment in pidfile.h
 	 * about the contents.  Note that we write the same first five lines into
 	 * both datadir and socket lockfiles; although more stuff may get added to
 	 * the datadir lockfile later.
