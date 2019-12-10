@@ -511,8 +511,8 @@ typedef struct TriggerData
     HeapTuple        tg_trigtuple;
     HeapTuple        tg_newtuple;
     Trigger         *tg_trigger;
-    Buffer           tg_trigtuplebuf;
-    Buffer           tg_newtuplebuf;
+    TupleTableSlot  *tg_trigslot;
+    TupleTableSlot  *tg_newslot;
     Tuplestorestate *tg_oldtable;
     Tuplestorestate *tg_newtable;
 } TriggerData;
@@ -714,21 +714,21 @@ typedef struct Trigger
      </varlistentry>
 
      <varlistentry>
-      <term><structfield>tg_trigtuplebuf</structfield></term>
+      <term><structfield>tg_trigslot</structfield></term>
       <listitem>
        <para>
-        The buffer containing <structfield>tg_trigtuple</structfield>, or <symbol>InvalidBuffer</symbol> if there
-        is no such tuple or it is not stored in a disk buffer.
+        The slot containing <structfield>tg_trigtuple</structfield>,
+        or a <symbol>NULL</symbol> pointer if there is no such tuple.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><structfield>tg_newtuplebuf</structfield></term>
+      <term><structfield>tg_newslot</structfield></term>
       <listitem>
        <para>
-        The buffer containing <structfield>tg_newtuple</structfield>, or <symbol>InvalidBuffer</symbol> if there
-        is no such tuple or it is not stored in a disk buffer.
+        The slot containing <structfield>tg_newtuple</structfield>,
+        or a <symbol>NULL</symbol> pointer if there is no such tuple.
        </para>
       </listitem>
      </varlistentry>

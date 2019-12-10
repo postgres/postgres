@@ -6459,6 +6459,36 @@ DROP TRIGGER trig_row_after ON rem1;
 DROP TRIGGER trig_stmt_before ON rem1;
 DROP TRIGGER trig_stmt_after ON rem1;
 DELETE from rem1;
+-- Test multiple AFTER ROW triggers on a foreign table
+CREATE TRIGGER trig_row_after1
+AFTER INSERT OR UPDATE OR DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+CREATE TRIGGER trig_row_after2
+AFTER INSERT OR UPDATE OR DELETE ON rem1
+FOR EACH ROW EXECUTE PROCEDURE trigger_data(23,'skidoo');
+insert into rem1 values(1,'insert');
+NOTICE:  trig_row_after1(23, skidoo) AFTER ROW INSERT ON rem1
+NOTICE:  NEW: (1,insert)
+NOTICE:  trig_row_after2(23, skidoo) AFTER ROW INSERT ON rem1
+NOTICE:  NEW: (1,insert)
+update rem1 set f2  = 'update' where f1 = 1;
+NOTICE:  trig_row_after1(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (1,insert),NEW: (1,update)
+NOTICE:  trig_row_after2(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (1,insert),NEW: (1,update)
+update rem1 set f2 = f2 || f2;
+NOTICE:  trig_row_after1(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (1,update),NEW: (1,updateupdate)
+NOTICE:  trig_row_after2(23, skidoo) AFTER ROW UPDATE ON rem1
+NOTICE:  OLD: (1,update),NEW: (1,updateupdate)
+delete from rem1;
+NOTICE:  trig_row_after1(23, skidoo) AFTER ROW DELETE ON rem1
+NOTICE:  OLD: (1,updateupdate)
+NOTICE:  trig_row_after2(23, skidoo) AFTER ROW DELETE ON rem1
+NOTICE:  OLD: (1,updateupdate)
+-- cleanup
+DROP TRIGGER trig_row_after1 ON rem1;
+DROP TRIGGER trig_row_after2 ON rem1;
 -- Test WHEN conditions
 CREATE TRIGGER trig_row_before_insupd
 BEFORE INSERT OR UPDATE ON rem1
@@ -6689,7 +6719,7 @@ NOTICE:  trig_row_after(23, skidoo) AFTER ROW INSERT ON rem1
 NOTICE:  NEW: (13,"test triggered !")
   ctid  
 --------
- (0,29)
+ (0,32)
 (1 row)
 
 -- cleanup
