@@ -22,22 +22,22 @@
 /* Define to the return type of 'accept' */
 #define ACCEPT_TYPE_RETURN unsigned int PASCAL
 
-/* The alignment requirement of a `double'. */
+/* The normal alignment of `double', in bytes. */
 #define ALIGNOF_DOUBLE 8
 
-/* The alignment requirement of a `int'. */
+/* The normal alignment of `int', in bytes. */
 #define ALIGNOF_INT 4
 
-/* The alignment requirement of a `long'. */
+/* The normal alignment of `long', in bytes. */
 #define ALIGNOF_LONG 4
 
-/* The alignment requirement of a `long long int'. */
+/* The normal alignment of `long long int', in bytes. */
 #define ALIGNOF_LONG_LONG_INT 8
 
 /* The normal alignment of `PG_INT128_TYPE', in bytes. */
 #undef ALIGNOF_PG_INT128_TYPE
 
-/* The alignment requirement of a `short'. */
+/* The normal alignment of `short', in bytes. */
 #define ALIGNOF_SHORT 2
 
 /* Define to the default TCP port number on which the server listens and to
@@ -49,6 +49,13 @@
 /* Define to the default TCP port number as a string constant. */
 #define DEF_PGPORT_STR "5432"
 
+/* Define to 1 if you want National Language Support. (--enable-nls) */
+/* #undef ENABLE_NLS */
+
+/* Define to 1 to build client libraries as thread-safe code.
+   (--enable-thread-safety) */
+#define ENABLE_THREAD_SAFETY 1
+
 /* Define to nothing if C supports flexible array members, and to 1 if it does
    not. That way, with a declaration like `struct s { int n; double
    d[FLEXIBLE_ARRAY_MEMBER]; };', the struct hack can be used with pre-C99
@@ -57,13 +64,6 @@
    instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
    MSVC and with C++ compilers. */
 #define FLEXIBLE_ARRAY_MEMBER
-
-/* Define to 1 if you want National Language Support. (--enable-nls) */
-/* #undef ENABLE_NLS */
-
-/* Define to 1 to build client libraries as thread-safe code.
-   (--enable-thread-safety) */
-#define ENABLE_THREAD_SAFETY 1
 
 /* Define to 1 if gettimeofday() takes only 1 argument. */
 /* #undef GETTIMEOFDAY_1ARG */
@@ -74,6 +74,9 @@
 
 /* Define to 1 if you have the `ASN1_STRING_get0_data' function. */
 /* #undef HAVE_ASN1_STRING_GET0_DATA */
+
+/* Define to 1 if you want to use atomics if available. */
+#define HAVE_ATOMICS 1
 
 /* Define to 1 if you have the `BIO_get_data' function. */
 /* #undef HAVE_BIO_GET_DATA */
@@ -109,13 +112,13 @@
    `LLVMCreatePerfJITEventListener', and to 0 if you don't. */
 #undef HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER
 
+/* Define to 1 if you have the declaration of `LLVMGetHostCPUFeatures', and to
+   0 if you don't. */
+#define HAVE_DECL_LLVMGETHOSTCPUFEATURES 0
+
 /* Define to 1 if you have the declaration of `LLVMGetHostCPUName', and to 0
    if you don't. */
 #define HAVE_DECL_LLVMGETHOSTCPUNAME 0
-
-/* Define to 1 if you have the declaration of `LLVMGetHostCPUFeatures', and to 0
-   if you don't. */
-#define HAVE_DECL_LLVMGETHOSTCPUFEATURES 0
 
 /* Define to 1 if you have the declaration of `LLVMOrcGetSymbolAddressIn', and
    to 0 if you don't. */
@@ -132,9 +135,6 @@
 /* Define to 1 if you have the declaration of `strnlen', and to 0 if you
    don't. */
 #define HAVE_DECL_STRNLEN 1
-
-/* Define to 1 if you have the `strtof' function. */
-#define HAVE_STRTOF 1
 
 /* Define to 1 if you have the declaration of `strtoll', and to 0 if you
    don't. */
@@ -180,7 +180,7 @@
 /* Define to 1 if your compiler understands __FUNCTION__. */
 #define HAVE_FUNCNAME__FUNCTION 1
 
-/* Define to 1 if you have getaddrinfo(). */
+/* Define to 1 if you have the `getaddrinfo' function. */
 /* #undef HAVE_GETADDRINFO */
 
 /* Define to 1 if you have the `gethostbyname_r' function. */
@@ -297,9 +297,6 @@
 /* Define to 1 if you have the <pam/pam_appl.h> header file. */
 /* #undef HAVE_PAM_PAM_APPL_H */
 
-/* Define to 1 if you have the `strnlen' function. */
-#define HAVE_STRNLEN 1
-
 /* Define to 1 if you have the `poll' function. */
 /* #undef HAVE_POLL */
 
@@ -364,9 +361,6 @@
 /* Define to 1 if you have spinlocks. */
 #define HAVE_SPINLOCKS 1
 
-/* Define to 1 if you have atomics. */
-#define HAVE_ATOMICS 1
-
 /* Define to 1 if you have the `srandom' function. */
 /* #undef HAVE_SRANDOM */
 
@@ -391,8 +385,14 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
+/* Define to 1 if you have the `strnlen' function. */
+#define HAVE_STRNLEN 1
+
 /* Define to 1 if you have the `strsignal' function. */
 /* #undef HAVE_STRSIGNAL */
+
+/* Define to 1 if you have the `strtof' function. */
+#define HAVE_STRTOF 1
 
 /* Define to 1 if you have the `strtoll' function. */
 #ifdef HAVE_LONG_LONG_INT_64
@@ -413,25 +413,25 @@
 /* Define to 1 if the system has the type `struct option'. */
 //#define HAVE_STRUCT_OPTION 1
 
-/* Define to 1 if `sa_len' is member of `struct sockaddr'. */
+/* Define to 1 if `sa_len' is a member of `struct sockaddr'. */
 /* #undef HAVE_STRUCT_SOCKADDR_SA_LEN */
 
 /* Define to 1 if the system has the type `struct sockaddr_storage'. */
 #define HAVE_STRUCT_SOCKADDR_STORAGE 1
 
-/* Define to 1 if `ss_family' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `ss_family' is a member of `struct sockaddr_storage'. */
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY 1
 
-/* Define to 1 if `ss_len' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `ss_len' is a member of `struct sockaddr_storage'. */
 /* #undef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN */
 
-/* Define to 1 if `__ss_family' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `__ss_family' is a member of `struct sockaddr_storage'. */
 /* #undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY */
 
-/* Define to 1 if `__ss_len' is member of `struct sockaddr_storage'. */
+/* Define to 1 if `__ss_len' is a member of `struct sockaddr_storage'. */
 /* #undef HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN */
 
-/* Define to 1 if `tm_zone' is member of `struct tm'. */
+/* Define to 1 if `tm_zone' is a member of `struct tm'. */
 /* #undef HAVE_STRUCT_TM_TM_ZONE */
 
 /* Define to 1 if you have the `symlink' function. */
@@ -578,9 +578,6 @@
 /* Define to 1 if `locale_t' requires <xlocale.h>. */
 /* #undef LOCALE_T_IN_XLOCALE */
 
-/* Define to the location of locale files. */
-/* #undef LOCALEDIR */
-
 /* Define as the maximum alignment requirement of any C data type. */
 #define MAXIMUM_ALIGNOF 8
 
@@ -596,6 +593,9 @@
 /* Define to the full name and version of this package. */
 #define PACKAGE_STRING "PostgreSQL 13devel"
 
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "postgresql"
+
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "13devel"
 
@@ -605,21 +605,18 @@
 /* Define to the name of a signed 64-bit integer type. */
 #define PG_INT64_TYPE long long int
 
+/* Define to the name of the default PostgreSQL service principal in Kerberos
+   (GSSAPI). (--with-krb-srvnam=NAME) */
+#define PG_KRB_SRVNAM "postgres"
+
+/* Define to 1 to use <stdbool.h> to define type bool. */
+#define PG_USE_STDBOOL 1
+
 /* PostgreSQL version as a string */
 #define PG_VERSION "13devel"
 
 /* PostgreSQL version as a number */
 #define PG_VERSION_NUM 130000
-
-/* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "postgresql"
-
-/* Define to the name of the default PostgreSQL service principal in Kerberos.
-   (--with-krb-srvnam=NAME) */
-#define PG_KRB_SRVNAM "postgres"
-
-/* Define to 1 to use <stdbool.h> to define type bool. */
-#define PG_USE_STDBOOL 1
 
 /* A string containing the version number, platform, and C compiler */
 #define PG_VERSION_STR "Uninitialized version string (win32)"
@@ -722,8 +719,8 @@
 #define inline __inline
 #endif
 
-/* Define to keyword to use for C99 restrict support, or to nothing if this is
-   not supported */
+/* Define to keyword to use for C99 restrict support, or to nothing if not
+   supported */
 /* Works for C and C++ in Visual Studio 2008 and upwards */
 #define pg_restrict __restrict
 

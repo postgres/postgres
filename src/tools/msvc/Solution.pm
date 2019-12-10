@@ -184,8 +184,6 @@ sub GenerateFiles
 			print $o $_;
 		}
 		print $o "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
-		print $o "#define LOCALEDIR \"/share/locale\"\n"
-		  if ($self->{options}->{nls});
 		print $o "/* defines added by config steps */\n";
 		print $o "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
 		print $o "#define USE_ASSERT_CHECKING 1\n"
