@@ -519,8 +519,29 @@ start_postmaster(void)
 		comspec = "CMD";
 
 	if (log_file != NULL)
+	{
+		/*
+		 * First, touch the log file.  The main value of this is that if the
+		 * file is still locked by a previous postmaster run, we'll wait until
+		 * it comes free, instead of failing with ERROR_SHARING_VIOLATION.
+		 * (It'd be better to open the file in a sharing-friendly mode, but we
+		 * can't use CMD.EXE to do that, so work around it.  Note that the
+		 * previous postmaster will still have the file open for a short time
+		 * after removing postmaster.pid.)
+		 */
+		FILE	   *fd = fopen(log_file, "a");
+
+		if (fd == NULL)
+		{
+			write_stderr(_("%s: could not create log file \"%s\": %s\n"),
+						 progname, log_file, strerror(errno));
+			exit(1);
+		}
+		fclose(fd);
+
 		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" >> \"%s\" 2>&1\"",
 				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL, log_file);
+	}
 	else
 		snprintf(cmd, MAXPGPATH, "\"%s\" /C \"\"%s\" %s%s < \"%s\" 2>&1\"",
 				 comspec, exec_path, pgdata_opt, post_opts, DEVNULL);
