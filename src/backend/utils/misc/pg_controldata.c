@@ -275,7 +275,7 @@ pg_control_init(PG_FUNCTION_ARGS)
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(12);
+	tupdesc = CreateTemplateTupleDesc(11);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "max_data_alignment",
 					   INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database_block_size",
