@@ -272,6 +272,15 @@ RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr, const char *conninfo,
 		walrcv->receivedTLI = tli;
 		walrcv->latestChunkStart = recptr;
 	}
+	/*
+	 * If it will restart the walreceiver, set the receivedUpto to the starting point,
+	 * so that the process will not read the old data before walreceiver starts.
+	 */
+	else if (launch && recptr < walrcv->receivedUpto)
+	{
+		walrcv->receivedUpto = recptr;
+		walrcv->latestChunkStart = recptr;
+	}
 	walrcv->receiveStart = recptr;
 	walrcv->receiveStartTLI = tli;
 
