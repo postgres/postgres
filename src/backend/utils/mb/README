@@ -9,6 +9,7 @@ wchar.c:	mostly static functions and a public table for mb string and
 		multibyte conversion
 mbutils.c:	public functions for the backend only.
 		requires conv.c and wchar.c
+stringinfo_mb.c: public backend-only multibyte-aware stringinfo functions
 wstrcmp.c:	strcmp for mb
 wstrncmp.c:	strncmp for mb
 win866.c:	a tool to generate KOI8 <--> CP866 conversion table

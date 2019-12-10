@@ -28,6 +28,7 @@
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "funcapi.h"
+#include "mb/stringinfo_mb.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
@@ -8611,19 +8612,11 @@ format_expr_params(PLpgSQL_execstate *estate,
 		if (paramisnull)
 			appendStringInfoString(&paramstr, "NULL");
 		else
-		{
-			char	   *value = convert_value_to_string(estate, paramdatum, paramtypeid);
-			char	   *p;
-
-			appendStringInfoCharMacro(&paramstr, '\'');
-			for (p = value; *p; p++)
-			{
-				if (*p == '\'') /* double single quotes */
-					appendStringInfoCharMacro(&paramstr, *p);
-				appendStringInfoCharMacro(&paramstr, *p);
-			}
-			appendStringInfoCharMacro(&paramstr, '\'');
-		}
+			appendStringInfoStringQuoted(&paramstr,
+										 convert_value_to_string(estate,
+																 paramdatum,
+																 paramtypeid),
+										 0);
 
 		paramno++;
 	}
@@ -8661,19 +8654,11 @@ format_preparedparamsdata(PLpgSQL_execstate *estate,
 		if (ppd->nulls[paramno] == 'n')
 			appendStringInfoString(&paramstr, "NULL");
 		else
-		{
-			char	   *value = convert_value_to_string(estate, ppd->values[paramno], ppd->types[paramno]);
-			char	   *p;
-
-			appendStringInfoCharMacro(&paramstr, '\'');
-			for (p = value; *p; p++)
-			{
-				if (*p == '\'') /* double single quotes */
-					appendStringInfoCharMacro(&paramstr, *p);
-				appendStringInfoCharMacro(&paramstr, *p);
-			}
-			appendStringInfoCharMacro(&paramstr, '\'');
-		}
+			appendStringInfoStringQuoted(&paramstr,
+										 convert_value_to_string(estate,
+																 ppd->values[paramno],
+																 ppd->types[paramno]),
+										 0);
 	}
 
 	MemoryContextSwitchTo(oldcontext);

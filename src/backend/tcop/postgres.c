@@ -48,6 +48,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
+#include "mb/stringinfo_mb.h"
 #include "miscadmin.h"
 #include "nodes/print.h"
 #include "optimizer/optimizer.h"
@@ -2348,7 +2349,6 @@ errdetail_params(ParamListInfo params)
 			Oid			typoutput;
 			bool		typisvarlena;
 			char	   *pstring;
-			char	   *p;
 
 			appendStringInfo(&param_str, "%s$%d = ",
 							 paramno > 0 ? ", " : "",
@@ -2364,14 +2364,7 @@ errdetail_params(ParamListInfo params)
 
 			pstring = OidOutputFunctionCall(typoutput, prm->value);
 
-			appendStringInfoCharMacro(&param_str, '\'');
-			for (p = pstring; *p; p++)
-			{
-				if (*p == '\'') /* double single quotes */
-					appendStringInfoCharMacro(&param_str, *p);
-				appendStringInfoCharMacro(&param_str, *p);
-			}
-			appendStringInfoCharMacro(&param_str, '\'');
+			appendStringInfoStringQuoted(&param_str, pstring, 0);
 
 			pfree(pstring);
 		}
