@@ -80,7 +80,6 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	mergestate->ps.plan = (Plan *) node;
 	mergestate->ps.state = estate;
 	mergestate->ps.ExecProcNode = ExecMergeAppend;
-	mergestate->ms_noopscan = false;
 
 	/* If run-time partition pruning is enabled, then set that up now */
 	if (node->part_prune_info != NULL)
@@ -101,23 +100,6 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 			validsubplans = ExecFindInitialMatchingSubPlans(prunestate,
 															list_length(node->mergeplans));
 
-			/*
-			 * The case where no subplans survive pruning must be handled
-			 * specially.  The problem here is that code in explain.c requires
-			 * a MergeAppend to have at least one subplan in order for it to
-			 * properly determine the Vars in that subplan's targetlist.  We
-			 * sidestep this issue by just initializing the first subplan and
-			 * setting ms_noopscan to true to indicate that we don't really
-			 * need to scan any subnodes.
-			 */
-			if (bms_is_empty(validsubplans))
-			{
-				mergestate->ms_noopscan = true;
-
-				/* Mark the first as valid so that it's initialized below */
-				validsubplans = bms_make_singleton(0);
-			}
-
 			nplans = bms_num_members(validsubplans);
 		}
 		else
@@ -129,14 +111,12 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 		}
 
 		/*
-		 * If no runtime pruning is required, we can fill ms_valid_subplans
-		 * immediately, preventing later calls to ExecFindMatchingSubPlans.
+		 * When no run-time pruning is required and there's at least one
+		 * subplan, we can fill as_valid_subplans immediately, preventing
+		 * later calls to ExecFindMatchingSubPlans.
 		 */
-		if (!prunestate->do_exec_prune)
-		{
-			Assert(nplans > 0);
+		if (!prunestate->do_exec_prune && nplans > 0)
 			mergestate->ms_valid_subplans = bms_add_range(NULL, 0, nplans - 1);
-		}
 	}
 	else
 	{
@@ -240,7 +220,7 @@ ExecMergeAppend(PlanState *pstate)
 	if (!node->ms_initialized)
 	{
 		/* Nothing to do if all subplans were pruned */
-		if (node->ms_noopscan)
+		if (node->ms_nplans == 0)
 			return ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
 		/*

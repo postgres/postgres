@@ -477,7 +477,6 @@ select explain_parallel_append('execute ab_q5 (1, 1, 1)');
 select explain_parallel_append('execute ab_q5 (2, 3, 3)');
 
 -- Try some params whose values do not belong to any partition.
--- We'll still get a single subplan in this case, but it should not be scanned.
 select explain_parallel_append('execute ab_q5 (33, 44, 55)');
 
 -- Test Parallel Append with PARAM_EXEC Params
@@ -702,8 +701,7 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,1);
 
 explain (analyze, costs off, summary off, timing off)  execute q1 (2,2);
 
--- Try with no matching partitions. One subplan should remain in this case,
--- but it shouldn't be executed.
+-- Try with no matching partitions.
 explain (analyze, costs off, summary off, timing off)  execute q1 (0,0);
 
 deallocate q1;
@@ -715,7 +713,6 @@ prepare q1 (int,int,int,int) as select * from listp where b in($1,$2) and $3 <> 
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,0);
 
 -- Both partitions allowed by IN clause, then both excluded again by <> clauses.
--- One subplan will remain in this case, but it should not be executed.
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
 
 -- Ensure Params that evaluate to NULL properly prune away all partitions
@@ -840,6 +837,16 @@ explain (analyze, costs off, summary off, timing off) execute mt_q1(35);
 execute mt_q1(35);
 
 deallocate mt_q1;
+
+set plan_cache_mode = force_generic_plan;
+
+prepare mt_q2 (int) as select * from ma_test where a >= $1 order by b limit 1;
+
+-- Ensure output list looks sane when the MergeAppend has no subplans.
+explain (analyze, verbose, costs off, summary off, timing off) execute mt_q2 (35);
+
+deallocate mt_q2;
+reset plan_cache_mode;
 
 -- ensure initplan params properly prune partitions
 explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(b) from ma_test_p2) order by b;
