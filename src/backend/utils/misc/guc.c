@@ -486,6 +486,7 @@ extern const struct config_enum_entry dynamic_shared_memory_options[];
  * GUC option variables that are exported from this module
  */
 bool		log_duration = false;
+bool		log_parameters_on_error = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
 bool		Debug_print_rewritten = false;
@@ -1297,6 +1298,15 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&log_duration,
+		false,
+		NULL, NULL, NULL
+	},
+	{
+		{"log_parameters_on_error", PGC_SUSET, LOGGING_WHAT,
+			gettext_noop("Logs bind parameters of the logged statements where possible."),
+			NULL
+		},
+		&log_parameters_on_error,
 		false,
 		NULL, NULL, NULL
 	},

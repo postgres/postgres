@@ -270,6 +270,50 @@ COMMIT;
 }
 	});
 
+# Verify server logging of parameters.
+$node->append_conf('postgresql.conf', "log_parameters_on_error = true");
+$node->reload;
+pgbench(
+		'-n -t1 -c1 -M prepared',
+		2,
+		[],
+		[
+		qr{ERROR:  division by zero},
+		qr{CONTEXT:  extended query with parameters: \$1 = '1', \$2 = NULL}
+		],
+		'server parameter logging',
+		{
+			'001_param_1' => q{select '1' as one \gset
+SELECT 1 / (random() / 2)::int, :one::int, :two::int;
+}
+	});
+
+$node->append_conf('postgresql.conf', "log_min_duration_statement = 0");
+$node->reload;
+pgbench(
+		'-n -t1 -c1 -M prepared',
+		2,
+		[],
+		[
+		qr{ERROR:  invalid input syntax for type json},
+		qr[CONTEXT:  JSON data, line 1: \{ invalid\.\.\.
+extended query with parameters: \$1 = '\{ invalid ', \$2 = '''Valame Dios!'' dijo Sancho; ''no le dije yo a vuestra merced que ...'$]m
+		],
+		'server parameter logging',
+		{
+			'001_param_2' => q[select '{ invalid ' as value \gset
+select $$'Valame Dios!' dijo Sancho; 'no le dije yo a vuestra merced que mirase bien lo que hacia?'$$ as long \gset
+select column1::jsonb from (values (:value), (:long)) as q;
+]
+	});
+my $log = TestLib::slurp_file($node->logfile);
+like($log, qr[DETAIL:  parameters: \$1 = '\{ invalid ', \$2 = '''Valame Dios!'' dijo Sancho; ''no le dije yo a vuestra merced que mirase bien lo que hacia\?'''],
+	 "parameter report does not truncate");
+$log = undef;
+
+$node->append_conf('postgresql.conf', "log_min_duration_statement = -1");
+$node->reload;
+
 # test expressions
 # command 1..3 and 23 depend on random seed which is used to call srandom.
 pgbench(

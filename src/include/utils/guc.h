@@ -234,6 +234,7 @@ typedef enum
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
 extern bool log_duration;
+extern bool log_parameters_on_error;
 extern bool Debug_print_plan;
 extern bool Debug_print_parse;
 extern bool Debug_print_rewritten;

@@ -15,11 +15,14 @@
 
 #include "postgres.h"
 
+#include "access/xact.h"
+#include "mb/stringinfo_mb.h"
 #include "nodes/bitmapset.h"
 #include "nodes/params.h"
 #include "storage/shmem.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 
 
 /*
@@ -44,6 +47,7 @@ makeParamList(int numParams)
 	retval->paramCompileArg = NULL;
 	retval->parserSetup = NULL;
 	retval->parserSetupArg = NULL;
+	retval->paramValuesStr = NULL;
 	retval->numParams = numParams;
 
 	return retval;
@@ -58,6 +62,8 @@ makeParamList(int numParams)
  * set of parameter values.  If dynamic parameter hooks are present, we
  * intentionally do not copy them into the result.  Rather, we forcibly
  * instantiate all available parameter values and copy the datum values.
+ *
+ * paramValuesStr is not copied, either.
  */
 ParamListInfo
 copyParamList(ParamListInfo from)
@@ -158,6 +164,8 @@ EstimateParamListSpace(ParamListInfo paramLI)
  * RestoreParamList can be used to recreate a ParamListInfo based on the
  * serialized representation; this will be a static, self-contained copy
  * just as copyParamList would create.
+ *
+ * paramValuesStr is not included.
  */
 void
 SerializeParamList(ParamListInfo paramLI, char **start_address)
@@ -250,4 +258,106 @@ RestoreParamList(char **start_address)
 	}
 
 	return paramLI;
+}
+
+/*
+ * BuildParamLogString
+ *		Return a string that represent the parameter list, for logging.
+ *
+ * If caller already knows textual representations for some parameters, it can
+ * pass an array of exactly params->numParams values as knownTextValues, which
+ * can contain NULLs for any unknown individual values.  NULL can be given if
+ * no parameters are known.
+ *
+ * If maxlen is not zero, that's the maximum number of characters of the
+ * input string printed; an ellipsis is added if more characters exist.
+ * (Added quotes are not considered.)
+ */
+char *
+BuildParamLogString(ParamListInfo params, char **knownTextValues, int maxlen)
+{
+	MemoryContext tmpCxt,
+				oldCxt;
+	StringInfoData buf;
+
+	/*
+	 * NB: think not of returning params->paramValuesStr!  It may have been
+	 * generated with a different maxlen, and so unsuitable.
+	 */
+
+	/*
+	 * No work if the param fetch hook is in use.  Also, it's not possible to
+	 * do this in an aborted transaction.  (It might be possible to improve on
+	 * this last point when some knownTextValues exist, but it seems tricky.)
+	 */
+	if (params->paramFetch != NULL ||
+		IsAbortedTransactionBlockState())
+		return NULL;
+
+	/* Initialize the output stringinfo, in caller's memory context */
+	initStringInfo(&buf);
+
+	/* Use a temporary context to call output functions, just in case */
+	tmpCxt = AllocSetContextCreate(CurrentMemoryContext,
+								   "BuildParamLogString",
+								   ALLOCSET_DEFAULT_SIZES);
+	oldCxt = MemoryContextSwitchTo(tmpCxt);
+
+	for (int paramno = 0; paramno < params->numParams; paramno++)
+	{
+		ParamExternData *param = &params->params[paramno];
+
+		appendStringInfo(&buf,
+						 "%s$%d = ",
+						 paramno > 0 ? ", " : "",
+						 paramno + 1);
+
+		if (param->isnull || !OidIsValid(param->ptype))
+			appendStringInfoString(&buf, "NULL");
+		else
+		{
+			if (knownTextValues != NULL && knownTextValues[paramno] != NULL)
+				appendStringInfoStringQuoted(&buf, knownTextValues[paramno],
+											 maxlen);
+			else
+			{
+				Oid			typoutput;
+				bool		typisvarlena;
+				char	   *pstring;
+
+				getTypeOutputInfo(param->ptype, &typoutput, &typisvarlena);
+				pstring = OidOutputFunctionCall(typoutput, param->value);
+				appendStringInfoStringQuoted(&buf, pstring, maxlen);
+			}
+		}
+	}
+
+	MemoryContextSwitchTo(oldCxt);
+	MemoryContextDelete(tmpCxt);
+
+	return buf.data;
+}
+
+/*
+ * ParamsErrorCallback - callback for printing parameters in error context
+ *
+ * Note that this is a no-op unless BuildParamLogString has been called
+ * beforehand.
+ */
+void
+ParamsErrorCallback(void *arg)
+{
+	ParamsErrorCbData *data = (ParamsErrorCbData *) arg;
+
+	if (data == NULL ||
+		data->params == NULL ||
+		data->params->paramValuesStr == NULL)
+		return;
+
+	if (data->portalName && data->portalName[0] != '\0')
+		errcontext("extended query \"%s\" with parameters: %s",
+				   data->portalName, data->params->paramValuesStr);
+	else
+		errcontext("extended query with parameters: %s",
+				   data->params->paramValuesStr);
 }
