@@ -2526,9 +2526,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		econtext = mtstate->ps.ps_ExprContext;
 		relationDesc = resultRelInfo->ri_RelationDesc->rd_att;
 
-		/* carried forward solely for the benefit of explain */
-		mtstate->mt_excludedtlist = node->exclRelTlist;
-
 		/* create state for DO UPDATE SET operation */
 		resultRelInfo->ri_onConflict = makeNode(OnConflictSetState);
 

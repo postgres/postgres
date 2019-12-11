@@ -14,21 +14,21 @@ explain (costs off) select * from lp;
             QUERY PLAN             
 -----------------------------------
  Append
-   ->  Seq Scan on lp_ad lp
-   ->  Seq Scan on lp_bc lp_1
-   ->  Seq Scan on lp_ef lp_2
-   ->  Seq Scan on lp_g lp_3
-   ->  Seq Scan on lp_null lp_4
-   ->  Seq Scan on lp_default lp_5
+   ->  Seq Scan on lp_ad lp_1
+   ->  Seq Scan on lp_bc lp_2
+   ->  Seq Scan on lp_ef lp_3
+   ->  Seq Scan on lp_g lp_4
+   ->  Seq Scan on lp_null lp_5
+   ->  Seq Scan on lp_default lp_6
 (7 rows)
 
 explain (costs off) select * from lp where a > 'a' and a < 'd';
                         QUERY PLAN                         
 -----------------------------------------------------------
  Append
-   ->  Seq Scan on lp_bc lp
+   ->  Seq Scan on lp_bc lp_1
          Filter: ((a > 'a'::bpchar) AND (a < 'd'::bpchar))
-   ->  Seq Scan on lp_default lp_1
+   ->  Seq Scan on lp_default lp_2
          Filter: ((a > 'a'::bpchar) AND (a < 'd'::bpchar))
 (5 rows)
 
@@ -36,11 +36,11 @@ explain (costs off) select * from lp where a > 'a' and a <= 'd';
                          QUERY PLAN                         
 ------------------------------------------------------------
  Append
-   ->  Seq Scan on lp_ad lp
+   ->  Seq Scan on lp_ad lp_1
          Filter: ((a > 'a'::bpchar) AND (a <= 'd'::bpchar))
-   ->  Seq Scan on lp_bc lp_1
+   ->  Seq Scan on lp_bc lp_2
          Filter: ((a > 'a'::bpchar) AND (a <= 'd'::bpchar))
-   ->  Seq Scan on lp_default lp_2
+   ->  Seq Scan on lp_default lp_3
          Filter: ((a > 'a'::bpchar) AND (a <= 'd'::bpchar))
 (7 rows)
 
@@ -62,15 +62,15 @@ explain (costs off) select * from lp where a is not null;
             QUERY PLAN             
 -----------------------------------
  Append
-   ->  Seq Scan on lp_ad lp
+   ->  Seq Scan on lp_ad lp_1
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on lp_bc lp_1
+   ->  Seq Scan on lp_bc lp_2
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on lp_ef lp_2
+   ->  Seq Scan on lp_ef lp_3
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on lp_g lp_3
+   ->  Seq Scan on lp_g lp_4
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on lp_default lp_4
+   ->  Seq Scan on lp_default lp_5
          Filter: (a IS NOT NULL)
 (11 rows)
 
@@ -85,9 +85,9 @@ explain (costs off) select * from lp where a = 'a' or a = 'c';
                         QUERY PLAN                        
 ----------------------------------------------------------
  Append
-   ->  Seq Scan on lp_ad lp
+   ->  Seq Scan on lp_ad lp_1
          Filter: ((a = 'a'::bpchar) OR (a = 'c'::bpchar))
-   ->  Seq Scan on lp_bc lp_1
+   ->  Seq Scan on lp_bc lp_2
          Filter: ((a = 'a'::bpchar) OR (a = 'c'::bpchar))
 (5 rows)
 
@@ -95,9 +95,9 @@ explain (costs off) select * from lp where a is not null and (a = 'a' or a = 'c'
                                    QUERY PLAN                                   
 --------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on lp_ad lp
+   ->  Seq Scan on lp_ad lp_1
          Filter: ((a IS NOT NULL) AND ((a = 'a'::bpchar) OR (a = 'c'::bpchar)))
-   ->  Seq Scan on lp_bc lp_1
+   ->  Seq Scan on lp_bc lp_2
          Filter: ((a IS NOT NULL) AND ((a = 'a'::bpchar) OR (a = 'c'::bpchar)))
 (5 rows)
 
@@ -105,13 +105,13 @@ explain (costs off) select * from lp where a <> 'g';
              QUERY PLAN             
 ------------------------------------
  Append
-   ->  Seq Scan on lp_ad lp
+   ->  Seq Scan on lp_ad lp_1
          Filter: (a <> 'g'::bpchar)
-   ->  Seq Scan on lp_bc lp_1
+   ->  Seq Scan on lp_bc lp_2
          Filter: (a <> 'g'::bpchar)
-   ->  Seq Scan on lp_ef lp_2
+   ->  Seq Scan on lp_ef lp_3
          Filter: (a <> 'g'::bpchar)
-   ->  Seq Scan on lp_default lp_3
+   ->  Seq Scan on lp_default lp_4
          Filter: (a <> 'g'::bpchar)
 (9 rows)
 
@@ -119,13 +119,13 @@ explain (costs off) select * from lp where a <> 'a' and a <> 'd';
                          QUERY PLAN                          
 -------------------------------------------------------------
  Append
-   ->  Seq Scan on lp_bc lp
+   ->  Seq Scan on lp_bc lp_1
          Filter: ((a <> 'a'::bpchar) AND (a <> 'd'::bpchar))
-   ->  Seq Scan on lp_ef lp_1
+   ->  Seq Scan on lp_ef lp_2
          Filter: ((a <> 'a'::bpchar) AND (a <> 'd'::bpchar))
-   ->  Seq Scan on lp_g lp_2
+   ->  Seq Scan on lp_g lp_3
          Filter: ((a <> 'a'::bpchar) AND (a <> 'd'::bpchar))
-   ->  Seq Scan on lp_default lp_3
+   ->  Seq Scan on lp_default lp_4
          Filter: ((a <> 'a'::bpchar) AND (a <> 'd'::bpchar))
 (9 rows)
 
@@ -133,13 +133,13 @@ explain (costs off) select * from lp where a not in ('a', 'd');
                    QUERY PLAN                   
 ------------------------------------------------
  Append
-   ->  Seq Scan on lp_bc lp
+   ->  Seq Scan on lp_bc lp_1
          Filter: (a <> ALL ('{a,d}'::bpchar[]))
-   ->  Seq Scan on lp_ef lp_1
+   ->  Seq Scan on lp_ef lp_2
          Filter: (a <> ALL ('{a,d}'::bpchar[]))
-   ->  Seq Scan on lp_g lp_2
+   ->  Seq Scan on lp_g lp_3
          Filter: (a <> ALL ('{a,d}'::bpchar[]))
-   ->  Seq Scan on lp_default lp_3
+   ->  Seq Scan on lp_default lp_4
          Filter: (a <> ALL ('{a,d}'::bpchar[]))
 (9 rows)
 
@@ -160,11 +160,11 @@ explain (costs off) select * from coll_pruning where a collate "POSIX" = 'a' col
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append
-   ->  Seq Scan on coll_pruning_a coll_pruning
+   ->  Seq Scan on coll_pruning_a coll_pruning_1
          Filter: ((a)::text = 'a'::text COLLATE "POSIX")
-   ->  Seq Scan on coll_pruning_b coll_pruning_1
+   ->  Seq Scan on coll_pruning_b coll_pruning_2
          Filter: ((a)::text = 'a'::text COLLATE "POSIX")
-   ->  Seq Scan on coll_pruning_def coll_pruning_2
+   ->  Seq Scan on coll_pruning_def coll_pruning_3
          Filter: ((a)::text = 'a'::text COLLATE "POSIX")
 (7 rows)
 
@@ -207,9 +207,9 @@ explain (costs off) select * from rlp where a <= 1;
           QUERY PLAN          
 ------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: (a <= 1)
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: (a <= 1)
 (5 rows)
 
@@ -231,35 +231,35 @@ explain (costs off) select * from rlp where a = 1::numeric;		/* no pruning */
                   QUERY PLAN                   
 -----------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp3abcd rlp_2
+   ->  Seq Scan on rlp3abcd rlp_3
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp3efgh rlp_3
+   ->  Seq Scan on rlp3efgh rlp_4
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp3nullxy rlp_4
+   ->  Seq Scan on rlp3nullxy rlp_5
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp3_default rlp_5
+   ->  Seq Scan on rlp3_default rlp_6
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp4_1 rlp_6
+   ->  Seq Scan on rlp4_1 rlp_7
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp4_2 rlp_7
+   ->  Seq Scan on rlp4_2 rlp_8
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp4_default rlp_8
+   ->  Seq Scan on rlp4_default rlp_9
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp5_1 rlp_9
+   ->  Seq Scan on rlp5_1 rlp_10
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp5_default rlp_10
+   ->  Seq Scan on rlp5_default rlp_11
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp_default_10 rlp_11
+   ->  Seq Scan on rlp_default_10 rlp_12
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp_default_30 rlp_12
+   ->  Seq Scan on rlp_default_30 rlp_13
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp_default_null rlp_13
+   ->  Seq Scan on rlp_default_null rlp_14
          Filter: ((a)::numeric = '1'::numeric)
-   ->  Seq Scan on rlp_default_default rlp_14
+   ->  Seq Scan on rlp_default_default rlp_15
          Filter: ((a)::numeric = '1'::numeric)
 (31 rows)
 
@@ -267,13 +267,13 @@ explain (costs off) select * from rlp where a <= 10;
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: (a <= 10)
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: (a <= 10)
-   ->  Seq Scan on rlp_default_10 rlp_2
+   ->  Seq Scan on rlp_default_10 rlp_3
          Filter: (a <= 10)
-   ->  Seq Scan on rlp_default_default rlp_3
+   ->  Seq Scan on rlp_default_default rlp_4
          Filter: (a <= 10)
 (9 rows)
 
@@ -281,27 +281,27 @@ explain (costs off) select * from rlp where a > 10;
                   QUERY PLAN                  
 ----------------------------------------------
  Append
-   ->  Seq Scan on rlp3abcd rlp
+   ->  Seq Scan on rlp3abcd rlp_1
          Filter: (a > 10)
-   ->  Seq Scan on rlp3efgh rlp_1
+   ->  Seq Scan on rlp3efgh rlp_2
          Filter: (a > 10)
-   ->  Seq Scan on rlp3nullxy rlp_2
+   ->  Seq Scan on rlp3nullxy rlp_3
          Filter: (a > 10)
-   ->  Seq Scan on rlp3_default rlp_3
+   ->  Seq Scan on rlp3_default rlp_4
          Filter: (a > 10)
-   ->  Seq Scan on rlp4_1 rlp_4
+   ->  Seq Scan on rlp4_1 rlp_5
          Filter: (a > 10)
-   ->  Seq Scan on rlp4_2 rlp_5
+   ->  Seq Scan on rlp4_2 rlp_6
          Filter: (a > 10)
-   ->  Seq Scan on rlp4_default rlp_6
+   ->  Seq Scan on rlp4_default rlp_7
          Filter: (a > 10)
-   ->  Seq Scan on rlp5_1 rlp_7
+   ->  Seq Scan on rlp5_1 rlp_8
          Filter: (a > 10)
-   ->  Seq Scan on rlp5_default rlp_8
+   ->  Seq Scan on rlp5_default rlp_9
          Filter: (a > 10)
-   ->  Seq Scan on rlp_default_30 rlp_9
+   ->  Seq Scan on rlp_default_30 rlp_10
          Filter: (a > 10)
-   ->  Seq Scan on rlp_default_default rlp_10
+   ->  Seq Scan on rlp_default_default rlp_11
          Filter: (a > 10)
 (23 rows)
 
@@ -309,13 +309,13 @@ explain (costs off) select * from rlp where a < 15;
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: (a < 15)
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: (a < 15)
-   ->  Seq Scan on rlp_default_10 rlp_2
+   ->  Seq Scan on rlp_default_10 rlp_3
          Filter: (a < 15)
-   ->  Seq Scan on rlp_default_default rlp_3
+   ->  Seq Scan on rlp_default_default rlp_4
          Filter: (a < 15)
 (9 rows)
 
@@ -323,21 +323,21 @@ explain (costs off) select * from rlp where a <= 15;
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: (a <= 15)
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: (a <= 15)
-   ->  Seq Scan on rlp3abcd rlp_2
+   ->  Seq Scan on rlp3abcd rlp_3
          Filter: (a <= 15)
-   ->  Seq Scan on rlp3efgh rlp_3
+   ->  Seq Scan on rlp3efgh rlp_4
          Filter: (a <= 15)
-   ->  Seq Scan on rlp3nullxy rlp_4
+   ->  Seq Scan on rlp3nullxy rlp_5
          Filter: (a <= 15)
-   ->  Seq Scan on rlp3_default rlp_5
+   ->  Seq Scan on rlp3_default rlp_6
          Filter: (a <= 15)
-   ->  Seq Scan on rlp_default_10 rlp_6
+   ->  Seq Scan on rlp_default_10 rlp_7
          Filter: (a <= 15)
-   ->  Seq Scan on rlp_default_default rlp_7
+   ->  Seq Scan on rlp_default_default rlp_8
          Filter: (a <= 15)
 (17 rows)
 
@@ -345,21 +345,21 @@ explain (costs off) select * from rlp where a > 15 and b = 'ab';
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append
-   ->  Seq Scan on rlp3abcd rlp
+   ->  Seq Scan on rlp3abcd rlp_1
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp4_1 rlp_1
+   ->  Seq Scan on rlp4_1 rlp_2
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp4_2 rlp_2
+   ->  Seq Scan on rlp4_2 rlp_3
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp4_default rlp_3
+   ->  Seq Scan on rlp4_default rlp_4
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp5_1 rlp_4
+   ->  Seq Scan on rlp5_1 rlp_5
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp5_default rlp_5
+   ->  Seq Scan on rlp5_default rlp_6
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp_default_30 rlp_6
+   ->  Seq Scan on rlp_default_30 rlp_7
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp_default_default rlp_7
+   ->  Seq Scan on rlp_default_default rlp_8
          Filter: ((a > 15) AND ((b)::text = 'ab'::text))
 (17 rows)
 
@@ -367,13 +367,13 @@ explain (costs off) select * from rlp where a = 16;
               QUERY PLAN              
 --------------------------------------
  Append
-   ->  Seq Scan on rlp3abcd rlp
+   ->  Seq Scan on rlp3abcd rlp_1
          Filter: (a = 16)
-   ->  Seq Scan on rlp3efgh rlp_1
+   ->  Seq Scan on rlp3efgh rlp_2
          Filter: (a = 16)
-   ->  Seq Scan on rlp3nullxy rlp_2
+   ->  Seq Scan on rlp3nullxy rlp_3
          Filter: (a = 16)
-   ->  Seq Scan on rlp3_default rlp_3
+   ->  Seq Scan on rlp3_default rlp_4
          Filter: (a = 16)
 (9 rows)
 
@@ -395,9 +395,9 @@ explain (costs off) select * from rlp where a = 16 and b <= 'ab';
                         QUERY PLAN                        
 ----------------------------------------------------------
  Append
-   ->  Seq Scan on rlp3abcd rlp
+   ->  Seq Scan on rlp3abcd rlp_1
          Filter: (((b)::text <= 'ab'::text) AND (a = 16))
-   ->  Seq Scan on rlp3_default rlp_1
+   ->  Seq Scan on rlp3_default rlp_2
          Filter: (((b)::text <= 'ab'::text) AND (a = 16))
 (5 rows)
 
@@ -412,13 +412,13 @@ explain (costs off) select * from rlp where a = 16 and b is not null;
                    QUERY PLAN                   
 ------------------------------------------------
  Append
-   ->  Seq Scan on rlp3abcd rlp
+   ->  Seq Scan on rlp3abcd rlp_1
          Filter: ((b IS NOT NULL) AND (a = 16))
-   ->  Seq Scan on rlp3efgh rlp_1
+   ->  Seq Scan on rlp3efgh rlp_2
          Filter: ((b IS NOT NULL) AND (a = 16))
-   ->  Seq Scan on rlp3nullxy rlp_2
+   ->  Seq Scan on rlp3nullxy rlp_3
          Filter: ((b IS NOT NULL) AND (a = 16))
-   ->  Seq Scan on rlp3_default rlp_3
+   ->  Seq Scan on rlp3_default rlp_4
          Filter: ((b IS NOT NULL) AND (a = 16))
 (9 rows)
 
@@ -433,33 +433,33 @@ explain (costs off) select * from rlp where a is not null;
                   QUERY PLAN                  
 ----------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp3abcd rlp_2
+   ->  Seq Scan on rlp3abcd rlp_3
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp3efgh rlp_3
+   ->  Seq Scan on rlp3efgh rlp_4
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp3nullxy rlp_4
+   ->  Seq Scan on rlp3nullxy rlp_5
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp3_default rlp_5
+   ->  Seq Scan on rlp3_default rlp_6
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp4_1 rlp_6
+   ->  Seq Scan on rlp4_1 rlp_7
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp4_2 rlp_7
+   ->  Seq Scan on rlp4_2 rlp_8
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp4_default rlp_8
+   ->  Seq Scan on rlp4_default rlp_9
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp5_1 rlp_9
+   ->  Seq Scan on rlp5_1 rlp_10
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp5_default rlp_10
+   ->  Seq Scan on rlp5_default rlp_11
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp_default_10 rlp_11
+   ->  Seq Scan on rlp_default_10 rlp_12
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp_default_30 rlp_12
+   ->  Seq Scan on rlp_default_30 rlp_13
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on rlp_default_default rlp_13
+   ->  Seq Scan on rlp_default_default rlp_14
          Filter: (a IS NOT NULL)
 (29 rows)
 
@@ -467,11 +467,11 @@ explain (costs off) select * from rlp where a > 30;
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on rlp5_1 rlp
+   ->  Seq Scan on rlp5_1 rlp_1
          Filter: (a > 30)
-   ->  Seq Scan on rlp5_default rlp_1
+   ->  Seq Scan on rlp5_default rlp_2
          Filter: (a > 30)
-   ->  Seq Scan on rlp_default_default rlp_2
+   ->  Seq Scan on rlp_default_default rlp_3
          Filter: (a > 30)
 (7 rows)
 
@@ -486,31 +486,31 @@ explain (costs off) select * from rlp where a <= 31;
                   QUERY PLAN                  
 ----------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: (a <= 31)
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: (a <= 31)
-   ->  Seq Scan on rlp3abcd rlp_2
+   ->  Seq Scan on rlp3abcd rlp_3
          Filter: (a <= 31)
-   ->  Seq Scan on rlp3efgh rlp_3
+   ->  Seq Scan on rlp3efgh rlp_4
          Filter: (a <= 31)
-   ->  Seq Scan on rlp3nullxy rlp_4
+   ->  Seq Scan on rlp3nullxy rlp_5
          Filter: (a <= 31)
-   ->  Seq Scan on rlp3_default rlp_5
+   ->  Seq Scan on rlp3_default rlp_6
          Filter: (a <= 31)
-   ->  Seq Scan on rlp4_1 rlp_6
+   ->  Seq Scan on rlp4_1 rlp_7
          Filter: (a <= 31)
-   ->  Seq Scan on rlp4_2 rlp_7
+   ->  Seq Scan on rlp4_2 rlp_8
          Filter: (a <= 31)
-   ->  Seq Scan on rlp4_default rlp_8
+   ->  Seq Scan on rlp4_default rlp_9
          Filter: (a <= 31)
-   ->  Seq Scan on rlp5_1 rlp_9
+   ->  Seq Scan on rlp5_1 rlp_10
          Filter: (a <= 31)
-   ->  Seq Scan on rlp_default_10 rlp_10
+   ->  Seq Scan on rlp_default_10 rlp_11
          Filter: (a <= 31)
-   ->  Seq Scan on rlp_default_30 rlp_11
+   ->  Seq Scan on rlp_default_30 rlp_12
          Filter: (a <= 31)
-   ->  Seq Scan on rlp_default_default rlp_12
+   ->  Seq Scan on rlp_default_default rlp_13
          Filter: (a <= 31)
 (27 rows)
 
@@ -525,29 +525,29 @@ explain (costs off) select * from rlp where a = 1 or b = 'ab';
                       QUERY PLAN                       
 -------------------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp2 rlp_1
+   ->  Seq Scan on rlp2 rlp_2
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp3abcd rlp_2
+   ->  Seq Scan on rlp3abcd rlp_3
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp4_1 rlp_3
+   ->  Seq Scan on rlp4_1 rlp_4
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp4_2 rlp_4
+   ->  Seq Scan on rlp4_2 rlp_5
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp4_default rlp_5
+   ->  Seq Scan on rlp4_default rlp_6
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp5_1 rlp_6
+   ->  Seq Scan on rlp5_1 rlp_7
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp5_default rlp_7
+   ->  Seq Scan on rlp5_default rlp_8
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp_default_10 rlp_8
+   ->  Seq Scan on rlp_default_10 rlp_9
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp_default_30 rlp_9
+   ->  Seq Scan on rlp_default_30 rlp_10
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp_default_null rlp_10
+   ->  Seq Scan on rlp_default_null rlp_11
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
-   ->  Seq Scan on rlp_default_default rlp_11
+   ->  Seq Scan on rlp_default_default rlp_12
          Filter: ((a = 1) OR ((b)::text = 'ab'::text))
 (25 rows)
 
@@ -555,9 +555,9 @@ explain (costs off) select * from rlp where a > 20 and a < 27;
                QUERY PLAN                
 -----------------------------------------
  Append
-   ->  Seq Scan on rlp4_1 rlp
+   ->  Seq Scan on rlp4_1 rlp_1
          Filter: ((a > 20) AND (a < 27))
-   ->  Seq Scan on rlp4_2 rlp_1
+   ->  Seq Scan on rlp4_2 rlp_2
          Filter: ((a > 20) AND (a < 27))
 (5 rows)
 
@@ -572,15 +572,15 @@ explain (costs off) select * from rlp where a >= 29;
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on rlp4_default rlp
+   ->  Seq Scan on rlp4_default rlp_1
          Filter: (a >= 29)
-   ->  Seq Scan on rlp5_1 rlp_1
+   ->  Seq Scan on rlp5_1 rlp_2
          Filter: (a >= 29)
-   ->  Seq Scan on rlp5_default rlp_2
+   ->  Seq Scan on rlp5_default rlp_3
          Filter: (a >= 29)
-   ->  Seq Scan on rlp_default_30 rlp_3
+   ->  Seq Scan on rlp_default_30 rlp_4
          Filter: (a >= 29)
-   ->  Seq Scan on rlp_default_default rlp_4
+   ->  Seq Scan on rlp_default_default rlp_5
          Filter: (a >= 29)
 (11 rows)
 
@@ -588,9 +588,9 @@ explain (costs off) select * from rlp where a < 1 or (a > 20 and a < 25);
                       QUERY PLAN                      
 ------------------------------------------------------
  Append
-   ->  Seq Scan on rlp1 rlp
+   ->  Seq Scan on rlp1 rlp_1
          Filter: ((a < 1) OR ((a > 20) AND (a < 25)))
-   ->  Seq Scan on rlp4_1 rlp_1
+   ->  Seq Scan on rlp4_1 rlp_2
          Filter: ((a < 1) OR ((a > 20) AND (a < 25)))
 (5 rows)
 
@@ -599,9 +599,9 @@ explain (costs off) select * from rlp where a = 20 or a = 40;
                QUERY PLAN               
 ----------------------------------------
  Append
-   ->  Seq Scan on rlp4_1 rlp
+   ->  Seq Scan on rlp4_1 rlp_1
          Filter: ((a = 20) OR (a = 40))
-   ->  Seq Scan on rlp5_default rlp_1
+   ->  Seq Scan on rlp5_default rlp_2
          Filter: ((a = 20) OR (a = 40))
 (5 rows)
 
@@ -624,27 +624,27 @@ explain (costs off) select * from rlp where a > 1 and a >=15;	/* rlp3 onwards, i
                   QUERY PLAN                  
 ----------------------------------------------
  Append
-   ->  Seq Scan on rlp3abcd rlp
+   ->  Seq Scan on rlp3abcd rlp_1
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp3efgh rlp_1
+   ->  Seq Scan on rlp3efgh rlp_2
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp3nullxy rlp_2
+   ->  Seq Scan on rlp3nullxy rlp_3
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp3_default rlp_3
+   ->  Seq Scan on rlp3_default rlp_4
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp4_1 rlp_4
+   ->  Seq Scan on rlp4_1 rlp_5
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp4_2 rlp_5
+   ->  Seq Scan on rlp4_2 rlp_6
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp4_default rlp_6
+   ->  Seq Scan on rlp4_default rlp_7
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp5_1 rlp_7
+   ->  Seq Scan on rlp5_1 rlp_8
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp5_default rlp_8
+   ->  Seq Scan on rlp5_default rlp_9
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp_default_30 rlp_9
+   ->  Seq Scan on rlp_default_30 rlp_10
          Filter: ((a > 1) AND (a >= 15))
-   ->  Seq Scan on rlp_default_default rlp_10
+   ->  Seq Scan on rlp_default_default rlp_11
          Filter: ((a > 1) AND (a >= 15))
 (23 rows)
 
@@ -659,15 +659,15 @@ explain (costs off) select * from rlp where (a = 1 and a = 3) or (a > 1 and a = 
                             QUERY PLAN                             
 -------------------------------------------------------------------
  Append
-   ->  Seq Scan on rlp2 rlp
+   ->  Seq Scan on rlp2 rlp_1
          Filter: (((a = 1) AND (a = 3)) OR ((a > 1) AND (a = 15)))
-   ->  Seq Scan on rlp3abcd rlp_1
+   ->  Seq Scan on rlp3abcd rlp_2
          Filter: (((a = 1) AND (a = 3)) OR ((a > 1) AND (a = 15)))
-   ->  Seq Scan on rlp3efgh rlp_2
+   ->  Seq Scan on rlp3efgh rlp_3
          Filter: (((a = 1) AND (a = 3)) OR ((a > 1) AND (a = 15)))
-   ->  Seq Scan on rlp3nullxy rlp_3
+   ->  Seq Scan on rlp3nullxy rlp_4
          Filter: (((a = 1) AND (a = 3)) OR ((a > 1) AND (a = 15)))
-   ->  Seq Scan on rlp3_default rlp_4
+   ->  Seq Scan on rlp3_default rlp_5
          Filter: (((a = 1) AND (a = 3)) OR ((a > 1) AND (a = 15)))
 (11 rows)
 
@@ -686,11 +686,11 @@ explain (costs off) select * from mc3p where a = 1;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: (a = 1)
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: (a = 1)
-   ->  Seq Scan on mc3p_default mc3p_2
+   ->  Seq Scan on mc3p_default mc3p_3
          Filter: (a = 1)
 (7 rows)
 
@@ -698,9 +698,9 @@ explain (costs off) select * from mc3p where a = 1 and abs(b) < 1;
                  QUERY PLAN                 
 --------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: ((a = 1) AND (abs(b) < 1))
-   ->  Seq Scan on mc3p_default mc3p_1
+   ->  Seq Scan on mc3p_default mc3p_2
          Filter: ((a = 1) AND (abs(b) < 1))
 (5 rows)
 
@@ -708,11 +708,11 @@ explain (costs off) select * from mc3p where a = 1 and abs(b) = 1;
                  QUERY PLAN                 
 --------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: ((a = 1) AND (abs(b) = 1))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: ((a = 1) AND (abs(b) = 1))
-   ->  Seq Scan on mc3p_default mc3p_2
+   ->  Seq Scan on mc3p_default mc3p_3
          Filter: ((a = 1) AND (abs(b) = 1))
 (7 rows)
 
@@ -720,9 +720,9 @@ explain (costs off) select * from mc3p where a = 1 and abs(b) = 1 and c < 8;
                        QUERY PLAN                       
 --------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: ((c < 8) AND (a = 1) AND (abs(b) = 1))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: ((c < 8) AND (a = 1) AND (abs(b) = 1))
 (5 rows)
 
@@ -730,15 +730,15 @@ explain (costs off) select * from mc3p where a = 10 and abs(b) between 5 and 35;
                            QUERY PLAN                            
 -----------------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p1 mc3p
+   ->  Seq Scan on mc3p1 mc3p_1
          Filter: ((a = 10) AND (abs(b) >= 5) AND (abs(b) <= 35))
-   ->  Seq Scan on mc3p2 mc3p_1
+   ->  Seq Scan on mc3p2 mc3p_2
          Filter: ((a = 10) AND (abs(b) >= 5) AND (abs(b) <= 35))
-   ->  Seq Scan on mc3p3 mc3p_2
+   ->  Seq Scan on mc3p3 mc3p_3
          Filter: ((a = 10) AND (abs(b) >= 5) AND (abs(b) <= 35))
-   ->  Seq Scan on mc3p4 mc3p_3
+   ->  Seq Scan on mc3p4 mc3p_4
          Filter: ((a = 10) AND (abs(b) >= 5) AND (abs(b) <= 35))
-   ->  Seq Scan on mc3p_default mc3p_4
+   ->  Seq Scan on mc3p_default mc3p_5
          Filter: ((a = 10) AND (abs(b) >= 5) AND (abs(b) <= 35))
 (11 rows)
 
@@ -746,13 +746,13 @@ explain (costs off) select * from mc3p where a > 10;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc3p5 mc3p
+   ->  Seq Scan on mc3p5 mc3p_1
          Filter: (a > 10)
-   ->  Seq Scan on mc3p6 mc3p_1
+   ->  Seq Scan on mc3p6 mc3p_2
          Filter: (a > 10)
-   ->  Seq Scan on mc3p7 mc3p_2
+   ->  Seq Scan on mc3p7 mc3p_3
          Filter: (a > 10)
-   ->  Seq Scan on mc3p_default mc3p_3
+   ->  Seq Scan on mc3p_default mc3p_4
          Filter: (a > 10)
 (9 rows)
 
@@ -760,21 +760,21 @@ explain (costs off) select * from mc3p where a >= 10;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc3p1 mc3p
+   ->  Seq Scan on mc3p1 mc3p_1
          Filter: (a >= 10)
-   ->  Seq Scan on mc3p2 mc3p_1
+   ->  Seq Scan on mc3p2 mc3p_2
          Filter: (a >= 10)
-   ->  Seq Scan on mc3p3 mc3p_2
+   ->  Seq Scan on mc3p3 mc3p_3
          Filter: (a >= 10)
-   ->  Seq Scan on mc3p4 mc3p_3
+   ->  Seq Scan on mc3p4 mc3p_4
          Filter: (a >= 10)
-   ->  Seq Scan on mc3p5 mc3p_4
+   ->  Seq Scan on mc3p5 mc3p_5
          Filter: (a >= 10)
-   ->  Seq Scan on mc3p6 mc3p_5
+   ->  Seq Scan on mc3p6 mc3p_6
          Filter: (a >= 10)
-   ->  Seq Scan on mc3p7 mc3p_6
+   ->  Seq Scan on mc3p7 mc3p_7
          Filter: (a >= 10)
-   ->  Seq Scan on mc3p_default mc3p_7
+   ->  Seq Scan on mc3p_default mc3p_8
          Filter: (a >= 10)
 (17 rows)
 
@@ -782,11 +782,11 @@ explain (costs off) select * from mc3p where a < 10;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: (a < 10)
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: (a < 10)
-   ->  Seq Scan on mc3p_default mc3p_2
+   ->  Seq Scan on mc3p_default mc3p_3
          Filter: (a < 10)
 (7 rows)
 
@@ -794,13 +794,13 @@ explain (costs off) select * from mc3p where a <= 10 and abs(b) < 10;
                   QUERY PLAN                   
 -----------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: ((a <= 10) AND (abs(b) < 10))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: ((a <= 10) AND (abs(b) < 10))
-   ->  Seq Scan on mc3p2 mc3p_2
+   ->  Seq Scan on mc3p2 mc3p_3
          Filter: ((a <= 10) AND (abs(b) < 10))
-   ->  Seq Scan on mc3p_default mc3p_3
+   ->  Seq Scan on mc3p_default mc3p_4
          Filter: ((a <= 10) AND (abs(b) < 10))
 (9 rows)
 
@@ -822,9 +822,9 @@ explain (costs off) select * from mc3p where a > 20;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc3p7 mc3p
+   ->  Seq Scan on mc3p7 mc3p_1
          Filter: (a > 20)
-   ->  Seq Scan on mc3p_default mc3p_1
+   ->  Seq Scan on mc3p_default mc3p_2
          Filter: (a > 20)
 (5 rows)
 
@@ -832,13 +832,13 @@ explain (costs off) select * from mc3p where a >= 20;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc3p5 mc3p
+   ->  Seq Scan on mc3p5 mc3p_1
          Filter: (a >= 20)
-   ->  Seq Scan on mc3p6 mc3p_1
+   ->  Seq Scan on mc3p6 mc3p_2
          Filter: (a >= 20)
-   ->  Seq Scan on mc3p7 mc3p_2
+   ->  Seq Scan on mc3p7 mc3p_3
          Filter: (a >= 20)
-   ->  Seq Scan on mc3p_default mc3p_3
+   ->  Seq Scan on mc3p_default mc3p_4
          Filter: (a >= 20)
 (9 rows)
 
@@ -846,13 +846,13 @@ explain (costs off) select * from mc3p where (a = 1 and abs(b) = 1 and c = 1) or
                                                            QUERY PLAN                                                            
 ---------------------------------------------------------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p1 mc3p
+   ->  Seq Scan on mc3p1 mc3p_1
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)))
-   ->  Seq Scan on mc3p2 mc3p_1
+   ->  Seq Scan on mc3p2 mc3p_2
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)))
-   ->  Seq Scan on mc3p5 mc3p_2
+   ->  Seq Scan on mc3p5 mc3p_3
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)))
-   ->  Seq Scan on mc3p_default mc3p_3
+   ->  Seq Scan on mc3p_default mc3p_4
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)))
 (9 rows)
 
@@ -860,15 +860,15 @@ explain (costs off) select * from mc3p where (a = 1 and abs(b) = 1 and c = 1) or
                                                                  QUERY PLAN                                                                 
 --------------------------------------------------------------------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1))
-   ->  Seq Scan on mc3p2 mc3p_2
+   ->  Seq Scan on mc3p2 mc3p_3
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1))
-   ->  Seq Scan on mc3p5 mc3p_3
+   ->  Seq Scan on mc3p5 mc3p_4
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1))
-   ->  Seq Scan on mc3p_default mc3p_4
+   ->  Seq Scan on mc3p_default mc3p_5
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1))
 (11 rows)
 
@@ -876,15 +876,15 @@ explain (costs off) select * from mc3p where (a = 1 and abs(b) = 1 and c = 1) or
                                                                       QUERY PLAN                                                                       
 -------------------------------------------------------------------------------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1) OR (a = 1))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1) OR (a = 1))
-   ->  Seq Scan on mc3p2 mc3p_2
+   ->  Seq Scan on mc3p2 mc3p_3
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1) OR (a = 1))
-   ->  Seq Scan on mc3p5 mc3p_3
+   ->  Seq Scan on mc3p5 mc3p_4
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1) OR (a = 1))
-   ->  Seq Scan on mc3p_default mc3p_4
+   ->  Seq Scan on mc3p_default mc3p_5
          Filter: (((a = 1) AND (abs(b) = 1) AND (c = 1)) OR ((a = 10) AND (abs(b) = 5) AND (c = 10)) OR ((a > 11) AND (a < 20)) OR (a < 1) OR (a = 1))
 (11 rows)
 
@@ -892,23 +892,23 @@ explain (costs off) select * from mc3p where a = 1 or abs(b) = 1 or c = 1;
                       QUERY PLAN                      
 ------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p2 mc3p_2
+   ->  Seq Scan on mc3p2 mc3p_3
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p3 mc3p_3
+   ->  Seq Scan on mc3p3 mc3p_4
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p4 mc3p_4
+   ->  Seq Scan on mc3p4 mc3p_5
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p5 mc3p_5
+   ->  Seq Scan on mc3p5 mc3p_6
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p6 mc3p_6
+   ->  Seq Scan on mc3p6 mc3p_7
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p7 mc3p_7
+   ->  Seq Scan on mc3p7 mc3p_8
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
-   ->  Seq Scan on mc3p_default mc3p_8
+   ->  Seq Scan on mc3p_default mc3p_9
          Filter: ((a = 1) OR (abs(b) = 1) OR (c = 1))
 (19 rows)
 
@@ -916,17 +916,17 @@ explain (costs off) select * from mc3p where (a = 1 and abs(b) = 1) or (a = 10 a
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 10)))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 10)))
-   ->  Seq Scan on mc3p2 mc3p_2
+   ->  Seq Scan on mc3p2 mc3p_3
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 10)))
-   ->  Seq Scan on mc3p3 mc3p_3
+   ->  Seq Scan on mc3p3 mc3p_4
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 10)))
-   ->  Seq Scan on mc3p4 mc3p_4
+   ->  Seq Scan on mc3p4 mc3p_5
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 10)))
-   ->  Seq Scan on mc3p_default mc3p_5
+   ->  Seq Scan on mc3p_default mc3p_6
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 10)))
 (13 rows)
 
@@ -934,13 +934,13 @@ explain (costs off) select * from mc3p where (a = 1 and abs(b) = 1) or (a = 10 a
                                  QUERY PLAN                                  
 -----------------------------------------------------------------------------
  Append
-   ->  Seq Scan on mc3p0 mc3p
+   ->  Seq Scan on mc3p0 mc3p_1
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 9)))
-   ->  Seq Scan on mc3p1 mc3p_1
+   ->  Seq Scan on mc3p1 mc3p_2
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 9)))
-   ->  Seq Scan on mc3p2 mc3p_2
+   ->  Seq Scan on mc3p2 mc3p_3
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 9)))
-   ->  Seq Scan on mc3p_default mc3p_3
+   ->  Seq Scan on mc3p_default mc3p_4
          Filter: (((a = 1) AND (abs(b) = 1)) OR ((a = 10) AND (abs(b) = 9)))
 (9 rows)
 
@@ -957,13 +957,13 @@ explain (costs off) select * from mc2p where a < 2;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc2p0 mc2p
+   ->  Seq Scan on mc2p0 mc2p_1
          Filter: (a < 2)
-   ->  Seq Scan on mc2p1 mc2p_1
+   ->  Seq Scan on mc2p1 mc2p_2
          Filter: (a < 2)
-   ->  Seq Scan on mc2p2 mc2p_2
+   ->  Seq Scan on mc2p2 mc2p_3
          Filter: (a < 2)
-   ->  Seq Scan on mc2p_default mc2p_3
+   ->  Seq Scan on mc2p_default mc2p_4
          Filter: (a < 2)
 (9 rows)
 
@@ -978,15 +978,15 @@ explain (costs off) select * from mc2p where a > 1;
               QUERY PLAN               
 ---------------------------------------
  Append
-   ->  Seq Scan on mc2p2 mc2p
+   ->  Seq Scan on mc2p2 mc2p_1
          Filter: (a > 1)
-   ->  Seq Scan on mc2p3 mc2p_1
+   ->  Seq Scan on mc2p3 mc2p_2
          Filter: (a > 1)
-   ->  Seq Scan on mc2p4 mc2p_2
+   ->  Seq Scan on mc2p4 mc2p_3
          Filter: (a > 1)
-   ->  Seq Scan on mc2p5 mc2p_3
+   ->  Seq Scan on mc2p5 mc2p_4
          Filter: (a > 1)
-   ->  Seq Scan on mc2p_default mc2p_4
+   ->  Seq Scan on mc2p_default mc2p_5
          Filter: (a > 1)
 (11 rows)
 
@@ -1042,9 +1042,9 @@ explain (costs off) select * from boolpart where a in (true, false);
                    QUERY PLAN                   
 ------------------------------------------------
  Append
-   ->  Seq Scan on boolpart_f boolpart
+   ->  Seq Scan on boolpart_f boolpart_1
          Filter: (a = ANY ('{t,f}'::boolean[]))
-   ->  Seq Scan on boolpart_t boolpart_1
+   ->  Seq Scan on boolpart_t boolpart_2
          Filter: (a = ANY ('{t,f}'::boolean[]))
 (5 rows)
 
@@ -1066,9 +1066,9 @@ explain (costs off) select * from boolpart where a is true or a is not true;
                     QUERY PLAN                    
 --------------------------------------------------
  Append
-   ->  Seq Scan on boolpart_f boolpart
+   ->  Seq Scan on boolpart_f boolpart_1
          Filter: ((a IS TRUE) OR (a IS NOT TRUE))
-   ->  Seq Scan on boolpart_t boolpart_1
+   ->  Seq Scan on boolpart_t boolpart_2
          Filter: ((a IS TRUE) OR (a IS NOT TRUE))
 (5 rows)
 
@@ -1090,11 +1090,11 @@ explain (costs off) select * from boolpart where a is unknown;
                   QUERY PLAN                   
 -----------------------------------------------
  Append
-   ->  Seq Scan on boolpart_f boolpart
+   ->  Seq Scan on boolpart_f boolpart_1
          Filter: (a IS UNKNOWN)
-   ->  Seq Scan on boolpart_t boolpart_1
+   ->  Seq Scan on boolpart_t boolpart_2
          Filter: (a IS UNKNOWN)
-   ->  Seq Scan on boolpart_default boolpart_2
+   ->  Seq Scan on boolpart_default boolpart_3
          Filter: (a IS UNKNOWN)
 (7 rows)
 
@@ -1102,11 +1102,11 @@ explain (costs off) select * from boolpart where a is not unknown;
                   QUERY PLAN                   
 -----------------------------------------------
  Append
-   ->  Seq Scan on boolpart_f boolpart
+   ->  Seq Scan on boolpart_f boolpart_1
          Filter: (a IS NOT UNKNOWN)
-   ->  Seq Scan on boolpart_t boolpart_1
+   ->  Seq Scan on boolpart_t boolpart_2
          Filter: (a IS NOT UNKNOWN)
-   ->  Seq Scan on boolpart_default boolpart_2
+   ->  Seq Scan on boolpart_default boolpart_3
          Filter: (a IS NOT UNKNOWN)
 (7 rows)
 
@@ -1132,11 +1132,11 @@ explain (costs off) select * from coercepart where a in ('ab', to_char(125, '999
                                                           QUERY PLAN                                                          
 ------------------------------------------------------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on coercepart_ab coercepart
+   ->  Seq Scan on coercepart_ab coercepart_1
          Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
-   ->  Seq Scan on coercepart_bc coercepart_1
+   ->  Seq Scan on coercepart_bc coercepart_2
          Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
-   ->  Seq Scan on coercepart_cd coercepart_2
+   ->  Seq Scan on coercepart_cd coercepart_3
          Filter: ((a)::text = ANY ((ARRAY['ab'::character varying, (to_char(125, '999'::text))::character varying])::text[]))
 (7 rows)
 
@@ -1144,11 +1144,11 @@ explain (costs off) select * from coercepart where a ~ any ('{ab}');
                      QUERY PLAN                     
 ----------------------------------------------------
  Append
-   ->  Seq Scan on coercepart_ab coercepart
+   ->  Seq Scan on coercepart_ab coercepart_1
          Filter: ((a)::text ~ ANY ('{ab}'::text[]))
-   ->  Seq Scan on coercepart_bc coercepart_1
+   ->  Seq Scan on coercepart_bc coercepart_2
          Filter: ((a)::text ~ ANY ('{ab}'::text[]))
-   ->  Seq Scan on coercepart_cd coercepart_2
+   ->  Seq Scan on coercepart_cd coercepart_3
          Filter: ((a)::text ~ ANY ('{ab}'::text[]))
 (7 rows)
 
@@ -1156,11 +1156,11 @@ explain (costs off) select * from coercepart where a !~ all ('{ab}');
                      QUERY PLAN                      
 -----------------------------------------------------
  Append
-   ->  Seq Scan on coercepart_ab coercepart
+   ->  Seq Scan on coercepart_ab coercepart_1
          Filter: ((a)::text !~ ALL ('{ab}'::text[]))
-   ->  Seq Scan on coercepart_bc coercepart_1
+   ->  Seq Scan on coercepart_bc coercepart_2
          Filter: ((a)::text !~ ALL ('{ab}'::text[]))
-   ->  Seq Scan on coercepart_cd coercepart_2
+   ->  Seq Scan on coercepart_cd coercepart_3
          Filter: ((a)::text !~ ALL ('{ab}'::text[]))
 (7 rows)
 
@@ -1168,11 +1168,11 @@ explain (costs off) select * from coercepart where a ~ any ('{ab,bc}');
                       QUERY PLAN                       
 -------------------------------------------------------
  Append
-   ->  Seq Scan on coercepart_ab coercepart
+   ->  Seq Scan on coercepart_ab coercepart_1
          Filter: ((a)::text ~ ANY ('{ab,bc}'::text[]))
-   ->  Seq Scan on coercepart_bc coercepart_1
+   ->  Seq Scan on coercepart_bc coercepart_2
          Filter: ((a)::text ~ ANY ('{ab,bc}'::text[]))
-   ->  Seq Scan on coercepart_cd coercepart_2
+   ->  Seq Scan on coercepart_cd coercepart_3
          Filter: ((a)::text ~ ANY ('{ab,bc}'::text[]))
 (7 rows)
 
@@ -1180,11 +1180,11 @@ explain (costs off) select * from coercepart where a !~ all ('{ab,bc}');
                        QUERY PLAN                       
 --------------------------------------------------------
  Append
-   ->  Seq Scan on coercepart_ab coercepart
+   ->  Seq Scan on coercepart_ab coercepart_1
          Filter: ((a)::text !~ ALL ('{ab,bc}'::text[]))
-   ->  Seq Scan on coercepart_bc coercepart_1
+   ->  Seq Scan on coercepart_bc coercepart_2
          Filter: ((a)::text !~ ALL ('{ab,bc}'::text[]))
-   ->  Seq Scan on coercepart_cd coercepart_2
+   ->  Seq Scan on coercepart_cd coercepart_3
          Filter: ((a)::text !~ ALL ('{ab,bc}'::text[]))
 (7 rows)
 
@@ -1192,9 +1192,9 @@ explain (costs off) select * from coercepart where a = any ('{ab,bc}');
                       QUERY PLAN                       
 -------------------------------------------------------
  Append
-   ->  Seq Scan on coercepart_ab coercepart
+   ->  Seq Scan on coercepart_ab coercepart_1
          Filter: ((a)::text = ANY ('{ab,bc}'::text[]))
-   ->  Seq Scan on coercepart_bc coercepart_1
+   ->  Seq Scan on coercepart_bc coercepart_2
          Filter: ((a)::text = ANY ('{ab,bc}'::text[]))
 (5 rows)
 
@@ -1268,12 +1268,12 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT * FROM part p(x) ORDER BY x;
    Output: p.x, p.b
    Sort Key: p.x
    ->  Append
-         ->  Seq Scan on public.part_p1 p
-               Output: p.x, p.b
-         ->  Seq Scan on public.part_rev p_1
+         ->  Seq Scan on public.part_p1 p_1
                Output: p_1.x, p_1.b
-         ->  Seq Scan on public.part_p2_p1 p_2
+         ->  Seq Scan on public.part_rev p_2
                Output: p_2.x, p_2.b
+         ->  Seq Scan on public.part_p2_p1 p_3
+               Output: p_3.x, p_3.b
 (10 rows)
 
 --
@@ -1288,31 +1288,31 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
 -----------------------------------------------------------------------
  Nested Loop
    ->  Append
-         ->  Seq Scan on mc2p1 t1
+         ->  Seq Scan on mc2p1 t1_1
                Filter: (a = 1)
-         ->  Seq Scan on mc2p2 t1_1
+         ->  Seq Scan on mc2p2 t1_2
                Filter: (a = 1)
-         ->  Seq Scan on mc2p_default t1_2
+         ->  Seq Scan on mc2p_default t1_3
                Filter: (a = 1)
    ->  Aggregate
          ->  Append
-               ->  Seq Scan on mc3p0 t2
+               ->  Seq Scan on mc3p0 t2_1
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p1 t2_1
+               ->  Seq Scan on mc3p1 t2_2
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p2 t2_2
+               ->  Seq Scan on mc3p2 t2_3
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p3 t2_3
+               ->  Seq Scan on mc3p3 t2_4
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p4 t2_4
+               ->  Seq Scan on mc3p4 t2_5
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p5 t2_5
+               ->  Seq Scan on mc3p5 t2_6
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p6 t2_6
+               ->  Seq Scan on mc3p6 t2_7
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p7 t2_7
+               ->  Seq Scan on mc3p7 t2_8
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p_default t2_8
+               ->  Seq Scan on mc3p_default t2_9
                      Filter: ((a = t1.b) AND (c = 1) AND (abs(b) = 1))
 (28 rows)
 
@@ -1323,19 +1323,19 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
 -----------------------------------------------------------------------
  Nested Loop
    ->  Append
-         ->  Seq Scan on mc2p1 t1
+         ->  Seq Scan on mc2p1 t1_1
                Filter: (a = 1)
-         ->  Seq Scan on mc2p2 t1_1
+         ->  Seq Scan on mc2p2 t1_2
                Filter: (a = 1)
-         ->  Seq Scan on mc2p_default t1_2
+         ->  Seq Scan on mc2p_default t1_3
                Filter: (a = 1)
    ->  Aggregate
          ->  Append
-               ->  Seq Scan on mc3p0 t2
+               ->  Seq Scan on mc3p0 t2_1
                      Filter: ((c = t1.b) AND (a = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p1 t2_1
+               ->  Seq Scan on mc3p1 t2_2
                      Filter: ((c = t1.b) AND (a = 1) AND (abs(b) = 1))
-               ->  Seq Scan on mc3p_default t2_2
+               ->  Seq Scan on mc3p_default t2_3
                      Filter: ((c = t1.b) AND (a = 1) AND (abs(b) = 1))
 (16 rows)
 
@@ -1348,11 +1348,11 @@ explain (costs off) select * from mc2p t1, lateral (select count(*) from mc3p t2
          ->  Seq Scan on mc3p1 t2
                Filter: ((a = 1) AND (c = 1) AND (abs(b) = 1))
    ->  Append
-         ->  Seq Scan on mc2p1 t1
+         ->  Seq Scan on mc2p1 t1_1
                Filter: (a = 1)
-         ->  Seq Scan on mc2p2 t1_1
+         ->  Seq Scan on mc2p2 t1_2
                Filter: (a = 1)
-         ->  Seq Scan on mc2p_default t1_2
+         ->  Seq Scan on mc2p_default t1_3
                Filter: (a = 1)
 (11 rows)
 
@@ -1368,11 +1368,11 @@ explain (costs off) select * from rp where a <> 1;
          QUERY PLAN         
 ----------------------------
  Append
-   ->  Seq Scan on rp0 rp
+   ->  Seq Scan on rp0 rp_1
          Filter: (a <> 1)
-   ->  Seq Scan on rp1 rp_1
+   ->  Seq Scan on rp1 rp_2
          Filter: (a <> 1)
-   ->  Seq Scan on rp2 rp_2
+   ->  Seq Scan on rp2 rp_3
          Filter: (a <> 1)
 (7 rows)
 
@@ -1380,11 +1380,11 @@ explain (costs off) select * from rp where a <> 1 and a <> 2;
                QUERY PLAN                
 -----------------------------------------
  Append
-   ->  Seq Scan on rp0 rp
+   ->  Seq Scan on rp0 rp_1
          Filter: ((a <> 1) AND (a <> 2))
-   ->  Seq Scan on rp1 rp_1
+   ->  Seq Scan on rp1 rp_2
          Filter: ((a <> 1) AND (a <> 2))
-   ->  Seq Scan on rp2 rp_2
+   ->  Seq Scan on rp2 rp_3
          Filter: ((a <> 1) AND (a <> 2))
 (7 rows)
 
@@ -1393,15 +1393,15 @@ explain (costs off) select * from lp where a <> 'a';
              QUERY PLAN             
 ------------------------------------
  Append
-   ->  Seq Scan on lp_ad lp
+   ->  Seq Scan on lp_ad lp_1
          Filter: (a <> 'a'::bpchar)
-   ->  Seq Scan on lp_bc lp_1
+   ->  Seq Scan on lp_bc lp_2
          Filter: (a <> 'a'::bpchar)
-   ->  Seq Scan on lp_ef lp_2
+   ->  Seq Scan on lp_ef lp_3
          Filter: (a <> 'a'::bpchar)
-   ->  Seq Scan on lp_g lp_3
+   ->  Seq Scan on lp_g lp_4
          Filter: (a <> 'a'::bpchar)
-   ->  Seq Scan on lp_default lp_4
+   ->  Seq Scan on lp_default lp_5
          Filter: (a <> 'a'::bpchar)
 (11 rows)
 
@@ -1417,15 +1417,15 @@ explain (costs off) select * from lp where (a <> 'a' and a <> 'd') or a is null;
                                   QUERY PLAN                                  
 ------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on lp_bc lp
+   ->  Seq Scan on lp_bc lp_1
          Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
-   ->  Seq Scan on lp_ef lp_1
+   ->  Seq Scan on lp_ef lp_2
          Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
-   ->  Seq Scan on lp_g lp_2
+   ->  Seq Scan on lp_g lp_3
          Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
-   ->  Seq Scan on lp_null lp_3
+   ->  Seq Scan on lp_null lp_4
          Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
-   ->  Seq Scan on lp_default lp_4
+   ->  Seq Scan on lp_default lp_5
          Filter: (((a <> 'a'::bpchar) AND (a <> 'd'::bpchar)) OR (a IS NULL))
 (11 rows)
 
@@ -1436,9 +1436,9 @@ explain (costs off) select * from rlp where a = 15 and b <> 'ab' and b <> 'cd' a
                                                                 QUERY PLAN                                                                
 ------------------------------------------------------------------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on rlp3efgh rlp
+   ->  Seq Scan on rlp3efgh rlp_1
          Filter: ((b IS NOT NULL) AND ((b)::text <> 'ab'::text) AND ((b)::text <> 'cd'::text) AND ((b)::text <> 'xy'::text) AND (a = 15))
-   ->  Seq Scan on rlp3_default rlp_1
+   ->  Seq Scan on rlp3_default rlp_2
          Filter: ((b IS NOT NULL) AND ((b)::text <> 'ab'::text) AND ((b)::text <> 'cd'::text) AND ((b)::text <> 'xy'::text) AND (a = 15))
 (5 rows)
 
@@ -1454,11 +1454,11 @@ explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'e' co
                          QUERY PLAN                         
 ------------------------------------------------------------
  Append
-   ->  Seq Scan on coll_pruning_multi1 coll_pruning_multi
+   ->  Seq Scan on coll_pruning_multi1 coll_pruning_multi_1
          Filter: (substr(a, 1) = 'e'::text COLLATE "C")
-   ->  Seq Scan on coll_pruning_multi2 coll_pruning_multi_1
+   ->  Seq Scan on coll_pruning_multi2 coll_pruning_multi_2
          Filter: (substr(a, 1) = 'e'::text COLLATE "C")
-   ->  Seq Scan on coll_pruning_multi3 coll_pruning_multi_2
+   ->  Seq Scan on coll_pruning_multi3 coll_pruning_multi_3
          Filter: (substr(a, 1) = 'e'::text COLLATE "C")
 (7 rows)
 
@@ -1467,9 +1467,9 @@ explain (costs off) select * from coll_pruning_multi where substr(a, 1) = 'a' co
                          QUERY PLAN                         
 ------------------------------------------------------------
  Append
-   ->  Seq Scan on coll_pruning_multi1 coll_pruning_multi
+   ->  Seq Scan on coll_pruning_multi1 coll_pruning_multi_1
          Filter: (substr(a, 1) = 'a'::text COLLATE "POSIX")
-   ->  Seq Scan on coll_pruning_multi2 coll_pruning_multi_1
+   ->  Seq Scan on coll_pruning_multi2 coll_pruning_multi_2
          Filter: (substr(a, 1) = 'a'::text COLLATE "POSIX")
 (5 rows)
 
@@ -1491,9 +1491,9 @@ explain (costs off) select * from like_op_noprune where a like '%BC';
                       QUERY PLAN                      
 ------------------------------------------------------
  Append
-   ->  Seq Scan on like_op_noprune1 like_op_noprune
+   ->  Seq Scan on like_op_noprune1 like_op_noprune_1
          Filter: (a ~~ '%BC'::text)
-   ->  Seq Scan on like_op_noprune2 like_op_noprune_1
+   ->  Seq Scan on like_op_noprune2 like_op_noprune_2
          Filter: (a ~~ '%BC'::text)
 (5 rows)
 
@@ -1565,13 +1565,13 @@ explain (costs off) select * from hp where a = 1;
          QUERY PLAN         
 ----------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: (a = 1)
-   ->  Seq Scan on hp1 hp_1
+   ->  Seq Scan on hp1 hp_2
          Filter: (a = 1)
-   ->  Seq Scan on hp2 hp_2
+   ->  Seq Scan on hp2 hp_3
          Filter: (a = 1)
-   ->  Seq Scan on hp3 hp_3
+   ->  Seq Scan on hp3 hp_4
          Filter: (a = 1)
 (9 rows)
 
@@ -1579,13 +1579,13 @@ explain (costs off) select * from hp where b = 'xxx';
             QUERY PLAN             
 -----------------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: (b = 'xxx'::text)
-   ->  Seq Scan on hp1 hp_1
+   ->  Seq Scan on hp1 hp_2
          Filter: (b = 'xxx'::text)
-   ->  Seq Scan on hp2 hp_2
+   ->  Seq Scan on hp2 hp_3
          Filter: (b = 'xxx'::text)
-   ->  Seq Scan on hp3 hp_3
+   ->  Seq Scan on hp3 hp_4
          Filter: (b = 'xxx'::text)
 (9 rows)
 
@@ -1593,13 +1593,13 @@ explain (costs off) select * from hp where a is null;
          QUERY PLAN          
 -----------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: (a IS NULL)
-   ->  Seq Scan on hp1 hp_1
+   ->  Seq Scan on hp1 hp_2
          Filter: (a IS NULL)
-   ->  Seq Scan on hp2 hp_2
+   ->  Seq Scan on hp2 hp_3
          Filter: (a IS NULL)
-   ->  Seq Scan on hp3 hp_3
+   ->  Seq Scan on hp3 hp_4
          Filter: (a IS NULL)
 (9 rows)
 
@@ -1607,13 +1607,13 @@ explain (costs off) select * from hp where b is null;
          QUERY PLAN          
 -----------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: (b IS NULL)
-   ->  Seq Scan on hp1 hp_1
+   ->  Seq Scan on hp1 hp_2
          Filter: (b IS NULL)
-   ->  Seq Scan on hp2 hp_2
+   ->  Seq Scan on hp2 hp_3
          Filter: (b IS NULL)
-   ->  Seq Scan on hp3 hp_3
+   ->  Seq Scan on hp3 hp_4
          Filter: (b IS NULL)
 (9 rows)
 
@@ -1621,13 +1621,13 @@ explain (costs off) select * from hp where a < 1 and b = 'xxx';
                    QUERY PLAN                    
 -------------------------------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: ((a < 1) AND (b = 'xxx'::text))
-   ->  Seq Scan on hp1 hp_1
+   ->  Seq Scan on hp1 hp_2
          Filter: ((a < 1) AND (b = 'xxx'::text))
-   ->  Seq Scan on hp2 hp_2
+   ->  Seq Scan on hp2 hp_3
          Filter: ((a < 1) AND (b = 'xxx'::text))
-   ->  Seq Scan on hp3 hp_3
+   ->  Seq Scan on hp3 hp_4
          Filter: ((a < 1) AND (b = 'xxx'::text))
 (9 rows)
 
@@ -1635,13 +1635,13 @@ explain (costs off) select * from hp where a <> 1 and b = 'yyy';
                     QUERY PLAN                    
 --------------------------------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: ((a <> 1) AND (b = 'yyy'::text))
-   ->  Seq Scan on hp1 hp_1
+   ->  Seq Scan on hp1 hp_2
          Filter: ((a <> 1) AND (b = 'yyy'::text))
-   ->  Seq Scan on hp2 hp_2
+   ->  Seq Scan on hp2 hp_3
          Filter: ((a <> 1) AND (b = 'yyy'::text))
-   ->  Seq Scan on hp3 hp_3
+   ->  Seq Scan on hp3 hp_4
          Filter: ((a <> 1) AND (b = 'yyy'::text))
 (9 rows)
 
@@ -1649,13 +1649,13 @@ explain (costs off) select * from hp where a <> 1 and b <> 'xxx';
                     QUERY PLAN                     
 ---------------------------------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: ((a <> 1) AND (b <> 'xxx'::text))
-   ->  Seq Scan on hp1 hp_1
+   ->  Seq Scan on hp1 hp_2
          Filter: ((a <> 1) AND (b <> 'xxx'::text))
-   ->  Seq Scan on hp2 hp_2
+   ->  Seq Scan on hp2 hp_3
          Filter: ((a <> 1) AND (b <> 'xxx'::text))
-   ->  Seq Scan on hp3 hp_3
+   ->  Seq Scan on hp3 hp_4
          Filter: ((a <> 1) AND (b <> 'xxx'::text))
 (9 rows)
 
@@ -1707,11 +1707,11 @@ explain (costs off) select * from hp where (a = 1 and b = 'abcde') or (a = 2 and
                                                        QUERY PLAN                                                        
 -------------------------------------------------------------------------------------------------------------------------
  Append
-   ->  Seq Scan on hp0 hp
+   ->  Seq Scan on hp0 hp_1
          Filter: (((a = 1) AND (b = 'abcde'::text)) OR ((a = 2) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
-   ->  Seq Scan on hp2 hp_1
+   ->  Seq Scan on hp2 hp_2
          Filter: (((a = 1) AND (b = 'abcde'::text)) OR ((a = 2) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
-   ->  Seq Scan on hp3 hp_2
+   ->  Seq Scan on hp3 hp_3
          Filter: (((a = 1) AND (b = 'abcde'::text)) OR ((a = 2) AND (b = 'xxx'::text)) OR ((a IS NULL) AND (b IS NULL)))
 (7 rows)
 
@@ -1743,11 +1743,11 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2, 3);
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 6
-   ->  Seq Scan on ab_a2_b1 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b1 ab_1 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   ->  Seq Scan on ab_a2_b2 ab_1 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   ->  Seq Scan on ab_a2_b3 ab_2 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b3 ab_3 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
 (8 rows)
 
@@ -1756,17 +1756,17 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (1, 2, 3);
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 3
-   ->  Seq Scan on ab_a1_b1 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a1_b1 ab_1 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   ->  Seq Scan on ab_a1_b2 ab_1 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a1_b2 ab_2 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   ->  Seq Scan on ab_a1_b3 ab_2 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a1_b3 ab_3 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   ->  Seq Scan on ab_a2_b1 ab_3 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b1 ab_4 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   ->  Seq Scan on ab_a2_b2 ab_4 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b2 ab_5 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
-   ->  Seq Scan on ab_a2_b3 ab_5 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b3 ab_6 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b <= $3))
 (14 rows)
 
@@ -1779,9 +1779,9 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 2);
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 4
-   ->  Seq Scan on ab_a2_b1 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b1 ab_1 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
-   ->  Seq Scan on ab_a2_b2 ab_1 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
 (6 rows)
 
@@ -1790,13 +1790,13 @@ explain (analyze, costs off, summary off, timing off) execute ab_q1 (2, 4);
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 2
-   ->  Seq Scan on ab_a2_b1 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b1 ab_1 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
-   ->  Seq Scan on ab_a2_b2 ab_1 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
-   ->  Seq Scan on ab_a3_b1 ab_2 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a3_b1 ab_3 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
-   ->  Seq Scan on ab_a3_b2 ab_3 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a3_b2 ab_4 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < 3))
 (10 rows)
 
@@ -1811,11 +1811,11 @@ explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
    Subplans Removed: 6
-   ->  Seq Scan on ab_a2_b1 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b1 ab_1 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
-   ->  Seq Scan on ab_a2_b2 ab_1 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
-   ->  Seq Scan on ab_a2_b3 ab_2 (never executed)
+   ->  Seq Scan on ab_a2_b3 ab_3 (never executed)
          Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
 (10 rows)
 
@@ -1829,11 +1829,11 @@ explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
    Subplans Removed: 6
-   ->  Seq Scan on ab_a1_b2 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a1_b2 ab_1 (actual rows=0 loops=1)
          Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
-   ->  Seq Scan on ab_a2_b2 ab_1 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0 loops=1)
          Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
-   ->  Seq Scan on ab_a3_b2 ab_2 (never executed)
+   ->  Seq Scan on ab_a3_b2 ab_3 (never executed)
          Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
 (10 rows)
 
@@ -1864,11 +1864,11 @@ begin;
 create function list_part_fn(int) returns int as $$ begin return $1; end;$$ language plpgsql stable;
 -- Ensure pruning works using a stable function containing no Vars
 explain (analyze, costs off, summary off, timing off) select * from list_part where a = list_part_fn(1);
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                            QUERY PLAN                            
+------------------------------------------------------------------
  Append (actual rows=1 loops=1)
    Subplans Removed: 3
-   ->  Seq Scan on list_part1 list_part (actual rows=1 loops=1)
+   ->  Seq Scan on list_part1 list_part_1 (actual rows=1 loops=1)
          Filter: (a = list_part_fn(1))
 (4 rows)
 
@@ -1877,13 +1877,13 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Append (actual rows=4 loops=1)
-   ->  Seq Scan on list_part1 list_part (actual rows=1 loops=1)
+   ->  Seq Scan on list_part1 list_part_1 (actual rows=1 loops=1)
          Filter: (a = list_part_fn(a))
-   ->  Seq Scan on list_part2 list_part_1 (actual rows=1 loops=1)
+   ->  Seq Scan on list_part2 list_part_2 (actual rows=1 loops=1)
          Filter: (a = list_part_fn(a))
-   ->  Seq Scan on list_part3 list_part_2 (actual rows=1 loops=1)
+   ->  Seq Scan on list_part3 list_part_3 (actual rows=1 loops=1)
          Filter: (a = list_part_fn(a))
-   ->  Seq Scan on list_part4 list_part_3 (actual rows=1 loops=1)
+   ->  Seq Scan on list_part4 list_part_4 (actual rows=1 loops=1)
          Filter: (a = list_part_fn(a))
 (9 rows)
 
@@ -1892,16 +1892,16 @@ explain (analyze, costs off, summary off, timing off) select * from list_part wh
                             QUERY PLAN                            
 ------------------------------------------------------------------
  Append (actual rows=0 loops=1)
-   ->  Seq Scan on list_part1 list_part (actual rows=0 loops=1)
+   ->  Seq Scan on list_part1 list_part_1 (actual rows=0 loops=1)
          Filter: (a = (list_part_fn(1) + a))
          Rows Removed by Filter: 1
-   ->  Seq Scan on list_part2 list_part_1 (actual rows=0 loops=1)
+   ->  Seq Scan on list_part2 list_part_2 (actual rows=0 loops=1)
          Filter: (a = (list_part_fn(1) + a))
          Rows Removed by Filter: 1
-   ->  Seq Scan on list_part3 list_part_2 (actual rows=0 loops=1)
+   ->  Seq Scan on list_part3 list_part_3 (actual rows=0 loops=1)
          Filter: (a = (list_part_fn(1) + a))
          Rows Removed by Filter: 1
-   ->  Seq Scan on list_part4 list_part_3 (actual rows=0 loops=1)
+   ->  Seq Scan on list_part4 list_part_4 (actual rows=0 loops=1)
          Filter: (a = (list_part_fn(1) + a))
          Rows Removed by Filter: 1
 (13 rows)
@@ -1951,11 +1951,11 @@ select explain_parallel_append('execute ab_q4 (2, 2)');
          ->  Partial Aggregate (actual rows=N loops=N)
                ->  Parallel Append (actual rows=N loops=N)
                      Subplans Removed: 6
-                     ->  Parallel Seq Scan on ab_a2_b1 ab (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a2_b1 ab_1 (actual rows=N loops=N)
                            Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
-                     ->  Parallel Seq Scan on ab_a2_b2 ab_1 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a2_b2 ab_2 (actual rows=N loops=N)
                            Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
-                     ->  Parallel Seq Scan on ab_a2_b3 ab_2 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a2_b3 ab_3 (actual rows=N loops=N)
                            Filter: ((a >= $1) AND (a <= $2) AND (b < 4))
 (13 rows)
 
@@ -1972,11 +1972,11 @@ select explain_parallel_append('execute ab_q5 (1, 1, 1)');
          ->  Partial Aggregate (actual rows=N loops=N)
                ->  Parallel Append (actual rows=N loops=N)
                      Subplans Removed: 6
-                     ->  Parallel Seq Scan on ab_a1_b1 ab (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a1_b1 ab_1 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a1_b2 ab_1 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a1_b2 ab_2 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a1_b3 ab_2 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a1_b3 ab_3 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
 (13 rows)
 
@@ -1990,17 +1990,17 @@ select explain_parallel_append('execute ab_q5 (2, 3, 3)');
          ->  Partial Aggregate (actual rows=N loops=N)
                ->  Parallel Append (actual rows=N loops=N)
                      Subplans Removed: 3
-                     ->  Parallel Seq Scan on ab_a2_b1 ab (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a2_b1 ab_1 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a2_b2 ab_1 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a2_b2 ab_2 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a2_b3 ab_2 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a2_b3 ab_3 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a3_b1 ab_3 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a3_b1 ab_4 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a3_b2 ab_4 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a3_b2 ab_5 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
-                     ->  Parallel Seq Scan on ab_a3_b3 ab_5 (actual rows=N loops=N)
+                     ->  Parallel Seq Scan on ab_a3_b3 ab_6 (actual rows=N loops=N)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
 (19 rows)
 
@@ -2016,7 +2016,7 @@ select explain_parallel_append('execute ab_q5 (33, 44, 55)');
          ->  Partial Aggregate (actual rows=N loops=N)
                ->  Parallel Append (actual rows=N loops=N)
                      Subplans Removed: 8
-                     ->  Parallel Seq Scan on ab_a1_b1 ab (never executed)
+                     ->  Parallel Seq Scan on ab_a1_b1 ab_1 (never executed)
                            Filter: ((b < 4) AND (a = ANY (ARRAY[$1, $2, $3])))
 (9 rows)
 
@@ -2034,11 +2034,11 @@ select explain_parallel_append('select count(*) from ab where (a = (select 1) or
          Params Evaluated: $0, $1
          Workers Launched: N
          ->  Parallel Append (actual rows=N loops=N)
-               ->  Parallel Seq Scan on ab_a1_b2 ab (actual rows=N loops=N)
+               ->  Parallel Seq Scan on ab_a1_b2 ab_1 (actual rows=N loops=N)
                      Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
-               ->  Parallel Seq Scan on ab_a2_b2 ab_1 (never executed)
+               ->  Parallel Seq Scan on ab_a2_b2 ab_2 (never executed)
                      Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
-               ->  Parallel Seq Scan on ab_a3_b2 ab_2 (actual rows=N loops=N)
+               ->  Parallel Seq Scan on ab_a3_b2 ab_3 (actual rows=N loops=N)
                      Filter: ((b = 2) AND ((a = $0) OR (a = $1)))
 (16 rows)
 
@@ -2072,23 +2072,23 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{0,0,1}'::integer[]))
                      ->  Append (actual rows=N loops=N)
-                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_1 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_2 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_3 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_4 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_5 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_6 (never executed)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_7 (never executed)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_8 (never executed)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
                                  Index Cond: (a = a.a)
 (27 rows)
 
@@ -2106,23 +2106,23 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{0,0,1}'::integer[]))
                      ->  Append (actual rows=N loops=N)
-                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_1 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_2 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_3 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_4 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_5 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_6 (never executed)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_7 (never executed)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
                                  Index Cond: (a = (a.a + 0))
-                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_8 (never executed)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
                                  Index Cond: (a = (a.a + 0))
 (27 rows)
 
@@ -2139,23 +2139,23 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                      ->  Parallel Seq Scan on lprt_a a (actual rows=N loops=N)
                            Filter: (a = ANY ('{1,0,3}'::integer[]))
                      ->  Append (actual rows=N loops=N)
-                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_1 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_2 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_3 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_4 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_5 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_6 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_7 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_8 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
 (27 rows)
 
@@ -2172,23 +2172,23 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
                            Rows Removed by Filter: N
                      ->  Append (actual rows=N loops=N)
-                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_1 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_2 (actual rows=N loops=N)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (actual rows=N loops=N)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_3 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_4 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_5 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_6 (never executed)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_7 (never executed)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_8 (never executed)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
                                  Index Cond: (a = a.a)
 (28 rows)
 
@@ -2206,23 +2206,23 @@ select explain_parallel_append('select avg(ab.a) from ab inner join lprt_a a on 
                            Filter: (a = ANY ('{1,0,0}'::integer[]))
                            Rows Removed by Filter: N
                      ->  Append (actual rows=N loops=N)
-                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab (never executed)
+                           ->  Index Scan using ab_a1_b1_a_idx on ab_a1_b1 ab_1 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_1 (never executed)
+                           ->  Index Scan using ab_a1_b2_a_idx on ab_a1_b2 ab_2 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_2 (never executed)
+                           ->  Index Scan using ab_a1_b3_a_idx on ab_a1_b3 ab_3 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_3 (never executed)
+                           ->  Index Scan using ab_a2_b1_a_idx on ab_a2_b1 ab_4 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_4 (never executed)
+                           ->  Index Scan using ab_a2_b2_a_idx on ab_a2_b2 ab_5 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_5 (never executed)
+                           ->  Index Scan using ab_a2_b3_a_idx on ab_a2_b3 ab_6 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_6 (never executed)
+                           ->  Index Scan using ab_a3_b1_a_idx on ab_a3_b1 ab_7 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_7 (never executed)
+                           ->  Index Scan using ab_a3_b2_a_idx on ab_a3_b2 ab_8 (never executed)
                                  Index Cond: (a = a.a)
-                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_8 (never executed)
+                           ->  Index Scan using ab_a3_b3_a_idx on ab_a3_b3 ab_9 (never executed)
                                  Index Cond: (a = a.a)
 (28 rows)
 
@@ -2244,47 +2244,47 @@ select * from ab where a = (select max(a) from lprt_a) and b = (select max(a)-1 
    InitPlan 2 (returns $1)
      ->  Aggregate (actual rows=1 loops=1)
            ->  Seq Scan on lprt_a lprt_a_1 (actual rows=102 loops=1)
-   ->  Bitmap Heap Scan on ab_a1_b1 ab (never executed)
+   ->  Bitmap Heap Scan on ab_a1_b1 ab_1 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a1_b1_a_idx (never executed)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a1_b2 ab_1 (never executed)
+   ->  Bitmap Heap Scan on ab_a1_b2 ab_2 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a1_b3 ab_2 (never executed)
+   ->  Bitmap Heap Scan on ab_a1_b3 ab_3 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a2_b1 ab_3 (never executed)
+   ->  Bitmap Heap Scan on ab_a2_b1 ab_4 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a2_b1_a_idx (never executed)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a2_b2 ab_4 (never executed)
+   ->  Bitmap Heap Scan on ab_a2_b2 ab_5 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a2_b2_a_idx (never executed)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a2_b3 ab_5 (never executed)
+   ->  Bitmap Heap Scan on ab_a2_b3 ab_6 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a2_b3_a_idx (never executed)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a3_b1 ab_6 (never executed)
+   ->  Bitmap Heap Scan on ab_a3_b1 ab_7 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a3_b1_a_idx (never executed)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a3_b2 ab_7 (actual rows=0 loops=1)
+   ->  Bitmap Heap Scan on ab_a3_b2 ab_8 (actual rows=0 loops=1)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a3_b2_a_idx (actual rows=0 loops=1)
                Index Cond: (a = $0)
-   ->  Bitmap Heap Scan on ab_a3_b3 ab_8 (never executed)
+   ->  Bitmap Heap Scan on ab_a3_b3 ab_9 (never executed)
          Recheck Cond: (a = $0)
          Filter: (b = $1)
          ->  Bitmap Index Scan on ab_a3_b3_a_idx (never executed)
@@ -2300,38 +2300,38 @@ select * from (select * from ab where a = 1 union all select * from ab) ab where
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
    ->  Append (actual rows=0 loops=1)
-         ->  Bitmap Heap Scan on ab_a1_b1 ab_9 (actual rows=0 loops=1)
+         ->  Bitmap Heap Scan on ab_a1_b1 ab_11 (actual rows=0 loops=1)
                Recheck Cond: (a = 1)
                Filter: (b = $0)
                ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
                      Index Cond: (a = 1)
-         ->  Bitmap Heap Scan on ab_a1_b2 ab_10 (never executed)
+         ->  Bitmap Heap Scan on ab_a1_b2 ab_12 (never executed)
                Recheck Cond: (a = 1)
                Filter: (b = $0)
                ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                      Index Cond: (a = 1)
-         ->  Bitmap Heap Scan on ab_a1_b3 ab_11 (never executed)
+         ->  Bitmap Heap Scan on ab_a1_b3 ab_13 (never executed)
                Recheck Cond: (a = 1)
                Filter: (b = $0)
                ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                      Index Cond: (a = 1)
-   ->  Seq Scan on ab_a1_b1 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a1_b1 ab_1 (actual rows=0 loops=1)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a1_b2 ab_1 (never executed)
+   ->  Seq Scan on ab_a1_b2 ab_2 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a1_b3 ab_2 (never executed)
+   ->  Seq Scan on ab_a1_b3 ab_3 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a2_b1 ab_3 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b1 ab_4 (actual rows=0 loops=1)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a2_b2 ab_4 (never executed)
+   ->  Seq Scan on ab_a2_b2 ab_5 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a2_b3 ab_5 (never executed)
+   ->  Seq Scan on ab_a2_b3 ab_6 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a3_b1 ab_6 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a3_b1 ab_7 (actual rows=0 loops=1)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a3_b2 ab_7 (never executed)
+   ->  Seq Scan on ab_a3_b2 ab_8 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a3_b3 ab_8 (never executed)
+   ->  Seq Scan on ab_a3_b3 ab_9 (never executed)
          Filter: (b = $0)
 (37 rows)
 
@@ -2344,40 +2344,40 @@ select * from (select * from ab where a = 1 union all (values(10,5)) union all s
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
    ->  Append (actual rows=0 loops=1)
-         ->  Bitmap Heap Scan on ab_a1_b1 ab_9 (actual rows=0 loops=1)
+         ->  Bitmap Heap Scan on ab_a1_b1 ab_11 (actual rows=0 loops=1)
                Recheck Cond: (a = 1)
                Filter: (b = $0)
                ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
                      Index Cond: (a = 1)
-         ->  Bitmap Heap Scan on ab_a1_b2 ab_10 (never executed)
+         ->  Bitmap Heap Scan on ab_a1_b2 ab_12 (never executed)
                Recheck Cond: (a = 1)
                Filter: (b = $0)
                ->  Bitmap Index Scan on ab_a1_b2_a_idx (never executed)
                      Index Cond: (a = 1)
-         ->  Bitmap Heap Scan on ab_a1_b3 ab_11 (never executed)
+         ->  Bitmap Heap Scan on ab_a1_b3 ab_13 (never executed)
                Recheck Cond: (a = 1)
                Filter: (b = $0)
                ->  Bitmap Index Scan on ab_a1_b3_a_idx (never executed)
                      Index Cond: (a = 1)
    ->  Result (actual rows=0 loops=1)
          One-Time Filter: (5 = $0)
-   ->  Seq Scan on ab_a1_b1 ab (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a1_b1 ab_1 (actual rows=0 loops=1)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a1_b2 ab_1 (never executed)
+   ->  Seq Scan on ab_a1_b2 ab_2 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a1_b3 ab_2 (never executed)
+   ->  Seq Scan on ab_a1_b3 ab_3 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a2_b1 ab_3 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a2_b1 ab_4 (actual rows=0 loops=1)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a2_b2 ab_4 (never executed)
+   ->  Seq Scan on ab_a2_b2 ab_5 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a2_b3 ab_5 (never executed)
+   ->  Seq Scan on ab_a2_b3 ab_6 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a3_b1 ab_6 (actual rows=0 loops=1)
+   ->  Seq Scan on ab_a3_b1 ab_7 (actual rows=0 loops=1)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a3_b2 ab_7 (never executed)
+   ->  Seq Scan on ab_a3_b2 ab_8 (never executed)
          Filter: (b = $0)
-   ->  Seq Scan on ab_a3_b3 ab_8 (never executed)
+   ->  Seq Scan on ab_a3_b3 ab_9 (never executed)
          Filter: (b = $0)
 (39 rows)
 
@@ -2402,20 +2402,20 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6(1);
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
    Subplans Removed: 12
-   ->  Seq Scan on ab_a1_b1 ab (never executed)
+   ->  Seq Scan on ab_a1_b1 ab_1 (never executed)
          Filter: ((a = $1) AND (b = $0))
-   ->  Seq Scan on ab_a1_b2 ab_1 (never executed)
+   ->  Seq Scan on ab_a1_b2 ab_2 (never executed)
          Filter: ((a = $1) AND (b = $0))
-   ->  Seq Scan on ab_a1_b3 ab_2 (never executed)
+   ->  Seq Scan on ab_a1_b3 ab_3 (never executed)
          Filter: ((a = $1) AND (b = $0))
    ->  Seq Scan on xy_1 (actual rows=0 loops=1)
          Filter: ((x = $1) AND (y = $0))
          Rows Removed by Filter: 1
-   ->  Seq Scan on ab_a1_b1 ab_3 (never executed)
+   ->  Seq Scan on ab_a1_b1 ab_4 (never executed)
          Filter: ((a = $1) AND (b = $0))
-   ->  Seq Scan on ab_a1_b2 ab_4 (never executed)
+   ->  Seq Scan on ab_a1_b2 ab_5 (never executed)
          Filter: ((a = $1) AND (b = $0))
-   ->  Seq Scan on ab_a1_b3 ab_5 (never executed)
+   ->  Seq Scan on ab_a1_b3 ab_6 (never executed)
          Filter: ((a = $1) AND (b = $0))
 (19 rows)
 
@@ -2446,16 +2446,16 @@ update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
    Update on ab_a1_b3 ab_a1_3
    ->  Nested Loop (actual rows=0 loops=1)
          ->  Append (actual rows=1 loops=1)
-               ->  Bitmap Heap Scan on ab_a1_b1 ab (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_1 (actual rows=0 loops=1)
                      Recheck Cond: (a = 1)
                      ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b2 ab_1 (actual rows=1 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_2 (actual rows=1 loops=1)
                      Recheck Cond: (a = 1)
                      Heap Blocks: exact=1
                      ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b3 ab_2 (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_3 (actual rows=0 loops=1)
                      Recheck Cond: (a = 1)
                      ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=0 loops=1)
                            Index Cond: (a = 1)
@@ -2466,16 +2466,16 @@ update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
                            Index Cond: (a = 1)
    ->  Nested Loop (actual rows=1 loops=1)
          ->  Append (actual rows=1 loops=1)
-               ->  Bitmap Heap Scan on ab_a1_b1 ab (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_1 (actual rows=0 loops=1)
                      Recheck Cond: (a = 1)
                      ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b2 ab_1 (actual rows=1 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_2 (actual rows=1 loops=1)
                      Recheck Cond: (a = 1)
                      Heap Blocks: exact=1
                      ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b3 ab_2 (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_3 (actual rows=0 loops=1)
                      Recheck Cond: (a = 1)
                      ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
@@ -2487,16 +2487,16 @@ update ab_a1 set b = 3 from ab where ab.a = 1 and ab.a = ab_a1.a;
                            Index Cond: (a = 1)
    ->  Nested Loop (actual rows=0 loops=1)
          ->  Append (actual rows=1 loops=1)
-               ->  Bitmap Heap Scan on ab_a1_b1 ab (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b1 ab_1 (actual rows=0 loops=1)
                      Recheck Cond: (a = 1)
                      ->  Bitmap Index Scan on ab_a1_b1_a_idx (actual rows=0 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b2 ab_1 (actual rows=1 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b2 ab_2 (actual rows=1 loops=1)
                      Recheck Cond: (a = 1)
                      Heap Blocks: exact=1
                      ->  Bitmap Index Scan on ab_a1_b2_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
-               ->  Bitmap Heap Scan on ab_a1_b3 ab_2 (actual rows=0 loops=1)
+               ->  Bitmap Heap Scan on ab_a1_b3 ab_3 (actual rows=0 loops=1)
                      Recheck Cond: (a = 1)
                      ->  Bitmap Index Scan on ab_a1_b3_a_idx (actual rows=1 loops=1)
                            Index Cond: (a = 1)
@@ -2518,8 +2518,8 @@ truncate ab;
 insert into ab values (1, 1), (1, 2), (1, 3), (2, 1);
 explain (analyze, costs off, summary off, timing off)
 update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
-                                 QUERY PLAN                                 
-----------------------------------------------------------------------------
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
  Update on ab_a1 (actual rows=0 loops=1)
    Update on ab_a1_b1 ab_a1_1
    Update on ab_a1_b2 ab_a1_2
@@ -2530,31 +2530,31 @@ update ab_a1 set b = 3 from ab_a2 where ab_a2.b = (select 1);
          ->  Seq Scan on ab_a1_b1 ab_a1_1 (actual rows=1 loops=1)
          ->  Materialize (actual rows=1 loops=1)
                ->  Append (actual rows=1 loops=1)
-                     ->  Seq Scan on ab_a2_b1 ab_a2 (actual rows=1 loops=1)
+                     ->  Seq Scan on ab_a2_b1 ab_a2_1 (actual rows=1 loops=1)
                            Filter: (b = $0)
-                     ->  Seq Scan on ab_a2_b2 ab_a2_1 (never executed)
+                     ->  Seq Scan on ab_a2_b2 ab_a2_2 (never executed)
                            Filter: (b = $0)
-                     ->  Seq Scan on ab_a2_b3 ab_a2_2 (never executed)
+                     ->  Seq Scan on ab_a2_b3 ab_a2_3 (never executed)
                            Filter: (b = $0)
    ->  Nested Loop (actual rows=1 loops=1)
          ->  Seq Scan on ab_a1_b2 ab_a1_2 (actual rows=1 loops=1)
          ->  Materialize (actual rows=1 loops=1)
                ->  Append (actual rows=1 loops=1)
-                     ->  Seq Scan on ab_a2_b1 ab_a2 (actual rows=1 loops=1)
+                     ->  Seq Scan on ab_a2_b1 ab_a2_1 (actual rows=1 loops=1)
                            Filter: (b = $0)
-                     ->  Seq Scan on ab_a2_b2 ab_a2_1 (never executed)
+                     ->  Seq Scan on ab_a2_b2 ab_a2_2 (never executed)
                            Filter: (b = $0)
-                     ->  Seq Scan on ab_a2_b3 ab_a2_2 (never executed)
+                     ->  Seq Scan on ab_a2_b3 ab_a2_3 (never executed)
                            Filter: (b = $0)
    ->  Nested Loop (actual rows=1 loops=1)
          ->  Seq Scan on ab_a1_b3 ab_a1_3 (actual rows=1 loops=1)
          ->  Materialize (actual rows=1 loops=1)
                ->  Append (actual rows=1 loops=1)
-                     ->  Seq Scan on ab_a2_b1 ab_a2 (actual rows=1 loops=1)
+                     ->  Seq Scan on ab_a2_b1 ab_a2_1 (actual rows=1 loops=1)
                            Filter: (b = $0)
-                     ->  Seq Scan on ab_a2_b2 ab_a2_1 (never executed)
+                     ->  Seq Scan on ab_a2_b2 ab_a2_2 (never executed)
                            Filter: (b = $0)
-                     ->  Seq Scan on ab_a2_b3 ab_a2_2 (never executed)
+                     ->  Seq Scan on ab_a2_b3 ab_a2_3 (never executed)
                            Filter: (b = $0)
 (36 rows)
 
@@ -2590,43 +2590,43 @@ set enable_hashjoin = off;
 set enable_mergejoin = off;
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 > tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=6 loops=1)
    ->  Seq Scan on tbl1 (actual rows=2 loops=1)
    ->  Append (actual rows=3 loops=2)
-         ->  Index Scan using tprt1_idx on tprt_1 tprt (actual rows=2 loops=2)
+         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2 loops=2)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 tprt_1 (actual rows=2 loops=1)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=2 loops=1)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 tprt_2 (never executed)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt4_idx on tprt_4 tprt_3 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt5_idx on tprt_5 tprt_4 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt6_idx on tprt_6 tprt_5 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 < tbl1.col1)
 (15 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=2 loops=1)
    ->  Seq Scan on tbl1 (actual rows=2 loops=1)
    ->  Append (actual rows=1 loops=2)
-         ->  Index Scan using tprt1_idx on tprt_1 tprt (never executed)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 tprt_1 (actual rows=1 loops=2)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 tprt_2 (never executed)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt4_idx on tprt_4 tprt_3 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt5_idx on tprt_5 tprt_4 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt6_idx on tprt_6 tprt_5 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 = tbl1.col1)
 (15 rows)
 
@@ -2656,43 +2656,43 @@ order by tbl1.col1, tprt.col1;
 insert into tbl1 values (1001), (1010), (1011);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 inner join tprt on tbl1.col1 > tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=23 loops=1)
    ->  Seq Scan on tbl1 (actual rows=5 loops=1)
    ->  Append (actual rows=5 loops=5)
-         ->  Index Scan using tprt1_idx on tprt_1 tprt (actual rows=2 loops=5)
+         ->  Index Scan using tprt1_idx on tprt_1 (actual rows=2 loops=5)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 tprt_1 (actual rows=3 loops=4)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=3 loops=4)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 tprt_2 (actual rows=1 loops=2)
+         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=1 loops=2)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt4_idx on tprt_4 tprt_3 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt5_idx on tprt_5 tprt_4 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 < tbl1.col1)
-         ->  Index Scan using tprt6_idx on tprt_6 tprt_5 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 < tbl1.col1)
 (15 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 inner join tprt on tbl1.col1 = tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=3 loops=1)
    ->  Seq Scan on tbl1 (actual rows=5 loops=1)
    ->  Append (actual rows=1 loops=5)
-         ->  Index Scan using tprt1_idx on tprt_1 tprt (never executed)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 tprt_1 (actual rows=1 loops=2)
+         ->  Index Scan using tprt2_idx on tprt_2 (actual rows=1 loops=2)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 tprt_2 (actual rows=0 loops=3)
+         ->  Index Scan using tprt3_idx on tprt_3 (actual rows=0 loops=3)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt4_idx on tprt_4 tprt_3 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt5_idx on tprt_5 tprt_4 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt6_idx on tprt_6 tprt_5 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 = tbl1.col1)
 (15 rows)
 
@@ -2741,22 +2741,22 @@ delete from tbl1;
 insert into tbl1 values (4400);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 < tprt.col1;
-                                   QUERY PLAN                                    
----------------------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Nested Loop (actual rows=1 loops=1)
    ->  Seq Scan on tbl1 (actual rows=1 loops=1)
    ->  Append (actual rows=1 loops=1)
-         ->  Index Scan using tprt1_idx on tprt_1 tprt (never executed)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 > tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 tprt_1 (never executed)
+         ->  Index Scan using tprt2_idx on tprt_2 (never executed)
                Index Cond: (col1 > tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 tprt_2 (never executed)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
                Index Cond: (col1 > tbl1.col1)
-         ->  Index Scan using tprt4_idx on tprt_4 tprt_3 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 > tbl1.col1)
-         ->  Index Scan using tprt5_idx on tprt_5 tprt_4 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 > tbl1.col1)
-         ->  Index Scan using tprt6_idx on tprt_6 tprt_5 (actual rows=1 loops=1)
+         ->  Index Scan using tprt6_idx on tprt_6 (actual rows=1 loops=1)
                Index Cond: (col1 > tbl1.col1)
 (15 rows)
 
@@ -2773,22 +2773,22 @@ delete from tbl1;
 insert into tbl1 values (10000);
 explain (analyze, costs off, summary off, timing off)
 select * from tbl1 join tprt on tbl1.col1 = tprt.col1;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Nested Loop (actual rows=0 loops=1)
    ->  Seq Scan on tbl1 (actual rows=1 loops=1)
    ->  Append (actual rows=0 loops=1)
-         ->  Index Scan using tprt1_idx on tprt_1 tprt (never executed)
+         ->  Index Scan using tprt1_idx on tprt_1 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt2_idx on tprt_2 tprt_1 (never executed)
+         ->  Index Scan using tprt2_idx on tprt_2 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt3_idx on tprt_3 tprt_2 (never executed)
+         ->  Index Scan using tprt3_idx on tprt_3 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt4_idx on tprt_4 tprt_3 (never executed)
+         ->  Index Scan using tprt4_idx on tprt_4 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt5_idx on tprt_5 tprt_4 (never executed)
+         ->  Index Scan using tprt5_idx on tprt_5 (never executed)
                Index Cond: (col1 = tbl1.col1)
-         ->  Index Scan using tprt6_idx on tprt_6 tprt_5 (never executed)
+         ->  Index Scan using tprt6_idx on tprt_6 (never executed)
                Index Cond: (col1 = tbl1.col1)
 (15 rows)
 
@@ -2837,31 +2837,31 @@ select * from listp where b = 1;
 -- which match the given parameter.
 prepare q1 (int,int) as select * from listp where b in ($1,$2);
 explain (analyze, costs off, summary off, timing off)  execute q1 (1,1);
-                        QUERY PLAN                         
------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 1
-   ->  Seq Scan on listp_1_1 listp (actual rows=0 loops=1)
+   ->  Seq Scan on listp_1_1 listp_1 (actual rows=0 loops=1)
          Filter: (b = ANY (ARRAY[$1, $2]))
 (4 rows)
 
 explain (analyze, costs off, summary off, timing off)  execute q1 (2,2);
-                        QUERY PLAN                         
------------------------------------------------------------
+                         QUERY PLAN                          
+-------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 1
-   ->  Seq Scan on listp_2_1 listp (actual rows=0 loops=1)
+   ->  Seq Scan on listp_2_1 listp_1 (actual rows=0 loops=1)
          Filter: (b = ANY (ARRAY[$1, $2]))
 (4 rows)
 
 -- Try with no matching partitions. One subplan should remain in this case,
 -- but it shouldn't be executed.
 explain (analyze, costs off, summary off, timing off)  execute q1 (0,0);
-                     QUERY PLAN                     
-----------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 1
-   ->  Seq Scan on listp_1_1 listp (never executed)
+   ->  Seq Scan on listp_1_1 listp_1 (never executed)
          Filter: (b = ANY (ARRAY[$1, $2]))
 (4 rows)
 
@@ -2874,7 +2874,7 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,0);
 -------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 1
-   ->  Seq Scan on listp_1_1 listp (actual rows=0 loops=1)
+   ->  Seq Scan on listp_1_1 listp_1 (actual rows=0 loops=1)
          Filter: ((b = ANY (ARRAY[$1, $2])) AND ($3 <> b) AND ($4 <> b))
 (4 rows)
 
@@ -2885,7 +2885,7 @@ explain (analyze, costs off, summary off, timing off)  execute q1 (1,2,2,1);
 -------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 1
-   ->  Seq Scan on listp_1_1 listp (never executed)
+   ->  Seq Scan on listp_1_1 listp_1 (never executed)
          Filter: ((b = ANY (ARRAY[$1, $2])) AND ($3 <> b) AND ($4 <> b))
 (4 rows)
 
@@ -2897,9 +2897,9 @@ select * from listp where a = (select null::int);
  Append (actual rows=0 loops=1)
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
-   ->  Seq Scan on listp_1_1 listp (never executed)
+   ->  Seq Scan on listp_1_1 listp_1 (never executed)
          Filter: (a = $0)
-   ->  Seq Scan on listp_2_1 listp_1 (never executed)
+   ->  Seq Scan on listp_2_1 listp_2 (never executed)
          Filter: (a = $0)
 (7 rows)
 
@@ -2921,20 +2921,20 @@ select * from stable_qual_pruning where a < localtimestamp;
 --------------------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 1
-   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning_1 (actual rows=0 loops=1)
          Filter: (a < LOCALTIMESTAMP)
-   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning_1 (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning_2 (actual rows=0 loops=1)
          Filter: (a < LOCALTIMESTAMP)
 (6 rows)
 
 -- timestamp < timestamptz comparison is only stable, not immutable
 explain (analyze, costs off, summary off, timing off)
 select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
-                                     QUERY PLAN                                     
-------------------------------------------------------------------------------------
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 2
-   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning_1 (actual rows=0 loops=1)
          Filter: (a < 'Tue Feb 01 00:00:00 2000 PST'::timestamp with time zone)
 (4 rows)
 
@@ -2964,7 +2964,7 @@ select * from stable_qual_pruning
 ------------------------------------------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 2
-   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning_1 (actual rows=0 loops=1)
          Filter: (a = ANY (ARRAY['Tue Feb 01 00:00:00 2000'::timestamp without time zone, LOCALTIMESTAMP]))
 (4 rows)
 
@@ -2975,7 +2975,7 @@ select * from stable_qual_pruning
 ---------------------------------------------------------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 2
-   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning (never executed)
+   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning_1 (never executed)
          Filter: (a = ANY ('{"Mon Feb 01 00:00:00 2010 PST","Wed Jan 01 00:00:00 2020 PST"}'::timestamp with time zone[]))
 (4 rows)
 
@@ -2986,7 +2986,7 @@ select * from stable_qual_pruning
 ---------------------------------------------------------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
    Subplans Removed: 2
-   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning_1 (actual rows=0 loops=1)
          Filter: (a = ANY ('{"Tue Feb 01 00:00:00 2000 PST","Fri Jan 01 00:00:00 2010 PST"}'::timestamp with time zone[]))
 (4 rows)
 
@@ -2996,11 +2996,11 @@ select * from stable_qual_pruning
                                       QUERY PLAN                                      
 --------------------------------------------------------------------------------------
  Append (actual rows=0 loops=1)
-   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning1 stable_qual_pruning_1 (actual rows=0 loops=1)
          Filter: (a = ANY (NULL::timestamp with time zone[]))
-   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning_1 (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning2 stable_qual_pruning_2 (actual rows=0 loops=1)
          Filter: (a = ANY (NULL::timestamp with time zone[]))
-   ->  Seq Scan on stable_qual_pruning3 stable_qual_pruning_2 (actual rows=0 loops=1)
+   ->  Seq Scan on stable_qual_pruning3 stable_qual_pruning_3 (actual rows=0 loops=1)
          Filter: (a = ANY (NULL::timestamp with time zone[]))
 (7 rows)
 
@@ -3023,11 +3023,11 @@ select * from mc3p where a < 3 and abs(b) = 1;
                        QUERY PLAN                       
 --------------------------------------------------------
  Append (actual rows=3 loops=1)
-   ->  Seq Scan on mc3p0 mc3p (actual rows=1 loops=1)
+   ->  Seq Scan on mc3p0 mc3p_1 (actual rows=1 loops=1)
          Filter: ((a < 3) AND (abs(b) = 1))
-   ->  Seq Scan on mc3p1 mc3p_1 (actual rows=1 loops=1)
+   ->  Seq Scan on mc3p1 mc3p_2 (actual rows=1 loops=1)
          Filter: ((a < 3) AND (abs(b) = 1))
-   ->  Seq Scan on mc3p2 mc3p_2 (actual rows=1 loops=1)
+   ->  Seq Scan on mc3p2 mc3p_3 (actual rows=1 loops=1)
          Filter: ((a < 3) AND (abs(b) = 1))
 (7 rows)
 
@@ -3040,13 +3040,13 @@ prepare ps1 as
   select * from mc3p where a = $1 and abs(b) < (select 3);
 explain (analyze, costs off, summary off, timing off)
 execute ps1(1);
-                      QUERY PLAN                      
-------------------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Append (actual rows=1 loops=1)
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
    Subplans Removed: 2
-   ->  Seq Scan on mc3p1 mc3p (actual rows=1 loops=1)
+   ->  Seq Scan on mc3p1 mc3p_1 (actual rows=1 loops=1)
          Filter: ((a = $1) AND (abs(b) < $0))
 (6 rows)
 
@@ -3061,9 +3061,9 @@ execute ps2(1);
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
    Subplans Removed: 1
-   ->  Seq Scan on mc3p0 mc3p (actual rows=1 loops=1)
+   ->  Seq Scan on mc3p0 mc3p_1 (actual rows=1 loops=1)
          Filter: ((a <= $1) AND (abs(b) < $0))
-   ->  Seq Scan on mc3p1 mc3p_1 (actual rows=1 loops=1)
+   ->  Seq Scan on mc3p1 mc3p_2 (actual rows=1 loops=1)
          Filter: ((a <= $1) AND (abs(b) < $0))
 (8 rows)
 
@@ -3084,24 +3084,24 @@ select * from boolp where a = (select value from boolvalues where value);
      ->  Seq Scan on boolvalues (actual rows=1 loops=1)
            Filter: value
            Rows Removed by Filter: 1
-   ->  Seq Scan on boolp_f boolp (never executed)
+   ->  Seq Scan on boolp_f boolp_1 (never executed)
          Filter: (a = $0)
-   ->  Seq Scan on boolp_t boolp_1 (actual rows=0 loops=1)
+   ->  Seq Scan on boolp_t boolp_2 (actual rows=0 loops=1)
          Filter: (a = $0)
 (9 rows)
 
 explain (analyze, costs off, summary off, timing off)
 select * from boolp where a = (select value from boolvalues where not value);
-                       QUERY PLAN                        
----------------------------------------------------------
+                        QUERY PLAN                         
+-----------------------------------------------------------
  Append (actual rows=0 loops=1)
    InitPlan 1 (returns $0)
      ->  Seq Scan on boolvalues (actual rows=1 loops=1)
            Filter: (NOT value)
            Rows Removed by Filter: 1
-   ->  Seq Scan on boolp_f boolp (actual rows=0 loops=1)
+   ->  Seq Scan on boolp_f boolp_1 (actual rows=0 loops=1)
          Filter: (a = $0)
-   ->  Seq Scan on boolp_t boolp_1 (never executed)
+   ->  Seq Scan on boolp_t boolp_2 (never executed)
          Filter: (a = $0)
 (9 rows)
 
@@ -3125,10 +3125,10 @@ explain (analyze, costs off, summary off, timing off) execute mt_q1(15);
  Merge Append (actual rows=2 loops=1)
    Sort Key: ma_test.b
    Subplans Removed: 1
-   ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 ma_test (actual rows=1 loops=1)
+   ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 ma_test_1 (actual rows=1 loops=1)
          Filter: ((a >= $1) AND ((a % 10) = 5))
          Rows Removed by Filter: 9
-   ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test_1 (actual rows=1 loops=1)
+   ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test_2 (actual rows=1 loops=1)
          Filter: ((a >= $1) AND ((a % 10) = 5))
          Rows Removed by Filter: 9
 (9 rows)
@@ -3141,12 +3141,12 @@ execute mt_q1(15);
 (2 rows)
 
 explain (analyze, costs off, summary off, timing off) execute mt_q1(25);
-                                      QUERY PLAN                                       
----------------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Merge Append (actual rows=1 loops=1)
    Sort Key: ma_test.b
    Subplans Removed: 2
-   ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test (actual rows=1 loops=1)
+   ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test_1 (actual rows=1 loops=1)
          Filter: ((a >= $1) AND ((a % 10) = 5))
          Rows Removed by Filter: 9
 (6 rows)
@@ -3159,12 +3159,12 @@ execute mt_q1(25);
 
 -- Ensure MergeAppend behaves correctly when no subplans match
 explain (analyze, costs off, summary off, timing off) execute mt_q1(35);
-                                   QUERY PLAN                                   
---------------------------------------------------------------------------------
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
  Merge Append (actual rows=0 loops=1)
    Sort Key: ma_test.b
    Subplans Removed: 2
-   ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 ma_test (never executed)
+   ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 ma_test_1 (never executed)
          Filter: ((a >= $1) AND ((a % 10) = 5))
 (5 rows)
 
@@ -3186,11 +3186,11 @@ explain (analyze, costs off, summary off, timing off) select * from ma_test wher
              ->  Limit (actual rows=1 loops=1)
                    ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 (actual rows=1 loops=1)
                          Index Cond: (b IS NOT NULL)
-   ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 ma_test (never executed)
+   ->  Index Scan using ma_test_p1_b_idx on ma_test_p1 ma_test_1 (never executed)
          Filter: (a >= $1)
-   ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 ma_test_1 (actual rows=10 loops=1)
+   ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 ma_test_2 (actual rows=10 loops=1)
          Filter: (a >= $1)
-   ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test_2 (actual rows=10 loops=1)
+   ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test_3 (actual rows=10 loops=1)
          Filter: (a >= $1)
 (14 rows)
 
@@ -3224,9 +3224,9 @@ explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Append
-   ->  Seq Scan on pp_arrpart1 pp_arrpart
+   ->  Seq Scan on pp_arrpart1 pp_arrpart_1
          Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
-   ->  Seq Scan on pp_arrpart2 pp_arrpart_1
+   ->  Seq Scan on pp_arrpart2 pp_arrpart_2
          Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
 (5 rows)
 
@@ -3280,9 +3280,9 @@ explain (costs off) select * from pph_arrpart where a in ('{4, 5}', '{1}');
                               QUERY PLAN                              
 ----------------------------------------------------------------------
  Append
-   ->  Seq Scan on pph_arrpart1 pph_arrpart
+   ->  Seq Scan on pph_arrpart1 pph_arrpart_1
          Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
-   ->  Seq Scan on pph_arrpart2 pph_arrpart_1
+   ->  Seq Scan on pph_arrpart2 pph_arrpart_2
          Filter: ((a = '{4,5}'::integer[]) OR (a = '{1}'::integer[]))
 (5 rows)
 
@@ -3385,9 +3385,9 @@ explain (costs off) select * from pp_lp where a = 1;
             QUERY PLAN            
 ----------------------------------
  Append
-   ->  Seq Scan on pp_lp1 pp_lp
+   ->  Seq Scan on pp_lp1 pp_lp_1
          Filter: (a = 1)
-   ->  Seq Scan on pp_lp2 pp_lp_1
+   ->  Seq Scan on pp_lp2 pp_lp_2
          Filter: (a = 1)
 (5 rows)
 
@@ -3420,9 +3420,9 @@ explain (costs off) select * from pp_lp where a = 1;
             QUERY PLAN            
 ----------------------------------
  Append
-   ->  Seq Scan on pp_lp1 pp_lp
+   ->  Seq Scan on pp_lp1 pp_lp_1
          Filter: (a = 1)
-   ->  Seq Scan on pp_lp2 pp_lp_1
+   ->  Seq Scan on pp_lp2 pp_lp_2
          Filter: (a = 1)
 (5 rows)
 
@@ -3465,9 +3465,9 @@ explain (costs off) select * from inh_lp where a = 1;
              QUERY PLAN             
 ------------------------------------
  Append
-   ->  Seq Scan on inh_lp
+   ->  Seq Scan on inh_lp inh_lp_1
          Filter: (a = 1)
-   ->  Seq Scan on inh_lp1 inh_lp_1
+   ->  Seq Scan on inh_lp1 inh_lp_2
          Filter: (a = 1)
 (5 rows)
 
@@ -3519,8 +3519,8 @@ explain (costs off) select * from pp_temp_parent where true;
                      QUERY PLAN                      
 -----------------------------------------------------
  Append
-   ->  Seq Scan on pp_temp_part_1 pp_temp_parent
-   ->  Seq Scan on pp_temp_part_def pp_temp_parent_1
+   ->  Seq Scan on pp_temp_part_1 pp_temp_parent_1
+   ->  Seq Scan on pp_temp_part_def pp_temp_parent_2
 (3 rows)
 
 explain (costs off) select * from pp_temp_parent where a = 2;

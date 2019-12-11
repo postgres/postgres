@@ -304,6 +304,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->finalrowmarks = NIL;
 	glob->resultRelations = NIL;
 	glob->rootResultRelations = NIL;
+	glob->appendRelations = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
 	glob->paramExecTypes = NIL;
@@ -494,6 +495,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
 	Assert(glob->rootResultRelations == NIL);
+	Assert(glob->appendRelations == NIL);
 	top_plan = set_plan_references(root, top_plan);
 	/* ... and the subplans (both regular subplans and initplans) */
 	Assert(list_length(glob->subplans) == list_length(glob->subroots));
@@ -520,6 +522,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->rtable = glob->finalrtable;
 	result->resultRelations = glob->resultRelations;
 	result->rootResultRelations = glob->rootResultRelations;
+	result->appendRelations = glob->appendRelations;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
 	result->rowMarks = glob->finalrowmarks;
@@ -1219,6 +1222,7 @@ inheritance_planner(PlannerInfo *root)
 	Index		rootRelation = 0;
 	List	   *final_rtable = NIL;
 	List	   *final_rowmarks = NIL;
+	List	   *final_appendrels = NIL;
 	int			save_rel_array_size = 0;
 	RelOptInfo **save_rel_array = NULL;
 	AppendRelInfo **save_append_rel_array = NULL;
@@ -1627,12 +1631,13 @@ inheritance_planner(PlannerInfo *root)
 		 * modified subquery RTEs into final_rtable, to ensure we have sane
 		 * copies of those.  Also save the first non-excluded child's version
 		 * of the rowmarks list; we assume all children will end up with
-		 * equivalent versions of that.
+		 * equivalent versions of that.  Likewise for append_rel_list.
 		 */
 		if (final_rtable == NIL)
 		{
 			final_rtable = subroot->parse->rtable;
 			final_rowmarks = subroot->rowMarks;
+			final_appendrels = subroot->append_rel_list;
 		}
 		else
 		{
@@ -1764,8 +1769,9 @@ inheritance_planner(PlannerInfo *root)
 			root->simple_rte_array[rti++] = rte;
 		}
 
-		/* Put back adjusted rowmarks, too */
+		/* Put back adjusted rowmarks and appendrels, too */
 		root->rowMarks = final_rowmarks;
+		root->append_rel_list = final_appendrels;
 	}
 
 	/*

@@ -5779,8 +5779,8 @@ select t1.b, ss.phv from join_ut1 t1 left join lateral
               (select t2.a as t2a, t3.a t3a, least(t1.a, t2.a, t3.a) phv
 					  from join_pt1 t2 join join_ut1 t3 on t2.a = t3.b) ss
               on t1.a = ss.t2a order by t1.a;
-                            QUERY PLAN                            
-------------------------------------------------------------------
+                             QUERY PLAN                             
+--------------------------------------------------------------------
  Sort
    Output: t1.b, (LEAST(t1.a, t2.a, t3.a)), t1.a
    Sort Key: t1.a
@@ -5796,12 +5796,12 @@ select t1.b, ss.phv from join_ut1 t1 left join lateral
                ->  Hash
                      Output: t2.a
                      ->  Append
-                           ->  Seq Scan on public.join_pt1p1p1 t2
-                                 Output: t2.a
-                                 Filter: (t1.a = t2.a)
-                           ->  Seq Scan on public.join_pt1p2 t2_1
+                           ->  Seq Scan on public.join_pt1p1p1 t2_1
                                  Output: t2_1.a
                                  Filter: (t1.a = t2_1.a)
+                           ->  Seq Scan on public.join_pt1p2 t2_2
+                                 Output: t2_2.a
+                                 Filter: (t1.a = t2_2.a)
 (21 rows)
 
 select t1.b, ss.phv from join_ut1 t1 left join lateral

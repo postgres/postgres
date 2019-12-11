@@ -74,6 +74,8 @@ typedef struct PlannedStmt
 	 */
 	List	   *rootResultRelations;
 
+	List	   *appendRelations;	/* list of AppendRelInfo nodes */
+
 	List	   *subplans;		/* Plan trees for SubPlan expressions; note
 								 * that some could be NULL */
 
@@ -249,6 +251,7 @@ struct PartitionPruneInfo;		/* forward reference to struct below */
 typedef struct Append
 {
 	Plan		plan;
+	Bitmapset  *apprelids;		/* RTIs of appendrel(s) formed by this node */
 	List	   *appendplans;
 
 	/*
@@ -269,6 +272,7 @@ typedef struct Append
 typedef struct MergeAppend
 {
 	Plan		plan;
+	Bitmapset  *apprelids;		/* RTIs of appendrel(s) formed by this node */
 	List	   *mergeplans;
 	/* these fields are just like the sort-key info in struct Sort: */
 	int			numCols;		/* number of sort-key columns */

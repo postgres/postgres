@@ -689,8 +689,8 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 	es->rtable = queryDesc->plannedstmt->rtable;
 	ExplainPreScanNode(queryDesc->planstate, &rels_used);
 	es->rtable_names = select_rtable_names_for_explain(es->rtable, rels_used);
-	es->deparse_cxt = deparse_context_for_plan_rtable(es->rtable,
-													  es->rtable_names);
+	es->deparse_cxt = deparse_context_for_plan_tree(queryDesc->plannedstmt,
+													es->rtable_names);
 	es->printed_subplans = NULL;
 
 	/*
@@ -1034,6 +1034,14 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 				*rels_used = bms_add_member(*rels_used,
 											((ModifyTable *) plan)->exclRelRTI);
 			break;
+		case T_Append:
+			*rels_used = bms_add_members(*rels_used,
+										 ((Append *) plan)->apprelids);
+			break;
+		case T_MergeAppend:
+			*rels_used = bms_add_members(*rels_used,
+										 ((MergeAppend *) plan)->apprelids);
+			break;
 		default:
 			break;
 	}
@@ -1049,8 +1057,8 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
  * We need to work from a PlanState node, not just a Plan node, in order to
  * get at the instrumentation data (if any) as well as the list of subplans.
  *
- * ancestors is a list of parent PlanState nodes, most-closely-nested first.
- * These are needed in order to interpret PARAM_EXEC Params.
+ * ancestors is a list of parent Plan and SubPlan nodes, most-closely-nested
+ * first.  These are needed in order to interpret PARAM_EXEC Params.
  *
  * relationship describes the relationship of this plan node to its parent
  * (eg, "Outer", "Inner"); it can be null at top level.  plan_name is an
@@ -1953,8 +1961,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 	if (haschildren)
 	{
 		ExplainOpenGroup("Plans", "Plans", false, es);
-		/* Pass current PlanState as head of ancestors list for children */
-		ancestors = lcons(planstate, ancestors);
+		/* Pass current Plan as head of ancestors list for children */
+		ancestors = lcons(plan, ancestors);
 	}
 
 	/* initPlan-s */
@@ -2075,9 +2083,9 @@ show_plan_tlist(PlanState *planstate, List *ancestors, ExplainState *es)
 		return;
 
 	/* Set up deparsing context */
-	context = set_deparse_context_planstate(es->deparse_cxt,
-											(Node *) planstate,
-											ancestors);
+	context = set_deparse_context_plan(es->deparse_cxt,
+									   plan,
+									   ancestors);
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Deparse each result column (we now include resjunk ones) */
@@ -2106,9 +2114,9 @@ show_expression(Node *node, const char *qlabel,
 	char	   *exprstr;
 
 	/* Set up deparsing context */
-	context = set_deparse_context_planstate(es->deparse_cxt,
-											(Node *) planstate,
-											ancestors);
+	context = set_deparse_context_plan(es->deparse_cxt,
+									   planstate->plan,
+									   ancestors);
 
 	/* Deparse the expression */
 	exprstr = deparse_expression(node, context, useprefix, false);
@@ -2209,7 +2217,7 @@ show_agg_keys(AggState *astate, List *ancestors,
 	if (plan->numCols > 0 || plan->groupingSets)
 	{
 		/* The key columns refer to the tlist of the child plan */
-		ancestors = lcons(astate, ancestors);
+		ancestors = lcons(plan, ancestors);
 
 		if (plan->groupingSets)
 			show_grouping_sets(outerPlanState(astate), plan, ancestors, es);
@@ -2232,9 +2240,9 @@ show_grouping_sets(PlanState *planstate, Agg *agg,
 	ListCell   *lc;
 
 	/* Set up deparsing context */
-	context = set_deparse_context_planstate(es->deparse_cxt,
-											(Node *) planstate,
-											ancestors);
+	context = set_deparse_context_plan(es->deparse_cxt,
+									   planstate->plan,
+									   ancestors);
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	ExplainOpenGroup("Grouping Sets", "Grouping Sets", false, es);
@@ -2339,7 +2347,7 @@ show_group_keys(GroupState *gstate, List *ancestors,
 	Group	   *plan = (Group *) gstate->ss.ps.plan;
 
 	/* The key columns refer to the tlist of the child plan */
-	ancestors = lcons(gstate, ancestors);
+	ancestors = lcons(plan, ancestors);
 	show_sort_group_keys(outerPlanState(gstate), "Group Key",
 						 plan->numCols, plan->grpColIdx,
 						 NULL, NULL, NULL,
@@ -2371,9 +2379,9 @@ show_sort_group_keys(PlanState *planstate, const char *qlabel,
 	initStringInfo(&sortkeybuf);
 
 	/* Set up deparsing context */
-	context = set_deparse_context_planstate(es->deparse_cxt,
-											(Node *) planstate,
-											ancestors);
+	context = set_deparse_context_plan(es->deparse_cxt,
+									   plan,
+									   ancestors);
 	useprefix = (list_length(es->rtable) > 1 || es->verbose);
 
 	for (keyno = 0; keyno < nkeys; keyno++)
@@ -2479,9 +2487,9 @@ show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 	ListCell   *lc;
 
 	/* Set up deparsing context */
-	context = set_deparse_context_planstate(es->deparse_cxt,
-											(Node *) planstate,
-											ancestors);
+	context = set_deparse_context_plan(es->deparse_cxt,
+									   planstate->plan,
+									   ancestors);
 	useprefix = list_length(es->rtable) > 1;
 
 	/* Get the tablesample method name */
@@ -3344,7 +3352,7 @@ ExplainMemberNodes(PlanState **planstates, int nsubnodes, int nplans,
  * Explain a list of SubPlans (or initPlans, which also use SubPlan nodes).
  *
  * The ancestors list should already contain the immediate parent of these
- * SubPlanStates.
+ * SubPlans.
  */
 static void
 ExplainSubPlans(List *plans, List *ancestors,
@@ -3372,8 +3380,17 @@ ExplainSubPlans(List *plans, List *ancestors,
 		es->printed_subplans = bms_add_member(es->printed_subplans,
 											  sp->plan_id);
 
+		/*
+		 * Treat the SubPlan node as an ancestor of the plan node(s) within
+		 * it, so that ruleutils.c can find the referents of subplan
+		 * parameters.
+		 */
+		ancestors = lcons(sp, ancestors);
+
 		ExplainNode(sps->planstate, ancestors,
 					relationship, sp->plan_name, es);
+
+		ancestors = list_delete_first(ancestors);
 	}
 }
 

@@ -1338,11 +1338,11 @@ select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
    ->  Limit
          ->  Seq Scan on int4_tbl
    ->  Append
-         ->  Index Scan using patest0i on patest0
+         ->  Index Scan using patest0i on patest0 patest0_1
                Index Cond: (id = int4_tbl.f1)
-         ->  Index Scan using patest1i on patest1 patest0_1
+         ->  Index Scan using patest1i on patest1 patest0_2
                Index Cond: (id = int4_tbl.f1)
-         ->  Index Scan using patest2i on patest2 patest0_2
+         ->  Index Scan using patest2i on patest2 patest0_3
                Index Cond: (id = int4_tbl.f1)
 (10 rows)
 
@@ -1363,11 +1363,11 @@ select * from patest0 join (select f1 from int4_tbl limit 1) ss on id = f1;
    ->  Limit
          ->  Seq Scan on int4_tbl
    ->  Append
-         ->  Index Scan using patest0i on patest0
+         ->  Index Scan using patest0i on patest0 patest0_1
                Index Cond: (id = int4_tbl.f1)
-         ->  Index Scan using patest1i on patest1 patest0_1
+         ->  Index Scan using patest1i on patest1 patest0_2
                Index Cond: (id = int4_tbl.f1)
-         ->  Seq Scan on patest2 patest0_2
+         ->  Seq Scan on patest2 patest0_3
                Filter: (int4_tbl.f1 = id)
 (10 rows)
 
@@ -1413,14 +1413,14 @@ explain (verbose, costs off) select * from matest0 order by 1-id;
    ->  Result
          Output: matest0.id, matest0.name, (1 - matest0.id)
          ->  Append
-               ->  Seq Scan on public.matest0
-                     Output: matest0.id, matest0.name
-               ->  Seq Scan on public.matest1 matest0_1
+               ->  Seq Scan on public.matest0 matest0_1
                      Output: matest0_1.id, matest0_1.name
-               ->  Seq Scan on public.matest2 matest0_2
+               ->  Seq Scan on public.matest1 matest0_2
                      Output: matest0_2.id, matest0_2.name
-               ->  Seq Scan on public.matest3 matest0_3
+               ->  Seq Scan on public.matest2 matest0_3
                      Output: matest0_3.id, matest0_3.name
+               ->  Seq Scan on public.matest3 matest0_4
+                     Output: matest0_4.id, matest0_4.name
 (14 rows)
 
 select * from matest0 order by 1-id;
@@ -1440,14 +1440,14 @@ explain (verbose, costs off) select min(1-id) from matest0;
  Aggregate
    Output: min((1 - matest0.id))
    ->  Append
-         ->  Seq Scan on public.matest0
-               Output: matest0.id
-         ->  Seq Scan on public.matest1 matest0_1
+         ->  Seq Scan on public.matest0 matest0_1
                Output: matest0_1.id
-         ->  Seq Scan on public.matest2 matest0_2
+         ->  Seq Scan on public.matest1 matest0_2
                Output: matest0_2.id
-         ->  Seq Scan on public.matest3 matest0_3
+         ->  Seq Scan on public.matest2 matest0_3
                Output: matest0_3.id
+         ->  Seq Scan on public.matest3 matest0_4
+               Output: matest0_4.id
 (11 rows)
 
 select min(1-id) from matest0;
@@ -1464,17 +1464,17 @@ explain (verbose, costs off) select * from matest0 order by 1-id;
 ------------------------------------------------------------------------
  Merge Append
    Sort Key: ((1 - matest0.id))
-   ->  Index Scan using matest0i on public.matest0
-         Output: matest0.id, matest0.name, (1 - matest0.id)
-   ->  Index Scan using matest1i on public.matest1 matest0_1
+   ->  Index Scan using matest0i on public.matest0 matest0_1
          Output: matest0_1.id, matest0_1.name, (1 - matest0_1.id)
+   ->  Index Scan using matest1i on public.matest1 matest0_2
+         Output: matest0_2.id, matest0_2.name, (1 - matest0_2.id)
    ->  Sort
-         Output: matest0_2.id, matest0_2.name, ((1 - matest0_2.id))
-         Sort Key: ((1 - matest0_2.id))
-         ->  Seq Scan on public.matest2 matest0_2
-               Output: matest0_2.id, matest0_2.name, (1 - matest0_2.id)
-   ->  Index Scan using matest3i on public.matest3 matest0_3
-         Output: matest0_3.id, matest0_3.name, (1 - matest0_3.id)
+         Output: matest0_3.id, matest0_3.name, ((1 - matest0_3.id))
+         Sort Key: ((1 - matest0_3.id))
+         ->  Seq Scan on public.matest2 matest0_3
+               Output: matest0_3.id, matest0_3.name, (1 - matest0_3.id)
+   ->  Index Scan using matest3i on public.matest3 matest0_4
+         Output: matest0_4.id, matest0_4.name, (1 - matest0_4.id)
 (13 rows)
 
 select * from matest0 order by 1-id;
@@ -1500,22 +1500,22 @@ explain (verbose, costs off) select min(1-id) from matest0;
                  Output: ((1 - matest0.id))
                  ->  Merge Append
                        Sort Key: ((1 - matest0.id))
-                       ->  Index Scan using matest0i on public.matest0
-                             Output: matest0.id, (1 - matest0.id)
-                             Index Cond: ((1 - matest0.id) IS NOT NULL)
-                       ->  Index Scan using matest1i on public.matest1 matest0_1
+                       ->  Index Scan using matest0i on public.matest0 matest0_1
                              Output: matest0_1.id, (1 - matest0_1.id)
                              Index Cond: ((1 - matest0_1.id) IS NOT NULL)
+                       ->  Index Scan using matest1i on public.matest1 matest0_2
+                             Output: matest0_2.id, (1 - matest0_2.id)
+                             Index Cond: ((1 - matest0_2.id) IS NOT NULL)
                        ->  Sort
-                             Output: matest0_2.id, ((1 - matest0_2.id))
-                             Sort Key: ((1 - matest0_2.id))
-                             ->  Bitmap Heap Scan on public.matest2 matest0_2
-                                   Output: matest0_2.id, (1 - matest0_2.id)
-                                   Filter: ((1 - matest0_2.id) IS NOT NULL)
+                             Output: matest0_3.id, ((1 - matest0_3.id))
+                             Sort Key: ((1 - matest0_3.id))
+                             ->  Bitmap Heap Scan on public.matest2 matest0_3
+                                   Output: matest0_3.id, (1 - matest0_3.id)
+                                   Filter: ((1 - matest0_3.id) IS NOT NULL)
                                    ->  Bitmap Index Scan on matest2_pkey
-                       ->  Index Scan using matest3i on public.matest3 matest0_3
-                             Output: matest0_3.id, (1 - matest0_3.id)
-                             Index Cond: ((1 - matest0_3.id) IS NOT NULL)
+                       ->  Index Scan using matest3i on public.matest3 matest0_4
+                             Output: matest0_4.id, (1 - matest0_4.id)
+                             Index Cond: ((1 - matest0_4.id) IS NOT NULL)
 (25 rows)
 
 select min(1-id) from matest0;
@@ -1551,14 +1551,14 @@ order by t1.b limit 10;
          Merge Cond: (t1.b = t2.b)
          ->  Merge Append
                Sort Key: t1.b
-               ->  Index Scan using matest0i on matest0 t1
-               ->  Index Scan using matest1i on matest1 t1_1
+               ->  Index Scan using matest0i on matest0 t1_1
+               ->  Index Scan using matest1i on matest1 t1_2
          ->  Materialize
                ->  Merge Append
                      Sort Key: t2.b
-                     ->  Index Scan using matest0i on matest0 t2
+                     ->  Index Scan using matest0i on matest0 t2_1
                            Filter: (c = d)
-                     ->  Index Scan using matest1i on matest1 t2_1
+                     ->  Index Scan using matest1i on matest1 t2_2
                            Filter: (c = d)
 (14 rows)
 
@@ -1783,9 +1783,9 @@ explain (costs off) select * from list_parted;
                   QUERY PLAN                  
 ----------------------------------------------
  Append
-   ->  Seq Scan on part_ab_cd list_parted
-   ->  Seq Scan on part_ef_gh list_parted_1
-   ->  Seq Scan on part_null_xy list_parted_2
+   ->  Seq Scan on part_ab_cd list_parted_1
+   ->  Seq Scan on part_ef_gh list_parted_2
+   ->  Seq Scan on part_null_xy list_parted_3
 (4 rows)
 
 explain (costs off) select * from list_parted where a is null;
@@ -1799,11 +1799,11 @@ explain (costs off) select * from list_parted where a is not null;
                   QUERY PLAN                  
 ----------------------------------------------
  Append
-   ->  Seq Scan on part_ab_cd list_parted
+   ->  Seq Scan on part_ab_cd list_parted_1
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on part_ef_gh list_parted_1
+   ->  Seq Scan on part_ef_gh list_parted_2
          Filter: (a IS NOT NULL)
-   ->  Seq Scan on part_null_xy list_parted_2
+   ->  Seq Scan on part_null_xy list_parted_3
          Filter: (a IS NOT NULL)
 (7 rows)
 
@@ -1811,9 +1811,9 @@ explain (costs off) select * from list_parted where a in ('ab', 'cd', 'ef');
                         QUERY PLAN                        
 ----------------------------------------------------------
  Append
-   ->  Seq Scan on part_ab_cd list_parted
+   ->  Seq Scan on part_ab_cd list_parted_1
          Filter: ((a)::text = ANY ('{ab,cd,ef}'::text[]))
-   ->  Seq Scan on part_ef_gh list_parted_1
+   ->  Seq Scan on part_ef_gh list_parted_2
          Filter: ((a)::text = ANY ('{ab,cd,ef}'::text[]))
 (5 rows)
 
@@ -1852,24 +1852,24 @@ explain (costs off) select * from range_list_parted;
                        QUERY PLAN                       
 --------------------------------------------------------
  Append
-   ->  Seq Scan on part_1_10_ab range_list_parted
-   ->  Seq Scan on part_1_10_cd range_list_parted_1
-   ->  Seq Scan on part_10_20_ab range_list_parted_2
-   ->  Seq Scan on part_10_20_cd range_list_parted_3
-   ->  Seq Scan on part_21_30_ab range_list_parted_4
-   ->  Seq Scan on part_21_30_cd range_list_parted_5
-   ->  Seq Scan on part_40_inf_ab range_list_parted_6
-   ->  Seq Scan on part_40_inf_cd range_list_parted_7
-   ->  Seq Scan on part_40_inf_null range_list_parted_8
+   ->  Seq Scan on part_1_10_ab range_list_parted_1
+   ->  Seq Scan on part_1_10_cd range_list_parted_2
+   ->  Seq Scan on part_10_20_ab range_list_parted_3
+   ->  Seq Scan on part_10_20_cd range_list_parted_4
+   ->  Seq Scan on part_21_30_ab range_list_parted_5
+   ->  Seq Scan on part_21_30_cd range_list_parted_6
+   ->  Seq Scan on part_40_inf_ab range_list_parted_7
+   ->  Seq Scan on part_40_inf_cd range_list_parted_8
+   ->  Seq Scan on part_40_inf_null range_list_parted_9
 (10 rows)
 
 explain (costs off) select * from range_list_parted where a = 5;
                      QUERY PLAN                     
 ----------------------------------------------------
  Append
-   ->  Seq Scan on part_1_10_ab range_list_parted
+   ->  Seq Scan on part_1_10_ab range_list_parted_1
          Filter: (a = 5)
-   ->  Seq Scan on part_1_10_cd range_list_parted_1
+   ->  Seq Scan on part_1_10_cd range_list_parted_2
          Filter: (a = 5)
 (5 rows)
 
@@ -1877,13 +1877,13 @@ explain (costs off) select * from range_list_parted where b = 'ab';
                       QUERY PLAN                      
 ------------------------------------------------------
  Append
-   ->  Seq Scan on part_1_10_ab range_list_parted
+   ->  Seq Scan on part_1_10_ab range_list_parted_1
          Filter: (b = 'ab'::bpchar)
-   ->  Seq Scan on part_10_20_ab range_list_parted_1
+   ->  Seq Scan on part_10_20_ab range_list_parted_2
          Filter: (b = 'ab'::bpchar)
-   ->  Seq Scan on part_21_30_ab range_list_parted_2
+   ->  Seq Scan on part_21_30_ab range_list_parted_3
          Filter: (b = 'ab'::bpchar)
-   ->  Seq Scan on part_40_inf_ab range_list_parted_3
+   ->  Seq Scan on part_40_inf_ab range_list_parted_4
          Filter: (b = 'ab'::bpchar)
 (9 rows)
 
@@ -1891,11 +1891,11 @@ explain (costs off) select * from range_list_parted where a between 3 and 23 and
                            QUERY PLAN                            
 -----------------------------------------------------------------
  Append
-   ->  Seq Scan on part_1_10_ab range_list_parted
+   ->  Seq Scan on part_1_10_ab range_list_parted_1
          Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
-   ->  Seq Scan on part_10_20_ab range_list_parted_1
+   ->  Seq Scan on part_10_20_ab range_list_parted_2
          Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
-   ->  Seq Scan on part_21_30_ab range_list_parted_2
+   ->  Seq Scan on part_21_30_ab range_list_parted_3
          Filter: ((a >= 3) AND (a <= 23) AND (b = 'ab'::bpchar))
 (7 rows)
 
@@ -1919,23 +1919,23 @@ explain (costs off) select * from range_list_parted where a is not null and a < 
                        QUERY PLAN                       
 --------------------------------------------------------
  Append
-   ->  Seq Scan on part_1_10_ab range_list_parted
+   ->  Seq Scan on part_1_10_ab range_list_parted_1
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_1_10_cd range_list_parted_1
+   ->  Seq Scan on part_1_10_cd range_list_parted_2
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_10_20_ab range_list_parted_2
+   ->  Seq Scan on part_10_20_ab range_list_parted_3
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_10_20_cd range_list_parted_3
+   ->  Seq Scan on part_10_20_cd range_list_parted_4
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_21_30_ab range_list_parted_4
+   ->  Seq Scan on part_21_30_ab range_list_parted_5
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_21_30_cd range_list_parted_5
+   ->  Seq Scan on part_21_30_cd range_list_parted_6
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_40_inf_ab range_list_parted_6
+   ->  Seq Scan on part_40_inf_ab range_list_parted_7
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_40_inf_cd range_list_parted_7
+   ->  Seq Scan on part_40_inf_cd range_list_parted_8
          Filter: ((a IS NOT NULL) AND (a < 67))
-   ->  Seq Scan on part_40_inf_null range_list_parted_8
+   ->  Seq Scan on part_40_inf_null range_list_parted_9
          Filter: ((a IS NOT NULL) AND (a < 67))
 (19 rows)
 
@@ -1943,11 +1943,11 @@ explain (costs off) select * from range_list_parted where a >= 30;
                        QUERY PLAN                       
 --------------------------------------------------------
  Append
-   ->  Seq Scan on part_40_inf_ab range_list_parted
+   ->  Seq Scan on part_40_inf_ab range_list_parted_1
          Filter: (a >= 30)
-   ->  Seq Scan on part_40_inf_cd range_list_parted_1
+   ->  Seq Scan on part_40_inf_cd range_list_parted_2
          Filter: (a >= 30)
-   ->  Seq Scan on part_40_inf_null range_list_parted_2
+   ->  Seq Scan on part_40_inf_null range_list_parted_3
          Filter: (a >= 30)
 (7 rows)
 
@@ -1967,9 +1967,9 @@ explain (costs off) select * from mcrparted where a = 0;	-- scans mcrparted0, mc
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on mcrparted0 mcrparted
+   ->  Seq Scan on mcrparted0 mcrparted_1
          Filter: (a = 0)
-   ->  Seq Scan on mcrparted_def mcrparted_1
+   ->  Seq Scan on mcrparted_def mcrparted_2
          Filter: (a = 0)
 (5 rows)
 
@@ -1977,9 +1977,9 @@ explain (costs off) select * from mcrparted where a = 10 and abs(b) < 5;	-- scan
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on mcrparted1 mcrparted
+   ->  Seq Scan on mcrparted1 mcrparted_1
          Filter: ((a = 10) AND (abs(b) < 5))
-   ->  Seq Scan on mcrparted_def mcrparted_1
+   ->  Seq Scan on mcrparted_def mcrparted_2
          Filter: ((a = 10) AND (abs(b) < 5))
 (5 rows)
 
@@ -1987,11 +1987,11 @@ explain (costs off) select * from mcrparted where a = 10 and abs(b) = 5;	-- scan
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on mcrparted1 mcrparted
+   ->  Seq Scan on mcrparted1 mcrparted_1
          Filter: ((a = 10) AND (abs(b) = 5))
-   ->  Seq Scan on mcrparted2 mcrparted_1
+   ->  Seq Scan on mcrparted2 mcrparted_2
          Filter: ((a = 10) AND (abs(b) = 5))
-   ->  Seq Scan on mcrparted_def mcrparted_2
+   ->  Seq Scan on mcrparted_def mcrparted_3
          Filter: ((a = 10) AND (abs(b) = 5))
 (7 rows)
 
@@ -1999,19 +1999,19 @@ explain (costs off) select * from mcrparted where abs(b) = 5;	-- scans all parti
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on mcrparted0 mcrparted
+   ->  Seq Scan on mcrparted0 mcrparted_1
          Filter: (abs(b) = 5)
-   ->  Seq Scan on mcrparted1 mcrparted_1
+   ->  Seq Scan on mcrparted1 mcrparted_2
          Filter: (abs(b) = 5)
-   ->  Seq Scan on mcrparted2 mcrparted_2
+   ->  Seq Scan on mcrparted2 mcrparted_3
          Filter: (abs(b) = 5)
-   ->  Seq Scan on mcrparted3 mcrparted_3
+   ->  Seq Scan on mcrparted3 mcrparted_4
          Filter: (abs(b) = 5)
-   ->  Seq Scan on mcrparted4 mcrparted_4
+   ->  Seq Scan on mcrparted4 mcrparted_5
          Filter: (abs(b) = 5)
-   ->  Seq Scan on mcrparted5 mcrparted_5
+   ->  Seq Scan on mcrparted5 mcrparted_6
          Filter: (abs(b) = 5)
-   ->  Seq Scan on mcrparted_def mcrparted_6
+   ->  Seq Scan on mcrparted_def mcrparted_7
          Filter: (abs(b) = 5)
 (15 rows)
 
@@ -2019,19 +2019,19 @@ explain (costs off) select * from mcrparted where a > -1;	-- scans all partition
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on mcrparted0 mcrparted
+   ->  Seq Scan on mcrparted0 mcrparted_1
          Filter: (a > '-1'::integer)
-   ->  Seq Scan on mcrparted1 mcrparted_1
+   ->  Seq Scan on mcrparted1 mcrparted_2
          Filter: (a > '-1'::integer)
-   ->  Seq Scan on mcrparted2 mcrparted_2
+   ->  Seq Scan on mcrparted2 mcrparted_3
          Filter: (a > '-1'::integer)
-   ->  Seq Scan on mcrparted3 mcrparted_3
+   ->  Seq Scan on mcrparted3 mcrparted_4
          Filter: (a > '-1'::integer)
-   ->  Seq Scan on mcrparted4 mcrparted_4
+   ->  Seq Scan on mcrparted4 mcrparted_5
          Filter: (a > '-1'::integer)
-   ->  Seq Scan on mcrparted5 mcrparted_5
+   ->  Seq Scan on mcrparted5 mcrparted_6
          Filter: (a > '-1'::integer)
-   ->  Seq Scan on mcrparted_def mcrparted_6
+   ->  Seq Scan on mcrparted_def mcrparted_7
          Filter: (a > '-1'::integer)
 (15 rows)
 
@@ -2046,13 +2046,13 @@ explain (costs off) select * from mcrparted where a = 20 and c > 20; -- scans mc
                  QUERY PLAN                  
 ---------------------------------------------
  Append
-   ->  Seq Scan on mcrparted3 mcrparted
+   ->  Seq Scan on mcrparted3 mcrparted_1
          Filter: ((c > 20) AND (a = 20))
-   ->  Seq Scan on mcrparted4 mcrparted_1
+   ->  Seq Scan on mcrparted4 mcrparted_2
          Filter: ((c > 20) AND (a = 20))
-   ->  Seq Scan on mcrparted5 mcrparted_2
+   ->  Seq Scan on mcrparted5 mcrparted_3
          Filter: ((c > 20) AND (a = 20))
-   ->  Seq Scan on mcrparted_def mcrparted_3
+   ->  Seq Scan on mcrparted_def mcrparted_4
          Filter: ((c > 20) AND (a = 20))
 (9 rows)
 
@@ -2092,13 +2092,13 @@ explain (costs off) select * from mcrparted order by a, abs(b), c;
 -------------------------------------------------------------------------------
  Merge Append
    Sort Key: mcrparted.a, (abs(mcrparted.b)), mcrparted.c
-   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted
-   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
-   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
-   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_3
-   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_4
-   ->  Index Scan using mcrparted5_a_abs_c_idx on mcrparted5 mcrparted_5
-   ->  Index Scan using mcrparted_def_a_abs_c_idx on mcrparted_def mcrparted_6
+   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted_1
+   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_2
+   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_3
+   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_4
+   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_5
+   ->  Index Scan using mcrparted5_a_abs_c_idx on mcrparted5 mcrparted_6
+   ->  Index Scan using mcrparted_def_a_abs_c_idx on mcrparted_def mcrparted_7
 (9 rows)
 
 drop table mcrparted_def;
@@ -2108,12 +2108,12 @@ explain (costs off) select * from mcrparted order by a, abs(b), c;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Append
-   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted
-   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
-   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
-   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_3
-   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_4
-   ->  Index Scan using mcrparted5_a_abs_c_idx on mcrparted5 mcrparted_5
+   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted_1
+   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_2
+   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_3
+   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_4
+   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_5
+   ->  Index Scan using mcrparted5_a_abs_c_idx on mcrparted5 mcrparted_6
 (7 rows)
 
 -- Append is used with subpaths in reverse order with backwards index scans
@@ -2121,12 +2121,12 @@ explain (costs off) select * from mcrparted order by a desc, abs(b) desc, c desc
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Append
-   ->  Index Scan Backward using mcrparted5_a_abs_c_idx on mcrparted5 mcrparted_5
-   ->  Index Scan Backward using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_4
-   ->  Index Scan Backward using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_3
-   ->  Index Scan Backward using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
-   ->  Index Scan Backward using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
-   ->  Index Scan Backward using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted
+   ->  Index Scan Backward using mcrparted5_a_abs_c_idx on mcrparted5 mcrparted_6
+   ->  Index Scan Backward using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_5
+   ->  Index Scan Backward using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_4
+   ->  Index Scan Backward using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_3
+   ->  Index Scan Backward using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_2
+   ->  Index Scan Backward using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted_1
 (7 rows)
 
 -- check that Append plan is used containing a MergeAppend for sub-partitions
@@ -2139,15 +2139,15 @@ explain (costs off) select * from mcrparted order by a, abs(b), c;
                                       QUERY PLAN                                       
 ---------------------------------------------------------------------------------------
  Append
-   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted
-   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
-   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
-   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_3
-   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_4
+   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted_1
+   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_2
+   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_3
+   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_4
+   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_5
    ->  Merge Append
-         Sort Key: mcrparted_5.a, (abs(mcrparted_5.b)), mcrparted_5.c
-         ->  Index Scan using mcrparted5a_a_abs_c_idx on mcrparted5a mcrparted_5
-         ->  Index Scan using mcrparted5_def_a_abs_c_idx on mcrparted5_def mcrparted_6
+         Sort Key: mcrparted_7.a, (abs(mcrparted_7.b)), mcrparted_7.c
+         ->  Index Scan using mcrparted5a_a_abs_c_idx on mcrparted5a mcrparted_7
+         ->  Index Scan using mcrparted5_def_a_abs_c_idx on mcrparted5_def mcrparted_8
 (10 rows)
 
 drop table mcrparted5_def;
@@ -2158,12 +2158,12 @@ explain (costs off) select a, abs(b) from mcrparted order by a, abs(b), c;
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
  Append
-   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted
-   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
-   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
-   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_3
-   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_4
-   ->  Index Scan using mcrparted5a_a_abs_c_idx on mcrparted5a mcrparted_5
+   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted_1
+   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_2
+   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_3
+   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_4
+   ->  Index Scan using mcrparted4_a_abs_c_idx on mcrparted4 mcrparted_5
+   ->  Index Scan using mcrparted5a_a_abs_c_idx on mcrparted5a mcrparted_6
 (7 rows)
 
 -- check that Append is used when the sub-partitioned tables are pruned
@@ -2172,13 +2172,13 @@ explain (costs off) select * from mcrparted where a < 20 order by a, abs(b), c;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Append
-   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted
+   ->  Index Scan using mcrparted0_a_abs_c_idx on mcrparted0 mcrparted_1
          Index Cond: (a < 20)
-   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
+   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_2
          Index Cond: (a < 20)
-   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
+   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_3
          Index Cond: (a < 20)
-   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_3
+   ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_4
          Index Cond: (a < 20)
 (9 rows)
 
@@ -2191,8 +2191,8 @@ explain (costs off) select * from mclparted order by a;
                                QUERY PLAN                               
 ------------------------------------------------------------------------
  Append
-   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted
-   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_1
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_1
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_2
 (3 rows)
 
 -- Ensure a MergeAppend is used when a partition exists with interleaved
@@ -2204,10 +2204,10 @@ explain (costs off) select * from mclparted order by a;
 ----------------------------------------------------------------------------
  Merge Append
    Sort Key: mclparted.a
-   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted
-   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_1
-   ->  Index Only Scan using mclparted3_5_a_idx on mclparted3_5 mclparted_2
-   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_3
+   ->  Index Only Scan using mclparted1_a_idx on mclparted1 mclparted_1
+   ->  Index Only Scan using mclparted2_a_idx on mclparted2 mclparted_2
+   ->  Index Only Scan using mclparted3_5_a_idx on mclparted3_5 mclparted_3
+   ->  Index Only Scan using mclparted4_a_idx on mclparted4 mclparted_4
 (6 rows)
 
 drop table mclparted;
@@ -2224,14 +2224,14 @@ explain (costs off) select * from mcrparted where a < 20 order by a, abs(b), c l
  Limit
    ->  Append
          ->  Sort
-               Sort Key: mcrparted.a, (abs(mcrparted.b)), mcrparted.c
-               ->  Seq Scan on mcrparted0 mcrparted
+               Sort Key: mcrparted_1.a, (abs(mcrparted_1.b)), mcrparted_1.c
+               ->  Seq Scan on mcrparted0 mcrparted_1
                      Filter: (a < 20)
-         ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
+         ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_2
                Index Cond: (a < 20)
-         ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
+         ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_3
                Index Cond: (a < 20)
-         ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_3
+         ->  Index Scan using mcrparted3_a_abs_c_idx on mcrparted3 mcrparted_4
                Index Cond: (a < 20)
 (12 rows)
 
@@ -2242,9 +2242,9 @@ explain (costs off) select * from mcrparted where a = 10 order by a, abs(b), c;
                                QUERY PLAN                                
 -------------------------------------------------------------------------
  Append
-   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted
+   ->  Index Scan using mcrparted1_a_abs_c_idx on mcrparted1 mcrparted_1
          Index Cond: (a = 10)
-   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_1
+   ->  Index Scan using mcrparted2_a_abs_c_idx on mcrparted2 mcrparted_2
          Index Cond: (a = 10)
 (5 rows)
 
@@ -2256,11 +2256,11 @@ create table bool_lp_true partition of bool_lp for values in(true);
 create table bool_lp_false partition of bool_lp for values in(false);
 create index on bool_lp (b);
 explain (costs off) select * from bool_lp order by b;
-                                QUERY PLAN                                
---------------------------------------------------------------------------
+                                 QUERY PLAN                                 
+----------------------------------------------------------------------------
  Append
-   ->  Index Only Scan using bool_lp_false_b_idx on bool_lp_false bool_lp
-   ->  Index Only Scan using bool_lp_true_b_idx on bool_lp_true bool_lp_1
+   ->  Index Only Scan using bool_lp_false_b_idx on bool_lp_false bool_lp_1
+   ->  Index Only Scan using bool_lp_true_b_idx on bool_lp_true bool_lp_2
 (3 rows)
 
 drop table bool_lp;
@@ -2275,9 +2275,9 @@ explain (costs off) select * from bool_rp where b = true order by b,a;
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Append
-   ->  Index Only Scan using bool_rp_true_1k_b_a_idx on bool_rp_true_1k bool_rp
+   ->  Index Only Scan using bool_rp_true_1k_b_a_idx on bool_rp_true_1k bool_rp_1
          Index Cond: (b = true)
-   ->  Index Only Scan using bool_rp_true_2k_b_a_idx on bool_rp_true_2k bool_rp_1
+   ->  Index Only Scan using bool_rp_true_2k_b_a_idx on bool_rp_true_2k bool_rp_2
          Index Cond: (b = true)
 (5 rows)
 
@@ -2285,9 +2285,9 @@ explain (costs off) select * from bool_rp where b = false order by b,a;
                                      QUERY PLAN                                     
 ------------------------------------------------------------------------------------
  Append
-   ->  Index Only Scan using bool_rp_false_1k_b_a_idx on bool_rp_false_1k bool_rp
+   ->  Index Only Scan using bool_rp_false_1k_b_a_idx on bool_rp_false_1k bool_rp_1
          Index Cond: (b = false)
-   ->  Index Only Scan using bool_rp_false_2k_b_a_idx on bool_rp_false_2k bool_rp_1
+   ->  Index Only Scan using bool_rp_false_2k_b_a_idx on bool_rp_false_2k bool_rp_2
          Index Cond: (b = false)
 (5 rows)
 
@@ -2295,9 +2295,9 @@ explain (costs off) select * from bool_rp where b = true order by a;
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
  Append
-   ->  Index Only Scan using bool_rp_true_1k_b_a_idx on bool_rp_true_1k bool_rp
+   ->  Index Only Scan using bool_rp_true_1k_b_a_idx on bool_rp_true_1k bool_rp_1
          Index Cond: (b = true)
-   ->  Index Only Scan using bool_rp_true_2k_b_a_idx on bool_rp_true_2k bool_rp_1
+   ->  Index Only Scan using bool_rp_true_2k_b_a_idx on bool_rp_true_2k bool_rp_2
          Index Cond: (b = true)
 (5 rows)
 
@@ -2305,9 +2305,9 @@ explain (costs off) select * from bool_rp where b = false order by a;
                                      QUERY PLAN                                     
 ------------------------------------------------------------------------------------
  Append
-   ->  Index Only Scan using bool_rp_false_1k_b_a_idx on bool_rp_false_1k bool_rp
+   ->  Index Only Scan using bool_rp_false_1k_b_a_idx on bool_rp_false_1k bool_rp_1
          Index Cond: (b = false)
-   ->  Index Only Scan using bool_rp_false_2k_b_a_idx on bool_rp_false_2k bool_rp_1
+   ->  Index Only Scan using bool_rp_false_2k_b_a_idx on bool_rp_false_2k bool_rp_2
          Index Cond: (b = false)
 (5 rows)
 
@@ -2322,16 +2322,16 @@ explain (costs off) select * from range_parted order by a,b,c;
                                      QUERY PLAN                                      
 -------------------------------------------------------------------------------------
  Append
-   ->  Index Only Scan using range_parted1_a_b_c_idx on range_parted1 range_parted
-   ->  Index Only Scan using range_parted2_a_b_c_idx on range_parted2 range_parted_1
+   ->  Index Only Scan using range_parted1_a_b_c_idx on range_parted1 range_parted_1
+   ->  Index Only Scan using range_parted2_a_b_c_idx on range_parted2 range_parted_2
 (3 rows)
 
 explain (costs off) select * from range_parted order by a desc,b desc,c desc;
                                           QUERY PLAN                                          
 ----------------------------------------------------------------------------------------------
  Append
-   ->  Index Only Scan Backward using range_parted2_a_b_c_idx on range_parted2 range_parted_1
-   ->  Index Only Scan Backward using range_parted1_a_b_c_idx on range_parted1 range_parted
+   ->  Index Only Scan Backward using range_parted2_a_b_c_idx on range_parted2 range_parted_2
+   ->  Index Only Scan Backward using range_parted1_a_b_c_idx on range_parted1 range_parted_1
 (3 rows)
 
 drop table range_parted;

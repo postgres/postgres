@@ -198,13 +198,13 @@ explain (costs off)
 -------------------------------------------------
  Aggregate
    ->  Append
-         ->  Sample Scan on person
+         ->  Sample Scan on person person_1
                Sampling: bernoulli ('100'::real)
-         ->  Sample Scan on emp person_1
+         ->  Sample Scan on emp person_2
                Sampling: bernoulli ('100'::real)
-         ->  Sample Scan on student person_2
+         ->  Sample Scan on student person_3
                Sampling: bernoulli ('100'::real)
-         ->  Sample Scan on stud_emp person_3
+         ->  Sample Scan on stud_emp person_4
                Sampling: bernoulli ('100'::real)
 (10 rows)
 
@@ -319,12 +319,12 @@ create table parted_sample_1 partition of parted_sample for values in (1);
 create table parted_sample_2 partition of parted_sample for values in (2);
 explain (costs off)
   select * from parted_sample tablesample bernoulli (100);
-                      QUERY PLAN                      
-------------------------------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Append
-   ->  Sample Scan on parted_sample_1 parted_sample
+   ->  Sample Scan on parted_sample_1
          Sampling: bernoulli ('100'::real)
-   ->  Sample Scan on parted_sample_2 parted_sample_1
+   ->  Sample Scan on parted_sample_2
          Sampling: bernoulli ('100'::real)
 (5 rows)
 

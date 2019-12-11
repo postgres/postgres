@@ -1118,6 +1118,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 	plan->plan.qual = NIL;
 	plan->plan.lefttree = NULL;
 	plan->plan.righttree = NULL;
+	plan->apprelids = rel->relids;
 
 	if (pathkeys != NIL)
 	{
@@ -1295,6 +1296,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 	plan->qual = NIL;
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
+	node->apprelids = rel->relids;
 
 	/*
 	 * Compute sort column info, and adjust MergeAppend's tlist as needed.

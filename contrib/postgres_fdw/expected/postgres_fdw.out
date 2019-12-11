@@ -7094,10 +7094,10 @@ select * from bar where f1 in (select f1 from foo) for update;
          Inner Unique: true
          Hash Cond: (bar.f1 = foo.f1)
          ->  Append
-               ->  Seq Scan on public.bar
-                     Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid
-               ->  Foreign Scan on public.bar2 bar_1
+               ->  Seq Scan on public.bar bar_1
                      Output: bar_1.f1, bar_1.f2, bar_1.ctid, bar_1.*, bar_1.tableoid
+               ->  Foreign Scan on public.bar2 bar_2
+                     Output: bar_2.f1, bar_2.f2, bar_2.ctid, bar_2.*, bar_2.tableoid
                      Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR UPDATE
          ->  Hash
                Output: foo.ctid, foo.f1, foo.*, foo.tableoid
@@ -7105,10 +7105,10 @@ select * from bar where f1 in (select f1 from foo) for update;
                      Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
-                           ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
-                           ->  Foreign Scan on public.foo2 foo_1
+                           ->  Seq Scan on public.foo foo_1
                                  Output: foo_1.ctid, foo_1.f1, foo_1.*, foo_1.tableoid
+                           ->  Foreign Scan on public.foo2 foo_2
+                                 Output: foo_2.ctid, foo_2.f1, foo_2.*, foo_2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
 (23 rows)
 
@@ -7132,10 +7132,10 @@ select * from bar where f1 in (select f1 from foo) for share;
          Inner Unique: true
          Hash Cond: (bar.f1 = foo.f1)
          ->  Append
-               ->  Seq Scan on public.bar
-                     Output: bar.f1, bar.f2, bar.ctid, bar.*, bar.tableoid
-               ->  Foreign Scan on public.bar2 bar_1
+               ->  Seq Scan on public.bar bar_1
                      Output: bar_1.f1, bar_1.f2, bar_1.ctid, bar_1.*, bar_1.tableoid
+               ->  Foreign Scan on public.bar2 bar_2
+                     Output: bar_2.f1, bar_2.f2, bar_2.ctid, bar_2.*, bar_2.tableoid
                      Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct2 FOR SHARE
          ->  Hash
                Output: foo.ctid, foo.f1, foo.*, foo.tableoid
@@ -7143,10 +7143,10 @@ select * from bar where f1 in (select f1 from foo) for share;
                      Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
-                           ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
-                           ->  Foreign Scan on public.foo2 foo_1
+                           ->  Seq Scan on public.foo foo_1
                                  Output: foo_1.ctid, foo_1.f1, foo_1.*, foo_1.tableoid
+                           ->  Foreign Scan on public.foo2 foo_2
+                                 Output: foo_2.ctid, foo_2.f1, foo_2.*, foo_2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
 (23 rows)
 
@@ -7180,10 +7180,10 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
                      Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
-                           ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
-                           ->  Foreign Scan on public.foo2 foo_1
+                           ->  Seq Scan on public.foo foo_1
                                  Output: foo_1.ctid, foo_1.f1, foo_1.*, foo_1.tableoid
+                           ->  Foreign Scan on public.foo2 foo_2
+                                 Output: foo_2.ctid, foo_2.f1, foo_2.*, foo_2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
    ->  Hash Join
          Output: bar_1.f1, (bar_1.f2 + 100), bar_1.f3, bar_1.ctid, foo.ctid, foo.*, foo.tableoid
@@ -7198,10 +7198,10 @@ update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
                      Output: foo.ctid, foo.f1, foo.*, foo.tableoid
                      Group Key: foo.f1
                      ->  Append
-                           ->  Seq Scan on public.foo
-                                 Output: foo.ctid, foo.f1, foo.*, foo.tableoid
-                           ->  Foreign Scan on public.foo2 foo_1
+                           ->  Seq Scan on public.foo foo_1
                                  Output: foo_1.ctid, foo_1.f1, foo_1.*, foo_1.tableoid
+                           ->  Foreign Scan on public.foo2 foo_2
+                                 Output: foo_2.ctid, foo_2.f1, foo_2.*, foo_2.tableoid
                                  Remote SQL: SELECT f1, f2, f3, ctid FROM public.loct1
 (39 rows)
 
@@ -7316,10 +7316,10 @@ explain (verbose, costs off)
                Merge Cond: (foo.f1 = loct1.f1)
                ->  Merge Append
                      Sort Key: foo.f1
-                     ->  Index Scan using i_foo_f1 on public.foo
-                           Output: foo.f1, foo.f2
-                     ->  Foreign Scan on public.foo2 foo_1
+                     ->  Index Scan using i_foo_f1 on public.foo foo_1
                            Output: foo_1.f1, foo_1.f2
+                     ->  Foreign Scan on public.foo2 foo_2
+                           Output: foo_2.f1, foo_2.f2
                            Remote SQL: SELECT f1, f2 FROM public.loct1 ORDER BY f1 ASC NULLS LAST
                ->  Index Only Scan using i_loct1_f1 on public.loct1
                      Output: loct1.f1
@@ -7356,10 +7356,10 @@ explain (verbose, costs off)
                Merge Cond: (foo.f1 = loct1.f1)
                ->  Merge Append
                      Sort Key: foo.f1
-                     ->  Index Scan using i_foo_f1 on public.foo
-                           Output: foo.f1, foo.f2
-                     ->  Foreign Scan on public.foo2 foo_1
+                     ->  Index Scan using i_foo_f1 on public.foo foo_1
                            Output: foo_1.f1, foo_1.f2
+                     ->  Foreign Scan on public.foo2 foo_2
+                           Output: foo_2.f1, foo_2.f2
                            Remote SQL: SELECT f1, f2 FROM public.loct1 ORDER BY f1 ASC NULLS LAST
                ->  Index Only Scan using i_loct1_f1 on public.loct1
                      Output: loct1.f1
@@ -8516,9 +8516,9 @@ SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER J
    Sort Key: t1.a, t3.c
    ->  Append
          ->  Foreign Scan
-               Relations: ((ftprt1_p1 t1) INNER JOIN (ftprt2_p1 t2)) INNER JOIN (ftprt1_p1 t3)
+               Relations: ((ftprt1_p1 t1_1) INNER JOIN (ftprt2_p1 t2_1)) INNER JOIN (ftprt1_p1 t3_1)
          ->  Foreign Scan
-               Relations: ((ftprt1_p2 t1_1) INNER JOIN (ftprt2_p2 t2_1)) INNER JOIN (ftprt1_p2 t3_1)
+               Relations: ((ftprt1_p2 t1_2) INNER JOIN (ftprt2_p2 t2_2)) INNER JOIN (ftprt1_p2 t3_2)
 (7 rows)
 
 SELECT t1.a,t2.b,t3.c FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) INNER JOIN fprt1 t3 ON (t2.b = t3.a) WHERE t1.a % 25 =0 ORDER BY 1,2,3;
@@ -8561,12 +8561,12 @@ SELECT t1.wr, t2.wr FROM (SELECT t1 wr, a FROM fprt1 t1 WHERE t1.a % 25 = 0) t1 
    ->  Hash Full Join
          Hash Cond: (t1.a = t2.b)
          ->  Append
-               ->  Foreign Scan on ftprt1_p1 t1
-               ->  Foreign Scan on ftprt1_p2 t1_1
+               ->  Foreign Scan on ftprt1_p1 t1_1
+               ->  Foreign Scan on ftprt1_p2 t1_2
          ->  Hash
                ->  Append
-                     ->  Foreign Scan on ftprt2_p1 t2
-                     ->  Foreign Scan on ftprt2_p2 t2_1
+                     ->  Foreign Scan on ftprt2_p1 t2_1
+                     ->  Foreign Scan on ftprt2_p2 t2_2
 (11 rows)
 
 SELECT t1.wr, t2.wr FROM (SELECT t1 wr, a FROM fprt1 t1 WHERE t1.a % 25 = 0) t1 FULL JOIN (SELECT t2 wr, b FROM fprt2 t2 WHERE t2.b % 25 = 0) t2 ON (t1.a = t2.b) ORDER BY 1,2;
@@ -8597,9 +8597,9 @@ SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t
    Sort Key: t1.a, t1.b
    ->  Append
          ->  Foreign Scan
-               Relations: (ftprt1_p1 t1) INNER JOIN (ftprt2_p1 t2)
+               Relations: (ftprt1_p1 t1_1) INNER JOIN (ftprt2_p1 t2_1)
          ->  Foreign Scan
-               Relations: (ftprt1_p2 t1_1) INNER JOIN (ftprt2_p2 t2_1)
+               Relations: (ftprt1_p2 t1_2) INNER JOIN (ftprt2_p2 t2_2)
 (7 rows)
 
 SELECT t1.a,t1.b FROM fprt1 t1, LATERAL (SELECT t2.a, t2.b FROM fprt2 t2 WHERE t1.a = t2.b AND t1.b = t2.a) q WHERE t1.a%25 = 0 ORDER BY 1,2;
@@ -8620,15 +8620,15 @@ SELECT t1.a, t1.phv, t2.b, t2.phv FROM (SELECT 't1_phv' phv, * FROM fprt1 WHERE 
    Sort Key: fprt1.a, fprt2.b
    ->  Append
          ->  Hash Full Join
-               Hash Cond: (fprt1.a = fprt2.b)
-               ->  Foreign Scan on ftprt1_p1 fprt1
-               ->  Hash
-                     ->  Foreign Scan on ftprt2_p1 fprt2
-         ->  Hash Full Join
                Hash Cond: (fprt1_1.a = fprt2_1.b)
-               ->  Foreign Scan on ftprt1_p2 fprt1_1
+               ->  Foreign Scan on ftprt1_p1 fprt1_1
                ->  Hash
-                     ->  Foreign Scan on ftprt2_p2 fprt2_1
+                     ->  Foreign Scan on ftprt2_p1 fprt2_1
+         ->  Hash Full Join
+               Hash Cond: (fprt1_2.a = fprt2_2.b)
+               ->  Foreign Scan on ftprt1_p2 fprt1_2
+               ->  Hash
+                     ->  Foreign Scan on ftprt2_p2 fprt2_2
 (13 rows)
 
 SELECT t1.a, t1.phv, t2.b, t2.phv FROM (SELECT 't1_phv' phv, * FROM fprt1 WHERE a % 25 = 0) t1 FULL JOIN (SELECT 't2_phv' phv, * FROM fprt2 WHERE b % 25 = 0) t2 ON (t1.a = t2.b) ORDER BY t1.a, t2.b;
@@ -8661,12 +8661,12 @@ SELECT t1.a, t2.b FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) WHERE t1.a 
          ->  Hash Join
                Hash Cond: (t2.b = t1.a)
                ->  Append
-                     ->  Foreign Scan on ftprt2_p1 t2
-                     ->  Foreign Scan on ftprt2_p2 t2_1
+                     ->  Foreign Scan on ftprt2_p1 t2_1
+                     ->  Foreign Scan on ftprt2_p2 t2_2
                ->  Hash
                      ->  Append
-                           ->  Foreign Scan on ftprt1_p1 t1
-                           ->  Foreign Scan on ftprt1_p2 t1_1
+                           ->  Foreign Scan on ftprt1_p1 t1_1
+                           ->  Foreign Scan on ftprt1_p2 t1_2
 (12 rows)
 
 SELECT t1.a, t2.b FROM fprt1 t1 INNER JOIN fprt2 t2 ON (t1.a = t2.b) WHERE t1.a % 25 = 0 ORDER BY 1,2 FOR UPDATE OF t1;
@@ -8710,9 +8710,9 @@ SELECT a, sum(b), min(b), count(*) FROM pagg_tab GROUP BY a HAVING avg(b) < 22 O
          Group Key: pagg_tab.a
          Filter: (avg(pagg_tab.b) < '22'::numeric)
          ->  Append
-               ->  Foreign Scan on fpagg_tab_p1 pagg_tab
-               ->  Foreign Scan on fpagg_tab_p2 pagg_tab_1
-               ->  Foreign Scan on fpagg_tab_p3 pagg_tab_2
+               ->  Foreign Scan on fpagg_tab_p1 pagg_tab_1
+               ->  Foreign Scan on fpagg_tab_p2 pagg_tab_2
+               ->  Foreign Scan on fpagg_tab_p3 pagg_tab_3
 (9 rows)
 
 -- Plan with partitionwise aggregates is enabled

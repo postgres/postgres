@@ -21,12 +21,12 @@ explain (costs off)
          Workers Planned: 3
          ->  Partial Aggregate
                ->  Parallel Append
-                     ->  Parallel Seq Scan on d_star a_star_3
-                     ->  Parallel Seq Scan on f_star a_star_5
-                     ->  Parallel Seq Scan on e_star a_star_4
-                     ->  Parallel Seq Scan on b_star a_star_1
-                     ->  Parallel Seq Scan on c_star a_star_2
-                     ->  Parallel Seq Scan on a_star
+                     ->  Parallel Seq Scan on d_star a_star_4
+                     ->  Parallel Seq Scan on f_star a_star_6
+                     ->  Parallel Seq Scan on e_star a_star_5
+                     ->  Parallel Seq Scan on b_star a_star_2
+                     ->  Parallel Seq Scan on c_star a_star_3
+                     ->  Parallel Seq Scan on a_star a_star_1
 (11 rows)
 
 select round(avg(aa)), sum(aa) from a_star a1;
@@ -47,12 +47,12 @@ explain (costs off)
          Workers Planned: 3
          ->  Partial Aggregate
                ->  Parallel Append
-                     ->  Seq Scan on d_star a_star_3
-                     ->  Seq Scan on c_star a_star_2
-                     ->  Parallel Seq Scan on f_star a_star_5
-                     ->  Parallel Seq Scan on e_star a_star_4
-                     ->  Parallel Seq Scan on b_star a_star_1
-                     ->  Parallel Seq Scan on a_star
+                     ->  Seq Scan on d_star a_star_4
+                     ->  Seq Scan on c_star a_star_3
+                     ->  Parallel Seq Scan on f_star a_star_6
+                     ->  Parallel Seq Scan on e_star a_star_5
+                     ->  Parallel Seq Scan on b_star a_star_2
+                     ->  Parallel Seq Scan on a_star a_star_1
 (11 rows)
 
 select round(avg(aa)), sum(aa) from a_star a2;
@@ -75,12 +75,12 @@ explain (costs off)
          Workers Planned: 3
          ->  Partial Aggregate
                ->  Parallel Append
-                     ->  Seq Scan on d_star a_star_3
-                     ->  Seq Scan on f_star a_star_5
-                     ->  Seq Scan on e_star a_star_4
-                     ->  Seq Scan on b_star a_star_1
-                     ->  Seq Scan on c_star a_star_2
-                     ->  Seq Scan on a_star
+                     ->  Seq Scan on d_star a_star_4
+                     ->  Seq Scan on f_star a_star_6
+                     ->  Seq Scan on e_star a_star_5
+                     ->  Seq Scan on b_star a_star_2
+                     ->  Seq Scan on c_star a_star_3
+                     ->  Seq Scan on a_star a_star_1
 (11 rows)
 
 select round(avg(aa)), sum(aa) from a_star a3;
@@ -106,12 +106,12 @@ explain (costs off)
          Workers Planned: 1
          ->  Partial Aggregate
                ->  Append
-                     ->  Parallel Seq Scan on a_star
-                     ->  Parallel Seq Scan on b_star a_star_1
-                     ->  Parallel Seq Scan on c_star a_star_2
-                     ->  Parallel Seq Scan on d_star a_star_3
-                     ->  Parallel Seq Scan on e_star a_star_4
-                     ->  Parallel Seq Scan on f_star a_star_5
+                     ->  Parallel Seq Scan on a_star a_star_1
+                     ->  Parallel Seq Scan on b_star a_star_2
+                     ->  Parallel Seq Scan on c_star a_star_3
+                     ->  Parallel Seq Scan on d_star a_star_4
+                     ->  Parallel Seq Scan on e_star a_star_5
+                     ->  Parallel Seq Scan on f_star a_star_6
 (11 rows)
 
 select round(avg(aa)), sum(aa) from a_star a4;
@@ -145,15 +145,15 @@ explain (costs off)
    ->  Gather
          Workers Planned: 3
          ->  Parallel Append
-               ->  Parallel Seq Scan on part_pa_test_p1 pa2
-               ->  Parallel Seq Scan on part_pa_test_p2 pa2_1
+               ->  Parallel Seq Scan on part_pa_test_p1 pa2_1
+               ->  Parallel Seq Scan on part_pa_test_p2 pa2_2
    SubPlan 2
      ->  Result
    SubPlan 1
      ->  Append
-           ->  Seq Scan on part_pa_test_p1 pa1
+           ->  Seq Scan on part_pa_test_p1 pa1_1
                  Filter: (a = pa2.a)
-           ->  Seq Scan on part_pa_test_p2 pa1_1
+           ->  Seq Scan on part_pa_test_p2 pa1_2
                  Filter: (a = pa2.a)
 (14 rows)
 

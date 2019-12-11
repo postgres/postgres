@@ -122,6 +122,8 @@ typedef struct PlannerGlobal
 
 	List	   *rootResultRelations;	/* "flat" list of integer RT indexes */
 
+	List	   *appendRelations;	/* "flat" list of AppendRelInfos */
+
 	List	   *relationOids;	/* OIDs of relations the plan depends on */
 
 	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
