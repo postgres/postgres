@@ -838,16 +838,6 @@ execute mt_q1(35);
 
 deallocate mt_q1;
 
-set plan_cache_mode = force_generic_plan;
-
-prepare mt_q2 (int) as select * from ma_test where a >= $1 order by b limit 1;
-
--- Ensure output list looks sane when the MergeAppend has no subplans.
-explain (analyze, verbose, costs off, summary off, timing off) execute mt_q2 (35);
-
-deallocate mt_q2;
-reset plan_cache_mode;
-
 -- ensure initplan params properly prune partitions
 explain (analyze, costs off, summary off, timing off) select * from ma_test where a >= (select min(b) from ma_test_p2) order by b;
 
