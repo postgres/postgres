@@ -118,8 +118,8 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form validates a constraint previously added as
-      <literal>NOT VALID</literal>, that is, verify that all data in columns using the
-      domain satisfy the specified constraint.
+      <literal>NOT VALID</literal>, that is, it verifies that all values in
+      table columns of the domain type satisfy the specified constraint.
      </para>
     </listitem>
    </varlistentry>
@@ -202,7 +202,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
       <term><literal>NOT VALID</literal></term>
       <listitem>
        <para>
-        Do not verify existing column data for constraint validity.
+        Do not verify existing stored data for constraint validity.
        </para>
       </listitem>
      </varlistentry>
@@ -271,6 +271,21 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
 
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   Although <command>ALTER DOMAIN ADD CONSTRAINT</command> attempts to verify
+   that existing stored data satisfies the new constraint, this check is not
+   bulletproof, because the command cannot <quote>see</quote> table rows that
+   are newly inserted or updated and not yet committed.  If there is a hazard
+   that concurrent operations might insert bad data, the way to proceed is to
+   add the constraint using the <literal>NOT VALID</literal> option, commit
+   that command, wait until all transactions started before that commit have
+   finished, and then issue <command>ALTER DOMAIN VALIDATE
+   CONSTRAINT</command> to search for data violating the constraint.  This
+   method is reliable because once the constraint is committed, all new
+   transactions are guaranteed to enforce it against new values of the domain
+   type.
+  </para>
 
   <para>
    Currently, <command>ALTER DOMAIN ADD CONSTRAINT</command>, <command>ALTER
