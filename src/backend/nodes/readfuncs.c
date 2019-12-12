@@ -1343,6 +1343,33 @@ _readOnConflictExpr(void)
 }
 
 /*
+ *	Stuff from pathnodes.h.
+ *
+ * Mostly we don't need to read planner nodes back in again, but some
+ * of these also end up in plan trees.
+ */
+
+/*
+ * _readAppendRelInfo
+ */
+static AppendRelInfo *
+_readAppendRelInfo(void)
+{
+	READ_LOCALS(AppendRelInfo);
+
+	READ_UINT_FIELD(parent_relid);
+	READ_UINT_FIELD(child_relid);
+	READ_OID_FIELD(parent_reltype);
+	READ_OID_FIELD(child_reltype);
+	READ_NODE_FIELD(translated_vars);
+	READ_INT_FIELD(num_child_cols);
+	READ_ATTRNUMBER_ARRAY(parent_colnos, local_node->num_child_cols);
+	READ_OID_FIELD(parent_reloid);
+
+	READ_DONE();
+}
+
+/*
  *	Stuff from parsenodes.h.
  */
 
@@ -2690,6 +2717,8 @@ parseNodeString(void)
 		return_value = _readFromExpr();
 	else if (MATCH("ONCONFLICTEXPR", 14))
 		return_value = _readOnConflictExpr();
+	else if (MATCH("APPENDRELINFO", 13))
+		return_value = _readAppendRelInfo();
 	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
 	else if (MATCH("RANGETBLFUNCTION", 16))
