@@ -2261,7 +2261,7 @@ get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
  *		AND
  *	(b > bl OR (b = bl AND c >= cl))
  *		AND
- *	(b < bu) OR (b = bu AND c < cu))
+ *	(b < bu OR (b = bu AND c < cu))
  *
  * If a bound datum is either MINVALUE or MAXVALUE, these expressions are
  * simplified using the fact that any value is greater than MINVALUE and less
