@@ -198,21 +198,36 @@ SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
   FROM TIMESTAMPTZ_TBL
   WHERE d1 BETWEEN timestamp with time zone '1902-01-01' AND timestamp with time zone '2038-01-01';
 
-SELECT '' AS "54", d1 as timestamptz,
+-- DATE_PART (timestamptz_part)
+SELECT d1 as timestamptz,
    date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
    date_part( 'day', d1) AS day, date_part( 'hour', d1) AS hour,
    date_part( 'minute', d1) AS minute, date_part( 'second', d1) AS second
-   FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+   FROM TIMESTAMPTZ_TBL;
 
-SELECT '' AS "54", d1 as timestamptz,
+SELECT d1 as timestamptz,
    date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
    date_part( 'usec', d1) AS usec
-   FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+   FROM TIMESTAMPTZ_TBL;
 
-SELECT '' AS "54", d1 as timestamptz,
+SELECT d1 as timestamptz,
    date_part( 'isoyear', d1) AS isoyear, date_part( 'week', d1) AS week,
-   date_part( 'dow', d1) AS dow
-   FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+   date_part( 'isodow', d1) AS isodow, date_part( 'dow', d1) AS dow,
+   date_part( 'doy', d1) AS doy
+   FROM TIMESTAMPTZ_TBL;
+
+SELECT d1 as timestamptz,
+   date_part( 'decade', d1) AS decade,
+   date_part( 'century', d1) AS century,
+   date_part( 'millennium', d1) AS millennium,
+   round(date_part( 'julian', d1)) AS julian
+   FROM TIMESTAMPTZ_TBL;
+
+SELECT d1 as timestamptz,
+   date_part( 'timezone', d1) AS timezone,
+   date_part( 'timezone_hour', d1) AS timezone_hour,
+   date_part( 'timezone_minute', d1) AS timezone_minute
+   FROM TIMESTAMPTZ_TBL;
 
 -- TO_CHAR()
 SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon')
