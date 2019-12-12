@@ -296,8 +296,7 @@ pgbench(
 		[],
 		[
 		qr{ERROR:  invalid input syntax for type json},
-		qr[CONTEXT:  JSON data, line 1: \{ invalid\.\.\.
-extended query with parameters: \$1 = '\{ invalid ', \$2 = '''Valame Dios!'' dijo Sancho; ''no le dije yo a vuestra merced que ...'$]m
+		qr[CONTEXT:  JSON data, line 1: \{ invalid\.\.\.[\r\n]+extended query with parameters: \$1 = '\{ invalid ', \$2 = '''Valame Dios!'' dijo Sancho; ''no le dije yo a vuestra merced que \.\.\.']m
 		],
 		'server parameter logging',
 		{
