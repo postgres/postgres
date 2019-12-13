@@ -21,7 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
+REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
+
+<phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
+
+    VERBOSE
 </synopsis>
  </refsynopsisdiv>
 
@@ -422,10 +426,10 @@ REINDEX INDEX my_index;
   </para>
 
   <para>
-   Rebuild all the indexes on the table <literal>my_table</literal>:
+   Rebuild all the indexes on the table <literal>my_table</literal> with progress report per index:
 
 <programlisting>
-REINDEX TABLE my_table;
+REINDEX (VERBOSE) TABLE my_table;
 </programlisting>
   </para>
 
