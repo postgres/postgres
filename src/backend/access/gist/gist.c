@@ -1345,6 +1345,7 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 			 * If the parent page was split, need to relocate the original
 			 * parent pointer.
 			 */
+			stack->downlinkoffnum = InvalidOffsetNumber;
 			gistFindCorrectParent(state->r, stack);
 		}
 		/* gistinserttuples() released the lock on right->buf. */
