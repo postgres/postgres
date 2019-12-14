@@ -1280,25 +1280,48 @@ int
 mdsyncfiletag(const FileTag *ftag, char *path)
 {
 	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId);
-	MdfdVec    *v;
-	char	   *p;
+	int			fd,
+				result,
+				save_errno;
+	bool		need_to_close;
 
-	/* Provide the path for informational messages. */
-	p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
-	strlcpy(path, p, MAXPGPATH);
-	pfree(p);
+	/* See if we already have the file open, or need to open it. */
+	if (ftag->segno < reln->md_num_open_segs[ftag->forknum])
+	{
+		File		file;
 
-	/* Try to open the requested segment. */
-	v = _mdfd_getseg(reln,
-					 ftag->forknum,
-					 ftag->segno * (BlockNumber) RELSEG_SIZE,
-					 false,
-					 EXTENSION_RETURN_NULL | EXTENSION_DONT_CHECK_SIZE);
-	if (v == NULL)
-		return -1;
+		file = reln->md_seg_fds[ftag->forknum][ftag->segno].mdfd_vfd;
+		strlcpy(path, FilePathName(file), MAXPGPATH);
+		fd = FileGetRawDesc(file);
+		need_to_close = false;
+	}
+	else
+	{
+		char	   *p;
 
-	/* Try to fsync the file. */
-	return FileSync(v->mdfd_vfd, WAIT_EVENT_DATA_FILE_SYNC);
+		p = _mdfd_segpath(reln, ftag->forknum, ftag->segno);
+		strlcpy(path, p, MAXPGPATH);
+		pfree(p);
+
+		fd = OpenTransientFile(path, O_RDWR);
+		if (fd < 0)
+			return -1;
+		need_to_close = true;
+	}
+
+	/* Sync the file. */
+	pgstat_report_wait_start(WAIT_EVENT_DATA_FILE_SYNC);
+	result = pg_fsync(fd);
+	save_errno = errno;
+	pgstat_report_wait_end();
+
+	if (need_to_close && CloseTransientFile(fd) != 0)
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m", path)));
+	errno = save_errno;
+
+	return result;
 }
 
 /*
