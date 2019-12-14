@@ -3242,6 +3242,32 @@ where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
       11 | WFAAAA   |       3 | LKIAAA
 (1 row)
 
+-- Here's a variant that we can't fold too aggressively, though,
+-- or we end up with noplace to evaluate the lateral PHV
+explain (verbose, costs off)
+select * from
+  (select 1 as x) ss1 left join (select 2 as y) ss2 on (true),
+  lateral (select ss2.y as z limit 1) ss3;
+        QUERY PLAN         
+---------------------------
+ Nested Loop
+   Output: 1, (2), ((2))
+   ->  Result
+         Output: 2
+   ->  Limit
+         Output: ((2))
+         ->  Result
+               Output: (2)
+(8 rows)
+
+select * from
+  (select 1 as x) ss1 left join (select 2 as y) ss2 on (true),
+  lateral (select ss2.y as z limit 1) ss3;
+ x | y | z 
+---+---+---
+ 1 | 2 | 2
+(1 row)
+
 --
 -- test inlining of immutable functions
 --

@@ -141,6 +141,9 @@ extern bool range_table_walker(List *rtable, bool (*walker) (),
 extern List *range_table_mutator(List *rtable, Node *(*mutator) (),
 								 void *context, int flags);
 
+extern bool range_table_entry_walker(RangeTblEntry *rte, bool (*walker) (),
+									 void *context, int flags);
+
 extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (),
 											void *context, int flags);
 extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (),
