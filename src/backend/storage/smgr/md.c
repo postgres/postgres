@@ -1280,19 +1280,16 @@ int
 mdsyncfiletag(const FileTag *ftag, char *path)
 {
 	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId);
-	int			fd,
-				result,
-				save_errno;
+	File		file;
 	bool		need_to_close;
+	int			result,
+				save_errno;
 
 	/* See if we already have the file open, or need to open it. */
 	if (ftag->segno < reln->md_num_open_segs[ftag->forknum])
 	{
-		File		file;
-
 		file = reln->md_seg_fds[ftag->forknum][ftag->segno].mdfd_vfd;
 		strlcpy(path, FilePathName(file), MAXPGPATH);
-		fd = FileGetRawDesc(file);
 		need_to_close = false;
 	}
 	else
@@ -1303,24 +1300,20 @@ mdsyncfiletag(const FileTag *ftag, char *path)
 		strlcpy(path, p, MAXPGPATH);
 		pfree(p);
 
-		fd = OpenTransientFile(path, O_RDWR);
-		if (fd < 0)
+		file = PathNameOpenFile(path, O_RDWR | PG_BINARY);
+		if (file < 0)
 			return -1;
 		need_to_close = true;
 	}
 
 	/* Sync the file. */
-	pgstat_report_wait_start(WAIT_EVENT_DATA_FILE_SYNC);
-	result = pg_fsync(fd);
+	result = FileSync(file, WAIT_EVENT_DATA_FILE_SYNC);
 	save_errno = errno;
-	pgstat_report_wait_end();
 
-	if (need_to_close && CloseTransientFile(fd) != 0)
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not close file \"%s\": %m", path)));
+	if (need_to_close)
+		FileClose(file);
+
 	errno = save_errno;
-
 	return result;
 }
 
