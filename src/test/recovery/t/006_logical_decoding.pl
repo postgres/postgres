@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 10;
+use Test::More tests => 11;
 use Config;
 
 # Initialize master node
@@ -134,6 +134,44 @@ is($node_master->psql('postgres', 'DROP DATABASE otherdb'),
 	0, 'dropping a DB with inactive logical slots succeeds');
 is($node_master->slot('otherdb_slot')->{'slot_name'},
 	undef, 'logical slot was actually dropped with DB');
+
+# Test to ensure that we don't run out of file descriptors even if there
+# are more spill files than maxAllocatedDescs.
+
+# Set max_files_per_process to a small value to make it more likely to run out
+# of max open file descriptors.
+$node_master->safe_psql('postgres',
+	'ALTER SYSTEM SET max_files_per_process = 26;');
+$node_master->restart;
+
+$node_master->safe_psql(
+	'postgres', q{
+do $$
+BEGIN
+    FOR i IN 1..10 LOOP
+        BEGIN
+            INSERT INTO decoding_test(x) SELECT generate_series(1,5000);
+        EXCEPTION
+            when division_by_zero then perform 'dummy';
+        END;
+    END LOOP;
+END $$;
+});
+
+$result = $node_master->safe_psql('postgres',
+	qq[
+set logical_decoding_work_mem to 64; -- generate plenty of .spill files
+SELECT data from pg_logical_slot_get_changes('test_slot', NULL, NULL)
+    WHERE data LIKE '%INSERT%' ORDER BY lsn LIMIT 1;
+]);
+
+$expected = q{table public.decoding_test: INSERT: x[integer]:1 y[text]:null};
+is($result, $expected, 'got expected output from spilling subxacts session');
+
+# Reset back max_files_per_process
+$node_master->safe_psql('postgres',
+	'ALTER SYSTEM SET max_files_per_process = DEFAULT;');
+$node_master->restart;
 
 # done with the node
 $node_master->stop;
