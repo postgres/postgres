@@ -1445,8 +1445,6 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		pgstat_progress_update_multi_param(2, hvp_index, hvp_val);
 
 		/* Remove tuples from heap */
-		pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
-									 PROGRESS_VACUUM_PHASE_VACUUM_HEAP);
 		lazy_vacuum_heap(onerel, vacrelstats);
 		vacrelstats->num_index_scans++;
 	}
