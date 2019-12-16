@@ -1338,10 +1338,9 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 	}
 
 	LockBuffer(stack->parent->buffer, GIST_EXCLUSIVE);
-	gistFindCorrectParent(state->r, stack);
 
 	/*
-	 * insert downlinks for the siblings from right to left, until there are
+	 * Insert downlinks for the siblings from right to left, until there are
 	 * only two siblings left.
 	 */
 	while (list_length(reversed) > 2)
@@ -1349,17 +1348,17 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 		right = (GISTPageSplitInfo *) linitial(reversed);
 		left = (GISTPageSplitInfo *) lsecond(reversed);
 
+		gistFindCorrectParent(state->r, stack);
 		if (gistinserttuples(state, stack->parent, giststate,
 							 &right->downlink, 1,
 							 InvalidOffsetNumber,
 							 left->buf, right->buf, false, false))
 		{
 			/*
-			 * If the parent page was split, need to relocate the original
-			 * parent pointer.
+			 * If the parent page was split, the existing downlink might
+			 * have moved.
 			 */
 			stack->downlinkoffnum = InvalidOffsetNumber;
-			gistFindCorrectParent(state->r, stack);
 		}
 		/* gistinserttuples() released the lock on right->buf. */
 		reversed = list_delete_first(reversed);
@@ -1375,13 +1374,21 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 	 */
 	tuples[0] = left->downlink;
 	tuples[1] = right->downlink;
-	gistinserttuples(state, stack->parent, giststate,
-					 tuples, 2,
-					 stack->downlinkoffnum,
-					 left->buf, right->buf,
-					 true,		/* Unlock parent */
-					 unlockbuf	/* Unlock stack->buffer if caller wants that */
-		);
+	gistFindCorrectParent(state->r, stack);
+	if (gistinserttuples(state, stack->parent, giststate,
+						 tuples, 2,
+						 stack->downlinkoffnum,
+						 left->buf, right->buf,
+						 true,		/* Unlock parent */
+						 unlockbuf	/* Unlock stack->buffer if caller wants that */
+			))
+	{
+		/*
+		 * If the parent page was split, the downlink might have moved.
+		 */
+		stack->downlinkoffnum = InvalidOffsetNumber;
+	}
+
 	Assert(left->buf == stack->buffer);
 
 	/*
