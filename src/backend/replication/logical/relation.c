@@ -220,6 +220,8 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 {
 	LogicalRepRelMapEntry *entry;
 	bool		found;
+	Oid			relid = InvalidOid;
+	LogicalRepRelation *remoterel;
 
 	if (LogicalRepRelMap == NULL)
 		logicalrep_relmap_init();
@@ -232,19 +234,16 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		elog(ERROR, "no relation map entry for remote relation ID %u",
 			 remoteid);
 
-	/* Need to update the local cache? */
+	remoterel = &entry->remoterel;
+
+	/*
+	 * When opening and locking a relation, pending invalidation messages are
+	 * processed which can invalidate the relation.  We need to update the
+	 * local cache both when we are first time accessing the relation and when
+	 * the relation is invalidated (aka entry->localreloid is set InvalidOid).
+	 */
 	if (!OidIsValid(entry->localreloid))
 	{
-		Oid			relid;
-		int			i;
-		int			found;
-		Bitmapset  *idkey;
-		TupleDesc	desc;
-		LogicalRepRelation *remoterel;
-		MemoryContext oldctx;
-
-		remoterel = &entry->remoterel;
-
 		/* Try to find and lock the relation by name. */
 		relid = RangeVarGetRelid(makeRangeVar(remoterel->nspname,
 											  remoterel->relname, -1),
@@ -255,6 +254,21 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 					 errmsg("logical replication target relation \"%s.%s\" does not exist",
 							remoterel->nspname, remoterel->relname)));
 		entry->localrel = table_open(relid, NoLock);
+
+	}
+	else
+	{
+		relid = entry->localreloid;
+		entry->localrel = table_open(entry->localreloid, lockmode);
+	}
+
+	if (!OidIsValid(entry->localreloid))
+	{
+		int			found;
+		Bitmapset  *idkey;
+		TupleDesc	desc;
+		MemoryContext oldctx;
+		int			i;
 
 		/* Check for supported relkind. */
 		CheckSubscriptionRelkind(entry->localrel->rd_rel->relkind,
@@ -350,8 +364,6 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 		entry->localreloid = relid;
 	}
-	else
-		entry->localrel = table_open(entry->localreloid, lockmode);
 
 	if (entry->state != SUBREL_STATE_READY)
 		entry->state = GetSubscriptionRelState(MySubscription->oid,
