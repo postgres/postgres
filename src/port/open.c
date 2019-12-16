@@ -111,17 +111,14 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 	{
 		/*
 		 * Sharing violation or locking error can indicate antivirus, backup
-		 * or similar software that's locking the file. Try again for 30
-		 * seconds before giving up.
+		 * or similar software that's locking the file.  Wait a bit and try
+		 * again, giving up after 30 seconds.
 		 */
 		DWORD		err = GetLastError();
 
 		if (err == ERROR_SHARING_VIOLATION ||
 			err == ERROR_LOCK_VIOLATION)
 		{
-			pg_usleep(100000);
-			loops++;
-
 #ifndef FRONTEND
 			if (loops == 50)
 				ereport(LOG,
@@ -132,7 +129,27 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 #endif
 
 			if (loops < 300)
+			{
+				pg_usleep(100000);
+				loops++;
 				continue;
+			}
+		}
+
+		/*
+		 * ERROR_ACCESS_DENIED can be returned if the file is deleted but not
+		 * yet gone (Windows NT status code is STATUS_DELETE_PENDING).  Wait a
+		 * bit and try again, giving up after 1 second (since this condition
+		 * should never persist very long).
+		 */
+		if (err == ERROR_ACCESS_DENIED)
+		{
+			if (loops < 10)
+			{
+				pg_usleep(100000);
+				loops++;
+				continue;
+			}
 		}
 
 		_dosmaperr(err);
