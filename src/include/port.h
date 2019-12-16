@@ -355,7 +355,10 @@ extern int	fls(int mask);
 #endif
 
 #ifndef HAVE_GETPEEREID
+/* On Windows, Perl might have incompatible definitions of uid_t and gid_t. */
+#ifndef PLPERL_HAVE_UID_GID
 extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
+#endif
 #endif
 
 #ifndef HAVE_ISINF
