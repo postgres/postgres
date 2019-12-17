@@ -23,6 +23,8 @@
  *	  - SH_DEFINE - if defined function definitions are generated
  *	  - SH_SCOPE - in which scope (e.g. extern, static inline) do function
  *		declarations reside
+ *	  - SH_RAW_ALLOCATOR - if defined, memory contexts are not used; instead,
+ *	    use this to allocate bytes
  *	  - SH_USE_NONDEFAULT_ALLOCATOR - if defined no element allocator functions
  *		are defined, so you can supply your own
  *	  The following parameters are only relevant when SH_DEFINE is defined:
@@ -121,8 +123,10 @@ typedef struct SH_TYPE
 	/* hash buckets */
 	SH_ELEMENT_TYPE *data;
 
+#ifndef SH_RAW_ALLOCATOR
 	/* memory context to use for allocations */
 	MemoryContext ctx;
+#endif
 
 	/* user defined data, useful for callbacks */
 	void	   *private_data;
@@ -142,8 +146,12 @@ typedef struct SH_ITERATOR
 }			SH_ITERATOR;
 
 /* externally visible function prototypes */
+#ifdef SH_RAW_ALLOCATOR
+SH_SCOPE	SH_TYPE *SH_CREATE(uint32 nelements, void *private_data);
+#else
 SH_SCOPE	SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
 							   void *private_data);
+#endif
 SH_SCOPE void SH_DESTROY(SH_TYPE * tb);
 SH_SCOPE void SH_RESET(SH_TYPE * tb);
 SH_SCOPE void SH_GROW(SH_TYPE * tb, uint32 newsize);
@@ -165,7 +173,9 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
 /* generate implementation of the hash table */
 #ifdef SH_DEFINE
 
+#ifndef SH_RAW_ALLOCATOR
 #include "utils/memutils.h"
+#endif
 
 /* max data array size,we allow up to PG_UINT32_MAX buckets, including 0 */
 #define SH_MAX_SIZE (((uint64) PG_UINT32_MAX) + 1)
@@ -328,8 +338,12 @@ static inline void SH_FREE(SH_TYPE * type, void *pointer);
 static inline void *
 SH_ALLOCATE(SH_TYPE * type, Size size)
 {
+#ifdef SH_RAW_ALLOCATOR
+	return SH_RAW_ALLOCATOR(size);
+#else
 	return MemoryContextAllocExtended(type->ctx, size,
 									  MCXT_ALLOC_HUGE | MCXT_ALLOC_ZERO);
+#endif
 }
 
 /* default memory free function */
@@ -350,14 +364,23 @@ SH_FREE(SH_TYPE * type, void *pointer)
  * Memory other than for the array of elements will still be allocated from
  * the passed-in context.
  */
+#ifdef SH_RAW_ALLOCATOR
+SH_SCOPE	SH_TYPE *
+SH_CREATE(uint32 nelements, void *private_data)
+#else
 SH_SCOPE	SH_TYPE *
 SH_CREATE(MemoryContext ctx, uint32 nelements, void *private_data)
+#endif
 {
 	SH_TYPE    *tb;
 	uint64		size;
 
+#ifdef SH_RAW_ALLOCATOR
+	tb = SH_RAW_ALLOCATOR(sizeof(SH_TYPE));
+#else
 	tb = MemoryContextAllocZero(ctx, sizeof(SH_TYPE));
 	tb->ctx = ctx;
+#endif
 	tb->private_data = private_data;
 
 	/* increase nelements by fillfactor, want to store nelements elements */
