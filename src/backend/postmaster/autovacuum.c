@@ -311,6 +311,8 @@ NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]) pg_attribute_nore
 NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]) pg_attribute_noreturn();
 
 static Oid	do_start_worker(void);
+static void HandleAutoVacLauncherInterrupts(void);
+static void AutoVacLauncherShutdown() pg_attribute_noreturn();
 static void launcher_determine_sleep(bool canlaunch, bool recursing,
 									 struct timeval *nap);
 static void launch_worker(TimestampTz now);
@@ -554,7 +556,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 		/* if in shutdown mode, no need for anything further; just go away */
 		if (got_SIGTERM)
-			goto shutdown;
+			AutoVacLauncherShutdown();
 
 		/*
 		 * Sleep at least 1 second after any error.  We don't want to be
@@ -649,30 +651,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 		ResetLatch(MyLatch);
 
-		/* Process sinval catchup interrupts that happened while sleeping */
-		ProcessCatchupInterrupt();
-
-		/* the normal shutdown case */
-		if (got_SIGTERM)
-			break;
-
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-
-			/* shutdown requested in config file? */
-			if (!AutoVacuumingActive())
-				break;
-
-			/* rebalance in case the default cost parameters changed */
-			LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
-			autovac_balance_cost();
-			LWLockRelease(AutovacuumLock);
-
-			/* rebuild the list in case the naptime changed */
-			rebuild_database_list(InvalidOid);
-		}
+		HandleAutoVacLauncherInterrupts();
 
 		/*
 		 * a worker finished, or postmaster signalled failure to start a
@@ -813,8 +792,47 @@ AutoVacLauncherMain(int argc, char *argv[])
 		}
 	}
 
-	/* Normal exit from the autovac launcher is here */
-shutdown:
+	AutoVacLauncherShutdown();
+}
+
+/*
+ * Process any new interrupts.
+ */
+static void
+HandleAutoVacLauncherInterrupts(void)
+{
+	/* the normal shutdown case */
+	if (got_SIGTERM)
+		AutoVacLauncherShutdown();
+
+	if (got_SIGHUP)
+	{
+		got_SIGHUP = false;
+		ProcessConfigFile(PGC_SIGHUP);
+
+		/* shutdown requested in config file? */
+		if (!AutoVacuumingActive())
+			AutoVacLauncherShutdown();
+
+		/* rebalance in case the default cost parameters changed */
+		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
+		autovac_balance_cost();
+		LWLockRelease(AutovacuumLock);
+
+		/* rebuild the list in case the naptime changed */
+		rebuild_database_list(InvalidOid);
+	}
+
+	/* Process sinval catchup interrupts that happened while sleeping */
+	ProcessCatchupInterrupt();
+}
+
+/*
+ * Perform a normal exit from the autovac launcher.
+ */
+static void
+AutoVacLauncherShutdown()
+{
 	ereport(DEBUG1,
 			(errmsg("autovacuum launcher shutting down")));
 	AutoVacuumShmem->av_launcherpid = 0;

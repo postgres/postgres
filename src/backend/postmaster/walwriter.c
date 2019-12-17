@@ -83,6 +83,8 @@ int			WalWriterFlushAfter = 128;
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
+static void HandleWalWriterInterrupts(void);
+
 /* Signal handlers */
 static void wal_quickdie(SIGNAL_ARGS);
 static void WalSigHupHandler(SIGNAL_ARGS);
@@ -242,19 +244,7 @@ WalWriterMain(void)
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
 
-		/*
-		 * Process any requests or signals received recently.
-		 */
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-		}
-		if (shutdown_requested)
-		{
-			/* Normal exit from the walwriter is here */
-			proc_exit(0);		/* done */
-		}
+		HandleWalWriterInterrupts();
 
 		/*
 		 * Do what we're here for; then, if XLogBackgroundFlush() found useful
@@ -279,6 +269,24 @@ WalWriterMain(void)
 						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 						 cur_timeout,
 						 WAIT_EVENT_WAL_WRITER_MAIN);
+	}
+}
+
+/*
+ * Process any new interrupts.
+ */
+static void
+HandleWalWriterInterrupts(void)
+{
+	if (got_SIGHUP)
+	{
+		got_SIGHUP = false;
+		ProcessConfigFile(PGC_SIGHUP);
+	}
+	if (shutdown_requested)
+	{
+		/* Normal exit from the walwriter is here */
+		proc_exit(0);		/* done */
 	}
 }
 

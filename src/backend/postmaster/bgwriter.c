@@ -92,6 +92,8 @@ static XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
+static void HandleBackgroundWriterInterrupts(void);
+
 /* Signal handlers */
 
 static void bg_quickdie(SIGNAL_ARGS);
@@ -241,21 +243,7 @@ BackgroundWriterMain(void)
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
 
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-		}
-		if (shutdown_requested)
-		{
-			/*
-			 * From here on, elog(ERROR) should end with exit(1), not send
-			 * control back to the sigsetjmp block above
-			 */
-			ExitOnAnyError = true;
-			/* Normal exit from the bgwriter is here */
-			proc_exit(0);		/* done */
-		}
+		HandleBackgroundWriterInterrupts();
 
 		/*
 		 * Do one cycle of dirty-buffer writing.
@@ -366,6 +354,30 @@ BackgroundWriterMain(void)
 		}
 
 		prev_hibernate = can_hibernate;
+	}
+}
+
+/*
+ * Process any new interrupts.
+ */
+static void
+HandleBackgroundWriterInterrupts(void)
+{
+	if (got_SIGHUP)
+	{
+		got_SIGHUP = false;
+		ProcessConfigFile(PGC_SIGHUP);
+	}
+
+	if (shutdown_requested)
+	{
+		/*
+		 * From here on, elog(ERROR) should end with exit(1), not send
+		 * control back to the sigsetjmp block above
+		 */
+		ExitOnAnyError = true;
+		/* Normal exit from the bgwriter is here */
+		proc_exit(0);		/* done */
 	}
 }
 

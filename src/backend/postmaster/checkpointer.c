@@ -169,6 +169,7 @@ static pg_time_t last_xlog_switch_time;
 
 /* Prototypes for private functions */
 
+static void HandleCheckpointerInterrupts();
 static void CheckArchiveTimeout(void);
 static bool IsCheckpointOnSchedule(double progress);
 static bool ImmediateCheckpointRequested(void);
@@ -350,37 +351,7 @@ CheckpointerMain(void)
 		 * Process any requests or signals received recently.
 		 */
 		AbsorbSyncRequests();
-
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-
-			/*
-			 * Checkpointer is the last process to shut down, so we ask it to
-			 * hold the keys for a range of other tasks required most of which
-			 * have nothing to do with checkpointing at all.
-			 *
-			 * For various reasons, some config values can change dynamically
-			 * so the primary copy of them is held in shared memory to make
-			 * sure all backends see the same value.  We make Checkpointer
-			 * responsible for updating the shared memory copy if the
-			 * parameter setting changes because of SIGHUP.
-			 */
-			UpdateSharedMemoryConfig();
-		}
-		if (shutdown_requested)
-		{
-			/*
-			 * From here on, elog(ERROR) should end with exit(1), not send
-			 * control back to the sigsetjmp block above
-			 */
-			ExitOnAnyError = true;
-			/* Close down the database */
-			ShutdownXLOG(0, 0);
-			/* Normal exit from the checkpointer is here */
-			proc_exit(0);		/* done */
-		}
+		HandleCheckpointerInterrupts();
 
 		/*
 		 * Detect a pending checkpoint request by checking whether the flags
@@ -555,6 +526,44 @@ CheckpointerMain(void)
 						 WL_LATCH_SET | WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
 						 cur_timeout * 1000L /* convert to ms */ ,
 						 WAIT_EVENT_CHECKPOINTER_MAIN);
+	}
+}
+
+/*
+ * Process any new interrupts.
+ */
+static void
+HandleCheckpointerInterrupts(void)
+{
+	if (got_SIGHUP)
+	{
+		got_SIGHUP = false;
+		ProcessConfigFile(PGC_SIGHUP);
+
+		/*
+		 * Checkpointer is the last process to shut down, so we ask it to
+		 * hold the keys for a range of other tasks required most of which
+		 * have nothing to do with checkpointing at all.
+		 *
+		 * For various reasons, some config values can change dynamically
+		 * so the primary copy of them is held in shared memory to make
+		 * sure all backends see the same value.  We make Checkpointer
+		 * responsible for updating the shared memory copy if the
+		 * parameter setting changes because of SIGHUP.
+		 */
+		UpdateSharedMemoryConfig();
+	}
+	if (shutdown_requested)
+	{
+		/*
+		 * From here on, elog(ERROR) should end with exit(1), not send
+		 * control back to the sigsetjmp block above
+		 */
+		ExitOnAnyError = true;
+		/* Close down the database */
+		ShutdownXLOG(0, 0);
+		/* Normal exit from the checkpointer is here */
+		proc_exit(0);		/* done */
 	}
 }
 
