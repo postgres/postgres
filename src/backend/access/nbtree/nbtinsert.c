@@ -1807,7 +1807,7 @@ _bt_insert_parent(Relation rel,
 
 		/* form an index tuple that points at the new right page */
 		new_item = CopyIndexTuple(ritem);
-		BTreeInnerTupleSetDownLink(new_item, rbknum);
+		BTreeTupleSetDownLink(new_item, rbknum);
 
 		/*
 		 * Re-find and write lock the parent of buf.
@@ -1991,7 +1991,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, BlockNumber child)
 				itemid = PageGetItemId(page, offnum);
 				item = (IndexTuple) PageGetItem(page, itemid);
 
-				if (BTreeInnerTupleGetDownLink(item) == child)
+				if (BTreeTupleGetDownLink(item) == child)
 				{
 					/* Return accurate pointer to where link is now */
 					stack->bts_blkno = blkno;
@@ -2007,7 +2007,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, BlockNumber child)
 				itemid = PageGetItemId(page, offnum);
 				item = (IndexTuple) PageGetItem(page, itemid);
 
-				if (BTreeInnerTupleGetDownLink(item) == child)
+				if (BTreeTupleGetDownLink(item) == child)
 				{
 					/* Return accurate pointer to where link is now */
 					stack->bts_blkno = blkno;
@@ -2096,7 +2096,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	left_item_sz = sizeof(IndexTupleData);
 	left_item = (IndexTuple) palloc(left_item_sz);
 	left_item->t_info = left_item_sz;
-	BTreeInnerTupleSetDownLink(left_item, lbkno);
+	BTreeTupleSetDownLink(left_item, lbkno);
 	BTreeTupleSetNAtts(left_item, 0);
 
 	/*
@@ -2107,7 +2107,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	right_item_sz = ItemIdGetLength(itemid);
 	item = (IndexTuple) PageGetItem(lpage, itemid);
 	right_item = CopyIndexTuple(item);
-	BTreeInnerTupleSetDownLink(right_item, rbkno);
+	BTreeTupleSetDownLink(right_item, rbkno);
 
 	/* NO EREPORT(ERROR) from here till newroot op is logged */
 	START_CRIT_SECTION();

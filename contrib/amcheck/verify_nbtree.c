@@ -758,7 +758,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 											  state->target,
 											  P_FIRSTDATAKEY(opaque));
 				itup = (IndexTuple) PageGetItem(state->target, itemid);
-				nextleveldown.leftmost = BTreeInnerTupleGetDownLink(itup);
+				nextleveldown.leftmost = BTreeTupleGetDownLink(itup);
 				nextleveldown.level = opaque->btpo.level - 1;
 			}
 			else
@@ -978,7 +978,7 @@ bt_target_page_check(BtreeCheckState *state)
 		/* Fingerprint downlink blocks in heapallindexed + readonly case */
 		if (state->heapallindexed && state->readonly && !P_ISLEAF(topaque))
 		{
-			BlockNumber childblock = BTreeInnerTupleGetDownLink(itup);
+			BlockNumber childblock = BTreeTupleGetDownLink(itup);
 
 			bloom_add_element(state->downlinkfilter,
 							  (unsigned char *) &childblock,
@@ -1267,7 +1267,7 @@ bt_target_page_check(BtreeCheckState *state)
 		 */
 		if (!P_ISLEAF(topaque) && state->readonly)
 		{
-			BlockNumber childblock = BTreeInnerTupleGetDownLink(itup);
+			BlockNumber childblock = BTreeTupleGetDownLink(itup);
 
 			bt_downlink_check(state, skey, childblock);
 		}
@@ -1746,7 +1746,7 @@ bt_downlink_missing_check(BtreeCheckState *state)
 	itemid = PageGetItemIdCareful(state, state->targetblock, state->target,
 								  P_FIRSTDATAKEY(topaque));
 	itup = (IndexTuple) PageGetItem(state->target, itemid);
-	childblk = BTreeInnerTupleGetDownLink(itup);
+	childblk = BTreeTupleGetDownLink(itup);
 	for (;;)
 	{
 		CHECK_FOR_INTERRUPTS();
@@ -1771,7 +1771,7 @@ bt_downlink_missing_check(BtreeCheckState *state)
 		itemid = PageGetItemIdCareful(state, childblk, child,
 									  P_FIRSTDATAKEY(copaque));
 		itup = (IndexTuple) PageGetItem(child, itemid);
-		childblk = BTreeInnerTupleGetDownLink(itup);
+		childblk = BTreeTupleGetDownLink(itup);
 		/* Be slightly more pro-active in freeing this memory, just in case */
 		pfree(child);
 	}

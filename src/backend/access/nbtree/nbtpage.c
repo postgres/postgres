@@ -1605,17 +1605,17 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 #ifdef USE_ASSERT_CHECKING
 	itemid = PageGetItemId(page, topoff);
 	itup = (IndexTuple) PageGetItem(page, itemid);
-	Assert(BTreeInnerTupleGetDownLink(itup) == target);
+	Assert(BTreeTupleGetDownLink(itup) == target);
 #endif
 
 	nextoffset = OffsetNumberNext(topoff);
 	itemid = PageGetItemId(page, nextoffset);
 	itup = (IndexTuple) PageGetItem(page, itemid);
-	if (BTreeInnerTupleGetDownLink(itup) != rightsib)
+	if (BTreeTupleGetDownLink(itup) != rightsib)
 		ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg_internal("right sibling %u of block %u is not next child %u of block %u in index \"%s\"",
-									 rightsib, target, BTreeInnerTupleGetDownLink(itup),
+									 rightsib, target, BTreeTupleGetDownLink(itup),
 					 BufferGetBlockNumber(topparent), RelationGetRelationName(rel))));
 
 	/*
@@ -1638,7 +1638,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 
 	itemid = PageGetItemId(page, topoff);
 	itup = (IndexTuple) PageGetItem(page, itemid);
-	BTreeInnerTupleSetDownLink(itup, rightsib);
+	BTreeTupleSetDownLink(itup, rightsib);
 
 	nextoffset = OffsetNumberNext(topoff);
 	PageIndexTupleDelete(page, nextoffset);
@@ -1902,7 +1902,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 
 		/* remember the next non-leaf child down in the branch. */
 		itemid = PageGetItemId(page, P_FIRSTDATAKEY(opaque));
-		nextchild = BTreeInnerTupleGetDownLink((IndexTuple) PageGetItem(page, itemid));
+		nextchild = BTreeTupleGetDownLink((IndexTuple) PageGetItem(page, itemid));
 		if (nextchild == leafblkno)
 			nextchild = InvalidBlockNumber;
 	}

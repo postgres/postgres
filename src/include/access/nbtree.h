@@ -298,10 +298,10 @@ typedef struct BTMetaPageData
 #define BT_N_KEYS_OFFSET_MASK		0x0FFF
 #define BT_HEAP_TID_ATTR			0x1000
 
-/* Get/set downlink block number */
-#define BTreeInnerTupleGetDownLink(itup) \
+/* Get/set downlink block number in pivot tuple */
+#define BTreeTupleGetDownLink(itup) \
 	ItemPointerGetBlockNumberNoCheck(&((itup)->t_tid))
-#define BTreeInnerTupleSetDownLink(itup, blkno) \
+#define BTreeTupleSetDownLink(itup, blkno) \
 	ItemPointerSetBlockNumber(&((itup)->t_tid), (blkno))
 
 /*

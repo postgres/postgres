@@ -597,11 +597,11 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 		nextoffset = OffsetNumberNext(poffset);
 		itemid = PageGetItemId(page, nextoffset);
 		itup = (IndexTuple) PageGetItem(page, itemid);
-		rightsib = BTreeInnerTupleGetDownLink(itup);
+		rightsib = BTreeTupleGetDownLink(itup);
 
 		itemid = PageGetItemId(page, poffset);
 		itup = (IndexTuple) PageGetItem(page, itemid);
-		BTreeInnerTupleSetDownLink(itup, rightsib);
+		BTreeTupleSetDownLink(itup, rightsib);
 		nextoffset = OffsetNumberNext(poffset);
 		PageIndexTupleDelete(page, nextoffset);
 
