@@ -83,7 +83,6 @@ static time_t last_sigterm_time = 0;
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t got_SIGTERM = false;
 static volatile sig_atomic_t wakened = false;
 static volatile sig_atomic_t ready_to_stop = false;
@@ -98,7 +97,6 @@ static pid_t pgarch_forkexec(void);
 
 NON_EXEC_STATIC void PgArchiverMain(int argc, char *argv[]) pg_attribute_noreturn();
 static void pgarch_exit(SIGNAL_ARGS);
-static void ArchSigHupHandler(SIGNAL_ARGS);
 static void ArchSigTermHandler(SIGNAL_ARGS);
 static void pgarch_waken(SIGNAL_ARGS);
 static void pgarch_waken_stop(SIGNAL_ARGS);
@@ -229,7 +227,7 @@ PgArchiverMain(int argc, char *argv[])
 	 * Ignore all signals usually bound to some action in the postmaster,
 	 * except for SIGHUP, SIGTERM, SIGUSR1, SIGUSR2, and SIGQUIT.
 	 */
-	pqsignal(SIGHUP, ArchSigHupHandler);
+	pqsignal(SIGHUP, PostgresSigHupHandler);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, ArchSigTermHandler);
 	pqsignal(SIGQUIT, pgarch_exit);
@@ -257,19 +255,6 @@ pgarch_exit(SIGNAL_ARGS)
 {
 	/* SIGQUIT means curl up and die ... */
 	exit(1);
-}
-
-/* SIGHUP signal handler for archiver process */
-static void
-ArchSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	/* set flag to re-read config file at next convenient time */
-	got_SIGHUP = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /* SIGTERM signal handler for archiver process */
@@ -348,9 +333,9 @@ pgarch_MainLoop(void)
 		time_to_stop = ready_to_stop;
 
 		/* Check for config update */
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
@@ -457,9 +442,9 @@ pgarch_ArchiverCopyLoop(void)
 			 * setting for archive_command as soon as possible, even if there
 			 * is a backlog of files to be archived.
 			 */
-			if (got_SIGHUP)
+			if (ConfigReloadPending)
 			{
-				got_SIGHUP = false;
+				ConfigReloadPending = false;
 				ProcessConfigFile(PGC_SIGHUP);
 			}
 

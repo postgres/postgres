@@ -111,9 +111,6 @@ static void store_flush_position(XLogRecPtr remote_lsn);
 
 static void maybe_reread_subscription(void);
 
-/* Flags set by signal handlers */
-static volatile sig_atomic_t got_SIGHUP = false;
-
 /*
  * Should this worker apply changes for given relation.
  *
@@ -1270,9 +1267,9 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 			CHECK_FOR_INTERRUPTS();
 		}
 
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 
@@ -1563,20 +1560,6 @@ subscription_change_cb(Datum arg, int cacheid, uint32 hashvalue)
 	MySubscriptionValid = false;
 }
 
-/* SIGHUP: set flag to reload configuration at next convenient time */
-static void
-logicalrep_worker_sighup(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-
-	/* Waken anything waiting on the process latch */
-	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
 /* Logical Replication Apply worker entry point */
 void
 ApplyWorkerMain(Datum main_arg)
@@ -1592,7 +1575,7 @@ ApplyWorkerMain(Datum main_arg)
 	logicalrep_worker_attach(worker_slot);
 
 	/* Setup signal handling */
-	pqsignal(SIGHUP, logicalrep_worker_sighup);
+	pqsignal(SIGHUP, PostgresSigHupHandler);
 	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 

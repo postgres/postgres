@@ -92,9 +92,6 @@ static void logicalrep_worker_onexit(int code, Datum arg);
 static void logicalrep_worker_detach(void);
 static void logicalrep_worker_cleanup(LogicalRepWorker *worker);
 
-/* Flags set by signal handlers */
-static volatile sig_atomic_t got_SIGHUP = false;
-
 static bool on_commit_launcher_wakeup = false;
 
 Datum		pg_stat_get_subscription(PG_FUNCTION_ARGS);
@@ -714,20 +711,6 @@ logicalrep_worker_onexit(int code, Datum arg)
 	ApplyLauncherWakeup();
 }
 
-/* SIGHUP: set flag to reload configuration at next convenient time */
-static void
-logicalrep_launcher_sighup(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-
-	/* Waken anything waiting on the process latch */
-	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
 /*
  * Count the number of registered (not necessarily running) sync workers
  * for a subscription.
@@ -972,7 +955,7 @@ ApplyLauncherMain(Datum main_arg)
 	LogicalRepCtx->launcher_pid = MyProcPid;
 
 	/* Establish signal handlers. */
-	pqsignal(SIGHUP, logicalrep_launcher_sighup);
+	pqsignal(SIGTERM, PostgresSigHupHandler);
 	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
@@ -1061,9 +1044,9 @@ ApplyLauncherMain(Datum main_arg)
 			CHECK_FOR_INTERRUPTS();
 		}
 
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
 	}

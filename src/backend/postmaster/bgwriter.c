@@ -89,7 +89,6 @@ static XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
 static void HandleBackgroundWriterInterrupts(void);
@@ -97,7 +96,6 @@ static void HandleBackgroundWriterInterrupts(void);
 /* Signal handlers */
 
 static void bg_quickdie(SIGNAL_ARGS);
-static void BgSigHupHandler(SIGNAL_ARGS);
 static void ReqShutdownHandler(SIGNAL_ARGS);
 
 
@@ -118,7 +116,7 @@ BackgroundWriterMain(void)
 	/*
 	 * Properly accept or ignore signals that might be sent to us.
 	 */
-	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, ReqShutdownHandler);	/* shutdown */
 	pqsignal(SIGQUIT, bg_quickdie); /* hard crash time */
@@ -363,9 +361,9 @@ BackgroundWriterMain(void)
 static void
 HandleBackgroundWriterInterrupts(void)
 {
-	if (got_SIGHUP)
+	if (ConfigReloadPending)
 	{
-		got_SIGHUP = false;
+		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 	}
 
@@ -411,18 +409,6 @@ bg_quickdie(SIGNAL_ARGS)
 	 * being doubly sure.)
 	 */
 	_exit(2);
-}
-
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-BgSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /* SIGTERM: set flag to shutdown and exit */

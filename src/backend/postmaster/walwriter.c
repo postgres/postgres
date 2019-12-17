@@ -80,14 +80,12 @@ int			WalWriterFlushAfter = 128;
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
 static void HandleWalWriterInterrupts(void);
 
 /* Signal handlers */
 static void wal_quickdie(SIGNAL_ARGS);
-static void WalSigHupHandler(SIGNAL_ARGS);
 static void WalShutdownHandler(SIGNAL_ARGS);
 
 /*
@@ -110,7 +108,7 @@ WalWriterMain(void)
 	 * We have no particular use for SIGINT at the moment, but seems
 	 * reasonable to treat like SIGTERM.
 	 */
-	pqsignal(SIGHUP, WalSigHupHandler); /* set flag to read config file */
+	pqsignal(SIGHUP, PostgresSigHupHandler); /* set flag to read config file */
 	pqsignal(SIGINT, WalShutdownHandler);	/* request shutdown */
 	pqsignal(SIGTERM, WalShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
@@ -278,9 +276,9 @@ WalWriterMain(void)
 static void
 HandleWalWriterInterrupts(void)
 {
-	if (got_SIGHUP)
+	if (ConfigReloadPending)
 	{
-		got_SIGHUP = false;
+		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 	}
 	if (shutdown_requested)
@@ -320,18 +318,6 @@ wal_quickdie(SIGNAL_ARGS)
 	 * being doubly sure.)
 	 */
 	_exit(2);
-}
-
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-WalSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /* SIGTERM: set flag to exit normally */

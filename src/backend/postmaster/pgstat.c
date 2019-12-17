@@ -264,7 +264,6 @@ static List *pending_write_requests = NIL;
 
 /* Signal handler flags */
 static volatile bool need_exit = false;
-static volatile bool got_SIGHUP = false;
 
 /*
  * Total time charged to functions so far in the current backend.
@@ -285,7 +284,6 @@ static pid_t pgstat_forkexec(void);
 NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]) pg_attribute_noreturn();
 static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
-static void pgstat_sighup_handler(SIGNAL_ARGS);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
 static PgStat_StatTabEntry *pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry,
@@ -4434,7 +4432,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * except SIGHUP and SIGQUIT.  Note we don't need a SIGUSR1 handler to
 	 * support latch operations, because we only use a local latch.
 	 */
-	pqsignal(SIGHUP, pgstat_sighup_handler);
+	pqsignal(SIGHUP, PostgresSigHupHandler);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
 	pqsignal(SIGQUIT, pgstat_exit);
@@ -4466,10 +4464,10 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * message.  (This effectively means that if backends are sending us stuff
 	 * like mad, we won't notice postmaster death until things slack off a
 	 * bit; which seems fine.)	To do that, we have an inner loop that
-	 * iterates as long as recv() succeeds.  We do recognize got_SIGHUP inside
-	 * the inner loop, which means that such interrupts will get serviced but
-	 * the latch won't get cleared until next time there is a break in the
-	 * action.
+	 * iterates as long as recv() succeeds.  We do check ConfigReloadPending
+	 * inside the inner loop, which means that such interrupts will get
+	 * serviced but the latch won't get cleared until next time there is a
+	 * break in the action.
 	 */
 	for (;;)
 	{
@@ -4491,9 +4489,9 @@ PgstatCollectorMain(int argc, char *argv[])
 			/*
 			 * Reload configuration if we got SIGHUP from the postmaster.
 			 */
-			if (got_SIGHUP)
+			if (ConfigReloadPending)
 			{
-				got_SIGHUP = false;
+				ConfigReloadPending = false;
 				ProcessConfigFile(PGC_SIGHUP);
 			}
 
@@ -4686,18 +4684,6 @@ pgstat_exit(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	need_exit = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
-/* SIGHUP handler for collector process */
-static void
-pgstat_sighup_handler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
 	SetLatch(MyLatch);
 
 	errno = save_errno;

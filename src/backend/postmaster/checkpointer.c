@@ -151,7 +151,6 @@ double		CheckPointCompletionTarget = 0.5;
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
 
 /*
@@ -179,7 +178,6 @@ static void UpdateSharedMemoryConfig(void);
 /* Signal handlers */
 
 static void chkpt_quickdie(SIGNAL_ARGS);
-static void ChkptSigHupHandler(SIGNAL_ARGS);
 static void ReqCheckpointHandler(SIGNAL_ARGS);
 static void ReqShutdownHandler(SIGNAL_ARGS);
 
@@ -206,7 +204,7 @@ CheckpointerMain(void)
 	 * want to wait for the backends to exit, whereupon the postmaster will
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 */
-	pqsignal(SIGHUP, ChkptSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, ReqCheckpointHandler); /* request checkpoint */
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
 	pqsignal(SIGQUIT, chkpt_quickdie);	/* hard crash time */
@@ -535,9 +533,9 @@ CheckpointerMain(void)
 static void
 HandleCheckpointerInterrupts(void)
 {
-	if (got_SIGHUP)
+	if (ConfigReloadPending)
 	{
-		got_SIGHUP = false;
+		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 
 		/*
@@ -685,9 +683,9 @@ CheckpointWriteDelay(int flags, double progress)
 		!ImmediateCheckpointRequested() &&
 		IsCheckpointOnSchedule(progress))
 	{
-		if (got_SIGHUP)
+		if (ConfigReloadPending)
 		{
-			got_SIGHUP = false;
+			ConfigReloadPending = false;
 			ProcessConfigFile(PGC_SIGHUP);
 			/* update shmem copies of config variables */
 			UpdateSharedMemoryConfig();
@@ -833,18 +831,6 @@ chkpt_quickdie(SIGNAL_ARGS)
 	 * being doubly sure.)
 	 */
 	_exit(2);
-}
-
-/* SIGHUP: set flag to re-read config file at next convenient time */
-static void
-ChkptSigHupHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGHUP = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /* SIGINT: set flag to run a normal checkpoint right away */
