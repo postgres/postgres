@@ -16,7 +16,6 @@
 
 #include "postgres_fe.h"
 
-#include <signal.h>
 #include <unistd.h>
 
 #include "fe_utils/cancel.h"
@@ -37,8 +36,20 @@
 		(void) rc_; \
 	} while (0)
 
+/*
+ * Contains all the information needed to cancel a query issued from
+ * a database connection to the backend.
+ */
 static PGcancel *volatile cancelConn = NULL;
-bool		CancelRequested = false;
+
+/*
+ * CancelRequested tracks if a cancellation request has completed after
+ * a signal interruption.  Note that if cancelConn is not set, in short
+ * if SetCancelConn() was never called or if ResetCancelConn() freed
+ * the cancellation object, then CancelRequested is switched to true after
+ * all cancellation attempts.
+ */
+volatile sig_atomic_t CancelRequested = false;
 
 #ifdef WIN32
 static CRITICAL_SECTION cancelConnLock;

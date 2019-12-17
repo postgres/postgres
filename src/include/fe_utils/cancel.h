@@ -14,9 +14,11 @@
 #ifndef CANCEL_H
 #define CANCEL_H
 
+#include <signal.h>
+
 #include "libpq-fe.h"
 
-extern bool CancelRequested;
+extern volatile sig_atomic_t CancelRequested;
 
 extern void SetCancelConn(PGconn *conn);
 extern void ResetCancelConn(void);

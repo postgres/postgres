@@ -13,6 +13,8 @@
 #ifndef PRINT_H
 #define PRINT_H
 
+#include <signal.h>
+
 #include "libpq-fe.h"
 
 
@@ -175,7 +177,7 @@ typedef struct printQueryOpt
 } printQueryOpt;
 
 
-extern volatile bool cancel_pressed;
+extern volatile sig_atomic_t cancel_pressed;
 
 extern const printTextFormat pg_asciiformat;
 extern const printTextFormat pg_asciiformat_old;
