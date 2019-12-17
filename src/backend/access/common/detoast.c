@@ -443,7 +443,7 @@ toast_fetch_datum(struct varlena *attr)
 									 toast_pointer.va_valueid,
 									 RelationGetRelationName(toastrel))));
 		expected_size = curchunk < totalchunks - 1 ? TOAST_MAX_CHUNK_SIZE
-			: attrsize % TOAST_MAX_CHUNK_SIZE;
+			: attrsize - ((totalchunks - 1) * TOAST_MAX_CHUNK_SIZE);
 		if (chunksize != expected_size)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -676,7 +676,7 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 									 toast_pointer.va_valueid,
 									 RelationGetRelationName(toastrel))));
 		expected_size = curchunk < totalchunks - 1 ? TOAST_MAX_CHUNK_SIZE
-			: attrsize % TOAST_MAX_CHUNK_SIZE;
+			: attrsize - ((totalchunks - 1) * TOAST_MAX_CHUNK_SIZE);
 		if (chunksize != expected_size)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
