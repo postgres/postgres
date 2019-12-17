@@ -369,6 +369,14 @@ ConstructTupleDescriptor(Relation heapRelation,
 			memcpy(to, from, ATTRIBUTE_FIXED_PART_SIZE);
 
 			/*
+			 * Set the attribute name as specified by caller.
+			 */
+			if (colnames_item == NULL)	/* shouldn't happen */
+				elog(ERROR, "too few entries in colnames list");
+			namestrcpy(&to->attname, (const char *) lfirst(colnames_item));
+			colnames_item = lnext(colnames_item);
+
+			/*
 			 * Fix the stuff that should not be the same as the underlying
 			 * attr
 			 */
@@ -391,6 +399,14 @@ ConstructTupleDescriptor(Relation heapRelation,
 			Node	   *indexkey;
 
 			MemSet(to, 0, ATTRIBUTE_FIXED_PART_SIZE);
+
+			/*
+			 * Set the attribute name as specified by caller.
+			 */
+			if (colnames_item == NULL)	/* shouldn't happen */
+				elog(ERROR, "too few entries in colnames list");
+			namestrcpy(&to->attname, (const char *) lfirst(colnames_item));
+			colnames_item = lnext(colnames_item);
 
 			if (indexpr_item == NULL)	/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");
@@ -444,14 +460,6 @@ ConstructTupleDescriptor(Relation heapRelation,
 		 * later.
 		 */
 		to->attrelid = InvalidOid;
-
-		/*
-		 * Set the attribute name as specified by caller.
-		 */
-		if (colnames_item == NULL)	/* shouldn't happen */
-			elog(ERROR, "too few entries in colnames list");
-		namestrcpy(&to->attname, (const char *) lfirst(colnames_item));
-		colnames_item = lnext(colnames_item);
 
 		/*
 		 * Check the opclass and index AM to see if either provides a keytype
