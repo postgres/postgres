@@ -236,6 +236,14 @@ sh_pow2(uint64 num)
 	return ((uint64) 1) << sh_log2(num);
 }
 
+#ifdef FRONTEND
+#define sh_error(...) pg_log_error(__VA_ARGS__)
+#define sh_log(...) pg_log_info(__VA_ARGS__)
+#else
+#define sh_error(...) elog(ERROR, __VA_ARGS__)
+#define sh_log(...) elog(LOG, __VA_ARGS__)
+#endif
+
 #endif
 
 /*
@@ -258,8 +266,8 @@ SH_COMPUTE_PARAMETERS(SH_TYPE * tb, uint32 newsize)
 	 * Verify that allocation of ->data is possible on this platform, without
 	 * overflowing Size.
 	 */
-	if ((((uint64) sizeof(SH_ELEMENT_TYPE)) * size) >= MaxAllocHugeSize)
-		elog(ERROR, "hash table too large");
+	if ((((uint64) sizeof(SH_ELEMENT_TYPE)) * size) >= SIZE_MAX / 2)
+		sh_error("hash table too large");
 
 	/* now set size */
 	tb->size = size;
@@ -549,7 +557,7 @@ restart:
 	{
 		if (tb->size == SH_MAX_SIZE)
 		{
-			elog(ERROR, "hash table size exceeded");
+			sh_error("hash table size exceeded");
 		}
 
 		/*
@@ -1001,7 +1009,7 @@ SH_STAT(SH_TYPE * tb)
 		avg_collisions = 0;
 	}
 
-	elog(LOG, "size: " UINT64_FORMAT ", members: %u, filled: %f, total chain: %u, max chain: %u, avg chain: %f, total_collisions: %u, max_collisions: %i, avg_collisions: %f",
+	sh_log("size: " UINT64_FORMAT ", members: %u, filled: %f, total chain: %u, max chain: %u, avg chain: %f, total_collisions: %u, max_collisions: %i, avg_collisions: %f",
 		 tb->size, tb->members, fillfactor, total_chain_length, max_chain_length, avg_chain_length,
 		 total_collisions, max_collisions, avg_collisions);
 }
