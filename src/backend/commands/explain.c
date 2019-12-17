@@ -695,13 +695,19 @@ ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc)
 
 	/*
 	 * Sometimes we mark a Gather node as "invisible", which means that it's
-	 * not displayed in EXPLAIN output.  The purpose of this is to allow
+	 * not to be displayed in EXPLAIN output.  The purpose of this is to allow
 	 * running regression tests with force_parallel_mode=regress to get the
 	 * same results as running the same tests with force_parallel_mode=off.
+	 * Such marking is currently only supported on a Gather at the top of the
+	 * plan.  We skip that node, and we must also hide per-worker detail data
+	 * further down in the plan tree.
 	 */
 	ps = queryDesc->planstate;
 	if (IsA(ps, GatherState) &&((Gather *) ps->plan)->invisible)
+	{
 		ps = outerPlanState(ps);
+		es->hide_workers = true;
+	}
 	ExplainNode(ps, NIL, NULL, NULL, es);
 
 	/*
@@ -804,6 +810,10 @@ ExplainPrintJIT(ExplainState *es, int jit_flags,
 
 	/* don't print information if no JITing happened */
 	if (!ji || ji->created_functions == 0)
+		return;
+
+	/* don't print per-worker info if we're supposed to hide that */
+	if (for_workers && es->hide_workers)
 		return;
 
 	/* calculate total time */
@@ -1877,7 +1887,8 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		show_buffer_usage(es, &planstate->instrument->bufusage);
 
 	/* Show worker detail */
-	if (es->analyze && es->verbose && planstate->worker_instrument)
+	if (es->analyze && es->verbose && !es->hide_workers &&
+		planstate->worker_instrument)
 	{
 		WorkerInstrumentation *w = planstate->worker_instrument;
 		bool		opened_group = false;
@@ -2574,6 +2585,12 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 		}
 	}
 
+	/*
+	 * You might think we should just skip this stanza entirely when
+	 * es->hide_workers is true, but then we'd get no sort-method output at
+	 * all.  We have to make it look like worker 0's data is top-level data.
+	 * Currently, we only bother with that for text-format output.
+	 */
 	if (sortstate->shared_info != NULL)
 	{
 		int			n;
@@ -2596,9 +2613,11 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 			if (es->format == EXPLAIN_FORMAT_TEXT)
 			{
 				appendStringInfoSpaces(es->str, es->indent * 2);
+				if (n > 0 || !es->hide_workers)
+					appendStringInfo(es->str, "Worker %d:  ", n);
 				appendStringInfo(es->str,
-								 "Worker %d:  Sort Method: %s  %s: %ldkB\n",
-								 n, sortMethod, spaceType, spaceUsed);
+								 "Sort Method: %s  %s: %ldkB\n",
+								 sortMethod, spaceType, spaceUsed);
 			}
 			else
 			{

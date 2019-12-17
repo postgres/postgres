@@ -631,8 +631,6 @@ begin
         select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3
     loop
         ln := regexp_replace(ln, 'Memory: \S*',  'Memory: xxx');
-        -- this case might occur if force_parallel_mode is on:
-        ln := regexp_replace(ln, 'Worker 0:  Sort Method',  'Sort Method');
         return next ln;
     end loop;
 end;
