@@ -1281,6 +1281,23 @@ ERROR:  duplicate key value violates unique constraint "func_index_index"
 DETAIL:  Key (textcat(f1, f2))=(ABCDEF) already exists.
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
+-- while we're here, see that the metadata looks sane
+\d func_index_heap
+         Table "public.func_index_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
+Indexes:
+    "func_index_index" UNIQUE, btree (textcat(f1, f2))
+
+\d func_index_index
+     Index "public.func_index_index"
+ Column  | Type | Key? |   Definition    
+---------+------+------+-----------------
+ textcat | text | yes  | textcat(f1, f2)
+unique, btree, for table "public.func_index_heap"
+
 --
 -- Same test, expressional index
 --
@@ -1296,6 +1313,26 @@ ERROR:  duplicate key value violates unique constraint "func_index_index"
 DETAIL:  Key ((f1 || f2))=(ABCDEF) already exists.
 -- but this shouldn't:
 INSERT INTO func_index_heap VALUES('QWERTY');
+-- while we're here, see that the metadata looks sane
+\d func_index_heap
+         Table "public.func_index_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
+Indexes:
+    "func_index_index" UNIQUE, btree ((f1 || f2))
+
+\d func_index_index
+  Index "public.func_index_index"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ expr   | text | yes  | (f1 || f2)
+unique, btree, for table "public.func_index_heap"
+
+-- this should fail because of unsafe column type (anonymous record)
+create index on func_index_heap ((f1 || f2), (row(f1, f2)));
+ERROR:  column "row" has pseudo-type record
 --
 -- Test unique index with included columns
 --
