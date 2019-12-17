@@ -161,7 +161,7 @@ static pg_time_t last_xlog_switch_time;
 
 /* Prototypes for private functions */
 
-static void HandleCheckpointerInterrupts();
+static void HandleCheckpointerInterrupts(void);
 static void CheckArchiveTimeout(void);
 static bool IsCheckpointOnSchedule(double progress);
 static bool ImmediateCheckpointRequested(void);
