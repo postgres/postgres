@@ -49,6 +49,7 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
+#include "postmaster/interrupt.h"
 #include "postmaster/postmaster.h"
 #include "replication/walsender.h"
 #include "storage/backendid.h"
@@ -262,9 +263,6 @@ static PgStat_GlobalStats globalStats;
  */
 static List *pending_write_requests = NIL;
 
-/* Signal handler flags */
-static volatile bool need_exit = false;
-
 /*
  * Total time charged to functions so far in the current backend.
  * We use this to help separate "self" and "other" time charges.
@@ -282,7 +280,6 @@ static pid_t pgstat_forkexec(void);
 #endif
 
 NON_EXEC_STATIC void PgstatCollectorMain(int argc, char *argv[]) pg_attribute_noreturn();
-static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
@@ -4432,10 +4429,10 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * except SIGHUP and SIGQUIT.  Note we don't need a SIGUSR1 handler to
 	 * support latch operations, because we only use a local latch.
 	 */
-	pqsignal(SIGHUP, PostgresSigHupHandler);
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, SIG_IGN);
 	pqsignal(SIGTERM, SIG_IGN);
-	pqsignal(SIGQUIT, pgstat_exit);
+	pqsignal(SIGQUIT, SignalHandlerForShutdownRequest);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN);
@@ -4477,14 +4474,14 @@ PgstatCollectorMain(int argc, char *argv[])
 		/*
 		 * Quit if we get SIGQUIT from the postmaster.
 		 */
-		if (need_exit)
+		if (ShutdownRequestPending)
 			break;
 
 		/*
 		 * Inner loop iterates as long as we keep getting messages, or until
-		 * need_exit becomes set.
+		 * ShutdownRequestPending becomes set.
 		 */
-		while (!need_exit)
+		while (!ShutdownRequestPending)
 		{
 			/*
 			 * Reload configuration if we got SIGHUP from the postmaster.
@@ -4674,19 +4671,6 @@ PgstatCollectorMain(int argc, char *argv[])
 	pgstat_write_statsfiles(true, true);
 
 	exit(0);
-}
-
-
-/* SIGQUIT signal handler for collector process */
-static void
-pgstat_exit(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	need_exit = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /*

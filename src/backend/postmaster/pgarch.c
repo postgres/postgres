@@ -39,6 +39,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/fork_process.h"
+#include "postmaster/interrupt.h"
 #include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
 #include "storage/dsm.h"
@@ -83,7 +84,6 @@ static time_t last_sigterm_time = 0;
 /*
  * Flags set by interrupt handlers for later service in the main loop.
  */
-static volatile sig_atomic_t got_SIGTERM = false;
 static volatile sig_atomic_t wakened = false;
 static volatile sig_atomic_t ready_to_stop = false;
 
@@ -97,7 +97,6 @@ static pid_t pgarch_forkexec(void);
 
 NON_EXEC_STATIC void PgArchiverMain(int argc, char *argv[]) pg_attribute_noreturn();
 static void pgarch_exit(SIGNAL_ARGS);
-static void ArchSigTermHandler(SIGNAL_ARGS);
 static void pgarch_waken(SIGNAL_ARGS);
 static void pgarch_waken_stop(SIGNAL_ARGS);
 static void pgarch_MainLoop(void);
@@ -227,9 +226,9 @@ PgArchiverMain(int argc, char *argv[])
 	 * Ignore all signals usually bound to some action in the postmaster,
 	 * except for SIGHUP, SIGTERM, SIGUSR1, SIGUSR2, and SIGQUIT.
 	 */
-	pqsignal(SIGHUP, PostgresSigHupHandler);
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, SIG_IGN);
-	pqsignal(SIGTERM, ArchSigTermHandler);
+	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
 	pqsignal(SIGQUIT, pgarch_exit);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
@@ -255,24 +254,6 @@ pgarch_exit(SIGNAL_ARGS)
 {
 	/* SIGQUIT means curl up and die ... */
 	exit(1);
-}
-
-/* SIGTERM signal handler for archiver process */
-static void
-ArchSigTermHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	/*
-	 * The postmaster never sends us SIGTERM, so we assume that this means
-	 * that init is trying to shut down the whole system.  If we hang around
-	 * too long we'll get SIGKILL'd.  Set flag to prevent starting any more
-	 * archive commands.
-	 */
-	got_SIGTERM = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }
 
 /* SIGUSR1 signal handler for archiver process */
@@ -346,7 +327,7 @@ pgarch_MainLoop(void)
 		 * idea.  If more than 60 seconds pass since SIGTERM, exit anyway, so
 		 * that the postmaster can start a new archiver if needed.
 		 */
-		if (got_SIGTERM)
+		if (ShutdownRequestPending)
 		{
 			time_t		curtime = time(NULL);
 
@@ -434,7 +415,7 @@ pgarch_ArchiverCopyLoop(void)
 			 * command, and the second is to avoid conflicts with another
 			 * archiver spawned by a newer postmaster.
 			 */
-			if (got_SIGTERM || !PostmasterIsAlive())
+			if (ShutdownRequestPending || !PostmasterIsAlive())
 				return;
 
 			/*

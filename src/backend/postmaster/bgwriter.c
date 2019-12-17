@@ -34,16 +34,13 @@
  */
 #include "postgres.h"
 
-#include <signal.h>
-#include <sys/time.h>
-#include <unistd.h>
-
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/interrupt.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 #include "storage/condition_variable.h"
@@ -86,18 +83,6 @@ int			BgWriterDelay = 200;
 static TimestampTz last_snapshot_ts;
 static XLogRecPtr last_snapshot_lsn = InvalidXLogRecPtr;
 
-/*
- * Flags set by interrupt handlers for later service in the main loop.
- */
-static volatile sig_atomic_t shutdown_requested = false;
-
-static void HandleBackgroundWriterInterrupts(void);
-
-/* Signal handlers */
-
-static void bg_quickdie(SIGNAL_ARGS);
-static void ReqShutdownHandler(SIGNAL_ARGS);
-
 
 /*
  * Main entry point for bgwriter process
@@ -116,10 +101,10 @@ BackgroundWriterMain(void)
 	/*
 	 * Properly accept or ignore signals that might be sent to us.
 	 */
-	pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, SIG_IGN);
-	pqsignal(SIGTERM, ReqShutdownHandler);	/* shutdown */
-	pqsignal(SIGQUIT, bg_quickdie); /* hard crash time */
+	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
+	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
@@ -241,7 +226,7 @@ BackgroundWriterMain(void)
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
 
-		HandleBackgroundWriterInterrupts();
+		HandleMainLoopInterrupts();
 
 		/*
 		 * Do one cycle of dirty-buffer writing.
@@ -353,72 +338,4 @@ BackgroundWriterMain(void)
 
 		prev_hibernate = can_hibernate;
 	}
-}
-
-/*
- * Process any new interrupts.
- */
-static void
-HandleBackgroundWriterInterrupts(void)
-{
-	if (ConfigReloadPending)
-	{
-		ConfigReloadPending = false;
-		ProcessConfigFile(PGC_SIGHUP);
-	}
-
-	if (shutdown_requested)
-	{
-		/*
-		 * From here on, elog(ERROR) should end with exit(1), not send
-		 * control back to the sigsetjmp block above
-		 */
-		ExitOnAnyError = true;
-		/* Normal exit from the bgwriter is here */
-		proc_exit(0);		/* done */
-	}
-}
-
-
-/* --------------------------------
- *		signal handler routines
- * --------------------------------
- */
-
-/*
- * bg_quickdie() occurs when signalled SIGQUIT by the postmaster.
- *
- * Some backend has bought the farm,
- * so we need to stop what we're doing and exit.
- */
-static void
-bg_quickdie(SIGNAL_ARGS)
-{
-	/*
-	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
-	 * because shared memory may be corrupted, so we don't want to try to
-	 * clean up our transaction.  Just nail the windows shut and get out of
-	 * town.  The callbacks wouldn't be safe to run from a signal handler,
-	 * anyway.
-	 *
-	 * Note we do _exit(2) not _exit(0).  This is to force the postmaster into
-	 * a system reset cycle if someone sends a manual SIGQUIT to a random
-	 * backend.  This is necessary precisely because we don't clean up our
-	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm in
-	 * being doubly sure.)
-	 */
-	_exit(2);
-}
-
-/* SIGTERM: set flag to shutdown and exit */
-static void
-ReqShutdownHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	shutdown_requested = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }

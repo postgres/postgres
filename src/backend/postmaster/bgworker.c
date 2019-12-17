@@ -12,14 +12,13 @@
 
 #include "postgres.h"
 
-#include <unistd.h>
-
 #include "access/parallel.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/atomics.h"
 #include "postmaster/bgworker_internals.h"
+#include "postmaster/interrupt.h"
 #include "postmaster/postmaster.h"
 #include "replication/logicallauncher.h"
 #include "replication/logicalworker.h"
@@ -641,26 +640,6 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 	return true;
 }
 
-static void
-bgworker_quickdie(SIGNAL_ARGS)
-{
-	/*
-	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
-	 * because shared memory may be corrupted, so we don't want to try to
-	 * clean up our transaction.  Just nail the windows shut and get out of
-	 * town.  The callbacks wouldn't be safe to run from a signal handler,
-	 * anyway.
-	 *
-	 * Note we do _exit(2) not _exit(0).  This is to force the postmaster into
-	 * a system reset cycle if someone sends a manual SIGQUIT to a random
-	 * backend.  This is necessary precisely because we don't clean up our
-	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm in
-	 * being doubly sure.)
-	 */
-	_exit(2);
-}
-
 /*
  * Standard SIGTERM handler for background workers
  */
@@ -754,7 +733,7 @@ StartBackgroundWorker(void)
 	pqsignal(SIGTERM, bgworker_die);
 	pqsignal(SIGHUP, SIG_IGN);
 
-	pqsignal(SIGQUIT, bgworker_quickdie);
+	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 
 	pqsignal(SIGPIPE, SIG_IGN);

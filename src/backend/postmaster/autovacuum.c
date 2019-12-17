@@ -84,6 +84,7 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/fork_process.h"
+#include "postmaster/interrupt.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
@@ -139,7 +140,6 @@ static bool am_autovacuum_worker = false;
 
 /* Flags set by signal handlers */
 static volatile sig_atomic_t got_SIGUSR2 = false;
-static volatile sig_atomic_t got_SIGTERM = false;
 
 /* Comparison points for determining whether freeze_max_age is exceeded */
 static TransactionId recentXid;
@@ -344,7 +344,6 @@ static void autovac_report_activity(autovac_table *tab);
 static void autovac_report_workitem(AutoVacuumWorkItem *workitem,
 									const char *nspname, const char *relname);
 static void avl_sigusr2_handler(SIGNAL_ARGS);
-static void avl_sigterm_handler(SIGNAL_ARGS);
 static void autovac_refresh_stats(void);
 
 
@@ -450,9 +449,9 @@ AutoVacLauncherMain(int argc, char *argv[])
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 */
-	pqsignal(SIGHUP, PostgresSigHupHandler);
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, StatementCancelHandler);
-	pqsignal(SIGTERM, avl_sigterm_handler);
+	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
 
 	pqsignal(SIGQUIT, quickdie);
 	InitializeTimeouts();		/* establishes SIGALRM handler */
@@ -553,7 +552,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		RESUME_INTERRUPTS();
 
 		/* if in shutdown mode, no need for anything further; just go away */
-		if (got_SIGTERM)
+		if (ShutdownRequestPending)
 			AutoVacLauncherShutdown();
 
 		/*
@@ -605,7 +604,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	 */
 	if (!AutoVacuumingActive())
 	{
-		if (!got_SIGTERM)
+		if (!ShutdownRequestPending)
 			do_start_worker();
 		proc_exit(0);			/* done */
 	}
@@ -622,7 +621,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	rebuild_database_list(InvalidOid);
 
 	/* loop until shutdown request */
-	while (!got_SIGTERM)
+	while (!ShutdownRequestPending)
 	{
 		struct timeval nap;
 		TimestampTz current_time = 0;
@@ -800,7 +799,7 @@ static void
 HandleAutoVacLauncherInterrupts(void)
 {
 	/* the normal shutdown case */
-	if (got_SIGTERM)
+	if (ShutdownRequestPending)
 		AutoVacLauncherShutdown();
 
 	if (ConfigReloadPending)
@@ -1415,18 +1414,6 @@ avl_sigusr2_handler(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
-/* SIGTERM: time to die */
-static void
-avl_sigterm_handler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	got_SIGTERM = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
 
 /********************************************************************
  *					  AUTOVACUUM WORKER CODE
@@ -1525,7 +1512,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 * backend, so we use the same signal handling.  See equivalent code in
 	 * tcop/postgres.c.
 	 */
-	pqsignal(SIGHUP, PostgresSigHupHandler);
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 
 	/*
 	 * SIGINT is used to signal canceling the current table's vacuum; SIGTERM

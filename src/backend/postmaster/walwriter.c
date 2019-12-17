@@ -48,6 +48,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postmaster/interrupt.h"
 #include "postmaster/walwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/condition_variable.h"
@@ -78,17 +79,6 @@ int			WalWriterFlushAfter = 128;
 #define HIBERNATE_FACTOR			25
 
 /*
- * Flags set by interrupt handlers for later service in the main loop.
- */
-static volatile sig_atomic_t shutdown_requested = false;
-
-static void HandleWalWriterInterrupts(void);
-
-/* Signal handlers */
-static void wal_quickdie(SIGNAL_ARGS);
-static void WalShutdownHandler(SIGNAL_ARGS);
-
-/*
  * Main entry point for walwriter process
  *
  * This is invoked from AuxiliaryProcessMain, which has already created the
@@ -108,10 +98,10 @@ WalWriterMain(void)
 	 * We have no particular use for SIGINT at the moment, but seems
 	 * reasonable to treat like SIGTERM.
 	 */
-	pqsignal(SIGHUP, PostgresSigHupHandler); /* set flag to read config file */
-	pqsignal(SIGINT, WalShutdownHandler);	/* request shutdown */
-	pqsignal(SIGTERM, WalShutdownHandler);	/* request shutdown */
-	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
+	pqsignal(SIGINT, SignalHandlerForShutdownRequest);
+	pqsignal(SIGTERM, SignalHandlerForShutdownRequest);
+	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
@@ -242,7 +232,7 @@ WalWriterMain(void)
 		/* Clear any already-pending wakeups */
 		ResetLatch(MyLatch);
 
-		HandleWalWriterInterrupts();
+		HandleMainLoopInterrupts();
 
 		/*
 		 * Do what we're here for; then, if XLogBackgroundFlush() found useful
@@ -268,66 +258,4 @@ WalWriterMain(void)
 						 cur_timeout,
 						 WAIT_EVENT_WAL_WRITER_MAIN);
 	}
-}
-
-/*
- * Process any new interrupts.
- */
-static void
-HandleWalWriterInterrupts(void)
-{
-	if (ConfigReloadPending)
-	{
-		ConfigReloadPending = false;
-		ProcessConfigFile(PGC_SIGHUP);
-	}
-	if (shutdown_requested)
-	{
-		/* Normal exit from the walwriter is here */
-		proc_exit(0);		/* done */
-	}
-}
-
-
-/* --------------------------------
- *		signal handler routines
- * --------------------------------
- */
-
-/*
- * wal_quickdie() occurs when signalled SIGQUIT by the postmaster.
- *
- * Some backend has bought the farm,
- * so we need to stop what we're doing and exit.
- */
-static void
-wal_quickdie(SIGNAL_ARGS)
-{
-	/*
-	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
-	 * because shared memory may be corrupted, so we don't want to try to
-	 * clean up our transaction.  Just nail the windows shut and get out of
-	 * town.  The callbacks wouldn't be safe to run from a signal handler,
-	 * anyway.
-	 *
-	 * Note we do _exit(2) not _exit(0).  This is to force the postmaster into
-	 * a system reset cycle if someone sends a manual SIGQUIT to a random
-	 * backend.  This is necessary precisely because we don't clean up our
-	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm in
-	 * being doubly sure.)
-	 */
-	_exit(2);
-}
-
-/* SIGTERM: set flag to exit normally */
-static void
-WalShutdownHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	shutdown_requested = true;
-	SetLatch(MyLatch);
-
-	errno = save_errno;
 }

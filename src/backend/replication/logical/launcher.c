@@ -30,6 +30,7 @@
 #include "pgstat.h"
 #include "postmaster/bgworker.h"
 #include "postmaster/fork_process.h"
+#include "postmaster/interrupt.h"
 #include "postmaster/postmaster.h"
 #include "replication/logicallauncher.h"
 #include "replication/logicalworker.h"
@@ -955,7 +956,7 @@ ApplyLauncherMain(Datum main_arg)
 	LogicalRepCtx->launcher_pid = MyProcPid;
 
 	/* Establish signal handlers. */
-	pqsignal(SIGTERM, PostgresSigHupHandler);
+	pqsignal(SIGTERM, SignalHandlerForConfigReload);
 	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 

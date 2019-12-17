@@ -36,10 +36,7 @@
  */
 #include "postgres.h"
 
-#include <signal.h>
 #include <sys/time.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
@@ -47,6 +44,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/interrupt.h"
 #include "replication/syncrep.h"
 #include "storage/bufmgr.h"
 #include "storage/condition_variable.h"
@@ -149,11 +147,6 @@ int			CheckPointWarning = 30;
 double		CheckPointCompletionTarget = 0.5;
 
 /*
- * Flags set by interrupt handlers for later service in the main loop.
- */
-static volatile sig_atomic_t shutdown_requested = false;
-
-/*
  * Private state
  */
 static bool ckpt_active = false;
@@ -176,10 +169,7 @@ static bool CompactCheckpointerRequestQueue(void);
 static void UpdateSharedMemoryConfig(void);
 
 /* Signal handlers */
-
-static void chkpt_quickdie(SIGNAL_ARGS);
 static void ReqCheckpointHandler(SIGNAL_ARGS);
-static void ReqShutdownHandler(SIGNAL_ARGS);
 
 
 /*
@@ -204,14 +194,14 @@ CheckpointerMain(void)
 	 * want to wait for the backends to exit, whereupon the postmaster will
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 */
-	pqsignal(SIGHUP, PostgresSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGINT, ReqCheckpointHandler); /* request checkpoint */
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
-	pqsignal(SIGQUIT, chkpt_quickdie);	/* hard crash time */
+	pqsignal(SIGQUIT, SignalHandlerForCrashExit);
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-	pqsignal(SIGUSR2, ReqShutdownHandler);	/* request shutdown */
+	pqsignal(SIGUSR2, SignalHandlerForShutdownRequest);
 
 	/*
 	 * Reset some signals that are accepted by postmaster but not here
@@ -551,7 +541,7 @@ HandleCheckpointerInterrupts(void)
 		 */
 		UpdateSharedMemoryConfig();
 	}
-	if (shutdown_requested)
+	if (ShutdownRequestPending)
 	{
 		/*
 		 * From here on, elog(ERROR) should end with exit(1), not send
@@ -679,7 +669,7 @@ CheckpointWriteDelay(int flags, double progress)
 	 * in which case we just try to catch up as quickly as possible.
 	 */
 	if (!(flags & CHECKPOINT_IMMEDIATE) &&
-		!shutdown_requested &&
+		!ShutdownRequestPending &&
 		!ImmediateCheckpointRequested() &&
 		IsCheckpointOnSchedule(progress))
 	{
@@ -807,32 +797,6 @@ IsCheckpointOnSchedule(double progress)
  * --------------------------------
  */
 
-/*
- * chkpt_quickdie() occurs when signalled SIGQUIT by the postmaster.
- *
- * Some backend has bought the farm,
- * so we need to stop what we're doing and exit.
- */
-static void
-chkpt_quickdie(SIGNAL_ARGS)
-{
-	/*
-	 * We DO NOT want to run proc_exit() or atexit() callbacks -- we're here
-	 * because shared memory may be corrupted, so we don't want to try to
-	 * clean up our transaction.  Just nail the windows shut and get out of
-	 * town.  The callbacks wouldn't be safe to run from a signal handler,
-	 * anyway.
-	 *
-	 * Note we do _exit(2) not _exit(0).  This is to force the postmaster into
-	 * a system reset cycle if someone sends a manual SIGQUIT to a random
-	 * backend.  This is necessary precisely because we don't clean up our
-	 * shared memory state.  (The "dead man switch" mechanism in pmsignal.c
-	 * should ensure the postmaster sees this as a crash, too, but no harm in
-	 * being doubly sure.)
-	 */
-	_exit(2);
-}
-
 /* SIGINT: set flag to run a normal checkpoint right away */
 static void
 ReqCheckpointHandler(SIGNAL_ARGS)
@@ -843,18 +807,6 @@ ReqCheckpointHandler(SIGNAL_ARGS)
 	 * The signalling process should have set ckpt_flags nonzero, so all we
 	 * need do is ensure that our main loop gets kicked out of any wait.
 	 */
-	SetLatch(MyLatch);
-
-	errno = save_errno;
-}
-
-/* SIGUSR2: set flag to run a shutdown checkpoint and exit */
-static void
-ReqShutdownHandler(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-
-	shutdown_requested = true;
 	SetLatch(MyLatch);
 
 	errno = save_errno;
