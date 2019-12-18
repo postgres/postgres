@@ -24,21 +24,21 @@ DICTFILES=synonym_sample.syn thesaurus_sample.ths \
 DICTFILES_PATH=$(addprefix dicts/,$(DICTFILES))
 
 OBJS = \
-	ts_locale.o \
-	ts_parse.o \
-	wparser.o \
-	wparser_def.o \
 	dict.o \
+	dict_ispell.o \
 	dict_simple.o \
 	dict_synonym.o \
 	dict_thesaurus.o \
-	dict_ispell.o \
 	regis.o \
 	spell.o \
 	to_tsany.o \
+	ts_locale.o \
+	ts_parse.o \
 	ts_selfuncs.o \
 	ts_typanalyze.o \
-	ts_utils.o
+	ts_utils.o \
+	wparser.o \
+	wparser_def.o
 
 include $(top_srcdir)/src/backend/common.mk
 
