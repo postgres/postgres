@@ -143,7 +143,6 @@ execute_attr_map_tuple(HeapTuple tuple, TupleConversionMap *map)
 	bool	   *inisnull = map->inisnull;
 	Datum	   *outvalues = map->outvalues;
 	bool	   *outisnull = map->outisnull;
-	int			outnatts = map->outdesc->natts;
 	int			i;
 
 	/*
@@ -156,7 +155,7 @@ execute_attr_map_tuple(HeapTuple tuple, TupleConversionMap *map)
 	/*
 	 * Transpose into proper fields of the new tuple.
 	 */
-	Assert(attrMap->maplen == outnatts);
+	Assert(attrMap->maplen == map->outdesc->natts);
 	for (i = 0; i < attrMap->maplen; i++)
 	{
 		int			j = attrMap->attnums[i];
