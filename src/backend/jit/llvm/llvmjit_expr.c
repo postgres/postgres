@@ -20,7 +20,6 @@
 
 #include "access/htup_details.h"
 #include "access/nbtree.h"
-#include "access/tupconvert.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_type.h"
 #include "executor/execExpr.h"

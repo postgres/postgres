@@ -14,11 +14,11 @@
 */
 #include "postgres.h"
 
+#include "access/attmap.h"
 #include "access/genam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "access/tupconvert.h"
 #include "catalog/indexing.h"
 #include "catalog/partition.h"
 #include "catalog/pg_inherits.h"
@@ -206,14 +206,13 @@ map_partition_varattnos(List *expr, int fromrel_varno,
 
 	if (expr != NIL)
 	{
-		AttrNumber *part_attnos;
+		AttrMap    *part_attmap;
 
-		part_attnos = convert_tuples_by_name_map(RelationGetDescr(to_rel),
-												 RelationGetDescr(from_rel));
+		part_attmap = build_attrmap_by_name(RelationGetDescr(to_rel),
+											RelationGetDescr(from_rel));
 		expr = (List *) map_variable_attnos((Node *) expr,
 											fromrel_varno, 0,
-											part_attnos,
-											RelationGetDescr(from_rel)->natts,
+											part_attmap,
 											RelationGetForm(to_rel)->reltype,
 											&my_found_whole_row);
 	}

@@ -137,6 +137,7 @@ AttoptCacheEntry
 AttoptCacheKey
 AttrDefInfo
 AttrDefault
+AttrMap
 AttrMissing
 AttrNumber
 AttributeOpts

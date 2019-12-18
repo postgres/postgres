@@ -143,7 +143,7 @@ typedef struct PartitionDispatchData
 	List	   *keystate;		/* list of ExprState */
 	PartitionDesc partdesc;
 	TupleTableSlot *tupslot;
-	AttrNumber *tupmap;
+	AttrMap    *tupmap;
 	int			indexes[FLEXIBLE_ARRAY_MEMBER];
 }			PartitionDispatchData;
 
@@ -298,7 +298,7 @@ ExecFindPartition(ModifyTableState *mtstate,
 	dispatch = pd[0];
 	while (true)
 	{
-		AttrNumber *map = dispatch->tupmap;
+		AttrMap    *map = dispatch->tupmap;
 		int			partidx = -1;
 
 		CHECK_FOR_INTERRUPTS();
@@ -511,7 +511,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	Relation	firstResultRel = mtstate->resultRelInfo[0].ri_RelationDesc;
 	ResultRelInfo *leaf_part_rri;
 	MemoryContext oldcxt;
-	AttrNumber *part_attnos = NULL;
+	AttrMap    *part_attmap = NULL;
 	bool		found_whole_row;
 
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
@@ -584,14 +584,13 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		/*
 		 * Convert Vars in it to contain this partition's attribute numbers.
 		 */
-		part_attnos =
-			convert_tuples_by_name_map(RelationGetDescr(partrel),
-									   RelationGetDescr(firstResultRel));
+		part_attmap =
+			build_attrmap_by_name(RelationGetDescr(partrel),
+								  RelationGetDescr(firstResultRel));
 		wcoList = (List *)
 			map_variable_attnos((Node *) wcoList,
 								firstVarno, 0,
-								part_attnos,
-								RelationGetDescr(firstResultRel)->natts,
+								part_attmap,
 								RelationGetForm(partrel)->reltype,
 								&found_whole_row);
 		/* We ignore the value of found_whole_row. */
@@ -642,15 +641,14 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		/*
 		 * Convert Vars in it to contain this partition's attribute numbers.
 		 */
-		if (part_attnos == NULL)
-			part_attnos =
-				convert_tuples_by_name_map(RelationGetDescr(partrel),
-										   RelationGetDescr(firstResultRel));
+		if (part_attmap == NULL)
+			part_attmap =
+				build_attrmap_by_name(RelationGetDescr(partrel),
+									  RelationGetDescr(firstResultRel));
 		returningList = (List *)
 			map_variable_attnos((Node *) returningList,
 								firstVarno, 0,
-								part_attnos,
-								RelationGetDescr(firstResultRel)->natts,
+								part_attmap,
 								RelationGetForm(partrel)->reltype,
 								&found_whole_row);
 		/* We ignore the value of found_whole_row. */
@@ -785,23 +783,21 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				 * target relation (firstVarno).
 				 */
 				onconflset = (List *) copyObject((Node *) node->onConflictSet);
-				if (part_attnos == NULL)
-					part_attnos =
-						convert_tuples_by_name_map(RelationGetDescr(partrel),
-												   RelationGetDescr(firstResultRel));
+				if (part_attmap == NULL)
+					part_attmap =
+						build_attrmap_by_name(RelationGetDescr(partrel),
+											  RelationGetDescr(firstResultRel));
 				onconflset = (List *)
 					map_variable_attnos((Node *) onconflset,
 										INNER_VAR, 0,
-										part_attnos,
-										RelationGetDescr(firstResultRel)->natts,
+										part_attmap,
 										RelationGetForm(partrel)->reltype,
 										&found_whole_row);
 				/* We ignore the value of found_whole_row. */
 				onconflset = (List *)
 					map_variable_attnos((Node *) onconflset,
 										firstVarno, 0,
-										part_attnos,
-										RelationGetDescr(firstResultRel)->natts,
+										part_attmap,
 										RelationGetForm(partrel)->reltype,
 										&found_whole_row);
 				/* We ignore the value of found_whole_row. */
@@ -835,16 +831,14 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 					clause = (List *)
 						map_variable_attnos((Node *) clause,
 											INNER_VAR, 0,
-											part_attnos,
-											RelationGetDescr(firstResultRel)->natts,
+											part_attmap,
 											RelationGetForm(partrel)->reltype,
 											&found_whole_row);
 					/* We ignore the value of found_whole_row. */
 					clause = (List *)
 						map_variable_attnos((Node *) clause,
 											firstVarno, 0,
-											part_attnos,
-											RelationGetDescr(firstResultRel)->natts,
+											part_attmap,
 											RelationGetForm(partrel)->reltype,
 											&found_whole_row);
 					/* We ignore the value of found_whole_row. */
@@ -1036,8 +1030,8 @@ ExecInitPartitionDispatchInfo(EState *estate,
 		 * tuple descriptor when computing its partition key for tuple
 		 * routing.
 		 */
-		pd->tupmap = convert_tuples_by_name_map_if_req(RelationGetDescr(parent_pd->reldesc),
-													   tupdesc);
+		pd->tupmap = build_attrmap_by_name_if_req(RelationGetDescr(parent_pd->reldesc),
+												  tupdesc);
 		pd->tupslot = pd->tupmap ?
 			MakeSingleTupleTableSlot(tupdesc, &TTSOpsVirtual) : NULL;
 	}
@@ -1434,15 +1428,16 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
 {
 	List	   *new_tlist = NIL;
 	TupleDesc	tupdesc = map->outdesc;
-	AttrNumber *attrMap = map->attrMap;
+	AttrMap    *attrMap = map->attrMap;
 	AttrNumber	attrno;
 
+	Assert(tupdesc->natts == attrMap->maplen);
 	for (attrno = 1; attrno <= tupdesc->natts; attrno++)
 	{
 		Form_pg_attribute att_tup = TupleDescAttr(tupdesc, attrno - 1);
 		TargetEntry *tle;
 
-		if (attrMap[attrno - 1] != InvalidAttrNumber)
+		if (attrMap->attnums[attrno - 1] != InvalidAttrNumber)
 		{
 			Assert(!att_tup->attisdropped);
 
@@ -1450,7 +1445,7 @@ adjust_partition_tlist(List *tlist, TupleConversionMap *map)
 			 * Use the corresponding entry from the parent's tlist, adjusting
 			 * the resno the match the partition's attno.
 			 */
-			tle = (TargetEntry *) list_nth(tlist, attrMap[attrno - 1] - 1);
+			tle = (TargetEntry *) list_nth(tlist, attrMap->attnums[attrno - 1] - 1);
 			tle->resno = attrno;
 		}
 		else

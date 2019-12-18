@@ -1221,8 +1221,7 @@ typedef struct
 {
 	int			target_varno;	/* RTE index to search for */
 	int			sublevels_up;	/* (current) nesting depth */
-	const AttrNumber *attno_map;	/* map array for user attnos */
-	int			map_length;		/* number of entries in attno_map[] */
+	const AttrMap *attno_map;	/* map array for user attnos */
 	Oid			to_rowtype;		/* change whole-row Vars to this type */
 	bool	   *found_whole_row;	/* output flag */
 } map_variable_attnos_context;
@@ -1249,11 +1248,11 @@ map_variable_attnos_mutator(Node *node,
 			if (attno > 0)
 			{
 				/* user-defined column, replace attno */
-				if (attno > context->map_length ||
-					context->attno_map[attno - 1] == 0)
+				if (attno > context->attno_map->maplen ||
+					context->attno_map->attnums[attno - 1] == 0)
 					elog(ERROR, "unexpected varattno %d in expression to be mapped",
 						 attno);
-				newvar->varattno = newvar->varoattno = context->attno_map[attno - 1];
+				newvar->varattno = newvar->varoattno = context->attno_map->attnums[attno - 1];
 			}
 			else if (attno == 0)
 			{
@@ -1350,7 +1349,7 @@ map_variable_attnos_mutator(Node *node,
 Node *
 map_variable_attnos(Node *node,
 					int target_varno, int sublevels_up,
-					const AttrNumber *attno_map, int map_length,
+					const AttrMap *attno_map,
 					Oid to_rowtype, bool *found_whole_row)
 {
 	map_variable_attnos_context context;
@@ -1358,7 +1357,6 @@ map_variable_attnos(Node *node,
 	context.target_varno = target_varno;
 	context.sublevels_up = sublevels_up;
 	context.attno_map = attno_map;
-	context.map_length = map_length;
 	context.to_rowtype = to_rowtype;
 	context.found_whole_row = found_whole_row;
 

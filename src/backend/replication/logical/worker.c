@@ -230,6 +230,7 @@ slot_fill_defaults(LogicalRepRelMapEntry *rel, EState *estate,
 	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
 	defexprs = (ExprState **) palloc(num_phys_attrs * sizeof(ExprState *));
 
+	Assert(rel->attrmap->maplen == num_phys_attrs);
 	for (attnum = 0; attnum < num_phys_attrs; attnum++)
 	{
 		Expr	   *defexpr;
@@ -237,7 +238,7 @@ slot_fill_defaults(LogicalRepRelMapEntry *rel, EState *estate,
 		if (TupleDescAttr(desc, attnum)->attisdropped || TupleDescAttr(desc, attnum)->attgenerated)
 			continue;
 
-		if (rel->attrmap[attnum] >= 0)
+		if (rel->attrmap->attnums[attnum] >= 0)
 			continue;
 
 		defexpr = (Expr *) build_column_default(rel->localrel, attnum + 1);
@@ -319,10 +320,11 @@ slot_store_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 	error_context_stack = &errcallback;
 
 	/* Call the "in" function for each non-dropped attribute */
+	Assert(natts == rel->attrmap->maplen);
 	for (i = 0; i < natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(slot->tts_tupleDescriptor, i);
-		int			remoteattnum = rel->attrmap[i];
+		int			remoteattnum = rel->attrmap->attnums[i];
 
 		if (!att->attisdropped && remoteattnum >= 0 &&
 			values[remoteattnum] != NULL)
@@ -403,10 +405,11 @@ slot_modify_cstrings(TupleTableSlot *slot, TupleTableSlot *srcslot,
 	error_context_stack = &errcallback;
 
 	/* Call the "in" function for each replaced attribute */
+	Assert(natts == rel->attrmap->maplen);
 	for (i = 0; i < natts; i++)
 	{
 		Form_pg_attribute att = TupleDescAttr(slot->tts_tupleDescriptor, i);
-		int			remoteattnum = rel->attrmap[i];
+		int			remoteattnum = rel->attrmap->attnums[i];
 
 		if (remoteattnum < 0)
 			continue;

@@ -281,7 +281,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		 */
 		desc = RelationGetDescr(entry->localrel);
 		oldctx = MemoryContextSwitchTo(LogicalRepRelMapContext);
-		entry->attrmap = palloc(desc->natts * sizeof(AttrNumber));
+		entry->attrmap = make_attrmap(desc->natts);
 		MemoryContextSwitchTo(oldctx);
 
 		found = 0;
@@ -292,14 +292,14 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 			if (attr->attisdropped || attr->attgenerated)
 			{
-				entry->attrmap[i] = -1;
+				entry->attrmap->attnums[i] = -1;
 				continue;
 			}
 
 			attnum = logicalrep_rel_att_by_name(remoterel,
 												NameStr(attr->attname));
 
-			entry->attrmap[i] = attnum;
+			entry->attrmap->attnums[i] = attnum;
 			if (attnum >= 0)
 				found++;
 		}
@@ -354,8 +354,8 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 
 			attnum = AttrNumberGetAttrOffset(attnum);
 
-			if (entry->attrmap[attnum] < 0 ||
-				!bms_is_member(entry->attrmap[attnum], remoterel->attkeys))
+			if (entry->attrmap->attnums[attnum] < 0 ||
+				!bms_is_member(entry->attrmap->attnums[attnum], remoterel->attkeys))
 			{
 				entry->updatable = false;
 				break;

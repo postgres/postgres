@@ -16,6 +16,7 @@
 
 #include "parser/parse_node.h"
 
+typedef struct AttrMap AttrMap;
 
 extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
 extern List *transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
@@ -29,7 +30,7 @@ extern PartitionBoundSpec *transformPartitionBound(ParseState *pstate, Relation 
 												   PartitionBoundSpec *spec);
 extern IndexStmt *generateClonedIndexStmt(RangeVar *heapRel,
 										  Relation source_idx,
-										  const AttrNumber *attmap, int attmap_length,
+										  const AttrMap *attmap,
 										  Oid *constraintOid);
 
 #endif							/* PARSE_UTILCMD_H */
