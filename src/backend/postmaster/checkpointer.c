@@ -37,6 +37,7 @@
 #include "postgres.h"
 
 #include <sys/time.h>
+#include <time.h>
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
