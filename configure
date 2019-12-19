@@ -2946,7 +2946,7 @@ else
 
 case $host_os in
      aix*) template=aix ;;
-  cygwin*) template=cygwin ;;
+  cygwin*|msys*) template=cygwin ;;
   darwin*) template=darwin ;;
 dragonfly*) template=netbsd ;;
  freebsd*) template=freebsd ;;
@@ -15856,24 +15856,22 @@ fi
 
 
 
-case $host_os in
+if test "$PORTNAME" = "win32" -o "$PORTNAME" = "cygwin"; then
 	# Cygwin and (apparently, based on test results) Mingw both
 	# have a broken strtof(), so substitute the same replacement
 	# code we use with VS2013. That's not a perfect fix, since
 	# (unlike with VS2013) it doesn't avoid double-rounding, but
 	# we have no better options. To get that, though, we have to
 	# force the file to be compiled despite HAVE_STRTOF.
-	mingw*|cygwin*)
-		case " $LIBOBJS " in
+	case " $LIBOBJS " in
   *" strtof.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS strtof.$ac_objext"
  ;;
 esac
 
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: On $host_os we will use our strtof wrapper." >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: On $host_os we will use our strtof wrapper." >&5
 $as_echo "$as_me: On $host_os we will use our strtof wrapper." >&6;}
-	;;
-esac
+fi
 
 case $host_os in
         # Windows uses a specialised env handler

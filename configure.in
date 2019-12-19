@@ -59,7 +59,7 @@ PGAC_ARG_REQ(with, template, [NAME], [override operating system template],
 
 case $host_os in
      aix*) template=aix ;;
-  cygwin*) template=cygwin ;;
+  cygwin*|msys*) template=cygwin ;;
   darwin*) template=darwin ;;
 dragonfly*) template=netbsd ;;
  freebsd*) template=freebsd ;;
@@ -1744,18 +1744,16 @@ AC_REPLACE_FUNCS(m4_normalize([
 	strtof
 ]))
 
-case $host_os in
+if test "$PORTNAME" = "win32" -o "$PORTNAME" = "cygwin"; then
 	# Cygwin and (apparently, based on test results) Mingw both
 	# have a broken strtof(), so substitute the same replacement
 	# code we use with VS2013. That's not a perfect fix, since
 	# (unlike with VS2013) it doesn't avoid double-rounding, but
 	# we have no better options. To get that, though, we have to
 	# force the file to be compiled despite HAVE_STRTOF.
-	mingw*|cygwin*)
-		AC_LIBOBJ([strtof])
-		AC_MSG_NOTICE([On $host_os we will use our strtof wrapper.])
-	;;
-esac
+	AC_LIBOBJ([strtof])
+	AC_MSG_NOTICE([On $host_os we will use our strtof wrapper.])
+fi
 
 case $host_os in
         # Windows uses a specialised env handler
