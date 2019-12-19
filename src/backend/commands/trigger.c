@@ -3033,8 +3033,8 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		/*
 		 * In READ COMMITTED isolation level it's possible that target tuple
 		 * was changed due to concurrent update.  In that case we have a raw
-		 * subplan output tuple in newSlot, and need to run it through the
-		 * junk filter to produce an insertable tuple.
+		 * subplan output tuple in epqslot_candidate, and need to run it
+		 * through the junk filter to produce an insertable tuple.
 		 *
 		 * Caution: more than likely, the passed-in slot is the same as the
 		 * junkfilter's output slot, so we are clobbering the original value
