@@ -46,8 +46,6 @@ typedef struct
 	IndexBulkDeleteCallback callback;
 	void	   *callback_state;
 	BTCycleId	cycleid;
-	BlockNumber lastBlockVacuumed;	/* highest blkno actually vacuumed */
-	BlockNumber lastBlockLocked;	/* highest blkno we've cleanup-locked */
 	BlockNumber totFreePages;	/* true total # of free pages */
 	TransactionId oldestBtpoXact;
 	MemoryContext pagedelcontext;
@@ -978,8 +976,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	vstate.callback = callback;
 	vstate.callback_state = callback_state;
 	vstate.cycleid = cycleid;
-	vstate.lastBlockVacuumed = BTREE_METAPAGE;	/* Initialise at first block */
-	vstate.lastBlockLocked = BTREE_METAPAGE;
 	vstate.totFreePages = 0;
 	vstate.oldestBtpoXact = InvalidTransactionId;
 
@@ -1038,39 +1034,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 				pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_DONE,
 											 blkno);
 		}
-	}
-
-	/*
-	 * Check to see if we need to issue one final WAL record for this index,
-	 * which may be needed for correctness on a hot standby node when non-MVCC
-	 * index scans could take place.
-	 *
-	 * If the WAL is replayed in hot standby, the replay process needs to get
-	 * cleanup locks on all index leaf pages, just as we've been doing here.
-	 * However, we won't issue any WAL records about pages that have no items
-	 * to be deleted.  For pages between pages we've vacuumed, the replay code
-	 * will take locks under the direction of the lastBlockVacuumed fields in
-	 * the XLOG_BTREE_VACUUM WAL records.  To cover pages after the last one
-	 * we vacuum, we need to issue a dummy XLOG_BTREE_VACUUM WAL record
-	 * against the last leaf page in the index, if that one wasn't vacuumed.
-	 */
-	if (XLogStandbyInfoActive() &&
-		vstate.lastBlockVacuumed < vstate.lastBlockLocked)
-	{
-		Buffer		buf;
-
-		/*
-		 * The page should be valid, but we can't use _bt_getbuf() because we
-		 * want to use a nondefault buffer access strategy.  Since we aren't
-		 * going to delete any items, getting cleanup lock again is probably
-		 * overkill, but for consistency do that anyway.
-		 */
-		buf = ReadBufferExtended(rel, MAIN_FORKNUM, vstate.lastBlockLocked,
-								 RBM_NORMAL, info->strategy);
-		LockBufferForCleanup(buf);
-		_bt_checkpage(rel, buf);
-		_bt_delitems_vacuum(rel, buf, NULL, 0, vstate.lastBlockVacuumed);
-		_bt_relbuf(rel, buf);
 	}
 
 	MemoryContextDelete(vstate.pagedelcontext);
@@ -1204,13 +1167,6 @@ restart:
 		LockBufferForCleanup(buf);
 
 		/*
-		 * Remember highest leaf page number we've taken cleanup lock on; see
-		 * notes in btvacuumscan
-		 */
-		if (blkno > vstate->lastBlockLocked)
-			vstate->lastBlockLocked = blkno;
-
-		/*
 		 * Check whether we need to recurse back to earlier pages.  What we
 		 * are concerned about is a page split that happened since we started
 		 * the vacuum scan.  If the split moved some tuples to a lower page
@@ -1225,8 +1181,10 @@ restart:
 			recurse_to = opaque->btpo_next;
 
 		/*
-		 * Scan over all items to see which ones need deleted according to the
-		 * callback function.
+		 * When each VACUUM begins, it determines an OldestXmin cutoff value.
+		 * Tuples before the cutoff are removed by VACUUM.  Scan over all
+		 * items to see which ones need to be deleted according to cutoff
+		 * point using callback.
 		 */
 		ndeletable = 0;
 		minoff = P_FIRSTDATAKEY(opaque);
@@ -1245,25 +1203,24 @@ restart:
 				htup = &(itup->t_tid);
 
 				/*
-				 * During Hot Standby we currently assume that
-				 * XLOG_BTREE_VACUUM records do not produce conflicts. That is
-				 * only true as long as the callback function depends only
-				 * upon whether the index tuple refers to heap tuples removed
-				 * in the initial heap scan. When vacuum starts it derives a
-				 * value of OldestXmin. Backends taking later snapshots could
-				 * have a RecentGlobalXmin with a later xid than the vacuum's
-				 * OldestXmin, so it is possible that row versions deleted
-				 * after OldestXmin could be marked as killed by other
-				 * backends. The callback function *could* look at the index
-				 * tuple state in isolation and decide to delete the index
-				 * tuple, though currently it does not. If it ever did, we
-				 * would need to reconsider whether XLOG_BTREE_VACUUM records
-				 * should cause conflicts. If they did cause conflicts they
-				 * would be fairly harsh conflicts, since we haven't yet
-				 * worked out a way to pass a useful value for
-				 * latestRemovedXid on the XLOG_BTREE_VACUUM records. This
-				 * applies to *any* type of index that marks index tuples as
-				 * killed.
+				 * Hot Standby assumes that it's okay that XLOG_BTREE_VACUUM
+				 * records do not produce their own conflicts.  This is safe
+				 * as long as the callback function only considers whether the
+				 * index tuple refers to pre-cutoff heap tuples that were
+				 * certainly already pruned away during VACUUM's initial heap
+				 * scan by the time we get here. (We can rely on conflicts
+				 * produced by heap pruning, rather than producing our own
+				 * now.)
+				 *
+				 * Backends with snapshots acquired after a VACUUM starts but
+				 * before it finishes could have a RecentGlobalXmin with a
+				 * later xid than the VACUUM's OldestXmin cutoff.  These
+				 * backends might happen to opportunistically mark some index
+				 * tuples LP_DEAD before we reach them, even though they may
+				 * be after our cutoff.  We don't try to kill these "extra"
+				 * index tuples in _bt_delitems_vacuum().  This keep things
+				 * simple, and allows us to always avoid generating our own
+				 * conflicts.
 				 */
 				if (callback(htup, callback_state))
 					deletable[ndeletable++] = offnum;
@@ -1276,29 +1233,7 @@ restart:
 		 */
 		if (ndeletable > 0)
 		{
-			/*
-			 * Notice that the issued XLOG_BTREE_VACUUM WAL record includes
-			 * all information to the replay code to allow it to get a cleanup
-			 * lock on all pages between the previous lastBlockVacuumed and
-			 * this page. This ensures that WAL replay locks all leaf pages at
-			 * some point, which is important should non-MVCC scans be
-			 * requested. This is currently unused on standby, but we record
-			 * it anyway, so that the WAL contains the required information.
-			 *
-			 * Since we can visit leaf pages out-of-order when recursing,
-			 * replay might end up locking such pages an extra time, but it
-			 * doesn't seem worth the amount of bookkeeping it'd take to avoid
-			 * that.
-			 */
-			_bt_delitems_vacuum(rel, buf, deletable, ndeletable,
-								vstate->lastBlockVacuumed);
-
-			/*
-			 * Remember highest leaf page number we've issued a
-			 * XLOG_BTREE_VACUUM WAL record for.
-			 */
-			if (blkno > vstate->lastBlockVacuumed)
-				vstate->lastBlockVacuumed = blkno;
+			_bt_delitems_vacuum(rel, buf, deletable, ndeletable);
 
 			stats->tuples_removed += ndeletable;
 			/* must recompute maxoff */

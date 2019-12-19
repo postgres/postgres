@@ -508,7 +508,9 @@ the parent is finished and the flag in the child cleared, but can be
 released immediately after that, before recursing up the tree if the parent
 also needs to be split.  This ensures that incompletely split pages should
 not be seen under normal circumstances; only if insertion to the parent
-has failed for some reason.
+has failed for some reason. (It's also possible for a reader to observe
+a page with the incomplete split flag set during recovery; see later
+section on "Scans during Recovery" for details.)
 
 We flag the left page, even though it's the right page that's missing the
 downlink, because it's more convenient to know already when following the
@@ -528,7 +530,7 @@ next VACUUM will find the half-dead leaf page and continue the deletion.
 
 Before 9.4, we used to keep track of incomplete splits and page deletions
 during recovery and finish them immediately at end of recovery, instead of
-doing it lazily at the next  insertion or vacuum.  However, that made the
+doing it lazily at the next insertion or vacuum.  However, that made the
 recovery much more complicated, and only fixed the problem when crash
 recovery was performed.  An incomplete split can also occur if an otherwise
 recoverable error, like out-of-memory or out-of-disk-space, happens while
@@ -537,23 +539,41 @@ inserting the downlink to the parent.
 Scans during Recovery
 ---------------------
 
-The btree index type can be safely used during recovery. During recovery
-we have at most one writer and potentially many readers. In that
-situation the locking requirements can be relaxed and we do not need
-double locking during block splits. Each WAL record makes changes to a
-single level of the btree using the correct locking sequence and so
-is safe for concurrent readers. Some readers may observe a block split
-in progress as they descend the tree, but they will simply move right
-onto the correct page.
+nbtree indexes support read queries in Hot Standby mode. Every atomic
+action/WAL record makes isolated changes that leave the tree in a
+consistent state for readers. Readers lock pages according to the same
+rules that readers follow on the primary. (Readers may have to move
+right to recover from a "concurrent" page split or page deletion, just
+like on the primary.)
+
+However, there are a couple of differences in how pages are locked by
+replay/the startup process as compared to the original write operation
+on the primary. The exceptions involve page splits and page deletions.
+The first phase and second phase of a page split are processed
+independently during replay, since they are independent atomic actions.
+We do not attempt to recreate the coupling of parent and child page
+write locks that took place on the primary. This is safe because readers
+never care about the incomplete split flag anyway. Holding on to an
+extra write lock on the primary is only necessary so that a second
+writer cannot observe the incomplete split flag before the first writer
+finishes the split. If we let concurrent writers on the primary observe
+an incomplete split flag on the same page, each writer would attempt to
+complete the unfinished split, corrupting the parent page.  (Similarly,
+replay of page deletion records does not hold a write lock on the leaf
+page throughout; only the primary needs to blocks out concurrent writers
+that insert on to the page being deleted.)
 
 During recovery all index scans start with ignore_killed_tuples = false
 and we never set kill_prior_tuple. We do this because the oldest xmin
 on the standby server can be older than the oldest xmin on the master
-server, which means tuples can be marked as killed even when they are
-still visible on the standby. We don't WAL log tuple killed bits, but
+server, which means tuples can be marked LP_DEAD even when they are
+still visible on the standby. We don't WAL log tuple LP_DEAD  bits, but
 they can still appear in the standby because of full page writes. So
 we must always ignore them in standby, and that means it's not worth
-setting them either.
+setting them either.  (When LP_DEAD-marked tuples are eventually deleted
+on the primary, the deletion is WAL-logged.  Queries that run on a
+standby therefore get much of the benefit of any LP_DEAD setting that
+takes place on the primary.)
 
 Note that we talk about scans that are started during recovery. We go to
 a little trouble to allow a scan to start during recovery and end during
@@ -562,14 +582,17 @@ because it allows running applications to continue while the standby
 changes state into a normally running server.
 
 The interlocking required to avoid returning incorrect results from
-non-MVCC scans is not required on standby nodes. That is because
+non-MVCC scans is not required on standby nodes. We still get a
+super-exclusive lock ("cleanup lock") when replaying VACUUM records
+during recovery, but recovery does not need to lock every leaf page
+(only those leaf pages that have items to delete). That is safe because
 HeapTupleSatisfiesUpdate(), HeapTupleSatisfiesSelf(),
-HeapTupleSatisfiesDirty() and HeapTupleSatisfiesVacuum() are only
-ever used during write transactions, which cannot exist on the standby.
-MVCC scans are already protected by definition, so HeapTupleSatisfiesMVCC()
-is not a problem.  The optimizer looks at the boundaries of value ranges
-using HeapTupleSatisfiesNonVacuumable() with an index-only scan, which is
-also safe.  That leaves concern only for HeapTupleSatisfiesToast().
+HeapTupleSatisfiesDirty() and HeapTupleSatisfiesVacuum() are only ever
+used during write transactions, which cannot exist on the standby. MVCC
+scans are already protected by definition, so HeapTupleSatisfiesMVCC()
+is not a problem. The optimizer looks at the boundaries of value ranges
+using HeapTupleSatisfiesNonVacuumable() with an index-only scan, which
+is also safe. That leaves concern only for HeapTupleSatisfiesToast().
 
 HeapTupleSatisfiesToast() doesn't use MVCC semantics, though that's
 because it doesn't need to - if the main heap row is visible then the

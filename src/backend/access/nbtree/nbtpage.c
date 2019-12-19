@@ -968,32 +968,28 @@ _bt_page_recyclable(Page page)
  * deleting the page it points to.
  *
  * This routine assumes that the caller has pinned and locked the buffer.
- * Also, the given itemnos *must* appear in increasing order in the array.
+ * Also, the given deletable array *must* be sorted in ascending order.
  *
- * We record VACUUMs and b-tree deletes differently in WAL. InHotStandby
- * we need to be able to pin all of the blocks in the btree in physical
- * order when replaying the effects of a VACUUM, just as we do for the
- * original VACUUM itself. lastBlockVacuumed allows us to tell whether an
- * intermediate range of blocks has had no changes at all by VACUUM,
- * and so must be scanned anyway during replay. We always write a WAL record
- * for the last block in the index, whether or not it contained any items
- * to be removed. This allows us to scan right up to end of index to
- * ensure correct locking.
+ * We record VACUUMs and b-tree deletes differently in WAL.  Deletes must
+ * generate recovery conflicts by accessing the heap inline, whereas VACUUMs
+ * can rely on the initial heap scan taking care of the problem (pruning would
+ * have generated the conflicts needed for hot standby already).
  */
 void
 _bt_delitems_vacuum(Relation rel, Buffer buf,
-					OffsetNumber *itemnos, int nitems,
-					BlockNumber lastBlockVacuumed)
+					OffsetNumber *deletable, int ndeletable)
 {
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
+
+	/* Shouldn't be called unless there's something to do */
+	Assert(ndeletable > 0);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
 	/* Fix the page */
-	if (nitems > 0)
-		PageIndexMultiDelete(page, itemnos, nitems);
+	PageIndexMultiDelete(page, deletable, ndeletable);
 
 	/*
 	 * We can clear the vacuum cycle ID since this page has certainly been
@@ -1019,7 +1015,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 		XLogRecPtr	recptr;
 		xl_btree_vacuum xlrec_vacuum;
 
-		xlrec_vacuum.lastBlockVacuumed = lastBlockVacuumed;
+		xlrec_vacuum.ndeleted = ndeletable;
 
 		XLogBeginInsert();
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
@@ -1030,8 +1026,8 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 		 * is.  When XLogInsert stores the whole buffer, the offsets array
 		 * need not be stored too.
 		 */
-		if (nitems > 0)
-			XLogRegisterBufData(0, (char *) itemnos, nitems * sizeof(OffsetNumber));
+		XLogRegisterBufData(0, (char *) deletable,
+							ndeletable * sizeof(OffsetNumber));
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_VACUUM);
 
@@ -1050,8 +1046,8 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
  * Also, the given itemnos *must* appear in increasing order in the array.
  *
  * This is nearly the same as _bt_delitems_vacuum as far as what it does to
- * the page, but the WAL logging considerations are quite different.  See
- * comments for _bt_delitems_vacuum.
+ * the page, but it needs to generate its own recovery conflicts by accessing
+ * the heap.  See comments for _bt_delitems_vacuum.
  */
 void
 _bt_delitems_delete(Relation rel, Buffer buf,

@@ -134,7 +134,11 @@ typedef struct xl_btree_delete
 #define SizeOfBtreeDelete	(offsetof(xl_btree_delete, nitems) + sizeof(int))
 
 /*
- * This is what we need to know about page reuse within btree.
+ * This is what we need to know about page reuse within btree.  This record
+ * only exists to generate a conflict point for Hot Standby.
+ *
+ * Note that we must include a RelFileNode in the record because we don't
+ * actually register the buffer with the record.
  */
 typedef struct xl_btree_reuse_page
 {
@@ -150,32 +154,17 @@ typedef struct xl_btree_reuse_page
  * The WAL record can represent deletion of any number of index tuples on a
  * single index page when executed by VACUUM.
  *
- * For MVCC scans, lastBlockVacuumed will be set to InvalidBlockNumber.
- * For a non-MVCC index scans there is an additional correctness requirement
- * for applying these changes during recovery, which is that we must do one
- * of these two things for every block in the index:
- *		* lock the block for cleanup and apply any required changes
- *		* EnsureBlockUnpinned()
- * The purpose of this is to ensure that no index scans started before we
- * finish scanning the index are still running by the time we begin to remove
- * heap tuples.
- *
- * Any changes to any one block are registered on just one WAL record. All
- * blocks that we need to run EnsureBlockUnpinned() are listed as a block range
- * starting from the last block vacuumed through until this one. Individual
- * block numbers aren't given.
- *
- * Note that the *last* WAL record in any vacuum of an index is allowed to
- * have a zero length array of offsets. Earlier records must have at least one.
+ * Note that the WAL record in any vacuum of an index must have at least one
+ * item to delete.
  */
 typedef struct xl_btree_vacuum
 {
-	BlockNumber lastBlockVacuumed;
+	uint32		ndeleted;
 
-	/* TARGET OFFSET NUMBERS FOLLOW */
+	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
 } xl_btree_vacuum;
 
-#define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, lastBlockVacuumed) + sizeof(BlockNumber))
+#define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, ndeleted) + sizeof(uint32))
 
 /*
  * This is what we need to know about marking an empty branch for deletion.
