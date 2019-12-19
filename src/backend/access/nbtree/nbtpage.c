@@ -1600,6 +1600,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * fail in the field, though.
 	 */
 	page = BufferGetPage(topparent);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 #ifdef USE_ASSERT_CHECKING
 	itemid = PageGetItemId(page, topoff);

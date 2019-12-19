@@ -590,6 +590,8 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 		BlockNumber rightsib;
 
 		page = (Page) BufferGetPage(buffer);
+		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+
 		poffset = xlrec->poffset;
 
 		nextoffset = OffsetNumberNext(poffset);
