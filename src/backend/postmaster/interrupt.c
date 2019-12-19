@@ -20,6 +20,7 @@
 #include "postmaster/interrupt.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
+#include "storage/procsignal.h"
 #include "utils/guc.h"
 
 volatile sig_atomic_t ConfigReloadPending = false;
@@ -31,6 +32,9 @@ volatile sig_atomic_t ShutdownRequestPending = false;
 void
 HandleMainLoopInterrupts(void)
 {
+	if (ProcSignalBarrierPending)
+		ProcessProcSignalBarrier();
+
 	if (ConfigReloadPending)
 	{
 		ConfigReloadPending = false;

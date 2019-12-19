@@ -524,6 +524,9 @@ CheckpointerMain(void)
 static void
 HandleCheckpointerInterrupts(void)
 {
+	if (ProcSignalBarrierPending)
+		ProcessProcSignalBarrier();
+
 	if (ConfigReloadPending)
 	{
 		ConfigReloadPending = false;
@@ -710,6 +713,10 @@ CheckpointWriteDelay(int flags, double progress)
 		AbsorbSyncRequests();
 		absorb_counter = WRITES_PER_ABSORB;
 	}
+
+	/* Check for barrier events. */
+	if (ProcSignalBarrierPending)
+		ProcessProcSignalBarrier();
 }
 
 /*

@@ -148,7 +148,8 @@ ProcessWalRcvInterrupts(void)
 	/*
 	 * Although walreceiver interrupt handling doesn't use the same scheme as
 	 * regular backends, call CHECK_FOR_INTERRUPTS() to make sure we receive
-	 * any incoming signals on Win32.
+	 * any incoming signals on Win32, and also to make sure we process any
+	 * barrier events.
 	 */
 	CHECK_FOR_INTERRUPTS();
 

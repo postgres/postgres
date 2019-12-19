@@ -45,6 +45,16 @@ typedef enum
 	NUM_PROCSIGNALS				/* Must be last! */
 } ProcSignalReason;
 
+typedef enum
+{
+	/*
+	 * XXX. PROCSIGNAL_BARRIER_PLACEHOLDER should be replaced when the first
+	 * real user of the ProcSignalBarrier mechanism is added. It's just here
+	 * for now because we can't have an empty enum.
+	 */
+	PROCSIGNAL_BARRIER_PLACEHOLDER = 0
+} ProcSignalBarrierType;
+
 /*
  * prototypes for functions in procsignal.c
  */
@@ -54,6 +64,10 @@ extern void ProcSignalShmemInit(void);
 extern void ProcSignalInit(int pss_idx);
 extern int	SendProcSignal(pid_t pid, ProcSignalReason reason,
 						   BackendId backendId);
+
+extern uint64 EmitProcSignalBarrier(ProcSignalBarrierType type);
+extern void WaitForProcSignalBarrier(uint64 generation);
+extern void ProcessProcSignalBarrier(void);
 
 extern void procsignal_sigusr1_handler(SIGNAL_ARGS);
 

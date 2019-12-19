@@ -3180,6 +3180,9 @@ ProcessInterrupts(void)
 
 	}
 
+	if (ProcSignalBarrierPending)
+		ProcessProcSignalBarrier();
+
 	if (ParallelMessagePending)
 		HandleParallelMessages();
 }

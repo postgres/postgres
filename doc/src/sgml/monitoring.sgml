@@ -1473,7 +1473,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
         </row>
         <row>
-         <entry morerows="66"><literal>IO</literal></entry>
+         <entry morerows="67"><literal>IO</literal></entry>
          <entry><literal>BufFileRead</literal></entry>
          <entry>Waiting for a read from a buffered file.</entry>
         </row>
@@ -1592,6 +1592,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>LogicalRewriteWrite</literal></entry>
          <entry>Waiting for a write of logical rewrite mappings.</entry>
+        </row>
+        <row>
+         <entry><literal>ProcSignalBarrier</literal></entry>
+         <entry>Waiting for a barrier event to be processed by all backends.</entry>
         </row>
         <row>
          <entry><literal>RelationMapRead</literal></entry>

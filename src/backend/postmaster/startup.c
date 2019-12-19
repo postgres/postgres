@@ -96,7 +96,7 @@ StartupProcShutdownHandler(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
-/* Handle SIGHUP and SIGTERM signals of startup process */
+/* Handle various signals that might be sent to the startup process */
 void
 HandleStartupProcInterrupts(void)
 {
@@ -121,6 +121,10 @@ HandleStartupProcInterrupts(void)
 	 */
 	if (IsUnderPostmaster && !PostmasterIsAlive())
 		exit(1);
+
+	/* Process barrier events */
+	if (ProcSignalBarrierPending)
+		ProcessProcSignalBarrier();
 }
 
 

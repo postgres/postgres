@@ -820,6 +820,10 @@ HandleAutoVacLauncherInterrupts(void)
 		rebuild_database_list(InvalidOid);
 	}
 
+	/* Process barrier events */
+	if (ProcSignalBarrierPending)
+		ProcessProcSignalBarrier();
+
 	/* Process sinval catchup interrupts that happened while sleeping */
 	ProcessCatchupInterrupt();
 }
