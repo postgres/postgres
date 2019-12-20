@@ -20,7 +20,6 @@ sub _new
 		projects                   => {},
 		options                    => $options,
 		numver                     => '',
-		strver                     => '',
 		VisualStudioVersion        => undef,
 		MinimumVisualStudioVersion => undef,
 		vcver                      => undef,
@@ -140,16 +139,22 @@ sub GenerateFiles
 {
 	my $self = shift;
 	my $bits = $self->{platform} eq 'Win32' ? 32 : 64;
+	my $package_name;
+	my $package_version;
+	my $package_bugreport;
 
 	# Parse configure.in to get version numbers
 	open(my $c, '<', "configure.in")
 	  || confess("Could not open configure.in for reading\n");
 	while (<$c>)
 	{
-		if (/^AC_INIT\(\[PostgreSQL\], \[([^\]]+)\]/)
+		if (/^AC_INIT\(\[([^\]]+)\], \[([^\]]+)\], \[([^\]]+)\]/)
 		{
-			$self->{strver} = $1;
-			if ($self->{strver} !~ /^(\d+)(?:\.(\d+))?/)
+			$package_name      = $1;
+			$package_version   = $2;
+			$package_bugreport = $3;
+
+			if ($package_version !~ /^(\d+)(?:\.(\d+))?/)
 			{
 				confess "Bad format of version: $self->{strver}\n";
 			}
@@ -159,7 +164,10 @@ sub GenerateFiles
 	}
 	close($c);
 	confess "Unable to parse configure.in for all variables!"
-	  if ($self->{strver} eq '' || $self->{numver} eq '');
+	  if ( $package_name eq ''
+		|| $package_version eq ''
+		|| $self->{numver} eq ''
+		|| $package_bugreport eq '');
 
 	if (IsNewer("src/include/pg_config_os.h", "src/include/port/win32.h"))
 	{
@@ -167,100 +175,369 @@ sub GenerateFiles
 		copyFile("src/include/port/win32.h", "src/include/pg_config_os.h");
 	}
 
-	if (IsNewer("src/include/pg_config.h", "src/include/pg_config.h.win32"))
+	print "Generating configuration headers...\n";
+	my $extraver = $self->{options}->{extraver};
+	$extraver = '' unless defined $extraver;
+	my $port = $self->{options}->{"--with-pgport"} || 5432;
+
+	# Every symbol in pg_config.h.in must be accounted for here.  Set
+	# to undef if the symbol should not be defined.
+	my %define = (
+		ACCEPT_TYPE_ARG1           => 'unsigned int',
+		ACCEPT_TYPE_ARG2           => 'struct sockaddr *',
+		ACCEPT_TYPE_ARG3           => 'int',
+		ACCEPT_TYPE_RETURN         => 'unsigned int PASCAL',
+		ALIGNOF_DOUBLE             => 8,
+		ALIGNOF_INT                => 4,
+		ALIGNOF_LONG               => 4,
+		ALIGNOF_LONG_LONG_INT      => 8,
+		ALIGNOF_PG_INT128_TYPE     => undef,
+		ALIGNOF_SHORT              => 2,
+		AC_APPLE_UNIVERSAL_BUILD   => undef,
+		BLCKSZ                     => 1024 * $self->{options}->{blocksize},
+		DEF_PGPORT                 => $port,
+		DEF_PGPORT_STR             => qq{"$port"},
+		ENABLE_GSS                 => $self->{options}->{gss} ? 1 : undef,
+		ENABLE_NLS                 => $self->{options}->{nls} ? 1 : undef,
+		ENABLE_THREAD_SAFETY       => 1,
+		FLEXIBLE_ARRAY_MEMBER      => '/**/',
+		GETTIMEOFDAY_1ARG          => undef,
+		HAVE_APPEND_HISTORY        => undef,
+		HAVE_ASN1_STRING_GET0_DATA => undef,
+		HAVE_ATOMICS               => 1,
+		HAVE_ATOMIC_H              => undef,
+		HAVE_BACKTRACE_SYMBOLS     => undef,
+		HAVE_BIO_GET_DATA          => undef,
+		HAVE_BIO_METH_NEW          => undef,
+		HAVE_CBRT                  => undef,
+		HAVE_CLASS                 => undef,
+		HAVE_CLOCK_GETTIME         => undef,
+		HAVE_COMPUTED_GOTO         => undef,
+		HAVE_COPYFILE              => undef,
+		HAVE_COPYFILE_H            => undef,
+		HAVE_CRTDEFS_H             => undef,
+		HAVE_CRYPTO_LOCK           => undef,
+		HAVE_DECL_FDATASYNC        => 0,
+		HAVE_DECL_F_FULLFSYNC      => 0,
+		HAVE_DECL_LLVMCREATEGDBREGISTRATIONLISTENER => undef,
+		HAVE_DECL_LLVMCREATEPERFJITEVENTLISTENER    => undef,
+		HAVE_DECL_LLVMGETHOSTCPUNAME                => 0,
+		HAVE_DECL_LLVMGETHOSTCPUFEATURES            => 0,
+		HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN         => 0,
+		HAVE_DECL_POSIX_FADVISE                     => undef,
+		HAVE_DECL_RTLD_GLOBAL                       => 0,
+		HAVE_DECL_RTLD_NOW                          => 0,
+		HAVE_DECL_STRLCAT                           => undef,
+		HAVE_DECL_STRLCPY                           => undef,
+		HAVE_DECL_STRNLEN                           => 1,
+		HAVE_DECL_STRTOLL                           => 1,
+		HAVE_DECL_STRTOULL                          => 1,
+		HAVE_DLOPEN                                 => undef,
+		HAVE_EDITLINE_HISTORY_H                     => undef,
+		HAVE_EDITLINE_READLINE_H                    => undef,
+		HAVE_EXECINFO_H                             => undef,
+		HAVE_EXPLICIT_BZERO                         => undef,
+		HAVE_FDATASYNC                              => undef,
+		HAVE_FLS                                    => undef,
+		HAVE_FPCLASS                                => undef,
+		HAVE_FP_CLASS                               => undef,
+		HAVE_FP_CLASS_D                             => undef,
+		HAVE_FP_CLASS_H                             => undef,
+		HAVE_FSEEKO                                 => 1,
+		HAVE_FUNCNAME__FUNC                         => undef,
+		HAVE_FUNCNAME__FUNCTION                     => 1,
+		HAVE_GCC__ATOMIC_INT32_CAS                  => undef,
+		HAVE_GCC__ATOMIC_INT64_CAS                  => undef,
+		HAVE_GCC__SYNC_CHAR_TAS                     => undef,
+		HAVE_GCC__SYNC_INT32_CAS                    => undef,
+		HAVE_GCC__SYNC_INT32_TAS                    => undef,
+		HAVE_GCC__SYNC_INT64_CAS                    => undef,
+		HAVE_GETADDRINFO                            => undef,
+		HAVE_GETHOSTBYNAME_R                        => undef,
+		HAVE_GETIFADDRS                             => undef,
+		HAVE_GETOPT                                 => undef,
+		HAVE_GETOPT_H                               => undef,
+		HAVE_GETOPT_LONG                            => undef,
+		HAVE_GETPEEREID                             => undef,
+		HAVE_GETPEERUCRED                           => undef,
+		HAVE_GETPWUID_R                             => undef,
+		HAVE_GETRLIMIT                              => undef,
+		HAVE_GETRUSAGE                              => undef,
+		HAVE_GETTIMEOFDAY                           => undef,
+		HAVE_GSSAPI_GSSAPI_H                        => undef,
+		HAVE_GSSAPI_H                               => undef,
+		HAVE_HISTORY_H                              => undef,
+		HAVE_HISTORY_TRUNCATE_FILE                  => undef,
+		HAVE_IEEEFP_H                               => undef,
+		HAVE_IFADDRS_H                              => undef,
+		HAVE_INET_ATON                              => undef,
+		HAVE_INT_TIMEZONE                           => 1,
+		HAVE_INT64                                  => undef,
+		HAVE_INT8                                   => undef,
+		HAVE_INTPTR_T                               => undef,
+		HAVE_INTTYPES_H                             => undef,
+		HAVE_INT_OPTERR                             => undef,
+		HAVE_INT_OPTRESET                           => undef,
+		HAVE_IPV6                                   => 1,
+		HAVE_ISINF                                  => 1,
+		HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P       => undef,
+		HAVE_LANGINFO_H                             => undef,
+		HAVE_LDAP_H                                 => undef,
+		HAVE_LDAP_INITIALIZE                        => undef,
+		HAVE_LIBCRYPTO                              => undef,
+		HAVE_LIBLDAP                                => undef,
+		HAVE_LIBLDAP_R                              => undef,
+		HAVE_LIBM                                   => undef,
+		HAVE_LIBPAM                                 => undef,
+		HAVE_LIBREADLINE                            => undef,
+		HAVE_LIBSELINUX                             => undef,
+		HAVE_LIBSSL                                 => undef,
+		HAVE_LIBWLDAP32                             => undef,
+		HAVE_LIBXML2                                => undef,
+		HAVE_LIBXSLT                                => undef,
+		HAVE_LIBZ                   => $self->{options}->{zlib} ? 1 : undef,
+		HAVE_LOCALE_T               => 1,
+		HAVE_LONG_INT_64            => undef,
+		HAVE_LONG_LONG_INT_64       => 1,
+		HAVE_MBARRIER_H             => undef,
+		HAVE_MBSTOWCS_L             => 1,
+		HAVE_MEMMOVE                => 1,
+		HAVE_MEMORY_H               => 1,
+		HAVE_MEMSET_S               => undef,
+		HAVE_MINIDUMP_TYPE          => 1,
+		HAVE_MKDTEMP                => undef,
+		HAVE_NETINET_TCP_H          => undef,
+		HAVE_NET_IF_H               => undef,
+		HAVE_OPENSSL_INIT_SSL       => undef,
+		HAVE_OSSP_UUID_H            => undef,
+		HAVE_PAM_PAM_APPL_H         => undef,
+		HAVE_POLL                   => undef,
+		HAVE_POLL_H                 => undef,
+		HAVE_POSIX_FADVISE          => undef,
+		HAVE_POSIX_FALLOCATE        => undef,
+		HAVE_PPC_LWARX_MUTEX_HINT   => undef,
+		HAVE_PPOLL                  => undef,
+		HAVE_PREAD                  => undef,
+		HAVE_PSTAT                  => undef,
+		HAVE_PS_STRINGS             => undef,
+		HAVE_PTHREAD                => undef,
+		HAVE_PTHREAD_IS_THREADED_NP => undef,
+		HAVE_PTHREAD_PRIO_INHERIT   => undef,
+		HAVE_PWRITE                 => undef,
+		HAVE_RANDOM                 => undef,
+		HAVE_READLINE_H             => undef,
+		HAVE_READLINE_HISTORY_H     => undef,
+		HAVE_READLINE_READLINE_H    => undef,
+		HAVE_READLINK               => undef,
+		HAVE_RINT                   => 1,
+		HAVE_RL_COMPLETION_APPEND_CHARACTER      => undef,
+		HAVE_RL_COMPLETION_MATCHES               => undef,
+		HAVE_RL_FILENAME_COMPLETION_FUNCTION     => undef,
+		HAVE_RL_RESET_SCREEN_SIZE                => undef,
+		HAVE_SECURITY_PAM_APPL_H                 => undef,
+		HAVE_SETPROCTITLE                        => undef,
+		HAVE_SETPROCTITLE_FAST                   => undef,
+		HAVE_SETSID                              => undef,
+		HAVE_SHM_OPEN                            => undef,
+		HAVE_SPINLOCKS                           => 1,
+		HAVE_SRANDOM                             => undef,
+		HAVE_STDBOOL_H                           => 1,
+		HAVE_STDINT_H                            => undef,
+		HAVE_STDLIB_H                            => 1,
+		HAVE_STRCHRNUL                           => undef,
+		HAVE_STRERROR_R                          => undef,
+		HAVE_STRINGS_H                           => undef,
+		HAVE_STRING_H                            => 1,
+		HAVE_STRLCAT                             => undef,
+		HAVE_STRLCPY                             => undef,
+		HAVE_STRNLEN                             => 1,
+		HAVE_STRSIGNAL                           => undef,
+		HAVE_STRTOF                              => 1,
+		HAVE_STRTOLL                             => 1,
+		HAVE_STRTOQ                              => undef,
+		HAVE_STRTOULL                            => 1,
+		HAVE_STRTOUQ                             => undef,
+		HAVE_STRUCT_ADDRINFO                     => 1,
+		HAVE_STRUCT_CMSGCRED                     => undef,
+		HAVE_STRUCT_OPTION                       => undef,
+		HAVE_STRUCT_SOCKADDR_SA_LEN              => undef,
+		HAVE_STRUCT_SOCKADDR_STORAGE             => 1,
+		HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY   => 1,
+		HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN      => undef,
+		HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY => undef,
+		HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN    => undef,
+		HAVE_STRUCT_TM_TM_ZONE                   => undef,
+		HAVE_SYNC_FILE_RANGE                     => undef,
+		HAVE_SYMLINK                             => 1,
+		HAVE_SYSLOG                              => undef,
+		HAVE_SYS_EPOLL_H                         => undef,
+		HAVE_SYS_IPC_H                           => undef,
+		HAVE_SYS_PRCTL_H                         => undef,
+		HAVE_SYS_PROCCTL_H                       => undef,
+		HAVE_SYS_PSTAT_H                         => undef,
+		HAVE_SYS_RESOURCE_H                      => undef,
+		HAVE_SYS_SELECT_H                        => undef,
+		HAVE_SYS_SEM_H                           => undef,
+		HAVE_SYS_SHM_H                           => undef,
+		HAVE_SYS_SOCKIO_H                        => undef,
+		HAVE_SYS_STAT_H                          => 1,
+		HAVE_SYS_TAS_H                           => undef,
+		HAVE_SYS_TYPES_H                         => 1,
+		HAVE_SYS_UCRED_H                         => undef,
+		HAVE_SYS_UN_H                            => undef,
+		HAVE_TERMIOS_H                           => undef,
+		HAVE_TYPEOF                              => undef,
+		HAVE_UCRED_H                             => undef,
+		HAVE_UINT64                              => undef,
+		HAVE_UINT8                               => undef,
+		HAVE_UINTPTR_T                           => undef,
+		HAVE_UNION_SEMUN                         => undef,
+		HAVE_UNISTD_H                            => 1,
+		HAVE_UNIX_SOCKETS                        => undef,
+		HAVE_UNSETENV                            => undef,
+		HAVE_USELOCALE                           => undef,
+		HAVE_UTIME                               => 1,
+		HAVE_UTIMES                              => undef,
+		HAVE_UTIME_H                             => 1,
+		HAVE_UUID_BSD                            => undef,
+		HAVE_UUID_E2FS                           => undef,
+		HAVE_UUID_OSSP                           => undef,
+		HAVE_UUID_H                              => undef,
+		HAVE_UUID_UUID_H                         => undef,
+		HAVE_WINLDAP_H                           => undef,
+		HAVE_WCHAR_H                             => 1,
+		HAVE_WCSTOMBS_L                          => 1,
+		HAVE_WCTYPE_H                            => 1,
+		HAVE_X509_GET_SIGNATURE_NID              => 1,
+		HAVE_X86_64_POPCNTQ                      => undef,
+		HAVE__BOOL                               => undef,
+		HAVE__BUILTIN_BSWAP16                    => undef,
+		HAVE__BUILTIN_BSWAP32                    => undef,
+		HAVE__BUILTIN_BSWAP64                    => undef,
+		HAVE__BUILTIN_CLZ                        => undef,
+		HAVE__BUILTIN_CONSTANT_P                 => undef,
+		HAVE__BUILTIN_CTZ                        => undef,
+		HAVE__BUILTIN_OP_OVERFLOW                => undef,
+		HAVE__BUILTIN_POPCOUNT                   => undef,
+		HAVE__BUILTIN_TYPES_COMPATIBLE_P         => undef,
+		HAVE__BUILTIN_UNREACHABLE                => undef,
+		HAVE__CONFIGTHREADLOCALE                 => 1,
+		HAVE__CPUID                              => 1,
+		HAVE__GET_CPUID                          => undef,
+		HAVE__STATIC_ASSERT                      => undef,
+		HAVE___STRTOLL                           => undef,
+		HAVE___STRTOULL                          => undef,
+		INT64_MODIFIER                           => qq{"ll"},
+		LOCALE_T_IN_XLOCALE                      => undef,
+		MAXIMUM_ALIGNOF                          => 8,
+		MEMSET_LOOP_LIMIT                        => 1024,
+		PACKAGE_BUGREPORT                        => qq{"$package_bugreport"},
+		PACKAGE_NAME                             => qq{"$package_name"},
+		PACKAGE_STRING      => qq{"$package_name $package_version"},
+		PACKAGE_TARNAME     => lc qq{"$package_name"},
+		PACKAGE_URL         => undef,
+		PACKAGE_VERSION     => qq{"$package_version"},
+		PG_INT128_TYPE      => undef,
+		PG_INT64_TYPE       => 'long long int',
+		PG_KRB_SRVNAM       => qq{"postgres"},
+		PG_MAJORVERSION     => qq{"$self->{majorver}"},
+		PG_PRINTF_ATTRIBUTE => undef,
+		PG_USE_STDBOOL      => 1,
+		PG_VERSION          => qq{"$package_version$extraver"},
+		PG_VERSION_NUM      => $self->{numver},
+		PG_VERSION_STR =>
+		  qq{"PostgreSQL $package_version$extraver, compiled by Visual C++ build " CppAsString2(_MSC_VER) ", $bits-bit"},
+		PROFILE_PID_DIR         => undef,
+		PTHREAD_CREATE_JOINABLE => undef,
+		RELSEG_SIZE             => (1024 / $self->{options}->{blocksize}) *
+		  $self->{options}->{segsize} * 1024,
+		SIZEOF_BOOL                         => 1,
+		SIZEOF_LONG                         => 4,
+		SIZEOF_OFF_T                        => undef,
+		SIZEOF_SIZE_T                       => $bits / 8,
+		SIZEOF_VOID_P                       => $bits / 8,
+		STDC_HEADERS                        => 1,
+		STRERROR_R_INT                      => undef,
+		USE_ARMV8_CRC32C                    => undef,
+		USE_ARMV8_CRC32C_WITH_RUNTIME_CHECK => undef,
+		USE_ASSERT_CHECKING => $self->{options}->{asserts} ? 1 : undef,
+		USE_BONJOUR         => undef,
+		USE_BSD_AUTH        => undef,
+		USE_DEV_URANDOM     => undef,
+		USE_ICU => $self->{options}->{icu} ? 1 : undef,
+		USE_LIBXML                 => undef,
+		USE_LIBXSLT                => undef,
+		USE_LDAP                   => $self->{options}->{ldap} ? 1 : undef,
+		USE_LLVM                   => undef,
+		USE_NAMED_POSIX_SEMAPHORES => undef,
+		USE_OPENSSL                => undef,
+		USE_OPENSSL_RANDOM         => undef,
+		USE_PAM                    => undef,
+		USE_SLICING_BY_8_CRC32C    => undef,
+		USE_SSE42_CRC32C           => undef,
+		USE_SSE42_CRC32C_WITH_RUNTIME_CHECK => 1,
+		USE_SYSTEMD                         => undef,
+		USE_SYSV_SEMAPHORES                 => undef,
+		USE_SYSV_SHARED_MEMORY              => undef,
+		USE_UNNAMED_POSIX_SEMAPHORES        => undef,
+		USE_WIN32_RANDOM                    => 1,
+		USE_WIN32_SEMAPHORES                => 1,
+		USE_WIN32_SHARED_MEMORY             => 1,
+		WCSTOMBS_L_IN_XLOCALE               => undef,
+		WORDS_BIGENDIAN                     => undef,
+		XLOG_BLCKSZ       => 1024 * $self->{options}->{wal_blocksize},
+		_FILE_OFFSET_BITS => undef,
+		_LARGEFILE_SOURCE => undef,
+		_LARGE_FILES      => undef,
+		inline            => '__inline',
+		intptr_t          => undef,
+		pg_restrict       => '__restrict',
+		# not defined, because it'd conflict with __declspec(restrict)
+		restrict  => undef,
+		signed    => undef,
+		typeof    => undef,
+		uintptr_t => undef,);
+
+	if ($self->{options}->{uuid})
 	{
-		print "Generating pg_config.h...\n";
-		open(my $i, '<', "src/include/pg_config.h.win32")
-		  || confess "Could not open pg_config.h.win32\n";
-		open(my $o, '>', "src/include/pg_config.h")
-		  || confess "Could not write to pg_config.h\n";
-		my $extraver = $self->{options}->{extraver};
-		$extraver = '' unless defined $extraver;
-		while (<$i>)
-		{
-			s{PG_VERSION "[^"]+"}{PG_VERSION "$self->{strver}$extraver"};
-			s{PG_VERSION_NUM \d+}{PG_VERSION_NUM $self->{numver}};
-			s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, compiled by Visual C++ build " CppAsString2(_MSC_VER) ", $bits-bit"};
-			print $o $_;
-		}
-		print $o "#define PG_MAJORVERSION \"$self->{majorver}\"\n";
-		print $o "/* defines added by config steps */\n";
-		print $o "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
-		print $o "#define USE_ASSERT_CHECKING 1\n"
-		  if ($self->{options}->{asserts});
-		print $o "#define USE_LDAP 1\n"   if ($self->{options}->{ldap});
-		print $o "#define HAVE_LIBZ 1\n"  if ($self->{options}->{zlib});
-		print $o "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+		$define{HAVE_UUID_OSSP} = 1;
+		$define{HAVE_UUID_H}    = 1;
+	}
+	if ($self->{options}->{xml})
+	{
+		$define{HAVE_LIBXML2} = 1;
+		$define{USE_LIBXML}   = 1;
+	}
+	if ($self->{options}->{xslt})
+	{
+		$define{HAVE_LIBXSLT} = 1;
+		$define{USE_LIBXSLT}  = 1;
+	}
+	if ($self->{options}->{openssl})
+	{
+		$define{USE_OPENSSL} = 1;
 
-		print $o "#define BLCKSZ ", 1024 * $self->{options}->{blocksize},
-		  "\n";
-		print $o "#define RELSEG_SIZE ",
-		  (1024 / $self->{options}->{blocksize}) *
-		  $self->{options}->{segsize} * 1024, "\n";
-		print $o "#define XLOG_BLCKSZ ",
-		  1024 * $self->{options}->{wal_blocksize}, "\n";
+		my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
 
-		if ($self->{options}->{uuid})
+		# More symbols are needed with OpenSSL 1.1.0 and above.
+		if ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
 		{
-			print $o "#define HAVE_UUID_OSSP\n";
-			print $o "#define HAVE_UUID_H\n";
+			$define{HAVE_ASN1_STRING_GET0_DATA} = 1;
+			$define{HAVE_BIO_GET_DATA}          = 1;
+			$define{HAVE_BIO_METH_NEW}          = 1;
+			$define{HAVE_OPENSSL_INIT_SSL}      = 1;
 		}
-		if ($self->{options}->{xml})
-		{
-			print $o "#define HAVE_LIBXML2\n";
-			print $o "#define USE_LIBXML\n";
-		}
-		if ($self->{options}->{xslt})
-		{
-			print $o "#define HAVE_LIBXSLT\n";
-			print $o "#define USE_LIBXSLT\n";
-		}
-		if ($self->{options}->{gss})
-		{
-			print $o "#define ENABLE_GSS 1\n";
-		}
-		if ($self->{options}->{openssl})
-		{
-			print $o "#define USE_OPENSSL 1\n";
-
-			my ($digit1, $digit2, $digit3) = $self->GetOpenSSLVersion();
-
-			# More symbols are needed with OpenSSL 1.1.0 and above.
-			if ($digit1 >= '1' && $digit2 >= '1' && $digit3 >= '0')
-			{
-				print $o "#define HAVE_ASN1_STRING_GET0_DATA 1\n";
-				print $o "#define HAVE_BIO_GET_DATA 1\n";
-				print $o "#define HAVE_BIO_METH_NEW 1\n";
-				print $o "#define HAVE_OPENSSL_INIT_SSL 1\n";
-			}
-		}
-		if ($self->{options}->{icu})
-		{
-			print $o "#define USE_ICU 1\n";
-		}
-		if (my $port = $self->{options}->{"--with-pgport"})
-		{
-			print $o "#undef DEF_PGPORT\n";
-			print $o "#undef DEF_PGPORT_STR\n";
-			print $o "#define DEF_PGPORT $port\n";
-			print $o "#define DEF_PGPORT_STR \"$port\"\n";
-		}
-		print $o "#define VAL_CONFIGURE \""
-		  . $self->GetFakeConfigure() . "\"\n";
-		print $o "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
-		close($o);
-		close($i);
 	}
 
-	if (IsNewer(
-			"src/include/pg_config_ext.h",
-			"src/include/pg_config_ext.h.win32"))
-	{
-		print "Copying pg_config_ext.h...\n";
-		copyFile(
-			"src/include/pg_config_ext.h.win32",
-			"src/include/pg_config_ext.h");
-	}
+	$self->GenerateConfigHeader('src/include/pg_config.h', \%define, 1);
+	$self->GenerateConfigHeader('src/include/pg_config_ext.h', \%define, 0);
+	$self->GenerateConfigHeader('src/interfaces/ecpg/include/ecpg_config.h', \%define, 0);
+
+	open(my $f, '>>', 'src/include/pg_config.h')
+	  || confess "Could not write to src/include/pg_config.h\n";
+	print $f "\n";
+	print $f "#define VAL_CONFIGURE \"" . $self->GetFakeConfigure() . "\"\n";
+	close($f);
 
 	$self->GenerateDefFile(
 		"src/interfaces/libpq/libpqdll.def",
@@ -475,22 +752,6 @@ sub GenerateFiles
 		chdir('../../../..');
 	}
 
-	if (IsNewer(
-			'src/interfaces/ecpg/include/ecpg_config.h',
-			'src/interfaces/ecpg/include/ecpg_config.h.in'))
-	{
-		print "Generating ecpg_config.h...\n";
-		open(my $o, '>', 'src/interfaces/ecpg/include/ecpg_config.h')
-		  || confess "Could not open ecpg_config.h";
-		print $o <<EOF;
-#define HAVE_LONG_LONG_INT 1
-#define HAVE_LONG_LONG_INT_64 1
-#define PG_USE_STDBOOL 1
-#define ENABLE_THREAD_SAFETY 1
-EOF
-		close($o);
-	}
-
 	unless (-f "src/port/pg_config_paths.h")
 	{
 		print "Generating pg_config_paths.h...\n";
@@ -581,11 +842,74 @@ EOF
 	open(my $o, '>', "doc/src/sgml/version.sgml")
 	  || croak "Could not write to version.sgml\n";
 	print $o <<EOF;
-<!ENTITY version "$self->{strver}">
+<!ENTITY version "$package_version">
 <!ENTITY majorversion "$self->{majorver}">
 EOF
 	close($o);
 	return;
+}
+
+# Read lines from input file and substitute symbols using the same
+# logic that config.status uses.  There should be one call of this for
+# each AC_CONFIG_HEADERS call in configure.in.
+#
+# If the "required" argument is true, we also keep track which of our
+# defines have been found and error out if any are left unused at the
+# end.  That way we avoid accumulating defines in this file that are
+# no longer used by configure.
+sub GenerateConfigHeader
+{
+	my ($self, $config_header, $defines, $required) = @_;
+	my %defines_copy = %$defines;
+
+	my $config_header_in = $config_header . '.in';
+
+	if (IsNewer($config_header, $config_header_in) ||
+		IsNewer($config_header, __FILE__))
+	{
+		open(my $i, '<', $config_header_in)
+		  || confess "Could not open $config_header_in\n";
+		open(my $o, '>', $config_header)
+		  || confess "Could not write to $config_header\n";
+
+		print $o
+		  "/* $config_header.  Generated from $config_header_in by src/tools/msvc/Solution.pm.  */\n";
+
+		while (<$i>)
+		{
+			if (m/^#(\s*)undef\s+(\w+)/)
+			{
+				my $ws    = $1;
+				my $macro = $2;
+				if (exists $defines->{$macro})
+				{
+					if (defined $defines->{$macro})
+					{
+						print $o "#${ws}define $macro ", $defines->{$macro}, "\n";
+					}
+					else
+					{
+						print $o "/* #${ws}undef $macro */\n";
+					}
+					delete $defines_copy{$macro};
+				}
+				else
+				{
+					croak "undefined symbol: $macro at $config_header line $.";
+				}
+			}
+			else
+			{
+				print $o $_;
+			}
+		}
+		close($o);
+		close($i);
+	}
+	if ($required && scalar(keys %defines_copy) > 0)
+	{
+		croak "unused defines: " . join(' ', keys %defines_copy);
+	}
 }
 
 sub GenerateDefFile
