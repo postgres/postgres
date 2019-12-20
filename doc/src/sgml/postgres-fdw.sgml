@@ -136,6 +136,30 @@
     authentication, so always specify the <literal>password</literal> option
     for user mappings belonging to non-superusers.
    </para>
+   <para>
+    A superuser may override this check on a per-user-mapping basis by setting
+    the user mapping option <literal>password_required 'false'</literal>, e.g.
+    <programlisting>
+      ALTER USER MAPPING FOR some_non_superuser SERVER loopback_nopw
+      OPTIONS (ADD password_required 'false');
+    </programlisting>
+    To prevent unprivileged users from exploiting the authentication rights
+    of the unix user the postgres server is running as to escalate to superuser
+    rights, only the superuser may set this option on a user mapping.
+    </para>
+    <para>
+    Care is required to ensure that this does not allow the mapped
+    user the ability to connect as superuser to the mapped database per
+    CVE-2007-3278 and CVE-2007-6601. Don't set
+    <literal>password_required=false</literal>
+    on the <literal>public</literal> role. Keep in mind that the mapped
+    user can potentially use any client certificates,
+    <filename>.pgpass</filename>,
+    <filename>.pg_service.conf</filename> etc in the unix home directory of the
+    system user the postgres server runs as. They can also use any trust
+    relationship granted by authentication modes like <literal>peer</literal>
+    or <literal>ident</literal> authentication.
+   </para>
   </sect3>
 
   <sect3>

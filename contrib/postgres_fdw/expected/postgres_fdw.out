@@ -8809,6 +8809,100 @@ SELECT b, avg(a), max(a), count(*) FROM pagg_tab GROUP BY b HAVING sum(a) < 700 
                      ->  Foreign Scan on fpagg_tab_p3 pagg_tab_2
 (15 rows)
 
+-- ===================================================================
+-- access rights and superuser
+-- ===================================================================
+-- Non-superuser cannot create a FDW without a password in the connstr
+CREATE ROLE nosuper NOSUPERUSER;
+GRANT USAGE ON FOREIGN DATA WRAPPER postgres_fdw TO nosuper;
+SET ROLE nosuper;
+SHOW is_superuser;
+ is_superuser 
+--------------
+ off
+(1 row)
+
+-- This will be OK, we can create the FDW
+DO $d$
+    BEGIN
+        EXECUTE $$CREATE SERVER loopback_nopw FOREIGN DATA WRAPPER postgres_fdw
+            OPTIONS (dbname '$$||current_database()||$$',
+                     port '$$||current_setting('port')||$$'
+            )$$;
+    END;
+$d$;
+-- But creation of user mappings for non-superusers should fail
+CREATE USER MAPPING FOR public SERVER loopback_nopw;
+CREATE USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;
+CREATE FOREIGN TABLE ft1_nopw (
+	c1 int NOT NULL,
+	c2 int NOT NULL,
+	c3 text,
+	c4 timestamptz,
+	c5 timestamp,
+	c6 varchar(10),
+	c7 char(10) default 'ft1',
+	c8 user_enum
+) SERVER loopback_nopw OPTIONS (schema_name 'public', table_name 'ft1');
+SELECT * FROM ft1_nopw LIMIT 1;
+ERROR:  password is required
+DETAIL:  Non-superusers must provide a password in the user mapping.
+-- If we add a password to the connstr it'll fail, because we don't allow passwords
+-- in connstrs only in user mappings.
+DO $d$
+    BEGIN
+        EXECUTE $$ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw')$$;
+    END;
+$d$;
+ERROR:  invalid option "password"
+HINT:  Valid options in this context are: service, passfile, channel_binding, connect_timeout, dbname, host, hostaddr, port, options, application_name, keepalives, keepalives_idle, keepalives_interval, keepalives_count, tcp_user_timeout, sslmode, sslcompression, sslcert, sslkey, sslrootcert, sslcrl, requirepeer, gssencmode, krbsrvname, target_session_attrs, use_remote_estimate, fdw_startup_cost, fdw_tuple_cost, extensions, updatable, fetch_size
+CONTEXT:  SQL statement "ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw')"
+PL/pgSQL function inline_code_block line 3 at EXECUTE
+-- If we add a password for our user mapping instead, we should get a different
+-- error because the password wasn't actually *used* when we run with trust auth.
+--
+-- This won't work with installcheck, but neither will most of the FDW checks.
+ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
+SELECT * FROM ft1_nopw LIMIT 1;
+ERROR:  password is required
+DETAIL:  Non-superuser cannot connect if the server does not request a password.
+HINT:  Target server's authentication method must be changed or password_required=false set in the user mapping attributes.
+-- Unpriv user cannot make the mapping passwordless
+ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password_required 'false');
+ERROR:  password_required=false is superuser-only
+HINT:  User mappings with the password_required option set to false may only be created or modified by the superuser
+SELECT * FROM ft1_nopw LIMIT 1;
+ERROR:  password is required
+DETAIL:  Non-superuser cannot connect if the server does not request a password.
+HINT:  Target server's authentication method must be changed or password_required=false set in the user mapping attributes.
+RESET ROLE;
+-- But the superuser can
+ALTER USER MAPPING FOR nosuper SERVER loopback_nopw OPTIONS (ADD password_required 'false');
+SET ROLE nosuper;
+-- Should finally work now
+SELECT * FROM ft1_nopw LIMIT 1;
+  c1  | c2 | c3 | c4 | c5 | c6 |     c7     | c8 
+------+----+----+----+----+----+------------+----
+ 1111 |  2 |    |    |    |    | ft1        | 
+(1 row)
+
+-- We're done with the role named after a specific user and need to check the
+-- changes to the public mapping.
+DROP USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;
+-- This will fail again as it'll resolve the user mapping for public, which
+-- lacks password_required=false
+SELECT * FROM ft1_nopw LIMIT 1;
+ERROR:  password is required
+DETAIL:  Non-superusers must provide a password in the user mapping.
+RESET ROLE;
+-- The user mapping for public is passwordless and lacks the password_required=false
+-- mapping option, but will work because the current user is a superuser.
+SELECT * FROM ft1_nopw LIMIT 1;
+  c1  | c2 | c3 | c4 | c5 | c6 |     c7     | c8 
+------+----+----+----+----+----+------------+----
+ 1111 |  2 |    |    |    |    | ft1        | 
+(1 row)
+
 -- Clean-up
 RESET enable_partitionwise_aggregate;
 -- Two-phase transactions are not supported.

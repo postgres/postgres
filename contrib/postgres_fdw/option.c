@@ -51,6 +51,7 @@ static void InitPgFdwOptions(void);
 static bool is_valid_option(const char *keyword, Oid context);
 static bool is_libpq_option(const char *keyword);
 
+#include "miscadmin.h"
 
 /*
  * Validate the generic options given to a FOREIGN DATA WRAPPER, SERVER,
@@ -141,6 +142,23 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 						 errmsg("%s requires a non-negative integer value",
 								def->defname)));
 		}
+		else if (strcmp(def->defname, "password_required") == 0)
+		{
+			bool pw_required = defGetBoolean(def);
+
+			/*
+			 * Only the superuser may set this option on a user mapping, or
+			 * alter a user mapping on which this option is set. We allow a
+			 * user to clear this option if it's set - in fact, we don't have a
+			 * choice since we can't see the old mapping when validating an
+			 * alter.
+			 */
+			if (!superuser() && !pw_required)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("password_required=false is superuser-only"),
+						 errhint("User mappings with the password_required option set to false may only be created or modified by the superuser")));
+		}
 	}
 
 	PG_RETURN_VOID();
@@ -175,6 +193,7 @@ InitPgFdwOptions(void)
 		/* fetch_size is available on both server and table */
 		{"fetch_size", ForeignServerRelationId, false},
 		{"fetch_size", ForeignTableRelationId, false},
+		{"password_required", UserMappingRelationId, false},
 		{NULL, InvalidOid, false}
 	};
 
