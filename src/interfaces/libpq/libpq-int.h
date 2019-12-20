@@ -359,13 +359,14 @@ struct pg_conn
 	char	   *sslcompression; /* SSL compression (0 or 1) */
 	char	   *sslkey;			/* client key filename */
 	char	   *sslcert;		/* client certificate filename */
+	char	   *sslpassword;	/* client key file password */
 	char	   *sslrootcert;	/* root certificate filename */
 	char	   *sslcrl;			/* certificate revocation list filename */
 	char	   *requirepeer;	/* required peer credentials for local sockets */
-
-#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+	char	   *gssencmode;		/* GSS mode (require,prefer,disable) */
 	char	   *krbsrvname;		/* Kerberos service name */
-#endif
+	char	   *gsslib;			/* What GSS library to use ("gssapi" or
+								 * "sspi") */
 
 	/* Type of connection to make.  Possible values: any, read-write. */
 	char	   *target_session_attrs;
@@ -484,7 +485,6 @@ struct pg_conn
 #endif							/* USE_OPENSSL */
 #endif							/* USE_SSL */
 
-	char	   *gssencmode;		/* GSS mode (require,prefer,disable) */
 #ifdef ENABLE_GSS
 	gss_ctx_id_t gctx;			/* GSS context */
 	gss_name_t	gtarg_nam;		/* GSS target name */
@@ -496,10 +496,6 @@ struct pg_conn
 #endif
 
 #ifdef ENABLE_SSPI
-#ifdef ENABLE_GSS
-	char	   *gsslib;			/* What GSS library to use ("gssapi" or
-								 * "sspi") */
-#endif
 	CredHandle *sspicred;		/* SSPI credentials handle */
 	CtxtHandle *sspictx;		/* SSPI context */
 	char	   *sspitarget;		/* SSPI target name */
@@ -512,8 +508,6 @@ struct pg_conn
 
 	/* Buffer for receiving various parts of messages */
 	PQExpBufferData workBuffer; /* expansible string */
-
-	char *sslpassword; /* client key file password */
 };
 
 /* PGcancel stores all data necessary to cancel a connection. A copy of this
