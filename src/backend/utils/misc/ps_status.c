@@ -89,6 +89,8 @@ bool		update_process_title = true;
 #endif
 
 
+#ifndef PS_USE_NONE
+
 #ifndef PS_USE_CLOBBER_ARGV
 /* all but one option need a buffer to write their ps line in */
 #define PS_BUFFER_SIZE 256
@@ -103,6 +105,8 @@ static size_t last_status_len;	/* use to minimize length of clobber */
 static size_t ps_buffer_cur_len;	/* nominal strlen(ps_buffer) */
 
 static size_t ps_buffer_fixed_size; /* size of the constant prefix */
+
+#endif							/* not PS_USE_NONE */
 
 /* save the original argv[] location here */
 static int	save_argc;
@@ -420,7 +424,11 @@ get_ps_display(int *displen)
 	}
 #endif
 
+#ifndef PS_USE_NONE
 	*displen = (int) (ps_buffer_cur_len - ps_buffer_fixed_size);
 
 	return ps_buffer + ps_buffer_fixed_size;
+#else
+	return "";
+#endif
 }
