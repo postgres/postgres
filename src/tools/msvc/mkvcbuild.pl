@@ -13,9 +13,9 @@ BEGIN { use lib File::Spec->rel2abs(dirname(__FILE__)); }
 
 use Mkvcbuild;
 
-chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
+chdir('../../..') if (-d '../msvc' && -d '../../../src');
 die 'Must run from root or msvc directory'
-  unless (-d 'src\tools\msvc' && -d 'src');
+  unless (-d 'src/tools/msvc' && -d 'src');
 
 die 'Could not find config_default.pl'
   unless (-f 'src/tools/msvc/config_default.pl');

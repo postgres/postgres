@@ -12,9 +12,9 @@ use Cwd;
 
 use Mkvcbuild;
 
-chdir('..\..\..') if (-d '..\msvc' && -d '..\..\..\src');
+chdir('../../..') if (-d '../msvc' && -d '../../../src');
 die 'Must run from root or msvc directory'
-  unless (-d 'src\tools\msvc' && -d 'src');
+  unless (-d 'src/tools/msvc' && -d 'src');
 
 # buildenv.pl is for specifying the build environment settings
 # it should contain lines like:
