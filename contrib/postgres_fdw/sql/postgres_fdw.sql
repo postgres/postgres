@@ -2498,11 +2498,11 @@ SELECT b, avg(a), max(a), count(*) FROM pagg_tab GROUP BY b HAVING sum(a) < 700 
 -- ===================================================================
 
 -- Non-superuser cannot create a FDW without a password in the connstr
-CREATE ROLE nosuper NOSUPERUSER;
+CREATE ROLE regress_nosuper NOSUPERUSER;
 
-GRANT USAGE ON FOREIGN DATA WRAPPER postgres_fdw TO nosuper;
+GRANT USAGE ON FOREIGN DATA WRAPPER postgres_fdw TO regress_nosuper;
 
-SET ROLE nosuper;
+SET ROLE regress_nosuper;
 
 SHOW is_superuser;
 
@@ -2559,9 +2559,9 @@ SELECT * FROM ft1_nopw LIMIT 1;
 RESET ROLE;
 
 -- But the superuser can
-ALTER USER MAPPING FOR nosuper SERVER loopback_nopw OPTIONS (ADD password_required 'false');
+ALTER USER MAPPING FOR regress_nosuper SERVER loopback_nopw OPTIONS (ADD password_required 'false');
 
-SET ROLE nosuper;
+SET ROLE regress_nosuper;
 
 -- Should finally work now
 SELECT * FROM ft1_nopw LIMIT 1;
@@ -2579,6 +2579,11 @@ RESET ROLE;
 -- The user mapping for public is passwordless and lacks the password_required=false
 -- mapping option, but will work because the current user is a superuser.
 SELECT * FROM ft1_nopw LIMIT 1;
+
+-- cleanup
+DROP USER MAPPING FOR public SERVER loopback_nopw;
+DROP OWNED BY regress_nosuper;
+DROP ROLE regress_nosuper;
 
 -- Clean-up
 RESET enable_partitionwise_aggregate;
