@@ -18,6 +18,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
+#include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -28,6 +29,7 @@
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 
 /*
@@ -71,6 +73,12 @@ RemoveRewriteRuleById(Oid ruleOid)
 	 */
 	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
 	event_relation = table_open(eventRelationOid, AccessExclusiveLock);
+
+	if (!allowSystemTableMods && IsSystemRelation(event_relation))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied: \"%s\" is a system catalog",
+						RelationGetRelationName(event_relation))));
 
 	/*
 	 * Now delete the pg_rewrite tuple for the rule
