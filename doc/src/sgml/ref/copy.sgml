@@ -61,11 +61,11 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
   </para>
 
   <para>
-   If a list of columns is specified, <command>COPY</command> will
-   only copy the data in the specified columns to or from the file.
-   If there are any columns in the table that are not in the column list,
-   <command>COPY FROM</command> will insert the default values for
-   those columns.
+   If a column list is specified, <command>COPY TO</command> copies only
+   the data in the specified columns to the file.  For <command>COPY
+   FROM</command>, each field in the file is inserted, in order, into the
+   specified column.  Table columns not specified in the <command>COPY
+   FROM</command> column list will receive their default values.
   </para>
 
   <para>
