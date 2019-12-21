@@ -237,7 +237,13 @@ MainLoop(FILE *source)
 			bool		found_exit_or_quit = false;
 			bool		found_q = false;
 
-			/* Search for the words we recognize;  must be first word */
+			/*
+			 * The assistance words, help/exit/quit, must have no
+			 * whitespace before them, and only whitespace after, with an
+			 * optional semicolon.  This prevents indented use of these
+			 * words, perhaps as identifiers, from invoking the assistance
+			 * behavior.
+			 */
 			if (pg_strncasecmp(first_word, "help", 4) == 0)
 			{
 				rest_of_line = first_word + 4;
@@ -249,7 +255,6 @@ MainLoop(FILE *source)
 				rest_of_line = first_word + 4;
 				found_exit_or_quit = true;
 			}
-
 			else if (strncmp(first_word, "\\q", 2) == 0)
 			{
 				rest_of_line = first_word + 2;
