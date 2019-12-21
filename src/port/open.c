@@ -21,6 +21,7 @@
 
 #include <fcntl.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 
 static int
@@ -137,18 +138,33 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 		}
 
 		/*
-		 * ERROR_ACCESS_DENIED can be returned if the file is deleted but not
-		 * yet gone (Windows NT status code is STATUS_DELETE_PENDING).  Wait a
-		 * bit and try again, giving up after 1 second (since this condition
-		 * should never persist very long).
+		 * ERROR_ACCESS_DENIED is returned if the file is deleted but not yet
+		 * gone (Windows NT status code is STATUS_DELETE_PENDING).  In that
+		 * case we want to wait a bit and try again, giving up after 1 second
+		 * (since this condition should never persist very long).  However,
+		 * there are other commonly-hit cases that return ERROR_ACCESS_DENIED,
+		 * so care is needed.  In particular that happens if we try to open a
+		 * directory, or of course if there's an actual file-permissions
+		 * problem.  To distinguish these cases, try a stat().  In the
+		 * delete-pending case, it will either also get STATUS_DELETE_PENDING,
+		 * or it will see the file as gone and fail with ENOENT.  In other
+		 * cases it will usually succeed.  The only somewhat-likely case where
+		 * this coding will uselessly wait is if there's a permissions problem
+		 * with a containing directory, which we hope will never happen in any
+		 * performance-critical code paths.
 		 */
 		if (err == ERROR_ACCESS_DENIED)
 		{
 			if (loops < 10)
 			{
-				pg_usleep(100000);
-				loops++;
-				continue;
+				struct stat st;
+
+				if (stat(fileName, &st) != 0)
+				{
+					pg_usleep(100000);
+					loops++;
+					continue;
+				}
 			}
 		}
 
