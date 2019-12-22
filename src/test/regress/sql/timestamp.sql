@@ -7,18 +7,11 @@ CREATE TABLE TIMESTAMP_TBL (d1 timestamp(2) without time zone);
 -- Test shorthand input values
 -- We can't just "select" the results since they aren't constants; test for
 -- equality instead.  We can do that by running the test inside a transaction
--- block, within which the value of 'now' shouldn't change.  We also check
--- that 'now' *does* change over a reasonable interval such as 100 msec.
--- NOTE: it is possible for this part of the test to fail if the transaction
--- block is entered exactly at local midnight; then 'now' and 'today' have
--- the same values and the counts will come out different.
-
-INSERT INTO TIMESTAMP_TBL VALUES ('now');
-SELECT pg_sleep(0.1);
+-- block, within which the value of 'now' shouldn't change, and so these
+-- related values shouldn't either.
 
 BEGIN;
 
-INSERT INTO TIMESTAMP_TBL VALUES ('now');
 INSERT INTO TIMESTAMP_TBL VALUES ('today');
 INSERT INTO TIMESTAMP_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow');
@@ -29,19 +22,24 @@ INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow zulu');
 SELECT count(*) AS One FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'today';
 SELECT count(*) AS Three FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'tomorrow';
 SELECT count(*) AS One FROM TIMESTAMP_TBL WHERE d1 = timestamp without time zone 'yesterday';
-SELECT count(*) AS One FROM TIMESTAMP_TBL WHERE d1 = timestamp(2) without time zone 'now';
 
 COMMIT;
 
 DELETE FROM TIMESTAMP_TBL;
 
--- verify uniform transaction time within transaction block
+-- Verify that 'now' *does* change over a reasonable interval such as 100 msec,
+-- and that it doesn't change over the same interval within a transaction block
+
+INSERT INTO TIMESTAMP_TBL VALUES ('now');
+SELECT pg_sleep(0.1);
+
 BEGIN;
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 SELECT pg_sleep(0.1);
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 SELECT pg_sleep(0.1);
 SELECT count(*) AS two FROM TIMESTAMP_TBL WHERE d1 = timestamp(2) without time zone 'now';
+SELECT count(d1) AS three, count(DISTINCT d1) AS two FROM TIMESTAMP_TBL;
 COMMIT;
 
 TRUNCATE TIMESTAMP_TBL;
