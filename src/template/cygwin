@@ -2,6 +2,9 @@
 
 SRCH_LIB="/usr/local/lib"
 
+# This is required for ppoll(2), and perhaps other things
+CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
+
 # Extra CFLAGS for code that will go into a shared library
 CFLAGS_SL=""
 
