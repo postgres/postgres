@@ -37,6 +37,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/atomics.h"
+#include "port/pg_bitutils.h"
 #include "utils/dynahash.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -1877,7 +1878,7 @@ ExecHashGetHashValue(HashJoinTable hashtable,
  * chains), and must only cause the batch number to remain the same or
  * increase.  Our algorithm is
  *		bucketno = hashvalue MOD nbuckets
- *		batchno = (hashvalue DIV nbuckets) MOD nbatch
+ *		batchno = ROR(hashvalue, log2_nbuckets) MOD nbatch
  * where nbuckets and nbatch are both expected to be powers of 2, so we can
  * do the computations by shifting and masking.  (This assumes that all hash
  * functions are good about randomizing all their output bits, else we are
@@ -1889,7 +1890,11 @@ ExecHashGetHashValue(HashJoinTable hashtable,
  * number the way we do here).
  *
  * nbatch is always a power of 2; we increase it only by doubling it.  This
- * effectively adds one more bit to the top of the batchno.
+ * effectively adds one more bit to the top of the batchno.  In very large
+ * joins, we might run out of bits to add, so we do this by rotating the hash
+ * value.  This causes batchno to steal bits from bucketno when the number of
+ * virtual buckets exceeds 2^32.  It's better to have longer bucket chains
+ * than to lose the ability to divide batches.
  */
 void
 ExecHashGetBucketAndBatch(HashJoinTable hashtable,
@@ -1902,9 +1907,9 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 
 	if (nbatch > 1)
 	{
-		/* we can do MOD by masking, DIV by shifting */
 		*bucketno = hashvalue & (nbuckets - 1);
-		*batchno = (hashvalue >> hashtable->log2_nbuckets) & (nbatch - 1);
+		*batchno = pg_rotate_right32(hashvalue,
+									 hashtable->log2_nbuckets) & (nbatch - 1);
 	}
 	else
 	{
