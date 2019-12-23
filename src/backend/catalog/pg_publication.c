@@ -374,7 +374,6 @@ GetPublication(Oid pubid)
 	Form_pg_publication pubform;
 
 	tup = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
-
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for publication %u", pubid);
 
@@ -403,19 +402,9 @@ GetPublicationByName(const char *pubname, bool missing_ok)
 {
 	Oid			oid;
 
-	oid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
-						  CStringGetDatum(pubname));
-	if (!OidIsValid(oid))
-	{
-		if (missing_ok)
-			return NULL;
+	oid = get_publication_oid(pubname, missing_ok);
 
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("publication \"%s\" does not exist", pubname)));
-	}
-
-	return GetPublication(oid);
+	return OidIsValid(oid) ? GetPublication(oid) : NULL;
 }
 
 /*
