@@ -763,6 +763,11 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 			/* get the category from the current sql result tuple */
 			catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			if (catname == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("provided \"categories\" SQL must " \
+								"not return NULL values")));
 
 			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 
