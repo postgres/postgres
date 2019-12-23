@@ -1074,15 +1074,8 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 
 	/*
 	 * Unlike _bt_delitems_vacuum, we *must not* clear the vacuum cycle ID,
-	 * because this is not called by VACUUM.
-	 */
-
-	/*
-	 * Mark the page as not containing any LP_DEAD items.  This is not
-	 * certainly true (there might be some that have recently been marked, but
-	 * weren't included in our target-item list), but it will almost always be
-	 * true and it doesn't seem worth an additional page scan to check it.
-	 * Remember that BTP_HAS_GARBAGE is only a hint anyway.
+	 * because this is not called by VACUUM.  Just clear the BTP_HAS_GARBAGE
+	 * page flag, since we deleted all items with their LP_DEAD bit set.
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;

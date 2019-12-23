@@ -559,15 +559,15 @@ writer cannot observe the incomplete split flag before the first writer
 finishes the split. If we let concurrent writers on the primary observe
 an incomplete split flag on the same page, each writer would attempt to
 complete the unfinished split, corrupting the parent page.  (Similarly,
-replay of page deletion records does not hold a write lock on the leaf
-page throughout; only the primary needs to blocks out concurrent writers
-that insert on to the page being deleted.)
+replay of page deletion records does not hold a write lock on the target
+leaf page throughout; only the primary needs to block out concurrent
+writers that insert on to the page being deleted.)
 
 During recovery all index scans start with ignore_killed_tuples = false
 and we never set kill_prior_tuple. We do this because the oldest xmin
 on the standby server can be older than the oldest xmin on the master
 server, which means tuples can be marked LP_DEAD even when they are
-still visible on the standby. We don't WAL log tuple LP_DEAD  bits, but
+still visible on the standby. We don't WAL log tuple LP_DEAD bits, but
 they can still appear in the standby because of full page writes. So
 we must always ignore them in standby, and that means it's not worth
 setting them either.  (When LP_DEAD-marked tuples are eventually deleted
