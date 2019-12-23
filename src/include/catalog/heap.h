@@ -22,6 +22,7 @@
 /* flag bits for CheckAttributeType/CheckAttributeNamesTypes */
 #define CHKATYPE_ANYARRAY		0x01	/* allow ANYARRAY */
 #define CHKATYPE_ANYRECORD		0x02	/* allow RECORD and RECORD[] */
+#define CHKATYPE_IS_PARTKEY		0x04	/* attname is part key # not column */
 
 typedef struct RawColumnDefault
 {
