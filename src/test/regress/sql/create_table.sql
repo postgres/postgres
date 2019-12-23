@@ -343,7 +343,7 @@ CREATE TABLE partitioned (
 
 CREATE TABLE partitioned (
 	a int
-) PARTITION BY RANGE (('a'));
+) PARTITION BY RANGE ((42));
 
 CREATE FUNCTION const_func () RETURNS int AS $$ SELECT 1; $$ LANGUAGE SQL IMMUTABLE;
 CREATE TABLE partitioned (
@@ -365,6 +365,16 @@ CREATE TABLE partitioned (
 CREATE TABLE partitioned (
 	a int
 ) PARTITION BY RANGE (xmin);
+
+-- cannot use pseudotypes
+CREATE TABLE partitioned (
+	a int,
+	b int
+) PARTITION BY RANGE (((a, b)));
+CREATE TABLE partitioned (
+	a int,
+	b int
+) PARTITION BY RANGE (a, ('unknown'));
 
 -- functions in key must be immutable
 CREATE FUNCTION immut_func (a int) RETURNS int AS $$ SELECT a + random()::int; $$ LANGUAGE SQL;

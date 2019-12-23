@@ -334,7 +334,7 @@ CREATE TABLE partitioned (
 ERROR:  cannot use subquery in partition key expression
 CREATE TABLE partitioned (
 	a int
-) PARTITION BY RANGE (('a'));
+) PARTITION BY RANGE ((42));
 ERROR:  cannot use constant expression as partition key
 CREATE FUNCTION const_func () RETURNS int AS $$ SELECT 1; $$ LANGUAGE SQL IMMUTABLE;
 CREATE TABLE partitioned (
@@ -357,6 +357,17 @@ CREATE TABLE partitioned (
 	a int
 ) PARTITION BY RANGE (xmin);
 ERROR:  cannot use system column "xmin" in partition key
+-- cannot use pseudotypes
+CREATE TABLE partitioned (
+	a int,
+	b int
+) PARTITION BY RANGE (((a, b)));
+ERROR:  column "partition key" has pseudo-type record
+CREATE TABLE partitioned (
+	a int,
+	b int
+) PARTITION BY RANGE (a, ('unknown'));
+ERROR:  column "partition key" has pseudo-type unknown
 -- functions in key must be immutable
 CREATE FUNCTION immut_func (a int) RETURNS int AS $$ SELECT a + random()::int; $$ LANGUAGE SQL;
 CREATE TABLE partitioned (

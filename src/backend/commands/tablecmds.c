@@ -14403,6 +14403,16 @@ ComputePartitionAttrs(Relation rel, List *partParams, AttrNumber *partattrs,
 			attcollation = exprCollation(expr);
 
 			/*
+			 * The expression must be of a storable type (e.g., not RECORD).
+			 * The test is the same as for whether a table column is of a safe
+			 * type (which is why we needn't check for the non-expression
+			 * case).
+			 */
+			CheckAttributeType("partition key",
+							   atttype, attcollation,
+							   NIL, false);
+
+			/*
 			 * Strip any top-level COLLATE clause.  This ensures that we treat
 			 * "x COLLATE y" and "(x COLLATE y)" alike.
 			 */
