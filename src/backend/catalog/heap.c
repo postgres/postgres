@@ -564,6 +564,15 @@ CheckAttributeType(const char *attname,
 
 		containing_rowtypes = list_delete_first(containing_rowtypes);
 	}
+	else if (att_typtype == TYPTYPE_RANGE)
+	{
+		/*
+		 * If it's a range, recurse to check its subtype.
+		 */
+		CheckAttributeType(attname, get_range_subtype(atttypid), attcollation,
+						   containing_rowtypes,
+						   allow_system_table_mods);
+	}
 	else if (OidIsValid((att_typelem = get_element_type(atttypid))))
 	{
 		/*
