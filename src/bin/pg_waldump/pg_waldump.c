@@ -142,8 +142,7 @@ open_file_in_directory(const char *directory, const char *fname)
 	fd = open(fpath, O_RDONLY | PG_BINARY, 0);
 
 	if (fd < 0 && errno != ENOENT)
-		fatal_error("could not open file \"%s\": %s",
-					fname, strerror(errno));
+		fatal_error("could not open file \"%s\": %m", fname);
 	return fd;
 }
 
@@ -207,8 +206,8 @@ search_directory(const char *directory, const char *fname)
 		else
 		{
 			if (errno != 0)
-				fatal_error("could not read file \"%s\": %s",
-							fname, strerror(errno));
+				fatal_error("could not read file \"%s\": %m",
+							fname);
 			else
 				fatal_error("could not read file \"%s\": read %d of %zu",
 							fname, r, (Size) XLOG_BLCKSZ);
@@ -316,7 +315,7 @@ WALDumpOpenSegment(XLogSegNo nextSegNo, WALSegmentContext *segcxt,
 		break;
 	}
 
-	fatal_error("could not find file \"%s\": %s", fname, strerror(errno));
+	fatal_error("could not find file \"%s\": %m", fname);
 	return -1;					/* keep compiler quiet */
 }
 
@@ -925,8 +924,7 @@ main(int argc, char **argv)
 		/* validate path points to directory */
 		if (!verify_directory(waldir))
 		{
-			pg_log_error("path \"%s\" could not be opened: %s",
-						 waldir, strerror(errno));
+			pg_log_error("could not open directory \"%s\": %m", waldir);
 			goto bad_argument;
 		}
 	}
@@ -946,8 +944,7 @@ main(int argc, char **argv)
 			waldir = directory;
 
 			if (!verify_directory(waldir))
-				fatal_error("could not open directory \"%s\": %s",
-							waldir, strerror(errno));
+				fatal_error("could not open directory \"%s\": %m", waldir);
 		}
 
 		waldir = identify_target_directory(waldir, fname);
