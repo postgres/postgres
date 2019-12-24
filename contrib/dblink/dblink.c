@@ -1639,8 +1639,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	if (src_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("source key array length must match number of key " \
-						"attributes")));
+				 errmsg("source key array length must match number of key attributes")));
 
 	/*
 	 * Target array is made up of key values that will be used to build the
@@ -1654,8 +1653,7 @@ dblink_build_sql_insert(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("target key array length must match number of key " \
-						"attributes")));
+				 errmsg("target key array length must match number of key attributes")));
 
 	/*
 	 * Prep work is finally done. Go get the SQL string.
@@ -1727,8 +1725,7 @@ dblink_build_sql_delete(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("target key array length must match number of key " \
-						"attributes")));
+				 errmsg("target key array length must match number of key attributes")));
 
 	/*
 	 * Prep work is finally done. Go get the SQL string.
@@ -1807,8 +1804,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	if (src_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("source key array length must match number of key " \
-						"attributes")));
+				 errmsg("source key array length must match number of key attributes")));
 
 	/*
 	 * Target array is made up of key values that will be used to build the
@@ -1822,8 +1818,7 @@ dblink_build_sql_update(PG_FUNCTION_ARGS)
 	if (tgt_nitems != pknumatts)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("target key array length must match number of key " \
-						"attributes")));
+				 errmsg("target key array length must match number of key attributes")));
 
 	/*
 	 * Prep work is finally done. Go get the SQL string.

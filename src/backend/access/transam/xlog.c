@@ -6135,9 +6135,7 @@ do { \
 	if ((currValue) < (minValue)) \
 		ereport(ERROR, \
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
-				 errmsg("hot standby is not possible because " \
-						"%s = %d is a lower setting than on the master server " \
-						"(its value was %d)", \
+				 errmsg("hot standby is not possible because %s = %d is a lower setting than on the master server (its value was %d)", \
 						param_name, \
 						currValue, \
 						minValue))); \
