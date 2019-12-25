@@ -35,7 +35,6 @@
 #include "utils/hashutils.h"
 #include "utils/lsyscache.h"
 #include "utils/partcache.h"
-#include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -775,6 +774,11 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 /*
  * Return a copy of given PartitionBoundInfo structure. The data types of bounds
  * are described by given partition key specification.
+ *
+ * Note: it's important that this function and its callees not do any catalog
+ * access, nor anything else that would result in allocating memory other than
+ * the returned data structure.  Since this is called in a long-lived context,
+ * that would result in unwanted memory leaks.
  */
 PartitionBoundInfo
 partition_bounds_copy(PartitionBoundInfo src,

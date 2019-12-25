@@ -459,6 +459,17 @@ CREATE TABLE part2_1 PARTITION OF partitioned2 FOR VALUES FROM (-1, 'aaaaa') TO 
 
 DROP TABLE partitioned, partitioned2;
 
+-- check reference to partitioned table's rowtype in partition descriptor
+create table partitioned (a int, b int)
+  partition by list ((row(a, b)::partitioned));
+create table partitioned1
+  partition of partitioned for values in ('(1,2)'::partitioned);
+create table partitioned2
+  partition of partitioned for values in ('(2,4)'::partitioned);
+explain (costs off)
+select * from partitioned where row(a,b)::partitioned = '(1,2)'::partitioned;
+drop table partitioned;
+
 -- check that dependencies of partition columns are handled correctly
 create domain intdom1 as int;
 

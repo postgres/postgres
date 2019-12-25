@@ -46,7 +46,8 @@ typedef struct PartitionKeyData
 	Oid		   *parttypcoll;
 }			PartitionKeyData;
 
-extern void RelationBuildPartitionKey(Relation relation);
+
+extern PartitionKey RelationGetPartitionKey(Relation rel);
 extern List *RelationGetPartitionQual(Relation rel);
 extern Expr *get_partition_qual_relid(Oid relid);
 

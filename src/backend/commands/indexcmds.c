@@ -812,7 +812,7 @@ DefineIndex(Oid relationId,
 	 */
 	if (partitioned && (stmt->unique || stmt->primary))
 	{
-		PartitionKey key = rel->rd_partkey;
+		PartitionKey key = RelationGetPartitionKey(rel);
 		int			i;
 
 		/*

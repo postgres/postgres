@@ -43,7 +43,6 @@
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/partition.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
@@ -53,7 +52,6 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
 #include "catalog/pg_rewrite.h"
@@ -71,8 +69,6 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
-#include "partitioning/partbounds.h"
-#include "partitioning/partdesc.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rowsecurity.h"
 #include "storage/lmgr.h"
@@ -84,7 +80,6 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
-#include "utils/partcache.h"
 #include "utils/relmapper.h"
 #include "utils/resowner_private.h"
 #include "utils/snapmgr.h"
@@ -1165,20 +1160,11 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_fkeylist = NIL;
 	relation->rd_fkeyvalid = false;
 
-	/* if a partitioned table, initialize key and partition descriptor info */
-	if (relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		RelationBuildPartitionKey(relation);
-		RelationBuildPartitionDesc(relation);
-	}
-	else
-	{
-		relation->rd_partkey = NULL;
-		relation->rd_partkeycxt = NULL;
-		relation->rd_partdesc = NULL;
-		relation->rd_pdcxt = NULL;
-	}
-	/* ... but partcheck is not loaded till asked for */
+	/* partitioning data is not loaded till asked for */
+	relation->rd_partkey = NULL;
+	relation->rd_partkeycxt = NULL;
+	relation->rd_partdesc = NULL;
+	relation->rd_pdcxt = NULL;
 	relation->rd_partcheck = NIL;
 	relation->rd_partcheckvalid = false;
 	relation->rd_partcheckcxt = NULL;
@@ -2090,6 +2076,16 @@ RelationClose(Relation relation)
 	/* Note: no locking manipulations needed */
 	RelationDecrementReferenceCount(relation);
 
+	/*
+	 * If the relation is no longer open in this session, we can clean up any
+	 * stale partition descriptors it has.  This is unlikely, so check to see
+	 * if there are child contexts before expending a call to mcxt.c.
+	 */
+	if (RelationHasReferenceCountZero(relation) &&
+		relation->rd_pdcxt != NULL &&
+		relation->rd_pdcxt->firstchild != NULL)
+		MemoryContextDeleteChildren(relation->rd_pdcxt);
+
 #ifdef RELCACHE_FORCE_RELEASE
 	if (RelationHasReferenceCountZero(relation) &&
 		relation->rd_createSubid == InvalidSubTransactionId &&
@@ -2527,7 +2523,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 		bool		keep_rules;
 		bool		keep_policies;
 		bool		keep_partkey;
-		bool		keep_partdesc;
 
 		/* Build temporary entry, but don't link it into hashtable */
 		newrel = RelationBuildDesc(save_relid, false);
@@ -2560,9 +2555,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 		keep_policies = equalRSDesc(relation->rd_rsdesc, newrel->rd_rsdesc);
 		/* partkey is immutable once set up, so we can always keep it */
 		keep_partkey = (relation->rd_partkey != NULL);
-		keep_partdesc = equalPartitionDescs(relation->rd_partkey,
-											relation->rd_partdesc,
-											newrel->rd_partdesc);
 
 		/*
 		 * Perform swapping of the relcache entry contents.  Within this
@@ -2617,34 +2609,45 @@ RelationClearRelation(Relation relation, bool rebuild)
 		SWAPFIELD(Oid, rd_toastoid);
 		/* pgstat_info must be preserved */
 		SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
-		/* preserve old partitioning info if no logical change */
+		/* preserve old partition key if we have one */
 		if (keep_partkey)
 		{
 			SWAPFIELD(PartitionKey, rd_partkey);
 			SWAPFIELD(MemoryContext, rd_partkeycxt);
 		}
-		if (keep_partdesc)
-		{
-			SWAPFIELD(PartitionDesc, rd_partdesc);
-			SWAPFIELD(MemoryContext, rd_pdcxt);
-		}
-		else if (rebuild && newrel->rd_pdcxt != NULL)
+		if (newrel->rd_pdcxt != NULL)
 		{
 			/*
 			 * We are rebuilding a partitioned relation with a non-zero
-			 * reference count, so keep the old partition descriptor around,
-			 * in case there's a PartitionDirectory with a pointer to it.
-			 * Attach it to the new rd_pdcxt so that it gets cleaned up
-			 * eventually.  In the case where the reference count is 0, this
-			 * code is not reached, which should be OK because in that case
-			 * there should be no PartitionDirectory with a pointer to the old
-			 * entry.
+			 * reference count, so we must keep the old partition descriptor
+			 * around, in case there's a PartitionDirectory with a pointer to
+			 * it.  This means we can't free the old rd_pdcxt yet.  (This is
+			 * necessary because RelationGetPartitionDesc hands out direct
+			 * pointers to the relcache's data structure, unlike our usual
+			 * practice which is to hand out copies.  We'd have the same
+			 * problem with rd_partkey, except that we always preserve that
+			 * once created.)
+			 *
+			 * To ensure that it's not leaked completely, re-attach it to the
+			 * new reldesc, or make it a child of the new reldesc's rd_pdcxt
+			 * in the unlikely event that there is one already.  (Compare hack
+			 * in RelationBuildPartitionDesc.)  RelationClose will clean up
+			 * any such contexts once the reference count reaches zero.
+			 *
+			 * In the case where the reference count is zero, this code is not
+			 * reached, which should be OK because in that case there should
+			 * be no PartitionDirectory with a pointer to the old entry.
 			 *
 			 * Note that newrel and relation have already been swapped, so the
 			 * "old" partition descriptor is actually the one hanging off of
 			 * newrel.
 			 */
-			MemoryContextSetParent(newrel->rd_pdcxt, relation->rd_pdcxt);
+			relation->rd_partdesc = NULL;	/* ensure rd_partdesc is invalid */
+			if (relation->rd_pdcxt != NULL) /* probably never happens */
+				MemoryContextSetParent(newrel->rd_pdcxt, relation->rd_pdcxt);
+			else
+				relation->rd_pdcxt = newrel->rd_pdcxt;
+			/* drop newrel's pointers so we don't destroy it below */
 			newrel->rd_partdesc = NULL;
 			newrel->rd_pdcxt = NULL;
 		}
@@ -3907,27 +3910,7 @@ RelationCacheInitializePhase3(void)
 			restart = true;
 		}
 
-		/*
-		 * Reload the partition key and descriptor for a partitioned table.
-		 */
-		if (relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
-			relation->rd_partkey == NULL)
-		{
-			RelationBuildPartitionKey(relation);
-			Assert(relation->rd_partkey != NULL);
-
-			restart = true;
-		}
-
-		if (relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
-			relation->rd_partdesc == NULL)
-		{
-			RelationBuildPartitionDesc(relation);
-			Assert(relation->rd_partdesc != NULL);
-
-			restart = true;
-		}
-
+		/* Reload tableam data if needed */
 		if (relation->rd_tableam == NULL &&
 			(relation->rd_rel->relkind == RELKIND_RELATION ||
 			 relation->rd_rel->relkind == RELKIND_SEQUENCE ||
