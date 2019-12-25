@@ -73,8 +73,8 @@
 
 #include <math.h>
 
-#include "access/amapi.h"
 #include "access/htup_details.h"
+#include "access/indexam.h"
 #include "access/tsmapi.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
@@ -539,7 +539,7 @@ cost_index(IndexPath *path, PlannerInfo *root, double loop_count,
 	 * for scanning the index, as well as the selectivity of the index (ie,
 	 * the fraction of main-table tuples we will have to retrieve) and its
 	 * correlation to the main-table tuple order.  We need a cast here because
-	 * pathnodes.h uses a weak function type to avoid including amapi.h.
+	 * pathnodes.h uses a weak function type to avoid including indexam.h.
 	 */
 	amcostestimate = (amcostestimate_function) index->amcostestimate;
 	amcostestimate(root, path, loop_count,

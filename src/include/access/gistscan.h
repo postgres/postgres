@@ -14,7 +14,7 @@
 #ifndef GISTSCAN_H
 #define GISTSCAN_H
 
-#include "access/amapi.h"
+#include "access/indexam.h"
 
 extern IndexScanDesc gistbeginscan(Relation r, int nkeys, int norderbys);
 extern void gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,

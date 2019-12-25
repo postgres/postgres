@@ -17,8 +17,8 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
-#include "access/genam.h"
 #include "access/htup_details.h"
+#include "access/indexgenam.h"
 #include "access/table.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_collation.h"

@@ -33,11 +33,11 @@
 #include "postgres.h"
 
 #include "access/bufmask.h"
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
 #include "access/heaptoast.h"
 #include "access/hio.h"
+#include "access/indexgenam.h"
 #include "access/multixact.h"
 #include "access/parallel.h"
 #include "access/relscan.h"

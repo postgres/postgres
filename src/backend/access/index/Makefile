@@ -13,9 +13,9 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = \
-	amapi.o \
-	amvalidate.o \
-	genam.o \
-	indexam.o
+	indexam.o \
+	indexamapi.o \
+	indexamvalidate.o \
+	indexgenam.o
 
 include $(top_srcdir)/src/backend/common.mk

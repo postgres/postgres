@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
- * amapi.h
+ * indexam.h
  *	  API for Postgres index access methods.
  *
  * Copyright (c) 2015-2019, PostgreSQL Global Development Group
  *
- * src/include/access/amapi.h
+ * src/include/access/indexam.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef AMAPI_H
-#define AMAPI_H
+#ifndef INDEXAM_H
+#define INDEXAM_H
 
-#include "access/genam.h"
+#include "access/indexgenam.h"
 
 /*
  * We don't wish to include planner header files here, since most of an index
@@ -233,8 +233,8 @@ typedef struct IndexAmRoutine
 } IndexAmRoutine;
 
 
-/* Functions in access/index/amapi.c */
+/* Functions in access/index/indexamapi.c */
 extern IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
 extern IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
 
-#endif							/* AMAPI_H */
+#endif							/* INDEXAM_H */

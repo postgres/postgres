@@ -15,7 +15,7 @@
 
 #include "postgres.h"
 
-#include "access/genam.h"
+#include "access/indexgenam.h"
 #include "access/spgist_private.h"
 #include "access/spgxlog.h"
 #include "access/xloginsert.h"

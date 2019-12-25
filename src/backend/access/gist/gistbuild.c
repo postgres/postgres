@@ -16,9 +16,9 @@
 
 #include <math.h>
 
-#include "access/genam.h"
 #include "access/gist_private.h"
 #include "access/gistxlog.h"
+#include "access/indexgenam.h"
 #include "access/tableam.h"
 #include "access/xloginsert.h"
 #include "catalog/index.h"

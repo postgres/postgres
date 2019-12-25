@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
- * genam.h
+ * indexgenam.h
  *	  POSTGRES generalized index access method definitions.
  *
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/access/genam.h
+ * src/include/access/indexgenam.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef GENAM_H
-#define GENAM_H
+#ifndef INDEXGENAM_H
+#define INDEXGENAM_H
 
 #include "access/sdir.h"
 #include "access/skey.h"
@@ -190,7 +190,7 @@ extern void index_store_float8_orderby_distances(IndexScanDesc scan,
 												 bool recheckOrderBy);
 
 /*
- * index access method support routines (in genam.c)
+ * index access method support routines (in indexgenam.c)
  */
 extern IndexScanDesc RelationGetIndexScan(Relation indexRelation,
 										  int nkeys, int norderbys);
@@ -204,7 +204,7 @@ extern TransactionId index_compute_xid_horizon_for_tuples(Relation irel,
 														  int nitems);
 
 /*
- * heap-or-index access to system catalogs (in genam.c)
+ * heap-or-index access to system catalogs (in indexgenam.c)
  */
 extern SysScanDesc systable_beginscan(Relation heapRelation,
 									  Oid indexId,
@@ -222,4 +222,4 @@ extern HeapTuple systable_getnext_ordered(SysScanDesc sysscan,
 										  ScanDirection direction);
 extern void systable_endscan_ordered(SysScanDesc sysscan);
 
-#endif							/* GENAM_H */
+#endif							/* INDEXGENAM_H */

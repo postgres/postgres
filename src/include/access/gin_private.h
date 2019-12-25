@@ -10,9 +10,9 @@
 #ifndef GIN_PRIVATE_H
 #define GIN_PRIVATE_H
 
-#include "access/amapi.h"
 #include "access/gin.h"
 #include "access/ginblock.h"
+#include "access/indexam.h"
 #include "access/itup.h"
 #include "catalog/pg_am_d.h"
 #include "fmgr.h"

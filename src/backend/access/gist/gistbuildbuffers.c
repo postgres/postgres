@@ -14,8 +14,8 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
 #include "access/gist_private.h"
+#include "access/indexgenam.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
 #include "storage/buffile.h"

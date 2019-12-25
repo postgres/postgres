@@ -14,7 +14,7 @@
 #ifndef NODEINDEXSCAN_H
 #define NODEINDEXSCAN_H
 
-#include "access/genam.h"
+#include "access/indexgenam.h"
 #include "access/parallel.h"
 #include "nodes/execnodes.h"
 

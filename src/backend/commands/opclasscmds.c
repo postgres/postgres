@@ -17,9 +17,9 @@
 
 #include <limits.h>
 
-#include "access/genam.h"
 #include "access/hash.h"
 #include "access/htup_details.h"
+#include "access/indexgenam.h"
 #include "access/nbtree.h"
 #include "access/sysattr.h"
 #include "access/table.h"

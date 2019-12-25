@@ -12,7 +12,7 @@
  */
 #include "postgres.h"
 
-#include "access/genam.h"
+#include "access/indexgenam.h"
 #include "bloom.h"
 #include "catalog/storage.h"
 #include "commands/vacuum.h"

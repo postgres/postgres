@@ -29,8 +29,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "access/genam.h"
 #include "access/htup_details.h"
+#include "access/indexgenam.h"
 #include "access/relation.h"
 #include "access/sysattr.h"
 #include "access/table.h"

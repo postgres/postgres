@@ -24,9 +24,9 @@
 
 #include "access/clog.h"
 #include "access/commit_ts.h"
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/indexgenam.h"
 #include "access/multixact.h"
 #include "access/tableam.h"
 #include "access/transam.h"

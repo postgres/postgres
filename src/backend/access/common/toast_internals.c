@@ -14,9 +14,9 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
-#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/heaptoast.h"
+#include "access/indexgenam.h"
 #include "access/table.h"
 #include "access/toast_internals.h"
 #include "access/xact.h"

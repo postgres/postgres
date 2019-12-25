@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "access/detoast.h"
-#include "access/genam.h"
+#include "access/indexgenam.h"
 #include "access/multixact.h"
 #include "access/relation.h"
 #include "access/sysattr.h"
