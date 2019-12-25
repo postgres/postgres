@@ -15168,15 +15168,11 @@ ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNu
 				 */
 
 				/*
-				 * Cannot have expressions containing whole-row references or
-				 * system column references.
+				 * Cannot allow system column references, since that would
+				 * make partition routing impossible: their values won't be
+				 * known yet when we need to do that.
 				 */
 				pull_varattnos(expr, 1, &expr_attrs);
-				if (bms_is_member(0 - FirstLowInvalidHeapAttributeNumber,
-								  expr_attrs))
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("partition key expressions cannot contain whole-row references")));
 				for (i = FirstLowInvalidHeapAttributeNumber; i < 0; i++)
 				{
 					if (bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
@@ -15196,7 +15192,8 @@ ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNu
 				{
 					AttrNumber	attno = i + FirstLowInvalidHeapAttributeNumber;
 
-					if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
+					if (attno > 0 &&
+						TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 								 errmsg("cannot use generated column in partition key"),
@@ -15451,7 +15448,6 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 		for (i = 0; i < partdesc->nparts; i++)
 		{
 			Relation	part_rel;
-			bool		found_whole_row;
 			List	   *thisPartConstraint;
 
 			/*
@@ -15465,10 +15461,7 @@ QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 			 */
 			thisPartConstraint =
 				map_partition_varattnos(partConstraint, 1,
-										part_rel, scanrel, &found_whole_row);
-			/* There can never be a whole-row reference here */
-			if (found_whole_row)
-				elog(ERROR, "unexpected whole-row reference found in partition constraint");
+										part_rel, scanrel);
 
 			QueuePartitionConstraintValidation(wqueue, part_rel,
 											   thisPartConstraint,
@@ -15497,7 +15490,6 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	TupleDesc	tupleDesc;
 	ObjectAddress address;
 	const char *trigger_name;
-	bool		found_whole_row;
 	Oid			defaultPartOid;
 	List	   *partBoundConstraint;
 
@@ -15714,11 +15706,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 		 * numbers.
 		 */
 		partConstraint = map_partition_varattnos(partConstraint, 1, attachrel,
-												 rel, &found_whole_row);
-		/* There can never be a whole-row reference here */
-		if (found_whole_row)
-			elog(ERROR,
-				 "unexpected whole-row reference found in partition key");
+												 rel);
 
 		/* Validate partition constraints against the table being attached. */
 		QueuePartitionConstraintValidation(wqueue, attachrel, partConstraint,
@@ -15750,7 +15738,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 		 */
 		defPartConstraint =
 			map_partition_varattnos(defPartConstraint,
-									1, defaultrel, rel, NULL);
+									1, defaultrel, rel);
 		QueuePartitionConstraintValidation(wqueue, defaultrel,
 										   defPartConstraint, true);
 
@@ -16004,19 +15992,11 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 							 RelationGetDescr(pg_trigger), &isnull);
 		if (!isnull)
 		{
-			bool		found_whole_row;
-
 			qual = stringToNode(TextDatumGetCString(value));
 			qual = (Node *) map_partition_varattnos((List *) qual, PRS2_OLD_VARNO,
-													partition, parent,
-													&found_whole_row);
-			if (found_whole_row)
-				elog(ERROR, "unexpected whole-row reference found in trigger WHEN clause");
+													partition, parent);
 			qual = (Node *) map_partition_varattnos((List *) qual, PRS2_NEW_VARNO,
-													partition, parent,
-													&found_whole_row);
-			if (found_whole_row)
-				elog(ERROR, "unexpected whole-row reference found in trigger WHEN clause");
+													partition, parent);
 		}
 
 		/*

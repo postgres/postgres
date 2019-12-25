@@ -1247,7 +1247,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 	 */
 	def_part_constraints =
 		map_partition_varattnos(def_part_constraints, 1, default_rel,
-								parent, NULL);
+								parent);
 
 	/*
 	 * If the existing constraints on the default partition imply that it will
@@ -1297,7 +1297,7 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 			partition_constraint = make_ands_explicit(def_part_constraints);
 			partition_constraint = (Expr *)
 				map_partition_varattnos((List *) partition_constraint, 1,
-										part_rel, default_rel, NULL);
+										part_rel, default_rel);
 
 			/*
 			 * If the partition constraints on default partition child imply

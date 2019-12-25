@@ -1144,7 +1144,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			CreateTrigStmt *childStmt;
 			Relation	childTbl;
 			Node	   *qual;
-			bool		found_whole_row;
 
 			childTbl = table_open(partdesc->oids[i], ShareRowExclusiveLock);
 
@@ -1177,16 +1176,10 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 			qual = copyObject(whenClause);
 			qual = (Node *)
 				map_partition_varattnos((List *) qual, PRS2_OLD_VARNO,
-										childTbl, rel,
-										&found_whole_row);
-			if (found_whole_row)
-				elog(ERROR, "unexpected whole-row reference found in trigger WHEN clause");
+										childTbl, rel);
 			qual = (Node *)
 				map_partition_varattnos((List *) qual, PRS2_NEW_VARNO,
-										childTbl, rel,
-										&found_whole_row);
-			if (found_whole_row)
-				elog(ERROR, "unexpected whole-row reference found in trigger WHEN clause");
+										childTbl, rel);
 
 			CreateTrigger(childStmt, queryString,
 						  partdesc->oids[i], refRelOid,

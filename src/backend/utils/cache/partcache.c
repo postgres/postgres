@@ -342,7 +342,6 @@ generate_partition_qual(Relation rel)
 	List	   *my_qual = NIL,
 			   *result = NIL;
 	Relation	parent;
-	bool		found_whole_row;
 
 	/* Guard against stack overflow due to overly deep partition tree */
 	check_stack_depth();
@@ -388,11 +387,7 @@ generate_partition_qual(Relation rel)
 	 * in it to bear this relation's attnos. It's safe to assume varno = 1
 	 * here.
 	 */
-	result = map_partition_varattnos(result, 1, rel, parent,
-									 &found_whole_row);
-	/* There can never be a whole-row reference here */
-	if (found_whole_row)
-		elog(ERROR, "unexpected whole-row reference found in partition key");
+	result = map_partition_varattnos(result, 1, rel, parent);
 
 	/* Assert that we're not leaking any old data during assignments below */
 	Assert(rel->rd_partcheckcxt == NULL);
