@@ -38,7 +38,4 @@ extern void DestroyPartitionDirectory(PartitionDirectory pdir);
 
 extern Oid	get_default_oid_from_partdesc(PartitionDesc partdesc);
 
-extern bool equalPartitionDescs(PartitionKey key, PartitionDesc partdesc1,
-								PartitionDesc partdesc2);
-
 #endif							/* PARTCACHE_H */
