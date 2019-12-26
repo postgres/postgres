@@ -476,6 +476,12 @@ select sillyaddtwo(42);
           44
 (1 row)
 
+select sillyaddtwo(43);
+ sillyaddtwo 
+-------------
+          45
+(1 row)
+
 -- check access to system columns in a record variable
 create function sillytrig() returns trigger language plpgsql as
 $$begin
