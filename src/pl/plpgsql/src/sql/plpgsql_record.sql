@@ -303,6 +303,7 @@ drop table mutable2;
 select sillyaddtwo(42);  -- fail
 create table mutable2(f0 text, f1 int, f2 text);
 select sillyaddtwo(42);
+select sillyaddtwo(43);
 
 -- check access to system columns in a record variable
 
