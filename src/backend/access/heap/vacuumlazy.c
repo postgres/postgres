@@ -158,6 +158,9 @@ static bool lazy_check_needs_freeze(Buffer buf, bool *hastup);
 static void lazy_vacuum_index(Relation indrel,
 							  IndexBulkDeleteResult **stats,
 							  LVRelStats *vacrelstats);
+static void lazy_vacuum_all_indexes(Relation onerel, LVRelStats *vacrelstats,
+									Relation *Irel, int nindexes,
+									IndexBulkDeleteResult **indstats);
 static void lazy_cleanup_index(Relation indrel,
 							   IndexBulkDeleteResult *stats,
 							   LVRelStats *vacrelstats);
@@ -740,12 +743,6 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		if ((vacrelstats->max_dead_tuples - vacrelstats->num_dead_tuples) < MaxHeapTuplesPerPage &&
 			vacrelstats->num_dead_tuples > 0)
 		{
-			const int	hvp_index[] = {
-				PROGRESS_VACUUM_PHASE,
-				PROGRESS_VACUUM_NUM_INDEX_VACUUMS
-			};
-			int64		hvp_val[2];
-
 			/*
 			 * Before beginning index vacuuming, we release any pin we may
 			 * hold on the visibility map page.  This isn't necessary for
@@ -758,28 +755,9 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 				vmbuffer = InvalidBuffer;
 			}
 
-			/* Log cleanup info before we touch indexes */
-			vacuum_log_cleanup_info(onerel, vacrelstats);
-
-			/* Report that we are now vacuuming indexes */
-			pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
-										 PROGRESS_VACUUM_PHASE_VACUUM_INDEX);
-
-			/* Remove index entries */
-			for (i = 0; i < nindexes; i++)
-				lazy_vacuum_index(Irel[i],
-								  &indstats[i],
-								  vacrelstats);
-
-			/*
-			 * Report that we are now vacuuming the heap.  We also increase
-			 * the number of index scans here; note that by using
-			 * pgstat_progress_update_multi_param we can update both
-			 * parameters atomically.
-			 */
-			hvp_val[0] = PROGRESS_VACUUM_PHASE_VACUUM_HEAP;
-			hvp_val[1] = vacrelstats->num_index_scans + 1;
-			pgstat_progress_update_multi_param(2, hvp_index, hvp_val);
+			/* Work on all the indexes, then the heap */
+			lazy_vacuum_all_indexes(onerel, vacrelstats, Irel,
+									nindexes, indstats);
 
 			/* Remove tuples from heap */
 			lazy_vacuum_heap(onerel, vacrelstats);
@@ -790,7 +768,6 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			 * valid.
 			 */
 			vacrelstats->num_dead_tuples = 0;
-			vacrelstats->num_index_scans++;
 
 			/*
 			 * Vacuum the Free Space Map to make newly-freed space visible on
@@ -1420,33 +1397,12 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 	/* XXX put a threshold on min number of tuples here? */
 	if (vacrelstats->num_dead_tuples > 0)
 	{
-		const int	hvp_index[] = {
-			PROGRESS_VACUUM_PHASE,
-			PROGRESS_VACUUM_NUM_INDEX_VACUUMS
-		};
-		int64		hvp_val[2];
-
-		/* Log cleanup info before we touch indexes */
-		vacuum_log_cleanup_info(onerel, vacrelstats);
-
-		/* Report that we are now vacuuming indexes */
-		pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
-									 PROGRESS_VACUUM_PHASE_VACUUM_INDEX);
-
-		/* Remove index entries */
-		for (i = 0; i < nindexes; i++)
-			lazy_vacuum_index(Irel[i],
-							  &indstats[i],
-							  vacrelstats);
-
-		/* Report that we are now vacuuming the heap */
-		hvp_val[0] = PROGRESS_VACUUM_PHASE_VACUUM_HEAP;
-		hvp_val[1] = vacrelstats->num_index_scans + 1;
-		pgstat_progress_update_multi_param(2, hvp_index, hvp_val);
+		/* Work on all the indexes, and then the heap */
+		lazy_vacuum_all_indexes(onerel, vacrelstats, Irel, nindexes,
+								indstats);
 
 		/* Remove tuples from heap */
 		lazy_vacuum_heap(onerel, vacrelstats);
-		vacrelstats->num_index_scans++;
 	}
 
 	/*
@@ -1508,6 +1464,36 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 	pfree(buf.data);
 }
 
+/*
+ *	lazy_vacuum_all_indexes() -- vacuum all indexes of relation.
+ *
+ *		This is a utility wrapper for lazy_vacuum_index(), able to do
+ *		progress reporting.
+ */
+static void
+lazy_vacuum_all_indexes(Relation onerel, LVRelStats *vacrelstats,
+						Relation *Irel, int nindexes,
+						IndexBulkDeleteResult **indstats)
+{
+	int			i;
+
+	/* Log cleanup info before we touch indexes */
+	vacuum_log_cleanup_info(onerel, vacrelstats);
+
+	/* Report that we are now vacuuming indexes */
+	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+								 PROGRESS_VACUUM_PHASE_VACUUM_INDEX);
+
+	/* Remove index entries */
+	for (i = 0; i < nindexes; i++)
+		lazy_vacuum_index(Irel[i], &indstats[i], vacrelstats);
+
+	/* Increase and report the number of index scans */
+	vacrelstats->num_index_scans++;
+	pgstat_progress_update_param(PROGRESS_VACUUM_NUM_INDEX_VACUUMS,
+								 vacrelstats->num_index_scans);
+}
+
 
 /*
  *	lazy_vacuum_heap() -- second pass over the heap
@@ -1527,6 +1513,10 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 	int			npages;
 	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
+
+	/* Report that we are now vacuuming the heap */
+	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
+								 PROGRESS_VACUUM_PHASE_VACUUM_HEAP);
 
 	pg_rusage_init(&ru0);
 	npages = 0;
