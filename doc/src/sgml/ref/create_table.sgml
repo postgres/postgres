@@ -539,6 +539,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <literal>CHECK</literal> constraints; additional constraints with the
       same name and condition as in the parent will be merged with the parent
       constraint.  Defaults may be specified separately for each partition.
+      But note that a partition's default value is not applied when inserting
+      a tuple through a partitioned table.
      </para>
 
      <para>
