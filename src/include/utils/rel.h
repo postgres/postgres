@@ -95,10 +95,15 @@ typedef struct RelationData
 	List	   *rd_fkeylist;	/* list of ForeignKeyCacheInfo (see below) */
 	bool		rd_fkeyvalid;	/* true if list has been computed */
 
+	/* data managed by RelationGetPartitionKey: */
 	PartitionKey rd_partkey;	/* partition key, or NULL */
 	MemoryContext rd_partkeycxt;	/* private context for rd_partkey, if any */
+
+	/* data managed by RelationGetPartitionDesc: */
 	PartitionDesc rd_partdesc;	/* partition descriptor, or NULL */
 	MemoryContext rd_pdcxt;		/* private context for rd_partdesc, if any */
+
+	/* data managed by RelationGetPartitionQual: */
 	List	   *rd_partcheck;	/* partition CHECK quals */
 	bool		rd_partcheckvalid;	/* true if list has been computed */
 	MemoryContext rd_partcheckcxt;	/* private cxt for rd_partcheck, if any */
