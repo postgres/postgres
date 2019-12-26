@@ -134,6 +134,8 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  *
  * p_target_rangetblentry: target relation's entry in the rtable list.
  *
+ * p_target_rtindex: target relation's index in the rtable list.
+ *
  * p_is_insert: true to process assignment expressions like INSERT, false
  * to process them like UPDATE.  (Note this can change intra-statement, for
  * cases like INSERT ON CONFLICT UPDATE.)
@@ -185,7 +187,8 @@ struct ParseState
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
 	CommonTableExpr *p_parent_cte;	/* this query's containing CTE */
 	Relation	p_target_relation;	/* INSERT/UPDATE/DELETE target rel */
-	RangeTblEntry *p_target_rangetblentry;	/* target rel's RTE */
+	RangeTblEntry *p_target_rangetblentry;	/* target rel's RTE, or NULL */
+	int			p_target_rtindex;	/* target rel's RT index, or 0 */
 	bool		p_is_insert;	/* process assignment like INSERT not UPDATE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */
@@ -249,6 +252,7 @@ struct ParseState
 typedef struct ParseNamespaceItem
 {
 	RangeTblEntry *p_rte;		/* The relation's rangetable entry */
+	int			p_rtindex;		/* The relation's index in the rangetable */
 	bool		p_rel_visible;	/* Relation name is visible? */
 	bool		p_cols_visible; /* Column names visible as unqualified refs? */
 	bool		p_lateral_only; /* Is only visible to LATERAL expressions? */
@@ -272,8 +276,6 @@ extern void setup_parser_errposition_callback(ParseCallbackState *pcbstate,
 											  ParseState *pstate, int location);
 extern void cancel_parser_errposition_callback(ParseCallbackState *pcbstate);
 
-extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno,
-					 int location);
 extern Oid	transformContainerType(Oid *containerType, int32 *containerTypmod);
 
 extern SubscriptingRef *transformContainerSubscripts(ParseState *pstate,

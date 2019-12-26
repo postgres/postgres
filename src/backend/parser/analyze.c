@@ -1344,7 +1344,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	int			sublist_length = -1;
 	bool		lateral = false;
 	RangeTblEntry *rte;
-	int			rtindex;
+	ParseNamespaceItem *nsitem;
 	ListCell   *lc;
 	ListCell   *lc2;
 	int			i;
@@ -1516,15 +1516,15 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 									  NULL, lateral, true);
 	addRTEtoQuery(pstate, rte, true, true, true);
 
-	/* assume new rte is at end */
-	rtindex = list_length(pstate->p_rtable);
-	Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
+	/* grab the namespace item made by addRTEtoQuery */
+	nsitem = (ParseNamespaceItem *) llast(pstate->p_namespace);
+	Assert(rte == nsitem->p_rte);
 
 	/*
 	 * Generate a targetlist as though expanding "*"
 	 */
 	Assert(pstate->p_next_resno == 1);
-	qry->targetList = expandRelAttrs(pstate, rte, rtindex, 0, -1);
+	qry->targetList = expandNSItemAttrs(pstate, nsitem, 0, -1);
 
 	/*
 	 * The grammar allows attaching ORDER BY, LIMIT, and FOR UPDATE to a

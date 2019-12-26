@@ -17,45 +17,28 @@
 #include "parser/parse_node.h"
 
 
-/*
- * Support for fuzzily matching column.
- *
- * This is for building diagnostic messages, where non-exact matching
- * attributes are suggested to the user.  The struct's fields may be facets of
- * a particular RTE, or of an entire range table, depending on context.
- */
-typedef struct
-{
-	int			distance;		/* Weighted distance (lowest so far) */
-	RangeTblEntry *rfirst;		/* RTE of first */
-	AttrNumber	first;			/* Closest attribute so far */
-	RangeTblEntry *rsecond;		/* RTE of second */
-	AttrNumber	second;			/* Second closest attribute so far */
-} FuzzyAttrMatchState;
-
-
-extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
-										   const char *schemaname,
-										   const char *refname,
-										   int location,
-										   int *sublevels_up);
+extern ParseNamespaceItem *refnameNamespaceItem(ParseState *pstate,
+												const char *schemaname,
+												const char *refname,
+												int location,
+												int *sublevels_up);
 extern CommonTableExpr *scanNameSpaceForCTE(ParseState *pstate,
 											const char *refname,
 											Index *ctelevelsup);
 extern bool scanNameSpaceForENR(ParseState *pstate, const char *refname);
 extern void checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 									List *namespace2);
-extern int	RTERangeTablePosn(ParseState *pstate,
-							  RangeTblEntry *rte,
-							  int *sublevels_up);
+extern ParseNamespaceItem *GetNSItemByRangeTablePosn(ParseState *pstate,
+													 int varno,
+													 int sublevels_up);
 extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
 											 int varno,
 											 int sublevels_up);
 extern CommonTableExpr *GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte,
 									 int rtelevelsup);
-extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
-							  const char *colname, int location,
-							  int fuzzy_rte_penalty, FuzzyAttrMatchState *fuzzystate);
+extern Node *scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
+								 int sublevels_up, const char *colname,
+								 int location);
 extern Node *colNameToVar(ParseState *pstate, const char *colname, bool localonly,
 						  int location);
 extern void markVarForSelectPriv(ParseState *pstate, Var *var,
@@ -122,8 +105,8 @@ extern void errorMissingColumn(ParseState *pstate,
 extern void expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					  int location, bool include_dropped,
 					  List **colnames, List **colvars);
-extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
-							int rtindex, int sublevels_up, int location);
+extern List *expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
+							   int sublevels_up, int location);
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern const NameData *attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);

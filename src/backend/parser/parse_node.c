@@ -181,27 +181,6 @@ pcb_error_callback(void *arg)
 
 
 /*
- * make_var
- *		Build a Var node for an attribute identified by RTE and attrno
- */
-Var *
-make_var(ParseState *pstate, RangeTblEntry *rte, int attrno, int location)
-{
-	Var		   *result;
-	int			vnum,
-				sublevels_up;
-	Oid			vartypeid;
-	int32		type_mod;
-	Oid			varcollid;
-
-	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
-	get_rte_attribute_type(rte, attrno, &vartypeid, &type_mod, &varcollid);
-	result = makeVar(vnum, attrno, vartypeid, type_mod, varcollid, sublevels_up);
-	result->location = location;
-	return result;
-}
-
-/*
  * transformContainerType()
  *		Identify the types involved in a subscripting operation for container
  *

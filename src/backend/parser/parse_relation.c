@@ -37,14 +37,37 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
+
+/*
+ * Support for fuzzily matching columns.
+ *
+ * This is for building diagnostic messages, where non-exact matching
+ * attributes are suggested to the user.  The struct's fields may be facets of
+ * a particular RTE, or of an entire range table, depending on context.
+ */
+typedef struct
+{
+	int			distance;		/* Weighted distance (lowest so far) */
+	RangeTblEntry *rfirst;		/* RTE of first */
+	AttrNumber	first;			/* Closest attribute so far */
+	RangeTblEntry *rsecond;		/* RTE of second */
+	AttrNumber	second;			/* Second closest attribute so far */
+} FuzzyAttrMatchState;
+
 #define MAX_FUZZY_DISTANCE				3
 
-static RangeTblEntry *scanNameSpaceForRefname(ParseState *pstate,
-											  const char *refname, int location);
-static RangeTblEntry *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
-											int location);
+
+static ParseNamespaceItem *scanNameSpaceForRefname(ParseState *pstate,
+												   const char *refname,
+												   int location);
+static ParseNamespaceItem *scanNameSpaceForRelid(ParseState *pstate, Oid relid,
+												 int location);
 static void check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
 								 int location);
+static int	scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
+							 const char *colname, int location,
+							 int fuzzy_rte_penalty,
+							 FuzzyAttrMatchState *fuzzystate);
 static void markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 								 int rtindex, AttrNumber col);
 static void expandRelation(Oid relid, Alias *eref,
@@ -61,28 +84,28 @@ static bool isQueryUsingTempRelation_walker(Node *node, void *context);
 
 
 /*
- * refnameRangeTblEntry
- *	  Given a possibly-qualified refname, look to see if it matches any RTE.
- *	  If so, return a pointer to the RangeTblEntry; else return NULL.
+ * refnameNamespaceItem
+ *	  Given a possibly-qualified refname, look to see if it matches any visible
+ *	  namespace item.  If so, return a pointer to the nsitem; else return NULL.
  *
- *	  Optionally get RTE's nesting depth (0 = current) into *sublevels_up.
+ *	  Optionally get nsitem's nesting depth (0 = current) into *sublevels_up.
  *	  If sublevels_up is NULL, only consider items at the current nesting
  *	  level.
  *
- * An unqualified refname (schemaname == NULL) can match any RTE with matching
+ * An unqualified refname (schemaname == NULL) can match any item with matching
  * alias, or matching unqualified relname in the case of alias-less relation
- * RTEs.  It is possible that such a refname matches multiple RTEs in the
+ * items.  It is possible that such a refname matches multiple items in the
  * nearest nesting level that has a match; if so, we report an error via
  * ereport().
  *
- * A qualified refname (schemaname != NULL) can only match a relation RTE
+ * A qualified refname (schemaname != NULL) can only match a relation item
  * that (a) has no alias and (b) is for the same relation identified by
  * schemaname.refname.  In this case we convert schemaname.refname to a
  * relation OID and search by relid, rather than by alias name.  This is
  * peculiar, but it's what SQL says to do.
  */
-RangeTblEntry *
-refnameRangeTblEntry(ParseState *pstate,
+ParseNamespaceItem *
+refnameNamespaceItem(ParseState *pstate,
 					 const char *schemaname,
 					 const char *refname,
 					 int location,
@@ -115,7 +138,7 @@ refnameRangeTblEntry(ParseState *pstate,
 
 	while (pstate != NULL)
 	{
-		RangeTblEntry *result;
+		ParseNamespaceItem *result;
 
 		if (OidIsValid(relId))
 			result = scanNameSpaceForRelid(pstate, relId, location);
@@ -136,8 +159,8 @@ refnameRangeTblEntry(ParseState *pstate,
 }
 
 /*
- * Search the query's table namespace for an RTE matching the
- * given unqualified refname.  Return the RTE if a unique match, or NULL
+ * Search the query's table namespace for an item matching the
+ * given unqualified refname.  Return the nsitem if a unique match, or NULL
  * if no match.  Raise error if multiple matches.
  *
  * Note: it might seem that we shouldn't have to worry about the possibility
@@ -152,10 +175,10 @@ refnameRangeTblEntry(ParseState *pstate,
  * this situation, and complain only if there's actually an ambiguous
  * reference to "x".
  */
-static RangeTblEntry *
+static ParseNamespaceItem *
 scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 {
-	RangeTblEntry *result = NULL;
+	ParseNamespaceItem *result = NULL;
 	ListCell   *l;
 
 	foreach(l, pstate->p_namespace)
@@ -179,24 +202,24 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 								refname),
 						 parser_errposition(pstate, location)));
 			check_lateral_ref_ok(pstate, nsitem, location);
-			result = rte;
+			result = nsitem;
 		}
 	}
 	return result;
 }
 
 /*
- * Search the query's table namespace for a relation RTE matching the
- * given relation OID.  Return the RTE if a unique match, or NULL
+ * Search the query's table namespace for a relation item matching the
+ * given relation OID.  Return the nsitem if a unique match, or NULL
  * if no match.  Raise error if multiple matches.
  *
- * See the comments for refnameRangeTblEntry to understand why this
+ * See the comments for refnameNamespaceItem to understand why this
  * acts the way it does.
  */
-static RangeTblEntry *
+static ParseNamespaceItem *
 scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 {
-	RangeTblEntry *result = NULL;
+	ParseNamespaceItem *result = NULL;
 	ListCell   *l;
 
 	foreach(l, pstate->p_namespace)
@@ -223,7 +246,7 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 								relid),
 						 parser_errposition(pstate, location)));
 			check_lateral_ref_ok(pstate, nsitem, location);
-			result = rte;
+			result = nsitem;
 		}
 	}
 	return result;
@@ -299,7 +322,7 @@ scanNameSpaceForENR(ParseState *pstate, const char *refname)
  *	  See if any RangeTblEntry could possibly match the RangeVar.
  *	  If so, return a pointer to the RangeTblEntry; else return NULL.
  *
- * This is different from refnameRangeTblEntry in that it considers every
+ * This is different from refnameNamespaceItem in that it considers every
  * entry in the ParseState's rangetable(s), not only those that are currently
  * visible in the p_namespace list(s).  This behavior is invalid per the SQL
  * spec, and it may give ambiguous results (there might be multiple equally
@@ -431,6 +454,8 @@ checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
  * referencing the target table of an UPDATE or DELETE as a lateral reference
  * in a FROM/USING clause.
  *
+ * Note: the pstate should be the same query level the nsitem was found in.
+ *
  * Convenience subroutine to avoid multiple copies of a rather ugly ereport.
  */
 static void
@@ -456,43 +481,35 @@ check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
 }
 
 /*
- * given an RTE, return RT index (starting with 1) of the entry,
- * and optionally get its nesting depth (0 = current).  If sublevels_up
- * is NULL, only consider rels at the current nesting level.
- * Raises error if RTE not found.
+ * Given an RT index and nesting depth, find the corresponding
+ * ParseNamespaceItem (there must be one).
  */
-int
-RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
+ParseNamespaceItem *
+GetNSItemByRangeTablePosn(ParseState *pstate,
+						  int varno,
+						  int sublevels_up)
 {
-	int			index;
-	ListCell   *l;
+	ListCell   *lc;
 
-	if (sublevels_up)
-		*sublevels_up = 0;
-
-	while (pstate != NULL)
+	while (sublevels_up-- > 0)
 	{
-		index = 1;
-		foreach(l, pstate->p_rtable)
-		{
-			if (rte == (RangeTblEntry *) lfirst(l))
-				return index;
-			index++;
-		}
 		pstate = pstate->parentParseState;
-		if (sublevels_up)
-			(*sublevels_up)++;
-		else
-			break;
+		Assert(pstate != NULL);
 	}
+	foreach(lc, pstate->p_namespace)
+	{
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(lc);
 
-	elog(ERROR, "RTE not found (internal error)");
-	return 0;					/* keep compiler quiet */
+		if (nsitem->p_rtindex == varno)
+			return nsitem;
+	}
+	elog(ERROR, "nsitem not found (internal error)");
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
  * Given an RT index and nesting depth, find the corresponding RTE.
- * This is the inverse of RTERangeTablePosn.
+ * (Note that the RTE need not be in the query's namespace.)
  */
 RangeTblEntry *
 GetRTEByRangeTablePosn(ParseState *pstate,
@@ -512,18 +529,13 @@ GetRTEByRangeTablePosn(ParseState *pstate,
  * Fetch the CTE for a CTE-reference RTE.
  *
  * rtelevelsup is the number of query levels above the given pstate that the
- * RTE came from.  Callers that don't have this information readily available
- * may pass -1 instead.
+ * RTE came from.
  */
 CommonTableExpr *
 GetCTEForRTE(ParseState *pstate, RangeTblEntry *rte, int rtelevelsup)
 {
 	Index		levelsup;
 	ListCell   *lc;
-
-	/* Determine RTE's levelsup if caller didn't know it */
-	if (rtelevelsup < 0)
-		(void) RTERangeTablePosn(pstate, rte, &rtelevelsup);
 
 	Assert(rte->rtekind == RTE_CTE);
 	levelsup = rte->ctelevelsup + rtelevelsup;
@@ -642,25 +654,94 @@ updateFuzzyAttrMatchState(int fuzzy_rte_penalty,
 }
 
 /*
- * scanRTEForColumn
- *	  Search the column names of a single RTE for the given name.
+ * scanNSItemForColumn
+ *	  Search the column names of a single namespace item for the given name.
  *	  If found, return an appropriate Var node, else return NULL.
- *	  If the name proves ambiguous within this RTE, raise error.
+ *	  If the name proves ambiguous within this nsitem, raise error.
  *
- * Side effect: if we find a match, mark the RTE as requiring read access
- * for the column.
- *
- * Additional side effect: if fuzzystate is non-NULL, check non-system columns
- * for an approximate match and update fuzzystate accordingly.
+ * Side effect: if we find a match, mark the item's RTE as requiring read
+ * access for the column.
  */
 Node *
-scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
-				 int location, int fuzzy_rte_penalty,
+scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
+					int sublevels_up, const char *colname, int location)
+{
+	RangeTblEntry *rte = nsitem->p_rte;
+	int			attnum;
+	Var		   *var;
+	Oid			vartypeid;
+	int32		vartypmod;
+	Oid			varcollid;
+
+	/*
+	 * Scan the RTE's column names (or aliases) for a match.  Complain if
+	 * multiple matches.
+	 */
+	attnum = scanRTEForColumn(pstate, rte,
+							  colname, location,
+							  0, NULL);
+
+	if (attnum == InvalidAttrNumber)
+		return NULL;			/* Return NULL if no match */
+
+	/* In constraint check, no system column is allowed except tableOid */
+	if (pstate->p_expr_kind == EXPR_KIND_CHECK_CONSTRAINT &&
+		attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("system column \"%s\" reference in check constraint is invalid",
+						colname),
+				 parser_errposition(pstate, location)));
+
+	/* In generated column, no system column is allowed except tableOid */
+	if (pstate->p_expr_kind == EXPR_KIND_GENERATED_COLUMN &&
+		attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot use system column \"%s\" in column generation expression",
+						colname),
+				 parser_errposition(pstate, location)));
+
+	/* Found a valid match, so build a Var */
+	get_rte_attribute_type(rte, attnum,
+						   &vartypeid, &vartypmod, &varcollid);
+	var = makeVar(nsitem->p_rtindex, attnum,
+				  vartypeid, vartypmod, varcollid,
+				  sublevels_up);
+	var->location = location;
+
+	/* Require read access to the column */
+	markVarForSelectPriv(pstate, var, rte);
+
+	return (Node *) var;
+}
+
+/*
+ * scanRTEForColumn
+ *	  Search the column names of a single RTE for the given name.
+ *	  If found, return the attnum (possibly negative, for a system column);
+ *	  else return InvalidAttrNumber.
+ *	  If the name proves ambiguous within this RTE, raise error.
+ *
+ * pstate and location are passed only for error-reporting purposes.
+ *
+ * Side effect: if fuzzystate is non-NULL, check non-system columns
+ * for an approximate match and update fuzzystate accordingly.
+ *
+ * Note: this is factored out of scanNSItemForColumn because error message
+ * creation may want to check RTEs that are not in the namespace.  To support
+ * that usage, minimize the number of validity checks performed here.  It's
+ * okay to complain about ambiguous-name cases, though, since if we are
+ * working to complain about an invalid name, we've already eliminated that.
+ */
+static int
+scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
+				 const char *colname, int location,
+				 int fuzzy_rte_penalty,
 				 FuzzyAttrMatchState *fuzzystate)
 {
-	Node	   *result = NULL;
+	int			result = InvalidAttrNumber;
 	int			attnum = 0;
-	Var		   *var;
 	ListCell   *c;
 
 	/*
@@ -673,10 +754,10 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
 	 *
 	 * Should this somehow go wrong and we try to access a dropped column,
 	 * we'll still catch it by virtue of the checks in
-	 * get_rte_attribute_type(), which is called by make_var().  That routine
-	 * has to do a cache lookup anyway, so the check there is cheap.  Callers
-	 * interested in finding match with shortest distance need to defend
-	 * against this directly, though.
+	 * get_rte_attribute_type(), which is called by scanNSItemForColumn().
+	 * That routine has to do a cache lookup anyway, so the check there is
+	 * cheap.  Callers interested in finding match with shortest distance need
+	 * to defend against this directly, though.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
@@ -691,13 +772,10 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
 						 errmsg("column reference \"%s\" is ambiguous",
 								colname),
 						 parser_errposition(pstate, location)));
-			var = make_var(pstate, rte, attnum, location);
-			/* Require read access to the column */
-			markVarForSelectPriv(pstate, var, rte);
-			result = (Node *) var;
+			result = attnum;
 		}
 
-		/* Updating fuzzy match state, if provided. */
+		/* Update fuzzy match state, if provided. */
 		if (fuzzystate != NULL)
 			updateFuzzyAttrMatchState(fuzzy_rte_penalty, fuzzystate,
 									  rte, attcolname, colname, attnum);
@@ -720,39 +798,13 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
 	{
 		/* quick check to see if name could be a system column */
 		attnum = specialAttNum(colname);
-
-		/* In constraint check, no system column is allowed except tableOid */
-		if (pstate->p_expr_kind == EXPR_KIND_CHECK_CONSTRAINT &&
-			attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("system column \"%s\" reference in check constraint is invalid",
-							colname),
-					 parser_errposition(pstate, location)));
-
-		/*
-		 * In generated column, no system column is allowed except tableOid.
-		 */
-		if (pstate->p_expr_kind == EXPR_KIND_GENERATED_COLUMN &&
-			attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("cannot use system column \"%s\" in column generation expression",
-							colname),
-					 parser_errposition(pstate, location)));
-
 		if (attnum != InvalidAttrNumber)
 		{
 			/* now check to see if column actually is defined */
 			if (SearchSysCacheExists2(ATTNUM,
 									  ObjectIdGetDatum(rte->relid),
 									  Int16GetDatum(attnum)))
-			{
-				var = make_var(pstate, rte, attnum, location);
-				/* Require read access to the column */
-				markVarForSelectPriv(pstate, var, rte);
-				result = (Node *) var;
-			}
+				result = attnum;
 		}
 	}
 
@@ -771,6 +823,7 @@ colNameToVar(ParseState *pstate, const char *colname, bool localonly,
 			 int location)
 {
 	Node	   *result = NULL;
+	int			sublevels_up = 0;
 	ParseState *orig_pstate = pstate;
 
 	while (pstate != NULL)
@@ -780,7 +833,6 @@ colNameToVar(ParseState *pstate, const char *colname, bool localonly,
 		foreach(l, pstate->p_namespace)
 		{
 			ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
-			RangeTblEntry *rte = nsitem->p_rte;
 			Node	   *newresult;
 
 			/* Ignore table-only items */
@@ -790,9 +842,9 @@ colNameToVar(ParseState *pstate, const char *colname, bool localonly,
 			if (nsitem->p_lateral_only && !pstate->p_lateral_active)
 				continue;
 
-			/* use orig_pstate here to get the right sublevels_up */
-			newresult = scanRTEForColumn(orig_pstate, rte, colname, location,
-										 0, NULL);
+			/* use orig_pstate here for consistency with other callers */
+			newresult = scanNSItemForColumn(orig_pstate, nsitem, sublevels_up,
+											colname, location);
 
 			if (newresult)
 			{
@@ -811,6 +863,7 @@ colNameToVar(ParseState *pstate, const char *colname, bool localonly,
 			break;				/* found, or don't want to look at parent */
 
 		pstate = pstate->parentParseState;
+		sublevels_up++;
 	}
 
 	return result;
@@ -2182,9 +2235,23 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList,
 			  bool addToRelNameSpace, bool addToVarNameSpace)
 {
+	int			rtindex;
+
+	/*
+	 * Most callers have just added the RTE to the rangetable, so it's likely
+	 * to be the last entry.  Hence, it's a good idea to search the rangetable
+	 * back-to-front.
+	 */
+	for (rtindex = list_length(pstate->p_rtable); rtindex > 0; rtindex--)
+	{
+		if (rte == rt_fetch(rtindex, pstate->p_rtable))
+			break;
+	}
+	if (rtindex <= 0)
+		elog(ERROR, "RTE not found (internal error)");
+
 	if (addToJoinList)
 	{
-		int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
 		RangeTblRef *rtr = makeNode(RangeTblRef);
 
 		rtr->rtindex = rtindex;
@@ -2196,6 +2263,7 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 
 		nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
 		nsitem->p_rte = rte;
+		nsitem->p_rtindex = rtindex;
 		nsitem->p_rel_visible = addToRelNameSpace;
 		nsitem->p_cols_visible = addToVarNameSpace;
 		nsitem->p_lateral_only = false;
@@ -2653,26 +2721,25 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref, int count, int offset,
 }
 
 /*
- * expandRelAttrs -
+ * expandNSItemAttrs -
  *	  Workhorse for "*" expansion: produce a list of targetentries
- *	  for the attributes of the RTE
+ *	  for the attributes of the nsitem
  *
- * As with expandRTE, rtindex/sublevels_up determine the varno/varlevelsup
- * fields of the Vars produced, and location sets their location.
  * pstate->p_next_resno determines the resnos assigned to the TLEs.
  * The referenced columns are marked as requiring SELECT access.
  */
 List *
-expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
-			   int rtindex, int sublevels_up, int location)
+expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
+				  int sublevels_up, int location)
 {
+	RangeTblEntry *rte = nsitem->p_rte;
 	List	   *names,
 			   *vars;
 	ListCell   *name,
 			   *var;
 	List	   *te_list = NIL;
 
-	expandRTE(rte, rtindex, sublevels_up, location, false,
+	expandRTE(rte, nsitem->p_rtindex, sublevels_up, location, false,
 			  &names, &vars);
 
 	/*
@@ -3253,7 +3320,6 @@ void
 errorMissingRTE(ParseState *pstate, RangeVar *relation)
 {
 	RangeTblEntry *rte;
-	int			sublevels_up;
 	const char *badAlias = NULL;
 
 	/*
@@ -3274,11 +3340,17 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 	 * MySQL-ism "SELECT ... FROM a, b LEFT JOIN c ON (a.x = c.y)".
 	 */
 	if (rte && rte->alias &&
-		strcmp(rte->eref->aliasname, relation->relname) != 0 &&
-		refnameRangeTblEntry(pstate, NULL, rte->eref->aliasname,
-							 relation->location,
-							 &sublevels_up) == rte)
-		badAlias = rte->eref->aliasname;
+		strcmp(rte->eref->aliasname, relation->relname) != 0)
+	{
+		ParseNamespaceItem *nsitem;
+		int			sublevels_up;
+
+		nsitem = refnameNamespaceItem(pstate, NULL, rte->eref->aliasname,
+									  relation->location,
+									  &sublevels_up);
+		if (nsitem && nsitem->p_rte == rte)
+			badAlias = rte->eref->aliasname;
+	}
 
 	if (rte)
 		ereport(ERROR,

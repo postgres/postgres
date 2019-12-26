@@ -62,8 +62,9 @@ static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 static List *ExpandAllTables(ParseState *pstate, int location);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 								   bool make_target_entry, ParseExprKind exprKind);
-static List *ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
-							   int location, bool make_target_entry);
+static List *ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
+							   int sublevels_up, int location,
+							   bool make_target_entry);
 static List *ExpandRowReference(ParseState *pstate, Node *expr,
 								bool make_target_entry);
 static int	FigureColnameInternal(Node *node, char **name);
@@ -548,10 +549,13 @@ transformAssignedExpr(ParseState *pstate,
 			/*
 			 * Build a Var for the column to be updated.
 			 */
-			colVar = (Node *) make_var(pstate,
-									   pstate->p_target_rangetblentry,
-									   attrno,
-									   location);
+			Var		   *var;
+
+			var = makeVar(pstate->p_target_rtindex, attrno,
+						  attrtype, attrtypmod, attrcollation, 0);
+			var->location = location;
+
+			colVar = (Node *) var;
 		}
 
 		expr = (Expr *)
@@ -1127,7 +1131,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 */
 		char	   *nspname = NULL;
 		char	   *relname = NULL;
-		RangeTblEntry *rte = NULL;
+		ParseNamespaceItem *nsitem = NULL;
 		int			levels_up;
 		enum
 		{
@@ -1153,16 +1157,16 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		{
 			case 2:
 				relname = strVal(linitial(fields));
-				rte = refnameRangeTblEntry(pstate, nspname, relname,
-										   cref->location,
-										   &levels_up);
+				nsitem = refnameNamespaceItem(pstate, nspname, relname,
+											  cref->location,
+											  &levels_up);
 				break;
 			case 3:
 				nspname = strVal(linitial(fields));
 				relname = strVal(lsecond(fields));
-				rte = refnameRangeTblEntry(pstate, nspname, relname,
-										   cref->location,
-										   &levels_up);
+				nsitem = refnameNamespaceItem(pstate, nspname, relname,
+											  cref->location,
+											  &levels_up);
 				break;
 			case 4:
 				{
@@ -1178,9 +1182,9 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 					}
 					nspname = strVal(lsecond(fields));
 					relname = strVal(lthird(fields));
-					rte = refnameRangeTblEntry(pstate, nspname, relname,
-											   cref->location,
-											   &levels_up);
+					nsitem = refnameNamespaceItem(pstate, nspname, relname,
+												  cref->location,
+												  &levels_up);
 					break;
 				}
 			default:
@@ -1193,17 +1197,19 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * bit by passing the RangeTblEntry, not a Var, as the planned
 		 * translation.  (A single Var wouldn't be strictly correct anyway.
 		 * This convention allows hooks that really care to know what is
-		 * happening.)
+		 * happening.  It might be better to pass the nsitem, but we'd have to
+		 * promote that struct to a full-fledged Node type so that callees
+		 * could identify its type.)
 		 */
 		if (pstate->p_post_columnref_hook != NULL)
 		{
 			Node	   *node;
 
 			node = pstate->p_post_columnref_hook(pstate, cref,
-												 (Node *) rte);
+												 (Node *) (nsitem ? nsitem->p_rte : NULL));
 			if (node != NULL)
 			{
-				if (rte != NULL)
+				if (nsitem != NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_AMBIGUOUS_COLUMN),
 							 errmsg("column reference \"%s\" is ambiguous",
@@ -1216,7 +1222,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		/*
 		 * Throw error if no translation found.
 		 */
-		if (rte == NULL)
+		if (nsitem == NULL)
 		{
 			switch (crserr)
 			{
@@ -1242,9 +1248,10 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		}
 
 		/*
-		 * OK, expand the RTE into fields.
+		 * OK, expand the nsitem into fields.
 		 */
-		return ExpandSingleTable(pstate, rte, cref->location, make_target_entry);
+		return ExpandSingleTable(pstate, nsitem, levels_up, cref->location,
+								 make_target_entry);
 	}
 }
 
@@ -1269,7 +1276,6 @@ ExpandAllTables(ParseState *pstate, int location)
 	foreach(l, pstate->p_namespace)
 	{
 		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(l);
-		RangeTblEntry *rte = nsitem->p_rte;
 
 		/* Ignore table-only items */
 		if (!nsitem->p_cols_visible)
@@ -1280,12 +1286,10 @@ ExpandAllTables(ParseState *pstate, int location)
 		found_table = true;
 
 		target = list_concat(target,
-							 expandRelAttrs(pstate,
-											rte,
-											RTERangeTablePosn(pstate, rte,
-															  NULL),
-											0,
-											location));
+							 expandNSItemAttrs(pstate,
+											   nsitem,
+											   0,
+											   location));
 	}
 
 	/*
@@ -1341,26 +1345,21 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
  * The referenced columns are marked as requiring SELECT access.
  */
 static List *
-ExpandSingleTable(ParseState *pstate, RangeTblEntry *rte,
-				  int location, bool make_target_entry)
+ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
+				  int sublevels_up, int location, bool make_target_entry)
 {
-	int			sublevels_up;
-	int			rtindex;
-
-	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
-
 	if (make_target_entry)
 	{
-		/* expandRelAttrs handles permissions marking */
-		return expandRelAttrs(pstate, rte, rtindex, sublevels_up,
-							  location);
+		/* expandNSItemAttrs handles permissions marking */
+		return expandNSItemAttrs(pstate, nsitem, sublevels_up, location);
 	}
 	else
 	{
+		RangeTblEntry *rte = nsitem->p_rte;
 		List	   *vars;
 		ListCell   *l;
 
-		expandRTE(rte, rtindex, sublevels_up, location, false,
+		expandRTE(rte, nsitem->p_rtindex, sublevels_up, location, false,
 				  NULL, &vars);
 
 		/*
@@ -1411,10 +1410,10 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 		((Var *) expr)->varattno == InvalidAttrNumber)
 	{
 		Var		   *var = (Var *) expr;
-		RangeTblEntry *rte;
+		ParseNamespaceItem *nsitem;
 
-		rte = GetRTEByRangeTablePosn(pstate, var->varno, var->varlevelsup);
-		return ExpandSingleTable(pstate, rte, var->location, make_target_entry);
+		nsitem = GetNSItemByRangeTablePosn(pstate, var->varno, var->varlevelsup);
+		return ExpandSingleTable(pstate, nsitem, var->varlevelsup, var->location, make_target_entry);
 	}
 
 	/*
