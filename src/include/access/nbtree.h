@@ -14,7 +14,7 @@
 #ifndef NBTREE_H
 #define NBTREE_H
 
-#include "access/indexam.h"
+#include "access/amapi.h"
 #include "access/itup.h"
 #include "access/sdir.h"
 #include "access/xlogreader.h"

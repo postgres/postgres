@@ -26,7 +26,7 @@
 
 #include "access/brin_internal.h"
 #include "access/brin_tuple.h"
-#include "access/indexgenam.h"
+#include "access/genam.h"
 #include "access/skey.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_type.h"

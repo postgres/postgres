@@ -36,10 +36,10 @@
 
 #include <math.h>
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/heapam_xlog.h"
 #include "access/htup_details.h"
-#include "access/indexgenam.h"
 #include "access/multixact.h"
 #include "access/transam.h"
 #include "access/visibilitymap.h"

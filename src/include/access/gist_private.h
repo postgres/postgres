@@ -14,14 +14,14 @@
 #ifndef GIST_PRIVATE_H
 #define GIST_PRIVATE_H
 
+#include "access/amapi.h"
 #include "access/gist.h"
-#include "access/indexam.h"
-#include "access/indexgenam.h"
 #include "access/itup.h"
 #include "lib/pairingheap.h"
 #include "storage/bufmgr.h"
 #include "storage/buffile.h"
 #include "utils/hsearch.h"
+#include "access/genam.h"
 
 /*
  * Maximum number of "halves" a page can be split into in one operation.

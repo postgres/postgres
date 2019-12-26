@@ -12,8 +12,8 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/generic_xlog.h"
-#include "access/indexgenam.h"
 #include "access/tableam.h"
 #include "bloom.h"
 #include "catalog/index.h"

@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
  *
- * indexamapi.c
+ * amapi.c
  *	  Support routines for API for Postgres index access methods.
  *
  * Copyright (c) 2015-2019, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  src/backend/access/index/indexamapi.c
+ *	  src/backend/access/index/amapi.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/htup_details.h"
-#include "access/indexam.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_opclass.h"
 #include "utils/builtins.h"

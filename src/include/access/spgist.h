@@ -14,7 +14,7 @@
 #ifndef SPGIST_H
 #define SPGIST_H
 
-#include "access/indexam.h"
+#include "access/amapi.h"
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 

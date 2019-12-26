@@ -6,7 +6,7 @@
  *
  * Note: this is split out of selfuncs.h mainly to avoid importing all of the
  * planner's data structures into the non-planner parts of the index AMs.
- * If you make it depend on anything besides access/indexam.h, that's likely
+ * If you make it depend on anything besides access/amapi.h, that's likely
  * a mistake.
  *
  * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
@@ -19,7 +19,7 @@
 #ifndef INDEX_SELFUNCS_H
 #define INDEX_SELFUNCS_H
 
-#include "access/indexam.h"
+#include "access/amapi.h"
 
 /* Functions in selfuncs.c */
 extern void brincostestimate(struct PlannerInfo *root,

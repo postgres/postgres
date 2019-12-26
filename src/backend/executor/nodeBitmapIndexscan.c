@@ -21,7 +21,7 @@
  */
 #include "postgres.h"
 
-#include "access/indexgenam.h"
+#include "access/genam.h"
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapIndexscan.h"
 #include "executor/nodeIndexscan.h"

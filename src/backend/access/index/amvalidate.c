@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
  *
- * indexamvalidate.c
+ * amvalidate.c
  *	  Support routines for index access methods' amvalidate functions.
  *
  * Copyright (c) 2016-2019, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  src/backend/access/index/indexamvalidate.c
+ *	  src/backend/access/index/amvalidate.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/amvalidate.h"
 #include "access/htup_details.h"
-#include "access/indexamvalidate.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"

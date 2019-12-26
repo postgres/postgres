@@ -17,7 +17,7 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include "access/indexam.h"
+#include "access/amapi.h"
 #include "access/itup.h"
 #include "access/sdir.h"
 #include "catalog/pg_am_d.h"

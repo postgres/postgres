@@ -15,9 +15,9 @@
 
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
-#include "access/indexam.h"
 #include "access/reloptions.h"
 #include "access/sysattr.h"
 #include "access/tableam.h"

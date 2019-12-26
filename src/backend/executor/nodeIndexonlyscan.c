@@ -30,7 +30,7 @@
  */
 #include "postgres.h"
 
-#include "access/indexgenam.h"
+#include "access/genam.h"
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/tupdesc.h"

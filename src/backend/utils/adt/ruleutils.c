@@ -19,8 +19,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "access/amapi.h"
 #include "access/htup_details.h"
-#include "access/indexam.h"
 #include "access/relation.h"
 #include "access/sysattr.h"
 #include "access/table.h"

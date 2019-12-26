@@ -13,8 +13,8 @@
 #ifndef _BLOOM_H_
 #define _BLOOM_H_
 
+#include "access/amapi.h"
 #include "access/generic_xlog.h"
-#include "access/indexam.h"
 #include "access/itup.h"
 #include "access/xlog.h"
 #include "fmgr.h"

@@ -14,8 +14,8 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/indexgenam.h"
 #include "access/transam.h"
 #include "commands/vacuum.h"
 #include "lib/integerset.h"

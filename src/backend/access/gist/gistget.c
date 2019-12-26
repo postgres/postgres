@@ -14,8 +14,8 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/gist_private.h"
-#include "access/indexgenam.h"
 #include "access/relscan.h"
 #include "lib/pairingheap.h"
 #include "miscadmin.h"

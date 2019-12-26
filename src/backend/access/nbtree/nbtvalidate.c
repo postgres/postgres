@@ -13,8 +13,8 @@
  */
 #include "postgres.h"
 
+#include "access/amvalidate.h"
 #include "access/htup_details.h"
-#include "access/indexamvalidate.h"
 #include "access/nbtree.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"

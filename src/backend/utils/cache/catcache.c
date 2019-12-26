@@ -14,8 +14,8 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heaptoast.h"
-#include "access/indexgenam.h"
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/table.h"

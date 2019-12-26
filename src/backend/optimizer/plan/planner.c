@@ -18,8 +18,8 @@
 #include <limits.h>
 #include <math.h>
 
+#include "access/genam.h"
 #include "access/htup_details.h"
-#include "access/indexgenam.h"
 #include "access/parallel.h"
 #include "access/sysattr.h"
 #include "access/table.h"

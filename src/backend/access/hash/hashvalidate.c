@@ -13,9 +13,9 @@
  */
 #include "postgres.h"
 
+#include "access/amvalidate.h"
 #include "access/hash.h"
 #include "access/htup_details.h"
-#include "access/indexamvalidate.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"

@@ -29,8 +29,8 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/htup_details.h"
-#include "access/indexgenam.h"
 #include "access/multixact.h"
 #include "access/relation.h"
 #include "access/sysattr.h"

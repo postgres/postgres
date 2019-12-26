@@ -17,8 +17,8 @@
  */
 #include "postgres.h"
 
+#include "access/amapi.h"
 #include "access/heapam.h"
-#include "access/indexam.h"
 #include "access/multixact.h"
 #include "access/relscan.h"
 #include "access/tableam.h"

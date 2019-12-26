@@ -12,8 +12,8 @@
 
 #include <selinux/label.h>
 
+#include "access/genam.h"
 #include "access/htup_details.h"
-#include "access/indexgenam.h"
 #include "access/table.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
