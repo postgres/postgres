@@ -378,8 +378,8 @@ pg_physical_replication_slot_advance(XLogRecPtr moveto)
 /*
  * Helper function for advancing our logical replication slot forward.
  *
- * The slot's restart_lsn is used as start point for reading records,
- * while confirmed_lsn is used as base point for the decoding context.
+ * The slot's restart_lsn is used as start point for reading records, while
+ * confirmed_flush is used as base point for the decoding context.
  *
  * We cannot just do LogicalConfirmReceivedLocation to update confirmed_flush,
  * because we need to digest WAL to advance restart_lsn allowing to recycle
@@ -549,8 +549,8 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 	/*
 	 * Check if the slot is not moving backwards.  Physical slots rely simply
 	 * on restart_lsn as a minimum point, while logical slots have confirmed
-	 * consumption up to confirmed_lsn, meaning that in both cases data older
-	 * than that is not available anymore.
+	 * consumption up to confirmed_flush, meaning that in both cases data
+	 * older than that is not available anymore.
 	 */
 	if (OidIsValid(MyReplicationSlot->data.database))
 		minlsn = MyReplicationSlot->data.confirmed_flush;
