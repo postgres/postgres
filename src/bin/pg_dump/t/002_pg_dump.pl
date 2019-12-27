@@ -2370,6 +2370,32 @@ my %tests = (
 		},
 	},
 
+	'Creation of row-level trigger in partitioned table' => {
+		create_order => 92,
+		create_sql   => 'CREATE TRIGGER test_trigger
+		   AFTER INSERT ON dump_test.measurement
+		   FOR EACH ROW EXECUTE PROCEDURE dump_test.trigger_func()',
+		regexp => qr/^
+			\QCREATE TRIGGER test_trigger AFTER INSERT ON dump_test.measurement \E
+			\QFOR EACH ROW \E
+			\QEXECUTE PROCEDURE dump_test.trigger_func();\E
+			/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+		},
+	},
+
+	# this shouldn't ever get emitted
+	'Creation of row-level trigger in partition' => {
+		regexp => qr/^
+			\QCREATE TRIGGER test_trigger AFTER INSERT ON dump_test_second_schema.measurement\E
+			/xm,
+		like => {},
+	},
+
 	'CREATE TABLE test_fourth_table_zero_col' => {
 		create_order => 6,
 		create_sql   => 'CREATE TABLE dump_test.test_fourth_table (
