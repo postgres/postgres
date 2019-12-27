@@ -131,29 +131,26 @@ SELECT isempty(numrange(1, 5));
   <title>Infinite (Unbounded) Ranges</title>
 
   <para>
-   The lower bound of a range can be omitted, meaning that all points less
-   than the upper bound are included in the range. Likewise, if the upper
-   bound of the range is omitted, then all points greater than the lower bound
-   are included in the range. If both lower and upper bounds are omitted, all
-   values of the element type are considered to be in the range.
+   The lower bound of a range can be omitted, meaning that all
+   values less than the upper bound are included in the range, e.g.,
+   <literal>(,3]</literal>. Likewise, if the upper bound of the range
+   is omitted, then all values greater than the lower bound are included
+   in the range. If both lower and upper bounds are omitted, all values
+   of the element type are considered to be in the range.  Specifying a
+   missing bound as inclusive is automatically converted to exclusive,
+   e.g., <literal>[,]</literal> is converted to <literal>(,)</literal>.
+   You can think of these missing values as +/-infinity, but they are
+   special range type values and are considered to be beyond any range
+   element type's +/-infinity values.
   </para>
 
   <para>
-   This is equivalent to considering that the lower bound is <quote>minus
-   infinity</quote>, or the upper bound is <quote>plus infinity</quote>,
-   respectively.  But note that these infinite values are never values of
-   the range's element type, and can never be part of the range.  (So there
-   is no such thing as an inclusive infinite bound &mdash; if you try to
-   write one, it will automatically be converted to an exclusive bound.)
-  </para>
-
-  <para>
-   Also, some element types have a notion of <quote>infinity</quote>, but that
-   is just another value so far as the range type mechanisms are concerned.
-   For example, in timestamp ranges, <literal>[today,]</literal> means the same
-   thing as <literal>[today,)</literal>.  But <literal>[today,infinity]</literal> means
-   something different from <literal>[today,infinity)</literal> &mdash; the latter
-   excludes the special <type>timestamp</type> value <literal>infinity</literal>.
+   Element types that have the notion of <quote>infinity</quote> can
+   use them as explicit bound values.  For example, with timestamp
+   ranges, <literal>[today,infinity)</literal> excludes the special
+   <type>timestamp</type> value <literal>infinity</literal>,
+   while <literal>[today,infinity]</literal> include it, as does
+   <literal>[today,)</literal> and <literal>[today,]</literal>.
   </para>
 
   <para>
