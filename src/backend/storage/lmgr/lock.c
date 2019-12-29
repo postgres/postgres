@@ -746,7 +746,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	ResourceOwner owner;
 	uint32		hashcode;
 	LWLock	   *partitionLock;
-	int			status;
+	bool		found_conflict;
 	bool		log_lock = false;
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
@@ -979,12 +979,12 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	 * (That's last because most complex check.)
 	 */
 	if (lockMethodTable->conflictTab[lockmode] & lock->waitMask)
-		status = STATUS_FOUND;
+		found_conflict = true;
 	else
-		status = LockCheckConflicts(lockMethodTable, lockmode,
+		found_conflict = LockCheckConflicts(lockMethodTable, lockmode,
 									lock, proclock);
 
-	if (status == STATUS_OK)
+	if (!found_conflict)
 	{
 		/* No conflict with held or previously requested locks */
 		GrantLock(lock, proclock, lockmode);
@@ -992,8 +992,6 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	}
 	else
 	{
-		Assert(status == STATUS_FOUND);
-
 		/*
 		 * We can't acquire the lock immediately.  If caller specified no
 		 * blocking, remove useless table entries and return
@@ -1330,7 +1328,7 @@ RemoveLocalLock(LOCALLOCK *locallock)
  * LockCheckConflicts -- test whether requested lock conflicts
  *		with those already granted
  *
- * Returns STATUS_FOUND if conflict, STATUS_OK if no conflict.
+ * Returns true if conflict, false if no conflict.
  *
  * NOTES:
  *		Here's what makes this complicated: one process's locks don't
@@ -1340,7 +1338,7 @@ RemoveLocalLock(LOCALLOCK *locallock)
  * the same group.  So, we must subtract off these locks when determining
  * whether the requested new lock conflicts with those already held.
  */
-int
+bool
 LockCheckConflicts(LockMethod lockMethodTable,
 				   LOCKMODE lockmode,
 				   LOCK *lock,
@@ -1367,7 +1365,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	if (!(conflictMask & lock->grantMask))
 	{
 		PROCLOCK_PRINT("LockCheckConflicts: no conflict", proclock);
-		return STATUS_OK;
+		return false;
 	}
 
 	/*
@@ -1393,7 +1391,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	if (totalConflictsRemaining == 0)
 	{
 		PROCLOCK_PRINT("LockCheckConflicts: resolved (simple)", proclock);
-		return STATUS_OK;
+		return false;
 	}
 
 	/* If no group locking, it's definitely a conflict. */
@@ -1402,7 +1400,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 		Assert(proclock->tag.myProc == MyProc);
 		PROCLOCK_PRINT("LockCheckConflicts: conflicting (simple)",
 					   proclock);
-		return STATUS_FOUND;
+		return true;
 	}
 
 	/*
@@ -1439,7 +1437,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 			{
 				PROCLOCK_PRINT("LockCheckConflicts: resolved (group)",
 							   proclock);
-				return STATUS_OK;
+				return false;
 			}
 		}
 		otherproclock = (PROCLOCK *)
@@ -1449,7 +1447,7 @@ LockCheckConflicts(LockMethod lockMethodTable,
 
 	/* Nope, it's a real conflict. */
 	PROCLOCK_PRINT("LockCheckConflicts: conflicting (group)", proclock);
-	return STATUS_FOUND;
+	return true;
 }
 
 /*

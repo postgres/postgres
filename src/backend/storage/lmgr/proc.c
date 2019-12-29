@@ -1149,10 +1149,8 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 				}
 				/* I must go before this waiter.  Check special case. */
 				if ((lockMethodTable->conflictTab[lockmode] & aheadRequests) == 0 &&
-					LockCheckConflicts(lockMethodTable,
-									   lockmode,
-									   lock,
-									   proclock) == STATUS_OK)
+					!LockCheckConflicts(lockMethodTable, lockmode, lock,
+										proclock))
 				{
 					/* Skip the wait and just grant myself the lock. */
 					GrantLock(lock, proclock, lockmode);
@@ -1648,10 +1646,8 @@ ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock)
 		 * (b) doesn't conflict with already-held locks.
 		 */
 		if ((lockMethodTable->conflictTab[lockmode] & aheadRequests) == 0 &&
-			LockCheckConflicts(lockMethodTable,
-							   lockmode,
-							   lock,
-							   proc->waitProcLock) == STATUS_OK)
+			!LockCheckConflicts(lockMethodTable, lockmode, lock,
+								proc->waitProcLock))
 		{
 			/* OK to waken */
 			GrantLock(lock, proc->waitProcLock, lockmode);

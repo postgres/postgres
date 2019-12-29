@@ -550,7 +550,7 @@ extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
 											  LOCKMODE lockmode, int *countp);
 extern void AtPrepare_Locks(void);
 extern void PostPrepare_Locks(TransactionId xid);
-extern int	LockCheckConflicts(LockMethod lockMethodTable,
+extern bool LockCheckConflicts(LockMethod lockMethodTable,
 							   LOCKMODE lockmode,
 							   LOCK *lock, PROCLOCK *proclock);
 extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
