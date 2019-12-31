@@ -1227,7 +1227,7 @@ except spiexceptions.DivisionByZero:
     return "denominator cannot equal zero"
 except spiexceptions.UniqueViolation:
     return "already have that fraction"
-except plpy.SPIError, e:
+except plpy.SPIError as e:
     return "other error, SQLSTATE %s" % e.sqlstate
 else:
     return "fraction inserted"
@@ -1274,7 +1274,7 @@ CREATE FUNCTION transfer_funds() RETURNS void AS $$
 try:
     plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
     plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
-except plpy.SPIError, e:
+except plpy.SPIError as e:
     result = "error transferring funds: %s" % e.args
 else:
     result = "funds transferred correctly"
@@ -1306,7 +1306,7 @@ try:
     with plpy.subtransaction():
         plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
         plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
-except plpy.SPIError, e:
+except plpy.SPIError as e:
     result = "error transferring funds: %s" % e.args
 else:
     result = "funds transferred correctly"
@@ -1357,7 +1357,7 @@ try:
         raise
     else:
         subxact.exit(None, None, None)
-except plpy.SPIError, e:
+except plpy.SPIError as e:
     result = "error transferring funds: %s" % e.args
 else:
     result = "funds transferred correctly"
