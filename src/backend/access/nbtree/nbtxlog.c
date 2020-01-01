@@ -428,14 +428,7 @@ btree_xlog_delete(XLogReaderState *record)
 
 	/*
 	 * If we have any conflict processing to do, it must happen before we
-	 * update the page.
-	 *
-	 * Btree delete records can conflict with standby queries.  You might
-	 * think that vacuum records would conflict as well, but we've handled
-	 * that already.  XLOG_HEAP2_CLEANUP_INFO records provide the highest xid
-	 * cleaned by the vacuum of the heap and so we can resolve any conflicts
-	 * just once when that arrives.  After that we know that no conflicts
-	 * exist from individual btree vacuum records on that index.
+	 * update the page
 	 */
 	if (InHotStandby)
 	{
@@ -463,10 +456,7 @@ btree_xlog_delete(XLogReaderState *record)
 			PageIndexMultiDelete(page, unused, xlrec->nitems);
 		}
 
-		/*
-		 * Mark the page as not containing any LP_DEAD items --- see comments
-		 * in _bt_delitems_delete().
-		 */
+		/* Mark the page as not containing any LP_DEAD items */
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
