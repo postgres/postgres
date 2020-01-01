@@ -2,7 +2,7 @@
  * tablesync.c
  *	  PostgreSQL logical replication
  *
- * Copyright (c) 2012-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/tablesync.c

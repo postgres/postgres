@@ -2,7 +2,7 @@
  * llvmjit_emit.h
  *	  Helpers to make emitting LLVM IR a it more concise and pgindent proof.
  *
- * Copyright (c) 2018-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2020, PostgreSQL Global Development Group
  *
  * src/include/lib/llvmjit_emit.h
  */

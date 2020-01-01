@@ -3,7 +3,7 @@
  * origin.c
  *	  Logical replication progress tracking support.
  *
- * Copyright (c) 2013-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/origin.c

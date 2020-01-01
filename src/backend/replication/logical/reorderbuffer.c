@@ -4,7 +4,7 @@
  *	  PostgreSQL logical replay/reorder buffer management
  *
  *
- * Copyright (c) 2012-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2020, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION

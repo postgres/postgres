@@ -2,7 +2,7 @@
  * llvmjit.h
  *	  LLVM JIT provider.
  *
- * Copyright (c) 2016-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2020, PostgreSQL Global Development Group
  *
  * src/include/jit/llvmjit.h
  *

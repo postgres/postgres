@@ -4,7 +4,7 @@
  *	  Checks, enables or disables page level checksums for an offline
  *	  cluster
  *
- * Copyright (c) 2010-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/pg_checksums/pg_checksums.c

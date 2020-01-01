@@ -172,7 +172,7 @@
  *
  *			Jan Wieck
  *
- * Copyright (c) 1999-2019, PostgreSQL Global Development Group
+ * Copyright (c) 1999-2020, PostgreSQL Global Development Group
  *
  * src/common/pg_lzcompress.c
  * ----------

@@ -3,7 +3,7 @@
 # parser generator for ecpg version 2
 # call with backend parser as stdin
 #
-# Copyright (c) 2007-2019, PostgreSQL Global Development Group
+# Copyright (c) 2007-2020, PostgreSQL Global Development Group
 #
 # Written by Mike Aubury <mike.aubury@aubit.com>
 #            Michael Meskes <meskes@postgresql.org>

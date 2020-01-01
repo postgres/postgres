@@ -14,7 +14,7 @@
  * that every visible heap tuple has a matching index tuple.
  *
  *
- * Copyright (c) 2017-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/amcheck/verify_nbtree.c

@@ -3,7 +3,7 @@
  * toast_internals.c
  *	  Functions for internal use by the TOAST system.
  *
- * Copyright (c) 2000-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/access/common/toast_internals.c

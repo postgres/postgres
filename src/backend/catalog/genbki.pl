@@ -7,7 +7,7 @@
 #    formatted header files and data files.  The BKI files are used to
 #    initialize the postgres template database.
 #
-# Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/backend/catalog/genbki.pl
@@ -395,7 +395,7 @@ foreach my $catname (@catnames)
  * %s_d.h
  *    Macro definitions for %s
  *
- * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES
@@ -643,7 +643,7 @@ print $schemapg <<EOM;
  * schemapg.h
  *    Schema_pg_xxx macros for use by relcache.c
  *
- * Portions Copyright (c) 1996-2019, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES

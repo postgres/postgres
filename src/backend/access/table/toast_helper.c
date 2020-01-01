@@ -4,7 +4,7 @@
  *	  Helper functions for table AMs implementing compressed or
  *    out-of-line storage of varlena attributes.
  *
- * Copyright (c) 2000-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/access/common/toast_helper.c

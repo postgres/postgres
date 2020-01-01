@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Generate the keywords table file
-# Copyright (c) 2019, PostgreSQL Global Development Group
+# Copyright (c) 2019-2020, PostgreSQL Global Development Group
 
 use strict;
 use warnings;

@@ -3,7 +3,7 @@
  *	scripts_parallel.h
  *		Parallel support for bin/scripts/
  *
- *	Copyright (c) 2003-2019, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2020, PostgreSQL Global Development Group
  *
  *	src/bin/scripts/scripts_parallel.h
  *

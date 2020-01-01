@@ -4,7 +4,7 @@
  *	  Utility and convenience functions for fmgr functions that return
  *	  sets and/or composite types, or deal with VARIADIC inputs.
  *
- * Copyright (c) 2002-2019, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/fmgr/funcapi.c
