@@ -341,6 +341,7 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 {
 	Relation	viewRel;
 	List	   *new_rt;
+	ParseNamespaceItem *nsitem;
 	RangeTblEntry *rt_entry1,
 			   *rt_entry2;
 	ParseState *pstate;
@@ -365,14 +366,17 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 * Create the 2 new range table entries and form the new range table...
 	 * OLD first, then NEW....
 	 */
-	rt_entry1 = addRangeTableEntryForRelation(pstate, viewRel,
-											  AccessShareLock,
-											  makeAlias("old", NIL),
-											  false, false);
-	rt_entry2 = addRangeTableEntryForRelation(pstate, viewRel,
-											  AccessShareLock,
-											  makeAlias("new", NIL),
-											  false, false);
+	nsitem = addRangeTableEntryForRelation(pstate, viewRel,
+										   AccessShareLock,
+										   makeAlias("old", NIL),
+										   false, false);
+	rt_entry1 = nsitem->p_rte;
+	nsitem = addRangeTableEntryForRelation(pstate, viewRel,
+										   AccessShareLock,
+										   makeAlias("new", NIL),
+										   false, false);
+	rt_entry2 = nsitem->p_rte;
+
 	/* Must override addRangeTableEntry's default access-check flags */
 	rt_entry1->requiredPerms = 0;
 	rt_entry2->requiredPerms = 0;

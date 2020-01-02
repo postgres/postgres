@@ -415,9 +415,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 										 stmt->relation->inh,
 										 true,
 										 ACL_DELETE);
-
-	/* grab the namespace item made by setTargetTable */
-	nsitem = (ParseNamespaceItem *) llast(pstate->p_namespace);
+	nsitem = pstate->p_target_nsitem;
 
 	/* there's no DISTINCT in DELETE */
 	qry->distinctClause = NIL;
@@ -476,8 +474,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	List	   *sub_namespace;
 	List	   *icolumns;
 	List	   *attrnos;
+	ParseNamespaceItem *nsitem;
 	RangeTblEntry *rte;
-	RangeTblRef *rtr;
 	ListCell   *icols;
 	ListCell   *attnos;
 	ListCell   *lc;
@@ -611,18 +609,14 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 		/*
 		 * Make the source be a subquery in the INSERT's rangetable, and add
-		 * it to the INSERT's joinlist.
+		 * it to the INSERT's joinlist (but not the namespace).
 		 */
-		rte = addRangeTableEntryForSubquery(pstate,
-											selectQuery,
-											makeAlias("*SELECT*", NIL),
-											false,
-											false);
-		rtr = makeNode(RangeTblRef);
-		/* assume new rte is at end */
-		rtr->rtindex = list_length(pstate->p_rtable);
-		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
-		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+		nsitem = addRangeTableEntryForSubquery(pstate,
+											   selectQuery,
+											   makeAlias("*SELECT*", NIL),
+											   false,
+											   false);
+		addNSItemToQuery(pstate, nsitem, true, false, false);
 
 		/*----------
 		 * Generate an expression list for the INSERT that selects all the
@@ -652,7 +646,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 				expr = tle->expr;
 			else
 			{
-				Var		   *var = makeVarFromTargetEntry(rtr->rtindex, tle);
+				Var		   *var = makeVarFromTargetEntry(nsitem->p_rtindex, tle);
 
 				var->location = exprLocation((Node *) tle->expr);
 				expr = (Expr *) var;
@@ -774,19 +768,15 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		/*
 		 * Generate the VALUES RTE
 		 */
-		rte = addRangeTableEntryForValues(pstate, exprsLists,
-										  coltypes, coltypmods, colcollations,
-										  NULL, lateral, true);
-		rtr = makeNode(RangeTblRef);
-		/* assume new rte is at end */
-		rtr->rtindex = list_length(pstate->p_rtable);
-		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
-		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+		nsitem = addRangeTableEntryForValues(pstate, exprsLists,
+											 coltypes, coltypmods, colcollations,
+											 NULL, lateral, true);
+		addNSItemToQuery(pstate, nsitem, true, false, false);
 
 		/*
 		 * Generate list of Vars referencing the RTE
 		 */
-		expandRTE(rte, rtr->rtindex, 0, -1, false, NULL, &exprList);
+		exprList = expandNSItemVars(nsitem, 0, -1, NULL);
 
 		/*
 		 * Re-apply any indirection on the target column specs to the Vars
@@ -829,7 +819,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 * Generate query's target list using the computed list of expressions.
 	 * Also, mark all the target columns as needing insert permissions.
 	 */
-	rte = pstate->p_target_rangetblentry;
+	rte = pstate->p_target_nsitem->p_rte;
 	qry->targetList = NIL;
 	Assert(list_length(exprList) <= list_length(icolumns));
 	forthree(lc, exprList, icols, icolumns, attnos, attrnos)
@@ -863,8 +853,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	if (stmt->returningList)
 	{
 		pstate->p_namespace = NIL;
-		addRTEtoQuery(pstate, pstate->p_target_rangetblentry,
-					  false, true, true);
+		addNSItemToQuery(pstate, pstate->p_target_nsitem,
+						 false, true, true);
 		qry->returningList = transformReturningList(pstate,
 													stmt->returningList);
 	}
@@ -999,7 +989,6 @@ transformOnConflictClause(ParseState *pstate,
 	Oid			arbiterConstraint;
 	List	   *onConflictSet = NIL;
 	Node	   *onConflictWhere = NULL;
-	RangeTblEntry *exclRte = NULL;
 	int			exclRelIndex = 0;
 	List	   *exclRelTlist = NIL;
 	OnConflictExpr *result;
@@ -1012,6 +1001,8 @@ transformOnConflictClause(ParseState *pstate,
 	if (onConflictClause->action == ONCONFLICT_UPDATE)
 	{
 		Relation	targetrel = pstate->p_target_relation;
+		ParseNamespaceItem *exclNSItem;
+		RangeTblEntry *exclRte;
 
 		/*
 		 * All INSERT expressions have been parsed, get ready for potentially
@@ -1025,16 +1016,17 @@ transformOnConflictClause(ParseState *pstate,
 		 * relation, and no permission checks are required on it.  (We'll
 		 * check the actual target relation, instead.)
 		 */
-		exclRte = addRangeTableEntryForRelation(pstate,
-												targetrel,
-												RowExclusiveLock,
-												makeAlias("excluded", NIL),
-												false, false);
+		exclNSItem = addRangeTableEntryForRelation(pstate,
+												   targetrel,
+												   RowExclusiveLock,
+												   makeAlias("excluded", NIL),
+												   false, false);
+		exclRte = exclNSItem->p_rte;
+		exclRelIndex = exclNSItem->p_rtindex;
+
 		exclRte->relkind = RELKIND_COMPOSITE_TYPE;
 		exclRte->requiredPerms = 0;
 		/* other permissions fields in exclRte are already empty */
-
-		exclRelIndex = list_length(pstate->p_rtable);
 
 		/* Create EXCLUDED rel's targetlist for use by EXPLAIN */
 		exclRelTlist = BuildOnConflictExcludedTargetlist(targetrel,
@@ -1044,9 +1036,9 @@ transformOnConflictClause(ParseState *pstate,
 		 * Add EXCLUDED and the target RTE to the namespace, so that they can
 		 * be used in the UPDATE subexpressions.
 		 */
-		addRTEtoQuery(pstate, exclRte, false, true, true);
-		addRTEtoQuery(pstate, pstate->p_target_rangetblentry,
-					  false, true, true);
+		addNSItemToQuery(pstate, exclNSItem, false, true, true);
+		addNSItemToQuery(pstate, pstate->p_target_nsitem,
+						 false, true, true);
 
 		/*
 		 * Now transform the UPDATE subexpressions.
@@ -1343,7 +1335,6 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	List	  **colexprs = NULL;
 	int			sublist_length = -1;
 	bool		lateral = false;
-	RangeTblEntry *rte;
 	ParseNamespaceItem *nsitem;
 	ListCell   *lc;
 	ListCell   *lc2;
@@ -1511,14 +1502,10 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Generate the VALUES RTE
 	 */
-	rte = addRangeTableEntryForValues(pstate, exprsLists,
-									  coltypes, coltypmods, colcollations,
-									  NULL, lateral, true);
-	addRTEtoQuery(pstate, rte, true, true, true);
-
-	/* grab the namespace item made by addRTEtoQuery */
-	nsitem = (ParseNamespaceItem *) llast(pstate->p_namespace);
-	Assert(rte == nsitem->p_rte);
+	nsitem = addRangeTableEntryForValues(pstate, exprsLists,
+										 coltypes, coltypmods, colcollations,
+										 NULL, lateral, true);
+	addNSItemToQuery(pstate, nsitem, true, true, true);
 
 	/*
 	 * Generate a targetlist as though expanding "*"
@@ -1593,7 +1580,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 			   *targetnames,
 			   *sv_namespace;
 	int			sv_rtable_length;
-	RangeTblEntry *jrte;
+	ParseNamespaceItem *jnsitem;
+	ParseNamespaceColumn *sortnscolumns;
+	int			sortcolindex;
 	int			tllen;
 
 	qry->commandType = CMD_SELECT;
@@ -1686,6 +1675,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->targetList = NIL;
 	targetvars = NIL;
 	targetnames = NIL;
+	sortnscolumns = (ParseNamespaceColumn *)
+		palloc0(list_length(sostmt->colTypes) * sizeof(ParseNamespaceColumn));
+	sortcolindex = 0;
 
 	forfour(lct, sostmt->colTypes,
 			lcm, sostmt->colTypmods,
@@ -1716,6 +1708,14 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		qry->targetList = lappend(qry->targetList, tle);
 		targetvars = lappend(targetvars, var);
 		targetnames = lappend(targetnames, makeString(colName));
+		sortnscolumns[sortcolindex].p_varno = leftmostRTI;
+		sortnscolumns[sortcolindex].p_varattno = lefttle->resno;
+		sortnscolumns[sortcolindex].p_vartype = colType;
+		sortnscolumns[sortcolindex].p_vartypmod = colTypmod;
+		sortnscolumns[sortcolindex].p_varcollid = colCollation;
+		sortnscolumns[sortcolindex].p_varnosyn = leftmostRTI;
+		sortnscolumns[sortcolindex].p_varattnosyn = lefttle->resno;
+		sortcolindex++;
 	}
 
 	/*
@@ -1730,18 +1730,19 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	sv_rtable_length = list_length(pstate->p_rtable);
 
-	jrte = addRangeTableEntryForJoin(pstate,
-									 targetnames,
-									 JOIN_INNER,
-									 targetvars,
-									 NULL,
-									 false);
+	jnsitem = addRangeTableEntryForJoin(pstate,
+										targetnames,
+										sortnscolumns,
+										JOIN_INNER,
+										targetvars,
+										NULL,
+										false);
 
 	sv_namespace = pstate->p_namespace;
 	pstate->p_namespace = NIL;
 
-	/* add jrte to column namespace only */
-	addRTEtoQuery(pstate, jrte, false, false, true);
+	/* add jnsitem to column namespace only */
+	addNSItemToQuery(pstate, jnsitem, false, false, true);
 
 	/*
 	 * For now, we don't support resjunk sort clauses on the output of a
@@ -1757,7 +1758,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 										  EXPR_KIND_ORDER_BY,
 										  false /* allow SQL92 rules */ );
 
-	/* restore namespace, remove jrte from rtable */
+	/* restore namespace, remove join RTE from rtable */
 	pstate->p_namespace = sv_namespace;
 	pstate->p_rtable = list_truncate(pstate->p_rtable, sv_rtable_length);
 
@@ -1869,7 +1870,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		/* Process leaf SELECT */
 		Query	   *selectQuery;
 		char		selectName[32];
-		RangeTblEntry *rte PG_USED_FOR_ASSERTS_ONLY;
+		ParseNamespaceItem *nsitem;
 		RangeTblRef *rtr;
 		ListCell   *tl;
 
@@ -1926,19 +1927,17 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		 */
 		snprintf(selectName, sizeof(selectName), "*SELECT* %d",
 				 list_length(pstate->p_rtable) + 1);
-		rte = addRangeTableEntryForSubquery(pstate,
-											selectQuery,
-											makeAlias(selectName, NIL),
-											false,
-											false);
+		nsitem = addRangeTableEntryForSubquery(pstate,
+											   selectQuery,
+											   makeAlias(selectName, NIL),
+											   false,
+											   false);
 
 		/*
 		 * Return a RangeTblRef to replace the SelectStmt in the set-op tree.
 		 */
 		rtr = makeNode(RangeTblRef);
-		/* assume new rte is at end */
-		rtr->rtindex = list_length(pstate->p_rtable);
-		Assert(rte == rt_fetch(rtr->rtindex, pstate->p_rtable));
+		rtr->rtindex = nsitem->p_rtindex;
 		return (Node *) rtr;
 	}
 	else
@@ -2236,9 +2235,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 										 stmt->relation->inh,
 										 true,
 										 ACL_UPDATE);
-
-	/* grab the namespace item made by setTargetTable */
-	nsitem = (ParseNamespaceItem *) llast(pstate->p_namespace);
+	nsitem = pstate->p_target_nsitem;
 
 	/* subqueries in FROM cannot access the result relation */
 	nsitem->p_lateral_only = true;
@@ -2297,7 +2294,7 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 		pstate->p_next_resno = RelationGetNumberOfAttributes(pstate->p_target_relation) + 1;
 
 	/* Prepare non-junk columns for assignment to target table */
-	target_rte = pstate->p_target_rangetblentry;
+	target_rte = pstate->p_target_nsitem->p_rte;
 	orig_tl = list_head(origTlist);
 
 	foreach(tl, tlist)

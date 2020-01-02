@@ -472,7 +472,8 @@ check_lateral_ref_ok(ParseState *pstate, ParseNamespaceItem *nsitem,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("invalid reference to FROM-clause entry for table \"%s\"",
 						refname),
-				 (rte == pstate->p_target_rangetblentry) ?
+				 (pstate->p_target_nsitem != NULL &&
+				  rte == pstate->p_target_nsitem->p_rte) ?
 				 errhint("There is an entry for table \"%s\", but it cannot be referenced from this part of the query.",
 						 refname) :
 				 errdetail("The combining JOIN type must be INNER or LEFT for a LATERAL reference."),
@@ -669,9 +670,6 @@ scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
 	RangeTblEntry *rte = nsitem->p_rte;
 	int			attnum;
 	Var		   *var;
-	Oid			vartypeid;
-	int32		vartypmod;
-	Oid			varcollid;
 
 	/*
 	 * Scan the RTE's column names (or aliases) for a match.  Complain if
@@ -703,11 +701,39 @@ scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
 				 parser_errposition(pstate, location)));
 
 	/* Found a valid match, so build a Var */
-	get_rte_attribute_type(rte, attnum,
-						   &vartypeid, &vartypmod, &varcollid);
-	var = makeVar(nsitem->p_rtindex, attnum,
-				  vartypeid, vartypmod, varcollid,
-				  sublevels_up);
+	if (attnum > InvalidAttrNumber)
+	{
+		/* Get attribute data from the ParseNamespaceColumn array */
+		ParseNamespaceColumn *nscol = &nsitem->p_nscolumns[attnum - 1];
+
+		/* Complain if dropped column.  See notes in scanRTEForColumn. */
+		if (nscol->p_varno == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							colname,
+							rte->eref->aliasname)));
+
+		var = makeVar(nsitem->p_rtindex,
+					  attnum,
+					  nscol->p_vartype,
+					  nscol->p_vartypmod,
+					  nscol->p_varcollid,
+					  sublevels_up);
+	}
+	else
+	{
+		/* System column, so use predetermined type data */
+		const FormData_pg_attribute *sysatt;
+
+		sysatt = SystemAttributeDefinition(attnum);
+		var = makeVar(nsitem->p_rtindex,
+					  attnum,
+					  sysatt->atttypid,
+					  sysatt->atttypmod,
+					  sysatt->attcollation,
+					  sublevels_up);
+	}
 	var->location = location;
 
 	/* Require read access to the column */
@@ -753,11 +779,9 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 	 * don't bother to test for that case here.
 	 *
 	 * Should this somehow go wrong and we try to access a dropped column,
-	 * we'll still catch it by virtue of the checks in
-	 * get_rte_attribute_type(), which is called by scanNSItemForColumn().
-	 * That routine has to do a cache lookup anyway, so the check there is
-	 * cheap.  Callers interested in finding match with shortest distance need
-	 * to defend against this directly, though.
+	 * we'll still catch it by virtue of the check in scanNSItemForColumn().
+	 * Callers interested in finding match with shortest distance need to
+	 * defend against this directly, though.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
@@ -1201,6 +1225,121 @@ chooseScalarFunctionAlias(Node *funcexpr, char *funcname,
 }
 
 /*
+ * buildNSItemFromTupleDesc
+ *		Build a ParseNamespaceItem, given a tupdesc describing the columns.
+ *
+ * rte: the new RangeTblEntry for the rel
+ * rtindex: its index in the rangetable list
+ * tupdesc: the physical column information
+ */
+static ParseNamespaceItem *
+buildNSItemFromTupleDesc(RangeTblEntry *rte, Index rtindex, TupleDesc tupdesc)
+{
+	ParseNamespaceItem *nsitem;
+	ParseNamespaceColumn *nscolumns;
+	int			maxattrs = tupdesc->natts;
+	int			varattno;
+
+	/* colnames must have the same number of entries as the nsitem */
+	Assert(maxattrs == list_length(rte->eref->colnames));
+
+	/* extract per-column data from the tupdesc */
+	nscolumns = (ParseNamespaceColumn *)
+		palloc0(maxattrs * sizeof(ParseNamespaceColumn));
+
+	for (varattno = 0; varattno < maxattrs; varattno++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, varattno);
+
+		/* For a dropped column, just leave the entry as zeroes */
+		if (attr->attisdropped)
+			continue;
+
+		nscolumns[varattno].p_varno = rtindex;
+		nscolumns[varattno].p_varattno = varattno + 1;
+		nscolumns[varattno].p_vartype = attr->atttypid;
+		nscolumns[varattno].p_vartypmod = attr->atttypmod;
+		nscolumns[varattno].p_varcollid = attr->attcollation;
+		nscolumns[varattno].p_varnosyn = rtindex;
+		nscolumns[varattno].p_varattnosyn = varattno + 1;
+	}
+
+	/* ... and build the nsitem */
+	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem->p_rte = rte;
+	nsitem->p_rtindex = rtindex;
+	nsitem->p_nscolumns = nscolumns;
+	/* set default visibility flags; might get changed later */
+	nsitem->p_rel_visible = true;
+	nsitem->p_cols_visible = true;
+	nsitem->p_lateral_only = false;
+	nsitem->p_lateral_ok = true;
+
+	return nsitem;
+}
+
+/*
+ * buildNSItemFromLists
+ *		Build a ParseNamespaceItem, given column type information in lists.
+ *
+ * rte: the new RangeTblEntry for the rel
+ * rtindex: its index in the rangetable list
+ * coltypes: per-column datatype OIDs
+ * coltypmods: per-column type modifiers
+ * colcollation: per-column collation OIDs
+ */
+static ParseNamespaceItem *
+buildNSItemFromLists(RangeTblEntry *rte, Index rtindex,
+					 List *coltypes, List *coltypmods, List *colcollations)
+{
+	ParseNamespaceItem *nsitem;
+	ParseNamespaceColumn *nscolumns;
+	int			maxattrs = list_length(coltypes);
+	int			varattno;
+	ListCell   *lct;
+	ListCell   *lcm;
+	ListCell   *lcc;
+
+	/* colnames must have the same number of entries as the nsitem */
+	Assert(maxattrs == list_length(rte->eref->colnames));
+
+	Assert(maxattrs == list_length(coltypmods));
+	Assert(maxattrs == list_length(colcollations));
+
+	/* extract per-column data from the lists */
+	nscolumns = (ParseNamespaceColumn *)
+		palloc0(maxattrs * sizeof(ParseNamespaceColumn));
+
+	varattno = 0;
+	forthree(lct, coltypes,
+			 lcm, coltypmods,
+			 lcc, colcollations)
+	{
+		nscolumns[varattno].p_varno = rtindex;
+		nscolumns[varattno].p_varattno = varattno + 1;
+		nscolumns[varattno].p_vartype = lfirst_oid(lct);
+		nscolumns[varattno].p_vartypmod = lfirst_int(lcm);
+		nscolumns[varattno].p_varcollid = lfirst_oid(lcc);
+		nscolumns[varattno].p_varnosyn = rtindex;
+		nscolumns[varattno].p_varattnosyn = varattno + 1;
+		varattno++;
+	}
+
+	/* ... and build the nsitem */
+	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem->p_rte = rte;
+	nsitem->p_rtindex = rtindex;
+	nsitem->p_nscolumns = nscolumns;
+	/* set default visibility flags; might get changed later */
+	nsitem->p_rel_visible = true;
+	nsitem->p_cols_visible = true;
+	nsitem->p_lateral_only = false;
+	nsitem->p_lateral_ok = true;
+
+	return nsitem;
+}
+
+/*
  * Open a table during parse analysis
  *
  * This is essentially just the same as table_openrv(), except that it caters
@@ -1255,11 +1394,15 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
 
 /*
  * Add an entry for a relation to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
+ *
+ * We do not link the ParseNamespaceItem into the pstate here; it's the
+ * caller's job to do that in the appropriate way.
  *
  * Note: formerly this checked for refname conflicts, but that's wrong.
  * Caller is responsible for checking for conflicts in the appropriate scope.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntry(ParseState *pstate,
 				   RangeVar *relation,
 				   Alias *alias,
@@ -1270,6 +1413,7 @@ addRangeTableEntry(ParseState *pstate,
 	char	   *refname = alias ? alias->aliasname : relation->relname;
 	LOCKMODE	lockmode;
 	Relation	rel;
+	ParseNamespaceItem *nsitem;
 
 	Assert(pstate != NULL);
 
@@ -1302,13 +1446,6 @@ addRangeTableEntry(ParseState *pstate,
 	buildRelationAliases(rel->rd_att, alias, rte->eref);
 
 	/*
-	 * Drop the rel refcount, but keep the access lock till end of transaction
-	 * so that the table can't be deleted or have its schema modified
-	 * underneath us.
-	 */
-	table_close(rel, NoLock);
-
-	/*
 	 * Set flags and access permissions.
 	 *
 	 * The initial default on access checks is always check-for-READ-access,
@@ -1326,16 +1463,32 @@ addRangeTableEntry(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	nsitem = buildNSItemFromTupleDesc(rte, list_length(pstate->p_rtable),
+									  rel->rd_att);
+
+	/*
+	 * Drop the rel refcount, but keep the access lock till end of transaction
+	 * so that the table can't be deleted or have its schema modified
+	 * underneath us.
+	 */
+	table_close(rel, NoLock);
+
+	return nsitem;
 }
 
 /*
  * Add an entry for a relation to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
  * This is just like addRangeTableEntry() except that it makes an RTE
  * given an already-open relation instead of a RangeVar reference.
@@ -1349,7 +1502,7 @@ addRangeTableEntry(ParseState *pstate,
  * would require importing storage/lock.h into parse_relation.h.  Since
  * LOCKMODE is typedef'd as int anyway, that seems like overkill.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForRelation(ParseState *pstate,
 							  Relation rel,
 							  int lockmode,
@@ -1398,21 +1551,28 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	return buildNSItemFromTupleDesc(rte, list_length(pstate->p_rtable),
+									rel->rd_att);
 }
 
 /*
  * Add an entry for a subquery to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
- * This is just like addRangeTableEntry() except that it makes a subquery RTE.
+ * This is much like addRangeTableEntry() except that it makes a subquery RTE.
  * Note that an alias clause *must* be supplied.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForSubquery(ParseState *pstate,
 							  Query *subquery,
 							  Alias *alias,
@@ -1423,6 +1583,9 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	char	   *refname = alias->aliasname;
 	Alias	   *eref;
 	int			numaliases;
+	List	   *coltypes,
+			   *coltypmods,
+			   *colcollations;
 	int			varattno;
 	ListCell   *tlistitem;
 
@@ -1435,7 +1598,8 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	eref = copyObject(alias);
 	numaliases = list_length(eref->colnames);
 
-	/* fill in any unspecified alias columns */
+	/* fill in any unspecified alias columns, and extract column type info */
+	coltypes = coltypmods = colcollations = NIL;
 	varattno = 0;
 	foreach(tlistitem, subquery->targetList)
 	{
@@ -1452,6 +1616,12 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 			attrname = pstrdup(te->resname);
 			eref->colnames = lappend(eref->colnames, makeString(attrname));
 		}
+		coltypes = lappend_oid(coltypes,
+							   exprType((Node *) te->expr));
+		coltypmods = lappend_int(coltypmods,
+								 exprTypmod((Node *) te->expr));
+		colcollations = lappend_oid(colcollations,
+									exprCollation((Node *) te->expr));
 	}
 	if (varattno < numaliases)
 		ereport(ERROR,
@@ -1478,21 +1648,27 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	return buildNSItemFromLists(rte, list_length(pstate->p_rtable),
+								coltypes, coltypmods, colcollations);
 }
 
 /*
  * Add an entry for a function (or functions) to the pstate's range table
- * (p_rtable).
+ * (p_rtable).  Then, construct and return a ParseNamespaceItem for the new RTE.
  *
- * This is just like addRangeTableEntry() except that it makes a function RTE.
+ * This is much like addRangeTableEntry() except that it makes a function RTE.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForFunction(ParseState *pstate,
 							  List *funcnames,
 							  List *funcexprs,
@@ -1742,20 +1918,27 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	return buildNSItemFromTupleDesc(rte, list_length(pstate->p_rtable),
+									tupdesc);
 }
 
 /*
  * Add an entry for a table function to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
  * This is much like addRangeTableEntry() except that it makes a tablefunc RTE.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForTableFunc(ParseState *pstate,
 							   TableFunc *tf,
 							   Alias *alias,
@@ -1806,20 +1989,28 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	return buildNSItemFromLists(rte, list_length(pstate->p_rtable),
+								rte->coltypes, rte->coltypmods,
+								rte->colcollations);
 }
 
 /*
  * Add an entry for a VALUES list to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
  * This is much like addRangeTableEntry() except that it makes a values RTE.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForValues(ParseState *pstate,
 							List *exprs,
 							List *coltypes,
@@ -1885,22 +2076,33 @@ addRangeTableEntryForValues(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	return buildNSItemFromLists(rte, list_length(pstate->p_rtable),
+								rte->coltypes, rte->coltypmods,
+								rte->colcollations);
 }
 
 /*
  * Add an entry for a join to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
  * This is much like addRangeTableEntry() except that it makes a join RTE.
+ * Also, it's more convenient for the caller to construct the
+ * ParseNamespaceColumn array, so we pass that in.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForJoin(ParseState *pstate,
 						  List *colnames,
+						  ParseNamespaceColumn *nscolumns,
 						  JoinType jointype,
 						  List *aliasvars,
 						  Alias *alias,
@@ -1909,6 +2111,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	Alias	   *eref;
 	int			numaliases;
+	ParseNamespaceItem *nsitem;
 
 	Assert(pstate != NULL);
 
@@ -1956,20 +2159,36 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem->p_rte = rte;
+	nsitem->p_rtindex = list_length(pstate->p_rtable);
+	nsitem->p_nscolumns = nscolumns;
+	/* set default visibility flags; might get changed later */
+	nsitem->p_rel_visible = true;
+	nsitem->p_cols_visible = true;
+	nsitem->p_lateral_only = false;
+	nsitem->p_lateral_ok = true;
+
+	return nsitem;
 }
 
 /*
  * Add an entry for a CTE reference to the pstate's range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
  * This is much like addRangeTableEntry() except that it makes a CTE RTE.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForCTE(ParseState *pstate,
 						 CommonTableExpr *cte,
 						 Index levelsup,
@@ -2059,17 +2278,25 @@ addRangeTableEntryForCTE(ParseState *pstate,
 	rte->extraUpdatedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	return buildNSItemFromLists(rte, list_length(pstate->p_rtable),
+								rte->coltypes, rte->coltypmods,
+								rte->colcollations);
 }
 
 /*
  * Add an entry for an ephemeral named relation reference to the pstate's
  * range table (p_rtable).
+ * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
  * It is expected that the RangeVar, which up until now is only known to be an
  * ephemeral named relation, will (in conjunction with the QueryEnvironment in
@@ -2079,7 +2306,7 @@ addRangeTableEntryForCTE(ParseState *pstate,
  * This is much like addRangeTableEntry() except that it makes an RTE for an
  * ephemeral named relation.
  */
-RangeTblEntry *
+ParseNamespaceItem *
 addRangeTableEntryForENR(ParseState *pstate,
 						 RangeVar *rv,
 						 bool inFromCl)
@@ -2164,12 +2391,18 @@ addRangeTableEntryForENR(ParseState *pstate,
 	rte->selectedCols = NULL;
 
 	/*
-	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor namespace --- caller must do that if appropriate.
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.  But we don't add it to the join list --- caller must do that if
+	 * appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
-	return rte;
+	/*
+	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
+	 * list --- caller must do that if appropriate.
+	 */
+	return buildNSItemFromTupleDesc(rte, list_length(pstate->p_rtable),
+									tupdesc);
 }
 
 
@@ -2221,49 +2454,26 @@ isLockedRefname(ParseState *pstate, const char *refname)
 }
 
 /*
- * Add the given RTE as a top-level entry in the pstate's join list
+ * Add the given nsitem/RTE as a top-level entry in the pstate's join list
  * and/or namespace list.  (We assume caller has checked for any
- * namespace conflicts.)  The RTE is always marked as unconditionally
+ * namespace conflicts.)  The nsitem is always marked as unconditionally
  * visible, that is, not LATERAL-only.
- *
- * Note: some callers know that they can find the new ParseNamespaceItem
- * at the end of the pstate->p_namespace list.  This is a bit ugly but not
- * worth complicating this function's signature for.
  */
 void
-addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
-			  bool addToJoinList,
-			  bool addToRelNameSpace, bool addToVarNameSpace)
+addNSItemToQuery(ParseState *pstate, ParseNamespaceItem *nsitem,
+				 bool addToJoinList,
+				 bool addToRelNameSpace, bool addToVarNameSpace)
 {
-	int			rtindex;
-
-	/*
-	 * Most callers have just added the RTE to the rangetable, so it's likely
-	 * to be the last entry.  Hence, it's a good idea to search the rangetable
-	 * back-to-front.
-	 */
-	for (rtindex = list_length(pstate->p_rtable); rtindex > 0; rtindex--)
-	{
-		if (rte == rt_fetch(rtindex, pstate->p_rtable))
-			break;
-	}
-	if (rtindex <= 0)
-		elog(ERROR, "RTE not found (internal error)");
-
 	if (addToJoinList)
 	{
 		RangeTblRef *rtr = makeNode(RangeTblRef);
 
-		rtr->rtindex = rtindex;
+		rtr->rtindex = nsitem->p_rtindex;
 		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
 	}
 	if (addToRelNameSpace || addToVarNameSpace)
 	{
-		ParseNamespaceItem *nsitem;
-
-		nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
-		nsitem->p_rte = rte;
-		nsitem->p_rtindex = rtindex;
+		/* Set the new nsitem's visibility flags correctly */
 		nsitem->p_rel_visible = addToRelNameSpace;
 		nsitem->p_cols_visible = addToVarNameSpace;
 		nsitem->p_lateral_only = false;
@@ -2721,6 +2931,61 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref, int count, int offset,
 }
 
 /*
+ * expandNSItemVars
+ *	  Produce a list of Vars, and optionally a list of column names,
+ *	  for the non-dropped columns of the nsitem.
+ *
+ * The emitted Vars are marked with the given sublevels_up and location.
+ *
+ * If colnames isn't NULL, a list of String items for the columns is stored
+ * there; note that it's just a subset of the RTE's eref list, and hence
+ * the list elements mustn't be modified.
+ */
+List *
+expandNSItemVars(ParseNamespaceItem *nsitem,
+				 int sublevels_up, int location,
+				 List **colnames)
+{
+	List	   *result = NIL;
+	int			colindex;
+	ListCell   *lc;
+
+	if (colnames)
+		*colnames = NIL;
+	colindex = 0;
+	foreach(lc, nsitem->p_rte->eref->colnames)
+	{
+		Value	   *colnameval = (Value *) lfirst(lc);
+		const char *colname = strVal(colnameval);
+		ParseNamespaceColumn *nscol = nsitem->p_nscolumns + colindex;
+
+		if (colname[0])
+		{
+			Var		   *var;
+
+			Assert(nscol->p_varno > 0);
+			var = makeVar(nsitem->p_rtindex,
+						  colindex + 1,
+						  nscol->p_vartype,
+						  nscol->p_vartypmod,
+						  nscol->p_varcollid,
+						  sublevels_up);
+			var->location = location;
+			result = lappend(result, var);
+			if (colnames)
+				*colnames = lappend(*colnames, colnameval);
+		}
+		else
+		{
+			/* dropped column, ignore */
+			Assert(nscol->p_varno == 0);
+		}
+		colindex++;
+	}
+	return result;
+}
+
+/*
  * expandNSItemAttrs -
  *	  Workhorse for "*" expansion: produce a list of targetentries
  *	  for the attributes of the nsitem
@@ -2739,8 +3004,7 @@ expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
 			   *var;
 	List	   *te_list = NIL;
 
-	expandRTE(rte, nsitem->p_rtindex, sublevels_up, location, false,
-			  &names, &vars);
+	vars = expandNSItemVars(nsitem, sublevels_up, location, &names);
 
 	/*
 	 * Require read access to the table.  This is normally redundant with the
@@ -2813,204 +3077,6 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	elog(ERROR, "invalid attnum %d for rangetable entry %s",
 		 attnum, rte->eref->aliasname);
 	return NULL;				/* keep compiler quiet */
-}
-
-/*
- * get_rte_attribute_type
- *		Get attribute type/typmod/collation information from a RangeTblEntry
- */
-void
-get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
-					   Oid *vartype, int32 *vartypmod, Oid *varcollid)
-{
-	switch (rte->rtekind)
-	{
-		case RTE_RELATION:
-			{
-				/* Plain relation RTE --- get the attribute's type info */
-				HeapTuple	tp;
-				Form_pg_attribute att_tup;
-
-				tp = SearchSysCache2(ATTNUM,
-									 ObjectIdGetDatum(rte->relid),
-									 Int16GetDatum(attnum));
-				if (!HeapTupleIsValid(tp))	/* shouldn't happen */
-					elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-						 attnum, rte->relid);
-				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-
-				/*
-				 * If dropped column, pretend it ain't there.  See notes in
-				 * scanRTEForColumn.
-				 */
-				if (att_tup->attisdropped)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column \"%s\" of relation \"%s\" does not exist",
-									NameStr(att_tup->attname),
-									get_rel_name(rte->relid))));
-				*vartype = att_tup->atttypid;
-				*vartypmod = att_tup->atttypmod;
-				*varcollid = att_tup->attcollation;
-				ReleaseSysCache(tp);
-			}
-			break;
-		case RTE_SUBQUERY:
-			{
-				/* Subselect RTE --- get type info from subselect's tlist */
-				TargetEntry *te = get_tle_by_resno(rte->subquery->targetList,
-												   attnum);
-
-				if (te == NULL || te->resjunk)
-					elog(ERROR, "subquery %s does not have attribute %d",
-						 rte->eref->aliasname, attnum);
-				*vartype = exprType((Node *) te->expr);
-				*vartypmod = exprTypmod((Node *) te->expr);
-				*varcollid = exprCollation((Node *) te->expr);
-			}
-			break;
-		case RTE_FUNCTION:
-			{
-				/* Function RTE */
-				ListCell   *lc;
-				int			atts_done = 0;
-
-				/* Identify which function covers the requested column */
-				foreach(lc, rte->functions)
-				{
-					RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
-
-					if (attnum > atts_done &&
-						attnum <= atts_done + rtfunc->funccolcount)
-					{
-						TypeFuncClass functypclass;
-						Oid			funcrettype;
-						TupleDesc	tupdesc;
-
-						attnum -= atts_done;	/* now relative to this func */
-						functypclass = get_expr_result_type(rtfunc->funcexpr,
-															&funcrettype,
-															&tupdesc);
-
-						if (functypclass == TYPEFUNC_COMPOSITE ||
-							functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
-						{
-							/* Composite data type, e.g. a table's row type */
-							Form_pg_attribute att_tup;
-
-							Assert(tupdesc);
-							Assert(attnum <= tupdesc->natts);
-							att_tup = TupleDescAttr(tupdesc, attnum - 1);
-
-							/*
-							 * If dropped column, pretend it ain't there.  See
-							 * notes in scanRTEForColumn.
-							 */
-							if (att_tup->attisdropped)
-								ereport(ERROR,
-										(errcode(ERRCODE_UNDEFINED_COLUMN),
-										 errmsg("column \"%s\" of relation \"%s\" does not exist",
-												NameStr(att_tup->attname),
-												rte->eref->aliasname)));
-							*vartype = att_tup->atttypid;
-							*vartypmod = att_tup->atttypmod;
-							*varcollid = att_tup->attcollation;
-						}
-						else if (functypclass == TYPEFUNC_SCALAR)
-						{
-							/* Base data type, i.e. scalar */
-							*vartype = funcrettype;
-							*vartypmod = -1;
-							*varcollid = exprCollation(rtfunc->funcexpr);
-						}
-						else if (functypclass == TYPEFUNC_RECORD)
-						{
-							*vartype = list_nth_oid(rtfunc->funccoltypes,
-													attnum - 1);
-							*vartypmod = list_nth_int(rtfunc->funccoltypmods,
-													  attnum - 1);
-							*varcollid = list_nth_oid(rtfunc->funccolcollations,
-													  attnum - 1);
-						}
-						else
-						{
-							/*
-							 * addRangeTableEntryForFunction should've caught
-							 * this
-							 */
-							elog(ERROR, "function in FROM has unsupported return type");
-						}
-						return;
-					}
-					atts_done += rtfunc->funccolcount;
-				}
-
-				/* If we get here, must be looking for the ordinality column */
-				if (rte->funcordinality && attnum == atts_done + 1)
-				{
-					*vartype = INT8OID;
-					*vartypmod = -1;
-					*varcollid = InvalidOid;
-					return;
-				}
-
-				/* this probably can't happen ... */
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("column %d of relation \"%s\" does not exist",
-								attnum,
-								rte->eref->aliasname)));
-			}
-			break;
-		case RTE_JOIN:
-			{
-				/*
-				 * Join RTE --- get type info from join RTE's alias variable
-				 */
-				Node	   *aliasvar;
-
-				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
-				aliasvar = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
-				Assert(aliasvar != NULL);
-				*vartype = exprType(aliasvar);
-				*vartypmod = exprTypmod(aliasvar);
-				*varcollid = exprCollation(aliasvar);
-			}
-			break;
-		case RTE_TABLEFUNC:
-		case RTE_VALUES:
-		case RTE_CTE:
-		case RTE_NAMEDTUPLESTORE:
-			{
-				/*
-				 * tablefunc, VALUES, CTE, or ENR RTE --- get type info from
-				 * lists in the RTE
-				 */
-				Assert(attnum > 0 && attnum <= list_length(rte->coltypes));
-				*vartype = list_nth_oid(rte->coltypes, attnum - 1);
-				*vartypmod = list_nth_int(rte->coltypmods, attnum - 1);
-				*varcollid = list_nth_oid(rte->colcollations, attnum - 1);
-
-				/* For ENR, better check for dropped column */
-				if (!OidIsValid(*vartype))
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("column %d of relation \"%s\" does not exist",
-									attnum,
-									rte->eref->aliasname)));
-			}
-			break;
-		case RTE_RESULT:
-			/* this probably can't happen ... */
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("column %d of relation \"%s\" does not exist",
-							attnum,
-							rte->eref->aliasname)));
-			break;
-		default:
-			elog(ERROR, "unrecognized RTE kind: %d", (int) rte->rtekind);
-	}
 }
 
 /*

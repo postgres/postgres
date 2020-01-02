@@ -3227,6 +3227,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	{
 		Index		old_exclRelIndex,
 					new_exclRelIndex;
+		ParseNamespaceItem *new_exclNSItem;
 		RangeTblEntry *new_exclRte;
 		List	   *tmp_tlist;
 
@@ -3261,11 +3262,12 @@ rewriteTargetView(Query *parsetree, Relation view)
 		 */
 		old_exclRelIndex = parsetree->onConflict->exclRelIndex;
 
-		new_exclRte = addRangeTableEntryForRelation(make_parsestate(NULL),
-													base_rel,
-													RowExclusiveLock,
-													makeAlias("excluded", NIL),
-													false, false);
+		new_exclNSItem = addRangeTableEntryForRelation(make_parsestate(NULL),
+													   base_rel,
+													   RowExclusiveLock,
+													   makeAlias("excluded", NIL),
+													   false, false);
+		new_exclRte = new_exclNSItem->p_rte;
 		new_exclRte->relkind = RELKIND_COMPOSITE_TYPE;
 		new_exclRte->requiredPerms = 0;
 		/* other permissions fields in new_exclRte are already empty */

@@ -568,9 +568,9 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 			qual_expr = stringToNode(qual_value);
 
 			/* Add this rel to the parsestate's rangetable, for dependencies */
-			addRangeTableEntryForRelation(qual_pstate, rel,
-										  AccessShareLock,
-										  NULL, false, false);
+			(void) addRangeTableEntryForRelation(qual_pstate, rel,
+												 AccessShareLock,
+												 NULL, false, false);
 
 			qual_parse_rtable = qual_pstate->p_rtable;
 			free_parsestate(qual_pstate);
@@ -592,9 +592,9 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 			with_check_qual = stringToNode(with_check_value);
 
 			/* Add this rel to the parsestate's rangetable, for dependencies */
-			addRangeTableEntryForRelation(with_check_pstate, rel,
-										  AccessShareLock,
-										  NULL, false, false);
+			(void) addRangeTableEntryForRelation(with_check_pstate, rel,
+												 AccessShareLock,
+												 NULL, false, false);
 
 			with_check_parse_rtable = with_check_pstate->p_rtable;
 			free_parsestate(with_check_pstate);
@@ -699,7 +699,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	ArrayType  *role_ids;
 	ParseState *qual_pstate;
 	ParseState *with_check_pstate;
-	RangeTblEntry *rte;
+	ParseNamespaceItem *nsitem;
 	Node	   *qual;
 	Node	   *with_check_qual;
 	ScanKeyData skey[2];
@@ -755,16 +755,16 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	target_table = relation_open(table_id, NoLock);
 
 	/* Add for the regular security quals */
-	rte = addRangeTableEntryForRelation(qual_pstate, target_table,
-										AccessShareLock,
-										NULL, false, false);
-	addRTEtoQuery(qual_pstate, rte, false, true, true);
+	nsitem = addRangeTableEntryForRelation(qual_pstate, target_table,
+										   AccessShareLock,
+										   NULL, false, false);
+	addNSItemToQuery(qual_pstate, nsitem, false, true, true);
 
 	/* Add for the with-check quals */
-	rte = addRangeTableEntryForRelation(with_check_pstate, target_table,
-										AccessShareLock,
-										NULL, false, false);
-	addRTEtoQuery(with_check_pstate, rte, false, true, true);
+	nsitem = addRangeTableEntryForRelation(with_check_pstate, target_table,
+										   AccessShareLock,
+										   NULL, false, false);
+	addNSItemToQuery(with_check_pstate, nsitem, false, true, true);
 
 	qual = transformWhereClause(qual_pstate,
 								copyObject(stmt->qual),
@@ -933,14 +933,14 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	/* Parse the using policy clause */
 	if (stmt->qual)
 	{
-		RangeTblEntry *rte;
+		ParseNamespaceItem *nsitem;
 		ParseState *qual_pstate = make_parsestate(NULL);
 
-		rte = addRangeTableEntryForRelation(qual_pstate, target_table,
-											AccessShareLock,
-											NULL, false, false);
+		nsitem = addRangeTableEntryForRelation(qual_pstate, target_table,
+											   AccessShareLock,
+											   NULL, false, false);
 
-		addRTEtoQuery(qual_pstate, rte, false, true, true);
+		addNSItemToQuery(qual_pstate, nsitem, false, true, true);
 
 		qual = transformWhereClause(qual_pstate, copyObject(stmt->qual),
 									EXPR_KIND_POLICY,
@@ -956,14 +956,14 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	/* Parse the with-check policy clause */
 	if (stmt->with_check)
 	{
-		RangeTblEntry *rte;
+		ParseNamespaceItem *nsitem;
 		ParseState *with_check_pstate = make_parsestate(NULL);
 
-		rte = addRangeTableEntryForRelation(with_check_pstate, target_table,
-											AccessShareLock,
-											NULL, false, false);
+		nsitem = addRangeTableEntryForRelation(with_check_pstate, target_table,
+											   AccessShareLock,
+											   NULL, false, false);
 
-		addRTEtoQuery(with_check_pstate, rte, false, true, true);
+		addNSItemToQuery(with_check_pstate, nsitem, false, true, true);
 
 		with_check_qual = transformWhereClause(with_check_pstate,
 											   copyObject(stmt->with_check),
@@ -1107,9 +1107,9 @@ AlterPolicy(AlterPolicyStmt *stmt)
 			qual = stringToNode(qual_value);
 
 			/* Add this rel to the parsestate's rangetable, for dependencies */
-			addRangeTableEntryForRelation(qual_pstate, target_table,
-										  AccessShareLock,
-										  NULL, false, false);
+			(void) addRangeTableEntryForRelation(qual_pstate, target_table,
+												 AccessShareLock,
+												 NULL, false, false);
 
 			qual_parse_rtable = qual_pstate->p_rtable;
 			free_parsestate(qual_pstate);
@@ -1149,9 +1149,10 @@ AlterPolicy(AlterPolicyStmt *stmt)
 			with_check_qual = stringToNode(with_check_value);
 
 			/* Add this rel to the parsestate's rangetable, for dependencies */
-			addRangeTableEntryForRelation(with_check_pstate, target_table,
-										  AccessShareLock,
-										  NULL, false, false);
+			(void) addRangeTableEntryForRelation(with_check_pstate,
+												 target_table,
+												 AccessShareLock,
+												 NULL, false, false);
 
 			with_check_parse_rtable = with_check_pstate->p_rtable;
 			free_parsestate(with_check_pstate);

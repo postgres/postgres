@@ -918,7 +918,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 					defaultPartOid;
 		Relation	parent,
 					defaultRel = NULL;
-		RangeTblEntry *rte;
+		ParseNamespaceItem *nsitem;
 
 		/* Already have strong enough lock on the parent */
 		parent = table_open(parentId, NoLock);
@@ -962,13 +962,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		pstate->p_sourcetext = queryString;
 
 		/*
-		 * Add an RTE containing this relation, so that transformExpr called
-		 * on partition bound expressions is able to report errors using a
-		 * proper context.
+		 * Add an nsitem containing this relation, so that transformExpr
+		 * called on partition bound expressions is able to report errors
+		 * using a proper context.
 		 */
-		rte = addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
-											NULL, false, false);
-		addRTEtoQuery(pstate, rte, false, true, true);
+		nsitem = addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
+											   NULL, false, false);
+		addNSItemToQuery(pstate, nsitem, false, true, true);
+
 		bound = transformPartitionBound(pstate, parent, stmt->partbound);
 
 		/*
@@ -14970,7 +14971,7 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 {
 	PartitionSpec *newspec;
 	ParseState *pstate;
-	RangeTblEntry *rte;
+	ParseNamespaceItem *nsitem;
 	ListCell   *l;
 
 	newspec = makeNode(PartitionSpec);
@@ -15004,9 +15005,9 @@ transformPartitionSpec(Relation rel, PartitionSpec *partspec, char *strategy)
 	 * rangetable entry.  We need a ParseState for transformExpr.
 	 */
 	pstate = make_parsestate(NULL);
-	rte = addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
-										NULL, false, true);
-	addRTEtoQuery(pstate, rte, true, true, true);
+	nsitem = addRangeTableEntryForRelation(pstate, rel, AccessShareLock,
+										   NULL, false, true);
+	addNSItemToQuery(pstate, nsitem, true, true, true);
 
 	/* take care of any partition expressions */
 	foreach(l, partspec->partParams)

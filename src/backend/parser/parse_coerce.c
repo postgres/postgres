@@ -1010,11 +1010,10 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 		int			rtindex = ((Var *) node)->varno;
 		int			sublevels_up = ((Var *) node)->varlevelsup;
 		int			vlocation = ((Var *) node)->location;
-		RangeTblEntry *rte;
+		ParseNamespaceItem *nsitem;
 
-		rte = GetRTEByRangeTablePosn(pstate, rtindex, sublevels_up);
-		expandRTE(rte, rtindex, sublevels_up, vlocation, false,
-				  NULL, &args);
+		nsitem = GetNSItemByRangeTablePosn(pstate, rtindex, sublevels_up);
+		args = expandNSItemVars(nsitem, sublevels_up, vlocation, NULL);
 	}
 	else
 		ereport(ERROR,

@@ -551,7 +551,7 @@ transformAssignedExpr(ParseState *pstate,
 			 */
 			Var		   *var;
 
-			var = makeVar(pstate->p_target_rtindex, attrno,
+			var = makeVar(pstate->p_target_nsitem->p_rtindex, attrno,
 						  attrtype, attrtypmod, attrcollation, 0);
 			var->location = location;
 
@@ -1359,8 +1359,7 @@ ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
 		List	   *vars;
 		ListCell   *l;
 
-		expandRTE(rte, nsitem->p_rtindex, sublevels_up, location, false,
-				  NULL, &vars);
+		vars = expandNSItemVars(nsitem, sublevels_up, location, NULL);
 
 		/*
 		 * Require read access to the table.  This is normally redundant with
@@ -1496,6 +1495,12 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 	Assert(IsA(var, Var));
 	Assert(var->vartype == RECORDOID);
 
+	/*
+	 * Note: it's tempting to use GetNSItemByRangeTablePosn here so that we
+	 * can use expandNSItemVars instead of expandRTE; but that does not work
+	 * for some of the recursion cases below, where we have consed up a
+	 * ParseState that lacks p_namespace data.
+	 */
 	netlevelsup = var->varlevelsup + levelsup;
 	rte = GetRTEByRangeTablePosn(pstate, var->varno, netlevelsup);
 	attnum = var->varattno;

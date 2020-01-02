@@ -2598,7 +2598,7 @@ IndexStmt *
 transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 {
 	ParseState *pstate;
-	RangeTblEntry *rte;
+	ParseNamespaceItem *nsitem;
 	ListCell   *l;
 	Relation	rel;
 
@@ -2622,12 +2622,12 @@ transformIndexStmt(Oid relid, IndexStmt *stmt, const char *queryString)
 	 * relation, but we still need to open it.
 	 */
 	rel = relation_open(relid, NoLock);
-	rte = addRangeTableEntryForRelation(pstate, rel,
-										AccessShareLock,
-										NULL, false, true);
+	nsitem = addRangeTableEntryForRelation(pstate, rel,
+										   AccessShareLock,
+										   NULL, false, true);
 
 	/* no to join list, yes to namespaces */
-	addRTEtoQuery(pstate, rte, false, true, true);
+	addNSItemToQuery(pstate, nsitem, false, true, true);
 
 	/* take care of the where clause */
 	if (stmt->whereClause)
@@ -2707,8 +2707,8 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 {
 	Relation	rel;
 	ParseState *pstate;
-	RangeTblEntry *oldrte;
-	RangeTblEntry *newrte;
+	ParseNamespaceItem *oldnsitem;
+	ParseNamespaceItem *newnsitem;
 
 	/*
 	 * To avoid deadlock, make sure the first thing we do is grab
@@ -2729,20 +2729,20 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 	/*
 	 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW' equal to 2.
-	 * Set up their RTEs in the main pstate for use in parsing the rule
-	 * qualification.
+	 * Set up their ParseNamespaceItems in the main pstate for use in parsing
+	 * the rule qualification.
 	 */
-	oldrte = addRangeTableEntryForRelation(pstate, rel,
-										   AccessShareLock,
-										   makeAlias("old", NIL),
-										   false, false);
-	newrte = addRangeTableEntryForRelation(pstate, rel,
-										   AccessShareLock,
-										   makeAlias("new", NIL),
-										   false, false);
+	oldnsitem = addRangeTableEntryForRelation(pstate, rel,
+											  AccessShareLock,
+											  makeAlias("old", NIL),
+											  false, false);
+	newnsitem = addRangeTableEntryForRelation(pstate, rel,
+											  AccessShareLock,
+											  makeAlias("new", NIL),
+											  false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
-	oldrte->requiredPerms = 0;
-	newrte->requiredPerms = 0;
+	oldnsitem->p_rte->requiredPerms = 0;
+	newnsitem->p_rte->requiredPerms = 0;
 
 	/*
 	 * They must be in the namespace too for lookup purposes, but only add the
@@ -2754,17 +2754,17 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	switch (stmt->event)
 	{
 		case CMD_SELECT:
-			addRTEtoQuery(pstate, oldrte, false, true, true);
+			addNSItemToQuery(pstate, oldnsitem, false, true, true);
 			break;
 		case CMD_UPDATE:
-			addRTEtoQuery(pstate, oldrte, false, true, true);
-			addRTEtoQuery(pstate, newrte, false, true, true);
+			addNSItemToQuery(pstate, oldnsitem, false, true, true);
+			addNSItemToQuery(pstate, newnsitem, false, true, true);
 			break;
 		case CMD_INSERT:
-			addRTEtoQuery(pstate, newrte, false, true, true);
+			addNSItemToQuery(pstate, newnsitem, false, true, true);
 			break;
 		case CMD_DELETE:
-			addRTEtoQuery(pstate, oldrte, false, true, true);
+			addNSItemToQuery(pstate, oldnsitem, false, true, true);
 			break;
 		default:
 			elog(ERROR, "unrecognized event type: %d",
@@ -2832,18 +2832,18 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 			 * nor "*" in the rule actions.  We decide later whether to put
 			 * them in the joinlist.
 			 */
-			oldrte = addRangeTableEntryForRelation(sub_pstate, rel,
-												   AccessShareLock,
-												   makeAlias("old", NIL),
-												   false, false);
-			newrte = addRangeTableEntryForRelation(sub_pstate, rel,
-												   AccessShareLock,
-												   makeAlias("new", NIL),
-												   false, false);
-			oldrte->requiredPerms = 0;
-			newrte->requiredPerms = 0;
-			addRTEtoQuery(sub_pstate, oldrte, false, true, false);
-			addRTEtoQuery(sub_pstate, newrte, false, true, false);
+			oldnsitem = addRangeTableEntryForRelation(sub_pstate, rel,
+													  AccessShareLock,
+													  makeAlias("old", NIL),
+													  false, false);
+			newnsitem = addRangeTableEntryForRelation(sub_pstate, rel,
+													  AccessShareLock,
+													  makeAlias("new", NIL),
+													  false, false);
+			oldnsitem->p_rte->requiredPerms = 0;
+			newnsitem->p_rte->requiredPerms = 0;
+			addNSItemToQuery(sub_pstate, oldnsitem, false, true, false);
+			addNSItemToQuery(sub_pstate, newnsitem, false, true, false);
 
 			/* Transform the rule action statement */
 			top_subqry = transformStmt(sub_pstate,
@@ -2967,6 +2967,8 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 			 */
 			if (has_old || (has_new && stmt->event == CMD_UPDATE))
 			{
+				RangeTblRef *rtr;
+
 				/*
 				 * If sub_qry is a setop, manipulating its jointree will do no
 				 * good at all, because the jointree is dummy. (This should be
@@ -2976,11 +2978,11 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("conditional UNION/INTERSECT/EXCEPT statements are not implemented")));
-				/* hack so we can use addRTEtoQuery() */
-				sub_pstate->p_rtable = sub_qry->rtable;
-				sub_pstate->p_joinlist = sub_qry->jointree->fromlist;
-				addRTEtoQuery(sub_pstate, oldrte, true, false, false);
-				sub_qry->jointree->fromlist = sub_pstate->p_joinlist;
+				/* hackishly add OLD to the already-built FROM clause */
+				rtr = makeNode(RangeTblRef);
+				rtr->rtindex = oldnsitem->p_rtindex;
+				sub_qry->jointree->fromlist =
+					lappend(sub_qry->jointree->fromlist, rtr);
 			}
 
 			newactions = lappend(newactions, top_subqry);
@@ -3025,7 +3027,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	List	   *newcmds = NIL;
 	bool		skipValidation = true;
 	AlterTableCmd *newcmd;
-	RangeTblEntry *rte;
+	ParseNamespaceItem *nsitem;
 
 	/*
 	 * We must not scribble on the passed-in AlterTableStmt, so copy it. (This
@@ -3040,13 +3042,13 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = queryString;
-	rte = addRangeTableEntryForRelation(pstate,
-										rel,
-										AccessShareLock,
-										NULL,
-										false,
-										true);
-	addRTEtoQuery(pstate, rte, false, true, true);
+	nsitem = addRangeTableEntryForRelation(pstate,
+										   rel,
+										   AccessShareLock,
+										   NULL,
+										   false,
+										   true);
+	addNSItemToQuery(pstate, nsitem, false, true, true);
 
 	/* Set up CreateStmtContext */
 	cxt.pstate = pstate;

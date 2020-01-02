@@ -565,7 +565,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	if (!whenClause && stmt->whenClause)
 	{
 		ParseState *pstate;
-		RangeTblEntry *rte;
+		ParseNamespaceItem *nsitem;
 		List	   *varList;
 		ListCell   *lc;
 
@@ -574,20 +574,20 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		pstate->p_sourcetext = queryString;
 
 		/*
-		 * Set up RTEs for OLD and NEW references.
+		 * Set up nsitems for OLD and NEW references.
 		 *
 		 * 'OLD' must always have varno equal to 1 and 'NEW' equal to 2.
 		 */
-		rte = addRangeTableEntryForRelation(pstate, rel,
-											AccessShareLock,
-											makeAlias("old", NIL),
-											false, false);
-		addRTEtoQuery(pstate, rte, false, true, true);
-		rte = addRangeTableEntryForRelation(pstate, rel,
-											AccessShareLock,
-											makeAlias("new", NIL),
-											false, false);
-		addRTEtoQuery(pstate, rte, false, true, true);
+		nsitem = addRangeTableEntryForRelation(pstate, rel,
+											   AccessShareLock,
+											   makeAlias("old", NIL),
+											   false, false);
+		addNSItemToQuery(pstate, nsitem, false, true, true);
+		nsitem = addRangeTableEntryForRelation(pstate, rel,
+											   AccessShareLock,
+											   makeAlias("new", NIL),
+											   false, false);
+		addNSItemToQuery(pstate, nsitem, false, true, true);
 
 		/* Transform expression.  Copy to be sure we don't modify original */
 		whenClause = transformWhereClause(pstate,
