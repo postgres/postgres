@@ -15932,6 +15932,54 @@ out:
 }
 
 /*
+ * isPartitionTrigger
+ *		Subroutine for CloneRowTriggersToPartition: determine whether
+ *		the given trigger has been cloned from another one.
+ *
+ * We use pg_depend as a proxy for this, since we don't have any direct
+ * evidence.  This is an ugly hack to cope with a catalog deficiency.
+ * Keep away from children.  Do not stare with naked eyes.  Do not propagate.
+ */
+static bool
+isPartitionTrigger(Oid trigger_oid)
+{
+	Relation	pg_depend;
+	ScanKeyData key[2];
+	SysScanDesc	scan;
+	HeapTuple	tup;
+	bool		found = false;
+
+	pg_depend = table_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0], Anum_pg_depend_classid,
+				BTEqualStrategyNumber,
+				F_OIDEQ,
+				ObjectIdGetDatum(TriggerRelationId));
+	ScanKeyInit(&key[1], Anum_pg_depend_objid,
+				BTEqualStrategyNumber,
+				F_OIDEQ,
+				ObjectIdGetDatum(trigger_oid));
+
+	scan = systable_beginscan(pg_depend, DependDependerIndexId,
+							  true, NULL, 2, key);
+	while ((tup = systable_getnext(scan)) != NULL)
+	{
+		Form_pg_depend	dep = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (dep->refclassid == TriggerRelationId)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	systable_endscan(scan);
+	table_close(pg_depend, AccessShareLock);
+
+	return found;
+}
+
+/*
  * CloneRowTriggersToPartition
  *		subroutine for ATExecAttachPartition/DefineRelation to create row
  *		triggers on partitions
@@ -15971,8 +16019,21 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		if (!TRIGGER_FOR_ROW(trigForm->tgtype))
 			continue;
 
-		/* We don't clone internal triggers, either */
-		if (trigForm->tgisinternal)
+		/*
+		 * Internal triggers require careful examination.  Ideally, we don't
+		 * clone them.
+		 *
+		 * However, if our parent is a partitioned relation, there might be
+		 * internal triggers that need cloning.  In that case, we must
+		 * skip clone it if the trigger on parent depends on another trigger.
+		 *
+		 * Note we dare not verify that the other trigger belongs to an
+		 * ancestor relation of our parent, because that creates deadlock
+		 * opportunities.
+		 */
+		if (trigForm->tgisinternal &&
+			(!parent->rd_rel->relispartition ||
+			 !isPartitionTrigger(trigForm->oid)))
 			continue;
 
 		/*
