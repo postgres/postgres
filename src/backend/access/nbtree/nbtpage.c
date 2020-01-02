@@ -1001,9 +1001,16 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 	/*
 	 * Mark the page as not containing any LP_DEAD items.  This is not
 	 * certainly true (there might be some that have recently been marked, but
-	 * weren't included in our target-item list), but it will almost always be
-	 * true and it doesn't seem worth an additional page scan to check it.
-	 * Remember that BTP_HAS_GARBAGE is only a hint anyway.
+	 * weren't targeted by VACUUM's heap scan), but it will be true often
+	 * enough.  VACUUM does not delete items purely because they have their
+	 * LP_DEAD bit set, since doing so would necessitate explicitly logging a
+	 * latestRemovedXid cutoff (this is how _bt_delitems_delete works).
+	 *
+	 * The consequences of falsely unsetting BTP_HAS_GARBAGE should be fairly
+	 * limited, since we never falsely unset an LP_DEAD bit.  Workloads that
+	 * are particularly dependent on LP_DEAD bits being set quickly will
+	 * usually manage to set the BTP_HAS_GARBAGE flag before the page fills up
+	 * again anyway.
 	 */
 	opaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 
