@@ -706,6 +706,7 @@ with_libxml
 XML2_CONFIG
 UUID_EXTRA_OBJS
 with_uuid
+with_readline
 with_systemd
 with_selinux
 with_openssl
@@ -7998,6 +7999,7 @@ $as_echo "$as_me: WARNING: *** Readline does not work on MinGW --- disabling" >&
     with_readline=no
   fi
 fi
+
 
 
 #

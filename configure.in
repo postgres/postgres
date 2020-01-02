@@ -875,6 +875,7 @@ if test "$PORTNAME" = "win32"; then
     with_readline=no
   fi
 fi
+AC_SUBST(with_readline)
 
 
 #
