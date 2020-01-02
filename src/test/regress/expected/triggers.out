@@ -1981,15 +1981,22 @@ create trigger trg1 after insert on trigpart for each row execute procedure trig
 create table trigpart2 partition of trigpart for values from (1000) to (2000);
 create table trigpart3 (like trigpart);
 alter table trigpart attach partition trigpart3 for values from (2000) to (3000);
+create table trigpart4 partition of trigpart for values from (3000) to (4000) partition by range (a);
+create table trigpart41 partition of trigpart4 for values from (3000) to (3500);
+create table trigpart42 (like trigpart);
+alter table trigpart4 attach partition trigpart42 for values from (3500) to (4000);
 select tgrelid::regclass, tgname, tgfoid::regproc from pg_trigger
   where tgrelid::regclass::text like 'trigpart%' order by tgrelid::regclass::text;
-  tgrelid  | tgname |     tgfoid      
------------+--------+-----------------
- trigpart  | trg1   | trigger_nothing
- trigpart1 | trg1   | trigger_nothing
- trigpart2 | trg1   | trigger_nothing
- trigpart3 | trg1   | trigger_nothing
-(4 rows)
+  tgrelid   | tgname |     tgfoid      
+------------+--------+-----------------
+ trigpart   | trg1   | trigger_nothing
+ trigpart1  | trg1   | trigger_nothing
+ trigpart2  | trg1   | trigger_nothing
+ trigpart3  | trg1   | trigger_nothing
+ trigpart4  | trg1   | trigger_nothing
+ trigpart41 | trg1   | trigger_nothing
+ trigpart42 | trg1   | trigger_nothing
+(7 rows)
 
 drop trigger trg1 on trigpart1;	-- fail
 ERROR:  cannot drop trigger trg1 on table trigpart1 because trigger trg1 on table trigpart requires it
@@ -2003,12 +2010,15 @@ HINT:  You can drop trigger trg1 on table trigpart instead.
 drop table trigpart2;			-- ok, trigger should be gone in that partition
 select tgrelid::regclass, tgname, tgfoid::regproc from pg_trigger
   where tgrelid::regclass::text like 'trigpart%' order by tgrelid::regclass::text;
-  tgrelid  | tgname |     tgfoid      
------------+--------+-----------------
- trigpart  | trg1   | trigger_nothing
- trigpart1 | trg1   | trigger_nothing
- trigpart3 | trg1   | trigger_nothing
-(3 rows)
+  tgrelid   | tgname |     tgfoid      
+------------+--------+-----------------
+ trigpart   | trg1   | trigger_nothing
+ trigpart1  | trg1   | trigger_nothing
+ trigpart3  | trg1   | trigger_nothing
+ trigpart4  | trg1   | trigger_nothing
+ trigpart41 | trg1   | trigger_nothing
+ trigpart42 | trg1   | trigger_nothing
+(6 rows)
 
 drop trigger trg1 on trigpart;		-- ok, all gone
 select tgrelid::regclass, tgname, tgfoid::regproc from pg_trigger
