@@ -442,7 +442,7 @@ CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_1;
 CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_1;
 
 ALTER STATISTICS alt_stat1 RENAME TO alt_stat2;   -- failed (name conflict)
-ALTER STATISTICS alt_stat1 RENAME TO alt_stat3;   -- failed (name conflict)
+ALTER STATISTICS alt_stat1 RENAME TO alt_stat3;   -- OK
 ALTER STATISTICS alt_stat2 OWNER TO regress_alter_generic_user2;  -- failed (no role membership)
 ALTER STATISTICS alt_stat2 OWNER TO regress_alter_generic_user3;  -- OK
 ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;    -- OK
