@@ -967,8 +967,9 @@ _bt_page_recyclable(Page page)
  * non-leaf page has to be done as part of an atomic action that includes
  * deleting the page it points to.
  *
- * This routine assumes that the caller has pinned and locked the buffer.
- * Also, the given deletable array *must* be sorted in ascending order.
+ * This routine assumes that the caller has a super-exclusive write lock on
+ * the buffer.  Also, the given deletable array *must* be sorted in ascending
+ * order.
  *
  * We record VACUUMs and b-tree deletes differently in WAL.  Deletes must
  * generate recovery conflicts by accessing the heap inline, whereas VACUUMs
@@ -1049,8 +1050,9 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
  *
  * As above, must only be used on leaf pages.
  *
- * This routine assumes that the caller has pinned and locked the buffer.
- * Also, the given itemnos *must* appear in increasing order in the array.
+ * This routine assumes that the caller has pinned and write locked the
+ * buffer.  Also, the given itemnos *must* appear in increasing order in the
+ * array.
  *
  * This is nearly the same as _bt_delitems_vacuum as far as what it does to
  * the page, but it needs to generate its own recovery conflicts by accessing
