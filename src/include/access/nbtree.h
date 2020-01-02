@@ -776,10 +776,10 @@ extern Buffer _bt_relandgetbuf(Relation rel, Buffer obuf,
 extern void _bt_relbuf(Relation rel, Buffer buf);
 extern void _bt_pageinit(Page page, Size size);
 extern bool _bt_page_recyclable(Page page);
-extern void _bt_delitems_delete(Relation rel, Buffer buf,
-								OffsetNumber *itemnos, int nitems, Relation heapRel);
 extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
 								OffsetNumber *deletable, int ndeletable);
+extern void _bt_delitems_delete(Relation rel, Buffer buf,
+								OffsetNumber *itemnos, int nitems, Relation heapRel);
 extern int	_bt_pagedel(Relation rel, Buffer buf);
 
 /*
