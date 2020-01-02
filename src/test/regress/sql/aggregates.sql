@@ -433,6 +433,21 @@ drop table t3;
 drop table p_t1;
 
 --
+-- Test GROUP BY matching of join columns that are type-coerced due to USING
+--
+
+create temp table t1(f1 int, f2 bigint);
+create temp table t2(f1 bigint, f22 bigint);
+
+select f1 from t1 left join t2 using (f1) group by f1;
+select f1 from t1 left join t2 using (f1) group by t1.f1;
+select t1.f1 from t1 left join t2 using (f1) group by t1.f1;
+-- only this one should fail:
+select t1.f1 from t1 left join t2 using (f1) group by f1;
+
+drop table t1, t2;
+
+--
 -- Test combinations of DISTINCT and/or ORDER BY
 --
 

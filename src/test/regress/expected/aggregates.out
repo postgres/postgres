@@ -1194,6 +1194,32 @@ drop table t2;
 drop table t3;
 drop table p_t1;
 --
+-- Test GROUP BY matching of join columns that are type-coerced due to USING
+--
+create temp table t1(f1 int, f2 bigint);
+create temp table t2(f1 bigint, f22 bigint);
+select f1 from t1 left join t2 using (f1) group by f1;
+ f1 
+----
+(0 rows)
+
+select f1 from t1 left join t2 using (f1) group by t1.f1;
+ f1 
+----
+(0 rows)
+
+select t1.f1 from t1 left join t2 using (f1) group by t1.f1;
+ f1 
+----
+(0 rows)
+
+-- only this one should fail:
+select t1.f1 from t1 left join t2 using (f1) group by f1;
+ERROR:  column "t1.f1" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: select t1.f1 from t1 left join t2 using (f1) group by f1;
+               ^
+drop table t1, t2;
+--
 -- Test combinations of DISTINCT and/or ORDER BY
 --
 select array_agg(a order by b)
