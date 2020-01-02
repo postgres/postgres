@@ -2616,7 +2616,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 							Var		   *varnode;
 
 							varnode = makeVar(rtindex, atts_done + 1,
-											  funcrettype, -1,
+											  funcrettype,
+											  exprTypmod(rtfunc->funcexpr),
 											  exprCollation(rtfunc->funcexpr),
 											  sublevels_up);
 							varnode->location = location;
