@@ -1781,8 +1781,11 @@ addRangeTableEntryForFunction(ParseState *pstate,
 							   chooseScalarFunctionAlias(funcexpr, funcname,
 														 alias, nfuncs),
 							   funcrettype,
-							   -1,
+							   exprTypmod(funcexpr),
 							   0);
+			TupleDescInitEntryCollation(tupdesc,
+										(AttrNumber) 1,
+										exprCollation(funcexpr));
 		}
 		else if (functypclass == TYPEFUNC_RECORD)
 		{
@@ -1882,12 +1885,15 @@ addRangeTableEntryForFunction(ParseState *pstate,
 
 		/* Add the ordinality column if needed */
 		if (rangefunc->ordinality)
+		{
 			TupleDescInitEntry(tupdesc,
 							   (AttrNumber) ++natts,
 							   "ordinality",
 							   INT8OID,
 							   -1,
 							   0);
+			/* no need to set collation */
+		}
 
 		Assert(natts == totalatts);
 	}
