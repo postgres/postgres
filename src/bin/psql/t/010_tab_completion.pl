@@ -5,6 +5,7 @@ use PostgresNode;
 use TestLib;
 use Test::More;
 use IPC::Run qw(pump finish timer);
+use Data::Dumper;
 
 if (!defined($ENV{with_readline}) || $ENV{with_readline} ne 'yes')
 {
@@ -52,6 +53,9 @@ sub check_completion
 {
 	my ($send, $pattern, $annotation) = @_;
 
+	# report test failures from caller location
+	local $Test::Builder::Level = $Test::Builder::Level + 1;
+
 	# reset output collector
 	$out = "";
 	# restart per-command timer
@@ -63,7 +67,9 @@ sub check_completion
 	my $okay = ($out =~ m/$pattern/ && !$timer->is_expired);
 	ok($okay, $annotation);
 	# for debugging, log actual output if it didn't match
-	note 'Actual output was "' . $out . "\"\n" if !$okay;
+	local $Data::Dumper::Terse = 1;
+	local $Data::Dumper::Useqq = 1;
+	diag 'Actual output was ' . Dumper($out) . "\n" if !$okay;
 	return;
 }
 
@@ -105,11 +111,9 @@ check_completion("2\t", "246 ",
 clear_query();
 
 # check case-sensitive keyword replacement
-# XXX the output here might vary across readline versions
-check_completion(
-	"\\DRD\t",
-	"\\DRD\b\b\bdrds ",
-	"complete \\DRD<tab> to \\drds");
+# note: various versions of readline/libedit handle backspacing
+# differently, so just check that the replacement comes out correctly
+check_completion("\\DRD\t", "drds ", "complete \\DRD<tab> to \\drds");
 
 clear_query();
 
