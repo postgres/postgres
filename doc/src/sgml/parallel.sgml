@@ -277,7 +277,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         scan</emphasis>, the cooperating processes take turns reading data from the
         index.  Currently, parallel index scans are supported only for
         btree indexes.  Each process will claim a single index block and will
-        scan and return all tuples referenced by that block; other process can
+        scan and return all tuples referenced by that block; other processes can
         at the same time be returning tuples from a different index block.
         The results of a parallel btree scan are returned in sorted order
         within each worker process.
@@ -410,7 +410,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     involve appending multiple results sets can therefore achieve
     coarse-grained parallelism even when efficient partial plans are not
     available.  For example, consider a query against a partitioned table
-    which can be only be implemented efficiently by using an index that does
+    which can only be implemented efficiently by using an index that does
     not support parallel scans.  The planner might choose a <literal>Parallel
     Append</literal> of regular <literal>Index Scan</literal> plans; each
     individual index scan would have to be executed to completion by a single
