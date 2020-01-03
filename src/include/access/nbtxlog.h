@@ -126,12 +126,12 @@ typedef struct xl_btree_split
 typedef struct xl_btree_delete
 {
 	TransactionId latestRemovedXid;
-	int			nitems;
+	uint32		ndeleted;
 
-	/* TARGET OFFSET NUMBERS FOLLOW AT THE END */
+	/* DELETED TARGET OFFSET NUMBERS FOLLOW */
 } xl_btree_delete;
 
-#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, nitems) + sizeof(int))
+#define SizeOfBtreeDelete	(offsetof(xl_btree_delete, ndeleted) + sizeof(uint32))
 
 /*
  * This is what we need to know about page reuse within btree.  This record

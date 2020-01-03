@@ -449,16 +449,11 @@ btree_xlog_delete(XLogReaderState *record)
 	 */
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
+		char	   *ptr = XLogRecGetBlockData(record, 0, NULL);
+
 		page = (Page) BufferGetPage(buffer);
 
-		if (XLogRecGetDataLen(record) > SizeOfBtreeDelete)
-		{
-			OffsetNumber *unused;
-
-			unused = (OffsetNumber *) ((char *) xlrec + SizeOfBtreeDelete);
-
-			PageIndexMultiDelete(page, unused, xlrec->nitems);
-		}
+		PageIndexMultiDelete(page, (OffsetNumber *) ptr, xlrec->ndeleted);
 
 		/* Mark the page as not containing any LP_DEAD items */
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);

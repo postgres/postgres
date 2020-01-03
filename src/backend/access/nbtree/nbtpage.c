@@ -961,20 +961,15 @@ _bt_page_recyclable(Page page)
 }
 
 /*
- * Delete item(s) from a btree page during VACUUM.
- *
- * This must only be used for deleting leaf items.  Deleting an item on a
- * non-leaf page has to be done as part of an atomic action that includes
- * deleting the page it points to.
+ * Delete item(s) from a btree leaf page during VACUUM.
  *
  * This routine assumes that the caller has a super-exclusive write lock on
  * the buffer.  Also, the given deletable array *must* be sorted in ascending
  * order.
  *
  * We record VACUUMs and b-tree deletes differently in WAL.  Deletes must
- * generate recovery conflicts by accessing the heap inline, whereas VACUUMs
- * can rely on the initial heap scan taking care of the problem (pruning would
- * have generated the conflicts needed for hot standby already).
+ * generate their own latestRemovedXid by accessing the heap directly, whereas
+ * VACUUMs rely on the initial heap scan taking care of it indirectly.
  */
 void
 _bt_delitems_vacuum(Relation rel, Buffer buf,
@@ -1030,9 +1025,9 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 		XLogRegisterData((char *) &xlrec_vacuum, SizeOfBtreeVacuum);
 
 		/*
-		 * The target-offsets array is not in the buffer, but pretend that it
-		 * is.  When XLogInsert stores the whole buffer, the offsets array
-		 * need not be stored too.
+		 * The deletable array is not in the buffer, but pretend that it is.
+		 * When XLogInsert stores the whole buffer, the array need not be
+		 * stored too.
 		 */
 		XLogRegisterBufData(0, (char *) deletable,
 							ndeletable * sizeof(OffsetNumber));
@@ -1046,21 +1041,19 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 }
 
 /*
- * Delete item(s) from a btree page during single-page cleanup.
- *
- * As above, must only be used on leaf pages.
+ * Delete item(s) from a btree leaf page during single-page cleanup.
  *
  * This routine assumes that the caller has pinned and write locked the
- * buffer.  Also, the given itemnos *must* appear in increasing order in the
- * array.
+ * buffer.  Also, the given deletable array *must* be sorted in ascending
+ * order.
  *
  * This is nearly the same as _bt_delitems_vacuum as far as what it does to
- * the page, but it needs to generate its own recovery conflicts by accessing
- * the heap.  See comments for _bt_delitems_vacuum.
+ * the page, but it needs to generate its own latestRemovedXid by accessing
+ * the heap.  This is used by the REDO routine to generate recovery conflicts.
  */
 void
 _bt_delitems_delete(Relation rel, Buffer buf,
-					OffsetNumber *itemnos, int nitems,
+					OffsetNumber *deletable, int ndeletable,
 					Relation heapRel)
 {
 	Page		page = BufferGetPage(buf);
@@ -1068,18 +1061,18 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 	TransactionId latestRemovedXid = InvalidTransactionId;
 
 	/* Shouldn't be called unless there's something to do */
-	Assert(nitems > 0);
+	Assert(ndeletable > 0);
 
 	if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
 		latestRemovedXid =
 			index_compute_xid_horizon_for_tuples(rel, heapRel, buf,
-												 itemnos, nitems);
+												 deletable, ndeletable);
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
 	/* Fix the page */
-	PageIndexMultiDelete(page, itemnos, nitems);
+	PageIndexMultiDelete(page, deletable, ndeletable);
 
 	/*
 	 * Unlike _bt_delitems_vacuum, we *must not* clear the vacuum cycle ID,
@@ -1098,18 +1091,19 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 		xl_btree_delete xlrec_delete;
 
 		xlrec_delete.latestRemovedXid = latestRemovedXid;
-		xlrec_delete.nitems = nitems;
+		xlrec_delete.ndeleted = ndeletable;
 
 		XLogBeginInsert();
 		XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 		XLogRegisterData((char *) &xlrec_delete, SizeOfBtreeDelete);
 
 		/*
-		 * We need the target-offsets array whether or not we store the whole
-		 * buffer, to allow us to find the latestRemovedXid on a standby
-		 * server.
+		 * The deletable array is not in the buffer, but pretend that it is.
+		 * When XLogInsert stores the whole buffer, the array need not be
+		 * stored too.
 		 */
-		XLogRegisterData((char *) itemnos, nitems * sizeof(OffsetNumber));
+		XLogRegisterBufData(0, (char *) deletable,
+							ndeletable * sizeof(OffsetNumber));
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE);
 
