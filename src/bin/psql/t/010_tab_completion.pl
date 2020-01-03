@@ -6,7 +6,7 @@ use TestLib;
 use Test::More;
 use IPC::Run qw(pump finish timer);
 
-if ($ENV{with_readline} ne 'yes')
+if (!defined($ENV{with_readline}) || $ENV{with_readline} ne 'yes')
 {
 	plan skip_all => 'readline is not supported by this build';
 }
@@ -64,6 +64,7 @@ sub check_completion
 	ok($okay, $annotation);
 	# for debugging, log actual output if it didn't match
 	note 'Actual output was "' . $out . "\"\n" if !$okay;
+	return;
 }
 
 # Clear query buffer to start over
@@ -71,6 +72,7 @@ sub check_completion
 sub clear_query
 {
 	check_completion("\\r\n", "postgres=# ", "\\r works");
+	return;
 }
 
 # check basic command completion: SEL<tab> produces SELECT<space>
