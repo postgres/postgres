@@ -281,7 +281,11 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 			datalen -= newitemsz;
 		}
 
-		/* Extract left hikey and its size (assuming 16-bit alignment) */
+		/*
+		 * Extract left hikey and its size.  We assume that 16-bit alignment
+		 * is enough to apply IndexTupleSize (since it's fetching from a
+		 * uint16 field).
+		 */
 		left_hikey = (IndexTuple) datapos;
 		left_hikeysz = MAXALIGN(IndexTupleSize(left_hikey));
 		datapos += left_hikeysz;
