@@ -1447,7 +1447,13 @@ psql_completion(const char *text, int start, int end)
 		NULL
 	};
 
-	(void) end;					/* "end" is not used */
+	/*
+	 * Temporary workaround for a bug in recent (2019) libedit: it incorrectly
+	 * de-escapes the input "text", causing us to fail to recognize backslash
+	 * commands.  So get the string to look at from rl_line_buffer instead.
+	 */
+	char	   *text_copy = pnstrdup(rl_line_buffer + start, end - start);
+	text = text_copy;
 
 #ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
 	rl_completion_append_character = ' ';
@@ -3859,6 +3865,7 @@ psql_completion(const char *text, int start, int end)
 	/* free storage */
 	free(previous_words);
 	free(words_buffer);
+	free(text_copy);
 
 	/* Return our Grand List O' Matches */
 	return matches;
