@@ -157,7 +157,7 @@ my @options = (
 			qr{error while setting random seed from --random-seed option}
 		]
 	],
-	[ 'bad partition type', '-i --partition-method=BAD', [qr{"range"}, qr{"hash"}, qr{"BAD"}] ],
+	[ 'bad partition method', '-i --partition-method=BAD', [qr{"range"}, qr{"hash"}, qr{"BAD"}] ],
 	[ 'bad partition number', '-i --partitions -1', [ qr{invalid number of partitions: "-1"} ] ],
 	[
 		'partition method without partitioning',
