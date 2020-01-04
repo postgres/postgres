@@ -38,6 +38,9 @@ $node->safe_psql('postgres',
 my $historyfile = "${TestLib::log_path}/010_psql_history.txt";
 $ENV{PSQL_HISTORY} = $historyfile;
 
+# Debug investigation
+note "TERM is set to '" . ($ENV{TERM} || "<undef>") . "'";
+
 # Ensure that readline/libedit puts out xterm escapes, not something else.
 $ENV{TERM} = 'xterm';
 
