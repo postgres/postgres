@@ -38,6 +38,12 @@ $node->safe_psql('postgres',
 my $historyfile = "${TestLib::log_path}/010_psql_history.txt";
 $ENV{PSQL_HISTORY} = $historyfile;
 
+# Ensure that readline/libedit puts out xterm escapes, not something else.
+$ENV{TERM} = 'xterm';
+
+# regexp to match one xterm escape sequence (CSI style only, for now)
+my $escseq = "(\e\\[[0-9;]*[A-Za-z])";
+
 # fire up an interactive psql session
 my $in  = '';
 my $out = '';
@@ -101,8 +107,12 @@ check_completion(
 	"select \\* from my\a?tab",
 	"complete my<tab> to mytab when there are multiple choices");
 
-# some versions of readline/libedit require two tabs here, some only need one
-check_completion("\t\t", "mytab123 +mytab246",
+# some versions of readline/libedit require two tabs here, some only need one.
+# also, some might issue escape sequences to reposition the cursor, clear the
+# line, etc, instead of just printing some spaces.
+check_completion(
+	"\t\t",
+	"mytab$escseq*123( |$escseq)+mytab$escseq*246",
 	"offer multiple table choices");
 
 check_completion("2\t", "246 ",
