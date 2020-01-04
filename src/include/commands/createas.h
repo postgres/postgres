@@ -21,7 +21,7 @@
 #include "utils/queryenvironment.h"
 
 
-extern ObjectAddress ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
+extern ObjectAddress ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 									   ParamListInfo params, QueryEnvironment *queryEnv, char *completionTag);
 
 extern int	GetIntoRelEFlags(IntoClause *intoClause);

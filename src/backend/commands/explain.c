@@ -139,9 +139,8 @@ static void escape_yaml(StringInfo buf, const char *str);
  *	  execute an EXPLAIN command
  */
 void
-ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
-			 ParamListInfo params, QueryEnvironment *queryEnv,
-			 DestReceiver *dest)
+ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
+			 ParamListInfo params, DestReceiver *dest)
 {
 	ExplainState *es = NewExplainState();
 	TupOutputState *tstate;
@@ -254,7 +253,7 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
 		{
 			ExplainOneQuery(lfirst_node(Query, l),
 							CURSOR_OPT_PARALLEL_OK, NULL, es,
-							queryString, params, queryEnv);
+							pstate->p_sourcetext, params, pstate->p_queryEnv);
 
 			/* Separate plans with an appropriate separator */
 			if (lnext(rewritten, l) != NULL)

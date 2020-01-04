@@ -64,8 +64,8 @@ typedef const char *(*explain_get_index_name_hook_type) (Oid indexId);
 extern PGDLLIMPORT explain_get_index_name_hook_type explain_get_index_name_hook;
 
 
-extern void ExplainQuery(ParseState *pstate, ExplainStmt *stmt, const char *queryString,
-						 ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest);
+extern void ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
+						 ParamListInfo params, DestReceiver *dest);
 
 extern ExplainState *NewExplainState(void);
 
