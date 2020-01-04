@@ -41,9 +41,6 @@ $ENV{PSQL_HISTORY} = $historyfile;
 # Debug investigation
 note "TERM is set to '" . ($ENV{TERM} || "<undef>") . "'";
 
-# Ensure that readline/libedit puts out xterm escapes, not something else.
-$ENV{TERM} = 'xterm';
-
 # regexp to match one xterm escape sequence (CSI style only, for now)
 my $escseq = "(\e\\[[0-9;]*[A-Za-z])";
 
