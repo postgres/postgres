@@ -58,7 +58,7 @@ my $timer = timer(5);
 
 my $h = $node->interactive_psql('postgres', \$in, \$out, $timer);
 
-ok($out =~ /psql/, "print startup banner");
+like($out, qr/psql/, "print startup banner");
 
 # Simple test case: type something and see if psql responds as expected
 sub check_completion
@@ -75,13 +75,14 @@ sub check_completion
 	# send the data to be sent
 	$in .= $send;
 	# wait ...
-	pump $h until ($out =~ m/$pattern/ || $timer->is_expired);
-	my $okay = ($out =~ m/$pattern/ && !$timer->is_expired);
+	pump $h until ($out =~ $pattern || $timer->is_expired);
+	my $okay = ($out =~ $pattern && !$timer->is_expired);
 	ok($okay, $annotation);
 	# for debugging, log actual output if it didn't match
 	local $Data::Dumper::Terse = 1;
 	local $Data::Dumper::Useqq = 1;
-	diag 'Actual output was ' . Dumper($out) . "\n" if !$okay;
+	diag 'Actual output was ' . Dumper($out) . "Did not match \"$pattern\"\n"
+	  if !$okay;
 	return;
 }
 
@@ -89,20 +90,20 @@ sub check_completion
 # (won't work if we are inside a string literal!)
 sub clear_query
 {
-	check_completion("\\r\n", "postgres=# ", "\\r works");
+	check_completion("\\r\n", qr/postgres=# /, "\\r works");
 	return;
 }
 
 # check basic command completion: SEL<tab> produces SELECT<space>
-check_completion("SEL\t", "SELECT ", "complete SEL<tab> to SELECT");
+check_completion("SEL\t", qr/SELECT /, "complete SEL<tab> to SELECT");
 
 clear_query();
 
 # check case variation is honored
-check_completion("sel\t", "select ", "complete sel<tab> to select");
+check_completion("sel\t", qr/select /, "complete sel<tab> to select");
 
 # check basic table name completion
-check_completion("* from t\t", "\\* from tab1 ", "complete t<tab> to tab1");
+check_completion("* from t\t", qr/\* from tab1 /, "complete t<tab> to tab1");
 
 clear_query();
 
@@ -110,14 +111,16 @@ clear_query();
 # note: readline might print a bell before the completion
 check_completion(
 	"select * from my\t",
-	"select \\* from my\a?tab",
+	qr/select \* from my\a?tab/,
 	"complete my<tab> to mytab when there are multiple choices");
 
 # some versions of readline/libedit require two tabs here, some only need one
-check_completion("\t\t", "mytab123 +mytab246",
+check_completion(
+	"\t\t",
+	qr/mytab123 +mytab246/,
 	"offer multiple table choices");
 
-check_completion("2\t", "246 ",
+check_completion("2\t", qr/246 /,
 	"finish completion of one of multiple table choices");
 
 clear_query();
@@ -125,7 +128,7 @@ clear_query();
 # check case-sensitive keyword replacement
 # note: various versions of readline/libedit handle backspacing
 # differently, so just check that the replacement comes out correctly
-check_completion("\\DRD\t", "drds ", "complete \\DRD<tab> to \\drds");
+check_completion("\\DRD\t", qr/drds /, "complete \\DRD<tab> to \\drds");
 
 clear_query();
 
