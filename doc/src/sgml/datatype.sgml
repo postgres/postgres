@@ -731,7 +731,7 @@ FROM generate_series(-3.5, 3.5, 1) as x;
      representable in the same binary precision. (However, the output value is
      currently never <emphasis>exactly</emphasis> midway between two
      representable values, in order to avoid a widespread bug where input
-     routines do not properly respect the round-to-even rule.) This value will
+     routines do not properly respect the round-to-nearest-even rule.) This value will
      use at most 17 significant decimal digits for <type>float8</type>
      values, and at most 9 digits for <type>float4</type> values.
     </para>
