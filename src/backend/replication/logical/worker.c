@@ -691,6 +691,7 @@ apply_handle_update(StringInfo s)
 	bool		has_oldtup;
 	TupleTableSlot *localslot;
 	TupleTableSlot *remoteslot;
+	RangeTblEntry *target_rte;
 	bool		found;
 	MemoryContext oldctx;
 
@@ -720,6 +721,21 @@ apply_handle_update(StringInfo s)
 	localslot = table_slot_create(rel->localrel,
 								  &estate->es_tupleTable);
 	EvalPlanQualInit(&epqstate, estate, NULL, NIL, -1);
+
+	/*
+	 * Populate updatedCols so that per-column triggers can fire.  This could
+	 * include more columns than were actually changed on the publisher
+	 * because the logical replication protocol doesn't contain that
+	 * information.  But it would for example exclude columns that only exist
+	 * on the subscriber, since we are not touching those.
+	 */
+	target_rte = list_nth(estate->es_range_table, 0);
+	for (int i = 0; i < remoteslot->tts_tupleDescriptor->natts; i++)
+	{
+		if (newtup.changed[i])
+			target_rte->updatedCols = bms_add_member(target_rte->updatedCols,
+													 i + 1 - FirstLowInvalidHeapAttributeNumber);
+	}
 
 	PushActiveSnapshot(GetTransactionSnapshot());
 	ExecOpenIndices(estate->es_result_relation_info, false);
