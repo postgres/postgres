@@ -223,9 +223,7 @@ be_tls_init(bool isServerStart)
 	}
 
 	/* disallow SSL session tickets */
-#ifdef SSL_OP_NO_TICKET			/* added in OpenSSL 0.9.8f */
 	SSL_CTX_set_options(context, SSL_OP_NO_TICKET);
-#endif
 
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);

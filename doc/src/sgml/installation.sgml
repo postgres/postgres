@@ -254,7 +254,7 @@ su - postgres
       encrypted client connections.  <productname>OpenSSL</productname> is
       also required for random number generation on platforms that do not
       have <filename>/dev/urandom</filename> (except Windows).  The minimum
-      version required is 0.9.8.
+      version required is 1.0.1.
      </para>
     </listitem>
 

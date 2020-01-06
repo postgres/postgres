@@ -1608,10 +1608,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         compression by default, and many operating system distributions
         disable it in prior versions as well, so setting this parameter to on
         will not have any effect if the server does not accept compression.
-        On the other hand, <productname>OpenSSL</productname> before 1.0.0
-        does not support disabling compression, so this parameter is ignored
-        with those versions, and whether compression is used depends on the
-        server.
        </para>
 
        <para>
