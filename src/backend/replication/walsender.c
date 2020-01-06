@@ -2774,7 +2774,14 @@ XLogSendLogical(void)
 {
 	XLogRecord *record;
 	char	   *errm;
-	XLogRecPtr	flushPtr;
+
+	/*
+	 * We'll use the current flush point to determine whether we've caught up.
+	 * This variable is static in order to cache it across calls.  Caching is
+	 * helpful because GetFlushRecPtr() needs to acquire a heavily-contended
+	 * spinlock.
+	 */
+	static XLogRecPtr flushPtr = InvalidXLogRecPtr;
 
 	/*
 	 * Don't know whether we've caught up yet. We'll set WalSndCaughtUp to
@@ -2791,11 +2798,6 @@ XLogSendLogical(void)
 	if (errm != NULL)
 		elog(ERROR, "%s", errm);
 
-	/*
-	 * We'll use the current flush point to determine whether we've caught up.
-	 */
-	flushPtr = GetFlushRecPtr();
-
 	if (record != NULL)
 	{
 		/*
@@ -2808,7 +2810,16 @@ XLogSendLogical(void)
 		sentPtr = logical_decoding_ctx->reader->EndRecPtr;
 	}
 
-	/* Set flag if we're caught up. */
+	/*
+	 * If first time through in this session, initialize flushPtr.  Otherwise,
+	 * we only need to update flushPtr if EndRecPtr is past it.
+	 */
+	if (flushPtr == InvalidXLogRecPtr)
+		flushPtr = GetFlushRecPtr();
+	else if (logical_decoding_ctx->reader->EndRecPtr >= flushPtr)
+		flushPtr = GetFlushRecPtr();
+
+	/* If EndRecPtr is still past our flushPtr, it means we caught up. */
 	if (logical_decoding_ctx->reader->EndRecPtr >= flushPtr)
 		WalSndCaughtUp = true;
 
