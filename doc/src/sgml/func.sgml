@@ -921,6 +921,20 @@
       <row>
        <entry>
         <indexterm>
+         <primary>min_scale</primary>
+        </indexterm>
+        <literal><function>min_scale(<type>numeric</type>)</function></literal>
+       </entry>
+       <entry><type>integer</type></entry>
+       <entry>minimum scale (number of fractional decimal digits) needed
+        to represent the supplied value</entry>
+       <entry><literal>min_scale(8.4100)</literal></entry>
+       <entry><literal>2</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>mod</primary>
         </indexterm>
         <literal><function>mod(<parameter>y</parameter>,
@@ -1011,8 +1025,8 @@
        </entry>
        <entry><type>integer</type></entry>
        <entry>scale of the argument (the number of decimal digits in the fractional part)</entry>
-       <entry><literal>scale(8.41)</literal></entry>
-       <entry><literal>2</literal></entry>
+       <entry><literal>scale(8.4100)</literal></entry>
+       <entry><literal>4</literal></entry>
       </row>
 
       <row>
@@ -1039,6 +1053,20 @@
        <entry>square root</entry>
        <entry><literal>sqrt(2.0)</literal></entry>
        <entry><literal>1.4142135623731</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>trim_scale</primary>
+        </indexterm>
+        <literal><function>trim_scale(<type>numeric</type>)</function></literal>
+       </entry>
+       <entry><type>numeric</type></entry>
+       <entry>reduce the scale (number of fractional decimal digits) by
+        removing trailing zeroes</entry>
+       <entry><literal>trim_scale(8.4100)</literal></entry>
+       <entry><literal>8.41</literal></entry>
       </row>
 
       <row>

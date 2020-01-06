@@ -3179,6 +3179,97 @@ numeric_scale(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(NUMERIC_DSCALE(num));
 }
 
+/*
+ * Calculate minimum scale for value.
+ */
+static int
+get_min_scale(NumericVar *var)
+{
+	int			min_scale;
+	int			last_digit_pos;
+
+	/*
+	 * Ordinarily, the input value will be "stripped" so that the last
+	 * NumericDigit is nonzero.  But we don't want to get into an infinite
+	 * loop if it isn't, so explicitly find the last nonzero digit.
+	 */
+	last_digit_pos = var->ndigits - 1;
+	while (last_digit_pos >= 0 &&
+		   var->digits[last_digit_pos] == 0)
+		last_digit_pos--;
+
+	if (last_digit_pos >= 0)
+	{
+		/* compute min_scale assuming that last ndigit has no zeroes */
+		min_scale = (last_digit_pos - var->weight) * DEC_DIGITS;
+
+		/*
+		 * We could get a negative result if there are no digits after the
+		 * decimal point.  In this case the min_scale must be zero.
+		 */
+		if (min_scale > 0)
+		{
+			/*
+			 * Reduce min_scale if trailing digit(s) in last NumericDigit are
+			 * zero.
+			 */
+			NumericDigit last_digit = var->digits[last_digit_pos];
+
+			while (last_digit % 10 == 0)
+			{
+				min_scale--;
+				last_digit /= 10;
+			}
+		}
+		else
+			min_scale = 0;
+	}
+	else
+		min_scale = 0;			/* result if input is zero */
+
+	return min_scale;
+}
+
+/*
+ * Returns minimum scale required to represent supplied value without loss.
+ */
+Datum
+numeric_min_scale(PG_FUNCTION_ARGS)
+{
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	NumericVar	arg;
+	int			min_scale;
+
+	if (NUMERIC_IS_NAN(num))
+		PG_RETURN_NULL();
+
+	init_var_from_num(num, &arg);
+	min_scale = get_min_scale(&arg);
+	free_var(&arg);
+
+	PG_RETURN_INT32(min_scale);
+}
+
+/*
+ * Reduce scale of numeric value to represent supplied value without loss.
+ */
+Datum
+numeric_trim_scale(PG_FUNCTION_ARGS)
+{
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	Numeric		res;
+	NumericVar	result;
+
+	if (NUMERIC_IS_NAN(num))
+		PG_RETURN_NUMERIC(make_result(&const_nan));
+
+	init_var_from_num(num, &result);
+	result.dscale = get_min_scale(&result);
+	res = make_result(&result);
+	free_var(&result);
+
+	PG_RETURN_NUMERIC(res);
+}
 
 
 /* ----------------------------------------------------------------------

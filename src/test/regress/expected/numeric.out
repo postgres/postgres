@@ -2079,6 +2079,132 @@ select scale(-13.000000000000000);
 (1 row)
 
 --
+-- Tests for min_scale()
+--
+select min_scale(numeric 'NaN') is NULL; -- should be true
+ ?column? 
+----------
+ t
+(1 row)
+
+select min_scale(0);                     -- no digits
+ min_scale 
+-----------
+         0
+(1 row)
+
+select min_scale(0.00);                  -- no digits again
+ min_scale 
+-----------
+         0
+(1 row)
+
+select min_scale(1.0);                   -- no scale
+ min_scale 
+-----------
+         0
+(1 row)
+
+select min_scale(1.1);                   -- scale 1
+ min_scale 
+-----------
+         1
+(1 row)
+
+select min_scale(1.12);                  -- scale 2
+ min_scale 
+-----------
+         2
+(1 row)
+
+select min_scale(1.123);                 -- scale 3
+ min_scale 
+-----------
+         3
+(1 row)
+
+select min_scale(1.1234);                -- scale 4, filled digit
+ min_scale 
+-----------
+         4
+(1 row)
+
+select min_scale(1.12345);               -- scale 5, 2 NDIGITS
+ min_scale 
+-----------
+         5
+(1 row)
+
+select min_scale(1.1000);                -- 1 pos in NDIGITS
+ min_scale 
+-----------
+         1
+(1 row)
+
+select min_scale(1e100);                 -- very big number
+ min_scale 
+-----------
+         0
+(1 row)
+
+--
+-- Tests for trim_scale()
+--
+select trim_scale(numeric 'NaN');
+ trim_scale 
+------------
+        NaN
+(1 row)
+
+select trim_scale(1.120);
+ trim_scale 
+------------
+       1.12
+(1 row)
+
+select trim_scale(0);
+ trim_scale 
+------------
+          0
+(1 row)
+
+select trim_scale(0.00);
+ trim_scale 
+------------
+          0
+(1 row)
+
+select trim_scale(1.1234500);
+ trim_scale 
+------------
+    1.12345
+(1 row)
+
+select trim_scale(110123.12475871856128000);
+      trim_scale       
+-----------------------
+ 110123.12475871856128
+(1 row)
+
+select trim_scale(-1123.124718561280000000);
+    trim_scale     
+-------------------
+ -1123.12471856128
+(1 row)
+
+select trim_scale(-13.00000000000000000000);
+ trim_scale 
+------------
+        -13
+(1 row)
+
+select trim_scale(1e100);
+                                              trim_scale                                               
+-------------------------------------------------------------------------------------------------------
+ 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+(1 row)
+
+--
 -- Tests for SUM()
 --
 -- cases that need carry propagation
