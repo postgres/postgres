@@ -179,11 +179,6 @@ top:
 				PageGetMaxOffsetNumber(page) >= P_FIRSTDATAKEY(lpageop) &&
 				_bt_compare(rel, itup_key, page, P_FIRSTDATAKEY(lpageop)) > 0)
 			{
-				/*
-				 * The right-most block should never have an incomplete split.
-				 * But be paranoid and check for it anyway.
-				 */
-				Assert(!P_INCOMPLETE_SPLIT(lpageop));
 				fastpath = true;
 			}
 			else
