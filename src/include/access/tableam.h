@@ -581,6 +581,13 @@ typedef struct TableAmRoutine
 	 */
 	bool		(*relation_needs_toast_table) (Relation rel);
 
+	/*
+	 * This callback should return the OID of the table AM that implements
+	 * TOAST tables for this AM.  If the relation_needs_toast_table callback
+	 * always returns false, this callback is not required.
+	 */
+	Oid		    (*relation_toast_am) (Relation rel);
+
 
 	/* ------------------------------------------------------------------------
 	 * Planner related functions.
@@ -1601,6 +1608,16 @@ static inline bool
 table_relation_needs_toast_table(Relation rel)
 {
 	return rel->rd_tableam->relation_needs_toast_table(rel);
+}
+
+/*
+ * Return the OID of the AM that should be used to implement the TOAST table
+ * for this relation.
+ */
+static inline Oid
+table_relation_toast_am(Relation rel)
+{
+	return rel->rd_tableam->relation_toast_am(rel);
 }
 
 

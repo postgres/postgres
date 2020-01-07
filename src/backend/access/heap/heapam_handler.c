@@ -2037,6 +2037,15 @@ heapam_relation_needs_toast_table(Relation rel)
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
 
+/*
+ * TOAST tables for heap relations are just heap relations.
+ */
+static Oid
+heapam_relation_toast_am(Relation rel)
+{
+	return rel->rd_rel->relam;
+}
+
 
 /* ------------------------------------------------------------------------
  * Planner related callbacks for the heap AM
@@ -2535,6 +2544,7 @@ static const TableAmRoutine heapam_methods = {
 
 	.relation_size = table_block_relation_size,
 	.relation_needs_toast_table = heapam_relation_needs_toast_table,
+	.relation_toast_am = heapam_relation_toast_am,
 
 	.relation_estimate_size = heapam_estimate_rel_size,
 
