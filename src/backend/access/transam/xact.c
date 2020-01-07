@@ -817,6 +817,13 @@ GetCurrentTransactionStopTimestamp(void)
 void
 SetCurrentStatementStartTimestamp(void)
 {
+	/*
+	 * Skip if on a walsender; this is not needed, and it confuses monitoring
+	 * if we publish non-NULL values.
+	 */
+	if (am_walsender)
+		return;
+
 	if (!IsParallelWorker())
 		stmtStartTimestamp = GetCurrentTimestamp();
 	else
