@@ -26,6 +26,8 @@ else
 # hostname, because the server certificate is always for the domain
 # postgresql-ssl-regression.test.
 my $SERVERHOSTADDR = '127.0.0.1';
+# This is the pattern to use in pg_hba.conf to match incoming connections.
+my $SERVERHOSTCIDR = '127.0.0.1/32';
 
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
@@ -66,7 +68,8 @@ $node->start;
 my $result = $node->safe_psql('postgres', "SHOW ssl_library");
 is($result, 'OpenSSL', 'ssl_library parameter');
 
-configure_test_server_for_ssl($node, $SERVERHOSTADDR, 'trust');
+configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
+	'trust');
 
 note "testing password-protected keys";
 

@@ -20,6 +20,8 @@ if ($ENV{with_openssl} ne 'yes')
 
 # This is the hostname used to connect to the server.
 my $SERVERHOSTADDR = '127.0.0.1';
+# This is the pattern to use in pg_hba.conf to match incoming connections.
+my $SERVERHOSTCIDR = '127.0.0.1/32';
 
 # Determine whether build supports tls-server-end-point.
 my $supports_tls_server_end_point =
@@ -43,8 +45,8 @@ $ENV{PGPORT} = $node->port;
 $node->start;
 
 # Configure server for SSL connections, with password handling.
-configure_test_server_for_ssl($node, $SERVERHOSTADDR, "scram-sha-256",
-	"pass", "scram-sha-256");
+configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
+	"scram-sha-256", "pass", "scram-sha-256");
 switch_server_cert($node, 'server-cn-only');
 $ENV{PGPASSWORD} = "pass";
 $common_connstr =
