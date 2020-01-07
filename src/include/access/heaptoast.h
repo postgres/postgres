@@ -136,4 +136,14 @@ extern HeapTuple toast_build_flattened_tuple(TupleDesc tupleDesc,
 											 Datum *values,
 											 bool *isnull);
 
+/* ----------
+ * heap_fetch_toast_slice
+ *
+ *	Fetch a slice from a toast value stored in a heap table.
+ * ----------
+ */
+extern void heap_fetch_toast_slice(Relation toastrel, Oid valueid,
+								   int32 attrsize, int32 sliceoffset,
+								   int32 slicelength, struct varlena *result);
+
 #endif							/* HEAPTOAST_H */
