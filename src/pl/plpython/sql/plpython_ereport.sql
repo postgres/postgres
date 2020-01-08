@@ -125,7 +125,7 @@ $$;
 DO $$
 try:
     plpy.execute("select raise_exception(_message => 'my message', _sqlstate => 'XX987', _hint => 'some hint', _table_name => 'users_tab', _datatype_name => 'user_type')")
-except Exception, e:
+except Exception as e:
     plpy.info(e.spidata)
     raise e
 $$ LANGUAGE plpythonu;
@@ -133,7 +133,7 @@ $$ LANGUAGE plpythonu;
 DO $$
 try:
     plpy.error(message  = 'my message', sqlstate = 'XX987', hint = 'some hint', table_name = 'users_tab', datatype_name = 'user_type')
-except Exception, e:
+except Exception as e:
     plpy.info('sqlstate: %s, hint: %s, table_name: %s, datatype_name: %s' % (e.sqlstate, e.hint, e.table_name, e.datatype_name))
     raise e
 $$ LANGUAGE plpythonu;

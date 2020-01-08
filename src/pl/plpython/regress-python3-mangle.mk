@@ -14,7 +14,7 @@ REGRESS := $(foreach test,$(REGRESS),$(if $(filter $(test),$(REGRESS_PLPYTHON3_M
 pgregress-python3-mangle:
 	$(MKDIR_P) sql/python3 expected/python3 results/python3
 	for file in $(patsubst %,$(srcdir)/sql/%.sql,$(REGRESS_PLPYTHON3_MANGLE)) $(patsubst %,$(srcdir)/expected/%*.out,$(REGRESS_PLPYTHON3_MANGLE)); do \
-	  sed -e 's/except \([[:alpha:]][[:alpha:].]*\), *\([[:alpha:]][[:alpha:]]*\):/except \1 as \2:/g' \
+	  sed \
 	      -e "s/<type 'exceptions\.\([[:alpha:]]*\)'>/<class '\1'>/g" \
 	      -e "s/<type 'long'>/<class 'int'>/g" \
 	      -e "s/\([0-9][0-9]*\)L/\1/g" \

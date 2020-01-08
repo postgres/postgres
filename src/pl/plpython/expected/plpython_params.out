@@ -25,7 +25,7 @@ CREATE FUNCTION test_param_names3(a0 integer) RETURNS boolean AS $$
 try:
 	assert a1 == args[0]
 	return False
-except NameError, e:
+except NameError as e:
 	assert e.args[0].find("a1") > -1
 	return True
 $$ LANGUAGE plpythonu;

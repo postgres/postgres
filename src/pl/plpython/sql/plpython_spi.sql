@@ -31,7 +31,7 @@ CREATE FUNCTION spi_prepared_plan_test_one(a text) RETURNS text
 try:
 	rv = plpy.execute(SD["myplan"], [a])
 	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
-except Exception, ex:
+except Exception as ex:
 	plpy.error(str(ex))
 return None
 '
@@ -45,7 +45,7 @@ CREATE FUNCTION spi_prepared_plan_test_two(a text) RETURNS text
 try:
 	rv = SD["myplan"].execute([a])
 	return "there are " + str(rv[0]["count"]) + " " + str(a) + "s"
-except Exception, ex:
+except Exception as ex:
 	plpy.error(str(ex))
 return None
 '
@@ -60,7 +60,7 @@ try:
 	rv = plpy.execute(SD["myplan"])
 	if len(rv):
 		return rv[0]["count"]
-except Exception, ex:
+except Exception as ex:
 	plpy.error(str(ex))
 return None
 '

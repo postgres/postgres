@@ -290,7 +290,6 @@ sub mangle_plpython3
 				close($handle);
 				do
 				{
-					s/except ([[:alpha:]][[:alpha:].]*), *([[:alpha:]][[:alpha:]]*):/except $1 as $2:/g;
 					s/<type 'exceptions\.([[:alpha:]]*)'>/<class '$1'>/g;
 					s/<type 'long'>/<class 'int'>/g;
 					s/([0-9][0-9]*)L/$1/g;

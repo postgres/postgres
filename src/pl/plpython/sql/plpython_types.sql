@@ -163,7 +163,7 @@ CREATE FUNCTION test_type_unmarshal(x bytea) RETURNS text AS $$
 import marshal
 try:
     return marshal.loads(x)
-except ValueError, e:
+except ValueError as e:
     return 'FAILED: ' + str(e)
 $$ LANGUAGE plpythonu;
 
