@@ -2800,10 +2800,12 @@ keep_going:						/* We will come back to here until there is
 #ifdef ENABLE_GSS
 
 				/*
-				 * If GSSAPI is enabled and we have a credential cache, try to
-				 * set it up before sending startup messages.  If it's already
-				 * operating, don't try SSL and instead just build the startup
-				 * packet.
+				 * If GSSAPI encryption is enabled, then call
+				 * pg_GSS_have_cred_cache() which will return true if we can
+				 * acquire credentials (and give us a handle to use in
+				 * conn->gcred), and then send a packet to the server asking
+				 * for GSSAPI Encryption (and skip past SSL negotiation and
+				 * regular startup below).
 				 */
 				if (conn->try_gss && !conn->gctx)
 					conn->try_gss = pg_GSS_have_cred_cache(&conn->gcred);
