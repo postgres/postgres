@@ -316,21 +316,40 @@ ALTER TABLE gtest25 ADD COLUMN b int GENERATED ALWAYS AS (a * 3) STORED;
 SELECT * FROM gtest25 ORDER BY a;
 ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (b * 4) STORED;  -- error
 ALTER TABLE gtest25 ADD COLUMN x int GENERATED ALWAYS AS (z * 4) STORED;  -- error
+ALTER TABLE gtest25 ADD COLUMN c int DEFAULT 42,
+  ADD COLUMN x int GENERATED ALWAYS AS (c * 4) STORED;
+ALTER TABLE gtest25 ADD COLUMN d int DEFAULT 101;
+ALTER TABLE gtest25 ALTER COLUMN d SET DATA TYPE float8,
+  ADD COLUMN y float8 GENERATED ALWAYS AS (d * 4) STORED;
+SELECT * FROM gtest25 ORDER BY a;
+\d gtest25
 
 -- ALTER TABLE ... ALTER COLUMN
 CREATE TABLE gtest27 (
     a int,
-    b int GENERATED ALWAYS AS (a * 2) STORED
+    b int,
+    x int GENERATED ALWAYS AS ((a + b) * 2) STORED
 );
-INSERT INTO gtest27 (a) VALUES (3), (4);
+INSERT INTO gtest27 (a, b) VALUES (3, 7), (4, 11);
 ALTER TABLE gtest27 ALTER COLUMN a TYPE text;  -- error
-ALTER TABLE gtest27 ALTER COLUMN b TYPE numeric;
+ALTER TABLE gtest27 ALTER COLUMN x TYPE numeric;
 \d gtest27
 SELECT * FROM gtest27;
-ALTER TABLE gtest27 ALTER COLUMN b TYPE boolean USING b <> 0;  -- error
-
-ALTER TABLE gtest27 ALTER COLUMN b DROP DEFAULT;  -- error
+ALTER TABLE gtest27 ALTER COLUMN x TYPE boolean USING x <> 0;  -- error
+ALTER TABLE gtest27 ALTER COLUMN x DROP DEFAULT;  -- error
+-- It's possible to alter the column types this way:
+ALTER TABLE gtest27
+  DROP COLUMN x,
+  ALTER COLUMN a TYPE bigint,
+  ALTER COLUMN b TYPE bigint,
+  ADD COLUMN x bigint GENERATED ALWAYS AS ((a + b) * 2) STORED;
 \d gtest27
+-- Ideally you could just do this, but not today (and should x change type?):
+ALTER TABLE gtest27
+  ALTER COLUMN a TYPE float8,
+  ALTER COLUMN b TYPE float8;  -- error
+\d gtest27
+SELECT * FROM gtest27;
 
 -- triggers
 CREATE TABLE gtest26 (
