@@ -515,6 +515,27 @@ $$ language sql strict immutable;
 select array_to_set(array['one', 'two']);
 select * from array_to_set(array['one', 'two']) as t(f1 int,f2 text);
 select * from array_to_set(array['one', 'two']); -- fail
+-- after-the-fact coercion of the columns is now possible, too
+select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
+-- and if it doesn't work, you get a compile-time not run-time error
+select * from array_to_set(array['one', 'two']) as t(f1 point,f2 text);
+
+-- with "strict", this function can't be inlined in FROM
+explain (verbose, costs off)
+  select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
+
+-- but without, it can be:
+
+create or replace function array_to_set(anyarray) returns setof record as $$
+  select i AS "index", $1[i] AS "value" from generate_subscripts($1, 1) i
+$$ language sql immutable;
+
+select array_to_set(array['one', 'two']);
+select * from array_to_set(array['one', 'two']) as t(f1 int,f2 text);
+select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
+select * from array_to_set(array['one', 'two']) as t(f1 point,f2 text);
+explain (verbose, costs off)
+  select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
 
 create temp table rngfunc(f1 int8, f2 int8);
 
@@ -537,6 +558,57 @@ select * from testrngfunc() as t(f1 int8,f2 int8);
 select * from testrngfunc(); -- fail
 
 drop function testrngfunc();
+
+-- Check that typmod imposed by a composite type is honored
+create type rngfunc_type as (f1 numeric(35,6), f2 numeric(35,2));
+
+create function testrngfunc() returns rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql immutable;
+
+explain (verbose, costs off)
+select testrngfunc();
+select testrngfunc();
+explain (verbose, costs off)
+select * from testrngfunc();
+select * from testrngfunc();
+
+create or replace function testrngfunc() returns rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql volatile;
+
+explain (verbose, costs off)
+select testrngfunc();
+select testrngfunc();
+explain (verbose, costs off)
+select * from testrngfunc();
+select * from testrngfunc();
+
+drop function testrngfunc();
+
+create function testrngfunc() returns setof rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql immutable;
+
+explain (verbose, costs off)
+select testrngfunc();
+select testrngfunc();
+explain (verbose, costs off)
+select * from testrngfunc();
+select * from testrngfunc();
+
+create or replace function testrngfunc() returns setof rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql volatile;
+
+explain (verbose, costs off)
+select testrngfunc();
+select testrngfunc();
+explain (verbose, costs off)
+select * from testrngfunc();
+select * from testrngfunc();
+
+drop type rngfunc_type cascade;
 
 --
 -- Check some cases involving added/dropped columns in a rowtype result
@@ -585,7 +657,7 @@ drop function get_first_user();
 drop function get_users();
 drop table users;
 
--- this won't get inlined because of type coercion, but it shouldn't fail
+-- check behavior with type coercion required for a set-op
 
 create or replace function rngfuncbar() returns setof text as
 $$ select 'foo'::varchar union all select 'bar'::varchar ; $$
@@ -593,6 +665,8 @@ language sql stable;
 
 select rngfuncbar();
 select * from rngfuncbar();
+-- this function is now inlinable, too:
+explain (verbose, costs off) select * from rngfuncbar();
 
 drop function rngfuncbar();
 

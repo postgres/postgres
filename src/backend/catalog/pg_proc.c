@@ -923,6 +923,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			 * verify the result type.
 			 */
 			SQLFunctionParseInfoPtr pinfo;
+			Oid			rettype;
+			TupleDesc	rettupdesc;
 
 			/* But first, set up parameter information */
 			pinfo = prepare_sql_fn_parse_info(tuple, NULL, InvalidOid);
@@ -943,9 +945,12 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			}
 
 			check_sql_fn_statements(querytree_list);
-			(void) check_sql_fn_retval(funcoid, proc->prorettype,
-									   querytree_list,
-									   NULL, NULL);
+
+			(void) get_func_result_type(funcoid, &rettype, &rettupdesc);
+
+			(void) check_sql_fn_retval(querytree_list,
+									   rettype, rettupdesc,
+									   false, NULL);
 		}
 
 		error_context_stack = sqlerrcontext.previous;

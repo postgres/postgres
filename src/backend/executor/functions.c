@@ -154,7 +154,7 @@ static Node *sql_fn_resolve_param_name(SQLFunctionParseInfoPtr pinfo,
 static List *init_execution_state(List *queryTree_list,
 								  SQLFunctionCachePtr fcache,
 								  bool lazyEvalOK);
-static void init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK);
+static void init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static bool postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
@@ -166,6 +166,11 @@ static Datum postquel_get_single_result(TupleTableSlot *slot,
 										MemoryContext resultcontext);
 static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
+static bool coerce_fn_result_column(TargetEntry *src_tle,
+									Oid res_type, int32 res_typmod,
+									bool tlist_is_modifiable,
+									List **upper_tlist,
+									bool *upper_tlist_nontrivial);
 static void sqlfunction_startup(DestReceiver *self, int operation, TupleDesc typeinfo);
 static bool sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self);
 static void sqlfunction_shutdown(DestReceiver *self);
@@ -591,18 +596,21 @@ init_execution_state(List *queryTree_list,
  * Initialize the SQLFunctionCache for a SQL function
  */
 static void
-init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
+init_sql_fcache(FunctionCallInfo fcinfo, Oid collation, bool lazyEvalOK)
 {
+	FmgrInfo   *finfo = fcinfo->flinfo;
 	Oid			foid = finfo->fn_oid;
 	MemoryContext fcontext;
 	MemoryContext oldcontext;
 	Oid			rettype;
+	TupleDesc	rettupdesc;
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
 	SQLFunctionCachePtr fcache;
 	List	   *raw_parsetree_list;
 	List	   *queryTree_list;
 	List	   *flat_query_list;
+	List	   *resulttlist;
 	ListCell   *lc;
 	Datum		tmp;
 	bool		isNull;
@@ -642,20 +650,10 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	MemoryContextSetIdentifier(fcontext, fcache->fname);
 
 	/*
-	 * get the result type from the procedure tuple, and check for polymorphic
-	 * result type; if so, find out the actual result type.
+	 * Resolve any polymorphism, obtaining the actual result type, and the
+	 * corresponding tupdesc if it's a rowtype.
 	 */
-	rettype = procedureStruct->prorettype;
-
-	if (IsPolymorphicType(rettype))
-	{
-		rettype = get_fn_expr_rettype(finfo);
-		if (rettype == InvalidOid)	/* this probably should not happen */
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not determine actual result type for function declared to return type %s",
-							format_type_be(procedureStruct->prorettype))));
-	}
+	(void) get_call_result_type(fcinfo, &rettype, &rettupdesc);
 
 	fcache->rettype = rettype;
 
@@ -728,8 +726,11 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 * Check that the function returns the type it claims to.  Although in
 	 * simple cases this was already done when the function was defined, we
 	 * have to recheck because database objects used in the function's queries
-	 * might have changed type.  We'd have to do it anyway if the function had
-	 * any polymorphic arguments.
+	 * might have changed type.  We'd have to recheck anyway if the function
+	 * had any polymorphic arguments.  Moreover, check_sql_fn_retval takes
+	 * care of injecting any required column type coercions.  (But we don't
+	 * ask it to insert nulls for dropped columns; the junkfilter handles
+	 * that.)
 	 *
 	 * Note: we set fcache->returnsTuple according to whether we are returning
 	 * the whole tuple result or just a single column.  In the latter case we
@@ -738,16 +739,40 @@ init_sql_fcache(FmgrInfo *finfo, Oid collation, bool lazyEvalOK)
 	 * lazy eval mode in that case; otherwise we'd need extra code to expand
 	 * the rowtype column into multiple columns, since we have no way to
 	 * notify the caller that it should do that.)
-	 *
-	 * check_sql_fn_retval will also construct a JunkFilter we can use to
-	 * coerce the returned rowtype to the desired form (unless the result type
-	 * is VOID, in which case there's nothing to coerce to).
 	 */
-	fcache->returnsTuple = check_sql_fn_retval(foid,
+	fcache->returnsTuple = check_sql_fn_retval(flat_query_list,
 											   rettype,
-											   flat_query_list,
-											   NULL,
-											   &fcache->junkFilter);
+											   rettupdesc,
+											   false,
+											   &resulttlist);
+
+	/*
+	 * Construct a JunkFilter we can use to coerce the returned rowtype to the
+	 * desired form, unless the result type is VOID, in which case there's
+	 * nothing to coerce to.  (XXX Frequently, the JunkFilter isn't doing
+	 * anything very interesting, but much of this module expects it to be
+	 * there anyway.)
+	 */
+	if (rettype != VOIDOID)
+	{
+		TupleTableSlot *slot = MakeSingleTupleTableSlot(NULL,
+														&TTSOpsMinimalTuple);
+
+		/*
+		 * If the result is composite, *and* we are returning the whole tuple
+		 * result, we need to insert nulls for any dropped columns.  In the
+		 * single-column-result case, there might be dropped columns within
+		 * the composite column value, but it's not our problem here.  There
+		 * should be no resjunk entries in resulttlist, so in the second case
+		 * the JunkFilter is certainly a no-op.
+		 */
+		if (rettupdesc && fcache->returnsTuple)
+			fcache->junkFilter = ExecInitJunkFilterConversion(resulttlist,
+															  rettupdesc,
+															  slot);
+		else
+			fcache->junkFilter = ExecInitJunkFilter(resulttlist, slot);
+	}
 
 	if (fcache->returnsTuple)
 	{
@@ -1049,7 +1074,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 
 	if (fcache == NULL)
 	{
-		init_sql_fcache(fcinfo->flinfo, PG_GET_COLLATION(), lazyEvalOK);
+		init_sql_fcache(fcinfo, PG_GET_COLLATION(), lazyEvalOK);
 		fcache = (SQLFunctionCachePtr) fcinfo->flinfo->fn_extra;
 	}
 
@@ -1532,15 +1557,9 @@ check_sql_fn_statements(List *queryTreeList)
  * check_sql_fn_retval() -- check return value of a list of sql parse trees.
  *
  * The return value of a sql function is the value returned by the last
- * canSetTag query in the function.  We do some ad-hoc type checking here
- * to be sure that the user is returning the type he claims.  There are
- * also a couple of strange-looking features to assist callers in dealing
- * with allowed special cases, such as binary-compatible result types.
- *
- * For a polymorphic function the passed rettype must be the actual resolved
- * output type of the function; we should never see a polymorphic pseudotype
- * such as ANYELEMENT as rettype.  (This means we can't check the type during
- * function definition of a polymorphic function.)
+ * canSetTag query in the function.  We do some ad-hoc type checking and
+ * coercion here to ensure that the function returns what it's supposed to.
+ * Note that we may actually modify the last query to make it match!
  *
  * This function returns true if the sql function returns the entire tuple
  * result of its final statement, or false if it returns just the first column
@@ -1550,45 +1569,47 @@ check_sql_fn_statements(List *queryTreeList)
  * Note that because we allow "SELECT rowtype_expression", the result can be
  * false even when the declared function return type is a rowtype.
  *
- * If modifyTargetList isn't NULL, the function will modify the final
- * statement's targetlist in two cases:
- * (1) if the tlist returns values that are binary-coercible to the expected
- * type rather than being exactly the expected type.  RelabelType nodes will
- * be inserted to make the result types match exactly.
- * (2) if there are dropped columns in the declared result rowtype.  NULL
- * output columns will be inserted in the tlist to match them.
- * (Obviously the caller must pass a parsetree that is okay to modify when
- * using this flag.)  Note that this flag does not affect whether the tlist is
- * considered to be a legal match to the result type, only how we react to
- * allowed not-exact-match cases.  *modifyTargetList will be set true iff
- * we had to make any "dangerous" changes that could modify the semantics of
- * the statement.  If it is set true, the caller should not use the modified
- * statement, but for simplicity we apply the changes anyway.
+ * For a polymorphic function the passed rettype must be the actual resolved
+ * output type of the function; we should never see a polymorphic pseudotype
+ * such as ANYELEMENT as rettype.  (This means we can't check the type during
+ * function definition of a polymorphic function.)  If the function returns
+ * composite, the passed rettupdesc should describe the expected output.
+ * If rettupdesc is NULL, we can't verify that the output matches; that
+ * should only happen in fmgr_sql_validator(), or when the function returns
+ * RECORD and the caller doesn't actually care which composite type it is.
+ * (Typically, rettype and rettupdesc are computed by get_call_result_type
+ * or a sibling function.)
  *
- * If junkFilter isn't NULL, then *junkFilter is set to a JunkFilter defined
- * to convert the function's tuple result to the correct output tuple type.
- * Exception: if the function is defined to return VOID then *junkFilter is
- * set to NULL.
+ * In addition to coercing individual output columns, we can modify the
+ * output to include dummy NULL columns for any dropped columns appearing
+ * in rettupdesc.  This is done only if the caller asks for it.
+ *
+ * If resultTargetList isn't NULL, then *resultTargetList is set to the
+ * targetlist that defines the final statement's result.  Exception: if the
+ * function is defined to return VOID then *resultTargetList is set to NIL.
  */
 bool
-check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
-					bool *modifyTargetList,
-					JunkFilter **junkFilter)
+check_sql_fn_retval(List *queryTreeList,
+					Oid rettype, TupleDesc rettupdesc,
+					bool insertDroppedCols,
+					List **resultTargetList)
 {
+	bool		is_tuple_result = false;
 	Query	   *parse;
-	List	  **tlist_ptr;
+	ListCell   *parse_cell;
 	List	   *tlist;
 	int			tlistlen;
+	bool		tlist_is_modifiable;
 	char		fn_typtype;
-	Oid			restype;
+	List	   *upper_tlist = NIL;
+	bool		upper_tlist_nontrivial = false;
 	ListCell   *lc;
 
+	/* Caller must have resolved any polymorphism */
 	AssertArg(!IsPolymorphicType(rettype));
 
-	if (modifyTargetList)
-		*modifyTargetList = false;	/* initialize for no change */
-	if (junkFilter)
-		*junkFilter = NULL;		/* initialize in case of VOID result */
+	if (resultTargetList)
+		*resultTargetList = NIL;	/* initialize in case of VOID result */
 
 	/*
 	 * If it's declared to return VOID, we don't care what's in the function.
@@ -1603,12 +1624,16 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	 * the user wrote.
 	 */
 	parse = NULL;
+	parse_cell = NULL;
 	foreach(lc, queryTreeList)
 	{
 		Query	   *q = lfirst_node(Query, lc);
 
 		if (q->canSetTag)
+		{
 			parse = q;
+			parse_cell = lc;
+		}
 	}
 
 	/*
@@ -1625,8 +1650,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	if (parse &&
 		parse->commandType == CMD_SELECT)
 	{
-		tlist_ptr = &parse->targetList;
 		tlist = parse->targetList;
+		/* tlist is modifiable unless it's a dummy in a setop query */
+		tlist_is_modifiable = (parse->setOperations == NULL);
 	}
 	else if (parse &&
 			 (parse->commandType == CMD_INSERT ||
@@ -1634,8 +1660,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			  parse->commandType == CMD_DELETE) &&
 			 parse->returningList)
 	{
-		tlist_ptr = &parse->returningList;
 		tlist = parse->returningList;
+		/* returningList can always be modified */
+		tlist_is_modifiable = true;
 	}
 	else
 	{
@@ -1650,7 +1677,12 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 	/*
 	 * OK, check that the targetlist returns something matching the declared
-	 * type.
+	 * type, and modify it if necessary.  If possible, we insert any coercion
+	 * steps right into the final statement's targetlist.  However, that might
+	 * risk changes in the statement's semantics --- we can't safely change
+	 * the output type of a grouping column, for instance.  In such cases we
+	 * handle coercions by inserting an extra level of Query that effectively
+	 * just does a projection.
 	 */
 
 	/*
@@ -1667,8 +1699,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	{
 		/*
 		 * For scalar-type returns, the target list must have exactly one
-		 * non-junk entry, and its type must agree with what the user
-		 * declared; except we allow binary-compatible types too.
+		 * non-junk entry, and its type must be coercible to rettype.
 		 */
 		TargetEntry *tle;
 
@@ -1683,30 +1714,16 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		tle = (TargetEntry *) linitial(tlist);
 		Assert(!tle->resjunk);
 
-		restype = exprType((Node *) tle->expr);
-		if (!IsBinaryCoercible(restype, rettype))
+		if (!coerce_fn_result_column(tle, rettype, -1,
+									 tlist_is_modifiable,
+									 &upper_tlist,
+									 &upper_tlist_nontrivial))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("return type mismatch in function declared to return %s",
 							format_type_be(rettype)),
 					 errdetail("Actual return type is %s.",
-							   format_type_be(restype))));
-		if (modifyTargetList && restype != rettype)
-		{
-			tle->expr = (Expr *) makeRelabelType(tle->expr,
-												 rettype,
-												 -1,
-												 get_typcollation(rettype),
-												 COERCE_IMPLICIT_CAST);
-			/* Relabel is dangerous if TLE is a sort/group or setop column */
-			if (tle->ressortgroupref != 0 || parse->setOperations)
-				*modifyTargetList = true;
-		}
-
-		/* Set up junk filter if needed */
-		if (junkFilter)
-			*junkFilter = ExecInitJunkFilter(tlist,
-											 MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple));
+							   format_type_be(exprType((Node *) tle->expr)))));
 	}
 	else if (fn_typtype == TYPTYPE_COMPOSITE || rettype == RECORDOID)
 	{
@@ -1715,26 +1732,29 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		 *
 		 * Note that we will not consider a domain over composite to be a
 		 * "rowtype" return type; it goes through the scalar case above.  This
-		 * is because SQL functions don't provide any implicit casting to the
-		 * result type, so there is no way to produce a domain-over-composite
-		 * result except by computing it as an explicit single-column result.
+		 * is because we only provide column-by-column implicit casting, and
+		 * will not cast the complete record result.  So the only way to
+		 * produce a domain-over-composite result is to compute it as an
+		 * explicit single-column result.  The single-composite-column code
+		 * path just below could handle such cases, but it won't be reached.
 		 */
-		TupleDesc	tupdesc;
 		int			tupnatts;	/* physical number of columns in tuple */
 		int			tuplogcols; /* # of nondeleted columns in tuple */
 		int			colindex;	/* physical column index */
-		List	   *newtlist;	/* new non-junk tlist entries */
-		List	   *junkattrs;	/* new junk tlist entries */
 
 		/*
-		 * If the target list is of length 1, and the type of the varnode in
-		 * the target list matches the declared return type, this is okay.
-		 * This can happen, for example, where the body of the function is
-		 * 'SELECT func2()', where func2 has the same composite return type as
-		 * the function that's calling it.
+		 * If the target list has one non-junk entry, and that expression has
+		 * or can be coerced to the declared return type, take it as the
+		 * result.  This allows, for example, 'SELECT func2()', where func2
+		 * has the same composite return type as the function that's calling
+		 * it.  This provision creates some ambiguity --- maybe the expression
+		 * was meant to be the lone field of the composite result --- but it
+		 * works well enough as long as we don't get too enthusiastic about
+		 * inventing coercions from scalar to composite types.
 		 *
-		 * XXX Note that if rettype is RECORD, the IsBinaryCoercible check
-		 * will succeed for any composite restype.  For the moment we rely on
+		 * XXX Note that if rettype is RECORD and the expression is of a named
+		 * composite type, or vice versa, this coercion will succeed, whether
+		 * or not the record type really matches.  For the moment we rely on
 		 * runtime type checking to catch any discrepancy, but it'd be nice to
 		 * do better at parse time.
 		 */
@@ -1743,78 +1763,46 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			TargetEntry *tle = (TargetEntry *) linitial(tlist);
 
 			Assert(!tle->resjunk);
-			restype = exprType((Node *) tle->expr);
-			if (IsBinaryCoercible(restype, rettype))
+			if (coerce_fn_result_column(tle, rettype, -1,
+										tlist_is_modifiable,
+										&upper_tlist,
+										&upper_tlist_nontrivial))
 			{
-				if (modifyTargetList && restype != rettype)
-				{
-					tle->expr = (Expr *) makeRelabelType(tle->expr,
-														 rettype,
-														 -1,
-														 get_typcollation(rettype),
-														 COERCE_IMPLICIT_CAST);
-					/* Relabel is dangerous if sort/group or setop column */
-					if (tle->ressortgroupref != 0 || parse->setOperations)
-						*modifyTargetList = true;
-				}
-				/* Set up junk filter if needed */
-				if (junkFilter)
-				{
-					TupleTableSlot *slot =
-					MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
-
-					*junkFilter = ExecInitJunkFilter(tlist, slot);
-				}
-				return false;	/* NOT returning whole tuple */
+				/* Note that we're NOT setting is_tuple_result */
+				goto tlist_coercion_finished;
 			}
 		}
 
 		/*
-		 * Is the rowtype fixed, or determined only at runtime?  (Note we
-		 * cannot see TYPEFUNC_COMPOSITE_DOMAIN here.)
+		 * If the caller didn't provide an expected tupdesc, we can't do any
+		 * further checking.  Assume we're returning the whole tuple.
 		 */
-		if (get_func_result_type(func_id, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		if (rettupdesc == NULL)
 		{
-			/*
-			 * Assume we are returning the whole tuple. Crosschecking against
-			 * what the caller expects will happen at runtime.
-			 */
-			if (junkFilter)
-			{
-				TupleTableSlot *slot;
-
-				slot = MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
-				*junkFilter = ExecInitJunkFilter(tlist, slot);
-			}
+			/* Return tlist if requested */
+			if (resultTargetList)
+				*resultTargetList = tlist;
 			return true;
 		}
-		Assert(tupdesc);
 
 		/*
-		 * Verify that the targetlist matches the return tuple type. We scan
-		 * the non-deleted attributes to ensure that they match the datatypes
-		 * of the non-resjunk columns.  For deleted attributes, insert NULL
-		 * result columns if the caller asked for that.
+		 * Verify that the targetlist matches the return tuple type.  We scan
+		 * the non-resjunk columns, and coerce them if necessary to match the
+		 * datatypes of the non-deleted attributes.  For deleted attributes,
+		 * insert NULL result columns if the caller asked for that.
 		 */
-		tupnatts = tupdesc->natts;
+		tupnatts = rettupdesc->natts;
 		tuplogcols = 0;			/* we'll count nondeleted cols as we go */
 		colindex = 0;
-		newtlist = NIL;			/* these are only used if modifyTargetList */
-		junkattrs = NIL;
 
 		foreach(lc, tlist)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(lc);
 			Form_pg_attribute attr;
-			Oid			tletype;
-			Oid			atttype;
 
+			/* resjunk columns can simply be ignored */
 			if (tle->resjunk)
-			{
-				if (modifyTargetList)
-					junkattrs = lappend(junkattrs, tle);
 				continue;
-			}
 
 			do
 			{
@@ -1825,8 +1813,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 							 errmsg("return type mismatch in function declared to return %s",
 									format_type_be(rettype)),
 							 errdetail("Final statement returns too many columns.")));
-				attr = TupleDescAttr(tupdesc, colindex - 1);
-				if (attr->attisdropped && modifyTargetList)
+				attr = TupleDescAttr(rettupdesc, colindex - 1);
+				if (attr->attisdropped && insertDroppedCols)
 				{
 					Expr	   *null_expr;
 
@@ -1838,57 +1826,41 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 												   (Datum) 0,
 												   true,	/* isnull */
 												   true /* byval */ );
-					newtlist = lappend(newtlist,
-									   makeTargetEntry(null_expr,
-													   colindex,
-													   NULL,
-													   false));
-					/* NULL insertion is dangerous in a setop */
-					if (parse->setOperations)
-						*modifyTargetList = true;
+					upper_tlist = lappend(upper_tlist,
+										  makeTargetEntry(null_expr,
+														  list_length(upper_tlist) + 1,
+														  NULL,
+														  false));
+					upper_tlist_nontrivial = true;
 				}
 			} while (attr->attisdropped);
 			tuplogcols++;
 
-			tletype = exprType((Node *) tle->expr);
-			atttype = attr->atttypid;
-			if (!IsBinaryCoercible(tletype, atttype))
+			if (!coerce_fn_result_column(tle,
+										 attr->atttypid, attr->atttypmod,
+										 tlist_is_modifiable,
+										 &upper_tlist,
+										 &upper_tlist_nontrivial))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("return type mismatch in function declared to return %s",
 								format_type_be(rettype)),
 						 errdetail("Final statement returns %s instead of %s at column %d.",
-								   format_type_be(tletype),
-								   format_type_be(atttype),
+								   format_type_be(exprType((Node *) tle->expr)),
+								   format_type_be(attr->atttypid),
 								   tuplogcols)));
-			if (modifyTargetList)
-			{
-				if (tletype != atttype)
-				{
-					tle->expr = (Expr *) makeRelabelType(tle->expr,
-														 atttype,
-														 -1,
-														 get_typcollation(atttype),
-														 COERCE_IMPLICIT_CAST);
-					/* Relabel is dangerous if sort/group or setop column */
-					if (tle->ressortgroupref != 0 || parse->setOperations)
-						*modifyTargetList = true;
-				}
-				tle->resno = colindex;
-				newtlist = lappend(newtlist, tle);
-			}
 		}
 
-		/* remaining columns in tupdesc had better all be dropped */
+		/* remaining columns in rettupdesc had better all be dropped */
 		for (colindex++; colindex <= tupnatts; colindex++)
 		{
-			if (!TupleDescAttr(tupdesc, colindex - 1)->attisdropped)
+			if (!TupleDescAttr(rettupdesc, colindex - 1)->attisdropped)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("return type mismatch in function declared to return %s",
 								format_type_be(rettype)),
 						 errdetail("Final statement returns too few columns.")));
-			if (modifyTargetList)
+			if (insertDroppedCols)
 			{
 				Expr	   *null_expr;
 
@@ -1900,43 +1872,17 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 											   (Datum) 0,
 											   true,	/* isnull */
 											   true /* byval */ );
-				newtlist = lappend(newtlist,
-								   makeTargetEntry(null_expr,
-												   colindex,
-												   NULL,
-												   false));
-				/* NULL insertion is dangerous in a setop */
-				if (parse->setOperations)
-					*modifyTargetList = true;
+				upper_tlist = lappend(upper_tlist,
+									  makeTargetEntry(null_expr,
+													  list_length(upper_tlist) + 1,
+													  NULL,
+													  false));
+				upper_tlist_nontrivial = true;
 			}
-		}
-
-		if (modifyTargetList)
-		{
-			/* ensure resjunk columns are numbered correctly */
-			foreach(lc, junkattrs)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(lc);
-
-				tle->resno = colindex++;
-			}
-			/* replace the tlist with the modified one */
-			*tlist_ptr = list_concat(newtlist, junkattrs);
-		}
-
-		/* Set up junk filter if needed */
-		if (junkFilter)
-		{
-			TupleTableSlot *slot =
-			MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
-
-			*junkFilter = ExecInitJunkFilterConversion(tlist,
-													   CreateTupleDescCopy(tupdesc),
-													   slot);
 		}
 
 		/* Report that we are returning entire tuple result */
-		return true;
+		is_tuple_result = true;
 	}
 	else
 		ereport(ERROR,
@@ -1944,7 +1890,135 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 				 errmsg("return type %s is not supported for SQL functions",
 						format_type_be(rettype))));
 
-	return false;
+tlist_coercion_finished:
+
+	/*
+	 * If necessary, modify the final Query by injecting an extra Query level
+	 * that just performs a projection.  (It'd be dubious to do this to a
+	 * non-SELECT query, but we never have to; RETURNING lists can always be
+	 * modified in-place.)
+	 */
+	if (upper_tlist_nontrivial)
+	{
+		Query	   *newquery;
+		List	   *colnames;
+		RangeTblEntry *rte;
+		RangeTblRef *rtr;
+
+		Assert(parse->commandType == CMD_SELECT);
+
+		/* Most of the upper Query struct can be left as zeroes/nulls */
+		newquery = makeNode(Query);
+		newquery->commandType = CMD_SELECT;
+		newquery->querySource = parse->querySource;
+		newquery->canSetTag = true;
+		newquery->targetList = upper_tlist;
+
+		/* We need a moderately realistic colnames list for the subquery RTE */
+		colnames = NIL;
+		foreach(lc, parse->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+			if (tle->resjunk)
+				continue;
+			colnames = lappend(colnames,
+							   makeString(tle->resname ? tle->resname : ""));
+		}
+
+		/* Build a suitable RTE for the subquery */
+		rte = makeNode(RangeTblEntry);
+		rte->rtekind = RTE_SUBQUERY;
+		rte->subquery = parse;
+		rte->eref = rte->alias = makeAlias("*SELECT*", colnames);
+		rte->lateral = false;
+		rte->inh = false;
+		rte->inFromCl = true;
+		newquery->rtable = list_make1(rte);
+
+		rtr = makeNode(RangeTblRef);
+		rtr->rtindex = 1;
+		newquery->jointree = makeFromExpr(list_make1(rtr), NULL);
+
+		/* Replace original query in the correct element of the query list */
+		lfirst(parse_cell) = newquery;
+	}
+
+	/* Return tlist (possibly modified) if requested */
+	if (resultTargetList)
+		*resultTargetList = upper_tlist;
+
+	return is_tuple_result;
+}
+
+/*
+ * Process one function result column for check_sql_fn_retval
+ *
+ * Coerce the output value to the required type/typmod, and add a column
+ * to *upper_tlist for it.  Set *upper_tlist_nontrivial to true if we
+ * add an upper tlist item that's not just a Var.
+ *
+ * Returns true if OK, false if could not coerce to required type
+ * (in which case, no changes have been made)
+ */
+static bool
+coerce_fn_result_column(TargetEntry *src_tle,
+						Oid res_type,
+						int32 res_typmod,
+						bool tlist_is_modifiable,
+						List **upper_tlist,
+						bool *upper_tlist_nontrivial)
+{
+	TargetEntry *new_tle;
+	Expr	   *new_tle_expr;
+	Node	   *cast_result;
+
+	/*
+	 * If the TLE has a sortgroupref marking, don't change it, as it probably
+	 * is referenced by ORDER BY, DISTINCT, etc, and changing its type would
+	 * break query semantics.  Otherwise, it's safe to modify in-place unless
+	 * the query as a whole has issues with that.
+	 */
+	if (tlist_is_modifiable && src_tle->ressortgroupref == 0)
+	{
+		/* OK to modify src_tle in place, if necessary */
+		cast_result = coerce_to_target_type(NULL,
+											(Node *) src_tle->expr,
+											exprType((Node *) src_tle->expr),
+											res_type, res_typmod,
+											COERCION_ASSIGNMENT,
+											COERCE_IMPLICIT_CAST,
+											-1);
+		if (cast_result == NULL)
+			return false;
+		src_tle->expr = (Expr *) cast_result;
+		/* Make a Var referencing the possibly-modified TLE */
+		new_tle_expr = (Expr *) makeVarFromTargetEntry(1, src_tle);
+	}
+	else
+	{
+		/* Any casting must happen in the upper tlist */
+		Var		   *var = makeVarFromTargetEntry(1, src_tle);
+
+		cast_result = coerce_to_target_type(NULL,
+											(Node *) var,
+											var->vartype,
+											res_type, res_typmod,
+											COERCION_ASSIGNMENT,
+											COERCE_IMPLICIT_CAST,
+											-1);
+		if (cast_result == NULL)
+			return false;
+		/* Did the coercion actually do anything? */
+		if (cast_result != (Node *) var)
+			*upper_tlist_nontrivial = true;
+		new_tle_expr = (Expr *) cast_result;
+	}
+	new_tle = makeTargetEntry(new_tle_expr,
+							  list_length(*upper_tlist) + 1,
+							  src_tle->resname, false);
+	*upper_tlist = lappend(*upper_tlist, new_tle);
+	return true;
 }
 
 

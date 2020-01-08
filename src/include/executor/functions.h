@@ -31,10 +31,10 @@ extern void sql_fn_parser_setup(struct ParseState *pstate,
 
 extern void check_sql_fn_statements(List *queryTreeList);
 
-extern bool check_sql_fn_retval(Oid func_id, Oid rettype,
-								List *queryTreeList,
-								bool *modifyTargetList,
-								JunkFilter **junkFilter);
+extern bool check_sql_fn_retval(List *queryTreeList,
+								Oid rettype, TupleDesc rettupdesc,
+								bool insertDroppedCols,
+								List **resultTargetList);
 
 extern DestReceiver *CreateSQLFunctionDestReceiver(void);
 

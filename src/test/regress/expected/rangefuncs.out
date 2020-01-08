@@ -1820,6 +1820,67 @@ select * from array_to_set(array['one', 'two']); -- fail
 ERROR:  a column definition list is required for functions returning "record"
 LINE 1: select * from array_to_set(array['one', 'two']);
                       ^
+-- after-the-fact coercion of the columns is now possible, too
+select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
+  f1  | f2  
+------+-----
+ 1.00 | one
+ 2.00 | two
+(2 rows)
+
+-- and if it doesn't work, you get a compile-time not run-time error
+select * from array_to_set(array['one', 'two']) as t(f1 point,f2 text);
+ERROR:  return type mismatch in function declared to return record
+DETAIL:  Final statement returns integer instead of point at column 1.
+CONTEXT:  SQL function "array_to_set" during startup
+-- with "strict", this function can't be inlined in FROM
+explain (verbose, costs off)
+  select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Function Scan on public.array_to_set t
+   Output: f1, f2
+   Function Call: array_to_set('{one,two}'::text[])
+(3 rows)
+
+-- but without, it can be:
+create or replace function array_to_set(anyarray) returns setof record as $$
+  select i AS "index", $1[i] AS "value" from generate_subscripts($1, 1) i
+$$ language sql immutable;
+select array_to_set(array['one', 'two']);
+ array_to_set 
+--------------
+ (1,one)
+ (2,two)
+(2 rows)
+
+select * from array_to_set(array['one', 'two']) as t(f1 int,f2 text);
+ f1 | f2  
+----+-----
+  1 | one
+  2 | two
+(2 rows)
+
+select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
+  f1  | f2  
+------+-----
+ 1.00 | one
+ 2.00 | two
+(2 rows)
+
+select * from array_to_set(array['one', 'two']) as t(f1 point,f2 text);
+ERROR:  return type mismatch in function declared to return record
+DETAIL:  Final statement returns integer instead of point at column 1.
+CONTEXT:  SQL function "array_to_set" during inlining
+explain (verbose, costs off)
+  select * from array_to_set(array['one', 'two']) as t(f1 numeric(4,2),f2 text);
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Function Scan on pg_catalog.generate_subscripts i
+   Output: i.i, ('{one,two}'::text[])[i.i]
+   Function Call: generate_subscripts('{one,two}'::text[], 1)
+(3 rows)
+
 create temp table rngfunc(f1 int8, f2 int8);
 create function testrngfunc() returns record as $$
   insert into rngfunc values (1,2) returning *;
@@ -1863,6 +1924,140 @@ ERROR:  a column definition list is required for functions returning "record"
 LINE 1: select * from testrngfunc();
                       ^
 drop function testrngfunc();
+-- Check that typmod imposed by a composite type is honored
+create type rngfunc_type as (f1 numeric(35,6), f2 numeric(35,2));
+create function testrngfunc() returns rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql immutable;
+explain (verbose, costs off)
+select testrngfunc();
+                QUERY PLAN                 
+-------------------------------------------
+ Result
+   Output: '(7.136178,7.14)'::rngfunc_type
+(2 rows)
+
+select testrngfunc();
+   testrngfunc   
+-----------------
+ (7.136178,7.14)
+(1 row)
+
+explain (verbose, costs off)
+select * from testrngfunc();
+                    QUERY PLAN                    
+--------------------------------------------------
+ Function Scan on testrngfunc
+   Output: f1, f2
+   Function Call: '(7.136178,7.14)'::rngfunc_type
+(3 rows)
+
+select * from testrngfunc();
+    f1    |  f2  
+----------+------
+ 7.136178 | 7.14
+(1 row)
+
+create or replace function testrngfunc() returns rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql volatile;
+explain (verbose, costs off)
+select testrngfunc();
+       QUERY PLAN        
+-------------------------
+ Result
+   Output: testrngfunc()
+(2 rows)
+
+select testrngfunc();
+   testrngfunc   
+-----------------
+ (7.136178,7.14)
+(1 row)
+
+explain (verbose, costs off)
+select * from testrngfunc();
+             QUERY PLAN              
+-------------------------------------
+ Function Scan on public.testrngfunc
+   Output: f1, f2
+   Function Call: testrngfunc()
+(3 rows)
+
+select * from testrngfunc();
+    f1    |  f2  
+----------+------
+ 7.136178 | 7.14
+(1 row)
+
+drop function testrngfunc();
+create function testrngfunc() returns setof rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql immutable;
+explain (verbose, costs off)
+select testrngfunc();
+       QUERY PLAN        
+-------------------------
+ ProjectSet
+   Output: testrngfunc()
+   ->  Result
+(3 rows)
+
+select testrngfunc();
+   testrngfunc   
+-----------------
+ (7.136178,7.14)
+(1 row)
+
+explain (verbose, costs off)
+select * from testrngfunc();
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Result
+   Output: 7.136178::numeric(35,6), 7.14::numeric(35,2)
+(2 rows)
+
+select * from testrngfunc();
+    f1    |  f2  
+----------+------
+ 7.136178 | 7.14
+(1 row)
+
+create or replace function testrngfunc() returns setof rngfunc_type as $$
+  select 7.136178319899999964, 7.136178319899999964;
+$$ language sql volatile;
+explain (verbose, costs off)
+select testrngfunc();
+       QUERY PLAN        
+-------------------------
+ ProjectSet
+   Output: testrngfunc()
+   ->  Result
+(3 rows)
+
+select testrngfunc();
+   testrngfunc   
+-----------------
+ (7.136178,7.14)
+(1 row)
+
+explain (verbose, costs off)
+select * from testrngfunc();
+             QUERY PLAN              
+-------------------------------------
+ Function Scan on public.testrngfunc
+   Output: f1, f2
+   Function Call: testrngfunc()
+(3 rows)
+
+select * from testrngfunc();
+    f1    |  f2  
+----------+------
+ 7.136178 | 7.14
+(1 row)
+
+drop type rngfunc_type cascade;
+NOTICE:  drop cascades to function testrngfunc()
 --
 -- Check some cases involving added/dropped columns in a rowtype result
 --
@@ -1955,7 +2150,7 @@ drop view usersview;
 drop function get_first_user();
 drop function get_users();
 drop table users;
--- this won't get inlined because of type coercion, but it shouldn't fail
+-- check behavior with type coercion required for a set-op
 create or replace function rngfuncbar() returns setof text as
 $$ select 'foo'::varchar union all select 'bar'::varchar ; $$
 language sql stable;
@@ -1972,6 +2167,19 @@ select * from rngfuncbar();
  foo
  bar
 (2 rows)
+
+-- this function is now inlinable, too:
+explain (verbose, costs off) select * from rngfuncbar();
+                   QUERY PLAN                   
+------------------------------------------------
+ Result
+   Output: ('foo'::character varying)
+   ->  Append
+         ->  Result
+               Output: 'foo'::character varying
+         ->  Result
+               Output: 'bar'::character varying
+(7 rows)
 
 drop function rngfuncbar();
 -- check handling of a SQL function with multiple OUT params (bug #5777)

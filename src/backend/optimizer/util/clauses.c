@@ -155,7 +155,6 @@ static Query *substitute_actual_srf_parameters(Query *expr,
 											   int nargs, List *args);
 static Node *substitute_actual_srf_parameters_mutator(Node *node,
 													  substitute_actual_srf_parameters_context *context);
-static bool tlist_matches_coltypelist(List *tlist, List *coltypelist);
 
 
 /*****************************************************************************
@@ -4399,15 +4398,16 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
-	bool		modifyTargetList;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
 	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
 	FuncExpr   *fexpr;
 	SQLFunctionParseInfoPtr pinfo;
+	TupleDesc	rettupdesc;
 	ParseState *pstate;
 	List	   *raw_parsetree_list;
+	List	   *querytree_list;
 	Query	   *querytree;
 	Node	   *newexpr;
 	int		   *usecounts;
@@ -4472,8 +4472,8 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	/*
 	 * Set up to handle parameters while parsing the function body.  We need a
 	 * dummy FuncExpr node containing the already-simplified arguments to pass
-	 * to prepare_sql_fn_parse_info.  (It is really only needed if there are
-	 * some polymorphic arguments, but for simplicity we always build it.)
+	 * to prepare_sql_fn_parse_info.  (In some cases we don't really need
+	 * that, but for simplicity we always build it.)
 	 */
 	fexpr = makeNode(FuncExpr);
 	fexpr->funcid = funcid;
@@ -4489,6 +4489,11 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	pinfo = prepare_sql_fn_parse_info(func_tuple,
 									  (Node *) fexpr,
 									  input_collid);
+
+	/* fexpr also provides a convenient way to resolve a composite result */
+	(void) get_expr_result_type((Node *) fexpr,
+								NULL,
+								&rettupdesc);
 
 	/*
 	 * We just do parsing and parse analysis, not rewriting, because rewriting
@@ -4542,15 +4547,23 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 * Make sure the function (still) returns what it's declared to.  This
 	 * will raise an error if wrong, but that's okay since the function would
 	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
-	 * a RelabelType if needed to make the tlist expression match the declared
+	 * a coercion if needed to make the tlist expression match the declared
 	 * type of the function.
 	 *
 	 * Note: we do not try this until we have verified that no rewriting was
 	 * needed; that's probably not important, but let's be careful.
 	 */
-	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree),
-							&modifyTargetList, NULL))
+	querytree_list = list_make1(querytree);
+	if (check_sql_fn_retval(querytree_list, result_type, rettupdesc,
+							false, NULL))
 		goto fail;				/* reject whole-tuple-result cases */
+
+	/*
+	 * Given the tests above, check_sql_fn_retval shouldn't have decided to
+	 * inject a projection step, but let's just make sure.
+	 */
+	if (querytree != linitial(querytree_list))
+		goto fail;
 
 	/* Now we can grab the tlist expression */
 	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
@@ -4565,9 +4578,6 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 */
 	if (exprType(newexpr) != result_type)
 		goto fail;
-
-	/* check_sql_fn_retval couldn't have made any dangerous tlist changes */
-	Assert(!modifyTargetList);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't be more
@@ -4877,12 +4887,13 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	char	   *src;
 	Datum		tmp;
 	bool		isNull;
-	bool		modifyTargetList;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
 	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
 	SQLFunctionParseInfoPtr pinfo;
+	TypeFuncClass functypclass;
+	TupleDesc	rettupdesc;
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
 	Query	   *querytree;
@@ -5013,6 +5024,18 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 									  fexpr->inputcollid);
 
 	/*
+	 * Also resolve the actual function result tupdesc, if composite.  If the
+	 * function is just declared to return RECORD, dig the info out of the AS
+	 * clause.
+	 */
+	functypclass = get_expr_result_type((Node *) fexpr, NULL, &rettupdesc);
+	if (functypclass == TYPEFUNC_RECORD)
+		rettupdesc = BuildDescFromLists(rtfunc->funccolnames,
+										rtfunc->funccoltypes,
+										rtfunc->funccoltypmods,
+										rtfunc->funccolcollations);
+
+	/*
 	 * Parse, analyze, and rewrite (unlike inline_function(), we can't skip
 	 * rewriting here).  We can fail as soon as we find more than one query,
 	 * though.
@@ -5040,43 +5063,28 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 * Make sure the function (still) returns what it's declared to.  This
 	 * will raise an error if wrong, but that's okay since the function would
 	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
-	 * RelabelType(s) and/or NULL columns if needed to make the tlist
-	 * expression(s) match the declared type of the function.
+	 * coercions if needed to make the tlist expression(s) match the declared
+	 * type of the function.  We also ask it to insert dummy NULL columns for
+	 * any dropped columns in rettupdesc, so that the elements of the modified
+	 * tlist match up to the attribute numbers.
 	 *
 	 * If the function returns a composite type, don't inline unless the check
 	 * shows it's returning a whole tuple result; otherwise what it's
-	 * returning is a single composite column which is not what we need. (Like
-	 * check_sql_fn_retval, we deliberately exclude domains over composite
-	 * here.)
+	 * returning is a single composite column which is not what we need.
 	 */
-	if (!check_sql_fn_retval(func_oid, fexpr->funcresulttype,
-							 querytree_list,
-							 &modifyTargetList, NULL) &&
-		(get_typtype(fexpr->funcresulttype) == TYPTYPE_COMPOSITE ||
-		 fexpr->funcresulttype == RECORDOID))
+	if (!check_sql_fn_retval(querytree_list,
+							 fexpr->funcresulttype, rettupdesc,
+							 true, NULL) &&
+		(functypclass == TYPEFUNC_COMPOSITE ||
+		 functypclass == TYPEFUNC_COMPOSITE_DOMAIN ||
+		 functypclass == TYPEFUNC_RECORD))
 		goto fail;				/* reject not-whole-tuple-result cases */
 
 	/*
-	 * If we had to modify the tlist to make it match, and the statement is
-	 * one in which changing the tlist contents could change semantics, we
-	 * have to punt and not inline.
+	 * check_sql_fn_retval might've inserted a projection step, but that's
+	 * fine; just make sure we use the upper Query.
 	 */
-	if (modifyTargetList)
-		goto fail;
-
-	/*
-	 * If it returns RECORD, we have to check against the column type list
-	 * provided in the RTE; check_sql_fn_retval can't do that.  (If no match,
-	 * we just fail to inline, rather than complaining; see notes for
-	 * tlist_matches_coltypelist.)	We don't have to do this for functions
-	 * with declared OUT parameters, even though their funcresulttype is
-	 * RECORDOID, so check get_func_result_type too.
-	 */
-	if (fexpr->funcresulttype == RECORDOID &&
-		get_func_result_type(func_oid, NULL, NULL) == TYPEFUNC_RECORD &&
-		!tlist_matches_coltypelist(querytree->targetList,
-								   rtfunc->funccoltypes))
-		goto fail;
+	querytree = linitial(querytree_list);
 
 	/*
 	 * Looks good --- substitute parameters into the query.
@@ -5180,47 +5188,4 @@ substitute_actual_srf_parameters_mutator(Node *node,
 	return expression_tree_mutator(node,
 								   substitute_actual_srf_parameters_mutator,
 								   (void *) context);
-}
-
-/*
- * Check whether a SELECT targetlist emits the specified column types,
- * to see if it's safe to inline a function returning record.
- *
- * We insist on exact match here.  The executor allows binary-coercible
- * cases too, but we don't have a way to preserve the correct column types
- * in the correct places if we inline the function in such a case.
- *
- * Note that we only check type OIDs not typmods; this agrees with what the
- * executor would do at runtime, and attributing a specific typmod to a
- * function result is largely wishful thinking anyway.
- */
-static bool
-tlist_matches_coltypelist(List *tlist, List *coltypelist)
-{
-	ListCell   *tlistitem;
-	ListCell   *clistitem;
-
-	clistitem = list_head(coltypelist);
-	foreach(tlistitem, tlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
-		Oid			coltype;
-
-		if (tle->resjunk)
-			continue;			/* ignore junk columns */
-
-		if (clistitem == NULL)
-			return false;		/* too many tlist items */
-
-		coltype = lfirst_oid(clistitem);
-		clistitem = lnext(coltypelist, clistitem);
-
-		if (exprType((Node *) tle->expr) != coltype)
-			return false;		/* column type mismatch */
-	}
-
-	if (clistitem != NULL)
-		return false;			/* too few tlist items */
-
-	return true;
 }
