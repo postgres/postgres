@@ -194,13 +194,15 @@ typedef struct NewConstraint
  * Phase 3 copy (this could be either a new column with a non-null default, or
  * a column that we're changing the type of).  Columns without such an entry
  * are just copied from the old table during ATRewriteTable.  Note that the
- * expr is an expression over *old* table values.
+ * expr is an expression over *old* table values, except when is_generated
+ * is true; then it is an expression over columns of the *new* tuple.
  */
 typedef struct NewColumnValue
 {
 	AttrNumber	attnum;			/* which column */
 	Expr	   *expr;			/* expression to compute */
 	ExprState  *exprstate;		/* execution state */
+	bool		is_generated;	/* is it a GENERATED expression? */
 } NewColumnValue;
 
 /*
@@ -4960,13 +4962,18 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 				/*
 				 * Process supplied expressions to replace selected columns.
-				 * Expression inputs come from the old tuple.
+				 *
+				 * First, evaluate expressions whose inputs come from the old
+				 * tuple.
 				 */
 				econtext->ecxt_scantuple = oldslot;
 
 				foreach(l, tab->newvals)
 				{
 					NewColumnValue *ex = lfirst(l);
+
+					if (ex->is_generated)
+						continue;
 
 					newslot->tts_values[ex->attnum - 1]
 						= ExecEvalExpr(ex->exprstate,
@@ -4975,6 +4982,26 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				}
 
 				ExecStoreVirtualTuple(newslot);
+
+				/*
+				 * Now, evaluate any expressions whose inputs come from the
+				 * new tuple.  We assume these columns won't reference each
+				 * other, so that there's no ordering dependency.
+				 */
+				econtext->ecxt_scantuple = newslot;
+
+				foreach(l, tab->newvals)
+				{
+					NewColumnValue *ex = lfirst(l);
+
+					if (!ex->is_generated)
+						continue;
+
+					newslot->tts_values[ex->attnum - 1]
+						= ExecEvalExpr(ex->exprstate,
+									   econtext,
+									   &newslot->tts_isnull[ex->attnum - 1]);
+				}
 
 				/*
 				 * Constraints might reference the tableoid column, so
@@ -5891,6 +5918,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
 			newval->attnum = attribute.attnum;
 			newval->expr = expression_planner(defval);
+			newval->is_generated = (colDef->generated != '\0');
 
 			tab->newvals = lappend(tab->newvals, newval);
 		}
@@ -10407,6 +10435,7 @@ ATPrepAlterColumnType(List **wqueue,
 		newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
 		newval->attnum = attnum;
 		newval->expr = (Expr *) transform;
+		newval->is_generated = false;
 
 		tab->newvals = lappend(tab->newvals, newval);
 		if (ATColumnChangeRequiresRewrite(transform, attnum))
