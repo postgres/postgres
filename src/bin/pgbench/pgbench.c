@@ -70,7 +70,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-
 #define ERRCODE_UNDEFINED_TABLE  "42P01"
 
 /*
@@ -541,8 +540,6 @@ static ParsedScript sql_script[MAX_SCRIPTS];	/* SQL script files */
 static int	num_scripts;		/* number of scripts in sql_script[] */
 static int64 total_weight = 0;
 
-static int	debug = 0;			/* debug flag */
-
 /* Builtin test scripts */
 typedef struct BuiltinScript
 {
@@ -787,14 +784,12 @@ strtoint64(const char *str, bool errorOK, int64 *result)
 
 out_of_range:
 	if (!errorOK)
-		fprintf(stderr,
-				"value \"%s\" is out of range for type bigint\n", str);
+		pg_log_error("value \"%s\" is out of range for type bigint", str);
 	return false;
 
 invalid_syntax:
 	if (!errorOK)
-		fprintf(stderr,
-				"invalid input syntax for type bigint: \"%s\"\n", str);
+		pg_log_error("invalid input syntax for type bigint: \"%s\"", str);
 	return false;
 }
 
@@ -810,16 +805,14 @@ strtodouble(const char *str, bool errorOK, double *dv)
 	if (unlikely(errno != 0))
 	{
 		if (!errorOK)
-			fprintf(stderr,
-					"value \"%s\" is out of range for type double\n", str);
+			pg_log_error("value \"%s\" is out of range for type double", str);
 		return false;
 	}
 
 	if (unlikely(end == str || *end != '\0'))
 	{
 		if (!errorOK)
-			fprintf(stderr,
-					"invalid input syntax for type double: \"%s\"\n", str);
+			pg_log_error("invalid input syntax for type double: \"%s\"", str);
 		return false;
 	}
 	return true;
@@ -1149,7 +1142,8 @@ executeStatement(PGconn *con, const char *sql)
 	res = PQexec(con, sql);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "%s", PQerrorMessage(con));
+		pg_log_fatal("query failed: %s", PQerrorMessage(con));
+		pg_log_info("query was: %s", sql);
 		exit(1);
 	}
 	PQclear(res);
@@ -1164,8 +1158,8 @@ tryExecuteStatement(PGconn *con, const char *sql)
 	res = PQexec(con, sql);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "%s", PQerrorMessage(con));
-		fprintf(stderr, "(ignoring this error and continuing anyway)\n");
+		pg_log_error("%s", PQerrorMessage(con));
+		pg_log_info("(ignoring this error and continuing anyway)");
 	}
 	PQclear(res);
 }
@@ -1211,8 +1205,7 @@ doConnect(void)
 
 		if (!conn)
 		{
-			fprintf(stderr, "connection to database \"%s\" failed\n",
-					dbName);
+			pg_log_error("connection to database \"%s\" failed", dbName);
 			return NULL;
 		}
 
@@ -1230,8 +1223,8 @@ doConnect(void)
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "connection to database \"%s\" failed:\n%s",
-				dbName, PQerrorMessage(conn));
+		pg_log_error("connection to database \"%s\" failed: %s",
+					 dbName, PQerrorMessage(conn));
 		PQfinish(conn);
 		return NULL;
 	}
@@ -1360,9 +1353,8 @@ makeVariableValue(Variable *var)
 
 		if (!strtodouble(var->svalue, true, &dv))
 		{
-			fprintf(stderr,
-					"malformed variable \"%s\" value: \"%s\"\n",
-					var->name, var->svalue);
+			pg_log_error("malformed variable \"%s\" value: \"%s\"",
+						 var->name, var->svalue);
 			return false;
 		}
 		setDoubleValue(&var->value, dv);
@@ -1425,8 +1417,7 @@ lookupCreateVariable(CState *st, const char *context, char *name)
 		 */
 		if (!valid_variable_name(name))
 		{
-			fprintf(stderr, "%s: invalid variable name: \"%s\"\n",
-					context, name);
+			pg_log_error("%s: invalid variable name: \"%s\"", context, name);
 			return NULL;
 		}
 
@@ -1635,7 +1626,7 @@ coerceToBool(PgBenchValue *pval, bool *bval)
 	}
 	else						/* NULL, INT or DOUBLE */
 	{
-		fprintf(stderr, "cannot coerce %s to boolean\n", valueTypeName(pval));
+		pg_log_error("cannot coerce %s to boolean", valueTypeName(pval));
 		*bval = false;			/* suppress uninitialized-variable warnings */
 		return false;
 	}
@@ -1680,7 +1671,7 @@ coerceToInt(PgBenchValue *pval, int64 *ival)
 
 		if (isnan(dval) || !FLOAT8_FITS_IN_INT64(dval))
 		{
-			fprintf(stderr, "double to int overflow for %f\n", dval);
+			pg_log_error("double to int overflow for %f", dval);
 			return false;
 		}
 		*ival = (int64) dval;
@@ -1688,7 +1679,7 @@ coerceToInt(PgBenchValue *pval, int64 *ival)
 	}
 	else						/* BOOLEAN or NULL */
 	{
-		fprintf(stderr, "cannot coerce %s to int\n", valueTypeName(pval));
+		pg_log_error("cannot coerce %s to int", valueTypeName(pval));
 		return false;
 	}
 }
@@ -1709,7 +1700,7 @@ coerceToDouble(PgBenchValue *pval, double *dval)
 	}
 	else						/* BOOLEAN or NULL */
 	{
-		fprintf(stderr, "cannot coerce %s to double\n", valueTypeName(pval));
+		pg_log_error("cannot coerce %s to double", valueTypeName(pval));
 		return false;
 	}
 }
@@ -1890,8 +1881,7 @@ evalStandardFunc(CState *st,
 
 	if (l != NULL)
 	{
-		fprintf(stderr,
-				"too many function arguments, maximum is %d\n", MAX_FARGS);
+		pg_log_error("too many function arguments, maximum is %d", MAX_FARGS);
 		return false;
 	}
 
@@ -1986,7 +1976,7 @@ evalStandardFunc(CState *st,
 						case PGBENCH_ADD:
 							if (pg_add_s64_overflow(li, ri, &res))
 							{
-								fprintf(stderr, "bigint add out of range\n");
+								pg_log_error("bigint add out of range");
 								return false;
 							}
 							setIntValue(retval, res);
@@ -1995,7 +1985,7 @@ evalStandardFunc(CState *st,
 						case PGBENCH_SUB:
 							if (pg_sub_s64_overflow(li, ri, &res))
 							{
-								fprintf(stderr, "bigint sub out of range\n");
+								pg_log_error("bigint sub out of range");
 								return false;
 							}
 							setIntValue(retval, res);
@@ -2004,7 +1994,7 @@ evalStandardFunc(CState *st,
 						case PGBENCH_MUL:
 							if (pg_mul_s64_overflow(li, ri, &res))
 							{
-								fprintf(stderr, "bigint mul out of range\n");
+								pg_log_error("bigint mul out of range");
 								return false;
 							}
 							setIntValue(retval, res);
@@ -2030,7 +2020,7 @@ evalStandardFunc(CState *st,
 						case PGBENCH_MOD:
 							if (ri == 0)
 							{
-								fprintf(stderr, "division by zero\n");
+								pg_log_error("division by zero");
 								return false;
 							}
 							/* special handling of -1 divisor */
@@ -2041,7 +2031,7 @@ evalStandardFunc(CState *st,
 									/* overflow check (needed for INT64_MIN) */
 									if (li == PG_INT64_MIN)
 									{
-										fprintf(stderr, "bigint div out of range\n");
+										pg_log_error("bigint div out of range");
 										return false;
 									}
 									else
@@ -2281,13 +2271,13 @@ evalStandardFunc(CState *st,
 				/* check random range */
 				if (imin > imax)
 				{
-					fprintf(stderr, "empty range given to random\n");
+					pg_log_error("empty range given to random");
 					return false;
 				}
 				else if (imax - imin < 0 || (imax - imin) + 1 < 0)
 				{
 					/* prevent int overflows in random functions */
-					fprintf(stderr, "random range is too large\n");
+					pg_log_error("random range is too large");
 					return false;
 				}
 
@@ -2309,9 +2299,8 @@ evalStandardFunc(CState *st,
 					{
 						if (param < MIN_GAUSSIAN_PARAM)
 						{
-							fprintf(stderr,
-									"gaussian parameter must be at least %f "
-									"(not %f)\n", MIN_GAUSSIAN_PARAM, param);
+							pg_log_error("gaussian parameter must be at least %f (not %f)",
+										 MIN_GAUSSIAN_PARAM, param);
 							return false;
 						}
 
@@ -2323,10 +2312,8 @@ evalStandardFunc(CState *st,
 					{
 						if (param < MIN_ZIPFIAN_PARAM || param > MAX_ZIPFIAN_PARAM)
 						{
-							fprintf(stderr,
-									"zipfian parameter must be in range [%.3f, %.0f]"
-									" (not %f)\n",
-									MIN_ZIPFIAN_PARAM, MAX_ZIPFIAN_PARAM, param);
+							pg_log_error("zipfian parameter must be in range [%.3f, %.0f] (not %f)",
+										 MIN_ZIPFIAN_PARAM, MAX_ZIPFIAN_PARAM, param);
 							return false;
 						}
 
@@ -2337,9 +2324,8 @@ evalStandardFunc(CState *st,
 					{
 						if (param <= 0.0)
 						{
-							fprintf(stderr,
-									"exponential parameter must be greater than zero"
-									" (not %f)\n", param);
+							pg_log_error("exponential parameter must be greater than zero (not %f)",
+										 param);
 							return false;
 						}
 
@@ -2450,8 +2436,7 @@ evaluateExpr(CState *st, PgBenchExpr *expr, PgBenchValue *retval)
 
 				if ((var = lookupVariable(st, expr->u.variable.varname)) == NULL)
 				{
-					fprintf(stderr, "undefined variable \"%s\"\n",
-							expr->u.variable.varname);
+					pg_log_error("undefined variable \"%s\"", expr->u.variable.varname);
 					return false;
 				}
 
@@ -2470,8 +2455,7 @@ evaluateExpr(CState *st, PgBenchExpr *expr, PgBenchValue *retval)
 
 		default:
 			/* internal error which should never occur */
-			fprintf(stderr, "unexpected enode type in evaluation: %d\n",
-					expr->etype);
+			pg_log_fatal("unexpected enode type in evaluation: %d", expr->etype);
 			exit(1);
 	}
 }
@@ -2547,15 +2531,14 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 		}
 		else if ((arg = getVariable(st, argv[i] + 1)) == NULL)
 		{
-			fprintf(stderr, "%s: undefined variable \"%s\"\n",
-					argv[0], argv[i]);
+			pg_log_error("%s: undefined variable \"%s\"", argv[0], argv[i]);
 			return false;
 		}
 
 		arglen = strlen(arg);
 		if (len + arglen + (i > 0 ? 1 : 0) >= SHELL_COMMAND_SIZE - 1)
 		{
-			fprintf(stderr, "%s: shell command is too long\n", argv[0]);
+			pg_log_error("%s: shell command is too long", argv[0]);
 			return false;
 		}
 
@@ -2573,7 +2556,7 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 		if (system(command))
 		{
 			if (!timer_exceeded)
-				fprintf(stderr, "%s: could not launch shell command\n", argv[0]);
+				pg_log_error("%s: could not launch shell command", argv[0]);
 			return false;
 		}
 		return true;
@@ -2582,19 +2565,19 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 	/* Execute the command with pipe and read the standard output. */
 	if ((fp = popen(command, "r")) == NULL)
 	{
-		fprintf(stderr, "%s: could not launch shell command\n", argv[0]);
+		pg_log_error("%s: could not launch shell command", argv[0]);
 		return false;
 	}
 	if (fgets(res, sizeof(res), fp) == NULL)
 	{
 		if (!timer_exceeded)
-			fprintf(stderr, "%s: could not read result of shell command\n", argv[0]);
+			pg_log_error("%s: could not read result of shell command", argv[0]);
 		(void) pclose(fp);
 		return false;
 	}
 	if (pclose(fp) < 0)
 	{
-		fprintf(stderr, "%s: could not close shell command\n", argv[0]);
+		pg_log_error("%s: could not close shell command", argv[0]);
 		return false;
 	}
 
@@ -2604,16 +2587,14 @@ runShellCommand(CState *st, char *variable, char **argv, int argc)
 		endptr++;
 	if (*res == '\0' || *endptr != '\0')
 	{
-		fprintf(stderr, "%s: shell command must return an integer (not \"%s\")\n",
-				argv[0], res);
+		pg_log_error("%s: shell command must return an integer (not \"%s\")", argv[0], res);
 		return false;
 	}
 	if (!putVariableInt(st, "setshell", variable, retval))
 		return false;
 
-#ifdef DEBUG
-	printf("shell parameter name: \"%s\", value: \"%s\"\n", argv[1], res);
-#endif
+	pg_log_debug("%s: shell parameter name: \"%s\", value: \"%s\"", argv[0], argv[1], res);
+
 	return true;
 }
 
@@ -2627,9 +2608,8 @@ preparedStatementName(char *buffer, int file, int state)
 static void
 commandFailed(CState *st, const char *cmd, const char *message)
 {
-	fprintf(stderr,
-			"client %d aborted in command %d (%s) of script %d; %s\n",
-			st->id, st->command, cmd, st->use_file, message);
+	pg_log_error("client %d aborted in command %d (%s) of script %d; %s",
+				 st->id, st->command, cmd, st->use_file, message);
 }
 
 /* return a script number with a weighted choice. */
@@ -2664,8 +2644,7 @@ sendCommand(CState *st, Command *command)
 		sql = pg_strdup(command->argv[0]);
 		sql = assignVariables(st, sql);
 
-		if (debug)
-			fprintf(stderr, "client %d sending %s\n", st->id, sql);
+		pg_log_debug("client %d sending %s", st->id, sql);
 		r = PQsendQuery(st->con, sql);
 		free(sql);
 	}
@@ -2676,8 +2655,7 @@ sendCommand(CState *st, Command *command)
 
 		getQueryParams(st, command, params);
 
-		if (debug)
-			fprintf(stderr, "client %d sending %s\n", st->id, sql);
+		pg_log_debug("client %d sending %s", st->id, sql);
 		r = PQsendQueryParams(st->con, sql, command->argc - 1,
 							  NULL, params, NULL, NULL, 0);
 	}
@@ -2702,7 +2680,7 @@ sendCommand(CState *st, Command *command)
 				res = PQprepare(st->con, name,
 								commands[j]->argv[0], commands[j]->argc - 1, NULL);
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
-					fprintf(stderr, "%s", PQerrorMessage(st->con));
+					pg_log_error("%s", PQerrorMessage(st->con));
 				PQclear(res);
 			}
 			st->prepared[st->use_file] = true;
@@ -2711,8 +2689,7 @@ sendCommand(CState *st, Command *command)
 		getQueryParams(st, command, params);
 		preparedStatementName(name, st->use_file, st->command);
 
-		if (debug)
-			fprintf(stderr, "client %d sending %s\n", st->id, name);
+		pg_log_debug("client %d sending %s", st->id, name);
 		r = PQsendQueryPrepared(st->con, name, command->argc - 1,
 								params, NULL, NULL, 0);
 	}
@@ -2721,9 +2698,7 @@ sendCommand(CState *st, Command *command)
 
 	if (r == 0)
 	{
-		if (debug)
-			fprintf(stderr, "client %d could not send %s\n",
-					st->id, command->argv[0]);
+		pg_log_debug("client %d could not send %s", st->id, command->argv[0]);
 		st->ecnt++;
 		return false;
 	}
@@ -2762,9 +2737,8 @@ readCommandResponse(CState *st, char *varprefix)
 			case PGRES_EMPTY_QUERY: /* may be used for testing no-op overhead */
 				if (is_last && varprefix != NULL)
 				{
-					fprintf(stderr,
-							"client %d script %d command %d query %d: expected one row, got %d\n",
-							st->id, st->use_file, st->command, qrynum, 0);
+					pg_log_error("client %d script %d command %d query %d: expected one row, got %d",
+								 st->id, st->use_file, st->command, qrynum, 0);
 					goto error;
 				}
 				break;
@@ -2774,9 +2748,8 @@ readCommandResponse(CState *st, char *varprefix)
 				{
 					if (PQntuples(res) != 1)
 					{
-						fprintf(stderr,
-								"client %d script %d command %d query %d: expected one row, got %d\n",
-								st->id, st->use_file, st->command, qrynum, PQntuples(res));
+						pg_log_error("client %d script %d command %d query %d: expected one row, got %d",
+									 st->id, st->use_file, st->command, qrynum, PQntuples(res));
 						goto error;
 					}
 
@@ -2794,10 +2767,8 @@ readCommandResponse(CState *st, char *varprefix)
 										 PQgetvalue(res, 0, fld)))
 						{
 							/* internal error */
-							fprintf(stderr,
-									"client %d script %d command %d query %d: error storing into variable %s\n",
-									st->id, st->use_file, st->command, qrynum,
-									varname);
+							pg_log_error("client %d script %d command %d query %d: error storing into variable %s",
+										 st->id, st->use_file, st->command, qrynum, varname);
 							goto error;
 						}
 
@@ -2810,10 +2781,9 @@ readCommandResponse(CState *st, char *varprefix)
 
 			default:
 				/* anything else is unexpected */
-				fprintf(stderr,
-						"client %d script %d aborted in command %d query %d: %s",
-						st->id, st->use_file, st->command, qrynum,
-						PQerrorMessage(st->con));
+				pg_log_error("client %d script %d aborted in command %d query %d: %s",
+							 st->id, st->use_file, st->command, qrynum,
+							 PQerrorMessage(st->con));
 				goto error;
 		}
 
@@ -2824,7 +2794,7 @@ readCommandResponse(CState *st, char *varprefix)
 
 	if (qrynum == 0)
 	{
-		fprintf(stderr, "client %d command %d: no results\n", st->id, st->command);
+		pg_log_error("client %d command %d: no results", st->id, st->command);
 		st->ecnt++;
 		return false;
 	}
@@ -2858,8 +2828,7 @@ evaluateSleep(CState *st, int argc, char **argv, int *usecs)
 	{
 		if ((var = getVariable(st, argv[1] + 1)) == NULL)
 		{
-			fprintf(stderr, "%s: undefined variable \"%s\"\n",
-					argv[0], argv[1]);
+			pg_log_error("%s: undefined variable \"%s\"", argv[0], argv[1] + 1);
 			return false;
 		}
 		usec = atoi(var);
@@ -2919,9 +2888,8 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 				st->use_file = chooseScript(thread);
 				Assert(conditional_stack_empty(st->cstack));
 
-				if (debug)
-					fprintf(stderr, "client %d executing script \"%s\"\n", st->id,
-							sql_script[st->use_file].desc);
+				pg_log_debug("client %d executing script \"%s\"",
+							 st->id, sql_script[st->use_file].desc);
 
 				/*
 				 * If time is over, we're done; otherwise, get ready to start
@@ -2943,8 +2911,7 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 					start = now;
 					if ((st->con = doConnect()) == NULL)
 					{
-						fprintf(stderr, "client %d aborted while establishing connection\n",
-								st->id);
+						pg_log_error("client %d aborted while establishing connection", st->id);
 						st->state = CSTATE_ABORTED;
 						break;
 					}
@@ -3201,8 +3168,7 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 				 * Wait for the current SQL command to complete
 				 */
 			case CSTATE_WAIT_RESULT:
-				if (debug)
-					fprintf(stderr, "client %d receiving\n", st->id);
+				pg_log_debug("client %d receiving", st->id);
 				if (!PQconsumeInput(st->con))
 				{
 					/* there's something wrong */
@@ -3329,7 +3295,7 @@ executeMetaCommand(CState *st, instr_time *now)
 	argc = command->argc;
 	argv = command->argv;
 
-	if (debug)
+	if (unlikely(__pg_log_level <= PG_LOG_DEBUG))
 	{
 		fprintf(stderr, "client %d executing \\%s", st->id, argv[0]);
 		for (int i = 1; i < argc; i++)
@@ -3877,7 +3843,7 @@ initGenerateDataClientSide(PGconn *con)
 	res = PQexec(con, "copy pgbench_accounts from stdin");
 	if (PQresultStatus(res) != PGRES_COPY_IN)
 	{
-		fprintf(stderr, "%s", PQerrorMessage(con));
+		pg_log_fatal("unexpected copy in result: %s", PQerrorMessage(con));
 		exit(1);
 	}
 	PQclear(res);
@@ -3894,7 +3860,7 @@ initGenerateDataClientSide(PGconn *con)
 				 j, k / naccounts + 1, 0);
 		if (PQputline(con, sql))
 		{
-			fprintf(stderr, "PQputline failed\n");
+			pg_log_fatal("PQputline failed");
 			exit(1);
 		}
 
@@ -3945,12 +3911,12 @@ initGenerateDataClientSide(PGconn *con)
 
 	if (PQputline(con, "\\.\n"))
 	{
-		fprintf(stderr, "very last PQputline failed\n");
+		pg_log_fatal("very last PQputline failed");
 		exit(1);
 	}
 	if (PQendcopy(con))
 	{
-		fprintf(stderr, "PQendcopy failed\n");
+		pg_log_fatal("PQendcopy failed");
 		exit(1);
 	}
 
@@ -4084,7 +4050,7 @@ checkInitSteps(const char *initialize_steps)
 {
 	if (initialize_steps[0] == '\0')
 	{
-		fprintf(stderr, "no initialization steps specified\n");
+		pg_log_fatal("no initialization steps specified");
 		exit(1);
 	}
 
@@ -4092,11 +4058,8 @@ checkInitSteps(const char *initialize_steps)
 	{
 		if (strchr(ALL_INIT_STEPS " ", *step) == NULL)
 		{
-			fprintf(stderr,
-					"unrecognized initialization step \"%c\"\n",
-					*step);
-			fprintf(stderr,
-					"Allowed step characters are: \"" ALL_INIT_STEPS "\".\n");
+			pg_log_fatal("unrecognized initialization step \"%c\"", *step);
+			pg_log_info("Allowed step characters are: \"" ALL_INIT_STEPS "\".");
 			exit(1);
 		}
 	}
@@ -4162,8 +4125,7 @@ runInitSteps(const char *initialize_steps)
 			case ' ':
 				break;			/* ignore */
 			default:
-				fprintf(stderr, "unrecognized initialization step \"%c\"\n",
-						*step);
+				pg_log_fatal("unrecognized initialization step \"%c\"", *step);
 				PQfinish(con);
 				exit(1);
 		}
@@ -4212,28 +4174,27 @@ GetTableInfo(PGconn *con, bool scale_given)
 	{
 		char	   *sqlState = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 
-		fprintf(stderr, "%s", PQerrorMessage(con));
+		pg_log_fatal("could not count number of branches: %s", PQerrorMessage(con));
+
 		if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) == 0)
-		{
-			fprintf(stderr, "Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\"\n", PQdb(con));
-		}
+			pg_log_info("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\"",
+						PQdb(con));
 
 		exit(1);
 	}
 	scale = atoi(PQgetvalue(res, 0, 0));
 	if (scale < 0)
 	{
-		fprintf(stderr, "invalid count(*) from pgbench_branches: \"%s\"\n",
-				PQgetvalue(res, 0, 0));
+		pg_log_fatal("invalid count(*) from pgbench_branches: \"%s\"",
+					 PQgetvalue(res, 0, 0));
 		exit(1);
 	}
 	PQclear(res);
 
 	/* warn if we override user-given -s switch */
 	if (scale_given)
-		fprintf(stderr,
-				"scale option ignored, using count from pgbench_branches table (%d)\n",
-				scale);
+		pg_log_warning("scale option ignored, using count from pgbench_branches table (%d)",
+					   scale);
 
 	/*
 	 * Get the partition information for the first "pgbench_accounts" table
@@ -4274,9 +4235,8 @@ GetTableInfo(PGconn *con, bool scale_given)
 		 * This case is unlikely as pgbench already found "pgbench_branches"
 		 * above to compute the scale.
 		 */
-		fprintf(stderr,
-				"no pgbench_accounts table found in search_path\n"
-				"Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".\n", PQdb(con));
+		pg_log_fatal("no pgbench_accounts table found in search_path");
+		pg_log_info("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".", PQdb(con));
 		exit(1);
 	}
 	else						/* PQntupes(res) == 1 */
@@ -4298,7 +4258,7 @@ GetTableInfo(PGconn *con, bool scale_given)
 			else
 			{
 				/* possibly a newer version with new partition method */
-				fprintf(stderr, "unexpected partition method: \"%s\"\n", ps);
+				pg_log_fatal("unexpected partition method: \"%s\"", ps);
 				exit(1);
 			}
 		}
@@ -4344,8 +4304,8 @@ parseQuery(Command *cmd)
 		 */
 		if (cmd->argc >= MAX_ARGS)
 		{
-			fprintf(stderr, "statement has too many arguments (maximum is %d): %s\n",
-					MAX_ARGS - 1, cmd->lines.data);
+			pg_log_error("statement has too many arguments (maximum is %d): %s",
+						 MAX_ARGS - 1, cmd->lines.data);
 			pg_free(name);
 			return false;
 		}
@@ -4379,26 +4339,29 @@ syntax_error(const char *source, int lineno,
 			 const char *line, const char *command,
 			 const char *msg, const char *more, int column)
 {
-	fprintf(stderr, "%s:%d: %s", source, lineno, msg);
+	PQExpBufferData buf;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf, "%s:%d: %s", source, lineno, msg);
 	if (more != NULL)
-		fprintf(stderr, " (%s)", more);
+		appendPQExpBuffer(&buf, " (%s)", more);
 	if (column >= 0 && line == NULL)
-		fprintf(stderr, " at column %d", column + 1);
+		appendPQExpBuffer(&buf, " at column %d", column + 1);
 	if (command != NULL)
-		fprintf(stderr, " in command \"%s\"", command);
-	fprintf(stderr, "\n");
+		appendPQExpBuffer(&buf, " in command \"%s\"", command);
+
+	pg_log_fatal("%s", buf.data);
+
+	termPQExpBuffer(&buf);
+
 	if (line != NULL)
 	{
 		fprintf(stderr, "%s\n", line);
 		if (column >= 0)
-		{
-			int			i;
-
-			for (i = 0; i < column; i++)
-				fprintf(stderr, " ");
-			fprintf(stderr, "^ error found here\n");
-		}
+			fprintf(stderr, "%*c error found here\n", column+1, '^');
 	}
+
 	exit(1);
 }
 
@@ -4710,9 +4673,8 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 static void
 ConditionError(const char *desc, int cmdn, const char *msg)
 {
-	fprintf(stderr,
-			"condition error in script \"%s\" command %d: %s\n",
-			desc, cmdn, msg);
+	pg_log_fatal("condition error in script \"%s\" command %d: %s",
+				 desc, cmdn, msg);
 	exit(1);
 }
 
@@ -4947,8 +4909,7 @@ process_file(const char *filename, int weight)
 		fd = stdin;
 	else if ((fd = fopen(filename, "r")) == NULL)
 	{
-		fprintf(stderr, "could not open file \"%s\": %s\n",
-				filename, strerror(errno));
+		pg_log_fatal("could not open file \"%s\": %m", filename);
 		exit(1);
 	}
 
@@ -4956,8 +4917,7 @@ process_file(const char *filename, int weight)
 
 	if (ferror(fd))
 	{
-		fprintf(stderr, "could not read file \"%s\": %s\n",
-				filename, strerror(errno));
+		pg_log_fatal("could not read file \"%s\": %m", filename);
 		exit(1);
 	}
 
@@ -5012,10 +4972,9 @@ findBuiltin(const char *name)
 
 	/* error cases */
 	if (found == 0)
-		fprintf(stderr, "no builtin script found for name \"%s\"\n", name);
+		pg_log_fatal("no builtin script found for name \"%s\"", name);
 	else						/* found > 1 */
-		fprintf(stderr,
-				"ambiguous builtin name: %d builtin scripts found for prefix \"%s\"\n", found, name);
+		pg_log_fatal("ambiguous builtin name: %d builtin scripts found for prefix \"%s\"", found, name);
 
 	listAvailableScripts();
 	exit(1);
@@ -5048,14 +5007,13 @@ parseScriptWeight(const char *option, char **script)
 		wtmp = strtol(sep + 1, &badp, 10);
 		if (errno != 0 || badp == sep + 1 || *badp != '\0')
 		{
-			fprintf(stderr, "invalid weight specification: %s\n", sep);
+			pg_log_fatal("invalid weight specification: %s", sep);
 			exit(1);
 		}
 		if (wtmp > INT_MAX || wtmp < 0)
 		{
-			fprintf(stderr,
-					"weight specification out of range (0 .. %u): " INT64_FORMAT "\n",
-					INT_MAX, (int64) wtmp);
+			pg_log_fatal("weight specification out of range (0 .. %u): " INT64_FORMAT,
+						 INT_MAX, (int64) wtmp);
 			exit(1);
 		}
 		weight = wtmp;
@@ -5075,13 +5033,13 @@ addScript(ParsedScript script)
 {
 	if (script.commands == NULL || script.commands[0] == NULL)
 	{
-		fprintf(stderr, "empty command list for script \"%s\"\n", script.desc);
+		pg_log_fatal("empty command list for script \"%s\"", script.desc);
 		exit(1);
 	}
 
 	if (num_scripts >= MAX_SCRIPTS)
 	{
-		fprintf(stderr, "at most %d SQL scripts are allowed\n", MAX_SCRIPTS);
+		pg_log_fatal("at most %d SQL scripts are allowed", MAX_SCRIPTS);
 		exit(1);
 	}
 
@@ -5353,7 +5311,7 @@ set_random_seed(const char *seed)
 		/* use some "strong" random source */
 		if (!pg_strong_random(&iseed, sizeof(iseed)))
 		{
-			fprintf(stderr, "could not generate random seed.\n");
+			pg_log_error("could not generate random seed");
 			return false;
 		}
 	}
@@ -5366,16 +5324,15 @@ set_random_seed(const char *seed)
 		/* Don't try to use UINT64_FORMAT here; it might not work for sscanf */
 		if (sscanf(seed, "%lu%c", &ulseed, &garbage) != 1)
 		{
-			fprintf(stderr,
-					"unrecognized random seed option \"%s\": expecting an unsigned integer, \"time\" or \"rand\"\n",
-					seed);
+			pg_log_error("unrecognized random seed option \"%s\"", seed);
+			pg_log_info("Expecting an unsigned integer, \"time\" or \"rand\"");
 			return false;
 		}
 		iseed = (uint64) ulseed;
 	}
 
 	if (seed != NULL)
-		fprintf(stderr, "setting random seed to " UINT64_FORMAT "\n", iseed);
+		pg_log_info("setting random seed to " UINT64_FORMAT, iseed);
 	random_seed = iseed;
 
 	/* Fill base_random_sequence with low-order bits of seed */
@@ -5498,7 +5455,7 @@ main(int argc, char **argv)
 	/* set random seed early, because it may be used while parsing scripts. */
 	if (!set_random_seed(getenv("PGBENCH_RANDOM_SEED")))
 	{
-		fprintf(stderr, "error while setting random seed from PGBENCH_RANDOM_SEED environment variable\n");
+		pg_log_fatal("error while setting random seed from PGBENCH_RANDOM_SEED environment variable");
 		exit(1);
 	}
 
@@ -5532,15 +5489,14 @@ main(int argc, char **argv)
 				pgport = pg_strdup(optarg);
 				break;
 			case 'd':
-				debug++;
+				pg_logging_set_level(PG_LOG_DEBUG);
 				break;
 			case 'c':
 				benchmarking_option_set = true;
 				nclients = atoi(optarg);
 				if (nclients <= 0)
 				{
-					fprintf(stderr, "invalid number of clients: \"%s\"\n",
-							optarg);
+					pg_log_fatal("invalid number of clients: \"%s\"", optarg);
 					exit(1);
 				}
 #ifdef HAVE_GETRLIMIT
@@ -5550,14 +5506,14 @@ main(int argc, char **argv)
 				if (getrlimit(RLIMIT_OFILE, &rlim) == -1)
 #endif							/* RLIMIT_NOFILE */
 				{
-					fprintf(stderr, "getrlimit failed: %s\n", strerror(errno));
+					pg_log_fatal("getrlimit failed: %m");
 					exit(1);
 				}
 				if (rlim.rlim_cur < nclients + 3)
 				{
-					fprintf(stderr, "need at least %d open files, but system limit is %ld\n",
-							nclients + 3, (long) rlim.rlim_cur);
-					fprintf(stderr, "Reduce number of clients, or use limit/ulimit to increase the system limit.\n");
+					pg_log_fatal("need at least %d open files, but system limit is %ld",
+								 nclients + 3, (long) rlim.rlim_cur);
+					pg_log_info("Reduce number of clients, or use limit/ulimit to increase the system limit.");
 					exit(1);
 				}
 #endif							/* HAVE_GETRLIMIT */
@@ -5567,14 +5523,13 @@ main(int argc, char **argv)
 				nthreads = atoi(optarg);
 				if (nthreads <= 0)
 				{
-					fprintf(stderr, "invalid number of threads: \"%s\"\n",
-							optarg);
+					pg_log_fatal("invalid number of threads: \"%s\"", optarg);
 					exit(1);
 				}
 #ifndef ENABLE_THREAD_SAFETY
 				if (nthreads != 1)
 				{
-					fprintf(stderr, "threads are not supported on this platform; use -j1\n");
+					pg_log_fatal("threads are not supported on this platform; use -j1");
 					exit(1);
 				}
 #endif							/* !ENABLE_THREAD_SAFETY */
@@ -5592,7 +5547,7 @@ main(int argc, char **argv)
 				scale = atoi(optarg);
 				if (scale <= 0)
 				{
-					fprintf(stderr, "invalid scaling factor: \"%s\"\n", optarg);
+					pg_log_fatal("invalid scaling factor: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5601,8 +5556,7 @@ main(int argc, char **argv)
 				nxacts = atoi(optarg);
 				if (nxacts <= 0)
 				{
-					fprintf(stderr, "invalid number of transactions: \"%s\"\n",
-							optarg);
+					pg_log_fatal("invalid number of transactions: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5611,7 +5565,7 @@ main(int argc, char **argv)
 				duration = atoi(optarg);
 				if (duration <= 0)
 				{
-					fprintf(stderr, "invalid duration: \"%s\"\n", optarg);
+					pg_log_fatal("invalid duration: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5660,8 +5614,7 @@ main(int argc, char **argv)
 
 					if ((p = strchr(optarg, '=')) == NULL || p == optarg || *(p + 1) == '\0')
 					{
-						fprintf(stderr, "invalid variable definition: \"%s\"\n",
-								optarg);
+						pg_log_fatal("invalid variable definition: \"%s\"", optarg);
 						exit(1);
 					}
 
@@ -5675,7 +5628,7 @@ main(int argc, char **argv)
 				fillfactor = atoi(optarg);
 				if (fillfactor < 10 || fillfactor > 100)
 				{
-					fprintf(stderr, "invalid fillfactor: \"%s\"\n", optarg);
+					pg_log_fatal("invalid fillfactor: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5686,8 +5639,7 @@ main(int argc, char **argv)
 						break;
 				if (querymode >= NUM_QUERYMODE)
 				{
-					fprintf(stderr, "invalid query mode (-M): \"%s\"\n",
-							optarg);
+					pg_log_fatal("invalid query mode (-M): \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5696,8 +5648,7 @@ main(int argc, char **argv)
 				progress = atoi(optarg);
 				if (progress <= 0)
 				{
-					fprintf(stderr, "invalid thread progress delay: \"%s\"\n",
-							optarg);
+					pg_log_fatal("invalid thread progress delay: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5710,7 +5661,7 @@ main(int argc, char **argv)
 
 					if (throttle_value <= 0.0)
 					{
-						fprintf(stderr, "invalid rate limit: \"%s\"\n", optarg);
+						pg_log_fatal("invalid rate limit: \"%s\"", optarg);
 						exit(1);
 					}
 					/* Invert rate limit into per-transaction delay in usec */
@@ -5723,8 +5674,7 @@ main(int argc, char **argv)
 
 					if (limit_ms <= 0.0)
 					{
-						fprintf(stderr, "invalid latency limit: \"%s\"\n",
-								optarg);
+						pg_log_fatal("invalid latency limit: \"%s\"", optarg);
 						exit(1);
 					}
 					benchmarking_option_set = true;
@@ -5748,7 +5698,7 @@ main(int argc, char **argv)
 				sample_rate = atof(optarg);
 				if (sample_rate <= 0.0 || sample_rate > 1.0)
 				{
-					fprintf(stderr, "invalid sampling rate: \"%s\"\n", optarg);
+					pg_log_fatal("invalid sampling rate: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5757,8 +5707,7 @@ main(int argc, char **argv)
 				agg_interval = atoi(optarg);
 				if (agg_interval <= 0)
 				{
-					fprintf(stderr, "invalid number of seconds for aggregation: \"%s\"\n",
-							optarg);
+					pg_log_fatal("invalid number of seconds for aggregation: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5778,7 +5727,7 @@ main(int argc, char **argv)
 				benchmarking_option_set = true;
 				if (!set_random_seed(optarg))
 				{
-					fprintf(stderr, "error while setting random seed from --random-seed option\n");
+					pg_log_fatal("error while setting random seed from --random-seed option");
 					exit(1);
 				}
 				break;
@@ -5795,8 +5744,7 @@ main(int argc, char **argv)
 				partitions = atoi(optarg);
 				if (partitions < 0)
 				{
-					fprintf(stderr, "invalid number of partitions: \"%s\"\n",
-							optarg);
+					pg_log_fatal("invalid number of partitions: \"%s\"", optarg);
 					exit(1);
 				}
 				break;
@@ -5808,8 +5756,8 @@ main(int argc, char **argv)
 					partition_method = PART_HASH;
 				else
 				{
-					fprintf(stderr, "invalid partition method, expecting \"range\" or \"hash\","
-							" got: \"%s\"\n", optarg);
+					pg_log_fatal("invalid partition method, expecting \"range\" or \"hash\", got: \"%s\"",
+								 optarg);
 					exit(1);
 				}
 				break;
@@ -5843,7 +5791,7 @@ main(int argc, char **argv)
 
 	if (total_weight == 0 && !is_init_mode)
 	{
-		fprintf(stderr, "total script weight must not be zero\n");
+		pg_log_fatal("total script weight must not be zero");
 		exit(1);
 	}
 
@@ -5880,8 +5828,8 @@ main(int argc, char **argv)
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
+		pg_log_fatal("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
@@ -5890,13 +5838,13 @@ main(int argc, char **argv)
 	{
 		if (benchmarking_option_set)
 		{
-			fprintf(stderr, "some of the specified options cannot be used in initialization (-i) mode\n");
+			pg_log_fatal("some of the specified options cannot be used in initialization (-i) mode");
 			exit(1);
 		}
 
 		if (partitions == 0 && partition_method != PART_NONE)
 		{
-			fprintf(stderr, "--partition-method requires greater than zero --partitions\n");
+			pg_log_fatal("--partition-method requires greater than zero --partitions");
 			exit(1);
 		}
 
@@ -5935,14 +5883,14 @@ main(int argc, char **argv)
 	{
 		if (initialization_option_set)
 		{
-			fprintf(stderr, "some of the specified options cannot be used in benchmarking mode\n");
+			pg_log_fatal("some of the specified options cannot be used in benchmarking mode");
 			exit(1);
 		}
 	}
 
 	if (nxacts > 0 && duration > 0)
 	{
-		fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both\n");
+		pg_log_fatal("specify either a number of transactions (-t) or a duration (-T), not both");
 		exit(1);
 	}
 
@@ -5953,44 +5901,44 @@ main(int argc, char **argv)
 	/* --sampling-rate may be used only with -l */
 	if (sample_rate > 0.0 && !use_log)
 	{
-		fprintf(stderr, "log sampling (--sampling-rate) is allowed only when logging transactions (-l)\n");
+		pg_log_fatal("log sampling (--sampling-rate) is allowed only when logging transactions (-l)");
 		exit(1);
 	}
 
 	/* --sampling-rate may not be used with --aggregate-interval */
 	if (sample_rate > 0.0 && agg_interval > 0)
 	{
-		fprintf(stderr, "log sampling (--sampling-rate) and aggregation (--aggregate-interval) cannot be used at the same time\n");
+		pg_log_fatal("log sampling (--sampling-rate) and aggregation (--aggregate-interval) cannot be used at the same time");
 		exit(1);
 	}
 
 	if (agg_interval > 0 && !use_log)
 	{
-		fprintf(stderr, "log aggregation is allowed only when actually logging transactions\n");
+		pg_log_fatal("log aggregation is allowed only when actually logging transactions");
 		exit(1);
 	}
 
 	if (!use_log && logfile_prefix)
 	{
-		fprintf(stderr, "log file prefix (--log-prefix) is allowed only when logging transactions (-l)\n");
+		pg_log_fatal("log file prefix (--log-prefix) is allowed only when logging transactions (-l)");
 		exit(1);
 	}
 
 	if (duration > 0 && agg_interval > duration)
 	{
-		fprintf(stderr, "number of seconds for aggregation (%d) must not be higher than test duration (%d)\n", agg_interval, duration);
+		pg_log_fatal("number of seconds for aggregation (%d) must not be higher than test duration (%d)", agg_interval, duration);
 		exit(1);
 	}
 
 	if (duration > 0 && agg_interval > 0 && duration % agg_interval != 0)
 	{
-		fprintf(stderr, "duration (%d) must be a multiple of aggregation interval (%d)\n", duration, agg_interval);
+		pg_log_fatal("duration (%d) must be a multiple of aggregation interval (%d)", duration, agg_interval);
 		exit(1);
 	}
 
 	if (progress_timestamp && progress == 0)
 	{
-		fprintf(stderr, "--progress-timestamp is allowed only under --progress\n");
+		pg_log_fatal("--progress-timestamp is allowed only under --progress");
 		exit(1);
 	}
 
@@ -6038,15 +5986,10 @@ main(int argc, char **argv)
 		initRandomState(&state[i].cs_func_rs);
 	}
 
-	if (debug)
-	{
-		if (duration <= 0)
-			printf("pghost: %s pgport: %s nclients: %d nxacts: %d dbName: %s\n",
-				   pghost, pgport, nclients, nxacts, dbName);
-		else
-			printf("pghost: %s pgport: %s nclients: %d duration: %d dbName: %s\n",
-				   pghost, pgport, nclients, duration, dbName);
-	}
+	pg_log_debug("pghost: %s pgport: %s nclients: %d %s: %d dbName: %s",
+				 pghost, pgport, nclients,
+				 duration <= 0 ? "nxacts" : "duration",
+				 duration <= 0 ? nxacts : duration, dbName);
 
 	/* opening connection... */
 	con = doConnect();
@@ -6055,8 +5998,8 @@ main(int argc, char **argv)
 
 	if (PQstatus(con) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "connection to database \"%s\" failed\n", dbName);
-		fprintf(stderr, "%s", PQerrorMessage(con));
+		pg_log_fatal("connection to database \"%s\" failed: %s",
+					 dbName, PQerrorMessage(con));
 		exit(1);
 	}
 
@@ -6176,7 +6119,7 @@ main(int argc, char **argv)
 
 			if (err != 0 || thread->thread == INVALID_THREAD)
 			{
-				fprintf(stderr, "could not create thread: %s\n", strerror(err));
+				pg_log_fatal("could not create thread: %m");
 				exit(1);
 			}
 		}
@@ -6241,7 +6184,7 @@ main(int argc, char **argv)
 	printResults(&stats, total_time, conn_total_time, latency_late);
 
 	if (exit_code != 0)
-		fprintf(stderr, "Run was aborted; the above results are incomplete.\n");
+		pg_log_fatal("Run was aborted; the above results are incomplete.");
 
 	return exit_code;
 }
@@ -6294,8 +6237,7 @@ threadRun(void *arg)
 
 		if (thread->logfile == NULL)
 		{
-			fprintf(stderr, "could not open logfile \"%s\": %s\n",
-					logpath, strerror(errno));
+			pg_log_fatal("could not open logfile \"%s\": %m", logpath);
 			goto done;
 		}
 	}
@@ -6368,8 +6310,7 @@ threadRun(void *arg)
 
 				if (sock < 0)
 				{
-					fprintf(stderr, "invalid socket: %s",
-							PQerrorMessage(st->con));
+					pg_log_error("invalid socket: %s", PQerrorMessage(st->con));
 					goto done;
 				}
 
@@ -6437,7 +6378,7 @@ threadRun(void *arg)
 					continue;
 				}
 				/* must be something wrong */
-				fprintf(stderr, "%s() failed: %s\n", SOCKET_WAIT_METHOD, strerror(errno));
+				pg_log_fatal("%s() failed: %m", SOCKET_WAIT_METHOD);
 				goto done;
 			}
 		}
@@ -6462,8 +6403,7 @@ threadRun(void *arg)
 
 				if (sock < 0)
 				{
-					fprintf(stderr, "invalid socket: %s",
-							PQerrorMessage(st->con));
+					pg_log_error("invalid socket: %s", PQerrorMessage(st->con));
 					goto done;
 				}
 
@@ -6587,7 +6527,7 @@ setalarm(int seconds)
 							   win32_timer_callback, NULL, seconds * 1000, 0,
 							   WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE))
 	{
-		fprintf(stderr, "failed to set timer\n");
+		pg_log_fatal("failed to set timer");
 		exit(1);
 	}
 }
@@ -6733,7 +6673,7 @@ add_socket_to_set(socket_set *sa, int fd, int idx)
 		 * Doing a hard exit here is a bit grotty, but it doesn't seem worth
 		 * complicating the API to make it less grotty.
 		 */
-		fprintf(stderr, "too many client connections for select()\n");
+		pg_log_fatal("too many client connections for select()");
 		exit(1);
 	}
 	FD_SET(fd, &sa->fds);

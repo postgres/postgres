@@ -153,7 +153,8 @@ my @options = (
 		'bad random seed',
 		'--random-seed=one',
 		[
-			qr{unrecognized random seed option "one": expecting an unsigned integer, "time" or "rand"},
+			qr{unrecognized random seed option "one"},
+			qr{Expecting an unsigned integer, "time" or "rand"},
 			qr{error while setting random seed from --random-seed option}
 		]
 	],
@@ -322,6 +323,11 @@ my @script_tests = (
 		'double overflow 3',
 		[qr{double constant overflow}],
 		{ 'overflow-3.sql' => "\\set d .1E310\n" }
+	],
+	[
+		'set i',
+		[ qr{set i 1 }, qr{\^ error found here} ],
+		{ 'set_i_op' => "\\set i 1 +\n" }
 	],);
 
 for my $t (@script_tests)
