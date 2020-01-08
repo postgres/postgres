@@ -1335,9 +1335,8 @@ $$ LANGUAGE plpythonu;
 
    <para>
     Context managers syntax using the <literal>with</literal> keyword
-    is available by default in Python 2.6.  If using PL/Python with an
-    older Python version, it is still possible to use explicit
-    subtransactions, although not as transparently.  You can call the
+    is available by default in Python 2.6.  For compatibility with
+    older Python versions, you can call the
     subtransaction manager's <literal>__enter__</literal> and
     <literal>__exit__</literal> functions using the
     <literal>enter</literal> and <literal>exit</literal> convenience
@@ -1367,17 +1366,6 @@ plpy.execute(plan, [result])
 $$ LANGUAGE plpythonu;
 </programlisting>
    </para>
-
-   <note>
-    <para>
-     Although context managers were implemented in Python 2.5, to use
-     the <literal>with</literal> syntax in that version you need to
-     use a <ulink
-     url="https://docs.python.org/release/2.5/ref/future.html">future
-     statement</ulink>.  Because of implementation details, however,
-     you cannot use future statements in PL/Python functions.
-    </para>
-   </note>
   </sect2>
  </sect1>
 

@@ -1,12 +1,8 @@
 Guide to alternative expected files:
 
-plpython_error_0.out			Python 2.4 and older
 plpython_error_5.out			Python 3.5 and newer
 
 plpython_unicode.out			server encoding != SQL_ASCII
 plpython_unicode_3.out			server encoding == SQL_ASCII
-
-plpython_subtransaction_0.out	Python 2.4 and older (without with statement)
-plpython_subtransaction_5.out	Python 2.5 (without with statement)
 
 plpython_types_3.out			Python 3.x
