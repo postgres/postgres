@@ -52,9 +52,9 @@
 #include "utils/syscache.h"
 
 
-static void extractRemainingColumns(List *common_colnames,
-									List *src_colnames, List *src_colvars,
-									ParseNamespaceColumn *src_nscolumns,
+static int	extractRemainingColumns(ParseNamespaceColumn *src_nscolumns,
+									List *src_colnames,
+									List **src_colnos,
 									List **res_colnames, List **res_colvars,
 									ParseNamespaceColumn *res_nscolumns);
 static Node *transformJoinUsingClause(ParseState *pstate,
@@ -76,6 +76,7 @@ static ParseNamespaceItem *getNSItemForSpecialRelationTypes(ParseState *pstate,
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 									 ParseNamespaceItem **top_nsitem,
 									 List **namespace);
+static Var *buildVarFromNSColumn(ParseNamespaceColumn *nscol);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 								Var *l_colvar, Var *r_colvar);
 static void setNamespaceColumnVisibility(List *namespace, bool cols_visible);
@@ -237,64 +238,61 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 /*
  * Extract all not-in-common columns from column lists of a source table
  *
- * We hand back new lists in *res_colnames and *res_colvars.  But
- * res_nscolumns points to a caller-allocated array that we fill in
- * the next few entries in.
+ * src_nscolumns and src_colnames describe the source table.
+ *
+ * *src_colnos initially contains the column numbers of the already-merged
+ * columns.  We add to it the column number of each additional column.
+ * Also append to *res_colnames the name of each additional column,
+ * append to *res_colvars a Var for each additional column, and copy the
+ * columns' nscolumns data into res_nscolumns[] (which is caller-allocated
+ * space that had better be big enough).
+ *
+ * Returns the number of columns added.
  */
-static void
-extractRemainingColumns(List *common_colnames,
-						List *src_colnames, List *src_colvars,
-						ParseNamespaceColumn *src_nscolumns,
+static int
+extractRemainingColumns(ParseNamespaceColumn *src_nscolumns,
+						List *src_colnames,
+						List **src_colnos,
 						List **res_colnames, List **res_colvars,
 						ParseNamespaceColumn *res_nscolumns)
 {
-	List	   *new_colnames = NIL;
-	List	   *new_colvars = NIL;
-	ListCell   *lnames,
-			   *lvars;
+	int			colcount = 0;
+	Bitmapset  *prevcols;
+	int			attnum;
+	ListCell   *lc;
 
-	Assert(list_length(src_colnames) == list_length(src_colvars));
-
-	forboth(lnames, src_colnames, lvars, src_colvars)
+	/*
+	 * While we could just test "list_member_int(*src_colnos, attnum)" to
+	 * detect already-merged columns in the loop below, that would be O(N^2)
+	 * for a wide input table.  Instead build a bitmapset of just the merged
+	 * USING columns, which we won't add to within the main loop.
+	 */
+	prevcols = NULL;
+	foreach(lc, *src_colnos)
 	{
-		char	   *colname = strVal(lfirst(lnames));
-		bool		match = false;
-		ListCell   *cnames;
-
-		/*
-		 * Ignore any dropped columns in the src_nscolumns input.  (The list
-		 * inputs won't contain entries for dropped columns.)
-		 */
-		while (src_nscolumns->p_varno == 0)
-			src_nscolumns++;
-
-		/* is current src column already accounted for in common_colnames? */
-		foreach(cnames, common_colnames)
-		{
-			char	   *ccolname = strVal(lfirst(cnames));
-
-			if (strcmp(colname, ccolname) == 0)
-			{
-				match = true;
-				break;
-			}
-		}
-
-		if (!match)
-		{
-			/* Nope, so emit it as next output column */
-			new_colnames = lappend(new_colnames, lfirst(lnames));
-			new_colvars = lappend(new_colvars, lfirst(lvars));
-			/* Copy the input relation's nscolumn data for this column */
-			*res_nscolumns = *src_nscolumns;
-			res_nscolumns++;
-		}
-
-		src_nscolumns++;
+		prevcols = bms_add_member(prevcols, lfirst_int(lc));
 	}
 
-	*res_colnames = new_colnames;
-	*res_colvars = new_colvars;
+	attnum = 0;
+	foreach(lc, src_colnames)
+	{
+		char	   *colname = strVal(lfirst(lc));
+
+		attnum++;
+		/* Non-dropped and not already merged? */
+		if (colname[0] != '\0' && !bms_is_member(attnum, prevcols))
+		{
+			/* Yes, so emit it as next output column */
+			*src_colnos = lappend_int(*src_colnos, attnum);
+			*res_colnames = lappend(*res_colnames, lfirst(lc));
+			*res_colvars = lappend(*res_colvars,
+								   buildVarFromNSColumn(src_nscolumns + attnum - 1));
+			/* Copy the input relation's nscolumn data for this column */
+			res_nscolumns[colcount] = src_nscolumns[attnum - 1];
+			colcount++;
+		}
+	}
+	return colcount;
 }
 
 /* transformJoinUsingClause()
@@ -1154,10 +1152,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				   *l_colnames,
 				   *r_colnames,
 				   *res_colnames,
-				   *l_colvars,
-				   *r_colvars,
+				   *l_colnos,
+				   *r_colnos,
 				   *res_colvars;
-		ParseNamespaceColumn *res_nscolumns;
+		ParseNamespaceColumn *l_nscolumns,
+				   *r_nscolumns,
+				   *res_nscolumns;
 		int			res_colindex;
 		bool		lateral_ok;
 		int			sv_namespace_length;
@@ -1211,12 +1211,15 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		my_namespace = list_concat(l_namespace, r_namespace);
 
 		/*
-		 * Extract column name and var lists from both subtrees
-		 *
-		 * Note: expandNSItemVars returns new lists, safe for me to modify
+		 * We'll work from the nscolumns data and eref alias column names for
+		 * each of the input nsitems.  Note that these include dropped
+		 * columns, which is helpful because we can keep track of physical
+		 * input column numbers more easily.
 		 */
-		l_colvars = expandNSItemVars(l_nsitem, 0, -1, &l_colnames);
-		r_colvars = expandNSItemVars(r_nsitem, 0, -1, &r_colnames);
+		l_nscolumns = l_nsitem->p_nscolumns;
+		l_colnames = l_nsitem->p_rte->eref->colnames;
+		r_nscolumns = r_nsitem->p_nscolumns;
+		r_colnames = r_nsitem->p_rte->eref->colnames;
 
 		/*
 		 * Natural join does not explicitly specify columns; must generate
@@ -1240,6 +1243,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				char	   *l_colname = strVal(lfirst(lx));
 				Value	   *m_name = NULL;
 
+				if (l_colname[0] == '\0')
+					continue;	/* ignore dropped columns */
+
 				foreach(rx, r_colnames)
 				{
 					char	   *r_colname = strVal(lfirst(rx));
@@ -1262,6 +1268,8 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		/*
 		 * Now transform the join qualifications, if any.
 		 */
+		l_colnos = NIL;
+		r_colnos = NIL;
 		res_colnames = NIL;
 		res_colvars = NIL;
 
@@ -1297,6 +1305,8 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				Node	   *u_colvar;
 				ParseNamespaceColumn *res_nscolumn;
 
+				Assert(u_colname[0] != '\0');
+
 				/* Check for USING(foo,foo) */
 				foreach(col, res_colnames)
 				{
@@ -1331,6 +1341,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("column \"%s\" specified in USING clause does not exist in left table",
 									u_colname)));
+				l_colnos = lappend_int(l_colnos, l_index + 1);
 
 				/* Find it in right input */
 				ndx = 0;
@@ -1354,10 +1365,11 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
 							 errmsg("column \"%s\" specified in USING clause does not exist in right table",
 									u_colname)));
+				r_colnos = lappend_int(r_colnos, r_index + 1);
 
-				l_colvar = list_nth(l_colvars, l_index);
+				l_colvar = buildVarFromNSColumn(l_nscolumns + l_index);
 				l_usingvars = lappend(l_usingvars, l_colvar);
-				r_colvar = list_nth(r_colvars, r_index);
+				r_colvar = buildVarFromNSColumn(r_nscolumns + r_index);
 				r_usingvars = lappend(r_usingvars, r_colvar);
 
 				res_colnames = lappend(res_colnames, lfirst(ucol));
@@ -1371,26 +1383,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 				if (u_colvar == (Node *) l_colvar)
 				{
 					/* Merged column is equivalent to left input */
-					res_nscolumn->p_varno = l_colvar->varno;
-					res_nscolumn->p_varattno = l_colvar->varattno;
-					res_nscolumn->p_vartype = l_colvar->vartype;
-					res_nscolumn->p_vartypmod = l_colvar->vartypmod;
-					res_nscolumn->p_varcollid = l_colvar->varcollid;
-					/* XXX these are not quite right, but doesn't matter yet */
-					res_nscolumn->p_varnosyn = l_colvar->varno;
-					res_nscolumn->p_varattnosyn = l_colvar->varattno;
+					*res_nscolumn = l_nscolumns[l_index];
 				}
 				else if (u_colvar == (Node *) r_colvar)
 				{
 					/* Merged column is equivalent to right input */
-					res_nscolumn->p_varno = r_colvar->varno;
-					res_nscolumn->p_varattno = r_colvar->varattno;
-					res_nscolumn->p_vartype = r_colvar->vartype;
-					res_nscolumn->p_vartypmod = r_colvar->vartypmod;
-					res_nscolumn->p_varcollid = r_colvar->varcollid;
-					/* XXX these are not quite right, but doesn't matter yet */
-					res_nscolumn->p_varnosyn = r_colvar->varno;
-					res_nscolumn->p_varattnosyn = r_colvar->varattno;
+					*res_nscolumn = r_nscolumns[r_index];
 				}
 				else
 				{
@@ -1427,22 +1425,14 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		}
 
 		/* Add remaining columns from each side to the output columns */
-		extractRemainingColumns(res_colnames,
-								l_colnames, l_colvars,
-								l_nsitem->p_nscolumns,
-								&l_colnames, &l_colvars,
-								res_nscolumns + res_colindex);
-		res_colindex += list_length(l_colvars);
-		extractRemainingColumns(res_colnames,
-								r_colnames, r_colvars,
-								r_nsitem->p_nscolumns,
-								&r_colnames, &r_colvars,
-								res_nscolumns + res_colindex);
-		res_colindex += list_length(r_colvars);
-		res_colnames = list_concat(res_colnames, l_colnames);
-		res_colvars = list_concat(res_colvars, l_colvars);
-		res_colnames = list_concat(res_colnames, r_colnames);
-		res_colvars = list_concat(res_colvars, r_colvars);
+		res_colindex +=
+			extractRemainingColumns(l_nscolumns, l_colnames, &l_colnos,
+									&res_colnames, &res_colvars,
+									res_nscolumns + res_colindex);
+		res_colindex +=
+			extractRemainingColumns(r_nscolumns, r_colnames, &r_colnos,
+									&res_colnames, &res_colvars,
+									res_nscolumns + res_colindex);
 
 		/*
 		 * Check alias (AS clause), if any.
@@ -1468,7 +1458,10 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 										   res_colnames,
 										   res_nscolumns,
 										   j->jointype,
+										   list_length(j->usingClause),
 										   res_colvars,
+										   l_colnos,
+										   r_colnos,
 										   j->alias,
 										   true);
 
@@ -1535,6 +1528,30 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 	else
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
 	return NULL;				/* can't get here, keep compiler quiet */
+}
+
+/*
+ * buildVarFromNSColumn -
+ *	  build a Var node using ParseNamespaceColumn data
+ *
+ * We assume varlevelsup should be 0, and no location is specified
+ */
+static Var *
+buildVarFromNSColumn(ParseNamespaceColumn *nscol)
+{
+	Var		   *var;
+
+	Assert(nscol->p_varno > 0); /* i.e., not deleted column */
+	var = makeVar(nscol->p_varno,
+				  nscol->p_varattno,
+				  nscol->p_vartype,
+				  nscol->p_vartypmod,
+				  nscol->p_varcollid,
+				  0);
+	/* makeVar doesn't offer parameters for these, so set by hand: */
+	var->varnosyn = nscol->p_varnosyn;
+	var->varattnosyn = nscol->p_varattnosyn;
+	return var;
 }
 
 /*

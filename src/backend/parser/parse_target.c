@@ -346,8 +346,11 @@ markTargetListOrigins(ParseState *pstate, List *targetlist)
  *
  * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
  *
- * This is split out so it can recurse for join references.  Note that we
- * do not drill down into views, but report the view as the column owner.
+ * Note that we do not drill down into views, but report the view as the
+ * column owner.  There's also no need to drill down into joins: if we see
+ * a join alias Var, it must be a merged JOIN USING column (or possibly a
+ * whole-row Var); that is not a direct reference to any plain table column,
+ * so we don't report it.
  */
 static void
 markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
@@ -385,17 +388,6 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			}
 			break;
 		case RTE_JOIN:
-			/* Join RTE --- recursively inspect the alias variable */
-			if (attnum != InvalidAttrNumber)
-			{
-				Var		   *aliasvar;
-
-				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
-				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
-				/* We intentionally don't strip implicit coercions here */
-				markTargetListOrigin(pstate, tle, aliasvar, netlevelsup);
-			}
-			break;
 		case RTE_FUNCTION:
 		case RTE_VALUES:
 		case RTE_TABLEFUNC:

@@ -255,6 +255,9 @@ adjust_appendrel_attrs_mutator(Node *node,
 		Var		   *var = (Var *) copyObject(node);
 		AppendRelInfo *appinfo = NULL;
 
+		if (var->varlevelsup != 0)
+			return (Node *) var;	/* no changes needed */
+
 		for (cnt = 0; cnt < nappinfos; cnt++)
 		{
 			if (var->varno == appinfos[cnt]->parent_relid)
@@ -264,10 +267,12 @@ adjust_appendrel_attrs_mutator(Node *node,
 			}
 		}
 
-		if (var->varlevelsup == 0 && appinfo)
+		if (appinfo)
 		{
 			var->varno = appinfo->child_relid;
-			var->varnoold = appinfo->child_relid;
+			/* it's now a generated Var, so drop any syntactic labeling */
+			var->varnosyn = 0;
+			var->varattnosyn = 0;
 			if (var->varattno > 0)
 			{
 				Node	   *newnode;

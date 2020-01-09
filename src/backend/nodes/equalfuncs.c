@@ -168,8 +168,12 @@ _equalVar(const Var *a, const Var *b)
 	COMPARE_SCALAR_FIELD(vartypmod);
 	COMPARE_SCALAR_FIELD(varcollid);
 	COMPARE_SCALAR_FIELD(varlevelsup);
-	COMPARE_SCALAR_FIELD(varnoold);
-	COMPARE_SCALAR_FIELD(varoattno);
+
+	/*
+	 * varnosyn/varattnosyn are intentionally ignored here, because Vars with
+	 * different syntactic identifiers are semantically the same as long as
+	 * their varno/varattno match.
+	 */
 	COMPARE_LOCATION_FIELD(location);
 
 	return true;
@@ -2657,7 +2661,10 @@ _equalRangeTblEntry(const RangeTblEntry *a, const RangeTblEntry *b)
 	COMPARE_NODE_FIELD(subquery);
 	COMPARE_SCALAR_FIELD(security_barrier);
 	COMPARE_SCALAR_FIELD(jointype);
+	COMPARE_SCALAR_FIELD(joinmergedcols);
 	COMPARE_NODE_FIELD(joinaliasvars);
+	COMPARE_NODE_FIELD(joinleftcols);
+	COMPARE_NODE_FIELD(joinrightcols);
 	COMPARE_NODE_FIELD(functions);
 	COMPARE_SCALAR_FIELD(funcordinality);
 	COMPARE_NODE_FIELD(tablefunc);

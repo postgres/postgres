@@ -141,18 +141,32 @@ typedef struct Expr
 /*
  * Var - expression node representing a variable (ie, a table column)
  *
- * Note: during parsing/planning, varnoold/varoattno are always just copies
- * of varno/varattno.  At the tail end of planning, Var nodes appearing in
- * upper-level plan nodes are reassigned to point to the outputs of their
- * subplans; for example, in a join node varno becomes INNER_VAR or OUTER_VAR
- * and varattno becomes the index of the proper element of that subplan's
- * target list.  Similarly, INDEX_VAR is used to identify Vars that reference
- * an index column rather than a heap column.  (In ForeignScan and CustomScan
- * plan nodes, INDEX_VAR is abused to signify references to columns of a
- * custom scan tuple type.)  In all these cases, varnoold/varoattno hold the
- * original values.  The code doesn't really need varnoold/varoattno, but they
- * are very useful for debugging and interpreting completed plans, so we keep
- * them around.
+ * In the parser and planner, varno and varattno identify the semantic
+ * referent, which is a base-relation column unless the reference is to a join
+ * USING column that isn't semantically equivalent to either join input column
+ * (because it is a FULL join or the input column requires a type coercion).
+ * In those cases varno and varattno refer to the JOIN RTE.  (Early in the
+ * planner, we replace such join references by the implied expression; but up
+ * till then we want join reference Vars to keep their original identity for
+ * query-printing purposes.)
+ *
+ * At the end of planning, Var nodes appearing in upper-level plan nodes are
+ * reassigned to point to the outputs of their subplans; for example, in a
+ * join node varno becomes INNER_VAR or OUTER_VAR and varattno becomes the
+ * index of the proper element of that subplan's target list.  Similarly,
+ * INDEX_VAR is used to identify Vars that reference an index column rather
+ * than a heap column.  (In ForeignScan and CustomScan plan nodes, INDEX_VAR
+ * is abused to signify references to columns of a custom scan tuple type.)
+ *
+ * In the parser, varnosyn and varattnosyn are either identical to
+ * varno/varattno, or they specify the column's position in an aliased JOIN
+ * RTE that hides the semantic referent RTE's refname.  This is a syntactic
+ * identifier as opposed to the semantic identifier; it tells ruleutils.c
+ * how to print the Var properly.  varnosyn/varattnosyn retain their values
+ * throughout planning and execution, so they are particularly helpful to
+ * identify Vars when debugging.  Note, however, that a Var that is generated
+ * in the planner and doesn't correspond to any simple relation column may
+ * have varnosyn = varattnosyn = 0.
  */
 #define    INNER_VAR		65000	/* reference to inner subplan */
 #define    OUTER_VAR		65001	/* reference to outer subplan */
@@ -177,8 +191,8 @@ typedef struct Var
 	Index		varlevelsup;	/* for subquery variables referencing outer
 								 * relations; 0 in a normal var, >0 means N
 								 * levels up */
-	Index		varnoold;		/* original value of varno, for debugging */
-	AttrNumber	varoattno;		/* original value of varattno */
+	Index		varnosyn;		/* syntactic relation index (0 if unknown) */
+	AttrNumber	varattnosyn;	/* syntactic attribute number */
 	int			location;		/* token location, or -1 if unknown */
 } Var;
 

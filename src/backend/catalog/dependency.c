@@ -1718,12 +1718,6 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 /*
  * Recursively search an expression tree for object references.
  *
- * Note: we avoid creating references to columns of tables that participate
- * in an SQL JOIN construct, but are not actually used anywhere in the query.
- * To do so, we do not scan the joinaliasvars list of a join RTE while
- * scanning the query rangetable, but instead scan each individual entry
- * of the alias list when we find a reference to it.
- *
  * Note: in many cases we do not need to create dependencies on the datatypes
  * involved in an expression, because we'll have an indirect dependency via
  * some other object.  For instance Var nodes depend on a column which depends
@@ -1773,24 +1767,15 @@ find_expr_references_walker(Node *node,
 			add_object_address(OCLASS_CLASS, rte->relid, var->varattno,
 							   context->addrs);
 		}
-		else if (rte->rtekind == RTE_JOIN)
-		{
-			/* Scan join output column to add references to join inputs */
-			List	   *save_rtables;
 
-			/* We must make the context appropriate for join's level */
-			save_rtables = context->rtables;
-			context->rtables = list_copy_tail(context->rtables,
-											  var->varlevelsup);
-			if (var->varattno <= 0 ||
-				var->varattno > list_length(rte->joinaliasvars))
-				elog(ERROR, "invalid varattno %d", var->varattno);
-			find_expr_references_walker((Node *) list_nth(rte->joinaliasvars,
-														  var->varattno - 1),
-										context);
-			list_free(context->rtables);
-			context->rtables = save_rtables;
-		}
+		/*
+		 * Vars referencing other RTE types require no additional work.  In
+		 * particular, a join alias Var can be ignored, because it must
+		 * reference a merged USING column.  The relevant join input columns
+		 * will also be referenced in the join qual, and any type coercion
+		 * functions involved in the alias expression will be dealt with when
+		 * we scan the RTE itself.
+		 */
 		return false;
 	}
 	else if (IsA(node, Const))
@@ -2147,11 +2132,13 @@ find_expr_references_walker(Node *node,
 
 		/*
 		 * Add whole-relation refs for each plain relation mentioned in the
-		 * subquery's rtable.
+		 * subquery's rtable, and ensure we add refs for any type-coercion
+		 * functions used in join alias lists.
 		 *
 		 * Note: query_tree_walker takes care of recursing into RTE_FUNCTION
-		 * RTEs, subqueries, etc, so no need to do that here.  But keep it
-		 * from looking at join alias lists.
+		 * RTEs, subqueries, etc, so no need to do that here.  But we must
+		 * tell it not to visit join alias lists, or we'll add refs for join
+		 * input columns whether or not they are actually used in our query.
 		 *
 		 * Note: we don't need to worry about collations mentioned in
 		 * RTE_VALUES or RTE_CTE RTEs, because those must just duplicate
@@ -2168,6 +2155,31 @@ find_expr_references_walker(Node *node,
 				case RTE_RELATION:
 					add_object_address(OCLASS_CLASS, rte->relid, 0,
 									   context->addrs);
+					break;
+				case RTE_JOIN:
+
+					/*
+					 * Examine joinaliasvars entries only for merged JOIN
+					 * USING columns.  Only those entries could contain
+					 * type-coercion functions.  Also, their join input
+					 * columns must be referenced in the join quals, so this
+					 * won't accidentally add refs to otherwise-unused join
+					 * input columns.  (We want to ref the type coercion
+					 * functions even if the merged column isn't explicitly
+					 * used anywhere, to protect possible expansion of the
+					 * join RTE as a whole-row var, and because it seems like
+					 * a bad idea to allow dropping a function that's present
+					 * in our query tree, whether or not it could get called.)
+					 */
+					context->rtables = lcons(query->rtable, context->rtables);
+					for (int i = 0; i < rte->joinmergedcols; i++)
+					{
+						Node	   *aliasvar = list_nth(rte->joinaliasvars, i);
+
+						if (!IsA(aliasvar, Var))
+							find_expr_references_walker(aliasvar, context);
+					}
+					context->rtables = list_delete_first(context->rtables);
 					break;
 				default:
 					break;

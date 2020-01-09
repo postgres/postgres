@@ -1020,14 +1020,35 @@ typedef struct RangeTblEntry
 	 * be a Var of one of the join's input relations, or such a Var with an
 	 * implicit coercion to the join's output column type, or a COALESCE
 	 * expression containing the two input column Vars (possibly coerced).
-	 * Within a Query loaded from a stored rule, it is also possible for
+	 * Elements beyond the first joinmergedcols entries are always just Vars,
+	 * and are never referenced from elsewhere in the query (that is, join
+	 * alias Vars are generated only for merged columns).  We keep these
+	 * entries only because they're needed in expandRTE() and similar code.
+	 *
+	 * Within a Query loaded from a stored rule, it is possible for non-merged
 	 * joinaliasvars items to be null pointers, which are placeholders for
 	 * (necessarily unreferenced) columns dropped since the rule was made.
 	 * Also, once planning begins, joinaliasvars items can be almost anything,
 	 * as a result of subquery-flattening substitutions.
+	 *
+	 * joinleftcols is an integer list of physical column numbers of the left
+	 * join input rel that are included in the join; likewise joinrighttcols
+	 * for the right join input rel.  (Which rels those are can be determined
+	 * from the associated JoinExpr.)  If the join is USING/NATURAL, then the
+	 * first joinmergedcols entries in each list identify the merged columns.
+	 * The merged columns come first in the join output, then remaining
+	 * columns of the left input, then remaining columns of the right.
+	 *
+	 * Note that input columns could have been dropped after creation of a
+	 * stored rule, if they are not referenced in the query (in particular,
+	 * merged columns could not be dropped); this is not accounted for in
+	 * joinleftcols/joinrighttcols.
 	 */
 	JoinType	jointype;		/* type of join */
+	int			joinmergedcols; /* number of merged (JOIN USING) columns */
 	List	   *joinaliasvars;	/* list of alias-var expansions */
+	List	   *joinleftcols;	/* left-side input column numbers */
+	List	   *joinrightcols;	/* right-side input column numbers */
 
 	/*
 	 * Fields valid for a function RTE (else NIL/zero):
@@ -3313,8 +3334,8 @@ typedef struct ConstraintsSetStmt
  */
 
 /* Reindex options */
-#define REINDEXOPT_VERBOSE (1 << 0)	/* print progress info */
-#define REINDEXOPT_REPORT_PROGRESS (1 << 1)	/* report pgstat progress */
+#define REINDEXOPT_VERBOSE (1 << 0) /* print progress info */
+#define REINDEXOPT_REPORT_PROGRESS (1 << 1) /* report pgstat progress */
 
 typedef enum ReindexObjectType
 {

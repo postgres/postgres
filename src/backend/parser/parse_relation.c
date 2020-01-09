@@ -714,12 +714,15 @@ scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
 							colname,
 							rte->eref->aliasname)));
 
-		var = makeVar(nsitem->p_rtindex,
-					  attnum,
+		var = makeVar(nscol->p_varno,
+					  nscol->p_varattno,
 					  nscol->p_vartype,
 					  nscol->p_vartypmod,
 					  nscol->p_varcollid,
 					  sublevels_up);
+		/* makeVar doesn't offer parameters for these, so set them by hand: */
+		var->varnosyn = nscol->p_varnosyn;
+		var->varattnosyn = nscol->p_varattnosyn;
 	}
 	else
 	{
@@ -991,9 +994,10 @@ searchRangeTableForCol(ParseState *pstate, const char *alias, const char *colnam
  *
  * col == InvalidAttrNumber means a "whole row" reference
  *
- * The caller should pass the actual RTE if it has it handy; otherwise pass
- * NULL, and we'll look it up here.  (This uglification of the API is
- * worthwhile because nearly all external callers have the RTE at hand.)
+ * External callers should always pass the Var's RTE.  Internally, we
+ * allow NULL to be passed for the RTE and then look it up if needed;
+ * this takes less code than requiring each internal recursion site
+ * to perform a lookup.
  */
 static void
 markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
@@ -1062,21 +1066,11 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 		else
 		{
 			/*
-			 * Regular join attribute, look at the alias-variable list.
-			 *
-			 * The aliasvar could be either a Var or a COALESCE expression,
-			 * but in the latter case we should already have marked the two
-			 * referent variables as being selected, due to their use in the
-			 * JOIN clause.  So we need only be concerned with the Var case.
-			 * But we do need to drill down through implicit coercions.
+			 * Join alias Vars for ordinary columns must refer to merged JOIN
+			 * USING columns.  We don't need to do anything here, because the
+			 * join input columns will also be referenced in the join's qual
+			 * clause, and will get marked for select privilege there.
 			 */
-			Var		   *aliasvar;
-
-			Assert(col > 0 && col <= list_length(rte->joinaliasvars));
-			aliasvar = (Var *) list_nth(rte->joinaliasvars, col - 1);
-			aliasvar = (Var *) strip_implicit_coercions((Node *) aliasvar);
-			if (aliasvar && IsA(aliasvar, Var))
-				markVarForSelectPriv(pstate, aliasvar, NULL);
 		}
 	}
 	/* other RTE types don't require privilege marking */
@@ -1085,9 +1079,6 @@ markRTEForSelectPriv(ParseState *pstate, RangeTblEntry *rte,
 /*
  * markVarForSelectPriv
  *	   Mark the RTE referenced by a Var as requiring SELECT privilege
- *
- * The caller should pass the Var's referenced RTE if it has it handy
- * (nearly all do); otherwise pass NULL.
  */
 void
 markVarForSelectPriv(ParseState *pstate, Var *var, RangeTblEntry *rte)
@@ -2110,7 +2101,10 @@ addRangeTableEntryForJoin(ParseState *pstate,
 						  List *colnames,
 						  ParseNamespaceColumn *nscolumns,
 						  JoinType jointype,
+						  int nummergedcols,
 						  List *aliasvars,
+						  List *leftcols,
+						  List *rightcols,
 						  Alias *alias,
 						  bool inFromCl)
 {
@@ -2135,7 +2129,10 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->relid = InvalidOid;
 	rte->subquery = NULL;
 	rte->jointype = jointype;
+	rte->joinmergedcols = nummergedcols;
 	rte->joinaliasvars = aliasvars;
+	rte->joinleftcols = leftcols;
+	rte->joinrightcols = rightcols;
 	rte->alias = alias;
 
 	eref = alias ? copyObject(alias) : makeAlias("unnamed_join", NIL);
@@ -2713,11 +2710,11 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 
 					/*
 					 * During ordinary parsing, there will never be any
-					 * deleted columns in the join; but we have to check since
-					 * this routine is also used by the rewriter, and joins
-					 * found in stored rules might have join columns for
-					 * since-deleted columns.  This will be signaled by a null
-					 * pointer in the alias-vars list.
+					 * deleted columns in the join.  While this function is
+					 * also used by the rewriter and planner, they do not
+					 * currently call it on any JOIN RTEs.  Therefore, this
+					 * next bit is dead code, but it seems prudent to handle
+					 * the case correctly anyway.
 					 */
 					if (avar == NULL)
 					{
@@ -2753,11 +2750,26 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					{
 						Var		   *varnode;
 
-						varnode = makeVar(rtindex, varattno,
-										  exprType(avar),
-										  exprTypmod(avar),
-										  exprCollation(avar),
-										  sublevels_up);
+						/*
+						 * If the joinaliasvars entry is a simple Var, just
+						 * copy it (with adjustment of varlevelsup and
+						 * location); otherwise it is a JOIN USING column and
+						 * we must generate a join alias Var.  This matches
+						 * the results that expansion of "join.*" by
+						 * expandNSItemVars would have produced, if we had
+						 * access to the ParseNamespaceItem for the join.
+						 */
+						if (IsA(avar, Var))
+						{
+							varnode = copyObject((Var *) avar);
+							varnode->varlevelsup = sublevels_up;
+						}
+						else
+							varnode = makeVar(rtindex, varattno,
+											  exprType(avar),
+											  exprTypmod(avar),
+											  exprCollation(avar),
+											  sublevels_up);
 						varnode->location = location;
 
 						*colvars = lappend(*colvars, varnode);
@@ -2971,12 +2983,15 @@ expandNSItemVars(ParseNamespaceItem *nsitem,
 			Var		   *var;
 
 			Assert(nscol->p_varno > 0);
-			var = makeVar(nsitem->p_rtindex,
-						  colindex + 1,
+			var = makeVar(nscol->p_varno,
+						  nscol->p_varattno,
 						  nscol->p_vartype,
 						  nscol->p_vartypmod,
 						  nscol->p_varcollid,
 						  sublevels_up);
+			/* makeVar doesn't offer parameters for these, so set by hand: */
+			var->varnosyn = nscol->p_varnosyn;
+			var->varattnosyn = nscol->p_varattnosyn;
 			var->location = location;
 			result = lappend(result, var);
 			if (colnames)

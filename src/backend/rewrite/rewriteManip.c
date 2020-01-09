@@ -322,7 +322,7 @@ contains_multiexpr_param(Node *node, void *context)
  *
  * Find all Var nodes in the given tree with varlevelsup == sublevels_up,
  * and increment their varno fields (rangetable indexes) by 'offset'.
- * The varnoold fields are adjusted similarly.  Also, adjust other nodes
+ * The varnosyn fields are adjusted similarly.  Also, adjust other nodes
  * that contain rangetable indexes, such as RangeTblRef and JoinExpr.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
@@ -348,7 +348,8 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 		if (var->varlevelsup == context->sublevels_up)
 		{
 			var->varno += context->offset;
-			var->varnoold += context->offset;
+			if (var->varnosyn > 0)
+				var->varnosyn += context->offset;
 		}
 		return false;
 	}
@@ -485,7 +486,7 @@ offset_relid_set(Relids relids, int offset)
  *
  * Find all Var nodes in the given tree belonging to a specific relation
  * (identified by sublevels_up and rt_index), and change their varno fields
- * to 'new_index'.  The varnoold fields are changed too.  Also, adjust other
+ * to 'new_index'.  The varnosyn fields are changed too.  Also, adjust other
  * nodes that contain rangetable indexes, such as RangeTblRef and JoinExpr.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
@@ -513,7 +514,9 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			var->varno == context->rt_index)
 		{
 			var->varno = context->new_index;
-			var->varnoold = context->new_index;
+			/* If the syntactic referent is same RTE, fix it too */
+			if (var->varnosyn == context->rt_index)
+				var->varnosyn = context->new_index;
 		}
 		return false;
 	}
@@ -1252,7 +1255,10 @@ map_variable_attnos_mutator(Node *node,
 					context->attno_map->attnums[attno - 1] == 0)
 					elog(ERROR, "unexpected varattno %d in expression to be mapped",
 						 attno);
-				newvar->varattno = newvar->varoattno = context->attno_map->attnums[attno - 1];
+				newvar->varattno = context->attno_map->attnums[attno - 1];
+				/* If the syntactic referent is same RTE, fix it too */
+				if (newvar->varnosyn == context->target_varno)
+					newvar->varattnosyn = newvar->varattno;
 			}
 			else if (attno == 0)
 			{
@@ -1453,7 +1459,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 			case REPLACEVARS_CHANGE_VARNO:
 				var = (Var *) copyObject(var);
 				var->varno = rcon->nomatch_varno;
-				var->varnoold = rcon->nomatch_varno;
+				/* we leave the syntactic referent alone */
 				return (Node *) var;
 
 			case REPLACEVARS_SUBSTITUTE_NULL:

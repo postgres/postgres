@@ -540,8 +540,8 @@ _readVar(void)
 	READ_INT_FIELD(vartypmod);
 	READ_OID_FIELD(varcollid);
 	READ_UINT_FIELD(varlevelsup);
-	READ_UINT_FIELD(varnoold);
-	READ_INT_FIELD(varoattno);
+	READ_UINT_FIELD(varnosyn);
+	READ_INT_FIELD(varattnosyn);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
@@ -1400,7 +1400,10 @@ _readRangeTblEntry(void)
 			break;
 		case RTE_JOIN:
 			READ_ENUM_FIELD(jointype, JoinType);
+			READ_INT_FIELD(joinmergedcols);
 			READ_NODE_FIELD(joinaliasvars);
+			READ_NODE_FIELD(joinleftcols);
+			READ_NODE_FIELD(joinrightcols);
 			break;
 		case RTE_FUNCTION:
 			READ_NODE_FIELD(functions);

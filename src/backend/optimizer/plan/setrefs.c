@@ -428,6 +428,8 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, RangeTblEntry *rte)
 	newrte->tablesample = NULL;
 	newrte->subquery = NULL;
 	newrte->joinaliasvars = NIL;
+	newrte->joinleftcols = NIL;
+	newrte->joinrightcols = NIL;
 	newrte->functions = NIL;
 	newrte->tablefunc = NULL;
 	newrte->values_lists = NIL;
@@ -1681,8 +1683,8 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		Assert(var->varno != OUTER_VAR);
 		if (!IS_SPECIAL_VARNO(var->varno))
 			var->varno += context->rtoffset;
-		if (var->varnoold > 0)
-			var->varnoold += context->rtoffset;
+		if (var->varnosyn > 0)
+			var->varnosyn += context->rtoffset;
 		return (Node *) var;
 	}
 	if (IsA(node, Param))
@@ -2110,15 +2112,16 @@ set_dummy_tlist_references(Plan *plan, int rtoffset)
 						 exprTypmod((Node *) oldvar),
 						 exprCollation((Node *) oldvar),
 						 0);
-		if (IsA(oldvar, Var))
+		if (IsA(oldvar, Var) &&
+			oldvar->varnosyn > 0)
 		{
-			newvar->varnoold = oldvar->varno + rtoffset;
-			newvar->varoattno = oldvar->varattno;
+			newvar->varnosyn = oldvar->varnosyn + rtoffset;
+			newvar->varattnosyn = oldvar->varattnosyn;
 		}
 		else
 		{
-			newvar->varnoold = 0;	/* wasn't ever a plain Var */
-			newvar->varoattno = 0;
+			newvar->varnosyn = 0;	/* wasn't ever a plain Var */
+			newvar->varattnosyn = 0;
 		}
 
 		tle = flatCopyTargetEntry(tle);
@@ -2242,7 +2245,7 @@ build_tlist_index_other_vars(List *tlist, Index ignore_rel)
  *
  * If a match is found, return a copy of the given Var with suitably
  * modified varno/varattno (to wit, newvarno and the resno of the TLE entry).
- * Also ensure that varnoold is incremented by rtoffset.
+ * Also ensure that varnosyn is incremented by rtoffset.
  * If no match, return NULL.
  */
 static Var *
@@ -2265,8 +2268,8 @@ search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist,
 
 			newvar->varno = newvarno;
 			newvar->varattno = vinfo->resno;
-			if (newvar->varnoold > 0)
-				newvar->varnoold += rtoffset;
+			if (newvar->varnosyn > 0)
+				newvar->varnosyn += rtoffset;
 			return newvar;
 		}
 		vinfo++;
@@ -2308,8 +2311,8 @@ search_indexed_tlist_for_non_var(Expr *node,
 		Var		   *newvar;
 
 		newvar = makeVarFromTargetEntry(newvarno, tle);
-		newvar->varnoold = 0;	/* wasn't ever a plain Var */
-		newvar->varoattno = 0;
+		newvar->varnosyn = 0;	/* wasn't ever a plain Var */
+		newvar->varattnosyn = 0;
 		return newvar;
 	}
 	return NULL;				/* no match */
@@ -2345,8 +2348,8 @@ search_indexed_tlist_for_sortgroupref(Expr *node,
 			Var		   *newvar;
 
 			newvar = makeVarFromTargetEntry(newvarno, tle);
-			newvar->varnoold = 0;	/* wasn't ever a plain Var */
-			newvar->varoattno = 0;
+			newvar->varnosyn = 0;	/* wasn't ever a plain Var */
+			newvar->varattnosyn = 0;
 			return newvar;
 		}
 	}
@@ -2384,7 +2387,7 @@ search_indexed_tlist_for_sortgroupref(Expr *node,
  *		or NULL
  * 'acceptable_rel' is either zero or the rangetable index of a relation
  *		whose Vars may appear in the clause without provoking an error
- * 'rtoffset': how much to increment varnoold by
+ * 'rtoffset': how much to increment varnos by
  *
  * Returns the new expression tree.  The original clause structure is
  * not modified.
@@ -2445,8 +2448,8 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		{
 			var = copyVar(var);
 			var->varno += context->rtoffset;
-			if (var->varnoold > 0)
-				var->varnoold += context->rtoffset;
+			if (var->varnosyn > 0)
+				var->varnosyn += context->rtoffset;
 			return (Node *) var;
 		}
 
@@ -2528,7 +2531,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
  * 'node': the tree to be fixed (a target item or qual)
  * 'subplan_itlist': indexed target list for subplan (or index)
  * 'newvarno': varno to use for Vars referencing tlist elements
- * 'rtoffset': how much to increment varnoold by
+ * 'rtoffset': how much to increment varnos by
  *
  * The resulting tree is a copy of the original in which all Var nodes have
  * varno = newvarno, varattno = resno of corresponding targetlist element.
