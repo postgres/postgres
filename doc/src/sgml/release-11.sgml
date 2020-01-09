@@ -6297,9 +6297,11 @@ Branch: REL9_3_STABLE [84261eb10] 2018-10-19 17:02:26 -0400
   <title>Migration to Version 11</title>
 
    <para>
-    A dump/restore using <xref linkend="app-pg-dumpall"/>, or use of <xref
-    linkend="pgupgrade"/>, is required for those wishing to migrate data
-    from any previous release.
+    A dump/restore using <xref linkend="app-pg-dumpall"/> or use of <xref
+    linkend="pgupgrade"/> or logical replication is required for those
+    wishing to migrate data from any previous release.  See <xref
+    linkend="upgrading"/> for general information on migrating to new major
+    releases.
    </para>
 
    <para>
