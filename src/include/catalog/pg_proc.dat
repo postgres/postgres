@@ -7663,6 +7663,15 @@
   proparallel => 'r', prorettype => 'float8', proargtypes => '',
   prosrc => 'pg_notification_queue_usage' },
 
+# shared memory usage
+{ oid => '8613',
+  descr => 'allocations from the main shared memory segment',
+  proname => 'pg_get_shmem_allocations', 'prorows' => 50, 'proretset' => 't',
+  provolatile => 'v', 'prorettype' => 'record', 'proargtypes' => '',
+  proallargtypes => '{text,int8,int8,int8}', proargmodes => '{o,o,o,o}',
+  proargnames => '{name,off,size,allocated_size}',
+  prosrc => 'pg_get_shmem_allocations' },
+
 # non-persistent series generator
 { oid => '1066', descr => 'non-persistent series generator',
   proname => 'generate_series', prorows => '1000',

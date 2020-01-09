@@ -66,12 +66,16 @@
 #include "postgres.h"
 
 #include "access/transam.h"
+#include "fmgr.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/lwlock.h"
 #include "storage/pg_shmem.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
+#include "utils/builtins.h"
 
+static void *ShmemAllocRaw(Size size, Size *allocated_size);
 
 /* shared memory global variables */
 
@@ -157,8 +161,9 @@ void *
 ShmemAlloc(Size size)
 {
 	void	   *newSpace;
+	Size		allocated_size;
 
-	newSpace = ShmemAllocNoError(size);
+	newSpace = ShmemAllocRaw(size, &allocated_size);
 	if (!newSpace)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -174,6 +179,20 @@ ShmemAlloc(Size size)
  */
 void *
 ShmemAllocNoError(Size size)
+{
+	Size		allocated_size;
+
+	return ShmemAllocRaw(size, &allocated_size);
+}
+
+/*
+ * ShmemAllocRaw -- allocate align chunk and return allocated size
+ *
+ * Also sets *allocated_size to the number of bytes allocated, which will
+ * be equal to the number requested plus any padding we choose to add.
+ */
+static void *
+ShmemAllocRaw(Size size, Size *allocated_size)
 {
 	Size		newStart;
 	Size		newFree;
@@ -191,6 +210,7 @@ ShmemAllocNoError(Size size)
 	 * won't be sufficient.
 	 */
 	size = CACHELINEALIGN(size);
+	*allocated_size = size;
 
 	Assert(ShmemSegHdr != NULL);
 
@@ -441,8 +461,10 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	}
 	else
 	{
+		Size	allocated_size;
+
 		/* It isn't in the table yet. allocate and initialize it */
-		structPtr = ShmemAllocNoError(size);
+		structPtr = ShmemAllocRaw(size, &allocated_size);
 		if (structPtr == NULL)
 		{
 			/* out of memory; remove the failed ShmemIndex entry */
@@ -455,6 +477,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 							name, size)));
 		}
 		result->size = size;
+		result->allocated_size = allocated_size;
 		result->location = structPtr;
 	}
 
@@ -502,4 +525,83 @@ mul_size(Size s1, Size s2)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("requested shared memory size overflows size_t")));
 	return result;
+}
+
+/* SQL SRF showing allocated shared memory */
+Datum
+pg_get_shmem_allocations(PG_FUNCTION_ARGS)
+{
+#define PG_GET_SHMEM_SIZES_COLS 4
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	HASH_SEQ_STATUS hstat;
+	ShmemIndexEnt *ent;
+	Size	named_allocated = 0;
+	Datum		values[PG_GET_SHMEM_SIZES_COLS];
+	bool		nulls[PG_GET_SHMEM_SIZES_COLS];
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	LWLockAcquire(ShmemIndexLock, LW_SHARED);
+
+	hash_seq_init(&hstat, ShmemIndex);
+
+	/* output all allocated entries */
+	memset(nulls, 0, sizeof(nulls));
+	while ((ent = (ShmemIndexEnt *) hash_seq_search(&hstat)) != NULL)
+	{
+		values[0] = CStringGetTextDatum(ent->key);
+		values[1] = Int64GetDatum((char *) ent->location - (char *) ShmemSegHdr);
+		values[2] = Int64GetDatum(ent->size);
+		values[3] = Int64GetDatum(ent->allocated_size);
+		named_allocated += ent->allocated_size;
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
+
+	/* output shared memory allocated but not counted via the shmem index */
+	values[0] = CStringGetTextDatum("<anonymous>");
+	nulls[1] = true;
+	values[2] = Int64GetDatum(ShmemSegHdr->freeoffset - named_allocated);
+	values[3] = values[2];
+	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+	/* output as-of-yet unused shared memory */
+	nulls[0] = true;
+	values[1] = Int64GetDatum(ShmemSegHdr->freeoffset);
+	nulls[1] = false;
+	values[2] = Int64GetDatum(ShmemSegHdr->totalsize - ShmemSegHdr->freeoffset);
+	values[3] = values[2];
+	tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+
+	LWLockRelease(ShmemIndexLock);
+
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
 }

@@ -8363,6 +8363,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
+      <entry><link linkend="view-pg-shmem-allocations"><structname>pg_shmem_allocations</structname></link></entry>
+      <entry>shared memory allocations</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-stats-ext"><structname>pg_stats_ext</structname></link></entry>
       <entry>extended planner statistics</entry>
      </row>
@@ -10746,6 +10751,86 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    </tgroup>
   </table>
 
+ </sect1>
+
+ <sect1 id="view-pg-shmem-allocations">
+  <title><structname>pg_shmem_allocations</structname></title>
+
+  <indexterm zone="view-pg-shmem-allocations">
+   <primary>pg_shmem_allocations</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_shmem_allocations</structname> view shows allocations
+   made from the server's main shared memory segment.  This includes both
+   memory allocated by <productname>postgres</productname> itself and memory
+   allocated by extensions using the mechanisms detailed in
+   <xref linkend="xfunc-shared-addin" />.
+  </para>
+
+  <para>
+   Note that this view does not include memory allocated using the dynamic
+   shared memory infrastructure.
+  </para>
+
+  <table>
+   <title><structname>pg_shmem_allocations</structname> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>name</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry>The name of the shared memory allocation. NULL for unused memory
+      and <literal>&lt;anonymous&gt;</literal> for anonymous
+      allocations.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>off</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry>The offset at which the allocation starts. NULL for anonymous
+      allocations and unused memory.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>size</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry>Size of the allocation</entry>
+     </row>
+
+     <row>
+      <entry><structfield>allocated_size</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry>Size of the allocation including padding. For anonymous
+      allocations, no information about padding is available, so the
+      <literal>size</literal> and <literal>allocated_size</literal> columns
+      will always be equal. Padding is not meaningful for free memory, so
+      the columns will be equal in that case also.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Anonymous allocations are allocations that have been made
+   with <literal>ShmemAlloc()</literal> directly, rather than via
+   <literal>ShmemInitStruct()</literal> or
+   <literal>ShmemInitHash()</literal>.
+  </para>
+
+  <para>
+   By default, the <structname>pg_shmem_allocations</structname> view can be
+   read only by superusers.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-stats">

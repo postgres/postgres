@@ -3239,7 +3239,7 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-shared-addin">
     <title>Shared Memory and LWLocks</title>
 
     <para>

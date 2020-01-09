@@ -59,7 +59,8 @@ typedef struct
 {
 	char		key[SHMEM_INDEX_KEYSIZE];	/* string name */
 	void	   *location;		/* location in shared mem */
-	Size		size;			/* # bytes allocated for the structure */
+	Size		size;			/* # bytes requested for the structure */
+	Size		allocated_size;	/* # bytes actually allocated */
 } ShmemIndexEnt;
 
 /*
