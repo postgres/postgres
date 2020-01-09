@@ -1039,7 +1039,8 @@ SELECT count(*) FROM words WHERE word = 'caterpiler';
 </programlisting>
 
     Either way, the word is spelled wrong, so let's look for what we might
-    have wanted.  Again using <literal>file_fdw</literal>:
+    have wanted.  Again using <literal>file_fdw</literal> and
+    <literal>pg_trgm</literal>:
 
 <programlisting>
 SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
