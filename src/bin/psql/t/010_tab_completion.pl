@@ -7,9 +7,19 @@ use Test::More;
 use IPC::Run qw(pump finish timer);
 use Data::Dumper;
 
+# Do nothing unless Makefile has told us that the build is --with-readline.
 if (!defined($ENV{with_readline}) || $ENV{with_readline} ne 'yes')
 {
 	plan skip_all => 'readline is not supported by this build';
+}
+
+# Also, skip if user has set environment variable to command that.
+# This is mainly intended to allow working around some of the more broken
+# versions of libedit --- some users might find them acceptable even if
+# they won't pass these tests.
+if (defined($ENV{SKIP_READLINE_TESTS}))
+{
+	plan skip_all => 'SKIP_READLINE_TESTS is set';
 }
 
 # If we don't have IO::Pty, forget it, because IPC::Run depends on that
