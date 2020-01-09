@@ -107,13 +107,13 @@
     A foreign server using the <filename>postgres_fdw</filename> foreign data wrapper
     can have the same options that <application>libpq</application> accepts in
     connection strings, as described in <xref linkend="libpq-paramkeywords"/>,
-    except that these options are not allowed:
+    except that these options are not allowed or have special handling:
 
     <itemizedlist spacing="compact">
      <listitem>
       <para>
        <literal>user</literal>, <literal>password</literal> and <literal>sslpassword</literal> (specify these
-       in a user mapping, instead)
+       in a user mapping, instead, or use a service file)
       </para>
      </listitem>
      <listitem>
@@ -126,6 +126,14 @@
       <para>
        <literal>fallback_application_name</literal> (always set to
        <literal>postgres_fdw</literal>)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>sslkey</literal> and <literal>sslpassword</literal> - these may
+       appear in <emphasis>either or both</emphasis> a connection and a user
+       mapping. If both are present, the user mapping setting overrides the
+       connection setting.
       </para>
      </listitem>
     </itemizedlist>

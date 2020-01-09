@@ -188,6 +188,19 @@ ALTER SERVER testserver1 OPTIONS (DROP extensions);
 ALTER USER MAPPING FOR public SERVER testserver1
 	OPTIONS (DROP user, DROP password);
 
+-- Attempt to add a valid option that's not allowed in a user mapping
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD sslmode 'require');
+
+-- But we can add valid ones fine
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD sslpassword 'dummy');
+
+-- Ensure valid options we haven't used in a user mapping yet are
+-- permitted to check validation.
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD sslkey 'value', ADD sslcert 'value');
+
 ALTER FOREIGN TABLE ft1 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft2 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');

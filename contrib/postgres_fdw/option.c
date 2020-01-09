@@ -194,6 +194,15 @@ InitPgFdwOptions(void)
 		{"fetch_size", ForeignServerRelationId, false},
 		{"fetch_size", ForeignTableRelationId, false},
 		{"password_required", UserMappingRelationId, false},
+		/*
+		 * sslcert and sslkey are in fact libpq options, but we repeat them
+		 * here to allow them to appear in both foreign server context
+		 * (when we generate libpq options) and user mapping context
+		 * (from here).
+		 */
+		{"sslcert", UserMappingRelationId, true},
+		{"sslkey", UserMappingRelationId, true},
+
 		{NULL, InvalidOid, false}
 	};
 
