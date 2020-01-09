@@ -2,3 +2,6 @@
 /log/
 /results/
 /tmp_check/
+
+# Downloaded files
+/Latin-ASCII.xml

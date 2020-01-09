@@ -26,3 +26,22 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+update-unicode: unaccent.rules
+
+# Allow running this even without --with-python
+PYTHON ?= python
+
+unaccent.rules: generate_unaccent_rules.py ../../src/common/unicode/UnicodeData.txt Latin-ASCII.xml
+	$(PYTHON) $< --unicode-data-file $(word 2,$^) --latin-ascii-file $(word 3,$^) >$@
+
+# Only download it once; dependencies must match src/common/unicode/
+../../src/common/unicode/UnicodeData.txt: $(top_builddir)/src/Makefile.global
+	$(MAKE) -C $(@D) $(@F)
+
+# Dependency on Makefile.global is for CLDR_VERSION
+Latin-ASCII.xml: $(top_builddir)/src/Makefile.global
+	$(DOWNLOAD) https://raw.githubusercontent.com/unicode-org/cldr/release-$(subst .,-,$(CLDR_VERSION))/common/transforms/Latin-ASCII.xml
+
+distclean:
+	rm -f Latin-ASCII.xml

@@ -115,9 +115,6 @@ maintainer-clean: distclean
 	rm -f $(MAPS)
 
 
-DOWNLOAD = wget -O $@ --no-use-server-timestamps
-#DOWNLOAD = curl -o $@
-
 BIG5.TXT CNS11643.TXT:
 	$(DOWNLOAD) https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/OTHER/$(@F)
 

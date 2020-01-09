@@ -20,13 +20,11 @@
 # option is enabled, the XML file of this transliterator [2] -- given as a
 # command line argument -- will be parsed and used.
 #
-# Ideally you should use the latest release for each data set.  For
-# Latin-ASCII.xml, the latest data sets released can be browsed directly
-# via [3].  Note that this script is compatible with at least release 29.
+# Ideally you should use the latest release for each data set.  This
+# script is compatible with at least CLDR release 29.
 #
-# [1] https://www.unicode.org/Public/8.0.0/ucd/UnicodeData.txt
-# [2] https://raw.githubusercontent.com/unicode-org/cldr/release-34/common/transforms/Latin-ASCII.xml
-# [3] https://github.com/unicode-org/cldr/tags
+# [1] https://www.unicode.org/Public/${UNICODE_VERSION}/ucd/UnicodeData.txt
+# [2] https://raw.githubusercontent.com/unicode-org/cldr/${TAG}/common/transforms/Latin-ASCII.xml
 
 # BEGIN: Python 2/3 compatibility - remove when Python 2 compatibility dropped
 # The approach is to be Python3 compatible with Python2 "backports".

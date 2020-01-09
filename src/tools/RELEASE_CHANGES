@@ -77,6 +77,9 @@ but there may be reasons to do them at other times as well.
 
 * Update inet/cidr data types with newest Bind patches
 
+* Update Unicode data: Edit UNICODE_VERSION and CLDR_VERSION in
+  src/Makefile.global.in, run make update-unicode, and commit.
+
 
 Starting a New Development Cycle
 ================================

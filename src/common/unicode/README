@@ -8,20 +8,11 @@ of Unicode.
 Generating unicode_norm_table.h
 -------------------------------
 
-1. Download the Unicode data file, UnicodeData.txt, from the Unicode
-consortium and place it to the current directory. Run the perl script
-"generate-unicode_norm_table.pl", to process it, and to generate the
-"unicode_norm_table.h" file. The Makefile contains a rule to download the
-data files if they don't exist.
+Run
 
-    make unicode_norm_table.h
+    make update-unicode
 
-2. Inspect the resulting header file. Once you're happy with it, copy it to
-the right location.
-
-    cp unicode_norm_table.h ../../../src/include/common/
-
-
+from the top level of the source tree and commit the result.
 
 Tests
 -----
@@ -33,3 +24,5 @@ normalization code with all the test strings in NormalizationTest.txt.
 To download NormalizationTest.txt and run the tests:
 
     make normalization-check
+
+This is also run as part of the update-unicode target.

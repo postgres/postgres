@@ -75,6 +75,10 @@ $(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib sr
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
 
+update-unicode: | submake-generated-headers submake-libpgport
+	$(MAKE) -C src/common/unicode $@
+	$(MAKE) -C contrib/unaccent $@
+
 
 ##########################################################################
 

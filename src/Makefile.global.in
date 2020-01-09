@@ -23,7 +23,7 @@ standard_targets = all install installdirs uninstall distprep clean distclean ma
 # these targets should recurse even into subdirectories not being built:
 standard_always_targets = distprep clean distclean maintainer-clean
 
-.PHONY: $(standard_targets) install-strip html man installcheck-parallel
+.PHONY: $(standard_targets) install-strip html man installcheck-parallel update-unicode
 
 # make `all' the default target
 all:
@@ -351,6 +351,22 @@ XGETTEXT = @XGETTEXT@
 
 GZIP	= gzip
 BZIP2	= bzip2
+
+DOWNLOAD = wget -O $@ --no-use-server-timestamps
+#DOWNLOAD = curl -o $@
+
+
+# Unicode data information
+
+# Before each major release, update these and run make update-unicode.
+
+# Pick a release from here: <https://www.unicode.org/Public/>.  Note
+# that the most recent release listed there is often a pre-release;
+# don't pick that one, except for testing.
+UNICODE_VERSION = 12.1.0
+
+# Pick a release from here: <http://cldr.unicode.org/index/downloads>
+CLDR_VERSION = 34
 
 
 # Tree-wide build support
