@@ -10035,9 +10035,11 @@ Branch: REL_10_STABLE [5159626af] 2017-11-03 14:14:16 -0400
   <title>Migration to Version 10</title>
 
    <para>
-    A dump/restore using <xref linkend="app-pg-dumpall">, or use of <xref
-    linkend="pgupgrade">, is required for those wishing to migrate data
-    from any previous release.
+    A dump/restore using <xref linkend="app-pg-dumpall"> or use of <xref
+    linkend="pgupgrade"> or logical replication is required for those
+    wishing to migrate data from any previous release.  See <xref
+    linkend="upgrading"> for general information on migrating to new major
+    releases.
    </para>
 
    <para>
