@@ -1659,11 +1659,10 @@ table_relation_fetch_toast_slice(Relation toastrel, Oid valueid,
 								 int32 attrsize, int32 sliceoffset,
 								 int32 slicelength, struct varlena *result)
 {
-	return toastrel->rd_tableam->relation_fetch_toast_slice(toastrel, valueid,
-															attrsize,
-															sliceoffset,
-															slicelength,
-															result);
+	toastrel->rd_tableam->relation_fetch_toast_slice(toastrel, valueid,
+													 attrsize,
+													 sliceoffset, slicelength,
+													 result);
 }
 
 
