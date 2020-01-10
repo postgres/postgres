@@ -263,9 +263,8 @@ typedef struct BTMetaPageData
  * offset field only stores the number of columns/attributes when the
  * INDEX_ALT_TID_MASK bit is set, which doesn't count the trailing heap
  * TID column sometimes stored in pivot tuples -- that's represented by
- * the presence of BT_HEAP_TID_ATTR.  The INDEX_ALT_TID_MASK bit in t_info
- * is always set on BTREE_VERSION 4.  BT_HEAP_TID_ATTR can only be set on
- * BTREE_VERSION 4.
+ * the presence of BT_PIVOT_HEAP_TID_ATTR.  The INDEX_ALT_TID_MASK bit in
+ * t_info is always set on BTREE_VERSION 4 pivot tuples.
  *
  * In version 3 indexes, the INDEX_ALT_TID_MASK flag might not be set in
  * pivot tuples.  In that case, the number of key columns is implicitly
@@ -296,7 +295,7 @@ typedef struct BTMetaPageData
 /* Item pointer offset bits */
 #define BT_RESERVED_OFFSET_MASK		0xF000
 #define BT_N_KEYS_OFFSET_MASK		0x0FFF
-#define BT_HEAP_TID_ATTR			0x1000
+#define BT_PIVOT_HEAP_TID_ATTR		0x1000
 
 /* Get/set downlink block number in pivot tuple */
 #define BTreeTupleGetDownLink(itup) \
@@ -347,7 +346,7 @@ typedef struct BTMetaPageData
 #define BTreeTupleGetHeapTID(itup) \
 	( \
 	  (itup)->t_info & INDEX_ALT_TID_MASK && \
-	  (ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_HEAP_TID_ATTR) != 0 ? \
+	  (ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) & BT_PIVOT_HEAP_TID_ATTR) != 0 ? \
 	  ( \
 		(ItemPointer) (((char *) (itup) + IndexTupleSize(itup)) - \
 					   sizeof(ItemPointerData)) \
@@ -362,7 +361,7 @@ typedef struct BTMetaPageData
 	do { \
 		Assert((itup)->t_info & INDEX_ALT_TID_MASK); \
 		ItemPointerSetOffsetNumber(&(itup)->t_tid, \
-								   ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) | BT_HEAP_TID_ATTR); \
+								   ItemPointerGetOffsetNumberNoCheck(&(itup)->t_tid) | BT_PIVOT_HEAP_TID_ATTR); \
 	} while(0)
 
 /*
