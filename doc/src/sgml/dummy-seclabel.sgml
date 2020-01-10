@@ -26,7 +26,7 @@
   <para>
    Security label providers intended to be used in production will typically be
    dependent on a platform-specific feature such as
-   <productname>SE-Linux</productname>.  This module is platform-independent,
+   <productname>SELinux</productname>.  This module is platform-independent,
    and therefore better-suited to regression testing.
   </para>
  </sect2>
