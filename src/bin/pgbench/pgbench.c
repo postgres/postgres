@@ -3297,10 +3297,17 @@ executeMetaCommand(CState *st, instr_time *now)
 
 	if (unlikely(__pg_log_level <= PG_LOG_DEBUG))
 	{
-		fprintf(stderr, "client %d executing \\%s", st->id, argv[0]);
+		PQExpBufferData	buf;
+
+		initPQExpBuffer(&buf);
+
+		printfPQExpBuffer(&buf, "client %d executing \\%s", st->id, argv[0]);
 		for (int i = 1; i < argc; i++)
-			fprintf(stderr, " %s", argv[i]);
-		fprintf(stderr, "\n");
+			appendPQExpBuffer(&buf, " %s", argv[i]);
+
+		pg_log_debug("%s", buf.data);
+
+		termPQExpBuffer(&buf);
 	}
 
 	if (command->meta == META_SLEEP)
