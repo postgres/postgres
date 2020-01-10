@@ -132,8 +132,8 @@ typedef struct BTMetaPageData
 #define BTREE_METAPAGE	0		/* first page is meta */
 #define BTREE_MAGIC		0x053162	/* magic number in metapage */
 #define BTREE_VERSION	4		/* current version number */
-#define BTREE_MIN_VERSION	2	/* minimal supported version number */
-#define BTREE_NOVAC_VERSION	3	/* minimal version with all meta fields */
+#define BTREE_MIN_VERSION	2	/* minimum supported version */
+#define BTREE_NOVAC_VERSION	3	/* version with all meta fields set */
 
 /*
  * Maximum size of a btree index entry, including its tuple header.
