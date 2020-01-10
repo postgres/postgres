@@ -1,19 +1,17 @@
-The dummy_seclabel module exists only to support regression
-testing of the SECURITY LABEL statement.  It is not intended
-to be used in production.
+The dummy_seclabel module exists only to support regression testing of
+the SECURITY LABEL statement.  It is not intended to be used in production.
 
 Rationale
 =========
 
-The SECURITY LABEL statement allows the user to assign security
-labels to database objects; however, security labels can only be assigned
-when specifically allowed by a loadable module, so this module is provided
-to allow proper regression testing.
+The SECURITY LABEL statement allows the user to assign security labels to
+database objects; however, security labels can only be assigned when
+specifically allowed by a loadable module, so this module is provided to
+allow proper regression testing.
 
 Security label providers intended to be used in production will typically be
-dependent on a platform-specific feature such as
-SE-Linux.  This module is platform-independent,
-and therefore better-suited to regression testing.
+dependent on a platform-specific feature such as SELinux.  This module is
+platform-independent, and therefore better-suited to regression testing.
 
 Usage
 =====
