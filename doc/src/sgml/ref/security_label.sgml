@@ -80,7 +80,7 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
    label provider must interpret security labels; it merely provides a
    mechanism for storing them.  In practice, this facility is intended to allow
    integration with label-based mandatory access control (MAC) systems such as
-   <productname>SE-Linux</productname>.  Such systems make all access control decisions
+   <productname>SELinux</productname>.  Such systems make all access control decisions
    based on object labels, rather than traditional discretionary access control
    (DAC) concepts such as users and groups.
   </para>
