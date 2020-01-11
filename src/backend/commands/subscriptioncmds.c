@@ -428,7 +428,6 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	 */
 	if (connect)
 	{
-		XLogRecPtr	lsn;
 		char	   *err;
 		WalReceiverConn *wrconn;
 		List	   *tables;
@@ -479,7 +478,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 				Assert(slotname);
 
 				walrcv_create_slot(wrconn, slotname, false,
-								   CRS_NOEXPORT_SNAPSHOT, &lsn);
+								   CRS_NOEXPORT_SNAPSHOT, NULL);
 				ereport(NOTICE,
 						(errmsg("created replication slot \"%s\" on publisher",
 								slotname)));

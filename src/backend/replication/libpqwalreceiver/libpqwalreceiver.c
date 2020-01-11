@@ -844,8 +844,10 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 						slotname, pchomp(PQerrorMessage(conn->streamConn)))));
 	}
 
-	*lsn = DatumGetLSN(DirectFunctionCall1Coll(pg_lsn_in, InvalidOid,
-											   CStringGetDatum(PQgetvalue(res, 0, 1))));
+	if (lsn)
+		*lsn = DatumGetLSN(DirectFunctionCall1Coll(pg_lsn_in, InvalidOid,
+												   CStringGetDatum(PQgetvalue(res, 0, 1))));
+
 	if (!PQgetisnull(res, 0, 2))
 		snapshot = pstrdup(PQgetvalue(res, 0, 2));
 	else
