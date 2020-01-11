@@ -19,7 +19,7 @@ use Test::More;
 
 if ($ENV{with_gssapi} eq 'yes')
 {
-	plan tests => 12;
+	plan tests => 18;
 }
 else
 {
@@ -166,15 +166,15 @@ $node->safe_psql('postgres', 'CREATE USER test1;');
 
 note "running tests";
 
+# Test connection success or failure, and if success, that query returns true.
 sub test_access
 {
-	my ($node, $role, $server_check, $expected_res, $gssencmode, $test_name)
-	  = @_;
+	my ($node, $role, $query, $expected_res, $gssencmode, $test_name) = @_;
 
 	# need to connect over TCP/IP for Kerberos
 	my ($res, $stdoutres, $stderrres) = $node->psql(
 		'postgres',
-		"$server_check",
+		"$query",
 		extra_params => [
 			'-XAtd',
 			$node->connstr('postgres')
@@ -192,6 +192,29 @@ sub test_access
 	{
 		is($res, $expected_res, $test_name);
 	}
+	return;
+}
+
+# As above, but test for an arbitrary query result.
+sub test_query
+{
+	my ($node, $role, $query, $expected, $gssencmode, $test_name) = @_;
+
+	# need to connect over TCP/IP for Kerberos
+	my ($res, $stdoutres, $stderrres) = $node->psql(
+		'postgres',
+		"$query",
+		extra_params => [
+			'-XAtd',
+			$node->connstr('postgres')
+			  . " host=$host hostaddr=$hostaddr $gssencmode",
+			'-U',
+			$role
+		]);
+
+	is($res, 0, $test_name);
+	like($stdoutres, $expected, $test_name);
+	is($stderrres, "", $test_name);
 	return;
 }
 
@@ -230,6 +253,27 @@ test_access(
 	0,
 	"gssencmode=require",
 	"succeeds with GSS-encrypted access required with host hba");
+
+# Test that we can transport a reasonable amount of data.
+test_query(
+	$node,
+	"test1",
+	'SELECT * FROM generate_series(1, 100000);',
+	qr/^1\n.*\n1024\n.*\n9999\n.*\n100000$/s,
+	"gssencmode=require",
+	"receiving 100K lines works");
+
+test_query(
+	$node,
+	"test1",
+	"CREATE TABLE mytab (f1 int primary key);\n"
+	  . "COPY mytab FROM STDIN;\n"
+	  . join("\n", (1 .. 100000))
+	  . "\n\\.\n"
+	  . "SELECT COUNT(*) FROM mytab;",
+	qr/^100000$/s,
+	"gssencmode=require",
+	"sending 100K lines works");
 
 unlink($node->data_dir . '/pg_hba.conf');
 $node->append_conf('pg_hba.conf',

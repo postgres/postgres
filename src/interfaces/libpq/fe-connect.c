@@ -462,7 +462,7 @@ pqDropConnection(PGconn *conn, bool flushInput)
 	/* Always discard any unsent data */
 	conn->outCount = 0;
 
-	/* Free authentication state */
+	/* Free authentication/encryption state */
 #ifdef ENABLE_GSS
 	{
 		OM_uint32	min_s;
@@ -471,6 +471,21 @@ pqDropConnection(PGconn *conn, bool flushInput)
 			gss_delete_sec_context(&min_s, &conn->gctx, GSS_C_NO_BUFFER);
 		if (conn->gtarg_nam)
 			gss_release_name(&min_s, &conn->gtarg_nam);
+		if (conn->gss_SendBuffer)
+		{
+			free(conn->gss_SendBuffer);
+			conn->gss_SendBuffer = NULL;
+		}
+		if (conn->gss_RecvBuffer)
+		{
+			free(conn->gss_RecvBuffer);
+			conn->gss_RecvBuffer = NULL;
+		}
+		if (conn->gss_ResultBuffer)
+		{
+			free(conn->gss_ResultBuffer);
+			conn->gss_ResultBuffer = NULL;
+		}
 	}
 #endif
 #ifdef ENABLE_SSPI

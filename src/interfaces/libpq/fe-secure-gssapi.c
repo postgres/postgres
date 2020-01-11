@@ -18,6 +18,7 @@
 #include "libpq-int.h"
 #include "port/pg_bswap.h"
 
+
 /*
  * Require encryption support, as well as mutual authentication and
  * tamperproofing measures.
@@ -26,124 +27,161 @@
 	GSS_C_SEQUENCE_FLAG | GSS_C_CONF_FLAG | GSS_C_INTEG_FLAG
 
 /*
- * We use fixed-size buffers for handling the encryption/decryption
- * which are larger than PQComm's buffer will typically be to minimize
- * the times where we have to make multiple packets and therefore sets
- * of recv/send calls for a single read/write call to us.
+ * Handle the encryption/decryption of data using GSSAPI.
+ *
+ * In the encrypted data stream on the wire, we break up the data
+ * into packets where each packet starts with a uint32-size length
+ * word (in network byte order), then encrypted data of that length
+ * immediately following.  Decryption yields the same data stream
+ * that would appear when not using encryption.
+ *
+ * Encrypted data typically ends up being larger than the same data
+ * unencrypted, so we use fixed-size buffers for handling the
+ * encryption/decryption which are larger than PQComm's buffer will
+ * typically be to minimize the times where we have to make multiple
+ * packets (and therefore multiple recv/send calls for a single
+ * read/write call to us).
  *
  * NOTE: The client and server have to agree on the max packet size,
  * because we have to pass an entire packet to GSSAPI at a time and we
- * don't want the other side to send arbitrairly huge packets as we
+ * don't want the other side to send arbitrarily huge packets as we
  * would have to allocate memory for them to then pass them to GSSAPI.
+ *
+ * Therefore, these two #define's are effectively part of the protocol
+ * spec and can't ever be changed.
  */
 #define PQ_GSS_SEND_BUFFER_SIZE 16384
 #define PQ_GSS_RECV_BUFFER_SIZE 16384
 
-/* PqGSSSendBuffer is for *encrypted* data */
-static char PqGSSSendBuffer[PQ_GSS_SEND_BUFFER_SIZE];
-static int	PqGSSSendPointer;	/* Next index to store a byte in
-								 * PqGSSSendBuffer */
-static int	PqGSSSendStart;		/* Next index to send a byte in
-								 * PqGSSSendBuffer */
+/*
+ * We need these state variables per-connection.  To allow the functions
+ * in this file to look mostly like those in be-secure-gssapi.c, set up
+ * these macros.
+ */
+#define PqGSSSendBuffer (conn->gss_SendBuffer)
+#define PqGSSSendLength (conn->gss_SendLength)
+#define PqGSSSendNext (conn->gss_SendNext)
+#define PqGSSSendConsumed (conn->gss_SendConsumed)
+#define PqGSSRecvBuffer (conn->gss_RecvBuffer)
+#define PqGSSRecvLength (conn->gss_RecvLength)
+#define PqGSSResultBuffer (conn->gss_ResultBuffer)
+#define PqGSSResultLength (conn->gss_ResultLength)
+#define PqGSSResultNext (conn->gss_ResultNext)
+#define PqGSSMaxPktSize (conn->gss_MaxPktSize)
 
-/* PqGSSRecvBuffer is for *encrypted* data */
-static char PqGSSRecvBuffer[PQ_GSS_RECV_BUFFER_SIZE];
-static int	PqGSSRecvPointer;	/* Next index to read a byte from
-								 * PqGSSRecvBuffer */
-static int	PqGSSRecvLength;	/* End of data available in PqGSSRecvBuffer */
-
-/* PqGSSResultBuffer is for *unencrypted* data */
-static char PqGSSResultBuffer[PQ_GSS_RECV_BUFFER_SIZE];
-static int	PqGSSResultPointer; /* Next index to read a byte from
-								 * PqGSSResultBuffer */
-static int	PqGSSResultLength;	/* End of data available in PqGSSResultBuffer */
-
-uint32		max_packet_size;	/* Maximum size we can encrypt and fit the
-								 * results into our output buffer */
 
 /*
- * Write len bytes of data from ptr along a GSSAPI-encrypted connection.  Note
- * that the connection must be already set up for GSSAPI encryption (i.e.,
- * GSSAPI transport negotiation is complete).  Returns len when all data has
- * been written; retry when errno is EWOULDBLOCK or similar with the same
- * values of ptr and len.  On non-socket failures, will log an error message.
+ * Attempt to write len bytes of data from ptr to a GSSAPI-encrypted connection.
+ *
+ * The connection must be already set up for GSSAPI encryption (i.e., GSSAPI
+ * transport negotiation is complete).
+ *
+ * On success, returns the number of data bytes consumed (possibly less than
+ * len).  On failure, returns -1 with errno set appropriately.  If the errno
+ * indicates a non-retryable error, a message is put into conn->errorMessage.
+ * For retryable errors, caller should call again (passing the same data)
+ * once the socket is ready.
  */
 ssize_t
 pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 {
-	gss_buffer_desc input,
-				output = GSS_C_EMPTY_BUFFER;
 	OM_uint32	major,
 				minor;
+	gss_buffer_desc input,
+				output = GSS_C_EMPTY_BUFFER;
 	ssize_t		ret = -1;
-	size_t		bytes_to_encrypt = len;
-	size_t		bytes_encrypted = 0;
+	size_t		bytes_sent = 0;
+	size_t		bytes_to_encrypt;
+	size_t		bytes_encrypted;
+	gss_ctx_id_t gctx = conn->gctx;
 
 	/*
-	 * Loop through encrypting data and sending it out until
+	 * When we get a failure, we must not tell the caller we have successfully
+	 * transmitted everything, else it won't retry.  Hence a "success"
+	 * (positive) return value must only count source bytes corresponding to
+	 * fully-transmitted encrypted packets.  The amount of source data
+	 * corresponding to the current partly-transmitted packet is remembered in
+	 * PqGSSSendConsumed.  On a retry, the caller *must* be sending that data
+	 * again, so if it offers a len less than that, something is wrong.
+	 */
+	if (len < PqGSSSendConsumed)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  "GSSAPI caller failed to retransmit all data needing to be retried\n");
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* Discount whatever source data we already encrypted. */
+	bytes_to_encrypt = len - PqGSSSendConsumed;
+	bytes_encrypted = PqGSSSendConsumed;
+
+	/*
+	 * Loop through encrypting data and sending it out until it's all done or
 	 * pqsecure_raw_write() complains (which would likely mean that the socket
 	 * is non-blocking and the requested send() would block, or there was some
-	 * kind of actual error) and then return.
+	 * kind of actual error).
 	 */
-	while (bytes_to_encrypt || PqGSSSendPointer)
+	while (bytes_to_encrypt || PqGSSSendLength)
 	{
 		int			conf_state = 0;
 		uint32		netlen;
 
 		/*
 		 * Check if we have data in the encrypted output buffer that needs to
-		 * be sent, and if so, try to send it.  If we aren't able to, return
-		 * that back up to the caller.
+		 * be sent (possibly left over from a previous call), and if so, try
+		 * to send it.  If we aren't able to, return that fact back up to the
+		 * caller.
 		 */
-		if (PqGSSSendPointer)
+		if (PqGSSSendLength)
 		{
 			ssize_t		ret;
-			ssize_t		amount = PqGSSSendPointer - PqGSSSendStart;
+			ssize_t		amount = PqGSSSendLength - PqGSSSendNext;
 
-			ret = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendStart, amount);
-			if (ret < 0)
+			ret = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendNext, amount);
+			if (ret <= 0)
 			{
 				/*
-				 * If we encrypted some data and it's in our output buffer,
-				 * but send() is saying that we would block, then tell the
-				 * client how far we got with encrypting the data so that they
-				 * can call us again with whatever is left, at which point we
-				 * will try to send the remaining encrypted data first and
-				 * then move on to encrypting the rest of the data.
+				 * Report any previously-sent data; if there was none, reflect
+				 * the pqsecure_raw_write result up to our caller.  When there
+				 * was some, we're effectively assuming that any interesting
+				 * failure condition will recur on the next try.
 				 */
-				if (bytes_encrypted != 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
-					return bytes_encrypted;
-				else
-					return ret;
+				if (bytes_sent)
+					return bytes_sent;
+				return ret;
 			}
 
 			/*
-			 * Partial write, move forward that far in our buffer and try
-			 * again
+			 * Check if this was a partial write, and if so, move forward that
+			 * far in our buffer and try again.
 			 */
 			if (ret != amount)
 			{
-				PqGSSSendStart += ret;
+				PqGSSSendNext += ret;
 				continue;
 			}
 
+			/* We've successfully sent whatever data was in that packet. */
+			bytes_sent += PqGSSSendConsumed;
+
 			/* All encrypted data was sent, our buffer is empty now. */
-			PqGSSSendPointer = PqGSSSendStart = 0;
+			PqGSSSendLength = PqGSSSendNext = PqGSSSendConsumed = 0;
 		}
 
 		/*
 		 * Check if there are any bytes left to encrypt.  If not, we're done.
 		 */
 		if (!bytes_to_encrypt)
-			return bytes_encrypted;
+			break;
 
 		/*
 		 * Check how much we are being asked to send, if it's too much, then
 		 * we will have to loop and possibly be called multiple times to get
 		 * through all the data.
 		 */
-		if (bytes_to_encrypt > max_packet_size)
-			input.length = max_packet_size;
+		if (bytes_to_encrypt > PqGSSMaxPktSize)
+			input.length = PqGSSMaxPktSize;
 		else
 			input.length = bytes_to_encrypt;
 
@@ -152,18 +190,24 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 		output.value = NULL;
 		output.length = 0;
 
-		/* Create the next encrypted packet */
-		major = gss_wrap(&minor, conn->gctx, 1, GSS_C_QOP_DEFAULT,
+		/*
+		 * Create the next encrypted packet.  Any failure here is considered a
+		 * hard failure, so we return -1 even if bytes_sent > 0.
+		 */
+		major = gss_wrap(&minor, gctx, 1, GSS_C_QOP_DEFAULT,
 						 &input, &conf_state, &output);
 		if (major != GSS_S_COMPLETE)
 		{
 			pg_GSS_error(libpq_gettext("GSSAPI wrap error"), conn, major, minor);
+			errno = EIO;		/* for lack of a better idea */
 			goto cleanup;
 		}
-		else if (conf_state == 0)
+
+		if (conf_state == 0)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("outgoing GSSAPI message would not use confidentiality\n"));
+			errno = EIO;		/* for lack of a better idea */
 			goto cleanup;
 		}
 
@@ -173,22 +217,28 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 							  libpq_gettext("client tried to send oversize GSSAPI packet (%zu > %zu)\n"),
 							  (size_t) output.length,
 							  PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32));
+			errno = EIO;		/* for lack of a better idea */
 			goto cleanup;
 		}
 
 		bytes_encrypted += input.length;
 		bytes_to_encrypt -= input.length;
+		PqGSSSendConsumed += input.length;
 
 		/* 4 network-order bytes of length, then payload */
 		netlen = htonl(output.length);
-		memcpy(PqGSSSendBuffer + PqGSSSendPointer, &netlen, sizeof(uint32));
-		PqGSSSendPointer += sizeof(uint32);
+		memcpy(PqGSSSendBuffer + PqGSSSendLength, &netlen, sizeof(uint32));
+		PqGSSSendLength += sizeof(uint32);
 
-		memcpy(PqGSSSendBuffer + PqGSSSendPointer, output.value, output.length);
-		PqGSSSendPointer += output.length;
+		memcpy(PqGSSSendBuffer + PqGSSSendLength, output.value, output.length);
+		PqGSSSendLength += output.length;
 	}
 
-	ret = bytes_encrypted;
+	/* If we get here, our counters should all match up. */
+	Assert(bytes_sent == len);
+	Assert(bytes_sent == bytes_encrypted);
+
+	ret = bytes_sent;
 
 cleanup:
 	if (output.value != NULL)
@@ -198,9 +248,14 @@ cleanup:
 
 /*
  * Read up to len bytes of data into ptr from a GSSAPI-encrypted connection.
- * Note that GSSAPI transport must already have been negotiated.  Returns the
- * number of bytes read into ptr; otherwise, returns -1.  Retry with the same
- * ptr and len when errno is EWOULDBLOCK or similar.
+ *
+ * The connection must be already set up for GSSAPI encryption (i.e., GSSAPI
+ * transport negotiation is complete).
+ *
+ * Returns the number of data bytes read, or on failure, returns -1
+ * with errno set appropriately.  If the errno indicates a non-retryable
+ * error, a message is put into conn->errorMessage.  For retryable errors,
+ * caller should call again once the socket is ready.
  */
 ssize_t
 pg_GSS_read(PGconn *conn, void *ptr, size_t len)
@@ -209,90 +264,94 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 				minor;
 	gss_buffer_desc input = GSS_C_EMPTY_BUFFER,
 				output = GSS_C_EMPTY_BUFFER;
-	ssize_t		ret = 0;
-	size_t		bytes_to_return = len;
+	ssize_t		ret;
 	size_t		bytes_returned = 0;
+	gss_ctx_id_t gctx = conn->gctx;
 
 	/*
-	 * The goal here is to read an incoming encrypted packet, one at a time,
-	 * decrypt it into our out buffer, returning to the caller what they asked
-	 * for, and then saving anything else for the next call.
-	 *
-	 * We get a read request, we look if we have cleartext bytes available
-	 * and, if so, copy those to the result, and then we try to decrypt the
-	 * next packet.
-	 *
-	 * We should not try to decrypt the next packet until the read buffer is
-	 * completely empty.
-	 *
-	 * If the caller asks for more bytes than one decrypted packet, then we
-	 * should try to return all bytes asked for.
+	 * The plan here is to read one incoming encrypted packet into
+	 * PqGSSRecvBuffer, decrypt it into PqGSSResultBuffer, and then dole out
+	 * data from there to the caller.  When we exhaust the current input
+	 * packet, read another.
 	 */
-	while (bytes_to_return)
+	while (bytes_returned < len)
 	{
 		int			conf_state = 0;
 
 		/* Check if we have data in our buffer that we can return immediately */
-		if (PqGSSResultPointer < PqGSSResultLength)
+		if (PqGSSResultNext < PqGSSResultLength)
 		{
-			int			bytes_in_buffer = PqGSSResultLength - PqGSSResultPointer;
-			int			bytes_to_copy = bytes_in_buffer < len - bytes_returned ? bytes_in_buffer : len - bytes_returned;
+			size_t		bytes_in_buffer = PqGSSResultLength - PqGSSResultNext;
+			size_t		bytes_to_copy = Min(bytes_in_buffer, len - bytes_returned);
 
 			/*
-			 * Copy the data from our output buffer into the caller's buffer,
-			 * at the point where we last left off filling their buffer
+			 * Copy the data from our result buffer into the caller's buffer,
+			 * at the point where we last left off filling their buffer.
 			 */
-			memcpy((char *) ptr + bytes_returned, PqGSSResultBuffer + PqGSSResultPointer, bytes_to_copy);
-			PqGSSResultPointer += bytes_to_copy;
-			bytes_to_return -= bytes_to_copy;
+			memcpy((char *) ptr + bytes_returned, PqGSSResultBuffer + PqGSSResultNext, bytes_to_copy);
+			PqGSSResultNext += bytes_to_copy;
 			bytes_returned += bytes_to_copy;
 
-			/* Check if our result buffer is now empty and, if so, reset */
-			if (PqGSSResultPointer == PqGSSResultLength)
-				PqGSSResultPointer = PqGSSResultLength = 0;
-
-			continue;
+			/*
+			 * At this point, we've either filled the caller's buffer or
+			 * emptied our result buffer.  Either way, return to caller.  In
+			 * the second case, we could try to read another encrypted packet,
+			 * but the odds are good that there isn't one available.  (If this
+			 * isn't true, we chose too small a max packet size.)  In any
+			 * case, there's no harm letting the caller process the data we've
+			 * already returned.
+			 */
+			break;
 		}
 
+		/* Result buffer is empty, so reset buffer pointers */
+		PqGSSResultLength = PqGSSResultNext = 0;
+
 		/*
-		 * At this point, our output buffer should be empty with more bytes
-		 * being requested to be read.  We are now ready to load the next
-		 * packet and decrypt it (entirely) into our buffer.
-		 *
-		 * If we get a partial read back while trying to read a packet off the
-		 * wire then we return back what bytes we were able to return and wait
-		 * to be called again, until we get a full packet to decrypt.
+		 * Because we chose above to return immediately as soon as we emit
+		 * some data, bytes_returned must be zero at this point.  Therefore
+		 * the failure exits below can just return -1 without worrying about
+		 * whether we already emitted some data.
+		 */
+		Assert(bytes_returned == 0);
+
+		/*
+		 * At this point, our result buffer is empty with more bytes being
+		 * requested to be read.  We are now ready to load the next packet and
+		 * decrypt it (entirely) into our result buffer.
 		 */
 
-		/* Check if we got a partial read just trying to get the length */
+		/* Collect the length if we haven't already */
 		if (PqGSSRecvLength < sizeof(uint32))
 		{
-			/* Try to get whatever of the length we still need */
 			ret = pqsecure_raw_read(conn, PqGSSRecvBuffer + PqGSSRecvLength,
 									sizeof(uint32) - PqGSSRecvLength);
-			if (ret < 0)
-				return bytes_returned ? bytes_returned : ret;
+
+			/* If ret <= 0, pqsecure_raw_read already set the correct errno */
+			if (ret <= 0)
+				return ret;
 
 			PqGSSRecvLength += ret;
+
+			/* If we still haven't got the length, return to the caller */
 			if (PqGSSRecvLength < sizeof(uint32))
-				return bytes_returned;
+			{
+				errno = EWOULDBLOCK;
+				return -1;
+			}
 		}
 
-		/*
-		 * We should have the whole length at this point, so pull it out and
-		 * then read whatever we have left of the packet
-		 */
+		/* Decode the packet length and check for overlength packet */
 		input.length = ntohl(*(uint32 *) PqGSSRecvBuffer);
 
-		/* Check for over-length packet */
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("oversize GSSAPI packet sent by the server (%zu > %zu)\n"),
 							  (size_t) input.length,
 							  PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32));
-			ret = -1;
-			goto cleanup;
+			errno = EIO;		/* for lack of a better idea */
+			return -1;
 		}
 
 		/*
@@ -301,47 +360,53 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 		 */
 		ret = pqsecure_raw_read(conn, PqGSSRecvBuffer + PqGSSRecvLength,
 								input.length - (PqGSSRecvLength - sizeof(uint32)));
-		if (ret < 0)
-			return bytes_returned ? bytes_returned : ret;
+		/* If ret <= 0, pqsecure_raw_read already set the correct errno */
+		if (ret <= 0)
+			return ret;
 
-		/*
-		 * If we got less than the rest of the packet then we need to return
-		 * and be called again.
-		 */
 		PqGSSRecvLength += ret;
+
+		/* If we don't yet have the whole packet, return to the caller */
 		if (PqGSSRecvLength - sizeof(uint32) < input.length)
-			return bytes_returned ? bytes_returned : -1;
+		{
+			errno = EWOULDBLOCK;
+			return -1;
+		}
 
 		/*
 		 * We now have the full packet and we can perform the decryption and
-		 * refill our output buffer, then loop back up to pass that back to
-		 * the user.
+		 * refill our result buffer, then loop back up to pass data back to
+		 * the caller.  Note that error exits below here must take care of
+		 * releasing the gss output buffer.
 		 */
 		output.value = NULL;
 		output.length = 0;
 		input.value = PqGSSRecvBuffer + sizeof(uint32);
 
-		major = gss_unwrap(&minor, conn->gctx, &input, &output, &conf_state, NULL);
+		major = gss_unwrap(&minor, gctx, &input, &output, &conf_state, NULL);
 		if (major != GSS_S_COMPLETE)
 		{
 			pg_GSS_error(libpq_gettext("GSSAPI unwrap error"), conn,
 						 major, minor);
 			ret = -1;
+			errno = EIO;		/* for lack of a better idea */
 			goto cleanup;
 		}
-		else if (conf_state == 0)
+
+		if (conf_state == 0)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("incoming GSSAPI message did not use confidentiality\n"));
 			ret = -1;
+			errno = EIO;		/* for lack of a better idea */
 			goto cleanup;
 		}
 
 		memcpy(PqGSSResultBuffer, output.value, output.length);
 		PqGSSResultLength = output.length;
 
-		/* Our buffer is now empty, reset it */
-		PqGSSRecvPointer = PqGSSRecvLength = 0;
+		/* Our receive buffer is now empty, reset it */
+		PqGSSRecvLength = 0;
 
 		gss_release_buffer(&minor, &output);
 	}
@@ -365,10 +430,13 @@ static PostgresPollingStatusType
 gss_read(PGconn *conn, void *recv_buffer, size_t length, ssize_t *ret)
 {
 	*ret = pqsecure_raw_read(conn, recv_buffer, length);
-	if (*ret < 0 && errno == EWOULDBLOCK)
-		return PGRES_POLLING_READING;
-	else if (*ret < 0)
-		return PGRES_POLLING_FAILED;
+	if (*ret < 0)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+			return PGRES_POLLING_READING;
+		else
+			return PGRES_POLLING_FAILED;
+	}
 
 	/* Check for EOF */
 	if (*ret == 0)
@@ -382,6 +450,13 @@ gss_read(PGconn *conn, void *recv_buffer, size_t length, ssize_t *ret)
 			return PGRES_POLLING_READING;
 
 		*ret = pqsecure_raw_read(conn, recv_buffer, length);
+		if (*ret < 0)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+				return PGRES_POLLING_READING;
+			else
+				return PGRES_POLLING_FAILED;
+		}
 		if (*ret == 0)
 			return PGRES_POLLING_FAILED;
 	}
@@ -398,7 +473,6 @@ gss_read(PGconn *conn, void *recv_buffer, size_t length, ssize_t *ret)
 PostgresPollingStatusType
 pqsecure_open_gss(PGconn *conn)
 {
-	static int	first = 1;
 	ssize_t		ret;
 	OM_uint32	major,
 				minor;
@@ -407,31 +481,50 @@ pqsecure_open_gss(PGconn *conn)
 	gss_buffer_desc input = GSS_C_EMPTY_BUFFER,
 				output = GSS_C_EMPTY_BUFFER;
 
-	/* Check for data that needs to be written */
-	if (first)
+	/*
+	 * If first time through for this connection, allocate buffers and
+	 * initialize state variables.  By malloc'ing the buffers separately, we
+	 * ensure that they are sufficiently aligned for the length-word accesses
+	 * that we do in some places in this file.
+	 */
+	if (PqGSSSendBuffer == NULL)
 	{
-		PqGSSSendPointer = PqGSSSendStart = PqGSSRecvPointer = PqGSSRecvLength = PqGSSResultPointer = PqGSSResultLength = 0;
-		first = 0;
+		PqGSSSendBuffer = malloc(PQ_GSS_SEND_BUFFER_SIZE);
+		PqGSSRecvBuffer = malloc(PQ_GSS_RECV_BUFFER_SIZE);
+		PqGSSResultBuffer = malloc(PQ_GSS_RECV_BUFFER_SIZE);
+		if (!PqGSSSendBuffer || !PqGSSRecvBuffer || !PqGSSResultBuffer)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("out of memory\n"));
+			return PGRES_POLLING_FAILED;
+		}
+		PqGSSSendLength = PqGSSSendNext = PqGSSSendConsumed = 0;
+		PqGSSRecvLength = PqGSSResultLength = PqGSSResultNext = 0;
 	}
 
 	/*
 	 * Check if we have anything to send from a prior call and if so, send it.
 	 */
-	if (PqGSSSendPointer)
+	if (PqGSSSendLength)
 	{
-		ssize_t		amount = PqGSSSendPointer - PqGSSSendStart;
+		ssize_t		amount = PqGSSSendLength - PqGSSSendNext;
 
-		ret = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendStart, amount);
-		if (ret < 0 && errno == EWOULDBLOCK)
-			return PGRES_POLLING_WRITING;
-
-		if (ret != amount)
+		ret = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendNext, amount);
+		if (ret < 0)
 		{
-			PqGSSSendStart += amount;
+			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+				return PGRES_POLLING_WRITING;
+			else
+				return PGRES_POLLING_FAILED;
+		}
+
+		if (ret < amount)
+		{
+			PqGSSSendNext += ret;
 			return PGRES_POLLING_WRITING;
 		}
 
-		PqGSSSendPointer = PqGSSSendStart = 0;
+		PqGSSSendLength = PqGSSSendNext = 0;
 	}
 
 	/*
@@ -536,7 +629,7 @@ pqsecure_open_gss(PGconn *conn)
 								 &output, NULL, NULL);
 
 	/* GSS Init Sec Context uses the whole packet, so clear it */
-	PqGSSRecvPointer = PqGSSRecvLength = 0;
+	PqGSSRecvLength = 0;
 
 	if (GSS_ERROR(major))
 	{
@@ -544,7 +637,8 @@ pqsecure_open_gss(PGconn *conn)
 					 conn, major, minor);
 		return PGRES_POLLING_FAILED;
 	}
-	else if (output.length == 0)
+
+	if (output.length == 0)
 	{
 		/*
 		 * We're done - hooray!  Kind of gross, but we need to disable SSL
@@ -553,20 +647,26 @@ pqsecure_open_gss(PGconn *conn)
 #ifdef USE_SSL
 		conn->allow_ssl_try = false;
 #endif
+
+		/* Clean up */
 		gss_release_cred(&minor, &conn->gcred);
 		conn->gcred = GSS_C_NO_CREDENTIAL;
 		conn->gssenc = true;
 
 		/*
 		 * Determine the max packet size which will fit in our buffer, after
-		 * accounting for the length
+		 * accounting for the length.  pg_GSS_write will need this.
 		 */
 		major = gss_wrap_size_limit(&minor, conn->gctx, 1, GSS_C_QOP_DEFAULT,
-									PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32), &max_packet_size);
+									PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32),
+									&PqGSSMaxPktSize);
 
 		if (GSS_ERROR(major))
+		{
 			pg_GSS_error(libpq_gettext("GSSAPI size check error"), conn,
 						 major, minor);
+			return PGRES_POLLING_FAILED;
+		}
 
 		return PGRES_POLLING_OK;
 	}
@@ -583,14 +683,16 @@ pqsecure_open_gss(PGconn *conn)
 	netlen = htonl(output.length);
 
 	memcpy(PqGSSSendBuffer, (char *) &netlen, sizeof(uint32));
-	PqGSSSendPointer += sizeof(uint32);
+	PqGSSSendLength += sizeof(uint32);
 
-	memcpy(PqGSSSendBuffer + PqGSSSendPointer, output.value, output.length);
-	PqGSSSendPointer += output.length;
+	memcpy(PqGSSSendBuffer + PqGSSSendLength, output.value, output.length);
+	PqGSSSendLength += output.length;
+
+	/* We don't bother with PqGSSSendConsumed here */
 
 	gss_release_buffer(&minor, &output);
 
-	/* Asked to be called again to write data */
+	/* Ask to be called again to write data */
 	return PGRES_POLLING_WRITING;
 }
 
