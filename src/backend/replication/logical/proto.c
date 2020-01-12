@@ -140,10 +140,6 @@ logicalrep_write_insert(StringInfo out, Relation rel, HeapTuple newtuple)
 {
 	pq_sendbyte(out, 'I');		/* action INSERT */
 
-	Assert(rel->rd_rel->relreplident == REPLICA_IDENTITY_DEFAULT ||
-		   rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL ||
-		   rel->rd_rel->relreplident == REPLICA_IDENTITY_INDEX);
-
 	/* use Oid as relation identifier */
 	pq_sendint(out, RelationGetRelid(rel), 4);
 
