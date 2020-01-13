@@ -429,18 +429,17 @@ splits during searches, we don't need a "vacuum cycle ID" concept for that
 like B-tree does.
 
 While we scan all the pages, we also make note of any completely empty leaf
-pages. We will try to unlink them from the tree in the second stage. We also
-record the block numbers of all internal pages; they are needed in the second
-stage, to locate parents of the empty pages.
+pages. We will try to unlink them from the tree after the scan. We also record
+the block numbers of all internal pages; they are needed to locate parents of
+the empty pages while unlinking them.
 
-In the second stage, we try to unlink any empty leaf pages from the tree, so
-that their space can be reused. In order to delete an empty page, its
-downlink must be removed from the parent. We scan all the internal pages,
-whose block numbers we memorized in the first stage, and look for downlinks
-to pages that we have memorized as being empty. Whenever we find one, we
-acquire a lock on the parent and child page, re-check that the child page is
-still empty. Then, we remove the downlink and mark the child as deleted, and
-release the locks.
+We try to unlink any empty leaf pages from the tree, so that their space can
+be reused. In order to delete an empty page, its downlink must be removed from
+the parent. We scan all the internal pages, whose block numbers we memorized
+in the first stage, and look for downlinks to pages that we have memorized as
+being empty. Whenever we find one, we acquire a lock on the parent and child
+page, re-check that the child page is still empty. Then, we remove the
+downlink and mark the child as deleted, and release the locks.
 
 The insertion algorithm would get confused, if an internal page was completely
 empty. So we never delete the last child of an internal page, even if it's
