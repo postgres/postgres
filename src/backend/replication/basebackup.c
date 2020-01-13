@@ -1291,7 +1291,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 
 			if (!sizeonly)
 				sent = sendFile(pathbuf, pathbuf + basepathlen + 1, &statbuf,
-								true, isDbDir ? pg_atoi(lastDir + 1, sizeof(Oid), 0) : InvalidOid);
+								true, isDbDir ? atooid(lastDir + 1) : InvalidOid);
 
 			if (sent || sizeonly)
 			{
