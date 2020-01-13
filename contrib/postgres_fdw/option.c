@@ -159,6 +159,16 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 						 errmsg("password_required=false is superuser-only"),
 						 errhint("User mappings with the password_required option set to false may only be created or modified by the superuser")));
 		}
+		else if (strcmp(def->defname, "sslcert") == 0 ||
+				 strcmp(def->defname, "sslkey") == 0)
+		{
+			/* similarly for sslcert / sslkey on user mapping */
+			if (catalog == UserMappingRelationId && !superuser())
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("sslcert and sslkey are superuser-only"),
+						 errhint("User mappings with the sslcert or sslkey options set may only be created or modified by the superuser")));
+		}
 	}
 
 	PG_RETURN_VOID();

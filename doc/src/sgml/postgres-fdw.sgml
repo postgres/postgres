@@ -130,7 +130,7 @@
      </listitem>
      <listitem>
       <para>
-       <literal>sslkey</literal> and <literal>sslpassword</literal> - these may
+       <literal>sslkey</literal> and <literal>sslcert</literal> - these may
        appear in <emphasis>either or both</emphasis> a connection and a user
        mapping. If both are present, the user mapping setting overrides the
        connection setting.
@@ -139,6 +139,10 @@
     </itemizedlist>
    </para>
 
+   <para>
+    Only superusers may create or modify user mappings with the
+    <literal>sslcert</literal> or <literal>sslkey</literal> settings.
+   </para>
    <para>
     Only superusers may connect to foreign servers without password
     authentication, so always specify the <literal>password</literal> option
