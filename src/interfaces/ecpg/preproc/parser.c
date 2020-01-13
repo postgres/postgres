@@ -6,6 +6,9 @@
  * This should match src/backend/parser/parser.c, except that we do not
  * need to bother with re-entrant interfaces.
  *
+ * Note: ECPG doesn't report error location like the backend does.
+ * This file will need work if we ever want it to.
+ *
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -27,8 +30,9 @@ static int	lookahead_token;	/* one-token lookahead */
 static YYSTYPE lookahead_yylval;	/* yylval for lookahead token */
 static YYLTYPE lookahead_yylloc;	/* yylloc for lookahead token */
 static char *lookahead_yytext;	/* start current token */
-static char *lookahead_end;		/* end of current token */
-static char lookahead_hold_char;	/* to be put back at *lookahead_end */
+
+static bool check_uescapechar(unsigned char escape);
+static bool ecpg_isspace(char ch);
 
 
 /*
@@ -43,13 +47,16 @@ static char lookahead_hold_char;	/* to be put back at *lookahead_end */
  * words.  Furthermore it's not clear how to do that without re-introducing
  * scanner backtrack, which would cost more performance than this filter
  * layer does.
+ *
+ * We also use this filter to convert UIDENT and USCONST sequences into
+ * plain IDENT and SCONST tokens.  While that could be handled by additional
+ * productions in the main grammar, it's more efficient to do it like this.
  */
 int
 filtered_base_yylex(void)
 {
 	int			cur_token;
 	int			next_token;
-	int			cur_token_length;
 	YYSTYPE		cur_yylval;
 	YYLTYPE		cur_yylloc;
 	char	   *cur_yytext;
@@ -61,40 +68,25 @@ filtered_base_yylex(void)
 		base_yylval = lookahead_yylval;
 		base_yylloc = lookahead_yylloc;
 		base_yytext = lookahead_yytext;
-		*lookahead_end = lookahead_hold_char;
 		have_lookahead = false;
 	}
 	else
 		cur_token = base_yylex();
 
 	/*
-	 * If this token isn't one that requires lookahead, just return it.  If it
-	 * does, determine the token length.  (We could get that via strlen(), but
-	 * since we have such a small set of possibilities, hardwiring seems
-	 * feasible and more efficient.)
+	 * If this token isn't one that requires lookahead, just return it.
 	 */
 	switch (cur_token)
 	{
 		case NOT:
-			cur_token_length = 3;
-			break;
 		case NULLS_P:
-			cur_token_length = 5;
-			break;
 		case WITH:
-			cur_token_length = 4;
+		case UIDENT:
+		case USCONST:
 			break;
 		default:
 			return cur_token;
 	}
-
-	/*
-	 * Identify end+1 of current token.  base_yylex() has temporarily stored a
-	 * '\0' here, and will undo that when we call it again.  We need to redo
-	 * it to fully revert the lookahead call for error reporting purposes.
-	 */
-	lookahead_end = base_yytext + cur_token_length;
-	Assert(*lookahead_end == '\0');
 
 	/* Save and restore lexer output variables around the call */
 	cur_yylval = base_yylval;
@@ -112,10 +104,6 @@ filtered_base_yylex(void)
 	base_yylval = cur_yylval;
 	base_yylloc = cur_yylloc;
 	base_yytext = cur_yytext;
-
-	/* Now revert the un-truncation of the current token */
-	lookahead_hold_char = *lookahead_end;
-	*lookahead_end = '\0';
 
 	have_lookahead = true;
 
@@ -157,7 +145,87 @@ filtered_base_yylex(void)
 					break;
 			}
 			break;
+		case UIDENT:
+		case USCONST:
+			/* Look ahead for UESCAPE */
+			if (next_token == UESCAPE)
+			{
+				/* Yup, so get third token, which had better be SCONST */
+				const char *escstr;
+
+				/*
+				 * Again save and restore lexer output variables around the
+				 * call
+				 */
+				cur_yylval = base_yylval;
+				cur_yylloc = base_yylloc;
+				cur_yytext = base_yytext;
+
+				/* Get third token */
+				next_token = base_yylex();
+
+				if (next_token != SCONST)
+					mmerror(PARSE_ERROR, ET_ERROR, "UESCAPE must be followed by a simple string literal");
+
+				/*
+				 * Save and check escape string, which the scanner returns
+				 * with quotes
+				 */
+				escstr = base_yylval.str;
+				if (strlen(escstr) != 3 || !check_uescapechar(escstr[1]))
+					mmerror(PARSE_ERROR, ET_ERROR, "invalid Unicode escape character");
+
+				base_yylval = cur_yylval;
+				base_yylloc = cur_yylloc;
+				base_yytext = cur_yytext;
+
+				/* Combine 3 tokens into 1 */
+				base_yylval.str = psprintf("%s UESCAPE %s", base_yylval.str, escstr);
+
+				/* Clear have_lookahead, thereby consuming all three tokens */
+				have_lookahead = false;
+			}
+
+			if (cur_token == UIDENT)
+				cur_token = IDENT;
+			else if (cur_token == USCONST)
+				cur_token = SCONST;
+			break;
 	}
 
 	return cur_token;
+}
+
+/*
+ * check_uescapechar() and ecpg_isspace() should match their equivalents
+ * in pgc.l.
+ */
+
+/* is 'escape' acceptable as Unicode escape character (UESCAPE syntax) ? */
+static bool
+check_uescapechar(unsigned char escape)
+{
+	if (isxdigit(escape)
+		|| escape == '+'
+		|| escape == '\''
+		|| escape == '"'
+		|| ecpg_isspace(escape))
+		return false;
+	else
+		return true;
+}
+
+/*
+ * ecpg_isspace() --- return true if flex scanner considers char whitespace
+ */
+static bool
+ecpg_isspace(char ch)
+{
+	if (ch == ' ' ||
+		ch == '\t' ||
+		ch == '\n' ||
+		ch == '\r' ||
+		ch == '\f')
+		return true;
+	return false;
 }

@@ -6,6 +6,9 @@
  *
  * This is a modified version of src/backend/parser/scan.l
  *
+ * The ecpg scanner is not backup-free, so the fail rules are
+ * only here to simplify syncing this file with scan.l.
+ *
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -61,7 +64,10 @@ static bool isdefine(void);
 static bool isinformixdefine(void);
 
 char *token_start;
-static int state_before;
+
+/* vars to keep track of start conditions when scanning literals */
+static int state_before_str_start;
+static int state_before_str_stop;
 
 struct _yy_buffer
 {
@@ -105,13 +111,13 @@ static struct _if_value
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
  *  <xb> bit string literal
- *  <xcc> extended C-style comments in C
- *  <xcsql> extended C-style comments in SQL
+ *  <xc> extended C-style comments
  *  <xd> delimited identifiers (double-quoted identifiers)
  *  <xdc> double-quoted strings in C
  *  <xh> hexadecimal numeric string
  *  <xn> national character quoted strings
  *  <xq> standard quoted strings
+ *  <xqs> quote stop (detect continued strings)
  *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xqc> single-quoted strings in C
  *  <xdolq> $foo$ quoted strings
@@ -120,18 +126,21 @@ static struct _if_value
  *  <xcond> condition of an EXEC SQL IFDEF construct
  *  <xskip> skipping the inactive part of an EXEC SQL IFDEF construct
  *
+ * Note: we intentionally don't mimic the backend's <xeu> state; we have
+ * no need to distinguish it from <xe> state.
+ *
  * Remember to add an <<EOF>> case whenever you add a new exclusive state!
  * The default one is probably not the right thing.
  */
 
 %x xb
-%x xcc
-%x xcsql
+%x xc
 %x xd
 %x xdc
 %x xh
 %x xn
 %x xq
+%x xqs
 %x xe
 %x xqc
 %x xdolq
@@ -181,9 +190,17 @@ horiz_whitespace		({horiz_space}|{comment})
 whitespace_with_newline	({horiz_whitespace}*{newline}{whitespace}*)
 
 quote			'
-quotestop		{quote}{whitespace}*
-quotecontinue	{quote}{whitespace_with_newline}{quote}
-quotefail		{quote}{whitespace}*"-"
+/* If we see {quote} then {quotecontinue}, the quoted string continues */
+quotecontinue	{whitespace_with_newline}{quote}
+
+/*
+ * {quotecontinuefail} is needed to avoid lexer backup when we fail to match
+ * {quotecontinue}.  It might seem that this could just be {whitespace}*,
+ * but if there's a dash after {whitespace_with_newline}, it must be consumed
+ * to see if there's another dash --- which would start a {comment} and thus
+ * allow continuation of the {quotecontinue} token.
+ */
+quotecontinuefail	{whitespace}*"-"?
 
 /* Bit string
  */
@@ -237,19 +254,11 @@ xdstop			{dquote}
 xddouble		{dquote}{dquote}
 xdinside		[^"]+
 
-/* Unicode escapes */
-/* (The ecpg scanner is not backup-free, so the fail rules in scan.l are
- * not needed here, but could be added if desired.)
- */
-uescape			[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']{quote}
-
 /* Quoted identifier with Unicode escapes */
 xuistart		[uU]&{dquote}
-xuistop			{dquote}({whitespace}*{uescape})?
 
 /* Quoted string with Unicode escapes */
 xusstart		[uU]&{quote}
-xusstop			{quote}({whitespace}*{uescape})?
 
 /* special stuff for C strings */
 xdcqq			\\\\
@@ -408,54 +417,58 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 {whitespace}	{
 					/* ignore */
 				}
-
-{xcstart}		{
-					token_start = yytext;
-					state_before = YYSTATE;
-					xcdepth = 0;
-					BEGIN(xcsql);
-					/* Put back any characters past slash-star; see above */
-					yyless(2);
-					fputs("/*", yyout);
-				}
 } /* <SQL> */
 
-<C>{xcstart}	{
+<C,SQL>{
+{xcstart}		{
 					token_start = yytext;
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					xcdepth = 0;
-					BEGIN(xcc);
+					BEGIN(xc);
 					/* Put back any characters past slash-star; see above */
 					yyless(2);
 					fputs("/*", yyout);
 				}
-<xcc>{xcstart}	{ ECHO; }
-<xcsql>{xcstart}	{
-					xcdepth++;
-					/* Put back any characters past slash-star; see above */
-					yyless(2);
-					fputs("/_*", yyout);
-				}
-<xcsql>{xcstop}	{
-					if (xcdepth <= 0)
+} /* <C,SQL> */
+
+<xc>{
+{xcstart}		{
+					if (state_before_str_start == SQL)
+					{
+						xcdepth++;
+						/* Put back any characters past slash-star; see above */
+						yyless(2);
+						fputs("/_*", yyout);
+					}
+					else if (state_before_str_start == C)
 					{
 						ECHO;
-						BEGIN(state_before);
-						token_start = NULL;
 					}
-					else
-					{
-						xcdepth--;
-						fputs("*_/", yyout);
-					}
-				}
-<xcc>{xcstop}	{
-					ECHO;
-					BEGIN(state_before);
-					token_start = NULL;
 				}
 
-<xcc,xcsql>{
+{xcstop}		{
+					if (state_before_str_start == SQL)
+					{
+						if (xcdepth <= 0)
+						{
+							ECHO;
+							BEGIN(SQL);
+							token_start = NULL;
+						}
+						else
+						{
+							xcdepth--;
+							fputs("*_/", yyout);
+						}
+					}
+					else if (state_before_str_start == C)
+					{
+						ECHO;
+						BEGIN(C);
+						token_start = NULL;
+					}
+				}
+
 {xcinside}		{
 					ECHO;
 				}
@@ -471,7 +484,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 <<EOF>>			{
 					mmfatal(PARSE_ERROR, "unterminated /* comment");
 				}
-} /* <xcc,xcsql> */
+} /* <xc> */
 
 <SQL>{
 {xbstart}		{
@@ -482,22 +495,9 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 } /* <SQL> */
 
-<xb>{quotestop}	|
-<xb>{quotefail} {
-					yyless(1);
-					BEGIN(SQL);
-					if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
-						mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string literal");
-					base_yylval.str = mm_strdup(literalbuf);
-					return BCONST;
-				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
 					addlit(yytext, yyleng);
-				}
-<xh>{quotecontinue}	|
-<xb>{quotecontinue}	{
-					/* ignore */
 				}
 <xb><<EOF>>		{ mmfatal(PARSE_ERROR, "unterminated bit string literal"); }
 
@@ -507,19 +507,11 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					startlit();
 					addlitchar('x');
 				}
-<xh>{quotestop}	|
-<xh>{quotefail} {
-					yyless(1);
-					BEGIN(SQL);
-					base_yylval.str = mm_strdup(literalbuf);
-					return XCONST;
-				}
-
 <xh><<EOF>>		{ mmfatal(PARSE_ERROR, "unterminated hexadecimal string literal"); }
 
 <C>{xqstart}	{
 					token_start = yytext;
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xqc);
 					startlit();
 				}
@@ -530,59 +522,91 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					 * Transfer it as-is to the backend.
 					 */
 					token_start = yytext;
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xn);
 					startlit();
 				}
 
 {xqstart}		{
 					token_start = yytext;
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xq);
 					startlit();
 				}
 {xestart}		{
 					token_start = yytext;
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xe);
 					startlit();
 				}
 {xusstart}		{
 					token_start = yytext;
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xus);
 					startlit();
-					addlit(yytext, yyleng);
 				}
 } /* <SQL> */
 
-<xq,xqc>{quotestop} |
-<xq,xqc>{quotefail} {
-					yyless(1);
-					BEGIN(state_before);
-					base_yylval.str = mm_strdup(literalbuf);
-					return SCONST;
+<xb,xh,xq,xqc,xe,xn,xus>{quote} {
+					/*
+					 * When we are scanning a quoted string and see an end
+					 * quote, we must look ahead for a possible continuation.
+					 * If we don't see one, we know the end quote was in fact
+					 * the end of the string.  To reduce the lexer table size,
+					 * we use a single "xqs" state to do the lookahead for all
+					 * types of strings.
+					 */
+					state_before_str_stop = YYSTATE;
+					BEGIN(xqs);
 				}
-<xe>{quotestop} |
-<xe>{quotefail} {
-					yyless(1);
-					BEGIN(state_before);
-					base_yylval.str = mm_strdup(literalbuf);
-					return ECONST;
+<xqs>{quotecontinue} {
+					/*
+					 * Found a quote continuation, so return to the in-quote
+					 * state and continue scanning the literal.  Nothing is
+					 * added to the literal's contents.
+					 */
+					BEGIN(state_before_str_stop);
 				}
-<xn>{quotestop} |
-<xn>{quotefail} {
-					yyless(1);
-					BEGIN(state_before);
-					base_yylval.str = mm_strdup(literalbuf);
-					return NCONST;
+<xqs>{quotecontinuefail} |
+<xqs>{other} |
+<xqs><<EOF>>	{
+					/*
+					 * Failed to see a quote continuation.  Throw back
+					 * everything after the end quote, and handle the string
+					 * according to the state we were in previously.
+					 */
+					yyless(0);
+					BEGIN(state_before_str_start);
+
+					switch (state_before_str_stop)
+					{
+						case xb:
+							if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
+								mmerror(PARSE_ERROR, ET_ERROR, "invalid bit string literal");
+							base_yylval.str = mm_strdup(literalbuf);
+							return BCONST;
+						case xh:
+							base_yylval.str = mm_strdup(literalbuf);
+							return XCONST;
+						case xq:
+							/* fallthrough */
+						case xqc:
+							base_yylval.str = psprintf("'%s'", literalbuf);
+							return SCONST;
+						case xe:
+							base_yylval.str = psprintf("E'%s'", literalbuf);
+							return SCONST;
+						case xn:
+							base_yylval.str = psprintf("N'%s'", literalbuf);
+							return SCONST;
+						case xus:
+							base_yylval.str = psprintf("U&'%s'", literalbuf);
+							return USCONST;
+						default:
+							mmfatal(PARSE_ERROR, "unhandled previous state in xqs\n");
+					}
 				}
-<xus>{xusstop} {
-					addlit(yytext, yyleng);
-					BEGIN(state_before);
-					base_yylval.str = mm_strdup(literalbuf);
-					return UCONST;
-				}
+
 <xq,xe,xn,xus>{xqdouble}	{ addlitchar('\''); }
 <xqc>{xqcquote}	{
 					addlitchar('\\');
@@ -603,9 +627,6 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 <xe>{xehexesc}  {
 					addlit(yytext, yyleng);
-				}
-<xq,xqc,xe,xn,xus>{quotecontinue}	{
-					/* ignore */
 				}
 <xe>.			{
 					/* This is only needed for \ just before EOF */
@@ -639,7 +660,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						dolqstart = NULL;
 						BEGIN(SQL);
 						base_yylval.str = mm_strdup(literalbuf);
-						return DOLCONST;
+						return SCONST;
 					}
 					else
 					{
@@ -666,20 +687,19 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 
 <SQL>{
 {xdstart}		{
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xd);
 					startlit();
 				}
 {xuistart}		{
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xui);
 					startlit();
-					addlit(yytext, yyleng);
 				}
 } /* <SQL> */
 
 <xd>{xdstop}	{
-					BEGIN(state_before);
+					BEGIN(state_before_str_start);
 					if (literallen == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
 					/* The backend will truncate the identifier here. We do not as it does not change the result. */
@@ -687,17 +707,16 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					return CSTRING;
 				}
 <xdc>{xdstop}	{
-					BEGIN(state_before);
+					BEGIN(state_before_str_start);
 					base_yylval.str = mm_strdup(literalbuf);
 					return CSTRING;
 				}
-<xui>{xuistop}	{
-					BEGIN(state_before);
+<xui>{dquote}	{
+					BEGIN(state_before_str_start);
 					if (literallen == 2) /* "U&" */
 						mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
 					/* The backend will truncate the identifier here. We do not as it does not change the result. */
-					addlit(yytext, yyleng);
-					base_yylval.str = mm_strdup(literalbuf);
+					base_yylval.str = psprintf("U&\"%s\"", literalbuf);
 					return UIDENT;
 				}
 <xd,xui>{xddouble}	{
@@ -708,7 +727,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 <xd,xui><<EOF>>	{ mmfatal(PARSE_ERROR, "unterminated quoted identifier"); }
 <C>{xdstart}	{
-					state_before = YYSTATE;
+					state_before_str_start = YYSTATE;
 					BEGIN(xdc);
 					startlit();
 				}

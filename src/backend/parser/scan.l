@@ -13,8 +13,8 @@
  * in the sense that there is always a rule that can match the input
  * consumed so far (the rule action may internally throw back some input
  * with yyless(), however).  As explained in the flex manual, this makes
- * for a useful speed increase --- about a third faster than a plain -CF
- * lexer, in simple testing.  The extra complexity is mostly in the rules
+ * for a useful speed increase --- several percent faster when measuring
+ * raw parsing (Flex + Bison).  The extra complexity is mostly in the rules
  * for handling float numbers and continued string literals.  If you change
  * the lexical rules, verify that you haven't broken the no-backtrack
  * property by running flex with the "-b" option and checking that the
@@ -110,14 +110,9 @@ const uint16 ScanKeywordTokens[] = {
 static void addlit(char *ytext, int yleng, core_yyscan_t yyscanner);
 static void addlitchar(unsigned char ychar, core_yyscan_t yyscanner);
 static char *litbufdup(core_yyscan_t yyscanner);
-static char *litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner);
 static unsigned char unescape_single_char(unsigned char c, core_yyscan_t yyscanner);
 static int	process_integer_literal(const char *token, YYSTYPE *lval);
-static bool is_utf16_surrogate_first(pg_wchar c);
-static bool is_utf16_surrogate_second(pg_wchar c);
-static pg_wchar surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second);
 static void addunicode(pg_wchar c, yyscan_t yyscanner);
-static bool check_uescapechar(unsigned char escape);
 
 #define yyerror(msg)  scanner_yyerror(msg, yyscanner)
 
@@ -168,12 +163,11 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  *  <xd> delimited identifiers (double-quoted identifiers)
  *  <xh> hexadecimal numeric string
  *  <xq> standard quoted strings
+ *  <xqs> quote stop (detect continued strings)
  *  <xe> extended quoted strings (support backslash escape sequences)
  *  <xdolq> $foo$ quoted strings
  *  <xui> quoted identifier with Unicode escapes
- *  <xuiend> end of a quoted identifier with Unicode escapes, UESCAPE can follow
  *  <xus> quoted string with Unicode escapes
- *  <xusend> end of a quoted string with Unicode escapes, UESCAPE can follow
  *  <xeu> Unicode surrogate pair in extended quoted string
  *
  * Remember to add an <<EOF>> case whenever you add a new exclusive state!
@@ -185,12 +179,11 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
 %x xd
 %x xh
 %x xq
+%x xqs
 %x xe
 %x xdolq
 %x xui
-%x xuiend
 %x xus
-%x xusend
 %x xeu
 
 /*
@@ -231,19 +224,18 @@ special_whitespace		({space}+|{comment}{newline})
 horiz_whitespace		({horiz_space}|{comment})
 whitespace_with_newline	({horiz_whitespace}*{newline}{special_whitespace}*)
 
-/*
- * To ensure that {quotecontinue} can be scanned without having to back up
- * if the full pattern isn't matched, we include trailing whitespace in
- * {quotestop}.  This matches all cases where {quotecontinue} fails to match,
- * except for {quote} followed by whitespace and just one "-" (not two,
- * which would start a {comment}).  To cover that we have {quotefail}.
- * The actions for {quotestop} and {quotefail} must throw back characters
- * beyond the quote proper.
- */
 quote			'
-quotestop		{quote}{whitespace}*
-quotecontinue	{quote}{whitespace_with_newline}{quote}
-quotefail		{quote}{whitespace}*"-"
+/* If we see {quote} then {quotecontinue}, the quoted string continues */
+quotecontinue	{whitespace_with_newline}{quote}
+
+/*
+ * {quotecontinuefail} is needed to avoid lexer backup when we fail to match
+ * {quotecontinue}.  It might seem that this could just be {whitespace}*,
+ * but if there's a dash after {whitespace_with_newline}, it must be consumed
+ * to see if there's another dash --- which would start a {comment} and thus
+ * allow continuation of the {quotecontinue} token.
+ */
+quotecontinuefail	{whitespace}*"-"?
 
 /* Bit string
  * It is tempting to scan the string for only those characters
@@ -304,20 +296,11 @@ xdstop			{dquote}
 xddouble		{dquote}{dquote}
 xdinside		[^"]+
 
-/* Unicode escapes */
-uescape			[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']{quote}
-/* error rule to avoid backup */
-uescapefail		[uU][eE][sS][cC][aA][pP][eE]{whitespace}*"-"|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}[^']|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*{quote}|[uU][eE][sS][cC][aA][pP][eE]{whitespace}*|[uU][eE][sS][cC][aA][pP]|[uU][eE][sS][cC][aA]|[uU][eE][sS][cC]|[uU][eE][sS]|[uU][eE]|[uU]
-
 /* Quoted identifier with Unicode escapes */
 xuistart		[uU]&{dquote}
 
 /* Quoted string with Unicode escapes */
 xusstart		[uU]&{quote}
-
-/* Optional UESCAPE after a quoted string or identifier with Unicode escapes. */
-xustop1		{uescapefail}?
-xustop2		{uescape}
 
 /* error rule to avoid backup */
 xufailed		[uU]&
@@ -476,20 +459,9 @@ other			.
 					startlit();
 					addlitchar('b', yyscanner);
 				}
-<xb>{quotestop}	|
-<xb>{quotefail} {
-					yyless(1);
-					BEGIN(INITIAL);
-					yylval->str = litbufdup(yyscanner);
-					return BCONST;
-				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
 					addlit(yytext, yyleng, yyscanner);
-				}
-<xh>{quotecontinue}	|
-<xb>{quotecontinue}	{
-					/* ignore */
 				}
 <xb><<EOF>>		{ yyerror("unterminated bit string literal"); }
 
@@ -504,13 +476,6 @@ other			.
 					BEGIN(xh);
 					startlit();
 					addlitchar('x', yyscanner);
-				}
-<xh>{quotestop}	|
-<xh>{quotefail} {
-					yyless(1);
-					BEGIN(INITIAL);
-					yylval->str = litbufdup(yyscanner);
-					return XCONST;
 				}
 <xh><<EOF>>		{ yyerror("unterminated hexadecimal string literal"); }
 
@@ -568,53 +533,66 @@ other			.
 					BEGIN(xus);
 					startlit();
 				}
-<xq,xe>{quotestop}	|
-<xq,xe>{quotefail} {
-					yyless(1);
-					BEGIN(INITIAL);
+
+<xb,xh,xq,xe,xus>{quote} {
 					/*
-					 * check that the data remains valid if it might have been
-					 * made invalid by unescaping any chars.
+					 * When we are scanning a quoted string and see an end
+					 * quote, we must look ahead for a possible continuation.
+					 * If we don't see one, we know the end quote was in fact
+					 * the end of the string.  To reduce the lexer table size,
+					 * we use a single "xqs" state to do the lookahead for all
+					 * types of strings.
 					 */
-					if (yyextra->saw_non_ascii)
-						pg_verifymbstr(yyextra->literalbuf,
-									   yyextra->literallen,
-									   false);
-					yylval->str = litbufdup(yyscanner);
-					return SCONST;
+					yyextra->state_before_str_stop = YYSTATE;
+					BEGIN(xqs);
 				}
-<xus>{quotestop} |
-<xus>{quotefail} {
-					/* throw back all but the quote */
-					yyless(1);
-					/* xusend state looks for possible UESCAPE */
-					BEGIN(xusend);
+<xqs>{quotecontinue} {
+					/*
+					 * Found a quote continuation, so return to the in-quote
+					 * state and continue scanning the literal.  Nothing is
+					 * added to the literal's contents.
+					 */
+					BEGIN(yyextra->state_before_str_stop);
 				}
-<xusend>{whitespace} {
-					/* stay in xusend state over whitespace */
-				}
-<xusend><<EOF>> |
-<xusend>{other} |
-<xusend>{xustop1} {
-					/* no UESCAPE after the quote, throw back everything */
+<xqs>{quotecontinuefail} |
+<xqs>{other} |
+<xqs><<EOF>>	{
+					/*
+					 * Failed to see a quote continuation.  Throw back
+					 * everything after the end quote, and handle the string
+					 * according to the state we were in previously.
+					 */
 					yyless(0);
 					BEGIN(INITIAL);
-					yylval->str = litbuf_udeescape('\\', yyscanner);
-					return SCONST;
-				}
-<xusend>{xustop2} {
-					/* found UESCAPE after the end quote */
-					BEGIN(INITIAL);
-					if (!check_uescapechar(yytext[yyleng - 2]))
+
+					switch (yyextra->state_before_str_stop)
 					{
-						SET_YYLLOC();
-						ADVANCE_YYLLOC(yyleng - 2);
-						yyerror("invalid Unicode escape character");
+						case xb:
+							yylval->str = litbufdup(yyscanner);
+							return BCONST;
+						case xh:
+							yylval->str = litbufdup(yyscanner);
+							return XCONST;
+						case xq:
+						case xe:
+							/*
+							 * Check that the data remains valid, if it might
+							 * have been made invalid by unescaping any chars.
+							 */
+							if (yyextra->saw_non_ascii)
+								pg_verifymbstr(yyextra->literalbuf,
+											   yyextra->literallen,
+											   false);
+							yylval->str = litbufdup(yyscanner);
+							return SCONST;
+						case xus:
+							yylval->str = litbufdup(yyscanner);
+							return USCONST;
+						default:
+							yyerror("unhandled previous state in xqs");
 					}
-					yylval->str = litbuf_udeescape(yytext[yyleng - 2],
-												   yyscanner);
-					return SCONST;
 				}
+
 <xq,xe,xus>{xqdouble} {
 					addlitchar('\'', yyscanner);
 				}
@@ -693,9 +671,6 @@ other			.
 					if (c == '\0' || IS_HIGHBIT_SET(c))
 						yyextra->saw_non_ascii = true;
 				}
-<xq,xe,xus>{quotecontinue} {
-					/* ignore */
-				}
 <xe>.			{
 					/* This is only needed for \ just before EOF */
 					addlitchar(yytext[0], yyscanner);
@@ -769,53 +744,13 @@ other			.
 					yylval->str = ident;
 					return IDENT;
 				}
-<xui>{dquote} {
-					yyless(1);
-					/* xuiend state looks for possible UESCAPE */
-					BEGIN(xuiend);
-				}
-<xuiend>{whitespace} {
-					/* stay in xuiend state over whitespace */
-				}
-<xuiend><<EOF>> |
-<xuiend>{other} |
-<xuiend>{xustop1} {
-					/* no UESCAPE after the quote, throw back everything */
-					char	   *ident;
-					int			identlen;
-
-					yyless(0);
-
+<xui>{dquote}	{
 					BEGIN(INITIAL);
 					if (yyextra->literallen == 0)
 						yyerror("zero-length delimited identifier");
-					ident = litbuf_udeescape('\\', yyscanner);
-					identlen = strlen(ident);
-					if (identlen >= NAMEDATALEN)
-						truncate_identifier(ident, identlen, true);
-					yylval->str = ident;
-					return IDENT;
-				}
-<xuiend>{xustop2}	{
-					/* found UESCAPE after the end quote */
-					char	   *ident;
-					int			identlen;
-
-					BEGIN(INITIAL);
-					if (yyextra->literallen == 0)
-						yyerror("zero-length delimited identifier");
-					if (!check_uescapechar(yytext[yyleng - 2]))
-					{
-						SET_YYLLOC();
-						ADVANCE_YYLLOC(yyleng - 2);
-						yyerror("invalid Unicode escape character");
-					}
-					ident = litbuf_udeescape(yytext[yyleng - 2], yyscanner);
-					identlen = strlen(ident);
-					if (identlen >= NAMEDATALEN)
-						truncate_identifier(ident, identlen, true);
-					yylval->str = ident;
-					return IDENT;
+					/* can't truncate till after we de-escape the ident */
+					yylval->str = litbufdup(yyscanner);
+					return UIDENT;
 				}
 <xd,xui>{xddouble}	{
 					addlitchar('"', yyscanner);
@@ -1288,55 +1223,12 @@ process_integer_literal(const char *token, YYSTYPE *lval)
 	return ICONST;
 }
 
-static unsigned int
-hexval(unsigned char c)
-{
-	if (c >= '0' && c <= '9')
-		return c - '0';
-	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 0xA;
-	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 0xA;
-	elog(ERROR, "invalid hexadecimal digit");
-	return 0;					/* not reached */
-}
-
-static void
-check_unicode_value(pg_wchar c, char *loc, core_yyscan_t yyscanner)
-{
-	if (GetDatabaseEncoding() == PG_UTF8)
-		return;
-
-	if (c > 0x7F)
-	{
-		ADVANCE_YYLLOC(loc - yyextra->literalbuf + 3);	/* 3 for U&" */
-		yyerror("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8");
-	}
-}
-
-static bool
-is_utf16_surrogate_first(pg_wchar c)
-{
-	return (c >= 0xD800 && c <= 0xDBFF);
-}
-
-static bool
-is_utf16_surrogate_second(pg_wchar c)
-{
-	return (c >= 0xDC00 && c <= 0xDFFF);
-}
-
-static pg_wchar
-surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
-{
-	return ((first & 0x3FF) << 10) + 0x10000 + (second & 0x3FF);
-}
-
 static void
 addunicode(pg_wchar c, core_yyscan_t yyscanner)
 {
 	char		buf[8];
 
+	/* See also check_unicode_value() in parser.c */
 	if (c == 0 || c > 0x10FFFF)
 		yyerror("invalid Unicode escape value");
 	if (c > 0x7F)
@@ -1347,172 +1239,6 @@ addunicode(pg_wchar c, core_yyscan_t yyscanner)
 	}
 	unicode_to_utf8(c, (unsigned char *) buf);
 	addlit(buf, pg_mblen(buf), yyscanner);
-}
-
-/* is 'escape' acceptable as Unicode escape character (UESCAPE syntax) ? */
-static bool
-check_uescapechar(unsigned char escape)
-{
-	if (isxdigit(escape)
-		|| escape == '+'
-		|| escape == '\''
-		|| escape == '"'
-		|| scanner_isspace(escape))
-	{
-		return false;
-	}
-	else
-		return true;
-}
-
-/* like litbufdup, but handle unicode escapes */
-static char *
-litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
-{
-	char	   *new;
-	char	   *litbuf,
-			   *in,
-			   *out;
-	pg_wchar	pair_first = 0;
-
-	/* Make literalbuf null-terminated to simplify the scanning loop */
-	litbuf = yyextra->literalbuf;
-	litbuf[yyextra->literallen] = '\0';
-
-	/*
-	 * This relies on the subtle assumption that a UTF-8 expansion cannot be
-	 * longer than its escaped representation.
-	 */
-	new = palloc(yyextra->literallen + 1);
-
-	in = litbuf;
-	out = new;
-	while (*in)
-	{
-		if (in[0] == escape)
-		{
-			if (in[1] == escape)
-			{
-				if (pair_first)
-				{
-					ADVANCE_YYLLOC(in - litbuf + 3);	/* 3 for U&" */
-					yyerror("invalid Unicode surrogate pair");
-				}
-				*out++ = escape;
-				in += 2;
-			}
-			else if (isxdigit((unsigned char) in[1]) &&
-					 isxdigit((unsigned char) in[2]) &&
-					 isxdigit((unsigned char) in[3]) &&
-					 isxdigit((unsigned char) in[4]))
-			{
-				pg_wchar	unicode;
-
-				unicode = (hexval(in[1]) << 12) +
-					(hexval(in[2]) << 8) +
-					(hexval(in[3]) << 4) +
-					hexval(in[4]);
-				check_unicode_value(unicode, in, yyscanner);
-				if (pair_first)
-				{
-					if (is_utf16_surrogate_second(unicode))
-					{
-						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
-						pair_first = 0;
-					}
-					else
-					{
-						ADVANCE_YYLLOC(in - litbuf + 3);		/* 3 for U&" */
-						yyerror("invalid Unicode surrogate pair");
-					}
-				}
-				else if (is_utf16_surrogate_second(unicode))
-					yyerror("invalid Unicode surrogate pair");
-
-				if (is_utf16_surrogate_first(unicode))
-					pair_first = unicode;
-				else
-				{
-					unicode_to_utf8(unicode, (unsigned char *) out);
-					out += pg_mblen(out);
-				}
-				in += 5;
-			}
-			else if (in[1] == '+' &&
-					 isxdigit((unsigned char) in[2]) &&
-					 isxdigit((unsigned char) in[3]) &&
-					 isxdigit((unsigned char) in[4]) &&
-					 isxdigit((unsigned char) in[5]) &&
-					 isxdigit((unsigned char) in[6]) &&
-					 isxdigit((unsigned char) in[7]))
-			{
-				pg_wchar	unicode;
-
-				unicode = (hexval(in[2]) << 20) +
-					(hexval(in[3]) << 16) +
-					(hexval(in[4]) << 12) +
-					(hexval(in[5]) << 8) +
-					(hexval(in[6]) << 4) +
-					hexval(in[7]);
-				check_unicode_value(unicode, in, yyscanner);
-				if (pair_first)
-				{
-					if (is_utf16_surrogate_second(unicode))
-					{
-						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
-						pair_first = 0;
-					}
-					else
-					{
-						ADVANCE_YYLLOC(in - litbuf + 3);		/* 3 for U&" */
-						yyerror("invalid Unicode surrogate pair");
-					}
-				}
-				else if (is_utf16_surrogate_second(unicode))
-					yyerror("invalid Unicode surrogate pair");
-
-				if (is_utf16_surrogate_first(unicode))
-					pair_first = unicode;
-				else
-				{
-					unicode_to_utf8(unicode, (unsigned char *) out);
-					out += pg_mblen(out);
-				}
-				in += 8;
-			}
-			else
-			{
-				ADVANCE_YYLLOC(in - litbuf + 3);		/* 3 for U&" */
-				yyerror("invalid Unicode escape value");
-			}
-		}
-		else
-		{
-			if (pair_first)
-			{
-				ADVANCE_YYLLOC(in - litbuf + 3);		/* 3 for U&" */
-				yyerror("invalid Unicode surrogate pair");
-			}
-			*out++ = *in++;
-		}
-	}
-
-	/* unfinished surrogate pair? */
-	if (pair_first)
-	{
-		ADVANCE_YYLLOC(in - litbuf + 3);				/* 3 for U&" */
-		yyerror("invalid Unicode surrogate pair");
-	}
-
-	*out = '\0';
-
-	/*
-	 * We could skip pg_verifymbstr if we didn't process any non-7-bit-ASCII
-	 * codes; but it's probably not worth the trouble, since this isn't likely
-	 * to be a performance-critical path.
-	 */
-	pg_verifymbstr(new, out - new, false);
-	return new;
 }
 
 static unsigned char

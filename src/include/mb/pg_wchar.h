@@ -509,6 +509,28 @@ typedef uint32 (*utf_local_conversion_func) (uint32 code);
 
 
 /*
+ * Some handy functions for Unicode-specific tests.
+ */
+static inline bool
+is_utf16_surrogate_first(pg_wchar c)
+{
+	return (c >= 0xD800 && c <= 0xDBFF);
+}
+
+static inline bool
+is_utf16_surrogate_second(pg_wchar c)
+{
+	return (c >= 0xDC00 && c <= 0xDFFF);
+}
+
+static inline pg_wchar
+surrogate_pair_to_codepoint(pg_wchar first, pg_wchar second)
+{
+	return ((first & 0x3FF) << 10) + 0x10000 + (second & 0x3FF);
+}
+
+
+/*
  * These functions are considered part of libpq's exported API and
  * are also declared in libpq-fe.h.
  */

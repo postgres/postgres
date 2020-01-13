@@ -21,8 +21,14 @@
 
 #include "postgres.h"
 
+#include "mb/pg_wchar.h"
 #include "parser/gramparse.h"
 #include "parser/parser.h"
+#include "parser/scansup.h"
+
+static bool check_uescapechar(unsigned char escape);
+static char *str_udeescape(const char *str, char escape,
+						   int position, core_yyscan_t yyscanner);
 
 
 /*
@@ -75,6 +81,10 @@ raw_parser(const char *str)
  * scanner backtrack, which would cost more performance than this filter
  * layer does.
  *
+ * We also use this filter to convert UIDENT and USCONST sequences into
+ * plain IDENT and SCONST tokens.  While that could be handled by additional
+ * productions in the main grammar, it's more efficient to do it like this.
+ *
  * The filter also provides a convenient place to translate between
  * the core_YYSTYPE and YYSTYPE representations (which are really the
  * same thing anyway, but notationally they're different).
@@ -104,7 +114,7 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 	 * If this token isn't one that requires lookahead, just return it.  If it
 	 * does, determine the token length.  (We could get that via strlen(), but
 	 * since we have such a small set of possibilities, hardwiring seems
-	 * feasible and more efficient.)
+	 * feasible and more efficient --- at least for the fixed-length cases.)
 	 */
 	switch (cur_token)
 	{
@@ -116,6 +126,10 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 			break;
 		case WITH:
 			cur_token_length = 4;
+			break;
+		case UIDENT:
+		case USCONST:
+			cur_token_length = strlen(yyextra->core_yy_extra.scanbuf + *llocp);
 			break;
 		default:
 			return cur_token;
@@ -190,7 +204,273 @@ base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 					break;
 			}
 			break;
+
+		case UIDENT:
+		case USCONST:
+			/* Look ahead for UESCAPE */
+			if (next_token == UESCAPE)
+			{
+				/* Yup, so get third token, which had better be SCONST */
+				const char *escstr;
+
+				/* Again save and restore *llocp */
+				cur_yylloc = *llocp;
+
+				/* Un-truncate current token so errors point to third token */
+				*(yyextra->lookahead_end) = yyextra->lookahead_hold_char;
+
+				/* Get third token */
+				next_token = core_yylex(&(yyextra->lookahead_yylval),
+										llocp, yyscanner);
+
+				/* If we throw error here, it will point to third token */
+				if (next_token != SCONST)
+					scanner_yyerror("UESCAPE must be followed by a simple string literal",
+									yyscanner);
+
+				escstr = yyextra->lookahead_yylval.str;
+				if (strlen(escstr) != 1 || !check_uescapechar(escstr[0]))
+					scanner_yyerror("invalid Unicode escape character",
+									yyscanner);
+
+				/* Now restore *llocp; errors will point to first token */
+				*llocp = cur_yylloc;
+
+				/* Apply Unicode conversion */
+				lvalp->core_yystype.str =
+					str_udeescape(lvalp->core_yystype.str,
+								  escstr[0],
+								  *llocp,
+								  yyscanner);
+
+				/*
+				 * We don't need to revert the un-truncation of UESCAPE.  What
+				 * we do want to do is clear have_lookahead, thereby consuming
+				 * all three tokens.
+				 */
+				yyextra->have_lookahead = false;
+			}
+			else
+			{
+				/* No UESCAPE, so convert using default escape character */
+				lvalp->core_yystype.str =
+					str_udeescape(lvalp->core_yystype.str,
+								  '\\',
+								  *llocp,
+								  yyscanner);
+			}
+
+			if (cur_token == UIDENT)
+			{
+				/* It's an identifier, so truncate as appropriate */
+				truncate_identifier(lvalp->core_yystype.str,
+									strlen(lvalp->core_yystype.str),
+									true);
+				cur_token = IDENT;
+			}
+			else if (cur_token == USCONST)
+			{
+				cur_token = SCONST;
+			}
+			break;
 	}
 
 	return cur_token;
+}
+
+/* convert hex digit (caller should have verified that) to value */
+static unsigned int
+hexval(unsigned char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 0xA;
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 0xA;
+	elog(ERROR, "invalid hexadecimal digit");
+	return 0;					/* not reached */
+}
+
+/* is Unicode code point acceptable in database's encoding? */
+static void
+check_unicode_value(pg_wchar c, int pos, core_yyscan_t yyscanner)
+{
+	/* See also addunicode() in scan.l */
+	if (c == 0 || c > 0x10FFFF)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid Unicode escape value"),
+				 scanner_errposition(pos, yyscanner)));
+
+	if (c > 0x7F && GetDatabaseEncoding() != PG_UTF8)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8"),
+				 scanner_errposition(pos, yyscanner)));
+}
+
+/* is 'escape' acceptable as Unicode escape character (UESCAPE syntax) ? */
+static bool
+check_uescapechar(unsigned char escape)
+{
+	if (isxdigit(escape)
+		|| escape == '+'
+		|| escape == '\''
+		|| escape == '"'
+		|| scanner_isspace(escape))
+		return false;
+	else
+		return true;
+}
+
+/*
+ * Process Unicode escapes in "str", producing a palloc'd plain string
+ *
+ * escape: the escape character to use
+ * position: start position of U&'' or U&"" string token
+ * yyscanner: context information needed for error reports
+ */
+static char *
+str_udeescape(const char *str, char escape,
+			  int position, core_yyscan_t yyscanner)
+{
+	const char *in;
+	char	   *new,
+			   *out;
+	pg_wchar	pair_first = 0;
+
+	/*
+	 * This relies on the subtle assumption that a UTF-8 expansion cannot be
+	 * longer than its escaped representation.
+	 */
+	new = palloc(strlen(str) + 1);
+
+	in = str;
+	out = new;
+	while (*in)
+	{
+		if (in[0] == escape)
+		{
+			if (in[1] == escape)
+			{
+				if (pair_first)
+					goto invalid_pair;
+				*out++ = escape;
+				in += 2;
+			}
+			else if (isxdigit((unsigned char) in[1]) &&
+					 isxdigit((unsigned char) in[2]) &&
+					 isxdigit((unsigned char) in[3]) &&
+					 isxdigit((unsigned char) in[4]))
+			{
+				pg_wchar	unicode;
+
+				unicode = (hexval(in[1]) << 12) +
+					(hexval(in[2]) << 8) +
+					(hexval(in[3]) << 4) +
+					hexval(in[4]);
+				check_unicode_value(unicode,
+									in - str + position + 3,	/* 3 for U&" */
+									yyscanner);
+				if (pair_first)
+				{
+					if (is_utf16_surrogate_second(unicode))
+					{
+						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
+						pair_first = 0;
+					}
+					else
+						goto invalid_pair;
+				}
+				else if (is_utf16_surrogate_second(unicode))
+					goto invalid_pair;
+
+				if (is_utf16_surrogate_first(unicode))
+					pair_first = unicode;
+				else
+				{
+					unicode_to_utf8(unicode, (unsigned char *) out);
+					out += pg_mblen(out);
+				}
+				in += 5;
+			}
+			else if (in[1] == '+' &&
+					 isxdigit((unsigned char) in[2]) &&
+					 isxdigit((unsigned char) in[3]) &&
+					 isxdigit((unsigned char) in[4]) &&
+					 isxdigit((unsigned char) in[5]) &&
+					 isxdigit((unsigned char) in[6]) &&
+					 isxdigit((unsigned char) in[7]))
+			{
+				pg_wchar	unicode;
+
+				unicode = (hexval(in[2]) << 20) +
+					(hexval(in[3]) << 16) +
+					(hexval(in[4]) << 12) +
+					(hexval(in[5]) << 8) +
+					(hexval(in[6]) << 4) +
+					hexval(in[7]);
+				check_unicode_value(unicode,
+									in - str + position + 3,	/* 3 for U&" */
+									yyscanner);
+				if (pair_first)
+				{
+					if (is_utf16_surrogate_second(unicode))
+					{
+						unicode = surrogate_pair_to_codepoint(pair_first, unicode);
+						pair_first = 0;
+					}
+					else
+						goto invalid_pair;
+				}
+				else if (is_utf16_surrogate_second(unicode))
+					goto invalid_pair;
+
+				if (is_utf16_surrogate_first(unicode))
+					pair_first = unicode;
+				else
+				{
+					unicode_to_utf8(unicode, (unsigned char *) out);
+					out += pg_mblen(out);
+				}
+				in += 8;
+			}
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("invalid Unicode escape value"),
+						 scanner_errposition(in - str + position + 3,	/* 3 for U&" */
+											 yyscanner)));
+		}
+		else
+		{
+			if (pair_first)
+				goto invalid_pair;
+
+			*out++ = *in++;
+		}
+	}
+
+	/* unfinished surrogate pair? */
+	if (pair_first)
+		goto invalid_pair;
+
+	*out = '\0';
+
+	/*
+	 * We could skip pg_verifymbstr if we didn't process any non-7-bit-ASCII
+	 * codes; but it's probably not worth the trouble, since this isn't likely
+	 * to be a performance-critical path.
+	 */
+	pg_verifymbstr(new, out - new, false);
+	return new;
+
+invalid_pair:
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("invalid Unicode surrogate pair"),
+			 scanner_errposition(in - str + position + 3,	/* 3 for U&" */
+								 yyscanner)));
+	return NULL;				/* keep compiler quiet */
 }

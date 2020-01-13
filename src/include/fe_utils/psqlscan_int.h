@@ -110,6 +110,7 @@ typedef struct PsqlScanStateData
 	 * and updated with its finishing state on exit.
 	 */
 	int			start_state;	/* yylex's starting/finishing state */
+	int			state_before_str_stop;	/* start cond. before end quote */
 	int			paren_depth;	/* depth of nesting in parentheses */
 	int			xcdepth;		/* depth of nesting in slash-star comments */
 	char	   *dolqstart;		/* current $foo$ quote start string */

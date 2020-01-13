@@ -218,8 +218,8 @@ sub main
 				if ($a eq 'IDENT' && $prior eq '%nonassoc')
 				{
 
-					# add two more tokens to the list
-					$str = $str . "\n%nonassoc CSTRING\n%nonassoc UIDENT";
+					# add more tokens to the list
+					$str = $str . "\n%nonassoc CSTRING";
 				}
 				$prior = $a;
 			}
