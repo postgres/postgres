@@ -535,6 +535,41 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE NOT a AND b AND NOT c');
 
+-- check the ability to use multiple MCV lists
+CREATE TABLE mcv_lists_multi (
+	a INTEGER,
+	b INTEGER,
+	c INTEGER,
+	d INTEGER
+);
+
+INSERT INTO mcv_lists_multi (a, b, c, d)
+    SELECT
+         mod(i,5),
+         mod(i,5),
+         mod(i,7),
+         mod(i,7)
+    FROM generate_series(1,5000) s(i);
+
+ANALYZE mcv_lists_multi;
+
+-- estimates without any mcv statistics
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE a = 0 AND b = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE c = 0 AND d = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+
+-- create separate MCV statistics
+CREATE STATISTICS mcv_lists_multi_1 (mcv) ON a, b FROM mcv_lists_multi;
+CREATE STATISTICS mcv_lists_multi_2 (mcv) ON c, d FROM mcv_lists_multi;
+
+ANALYZE mcv_lists_multi;
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE a = 0 AND b = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE c = 0 AND d = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+
+DROP TABLE mcv_lists_multi;
+
 -- Permission tests. Users should not be able to see specific data values in
 -- the extended statistics, if they lack permission to see those values in
 -- the underlying table.
