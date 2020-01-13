@@ -2145,7 +2145,7 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 	 * that check MUST be done at least past the point of acquiring an
 	 * exclusive buffer content lock on every buffer that will be affected,
 	 * and MAY be done after all inserts are reflected in the buffers and
-	 * those locks are released; otherwise there race condition.  Since
+	 * those locks are released; otherwise there is a race condition.  Since
 	 * multiple buffers can be locked and unlocked in the loop below, and it
 	 * would not be feasible to identify and lock all of those buffers before
 	 * the loop, we must do a final check at the end.
