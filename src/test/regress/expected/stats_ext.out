@@ -451,6 +451,63 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
         50 |     50
 (1 row)
 
+-- check the ability to use multiple functional dependencies
+CREATE TABLE functional_dependencies_multi (
+	a INTEGER,
+	b INTEGER,
+	c INTEGER,
+	d INTEGER
+);
+INSERT INTO functional_dependencies_multi (a, b, c, d)
+    SELECT
+         mod(i,7),
+         mod(i,7),
+         mod(i,11),
+         mod(i,11)
+    FROM generate_series(1,5000) s(i);
+ANALYZE functional_dependencies_multi;
+-- estimates without any functional dependencies
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0');
+ estimated | actual 
+-----------+--------
+       102 |    714
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE c = 0 AND d = 0');
+ estimated | actual 
+-----------+--------
+        41 |    454
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+ estimated | actual 
+-----------+--------
+         1 |     64
+(1 row)
+
+-- create separate functional dependencies
+CREATE STATISTICS functional_dependencies_multi_1 (dependencies) ON a, b FROM functional_dependencies_multi;
+CREATE STATISTICS functional_dependencies_multi_2 (dependencies) ON c, d FROM functional_dependencies_multi;
+ANALYZE functional_dependencies_multi;
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0');
+ estimated | actual 
+-----------+--------
+       714 |    714
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE c = 0 AND d = 0');
+ estimated | actual 
+-----------+--------
+       454 |    454
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+ estimated | actual 
+-----------+--------
+        65 |     64
+(1 row)
+
+DROP TABLE functional_dependencies_multi;
 -- MCV lists
 CREATE TABLE mcv_lists (
     filler1 TEXT,

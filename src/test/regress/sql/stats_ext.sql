@@ -291,6 +291,41 @@ ANALYZE functional_dependencies;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
+-- check the ability to use multiple functional dependencies
+CREATE TABLE functional_dependencies_multi (
+	a INTEGER,
+	b INTEGER,
+	c INTEGER,
+	d INTEGER
+);
+
+INSERT INTO functional_dependencies_multi (a, b, c, d)
+    SELECT
+         mod(i,7),
+         mod(i,7),
+         mod(i,11),
+         mod(i,11)
+    FROM generate_series(1,5000) s(i);
+
+ANALYZE functional_dependencies_multi;
+
+-- estimates without any functional dependencies
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE c = 0 AND d = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+
+-- create separate functional dependencies
+CREATE STATISTICS functional_dependencies_multi_1 (dependencies) ON a, b FROM functional_dependencies_multi;
+CREATE STATISTICS functional_dependencies_multi_2 (dependencies) ON c, d FROM functional_dependencies_multi;
+
+ANALYZE functional_dependencies_multi;
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE c = 0 AND d = 0');
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+
+DROP TABLE functional_dependencies_multi;
+
 -- MCV lists
 CREATE TABLE mcv_lists (
     filler1 TEXT,
