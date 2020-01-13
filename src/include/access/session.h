@@ -19,7 +19,7 @@ struct SharedRecordTypmodRegistry;
 
 /*
  * A struct encapsulating some elements of a user's session.  For now this
- * manages state that applies to parallel query, but it principle it could
+ * manages state that applies to parallel query, but in principle it could
  * include other things that are currently global variables.
  */
 typedef struct Session
