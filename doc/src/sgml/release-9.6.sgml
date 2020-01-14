@@ -13114,7 +13114,7 @@ XXX this is pending backpatch, may need to remove
 2016-04-08 [7a542700d] Create default roles
 -->
        <para>
-        Create some <link linkend="default-roles">built-in roles</link>
+        Create some <link linkend="predefined-roles">built-in roles</link>
         that can be used to grant access to what were previously
         superuser-only functions (Stephen Frost)
        </para>
