@@ -328,6 +328,27 @@ UPDATE ro_view20 SET b=upper(b);
 ERROR:  cannot update view "ro_view20"
 DETAIL:  Views that return set-returning functions are not automatically updatable.
 HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
+-- A view with a conditional INSTEAD rule but no unconditional INSTEAD rules
+-- or INSTEAD OF triggers should be non-updatable and generate useful error
+-- messages with appropriate detail
+CREATE RULE rw_view16_ins_rule AS ON INSERT TO rw_view16
+  WHERE NEW.a > 0 DO INSTEAD INSERT INTO base_tbl VALUES (NEW.a, NEW.b);
+CREATE RULE rw_view16_upd_rule AS ON UPDATE TO rw_view16
+  WHERE OLD.a > 0 DO INSTEAD UPDATE base_tbl SET b=NEW.b WHERE a=OLD.a;
+CREATE RULE rw_view16_del_rule AS ON DELETE TO rw_view16
+  WHERE OLD.a > 0 DO INSTEAD DELETE FROM base_tbl WHERE a=OLD.a;
+INSERT INTO rw_view16 (a, b) VALUES (3, 'Row 3'); -- should fail
+ERROR:  cannot insert into view "rw_view16"
+DETAIL:  Views with conditional DO INSTEAD rules are not automatically updatable.
+HINT:  To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.
+UPDATE rw_view16 SET b='ROW 2' WHERE a=2; -- should fail
+ERROR:  cannot update view "rw_view16"
+DETAIL:  Views with conditional DO INSTEAD rules are not automatically updatable.
+HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
+DELETE FROM rw_view16 WHERE a=2; -- should fail
+ERROR:  cannot delete from view "rw_view16"
+DETAIL:  Views with conditional DO INSTEAD rules are not automatically updatable.
+HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 16 other objects
 DETAIL:  drop cascades to view ro_view1
