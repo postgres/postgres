@@ -834,6 +834,10 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 				break;
 		}
 	}
+	else
+	{
+		appendStringInfoString(&cmd, " PHYSICAL RESERVE_WAL");
+	}
 
 	res = libpqrcv_PQexec(conn->streamConn, cmd.data);
 	pfree(cmd.data);

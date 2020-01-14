@@ -23,6 +23,7 @@
 #include "utils/tuplestore.h"
 
 /* user-settable parameters */
+extern bool wal_receiver_create_temp_slot;
 extern int	wal_receiver_status_interval;
 extern int	wal_receiver_timeout;
 extern bool hot_standby_feedback;
@@ -120,6 +121,12 @@ typedef struct
 	 * primary
 	 */
 	char		slotname[NAMEDATALEN];
+
+	/*
+	 * If it's a temporary replication slot, it needs to be recreated when
+	 * connecting.
+	 */
+	bool		is_temp_slot;
 
 	/* set true once conninfo is ready to display (obfuscated pwds etc) */
 	bool		ready_to_display;

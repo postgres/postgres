@@ -4124,6 +4124,26 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-wal-receiver-create-temp-slot" xreflabel="wal_receiver_create_temp_slot">
+      <term><varname>wal_receiver_create_temp_slot</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>wal_receiver_create_temp_slot</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies whether a WAL receiver should create a temporary replication
+        slot on the remote instance when no permanent replication slot to use
+        has been configured (using <xref linkend="guc-primary-slot-name"/>).
+        The default is on.  The only reason to turn this off would be if the
+        remote instance is currently out of available replication slots.  This
+        parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line.  Changes only take effect when the
+        WAL receiver process starts a new connection.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-wal-receiver-status-interval" xreflabel="wal_receiver_status_interval">
       <term><varname>wal_receiver_status_interval</varname> (<type>integer</type>)
       <indexterm>
