@@ -3670,21 +3670,71 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		}
 
 		/*
-		 * If there were no INSTEAD rules, and the target relation is a view
-		 * without any INSTEAD OF triggers, see if the view can be
+		 * If there was no unqualified INSTEAD rule, and the target relation
+		 * is a view without any INSTEAD OF triggers, see if the view can be
 		 * automatically updated.  If so, we perform the necessary query
 		 * transformation here and add the resulting query to the
 		 * product_queries list, so that it gets recursively rewritten if
 		 * necessary.
+		 *
+		 * If the view cannot be automatically updated, we throw an error here
+		 * which is OK since the query would fail at runtime anyway.  Throwing
+		 * the error here is preferable to the executor check since we have
+		 * more detailed information available about why the view isn't
+		 * updatable.
 		 */
-		if (!instead && qual_product == NULL &&
+		if (!instead &&
 			rt_entry_relation->rd_rel->relkind == RELKIND_VIEW &&
 			!view_has_instead_trigger(rt_entry_relation, event))
 		{
 			/*
+			 * If there were any qualified INSTEAD rules, don't allow the view
+			 * to be automatically updated (an unqualified INSTEAD rule or
+			 * INSTEAD OF trigger is required).
+			 *
+			 * The messages here should match execMain.c's CheckValidResultRel
+			 * and in principle make those checks in executor unnecessary, but
+			 * we keep them just in case.
+			 */
+			if (qual_product != NULL)
+			{
+				switch (parsetree->commandType)
+				{
+					case CMD_INSERT:
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+								 errmsg("cannot insert into view \"%s\"",
+										RelationGetRelationName(rt_entry_relation)),
+								 errdetail("Views with conditional DO INSTEAD rules are not automatically updatable."),
+								 errhint("To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule.")));
+						break;
+					case CMD_UPDATE:
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+								 errmsg("cannot update view \"%s\"",
+										RelationGetRelationName(rt_entry_relation)),
+								 errdetail("Views with conditional DO INSTEAD rules are not automatically updatable."),
+								 errhint("To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.")));
+						break;
+					case CMD_DELETE:
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+								 errmsg("cannot delete from view \"%s\"",
+										RelationGetRelationName(rt_entry_relation)),
+								 errdetail("Views with conditional DO INSTEAD rules are not automatically updatable."),
+								 errhint("To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.")));
+						break;
+					default:
+						elog(ERROR, "unrecognized CmdType: %d",
+							 (int) parsetree->commandType);
+						break;
+				}
+			}
+
+			/*
+			 * Attempt to rewrite the query to automatically update the view.
 			 * This throws an error if the view can't be automatically
-			 * updated, but that's OK since the query would fail at runtime
-			 * anyway.
+			 * updated.
 			 */
 			parsetree = rewriteTargetView(parsetree, rt_entry_relation);
 
