@@ -388,6 +388,8 @@ static ObjectAddress ATExecAddIdentity(Relation rel, const char *colName,
 static ObjectAddress ATExecSetIdentity(Relation rel, const char *colName,
 									   Node *def, LOCKMODE lockmode);
 static ObjectAddress ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
+static void ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recursing);
+static ObjectAddress ATExecDropExpression(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode);
 static ObjectAddress ATExecSetStatistics(Relation rel, const char *colName, int16 colNum,
 										 Node *newValue, LOCKMODE lockmode);
 static ObjectAddress ATExecSetOptions(Relation rel, const char *colName,
@@ -3672,6 +3674,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_AddIdentity:
 			case AT_DropIdentity:
 			case AT_SetIdentity:
+			case AT_DropExpression:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -3945,6 +3948,12 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
 			/* No command-specific prep needed */
 			pass = AT_PASS_COL_ATTRS;
+			break;
+		case AT_DropExpression:	/* ALTER COLUMN DROP EXPRESSION */
+			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+			ATPrepDropExpression(rel, cmd, recursing);
+			pass = AT_PASS_DROP;
 			break;
 		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX | ATT_PARTITIONED_INDEX | ATT_FOREIGN_TABLE);
@@ -4264,6 +4273,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			break;
 		case AT_CheckNotNull:	/* check column is already marked NOT NULL */
 			ATExecCheckNotNull(tab, rel, cmd->name, lockmode);
+			break;
+		case AT_DropExpression:
+			address = ATExecDropExpression(rel, cmd->name, cmd->missing_ok, lockmode);
 			break;
 		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			address = ATExecSetStatistics(rel, cmd->name, cmd->num, cmd->def, lockmode);
@@ -6457,7 +6469,9 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column \"%s\" of relation \"%s\" is a generated column",
-						colName, RelationGetRelationName(rel))));
+						colName, RelationGetRelationName(rel)),
+				 newDefault || TupleDescAttr(tupdesc, attnum - 1)->attgenerated != ATTRIBUTE_GENERATED_STORED ? 0 :
+				 errhint("Use ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION instead.")));
 
 	/*
 	 * Remove any old default for the column.  We use RESTRICT here for
@@ -6721,6 +6735,151 @@ ATExecDropIdentity(Relation rel, const char *colName, bool missing_ok, LOCKMODE 
 	seqaddress.objectId = seqid;
 	seqaddress.objectSubId = 0;
 	performDeletion(&seqaddress, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
+
+	return address;
+}
+
+/*
+ * ALTER TABLE ALTER COLUMN DROP EXPRESSION
+ */
+static void
+ATPrepDropExpression(Relation rel, AlterTableCmd *cmd, bool recursing)
+{
+	/*
+	 * Cannot drop generation expression from inherited columns.
+	 */
+	if (!recursing)
+	{
+		HeapTuple	tuple;
+		Form_pg_attribute attTup;
+
+		tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), cmd->name);
+		if (!HeapTupleIsValid(tuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" of relation \"%s\" does not exist",
+							cmd->name, RelationGetRelationName(rel))));
+
+		attTup = (Form_pg_attribute) GETSTRUCT(tuple);
+
+		if (attTup->attinhcount > 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("cannot drop generation expression from inherited column")));
+	}
+}
+
+/*
+ * Return the address of the affected column.
+ */
+static ObjectAddress
+ATExecDropExpression(Relation rel, const char *colName, bool missing_ok, LOCKMODE lockmode)
+{
+	HeapTuple	tuple;
+	Form_pg_attribute attTup;
+	AttrNumber	attnum;
+	Relation	attrelation;
+	ObjectAddress address;
+
+	attrelation = table_open(AttributeRelationId, RowExclusiveLock);
+	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						colName, RelationGetRelationName(rel))));
+
+	attTup = (Form_pg_attribute) GETSTRUCT(tuple);
+	attnum = attTup->attnum;
+
+	if (attnum <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot alter system column \"%s\"",
+						colName)));
+
+	if (attTup->attgenerated != ATTRIBUTE_GENERATED_STORED)
+	{
+		if (!missing_ok)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("column \"%s\" of relation \"%s\" is not a stored generated column",
+							colName, RelationGetRelationName(rel))));
+		else
+		{
+			ereport(NOTICE,
+					(errmsg("column \"%s\" of relation \"%s\" is not a stored generated column, skipping",
+							colName, RelationGetRelationName(rel))));
+			heap_freetuple(tuple);
+			table_close(attrelation, RowExclusiveLock);
+			return InvalidObjectAddress;
+		}
+	}
+
+	attTup->attgenerated = '\0';
+	CatalogTupleUpdate(attrelation, &tuple->t_self, tuple);
+
+	InvokeObjectPostAlterHook(RelationRelationId,
+							  RelationGetRelid(rel),
+							  attTup->attnum);
+	ObjectAddressSubSet(address, RelationRelationId,
+						RelationGetRelid(rel), attnum);
+	heap_freetuple(tuple);
+
+	table_close(attrelation, RowExclusiveLock);
+
+	CommandCounterIncrement();
+
+	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false, false);
+
+	/*
+	 * Remove all dependencies of this (formerly generated) column on other
+	 * columns in the same table.  (See StoreAttrDefault() for which
+	 * dependencies are created.)  We don't expect there to be dependencies
+	 * between columns of the same table for other reasons, so it's okay to
+	 * remove all of them.
+	 */
+	{
+		Relation	depRel;
+		ScanKeyData key[3];
+		SysScanDesc scan;
+		HeapTuple	tup;
+
+		depRel = table_open(DependRelationId, RowExclusiveLock);
+
+		ScanKeyInit(&key[0],
+					Anum_pg_depend_classid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationRelationId));
+		ScanKeyInit(&key[1],
+					Anum_pg_depend_objid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(RelationGetRelid(rel)));
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_objsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(attnum));
+
+		scan = systable_beginscan(depRel, DependDependerIndexId, true,
+								  NULL, 3, key);
+
+		while (HeapTupleIsValid(tup = systable_getnext(scan)))
+		{
+			Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+			if (depform->refclassid == RelationRelationId &&
+				depform->refobjid == RelationGetRelid(rel) &&
+				depform->refobjsubid != 0 &&
+				depform->deptype == DEPENDENCY_AUTO)
+			{
+				CatalogTupleDelete(depRel, &tup->t_self);
+			}
+		}
+
+		systable_endscan(scan);
+
+		table_close(depRel, RowExclusiveLock);
+	}
 
 	return address;
 }

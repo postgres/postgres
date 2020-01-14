@@ -2015,7 +2015,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER TABLE ALTER [COLUMN] <foo> DROP */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "DROP") ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "DROP"))
-		COMPLETE_WITH("DEFAULT", "IDENTITY", "NOT NULL");
+		COMPLETE_WITH("DEFAULT", "EXPRESSION", "IDENTITY", "NOT NULL");
 	else if (Matches("ALTER", "TABLE", MatchAny, "CLUSTER"))
 		COMPLETE_WITH("ON");
 	else if (Matches("ALTER", "TABLE", MatchAny, "CLUSTER", "ON"))

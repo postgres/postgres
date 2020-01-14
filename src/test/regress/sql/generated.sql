@@ -351,6 +351,44 @@ ALTER TABLE gtest27
 \d gtest27
 SELECT * FROM gtest27;
 
+-- ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION
+CREATE TABLE gtest29 (
+    a int,
+    b int GENERATED ALWAYS AS (a * 2) STORED
+);
+INSERT INTO gtest29 (a) VALUES (3), (4);
+ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION;  -- error
+ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION IF EXISTS;  -- notice
+ALTER TABLE gtest29 ALTER COLUMN b DROP EXPRESSION;
+INSERT INTO gtest29 (a) VALUES (5);
+INSERT INTO gtest29 (a, b) VALUES (6, 66);
+SELECT * FROM gtest29;
+\d gtest29
+
+-- check that dependencies between columns have also been removed
+ALTER TABLE gtest29 DROP COLUMN a;  -- should not drop b
+\d gtest29
+
+-- with inheritance
+CREATE TABLE gtest30 (
+    a int,
+    b int GENERATED ALWAYS AS (a * 2) STORED
+);
+CREATE TABLE gtest30_1 () INHERITS (gtest30);
+ALTER TABLE gtest30 ALTER COLUMN b DROP EXPRESSION;
+\d gtest30
+\d gtest30_1
+DROP TABLE gtest30 CASCADE;
+CREATE TABLE gtest30 (
+    a int,
+    b int GENERATED ALWAYS AS (a * 2) STORED
+);
+CREATE TABLE gtest30_1 () INHERITS (gtest30);
+ALTER TABLE ONLY gtest30 ALTER COLUMN b DROP EXPRESSION;
+\d gtest30
+\d gtest30_1
+ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
+
 -- triggers
 CREATE TABLE gtest26 (
     a int PRIMARY KEY,

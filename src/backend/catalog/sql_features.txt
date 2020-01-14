@@ -252,7 +252,7 @@ F381	Extended schema manipulation	03	ALTER TABLE statement: DROP CONSTRAINT clau
 F382	Alter column data type			YES	
 F383	Set column not null clause			YES	
 F384	Drop identity property clause			YES	
-F385	Drop column generation expression clause			NO	
+F385	Drop column generation expression clause			YES	
 F386	Set identity column generation clause			YES	
 F391	Long identifiers			YES	
 F392	Unicode escapes in identifiers			YES	

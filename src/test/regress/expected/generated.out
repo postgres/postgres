@@ -648,6 +648,7 @@ ALTER TABLE gtest27 ALTER COLUMN x TYPE boolean USING x <> 0;  -- error
 ERROR:  generation expression for column "x" cannot be cast automatically to type boolean
 ALTER TABLE gtest27 ALTER COLUMN x DROP DEFAULT;  -- error
 ERROR:  column "x" of relation "gtest27" is a generated column
+HINT:  Use ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION instead.
 -- It's possible to alter the column types this way:
 ALTER TABLE gtest27
   DROP COLUMN x,
@@ -683,6 +684,92 @@ SELECT * FROM gtest27;
  4 | 11 | 30
 (2 rows)
 
+-- ALTER TABLE ... ALTER COLUMN ... DROP EXPRESSION
+CREATE TABLE gtest29 (
+    a int,
+    b int GENERATED ALWAYS AS (a * 2) STORED
+);
+INSERT INTO gtest29 (a) VALUES (3), (4);
+ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION;  -- error
+ERROR:  column "a" of relation "gtest29" is not a stored generated column
+ALTER TABLE gtest29 ALTER COLUMN a DROP EXPRESSION IF EXISTS;  -- notice
+NOTICE:  column "a" of relation "gtest29" is not a stored generated column, skipping
+ALTER TABLE gtest29 ALTER COLUMN b DROP EXPRESSION;
+INSERT INTO gtest29 (a) VALUES (5);
+INSERT INTO gtest29 (a, b) VALUES (6, 66);
+SELECT * FROM gtest29;
+ a | b  
+---+----
+ 3 |  6
+ 4 |  8
+ 5 |   
+ 6 | 66
+(4 rows)
+
+\d gtest29
+              Table "public.gtest29"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+
+-- check that dependencies between columns have also been removed
+ALTER TABLE gtest29 DROP COLUMN a;  -- should not drop b
+\d gtest29
+              Table "public.gtest29"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ b      | integer |           |          | 
+
+-- with inheritance
+CREATE TABLE gtest30 (
+    a int,
+    b int GENERATED ALWAYS AS (a * 2) STORED
+);
+CREATE TABLE gtest30_1 () INHERITS (gtest30);
+ALTER TABLE gtest30 ALTER COLUMN b DROP EXPRESSION;
+\d gtest30
+              Table "public.gtest30"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d gtest30_1
+             Table "public.gtest30_1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Inherits: gtest30
+
+DROP TABLE gtest30 CASCADE;
+NOTICE:  drop cascades to table gtest30_1
+CREATE TABLE gtest30 (
+    a int,
+    b int GENERATED ALWAYS AS (a * 2) STORED
+);
+CREATE TABLE gtest30_1 () INHERITS (gtest30);
+ALTER TABLE ONLY gtest30 ALTER COLUMN b DROP EXPRESSION;
+\d gtest30
+              Table "public.gtest30"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Number of child tables: 1 (Use \d+ to list them.)
+
+\d gtest30_1
+                           Table "public.gtest30_1"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
+ a      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 2) stored
+Inherits: gtest30
+
+ALTER TABLE gtest30_1 ALTER COLUMN b DROP EXPRESSION;  -- error
+ERROR:  cannot drop generation expression from inherited column
 -- triggers
 CREATE TABLE gtest26 (
     a int PRIMARY KEY,
