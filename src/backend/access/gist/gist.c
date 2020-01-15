@@ -17,6 +17,7 @@
 #include "access/gist_private.h"
 #include "access/gistscan.h"
 #include "catalog/pg_collation.h"
+#include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "storage/lmgr.h"
@@ -74,6 +75,9 @@ gisthandler(PG_FUNCTION_ARGS)
 	amroutine->ampredlocks = true;
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = true;
+	amroutine->amusemaintenanceworkmem = false;
+	amroutine->amparallelvacuumoptions =
+		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_COND_CLEANUP;
 	amroutine->amkeytype = InvalidOid;
 
 	amroutine->ambuild = gistbuild;

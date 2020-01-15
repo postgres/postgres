@@ -16,6 +16,7 @@
 #include "access/amapi.h"
 #include "access/reloptions.h"
 #include "catalog/index.h"
+#include "commands/vacuum.h"
 #include "nodes/pathnodes.h"
 #include "utils/guc.h"
 #include "utils/rel.h"
@@ -294,6 +295,8 @@ dihandler(PG_FUNCTION_ARGS)
 	amroutine->ampredlocks = false;
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = false;
+	amroutine->amusemaintenanceworkmem = false;
+	amroutine->amparallelvacuumoptions = VACUUM_OPTION_NO_PARALLEL;
 	amroutine->amkeytype = InvalidOid;
 
 	amroutine->ambuild = dibuild;
