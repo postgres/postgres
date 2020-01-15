@@ -37,8 +37,8 @@ typedef struct
 
 typedef BlockSamplerData *BlockSampler;
 
-extern void BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
-							  int samplesize, long randseed);
+extern BlockNumber BlockSampler_Init(BlockSampler bs, BlockNumber nblocks,
+									 int samplesize, long randseed);
 extern bool BlockSampler_HasMore(BlockSampler bs);
 extern BlockNumber BlockSampler_Next(BlockSampler bs);
 

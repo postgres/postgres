@@ -24,10 +24,12 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_statistic_ext_data.h"
+#include "commands/progress.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
+#include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "statistics/extended_stats_internal.h"
 #include "statistics/statistics.h"
@@ -92,6 +94,7 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 	List	   *stats;
 	MemoryContext cxt;
 	MemoryContext oldcxt;
+	int64		ext_cnt;
 
 	cxt = AllocSetContextCreate(CurrentMemoryContext,
 								"BuildRelationExtStatistics",
@@ -101,6 +104,22 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 	pg_stext = table_open(StatisticExtRelationId, RowExclusiveLock);
 	stats = fetch_statentries_for_relation(pg_stext, RelationGetRelid(onerel));
 
+	/* report this phase */
+	if (stats != NIL)
+	{
+		const int	index[] = {
+			PROGRESS_ANALYZE_PHASE,
+			PROGRESS_ANALYZE_EXT_STATS_TOTAL
+		};
+		const int64 val[] = {
+			PROGRESS_ANALYZE_PHASE_COMPUTE_EXT_STATS,
+			list_length(stats)
+		};
+
+		pgstat_progress_update_multi_param(2, index, val);
+	}
+
+	ext_cnt = 0;
 	foreach(lc, stats)
 	{
 		StatExtEntry *stat = (StatExtEntry *) lfirst(lc);
@@ -165,6 +184,10 @@ BuildRelationExtStatistics(Relation onerel, double totalrows,
 
 		/* store the statistics in the catalog */
 		statext_store(stat->statOid, ndistinct, dependencies, mcv, stats);
+
+		/* for reporting progress */
+		pgstat_progress_update_param(PROGRESS_ANALYZE_EXT_STATS_COMPUTED,
+									 ++ext_cnt);
 	}
 
 	table_close(pg_stext, RowExclusiveLock);
