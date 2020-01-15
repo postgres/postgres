@@ -66,6 +66,5 @@ sub wanted
 }
 
 print "Manually update:\n";
-print "  ./src/interfaces/libpq/libpq.rc.in in head\n";
 print "  ./doc/src/sgml/legal.sgml in head and back branches\n";
 print "  ./COPYRIGHT in back branches\n";

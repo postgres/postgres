@@ -56,11 +56,7 @@ endif
 # Build rules to add versioninfo resources to win32 binaries
 
 WIN32RES += win32ver.o
-ifeq ($(PGFILESHLIB),1)
-PGFTYPE = VFT_DLL
-else
-PGFTYPE = VFT_APP
-endif
+PGFTYPE = $(if $(shlib),VFT_DLL,VFT_APP)
 ifneq (,$(PGAPPICON))
 PGICOSTR = $(subst /,\/,IDI_ICON ICON \"$(top_builddir)/src/port/$(PGAPPICON).ico\")
 endif
@@ -71,7 +67,16 @@ endif
 # signal win32ver.rc availability to the dll build rule below.
 ifndef PGXS
 win32ver.rc: $(top_srcdir)/src/port/win32ver.rc
-	sed -e 's;FILEDESC;$(PGFILEDESC);' -e 's;VFT_APP;$(PGFTYPE);' -e 's;_ICO_;$(PGICOSTR);' -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' $< >$@
+	sed -e 's;FILEDESC;$(PGFILEDESC);' \
+	    -e 's;VFT_APP;$(PGFTYPE);' \
+	    -e 's;_ICO_;$(PGICOSTR);' \
+	    -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' \
+	    -e '/_INTERNAL_NAME_/$(if $(shlib),s;_INTERNAL_NAME_;"$(basename $(shlib))";,d)' \
+	    -e '/_ORIGINAL_NAME_/$(if $(shlib),s;_ORIGINAL_NAME_;"$(shlib)";,d)' \
+	  $< >$@
+
+# Depend on Makefile.global to force rebuild on re-run of configure.
+win32ver.rc: $(top_builddir)/src/Makefile.global
 endif
 
 win32ver.o: win32ver.rc

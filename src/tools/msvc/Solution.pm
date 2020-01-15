@@ -668,27 +668,6 @@ sub GenerateFiles
 		);
 	}
 
-	if (IsNewer(
-			'src/interfaces/libpq/libpq.rc',
-			'src/interfaces/libpq/libpq.rc.in'))
-	{
-		print "Generating libpq.rc...\n";
-		my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
-		  localtime(time);
-		my $d = ($year - 100) . "$yday";
-		open(my $i, '<', 'src/interfaces/libpq/libpq.rc.in')
-		  || confess "Could not open libpq.rc.in";
-		open(my $o, '>', 'src/interfaces/libpq/libpq.rc')
-		  || confess "Could not open libpq.rc";
-		while (<$i>)
-		{
-			s/(VERSION.*),0/$1,$d/;
-			print $o $_;
-		}
-		close($i);
-		close($o);
-	}
-
 	if (IsNewer('src/bin/psql/sql_help.h', 'src/bin/psql/create_help.pl'))
 	{
 		print "Generating sql_help.h...\n";

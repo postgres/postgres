@@ -338,6 +338,14 @@ sub AddResourceFile
 			if ($self->{type} eq "dll")
 			{
 				s/VFT_APP/VFT_DLL/gm;
+				my $name = $self->{name};
+				s/_INTERNAL_NAME_/"$name"/;
+				s/_ORIGINAL_NAME_/"$name.dll"/;
+			}
+			else
+			{
+				/_INTERNAL_NAME_/ && next;
+				/_ORIGINAL_NAME_/ && next;
 			}
 			print $o $_;
 		}

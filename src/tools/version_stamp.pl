@@ -102,13 +102,6 @@ sed_file("configure.in",
 	"-e 's/AC_INIT(\\[PostgreSQL\\], \\[[0-9a-z.]*\\]/AC_INIT([PostgreSQL], [$fullversion]/'"
 );
 
-sed_file("src/interfaces/libpq/libpq.rc.in",
-	"-e 's/FILEVERSION [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION $majorversion,0,$numericminor,0/' "
-	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $majorversion,0,$numericminor,0/' "
-	  . "-e 's/VALUE \"FileVersion\", \"[0-9.]*/VALUE \"FileVersion\", \"$numericversion/' "
-	  . "-e 's/VALUE \"ProductVersion\", \"[0-9.]*/VALUE \"ProductVersion\", \"$numericversion/'"
-);
-
 sed_file("src/port/win32ver.rc",
 	"-e 's/FILEVERSION    [0-9]*,[0-9]*,[0-9]*,0/FILEVERSION    $majorversion,0,$numericminor,0/' "
 	  . "-e 's/PRODUCTVERSION [0-9]*,[0-9]*,[0-9]*,0/PRODUCTVERSION $majorversion,0,$numericminor,0/'"

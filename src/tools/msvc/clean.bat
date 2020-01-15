@@ -89,7 +89,6 @@ if %DIST%==1 if exist src\backend\replication\syncrep_scanner.c del /q src\backe
 if %DIST%==1 if exist src\backend\replication\syncrep_gram.c del /q src\backend\replication\syncrep_gram.c
 
 
-if exist src\interfaces\libpq\libpq.rc del /q src\interfaces\libpq\libpq.rc
 if exist src\interfaces\libpq\libpqdll.def del /q src\interfaces\libpq\libpqdll.def
 if exist src\interfaces\ecpg\compatlib\compatlib.def del /q src\interfaces\ecpg\compatlib\compatlib.def
 if exist src\interfaces\ecpg\ecpglib\ecpglib.def del /q src\interfaces\ecpg\ecpglib\ecpglib.def

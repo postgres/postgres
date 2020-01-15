@@ -1,10 +1,12 @@
 #include <winver.h>
 #include "pg_config.h"
 
+// https://docs.microsoft.com/en-us/windows/win32/menurc/versioninfo-resource
+
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION    13,0,0,0
  PRODUCTVERSION 13,0,0,0
- FILEFLAGSMASK  0x17L
+ FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
  FILEFLAGS      0x0L
  FILEOS         VOS_NT_WINDOWS32
  FILETYPE	VFT_APP
@@ -12,19 +14,21 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
  BLOCK "StringFileInfo"
  BEGIN
-  BLOCK "000004b0"
+  BLOCK "040904B0"			// U.S. English, Unicode
   BEGIN
    VALUE "CompanyName",      "PostgreSQL Global Development Group"
    VALUE "FileDescription",  FILEDESC
    VALUE "FileVersion",      PG_VERSION
+   VALUE "InternalName",     _INTERNAL_NAME_
    VALUE "LegalCopyright", "Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group. Portions Copyright (c) 1994, Regents of the University of California."
+   VALUE "OriginalFileName", _ORIGINAL_NAME_
    VALUE "ProductName",      "PostgreSQL"
    VALUE "ProductVersion",   PG_VERSION
   END
  END
  BLOCK "VarFileInfo"
  BEGIN
-  VALUE "Translation", 0x0, 1200
+  VALUE "Translation", 0x0409, 1200	// U.S. English, Unicode
  END
 END
 
