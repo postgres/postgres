@@ -3235,8 +3235,8 @@ isTempNamespaceInUse(Oid namespaceId)
 
 	backendId = GetTempNamespaceBackendId(namespaceId);
 
-	if (backendId == InvalidBackendId ||
-		backendId == MyBackendId)
+	/* No such temporary namespace? */
+	if (backendId == InvalidBackendId)
 		return false;
 
 	/* Is the backend alive? */
