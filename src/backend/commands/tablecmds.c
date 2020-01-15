@@ -85,6 +85,7 @@
 #include "storage/lock.h"
 #include "storage/predicate.h"
 #include "storage/smgr.h"
+#include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -142,11 +143,13 @@ static List *on_commits = NIL;
 #define AT_PASS_OLD_CONSTR		3	/* re-add existing constraints */
 /* We could support a RENAME COLUMN pass here, but not currently used */
 #define AT_PASS_ADD_COL			4	/* ADD COLUMN */
-#define AT_PASS_COL_ATTRS		5	/* set other column attributes */
-#define AT_PASS_ADD_INDEX		6	/* ADD indexes */
-#define AT_PASS_ADD_CONSTR		7	/* ADD constraints, defaults */
-#define AT_PASS_MISC			8	/* other stuff */
-#define AT_NUM_PASSES			9
+#define AT_PASS_ADD_CONSTR		5	/* ADD constraints (initial examination) */
+#define AT_PASS_COL_ATTRS		6	/* set column attributes, eg NOT NULL */
+#define AT_PASS_ADD_INDEXCONSTR	7	/* ADD index-based constraints */
+#define AT_PASS_ADD_INDEX		8	/* ADD indexes */
+#define AT_PASS_ADD_OTHERCONSTR	9	/* ADD other constraints, defaults */
+#define AT_PASS_MISC			10	/* other stuff */
+#define AT_NUM_PASSES			11
 
 typedef struct AlteredTableInfo
 {
@@ -159,6 +162,7 @@ typedef struct AlteredTableInfo
 	/* Information saved by Phases 1/2 for Phase 3: */
 	List	   *constraints;	/* List of NewConstraint */
 	List	   *newvals;		/* List of NewColumnValue */
+	List	   *afterStmts;		/* List of utility command parsetrees */
 	bool		verify_new_notnull; /* T if we should recheck NOT NULL */
 	int			rewrite;		/* Reason for forced rewrite, if any */
 	Oid			newTableSpace;	/* new tablespace; 0 means no change */
@@ -340,31 +344,45 @@ static void validateForeignKeyConstraint(char *conname,
 										 Relation rel, Relation pkrel,
 										 Oid pkindOid, Oid constraintOid);
 static void ATController(AlterTableStmt *parsetree,
-						 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode);
+						 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode,
+						 AlterTableUtilityContext *context);
 static void ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
-					  bool recurse, bool recursing, LOCKMODE lockmode);
-static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode);
+					  bool recurse, bool recursing, LOCKMODE lockmode,
+					  AlterTableUtilityContext *context);
+static void ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
+							  AlterTableUtilityContext *context);
 static void ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
-					  AlterTableCmd *cmd, LOCKMODE lockmode);
+					  AlterTableCmd *cmd, LOCKMODE lockmode, int cur_pass,
+					  AlterTableUtilityContext *context);
+static AlterTableCmd *ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab,
+										  Relation rel, AlterTableCmd *cmd,
+										  bool recurse, LOCKMODE lockmode,
+										  int cur_pass,
+										  AlterTableUtilityContext *context);
 static void ATRewriteTables(AlterTableStmt *parsetree,
-							List **wqueue, LOCKMODE lockmode);
+							List **wqueue, LOCKMODE lockmode,
+							AlterTableUtilityContext *context);
 static void ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode);
 static AlteredTableInfo *ATGetQueueEntry(List **wqueue, Relation rel);
 static void ATSimplePermissions(Relation rel, int allowed_targets);
 static void ATWrongRelkindError(Relation rel, int allowed_targets);
 static void ATSimpleRecursion(List **wqueue, Relation rel,
-							  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode);
+							  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode,
+							  AlterTableUtilityContext *context);
 static void ATCheckPartitionsNotInUse(Relation rel, LOCKMODE lockmode);
 static void ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
-								  LOCKMODE lockmode);
+								  LOCKMODE lockmode,
+								  AlterTableUtilityContext *context);
 static List *find_typed_table_dependencies(Oid typeOid, const char *typeName,
 										   DropBehavior behavior);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-							bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode);
+							bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode,
+							AlterTableUtilityContext *context);
 static ObjectAddress ATExecAddColumn(List **wqueue, AlteredTableInfo *tab,
-									 Relation rel, ColumnDef *colDef,
+									 Relation rel, AlterTableCmd **cmd,
 									 bool recurse, bool recursing,
-									 bool if_not_exists, LOCKMODE lockmode);
+									 LOCKMODE lockmode, int cur_pass,
+									 AlterTableUtilityContext *context);
 static bool check_for_column_name_collision(Relation rel, const char *colname,
 											bool if_not_exists);
 static void add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid);
@@ -373,7 +391,8 @@ static void ATPrepDropNotNull(Relation rel, bool recurse, bool recursing);
 static ObjectAddress ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode);
 static void ATPrepSetNotNull(List **wqueue, Relation rel,
 							 AlterTableCmd *cmd, bool recurse, bool recursing,
-							 LOCKMODE lockmode);
+							 LOCKMODE lockmode,
+							 AlterTableUtilityContext *context);
 static ObjectAddress ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 									  const char *colName, LOCKMODE lockmode);
 static void ATExecCheckNotNull(AlteredTableInfo *tab, Relation rel,
@@ -397,7 +416,8 @@ static ObjectAddress ATExecSetOptions(Relation rel, const char *colName,
 static ObjectAddress ATExecSetStorage(Relation rel, const char *colName,
 									  Node *newValue, LOCKMODE lockmode);
 static void ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-							 AlterTableCmd *cmd, LOCKMODE lockmode);
+							 AlterTableCmd *cmd, LOCKMODE lockmode,
+							 AlterTableUtilityContext *context);
 static ObjectAddress ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 									  DropBehavior behavior,
 									  bool recurse, bool recursing,
@@ -454,7 +474,8 @@ static void ATExecDropConstraint(Relation rel, const char *constrName,
 static void ATPrepAlterColumnType(List **wqueue,
 								  AlteredTableInfo *tab, Relation rel,
 								  bool recurse, bool recursing,
-								  AlterTableCmd *cmd, LOCKMODE lockmode);
+								  AlterTableCmd *cmd, LOCKMODE lockmode,
+								  AlterTableUtilityContext *context);
 static bool ATColumnChangeRequiresRewrite(Node *expr, AttrNumber varattno);
 static ObjectAddress ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 										   AlterTableCmd *cmd, LOCKMODE lockmode);
@@ -3463,7 +3484,7 @@ AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
  *
  * ALTER TABLE is performed in three phases:
  *		1. Examine subcommands and perform pre-transformation checking.
- *		2. Update system catalogs.
+ *		2. Validate and transform subcommands, and update system catalogs.
  *		3. Scan table(s) to check new constraints, and optionally recopy
  *		   the data into new table(s).
  * Phase 3 is not performed unless one or more of the subcommands requires
@@ -3474,9 +3495,10 @@ AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
  * ATPrepCmd performs phase 1.  A "work queue" entry is created for
  * each table to be affected (there may be multiple affected tables if the
  * commands traverse a table inheritance hierarchy).  Also we do preliminary
- * validation of the subcommands, including parse transformation of those
- * expressions that need to be evaluated with respect to the old table
- * schema.
+ * validation of the subcommands.  Because earlier subcommands may change
+ * the catalog state seen by later commands, there are limits to what can
+ * be done in this phase.  Generally, this phase acquires table locks,
+ * checks permissions and relkind, and recurses to find child tables.
  *
  * ATRewriteCatalogs performs phase 2 for each affected table.  (Note that
  * phases 2 and 3 normally do no explicit recursion, since phase 1 already
@@ -3498,18 +3520,23 @@ AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
  * lock level we want as we recurse might well be higher than required for
  * that specific subcommand. So we pass down the overall lock requirement,
  * rather than reassess it at lower levels.
+ *
+ * The caller also provides a "context" which is to be passed back to
+ * utility.c when we need to execute a subcommand such as CREATE INDEX.
+ * Some of the fields therein, such as the relid, are used here as well.
  */
 void
-AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
+AlterTable(AlterTableStmt *stmt, LOCKMODE lockmode,
+		   AlterTableUtilityContext *context)
 {
 	Relation	rel;
 
 	/* Caller is required to provide an adequate lock. */
-	rel = relation_open(relid, NoLock);
+	rel = relation_open(context->relid, NoLock);
 
 	CheckTableNotInUse(rel, "ALTER TABLE");
 
-	ATController(stmt, rel, stmt->cmds, stmt->relation->inh, lockmode);
+	ATController(stmt, rel, stmt->cmds, stmt->relation->inh, lockmode, context);
 }
 
 /*
@@ -3522,6 +3549,10 @@ AlterTable(Oid relid, LOCKMODE lockmode, AlterTableStmt *stmt)
  * is unsafe to use this entry point for alterations that could break
  * existing query plans.  On the assumption it's not used for such, we
  * don't have to reject pending AFTER triggers, either.
+ *
+ * Also, since we don't have an AlterTableUtilityContext, this cannot be
+ * used for any subcommand types that require parse transformation or
+ * could generate subcommands that have to be passed to ProcessUtility.
  */
 void
 AlterTableInternal(Oid relid, List *cmds, bool recurse)
@@ -3533,7 +3564,7 @@ AlterTableInternal(Oid relid, List *cmds, bool recurse)
 
 	EventTriggerAlterTableRelid(relid);
 
-	ATController(NULL, rel, cmds, recurse, lockmode);
+	ATController(NULL, rel, cmds, recurse, lockmode, NULL);
 }
 
 /*
@@ -3679,7 +3710,6 @@ AlterTableGetLockLevel(List *cmds)
 				break;
 
 			case AT_AddConstraint:
-			case AT_ProcessedConstraint:	/* becomes AT_AddConstraint */
 			case AT_AddConstraintRecurse:	/* becomes AT_AddConstraint */
 			case AT_ReAddConstraint:	/* becomes AT_AddConstraint */
 			case AT_ReAddDomainConstraint:	/* becomes AT_AddConstraint */
@@ -3832,7 +3862,8 @@ AlterTableGetLockLevel(List *cmds)
  */
 static void
 ATController(AlterTableStmt *parsetree,
-			 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode)
+			 Relation rel, List *cmds, bool recurse, LOCKMODE lockmode,
+			 AlterTableUtilityContext *context)
 {
 	List	   *wqueue = NIL;
 	ListCell   *lcmd;
@@ -3842,17 +3873,17 @@ ATController(AlterTableStmt *parsetree,
 	{
 		AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
 
-		ATPrepCmd(&wqueue, rel, cmd, recurse, false, lockmode);
+		ATPrepCmd(&wqueue, rel, cmd, recurse, false, lockmode, context);
 	}
 
 	/* Close the relation, but keep lock until commit */
 	relation_close(rel, NoLock);
 
 	/* Phase 2: update system catalogs */
-	ATRewriteCatalogs(&wqueue, lockmode);
+	ATRewriteCatalogs(&wqueue, lockmode, context);
 
-	/* Phase 3: scan/rewrite tables as needed */
-	ATRewriteTables(parsetree, &wqueue, lockmode);
+	/* Phase 3: scan/rewrite tables as needed, and run afterStmts */
+	ATRewriteTables(parsetree, &wqueue, lockmode, context);
 }
 
 /*
@@ -3866,7 +3897,8 @@ ATController(AlterTableStmt *parsetree,
  */
 static void
 ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
-		  bool recurse, bool recursing, LOCKMODE lockmode)
+		  bool recurse, bool recursing, LOCKMODE lockmode,
+		  AlterTableUtilityContext *context)
 {
 	AlteredTableInfo *tab;
 	int			pass = AT_PASS_UNSET;
@@ -3878,13 +3910,17 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 	 * Copy the original subcommand for each table.  This avoids conflicts
 	 * when different child tables need to make different parse
 	 * transformations (for example, the same column may have different column
-	 * numbers in different children).
+	 * numbers in different children).  It also ensures that we don't corrupt
+	 * the original parse tree, in case it is saved in plancache.
 	 */
 	cmd = copyObject(cmd);
 
 	/*
-	 * Do permissions checking, recursion to child tables if needed, and any
-	 * additional phase-1 processing needed.
+	 * Do permissions and relkind checking, recursion to child tables if
+	 * needed, and any additional phase-1 processing needed.  (But beware of
+	 * adding any processing that looks at table details that another
+	 * subcommand could change.  In some cases we reject multiple subcommands
+	 * that could try to change the same state in contrary ways.)
 	 */
 	switch (cmd->subtype)
 	{
@@ -3892,14 +3928,14 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATSimplePermissions(rel,
 								ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
 			ATPrepAddColumn(wqueue, rel, recurse, recursing, false, cmd,
-							lockmode);
+							lockmode, context);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_ADD_COL;
 			break;
 		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
 			ATSimplePermissions(rel, ATT_VIEW);
 			ATPrepAddColumn(wqueue, rel, recurse, recursing, true, cmd,
-							lockmode);
+							lockmode, context);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_ADD_COL;
 			break;
@@ -3912,19 +3948,20 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			 * rules.
 			 */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			/* No command-specific prep needed */
-			pass = cmd->def ? AT_PASS_ADD_CONSTR : AT_PASS_DROP;
+			pass = cmd->def ? AT_PASS_ADD_OTHERCONSTR : AT_PASS_DROP;
 			break;
 		case AT_AddIdentity:
 			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
 			/* This command never recurses */
-			pass = AT_PASS_ADD_CONSTR;
+			pass = AT_PASS_ADD_OTHERCONSTR;
 			break;
 		case AT_SetIdentity:
 			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
 			/* This command never recurses */
-			pass = AT_PASS_COL_ATTRS;
+			/* This should run after AddIdentity, so do it in MISC pass */
+			pass = AT_PASS_MISC;
 			break;
 		case AT_DropIdentity:
 			ATSimplePermissions(rel, ATT_TABLE | ATT_VIEW | ATT_FOREIGN_TABLE);
@@ -3934,30 +3971,31 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DropNotNull:	/* ALTER COLUMN DROP NOT NULL */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			ATPrepDropNotNull(rel, recurse, recursing);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetNotNull:		/* ALTER COLUMN SET NOT NULL */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
 			/* Need command-specific recursion decision */
-			ATPrepSetNotNull(wqueue, rel, cmd, recurse, recursing, lockmode);
+			ATPrepSetNotNull(wqueue, rel, cmd, recurse, recursing,
+							 lockmode, context);
 			pass = AT_PASS_COL_ATTRS;
 			break;
 		case AT_CheckNotNull:	/* check column is already marked NOT NULL */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			/* No command-specific prep needed */
 			pass = AT_PASS_COL_ATTRS;
 			break;
-		case AT_DropExpression:	/* ALTER COLUMN DROP EXPRESSION */
+		case AT_DropExpression: /* ALTER COLUMN DROP EXPRESSION */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			ATPrepDropExpression(rel, cmd, recursing);
 			pass = AT_PASS_DROP;
 			break;
 		case AT_SetStatistics:	/* ALTER COLUMN SET STATISTICS */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_INDEX | ATT_PARTITIONED_INDEX | ATT_FOREIGN_TABLE);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
@@ -3969,14 +4007,15 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_SetStorage:		/* ALTER COLUMN SET STORAGE */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_MATVIEW | ATT_FOREIGN_TABLE);
-			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+			ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
 			break;
 		case AT_DropColumn:		/* DROP COLUMN */
 			ATSimplePermissions(rel,
 								ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
-			ATPrepDropColumn(wqueue, rel, recurse, recursing, cmd, lockmode);
+			ATPrepDropColumn(wqueue, rel, recurse, recursing, cmd,
+							 lockmode, context);
 			/* Recursion occurs during execution phase */
 			pass = AT_PASS_DROP;
 			break;
@@ -3998,7 +4037,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			ATSimplePermissions(rel, ATT_TABLE);
 			/* This command never recurses */
 			/* No command-specific prep needed */
-			pass = AT_PASS_ADD_CONSTR;
+			pass = AT_PASS_ADD_INDEXCONSTR;
 			break;
 		case AT_DropConstraint: /* DROP CONSTRAINT */
 			ATSimplePermissions(rel, ATT_TABLE | ATT_FOREIGN_TABLE);
@@ -4012,8 +4051,13 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_AlterColumnType:	/* ALTER COLUMN TYPE */
 			ATSimplePermissions(rel,
 								ATT_TABLE | ATT_COMPOSITE_TYPE | ATT_FOREIGN_TABLE);
+			/* See comments for ATPrepAlterColumnType */
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, recurse, lockmode,
+									  AT_PASS_UNSET, context);
+			Assert(cmd != NULL);
 			/* Performs own recursion */
-			ATPrepAlterColumnType(wqueue, tab, rel, recurse, recursing, cmd, lockmode);
+			ATPrepAlterColumnType(wqueue, tab, rel, recurse, recursing, cmd,
+								  lockmode, context);
 			pass = AT_PASS_ALTER_TYPE;
 			break;
 		case AT_AlterColumnGenericOptions:
@@ -4036,6 +4080,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_SetLogged:		/* SET LOGGED */
 			ATSimplePermissions(rel, ATT_TABLE);
+			if (tab->chgPersistence)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot change persistence setting twice")));
 			tab->chgPersistence = ATPrepChangePersistence(rel, true);
 			/* force rewrite if necessary; see comment in ATRewriteTables */
 			if (tab->chgPersistence)
@@ -4047,6 +4095,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			break;
 		case AT_SetUnLogged:	/* SET UNLOGGED */
 			ATSimplePermissions(rel, ATT_TABLE);
+			if (tab->chgPersistence)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot change persistence setting twice")));
 			tab->chgPersistence = ATPrepChangePersistence(rel, false);
 			/* force rewrite if necessary; see comment in ATRewriteTables */
 			if (tab->chgPersistence)
@@ -4166,7 +4218,8 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
  * conflicts).
  */
 static void
-ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
+ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode,
+				  AlterTableUtilityContext *context)
 {
 	int			pass;
 	ListCell   *ltab;
@@ -4199,7 +4252,7 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 			foreach(lcmd, subcmds)
 				ATExecCmd(wqueue, tab, rel,
 						  castNode(AlterTableCmd, lfirst(lcmd)),
-						  lockmode);
+						  lockmode, pass, context);
 
 			/*
 			 * After the ALTER TYPE pass, do cleanup work (this is not done in
@@ -4236,7 +4289,8 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
  */
 static void
 ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
-		  AlterTableCmd *cmd, LOCKMODE lockmode)
+		  AlterTableCmd *cmd, LOCKMODE lockmode, int cur_pass,
+		  AlterTableUtilityContext *context)
 {
 	ObjectAddress address = InvalidObjectAddress;
 
@@ -4244,22 +4298,28 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	{
 		case AT_AddColumn:		/* ADD COLUMN */
 		case AT_AddColumnToView:	/* add column via CREATE OR REPLACE VIEW */
-			address = ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
+			address = ATExecAddColumn(wqueue, tab, rel, &cmd,
 									  false, false,
-									  cmd->missing_ok, lockmode);
+									  lockmode, cur_pass, context);
 			break;
 		case AT_AddColumnRecurse:
-			address = ATExecAddColumn(wqueue, tab, rel, (ColumnDef *) cmd->def,
+			address = ATExecAddColumn(wqueue, tab, rel, &cmd,
 									  true, false,
-									  cmd->missing_ok, lockmode);
+									  lockmode, cur_pass, context);
 			break;
 		case AT_ColumnDefault:	/* ALTER COLUMN DEFAULT */
 			address = ATExecColumnDefault(rel, cmd->name, cmd->def, lockmode);
 			break;
 		case AT_AddIdentity:
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
+									  cur_pass, context);
+			Assert(cmd != NULL);
 			address = ATExecAddIdentity(rel, cmd->name, cmd->def, lockmode);
 			break;
 		case AT_SetIdentity:
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
+									  cur_pass, context);
+			Assert(cmd != NULL);
 			address = ATExecSetIdentity(rel, cmd->name, cmd->def, lockmode);
 			break;
 		case AT_DropIdentity:
@@ -4310,14 +4370,24 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 									 lockmode);
 			break;
 		case AT_AddConstraint:	/* ADD CONSTRAINT */
-			address =
-				ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-									false, false, lockmode);
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
+									  cur_pass, context);
+			/* Might not have gotten AddConstraint back from parse transform */
+			if (cmd != NULL)
+				address =
+					ATExecAddConstraint(wqueue, tab, rel,
+										(Constraint *) cmd->def,
+										false, false, lockmode);
 			break;
 		case AT_AddConstraintRecurse:	/* ADD CONSTRAINT with recursion */
-			address =
-				ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
-									true, false, lockmode);
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, true, lockmode,
+									  cur_pass, context);
+			/* Might not have gotten AddConstraint back from parse transform */
+			if (cmd != NULL)
+				address =
+					ATExecAddConstraint(wqueue, tab, rel,
+										(Constraint *) cmd->def,
+										true, false, lockmode);
 			break;
 		case AT_ReAddConstraint:	/* Re-add pre-existing check constraint */
 			address =
@@ -4361,6 +4431,7 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 								 cmd->missing_ok, lockmode);
 			break;
 		case AT_AlterColumnType:	/* ALTER COLUMN TYPE */
+			/* parse transformation was done earlier */
 			address = ATExecAlterColumnType(tab, rel, cmd, lockmode);
 			break;
 		case AT_AlterColumnGenericOptions:	/* ALTER COLUMN OPTIONS */
@@ -4483,6 +4554,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			ATExecGenericOptions(rel, (List *) cmd->def);
 			break;
 		case AT_AttachPartition:
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
+									  cur_pass, context);
+			Assert(cmd != NULL);
 			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 				ATExecAttachPartition(wqueue, rel, (PartitionCmd *) cmd->def);
 			else
@@ -4490,6 +4564,9 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 										 ((PartitionCmd *) cmd->def)->name);
 			break;
 		case AT_DetachPartition:
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
+									  cur_pass, context);
+			Assert(cmd != NULL);
 			/* ATPrepCmd ensures it must be a table */
 			Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 			ATExecDetachPartition(rel, ((PartitionCmd *) cmd->def)->name);
@@ -4503,7 +4580,8 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Report the subcommand to interested event triggers.
 	 */
-	EventTriggerCollectAlterTableSubcmd((Node *) cmd, address);
+	if (cmd)
+		EventTriggerCollectAlterTableSubcmd((Node *) cmd, address);
 
 	/*
 	 * Bump the command counter to ensure the next subcommand in the sequence
@@ -4513,10 +4591,143 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 }
 
 /*
+ * ATParseTransformCmd: perform parse transformation for one subcommand
+ *
+ * Returns the transformed subcommand tree, if there is one, else NULL.
+ *
+ * The parser may hand back additional AlterTableCmd(s) and/or other
+ * utility statements, either before or after the original subcommand.
+ * Other AlterTableCmds are scheduled into the appropriate slot of the
+ * AlteredTableInfo (they had better be for later passes than the current one).
+ * Utility statements that are supposed to happen before the AlterTableCmd
+ * are executed immediately.  Those that are supposed to happen afterwards
+ * are added to the tab->afterStmts list to be done at the very end.
+ */
+static AlterTableCmd *
+ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
+					AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode,
+					int cur_pass, AlterTableUtilityContext *context)
+{
+	AlterTableCmd *newcmd = NULL;
+	AlterTableStmt *atstmt = makeNode(AlterTableStmt);
+	List	   *beforeStmts;
+	List	   *afterStmts;
+	ListCell   *lc;
+
+	/* Gin up an AlterTableStmt with just this subcommand and this table */
+	atstmt->relation =
+		makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
+					 pstrdup(RelationGetRelationName(rel)),
+					 -1);
+	atstmt->relation->inh = recurse;
+	atstmt->cmds = list_make1(cmd);
+	atstmt->relkind = OBJECT_TABLE; /* needn't be picky here */
+	atstmt->missing_ok = false;
+
+	/* Transform the AlterTableStmt */
+	atstmt = transformAlterTableStmt(RelationGetRelid(rel),
+									 atstmt,
+									 context->queryString,
+									 &beforeStmts,
+									 &afterStmts);
+
+	/* Execute any statements that should happen before these subcommand(s) */
+	foreach(lc, beforeStmts)
+	{
+		Node	   *stmt = (Node *) lfirst(lc);
+
+		ProcessUtilityForAlterTable(stmt, context);
+		CommandCounterIncrement();
+	}
+
+	/* Examine the transformed subcommands and schedule them appropriately */
+	foreach(lc, atstmt->cmds)
+	{
+		AlterTableCmd *cmd2 = lfirst_node(AlterTableCmd, lc);
+
+		if (newcmd == NULL &&
+			(cmd->subtype == cmd2->subtype ||
+			 (cmd->subtype == AT_AddConstraintRecurse &&
+			  cmd2->subtype == AT_AddConstraint)))
+		{
+			/* Found the transformed version of our subcommand */
+			cmd2->subtype = cmd->subtype;	/* copy recursion flag */
+			newcmd = cmd2;
+		}
+		else
+		{
+			int			pass;
+
+			/*
+			 * Schedule added subcommand appropriately.  We assume we needn't
+			 * do any phase-1 checks for it.  This switch only has to cover
+			 * the subcommand types that can be added by parse_utilcmd.c.
+			 */
+			switch (cmd2->subtype)
+			{
+				case AT_SetNotNull:
+					/* Need command-specific recursion decision */
+					ATPrepSetNotNull(wqueue, rel, cmd2,
+									 recurse, false,
+									 lockmode, context);
+					pass = AT_PASS_COL_ATTRS;
+					break;
+				case AT_AddIndex:
+					/* This command never recurses */
+					/* No command-specific prep needed */
+					pass = AT_PASS_ADD_INDEX;
+					break;
+				case AT_AddIndexConstraint:
+					/* This command never recurses */
+					/* No command-specific prep needed */
+					pass = AT_PASS_ADD_INDEXCONSTR;
+					break;
+				case AT_AddConstraint:
+					/* Recursion occurs during execution phase */
+					if (recurse)
+						cmd2->subtype = AT_AddConstraintRecurse;
+					switch (castNode(Constraint, cmd2->def)->contype)
+					{
+						case CONSTR_PRIMARY:
+						case CONSTR_UNIQUE:
+						case CONSTR_EXCLUSION:
+							pass = AT_PASS_ADD_INDEXCONSTR;
+							break;
+						default:
+							pass = AT_PASS_ADD_OTHERCONSTR;
+							break;
+					}
+					break;
+				case AT_AlterColumnGenericOptions:
+					/* This command never recurses */
+					/* No command-specific prep needed */
+					pass = AT_PASS_MISC;
+					break;
+				default:
+					elog(ERROR, "unexpected AlterTableType: %d",
+						 (int) cmd2->subtype);
+					pass = AT_PASS_UNSET;
+					break;
+			}
+			/* Must be for a later pass than we're currently doing */
+			if (pass <= cur_pass)
+				elog(ERROR, "ALTER TABLE scheduling failure");
+			tab->subcmds[pass] = lappend(tab->subcmds[pass], cmd2);
+		}
+	}
+
+	/* Queue up any after-statements to happen at the end */
+	tab->afterStmts = list_concat(tab->afterStmts, afterStmts);
+
+	return newcmd;
+}
+
+/*
  * ATRewriteTables: ALTER TABLE phase 3
  */
 static void
-ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
+ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
+				AlterTableUtilityContext *context)
 {
 	ListCell   *ltab;
 
@@ -4742,6 +4953,21 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 
 		if (rel)
 			table_close(rel, NoLock);
+	}
+
+	/* Finally, run any afterStmts that were queued up */
+	foreach(ltab, *wqueue)
+	{
+		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
+		ListCell   *lc;
+
+		foreach(lc, tab->afterStmts)
+		{
+			Node	   *stmt = (Node *) lfirst(lc);
+
+			ProcessUtilityForAlterTable(stmt, context);
+			CommandCounterIncrement();
+		}
 	}
 }
 
@@ -5279,7 +5505,8 @@ ATWrongRelkindError(Relation rel, int allowed_targets)
  */
 static void
 ATSimpleRecursion(List **wqueue, Relation rel,
-				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode)
+				  AlterTableCmd *cmd, bool recurse, LOCKMODE lockmode,
+				  AlterTableUtilityContext *context)
 {
 	/*
 	 * Propagate to children if desired.  Only plain tables, foreign tables
@@ -5312,7 +5539,7 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 			/* find_all_inheritors already got lock */
 			childrel = relation_open(childrelid, NoLock);
 			CheckTableNotInUse(childrel, "ALTER TABLE");
-			ATPrepCmd(wqueue, childrel, cmd, false, true, lockmode);
+			ATPrepCmd(wqueue, childrel, cmd, false, true, lockmode, context);
 			relation_close(childrel, NoLock);
 		}
 	}
@@ -5357,7 +5584,7 @@ ATCheckPartitionsNotInUse(Relation rel, LOCKMODE lockmode)
  */
 static void
 ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
-					  LOCKMODE lockmode)
+					  LOCKMODE lockmode, AlterTableUtilityContext *context)
 {
 	ListCell   *child;
 	List	   *children;
@@ -5375,7 +5602,7 @@ ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 		childrel = relation_open(childrelid, lockmode);
 		CheckTableNotInUse(childrel, "ALTER TABLE");
-		ATPrepCmd(wqueue, childrel, cmd, true, true, lockmode);
+		ATPrepCmd(wqueue, childrel, cmd, true, true, lockmode, context);
 		relation_close(childrel, NoLock);
 	}
 }
@@ -5612,7 +5839,8 @@ check_of_type(HeapTuple typetuple)
  */
 static void
 ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-				bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode)
+				bool is_view, AlterTableCmd *cmd, LOCKMODE lockmode,
+				AlterTableUtilityContext *context)
 {
 	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
@@ -5620,7 +5848,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				 errmsg("cannot add column to typed table")));
 
 	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
+		ATTypedTableRecursion(wqueue, rel, cmd, lockmode, context);
 
 	if (recurse && !is_view)
 		cmd->subtype = AT_AddColumnRecurse;
@@ -5629,14 +5857,20 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 /*
  * Add a column to a table.  The return value is the address of the
  * new column in the parent relation.
+ *
+ * cmd is pass-by-ref so that we can replace it with the parse-transformed
+ * copy (but that happens only after we check for IF NOT EXISTS).
  */
 static ObjectAddress
 ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
-				ColumnDef *colDef,
+				AlterTableCmd **cmd,
 				bool recurse, bool recursing,
-				bool if_not_exists, LOCKMODE lockmode)
+				LOCKMODE lockmode, int cur_pass,
+				AlterTableUtilityContext *context)
 {
 	Oid			myrelid = RelationGetRelid(rel);
+	ColumnDef  *colDef = castNode(ColumnDef, (*cmd)->def);
+	bool		if_not_exists = (*cmd)->missing_ok;
 	Relation	pgclass,
 				attrdesc;
 	HeapTuple	reltup;
@@ -5651,6 +5885,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	Expr	   *defval;
 	List	   *children;
 	ListCell   *child;
+	AlterTableCmd *childcmd;
 	AclResult	aclresult;
 	ObjectAddress address;
 
@@ -5718,12 +5953,31 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		}
 	}
 
-	pgclass = table_open(RelationRelationId, RowExclusiveLock);
+	/* skip if the name already exists and if_not_exists is true */
+	if (!check_for_column_name_collision(rel, colDef->colname, if_not_exists))
+	{
+		table_close(attrdesc, RowExclusiveLock);
+		return InvalidObjectAddress;
+	}
 
-	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(myrelid));
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "cache lookup failed for relation %u", myrelid);
-	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
+	/*
+	 * Okay, we need to add the column, so go ahead and do parse
+	 * transformation.  This can result in queueing up, or even immediately
+	 * executing, subsidiary operations (such as creation of unique indexes);
+	 * so we mustn't do it until we have made the if_not_exists check.
+	 *
+	 * When recursing, the command was already transformed and we needn't do
+	 * so again.  Also, if context isn't given we can't transform.  (That
+	 * currently happens only for AT_AddColumnToView; we expect that view.c
+	 * passed us a ColumnDef that doesn't need work.)
+	 */
+	if (context != NULL && !recursing)
+	{
+		*cmd = ATParseTransformCmd(wqueue, tab, rel, *cmd, recurse, lockmode,
+								   cur_pass, context);
+		Assert(*cmd != NULL);
+		colDef = castNode(ColumnDef, (*cmd)->def);
+	}
 
 	/*
 	 * Cannot add identity column if table has children, because identity does
@@ -5736,14 +5990,12 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("cannot recursively add identity column to table that has child tables")));
 
-	/* skip if the name already exists and if_not_exists is true */
-	if (!check_for_column_name_collision(rel, colDef->colname, if_not_exists))
-	{
-		table_close(attrdesc, RowExclusiveLock);
-		heap_freetuple(reltup);
-		table_close(pgclass, RowExclusiveLock);
-		return InvalidObjectAddress;
-	}
+	pgclass = table_open(RelationRelationId, RowExclusiveLock);
+
+	reltup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(myrelid));
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "cache lookup failed for relation %u", myrelid);
+	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
 
 	/* Determine the new attribute's number */
 	newattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts + 1;
@@ -5974,10 +6226,13 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/* Children should see column as singly inherited */
 	if (!recursing)
 	{
-		colDef = copyObject(colDef);
+		childcmd = copyObject(*cmd);
+		colDef = castNode(ColumnDef, childcmd->def);
 		colDef->inhcount = 1;
 		colDef->is_local = false;
 	}
+	else
+		childcmd = *cmd;		/* no need to copy again */
 
 	foreach(child, children)
 	{
@@ -5994,8 +6249,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		/* Recurse to child; return value is ignored */
 		ATExecAddColumn(wqueue, childtab, childrel,
-						colDef, recurse, true,
-						if_not_exists, lockmode);
+						&childcmd, recurse, true,
+						lockmode, cur_pass, context);
 
 		table_close(childrel, NoLock);
 	}
@@ -6254,7 +6509,7 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 static void
 ATPrepSetNotNull(List **wqueue, Relation rel,
 				 AlterTableCmd *cmd, bool recurse, bool recursing,
-				 LOCKMODE lockmode)
+				 LOCKMODE lockmode, AlterTableUtilityContext *context)
 {
 	/*
 	 * If we're already recursing, there's nothing to do; the topmost
@@ -6275,10 +6530,10 @@ ATPrepSetNotNull(List **wqueue, Relation rel,
 
 		newcmd->subtype = AT_CheckNotNull;
 		newcmd->name = pstrdup(cmd->name);
-		ATSimpleRecursion(wqueue, rel, newcmd, true, lockmode);
+		ATSimpleRecursion(wqueue, rel, newcmd, true, lockmode, context);
 	}
 	else
-		ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode);
+		ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
 }
 
 /*
@@ -7165,7 +7420,8 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue, LOCKMODE loc
  */
 static void
 ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
-				 AlterTableCmd *cmd, LOCKMODE lockmode)
+				 AlterTableCmd *cmd, LOCKMODE lockmode,
+				 AlterTableUtilityContext *context)
 {
 	if (rel->rd_rel->reloftype && !recursing)
 		ereport(ERROR,
@@ -7173,7 +7429,7 @@ ATPrepDropColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 				 errmsg("cannot drop column from typed table")));
 
 	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
+		ATTypedTableRecursion(wqueue, rel, cmd, lockmode, context);
 
 	if (recurse)
 		cmd->subtype = AT_DropColumnRecurse;
@@ -10426,12 +10682,27 @@ ATExecDropConstraint(Relation rel, const char *constrName,
 
 /*
  * ALTER COLUMN TYPE
+ *
+ * Unlike other subcommand types, we do parse transformation for ALTER COLUMN
+ * TYPE during phase 1 --- the AlterTableCmd passed in here is already
+ * transformed (and must be, because we rely on some transformed fields).
+ *
+ * The point of this is that the execution of all ALTER COLUMN TYPEs for a
+ * table will be done "in parallel" during phase 3, so all the USING
+ * expressions should be parsed assuming the original column types.  Also,
+ * this allows a USING expression to refer to a field that will be dropped.
+ *
+ * To make this work safely, AT_PASS_DROP then AT_PASS_ALTER_TYPE must be
+ * the first two execution steps in phase 2; they must not see the effects
+ * of any other subcommand types, since the USING expressions are parsed
+ * against the unmodified table's state.
  */
 static void
 ATPrepAlterColumnType(List **wqueue,
 					  AlteredTableInfo *tab, Relation rel,
 					  bool recurse, bool recursing,
-					  AlterTableCmd *cmd, LOCKMODE lockmode)
+					  AlterTableCmd *cmd, LOCKMODE lockmode,
+					  AlterTableUtilityContext *context)
 {
 	char	   *colName = cmd->name;
 	ColumnDef  *def = (ColumnDef *) cmd->def;
@@ -10678,7 +10949,7 @@ ATPrepAlterColumnType(List **wqueue,
 							 errdetail("USING expression contains a whole-row table reference.")));
 				pfree(attmap);
 			}
-			ATPrepCmd(wqueue, childrel, cmd, false, true, lockmode);
+			ATPrepCmd(wqueue, childrel, cmd, false, true, lockmode, context);
 			relation_close(childrel, NoLock);
 		}
 	}
@@ -10690,7 +10961,7 @@ ATPrepAlterColumnType(List **wqueue,
 						colName)));
 
 	if (tab->relkind == RELKIND_COMPOSITE_TYPE)
-		ATTypedTableRecursion(wqueue, rel, cmd, lockmode);
+		ATTypedTableRecursion(wqueue, rel, cmd, lockmode, context);
 }
 
 /*
@@ -11469,10 +11740,19 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 														(IndexStmt *) stmt,
 														cmd));
 		else if (IsA(stmt, AlterTableStmt))
-			querytree_list = list_concat(querytree_list,
-										 transformAlterTableStmt(oldRelId,
-																 (AlterTableStmt *) stmt,
-																 cmd));
+		{
+			List	   *beforeStmts;
+			List	   *afterStmts;
+
+			stmt = (Node *) transformAlterTableStmt(oldRelId,
+													(AlterTableStmt *) stmt,
+													cmd,
+													&beforeStmts,
+													&afterStmts);
+			querytree_list = list_concat(querytree_list, beforeStmts);
+			querytree_list = lappend(querytree_list, stmt);
+			querytree_list = list_concat(querytree_list, afterStmts);
+		}
 		else
 			querytree_list = lappend(querytree_list, stmt);
 	}
@@ -16133,7 +16413,7 @@ isPartitionTrigger(Oid trigger_oid)
 {
 	Relation	pg_depend;
 	ScanKeyData key[2];
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	tup;
 	bool		found = false;
 
@@ -16152,7 +16432,7 @@ isPartitionTrigger(Oid trigger_oid)
 							  true, NULL, 2, key);
 	while ((tup = systable_getnext(scan)) != NULL)
 	{
-		Form_pg_depend	dep = (Form_pg_depend) GETSTRUCT(tup);
+		Form_pg_depend dep = (Form_pg_depend) GETSTRUCT(tup);
 
 		if (dep->refclassid == TriggerRelationId)
 		{
@@ -16212,8 +16492,8 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		 * clone them.
 		 *
 		 * However, if our parent is a partitioned relation, there might be
-		 * internal triggers that need cloning.  In that case, we must
-		 * skip clone it if the trigger on parent depends on another trigger.
+		 * internal triggers that need cloning.  In that case, we must skip
+		 * clone it if the trigger on parent depends on another trigger.
 		 *
 		 * Note we dare not verify that the other trigger belongs to an
 		 * ancestor relation of our parent, because that creates deadlock

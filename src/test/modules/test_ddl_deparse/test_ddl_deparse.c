@@ -162,9 +162,6 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 			case AT_ValidateConstraintRecurse:
 				strtype = "VALIDATE CONSTRAINT (and recurse)";
 				break;
-			case AT_ProcessedConstraint:
-				strtype = "ADD (processed) CONSTRAINT";
-				break;
 			case AT_AddIndexConstraint:
 				strtype = "ADD CONSTRAINT (using index)";
 				break;

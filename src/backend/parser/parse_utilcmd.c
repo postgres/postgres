@@ -347,7 +347,8 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
  */
 static void
 generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
-						 Oid seqtypid, List *seqoptions, bool for_identity,
+						 Oid seqtypid, List *seqoptions,
+						 bool for_identity, bool col_exists,
 						 char **snamespace_p, char **sname_p)
 {
 	ListCell   *option;
@@ -472,8 +473,12 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 
 	/*
 	 * Build an ALTER SEQUENCE ... OWNED BY command to mark the sequence as
-	 * owned by this column, and add it to the list of things to be done after
-	 * this CREATE/ALTER TABLE.
+	 * owned by this column, and add it to the appropriate list of things to
+	 * be done along with this CREATE/ALTER TABLE.  In a CREATE or ALTER ADD
+	 * COLUMN, it must be done after the statement because we don't know the
+	 * column's attnum yet.  But if we do have the attnum (in AT_AddIdentity),
+	 * we can do the marking immediately, which improves some ALTER TABLE
+	 * behaviors.
 	 */
 	altseqstmt = makeNode(AlterSeqStmt);
 	altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
@@ -484,7 +489,10 @@ generateSerialExtraStmts(CreateStmtContext *cxt, ColumnDef *column,
 												 (Node *) attnamelist, -1));
 	altseqstmt->for_identity = for_identity;
 
-	cxt->alist = lappend(cxt->alist, altseqstmt);
+	if (col_exists)
+		cxt->blist = lappend(cxt->blist, altseqstmt);
+	else
+		cxt->alist = lappend(cxt->alist, altseqstmt);
 
 	if (snamespace_p)
 		*snamespace_p = snamespace;
@@ -568,7 +576,8 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		Constraint *constraint;
 
 		generateSerialExtraStmts(cxt, column,
-								 column->typeName->typeOid, NIL, false,
+								 column->typeName->typeOid, NIL,
+								 false, false,
 								 &snamespace, &sname);
 
 		/*
@@ -684,7 +693,8 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 													constraint->location)));
 
 					generateSerialExtraStmts(cxt, column,
-											 typeOid, constraint->options, true,
+											 typeOid, constraint->options,
+											 true, false,
 											 NULL, NULL);
 
 					column->identity = constraint->generated_when;
@@ -1086,7 +1096,8 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			seq_relid = getIdentitySequence(RelationGetRelid(relation), attribute->attnum, false);
 			seq_options = sequence_options(seq_relid);
 			generateSerialExtraStmts(cxt, def,
-									 InvalidOid, seq_options, true,
+									 InvalidOid, seq_options,
+									 true, false,
 									 NULL, NULL);
 			def->identity = attribute->attidentity;
 		}
@@ -2572,7 +2583,7 @@ transformFKConstraints(CreateStmtContext *cxt,
 			Constraint *constraint = (Constraint *) lfirst(fkclist);
 			AlterTableCmd *altercmd = makeNode(AlterTableCmd);
 
-			altercmd->subtype = AT_ProcessedConstraint;
+			altercmd->subtype = AT_AddConstraint;
 			altercmd->name = NULL;
 			altercmd->def = (Node *) constraint;
 			alterstmt->cmds = lappend(alterstmt->cmds, altercmd);
@@ -3004,23 +3015,23 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
  * transformAlterTableStmt -
  *		parse analysis for ALTER TABLE
  *
- * Returns a List of utility commands to be done in sequence.  One of these
- * will be the transformed AlterTableStmt, but there may be additional actions
- * to be done before and after the actual AlterTable() call.
+ * Returns the transformed AlterTableStmt.  There may be additional actions
+ * to be done before and after the transformed statement, which are returned
+ * in *beforeStmts and *afterStmts as lists of utility command parsetrees.
  *
  * To avoid race conditions, it's important that this function rely only on
  * the passed-in relid (and not on stmt->relation) to determine the target
  * relation.
  */
-List *
+AlterTableStmt *
 transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
-						const char *queryString)
+						const char *queryString,
+						List **beforeStmts, List **afterStmts)
 {
 	Relation	rel;
 	TupleDesc	tupdesc;
 	ParseState *pstate;
 	CreateStmtContext cxt;
-	List	   *result;
 	List	   *save_alist;
 	ListCell   *lcmd,
 			   *l;
@@ -3052,7 +3063,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 
 	/* Set up CreateStmtContext */
 	cxt.pstate = pstate;
-	if (stmt->relkind == OBJECT_FOREIGN_TABLE)
+	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		cxt.stmtType = "ALTER FOREIGN TABLE";
 		cxt.isforeign = true;
@@ -3080,9 +3091,8 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	cxt.ofType = false;
 
 	/*
-	 * The only subtypes that currently require parse transformation handling
-	 * are ADD COLUMN, ADD CONSTRAINT and SET DATA TYPE.  These largely re-use
-	 * code from CREATE TABLE.
+	 * Transform ALTER subcommands that need it (most don't).  These largely
+	 * re-use code from CREATE TABLE.
 	 */
 	foreach(lcmd, stmt->cmds)
 	{
@@ -3091,7 +3101,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 		switch (cmd->subtype)
 		{
 			case AT_AddColumn:
-			case AT_AddColumnToView:
+			case AT_AddColumnRecurse:
 				{
 					ColumnDef  *def = castNode(ColumnDef, cmd->def);
 
@@ -3115,6 +3125,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				}
 
 			case AT_AddConstraint:
+			case AT_AddConstraintRecurse:
 
 				/*
 				 * The original AddConstraint cmd node doesn't go to newcmds
@@ -3130,19 +3141,9 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 						 (int) nodeTag(cmd->def));
 				break;
 
-			case AT_ProcessedConstraint:
-
-				/*
-				 * Already-transformed ADD CONSTRAINT, so just make it look
-				 * like the standard case.
-				 */
-				cmd->subtype = AT_AddConstraint;
-				newcmds = lappend(newcmds, cmd);
-				break;
-
 			case AT_AlterColumnType:
 				{
-					ColumnDef  *def = (ColumnDef *) cmd->def;
+					ColumnDef  *def = castNode(ColumnDef, cmd->def);
 					AttrNumber	attnum;
 
 					/*
@@ -3161,13 +3162,13 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					 * change the data type of the sequence.
 					 */
 					attnum = get_attnum(relid, cmd->name);
+					if (attnum == InvalidAttrNumber)
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("column \"%s\" of relation \"%s\" does not exist",
+										cmd->name, RelationGetRelationName(rel))));
 
-					/*
-					 * if attribute not found, something will error about it
-					 * later
-					 */
-					if (attnum != InvalidAttrNumber &&
-						TupleDescAttr(tupdesc, attnum - 1)->attidentity)
+					if (TupleDescAttr(tupdesc, attnum - 1)->attidentity)
 					{
 						Oid			seq_relid = getIdentitySequence(relid, attnum, false);
 						Oid			typeOid = typenameTypeId(pstate, def->typeName);
@@ -3196,16 +3197,16 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					cmd->def = (Node *) newdef;
 
 					attnum = get_attnum(relid, cmd->name);
+					if (attnum == InvalidAttrNumber)
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("column \"%s\" of relation \"%s\" does not exist",
+										cmd->name, RelationGetRelationName(rel))));
 
-					/*
-					 * if attribute not found, something will error about it
-					 * later
-					 */
-					if (attnum != InvalidAttrNumber)
-						generateSerialExtraStmts(&cxt, newdef,
-												 get_atttype(relid, attnum),
-												 def->options, true,
-												 NULL, NULL);
+					generateSerialExtraStmts(&cxt, newdef,
+											 get_atttype(relid, attnum),
+											 def->options, true, true,
+											 NULL, NULL);
 
 					newcmds = lappend(newcmds, cmd);
 					break;
@@ -3221,6 +3222,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					List	   *newseqopts = NIL;
 					List	   *newdef = NIL;
 					AttrNumber	attnum;
+					Oid			seq_relid;
 
 					/*
 					 * Split options into those handled by ALTER SEQUENCE and
@@ -3237,29 +3239,34 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					}
 
 					attnum = get_attnum(relid, cmd->name);
+					if (attnum == InvalidAttrNumber)
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_COLUMN),
+								 errmsg("column \"%s\" of relation \"%s\" does not exist",
+										cmd->name, RelationGetRelationName(rel))));
 
-					if (attnum)
+					seq_relid = getIdentitySequence(relid, attnum, true);
+
+					if (seq_relid)
 					{
-						Oid			seq_relid = getIdentitySequence(relid, attnum, true);
+						AlterSeqStmt *seqstmt;
 
-						if (seq_relid)
-						{
-							AlterSeqStmt *seqstmt;
+						seqstmt = makeNode(AlterSeqStmt);
+						seqstmt->sequence = makeRangeVar(get_namespace_name(get_rel_namespace(seq_relid)),
+														 get_rel_name(seq_relid), -1);
+						seqstmt->options = newseqopts;
+						seqstmt->for_identity = true;
+						seqstmt->missing_ok = false;
 
-							seqstmt = makeNode(AlterSeqStmt);
-							seqstmt->sequence = makeRangeVar(get_namespace_name(get_rel_namespace(seq_relid)),
-															 get_rel_name(seq_relid), -1);
-							seqstmt->options = newseqopts;
-							seqstmt->for_identity = true;
-							seqstmt->missing_ok = false;
-
-							cxt.alist = lappend(cxt.alist, seqstmt);
-						}
+						cxt.blist = lappend(cxt.blist, seqstmt);
 					}
 
 					/*
-					 * If column was not found or was not an identity column,
-					 * we just let the ALTER TABLE command error out later.
+					 * If column was not an identity column, we just let the
+					 * ALTER TABLE command error out later.  (There are cases
+					 * this fails to cover, but we'll need to restructure
+					 * where creation of the sequence dependency linkage
+					 * happens before we can fix it.)
 					 */
 
 					cmd->def = (Node *) newdef;
@@ -3281,6 +3288,12 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				break;
 
 			default:
+
+				/*
+				 * Currently, we shouldn't actually get here for subcommand
+				 * types that don't require transformation; but if we do, just
+				 * emit them unchanged.
+				 */
 				newcmds = lappend(newcmds, cmd);
 				break;
 		}
@@ -3361,11 +3374,10 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 	 */
 	stmt->cmds = newcmds;
 
-	result = lappend(cxt.blist, stmt);
-	result = list_concat(result, cxt.alist);
-	result = list_concat(result, save_alist);
+	*beforeStmts = cxt.blist;
+	*afterStmts = list_concat(cxt.alist, save_alist);
 
-	return result;
+	return stmt;
 }
 
 

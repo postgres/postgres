@@ -20,8 +20,10 @@ struct AttrMap;					/* avoid including attmap.h here */
 
 
 extern List *transformCreateStmt(CreateStmt *stmt, const char *queryString);
-extern List *transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
-									 const char *queryString);
+extern AlterTableStmt *transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
+											   const char *queryString,
+											   List **beforeStmts,
+											   List **afterStmts);
 extern IndexStmt *transformIndexStmt(Oid relid, IndexStmt *stmt,
 									 const char *queryString);
 extern void transformRuleStmt(RuleStmt *stmt, const char *queryString,

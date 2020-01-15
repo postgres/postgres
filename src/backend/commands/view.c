@@ -145,6 +145,10 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		 * Note that we must do this before updating the query for the view,
 		 * since the rules system requires that the correct view columns be in
 		 * place when defining the new rules.
+		 *
+		 * Also note that ALTER TABLE doesn't run parse transformation on
+		 * AT_AddColumnToView commands.  The ColumnDef we supply must be ready
+		 * to execute as-is.
 		 */
 		if (list_length(attrList) > rel->rd_att->natts)
 		{

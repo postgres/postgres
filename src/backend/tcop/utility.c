@@ -1093,8 +1093,6 @@ ProcessUtilitySlow(ParseState *pstate,
 				{
 					AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
 					Oid			relid;
-					List	   *stmts;
-					ListCell   *l;
 					LOCKMODE	lockmode;
 
 					/*
@@ -1108,59 +1106,21 @@ ProcessUtilitySlow(ParseState *pstate,
 
 					if (OidIsValid(relid))
 					{
-						/* Run parse analysis ... */
-						stmts = transformAlterTableStmt(relid, atstmt,
-														queryString);
+						AlterTableUtilityContext atcontext;
+
+						/* Set up info needed for recursive callbacks ... */
+						atcontext.pstmt = pstmt;
+						atcontext.queryString = queryString;
+						atcontext.relid = relid;
+						atcontext.params = params;
+						atcontext.queryEnv = queryEnv;
 
 						/* ... ensure we have an event trigger context ... */
 						EventTriggerAlterTableStart(parsetree);
 						EventTriggerAlterTableRelid(relid);
 
 						/* ... and do it */
-						foreach(l, stmts)
-						{
-							Node	   *stmt = (Node *) lfirst(l);
-
-							if (IsA(stmt, AlterTableStmt))
-							{
-								/* Do the table alteration proper */
-								AlterTable(relid, lockmode,
-										   (AlterTableStmt *) stmt);
-							}
-							else
-							{
-								/*
-								 * Recurse for anything else.  If we need to
-								 * do so, "close" the current complex-command
-								 * set, and start a new one at the bottom;
-								 * this is needed to ensure the ordering of
-								 * queued commands is consistent with the way
-								 * they are executed here.
-								 */
-								PlannedStmt *wrapper;
-
-								EventTriggerAlterTableEnd();
-								wrapper = makeNode(PlannedStmt);
-								wrapper->commandType = CMD_UTILITY;
-								wrapper->canSetTag = false;
-								wrapper->utilityStmt = stmt;
-								wrapper->stmt_location = pstmt->stmt_location;
-								wrapper->stmt_len = pstmt->stmt_len;
-								ProcessUtility(wrapper,
-											   queryString,
-											   PROCESS_UTILITY_SUBCOMMAND,
-											   params,
-											   NULL,
-											   None_Receiver,
-											   NULL);
-								EventTriggerAlterTableStart(parsetree);
-								EventTriggerAlterTableRelid(relid);
-							}
-
-							/* Need CCI between commands */
-							if (lnext(stmts, l) != NULL)
-								CommandCounterIncrement();
-						}
+						AlterTable(atstmt, lockmode, &atcontext);
 
 						/* done */
 						EventTriggerAlterTableEnd();
@@ -1715,6 +1675,52 @@ ProcessUtilitySlow(ParseState *pstate,
 			EventTriggerEndCompleteQuery();
 	}
 	PG_END_TRY();
+}
+
+/*
+ * ProcessUtilityForAlterTable
+ *		Recursive entry from ALTER TABLE
+ *
+ * ALTER TABLE sometimes generates subcommands such as CREATE INDEX.
+ * It calls this, not the main entry point ProcessUtility, to execute
+ * such subcommands.
+ *
+ * stmt: the utility command to execute
+ * context: opaque passthrough struct with the info we need
+ *
+ * It's caller's responsibility to do CommandCounterIncrement after
+ * calling this, if needed.
+ */
+void
+ProcessUtilityForAlterTable(Node *stmt, AlterTableUtilityContext *context)
+{
+	PlannedStmt *wrapper;
+
+	/*
+	 * For event triggers, we must "close" the current complex-command set,
+	 * and start a new one afterwards; this is needed to ensure the ordering
+	 * of command events is consistent with the way they were executed.
+	 */
+	EventTriggerAlterTableEnd();
+
+	/* Create a suitable wrapper */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = context->pstmt->stmt_location;
+	wrapper->stmt_len = context->pstmt->stmt_len;
+
+	ProcessUtility(wrapper,
+				   context->queryString,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   context->params,
+				   context->queryEnv,
+				   None_Receiver,
+				   NULL);
+
+	EventTriggerAlterTableStart(context->pstmt->utilityStmt);
+	EventTriggerAlterTableRelid(context->relid);
 }
 
 /*
@@ -2394,14 +2400,15 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_RenameStmt:
+
 			/*
-			 * When the column is renamed, the command tag is created
-			 * from its relation type
+			 * When the column is renamed, the command tag is created from its
+			 * relation type
 			 */
 			tag = AlterObjectTypeCommandTag(
-				((RenameStmt *) parsetree)->renameType == OBJECT_COLUMN ?
-				((RenameStmt *) parsetree)->relationType :
-				((RenameStmt *) parsetree)->renameType);
+											((RenameStmt *) parsetree)->renameType == OBJECT_COLUMN ?
+											((RenameStmt *) parsetree)->relationType :
+											((RenameStmt *) parsetree)->renameType);
 			break;
 
 		case T_AlterObjectDependsStmt:
