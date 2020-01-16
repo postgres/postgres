@@ -10,12 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifdef FRONTEND
-#include "postgres_fe.h"
-#else
-#include "postgres.h"
-#include "utils/builtins.h"
-#endif
+#include "c.h"
 
 #include <ctype.h>
 #include <unistd.h>
@@ -310,6 +305,7 @@ static const pg_encname pg_encname_tbl[] =
 #else
 #define DEF_ENC2NAME(name, codepage) { #name, PG_##name, codepage }
 #endif
+
 const pg_enc2name pg_enc2name_tbl[] =
 {
 	DEF_ENC2NAME(SQL_ASCII, 0),
@@ -409,10 +405,8 @@ const pg_enc2gettext pg_enc2gettext_tbl[] =
 };
 
 
-#ifndef FRONTEND
-
 /*
- * Table of encoding names for ICU
+ * Table of encoding names for ICU (currently covers backend encodings only)
  *
  * Reference: <https://ssl.icu-project.org/icu-bin/convexp>
  *
@@ -457,32 +451,31 @@ static const char *const pg_enc2icu_tbl[] =
 	"KOI8-U",					/* PG_KOI8U */
 };
 
+
+/*
+ * Is this encoding supported by ICU?
+ */
 bool
 is_encoding_supported_by_icu(int encoding)
 {
+	if (!PG_VALID_BE_ENCODING(encoding))
+		return false;
 	return (pg_enc2icu_tbl[encoding] != NULL);
 }
 
+/*
+ * Returns ICU's name for encoding, or NULL if not supported
+ */
 const char *
 get_encoding_name_for_icu(int encoding)
 {
-	const char *icu_encoding_name;
-
 	StaticAssertStmt(lengthof(pg_enc2icu_tbl) == PG_ENCODING_BE_LAST + 1,
 					 "pg_enc2icu_tbl incomplete");
 
-	icu_encoding_name = pg_enc2icu_tbl[encoding];
-
-	if (!icu_encoding_name)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("encoding \"%s\" not supported by ICU",
-						pg_encoding_to_char(encoding))));
-
-	return icu_encoding_name;
+	if (!PG_VALID_BE_ENCODING(encoding))
+		return NULL;
+	return pg_enc2icu_tbl[encoding];
 }
-
-#endif							/* not FRONTEND */
 
 
 /* ----------
@@ -523,9 +516,10 @@ pg_valid_server_encoding_id(int encoding)
 	return PG_VALID_BE_ENCODING(encoding);
 }
 
-/* ----------
- * Remove irrelevant chars from encoding name
- * ----------
+/*
+ * Remove irrelevant chars from encoding name, store at *newkey
+ *
+ * (Caller's responsibility to provide a large enough buffer)
  */
 static char *
 clean_encoding_name(const char *key, char *newkey)
@@ -547,11 +541,10 @@ clean_encoding_name(const char *key, char *newkey)
 	return newkey;
 }
 
-/* ----------
+/*
  * Search encoding by encoding name
  *
- * Returns encoding ID, or -1 for error
- * ----------
+ * Returns encoding ID, or -1 if not recognized
  */
 int
 pg_char_to_encoding(const char *name)
@@ -568,16 +561,8 @@ pg_char_to_encoding(const char *name)
 		return -1;
 
 	if (strlen(name) >= NAMEDATALEN)
-	{
-#ifdef FRONTEND
-		fprintf(stderr, "encoding name too long\n");
-		return -1;
-#else
-		ereport(ERROR,
-				(errcode(ERRCODE_NAME_TOO_LONG),
-				 errmsg("encoding name too long")));
-#endif
-	}
+		return -1;				/* it's certainly not in the table */
+
 	key = clean_encoding_name(name, buff);
 
 	while (last >= base)
@@ -599,16 +584,6 @@ pg_char_to_encoding(const char *name)
 	return -1;
 }
 
-#ifndef FRONTEND
-Datum
-PG_char_to_encoding(PG_FUNCTION_ARGS)
-{
-	Name		s = PG_GETARG_NAME(0);
-
-	PG_RETURN_INT32(pg_char_to_encoding(NameStr(*s)));
-}
-#endif
-
 const char *
 pg_encoding_to_char(int encoding)
 {
@@ -621,15 +596,3 @@ pg_encoding_to_char(int encoding)
 	}
 	return "";
 }
-
-#ifndef FRONTEND
-Datum
-PG_encoding_to_char(PG_FUNCTION_ARGS)
-{
-	int32		encoding = PG_GETARG_INT32(0);
-	const char *encoding_name = pg_encoding_to_char(encoding);
-
-	return DirectFunctionCall1(namein, CStringGetDatum(encoding_name));
-}
-
-#endif

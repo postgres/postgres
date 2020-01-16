@@ -9,7 +9,7 @@
  * src/include/mb/pg_wchar.h
  *
  *	NOTES
- *		This is used both by the backend and by libpq, but should not be
+ *		This is used both by the backend and by frontends, but should not be
  *		included by libpq client programs.  In particular, a libpq client
  *		should not assume that the encoding IDs used by the version of libpq
  *		it's linked to match up with the IDs declared here.
@@ -346,12 +346,6 @@ typedef struct pg_enc2gettext
 extern const pg_enc2gettext pg_enc2gettext_tbl[];
 
 /*
- * Encoding names for ICU
- */
-extern bool is_encoding_supported_by_icu(int encoding);
-extern const char *get_encoding_name_for_icu(int encoding);
-
-/*
  * pg_wchar stuff
  */
 typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
@@ -539,8 +533,27 @@ extern const char *pg_encoding_to_char(int encoding);
 extern int	pg_valid_server_encoding_id(int encoding);
 
 /*
- * Remaining functions are not considered part of libpq's API, though many
- * of them do exist inside libpq.
+ * These functions are available to frontend code that links with libpgcommon
+ * (in addition to the ones just above).  The constant tables declared
+ * earlier in this file are also available from libpgcommon.
+ */
+extern int	pg_encoding_mblen(int encoding, const char *mbstr);
+extern int	pg_encoding_dsplen(int encoding, const char *mbstr);
+extern int	pg_encoding_verifymb(int encoding, const char *mbstr, int len);
+extern int	pg_encoding_max_length(int encoding);
+extern int	pg_valid_client_encoding(const char *name);
+extern int	pg_valid_server_encoding(const char *name);
+extern bool is_encoding_supported_by_icu(int encoding);
+extern const char *get_encoding_name_for_icu(int encoding);
+
+extern unsigned char *unicode_to_utf8(pg_wchar c, unsigned char *utf8string);
+extern pg_wchar utf8_to_unicode(const unsigned char *c);
+extern bool pg_utf8_islegal(const unsigned char *source, int length);
+extern int	pg_utf_mblen(const unsigned char *s);
+extern int	pg_mule_mblen(const unsigned char *s);
+
+/*
+ * The remaining functions are backend-only.
  */
 extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);
@@ -556,18 +569,12 @@ extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t 
 extern size_t pg_wchar_strlen(const pg_wchar *wstr);
 extern int	pg_mblen(const char *mbstr);
 extern int	pg_dsplen(const char *mbstr);
-extern int	pg_encoding_mblen(int encoding, const char *mbstr);
-extern int	pg_encoding_dsplen(int encoding, const char *mbstr);
-extern int	pg_encoding_verifymb(int encoding, const char *mbstr, int len);
-extern int	pg_mule_mblen(const unsigned char *mbstr);
-extern int	pg_mic_mblen(const unsigned char *mbstr);
 extern int	pg_mbstrlen(const char *mbstr);
 extern int	pg_mbstrlen_with_len(const char *mbstr, int len);
 extern int	pg_mbcliplen(const char *mbstr, int len, int limit);
 extern int	pg_encoding_mbcliplen(int encoding, const char *mbstr,
 								  int len, int limit);
 extern int	pg_mbcharcliplen(const char *mbstr, int len, int limit);
-extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
 extern mbcharacter_incrementer pg_database_encoding_character_incrementer(void);
 
@@ -587,12 +594,6 @@ extern int	GetMessageEncoding(void);
 extern int	pg_bind_textdomain_codeset(const char *domainname);
 #endif
 
-extern int	pg_valid_client_encoding(const char *name);
-extern int	pg_valid_server_encoding(const char *name);
-
-extern unsigned char *unicode_to_utf8(pg_wchar c, unsigned char *utf8string);
-extern pg_wchar utf8_to_unicode(const unsigned char *c);
-extern int	pg_utf_mblen(const unsigned char *);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
 												int src_encoding,
 												int dest_encoding);
@@ -646,8 +647,6 @@ extern void latin2mic_with_table(const unsigned char *l, unsigned char *p,
 extern void mic2latin_with_table(const unsigned char *mic, unsigned char *p,
 								 int len, int lc, int encoding,
 								 const unsigned char *tab);
-
-extern bool pg_utf8_islegal(const unsigned char *source, int length);
 
 #ifdef WIN32
 extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);

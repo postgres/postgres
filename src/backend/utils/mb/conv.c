@@ -115,7 +115,7 @@ mic2latin(const unsigned char *mic, unsigned char *p, int len,
 		}
 		else
 		{
-			int			l = pg_mic_mblen(mic);
+			int			l = pg_mule_mblen(mic);
 
 			if (len < l)
 				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,
@@ -217,7 +217,7 @@ mic2latin_with_table(const unsigned char *mic,
 		}
 		else
 		{
-			int			l = pg_mic_mblen(mic);
+			int			l = pg_mule_mblen(mic);
 
 			if (len < l)
 				report_invalid_encoding(PG_MULE_INTERNAL, (const char *) mic,
