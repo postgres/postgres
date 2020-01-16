@@ -1,8 +1,14 @@
-/*
- * Encoding names and routines for work with it. All
- * in this file is shared between FE and BE.
+/*-------------------------------------------------------------------------
  *
- * src/backend/utils/mb/encnames.c
+ * encnames.c
+ *	  Encoding names and routines for working with them.
+ *
+ * Portions Copyright (c) 2001-2020, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  src/common/encnames.c
+ *
+ *-------------------------------------------------------------------------
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"

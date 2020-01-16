@@ -1,10 +1,15 @@
-/*
- * conversion functions between pg_wchar and multibyte streams.
- * Tatsuo Ishii
- * src/backend/utils/mb/wchar.c
+/*-------------------------------------------------------------------------
  *
+ * wchar.c
+ *	  Functions for working with multibyte characters in various encodings.
+ *
+ * Portions Copyright (c) 1998-2020, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  src/common/wchar.c
+ *
+ *-------------------------------------------------------------------------
  */
-/* can be used in either frontend or backend */
 #ifdef FRONTEND
 #include "postgres_fe.h"
 #else
