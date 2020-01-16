@@ -42,17 +42,6 @@ LockTableCommand(LockStmt *lockstmt)
 {
 	ListCell   *p;
 
-	/*---------
-	 * During recovery we only accept these variations:
-	 * LOCK TABLE foo IN ACCESS SHARE MODE
-	 * LOCK TABLE foo IN ROW SHARE MODE
-	 * LOCK TABLE foo IN ROW EXCLUSIVE MODE
-	 * This test must match the restrictions defined in LockAcquireExtended()
-	 *---------
-	 */
-	if (lockstmt->mode > RowExclusiveLock)
-		PreventCommandDuringRecovery("LOCK TABLE");
-
 	/*
 	 * Iterate over the list and process the named relations one at a time
 	 */
