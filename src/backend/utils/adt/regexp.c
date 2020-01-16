@@ -63,7 +63,7 @@ typedef struct regexp_matches_ctx
 	Datum	   *elems;			/* has npatterns elements */
 	bool	   *nulls;			/* has npatterns elements */
 	pg_wchar   *wide_str;		/* wide-char version of original string */
-	char	   *conv_buf;		/* conversion buffer */
+	char	   *conv_buf;		/* conversion buffer, if needed */
 	int			conv_bufsiz;	/* size thereof */
 } regexp_matches_ctx;
 
@@ -1285,7 +1285,6 @@ static ArrayType *
 build_regexp_match_result(regexp_matches_ctx *matchctx)
 {
 	char	   *buf = matchctx->conv_buf;
-	int			bufsiz PG_USED_FOR_ASSERTS_ONLY = matchctx->conv_bufsiz;
 	Datum	   *elems = matchctx->elems;
 	bool	   *nulls = matchctx->nulls;
 	int			dims[1];
@@ -1311,7 +1310,7 @@ build_regexp_match_result(regexp_matches_ctx *matchctx)
 												   buf,
 												   eo - so);
 
-			Assert(len < bufsiz);
+			Assert(len < matchctx->conv_bufsiz);
 			elems[i] = PointerGetDatum(cstring_to_text_with_len(buf, len));
 			nulls[i] = false;
 		}
@@ -1467,25 +1466,22 @@ build_regexp_split_result(regexp_matches_ctx *splitctx)
 	if (startpos < 0)
 		elog(ERROR, "invalid match ending position");
 
+	endpos = splitctx->match_locs[splitctx->next_match * 2];
+	if (endpos < startpos)
+		elog(ERROR, "invalid match starting position");
+
 	if (buf)
 	{
-		int			bufsiz PG_USED_FOR_ASSERTS_ONLY = splitctx->conv_bufsiz;
 		int			len;
 
-		endpos = splitctx->match_locs[splitctx->next_match * 2];
-		if (endpos < startpos)
-			elog(ERROR, "invalid match starting position");
 		len = pg_wchar2mb_with_len(splitctx->wide_str + startpos,
 								   buf,
 								   endpos - startpos);
-		Assert(len < bufsiz);
+		Assert(len < splitctx->conv_bufsiz);
 		return PointerGetDatum(cstring_to_text_with_len(buf, len));
 	}
 	else
 	{
-		endpos = splitctx->match_locs[splitctx->next_match * 2];
-		if (endpos < startpos)
-			elog(ERROR, "invalid match starting position");
 		return DirectFunctionCall3(text_substr,
 								   PointerGetDatum(splitctx->orig_str),
 								   Int32GetDatum(startpos + 1),
