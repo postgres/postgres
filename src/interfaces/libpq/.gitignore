@@ -1,4 +1,1 @@
 /exports.list
-# .c files that are symlinked in from elsewhere
-/encnames.c
-/wchar.c

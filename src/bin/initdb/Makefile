@@ -18,7 +18,12 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(CPPFLAGS)
 
-# note: we need libpq only because fe_utils does
+# Note: it's important that we link to encnames.o from libpgcommon, not
+# from libpq, else we have risks of version skew if we run with a libpq
+# shared library from a different PG version.  The libpq_pgport macro
+# should ensure that that happens.
+#
+# We need libpq only because fe_utils does.
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
 # use system timezone data?
@@ -28,7 +33,6 @@ endif
 
 OBJS = \
 	$(WIN32RES) \
-	encnames.o \
 	findtimezone.o \
 	initdb.o \
 	localtime.o
@@ -38,15 +42,7 @@ all: initdb
 initdb: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-# We used to pull in all of libpq to get encnames.c, but that
-# exposes us to risks of version skew if we link to a shared library.
-# Do it the hard way, instead, so that we're statically linked.
-
-encnames.c: % : $(top_srcdir)/src/backend/utils/mb/%
-	rm -f $@ && $(LN_S) $< .
-
-# Likewise, pull in localtime.c from src/timezones
-
+# We must pull in localtime.c from src/timezones
 localtime.c: % : $(top_srcdir)/src/timezone/%
 	rm -f $@ && $(LN_S) $< .
 
@@ -60,7 +56,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/initdb$(X)'
 
 clean distclean maintainer-clean:
-	rm -f initdb$(X) $(OBJS) encnames.c localtime.c
+	rm -f initdb$(X) $(OBJS) localtime.c
 	rm -rf tmp_check
 
 # ensure that changes in datadir propagate into object file

@@ -222,8 +222,8 @@ typedef unsigned int pg_wchar;
  * PostgreSQL encoding identifiers
  *
  * WARNING: the order of this enum must be same as order of entries
- *			in the pg_enc2name_tbl[] array (in mb/encnames.c), and
- *			in the pg_wchar_table[] array (in mb/wchar.c)!
+ *			in the pg_enc2name_tbl[] array (in src/common/encnames.c), and
+ *			in the pg_wchar_table[] array (in src/common/wchar.c)!
  *
  *			If you add some encoding don't forget to check
  *			PG_ENCODING_BE_LAST macro.
