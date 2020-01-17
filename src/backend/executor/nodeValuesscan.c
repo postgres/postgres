@@ -26,6 +26,7 @@
 #include "executor/executor.h"
 #include "executor/nodeValuesscan.h"
 #include "jit/jit.h"
+#include "optimizer/clauses.h"
 #include "utils/expandeddatum.h"
 
 
@@ -50,7 +51,7 @@ ValuesNext(ValuesScanState *node)
 	EState	   *estate;
 	ExprContext *econtext;
 	ScanDirection direction;
-	List	   *exprlist;
+	int			curr_idx;
 
 	/*
 	 * get information from the estate and scan state
@@ -67,19 +68,11 @@ ValuesNext(ValuesScanState *node)
 	{
 		if (node->curr_idx < node->array_len)
 			node->curr_idx++;
-		if (node->curr_idx < node->array_len)
-			exprlist = node->exprlists[node->curr_idx];
-		else
-			exprlist = NIL;
 	}
 	else
 	{
 		if (node->curr_idx >= 0)
 			node->curr_idx--;
-		if (node->curr_idx >= 0)
-			exprlist = node->exprlists[node->curr_idx];
-		else
-			exprlist = NIL;
 	}
 
 	/*
@@ -90,16 +83,16 @@ ValuesNext(ValuesScanState *node)
 	 */
 	ExecClearTuple(slot);
 
-	if (exprlist)
+	curr_idx = node->curr_idx;
+	if (curr_idx >= 0 && curr_idx < node->array_len)
 	{
+		List	   *exprlist = node->exprlists[curr_idx];
+		List	   *exprstatelist = node->exprstatelists[curr_idx];
 		MemoryContext oldContext;
-		List	   *oldsubplans;
-		List	   *exprstatelist;
 		Datum	   *values;
 		bool	   *isnull;
 		ListCell   *lc;
 		int			resind;
-		int			saved_jit_flags;
 
 		/*
 		 * Get rid of any prior cycle's leftovers.  We use ReScanExprContext
@@ -109,38 +102,32 @@ ValuesNext(ValuesScanState *node)
 		ReScanExprContext(econtext);
 
 		/*
-		 * Build the expression eval state in the econtext's per-tuple memory.
-		 * This is a tad unusual, but we want to delete the eval state again
-		 * when we move to the next row, to avoid growth of memory
-		 * requirements over a long values list.
+		 * Do per-VALUES-row work in the per-tuple context.
 		 */
 		oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 		/*
-		 * The expressions might contain SubPlans (this is currently only
-		 * possible if there's a sub-select containing a LATERAL reference,
-		 * otherwise sub-selects in a VALUES list should be InitPlans). Those
-		 * subplans will want to hook themselves into our subPlan list, which
-		 * would result in a corrupted list after we delete the eval state. We
-		 * can work around this by saving and restoring the subPlan list.
-		 * (There's no need for the functionality that would be enabled by
-		 * having the list entries, since the SubPlans aren't going to be
-		 * re-executed anyway.)
+		 * Unless we already made the expression eval state for this row,
+		 * build it in the econtext's per-tuple memory.  This is a tad
+		 * unusual, but we want to delete the eval state again when we move to
+		 * the next row, to avoid growth of memory requirements over a long
+		 * values list.  For rows in which that won't work, we already built
+		 * the eval state at plan startup.
 		 */
-		oldsubplans = node->ss.ps.subPlan;
-		node->ss.ps.subPlan = NIL;
-
-		/*
-		 * As the expressions are only ever used once, disable JIT for them.
-		 * This is worthwhile because it's common to insert significant
-		 * amounts of data via VALUES().
-		 */
-		saved_jit_flags = econtext->ecxt_estate->es_jit_flags;
-		econtext->ecxt_estate->es_jit_flags = PGJIT_NONE;
-		exprstatelist = ExecInitExprList(exprlist, &node->ss.ps);
-		econtext->ecxt_estate->es_jit_flags = saved_jit_flags;
-
-		node->ss.ps.subPlan = oldsubplans;
+		if (exprstatelist == NIL)
+		{
+			/*
+			 * Pass parent as NULL, not my plan node, because we don't want
+			 * anything in this transient state linking into permanent state.
+			 * The only expression type that might wish to do so is a SubPlan,
+			 * and we already checked that there aren't any.
+			 *
+			 * Note that passing parent = NULL also disables JIT compilation
+			 * of the expressions, which is a win, because they're only going
+			 * to be used once under normal circumstances.
+			 */
+			exprstatelist = ExecInitExprList(exprlist, NULL);
+		}
 
 		/* parser should have checked all sublists are the same length */
 		Assert(list_length(exprstatelist) == slot->tts_tupleDescriptor->natts);
@@ -281,13 +268,52 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	scanstate->curr_idx = -1;
 	scanstate->array_len = list_length(node->values_lists);
 
-	/* convert list of sublists into array of sublists for easy addressing */
+	/*
+	 * Convert the list of expression sublists into an array for easier
+	 * addressing at runtime.  Also, detect whether any sublists contain
+	 * SubPlans; for just those sublists, go ahead and do expression
+	 * initialization.  (This avoids problems with SubPlans wanting to connect
+	 * themselves up to the outer plan tree.  Notably, EXPLAIN won't see the
+	 * subplans otherwise; also we will have troubles with dangling pointers
+	 * and/or leaked resources if we try to handle SubPlans the same as
+	 * simpler expressions.)
+	 */
 	scanstate->exprlists = (List **)
 		palloc(scanstate->array_len * sizeof(List *));
+	scanstate->exprstatelists = (List **)
+		palloc0(scanstate->array_len * sizeof(List *));
 	i = 0;
 	foreach(vtl, node->values_lists)
 	{
-		scanstate->exprlists[i++] = (List *) lfirst(vtl);
+		List	   *exprs = castNode(List, lfirst(vtl));
+
+		scanstate->exprlists[i] = exprs;
+
+		/*
+		 * We can avoid the cost of a contain_subplans() scan in the simple
+		 * case where there are no SubPlans anywhere.
+		 */
+		if (estate->es_subplanstates &&
+			contain_subplans((Node *) exprs))
+		{
+			int			saved_jit_flags;
+
+			/*
+			 * As these expressions are only used once, disable JIT for them.
+			 * This is worthwhile because it's common to insert significant
+			 * amounts of data via VALUES().  Note that this doesn't prevent
+			 * use of JIT *within* a subplan, since that's initialized
+			 * separately; this just affects the upper-level subexpressions.
+			 */
+			saved_jit_flags = estate->es_jit_flags;
+			estate->es_jit_flags = PGJIT_NONE;
+
+			scanstate->exprstatelists[i] = ExecInitExprList(exprs,
+															&scanstate->ss.ps);
+
+			estate->es_jit_flags = saved_jit_flags;
+		}
+		i++;
 	}
 
 	return scanstate;
