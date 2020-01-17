@@ -75,7 +75,9 @@ OBJS_COMMON = \
 	wchar.o
 
 ifeq ($(with_openssl),yes)
-OBJS_COMMON += sha2_openssl.o
+OBJS_COMMON += \
+	protocol_openssl.o \
+	sha2_openssl.o
 else
 OBJS_COMMON += sha2.o
 endif
