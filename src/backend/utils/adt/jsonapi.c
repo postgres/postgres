@@ -69,44 +69,7 @@ lex_peek(JsonLexContext *lex)
 }
 
 /*
- * lex_accept
- *
- * accept the look_ahead token and move the lexer to the next token if the
- * look_ahead token matches the token parameter. In that case, and if required,
- * also hand back the de-escaped lexeme.
- *
- * returns true if the token matched, false otherwise.
- */
-static inline bool
-lex_accept(JsonLexContext *lex, JsonTokenType token, char **lexeme)
-{
-	if (lex->token_type == token)
-	{
-		if (lexeme != NULL)
-		{
-			if (lex->token_type == JSON_TOKEN_STRING)
-			{
-				if (lex->strval != NULL)
-					*lexeme = pstrdup(lex->strval->data);
-			}
-			else
-			{
-				int			len = (lex->token_terminator - lex->token_start);
-				char	   *tokstr = palloc(len + 1);
-
-				memcpy(tokstr, lex->token_start, len);
-				tokstr[len] = '\0';
-				*lexeme = tokstr;
-			}
-		}
-		json_lex(lex);
-		return true;
-	}
-	return false;
-}
-
-/*
- * lex_accept
+ * lex_expect
  *
  * move the lexer to the next token if the current look_ahead token matches
  * the parameter token. Otherwise, report an error.
@@ -114,7 +77,9 @@ lex_accept(JsonLexContext *lex, JsonTokenType token, char **lexeme)
 static inline void
 lex_expect(JsonParseContext ctx, JsonLexContext *lex, JsonTokenType token)
 {
-	if (!lex_accept(lex, token, NULL))
+	if (lex_peek(lex) == token)
+		json_lex(lex);
+	else
 		report_parse_error(ctx, lex);
 }
 
@@ -260,12 +225,14 @@ json_count_array_elements(JsonLexContext *lex)
 	lex_expect(JSON_PARSE_ARRAY_START, &copylex, JSON_TOKEN_ARRAY_START);
 	if (lex_peek(&copylex) != JSON_TOKEN_ARRAY_END)
 	{
-		do
+		while (1)
 		{
 			count++;
 			parse_array_element(&copylex, &nullSemAction);
+			if (copylex.token_type != JSON_TOKEN_COMMA)
+				break;
+			json_lex(&copylex);
 		}
-		while (lex_accept(&copylex, JSON_TOKEN_COMMA, NULL));
 	}
 	lex_expect(JSON_PARSE_ARRAY_NEXT, &copylex, JSON_TOKEN_ARRAY_END);
 
@@ -286,35 +253,41 @@ parse_scalar(JsonLexContext *lex, JsonSemAction *sem)
 {
 	char	   *val = NULL;
 	json_scalar_action sfunc = sem->scalar;
-	char	  **valaddr;
 	JsonTokenType tok = lex_peek(lex);
 
-	valaddr = sfunc == NULL ? NULL : &val;
-
 	/* a scalar must be a string, a number, true, false, or null */
-	switch (tok)
+	if (tok != JSON_TOKEN_STRING && tok != JSON_TOKEN_NUMBER &&
+		tok != JSON_TOKEN_TRUE && tok != JSON_TOKEN_FALSE &&
+		tok != JSON_TOKEN_NULL)
+		report_parse_error(JSON_PARSE_VALUE, lex);
+
+	/* if no semantic function, just consume the token */
+	if (sfunc == NULL)
 	{
-		case JSON_TOKEN_TRUE:
-			lex_accept(lex, JSON_TOKEN_TRUE, valaddr);
-			break;
-		case JSON_TOKEN_FALSE:
-			lex_accept(lex, JSON_TOKEN_FALSE, valaddr);
-			break;
-		case JSON_TOKEN_NULL:
-			lex_accept(lex, JSON_TOKEN_NULL, valaddr);
-			break;
-		case JSON_TOKEN_NUMBER:
-			lex_accept(lex, JSON_TOKEN_NUMBER, valaddr);
-			break;
-		case JSON_TOKEN_STRING:
-			lex_accept(lex, JSON_TOKEN_STRING, valaddr);
-			break;
-		default:
-			report_parse_error(JSON_PARSE_VALUE, lex);
+		json_lex(lex);
+		return;
 	}
 
-	if (sfunc != NULL)
-		(*sfunc) (sem->semstate, val, tok);
+	/* extract the de-escaped string value, or the raw lexeme */
+	if (lex_peek(lex) == JSON_TOKEN_STRING)
+	{
+		if (lex->strval != NULL)
+			val = pstrdup(lex->strval->data);
+	}
+	else
+	{
+		int			len = (lex->token_terminator - lex->token_start);
+
+		val = palloc(len + 1);
+		memcpy(val, lex->token_start, len);
+		val[len] = '\0';
+	}
+
+	/* consume the token */
+	json_lex(lex);
+
+	/* invoke the callback */
+	(*sfunc) (sem->semstate, val, tok);
 }
 
 static void
@@ -330,14 +303,13 @@ parse_object_field(JsonLexContext *lex, JsonSemAction *sem)
 	json_ofield_action ostart = sem->object_field_start;
 	json_ofield_action oend = sem->object_field_end;
 	bool		isnull;
-	char	  **fnameaddr = NULL;
 	JsonTokenType tok;
 
-	if (ostart != NULL || oend != NULL)
-		fnameaddr = &fname;
-
-	if (!lex_accept(lex, JSON_TOKEN_STRING, fnameaddr))
+	if (lex_peek(lex) != JSON_TOKEN_STRING)
 		report_parse_error(JSON_PARSE_STRING, lex);
+	if ((ostart != NULL || oend != NULL) && lex->strval != NULL)
+		fname = pstrdup(lex->strval->data);
+	json_lex(lex);
 
 	lex_expect(JSON_PARSE_OBJECT_LABEL, lex, JSON_TOKEN_COLON);
 
@@ -387,16 +359,19 @@ parse_object(JsonLexContext *lex, JsonSemAction *sem)
 	 */
 	lex->lex_level++;
 
-	/* we know this will succeed, just clearing the token */
-	lex_expect(JSON_PARSE_OBJECT_START, lex, JSON_TOKEN_OBJECT_START);
+	Assert(lex_peek(lex) == JSON_TOKEN_OBJECT_START);
+	json_lex(lex);
 
 	tok = lex_peek(lex);
 	switch (tok)
 	{
 		case JSON_TOKEN_STRING:
 			parse_object_field(lex, sem);
-			while (lex_accept(lex, JSON_TOKEN_COMMA, NULL))
+			while (lex_peek(lex) == JSON_TOKEN_COMMA)
+			{
+				json_lex(lex);
 				parse_object_field(lex, sem);
+			}
 			break;
 		case JSON_TOKEN_OBJECT_END:
 			break;
@@ -473,8 +448,11 @@ parse_array(JsonLexContext *lex, JsonSemAction *sem)
 
 		parse_array_element(lex, sem);
 
-		while (lex_accept(lex, JSON_TOKEN_COMMA, NULL))
+		while (lex_peek(lex) == JSON_TOKEN_COMMA)
+		{
+			json_lex(lex);
 			parse_array_element(lex, sem);
+		}
 	}
 
 	lex_expect(JSON_PARSE_ARRAY_NEXT, lex, JSON_TOKEN_ARRAY_END);
