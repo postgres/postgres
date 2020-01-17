@@ -55,6 +55,33 @@ select t,similarity(t,'gwertyu0988') as sml from test_trgm where t % 'gwertyu098
 select t,similarity(t,'gwertyu1988') as sml from test_trgm where t % 'gwertyu1988' order by sml desc, t;
 select count(*) from test_trgm where t ~ '[qwerty]{2}-?[qwerty]{2}';
 
+-- check handling of indexquals that generate no searchable conditions
+explain (costs off)
+select count(*) from test_trgm where t like '%99%' and t like '%qwerty%';
+select count(*) from test_trgm where t like '%99%' and t like '%qwerty%';
+explain (costs off)
+select count(*) from test_trgm where t like '%99%' and t like '%qw%';
+select count(*) from test_trgm where t like '%99%' and t like '%qw%';
+-- ensure that pending-list items are handled correctly, too
+create temp table t_test_trgm(t text COLLATE "C");
+create index t_trgm_idx on t_test_trgm using gin (t gin_trgm_ops);
+insert into t_test_trgm values ('qwerty99'), ('qwerty01');
+explain (costs off)
+select count(*) from t_test_trgm where t like '%99%' and t like '%qwerty%';
+select count(*) from t_test_trgm where t like '%99%' and t like '%qwerty%';
+explain (costs off)
+select count(*) from t_test_trgm where t like '%99%' and t like '%qw%';
+select count(*) from t_test_trgm where t like '%99%' and t like '%qw%';
+
+-- run the same queries with sequential scan to check the results
+set enable_bitmapscan=off;
+set enable_seqscan=on;
+select count(*) from test_trgm where t like '%99%' and t like '%qwerty%';
+select count(*) from test_trgm where t like '%99%' and t like '%qw%';
+select count(*) from t_test_trgm where t like '%99%' and t like '%qwerty%';
+select count(*) from t_test_trgm where t like '%99%' and t like '%qw%';
+reset enable_bitmapscan;
+
 create table test2(t text COLLATE "C");
 insert into test2 values ('abcdef');
 insert into test2 values ('quark');

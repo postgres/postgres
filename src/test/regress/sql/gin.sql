@@ -1,7 +1,7 @@
 --
 -- Test GIN indexes.
 --
--- There are other tests to test different GIN opclassed. This is for testing
+-- There are other tests to test different GIN opclasses. This is for testing
 -- GIN itself.
 
 -- Create and populate a test table with a GIN index.
@@ -34,3 +34,92 @@ insert into gin_test_tbl select array[1, 3, g] from generate_series(1, 1000) g;
 
 delete from gin_test_tbl where i @> array[2];
 vacuum gin_test_tbl;
+
+-- Test optimization of empty queries
+create temp table t_gin_test_tbl(i int4[], j int4[]);
+create index on t_gin_test_tbl using gin (i, j);
+insert into t_gin_test_tbl
+values
+  (null,    null),
+  ('{}',    null),
+  ('{1}',   null),
+  ('{1,2}', null),
+  (null,    '{}'),
+  (null,    '{10}'),
+  ('{1,2}', '{10}'),
+  ('{2}',   '{10}'),
+  ('{1,3}', '{}'),
+  ('{1,1}', '{10}');
+
+set enable_seqscan = off;
+explain (costs off)
+select * from t_gin_test_tbl where array[0] <@ i;
+select * from t_gin_test_tbl where array[0] <@ i;
+select * from t_gin_test_tbl where array[0] <@ i and '{}'::int4[] <@ j;
+
+explain (costs off)
+select * from t_gin_test_tbl where i @> '{}';
+select * from t_gin_test_tbl where i @> '{}';
+
+create function explain_query_json(query_sql text)
+returns table (explain_line json)
+language plpgsql as
+$$
+begin
+  set enable_seqscan = off;
+  set enable_bitmapscan = on;
+  return query execute 'EXPLAIN (ANALYZE, FORMAT json) ' || query_sql;
+end;
+$$;
+
+create function execute_text_query_index(query_sql text)
+returns setof text
+language plpgsql
+as
+$$
+begin
+  set enable_seqscan = off;
+  set enable_bitmapscan = on;
+  return query execute query_sql;
+end;
+$$;
+
+create function execute_text_query_heap(query_sql text)
+returns setof text
+language plpgsql
+as
+$$
+begin
+  set enable_seqscan = on;
+  set enable_bitmapscan = off;
+  return query execute query_sql;
+end;
+$$;
+
+-- check number of rows returned by index and removed by recheck
+select
+  query,
+  js->0->'Plan'->'Plans'->0->'Actual Rows' as "return by index",
+  js->0->'Plan'->'Rows Removed by Index Recheck' as "removed by recheck",
+  (res_index = res_heap) as "match"
+from
+  (values
+    ($$ i @> '{}' $$),
+    ($$ j @> '{}' $$),
+    ($$ i @> '{}' and j @> '{}' $$),
+    ($$ i @> '{1}' $$),
+    ($$ i @> '{1}' and j @> '{}' $$),
+    ($$ i @> '{1}' and i @> '{}' and j @> '{}' $$),
+    ($$ j @> '{10}' $$),
+    ($$ j @> '{10}' and i @> '{}' $$),
+    ($$ j @> '{10}' and j @> '{}' and i @> '{}' $$),
+    ($$ i @> '{1}' and j @> '{10}' $$)
+  ) q(query),
+  lateral explain_query_json($$select * from t_gin_test_tbl where $$ || query) js,
+  lateral execute_text_query_index($$select string_agg((i, j)::text, ' ') from t_gin_test_tbl where $$ || query) res_index,
+  lateral execute_text_query_heap($$select string_agg((i, j)::text, ' ') from t_gin_test_tbl where $$ || query) res_heap;
+
+reset enable_seqscan;
+reset enable_bitmapscan;
+
+drop table t_gin_test_tbl;

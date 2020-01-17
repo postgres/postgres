@@ -304,6 +304,20 @@ typedef struct GinScanKeyData
 	OffsetNumber attnum;
 
 	/*
+	 * An excludeOnly scan key is not able to enumerate all matching tuples.
+	 * That is, to be semantically correct on its own, it would need to have a
+	 * GIN_CAT_EMPTY_QUERY scanEntry, but it doesn't.  Such a key can still be
+	 * used to filter tuples returned by other scan keys, so we will get the
+	 * right answers as long as there's at least one non-excludeOnly scan key
+	 * for each index attribute considered by the search.  For efficiency
+	 * reasons we don't want to have unnecessary GIN_CAT_EMPTY_QUERY entries,
+	 * so we will convert an excludeOnly scan key to non-excludeOnly (by
+	 * adding a GIN_CAT_EMPTY_QUERY scanEntry) only if there are no other
+	 * non-excludeOnly scan keys.
+	 */
+	bool		excludeOnly;
+
+	/*
 	 * Match status data.  curItem is the TID most recently tested (could be a
 	 * lossy-page pointer).  curItemMatches is true if it passes the
 	 * consistentFn test; if so, recheckCurItem is the recheck flag.

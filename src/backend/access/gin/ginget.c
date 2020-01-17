@@ -528,8 +528,20 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 	 * order, until the consistent function says that none of the remaining
 	 * entries can form a match, without any items from the required set. The
 	 * rest go to the additional set.
+	 *
+	 * Exclude-only scan keys are known to have no required entries.
 	 */
-	if (key->nentries > 1)
+	if (key->excludeOnly)
+	{
+		MemoryContextSwitchTo(so->keyCtx);
+
+		key->nrequired = 0;
+		key->nadditional = key->nentries;
+		key->additionalEntries = palloc(key->nadditional * sizeof(GinScanEntry));
+		for (i = 0; i < key->nadditional; i++)
+			key->additionalEntries[i] = key->scanEntry[i];
+	}
+	else if (key->nentries > 1)
 	{
 		MemoryContextSwitchTo(so->tempCtx);
 
@@ -1008,37 +1020,52 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 			minItem = entry->curItem;
 	}
 
-	if (allFinished)
+	if (allFinished && !key->excludeOnly)
 	{
 		/* all entries are finished */
 		key->isFinished = true;
 		return;
 	}
 
-	/*
-	 * Ok, we now know that there are no matches < minItem.
-	 *
-	 * If minItem is lossy, it means that there were no exact items on the
-	 * page among requiredEntries, because lossy pointers sort after exact
-	 * items. However, there might be exact items for the same page among
-	 * additionalEntries, so we mustn't advance past them.
-	 */
-	if (ItemPointerIsLossyPage(&minItem))
+	if (!key->excludeOnly)
 	{
-		if (GinItemPointerGetBlockNumber(&advancePast) <
-			GinItemPointerGetBlockNumber(&minItem))
+		/*
+		 * For a normal scan key, we now know there are no matches < minItem.
+		 *
+		 * If minItem is lossy, it means that there were no exact items on the
+		 * page among requiredEntries, because lossy pointers sort after exact
+		 * items. However, there might be exact items for the same page among
+		 * additionalEntries, so we mustn't advance past them.
+		 */
+		if (ItemPointerIsLossyPage(&minItem))
 		{
+			if (GinItemPointerGetBlockNumber(&advancePast) <
+				GinItemPointerGetBlockNumber(&minItem))
+			{
+				ItemPointerSet(&advancePast,
+							   GinItemPointerGetBlockNumber(&minItem),
+							   InvalidOffsetNumber);
+			}
+		}
+		else
+		{
+			Assert(GinItemPointerGetOffsetNumber(&minItem) > 0);
 			ItemPointerSet(&advancePast,
 						   GinItemPointerGetBlockNumber(&minItem),
-						   InvalidOffsetNumber);
+						   OffsetNumberPrev(GinItemPointerGetOffsetNumber(&minItem)));
 		}
 	}
 	else
 	{
-		Assert(GinItemPointerGetOffsetNumber(&minItem) > 0);
-		ItemPointerSet(&advancePast,
-					   GinItemPointerGetBlockNumber(&minItem),
-					   OffsetNumberPrev(GinItemPointerGetOffsetNumber(&minItem)));
+		/*
+		 * excludeOnly scan keys don't have any entries that are necessarily
+		 * present in matching items.  So, we consider the item just after
+		 * advancePast.
+		 */
+		Assert(key->nrequired == 0);
+		ItemPointerSet(&minItem,
+					   GinItemPointerGetBlockNumber(&advancePast),
+					   OffsetNumberNext(GinItemPointerGetOffsetNumber(&advancePast)));
 	}
 
 	/*
@@ -1265,6 +1292,20 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 		for (i = 0; i < so->nkeys && match; i++)
 		{
 			GinScanKey	key = so->keys + i;
+
+			/*
+			 * If we're considering a lossy page, skip excludeOnly keys,  They
+			 * can't exclude the whole page anyway.
+			 */
+			if (ItemPointerIsLossyPage(item) && key->excludeOnly)
+			{
+				/*
+				 * ginNewScanKey() should never mark the first key as
+				 * excludeOnly.
+				 */
+				Assert(i > 0);
+				continue;
+			}
 
 			/* Fetch the next item for this key that is > advancePast. */
 			keyGetItem(&so->ginstate, so->tempCtx, key, advancePast,
@@ -1736,11 +1777,14 @@ collectMatchesForHeapRow(IndexScanDesc scan, pendingPosition *pos)
 	}
 
 	/*
-	 * Now return "true" if all scan keys have at least one matching datum
+	 * All scan keys except excludeOnly require at least one entry to match.
+	 * excludeOnly keys are an exception, because their implied
+	 * GIN_CAT_EMPTY_QUERY scanEntry always matches.  So return "true" if all
+	 * non-excludeOnly scan keys have at least one match.
 	 */
 	for (i = 0; i < so->nkeys; i++)
 	{
-		if (pos->hasMatchKey[i] == false)
+		if (pos->hasMatchKey[i] == false && !so->keys[i].excludeOnly)
 			return false;
 	}
 

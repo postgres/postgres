@@ -6356,7 +6356,8 @@ spgcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 
 typedef struct
 {
-	bool		haveFullScan;
+	bool		attHasFullScan[INDEX_MAX_KEYS];
+	bool		attHasNormalScan[INDEX_MAX_KEYS];
 	double		partialEntries;
 	double		exactEntries;
 	double		searchEntries;
@@ -6452,16 +6453,21 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 		counts->searchEntries++;
 	}
 
-	if (searchMode == GIN_SEARCH_MODE_INCLUDE_EMPTY)
+	if (searchMode == GIN_SEARCH_MODE_DEFAULT)
+	{
+		counts->attHasNormalScan[indexcol] = true;
+	}
+	else if (searchMode == GIN_SEARCH_MODE_INCLUDE_EMPTY)
 	{
 		/* Treat "include empty" like an exact-match item */
+		counts->attHasNormalScan[indexcol] = true;
 		counts->exactEntries++;
 		counts->searchEntries++;
 	}
-	else if (searchMode != GIN_SEARCH_MODE_DEFAULT)
+	else
 	{
 		/* It's GIN_SEARCH_MODE_ALL */
-		counts->haveFullScan = true;
+		counts->attHasFullScan[indexcol] = true;
 	}
 
 	return true;
@@ -6597,7 +6603,8 @@ gincost_scalararrayopexpr(PlannerInfo *root,
 			/* We ignore array elements that are unsatisfiable patterns */
 			numPossible++;
 
-			if (elemcounts.haveFullScan)
+			if (elemcounts.attHasFullScan[indexcol] &&
+				!elemcounts.attHasNormalScan[indexcol])
 			{
 				/*
 				 * Full index scan will be required.  We treat this as if
@@ -6654,6 +6661,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				numEntries;
 	GinQualCounts counts;
 	bool		matchPossible;
+	bool		fullIndexScan;
 	double		partialScale;
 	double		entryPagesFetched,
 				dataPagesFetched,
@@ -6665,6 +6673,7 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	Relation	indexRel;
 	GinStatsData ginStats;
 	ListCell   *lc;
+	int			i;
 
 	/*
 	 * Obtain statistical information from the meta page, if possible.  Else
@@ -6821,7 +6830,23 @@ gincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 		return;
 	}
 
-	if (counts.haveFullScan || indexQuals == NIL)
+	/*
+	 * If attribute has a full scan and at the same time doesn't have normal
+	 * scan, then we'll have to scan all non-null entries of that attribute.
+	 * Currently, we don't have per-attribute statistics for GIN.  Thus, we
+	 * must assume the whole GIN index has to be scanned in this case.
+	 */
+	fullIndexScan = false;
+	for (i = 0; i < index->nkeycolumns; i++)
+	{
+		if (counts.attHasFullScan[i] && !counts.attHasNormalScan[i])
+		{
+			fullIndexScan = true;
+			break;
+		}
+	}
+
+	if (fullIndexScan || indexQuals == NIL)
 	{
 		/*
 		 * Full index scan will be required.  We treat this as if every key in

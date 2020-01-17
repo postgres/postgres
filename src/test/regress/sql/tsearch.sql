@@ -111,6 +111,15 @@ SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
 SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
 
+-- Test optimization of non-empty GIN_SEARCH_MODE_ALL queries
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qh';
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr' AND a @@ '!qh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr' AND a @@ '!qh';
+
 RESET enable_seqscan;
 
 INSERT INTO test_tsvector VALUES ('???', 'DFG:1A,2B,6C,10 FGH');

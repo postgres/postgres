@@ -337,6 +337,41 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
    508
 (1 row)
 
+-- Test optimization of non-empty GIN_SEARCH_MODE_ALL queries
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qh';
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_tsvector
+         Recheck Cond: (a @@ '!''qh'''::tsquery)
+         ->  Bitmap Index Scan on wowidx
+               Index Cond: (a @@ '!''qh'''::tsquery)
+(5 rows)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qh';
+ count 
+-------
+   410
+(1 row)
+
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr' AND a @@ '!qh';
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_tsvector
+         Recheck Cond: ((a @@ '''wr'''::tsquery) AND (a @@ '!''qh'''::tsquery))
+         ->  Bitmap Index Scan on wowidx
+               Index Cond: ((a @@ '''wr'''::tsquery) AND (a @@ '!''qh'''::tsquery))
+(5 rows)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr' AND a @@ '!qh';
+ count 
+-------
+    60
+(1 row)
+
 RESET enable_seqscan;
 INSERT INTO test_tsvector VALUES ('???', 'DFG:1A,2B,6C,10 FGH');
 SELECT * FROM ts_stat('SELECT a FROM test_tsvector') ORDER BY ndoc DESC, nentry DESC, word LIMIT 10;
