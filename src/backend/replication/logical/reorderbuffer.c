@@ -1974,21 +1974,6 @@ ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid)
 
 		if (TransactionIdPrecedes(txn->xid, oldestRunningXid))
 		{
-			/*
-			 * We set final_lsn on a transaction when we decode its commit or
-			 * abort record, but we never see those records for crashed
-			 * transactions.  To ensure cleanup of these transactions, set
-			 * final_lsn to that of their last change; this causes
-			 * ReorderBufferRestoreCleanup to do the right thing.
-			 */
-			if (rbtxn_is_serialized(txn) && txn->final_lsn == 0)
-			{
-				ReorderBufferChange *last =
-				dlist_tail_element(ReorderBufferChange, node, &txn->changes);
-
-				txn->final_lsn = last->lsn;
-			}
-
 			elog(DEBUG2, "aborting old transaction %u", txn->xid);
 
 			/* remove potential on-disk data, and deallocate this tx */
@@ -2623,8 +2608,7 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 				sz += sizeof(SnapshotData) +
 					sizeof(TransactionId) * snap->xcnt +
-					sizeof(TransactionId) * snap->subxcnt
-					;
+					sizeof(TransactionId) * snap->subxcnt;
 
 				/* make sure we have enough space */
 				ReorderBufferSerializeReserve(rb, sz);
@@ -2696,6 +2680,17 @@ ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 						txn->xid)));
 	}
 	pgstat_report_wait_end();
+
+	/*
+	 * Keep the transaction's final_lsn up to date with each change we send to
+	 * disk, so that ReorderBufferRestoreCleanup works correctly.  (We used to
+	 * only do this on commit and abort records, but that doesn't work if a
+	 * system crash leaves a transaction without its abort record).
+	 *
+	 * Make sure not to move it backwards.
+	 */
+	if (txn->final_lsn < change->lsn)
+		txn->final_lsn = change->lsn;
 
 	Assert(ondisk->change.action == change->action);
 }
