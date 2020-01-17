@@ -179,9 +179,10 @@ typedef struct ReorderBufferTXN
 	 * * prepared transaction commit
 	 * * plain abort record
 	 * * prepared transaction abort
-	 * * error during decoding
-	 * * for a crashed transaction, the LSN of the last change, regardless of
-	 *   what it was.
+	 *
+	 * This can also become set to earlier values than transaction end when
+	 * a transaction is spilled to disk; specifically it's set to the LSN of
+	 * the latest change written to disk so far.
 	 * ----
 	 */
 	XLogRecPtr	final_lsn;
