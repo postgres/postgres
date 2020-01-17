@@ -12232,6 +12232,9 @@ table2-mapping
    <primary>jsonb_set</primary>
   </indexterm>
   <indexterm>
+   <primary>jsonb_set_lax</primary>
+  </indexterm>
+  <indexterm>
    <primary>jsonb_insert</primary>
   </indexterm>
   <indexterm>
@@ -12543,6 +12546,26 @@ table2-mapping
          </para></entry>
        <entry><para><literal>[{"f1":[2,3,4],"f2":null},2,null,3]</literal>
          </para><para><literal>[{"f1": 1, "f2": null, "f3": [2, 3, 4]}, 2]</literal>
+        </para></entry>
+       </row>
+      <row>
+       <entry><para><literal>jsonb_set_lax(target jsonb, path text[], new_value jsonb <optional>, create_missing boolean</optional> <optional>, null_value_treatment text</optional>)</literal>
+         </para></entry>
+       <entry><para><type>jsonb</type></para></entry>
+       <entry>
+        If <replaceable>new_value</replaceable> is not <literal>null</literal>,
+        behaves identically to <literal>jsonb_set</literal>. Otherwise behaves
+        according to the value of <replaceable>null_value_treatment</replaceable>
+        which must be one of <literal>'raise_exception'</literal>,
+        <literal>'use_json_null'</literal>, <literal>'delete_key'</literal>, or
+        <literal>'return_target'</literal>. The default is
+        <literal>'use_json_null'</literal>.
+       </entry>
+       <entry><para><literal>jsonb_set_lax('[{"f1":1,"f2":null},2,null,3]', '{0,f1}',null)</literal>
+         </para><para><literal>jsonb_set_lax('[{"f1":99,"f2":null},2]', '{0,f3}',null, true, 'return_target')</literal>
+         </para></entry>
+       <entry><para><literal>[{"f1":null,"f2":null},2,null,3]</literal>
+         </para><para><literal>[{"f1": 99, "f2": null}, 2]</literal>
         </para></entry>
        </row>
       <row>
