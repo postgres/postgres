@@ -894,6 +894,33 @@ where s.i < 10 and (select val.x) < 110;
   10
 (17 rows)
 
+-- another variant of that (bug #16213)
+explain (verbose, costs off)
+select * from
+(values
+  (3 not in (select * from (values (1), (2)) ss1)),
+  (false)
+) ss;
+               QUERY PLAN               
+----------------------------------------
+ Values Scan on "*VALUES*"
+   Output: "*VALUES*".column1
+   SubPlan 1
+     ->  Values Scan on "*VALUES*_1"
+           Output: "*VALUES*_1".column1
+(5 rows)
+
+select * from
+(values
+  (3 not in (select * from (values (1), (2)) ss1)),
+  (false)
+) ss;
+ column1 
+---------
+ t
+ f
+(2 rows)
+
 --
 -- Check sane behavior with nested IN SubLinks
 --
