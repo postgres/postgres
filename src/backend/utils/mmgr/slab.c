@@ -70,6 +70,9 @@ typedef struct SlabContext
 	int			chunksPerBlock; /* number of chunks per block */
 	int			minFreeChunks;	/* min number of free chunks in any block */
 	int			nblocks;		/* number of blocks allocated */
+#ifdef MEMORY_CONTEXT_CHECKING
+	bool	   *freechunks;		/* bitmap of free chunks in a block */
+#endif
 	/* blocks with free space, grouped by number of free chunks: */
 	dlist_head	freelist[FLEXIBLE_ARRAY_MEMBER];
 } SlabContext;
@@ -188,6 +191,7 @@ SlabContextCreate(MemoryContext parent,
 	int			chunksPerBlock;
 	Size		fullChunkSize;
 	Size		freelistSize;
+	Size		headerSize;
 	SlabContext *slab;
 
 	StaticAssertStmt(offsetof(SlabChunk, slab) + sizeof(MemoryContext) ==
@@ -218,10 +222,22 @@ SlabContextCreate(MemoryContext parent,
 	/* make sure the chunks actually fit on the block	*/
 	Assert((fullChunkSize * chunksPerBlock) + sizeof(SlabBlock) <= blockSize);
 
+	/* Size of the memory context header */
+	headerSize = offsetof(SlabContext, freelist) + freelistSize;
+
+#ifdef MEMORY_CONTEXT_CHECKING
+	/*
+	 * With memory checking, we need to allocate extra space for the bitmap
+	 * of free chunks. The bitmap is an array of bools, so we don't need to
+	 * worry about alignment.
+	 */
+	headerSize += chunksPerBlock * sizeof(bool);
+#endif
+
 	/* Do the type-independent part of context creation */
 	slab = (SlabContext *)
 		MemoryContextCreate(T_SlabContext,
-							(offsetof(SlabContext, freelist) + freelistSize),
+							headerSize,
 							&SlabMethods,
 							parent,
 							name);
@@ -232,6 +248,12 @@ SlabContextCreate(MemoryContext parent,
 	slab->chunksPerBlock = chunksPerBlock;
 	slab->nblocks = 0;
 	slab->minFreeChunks = 0;
+
+#ifdef MEMORY_CONTEXT_CHECKING
+	/* set the freechunks pointer right after the freelists array */
+	slab->freechunks
+		= (bool *) slab + offsetof(SlabContext, freelist) + freelistSize;
+#endif
 
 	return (MemoryContext) slab;
 }
@@ -674,13 +696,9 @@ SlabCheck(MemoryContext context)
 	int			i;
 	SlabContext *slab = castNode(SlabContext, context);
 	char	   *name = slab->header.name;
-	char	   *freechunks;
 
 	Assert(slab);
 	Assert(slab->chunksPerBlock > 0);
-
-	/* bitmap of free chunks on a block */
-	freechunks = palloc(slab->chunksPerBlock * sizeof(bool));
 
 	/* walk all the freelists */
 	for (i = 0; i <= slab->chunksPerBlock; i++)
@@ -704,7 +722,7 @@ SlabCheck(MemoryContext context)
 					 name, block->nfree, block, i);
 
 			/* reset the bitmap of free chunks for this block */
-			memset(freechunks, 0, (slab->chunksPerBlock * sizeof(bool)));
+			memset(slab->freechunks, 0, (slab->chunksPerBlock * sizeof(bool)));
 			idx = block->firstFreeChunk;
 
 			/*
@@ -721,7 +739,7 @@ SlabCheck(MemoryContext context)
 
 				/* count the chunk as free, add it to the bitmap */
 				nfree++;
-				freechunks[idx] = true;
+				slab->freechunks[idx] = true;
 
 				/* read index of the next free chunk */
 				chunk = SlabBlockGetChunk(slab, block, idx);
@@ -732,7 +750,7 @@ SlabCheck(MemoryContext context)
 			for (j = 0; j < slab->chunksPerBlock; j++)
 			{
 				/* non-zero bit in the bitmap means chunk the chunk is used */
-				if (!freechunks[j])
+				if (!slab->freechunks[j])
 				{
 					SlabChunk  *chunk = SlabBlockGetChunk(slab, block, j);
 
