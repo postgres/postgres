@@ -204,6 +204,10 @@ static const char *show_log_file_mode(void);
 static const char *show_data_directory_mode(void);
 static bool check_backtrace_functions(char **newval, void **extra, GucSource source);
 static void assign_backtrace_functions(const char *newval, void *extra);
+static bool check_ssl_min_protocol_version(int *newval, void **extra,
+										   GucSource source);
+static bool check_ssl_max_protocol_version(int *newval, void **extra,
+										   GucSource source);
 static bool check_recovery_target_timeline(char **newval, void **extra, GucSource source);
 static void assign_recovery_target_timeline(const char *newval, void *extra);
 static bool check_recovery_target(char **newval, void **extra, GucSource source);
@@ -4594,7 +4598,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		&ssl_min_protocol_version,
 		PG_TLS1_2_VERSION,
 		ssl_protocol_versions_info + 1, /* don't allow PG_TLS_ANY */
-		NULL, NULL, NULL
+		check_ssl_min_protocol_version, NULL, NULL
 	},
 
 	{
@@ -4606,7 +4610,7 @@ static struct config_enum ConfigureNamesEnum[] =
 		&ssl_max_protocol_version,
 		PG_TLS_ANY,
 		ssl_protocol_versions_info,
-		NULL, NULL, NULL
+		check_ssl_max_protocol_version, NULL, NULL
 	},
 
 	/* End-of-list marker */
@@ -11601,6 +11605,49 @@ static void
 assign_backtrace_functions(const char *newval, void *extra)
 {
 	backtrace_symbol_list = (char *) extra;
+}
+
+static bool
+check_ssl_min_protocol_version(int *newval, void **extra, GucSource source)
+{
+	int			new_ssl_min_protocol_version = *newval;
+
+	/* PG_TLS_ANY is not supported for the minimum bound */
+	Assert(new_ssl_min_protocol_version > PG_TLS_ANY);
+
+	if (ssl_max_protocol_version &&
+		new_ssl_min_protocol_version > ssl_max_protocol_version)
+	{
+		GUC_check_errhint("\"%s\" cannot be higher than \"%s\".",
+						  "ssl_min_protocol_version",
+						  "ssl_max_protocol_version");
+		GUC_check_errcode(ERRCODE_INVALID_PARAMETER_VALUE);
+		return false;
+	}
+
+	return true;
+}
+
+static bool
+check_ssl_max_protocol_version(int *newval, void **extra, GucSource source)
+{
+	int			new_ssl_max_protocol_version = *newval;
+
+	/* if PG_TLS_ANY, there is no need to check the bounds */
+	if (new_ssl_max_protocol_version == PG_TLS_ANY)
+		return true;
+
+	if (ssl_min_protocol_version &&
+		ssl_min_protocol_version > new_ssl_max_protocol_version)
+	{
+		GUC_check_errhint("\"%s\" cannot be lower than \"%s\".",
+						  "ssl_max_protocol_version",
+						  "ssl_min_protocol_version");
+		GUC_check_errcode(ERRCODE_INVALID_PARAMETER_VALUE);
+		return false;
+	}
+
+	return true;
 }
 
 static bool

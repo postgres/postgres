@@ -13,7 +13,7 @@ use SSLServer;
 
 if ($ENV{with_openssl} eq 'yes')
 {
-	plan tests => 84;
+	plan tests => 86;
 }
 else
 {
@@ -96,6 +96,24 @@ command_ok(
 	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
 	'restart succeeds with password-protected key file');
 $node->_update_pid(1);
+
+# Test compatibility of SSL protocols.
+# TLSv1.1 is lower than TLSv1.2, so it won't work.
+$node->append_conf(
+	'postgresql.conf',
+	qq{ssl_min_protocol_version='TLSv1.2'
+ssl_max_protocol_version='TLSv1.1'});
+command_fails(
+	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
+	'restart fails with incorrect SSL protocol bounds');
+# Go back to the defaults, this works.
+$node->append_conf(
+	'postgresql.conf',
+	qq{ssl_min_protocol_version='TLSv1.2'
+ssl_max_protocol_version=''});
+command_ok(
+	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
+	'restart succeeds with correct SSL protocol bounds');
 
 ### Run client-side tests.
 ###
