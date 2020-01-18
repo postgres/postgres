@@ -1455,8 +1455,7 @@
     and <type>text</type>.  Unless otherwise noted, all
     of the functions listed below work on all of these types, but be
     wary of potential effects of automatic space-padding when using the
-    <type>character</type> type.  Some functions also exist
-    natively for the bit-string types.
+    <type>character</type> type.
    </para>
 
    <para>
@@ -1628,7 +1627,8 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Extract substring
+        Extract substring (provide at least one of <literal>from</literal>
+        and <literal>for</literal>)
        </entry>
        <entry><literal>substring('Thomas' from 2 for 3)</literal></entry>
        <entry><literal>hom</literal></entry>
@@ -1638,9 +1638,9 @@
        <entry><literal><function>substring(<parameter>string</parameter> from <replaceable>pattern</replaceable>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>
-        Extract substring matching POSIX regular expression. See
+        Extract substring matching POSIX regular expression (see
         <xref linkend="functions-matching"/> for more information on pattern
-        matching.
+        matching)
        </entry>
        <entry><literal>substring('Thomas' from '...$')</literal></entry>
        <entry><literal>mas</literal></entry>
@@ -1650,9 +1650,9 @@
        <entry><literal><function>substring(<parameter>string</parameter> from <replaceable>pattern</replaceable> for <replaceable>escape</replaceable>)</function></literal></entry>
        <entry><type>text</type></entry>
        <entry>
-        Extract substring matching <acronym>SQL</acronym> regular expression.
-        See <xref linkend="functions-matching"/> for more information on
-        pattern matching.
+        Extract substring matching <acronym>SQL</acronym> regular expression
+        (see <xref linkend="functions-matching"/> for more information on
+        pattern matching)
        </entry>
        <entry><literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal></entry>
        <entry><literal>oma</literal></entry>
@@ -1682,9 +1682,8 @@
        <entry>
         <literal><function>trim(<optional>leading | trailing
         | both</optional> <optional>from</optional>
-        <parameter>string</parameter>
-        <optional>, <parameter>characters</parameter></optional>
-        )</function></literal>
+        <parameter>string</parameter> <optional>,
+        <parameter>characters</parameter></optional>)</function></literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>
@@ -1823,101 +1822,6 @@
       <row>
        <entry>
         <indexterm>
-         <primary>convert</primary>
-        </indexterm>
-        <literal><function>convert(<parameter>string</parameter> <type>bytea</type>,
-        <parameter>src_encoding</parameter> <type>name</type>,
-        <parameter>dest_encoding</parameter> <type>name</type>)</function></literal>
-       </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Convert string to <parameter>dest_encoding</parameter>.  The
-        original encoding is specified by
-        <parameter>src_encoding</parameter>. The
-        <parameter>string</parameter> must be valid in this encoding.
-        Conversions can be defined by <command>CREATE CONVERSION</command>.
-        Also there are some predefined conversions. See <xref
-        linkend="conversion-names"/> for available conversions.
-       </entry>
-       <entry><literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
-       <entry><literal>text_in_utf8</literal> represented in Latin-1
-       encoding (ISO 8859-1)</entry>
-      </row>
-
-      <row>
-       <entry>
-        <indexterm>
-         <primary>convert_from</primary>
-        </indexterm>
-        <literal><function>convert_from(<parameter>string</parameter> <type>bytea</type>,
-        <parameter>src_encoding</parameter> <type>name</type>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Convert string to the database encoding.  The original encoding
-        is specified by <parameter>src_encoding</parameter>. The
-        <parameter>string</parameter> must be valid in this encoding.
-       </entry>
-       <entry><literal>convert_from('text_in_utf8', 'UTF8')</literal></entry>
-       <entry><literal>text_in_utf8</literal> represented in the current database encoding</entry>
-      </row>
-
-      <row>
-       <entry>
-        <indexterm>
-         <primary>convert_to</primary>
-        </indexterm>
-        <literal><function>convert_to(<parameter>string</parameter> <type>text</type>,
-        <parameter>dest_encoding</parameter> <type>name</type>)</function></literal>
-       </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Convert string to <parameter>dest_encoding</parameter>.
-       </entry>
-       <entry><literal>convert_to('some text', 'UTF8')</literal></entry>
-       <entry><literal>some text</literal> represented in the UTF8 encoding</entry>
-      </row>
-
-      <row>
-       <entry>
-        <indexterm>
-         <primary>decode</primary>
-        </indexterm>
-        <literal><function>decode(<parameter>string</parameter> <type>text</type>,
-        <parameter>format</parameter> <type>text</type>)</function></literal>
-       </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Decode binary data from textual representation in <parameter>string</parameter>.
-        Options for <parameter>format</parameter> are same as in <function>encode</function>.
-       </entry>
-       <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
-       <entry><literal>\x3132330001</literal></entry>
-      </row>
-
-      <row>
-       <entry>
-        <indexterm>
-         <primary>encode</primary>
-        </indexterm>
-        <literal><function>encode(<parameter>data</parameter> <type>bytea</type>,
-        <parameter>format</parameter> <type>text</type>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Encode binary data into a textual representation.  Supported
-        formats are: <literal>base64</literal>, <literal>hex</literal>, <literal>escape</literal>.
-        <literal>escape</literal> converts zero bytes and high-bit-set bytes to
-        octal sequences (<literal>\</literal><replaceable>nnn</replaceable>) and
-        doubles backslashes.
-       </entry>
-       <entry><literal>encode('123\000\001', 'base64')</literal></entry>
-       <entry><literal>MTIzAAE=</literal></entry>
-      </row>
-
-      <row>
-       <entry id="format">
-        <indexterm>
          <primary>format</primary>
         </indexterm>
         <literal><function>format</function>(<parameter>formatstr</parameter> <type>text</type>
@@ -1955,13 +1859,14 @@
         <indexterm>
          <primary>left</primary>
         </indexterm>
-        <literal><function>left(<parameter>str</parameter> <type>text</type>,
+        <literal><function>left(<parameter>string</parameter> <type>text</type>,
         <parameter>n</parameter> <type>int</type>)</function></literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Return first <replaceable>n</replaceable> characters in the string. When <replaceable>n</replaceable>
-        is negative, return all but last |<replaceable>n</replaceable>| characters.
+        Return first <replaceable>n</replaceable> characters in the
+        string, or when <replaceable>n</replaceable> is negative, return
+        all but last |<replaceable>n</replaceable>| characters
         </entry>
        <entry><literal>left('abcde', 2)</literal></entry>
        <entry><literal>ab</literal></entry>
@@ -1983,19 +1888,6 @@
       </row>
 
       <row>
-       <entry><literal><function>length(<parameter>string</parameter> <type>bytea</type>,
-        <parameter>encoding</parameter> <type>name</type> )</function></literal></entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Number of characters in <parameter>string</parameter> in the given
-        <parameter>encoding</parameter>. The <parameter>string</parameter>
-        must be valid in this encoding.
-       </entry>
-       <entry><literal>length('jose', 'UTF8')</literal></entry>
-       <entry><literal>4</literal></entry>
-      </row>
-
-      <row>
        <entry>
         <indexterm>
          <primary>lpad</primary>
@@ -2006,7 +1898,7 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Fill up the <parameter>string</parameter> to length
+        Extend the <parameter>string</parameter> to length
         <parameter>length</parameter> by prepending the characters
         <parameter>fill</parameter> (a space by default).  If the
         <parameter>string</parameter> is already longer than
@@ -2044,8 +1936,8 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Calculates the MD5 hash of <parameter>string</parameter>,
-        returning the result in hexadecimal
+        MD5 <link linkend="functions-hash-note">hash</link>, with
+        the result written in hexadecimal
        </entry>
        <entry><literal>md5('abc')</literal></entry>
        <entry><literal>900150983cd24fb0 d6963f7d28e17f72</literal></entry>
@@ -2182,8 +2074,8 @@
        <entry><type>text[]</type></entry>
        <entry>
         Return captured substring(s) resulting from the first match of a POSIX
-        regular expression to the <parameter>string</parameter>. See
-        <xref linkend="functions-posix-regexp"/> for more information.
+        regular expression to the <parameter>string</parameter> (see
+        <xref linkend="functions-posix-regexp"/> for more information)
        </entry>
        <entry><literal>regexp_match('foobarbequebaz', '(bar)(beque)')</literal></entry>
        <entry><literal>{bar,beque}</literal></entry>
@@ -2199,8 +2091,8 @@
        <entry><type>setof text[]</type></entry>
        <entry>
         Return captured substring(s) resulting from matching a POSIX regular
-        expression to the <parameter>string</parameter>. See
-        <xref linkend="functions-posix-regexp"/> for more information.
+        expression to the <parameter>string</parameter> (see
+        <xref linkend="functions-posix-regexp"/> for more information)
        </entry>
        <entry><literal>regexp_matches('foobarbequebaz', 'ba.', 'g')</literal></entry>
        <entry><literal>{bar}</literal><para><literal>{baz}</literal></para> (2 rows)</entry>
@@ -2215,8 +2107,8 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Replace substring(s) matching a POSIX regular expression. See
-        <xref linkend="functions-posix-regexp"/> for more information.
+        Replace substring(s) matching a POSIX regular expression (see
+        <xref linkend="functions-posix-regexp"/> for more information)
        </entry>
        <entry><literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal></entry>
        <entry><literal>ThM</literal></entry>
@@ -2232,8 +2124,8 @@
        <entry><type>text[]</type></entry>
        <entry>
         Split <parameter>string</parameter> using a POSIX regular expression as
-        the delimiter.  See <xref linkend="functions-posix-regexp"/> for more
-        information.
+        the delimiter (see <xref linkend="functions-posix-regexp"/> for more
+        information)
        </entry>
        <entry><literal>regexp_split_to_array('hello world', '\s+')</literal></entry>
        <entry><literal>{hello,world}</literal></entry>
@@ -2249,8 +2141,8 @@
        <entry><type>setof text</type></entry>
        <entry>
         Split <parameter>string</parameter> using a POSIX regular expression as
-        the delimiter.  See <xref linkend="functions-posix-regexp"/> for more
-        information.
+        the delimiter (see <xref linkend="functions-posix-regexp"/> for more
+        information)
        </entry>
        <entry><literal>regexp_split_to_table('hello world', '\s+')</literal></entry>
        <entry><literal>hello</literal><para><literal>world</literal></para> (2 rows)</entry>
@@ -2296,7 +2188,7 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Return reversed string.
+        Reverse the order of the characters in <parameter>string</parameter>
        </entry>
        <entry><literal>reverse('abcde')</literal></entry>
        <entry><literal>edcba</literal></entry>
@@ -2307,13 +2199,14 @@
         <indexterm>
          <primary>right</primary>
         </indexterm>
-        <literal><function>right(<parameter>str</parameter> <type>text</type>,
+        <literal><function>right(<parameter>string</parameter> <type>text</type>,
          <parameter>n</parameter> <type>int</type>)</function></literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Return last <replaceable>n</replaceable> characters in the string. When <replaceable>n</replaceable>
-        is negative, return all but first |<replaceable>n</replaceable>| characters.
+        Return last <replaceable>n</replaceable> characters in the string,
+        or when <replaceable>n</replaceable> is negative, return all but
+        first |<replaceable>n</replaceable>| characters
        </entry>
        <entry><literal>right('abcde', 2)</literal></entry>
        <entry><literal>de</literal></entry>
@@ -2330,7 +2223,7 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Fill up the <parameter>string</parameter> to length
+        Extend the <parameter>string</parameter> to length
         <parameter>length</parameter> by appending the characters
         <parameter>fill</parameter> (a space by default).  If the
         <parameter>string</parameter> is already longer than
@@ -2418,7 +2311,8 @@
        </entry>
        <entry><type>bool</type></entry>
        <entry>
-        Returns true if <parameter>string</parameter> starts with <parameter>prefix</parameter>.
+        Return true if <parameter>string</parameter> starts
+        with <parameter>prefix</parameter>
        </entry>
        <entry><literal>starts_with('alphabet', 'alph')</literal></entry>
        <entry><literal>t</literal></entry>
@@ -2497,780 +2391,11 @@
    </para>
 
    <para>
-   See also the aggregate function <function>string_agg</function> in
-   <xref linkend="functions-aggregate"/>.
+    See also the aggregate function <function>string_agg</function> in
+    <xref linkend="functions-aggregate"/>, and the functions for
+    converting between strings and the <type>bytea</type> type in
+    <xref linkend="functions-binarystring-conversions"/>.
    </para>
-
-   <table id="conversion-names">
-    <title>Built-in Conversions</title>
-    <tgroup cols="3">
-     <thead>
-      <row>
-       <entry>Conversion Name
-        <footnote>
-         <para>
-          The conversion names follow a standard naming scheme: The
-          official name of the source encoding with all
-          non-alphanumeric characters replaced by underscores, followed
-          by <literal>_to_</literal>, followed by the similarly processed
-          destination encoding name. Therefore, the names might deviate
-          from the customary encoding names.
-         </para>
-        </footnote>
-       </entry>
-       <entry>Source Encoding</entry>
-       <entry>Destination Encoding</entry>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry><literal>big5_to_euc_tw</literal></entry>
-       <entry><literal>BIG5</literal></entry>
-       <entry><literal>EUC_TW</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>big5_to_mic</literal></entry>
-       <entry><literal>BIG5</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>big5_to_utf8</literal></entry>
-       <entry><literal>BIG5</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_cn_to_mic</literal></entry>
-       <entry><literal>EUC_CN</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_cn_to_utf8</literal></entry>
-       <entry><literal>EUC_CN</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_jp_to_mic</literal></entry>
-       <entry><literal>EUC_JP</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_jp_to_sjis</literal></entry>
-       <entry><literal>EUC_JP</literal></entry>
-       <entry><literal>SJIS</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_jp_to_utf8</literal></entry>
-       <entry><literal>EUC_JP</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_kr_to_mic</literal></entry>
-       <entry><literal>EUC_KR</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_kr_to_utf8</literal></entry>
-       <entry><literal>EUC_KR</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_tw_to_big5</literal></entry>
-       <entry><literal>EUC_TW</literal></entry>
-       <entry><literal>BIG5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_tw_to_mic</literal></entry>
-       <entry><literal>EUC_TW</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_tw_to_utf8</literal></entry>
-       <entry><literal>EUC_TW</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>gb18030_to_utf8</literal></entry>
-       <entry><literal>GB18030</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>gbk_to_utf8</literal></entry>
-       <entry><literal>GBK</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_10_to_utf8</literal></entry>
-       <entry><literal>LATIN6</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_13_to_utf8</literal></entry>
-       <entry><literal>LATIN7</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_14_to_utf8</literal></entry>
-       <entry><literal>LATIN8</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_15_to_utf8</literal></entry>
-       <entry><literal>LATIN9</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_16_to_utf8</literal></entry>
-       <entry><literal>LATIN10</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_1_to_mic</literal></entry>
-       <entry><literal>LATIN1</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_1_to_utf8</literal></entry>
-       <entry><literal>LATIN1</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_2_to_mic</literal></entry>
-       <entry><literal>LATIN2</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_2_to_utf8</literal></entry>
-       <entry><literal>LATIN2</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_2_to_windows_1250</literal></entry>
-       <entry><literal>LATIN2</literal></entry>
-       <entry><literal>WIN1250</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_3_to_mic</literal></entry>
-       <entry><literal>LATIN3</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_3_to_utf8</literal></entry>
-       <entry><literal>LATIN3</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_4_to_mic</literal></entry>
-       <entry><literal>LATIN4</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_4_to_utf8</literal></entry>
-       <entry><literal>LATIN4</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_5_to_koi8_r</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_5_to_mic</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_5_to_utf8</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_5_to_windows_1251</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_5_to_windows_866</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_6_to_utf8</literal></entry>
-       <entry><literal>ISO_8859_6</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_7_to_utf8</literal></entry>
-       <entry><literal>ISO_8859_7</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_8_to_utf8</literal></entry>
-       <entry><literal>ISO_8859_8</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>iso_8859_9_to_utf8</literal></entry>
-       <entry><literal>LATIN5</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>johab_to_utf8</literal></entry>
-       <entry><literal>JOHAB</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>koi8_r_to_iso_8859_5</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>koi8_r_to_mic</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>koi8_r_to_utf8</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>koi8_r_to_windows_1251</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>koi8_r_to_windows_866</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>koi8_u_to_utf8</literal></entry>
-       <entry><literal>KOI8U</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_big5</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>BIG5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_euc_cn</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>EUC_CN</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_euc_jp</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>EUC_JP</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_euc_kr</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>EUC_KR</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_euc_tw</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>EUC_TW</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_iso_8859_1</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>LATIN1</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_iso_8859_2</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>LATIN2</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_iso_8859_3</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>LATIN3</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_iso_8859_4</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>LATIN4</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_iso_8859_5</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_koi8_r</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_sjis</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>SJIS</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_windows_1250</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>WIN1250</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_windows_1251</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>mic_to_windows_866</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>sjis_to_euc_jp</literal></entry>
-       <entry><literal>SJIS</literal></entry>
-       <entry><literal>EUC_JP</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>sjis_to_mic</literal></entry>
-       <entry><literal>SJIS</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>sjis_to_utf8</literal></entry>
-       <entry><literal>SJIS</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1258_to_utf8</literal></entry>
-       <entry><literal>WIN1258</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>uhc_to_utf8</literal></entry>
-       <entry><literal>UHC</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_big5</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>BIG5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_euc_cn</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>EUC_CN</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_euc_jp</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>EUC_JP</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_euc_kr</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>EUC_KR</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_euc_tw</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>EUC_TW</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_gb18030</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>GB18030</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_gbk</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>GBK</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_1</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN1</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_10</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN6</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_13</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN7</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_14</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_15</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN9</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_16</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN10</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_2</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN2</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_3</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN3</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_4</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN4</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_5</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_6</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>ISO_8859_6</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_7</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>ISO_8859_7</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_8</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>ISO_8859_8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_iso_8859_9</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>LATIN5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_johab</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>JOHAB</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_koi8_r</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_koi8_u</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>KOI8U</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_sjis</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>SJIS</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1258</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1258</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_uhc</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>UHC</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1250</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1250</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1251</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1252</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1252</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1253</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1253</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1254</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1254</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1255</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1255</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1256</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1256</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_1257</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN1257</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_866</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_windows_874</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>WIN874</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1250_to_iso_8859_2</literal></entry>
-       <entry><literal>WIN1250</literal></entry>
-       <entry><literal>LATIN2</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1250_to_mic</literal></entry>
-       <entry><literal>WIN1250</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1250_to_utf8</literal></entry>
-       <entry><literal>WIN1250</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1251_to_iso_8859_5</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1251_to_koi8_r</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1251_to_mic</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1251_to_utf8</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1251_to_windows_866</literal></entry>
-       <entry><literal>WIN1251</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1252_to_utf8</literal></entry>
-       <entry><literal>WIN1252</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_1256_to_utf8</literal></entry>
-       <entry><literal>WIN1256</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_866_to_iso_8859_5</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-       <entry><literal>ISO_8859_5</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_866_to_koi8_r</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-       <entry><literal>KOI8R</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_866_to_mic</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-       <entry><literal>MULE_INTERNAL</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_866_to_utf8</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_866_to_windows_1251</literal></entry>
-       <entry><literal>WIN866</literal></entry>
-       <entry><literal>WIN</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>windows_874_to_utf8</literal></entry>
-       <entry><literal>WIN874</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_jis_2004_to_utf8</literal></entry>
-       <entry><literal>EUC_JIS_2004</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_euc_jis_2004</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>EUC_JIS_2004</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>shift_jis_2004_to_utf8</literal></entry>
-       <entry><literal>SHIFT_JIS_2004</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>utf8_to_shift_jis_2004</literal></entry>
-       <entry><literal>UTF8</literal></entry>
-       <entry><literal>SHIFT_JIS_2004</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>euc_jis_2004_to_shift_jis_2004</literal></entry>
-       <entry><literal>EUC_JIS_2004</literal></entry>
-       <entry><literal>SHIFT_JIS_2004</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal>shift_jis_2004_to_euc_jis_2004</literal></entry>
-       <entry><literal>SHIFT_JIS_2004</literal></entry>
-       <entry><literal>EUC_JIS_2004</literal></entry>
-      </row>
-
-     </tbody>
-    </tgroup>
-   </table>
 
    <sect2 id="functions-string-format">
     <title><function>format</function></title>
@@ -3494,7 +2619,9 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
    <para>
     This section describes functions and operators for examining and
-    manipulating values of type <type>bytea</type>.
+    manipulating binary strings, that is values of type <type>bytea</type>.
+    Many of these are equivalent, in purpose and syntax, to the
+    text-string functions described in the previous section.
    </para>
 
    <para>
@@ -3512,6 +2639,8 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
      The sample results shown on this page assume that the server parameter
      <link linkend="guc-bytea-output"><varname>bytea_output</varname></link> is set
      to <literal>escape</literal> (the traditional PostgreSQL format).
+     The output will look different when using the default setting
+     (<literal>hex</literal>).
     </para>
    </note>
 
@@ -3530,11 +2659,11 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
      <tbody>
       <row>
-       <entry><literal><parameter>string</parameter> <literal>||</literal>
-        <parameter>string</parameter></literal></entry>
+       <entry><literal><parameter>bytes</parameter> <literal>||</literal>
+        <parameter>bytes</parameter></literal></entry>
        <entry> <type>bytea</type> </entry>
        <entry>
-        String concatenation
+        Binary string concatenation
         <indexterm>
          <primary>binary string</primary>
          <secondary>concatenation</secondary>
@@ -3547,9 +2676,22 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       <row>
        <entry>
         <indexterm>
+         <primary>bit_length</primary>
+        </indexterm>
+        <literal><function>bit_length(<parameter>bytes</parameter>)</function></literal>
+       </entry>
+       <entry><type>int</type></entry>
+       <entry>Number of bits in binary string</entry>
+       <entry><literal>bit_length('jo\000se':bytea)</literal></entry>
+       <entry><literal>40</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>octet_length</primary>
         </indexterm>
-        <literal><function>octet_length(<parameter>string</parameter>)</function></literal>
+        <literal><function>octet_length(<parameter>bytes</parameter>)</function></literal>
        </entry>
        <entry><type>int</type></entry>
        <entry>Number of bytes in binary string</entry>
@@ -3562,7 +2704,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>overlay</primary>
         </indexterm>
-        <literal><function>overlay(<parameter>string</parameter> placing <parameter>string</parameter> from <type>int</type> <optional>for <type>int</type></optional>)</function></literal>
+        <literal><function>overlay(<parameter>bytes</parameter> placing <parameter>bytes</parameter> from <type>int</type> <optional>for <type>int</type></optional>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
@@ -3577,7 +2719,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>position</primary>
         </indexterm>
-        <literal><function>position(<parameter>substring</parameter> in <parameter>string</parameter>)</function></literal>
+        <literal><function>position(<parameter>bytesubstring</parameter> in <parameter>bytes</parameter>)</function></literal>
        </entry>
        <entry><type>int</type></entry>
        <entry>Location of specified substring</entry>
@@ -3590,11 +2732,12 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>substring</primary>
         </indexterm>
-        <literal><function>substring(<parameter>string</parameter> <optional>from <type>int</type></optional> <optional>for <type>int</type></optional>)</function></literal>
+        <literal><function>substring(<parameter>bytes</parameter> <optional>from <type>int</type></optional> <optional>for <type>int</type></optional>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Extract substring
+        Extract substring (provide at least one of <literal>from</literal>
+        and <literal>for</literal>)
        </entry>
        <entry><literal>substring('Th\000omas'::bytea from 2 for 3)</literal></entry>
        <entry><literal>h\000o</literal></entry>
@@ -3606,16 +2749,30 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
          <primary>trim</primary>
         </indexterm>
         <literal><function>trim(<optional>both</optional>
-        <parameter>bytes</parameter> from
-        <parameter>string</parameter>)</function></literal>
+        <parameter>bytesremoved</parameter> from
+        <parameter>bytes</parameter>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
         Remove the longest string containing only bytes appearing in
-        <parameter>bytes</parameter> from the start
-        and end of <parameter>string</parameter>
+        <parameter>bytesremoved</parameter> from the start
+        and end of <parameter>bytes</parameter>
        </entry>
        <entry><literal>trim('\000\001'::bytea from '\000Tom\001'::bytea)</literal></entry>
+       <entry><literal>Tom</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>trim(<optional>both</optional> <optional>from</optional>
+        <parameter>bytes</parameter>,
+        <parameter>bytesremoved</parameter>)</function></literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Non-standard syntax for <function>trim()</function>
+       </entry>
+       <entry><literal>trim(both from 'yxTomxx'::bytea, 'xyz'::bytea)</literal></entry>
        <entry><literal>Tom</literal></entry>
       </row>
      </tbody>
@@ -3649,54 +2806,17 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>btrim</primary>
         </indexterm>
-        <literal><function>btrim(<parameter>string</parameter>
-        <type>bytea</type>, <parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+        <literal><function>btrim(<parameter>bytes</parameter>
+        <type>bytea</type>, <parameter>bytesremoved</parameter> <type>bytea</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
         Remove the longest string containing only bytes appearing in
-        <parameter>bytes</parameter> from the start and end of
-        <parameter>string</parameter>
-      </entry>
+        <parameter>bytesremoved</parameter> from the start and end of
+        <parameter>bytes</parameter>
+       </entry>
       <entry><literal>btrim('\000trim\001'::bytea, '\000\001'::bytea)</literal></entry>
       <entry><literal>trim</literal></entry>
-     </row>
-
-     <row>
-      <entry>
-        <indexterm>
-         <primary>decode</primary>
-        </indexterm>
-       <literal><function>decode(<parameter>string</parameter> <type>text</type>,
-       <parameter>format</parameter> <type>text</type>)</function></literal>
-      </entry>
-      <entry><type>bytea</type></entry>
-      <entry>
-       Decode binary data from textual representation in <parameter>string</parameter>.
-       Options for <parameter>format</parameter> are same as in <function>encode</function>.
-      </entry>
-      <entry><literal>decode('123\000456', 'escape')</literal></entry>
-      <entry><literal>123\000456</literal></entry>
-     </row>
-
-     <row>
-      <entry>
-        <indexterm>
-         <primary>encode</primary>
-        </indexterm>
-       <literal><function>encode(<parameter>data</parameter> <type>bytea</type>,
-       <parameter>format</parameter> <type>text</type>)</function></literal>
-      </entry>
-      <entry><type>text</type></entry>
-      <entry>
-       Encode binary data into a textual representation.  Supported
-       formats are: <literal>base64</literal>, <literal>hex</literal>, <literal>escape</literal>.
-       <literal>escape</literal> converts zero bytes and high-bit-set bytes to
-       octal sequences (<literal>\</literal><replaceable>nnn</replaceable>) and
-       doubles backslashes.
-      </entry>
-      <entry><literal>encode('123\000456'::bytea, 'escape')</literal></entry>
-      <entry><literal>123\000456</literal></entry>
      </row>
 
       <row>
@@ -3704,11 +2824,12 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>get_bit</primary>
         </indexterm>
-        <literal><function>get_bit(<parameter>string</parameter>, <parameter>offset</parameter>)</function></literal>
+        <literal><function>get_bit(<parameter>bytes</parameter> <type>bytea</type>, <parameter>offset</parameter> <type>int</type>)</function></literal>
        </entry>
        <entry><type>int</type></entry>
        <entry>
-        Extract bit from string
+        Extract <link linkend="functions-zerobased-note">n'th</link> bit
+        from binary string
        </entry>
        <entry><literal>get_bit('Th\000omas'::bytea, 45)</literal></entry>
        <entry><literal>1</literal></entry>
@@ -3719,67 +2840,82 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>get_byte</primary>
         </indexterm>
-        <literal><function>get_byte(<parameter>string</parameter>, <parameter>offset</parameter>)</function></literal>
+        <literal><function>get_byte(<parameter>bytes</parameter> <type>bytea</type>, <parameter>offset</parameter> <type>int</type>)</function></literal>
        </entry>
        <entry><type>int</type></entry>
        <entry>
-        Extract byte from string
+        Extract <link linkend="functions-zerobased-note">n'th</link> byte
+        from binary string
        </entry>
        <entry><literal>get_byte('Th\000omas'::bytea, 4)</literal></entry>
        <entry><literal>109</literal></entry>
       </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>length</primary>
-       </indexterm>
-       <literal><function>length(<parameter>string</parameter>)</function></literal>
-      </entry>
-      <entry><type>int</type></entry>
-      <entry>
-       Length of binary string
-       <indexterm>
-        <primary>binary string</primary>
-        <secondary>length</secondary>
-       </indexterm>
-       <indexterm>
-        <primary>length</primary>
-        <secondary sortas="binary string">of a binary string</secondary>
-        <see>binary strings, length</see>
-       </indexterm>
-      </entry>
-      <entry><literal>length('jo\000se'::bytea)</literal></entry>
-      <entry><literal>5</literal></entry>
-     </row>
+      <row>
+       <entry>
+        <indexterm>
+         <primary>length</primary>
+        </indexterm>
+        <literal><function>length(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+       </entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Number of bytes in binary string
+        <indexterm>
+         <primary>binary string</primary>
+         <secondary>length</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>length</primary>
+         <secondary sortas="binary string">of a binary string</secondary>
+         <see>binary strings, length</see>
+        </indexterm>
+       </entry>
+       <entry><literal>length('jo\000se'::bytea)</literal></entry>
+       <entry><literal>5</literal></entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>md5</primary>
-       </indexterm>
-       <literal><function>md5(<parameter>string</parameter>)</function></literal>
-      </entry>
-      <entry><type>text</type></entry>
-      <entry>
-       Calculates the MD5 hash of <parameter>string</parameter>,
-       returning the result in hexadecimal
-      </entry>
-      <entry><literal>md5('Th\000omas'::bytea)</literal></entry>
-      <entry><literal>8ab2d3c9689aaf18&#x200B;b4958c334c82d8b1</literal></entry>
-     </row>
+      <row>
+       <entry><literal><function>length(<parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>encoding</parameter> <type>name</type>)</function></literal></entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Number of characters in <parameter>bytes</parameter>, assuming
+        that it is text in the given <parameter>encoding</parameter>
+       </entry>
+       <entry><literal>length('jose'::bytea, 'UTF8')</literal></entry>
+       <entry><literal>4</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>md5</primary>
+        </indexterm>
+        <literal><function>md5(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        MD5 <link linkend="functions-hash-note">hash</link>, with
+        the result written in hexadecimal
+       </entry>
+       <entry><literal>md5('Th\000omas'::bytea)</literal></entry>
+       <entry><literal>8ab2d3c9689aaf18&#x200B;b4958c334c82d8b1</literal></entry>
+      </row>
 
       <row>
        <entry>
         <indexterm>
          <primary>set_bit</primary>
         </indexterm>
-        <literal><function>set_bit(<parameter>string</parameter>,
-        <parameter>offset</parameter>, <parameter>newvalue</parameter>)</function></literal>
+        <literal><function>set_bit(<parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>offset</parameter> <type>int</type>,
+        <parameter>newvalue</parameter> <type>int</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Set bit in string
+        Set <link linkend="functions-zerobased-note">n'th</link> bit in
+        binary string
        </entry>
        <entry><literal>set_bit('Th\000omas'::bytea, 45, 0)</literal></entry>
        <entry><literal>Th\000omAs</literal></entry>
@@ -3790,12 +2926,14 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>set_byte</primary>
         </indexterm>
-        <literal><function>set_byte(<parameter>string</parameter>,
-        <parameter>offset</parameter>, <parameter>newvalue</parameter>)</function></literal>
+        <literal><function>set_byte(<parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>offset</parameter> <type>int</type>,
+        <parameter>newvalue</parameter> <type>int</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Set byte in string
+        Set <link linkend="functions-zerobased-note">n'th</link> byte in
+        binary string
        </entry>
        <entry><literal>set_byte('Th\000omas'::bytea, 4, 64)</literal></entry>
        <entry><literal>Th\000o@as</literal></entry>
@@ -3806,13 +2944,13 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>sha224</primary>
         </indexterm>
-        <literal><function>sha224(<type>bytea</type>)</function></literal>
+        <literal><function>sha224(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        SHA-224 hash
+        SHA-224 <link linkend="functions-hash-note">hash</link>
        </entry>
-       <entry><literal>sha224('abc')</literal></entry>
+       <entry><literal>sha224('abc'::bytea)</literal></entry>
        <entry><literal>\x23097d223405d8228642a477bda2&#x200B;55b32aadbce4bda0b3f7e36c9da7</literal></entry>
       </row>
 
@@ -3821,13 +2959,13 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>sha256</primary>
         </indexterm>
-        <literal><function>sha256(<type>bytea</type>)</function></literal>
+        <literal><function>sha256(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        SHA-256 hash
+        SHA-256 <link linkend="functions-hash-note">hash</link>
        </entry>
-       <entry><literal>sha256('abc')</literal></entry>
+       <entry><literal>sha256('abc'::bytea)</literal></entry>
        <entry><literal>\xba7816bf8f01cfea414140de5dae2223&#x200B;b00361a396177a9cb410ff61f20015ad</literal></entry>
       </row>
 
@@ -3836,13 +2974,13 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>sha384</primary>
         </indexterm>
-        <literal><function>sha384(<type>bytea</type>)</function></literal>
+        <literal><function>sha384(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        SHA-384 hash
+        SHA-384 <link linkend="functions-hash-note">hash</link>
        </entry>
-       <entry><literal>sha384('abc')</literal></entry>
+       <entry><literal>sha384('abc'::bytea)</literal></entry>
        <entry><literal>\xcb00753f45a35e8bb5a03d699ac65007&#x200B;272c32ab0eded1631a8b605a43ff5bed&#x200B;8086072ba1e7cc2358baeca134c825a7</literal></entry>
       </row>
 
@@ -3851,34 +2989,258 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>sha512</primary>
         </indexterm>
-        <literal><function>sha512(<type>bytea</type>)</function></literal>
+        <literal><function>sha512(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        SHA-512 hash
+         SHA-512 <link linkend="functions-hash-note">hash</link>
        </entry>
-       <entry><literal>sha512('abc')</literal></entry>
+       <entry><literal>sha512('abc'::bytea)</literal></entry>
        <entry><literal>\xddaf35a193617abacc417349ae204131&#x200B;12e6fa4e89a97ea20a9eeee64b55d39a&#x200B;2192992a274fc1a836ba3c23a3feebbd&#x200B;454d4423643ce80e2a9ac94fa54ca49f</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>substr</primary>
+        </indexterm>
+        <literal><function>substr(<parameter>bytes</parameter> <type>bytea</type>, <parameter>from</parameter> <type>int</type> <optional>, <parameter>count</parameter> <type>int</type></optional>)</function></literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Extract substring (same as
+        <literal>substring(<parameter>bytea</parameter> from <parameter>from</parameter> for <parameter>count</parameter>)</literal>)
+       </entry>
+       <entry><literal>substr('alphabet', 3, 2)</literal></entry>
+       <entry><literal>ph</literal></entry>
       </row>
     </tbody>
    </tgroup>
   </table>
 
-  <para>
-   <function>get_byte</function> and <function>set_byte</function> number the first byte
-   of a binary string as byte 0.
-   <function>get_bit</function> and <function>set_bit</function> number bits from the
-   right within each byte; for example bit 0 is the least significant bit of
-   the first byte, and bit 15 is the most significant bit of the second byte.
+  <para id="functions-zerobased-note">
+   Functions <function>get_byte</function> and <function>set_byte</function>
+   number the first byte of a binary string as byte 0.
+   Functions <function>get_bit</function> and <function>set_bit</function>
+   number bits from the right within each byte; for example bit 0 is the least
+   significant bit of the first byte, and bit 15 is the most significant bit
+   of the second byte.
+  </para>
+
+  <para id="functions-hash-note">
+   For historical reasons, the function <function>md5</function>
+   returns a hex-encoded value of type <type>text</type> whereas the SHA-2
+   functions return type <type>bytea</type>.  Use the functions
+   <link linkend="function-encode"><function>encode</function></link>
+   and <link linkend="function-decode"><function>decode</function></link> to
+   convert between the two.  For example write <literal>encode(sha256('abc'),
+   'hex')</literal> to get a hex-encoded text representation,
+   or <literal>decode(md5('abc'), 'hex')</literal> to get
+   a <type>bytea</type> value.
   </para>
 
   <para>
-   Note that for historic reasons, the function <function>md5</function>
-   returns a hex-encoded value of type <type>text</type> whereas the SHA-2
-   functions return type <type>bytea</type>.  Use the functions
-   <function>encode</function> and <function>decode</function> to convert
-   between the two, for example <literal>encode(sha256('abc'),
-   'hex')</literal> to get a hex-encoded text representation.
+   <indexterm>
+    <primary>character string</primary>
+    <secondary>converting to binary string</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>binary string</primary>
+    <secondary>converting to character string</secondary>
+   </indexterm>
+   Functions for converting strings between different character sets
+   (encodings), and for representing arbitrary binary data in textual
+   form, are shown in
+   <xref linkend="functions-binarystring-conversions"/>.  For these
+   functions, an argument or result of type <type>text</type> is expressed
+   in the database's default encoding, while arguments or results of
+   type <type>bytea</type> are in an encoding named by another argument.
+  </para>
+
+  <table id="functions-binarystring-conversions">
+   <title>Text/Binary String Conversion Functions</title>
+   <tgroup cols="5">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+      <entry>Example</entry>
+      <entry>Result</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>
+       <indexterm>
+        <primary>convert</primary>
+       </indexterm>
+       <literal><function>convert(<parameter>bytes</parameter> <type>bytea</type>,
+       <parameter>src_encoding</parameter> <type>name</type>,
+       <parameter>dest_encoding</parameter> <type>name</type>)</function></literal>
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Convert binary string representing text in
+       encoding <parameter>src_encoding</parameter>
+       to a binary string in encoding <parameter>dest_encoding</parameter>
+       (see <xref linkend="multibyte-conversions-supported"/> for
+       available conversions)
+      </entry>
+      <entry><literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
+      <entry><literal>text_in_utf8</literal> represented in Latin-1 encoding</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>convert_from</primary>
+       </indexterm>
+       <literal><function>convert_from(<parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>src_encoding</parameter> <type>name</type>)</function></literal>
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Convert binary string representing text in
+       encoding <parameter>src_encoding</parameter>
+       to <type>text</type> in the database encoding
+       (see <xref linkend="multibyte-conversions-supported"/> for
+       available conversions)
+      </entry>
+      <entry><literal>convert_from('text_in_utf8', 'UTF8')</literal></entry>
+      <entry><literal>text_in_utf8</literal> represented in the
+       database encoding</entry>
+     </row>
+
+     <row>
+      <entry>
+       <indexterm>
+        <primary>convert_to</primary>
+       </indexterm>
+       <literal><function>convert_to(<parameter>string</parameter> <type>text</type>,
+        <parameter>dest_encoding</parameter> <type>name</type>)</function></literal>
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Convert <type>text</type> (in the database encoding) to a binary
+       string encoded in encoding <parameter>dest_encoding</parameter>
+       (see <xref linkend="multibyte-conversions-supported"/> for
+       available conversions)
+      </entry>
+      <entry><literal>convert_to('some text', 'UTF8')</literal></entry>
+      <entry><literal>some text</literal> represented in UTF8 encoding</entry>
+     </row>
+
+     <row id="function-encode">
+      <entry>
+       <indexterm>
+        <primary>encode</primary>
+       </indexterm>
+       <literal><function>encode(<parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>format</parameter> <type>text</type>)</function></literal>
+      </entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Encode binary data into a textual representation; supported
+       <parameter>format</parameter> values are:
+       <link linkend="encode-format-base64"><literal>base64</literal></link>,
+       <link linkend="encode-format-escape"><literal>escape</literal></link>,
+       <link linkend="encode-format-hex"><literal>hex</literal></link>
+      </entry>
+      <entry><literal>encode('123\000\001', 'base64')</literal></entry>
+      <entry><literal>MTIzAAE=</literal></entry>
+     </row>
+
+     <row id="function-decode">
+      <entry>
+       <indexterm>
+        <primary>decode</primary>
+       </indexterm>
+       <literal><function>decode(<parameter>string</parameter> <type>text</type>,
+        <parameter>format</parameter> <type>text</type>)</function></literal>
+      </entry>
+      <entry><type>bytea</type></entry>
+      <entry>
+       Decode binary data from a textual representation given
+       in <parameter>string</parameter>; allowed
+       <parameter>format</parameter> values are the same as
+       for <function>encode</function>
+      </entry>
+      <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
+      <entry><literal>\x3132330001</literal></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <function>encode</function> and <function>decode</function>
+   functions support the following textual formats:
+
+   <variablelist>
+    <varlistentry id="encode-format-base64">
+     <term>base64
+     <indexterm>
+      <primary>base64 format</primary>
+     </indexterm></term>
+     <listitem>
+      <para>
+       The <literal>base64</literal> format is that
+       of <ulink url="https://tools.ietf.org/html/rfc2045#section-6.8">RFC
+       2045 Section 6.8</ulink>.  As per the RFC, encoded lines are
+       broken at 76 characters.  However instead of the MIME CRLF
+       end-of-line marker, only a newline is used for end-of-line.
+       The <function>decode</function> function ignores carriage-return,
+       newline, space, and tab characters.  Otherwise, an error is
+       raised when <function>decode</function> is supplied invalid
+       base64 data &mdash; including when trailing padding is incorrect.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="encode-format-escape">
+     <term>escape
+     <indexterm>
+      <primary>escape format</primary>
+     </indexterm></term>
+     <listitem>
+      <para>
+       The <literal>escape</literal> format converts zero bytes and
+       bytes with the high bit set into octal escape sequences
+       (<literal>\</literal><replaceable>nnn</replaceable>), and it doubles
+       backslashes.  Other byte values are represented literally.
+       The <function>decode</function> function will raise an error if a
+       backslash is not followed by either a second backslash or three
+       octal digits; it accepts other byte values unchanged.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="encode-format-hex">
+     <term>hex
+     <indexterm>
+      <primary>hex format</primary>
+     </indexterm></term>
+     <listitem>
+      <para>
+       The <literal>hex</literal> format represents each 4 bits of
+       data as one hexadecimal digit, <literal>0</literal>
+       through <literal>f</literal>, writing the higher-order digit of
+       each byte first.  The <function>encode</function> function outputs
+       the <literal>a</literal>-<literal>f</literal> hex digits in lower
+       case.  Because the smallest unit of data is 8 bits, there are
+       always an even number of characters returned
+       by <function>encode</function>.
+       The <function>decode</function> function
+       accepts the <literal>a</literal>-<literal>f</literal> characters in
+       either upper or lower case.  An error is raised
+       when <function>decode</function> is given invalid hex data
+       &mdash; including when given an odd number of characters.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
   <para>
@@ -3976,22 +3338,20 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
    </table>
 
    <para>
-    The following <acronym>SQL</acronym>-standard functions work on bit
-    strings as well as character strings:
+    Some of the binary-string functions shown in
+    <xref linkend="functions-binarystring-sql"/> and
+    <xref linkend="functions-binarystring-other"/> are also available
+    for bit strings, specifically:
     <literal><function>length</function></literal>,
     <literal><function>bit_length</function></literal>,
     <literal><function>octet_length</function></literal>,
     <literal><function>position</function></literal>,
     <literal><function>substring</function></literal>,
-    <literal><function>overlay</function></literal>.
-   </para>
-
-   <para>
-    The following functions work on bit strings as well as binary
-    strings:
+    <literal><function>overlay</function></literal>,
     <literal><function>get_bit</function></literal>,
     <literal><function>set_bit</function></literal>.
-    When working with a bit string, these functions number the first
+    When working with a bit string, <function>get_bit</function>
+    and <function>set_bit</function> number the first
     (leftmost) bit of the string as bit 0.
    </para>
 
