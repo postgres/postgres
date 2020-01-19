@@ -925,10 +925,15 @@ postgresql:///mydb?host=localhost&amp;port=5433
    </para>
 
    <para>
-    Percent-encoding may be used to include symbols with special meaning in any
-    of the <acronym>URI</acronym> parts, e.g. replace <literal>=</literal> with
-    <literal>%3D</literal>.
-
+    Connection <acronym>URI</acronym> needs to be encoded with 
+    <ulink url="https://tools.ietf.org/html/rfc3986#section-2.1">Percent-encoding</ulink> 
+    if it includes symbols with special meaning in any of its parts. 
+    Here is an example where equal sign (<literal>=</literal>) is replaced
+    with <literal>%3D</literal> and whitespace character with
+    <literal>%20</literal>:
+<programlisting>
+postgresql://user@localhost:5433/mydb?options=-c%20synchronous_commit%3Doff
+</programlisting>
    </para>
 
    <para>
