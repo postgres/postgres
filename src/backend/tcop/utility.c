@@ -129,7 +129,7 @@ CommandIsReadOnly(PlannedStmt *pstmt)
  *
  * Note the definitions of the relevant flags in src/include/utility/tcop.h.
  */
-int
+static int
 ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 {
 	switch (nodeTag(parsetree))
@@ -359,7 +359,7 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
 				/*
-				 * PREPARE, COMMIT PREPARED, and ROLLBACK PREPARED all change
+				 * PREPARE, COMMIT PREPARED, and ROLLBACK PREPARED all
 				 * write WAL, so they're not read-only in the strict sense;
 				 * but the first and third do not change pg_dump output, so
 				 * they're OK in a read-only transactions.
@@ -383,12 +383,15 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 					case TRANS_STMT_ROLLBACK_PREPARED:
 						return COMMAND_OK_IN_READ_ONLY_TXN;
 				}
+				elog(ERROR, "unrecognized TransactionStmtKind: %d",
+					 (int) stmt->kind);
+				return 0;		/* silence stupider compilers */
 			}
 
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(parsetree));
-			break;
+			return 0;			/* silence stupider compilers */
 	}
 }
 

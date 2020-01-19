@@ -4456,6 +4456,7 @@ jsonb_set_lax(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("need delete_key, return_target, use_json_null, or raise_exception")));
+		return (Datum) 0;		/* silence stupider compilers */
 	}
 }
 
