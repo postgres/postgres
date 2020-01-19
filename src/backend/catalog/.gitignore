@@ -1,6 +1,4 @@
 /postgres.bki
-/postgres.description
-/postgres.shdescription
 /schemapg.h
 /pg_*_d.h
 /bki-stamp

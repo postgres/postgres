@@ -44,8 +44,6 @@ OBJS = \
 	storage.o \
 	toasting.o
 
-BKIFILES = postgres.bki postgres.description postgres.shdescription
-
 include $(top_srcdir)/src/backend/common.mk
 
 # Note: the order of this list determines the order in which the catalog
@@ -127,8 +125,6 @@ $(top_builddir)/src/include/catalog/header-stamp: bki-stamp
 .PHONY: install-data
 install-data: bki-stamp installdirs
 	$(INSTALL_DATA) $(call vpathsearch,postgres.bki) '$(DESTDIR)$(datadir)/postgres.bki'
-	$(INSTALL_DATA) $(call vpathsearch,postgres.description) '$(DESTDIR)$(datadir)/postgres.description'
-	$(INSTALL_DATA) $(call vpathsearch,postgres.shdescription) '$(DESTDIR)$(datadir)/postgres.shdescription'
 	$(INSTALL_DATA) $(srcdir)/system_views.sql '$(DESTDIR)$(datadir)/system_views.sql'
 	$(INSTALL_DATA) $(srcdir)/information_schema.sql '$(DESTDIR)$(datadir)/information_schema.sql'
 	$(INSTALL_DATA) $(srcdir)/sql_features.txt '$(DESTDIR)$(datadir)/sql_features.txt'
@@ -138,12 +134,11 @@ installdirs:
 
 .PHONY: uninstall-data
 uninstall-data:
-	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, $(BKIFILES) system_views.sql information_schema.sql sql_features.txt)
+	rm -f $(addprefix '$(DESTDIR)$(datadir)'/, postgres.bki system_views.sql information_schema.sql sql_features.txt)
 
-# postgres.bki, postgres.description, postgres.shdescription,
-# and the generated headers are in the distribution tarball,
+# postgres.bki and the generated headers are in the distribution tarball,
 # so they are not cleaned here.
 clean:
 
 maintainer-clean: clean
-	rm -f bki-stamp $(BKIFILES) $(GENERATED_HEADERS)
+	rm -f bki-stamp postgres.bki $(GENERATED_HEADERS)

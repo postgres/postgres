@@ -2,10 +2,9 @@
 #----------------------------------------------------------------------
 #
 # genbki.pl
-#    Perl script that generates postgres.bki, postgres.description,
-#    postgres.shdescription, and symbol definition headers from specially
-#    formatted header files and data files.  The BKI files are used to
-#    initialize the postgres template database.
+#    Perl script that generates postgres.bki and symbol definition
+#    headers from specially formatted header files and data files.
+#    postgres.bki is used to initialize the postgres template database.
 #
 # Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
@@ -93,9 +92,29 @@ foreach my $header (@ARGV)
 		my $data = Catalog::ParseData($datfile, $schema, 0);
 		$catalog_data{$catname} = $data;
 
-		# Check for duplicated OIDs while we're at it.
 		foreach my $row (@$data)
 		{
+			# Generate entries for pg_description and pg_shdescription.
+			if (defined $row->{descr})
+			{
+				my %descr = (
+					objoid      => $row->{oid},
+					classoid    => $catalog->{relation_oid},
+					objsubid    => 0,
+					description => $row->{descr});
+
+				if ($catalog->{shared_relation})
+				{
+					delete $descr{objsubid};
+					push @{ $catalog_data{pg_shdescription} }, \%descr;
+				}
+				else
+				{
+					push @{ $catalog_data{pg_description}}, \%descr;
+				}
+			}
+
+			# Check for duplicated OIDs while we're at it.
 			$oidcounts{ $row->{oid} }++ if defined $row->{oid};
 		}
 	}
@@ -361,15 +380,8 @@ open my $bki, '>', $bkifile . $tmpext
 my $schemafile = $output_path . 'schemapg.h';
 open my $schemapg, '>', $schemafile . $tmpext
   or die "can't open $schemafile$tmpext: $!";
-my $descrfile = $output_path . 'postgres.description';
-open my $descr, '>', $descrfile . $tmpext
-  or die "can't open $descrfile$tmpext: $!";
-my $shdescrfile = $output_path . 'postgres.shdescription';
-open my $shdescr, '>', $shdescrfile . $tmpext
-  or die "can't open $shdescrfile$tmpext: $!";
 
-# Generate postgres.bki, postgres.description, postgres.shdescription,
-# and pg_*_d.h headers.
+# Generate postgres.bki and pg_*_d.h headers.
 
 # version marker for .bki file
 print $bki "# PostgreSQL $major_version\n";
@@ -579,22 +591,6 @@ EOM
 		# Write to postgres.bki
 		print_bki_insert(\%bki_values, $schema);
 
-		# Write comments to postgres.description and
-		# postgres.shdescription
-		if (defined $bki_values{descr})
-		{
-			if ($catalog->{shared_relation})
-			{
-				printf $shdescr "%s\t%s\t%s\n",
-				  $bki_values{oid}, $catname, $bki_values{descr};
-			}
-			else
-			{
-				printf $descr "%s\t%s\t0\t%s\n",
-				  $bki_values{oid}, $catname, $bki_values{descr};
-			}
-		}
-
 		# Emit OID symbol
 		if (defined $bki_values{oid_symbol})
 		{
@@ -673,14 +669,10 @@ print $schemapg "\n#endif\t\t\t\t\t\t\t/* SCHEMAPG_H */\n";
 # We're done emitting data
 close $bki;
 close $schemapg;
-close $descr;
-close $shdescr;
 
 # Finally, rename the completed files into place.
 Catalog::RenameTempFile($bkifile,     $tmpext);
 Catalog::RenameTempFile($schemafile,  $tmpext);
-Catalog::RenameTempFile($descrfile,   $tmpext);
-Catalog::RenameTempFile($shdescrfile, $tmpext);
 
 exit 0;
 
@@ -967,9 +959,9 @@ Options:
     --set-version    PostgreSQL version number for initdb cross-check
     --include-path   Include path in source tree
 
-genbki.pl generates BKI files and symbol definition
+genbki.pl generates postgres.bki and symbol definition
 headers from specially formatted header files and .dat
-files.  The BKI files are used to initialize the
+files.  postgres.bki is used to initialize the
 postgres template database.
 
 Report bugs to <pgsql-bugs\@lists.postgresql.org>.
