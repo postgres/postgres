@@ -1499,26 +1499,37 @@ ecpg_build_params(struct statement *stmt)
 		}
 		else
 		{
-			if (!(stmt->paramvalues = (char **) ecpg_realloc(stmt->paramvalues, sizeof(char *) * (stmt->nparams + 1), stmt->lineno)))
+			bool		realloc_failed = false;
+			char	  **newparamvalues;
+			int		   *newparamlengths;
+			int		   *newparamformats;
+
+			/* enlarge all the param arrays */
+			if ((newparamvalues = (char **) ecpg_realloc(stmt->paramvalues, sizeof(char *) * (stmt->nparams + 1), stmt->lineno)))
+				stmt->paramvalues = newparamvalues;
+			else
+				realloc_failed = true;
+
+			if ((newparamlengths = (int *) ecpg_realloc(stmt->paramlengths, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
+				stmt->paramlengths = newparamlengths;
+			else
+				realloc_failed = true;
+
+			if ((newparamformats = (int *) ecpg_realloc(stmt->paramformats, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
+				stmt->paramformats = newparamformats;
+			else
+				realloc_failed = true;
+
+			if (realloc_failed)
 			{
 				ecpg_free_params(stmt, false);
 				ecpg_free(tobeinserted);
 				return false;
 			}
+
+			/* only now can we assign ownership of "tobeinserted" to stmt */
 			stmt->paramvalues[stmt->nparams] = tobeinserted;
-
-			if (!(stmt->paramlengths = (int *) ecpg_realloc(stmt->paramlengths, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
-			{
-				ecpg_free_params(stmt, false);
-				return false;
-			}
 			stmt->paramlengths[stmt->nparams] = binary_length;
-
-			if (!(stmt->paramformats = (int *) ecpg_realloc(stmt->paramformats, sizeof(int) * (stmt->nparams + 1), stmt->lineno)))
-			{
-				ecpg_free_params(stmt, false);
-				return false;
-			}
 			stmt->paramformats[stmt->nparams] = (binary_format ? 1 : 0);
 			stmt->nparams++;
 
