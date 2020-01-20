@@ -4415,7 +4415,7 @@ jsonb_set_lax(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(4))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("need delete_key, return_target, use_json_null, or raise_exception")));
+				 errmsg("null_value_treatment must be \"delete_key\", \"return_target\", \"use_json_null\", or \"raise_exception\"")));
 
 	/* if the new value isn't an SQL NULL just call jsonb_set */
 	if (! PG_ARGISNULL(2))
@@ -4428,9 +4428,10 @@ jsonb_set_lax(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("NULL is not allowed"),
-				 errdetail("exception raised due to \"null_value_treatment => 'raise_exception'\""),
-				 errhint("to avoid, either change the null_value_treatment argument or ensure that an SQL NULL is not used")));
+				 errmsg("JSON value must not be null"),
+				 errdetail("Exception was raised because null_value_treatment is \"raise_exception\"."),
+				 errhint("To avoid, either change the null_value_treatment argument or ensure that an SQL NULL is not passed.")));
+		return (Datum) 0;		/* silence stupider compilers */
 	}
 	else if (strcmp(handle_val, "use_json_null") == 0)
 	{
@@ -4455,7 +4456,7 @@ jsonb_set_lax(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("need delete_key, return_target, use_json_null, or raise_exception")));
+				 errmsg("null_value_treatment must be \"delete_key\", \"return_target\", \"use_json_null\", or \"raise_exception\"")));
 		return (Datum) 0;		/* silence stupider compilers */
 	}
 }

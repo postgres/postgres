@@ -4541,14 +4541,14 @@ select jsonb_set_lax('{"a":1,"b":2}','{d}',null,true);
 
 -- errors
 select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, true, null);
-ERROR:  need delete_key, return_target, use_json_null, or raise_exception
+ERROR:  null_value_treatment must be "delete_key", "return_target", "use_json_null", or "raise_exception"
 select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, true, 'no_such_treatment');
-ERROR:  need delete_key, return_target, use_json_null, or raise_exception
+ERROR:  null_value_treatment must be "delete_key", "return_target", "use_json_null", or "raise_exception"
 -- explicit treatments
 select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, null_value_treatment => 'raise_exception') as raise_exception;
-ERROR:  NULL is not allowed
-DETAIL:  exception raised due to "null_value_treatment => 'raise_exception'"
-HINT:  to avoid, either change the null_value_treatment argument or ensure that an SQL NULL is not used
+ERROR:  JSON value must not be null
+DETAIL:  Exception was raised because null_value_treatment is "raise_exception".
+HINT:  To avoid, either change the null_value_treatment argument or ensure that an SQL NULL is not passed.
 select jsonb_set_lax('{"a":1,"b":2}', '{b}', null, null_value_treatment => 'return_target') as return_target;
   return_target   
 ------------------
