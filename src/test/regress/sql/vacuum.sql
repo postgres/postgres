@@ -75,6 +75,37 @@ VACUUM FULL vactst;
 
 VACUUM (DISABLE_PAGE_SKIPPING) vaccluster;
 
+-- PARALLEL option
+CREATE TABLE pvactst (i INT, a INT[], p POINT) with (autovacuum_enabled = off);
+INSERT INTO pvactst SELECT i, array[1,2,3], point(i, i+1) FROM generate_series(1,1000) i;
+CREATE INDEX btree_pvactst ON pvactst USING btree (i);
+CREATE INDEX hash_pvactst ON pvactst USING hash (i);
+CREATE INDEX brin_pvactst ON pvactst USING brin (i);
+CREATE INDEX gin_pvactst ON pvactst USING gin (a);
+CREATE INDEX gist_pvactst ON pvactst USING gist (p);
+CREATE INDEX spgist_pvactst ON pvactst USING spgist (p);
+
+-- VACUUM invokes parallel index cleanup
+SET min_parallel_index_scan_size to 0;
+VACUUM (PARALLEL 2) pvactst;
+
+-- VACUUM invokes parallel bulk-deletion
+UPDATE pvactst SET i = i WHERE i < 1000;
+VACUUM (PARALLEL 2) pvactst;
+
+UPDATE pvactst SET i = i WHERE i < 1000;
+VACUUM (PARALLEL 0) pvactst; -- disable parallel vacuum
+
+VACUUM (PARALLEL -1) pvactst; -- error
+VACUUM (PARALLEL 2, INDEX_CLEANUP FALSE) pvactst;
+VACUUM (PARALLEL 2, FULL TRUE) pvactst; -- error, cannot use both PARALLEL and FULL
+VACUUM (PARALLEL) pvactst; -- error, cannot use PARALLEL option without parallel degree
+CREATE TEMPORARY TABLE tmp (a int PRIMARY KEY);
+CREATE INDEX tmp_idx1 ON tmp (a);
+VACUUM (PARALLEL 1) tmp; -- disables parallel vacuum option
+RESET min_parallel_index_scan_size;
+DROP TABLE pvactst;
+
 -- INDEX_CLEANUP option
 CREATE TABLE no_index_cleanup (i INT PRIMARY KEY, t TEXT);
 -- Use uncompressed data stored in toast.

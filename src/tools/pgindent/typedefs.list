@@ -1216,7 +1216,11 @@ LPVOID
 LPWSTR
 LSEG
 LUID
+LVDeadTuples
+LVParallelState
 LVRelStats
+LVShared
+LVSharedIndStats
 LWLock
 LWLockHandle
 LWLockMinimallyPadded

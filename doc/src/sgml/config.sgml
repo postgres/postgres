@@ -2308,13 +2308,13 @@ include_dir 'conf.d'
        <listitem>
         <para>
          Sets the maximum number of parallel workers that can be
-         started by a single utility command.  Currently, the only
-         parallel utility command that supports the use of parallel
-         workers is <command>CREATE INDEX</command>, and only when
-         building a B-tree index.  Parallel workers are taken from the
-         pool of processes established by <xref
-         linkend="guc-max-worker-processes"/>, limited by <xref
-         linkend="guc-max-parallel-workers"/>.  Note that the requested
+         started by a single utility command.  Currently, the parallel
+         utility commands that support the use of parallel workers are
+         <command>CREATE INDEX</command> only when building a B-tree index,
+         and <command>VACUUM</command> without <literal>FULL</literal>
+         option.  Parallel workers are taken from the pool of processes
+         established by <xref linkend="guc-max-worker-processes"/>, limited
+         by <xref linkend="guc-max-parallel-workers"/>.  Note that the requested
          number of workers may not actually be available at run time.
          If this occurs, the utility operation will run with fewer
          workers than expected.  The default value is 2.  Setting this
@@ -4915,7 +4915,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         for a parallel scan to be considered.  Note that a parallel index scan
         typically won't touch the entire index; it is the number of pages
         which the planner believes will actually be touched by the scan which
-        is relevant.
+        is relevant.  This parameter is also used to decide whether a
+        particular index can participate in a parallel vacuum.  See
+        <xref linkend="sql-vacuum"/>.
         If this value is specified without units, it is taken as blocks,
         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
         The default is 512 kilobytes (<literal>512kB</literal>).

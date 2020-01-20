@@ -14,6 +14,7 @@
 
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/parallel.h"
 #include "access/session.h"
@@ -139,6 +140,9 @@ static const struct
 	},
 	{
 		"_bt_parallel_build_main", _bt_parallel_build_main
+	},
+	{
+		"parallel_vacuum_main", parallel_vacuum_main
 	}
 };
 
@@ -174,6 +178,7 @@ CreateParallelContext(const char *library_name, const char *function_name,
 	pcxt = palloc0(sizeof(ParallelContext));
 	pcxt->subid = GetCurrentSubTransactionId();
 	pcxt->nworkers = nworkers;
+	pcxt->nworkers_to_launch = nworkers;
 	pcxt->library_name = pstrdup(library_name);
 	pcxt->function_name = pstrdup(function_name);
 	pcxt->error_context_stack = error_context_stack;
@@ -487,6 +492,23 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 }
 
 /*
+ * Reinitialize parallel workers for a parallel context such that we could
+ * launch the different number of workers.  This is required for cases where
+ * we need to reuse the same DSM segment, but the number of workers can
+ * vary from run-to-run.
+ */
+void
+ReinitializeParallelWorkers(ParallelContext *pcxt, int nworkers_to_launch)
+{
+	/*
+	 * The number of workers that need to be launched must be less than the
+	 * number of workers with which the parallel context is initialized.
+	 */
+	Assert(pcxt->nworkers >= nworkers_to_launch);
+	pcxt->nworkers_to_launch = nworkers_to_launch;
+}
+
+/*
  * Launch parallel workers.
  */
 void
@@ -498,7 +520,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	bool		any_registrations_failed = false;
 
 	/* Skip this if we have no workers. */
-	if (pcxt->nworkers == 0)
+	if (pcxt->nworkers == 0 || pcxt->nworkers_to_launch == 0)
 		return;
 
 	/* We need to be a lock group leader. */
@@ -533,7 +555,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	 * fails.  It wouldn't help much anyway, because registering the worker in
 	 * no way guarantees that it will start up and initialize successfully.
 	 */
-	for (i = 0; i < pcxt->nworkers; ++i)
+	for (i = 0; i < pcxt->nworkers_to_launch; ++i)
 	{
 		memcpy(worker.bgw_extra, &i, sizeof(int));
 		if (!any_registrations_failed &&

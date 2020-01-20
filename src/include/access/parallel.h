@@ -33,7 +33,8 @@ typedef struct ParallelContext
 {
 	dlist_node	node;
 	SubTransactionId subid;
-	int			nworkers;
+	int			nworkers;		/* Maximum number of workers to launch */
+	int			nworkers_to_launch; /* Actual number of workers to launch */
 	int			nworkers_launched;
 	char	   *library_name;
 	char	   *function_name;
@@ -63,6 +64,7 @@ extern ParallelContext *CreateParallelContext(const char *library_name,
 											  const char *function_name, int nworkers);
 extern void InitializeParallelDSM(ParallelContext *pcxt);
 extern void ReinitializeParallelDSM(ParallelContext *pcxt);
+extern void ReinitializeParallelWorkers(ParallelContext *pcxt, int nworkers_to_launch);
 extern void LaunchParallelWorkers(ParallelContext *pcxt);
 extern void WaitForParallelWorkersToAttach(ParallelContext *pcxt);
 extern void WaitForParallelWorkersToFinish(ParallelContext *pcxt);
