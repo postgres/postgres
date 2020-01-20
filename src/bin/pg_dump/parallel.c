@@ -606,8 +606,11 @@ sigTermHandler(SIGNAL_ARGS)
 		write_stderr("terminated by user\n");
 	}
 
-	/* And die. */
-	exit(1);
+	/*
+	 * And die, using _exit() not exit() because the latter will invoke atexit
+	 * handlers that can fail if we interrupted related code.
+	 */
+	_exit(1);
 }
 
 /*
