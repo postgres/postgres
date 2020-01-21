@@ -269,6 +269,12 @@ ALTER TABLE itest8
 
 INSERT INTO itest8 VALUES(0), (1);
 
+-- This does not work when the table isn't empty.  That's intentional,
+-- since ADD GENERATED should only affect later insertions:
+ALTER TABLE itest8
+  ADD COLUMN f22 int NOT NULL,
+  ALTER COLUMN f22 ADD GENERATED ALWAYS AS IDENTITY;
+
 TABLE itest8;
 \d+ itest8
 \d itest8_f2_seq

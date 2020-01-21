@@ -409,6 +409,12 @@ ALTER TABLE itest8
   ALTER COLUMN f5 DROP NOT NULL,
   ALTER COLUMN f5 SET DATA TYPE bigint;
 INSERT INTO itest8 VALUES(0), (1);
+-- This does not work when the table isn't empty.  That's intentional,
+-- since ADD GENERATED should only affect later insertions:
+ALTER TABLE itest8
+  ADD COLUMN f22 int NOT NULL,
+  ALTER COLUMN f22 ADD GENERATED ALWAYS AS IDENTITY;
+ERROR:  column "f22" contains null values
 TABLE itest8;
  f1 | f2 | f3 | f4 | f5 
 ----+----+----+----+----

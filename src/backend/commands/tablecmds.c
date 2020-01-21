@@ -6126,14 +6126,18 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * returned by AddRelationNewConstraints, so that the right thing happens
 	 * when a datatype's default applies.
 	 *
-	 * We skip this step completely for views and foreign tables.  For a view,
-	 * we can only get here from CREATE OR REPLACE VIEW, which historically
-	 * doesn't set up defaults, not even for domain-typed columns.  And in any
-	 * case we mustn't invoke Phase 3 on a view or foreign table, since they
-	 * have no storage.
+	 * Note: it might seem that this should happen at the end of Phase 2, so
+	 * that the effects of subsequent subcommands can be taken into account.
+	 * It's intentional that we do it now, though.  The new column should be
+	 * filled according to what is said in the ADD COLUMN subcommand, so that
+	 * the effects are the same as if this subcommand had been run by itself
+	 * and the later subcommands had been issued in new ALTER TABLE commands.
+	 *
+	 * We can skip this entirely for relations without storage, since Phase 3
+	 * is certainly not going to touch them.  System attributes don't have
+	 * interesting defaults, either.
 	 */
-	if (relkind != RELKIND_VIEW && relkind != RELKIND_COMPOSITE_TYPE
-		&& relkind != RELKIND_FOREIGN_TABLE && attribute.attnum > 0)
+	if (RELKIND_HAS_STORAGE(relkind) && attribute.attnum > 0)
 	{
 		/*
 		 * For an identity column, we can't use build_column_default(),
