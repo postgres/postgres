@@ -224,8 +224,8 @@ extern PGPROC *PreparedXactProcs;
 
 /* configurable options */
 extern PGDLLIMPORT int DeadlockTimeout;
-extern int	StatementTimeout;
-extern int	LockTimeout;
+extern PGDLLIMPORT int StatementTimeout;
+extern PGDLLIMPORT int LockTimeout;
 extern bool log_lock_waits;
 
 
