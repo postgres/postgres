@@ -129,6 +129,11 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
         &mdash; see <xref linkend="sql-createindex-concurrently"
         endterm="sql-createindex-concurrently-title"/>.
        </para>
+       <para>
+        For temporary tables, <command>CREATE INDEX</command> is always
+        non-concurrent, as no other session can access them, and
+        non-concurrent index creation is cheaper.
+       </para>
       </listitem>
      </varlistentry>
 
