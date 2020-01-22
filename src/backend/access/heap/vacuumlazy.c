@@ -159,9 +159,12 @@ typedef struct LVDeadTuples
 														 * ItemPointerData */
 } LVDeadTuples;
 
-#define SizeOfLVDeadTuples(cnt) \
-		add_size((offsetof(LVDeadTuples, itemptrs)), \
-				 mul_size(sizeof(ItemPointerData), cnt))
+/* The dead tuple space consists of LVDeadTuples and dead tuple TIDs */
+#define SizeOfDeadTuples(cnt) \
+	add_size(offsetof(LVDeadTuples, itemptrs), \
+			 mul_size(sizeof(ItemPointerData), cnt))
+#define MAXDEADTUPLES(max_size) \
+		(((max_size) - offsetof(LVDeadTuples, itemptrs)) / sizeof(ItemPointerData))
 
 /*
  * Shared information among parallel workers.  So this is allocated in the DSM
@@ -2708,9 +2711,9 @@ compute_max_dead_tuples(BlockNumber relblocks, bool useindex)
 
 	if (useindex)
 	{
-		maxtuples = (vac_work_mem * 1024L) / sizeof(ItemPointerData);
+		maxtuples = MAXDEADTUPLES(vac_work_mem * 1024L);
 		maxtuples = Min(maxtuples, INT_MAX);
-		maxtuples = Min(maxtuples, MaxAllocSize / sizeof(ItemPointerData));
+		maxtuples = Min(maxtuples, MAXDEADTUPLES(MaxAllocSize));
 
 		/* curious coding here to ensure the multiplication can't overflow */
 		if ((BlockNumber) (maxtuples / LAZY_ALLOC_TUPLES) > relblocks)
@@ -2738,7 +2741,7 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 
 	maxtuples = compute_max_dead_tuples(relblocks, vacrelstats->useindex);
 
-	dead_tuples = (LVDeadTuples *) palloc(SizeOfLVDeadTuples(maxtuples));
+	dead_tuples = (LVDeadTuples *) palloc(SizeOfDeadTuples(maxtuples));
 	dead_tuples->num_tuples = 0;
 	dead_tuples->max_tuples = (int) maxtuples;
 
@@ -3146,7 +3149,7 @@ begin_parallel_vacuum(Oid relid, Relation *Irel, LVRelStats *vacrelstats,
 
 	/* Estimate size for dead tuples -- PARALLEL_VACUUM_KEY_DEAD_TUPLES */
 	maxtuples = compute_max_dead_tuples(nblocks, true);
-	est_deadtuples = MAXALIGN(SizeOfLVDeadTuples(maxtuples));
+	est_deadtuples = MAXALIGN(SizeOfDeadTuples(maxtuples));
 	shm_toc_estimate_chunk(&pcxt->estimator, est_deadtuples);
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
