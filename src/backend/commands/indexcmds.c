@@ -335,6 +335,7 @@ DefineIndex(Oid relationId,
 			bool skip_build,
 			bool quiet)
 {
+	bool		concurrent;
 	char	   *indexRelationName;
 	char	   *accessMethodName;
 	Oid		   *typeObjectId;
@@ -370,6 +371,18 @@ DefineIndex(Oid relationId,
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
 	int			i;
+
+	/*
+	 * Force non-concurrent build on temporary relations, even if CONCURRENTLY
+	 * was requested.  Other backends can't access a temporary relation, so
+	 * there's no harm in grabbing a stronger lock, and a non-concurrent DROP
+	 * is more efficient.  Do this before any use of the concurrent option is
+	 * done.
+	 */
+	if (stmt->concurrent && get_rel_persistence(relationId) != RELPERSISTENCE_TEMP)
+		concurrent = true;
+	else
+		concurrent = false;
 
 	/*
 	 * count key attributes in index
@@ -413,7 +426,7 @@ DefineIndex(Oid relationId,
 	 * parallel workers under the control of certain particular ambuild
 	 * functions will need to be updated, too.
 	 */
-	lockmode = stmt->concurrent ? ShareUpdateExclusiveLock : ShareLock;
+	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_open(relationId, lockmode);
 
 	relationId = RelationGetRelid(rel);
@@ -457,6 +470,12 @@ DefineIndex(Oid relationId,
 	partitioned = rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE;
 	if (partitioned)
 	{
+		/*
+		 * Note: we check 'stmt->concurrent' rather than 'concurrent', so that
+		 * the error is thrown also for temporary tables.  Seems better to be
+		 * consistent, even though we could do it on temporary table because
+		 * we're not actually doing it concurrently.
+		 */
 		if (stmt->concurrent)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -645,8 +664,8 @@ DefineIndex(Oid relationId,
 	indexInfo->ii_ExclusionStrats = NULL;
 	indexInfo->ii_Unique = stmt->unique;
 	/* In a concurrent build, mark it not-ready-for-inserts */
-	indexInfo->ii_ReadyForInserts = !stmt->concurrent;
-	indexInfo->ii_Concurrent = stmt->concurrent;
+	indexInfo->ii_ReadyForInserts = !concurrent;
+	indexInfo->ii_Concurrent = concurrent;
 	indexInfo->ii_BrokenHotChain = false;
 	indexInfo->ii_ParallelWorkers = 0;
 	indexInfo->ii_Am = accessMethodId;
@@ -814,7 +833,7 @@ DefineIndex(Oid relationId,
 	 * A valid stmt->oldNode implies that we already have a built form of the
 	 * index.  The caller should also decline any index build.
 	 */
-	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !stmt->concurrent));
+	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !concurrent));
 
 	/*
 	 * Make the catalog entries for the index, including constraints. This
@@ -825,11 +844,11 @@ DefineIndex(Oid relationId,
 	flags = constr_flags = 0;
 	if (stmt->isconstraint)
 		flags |= INDEX_CREATE_ADD_CONSTRAINT;
-	if (skip_build || stmt->concurrent || partitioned)
+	if (skip_build || concurrent || partitioned)
 		flags |= INDEX_CREATE_SKIP_BUILD;
 	if (stmt->if_not_exists)
 		flags |= INDEX_CREATE_IF_NOT_EXISTS;
-	if (stmt->concurrent)
+	if (concurrent)
 		flags |= INDEX_CREATE_CONCURRENT;
 	if (partitioned)
 		flags |= INDEX_CREATE_PARTITIONED;
@@ -1107,7 +1126,7 @@ DefineIndex(Oid relationId,
 		return address;
 	}
 
-	if (!stmt->concurrent)
+	if (!concurrent)
 	{
 		/* Close the heap and we're done, in the non-concurrent case */
 		heap_close(rel, NoLock);
