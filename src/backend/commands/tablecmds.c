@@ -1260,7 +1260,11 @@ RemoveRelations(DropStmt *drop)
 	/* DROP CONCURRENTLY uses a weaker lock, and has some restrictions */
 	if (drop->concurrent)
 	{
-		flags |= PERFORM_DELETION_CONCURRENTLY;
+		/*
+		 * Note that for temporary relations this lock may get upgraded
+		 * later on, but as no other session can access a temporary
+		 * relation, this is actually fine.
+		 */
 		lockmode = ShareUpdateExclusiveLock;
 		Assert(drop->removeType == OBJECT_INDEX);
 		if (list_length(drop->objects) != 1)
@@ -1349,6 +1353,18 @@ RemoveRelations(DropStmt *drop)
 		{
 			DropErrorMsgNonExistent(rel, relkind, drop->missing_ok);
 			continue;
+		}
+
+		/*
+		 * Decide if concurrent mode needs to be used here or not.  The
+		 * relation persistence cannot be known without its OID.
+		 */
+		if (drop->concurrent &&
+			get_rel_persistence(relOid) != RELPERSISTENCE_TEMP)
+		{
+			Assert(list_length(drop->objects) == 1 &&
+				   drop->removeType == OBJECT_INDEX);
+			flags |= PERFORM_DELETION_CONCURRENTLY;
 		}
 
 		/* OK, we're ready to delete this one */

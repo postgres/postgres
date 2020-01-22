@@ -501,6 +501,31 @@ VACUUM FULL concur_heap;
 REINDEX TABLE concur_heap;
 \d concur_heap
 
+-- Temporary tables with concurrent builds and on-commit actions
+-- CONCURRENTLY used with CREATE INDEX and DROP INDEX is ignored.
+-- PRESERVE ROWS, the default.
+CREATE TEMP TABLE concur_temp (f1 int, f2 text)
+  ON COMMIT PRESERVE ROWS;
+INSERT INTO concur_temp VALUES (1, 'foo'), (2, 'bar');
+CREATE INDEX CONCURRENTLY concur_temp_ind ON concur_temp(f1);
+DROP INDEX CONCURRENTLY concur_temp_ind;
+DROP TABLE concur_temp;
+-- ON COMMIT DROP
+BEGIN;
+CREATE TEMP TABLE concur_temp (f1 int, f2 text)
+  ON COMMIT DROP;
+INSERT INTO concur_temp VALUES (1, 'foo'), (2, 'bar');
+-- Fails when running in a transaction.
+CREATE INDEX CONCURRENTLY concur_temp_ind ON concur_temp(f1);
+COMMIT;
+-- ON COMMIT DELETE ROWS
+CREATE TEMP TABLE concur_temp (f1 int, f2 text)
+  ON COMMIT DELETE ROWS;
+INSERT INTO concur_temp VALUES (1, 'foo'), (2, 'bar');
+CREATE INDEX CONCURRENTLY concur_temp_ind ON concur_temp(f1);
+DROP INDEX CONCURRENTLY concur_temp_ind;
+DROP TABLE concur_temp;
+
 --
 -- Try some concurrent index drops
 --
@@ -971,6 +996,48 @@ SELECT pg_get_indexdef('concur_exprs_index_expr'::regclass);
 SELECT pg_get_indexdef('concur_exprs_index_pred'::regclass);
 SELECT pg_get_indexdef('concur_exprs_index_pred_2'::regclass);
 DROP TABLE concur_exprs_tab;
+
+-- Temporary tables and on-commit actions, where CONCURRENTLY is ignored.
+-- ON COMMIT PRESERVE ROWS, the default.
+CREATE TEMP TABLE concur_temp_tab_1 (c1 int, c2 text)
+  ON COMMIT PRESERVE ROWS;
+INSERT INTO concur_temp_tab_1 VALUES (1, 'foo'), (2, 'bar');
+CREATE INDEX concur_temp_ind_1 ON concur_temp_tab_1(c2);
+REINDEX TABLE CONCURRENTLY concur_temp_tab_1;
+REINDEX INDEX CONCURRENTLY concur_temp_ind_1;
+-- Still fails in transaction blocks
+BEGIN;
+REINDEX INDEX CONCURRENTLY concur_temp_ind_1;
+COMMIT;
+-- ON COMMIT DELETE ROWS
+CREATE TEMP TABLE concur_temp_tab_2 (c1 int, c2 text)
+  ON COMMIT DELETE ROWS;
+CREATE INDEX concur_temp_ind_2 ON concur_temp_tab_2(c2);
+REINDEX TABLE CONCURRENTLY concur_temp_tab_2;
+REINDEX INDEX CONCURRENTLY concur_temp_ind_2;
+-- ON COMMIT DROP
+BEGIN;
+CREATE TEMP TABLE concur_temp_tab_3 (c1 int, c2 text)
+  ON COMMIT PRESERVE ROWS;
+INSERT INTO concur_temp_tab_3 VALUES (1, 'foo'), (2, 'bar');
+CREATE INDEX concur_temp_ind_3 ON concur_temp_tab_3(c2);
+-- Fails when running in a transaction
+REINDEX INDEX CONCURRENTLY concur_temp_ind_3;
+COMMIT;
+-- REINDEX SCHEMA processes all temporary relations
+CREATE TABLE reindex_temp_before AS
+SELECT oid, relname, relfilenode, relkind, reltoastrelid
+  FROM pg_class
+  WHERE relname IN ('concur_temp_ind_1', 'concur_temp_ind_2');
+SELECT pg_my_temp_schema()::regnamespace as temp_schema_name \gset
+REINDEX SCHEMA CONCURRENTLY :temp_schema_name;
+SELECT  b.relname,
+        b.relkind,
+        CASE WHEN a.relfilenode = b.relfilenode THEN 'relfilenode is unchanged'
+        ELSE 'relfilenode has changed' END
+  FROM reindex_temp_before b JOIN pg_class a ON b.oid = a.oid
+  ORDER BY 1;
+DROP TABLE concur_temp_tab_1, concur_temp_tab_2, reindex_temp_before;
 
 --
 -- REINDEX SCHEMA

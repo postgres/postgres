@@ -58,6 +58,11 @@ DROP INDEX [ CONCURRENTLY ] [ IF EXISTS ] <replaceable class="parameter">name</r
       performed within a transaction block, but
       <command>DROP INDEX CONCURRENTLY</command> cannot.
      </para>
+     <para>
+      For temporary tables, <command>DROP INDEX</command> is always
+      non-concurrent, as no other session can access them, and
+      non-concurrent index drop is cheaper.
+     </para>
     </listitem>
    </varlistentry>
 

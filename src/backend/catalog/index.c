@@ -2017,6 +2017,15 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 	LOCKMODE	lockmode;
 
 	/*
+	 * A temporary relation uses a non-concurrent DROP.  Other backends can't
+	 * access a temporary relation, so there's no harm in grabbing a stronger
+	 * lock (see comments in RemoveRelations), and a non-concurrent DROP is
+	 * more efficient.
+	 */
+	Assert(get_rel_persistence(indexId) != RELPERSISTENCE_TEMP ||
+		   (!concurrent && !concurrent_lock_mode));
+
+	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
 	 * table.  Exclusive lock on the index alone is insufficient because
 	 * another backend might be about to execute a query on the parent table.
