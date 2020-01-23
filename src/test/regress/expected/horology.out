@@ -2660,6 +2660,18 @@ SELECT to_timestamp('1997 BC 11 16', 'YYYY BC MM DD');
  Tue Nov 16 00:00:00 1997 PST BC
 (1 row)
 
+SELECT to_timestamp('1997 A.D. 11 16', 'YYYY B.C. MM DD');
+         to_timestamp         
+------------------------------
+ Sun Nov 16 00:00:00 1997 PST
+(1 row)
+
+SELECT to_timestamp('1997 B.C. 11 16', 'YYYY B.C. MM DD');
+          to_timestamp           
+---------------------------------
+ Tue Nov 16 00:00:00 1997 PST BC
+(1 row)
+
 SELECT to_timestamp('9-1116', 'Y-MMDD');
          to_timestamp         
 ------------------------------
@@ -2756,6 +2768,18 @@ SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
  Sun Dec 18 23:38:00 2011 PST
 (1 row)
 
+SELECT to_timestamp('2011-12-18 11:38 A.M.', 'YYYY-MM-DD HH12:MI P.M.');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 11:38:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 P.M.', 'YYYY-MM-DD HH12:MI P.M.');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 23:38:00 2011 PST
+(1 row)
+
 SELECT to_timestamp('2011-12-18 11:38 +05',    'YYYY-MM-DD HH12:MI TZH');
          to_timestamp         
 ------------------------------
@@ -2784,6 +2808,14 @@ SELECT to_timestamp('2011-12-18 11:38 20',     'YYYY-MM-DD HH12:MI TZM');
          to_timestamp         
 ------------------------------
  Sun Dec 18 03:18:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 PST', 'YYYY-MM-DD HH12:MI TZ');  -- NYI
+ERROR:  formatting field "TZ" is only supported in to_char
+SELECT to_timestamp('2018-11-02 12:34:56.025', 'YYYY-MM-DD HH24:MI:SS.MS');
+           to_timestamp           
+----------------------------------
+ Fri Nov 02 12:34:56.025 2018 PDT
 (1 row)
 
 SELECT i, to_timestamp('2018-11-02 12:34:56', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
@@ -2865,6 +2897,24 @@ SELECT i, to_timestamp('2018-11-02 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF' 
 
 SELECT i, to_timestamp('2018-11-02 12:34:56.123456789', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
 ERROR:  date/time field value out of range: "2018-11-02 12:34:56.123456789"
+SELECT to_date('1 4 1902', 'Q MM YYYY');  -- Q is ignored
+  to_date   
+------------
+ 04-01-1902
+(1 row)
+
+SELECT to_date('3 4 21 01', 'W MM CC YY');
+  to_date   
+------------
+ 04-15-2001
+(1 row)
+
+SELECT to_date('2458872', 'J');
+  to_date   
+------------
+ 01-23-2020
+(1 row)
+
 --
 -- Check handling of multiple spaces in format and/or input
 --
@@ -3029,6 +3079,19 @@ SELECT to_timestamp('19971)24', 'YYYYMMDD');
 ERROR:  invalid value "1)" for "MM"
 DETAIL:  Field requires 2 characters, but only 1 could be parsed.
 HINT:  If your source string is not fixed-width, try using the "FM" modifier.
+-- We don't accept full-length day or month names if short form is specified:
+SELECT to_timestamp('Friday 1-January-1999', 'DY DD MON YYYY');
+ERROR:  invalid value "da" for "DD"
+DETAIL:  Value must be an integer.
+SELECT to_timestamp('Fri 1-January-1999', 'DY DD MON YYYY');
+ERROR:  invalid value "uary" for "YYYY"
+DETAIL:  Value must be an integer.
+SELECT to_timestamp('Fri 1-Jan-1999', 'DY DD MON YYYY');  -- ok
+         to_timestamp         
+------------------------------
+ Fri Jan 01 00:00:00 1999 PST
+(1 row)
+
 -- Value clobbering:
 SELECT to_timestamp('1997-11-Jan-16', 'YYYY-MM-Mon-DD');
 ERROR:  conflicting values for "Mon" field in formatting string

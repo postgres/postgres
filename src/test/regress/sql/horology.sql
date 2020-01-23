@@ -365,6 +365,9 @@ SELECT to_timestamp('20000-1116', 'YYYY-MMDD');
 SELECT to_timestamp('1997 AD 11 16', 'YYYY BC MM DD');
 SELECT to_timestamp('1997 BC 11 16', 'YYYY BC MM DD');
 
+SELECT to_timestamp('1997 A.D. 11 16', 'YYYY B.C. MM DD');
+SELECT to_timestamp('1997 B.C. 11 16', 'YYYY B.C. MM DD');
+
 SELECT to_timestamp('9-1116', 'Y-MMDD');
 
 SELECT to_timestamp('95-1116', 'YY-MMDD');
@@ -396,11 +399,18 @@ SELECT to_timestamp('  20050302', 'YYYYMMDD');
 SELECT to_timestamp('2011-12-18 11:38 AM', 'YYYY-MM-DD HH12:MI PM');
 SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
 
+SELECT to_timestamp('2011-12-18 11:38 A.M.', 'YYYY-MM-DD HH12:MI P.M.');
+SELECT to_timestamp('2011-12-18 11:38 P.M.', 'YYYY-MM-DD HH12:MI P.M.');
+
 SELECT to_timestamp('2011-12-18 11:38 +05',    'YYYY-MM-DD HH12:MI TZH');
 SELECT to_timestamp('2011-12-18 11:38 -05',    'YYYY-MM-DD HH12:MI TZH');
 SELECT to_timestamp('2011-12-18 11:38 +05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
 SELECT to_timestamp('2011-12-18 11:38 -05:20', 'YYYY-MM-DD HH12:MI TZH:TZM');
 SELECT to_timestamp('2011-12-18 11:38 20',     'YYYY-MM-DD HH12:MI TZM');
+
+SELECT to_timestamp('2011-12-18 11:38 PST', 'YYYY-MM-DD HH12:MI TZ');  -- NYI
+
+SELECT to_timestamp('2018-11-02 12:34:56.025', 'YYYY-MM-DD HH24:MI:SS.MS');
 
 SELECT i, to_timestamp('2018-11-02 12:34:56', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
 SELECT i, to_timestamp('2018-11-02 12:34:56.1', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
@@ -410,6 +420,10 @@ SELECT i, to_timestamp('2018-11-02 12:34:56.1234', 'YYYY-MM-DD HH24:MI:SS.FF' ||
 SELECT i, to_timestamp('2018-11-02 12:34:56.12345', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
 SELECT i, to_timestamp('2018-11-02 12:34:56.123456', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
 SELECT i, to_timestamp('2018-11-02 12:34:56.123456789', 'YYYY-MM-DD HH24:MI:SS.FF' || i) FROM generate_series(1, 6) i;
+
+SELECT to_date('1 4 1902', 'Q MM YYYY');  -- Q is ignored
+SELECT to_date('3 4 21 01', 'W MM CC YY');
+SELECT to_date('2458872', 'J');
 
 --
 -- Check handling of multiple spaces in format and/or input
@@ -458,6 +472,11 @@ SELECT to_timestamp('19971', 'YYYYMMDD');
 
 -- Insufficient digit characters for a single node:
 SELECT to_timestamp('19971)24', 'YYYYMMDD');
+
+-- We don't accept full-length day or month names if short form is specified:
+SELECT to_timestamp('Friday 1-January-1999', 'DY DD MON YYYY');
+SELECT to_timestamp('Fri 1-January-1999', 'DY DD MON YYYY');
+SELECT to_timestamp('Fri 1-Jan-1999', 'DY DD MON YYYY');  -- ok
 
 -- Value clobbering:
 SELECT to_timestamp('1997-11-Jan-16', 'YYYY-MM-Mon-DD');
