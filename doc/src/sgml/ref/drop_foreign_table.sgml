@@ -93,7 +93,7 @@ DROP FOREIGN TABLE films, distributors;
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the ISO/IEC 9075-9 (SQL/MED), except that the
+   This command conforms to ISO/IEC 9075-9 (SQL/MED), except that the
    standard only allows one foreign table to be dropped per command, and apart
    from the <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
