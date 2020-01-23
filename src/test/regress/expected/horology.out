@@ -2808,7 +2808,7 @@ SELECT to_timestamp('2000January09Sunday', 'YYYYFMMonthDDFMDay');
 (1 row)
 
 SELECT to_timestamp('97/Feb/16', 'YYMonDD');
-ERROR:  invalid value "/Fe" for "Mon"
+ERROR:  invalid value "/Feb/16" for "Mon"
 DETAIL:  The given value did not match any of the allowed values for this field.
 SELECT to_timestamp('19971116', 'YYYYMMDD');
          to_timestamp         
