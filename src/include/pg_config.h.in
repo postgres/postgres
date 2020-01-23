@@ -488,6 +488,14 @@
 /* Define to 1 if you have the `rl_filename_completion_function' function. */
 #undef HAVE_RL_FILENAME_COMPLETION_FUNCTION
 
+/* Define to 1 if you have the global variable 'rl_filename_quote_characters'.
+   */
+#undef HAVE_RL_FILENAME_QUOTE_CHARACTERS
+
+/* Define to 1 if you have the global variable 'rl_filename_quoting_function'.
+   */
+#undef HAVE_RL_FILENAME_QUOTING_FUNCTION
+
 /* Define to 1 if you have the `rl_reset_screen_size' function. */
 #undef HAVE_RL_RESET_SCREEN_SIZE
 

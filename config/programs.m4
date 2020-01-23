@@ -209,17 +209,20 @@ fi
 
 
 
-# PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
-# ---------------------------------------
+# PGAC_READLINE_VARIABLES
+# -----------------------
 # Readline versions < 2.1 don't have rl_completion_append_character
+# Libedit lacks rl_filename_quote_characters and rl_filename_quoting_function
 
-AC_DEFUN([PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER],
+AC_DEFUN([PGAC_READLINE_VARIABLES],
 [AC_CACHE_CHECK([for rl_completion_append_character], pgac_cv_var_rl_completion_append_character,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>
-#ifdef HAVE_READLINE_READLINE_H
-# include <readline/readline.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
 #elif defined(HAVE_READLINE_H)
-# include <readline.h>
+#include <readline.h>
 #endif
 ],
 [rl_completion_append_character = 'x';])],
@@ -228,7 +231,42 @@ AC_DEFUN([PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER],
 if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then
 AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
           [Define to 1 if you have the global variable 'rl_completion_append_character'.])
-fi])# PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
+fi
+AC_CACHE_CHECK([for rl_filename_quote_characters], pgac_cv_var_rl_filename_quote_characters,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#endif
+],
+[rl_filename_quote_characters = "x";])],
+[pgac_cv_var_rl_filename_quote_characters=yes],
+[pgac_cv_var_rl_filename_quote_characters=no])])
+if test x"$pgac_cv_var_rl_filename_quote_characters" = x"yes"; then
+AC_DEFINE(HAVE_RL_FILENAME_QUOTE_CHARACTERS, 1,
+          [Define to 1 if you have the global variable 'rl_filename_quote_characters'.])
+fi
+AC_CACHE_CHECK([for rl_filename_quoting_function], pgac_cv_var_rl_filename_quoting_function,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#endif
+],
+[rl_filename_quoting_function = 0;])],
+[pgac_cv_var_rl_filename_quoting_function=yes],
+[pgac_cv_var_rl_filename_quoting_function=no])])
+if test x"$pgac_cv_var_rl_filename_quoting_function" = x"yes"; then
+AC_DEFINE(HAVE_RL_FILENAME_QUOTING_FUNCTION, 1,
+          [Define to 1 if you have the global variable 'rl_filename_quoting_function'.])
+fi
+])# PGAC_READLINE_VARIABLES
 
 
 

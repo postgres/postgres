@@ -1874,7 +1874,7 @@ fi
 LIBS="$LIBS_including_readline"
 
 if test "$with_readline" = yes; then
-  PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
+  PGAC_READLINE_VARIABLES
   AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function rl_reset_screen_size])
   AC_CHECK_FUNCS([append_history history_truncate_file])
 fi

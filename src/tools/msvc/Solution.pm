@@ -333,6 +333,8 @@ sub GenerateFiles
 		HAVE_RL_COMPLETION_APPEND_CHARACTER      => undef,
 		HAVE_RL_COMPLETION_MATCHES               => undef,
 		HAVE_RL_FILENAME_COMPLETION_FUNCTION     => undef,
+		HAVE_RL_FILENAME_QUOTE_CHARACTERS        => undef,
+		HAVE_RL_FILENAME_QUOTING_FUNCTION        => undef,
 		HAVE_RL_RESET_SCREEN_SIZE                => undef,
 		HAVE_SECURITY_PAM_APPL_H                 => undef,
 		HAVE_SETPROCTITLE                        => undef,

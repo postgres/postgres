@@ -16316,10 +16316,12 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdio.h>
-#ifdef HAVE_READLINE_READLINE_H
-# include <readline/readline.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
 #elif defined(HAVE_READLINE_H)
-# include <readline.h>
+#include <readline.h>
 #endif
 
 int
@@ -16345,6 +16347,85 @@ if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then
 $as_echo "#define HAVE_RL_COMPLETION_APPEND_CHARACTER 1" >>confdefs.h
 
 fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl_filename_quote_characters" >&5
+$as_echo_n "checking for rl_filename_quote_characters... " >&6; }
+if ${pgac_cv_var_rl_filename_quote_characters+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdio.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#endif
+
+int
+main ()
+{
+rl_filename_quote_characters = "x";
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_var_rl_filename_quote_characters=yes
+else
+  pgac_cv_var_rl_filename_quote_characters=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_var_rl_filename_quote_characters" >&5
+$as_echo "$pgac_cv_var_rl_filename_quote_characters" >&6; }
+if test x"$pgac_cv_var_rl_filename_quote_characters" = x"yes"; then
+
+$as_echo "#define HAVE_RL_FILENAME_QUOTE_CHARACTERS 1" >>confdefs.h
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl_filename_quoting_function" >&5
+$as_echo_n "checking for rl_filename_quoting_function... " >&6; }
+if ${pgac_cv_var_rl_filename_quoting_function+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <stdio.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#endif
+
+int
+main ()
+{
+rl_filename_quoting_function = 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_var_rl_filename_quoting_function=yes
+else
+  pgac_cv_var_rl_filename_quoting_function=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_var_rl_filename_quoting_function" >&5
+$as_echo "$pgac_cv_var_rl_filename_quoting_function" >&6; }
+if test x"$pgac_cv_var_rl_filename_quoting_function" = x"yes"; then
+
+$as_echo "#define HAVE_RL_FILENAME_QUOTING_FUNCTION 1" >>confdefs.h
+
+fi
+
   for ac_func in rl_completion_matches rl_filename_completion_function rl_reset_screen_size
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`

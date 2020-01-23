@@ -60,6 +60,30 @@ delete $ENV{TERM};
 # Some versions of readline inspect LS_COLORS, so for luck unset that too.
 delete $ENV{LS_COLORS};
 
+# In a VPATH build, we'll be started in the source directory, but we want
+# to run in the build directory so that we can use relative paths to
+# access the tmp_check subdirectory; otherwise the output from filename
+# completion tests is too variable.
+if ($ENV{TESTDIR})
+{
+	chdir $ENV{TESTDIR} or die "could not chdir to \"$ENV{TESTDIR}\": $!";
+}
+
+# Create some junk files for filename completion testing.
+my $FH;
+open $FH, ">", "tmp_check/somefile"
+  or die("could not create file \"tmp_check/somefile\": $!");
+print $FH "some stuff\n";
+close $FH;
+open $FH, ">", "tmp_check/afile123"
+  or die("could not create file \"tmp_check/afile123\": $!");
+print $FH "more stuff\n";
+close $FH;
+open $FH, ">", "tmp_check/afile456"
+  or die("could not create file \"tmp_check/afile456\": $!");
+print $FH "other stuff\n";
+close $FH;
+
 # fire up an interactive psql session
 my $in  = '';
 my $out = '';
@@ -104,6 +128,15 @@ sub clear_query
 	return;
 }
 
+# Clear current line to start over
+# (this will work in an incomplete string literal, but it's less desirable
+# than clear_query because we lose evidence in the history file)
+sub clear_line
+{
+	check_completion("\025\n", qr/postgres=# /, "control-U works");
+	return;
+}
+
 # check basic command completion: SEL<tab> produces SELECT<space>
 check_completion("SEL\t", qr/SELECT /, "complete SEL<tab> to SELECT");
 
@@ -141,6 +174,47 @@ clear_query();
 check_completion("\\DRD\t", qr/drds /, "complete \\DRD<tab> to \\drds");
 
 clear_query();
+
+# check filename completion
+check_completion(
+	"\\lo_import tmp_check/some\t",
+	qr|tmp_check/somefile |,
+	"filename completion with one possibility");
+
+clear_query();
+
+# note: readline might print a bell before the completion
+check_completion(
+	"\\lo_import tmp_check/af\t",
+	qr|tmp_check/af\a?ile|,
+	"filename completion with multiple possibilities");
+
+clear_query();
+
+# COPY requires quoting
+# note: broken versions of libedit want to backslash the closing quote;
+# not much we can do about that
+check_completion(
+	"COPY foo FROM tmp_check/some\t",
+	qr|'tmp_check/somefile\\?' |,
+	"quoted filename completion with one possibility");
+
+clear_line();
+
+check_completion(
+	"COPY foo FROM tmp_check/af\t",
+	qr|'tmp_check/afile|,
+	"quoted filename completion with multiple possibilities");
+
+# some versions of readline/libedit require two tabs here, some only need one
+# also, some will offer the whole path name and some just the file name
+# the quotes might appear, too
+check_completion(
+	"\t\t",
+	qr|afile123'? +'?(tmp_check/)?afile456|,
+	"offer multiple file choices");
+
+clear_line();
 
 # send psql an explicit \q to shut it down, else pty won't close properly
 $timer->start(5);
