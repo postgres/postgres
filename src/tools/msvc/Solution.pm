@@ -332,6 +332,7 @@ sub GenerateFiles
 		HAVE_RINT                   => 1,
 		HAVE_RL_COMPLETION_APPEND_CHARACTER      => undef,
 		HAVE_RL_COMPLETION_MATCHES               => undef,
+		HAVE_RL_COMPLETION_SUPPRESS_QUOTE        => undef,
 		HAVE_RL_FILENAME_COMPLETION_FUNCTION     => undef,
 		HAVE_RL_FILENAME_QUOTE_CHARACTERS        => undef,
 		HAVE_RL_FILENAME_QUOTING_FUNCTION        => undef,

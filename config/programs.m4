@@ -211,7 +211,8 @@ fi
 
 # PGAC_READLINE_VARIABLES
 # -----------------------
-# Readline versions < 2.1 don't have rl_completion_append_character
+# Readline versions < 2.1 don't have rl_completion_append_character,
+# and some versions lack rl_completion_suppress_quote.
 # Libedit lacks rl_filename_quote_characters and rl_filename_quoting_function
 
 AC_DEFUN([PGAC_READLINE_VARIABLES],
@@ -231,6 +232,23 @@ AC_DEFUN([PGAC_READLINE_VARIABLES],
 if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then
 AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
           [Define to 1 if you have the global variable 'rl_completion_append_character'.])
+fi
+AC_CACHE_CHECK([for rl_completion_suppress_quote], pgac_cv_var_rl_completion_suppress_quote,
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>
+#if defined(HAVE_READLINE_READLINE_H)
+#include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
+#elif defined(HAVE_READLINE_H)
+#include <readline.h>
+#endif
+],
+[rl_completion_suppress_quote = 1;])],
+[pgac_cv_var_rl_completion_suppress_quote=yes],
+[pgac_cv_var_rl_completion_suppress_quote=no])])
+if test x"$pgac_cv_var_rl_completion_suppress_quote" = x"yes"; then
+AC_DEFINE(HAVE_RL_COMPLETION_SUPPRESS_QUOTE, 1,
+          [Define to 1 if you have the global variable 'rl_completion_suppress_quote'.])
 fi
 AC_CACHE_CHECK([for rl_filename_quote_characters], pgac_cv_var_rl_filename_quote_characters,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>

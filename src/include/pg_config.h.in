@@ -485,6 +485,10 @@
 /* Define to 1 if you have the `rl_completion_matches' function. */
 #undef HAVE_RL_COMPLETION_MATCHES
 
+/* Define to 1 if you have the global variable 'rl_completion_suppress_quote'.
+   */
+#undef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
+
 /* Define to 1 if you have the `rl_filename_completion_function' function. */
 #undef HAVE_RL_FILENAME_COMPLETION_FUNCTION
 

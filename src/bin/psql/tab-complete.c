@@ -4468,11 +4468,10 @@ complete_from_files(const char *text, int state)
 	 * anyway.  Set rl_completion_suppress_quote to prevent that.  If we do
 	 * get to quote_file_name(), we'll clear this again.  (Yes, this seems
 	 * like it's working around Readline bugs.)
-	 *
-	 * (For now, we assume that rl_completion_suppress_quote exists if the
-	 * filename quoting hooks do.)
 	 */
+#ifdef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
 	rl_completion_suppress_quote = 1;
+#endif
 
 	/* If user typed a quote, force quoting (never remove user's quote) */
 	if (*text == '\'')
@@ -4842,7 +4841,9 @@ quote_file_name(char *fname, int match_type, char *quote_pointer)
 	 * on its own accord.  (This covers some additional cases beyond those
 	 * dealt with above.)
 	 */
+#ifdef HAVE_RL_COMPLETION_SUPPRESS_QUOTE
 	rl_completion_suppress_quote = 0;
+#endif
 
 	/*
 	 * If user typed a leading quote character other than single quote (i.e.,
