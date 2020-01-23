@@ -1507,8 +1507,8 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			/*
 			 * It should never be the case that the visibility map page is set
 			 * while the page-level bit is clear, but the reverse is allowed
-			 * (if checksums are not enabled).  Regardless, set the both bits
-			 * so that we get back in sync.
+			 * (if checksums are not enabled).  Regardless, set both bits so
+			 * that we get back in sync.
 			 *
 			 * NB: If the heap page is all-visible but the VM bit is not set,
 			 * we don't need to dirty the heap page.  However, if checksums
@@ -1563,9 +1563,9 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 		}
 
 		/*
-		 * If the all-visible page is turned out to be all-frozen but not
-		 * marked, we should so mark it.  Note that all_frozen is only valid
-		 * if all_visible is true, so we must check both.
+		 * If the all-visible page is all-frozen but not marked as such yet,
+		 * mark it as all-frozen.  Note that all_frozen is only valid if
+		 * all_visible is true, so we must check both.
 		 */
 		else if (all_visible_according_to_vm && all_visible && all_frozen &&
 				 !VM_ALL_FROZEN(onerel, blkno, &vmbuffer))
