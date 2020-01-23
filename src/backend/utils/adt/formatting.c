@@ -88,6 +88,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
@@ -317,16 +318,6 @@ static const char *const numth[] = {"st", "nd", "rd", "th", NULL};
  * Flags & Options:
  * ----------
  */
-#define ONE_UPPER		1		/* Name */
-#define ALL_UPPER		2		/* NAME */
-#define ALL_LOWER		3		/* name */
-
-#define MAX_MONTH_LEN	9
-#define MAX_MON_LEN		3
-#define MAX_DAY_LEN		9
-#define MAX_DY_LEN		3
-#define MAX_RM_LEN		4
-
 #define TH_UPPER		1
 #define TH_LOWER		2
 
@@ -1048,7 +1039,7 @@ static void parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 
 static void DCH_to_char(FormatNode *node, bool is_interval,
 						TmToChar *in, char *out, Oid collid);
-static void DCH_from_char(FormatNode *node, char *in, TmFromChar *out,
+static void DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
 						  bool std, bool *have_error);
 
 #ifdef DEBUG_TO_FROM_CHAR
@@ -1059,18 +1050,18 @@ static void dump_node(FormatNode *node, int max);
 static const char *get_th(char *num, int type);
 static char *str_numth(char *dest, char *num, int type);
 static int	adjust_partial_year_to_2020(int year);
-static int	strspace_len(char *str);
+static int	strspace_len(const char *str);
 static void from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode,
 							   bool *have_error);
 static void from_char_set_int(int *dest, const int value, const FormatNode *node,
 							  bool *have_error);
-static int	from_char_parse_int_len(int *dest, char **src, const int len,
+static int	from_char_parse_int_len(int *dest, const char **src, const int len,
 									FormatNode *node, bool *have_error);
-static int	from_char_parse_int(int *dest, char **src, FormatNode *node,
+static int	from_char_parse_int(int *dest, const char **src, FormatNode *node,
 								bool *have_error);
-static int	seq_search(char *name, const char *const *array, int type, int max, int *len);
-static int	from_char_seq_search(int *dest, char **src,
-								 const char *const *array, int type, int max,
+static int	seq_search(const char *name, const char *const *array, int *len);
+static int	from_char_seq_search(int *dest, const char **src,
+								 const char *const *array,
 								 FormatNode *node, bool *have_error);
 static void do_to_timestamp(text *date_txt, text *fmt, bool std,
 							struct pg_tm *tm, fsec_t *fsec, int *fprec,
@@ -2259,7 +2250,7 @@ adjust_partial_year_to_2020(int year)
 
 
 static int
-strspace_len(char *str)
+strspace_len(const char *str)
 {
 	int			len = 0;
 
@@ -2348,12 +2339,12 @@ on_error:
  * and -1 is returned.
  */
 static int
-from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node,
+from_char_parse_int_len(int *dest, const char **src, const int len, FormatNode *node,
 						bool *have_error)
 {
 	long		result;
 	char		copy[DCH_MAX_ITEM_SIZ + 1];
-	char	   *init = *src;
+	const char *init = *src;
 	int			used;
 
 	/*
@@ -2370,8 +2361,11 @@ from_char_parse_int_len(int *dest, char **src, const int len, FormatNode *node,
 		 * This node is in Fill Mode, or the next node is known to be a
 		 * non-digit value, so we just slurp as many characters as we can get.
 		 */
+		char	   *endptr;
+
 		errno = 0;
-		result = strtol(init, src, 10);
+		result = strtol(init, &endptr, 10);
+		*src = endptr;
 	}
 	else
 	{
@@ -2448,76 +2442,61 @@ on_error:
  * required length explicitly.
  */
 static int
-from_char_parse_int(int *dest, char **src, FormatNode *node, bool *have_error)
+from_char_parse_int(int *dest, const char **src, FormatNode *node, bool *have_error)
 {
 	return from_char_parse_int_len(dest, src, node->key->len, node, have_error);
 }
 
-/* ----------
- * Sequential search with to upper/lower conversion
- * ----------
+/*
+ * Sequentially search null-terminated "array" for a case-insensitive match
+ * to the initial character(s) of "name".
+ *
+ * Returns array index of match, or -1 for no match.
+ *
+ * *len is set to the length of the match, or 0 for no match.
+ *
+ * Case-insensitivity is defined per pg_ascii_tolower, so this is only
+ * suitable for comparisons to ASCII strings.
  */
 static int
-seq_search(char *name, const char *const *array, int type, int max, int *len)
+seq_search(const char *name, const char *const *array, int *len)
 {
-	const char *p;
+	unsigned char firstc;
 	const char *const *a;
-	char	   *n;
-	int			last,
-				i;
 
 	*len = 0;
 
+	/* empty string can't match anything */
 	if (!*name)
 		return -1;
 
-	/* set first char */
-	if (type == ONE_UPPER || type == ALL_UPPER)
-		*name = pg_toupper((unsigned char) *name);
-	else if (type == ALL_LOWER)
-		*name = pg_tolower((unsigned char) *name);
+	/* we handle first char specially to gain some speed */
+	firstc = pg_ascii_tolower((unsigned char) *name);
 
-	for (last = 0, a = array; *a != NULL; a++)
+	for (a = array; *a != NULL; a++)
 	{
+		const char *p;
+		const char *n;
+
 		/* compare first chars */
-		if (*name != **a)
+		if (pg_ascii_tolower((unsigned char) **a) != firstc)
 			continue;
 
-		for (i = 1, p = *a + 1, n = name + 1;; n++, p++, i++)
+		/* compare rest of string */
+		for (p = *a + 1, n = name + 1;; p++, n++)
 		{
-			/* search fragment (max) only */
-			if (max && i == max)
-			{
-				*len = i;
-				return a - array;
-			}
-			/* full size */
+			/* return success if we matched whole array entry */
 			if (*p == '\0')
 			{
-				*len = i;
+				*len = n - name;
 				return a - array;
 			}
-			/* Not found in array 'a' */
+			/* else, must have another character in "name" ... */
 			if (*n == '\0')
 				break;
-
-			/*
-			 * Convert (but convert new chars only)
-			 */
-			if (i > last)
-			{
-				if (type == ONE_UPPER || type == ALL_LOWER)
-					*n = pg_tolower((unsigned char) *n);
-				else if (type == ALL_UPPER)
-					*n = pg_toupper((unsigned char) *n);
-				last = i;
-			}
-
-#ifdef DEBUG_TO_FROM_CHAR
-			elog(DEBUG_elog_output, "N: %c, P: %c, A: %s (%s)",
-				 *n, *p, *a, name);
-#endif
-			if (*n != *p)
+			/* ... and it must match */
+			if (pg_ascii_tolower((unsigned char) *p) !=
+				pg_ascii_tolower((unsigned char) *n))
 				break;
 		}
 	}
@@ -2526,8 +2505,8 @@ seq_search(char *name, const char *const *array, int type, int max, int *len)
 }
 
 /*
- * Perform a sequential search in 'array' for text matching the first 'max'
- * characters of the source string.
+ * Perform a sequential search in 'array' for an entry matching the first
+ * character(s) of the 'src' string case-insensitively.
  *
  * If a match is found, copy the array index of the match into the integer
  * pointed to by 'dest', advance 'src' to the end of the part of the string
@@ -2535,20 +2514,35 @@ seq_search(char *name, const char *const *array, int type, int max, int *len)
  *
  * If the string doesn't match, throw an error if 'have_error' is NULL,
  * otherwise set '*have_error' and return -1.
+ *
+ * 'node' is used only for error reports: node->key->name identifies the
+ * field type we were searching for.
  */
 static int
-from_char_seq_search(int *dest, char **src, const char *const *array, int type,
-					 int max, FormatNode *node, bool *have_error)
+from_char_seq_search(int *dest, const char **src, const char *const *array,
+					 FormatNode *node, bool *have_error)
 {
 	int			len;
 
-	*dest = seq_search(*src, array, type, max, &len);
+	*dest = seq_search(*src, array, &len);
+
 	if (len <= 0)
 	{
-		char		copy[DCH_MAX_ITEM_SIZ + 1];
+		/*
+		 * In the error report, truncate the string at the next whitespace (if
+		 * any) to avoid including irrelevant data.
+		 */
+		char	   *copy = pstrdup(*src);
+		char	   *c;
 
-		Assert(max <= DCH_MAX_ITEM_SIZ);
-		strlcpy(copy, *src, max + 1);
+		for (c = copy; *c; c++)
+		{
+			if (scanner_isspace(*c))
+			{
+				*c = '\0';
+				break;
+			}
+		}
 
 		RETURN_ERROR(ereport(ERROR,
 							 (errcode(ERRCODE_INVALID_DATETIME_FORMAT),
@@ -3166,11 +3160,11 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
  * ----------
  */
 static void
-DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
+DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			  bool *have_error)
 {
 	FormatNode *n;
-	char	   *s;
+	const char *s;
 	int			len,
 				value;
 	bool		fx_mode = std;
@@ -3279,7 +3273,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_a_m:
 			case DCH_p_m:
 				from_char_seq_search(&value, &s, ampm_strings_long,
-									 ALL_UPPER, n->key->len, n, have_error);
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->pm, value % 2, n, have_error);
 				CHECK_ERROR;
@@ -3290,7 +3284,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_am:
 			case DCH_pm:
 				from_char_seq_search(&value, &s, ampm_strings,
-									 ALL_UPPER, n->key->len, n, have_error);
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->pm, value % 2, n, have_error);
 				CHECK_ERROR;
@@ -3403,7 +3397,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_a_d:
 			case DCH_b_c:
 				from_char_seq_search(&value, &s, adbc_strings_long,
-									 ALL_UPPER, n->key->len, n, have_error);
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->bc, value % 2, n, have_error);
 				CHECK_ERROR;
@@ -3413,7 +3407,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_ad:
 			case DCH_bc:
 				from_char_seq_search(&value, &s, adbc_strings,
-									 ALL_UPPER, n->key->len, n, have_error);
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->bc, value % 2, n, have_error);
 				CHECK_ERROR;
@@ -3421,8 +3415,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_MONTH:
 			case DCH_Month:
 			case DCH_month:
-				from_char_seq_search(&value, &s, months_full, ONE_UPPER,
-									 MAX_MONTH_LEN, n, have_error);
+				from_char_seq_search(&value, &s, months_full,
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->mm, value + 1, n, have_error);
 				CHECK_ERROR;
@@ -3430,8 +3424,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_MON:
 			case DCH_Mon:
 			case DCH_mon:
-				from_char_seq_search(&value, &s, months, ONE_UPPER,
-									 MAX_MON_LEN, n, have_error);
+				from_char_seq_search(&value, &s, months,
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->mm, value + 1, n, have_error);
 				CHECK_ERROR;
@@ -3444,8 +3438,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_DAY:
 			case DCH_Day:
 			case DCH_day:
-				from_char_seq_search(&value, &s, days, ONE_UPPER,
-									 MAX_DAY_LEN, n, have_error);
+				from_char_seq_search(&value, &s, days,
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->d, value, n, have_error);
 				CHECK_ERROR;
@@ -3454,8 +3448,8 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 			case DCH_DY:
 			case DCH_Dy:
 			case DCH_dy:
-				from_char_seq_search(&value, &s, days, ONE_UPPER,
-									 MAX_DY_LEN, n, have_error);
+				from_char_seq_search(&value, &s, days,
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->d, value, n, have_error);
 				CHECK_ERROR;
@@ -3572,7 +3566,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 				break;
 			case DCH_RM:
 				from_char_seq_search(&value, &s, rm_months_upper,
-									 ALL_UPPER, MAX_RM_LEN, n, have_error);
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->mm, MONTHS_PER_YEAR - value,
 								  n, have_error);
@@ -3580,7 +3574,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out, bool std,
 				break;
 			case DCH_rm:
 				from_char_seq_search(&value, &s, rm_months_lower,
-									 ALL_LOWER, MAX_RM_LEN, n, have_error);
+									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->mm, MONTHS_PER_YEAR - value,
 								  n, have_error);
