@@ -3084,7 +3084,7 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out)
 			case DCH_DY:
 			case DCH_Dy:
 			case DCH_dy:
-				from_char_seq_search(&value, &s, days,
+				from_char_seq_search(&value, &s, days_short,
 									 n);
 				from_char_set_int(&out->d, value, n);
 				out->d++;
@@ -3183,10 +3183,6 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out)
 				SKIP_THth(s, n->suffix);
 				break;
 			case DCH_RM:
-				from_char_seq_search(&value, &s, rm_months_upper,
-									 n);
-				from_char_set_int(&out->mm, MONTHS_PER_YEAR - value, n);
-				break;
 			case DCH_rm:
 				from_char_seq_search(&value, &s, rm_months_lower,
 									 n);
