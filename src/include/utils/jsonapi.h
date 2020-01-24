@@ -103,6 +103,9 @@ typedef struct JsonSemAction
  */
 extern void pg_parse_json(JsonLexContext *lex, JsonSemAction *sem);
 
+/* the null action object used for pure validation */
+extern JsonSemAction nullSemAction;
+
 /*
  * json_count_array_elements performs a fast secondary parse to determine the
  * number of elements in passed array lex context. It should be called from an
@@ -123,6 +126,9 @@ extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
 extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
 													int len,
 													bool need_escapes);
+
+/* lex one token */
+extern void json_lex(JsonLexContext *lex);
 
 /*
  * Utility function to check if a string is a valid JSON number.
