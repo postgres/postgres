@@ -719,9 +719,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for
       fillfactor, toast and autovacuum storage parameters, as well as the
-      following planner related parameters:
-      <varname>effective_io_concurrency</varname>, <varname>parallel_workers</varname>, <varname>seq_page_cost</varname>,
-      <varname>random_page_cost</varname>, <varname>n_distinct</varname> and <varname>n_distinct_inherited</varname>.
+      planner parameter <varname>parallel_workers</varname>.
      </para>
     </listitem>
    </varlistentry>
