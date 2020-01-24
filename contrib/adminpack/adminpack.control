@@ -1,6 +1,6 @@
 # adminpack extension
 comment = 'administrative functions for PostgreSQL'
-default_version = '2.0'
+default_version = '2.1'
 module_pathname = '$libdir/adminpack'
 relocatable = false
 schema = pg_catalog

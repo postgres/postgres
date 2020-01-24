@@ -145,6 +145,7 @@ extern int	pg_fsync_writethrough(int fd);
 extern int	pg_fdatasync(int fd);
 extern void pg_flush_data(int fd, off_t offset, off_t amount);
 extern void fsync_fname(const char *fname, bool isdir);
+extern int	fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel);
 extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel);
 extern int	durable_unlink(const char *fname, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);

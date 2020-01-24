@@ -44,6 +44,13 @@
      </entry>
     </row>
     <row>
+     <entry><function>pg_catalog.pg_file_sync(filename text)</function></entry>
+     <entry><type>void</type></entry>
+     <entry>
+      Flush a file or directory to disk
+     </entry>
+    </row>
+    <row>
      <entry><function>pg_catalog.pg_file_rename(oldname text, newname text <optional>, archivename text</optional>)</function></entry>
      <entry><type>boolean</type></entry>
      <entry>
@@ -77,6 +84,18 @@
   false, the file must not already exist.  If <parameter>append</parameter> is true,
   the file can already exist, and will be appended to if so.
   Returns the number of bytes written.
+ </para>
+
+ <indexterm>
+  <primary>pg_file_sync</primary>
+ </indexterm>
+ <para>
+  <function>pg_file_sync</function> fsyncs the specified file or directory
+  named by <parameter>filename</parameter>.  An error is thrown
+  on failure (e.g., the specified file is not present). Note that
+  <xref linkend="guc-data-sync-retry"/> has no effect on this function,
+  and therefore a PANIC-level error will not be raised even on failure to
+  flush database files.
  </para>
 
  <indexterm>

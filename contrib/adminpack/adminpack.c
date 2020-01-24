@@ -43,6 +43,7 @@ PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pg_file_write);
 PG_FUNCTION_INFO_V1(pg_file_write_v1_1);
+PG_FUNCTION_INFO_V1(pg_file_sync);
 PG_FUNCTION_INFO_V1(pg_file_rename);
 PG_FUNCTION_INFO_V1(pg_file_rename_v1_1);
 PG_FUNCTION_INFO_V1(pg_file_unlink);
@@ -213,6 +214,30 @@ pg_file_write_internal(text *file, text *data, bool replace)
 				 errmsg("could not write file \"%s\": %m", filename)));
 
 	return (count);
+}
+
+/* ------------------------------------
+ * pg_file_sync
+ *
+ * We REVOKE EXECUTE on the function from PUBLIC.
+ * Users can then grant access to it based on their policies.
+ */
+Datum
+pg_file_sync(PG_FUNCTION_ARGS)
+{
+	char	   *filename;
+	struct stat	fst;
+
+	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0), false);
+
+	if (stat(filename, &fst) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m", filename)));
+
+	fsync_fname_ext(filename, S_ISDIR(fst.st_mode), false, ERROR);
+
+	PG_RETURN_VOID();
 }
 
 /* ------------------------------------

@@ -319,7 +319,6 @@ static void pre_sync_fname(const char *fname, bool isdir, int elevel);
 static void datadir_fsync_fname(const char *fname, bool isdir, int elevel);
 static void unlink_if_exists_fname(const char *fname, bool isdir, int elevel);
 
-static int	fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel);
 static int	fsync_parent_path(const char *fname, int elevel);
 
 
@@ -3376,7 +3375,7 @@ unlink_if_exists_fname(const char *fname, bool isdir, int elevel)
  *
  * Returns 0 if the operation succeeded, -1 otherwise.
  */
-static int
+int
 fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel)
 {
 	int			fd;
