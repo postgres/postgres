@@ -18,5 +18,7 @@
 
 /* functions in json.c */
 extern void escape_json(StringInfo buf, const char *str);
+extern char *JsonEncodeDateTime(char *buf, Datum value, Oid typid,
+								const int *tzp);
 
 #endif							/* JSON_H */

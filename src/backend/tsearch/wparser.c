@@ -21,6 +21,7 @@
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/jsonapi.h"
+#include "utils/jsonfuncs.h"
 #include "utils/varlena.h"
 
 /******sql-level interface******/

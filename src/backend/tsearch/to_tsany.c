@@ -17,6 +17,7 @@
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/jsonapi.h"
+#include "utils/jsonfuncs.h"
 
 
 typedef struct MorphOpaque
