@@ -25,6 +25,15 @@ typedef enum ExplainFormat
 	EXPLAIN_FORMAT_YAML
 } ExplainFormat;
 
+typedef struct ExplainWorkersState
+{
+	int			num_workers;	/* # of worker processes the plan used */
+	bool	   *worker_inited;	/* per-worker state-initialized flags */
+	StringInfoData *worker_str; /* per-worker transient output buffers */
+	int		   *worker_state_save;	/* per-worker grouping state save areas */
+	StringInfo	prev_str;		/* saved output buffer while redirecting */
+} ExplainWorkersState;
+
 typedef struct ExplainState
 {
 	StringInfo	str;			/* output buffer */
@@ -47,6 +56,8 @@ typedef struct ExplainState
 	List	   *deparse_cxt;	/* context list for deparsing expressions */
 	Bitmapset  *printed_subplans;	/* ids of SubPlans we've printed */
 	bool		hide_workers;	/* set if we find an invisible Gather */
+	/* state related to the current plan node */
+	ExplainWorkersState *workers_state; /* needed if parallel plan */
 } ExplainState;
 
 /* Hook for plugins to get control in ExplainOneQuery() */
@@ -84,8 +95,6 @@ extern void ExplainPrintPlan(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc);
 
 extern void ExplainPrintJITSummary(ExplainState *es, QueryDesc *queryDesc);
-extern void ExplainPrintJIT(ExplainState *es, int jit_flags,
-							struct JitInstrumentation *jit_instr, int worker_num);
 
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
 
