@@ -873,6 +873,40 @@
       <row>
        <entry>
         <indexterm>
+         <primary>gcd</primary>
+        </indexterm>
+        <literal><function>gcd(<replaceable>a</replaceable>, <replaceable>b</replaceable>)</function></literal>
+       </entry>
+       <entry>(same as argument types)</entry>
+       <entry>
+        greatest common divisor (the largest positive number that divides both
+        inputs with no remainder); returns <literal>0</literal> if both inputs
+        are zero
+       </entry>
+       <entry><literal>gcd(1071, 462)</literal></entry>
+       <entry><literal>21</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>lcm</primary>
+        </indexterm>
+        <literal><function>lcm(<replaceable>a</replaceable>, <replaceable>b</replaceable>)</function></literal>
+       </entry>
+       <entry>(same as argument types)</entry>
+       <entry>
+        least common multiple (the smallest strictly positive number that is
+        an integral multiple of both inputs); returns <literal>0</literal> if
+        either input is zero
+       </entry>
+       <entry><literal>lcm(1071, 462)</literal></entry>
+       <entry><literal>23562</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>ln</primary>
         </indexterm>
         <literal><function>ln(<type>dp</type> or <type>numeric</type>)</function></literal>

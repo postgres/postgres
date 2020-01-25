@@ -1196,6 +1196,132 @@ int2abs(PG_FUNCTION_ARGS)
 	PG_RETURN_INT16(result);
 }
 
+/*
+ * Greatest Common Divisor
+ *
+ * Returns the largest positive integer that exactly divides both inputs.
+ * Special cases:
+ *   - gcd(x, 0) = gcd(0, x) = abs(x)
+ *   		because 0 is divisible by anything
+ *   - gcd(0, 0) = 0
+ *   		complies with the previous definition and is a common convention
+ *
+ * Special care must be taken if either input is INT_MIN --- gcd(0, INT_MIN),
+ * gcd(INT_MIN, 0) and gcd(INT_MIN, INT_MIN) are all equal to abs(INT_MIN),
+ * which cannot be represented as a 32-bit signed integer.
+ */
+static int32
+int4gcd_internal(int32 arg1, int32 arg2)
+{
+	int32	swap;
+	int32	a1, a2;
+
+	/*
+	 * Put the greater absolute value in arg1.
+	 *
+	 * This would happen automatically in the loop below, but avoids an
+	 * expensive modulo operation, and simplifies the special-case handling
+	 * for INT_MIN below.
+	 *
+	 * We do this in negative space in order to handle INT_MIN.
+	 */
+	a1 = (arg1 < 0) ? arg1 : -arg1;
+	a2 = (arg2 < 0) ? arg2 : -arg2;
+	if (a1 > a2)
+	{
+		swap = arg1;
+		arg1 = arg2;
+		arg2 = swap;
+	}
+
+	/* Special care needs to be taken with INT_MIN.  See comments above. */
+	if (arg1 == PG_INT32_MIN)
+	{
+		if (arg2 == 0 || arg2 == PG_INT32_MIN)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("integer out of range")));
+
+		/*
+		 * Some machines throw a floating-point exception for INT_MIN % -1,
+		 * which is a bit silly since the correct answer is perfectly
+		 * well-defined, namely zero.  Guard against this and just return the
+		 * result, gcd(INT_MIN, -1) = 1.
+		 */
+		if (arg2 == -1)
+			return 1;
+	}
+
+	/* Use the Euclidean algorithm to find the GCD */
+	while (arg2 != 0)
+	{
+		swap = arg2;
+		arg2 = arg1 % arg2;
+		arg1 = swap;
+	}
+
+	/*
+	 * Make sure the result is positive. (We know we don't have INT_MIN
+	 * anymore).
+	 */
+	if (arg1 < 0)
+		arg1 = -arg1;
+
+	return arg1;
+}
+
+Datum
+int4gcd(PG_FUNCTION_ARGS)
+{
+	int32	arg1 = PG_GETARG_INT32(0);
+	int32	arg2 = PG_GETARG_INT32(1);
+	int32	result;
+
+	result = int4gcd_internal(arg1, arg2);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * Least Common Multiple
+ */
+Datum
+int4lcm(PG_FUNCTION_ARGS)
+{
+	int32	arg1 = PG_GETARG_INT32(0);
+	int32	arg2 = PG_GETARG_INT32(1);
+	int32	gcd;
+	int32	result;
+
+	/*
+	 * Handle lcm(x, 0) = lcm(0, x) = 0 as a special case.  This prevents a
+	 * division-by-zero error below when x is zero, and an overflow error from
+	 * the GCD computation when x = INT_MIN.
+	 */
+	if (arg1 == 0 || arg2 == 0)
+		PG_RETURN_INT32(0);
+
+	/* lcm(x, y) = abs(x / gcd(x, y) * y) */
+	gcd = int4gcd_internal(arg1, arg2);
+	arg1 = arg1 / gcd;
+
+	if (unlikely(pg_mul_s32_overflow(arg1, arg2, &result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+
+	/* If the result is INT_MIN, it cannot be represented. */
+	if (unlikely(result == PG_INT32_MIN))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("integer out of range")));
+
+	if (result < 0)
+		result = -result;
+
+	PG_RETURN_INT32(result);
+}
+
 Datum
 int2larger(PG_FUNCTION_ARGS)
 {
