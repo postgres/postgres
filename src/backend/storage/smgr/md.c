@@ -1100,8 +1100,13 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 	if (fd < 0)
 		return NULL;
 
-	if (segno <= reln->md_num_open_segs[forknum])
-		_fdvec_resize(reln, forknum, segno + 1);
+	/*
+	 * Segments are always opened in order from lowest to highest, so we must
+	 * be adding a new one at the end.
+	 */
+	Assert(segno == reln->md_num_open_segs[forknum]);
+
+	_fdvec_resize(reln, forknum, segno + 1);
 
 	/* fill the entry */
 	v = &reln->md_seg_fds[forknum][segno];
