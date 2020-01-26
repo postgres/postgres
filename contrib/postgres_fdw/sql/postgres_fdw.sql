@@ -1138,6 +1138,26 @@ EXPLAIN (verbose, costs off)
 DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;                       -- can be pushed down
 DELETE FROM ft2 WHERE c1 = 9999 RETURNING tableoid::regclass;
 
+-- Test UPDATE with a MULTIEXPR sub-select
+-- (maybe someday this'll be remotely executable, but not today)
+EXPLAIN (verbose, costs off)
+UPDATE ft2 AS target SET (c2, c7) = (
+    SELECT c2 * 10, c7
+        FROM ft2 AS src
+        WHERE target.c1 = src.c1
+) WHERE c1 > 1100;
+UPDATE ft2 AS target SET (c2, c7) = (
+    SELECT c2 * 10, c7
+        FROM ft2 AS src
+        WHERE target.c1 = src.c1
+) WHERE c1 > 1100;
+
+UPDATE ft2 AS target SET (c2) = (
+    SELECT c2 / 10
+        FROM ft2 AS src
+        WHERE target.c1 = src.c1
+) WHERE c1 > 1100;
+
 -- Test that trigger on remote table works as expected
 CREATE OR REPLACE FUNCTION "S 1".F_BRTRIG() RETURNS trigger AS $$
 BEGIN
