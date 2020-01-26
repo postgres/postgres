@@ -191,7 +191,6 @@ static volatile sig_atomic_t got_STOPPING = false;
 static volatile sig_atomic_t replication_active = false;
 
 static LogicalDecodingContext *logical_decoding_ctx = NULL;
-static XLogRecPtr logical_startptr = InvalidXLogRecPtr;
 
 /* A sample associating a WAL location with the time it was written. */
 typedef struct
@@ -1130,9 +1129,9 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	pq_endmessage(&buf);
 	pq_flush();
 
-
 	/* Start reading WAL from the oldest required WAL. */
-	logical_startptr = MyReplicationSlot->data.restart_lsn;
+	XLogBeginRead(logical_decoding_ctx->reader,
+				  MyReplicationSlot->data.restart_lsn);
 
 	/*
 	 * Report the location after which we'll send out further commits as the
@@ -2791,8 +2790,7 @@ XLogSendLogical(void)
 	 */
 	WalSndCaughtUp = false;
 
-	record = XLogReadRecord(logical_decoding_ctx->reader, logical_startptr, &errm);
-	logical_startptr = InvalidXLogRecPtr;
+	record = XLogReadRecord(logical_decoding_ctx->reader, &errm);
 
 	/* xlog record was invalid */
 	if (errm != NULL)

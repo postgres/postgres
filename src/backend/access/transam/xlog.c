@@ -897,7 +897,7 @@ static void UpdateLastRemovedPtr(char *filename);
 static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
 static void UpdateMinRecoveryPoint(XLogRecPtr lsn, bool force);
-static XLogRecord *ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
+static XLogRecord *ReadRecord(XLogReaderState *xlogreader,
 							  int emode, bool fetching_ckpt);
 static void CheckRecoveryConsistency(void);
 static XLogRecord *ReadCheckpointRecord(XLogReaderState *xlogreader,
@@ -4246,17 +4246,17 @@ CleanupBackupHistory(void)
 }
 
 /*
- * Attempt to read an XLOG record.
+ * Attempt to read the next XLOG record.
  *
- * If RecPtr is valid, try to read a record at that position.  Otherwise
- * try to read a record just after the last one previously read.
+ * Before first call, the reader needs to be positioned to the first record
+ * by calling XLogBeginRead().
  *
  * If no valid record is available, returns NULL, or fails if emode is PANIC.
  * (emode must be either PANIC, LOG). In standby mode, retries until a valid
  * record is available.
  */
 static XLogRecord *
-ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
+ReadRecord(XLogReaderState *xlogreader, int emode,
 		   bool fetching_ckpt)
 {
 	XLogRecord *record;
@@ -4265,7 +4265,7 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 	/* Pass through parameters to XLogPageRead */
 	private->fetching_ckpt = fetching_ckpt;
 	private->emode = emode;
-	private->randAccess = (RecPtr != InvalidXLogRecPtr);
+	private->randAccess = (xlogreader->ReadRecPtr != InvalidXLogRecPtr);
 
 	/* This is the first attempt to read this page. */
 	lastSourceFailed = false;
@@ -4274,7 +4274,7 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 	{
 		char	   *errormsg;
 
-		record = XLogReadRecord(xlogreader, RecPtr, &errormsg);
+		record = XLogReadRecord(xlogreader, &errormsg);
 		ReadRecPtr = xlogreader->ReadRecPtr;
 		EndRecPtr = xlogreader->EndRecPtr;
 		if (record == NULL)
@@ -4292,8 +4292,7 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 			 * shouldn't loop anymore in that case.
 			 */
 			if (errormsg)
-				ereport(emode_for_corrupt_record(emode,
-												 RecPtr ? RecPtr : EndRecPtr),
+				ereport(emode_for_corrupt_record(emode, EndRecPtr),
 						(errmsg_internal("%s", errormsg) /* already translated */ ));
 		}
 
@@ -4311,8 +4310,7 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 									   wal_segment_size);
 			XLogFileName(fname, xlogreader->seg.ws_tli, segno,
 						 wal_segment_size);
-			ereport(emode_for_corrupt_record(emode,
-											 RecPtr ? RecPtr : EndRecPtr),
+			ereport(emode_for_corrupt_record(emode, EndRecPtr),
 					(errmsg("unexpected timeline ID %u in log segment %s, offset %u",
 							xlogreader->latestPageTLI,
 							fname,
@@ -6427,7 +6425,8 @@ StartupXLOG(void)
 			 */
 			if (checkPoint.redo < checkPointLoc)
 			{
-				if (!ReadRecord(xlogreader, checkPoint.redo, LOG, false))
+				XLogBeginRead(xlogreader, checkPoint.redo);
+				if (!ReadRecord(xlogreader, LOG, false))
 					ereport(FATAL,
 							(errmsg("could not find redo location referenced by checkpoint record"),
 							 errhint("If you are restoring from a backup, touch \"%s/recovery.signal\" and add required recovery options.\n"
@@ -7034,12 +7033,13 @@ StartupXLOG(void)
 		if (checkPoint.redo < RecPtr)
 		{
 			/* back up to find the record */
-			record = ReadRecord(xlogreader, checkPoint.redo, PANIC, false);
+			XLogBeginRead(xlogreader, checkPoint.redo);
+			record = ReadRecord(xlogreader, PANIC, false);
 		}
 		else
 		{
 			/* just have to read next record after CheckPoint */
-			record = ReadRecord(xlogreader, InvalidXLogRecPtr, LOG, false);
+			record = ReadRecord(xlogreader, LOG, false);
 		}
 
 		if (record != NULL)
@@ -7263,7 +7263,7 @@ StartupXLOG(void)
 				}
 
 				/* Else, try to fetch the next WAL record */
-				record = ReadRecord(xlogreader, InvalidXLogRecPtr, LOG, false);
+				record = ReadRecord(xlogreader, LOG, false);
 			} while (record != NULL);
 
 			/*
@@ -7365,7 +7365,8 @@ StartupXLOG(void)
 	 * Re-fetch the last valid or last applied record, so we can identify the
 	 * exact endpoint of what we consider the valid portion of WAL.
 	 */
-	record = ReadRecord(xlogreader, LastRec, PANIC, false);
+	XLogBeginRead(xlogreader, LastRec);
+	record = ReadRecord(xlogreader, PANIC, false);
 	EndOfLog = EndRecPtr;
 
 	/*
@@ -8094,7 +8095,8 @@ ReadCheckpointRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr,
 		return NULL;
 	}
 
-	record = ReadRecord(xlogreader, RecPtr, LOG, true);
+	XLogBeginRead(xlogreader, RecPtr);
+	record = ReadRecord(xlogreader, LOG, true);
 
 	if (record == NULL)
 	{

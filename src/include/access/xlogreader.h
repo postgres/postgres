@@ -13,7 +13,9 @@
  *		how to use the XLogReader infrastructure.
  *
  *		The basic idea is to allocate an XLogReaderState via
- *		XLogReaderAllocate(), and call XLogReadRecord() until it returns NULL.
+ *		XLogReaderAllocate(), position the reader to the first record with
+ *		XLogBeginRead() or XLogFindNextRecord(), and call XLogReadRecord()
+ *		until it returns NULL.
  *
  *		After reading a record with XLogReadRecord(), it's decomposed into
  *		the per-block and main data parts, and the parts can be accessed
@@ -126,7 +128,8 @@ struct XLogReaderState
 
 	/*
 	 * Start and end point of last record read.  EndRecPtr is also used as the
-	 * position to read next, if XLogReadRecord receives an invalid recptr.
+	 * position to read next.  Calling XLogBeginRead() sets EndRecPtr to the
+	 * starting position and ReadRecPtr to invalid.
 	 */
 	XLogRecPtr	ReadRecPtr;		/* start of last record read */
 	XLogRecPtr	EndRecPtr;		/* end+1 of last record read */
@@ -239,17 +242,19 @@ typedef int (*WALSegmentOpen) (XLogSegNo nextSegNo, WALSegmentContext *segcxt,
 extern void WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
 							   int segsize, const char *waldir);
 
+/* Position the XLogReader to given record */
+extern void XLogBeginRead(XLogReaderState *state, XLogRecPtr RecPtr);
+#ifdef FRONTEND
+extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);
+#endif							/* FRONTEND */
+
 /* Read the next XLog record. Returns NULL on end-of-WAL or failure */
 extern struct XLogRecord *XLogReadRecord(XLogReaderState *state,
-										 XLogRecPtr recptr, char **errormsg);
+										 char **errormsg);
 
 /* Validate a page */
 extern bool XLogReaderValidatePageHeader(XLogReaderState *state,
 										 XLogRecPtr recptr, char *phdr);
-
-#ifdef FRONTEND
-extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);
-#endif							/* FRONTEND */
 
 /*
  * Error information from WALRead that both backend and frontend caller can

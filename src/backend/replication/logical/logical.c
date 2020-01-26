@@ -461,11 +461,10 @@ DecodingContextReady(LogicalDecodingContext *ctx)
 void
 DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 {
-	XLogRecPtr	startptr;
 	ReplicationSlot *slot = ctx->slot;
 
 	/* Initialize from where to start reading WAL. */
-	startptr = slot->data.restart_lsn;
+	XLogBeginRead(ctx->reader, slot->data.restart_lsn);
 
 	elog(DEBUG1, "searching for logical decoding starting point, starting at %X/%X",
 		 (uint32) (slot->data.restart_lsn >> 32),
@@ -478,13 +477,11 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 		char	   *err = NULL;
 
 		/* the read_page callback waits for new WAL */
-		record = XLogReadRecord(ctx->reader, startptr, &err);
+		record = XLogReadRecord(ctx->reader, &err);
 		if (err)
 			elog(ERROR, "%s", err);
 		if (!record)
 			elog(ERROR, "no record found"); /* shouldn't happen */
-
-		startptr = InvalidXLogRecPtr;
 
 		LogicalDecodingProcessRecord(ctx, ctx->reader);
 

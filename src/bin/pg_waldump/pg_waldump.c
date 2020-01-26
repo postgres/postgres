@@ -1053,7 +1053,7 @@ main(int argc, char **argv)
 	for (;;)
 	{
 		/* try to read the next record */
-		record = XLogReadRecord(xlogreader_state, first_record, &errormsg);
+		record = XLogReadRecord(xlogreader_state, &errormsg);
 		if (!record)
 		{
 			if (!config.follow || private.endptr_reached)
@@ -1064,9 +1064,6 @@ main(int argc, char **argv)
 				continue;
 			}
 		}
-
-		/* after reading the first record, continue at next one */
-		first_record = InvalidXLogRecPtr;
 
 		/* apply all specified filters */
 		if (config.filter_by_rmgr != -1 &&

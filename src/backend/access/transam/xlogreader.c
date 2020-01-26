@@ -219,10 +219,33 @@ WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
 }
 
 /*
+ * Begin reading WAL at 'RecPtr'.
+ *
+ * 'RecPtr' should point to the beginnning of a valid WAL record.  Pointing at
+ * the beginning of a page is also OK, if there is a new record right after
+ * the page header, i.e. not a continuation.
+ *
+ * This does not make any attempt to read the WAL yet, and hence cannot fail.
+ * If the starting address is not correct, the first call to XLogReadRecord()
+ * will error out.
+ */
+void
+XLogBeginRead(XLogReaderState *state, XLogRecPtr RecPtr)
+{
+	Assert(!XLogRecPtrIsInvalid(RecPtr));
+
+	ResetDecoder(state);
+
+	/* Begin at the passed-in record pointer. */
+	state->EndRecPtr = RecPtr;
+	state->ReadRecPtr = InvalidXLogRecPtr;
+}
+
+/*
  * Attempt to read an XLOG record.
  *
- * If RecPtr is valid, try to read a record at that position.  Otherwise
- * try to read a record just after the last one previously read.
+ * XLogBeginRead() or XLogFindNextRecord() must be called before the first call
+ * to XLogReadRecord().
  *
  * If the read_page callback fails to read the requested data, NULL is
  * returned.  The callback is expected to have reported the error; errormsg
@@ -235,8 +258,9 @@ WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
  * valid until the next call to XLogReadRecord.
  */
 XLogRecord *
-XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
+XLogReadRecord(XLogReaderState *state, char **errormsg)
 {
+	XLogRecPtr	RecPtr;
 	XLogRecord *record;
 	XLogRecPtr	targetPagePtr;
 	bool		randAccess;
@@ -260,19 +284,17 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 
 	ResetDecoder(state);
 
-	if (RecPtr == InvalidXLogRecPtr)
-	{
-		/* No explicit start point; read the record after the one we just read */
-		RecPtr = state->EndRecPtr;
+	RecPtr = state->EndRecPtr;
 
-		if (state->ReadRecPtr == InvalidXLogRecPtr)
-			randAccess = true;
+	if (state->ReadRecPtr != InvalidXLogRecPtr)
+	{
+		/* read the record after the one we just read */
 
 		/*
-		 * RecPtr is pointing to end+1 of the previous WAL record.  If we're
-		 * at a page boundary, no more records can fit on the current page. We
-		 * must skip over the page header, but we can't do that until we've
-		 * read in the page, since the header size is variable.
+		 * EndRecPtr is pointing to end+1 of the previous WAL record.  If
+		 * we're at a page boundary, no more records can fit on the current
+		 * page. We must skip over the page header, but we can't do that until
+		 * we've read in the page, since the header size is variable.
 		 */
 	}
 	else
@@ -280,8 +302,8 @@ XLogReadRecord(XLogReaderState *state, XLogRecPtr RecPtr, char **errormsg)
 		/*
 		 * Caller supplied a position to start at.
 		 *
-		 * In this case, the passed-in record pointer should already be
-		 * pointing to a valid record starting position.
+		 * In this case, EndRecPtr should already be pointing to a valid
+		 * record starting position.
 		 */
 		Assert(XRecOffIsValid(RecPtr));
 		randAccess = true;
@@ -899,14 +921,17 @@ XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
 /*
  * Find the first record with an lsn >= RecPtr.
  *
- * Useful for checking whether RecPtr is a valid xlog address for reading, and
- * to find the first valid address after some address when dumping records for
- * debugging purposes.
+ * This is different from XLogBeginRead() in that RecPtr doesn't need to point
+ * to a valid record boundary.  Useful for checking whether RecPtr is a valid
+ * xlog address for reading, and to find the first valid address after some
+ * address when dumping records for debugging purposes.
+ *
+ * This positions the reader, like XLogBeginRead(), so that the next call to
+ * XLogReadRecord() will read the next valid record.
  */
 XLogRecPtr
 XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 {
-	XLogReaderState saved_state = *state;
 	XLogRecPtr	tmpRecPtr;
 	XLogRecPtr	found = InvalidXLogRecPtr;
 	XLogPageHeader header;
@@ -991,27 +1016,23 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 	 * because either we're at the first record after the beginning of a page
 	 * or we just jumped over the remaining data of a continuation.
 	 */
-	while (XLogReadRecord(state, tmpRecPtr, &errormsg) != NULL)
+	XLogBeginRead(state, tmpRecPtr);
+	while (XLogReadRecord(state, &errormsg) != NULL)
 	{
-		/* continue after the record */
-		tmpRecPtr = InvalidXLogRecPtr;
-
 		/* past the record we've found, break out */
 		if (RecPtr <= state->ReadRecPtr)
 		{
+			/* Rewind the reader to the beginning of the last record. */
 			found = state->ReadRecPtr;
-			goto out;
+			XLogBeginRead(state, found);
+			return found;
 		}
 	}
 
 err:
-out:
-	/* Reset state to what we had before finding the record */
-	state->ReadRecPtr = saved_state.ReadRecPtr;
-	state->EndRecPtr = saved_state.EndRecPtr;
 	XLogReaderInvalReadState(state);
 
-	return found;
+	return InvalidXLogRecPtr;
 }
 
 #endif							/* FRONTEND */

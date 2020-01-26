@@ -391,7 +391,6 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 {
 	LogicalDecodingContext *ctx;
 	ResourceOwner old_resowner = CurrentResourceOwner;
-	XLogRecPtr	startlsn;
 	XLogRecPtr	retlsn;
 
 	PG_TRY();
@@ -411,7 +410,7 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 		 * Start reading at the slot's restart_lsn, which we know to point to
 		 * a valid record.
 		 */
-		startlsn = MyReplicationSlot->data.restart_lsn;
+		XLogBeginRead(ctx->reader, MyReplicationSlot->data.restart_lsn);
 
 		/* Initialize our return value in case we don't do anything */
 		retlsn = MyReplicationSlot->data.confirmed_flush;
@@ -420,10 +419,7 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 		InvalidateSystemCaches();
 
 		/* Decode at least one record, until we run out of records */
-		while ((!XLogRecPtrIsInvalid(startlsn) &&
-				startlsn < moveto) ||
-			   (!XLogRecPtrIsInvalid(ctx->reader->EndRecPtr) &&
-				ctx->reader->EndRecPtr < moveto))
+		while (ctx->reader->EndRecPtr < moveto)
 		{
 			char	   *errm = NULL;
 			XLogRecord *record;
@@ -432,12 +428,9 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 			 * Read records.  No changes are generated in fast_forward mode,
 			 * but snapbuilder/slot statuses are updated properly.
 			 */
-			record = XLogReadRecord(ctx->reader, startlsn, &errm);
+			record = XLogReadRecord(ctx->reader, &errm);
 			if (errm)
 				elog(ERROR, "%s", errm);
-
-			/* Read sequentially from now on */
-			startlsn = InvalidXLogRecPtr;
 
 			/*
 			 * Process the record.  Storage-level changes are ignored in

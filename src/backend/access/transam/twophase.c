@@ -1338,7 +1338,8 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 				 errmsg("out of memory"),
 				 errdetail("Failed while allocating a WAL reading processor.")));
 
-	record = XLogReadRecord(xlogreader, lsn, &errormsg);
+	XLogBeginRead(xlogreader, lsn);
+	record = XLogReadRecord(xlogreader, &errormsg);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),

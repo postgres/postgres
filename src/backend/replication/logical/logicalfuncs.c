@@ -127,7 +127,6 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	XLogRecPtr	end_of_wal;
-	XLogRecPtr	startptr;
 	LogicalDecodingContext *ctx;
 	ResourceOwner old_resowner = CurrentResourceOwner;
 	ArrayType  *arr;
@@ -269,27 +268,20 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		 * xacts that committed after the slot's confirmed_flush can be
 		 * accumulated into reorder buffers.
 		 */
-		startptr = MyReplicationSlot->data.restart_lsn;
+		XLogBeginRead(ctx->reader, MyReplicationSlot->data.restart_lsn);
 
 		/* invalidate non-timetravel entries */
 		InvalidateSystemCaches();
 
 		/* Decode until we run out of records */
-		while ((startptr != InvalidXLogRecPtr && startptr < end_of_wal) ||
-			   (ctx->reader->EndRecPtr != InvalidXLogRecPtr && ctx->reader->EndRecPtr < end_of_wal))
+		while (ctx->reader->EndRecPtr < end_of_wal)
 		{
 			XLogRecord *record;
 			char	   *errm = NULL;
 
-			record = XLogReadRecord(ctx->reader, startptr, &errm);
+			record = XLogReadRecord(ctx->reader, &errm);
 			if (errm)
 				elog(ERROR, "%s", errm);
-
-			/*
-			 * Now that we've set up the xlog reader state, subsequent calls
-			 * pass InvalidXLogRecPtr to say "continue from last record"
-			 */
-			startptr = InvalidXLogRecPtr;
 
 			/*
 			 * The {begin_txn,change,commit_txn}_wrapper callbacks above will
