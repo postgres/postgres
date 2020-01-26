@@ -57,6 +57,18 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
 select explain_filter('explain (analyze, buffers, format xml) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers, format yaml) select * from int8_tbl i8');
 
+-- SETTINGS option
+-- We have to ignore other settings that might be imposed by the environment,
+-- so printing the whole Settings field unfortunately won't do.
+
+begin;
+set local plan_cache_mode = force_generic_plan;
+select true as "OK"
+  from explain_filter('explain (settings) select * from int8_tbl i8') ln
+  where ln ~ '^ *Settings: .*plan_cache_mode = ''force_generic_plan''';
+select explain_filter_to_json('explain (settings, format json) select * from int8_tbl i8') #> '{0,Settings,plan_cache_mode}';
+rollback;
+
 --
 -- Test production of per-worker data
 --

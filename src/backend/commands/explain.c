@@ -626,17 +626,11 @@ ExplainPrintSettings(ExplainState *es)
 	/* request an array of relevant settings */
 	gucs = get_explain_guc_options(&num);
 
-	/* also bail out of there are no options */
-	if (!num)
-		return;
-
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-		int			i;
-
 		ExplainOpenGroup("Settings", "Settings", true, es);
 
-		for (i = 0; i < num; i++)
+		for (int i = 0; i < num; i++)
 		{
 			char	   *setting;
 			struct config_generic *conf = gucs[i];
@@ -650,12 +644,15 @@ ExplainPrintSettings(ExplainState *es)
 	}
 	else
 	{
-		int			i;
 		StringInfoData str;
+
+		/* In TEXT mode, print nothing if there are no options */
+		if (num <= 0)
+			return;
 
 		initStringInfo(&str);
 
-		for (i = 0; i < num; i++)
+		for (int i = 0; i < num; i++)
 		{
 			char	   *setting;
 			struct config_generic *conf = gucs[i];
@@ -671,8 +668,7 @@ ExplainPrintSettings(ExplainState *es)
 				appendStringInfo(&str, "%s = NULL", conf->name);
 		}
 
-		if (num > 0)
-			ExplainPropertyText("Settings", str.data, es);
+		ExplainPropertyText("Settings", str.data, es);
 	}
 }
 
