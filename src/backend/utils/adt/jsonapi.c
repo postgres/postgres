@@ -1003,9 +1003,15 @@ report_parse_error(JsonParseContext ctx, JsonLexContext *lex)
 			return JSON_EXPECTED_OBJECT_NEXT;
 		case JSON_PARSE_OBJECT_COMMA:
 			return JSON_EXPECTED_STRING;
-		default:
-			elog(ERROR, "unexpected json parse state: %d", ctx);
 	}
+
+	/*
+	 * We don't use a default: case, so that the compiler will warn about
+	 * unhandled enum values.  But this needs to be here anyway to cover the
+	 * possibility of an incorrect input.
+	 */
+	elog(ERROR, "unexpected json parse state: %d", (int) ctx);
+	return JSON_SUCCESS;		/* silence stupider compilers */
 }
 
 /*
@@ -1017,7 +1023,7 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 	switch (error)
 	{
 		case JSON_SUCCESS:
-			elog(ERROR, "internal error in json parser");
+			/* fall through to the error code after switch */
 			break;
 		case JSON_ESCAPING_INVALID:
 			return psprintf(_("Escape sequence \"\\%s\" is invalid."),
@@ -1065,6 +1071,14 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 		case JSON_UNICODE_LOW_SURROGATE:
 			return _("Unicode low surrogate must follow a high surrogate.");
 	}
+
+	/*
+	 * We don't use a default: case, so that the compiler will warn about
+	 * unhandled enum values.  But this needs to be here anyway to cover the
+	 * possibility of an incorrect input.
+	 */
+	elog(ERROR, "unexpected json parse error type: %d", (int) error);
+	return NULL;				/* silence stupider compilers */
 }
 
 /*
