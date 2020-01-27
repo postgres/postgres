@@ -1387,6 +1387,13 @@ pg_SSPI_recvauth(Port *port)
 		mtype = pq_getbyte();
 		if (mtype != 'p')
 		{
+			if (sspictx != NULL)
+			{
+				DeleteSecurityContext(sspictx);
+				free(sspictx);
+			}
+			FreeCredentialsHandle(&sspicred);
+
 			/* Only log error if client didn't disconnect. */
 			if (mtype != EOF)
 				ereport(ERROR,
@@ -1402,6 +1409,12 @@ pg_SSPI_recvauth(Port *port)
 		{
 			/* EOF - pq_getmessage already logged error */
 			pfree(buf.data);
+			if (sspictx != NULL)
+			{
+				DeleteSecurityContext(sspictx);
+				free(sspictx);
+			}
+			FreeCredentialsHandle(&sspicred);
 			return STATUS_ERROR;
 		}
 
@@ -2517,6 +2530,7 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 						(errmsg("could not load function _ldap_start_tls_sA in wldap32.dll"),
 						 errdetail("LDAP over SSL is not supported on this platform.")));
 				ldap_unbind(*ldap);
+				FreeLibrary(ldaphandle);
 				return STATUS_ERROR;
 			}
 

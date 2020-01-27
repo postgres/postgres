@@ -40,8 +40,8 @@ typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_
  *
  * Returns restricted token on success and 0 on failure.
  *
- * On NT4, or any other system not containing the required functions, will
- * NOT execute anything.
+ * On any system not containing the required functions, do nothing
+ * but still report an error.
  */
 HANDLE
 CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
@@ -52,30 +52,36 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 	HANDLE		restrictedToken;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
 	SID_AND_ATTRIBUTES dropSids[2];
-	__CreateRestrictedToken _CreateRestrictedToken = NULL;
+	__CreateRestrictedToken _CreateRestrictedToken;
 	HANDLE		Advapi32Handle;
 
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 
 	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
-	if (Advapi32Handle != NULL)
+	if (Advapi32Handle == NULL)
 	{
-		_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+		pg_log_error("could not load advapi32.dll: error code %lu",
+					 GetLastError());
+		return 0;
 	}
+
+	_CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
 
 	if (_CreateRestrictedToken == NULL)
 	{
-		pg_log_warning("cannot create restricted tokens on this platform");
-		if (Advapi32Handle != NULL)
-			FreeLibrary(Advapi32Handle);
+		pg_log_error("cannot create restricted tokens on this platform: error code %lu",
+					 GetLastError());
+		FreeLibrary(Advapi32Handle);
 		return 0;
 	}
 
 	/* Open the current token to use as a base for the restricted one */
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
 	{
-		pg_log_error("could not open process token: error code %lu", GetLastError());
+		pg_log_error("could not open process token: error code %lu",
+					 GetLastError());
+		FreeLibrary(Advapi32Handle);
 		return 0;
 	}
 
@@ -88,7 +94,10 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo)
 								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &dropSids[1].Sid))
 	{
-		pg_log_error("could not allocate SIDs: error code %lu", GetLastError());
+		pg_log_error("could not allocate SIDs: error code %lu",
+					 GetLastError());
+		CloseHandle(origToken);
+		FreeLibrary(Advapi32Handle);
 		return 0;
 	}
 
@@ -171,8 +180,8 @@ get_restricted_token(void)
 		else
 		{
 			/*
-			 * Successfully re-execed. Now wait for child process to capture
-			 * exitcode.
+			 * Successfully re-executed. Now wait for child process to capture
+			 * the exit code.
 			 */
 			DWORD		x;
 
@@ -187,6 +196,7 @@ get_restricted_token(void)
 			}
 			exit(x);
 		}
+		pg_free(cmdline);
 	}
 #endif
 }

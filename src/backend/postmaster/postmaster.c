@@ -4719,6 +4719,8 @@ retry:
 	if (cmdLine[sizeof(cmdLine) - 2] != '\0')
 	{
 		elog(LOG, "subprocess command line too long");
+		UnmapViewOfFile(param);
+		CloseHandle(paramHandle);
 		return -1;
 	}
 
@@ -4735,6 +4737,8 @@ retry:
 	{
 		elog(LOG, "CreateProcess call failed: %m (error code %lu)",
 			 GetLastError());
+		UnmapViewOfFile(param);
+		CloseHandle(paramHandle);
 		return -1;
 	}
 
@@ -4750,6 +4754,8 @@ retry:
 									 GetLastError())));
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
+		UnmapViewOfFile(param);
+		CloseHandle(paramHandle);
 		return -1;				/* log made by save_backend_variables */
 	}
 
