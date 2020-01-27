@@ -606,7 +606,7 @@ json_object_keys(PG_FUNCTION_ARGS)
 		sem->object_field_start = okeys_object_field_start;
 		/* remainder are all NULL, courtesy of palloc0 above */
 
-		pg_parse_json(lex, sem);
+		pg_parse_json_or_ereport(lex, sem);
 		/* keys are now in state->result */
 
 		pfree(lex->strval->data);
@@ -1000,7 +1000,7 @@ get_worker(text *json,
 		sem->array_element_end = get_array_element_end;
 	}
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 
 	return state->tresult;
 }
@@ -1148,7 +1148,12 @@ get_array_start(void *state)
 			_state->path_indexes[lex_level] != INT_MIN)
 		{
 			/* Negative subscript -- convert to positive-wise subscript */
-			int			nelements = json_count_array_elements(_state->lex);
+			JsonParseErrorType error;
+			int			nelements;
+
+			error = json_count_array_elements(_state->lex, &nelements);
+			if (error != JSON_SUCCESS)
+				json_ereport_error(error, _state->lex);
 
 			if (-_state->path_indexes[lex_level] <= nelements)
 				_state->path_indexes[lex_level] += nelements;
@@ -1548,7 +1553,7 @@ json_array_length(PG_FUNCTION_ARGS)
 	sem->scalar = alen_scalar;
 	sem->array_element_start = alen_array_element_start;
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 
 	PG_RETURN_INT32(state->count);
 }
@@ -1814,7 +1819,7 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 										   "json_each temporary cxt",
 										   ALLOCSET_DEFAULT_SIZES);
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 
 	MemoryContextDelete(state->tmp_cxt);
 
@@ -2113,7 +2118,7 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 										   "json_array_elements temporary cxt",
 										   ALLOCSET_DEFAULT_SIZES);
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 
 	MemoryContextDelete(state->tmp_cxt);
 
@@ -2485,7 +2490,7 @@ populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 	sem.array_element_end = populate_array_element_end;
 	sem.scalar = populate_array_scalar;
 
-	pg_parse_json(state.lex, &sem);
+	pg_parse_json_or_ereport(state.lex, &sem);
 
 	/* number of dimensions should be already known */
 	Assert(ctx->ndims > 0 && ctx->dims);
@@ -3342,7 +3347,7 @@ get_json_object_as_hash(char *json, int len, const char *funcname)
 	sem->object_field_start = hash_object_field_start;
 	sem->object_field_end = hash_object_field_end;
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 
 	return tab;
 }
@@ -3641,7 +3646,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 		state->lex = lex;
 
-		pg_parse_json(lex, sem);
+		pg_parse_json_or_ereport(lex, sem);
 	}
 	else
 	{
@@ -3971,7 +3976,7 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 	sem->array_element_start = sn_array_element_start;
 	sem->object_field_start = sn_object_field_start;
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->strval->data,
 											  state->strval->len));
@@ -5110,7 +5115,7 @@ iterate_json_values(text *json, uint32 flags, void *action_state,
 	sem->scalar = iterate_values_scalar;
 	sem->object_field_start = iterate_values_object_field_start;
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 }
 
 /*
@@ -5230,7 +5235,7 @@ transform_json_string_values(text *json, void *action_state,
 	sem->array_element_start = transform_string_values_array_element_start;
 	sem->object_field_start = transform_string_values_object_field_start;
 
-	pg_parse_json(lex, sem);
+	pg_parse_json_or_ereport(lex, sem);
 
 	return cstring_to_text_with_len(state->strval->data, state->strval->len);
 }
