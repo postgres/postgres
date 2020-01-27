@@ -36,6 +36,15 @@ typedef void (*JsonIterateStringValuesAction) (void *state, char *elem_value, in
 /* an action that will be applied to each value in transform_json(b)_values functions */
 typedef text *(*JsonTransformStringValuesAction) (void *state, char *elem_value, int elem_len);
 
+/* build a JsonLexContext from a text datum */
+extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
+
+/* try to parse json, and ereport(ERROR) on failure */
+extern void pg_parse_json_or_ereport(JsonLexContext *lex, JsonSemAction *sem);
+
+/* report an error during json lexing or parsing */
+extern void json_ereport_error(JsonParseErrorType error, JsonLexContext *lex);
+
 extern uint32 parse_jsonb_index_flags(Jsonb *jb);
 extern void iterate_jsonb_values(Jsonb *jb, uint32 flags, void *state,
 								 JsonIterateStringValuesAction action);

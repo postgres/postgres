@@ -126,12 +126,6 @@ typedef struct JsonSemAction
 extern JsonParseErrorType pg_parse_json(JsonLexContext *lex,
 										JsonSemAction *sem);
 
-/*
- * Same thing, but signal errors via ereport(ERROR) instead of returning
- * a result code.
- */
-extern void pg_parse_json_or_ereport(JsonLexContext *lex, JsonSemAction *sem);
-
 /* the null action object used for pure validation */
 extern JsonSemAction nullSemAction;
 
@@ -148,24 +142,17 @@ extern JsonParseErrorType json_count_array_elements(JsonLexContext *lex,
 													int *elements);
 
 /*
- * constructors for JsonLexContext, with or without strval element.
+ * constructor for JsonLexContext, with or without strval element.
  * If supplied, the strval element will contain a de-escaped version of
  * the lexeme. However, doing this imposes a performance penalty, so
  * it should be avoided if the de-escaped lexeme is not required.
- *
- * If you already have the json as a text* value, use the first of these
- * functions, otherwise use  makeJsonLexContextCstringLen().
  */
-extern JsonLexContext *makeJsonLexContext(text *json, bool need_escapes);
 extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
 													int len,
 													bool need_escapes);
 
 /* lex one token */
 extern JsonParseErrorType json_lex(JsonLexContext *lex);
-
-/* report an error during json lexing or parsing */
-extern void json_ereport_error(JsonParseErrorType error, JsonLexContext *lex);
 
 /* construct an error detail string for a json error */
 extern char *json_errdetail(JsonParseErrorType error, JsonLexContext *lex);

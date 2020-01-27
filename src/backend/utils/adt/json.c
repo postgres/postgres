@@ -23,7 +23,7 @@
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/json.h"
-#include "utils/jsonapi.h"
+#include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
