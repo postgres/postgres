@@ -93,12 +93,6 @@ ConditionVariablePrepareToSleep(ConditionVariable *cv)
 	/* Record the condition variable on which we will sleep. */
 	cv_sleep_target = cv;
 
-	/*
-	 * Reset my latch before adding myself to the queue, to ensure that we
-	 * don't miss a wakeup that occurs immediately.
-	 */
-	ResetLatch(MyLatch);
-
 	/* Add myself to the wait queue. */
 	SpinLockAcquire(&cv->mutex);
 	proclist_push_tail(&cv->wakeup, pgprocno, cvWaitLink);
