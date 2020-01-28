@@ -673,6 +673,13 @@ a              b              c
 2              3              0              
 step c2: COMMIT;
 
+starting permutation: writep3a writep3b c1 c2
+step writep3a: UPDATE p SET b = -b WHERE c = 0;
+step writep3b: UPDATE p SET b = -b WHERE c = 0; <waiting ...>
+step c1: COMMIT;
+step writep3b: <... completed>
+step c2: COMMIT;
+
 starting permutation: wx2 partiallock c2 c1 read
 step wx2: UPDATE accounts SET balance = balance + 450 WHERE accountid = 'checking' RETURNING balance;
 balance        
