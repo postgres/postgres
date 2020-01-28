@@ -69,7 +69,7 @@ INSERT INTO serialTest1 VALUES ('foo');
 INSERT INTO serialTest1 VALUES ('bar');
 INSERT INTO serialTest1 VALUES ('force', 100);
 INSERT INTO serialTest1 VALUES ('wrong', NULL);
-ERROR:  null value in column "f2" violates not-null constraint
+ERROR:  null value in column "f2" of relation "serialtest1" violates not-null constraint
 DETAIL:  Failing row contains (wrong, null).
 SELECT * FROM serialTest1;
   f1   | f2  

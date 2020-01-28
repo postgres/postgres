@@ -100,7 +100,7 @@ SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
 (1 row)
 
 INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
-ERROR:  null value in column "i" violates not-null constraint
+ERROR:  null value in column "i" of relation "reloptions_test" violates not-null constraint
 DETAIL:  Failing row contains (null, null).
 VACUUM reloptions_test;
 SELECT pg_relation_size('reloptions_test') > 0;
@@ -125,7 +125,7 @@ SELECT reloptions FROM pg_class WHERE oid = 'reloptions_test'::regclass;
 (1 row)
 
 INSERT INTO reloptions_test VALUES (1, NULL), (NULL, NULL);
-ERROR:  null value in column "i" violates not-null constraint
+ERROR:  null value in column "i" of relation "reloptions_test" violates not-null constraint
 DETAIL:  Failing row contains (null, null).
 VACUUM reloptions_test;
 SELECT pg_relation_size('reloptions_test') = 0;

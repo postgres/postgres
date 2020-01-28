@@ -440,7 +440,7 @@ SELECT c, d FROM forcetest WHERE a = 2;
 -- should fail with not-null constraint violation
 BEGIN;
 COPY forcetest (a, b, c) FROM STDIN WITH (FORMAT csv, FORCE_NULL(b), FORCE_NOT_NULL(c));
-ERROR:  null value in column "b" violates not-null constraint
+ERROR:  null value in column "b" of relation "forcetest" violates not-null constraint
 DETAIL:  Failing row contains (3, null, , null, null).
 CONTEXT:  COPY forcetest, line 1: "3,,"""
 ROLLBACK;

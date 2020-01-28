@@ -542,12 +542,12 @@ ERROR:  domain dnotnull does not allow null values
 INSERT INTO nulltest values ('a', NULL, 'c', 'd', 'c');
 ERROR:  domain dnotnull does not allow null values
 INSERT INTO nulltest values ('a', 'b', NULL, 'd', 'c');
-ERROR:  null value in column "col3" violates not-null constraint
+ERROR:  null value in column "col3" of relation "nulltest" violates not-null constraint
 DETAIL:  Failing row contains (a, b, null, d, c).
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
-ERROR:  null value in column "col3" violates not-null constraint
+ERROR:  null value in column "col3" of relation "nulltest" violates not-null constraint
 DETAIL:  Failing row contains (a, b, null, d, d).
 CONTEXT:  COPY nulltest, line 1: "a	b	\N	d	d"
 COPY nulltest FROM stdin; --fail
@@ -601,14 +601,14 @@ create table defaulttest
             , col8 ddef5
             );
 insert into defaulttest(col4) values(0); -- fails, col5 defaults to null
-ERROR:  null value in column "col5" violates not-null constraint
+ERROR:  null value in column "col5" of relation "defaulttest" violates not-null constraint
 DETAIL:  Failing row contains (3, 12, 5, 0, null, 88, 8000, 12.12).
 alter table defaulttest alter column col5 drop default;
 insert into defaulttest default values; -- succeeds, inserts domain default
 -- We used to treat SET DEFAULT NULL as equivalent to DROP DEFAULT; wrong
 alter table defaulttest alter column col5 set default null;
 insert into defaulttest(col4) values(0); -- fails
-ERROR:  null value in column "col5" violates not-null constraint
+ERROR:  null value in column "col5" of relation "defaulttest" violates not-null constraint
 DETAIL:  Failing row contains (3, 12, 5, 0, null, 88, 8000, 12.12).
 alter table defaulttest alter column col5 drop default;
 insert into defaulttest default values;

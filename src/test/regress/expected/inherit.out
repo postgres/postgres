@@ -537,7 +537,7 @@ SELECT relname, d.* FROM ONLY d, pg_class where d.tableoid = pg_class.oid;
 -- Confirm PRIMARY KEY adds NOT NULL constraint to child table
 CREATE TEMP TABLE z (b TEXT, PRIMARY KEY(aa, b)) inherits (a);
 INSERT INTO z VALUES (NULL, 'text'); -- should fail
-ERROR:  null value in column "aa" violates not-null constraint
+ERROR:  null value in column "aa" of relation "z" violates not-null constraint
 DETAIL:  Failing row contains (null, text).
 -- Check inherited UPDATE with all children excluded
 create table some_tab (a int, b int);
@@ -940,9 +940,9 @@ create table p2(f2 int);
 create table c1(f3 int) inherits(p1,p2);
 insert into c1 values(1,-1,2);
 alter table p2 add constraint cc check (f2>0);  -- fail
-ERROR:  check constraint "cc" is violated by some row
+ERROR:  check constraint "cc" of relation "c1" is violated by some row
 alter table p2 add check (f2>0);  -- check it without a name, too
-ERROR:  check constraint "p2_f2_check" is violated by some row
+ERROR:  check constraint "p2_f2_check" of relation "c1" is violated by some row
 delete from c1;
 insert into c1 values(1,1,2);
 alter table p2 add check (f2>0);

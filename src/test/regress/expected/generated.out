@@ -406,24 +406,24 @@ CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STOR
 INSERT INTO gtest20a (a) VALUES (10);
 INSERT INTO gtest20a (a) VALUES (30);
 ALTER TABLE gtest20a ADD CHECK (b < 50);  -- fails on existing row
-ERROR:  check constraint "gtest20a_b_check" is violated by some row
+ERROR:  check constraint "gtest20a_b_check" of relation "gtest20a" is violated by some row
 CREATE TABLE gtest20b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) STORED);
 INSERT INTO gtest20b (a) VALUES (10);
 INSERT INTO gtest20b (a) VALUES (30);
 ALTER TABLE gtest20b ADD CONSTRAINT chk CHECK (b < 50) NOT VALID;
 ALTER TABLE gtest20b VALIDATE CONSTRAINT chk;  -- fails on existing row
-ERROR:  check constraint "chk" is violated by some row
+ERROR:  check constraint "chk" of relation "gtest20b" is violated by some row
 -- not-null constraints
 CREATE TABLE gtest21a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED NOT NULL);
 INSERT INTO gtest21a (a) VALUES (1);  -- ok
 INSERT INTO gtest21a (a) VALUES (0);  -- violates constraint
-ERROR:  null value in column "b" violates not-null constraint
+ERROR:  null value in column "b" of relation "gtest21a" violates not-null constraint
 DETAIL:  Failing row contains (0, null).
 CREATE TABLE gtest21b (a int PRIMARY KEY, b int GENERATED ALWAYS AS (nullif(a, 0)) STORED);
 ALTER TABLE gtest21b ALTER COLUMN b SET NOT NULL;
 INSERT INTO gtest21b (a) VALUES (1);  -- ok
 INSERT INTO gtest21b (a) VALUES (0);  -- violates constraint
-ERROR:  null value in column "b" violates not-null constraint
+ERROR:  null value in column "b" of relation "gtest21b" violates not-null constraint
 DETAIL:  Failing row contains (0, null).
 ALTER TABLE gtest21b ALTER COLUMN b DROP NOT NULL;
 INSERT INTO gtest21b (a) VALUES (0);  -- ok now

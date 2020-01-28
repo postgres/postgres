@@ -3,7 +3,7 @@
 --
 create table inserttest (col1 int4, col2 int4 NOT NULL, col3 text default 'testing');
 insert into inserttest (col1, col2, col3) values (DEFAULT, DEFAULT, DEFAULT);
-ERROR:  null value in column "col2" violates not-null constraint
+ERROR:  null value in column "col2" of relation "inserttest" violates not-null constraint
 DETAIL:  Failing row contains (null, null, testing).
 insert into inserttest (col2, col3) values (3, DEFAULT);
 insert into inserttest (col1, col2, col3) values (DEFAULT, 5, DEFAULT);

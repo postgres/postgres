@@ -1957,8 +1957,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
-						 errmsg("null value in column \"%s\" violates not-null constraint",
-								NameStr(att->attname)),
+						 errmsg("null value in column \"%s\" of relation \"%s\" violates not-null constraint",
+								NameStr(att->attname),
+								RelationGetRelationName(orig_rel)),
 						 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
 						 errtablecol(orig_rel, attrChk)));
 			}

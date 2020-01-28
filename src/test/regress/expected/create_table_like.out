@@ -90,7 +90,7 @@ CREATE TABLE test_like_id_2 (LIKE test_like_id_1);
  b      | text   |           |          | 
 
 INSERT INTO test_like_id_2 (b) VALUES ('b2');
-ERROR:  null value in column "a" violates not-null constraint
+ERROR:  null value in column "a" of relation "test_like_id_2" violates not-null constraint
 DETAIL:  Failing row contains (null, b2).
 SELECT * FROM test_like_id_2;  -- identity was not copied
  a | b 

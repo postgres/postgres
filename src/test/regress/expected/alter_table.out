@@ -457,10 +457,10 @@ ALTER TABLE attmp3 validate constraint attmpconstr;
 ALTER TABLE attmp3 validate constraint attmpconstr;
 -- Try a non-verified CHECK constraint
 ALTER TABLE attmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10); -- fail
-ERROR:  check constraint "b_greater_than_ten" is violated by some row
+ERROR:  check constraint "b_greater_than_ten" of relation "attmp3" is violated by some row
 ALTER TABLE attmp3 ADD CONSTRAINT b_greater_than_ten CHECK (b > 10) NOT VALID; -- succeeds
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- fails
-ERROR:  check constraint "b_greater_than_ten" is violated by some row
+ERROR:  check constraint "b_greater_than_ten" of relation "attmp3" is violated by some row
 DELETE FROM attmp3 WHERE NOT b > 10;
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_greater_than_ten; -- succeeds
@@ -476,7 +476,7 @@ CREATE TABLE attmp7 () INHERITS (attmp3);
 INSERT INTO attmp6 VALUES (6, 30), (7, 16);
 ALTER TABLE attmp3 ADD CONSTRAINT b_le_20 CHECK (b <= 20) NOT VALID;
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_le_20;	-- fails
-ERROR:  check constraint "b_le_20" is violated by some row
+ERROR:  check constraint "b_le_20" of relation "attmp6" is violated by some row
 DELETE FROM attmp6 WHERE b > 20;
 ALTER TABLE attmp3 VALIDATE CONSTRAINT b_le_20;	-- succeeds
 -- An already validated constraint must not be revalidated
@@ -497,7 +497,7 @@ insert into child_noinh_convalid values (1);
 alter table parent_noinh_convalid add constraint check_a_is_2 check (a = 2) no inherit not valid;
 -- fail, because of the row in parent
 alter table parent_noinh_convalid validate constraint check_a_is_2;
-ERROR:  check constraint "check_a_is_2" is violated by some row
+ERROR:  check constraint "check_a_is_2" of relation "parent_noinh_convalid" is violated by some row
 delete from only parent_noinh_convalid;
 -- ok (parent itself contains no violating rows)
 alter table parent_noinh_convalid validate constraint check_a_is_2;
@@ -754,7 +754,7 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (2);
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test>3);
-ERROR:  check constraint "atacc_test1" is violated by some row
+ERROR:  check constraint "atacc_test1" of relation "atacc1" is violated by some row
 insert into atacc1 (test) values (4);
 drop table atacc1;
 -- let's do one where the check fails because the column doesn't exist
@@ -867,7 +867,7 @@ DETAIL:  Failing row contains (-3).
 insert into atacc1 (test) values (3);
 -- fail, violating row:
 alter table atacc2 add constraint foo check (test>0) no inherit;
-ERROR:  check constraint "foo" is violated by some row
+ERROR:  check constraint "foo" of relation "atacc2" is violated by some row
 drop table atacc2;
 drop table atacc1;
 -- test unique constraint adding
@@ -943,7 +943,7 @@ DETAIL:  Key (test)=(2) already exists.
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
 insert into atacc1 (test) values(NULL);
-ERROR:  null value in column "test" violates not-null constraint
+ERROR:  null value in column "test" of relation "atacc1" violates not-null constraint
 DETAIL:  Failing row contains (4, null).
 -- try adding a second primary key (should fail)
 alter table atacc1 add constraint atacc_oid1 primary key(id);
@@ -970,7 +970,7 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (NULL);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
-ERROR:  column "test" contains null values
+ERROR:  column "test" of relation "atacc1" contains null values
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do one where the primary key constraint fails
@@ -986,7 +986,7 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (0);
 -- add a primary key column without a default (fails).
 alter table atacc1 add column test2 int primary key;
-ERROR:  column "test2" contains null values
+ERROR:  column "test2" of relation "atacc1" contains null values
 -- now add a primary key column with a default (succeeds).
 alter table atacc1 add column test2 int default 0 primary key;
 drop table atacc1;
@@ -1011,13 +1011,13 @@ insert into atacc1 (test,test2) values (4,4);
 ERROR:  duplicate key value violates unique constraint "atacc_test1"
 DETAIL:  Key (test, test2)=(4, 4) already exists.
 insert into atacc1 (test,test2) values (NULL,3);
-ERROR:  null value in column "test" violates not-null constraint
+ERROR:  null value in column "test" of relation "atacc1" violates not-null constraint
 DETAIL:  Failing row contains (null, 3).
 insert into atacc1 (test,test2) values (3, NULL);
-ERROR:  null value in column "test2" violates not-null constraint
+ERROR:  null value in column "test2" of relation "atacc1" violates not-null constraint
 DETAIL:  Failing row contains (3, null).
 insert into atacc1 (test,test2) values (NULL,NULL);
-ERROR:  null value in column "test" violates not-null constraint
+ERROR:  null value in column "test" of relation "atacc1" violates not-null constraint
 DETAIL:  Failing row contains (null, null).
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
@@ -1032,7 +1032,7 @@ insert into atacc1 (test2, test) values (2, 3);
 ERROR:  duplicate key value violates unique constraint "atacc1_pkey"
 DETAIL:  Key (test)=(3) already exists.
 insert into atacc1 (test2, test) values (1, NULL);
-ERROR:  null value in column "test" violates not-null constraint
+ERROR:  null value in column "test" of relation "atacc1" violates not-null constraint
 DETAIL:  Failing row contains (null, 1).
 drop table atacc1;
 -- alter table / alter column [set/drop] not null tests
@@ -1056,7 +1056,7 @@ alter table atacc1 drop constraint "atacc1_pkey";
 alter table atacc1 alter column test drop not null;
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
-ERROR:  column "test" contains null values
+ERROR:  column "test" of relation "atacc1" contains null values
 delete from atacc1;
 alter table atacc1 alter test set not null;
 -- try altering a non-existent column, should fail
@@ -1078,12 +1078,12 @@ insert into atacc1 values (null, 1);
 -- constraint not cover all values, should fail
 alter table atacc1 add constraint atacc1_constr_or check(test_a is not null or test_b < 10);
 alter table atacc1 alter test_a set not null;
-ERROR:  column "test_a" contains null values
+ERROR:  column "test_a" of relation "atacc1" contains null values
 alter table atacc1 drop constraint atacc1_constr_or;
 -- not valid constraint, should fail
 alter table atacc1 add constraint atacc1_constr_invalid check(test_a is not null) not valid;
 alter table atacc1 alter test_a set not null;
-ERROR:  column "test_a" contains null values
+ERROR:  column "test_a" of relation "atacc1" contains null values
 alter table atacc1 drop constraint atacc1_constr_invalid;
 -- with valid constraint
 update atacc1 set test_a = 1;
@@ -1095,10 +1095,10 @@ alter table atacc1 alter test_a drop not null;
 -- test multiple set not null at same time
 -- test_a checked by atacc1_constr_a_valid, test_b should fail by table scan
 alter table atacc1 alter test_a set not null, alter test_b set not null;
-ERROR:  column "test_b" contains null values
+ERROR:  column "test_b" of relation "atacc1" contains null values
 -- commands order has no importance
 alter table atacc1 alter test_b set not null, alter test_a set not null;
-ERROR:  column "test_b" contains null values
+ERROR:  column "test_b" of relation "atacc1" contains null values
 -- valid one by table scan, one by check constraints
 update atacc1 set test_b = 1;
 alter table atacc1 alter test_b set not null, alter test_a set not null;
@@ -1112,31 +1112,31 @@ create table parent (a int);
 create table child (b varchar(255)) inherits (parent);
 alter table parent alter a set not null;
 insert into parent values (NULL);
-ERROR:  null value in column "a" violates not-null constraint
+ERROR:  null value in column "a" of relation "parent" violates not-null constraint
 DETAIL:  Failing row contains (null).
 insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" violates not-null constraint
+ERROR:  null value in column "a" of relation "child" violates not-null constraint
 DETAIL:  Failing row contains (null, foo).
 alter table parent alter a drop not null;
 insert into parent values (NULL);
 insert into child (a, b) values (NULL, 'foo');
 alter table only parent alter a set not null;
-ERROR:  column "a" contains null values
+ERROR:  column "a" of relation "parent" contains null values
 alter table child alter a set not null;
-ERROR:  column "a" contains null values
+ERROR:  column "a" of relation "child" contains null values
 delete from parent;
 alter table only parent alter a set not null;
 insert into parent values (NULL);
-ERROR:  null value in column "a" violates not-null constraint
+ERROR:  null value in column "a" of relation "parent" violates not-null constraint
 DETAIL:  Failing row contains (null).
 alter table child alter a set not null;
 insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" violates not-null constraint
+ERROR:  null value in column "a" of relation "child" violates not-null constraint
 DETAIL:  Failing row contains (null, foo).
 delete from child;
 alter table child alter a set not null;
 insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value in column "a" violates not-null constraint
+ERROR:  null value in column "a" of relation "child" violates not-null constraint
 DETAIL:  Failing row contains (null, foo).
 drop table child;
 drop table parent;
@@ -1474,7 +1474,7 @@ insert into atacc1(value) values (100);
 ERROR:  new row for relation "atacc1" violates check constraint "atacc1_value_check"
 DETAIL:  Failing row contains (2, 100).
 insert into atacc1(id, value) values (null, 0);
-ERROR:  null value in column "id" violates not-null constraint
+ERROR:  null value in column "id" of relation "atacc1" violates not-null constraint
 DETAIL:  Failing row contains (null, 0).
 drop table atacc1;
 -- test inheritance
@@ -3804,7 +3804,7 @@ CREATE TABLE list_parted2 (
 CREATE TABLE part_2 (LIKE list_parted2);
 INSERT INTO part_2 VALUES (3, 'a');
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "part_2" is violated by some row
 -- should be ok after deleting the bad row
 DELETE FROM part_2;
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
@@ -3813,7 +3813,7 @@ CREATE TABLE list_parted2_def PARTITION OF list_parted2 DEFAULT;
 INSERT INTO list_parted2_def VALUES (11, 'z');
 CREATE TABLE part_3 (LIKE list_parted2);
 ALTER TABLE list_parted2 ATTACH PARTITION part_3 FOR VALUES IN (11);
-ERROR:  updated partition constraint for default partition would be violated by some row
+ERROR:  updated partition constraint for default partition "list_parted2_def" would be violated by some row
 -- should be ok after deleting the bad row
 DELETE FROM list_parted2_def WHERE a = 11;
 ALTER TABLE list_parted2 ATTACH PARTITION part_3 FOR VALUES IN (11);
@@ -3847,7 +3847,7 @@ CREATE TABLE part1 (
 INSERT INTO part1 VALUES (1, 10);
 -- Remember the TO bound is exclusive
 ALTER TABLE range_parted ATTACH PARTITION part1 FOR VALUES FROM (1, 1) TO (1, 10);
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "part1" is violated by some row
 -- should be ok after deleting the bad row
 DELETE FROM part1;
 ALTER TABLE range_parted ATTACH PARTITION part1 FOR VALUES FROM (1, 1) TO (1, 10);
@@ -3868,7 +3868,7 @@ ERROR:  partition "partr_def2" conflicts with existing default partition "partr_
 INSERT INTO partr_def1 VALUES (2, 10);
 CREATE TABLE part3 (LIKE range_parted);
 ALTER TABLE range_parted ATTACH partition part3 FOR VALUES FROM (2, 10) TO (2, 20);
-ERROR:  updated partition constraint for default partition would be violated by some row
+ERROR:  updated partition constraint for default partition "partr_def1" would be violated by some row
 -- Attaching partitions should be successful when there are no overlapping rows
 ALTER TABLE range_parted ATTACH partition part3 FOR VALUES FROM (3, 10) TO (3, 20);
 -- check that leaf partitions are scanned when attaching a partitioned
@@ -3880,7 +3880,7 @@ CREATE TABLE part_5 (
 CREATE TABLE part_5_a PARTITION OF part_5 FOR VALUES IN ('a');
 INSERT INTO part_5_a (a, b) VALUES (6, 'a');
 ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "part_5_a" is violated by some row
 -- delete the faulting row and also add a constraint to skip the scan
 DELETE FROM part_5_a WHERE a NOT IN (3);
 ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 5);
@@ -3931,7 +3931,7 @@ SELECT tableoid::regclass, a, b FROM part_7 order by a;
 (2 rows)
 
 ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "part_7_a_null" is violated by some row
 -- check that leaf partitions of default partition are scanned when
 -- attaching a partitioned table.
 ALTER TABLE part_5 DROP CONSTRAINT check_a;
@@ -3940,7 +3940,7 @@ CREATE TABLE part5_def_p1 PARTITION OF part5_def FOR VALUES IN (5);
 INSERT INTO part5_def_p1 VALUES (5, 'y');
 CREATE TABLE part5_p1 (LIKE part_5);
 ALTER TABLE part_5 ATTACH PARTITION part5_p1 FOR VALUES IN ('y');
-ERROR:  updated partition constraint for default partition would be violated by some row
+ERROR:  updated partition constraint for default partition "part5_def_p1" would be violated by some row
 -- should be ok after deleting the bad row
 DELETE FROM part5_def_p1 WHERE b = 'y';
 ALTER TABLE part_5 ATTACH PARTITION part5_p1 FOR VALUES IN ('y');
@@ -3992,7 +3992,7 @@ DROP TABLE fail_part;
 CREATE TABLE hpart_2 (LIKE hash_parted);
 INSERT INTO hpart_2 VALUES (3, 0);
 ALTER TABLE hash_parted ATTACH PARTITION hpart_2 FOR VALUES WITH (MODULUS 4, REMAINDER 1);
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "hpart_2" is violated by some row
 -- should be ok after deleting the bad row
 DELETE FROM hpart_2;
 ALTER TABLE hash_parted ATTACH PARTITION hpart_2 FOR VALUES WITH (MODULUS 4, REMAINDER 1);
@@ -4005,7 +4005,7 @@ CREATE TABLE hpart_5 (
 CREATE TABLE hpart_5_a PARTITION OF hpart_5 FOR VALUES IN ('1', '2', '3');
 INSERT INTO hpart_5_a (a, b) VALUES (7, 1);
 ALTER TABLE hash_parted ATTACH PARTITION hpart_5 FOR VALUES WITH (MODULUS 4, REMAINDER 2);
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "hpart_5_a" is violated by some row
 -- should be ok after deleting the bad row
 DELETE FROM hpart_5_a;
 ALTER TABLE hash_parted ATTACH PARTITION hpart_5 FOR VALUES WITH (MODULUS 4, REMAINDER 2);
@@ -4172,7 +4172,7 @@ alter table p1 attach partition p11 for values from (2) to (5);
 insert into p1 (a, b) values (2, 3);
 -- check that partition validation scan correctly detects violating rows
 alter table p attach partition p1 for values from (1, 2) to (1, 10);
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "p11" is violated by some row
 -- cleanup
 drop table p;
 drop table p1;
@@ -4200,7 +4200,7 @@ insert into defpart_attach_test_d values (1), (2);
 -- error because its constraint as the default partition would be violated
 -- by the row containing 1
 alter table defpart_attach_test attach partition defpart_attach_test_d default;
-ERROR:  partition constraint is violated by some row
+ERROR:  partition constraint of relation "defpart_attach_test_d" is violated by some row
 delete from defpart_attach_test_d where a = 1;
 alter table defpart_attach_test_d add check (a > 1);
 -- should be attached successfully and without needing to be scanned
@@ -4210,7 +4210,7 @@ alter table defpart_attach_test attach partition defpart_attach_test_d default;
 -- successfully
 create table defpart_attach_test_2 (like defpart_attach_test_d);
 alter table defpart_attach_test attach partition defpart_attach_test_2 for values in (2);
-ERROR:  updated partition constraint for default partition would be violated by some row
+ERROR:  updated partition constraint for default partition "defpart_attach_test_d" would be violated by some row
 drop table defpart_attach_test;
 -- check combinations of temporary and permanent relations when attaching
 -- partitions.
