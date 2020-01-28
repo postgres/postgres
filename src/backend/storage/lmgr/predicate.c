@@ -163,8 +163,8 @@
  *		PredicateLockRelation(Relation relation, Snapshot snapshot)
  *		PredicateLockPage(Relation relation, BlockNumber blkno,
  *						Snapshot snapshot)
- *		PredicateLockTuple(Relation relation, HeapTuple tuple,
- *						Snapshot snapshot)
+ *		PredicateLockTID(Relation relation, ItemPointer tid, Snapshot snapshot,
+ *						 TransactionId insert_xid)
  *		PredicateLockPageSplit(Relation relation, BlockNumber oldblkno,
  *							   BlockNumber newblkno)
  *		PredicateLockPageCombine(Relation relation, BlockNumber oldblkno,
@@ -173,11 +173,10 @@
  *		ReleasePredicateLocks(bool isCommit, bool isReadOnlySafe)
  *
  * conflict detection (may also trigger rollback)
- *		CheckForSerializableConflictOut(bool visible, Relation relation,
- *										HeapTupleData *tup, Buffer buffer,
+ *		CheckForSerializableConflictOut(Relation relation, TransactionId xid,
  *										Snapshot snapshot)
- *		CheckForSerializableConflictIn(Relation relation, HeapTupleData *tup,
- *									   Buffer buffer)
+ *		CheckForSerializableConflictIn(Relation relation, ItemPointer tid,
+ *									   BlockNumber blkno)
  *		CheckTableForSerializableConflictIn(Relation relation)
  *
  * final rollback checking
@@ -193,8 +192,6 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "access/htup_details.h"
 #include "access/parallel.h"
 #include "access/slru.h"
 #include "access/subtrans.h"
@@ -2538,28 +2535,28 @@ PredicateLockPage(Relation relation, BlockNumber blkno, Snapshot snapshot)
 }
 
 /*
- *		PredicateLockTuple
+ *		PredicateLockTID
  *
  * Gets a predicate lock at the tuple level.
  * Skip if not in full serializable transaction isolation level.
  * Skip if this is a temporary table.
  */
 void
-PredicateLockTuple(Relation relation, HeapTuple tuple, Snapshot snapshot)
+PredicateLockTID(Relation relation, ItemPointer tid, Snapshot snapshot,
+				 TransactionId tuple_xid)
 {
 	PREDICATELOCKTARGETTAG tag;
-	ItemPointer tid;
 
 	if (!SerializationNeededForRead(relation, snapshot))
 		return;
 
 	/*
-	 * If it's a heap tuple, return if this xact wrote it.
+	 * Return if this xact wrote it.
 	 */
 	if (relation->rd_index == NULL)
 	{
 		/* If we wrote it; we already have a write lock. */
-		if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(tuple->t_data)))
+		if (TransactionIdIsCurrentTransactionId(tuple_xid))
 			return;
 	}
 
@@ -2575,7 +2572,6 @@ PredicateLockTuple(Relation relation, HeapTuple tuple, Snapshot snapshot)
 	if (PredicateLockExists(&tag))
 		return;
 
-	tid = &(tuple->t_self);
 	SET_PREDICATELOCKTARGETTAG_TUPLE(tag,
 									 relation->rd_node.dbNode,
 									 relation->rd_id,
@@ -4020,33 +4016,41 @@ XidIsConcurrent(TransactionId xid)
 	return false;
 }
 
+bool
+CheckForSerializableConflictOutNeeded(Relation relation, Snapshot snapshot)
+{
+	if (!SerializationNeededForRead(relation, snapshot))
+		return false;
+
+	/* Check if someone else has already decided that we need to die */
+	if (SxactIsDoomed(MySerializableXact))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+				 errmsg("could not serialize access due to read/write dependencies among transactions"),
+				 errdetail_internal("Reason code: Canceled on identification as a pivot, during conflict out checking."),
+				 errhint("The transaction might succeed if retried.")));
+	}
+
+	return true;
+}
+
 /*
  * CheckForSerializableConflictOut
- *		We are reading a tuple which has been modified.  If it is visible to
- *		us but has been deleted, that indicates a rw-conflict out.  If it's
- *		not visible and was created by a concurrent (overlapping)
- *		serializable transaction, that is also a rw-conflict out,
+ *		A table AM is reading a tuple that has been modified.  After determining
+ *		that it is visible to us, it should call this function with the top
+ *		level xid of the writing transaction.
  *
- * We will determine the top level xid of the writing transaction with which
- * we may be in conflict, and check for overlap with our own transaction.
- * If the transactions overlap (i.e., they cannot see each other's writes),
- * then we have a conflict out.
- *
- * This function should be called just about anywhere in heapam.c where a
- * tuple has been read. The caller must hold at least a shared lock on the
- * buffer, because this function might set hint bits on the tuple. There is
- * currently no known reason to call this function from an index AM.
+ * This function will check for overlap with our own transaction.  If the
+ * transactions overlap (i.e., they cannot see each other's writes), then we
+ * have a conflict out.
  */
 void
-CheckForSerializableConflictOut(bool visible, Relation relation,
-								HeapTuple tuple, Buffer buffer,
-								Snapshot snapshot)
+CheckForSerializableConflictOut(Relation relation, TransactionId xid, Snapshot snapshot)
 {
-	TransactionId xid;
 	SERIALIZABLEXIDTAG sxidtag;
 	SERIALIZABLEXID *sxid;
 	SERIALIZABLEXACT *sxact;
-	HTSV_Result htsvResult;
 
 	if (!SerializationNeededForRead(relation, snapshot))
 		return;
@@ -4060,64 +4064,8 @@ CheckForSerializableConflictOut(bool visible, Relation relation,
 				 errdetail_internal("Reason code: Canceled on identification as a pivot, during conflict out checking."),
 				 errhint("The transaction might succeed if retried.")));
 	}
-
-	/*
-	 * Check to see whether the tuple has been written to by a concurrent
-	 * transaction, either to create it not visible to us, or to delete it
-	 * while it is visible to us.  The "visible" bool indicates whether the
-	 * tuple is visible to us, while HeapTupleSatisfiesVacuum checks what else
-	 * is going on with it.
-	 */
-	htsvResult = HeapTupleSatisfiesVacuum(tuple, TransactionXmin, buffer);
-	switch (htsvResult)
-	{
-		case HEAPTUPLE_LIVE:
-			if (visible)
-				return;
-			xid = HeapTupleHeaderGetXmin(tuple->t_data);
-			break;
-		case HEAPTUPLE_RECENTLY_DEAD:
-			if (!visible)
-				return;
-			xid = HeapTupleHeaderGetUpdateXid(tuple->t_data);
-			break;
-		case HEAPTUPLE_DELETE_IN_PROGRESS:
-			xid = HeapTupleHeaderGetUpdateXid(tuple->t_data);
-			break;
-		case HEAPTUPLE_INSERT_IN_PROGRESS:
-			xid = HeapTupleHeaderGetXmin(tuple->t_data);
-			break;
-		case HEAPTUPLE_DEAD:
-			return;
-		default:
-
-			/*
-			 * The only way to get to this default clause is if a new value is
-			 * added to the enum type without adding it to this switch
-			 * statement.  That's a bug, so elog.
-			 */
-			elog(ERROR, "unrecognized return value from HeapTupleSatisfiesVacuum: %u", htsvResult);
-
-			/*
-			 * In spite of having all enum values covered and calling elog on
-			 * this default, some compilers think this is a code path which
-			 * allows xid to be used below without initialization. Silence
-			 * that warning.
-			 */
-			xid = InvalidTransactionId;
-	}
 	Assert(TransactionIdIsValid(xid));
-	Assert(TransactionIdFollowsOrEquals(xid, TransactionXmin));
 
-	/*
-	 * Find top level xid.  Bail out if xid is too early to be a conflict, or
-	 * if it's our own xid.
-	 */
-	if (TransactionIdEquals(xid, GetTopTransactionIdIfAny()))
-		return;
-	xid = SubTransGetTopmostTransaction(xid);
-	if (TransactionIdPrecedes(xid, TransactionXmin))
-		return;
 	if (TransactionIdEquals(xid, GetTopTransactionIdIfAny()))
 		return;
 
@@ -4423,8 +4371,7 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
  * tuple itself.
  */
 void
-CheckForSerializableConflictIn(Relation relation, HeapTuple tuple,
-							   Buffer buffer)
+CheckForSerializableConflictIn(Relation relation, ItemPointer tid, BlockNumber blkno)
 {
 	PREDICATELOCKTARGETTAG targettag;
 
@@ -4454,22 +4401,22 @@ CheckForSerializableConflictIn(Relation relation, HeapTuple tuple,
 	 * It is not possible to take and hold a lock across the checks for all
 	 * granularities because each target could be in a separate partition.
 	 */
-	if (tuple != NULL)
+	if (tid != NULL)
 	{
 		SET_PREDICATELOCKTARGETTAG_TUPLE(targettag,
 										 relation->rd_node.dbNode,
 										 relation->rd_id,
-										 ItemPointerGetBlockNumber(&(tuple->t_self)),
-										 ItemPointerGetOffsetNumber(&(tuple->t_self)));
+										 ItemPointerGetBlockNumber(tid),
+										 ItemPointerGetOffsetNumber(tid));
 		CheckTargetForConflictsIn(&targettag);
 	}
 
-	if (BufferIsValid(buffer))
+	if (blkno != InvalidBlockNumber)
 	{
 		SET_PREDICATELOCKTARGETTAG_PAGE(targettag,
 										relation->rd_node.dbNode,
 										relation->rd_id,
-										BufferGetBlockNumber(buffer));
+										blkno);
 		CheckTargetForConflictsIn(&targettag);
 	}
 

@@ -216,7 +216,8 @@ ginEntryInsert(GinState *ginstate,
 			return;
 		}
 
-		CheckForSerializableConflictIn(ginstate->index, NULL, stack->buffer);
+		CheckForSerializableConflictIn(ginstate->index, NULL,
+									   BufferGetBlockNumber(stack->buffer));
 		/* modify an existing leaf entry */
 		itup = addItemPointersToLeafTuple(ginstate, itup,
 										  items, nitem, buildStats, stack->buffer);
@@ -225,7 +226,8 @@ ginEntryInsert(GinState *ginstate,
 	}
 	else
 	{
-		CheckForSerializableConflictIn(ginstate->index, NULL, stack->buffer);
+		CheckForSerializableConflictIn(ginstate->index, NULL,
+									   BufferGetBlockNumber(stack->buffer));
 		/* no match, so construct a new leaf entry */
 		itup = buildFreshLeafTuple(ginstate, attnum, key, category,
 								   items, nitem, buildStats, stack->buffer);

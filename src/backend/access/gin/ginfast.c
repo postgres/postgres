@@ -246,7 +246,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 	 * tree, so it conflicts with all serializable scans.  All scans acquire a
 	 * predicate lock on the metabuffer to represent that.
 	 */
-	CheckForSerializableConflictIn(index, NULL, metabuffer);
+	CheckForSerializableConflictIn(index, NULL, GIN_METAPAGE_BLKNO);
 
 	if (collector->sumsize + collector->ntuples * sizeof(ItemIdData) > GinListPageSize)
 	{

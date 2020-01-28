@@ -88,7 +88,7 @@ restart_insert:
 										  &usedmetap);
 	Assert(usedmetap != NULL);
 
-	CheckForSerializableConflictIn(rel, NULL, buf);
+	CheckForSerializableConflictIn(rel, NULL, BufferGetBlockNumber(buf));
 
 	/* remember the primary bucket buffer to release the pin on it at end. */
 	bucket_buf = buf;

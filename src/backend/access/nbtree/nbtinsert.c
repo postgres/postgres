@@ -285,7 +285,7 @@ top:
 		 * checkingunique and !heapkeyspace cases, but it's okay to use the
 		 * first page the value could be on (with scantid omitted) instead.
 		 */
-		CheckForSerializableConflictIn(rel, NULL, insertstate.buf);
+		CheckForSerializableConflictIn(rel, NULL, BufferGetBlockNumber(insertstate.buf));
 
 		/*
 		 * Do the insertion.  Note that insertstate contains cached binary
@@ -528,7 +528,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 					 * otherwise be masked by this unique constraint
 					 * violation.
 					 */
-					CheckForSerializableConflictIn(rel, NULL, insertstate->buf);
+					CheckForSerializableConflictIn(rel, NULL, BufferGetBlockNumber(insertstate->buf));
 
 					/*
 					 * This is a definite conflict.  Break the tuple down into

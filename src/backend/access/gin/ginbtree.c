@@ -89,7 +89,7 @@ ginFindLeafPage(GinBtree btree, bool searchMode,
 	stack->predictNumber = 1;
 
 	if (rootConflictCheck)
-		CheckForSerializableConflictIn(btree->index, NULL, stack->buffer);
+		CheckForSerializableConflictIn(btree->index, NULL, btree->rootBlkno);
 
 	for (;;)
 	{

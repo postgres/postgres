@@ -220,5 +220,7 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 										  HeapTuple htup,
 										  Buffer buffer,
 										  CommandId *cmin, CommandId *cmax);
+extern void HeapCheckForSerializableConflictOut(bool valid, Relation relation, HeapTuple tuple,
+												Buffer buffer, Snapshot snapshot);
 
 #endif							/* HEAPAM_H */
