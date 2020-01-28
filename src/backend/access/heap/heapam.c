@@ -9134,5 +9134,5 @@ HeapCheckForSerializableConflictOut(bool visible, Relation relation,
 	if (TransactionIdPrecedes(xid, TransactionXmin))
 		return;
 
-	return CheckForSerializableConflictOut(relation, xid, snapshot);
+	CheckForSerializableConflictOut(relation, xid, snapshot);
 }
