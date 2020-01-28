@@ -1732,6 +1732,40 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-sslminprotocolversion" xreflabel="sslminprotocolversion">
+      <term><literal>sslminprotocolversion</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the minimum SSL/TLS protocol version to allow
+        for the connection. Valid values are <literal>TLSv1</literal>,
+        <literal>TLSv1.1</literal>, <literal>TLSv1.2</literal> and
+        <literal>TLSv1.3</literal>. The supported protocols depend on the
+        version of <productname>OpenSSL</productname> used, older versions
+        not supporting the most modern protocol versions. If not set, this
+        parameter is ignored and the connection will use the minimum bound
+        defined by the backend.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="libpq-connect-sslmaxprotocolversion" xreflabel="sslmaxprotocolversion">
+      <term><literal>sslmaxprotocolversion</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the maximum SSL/TLS protocol version to allow
+        for the connection. Valid values are <literal>TLSv1</literal>,
+        <literal>TLSv1.1</literal>, <literal>TLSv1.2</literal> and
+        <literal>TLSv1.3</literal>. The supported protocols depend on the
+        version of <productname>OpenSSL</productname> used, older versions
+        not supporting the most modern protocol versions. If not set, this
+        parameter is ignored and the connection will use the maximum bound
+        defined by the backend, if set. Setting the maximum protocol version
+        is mainly useful for testing or if some component has issues working
+        with a newer protocol.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-krbsrvname" xreflabel="krbsrvname">
       <term><literal>krbsrvname</literal></term>
       <listitem>
@@ -7117,6 +7151,26 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGREQUIREPEER</envar> behaves the same as the <xref
       linkend="libpq-connect-requirepeer"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLMINPROTOCOLVERSION</envar></primary>
+      </indexterm>
+      <envar>PGSSLMINPROTOCOLVERSION</envar> behaves the same as the <xref
+      linkend="libpq-connect-sslminprotocolversion"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLMAXPROTOCOLVERSION</envar></primary>
+      </indexterm>
+      <envar>PGSSLMAXPROTOCOLVERSION</envar> behaves the same as the <xref
+      linkend="libpq-connect-sslminprotocolversion"/> connection parameter.
      </para>
     </listitem>
 

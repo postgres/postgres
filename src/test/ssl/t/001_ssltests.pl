@@ -13,7 +13,7 @@ use SSLServer;
 
 if ($ENV{with_openssl} eq 'yes')
 {
-	plan tests => 86;
+	plan tests => 93;
 }
 else
 {
@@ -355,6 +355,27 @@ command_like(
 	qr{^pid,ssl,version,cipher,bits,compression,client_dn,client_serial,issuer_dn\r?\n
 				^\d+,t,TLSv[\d.]+,[\w-]+,\d+,f,_null_,_null_,_null_\r?$}mx,
 	'pg_stat_ssl view without client certificate');
+
+# Test min/max SSL protocol versions.
+test_connect_ok(
+	$common_connstr,
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslminprotocolversion=TLSv1.2 sslmaxprotocolversion=TLSv1.2",
+	"connection success with correct range of TLS protocol versions");
+test_connect_fails(
+	$common_connstr,
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslminprotocolversion=TLSv1.2 sslmaxprotocolversion=TLSv1.1",
+	qr/invalid SSL protocol version range/,
+	"connection failure with incorrect range of TLS protocol versions");
+test_connect_fails(
+	$common_connstr,
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslminprotocolversion=incorrect_tls",
+	qr/invalid sslminprotocolversion value/,
+	"connection failure with an incorrect SSL protocol minimum bound");
+test_connect_fails(
+	$common_connstr,
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslmaxprotocolversion=incorrect_tls",
+	qr/invalid sslmaxprotocolversion value/,
+	"connection failure with an incorrect SSL protocol maximum bound");
 
 ### Server-side tests.
 ###

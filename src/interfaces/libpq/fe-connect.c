@@ -320,6 +320,14 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Require-Peer", "", 10,
 	offsetof(struct pg_conn, requirepeer)},
 
+	{"sslminprotocolversion", "PGSSLMINPROTOCOLVERSION", NULL, NULL,
+		"SSL-Minimum-Protocol-Version", "", 8,	/* sizeof("TLSv1.x") == 8 */
+	offsetof(struct pg_conn, sslminprotocolversion)},
+
+	{"sslmaxprotocolversion", "PGSSLMAXPROTOCOLVERSION", NULL, NULL,
+		"SSL-Maximum-Protocol-Version", "", 8,	/* sizeof("TLSv1.x") == 8 */
+	offsetof(struct pg_conn, sslmaxprotocolversion)},
+
 	/*
 	 * As with SSL, all GSS options are exposed even in builds that don't have
 	 * support.
@@ -426,6 +434,8 @@ static char *passwordFromFile(const char *hostname, const char *port, const char
 							  const char *username, const char *pgpassfile);
 static void pgpassfileWarning(PGconn *conn);
 static void default_threadlock(int acquire);
+static bool sslVerifyProtocolVersion(const char *version);
+static bool sslVerifyProtocolRange(const char *min, const char *max);
 
 
 /* global variable because fe-auth.c needs to access it */
@@ -1283,6 +1293,40 @@ connectOptions2(PGconn *conn)
 		conn->sslmode = strdup(DefaultSSLMode);
 		if (!conn->sslmode)
 			goto oom_error;
+	}
+
+	/*
+	 * Validate TLS protocol versions for sslminprotocolversion and
+	 * sslmaxprotocolversion.
+	 */
+	if (!sslVerifyProtocolVersion(conn->sslminprotocolversion))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("invalid sslminprotocolversion value: \"%s\"\n"),
+						  conn->sslminprotocolversion);
+		return false;
+	}
+	if (!sslVerifyProtocolVersion(conn->sslmaxprotocolversion))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("invalid sslmaxprotocolversion value: \"%s\"\n"),
+						  conn->sslmaxprotocolversion);
+		return false;
+	}
+
+	/*
+	 * Check if the range of SSL protocols defined is correct.  This is done
+	 * at this early step because this is independent of the SSL
+	 * implementation used, and this avoids unnecessary cycles with an
+	 * already-built SSL context when the connection is being established, as
+	 * it would be doomed anyway.
+	 */
+	if (!sslVerifyProtocolRange(conn->sslminprotocolversion,
+								conn->sslmaxprotocolversion))
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("invalid SSL protocol version range"));
+		return false;
 	}
 
 	/*
@@ -4001,6 +4045,10 @@ freePGconn(PGconn *conn)
 		free(conn->sslcompression);
 	if (conn->requirepeer)
 		free(conn->requirepeer);
+	if (conn->sslminprotocolversion)
+		free(conn->sslminprotocolversion);
+	if (conn->sslmaxprotocolversion)
+		free(conn->sslmaxprotocolversion);
 	if (conn->gssencmode)
 		free(conn->gssencmode);
 	if (conn->krbsrvname)
@@ -7029,6 +7077,71 @@ pgpassfileWarning(PGconn *conn)
 							  libpq_gettext("password retrieved from file \"%s\"\n"),
 							  conn->pgpassfile);
 	}
+}
+
+/*
+ * Check if the SSL procotol value given in input is valid or not.
+ * This is used as a sanity check routine for the connection parameters
+ * sslminprotocolversion and sslmaxprotocolversion.
+ */
+static bool
+sslVerifyProtocolVersion(const char *version)
+{
+	/*
+	 * An empty string and a NULL value are considered valid as it is
+	 * equivalent to ignoring the parameter.
+	 */
+	if (!version || strlen(version) == 0)
+		return true;
+
+	if (pg_strcasecmp(version, "TLSv1") == 0 ||
+		pg_strcasecmp(version, "TLSv1.1") == 0 ||
+		pg_strcasecmp(version, "TLSv1.2") == 0 ||
+		pg_strcasecmp(version, "TLSv1.3") == 0)
+		return true;
+
+	/* anything else is wrong */
+	return false;
+}
+
+
+/*
+ * Ensure that the SSL protocol range given in input is correct.  The check
+ * is performed on the input string to keep it TLS backend agnostic.  Input
+ * to this function is expected verified with sslVerifyProtocolVersion().
+ */
+static bool
+sslVerifyProtocolRange(const char *min, const char *max)
+{
+	Assert(sslVerifyProtocolVersion(min) &&
+		   sslVerifyProtocolVersion(max));
+
+	/* If at least one of the bounds is not set, the range is valid */
+	if (min == NULL || max == NULL || strlen(min) == 0 || strlen(max) == 0)
+		return true;
+
+	/*
+	 * If the minimum version is the lowest one we accept, then all options
+	 * for the maximum are valid.
+	 */
+	if (pg_strcasecmp(min, "TLSv1") == 0)
+		return true;
+
+	/*
+	 * The minimum bound is valid, and cannot be TLSv1, so using TLSv1 for the
+	 * maximum is incorrect.
+	 */
+	if (pg_strcasecmp(max, "TLSv1") == 0)
+		return false;
+
+	/*
+	 * At this point we know that we have a mix of TLSv1.1 through 1.3
+	 * versions.
+	 */
+	if (pg_strcasecmp(min, max) > 0)
+		return false;
+
+	return true;
 }
 
 
