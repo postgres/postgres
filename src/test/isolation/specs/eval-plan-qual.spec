@@ -97,10 +97,12 @@ step "upsert1"	{
 # readp1/writep1/readp2 tests a bug where nodeLockRows did the wrong thing
 # when the first updated tuple was in a non-first child table.
 # writep2/returningp1 tests a memory allocation issue
+# writep3a/writep3b tests updates touching more than one table
 
 step "readp1"	{ SELECT tableoid::regclass, ctid, * FROM p WHERE b IN (0, 1) AND c = 0 FOR UPDATE; }
 step "writep1"	{ UPDATE p SET b = -1 WHERE a = 1 AND b = 1 AND c = 0; }
 step "writep2"	{ UPDATE p SET b = -b WHERE a = 1 AND c = 0; }
+step "writep3a"	{ UPDATE p SET b = -b WHERE c = 0; }
 step "c1"	{ COMMIT; }
 step "r1"	{ ROLLBACK; }
 
@@ -203,6 +205,7 @@ step "returningp1" {
 	WITH u AS ( UPDATE p SET b = b WHERE a > 0 RETURNING * )
 	  SELECT * FROM u;
 }
+step "writep3b"	{ UPDATE p SET b = -b WHERE c = 0; }
 step "readforss"	{
 	SELECT ta.id AS ta_id, ta.value AS ta_value,
 		(SELECT ROW(tb.id, tb.value)
@@ -338,6 +341,7 @@ permutation "wx1" "delwctefail" "c1" "c2" "read"
 permutation "upsert1" "upsert2" "c1" "c2" "read"
 permutation "readp1" "writep1" "readp2" "c1" "c2"
 permutation "writep2" "returningp1" "c1" "c2"
+permutation "writep3a" "writep3b" "c1" "c2"
 permutation "wx2" "partiallock" "c2" "c1" "read"
 permutation "wx2" "lockwithvalues" "c2" "c1" "read"
 permutation "wx2_ext" "partiallock_ext" "c2" "c1" "read_ext"
