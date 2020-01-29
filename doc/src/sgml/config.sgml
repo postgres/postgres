@@ -3571,6 +3571,11 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         If <xref linkend="guc-hot-standby"/> is not enabled, a setting of
         <literal>pause</literal> will act the same as <literal>shutdown</literal>.
        </para>
+       <para>
+        In any case, if a recovery target is configured but the archive
+        recovery ends before the target is reached, the server will shut down
+        with a fatal error.
+       </para>
       </listitem>
      </varlistentry>
 
