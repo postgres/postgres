@@ -215,7 +215,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, pgpassfile)},
 
 	{"channel_binding", "PGCHANNELBINDING", NULL, NULL,
-		"Channel-Binding", "", 7,	/* sizeof("require") */
+		"Channel-Binding", "", 8,	/* sizeof("require") == 8 */
 	offsetof(struct pg_conn, channel_binding)},
 
 	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
@@ -333,7 +333,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	 * support.
 	 */
 	{"gssencmode", "PGGSSENCMODE", DefaultGSSMode, NULL,
-		"GSSENC-Mode", "", 7,	/* sizeof("disable") == 7 */
+		"GSSENC-Mode", "", 8,	/* sizeof("disable") == 8 */
 	offsetof(struct pg_conn, gssencmode)},
 
 	/* Kerberos and GSSAPI authentication support specifying the service name */
@@ -342,7 +342,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, krbsrvname)},
 
 	{"gsslib", "PGGSSLIB", NULL, NULL,
-		"GSS-library", "", 7,	/* sizeof("gssapi") = 7 */
+		"GSS-library", "", 7,	/* sizeof("gssapi") == 7 */
 	offsetof(struct pg_conn, gsslib)},
 
 	{"replication", NULL, NULL, NULL,
