@@ -227,6 +227,24 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-P <replaceable class="parameter">parallel_degree</replaceable></option></term>
+      <term><option>--parallel=<replaceable class="parameter">parallel_degree</replaceable></option></term>
+      <listitem>
+       <para>
+        Specify the parallel degree of <firstterm>parallel vacuum</firstterm>.
+        This allows the vacuum to leverage multiple CPUs to process indexes.
+        See <xref linkend="sql-vacuum"/>.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 13 and later.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-q</option></term>
       <term><option>--quiet</option></term>
       <listitem>

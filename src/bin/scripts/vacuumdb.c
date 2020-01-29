@@ -35,6 +35,8 @@ typedef struct vacuumingOptions
 	bool		skip_locked;
 	int			min_xid_age;
 	int			min_mxid_age;
+	int			parallel_workers;	/* >= 0 indicates user specified the
+									 * parallel degree, otherwise -1 */
 } vacuumingOptions;
 
 
@@ -87,6 +89,7 @@ main(int argc, char *argv[])
 		{"full", no_argument, NULL, 'f'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"jobs", required_argument, NULL, 'j'},
+		{"parallel", required_argument, NULL, 'P'},
 		{"maintenance-db", required_argument, NULL, 2},
 		{"analyze-in-stages", no_argument, NULL, 3},
 		{"disable-page-skipping", no_argument, NULL, 4},
@@ -116,6 +119,7 @@ main(int argc, char *argv[])
 
 	/* initialize options to all false */
 	memset(&vacopts, 0, sizeof(vacopts));
+	vacopts.parallel_workers = -1;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -123,7 +127,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:zZFat:fvj:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:zZFat:fvj:P:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -180,6 +184,14 @@ main(int argc, char *argv[])
 				if (concurrentCons <= 0)
 				{
 					pg_log_error("number of parallel jobs must be at least 1");
+					exit(1);
+				}
+				break;
+			case 'P':
+				vacopts.parallel_workers = atoi(optarg);
+				if (vacopts.parallel_workers < 0)
+				{
+					pg_log_error("parallel vacuum degree must be a non-negative integer");
 					exit(1);
 				}
 				break;
@@ -256,6 +268,23 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 		/* allow 'and_analyze' with 'analyze_only' */
+	}
+
+	/* Prohibit full and analyze_only options with parallel option */
+	if (vacopts.parallel_workers >= 0)
+	{
+		if (vacopts.analyze_only)
+		{
+			pg_log_error("cannot use the \"%s\" option when performing only analyze",
+						 "parallel");
+			exit(1);
+		}
+		if (vacopts.full)
+		{
+			pg_log_error("cannot use the \"%s\" option when performing full",
+						 "parallel");
+			exit(1);
+		}
 	}
 
 	setup_cancel_handler(NULL);
@@ -402,6 +431,13 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 	{
 		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
 					 "--min-mxid-age", "9.6");
+		exit(1);
+	}
+
+	if (vacopts->parallel_workers >= 0 && PQserverVersion(conn) < 130000)
+	{
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "--parallel", "13");
 		exit(1);
 	}
 
@@ -823,6 +859,14 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 				appendPQExpBuffer(sql, "%sANALYZE", sep);
 				sep = comma;
 			}
+			if (vacopts->parallel_workers >= 0)
+			{
+				/* PARALLEL is supported since v13 */
+				Assert(serverVersion >= 130000);
+				appendPQExpBuffer(sql, "%sPARALLEL %d", sep,
+								  vacopts->parallel_workers);
+				sep = comma;
+			}
 			if (sep != paren)
 				appendPQExpBufferChar(sql, ')');
 		}
@@ -886,6 +930,7 @@ help(const char *progname)
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"));
 	printf(_("      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"));
+	printf(_("  -P, --parallel=PARALLEL_DEGREE  use this many background workers for vacuum, if available\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("      --skip-locked               skip relations that cannot be immediately locked\n"));
 	printf(_("  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"));
