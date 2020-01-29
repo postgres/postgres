@@ -576,6 +576,31 @@
         version.  If it is set to <literal>false</literal>, just the privileges
         required to execute the commands in the installation or update script
         are required.
+        This should normally be set to <literal>true</literal> if any of the
+        script commands require superuser privileges.  (Such commands would
+        fail anyway, but it's more user-friendly to give the error up front.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>trusted</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        This parameter, if set to <literal>true</literal> (which is not the
+        default), allows some non-superusers to install an extension that
+        has <varname>superuser</varname> set to <literal>true</literal>.
+        Specifically, installation will be permitted for anyone who has
+        <literal>CREATE</literal> privilege on the current database.
+        When the user executing <command>CREATE EXTENSION</command> is not
+        a superuser but is allowed to install by virtue of this parameter,
+        then the installation or update script is run as the bootstrap
+        superuser, not as the calling user.
+        This parameter is irrelevant if <varname>superuser</varname> is
+        <literal>false</literal>.
+        Generally, this should not be set true for extensions that could
+        allow access to otherwise-superuser-only abilities, such as
+        filesystem access.
        </para>
       </listitem>
      </varlistentry>
@@ -639,6 +664,18 @@
      Without that, users might accidentally load the
      extension's contents as <quote>loose</quote> objects rather than as an
      extension, a state of affairs that's a bit tedious to recover from.
+    </para>
+
+    <para>
+     If the extension script contains the
+     string <literal>@extowner@</literal>, that string is replaced with the
+     (suitably quoted) name of the user calling <command>CREATE
+     EXTENSION</command> or <command>ALTER EXTENSION</command>.  Typically
+     this feature is used by extensions that are marked trusted to assign
+     ownership of selected objects to the calling user rather than the
+     bootstrap superuser.  (One should be careful about doing so, however.
+     For example, assigning ownership of a C-language function to a
+     non-superuser would create a privilege escalation path for that user.)
     </para>
 
     <para>

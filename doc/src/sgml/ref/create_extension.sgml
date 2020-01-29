@@ -47,12 +47,23 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
   </para>
 
   <para>
-   Loading an extension requires the same privileges that would be
-   required to create its component objects.  For most extensions this
-   means superuser or database owner privileges are needed.
    The user who runs <command>CREATE EXTENSION</command> becomes the
    owner of the extension for purposes of later privilege checks, as well
    as the owner of any objects created by the extension's script.
+  </para>
+
+  <para>
+   Loading an extension ordinarily requires the same privileges that would
+   be required to create its component objects.  For many extensions this
+   means superuser privileges are needed.
+   However, if the extension is marked <firstterm>trusted</firstterm> in
+   its control file, then it can be installed by any user who has
+   <literal>CREATE</literal> privilege on the current database.
+   In this case the extension object itself will be owned by the calling
+   user, but the contained objects will be owned by the bootstrap superuser
+   (unless the extension's script explicitly assigns them to the calling
+   user).  This configuration gives the calling user the right to drop the
+   extension, but not to modify individual objects within it.
   </para>
 
  </refsect1>

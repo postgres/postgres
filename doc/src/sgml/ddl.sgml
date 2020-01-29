@@ -1742,6 +1742,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
      <listitem>
       <para>
        For databases, allows new schemas and publications to be created within
+       the database, and allows trusted extensions to be installed within
        the database.
       </para>
       <para>
@@ -1753,8 +1754,11 @@ REVOKE ALL ON accounts FROM PUBLIC;
       <para>
        For tablespaces, allows tables, indexes, and temporary files to be
        created within the tablespace, and allows databases to be created that
-       have the tablespace as their default tablespace.  (Note that revoking
-       this privilege will not alter the placement of existing objects.)
+       have the tablespace as their default tablespace.
+      </para>
+      <para>
+       Note that revoking this privilege will not alter the existence or
+       location of existing objects.
       </para>
      </listitem>
     </varlistentry>

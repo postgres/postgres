@@ -1,11 +1,12 @@
 /* src/pl/tcl/pltcl--1.0.sql */
 
-/*
- * Currently, all the interesting stuff is done by CREATE LANGUAGE.
- * Later we will probably "dumb down" that command and put more of the
- * knowledge into this script.
- */
+CREATE FUNCTION pltcl_call_handler() RETURNS language_handler
+  LANGUAGE c AS 'MODULE_PATHNAME';
 
-CREATE LANGUAGE pltcl;
+CREATE TRUSTED LANGUAGE pltcl
+  HANDLER pltcl_call_handler;
+
+-- The language object, but not the functions, can be owned by a non-superuser.
+ALTER LANGUAGE pltcl OWNER TO @extowner@;
 
 COMMENT ON LANGUAGE pltcl IS 'PL/Tcl procedural language';

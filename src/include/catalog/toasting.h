@@ -86,9 +86,6 @@ DECLARE_TOAST(pg_database, 4177, 4178);
 DECLARE_TOAST(pg_db_role_setting, 2966, 2967);
 #define PgDbRoleSettingToastTable 2966
 #define PgDbRoleSettingToastIndex 2967
-DECLARE_TOAST(pg_pltemplate, 4179, 4180);
-#define PgPlTemplateToastTable 4179
-#define PgPlTemplateToastIndex 4180
 DECLARE_TOAST(pg_replication_origin, 4181, 4182);
 #define PgReplicationOriginToastTable 4181
 #define PgReplicationOriginToastIndex 4182

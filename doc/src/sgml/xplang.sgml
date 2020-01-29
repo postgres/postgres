@@ -190,7 +190,7 @@ CREATE FUNCTION plperl_call_handler() RETURNS language_handler AS
 
 <programlisting>
 CREATE FUNCTION plperl_inline_handler(internal) RETURNS void AS
-    '$libdir/plperl' LANGUAGE C;
+    '$libdir/plperl' LANGUAGE C STRICT;
 
 CREATE FUNCTION plperl_validator(oid) RETURNS void AS
     '$libdir/plperl' LANGUAGE C STRICT;

@@ -317,7 +317,8 @@ CREATE VIEW pg_available_extensions AS
 
 CREATE VIEW pg_available_extension_versions AS
     SELECT E.name, E.version, (X.extname IS NOT NULL) AS installed,
-           E.superuser, E.relocatable, E.schema, E.requires, E.comment
+           E.superuser, E.trusted, E.relocatable,
+           E.schema, E.requires, E.comment
       FROM pg_available_extension_versions() AS E
            LEFT JOIN pg_extension AS X
              ON E.name = X.extname AND E.version = X.extversion;

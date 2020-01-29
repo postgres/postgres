@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ OR REPLACE ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
 CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
     HANDLER <replaceable class="parameter">call_handler</replaceable> [ INLINE <replaceable class="parameter">inline_handler</replaceable> ] [ VALIDATOR <replaceable>valfunction</replaceable> ]
+CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -37,21 +37,6 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
    defined in this new language.
   </para>
 
-  <note>
-   <para>
-    As of <productname>PostgreSQL</productname> 9.1, most procedural
-    languages have been made into <quote>extensions</quote>, and should
-    therefore be installed with <xref linkend="sql-createextension"/>
-    not <command>CREATE LANGUAGE</command>.  Direct use of
-    <command>CREATE LANGUAGE</command> should now be confined to
-    extension installation scripts.  If you have a <quote>bare</quote>
-    language in your database, perhaps as a result of an upgrade,
-    you can convert it to an extension using
-    <literal>CREATE EXTENSION <replaceable>langname</replaceable> FROM
-    unpackaged</literal>.
-   </para>
-  </note>
-
   <para>
    <command>CREATE LANGUAGE</command> effectively associates the
    language name with handler function(s) that are responsible for executing
@@ -60,53 +45,32 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
   </para>
 
   <para>
-   There are two forms of the <command>CREATE LANGUAGE</command> command.
-   In the first form, the user supplies just the name of the desired
-   language, and the <productname>PostgreSQL</productname> server consults
-   the <link linkend="catalog-pg-pltemplate"><structname>pg_pltemplate</structname></link>
-   system catalog to determine the correct parameters.  In the second form,
-   the user supplies the language parameters along with the language name.
-   The second form can be used to create a language that is not defined in
-   <structname>pg_pltemplate</structname>, but this approach is considered obsolescent.
-  </para>
-
-  <para>
-   When the server finds an entry in the <structname>pg_pltemplate</structname> catalog
-   for the given language name, it will use the catalog data even if the
-   command includes language parameters.  This behavior simplifies loading of
-   old dump files, which are likely to contain out-of-date information
-   about language support functions.
-  </para>
-
-  <para>
-   Ordinarily, the user must have the
-   <productname>PostgreSQL</productname> superuser privilege to
-   register a new language.  However, the owner of a database can register
-   a new language within that database if the language is listed in
-   the <structname>pg_pltemplate</structname> catalog and is marked
-   as allowed to be created by database owners (<structfield>tmpldbacreate</structfield>
-   is true).  The default is that trusted languages can be created
-   by database owners, but this can be adjusted by superusers by modifying
-   the contents of <structname>pg_pltemplate</structname>.
-   The creator of a language becomes its owner and can later
-   drop it, rename it, or assign it to a new owner.
-  </para>
-
-  <para>
    <command>CREATE OR REPLACE LANGUAGE</command> will either create a
    new language, or replace an existing definition.  If the language
-   already exists, its parameters are updated according to the values
-   specified or taken from <structname>pg_pltemplate</structname>,
+   already exists, its parameters are updated according to the command,
    but the language's ownership and permissions settings do not change,
    and any existing functions written in the language are assumed to still
-   be valid.  In addition to the normal privilege requirements for creating
-   a language, the user must be superuser or owner of the existing language.
-   The <literal>REPLACE</literal> case is mainly meant to be used to
-   ensure that the language exists.  If the language has a
-   <structname>pg_pltemplate</structname> entry then <literal>REPLACE</literal>
-   will not actually change anything about an existing definition, except in
-   the unusual case where the <structname>pg_pltemplate</structname> entry
-   has been modified since the language was created.
+   be valid.
+  </para>
+
+  <para>
+   One must have the
+   <productname>PostgreSQL</productname> superuser privilege to
+   register a new language or change an existing language's parameters.
+   However, once the language is created it is valid to assign ownership of
+   it to a non-superuser, who may then drop it, change its permissions,
+   rename it, or assign it to a new owner.  (Do not, however, assign
+   ownership of the underlying C functions to a non-superuser; that would
+   create a privilege escalation path for that user.)
+  </para>
+
+  <para>
+   The form of <command>CREATE LANGUAGE</command> that does not supply
+   any handler function is obsolete.  For backwards compatibility with
+   old dump files, it is interpreted as <command>CREATE EXTENSION</command>.
+   That will work if the language has been packaged into an extension of
+   the same name, which is the conventional way to set up procedural
+   languages.
   </para>
  </refsect1>
 
@@ -218,12 +182,6 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
      </listitem>
     </varlistentry>
    </variablelist>
-
-  <para>
-   The <literal>TRUSTED</literal> option and the support function name(s) are
-   ignored if the server has an entry for the specified language
-   name in <structname>pg_pltemplate</structname>.
-  </para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-notes">
@@ -255,18 +213,6 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
   </para>
 
   <para>
-   The call handler function, the inline handler function (if any),
-   and the validator function (if any)
-   must already exist if the server does not have an entry for the language
-   in <structname>pg_pltemplate</structname>.  But when there is an entry,
-   the functions need not already exist;
-   they will be automatically defined if not present in the database.
-   (This might result in <command>CREATE LANGUAGE</command> failing, if the
-   shared library that implements the language is not available in
-   the installation.)
-  </para>
-
-  <para>
    In <productname>PostgreSQL</productname> versions before 7.3, it was
    necessary to declare handler functions as returning the placeholder
    type <type>opaque</type>, rather than <type>language_handler</type>.
@@ -281,23 +227,20 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
   <title>Examples</title>
 
   <para>
-   The preferred way of creating any of the standard procedural languages
-   is just:
-<programlisting>
-CREATE LANGUAGE plperl;
-</programlisting>
-  </para>
-
-  <para>
-   For a language not known in the <structname>pg_pltemplate</structname> catalog, a
-   sequence such as this is needed:
+   A minimal sequence for creating a new procedural language is:
 <programlisting>
 CREATE FUNCTION plsample_call_handler() RETURNS language_handler
     AS '$libdir/plsample'
     LANGUAGE C;
 CREATE LANGUAGE plsample
     HANDLER plsample_call_handler;
-</programlisting></para>
+</programlisting>
+   Typically that would be written in an extension's creation script,
+   and users would do this to install the extension:
+<programlisting>
+CREATE EXTENSION plsample;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-compat">

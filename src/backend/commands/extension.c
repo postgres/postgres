@@ -40,6 +40,7 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_extension.h"
@@ -84,6 +85,7 @@ typedef struct ExtensionControlFile
 	char	   *schema;			/* target schema (allowed if !relocatable) */
 	bool		relocatable;	/* is ALTER EXTENSION SET SCHEMA supported? */
 	bool		superuser;		/* must be superuser to install? */
+	bool		trusted;		/* allow becoming superuser on the fly? */
 	int			encoding;		/* encoding of the script file, or -1 */
 	List	   *requires;		/* names of prerequisite extensions */
 } ExtensionControlFile;
@@ -558,6 +560,14 @@ parse_extension_control_file(ExtensionControlFile *control,
 						 errmsg("parameter \"%s\" requires a Boolean value",
 								item->name)));
 		}
+		else if (strcmp(item->name, "trusted") == 0)
+		{
+			if (!parse_bool(item->value, &control->trusted))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("parameter \"%s\" requires a Boolean value",
+								item->name)));
+		}
 		else if (strcmp(item->name, "encoding") == 0)
 		{
 			control->encoding = pg_valid_server_encoding(item->value);
@@ -614,6 +624,7 @@ read_extension_control_file(const char *extname)
 	control->name = pstrdup(extname);
 	control->relocatable = false;
 	control->superuser = true;
+	control->trusted = false;
 	control->encoding = -1;
 
 	/*
@@ -795,6 +806,27 @@ execute_sql_string(const char *sql)
 }
 
 /*
+ * Policy function: is the given extension trusted for installation by a
+ * non-superuser?
+ *
+ * (Update the errhint logic below if you change this.)
+ */
+static bool
+extension_is_trusted(ExtensionControlFile *control)
+{
+	AclResult	aclresult;
+
+	/* Never trust unless extension's control file says it's okay */
+	if (!control->trusted)
+		return false;
+	/* Allow if user has CREATE privilege on current database */
+	aclresult = pg_database_aclcheck(MyDatabaseId, GetUserId(), ACL_CREATE);
+	if (aclresult == ACLCHECK_OK)
+		return true;
+	return false;
+}
+
+/*
  * Execute the appropriate script file for installing or updating the extension
  *
  * If from_version isn't NULL, it's an update
@@ -806,33 +838,54 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 						 List *requiredSchemas,
 						 const char *schemaName, Oid schemaOid)
 {
+	bool		switch_to_superuser = false;
 	char	   *filename;
+	Oid			save_userid = 0;
+	int			save_sec_context = 0;
 	int			save_nestlevel;
 	StringInfoData pathbuf;
 	ListCell   *lc;
 
 	/*
-	 * Enforce superuser-ness if appropriate.  We postpone this check until
-	 * here so that the flag is correctly associated with the right script(s)
-	 * if it's set in secondary control files.
+	 * Enforce superuser-ness if appropriate.  We postpone these checks until
+	 * here so that the control flags are correctly associated with the right
+	 * script(s) if they happen to be set in secondary control files.
 	 */
 	if (control->superuser && !superuser())
 	{
-		if (from_version == NULL)
+		if (extension_is_trusted(control))
+			switch_to_superuser = true;
+		else if (from_version == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to create extension \"%s\"",
 							control->name),
-					 errhint("Must be superuser to create this extension.")));
+					 control->trusted
+					 ? errhint("Must have CREATE privilege on current database to create this extension.")
+					 : errhint("Must be superuser to create this extension.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to update extension \"%s\"",
 							control->name),
-					 errhint("Must be superuser to update this extension.")));
+					 control->trusted
+					 ? errhint("Must have CREATE privilege on current database to update this extension.")
+					 : errhint("Must be superuser to update this extension.")));
 	}
 
 	filename = get_extension_script_filename(control, from_version, version);
+
+	/*
+	 * If installing a trusted extension on behalf of a non-superuser, become
+	 * the bootstrap superuser.  (This switch will be cleaned up automatically
+	 * if the transaction aborts, as will the GUC changes below.)
+	 */
+	if (switch_to_superuser)
+	{
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(BOOTSTRAP_SUPERUSERID,
+							   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+	}
 
 	/*
 	 * Force client_min_messages and log_min_messages to be at least WARNING,
@@ -907,6 +960,22 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 										CStringGetTextDatum("ng"));
 
 		/*
+		 * If the script uses @extowner@, substitute the calling username.
+		 */
+		if (strstr(c_sql, "@extowner@"))
+		{
+			Oid			uid = switch_to_superuser ? save_userid : GetUserId();
+			const char *userName = GetUserNameFromId(uid, false);
+			const char *qUserName = quote_identifier(userName);
+
+			t_sql = DirectFunctionCall3Coll(replace_text,
+											C_COLLATION_OID,
+											t_sql,
+											CStringGetTextDatum("@extowner@"),
+											CStringGetTextDatum(qUserName));
+		}
+
+		/*
 		 * If it's not relocatable, substitute the target schema name for
 		 * occurrences of @extschema@.
 		 *
@@ -953,6 +1022,12 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	 * Restore the GUC variables we set above.
 	 */
 	AtEOXact_GUC(true, save_nestlevel);
+
+	/*
+	 * Restore authentication state if needed.
+	 */
+	if (switch_to_superuser)
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 /*
@@ -2111,8 +2186,8 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 	{
 		ExtensionVersionInfo *evi = (ExtensionVersionInfo *) lfirst(lc);
 		ExtensionControlFile *control;
-		Datum		values[7];
-		bool		nulls[7];
+		Datum		values[8];
+		bool		nulls[8];
 		ListCell   *lc2;
 
 		if (!evi->installable)
@@ -2133,24 +2208,26 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 		values[1] = CStringGetTextDatum(evi->name);
 		/* superuser */
 		values[2] = BoolGetDatum(control->superuser);
+		/* trusted */
+		values[3] = BoolGetDatum(control->trusted);
 		/* relocatable */
-		values[3] = BoolGetDatum(control->relocatable);
+		values[4] = BoolGetDatum(control->relocatable);
 		/* schema */
 		if (control->schema == NULL)
-			nulls[4] = true;
+			nulls[5] = true;
 		else
-			values[4] = DirectFunctionCall1(namein,
+			values[5] = DirectFunctionCall1(namein,
 											CStringGetDatum(control->schema));
 		/* requires */
 		if (control->requires == NIL)
-			nulls[5] = true;
-		else
-			values[5] = convert_requires_to_datum(control->requires);
-		/* comment */
-		if (control->comment == NULL)
 			nulls[6] = true;
 		else
-			values[6] = CStringGetTextDatum(control->comment);
+			values[6] = convert_requires_to_datum(control->requires);
+		/* comment */
+		if (control->comment == NULL)
+			nulls[7] = true;
+		else
+			values[7] = CStringGetTextDatum(control->comment);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 
@@ -2178,16 +2255,18 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 				values[1] = CStringGetTextDatum(evi2->name);
 				/* superuser */
 				values[2] = BoolGetDatum(control->superuser);
+				/* trusted */
+				values[3] = BoolGetDatum(control->trusted);
 				/* relocatable */
-				values[3] = BoolGetDatum(control->relocatable);
+				values[4] = BoolGetDatum(control->relocatable);
 				/* schema stays the same */
 				/* requires */
 				if (control->requires == NIL)
-					nulls[5] = true;
+					nulls[6] = true;
 				else
 				{
-					values[5] = convert_requires_to_datum(control->requires);
-					nulls[5] = false;
+					values[6] = convert_requires_to_datum(control->requires);
+					nulls[6] = false;
 				}
 				/* comment stays the same */
 
@@ -2195,6 +2274,64 @@ get_available_versions_for_extension(ExtensionControlFile *pcontrol,
 			}
 		}
 	}
+}
+
+/*
+ * Test whether the given extension exists (not whether it's installed)
+ *
+ * This checks for the existence of a matching control file in the extension
+ * directory.  That's not a bulletproof check, since the file might be
+ * invalid, but this is only used for hints so it doesn't have to be 100%
+ * right.
+ */
+bool
+extension_file_exists(const char *extensionName)
+{
+	bool		result = false;
+	char	   *location;
+	DIR		   *dir;
+	struct dirent *de;
+
+	location = get_extension_control_directory();
+	dir = AllocateDir(location);
+
+	/*
+	 * If the control directory doesn't exist, we want to silently return
+	 * false.  Any other error will be reported by ReadDir.
+	 */
+	if (dir == NULL && errno == ENOENT)
+	{
+		/* do nothing */
+	}
+	else
+	{
+		while ((de = ReadDir(dir, location)) != NULL)
+		{
+			char	   *extname;
+
+			if (!is_extension_control_filename(de->d_name))
+				continue;
+
+			/* extract extension name from 'name.control' filename */
+			extname = pstrdup(de->d_name);
+			*strrchr(extname, '.') = '\0';
+
+			/* ignore it if it's an auxiliary control file */
+			if (strstr(extname, "--"))
+				continue;
+
+			/* done if it matches request */
+			if (strcmp(extname, extensionName) == 0)
+			{
+				result = true;
+				break;
+			}
+		}
+
+		FreeDir(dir);
+	}
+
+	return result;
 }
 
 /*

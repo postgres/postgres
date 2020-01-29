@@ -226,11 +226,6 @@
      </row>
 
      <row>
-      <entry><link linkend="catalog-pg-pltemplate"><structname>pg_pltemplate</structname></link></entry>
-      <entry>template data for procedural languages</entry>
-     </row>
-
-     <row>
       <entry><link linkend="catalog-pg-policy"><structname>pg_policy</structname></link></entry>
       <entry>row-security policies</entry>
      </row>
@@ -4911,113 +4906,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
  </sect1>
 
 
- <sect1 id="catalog-pg-pltemplate">
-  <title><structname>pg_pltemplate</structname></title>
-
-  <indexterm zone="catalog-pg-pltemplate">
-   <primary>pg_pltemplate</primary>
-  </indexterm>
-
-  <para>
-   The catalog <structname>pg_pltemplate</structname> stores
-   <quote>template</quote> information for procedural languages.
-   A template for a language allows the language to be created in a
-   particular database by a simple <command>CREATE LANGUAGE</command> command,
-   with no need to specify implementation details.
-  </para>
-
-  <para>
-   Unlike most system catalogs, <structname>pg_pltemplate</structname>
-   is shared across all databases of a cluster: there is only one
-   copy of <structname>pg_pltemplate</structname> per cluster, not
-   one per database.  This allows the information to be accessible in
-   each database as it is needed.
-  </para>
-
-  <table>
-   <title><structname>pg_pltemplate</structname> Columns</title>
-
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry><structfield>tmplname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry>Name of the language this template is for</entry>
-     </row>
-
-     <row>
-      <entry><structfield>tmpltrusted</structfield></entry>
-      <entry><type>boolean</type></entry>
-      <entry>True if language is considered trusted</entry>
-     </row>
-
-     <row>
-      <entry><structfield>tmpldbacreate</structfield></entry>
-      <entry><type>boolean</type></entry>
-      <entry>True if language may be created by a database owner</entry>
-     </row>
-
-     <row>
-      <entry><structfield>tmplhandler</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>Name of call handler function</entry>
-     </row>
-
-     <row>
-      <entry><structfield>tmplinline</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>Name of anonymous-block handler function, or null if none</entry>
-     </row>
-
-     <row>
-      <entry><structfield>tmplvalidator</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>Name of validator function, or null if none</entry>
-     </row>
-
-     <row>
-      <entry><structfield>tmpllibrary</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>Path of shared library that implements language</entry>
-     </row>
-
-     <row>
-      <entry><structfield>tmplacl</structfield></entry>
-      <entry><type>aclitem[]</type></entry>
-      <entry>Access privileges for template (not actually used)</entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   There are not currently any commands that manipulate procedural language
-   templates; to change the built-in information, a superuser must modify
-   the table using ordinary <command>INSERT</command>, <command>DELETE</command>,
-   or <command>UPDATE</command> commands.
-  </para>
-
-  <note>
-   <para>
-    It is likely that <structname>pg_pltemplate</structname> will be removed in some
-    future release of <productname>PostgreSQL</productname>, in favor of
-    keeping this knowledge about procedural languages in their respective
-    extension installation scripts.
-   </para>
-  </note>
-
- </sect1>
-
-
  <sect1 id="catalog-pg-policy">
   <title><structname>pg_policy</structname></title>
 
@@ -8519,7 +8407,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      <row>
       <entry><structfield>superuser</structfield></entry>
       <entry><type>bool</type></entry>
-      <entry>True if only superusers are allowed to install this extension</entry>
+      <entry>True if only superusers are allowed to install this extension
+       (but see <structfield>trusted</structfield>)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>trusted</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry>True if the extension can be installed by non-superusers
+       with appropriate privileges</entry>
      </row>
 
      <row>

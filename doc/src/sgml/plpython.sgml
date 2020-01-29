@@ -153,7 +153,7 @@
      <para>
       Daredevils, who want to build a Python-3-only operating system
       environment, can change the contents of
-      <link linkend="catalog-pg-pltemplate"><structname>pg_pltemplate</structname></link>
+      <literal>plpythonu</literal>'s extension control and script files
       to make <literal>plpythonu</literal> be equivalent
       to <literal>plpython3u</literal>, keeping in mind that this
       would make their installation incompatible with most of the rest

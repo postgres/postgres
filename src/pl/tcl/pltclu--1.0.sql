@@ -1,11 +1,9 @@
 /* src/pl/tcl/pltclu--1.0.sql */
 
-/*
- * Currently, all the interesting stuff is done by CREATE LANGUAGE.
- * Later we will probably "dumb down" that command and put more of the
- * knowledge into this script.
- */
+CREATE FUNCTION pltclu_call_handler() RETURNS language_handler
+  LANGUAGE c AS 'MODULE_PATHNAME';
 
-CREATE LANGUAGE pltclu;
+CREATE LANGUAGE pltclu
+  HANDLER pltclu_call_handler;
 
 COMMENT ON LANGUAGE pltclu IS 'PL/TclU untrusted procedural language';

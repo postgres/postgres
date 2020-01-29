@@ -1,11 +1,12 @@
-/*
- * src/include/commands/proclang.h
- *
- *-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------
  *
  * proclang.h
  *	  prototypes for proclang.c.
  *
+ * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * src/include/commands/proclang.h
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +18,7 @@
 
 extern ObjectAddress CreateProceduralLanguage(CreatePLangStmt *stmt);
 extern void DropProceduralLanguageById(Oid langOid);
-extern bool PLTemplateExists(const char *languageName);
+
 extern Oid	get_language_oid(const char *langname, bool missing_ok);
 
 #endif							/* PROCLANG_H */

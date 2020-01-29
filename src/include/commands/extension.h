@@ -47,6 +47,7 @@ extern ObjectAddress ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *
 
 extern Oid	get_extension_oid(const char *extname, bool missing_ok);
 extern char *get_extension_name(Oid ext_oid);
+extern bool extension_file_exists(const char *extensionName);
 
 extern ObjectAddress AlterExtensionNamespace(const char *extensionName, const char *newschema,
 											 Oid *oldschema);

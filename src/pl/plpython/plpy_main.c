@@ -29,7 +29,7 @@
  */
 
 #if PY_MAJOR_VERSION >= 3
-/* Use separate names to avoid clash in pg_pltemplate */
+/* Use separate names to reduce confusion */
 #define plpython_validator plpython3_validator
 #define plpython_call_handler plpython3_call_handler
 #define plpython_inline_handler plpython3_inline_handler
