@@ -261,7 +261,7 @@ jsonb_from_cstring(char *json, int len)
 
 	memset(&state, 0, sizeof(state));
 	memset(&sem, 0, sizeof(sem));
-	lex = makeJsonLexContextCstringLen(json, len, true);
+	lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
 
 	sem.semstate = (void *) &state;
 

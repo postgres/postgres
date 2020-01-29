@@ -56,6 +56,7 @@ OBJS_COMMON = \
 	f2s.o \
 	file_perm.o \
 	ip.o \
+	jsonapi.o \
 	keywords.o \
 	kwlookup.o \
 	link-canary.o \

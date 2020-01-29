@@ -127,7 +127,7 @@ json_recv(PG_FUNCTION_ARGS)
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	/* Validate it. */
-	lex = makeJsonLexContextCstringLen(str, nbytes, false);
+	lex = makeJsonLexContextCstringLen(str, nbytes, GetDatabaseEncoding(), false);
 	pg_parse_json_or_ereport(lex, &nullSemAction);
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(str, nbytes));

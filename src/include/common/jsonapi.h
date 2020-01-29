@@ -73,6 +73,7 @@ typedef struct JsonLexContext
 {
 	char	   *input;
 	int			input_length;
+	int			input_encoding;
 	char	   *token_start;
 	char	   *token_terminator;
 	char	   *prev_token_terminator;
@@ -149,6 +150,7 @@ extern JsonParseErrorType json_count_array_elements(JsonLexContext *lex,
  */
 extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
 													int len,
+													int encoding,
 													bool need_escapes);
 
 /* lex one token */

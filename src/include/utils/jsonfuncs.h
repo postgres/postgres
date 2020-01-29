@@ -14,7 +14,7 @@
 #ifndef JSONFUNCS_H
 #define JSONFUNCS_H
 
-#include "utils/jsonapi.h"
+#include "common/jsonapi.h"
 #include "utils/jsonb.h"
 
 /*

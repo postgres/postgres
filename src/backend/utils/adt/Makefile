@@ -44,7 +44,6 @@ OBJS = \
 	int.o \
 	int8.o \
 	json.o \
-	jsonapi.o \
 	jsonb.o \
 	jsonb_gin.o \
 	jsonb_op.o \

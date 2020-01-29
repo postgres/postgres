@@ -18,6 +18,7 @@
 
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
+#include "common/jsonapi.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "lib/stringinfo.h"
@@ -27,7 +28,6 @@
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/json.h"
-#include "utils/jsonapi.h"
 #include "utils/jsonb.h"
 #include "utils/jsonfuncs.h"
 #include "utils/lsyscache.h"
@@ -514,6 +514,7 @@ makeJsonLexContext(text *json, bool need_escapes)
 {
 	return makeJsonLexContextCstringLen(VARDATA_ANY(json),
 										VARSIZE_ANY_EXHDR(json),
+										GetDatabaseEncoding(),
 										need_escapes);
 }
 
@@ -2605,7 +2606,7 @@ populate_array_json(PopulateArrayContext *ctx, char *json, int len)
 	PopulateArrayState state;
 	JsonSemAction sem;
 
-	state.lex = makeJsonLexContextCstringLen(json, len, true);
+	state.lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
 	state.ctx = ctx;
 
 	memset(&sem, 0, sizeof(sem));
@@ -3448,7 +3449,7 @@ get_json_object_as_hash(char *json, int len, const char *funcname)
 	HASHCTL		ctl;
 	HTAB	   *tab;
 	JHashState *state;
-	JsonLexContext *lex = makeJsonLexContextCstringLen(json, len, true);
+	JsonLexContext *lex = makeJsonLexContextCstringLen(json, len, GetDatabaseEncoding(), true);
 	JsonSemAction *sem;
 
 	memset(&ctl, 0, sizeof(ctl));

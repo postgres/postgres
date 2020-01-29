@@ -7,15 +7,32 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/utils/adt/jsonapi.c
+ *	  src/common/jsonapi.c
  *
  *-------------------------------------------------------------------------
  */
+#ifndef FRONTEND
 #include "postgres.h"
+#else
+#include "postgres_fe.h"
+#endif
 
+#include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
+
+#ifdef FRONTEND
+#include "common/logging.h"
+#else
 #include "miscadmin.h"
-#include "utils/jsonapi.h"
+#endif
+
+#ifdef FRONTEND
+#define check_stack_depth()
+#define json_log_and_abort(...) \
+	do { pg_log_fatal(__VA_ARGS__); exit(1); } while(0)
+#else
+#define json_log_and_abort(...) elog(ERROR, __VA_ARGS__)
+#endif
 
 /*
  * The context of the parser is maintained by the recursive descent
@@ -135,13 +152,14 @@ IsValidJsonNumber(const char *str, int len)
  * if really required.
  */
 JsonLexContext *
-makeJsonLexContextCstringLen(char *json, int len, bool need_escapes)
+makeJsonLexContextCstringLen(char *json, int len, int encoding, bool need_escapes)
 {
 	JsonLexContext *lex = palloc0(sizeof(JsonLexContext));
 
 	lex->input = lex->token_terminator = lex->line_start = json;
 	lex->line_number = 1;
 	lex->input_length = len;
+	lex->input_encoding = encoding;
 	if (need_escapes)
 		lex->strval = makeStringInfo();
 	return lex;
@@ -720,7 +738,7 @@ json_lex_string(JsonLexContext *lex)
 						ch = (ch * 16) + (*s - 'A') + 10;
 					else
 					{
-						lex->token_terminator = s + pg_mblen(s);
+						lex->token_terminator = s + pg_encoding_mblen(lex->input_encoding, s);
 						return JSON_UNICODE_ESCAPE_FORMAT;
 					}
 				}
@@ -759,7 +777,7 @@ json_lex_string(JsonLexContext *lex)
 						/* We can't allow this, since our TEXT type doesn't */
 						return JSON_UNICODE_CODE_POINT_ZERO;
 					}
-					else if (GetDatabaseEncoding() == PG_UTF8)
+					else if (lex->input_encoding == PG_UTF8)
 					{
 						unicode_to_utf8(ch, (unsigned char *) utf8str);
 						utf8len = pg_utf_mblen((unsigned char *) utf8str);
@@ -809,7 +827,7 @@ json_lex_string(JsonLexContext *lex)
 					default:
 						/* Not a valid string escape, so signal error. */
 						lex->token_start = s;
-						lex->token_terminator = s + pg_mblen(s);
+						lex->token_terminator = s + pg_encoding_mblen(lex->input_encoding, s);
 						return JSON_ESCAPING_INVALID;
 				}
 			}
@@ -823,7 +841,7 @@ json_lex_string(JsonLexContext *lex)
 				 * shown it's not a performance win.
 				 */
 				lex->token_start = s;
-				lex->token_terminator = s + pg_mblen(s);
+				lex->token_terminator = s + pg_encoding_mblen(lex->input_encoding, s);
 				return JSON_ESCAPING_INVALID;
 			}
 
@@ -1010,7 +1028,7 @@ report_parse_error(JsonParseContext ctx, JsonLexContext *lex)
 	 * unhandled enum values.  But this needs to be here anyway to cover the
 	 * possibility of an incorrect input.
 	 */
-	elog(ERROR, "unexpected json parse state: %d", (int) ctx);
+	json_log_and_abort("unexpected json parse state: %d", (int) ctx);
 	return JSON_SUCCESS;		/* silence stupider compilers */
 }
 
@@ -1077,7 +1095,7 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 	 * unhandled enum values.  But this needs to be here anyway to cover the
 	 * possibility of an incorrect input.
 	 */
-	elog(ERROR, "unexpected json parse error type: %d", (int) error);
+	json_log_and_abort("unexpected json parse error type: %d", (int) error);
 	return NULL;				/* silence stupider compilers */
 }
 
