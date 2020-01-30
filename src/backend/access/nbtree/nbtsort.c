@@ -1331,6 +1331,15 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	Assert(request > 0);
 	pcxt = CreateParallelContext("postgres", "_bt_parallel_build_main",
 								 request);
+
+	/* If no DSM segment was available, back out (do serial build) */
+	if (pcxt->seg == NULL)
+	{
+		DestroyParallelContext(pcxt);
+		ExitParallelMode();
+		return;
+	}
+
 	scantuplesortstates = leaderparticipates ? request + 1 : request;
 
 	/*
