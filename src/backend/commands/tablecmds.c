@@ -304,6 +304,7 @@ struct DropRelationCallbackState
 	((child_is_partition) ? DEPENDENCY_AUTO : DEPENDENCY_NORMAL)
 
 static void truncate_check_rel(Oid relid, Form_pg_class reltuple);
+static void truncate_check_perms(Oid relid, Form_pg_class reltuple);
 static void truncate_check_activity(Relation rel);
 static void RangeVarCallbackForTruncate(const RangeVar *relation,
 										Oid relId, Oid oldRelId, void *arg);
@@ -1615,6 +1616,12 @@ ExecuteTruncate(TruncateStmt *stmt)
 					continue;
 				}
 
+				/*
+				 * Inherited TRUNCATE commands perform access
+				 * permission checks on the parent table only.
+				 * So we skip checking the children's permissions
+				 * and don't call truncate_check_perms() here.
+				 */
 				truncate_check_rel(RelationGetRelid(rel), rel->rd_rel);
 				truncate_check_activity(rel);
 
@@ -1701,6 +1708,7 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 						(errmsg("truncate cascades to table \"%s\"",
 								RelationGetRelationName(rel))));
 				truncate_check_rel(relid, rel->rd_rel);
+				truncate_check_perms(relid, rel->rd_rel);
 				truncate_check_activity(rel);
 				rels = lappend(rels, rel);
 				relids = lappend_oid(relids, relid);
@@ -1951,7 +1959,6 @@ ExecuteTruncateGuts(List *explicit_rels, List *relids, List *relids_logged,
 static void
 truncate_check_rel(Oid relid, Form_pg_class reltuple)
 {
-	AclResult	aclresult;
 	char	   *relname = NameStr(reltuple->relname);
 
 	/*
@@ -1965,12 +1972,6 @@ truncate_check_rel(Oid relid, Form_pg_class reltuple)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table", relname)));
 
-	/* Permissions checks */
-	aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_TRUNCATE);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_relkind_objtype(reltuple->relkind),
-					   relname);
-
 	if (!allowSystemTableMods && IsSystemClass(relid, reltuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -1978,6 +1979,22 @@ truncate_check_rel(Oid relid, Form_pg_class reltuple)
 						relname)));
 
 	InvokeObjectTruncateHook(relid);
+}
+
+/*
+ * Check that current user has the permission to truncate given relation.
+ */
+static void
+truncate_check_perms(Oid relid, Form_pg_class reltuple)
+{
+	char	   *relname = NameStr(reltuple->relname);
+	AclResult	aclresult;
+
+	/* Permissions checks */
+	aclresult = pg_class_aclcheck(relid, GetUserId(), ACL_TRUNCATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_relkind_objtype(reltuple->relkind),
+					   relname);
 }
 
 /*
@@ -15292,6 +15309,7 @@ RangeVarCallbackForTruncate(const RangeVar *relation,
 		elog(ERROR, "cache lookup failed for relation %u", relId);
 
 	truncate_check_rel(relId, (Form_pg_class) GETSTRUCT(tuple));
+	truncate_check_perms(relId, (Form_pg_class) GETSTRUCT(tuple));
 
 	ReleaseSysCache(tuple);
 }
