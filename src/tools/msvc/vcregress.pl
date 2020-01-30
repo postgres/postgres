@@ -353,8 +353,8 @@ sub plcheck
 		if ($lang eq 'plperl')
 		{
 
-			# run both trusted and untrusted perl tests
-			push(@lang_args, "--load-extension=plperlu");
+			# plperl tests will install the extensions themselves
+			@lang_args = ();
 
 			# assume we're using this perl to built postgres
 			# test if we can run two interpreters in one backend, and if so
