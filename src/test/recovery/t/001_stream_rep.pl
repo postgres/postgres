@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 32;
+use Test::More tests => 34;
 
 # Initialize master node
 my $node_master = get_new_node('master');
@@ -344,3 +344,28 @@ is($catalog_xmin, '',
 is($xmin, '', 'xmin of cascaded slot null with hs feedback reset');
 is($catalog_xmin, '',
 	'catalog xmin of cascaded slot still null with hs_feedback reset');
+
+# Test physical slot advancing and its durability.  Create a new slot on
+# the primary, not used by any of the standbys. This reserves WAL at creation.
+my $phys_slot = 'phys_slot';
+$node_master->safe_psql('postgres',
+	"SELECT pg_create_physical_replication_slot('$phys_slot', true);");
+$node_master->psql('postgres', "
+	CREATE TABLE tab_phys_slot (a int);
+	INSERT INTO tab_phys_slot VALUES (generate_series(1,10));");
+my $current_lsn = $node_master->safe_psql('postgres',
+	"SELECT pg_current_wal_lsn();");
+chomp($current_lsn);
+my $psql_rc = $node_master->psql('postgres',
+	"SELECT pg_replication_slot_advance('$phys_slot', '$current_lsn'::pg_lsn);");
+is($psql_rc, '0', 'slot advancing with physical slot');
+my $phys_restart_lsn_pre = $node_master->safe_psql('postgres',
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$phys_slot';");
+chomp($phys_restart_lsn_pre);
+# Slot advance should persist across clean restarts.
+$node_master->restart;
+my $phys_restart_lsn_post = $node_master->safe_psql('postgres',
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$phys_slot';");
+chomp($phys_restart_lsn_post);
+ok(($phys_restart_lsn_pre cmp $phys_restart_lsn_post) == 0,
+	"physical slot advance persists across restarts");

@@ -20470,8 +20470,11 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
        <entry>
         Advances the current confirmed position of a replication slot named
         <parameter>slot_name</parameter>. The slot will not be moved backwards,
-        and it will not be moved beyond the current insert location.  Returns
-        name of the slot and real position to which it was advanced to.
+        and it will not be moved beyond the current insert location. Returns
+        the name of the slot and the real position to which it was advanced to.
+        The information of the updated slot is written out at the follow-up
+        checkpoint if any advancing is done. In the event of a crash, the
+        slot may return to an earlier position.
        </entry>
       </row>
 
