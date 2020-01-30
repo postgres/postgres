@@ -367,7 +367,6 @@ PLyNumber_ToJsonbValue(PyObject *obj, JsonbValue *jbvNum)
 static JsonbValue *
 PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_elem)
 {
-	JsonbValue	buf;
 	JsonbValue *out;
 
 	if (!(PyString_Check(obj) || PyUnicode_Check(obj)))
@@ -378,11 +377,7 @@ PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_ele
 			return PLyMapping_ToJsonbValue(obj, jsonb_state);
 	}
 
-	/* Allocate JsonbValue in heap only if it is raw scalar value. */
-	if (*jsonb_state)
-		out = &buf;
-	else
-		out = palloc(sizeof(JsonbValue));
+	out = palloc(sizeof(JsonbValue));
 
 	if (obj == Py_None)
 		out->type = jbvNull;
