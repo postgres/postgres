@@ -90,8 +90,7 @@ LogicalOutputWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xi
 							   false));
 
 	/* ick, but cstring_to_text_with_len works for bytea perfectly fine */
-	values[2] = PointerGetDatum(
-								cstring_to_text_with_len(ctx->out->data, ctx->out->len));
+	values[2] = PointerGetDatum(cstring_to_text_with_len(ctx->out->data, ctx->out->len));
 
 	tuplestore_putvalues(p->tupstore, p->tupdesc, values, nulls);
 	p->returned_rows++;

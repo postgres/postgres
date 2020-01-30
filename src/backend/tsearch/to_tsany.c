@@ -49,8 +49,7 @@ compareWORD(const void *a, const void *b)
 {
 	int			res;
 
-	res = tsCompareString(
-						  ((const ParsedWord *) a)->word, ((const ParsedWord *) a)->len,
+	res = tsCompareString(((const ParsedWord *) a)->word, ((const ParsedWord *) a)->len,
 						  ((const ParsedWord *) b)->word, ((const ParsedWord *) b)->len,
 						  false);
 

@@ -74,8 +74,7 @@ init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
 	 * and determining the windows version is its self somewhat Windows
 	 * version and development SDK specific...
 	 */
-	pg_get_system_time = (PgGetSystemTimeFn) GetProcAddress(
-															GetModuleHandle(TEXT("kernel32.dll")),
+	pg_get_system_time = (PgGetSystemTimeFn) GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")),
 															"GetSystemTimePreciseAsFileTime");
 	if (pg_get_system_time == NULL)
 	{

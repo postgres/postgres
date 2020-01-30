@@ -1377,8 +1377,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 			{
 				POLYGON    *query = PG_GETARG_POLYGON_P(1);
 
-				result = DatumGetBool(DirectFunctionCall5(
-														  gist_poly_consistent,
+				result = DatumGetBool(DirectFunctionCall5(gist_poly_consistent,
 														  PointerGetDatum(entry),
 														  PolygonPGetDatum(query),
 														  Int16GetDatum(RTOverlapStrategyNumber),
@@ -1394,8 +1393,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 
 					Assert(box->high.x == box->low.x
 						   && box->high.y == box->low.y);
-					result = DatumGetBool(DirectFunctionCall2(
-															  poly_contain_pt,
+					result = DatumGetBool(DirectFunctionCall2(poly_contain_pt,
 															  PolygonPGetDatum(query),
 															  PointPGetDatum(&box->high)));
 					*recheck = false;
@@ -1406,8 +1404,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 			{
 				CIRCLE	   *query = PG_GETARG_CIRCLE_P(1);
 
-				result = DatumGetBool(DirectFunctionCall5(
-														  gist_circle_consistent,
+				result = DatumGetBool(DirectFunctionCall5(gist_circle_consistent,
 														  PointerGetDatum(entry),
 														  CirclePGetDatum(query),
 														  Int16GetDatum(RTOverlapStrategyNumber),
@@ -1423,8 +1420,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 
 					Assert(box->high.x == box->low.x
 						   && box->high.y == box->low.y);
-					result = DatumGetBool(DirectFunctionCall2(
-															  circle_contain_pt,
+					result = DatumGetBool(DirectFunctionCall2(circle_contain_pt,
 															  CirclePGetDatum(query),
 															  PointPGetDatum(&box->high)));
 					*recheck = false;

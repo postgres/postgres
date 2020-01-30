@@ -405,8 +405,7 @@ pqParseInput3(PGconn *conn)
 					break;
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
-													"unexpected response from server; first received character was \"%c\"\n"),
+									  libpq_gettext("unexpected response from server; first received character was \"%c\"\n"),
 									  id);
 					/* build an error result holding the error message */
 					pqSaveErrorResult(conn);
@@ -447,8 +446,7 @@ static void
 handleSyncLoss(PGconn *conn, char id, int msgLength)
 {
 	printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext(
-									"lost synchronization with server: got message type \"%c\", length %d\n"),
+					  libpq_gettext("lost synchronization with server: got message type \"%c\", length %d\n"),
 					  id, msgLength);
 	/* build an error result holding the error message */
 	pqSaveErrorResult(conn);

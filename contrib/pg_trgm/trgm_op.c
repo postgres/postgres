@@ -975,14 +975,12 @@ show_trgm(PG_FUNCTION_ARGS)
 		d[i] = PointerGetDatum(item);
 	}
 
-	a = construct_array(
-						d,
+	a = construct_array(d,
 						ARRNELEM(trg),
 						TEXTOID,
 						-1,
 						false,
-						'i'
-		);
+						'i');
 
 	for (i = 0; i < ARRNELEM(trg); i++)
 		pfree(DatumGetPointer(d[i]));

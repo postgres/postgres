@@ -905,8 +905,7 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 			if (!is_sql_cmd)
 				nestlevel = applyRemoteGucs(conn);
 
-			oldcontext = MemoryContextSwitchTo(
-											   rsinfo->econtext->ecxt_per_query_memory);
+			oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 			tupstore = tuplestore_begin_heap(true, false, work_mem);
 			rsinfo->setResult = tupstore;
 			rsinfo->setDesc = tupdesc;
@@ -1027,8 +1026,7 @@ materializeQueryResult(FunctionCallInfo fcinfo,
 							   TEXTOID, -1, 0);
 			attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
-			oldcontext = MemoryContextSwitchTo(
-											   rsinfo->econtext->ecxt_per_query_memory);
+			oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 			tupstore = tuplestore_begin_heap(true, false, work_mem);
 			rsinfo->setResult = tupstore;
 			rsinfo->setDesc = tupdesc;

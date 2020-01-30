@@ -419,9 +419,7 @@ pg_decode_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 	appendStringInfoString(ctx->out, "table ");
 	appendStringInfoString(ctx->out,
-						   quote_qualified_identifier(
-													  get_namespace_name(
-																		 get_rel_namespace(RelationGetRelid(relation))),
+						   quote_qualified_identifier(get_namespace_name(get_rel_namespace(RelationGetRelid(relation))),
 													  class_form->relrewrite ?
 													  get_rel_name(class_form->relrewrite) :
 													  NameStr(class_form->relname)));

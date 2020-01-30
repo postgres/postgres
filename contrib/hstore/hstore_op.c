@@ -612,9 +612,9 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			out_datums[i] = PointerGetDatum(
-											cstring_to_text_with_len(HSTORE_VAL(entries, ptr, idx),
-																	 HSTORE_VALLEN(entries, idx)));
+			out_datums[i] =
+				PointerGetDatum(cstring_to_text_with_len(HSTORE_VAL(entries, ptr, idx),
+														 HSTORE_VALLEN(entries, idx)));
 			out_nulls[i] = false;
 		}
 	}

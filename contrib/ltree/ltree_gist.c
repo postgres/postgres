@@ -258,10 +258,8 @@ typedef struct rix
 static int
 treekey_cmp(const void *a, const void *b)
 {
-	return ltree_compare(
-						 ((const RIX *) a)->r,
-						 ((const RIX *) b)->r
-		);
+	return ltree_compare(((const RIX *) a)->r,
+						 ((const RIX *) b)->r);
 }
 
 
@@ -571,11 +569,9 @@ gist_qtxt(ltree_gist *key, ltxtquery *query)
 	if (LTG_ISALLTRUE(key))
 		return true;
 
-	return ltree_execute(
-						 GETQUERY(query),
+	return ltree_execute(GETQUERY(query),
 						 (void *) LTG_SIGN(key), false,
-						 checkcondition_bit
-		);
+						 checkcondition_bit);
 }
 
 static bool
@@ -636,11 +632,9 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			if (GIST_LEAF(entry))
 				res = (ltree_compare((ltree *) query, LTG_NODE(key)) == 0);
 			else
-				res = (
-					   ltree_compare((ltree *) query, LTG_GETLNODE(key)) >= 0
+				res = (ltree_compare((ltree *) query, LTG_GETLNODE(key)) >= 0
 					   &&
-					   ltree_compare((ltree *) query, LTG_GETRNODE(key)) <= 0
-					);
+					   ltree_compare((ltree *) query, LTG_GETRNODE(key)) <= 0);
 			break;
 		case BTGreaterEqualStrategyNumber:
 			query = PG_GETARG_LTREE_P(1);

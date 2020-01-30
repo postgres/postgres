@@ -31,16 +31,16 @@ PG_FUNCTION_INFO_V1(gbt_enum_same);
 static bool
 gbt_enumgt(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return DatumGetBool(
-						CallerFInfoFunctionCall2(enum_gt, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
-		);
+	return DatumGetBool(CallerFInfoFunctionCall2(enum_gt, flinfo, InvalidOid,
+												 ObjectIdGetDatum(*((const Oid *) a)),
+												 ObjectIdGetDatum(*((const Oid *) b))));
 }
 static bool
 gbt_enumge(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return DatumGetBool(
-						CallerFInfoFunctionCall2(enum_ge, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
-		);
+	return DatumGetBool(CallerFInfoFunctionCall2(enum_ge, flinfo, InvalidOid,
+												 ObjectIdGetDatum(*((const Oid *) a)),
+												 ObjectIdGetDatum(*((const Oid *) b))));
 }
 static bool
 gbt_enumeq(const void *a, const void *b, FmgrInfo *flinfo)
@@ -50,16 +50,16 @@ gbt_enumeq(const void *a, const void *b, FmgrInfo *flinfo)
 static bool
 gbt_enumle(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return DatumGetBool(
-						CallerFInfoFunctionCall2(enum_le, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
-		);
+	return DatumGetBool(CallerFInfoFunctionCall2(enum_le, flinfo, InvalidOid,
+												 ObjectIdGetDatum(*((const Oid *) a)),
+												 ObjectIdGetDatum(*((const Oid *) b))));
 }
 static bool
 gbt_enumlt(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return DatumGetBool(
-						CallerFInfoFunctionCall2(enum_lt, flinfo, InvalidOid, ObjectIdGetDatum(*((const Oid *) a)), ObjectIdGetDatum(*((const Oid *) b)))
-		);
+	return DatumGetBool(CallerFInfoFunctionCall2(enum_lt, flinfo, InvalidOid,
+												 ObjectIdGetDatum(*((const Oid *) a)),
+												 ObjectIdGetDatum(*((const Oid *) b))));
 }
 
 static int
@@ -73,14 +73,14 @@ gbt_enumkey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 		if (ia->upper == ib->upper)
 			return 0;
 
-		return DatumGetInt32(
-							 CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid, ObjectIdGetDatum(ia->upper), ObjectIdGetDatum(ib->upper))
-			);
+		return DatumGetInt32(CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid,
+													  ObjectIdGetDatum(ia->upper),
+													  ObjectIdGetDatum(ib->upper)));
 	}
 
-	return DatumGetInt32(
-						 CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid, ObjectIdGetDatum(ia->lower), ObjectIdGetDatum(ib->lower))
-		);
+	return DatumGetInt32(CallerFInfoFunctionCall2(enum_cmp, flinfo, InvalidOid,
+												  ObjectIdGetDatum(ia->lower),
+												  ObjectIdGetDatum(ib->lower)));
 }
 
 static const gbtree_ninfo tinfo =
@@ -137,9 +137,9 @@ gbt_enum_consistent(PG_FUNCTION_ARGS)
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
-	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
-		);
+	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &query, &strategy,
+									  GIST_LEAF(entry), &tinfo,
+									  fcinfo->flinfo));
 }
 
 Datum
@@ -168,11 +168,9 @@ gbt_enum_penalty(PG_FUNCTION_ARGS)
 Datum
 gbt_enum_picksplit(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(gbt_num_picksplit(
-										(GistEntryVector *) PG_GETARG_POINTER(0),
+	PG_RETURN_POINTER(gbt_num_picksplit((GistEntryVector *) PG_GETARG_POINTER(0),
 										(GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo, fcinfo->flinfo
-										));
+										&tinfo, fcinfo->flinfo));
 }
 
 Datum

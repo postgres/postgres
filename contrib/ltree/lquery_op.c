@@ -65,11 +65,7 @@ compare_subnode(ltree_level *t, char *qn, int len, int (*cmpptr) (const char *, 
 		isok = false;
 		while ((tn = getlexeme(tn, endt, &lent)) != NULL)
 		{
-			if (
-				(
-				 lent == lenq ||
-				 (lent > lenq && anyend)
-				 ) &&
+			if ((lent == lenq || (lent > lenq && anyend)) &&
 				(*cmpptr) (qn, tn, lenq) == 0)
 			{
 
@@ -118,11 +114,8 @@ checkLevel(lquery_level *curq, ltree_level *curt)
 			if (compare_subnode(curt, curvar->name, curvar->len, cmpptr, (curvar->flag & LVAR_ANYEND)))
 				return true;
 		}
-		else if (
-				 (
-				  curvar->len == curt->len ||
-				  (curt->len > curvar->len && (curvar->flag & LVAR_ANYEND))
-				  ) &&
+		else if ((curvar->len == curt->len ||
+				  (curt->len > curvar->len && (curvar->flag & LVAR_ANYEND))) &&
 				 (*cmpptr) (curvar->name, curt->name, curvar->len) == 0)
 		{
 

@@ -11481,8 +11481,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 										   attTup->attbyval,
 										   attTup->attalign,
 										   &isNull);
-			missingval = PointerGetDatum(
-										 construct_array(&missingval,
+			missingval = PointerGetDatum(construct_array(&missingval,
 														 1,
 														 targettype,
 														 tform->typlen,

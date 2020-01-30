@@ -446,11 +446,9 @@ gist_qtxt(ltree_gist *key, ltxtquery *query)
 	if (LTG_ISALLTRUE(key))
 		return true;
 
-	return ltree_execute(
-						 GETQUERY(query),
+	return ltree_execute(GETQUERY(query),
 						 (void *) LTG_SIGN(key), false,
-						 checkcondition_bit
-		);
+						 checkcondition_bit);
 }
 
 static bool

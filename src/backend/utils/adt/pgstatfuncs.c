@@ -1501,8 +1501,7 @@ pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS)
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
 		result = 0;
 	else
-		result = (int64) (
-						  dbentry->n_conflict_tablespace +
+		result = (int64) (dbentry->n_conflict_tablespace +
 						  dbentry->n_conflict_lock +
 						  dbentry->n_conflict_snapshot +
 						  dbentry->n_conflict_bufferpin +
@@ -1973,6 +1972,5 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 		values[6] = TimestampTzGetDatum(archiver_stats->stat_reset_timestamp);
 
 	/* Returns the record as Datum */
-	PG_RETURN_DATUM(HeapTupleGetDatum(
-									  heap_form_tuple(tupdesc, values, nulls)));
+	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
 }

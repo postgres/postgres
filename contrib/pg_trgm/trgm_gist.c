@@ -878,9 +878,9 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) && cache[j].allistrue)
 				size_alpha = 0;
 			else
-				size_alpha = SIGLENBIT - sizebitvec(
-													(cache[j].allistrue) ? GETSIGN(datum_l) : GETSIGN(cache[j].sign)
-					);
+				size_alpha = SIGLENBIT -
+					sizebitvec((cache[j].allistrue) ? GETSIGN(datum_l) :
+							   GETSIGN(cache[j].sign));
 		}
 		else
 			size_alpha = hemdistsign(cache[j].sign, GETSIGN(datum_l));
@@ -890,9 +890,9 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) && cache[j].allistrue)
 				size_beta = 0;
 			else
-				size_beta = SIGLENBIT - sizebitvec(
-												   (cache[j].allistrue) ? GETSIGN(datum_r) : GETSIGN(cache[j].sign)
-					);
+				size_beta = SIGLENBIT -
+					sizebitvec((cache[j].allistrue) ? GETSIGN(datum_r) :
+							   GETSIGN(cache[j].sign));
 		}
 		else
 			size_beta = hemdistsign(cache[j].sign, GETSIGN(datum_r));

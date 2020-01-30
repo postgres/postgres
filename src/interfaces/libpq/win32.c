@@ -291,8 +291,7 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 		if (!dlls[i].loaded)
 		{
 			dlls[i].loaded = 1; /* Only load once */
-			dlls[i].handle = (void *) LoadLibraryEx(
-													dlls[i].dll_name,
+			dlls[i].handle = (void *) LoadLibraryEx(dlls[i].dll_name,
 													0,
 													LOAD_LIBRARY_AS_DATAFILE);
 		}
@@ -304,13 +303,11 @@ winsock_strerror(int err, char *strerrbuf, size_t buflen)
 			| FORMAT_MESSAGE_IGNORE_INSERTS
 			| (dlls[i].handle ? FORMAT_MESSAGE_FROM_HMODULE : 0);
 
-		success = 0 != FormatMessage(
-									 flags,
+		success = 0 != FormatMessage(flags,
 									 dlls[i].handle, err,
 									 MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
 									 strerrbuf, buflen - 64,
-									 0
-			);
+									 0);
 	}
 
 	if (!success)

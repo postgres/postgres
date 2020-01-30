@@ -6453,8 +6453,7 @@ get_update_query_targetlist_def(Query *query, List *targetList,
 			{
 				cur_ma_sublink = (SubLink *) lfirst(next_ma_cell);
 				next_ma_cell = lnext(ma_sublinks, next_ma_cell);
-				remaining_ma_columns = count_nonjunk_tlist_entries(
-																   ((Query *) cur_ma_sublink->subselect)->targetList);
+				remaining_ma_columns = count_nonjunk_tlist_entries(((Query *) cur_ma_sublink->subselect)->targetList);
 				Assert(((Param *) expr)->paramid ==
 					   ((cur_ma_sublink->subLinkId << 16) | 1));
 				appendStringInfoChar(buf, '(');

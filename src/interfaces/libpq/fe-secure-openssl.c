@@ -206,8 +206,7 @@ rloop:
 				if (result_errno == EPIPE ||
 					result_errno == ECONNRESET)
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
-													"server closed the connection unexpectedly\n"
+									  libpq_gettext("server closed the connection unexpectedly\n"
 													"\tThis probably means the server terminated abnormally\n"
 													"\tbefore or while processing the request.\n"));
 				else
@@ -314,8 +313,7 @@ pgtls_write(PGconn *conn, const void *ptr, size_t len)
 				result_errno = SOCK_ERRNO;
 				if (result_errno == EPIPE || result_errno == ECONNRESET)
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
-													"server closed the connection unexpectedly\n"
+									  libpq_gettext("server closed the connection unexpectedly\n"
 													"\tThis probably means the server terminated abnormally\n"
 													"\tbefore or while processing the request.\n"));
 				else
@@ -578,10 +576,8 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 			if (cn_index >= 0)
 			{
 				(*names_examined)++;
-				rc = openssl_verify_peer_name_matches_certificate_name(
-																	   conn,
-																	   X509_NAME_ENTRY_get_data(
-																								X509_NAME_get_entry(subject_name, cn_index)),
+				rc = openssl_verify_peer_name_matches_certificate_name(conn,
+																	   X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subject_name, cn_index)),
 																	   first_name);
 			}
 		}

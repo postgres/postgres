@@ -165,8 +165,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				 * For an ordinary range, use subdiff function between upper
 				 * and lower bound values.
 				 */
-				length = DatumGetFloat8(FunctionCall2Coll(
-														  &typcache->rng_subdiff_finfo,
+				length = DatumGetFloat8(FunctionCall2Coll(&typcache->rng_subdiff_finfo,
 														  typcache->rng_collation,
 														  upper.val, lower.val));
 			}
@@ -246,8 +245,10 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 
 			for (i = 0; i < num_hist; i++)
 			{
-				bound_hist_values[i] = PointerGetDatum(range_serialize(
-																	   typcache, &lowers[pos], &uppers[pos], false));
+				bound_hist_values[i] = PointerGetDatum(range_serialize(typcache,
+																	   &lowers[pos],
+																	   &uppers[pos],
+																	   false));
 				pos += delta;
 				posfrac += deltafrac;
 				if (posfrac >= (num_hist - 1))

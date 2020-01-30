@@ -650,8 +650,7 @@ spgInnerTest(SpGistScanOpaque so, SpGistSearchItem *item,
 	{
 		/* collect node pointers */
 		SpGistNodeTuple node;
-		SpGistNodeTuple *nodes = (SpGistNodeTuple *) palloc(
-															sizeof(SpGistNodeTuple) * nNodes);
+		SpGistNodeTuple *nodes = (SpGistNodeTuple *) palloc(sizeof(SpGistNodeTuple) * nNodes);
 
 		SGITITERATE(innerTuple, i, node)
 		{

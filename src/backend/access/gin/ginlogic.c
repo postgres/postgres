@@ -94,8 +94,7 @@ directBoolConsistentFn(GinScanKey key)
 static GinTernaryValue
 directTriConsistentFn(GinScanKey key)
 {
-	return DatumGetGinTernaryValue(FunctionCall7Coll(
-													 key->triConsistentFmgrInfo,
+	return DatumGetGinTernaryValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
 													 key->collation,
 													 PointerGetDatum(key->entryRes),
 													 UInt16GetDatum(key->strategy),
@@ -116,8 +115,7 @@ shimBoolConsistentFn(GinScanKey key)
 {
 	GinTernaryValue result;
 
-	result = DatumGetGinTernaryValue(FunctionCall7Coll(
-													   key->triConsistentFmgrInfo,
+	result = DatumGetGinTernaryValue(FunctionCall7Coll(key->triConsistentFmgrInfo,
 													   key->collation,
 													   PointerGetDatum(key->entryRes),
 													   UInt16GetDatum(key->strategy),

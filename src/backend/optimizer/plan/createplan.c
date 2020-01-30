@@ -5110,13 +5110,11 @@ static void
 bitmap_subplan_mark_shared(Plan *plan)
 {
 	if (IsA(plan, BitmapAnd))
-		bitmap_subplan_mark_shared(
-								   linitial(((BitmapAnd *) plan)->bitmapplans));
+		bitmap_subplan_mark_shared(linitial(((BitmapAnd *) plan)->bitmapplans));
 	else if (IsA(plan, BitmapOr))
 	{
 		((BitmapOr *) plan)->isshared = true;
-		bitmap_subplan_mark_shared(
-								   linitial(((BitmapOr *) plan)->bitmapplans));
+		bitmap_subplan_mark_shared(linitial(((BitmapOr *) plan)->bitmapplans));
 	}
 	else if (IsA(plan, BitmapIndexScan))
 		((BitmapIndexScan *) plan)->isshared = true;

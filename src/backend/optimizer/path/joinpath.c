@@ -1538,8 +1538,7 @@ match_unsorted_outer(PlannerInfo *root,
 			if (save_jointype == JOIN_UNIQUE_INNER)
 				return;
 
-			inner_cheapest_total = get_cheapest_parallel_safe_total_inner(
-																		  innerrel->pathlist);
+			inner_cheapest_total = get_cheapest_parallel_safe_total_inner(innerrel->pathlist);
 		}
 
 		if (inner_cheapest_total)

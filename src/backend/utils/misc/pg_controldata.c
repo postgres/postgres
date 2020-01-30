@@ -199,8 +199,7 @@ pg_control_checkpoint(PG_FUNCTION_ARGS)
 	values[16] = TransactionIdGetDatum(ControlFile->checkPointCopy.newestCommitTsXid);
 	nulls[16] = false;
 
-	values[17] = TimestampTzGetDatum(
-									 time_t_to_timestamptz(ControlFile->checkPointCopy.time));
+	values[17] = TimestampTzGetDatum(time_t_to_timestamptz(ControlFile->checkPointCopy.time));
 	nulls[17] = false;
 
 	htup = heap_form_tuple(tupdesc, values, nulls);

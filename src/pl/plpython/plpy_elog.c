@@ -297,12 +297,10 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			plain_lineno = PyInt_AsLong(lineno);
 
 			if (proname == NULL)
-				appendStringInfo(
-								 &tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
+				appendStringInfo(&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
 								 plain_lineno - 1, fname);
 			else
-				appendStringInfo(
-								 &tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
+				appendStringInfo(&tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
 								 proname, plain_lineno - 1, fname);
 
 			/*

@@ -2301,10 +2301,7 @@ PQconnectPoll(PGconn *conn)
 
 		default:
 			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext(
-											   "invalid connection state, "
-											   "probably indicative of memory corruption\n"
-											   ));
+								 libpq_gettext("invalid connection state, probably indicative of memory corruption\n"));
 			goto error_return;
 	}
 
@@ -3217,9 +3214,7 @@ keep_going:						/* We will come back to here until there is
 				if (!(beresp == 'R' || beresp == 'E'))
 				{
 					appendPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
-													"expected authentication request from "
-													"server, but received %c\n"),
+									  libpq_gettext("expected authentication request from server, but received %c\n"),
 									  beresp);
 					goto error_return;
 				}
@@ -3250,9 +3245,7 @@ keep_going:						/* We will come back to here until there is
 				if (beresp == 'R' && (msgLength < 8 || msgLength > 2000))
 				{
 					appendPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext(
-													"expected authentication request from "
-													"server, but received %c\n"),
+									  libpq_gettext("expected authentication request from server, but received %c\n"),
 									  beresp);
 					goto error_return;
 				}
@@ -4637,8 +4630,9 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	p = strchr(url + strlen(LDAP_URL), '/');
 	if (p == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
-		printfPQExpBuffer(errorMessage, libpq_gettext(
-													  "invalid LDAP URL \"%s\": missing distinguished name\n"), purl);
+		printfPQExpBuffer(errorMessage,
+						  libpq_gettext("invalid LDAP URL \"%s\": missing distinguished name\n"),
+						  purl);
 		free(url);
 		return 3;
 	}
@@ -4648,8 +4642,9 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	/* attribute */
 	if ((p = strchr(dn, '?')) == NULL || *(p + 1) == '\0' || *(p + 1) == '?')
 	{
-		printfPQExpBuffer(errorMessage, libpq_gettext(
-													  "invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+		printfPQExpBuffer(errorMessage,
+						  libpq_gettext("invalid LDAP URL \"%s\": must have exactly one attribute\n"),
+						  purl);
 		free(url);
 		return 3;
 	}
@@ -4690,8 +4685,9 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 		lport = strtol(portstr, &endptr, 10);
 		if (*portstr == '\0' || *endptr != '\0' || errno || lport < 0 || lport > 65535)
 		{
-			printfPQExpBuffer(errorMessage, libpq_gettext(
-														  "invalid LDAP URL \"%s\": invalid port number\n"), purl);
+			printfPQExpBuffer(errorMessage,
+							  libpq_gettext("invalid LDAP URL \"%s\": invalid port number\n"),
+							  purl);
 			free(url);
 			return 3;
 		}
@@ -4701,8 +4697,9 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	/* Allow only one attribute */
 	if (strchr(attrs[0], ',') != NULL)
 	{
-		printfPQExpBuffer(errorMessage, libpq_gettext(
-													  "invalid LDAP URL \"%s\": must have exactly one attribute\n"), purl);
+		printfPQExpBuffer(errorMessage,
+						  libpq_gettext("invalid LDAP URL \"%s\": must have exactly one attribute\n"),
+						  purl);
 		free(url);
 		return 3;
 	}
@@ -4900,8 +4897,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				}
 				else if (ld_is_nl_cr(*p))
 				{
-					printfPQExpBuffer(errorMessage, libpq_gettext(
-																  "missing \"=\" after \"%s\" in connection info string\n"),
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("missing \"=\" after \"%s\" in connection info string\n"),
 									  optname);
 					free(result);
 					return 3;
@@ -4919,8 +4916,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 				}
 				else if (!ld_is_sp_tab(*p))
 				{
-					printfPQExpBuffer(errorMessage, libpq_gettext(
-																  "missing \"=\" after \"%s\" in connection info string\n"),
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("missing \"=\" after \"%s\" in connection info string\n"),
 									  optname);
 					free(result);
 					return 3;
@@ -5008,8 +5005,8 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 	if (state == 5 || state == 6)
 	{
-		printfPQExpBuffer(errorMessage, libpq_gettext(
-													  "unterminated quoted string in connection info string\n"));
+		printfPQExpBuffer(errorMessage,
+						  libpq_gettext("unterminated quoted string in connection info string\n"));
 		return 3;
 	}
 

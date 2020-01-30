@@ -265,9 +265,8 @@ gbt_ts_consistent(PG_FUNCTION_ARGS)
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
-	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &query, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
-		);
+	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &query, &strategy,
+									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
 Datum
@@ -283,9 +282,8 @@ gbt_ts_distance(PG_FUNCTION_ARGS)
 	key.lower = (GBT_NUMKEY *) &kkk->lower;
 	key.upper = (GBT_NUMKEY *) &kkk->upper;
 
-	PG_RETURN_FLOAT8(
-					 gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
-		);
+	PG_RETURN_FLOAT8(gbt_num_distance(&key, (void *) &query, GIST_LEAF(entry),
+									  &tinfo, fcinfo->flinfo));
 }
 
 Datum
@@ -308,9 +306,8 @@ gbt_tstz_consistent(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk[MAXALIGN(tinfo.size)];
 	qqq = tstz_to_ts_gmt(query);
 
-	PG_RETURN_BOOL(
-				   gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
-		);
+	PG_RETURN_BOOL(gbt_num_consistent(&key, (void *) &qqq, &strategy,
+									  GIST_LEAF(entry), &tinfo, fcinfo->flinfo));
 }
 
 Datum
@@ -328,9 +325,8 @@ gbt_tstz_distance(PG_FUNCTION_ARGS)
 	key.upper = (GBT_NUMKEY *) &kkk[MAXALIGN(tinfo.size)];
 	qqq = tstz_to_ts_gmt(query);
 
-	PG_RETURN_FLOAT8(
-					 gbt_num_distance(&key, (void *) &qqq, GIST_LEAF(entry), &tinfo, fcinfo->flinfo)
-		);
+	PG_RETURN_FLOAT8(gbt_num_distance(&key, (void *) &qqq, GIST_LEAF(entry),
+									  &tinfo, fcinfo->flinfo));
 }
 
 
@@ -387,11 +383,9 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 Datum
 gbt_ts_picksplit(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(gbt_num_picksplit(
-										(GistEntryVector *) PG_GETARG_POINTER(0),
+	PG_RETURN_POINTER(gbt_num_picksplit((GistEntryVector *) PG_GETARG_POINTER(0),
 										(GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo, fcinfo->flinfo
-										));
+										&tinfo, fcinfo->flinfo));
 }
 
 Datum

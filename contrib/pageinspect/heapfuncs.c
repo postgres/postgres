@@ -250,8 +250,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 
 					bits_len =
 						BITMAPLEN(HeapTupleHeaderGetNatts(tuphdr)) * BITS_PER_BYTE;
-					values[11] = CStringGetTextDatum(
-													 bits_to_text(tuphdr->t_bits, bits_len));
+					values[11] = CStringGetTextDatum(bits_to_text(tuphdr->t_bits, bits_len));
 				}
 				else
 					nulls[11] = true;

@@ -188,8 +188,7 @@ static int	pg_GSS_recvauth(Port *port);
  */
 #ifdef ENABLE_SSPI
 typedef SECURITY_STATUS
-			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (
-														PCtxtHandle, void **);
+			(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN) (PCtxtHandle, void **);
 static int	pg_SSPI_recvauth(Port *port);
 static int	pg_SSPI_make_upn(char *accountname,
 							 size_t accountnamesize,
@@ -1147,8 +1146,7 @@ pg_GSS_recvauth(Port *port)
 		elog(DEBUG4, "processing received GSS token of length %u",
 			 (unsigned int) gbuf.length);
 
-		maj_stat = gss_accept_sec_context(
-										  &min_stat,
+		maj_stat = gss_accept_sec_context(&min_stat,
 										  &port->gss->ctx,
 										  port->gss->cred,
 										  &gbuf,

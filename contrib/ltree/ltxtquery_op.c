@@ -68,11 +68,8 @@ checkcondition_str(void *checkval, ITEM *val)
 			if (compare_subnode(level, op, val->length, cmpptr, (val->flag & LVAR_ANYEND)))
 				return true;
 		}
-		else if (
-				 (
-				  val->length == level->len ||
-				  (level->len > val->length && (val->flag & LVAR_ANYEND))
-				  ) &&
+		else if ((val->length == level->len ||
+				  (level->len > val->length && (val->flag & LVAR_ANYEND))) &&
 				 (*cmpptr) (op, level->name, val->length) == 0)
 			return true;
 
@@ -94,12 +91,10 @@ ltxtq_exec(PG_FUNCTION_ARGS)
 	chkval.node = val;
 	chkval.operand = GETOPERAND(query);
 
-	result = ltree_execute(
-						   GETQUERY(query),
+	result = ltree_execute(GETQUERY(query),
 						   &chkval,
 						   true,
-						   checkcondition_str
-		);
+						   checkcondition_str);
 
 	PG_FREE_IF_COPY(val, 0);
 	PG_FREE_IF_COPY(query, 1);

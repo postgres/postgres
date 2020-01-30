@@ -533,15 +533,11 @@ compileTheSubstitute(DictThesaurus *d)
 			}
 			else
 			{
-				lexized = (TSLexeme *) DatumGetPointer(
-													   FunctionCall4(
-																	 &(d->subdict->lexize),
+				lexized = (TSLexeme *) DatumGetPointer(FunctionCall4(&(d->subdict->lexize),
 																	 PointerGetDatum(d->subdict->dictData),
 																	 PointerGetDatum(inptr->lexeme),
 																	 Int32GetDatum(strlen(inptr->lexeme)),
-																	 PointerGetDatum(NULL)
-																	 )
-					);
+																	 PointerGetDatum(NULL)));
 			}
 
 			if (lexized && lexized->lexeme)

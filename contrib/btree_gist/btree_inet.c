@@ -171,11 +171,9 @@ gbt_inet_penalty(PG_FUNCTION_ARGS)
 Datum
 gbt_inet_picksplit(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER(gbt_num_picksplit(
-										(GistEntryVector *) PG_GETARG_POINTER(0),
+	PG_RETURN_POINTER(gbt_num_picksplit((GistEntryVector *) PG_GETARG_POINTER(0),
 										(GIST_SPLITVEC *) PG_GETARG_POINTER(1),
-										&tinfo, fcinfo->flinfo
-										));
+										&tinfo, fcinfo->flinfo));
 }
 
 Datum

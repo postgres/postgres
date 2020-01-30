@@ -190,10 +190,9 @@ gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo *tinf
 static bool
 gbt_var_node_pf_match(const GBT_VARKEY_R *node, const bytea *query, const gbtree_vinfo *tinfo)
 {
-	return (tinfo->trnc && (
-							gbt_bytea_pf_match(node->lower, query, tinfo) ||
-							gbt_bytea_pf_match(node->upper, query, tinfo)
-							));
+	return (tinfo->trnc &&
+			(gbt_bytea_pf_match(node->lower, query, tinfo) ||
+			 gbt_bytea_pf_match(node->upper, query, tinfo)));
 }
 
 

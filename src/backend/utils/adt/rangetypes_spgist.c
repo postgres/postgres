@@ -346,8 +346,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			 * is RANGESTRAT_CONTAINS_ELEM.
 			 */
 			if (strategy != RANGESTRAT_CONTAINS_ELEM)
-				empty = RangeIsEmpty(
-									 DatumGetRangeTypeP(in->scankeys[i].sk_argument));
+				empty = RangeIsEmpty(DatumGetRangeTypeP(in->scankeys[i].sk_argument));
 			else
 				empty = false;
 
