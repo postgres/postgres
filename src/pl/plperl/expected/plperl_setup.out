@@ -32,6 +32,9 @@ SELECT foo1();
     1
 (1 row)
 
+-- Must reconnect to avoid failure with non-MULTIPLICITY Perl interpreters
+\c -
+SET ROLE regress_user1;
 -- Should be able to change privileges on the language
 revoke all on language plperl from public;
 SET ROLE regress_user2;

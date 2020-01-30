@@ -31,6 +31,11 @@ CREATE EXTENSION plperlu;  -- fail
 CREATE FUNCTION foo1() returns int language plperl as '1;';
 SELECT foo1();
 
+-- Must reconnect to avoid failure with non-MULTIPLICITY Perl interpreters
+\c -
+
+SET ROLE regress_user1;
+
 -- Should be able to change privileges on the language
 revoke all on language plperl from public;
 
