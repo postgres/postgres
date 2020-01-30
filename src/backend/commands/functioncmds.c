@@ -286,8 +286,8 @@ interpret_function_parameter_list(ParseState *pstate,
 			if (fp->mode == FUNC_PARAM_OUT)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 (errmsg("procedures cannot have OUT arguments"),
-						  errhint("INOUT arguments are permitted."))));
+						 errmsg("procedures cannot have OUT arguments"),
+						 errhint("INOUT arguments are permitted.")));
 		}
 
 		/* handle input parameters */

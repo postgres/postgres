@@ -235,11 +235,11 @@ SV_to_JsonbValue(SV *in, JsonbParseState **jsonb_state, bool is_elem)
 				if (isinf(nval))
 					ereport(ERROR,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-							 (errmsg("cannot convert infinity to jsonb"))));
+							 errmsg("cannot convert infinity to jsonb")));
 				if (isnan(nval))
 					ereport(ERROR,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-							 (errmsg("cannot convert NaN to jsonb"))));
+							 errmsg("cannot convert NaN to jsonb")));
 
 				out.type = jbvNumeric;
 				out.val.numeric =
@@ -260,7 +260,7 @@ SV_to_JsonbValue(SV *in, JsonbParseState **jsonb_state, bool is_elem)
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 (errmsg("cannot transform this Perl type to jsonb"))));
+						 errmsg("cannot transform this Perl type to jsonb")));
 				return NULL;
 			}
 	}

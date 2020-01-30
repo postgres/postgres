@@ -115,12 +115,12 @@ pg_cancel_backend(PG_FUNCTION_ARGS)
 	if (r == SIGNAL_BACKEND_NOSUPERUSER)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be a superuser to cancel superuser query"))));
+				 errmsg("must be a superuser to cancel superuser query")));
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be a member of the role whose query is being canceled or member of pg_signal_backend"))));
+				 errmsg("must be a member of the role whose query is being canceled or member of pg_signal_backend")));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
@@ -139,12 +139,12 @@ pg_terminate_backend(PG_FUNCTION_ARGS)
 	if (r == SIGNAL_BACKEND_NOSUPERUSER)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be a superuser to terminate superuser process"))));
+				 errmsg("must be a superuser to terminate superuser process")));
 
 	if (r == SIGNAL_BACKEND_NOPERMISSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be a member of the role whose process is being terminated or member of pg_signal_backend"))));
+				 errmsg("must be a member of the role whose process is being terminated or member of pg_signal_backend")));
 
 	PG_RETURN_BOOL(r == SIGNAL_BACKEND_SUCCESS);
 }
@@ -180,10 +180,10 @@ pg_rotate_logfile(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to rotate log files with adminpack 1.0"),
+				 errmsg("must be superuser to rotate log files with adminpack 1.0"),
 		/* translator: %s is a SQL function name */
-				  errhint("Consider using %s, which is part of core, instead.",
-						  "pg_logfile_rotate()"))));
+				 errhint("Consider using %s, which is part of core, instead.",
+						 "pg_logfile_rotate()")));
 
 	if (!Logging_collector)
 	{

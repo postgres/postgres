@@ -390,13 +390,13 @@ CreateDecodingContext(XLogRecPtr start_lsn,
 	if (SlotIsPhysical(slot))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 (errmsg("cannot use physical replication slot for logical decoding"))));
+				 errmsg("cannot use physical replication slot for logical decoding")));
 
 	if (slot->data.database != MyDatabaseId)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 (errmsg("replication slot \"%s\" was not created in this database",
-						 NameStr(slot->data.name)))));
+				 errmsg("replication slot \"%s\" was not created in this database",
+						NameStr(slot->data.name))));
 
 	if (start_lsn == InvalidXLogRecPtr)
 	{

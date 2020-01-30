@@ -563,7 +563,7 @@ StartReplication(StartReplicationCmd *cmd)
 		if (SlotIsLogical(MyReplicationSlot))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 (errmsg("cannot use a logical replication slot for physical replication"))));
+					 errmsg("cannot use a logical replication slot for physical replication")));
 	}
 
 	/*
@@ -1499,8 +1499,8 @@ exec_replication_command(const char *cmd_string)
 	if (parse_rc != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 (errmsg_internal("replication command parser returned %d",
-								  parse_rc))));
+				 errmsg_internal("replication command parser returned %d",
+								 parse_rc)));
 
 	cmd_node = replication_parse_result;
 

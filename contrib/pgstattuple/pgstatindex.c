@@ -151,7 +151,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
+				 errmsg("must be superuser to use pgstattuple functions")));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
@@ -193,7 +193,7 @@ pgstatindexbyid(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
+				 errmsg("must be superuser to use pgstattuple functions")));
 
 	rel = relation_open(relid, AccessShareLock);
 
@@ -386,7 +386,7 @@ pg_relpages(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
+				 errmsg("must be superuser to use pgstattuple functions")));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
@@ -438,7 +438,7 @@ pg_relpagesbyid(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
+				 errmsg("must be superuser to use pgstattuple functions")));
 
 	rel = relation_open(relid, AccessShareLock);
 
@@ -492,7 +492,7 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
+				 errmsg("must be superuser to use pgstattuple functions")));
 
 	PG_RETURN_DATUM(pgstatginindex_internal(relid, fcinfo));
 }

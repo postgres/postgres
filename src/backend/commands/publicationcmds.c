@@ -158,7 +158,7 @@ CreatePublication(CreatePublicationStmt *stmt)
 	if (stmt->for_all_tables && !superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to create FOR ALL TABLES publication"))));
+				 errmsg("must be superuser to create FOR ALL TABLES publication")));
 
 	rel = table_open(PublicationRelationId, RowExclusiveLock);
 

@@ -78,7 +78,7 @@ convert_and_check_filename(text *arg)
 		if (path_contains_parent_reference(filename))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 (errmsg("reference to parent directory (\"..\") not allowed"))));
+					 errmsg("reference to parent directory (\"..\") not allowed")));
 
 		/*
 		 * Allow absolute paths if within DataDir or Log_directory, even
@@ -89,12 +89,12 @@ convert_and_check_filename(text *arg)
 			 !path_is_prefix_of_path(Log_directory, filename)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 (errmsg("absolute path not allowed"))));
+					 errmsg("absolute path not allowed")));
 	}
 	else if (!path_is_relative_and_below_cwd(filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("path must be in or below the current directory"))));
+				 errmsg("path must be in or below the current directory")));
 
 	return filename;
 }
@@ -218,10 +218,10 @@ pg_read_file(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to read files with adminpack 1.0"),
+				 errmsg("must be superuser to read files with adminpack 1.0"),
 		/* translator: %s is a SQL function name */
-				  errhint("Consider using %s, which is part of core, instead.",
-						  "pg_file_read()"))));
+				 errhint("Consider using %s, which is part of core, instead.",
+						 "pg_file_read()")));
 
 	/* handle optional arguments */
 	if (PG_NARGS() >= 3)

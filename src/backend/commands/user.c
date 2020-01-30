@@ -1523,8 +1523,8 @@ AddRoleMems(const char *rolename, Oid roleid,
 		if (is_member_of_role_nosuper(roleid, memberid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-					 (errmsg("role \"%s\" is a member of role \"%s\"",
-							 rolename, get_rolespec_name(memberRole)))));
+					 errmsg("role \"%s\" is a member of role \"%s\"",
+							rolename, get_rolespec_name(memberRole))));
 
 		/*
 		 * Check if entry for this role/member already exists; if so, give

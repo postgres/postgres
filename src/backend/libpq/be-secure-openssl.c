@@ -999,7 +999,7 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 	{
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 (errmsg("DH: could not load DH parameters"))));
+				 errmsg("DH: could not load DH parameters")));
 		return false;
 	}
 
@@ -1007,8 +1007,8 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 	{
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 (errmsg("DH: could not set DH parameters: %s",
-						 SSLerrmessage(ERR_get_error())))));
+				 errmsg("DH: could not set DH parameters: %s",
+						SSLerrmessage(ERR_get_error()))));
 		DH_free(dh);
 		return false;
 	}

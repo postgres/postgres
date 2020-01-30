@@ -569,7 +569,7 @@ SysLogger_Start(void)
 		if (pipe(syslogPipe) < 0)
 			ereport(FATAL,
 					(errcode_for_socket_access(),
-					 (errmsg("could not create pipe for syslog: %m"))));
+					 errmsg("could not create pipe for syslog: %m")));
 	}
 #else
 	if (!syslogPipe[0])
@@ -583,7 +583,7 @@ SysLogger_Start(void)
 		if (!CreatePipe(&syslogPipe[0], &syslogPipe[1], &sa, 32768))
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 (errmsg("could not create pipe for syslog: %m"))));
+					 errmsg("could not create pipe for syslog: %m")));
 	}
 #endif
 

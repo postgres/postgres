@@ -31,7 +31,7 @@ check_permissions(void)
 	if (!superuser() && !has_rolreplication(GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser or replication role to use replication slots"))));
+				 errmsg("must be superuser or replication role to use replication slots")));
 }
 
 /*
@@ -669,7 +669,7 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 		Assert(!logical_slot);
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 (errmsg("cannot copy a replication slot that doesn't reserve WAL"))));
+				 errmsg("cannot copy a replication slot that doesn't reserve WAL")));
 	}
 
 	/* Overwrite params from optional arguments */

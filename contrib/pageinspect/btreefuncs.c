@@ -174,7 +174,7 @@ bt_page_stats(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pageinspect functions"))));
+				 errmsg("must be superuser to use pageinspect functions")));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
@@ -318,7 +318,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pageinspect functions"))));
+				 errmsg("must be superuser to use pageinspect functions")));
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -428,7 +428,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use raw page functions"))));
+				 errmsg("must be superuser to use raw page functions")));
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -518,7 +518,7 @@ bt_metap(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pageinspect functions"))));
+				 errmsg("must be superuser to use pageinspect functions")));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);

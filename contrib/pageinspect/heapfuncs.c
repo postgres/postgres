@@ -135,7 +135,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use raw page functions"))));
+				 errmsg("must be superuser to use raw page functions")));
 
 	raw_page_size = VARSIZE(raw_page) - VARHDRSZ;
 

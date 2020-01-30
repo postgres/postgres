@@ -116,7 +116,7 @@ plperl_to_hstore(PG_FUNCTION_ARGS)
 	if (SvTYPE(in) != SVt_PVHV)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 (errmsg("cannot transform non-hash Perl value to hstore"))));
+				 errmsg("cannot transform non-hash Perl value to hstore")));
 	hv = (HV *) in;
 
 	pcount = hv_iterinit(hv);

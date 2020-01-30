@@ -45,7 +45,7 @@ gin_metapage_info(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use raw page functions"))));
+				 errmsg("must be superuser to use raw page functions")));
 
 	page = get_page_from_raw(raw_page);
 
@@ -103,7 +103,7 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use raw page functions"))));
+				 errmsg("must be superuser to use raw page functions")));
 
 	page = get_page_from_raw(raw_page);
 
@@ -169,7 +169,7 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use raw page functions"))));
+				 errmsg("must be superuser to use raw page functions")));
 
 	if (SRF_IS_FIRSTCALL())
 	{

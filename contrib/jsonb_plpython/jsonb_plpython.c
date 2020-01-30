@@ -380,7 +380,7 @@ PLyNumber_ToJsonbValue(PyObject *obj, JsonbValue *jbvNum)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 (errmsg("could not convert value \"%s\" to jsonb", str))));
+				 errmsg("could not convert value \"%s\" to jsonb", str)));
 	}
 	PG_END_TRY();
 
@@ -394,7 +394,7 @@ PLyNumber_ToJsonbValue(PyObject *obj, JsonbValue *jbvNum)
 	if (numeric_is_nan(num))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 (errmsg("cannot convert NaN to jsonb"))));
+				 errmsg("cannot convert NaN to jsonb")));
 
 	jbvNum->type = jbvNumeric;
 	jbvNum->val.numeric = num;
@@ -446,8 +446,8 @@ PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_ele
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 (errmsg("Python type \"%s\" cannot be transformed to jsonb",
-						 PLyObject_AsString((PyObject *) obj->ob_type)))));
+				 errmsg("Python type \"%s\" cannot be transformed to jsonb",
+						PLyObject_AsString((PyObject *) obj->ob_type))));
 
 	/* Push result into 'jsonb_state' unless it is raw scalar value. */
 	return (*jsonb_state ?

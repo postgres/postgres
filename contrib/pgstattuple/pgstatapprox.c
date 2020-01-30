@@ -228,7 +228,7 @@ pgstattuple_approx(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
+				 errmsg("must be superuser to use pgstattuple functions")));
 
 	PG_RETURN_DATUM(pgstattuple_approx_internal(relid, fcinfo));
 }

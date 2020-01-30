@@ -103,7 +103,7 @@ check_permissions(void)
 	if (!superuser() && !has_rolreplication(GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser or replication role to use replication slots"))));
+				 errmsg("must be superuser or replication role to use replication slots")));
 }
 
 int

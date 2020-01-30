@@ -979,7 +979,7 @@ CheckSlotRequirements(void)
 	if (max_replication_slots == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 (errmsg("replication slots can only be used if max_replication_slots > 0"))));
+				 errmsg("replication slots can only be used if max_replication_slots > 0")));
 
 	if (wal_level < WAL_LEVEL_REPLICA)
 		ereport(ERROR,

@@ -298,8 +298,8 @@ pg_create_restore_point(PG_FUNCTION_ARGS)
 	if (RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 (errmsg("recovery is in progress"),
-				  errhint("WAL control functions cannot be executed during recovery."))));
+				 errmsg("recovery is in progress"),
+				 errhint("WAL control functions cannot be executed during recovery.")));
 
 	if (!XLogIsNeeded())
 		ereport(ERROR,

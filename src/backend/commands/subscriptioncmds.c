@@ -347,7 +347,7 @@ CreateSubscription(CreateSubscriptionStmt *stmt, bool isTopLevel)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to create subscriptions"))));
+				 errmsg("must be superuser to create subscriptions")));
 
 	/*
 	 * If built with appropriate switch, whine when regression-testing

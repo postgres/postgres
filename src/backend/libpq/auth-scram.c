@@ -997,8 +997,8 @@ read_client_first_message(scram_state *state, const char *input)
 			if (strcmp(channel_binding_type, "tls-server-end-point") != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						 (errmsg("unsupported SCRAM channel-binding type \"%s\"",
-								 sanitize_str(channel_binding_type)))));
+						 errmsg("unsupported SCRAM channel-binding type \"%s\"",
+								sanitize_str(channel_binding_type))));
 			break;
 		default:
 			ereport(ERROR,
@@ -1282,7 +1282,7 @@ read_client_final_message(scram_state *state, const char *input)
 		if (strcmp(channel_binding, b64_message) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-					 (errmsg("SCRAM channel binding check failed"))));
+					 errmsg("SCRAM channel binding check failed")));
 #else
 		/* shouldn't happen, because we checked this earlier already */
 		elog(ERROR, "channel binding not supported by this build");
@@ -1300,7 +1300,7 @@ read_client_final_message(scram_state *state, const char *input)
 			!(strcmp(channel_binding, "eSws") == 0 && state->cbind_flag == 'y'))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					 (errmsg("unexpected SCRAM channel-binding attribute in client-final-message"))));
+					 errmsg("unexpected SCRAM channel-binding attribute in client-final-message")));
 	}
 
 	state->client_final_nonce = read_attr_value(&p, 'r');

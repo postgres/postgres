@@ -26,7 +26,7 @@ do {															\
 	if (!IsBinaryUpgrade)										\
 		ereport(ERROR,											\
 				(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),	\
-				 (errmsg("function can only be called when server is in binary upgrade mode")))); \
+				 errmsg("function can only be called when server is in binary upgrade mode"))); \
 } while (0)
 
 Datum
