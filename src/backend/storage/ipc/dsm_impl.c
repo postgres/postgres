@@ -371,10 +371,12 @@ dsm_impl_posix_resize(int fd, off_t size)
 		 * interrupt pending.  This avoids the possibility of looping forever
 		 * if another backend is repeatedly trying to interrupt us.
 		 */
+		pgstat_report_wait_start(WAIT_EVENT_DSM_FILL_ZERO_WRITE);
 		do
 		{
 			rc = posix_fallocate(fd, 0, size);
 		} while (rc == EINTR && !(ProcDiePending || QueryCancelPending));
+		pgstat_report_wait_end();
 
 		/*
 		 * The caller expects errno to be set, but posix_fallocate() doesn't
