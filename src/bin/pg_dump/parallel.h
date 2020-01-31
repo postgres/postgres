@@ -29,6 +29,9 @@ typedef enum
 	WRKR_FINISHED
 } T_WorkerStatus;
 
+#define WORKER_IS_RUNNING(workerStatus) \
+	((workerStatus) != WRKR_TERMINATED)
+
 /* Arguments needed for a worker process */
 typedef struct ParallelArgs
 {
