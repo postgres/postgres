@@ -569,7 +569,8 @@ CheckAttributeType(const char *attname,
 		/*
 		 * If it's a range, recurse to check its subtype.
 		 */
-		CheckAttributeType(attname, get_range_subtype(atttypid), attcollation,
+		CheckAttributeType(attname, get_range_subtype(atttypid),
+						   get_range_collation(atttypid),
 						   containing_rowtypes,
 						   allow_system_table_mods);
 	}
