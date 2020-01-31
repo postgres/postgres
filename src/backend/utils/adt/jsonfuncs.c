@@ -5125,7 +5125,7 @@ parse_jsonb_index_flags(Jsonb *jb)
 				 pg_strncasecmp(v.val.string.val, "key", 3) == 0)
 			flags |= jtiKey;
 		else if (v.val.string.len == 6 &&
-				 pg_strncasecmp(v.val.string.val, "string", 5) == 0)
+				 pg_strncasecmp(v.val.string.val, "string", 6) == 0)
 			flags |= jtiString;
 		else if (v.val.string.len == 7 &&
 				 pg_strncasecmp(v.val.string.val, "numeric", 7) == 0)
