@@ -1095,12 +1095,17 @@ connectOptions2(PGconn *conn)
 			if (ch->host)
 				free(ch->host);
 #ifdef HAVE_UNIX_SOCKETS
-			ch->host = strdup(DEFAULT_PGSOCKET_DIR);
-			ch->type = CHT_UNIX_SOCKET;
-#else
-			ch->host = strdup(DefaultHost);
-			ch->type = CHT_HOST_NAME;
+			if (DEFAULT_PGSOCKET_DIR[0])
+			{
+				ch->host = strdup(DEFAULT_PGSOCKET_DIR);
+				ch->type = CHT_UNIX_SOCKET;
+			}
+			else
 #endif
+			{
+				ch->host = strdup(DefaultHost);
+				ch->type = CHT_HOST_NAME;
+			}
 			if (ch->host == NULL)
 				goto oom_error;
 		}

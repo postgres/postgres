@@ -68,10 +68,10 @@ typedef struct
 /* Configure the UNIX socket location for the well known port. */
 
 #define UNIXSOCK_PATH(path, port, sockdir) \
+	   (AssertMacro(sockdir), \
+		AssertMacro(*(sockdir) != '\0'), \
 		snprintf(path, sizeof(path), "%s/.s.PGSQL.%d", \
-				((sockdir) && *(sockdir) != '\0') ? (sockdir) : \
-				DEFAULT_PGSOCKET_DIR, \
-				(port))
+				 (sockdir), (port)))
 
 /*
  * The maximum workable length of a socket path is what will fit into

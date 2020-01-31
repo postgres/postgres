@@ -191,6 +191,11 @@
  * directory.  But if you just hate the idea of sockets in /tmp,
  * here's where to twiddle it.  You can also override this at runtime
  * with the postmaster's -k switch.
+ *
+ * If set to an empty string, then AF_UNIX sockets are not used by default: A
+ * server will not create an AF_UNIX socket unless the run-time configuration
+ * is changed, a client will connect via TCP/IP by default and will only use
+ * an AF_UNIX socket if one is explicitly specified.
  */
 #define DEFAULT_PGSOCKET_DIR  "/tmp"
 
