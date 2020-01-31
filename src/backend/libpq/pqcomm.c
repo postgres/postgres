@@ -166,8 +166,8 @@ static int	internal_putbytes(const char *s, size_t len);
 static int	internal_flush(void);
 
 #ifdef HAVE_UNIX_SOCKETS
-static int	Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath);
-static int	Setup_AF_UNIX(char *sock_path);
+static int	Lock_AF_UNIX(const char *unixSocketDir, const char *unixSocketPath);
+static int	Setup_AF_UNIX(const char *sock_path);
 #endif							/* HAVE_UNIX_SOCKETS */
 
 static const PQcommMethods PqCommSocketMethods = {
@@ -327,8 +327,8 @@ socket_close(int code, Datum arg)
  */
 
 int
-StreamServerPort(int family, char *hostName, unsigned short portNumber,
-				 char *unixSocketDir,
+StreamServerPort(int family, const char *hostName, unsigned short portNumber,
+				 const char *unixSocketDir,
 				 pgsocket ListenSocket[], int MaxListen)
 {
 	pgsocket	fd;
@@ -611,7 +611,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
  * Lock_AF_UNIX -- configure unix socket file path
  */
 static int
-Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath)
+Lock_AF_UNIX(const char *unixSocketDir, const char *unixSocketPath)
 {
 	/*
 	 * Grab an interlock file associated with the socket file.
@@ -642,7 +642,7 @@ Lock_AF_UNIX(char *unixSocketDir, char *unixSocketPath)
  * Setup_AF_UNIX -- configure unix socket permissions
  */
 static int
-Setup_AF_UNIX(char *sock_path)
+Setup_AF_UNIX(const char *sock_path)
 {
 	/*
 	 * Fix socket ownership/permission if requested.  Note we must do this
