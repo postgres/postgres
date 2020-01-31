@@ -151,7 +151,7 @@ is($psql_rc, '0', 'slot advancing with logical slot');
 my $logical_restart_lsn_pre = $node_master->safe_psql('postgres',
 	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$logical_slot';");
 chomp($logical_restart_lsn_pre);
-# Slot advance should persists across clean restarts.
+# Slot advance should persist across clean restarts.
 $node_master->restart;
 my $logical_restart_lsn_post = $node_master->safe_psql('postgres',
 	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$logical_slot';");
