@@ -582,8 +582,95 @@ select * from numrange_test natural join numrange_test2 order by nr;
 set enable_nestloop to default;
 set enable_hashjoin to default;
 set enable_mergejoin to default;
-DROP TABLE numrange_test;
+-- keep numrange_test around to help exercise dump/reload
 DROP TABLE numrange_test2;
+--
+-- Apply a subset of the above tests on a collatable type, too
+--
+CREATE TABLE textrange_test (tr textrange);
+create index textrange_test_btree on textrange_test(tr);
+INSERT INTO textrange_test VALUES('[,)');
+INSERT INTO textrange_test VALUES('["a",]');
+INSERT INTO textrange_test VALUES('[,"q")');
+INSERT INTO textrange_test VALUES(textrange('b', 'g'));
+INSERT INTO textrange_test VALUES('empty');
+INSERT INTO textrange_test VALUES(textrange('d', 'd', '[]'));
+SELECT tr, isempty(tr), lower(tr), upper(tr) FROM textrange_test;
+  tr   | isempty | lower | upper 
+-------+---------+-------+-------
+ (,)   | f       |       | 
+ [a,)  | f       | a     | 
+ (,q)  | f       |       | q
+ [b,g) | f       | b     | g
+ empty | t       |       | 
+ [d,d] | f       | d     | d
+(6 rows)
+
+SELECT tr, lower_inc(tr), lower_inf(tr), upper_inc(tr), upper_inf(tr) FROM textrange_test;
+  tr   | lower_inc | lower_inf | upper_inc | upper_inf 
+-------+-----------+-----------+-----------+-----------
+ (,)   | f         | t         | f         | t
+ [a,)  | t         | f         | f         | t
+ (,q)  | f         | t         | f         | f
+ [b,g) | t         | f         | f         | f
+ empty | f         | f         | f         | f
+ [d,d] | t         | f         | t         | f
+(6 rows)
+
+SELECT * FROM textrange_test WHERE range_contains(tr, textrange('f', 'fx'));
+  tr   
+-------
+ (,)
+ [a,)
+ (,q)
+ [b,g)
+(4 rows)
+
+SELECT * FROM textrange_test WHERE tr @> textrange('a', 'z');
+  tr  
+------
+ (,)
+ [a,)
+(2 rows)
+
+SELECT * FROM textrange_test WHERE range_contained_by(textrange('0','9'), tr);
+  tr  
+------
+ (,)
+ (,q)
+(2 rows)
+
+SELECT * FROM textrange_test WHERE 'e'::text <@ tr;
+  tr   
+-------
+ (,)
+ [a,)
+ (,q)
+ [b,g)
+(4 rows)
+
+select * from textrange_test where tr = 'empty';
+  tr   
+-------
+ empty
+(1 row)
+
+select * from textrange_test where tr = '("b","g")';
+ tr 
+----
+(0 rows)
+
+select * from textrange_test where tr = '["b","g")';
+  tr   
+-------
+ [b,g)
+(1 row)
+
+select * from textrange_test where tr < 'empty';
+ tr 
+----
+(0 rows)
+
 -- test canonical form for int4range
 select int4range(1, 10, '[]');
  int4range 
