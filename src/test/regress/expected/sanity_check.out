@@ -92,6 +92,7 @@ num_exp_sqrt|t
 num_exp_sub|t
 num_input_test|f
 num_result|f
+numrange_test|t
 onek|t
 onek2|t
 path_tbl|f
@@ -203,6 +204,7 @@ test_range_spgist|t
 test_tsvector|f
 testjsonb|f
 text_tbl|f
+textrange_test|t
 time_tbl|f
 timestamp_tbl|f
 timestamptz_tbl|f

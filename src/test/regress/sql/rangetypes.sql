@@ -148,8 +148,36 @@ set enable_nestloop to default;
 set enable_hashjoin to default;
 set enable_mergejoin to default;
 
-DROP TABLE numrange_test;
+-- keep numrange_test around to help exercise dump/reload
 DROP TABLE numrange_test2;
+
+--
+-- Apply a subset of the above tests on a collatable type, too
+--
+
+CREATE TABLE textrange_test (tr textrange);
+create index textrange_test_btree on textrange_test(tr);
+
+INSERT INTO textrange_test VALUES('[,)');
+INSERT INTO textrange_test VALUES('["a",]');
+INSERT INTO textrange_test VALUES('[,"q")');
+INSERT INTO textrange_test VALUES(textrange('b', 'g'));
+INSERT INTO textrange_test VALUES('empty');
+INSERT INTO textrange_test VALUES(textrange('d', 'd', '[]'));
+
+SELECT tr, isempty(tr), lower(tr), upper(tr) FROM textrange_test;
+SELECT tr, lower_inc(tr), lower_inf(tr), upper_inc(tr), upper_inf(tr) FROM textrange_test;
+
+SELECT * FROM textrange_test WHERE range_contains(tr, textrange('f', 'fx'));
+SELECT * FROM textrange_test WHERE tr @> textrange('a', 'z');
+SELECT * FROM textrange_test WHERE range_contained_by(textrange('0','9'), tr);
+SELECT * FROM textrange_test WHERE 'e'::text <@ tr;
+
+select * from textrange_test where tr = 'empty';
+select * from textrange_test where tr = '("b","g")';
+select * from textrange_test where tr = '["b","g")';
+select * from textrange_test where tr < 'empty';
+
 
 -- test canonical form for int4range
 select int4range(1, 10, '[]');
