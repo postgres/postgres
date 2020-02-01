@@ -112,7 +112,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 			case INT8OID:
 				{
 					int64		num = DatumGetInt64(value);
-					char		str[23];	/* sign, 21 digits and '\0' */
+					char		str[MAXINT8LEN + 1];
 
 					pg_lltoa(num, str);
 					pq_sendcountedtext(&buf, str, strlen(str), false);

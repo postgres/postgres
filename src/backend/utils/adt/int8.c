@@ -26,7 +26,6 @@
 #include "utils/builtins.h"
 #include "utils/int8.h"
 
-#define MAXINT8LEN		25
 
 typedef struct
 {

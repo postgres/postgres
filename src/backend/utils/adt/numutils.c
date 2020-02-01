@@ -20,6 +20,68 @@
 
 #include "common/int.h"
 #include "utils/builtins.h"
+#include "port/pg_bitutils.h"
+
+/*
+ * A table of all two-digit numbers. This is used to speed up decimal digit
+ * generation by copying pairs of digits into the final output.
+ */
+static const char DIGIT_TABLE[200] =
+"00" "01" "02" "03" "04" "05" "06" "07" "08" "09"
+"10" "11" "12" "13" "14" "15" "16" "17" "18" "19"
+"20" "21" "22" "23" "24" "25" "26" "27" "28" "29"
+"30" "31" "32" "33" "34" "35" "36" "37" "38" "39"
+"40" "41" "42" "43" "44" "45" "46" "47" "48" "49"
+"50" "51" "52" "53" "54" "55" "56" "57" "58" "59"
+"60" "61" "62" "63" "64" "65" "66" "67" "68" "69"
+"70" "71" "72" "73" "74" "75" "76" "77" "78" "79"
+"80" "81" "82" "83" "84" "85" "86" "87" "88" "89"
+"90" "91" "92" "93" "94" "95" "96" "97" "98" "99";
+
+/*
+ * Adapted from http://graphics.stanford.edu/~seander/bithacks.html#IntegerLog10
+ */
+static inline int
+decimalLength32(const uint32 v)
+{
+	int			t;
+	static uint32	PowersOfTen[] =
+	{1,                10,                100,
+	 1000,             10000,             100000,
+	 1000000,          10000000,          100000000,
+	 1000000000};
+	/*
+	 * Compute base-10 logarithm by dividing the base-2 logarithm by a
+	 * good-enough approximation of the base-2 logarithm of 10
+	 */
+	t = (pg_leftmost_one_pos32(v) + 1) * 1233 / 4096;
+	return t + (v >= PowersOfTen[t]);
+}
+
+static inline int
+decimalLength64(const uint64 v)
+{
+	int			t;
+	static uint64	PowersOfTen[] = {
+		UINT64CONST(1),                   UINT64CONST(10),
+		UINT64CONST(100),                 UINT64CONST(1000),
+		UINT64CONST(10000),               UINT64CONST(100000),
+		UINT64CONST(1000000),             UINT64CONST(10000000),
+		UINT64CONST(100000000),           UINT64CONST(1000000000),
+		UINT64CONST(10000000000),         UINT64CONST(100000000000),
+		UINT64CONST(1000000000000),       UINT64CONST(10000000000000),
+		UINT64CONST(100000000000000),     UINT64CONST(1000000000000000),
+		UINT64CONST(10000000000000000),   UINT64CONST(100000000000000000),
+		UINT64CONST(1000000000000000000), UINT64CONST(10000000000000000000)
+	};
+
+	/*
+	 * Compute base-10 logarithm by dividing the base-2 logarithm by a
+	 * good-enough approximation of the base-2 logarithm of 10
+	 */
+	t = (pg_leftmost_one_pos64(v) + 1) * 1233 / 4096;
+	return t + (v >= PowersOfTen[t]);
+}
 
 /*
  * pg_atoi: convert string to integer
@@ -276,116 +338,201 @@ pg_itoa(int16 i, char *a)
 }
 
 /*
- * pg_ltoa: converts a signed 32-bit integer to its string representation
+ * pg_ultoa_n: converts an unsigned 32-bit integer to its string representation,
+ * not NUL-terminated, and returns the length of that string representation
  *
- * Caller must ensure that 'a' points to enough memory to hold the result
- * (at least 12 bytes, counting a leading sign and trailing NUL).
+ * Caller must ensure that 'a' points to enough memory to hold the result (at
+ * least 10 bytes)
+ */
+int
+pg_ultoa_n(uint32 value, char *a)
+{
+	int			olength,
+				i = 0;
+
+	/* Degenerate case */
+	if (value == 0)
+	{
+		*a = '0';
+		return 1;
+	}
+
+	olength = decimalLength32(value);
+
+	/* Compute the result string. */
+	while (value >= 10000)
+	{
+		const uint32 c = value - 10000 * (value / 10000);
+		const uint32 c0 = (c % 100) << 1;
+		const uint32 c1 = (c / 100) << 1;
+
+		char	   *pos = a + olength - i;
+
+		value /= 10000;
+
+		memcpy(pos - 2, DIGIT_TABLE + c0, 2);
+		memcpy(pos - 4, DIGIT_TABLE + c1, 2);
+		i += 4;
+	}
+	if (value >= 100)
+	{
+		const uint32 c = (value % 100) << 1;
+
+		char	   *pos = a + olength - i;
+
+		value /= 100;
+
+		memcpy(pos - 2, DIGIT_TABLE + c, 2);
+		i += 2;
+	}
+	if (value >= 10)
+	{
+		const uint32 c = value << 1;
+
+		char	   *pos = a + olength - i;
+
+		memcpy(pos - 2, DIGIT_TABLE + c, 2);
+	}
+	else
+	{
+		*a = (char) ('0' + value);
+	}
+
+	return olength;
+}
+
+/*
+ * NUL-terminate the output of pg_ultoa_n.
+ *
+ * It is the caller's responsibility to ensure that a is at least 12 bytes long,
+ * which is enough room to hold a minus sign, a maximally long int32, and the
+ * above terminating NUL.
  */
 void
 pg_ltoa(int32 value, char *a)
 {
-	char	   *start = a;
-	bool		neg = false;
 
-	/*
-	 * Avoid problems with the most negative integer not being representable
-	 * as a positive integer.
-	 */
-	if (value == PG_INT32_MIN)
+	uint32		uvalue = (uint32) value;
+	int			len;
+
+	if (value < 0)
 	{
-		memcpy(a, "-2147483648", 12);
-		return;
-	}
-	else if (value < 0)
-	{
-		value = -value;
-		neg = true;
-	}
-
-	/* Compute the result string backwards. */
-	do
-	{
-		int32		remainder;
-		int32		oldval = value;
-
-		value /= 10;
-		remainder = oldval - value * 10;
-		*a++ = '0' + remainder;
-	} while (value != 0);
-
-	if (neg)
+		uvalue = (uint32) 0 - uvalue;
 		*a++ = '-';
-
-	/* Add trailing NUL byte, and back up 'a' to the last character. */
-	*a-- = '\0';
-
-	/* Reverse string. */
-	while (start < a)
-	{
-		char		swap = *start;
-
-		*start++ = *a;
-		*a-- = swap;
 	}
+	len = pg_ultoa_n(uvalue, a);
+	a[len] = '\0';
+}
+
+/*
+ * Get the decimal representation, not NUL-terminated, and return the length of
+ * same.  Caller must ensure that a points to at least MAXINT8LEN bytes.
+ */
+int
+pg_ulltoa_n(uint64 value, char *a)
+{
+	int			olength,
+				i = 0;
+	uint32		value2;
+
+
+	/* Degenerate case */
+	if (value == 0)
+	{
+		*a = '0';
+		return 1;
+	}
+
+	olength = decimalLength64(value);
+
+	/* Compute the result string. */
+	while (value >= 100000000)
+	{
+		const uint64 q = value / 100000000;
+		uint32		value2 = (uint32) (value - 100000000 * q);
+
+		const uint32 c = value2 % 10000;
+		const uint32 d = value2 / 10000;
+		const uint32 c0 = (c % 100) << 1;
+		const uint32 c1 = (c / 100) << 1;
+		const uint32 d0 = (d % 100) << 1;
+		const uint32 d1 = (d / 100) << 1;
+
+		char	   *pos = a + olength - i;
+
+		value = q;
+
+		memcpy(pos - 2, DIGIT_TABLE + c0, 2);
+		memcpy(pos - 4, DIGIT_TABLE + c1, 2);
+		memcpy(pos - 6, DIGIT_TABLE + d0, 2);
+		memcpy(pos - 8, DIGIT_TABLE + d1, 2);
+		i += 8;
+	}
+
+	/* Switch to 32-bit for speed */
+	value2 = (uint32) value;
+
+	if (value2 >= 10000)
+	{
+		const uint32 c = value2 - 10000 * (value2 / 10000);
+		const uint32 c0 = (c % 100) << 1;
+		const uint32 c1 = (c / 100) << 1;
+
+		char	   *pos = a + olength - i;
+
+		value2 /= 10000;
+
+		memcpy(pos - 2, DIGIT_TABLE + c0, 2);
+		memcpy(pos - 4, DIGIT_TABLE + c1, 2);
+		i += 4;
+	}
+	if (value2 >= 100)
+	{
+		const uint32 c = (value2 % 100) << 1;
+		char	   *pos = a + olength - i;
+
+		value2 /= 100;
+
+		memcpy(pos - 2, DIGIT_TABLE + c, 2);
+		i += 2;
+	}
+	if (value2 >= 10)
+	{
+		const uint32 c = value2 << 1;
+		char	   *pos = a + olength - i;
+
+		memcpy(pos - 2, DIGIT_TABLE + c, 2);
+	}
+	else
+		*a = (char) ('0' + value2);
+
+	return olength;
 }
 
 /*
  * pg_lltoa: convert a signed 64-bit integer to its string representation
  *
  * Caller must ensure that 'a' points to enough memory to hold the result
- * (at least MAXINT8LEN+1 bytes, counting a leading sign and trailing NUL).
+ * (at least MAXINT8LEN + 1 bytes, counting a leading sign and trailing NUL).
  */
 void
 pg_lltoa(int64 value, char *a)
 {
-	char	   *start = a;
-	bool		neg = false;
+	int			len;
+	uint64		uvalue = value;
 
-	/*
-	 * Avoid problems with the most negative integer not being representable
-	 * as a positive integer.
-	 */
-	if (value == PG_INT64_MIN)
+	if (value < 0)
 	{
-		memcpy(a, "-9223372036854775808", 21);
-		return;
-	}
-	else if (value < 0)
-	{
-		value = -value;
-		neg = true;
-	}
-
-	/* Compute the result string backwards. */
-	do
-	{
-		int64		remainder;
-		int64		oldval = value;
-
-		value /= 10;
-		remainder = oldval - value * 10;
-		*a++ = '0' + remainder;
-	} while (value != 0);
-
-	if (neg)
 		*a++ = '-';
-
-	/* Add trailing NUL byte, and back up 'a' to the last character. */
-	*a-- = '\0';
-
-	/* Reverse string. */
-	while (start < a)
-	{
-		char		swap = *start;
-
-		*start++ = *a;
-		*a-- = swap;
+		uvalue = (uint64) 0 - uvalue;
 	}
+	len = pg_ulltoa_n(uvalue, a);
+	a[len] = 0;
 }
 
 
 /*
- * pg_ltostr_zeropad
+ * pg_ultostr_zeropad
  *		Converts 'value' into a decimal string representation stored at 'str'.
  *		'minwidth' specifies the minimum width of the result; any extra space
  *		is filled up by prefixing the number with zeros.
@@ -407,62 +554,25 @@ pg_lltoa(int64 value, char *a)
  * result.
  */
 char *
-pg_ltostr_zeropad(char *str, int32 value, int32 minwidth)
+pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth)
 {
-	char	   *start = str;
-	char	   *end = &str[minwidth];
-	int32		num = value;
+	int			len;
 
 	Assert(minwidth > 0);
 
-	/*
-	 * Handle negative numbers in a special way.  We can't just write a '-'
-	 * prefix and reverse the sign as that would overflow for INT32_MIN.
-	 */
-	if (num < 0)
+	if (value < 100 && minwidth == 2)	/* Short cut for common case */
 	{
-		*start++ = '-';
-		minwidth--;
-
-		/*
-		 * Build the number starting at the last digit.  Here remainder will
-		 * be a negative number, so we must reverse the sign before adding '0'
-		 * in order to get the correct ASCII digit.
-		 */
-		while (minwidth--)
-		{
-			int32		oldval = num;
-			int32		remainder;
-
-			num /= 10;
-			remainder = oldval - num * 10;
-			start[minwidth] = '0' - remainder;
-		}
-	}
-	else
-	{
-		/* Build the number starting at the last digit */
-		while (minwidth--)
-		{
-			int32		oldval = num;
-			int32		remainder;
-
-			num /= 10;
-			remainder = oldval - num * 10;
-			start[minwidth] = '0' + remainder;
-		}
+		memcpy(str, DIGIT_TABLE + value * 2, 2);
+		return str + 2;
 	}
 
-	/*
-	 * If minwidth was not high enough to fit the number then num won't have
-	 * been divided down to zero.  We punt the problem to pg_ltostr(), which
-	 * will generate a correct answer in the minimum valid width.
-	 */
-	if (num != 0)
-		return pg_ltostr(str, value);
+	len = pg_ultoa_n(value, str);
+	if (len >= minwidth)
+		return str + len;
 
-	/* Otherwise, return last output character + 1 */
-	return end;
+	memmove(str + minwidth - len, str, len);
+	memset(str, '0', minwidth - len);
+	return str + minwidth;
 }
 
 /*
@@ -484,64 +594,11 @@ pg_ltostr_zeropad(char *str, int32 value, int32 minwidth)
  * result.
  */
 char *
-pg_ltostr(char *str, int32 value)
+pg_ultostr(char *str, uint32 value)
 {
-	char	   *start;
-	char	   *end;
+	int			len = pg_ultoa_n(value, str);
 
-	/*
-	 * Handle negative numbers in a special way.  We can't just write a '-'
-	 * prefix and reverse the sign as that would overflow for INT32_MIN.
-	 */
-	if (value < 0)
-	{
-		*str++ = '-';
-
-		/* Mark the position we must reverse the string from. */
-		start = str;
-
-		/* Compute the result string backwards. */
-		do
-		{
-			int32		oldval = value;
-			int32		remainder;
-
-			value /= 10;
-			remainder = oldval - value * 10;
-			/* As above, we expect remainder to be negative. */
-			*str++ = '0' - remainder;
-		} while (value != 0);
-	}
-	else
-	{
-		/* Mark the position we must reverse the string from. */
-		start = str;
-
-		/* Compute the result string backwards. */
-		do
-		{
-			int32		oldval = value;
-			int32		remainder;
-
-			value /= 10;
-			remainder = oldval - value * 10;
-			*str++ = '0' + remainder;
-		} while (value != 0);
-	}
-
-	/* Remember the end+1 and back up 'str' to the last character. */
-	end = str--;
-
-	/* Reverse string. */
-	while (start < str)
-	{
-		char		swap = *start;
-
-		*start++ = *str;
-		*str-- = swap;
-	}
-
-	return end;
+	return str + len;
 }
 
 /*
