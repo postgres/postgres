@@ -496,9 +496,18 @@ dsm_create(Size size)
 
 	/* Verify that we can support an additional mapping. */
 	if (nitems >= dsm_control->maxitems)
+	{
+		LWLockRelease(DynamicSharedMemoryControlLock);
+		dsm_impl_op(DSM_OP_DESTROY, seg->handle, 0, &seg->impl_private,
+					&seg->mapped_address, &seg->mapped_size, WARNING);
+		if (seg->resowner != NULL)
+			ResourceOwnerForgetDSM(seg->resowner, seg);
+		dlist_delete(&seg->node);
+		pfree(seg);
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
 				 errmsg("too many dynamic shared memory segments")));
+	}
 
 	/* Enter the handle into a new array slot. */
 	dsm_control->item[nitems].handle = seg->handle;
