@@ -1306,6 +1306,7 @@ connectOptions2(PGconn *conn)
 	 */
 	if (!sslVerifyProtocolVersion(conn->sslminprotocolversion))
 	{
+		conn->status = CONNECTION_BAD;
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("invalid sslminprotocolversion value: \"%s\"\n"),
 						  conn->sslminprotocolversion);
@@ -1313,6 +1314,7 @@ connectOptions2(PGconn *conn)
 	}
 	if (!sslVerifyProtocolVersion(conn->sslmaxprotocolversion))
 	{
+		conn->status = CONNECTION_BAD;
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("invalid sslmaxprotocolversion value: \"%s\"\n"),
 						  conn->sslmaxprotocolversion);
@@ -1329,6 +1331,7 @@ connectOptions2(PGconn *conn)
 	if (!sslVerifyProtocolRange(conn->sslminprotocolversion,
 								conn->sslmaxprotocolversion))
 	{
+		conn->status = CONNECTION_BAD;
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("invalid SSL protocol version range"));
 		return false;
