@@ -446,20 +446,6 @@ SELECT fy FROM atestp2; -- ok
 SELECT atestp2 FROM atestp2; -- ok
 SELECT oid FROM atestp2; -- ok
 
--- child's permissions do not apply when operating on parent
-SET SESSION AUTHORIZATION regressuser1;
-REVOKE ALL ON atestc FROM regressuser2;
-GRANT ALL ON atestp1 TO regressuser2;
-SET SESSION AUTHORIZATION regressuser2;
-SELECT f2 FROM atestp1; -- ok
-SELECT f2 FROM atestc; -- fail
-DELETE FROM atestp1; -- ok
-DELETE FROM atestc; -- fail
-UPDATE atestp1 SET f1 = 1; -- ok
-UPDATE atestc SET f1 = 1; -- fail
-TRUNCATE atestp1; -- ok
-TRUNCATE atestc; -- fail
-
 -- privileges on functions, languages
 
 -- switch to superuser
