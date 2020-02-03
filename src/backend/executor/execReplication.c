@@ -327,6 +327,9 @@ retry:
 			XactLockTableWait(xwait, NULL, NULL, XLTW_None);
 			goto retry;
 		}
+
+		/* Found our tuple and it's not locked */
+		break;
 	}
 
 	/* Found tuple, try to lock it in the lockmode. */
