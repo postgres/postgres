@@ -37,6 +37,9 @@ const char *const forkNames[] = {
 	"init"						/* INIT_FORKNUM */
 };
 
+StaticAssertDecl(lengthof(forkNames) == (MAX_FORKNUM + 1),
+				 "array length mismatch");
+
 /*
  * forkname_to_number - look up fork number by name
  *

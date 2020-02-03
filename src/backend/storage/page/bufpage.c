@@ -119,14 +119,7 @@ PageIsVerified(Page page, BlockNumber blkno)
 			return true;
 	}
 
-	/*
-	 * Check all-zeroes case. Luckily BLCKSZ is guaranteed to always be a
-	 * multiple of size_t - and it's much faster to compare memory using the
-	 * native word size.
-	 */
-	StaticAssertStmt(BLCKSZ == (BLCKSZ / sizeof(size_t)) * sizeof(size_t),
-					 "BLCKSZ has to be a multiple of sizeof(size_t)");
-
+	/* Check all-zeroes case */
 	all_zeroes = true;
 	pagebytes = (size_t *) page;
 	for (i = 0; i < (BLCKSZ / sizeof(size_t)); i++)

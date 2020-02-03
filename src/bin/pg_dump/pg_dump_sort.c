@@ -80,6 +80,9 @@ static const int dbObjectTypePriority[] =
 	38							/* DO_SUBSCRIPTION */
 };
 
+StaticAssertDecl(lengthof(dbObjectTypePriority) == (DO_SUBSCRIPTION + 1),
+				 "array length mismatch");
+
 static DumpId preDataBoundId;
 static DumpId postDataBoundId;
 
