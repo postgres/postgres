@@ -1808,9 +1808,9 @@ explain (analyze, costs off, summary off, timing off) execute ab_q2 (2, 2);
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
+   Subplans Removed: 6
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
-   Subplans Removed: 6
    ->  Seq Scan on ab_a2_b1 ab_1 (actual rows=0 loops=1)
          Filter: ((a >= $1) AND (a <= $2) AND (b < $0))
    ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0 loops=1)
@@ -1826,9 +1826,9 @@ explain (analyze, costs off, summary off, timing off) execute ab_q3 (2, 2);
                        QUERY PLAN                        
 ---------------------------------------------------------
  Append (actual rows=0 loops=1)
+   Subplans Removed: 6
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
-   Subplans Removed: 6
    ->  Seq Scan on ab_a1_b2 ab_1 (actual rows=0 loops=1)
          Filter: ((b >= $1) AND (b <= $2) AND (a < $0))
    ->  Seq Scan on ab_a2_b2 ab_2 (actual rows=0 loops=1)
@@ -2396,9 +2396,9 @@ explain (analyze, costs off, summary off, timing off) execute ab_q6(1);
                     QUERY PLAN                    
 --------------------------------------------------
  Append (actual rows=0 loops=1)
+   Subplans Removed: 12
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
-   Subplans Removed: 12
    ->  Seq Scan on ab_a1_b1 ab_1 (never executed)
          Filter: ((a = $1) AND (b = $0))
    ->  Seq Scan on ab_a1_b2 ab_2 (never executed)
@@ -3032,9 +3032,9 @@ execute ps1(1);
                        QUERY PLAN                       
 --------------------------------------------------------
  Append (actual rows=1 loops=1)
+   Subplans Removed: 2
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
-   Subplans Removed: 2
    ->  Seq Scan on mc3p1 mc3p_1 (actual rows=1 loops=1)
          Filter: ((a = $1) AND (abs(b) < $0))
 (6 rows)
@@ -3047,9 +3047,9 @@ execute ps2(1);
                        QUERY PLAN                       
 --------------------------------------------------------
  Append (actual rows=2 loops=1)
+   Subplans Removed: 1
    InitPlan 1 (returns $0)
      ->  Result (actual rows=1 loops=1)
-   Subplans Removed: 1
    ->  Seq Scan on mc3p0 mc3p_1 (actual rows=1 loops=1)
          Filter: ((a <= $1) AND (abs(b) < $0))
    ->  Seq Scan on mc3p1 mc3p_2 (actual rows=1 loops=1)
@@ -3594,9 +3594,9 @@ explain (costs off) execute q (1, 1);
                           QUERY PLAN                           
 ---------------------------------------------------------------
  Append
+   Subplans Removed: 1
    InitPlan 1 (returns $0)
      ->  Result
-   Subplans Removed: 1
    ->  Seq Scan on p1 p
          Filter: ((a = $1) AND (b = $2) AND (c = $0))
    ->  Seq Scan on q111 q1
