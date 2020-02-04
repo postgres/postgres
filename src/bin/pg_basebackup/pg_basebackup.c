@@ -1022,7 +1022,20 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 #ifdef HAVE_LIBZ
 			if (compresslevel != 0)
 			{
-				state.ztarfile = gzdopen(dup(fileno(stdout)), "wb");
+				int		fd = dup(fileno(stdout));
+				if (fd < 0)
+				{
+					pg_log_error("could not duplicate stdout: %m");
+					exit(1);
+				}
+
+				state.ztarfile = gzdopen(fd, "wb");
+				if (state.ztarfile == NULL)
+				{
+					pg_log_error("could not open output file: %m");
+					exit(1);
+				}
+
 				if (gzsetparams(state.ztarfile, compresslevel,
 								Z_DEFAULT_STRATEGY) != Z_OK)
 				{
