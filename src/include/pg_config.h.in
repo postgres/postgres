@@ -331,6 +331,9 @@
 /* Define to 1 if __builtin_constant_p(x) implies "i"(x) acceptance. */
 #undef HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P
 
+/* Define to 1 if you have the `kqueue' function. */
+#undef HAVE_KQUEUE
+
 /* Define to 1 if you have the <langinfo.h> header file. */
 #undef HAVE_LANGINFO_H
 
@@ -613,6 +616,9 @@
 
 /* Define to 1 if you have the <sys/epoll.h> header file. */
 #undef HAVE_SYS_EPOLL_H
+
+/* Define to 1 if you have the <sys/event.h> header file. */
+#undef HAVE_SYS_EVENT_H
 
 /* Define to 1 if you have the <sys/ipc.h> header file. */
 #undef HAVE_SYS_IPC_H
