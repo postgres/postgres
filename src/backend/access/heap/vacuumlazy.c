@@ -614,10 +614,10 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 							 vacrelstats->new_dead_tuples,
 							 OldestXmin);
 			appendStringInfo(&buf,
-							 _("buffer usage: %d hits, %d misses, %d dirtied\n"),
-							 VacuumPageHit,
-							 VacuumPageMiss,
-							 VacuumPageDirty);
+							 _("buffer usage: %lld hits, %lld misses, %lld dirtied\n"),
+							 (long long) VacuumPageHit,
+							 (long long) VacuumPageMiss,
+							 (long long) VacuumPageDirty);
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
 			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
