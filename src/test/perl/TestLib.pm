@@ -183,8 +183,13 @@ INIT
 END
 {
 
-	# Preserve temporary directory for this test on failure
-	$File::Temp::KEEP_ALL = 1 unless all_tests_passing();
+	# Test files have several ways of causing prove_check to fail:
+	# 1. Exit with a non-zero status.
+	# 2. Call ok(0) or similar, indicating that a constituent test failed.
+	# 3. Deviate from the planned number of tests.
+	#
+	# Preserve temporary directories after (1) and after (2).
+	$File::Temp::KEEP_ALL = 1 unless $? == 0 && all_tests_passing();
 }
 
 =pod
