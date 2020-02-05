@@ -149,8 +149,18 @@ convert_tuples_by_position(TupleDesc indesc,
 	{
 		for (i = 0; i < n; i++)
 		{
-			Form_pg_attribute inatt;
-			Form_pg_attribute outatt;
+			Form_pg_attribute inatt = TupleDescAttr(indesc, i);
+			Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
+
+			/*
+			 * If the input column has a missing attribute, we need a
+			 * conversion.
+			 */
+			if (inatt->atthasmissing)
+			{
+				same = false;
+				break;
+			}
 
 			if (attrMap[i] == (i + 1))
 				continue;
@@ -160,8 +170,6 @@ convert_tuples_by_position(TupleDesc indesc,
 			 * also dropped, we needn't convert.  However, attlen and attalign
 			 * must agree.
 			 */
-			inatt = TupleDescAttr(indesc, i);
-			outatt = TupleDescAttr(outdesc, i);
 			if (attrMap[i] == 0 &&
 				inatt->attisdropped &&
 				inatt->attlen == outatt->attlen &&
@@ -233,8 +241,18 @@ convert_tuples_by_name(TupleDesc indesc,
 		same = true;
 		for (i = 0; i < n; i++)
 		{
-			Form_pg_attribute inatt;
-			Form_pg_attribute outatt;
+			Form_pg_attribute inatt = TupleDescAttr(indesc, i);
+			Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
+
+			/*
+			 * If the input column has a missing attribute, we need a
+			 * conversion.
+			 */
+			if (inatt->atthasmissing)
+			{
+				same = false;
+				break;
+			}
 
 			if (attrMap[i] == (i + 1))
 				continue;
@@ -244,8 +262,6 @@ convert_tuples_by_name(TupleDesc indesc,
 			 * also dropped, we needn't convert.  However, attlen and attalign
 			 * must agree.
 			 */
-			inatt = TupleDescAttr(indesc, i);
-			outatt = TupleDescAttr(outdesc, i);
 			if (attrMap[i] == 0 &&
 				inatt->attisdropped &&
 				inatt->attlen == outatt->attlen &&
