@@ -294,8 +294,14 @@ check_attrmap_match(TupleDesc indesc,
 
 	for (i = 0; i < attrMap->maplen; i++)
 	{
-		Form_pg_attribute inatt;
-		Form_pg_attribute outatt;
+		Form_pg_attribute inatt = TupleDescAttr(indesc, i);
+		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
+
+		/*
+		 * If the input column has a missing attribute, we need a conversion.
+		 */
+		if (inatt->atthasmissing)
+			return false;
 
 		if (attrMap->attnums[i] == (i + 1))
 			continue;
@@ -305,8 +311,6 @@ check_attrmap_match(TupleDesc indesc,
 		 * dropped, we don't need a conversion.  However, attlen and attalign
 		 * must agree.
 		 */
-		inatt = TupleDescAttr(indesc, i);
-		outatt = TupleDescAttr(outdesc, i);
 		if (attrMap->attnums[i] == 0 &&
 			inatt->attisdropped &&
 			inatt->attlen == outatt->attlen &&
