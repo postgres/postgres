@@ -128,7 +128,7 @@ sub configure_test_server_for_ssl
 	print $conf "log_statement=all\n";
 
 	# enable SSL and set up server key
-	print $conf "include 'sslconfig.conf'\n";
+	print $conf "include 'sslconfig.conf'";
 
 	close $conf;
 
