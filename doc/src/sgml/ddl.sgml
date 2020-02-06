@@ -2323,7 +2323,11 @@ VALUES ('New York', NULL, NULL, 'NY');
    access privilege checking.  This preserves the appearance that the
    data is (also) in the parent table.  Accessing the child tables
    directly is, however, not automatically allowed and would require
-   further privileges to be granted.
+   further privileges to be granted.  Two exceptions to this rule are
+   <command>TRUNCATE</command> and <command>LOCK TABLE</command>,
+   where permissions on the child tables are always checked,
+   whether they are processed directly or recursively via those commands
+   performed on the parent table.
   </para>
 
  <sect2 id="ddl-inherit-caveats">
