@@ -623,6 +623,18 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry>Process ID of this backend</entry>
     </row>
     <row>
+     <entry><structfield>leader_pid</structfield></entry>
+     <entry><type>integer</type></entry>
+     <entry>
+      Process ID of the parallel group leader if this process is or
+      has been involved in parallel query, or null. This field is set
+      when a process wants to cooperate with parallel workers, and
+      remains set as long as the process exists. For a parallel group leader,
+      this field is set to its own process ID. For a parallel worker,
+      this field is set to the process ID of the parallel group leader.
+     </entry>
+    </row>
+    <row>
      <entry><structfield>usesysid</structfield></entry>
      <entry><type>oid</type></entry>
      <entry>OID of the user logged into this backend</entry>
