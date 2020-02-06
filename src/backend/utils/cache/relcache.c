@@ -669,8 +669,11 @@ RelationBuildTupleDesc(Relation relation)
 	/*
 	 * Set up constraint/default info
 	 */
-	if (constr->has_not_null || ndef > 0 ||
-		attrmiss || relation->rd_rel->relchecks)
+	if (constr->has_not_null ||
+		constr->has_generated_stored ||
+		ndef > 0 ||
+		attrmiss ||
+		relation->rd_rel->relchecks)
 	{
 		relation->rd_att->constr = constr;
 
