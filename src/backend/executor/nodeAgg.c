@@ -1422,24 +1422,17 @@ find_hash_columns(AggState *aggstate)
 }
 
 /*
- * Estimate per-hash-table-entry overhead for the planner.
- *
- * Note that the estimate does not include space for pass-by-reference
- * transition data values, nor for the representative tuple of each group.
- * Nor does this account of the target fill-factor and growth policy of the
- * hash table.
+ * Estimate per-hash-table-entry overhead.
  */
 Size
-hash_agg_entry_size(int numAggs)
+hash_agg_entry_size(int numAggs, Size tupleWidth, Size transitionSpace)
 {
-	Size		entrysize;
-
-	/* This must match build_hash_table */
-	entrysize = sizeof(TupleHashEntryData) +
-		numAggs * sizeof(AggStatePerGroupData);
-	entrysize = MAXALIGN(entrysize);
-
-	return entrysize;
+	return
+		MAXALIGN(SizeofMinimalTupleHeader) +
+		MAXALIGN(tupleWidth) +
+		MAXALIGN(sizeof(TupleHashEntryData) +
+				 numAggs * sizeof(AggStatePerGroupData)) +
+		transitionSpace;
 }
 
 /*
