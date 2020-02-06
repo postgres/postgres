@@ -3384,7 +3384,15 @@ VALUES ('Albany', NULL, NULL, 'NY');
    accessed through <structname>cities</structname>.  This preserves the appearance
    that the data is (also) in the parent table.  But
    the <structname>capitals</structname> table could not be updated directly
-   without an additional grant.  In a similar way, the parent table's row
+   without an additional grant.  Two exceptions to this rule are
+   <command>TRUNCATE</command> and <command>LOCK TABLE</command>,
+   where permissions on the child tables are always checked,
+   whether they are processed directly or recursively via those commands
+   performed on the parent table.
+  </para>
+
+  <para>
+   In a similar way, the parent table's row
    security policies (see <xref linkend="ddl-rowsecurity"/>) are applied to
    rows coming from child tables during an inherited query.  A child table's
    policies, if any, are applied only when it is the table explicitly named
