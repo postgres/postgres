@@ -310,6 +310,7 @@ get_lwlock_stats_entry(LWLock *lock)
 		return &lwlock_stats_dummy;
 
 	/* Fetch or create the entry. */
+	MemSet(&key, 0, sizeof(key));
 	key.tranche = lock->tranche;
 	key.instance = lock;
 	lwstats = hash_search(lwlock_stats_htab, &key, HASH_ENTER, &found);
