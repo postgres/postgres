@@ -1261,10 +1261,10 @@ llvm_compile_expr(ExprState *state)
 				{
 					FunctionCallInfo fcinfo_out,
 								fcinfo_in;
+					LLVMValueRef v_fn_out,
+								v_fn_in;
 					LLVMValueRef v_fcinfo_out,
 								v_fcinfo_in;
-					LLVMValueRef v_fn_addr_out,
-								v_fn_addr_in;
 					LLVMValueRef v_fcinfo_in_isnullp;
 					LLVMValueRef v_retval;
 					LLVMValueRef v_resvalue;
@@ -1290,10 +1290,10 @@ llvm_compile_expr(ExprState *state)
 					b_inputcall = l_bb_before_v(opblocks[opno + 1],
 												"op.%d.inputcall", opno);
 
+					v_fn_out = llvm_function_reference(context, b, mod, fcinfo_out);
+					v_fn_in = llvm_function_reference(context, b, mod, fcinfo_in);
 					v_fcinfo_out = l_ptr_const(fcinfo_out, l_ptr(StructFunctionCallInfoData));
 					v_fcinfo_in = l_ptr_const(fcinfo_in, l_ptr(StructFunctionCallInfoData));
-					v_fn_addr_out = l_ptr_const(fcinfo_out->flinfo->fn_addr, TypePGFunction);
-					v_fn_addr_in = l_ptr_const(fcinfo_in->flinfo->fn_addr, TypePGFunction);
 
 					v_fcinfo_in_isnullp =
 						LLVMBuildStructGEP(b, v_fcinfo_in,
@@ -1323,7 +1323,7 @@ llvm_compile_expr(ExprState *state)
 								   l_sbool_const(0),
 								   l_funcnullp(b, v_fcinfo_out, 0));
 					/* and call output function (can never return NULL) */
-					v_output = LLVMBuildCall(b, v_fn_addr_out, &v_fcinfo_out,
+					v_output = LLVMBuildCall(b, v_fn_out, &v_fcinfo_out,
 											 1, "funccall_coerce_out");
 					LLVMBuildBr(b, b_input);
 
@@ -1378,7 +1378,7 @@ llvm_compile_expr(ExprState *state)
 					/* reset fcinfo_in->isnull */
 					LLVMBuildStore(b, l_sbool_const(0), v_fcinfo_in_isnullp);
 					/* and call function */
-					v_retval = LLVMBuildCall(b, v_fn_addr_in, &v_fcinfo_in, 1,
+					v_retval = LLVMBuildCall(b, v_fn_in, &v_fcinfo_in, 1,
 											 "funccall_iocoerce_in");
 
 					LLVMBuildStore(b, v_retval, v_resvaluep);
