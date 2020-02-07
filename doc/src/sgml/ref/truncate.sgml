@@ -124,6 +124,9 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
    option can be used to automatically include all dependent tables &mdash;
    but be very careful when using this option, or else you might lose data you
    did not intend to!
+   Note in particular that when the table to be truncated is a partition,
+   siblings partitions are left untouched, but cascading occurs to all
+   referencing tables and all their partitions with no distinction.
   </para>
 
   <para>
