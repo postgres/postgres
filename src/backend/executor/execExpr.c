@@ -810,7 +810,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					elog(ERROR, "GroupingFunc found in non-Agg plan node");
 
 				scratch.opcode = EEOP_GROUPING_FUNC;
-				scratch.d.grouping_func.parent = (AggState *) state->parent;
 
 				agg = (Agg *) (state->parent->plan);
 
@@ -3050,7 +3049,6 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				else
 					scratch.opcode = EEOP_AGG_DESERIALIZE;
 
-				scratch.d.agg_deserialize.aggstate = aggstate;
 				scratch.d.agg_deserialize.fcinfo_data = ds_fcinfo;
 				scratch.d.agg_deserialize.jumpnull = -1;	/* adjust later */
 				scratch.resvalue = &trans_fcinfo->args[argno + 1].value;
@@ -3252,7 +3250,6 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 		pertrans->initValueIsNull)
 	{
 		scratch->opcode = EEOP_AGG_INIT_TRANS;
-		scratch->d.agg_init_trans.aggstate = aggstate;
 		scratch->d.agg_init_trans.pertrans = pertrans;
 		scratch->d.agg_init_trans.setno = setno;
 		scratch->d.agg_init_trans.setoff = setoff;
@@ -3269,7 +3266,6 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 		fcinfo->flinfo->fn_strict)
 	{
 		scratch->opcode = EEOP_AGG_STRICT_TRANS_CHECK;
-		scratch->d.agg_strict_trans_check.aggstate = aggstate;
 		scratch->d.agg_strict_trans_check.setno = setno;
 		scratch->d.agg_strict_trans_check.setoff = setoff;
 		scratch->d.agg_strict_trans_check.transno = transno;
@@ -3294,7 +3290,6 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 	else
 		scratch->opcode = EEOP_AGG_ORDERED_TRANS_TUPLE;
 
-	scratch->d.agg_trans.aggstate = aggstate;
 	scratch->d.agg_trans.pertrans = pertrans;
 	scratch->d.agg_trans.setno = setno;
 	scratch->d.agg_trans.setoff = setoff;

@@ -85,6 +85,7 @@ llvm_compile_expr(ExprState *state)
 	/* state itself */
 	LLVMValueRef v_state;
 	LLVMValueRef v_econtext;
+	LLVMValueRef v_parent;
 
 	/* returnvalue */
 	LLVMValueRef v_isnullp;
@@ -173,6 +174,9 @@ llvm_compile_expr(ExprState *state)
 	v_tmpisnullp = LLVMBuildStructGEP(b, v_state,
 									  FIELDNO_EXPRSTATE_RESNULL,
 									  "v.state.resnull");
+	v_parent = l_load_struct_gep(b, v_state,
+								 FIELDNO_EXPRSTATE_PARENT,
+								 "v.state.parent");
 
 	/* build global slots */
 	v_scanslot = l_load_struct_gep(b, v_econtext,
@@ -1989,7 +1993,7 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_tmpcontext;
 					LLVMValueRef v_oldcontext;
 
-					aggstate = op->d.agg_deserialize.aggstate;
+					aggstate = castNode(AggState, state->parent);
 					fcinfo = op->d.agg_deserialize.fcinfo_data;
 
 					v_tmpcontext =
@@ -2078,7 +2082,6 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_AGG_INIT_TRANS:
 				{
-					AggState   *aggstate;
 					AggStatePerTrans pertrans;
 
 					LLVMValueRef v_aggstatep;
@@ -2095,11 +2098,10 @@ llvm_compile_expr(ExprState *state)
 
 					LLVMBasicBlockRef b_init;
 
-					aggstate = op->d.agg_init_trans.aggstate;
 					pertrans = op->d.agg_init_trans.pertrans;
 
-					v_aggstatep = l_ptr_const(aggstate,
-											  l_ptr(StructAggState));
+					v_aggstatep =
+						LLVMBuildBitCast(b, v_parent, l_ptr(StructAggState), "");
 					v_pertransp = l_ptr_const(pertrans,
 											  l_ptr(StructAggStatePerTransData));
 
@@ -2176,7 +2178,6 @@ llvm_compile_expr(ExprState *state)
 
 			case EEOP_AGG_STRICT_TRANS_CHECK:
 				{
-					AggState   *aggstate;
 					LLVMValueRef v_setoff,
 								v_transno;
 
@@ -2188,8 +2189,8 @@ llvm_compile_expr(ExprState *state)
 
 					int			jumpnull = op->d.agg_strict_trans_check.jumpnull;
 
-					aggstate = op->d.agg_strict_trans_check.aggstate;
-					v_aggstatep = l_ptr_const(aggstate, l_ptr(StructAggState));
+					v_aggstatep =
+						LLVMBuildBitCast(b, v_parent, l_ptr(StructAggState), "");
 
 					/*
 					 * pergroup = &aggstate->all_pergroups
@@ -2256,13 +2257,13 @@ llvm_compile_expr(ExprState *state)
 					LLVMValueRef v_tmpcontext;
 					LLVMValueRef v_oldcontext;
 
-					aggstate = op->d.agg_trans.aggstate;
+					aggstate = castNode(AggState, state->parent);
 					pertrans = op->d.agg_trans.pertrans;
 
 					fcinfo = pertrans->transfn_fcinfo;
 
-					v_aggstatep = l_ptr_const(aggstate,
-											  l_ptr(StructAggState));
+					v_aggstatep =
+						LLVMBuildBitCast(b, v_parent, l_ptr(StructAggState), "");
 					v_pertransp = l_ptr_const(pertrans,
 											  l_ptr(StructAggStatePerTransData));
 

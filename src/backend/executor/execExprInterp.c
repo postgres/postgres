@@ -1544,7 +1544,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_AGG_DESERIALIZE)
 		{
 			FunctionCallInfo fcinfo = op->d.agg_deserialize.fcinfo_data;
-			AggState   *aggstate = op->d.agg_deserialize.aggstate;
+			AggState   *aggstate = castNode(AggState, state->parent);
 			MemoryContext oldContext;
 
 			/*
@@ -1596,10 +1596,9 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		 */
 		EEO_CASE(EEOP_AGG_INIT_TRANS)
 		{
-			AggState   *aggstate;
+			AggState   *aggstate = castNode(AggState, state->parent);
 			AggStatePerGroup pergroup;
 
-			aggstate = op->d.agg_init_trans.aggstate;
 			pergroup = &aggstate->all_pergroups
 				[op->d.agg_init_trans.setoff]
 				[op->d.agg_init_trans.transno];
@@ -1624,10 +1623,9 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		/* check that a strict aggregate's input isn't NULL */
 		EEO_CASE(EEOP_AGG_STRICT_TRANS_CHECK)
 		{
-			AggState   *aggstate;
+			AggState   *aggstate = castNode(AggState, state->parent);
 			AggStatePerGroup pergroup;
 
-			aggstate = op->d.agg_strict_trans_check.aggstate;
 			pergroup = &aggstate->all_pergroups
 				[op->d.agg_strict_trans_check.setoff]
 				[op->d.agg_strict_trans_check.transno];
@@ -1645,14 +1643,13 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		 */
 		EEO_CASE(EEOP_AGG_PLAIN_TRANS_BYVAL)
 		{
-			AggState   *aggstate;
+			AggState   *aggstate = castNode(AggState, state->parent);
 			AggStatePerTrans pertrans;
 			AggStatePerGroup pergroup;
 			FunctionCallInfo fcinfo;
 			MemoryContext oldContext;
 			Datum		newVal;
 
-			aggstate = op->d.agg_trans.aggstate;
 			pertrans = op->d.agg_trans.pertrans;
 
 			pergroup = &aggstate->all_pergroups
@@ -1696,14 +1693,13 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		 */
 		EEO_CASE(EEOP_AGG_PLAIN_TRANS)
 		{
-			AggState   *aggstate;
+			AggState   *aggstate = castNode(AggState, state->parent);
 			AggStatePerTrans pertrans;
 			AggStatePerGroup pergroup;
 			FunctionCallInfo fcinfo;
 			MemoryContext oldContext;
 			Datum		newVal;
 
-			aggstate = op->d.agg_trans.aggstate;
 			pertrans = op->d.agg_trans.pertrans;
 
 			pergroup = &aggstate->all_pergroups
@@ -3846,8 +3842,9 @@ ExecEvalXmlExpr(ExprState *state, ExprEvalStep *op)
 void
 ExecEvalGroupingFunc(ExprState *state, ExprEvalStep *op)
 {
+	AggState   *aggstate = castNode(AggState, state->parent);
 	int			result = 0;
-	Bitmapset  *grouped_cols = op->d.grouping_func.parent->grouped_cols;
+	Bitmapset  *grouped_cols = aggstate->grouped_cols;
 	ListCell   *lc;
 
 	foreach(lc, op->d.grouping_func.clauses)

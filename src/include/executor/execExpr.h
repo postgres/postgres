@@ -569,7 +569,6 @@ typedef struct ExprEvalStep
 		/* for EEOP_GROUPING_FUNC */
 		struct
 		{
-			AggState   *parent; /* parent Agg */
 			List	   *clauses;	/* integer list of column numbers */
 		}			grouping_func;
 
@@ -597,7 +596,6 @@ typedef struct ExprEvalStep
 		/* for EEOP_AGG_*DESERIALIZE */
 		struct
 		{
-			AggState   *aggstate;
 			FunctionCallInfo fcinfo_data;
 			int			jumpnull;
 		}			agg_deserialize;
@@ -625,7 +623,6 @@ typedef struct ExprEvalStep
 		/* for EEOP_AGG_INIT_TRANS */
 		struct
 		{
-			AggState   *aggstate;
 			AggStatePerTrans pertrans;
 			ExprContext *aggcontext;
 			int			setno;
@@ -637,7 +634,6 @@ typedef struct ExprEvalStep
 		/* for EEOP_AGG_STRICT_TRANS_CHECK */
 		struct
 		{
-			AggState   *aggstate;
 			int			setno;
 			int			transno;
 			int			setoff;
@@ -647,7 +643,6 @@ typedef struct ExprEvalStep
 		/* for EEOP_AGG_{PLAIN,ORDERED}_TRANS* */
 		struct
 		{
-			AggState   *aggstate;
 			AggStatePerTrans pertrans;
 			ExprContext *aggcontext;
 			int			setno;

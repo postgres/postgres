@@ -104,6 +104,7 @@ typedef struct ExprState
 	int			steps_len;		/* number of steps currently */
 	int			steps_alloc;	/* allocated length of steps array */
 
+#define FIELDNO_EXPRSTATE_PARENT 11
 	struct PlanState *parent;	/* parent PlanState node, if any */
 	ParamListInfo ext_params;	/* for compiling PARAM_EXTERN nodes */
 
