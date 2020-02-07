@@ -143,9 +143,8 @@ TidListEval(TidScanState *tidstate)
 	 */
 	if (tidstate->ss.ss_currentScanDesc == NULL)
 		tidstate->ss.ss_currentScanDesc =
-			table_beginscan(tidstate->ss.ss_currentRelation,
-							tidstate->ss.ps.state->es_snapshot,
-							0, NULL);
+			table_beginscan_tid(tidstate->ss.ss_currentRelation,
+							tidstate->ss.ps.state->es_snapshot);
 	scan = tidstate->ss.ss_currentScanDesc;
 
 	/*
