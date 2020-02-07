@@ -76,16 +76,8 @@ LLVMTypeRef StructAggStatePerGroupData;
 LLVMTypeRef StructAggStatePerTransData;
 
 LLVMValueRef AttributeTemplate;
-LLVMValueRef FuncStrlen;
-LLVMValueRef FuncVarsizeAny;
-LLVMValueRef FuncSlotGetsomeattrsInt;
-LLVMValueRef FuncSlotGetmissingattrs;
-LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
-LLVMValueRef FuncExecEvalSubscriptingRef;
-LLVMValueRef FuncExecEvalSysVar;
-LLVMValueRef FuncExecAggTransReparent;
-LLVMValueRef FuncExecAggInitGroup;
 
+LLVMModuleRef llvm_types_module = NULL;
 
 static bool llvm_session_initialized = false;
 static size_t llvm_generation = 0;
@@ -301,26 +293,32 @@ llvm_get_function(LLVMJitContext *context, const char *funcname)
 }
 
 /*
- * Return declaration for passed function, adding it to the module if
- * necessary.
+ * Return declaration for a function referenced in llvmjit_types.c, adding it
+ * to the module if necessary.
  *
- * This is used to make functions imported by llvm_create_types() known to the
- * module that's currently being worked on.
+ * This is used to make functions discovered via llvm_create_types() known to
+ * the module that's currently being worked on.
  */
 LLVMValueRef
-llvm_get_decl(LLVMModuleRef mod, LLVMValueRef v_src)
+llvm_pg_func(LLVMModuleRef mod, const char *funcname)
 {
+	LLVMValueRef v_srcfn;
 	LLVMValueRef v_fn;
 
 	/* don't repeatedly add function */
-	v_fn = LLVMGetNamedFunction(mod, LLVMGetValueName(v_src));
+	v_fn = LLVMGetNamedFunction(mod, funcname);
 	if (v_fn)
 		return v_fn;
 
+	v_srcfn = LLVMGetNamedFunction(llvm_types_module, funcname);
+
+	if (!v_srcfn)
+		elog(ERROR, "function %s not in llvmjit_types.c", funcname);
+
 	v_fn = LLVMAddFunction(mod,
-						   LLVMGetValueName(v_src),
-						   LLVMGetElementType(LLVMTypeOf(v_src)));
-	llvm_copy_attributes(v_src, v_fn);
+						   funcname,
+						   LLVMGetElementType(LLVMTypeOf(v_srcfn)));
+	llvm_copy_attributes(v_srcfn, v_fn);
 
 	return v_fn;
 }
@@ -775,7 +773,6 @@ llvm_create_types(void)
 	char		path[MAXPGPATH];
 	LLVMMemoryBufferRef buf;
 	char	   *msg;
-	LLVMModuleRef mod = NULL;
 
 	snprintf(path, MAXPGPATH, "%s/%s", pkglib_path, "llvmjit_types.bc");
 
@@ -787,7 +784,7 @@ llvm_create_types(void)
 	}
 
 	/* eagerly load contents, going to need it all */
-	if (LLVMParseBitcode2(buf, &mod))
+	if (LLVMParseBitcode2(buf, &llvm_types_module))
 	{
 		elog(ERROR, "LLVMParseBitcode2 of %s failed", path);
 	}
@@ -797,43 +794,29 @@ llvm_create_types(void)
 	 * Load triple & layout from clang emitted file so we're guaranteed to be
 	 * compatible.
 	 */
-	llvm_triple = pstrdup(LLVMGetTarget(mod));
-	llvm_layout = pstrdup(LLVMGetDataLayoutStr(mod));
+	llvm_triple = pstrdup(LLVMGetTarget(llvm_types_module));
+	llvm_layout = pstrdup(LLVMGetDataLayoutStr(llvm_types_module));
 
-	TypeSizeT = load_type(mod, "TypeSizeT");
-	TypeParamBool = load_return_type(mod, "FunctionReturningBool");
-	TypeStorageBool = load_type(mod, "TypeStorageBool");
-	TypePGFunction = load_type(mod, "TypePGFunction");
-	StructNullableDatum = load_type(mod, "StructNullableDatum");
-	StructExprContext = load_type(mod, "StructExprContext");
-	StructExprEvalStep = load_type(mod, "StructExprEvalStep");
-	StructExprState = load_type(mod, "StructExprState");
-	StructFunctionCallInfoData = load_type(mod, "StructFunctionCallInfoData");
-	StructMemoryContextData = load_type(mod, "StructMemoryContextData");
-	StructTupleTableSlot = load_type(mod, "StructTupleTableSlot");
-	StructHeapTupleTableSlot = load_type(mod, "StructHeapTupleTableSlot");
-	StructMinimalTupleTableSlot = load_type(mod, "StructMinimalTupleTableSlot");
-	StructHeapTupleData = load_type(mod, "StructHeapTupleData");
-	StructTupleDescData = load_type(mod, "StructTupleDescData");
-	StructAggState = load_type(mod, "StructAggState");
-	StructAggStatePerGroupData = load_type(mod, "StructAggStatePerGroupData");
-	StructAggStatePerTransData = load_type(mod, "StructAggStatePerTransData");
+	TypeSizeT = load_type(llvm_types_module, "TypeSizeT");
+	TypeParamBool = load_return_type(llvm_types_module, "FunctionReturningBool");
+	TypeStorageBool = load_type(llvm_types_module, "TypeStorageBool");
+	TypePGFunction = load_type(llvm_types_module, "TypePGFunction");
+	StructNullableDatum = load_type(llvm_types_module, "StructNullableDatum");
+	StructExprContext = load_type(llvm_types_module, "StructExprContext");
+	StructExprEvalStep = load_type(llvm_types_module, "StructExprEvalStep");
+	StructExprState = load_type(llvm_types_module, "StructExprState");
+	StructFunctionCallInfoData = load_type(llvm_types_module, "StructFunctionCallInfoData");
+	StructMemoryContextData = load_type(llvm_types_module, "StructMemoryContextData");
+	StructTupleTableSlot = load_type(llvm_types_module, "StructTupleTableSlot");
+	StructHeapTupleTableSlot = load_type(llvm_types_module, "StructHeapTupleTableSlot");
+	StructMinimalTupleTableSlot = load_type(llvm_types_module, "StructMinimalTupleTableSlot");
+	StructHeapTupleData = load_type(llvm_types_module, "StructHeapTupleData");
+	StructTupleDescData = load_type(llvm_types_module, "StructTupleDescData");
+	StructAggState = load_type(llvm_types_module, "StructAggState");
+	StructAggStatePerGroupData = load_type(llvm_types_module, "StructAggStatePerGroupData");
+	StructAggStatePerTransData = load_type(llvm_types_module, "StructAggStatePerTransData");
 
-	AttributeTemplate = LLVMGetNamedFunction(mod, "AttributeTemplate");
-	FuncStrlen = LLVMGetNamedFunction(mod, "strlen");
-	FuncVarsizeAny = LLVMGetNamedFunction(mod, "varsize_any");
-	FuncSlotGetsomeattrsInt = LLVMGetNamedFunction(mod, "slot_getsomeattrs_int");
-	FuncSlotGetmissingattrs = LLVMGetNamedFunction(mod, "slot_getmissingattrs");
-	FuncMakeExpandedObjectReadOnlyInternal = LLVMGetNamedFunction(mod, "MakeExpandedObjectReadOnlyInternal");
-	FuncExecEvalSubscriptingRef = LLVMGetNamedFunction(mod, "ExecEvalSubscriptingRef");
-	FuncExecEvalSysVar = LLVMGetNamedFunction(mod, "ExecEvalSysVar");
-	FuncExecAggTransReparent = LLVMGetNamedFunction(mod, "ExecAggTransReparent");
-	FuncExecAggInitGroup = LLVMGetNamedFunction(mod, "ExecAggInitGroup");
-
-	/*
-	 * Leave the module alive, otherwise references to function would be
-	 * dangling.
-	 */
+	AttributeTemplate = LLVMGetNamedFunction(llvm_types_module, "AttributeTemplate");
 }
 
 /*

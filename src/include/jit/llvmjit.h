@@ -55,6 +55,8 @@ typedef struct LLVMJitContext
 	List	   *handles;
 } LLVMJitContext;
 
+/* llvm module containing information about types */
+extern LLVMModuleRef llvm_types_module;
 
 /* type and struct definitions */
 extern LLVMTypeRef TypeParamBool;
@@ -78,15 +80,6 @@ extern LLVMTypeRef StructAggStatePerTransData;
 extern LLVMTypeRef StructAggStatePerGroupData;
 
 extern LLVMValueRef AttributeTemplate;
-extern LLVMValueRef FuncStrlen;
-extern LLVMValueRef FuncVarsizeAny;
-extern LLVMValueRef FuncSlotGetmissingattrs;
-extern LLVMValueRef FuncSlotGetsomeattrsInt;
-extern LLVMValueRef FuncMakeExpandedObjectReadOnlyInternal;
-extern LLVMValueRef FuncExecEvalSubscriptingRef;
-extern LLVMValueRef FuncExecEvalSysVar;
-extern LLVMValueRef FuncExecAggTransReparent;
-extern LLVMValueRef FuncExecAggInitGroup;
 
 
 extern void llvm_enter_fatal_on_oom(void);
@@ -99,7 +92,7 @@ extern LLVMModuleRef llvm_mutable_module(LLVMJitContext *context);
 extern char *llvm_expand_funcname(LLVMJitContext *context, const char *basename);
 extern void *llvm_get_function(LLVMJitContext *context, const char *funcname);
 extern void llvm_split_symbol_name(const char *name, char **modname, char **funcname);
-extern LLVMValueRef llvm_get_decl(LLVMModuleRef mod, LLVMValueRef f);
+extern LLVMValueRef llvm_pg_func(LLVMModuleRef mod, const char *funcname);
 extern void llvm_copy_attributes(LLVMValueRef from, LLVMValueRef to);
 extern LLVMValueRef llvm_function_reference(LLVMJitContext *context,
 						LLVMBuilderRef builder,
