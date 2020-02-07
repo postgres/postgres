@@ -2090,22 +2090,6 @@ main(int argc, char **argv)
 		}
 	}
 
-	/*
-	 * Don't allow pg_basebackup to be run as root, to avoid creating files in
-	 * the data directory with ownership rights incompatible with the
-	 * postmaster.
-	 */
-#ifndef WIN32
-	if (geteuid() == 0)			/* 0 is root's uid */
-	{
-		pg_log_error("cannot be run as root");
-		fprintf(stderr,
-				_("Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
-				  "own the server process.\n"));
-		exit(1);
-	}
-#endif
-
 	atexit(cleanup_directories_atexit);
 
 	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWkvP",
