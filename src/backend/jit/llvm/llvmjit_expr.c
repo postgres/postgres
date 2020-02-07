@@ -471,6 +471,7 @@ llvm_compile_expr(ExprState *state)
 				}
 
 			case EEOP_ASSIGN_TMP:
+			case EEOP_ASSIGN_TMP_MAKE_RO:
 				{
 					LLVMValueRef v_value,
 								v_isnull;
@@ -490,59 +491,40 @@ llvm_compile_expr(ExprState *state)
 					v_risnullp =
 						LLVMBuildGEP(b, v_resultnulls, &v_resultnum, 1, "");
 
-					/* and store */
-					LLVMBuildStore(b, v_value, v_rvaluep);
-					LLVMBuildStore(b, v_isnull, v_risnullp);
-
-					LLVMBuildBr(b, opblocks[opno + 1]);
-					break;
-				}
-
-			case EEOP_ASSIGN_TMP_MAKE_RO:
-				{
-					LLVMBasicBlockRef b_notnull;
-					LLVMValueRef v_params[1];
-					LLVMValueRef v_ret;
-					LLVMValueRef v_value,
-								v_isnull;
-					LLVMValueRef v_rvaluep,
-								v_risnullp;
-					LLVMValueRef v_resultnum;
-					size_t		resultnum = op->d.assign_tmp.resultnum;
-
-					b_notnull = l_bb_before_v(opblocks[opno + 1],
-											  "op.%d.assign_tmp.notnull", opno);
-
-					/* load data */
-					v_value = LLVMBuildLoad(b, v_tmpvaluep, "");
-					v_isnull = LLVMBuildLoad(b, v_tmpisnullp, "");
-
-					/* compute addresses of targets */
-					v_resultnum = l_int32_const(resultnum);
-					v_rvaluep = LLVMBuildGEP(b, v_resultvalues,
-											 &v_resultnum, 1, "");
-					v_risnullp = LLVMBuildGEP(b, v_resultnulls,
-											  &v_resultnum, 1, "");
-
 					/* store nullness */
 					LLVMBuildStore(b, v_isnull, v_risnullp);
 
-					/* check if value is NULL */
-					LLVMBuildCondBr(b,
-									LLVMBuildICmp(b, LLVMIntEQ, v_isnull,
-												  l_sbool_const(0), ""),
-									b_notnull, opblocks[opno + 1]);
+					/* make value readonly if necessary */
+					if (opcode == EEOP_ASSIGN_TMP_MAKE_RO)
+					{
+						LLVMBasicBlockRef b_notnull;
+						LLVMValueRef v_params[1];
 
-					/* if value is not null, convert to RO datum */
-					LLVMPositionBuilderAtEnd(b, b_notnull);
-					v_params[0] = v_value;
-					v_ret =
-						LLVMBuildCall(b,
-									  llvm_get_decl(mod, FuncMakeExpandedObjectReadOnlyInternal),
-									  v_params, lengthof(v_params), "");
+						b_notnull = l_bb_before_v(opblocks[opno + 1],
+												  "op.%d.assign_tmp.notnull", opno);
 
-					/* store value */
-					LLVMBuildStore(b, v_ret, v_rvaluep);
+						/* check if value is NULL */
+						LLVMBuildCondBr(b,
+										LLVMBuildICmp(b, LLVMIntEQ, v_isnull,
+													  l_sbool_const(0), ""),
+										b_notnull, opblocks[opno + 1]);
+
+						/* if value is not null, convert to RO datum */
+						LLVMPositionBuilderAtEnd(b, b_notnull);
+						v_params[0] = v_value;
+						v_value =
+							LLVMBuildCall(b,
+										  llvm_get_decl(mod, FuncMakeExpandedObjectReadOnlyInternal),
+										  v_params, lengthof(v_params), "");
+
+						/*
+						 * Falling out of the if () with builder in b_notnull,
+						 * which is fine - the null is already stored above.
+						 */
+					}
+
+					/* and finally store result */
+					LLVMBuildStore(b, v_value, v_rvaluep);
 
 					LLVMBuildBr(b, opblocks[opno + 1]);
 					break;
@@ -563,77 +545,80 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
-			case EEOP_FUNCEXPR_STRICT:
-				{
-					FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
-					LLVMBasicBlockRef b_nonull;
-					LLVMValueRef v_fcinfo;
-					LLVMBasicBlockRef *b_checkargnulls;
-
-					/*
-					 * Block for the actual function call, if args are
-					 * non-NULL.
-					 */
-					b_nonull = l_bb_before_v(opblocks[opno + 1],
-											 "b.%d.no-null-args", opno);
-
-					/* should make sure they're optimized beforehand */
-					if (op->d.func.nargs == 0)
-						elog(ERROR, "argumentless strict functions are pointless");
-
-					v_fcinfo =
-						l_ptr_const(fcinfo, l_ptr(StructFunctionCallInfoData));
-
-					/*
-					 * set resnull to true, if the function is actually
-					 * called, it'll be reset
-					 */
-					LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
-
-					/* create blocks for checking args, one for each */
-					b_checkargnulls =
-						palloc(sizeof(LLVMBasicBlockRef *) * op->d.func.nargs);
-					for (int argno = 0; argno < op->d.func.nargs; argno++)
-						b_checkargnulls[argno] =
-							l_bb_before_v(b_nonull, "b.%d.isnull.%d", opno, argno);
-
-					/* jump to check of first argument */
-					LLVMBuildBr(b, b_checkargnulls[0]);
-
-					/* check each arg for NULLness */
-					for (int argno = 0; argno < op->d.func.nargs; argno++)
-					{
-						LLVMValueRef v_argisnull;
-						LLVMBasicBlockRef b_argnotnull;
-
-						LLVMPositionBuilderAtEnd(b, b_checkargnulls[argno]);
-
-						/* compute block to jump to if argument is not null */
-						if (argno + 1 == op->d.func.nargs)
-							b_argnotnull = b_nonull;
-						else
-							b_argnotnull = b_checkargnulls[argno + 1];
-
-						/* and finally load & check NULLness of arg */
-						v_argisnull = l_funcnull(b, v_fcinfo, argno);
-						LLVMBuildCondBr(b,
-										LLVMBuildICmp(b, LLVMIntEQ,
-													  v_argisnull,
-													  l_sbool_const(1),
-													  ""),
-										opblocks[opno + 1],
-										b_argnotnull);
-					}
-
-					LLVMPositionBuilderAtEnd(b, b_nonull);
-				}
-				/* FALLTHROUGH */
-
 			case EEOP_FUNCEXPR:
+			case EEOP_FUNCEXPR_STRICT:
 				{
 					FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
 					LLVMValueRef v_fcinfo_isnull;
 					LLVMValueRef v_retval;
+
+					if (opcode == EEOP_FUNCEXPR_STRICT)
+					{
+						LLVMBasicBlockRef b_nonull;
+						LLVMBasicBlockRef *b_checkargnulls;
+						LLVMValueRef v_fcinfo;
+
+						/*
+						 * Block for the actual function call, if args are
+						 * non-NULL.
+						 */
+						b_nonull = l_bb_before_v(opblocks[opno + 1],
+												 "b.%d.no-null-args", opno);
+
+						/* should make sure they're optimized beforehand */
+						if (op->d.func.nargs == 0)
+							elog(ERROR, "argumentless strict functions are pointless");
+
+						v_fcinfo =
+							l_ptr_const(fcinfo, l_ptr(StructFunctionCallInfoData));
+
+						/*
+						 * set resnull to true, if the function is actually
+						 * called, it'll be reset
+						 */
+						LLVMBuildStore(b, l_sbool_const(1), v_resnullp);
+
+						/* create blocks for checking args, one for each */
+						b_checkargnulls =
+							palloc(sizeof(LLVMBasicBlockRef *) * op->d.func.nargs);
+						for (int argno = 0; argno < op->d.func.nargs; argno++)
+							b_checkargnulls[argno] =
+								l_bb_before_v(b_nonull, "b.%d.isnull.%d", opno,
+											  argno);
+
+						/* jump to check of first argument */
+						LLVMBuildBr(b, b_checkargnulls[0]);
+
+						/* check each arg for NULLness */
+						for (int argno = 0; argno < op->d.func.nargs; argno++)
+						{
+							LLVMValueRef v_argisnull;
+							LLVMBasicBlockRef b_argnotnull;
+
+							LLVMPositionBuilderAtEnd(b, b_checkargnulls[argno]);
+
+							/*
+							 * Compute block to jump to if argument is not
+							 * null.
+							 */
+							if (argno + 1 == op->d.func.nargs)
+								b_argnotnull = b_nonull;
+							else
+								b_argnotnull = b_checkargnulls[argno + 1];
+
+							/* and finally load & check NULLness of arg */
+							v_argisnull = l_funcnull(b, v_fcinfo, argno);
+							LLVMBuildCondBr(b,
+											LLVMBuildICmp(b, LLVMIntEQ,
+														  v_argisnull,
+														  l_sbool_const(1),
+														  ""),
+											opblocks[opno + 1],
+											b_argnotnull);
+						}
+
+						LLVMPositionBuilderAtEnd(b, b_nonull);
+					}
 
 					v_retval = BuildV1Call(context, b, mod, fcinfo,
 										   &v_fcinfo_isnull);
@@ -657,24 +642,14 @@ llvm_compile_expr(ExprState *state)
 				LLVMBuildBr(b, opblocks[opno + 1]);
 				break;
 
-			case EEOP_BOOL_AND_STEP_FIRST:
-				{
-					LLVMValueRef v_boolanynullp;
-
-					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
-												 l_ptr(TypeStorageBool));
-					LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
-
-				}
-				/* FALLTHROUGH */
-
 				/*
 				 * Treat them the same for now, optimizer can remove
 				 * redundancy. Could be worthwhile to optimize during emission
 				 * though.
 				 */
-			case EEOP_BOOL_AND_STEP_LAST:
+			case EEOP_BOOL_AND_STEP_FIRST:
 			case EEOP_BOOL_AND_STEP:
+			case EEOP_BOOL_AND_STEP_LAST:
 				{
 					LLVMValueRef v_boolvalue;
 					LLVMValueRef v_boolnull;
@@ -699,6 +674,9 @@ llvm_compile_expr(ExprState *state)
 
 					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
 												 l_ptr(TypeStorageBool));
+
+					if (opcode == EEOP_BOOL_AND_STEP_FIRST)
+						LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
 
 					v_boolnull = LLVMBuildLoad(b, v_resnullp, "");
 					v_boolvalue = LLVMBuildLoad(b, v_resvaluep, "");
@@ -759,23 +737,15 @@ llvm_compile_expr(ExprState *state)
 					LLVMBuildBr(b, opblocks[opno + 1]);
 					break;
 				}
-			case EEOP_BOOL_OR_STEP_FIRST:
-				{
-					LLVMValueRef v_boolanynullp;
-
-					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
-												 l_ptr(TypeStorageBool));
-					LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
-				}
-				/* FALLTHROUGH */
 
 				/*
 				 * Treat them the same for now, optimizer can remove
 				 * redundancy. Could be worthwhile to optimize during emission
 				 * though.
 				 */
-			case EEOP_BOOL_OR_STEP_LAST:
+			case EEOP_BOOL_OR_STEP_FIRST:
 			case EEOP_BOOL_OR_STEP:
+			case EEOP_BOOL_OR_STEP_LAST:
 				{
 					LLVMValueRef v_boolvalue;
 					LLVMValueRef v_boolnull;
@@ -802,6 +772,8 @@ llvm_compile_expr(ExprState *state)
 					v_boolanynullp = l_ptr_const(op->d.boolexpr.anynull,
 												 l_ptr(TypeStorageBool));
 
+					if (opcode == EEOP_BOOL_OR_STEP_FIRST)
+						LLVMBuildStore(b, l_sbool_const(0), v_boolanynullp);
 					v_boolnull = LLVMBuildLoad(b, v_resnullp, "");
 					v_boolvalue = LLVMBuildLoad(b, v_resvaluep, "");
 
@@ -1958,40 +1930,39 @@ llvm_compile_expr(ExprState *state)
 				break;
 
 			case EEOP_AGG_STRICT_DESERIALIZE:
-				{
-					FunctionCallInfo fcinfo = op->d.agg_deserialize.fcinfo_data;
-					LLVMValueRef v_fcinfo;
-					LLVMValueRef v_argnull0;
-					LLVMBasicBlockRef b_deserialize;
-
-					b_deserialize = l_bb_before_v(opblocks[opno + 1],
-												  "op.%d.deserialize", opno);
-
-					v_fcinfo = l_ptr_const(fcinfo,
-										   l_ptr(StructFunctionCallInfoData));
-					v_argnull0 = l_funcnull(b, v_fcinfo, 0);
-
-					LLVMBuildCondBr(b,
-									LLVMBuildICmp(b,
-												  LLVMIntEQ,
-												  v_argnull0,
-												  l_sbool_const(1),
-												  ""),
-									opblocks[op->d.agg_deserialize.jumpnull],
-									b_deserialize);
-					LLVMPositionBuilderAtEnd(b, b_deserialize);
-				}
-				/* FALLTHROUGH */
-
 			case EEOP_AGG_DESERIALIZE:
 				{
 					AggState   *aggstate;
-					FunctionCallInfo fcinfo;
+					FunctionCallInfo fcinfo = op->d.agg_deserialize.fcinfo_data;
 
 					LLVMValueRef v_retval;
 					LLVMValueRef v_fcinfo_isnull;
 					LLVMValueRef v_tmpcontext;
 					LLVMValueRef v_oldcontext;
+
+					if (opcode == EEOP_AGG_STRICT_DESERIALIZE)
+					{
+						LLVMValueRef v_fcinfo;
+						LLVMValueRef v_argnull0;
+						LLVMBasicBlockRef b_deserialize;
+
+						b_deserialize = l_bb_before_v(opblocks[opno + 1],
+													  "op.%d.deserialize", opno);
+
+						v_fcinfo = l_ptr_const(fcinfo,
+											   l_ptr(StructFunctionCallInfoData));
+						v_argnull0 = l_funcnull(b, v_fcinfo, 0);
+
+						LLVMBuildCondBr(b,
+										LLVMBuildICmp(b,
+													  LLVMIntEQ,
+													  v_argnull0,
+													  l_sbool_const(1),
+													  ""),
+										opblocks[op->d.agg_deserialize.jumpnull],
+										b_deserialize);
+						LLVMPositionBuilderAtEnd(b, b_deserialize);
+					}
 
 					aggstate = castNode(AggState, state->parent);
 					fcinfo = op->d.agg_deserialize.fcinfo_data;
