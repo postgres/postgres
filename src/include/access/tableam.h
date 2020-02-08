@@ -47,19 +47,19 @@ typedef enum ScanOptions
 	SO_TYPE_SEQSCAN = 1 << 0,
 	SO_TYPE_BITMAPSCAN = 1 << 1,
 	SO_TYPE_SAMPLESCAN = 1 << 2,
-	SO_TYPE_TIDSCAN = 1 << 3,
-	SO_TYPE_ANALYZE = 1 << 4,
+	SO_TYPE_ANALYZE = 1 << 3,
+	SO_TYPE_TIDSCAN = 1 << 8,
 
 	/* several of SO_ALLOW_* may be specified */
 	/* allow or disallow use of access strategy */
-	SO_ALLOW_STRAT = 1 << 5,
+	SO_ALLOW_STRAT = 1 << 4,
 	/* report location to syncscan logic? */
-	SO_ALLOW_SYNC = 1 << 6,
+	SO_ALLOW_SYNC = 1 << 5,
 	/* verify visibility page-at-a-time? */
-	SO_ALLOW_PAGEMODE = 1 << 7,
+	SO_ALLOW_PAGEMODE = 1 << 6,
 
 	/* unregister snapshot at scan end? */
-	SO_TEMP_SNAPSHOT = 1 << 8
+	SO_TEMP_SNAPSHOT = 1 << 7
 } ScanOptions;
 
 /*
