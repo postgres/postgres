@@ -8744,7 +8744,7 @@ same commits as above
 -->
 
        <para>
-        Add <link linkend="predefined-roles-table">default roles</link> that
+        Add <link linkend="default-roles-table">default roles</link> that
         enable file system access (Stephen Frost)
        </para>
 
