@@ -23,10 +23,9 @@
    </para>
 
    <para>
-    However, if you have done any
-    partition-level <command>TRUNCATE</command> commands affecting
-    partitioned tables that have foreign-key references, see the entry
-    below about that.
+    However, if you have any foreign key constraints referencing
+    partitioned tables, see the two entries below about bugs in that
+    feature.
    </para>
   </sect2>
 
@@ -60,8 +59,32 @@ Branch: REL_12_STABLE [ce054a8cd] 2020-02-07 17:09:36 -0300
       tables, and you have done any
       partition-level <command>TRUNCATE</command> on the referenced table,
       you should check to see if any foreign key violations exist.  The
-      simplest way is to drop and re-add the foreign key constraint,
-      though this may be unduly expensive.
+      simplest way is to add a new instance of the foreign key constraint
+      (and, once that succeeds, drop it or the original constraint).
+      That may be prohibitive from a locking standpoint, however, in which
+      case you might prefer to manually query for unmatched rows.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [55173d2e6] 2020-02-07 18:27:18 -0300
+Branch: REL_12_STABLE [2c80a656c] 2020-02-07 18:27:18 -0300
+-->
+     <para>
+      Fix failure to attach foreign key constraints to sub-partitions
+      (Jehan-Guillaume de Rorthais)
+     </para>
+
+     <para>
+      When adding a partition to a level below the first level of a
+      multi-level partitioned table, foreign key constraints referencing
+      the top partitioned table were not cloned to the new partition,
+      leading to possible constraint violations later.  Detaching and
+      re-attaching the new partition is the cheapest way to fix this.
+      However, if there are many partitions to be fixed, adding a new
+      instance of the foreign key constraint might be preferable.
      </para>
     </listitem>
 
@@ -413,6 +436,10 @@ Branch: REL_10_STABLE [ab64b474d] 2019-11-20 00:05:42 +0300
 Branch: REL9_6_STABLE [99f5888d3] 2019-11-19 23:47:29 +0300
 Branch: REL9_5_STABLE [4fc485684] 2019-11-20 00:01:55 +0300
 Branch: REL9_4_STABLE [1414821e1] 2019-11-20 00:03:04 +0300
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [4093ff573] 2020-02-09 12:02:57 -0500
+Branch: REL_12_STABLE [baf487123] 2020-02-09 12:02:57 -0500
+Branch: REL_11_STABLE [f91706b00] 2020-02-09 12:02:57 -0500
 -->
      <para>
       Fix handling of deleted pages in GIN indexes (Alexander Korotkov)
@@ -605,6 +632,7 @@ Branch: REL_12_STABLE [5a6eea092] 2019-11-13 15:53:53 -0500
 Author: Fujii Masao <fujii@postgresql.org>
 Branch: master [cb5b28613] 2020-02-07 22:06:31 +0900
 Branch: REL_12_STABLE [598b466e8] 2020-02-07 22:07:44 +0900
+Branch: REL_12_STABLE [4faea7fdf] 2020-02-08 12:29:38 +0900
 -->
      <para>
       Avoid treating TID scans as sequential scans (Tatsuhito Kasahara)
@@ -1262,7 +1290,7 @@ Branch: REL_11_STABLE [7ad544fd8] 2019-12-06 15:14:31 +0900
       Fix <application>configure</application>'s probe for
       OpenSSL's <function>SSL_clear_options()</function> function so that
       it works with OpenSSL versions before 1.1.0 (Michael Paquier, Daniel
-      Gustaffson)
+      Gustafsson)
      </para>
 
      <para>
