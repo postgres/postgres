@@ -483,30 +483,30 @@ DROP ROLE doomed_role;
   </para>
  </sect1>
 
- <sect1 id="predefined-roles">
-  <title>Predefined Roles</title>
+ <sect1 id="default-roles">
+  <title>Default Roles</title>
 
-  <indexterm zone="predefined-roles">
+  <indexterm zone="default-roles">
    <primary>role</primary>
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> provides a set of predefined
-   roles which allow access to privileged capabilities and information.
-   Administrators can GRANT these roles to login and non-login roles,
-   providing those roles with access to the specified capabilities and
-   information.
+   <productname>PostgreSQL</productname> provides a set of default roles
+   which provide access to certain, commonly needed, privileged capabilities
+   and information.  Administrators can GRANT these roles to users and/or
+   other roles in their environment, providing those users with access to
+   the specified capabilities and information.
   </para>
 
   <para>
-   The predefined roles are described in <xref linkend="predefined-roles-table"/>.
-   Note that the specific permissions for each of the predefined roles may
+   The default roles are described in <xref linkend="default-roles-table"/>.
+   Note that the specific permissions for each of the default roles may
    change in the future as additional capabilities are added.  Administrators
    should monitor the release notes for changes.
   </para>
 
-   <table tocentry="1" id="predefined-roles-table">
-    <title>Predefined Roles</title>
+   <table tocentry="1" id="default-roles-table">
+    <title>Default Roles</title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -565,8 +565,8 @@ DROP ROLE doomed_role;
   <literal>pg_read_all_stats</literal> and <literal>pg_stat_scan_tables</literal>
   roles are intended to allow administrators to easily configure a role for the
   purpose of monitoring the database server. They grant a set of common privileges
-  allowing the role to read configuration settings, statistics, and other
-  system information normally restricted to superusers.
+  allowing the role to read various useful configuration settings, statistics and
+  other system information normally restricted to superusers.
   </para>
 
   <para>
