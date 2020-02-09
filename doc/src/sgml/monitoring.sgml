@@ -277,7 +277,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    existence of a session and its general properties such as its sessions user
    and database are visible to all users.  Superusers and members of the
    built-in role <literal>pg_read_all_stats</literal> (see also <xref
-   linkend="predefined-roles"/>) can see all the information about all sessions.
+   linkend="default-roles"/>) can see all the information about all sessions.
   </para>
 
   <table id="monitoring-stats-dynamic-views-table">
