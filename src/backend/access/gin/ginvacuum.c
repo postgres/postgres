@@ -165,9 +165,6 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	page = BufferGetPage(lBuffer);
 	GinPageGetOpaque(page)->rightlink = rightlink;
 
-	/* For deleted page remember last xid which could knew its address */
-	GinPageSetDeleteXid(page, ReadNewTransactionId());
-
 	/* Delete downlink from parent */
 	parentPage = BufferGetPage(pBuffer);
 #ifdef USE_ASSERT_CHECKING
@@ -186,7 +183,13 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	 * we shouldn't change rightlink field to save workability of running
 	 * search scan
 	 */
+
+	/*
+	 * Mark page as deleted, and remember last xid which could know its
+	 * address.
+	 */
 	GinPageSetDeleted(page);
+	GinPageSetDeleteXid(page, ReadNewTransactionId());
 
 	MarkBufferDirty(pBuffer);
 	MarkBufferDirty(lBuffer);
