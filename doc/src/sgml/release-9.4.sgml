@@ -502,6 +502,24 @@ Branch: REL9_4_STABLE [56c06999d] 2019-11-13 11:35:37 -0500
 
     <listitem>
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [8fa8e0115] 2020-02-10 12:14:58 -0300
+Branch: REL_12_STABLE [87d014da9] 2020-02-10 12:14:58 -0300
+Branch: REL_11_STABLE [ca902add6] 2020-02-10 12:14:58 -0300
+Branch: REL_10_STABLE [163161723] 2020-02-10 12:14:58 -0300
+Branch: REL9_6_STABLE [5575fc208] 2020-02-10 12:14:58 -0300
+Branch: REL9_5_STABLE [1b2ae4bcd] 2020-02-10 12:16:40 -0300
+Branch: REL9_4_STABLE [6f1e443a6] 2020-02-10 12:14:58 -0300
+-->
+     <para>
+      Apply more thorough syntax checking
+      to <application>createuser</application>'s
+      <option>--connection-limit</option> option (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 Branch: master [b52739436] 2019-12-03 18:40:07 +0100
 Branch: REL_12_STABLE [a8a8c6b29] 2019-12-03 18:40:48 +0100
