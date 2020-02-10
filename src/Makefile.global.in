@@ -74,9 +74,6 @@ endif # not PGXS
 
 vpathsearch = `for f in $(addsuffix /$(1),$(subst :, ,. $(VPATH))); do test -r $$f && echo $$f && break; done`
 
-# Saved arguments from configure
-configure_args = @configure_args@
-
 
 ##########################################################################
 #

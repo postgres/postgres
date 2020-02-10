@@ -124,11 +124,7 @@ get_configdata(const char *my_exec_path, size_t *configdata_len)
 	i++;
 
 	configdata[i].name = pstrdup("CONFIGURE");
-#ifdef VAL_CONFIGURE
-	configdata[i].setting = pstrdup(VAL_CONFIGURE);
-#else
-	configdata[i].setting = pstrdup(_("not recorded"));
-#endif
+	configdata[i].setting = pstrdup(CONFIGURE_ARGS);
 	i++;
 
 	configdata[i].name = pstrdup("CC");

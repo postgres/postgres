@@ -195,6 +195,7 @@ sub GenerateFiles
 		ALIGNOF_SHORT              => 2,
 		AC_APPLE_UNIVERSAL_BUILD   => undef,
 		BLCKSZ                     => 1024 * $self->{options}->{blocksize},
+		CONFIGURE_ARGS             => '"' . $self->GetFakeConfigure() . '"',
 		DEF_PGPORT                 => $port,
 		DEF_PGPORT_STR             => qq{"$port"},
 		ENABLE_GSS                 => $self->{options}->{gss} ? 1 : undef,
@@ -537,12 +538,6 @@ sub GenerateFiles
 	$self->GenerateConfigHeader('src/include/pg_config.h', \%define, 1);
 	$self->GenerateConfigHeader('src/include/pg_config_ext.h', \%define, 0);
 	$self->GenerateConfigHeader('src/interfaces/ecpg/include/ecpg_config.h', \%define, 0);
-
-	open(my $f, '>>', 'src/include/pg_config.h')
-	  || confess "Could not write to src/include/pg_config.h\n";
-	print $f "\n";
-	print $f "#define VAL_CONFIGURE \"" . $self->GetFakeConfigure() . "\"\n";
-	close($f);
 
 	$self->GenerateDefFile(
 		"src/interfaces/libpq/libpqdll.def",

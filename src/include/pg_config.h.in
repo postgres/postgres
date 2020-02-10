@@ -42,6 +42,9 @@
    Changing BLCKSZ requires an initdb. */
 #undef BLCKSZ
 
+/* Saved arguments from configure */
+#undef CONFIGURE_ARGS
+
 /* Define to the default TCP port number on which the server listens and to
    which clients will try to connect. This can be overridden at run-time, but
    it's convenient if your clients have the right default compiled in.
