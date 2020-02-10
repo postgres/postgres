@@ -373,7 +373,10 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 				if (visible)
 				{
 					chwidth = PQdsplen(p, pset.encoding);
-					if (chwidth > 0)
+
+					if (*p == '\n')
+						last_prompt1_width = 0;
+					else if (chwidth > 0)
 						last_prompt1_width += chwidth;
 				}
 
