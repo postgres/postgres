@@ -65,8 +65,8 @@
      <para>
       Number of bits generated for each index column. Each parameter's name
       refers to the number of the index column that it controls.  The default
-      is <literal>2</literal> bits and maximum is <literal>4095</literal>.  Parameters for
-      index columns not actually used are ignored.
+      is <literal>2</literal> bits and the maximum is <literal>4095</literal>.
+      Parameters for index columns not actually used are ignored.
      </para>
     </listitem>
    </varlistentry>
