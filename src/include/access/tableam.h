@@ -1199,7 +1199,7 @@ table_tuple_complete_speculative(Relation rel, TupleTableSlot *slot,
  * operation. That's often faster than calling table_insert() in a loop,
  * because e.g. the AM can reduce WAL logging and page locking overhead.
  *
- * Except for taking `nslots` tuples as input, as an array of TupleTableSlots
+ * Except for taking `nslots` tuples as input, and an array of TupleTableSlots
  * in `slots`, the parameters for table_multi_insert() are the same as for
  * table_tuple_insert().
  *

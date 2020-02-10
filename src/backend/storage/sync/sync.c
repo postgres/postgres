@@ -216,7 +216,7 @@ SyncPostCheckpoint(void)
 
 		/*
 		 * As in ProcessSyncRequests, we don't want to stop absorbing fsync
-		 * requests for along time when there are many deletions to be done.
+		 * requests for a long time when there are many deletions to be done.
 		 * We can safely call AbsorbSyncRequests() at this point in the loop
 		 * (note it might try to delete list entries).
 		 */

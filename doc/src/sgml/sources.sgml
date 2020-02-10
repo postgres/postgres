@@ -511,7 +511,7 @@ Hint:       the addendum
 
    <para>
     There are functions in the backend that will double-quote their own output
-    at need (for example, <function>format_type_be()</function>).  Do not put
+    as needed (for example, <function>format_type_be()</function>).  Do not put
     additional quotes around the output of such functions.
    </para>
 
@@ -880,7 +880,7 @@ BETTER: unrecognized node type: 42
      practices.
     </para>
     <para>
-     Features from later revision of the C standard or compiler specific
+     Features from later revisions of the C standard or compiler specific
      features can be used, if a fallback is provided.
     </para>
     <para>

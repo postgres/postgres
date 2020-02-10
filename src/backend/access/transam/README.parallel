@@ -169,7 +169,7 @@ differently because of them.  Right now, we don't even allow that.
 At the end of a parallel operation, which can happen either because it
 completed successfully or because it was interrupted by an error, parallel
 workers associated with that operation exit.  In the error case, transaction
-abort processing in the parallel leader kills of any remaining workers, and
+abort processing in the parallel leader kills off any remaining workers, and
 the parallel leader then waits for them to die.  In the case of a successful
 parallel operation, the parallel leader does not send any signals, but must
 wait for workers to complete and exit of their own volition.  In either

@@ -4291,7 +4291,7 @@ ts_ckpt_progress_comparator(Datum a, Datum b, void *arg)
  *
  * *max_pending is a pointer instead of an immediate value, so the coalesce
  * limits can easily changed by the GUC mechanism, and so calling code does
- * not have to check the current configuration. A value is 0 means that no
+ * not have to check the current configuration. A value of 0 means that no
  * writeback control will be performed.
  */
 void
