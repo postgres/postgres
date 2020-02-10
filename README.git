@@ -6,7 +6,7 @@ git and so will not be present if you are using a git checkout.
 
 If you are using a git checkout, you can view the most recent installation
 instructions at:
-	https://www.postgresql.org/docs/devel/static/installation.html
+	https://www.postgresql.org/docs/devel/installation.html
 
 Users compiling from git will also need compatible versions of Bison, Flex,
 and Perl, as discussed in the install documentation.  These programs are not
