@@ -1,0 +1,179 @@
+# LANGUAGE message translation file for pg_archivecleanup
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 12\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-02-09 20:16+0000\n"
+"PO-Revision-Date: 2019-10-31 11:13+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../../src/common/logging.c:188
+#, c-format
+msgid "fatal: "
+msgstr "심각: "
+
+#: ../../../src/common/logging.c:195
+#, c-format
+msgid "error: "
+msgstr "오류: "
+
+#: ../../../src/common/logging.c:202
+#, c-format
+msgid "warning: "
+msgstr "경고: "
+
+#: pg_archivecleanup.c:68
+#, c-format
+msgid "archive location \"%s\" does not exist"
+msgstr "\"%s\" 이름의 아카이브 위치가 없음"
+
+#: pg_archivecleanup.c:154
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "\"%s\" 파일을 삭제할 수 없음: %m"
+
+#: pg_archivecleanup.c:162
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "\"%s\" 아카이브 위치를 읽을 수 없음: %m"
+
+#: pg_archivecleanup.c:165
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "\"%s\" 아카이브 위치를 닫을 수 없음: %m"
+
+#: pg_archivecleanup.c:169
+#, c-format
+msgid "could not open archive location \"%s\": %m"
+msgstr "\"%s\" 아카이브 위치를 열 수 없음: %m"
+
+#: pg_archivecleanup.c:242
+#, c-format
+msgid "invalid file name argument"
+msgstr "잘못된 파일 이름 매개변수"
+
+#: pg_archivecleanup.c:243 pg_archivecleanup.c:316 pg_archivecleanup.c:337
+#: pg_archivecleanup.c:349 pg_archivecleanup.c:356
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "보다 자세한 정보는 \"%s --help\" 명령을 참조하세요.\n"
+
+#: pg_archivecleanup.c:256
+#, c-format
+msgid ""
+"%s removes older WAL files from PostgreSQL archives.\n"
+"\n"
+msgstr ""
+"%s 명령은 PostgreSQL 아카이브 보관소에서 오래된\n"
+"WAL 파일을 지웁니다.\n"
+"\n"
+
+#: pg_archivecleanup.c:257
+#, c-format
+msgid "Usage:\n"
+msgstr "사용법:\n"
+
+#: pg_archivecleanup.c:258
+#, c-format
+msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr "  %s [옵션]... 아카이브위치 보관할제일오래된파일\n"
+
+#: pg_archivecleanup.c:259
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"옵션들:\n"
+
+#: pg_archivecleanup.c:260
+#, c-format
+msgid "  -d             generate debug output (verbose mode)\n"
+msgstr "  -d             보다 자세한 작업 내용 출력\n"
+
+#: pg_archivecleanup.c:261
+#, c-format
+msgid ""
+"  -n             dry run, show the names of the files that would be removed\n"
+msgstr "  -n             지울 대상만 확인하고 지우지는 않음\n"
+
+#: pg_archivecleanup.c:262
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  버전 정보를 보여주고 마침\n"
+
+#: pg_archivecleanup.c:263
+#, c-format
+msgid "  -x EXT         clean up files if they have this extension\n"
+msgstr "  -x EXT         해당 확장자 파일들을 작업 대상으로 함\n"
+
+#: pg_archivecleanup.c:264
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     도움말을 보여주고 마침\n"
+
+#: pg_archivecleanup.c:265
+#, c-format
+msgid ""
+"\n"
+"For use as archive_cleanup_command in postgresql.conf:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION "
+"%%r'\n"
+"e.g.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+msgstr ""
+"\n"
+"postgresql.conf 파일에서 archive_cleanup_command 설정 방법:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [옵션]... 아카이브위치 %%r'\n"
+"사용예:\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+
+#: pg_archivecleanup.c:270
+#, c-format
+msgid ""
+"\n"
+"Or for use as a standalone archive cleaner:\n"
+"e.g.\n"
+"  pg_archivecleanup /mnt/server/archiverdir "
+"000000010000000000000010.00000020.backup\n"
+msgstr ""
+"\n"
+"또는 명령행에서 독립적으로 사용하는 경우:\n"
+"사용예:\n"
+"  pg_archivecleanup /mnt/server/archiverdir "
+"000000010000000000000010.00000020.backup\n"
+
+#: pg_archivecleanup.c:274
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr ""
+"\n"
+"문제점 보고 <pgsql-bugs@lists.postgresql.org>.\n"
+
+#: pg_archivecleanup.c:336
+#, c-format
+msgid "must specify archive location"
+msgstr "아카이브 위치는 지정해야 함"
+
+#: pg_archivecleanup.c:348
+#, c-format
+msgid "must specify oldest kept WAL file"
+msgstr "남길 가장 오래된 WAL 파일은 지정해야 함"
+
+#: pg_archivecleanup.c:355
+#, c-format
+msgid "too many command-line arguments"
+msgstr "너무 많은 명령행 인자를 지정했음"

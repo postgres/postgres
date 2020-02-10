@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-02 13:57+0900\n"
-"PO-Revision-Date: 2017-08-17 13:16+0900\n"
+"Project-Id-Version: pg_config (PostgreSQL) 12\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-02-09 20:14+0000\n"
+"PO-Revision-Date: 2019-11-01 11:34+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -23,40 +23,44 @@ msgstr ""
 msgid "not recorded"
 msgstr "기록되어 있지 않음"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "현재 디렉터리를 알 수 없음: %s"
+msgid "could not identify current directory: %m"
+msgstr "현재 디렉터리를 알 수 없음: %m"
 
-#: ../../common/exec.c:146
+#: ../../common/exec.c:157
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "잘못된 바이너리 파일: \"%s\""
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:207
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "\"%s\" 바이너리 파일을 읽을 수 없음"
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:215
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "실행할 \"%s\" 파일 찾을 수 없음"
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "\"%s\" 디렉터리로 바꿀 수 없음: %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "\"%s\" 디렉터리로 바꿀 수 없음: %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:288
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "\"%s\" 심벌릭 링크를 읽을 수 없음"
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "\"%s\" 심벌릭 링크를 읽을 수 없음: %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:541
 #, c-format
-msgid "pclose failed: %s"
-msgstr "pclose 실패: %s"
+msgid "pclose failed: %m"
+msgstr "pclose 실패: %m"
+
+#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+msgid "out of memory"
+msgstr "메모리 부족"
 
 #: pg_config.c:74
 #, c-format
@@ -248,8 +252,8 @@ msgstr ""
 
 #: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "오류보고: <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr "오류보고: <pgsql-bugs@lists.postgresql.org>.\n"
 
 #: pg_config.c:111
 #, c-format
@@ -265,24 +269,3 @@ msgstr "%s: 실행 가능한 프로그램을 찾을 수 없습니다\n"
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: 잘못된 인수: %s\n"
-
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "하위 프로세스가 종료되었음, 알수 없는 상태 %d"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "하위 프로세스가 종료되었음, 시그널 %d"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "%s 시그널이 감지되어 하위 프로세스가 종료되었음"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "0x%X 예외처리에 의해 하위 프로세스가 종료되었음"
-
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "하위 프로세스가 종료되었음, 종료 코드 %d"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "\"%s\" 디렉터리로 이동 할 수 없음"
-
-#~ msgid "  --help                show this help, then exit\n"
-#~ msgstr "  --help                이 도움말을 보여주고 마침\n"

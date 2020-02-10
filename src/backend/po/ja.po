@@ -18289,7 +18289,7 @@ msgstr "並べ替えバッファのあふれファイルの読み込みに失敗
 #: replication/logical/reorderbuffer.c:2849
 #, c-format
 msgid "could not remove file \"%s\" during removal of pg_replslot/%s/xid*: %m"
-msgstr "pg_repslot/%2$s/xid* の削除中にファイル\"%1$s\"が削除できませんでした: %3$m"
+msgstr "pg_replslot/%2$s/xid* の削除中にファイル\"%1$s\"が削除できませんでした: %3$m"
 
 #: replication/logical/reorderbuffer.c:3319
 #, c-format

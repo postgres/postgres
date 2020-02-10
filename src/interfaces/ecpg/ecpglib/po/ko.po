@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-26 14:02+0900\n"
-"PO-Revision-Date: 2017-08-17 13:20+0900\n"
+"Project-Id-Version: ecpglib (PostgreSQL) 12\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2020-02-09 20:09+0000\n"
+"PO-Revision-Date: 2020-02-10 09:54+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -24,7 +24,7 @@ msgstr "빈 메시지 텍스트"
 msgid "<DEFAULT>"
 msgstr "<초기값>"
 
-#: descriptor.c:833 misc.c:120
+#: descriptor.c:876 misc.c:120
 msgid "NULL"
 msgstr "NULL"
 
@@ -193,6 +193,6 @@ msgstr "서버 연결 끊김"
 msgid "SQL error: %s\n"
 msgstr "SQL 오류: %s\n"
 
-#: execute.c:1962
+#: execute.c:2198 execute.c:2205
 msgid "<empty>"
 msgstr "<empty>"

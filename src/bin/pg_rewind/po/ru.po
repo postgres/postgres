@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-09 12:21+0300\n"
+"POT-Creation-Date: 2019-10-08 21:31+0300\n"
 "PO-Revision-Date: 2019-09-02 12:32+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -594,27 +594,27 @@ msgstr "требуется скопировать %lu МБ (общий разм�
 msgid "creating backup label and updating control file"
 msgstr "создание метки копии и модификация управляющего файла"
 
-#: pg_rewind.c:394
+#: pg_rewind.c:395
 #, c-format
 msgid "syncing target data directory"
 msgstr "синхронизация целевого каталога данных"
 
-#: pg_rewind.c:397
+#: pg_rewind.c:398
 #, c-format
 msgid "Done!"
 msgstr "Готово!"
 
-#: pg_rewind.c:409
+#: pg_rewind.c:410
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "исходный и целевой кластеры относятся к разным системам"
 
-#: pg_rewind.c:417
+#: pg_rewind.c:418
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "кластеры несовместимы с этой версией pg_rewind"
 
-#: pg_rewind.c:427
+#: pg_rewind.c:428
 #, c-format
 msgid ""
 "target server needs to use either data checksums or \"wal_log_hints = on\""
@@ -622,49 +622,49 @@ msgstr ""
 "на целевом сервере должны быть контрольные суммы данных или \"wal_log_hints "
 "= on\""
 
-#: pg_rewind.c:438
+#: pg_rewind.c:439
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "целевой сервер должен быть выключен штатно"
 
-#: pg_rewind.c:448
+#: pg_rewind.c:449
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "работа с исходным каталогом данных должна быть завершена штатно"
 
-#: pg_rewind.c:497
+#: pg_rewind.c:498
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s КБ (%d%%) скопировано"
 
-#: pg_rewind.c:558
+#: pg_rewind.c:559
 #, c-format
 msgid "invalid control file"
 msgstr "неверный управляющий файл"
 
-#: pg_rewind.c:642
+#: pg_rewind.c:643
 #, c-format
 msgid ""
 "could not find common ancestor of the source and target cluster's timelines"
 msgstr ""
 "не удалось найти общего предка линий времени исходного и целевого кластеров"
 
-#: pg_rewind.c:683
+#: pg_rewind.c:684
 #, c-format
 msgid "backup label buffer too small"
 msgstr "буфер для метки копии слишком мал"
 
-#: pg_rewind.c:706
+#: pg_rewind.c:707
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "неверная контрольная сумма управляющего файла"
 
-#: pg_rewind.c:716
+#: pg_rewind.c:717
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "неверный размер управляющего файла (%d), ожидалось: %d"
 
-#: pg_rewind.c:725
+#: pg_rewind.c:726
 #, c-format
 msgid ""
 "WAL segment size must be a power of two between 1 MB and 1 GB, but the "

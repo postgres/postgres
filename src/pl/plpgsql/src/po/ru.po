@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-09 12:21+0300\n"
+"POT-Creation-Date: 2020-02-05 11:03+0300\n"
 "PO-Revision-Date: 2019-08-29 16:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -99,7 +99,7 @@ msgstr "переменная \"%s\" имеет псевдотип %s"
 msgid "type \"%s\" is only a shell"
 msgstr "тип \"%s\" — лишь пустышка"
 
-#: pl_comp.c:2162 pl_exec.c:6886
+#: pl_comp.c:2162 pl_exec.c:6895
 #, c-format
 msgid "type %s is not composite"
 msgstr "тип %s не является составным"
@@ -411,7 +411,7 @@ msgstr "в запросе нет назначения для данных рез
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Если вам нужно отбросить результаты SELECT, используйте PERFORM."
 
-#: pl_exec.c:4333 pl_exec.c:8518
+#: pl_exec.c:4333 pl_exec.c:8527
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "в качестве текста запроса в EXECUTE передан NULL"
@@ -517,29 +517,29 @@ msgstr ""
 "тип параметра %d (%s) не соответствует тому, с которым подготавливался план "
 "(%s)"
 
-#: pl_exec.c:7090 pl_exec.c:7124 pl_exec.c:7198 pl_exec.c:7224
+#: pl_exec.c:7099 pl_exec.c:7133 pl_exec.c:7207 pl_exec.c:7233
 #, c-format
 msgid "number of source and target fields in assignment does not match"
 msgstr "в левой и правой части присваивания разное количество полей"
 
 #. translator: %s represents a name of an extra check
-#: pl_exec.c:7092 pl_exec.c:7126 pl_exec.c:7200 pl_exec.c:7226
+#: pl_exec.c:7101 pl_exec.c:7135 pl_exec.c:7209 pl_exec.c:7235
 #, c-format
 msgid "%s check of %s is active."
 msgstr "Включена проверка %s (с %s)."
 
-#: pl_exec.c:7096 pl_exec.c:7130 pl_exec.c:7204 pl_exec.c:7230
+#: pl_exec.c:7105 pl_exec.c:7139 pl_exec.c:7213 pl_exec.c:7239
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
 msgstr ""
 "Измените запрос, чтобы он возвращал в точности требуемый список столбцов."
 
-#: pl_exec.c:7617
+#: pl_exec.c:7626
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "записи \"%s\" не присвоено значение"
 
-#: pl_exec.c:7618
+#: pl_exec.c:7627
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr ""
