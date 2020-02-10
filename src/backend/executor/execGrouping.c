@@ -26,6 +26,8 @@
 #include "utils/memutils.h"
 
 static int	TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2);
+static uint32 TupleHashTableHash_internal(struct tuplehash_hash *tb,
+										  const MinimalTuple tuple);
 static TupleHashEntry LookupTupleHashEntry_internal(
 	TupleHashTable hashtable, TupleTableSlot *slot, bool *isnew, uint32 hash);
 
@@ -38,7 +40,7 @@ static TupleHashEntry LookupTupleHashEntry_internal(
 #define SH_ELEMENT_TYPE TupleHashEntryData
 #define SH_KEY_TYPE MinimalTuple
 #define SH_KEY firstTuple
-#define SH_HASH_KEY(tb, key) TupleHashTableHash(tb, key)
+#define SH_HASH_KEY(tb, key) TupleHashTableHash_internal(tb, key)
 #define SH_EQUAL(tb, a, b) TupleHashTableMatch(tb, a, b) == 0
 #define SH_SCOPE extern
 #define SH_STORE_HASH
@@ -313,12 +315,34 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 	hashtable->in_hash_funcs = hashtable->tab_hash_funcs;
 	hashtable->cur_eq_func = hashtable->tab_eq_func;
 
-	hash = TupleHashTableHash(hashtable->hashtab, NULL);
+	hash = TupleHashTableHash_internal(hashtable->hashtab, NULL);
 	entry = LookupTupleHashEntry_internal(hashtable, slot, isnew, hash);
 
 	MemoryContextSwitchTo(oldContext);
 
 	return entry;
+}
+
+/*
+ * Compute the hash value for a tuple
+ */
+uint32
+TupleHashTableHash(TupleHashTable hashtable, TupleTableSlot *slot)
+{
+	MemoryContext   oldContext;
+	uint32          hash;
+
+	hashtable->inputslot = slot;
+	hashtable->in_hash_funcs = hashtable->tab_hash_funcs;
+
+	/* Need to run the hash functions in short-lived context */
+	oldContext = MemoryContextSwitchTo(hashtable->tempcxt);
+
+	hash = TupleHashTableHash_internal(hashtable->hashtab, NULL);
+
+	MemoryContextSwitchTo(oldContext);
+
+	return hash;
 }
 
 /*
@@ -382,8 +406,6 @@ FindTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 }
 
 /*
- * Compute the hash value for a tuple
- *
  * If tuple is NULL, use the input slot instead. This convention avoids the
  * need to materialize virtual input tuples unless they actually need to get
  * copied into the table.
@@ -391,8 +413,9 @@ FindTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
  * Also, the caller must select an appropriate memory context for running
  * the hash functions. (dynahash.c doesn't change CurrentMemoryContext.)
  */
-uint32
-TupleHashTableHash(struct tuplehash_hash *tb, const MinimalTuple tuple)
+static uint32
+TupleHashTableHash_internal(struct tuplehash_hash *tb,
+							const MinimalTuple tuple)
 {
 	TupleHashTable hashtable = (TupleHashTable) tb->private_data;
 	int			numCols = hashtable->numCols;

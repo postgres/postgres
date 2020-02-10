@@ -140,8 +140,8 @@ extern TupleHashTable BuildTupleHashTableExt(PlanState *parent,
 extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 										   TupleTableSlot *slot,
 										   bool *isnew);
-extern uint32 TupleHashTableHash(struct tuplehash_hash *tb,
-								 const MinimalTuple tuple);
+extern uint32 TupleHashTableHash(TupleHashTable hashtable,
+								 TupleTableSlot *slot);
 extern TupleHashEntry LookupTupleHashEntryHash(TupleHashTable hashtable,
 											   TupleTableSlot *slot,
 											   bool *isnew, uint32 hash);
