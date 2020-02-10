@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	enum trivalue prompt_password = TRI_DEFAULT;
 	bool		echo = false;
 	bool		interactive = false;
-	char	   *conn_limit = NULL;
+	int			conn_limit = -2;	/* less than minimum valid value */
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
 
@@ -88,6 +88,8 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSaArRiIlLc:PEN",
 							long_options, &optindex)) != -1)
 	{
+		char   *endptr;
+
 		switch (c)
 		{
 			case 'h':
@@ -144,7 +146,14 @@ main(int argc, char *argv[])
 				login = TRI_NO;
 				break;
 			case 'c':
-				conn_limit = pg_strdup(optarg);
+				conn_limit = strtol(optarg, &endptr, 10);
+				if (*endptr != '\0' || conn_limit < -1)	/* minimum valid value */
+				{
+					fprintf(stderr,
+							_("%s: invalid value for --connection-limit: %s\n"),
+							progname, optarg);
+					exit(1);
+				}
 				break;
 			case 'P':
 				pwprompt = true;
@@ -305,8 +314,8 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(&sql, " REPLICATION");
 	if (replication == TRI_NO)
 		appendPQExpBufferStr(&sql, " NOREPLICATION");
-	if (conn_limit != NULL)
-		appendPQExpBuffer(&sql, " CONNECTION LIMIT %s", conn_limit);
+	if (conn_limit >= -1)
+		appendPQExpBuffer(&sql, " CONNECTION LIMIT %d", conn_limit);
 	if (roles.head != NULL)
 	{
 		SimpleStringListCell *cell;
