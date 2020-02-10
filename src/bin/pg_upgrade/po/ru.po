@@ -1,12 +1,12 @@
 # Russian message translation file for pg_upgrade
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-02-10 17:44+0300\n"
+"POT-Creation-Date: 2020-02-05 11:04+0300\n"
 "PO-Revision-Date: 2019-02-08 13:03+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -198,7 +198,7 @@ msgid "Creating script to analyze new cluster"
 msgstr "Создание скрипта для анализа нового кластера"
 
 #: check.c:446 check.c:574 check.c:838 check.c:949 check.c:1040 function.c:253
-#: option.c:480 version.c:57 version.c:156 version.c:257 version.c:339
+#: option.c:480 version.c:57 version.c:202 version.c:344
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не удалось открыть файл \"%s\": %s\n"
@@ -298,8 +298,8 @@ msgstr "Целевой кластер содержит подготовленн�
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Проверка несоответствия при передаче bigint в contrib/isn"
 
-#: check.c:860 check.c:972 check.c:1063 function.c:268 version.c:179
-#: version.c:280
+#: check.c:860 check.c:972 check.c:1063 function.c:268 version.c:248
+#: version.c:285
 #, c-format
 msgid "fatal\n"
 msgstr "сбой\n"
@@ -1711,7 +1711,7 @@ msgstr "ok"
 msgid "Checking for large objects"
 msgstr "Проверка больших объектов"
 
-#: version.c:80 version.c:382
+#: version.c:80 version.c:387
 #, c-format
 msgid "warning"
 msgstr "предупреждение"
@@ -1755,12 +1755,12 @@ msgstr ""
 "суперпользователем базы данных).\n"
 "\n"
 
-#: version.c:118
+#: version.c:242
 #, c-format
 msgid "Checking for incompatible \"line\" data type"
 msgstr "Проверка несовместимого типа данных \"line\""
 
-#: version.c:180
+#: version.c:249
 #, c-format
 msgid ""
 "Your installation contains the \"line\" data type in user tables.  This\n"
@@ -1782,12 +1782,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:215
+#: version.c:279
 #, c-format
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Проверка неправильных пользовательских столбцов типа \"unknown\""
 
-#: version.c:281
+#: version.c:286
 #, c-format
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.  This\n"
@@ -1805,12 +1805,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:304
+#: version.c:309
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Проверка хеш-индексов"
 
-#: version.c:384
+#: version.c:389
 #, c-format
 msgid ""
 "\n"
@@ -1827,7 +1827,7 @@ msgstr ""
 "инструкции по выполнению REINDEX.\n"
 "\n"
 
-#: version.c:390
+#: version.c:395
 #, c-format
 msgid ""
 "\n"
