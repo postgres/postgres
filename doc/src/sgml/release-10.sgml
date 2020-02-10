@@ -35,6 +35,30 @@
 
     <listitem>
 <!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [b048f558d] 2020-02-10 11:47:09 -0300
+Branch: REL_12_STABLE [2ad125322] 2020-02-10 11:47:09 -0300
+Branch: REL_11_STABLE [bdd19e48a] 2020-02-10 11:47:09 -0300
+Branch: REL_10_STABLE [ac1a998ed] 2020-02-10 11:47:09 -0300
+Branch: REL9_6_STABLE [e8b8eb937] 2020-02-10 12:06:25 -0300
+-->
+     <para>
+      Add missing permissions checks for <command>ALTER ... DEPENDS ON
+      EXTENSION</command> (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      Marking an object as dependent on an extension did not have any
+      privilege check whatsoever.  This oversight allowed any user to mark
+      routines, triggers, materialized views, or indexes as droppable by
+      anyone able to drop an extension.  Require that the calling user own
+      the specified object (and hence have privilege to drop it).
+      (CVE-2020-1720)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 Branch: master [b9c130a1f] 2020-01-06 08:40:00 +0100
 Branch: REL_12_STABLE [8c2bfd9f9] 2020-01-06 10:43:55 +0100
@@ -763,6 +787,24 @@ Branch: REL9_4_STABLE [56c06999d] 2019-11-13 11:35:37 -0500
       In <application>pg_upgrade</application>, look inside arrays and
       ranges while searching for non-upgradable data types in tables
       (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [8fa8e0115] 2020-02-10 12:14:58 -0300
+Branch: REL_12_STABLE [87d014da9] 2020-02-10 12:14:58 -0300
+Branch: REL_11_STABLE [ca902add6] 2020-02-10 12:14:58 -0300
+Branch: REL_10_STABLE [163161723] 2020-02-10 12:14:58 -0300
+Branch: REL9_6_STABLE [5575fc208] 2020-02-10 12:14:58 -0300
+Branch: REL9_5_STABLE [1b2ae4bcd] 2020-02-10 12:16:40 -0300
+Branch: REL9_4_STABLE [6f1e443a6] 2020-02-10 12:14:58 -0300
+-->
+     <para>
+      Apply more thorough syntax checking
+      to <application>createuser</application>'s
+      <option>--connection-limit</option> option (&Aacute;lvaro Herrera)
      </para>
     </listitem>
 
