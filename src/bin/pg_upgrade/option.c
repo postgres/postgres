@@ -285,7 +285,7 @@ Options:\n\
   -c, --check                   check clusters only, don't change any data\n\
   -d, --old-datadir=DATADIR     old cluster data directory\n\
   -D, --new-datadir=DATADIR     new cluster data directory\n\
-  -j, --jobs                    number of simultaneous processes or threads to use\n\
+  -j, --jobs=NUM                number of simultaneous processes or threads to use\n\
   -k, --link                    link instead of copying files to new cluster\n\
   -o, --old-options=OPTIONS     old cluster options to pass to the server\n\
   -O, --new-options=OPTIONS     new cluster options to pass to the server\n\
