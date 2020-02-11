@@ -1156,13 +1156,6 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 						path, (uint32) xlrec->offset)));
 	pgstat_report_wait_end();
 
-	/* now seek to the position we want to write our data to */
-	if (lseek(fd, xlrec->offset, SEEK_SET) != xlrec->offset)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not seek to end of file \"%s\": %m",
-						path)));
-
 	data = XLogRecGetData(r) + sizeof(*xlrec);
 
 	len = xlrec->num_mappings * sizeof(LogicalRewriteMappingData);
@@ -1170,7 +1163,7 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	/* write out tail end of mapping file (again) */
 	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_MAPPING_WRITE);
-	if (write(fd, data, len) != len)
+	if (pg_pwrite(fd, data, len, xlrec->offset) != len)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)

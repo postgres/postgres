@@ -85,14 +85,13 @@ WalReceiverFunctionsType *WalReceiverFunctions = NULL;
 #define NAPTIME_PER_CYCLE 100	/* max sleep time between cycles (100ms) */
 
 /*
- * These variables are used similarly to openLogFile/SegNo/Off,
+ * These variables are used similarly to openLogFile/SegNo,
  * but for walreceiver to write the XLOG. recvFileTLI is the TimeLineID
  * corresponding the filename of recvFile.
  */
 static int	recvFile = -1;
 static TimeLineID recvFileTLI = 0;
 static XLogSegNo recvSegNo = 0;
-static uint32 recvOff = 0;
 
 /*
  * Flags set by interrupt handlers of walreceiver for later service in the
@@ -945,7 +944,6 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			use_existent = true;
 			recvFile = XLogFileInit(recvSegNo, &use_existent, true);
 			recvFileTLI = ThisTimeLineID;
-			recvOff = 0;
 		}
 
 		/* Calculate the start offset of the received logs */
@@ -956,29 +954,10 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 		else
 			segbytes = nbytes;
 
-		/* Need to seek in the file? */
-		if (recvOff != startoff)
-		{
-			if (lseek(recvFile, (off_t) startoff, SEEK_SET) < 0)
-			{
-				char		xlogfname[MAXFNAMELEN];
-				int			save_errno = errno;
-
-				XLogFileName(xlogfname, recvFileTLI, recvSegNo, wal_segment_size);
-				errno = save_errno;
-				ereport(PANIC,
-						(errcode_for_file_access(),
-						 errmsg("could not seek in log segment %s to offset %u: %m",
-								xlogfname, startoff)));
-			}
-
-			recvOff = startoff;
-		}
-
 		/* OK to write the logs */
 		errno = 0;
 
-		byteswritten = write(recvFile, buf, segbytes);
+		byteswritten = pg_pwrite(recvFile, buf, segbytes, (off_t) startoff);
 		if (byteswritten <= 0)
 		{
 			char		xlogfname[MAXFNAMELEN];
@@ -995,13 +974,12 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 					(errcode_for_file_access(),
 					 errmsg("could not write to log segment %s "
 							"at offset %u, length %lu: %m",
-							xlogfname, recvOff, (unsigned long) segbytes)));
+							xlogfname, startoff, (unsigned long) segbytes)));
 		}
 
 		/* Update state for write */
 		recptr += byteswritten;
 
-		recvOff += byteswritten;
 		nbytes -= byteswritten;
 		buf += byteswritten;
 
