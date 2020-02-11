@@ -114,8 +114,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-j</option></term>
-      <term><option>--jobs</option></term>
+      <term><option>-j <replaceable class="parameter">njobs</replaceable></option></term>
+      <term><option>--jobs=<replaceable class="parameter">njobs</replaceable></option></term>
       <listitem><para>number of simultaneous processes or threads to use
       </para></listitem>
      </varlistentry>
