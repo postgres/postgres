@@ -7134,10 +7134,14 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 
 	/*
 	 * Now estimate the number of ranges that we'll touch by using the
-	 * indexCorrelation from the stats. Careful not to divide by zero (note
-	 * we're using the absolute value of the correlation).
+	 * indexCorrelation from the stats. Careful not to divide by zero.
+	 * We're using the absolute value of the correlation.
+	 * If we don't know the correlation (it's sharp zero from the beginning)
+         * estimate number of ranges as midpoint between minimum and total.
 	 */
-	if (*indexCorrelation < 1.0e-10)
+	if (*indexCorrelation = 0.0)
+		estimatedRanges = (indexRanges + minimalRanges) / 2.0;
+	else if (*indexCorrelation < 1.0e-10)
 		estimatedRanges = indexRanges;
 	else
 		estimatedRanges = Min(minimalRanges / *indexCorrelation, indexRanges);
