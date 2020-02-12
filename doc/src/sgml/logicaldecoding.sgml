@@ -92,9 +92,9 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NU
 (0 rows)
 
 postgres=# BEGIN;
-postgres=# INSERT INTO data(data) VALUES('1');
-postgres=# INSERT INTO data(data) VALUES('2');
-postgres=# COMMIT;
+postgres=*# INSERT INTO data(data) VALUES('1');
+postgres=*# INSERT INTO data(data) VALUES('2');
+postgres=*# COMMIT;
 
 postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn    |  xid  |                          data                           

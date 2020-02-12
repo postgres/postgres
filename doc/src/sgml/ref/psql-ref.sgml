@@ -4332,7 +4332,7 @@ testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%]%# '
 
     To insert a percent sign into your prompt, write
     <literal>%%</literal>. The default prompts are
-    <literal>'%/%R%# '</literal> for prompts 1 and 2, and
+    <literal>'%/%R%x%# '</literal> for prompts 1 and 2, and
     <literal>'&gt;&gt; '</literal> for prompt 3.
     </para>
 
