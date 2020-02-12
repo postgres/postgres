@@ -7,7 +7,7 @@ REGRESS = ddl xact rewrite toast permissions decoding_in_xact \
 	decoding_into_rel binary prepared replorigin time messages \
 	spill slot truncate
 ISOLATION = mxact delayed_startup ondisk_startup concurrent_ddl_dml \
-	oldest_xmin snapshot_transfer
+	oldest_xmin snapshot_transfer subxact_without_top
 
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf
 ISOLATION_OPTS = --temp-config $(top_srcdir)/contrib/test_decoding/logical.conf

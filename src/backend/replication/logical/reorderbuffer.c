@@ -838,9 +838,6 @@ ReorderBufferAssignChild(ReorderBuffer *rb, TransactionId xid,
 	txn = ReorderBufferTXNByXid(rb, xid, true, &new_top, lsn, true);
 	subtxn = ReorderBufferTXNByXid(rb, subxid, true, &new_sub, lsn, false);
 
-	if (new_top && !new_sub)
-		elog(ERROR, "subtransaction logged without previous top-level txn record");
-
 	if (!new_sub)
 	{
 		if (rbtxn_is_known_subxact(subtxn))
