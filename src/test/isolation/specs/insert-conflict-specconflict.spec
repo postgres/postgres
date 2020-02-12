@@ -63,7 +63,10 @@ step "controller_show_count" {SELECT COUNT(*) FROM upserttest; }
 step "controller_print_speculative_locks" {
     SELECT pa.application_name, locktype, mode, granted
     FROM pg_locks pl JOIN pg_stat_activity pa USING (pid)
-    WHERE locktype IN ('speculative token', 'transactionid') AND pa.datname = current_database()
+    WHERE
+        locktype IN ('speculative token', 'transactionid')
+        AND pa.datname = current_database()
+        AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
     ORDER BY 1, 2, 3, 4;
 }
 
