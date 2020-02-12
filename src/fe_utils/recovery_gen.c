@@ -128,7 +128,7 @@ WriteRecoveryConfig(PGconn *pgconn, char *target_dir, PQExpBuffer contents)
 	snprintf(filename, MAXPGPATH, "%s/%s", target_dir,
 			 use_recovery_conf ? "recovery.conf" : "postgresql.auto.conf");
 
-	cf = fopen(filename, use_recovery_conf ? "a" : "w");
+	cf = fopen(filename, use_recovery_conf ? "w" : "a");
 	if (cf == NULL)
 	{
 		pg_log_error("could not open file \"%s\": %m", filename);
