@@ -26,14 +26,14 @@ REVOKE [ GRANT OPTION FOR ]
     [, ...] | ALL [ PRIVILEGES ] }
     ON { [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
          | ALL TABLES IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | REFERENCES } ( <replaceable class="parameter">column_name</replaceable> [, ...] )
     [, ...] | ALL [ PRIVILEGES ] ( <replaceable class="parameter">column_name</replaceable> [, ...] ) }
     ON [ TABLE ] <replaceable class="parameter">table_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
@@ -41,73 +41,81 @@ REVOKE [ GRANT OPTION FOR ]
     [, ...] | ALL [ PRIVILEGES ] }
     ON { SEQUENCE <replaceable class="parameter">sequence_name</replaceable> [, ...]
          | ALL SEQUENCES IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { CREATE | CONNECT | TEMPORARY | TEMP } [, ...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>database_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON DOMAIN <replaceable>domain_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON FOREIGN DATA WRAPPER <replaceable>fdw_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON FOREIGN SERVER <replaceable>server_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { EXECUTE | ALL [ PRIVILEGES ] }
     ON { { FUNCTION | PROCEDURE | ROUTINE } <replaceable>function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">arg_name</replaceable> ] <replaceable class="parameter">arg_type</replaceable> [, ...] ] ) ] [, ...]
          | ALL { FUNCTIONS | PROCEDURES | ROUTINES } IN SCHEMA <replaceable>schema_name</replaceable> [, ...] }
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>lang_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | UPDATE } [, ...] | ALL [ PRIVILEGES ] }
     ON LARGE OBJECT <replaceable class="parameter">loid</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { CREATE | USAGE } [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schema_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { CREATE | ALL [ PRIVILEGES ] }
     ON TABLESPACE <replaceable>tablespace_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON TYPE <replaceable>type_name</replaceable> [, ...]
-    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
+    FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ ADMIN OPTION FOR ]
-    <replaceable class="parameter">role_name</replaceable> [, ...] FROM <replaceable class="parameter">role_name</replaceable> [, ...]
+    <replaceable class="parameter">role_name</replaceable> [, ...] FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
+
+<phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
+
+    [ GROUP ] <replaceable class="parameter">role_name</replaceable>
+  | PUBLIC
+  | CURRENT_USER
+  | SESSION_USER
 </synopsis>
  </refsynopsisdiv>
 
@@ -169,8 +177,12 @@ REVOKE [ ADMIN OPTION FOR ]
   <para>
    When revoking membership in a role, <literal>GRANT OPTION</literal> is instead
    called <literal>ADMIN OPTION</literal>, but the behavior is similar.
+   This form of the command also allows a <literal>GRANTED BY</literal>
+   option, but that option is currently ignored (except for checking
+   the existence of the named role).
    Note also that this form of the command does not
-   allow the noise word <literal>GROUP</literal>.
+   allow the noise word <literal>GROUP</literal>
+   in <replaceable class="parameter">role_specification</replaceable>.
   </para>
  </refsect1>
 
