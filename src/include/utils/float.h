@@ -37,6 +37,9 @@ extern PGDLLIMPORT int extra_float_digits;
 /*
  * Utility functions in float.c
  */
+extern void float_overflow_error(void) pg_attribute_noreturn();
+extern void float_underflow_error(void) pg_attribute_noreturn();
+extern void float_zero_divide_error(void) pg_attribute_noreturn();
 extern int	is_infinite(float8 val);
 extern float8 float8in_internal(char *num, char **endptr_p,
 								const char *type_name, const char *orig_string);
@@ -129,41 +132,7 @@ get_float8_nan(void)
 }
 
 /*
- * Checks to see if a float4/8 val has underflowed or overflowed
- */
-
-static inline void
-check_float4_val(const float4 val, const bool inf_is_valid,
-				 const bool zero_is_valid)
-{
-	if (!inf_is_valid && unlikely(isinf(val)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value out of range: overflow")));
-
-	if (!zero_is_valid && unlikely(val == 0.0))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value out of range: underflow")));
-}
-
-static inline void
-check_float8_val(const float8 val, const bool inf_is_valid,
-				 const bool zero_is_valid)
-{
-	if (!inf_is_valid && unlikely(isinf(val)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value out of range: overflow")));
-
-	if (!zero_is_valid && unlikely(val == 0.0))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value out of range: underflow")));
-}
-
-/*
- * Routines for operations with the checks above
+ * Floating-point arithmetic with overflow/underflow reported as errors
  *
  * There isn't any way to check for underflow of addition/subtraction
  * because numbers near the underflow value have already been rounded to
@@ -178,7 +147,8 @@ float4_pl(const float4 val1, const float4 val2)
 	float4		result;
 
 	result = val1 + val2;
-	check_float4_val(result, isinf(val1) || isinf(val2), true);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
 
 	return result;
 }
@@ -189,7 +159,8 @@ float8_pl(const float8 val1, const float8 val2)
 	float8		result;
 
 	result = val1 + val2;
-	check_float8_val(result, isinf(val1) || isinf(val2), true);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
 
 	return result;
 }
@@ -200,7 +171,8 @@ float4_mi(const float4 val1, const float4 val2)
 	float4		result;
 
 	result = val1 - val2;
-	check_float4_val(result, isinf(val1) || isinf(val2), true);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
 
 	return result;
 }
@@ -211,7 +183,8 @@ float8_mi(const float8 val1, const float8 val2)
 	float8		result;
 
 	result = val1 - val2;
-	check_float8_val(result, isinf(val1) || isinf(val2), true);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
 
 	return result;
 }
@@ -222,8 +195,10 @@ float4_mul(const float4 val1, const float4 val2)
 	float4		result;
 
 	result = val1 * val2;
-	check_float4_val(result, isinf(val1) || isinf(val2),
-					 val1 == 0.0f || val2 == 0.0f);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
+	if (unlikely(result == 0.0f) && val1 != 0.0f && val2 != 0.0f)
+		float_underflow_error();
 
 	return result;
 }
@@ -234,8 +209,10 @@ float8_mul(const float8 val1, const float8 val2)
 	float8		result;
 
 	result = val1 * val2;
-	check_float8_val(result, isinf(val1) || isinf(val2),
-					 val1 == 0.0 || val2 == 0.0);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
+	if (unlikely(result == 0.0) && val1 != 0.0 && val2 != 0.0)
+		float_underflow_error();
 
 	return result;
 }
@@ -245,13 +222,13 @@ float4_div(const float4 val1, const float4 val2)
 {
 	float4		result;
 
-	if (val2 == 0.0f)
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-
+	if (unlikely(val2 == 0.0f))
+		float_zero_divide_error();
 	result = val1 / val2;
-	check_float4_val(result, isinf(val1) || isinf(val2), val1 == 0.0f);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
+	if (unlikely(result == 0.0f) && val1 != 0.0f)
+		float_underflow_error();
 
 	return result;
 }
@@ -261,13 +238,13 @@ float8_div(const float8 val1, const float8 val2)
 {
 	float8		result;
 
-	if (val2 == 0.0)
-		ereport(ERROR,
-				(errcode(ERRCODE_DIVISION_BY_ZERO),
-				 errmsg("division by zero")));
-
+	if (unlikely(val2 == 0.0))
+		float_zero_divide_error();
 	result = val1 / val2;
-	check_float8_val(result, isinf(val1) || isinf(val2), val1 == 0.0);
+	if (unlikely(isinf(result)) && !isinf(val1) && !isinf(val2))
+		float_overflow_error();
+	if (unlikely(result == 0.0) && val1 != 0.0)
+		float_underflow_error();
 
 	return result;
 }

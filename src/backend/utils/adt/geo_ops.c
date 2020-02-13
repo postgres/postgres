@@ -5545,7 +5545,10 @@ pg_hypot(float8 x, float8 y)
 	yx = y / x;
 	result = x * sqrt(1.0 + (yx * yx));
 
-	check_float8_val(result, false, false);
+	if (unlikely(isinf(result)))
+		float_overflow_error();
+	if (unlikely(result == 0.0))
+		float_underflow_error();
 
 	return result;
 }
