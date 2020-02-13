@@ -201,6 +201,7 @@ static long ltsGetFreeBlock(LogicalTapeSet *lts);
 static void ltsReleaseBlock(LogicalTapeSet *lts, long blocknum);
 static void ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 								 SharedFileSet *fileset);
+static void ltsInitReadBuffer(LogicalTapeSet *lts, LogicalTape *lt);
 
 
 /*
@@ -536,6 +537,27 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 }
 
 /*
+ * Lazily allocate and initialize the read buffer. This avoids waste when many
+ * tapes are open at once, but not all are active between rewinding and
+ * reading.
+ */
+static void
+ltsInitReadBuffer(LogicalTapeSet *lts, LogicalTape *lt)
+{
+	if (lt->firstBlockNumber != -1L)
+	{
+		Assert(lt->buffer_size > 0);
+		lt->buffer = palloc(lt->buffer_size);
+	}
+
+	/* Read the first block, or reset if tape is empty */
+	lt->nextBlockNumber = lt->firstBlockNumber;
+	lt->pos = 0;
+	lt->nbytes = 0;
+	ltsReadFillBuffer(lts, lt);
+}
+
+/*
  * Create a set of logical tapes in a temporary underlying file.
  *
  * Each tape is initialized in write state.  Serial callers pass ntapes,
@@ -821,15 +843,9 @@ LogicalTapeRewindForRead(LogicalTapeSet *lts, int tapenum, size_t buffer_size)
 	lt->buffer_size = 0;
 	if (lt->firstBlockNumber != -1L)
 	{
-		lt->buffer = palloc(buffer_size);
+		/* the buffer is lazily allocated, but set the size here */
 		lt->buffer_size = buffer_size;
 	}
-
-	/* Read the first block, or reset if tape is empty */
-	lt->nextBlockNumber = lt->firstBlockNumber;
-	lt->pos = 0;
-	lt->nbytes = 0;
-	ltsReadFillBuffer(lts, lt);
 }
 
 /*
@@ -877,6 +893,9 @@ LogicalTapeRead(LogicalTapeSet *lts, int tapenum,
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = &lts->tapes[tapenum];
 	Assert(!lt->writing);
+
+	if (lt->buffer == NULL)
+		ltsInitReadBuffer(lts, lt);
 
 	while (size > 0)
 	{
@@ -1015,6 +1034,9 @@ LogicalTapeBackspace(LogicalTapeSet *lts, int tapenum, size_t size)
 	Assert(lt->frozen);
 	Assert(lt->buffer_size == BLCKSZ);
 
+	if (lt->buffer == NULL)
+		ltsInitReadBuffer(lts, lt);
+
 	/*
 	 * Easy case for seek within current block.
 	 */
@@ -1087,6 +1109,9 @@ LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 	Assert(offset >= 0 && offset <= TapeBlockPayloadSize);
 	Assert(lt->buffer_size == BLCKSZ);
 
+	if (lt->buffer == NULL)
+		ltsInitReadBuffer(lts, lt);
+
 	if (blocknum != lt->curBlockNumber)
 	{
 		ltsReadBlock(lts, blocknum, (void *) lt->buffer);
@@ -1114,6 +1139,10 @@ LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 
 	Assert(tapenum >= 0 && tapenum < lts->nTapes);
 	lt = &lts->tapes[tapenum];
+
+	if (lt->buffer == NULL)
+		ltsInitReadBuffer(lts, lt);
+
 	Assert(lt->offsetBlockNumber == 0L);
 
 	/* With a larger buffer, 'pos' wouldn't be the same as offset within page */
