@@ -3,3 +3,4 @@ comment = 'data types for international product numbering standards'
 default_version = '1.2'
 module_pathname = '$libdir/isn'
 relocatable = true
+trusted = true

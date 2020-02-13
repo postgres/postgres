@@ -54,7 +54,7 @@
   Many modules supply new user-defined functions, operators, or types.
   To make use of one of these modules, after you have installed the code
   you need to register the new SQL objects in the database system.
-  In <productname>PostgreSQL</productname> 9.1 and later, this is done by executing
+  This is done by executing
   a <xref linkend="sql-createextension"/> command.  In a fresh database,
   you can simply do
 
@@ -62,12 +62,21 @@
 CREATE EXTENSION <replaceable>module_name</replaceable>;
 </programlisting>
 
-  This command must be run by a database superuser.  This registers the
-  new SQL objects in the current database only, so you need to run this
-  command in each database that you want
+  This command registers the new SQL objects in the current database only,
+  so you need to run it in each database that you want
   the module's facilities to be available in.  Alternatively, run it in
   database <literal>template1</literal> so that the extension will be copied into
   subsequently-created databases by default.
+ </para>
+
+ <para>
+  For all these modules, <command>CREATE EXTENSION</command> must be run
+  by a database superuser, unless the module is
+  considered <quote>trusted</quote>, in which case it can be run by any
+  user who has <literal>CREATE</literal> privilege on the current
+  database.  Modules that are trusted are identified as such in the
+  sections that follow.  Generally, trusted modules are ones that cannot
+  provide access to outside-the-database functionality.
  </para>
 
  <para>

@@ -3,3 +3,4 @@ comment = 'text similarity measurement and index searching based on trigrams'
 default_version = '1.4'
 module_pathname = '$libdir/pg_trgm'
 relocatable = true
+trusted = true

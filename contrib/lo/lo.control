@@ -3,3 +3,4 @@ comment = 'Large Object maintenance'
 default_version = '1.1'
 module_pathname = '$libdir/lo'
 relocatable = true
+trusted = true

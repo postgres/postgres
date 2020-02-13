@@ -622,6 +622,13 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
    use them, <type>jsonb</type> values are mapped to Python dictionaries,
    lists, and scalars, as appropriate.
   </para>
+
+  <para>
+   Of these extensions, <literal>jsonb_plperl</literal> is
+   considered <quote>trusted</quote>, that is, it can be installed by
+   non-superusers who have <literal>CREATE</literal> privilege on the
+   current database.  The rest require superuser privilege to install.
+  </para>
  </sect2>
 
  <sect2 id="datatype-jsonpath">

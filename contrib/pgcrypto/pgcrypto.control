@@ -3,3 +3,4 @@ comment = 'cryptographic functions'
 default_version = '1.3'
 module_pathname = '$libdir/pgcrypto'
 relocatable = true
+trusted = true

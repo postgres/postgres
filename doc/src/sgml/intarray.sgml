@@ -24,6 +24,12 @@
   treated as though it were a linear array in storage order.
  </para>
 
+ <para>
+  This module is considered <quote>trusted</quote>, that is, it can be
+  installed by non-superusers who have <literal>CREATE</literal> privilege
+  on the current database.
+ </para>
+
  <sect2>
   <title><filename>intarray</filename> Functions and Operators</title>
 

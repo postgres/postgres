@@ -18,6 +18,12 @@
  </para>
 
  <para>
+  This module is considered <quote>trusted</quote>, that is, it can be
+  installed by non-superusers who have <literal>CREATE</literal> privilege
+  on the current database.
+ </para>
+
+ <para>
   Only one parameter may be supplied to the function in a
   <literal>CREATE TRIGGER</literal> statement, and that is optional.  If supplied
   it will be used for the channel name for the notifications.  If omitted

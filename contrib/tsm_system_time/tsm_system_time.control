@@ -3,3 +3,4 @@ comment = 'TABLESAMPLE method which accepts time in milliseconds as a limit'
 default_version = '1.0'
 module_pathname = '$libdir/tsm_system_time'
 relocatable = true
+trusted = true

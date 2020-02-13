@@ -15,6 +15,12 @@
   strings.
  </para>
 
+ <para>
+  This module is considered <quote>trusted</quote>, that is, it can be
+  installed by non-superusers who have <literal>CREATE</literal> privilege
+  on the current database.
+ </para>
+
  <sect2>
   <title>Trigram (or Trigraph) Concepts</title>
 
