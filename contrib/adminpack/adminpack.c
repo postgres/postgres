@@ -69,10 +69,10 @@ typedef struct
  * Convert a "text" filename argument to C string, and check it's allowable.
  *
  * Filename may be absolute or relative to the DataDir, but we only allow
- * absolute paths that match DataDir or Log_directory.
+ * absolute paths that match DataDir.
  */
 static char *
-convert_and_check_filename(text *arg, bool logAllowed)
+convert_and_check_filename(text *arg)
 {
 	char	   *filename = text_to_cstring(arg);
 
@@ -95,13 +95,8 @@ convert_and_check_filename(text *arg, bool logAllowed)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("reference to parent directory (\"..\") not allowed")));
 
-		/*
-		 * Allow absolute paths if within DataDir or Log_directory, even
-		 * though Log_directory might be outside DataDir.
-		 */
-		if (!path_is_prefix_of_path(DataDir, filename) &&
-			(!logAllowed || !is_absolute_path(Log_directory) ||
-			 !path_is_prefix_of_path(Log_directory, filename)))
+		/* Allow absolute paths if within DataDir */
+		if (!path_is_prefix_of_path(DataDir, filename))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("absolute path not allowed")));
@@ -185,7 +180,7 @@ pg_file_write_internal(text *file, text *data, bool replace)
 	char	   *filename;
 	int64		count = 0;
 
-	filename = convert_and_check_filename(file, false);
+	filename = convert_and_check_filename(file);
 
 	if (!replace)
 	{
@@ -228,7 +223,7 @@ pg_file_sync(PG_FUNCTION_ARGS)
 	char	   *filename;
 	struct stat	fst;
 
-	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0), false);
+	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 	if (stat(filename, &fst) < 0)
 		ereport(ERROR,
@@ -319,13 +314,13 @@ pg_file_rename_internal(text *file1, text *file2, text *file3)
 			   *fn3;
 	int			rc;
 
-	fn1 = convert_and_check_filename(file1, false);
-	fn2 = convert_and_check_filename(file2, false);
+	fn1 = convert_and_check_filename(file1);
+	fn2 = convert_and_check_filename(file2);
 
 	if (file3 == NULL)
 		fn3 = NULL;
 	else
-		fn3 = convert_and_check_filename(file3, false);
+		fn3 = convert_and_check_filename(file3);
 
 	if (access(fn1, W_OK) < 0)
 	{
@@ -411,7 +406,7 @@ pg_file_unlink(PG_FUNCTION_ARGS)
 
 	requireSuperuser();
 
-	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0), false);
+	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 	if (access(filename, W_OK) < 0)
 	{
@@ -449,7 +444,7 @@ pg_file_unlink_v1_1(PG_FUNCTION_ARGS)
 {
 	char	   *filename;
 
-	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0), false);
+	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 	if (access(filename, W_OK) < 0)
 	{
