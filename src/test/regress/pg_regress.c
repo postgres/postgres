@@ -76,7 +76,6 @@ char	   *inputdir = ".";
 char	   *outputdir = ".";
 char	   *bindir = PGBINDIR;
 char	   *launcher = NULL;
-static _stringlist *loadlanguage = NULL;
 static _stringlist *loadextension = NULL;
 static int	max_connections = 0;
 static int	max_concurrent_tests = 0;
@@ -1998,16 +1997,6 @@ create_database(const char *dbname)
 				 dbname, dbname, dbname, dbname, dbname, dbname);
 
 	/*
-	 * Install any requested procedural languages.  We use CREATE OR REPLACE
-	 * so that this will work whether or not the language is preinstalled.
-	 */
-	for (sl = loadlanguage; sl != NULL; sl = sl->next)
-	{
-		header(_("installing %s"), sl->str);
-		psql_command(dbname, "CREATE OR REPLACE LANGUAGE \"%s\"", sl->str);
-	}
-
-	/*
 	 * Install any requested extensions.  We use CREATE IF NOT EXISTS so that
 	 * this will work whether or not the extension is preinstalled.
 	 */
@@ -2058,8 +2047,6 @@ help(void)
 	printf(_("      --launcher=CMD            use CMD as launcher of psql\n"));
 	printf(_("      --load-extension=EXT      load the named extension before running the\n"));
 	printf(_("                                tests; can appear multiple times\n"));
-	printf(_("      --load-language=LANG      load the named language before running the\n"));
-	printf(_("                                tests; can appear multiple times\n"));
 	printf(_("      --max-connections=N       maximum number of concurrent connections\n"));
 	printf(_("                                (default is 0, meaning unlimited)\n"));
 	printf(_("      --max-concurrent-tests=N  maximum number of concurrent tests in schedule\n"));
@@ -2096,7 +2083,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"dbname", required_argument, NULL, 1},
 		{"debug", no_argument, NULL, 2},
 		{"inputdir", required_argument, NULL, 3},
-		{"load-language", required_argument, NULL, 4},
 		{"max-connections", required_argument, NULL, 5},
 		{"encoding", required_argument, NULL, 6},
 		{"outputdir", required_argument, NULL, 7},
@@ -2171,9 +2157,6 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				break;
 			case 3:
 				inputdir = pg_strdup(optarg);
-				break;
-			case 4:
-				add_stringlist_item(&loadlanguage, optarg);
 				break;
 			case 5:
 				max_connections = atoi(optarg);
