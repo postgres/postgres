@@ -23,7 +23,12 @@
 <xsl:param name="html.stylesheet">
   <xsl:choose>
     <xsl:when test="$website.stylesheet = 0">stylesheet.css</xsl:when>
-    <xsl:otherwise>https://www.postgresql.org/media/css/docs.css</xsl:otherwise>
+    <xsl:otherwise>
+      https://www.postgresql.org/media/css/fontawesome.css
+      https://www.postgresql.org/media/css/bootstrap.min.css
+      https://www.postgresql.org/media/css/main.css
+      https://www.postgresql.org/media/css/normalize.css
+    </xsl:otherwise>
   </xsl:choose>
 </xsl:param>
 

@@ -276,6 +276,13 @@ checking for fop... fop
 <prompt>doc/src/sgml$ </prompt><userinput>make STYLE=website html</userinput>
 </screen>
    </para>
+
+   <para>
+    If the <literal>STYLE=website</literal> option is used, the generated HTML
+    files include references to stylesheets hosted on <ulink
+    url="https://www.postgresql.org/docs/current/">postgresql.org</ulink> and
+    require network access to view.
+   </para>
  </sect2>
 
  <sect2>
