@@ -184,6 +184,15 @@ my $PG_CATALOG_NAMESPACE =
 	'PG_CATALOG_NAMESPACE');
 
 
+# Fill in pg_class.relnatts by looking at the referenced catalog's schema.
+# This is ugly but there's no better place; Catalog::AddDefaultValues
+# can't do it, for lack of easy access to the other catalog.
+foreach my $row (@{ $catalog_data{pg_class} })
+{
+	$row->{relnatts} = scalar(@{ $catalogs{ $row->{relname} }->{columns} });
+}
+
+
 # Build lookup tables.
 
 # access method OID lookup
