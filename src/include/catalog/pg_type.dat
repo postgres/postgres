@@ -215,9 +215,9 @@
 
 { oid => '700', array_type_oid => '1021',
   descr => 'single-precision floating point number, 4-byte storage',
-  typname => 'float4', typlen => '4', typbyval => 't',
-  typcategory => 'N', typinput => 'float4in', typoutput => 'float4out',
-  typreceive => 'float4recv', typsend => 'float4send', typalign => 'i' },
+  typname => 'float4', typlen => '4', typbyval => 't', typcategory => 'N',
+  typinput => 'float4in', typoutput => 'float4out', typreceive => 'float4recv',
+  typsend => 'float4send', typalign => 'i' },
 { oid => '701', array_type_oid => '1022',
   descr => 'double-precision floating point number, 8-byte storage',
   typname => 'float8', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',

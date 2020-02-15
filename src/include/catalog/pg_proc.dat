@@ -7684,10 +7684,9 @@
   prosrc => 'pg_notification_queue_usage' },
 
 # shared memory usage
-{ oid => '8613',
-  descr => 'allocations from the main shared memory segment',
-  proname => 'pg_get_shmem_allocations', 'prorows' => 50, 'proretset' => 't',
-  provolatile => 'v', 'prorettype' => 'record', 'proargtypes' => '',
+{ oid => '8613', descr => 'allocations from the main shared memory segment',
+  proname => 'pg_get_shmem_allocations', prorows => '50', proretset => 't',
+  provolatile => 'v', prorettype => 'record', proargtypes => '',
   proallargtypes => '{text,int8,int8,int8}', proargmodes => '{o,o,o,o}',
   proargnames => '{name,off,size,allocated_size}',
   prosrc => 'pg_get_shmem_allocations' },
@@ -9326,7 +9325,7 @@
   proname => 'jsonb_delete_path', prorettype => 'jsonb',
   proargtypes => 'jsonb _text', prosrc => 'jsonb_delete_path' },
 { oid => '8945', descr => 'Set part of a jsonb, handle NULL value',
-  proname => 'jsonb_set_lax', prorettype => 'jsonb', proisstrict => 'f',
+  proname => 'jsonb_set_lax', proisstrict => 'f', prorettype => 'jsonb',
   proargtypes => 'jsonb _text jsonb bool text', prosrc => 'jsonb_set_lax' },
 { oid => '3305', descr => 'Set part of a jsonb',
   proname => 'jsonb_set', prorettype => 'jsonb',
