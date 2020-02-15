@@ -331,25 +331,22 @@ sub AddDefaultValues
 	foreach my $column (@$schema)
 	{
 		my $attname = $column->{name};
-		my $atttype = $column->{type};
 
-		if (defined $row->{$attname})
-		{
-			;
-		}
-		elsif ($attname eq 'oid')
-		{
-			;
-		}
-		elsif (defined $column->{default})
+		# No work if field already has a value.
+		next if defined $row->{$attname};
+
+		# Ignore 'oid' columns, they're handled elsewhere.
+		next if $attname eq 'oid';
+
+		# If column has a default value, fill that in.
+		if (defined $column->{default})
 		{
 			$row->{$attname} = $column->{default};
+			next;
 		}
-		else
-		{
-			# Failed to find a value.
-			push @missing_fields, $attname;
-		}
+
+		# Failed to find a value for this field.
+		push @missing_fields, $attname;
 	}
 
 	# Failure to provide all columns is a hard error.
