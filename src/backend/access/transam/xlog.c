@@ -6297,16 +6297,17 @@ StartupXLOG(void)
 
 	/*----------
 	 * If we previously crashed, perform a couple of actions:
-	 *	- The pg_wal directory may still include some temporary WAL segments
-	 * used when creating a new segment, so perform some clean up to not
-	 * bloat this path.  This is done first as there is no point to sync this
-	 * temporary data.
-	 *	- There might be data which we had written, intending to fsync it,
-	 * but which we had not actually fsync'd yet. Therefore, a power failure
-	 * in the near future might cause earlier unflushed writes to be lost,
-	 * even though more recent data written to disk from here on would be
-	 * persisted.  To avoid that, fsync the entire data directory.
-	 *---------
+	 *
+	 * - The pg_wal directory may still include some temporary WAL segments
+	 *   used when creating a new segment, so perform some clean up to not
+	 *   bloat this path.  This is done first as there is no point to sync
+	 *   this temporary data.
+	 *
+	 * - There might be data which we had written, intending to fsync it, but
+	 *   which we had not actually fsync'd yet.  Therefore, a power failure in
+	 *   the near future might cause earlier unflushed writes to be lost, even
+	 *   though more recent data written to disk from here on would be
+	 *   persisted.  To avoid that, fsync the entire data directory.
 	 */
 	if (ControlFile->state != DB_SHUTDOWNED &&
 		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
