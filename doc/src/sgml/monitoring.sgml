@@ -1293,13 +1293,17 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in main loop of WAL writer process.</entry>
         </row>
         <row>
-         <entry morerows="7"><literal>Client</literal></entry>
+         <entry morerows="8"><literal>Client</literal></entry>
          <entry><literal>ClientRead</literal></entry>
          <entry>Waiting to read data from the client.</entry>
         </row>
         <row>
          <entry><literal>ClientWrite</literal></entry>
          <entry>Waiting to write data to the client.</entry>
+        </row>
+        <row>
+         <entry><literal>GSSOpenServer</literal></entry>
+         <entry>Waiting to read data from the client while establishing the GSSAPI session.</entry>
         </row>
         <row>
          <entry><literal>LibPQWalReceiverConnect</literal></entry>
