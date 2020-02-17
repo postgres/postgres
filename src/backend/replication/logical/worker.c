@@ -42,6 +42,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/optimizer.h"
+#include "parser/analyze.h"
 #include "parser/parse_relation.h"
 #include "pgstat.h"
 #include "postmaster/bgworker.h"
@@ -736,6 +737,8 @@ apply_handle_update(StringInfo s)
 			target_rte->updatedCols = bms_add_member(target_rte->updatedCols,
 													 i + 1 - FirstLowInvalidHeapAttributeNumber);
 	}
+
+	fill_extraUpdatedCols(target_rte, RelationGetDescr(rel->localrel));
 
 	PushActiveSnapshot(GetTransactionSnapshot());
 	ExecOpenIndices(estate->es_result_relation_info, false);
