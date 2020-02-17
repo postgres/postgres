@@ -2346,10 +2346,18 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 	if (orig_tl != NULL)
 		elog(ERROR, "UPDATE target count mismatch --- internal error");
 
-	/*
-	 * Record in extraUpdatedCols generated columns referencing updated base
-	 * columns.
-	 */
+	fill_extraUpdatedCols(target_rte, tupdesc);
+
+	return tlist;
+}
+
+/*
+ * Record in extraUpdatedCols generated columns referencing updated base
+ * columns.
+ */
+void
+fill_extraUpdatedCols(RangeTblEntry *target_rte, TupleDesc tupdesc)
+{
 	if (tupdesc->constr &&
 		tupdesc->constr->has_generated_stored)
 	{
@@ -2371,8 +2379,6 @@ transformUpdateTargetList(ParseState *pstate, List *origTlist)
 															  defval.adnum - FirstLowInvalidHeapAttributeNumber);
 		}
 	}
-
-	return tlist;
 }
 
 /*
