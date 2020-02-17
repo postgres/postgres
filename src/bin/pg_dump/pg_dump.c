@@ -3157,6 +3157,8 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 	TableInfo  *tbinfo = polinfo->poltable;
 	PQExpBuffer query;
 	PQExpBuffer delqry;
+	PQExpBuffer polprefix;
+	char	   *qtabname;
 	const char *cmd;
 
 	if (dopt->dataOnly)
@@ -3212,6 +3214,9 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 
 	query = createPQExpBuffer();
 	delqry = createPQExpBuffer();
+	polprefix = createPQExpBuffer();
+
+	qtabname = pg_strdup(fmtId(tbinfo->dobj.name));
 
 	appendPQExpBuffer(query, "CREATE POLICY %s", fmtId(polinfo->polname));
 
@@ -3232,6 +3237,9 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 	appendPQExpBuffer(delqry, "DROP POLICY %s", fmtId(polinfo->polname));
 	appendPQExpBuffer(delqry, " ON %s;\n", fmtQualifiedDumpable(tbinfo));
 
+	appendPQExpBuffer(polprefix, "POLICY %s ON",
+					  fmtId(polinfo->polname));
+
 	ArchiveEntry(fout, polinfo->dobj.catId, polinfo->dobj.dumpId,
 				 polinfo->dobj.name,
 				 polinfo->dobj.namespace->dobj.name,
@@ -3242,8 +3250,14 @@ dumpPolicy(Archive *fout, PolicyInfo *polinfo)
 				 NULL, 0,
 				 NULL, NULL);
 
+	dumpComment(fout, polprefix->data, qtabname,
+				tbinfo->dobj.namespace->dobj.name, tbinfo->rolname,
+				polinfo->dobj.catId, 0, polinfo->dobj.dumpId);
+
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(delqry);
+	destroyPQExpBuffer(polprefix);
+	free(qtabname);
 }
 
 static void
