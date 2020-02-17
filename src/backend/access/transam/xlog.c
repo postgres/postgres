@@ -903,6 +903,7 @@ static void CheckRecoveryConsistency(void);
 static XLogRecord *ReadCheckpointRecord(XLogReaderState *xlogreader,
 										XLogRecPtr RecPtr, int whichChkpt, bool report);
 static bool rescanLatestTimeLine(void);
+static void InitControlFile(uint64 sysidentifier);
 static void WriteControlFile(void);
 static void ReadControlFile(void);
 static char *str_time(pg_time_t tnow);
@@ -4486,12 +4487,49 @@ rescanLatestTimeLine(void)
  * given a preloaded buffer, ReadControlFile() loads the buffer from
  * the pg_control file (during postmaster or standalone-backend startup),
  * and UpdateControlFile() rewrites pg_control after we modify xlog state.
+ * InitControlFile() fills the buffer with initial values.
  *
  * For simplicity, WriteControlFile() initializes the fields of pg_control
  * that are related to checking backend/database compatibility, and
  * ReadControlFile() verifies they are correct.  We could split out the
  * I/O and compatibility-check functions, but there seems no need currently.
  */
+
+static void
+InitControlFile(uint64 sysidentifier)
+{
+	char		mock_auth_nonce[MOCK_AUTH_NONCE_LEN];
+
+	/*
+	 * Generate a random nonce. This is used for authentication requests that
+	 * will fail because the user does not exist. The nonce is used to create
+	 * a genuine-looking password challenge for the non-existent user, in lieu
+	 * of an actual stored password.
+	 */
+	if (!pg_strong_random(mock_auth_nonce, MOCK_AUTH_NONCE_LEN))
+		ereport(PANIC,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate secret authorization token")));
+
+	memset(ControlFile, 0, sizeof(ControlFileData));
+	/* Initialize pg_control status fields */
+	ControlFile->system_identifier = sysidentifier;
+	memcpy(ControlFile->mock_authentication_nonce, mock_auth_nonce, MOCK_AUTH_NONCE_LEN);
+	ControlFile->state = DB_SHUTDOWNED;
+	ControlFile->unloggedLSN = FirstNormalUnloggedLSN;
+
+	/* Set important parameter values for use when replaying WAL */
+	ControlFile->MaxConnections = MaxConnections;
+	ControlFile->max_worker_processes = max_worker_processes;
+	ControlFile->max_wal_senders = max_wal_senders;
+	ControlFile->max_prepared_xacts = max_prepared_xacts;
+	ControlFile->max_locks_per_xact = max_locks_per_xact;
+	ControlFile->wal_level = wal_level;
+	ControlFile->wal_log_hints = wal_log_hints;
+	ControlFile->track_commit_timestamp = track_commit_timestamp;
+	ControlFile->data_checksum_version = bootstrap_data_checksum_version;
+}
+
 static void
 WriteControlFile(void)
 {
@@ -5088,7 +5126,6 @@ BootStrapXLOG(void)
 	char	   *recptr;
 	bool		use_existent;
 	uint64		sysidentifier;
-	char		mock_auth_nonce[MOCK_AUTH_NONCE_LEN];
 	struct timeval tv;
 	pg_crc32c	crc;
 
@@ -5108,17 +5145,6 @@ BootStrapXLOG(void)
 	sysidentifier = ((uint64) tv.tv_sec) << 32;
 	sysidentifier |= ((uint64) tv.tv_usec) << 12;
 	sysidentifier |= getpid() & 0xFFF;
-
-	/*
-	 * Generate a random nonce. This is used for authentication requests that
-	 * will fail because the user does not exist. The nonce is used to create
-	 * a genuine-looking password challenge for the non-existent user, in lieu
-	 * of an actual stored password.
-	 */
-	if (!pg_strong_random(mock_auth_nonce, MOCK_AUTH_NONCE_LEN))
-		ereport(PANIC,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate secret authorization token")));
 
 	/* First timeline ID is always 1 */
 	ThisTimeLineID = 1;
@@ -5227,30 +5253,12 @@ BootStrapXLOG(void)
 	openLogFile = -1;
 
 	/* Now create pg_control */
-
-	memset(ControlFile, 0, sizeof(ControlFileData));
-	/* Initialize pg_control status fields */
-	ControlFile->system_identifier = sysidentifier;
-	memcpy(ControlFile->mock_authentication_nonce, mock_auth_nonce, MOCK_AUTH_NONCE_LEN);
-	ControlFile->state = DB_SHUTDOWNED;
+	InitControlFile(sysidentifier);
 	ControlFile->time = checkPoint.time;
 	ControlFile->checkPoint = checkPoint.redo;
 	ControlFile->checkPointCopy = checkPoint;
-	ControlFile->unloggedLSN = FirstNormalUnloggedLSN;
-
-	/* Set important parameter values for use when replaying WAL */
-	ControlFile->MaxConnections = MaxConnections;
-	ControlFile->max_worker_processes = max_worker_processes;
-	ControlFile->max_wal_senders = max_wal_senders;
-	ControlFile->max_prepared_xacts = max_prepared_xacts;
-	ControlFile->max_locks_per_xact = max_locks_per_xact;
-	ControlFile->wal_level = wal_level;
-	ControlFile->wal_log_hints = wal_log_hints;
-	ControlFile->track_commit_timestamp = track_commit_timestamp;
-	ControlFile->data_checksum_version = bootstrap_data_checksum_version;
 
 	/* some additional ControlFile fields are set in WriteControlFile() */
-
 	WriteControlFile();
 
 	/* Bootstrap the commit log, too */
