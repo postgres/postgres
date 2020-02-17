@@ -246,7 +246,7 @@ ExecCheckTIDVisible(EState *estate,
  * Compute stored generated columns for a tuple
  */
 void
-ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
+ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot, CmdType cmdtype)
 {
 	ResultRelInfo *resultRelInfo = estate->es_result_relation_info;
 	Relation	rel = resultRelInfo->ri_RelationDesc;
@@ -269,6 +269,7 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 
 		resultRelInfo->ri_GeneratedExprs =
 			(ExprState **) palloc(natts * sizeof(ExprState *));
+		resultRelInfo->ri_NumGeneratedNeeded = 0;
 
 		for (int i = 0; i < natts; i++)
 		{
@@ -276,17 +277,40 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 			{
 				Expr	   *expr;
 
+				/*
+				 * If it's an update and the current column was not marked as
+				 * being updated, then we can skip the computation.  But if
+				 * there is a BEFORE ROW UPDATE trigger, we cannot skip
+				 * because the trigger might affect additional columns.
+				 */
+				if (cmdtype == CMD_UPDATE &&
+					!(rel->trigdesc && rel->trigdesc->trig_update_before_row) &&
+					!bms_is_member(i + 1 - FirstLowInvalidHeapAttributeNumber,
+								   exec_rt_fetch(resultRelInfo->ri_RangeTableIndex, estate)->extraUpdatedCols))
+				{
+					resultRelInfo->ri_GeneratedExprs[i] = NULL;
+					continue;
+				}
+
 				expr = (Expr *) build_column_default(rel, i + 1);
 				if (expr == NULL)
 					elog(ERROR, "no generation expression found for column number %d of table \"%s\"",
 						 i + 1, RelationGetRelationName(rel));
 
 				resultRelInfo->ri_GeneratedExprs[i] = ExecPrepareExpr(expr, estate);
+				resultRelInfo->ri_NumGeneratedNeeded++;
 			}
 		}
 
 		MemoryContextSwitchTo(oldContext);
 	}
+
+	/*
+	 * If no generated columns have been affected by this change, then skip
+	 * the rest.
+	 */
+	if (resultRelInfo->ri_NumGeneratedNeeded == 0)
+		return;
 
 	oldContext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
@@ -300,7 +324,8 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
-		if (attr->attgenerated == ATTRIBUTE_GENERATED_STORED)
+		if (attr->attgenerated == ATTRIBUTE_GENERATED_STORED &&
+			resultRelInfo->ri_GeneratedExprs[i])
 		{
 			ExprContext *econtext;
 			Datum		val;
@@ -392,7 +417,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 */
 		if (resultRelationDesc->rd_att->constr &&
 			resultRelationDesc->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot);
+			ExecComputeStoredGenerated(estate, slot, CMD_INSERT);
 
 		/*
 		 * insert into foreign table: let the FDW do it
@@ -427,7 +452,7 @@ ExecInsert(ModifyTableState *mtstate,
 		 */
 		if (resultRelationDesc->rd_att->constr &&
 			resultRelationDesc->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot);
+			ExecComputeStoredGenerated(estate, slot, CMD_INSERT);
 
 		/*
 		 * Check any RLS WITH CHECK policies.
@@ -1088,7 +1113,7 @@ ExecUpdate(ModifyTableState *mtstate,
 		 */
 		if (resultRelationDesc->rd_att->constr &&
 			resultRelationDesc->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot);
+			ExecComputeStoredGenerated(estate, slot, CMD_UPDATE);
 
 		/*
 		 * update in foreign table: let the FDW do it
@@ -1125,7 +1150,7 @@ ExecUpdate(ModifyTableState *mtstate,
 		 */
 		if (resultRelationDesc->rd_att->constr &&
 			resultRelationDesc->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot);
+			ExecComputeStoredGenerated(estate, slot, CMD_UPDATE);
 
 		/*
 		 * Check any RLS UPDATE WITH CHECK policies

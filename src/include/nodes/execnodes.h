@@ -457,6 +457,9 @@ typedef struct ResultRelInfo
 	/* array of stored generated columns expr states */
 	ExprState **ri_GeneratedExprs;
 
+	/* number of stored generated columns we need to compute */
+	int			ri_NumGeneratedNeeded;
+
 	/* for removing junk attributes from tuples */
 	JunkFilter *ri_junkFilter;
 

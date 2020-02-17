@@ -419,7 +419,7 @@ ExecSimpleRelationInsert(EState *estate, TupleTableSlot *slot)
 		/* Compute stored generated columns */
 		if (rel->rd_att->constr &&
 			rel->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot);
+			ExecComputeStoredGenerated(estate, slot, CMD_INSERT);
 
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)
@@ -485,7 +485,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 		/* Compute stored generated columns */
 		if (rel->rd_att->constr &&
 			rel->rd_att->constr->has_generated_stored)
-			ExecComputeStoredGenerated(estate, slot);
+			ExecComputeStoredGenerated(estate, slot, CMD_UPDATE);
 
 		/* Check the constraints of the tuple */
 		if (rel->rd_att->constr)
