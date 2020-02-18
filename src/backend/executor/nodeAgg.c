@@ -2234,8 +2234,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * The output of the tuplesort, and the output from the outer child
 		 * might not use the same type of slot. In most cases the child will
 		 * be a Sort, and thus return a TTSOpsMinimalTuple type slot - but the
-		 * input can also be be presorted due an index, in which case it could
-		 * be a different type of slot.
+		 * input can also be presorted due an index, in which case it could be
+		 * a different type of slot.
 		 *
 		 * XXX: For efficiency it would be good to instead/additionally
 		 * generate expressions with corresponding settings of outerops* for

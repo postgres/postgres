@@ -156,7 +156,7 @@ check_for_data_type_usage(ClusterInfo *cluster, const char *typename,
 						  "				  a.atttypid = x.oid ",
 						  typename);
 
-		/* Ranges came in in 9.2 */
+		/* Ranges were introduced in 9.2 */
 		if (GET_MAJOR_VERSION(cluster->major_version) >= 902)
 			appendPQExpBuffer(&querybuf,
 							  "			UNION ALL "

@@ -2517,7 +2517,7 @@ JsonbInitBinary(JsonbValue *jbv, Jsonb *jb)
 }
 
 /*
- * Returns jbv* type of of JsonbValue. Note, it never returns jbvBinary as is.
+ * Returns jbv* type of JsonbValue. Note, it never returns jbvBinary as is.
  */
 static int
 JsonbType(JsonbValue *jb)
