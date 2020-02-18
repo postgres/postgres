@@ -544,11 +544,8 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 static void
 ltsInitReadBuffer(LogicalTapeSet *lts, LogicalTape *lt)
 {
-	if (lt->firstBlockNumber != -1L)
-	{
-		Assert(lt->buffer_size > 0);
-		lt->buffer = palloc(lt->buffer_size);
-	}
+	Assert(lt->buffer_size > 0);
+	lt->buffer = palloc(lt->buffer_size);
 
 	/* Read the first block, or reset if tape is empty */
 	lt->nextBlockNumber = lt->firstBlockNumber;
@@ -839,13 +836,10 @@ LogicalTapeRewindForRead(LogicalTapeSet *lts, int tapenum, size_t buffer_size)
 	/* Allocate a read buffer (unless the tape is empty) */
 	if (lt->buffer)
 		pfree(lt->buffer);
+
+	/* the buffer is lazily allocated, but set the size here */
 	lt->buffer = NULL;
-	lt->buffer_size = 0;
-	if (lt->firstBlockNumber != -1L)
-	{
-		/* the buffer is lazily allocated, but set the size here */
-		lt->buffer_size = buffer_size;
-	}
+	lt->buffer_size = buffer_size;
 }
 
 /*
