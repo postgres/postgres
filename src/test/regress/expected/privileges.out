@@ -716,6 +716,13 @@ ERROR:  permission denied for table atestc
 TRUNCATE atestp1; -- ok
 TRUNCATE atestc; -- fail
 ERROR:  permission denied for table atestc
+BEGIN;
+LOCK atestp1;
+END;
+BEGIN;
+LOCK atestc;
+ERROR:  permission denied for table atestc
+END;
 -- privileges on functions, languages
 -- switch to superuser
 \c -

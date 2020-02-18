@@ -459,6 +459,12 @@ UPDATE atestp1 SET f1 = 1; -- ok
 UPDATE atestc SET f1 = 1; -- fail
 TRUNCATE atestp1; -- ok
 TRUNCATE atestc; -- fail
+BEGIN;
+LOCK atestp1;
+END;
+BEGIN;
+LOCK atestc;
+END;
 
 -- privileges on functions, languages
 

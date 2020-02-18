@@ -138,13 +138,17 @@ CREATE TABLE lock_tbl3 () INHERITS (lock_tbl2);
 BEGIN TRANSACTION;
 LOCK TABLE lock_tbl1 * IN ACCESS EXCLUSIVE MODE;
 ROLLBACK;
--- Verify that we can't lock a child table just because we have permission
--- on the parent, but that we can lock the parent only.
+-- Child tables are locked without granting explicit permission to do so as
+-- long as we have permission to lock the parent.
 GRANT UPDATE ON TABLE lock_tbl1 TO regress_rol_lock1;
 SET ROLE regress_rol_lock1;
+-- fail when child locked directly
+BEGIN;
+LOCK TABLE lock_tbl2;
+ERROR:  permission denied for table lock_tbl2
+ROLLBACK;
 BEGIN;
 LOCK TABLE lock_tbl1 * IN ACCESS EXCLUSIVE MODE;
-ERROR:  permission denied for table lock_tbl2
 ROLLBACK;
 BEGIN;
 LOCK TABLE ONLY lock_tbl1;
