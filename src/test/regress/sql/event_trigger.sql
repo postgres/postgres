@@ -10,6 +10,9 @@ BEGIN
 END
 $$ language plpgsql;
 
+-- should fail, can't call it as a plain function
+SELECT test_event_trigger();
+
 -- should fail, event triggers cannot have declared arguments
 create function test_event_trigger_arg(name text)
 returns event_trigger as $$ BEGIN RETURN 1; END $$ language plpgsql;
