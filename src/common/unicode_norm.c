@@ -300,7 +300,7 @@ decompose_code(pg_wchar code, pg_wchar **result, int *current)
  * The input is a 0-terminated array of codepoints.
  *
  * In frontend, returns a 0-terminated array of codepoints, allocated with
- * malloc. Or NULL if we run out of memory. In frontend, the returned
+ * malloc. Or NULL if we run out of memory. In backend, the returned
  * string is palloc'd instead, and OOM is reported with ereport().
  */
 pg_wchar *
