@@ -601,7 +601,6 @@ _bt_compare(Relation rel,
 
 		datum = index_getattr(itup, scankey->sk_attno, itupdesc, &isNull);
 
-		/* see comments about NULLs handling in btbuild */
 		if (scankey->sk_flags & SK_ISNULL)	/* key is NULL */
 		{
 			if (isNull)
