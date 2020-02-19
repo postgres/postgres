@@ -8421,8 +8421,8 @@
   proname => 'uuid_hash_extended', prorettype => 'int8',
   proargtypes => 'uuid int8', prosrc => 'uuid_hash_extended' },
 { oid => '3432', descr => 'generate random UUID',
-  proname => 'gen_random_uuid', proleakproof => 't', prorettype => 'uuid',
-  proargtypes => '', prosrc => 'gen_random_uuid' },
+  proname => 'gen_random_uuid', proleakproof => 't', provolatile => 'v',
+  prorettype => 'uuid', proargtypes => '', prosrc => 'gen_random_uuid' },
 
 # pg_lsn
 { oid => '3229', descr => 'I/O',
