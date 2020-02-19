@@ -88,22 +88,6 @@ CREATE EXTENSION <replaceable>module_name</replaceable>;
  </para>
 
  <para>
-  If your database was brought forward by dump and reload from a pre-9.1
-  version of <productname>PostgreSQL</productname>, and you had been using the pre-9.1
-  version of the module in it, you should instead do
-
-<programlisting>
-CREATE EXTENSION <replaceable>module_name</replaceable> FROM unpackaged;
-</programlisting>
-
-  This will update the pre-9.1 objects of the module into a proper
-  <firstterm>extension</firstterm> object.  Future updates to the module will be
-  managed by <xref linkend="sql-alterextension"/>.
-  For more information about extension updates, see
-  <xref linkend="extend-extensions"/>.
- </para>
-
- <para>
   Note, however, that some of these modules are not <quote>extensions</quote>
   in this sense, but are loaded into the server in some other way, for instance
   by way of

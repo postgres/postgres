@@ -6,7 +6,7 @@ OBJS = \
 	unaccent.o
 
 EXTENSION = unaccent
-DATA = unaccent--1.1.sql unaccent--1.0--1.1.sql unaccent--unpackaged--1.0.sql
+DATA = unaccent--1.1.sql unaccent--1.0--1.1.sql
 DATA_TSEARCH = unaccent.rules
 PGFILEDESC = "unaccent - text search dictionary that removes accents"
 

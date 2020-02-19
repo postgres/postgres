@@ -917,33 +917,6 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
     </para>
 
     <para>
-     The update mechanism can be used to solve an important special case:
-     converting a <quote>loose</quote> collection of objects into an extension.
-     Before the extension mechanism was added to
-     <productname>PostgreSQL</productname> (in 9.1), many people wrote
-     extension modules that simply created assorted unpackaged objects.
-     Given an existing database containing such objects, how can we convert
-     the objects into a properly packaged extension?  Dropping them and then
-     doing a plain <command>CREATE EXTENSION</command> is one way, but it's not
-     desirable if the objects have dependencies (for example, if there are
-     table columns of a data type created by the extension).  The way to fix
-     this situation is to create an empty extension, then use <command>ALTER
-     EXTENSION ADD</command> to attach each pre-existing object to the extension,
-     then finally create any new objects that are in the current extension
-     version but were not in the unpackaged release.  <command>CREATE
-     EXTENSION</command> supports this case with its <literal>FROM</literal> <replaceable
-     class="parameter">old_version</replaceable> option, which causes it to not run the
-     normal installation script for the target version, but instead the update
-     script named
-     <literal><replaceable>extension</replaceable>--<replaceable>old_version</replaceable>--<replaceable>target_version</replaceable>.sql</literal>.
-     The choice of the dummy version name to use as <replaceable
-     class="parameter">old_version</replaceable> is up to the extension author, though
-     <literal>unpackaged</literal> is a common convention.  If you have multiple
-     prior versions you need to be able to update into extension style, use
-     multiple dummy version names to identify them.
-    </para>
-
-    <para>
      <command>ALTER EXTENSION</command> is able to execute sequences of update
      script files to achieve a requested update.  For example, if only
      <literal>foo--1.0--1.1.sql</literal> and <literal>foo--1.1--2.0.sql</literal> are

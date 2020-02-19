@@ -7,7 +7,7 @@ OBJS = \
 PGFILEDESC = "test_parser - example of a custom parser for full-text search"
 
 EXTENSION = test_parser
-DATA = test_parser--1.0.sql test_parser--unpackaged--1.0.sql
+DATA = test_parser--1.0.sql
 
 REGRESS = test_parser
 

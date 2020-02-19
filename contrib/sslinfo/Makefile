@@ -6,8 +6,7 @@ OBJS = \
 	sslinfo.o
 
 EXTENSION = sslinfo
-DATA = sslinfo--1.2.sql sslinfo--1.1--1.2.sql sslinfo--1.0--1.1.sql \
-	sslinfo--unpackaged--1.0.sql
+DATA = sslinfo--1.2.sql sslinfo--1.1--1.2.sql sslinfo--1.0--1.1.sql
 PGFILEDESC = "sslinfo - information about client SSL certificate"
 
 ifdef USE_PGXS

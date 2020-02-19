@@ -9,8 +9,7 @@ EXTENSION = pg_stat_statements
 DATA = pg_stat_statements--1.4.sql pg_stat_statements--1.6--1.7.sql \
 	pg_stat_statements--1.5--1.6.sql pg_stat_statements--1.4--1.5.sql \
 	pg_stat_statements--1.3--1.4.sql pg_stat_statements--1.2--1.3.sql \
-	pg_stat_statements--1.1--1.2.sql pg_stat_statements--1.0--1.1.sql \
-	pg_stat_statements--unpackaged--1.0.sql
+	pg_stat_statements--1.1--1.2.sql pg_stat_statements--1.0--1.1.sql
 PGFILEDESC = "pg_stat_statements - execution statistics of SQL statements"
 
 LDFLAGS_SL += $(filter -lm, $(LIBS))

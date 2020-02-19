@@ -7,8 +7,7 @@ OBJS = \
 	fuzzystrmatch.o
 
 EXTENSION = fuzzystrmatch
-DATA = fuzzystrmatch--1.1.sql fuzzystrmatch--1.0--1.1.sql \
-	fuzzystrmatch--unpackaged--1.0.sql
+DATA = fuzzystrmatch--1.1.sql fuzzystrmatch--1.0--1.1.sql
 PGFILEDESC = "fuzzystrmatch - similarities and distance between strings"
 
 REGRESS = fuzzystrmatch

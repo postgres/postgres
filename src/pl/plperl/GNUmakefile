@@ -27,8 +27,8 @@ NAME = plperl
 
 OBJS = plperl.o SPI.o Util.o $(WIN32RES)
 
-DATA = plperl.control plperl--1.0.sql plperl--unpackaged--1.0.sql \
-       plperlu.control plperlu--1.0.sql plperlu--unpackaged--1.0.sql
+DATA = plperl.control plperl--1.0.sql \
+       plperlu.control plperlu--1.0.sql
 
 PERLCHUNKS = plc_perlboot.pl plc_trusted.pl
 

@@ -2,5 +2,5 @@
 comment = 'XPath querying and XSLT'
 default_version = '1.1'
 module_pathname = '$libdir/pgxml'
-# non-relocatable because xml2--unpackaged--1.0.sql needs to use @extschema@
+# XXX do we still need this to be non-relocatable?
 relocatable = false

@@ -11,7 +11,7 @@ OBJS = \
 EXTENSION = pg_trgm
 DATA = pg_trgm--1.3--1.4.sql \
 	pg_trgm--1.3.sql pg_trgm--1.2--1.3.sql pg_trgm--1.1--1.2.sql \
-	pg_trgm--1.0--1.1.sql pg_trgm--unpackaged--1.0.sql
+	pg_trgm--1.0--1.1.sql
 PGFILEDESC = "pg_trgm - trigram matching"
 
 REGRESS = pg_trgm pg_word_trgm pg_strict_word_trgm

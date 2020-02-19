@@ -6,7 +6,7 @@ OBJS = \
 	dict_int.o
 
 EXTENSION = dict_int
-DATA = dict_int--1.0.sql dict_int--unpackaged--1.0.sql
+DATA = dict_int--1.0.sql
 PGFILEDESC = "dict_int - add-on dictionary template for full-text search"
 
 REGRESS = dict_int

@@ -28,7 +28,7 @@ OBJS = \
 	pl_handler.o \
 	pl_scanner.o
 
-DATA = plpgsql.control plpgsql--1.0.sql plpgsql--unpackaged--1.0.sql
+DATA = plpgsql.control plpgsql--1.0.sql
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB)
 

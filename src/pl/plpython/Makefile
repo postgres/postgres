@@ -34,9 +34,9 @@ OBJS = \
 	plpy_typeio.o \
 	plpy_util.o
 
-DATA = $(NAME)u.control $(NAME)u--1.0.sql $(NAME)u--unpackaged--1.0.sql
+DATA = $(NAME)u.control $(NAME)u--1.0.sql
 ifeq ($(python_majorversion),2)
-DATA += plpythonu.control plpythonu--1.0.sql plpythonu--unpackaged--1.0.sql
+DATA += plpythonu.control plpythonu--1.0.sql
 endif
 
 # header files to install - it's not clear which of these might be needed

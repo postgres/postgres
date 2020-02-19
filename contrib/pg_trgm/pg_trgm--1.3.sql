@@ -182,8 +182,8 @@ AS
 
 -- Add operators and support functions that are new in 9.1.  We do it like
 -- this, leaving them "loose" in the operator family rather than bound into
--- the gist_trgm_ops opclass, because that's the only state that can be
--- reproduced during an upgrade from 9.0 (see pg_trgm--unpackaged--1.0.sql).
+-- the gist_trgm_ops opclass, because that's the only state that could be
+-- reproduced during an upgrade from 9.0.
 
 ALTER OPERATOR FAMILY gist_trgm_ops USING gist ADD
         OPERATOR        2       <-> (text, text) FOR ORDER BY pg_catalog.float_ops,

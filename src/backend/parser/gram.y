@@ -4460,7 +4460,7 @@ DropTableSpaceStmt: DROP TABLESPACE name
  *
  *		QUERY:
  *             CREATE EXTENSION extension
- *             [ WITH ] [ SCHEMA schema ] [ VERSION version ] [ FROM oldversion ]
+ *             [ WITH ] [ SCHEMA schema ] [ VERSION version ]
  *
  *****************************************************************************/
 
@@ -4500,7 +4500,10 @@ create_extension_opt_item:
 				}
 			| FROM NonReservedWord_or_Sconst
 				{
-					$$ = makeDefElem("old_version", (Node *)makeString($2), @1);
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("CREATE EXTENSION ... FROM is no longer supported"),
+							 parser_errposition(@1)));
 				}
 			| CASCADE
 				{

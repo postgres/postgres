@@ -1357,7 +1357,6 @@ static ObjectAddress
 CreateExtensionInternal(char *extensionName,
 						char *schemaName,
 						const char *versionName,
-						const char *oldVersionName,
 						bool cascade,
 						List *parents,
 						bool is_create)
@@ -1367,6 +1366,8 @@ CreateExtensionInternal(char *extensionName,
 	Oid			extowner = GetUserId();
 	ExtensionControlFile *pcontrol;
 	ExtensionControlFile *control;
+	char	   *filename;
+	struct stat fst;
 	List	   *updateVersions;
 	List	   *requiredExtensions;
 	List	   *requiredSchemas;
@@ -1401,56 +1402,6 @@ CreateExtensionInternal(char *extensionName,
 	 * does what is needed, we try to find a sequence of update scripts that
 	 * will get us there.
 	 */
-	if (oldVersionName)
-	{
-		/*
-		 * "FROM old_version" was specified, indicating that we're trying to
-		 * update from some unpackaged version of the extension.  Locate a
-		 * series of update scripts that will do it.
-		 */
-		check_valid_version_name(oldVersionName);
-
-		if (strcmp(oldVersionName, versionName) == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("FROM version must be different from installation target version \"%s\"",
-							versionName)));
-
-		updateVersions = identify_update_path(pcontrol,
-											  oldVersionName,
-											  versionName);
-
-		if (list_length(updateVersions) == 1)
-		{
-			/*
-			 * Simple case where there's just one update script to run. We
-			 * will not need any follow-on update steps.
-			 */
-			Assert(strcmp((char *) linitial(updateVersions), versionName) == 0);
-			updateVersions = NIL;
-		}
-		else
-		{
-			/*
-			 * Multi-step sequence.  We treat this as installing the version
-			 * that is the target of the first script, followed by successive
-			 * updates to the later versions.
-			 */
-			versionName = (char *) linitial(updateVersions);
-			updateVersions = list_delete_first(updateVersions);
-		}
-	}
-	else
-	{
-		/*
-		 * No FROM, so we're installing from scratch.  If there is an install
-		 * script for the desired version, we only need to run that one.
-		 */
-		char	   *filename;
-		struct stat fst;
-
-		oldVersionName = NULL;
-
 		filename = get_extension_script_filename(pcontrol, NULL, versionName);
 		if (stat(filename, &fst) == 0)
 		{
@@ -1484,7 +1435,6 @@ CreateExtensionInternal(char *extensionName,
 			/* Otherwise, install best starting point and then upgrade */
 			versionName = evi_start->name;
 		}
-	}
 
 	/*
 	 * Fetch control parameters for installation target version
@@ -1624,7 +1574,7 @@ CreateExtensionInternal(char *extensionName,
 	 * Execute the installation script file
 	 */
 	execute_extension_script(extensionOid, control,
-							 oldVersionName, versionName,
+							 NULL, versionName,
 							 requiredSchemas,
 							 schemaName, schemaOid);
 
@@ -1691,7 +1641,6 @@ get_required_extension(char *reqExtensionName,
 			addr = CreateExtensionInternal(reqExtensionName,
 										   origSchemaName,
 										   NULL,
-										   NULL,
 										   cascade,
 										   cascade_parents,
 										   is_create);
@@ -1719,11 +1668,9 @@ CreateExtension(ParseState *pstate, CreateExtensionStmt *stmt)
 {
 	DefElem    *d_schema = NULL;
 	DefElem    *d_new_version = NULL;
-	DefElem    *d_old_version = NULL;
 	DefElem    *d_cascade = NULL;
 	char	   *schemaName = NULL;
 	char	   *versionName = NULL;
-	char	   *oldVersionName = NULL;
 	bool		cascade = false;
 	ListCell   *lc;
 
@@ -1787,16 +1734,6 @@ CreateExtension(ParseState *pstate, CreateExtensionStmt *stmt)
 			d_new_version = defel;
 			versionName = defGetString(d_new_version);
 		}
-		else if (strcmp(defel->defname, "old_version") == 0)
-		{
-			if (d_old_version)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("conflicting or redundant options"),
-						 parser_errposition(pstate, defel->location)));
-			d_old_version = defel;
-			oldVersionName = defGetString(d_old_version);
-		}
 		else if (strcmp(defel->defname, "cascade") == 0)
 		{
 			if (d_cascade)
@@ -1815,7 +1752,6 @@ CreateExtension(ParseState *pstate, CreateExtensionStmt *stmt)
 	return CreateExtensionInternal(stmt->extname,
 								   schemaName,
 								   versionName,
-								   oldVersionName,
 								   cascade,
 								   NIL,
 								   true);

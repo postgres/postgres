@@ -29,7 +29,7 @@ OBJS =  \
 	btree_uuid.o
 
 EXTENSION = btree_gist
-DATA = btree_gist--unpackaged--1.0.sql btree_gist--1.0--1.1.sql \
+DATA = btree_gist--1.0--1.1.sql \
        btree_gist--1.1--1.2.sql btree_gist--1.2.sql btree_gist--1.2--1.3.sql \
        btree_gist--1.3--1.4.sql btree_gist--1.4--1.5.sql
 PGFILEDESC = "btree_gist - B-tree equivalent GiST operator classes"
