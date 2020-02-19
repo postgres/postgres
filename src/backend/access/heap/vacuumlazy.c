@@ -2439,10 +2439,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 {
 	BlockNumber old_rel_pages = vacrelstats->rel_pages;
 	BlockNumber new_rel_pages;
-	PGRUsage	ru0;
 	int			lock_retry;
-
-	pg_rusage_init(&ru0);
 
 	/* Report that we are now truncating */
 	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
@@ -2453,6 +2450,10 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 */
 	do
 	{
+		PGRUsage	ru0;
+
+		pg_rusage_init(&ru0);
+
 		/*
 		 * We need full exclusive lock on the relation in order to do
 		 * truncation. If we can't get it, give up rather than waiting --- we
