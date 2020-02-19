@@ -985,9 +985,53 @@ CREATE UNIQUE INDEX tests_target_one_null ON tests ((target IS NULL)) WHERE targ
    know at least as much as the query planner knows, in particular you
    know when an index might be profitable.  Forming this knowledge
    requires experience and understanding of how indexes in
-   <productname>PostgreSQL</productname> work.  In most cases, the advantage of a
-   partial index over a regular index will be minimal.
+   <productname>PostgreSQL</productname> work.  In most cases, the
+   advantage of a partial index over a regular index will be minimal.
+   There are cases where they are quite counterproductive, as in <xref
+   linkend="indexes-partial-ex4"/>.
   </para>
+
+  <example id="indexes-partial-ex4">
+   <title>Do Not Use Partial Indexes as a Substitute for Partitioning</title>
+
+   <para>
+    You might be tempted to create a large set of non-overlapping partial
+    indexes, for example
+
+<programlisting>
+CREATE INDEX mytable_cat_1 ON mytable (data) WHERE category = 1;
+CREATE INDEX mytable_cat_2 ON mytable (data) WHERE category = 2;
+CREATE INDEX mytable_cat_3 ON mytable (data) WHERE category = 3;
+...
+CREATE INDEX mytable_cat_<replaceable>N</replaceable> ON mytable (data) WHERE category = <replaceable>N</replaceable>;
+</programlisting>
+
+    This is a bad idea!  Almost certainly, you'll be better off with a
+    single non-partial index, declared like
+
+<programlisting>
+CREATE INDEX mytable_cat_data ON mytable (category, data);
+</programlisting>
+
+    (Put the category column first, for the reasons described in
+    <xref linkend="indexes-multicolumn"/>.)  While a search in this larger
+    index might have to descend through a couple more tree levels than a
+    search in a smaller index, that's almost certainly going to be cheaper
+    than the planner effort needed to select the appropriate one of the
+    partial indexes.  The core of the problem is that the system does not
+    understand the relationship among the partial indexes, and will
+    laboriously test each one to see if it's applicable to the current
+    query.
+   </para>
+
+   <para>
+    If your table is large enough that a single index really is a bad idea,
+    you should look into using partitioning instead (see
+    <xref linkend="ddl-partitioning"/>).  With that mechanism, the system
+    does understand that the tables and indexes are non-overlapping, so
+    far better performance is possible.
+   </para>
+  </example>
 
   <para>
    More information about partial indexes can be found in <xref
