@@ -263,6 +263,7 @@ static void finalize_partialaggregate(AggState *aggstate,
 									  AggStatePerAgg peragg,
 									  AggStatePerGroup pergroupstate,
 									  Datum *resultVal, bool *resultIsNull);
+static void prepare_hash_slot(AggState *aggstate);
 static void prepare_projection_slot(AggState *aggstate,
 									TupleTableSlot *slot,
 									int currentSet);
@@ -272,8 +273,9 @@ static void finalize_aggregates(AggState *aggstate,
 static TupleTableSlot *project_aggregates(AggState *aggstate);
 static Bitmapset *find_unaggregated_cols(AggState *aggstate);
 static bool find_unaggregated_cols_walker(Node *node, Bitmapset **colnos);
-static void build_hash_table(AggState *aggstate);
-static TupleHashEntryData *lookup_hash_entry(AggState *aggstate);
+static void build_hash_tables(AggState *aggstate);
+static void build_hash_table(AggState *aggstate, int setno, long nbuckets);
+static AggStatePerGroup lookup_hash_entry(AggState *aggstate, uint32 hash);
 static void lookup_hash_entries(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
@@ -1036,6 +1038,32 @@ finalize_partialaggregate(AggState *aggstate,
 }
 
 /*
+ * Extract the attributes that make up the grouping key into the
+ * hashslot. This is necessary to compute the hash or perform a lookup.
+ */
+static void
+prepare_hash_slot(AggState *aggstate)
+{
+	TupleTableSlot *inputslot = aggstate->tmpcontext->ecxt_outertuple;
+	AggStatePerHash perhash = &aggstate->perhash[aggstate->current_set];
+	TupleTableSlot *hashslot = perhash->hashslot;
+	int				i;
+
+	/* transfer just the needed columns into hashslot */
+	slot_getsomeattrs(inputslot, perhash->largestGrpColIdx);
+	ExecClearTuple(hashslot);
+
+	for (i = 0; i < perhash->numhashGrpCols; i++)
+	{
+		int			varNumber = perhash->hashGrpColIdxInput[i] - 1;
+
+		hashslot->tts_values[i] = inputslot->tts_values[varNumber];
+		hashslot->tts_isnull[i] = inputslot->tts_isnull[varNumber];
+	}
+	ExecStoreVirtualTuple(hashslot);
+}
+
+/*
  * Prepare to finalize and project based on the specified representative tuple
  * slot and grouping set.
  *
@@ -1249,39 +1277,57 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
  * they are all reset at the same time).
  */
 static void
-build_hash_table(AggState *aggstate)
+build_hash_tables(AggState *aggstate)
 {
-	MemoryContext tmpmem = aggstate->tmpcontext->ecxt_per_tuple_memory;
-	Size		additionalsize;
-	int			i;
+	int				setno;
 
-	Assert(aggstate->aggstrategy == AGG_HASHED || aggstate->aggstrategy == AGG_MIXED);
-
-	additionalsize = aggstate->numtrans * sizeof(AggStatePerGroupData);
-
-	for (i = 0; i < aggstate->num_hashes; ++i)
+	for (setno = 0; setno < aggstate->num_hashes; ++setno)
 	{
-		AggStatePerHash perhash = &aggstate->perhash[i];
+		AggStatePerHash perhash = &aggstate->perhash[setno];
 
 		Assert(perhash->aggnode->numGroups > 0);
 
-		if (perhash->hashtable)
-			ResetTupleHashTable(perhash->hashtable);
-		else
-			perhash->hashtable = BuildTupleHashTableExt(&aggstate->ss.ps,
-														perhash->hashslot->tts_tupleDescriptor,
-														perhash->numCols,
-														perhash->hashGrpColIdxHash,
-														perhash->eqfuncoids,
-														perhash->hashfunctions,
-														perhash->aggnode->grpCollations,
-														perhash->aggnode->numGroups,
-														additionalsize,
-														aggstate->ss.ps.state->es_query_cxt,
-														aggstate->hashcontext->ecxt_per_tuple_memory,
-														tmpmem,
-														DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
+		build_hash_table(aggstate, setno, perhash->aggnode->numGroups);
 	}
+}
+
+/*
+ * Build a single hashtable for this grouping set.
+ */
+static void
+build_hash_table(AggState *aggstate, int setno, long nbuckets)
+{
+	AggStatePerHash perhash = &aggstate->perhash[setno];
+	MemoryContext	metacxt = aggstate->ss.ps.state->es_query_cxt;
+	MemoryContext	hashcxt = aggstate->hashcontext->ecxt_per_tuple_memory;
+	MemoryContext	tmpcxt	= aggstate->tmpcontext->ecxt_per_tuple_memory;
+	Size            additionalsize;
+
+	Assert(aggstate->aggstrategy == AGG_HASHED ||
+		   aggstate->aggstrategy == AGG_MIXED);
+
+	/*
+	 * Used to make sure initial hash table allocation does not exceed
+	 * work_mem. Note that the estimate does not include space for
+	 * pass-by-reference transition data values, nor for the representative
+	 * tuple of each group.
+	 */
+	additionalsize = aggstate->numtrans * sizeof(AggStatePerGroupData);
+
+	perhash->hashtable = BuildTupleHashTableExt(
+		&aggstate->ss.ps,
+		perhash->hashslot->tts_tupleDescriptor,
+		perhash->numCols,
+		perhash->hashGrpColIdxHash,
+		perhash->eqfuncoids,
+		perhash->hashfunctions,
+		perhash->aggnode->grpCollations,
+		nbuckets,
+		additionalsize,
+		metacxt,
+		hashcxt,
+		tmpcxt,
+		DO_AGGSPLIT_SKIPFINAL(aggstate->aggsplit));
 }
 
 /*
@@ -1441,33 +1487,20 @@ hash_agg_entry_size(int numAggs, Size tupleWidth, Size transitionSpace)
  * set (which the caller must have selected - note that initialize_aggregate
  * depends on this).
  *
- * When called, CurrentMemoryContext should be the per-query context.
+ * When called, CurrentMemoryContext should be the per-query context. The
+ * already-calculated hash value for the tuple must be specified.
  */
-static TupleHashEntryData *
-lookup_hash_entry(AggState *aggstate)
+static AggStatePerGroup
+lookup_hash_entry(AggState *aggstate, uint32 hash)
 {
-	TupleTableSlot *inputslot = aggstate->tmpcontext->ecxt_outertuple;
 	AggStatePerHash perhash = &aggstate->perhash[aggstate->current_set];
 	TupleTableSlot *hashslot = perhash->hashslot;
 	TupleHashEntryData *entry;
 	bool		isnew;
-	int			i;
-
-	/* transfer just the needed columns into hashslot */
-	slot_getsomeattrs(inputslot, perhash->largestGrpColIdx);
-	ExecClearTuple(hashslot);
-
-	for (i = 0; i < perhash->numhashGrpCols; i++)
-	{
-		int			varNumber = perhash->hashGrpColIdxInput[i] - 1;
-
-		hashslot->tts_values[i] = inputslot->tts_values[varNumber];
-		hashslot->tts_isnull[i] = inputslot->tts_isnull[varNumber];
-	}
-	ExecStoreVirtualTuple(hashslot);
 
 	/* find or create the hashtable entry using the filtered tuple */
-	entry = LookupTupleHashEntry(perhash->hashtable, hashslot, &isnew);
+	entry = LookupTupleHashEntryHash(perhash->hashtable, hashslot, &isnew,
+									 hash);
 
 	if (isnew)
 	{
@@ -1492,7 +1525,7 @@ lookup_hash_entry(AggState *aggstate)
 		}
 	}
 
-	return entry;
+	return entry->additional;
 }
 
 /*
@@ -1510,8 +1543,13 @@ lookup_hash_entries(AggState *aggstate)
 
 	for (setno = 0; setno < numHashes; setno++)
 	{
+		AggStatePerHash perhash = &aggstate->perhash[setno];
+		uint32			hash;
+
 		select_current_set(aggstate, setno, true);
-		pergroup[setno] = lookup_hash_entry(aggstate)->additional;
+		prepare_hash_slot(aggstate);
+		hash = TupleHashTableHash(perhash->hashtable, perhash->hashslot);
+		pergroup[setno] = lookup_hash_entry(aggstate, hash);
 	}
 }
 
@@ -2478,7 +2516,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggstate->hash_pergroup = pergroups;
 
 		find_hash_columns(aggstate);
-		build_hash_table(aggstate);
+		build_hash_tables(aggstate);
 		aggstate->table_filled = false;
 	}
 
@@ -3498,7 +3536,7 @@ ExecReScanAgg(AggState *node)
 	{
 		ReScanExprContext(node->hashcontext);
 		/* Rebuild an empty hash table */
-		build_hash_table(node);
+		build_hash_tables(node);
 		node->table_filled = false;
 		/* iterator will be reset when the table is filled */
 	}
