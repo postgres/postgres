@@ -354,17 +354,11 @@ find_other_exec(const char *argv0, const char *target,
 
 
 /*
- * The runtime library's popen() on win32 does not work when being
- * called from a service when running on windows <= 2000, because
- * there is no stdin/stdout/stderr.
- *
- * Executing a command in a pipe and reading the first line from it
- * is all we need.
+ * Execute a command in a pipe and read the first line from it.
  */
 static char *
 pipe_read_line(char *cmd, char *line, int maxsize)
 {
-#ifndef WIN32
 	FILE	   *pgver;
 
 	/* flush output buffers in case popen does not... */
@@ -393,130 +387,6 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 		return NULL;
 
 	return line;
-#else							/* WIN32 */
-
-	SECURITY_ATTRIBUTES sattr;
-	HANDLE		childstdoutrd,
-				childstdoutwr,
-				childstdoutrddup;
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	char	   *retval = NULL;
-
-	sattr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sattr.bInheritHandle = TRUE;
-	sattr.lpSecurityDescriptor = NULL;
-
-	if (!CreatePipe(&childstdoutrd, &childstdoutwr, &sattr, 0))
-		return NULL;
-
-	if (!DuplicateHandle(GetCurrentProcess(),
-						 childstdoutrd,
-						 GetCurrentProcess(),
-						 &childstdoutrddup,
-						 0,
-						 FALSE,
-						 DUPLICATE_SAME_ACCESS))
-	{
-		CloseHandle(childstdoutrd);
-		CloseHandle(childstdoutwr);
-		return NULL;
-	}
-
-	CloseHandle(childstdoutrd);
-
-	ZeroMemory(&pi, sizeof(pi));
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdError = childstdoutwr;
-	si.hStdOutput = childstdoutwr;
-	si.hStdInput = INVALID_HANDLE_VALUE;
-
-	if (CreateProcess(NULL,
-					  cmd,
-					  NULL,
-					  NULL,
-					  TRUE,
-					  0,
-					  NULL,
-					  NULL,
-					  &si,
-					  &pi))
-	{
-		/* Successfully started the process */
-		char	   *lineptr;
-
-		ZeroMemory(line, maxsize);
-
-		/* Try to read at least one line from the pipe */
-		/* This may require more than one wait/read attempt */
-		for (lineptr = line; lineptr < line + maxsize - 1;)
-		{
-			DWORD		bytesread = 0;
-
-			/* Let's see if we can read */
-			if (WaitForSingleObject(childstdoutrddup, 10000) != WAIT_OBJECT_0)
-				break;			/* Timeout, but perhaps we got a line already */
-
-			if (!ReadFile(childstdoutrddup, lineptr, maxsize - (lineptr - line),
-						  &bytesread, NULL))
-				break;			/* Error, but perhaps we got a line already */
-
-			lineptr += strlen(lineptr);
-
-			if (!bytesread)
-				break;			/* EOF */
-
-			if (strchr(line, '\n'))
-				break;			/* One or more lines read */
-		}
-
-		if (lineptr != line)
-		{
-			/* OK, we read some data */
-			int			len;
-
-			/* If we got more than one line, cut off after the first \n */
-			lineptr = strchr(line, '\n');
-			if (lineptr)
-				*(lineptr + 1) = '\0';
-
-			len = strlen(line);
-
-			/*
-			 * If EOL is \r\n, convert to just \n. Because stdout is a
-			 * text-mode stream, the \n output by the child process is
-			 * received as \r\n, so we convert it to \n.  The server main.c
-			 * sets setvbuf(stdout, NULL, _IONBF, 0) which has the effect of
-			 * disabling \n to \r\n expansion for stdout.
-			 */
-			if (len >= 2 && line[len - 2] == '\r' && line[len - 1] == '\n')
-			{
-				line[len - 2] = '\n';
-				line[len - 1] = '\0';
-				len--;
-			}
-
-			/*
-			 * We emulate fgets() behaviour. So if there is no newline at the
-			 * end, we add one...
-			 */
-			if (len == 0 || line[len - 1] != '\n')
-				strcat(line, "\n");
-
-			retval = line;
-		}
-
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-	}
-
-	CloseHandle(childstdoutwr);
-	CloseHandle(childstdoutrddup);
-
-	return retval;
-#endif							/* WIN32 */
 }
 
 

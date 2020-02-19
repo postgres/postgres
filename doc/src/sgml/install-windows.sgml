@@ -46,8 +46,7 @@
   <productname>Cygwin</productname> is not recommended for running a
   production server, and it should only be used for running on
   older versions of <productname>Windows</productname> where
-  the native build does not work, such as
-  <productname>Windows 98</productname>. The official
+  the native build does not work. The official
   binaries are built using <productname>Visual Studio</productname>.
  </para>
 

@@ -2087,7 +2087,7 @@ export MANPATH
 
   <para>
    <productname>PostgreSQL</productname> can be expected to work on these operating
-   systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
+   systems: Linux (all recent distributions), Windows (XP and later),
    FreeBSD, OpenBSD, NetBSD, macOS, AIX, HP/UX, and Solaris.
    Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by

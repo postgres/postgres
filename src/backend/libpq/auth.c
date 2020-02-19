@@ -2503,9 +2503,9 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 		if (_ldap_start_tls_sA == NULL)
 		{
 			/*
-			 * Need to load this function dynamically because it does not
-			 * exist on Windows 2000, and causes a load error for the whole
-			 * exe if referenced.
+			 * Need to load this function dynamically because it may not exist
+			 * on Windows, and causes a load error for the whole exe if
+			 * referenced.
 			 */
 			HANDLE		ldaphandle;
 
