@@ -1,0 +1,39 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s0_begin s0_first_subxact s2_checkpoint s1_begin s1_dml s0_many_subxacts s0_commit s2_checkpoint s2_get_changes_suppress_output s2_get_changes_suppress_output s1_commit s2_get_changes
+step s0_begin: BEGIN;
+step s0_first_subxact: 
+    DO LANGUAGE plpgsql $$
+      BEGIN
+        BEGIN
+          INSERT INTO harvest VALUES (41);
+	EXCEPTION WHEN OTHERS THEN RAISE;
+	END;
+      END $$;
+
+step s2_checkpoint: CHECKPOINT;
+step s1_begin: BEGIN;
+step s1_dml: INSERT INTO harvest VALUES (43);
+step s0_many_subxacts: select subxacts();
+subxacts       
+
+               
+step s0_commit: COMMIT;
+step s2_checkpoint: CHECKPOINT;
+step s2_get_changes_suppress_output: SELECT null n FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1') GROUP BY n;
+n              
+
+               
+step s2_get_changes_suppress_output: SELECT null n FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1') GROUP BY n;
+n              
+
+step s1_commit: COMMIT;
+step s2_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+data           
+
+BEGIN          
+table public.harvest: INSERT: apples[integer]:43
+COMMIT         
+?column?       
+
+stop           
