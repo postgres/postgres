@@ -1735,8 +1735,6 @@ CREATE SCHEMA fkpart9
 INSERT INTO fkpart9.pk VALUES (35);
 INSERT INTO fkpart9.fk VALUES (35);
 DELETE FROM fkpart9.pk WHERE a=35;
-SELECT fk.fk_a, pk.a
-FROM fkpart9.fk
-LEFT JOIN fkpart9.pk ON fk.fk_a = pk.a
-WHERE fk.fk_a=35;
+SELECT * FROM fkpart9.pk;
+SELECT * FROM fkpart9.fk;
 DROP SCHEMA fkpart9 CASCADE;
