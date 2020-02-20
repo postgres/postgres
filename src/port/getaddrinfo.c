@@ -74,16 +74,6 @@ haveNativeWindowsIPv6routines(void)
 	 */
 	hLibrary = LoadLibraryA("ws2_32");
 
-	if (hLibrary == NULL || GetProcAddress(hLibrary, "getaddrinfo") == NULL)
-	{
-		/*
-		 * Well, ws2_32 doesn't exist, or more likely doesn't have
-		 * getaddrinfo.
-		 */
-		if (hLibrary != NULL)
-			FreeLibrary(hLibrary);
-	}
-
 	/* If hLibrary is null, we couldn't find a dll with functions */
 	if (hLibrary != NULL)
 	{
