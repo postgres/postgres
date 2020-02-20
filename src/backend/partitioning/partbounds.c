@@ -824,7 +824,7 @@ partition_bounds_copy(PartitionBoundInfo src,
 		int			j;
 
 		/*
-		 * For a corresponding to hash partition, datums array will have two
+		 * For a corresponding hash partition, datums array will have two
 		 * elements - modulus and remainder.
 		 */
 		bool		hash_part = (key->strategy == PARTITION_STRATEGY_HASH);
