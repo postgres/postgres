@@ -1261,10 +1261,6 @@ extern long long strtoll(const char *str, char **endptr, int base);
 extern unsigned long long strtoull(const char *str, char **endptr, int base);
 #endif
 
-#if !defined(HAVE_MEMMOVE) && !defined(memmove)
-#define memmove(d, s, c)		bcopy(s, d, c)
-#endif
-
 /* no special DLL markers on most ports */
 #ifndef PGDLLIMPORT
 #define PGDLLIMPORT
