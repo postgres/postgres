@@ -26,9 +26,7 @@
 #include <pwd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef HAVE_UTIME_H
 #include <utime.h>
-#endif
 
 #include "access/htup_details.h"
 #include "catalog/pg_authid.h"
@@ -1213,29 +1211,8 @@ TouchSocketLockFiles(void)
 		if (strcmp(socketLockFile, DIRECTORY_LOCK_FILE) == 0)
 			continue;
 
-		/*
-		 * utime() is POSIX standard, utimes() is a common alternative; if we
-		 * have neither, fall back to actually reading the file (which only
-		 * sets the access time not mod time, but that should be enough in
-		 * most cases).  In all paths, we ignore errors.
-		 */
-#ifdef HAVE_UTIME
-		utime(socketLockFile, NULL);
-#else							/* !HAVE_UTIME */
-#ifdef HAVE_UTIMES
-		utimes(socketLockFile, NULL);
-#else							/* !HAVE_UTIMES */
-		int			fd;
-		char		buffer[1];
-
-		fd = open(socketLockFile, O_RDONLY | PG_BINARY, 0);
-		if (fd >= 0)
-		{
-			read(fd, buffer, sizeof(buffer));
-			close(fd);
-		}
-#endif							/* HAVE_UTIMES */
-#endif							/* HAVE_UTIME */
+		/* we just ignore any error here */
+		(void) utime(socketLockFile, NULL);
 	}
 }
 

@@ -81,9 +81,7 @@
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
-#ifdef HAVE_UTIME_H
 #include <utime.h>
-#endif
 #ifdef _MSC_VER					/* mstcpip.h is missing on mingw */
 #include <mstcpip.h>
 #endif
@@ -866,20 +864,8 @@ TouchSocketFiles(void)
 	{
 		char	   *sock_path = (char *) lfirst(l);
 
-		/*
-		 * utime() is POSIX standard, utimes() is a common alternative. If we
-		 * have neither, there's no way to affect the mod or access time of
-		 * the socket :-(
-		 *
-		 * In either path, we ignore errors; there's no point in complaining.
-		 */
-#ifdef HAVE_UTIME
-		utime(sock_path, NULL);
-#else							/* !HAVE_UTIME */
-#ifdef HAVE_UTIMES
-		utimes(sock_path, NULL);
-#endif							/* HAVE_UTIMES */
-#endif							/* HAVE_UTIME */
+		/* Ignore errors; there's no point in complaining */
+		(void) utime(sock_path, NULL);
 	}
 }
 

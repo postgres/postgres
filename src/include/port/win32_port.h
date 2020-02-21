@@ -50,7 +50,6 @@
 #include <process.h>
 #include <signal.h>
 #include <direct.h>
-#include <sys/utime.h>			/* for non-unicode version */
 #undef near
 #include <sys/stat.h>			/* needed before sys/stat hacking below */
 

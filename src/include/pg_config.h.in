@@ -662,15 +662,6 @@
 /* Define to 1 if you have the `uselocale' function. */
 #undef HAVE_USELOCALE
 
-/* Define to 1 if you have the `utime' function. */
-#undef HAVE_UTIME
-
-/* Define to 1 if you have the `utimes' function. */
-#undef HAVE_UTIMES
-
-/* Define to 1 if you have the <utime.h> header file. */
-#undef HAVE_UTIME_H
-
 /* Define to 1 if you have BSD UUID support. */
 #undef HAVE_UUID_BSD
 
