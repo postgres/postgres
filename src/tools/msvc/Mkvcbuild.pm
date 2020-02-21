@@ -6,7 +6,7 @@ package Mkvcbuild;
 # src/tools/msvc/Mkvcbuild.pm
 #
 use Carp;
-use Win32;
+use if ($^O eq "MSWin32"), 'Win32';
 use strict;
 use warnings;
 use Project;
@@ -648,9 +648,11 @@ sub mkvcbuild
 					# 'Can't spawn "conftest.exe"'; suppress that.
 					no warnings;
 
+					no strict 'subs';
+
 					# Disable error dialog boxes like we do in the postmaster.
 					# Here, we run code that triggers relevant errors.
-					use Win32API::File qw(SetErrorMode :SEM_);
+					use if ($^O eq "MSWin32"), 'Win32API::File', qw(SetErrorMode :SEM_);
 					my $oldmode = SetErrorMode(
 						SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 					system(".\\$exe");

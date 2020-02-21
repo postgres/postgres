@@ -60,10 +60,17 @@ sub DeterminePlatform
 {
 	my $self = shift;
 
-	# Examine CL help output to determine if we are in 32 or 64-bit mode.
-	my $output = `cl /? 2>&1`;
-	$? >> 8 == 0 or die "cl command not found";
-	$self->{platform} = ($output =~ /^\/favor:<.+AMD64/m) ? 'x64' : 'Win32';
+	if ($^O eq "MSWin32")
+	{
+		# Examine CL help output to determine if we are in 32 or 64-bit mode.
+		my $output = `cl /? 2>&1`;
+		$? >> 8 == 0 or die "cl command not found";
+		$self->{platform} = ($output =~ /^\/favor:<.+AMD64/m) ? 'x64' : 'Win32';
+	}
+	else
+	{
+		$self->{platform} = 'FAKE';
+	}
 	print "Detected hardware platform: $self->{platform}\n";
 	return;
 }
@@ -1061,7 +1068,7 @@ EOF
 		}
 		if ($fld ne "")
 		{
-			$flduid{$fld} = Win32::GuidGen();
+			$flduid{$fld} = $^O eq "MSWin32" ? Win32::GuidGen() : 'FAKE';
 			print $sln <<EOF;
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "$fld", "$fld", "$flduid{$fld}"
 EndProject

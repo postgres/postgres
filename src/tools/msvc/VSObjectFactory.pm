@@ -111,21 +111,28 @@ sub CreateProject
 
 sub DetermineVisualStudioVersion
 {
-
-	# To determine version of Visual Studio we use nmake as it has
-	# existed for a long time and still exists in current Visual
-	# Studio versions.
-	my $output = `nmake /? 2>&1`;
-	$? >> 8 == 0
-	  or croak
-	  "Unable to determine Visual Studio version: The nmake command wasn't found.";
-	if ($output =~ /(\d+)\.(\d+)\.\d+(\.\d+)?$/m)
+	if ($^O eq "MSWin32")
 	{
-		return _GetVisualStudioVersion($1, $2);
-	}
+		# To determine version of Visual Studio we use nmake as it has
+		# existed for a long time and still exists in current Visual
+		# Studio versions.
+		my $output = `nmake /? 2>&1`;
+		$? >> 8 == 0
+		  or croak
+		  "Unable to determine Visual Studio version: The nmake command wasn't found.";
+		if ($output =~ /(\d+)\.(\d+)\.\d+(\.\d+)?$/m)
+		{
+			return _GetVisualStudioVersion($1, $2);
+		}
 
-	croak
-	  "Unable to determine Visual Studio version: The nmake version could not be determined.";
+		croak
+		  "Unable to determine Visual Studio version: The nmake version could not be determined.";
+	}
+	else
+	{
+		# fake version
+		return '16.00';
+	}
 }
 
 sub _GetVisualStudioVersion

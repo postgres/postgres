@@ -22,7 +22,7 @@ sub _new
 	my $self = {
 		name                  => $name,
 		type                  => $type,
-		guid                  => Win32::GuidGen(),
+		guid                  => $^O eq "MSWin32" ? Win32::GuidGen() : 'FAKE',
 		files                 => {},
 		references            => [],
 		libraries             => [],
