@@ -385,10 +385,6 @@ extern float pg_strtof(const char *nptr, char **endptr);
 extern char *mkdtemp(char *path);
 #endif
 
-#ifndef HAVE_RINT
-extern double rint(double x);
-#endif
-
 #ifndef HAVE_INET_ATON
 #include <netinet/in.h>
 #include <arpa/inet.h>

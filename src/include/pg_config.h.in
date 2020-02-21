@@ -451,9 +451,6 @@
 /* Define to 1 if you have the `readlink' function. */
 #undef HAVE_READLINK
 
-/* Define to 1 if you have the `rint' function. */
-#undef HAVE_RINT
-
 /* Define to 1 if you have the global variable
    'rl_completion_append_character'. */
 #undef HAVE_RL_COMPLETION_APPEND_CHARACTER

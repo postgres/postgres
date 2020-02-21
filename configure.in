@@ -1707,7 +1707,6 @@ AC_REPLACE_FUNCS(m4_normalize([
 	pread
 	pwrite
 	random
-	rint
 	srandom
 	strlcat
 	strlcpy

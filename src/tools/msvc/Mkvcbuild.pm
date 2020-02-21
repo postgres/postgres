@@ -104,8 +104,6 @@ sub mkvcbuild
 	  sprompt.c strerror.c tar.c thread.c
 	  win32env.c win32error.c win32security.c win32setlocale.c);
 
-	push(@pgportfiles, 'rint.c') if ($vsVersion < '12.00');
-
 	push(@pgportfiles, 'strtof.c') if ($vsVersion < '14.00');
 
 	if ($vsVersion >= '9.00')

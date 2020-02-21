@@ -321,7 +321,6 @@ sub GenerateFiles
 		HAVE_READLINE_HISTORY_H     => undef,
 		HAVE_READLINE_READLINE_H    => undef,
 		HAVE_READLINK               => undef,
-		HAVE_RINT                   => 1,
 		HAVE_RL_COMPLETION_APPEND_CHARACTER      => undef,
 		HAVE_RL_COMPLETION_MATCHES               => undef,
 		HAVE_RL_COMPLETION_SUPPRESS_QUOTE        => undef,

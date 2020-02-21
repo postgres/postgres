@@ -15628,19 +15628,6 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "rint" "ac_cv_func_rint"
-if test "x$ac_cv_func_rint" = xyes; then :
-  $as_echo "#define HAVE_RINT 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" rint.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS rint.$ac_objext"
- ;;
-esac
-
-fi
-
 ac_fn_c_check_func "$LINENO" "srandom" "ac_cv_func_srandom"
 if test "x$ac_cv_func_srandom" = xyes; then :
   $as_echo "#define HAVE_SRANDOM 1" >>confdefs.h
