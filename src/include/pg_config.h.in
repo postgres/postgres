@@ -310,9 +310,6 @@
 /* Define to 1 if the system has the type `int8'. */
 #undef HAVE_INT8
 
-/* Define to 1 if the system has the type `intptr_t'. */
-#undef HAVE_INTPTR_T
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -680,9 +677,6 @@
 /* Define to 1 if the system has the type `uint8'. */
 #undef HAVE_UINT8
 
-/* Define to 1 if the system has the type `uintptr_t'. */
-#undef HAVE_UINTPTR_T
-
 /* Define to 1 if the system has the type `union semun'. */
 #undef HAVE_UNION_SEMUN
 
@@ -1006,10 +1000,6 @@
 #undef inline
 #endif
 
-/* Define to the type of a signed integer type wide enough to hold a pointer,
-   if such a type exists, and if the system does not define it. */
-#undef intptr_t
-
 /* Define to keyword to use for C99 restrict support, or to nothing if not
    supported */
 #undef pg_restrict
@@ -1033,7 +1023,3 @@
 
 /* Define to how the compiler spells `typeof'. */
 #undef typeof
-
-/* Define to the type of an unsigned integer type wide enough to hold a
-   pointer, if such a type exists, and if the system does not define it. */
-#undef uintptr_t

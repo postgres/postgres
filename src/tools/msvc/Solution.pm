@@ -275,7 +275,6 @@ sub GenerateFiles
 		HAVE_INT_TIMEZONE                           => 1,
 		HAVE_INT64                                  => undef,
 		HAVE_INT8                                   => undef,
-		HAVE_INTPTR_T                               => undef,
 		HAVE_INTTYPES_H                             => undef,
 		HAVE_INT_OPTERR                             => undef,
 		HAVE_INT_OPTRESET                           => undef,
@@ -396,7 +395,6 @@ sub GenerateFiles
 		HAVE_UCRED_H                             => undef,
 		HAVE_UINT64                              => undef,
 		HAVE_UINT8                               => undef,
-		HAVE_UINTPTR_T                           => undef,
 		HAVE_UNION_SEMUN                         => undef,
 		HAVE_UNISTD_H                            => 1,
 		HAVE_UNIX_SOCKETS                        => undef,
@@ -496,13 +494,11 @@ sub GenerateFiles
 		_LARGEFILE_SOURCE => undef,
 		_LARGE_FILES      => undef,
 		inline            => '__inline',
-		intptr_t          => undef,
 		pg_restrict       => '__restrict',
 		# not defined, because it'd conflict with __declspec(restrict)
 		restrict  => undef,
 		signed    => undef,
-		typeof    => undef,
-		uintptr_t => undef,);
+		typeof    => undef,);
 
 	if ($self->{options}->{uuid})
 	{
