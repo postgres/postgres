@@ -5,10 +5,11 @@ package Mkvcbuild;
 #
 # src/tools/msvc/Mkvcbuild.pm
 #
-use Carp;
-use if ($^O eq "MSWin32"), 'Win32';
 use strict;
 use warnings;
+
+use Carp;
+use if ($^O eq "MSWin32"), 'Win32';
 use Project;
 use Solution;
 use Cwd;
@@ -648,7 +649,7 @@ sub mkvcbuild
 					# 'Can't spawn "conftest.exe"'; suppress that.
 					no warnings;
 
-					no strict 'subs';
+					no strict 'subs'; ## no critic (ProhibitNoStrict)
 
 					# Disable error dialog boxes like we do in the postmaster.
 					# Here, we run code that triggers relevant errors.
