@@ -342,7 +342,7 @@ sub GenerateFiles
 		HAVE_SPINLOCKS                           => 1,
 		HAVE_SRANDOM                             => undef,
 		HAVE_STDBOOL_H                           => 1,
-		HAVE_STDINT_H                            => undef,
+		HAVE_STDINT_H                            => 1,
 		HAVE_STDLIB_H                            => 1,
 		HAVE_STRCHRNUL                           => undef,
 		HAVE_STRERROR_R                          => undef,
