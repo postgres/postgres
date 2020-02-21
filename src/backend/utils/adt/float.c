@@ -72,19 +72,6 @@ static double sind_q1(double x);
 static double cosd_q1(double x);
 static void init_degree_constants(void);
 
-#ifndef HAVE_CBRT
-/*
- * Some machines (in particular, some versions of AIX) have an extern
- * declaration for cbrt() in <math.h> but fail to provide the actual
- * function, which causes configure to not set HAVE_CBRT.  Furthermore,
- * their compilers spit up at the mismatch between extern declaration
- * and static definition.  We work around that here by the expedient
- * of a #define to make the actual name of the static function different.
- */
-#define cbrt my_cbrt
-static double cbrt(double x);
-#endif							/* HAVE_CBRT */
-
 
 /*
  * We use these out-of-line ereport() calls to report float overflow,
@@ -3964,28 +3951,3 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(result);
 }
-
-/* ========== PRIVATE ROUTINES ========== */
-
-#ifndef HAVE_CBRT
-
-static double
-cbrt(double x)
-{
-	int			isneg = (x < 0.0);
-	double		absx = fabs(x);
-	double		tmpres = pow(absx, (double) 1.0 / (double) 3.0);
-
-	/*
-	 * The result is somewhat inaccurate --- not really pow()'s fault, as the
-	 * exponent it's handed contains roundoff error.  We can improve the
-	 * accuracy by doing one iteration of Newton's formula.  Beware of zero
-	 * input however.
-	 */
-	if (tmpres > 0.0)
-		tmpres -= (tmpres - absx / (tmpres * tmpres)) / (double) 3.0;
-
-	return isneg ? -tmpres : tmpres;
-}
-
-#endif							/* !HAVE_CBRT */

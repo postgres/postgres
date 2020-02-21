@@ -101,9 +101,6 @@
 /* Define to 1 if you have the `BIO_meth_new' function. */
 #undef HAVE_BIO_METH_NEW
 
-/* Define to 1 if you have the `cbrt' function. */
-#undef HAVE_CBRT
-
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
