@@ -3872,15 +3872,6 @@ checkSeek(FILE *fp)
 {
 	pgoff_t		tpos;
 
-	/*
-	 * If pgoff_t is wider than long, we must have "real" fseeko and not an
-	 * emulation using fseek.  Otherwise report no seek capability.
-	 */
-#ifndef HAVE_FSEEKO
-	if (sizeof(pgoff_t) > sizeof(long))
-		return false;
-#endif
-
 	/* Check that ftello works on this file */
 	tpos = ftello(fp);
 	if (tpos < 0)

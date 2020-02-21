@@ -331,13 +331,9 @@ extern int	gettimeofday(struct timeval *tp, struct timezone *tzp);
  * When necessary, these routines are provided by files in src/port/.
  */
 
-/* WIN32 handled in port/win32_port.h */
-#ifndef WIN32
+/* Type to use with fseeko/ftello */
+#ifndef WIN32					/* WIN32 is handled in port/win32_port.h */
 #define pgoff_t off_t
-#ifdef __NetBSD__
-extern int	fseeko(FILE *stream, off_t offset, int whence);
-extern off_t ftello(FILE *stream);
-#endif
 #endif
 
 extern double pg_erand48(unsigned short xseed[3]);
@@ -347,11 +343,6 @@ extern void pg_srand48(long seed);
 
 #ifndef HAVE_FLS
 extern int	fls(int mask);
-#endif
-
-#ifndef HAVE_FSEEKO
-#define fseeko(a, b, c) fseek(a, b, c)
-#define ftello(a)		ftell(a)
 #endif
 
 #ifndef HAVE_GETPEEREID

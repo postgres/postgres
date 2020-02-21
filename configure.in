@@ -1660,16 +1660,9 @@ PGAC_CHECK_BUILTIN_FUNC([__builtin_clz], [unsigned int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_ctz], [unsigned int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_popcount], [unsigned int x])
 
-AC_REPLACE_FUNCS(fseeko)
-case $host_os in
-	# NetBSD uses a custom fseeko/ftello built on fsetpos/fgetpos
-	# Mingw uses macros to access Win32 API calls
-	netbsd*|mingw*)
-		AC_DEFINE(HAVE_FSEEKO, 1, [Define to 1 because replacement version used.])
-		ac_cv_func_fseeko=yes;;
-	*)
-		AC_FUNC_FSEEKO;;
-esac
+# We require 64-bit fseeko() to be available, but run this check anyway
+# in case it finds that _LARGEFILE_SOURCE has to be #define'd for that.
+AC_FUNC_FSEEKO
 
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02

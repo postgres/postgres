@@ -193,6 +193,7 @@ int			setitimer(int which, const struct itimerval *value, struct itimerval *oval
  * with 64-bit offsets.
  */
 #define pgoff_t __int64
+
 #ifdef _MSC_VER
 #define fseeko(stream, offset, origin) _fseeki64(stream, offset, origin)
 #define ftello(stream) _ftelli64(stream)

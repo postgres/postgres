@@ -15169,30 +15169,9 @@ _ACEOF
 
 fi
 
-ac_fn_c_check_func "$LINENO" "fseeko" "ac_cv_func_fseeko"
-if test "x$ac_cv_func_fseeko" = xyes; then :
-  $as_echo "#define HAVE_FSEEKO 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" fseeko.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS fseeko.$ac_objext"
- ;;
-esac
-
-fi
-
-
-case $host_os in
-	# NetBSD uses a custom fseeko/ftello built on fsetpos/fgetpos
-	# Mingw uses macros to access Win32 API calls
-	netbsd*|mingw*)
-
-$as_echo "#define HAVE_FSEEKO 1" >>confdefs.h
-
-		ac_cv_func_fseeko=yes;;
-	*)
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _LARGEFILE_SOURCE value needed for large files" >&5
+# We require 64-bit fseeko() to be available, but run this check anyway
+# in case it finds that _LARGEFILE_SOURCE has to be #define'd for that.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for _LARGEFILE_SOURCE value needed for large files" >&5
 $as_echo_n "checking for _LARGEFILE_SOURCE value needed for large files... " >&6; }
 if ${ac_cv_sys_largefile_source+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -15259,8 +15238,7 @@ if test $ac_cv_sys_largefile_source != unknown; then
 $as_echo "#define HAVE_FSEEKO 1" >>confdefs.h
 
 fi
-;;
-esac
+
 
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
