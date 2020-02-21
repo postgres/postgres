@@ -104,9 +104,6 @@
 /* Define to 1 if you have the `cbrt' function. */
 #undef HAVE_CBRT
 
-/* Define to 1 if you have the `class' function. */
-#undef HAVE_CLASS
-
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
@@ -206,18 +203,6 @@
 /* Define to 1 if you have the `fls' function. */
 #undef HAVE_FLS
 
-/* Define to 1 if you have the `fpclass' function. */
-#undef HAVE_FPCLASS
-
-/* Define to 1 if you have the `fp_class' function. */
-#undef HAVE_FP_CLASS
-
-/* Define to 1 if you have the `fp_class_d' function. */
-#undef HAVE_FP_CLASS_D
-
-/* Define to 1 if you have the <fp_class.h> header file. */
-#undef HAVE_FP_CLASS_H
-
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
 
@@ -295,9 +280,6 @@
 /* Define to 1 if you have the `history_truncate_file' function. */
 #undef HAVE_HISTORY_TRUNCATE_FILE
 
-/* Define to 1 if you have the <ieeefp.h> header file. */
-#undef HAVE_IEEEFP_H
-
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #undef HAVE_IFADDRS_H
 
@@ -324,9 +306,6 @@
 
 /* Define to 1 if you have support for IPv6. */
 #undef HAVE_IPV6
-
-/* Define to 1 if you have isinf(). */
-#undef HAVE_ISINF
 
 /* Define to 1 if __builtin_constant_p(x) implies "i"(x) acceptance. */
 #undef HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P

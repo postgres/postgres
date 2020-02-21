@@ -352,9 +352,6 @@ extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
 #endif
 #endif
 
-#ifndef HAVE_ISINF
-extern int	isinf(double x);
-#else
 /*
  * Glibc doesn't use the builtin for clang due to a *gcc* bug in a version
  * newer than the gcc compatibility clang claims to have. This would cause a
@@ -370,7 +367,6 @@ extern int	isinf(double x);
 #define isinf __builtin_isinf
 #endif							/* __has_builtin(isinf) */
 #endif							/* __clang__ && !__cplusplus */
-#endif							/* !HAVE_ISINF */
 
 #ifndef HAVE_EXPLICIT_BZERO
 extern void explicit_bzero(void *buf, size_t len);

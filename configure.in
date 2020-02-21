@@ -1280,9 +1280,7 @@ AC_CHECK_HEADERS(m4_normalize([
 	atomic.h
 	copyfile.h
 	execinfo.h
-	fp_class.h
 	getopt.h
-	ieeefp.h
 	ifaddrs.h
 	langinfo.h
 	mbarrier.h
@@ -1697,25 +1695,6 @@ PS_STRINGS->ps_argvstr = "foo";])],
 [pgac_cv_var_PS_STRINGS=no])])
 if test "$pgac_cv_var_PS_STRINGS" = yes ; then
   AC_DEFINE([HAVE_PS_STRINGS], 1, [Define to 1 if the PS_STRINGS thing exists.])
-fi
-
-
-dnl Cannot use AC_CHECK_FUNC because isinf may be a macro
-AC_CACHE_CHECK([for isinf], ac_cv_func_isinf,
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([
-#include <math.h>
-double glob_double;
-],
-[return isinf(glob_double) ? 0 : 1;])],
-[ac_cv_func_isinf=yes],
-[ac_cv_func_isinf=no])])
-
-if test $ac_cv_func_isinf = yes ; then
-  AC_DEFINE(HAVE_ISINF, 1, [Define to 1 if you have isinf().])
-else
-  AC_LIBOBJ(isinf)
-  # Look for a way to implement a substitute for isinf()
-  AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
 AC_REPLACE_FUNCS(m4_normalize([
