@@ -2,21 +2,6 @@
 # config/c-compiler.m4
 
 
-# PGAC_C_SIGNED
-# -------------
-# Check if the C compiler understands signed types.
-AC_DEFUN([PGAC_C_SIGNED],
-[AC_CACHE_CHECK(for signed types, pgac_cv_c_signed,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([],
-[signed char c; signed short s; signed int i;])],
-[pgac_cv_c_signed=yes],
-[pgac_cv_c_signed=no])])
-if test x"$pgac_cv_c_signed" = xno ; then
-  AC_DEFINE(signed,, [Define to empty if the C compiler does not understand signed types.])
-fi])# PGAC_C_SIGNED
-
-
-
 # PGAC_C_PRINTF_ARCHETYPE
 # -----------------------
 # Select the format archetype to be used by gcc to check printf-type functions.
