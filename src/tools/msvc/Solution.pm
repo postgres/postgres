@@ -396,7 +396,6 @@ sub GenerateFiles
 		HAVE_UUID_H                              => undef,
 		HAVE_UUID_UUID_H                         => undef,
 		HAVE_WINLDAP_H                           => undef,
-		HAVE_WCHAR_H                             => 1,
 		HAVE_WCSTOMBS_L                          => 1,
 		HAVE_WCTYPE_H                            => 1,
 		HAVE_X509_GET_SIGNATURE_NID              => 1,

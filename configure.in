@@ -1300,7 +1300,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/un.h
 	termios.h
 	ucred.h
-	wchar.h
 	wctype.h
 ]))
 
