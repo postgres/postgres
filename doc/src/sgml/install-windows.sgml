@@ -109,14 +109,19 @@
   <application>Visual Studio Command Prompt</application>.
   If you wish to build a 64-bit version, you must use the 64-bit version of
   the command, and vice versa.
-  In the <productname>Microsoft Windows SDK</productname>, start the
-  <application>CMD shell</application> listed under the SDK on the Start Menu.
-  In recent SDK versions you can change the targeted CPU architecture, build
-  type, and target OS by using the <command>setenv</command> command, e.g.
-  <command>setenv /x86 /release /xp</command> to target Windows XP or later
-  with a 32-bit release build. See <command>/?</command> for other options to
-  <command>setenv</command>.  All commands should be run from the
-  <filename>src\tools\msvc</filename> directory.
+  Starting with <productname>Visual Studio 2017</productname> this can be
+  done from the command line using <command>VsDevCmd.bat</command>, see
+  <command>-help</command> for the available options and their default values.
+  <command>vsvars32.bat</command> is available in
+  <productname>Visual Studio 2015</productname> and earlier versions for the
+  same purpose.
+  From the <application>Visual Studio Command Prompt</application>, you can
+  change the targeted CPU architecture, build type, and target OS by using the
+  <command>vcvarsall.bat</command> command, e.g.
+  <command>vcvarsall.bat x64 10.0.10240.0</command> to target Windows 10
+  with a 64-bit release build. See <command>-help</command> for the other
+  options of <command>vcvarsall.bat</command>. All commands should be run from
+  the <filename>src\tools\msvc</filename> directory.
  </para>
 
  <para>
