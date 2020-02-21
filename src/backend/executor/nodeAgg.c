@@ -1287,7 +1287,10 @@ build_hash_tables(AggState *aggstate)
 
 		Assert(perhash->aggnode->numGroups > 0);
 
-		build_hash_table(aggstate, setno, perhash->aggnode->numGroups);
+		if (perhash->hashtable)
+			ResetTupleHashTable(perhash->hashtable);
+		else
+			build_hash_table(aggstate, setno, perhash->aggnode->numGroups);
 	}
 }
 
