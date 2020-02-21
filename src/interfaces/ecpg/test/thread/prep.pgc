@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include "ecpg_config.h"
 
@@ -42,7 +43,7 @@ static void* fn(void* arg)
 	char query[256] = "INSERT INTO T VALUES ( ? )";
 	EXEC SQL END DECLARE SECTION;
 
-	value = (long)arg;
+	value = (intptr_t) arg;
 	sprintf(name, "Connection: %d", value);
 
 	EXEC SQL CONNECT TO REGRESSDB1 AS :name;
@@ -60,7 +61,7 @@ static void* fn(void* arg)
 
 int main ()
 {
-	int i;
+	intptr_t i;
 #ifdef WIN32
 	HANDLE threads[THREADS];
 #else
@@ -85,7 +86,7 @@ int main ()
 		CloseHandle(threads[i]);
 #else
 	for (i = 0; i < THREADS; ++i)
-		pthread_create(&threads[i], NULL, fn, (void *) (long) i);
+		pthread_create(&threads[i], NULL, fn, (void *) i);
 	for (i = 0; i < THREADS; ++i)
 		pthread_join(threads[i], NULL);
 #endif

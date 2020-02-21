@@ -11,7 +11,7 @@
  *	Thread test program
  *	by Lee Kindness.
  */
-
+#include <stdint.h>
 #include <stdlib.h>
 #include "ecpg_config.h"
 
@@ -53,7 +53,7 @@ int main()
 #else
   HANDLE *threads;
 #endif
-  int n;
+  intptr_t n;
   /* exec sql begin declare section */
    
   
@@ -97,7 +97,7 @@ int main()
   for( n = 0; n < nthreads; n++ )
     {
 #ifndef WIN32
-      pthread_create(&threads[n], NULL, test_thread, (void *) (long) (n + 1));
+      pthread_create(&threads[n], NULL, test_thread, (void *) (n + 1));
 #else
       threads[n] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_thread, (void *) (n+1), 0, NULL);
 #endif
@@ -139,7 +139,7 @@ int main()
 
 void *test_thread(void *arg)
 {
-  long threadnum = (long)arg;
+  long threadnum = (intptr_t) arg;
 
   /* exec sql begin declare section */
     
