@@ -26,6 +26,12 @@ extern Datum hash_any_extended(const unsigned char *k,
 extern Datum hash_uint32(uint32 k);
 extern Datum hash_uint32_extended(uint32 k, uint64 seed);
 
+extern uint32 string_hash(const void *key, Size keysize);
+extern uint32 tag_hash(const void *key, Size keysize);
+extern uint32 uint32_hash(const void *key, Size keysize);
+
+#define oid_hash uint32_hash	/* Remove me eventually */
+
 /*
  * Combine two 32-bit hash values, resulting in another hash value, with
  * decent bit mixing.

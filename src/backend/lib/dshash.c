@@ -35,7 +35,7 @@
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
-#include "utils/hsearch.h"
+#include "utils/hashutils.h"
 #include "utils/memutils.h"
 
 /*
