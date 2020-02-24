@@ -2191,6 +2191,14 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		 * Put that on the page, and then as many other tuples as fit.
 		 */
 		RelationPutHeapTuple(relation, buffer, heaptuples[ndone], false);
+
+		/*
+		 * Note that heap_multi_insert is not used for catalog tuples yet,
+		 * but this will cover the gap once that is the case.
+		 */
+		if (needwal && need_cids)
+			log_heap_new_cid(relation, heaptuples[ndone]);
+
 		for (nthispage = 1; ndone + nthispage < ntuples; nthispage++)
 		{
 			HeapTuple	heaptup = heaptuples[ndone + nthispage];
