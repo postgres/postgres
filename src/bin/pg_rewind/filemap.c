@@ -31,6 +31,18 @@ static void filemap_list_to_array(filemap_t *map);
 static bool check_file_excluded(const char *path, bool is_source);
 
 /*
+ * Definition of one element part of an exclusion list, used to exclude
+ * contents when rewinding.  "name" is the name of the file or path to
+ * check for exclusion.  If "match_prefix" is true, any items matching
+ * the name as prefix are excluded.
+ */
+struct exclude_list_item
+{
+	const char *name;
+	bool		match_prefix;
+};
+
+/*
  * The contents of these directories are removed or recreated during server
  * start so they are not included in data processed by pg_rewind.
  *
@@ -78,32 +90,34 @@ static const char *excludeDirContents[] =
 };
 
 /*
- * List of files excluded from filemap processing.
+ * List of files excluded from filemap processing.   Files are excluded
+ * if their prefix match.
  */
-static const char *excludeFiles[] =
+static const struct exclude_list_item excludeFiles[] =
 {
 	/* Skip auto conf temporary file. */
-	"postgresql.auto.conf.tmp", /* defined as PG_AUTOCONF_FILENAME */
+	{"postgresql.auto.conf.tmp", false},	/* defined as PG_AUTOCONF_FILENAME */
 
 	/* Skip current log file temporary file */
-	"current_logfiles.tmp",		/* defined as LOG_METAINFO_DATAFILE_TMP */
+	{"current_logfiles.tmp", false},	/* defined as
+										 * LOG_METAINFO_DATAFILE_TMP */
 
 	/* Skip relation cache because it is rebuilt on startup */
-	"pg_internal.init",			/* defined as RELCACHE_INIT_FILENAME */
+	{"pg_internal.init", true}, /* defined as RELCACHE_INIT_FILENAME */
 
 	/*
 	 * If there's a backup_label or tablespace_map file, it belongs to a
 	 * backup started by the user with pg_start_backup().  It is *not* correct
 	 * for this backup.  Our backup_label is written later on separately.
 	 */
-	"backup_label",				/* defined as BACKUP_LABEL_FILE */
-	"tablespace_map",			/* defined as TABLESPACE_MAP */
+	{"backup_label", false},	/* defined as BACKUP_LABEL_FILE */
+	{"tablespace_map", false},	/* defined as TABLESPACE_MAP */
 
-	"postmaster.pid",
-	"postmaster.opts",
+	{"postmaster.pid", false},
+	{"postmaster.opts", false},
 
 	/* end of list */
-	NULL
+	{NULL, false}
 };
 
 /*
@@ -496,14 +510,19 @@ check_file_excluded(const char *path, bool is_source)
 	const char *filename;
 
 	/* check individual files... */
-	for (excludeIdx = 0; excludeFiles[excludeIdx] != NULL; excludeIdx++)
+	for (excludeIdx = 0; excludeFiles[excludeIdx].name != NULL; excludeIdx++)
 	{
+		int			cmplen = strlen(excludeFiles[excludeIdx].name);
+
 		filename = last_dir_separator(path);
 		if (filename == NULL)
 			filename = path;
 		else
 			filename++;
-		if (strcmp(filename, excludeFiles[excludeIdx]) == 0)
+
+		if (!excludeFiles[excludeIdx].match_prefix)
+			cmplen++;
+		if (strncmp(filename, excludeFiles[excludeIdx].name, cmplen) == 0)
 		{
 			if (is_source)
 				pg_log_debug("entry \"%s\" excluded from source file list",

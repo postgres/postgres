@@ -92,20 +92,31 @@ usage(void)
 }
 
 /*
+ * Definition of one element part of an exclusion list, used for files
+ * to exclude from checksum validation.  "name" is the name of the file
+ * or path to check for exclusion.  If "match_prefix" is true, any items
+ * matching the name as prefix are excluded.
+ */
+struct exclude_list_item
+{
+	const char *name;
+	bool		match_prefix;
+};
+
+/*
  * List of files excluded from checksum validation.
  *
  * Note: this list should be kept in sync with what basebackup.c includes.
  */
-static const char *const skip[] = {
-	"pg_control",
-	"pg_filenode.map",
-	"pg_internal.init",
-	"PG_VERSION",
+static const struct exclude_list_item skip[] = {
+	{"pg_control", false},
+	{"pg_filenode.map", false},
+	{"pg_internal.init", true},
+	{"PG_VERSION", false},
 #ifdef EXEC_BACKEND
-	"config_exec_params",
-	"config_exec_params.new",
+	{"config_exec_params", true},
 #endif
-	NULL,
+	{NULL, false}
 };
 
 /*
@@ -157,11 +168,17 @@ progress_report(bool force)
 static bool
 skipfile(const char *fn)
 {
-	const char *const *f;
+	int			excludeIdx;
 
-	for (f = skip; *f; f++)
-		if (strcmp(*f, fn) == 0)
+	for (excludeIdx = 0; skip[excludeIdx].name != NULL; excludeIdx++)
+	{
+		int			cmplen = strlen(skip[excludeIdx].name);
+
+		if (!skip[excludeIdx].match_prefix)
+			cmplen++;
+		if (strncmp(skip[excludeIdx].name, fn, cmplen) == 0)
 			return true;
+	}
 
 	return false;
 }
