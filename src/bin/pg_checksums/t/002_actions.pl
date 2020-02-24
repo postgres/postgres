@@ -111,7 +111,9 @@ append_to_file "$pgdata/global/99999_vm.123",   "";
 # should be ignored by the scan.
 append_to_file "$pgdata/global/pgsql_tmp_123", "foo";
 mkdir "$pgdata/global/pgsql_tmp";
-append_to_file "$pgdata/global/pgsql_tmp/1.1", "foo";
+append_to_file "$pgdata/global/pgsql_tmp/1.1",        "foo";
+append_to_file "$pgdata/global/pg_internal.init",     "foo";
+append_to_file "$pgdata/global/pg_internal.init.123", "foo";
 
 # Enable checksums.
 command_ok([ 'pg_checksums', '--enable', '--no-sync', '-D', $pgdata ],
