@@ -562,6 +562,11 @@ SysLogger_Start(void)
 	 * This means the postmaster must continue to hold the read end of the
 	 * pipe open, so we can pass it down to the reincarnated syslogger. This
 	 * is a bit klugy but we have little choice.
+	 *
+	 * Also note that we don't bother counting the pipe FDs by calling
+	 * Reserve/ReleaseExternalFD.  There's no real need to account for them
+	 * accurately in the postmaster or syslogger process, and both ends of the
+	 * pipe will wind up closed in all other postmaster children.
 	 */
 #ifndef WIN32
 	if (syslogPipe[0] < 0)

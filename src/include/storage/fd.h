@@ -35,6 +35,10 @@
  * Likewise, use AllocateDir/FreeDir, not opendir/closedir, to allocate
  * open directories (DIR*), and OpenTransientFile/CloseTransientFile for an
  * unbuffered file descriptor.
+ *
+ * If you really can't use any of the above, at least call AcquireExternalFD
+ * or ReserveExternalFD to report any file descriptors that are held for any
+ * length of time.  Failure to do so risks unnecessary EMFILE errors.
  */
 #ifndef FD_H
 #define FD_H
@@ -120,7 +124,12 @@ extern int	CloseTransientFile(int fd);
 extern int	BasicOpenFile(const char *fileName, int fileFlags);
 extern int	BasicOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 
- /* Make a directory with default permissions */
+/* Use these for other cases, and also for long-lived BasicOpenFile FDs */
+extern bool AcquireExternalFD(void);
+extern void ReserveExternalFD(void);
+extern void ReleaseExternalFD(void);
+
+/* Make a directory with default permissions */
 extern int	MakePGDirectory(const char *directoryName);
 
 /* Miscellaneous support routines */

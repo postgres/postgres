@@ -774,6 +774,7 @@ static const char *const xlogSourceNames[] = {"any", "archive", "pg_wal", "strea
  * openLogFile is -1 or a kernel FD for an open log file segment.
  * openLogSegNo identifies the segment.  These variables are only used to
  * write the XLOG, and so will normally refer to the active segment.
+ * Note: call Reserve/ReleaseExternalFD to track consumption of this FD.
  */
 static int	openLogFile = -1;
 static XLogSegNo openLogSegNo = 0;
@@ -785,6 +786,9 @@ static XLogSegNo openLogSegNo = 0;
  * will be just past that page. readLen indicates how much of the current
  * page has been read into readBuf, and readSource indicates where we got
  * the currently open file from.
+ * Note: we could use Reserve/ReleaseExternalFD to track consumption of
+ * this FD too; but it doesn't currently seem worthwhile, since the XLOG is
+ * not read by general-purpose sessions.
  */
 static int	readFile = -1;
 static XLogSegNo readSegNo = 0;
@@ -2447,6 +2451,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			/* create/use new log file */
 			use_existent = true;
 			openLogFile = XLogFileInit(openLogSegNo, &use_existent, true);
+			ReserveExternalFD();
 		}
 
 		/* Make sure we have the current logfile open */
@@ -2455,6 +2460,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 			XLByteToPrevSeg(LogwrtResult.Write, openLogSegNo,
 							wal_segment_size);
 			openLogFile = XLogFileOpen(openLogSegNo);
+			ReserveExternalFD();
 		}
 
 		/* Add current page to the set of pending pages-to-dump */
@@ -2605,6 +2611,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible)
 				XLByteToPrevSeg(LogwrtResult.Write, openLogSegNo,
 								wal_segment_size);
 				openLogFile = XLogFileOpen(openLogSegNo);
+				ReserveExternalFD();
 			}
 
 			issue_xlog_fsync(openLogFile, openLogSegNo);
@@ -3811,6 +3818,7 @@ XLogFileClose(void)
 	}
 
 	openLogFile = -1;
+	ReleaseExternalFD();
 }
 
 /*
@@ -5223,6 +5231,11 @@ BootStrapXLOG(void)
 	/* Create first XLOG segment file */
 	use_existent = false;
 	openLogFile = XLogFileInit(1, &use_existent, false);
+
+	/*
+	 * We needn't bother with Reserve/ReleaseExternalFD here, since we'll
+	 * close the file again in a moment.
+	 */
 
 	/* Write the first page with the initial record */
 	errno = 0;

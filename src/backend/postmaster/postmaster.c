@@ -2554,9 +2554,14 @@ ClosePostmasterPorts(bool am_syslogger)
 				(errcode_for_file_access(),
 				 errmsg_internal("could not close postmaster death monitoring pipe in child process: %m")));
 	postmaster_alive_fds[POSTMASTER_FD_OWN] = -1;
+	/* Notify fd.c that we released one pipe FD. */
+	ReleaseExternalFD();
 #endif
 
-	/* Close the listen sockets */
+	/*
+	 * Close the postmaster's listen sockets.  These aren't tracked by fd.c,
+	 * so we don't call ReleaseExternalFD() here.
+	 */
 	for (i = 0; i < MAXLISTEN; i++)
 	{
 		if (ListenSocket[i] != PGINVALID_SOCKET)
@@ -2566,7 +2571,10 @@ ClosePostmasterPorts(bool am_syslogger)
 		}
 	}
 
-	/* If using syslogger, close the read side of the pipe */
+	/*
+	 * If using syslogger, close the read side of the pipe.  We don't bother
+	 * tracking this in fd.c, either.
+	 */
 	if (!am_syslogger)
 	{
 #ifndef WIN32
@@ -4278,6 +4286,9 @@ BackendInitialize(Port *port)
 
 	/* Save port etc. for ps status */
 	MyProcPort = port;
+
+	/* Tell fd.c about the long-lived FD associated with the port */
+	ReserveExternalFD();
 
 	/*
 	 * PreAuthDelay is a debugging aid for investigating problems in the
@@ -6442,6 +6453,20 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	strlcpy(pkglib_path, param->pkglib_path, MAXPGPATH);
 
 	strlcpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
+
+	/*
+	 * We need to restore fd.c's counts of externally-opened FDs; to avoid
+	 * confusion, be sure to do this after restoring max_safe_fds.  (Note:
+	 * BackendInitialize will handle this for port->sock.)
+	 */
+#ifndef WIN32
+	if (postmaster_alive_fds[0] >= 0)
+		ReserveExternalFD();
+	if (postmaster_alive_fds[1] >= 0)
+		ReserveExternalFD();
+#endif
+	if (pgStatSock != PGINVALID_SOCKET)
+		ReserveExternalFD();
 }
 
 
@@ -6583,6 +6608,10 @@ InitPostmasterDeathWatchHandle(void)
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg_internal("could not create pipe to monitor postmaster death: %m")));
+
+	/* Notify fd.c that we've eaten two FDs for the pipe. */
+	ReserveExternalFD();
+	ReserveExternalFD();
 
 	/*
 	 * Set O_NONBLOCK to allow testing for the fd's presence with a read()

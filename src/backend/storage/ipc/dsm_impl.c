@@ -247,14 +247,17 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	/*
 	 * Create new segment or open an existing one for attach.
 	 *
-	 * Even though we're not going through fd.c, we should be safe against
-	 * running out of file descriptors, because of NUM_RESERVED_FDS.  We're
-	 * only opening one extra descriptor here, and we'll close it before
-	 * returning.
+	 * Even though we will close the FD before returning, it seems desirable
+	 * to use Reserve/ReleaseExternalFD, to reduce the probability of EMFILE
+	 * failure.  The fact that we won't hold the FD open long justifies using
+	 * ReserveExternalFD rather than AcquireExternalFD, though.
 	 */
+	ReserveExternalFD();
+
 	flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
 	if ((fd = shm_open(name, flags, PG_FILE_MODE_OWNER)) == -1)
 	{
+		ReleaseExternalFD();
 		if (errno != EEXIST)
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
@@ -278,6 +281,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 			/* Back out what's already been done. */
 			save_errno = errno;
 			close(fd);
+			ReleaseExternalFD();
 			errno = save_errno;
 
 			ereport(elevel,
@@ -295,6 +299,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 		/* Back out what's already been done. */
 		save_errno = errno;
 		close(fd);
+		ReleaseExternalFD();
 		shm_unlink(name);
 		errno = save_errno;
 
@@ -323,6 +328,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 		/* Back out what's already been done. */
 		save_errno = errno;
 		close(fd);
+		ReleaseExternalFD();
 		if (op == DSM_OP_CREATE)
 			shm_unlink(name);
 		errno = save_errno;
@@ -336,6 +342,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	*mapped_address = address;
 	*mapped_size = request_size;
 	close(fd);
+	ReleaseExternalFD();
 
 	return true;
 }

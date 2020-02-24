@@ -602,6 +602,9 @@ retry2:
 
 	pg_freeaddrinfo_all(hints.ai_family, addrs);
 
+	/* Now that we have a long-lived socket, tell fd.c about it. */
+	ReserveExternalFD();
+
 	return;
 
 startup_failed:

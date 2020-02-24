@@ -51,6 +51,7 @@
 #include "port/atomics.h"
 #include "portability/instr_time.h"
 #include "postmaster/postmaster.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
 #include "storage/pmsignal.h"
@@ -187,6 +188,9 @@ InitializeLatchSupport(void)
 			/* Clean up, just for safety's sake; we'll set these below */
 			selfpipe_readfd = selfpipe_writefd = -1;
 			selfpipe_owner_pid = 0;
+			/* Keep fd.c's accounting straight */
+			ReleaseExternalFD();
+			ReleaseExternalFD();
 		}
 		else
 		{
@@ -194,6 +198,7 @@ InitializeLatchSupport(void)
 			 * Postmaster didn't create a self-pipe ... or else we're in an
 			 * EXEC_BACKEND build, in which case it doesn't matter since the
 			 * postmaster's pipe FDs were closed by the action of FD_CLOEXEC.
+			 * fd.c won't have state to clean up, either.
 			 */
 			Assert(selfpipe_readfd == -1);
 		}
@@ -228,6 +233,10 @@ InitializeLatchSupport(void)
 	selfpipe_readfd = pipefd[0];
 	selfpipe_writefd = pipefd[1];
 	selfpipe_owner_pid = MyProcPid;
+
+	/* Tell fd.c about these two long-lived FDs */
+	ReserveExternalFD();
+	ReserveExternalFD();
 #else
 	/* currently, nothing to do here for Windows */
 #endif
@@ -604,24 +613,57 @@ CreateWaitEventSet(MemoryContext context, int nevents)
 	set->exit_on_postmaster_death = false;
 
 #if defined(WAIT_USE_EPOLL)
+	if (!AcquireExternalFD())
+	{
+		/* treat this as though epoll_create1 itself returned EMFILE */
+		elog(ERROR, "epoll_create1 failed: %m");
+	}
 #ifdef EPOLL_CLOEXEC
 	set->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
 	if (set->epoll_fd < 0)
+	{
+		ReleaseExternalFD();
 		elog(ERROR, "epoll_create1 failed: %m");
+	}
 #else
 	/* cope with ancient glibc lacking epoll_create1 (e.g., RHEL5) */
 	set->epoll_fd = epoll_create(nevents);
 	if (set->epoll_fd < 0)
+	{
+		ReleaseExternalFD();
 		elog(ERROR, "epoll_create failed: %m");
+	}
 	if (fcntl(set->epoll_fd, F_SETFD, FD_CLOEXEC) == -1)
+	{
+		int			save_errno = errno;
+
+		close(set->epoll_fd);
+		ReleaseExternalFD();
+		errno = save_errno;
 		elog(ERROR, "fcntl(F_SETFD) failed on epoll descriptor: %m");
+	}
 #endif							/* EPOLL_CLOEXEC */
 #elif defined(WAIT_USE_KQUEUE)
+	if (!AcquireExternalFD())
+	{
+		/* treat this as though kqueue itself returned EMFILE */
+		elog(ERROR, "kqueue failed: %m");
+	}
 	set->kqueue_fd = kqueue();
 	if (set->kqueue_fd < 0)
+	{
+		ReleaseExternalFD();
 		elog(ERROR, "kqueue failed: %m");
+	}
 	if (fcntl(set->kqueue_fd, F_SETFD, FD_CLOEXEC) == -1)
+	{
+		int			save_errno = errno;
+
+		close(set->kqueue_fd);
+		ReleaseExternalFD();
+		errno = save_errno;
 		elog(ERROR, "fcntl(F_SETFD) failed on kqueue descriptor: %m");
+	}
 	set->report_postmaster_not_running = false;
 #elif defined(WAIT_USE_WIN32)
 
@@ -655,8 +697,10 @@ FreeWaitEventSet(WaitEventSet *set)
 {
 #if defined(WAIT_USE_EPOLL)
 	close(set->epoll_fd);
+	ReleaseExternalFD();
 #elif defined(WAIT_USE_KQUEUE)
 	close(set->kqueue_fd);
+	ReleaseExternalFD();
 #elif defined(WAIT_USE_WIN32)
 	WaitEvent  *cur_event;
 

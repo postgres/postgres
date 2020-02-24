@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postgres_fdw.h"
+#include "storage/fd.h"
 #include "storage/latch.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
@@ -259,10 +260,33 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 
 		keywords[n] = values[n] = NULL;
 
-		/* verify connection parameters and make connection */
+		/* verify the set of connection parameters */
 		check_conn_params(keywords, values, user);
 
+		/*
+		 * We must obey fd.c's limit on non-virtual file descriptors.  Assume
+		 * that a PGconn represents one long-lived FD.  (Doing this here also
+		 * ensures that VFDs are closed if needed to make room.)
+		 */
+		if (!AcquireExternalFD())
+			ereport(ERROR,
+					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+					 errmsg("could not connect to server \"%s\"",
+							server->servername),
+					 errdetail("There are too many open files on the local server."),
+#ifndef WIN32
+					 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")
+#else
+					 errhint("Raise the server's max_files_per_process setting.")
+#endif
+					 ));
+
+		/* OK to make connection */
 		conn = PQconnectdbParams(keywords, values, false);
+
+		if (!conn)
+			ReleaseExternalFD();	/* because the PG_CATCH block won't */
+
 		if (!conn || PQstatus(conn) != CONNECTION_OK)
 			ereport(ERROR,
 					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
@@ -294,7 +318,10 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 	{
 		/* Release PGconn data structure if we managed to create one */
 		if (conn)
+		{
 			PQfinish(conn);
+			ReleaseExternalFD();
+		}
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -312,6 +339,7 @@ disconnect_pg_server(ConnCacheEntry *entry)
 	{
 		PQfinish(entry->conn);
 		entry->conn = NULL;
+		ReleaseExternalFD();
 	}
 }
 

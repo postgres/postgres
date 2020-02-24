@@ -2431,7 +2431,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&max_files_per_process,
-		1000, 25, INT_MAX,
+		1000, 64, INT_MAX,
 		NULL, NULL, NULL
 	},
 

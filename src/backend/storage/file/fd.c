@@ -61,6 +61,12 @@
  * BasicOpenFile, it is solely the caller's responsibility to close the file
  * descriptor by calling close(2).
  *
+ * If a non-virtual file descriptor needs to be held open for any length of
+ * time, report it to fd.c by calling AcquireExternalFD or ReserveExternalFD
+ * (and eventually ReleaseExternalFD), so that we can take it into account
+ * while deciding how many VFDs can be open.  This applies to FDs obtained
+ * with BasicOpenFile as well as those obtained without use of any fd.c API.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -103,8 +109,8 @@
 /*
  * We must leave some file descriptors free for system(), the dynamic loader,
  * and other code that tries to open files without consulting fd.c.  This
- * is the number left free.  (While we can be pretty sure we won't get
- * EMFILE, there's never any guarantee that we won't get ENFILE due to
+ * is the number left free.  (While we try fairly hard to prevent EMFILE
+ * errors, there's never any guarantee that we won't get ENFILE due to
  * other processes chewing up FDs.  So it's a bad idea to try to open files
  * without consulting fd.c.  Nonetheless we cannot control all code.)
  *
@@ -119,9 +125,12 @@
 
 /*
  * If we have fewer than this many usable FDs after allowing for the reserved
- * ones, choke.
+ * ones, choke.  (This value is chosen to work with "ulimit -n 64", but not
+ * much less than that.  Note that this value ensures numExternalFDs can be
+ * at least 16; as of this writing, the contrib/postgres_fdw regression tests
+ * will not pass unless that can grow to at least 14.)
  */
-#define FD_MINFREE				10
+#define FD_MINFREE				48
 
 /*
  * A number of platforms allow individual processes to open many more files
@@ -132,8 +141,8 @@
 int			max_files_per_process = 1000;
 
 /*
- * Maximum number of file descriptors to open for either VFD entries or
- * AllocateFile/AllocateDir/OpenTransientFile operations.  This is initialized
+ * Maximum number of file descriptors to open for operations that fd.c knows
+ * about (VFDs, AllocateFile etc, or "external" FDs).  This is initialized
  * to a conservative value, and remains that way indefinitely in bootstrap or
  * standalone-backend cases.  In normal postmaster operation, the postmaster
  * calls set_max_safe_fds() late in initialization to update the value, and
@@ -142,7 +151,7 @@ int			max_files_per_process = 1000;
  * Note: the value of max_files_per_process is taken into account while
  * setting this variable, and so need not be tested separately.
  */
-int			max_safe_fds = 32;	/* default if not changed */
+int			max_safe_fds = FD_MINFREE;	/* default if not changed */
 
 /* Whether it is safe to continue running after fsync() fails. */
 bool		data_sync_retry = false;
@@ -242,6 +251,11 @@ typedef struct
 static int	numAllocatedDescs = 0;
 static int	maxAllocatedDescs = 0;
 static AllocateDesc *allocatedDescs = NULL;
+
+/*
+ * Number of open "external" FDs reported to Reserve/ReleaseExternalFD.
+ */
+static int	numExternalFDs = 0;
 
 /*
  * Number of temporary files opened during the current session;
@@ -1025,6 +1039,80 @@ tryAgain:
 	return -1;					/* failure */
 }
 
+/*
+ * AcquireExternalFD - attempt to reserve an external file descriptor
+ *
+ * This should be used by callers that need to hold a file descriptor open
+ * over more than a short interval, but cannot use any of the other facilities
+ * provided by this module.
+ *
+ * The difference between this and the underlying ReserveExternalFD function
+ * is that this will report failure (by setting errno and returning false)
+ * if "too many" external FDs are already reserved.  This should be used in
+ * any code where the total number of FDs to be reserved is not predictable
+ * and small.
+ */
+bool
+AcquireExternalFD(void)
+{
+	/*
+	 * We don't want more than max_safe_fds / 3 FDs to be consumed for
+	 * "external" FDs.
+	 */
+	if (numExternalFDs < max_safe_fds / 3)
+	{
+		ReserveExternalFD();
+		return true;
+	}
+	errno = EMFILE;
+	return false;
+}
+
+/*
+ * ReserveExternalFD - report external consumption of a file descriptor
+ *
+ * This should be used by callers that need to hold a file descriptor open
+ * over more than a short interval, but cannot use any of the other facilities
+ * provided by this module.  This just tracks the use of the FD and closes
+ * VFDs if needed to ensure we keep NUM_RESERVED_FDS FDs available.
+ *
+ * Call this directly only in code where failure to reserve the FD would be
+ * fatal; for example, the WAL-writing code does so, since the alternative is
+ * session failure.  Also, it's very unwise to do so in code that could
+ * consume more than one FD per process.
+ *
+ * Note: as long as everybody plays nice so that NUM_RESERVED_FDS FDs remain
+ * available, it doesn't matter too much whether this is called before or
+ * after actually opening the FD; but doing so beforehand reduces the risk of
+ * an EMFILE failure if not everybody played nice.  In any case, it's solely
+ * caller's responsibility to keep the external-FD count in sync with reality.
+ */
+void
+ReserveExternalFD(void)
+{
+	/*
+	 * Release VFDs if needed to stay safe.  Because we do this before
+	 * incrementing numExternalFDs, the final state will be as desired, i.e.,
+	 * nfile + numAllocatedDescs + numExternalFDs <= max_safe_fds.
+	 */
+	ReleaseLruFiles();
+
+	numExternalFDs++;
+}
+
+/*
+ * ReleaseExternalFD - report release of an external file descriptor
+ *
+ * This is guaranteed not to change errno, so it can be used in failure paths.
+ */
+void
+ReleaseExternalFD(void)
+{
+	Assert(numExternalFDs > 0);
+	numExternalFDs--;
+}
+
+
 #if defined(FDDEBUG)
 
 static void
@@ -1185,7 +1273,7 @@ ReleaseLruFile(void)
 static void
 ReleaseLruFiles(void)
 {
-	while (nfile + numAllocatedDescs >= max_safe_fds)
+	while (nfile + numAllocatedDescs + numExternalFDs >= max_safe_fds)
 	{
 		if (!ReleaseLruFile())
 			break;
@@ -2176,13 +2264,13 @@ reserveAllocatedDesc(void)
 
 	/*
 	 * If the array hasn't yet been created in the current process, initialize
-	 * it with FD_MINFREE / 2 elements.  In many scenarios this is as many as
+	 * it with FD_MINFREE / 3 elements.  In many scenarios this is as many as
 	 * we will ever need, anyway.  We don't want to look at max_safe_fds
 	 * immediately because set_max_safe_fds() may not have run yet.
 	 */
 	if (allocatedDescs == NULL)
 	{
-		newMax = FD_MINFREE / 2;
+		newMax = FD_MINFREE / 3;
 		newDescs = (AllocateDesc *) malloc(newMax * sizeof(AllocateDesc));
 		/* Out of memory already?  Treat as fatal error. */
 		if (newDescs == NULL)
@@ -2200,10 +2288,12 @@ reserveAllocatedDesc(void)
 	 *
 	 * We mustn't let allocated descriptors hog all the available FDs, and in
 	 * practice we'd better leave a reasonable number of FDs for VFD use.  So
-	 * set the maximum to max_safe_fds / 2.  (This should certainly be at
-	 * least as large as the initial size, FD_MINFREE / 2.)
+	 * set the maximum to max_safe_fds / 3.  (This should certainly be at
+	 * least as large as the initial size, FD_MINFREE / 3, so we aren't
+	 * tightening the restriction here.)  Recall that "external" FDs are
+	 * allowed to consume another third of max_safe_fds.
 	 */
-	newMax = max_safe_fds / 2;
+	newMax = max_safe_fds / 3;
 	if (newMax > maxAllocatedDescs)
 	{
 		newDescs = (AllocateDesc *) realloc(allocatedDescs,
