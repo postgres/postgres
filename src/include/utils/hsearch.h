@@ -152,8 +152,6 @@ extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);
 extern uint32 string_hash(const void *key, Size keysize);
 extern uint32 tag_hash(const void *key, Size keysize);
 extern uint32 uint32_hash(const void *key, Size keysize);
-extern uint32 bitmap_hash(const void *key, Size keysize);
-extern int	bitmap_match(const void *key1, const void *key2, Size keysize);
 
 #define oid_hash uint32_hash	/* Remove me eventually */
 
