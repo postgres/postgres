@@ -269,17 +269,23 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		 * ensures that VFDs are closed if needed to make room.)
 		 */
 		if (!AcquireExternalFD())
+		{
+#ifndef WIN32					/* can't write #if within ereport() macro */
 			ereport(ERROR,
 					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 					 errmsg("could not connect to server \"%s\"",
 							server->servername),
 					 errdetail("There are too many open files on the local server."),
-#ifndef WIN32
-					 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")
+					 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")));
 #else
-					 errhint("Raise the server's max_files_per_process setting.")
+			ereport(ERROR,
+					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+					 errmsg("could not connect to server \"%s\"",
+							server->servername),
+					 errdetail("There are too many open files on the local server."),
+					 errhint("Raise the server's max_files_per_process setting.")));
 #endif
-					 ));
+		}
 
 		/* OK to make connection */
 		conn = PQconnectdbParams(keywords, values, false);

@@ -207,16 +207,21 @@ dblink_get_conn(char *conname_or_str,
 		 * ensures that VFDs are closed if needed to make room.)
 		 */
 		if (!AcquireExternalFD())
+		{
+#ifndef WIN32					/* can't write #if within ereport() macro */
 			ereport(ERROR,
 					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 					 errmsg("could not establish connection"),
 					 errdetail("There are too many open files on the local server."),
-#ifndef WIN32
-					 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")
+					 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")));
 #else
-					 errhint("Raise the server's max_files_per_process setting.")
+			ereport(ERROR,
+					(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+					 errmsg("could not establish connection"),
+					 errdetail("There are too many open files on the local server."),
+					 errhint("Raise the server's max_files_per_process setting.")));
 #endif
-					 ));
+		}
 
 		/* OK to make connection */
 		conn = PQconnectdb(connstr);
@@ -310,16 +315,21 @@ dblink_connect(PG_FUNCTION_ARGS)
 	 * that VFDs are closed if needed to make room.)
 	 */
 	if (!AcquireExternalFD())
+	{
+#ifndef WIN32					/* can't write #if within ereport() macro */
 		ereport(ERROR,
 				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
 				 errmsg("could not establish connection"),
 				 errdetail("There are too many open files on the local server."),
-#ifndef WIN32
-				 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")
+				 errhint("Raise the server's max_files_per_process and/or \"ulimit -n\" limits.")));
 #else
-				 errhint("Raise the server's max_files_per_process setting.")
+		ereport(ERROR,
+				(errcode(ERRCODE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION),
+				 errmsg("could not establish connection"),
+				 errdetail("There are too many open files on the local server."),
+				 errhint("Raise the server's max_files_per_process setting.")));
 #endif
-				 ));
+	}
 
 	/* OK to make connection */
 	conn = PQconnectdb(connstr);
