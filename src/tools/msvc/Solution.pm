@@ -826,13 +826,14 @@ EOF
 sub GenerateConfigHeader
 {
 	my ($self, $config_header, $defines, $required) = @_;
-	my %defines_copy = %$defines;
 
 	my $config_header_in = $config_header . '.in';
 
 	if (IsNewer($config_header, $config_header_in) ||
 		IsNewer($config_header, __FILE__))
 	{
+		my %defines_copy = %$defines;
+
 		open(my $i, '<', $config_header_in)
 		  || confess "Could not open $config_header_in\n";
 		open(my $o, '>', $config_header)
@@ -871,10 +872,11 @@ sub GenerateConfigHeader
 		}
 		close($o);
 		close($i);
-	}
-	if ($required && scalar(keys %defines_copy) > 0)
-	{
-		croak "unused defines: " . join(' ', keys %defines_copy);
+
+		if ($required && scalar(keys %defines_copy) > 0)
+		{
+			croak "unused defines: " . join(' ', keys %defines_copy);
+		}
 	}
 }
 
