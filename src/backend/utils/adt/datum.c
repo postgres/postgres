@@ -44,6 +44,7 @@
 
 #include "access/detoast.h"
 #include "fmgr.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/expandeddatum.h"
 
@@ -321,6 +322,31 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 		elog(ERROR, "unexpected typLen: %d", typLen);
 
 	return result;
+}
+
+/*-------------------------------------------------------------------------
+ * btequalimage
+ *
+ * Generic "equalimage" support function.
+ *
+ * B-Tree operator classes whose equality function could safely be replaced by
+ * datum_image_eq() in all cases can use this as their "equalimage" support
+ * function.
+ *
+ * Currently, we unconditionally assume that any B-Tree operator class that
+ * registers btequalimage as its support function 4 must be able to safely use
+ * optimizations like deduplication (i.e. we return true unconditionally).  If
+ * it ever proved necessary to rescind support for an operator class, we could
+ * do that in a targeted fashion by doing something with the opcintype
+ * argument.
+ *-------------------------------------------------------------------------
+ */
+Datum
+btequalimage(PG_FUNCTION_ARGS)
+{
+	/* Oid		opcintype = PG_GETARG_OID(0); */
+
+	PG_RETURN_BOOL(true);
 }
 
 /*-------------------------------------------------------------------------

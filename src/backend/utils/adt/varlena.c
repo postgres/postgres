@@ -2783,6 +2783,26 @@ varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 	return true;
 }
 
+/*
+ * Generic equalimage support function for character type's operator classes.
+ * Disables the use of deduplication with nondeterministic collations.
+ */
+Datum
+btvarstrequalimage(PG_FUNCTION_ARGS)
+{
+	/* Oid		opcintype = PG_GETARG_OID(0); */
+	Oid			collid = PG_GET_COLLATION();
+
+	check_collation_set(collid);
+
+	if (lc_collate_is_c(collid) ||
+		collid == DEFAULT_COLLATION_OID ||
+		get_collation_isdeterministic(collid))
+		PG_RETURN_BOOL(true);
+	else
+		PG_RETURN_BOOL(false);
+}
+
 Datum
 text_larger(PG_FUNCTION_ARGS)
 {

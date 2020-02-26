@@ -153,9 +153,10 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
       and hash functions it is not necessary to specify <replaceable
       class="parameter">op_type</replaceable> since the function's input
       data type(s) are always the correct ones to use.  For B-tree sort
-      support functions and all functions in GiST, SP-GiST and GIN operator
-      classes, it is necessary to specify the operand data type(s) the function
-      is to be used with.
+      support functions, B-Tree equal image functions, and all
+      functions in GiST, SP-GiST and GIN operator classes, it is
+      necessary to specify the operand data type(s) the function is to
+      be used with.
      </para>
 
      <para>

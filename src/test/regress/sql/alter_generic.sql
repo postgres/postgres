@@ -430,6 +430,9 @@ ALTER OPERATOR FAMILY alt_opf18 USING btree ADD
   OPERATOR 4 >= (int4, int2) ,
   OPERATOR 5 > (int4, int2) ,
   FUNCTION 1 btint42cmp(int4, int2);
+-- Should fail. Not allowed to have cross-type equalimage function.
+ALTER OPERATOR FAMILY alt_opf18 USING btree
+  ADD FUNCTION 4 (int4, int2) btequalimage(oid);
 ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
 DROP OPERATOR FAMILY alt_opf18 USING btree;
 

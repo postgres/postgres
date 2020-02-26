@@ -207,7 +207,7 @@
 
  <para>
   As shown in <xref linkend="xindex-btree-support-table"/>, btree defines
-  one required and two optional support functions.  The three
+  one required and three optional support functions.  The four
   user-defined methods are:
  </para>
  <variablelist>
@@ -453,6 +453,100 @@ returns bool
     <para>
      <function>in_range</function> functions need not handle NULL
      inputs, and typically will be marked strict.
+    </para>
+   </listitem>
+  </varlistentry>
+  <varlistentry>
+   <term><function>equalimage</function></term>
+   <listitem>
+    <para>
+     Optionally, a btree operator family may provide
+     <function>equalimage</function> (<quote>equality implies image
+      equality</quote>) support functions, registered under support
+     function number 4.  These functions allow the core code to
+     determine when it is safe to apply the btree deduplication
+     optimization.  Currently, <function>equalimage</function>
+     functions are only called when building or rebuilding an index.
+    </para>
+    <para>
+     An <function>equalimage</function> function must have the
+     signature
+<synopsis>
+equalimage(<replaceable>opcintype</replaceable> <type>oid</type>) returns bool
+</synopsis>
+     The return value is static information about an operator class
+     and collation.  Returning <literal>true</literal> indicates that
+     the <function>order</function> function for the operator class is
+     guaranteed to only return <literal>0</literal> (<quote>arguments
+      are equal</quote>) when its <replaceable>A</replaceable> and
+     <replaceable>B</replaceable> arguments are also interchangeable
+     without any loss of semantic information.  Not registering an
+     <function>equalimage</function> function or returning
+     <literal>false</literal> indicates that this condition cannot be
+     assumed to hold.
+    </para>
+    <para>
+     The <replaceable>opcintype</replaceable> argument is the
+     <literal><structname>pg_type</structname>.oid</literal> of the
+     data type that the operator class indexes.  This is a convenience
+     that allows reuse of the same underlying
+     <function>equalimage</function> function across operator classes.
+     If <replaceable>opcintype</replaceable> is a collatable data
+     type, the appropriate collation OID will be passed to the
+     <function>equalimage</function> function, using the standard
+     <function>PG_GET_COLLATION()</function> mechanism.
+    </para>
+    <para>
+     As far as the operator class is concerned, returning
+     <literal>true</literal> indicates that deduplication is safe (or
+     safe for the collation whose OID was passed to its
+     <function>equalimage</function> function).  However, the core
+     code will only deem deduplication safe for an index when
+     <emphasis>every</emphasis> indexed column uses an operator class
+     that registers an <function>equalimage</function> function, and
+     each function actually returns <literal>true</literal> when
+     called.
+    </para>
+    <para>
+     Image equality is <emphasis>almost</emphasis> the same condition
+     as simple bitwise equality.  There is one subtle difference: When
+     indexing a varlena data type, the on-disk representation of two
+     image equal datums may not be bitwise equal due to inconsistent
+     application of <acronym>TOAST</acronym> compression on input.
+     Formally, when an operator class's
+     <function>equalimage</function> function returns
+     <literal>true</literal>, it is safe to assume that the
+     <literal>datum_image_eq()</literal> C function will always agree
+     with the operator class's <function>order</function> function
+     (provided that the same collation OID is passed to both the
+     <function>equalimage</function> and <function>order</function>
+     functions).
+    </para>
+    <para>
+     The core code is fundamentally unable to deduce anything about
+     the <quote>equality implies image equality</quote> status of an
+     operator class within a multiple-data-type family based on
+     details from other operator classes in the same family.  Also, it
+     is not sensible for an operator family to register a cross-type
+     <function>equalimage</function> function, and attempting to do so
+     will result in an error.  This is because <quote>equality implies
+      image equality</quote> status does not just depend on
+     sorting/equality semantics, which are more or less defined at the
+     operator family level.  In general, the semantics that one
+     particular data type implements must be considered separately.
+    </para>
+    <para>
+     The convention followed by the operator classes included with the
+     core <productname>PostgreSQL</productname> distribution is to
+     register a stock, generic <function>equalimage</function>
+     function.  Most operator classes register
+     <function>btequalimage()</function>, which indicates that
+     deduplication is safe unconditionally.  Operator classes for
+     collatable data types such as <type>text</type> register
+     <function>btvarstrequalimage()</function>, which indicates that
+     deduplication is safe with deterministic collations.  Best
+     practice for third-party extensions is to register their own
+     custom function to retain control.
     </para>
    </listitem>
   </varlistentry>

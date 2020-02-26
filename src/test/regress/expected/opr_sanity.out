@@ -2111,6 +2111,42 @@ WHERE p1.amproc = p2.oid AND
 --------------+--------+--------
 (0 rows)
 
+-- Almost all of the core distribution's Btree opclasses can use one of the
+-- two generic "equalimage" functions as their support function 4.  Look for
+-- opclasses that don't allow deduplication unconditionally here.
+--
+-- Newly added Btree opclasses don't have to support deduplication.  It will
+-- usually be trivial to add support, though.  Note that the expected output
+-- of this part of the test will need to be updated when a new opclass cannot
+-- support deduplication (by using btequalimage).
+SELECT amp.amproc::regproc AS proc, opf.opfname AS opfamily_name,
+       opc.opcname AS opclass_name, opc.opcintype::regtype AS opcintype
+FROM pg_am AS am
+JOIN pg_opclass AS opc ON opc.opcmethod = am.oid
+JOIN pg_opfamily AS opf ON opc.opcfamily = opf.oid
+LEFT JOIN pg_amproc AS amp ON amp.amprocfamily = opf.oid AND
+    amp.amproclefttype = opc.opcintype AND amp.amprocnum = 4
+WHERE am.amname = 'btree' AND
+    amp.amproc IS DISTINCT FROM 'btequalimage'::regproc
+ORDER BY 1, 2, 3;
+        proc        |  opfamily_name   |   opclass_name   |    opcintype     
+--------------------+------------------+------------------+------------------
+ btvarstrequalimage | bpchar_ops       | bpchar_ops       | character
+ btvarstrequalimage | text_ops         | name_ops         | name
+ btvarstrequalimage | text_ops         | text_ops         | text
+ btvarstrequalimage | text_ops         | varchar_ops      | text
+                    | array_ops        | array_ops        | anyarray
+                    | float_ops        | float4_ops       | real
+                    | float_ops        | float8_ops       | double precision
+                    | jsonb_ops        | jsonb_ops        | jsonb
+                    | numeric_ops      | numeric_ops      | numeric
+                    | range_ops        | range_ops        | anyrange
+                    | record_image_ops | record_image_ops | record
+                    | record_ops       | record_ops       | record
+                    | tsquery_ops      | tsquery_ops      | tsquery
+                    | tsvector_ops     | tsvector_ops     | tsvector
+(14 rows)
+
 -- **************** pg_index ****************
 -- Look for illegal values in pg_index fields.
 SELECT p1.indexrelid, p1.indrelid

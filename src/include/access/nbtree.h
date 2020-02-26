@@ -387,12 +387,17 @@ typedef struct BTMetaPageData
  *	an operator class may choose to offer a third amproc procedure
  *	(BTINRANGE_PROC), independently of whether it offers sortsupport.
  *	For full details, see doc/src/sgml/btree.sgml.
+ *
+ *	To facilitate B-Tree deduplication, an operator class may choose to
+ *	offer a forth amproc procedure (BTEQUALIMAGE_PROC).  For full details,
+ *	see doc/src/sgml/btree.sgml.
  */
 
 #define BTORDER_PROC		1
 #define BTSORTSUPPORT_PROC	2
 #define BTINRANGE_PROC		3
-#define BTNProcs			3
+#define BTEQUALIMAGE_PROC	4
+#define BTNProcs			4
 
 /*
  *	We need to be able to tell the difference between read and write
@@ -829,6 +834,7 @@ extern bool _bt_check_natts(Relation rel, bool heapkeyspace, Page page,
 							OffsetNumber offnum);
 extern void _bt_check_third_page(Relation rel, Relation heap,
 								 bool needheaptidspace, Page page, IndexTuple newtup);
+extern bool _bt_allequalimage(Relation rel, bool debugmessage);
 
 /*
  * prototypes for functions in nbtvalidate.c

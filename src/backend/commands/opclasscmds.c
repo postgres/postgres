@@ -1143,9 +1143,10 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	/*
 	 * btree comparison procs must be 2-arg procs returning int4.  btree
 	 * sortsupport procs must take internal and return void.  btree in_range
-	 * procs must be 5-arg procs returning bool.  hash support proc 1 must be
-	 * a 1-arg proc returning int4, while proc 2 must be a 2-arg proc
-	 * returning int8.  Otherwise we don't know.
+	 * procs must be 5-arg procs returning bool.  btree equalimage procs must
+	 * take 1 arg and return bool.  hash support proc 1 must be a 1-arg proc
+	 * returning int4, while proc 2 must be a 2-arg proc returning int8.
+	 * Otherwise we don't know.
 	 */
 	if (amoid == BTREE_AM_OID)
 	{
@@ -1204,6 +1205,29 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 				member->lefttype = procform->proargtypes.values[0];
 			if (!OidIsValid(member->righttype))
 				member->righttype = procform->proargtypes.values[2];
+		}
+		else if (member->number == BTEQUALIMAGE_PROC)
+		{
+			if (procform->pronargs != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree equal image functions must have one argument")));
+			if (procform->prorettype != BOOLOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree equal image functions must return boolean")));
+			/*
+			 * pg_amproc functions are indexed by (lefttype, righttype), but
+			 * an equalimage function can only be called at CREATE INDEX time.
+			 * The same opclass opcintype OID is always used for leftype and
+			 * righttype.  Providing a cross-type routine isn't sensible.
+			 * Reject cross-type ALTER OPERATOR FAMILY ...  ADD FUNCTION 4
+			 * statements here.
+			 */
+			if (member->lefttype != member->righttype)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("btree equal image functions must not be cross-type")));
 		}
 	}
 	else if (amoid == HASH_AM_OID)

@@ -20,6 +20,7 @@
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
+#include "catalog/catalog.h"
 #include "commands/progress.h"
 #include "lib/qunique.h"
 #include "miscadmin.h"
@@ -2565,4 +2566,76 @@ _bt_check_third_page(Relation rel, Relation heap, bool needheaptidspace,
 					 "Consider a function index of an MD5 hash of the value, "
 					 "or use full text indexing."),
 			 errtableconstraint(heap, RelationGetRelationName(rel))));
+}
+
+/*
+ * Are all attributes in rel "equality is image equality" attributes?
+ *
+ * We use each attribute's BTEQUALIMAGE_PROC opclass procedure.  If any
+ * opclass either lacks a BTEQUALIMAGE_PROC procedure or returns false, we
+ * return false; otherwise we return true.
+ *
+ * Returned boolean value is stored in index metapage during index builds.
+ * Deduplication can only be used when we return true.
+ */
+bool
+_bt_allequalimage(Relation rel, bool debugmessage)
+{
+	bool		allequalimage = true;
+
+	/* INCLUDE indexes don't support deduplication */
+	if (IndexRelationGetNumberOfAttributes(rel) !=
+		IndexRelationGetNumberOfKeyAttributes(rel))
+		return false;
+
+	/*
+	 * There is no special reason why deduplication cannot work with system
+	 * relations (i.e. with system catalog indexes and TOAST indexes).  We
+	 * deem deduplication unsafe for these indexes all the same, since the
+	 * alternative is to force users to always use deduplication, without
+	 * being able to opt out.  (ALTER INDEX is not supported with system
+	 * indexes, so users would have no way to set the deduplicate_items
+	 * storage parameter to 'off'.)
+	 */
+	if (IsSystemRelation(rel))
+		return false;
+
+	for (int i = 0; i < IndexRelationGetNumberOfKeyAttributes(rel); i++)
+	{
+		Oid			opfamily = rel->rd_opfamily[i];
+		Oid			opcintype = rel->rd_opcintype[i];
+		Oid			collation = rel->rd_indcollation[i];
+		Oid			equalimageproc;
+
+		equalimageproc = get_opfamily_proc(opfamily, opcintype, opcintype,
+										   BTEQUALIMAGE_PROC);
+
+		/*
+		 * If there is no BTEQUALIMAGE_PROC then deduplication is assumed to
+		 * be unsafe.  Otherwise, actually call proc and see what it says.
+		 */
+		if (!OidIsValid(equalimageproc) ||
+			!DatumGetBool(OidFunctionCall1Coll(equalimageproc, collation,
+											   ObjectIdGetDatum(opcintype))))
+		{
+			allequalimage = false;
+			break;
+		}
+	}
+
+	/*
+	 * Don't elog() until here to avoid reporting on a system relation index
+	 * or an INCLUDE index
+	 */
+	if (debugmessage)
+	{
+		if (allequalimage)
+			elog(DEBUG1, "index \"%s\" can safely use deduplication",
+				 RelationGetRelationName(rel));
+		else
+			elog(DEBUG1, "index \"%s\" cannot use deduplication",
+				 RelationGetRelationName(rel));
+	}
+
+	return allequalimage;
 }
