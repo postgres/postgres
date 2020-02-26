@@ -115,8 +115,10 @@
     <literal>BEFORE</literal> triggers fire immediately before a particular row is
     operated on, while row-level <literal>AFTER</literal> triggers fire at the end of
     the statement (but before any statement-level <literal>AFTER</literal> triggers).
-    These types of triggers may only be defined on non-partitioned tables and
-    foreign tables, not views.  <literal>INSTEAD OF</literal> triggers may only be
+    These types of triggers may only be defined on tables and
+    foreign tables, not views; <literal>BEFORE</literal> row-level triggers may not
+    be defined on partitioned tables.
+    <literal>INSTEAD OF</literal> triggers may only be
     defined on views, and only at row level; they fire immediately as each
     row in the view is identified as needing to be operated on.
    </para>
