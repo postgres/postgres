@@ -243,6 +243,7 @@ typedef struct BTPageState
 	BlockNumber btps_blkno;		/* block # to write this page at */
 	IndexTuple	btps_lowkey;	/* page's strict lower bound pivot tuple */
 	OffsetNumber btps_lastoff;	/* last item offset loaded */
+	Size		btps_lastextra; /* last item's extra posting list space */
 	uint32		btps_level;		/* tree level (0 = leaf) */
 	Size		btps_full;		/* "full" if less than this much free space */
 	struct BTPageState *btps_next;	/* link to parent level, if any */
@@ -277,7 +278,10 @@ static void _bt_slideleft(Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
 						   IndexTuple itup, OffsetNumber itup_off);
 static void _bt_buildadd(BTWriteState *wstate, BTPageState *state,
-						 IndexTuple itup);
+						 IndexTuple itup, Size truncextra);
+static void _bt_sort_dedup_finish_pending(BTWriteState *wstate,
+										  BTPageState *state,
+										  BTDedupState dstate);
 static void _bt_uppershutdown(BTWriteState *wstate, BTPageState *state);
 static void _bt_load(BTWriteState *wstate,
 					 BTSpool *btspool, BTSpool *btspool2);
@@ -563,6 +567,8 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	wstate.heap = btspool->heap;
 	wstate.index = btspool->index;
 	wstate.inskey = _bt_mkscankey(wstate.index, NULL);
+	/* _bt_mkscankey() won't set allequalimage without metapage */
+	wstate.inskey->allequalimage = _bt_allequalimage(wstate.index, true);
 
 	/*
 	 * We need to log index creation in WAL iff WAL archiving/streaming is
@@ -711,6 +717,7 @@ _bt_pagestate(BTWriteState *wstate, uint32 level)
 	state->btps_lowkey = NULL;
 	/* initialize lastoff so first item goes into P_FIRSTKEY */
 	state->btps_lastoff = P_HIKEY;
+	state->btps_lastextra = 0;
 	state->btps_level = level;
 	/* set "full" threshold based on level.  See notes at head of file. */
 	if (level > 0)
@@ -789,7 +796,8 @@ _bt_sortaddtup(Page page,
 }
 
 /*----------
- * Add an item to a disk page from the sort output.
+ * Add an item to a disk page from the sort output (or add a posting list
+ * item formed from the sort output).
  *
  * We must be careful to observe the page layout conventions of nbtsearch.c:
  * - rightmost pages start data items at P_HIKEY instead of at P_FIRSTKEY.
@@ -821,14 +829,27 @@ _bt_sortaddtup(Page page,
  * the truncated high key at offset 1.
  *
  * 'last' pointer indicates the last offset added to the page.
+ *
+ * 'truncextra' is the size of the posting list in itup, if any.  This
+ * information is stashed for the next call here, when we may benefit
+ * from considering the impact of truncating away the posting list on
+ * the page before deciding to finish the page off.  Posting lists are
+ * often relatively large, so it is worth going to the trouble of
+ * accounting for the saving from truncating away the posting list of
+ * the tuple that becomes the high key (that may be the only way to
+ * get close to target free space on the page).  Note that this is
+ * only used for the soft fillfactor-wise limit, not the critical hard
+ * limit.
  *----------
  */
 static void
-_bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
+_bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
+			 Size truncextra)
 {
 	Page		npage;
 	BlockNumber nblkno;
 	OffsetNumber last_off;
+	Size		last_truncextra;
 	Size		pgspc;
 	Size		itupsz;
 	bool		isleaf;
@@ -842,6 +863,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	npage = state->btps_page;
 	nblkno = state->btps_blkno;
 	last_off = state->btps_lastoff;
+	last_truncextra = state->btps_lastextra;
+	state->btps_lastextra = truncextra;
 
 	pgspc = PageGetFreeSpace(npage);
 	itupsz = IndexTupleSize(itup);
@@ -883,10 +906,10 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	 * page.  Disregard fillfactor and insert on "full" current page if we
 	 * don't have the minimum number of items yet.  (Note that we deliberately
 	 * assume that suffix truncation neither enlarges nor shrinks new high key
-	 * when applying soft limit.)
+	 * when applying soft limit, except when last tuple has a posting list.)
 	 */
 	if (pgspc < itupsz + (isleaf ? MAXALIGN(sizeof(ItemPointerData)) : 0) ||
-		(pgspc < state->btps_full && last_off > P_FIRSTKEY))
+		(pgspc + last_truncextra < state->btps_full && last_off > P_FIRSTKEY))
 	{
 		/*
 		 * Finish off the page and write it out.
@@ -944,11 +967,14 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 			 * We don't try to bias our choice of split point to make it more
 			 * likely that _bt_truncate() can truncate away more attributes,
 			 * whereas the split point used within _bt_split() is chosen much
-			 * more delicately.  Suffix truncation is mostly useful because it
-			 * improves space utilization for workloads with random
-			 * insertions.  It doesn't seem worthwhile to add logic for
-			 * choosing a split point here for a benefit that is bound to be
-			 * much smaller.
+			 * more delicately.  Even still, the lastleft and firstright
+			 * tuples passed to _bt_truncate() here are at least not fully
+			 * equal to each other when deduplication is used, unless there is
+			 * a large group of duplicates (also, unique index builds usually
+			 * have few or no spool2 duplicates).  When the split point is
+			 * between two unequal tuples, _bt_truncate() will avoid including
+			 * a heap TID in the new high key, which is the most important
+			 * benefit of suffix truncation.
 			 *
 			 * Overwrite the old item with new truncated high key directly.
 			 * oitup is already located at the physical beginning of tuple
@@ -983,7 +1009,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		Assert(BTreeTupleGetNAtts(state->btps_lowkey, wstate->index) == 0 ||
 			   !P_LEFTMOST((BTPageOpaque) PageGetSpecialPointer(opage)));
 		BTreeTupleSetDownLink(state->btps_lowkey, oblkno);
-		_bt_buildadd(wstate, state->btps_next, state->btps_lowkey);
+		_bt_buildadd(wstate, state->btps_next, state->btps_lowkey, 0);
 		pfree(state->btps_lowkey);
 
 		/*
@@ -1046,6 +1072,43 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 }
 
 /*
+ * Finalize pending posting list tuple, and add it to the index.  Final tuple
+ * is based on saved base tuple, and saved list of heap TIDs.
+ *
+ * This is almost like _bt_dedup_finish_pending(), but it adds a new tuple
+ * using _bt_buildadd().
+ */
+static void
+_bt_sort_dedup_finish_pending(BTWriteState *wstate, BTPageState *state,
+							  BTDedupState dstate)
+{
+	Assert(dstate->nitems > 0);
+
+	if (dstate->nitems == 1)
+		_bt_buildadd(wstate, state, dstate->base, 0);
+	else
+	{
+		IndexTuple	postingtuple;
+		Size		truncextra;
+
+		/* form a tuple with a posting list */
+		postingtuple = _bt_form_posting(dstate->base,
+										dstate->htids,
+										dstate->nhtids);
+		/* Calculate posting list overhead */
+		truncextra = IndexTupleSize(postingtuple) -
+			BTreeTupleGetPostingOffset(postingtuple);
+
+		_bt_buildadd(wstate, state, postingtuple, truncextra);
+		pfree(postingtuple);
+	}
+
+	dstate->nhtids = 0;
+	dstate->nitems = 0;
+	dstate->phystupsize = 0;
+}
+
+/*
  * Finish writing out the completed btree.
  */
 static void
@@ -1090,7 +1153,7 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 			Assert(BTreeTupleGetNAtts(s->btps_lowkey, wstate->index) == 0 ||
 				   !P_LEFTMOST(opaque));
 			BTreeTupleSetDownLink(s->btps_lowkey, blkno);
-			_bt_buildadd(wstate, s->btps_next, s->btps_lowkey);
+			_bt_buildadd(wstate, s->btps_next, s->btps_lowkey, 0);
 			pfree(s->btps_lowkey);
 			s->btps_lowkey = NULL;
 		}
@@ -1111,7 +1174,8 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 	 * by filling in a valid magic number in the metapage.
 	 */
 	metapage = (Page) palloc(BLCKSZ);
-	_bt_initmetapage(metapage, rootblkno, rootlevel);
+	_bt_initmetapage(metapage, rootblkno, rootlevel,
+					 wstate->inskey->allequalimage);
 	_bt_blwritepage(wstate, metapage, BTREE_METAPAGE);
 }
 
@@ -1132,6 +1196,10 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 				keysz = IndexRelationGetNumberOfKeyAttributes(wstate->index);
 	SortSupport sortKeys;
 	int64		tuples_done = 0;
+	bool		deduplicate;
+
+	deduplicate = wstate->inskey->allequalimage &&
+		BTGetDeduplicateItems(wstate->index);
 
 	if (merge)
 	{
@@ -1228,12 +1296,12 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 			if (load1)
 			{
-				_bt_buildadd(wstate, state, itup);
+				_bt_buildadd(wstate, state, itup, 0);
 				itup = tuplesort_getindextuple(btspool->sortstate, true);
 			}
 			else
 			{
-				_bt_buildadd(wstate, state, itup2);
+				_bt_buildadd(wstate, state, itup2, 0);
 				itup2 = tuplesort_getindextuple(btspool2->sortstate, true);
 			}
 
@@ -1243,9 +1311,100 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		}
 		pfree(sortKeys);
 	}
+	else if (deduplicate)
+	{
+		/* merge is unnecessary, deduplicate into posting lists */
+		BTDedupState dstate;
+
+		dstate = (BTDedupState) palloc(sizeof(BTDedupStateData));
+		dstate->deduplicate = true; /* unused */
+		dstate->maxpostingsize = 0; /* set later */
+		/* Metadata about base tuple of current pending posting list */
+		dstate->base = NULL;
+		dstate->baseoff = InvalidOffsetNumber;	/* unused */
+		dstate->basetupsize = 0;
+		/* Metadata about current pending posting list TIDs */
+		dstate->htids = NULL;
+		dstate->nhtids = 0;
+		dstate->nitems = 0;
+		dstate->phystupsize = 0;	/* unused */
+		dstate->nintervals = 0; /* unused */
+
+		while ((itup = tuplesort_getindextuple(btspool->sortstate,
+											   true)) != NULL)
+		{
+			/* When we see first tuple, create first index page */
+			if (state == NULL)
+			{
+				state = _bt_pagestate(wstate, 0);
+
+				/*
+				 * Limit size of posting list tuples to 1/10 space we want to
+				 * leave behind on the page, plus space for final item's line
+				 * pointer.  This is equal to the space that we'd like to
+				 * leave behind on each leaf page when fillfactor is 90,
+				 * allowing us to get close to fillfactor% space utilization
+				 * when there happen to be a great many duplicates.  (This
+				 * makes higher leaf fillfactor settings ineffective when
+				 * building indexes that have many duplicates, but packing
+				 * leaf pages full with few very large tuples doesn't seem
+				 * like a useful goal.)
+				 */
+				dstate->maxpostingsize = MAXALIGN_DOWN((BLCKSZ * 10 / 100)) -
+					sizeof(ItemIdData);
+				Assert(dstate->maxpostingsize <= BTMaxItemSize(state->btps_page) &&
+					   dstate->maxpostingsize <= INDEX_SIZE_MASK);
+				dstate->htids = palloc(dstate->maxpostingsize);
+
+				/* start new pending posting list with itup copy */
+				_bt_dedup_start_pending(dstate, CopyIndexTuple(itup),
+										InvalidOffsetNumber);
+			}
+			else if (_bt_keep_natts_fast(wstate->index, dstate->base,
+										 itup) > keysz &&
+					 _bt_dedup_save_htid(dstate, itup))
+			{
+				/*
+				 * Tuple is equal to base tuple of pending posting list.  Heap
+				 * TID from itup has been saved in state.
+				 */
+			}
+			else
+			{
+				/*
+				 * Tuple is not equal to pending posting list tuple, or
+				 * _bt_dedup_save_htid() opted to not merge current item into
+				 * pending posting list.
+				 */
+				_bt_sort_dedup_finish_pending(wstate, state, dstate);
+				pfree(dstate->base);
+
+				/* start new pending posting list with itup copy */
+				_bt_dedup_start_pending(dstate, CopyIndexTuple(itup),
+										InvalidOffsetNumber);
+			}
+
+			/* Report progress */
+			pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,
+										 ++tuples_done);
+		}
+
+		if (state)
+		{
+			/*
+			 * Handle the last item (there must be a last item when the
+			 * tuplesort returned one or more tuples)
+			 */
+			_bt_sort_dedup_finish_pending(wstate, state, dstate);
+			pfree(dstate->base);
+			pfree(dstate->htids);
+		}
+
+		pfree(dstate);
+	}
 	else
 	{
-		/* merge is unnecessary */
+		/* merging and deduplication are both unnecessary */
 		while ((itup = tuplesort_getindextuple(btspool->sortstate,
 											   true)) != NULL)
 		{
@@ -1253,7 +1412,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			if (state == NULL)
 				state = _bt_pagestate(wstate, 0);
 
-			_bt_buildadd(wstate, state, itup);
+			_bt_buildadd(wstate, state, itup, 0);
 
 			/* Report progress */
 			pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,

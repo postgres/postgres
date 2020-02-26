@@ -145,6 +145,7 @@ static void bt_tuple_present_callback(Relation index, ItemPointer tid,
 									  bool tupleIsAlive, void *checkstate);
 static IndexTuple bt_normalize_tuple(BtreeCheckState *state,
 									 IndexTuple itup);
+static inline IndexTuple bt_posting_plain_tuple(IndexTuple itup, int n);
 static bool bt_rootdescend(BtreeCheckState *state, IndexTuple itup);
 static inline bool offset_is_negative_infinity(BTPageOpaque opaque,
 											   OffsetNumber offset);
@@ -167,6 +168,7 @@ static ItemId PageGetItemIdCareful(BtreeCheckState *state, BlockNumber block,
 								   Page page, OffsetNumber offset);
 static inline ItemPointer BTreeTupleGetHeapTIDCareful(BtreeCheckState *state,
 													  IndexTuple itup, bool nonpivot);
+static inline ItemPointer BTreeTupleGetPointsToTID(IndexTuple itup);
 
 /*
  * bt_index_check(index regclass, heapallindexed boolean)
@@ -278,7 +280,8 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 
 	if (btree_index_mainfork_expected(indrel))
 	{
-		bool	heapkeyspace;
+		bool		heapkeyspace,
+					allequalimage;
 
 		RelationOpenSmgr(indrel);
 		if (!smgrexists(indrel->rd_smgr, MAIN_FORKNUM))
@@ -288,7 +291,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 							RelationGetRelationName(indrel))));
 
 		/* Check index, possibly against table it is an index on */
-		heapkeyspace = _bt_heapkeyspace(indrel);
+		_bt_metaversion(indrel, &heapkeyspace, &allequalimage);
 		bt_check_every_level(indrel, heaprel, heapkeyspace, parentcheck,
 							 heapallindexed, rootdescend);
 	}
@@ -419,12 +422,12 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		/*
 		 * Size Bloom filter based on estimated number of tuples in index,
 		 * while conservatively assuming that each block must contain at least
-		 * MaxIndexTuplesPerPage / 5 non-pivot tuples.  (Non-leaf pages cannot
-		 * contain non-pivot tuples.  That's okay because they generally make
-		 * up no more than about 1% of all pages in the index.)
+		 * MaxTIDsPerBTreePage / 3 "plain" tuples -- see
+		 * bt_posting_plain_tuple() for definition, and details of how posting
+		 * list tuples are handled.
 		 */
 		total_pages = RelationGetNumberOfBlocks(rel);
-		total_elems = Max(total_pages * (MaxIndexTuplesPerPage / 5),
+		total_elems = Max(total_pages * (MaxTIDsPerBTreePage / 3),
 						  (int64) state->rel->rd_rel->reltuples);
 		/* Random seed relies on backend srandom() call to avoid repetition */
 		seed = random();
@@ -924,6 +927,7 @@ bt_target_page_check(BtreeCheckState *state)
 		size_t		tupsize;
 		BTScanInsert skey;
 		bool		lowersizelimit;
+		ItemPointer scantid;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -954,13 +958,15 @@ bt_target_page_check(BtreeCheckState *state)
 		if (!_bt_check_natts(state->rel, state->heapkeyspace, state->target,
 							 offset))
 		{
+			ItemPointer tid;
 			char	   *itid,
 					   *htid;
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
+			tid = BTreeTupleGetPointsToTID(itup);
 			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
-							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+							ItemPointerGetBlockNumberNoCheck(tid),
+							ItemPointerGetOffsetNumberNoCheck(tid));
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -994,18 +1000,20 @@ bt_target_page_check(BtreeCheckState *state)
 
 		/*
 		 * Readonly callers may optionally verify that non-pivot tuples can
-		 * each be found by an independent search that starts from the root
+		 * each be found by an independent search that starts from the root.
+		 * Note that we deliberately don't do individual searches for each
+		 * TID, since the posting list itself is validated by other checks.
 		 */
 		if (state->rootdescend && P_ISLEAF(topaque) &&
 			!bt_rootdescend(state, itup))
 		{
+			ItemPointer tid = BTreeTupleGetPointsToTID(itup);
 			char	   *itid,
 					   *htid;
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
-			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumber(&(itup->t_tid)),
-							ItemPointerGetOffsetNumber(&(itup->t_tid)));
+			htid = psprintf("(%u,%u)", ItemPointerGetBlockNumber(tid),
+							ItemPointerGetOffsetNumber(tid));
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -1015,6 +1023,40 @@ bt_target_page_check(BtreeCheckState *state)
 										itid, htid,
 										(uint32) (state->targetlsn >> 32),
 										(uint32) state->targetlsn)));
+		}
+
+		/*
+		 * If tuple is a posting list tuple, make sure posting list TIDs are
+		 * in order
+		 */
+		if (BTreeTupleIsPosting(itup))
+		{
+			ItemPointerData last;
+			ItemPointer current;
+
+			ItemPointerCopy(BTreeTupleGetHeapTID(itup), &last);
+
+			for (int i = 1; i < BTreeTupleGetNPosting(itup); i++)
+			{
+
+				current = BTreeTupleGetPostingN(itup, i);
+
+				if (ItemPointerCompare(current, &last) <= 0)
+				{
+					char	   *itid = psprintf("(%u,%u)", state->targetblock, offset);
+
+					ereport(ERROR,
+							(errcode(ERRCODE_INDEX_CORRUPTED),
+							 errmsg_internal("posting list contains misplaced TID in index \"%s\"",
+											 RelationGetRelationName(state->rel)),
+							 errdetail_internal("Index tid=%s posting list offset=%d page lsn=%X/%X.",
+												itid, i,
+												(uint32) (state->targetlsn >> 32),
+												(uint32) state->targetlsn)));
+				}
+
+				ItemPointerCopy(current, &last);
+			}
 		}
 
 		/* Build insertion scankey for current page offset */
@@ -1049,13 +1091,14 @@ bt_target_page_check(BtreeCheckState *state)
 		if (tupsize > (lowersizelimit ? BTMaxItemSize(state->target) :
 					   BTMaxItemSizeNoHeapTid(state->target)))
 		{
+			ItemPointer tid = BTreeTupleGetPointsToTID(itup);
 			char	   *itid,
 					   *htid;
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
 			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
-							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+							ItemPointerGetBlockNumberNoCheck(tid),
+							ItemPointerGetOffsetNumberNoCheck(tid));
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -1074,12 +1117,32 @@ bt_target_page_check(BtreeCheckState *state)
 		{
 			IndexTuple	norm;
 
-			norm = bt_normalize_tuple(state, itup);
-			bloom_add_element(state->filter, (unsigned char *) norm,
-							  IndexTupleSize(norm));
-			/* Be tidy */
-			if (norm != itup)
-				pfree(norm);
+			if (BTreeTupleIsPosting(itup))
+			{
+				/* Fingerprint all elements as distinct "plain" tuples */
+				for (int i = 0; i < BTreeTupleGetNPosting(itup); i++)
+				{
+					IndexTuple	logtuple;
+
+					logtuple = bt_posting_plain_tuple(itup, i);
+					norm = bt_normalize_tuple(state, logtuple);
+					bloom_add_element(state->filter, (unsigned char *) norm,
+									  IndexTupleSize(norm));
+					/* Be tidy */
+					if (norm != logtuple)
+						pfree(norm);
+					pfree(logtuple);
+				}
+			}
+			else
+			{
+				norm = bt_normalize_tuple(state, itup);
+				bloom_add_element(state->filter, (unsigned char *) norm,
+								  IndexTupleSize(norm));
+				/* Be tidy */
+				if (norm != itup)
+					pfree(norm);
+			}
 		}
 
 		/*
@@ -1087,7 +1150,8 @@ bt_target_page_check(BtreeCheckState *state)
 		 *
 		 * If there is a high key (if this is not the rightmost page on its
 		 * entire level), check that high key actually is upper bound on all
-		 * page items.
+		 * page items.  If this is a posting list tuple, we'll need to set
+		 * scantid to be highest TID in posting list.
 		 *
 		 * We prefer to check all items against high key rather than checking
 		 * just the last and trusting that the operator class obeys the
@@ -1127,17 +1191,22 @@ bt_target_page_check(BtreeCheckState *state)
 		 * tuple. (See also: "Notes About Data Representation" in the nbtree
 		 * README.)
 		 */
+		scantid = skey->scantid;
+		if (state->heapkeyspace && BTreeTupleIsPosting(itup))
+			skey->scantid = BTreeTupleGetMaxHeapTID(itup);
+
 		if (!P_RIGHTMOST(topaque) &&
 			!(P_ISLEAF(topaque) ? invariant_leq_offset(state, skey, P_HIKEY) :
 			  invariant_l_offset(state, skey, P_HIKEY)))
 		{
+			ItemPointer tid = BTreeTupleGetPointsToTID(itup);
 			char	   *itid,
 					   *htid;
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
 			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
-							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+							ItemPointerGetBlockNumberNoCheck(tid),
+							ItemPointerGetOffsetNumberNoCheck(tid));
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -1150,6 +1219,8 @@ bt_target_page_check(BtreeCheckState *state)
 										(uint32) (state->targetlsn >> 32),
 										(uint32) state->targetlsn)));
 		}
+		/* Reset, in case scantid was set to (itup) posting tuple's max TID */
+		skey->scantid = scantid;
 
 		/*
 		 * * Item order check *
@@ -1160,15 +1231,17 @@ bt_target_page_check(BtreeCheckState *state)
 		if (OffsetNumberNext(offset) <= max &&
 			!invariant_l_offset(state, skey, OffsetNumberNext(offset)))
 		{
+			ItemPointer tid;
 			char	   *itid,
 					   *htid,
 					   *nitid,
 					   *nhtid;
 
 			itid = psprintf("(%u,%u)", state->targetblock, offset);
+			tid = BTreeTupleGetPointsToTID(itup);
 			htid = psprintf("(%u,%u)",
-							ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
-							ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+							ItemPointerGetBlockNumberNoCheck(tid),
+							ItemPointerGetOffsetNumberNoCheck(tid));
 			nitid = psprintf("(%u,%u)", state->targetblock,
 							 OffsetNumberNext(offset));
 
@@ -1177,9 +1250,10 @@ bt_target_page_check(BtreeCheckState *state)
 										  state->target,
 										  OffsetNumberNext(offset));
 			itup = (IndexTuple) PageGetItem(state->target, itemid);
+			tid = BTreeTupleGetPointsToTID(itup);
 			nhtid = psprintf("(%u,%u)",
-							 ItemPointerGetBlockNumberNoCheck(&(itup->t_tid)),
-							 ItemPointerGetOffsetNumberNoCheck(&(itup->t_tid)));
+							 ItemPointerGetBlockNumberNoCheck(tid),
+							 ItemPointerGetOffsetNumberNoCheck(tid));
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -1953,10 +2027,9 @@ bt_tuple_present_callback(Relation index, ItemPointer tid, Datum *values,
  * verification.  In particular, it won't try to normalize opclass-equal
  * datums with potentially distinct representations (e.g., btree/numeric_ops
  * index datums will not get their display scale normalized-away here).
- * Normalization may need to be expanded to handle more cases in the future,
- * though.  For example, it's possible that non-pivot tuples could in the
- * future have alternative logically equivalent representations due to using
- * the INDEX_ALT_TID_MASK bit to implement intelligent deduplication.
+ * Caller does normalization for non-pivot tuples that have a posting list,
+ * since dummy CREATE INDEX callback code generates new tuples with the same
+ * normalized representation.
  */
 static IndexTuple
 bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
@@ -1968,6 +2041,9 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 	bool		formnewtup = false;
 	IndexTuple	reformed;
 	int			i;
+
+	/* Caller should only pass "logical" non-pivot tuples here */
+	Assert(!BTreeTupleIsPosting(itup) && !BTreeTupleIsPivot(itup));
 
 	/* Easy case: It's immediately clear that tuple has no varlena datums */
 	if (!IndexTupleHasVarwidths(itup))
@@ -2032,6 +2108,29 @@ bt_normalize_tuple(BtreeCheckState *state, IndexTuple itup)
 }
 
 /*
+ * Produce palloc()'d "plain" tuple for nth posting list entry/TID.
+ *
+ * In general, deduplication is not supposed to change the logical contents of
+ * an index.  Multiple index tuples are merged together into one equivalent
+ * posting list index tuple when convenient.
+ *
+ * heapallindexed verification must normalize-away this variation in
+ * representation by converting posting list tuples into two or more "plain"
+ * tuples.  Each tuple must be fingerprinted separately -- there must be one
+ * tuple for each corresponding Bloom filter probe during the heap scan.
+ *
+ * Note: Caller still needs to call bt_normalize_tuple() with returned tuple.
+ */
+static inline IndexTuple
+bt_posting_plain_tuple(IndexTuple itup, int n)
+{
+	Assert(BTreeTupleIsPosting(itup));
+
+	/* Returns non-posting-list tuple */
+	return _bt_form_posting(itup, BTreeTupleGetPostingN(itup, n), 1);
+}
+
+/*
  * Search for itup in index, starting from fast root page.  itup must be a
  * non-pivot tuple.  This is only supported with heapkeyspace indexes, since
  * we rely on having fully unique keys to find a match with only a single
@@ -2087,6 +2186,7 @@ bt_rootdescend(BtreeCheckState *state, IndexTuple itup)
 		insertstate.itup = itup;
 		insertstate.itemsz = MAXALIGN(IndexTupleSize(itup));
 		insertstate.itup_key = key;
+		insertstate.postingoff = 0;
 		insertstate.bounds_valid = false;
 		insertstate.buf = lbuf;
 
@@ -2094,7 +2194,9 @@ bt_rootdescend(BtreeCheckState *state, IndexTuple itup)
 		offnum = _bt_binsrch_insert(state->rel, &insertstate);
 		/* Compare first >= matching item on leaf page, if any */
 		page = BufferGetPage(lbuf);
+		/* Should match on first heap TID when tuple has a posting list */
 		if (offnum <= PageGetMaxOffsetNumber(page) &&
+			insertstate.postingoff <= 0 &&
 			_bt_compare(state->rel, key, page, offnum) == 0)
 			exists = true;
 		_bt_relbuf(state->rel, lbuf);
@@ -2548,26 +2650,69 @@ PageGetItemIdCareful(BtreeCheckState *state, BlockNumber block, Page page,
 }
 
 /*
- * BTreeTupleGetHeapTID() wrapper that lets caller enforce that a heap TID must
- * be present in cases where that is mandatory.
- *
- * This doesn't add much as of BTREE_VERSION 4, since the INDEX_ALT_TID_MASK
- * bit is effectively a proxy for whether or not the tuple is a pivot tuple.
- * It may become more useful in the future, when non-pivot tuples support their
- * own alternative INDEX_ALT_TID_MASK representation.
+ * BTreeTupleGetHeapTID() wrapper that enforces that a heap TID is present in
+ * cases where that is mandatory (i.e. for non-pivot tuples)
  */
 static inline ItemPointer
 BTreeTupleGetHeapTIDCareful(BtreeCheckState *state, IndexTuple itup,
 							bool nonpivot)
 {
-	ItemPointer result = BTreeTupleGetHeapTID(itup);
-	BlockNumber targetblock = state->targetblock;
+	ItemPointer htid;
 
-	if (result == NULL && nonpivot)
+	/*
+	 * Caller determines whether this is supposed to be a pivot or non-pivot
+	 * tuple using page type and item offset number.  Verify that tuple
+	 * metadata agrees with this.
+	 */
+	Assert(state->heapkeyspace);
+	if (BTreeTupleIsPivot(itup) && nonpivot)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("block %u or its right sibling block or child block in index \"%s\" has unexpected pivot tuple",
+								 state->targetblock,
+								 RelationGetRelationName(state->rel))));
+
+	if (!BTreeTupleIsPivot(itup) && !nonpivot)
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("block %u or its right sibling block or child block in index \"%s\" has unexpected non-pivot tuple",
+								 state->targetblock,
+								 RelationGetRelationName(state->rel))));
+
+	htid = BTreeTupleGetHeapTID(itup);
+	if (!ItemPointerIsValid(htid) && nonpivot)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("block %u or its right sibling block or child block in index \"%s\" contains non-pivot tuple that lacks a heap TID",
-						targetblock, RelationGetRelationName(state->rel))));
+						state->targetblock,
+						RelationGetRelationName(state->rel))));
 
-	return result;
+	return htid;
+}
+
+/*
+ * Return the "pointed to" TID for itup, which is used to generate a
+ * descriptive error message.  itup must be a "data item" tuple (it wouldn't
+ * make much sense to call here with a high key tuple, since there won't be a
+ * valid downlink/block number to display).
+ *
+ * Returns either a heap TID (which will be the first heap TID in posting list
+ * if itup is posting list tuple), or a TID that contains downlink block
+ * number, plus some encoded metadata (e.g., the number of attributes present
+ * in itup).
+ */
+static inline ItemPointer
+BTreeTupleGetPointsToTID(IndexTuple itup)
+{
+	/*
+	 * Rely on the assumption that !heapkeyspace internal page data items will
+	 * correctly return TID with downlink here -- BTreeTupleGetHeapTID() won't
+	 * recognize it as a pivot tuple, but everything still works out because
+	 * the t_tid field is still returned
+	 */
+	if (!BTreeTupleIsPivot(itup))
+		return BTreeTupleGetHeapTID(itup);
+
+	/* Pivot tuple returns TID with downlink block (heapkeyspace variant) */
+	return &itup->t_tid;
 }

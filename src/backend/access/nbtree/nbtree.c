@@ -95,6 +95,10 @@ static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 						 BTCycleId cycleid, TransactionId *oldestBtpoXact);
 static void btvacuumpage(BTVacState *vstate, BlockNumber blkno,
 						 BlockNumber orig_blkno);
+static BTVacuumPosting btreevacuumposting(BTVacState *vstate,
+										  IndexTuple posting,
+										  OffsetNumber updatedoffset,
+										  int *nremaining);
 
 
 /*
@@ -161,7 +165,7 @@ btbuildempty(Relation index)
 
 	/* Construct metapage. */
 	metapage = (Page) palloc(BLCKSZ);
-	_bt_initmetapage(metapage, P_NONE, 0);
+	_bt_initmetapage(metapage, P_NONE, 0, _bt_allequalimage(index, false));
 
 	/*
 	 * Write the page and log it.  It might seem that an immediate sync would
@@ -264,8 +268,8 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 				 */
 				if (so->killedItems == NULL)
 					so->killedItems = (int *)
-						palloc(MaxIndexTuplesPerPage * sizeof(int));
-				if (so->numKilled < MaxIndexTuplesPerPage)
+						palloc(MaxTIDsPerBTreePage * sizeof(int));
+				if (so->numKilled < MaxTIDsPerBTreePage)
 					so->killedItems[so->numKilled++] = so->currPos.itemIndex;
 			}
 
@@ -1154,11 +1158,15 @@ restart:
 	}
 	else if (P_ISLEAF(opaque))
 	{
-		OffsetNumber deletable[MaxOffsetNumber];
+		OffsetNumber deletable[MaxIndexTuplesPerPage];
 		int			ndeletable;
+		BTVacuumPosting updatable[MaxIndexTuplesPerPage];
+		int			nupdatable;
 		OffsetNumber offnum,
 					minoff,
 					maxoff;
+		int			nhtidsdead,
+					nhtidslive;
 
 		/*
 		 * Trade in the initial read lock for a super-exclusive write lock on
@@ -1190,8 +1198,11 @@ restart:
 		 * point using callback.
 		 */
 		ndeletable = 0;
+		nupdatable = 0;
 		minoff = P_FIRSTDATAKEY(opaque);
 		maxoff = PageGetMaxOffsetNumber(page);
+		nhtidsdead = 0;
+		nhtidslive = 0;
 		if (callback)
 		{
 			for (offnum = minoff;
@@ -1199,11 +1210,9 @@ restart:
 				 offnum = OffsetNumberNext(offnum))
 			{
 				IndexTuple	itup;
-				ItemPointer htup;
 
 				itup = (IndexTuple) PageGetItem(page,
 												PageGetItemId(page, offnum));
-				htup = &(itup->t_tid);
 
 				/*
 				 * Hot Standby assumes that it's okay that XLOG_BTREE_VACUUM
@@ -1226,22 +1235,82 @@ restart:
 				 * simple, and allows us to always avoid generating our own
 				 * conflicts.
 				 */
-				if (callback(htup, callback_state))
-					deletable[ndeletable++] = offnum;
+				Assert(!BTreeTupleIsPivot(itup));
+				if (!BTreeTupleIsPosting(itup))
+				{
+					/* Regular tuple, standard table TID representation */
+					if (callback(&itup->t_tid, callback_state))
+					{
+						deletable[ndeletable++] = offnum;
+						nhtidsdead++;
+					}
+					else
+						nhtidslive++;
+				}
+				else
+				{
+					BTVacuumPosting vacposting;
+					int			nremaining;
+
+					/* Posting list tuple */
+					vacposting = btreevacuumposting(vstate, itup, offnum,
+													&nremaining);
+					if (vacposting == NULL)
+					{
+						/*
+						 * All table TIDs from the posting tuple remain, so no
+						 * delete or update required
+						 */
+						Assert(nremaining == BTreeTupleGetNPosting(itup));
+					}
+					else if (nremaining > 0)
+					{
+
+						/*
+						 * Store metadata about posting list tuple in
+						 * updatable array for entire page.  Existing tuple
+						 * will be updated during the later call to
+						 * _bt_delitems_vacuum().
+						 */
+						Assert(nremaining < BTreeTupleGetNPosting(itup));
+						updatable[nupdatable++] = vacposting;
+						nhtidsdead += BTreeTupleGetNPosting(itup) - nremaining;
+					}
+					else
+					{
+						/*
+						 * All table TIDs from the posting list must be
+						 * deleted.  We'll delete the index tuple completely
+						 * (no update required).
+						 */
+						Assert(nremaining == 0);
+						deletable[ndeletable++] = offnum;
+						nhtidsdead += BTreeTupleGetNPosting(itup);
+						pfree(vacposting);
+					}
+
+					nhtidslive += nremaining;
+				}
 			}
 		}
 
 		/*
-		 * Apply any needed deletes.  We issue just one _bt_delitems_vacuum()
-		 * call per page, so as to minimize WAL traffic.
+		 * Apply any needed deletes or updates.  We issue just one
+		 * _bt_delitems_vacuum() call per page, so as to minimize WAL traffic.
 		 */
-		if (ndeletable > 0)
+		if (ndeletable > 0 || nupdatable > 0)
 		{
-			_bt_delitems_vacuum(rel, buf, deletable, ndeletable);
+			Assert(nhtidsdead >= Max(ndeletable, 1));
+			_bt_delitems_vacuum(rel, buf, deletable, ndeletable, updatable,
+								nupdatable);
 
-			stats->tuples_removed += ndeletable;
+			stats->tuples_removed += nhtidsdead;
 			/* must recompute maxoff */
 			maxoff = PageGetMaxOffsetNumber(page);
+
+			/* can't leak memory here */
+			for (int i = 0; i < nupdatable; i++)
+				pfree(updatable[i]);
 		}
 		else
 		{
@@ -1254,6 +1323,7 @@ restart:
 			 * We treat this like a hint-bit update because there's no need to
 			 * WAL-log it.
 			 */
+			Assert(nhtidsdead == 0);
 			if (vstate->cycleid != 0 &&
 				opaque->btpo_cycleid == vstate->cycleid)
 			{
@@ -1263,15 +1333,18 @@ restart:
 		}
 
 		/*
-		 * If it's now empty, try to delete; else count the live tuples. We
-		 * don't delete when recursing, though, to avoid putting entries into
-		 * freePages out-of-order (doesn't seem worth any extra code to handle
-		 * the case).
+		 * If it's now empty, try to delete; else count the live tuples (live
+		 * table TIDs in posting lists are counted as separate live tuples).
+		 * We don't delete when recursing, though, to avoid putting entries
+		 * into freePages out-of-order (doesn't seem worth any extra code to
+		 * handle the case).
 		 */
 		if (minoff > maxoff)
 			delete_now = (blkno == orig_blkno);
 		else
-			stats->num_index_tuples += maxoff - minoff + 1;
+			stats->num_index_tuples += nhtidslive;
+
+		Assert(!delete_now || nhtidslive == 0);
 	}
 
 	if (delete_now)
@@ -1303,15 +1376,71 @@ restart:
 	/*
 	 * This is really tail recursion, but if the compiler is too stupid to
 	 * optimize it as such, we'd eat an uncomfortably large amount of stack
-	 * space per recursion level (due to the deletable[] array). A failure is
-	 * improbable since the number of levels isn't likely to be large ... but
-	 * just in case, let's hand-optimize into a loop.
+	 * space per recursion level (due to the arrays used to track details of
+	 * deletable/updatable items).  A failure is improbable since the number
+	 * of levels isn't likely to be large ...  but just in case, let's
+	 * hand-optimize into a loop.
 	 */
 	if (recurse_to != P_NONE)
 	{
 		blkno = recurse_to;
 		goto restart;
 	}
+}
+
+/*
+ * btreevacuumposting --- determine TIDs still needed in posting list
+ *
+ * Returns metadata describing how to build replacement tuple without the TIDs
+ * that VACUUM needs to delete.  Returned value is NULL in the common case
+ * where no changes are needed to caller's posting list tuple (we avoid
+ * allocating memory here as an optimization).
+ *
+ * The number of TIDs that should remain in the posting list tuple is set for
+ * caller in *nremaining.
+ */
+static BTVacuumPosting
+btreevacuumposting(BTVacState *vstate, IndexTuple posting,
+				   OffsetNumber updatedoffset, int *nremaining)
+{
+	int			live = 0;
+	int			nitem = BTreeTupleGetNPosting(posting);
+	ItemPointer items = BTreeTupleGetPosting(posting);
+	BTVacuumPosting vacposting = NULL;
+
+	for (int i = 0; i < nitem; i++)
+	{
+		if (!vstate->callback(items + i, vstate->callback_state))
+		{
+			/* Live table TID */
+			live++;
+		}
+		else if (vacposting == NULL)
+		{
+			/*
+			 * First dead table TID encountered.
+			 *
+			 * It's now clear that we need to delete one or more dead table
+			 * TIDs, so start maintaining metadata describing how to update
+			 * existing posting list tuple.
+			 */
+			vacposting = palloc(offsetof(BTVacuumPostingData, deletetids) +
+								nitem * sizeof(uint16));
+
+			vacposting->itup = posting;
+			vacposting->updatedoffset = updatedoffset;
+			vacposting->ndeletedtids = 0;
+			vacposting->deletetids[vacposting->ndeletedtids++] = i;
+		}
+		else
+		{
+			/* Second or subsequent dead table TID */
+			vacposting->deletetids[vacposting->ndeletedtids++] = i;
+		}
+	}
+
+	*nremaining = live;
+	return vacposting;
 }
 
 /*

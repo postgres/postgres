@@ -183,6 +183,9 @@ _bt_findsplitloc(Relation rel,
 	state.minfirstrightsz = SIZE_MAX;
 	state.newitemoff = newitemoff;
 
+	/* newitem cannot be a posting list item */
+	Assert(!BTreeTupleIsPosting(newitem));
+
 	/*
 	 * maxsplits should never exceed maxoff because there will be at most as
 	 * many candidate split points as there are points _between_ tuples, once
@@ -459,6 +462,7 @@ _bt_recsplitloc(FindSplitData *state,
 	int16		leftfree,
 				rightfree;
 	Size		firstrightitemsz;
+	Size		postingsz = 0;
 	bool		newitemisfirstonright;
 
 	/* Is the new item going to be the first item on the right page? */
@@ -468,7 +472,29 @@ _bt_recsplitloc(FindSplitData *state,
 	if (newitemisfirstonright)
 		firstrightitemsz = state->newitemsz;
 	else
+	{
 		firstrightitemsz = firstoldonrightsz;
+
+		/*
+		 * Calculate suffix truncation space saving when firstright is a
+		 * posting list tuple, though only when the firstright is over 64
+		 * bytes including line pointer overhead (arbitrary).  This avoids
+		 * accessing the tuple in cases where its posting list must be very
+		 * small (if firstright has one at all).
+		 */
+		if (state->is_leaf && firstrightitemsz > 64)
+		{
+			ItemId		itemid;
+			IndexTuple	newhighkey;
+
+			itemid = PageGetItemId(state->page, firstoldonright);
+			newhighkey = (IndexTuple) PageGetItem(state->page, itemid);
+
+			if (BTreeTupleIsPosting(newhighkey))
+				postingsz = IndexTupleSize(newhighkey) -
+					BTreeTupleGetPostingOffset(newhighkey);
+		}
+	}
 
 	/* Account for all the old tuples */
 	leftfree = state->leftspace - olddataitemstoleft;
@@ -491,11 +517,17 @@ _bt_recsplitloc(FindSplitData *state,
 	 * If we are on the leaf level, assume that suffix truncation cannot avoid
 	 * adding a heap TID to the left half's new high key when splitting at the
 	 * leaf level.  In practice the new high key will often be smaller and
-	 * will rarely be larger, but conservatively assume the worst case.
+	 * will rarely be larger, but conservatively assume the worst case.  We do
+	 * go to the trouble of subtracting away posting list overhead, though
+	 * only when it looks like it will make an appreciable difference.
+	 * (Posting lists are the only case where truncation will typically make
+	 * the final high key far smaller than firstright, so being a bit more
+	 * precise there noticeably improves the balance of free space.)
 	 */
 	if (state->is_leaf)
 		leftfree -= (int16) (firstrightitemsz +
-							 MAXALIGN(sizeof(ItemPointerData)));
+							 MAXALIGN(sizeof(ItemPointerData)) -
+							 postingsz);
 	else
 		leftfree -= (int16) firstrightitemsz;
 
@@ -691,7 +723,8 @@ _bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
 	itemid = PageGetItemId(state->page, OffsetNumberPrev(state->newitemoff));
 	tup = (IndexTuple) PageGetItem(state->page, itemid);
 	/* Do cheaper test first */
-	if (!_bt_adjacenthtid(&tup->t_tid, &state->newitem->t_tid))
+	if (BTreeTupleIsPosting(tup) ||
+		!_bt_adjacenthtid(&tup->t_tid, &state->newitem->t_tid))
 		return false;
 	/* Check same conditions as rightmost item case, too */
 	keepnatts = _bt_keep_natts_fast(state->rel, tup, state->newitem);

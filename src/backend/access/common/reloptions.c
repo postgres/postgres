@@ -158,6 +158,16 @@ static relopt_bool boolRelOpts[] =
 		},
 		true
 	},
+	{
+		{
+			"deduplicate_items",
+			"Enables \"deduplicate items\" feature for this btree index",
+			RELOPT_KIND_BTREE,
+			ShareUpdateExclusiveLock	/* since it applies only to later
+										 * inserts */
+		},
+		true
+	},
 	/* list terminator */
 	{{NULL}}
 };

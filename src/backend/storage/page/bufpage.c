@@ -1048,8 +1048,10 @@ PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offnum)
  * This is better than deleting and reinserting the tuple, because it
  * avoids any data shifting when the tuple size doesn't change; and
  * even when it does, we avoid moving the line pointers around.
- * Conceivably this could also be of use to an index AM that cares about
- * the physical order of tuples as well as their ItemId order.
+ * This could be used by an index AM that doesn't want to unset the
+ * LP_DEAD bit when it happens to be set.  It could conceivably also be
+ * used by an index AM that cares about the physical order of tuples as
+ * well as their logical/ItemId order.
  *
  * If there's insufficient space for the new tuple, return false.  Other
  * errors represent data-corruption problems, so we just elog.
@@ -1134,8 +1136,9 @@ PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 		}
 	}
 
-	/* Update the item's tuple length (other fields shouldn't change) */
-	ItemIdSetNormal(tupid, offset + size_diff, newsize);
+	/* Update the item's tuple length without changing its lp_flags field */
+	tupid->lp_off = offset + size_diff;
+	tupid->lp_len = newsize;
 
 	/* Copy new tuple data onto page */
 	memcpy(PageGetItem(page, tupid), newtup, newsize);

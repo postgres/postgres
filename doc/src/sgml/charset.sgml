@@ -928,10 +928,11 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
      nondeterministic collations give a more <quote>correct</quote> behavior,
      especially when considering the full power of Unicode and its many
      special cases, they also have some drawbacks.  Foremost, their use leads
-     to a performance penalty.  Also, certain operations are not possible with
-     nondeterministic collations, such as pattern matching operations.
-     Therefore, they should be used only in cases where they are specifically
-     wanted.
+     to a performance penalty.  Note, in particular, that B-tree cannot use
+     deduplication with indexes that use a nondeterministic collation.  Also,
+     certain operations are not possible with nondeterministic collations,
+     such as pattern matching operations.  Therefore, they should be used
+     only in cases where they are specifically wanted.
     </para>
    </sect3>
   </sect2>

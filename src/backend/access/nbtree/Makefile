@@ -14,6 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 OBJS = \
 	nbtcompare.o \
+	nbtdedup.o \
 	nbtinsert.o \
 	nbtpage.o \
 	nbtree.o \

@@ -432,7 +432,10 @@ because we allow LP_DEAD to be set with only a share lock (it's exactly
 like a hint bit for a heap tuple), but physically removing tuples requires
 exclusive lock.  In the current code we try to remove LP_DEAD tuples when
 we are otherwise faced with having to split a page to do an insertion (and
-hence have exclusive lock on it already).
+hence have exclusive lock on it already).  Deduplication can also prevent
+a page split, but removing LP_DEAD tuples is the preferred approach.
+(Note that posting list tuples can only have their LP_DEAD bit set when
+every table TID within the posting list is known dead.)
 
 This leaves the index in a state where it has no entry for a dead tuple
 that still exists in the heap.  This is not a problem for the current
@@ -726,6 +729,134 @@ if it must.  When a page that's already full of duplicates must be split,
 the fallback strategy assumes that duplicates are mostly inserted in
 ascending heap TID order.  The page is split in a way that leaves the left
 half of the page mostly full, and the right half of the page mostly empty.
+The overall effect is that leaf page splits gracefully adapt to inserts of
+large groups of duplicates, maximizing space utilization.  Note also that
+"trapping" large groups of duplicates on the same leaf page like this makes
+deduplication more efficient.  Deduplication can be performed infrequently,
+without merging together existing posting list tuples too often.
+
+Notes about deduplication
+-------------------------
+
+We deduplicate non-pivot tuples in non-unique indexes to reduce storage
+overhead, and to avoid (or at least delay) page splits.  Note that the
+goals for deduplication in unique indexes are rather different; see later
+section for details.  Deduplication alters the physical representation of
+tuples without changing the logical contents of the index, and without
+adding overhead to read queries.  Non-pivot tuples are merged together
+into a single physical tuple with a posting list (a simple array of heap
+TIDs with the standard item pointer format).  Deduplication is always
+applied lazily, at the point where it would otherwise be necessary to
+perform a page split.  It occurs only when LP_DEAD items have been
+removed, as our last line of defense against splitting a leaf page.  We
+can set the LP_DEAD bit with posting list tuples, though only when all
+TIDs are known dead.
+
+Our lazy approach to deduplication allows the page space accounting used
+during page splits to have absolutely minimal special case logic for
+posting lists.  Posting lists can be thought of as extra payload that
+suffix truncation will reliably truncate away as needed during page
+splits, just like non-key columns from an INCLUDE index tuple.
+Incoming/new tuples can generally be treated as non-overlapping plain
+items (though see section on posting list splits for information about how
+overlapping new/incoming items are really handled).
+
+The representation of posting lists is almost identical to the posting
+lists used by GIN, so it would be straightforward to apply GIN's varbyte
+encoding compression scheme to individual posting lists.  Posting list
+compression would break the assumptions made by posting list splits about
+page space accounting (see later section), so it's not clear how
+compression could be integrated with nbtree.  Besides, posting list
+compression does not offer a compelling trade-off for nbtree, since in
+general nbtree is optimized for consistent performance with many
+concurrent readers and writers.
+
+A major goal of our lazy approach to deduplication is to limit the
+performance impact of deduplication with random updates.  Even concurrent
+append-only inserts of the same key value will tend to have inserts of
+individual index tuples in an order that doesn't quite match heap TID
+order.  Delaying deduplication minimizes page level fragmentation.
+
+Deduplication in unique indexes
+-------------------------------
+
+Very often, the range of values that can be placed on a given leaf page in
+a unique index is fixed and permanent.  For example, a primary key on an
+identity column will usually only have page splits caused by the insertion
+of new logical rows within the rightmost leaf page.  If there is a split
+of a non-rightmost leaf page, then the split must have been triggered by
+inserts associated with an UPDATE of an existing logical row.  Splitting a
+leaf page purely to store multiple versions should be considered
+pathological, since it permanently degrades the index structure in order
+to absorb a temporary burst of duplicates.  Deduplication in unique
+indexes helps to prevent these pathological page splits.  Storing
+duplicates in a space efficient manner is not the goal, since in the long
+run there won't be any duplicates anyway.  Rather, we're buying time for
+standard garbage collection mechanisms to run before a page split is
+needed.
+
+Unique index leaf pages only get a deduplication pass when an insertion
+(that might have to split the page) observed an existing duplicate on the
+page in passing.  This is based on the assumption that deduplication will
+only work out when _all_ new insertions are duplicates from UPDATEs.  This
+may mean that we miss an opportunity to delay a page split, but that's
+okay because our ultimate goal is to delay leaf page splits _indefinitely_
+(i.e. to prevent them altogether).  There is little point in trying to
+delay a split that is probably inevitable anyway.  This allows us to avoid
+the overhead of attempting to deduplicate with unique indexes that always
+have few or no duplicates.
+
+Posting list splits
+-------------------
+
+When the incoming tuple happens to overlap with an existing posting list,
+a posting list split is performed.  Like a page split, a posting list
+split resolves a situation where a new/incoming item "won't fit", while
+inserting the incoming item in passing (i.e. as part of the same atomic
+action).  It's possible (though not particularly likely) that an insert of
+a new item on to an almost-full page will overlap with a posting list,
+resulting in both a posting list split and a page split.  Even then, the
+atomic action that splits the posting list also inserts the new item
+(since page splits always insert the new item in passing).  Including the
+posting list split in the same atomic action as the insert avoids problems
+caused by concurrent inserts into the same posting list --  the exact
+details of how we change the posting list depend upon the new item, and
+vice-versa.  A single atomic action also minimizes the volume of extra
+WAL required for a posting list split, since we don't have to explicitly
+WAL-log the original posting list tuple.
+
+Despite piggy-backing on the same atomic action that inserts a new tuple,
+posting list splits can be thought of as a separate, extra action to the
+insert itself (or to the page split itself).  Posting list splits
+conceptually "rewrite" an insert that overlaps with an existing posting
+list into an insert that adds its final new item just to the right of the
+posting list instead.  The size of the posting list won't change, and so
+page space accounting code does not need to care about posting list splits
+at all.  This is an important upside of our design; the page split point
+choice logic is very subtle even without it needing to deal with posting
+list splits.
+
+Only a few isolated extra steps are required to preserve the illusion that
+the new item never overlapped with an existing posting list in the first
+place: the heap TID of the incoming tuple is swapped with the rightmost/max
+heap TID from the existing/originally overlapping posting list.  Also, the
+posting-split-with-page-split case must generate a new high key based on
+an imaginary version of the original page that has both the final new item
+and the after-list-split posting tuple (page splits usually just operate
+against an imaginary version that contains the new item/item that won't
+fit).
+
+This approach avoids inventing an "eager" atomic posting split operation
+that splits the posting list without simultaneously finishing the insert
+of the incoming item.  This alternative design might seem cleaner, but it
+creates subtle problems for page space accounting.  In general, there
+might not be enough free space on the page to split a posting list such
+that the incoming/new item no longer overlaps with either posting list
+half --- the operation could fail before the actual retail insert of the
+new item even begins.  We'd end up having to handle posting list splits
+that need a page split anyway.  Besides, supporting variable "split points"
+while splitting posting lists won't actually improve overall space
+utilization.
 
 Notes About Data Representation
 -------------------------------

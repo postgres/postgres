@@ -557,11 +557,208 @@ equalimage(<replaceable>opcintype</replaceable> <type>oid</type>) returns bool
 <sect1 id="btree-implementation">
  <title>Implementation</title>
 
+ <para>
+  This section covers B-Tree index implementation details that may be
+  of use to advanced users.  See
+  <filename>src/backend/access/nbtree/README</filename> in the source
+  distribution for a much more detailed, internals-focused description
+  of the B-Tree implementation.
+ </para>
+ <sect2 id="btree-structure">
+  <title>B-Tree Structure</title>
   <para>
-   An introduction to the btree index implementation can be found in
-   <filename>src/backend/access/nbtree/README</filename>.
+   <productname>PostgreSQL</productname> B-Tree indexes are
+   multi-level tree structures, where each level of the tree can be
+   used as a doubly-linked list of pages.  A single metapage is stored
+   in a fixed position at the start of the first segment file of the
+   index.  All other pages are either leaf pages or internal pages.
+   Leaf pages are the pages on the lowest level of the tree.  All
+   other levels consist of internal pages.  Each leaf page contains
+   tuples that point to table rows.  Each internal page contains
+   tuples that point to the next level down in the tree.  Typically,
+   over 99% of all pages are leaf pages.  Both internal pages and leaf
+   pages use the standard page format described in <xref
+    linkend="storage-page-layout"/>.
+  </para>
+  <para>
+   New leaf pages are added to a B-Tree index when an existing leaf
+   page cannot fit an incoming tuple.  A <firstterm>page
+    split</firstterm> operation makes room for items that originally
+   belonged on the overflowing page by moving a portion of the items
+   to a new page.  Page splits must also insert a new
+   <firstterm>downlink</firstterm> to the new page in the parent page,
+   which may cause the parent to split in turn.  Page splits
+   <quote>cascade upwards</quote> in a recursive fashion.  When the
+   root page finally cannot fit a new downlink, a <firstterm>root page
+    split</firstterm> operation takes place.  This adds a new level to
+   the tree structure by creating a new root page that is one level
+   above the original root page.
+  </para>
+ </sect2>
+
+ <sect2 id="btree-deduplication">
+  <title>Deduplication</title>
+  <para>
+   A duplicate is a leaf page tuple (a tuple that points to a table
+   row) where <emphasis>all</emphasis> indexed key columns have values
+   that match corresponding column values from at least one other leaf
+   page tuple that's close by in the same index.  Duplicate tuples are
+   quite common in practice.  B-Tree indexes can use a special,
+   space-efficient representation for duplicates when an optional
+   technique is enabled: <firstterm>deduplication</firstterm>.
+  </para>
+  <para>
+   Deduplication works by periodically merging groups of duplicate
+   tuples together, forming a single posting list tuple for each
+   group.  The column key value(s) only appear once in this
+   representation.  This is followed by a sorted array of
+   <acronym>TID</acronym>s that point to rows in the table.  This
+   significantly reduces the storage size of indexes where each value
+   (or each distinct combination of column values) appears several
+   times on average.  The latency of queries can be reduced
+   significantly.  Overall query throughput may increase
+   significantly.  The overhead of routine index vacuuming may also be
+   reduced significantly.
+  </para>
+  <note>
+   <para>
+    While NULL is generally not considered to be equal to any other
+    value, including NULL, NULL is nevertheless treated as just
+    another value from the domain of indexed values by the B-Tree
+    implementation (except when enforcing uniqueness in a unique
+    index).  B-Tree deduplication is therefore just as effective with
+    <quote>duplicates</quote> that contain a NULL value.
+   </para>
+  </note>
+  <para>
+   The deduplication process occurs lazily, when a new item is
+   inserted that cannot fit on an existing leaf page.  This prevents
+   (or at least delays) leaf page splits.  Unlike GIN posting list
+   tuples, B-Tree posting list tuples do not need to expand every time
+   a new duplicate is inserted; they are merely an alternative
+   physical representation of the original logical contents of the
+   leaf page.  This design prioritizes consistent performance with
+   mixed read-write workloads.  Most client applications will at least
+   see a moderate performance benefit from using deduplication.
+   Deduplication is enabled by default.
+  </para>
+  <para>
+   Write-heavy workloads that don't benefit from deduplication due to
+   having few or no duplicate values in indexes will incur a small,
+   fixed performance penalty (unless deduplication is explicitly
+   disabled).  The <literal>deduplicate_items</literal> storage
+   parameter can be used to disable deduplication within individual
+   indexes.  There is never any performance penalty with read-only
+   workloads, since reading posting list tuples is at least as
+   efficient as reading the standard tuple representation.  Disabling
+   deduplication isn't usually helpful.
+  </para>
+  <para>
+   B-Tree indexes are not directly aware that under MVCC, there might
+   be multiple extant versions of the same logical table row; to an
+   index, each tuple is an independent object that needs its own index
+   entry.  Thus, an update of a row always creates all-new index
+   entries for the row, even if the key values did not change.  Some
+   workloads suffer from index bloat caused by these
+   implementation-level version duplicates (this is typically a
+   problem for <command>UPDATE</command>-heavy workloads that cannot
+   apply the <acronym>HOT</acronym> optimization due to modifying at
+   least one indexed column).  B-Tree deduplication does not
+   distinguish between these implementation-level version duplicates
+   and conventional duplicates.  Deduplication can nevertheless help
+   with controlling index bloat caused by implementation-level version
+   churn.
+  </para>
+  <tip>
+   <para>
+    A special heuristic is applied to determine whether a
+    deduplication pass in a unique index should take place.  It can
+    often skip straight to splitting a leaf page, avoiding a
+    performance penalty from wasting cycles on unhelpful deduplication
+    passes.  If you're concerned about the overhead of deduplication,
+    consider setting <literal>deduplicate_items = off</literal>
+    selectively.  Leaving deduplication enabled in unique indexes has
+    little downside.
+   </para>
+  </tip>
+  <para>
+   Deduplication cannot be used in all cases due to
+   implementation-level restrictions.  Deduplication safety is
+   determined when <command>CREATE INDEX</command> or
+   <command>REINDEX</command> run.
+  </para>
+  <para>
+   Note that deduplication is deemed unsafe and cannot be used in the
+   following cases involving semantically significant differences
+   among equal datums:
+  </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <type>text</type>, <type>varchar</type>, and <type>char</type>
+      cannot use deduplication when a
+      <emphasis>nondeterministic</emphasis> collation is used.  Case
+      and accent differences must be preserved among equal datums.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <type>numeric</type> cannot use deduplication.  Numeric display
+      scale must be preserved among equal datums.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <type>jsonb</type> cannot use deduplication, since the
+      <type>jsonb</type> B-Tree operator class uses
+      <type>numeric</type> internally.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <type>float4</type> and <type>float8</type> cannot use
+      deduplication.  These types have distinct representations for
+      <literal>-0</literal> and <literal>0</literal>, which are
+      nevertheless considered equal.  This difference must be
+      preserved.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   There is one further implementation-level restriction that may be
+   lifted in a future version of
+   <productname>PostgreSQL</productname>:
+  </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      Container types (such as composite types, arrays, or range
+      types) cannot use deduplication.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+  <para>
+   There is one further implementation-level restriction that applies
+   regardless of the operator class or collation used:
+  </para>
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>INCLUDE</literal> indexes can never use deduplication.
+     </para>
+    </listitem>
+   </itemizedlist>
   </para>
 
+ </sect2>
 </sect1>
 
 </chapter>

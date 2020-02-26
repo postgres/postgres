@@ -200,7 +200,7 @@ reset enable_indexscan;
 reset enable_bitmapscan;
 -- Also check LIKE optimization with binary-compatible cases
 create temp table btree_bpchar (f1 text collate "C");
-create index on btree_bpchar(f1 bpchar_ops);
+create index on btree_bpchar(f1 bpchar_ops) WITH (deduplicate_items=on);
 insert into btree_bpchar values ('foo'), ('fool'), ('bar'), ('quux');
 -- doesn't match index:
 explain (costs off)
@@ -266,6 +266,24 @@ select * from btree_bpchar where f1::bpchar like 'foo%';
  fool
 (2 rows)
 
+-- get test coverage for "single value" deduplication strategy:
+insert into btree_bpchar select 'foo' from generate_series(1,1500);
+--
+-- Perform unique checking, with and without the use of deduplication
+--
+CREATE TABLE dedup_unique_test_table (a int) WITH (autovacuum_enabled=false);
+CREATE UNIQUE INDEX dedup_unique ON dedup_unique_test_table (a) WITH (deduplicate_items=on);
+CREATE UNIQUE INDEX plain_unique ON dedup_unique_test_table (a) WITH (deduplicate_items=off);
+-- Generate enough garbage tuples in index to ensure that even the unique index
+-- with deduplication enabled has to check multiple leaf pages during unique
+-- checking (at least with a BLCKSZ of 8192 or less)
+DO $$
+BEGIN
+    FOR r IN 1..1350 LOOP
+        DELETE FROM dedup_unique_test_table;
+        INSERT INTO dedup_unique_test_table SELECT 1;
+    END LOOP;
+END$$;
 --
 -- Test B-tree fast path (cache rightmost leaf page) optimization.
 --

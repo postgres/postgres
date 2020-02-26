@@ -16561,10 +16561,11 @@ AND
    rows.  Two rows might have a different binary representation even
    though comparisons of the two rows with the equality operator is true.
    The ordering of rows under these comparison operators is deterministic
-   but not otherwise meaningful.  These operators are used internally for
-   materialized views and might be useful for other specialized purposes
-   such as replication but are not intended to be generally useful for
-   writing queries.
+   but not otherwise meaningful.  These operators are used internally
+   for materialized views and might be useful for other specialized
+   purposes such as replication and B-Tree deduplication (see <xref
+   linkend="btree-deduplication"/>).  They are not intended to be
+   generally useful for writing queries, though.
   </para>
   </sect2>
  </sect1>

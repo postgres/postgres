@@ -276,6 +276,10 @@ BuildIndexValueDescription(Relation indexRelation,
 /*
  * Get the latestRemovedXid from the table entries pointed at by the index
  * tuples being deleted.
+ *
+ * Note: index access methods that don't consistently use the standard
+ * IndexTuple + heap TID item pointer representation will need to provide
+ * their own version of this function.
  */
 TransactionId
 index_compute_xid_horizon_for_tuples(Relation irel,
