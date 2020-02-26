@@ -119,6 +119,9 @@ static Node *eval_const_expressions_mutator(Node *node,
 static bool contain_non_const_walker(Node *node, void *context);
 static bool ece_function_is_safe(Oid funcid,
 								 eval_const_expressions_context *context);
+static Node *apply_const_relabel(Node *arg, Oid rtype,
+								 int32 rtypmod, Oid rcollid,
+								 CoercionForm rformat, int rlocation);
 static List *simplify_or_arguments(List *args,
 								   eval_const_expressions_context *context,
 								   bool *haveNull, bool *forceTrue);
@@ -2774,46 +2777,19 @@ eval_const_expressions_mutator(Node *node,
 			return node;
 		case T_RelabelType:
 			{
-				/*
-				 * If we can simplify the input to a constant, then we don't
-				 * need the RelabelType node anymore: just change the type
-				 * field of the Const node.  Otherwise, must copy the
-				 * RelabelType node.
-				 */
 				RelabelType *relabel = (RelabelType *) node;
 				Node	   *arg;
 
+				/* Simplify the input ... */
 				arg = eval_const_expressions_mutator((Node *) relabel->arg,
 													 context);
-
-				/*
-				 * If we find stacked RelabelTypes (eg, from foo :: int ::
-				 * oid) we can discard all but the top one.
-				 */
-				while (arg && IsA(arg, RelabelType))
-					arg = (Node *) ((RelabelType *) arg)->arg;
-
-				if (arg && IsA(arg, Const))
-				{
-					Const	   *con = (Const *) arg;
-
-					con->consttype = relabel->resulttype;
-					con->consttypmod = relabel->resulttypmod;
-					con->constcollid = relabel->resultcollid;
-					return (Node *) con;
-				}
-				else
-				{
-					RelabelType *newrelabel = makeNode(RelabelType);
-
-					newrelabel->arg = (Expr *) arg;
-					newrelabel->resulttype = relabel->resulttype;
-					newrelabel->resulttypmod = relabel->resulttypmod;
-					newrelabel->resultcollid = relabel->resultcollid;
-					newrelabel->relabelformat = relabel->relabelformat;
-					newrelabel->location = relabel->location;
-					return (Node *) newrelabel;
-				}
+				/* ... and attach a new RelabelType node, if needed */
+				return apply_const_relabel(arg,
+										   relabel->resulttype,
+										   relabel->resulttypmod,
+										   relabel->resultcollid,
+										   relabel->relabelformat,
+										   relabel->location);
 			}
 		case T_CoerceViaIO:
 			{
@@ -2947,48 +2923,25 @@ eval_const_expressions_mutator(Node *node,
 		case T_CollateExpr:
 			{
 				/*
-				 * If we can simplify the input to a constant, then we don't
-				 * need the CollateExpr node at all: just change the
-				 * constcollid field of the Const node.  Otherwise, replace
-				 * the CollateExpr with a RelabelType. (We do that so as to
-				 * improve uniformity of expression representation and thus
-				 * simplify comparison of expressions.)
+				 * We replace CollateExpr with RelabelType, so as to improve
+				 * uniformity of expression representation and thus simplify
+				 * comparison of expressions.  Hence this looks very nearly
+				 * the same as the RelabelType case, and we can apply the same
+				 * optimizations to avoid unnecessary RelabelTypes.
 				 */
 				CollateExpr *collate = (CollateExpr *) node;
 				Node	   *arg;
 
+				/* Simplify the input ... */
 				arg = eval_const_expressions_mutator((Node *) collate->arg,
 													 context);
-
-				if (arg && IsA(arg, Const))
-				{
-					Const	   *con = (Const *) arg;
-
-					con->constcollid = collate->collOid;
-					return (Node *) con;
-				}
-				else if (collate->collOid == exprCollation(arg))
-				{
-					/* Don't need a RelabelType either... */
-					return arg;
-				}
-				else
-				{
-					RelabelType *relabel = makeNode(RelabelType);
-
-					relabel->resulttype = exprType(arg);
-					relabel->resulttypmod = exprTypmod(arg);
-					relabel->resultcollid = collate->collOid;
-					relabel->relabelformat = COERCE_IMPLICIT_CAST;
-					relabel->location = collate->location;
-
-					/* Don't create stacked RelabelTypes */
-					while (arg && IsA(arg, RelabelType))
-						arg = (Node *) ((RelabelType *) arg)->arg;
-					relabel->arg = (Expr *) arg;
-
-					return (Node *) relabel;
-				}
+				/* ... and attach a new RelabelType node, if needed */
+				return apply_const_relabel(arg,
+										   exprType(arg),
+										   exprTypmod(arg),
+										   collate->collOid,
+										   COERCE_IMPLICIT_CAST,
+										   collate->location);
 			}
 		case T_CaseExpr:
 			{
@@ -3490,32 +3443,12 @@ eval_const_expressions_mutator(Node *node,
 													cdomain->resulttype);
 
 					/* Generate RelabelType to substitute for CoerceToDomain */
-					/* This should match the RelabelType logic above */
-
-					while (arg && IsA(arg, RelabelType))
-						arg = (Node *) ((RelabelType *) arg)->arg;
-
-					if (arg && IsA(arg, Const))
-					{
-						Const	   *con = (Const *) arg;
-
-						con->consttype = cdomain->resulttype;
-						con->consttypmod = cdomain->resulttypmod;
-						con->constcollid = cdomain->resultcollid;
-						return (Node *) con;
-					}
-					else
-					{
-						RelabelType *newrelabel = makeNode(RelabelType);
-
-						newrelabel->arg = (Expr *) arg;
-						newrelabel->resulttype = cdomain->resulttype;
-						newrelabel->resulttypmod = cdomain->resulttypmod;
-						newrelabel->resultcollid = cdomain->resultcollid;
-						newrelabel->relabelformat = cdomain->coercionformat;
-						newrelabel->location = cdomain->location;
-						return (Node *) newrelabel;
-					}
+					return apply_const_relabel(arg,
+											   cdomain->resulttype,
+											   cdomain->resulttypmod,
+											   cdomain->resultcollid,
+											   cdomain->coercionformat,
+											   cdomain->location);
 				}
 
 				newcdomain = makeNode(CoerceToDomain);
@@ -3646,6 +3579,58 @@ ece_function_is_safe(Oid funcid, eval_const_expressions_context *context)
 	if (context->estimate && provolatile == PROVOLATILE_STABLE)
 		return true;
 	return false;
+}
+
+/*
+ * Subroutine for eval_const_expressions: apply RelabelType if needed
+ */
+static Node *
+apply_const_relabel(Node *arg, Oid rtype, int32 rtypmod, Oid rcollid,
+					CoercionForm rformat, int rlocation)
+{
+	/*
+	 * If we find stacked RelabelTypes (eg, from foo::int::oid) we can discard
+	 * all but the top one, and must do so to ensure that semantically
+	 * equivalent expressions are equal().
+	 */
+	while (arg && IsA(arg, RelabelType))
+		arg = (Node *) ((RelabelType *) arg)->arg;
+
+	if (arg && IsA(arg, Const))
+	{
+		/*
+		 * If it's a Const, just modify it in-place; since this is part of
+		 * eval_const_expressions, we want to end up with a simple Const not
+		 * an expression tree.  We assume the Const is newly generated and
+		 * hence safe to modify.
+		 */
+		Const	   *con = (Const *) arg;
+
+		con->consttype = rtype;
+		con->consttypmod = rtypmod;
+		con->constcollid = rcollid;
+		return (Node *) con;
+	}
+	else if (exprType(arg) == rtype &&
+			 exprTypmod(arg) == rtypmod &&
+			 exprCollation(arg) == rcollid)
+	{
+		/* Sometimes we find a nest of relabels that net out to nothing. */
+		return arg;
+	}
+	else
+	{
+		/* Nope, gotta have a RelabelType. */
+		RelabelType *newrelabel = makeNode(RelabelType);
+
+		newrelabel->arg = (Expr *) arg;
+		newrelabel->resulttype = rtype;
+		newrelabel->resulttypmod = rtypmod;
+		newrelabel->resultcollid = rcollid;
+		newrelabel->relabelformat = rformat;
+		newrelabel->location = rlocation;
+		return (Node *) newrelabel;
+	}
 }
 
 /*
