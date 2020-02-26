@@ -1064,7 +1064,7 @@ _bt_insertonpg(Relation rel,
 	Page		page;
 	BTPageOpaque lpageop;
 	Size		itemsz;
-	IndexTuple	oposting;
+	IndexTuple	oposting = NULL;
 	IndexTuple	origitup = NULL;
 	IndexTuple	nposting = NULL;
 
