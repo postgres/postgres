@@ -442,7 +442,7 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 			if (inposting || !ItemIdIsDead(curitemid))
 			{
 				ItemPointerData htid;
-				bool		all_dead;
+				bool		all_dead = false;
 
 				if (!inposting)
 				{
