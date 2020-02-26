@@ -262,3 +262,10 @@ explain (costs off)
 -- this could be converted, but isn't at present
 explain (costs off)
   select * from tenk1 where unique1 = unique1 or unique2 = unique2;
+
+-- check that we recognize equivalence with dummy domains in the way
+create temp table undername (f1 name, f2 int);
+create temp view overview as
+  select f1::information_schema.sql_identifier as sqli, f2 from undername;
+explain (costs off)  -- this should not require a sort
+  select * from overview where sqli = 'foo' order by sqli;
