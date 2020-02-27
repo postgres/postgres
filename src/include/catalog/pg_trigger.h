@@ -35,6 +35,7 @@ CATALOG(pg_trigger,2620,TriggerRelationId)
 {
 	Oid			oid;			/* oid */
 	Oid			tgrelid;		/* relation trigger is attached to */
+	Oid			tgparentid;		/* OID of parent trigger, if any */
 	NameData	tgname;			/* trigger's name */
 	Oid			tgfoid;			/* OID of function to be called */
 	int16		tgtype;			/* BEFORE/AFTER/INSTEAD, UPDATE/DELETE/INSERT,

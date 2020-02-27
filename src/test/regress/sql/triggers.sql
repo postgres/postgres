@@ -2213,3 +2213,13 @@ drop table self_ref;
 drop function dump_insert();
 drop function dump_update();
 drop function dump_delete();
+
+-- Leave around some objects for other tests
+create table trigger_parted (a int primary key) partition by list (a);
+create function trigger_parted_trigfunc() returns trigger language plpgsql as
+  $$ begin end; $$;
+create trigger aft_row after insert or update on trigger_parted
+  for each row execute function trigger_parted_trigfunc();
+create table trigger_parted_p1 partition of trigger_parted for values in (1)
+  partition by list (a);
+create table trigger_parted_p1_1 partition of trigger_parted_p1 for values in (1);

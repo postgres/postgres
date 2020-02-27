@@ -208,6 +208,9 @@ timestamp_tbl|f
 timestamptz_tbl|f
 timetz_tbl|f
 tmp|f
+trigger_parted|t
+trigger_parted_p1|t
+trigger_parted_p1_1|t
 varchar_tbl|f
 view_base_table|t
 -- restore normal output mode

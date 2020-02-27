@@ -847,6 +847,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 
 	values[Anum_pg_trigger_oid - 1] = ObjectIdGetDatum(trigoid);
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
+	values[Anum_pg_trigger_tgparentid - 1] = ObjectIdGetDatum(parentTriggerOid);
 	values[Anum_pg_trigger_tgname - 1] = DirectFunctionCall1(namein,
 															 CStringGetDatum(trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
