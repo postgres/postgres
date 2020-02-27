@@ -144,10 +144,8 @@ CustomizableInitialize(void)
 	switch (restoreCommandType)
 	{
 		case RESTORE_COMMAND_LINK:
-#ifdef HAVE_WORKING_LINK
 			SET_RESTORE_COMMAND("ln -s -f", WALFilePath, xlogFilePath);
 			break;
-#endif
 		case RESTORE_COMMAND_COPY:
 		default:
 			SET_RESTORE_COMMAND("cp", WALFilePath, xlogFilePath);
