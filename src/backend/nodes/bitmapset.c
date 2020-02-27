@@ -20,10 +20,10 @@
  */
 #include "postgres.h"
 
+#include "common/hashfn.h"
 #include "nodes/bitmapset.h"
 #include "nodes/pg_list.h"
 #include "port/pg_bitutils.h"
-#include "utils/hashutils.h"
 
 
 #define WORDNUM(x)	((x) / BITS_PER_BITMAPWORD)

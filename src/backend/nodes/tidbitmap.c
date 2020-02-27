@@ -41,11 +41,11 @@
 #include <limits.h>
 
 #include "access/htup_details.h"
+#include "common/hashfn.h"
 #include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
-#include "utils/hashutils.h"
 
 /*
  * The maximum number of tuples per page is not large (typically 256 with

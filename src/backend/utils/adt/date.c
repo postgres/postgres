@@ -21,6 +21,7 @@
 #include <time.h>
 
 #include "access/xact.h"
+#include "common/hashfn.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/supportnodes.h"
@@ -29,7 +30,6 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
-#include "utils/hashutils.h"
 #include "utils/sortsupport.h"
 
 /*

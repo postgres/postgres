@@ -21,9 +21,9 @@
 
 #include "postgres.h"
 
+#include "common/hashfn.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
-#include "utils/hashutils.h"
 #include "utils/inet.h"
 
 /*

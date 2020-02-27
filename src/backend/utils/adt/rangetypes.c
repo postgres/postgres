@@ -31,12 +31,12 @@
 #include "postgres.h"
 
 #include "access/tupmacs.h"
+#include "common/hashfn.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
-#include "utils/hashutils.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/rangetypes.h"

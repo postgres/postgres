@@ -20,12 +20,12 @@
  */
 #include "postgres.h"
 
+#include "common/hashfn.h"
 #include "jit/jit.h"
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/predicate.h"
 #include "storage/proc.h"
-#include "utils/hashutils.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/resowner_private.h"

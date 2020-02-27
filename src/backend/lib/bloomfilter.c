@@ -35,9 +35,9 @@
 
 #include <math.h>
 
+#include "common/hashfn.h"
 #include "lib/bloomfilter.h"
 #include "port/pg_bitutils.h"
-#include "utils/hashutils.h"
 
 #define MAX_HASH_FUNCS		10
 

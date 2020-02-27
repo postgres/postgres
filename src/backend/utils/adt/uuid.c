@@ -13,12 +13,12 @@
 
 #include "postgres.h"
 
+#include "common/hashfn.h"
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
 #include "port/pg_bswap.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
-#include "utils/hashutils.h"
 #include "utils/sortsupport.h"
 #include "utils/uuid.h"
 

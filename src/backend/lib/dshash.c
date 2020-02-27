@@ -31,11 +31,11 @@
 
 #include "postgres.h"
 
+#include "common/hashfn.h"
 #include "lib/dshash.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
-#include "utils/hashutils.h"
 #include "utils/memutils.h"
 
 /*

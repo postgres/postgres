@@ -19,9 +19,9 @@
 #include "postgres.h"
 
 #include "access/parallel.h"
+#include "common/hashfn.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "utils/hashutils.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 

@@ -4,8 +4,8 @@
  * Portions Copyright (c) 2017-2020, PostgreSQL Global Development Group
  */
 
-#ifndef HASHUTILS_H
-#define HASHUTILS_H
+#ifndef HASHFN_H
+#define HASHFN_H
 
 
 /*
@@ -101,4 +101,4 @@ murmurhash32(uint32 data)
 	return h;
 }
 
-#endif							/* HASHUTILS_H */
+#endif							/* HASHFN_H */

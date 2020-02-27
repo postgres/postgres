@@ -120,7 +120,7 @@ sub mkvcbuild
 
 	our @pgcommonallfiles = qw(
 	  base64.c config_info.c controldata_utils.c d2s.c encnames.c exec.c
-	  f2s.c file_perm.c ip.c jsonapi.c
+	  f2s.c file_perm.c hashfn.c ip.c jsonapi.c
 	  keywords.c kwlookup.c link-canary.c md5.c
 	  pg_lzcompress.c pgfnames.c psprintf.c relpath.c rmtree.c
 	  saslprep.c scram-common.c string.c stringinfo.c unicode_norm.c username.c

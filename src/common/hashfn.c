@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/utils/hash/hashfn.c
+ *	  src/common/hashfn.c
  *
  * NOTES
  *	  It is expected that every bit of a hash function's 32-bit result is
@@ -23,7 +23,7 @@
  */
 #include "postgres.h"
 
-#include "utils/hashutils.h"
+#include "common/hashfn.h"
 
 
 /*

@@ -4,9 +4,9 @@
 #include "postgres.h"
 
 #include "catalog/pg_collation.h"
+#include "common/hashfn.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
-#include "utils/hashutils.h"
 #include "utils/varlena.h"
 
 PG_MODULE_MAGIC;
