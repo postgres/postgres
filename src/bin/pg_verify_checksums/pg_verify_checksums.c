@@ -15,6 +15,7 @@
 
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"
+#include "common/relpath.h"
 #include "getopt_long.h"
 #include "pg_getopt.h"
 #include "storage/bufpage.h"
@@ -238,7 +239,51 @@ scan_directory(const char *basedir, const char *subdir)
 #else
 		else if (S_ISDIR(st.st_mode) || pgwin32_is_junction(fn))
 #endif
-			scan_directory(path, de->d_name);
+		{
+			/*
+			 * If going through the entries of pg_tblspc, we assume to operate
+			 * on tablespace locations where only TABLESPACE_VERSION_DIRECTORY
+			 * is valid, resolving the linked locations and dive into them
+			 * directly.
+			 */
+			if (strncmp("pg_tblspc", subdir, strlen("pg_tblspc")) == 0)
+			{
+				char		tblspc_path[MAXPGPATH];
+				struct stat tblspc_st;
+
+				/*
+				 * Resolve tablespace location path and check whether
+				 * TABLESPACE_VERSION_DIRECTORY exists.  Not finding a valid
+				 * location is unexpected, since there should be no orphaned
+				 * links and no links pointing to something else than a
+				 * directory.
+				 */
+				snprintf(tblspc_path, sizeof(tblspc_path), "%s/%s/%s",
+						 path, de->d_name, TABLESPACE_VERSION_DIRECTORY);
+
+				if (lstat(tblspc_path, &tblspc_st) < 0)
+				{
+					fprintf(stderr, _("%s: could not stat file \"%s\": %s\n"),
+							progname, tblspc_path, strerror(errno));
+					exit(1);
+				}
+
+				/*
+				 * Move backwards once as the scan needs to happen for the
+				 * contents of TABLESPACE_VERSION_DIRECTORY.
+				 */
+				snprintf(tblspc_path, sizeof(tblspc_path), "%s/%s",
+						 path, de->d_name);
+
+				/* Looks like a valid tablespace location */
+				scan_directory(tblspc_path,
+							   TABLESPACE_VERSION_DIRECTORY);
+			}
+			else
+			{
+				scan_directory(path, de->d_name);
+			}
+		}
 	}
 	closedir(dir);
 }
