@@ -402,8 +402,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    <varlistentry id="index-reloption-deduplication" xreflabel="deduplicate_items">
     <term><literal>deduplicate_items</literal>
      <indexterm>
-      <primary><varname>deduplicate_items</varname></primary>
-      <secondary>storage parameter</secondary>
+      <primary><varname>deduplicate_items</varname> storage parameter</primary>
      </indexterm>
     </term>
     <listitem>
