@@ -2949,6 +2949,7 @@ create_agg_path(PlannerInfo *root,
 	pathnode->aggstrategy = aggstrategy;
 	pathnode->aggsplit = aggsplit;
 	pathnode->numGroups = numGroups;
+	pathnode->transitionSpace = aggcosts ? aggcosts->transitionSpace : 0;
 	pathnode->groupClause = groupClause;
 	pathnode->qual = qual;
 
@@ -3036,6 +3037,7 @@ create_groupingsets_path(PlannerInfo *root,
 	pathnode->aggstrategy = aggstrategy;
 	pathnode->rollups = rollups;
 	pathnode->qual = having_qual;
+	pathnode->transitionSpace = agg_costs ? agg_costs->transitionSpace : 0;
 
 	Assert(rollups != NIL);
 	Assert(aggstrategy != AGG_PLAIN || list_length(rollups) == 1);
