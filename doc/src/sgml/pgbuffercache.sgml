@@ -24,8 +24,8 @@
  </para>
 
  <para>
-  By default use is restricted to superusers and members of the
-  <literal>pg_read_all_stats</literal> role. Access may be granted to others
+  By default, use is restricted to superusers and members of the
+  <literal>pg_monitor</literal> role. Access may be granted to others
   using <command>GRANT</command>.
  </para>
 
