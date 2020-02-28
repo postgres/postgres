@@ -1663,7 +1663,7 @@ typedef struct AggPath
 	AggStrategy aggstrategy;	/* basic strategy, see nodes.h */
 	AggSplit	aggsplit;		/* agg-splitting mode, see nodes.h */
 	double		numGroups;		/* estimated number of groups in input */
-	Size		transitionSpace;	/* for pass-by-ref transition data */
+	uint64		transitionSpace;	/* for pass-by-ref transition data */
 	List	   *groupClause;	/* a list of SortGroupClause's */
 	List	   *qual;			/* quals (HAVING quals), if any */
 } AggPath;
@@ -1701,7 +1701,7 @@ typedef struct GroupingSetsPath
 	AggStrategy aggstrategy;	/* basic strategy */
 	List	   *rollups;		/* list of RollupData */
 	List	   *qual;			/* quals (HAVING quals), if any */
-	Size		transitionSpace;	/* for pass-by-ref transition data */
+	uint64		transitionSpace;	/* for pass-by-ref transition data */
 } GroupingSetsPath;
 
 /*
