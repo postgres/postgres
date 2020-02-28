@@ -681,8 +681,9 @@ usage(void)
 		   "  -V, --version            output version information, then exit\n"
 		   "  -?, --help               show this help, then exit\n"
 		   "\n"
-		   "Report bugs to <%s>.\n",
-		   progname, progname, PACKAGE_BUGREPORT);
+		   "Report bugs to <%s>.\n"
+		   "%s home page: <%s>\n",
+		   progname, progname, PACKAGE_BUGREPORT, PACKAGE_NAME, PACKAGE_URL);
 }
 
 /* return whether str matches "^\s*[-+]?[0-9]+$" */

@@ -437,6 +437,7 @@ usage(const char *progname)
 	printf("  -W, --password            force password prompt\n");
 	printf("\n");
 	printf("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
+	printf("%s home page: <%s>\n", PACKAGE_NAME, PACKAGE_URL);
 }
 
 

@@ -360,6 +360,7 @@ help(const char *progname)
 			 "configuration settings and how to set them on the command line or in\n"
 			 "the configuration file.\n\n"
 			 "Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
+	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
 }
 
 

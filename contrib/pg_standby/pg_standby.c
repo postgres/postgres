@@ -613,6 +613,7 @@ usage(void)
 		   "e.g.\n"
 		   "  restore_command = 'pg_standby /mnt/server/archiverdir %%f %%p %%r'\n");
 	printf("\nReport bugs to <%s>.\n", PACKAGE_BUGREPORT);
+	printf("%s home page: <%s>\n", PACKAGE_NAME, PACKAGE_URL);
 }
 
 #ifndef WIN32

@@ -146,20 +146,26 @@ sub GenerateFiles
 {
 	my $self = shift;
 	my $bits = $self->{platform} eq 'Win32' ? 32 : 64;
+	my $ac_init_found = 0;
 	my $package_name;
 	my $package_version;
 	my $package_bugreport;
+	my $package_url;
 
 	# Parse configure.in to get version numbers
 	open(my $c, '<', "configure.in")
 	  || confess("Could not open configure.in for reading\n");
 	while (<$c>)
 	{
-		if (/^AC_INIT\(\[([^\]]+)\], \[([^\]]+)\], \[([^\]]+)\]/)
+		if (/^AC_INIT\(\[([^\]]+)\], \[([^\]]+)\], \[([^\]]+)\], \[([^\]]*)\], \[([^\]]+)\]/)
 		{
+			$ac_init_found = 1;
+
 			$package_name      = $1;
 			$package_version   = $2;
 			$package_bugreport = $3;
+			#$package_tarname   = $4;
+			$package_url       = $5;
 
 			if ($package_version !~ /^(\d+)(?:\.(\d+))?/)
 			{
@@ -171,10 +177,7 @@ sub GenerateFiles
 	}
 	close($c);
 	confess "Unable to parse configure.in for all variables!"
-	  if ( $package_name eq ''
-		|| $package_version eq ''
-		|| $self->{numver} eq ''
-		|| $package_bugreport eq '');
+	  unless $ac_init_found;
 
 	if (IsNewer("src/include/pg_config_os.h", "src/include/port/win32.h"))
 	{
@@ -431,7 +434,7 @@ sub GenerateFiles
 		PACKAGE_NAME                             => qq{"$package_name"},
 		PACKAGE_STRING      => qq{"$package_name $package_version"},
 		PACKAGE_TARNAME     => lc qq{"$package_name"},
-		PACKAGE_URL         => undef,
+		PACKAGE_URL         => qq{"$package_url"},
 		PACKAGE_VERSION     => qq{"$package_version"},
 		PG_INT128_TYPE      => undef,
 		PG_INT64_TYPE       => 'long long int',

@@ -40,6 +40,8 @@ VERSION = @PACKAGE_VERSION@
 MAJORVERSION = @PG_MAJORVERSION@
 VERSION_NUM = @PG_VERSION_NUM@
 
+PACKAGE_URL = @PACKAGE_URL@
+
 # Set top_srcdir, srcdir, and VPATH.
 ifdef PGXS
 top_srcdir = $(top_builddir)

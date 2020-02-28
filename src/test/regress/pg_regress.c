@@ -2072,6 +2072,7 @@ help(void)
 	printf(_("if the tests could not be run for some reason.\n"));
 	printf(_("\n"));
 	printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
+	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
 }
 
 int

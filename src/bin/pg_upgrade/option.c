@@ -337,6 +337,7 @@ usage(void)
 			 "  C:\\> pg_upgrade\n"));
 #endif
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
+	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
 }
 
 

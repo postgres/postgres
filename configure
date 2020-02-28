@@ -585,7 +585,7 @@ PACKAGE_TARNAME='postgresql'
 PACKAGE_VERSION='13devel'
 PACKAGE_STRING='PostgreSQL 13devel'
 PACKAGE_BUGREPORT='pgsql-bugs@lists.postgresql.org'
-PACKAGE_URL=''
+PACKAGE_URL='https://www.postgresql.org/'
 
 ac_unique_file="src/backend/access/common/heaptuple.c"
 ac_default_prefix=/usr/local/pgsql
@@ -1600,6 +1600,7 @@ Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
 Report bugs to <pgsql-bugs@lists.postgresql.org>.
+PostgreSQL home page: <https://www.postgresql.org/>.
 _ACEOF
 ac_status=$?
 fi
@@ -19516,7 +19517,8 @@ $config_links
 Configuration commands:
 $config_commands
 
-Report bugs to <pgsql-bugs@lists.postgresql.org>."
+Report bugs to <pgsql-bugs@lists.postgresql.org>.
+PostgreSQL home page: <https://www.postgresql.org/>."
 
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
