@@ -235,5 +235,5 @@ help(const char *progname)
 	printf(_("  -p, --port=PORT          database server port\n"));
 	printf(_("  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"), DEFAULT_CONNECT_TIMEOUT);
 	printf(_("  -U, --username=USERNAME  user name to connect as\n"));
-	printf(_("\nReport bugs to <pgsql-bugs@lists.postgresql.org>.\n"));
+	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 }

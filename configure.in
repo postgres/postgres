@@ -79,7 +79,7 @@ PostgreSQL has apparently not been ported to your platform yet.
 To try a manual configuration, look into the src/template directory
 for a similar platform and use the '--with-template=' option.
 
-Please also contact <pgsql-bugs@lists.postgresql.org> to see about
+Please also contact <]AC_PACKAGE_BUGREPORT[> to see about
 rectifying this.  Include the above 'checking host system type...'
 line.
 *******************************************************************

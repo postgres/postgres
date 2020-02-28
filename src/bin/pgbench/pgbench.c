@@ -681,8 +681,8 @@ usage(void)
 		   "  -V, --version            output version information, then exit\n"
 		   "  -?, --help               show this help, then exit\n"
 		   "\n"
-		   "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n",
-		   progname, progname);
+		   "Report bugs to <%s>.\n",
+		   progname, progname, PACKAGE_BUGREPORT);
 }
 
 /* return whether str matches "^\s*[-+]?[0-9]+$" */
