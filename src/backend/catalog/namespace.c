@@ -3217,7 +3217,7 @@ isOtherTempNamespace(Oid namespaceId)
 }
 
 /*
- * isTempNamespaceInUse - is the given namespace owned and actively used
+ * checkTempNamespaceStatus - is the given namespace owned and actively used
  * by a backend?
  *
  * Note: this can be used while scanning relations in pg_class to detect
@@ -3225,8 +3225,8 @@ isOtherTempNamespace(Oid namespaceId)
  * given database.  The result may be out of date quickly, so the caller
  * must be careful how to handle this information.
  */
-bool
-isTempNamespaceInUse(Oid namespaceId)
+TempNamespaceStatus
+checkTempNamespaceStatus(Oid namespaceId)
 {
 	PGPROC	   *proc;
 	int			backendId;
@@ -3235,25 +3235,25 @@ isTempNamespaceInUse(Oid namespaceId)
 
 	backendId = GetTempNamespaceBackendId(namespaceId);
 
-	/* No such temporary namespace? */
+	/* No such namespace, or its name shows it's not temp? */
 	if (backendId == InvalidBackendId)
-		return false;
+		return TEMP_NAMESPACE_NOT_TEMP;
 
 	/* Is the backend alive? */
 	proc = BackendIdGetProc(backendId);
 	if (proc == NULL)
-		return false;
+		return TEMP_NAMESPACE_IDLE;
 
 	/* Is the backend connected to the same database we are looking at? */
 	if (proc->databaseId != MyDatabaseId)
-		return false;
+		return TEMP_NAMESPACE_IDLE;
 
 	/* Does the backend own the temporary namespace? */
 	if (proc->tempNamespaceId != namespaceId)
-		return false;
+		return TEMP_NAMESPACE_IDLE;
 
-	/* all good to go */
-	return true;
+	/* Yup, so namespace is busy */
+	return TEMP_NAMESPACE_IN_USE;
 }
 
 /*
