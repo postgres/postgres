@@ -357,8 +357,8 @@ btpo_flags    | 3
       <function>bt_page_items</function> returns detailed information about
       all of the items on a B-tree index page.  For example:
 <screen>
- test=# SELECT itemoffset, ctid, itemlen, nulls, vars, data, dead, htid, tids[0:2] AS some_tids
-         FROM bt_page_items(get_raw_page('tenk2_hundred', 5));
+test=# SELECT itemoffset, ctid, itemlen, nulls, vars, data, dead, htid, tids[0:2] AS some_tids
+        FROM bt_page_items('tenk2_hundred', 5);
  itemoffset |   ctid    | itemlen | nulls | vars |          data           | dead |  htid  |      some_tids
 ------------+-----------+---------+-------+------+-------------------------+------+--------+---------------------
           1 | (16,1)    |      16 | f     | f    | 30 00 00 00 00 00 00 00 |      |        |
@@ -445,8 +445,8 @@ btpo_flags    | 3
       with <function>get_raw_page</function> should be passed as argument.  So
       the last example could also be rewritten like this:
 <screen>
- test=# SELECT itemoffset, ctid, itemlen, nulls, vars, data, dead, htid, tids[0:2] AS some_tids
-         FROM bt_page_items(get_raw_page('tenk2_hundred', 5));
+test=# SELECT itemoffset, ctid, itemlen, nulls, vars, data, dead, htid, tids[0:2] AS some_tids
+        FROM bt_page_items(get_raw_page('tenk2_hundred', 5));
  itemoffset |   ctid    | itemlen | nulls | vars |          data           | dead |  htid  |      some_tids
 ------------+-----------+---------+-------+------+-------------------------+------+--------+---------------------
           1 | (16,1)    |      16 | f     | f    | 30 00 00 00 00 00 00 00 |      |        |
