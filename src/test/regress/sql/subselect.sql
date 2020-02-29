@@ -494,6 +494,71 @@ explain (verbose, costs off)
     (select (select random() where y=y) as x from (values(1),(2)) v(y)) ss;
 
 --
+-- Test rescan of a hashed subplan (the use of random() is to prevent the
+-- sub-select from being pulled up, which would result in not hashing)
+--
+explain (verbose, costs off)
+select sum(ss.tst::int) from
+  onek o cross join lateral (
+  select i.ten in (select f1 from int4_tbl where f1 <= o.hundred) as tst,
+         random() as r
+  from onek i where i.unique1 = o.unique1 ) ss
+where o.ten = 0;
+
+select sum(ss.tst::int) from
+  onek o cross join lateral (
+  select i.ten in (select f1 from int4_tbl where f1 <= o.hundred) as tst,
+         random() as r
+  from onek i where i.unique1 = o.unique1 ) ss
+where o.ten = 0;
+
+--
+-- Test rescan of a SetOp node
+--
+explain (costs off)
+select count(*) from
+  onek o cross join lateral (
+    select * from onek i1 where i1.unique1 = o.unique1
+    except
+    select * from onek i2 where i2.unique1 = o.unique2
+  ) ss
+where o.ten = 1;
+
+select count(*) from
+  onek o cross join lateral (
+    select * from onek i1 where i1.unique1 = o.unique1
+    except
+    select * from onek i2 where i2.unique1 = o.unique2
+  ) ss
+where o.ten = 1;
+
+--
+-- Test rescan of a RecursiveUnion node
+--
+explain (costs off)
+select sum(o.four), sum(ss.a) from
+  onek o cross join lateral (
+    with recursive x(a) as
+      (select o.four as a
+       union
+       select a + 1 from x
+       where a < 10)
+    select * from x
+  ) ss
+where o.ten = 1;
+
+select sum(o.four), sum(ss.a) from
+  onek o cross join lateral (
+    with recursive x(a) as
+      (select o.four as a
+       union
+       select a + 1 from x
+       where a < 10)
+    select * from x
+  ) ss
+where o.ten = 1;
+
+--
 -- Check we don't misoptimize a NOT IN where the subquery returns no rows.
 --
 create temp table notinouter (a int);

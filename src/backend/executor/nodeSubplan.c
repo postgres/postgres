@@ -495,8 +495,6 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	 * need to store subplan output rows that contain NULL.
 	 */
 	MemoryContextReset(node->hashtablecxt);
-	node->hashtable = NULL;
-	node->hashnulls = NULL;
 	node->havehashrows = false;
 	node->havenullrows = false;
 
@@ -533,7 +531,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 		}
 
 		if (node->hashnulls)
-			ResetTupleHashTable(node->hashtable);
+			ResetTupleHashTable(node->hashnulls);
 		else
 			node->hashnulls = BuildTupleHashTableExt(node->parent,
 													 node->descRight,
@@ -549,6 +547,8 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 													 node->hashtempcxt,
 													 false);
 	}
+	else
+		node->hashnulls = NULL;
 
 	/*
 	 * We are probably in a short-lived expression-evaluation context. Switch
