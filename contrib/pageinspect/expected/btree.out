@@ -12,6 +12,7 @@ fastroot                | 1
 fastlevel               | 0
 oldest_xact             | 0
 last_cleanup_num_tuples | -1
+allequalimage           | t
 
 SELECT * FROM bt_page_stats('test1_a_idx', 0);
 ERROR:  block 0 is a meta page
@@ -41,6 +42,9 @@ itemlen    | 16
 nulls      | f
 vars       | f
 data       | 01 00 00 00 00 00 00 01
+dead       | f
+htid       | (0,1)
+tids       | 
 
 SELECT * FROM bt_page_items('test1_a_idx', 2);
 ERROR:  block number out of range
@@ -54,6 +58,9 @@ itemlen    | 16
 nulls      | f
 vars       | f
 data       | 01 00 00 00 00 00 00 01
+dead       | f
+htid       | (0,1)
+tids       | 
 
 SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 2));
 ERROR:  block number 2 is out of range for relation "test1_a_idx"

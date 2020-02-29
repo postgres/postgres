@@ -31,9 +31,11 @@
 #include "access/relation.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pageinspect.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/varlena.h"
@@ -45,6 +47,8 @@ PG_FUNCTION_INFO_V1(bt_page_stats);
 
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
+#define DatumGetItemPointer(X)	 ((ItemPointer) DatumGetPointer(X))
+#define ItemPointerGetDatum(X)	 PointerGetDatum(X)
 
 /* note: BlockNumber is unsigned, hence can't be negative */
 #define CHECK_RELATION_BLOCK_RANGE(rel, blkno) { \
@@ -243,6 +247,9 @@ struct user_args
 {
 	Page		page;
 	OffsetNumber offset;
+	bool		leafpage;
+	bool		rightmost;
+	TupleDesc	tupd;
 };
 
 /*-------------------------------------------------------
@@ -252,17 +259,25 @@ struct user_args
  * ------------------------------------------------------
  */
 static Datum
-bt_page_print_tuples(FuncCallContext *fctx, Page page, OffsetNumber offset)
+bt_page_print_tuples(FuncCallContext *fctx, struct user_args *uargs)
 {
-	char	   *values[6];
+	Page		page = uargs->page;
+	OffsetNumber offset = uargs->offset;
+	bool		leafpage = uargs->leafpage;
+	bool		rightmost = uargs->rightmost;
+	bool		ispivottuple;
+	Datum		values[9];
+	bool		nulls[9];
 	HeapTuple	tuple;
 	ItemId		id;
 	IndexTuple	itup;
 	int			j;
 	int			off;
 	int			dlen;
-	char	   *dump;
+	char	   *dump,
+			   *datacstring;
 	char	   *ptr;
+	ItemPointer htid;
 
 	id = PageGetItemId(page, offset);
 
@@ -272,18 +287,49 @@ bt_page_print_tuples(FuncCallContext *fctx, Page page, OffsetNumber offset)
 	itup = (IndexTuple) PageGetItem(page, id);
 
 	j = 0;
-	values[j++] = psprintf("%d", offset);
-	values[j++] = psprintf("(%u,%u)",
-						   ItemPointerGetBlockNumberNoCheck(&itup->t_tid),
-						   ItemPointerGetOffsetNumberNoCheck(&itup->t_tid));
-	values[j++] = psprintf("%d", (int) IndexTupleSize(itup));
-	values[j++] = psprintf("%c", IndexTupleHasNulls(itup) ? 't' : 'f');
-	values[j++] = psprintf("%c", IndexTupleHasVarwidths(itup) ? 't' : 'f');
+	memset(nulls, 0, sizeof(nulls));
+	values[j++] = DatumGetInt16(offset);
+	values[j++] = ItemPointerGetDatum(&itup->t_tid);
+	values[j++] = Int32GetDatum((int) IndexTupleSize(itup));
+	values[j++] = BoolGetDatum(IndexTupleHasNulls(itup));
+	values[j++] = BoolGetDatum(IndexTupleHasVarwidths(itup));
 
 	ptr = (char *) itup + IndexInfoFindDataOffset(itup->t_info);
 	dlen = IndexTupleSize(itup) - IndexInfoFindDataOffset(itup->t_info);
+
+	/*
+	 * Make sure that "data" column does not include posting list or pivot
+	 * tuple representation of heap TID(s).
+	 *
+	 * Note: BTreeTupleIsPivot() won't work reliably on !heapkeyspace indexes
+	 * (those built before BTREE_VERSION 4), but we have no way of determining
+	 * if this page came from a !heapkeyspace index.  We may only have a bytea
+	 * nbtree page image to go on, so in general there is no metapage that we
+	 * can check.
+	 *
+	 * That's okay here because BTreeTupleIsPivot() can only return false for
+	 * a !heapkeyspace pivot, never true for a !heapkeyspace non-pivot.  Since
+	 * heap TID isn't part of the keyspace in a !heapkeyspace index anyway,
+	 * there cannot possibly be a pivot tuple heap TID representation that we
+	 * fail to make an adjustment for.  A !heapkeyspace index can have
+	 * BTreeTupleIsPivot() return true (due to things like suffix truncation
+	 * for INCLUDE indexes in Postgres v11), but when that happens
+	 * BTreeTupleGetHeapTID() can be trusted to work reliably (i.e. return
+	 * NULL).
+	 *
+	 * Note: BTreeTupleIsPosting() always works reliably, even with
+	 * !heapkeyspace indexes.
+	 */
+	if (BTreeTupleIsPosting(itup))
+		dlen -= IndexTupleSize(itup) - BTreeTupleGetPostingOffset(itup);
+	else if (BTreeTupleIsPivot(itup) && BTreeTupleGetHeapTID(itup) != NULL)
+		dlen -= MAXALIGN(sizeof(ItemPointerData));
+
+	if (dlen < 0 || dlen > INDEX_SIZE_MASK)
+		elog(ERROR, "invalid tuple length %d for tuple at offset number %u",
+			 dlen, offset);
 	dump = palloc0(dlen * 3 + 1);
-	values[j] = dump;
+	datacstring = dump;
 	for (off = 0; off < dlen; off++)
 	{
 		if (off > 0)
@@ -291,8 +337,62 @@ bt_page_print_tuples(FuncCallContext *fctx, Page page, OffsetNumber offset)
 		sprintf(dump, "%02x", *(ptr + off) & 0xff);
 		dump += 2;
 	}
+	values[j++] = CStringGetTextDatum(datacstring);
+	pfree(datacstring);
 
-	tuple = BuildTupleFromCStrings(fctx->attinmeta, values);
+	/*
+	 * We need to work around the BTreeTupleIsPivot() !heapkeyspace limitation
+	 * again.  Deduce whether or not tuple must be a pivot tuple based on
+	 * whether or not the page is a leaf page, as well as the page offset
+	 * number of the tuple.
+	 */
+	ispivottuple = (!leafpage || (!rightmost && offset == P_HIKEY));
+
+	/* LP_DEAD bit can never be set for pivot tuples, so show a NULL there */
+	if (!ispivottuple)
+		values[j++] = BoolGetDatum(ItemIdIsDead(id));
+	else
+	{
+		Assert(!ItemIdIsDead(id));
+		nulls[j++] = true;
+	}
+
+	htid = BTreeTupleGetHeapTID(itup);
+	if (ispivottuple && !BTreeTupleIsPivot(itup))
+	{
+		/* Don't show bogus heap TID in !heapkeyspace pivot tuple */
+		htid = NULL;
+	}
+
+	if (htid)
+		values[j++] = ItemPointerGetDatum(htid);
+	else
+		nulls[j++] = true;
+
+	if (BTreeTupleIsPosting(itup))
+	{
+		/* Build an array of item pointers */
+		ItemPointer tids;
+		Datum	   *tids_datum;
+		int			nposting;
+
+		tids = BTreeTupleGetPosting(itup);
+		nposting = BTreeTupleGetNPosting(itup);
+		tids_datum = (Datum *) palloc(nposting * sizeof(Datum));
+		for (int i = 0; i < nposting; i++)
+			tids_datum[i] = ItemPointerGetDatum(&tids[i]);
+		values[j++] = PointerGetDatum(construct_array(tids_datum,
+													  nposting,
+													  TIDOID,
+													  sizeof(ItemPointerData),
+													  false, 's'));
+		pfree(tids_datum);
+	}
+	else
+		nulls[j++] = true;
+
+	/* Build and return the result tuple */
+	tuple = heap_form_tuple(uargs->tupd, values, nulls);
 
 	return HeapTupleGetDatum(tuple);
 }
@@ -378,12 +478,15 @@ bt_page_items(PG_FUNCTION_ARGS)
 			elog(NOTICE, "page is deleted");
 
 		fctx->max_calls = PageGetMaxOffsetNumber(uargs->page);
+		uargs->leafpage = P_ISLEAF(opaque);
+		uargs->rightmost = P_RIGHTMOST(opaque);
 
 		/* Build a tuple descriptor for our result type */
 		if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
 			elog(ERROR, "return type must be a row type");
+		tupleDesc = BlessTupleDesc(tupleDesc);
 
-		fctx->attinmeta = TupleDescGetAttInMetadata(tupleDesc);
+		uargs->tupd = tupleDesc;
 
 		fctx->user_fctx = uargs;
 
@@ -395,7 +498,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 
 	if (fctx->call_cntr < fctx->max_calls)
 	{
-		result = bt_page_print_tuples(fctx, uargs->page, uargs->offset);
+		result = bt_page_print_tuples(fctx, uargs);
 		uargs->offset++;
 		SRF_RETURN_NEXT(fctx, result);
 	}
@@ -463,12 +566,15 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 			elog(NOTICE, "page is deleted");
 
 		fctx->max_calls = PageGetMaxOffsetNumber(uargs->page);
+		uargs->leafpage = P_ISLEAF(opaque);
+		uargs->rightmost = P_RIGHTMOST(opaque);
 
 		/* Build a tuple descriptor for our result type */
 		if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
 			elog(ERROR, "return type must be a row type");
+		tupleDesc = BlessTupleDesc(tupleDesc);
 
-		fctx->attinmeta = TupleDescGetAttInMetadata(tupleDesc);
+		uargs->tupd = tupleDesc;
 
 		fctx->user_fctx = uargs;
 
@@ -480,7 +586,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 
 	if (fctx->call_cntr < fctx->max_calls)
 	{
-		result = bt_page_print_tuples(fctx, uargs->page, uargs->offset);
+		result = bt_page_print_tuples(fctx, uargs);
 		uargs->offset++;
 		SRF_RETURN_NEXT(fctx, result);
 	}
@@ -510,7 +616,7 @@ bt_metap(PG_FUNCTION_ARGS)
 	BTMetaPageData *metad;
 	TupleDesc	tupleDesc;
 	int			j;
-	char	   *values[8];
+	char	   *values[9];
 	Buffer		buffer;
 	Page		page;
 	HeapTuple	tuple;
@@ -557,17 +663,21 @@ bt_metap(PG_FUNCTION_ARGS)
 
 	/*
 	 * Get values of extended metadata if available, use default values
-	 * otherwise.
+	 * otherwise.  Note that we rely on the assumption that btm_allequalimage
+	 * is initialized to zero with indexes that were built on versions prior
+	 * to Postgres 13 (just like _bt_metaversion()).
 	 */
 	if (metad->btm_version >= BTREE_NOVAC_VERSION)
 	{
 		values[j++] = psprintf("%u", metad->btm_oldest_btpo_xact);
 		values[j++] = psprintf("%f", metad->btm_last_cleanup_num_heap_tuples);
+		values[j++] = metad->btm_allequalimage ? "t" : "f";
 	}
 	else
 	{
 		values[j++] = "0";
 		values[j++] = "-1";
+		values[j++] = "f";
 	}
 
 	tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
