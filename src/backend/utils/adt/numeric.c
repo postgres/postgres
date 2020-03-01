@@ -8500,6 +8500,7 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 	NumericVar	ni;
 	NumericVar	elem;
 	NumericVar	fact;
+	int			nsqrt;
 	int			local_rscale;
 	int			cmp;
 
@@ -8530,12 +8531,14 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 * rscale as we work so that we keep this many significant digits at each
 	 * step (plus a few more for good measure).
 	 */
+	nsqrt = 0;
 	while (cmp_var(&x, &const_zero_point_nine) <= 0)
 	{
 		local_rscale = rscale - x.weight * DEC_DIGITS / 2 + 8;
 		local_rscale = Max(local_rscale, NUMERIC_MIN_DISPLAY_SCALE);
 		sqrt_var(&x, &x, local_rscale);
 		mul_var(&fact, &const_two, &fact, 0);
+		nsqrt++;
 	}
 	while (cmp_var(&x, &const_one_point_one) >= 0)
 	{
@@ -8543,6 +8546,7 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 		local_rscale = Max(local_rscale, NUMERIC_MIN_DISPLAY_SCALE);
 		sqrt_var(&x, &x, local_rscale);
 		mul_var(&fact, &const_two, &fact, 0);
+		nsqrt++;
 	}
 
 	/*
@@ -8555,8 +8559,12 @@ ln_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 *
 	 * The convergence of this is not as fast as one would like, but is
 	 * tolerable given that z is small.
+	 *
+	 * The Taylor series result will be multiplied by 2^(nsqrt+1), which has a
+	 * decimal weight of (nsqrt+1) * log10(2), so work with this many extra
+	 * digits of precision (plus a few more for good measure).
 	 */
-	local_rscale = rscale + 8;
+	local_rscale = rscale + (int) ((nsqrt + 1) * 0.301029995663981) + 8;
 
 	sub_var(&x, &const_one, result);
 	add_var(&x, &const_one, &elem);
