@@ -674,11 +674,6 @@ _bt_update_posting(BTVacuumPosting vacposting)
 	Assert(_bt_posting_valid(origtuple));
 	Assert(nhtids > 0 && nhtids < BTreeTupleGetNPosting(origtuple));
 
-	if (BTreeTupleIsPosting(origtuple))
-		keysize = BTreeTupleGetPostingOffset(origtuple);
-	else
-		keysize = IndexTupleSize(origtuple);
-
 	/*
 	 * Determine final size of new tuple.
 	 *
@@ -686,6 +681,7 @@ _bt_update_posting(BTVacuumPosting vacposting)
 	 * for new posting list tuples.  We avoid calling _bt_form_posting() here
 	 * to save ourselves a second memory allocation for a htids workspace.
 	 */
+	keysize = BTreeTupleGetPostingOffset(origtuple);
 	if (nhtids > 1)
 		newsize = MAXALIGN(keysize +
 						   nhtids * sizeof(ItemPointerData));
