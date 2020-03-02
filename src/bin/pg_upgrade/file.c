@@ -384,7 +384,7 @@ win32_pghardlink(const char *src, const char *dst)
 {
 	/*
 	 * CreateHardLinkA returns zero for failure
-	 * http://msdn.microsoft.com/en-us/library/aa363860(VS.85).aspx
+	 * https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createhardlinka
 	 */
 	if (CreateHardLinkA(dst, src, NULL) == 0)
 	{
