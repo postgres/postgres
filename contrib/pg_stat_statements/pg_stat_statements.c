@@ -1013,8 +1013,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		INSTR_TIME_SET_CURRENT(duration);
 		INSTR_TIME_SUBTRACT(duration, start);
 
-		if (qc)
-			rows = qc->commandTag == CMDTAG_COPY ? qc->nprocessed : 0;
+		rows = (qc && qc->commandTag == CMDTAG_COPY) ? qc->nprocessed : 0;
 
 		/* calc differences of buffer counters. */
 		bufusage.shared_blks_hit =
