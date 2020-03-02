@@ -381,7 +381,7 @@ static inline void
 BTreeTupleSetPosting(IndexTuple itup, int nhtids, int postingoffset)
 {
 	Assert(nhtids > 1 && (nhtids & BT_OFFSET_MASK) == nhtids);
-	Assert(postingoffset == MAXALIGN(postingoffset));
+	Assert((size_t) postingoffset == MAXALIGN(postingoffset));
 	Assert(postingoffset < INDEX_SIZE_MASK);
 
 	itup->t_info |= INDEX_ALT_TID_MASK;
