@@ -688,6 +688,9 @@ _bt_update_posting(BTVacuumPosting vacposting)
 	else
 		newsize = keysize;
 
+	Assert(newsize <= INDEX_SIZE_MASK);
+	Assert(newsize == MAXALIGN(newsize));
+
 	/* Allocate memory using palloc0() (matches index_form_tuple()) */
 	itup = palloc0(newsize);
 	memcpy(itup, origtuple, keysize);
@@ -721,6 +724,7 @@ _bt_update_posting(BTVacuumPosting vacposting)
 	Assert(ui == nhtids);
 	Assert(d == vacposting->ndeletedtids);
 	Assert(nhtids == 1 || _bt_posting_valid(itup));
+	Assert(nhtids > 1 || ItemPointerIsValid(&itup->t_tid));
 
 	/* vacposting arg's itup will now point to updated version */
 	vacposting->itup = itup;
