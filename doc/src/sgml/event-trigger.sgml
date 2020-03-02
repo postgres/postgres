@@ -1074,7 +1074,7 @@ typedef struct EventTriggerData
     NodeTag     type;
     const char *event;      /* event name */
     Node       *parsetree;  /* parse tree */
-    const char *tag;        /* command tag */
+    CommandTag  tag;        /* command tag */
 } EventTriggerData;
 </programlisting>
 

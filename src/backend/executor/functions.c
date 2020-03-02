@@ -530,7 +530,7 @@ init_execution_state(List *queryTree_list,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					/* translator: %s is a SQL statement name */
 							 errmsg("%s is not allowed in a SQL function",
-									CreateCommandTag(stmt->utilityStmt))));
+									CreateCommandName(stmt->utilityStmt))));
 			}
 
 			if (fcache->readonly_func && !CommandIsReadOnly(stmt))
@@ -538,7 +538,7 @@ init_execution_state(List *queryTree_list,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				/* translator: %s is a SQL statement name */
 						 errmsg("%s is not allowed in a non-volatile function",
-								CreateCommandTag((Node *) stmt))));
+								CreateCommandName((Node *) stmt))));
 
 			/* OK, build the execution_state for this query */
 			newes = (execution_state *) palloc(sizeof(execution_state));

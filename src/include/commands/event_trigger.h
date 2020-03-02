@@ -17,6 +17,7 @@
 #include "catalog/objectaddress.h"
 #include "catalog/pg_event_trigger.h"
 #include "nodes/parsenodes.h"
+#include "tcop/cmdtag.h"
 #include "tcop/deparse_utility.h"
 #include "utils/aclchk_internal.h"
 
@@ -25,7 +26,7 @@ typedef struct EventTriggerData
 	NodeTag		type;
 	const char *event;			/* event name */
 	Node	   *parsetree;		/* parse tree */
-	const char *tag;			/* command tag */
+	CommandTag	tag;
 } EventTriggerData;
 
 #define AT_REWRITE_ALTER_PERSISTENCE	0x01

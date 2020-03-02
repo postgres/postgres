@@ -13,6 +13,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = \
+	cmdtag.o \
 	dest.o \
 	fastpath.o \
 	postgres.o \

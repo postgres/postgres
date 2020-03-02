@@ -1338,7 +1338,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 		/* translator: %s is name of a SQL command, eg INSERT */
 				 errmsg("cannot open %s query as cursor",
-						plansource->commandTag)));
+						GetCommandTagName(plansource->commandTag))));
 	}
 
 	Assert(list_length(plan->plancache_list) == 1);
@@ -1469,7 +1469,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				/* translator: %s is a SQL statement name */
 						 errmsg("%s is not allowed in a non-volatile function",
-								CreateCommandTag((Node *) pstmt))));
+								CreateCommandName((Node *) pstmt))));
 		}
 	}
 
@@ -2255,7 +2255,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				/* translator: %s is a SQL statement name */
 						 errmsg("%s is not allowed in a non-volatile function",
-								CreateCommandTag((Node *) stmt))));
+								CreateCommandName((Node *) stmt))));
 
 			/*
 			 * If not read-only mode, advance the command counter before each
@@ -2291,8 +2291,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			}
 			else
 			{
-				char		completionTag[COMPLETION_TAG_BUFSIZE];
 				ProcessUtilityContext context;
+				QueryCompletion qc;
 
 				/*
 				 * If the SPI context is atomic, or we are asked to manage
@@ -2306,13 +2306,14 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				else
 					context = PROCESS_UTILITY_QUERY_NONATOMIC;
 
+				InitializeQueryCompletion(&qc);
 				ProcessUtility(stmt,
 							   plansource->query_string,
 							   context,
 							   paramLI,
 							   _SPI_current->queryEnv,
 							   dest,
-							   completionTag);
+							   &qc);
 
 				/* Update "processed" if stmt returned tuples */
 				if (_SPI_current->tuptable)
@@ -2328,9 +2329,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				{
 					CreateTableAsStmt *ctastmt = (CreateTableAsStmt *) stmt->utilityStmt;
 
-					if (strncmp(completionTag, "SELECT ", 7) == 0)
-						_SPI_current->processed =
-							pg_strtouint64(completionTag + 7, NULL, 10);
+					if (qc.commandTag == CMDTAG_SELECT)
+						_SPI_current->processed = qc.nprocessed;
 					else
 					{
 						/*
@@ -2351,9 +2351,8 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				}
 				else if (IsA(stmt->utilityStmt, CopyStmt))
 				{
-					Assert(strncmp(completionTag, "COPY ", 5) == 0);
-					_SPI_current->processed = pg_strtouint64(completionTag + 5,
-															 NULL, 10);
+					Assert(qc.commandTag == CMDTAG_COPY);
+					_SPI_current->processed = qc.nprocessed;
 				}
 			}
 

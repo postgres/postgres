@@ -14,6 +14,7 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
+#include "tcop/cmdtag.h"
 #include "tcop/tcopprot.h"
 
 typedef enum
@@ -71,17 +72,17 @@ typedef void (*ProcessUtility_hook_type) (PlannedStmt *pstmt,
 										  const char *queryString, ProcessUtilityContext context,
 										  ParamListInfo params,
 										  QueryEnvironment *queryEnv,
-										  DestReceiver *dest, char *completionTag);
+										  DestReceiver *dest, QueryCompletion *qc);
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 
 extern void ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 						   ProcessUtilityContext context, ParamListInfo params,
 						   QueryEnvironment *queryEnv,
-						   DestReceiver *dest, char *completionTag);
+						   DestReceiver *dest, QueryCompletion *qc);
 extern void standard_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 									ProcessUtilityContext context, ParamListInfo params,
 									QueryEnvironment *queryEnv,
-									DestReceiver *dest, char *completionTag);
+									DestReceiver *dest, QueryCompletion *qc);
 
 extern void ProcessUtilityForAlterTable(Node *stmt,
 										AlterTableUtilityContext *context);
@@ -92,7 +93,13 @@ extern TupleDesc UtilityTupleDescriptor(Node *parsetree);
 
 extern Query *UtilityContainsQuery(Node *parsetree);
 
-extern const char *CreateCommandTag(Node *parsetree);
+extern CommandTag CreateCommandTag(Node *parsetree);
+
+static inline const char *
+CreateCommandName(Node *parsetree)
+{
+	return GetCommandTagName(CreateCommandTag(parsetree));
+}
 
 extern LogStmtLevel GetCommandLogLevel(Node *parsetree);
 

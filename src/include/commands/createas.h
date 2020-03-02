@@ -22,7 +22,8 @@
 
 
 extern ObjectAddress ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
-									   ParamListInfo params, QueryEnvironment *queryEnv, char *completionTag);
+									   ParamListInfo params, QueryEnvironment *queryEnv,
+									   QueryCompletion *qc);
 
 extern int	GetIntoRelEFlags(IntoClause *intoClause);
 

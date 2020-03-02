@@ -40,7 +40,7 @@ extern void PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 extern void ExecuteQuery(ParseState *pstate,
 						 ExecuteStmt *stmt, IntoClause *intoClause,
 						 ParamListInfo params,
-						 DestReceiver *dest, char *completionTag);
+						 DestReceiver *dest, QueryCompletion *qc);
 extern void DeallocateQuery(DeallocateStmt *stmt);
 extern void ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into,
 								ExplainState *es, const char *queryString,

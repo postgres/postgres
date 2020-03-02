@@ -281,7 +281,7 @@ void
 PortalDefineQuery(Portal portal,
 				  const char *prepStmtName,
 				  const char *sourceText,
-				  const char *commandTag,
+				  CommandTag commandTag,
 				  List *stmts,
 				  CachedPlan *cplan)
 {
@@ -289,10 +289,12 @@ PortalDefineQuery(Portal portal,
 	AssertState(portal->status == PORTAL_NEW);
 
 	AssertArg(sourceText != NULL);
-	AssertArg(commandTag != NULL || stmts == NIL);
+	AssertArg(commandTag != CMDTAG_UNKNOWN || stmts == NIL);
 
 	portal->prepStmtName = prepStmtName;
 	portal->sourceText = sourceText;
+	portal->qc.commandTag = commandTag;
+	portal->qc.nprocessed = 0;
 	portal->commandTag = commandTag;
 	portal->stmts = stmts;
 	portal->cplan = cplan;

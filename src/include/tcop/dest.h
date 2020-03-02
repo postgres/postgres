@@ -68,6 +68,7 @@
 #define DEST_H
 
 #include "executor/tuptable.h"
+#include "tcop/cmdtag.h"
 
 
 /* buffer size to use for command completion tags */
@@ -134,9 +135,10 @@ extern PGDLLIMPORT DestReceiver *None_Receiver; /* permanent receiver for
 
 /* The primary destination management functions */
 
-extern void BeginCommand(const char *commandTag, CommandDest dest);
+extern void BeginCommand(CommandTag commandTag, CommandDest dest);
 extern DestReceiver *CreateDestReceiver(CommandDest dest);
-extern void EndCommand(const char *commandTag, CommandDest dest);
+extern void EndCommand(const QueryCompletion *qc, CommandDest dest,
+					   bool force_undecorated_output);
 
 /* Additional functions that go with destination management, more or less. */
 

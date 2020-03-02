@@ -74,7 +74,7 @@ get_command_tag(PG_FUNCTION_ARGS)
 	if (!cmd->parsetree)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(cstring_to_text(CreateCommandTag(cmd->parsetree)));
+	PG_RETURN_TEXT_P(cstring_to_text(CreateCommandName(cmd->parsetree)));
 }
 
 /*

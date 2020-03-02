@@ -37,6 +37,7 @@
 #include "parser/scansup.h"
 #include "plpgsql.h"
 #include "storage/proc.h"
+#include "tcop/cmdtag.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/array.h"
@@ -1473,7 +1474,7 @@ plpgsql_fulfill_promise(PLpgSQL_execstate *estate,
 		case PLPGSQL_PROMISE_TG_TAG:
 			if (estate->evtrigdata == NULL)
 				elog(ERROR, "event trigger promise is not in an event trigger function");
-			assign_text_var(estate, var, estate->evtrigdata->tag);
+			assign_text_var(estate, var, GetCommandTagName(estate->evtrigdata->tag));
 			break;
 
 		default:
@@ -4115,10 +4116,9 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			 * tree(s), since those are the result of rewriting and could have
 			 * been transmogrified into something else entirely.
 			 */
-			if (plansource->commandTag &&
-				(strcmp(plansource->commandTag, "INSERT") == 0 ||
-				 strcmp(plansource->commandTag, "UPDATE") == 0 ||
-				 strcmp(plansource->commandTag, "DELETE") == 0))
+			if (plansource->commandTag == CMDTAG_INSERT ||
+				plansource->commandTag == CMDTAG_UPDATE ||
+				plansource->commandTag == CMDTAG_DELETE)
 			{
 				stmt->mod_stmt = true;
 				break;

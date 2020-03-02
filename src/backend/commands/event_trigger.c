@@ -78,59 +78,6 @@ typedef struct
 	bool		supported;
 } event_trigger_support_data;
 
-typedef enum
-{
-	EVENT_TRIGGER_COMMAND_TAG_OK,
-	EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED,
-	EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED
-} event_trigger_command_tag_check_result;
-
-/* XXX merge this with ObjectTypeMap? */
-static const event_trigger_support_data event_trigger_support[] = {
-	{"ACCESS METHOD", true},
-	{"AGGREGATE", true},
-	{"CAST", true},
-	{"CONSTRAINT", true},
-	{"COLLATION", true},
-	{"CONVERSION", true},
-	{"DATABASE", false},
-	{"DOMAIN", true},
-	{"EXTENSION", true},
-	{"EVENT TRIGGER", false},
-	{"FOREIGN DATA WRAPPER", true},
-	{"FOREIGN TABLE", true},
-	{"FUNCTION", true},
-	{"INDEX", true},
-	{"LANGUAGE", true},
-	{"MATERIALIZED VIEW", true},
-	{"OPERATOR", true},
-	{"OPERATOR CLASS", true},
-	{"OPERATOR FAMILY", true},
-	{"POLICY", true},
-	{"PROCEDURE", true},
-	{"PUBLICATION", true},
-	{"ROLE", false},
-	{"ROUTINE", true},
-	{"RULE", true},
-	{"SCHEMA", true},
-	{"SEQUENCE", true},
-	{"SERVER", true},
-	{"STATISTICS", true},
-	{"SUBSCRIPTION", true},
-	{"TABLE", true},
-	{"TABLESPACE", false},
-	{"TRANSFORM", true},
-	{"TRIGGER", true},
-	{"TEXT SEARCH CONFIGURATION", true},
-	{"TEXT SEARCH DICTIONARY", true},
-	{"TEXT SEARCH PARSER", true},
-	{"TEXT SEARCH TEMPLATE", true},
-	{"TYPE", true},
-	{"USER MAPPING", true},
-	{"VIEW", true},
-	{NULL, false}
-};
-
 /* Support for dropped objects */
 typedef struct SQLDropObject
 {
@@ -150,8 +97,6 @@ typedef struct SQLDropObject
 static void AlterEventTriggerOwner_internal(Relation rel,
 											HeapTuple tup,
 											Oid newOwnerId);
-static event_trigger_command_tag_check_result check_ddl_tag(const char *tag);
-static event_trigger_command_tag_check_result check_table_rewrite_ddl_tag(const char *tag);
 static void error_duplicate_filter_variable(const char *defname);
 static Datum filter_list_to_array(List *filterlist);
 static Oid	insert_event_trigger_tuple(const char *trigname, const char *eventname,
@@ -259,69 +204,21 @@ validate_ddl_tags(const char *filtervar, List *taglist)
 
 	foreach(lc, taglist)
 	{
-		const char *tag = strVal(lfirst(lc));
-		event_trigger_command_tag_check_result result;
+		const char *tagstr = strVal(lfirst(lc));
+		CommandTag	commandTag = GetCommandTagEnum(tagstr);
 
-		result = check_ddl_tag(tag);
-		if (result == EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED)
+		if (commandTag == CMDTAG_UNKNOWN)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("filter value \"%s\" not recognized for filter variable \"%s\"",
-							tag, filtervar)));
-		if (result == EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED)
+							tagstr, filtervar)));
+		if (!command_tag_event_trigger_ok(commandTag))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			/* translator: %s represents an SQL statement name */
 					 errmsg("event triggers are not supported for %s",
-							tag)));
+							tagstr)));
 	}
-}
-
-static event_trigger_command_tag_check_result
-check_ddl_tag(const char *tag)
-{
-	const char *obtypename;
-	const event_trigger_support_data *etsd;
-
-	/*
-	 * Handle some idiosyncratic special cases.
-	 */
-	if (pg_strcasecmp(tag, "CREATE TABLE AS") == 0 ||
-		pg_strcasecmp(tag, "SELECT INTO") == 0 ||
-		pg_strcasecmp(tag, "REFRESH MATERIALIZED VIEW") == 0 ||
-		pg_strcasecmp(tag, "ALTER DEFAULT PRIVILEGES") == 0 ||
-		pg_strcasecmp(tag, "ALTER LARGE OBJECT") == 0 ||
-		pg_strcasecmp(tag, "COMMENT") == 0 ||
-		pg_strcasecmp(tag, "GRANT") == 0 ||
-		pg_strcasecmp(tag, "REVOKE") == 0 ||
-		pg_strcasecmp(tag, "DROP OWNED") == 0 ||
-		pg_strcasecmp(tag, "IMPORT FOREIGN SCHEMA") == 0 ||
-		pg_strcasecmp(tag, "SECURITY LABEL") == 0)
-		return EVENT_TRIGGER_COMMAND_TAG_OK;
-
-	/*
-	 * Otherwise, command should be CREATE, ALTER, or DROP.
-	 */
-	if (pg_strncasecmp(tag, "CREATE ", 7) == 0)
-		obtypename = tag + 7;
-	else if (pg_strncasecmp(tag, "ALTER ", 6) == 0)
-		obtypename = tag + 6;
-	else if (pg_strncasecmp(tag, "DROP ", 5) == 0)
-		obtypename = tag + 5;
-	else
-		return EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED;
-
-	/*
-	 * ...and the object type should be something recognizable.
-	 */
-	for (etsd = event_trigger_support; etsd->obtypename != NULL; etsd++)
-		if (pg_strcasecmp(etsd->obtypename, obtypename) == 0)
-			break;
-	if (etsd->obtypename == NULL)
-		return EVENT_TRIGGER_COMMAND_TAG_NOT_RECOGNIZED;
-	if (!etsd->supported)
-		return EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED;
-	return EVENT_TRIGGER_COMMAND_TAG_OK;
 }
 
 /*
@@ -334,27 +231,16 @@ validate_table_rewrite_tags(const char *filtervar, List *taglist)
 
 	foreach(lc, taglist)
 	{
-		const char *tag = strVal(lfirst(lc));
-		event_trigger_command_tag_check_result result;
+		const char *tagstr = strVal(lfirst(lc));
+		CommandTag	commandTag = GetCommandTagEnum(tagstr);
 
-		result = check_table_rewrite_ddl_tag(tag);
-		if (result == EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED)
+		if (!command_tag_table_rewrite_ok(commandTag))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			/* translator: %s represents an SQL statement name */
 					 errmsg("event triggers are not supported for %s",
-							tag)));
+							tagstr)));
 	}
-}
-
-static event_trigger_command_tag_check_result
-check_table_rewrite_ddl_tag(const char *tag)
-{
-	if (pg_strcasecmp(tag, "ALTER TABLE") == 0 ||
-		pg_strcasecmp(tag, "ALTER TYPE") == 0)
-		return EVENT_TRIGGER_COMMAND_TAG_OK;
-
-	return EVENT_TRIGGER_COMMAND_TAG_NOT_SUPPORTED;
 }
 
 /*
@@ -663,7 +549,7 @@ get_event_trigger_oid(const char *trigname, bool missing_ok)
  * tags matching.
  */
 static bool
-filter_event_trigger(const char **tag, EventTriggerCacheItem *item)
+filter_event_trigger(CommandTag tag, EventTriggerCacheItem *item)
 {
 	/*
 	 * Filter by session replication role, knowing that we never see disabled
@@ -681,9 +567,7 @@ filter_event_trigger(const char **tag, EventTriggerCacheItem *item)
 	}
 
 	/* Filter by tags, if any were specified. */
-	if (item->ntags != 0 && bsearch(tag, item->tag,
-									item->ntags, sizeof(char *),
-									pg_qsort_strcmp) == NULL)
+	if (!bms_is_empty(item->tagset) && !bms_is_member(tag, item->tagset))
 		return false;
 
 	/* if we reach that point, we're not filtering out this item */
@@ -700,7 +584,7 @@ EventTriggerCommonSetup(Node *parsetree,
 						EventTriggerEvent event, const char *eventstr,
 						EventTriggerData *trigdata)
 {
-	const char *tag;
+	CommandTag	tag;
 	List	   *cachelist;
 	ListCell   *lc;
 	List	   *runlist = NIL;
@@ -716,25 +600,25 @@ EventTriggerCommonSetup(Node *parsetree,
 	 *
 	 * If this cross-check fails for you, you probably need to either adjust
 	 * standard_ProcessUtility() not to invoke event triggers for the command
-	 * type in question, or you need to adjust check_ddl_tag to accept the
+	 * type in question, or you need to adjust event_trigger_ok to accept the
 	 * relevant command tag.
 	 */
 #ifdef USE_ASSERT_CHECKING
 	{
-		const char *dbgtag;
+		CommandTag	dbgtag;
 
 		dbgtag = CreateCommandTag(parsetree);
 		if (event == EVT_DDLCommandStart ||
 			event == EVT_DDLCommandEnd ||
 			event == EVT_SQLDrop)
 		{
-			if (check_ddl_tag(dbgtag) != EVENT_TRIGGER_COMMAND_TAG_OK)
-				elog(ERROR, "unexpected command tag \"%s\"", dbgtag);
+			if (!command_tag_event_trigger_ok(dbgtag))
+				elog(ERROR, "unexpected command tag \"%s\"", GetCommandTagName(dbgtag));
 		}
 		else if (event == EVT_TableRewrite)
 		{
-			if (check_table_rewrite_ddl_tag(dbgtag) != EVENT_TRIGGER_COMMAND_TAG_OK)
-				elog(ERROR, "unexpected command tag \"%s\"", dbgtag);
+			if (!command_tag_table_rewrite_ok(dbgtag))
+				elog(ERROR, "unexpected command tag \"%s\"", GetCommandTagName(dbgtag));
 		}
 	}
 #endif
@@ -758,7 +642,7 @@ EventTriggerCommonSetup(Node *parsetree,
 	{
 		EventTriggerCacheItem *item = lfirst(lc);
 
-		if (filter_event_trigger(&tag, item))
+		if (filter_event_trigger(tag, item))
 		{
 			/* We must plan to fire this trigger. */
 			runlist = lappend_oid(runlist, item->fnoid);
@@ -2136,7 +2020,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 					/* objsubid */
 					values[i++] = Int32GetDatum(addr.objectSubId);
 					/* command tag */
-					values[i++] = CStringGetTextDatum(CreateCommandTag(cmd->parsetree));
+					values[i++] = CStringGetTextDatum(CreateCommandName(cmd->parsetree));
 					/* object_type */
 					values[i++] = CStringGetTextDatum(type);
 					/* schema */
@@ -2161,7 +2045,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 				/* objsubid */
 				nulls[i++] = true;
 				/* command tag */
-				values[i++] = CStringGetTextDatum(CreateCommandTag(cmd->parsetree));
+				values[i++] = CStringGetTextDatum(CreateCommandName(cmd->parsetree));
 				/* object_type */
 				values[i++] = CStringGetTextDatum(stringify_adefprivs_objtype(cmd->d.defprivs.objtype));
 				/* schema */

@@ -1737,7 +1737,7 @@ plperl_event_trigger_build_args(FunctionCallInfo fcinfo)
 	tdata = (EventTriggerData *) fcinfo->context;
 
 	hv_store_string(hv, "event", cstr2sv(tdata->event));
-	hv_store_string(hv, "tag", cstr2sv(tdata->tag));
+	hv_store_string(hv, "tag", cstr2sv(GetCommandTagName(tdata->tag)));
 
 	return newRV_noinc((SV *) hv);
 }

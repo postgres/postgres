@@ -20,6 +20,7 @@
 #include "catalog/pg_event_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
+#include "tcop/cmdtag.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -51,7 +52,7 @@ static EventTriggerCacheStateType EventTriggerCacheState = ETCS_NEEDS_REBUILD;
 static void BuildEventTriggerCache(void);
 static void InvalidateEventCacheCallback(Datum arg,
 										 int cacheid, uint32 hashvalue);
-static int	DecodeTextArrayToCString(Datum array, char ***cstringp);
+static Bitmapset *DecodeTextArrayToBitmapset(Datum array);
 
 /*
  * Search the event cache by trigger event.
@@ -180,10 +181,7 @@ BuildEventTriggerCache(void)
 		evttags = heap_getattr(tup, Anum_pg_event_trigger_evttags,
 							   RelationGetDescr(rel), &evttags_isnull);
 		if (!evttags_isnull)
-		{
-			item->ntags = DecodeTextArrayToCString(evttags, &item->tag);
-			qsort(item->tag, item->ntags, sizeof(char *), pg_qsort_strcmp);
-		}
+			item->tagset = DecodeTextArrayToBitmapset(evttags);
 
 		/* Add to cache entry. */
 		entry = hash_search(cache, &event, HASH_ENTER, &found);
@@ -215,18 +213,18 @@ BuildEventTriggerCache(void)
 }
 
 /*
- * Decode text[] to an array of C strings.
+ * Decode text[] to a Bitmapset of CommandTags.
  *
  * We could avoid a bit of overhead here if we were willing to duplicate some
  * of the logic from deconstruct_array, but it doesn't seem worth the code
  * complexity.
  */
-static int
-DecodeTextArrayToCString(Datum array, char ***cstringp)
+static Bitmapset *
+DecodeTextArrayToBitmapset(Datum array)
 {
 	ArrayType  *arr = DatumGetArrayTypeP(array);
 	Datum	   *elems;
-	char	  **cstring;
+	Bitmapset  *bms;
 	int			i;
 	int			nelems;
 
@@ -234,13 +232,17 @@ DecodeTextArrayToCString(Datum array, char ***cstringp)
 		elog(ERROR, "expected 1-D text array");
 	deconstruct_array(arr, TEXTOID, -1, false, 'i', &elems, NULL, &nelems);
 
-	cstring = palloc(nelems * sizeof(char *));
-	for (i = 0; i < nelems; ++i)
-		cstring[i] = TextDatumGetCString(elems[i]);
+	for (bms = NULL, i = 0; i < nelems; ++i)
+	{
+		char	   *str = TextDatumGetCString(elems[i]);
+
+		bms = bms_add_member(bms, GetCommandTagEnum(str));
+		pfree(str);
+	}
 
 	pfree(elems);
-	*cstringp = cstring;
-	return nelems;
+
+	return bms;
 }
 
 /*

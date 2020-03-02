@@ -100,7 +100,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 	buf.record = record;
 
 	/* cast so we get a warning when new rmgrs are added */
-	switch ((RmgrIds) XLogRecGetRmid(record))
+	switch ((RmgrId) XLogRecGetRmid(record))
 	{
 			/*
 			 * Rmgrs we care about for logical decoding. Add new rmgrs in

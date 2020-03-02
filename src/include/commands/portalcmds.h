@@ -23,7 +23,7 @@ extern void PerformCursorOpen(ParseState *pstate, DeclareCursorStmt *cstmt, Para
 							  bool isTopLevel);
 
 extern void PerformPortalFetch(FetchStmt *stmt, DestReceiver *dest,
-							   char *completionTag);
+							   QueryCompletion *qc);
 
 extern void PerformPortalClose(const char *name);
 
