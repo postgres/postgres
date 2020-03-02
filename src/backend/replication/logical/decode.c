@@ -891,6 +891,13 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	xlrec = (xl_heap_multi_insert *) XLogRecGetData(r);
 
+	/*
+	 * Ignore insert records without new tuples.  This happens when a
+	 * multi_insert is done on a catalog or on a non-persistent relation.
+	 */
+	if (!(xlrec->flags & XLH_INSERT_CONTAINS_NEW_TUPLE))
+		return;
+
 	/* only interested in our database */
 	XLogRecGetBlockTag(r, 0, &rnode, NULL, NULL);
 	if (rnode.dbNode != ctx->slot->data.database)
@@ -901,8 +908,8 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	/*
-	 * As multi_insert is not used for catalogs yet, the block should always
-	 * have data even if a full-page write of it is taken.
+	 * We know that this multi_insert isn't for a catalog, so the block should
+	 * always have data even if a full-page write of it is taken.
 	 */
 	tupledata = XLogRecGetBlockData(r, 0, &tuplelen);
 	Assert(tupledata != NULL);
@@ -914,6 +921,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		xl_multi_insert_tuple *xlhdr;
 		int			datalen;
 		ReorderBufferTupleBuf *tuple;
+		HeapTupleHeader header;
 
 		change = ReorderBufferGetChange(ctx->reorder);
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
@@ -925,43 +933,30 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		data = ((char *) xlhdr) + SizeOfMultiInsertTuple;
 		datalen = xlhdr->datalen;
 
+		change->data.tp.newtuple =
+			ReorderBufferGetTupleBuf(ctx->reorder, datalen);
+
+		tuple = change->data.tp.newtuple;
+		header = tuple->tuple.t_data;
+
+		/* not a disk based tuple */
+		ItemPointerSetInvalid(&tuple->tuple.t_self);
+
 		/*
-		 * CONTAINS_NEW_TUPLE will always be set currently as multi_insert
-		 * isn't used for catalogs, but better be future proof.
-		 *
-		 * We decode the tuple in pretty much the same way as DecodeXLogTuple,
-		 * but since the layout is slightly different, we can't use it here.
+		 * We can only figure this out after reassembling the transactions.
 		 */
-		if (xlrec->flags & XLH_INSERT_CONTAINS_NEW_TUPLE)
-		{
-			HeapTupleHeader header;
+		tuple->tuple.t_tableOid = InvalidOid;
 
-			change->data.tp.newtuple =
-				ReorderBufferGetTupleBuf(ctx->reorder, datalen);
+		tuple->tuple.t_len = datalen + SizeofHeapTupleHeader;
 
-			tuple = change->data.tp.newtuple;
-			header = tuple->tuple.t_data;
+		memset(header, 0, SizeofHeapTupleHeader);
 
-			/* not a disk based tuple */
-			ItemPointerSetInvalid(&tuple->tuple.t_self);
-
-			/*
-			 * We can only figure this out after reassembling the
-			 * transactions.
-			 */
-			tuple->tuple.t_tableOid = InvalidOid;
-
-			tuple->tuple.t_len = datalen + SizeofHeapTupleHeader;
-
-			memset(header, 0, SizeofHeapTupleHeader);
-
-			memcpy((char *) tuple->tuple.t_data + SizeofHeapTupleHeader,
-				   (char *) data,
-				   datalen);
-			header->t_infomask = xlhdr->t_infomask;
-			header->t_infomask2 = xlhdr->t_infomask2;
-			header->t_hoff = xlhdr->t_hoff;
-		}
+		memcpy((char *) tuple->tuple.t_data + SizeofHeapTupleHeader,
+			   (char *) data,
+			   datalen);
+		header->t_infomask = xlhdr->t_infomask;
+		header->t_infomask2 = xlhdr->t_infomask2;
+		header->t_hoff = xlhdr->t_hoff;
 
 		/*
 		 * Reset toast reassembly state only after the last row in the last
