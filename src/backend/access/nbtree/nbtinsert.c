@@ -1632,7 +1632,6 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 */
 	leftoff = P_HIKEY;
 
-	Assert(BTreeTupleIsPivot(lefthikey) || !itup_key->heapkeyspace);
 	Assert(BTreeTupleGetNAtts(lefthikey, rel) > 0);
 	Assert(BTreeTupleGetNAtts(lefthikey, rel) <= indnkeyatts);
 	if (PageAddItem(leftpage, (Item) lefthikey, itemsz, leftoff,
@@ -1697,7 +1696,6 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 		itemid = PageGetItemId(origpage, P_HIKEY);
 		itemsz = ItemIdGetLength(itemid);
 		item = (IndexTuple) PageGetItem(origpage, itemid);
-		Assert(BTreeTupleIsPivot(item) || !itup_key->heapkeyspace);
 		Assert(BTreeTupleGetNAtts(item, rel) > 0);
 		Assert(BTreeTupleGetNAtts(item, rel) <= indnkeyatts);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
