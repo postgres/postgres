@@ -3685,7 +3685,6 @@ transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd)
 			break;
 		case RELKIND_PARTITIONED_INDEX:
 			/* nothing to check */
-			Assert(cmd->bound == NULL);
 			break;
 		case RELKIND_RELATION:
 			/* the table must be partitioned */
