@@ -858,6 +858,15 @@ SELECT obj_description('testcomment_idx1'::regclass, 'pg_class');
 REINDEX TABLE CONCURRENTLY testcomment ;
 SELECT obj_description('testcomment_idx1'::regclass, 'pg_class');
 DROP TABLE testcomment;
+-- Check that indisclustered updates are preserved
+CREATE TABLE concur_clustered(i int);
+CREATE INDEX concur_clustered_i_idx ON concur_clustered(i);
+ALTER TABLE concur_clustered CLUSTER ON concur_clustered_i_idx;
+REINDEX TABLE CONCURRENTLY concur_clustered;
+SELECT indexrelid::regclass, indisclustered FROM pg_index
+  WHERE indrelid = 'concur_clustered'::regclass;
+DROP TABLE concur_clustered;
+
 -- Partitions
 -- Create some partitioned tables
 CREATE TABLE concur_reindex_part (c1 int, c2 int) PARTITION BY RANGE (c1);
