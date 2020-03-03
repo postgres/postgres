@@ -4408,7 +4408,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>
       Amount of data streamed. This counter only advances
       when the phase is <literal>streaming database files</literal> or
-      <literal>transfering wal files</literal>.
+      <literal>transferring wal files</literal>.
      </entry>
     </row>
     <row>
