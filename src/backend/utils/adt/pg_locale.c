@@ -96,11 +96,17 @@ char	   *locale_monetary;
 char	   *locale_numeric;
 char	   *locale_time;
 
-/* lc_time localization cache */
-char	   *localized_abbrev_days[7];
-char	   *localized_full_days[7];
-char	   *localized_abbrev_months[12];
-char	   *localized_full_months[12];
+/*
+ * lc_time localization cache.
+ *
+ * We use only the first 7 or 12 entries of these arrays.  The last array
+ * element is left as NULL for the convenience of outside code that wants
+ * to sequentially scan these arrays.
+ */
+char	   *localized_abbrev_days[7 + 1];
+char	   *localized_full_days[7 + 1];
+char	   *localized_abbrev_months[12 + 1];
+char	   *localized_full_months[12 + 1];
 
 /* indicates whether locale information cache is valid */
 static bool CurrentLocaleConvValid = false;
@@ -922,6 +928,8 @@ cache_locale_time(void)
 		cache_single_string(&localized_full_days[i], bufptr, encoding);
 		bufptr += MAX_L10N_DATA;
 	}
+	localized_abbrev_days[7] = NULL;
+	localized_full_days[7] = NULL;
 
 	/* localized months */
 	for (i = 0; i < 12; i++)
@@ -931,6 +939,8 @@ cache_locale_time(void)
 		cache_single_string(&localized_full_months[i], bufptr, encoding);
 		bufptr += MAX_L10N_DATA;
 	}
+	localized_abbrev_months[12] = NULL;
+	localized_full_months[12] = NULL;
 
 	CurrentLCTimeValid = true;
 }

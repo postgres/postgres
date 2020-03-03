@@ -1674,9 +1674,9 @@ select jsonb_path_query('[]', 'strict $.datetime()');
 ERROR:  jsonpath item method .datetime() can only be applied to a string
 select jsonb_path_query('{}', '$.datetime()');
 ERROR:  jsonpath item method .datetime() can only be applied to a string
-select jsonb_path_query('""', '$.datetime()');
-ERROR:  datetime format is not unrecognized
-HINT:  use datetime template argument for explicit format specification
+select jsonb_path_query('"bogus"', '$.datetime()');
+ERROR:  datetime format is not recognized: "bogus"
+HINT:  Use a datetime template argument to specify the input data format.
 select jsonb_path_query('"12:34"', '$.datetime("aaa")');
 ERROR:  invalid datetime format separator: "a"
 select jsonb_path_query('"aaaa"', '$.datetime("HH24")');

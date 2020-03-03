@@ -1781,6 +1781,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 	JsonbValue	jbvbuf;
 	Datum		value;
 	text	   *datetime;
+	Oid			collid;
 	Oid			typid;
 	int32		typmod = -1;
 	int			tz = 0;
@@ -1796,6 +1797,13 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 
 	datetime = cstring_to_text_with_len(jb->val.string.val,
 										jb->val.string.len);
+
+	/*
+	 * At some point we might wish to have callers supply the collation to
+	 * use, but right now it's unclear that they'd be able to do better than
+	 * DEFAULT_COLLATION_OID anyway.
+	 */
+	collid = DEFAULT_COLLATION_OID;
 
 	if (jsp->content.arg)
 	{
@@ -1814,7 +1822,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		template = cstring_to_text_with_len(template_str,
 											template_len);
 
-		value = parse_datetime(datetime, template, true,
+		value = parse_datetime(datetime, template, collid, true,
 							   &typid, &typmod, &tz,
 							   jspThrowErrors(cxt) ? NULL : &have_error);
 
@@ -1858,7 +1866,7 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				MemoryContextSwitchTo(oldcxt);
 			}
 
-			value = parse_datetime(datetime, fmt_txt[i], true,
+			value = parse_datetime(datetime, fmt_txt[i], collid, true,
 								   &typid, &typmod, &tz,
 								   &have_error);
 
@@ -1872,8 +1880,9 @@ executeDateTimeMethod(JsonPathExecContext *cxt, JsonPathItem *jsp,
 		if (res == jperNotFound)
 			RETURN_ERROR(ereport(ERROR,
 								 (errcode(ERRCODE_INVALID_ARGUMENT_FOR_JSON_DATETIME_FUNCTION),
-								  errmsg("datetime format is not unrecognized"),
-								  errhint("use datetime template argument for explicit format specification"))));
+								  errmsg("datetime format is not recognized: \"%s\"",
+										 text_to_cstring(datetime)),
+								  errhint("Use a datetime template argument to specify the input data format."))));
 	}
 
 	pfree(datetime);

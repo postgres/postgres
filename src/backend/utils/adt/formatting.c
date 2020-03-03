@@ -1038,7 +1038,7 @@ static void parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 static void DCH_to_char(FormatNode *node, bool is_interval,
 						TmToChar *in, char *out, Oid collid);
 static void DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
-						  bool std, bool *have_error);
+						  Oid collid, bool std, bool *have_error);
 
 #ifdef DEBUG_TO_FROM_CHAR
 static void dump_index(const KeyWord *k, const int *index);
@@ -1057,11 +1057,14 @@ static int	from_char_parse_int_len(int *dest, const char **src, const int len,
 									FormatNode *node, bool *have_error);
 static int	from_char_parse_int(int *dest, const char **src, FormatNode *node,
 								bool *have_error);
-static int	seq_search(const char *name, const char *const *array, int *len);
+static int	seq_search_ascii(const char *name, const char *const *array, int *len);
+static int	seq_search_localized(const char *name, char **array, int *len,
+								 Oid collid);
 static int	from_char_seq_search(int *dest, const char **src,
 								 const char *const *array,
+								 char **localized_array, Oid collid,
 								 FormatNode *node, bool *have_error);
-static void do_to_timestamp(text *date_txt, text *fmt, bool std,
+static void do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 							struct pg_tm *tm, fsec_t *fsec, int *fprec,
 							uint32 *flags, bool *have_error);
 static char *fill_str(char *str, int c, int max);
@@ -2457,7 +2460,7 @@ from_char_parse_int(int *dest, const char **src, FormatNode *node, bool *have_er
  * suitable for comparisons to ASCII strings.
  */
 static int
-seq_search(const char *name, const char *const *array, int *len)
+seq_search_ascii(const char *name, const char *const *array, int *len)
 {
 	unsigned char firstc;
 	const char *const *a;
@@ -2503,8 +2506,89 @@ seq_search(const char *name, const char *const *array, int *len)
 }
 
 /*
- * Perform a sequential search in 'array' for an entry matching the first
- * character(s) of the 'src' string case-insensitively.
+ * Sequentially search an array of possibly non-English words for
+ * a case-insensitive match to the initial character(s) of "name".
+ *
+ * This has the same API as seq_search_ascii(), but we use a more general
+ * case-folding transformation to achieve case-insensitivity.  Case folding
+ * is done per the rules of the collation identified by "collid".
+ *
+ * The array is treated as const, but we don't declare it that way because
+ * the arrays exported by pg_locale.c aren't const.
+ */
+static int
+seq_search_localized(const char *name, char **array, int *len, Oid collid)
+{
+	char	  **a;
+	char	   *upper_name;
+	char	   *lower_name;
+
+	*len = 0;
+
+	/* empty string can't match anything */
+	if (!*name)
+		return -1;
+
+	/*
+	 * The case-folding processing done below is fairly expensive, so before
+	 * doing that, make a quick pass to see if there is an exact match.
+	 */
+	for (a = array; *a != NULL; a++)
+	{
+		int			element_len = strlen(*a);
+
+		if (strncmp(name, *a, element_len) == 0)
+		{
+			*len = element_len;
+			return a - array;
+		}
+	}
+
+	/*
+	 * Fold to upper case, then to lower case, so that we can match reliably
+	 * even in languages in which case conversions are not injective.
+	 */
+	upper_name = str_toupper(unconstify(char *, name), strlen(name), collid);
+	lower_name = str_tolower(upper_name, strlen(upper_name), collid);
+	pfree(upper_name);
+
+	for (a = array; *a != NULL; a++)
+	{
+		char	   *upper_element;
+		char	   *lower_element;
+		int			element_len;
+
+		/* Likewise upper/lower-case array element */
+		upper_element = str_toupper(*a, strlen(*a), collid);
+		lower_element = str_tolower(upper_element, strlen(upper_element),
+									collid);
+		pfree(upper_element);
+		element_len = strlen(lower_element);
+
+		/* Match? */
+		if (strncmp(lower_name, lower_element, element_len) == 0)
+		{
+			*len = element_len;
+			pfree(lower_element);
+			pfree(lower_name);
+			return a - array;
+		}
+		pfree(lower_element);
+	}
+
+	pfree(lower_name);
+	return -1;
+}
+
+/*
+ * Perform a sequential search in 'array' (or 'localized_array', if that's
+ * not NULL) for an entry matching the first character(s) of the 'src'
+ * string case-insensitively.
+ *
+ * The 'array' is presumed to be English words (all-ASCII), but
+ * if 'localized_array' is supplied, that might be non-English
+ * so we need a more expensive case-folding transformation
+ * (which will follow the rules of the collation 'collid').
  *
  * If a match is found, copy the array index of the match into the integer
  * pointed to by 'dest', advance 'src' to the end of the part of the string
@@ -2518,11 +2602,15 @@ seq_search(const char *name, const char *const *array, int *len)
  */
 static int
 from_char_seq_search(int *dest, const char **src, const char *const *array,
+					 char **localized_array, Oid collid,
 					 FormatNode *node, bool *have_error)
 {
 	int			len;
 
-	*dest = seq_search(*src, array, &len);
+	if (localized_array == NULL)
+		*dest = seq_search_ascii(*src, array, &len);
+	else
+		*dest = seq_search_localized(*src, localized_array, &len, collid);
 
 	if (len <= 0)
 	{
@@ -3147,19 +3235,20 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 	*s = '\0';
 }
 
-/* ----------
- * Process a string as denoted by a list of FormatNodes.
+/*
+ * Process the string 'in' as denoted by the array of FormatNodes 'node[]'.
  * The TmFromChar struct pointed to by 'out' is populated with the results.
+ *
+ * 'collid' identifies the collation to use, if needed.
+ * 'std' specifies standard parsing mode.
+ * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set.
  *
  * Note: we currently don't have any to_interval() function, so there
  * is no need here for INVALID_FOR_INTERVAL checks.
- *
- * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set.
- * ----------
  */
 static void
-DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
-			  bool *have_error)
+DCH_from_char(FormatNode *node, const char *in, TmFromChar *out,
+			  Oid collid, bool std, bool *have_error)
 {
 	FormatNode *n;
 	const char *s;
@@ -3169,6 +3258,9 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 
 	/* number of extra skipped characters (more than given in format string) */
 	int			extra_skip = 0;
+
+	/* cache localized days and months */
+	cache_locale_time();
 
 	for (n = node, s = in; n->type != NODE_TYPE_END && *s != '\0'; n++)
 	{
@@ -3271,6 +3363,7 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_a_m:
 			case DCH_p_m:
 				from_char_seq_search(&value, &s, ampm_strings_long,
+									 NULL, InvalidOid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->pm, value % 2, n, have_error);
@@ -3282,6 +3375,7 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_am:
 			case DCH_pm:
 				from_char_seq_search(&value, &s, ampm_strings,
+									 NULL, InvalidOid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->pm, value % 2, n, have_error);
@@ -3395,6 +3489,7 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_a_d:
 			case DCH_b_c:
 				from_char_seq_search(&value, &s, adbc_strings_long,
+									 NULL, InvalidOid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->bc, value % 2, n, have_error);
@@ -3405,6 +3500,7 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_ad:
 			case DCH_bc:
 				from_char_seq_search(&value, &s, adbc_strings,
+									 NULL, InvalidOid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->bc, value % 2, n, have_error);
@@ -3414,6 +3510,8 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_Month:
 			case DCH_month:
 				from_char_seq_search(&value, &s, months_full,
+									 S_TM(n->suffix) ? localized_full_months : NULL,
+									 collid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->mm, value + 1, n, have_error);
@@ -3423,6 +3521,8 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_Mon:
 			case DCH_mon:
 				from_char_seq_search(&value, &s, months,
+									 S_TM(n->suffix) ? localized_abbrev_months : NULL,
+									 collid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->mm, value + 1, n, have_error);
@@ -3437,6 +3537,8 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_Day:
 			case DCH_day:
 				from_char_seq_search(&value, &s, days,
+									 S_TM(n->suffix) ? localized_full_days : NULL,
+									 collid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->d, value, n, have_error);
@@ -3447,6 +3549,8 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_Dy:
 			case DCH_dy:
 				from_char_seq_search(&value, &s, days_short,
+									 S_TM(n->suffix) ? localized_abbrev_days : NULL,
+									 collid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->d, value, n, have_error);
@@ -3565,6 +3669,7 @@ DCH_from_char(FormatNode *node, const char *in, TmFromChar *out, bool std,
 			case DCH_RM:
 			case DCH_rm:
 				from_char_seq_search(&value, &s, rm_months_lower,
+									 NULL, InvalidOid,
 									 n, have_error);
 				CHECK_ERROR;
 				from_char_set_int(&out->mm, MONTHS_PER_YEAR - value,
@@ -4031,13 +4136,15 @@ to_timestamp(PG_FUNCTION_ARGS)
 {
 	text	   *date_txt = PG_GETARG_TEXT_PP(0);
 	text	   *fmt = PG_GETARG_TEXT_PP(1);
+	Oid			collid = PG_GET_COLLATION();
 	Timestamp	result;
 	int			tz;
 	struct pg_tm tm;
 	fsec_t		fsec;
 	int			fprec;
 
-	do_to_timestamp(date_txt, fmt, false, &tm, &fsec, &fprec, NULL, NULL);
+	do_to_timestamp(date_txt, fmt, collid, false,
+					&tm, &fsec, &fprec, NULL, NULL);
 
 	/* Use the specified time zone, if any. */
 	if (tm.tm_zone)
@@ -4072,11 +4179,13 @@ to_date(PG_FUNCTION_ARGS)
 {
 	text	   *date_txt = PG_GETARG_TEXT_PP(0);
 	text	   *fmt = PG_GETARG_TEXT_PP(1);
+	Oid			collid = PG_GET_COLLATION();
 	DateADT		result;
 	struct pg_tm tm;
 	fsec_t		fsec;
 
-	do_to_timestamp(date_txt, fmt, false, &tm, &fsec, NULL, NULL, NULL);
+	do_to_timestamp(date_txt, fmt, collid, false,
+					&tm, &fsec, NULL, NULL, NULL);
 
 	/* Prevent overflow in Julian-day routines */
 	if (!IS_VALID_JULIAN(tm.tm_year, tm.tm_mon, tm.tm_mday))
@@ -4098,25 +4207,31 @@ to_date(PG_FUNCTION_ARGS)
 }
 
 /*
- * Convert the 'date_txt' input to a datetime type using argument 'fmt' as a format string.
+ * Convert the 'date_txt' input to a datetime type using argument 'fmt'
+ * as a format string.  The collation 'collid' may be used for case-folding
+ * rules in some cases.  'strict' specifies standard parsing mode.
+ *
  * The actual data type (returned in 'typid', 'typmod') is determined by
  * the presence of date/time/zone components in the format string.
  *
- * When timezone component is present, the corresponding offset is set to '*tz'.
+ * When timezone component is present, the corresponding offset is
+ * returned in '*tz'.
  *
  * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set
  * and zero value is returned.
  */
 Datum
-parse_datetime(text *date_txt, text *fmt, bool strict, Oid *typid,
-			   int32 *typmod, int *tz, bool *have_error)
+parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
+			   Oid *typid, int32 *typmod, int *tz,
+			   bool *have_error)
 {
 	struct pg_tm tm;
 	fsec_t		fsec;
 	int			fprec;
 	uint32		flags;
 
-	do_to_timestamp(date_txt, fmt, strict, &tm, &fsec, &fprec, &flags, have_error);
+	do_to_timestamp(date_txt, fmt, collid, strict,
+					&tm, &fsec, &fprec, &flags, have_error);
 	CHECK_ERROR;
 
 	*typmod = fprec ? fprec : -1;	/* fractional part precision */
@@ -4278,21 +4393,21 @@ on_error:
  * Parse the 'date_txt' according to 'fmt', return results as a struct pg_tm,
  * fractional seconds, and fractional precision.
  *
+ * 'collid' identifies the collation to use, if needed.
+ * 'std' specifies standard parsing mode.
+ * Bit mask of date/time/zone components found in 'fmt' is returned in 'flags',
+ * if that is not NULL.
+ * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set.
+ *
  * We parse 'fmt' into a list of FormatNodes, which is then passed to
  * DCH_from_char to populate a TmFromChar with the parsed contents of
  * 'date_txt'.
  *
  * The TmFromChar is then analysed and converted into the final results in
- * struct 'tm' and 'fsec'.
- *
- * Bit mask of date/time/zone components found in 'fmt' is returned in 'flags'.
- *
- * 'std' specifies standard parsing mode.
- *
- * If 'have_error' is NULL, then errors are thrown, else '*have_error' is set.
+ * struct 'tm', 'fsec', and 'fprec'.
  */
 static void
-do_to_timestamp(text *date_txt, text *fmt, bool std,
+do_to_timestamp(text *date_txt, text *fmt, Oid collid, bool std,
 				struct pg_tm *tm, fsec_t *fsec, int *fprec,
 				uint32 *flags, bool *have_error)
 {
@@ -4352,7 +4467,7 @@ do_to_timestamp(text *date_txt, text *fmt, bool std,
 		/* dump_index(DCH_keywords, DCH_index); */
 #endif
 
-		DCH_from_char(format, date_str, &tmfc, std, have_error);
+		DCH_from_char(format, date_str, &tmfc, collid, std, have_error);
 		CHECK_ERROR;
 
 		pfree(fmt_str);

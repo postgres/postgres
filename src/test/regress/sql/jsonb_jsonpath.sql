@@ -352,7 +352,7 @@ select jsonb_path_query('1', '$.datetime()');
 select jsonb_path_query('[]', '$.datetime()');
 select jsonb_path_query('[]', 'strict $.datetime()');
 select jsonb_path_query('{}', '$.datetime()');
-select jsonb_path_query('""', '$.datetime()');
+select jsonb_path_query('"bogus"', '$.datetime()');
 select jsonb_path_query('"12:34"', '$.datetime("aaa")');
 select jsonb_path_query('"aaaa"', '$.datetime("HH24")');
 
