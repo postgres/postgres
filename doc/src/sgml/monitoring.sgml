@@ -376,6 +376,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_progress_basebackup</structname><indexterm><primary>pg_stat_progress_basebackup</primary></indexterm></entry>
+      <entry>One row for each WAL sender process streaming a base backup,
+       showing current progress.
+       See <xref linkend='basebackup-progress-reporting'/>.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -3535,7 +3543,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    certain commands during command execution.  Currently, the only commands
    which support progress reporting are <command>ANALYZE</command>,
    <command>CLUSTER</command>,
-   <command>CREATE INDEX</command>, and <command>VACUUM</command>.
+   <command>CREATE INDEX</command>, <command>VACUUM</command>,
+   and <xref linkend="protocol-replication-base-backup"/> (i.e., replication
+   command that <xref linkend="app-pgbasebackup"/> issues to take
+   a base backup).
    This may be expanded in the future.
   </para>
 
@@ -4334,6 +4345,156 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      </entry>
     </row>
    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
+ <sect2 id="basebackup-progress-reporting">
+  <title>Base Backup Progress Reporting</title>
+
+  <para>
+   Whenever an application like <application>pg_basebackup</application>
+   is taking a base backup, the
+   <structname>pg_stat_progress_basebackup</structname>
+   view will contain a row for each WAL sender process that is currently
+   running <command>BASE_BACKUP</command> replication command
+   and streaming the backup. The tables below describe the information
+   that will be reported and provide information about how to interpret it.
+  </para>
+
+  <table id="pg-stat-progress-basebackup-view" xreflabel="pg_stat_progress_basebackup">
+   <title><structname>pg_stat_progress_basebackup</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>pid</structfield></entry>
+     <entry><type>integer</type></entry>
+     <entry>Process ID of a WAL sender process.</entry>
+    </row>
+    <row>
+     <entry><structfield>phase</structfield></entry>
+     <entry><type>text</type></entry>
+     <entry>Current processing phase. See <xref linkend="basebackup-phases" />.</entry>
+    </row>
+    <row>
+     <entry><structfield>backup_total</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>
+      Total amount of data that will be streamed. If progress reporting
+      is not enabled in <application>pg_basebackup</application>
+      (i.e., <literal>--progress</literal> option is not specified),
+      this is <literal>0</literal>. Otherwise, this is estimated and
+      reported as of the beginning of
+      <literal>streaming database files</literal> phase. Note that
+      this is only an approximation since the database
+      may change during <literal>streaming database files</literal> phase
+      and WAL log may be included in the backup later. This is always
+      the same value as <structfield>backup_streamed</structfield>
+      once the amount of data streamed exceeds the estimated
+      total size.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>backup_streamed</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>
+      Amount of data streamed. This counter only advances
+      when the phase is <literal>streaming database files</literal> or
+      <literal>transfering wal files</literal>.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>tablespaces_total</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>
+      Total number of tablespaces that will be streamed.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>tablespaces_streamed</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>
+      Number of tablespaces streamed. This counter only
+      advances when the phase is <literal>streaming database files</literal>.
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <table id="basebackup-phases">
+   <title>Base backup phases</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Phase</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>initializing</literal></entry>
+      <entry>
+       The WAL sender process is preparing to begin the backup.
+       This phase is expected to be very brief.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>waiting for checkpoint to finish</literal></entry>
+      <entry>
+       The WAL sender process is currently performing
+       <function>pg_start_backup</function> to set up for
+       taking a base backup, and waiting for backup start
+       checkpoint to finish.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>estimating backup size</literal></entry>
+      <entry>
+       The WAL sender process is currently estimating the total amount
+       of database files that will be streamed as a base backup.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>streaming database files</literal></entry>
+      <entry>
+       The WAL sender process is currently streaming database files
+       as a base backup.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>waiting for wal archiving to finish</literal></entry>
+      <entry>
+       The WAL sender process is currently performing
+       <function>pg_stop_backup</function> to finish the backup,
+       and waiting for all the WAL files required for the base backup
+       to be successfully archived.
+       If either <literal>--wal-method=none</literal> or
+       <literal>--wal-method=stream</literal> is specified in
+       <application>pg_basebackup</application>, the backup will end
+       when this phase is completed.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>transferring wal files</literal></entry>
+      <entry>
+       The WAL sender process is currently transferring all WAL logs
+       generated during the backup. This phase occurs after
+       <literal>waiting for wal archiving to finish</literal> phase if
+       <literal>--wal-method=fetch</literal> is specified in
+       <application>pg_basebackup</application>. The backup will end
+       when this phase is completed.
+      </entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 

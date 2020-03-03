@@ -39,6 +39,7 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "catalog/pg_database.h"
+#include "commands/progress.h"
 #include "commands/tablespace.h"
 #include "common/controldata_utils.h"
 #include "miscadmin.h"
@@ -10228,6 +10229,10 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
  * active at the same time, and they don't conflict with an exclusive backup
  * either.
  *
+ * tablespaces is required only when this function is called while
+ * the streaming base backup requested by pg_basebackup is running.
+ * NULL should be specified otherwise.
+ *
  * tblspcmapfile is required mainly for tar format in windows as native windows
  * utilities are not able to create symlinks while extracting files from tar.
  * However for consistency, the same is used for all platforms.
@@ -10469,6 +10474,14 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			tblspcmapfile = makeStringInfo();
 
 		datadirpathlen = strlen(DataDir);
+
+		/*
+		 * Report that we are now estimating the total backup size
+		 * if we're streaming base backup as requested by pg_basebackup
+		 */
+		if (tablespaces)
+			pgstat_progress_update_param(PROGRESS_BASEBACKUP_PHASE,
+										 PROGRESS_BASEBACKUP_PHASE_ESTIMATE_BACKUP_SIZE);
 
 		/* Collect information about all tablespaces */
 		tblspcdir = AllocateDir("pg_tblspc");

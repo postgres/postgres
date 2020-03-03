@@ -2465,7 +2465,7 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry>
+  <varlistentry id="protocol-replication-base-backup" xreflabel="BASE_BACKUP">
     <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ] [ <literal>NOVERIFY_CHECKSUMS</literal> ]
      <indexterm><primary>BASE_BACKUP</primary></indexterm>
     </term>
