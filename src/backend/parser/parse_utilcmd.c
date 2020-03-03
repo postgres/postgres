@@ -3698,8 +3698,16 @@ transformPartitionCmd(CreateStmtContext *cxt, PartitionCmd *cmd)
 														 cmd->bound);
 			break;
 		case RELKIND_PARTITIONED_INDEX:
-			/* nothing to check */
-			Assert(cmd->bound == NULL);
+
+			/*
+			 * A partitioned index cannot have a partition bound set.  ALTER
+			 * INDEX prevents that with its grammar, but not ALTER TABLE.
+			 */
+			if (cmd->bound != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("\"%s\" is not a partitioned table",
+								RelationGetRelationName(parentRel))));
 			break;
 		case RELKIND_RELATION:
 			/* the table must be partitioned */

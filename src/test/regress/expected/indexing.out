@@ -121,6 +121,23 @@ Partition of: idxparti2
 No partition constraint
 btree, for table "public.idxpart1"
 
+-- Forbid ALTER TABLE when attaching or detaching an index to a partition.
+create index idxpart_c on only idxpart (c);
+create index idxpart1_c on idxpart1 (c);
+alter table idxpart_c attach partition idxpart1_c for values from (10) to (20);
+ERROR:  "idxpart_c" is not a partitioned table
+alter index idxpart_c attach partition idxpart1_c;
+select relname, relpartbound from pg_class
+  where relname in ('idxpart_c', 'idxpart1_c')
+  order by relname;
+  relname   | relpartbound 
+------------+--------------
+ idxpart1_c | 
+ idxpart_c  | 
+(2 rows)
+
+alter table idxpart_c detach partition idxpart1_c;
+ERROR:  "idxpart_c" is not a table
 drop table idxpart;
 -- If a partition already has an index, don't create a duplicative one
 create table idxpart (a int, b int) partition by range (a, b);
