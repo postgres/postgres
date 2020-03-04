@@ -1473,7 +1473,7 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 						 constraintId);
 
 				deconstruct_array(DatumGetArrayTypeP(datum),
-								  OIDOID, sizeof(Oid), true, 'i',
+								  OIDOID, sizeof(Oid), true, TYPALIGN_INT,
 								  &elems, NULL, &nElems);
 
 				for (i = 0; i < nElems; i++)

@@ -10470,7 +10470,7 @@ ProcessGUCArray(ArrayType *array,
 					  -1 /* varlenarray */ ,
 					  -1 /* TEXT's typlen */ ,
 					  false /* TEXT's typbyval */ ,
-					  'i' /* TEXT's typalign */ ,
+					  TYPALIGN_INT /* TEXT's typalign */ ,
 					  &isnull);
 
 		if (isnull)
@@ -10549,7 +10549,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 						  -1 /* varlenarray */ ,
 						  -1 /* TEXT's typlen */ ,
 						  false /* TEXT's typbyval */ ,
-						  'i' /* TEXT's typalign */ ,
+						  TYPALIGN_INT /* TEXT's typalign */ ,
 						  &isnull);
 			if (isnull)
 				continue;
@@ -10569,12 +10569,12 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 					  -1 /* varlena array */ ,
 					  -1 /* TEXT's typlen */ ,
 					  false /* TEXT's typbyval */ ,
-					  'i' /* TEXT's typalign */ );
+					  TYPALIGN_INT /* TEXT's typalign */ );
 	}
 	else
 		a = construct_array(&datum, 1,
 							TEXTOID,
-							-1, false, 'i');
+							-1, false, TYPALIGN_INT);
 
 	return a;
 }
@@ -10620,7 +10620,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 					  -1 /* varlenarray */ ,
 					  -1 /* TEXT's typlen */ ,
 					  false /* TEXT's typbyval */ ,
-					  'i' /* TEXT's typalign */ ,
+					  TYPALIGN_INT /* TEXT's typalign */ ,
 					  &isnull);
 		if (isnull)
 			continue;
@@ -10639,11 +10639,11 @@ GUCArrayDelete(ArrayType *array, const char *name)
 								 -1 /* varlenarray */ ,
 								 -1 /* TEXT's typlen */ ,
 								 false /* TEXT's typbyval */ ,
-								 'i' /* TEXT's typalign */ );
+								 TYPALIGN_INT /* TEXT's typalign */ );
 		else
 			newarray = construct_array(&d, 1,
 									   TEXTOID,
-									   -1, false, 'i');
+									   -1, false, TYPALIGN_INT);
 
 		index++;
 	}
@@ -10686,7 +10686,7 @@ GUCArrayReset(ArrayType *array)
 					  -1 /* varlenarray */ ,
 					  -1 /* TEXT's typlen */ ,
 					  false /* TEXT's typbyval */ ,
-					  'i' /* TEXT's typalign */ ,
+					  TYPALIGN_INT /* TEXT's typalign */ ,
 					  &isnull);
 		if (isnull)
 			continue;
@@ -10707,11 +10707,11 @@ GUCArrayReset(ArrayType *array)
 								 -1 /* varlenarray */ ,
 								 -1 /* TEXT's typlen */ ,
 								 false /* TEXT's typbyval */ ,
-								 'i' /* TEXT's typalign */ );
+								 TYPALIGN_INT /* TEXT's typalign */ );
 		else
 			newarray = construct_array(&d, 1,
 									   TEXTOID,
-									   -1, false, 'i');
+									   -1, false, TYPALIGN_INT);
 
 		index++;
 		pfree(val);

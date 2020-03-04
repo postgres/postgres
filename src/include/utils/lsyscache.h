@@ -186,6 +186,6 @@ extern Oid	get_index_column_opclass(Oid index_oid, int attno);
 /* type_is_array_domain accepts both plain arrays and domains over arrays */
 #define type_is_array_domain(typid)  (get_base_element_type(typid) != InvalidOid)
 
-#define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
+#define TypeIsToastable(typid)	(get_typstorage(typid) != TYPSTORAGE_PLAIN)
 
 #endif							/* LSYSCACHE_H */

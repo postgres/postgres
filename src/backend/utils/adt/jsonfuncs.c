@@ -1019,7 +1019,7 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 	if (array_contains_nulls(path))
 		PG_RETURN_NULL();
 
-	deconstruct_array(path, TEXTOID, -1, false, 'i',
+	deconstruct_array(path, TEXTOID, -1, false, TYPALIGN_INT,
 					  &pathtext, &pathnulls, &npath);
 
 	tpath = palloc(npath * sizeof(char *));
@@ -1479,7 +1479,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	if (array_contains_nulls(path))
 		PG_RETURN_NULL();
 
-	deconstruct_array(path, TEXTOID, -1, false, 'i',
+	deconstruct_array(path, TEXTOID, -1, false, TYPALIGN_INT,
 					  &pathtext, &pathnulls, &npath);
 
 	/* Identify whether we have object, array, or scalar at top-level */
@@ -4361,7 +4361,7 @@ jsonb_delete_array(PG_FUNCTION_ARGS)
 	if (JB_ROOT_COUNT(in) == 0)
 		PG_RETURN_JSONB_P(in);
 
-	deconstruct_array(keys, TEXTOID, -1, false, 'i',
+	deconstruct_array(keys, TEXTOID, -1, false, TYPALIGN_INT,
 					  &keys_elems, &keys_nulls, &keys_len);
 
 	if (keys_len == 0)
@@ -4511,7 +4511,7 @@ jsonb_set(PG_FUNCTION_ARGS)
 	if (JB_ROOT_COUNT(in) == 0 && !create)
 		PG_RETURN_JSONB_P(in);
 
-	deconstruct_array(path, TEXTOID, -1, false, 'i',
+	deconstruct_array(path, TEXTOID, -1, false, TYPALIGN_INT,
 					  &path_elems, &path_nulls, &path_len);
 
 	if (path_len == 0)
@@ -4622,7 +4622,7 @@ jsonb_delete_path(PG_FUNCTION_ARGS)
 	if (JB_ROOT_COUNT(in) == 0)
 		PG_RETURN_JSONB_P(in);
 
-	deconstruct_array(path, TEXTOID, -1, false, 'i',
+	deconstruct_array(path, TEXTOID, -1, false, TYPALIGN_INT,
 					  &path_elems, &path_nulls, &path_len);
 
 	if (path_len == 0)
@@ -4665,7 +4665,7 @@ jsonb_insert(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot set path in scalar")));
 
-	deconstruct_array(path, TEXTOID, -1, false, 'i',
+	deconstruct_array(path, TEXTOID, -1, false, TYPALIGN_INT,
 					  &path_elems, &path_nulls, &path_len);
 
 	if (path_len == 0)

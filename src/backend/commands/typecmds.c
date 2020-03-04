@@ -132,8 +132,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	Oid			elemType = InvalidOid;
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
-	char		alignment = 'i';	/* default alignment */
-	char		storage = 'p';	/* default TOAST storage method */
+	char		alignment = TYPALIGN_INT;	/* default alignment */
+	char		storage = TYPSTORAGE_PLAIN; /* default TOAST storage method */
 	Oid			collation = InvalidOid;
 	DefElem    *likeTypeEl = NULL;
 	DefElem    *internalLengthEl = NULL;
@@ -382,16 +382,16 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		if (pg_strcasecmp(a, "double") == 0 ||
 			pg_strcasecmp(a, "float8") == 0 ||
 			pg_strcasecmp(a, "pg_catalog.float8") == 0)
-			alignment = 'd';
+			alignment = TYPALIGN_DOUBLE;
 		else if (pg_strcasecmp(a, "int4") == 0 ||
 				 pg_strcasecmp(a, "pg_catalog.int4") == 0)
-			alignment = 'i';
+			alignment = TYPALIGN_INT;
 		else if (pg_strcasecmp(a, "int2") == 0 ||
 				 pg_strcasecmp(a, "pg_catalog.int2") == 0)
-			alignment = 's';
+			alignment = TYPALIGN_SHORT;
 		else if (pg_strcasecmp(a, "char") == 0 ||
 				 pg_strcasecmp(a, "pg_catalog.bpchar") == 0)
-			alignment = 'c';
+			alignment = TYPALIGN_CHAR;
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -402,13 +402,13 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		char	   *a = defGetString(storageEl);
 
 		if (pg_strcasecmp(a, "plain") == 0)
-			storage = 'p';
+			storage = TYPSTORAGE_PLAIN;
 		else if (pg_strcasecmp(a, "external") == 0)
-			storage = 'e';
+			storage = TYPSTORAGE_EXTERNAL;
 		else if (pg_strcasecmp(a, "extended") == 0)
-			storage = 'x';
+			storage = TYPSTORAGE_EXTENDED;
 		else if (pg_strcasecmp(a, "main") == 0)
-			storage = 'm';
+			storage = TYPSTORAGE_MAIN;
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -643,8 +643,8 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	 */
 	array_type = makeArrayTypeName(typeName, typeNamespace);
 
-	/* alignment must be 'i' or 'd' for arrays */
-	alignment = (alignment == 'd') ? 'd' : 'i';
+	/* alignment must be TYPALIGN_INT or TYPALIGN_DOUBLE for arrays */
+	alignment = (alignment == TYPALIGN_DOUBLE) ? TYPALIGN_DOUBLE : TYPALIGN_INT;
 
 	TypeCreate(array_oid,		/* force assignment of this type OID */
 			   array_type,		/* type name */
@@ -672,7 +672,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 			   NULL,			/* binary default isn't sent either */
 			   false,			/* never passed by value */
 			   alignment,		/* see above */
-			   'x',				/* ARRAY is always toastable */
+			   TYPSTORAGE_EXTENDED, /* ARRAY is always toastable */
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
 			   false,			/* Type NOT NULL */
@@ -1078,8 +1078,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	domainArrayName = makeArrayTypeName(domainName, domainNamespace);
 
-	/* alignment must be 'i' or 'd' for arrays */
-	alignment = (alignment == 'd') ? 'd' : 'i';
+	/* alignment must be TYPALIGN_INT or TYPALIGN_DOUBLE for arrays */
+	alignment = (alignment == TYPALIGN_DOUBLE) ? TYPALIGN_DOUBLE : TYPALIGN_INT;
 
 	TypeCreate(domainArrayOid,	/* force assignment of this type OID */
 			   domainArrayName, /* type name */
@@ -1107,7 +1107,7 @@ DefineDomain(CreateDomainStmt *stmt)
 			   NULL,			/* binary default isn't sent either */
 			   false,			/* never passed by value */
 			   alignment,		/* see above */
-			   'x',				/* ARRAY is always toastable */
+			   TYPSTORAGE_EXTENDED, /* ARRAY is always toastable */
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
 			   false,			/* Type NOT NULL */
@@ -1221,8 +1221,8 @@ DefineEnum(CreateEnumStmt *stmt)
 				   NULL,		/* never a default type value */
 				   NULL,		/* binary default isn't sent either */
 				   true,		/* always passed by value */
-				   'i',			/* int alignment */
-				   'p',			/* TOAST strategy always plain */
+				   TYPALIGN_INT,	/* int alignment */
+				   TYPSTORAGE_PLAIN,	/* TOAST strategy always plain */
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
@@ -1261,8 +1261,8 @@ DefineEnum(CreateEnumStmt *stmt)
 			   NULL,			/* never a default type value */
 			   NULL,			/* binary default isn't sent either */
 			   false,			/* never passed by value */
-			   'i',				/* enums have align i, so do their arrays */
-			   'x',				/* ARRAY is always toastable */
+			   TYPALIGN_INT,	/* enums have int align, so do their arrays */
+			   TYPSTORAGE_EXTENDED, /* ARRAY is always toastable */
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
 			   false,			/* Type NOT NULL */
@@ -1516,8 +1516,8 @@ DefineRange(CreateRangeStmt *stmt)
 	get_typlenbyvalalign(rangeSubtype,
 						 &subtyplen, &subtypbyval, &subtypalign);
 
-	/* alignment must be 'i' or 'd' for ranges */
-	alignment = (subtypalign == 'd') ? 'd' : 'i';
+	/* alignment must be TYPALIGN_INT or TYPALIGN_DOUBLE for ranges */
+	alignment = (subtypalign == TYPALIGN_DOUBLE) ? TYPALIGN_DOUBLE : TYPALIGN_INT;
 
 	/* Allocate OID for array type */
 	rangeArrayOid = AssignTypeArrayOid();
@@ -1550,7 +1550,7 @@ DefineRange(CreateRangeStmt *stmt)
 				   NULL,		/* no binary form available either */
 				   false,		/* never passed by value */
 				   alignment,	/* alignment */
-				   'x',			/* TOAST strategy (always extended) */
+				   TYPSTORAGE_EXTENDED, /* TOAST strategy (always extended) */
 				   -1,			/* typMod (Domains only) */
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
@@ -1592,7 +1592,7 @@ DefineRange(CreateRangeStmt *stmt)
 			   NULL,			/* binary default isn't sent either */
 			   false,			/* never passed by value */
 			   alignment,		/* alignment - same as range's */
-			   'x',				/* ARRAY is always toastable */
+			   TYPSTORAGE_EXTENDED, /* ARRAY is always toastable */
 			   -1,				/* typMod (Domains only) */
 			   0,				/* Array dimensions of typbasetype */
 			   false,			/* Type NOT NULL */

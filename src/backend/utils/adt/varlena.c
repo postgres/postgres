@@ -4754,7 +4754,7 @@ text_to_array_internal(PG_FUNCTION_ARGS)
 			/* XXX: this hardcodes assumptions about the text type */
 			PG_RETURN_ARRAYTYPE_P(construct_md_array(elems, nulls,
 													 1, dims, lbs,
-													 TEXTOID, -1, false, 'i'));
+													 TEXTOID, -1, false, TYPALIGN_INT));
 		}
 
 		text_position_setup(inputstring, fldsep, PG_GET_COLLATION(), &state);

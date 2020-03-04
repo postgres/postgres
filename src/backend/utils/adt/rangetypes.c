@@ -2389,7 +2389,7 @@ range_contains_elem_internal(TypeCacheEntry *typcache, const RangeType *r, Datum
 
 /* Does datatype allow packing into the 1-byte-header varlena format? */
 #define TYPE_IS_PACKABLE(typlen, typstorage) \
-	((typlen) == -1 && (typstorage) != 'p')
+	((typlen) == -1 && (typstorage) != TYPSTORAGE_PLAIN)
 
 /*
  * Increment data_length by the space needed by the datum, including any
@@ -2473,7 +2473,7 @@ datum_write(Pointer ptr, Datum datum, bool typbyval, char typalign,
 	else if (typlen == -2)
 	{
 		/* cstring ... never needs alignment */
-		Assert(typalign == 'c');
+		Assert(typalign == TYPALIGN_CHAR);
 		data_length = strlen(DatumGetCString(datum)) + 1;
 		memcpy(ptr, DatumGetPointer(datum), data_length);
 	}

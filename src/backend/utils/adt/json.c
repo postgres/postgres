@@ -1142,7 +1142,7 @@ json_object(PG_FUNCTION_ARGS)
 	}
 
 	deconstruct_array(in_array,
-					  TEXTOID, -1, false, 'i',
+					  TEXTOID, -1, false, TYPALIGN_INT,
 					  &in_datums, &in_nulls, &in_count);
 
 	count = in_count / 2;
@@ -1219,11 +1219,11 @@ json_object_two_arg(PG_FUNCTION_ARGS)
 		PG_RETURN_DATUM(CStringGetTextDatum("{}"));
 
 	deconstruct_array(key_array,
-					  TEXTOID, -1, false, 'i',
+					  TEXTOID, -1, false, TYPALIGN_INT,
 					  &key_datums, &key_nulls, &key_count);
 
 	deconstruct_array(val_array,
-					  TEXTOID, -1, false, 'i',
+					  TEXTOID, -1, false, TYPALIGN_INT,
 					  &val_datums, &val_nulls, &val_count);
 
 	if (key_count != val_count)

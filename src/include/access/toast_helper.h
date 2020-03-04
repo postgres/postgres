@@ -20,12 +20,12 @@
  * Information about one column of a tuple being toasted.
  *
  * NOTE: toast_action[i] can have these values:
- *		' '		default handling
- *		'p'		already processed --- don't touch it
- *		'x'		incompressible, but OK to move off
+ *		' '						default handling
+ *		TYPSTORAGE_PLAIN		already processed --- don't touch it
+ *		TYPSTORAGE_EXTENDED		incompressible, but OK to move off
  *
  * NOTE: toast_attr[i].tai_size is only made valid for varlena attributes with
- * toast_action[i] different from 'p'.
+ * toast_action[i] different from TYPSTORAGE_PLAIN.
  */
 typedef struct
 {

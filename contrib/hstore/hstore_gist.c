@@ -555,7 +555,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 		int			i;
 
 		deconstruct_array(query,
-						  TEXTOID, -1, false, 'i',
+						  TEXTOID, -1, false, TYPALIGN_INT,
 						  &key_datums, &key_nulls, &key_count);
 
 		for (i = 0; res && i < key_count; ++i)
@@ -578,7 +578,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 		int			i;
 
 		deconstruct_array(query,
-						  TEXTOID, -1, false, 'i',
+						  TEXTOID, -1, false, TYPALIGN_INT,
 						  &key_datums, &key_nulls, &key_count);
 
 		res = false;

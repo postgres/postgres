@@ -892,7 +892,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 		int			noldoptions;
 		int			i;
 
-		deconstruct_array(array, TEXTOID, -1, false, 'i',
+		deconstruct_array(array, TEXTOID, -1, false, TYPALIGN_INT,
 						  &oldoptions, NULL, &noldoptions);
 
 		for (i = 0; i < noldoptions; i++)
@@ -1060,7 +1060,7 @@ untransformRelOptions(Datum options)
 
 	array = DatumGetArrayTypeP(options);
 
-	deconstruct_array(array, TEXTOID, -1, false, 'i',
+	deconstruct_array(array, TEXTOID, -1, false, TYPALIGN_INT,
 					  &optiondatums, NULL, &noptions);
 
 	for (i = 0; i < noptions; i++)
@@ -1201,7 +1201,7 @@ parseRelOptions(Datum options, bool validate, relopt_kind kind,
 		Datum	   *optiondatums;
 		int			noptions;
 
-		deconstruct_array(array, TEXTOID, -1, false, 'i',
+		deconstruct_array(array, TEXTOID, -1, false, TYPALIGN_INT,
 						  &optiondatums, NULL, &noptions);
 
 		for (i = 0; i < noptions; i++)

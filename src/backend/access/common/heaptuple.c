@@ -24,7 +24,7 @@
  * that have been put into a tuple but never sent to disk.  Hopefully there
  * are few such places.
  *
- * Varlenas still have alignment 'i' (or 'd') in pg_type/pg_attribute, since
+ * Varlenas still have alignment INT (or DOUBLE) in pg_type/pg_attribute, since
  * that's the normal requirement for the untoasted format.  But we ignore that
  * for the 1-byte-header format.  This means that the actual start position
  * of a varlena datum may vary depending on which format it has.  To determine
@@ -39,7 +39,7 @@
  * catalog, this is now risky: it's only safe if the preceding field is
  * word-aligned, so that there will never be any padding.
  *
- * We don't pack varlenas whose attstorage is 'p', since the data type
+ * We don't pack varlenas whose attstorage is PLAIN, since the data type
  * isn't expecting to have to detoast values.  This is used in particular
  * by oidvector and int2vector, which are used in the system catalogs
  * and we'd like to still refer to them via C struct offsets.
@@ -66,10 +66,10 @@
 
 /* Does att's datatype allow packing into the 1-byte-header varlena format? */
 #define ATT_IS_PACKABLE(att) \
-	((att)->attlen == -1 && (att)->attstorage != 'p')
+	((att)->attlen == -1 && (att)->attstorage != TYPSTORAGE_PLAIN)
 /* Use this if it's already known varlena */
 #define VARLENA_ATT_IS_PACKABLE(att) \
-	((att)->attstorage != 'p')
+	((att)->attstorage != TYPSTORAGE_PLAIN)
 
 
 /* ----------------------------------------------------------------
@@ -274,7 +274,7 @@ fill_val(Form_pg_attribute att,
 	{
 		/* cstring ... never needs alignment */
 		*infomask |= HEAP_HASVARWIDTH;
-		Assert(att->attalign == 'c');
+		Assert(att->attalign == TYPALIGN_CHAR);
 		data_length = strlen(DatumGetCString(datum)) + 1;
 		memcpy(data, DatumGetPointer(datum), data_length);
 	}

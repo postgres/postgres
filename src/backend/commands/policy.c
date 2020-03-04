@@ -614,7 +614,7 @@ RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id)
 
 		/* This is the array for the new tuple */
 		role_ids = construct_array(role_oids, num_roles, OIDOID,
-								   sizeof(Oid), true, 'i');
+								   sizeof(Oid), true, TYPALIGN_INT);
 
 		replaces[Anum_pg_policy_polroles - 1] = true;
 		values[Anum_pg_policy_polroles - 1] = PointerGetDatum(role_ids);
@@ -735,7 +735,7 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	/* Collect role ids */
 	role_oids = policy_role_list_to_array(stmt->roles, &nitems);
 	role_ids = construct_array(role_oids, nitems, OIDOID,
-							   sizeof(Oid), true, 'i');
+							   sizeof(Oid), true, TYPALIGN_INT);
 
 	/* Parse the supplied clause */
 	qual_pstate = make_parsestate(NULL);
@@ -919,7 +919,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 	{
 		role_oids = policy_role_list_to_array(stmt->roles, &nitems);
 		role_ids = construct_array(role_oids, nitems, OIDOID,
-								   sizeof(Oid), true, 'i');
+								   sizeof(Oid), true, TYPALIGN_INT);
 	}
 
 	/* Get id of table.  Also handles permissions checks. */

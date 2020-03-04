@@ -2023,7 +2023,7 @@ heapam_relation_needs_toast_table(Relation rel)
 				maxlength_unknown = true;
 			else
 				data_length += maxlen;
-			if (att->attstorage != 'p')
+			if (att->attstorage != TYPSTORAGE_PLAIN)
 				has_toastable_attrs = true;
 		}
 	}

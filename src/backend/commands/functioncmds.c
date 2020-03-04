@@ -433,9 +433,9 @@ interpret_function_parameter_list(ParseState *pstate,
 	if (outCount > 0 || varCount > 0)
 	{
 		*allParameterTypes = construct_array(allTypes, parameterCount, OIDOID,
-											 sizeof(Oid), true, 'i');
+											 sizeof(Oid), true, TYPALIGN_INT);
 		*parameterModes = construct_array(paramModes, parameterCount, CHAROID,
-										  1, true, 'c');
+										  1, true, TYPALIGN_CHAR);
 		if (outCount > 1)
 			*requiredResultType = RECORDOID;
 		/* otherwise we set requiredResultType correctly above */
@@ -454,7 +454,7 @@ interpret_function_parameter_list(ParseState *pstate,
 				paramNames[i] = CStringGetTextDatum("");
 		}
 		*parameterNames = construct_array(paramNames, parameterCount, TEXTOID,
-										  -1, false, 'i');
+										  -1, false, TYPALIGN_INT);
 	}
 	else
 		*parameterNames = NULL;
@@ -1107,7 +1107,7 @@ CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt)
 		foreach(lc, trftypes_list)
 			arr[i++] = ObjectIdGetDatum(lfirst_oid(lc));
 		trftypes = construct_array(arr, list_length(trftypes_list),
-								   OIDOID, sizeof(Oid), true, 'i');
+								   OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 	}
 	else
 	{

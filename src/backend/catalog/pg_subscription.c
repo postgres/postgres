@@ -216,7 +216,7 @@ textarray_to_stringlist(ArrayType *textarray)
 	List	   *res = NIL;
 
 	deconstruct_array(textarray,
-					  TEXTOID, -1, false, 'i',
+					  TEXTOID, -1, false, TYPALIGN_INT,
 					  &elems, NULL, &nelems);
 
 	if (nelems == 0)

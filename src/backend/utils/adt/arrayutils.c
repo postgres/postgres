@@ -220,7 +220,7 @@ ArrayGetIntegerTypmods(ArrayType *arr, int *n)
 
 	/* hardwired knowledge about cstring's representation details here */
 	deconstruct_array(arr, CSTRINGOID,
-					  -2, false, 'c',
+					  -2, false, TYPALIGN_CHAR,
 					  &elem_values, NULL, n);
 
 	result = (int32 *) palloc(*n * sizeof(int32));

@@ -560,14 +560,18 @@ hash_metapage_info(PG_FUNCTION_ARGS)
 	values[j++] = PointerGetDatum(construct_array(spares,
 												  HASH_MAX_SPLITPOINTS,
 												  INT8OID,
-												  8, FLOAT8PASSBYVAL, 'd'));
+												  sizeof(int64),
+												  FLOAT8PASSBYVAL,
+												  TYPALIGN_DOUBLE));
 
 	for (i = 0; i < HASH_MAX_BITMAPS; i++)
 		mapp[i] = Int64GetDatum((int64) metad->hashm_mapp[i]);
 	values[j++] = PointerGetDatum(construct_array(mapp,
 												  HASH_MAX_BITMAPS,
 												  INT8OID,
-												  8, FLOAT8PASSBYVAL, 'd'));
+												  sizeof(int64),
+												  FLOAT8PASSBYVAL,
+												  TYPALIGN_DOUBLE));
 
 	tuple = heap_form_tuple(tupleDesc, values, nulls);
 

@@ -2189,7 +2189,7 @@ get_typalign(Oid typid)
 		return result;
 	}
 	else
-		return 'i';
+		return TYPALIGN_INT;
 }
 #endif
 
@@ -2209,7 +2209,7 @@ get_typstorage(Oid typid)
 		return result;
 	}
 	else
-		return 'p';
+		return TYPSTORAGE_PLAIN;
 }
 
 /*

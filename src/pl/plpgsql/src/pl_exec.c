@@ -1456,7 +1456,7 @@ plpgsql_fulfill_promise(PLpgSQL_execstate *estate,
 								  PointerGetDatum(construct_md_array(elems, NULL,
 																	 1, dims, lbs,
 																	 TEXTOID,
-																	 -1, false, 'i')),
+																	 -1, false, TYPALIGN_INT)),
 								  false, true);
 			}
 			else

@@ -886,7 +886,7 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 					j;
 
 		deconstruct_array(query,
-						  TEXTOID, -1, false, 'i',
+						  TEXTOID, -1, false, TYPALIGN_INT,
 						  &key_datums, &key_nulls, &key_count);
 
 		entries = (Datum *) palloc(sizeof(Datum) * key_count);

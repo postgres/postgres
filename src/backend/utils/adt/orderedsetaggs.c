@@ -755,7 +755,7 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 
 	deconstruct_array(param, FLOAT8OID,
 	/* hard-wired info on type float8 */
-					  8, FLOAT8PASSBYVAL, 'd',
+					  sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE,
 					  &percentiles_datum,
 					  &percentiles_null,
 					  &num_percentiles);
@@ -879,7 +879,7 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 
 	deconstruct_array(param, FLOAT8OID,
 	/* hard-wired info on type float8 */
-					  8, FLOAT8PASSBYVAL, 'd',
+					  sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE,
 					  &percentiles_datum,
 					  &percentiles_null,
 					  &num_percentiles);
@@ -1002,7 +1002,9 @@ percentile_cont_float8_multi_final(PG_FUNCTION_ARGS)
 	return percentile_cont_multi_final_common(fcinfo,
 											  FLOAT8OID,
 	/* hard-wired info on type float8 */
-											  8, FLOAT8PASSBYVAL, 'd',
+											  sizeof(float8),
+											  FLOAT8PASSBYVAL,
+											  TYPALIGN_DOUBLE,
 											  float8_lerp);
 }
 
@@ -1015,7 +1017,7 @@ percentile_cont_interval_multi_final(PG_FUNCTION_ARGS)
 	return percentile_cont_multi_final_common(fcinfo,
 											  INTERVALOID,
 	/* hard-wired info on type interval */
-											  16, false, 'd',
+											  16, false, TYPALIGN_DOUBLE,
 											  interval_lerp);
 }
 

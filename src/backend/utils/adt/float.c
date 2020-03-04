@@ -2878,7 +2878,7 @@ float8_combine(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 3,
 								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, 'd');
+								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -2950,7 +2950,7 @@ float8_accum(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 3,
 								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, 'd');
+								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3024,7 +3024,7 @@ float4_accum(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 3,
 								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, 'd');
+								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3256,7 +3256,7 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 6,
 								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, 'd');
+								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3397,7 +3397,7 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 
 		result = construct_array(transdatums, 6,
 								 FLOAT8OID,
-								 sizeof(float8), FLOAT8PASSBYVAL, 'd');
+								 sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}

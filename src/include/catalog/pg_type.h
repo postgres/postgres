@@ -155,6 +155,7 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * 's' = SHORT alignment (2 bytes on most machines).
 	 * 'i' = INT alignment (4 bytes on most machines).
 	 * 'd' = DOUBLE alignment (8 bytes on many machines, but by no means all).
+	 * (Use the TYPALIGN macros below for these.)
 	 *
 	 * See include/access/tupmacs.h for the macros that compute these
 	 * alignment requirements.  Note also that we allow the nominal alignment
@@ -176,6 +177,10 @@ CATALOG(pg_type,1247,TypeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71,TypeRelati
 	 * 'e' EXTERNAL   external storage possible, don't try to compress
 	 * 'x' EXTENDED   try to compress and store external if required
 	 * 'm' MAIN		  like 'x' but try to keep in main tuple
+	 * (Use the TYPSTORAGE macros below for these.)
+	 *
+	 * Note that 'm' fields can also be moved out to secondary storage,
+	 * but only as a last resort ('e' and 'x' fields are moved first).
 	 * ----------------
 	 */
 	char		typstorage BKI_DEFAULT(p) BKI_ARRAY_DEFAULT(x);
@@ -277,6 +282,16 @@ typedef FormData_pg_type *Form_pg_type;
 #define  TYPCATEGORY_USER		'U'
 #define  TYPCATEGORY_BITSTRING	'V' /* er ... "varbit"? */
 #define  TYPCATEGORY_UNKNOWN	'X'
+
+#define  TYPALIGN_CHAR			'c' /* char alignment (i.e. unaligned) */
+#define  TYPALIGN_SHORT			's' /* short alignment (typically 2 bytes) */
+#define  TYPALIGN_INT			'i' /* int alignment (typically 4 bytes) */
+#define  TYPALIGN_DOUBLE		'd' /* double alignment (often 8 bytes) */
+
+#define  TYPSTORAGE_PLAIN		'p' /* type not prepared for toasting */
+#define  TYPSTORAGE_EXTERNAL	'e' /* toastable, don't try to compress */
+#define  TYPSTORAGE_EXTENDED	'x' /* fully toastable */
+#define  TYPSTORAGE_MAIN		'm' /* like 'x' but try to store inline */
 
 /* Is a type OID a polymorphic pseudotype?	(Beware of multiple evaluation) */
 #define IsPolymorphicType(typid)  \

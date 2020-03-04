@@ -358,7 +358,7 @@ current_schemas(PG_FUNCTION_ARGS)
 							NAMEOID,
 							NAMEDATALEN,	/* sizeof(Name) */
 							false,	/* Name is not by-val */
-							'c');	/* alignment of Name */
+							TYPALIGN_CHAR); /* alignment of Name */
 
 	PG_RETURN_POINTER(array);
 }

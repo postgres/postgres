@@ -10756,22 +10756,22 @@ dumpBaseType(Archive *fout, TypeInfo *tyinfo)
 		appendStringLiteralAH(q, typdelim, fout);
 	}
 
-	if (strcmp(typalign, "c") == 0)
+	if (*typalign == TYPALIGN_CHAR)
 		appendPQExpBufferStr(q, ",\n    ALIGNMENT = char");
-	else if (strcmp(typalign, "s") == 0)
+	else if (*typalign == TYPALIGN_SHORT)
 		appendPQExpBufferStr(q, ",\n    ALIGNMENT = int2");
-	else if (strcmp(typalign, "i") == 0)
+	else if (*typalign == TYPALIGN_INT)
 		appendPQExpBufferStr(q, ",\n    ALIGNMENT = int4");
-	else if (strcmp(typalign, "d") == 0)
+	else if (*typalign == TYPALIGN_DOUBLE)
 		appendPQExpBufferStr(q, ",\n    ALIGNMENT = double");
 
-	if (strcmp(typstorage, "p") == 0)
+	if (*typstorage == TYPSTORAGE_PLAIN)
 		appendPQExpBufferStr(q, ",\n    STORAGE = plain");
-	else if (strcmp(typstorage, "e") == 0)
+	else if (*typstorage == TYPSTORAGE_EXTERNAL)
 		appendPQExpBufferStr(q, ",\n    STORAGE = external");
-	else if (strcmp(typstorage, "x") == 0)
+	else if (*typstorage == TYPSTORAGE_EXTENDED)
 		appendPQExpBufferStr(q, ",\n    STORAGE = extended");
-	else if (strcmp(typstorage, "m") == 0)
+	else if (*typstorage == TYPSTORAGE_MAIN)
 		appendPQExpBufferStr(q, ",\n    STORAGE = main");
 
 	if (strcmp(typbyval, "t") == 0)
@@ -16129,17 +16129,17 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			{
 				switch (tbinfo->attstorage[j])
 				{
-					case 'p':
+					case TYPSTORAGE_PLAIN:
 						storage = "PLAIN";
 						break;
-					case 'e':
+					case TYPSTORAGE_EXTERNAL:
 						storage = "EXTERNAL";
 						break;
-					case 'm':
-						storage = "MAIN";
-						break;
-					case 'x':
+					case TYPSTORAGE_EXTENDED:
 						storage = "EXTENDED";
+						break;
+					case TYPSTORAGE_MAIN:
+						storage = "MAIN";
 						break;
 					default:
 						storage = NULL;

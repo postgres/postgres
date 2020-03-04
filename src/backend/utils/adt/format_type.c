@@ -136,7 +136,8 @@ format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 */
 	array_base_type = typeform->typelem;
 
-	if (array_base_type != InvalidOid && typeform->typstorage != 'p')
+	if (array_base_type != InvalidOid &&
+		typeform->typstorage != TYPSTORAGE_PLAIN)
 	{
 		/* Switch our attention to the array element type */
 		ReleaseSysCache(tuple);

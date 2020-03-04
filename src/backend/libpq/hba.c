@@ -2390,7 +2390,7 @@ gethba_options(HbaLine *hba)
 	Assert(noptions <= MAX_HBA_OPTIONS);
 
 	if (noptions > 0)
-		return construct_array(options, noptions, TEXTOID, -1, false, 'i');
+		return construct_array(options, noptions, TEXTOID, -1, false, TYPALIGN_INT);
 	else
 		return NULL;
 }

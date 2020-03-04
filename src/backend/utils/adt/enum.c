@@ -602,7 +602,8 @@ enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 
 	/* and build the result array */
 	/* note this hardwires some details about the representation of Oid */
-	result = construct_array(elems, cnt, enumtypoid, sizeof(Oid), true, 'i');
+	result = construct_array(elems, cnt, enumtypoid,
+							 sizeof(Oid), true, TYPALIGN_INT);
 
 	pfree(elems);
 

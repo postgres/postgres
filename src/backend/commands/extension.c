@@ -2293,7 +2293,7 @@ convert_requires_to_datum(List *requires)
 	}
 	a = construct_array(datums, ndatums,
 						NAMEOID,
-						NAMEDATALEN, false, 'c');
+						NAMEDATALEN, false, TYPALIGN_CHAR);
 	return PointerGetDatum(a);
 }
 
@@ -2503,7 +2503,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 
 		a = construct_array(&elementDatum, 1,
 							OIDOID,
-							sizeof(Oid), true, 'i');
+							sizeof(Oid), true, TYPALIGN_INT);
 	}
 	else
 	{
@@ -2539,7 +2539,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 					  -1 /* varlena array */ ,
 					  sizeof(Oid) /* OID's typlen */ ,
 					  true /* OID's typbyval */ ,
-					  'i' /* OID's typalign */ );
+					  TYPALIGN_INT /* OID's typalign */ );
 	}
 	repl_val[Anum_pg_extension_extconfig - 1] = PointerGetDatum(a);
 	repl_repl[Anum_pg_extension_extconfig - 1] = true;
@@ -2556,7 +2556,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 
 		a = construct_array(&elementDatum, 1,
 							TEXTOID,
-							-1, false, 'i');
+							-1, false, TYPALIGN_INT);
 	}
 	else
 	{
@@ -2577,7 +2577,7 @@ pg_extension_config_dump(PG_FUNCTION_ARGS)
 					  -1 /* varlena array */ ,
 					  -1 /* TEXT's typlen */ ,
 					  false /* TEXT's typbyval */ ,
-					  'i' /* TEXT's typalign */ );
+					  TYPALIGN_INT /* TEXT's typalign */ );
 	}
 	repl_val[Anum_pg_extension_extcondition - 1] = PointerGetDatum(a);
 	repl_repl[Anum_pg_extension_extcondition - 1] = true;
@@ -2698,14 +2698,14 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 		int			i;
 
 		/* We already checked there are no nulls */
-		deconstruct_array(a, OIDOID, sizeof(Oid), true, 'i',
+		deconstruct_array(a, OIDOID, sizeof(Oid), true, TYPALIGN_INT,
 						  &dvalues, NULL, &nelems);
 
 		for (i = arrayIndex; i < arrayLength - 1; i++)
 			dvalues[i] = dvalues[i + 1];
 
 		a = construct_array(dvalues, arrayLength - 1,
-							OIDOID, sizeof(Oid), true, 'i');
+							OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 
 		repl_val[Anum_pg_extension_extconfig - 1] = PointerGetDatum(a);
 	}
@@ -2744,14 +2744,14 @@ extension_config_remove(Oid extensionoid, Oid tableoid)
 		int			i;
 
 		/* We already checked there are no nulls */
-		deconstruct_array(a, TEXTOID, -1, false, 'i',
+		deconstruct_array(a, TEXTOID, -1, false, TYPALIGN_INT,
 						  &dvalues, NULL, &nelems);
 
 		for (i = arrayIndex; i < arrayLength - 1; i++)
 			dvalues[i] = dvalues[i + 1];
 
 		a = construct_array(dvalues, arrayLength - 1,
-							TEXTOID, -1, false, 'i');
+							TEXTOID, -1, false, TYPALIGN_INT);
 
 		repl_val[Anum_pg_extension_extcondition - 1] = PointerGetDatum(a);
 	}

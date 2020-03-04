@@ -385,7 +385,7 @@ bt_page_print_tuples(FuncCallContext *fctx, struct user_args *uargs)
 													  nposting,
 													  TIDOID,
 													  sizeof(ItemPointerData),
-													  false, 's'));
+													  false, TYPALIGN_SHORT));
 		pfree(tids_datum);
 	}
 	else

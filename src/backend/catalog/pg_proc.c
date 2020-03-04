@@ -1171,7 +1171,7 @@ oid_array_to_list(Datum datum)
 
 	deconstruct_array(array,
 					  OIDOID,
-					  sizeof(Oid), true, 'i',
+					  sizeof(Oid), true, TYPALIGN_INT,
 					  &values, NULL, &nelems);
 	for (i = 0; i < nelems; i++)
 		result = lappend_oid(result, values[i]);

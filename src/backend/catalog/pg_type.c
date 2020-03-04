@@ -111,8 +111,8 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	values[Anum_pg_type_typmodin - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_type_typmodout - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_type_typanalyze - 1] = ObjectIdGetDatum(InvalidOid);
-	values[Anum_pg_type_typalign - 1] = CharGetDatum('i');
-	values[Anum_pg_type_typstorage - 1] = CharGetDatum('p');
+	values[Anum_pg_type_typalign - 1] = CharGetDatum(TYPALIGN_INT);
+	values[Anum_pg_type_typstorage - 1] = CharGetDatum(TYPSTORAGE_PLAIN);
 	values[Anum_pg_type_typnotnull - 1] = BoolGetDatum(false);
 	values[Anum_pg_type_typbasetype - 1] = ObjectIdGetDatum(InvalidOid);
 	values[Anum_pg_type_typtypmod - 1] = Int32GetDatum(-1);
@@ -259,7 +259,7 @@ TypeCreate(Oid newTypeOid,
 		 */
 		if (internalSize == (int16) sizeof(char))
 		{
-			if (alignment != 'c')
+			if (alignment != TYPALIGN_CHAR)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
@@ -267,7 +267,7 @@ TypeCreate(Oid newTypeOid,
 		}
 		else if (internalSize == (int16) sizeof(int16))
 		{
-			if (alignment != 's')
+			if (alignment != TYPALIGN_SHORT)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
@@ -275,7 +275,7 @@ TypeCreate(Oid newTypeOid,
 		}
 		else if (internalSize == (int16) sizeof(int32))
 		{
-			if (alignment != 'i')
+			if (alignment != TYPALIGN_INT)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
@@ -284,7 +284,7 @@ TypeCreate(Oid newTypeOid,
 #if SIZEOF_DATUM == 8
 		else if (internalSize == (int16) sizeof(Datum))
 		{
-			if (alignment != 'd')
+			if (alignment != TYPALIGN_DOUBLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
@@ -300,13 +300,14 @@ TypeCreate(Oid newTypeOid,
 	else
 	{
 		/* varlena types must have int align or better */
-		if (internalSize == -1 && !(alignment == 'i' || alignment == 'd'))
+		if (internalSize == -1 &&
+			!(alignment == TYPALIGN_INT || alignment == TYPALIGN_DOUBLE))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("alignment \"%c\" is invalid for variable-length type",
 							alignment)));
 		/* cstring must have char alignment */
-		if (internalSize == -2 && !(alignment == 'c'))
+		if (internalSize == -2 && !(alignment == TYPALIGN_CHAR))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("alignment \"%c\" is invalid for variable-length type",
@@ -314,7 +315,7 @@ TypeCreate(Oid newTypeOid,
 	}
 
 	/* Only varlena types can be toasted */
-	if (storage != 'p' && internalSize != -1)
+	if (storage != TYPSTORAGE_PLAIN && internalSize != -1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("fixed-size types must have storage PLAIN")));

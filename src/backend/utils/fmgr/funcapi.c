@@ -917,7 +917,7 @@ get_func_arg_info(HeapTuple procTup,
 	else
 	{
 		deconstruct_array(DatumGetArrayTypeP(proargnames),
-						  TEXTOID, -1, false, 'i',
+						  TEXTOID, -1, false, TYPALIGN_INT,
 						  &elems, NULL, &nelems);
 		if (nelems != numargs)	/* should not happen */
 			elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
@@ -1030,7 +1030,7 @@ get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != TEXTOID)
 		elog(ERROR, "proargnames is not a 1-D text array");
-	deconstruct_array(arr, TEXTOID, -1, false, 'i',
+	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
 					  &argnames, NULL, &numargs);
 	if (proargmodes != PointerGetDatum(NULL))
 	{
@@ -1143,7 +1143,7 @@ get_func_result_name(Oid functionId)
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != TEXTOID)
 			elog(ERROR, "proargnames is not a 1-D text array");
-		deconstruct_array(arr, TEXTOID, -1, false, 'i',
+		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
 						  &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
 
@@ -1290,7 +1290,7 @@ build_function_result_tupdesc_d(char prokind,
 			ARR_HASNULL(arr) ||
 			ARR_ELEMTYPE(arr) != TEXTOID)
 			elog(ERROR, "proargnames is not a 1-D text array");
-		deconstruct_array(arr, TEXTOID, -1, false, 'i',
+		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
 						  &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
 	}

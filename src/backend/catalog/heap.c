@@ -156,8 +156,8 @@ static const FormData_pg_attribute a1 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = false,
-	.attstorage = 'p',
-	.attalign = 's',
+	.attstorage = TYPSTORAGE_PLAIN,
+	.attalign = TYPALIGN_SHORT,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -170,8 +170,8 @@ static const FormData_pg_attribute a2 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = 'p',
-	.attalign = 'i',
+	.attstorage = TYPSTORAGE_PLAIN,
+	.attalign = TYPALIGN_INT,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -184,8 +184,8 @@ static const FormData_pg_attribute a3 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = 'p',
-	.attalign = 'i',
+	.attstorage = TYPSTORAGE_PLAIN,
+	.attalign = TYPALIGN_INT,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -198,8 +198,8 @@ static const FormData_pg_attribute a4 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = 'p',
-	.attalign = 'i',
+	.attstorage = TYPSTORAGE_PLAIN,
+	.attalign = TYPALIGN_INT,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -212,8 +212,8 @@ static const FormData_pg_attribute a5 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = 'p',
-	.attalign = 'i',
+	.attstorage = TYPSTORAGE_PLAIN,
+	.attalign = TYPALIGN_INT,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -232,8 +232,8 @@ static const FormData_pg_attribute a6 = {
 	.attcacheoff = -1,
 	.atttypmod = -1,
 	.attbyval = true,
-	.attstorage = 'p',
-	.attalign = 'i',
+	.attstorage = TYPSTORAGE_PLAIN,
+	.attalign = TYPALIGN_INT,
 	.attnotnull = true,
 	.attislocal = true,
 };
@@ -1053,8 +1053,8 @@ AddNewRelationType(const char *typeName,
 				   NULL,		/* default value - none */
 				   NULL,		/* default binary representation */
 				   false,		/* passed by reference */
-				   'd',			/* alignment - must be the largest! */
-				   'x',			/* fully TOASTable */
+				   TYPALIGN_DOUBLE, /* alignment - must be the largest! */
+				   TYPSTORAGE_EXTENDED, /* fully TOASTable */
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
 				   false,		/* Type NOT NULL */
@@ -1334,8 +1334,8 @@ heap_create_with_catalog(const char *relname,
 				   NULL,		/* default value - none */
 				   NULL,		/* default binary representation */
 				   false,		/* passed by reference */
-				   'd',			/* alignment - must be the largest! */
-				   'x',			/* fully TOASTable */
+				   TYPALIGN_DOUBLE, /* alignment - must be the largest! */
+				   TYPSTORAGE_EXTENDED, /* fully TOASTable */
 				   -1,			/* typmod */
 				   0,			/* array dimensions for typBaseType */
 				   false,		/* Type NOT NULL */

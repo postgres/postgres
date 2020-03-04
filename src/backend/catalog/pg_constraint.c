@@ -108,7 +108,7 @@ CreateConstraintEntry(const char *constraintName,
 		for (i = 0; i < constraintNKeys; i++)
 			conkey[i] = Int16GetDatum(constraintKey[i]);
 		conkeyArray = construct_array(conkey, constraintNKeys,
-									  INT2OID, 2, true, 's');
+									  INT2OID, 2, true, TYPALIGN_SHORT);
 	}
 	else
 		conkeyArray = NULL;
@@ -121,19 +121,19 @@ CreateConstraintEntry(const char *constraintName,
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = Int16GetDatum(foreignKey[i]);
 		confkeyArray = construct_array(fkdatums, foreignNKeys,
-									   INT2OID, 2, true, 's');
+									   INT2OID, 2, true, TYPALIGN_SHORT);
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = ObjectIdGetDatum(pfEqOp[i]);
 		conpfeqopArray = construct_array(fkdatums, foreignNKeys,
-										 OIDOID, sizeof(Oid), true, 'i');
+										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = ObjectIdGetDatum(ppEqOp[i]);
 		conppeqopArray = construct_array(fkdatums, foreignNKeys,
-										 OIDOID, sizeof(Oid), true, 'i');
+										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = ObjectIdGetDatum(ffEqOp[i]);
 		conffeqopArray = construct_array(fkdatums, foreignNKeys,
-										 OIDOID, sizeof(Oid), true, 'i');
+										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 	}
 	else
 	{
@@ -151,7 +151,7 @@ CreateConstraintEntry(const char *constraintName,
 		for (i = 0; i < constraintNKeys; i++)
 			opdatums[i] = ObjectIdGetDatum(exclOp[i]);
 		conexclopArray = construct_array(opdatums, constraintNKeys,
-										 OIDOID, sizeof(Oid), true, 'i');
+										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 	}
 	else
 		conexclopArray = NULL;

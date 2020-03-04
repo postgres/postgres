@@ -328,7 +328,7 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 		/* hard-wired knowledge about type RECORD: */
 		arg->typbyval = false;
 		arg->typlen = -1;
-		arg->typalign = 'd';
+		arg->typalign = TYPALIGN_DOUBLE;
 	}
 
 	/*
@@ -451,7 +451,7 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 		/* hard-wired knowledge about type RECORD: */
 		arg->typbyval = false;
 		arg->typlen = -1;
-		arg->typalign = 'd';
+		arg->typalign = TYPALIGN_DOUBLE;
 	}
 
 	/*

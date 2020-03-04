@@ -725,32 +725,32 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 		case TEXTARRAYOID:
 			att->attlen = -1;
 			att->attbyval = false;
-			att->attalign = 'i';
-			att->attstorage = 'x';
+			att->attalign = TYPALIGN_INT;
+			att->attstorage = TYPSTORAGE_EXTENDED;
 			att->attcollation = DEFAULT_COLLATION_OID;
 			break;
 
 		case BOOLOID:
 			att->attlen = 1;
 			att->attbyval = true;
-			att->attalign = 'c';
-			att->attstorage = 'p';
+			att->attalign = TYPALIGN_CHAR;
+			att->attstorage = TYPSTORAGE_PLAIN;
 			att->attcollation = InvalidOid;
 			break;
 
 		case INT4OID:
 			att->attlen = 4;
 			att->attbyval = true;
-			att->attalign = 'i';
-			att->attstorage = 'p';
+			att->attalign = TYPALIGN_INT;
+			att->attstorage = TYPSTORAGE_PLAIN;
 			att->attcollation = InvalidOid;
 			break;
 
 		case INT8OID:
 			att->attlen = 8;
 			att->attbyval = FLOAT8PASSBYVAL;
-			att->attalign = 'd';
-			att->attstorage = 'p';
+			att->attalign = TYPALIGN_DOUBLE;
+			att->attstorage = TYPSTORAGE_PLAIN;
 			att->attcollation = InvalidOid;
 			break;
 

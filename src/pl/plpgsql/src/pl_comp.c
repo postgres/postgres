@@ -2125,13 +2125,13 @@ build_datatype(HeapTuple typeTup, int32 typmod,
 		 */
 		typ->typisarray = (typeStruct->typlen == -1 &&
 						   OidIsValid(typeStruct->typelem) &&
-						   typeStruct->typstorage != 'p');
+						   typeStruct->typstorage != TYPSTORAGE_PLAIN);
 	}
 	else if (typeStruct->typtype == TYPTYPE_DOMAIN)
 	{
 		/* we can short-circuit looking up base types if it's not varlena */
 		typ->typisarray = (typeStruct->typlen == -1 &&
-						   typeStruct->typstorage != 'p' &&
+						   typeStruct->typstorage != TYPSTORAGE_PLAIN &&
 						   OidIsValid(get_base_element_type(typeStruct->typbasetype)));
 	}
 	else

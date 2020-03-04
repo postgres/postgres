@@ -110,14 +110,7 @@ CATALOG(pg_attribute,1249,AttributeRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(75,
 	/*----------
 	 * attstorage tells for VARLENA attributes, what the heap access
 	 * methods can do to it if a given tuple doesn't fit into a page.
-	 * Possible values are
-	 *		'p': Value must be stored plain always
-	 *		'e': Value can be stored in "secondary" relation (if relation
-	 *			 has one, see pg_class.reltoastrelid)
-	 *		'm': Value can be stored compressed inline
-	 *		'x': Value can be stored compressed inline or in "secondary"
-	 * Note that 'm' fields can also be moved out to secondary storage,
-	 * but only as a last resort ('e' and 'x' fields are moved first).
+	 * Possible values are as for pg_type.typstorage (see TYPSTORAGE macros).
 	 *----------
 	 */
 	char		attstorage;

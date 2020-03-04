@@ -589,7 +589,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 
 	/* build value */
 	Assert(cnt <= bitcnt);
-	a = construct_array(flags, cnt, TEXTOID, -1, false, 'i');
+	a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
 	values[0] = PointerGetDatum(a);
 
 	/*
@@ -611,7 +611,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 	if (cnt == 0)
 		a = construct_empty_array(TEXTOID);
 	else
-		a = construct_array(flags, cnt, TEXTOID, -1, false, 'i');
+		a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
 	pfree(flags);
 	values[1] = PointerGetDatum(a);
 

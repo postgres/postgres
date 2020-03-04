@@ -4036,7 +4036,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 
 		Assert(ARR_ELEMTYPE(namespaces) == TEXTOID);
 
-		deconstruct_array(namespaces, TEXTOID, -1, false, 'i',
+		deconstruct_array(namespaces, TEXTOID, -1, false, TYPALIGN_INT,
 						  &ns_names_uris, &ns_names_uris_nulls,
 						  &ns_count);
 

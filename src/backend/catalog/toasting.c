@@ -221,9 +221,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	 * toast :-(.  This is essential for chunk_data because type bytea is
 	 * toastable; hit the other two just to be sure.
 	 */
-	TupleDescAttr(tupdesc, 0)->attstorage = 'p';
-	TupleDescAttr(tupdesc, 1)->attstorage = 'p';
-	TupleDescAttr(tupdesc, 2)->attstorage = 'p';
+	TupleDescAttr(tupdesc, 0)->attstorage = TYPSTORAGE_PLAIN;
+	TupleDescAttr(tupdesc, 1)->attstorage = TYPSTORAGE_PLAIN;
+	TupleDescAttr(tupdesc, 2)->attstorage = TYPSTORAGE_PLAIN;
 
 	/*
 	 * Toast tables for regular relations go in pg_toast; those for temp

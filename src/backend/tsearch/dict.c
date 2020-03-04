@@ -73,7 +73,7 @@ ts_lexize(PG_FUNCTION_ARGS)
 						TEXTOID,
 						-1,
 						false,
-						'i');
+						TYPALIGN_INT);
 
 	ptr = res;
 	while (ptr->lexeme)

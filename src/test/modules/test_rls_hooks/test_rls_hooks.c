@@ -87,7 +87,7 @@ test_rls_hooks_permissive(CmdType cmdtype, Relation relation)
 
 	policy->policy_name = pstrdup("extension policy");
 	policy->polcmd = '*';
-	policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true, 'i');
+	policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 
 	/*
 	 * policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
@@ -152,7 +152,7 @@ test_rls_hooks_restrictive(CmdType cmdtype, Relation relation)
 
 	policy->policy_name = pstrdup("extension policy");
 	policy->polcmd = '*';
-	policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true, 'i');
+	policy->roles = construct_array(&role, 1, OIDOID, sizeof(Oid), true, TYPALIGN_INT);
 
 	n = makeFuncCall(list_make2(makeString("pg_catalog"),
 								makeString("current_user")), NIL, 0);

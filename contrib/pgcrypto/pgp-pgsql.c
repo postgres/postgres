@@ -787,11 +787,11 @@ parse_key_value_arrays(ArrayType *key_array, ArrayType *val_array,
 		return 0;
 
 	deconstruct_array(key_array,
-					  TEXTOID, -1, false, 'i',
+					  TEXTOID, -1, false, TYPALIGN_INT,
 					  &key_datums, &key_nulls, &key_count);
 
 	deconstruct_array(val_array,
-					  TEXTOID, -1, false, 'i',
+					  TEXTOID, -1, false, TYPALIGN_INT,
 					  &val_datums, &val_nulls, &val_count);
 
 	if (key_count != val_count)

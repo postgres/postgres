@@ -519,7 +519,7 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 	/* Construct array, using hardwired knowledge about int4 type */
 	PG_RETURN_ARRAYTYPE_P(construct_array(arrayelems, narrayelems,
 										  INT4OID,
-										  sizeof(int32), true, 'i'));
+										  sizeof(int32), true, TYPALIGN_INT));
 }
 
 
@@ -560,7 +560,7 @@ pg_safe_snapshot_blocking_pids(PG_FUNCTION_ARGS)
 	/* Construct array, using hardwired knowledge about int4 type */
 	PG_RETURN_ARRAYTYPE_P(construct_array(blocker_datums, num_blockers,
 										  INT4OID,
-										  sizeof(int32), true, 'i'));
+										  sizeof(int32), true, TYPALIGN_INT));
 }
 
 

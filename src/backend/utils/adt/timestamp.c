@@ -3421,7 +3421,7 @@ interval_accum(PG_FUNCTION_ARGS)
 	ArrayType  *result;
 
 	deconstruct_array(transarray,
-					  INTERVALOID, sizeof(Interval), false, 'd',
+					  INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE,
 					  &transdatums, NULL, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
@@ -3438,7 +3438,7 @@ interval_accum(PG_FUNCTION_ARGS)
 	transdatums[1] = IntervalPGetDatum(&N);
 
 	result = construct_array(transdatums, 2,
-							 INTERVALOID, sizeof(Interval), false, 'd');
+							 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -3461,7 +3461,7 @@ interval_combine(PG_FUNCTION_ARGS)
 	ArrayType  *result;
 
 	deconstruct_array(transarray1,
-					  INTERVALOID, sizeof(Interval), false, 'd',
+					  INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE,
 					  &transdatums1, NULL, &ndatums1);
 	if (ndatums1 != 2)
 		elog(ERROR, "expected 2-element interval array");
@@ -3470,7 +3470,7 @@ interval_combine(PG_FUNCTION_ARGS)
 	N1 = *(DatumGetIntervalP(transdatums1[1]));
 
 	deconstruct_array(transarray2,
-					  INTERVALOID, sizeof(Interval), false, 'd',
+					  INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE,
 					  &transdatums2, NULL, &ndatums2);
 	if (ndatums2 != 2)
 		elog(ERROR, "expected 2-element interval array");
@@ -3487,7 +3487,7 @@ interval_combine(PG_FUNCTION_ARGS)
 	transdatums1[1] = IntervalPGetDatum(&N1);
 
 	result = construct_array(transdatums1, 2,
-							 INTERVALOID, sizeof(Interval), false, 'd');
+							 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -3505,7 +3505,7 @@ interval_accum_inv(PG_FUNCTION_ARGS)
 	ArrayType  *result;
 
 	deconstruct_array(transarray,
-					  INTERVALOID, sizeof(Interval), false, 'd',
+					  INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE,
 					  &transdatums, NULL, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");
@@ -3522,7 +3522,7 @@ interval_accum_inv(PG_FUNCTION_ARGS)
 	transdatums[1] = IntervalPGetDatum(&N);
 
 	result = construct_array(transdatums, 2,
-							 INTERVALOID, sizeof(Interval), false, 'd');
+							 INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE);
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -3537,7 +3537,7 @@ interval_avg(PG_FUNCTION_ARGS)
 				N;
 
 	deconstruct_array(transarray,
-					  INTERVALOID, sizeof(Interval), false, 'd',
+					  INTERVALOID, sizeof(Interval), false, TYPALIGN_DOUBLE,
 					  &transdatums, NULL, &ndatums);
 	if (ndatums != 2)
 		elog(ERROR, "expected 2-element interval array");

@@ -357,7 +357,8 @@ filter_list_to_array(List *filterlist)
 		pfree(result);
 	}
 
-	return PointerGetDatum(construct_array(data, l, TEXTOID, -1, false, 'i'));
+	return PointerGetDatum(construct_array(data, l, TEXTOID,
+										   -1, false, TYPALIGN_INT));
 }
 
 /*

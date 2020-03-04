@@ -980,7 +980,7 @@ show_trgm(PG_FUNCTION_ARGS)
 						TEXTOID,
 						-1,
 						false,
-						'i');
+						TYPALIGN_INT);
 
 	for (i = 0; i < ARRNELEM(trg); i++)
 		pfree(DatumGetPointer(d[i]));
