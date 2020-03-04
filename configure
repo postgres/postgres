@@ -15505,6 +15505,19 @@ esac
 
 fi
 
+ac_fn_c_check_func "$LINENO" "link" "ac_cv_func_link"
+if test "x$ac_cv_func_link" = xyes; then :
+  $as_echo "#define HAVE_LINK 1" >>confdefs.h
+
+else
+  case " $LIBOBJS " in
+  *" link.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS link.$ac_objext"
+ ;;
+esac
+
+fi
+
 ac_fn_c_check_func "$LINENO" "mkdtemp" "ac_cv_func_mkdtemp"
 if test "x$ac_cv_func_mkdtemp" = xyes; then :
   $as_echo "#define HAVE_MKDTEMP 1" >>confdefs.h

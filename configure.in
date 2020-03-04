@@ -1697,6 +1697,7 @@ AC_REPLACE_FUNCS(m4_normalize([
 	getpeereid
 	getrusage
 	inet_aton
+	link
 	mkdtemp
 	pread
 	pwrite

@@ -98,7 +98,7 @@ sub mkvcbuild
 	  chklocale.c explicit_bzero.c fls.c getpeereid.c getrusage.c inet_aton.c random.c
 	  srandom.c getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
 	  erand48.c snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
-	  dirent.c dlopen.c getopt.c getopt_long.c
+	  dirent.c dlopen.c getopt.c getopt_long.c link.c
 	  pread.c pwrite.c pg_bitutils.c
 	  pg_strong_random.c pgcheckdir.c pgmkdirp.c pgsleep.c pgstrcasecmp.c
 	  pqsignal.c mkdtemp.c qsort.c qsort_arg.c quotes.c system.c

@@ -381,6 +381,10 @@ extern float pg_strtof(const char *nptr, char **endptr);
 #define strtof(a,b) (pg_strtof((a),(b)))
 #endif
 
+#ifndef HAVE_LINK
+extern int link(const char *src, const char *dst);
+#endif
+
 #ifndef HAVE_MKDTEMP
 extern char *mkdtemp(char *path);
 #endif
