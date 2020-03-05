@@ -2928,7 +2928,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		else
 			Assert(false);
 
-		phase->evaltrans = ExecBuildAggTrans(aggstate, phase, dosort, dohash);
+		phase->evaltrans = ExecBuildAggTrans(aggstate, phase, dosort, dohash,
+											 false);
 
 	}
 

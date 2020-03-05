@@ -2046,6 +2046,45 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_AGG_PLAIN_PERGROUP_NULLCHECK:
+				{
+					int				 jumpnull;
+					LLVMValueRef	 v_aggstatep;
+					LLVMValueRef	 v_allpergroupsp;
+					LLVMValueRef	 v_pergroup_allaggs;
+					LLVMValueRef	 v_setoff;
+
+					jumpnull = op->d.agg_plain_pergroup_nullcheck.jumpnull;
+
+					/*
+					 * pergroup_allaggs = aggstate->all_pergroups
+					 * [op->d.agg_plain_pergroup_nullcheck.setoff];
+					 */
+					v_aggstatep = LLVMBuildBitCast(
+						b, v_parent, l_ptr(StructAggState), "");
+
+					v_allpergroupsp = l_load_struct_gep(
+						b, v_aggstatep,
+						FIELDNO_AGGSTATE_ALL_PERGROUPS,
+						"aggstate.all_pergroups");
+
+					v_setoff = l_int32_const(
+						op->d.agg_plain_pergroup_nullcheck.setoff);
+
+					v_pergroup_allaggs = l_load_gep1(
+						b, v_allpergroupsp, v_setoff, "");
+
+					LLVMBuildCondBr(
+						b,
+						LLVMBuildICmp(b, LLVMIntEQ,
+									  LLVMBuildPtrToInt(
+										  b, v_pergroup_allaggs, TypeSizeT, ""),
+									  l_sizet_const(0), ""),
+						opblocks[jumpnull],
+						opblocks[opno + 1]);
+					break;
+				}
+
 			case EEOP_AGG_PLAIN_TRANS_INIT_STRICT_BYVAL:
 			case EEOP_AGG_PLAIN_TRANS_STRICT_BYVAL:
 			case EEOP_AGG_PLAIN_TRANS_BYVAL:

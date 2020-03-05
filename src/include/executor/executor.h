@@ -255,7 +255,7 @@ extern ExprState *ExecInitQual(List *qual, PlanState *parent);
 extern ExprState *ExecInitCheck(List *qual, PlanState *parent);
 extern List *ExecInitExprList(List *nodes, PlanState *parent);
 extern ExprState *ExecBuildAggTrans(AggState *aggstate, struct AggStatePerPhaseData *phase,
-									bool doSort, bool doHash);
+									bool doSort, bool doHash, bool nullcheck);
 extern ExprState *ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 										 const TupleTableSlotOps *lops, const TupleTableSlotOps *rops,
 										 int numCols,
