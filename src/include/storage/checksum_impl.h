@@ -211,5 +211,5 @@ pg_checksum_page(char *page, BlockNumber blkno)
 	 * Reduce to a uint16 (to fit in the pd_checksum field) with an offset of
 	 * one. That avoids checksums of zero, which seems like a good idea.
 	 */
-	return (checksum % 65535) + 1;
+	return (uint16) ((checksum % 65536) + 1);
 }
