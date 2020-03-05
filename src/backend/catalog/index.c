@@ -1675,12 +1675,13 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 	}
 
 	/*
-	 * Move all dependencies of and on the old index to the new one.  First
-	 * remove any dependencies that the new index may have to provide an
-	 * initial clean state for the dependency switch, and then move all the
-	 * dependencies from the old index to the new one.
+	 * Swap all dependencies of and on the old index to the new one, and
+	 * vice-versa.  Note that a call to CommandCounterIncrement() would cause
+	 * duplicate entries in pg_depend, so this should not be done.
 	 */
-	deleteDependencyRecordsFor(RelationRelationId, newIndexId, false);
+	changeDependenciesOf(RelationRelationId, newIndexId, oldIndexId);
+	changeDependenciesOn(RelationRelationId, newIndexId, oldIndexId);
+
 	changeDependenciesOf(RelationRelationId, oldIndexId, newIndexId);
 	changeDependenciesOn(RelationRelationId, oldIndexId, newIndexId);
 
