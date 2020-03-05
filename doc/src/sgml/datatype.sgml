@@ -4827,10 +4827,6 @@ SELECT * FROM pg_attribute
     <primary>unknown</primary>
    </indexterm>
 
-   <indexterm zone="datatype-pseudo">
-    <primary>opaque</primary>
-   </indexterm>
-
    <para>
     The <productname>PostgreSQL</productname> type system contains a
     number of special-purpose entries that are collectively called
@@ -4952,12 +4948,6 @@ SELECT * FROM pg_attribute
         <entry><type>unknown</type></entry>
         <entry>Identifies a not-yet-resolved type, e.g. of an undecorated
          string literal.</entry>
-       </row>
-
-       <row>
-        <entry><type>opaque</type></entry>
-        <entry>An obsolete type name that formerly served many of the above
-         purposes.</entry>
        </row>
       </tbody>
      </tgroup>

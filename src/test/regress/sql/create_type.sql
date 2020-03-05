@@ -84,8 +84,11 @@ INSERT INTO default_test DEFAULT VALUES;
 
 SELECT * FROM default_test;
 
+-- We need a shell type to test some CREATE TYPE failure cases with
+CREATE TYPE bogus_type;
+
 -- invalid: non-lowercase quoted identifiers
-CREATE TYPE case_int42 (
+CREATE TYPE bogus_type (
 	"Internallength" = 4,
 	"Input" = int42_in,
 	"Output" = int42_out,
@@ -93,6 +96,20 @@ CREATE TYPE case_int42 (
 	"Default" = 42,
 	"Passedbyvalue"
 );
+
+-- invalid: input/output function incompatibility
+CREATE TYPE bogus_type (INPUT = array_in,
+    OUTPUT = array_out,
+    ELEMENT = int,
+    INTERNALLENGTH = 32);
+
+DROP TYPE bogus_type;
+
+-- It no longer is possible to issue CREATE TYPE without making a shell first
+CREATE TYPE bogus_type (INPUT = array_in,
+    OUTPUT = array_out,
+    ELEMENT = int,
+    INTERNALLENGTH = 32);
 
 -- Test stand-alone composite type
 
@@ -119,20 +136,15 @@ DROP TYPE default_test_row CASCADE;
 
 DROP TABLE default_test;
 
--- Check type create with input/output incompatibility
-CREATE TYPE not_existing_type (INPUT = array_in,
-    OUTPUT = array_out,
-    ELEMENT = int,
-    INTERNALLENGTH = 32);
-
--- Check dependency transfer of opaque functions when creating a new type
-CREATE FUNCTION base_fn_in(cstring) RETURNS opaque AS 'boolin'
+-- Check dependencies are established when creating a new type
+CREATE TYPE base_type;
+CREATE FUNCTION base_fn_in(cstring) RETURNS base_type AS 'boolin'
     LANGUAGE internal IMMUTABLE STRICT;
-CREATE FUNCTION base_fn_out(opaque) RETURNS opaque AS 'boolout'
+CREATE FUNCTION base_fn_out(base_type) RETURNS cstring AS 'boolout'
     LANGUAGE internal IMMUTABLE STRICT;
 CREATE TYPE base_type(INPUT = base_fn_in, OUTPUT = base_fn_out);
 DROP FUNCTION base_fn_in(cstring); -- error
-DROP FUNCTION base_fn_out(opaque); -- error
+DROP FUNCTION base_fn_out(base_type); -- error
 DROP TYPE base_type; -- error
 DROP TYPE base_type CASCADE;
 

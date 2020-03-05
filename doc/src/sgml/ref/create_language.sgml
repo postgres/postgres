@@ -211,16 +211,6 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
    database, which will cause it to be available automatically in
    all subsequently-created databases.
   </para>
-
-  <para>
-   In <productname>PostgreSQL</productname> versions before 7.3, it was
-   necessary to declare handler functions as returning the placeholder
-   type <type>opaque</type>, rather than <type>language_handler</type>.
-   To support loading
-   of old dump files, <command>CREATE LANGUAGE</command> will accept a function
-   declared as returning <type>opaque</type>, but it will issue a notice and
-   change the function's declared return type to <type>language_handler</type>.
-  </para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-examples">

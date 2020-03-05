@@ -54,8 +54,6 @@ extern Oid	ResolveOpClass(List *opclass, Oid attrType,
 /* commands/functioncmds.c */
 extern ObjectAddress CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt);
 extern void RemoveFunctionById(Oid funcOid);
-extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
-extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
 extern ObjectAddress AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt);
 extern ObjectAddress CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);

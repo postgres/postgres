@@ -543,15 +543,6 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    row-level triggers with transition relations cannot be defined on
    partitions or inheritance child tables.
   </para>
-
-  <para>
-   In <productname>PostgreSQL</productname> versions before 7.3, it was
-   necessary to declare trigger functions as returning the placeholder
-   type <type>opaque</type>, rather than <type>trigger</type>.  To support loading
-   of old dump files, <command>CREATE TRIGGER</command> will accept a function
-   declared as returning <type>opaque</type>, but it will issue a notice and
-   change the function's declared return type to <type>trigger</type>.
-  </para>
  </refsect1>
 
  <refsect1 id="sql-createtrigger-examples">

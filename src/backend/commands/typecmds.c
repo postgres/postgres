@@ -163,7 +163,6 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	char	   *array_type;
 	Oid			array_oid;
 	Oid			typoid;
-	Oid			resulttype;
 	ListCell   *pl;
 	ObjectAddress address;
 
@@ -196,8 +195,7 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 #endif
 
 	/*
-	 * Look to see if type already exists (presumably as a shell; if not,
-	 * TypeCreate will complain).
+	 * Look to see if type already exists.
 	 */
 	typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 							 CStringGetDatum(typeName),
@@ -211,34 +209,36 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 	{
 		if (moveArrayTypeName(typoid, typeName, typeNamespace))
 			typoid = InvalidOid;
-	}
-
-	/*
-	 * If it doesn't exist, create it as a shell, so that the OID is known for
-	 * use in the I/O function definitions.
-	 */
-	if (!OidIsValid(typoid))
-	{
-		address = TypeShellMake(typeName, typeNamespace, GetUserId());
-		typoid = address.objectId;
-		/* Make new shell type visible for modification below */
-		CommandCounterIncrement();
-
-		/*
-		 * If the command was a parameterless CREATE TYPE, we're done ---
-		 * creating the shell type was all we're supposed to do.
-		 */
-		if (parameters == NIL)
-			return address;
-	}
-	else
-	{
-		/* Complain if dummy CREATE TYPE and entry already exists */
-		if (parameters == NIL)
+		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("type \"%s\" already exists", typeName)));
 	}
+
+	/*
+	 * If this command is a parameterless CREATE TYPE, then we're just here to
+	 * make a shell type, so do that (or fail if there already is a shell).
+	 */
+	if (parameters == NIL)
+	{
+		if (OidIsValid(typoid))
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("type \"%s\" already exists", typeName)));
+
+		address = TypeShellMake(typeName, typeNamespace, GetUserId());
+		return address;
+	}
+
+	/*
+	 * Otherwise, we must already have a shell type, since there is no other
+	 * way that the I/O functions could have been created.
+	 */
+	if (!OidIsValid(typoid))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("type \"%s\" does not exist", typeName),
+				 errhint("Create the type as a shell type, then create its I/O functions, then do a full CREATE TYPE.")));
 
 	/* Extract the parameters from the parameter list */
 	foreach(pl, parameters)
@@ -443,63 +443,6 @@ DefineType(ParseState *pstate, List *names, List *parameters)
 		receiveOid = findTypeReceiveFunction(receiveName, typoid);
 	if (sendName)
 		sendOid = findTypeSendFunction(sendName, typoid);
-
-	/*
-	 * Verify that I/O procs return the expected thing.  If we see OPAQUE,
-	 * complain and change it to the correct type-safe choice.
-	 */
-	resulttype = get_func_rettype(inputOid);
-	if (resulttype != typoid)
-	{
-		if (resulttype == OPAQUEOID)
-		{
-			/* backwards-compatibility hack */
-			ereport(WARNING,
-					(errmsg("changing return type of function %s from %s to %s",
-							NameListToString(inputName), "opaque", typeName)));
-			SetFunctionReturnType(inputOid, typoid);
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type input function %s must return type %s",
-							NameListToString(inputName), typeName)));
-	}
-	resulttype = get_func_rettype(outputOid);
-	if (resulttype != CSTRINGOID)
-	{
-		if (resulttype == OPAQUEOID)
-		{
-			/* backwards-compatibility hack */
-			ereport(WARNING,
-					(errmsg("changing return type of function %s from %s to %s",
-							NameListToString(outputName), "opaque", "cstring")));
-			SetFunctionReturnType(outputOid, CSTRINGOID);
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type output function %s must return type %s",
-							NameListToString(outputName), "cstring")));
-	}
-	if (receiveOid)
-	{
-		resulttype = get_func_rettype(receiveOid);
-		if (resulttype != typoid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type receive function %s must return type %s",
-							NameListToString(receiveName), typeName)));
-	}
-	if (sendOid)
-	{
-		resulttype = get_func_rettype(sendOid);
-		if (resulttype != BYTEAOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type send function %s must return type %s",
-							NameListToString(sendName), "bytea")));
-	}
 
 	/*
 	 * Convert typmodin/out function proc names to OIDs.
@@ -1404,16 +1347,9 @@ DefineRange(CreateRangeStmt *stmt)
 	}
 
 	/*
-	 * If it doesn't exist, create it as a shell, so that the OID is known for
-	 * use in the range function definitions.
+	 * Unlike DefineType(), we don't insist on a shell type existing first, as
+	 * it's only needed if the user wants to specify a canonical function.
 	 */
-	if (!OidIsValid(typoid))
-	{
-		address = TypeShellMake(typeName, typeNamespace, GetUserId());
-		typoid = address.objectId;
-		/* Make new shell type visible for modification below */
-		CommandCounterIncrement();
-	}
 
 	/* Extract the parameters from the parameter list */
 	foreach(lc, stmt->params)
@@ -1502,8 +1438,15 @@ DefineRange(CreateRangeStmt *stmt)
 
 	/* Identify support functions, if provided */
 	if (rangeCanonicalName != NIL)
+	{
+		if (!OidIsValid(typoid))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("cannot specify a canonical function without a pre-created shell type"),
+					 errhint("Create the type as a shell type, then create its canonicalization function, then do a full CREATE TYPE.")));
 		rangeCanonical = findRangeCanonicalFunction(rangeCanonicalName,
 													typoid);
+	}
 	else
 		rangeCanonical = InvalidOid;
 
@@ -1555,7 +1498,8 @@ DefineRange(CreateRangeStmt *stmt)
 				   0,			/* Array dimensions of typbasetype */
 				   false,		/* Type NOT NULL */
 				   InvalidOid); /* type's collation (ranges never have one) */
-	Assert(typoid == address.objectId);
+	Assert(typoid == InvalidOid || typoid == address.objectId);
+	typoid = address.objectId;
 
 	/* Create the entry in pg_range */
 	RangeCreate(typoid, rangeSubtype, rangeCollation, rangeSubOpclass,
@@ -1695,63 +1639,32 @@ findTypeInputFunction(List *procname, Oid typeOid)
 
 	/*
 	 * Input functions can take a single argument of type CSTRING, or three
-	 * arguments (string, typioparam OID, typmod).
-	 *
-	 * For backwards compatibility we allow OPAQUE in place of CSTRING; if we
-	 * see this, we issue a warning and fix up the pg_proc entry.
+	 * arguments (string, typioparam OID, typmod).  They must return the
+	 * target type.
 	 */
 	argList[0] = CSTRINGOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
-
-	argList[1] = OIDOID;
-	argList[2] = INT4OID;
-
-	procOid = LookupFuncName(procname, 3, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
-
-	/* No luck, try it with OPAQUE */
-	argList[0] = OPAQUEOID;
-
-	procOid = LookupFuncName(procname, 1, argList, true);
-
 	if (!OidIsValid(procOid))
 	{
 		argList[1] = OIDOID;
 		argList[2] = INT4OID;
 
 		procOid = LookupFuncName(procname, 3, argList, true);
+		if (!OidIsValid(procOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("function %s does not exist",
+							func_signature_string(procname, 1, NIL, argList))));
 	}
 
-	if (OidIsValid(procOid))
-	{
-		/* Found, but must complain and fix the pg_proc entry */
-		ereport(WARNING,
-				(errmsg("changing argument type of function %s from \"opaque\" to \"cstring\"",
-						NameListToString(procname))));
-		SetFunctionArgType(procOid, 0, CSTRINGOID);
+	if (get_func_rettype(procOid) != typeOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type input function %s must return type %s",
+						NameListToString(procname), format_type_be(typeOid))));
 
-		/*
-		 * Need CommandCounterIncrement since DefineType will likely try to
-		 * alter the pg_proc tuple again.
-		 */
-		CommandCounterIncrement();
-
-		return procOid;
-	}
-
-	/* Use CSTRING (preferred) in the error message */
-	argList[0] = CSTRINGOID;
-
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, NIL, argList))));
-
-	return InvalidOid;			/* keep compiler quiet */
+	return procOid;
 }
 
 static Oid
@@ -1761,48 +1674,25 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Output functions can take a single argument of the type.
-	 *
-	 * For backwards compatibility we allow OPAQUE in place of the actual type
-	 * name; if we see this, we issue a warning and fix up the pg_proc entry.
+	 * Output functions always take a single argument of the type and return
+	 * cstring.
 	 */
 	argList[0] = typeOid;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
+	if (!OidIsValid(procOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function %s does not exist",
+						func_signature_string(procname, 1, NIL, argList))));
 
-	/* No luck, try it with OPAQUE */
-	argList[0] = OPAQUEOID;
+	if (get_func_rettype(procOid) != CSTRINGOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type output function %s must return type %s",
+						NameListToString(procname), "cstring")));
 
-	procOid = LookupFuncName(procname, 1, argList, true);
-
-	if (OidIsValid(procOid))
-	{
-		/* Found, but must complain and fix the pg_proc entry */
-		ereport(WARNING,
-				(errmsg("changing argument type of function %s from \"opaque\" to %s",
-						NameListToString(procname), format_type_be(typeOid))));
-		SetFunctionArgType(procOid, 0, typeOid);
-
-		/*
-		 * Need CommandCounterIncrement since DefineType will likely try to
-		 * alter the pg_proc tuple again.
-		 */
-		CommandCounterIncrement();
-
-		return procOid;
-	}
-
-	/* Use type name, not OPAQUE, in the failure message. */
-	argList[0] = typeOid;
-
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, NIL, argList))));
-
-	return InvalidOid;			/* keep compiler quiet */
+	return procOid;
 }
 
 static Oid
@@ -1813,27 +1703,32 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 
 	/*
 	 * Receive functions can take a single argument of type INTERNAL, or three
-	 * arguments (internal, typioparam OID, typmod).
+	 * arguments (internal, typioparam OID, typmod).  They must return the
+	 * target type.
 	 */
 	argList[0] = INTERNALOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
+	if (!OidIsValid(procOid))
+	{
+		argList[1] = OIDOID;
+		argList[2] = INT4OID;
 
-	argList[1] = OIDOID;
-	argList[2] = INT4OID;
+		procOid = LookupFuncName(procname, 3, argList, true);
+		if (!OidIsValid(procOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("function %s does not exist",
+							func_signature_string(procname, 1, NIL, argList))));
+	}
 
-	procOid = LookupFuncName(procname, 3, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
+	if (get_func_rettype(procOid) != typeOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type receive function %s must return type %s",
+						NameListToString(procname), format_type_be(typeOid))));
 
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, NIL, argList))));
-
-	return InvalidOid;			/* keep compiler quiet */
+	return procOid;
 }
 
 static Oid
@@ -1843,20 +1738,25 @@ findTypeSendFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Send functions can take a single argument of the type.
+	 * Send functions always take a single argument of the type and return
+	 * bytea.
 	 */
 	argList[0] = typeOid;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
+	if (!OidIsValid(procOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function %s does not exist",
+						func_signature_string(procname, 1, NIL, argList))));
 
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_FUNCTION),
-			 errmsg("function %s does not exist",
-					func_signature_string(procname, 1, NIL, argList))));
+	if (get_func_rettype(procOid) != BYTEAOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("type send function %s must return type %s",
+						NameListToString(procname), "bytea")));
 
-	return InvalidOid;			/* keep compiler quiet */
+	return procOid;
 }
 
 static Oid

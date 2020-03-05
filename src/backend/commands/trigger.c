@@ -694,25 +694,10 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	}
 	funcrettype = get_func_rettype(funcoid);
 	if (funcrettype != TRIGGEROID)
-	{
-		/*
-		 * We allow OPAQUE just so we can load old dump files.  When we see a
-		 * trigger function declared OPAQUE, change it to TRIGGER.
-		 */
-		if (funcrettype == OPAQUEOID)
-		{
-			ereport(WARNING,
-					(errmsg("changing return type of function %s from %s to %s",
-							NameListToString(stmt->funcname),
-							"opaque", "trigger")));
-			SetFunctionReturnType(funcoid, TRIGGEROID);
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("function %s must return type %s",
-							NameListToString(stmt->funcname), "trigger")));
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("function %s must return type %s",
+						NameListToString(stmt->funcname), "trigger")));
 
 	/*
 	 * If it's a user-entered CREATE CONSTRAINT TRIGGER command, make a

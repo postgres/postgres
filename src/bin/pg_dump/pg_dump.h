@@ -640,8 +640,6 @@ typedef struct _extensionMemberId
 extern char g_comment_start[10];
 extern char g_comment_end[10];
 
-extern char g_opaque_type[10];	/* name for the opaque type */
-
 /*
  *	common utility functions
  */

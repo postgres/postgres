@@ -379,9 +379,7 @@ plpython2_inline_handler(PG_FUNCTION_ARGS)
 static bool
 PLy_procedure_is_trigger(Form_pg_proc procStruct)
 {
-	return (procStruct->prorettype == TRIGGEROID ||
-			(procStruct->prorettype == OPAQUEOID &&
-			 procStruct->pronargs == 0));
+	return (procStruct->prorettype == TRIGGEROID);
 }
 
 static void

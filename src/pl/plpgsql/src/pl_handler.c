@@ -421,12 +421,10 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	functyptype = get_typtype(proc->prorettype);
 
 	/* Disallow pseudotype result */
-	/* except for TRIGGER, RECORD, VOID, or polymorphic */
+	/* except for TRIGGER, EVTTRIGGER, RECORD, VOID, or polymorphic */
 	if (functyptype == TYPTYPE_PSEUDO)
 	{
-		/* we assume OPAQUE with no arguments means a trigger */
-		if (proc->prorettype == TRIGGEROID ||
-			(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
+		if (proc->prorettype == TRIGGEROID)
 			is_dml_trigger = true;
 		else if (proc->prorettype == EVTTRIGGEROID)
 			is_event_trigger = true;

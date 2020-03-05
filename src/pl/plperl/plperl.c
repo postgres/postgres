@@ -2000,9 +2000,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 	/* except for TRIGGER, EVTTRIGGER, RECORD, or VOID */
 	if (functyptype == TYPTYPE_PSEUDO)
 	{
-		/* we assume OPAQUE with no arguments means a trigger */
-		if (proc->prorettype == TRIGGEROID ||
-			(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
+		if (proc->prorettype == TRIGGEROID)
 			is_trigger = true;
 		else if (proc->prorettype == EVTTRIGGEROID)
 			is_event_trigger = true;
