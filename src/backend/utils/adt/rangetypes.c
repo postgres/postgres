@@ -49,9 +49,8 @@
 typedef struct RangeIOData
 {
 	TypeCacheEntry *typcache;	/* range type's typcache entry */
-	Oid			typiofunc;		/* element type's I/O function */
+	FmgrInfo	typioproc;		/* element type's I/O function */
 	Oid			typioparam;		/* element type's I/O parameter */
-	FmgrInfo	proc;			/* lookup result for typiofunc */
 } RangeIOData;
 
 
@@ -100,10 +99,10 @@ range_in(PG_FUNCTION_ARGS)
 
 	/* call element type's input function */
 	if (RANGE_HAS_LBOUND(flags))
-		lower.val = InputFunctionCall(&cache->proc, lbound_str,
+		lower.val = InputFunctionCall(&cache->typioproc, lbound_str,
 									  cache->typioparam, typmod);
 	if (RANGE_HAS_UBOUND(flags))
-		upper.val = InputFunctionCall(&cache->proc, ubound_str,
+		upper.val = InputFunctionCall(&cache->typioproc, ubound_str,
 									  cache->typioparam, typmod);
 
 	lower.infinite = (flags & RANGE_LB_INF) != 0;
@@ -142,9 +141,9 @@ range_out(PG_FUNCTION_ARGS)
 
 	/* call element type's output function */
 	if (RANGE_HAS_LBOUND(flags))
-		lbound_str = OutputFunctionCall(&cache->proc, lower.val);
+		lbound_str = OutputFunctionCall(&cache->typioproc, lower.val);
 	if (RANGE_HAS_UBOUND(flags))
-		ubound_str = OutputFunctionCall(&cache->proc, upper.val);
+		ubound_str = OutputFunctionCall(&cache->typioproc, upper.val);
 
 	/* construct result string */
 	output_str = range_deparse(flags, lbound_str, ubound_str);
@@ -199,7 +198,7 @@ range_recv(PG_FUNCTION_ARGS)
 		initStringInfo(&bound_buf);
 		appendBinaryStringInfo(&bound_buf, bound_data, bound_len);
 
-		lower.val = ReceiveFunctionCall(&cache->proc,
+		lower.val = ReceiveFunctionCall(&cache->typioproc,
 										&bound_buf,
 										cache->typioparam,
 										typmod);
@@ -217,7 +216,7 @@ range_recv(PG_FUNCTION_ARGS)
 		initStringInfo(&bound_buf);
 		appendBinaryStringInfo(&bound_buf, bound_data, bound_len);
 
-		upper.val = ReceiveFunctionCall(&cache->proc,
+		upper.val = ReceiveFunctionCall(&cache->typioproc,
 										&bound_buf,
 										cache->typioparam,
 										typmod);
@@ -268,7 +267,7 @@ range_send(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
-		Datum		bound = PointerGetDatum(SendFunctionCall(&cache->proc,
+		Datum		bound = PointerGetDatum(SendFunctionCall(&cache->typioproc,
 															 lower.val));
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
@@ -279,7 +278,7 @@ range_send(PG_FUNCTION_ARGS)
 
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		Datum		bound = PointerGetDatum(SendFunctionCall(&cache->proc,
+		Datum		bound = PointerGetDatum(SendFunctionCall(&cache->typioproc,
 															 upper.val));
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
@@ -309,6 +308,7 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
 		bool		typbyval;
 		char		typalign;
 		char		typdelim;
+		Oid			typiofunc;
 
 		cache = (RangeIOData *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
 												   sizeof(RangeIOData));
@@ -324,9 +324,9 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
 						 &typalign,
 						 &typdelim,
 						 &cache->typioparam,
-						 &cache->typiofunc);
+						 &typiofunc);
 
-		if (!OidIsValid(cache->typiofunc))
+		if (!OidIsValid(typiofunc))
 		{
 			/* this could only happen for receive or send */
 			if (func == IOFunc_receive)
@@ -340,7 +340,7 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
 						 errmsg("no binary output function available for type %s",
 								format_type_be(cache->typcache->rngelemtype->type_id))));
 		}
-		fmgr_info_cxt(cache->typiofunc, &cache->proc,
+		fmgr_info_cxt(typiofunc, &cache->typioproc,
 					  fcinfo->flinfo->fn_mcxt);
 
 		fcinfo->flinfo->fn_extra = (void *) cache;
