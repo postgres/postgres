@@ -6949,6 +6949,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 {
 	FILE	   *fp;
 	struct stat stat_buf;
+	int			line_number = 0;
 
 #define LINELEN NAMEDATALEN*5
 	char		buf[LINELEN];
@@ -7014,9 +7015,41 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 				   *p1,
 				   *p2;
 		int			len;
+		int			buflen;
 
 		if (fgets(buf, sizeof(buf), fp) == NULL)
 			break;
+
+		line_number++;
+		buflen = strlen(buf);
+		if (buflen >= sizeof(buf) - 1 && buf[buflen - 1] != '\n')
+		{
+			char		rest[LINELEN];
+			int			restlen;
+
+			/*
+			 * Warn if this password setting line is too long, because it's
+			 * unexpectedly truncated.
+			 */
+			if (buf[0] != '#')
+				fprintf(stderr,
+						libpq_gettext("WARNING: line %d too long in password file \"%s\"\n"),
+						line_number, pgpassfile);
+
+			/* eat rest of the line */
+			while (!feof(fp) && !ferror(fp))
+			{
+				if (fgets(rest, sizeof(rest), fp) == NULL)
+					break;
+				restlen = strlen(rest);
+				if (restlen < sizeof(rest) - 1 || rest[restlen - 1] == '\n')
+					break;
+			}
+		}
+
+		/* ignore comments */
+		if (buf[0] == '#')
+			continue;
 
 		/* strip trailing newline and carriage return */
 		len = pg_strip_crlf(buf);
