@@ -1,4 +1,19 @@
+--
 -- encoding-sensitive tests for jsonpath
+--
+-- We provide expected-results files for UTF8 (jsonpath_encoding.out)
+-- and for SQL_ASCII (jsonpath_encoding_1.out).  Skip otherwise.
+SELECT getdatabaseencoding() NOT IN ('UTF8', 'SQL_ASCII')
+       AS skip_test \gset
+\if :skip_test
+\quit
+\endif
+SELECT getdatabaseencoding();           -- just to label the results files
+ getdatabaseencoding 
+---------------------
+ SQL_ASCII
+(1 row)
+
 -- checks for double-quoted values
 -- basic unicode input
 SELECT '"\u"'::jsonpath;		-- ERROR, incomplete escape
@@ -19,16 +34,14 @@ LINE 1: SELECT '"\u0000"'::jsonpath;
                ^
 DETAIL:  \u0000 cannot be converted to text.
 SELECT '"\uaBcD"'::jsonpath;	-- OK, uppercase and lower case both OK
-ERROR:  invalid input syntax for type jsonpath
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: SELECT '"\uaBcD"'::jsonpath;
                ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 -- handling of unicode surrogate pairs
 select '"\ud83d\ude04\ud83d\udc36"'::jsonpath as correct_in_utf8;
-ERROR:  invalid input syntax for type jsonpath
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: select '"\ud83d\ude04\ud83d\udc36"'::jsonpath as correct_in_...
                ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 select '"\ud83d\ud83d"'::jsonpath; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type jsonpath
 LINE 1: select '"\ud83d\ud83d"'::jsonpath;
@@ -51,10 +64,9 @@ LINE 1: select '"\ude04X"'::jsonpath;
 DETAIL:  Unicode low surrogate must follow a high surrogate.
 --handling of simple unicode escapes
 select '"the Copyright \u00a9 sign"'::jsonpath as correct_in_utf8;
-ERROR:  invalid input syntax for type jsonpath
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: select '"the Copyright \u00a9 sign"'::jsonpath as correct_in...
                ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 select '"dollar \u0024 character"'::jsonpath as correct_everywhere;
   correct_everywhere  
 ----------------------
@@ -98,16 +110,14 @@ LINE 1: SELECT '$."\u0000"'::jsonpath;
                ^
 DETAIL:  \u0000 cannot be converted to text.
 SELECT '$."\uaBcD"'::jsonpath;	-- OK, uppercase and lower case both OK
-ERROR:  invalid input syntax for type jsonpath
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: SELECT '$."\uaBcD"'::jsonpath;
                ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 -- handling of unicode surrogate pairs
 select '$."\ud83d\ude04\ud83d\udc36"'::jsonpath as correct_in_utf8;
-ERROR:  invalid input syntax for type jsonpath
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: select '$."\ud83d\ude04\ud83d\udc36"'::jsonpath as correct_i...
                ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 select '$."\ud83d\ud83d"'::jsonpath; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type jsonpath
 LINE 1: select '$."\ud83d\ud83d"'::jsonpath;
@@ -130,10 +140,9 @@ LINE 1: select '$."\ude04X"'::jsonpath;
 DETAIL:  Unicode low surrogate must follow a high surrogate.
 --handling of simple unicode escapes
 select '$."the Copyright \u00a9 sign"'::jsonpath as correct_in_utf8;
-ERROR:  invalid input syntax for type jsonpath
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: select '$."the Copyright \u00a9 sign"'::jsonpath as correct_...
                ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
 select '$."dollar \u0024 character"'::jsonpath as correct_everywhere;
    correct_everywhere   
 ------------------------

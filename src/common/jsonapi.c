@@ -744,21 +744,21 @@ json_lex_string(JsonLexContext *lex)
 				}
 				if (lex->strval != NULL)
 				{
-					char		utf8str[5];
-					int			utf8len;
-
-					if (ch >= 0xd800 && ch <= 0xdbff)
+					/*
+					 * Combine surrogate pairs.
+					 */
+					if (is_utf16_surrogate_first(ch))
 					{
 						if (hi_surrogate != -1)
 							return JSON_UNICODE_HIGH_SURROGATE;
-						hi_surrogate = (ch & 0x3ff) << 10;
+						hi_surrogate = ch;
 						continue;
 					}
-					else if (ch >= 0xdc00 && ch <= 0xdfff)
+					else if (is_utf16_surrogate_second(ch))
 					{
 						if (hi_surrogate == -1)
 							return JSON_UNICODE_LOW_SURROGATE;
-						ch = 0x10000 + hi_surrogate + (ch & 0x3ff);
+						ch = surrogate_pair_to_codepoint(hi_surrogate, ch);
 						hi_surrogate = -1;
 					}
 
@@ -766,35 +766,52 @@ json_lex_string(JsonLexContext *lex)
 						return JSON_UNICODE_LOW_SURROGATE;
 
 					/*
-					 * For UTF8, replace the escape sequence by the actual
-					 * utf8 character in lex->strval. Do this also for other
-					 * encodings if the escape designates an ASCII character,
-					 * otherwise raise an error.
+					 * Reject invalid cases.  We can't have a value above
+					 * 0xFFFF here (since we only accepted 4 hex digits
+					 * above), so no need to test for out-of-range chars.
 					 */
-
 					if (ch == 0)
 					{
 						/* We can't allow this, since our TEXT type doesn't */
 						return JSON_UNICODE_CODE_POINT_ZERO;
 					}
-					else if (lex->input_encoding == PG_UTF8)
+
+					/*
+					 * Add the represented character to lex->strval.  In the
+					 * backend, we can let pg_unicode_to_server() handle any
+					 * required character set conversion; in frontend, we can
+					 * only deal with trivial conversions.
+					 *
+					 * Note: pg_unicode_to_server() will throw an error for a
+					 * conversion failure, rather than returning a failure
+					 * indication.  That seems OK.
+					 */
+#ifndef FRONTEND
 					{
+						char		cbuf[MAX_UNICODE_EQUIVALENT_STRING + 1];
+
+						pg_unicode_to_server(ch, (unsigned char *) cbuf);
+						appendStringInfoString(lex->strval, cbuf);
+					}
+#else
+					if (lex->input_encoding == PG_UTF8)
+					{
+						/* OK, we can map the code point to UTF8 easily */
+						char		utf8str[5];
+						int			utf8len;
+
 						unicode_to_utf8(ch, (unsigned char *) utf8str);
 						utf8len = pg_utf_mblen((unsigned char *) utf8str);
 						appendBinaryStringInfo(lex->strval, utf8str, utf8len);
 					}
 					else if (ch <= 0x007f)
 					{
-						/*
-						 * This is the only way to designate things like a
-						 * form feed character in JSON, so it's useful in all
-						 * encodings.
-						 */
+						/* The ASCII range is the same in all encodings */
 						appendStringInfoChar(lex->strval, (char) ch);
 					}
 					else
 						return JSON_UNICODE_HIGH_ESCAPE;
-
+#endif							/* FRONTEND */
 				}
 			}
 			else if (lex->strval != NULL)
@@ -1083,7 +1100,8 @@ json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
 		case JSON_UNICODE_ESCAPE_FORMAT:
 			return _("\"\\u\" must be followed by four hexadecimal digits.");
 		case JSON_UNICODE_HIGH_ESCAPE:
-			return _("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.");
+			/* note: this case is only reachable in frontend not backend */
+			return _("Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8.");
 		case JSON_UNICODE_HIGH_SURROGATE:
 			return _("Unicode high surrogate must not follow a high surrogate.");
 		case JSON_UNICODE_LOW_SURROGATE:

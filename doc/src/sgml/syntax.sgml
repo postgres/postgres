@@ -189,6 +189,23 @@ UPDATE "my_table" SET "a" = 5;
     ampersands.  The length limitation still applies.
    </para>
 
+   <para>
+    Quoting an identifier also makes it case-sensitive, whereas
+    unquoted names are always folded to lower case.  For example, the
+    identifiers <literal>FOO</literal>, <literal>foo</literal>, and
+    <literal>"foo"</literal> are considered the same by
+    <productname>PostgreSQL</productname>, but
+    <literal>"Foo"</literal> and <literal>"FOO"</literal> are
+    different from these three and each other.  (The folding of
+    unquoted names to lower case in <productname>PostgreSQL</productname> is
+    incompatible with the SQL standard, which says that unquoted names
+    should be folded to upper case.  Thus, <literal>foo</literal>
+    should be equivalent to <literal>"FOO"</literal> not
+    <literal>"foo"</literal> according to the standard.  If you want
+    to write portable applications you are advised to always quote a
+    particular name or never quote it.)
+   </para>
+
    <indexterm>
      <primary>Unicode escape</primary>
      <secondary>in identifiers</secondary>
@@ -230,7 +247,8 @@ U&amp;"d!0061t!+000061" UESCAPE '!'
     The escape character can be any single character other than a
     hexadecimal digit, the plus sign, a single quote, a double quote,
     or a whitespace character.  Note that the escape character is
-    written in single quotes, not double quotes.
+    written in single quotes, not double quotes,
+    after <literal>UESCAPE</literal>.
    </para>
 
    <para>
@@ -239,32 +257,18 @@ U&amp;"d!0061t!+000061" UESCAPE '!'
    </para>
 
    <para>
-    The Unicode escape syntax works only when the server encoding is
-    <literal>UTF8</literal>.  When other server encodings are used, only code
-    points in the ASCII range (up to <literal>\007F</literal>) can be
-    specified.  Both the 4-digit and the 6-digit form can be used to
+    Either the 4-digit or the 6-digit escape form can be used to
     specify UTF-16 surrogate pairs to compose characters with code
     points larger than U+FFFF, although the availability of the
     6-digit form technically makes this unnecessary.  (Surrogate
-    pairs are not stored directly, but combined into a single
-    code point that is then encoded in UTF-8.)
+    pairs are not stored directly, but are combined into a single
+    code point.)
    </para>
 
    <para>
-    Quoting an identifier also makes it case-sensitive, whereas
-    unquoted names are always folded to lower case.  For example, the
-    identifiers <literal>FOO</literal>, <literal>foo</literal>, and
-    <literal>"foo"</literal> are considered the same by
-    <productname>PostgreSQL</productname>, but
-    <literal>"Foo"</literal> and <literal>"FOO"</literal> are
-    different from these three and each other.  (The folding of
-    unquoted names to lower case in <productname>PostgreSQL</productname> is
-    incompatible with the SQL standard, which says that unquoted names
-    should be folded to upper case.  Thus, <literal>foo</literal>
-    should be equivalent to <literal>"FOO"</literal> not
-    <literal>"foo"</literal> according to the standard.  If you want
-    to write portable applications you are advised to always quote a
-    particular name or never quote it.)
+    If the server encoding is not UTF-8, the Unicode code point identified
+    by one of these escape sequences is converted to the actual server
+    encoding; an error is reported if that's not possible.
    </para>
   </sect2>
 
@@ -427,25 +431,11 @@ SELECT 'foo'      'bar';
     <para>
      It is your responsibility that the byte sequences you create,
      especially when using the octal or hexadecimal escapes, compose
-     valid characters in the server character set encoding.  When the
-     server encoding is UTF-8, then the Unicode escapes or the
+     valid characters in the server character set encoding.
+     A useful alternative is to use Unicode escapes or the
      alternative Unicode escape syntax, explained
-     in <xref linkend="sql-syntax-strings-uescape"/>, should be used
-     instead.  (The alternative would be doing the UTF-8 encoding by
-     hand and writing out the bytes, which would be very cumbersome.)
-    </para>
-
-    <para>
-     The Unicode escape syntax works fully only when the server
-     encoding is <literal>UTF8</literal>.  When other server encodings are
-     used, only code points in the ASCII range (up
-     to <literal>\u007F</literal>) can be specified.  Both the 4-digit and
-     the 8-digit form can be used to specify UTF-16 surrogate pairs to
-     compose characters with code points larger than U+FFFF, although
-     the availability of the 8-digit form technically makes this
-     unnecessary.  (When surrogate pairs are used when the server
-     encoding is <literal>UTF8</literal>, they are first combined into a
-     single code point that is then encoded in UTF-8.)
+     in <xref linkend="sql-syntax-strings-uescape"/>; then the server
+     will check that the character conversion is possible.
     </para>
 
     <caution>
@@ -524,16 +514,23 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
     </para>
 
     <para>
-     The Unicode escape syntax works only when the server encoding is
-     <literal>UTF8</literal>.  When other server encodings are used, only
-     code points in the ASCII range (up to <literal>\007F</literal>)
-     can be specified.  Both the 4-digit and the 6-digit form can be
-     used to specify UTF-16 surrogate pairs to compose characters with
-     code points larger than U+FFFF, although the availability of the
-     6-digit form technically makes this unnecessary.  (When surrogate
-     pairs are used when the server encoding is <literal>UTF8</literal>, they
-     are first combined into a single code point that is then encoded
-     in UTF-8.)
+     To include the escape character in the string literally, write
+     it twice.
+    </para>
+
+    <para>
+     Either the 4-digit or the 6-digit escape form can be used to
+     specify UTF-16 surrogate pairs to compose characters with code
+     points larger than U+FFFF, although the availability of the
+     6-digit form technically makes this unnecessary.  (Surrogate
+     pairs are not stored directly, but are combined into a single
+     code point.)
+    </para>
+
+    <para>
+     If the server encoding is not UTF-8, the Unicode code point identified
+     by one of these escape sequences is converted to the actual server
+     encoding; an error is reported if that's not possible.
     </para>
 
     <para>
@@ -545,11 +542,6 @@ U&amp;'d!0061t!+000061' UESCAPE '!'
      lead to SQL injections and similar security issues.  If the
      parameter is set to off, this syntax will be rejected with an
      error message.
-    </para>
-
-    <para>
-     To include the escape character in the string literally, write it
-     twice.
     </para>
    </sect3>
 

@@ -292,22 +292,14 @@ hexval(unsigned char c)
 	return 0;					/* not reached */
 }
 
-/* is Unicode code point acceptable in database's encoding? */
+/* is Unicode code point acceptable? */
 static void
-check_unicode_value(pg_wchar c, int pos, core_yyscan_t yyscanner)
+check_unicode_value(pg_wchar c)
 {
-	/* See also addunicode() in scan.l */
-	if (c == 0 || c > 0x10FFFF)
+	if (!is_valid_unicode_codepoint(c))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid Unicode escape value"),
-				 scanner_errposition(pos, yyscanner)));
-
-	if (c > 0x7F && GetDatabaseEncoding() != PG_UTF8)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8"),
-				 scanner_errposition(pos, yyscanner)));
+				 errmsg("invalid Unicode escape value")));
 }
 
 /* is 'escape' acceptable as Unicode escape character (UESCAPE syntax) ? */
@@ -338,20 +330,39 @@ str_udeescape(const char *str, char escape,
 	const char *in;
 	char	   *new,
 			   *out;
+	size_t		new_len;
 	pg_wchar	pair_first = 0;
+	ScannerCallbackState scbstate;
 
 	/*
-	 * This relies on the subtle assumption that a UTF-8 expansion cannot be
-	 * longer than its escaped representation.
+	 * Guesstimate that result will be no longer than input, but allow enough
+	 * padding for Unicode conversion.
 	 */
-	new = palloc(strlen(str) + 1);
+	new_len = strlen(str) + MAX_UNICODE_EQUIVALENT_STRING + 1;
+	new = palloc(new_len);
 
 	in = str;
 	out = new;
 	while (*in)
 	{
+		/* Enlarge string if needed */
+		size_t		out_dist = out - new;
+
+		if (out_dist > new_len - (MAX_UNICODE_EQUIVALENT_STRING + 1))
+		{
+			new_len *= 2;
+			new = repalloc(new, new_len);
+			out = new + out_dist;
+		}
+
 		if (in[0] == escape)
 		{
+			/*
+			 * Any errors reported while processing this escape sequence will
+			 * have an error cursor pointing at the escape.
+			 */
+			setup_scanner_errposition_callback(&scbstate, yyscanner,
+											   in - str + position + 3);	/* 3 for U&" */
 			if (in[1] == escape)
 			{
 				if (pair_first)
@@ -370,9 +381,7 @@ str_udeescape(const char *str, char escape,
 					(hexval(in[2]) << 8) +
 					(hexval(in[3]) << 4) +
 					hexval(in[4]);
-				check_unicode_value(unicode,
-									in - str + position + 3,	/* 3 for U&" */
-									yyscanner);
+				check_unicode_value(unicode);
 				if (pair_first)
 				{
 					if (is_utf16_surrogate_second(unicode))
@@ -390,8 +399,8 @@ str_udeescape(const char *str, char escape,
 					pair_first = unicode;
 				else
 				{
-					unicode_to_utf8(unicode, (unsigned char *) out);
-					out += pg_mblen(out);
+					pg_unicode_to_server(unicode, (unsigned char *) out);
+					out += strlen(out);
 				}
 				in += 5;
 			}
@@ -411,9 +420,7 @@ str_udeescape(const char *str, char escape,
 					(hexval(in[5]) << 8) +
 					(hexval(in[6]) << 4) +
 					hexval(in[7]);
-				check_unicode_value(unicode,
-									in - str + position + 3,	/* 3 for U&" */
-									yyscanner);
+				check_unicode_value(unicode);
 				if (pair_first)
 				{
 					if (is_utf16_surrogate_second(unicode))
@@ -431,17 +438,18 @@ str_udeescape(const char *str, char escape,
 					pair_first = unicode;
 				else
 				{
-					unicode_to_utf8(unicode, (unsigned char *) out);
-					out += pg_mblen(out);
+					pg_unicode_to_server(unicode, (unsigned char *) out);
+					out += strlen(out);
 				}
 				in += 8;
 			}
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid Unicode escape value"),
-						 scanner_errposition(in - str + position + 3,	/* 3 for U&" */
-											 yyscanner)));
+						 errmsg("invalid Unicode escape"),
+						 errhint("Unicode escapes must be \\XXXX or \\+XXXXXX.")));
+
+			cancel_scanner_errposition_callback(&scbstate);
 		}
 		else
 		{
@@ -457,15 +465,13 @@ str_udeescape(const char *str, char escape,
 		goto invalid_pair;
 
 	*out = '\0';
-
-	/*
-	 * We could skip pg_verifymbstr if we didn't process any non-7-bit-ASCII
-	 * codes; but it's probably not worth the trouble, since this isn't likely
-	 * to be a performance-critical path.
-	 */
-	pg_verifymbstr(new, out - new, false);
 	return new;
 
+	/*
+	 * We might get here with the error callback active, or not.  Call
+	 * scanner_errposition to make sure an error cursor appears; if the
+	 * callback is active, this is duplicative but harmless.
+	 */
 invalid_pair:
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),

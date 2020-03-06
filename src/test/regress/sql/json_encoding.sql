@@ -1,5 +1,16 @@
-
+--
 -- encoding-sensitive tests for json and jsonb
+--
+
+-- We provide expected-results files for UTF8 (json_encoding.out)
+-- and for SQL_ASCII (json_encoding_1.out).  Skip otherwise.
+SELECT getdatabaseencoding() NOT IN ('UTF8', 'SQL_ASCII')
+       AS skip_test \gset
+\if :skip_test
+\quit
+\endif
+
+SELECT getdatabaseencoding();           -- just to label the results files
 
 -- first json
 

@@ -1,4 +1,19 @@
+--
 -- encoding-sensitive tests for json and jsonb
+--
+-- We provide expected-results files for UTF8 (json_encoding.out)
+-- and for SQL_ASCII (json_encoding_1.out).  Skip otherwise.
+SELECT getdatabaseencoding() NOT IN ('UTF8', 'SQL_ASCII')
+       AS skip_test \gset
+\if :skip_test
+\quit
+\endif
+SELECT getdatabaseencoding();           -- just to label the results files
+ getdatabaseencoding 
+---------------------
+ SQL_ASCII
+(1 row)
+
 -- first json
 -- basic unicode input
 SELECT '"\u"'::json;			-- ERROR, incomplete escape
@@ -33,9 +48,7 @@ SELECT '"\uaBcD"'::json;		-- OK, uppercase and lower case both OK
 
 -- handling of unicode surrogate pairs
 select json '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a' as correct_in_utf8;
-ERROR:  unsupported Unicode escape sequence
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 select json '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type json
 DETAIL:  Unicode high surrogate must not follow a high surrogate.
@@ -84,9 +97,7 @@ select json '{ "a":  "null \\u0000 escape" }' as not_an_escape;
 (1 row)
 
 select json '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
-ERROR:  unsupported Unicode escape sequence
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 select json '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
  correct_everywhere 
 --------------------
@@ -144,18 +155,14 @@ CONTEXT:  JSON data, line 1: ...
 -- use octet_length here so we don't get an odd unicode char in the
 -- output
 SELECT octet_length('"\uaBcD"'::jsonb::text); -- OK, uppercase and lower case both OK
-ERROR:  unsupported Unicode escape sequence
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: SELECT octet_length('"\uaBcD"'::jsonb::text);
                             ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: ...
 -- handling of unicode surrogate pairs
 SELECT octet_length((jsonb '{ "a":  "\ud83d\ude04\ud83d\udc36" }' -> 'a')::text) AS correct_in_utf8;
-ERROR:  unsupported Unicode escape sequence
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: SELECT octet_length((jsonb '{ "a":  "\ud83d\ude04\ud83d\udc3...
                                    ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
 SELECT jsonb '{ "a":  "\ud83d\ud83d" }' -> 'a'; -- 2 high surrogates in a row
 ERROR:  invalid input syntax for type json
 LINE 1: SELECT jsonb '{ "a":  "\ud83d\ud83d" }' -> 'a';
@@ -182,11 +189,9 @@ DETAIL:  Unicode low surrogate must follow a high surrogate.
 CONTEXT:  JSON data, line 1: { "a":...
 -- handling of simple unicode escapes
 SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' as correct_in_utf8;
-ERROR:  unsupported Unicode escape sequence
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' as corr...
                      ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
 SELECT jsonb '{ "a":  "dollar \u0024 character" }' as correct_everywhere;
      correct_everywhere      
 -----------------------------
@@ -212,11 +217,9 @@ SELECT jsonb '{ "a":  "null \\u0000 escape" }' as not_an_escape;
 (1 row)
 
 SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a' as correct_in_utf8;
-ERROR:  unsupported Unicode escape sequence
+ERROR:  conversion between UTF8 and SQL_ASCII is not supported
 LINE 1: SELECT jsonb '{ "a":  "the Copyright \u00a9 sign" }' ->> 'a'...
                      ^
-DETAIL:  Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8.
-CONTEXT:  JSON data, line 1: { "a":...
 SELECT jsonb '{ "a":  "dollar \u0024 character" }' ->> 'a' as correct_everywhere;
  correct_everywhere 
 --------------------

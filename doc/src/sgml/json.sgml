@@ -61,8 +61,8 @@
  </para>
 
  <para>
-  <productname>PostgreSQL</productname> allows only one character set
-  encoding per database.  It is therefore not possible for the JSON
+  RFC 7159 specifies that JSON strings should be encoded in UTF8.
+  It is therefore not possible for the JSON
   types to conform rigidly to the JSON specification unless the database
   encoding is UTF8. Attempts to directly include characters that
   cannot be represented in the database encoding will fail; conversely,
@@ -77,13 +77,13 @@
   regardless of the database encoding, and are checked only for syntactic
   correctness (that is, that four hex digits follow <literal>\u</literal>).
   However, the input function for <type>jsonb</type> is stricter: it disallows
-  Unicode escapes for non-ASCII characters (those above <literal>U+007F</literal>)
-  unless the database encoding is UTF8.  The <type>jsonb</type> type also
+  Unicode escapes for characters that cannot be represented in the database
+  encoding.  The <type>jsonb</type> type also
   rejects <literal>\u0000</literal> (because that cannot be represented in
   <productname>PostgreSQL</productname>'s <type>text</type> type), and it insists
   that any use of Unicode surrogate pairs to designate characters outside
   the Unicode Basic Multilingual Plane be correct.  Valid Unicode escapes
-  are converted to the equivalent ASCII or UTF8 character for storage;
+  are converted to the equivalent single character for storage;
   this includes folding surrogate pairs into a single character.
  </para>
 
@@ -96,9 +96,8 @@
    not <type>jsonb</type>. The fact that the <type>json</type> input function does
    not make these checks may be considered a historical artifact, although
    it does allow for simple storage (without processing) of JSON Unicode
-   escapes in a non-UTF8 database encoding.  In general, it is best to
-   avoid mixing Unicode escapes in JSON with a non-UTF8 database encoding,
-   if possible.
+   escapes in a database encoding that does not support the represented
+   characters.
   </para>
  </note>
 
@@ -144,8 +143,8 @@
        <row>
         <entry><type>string</type></entry>
         <entry><type>text</type></entry>
-        <entry><literal>\u0000</literal> is disallowed, as are non-ASCII Unicode
-         escapes if database encoding is not UTF8</entry>
+        <entry><literal>\u0000</literal> is disallowed, as are Unicode escapes
+         representing characters not available in the database encoding</entry>
        </row>
        <row>
         <entry><type>number</type></entry>

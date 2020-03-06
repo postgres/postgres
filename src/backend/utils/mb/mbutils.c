@@ -68,6 +68,13 @@ static FmgrInfo *ToServerConvProc = NULL;
 static FmgrInfo *ToClientConvProc = NULL;
 
 /*
+ * This variable stores the conversion function to convert from UTF-8
+ * to the server encoding.  It's NULL if the server encoding *is* UTF-8,
+ * or if we lack a conversion function for this.
+ */
+static FmgrInfo *Utf8ToServerConvProc = NULL;
+
+/*
  * These variables track the currently-selected encodings.
  */
 static const pg_enc2name *ClientEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
@@ -273,6 +280,8 @@ SetClientEncoding(int encoding)
 void
 InitializeClientEncoding(void)
 {
+	int			current_server_encoding;
+
 	Assert(!backend_startup_complete);
 	backend_startup_complete = true;
 
@@ -288,6 +297,35 @@ InitializeClientEncoding(void)
 				 errmsg("conversion between %s and %s is not supported",
 						pg_enc2name_tbl[pending_client_encoding].name,
 						GetDatabaseEncodingName())));
+	}
+
+	/*
+	 * Also look up the UTF8-to-server conversion function if needed.  Since
+	 * the server encoding is fixed within any one backend process, we don't
+	 * have to do this more than once.
+	 */
+	current_server_encoding = GetDatabaseEncoding();
+	if (current_server_encoding != PG_UTF8 &&
+		current_server_encoding != PG_SQL_ASCII)
+	{
+		Oid			utf8_to_server_proc;
+
+		Assert(IsTransactionState());
+		utf8_to_server_proc =
+			FindDefaultConversionProc(PG_UTF8,
+									  current_server_encoding);
+		/* If there's no such conversion, just leave the pointer as NULL */
+		if (OidIsValid(utf8_to_server_proc))
+		{
+			FmgrInfo   *finfo;
+
+			finfo = (FmgrInfo *) MemoryContextAlloc(TopMemoryContext,
+													sizeof(FmgrInfo));
+			fmgr_info_cxt(utf8_to_server_proc, finfo,
+						  TopMemoryContext);
+			/* Set Utf8ToServerConvProc only after data is fully valid */
+			Utf8ToServerConvProc = finfo;
+		}
 	}
 }
 
@@ -750,6 +788,73 @@ perform_default_encoding_conversion(const char *src, int len,
 	}
 
 	return result;
+}
+
+/*
+ * Convert a single Unicode code point into a string in the server encoding.
+ *
+ * The code point given by "c" is converted and stored at *s, which must
+ * have at least MAX_UNICODE_EQUIVALENT_STRING+1 bytes available.
+ * The output will have a trailing '\0'.  Throws error if the conversion
+ * cannot be performed.
+ *
+ * Note that this relies on having previously looked up any required
+ * conversion function.  That's partly for speed but mostly because the parser
+ * may call this outside any transaction, or in an aborted transaction.
+ */
+void
+pg_unicode_to_server(pg_wchar c, unsigned char *s)
+{
+	unsigned char c_as_utf8[MAX_MULTIBYTE_CHAR_LEN + 1];
+	int			c_as_utf8_len;
+	int			server_encoding;
+
+	/*
+	 * Complain if invalid Unicode code point.  The choice of errcode here is
+	 * debatable, but really our caller should have checked this anyway.
+	 */
+	if (!is_valid_unicode_codepoint(c))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid Unicode code point")));
+
+	/* Otherwise, if it's in ASCII range, conversion is trivial */
+	if (c <= 0x7F)
+	{
+		s[0] = (unsigned char) c;
+		s[1] = '\0';
+		return;
+	}
+
+	/* If the server encoding is UTF-8, we just need to reformat the code */
+	server_encoding = GetDatabaseEncoding();
+	if (server_encoding == PG_UTF8)
+	{
+		unicode_to_utf8(c, s);
+		s[pg_utf_mblen(s)] = '\0';
+		return;
+	}
+
+	/* For all other cases, we must have a conversion function available */
+	if (Utf8ToServerConvProc == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("conversion between %s and %s is not supported",
+						pg_enc2name_tbl[PG_UTF8].name,
+						GetDatabaseEncodingName())));
+
+	/* Construct UTF-8 source string */
+	unicode_to_utf8(c, c_as_utf8);
+	c_as_utf8_len = pg_utf_mblen(c_as_utf8);
+	c_as_utf8[c_as_utf8_len] = '\0';
+
+	/* Convert, or throw error if we can't */
+	FunctionCall5(Utf8ToServerConvProc,
+				  Int32GetDatum(PG_UTF8),
+				  Int32GetDatum(server_encoding),
+				  CStringGetDatum(c_as_utf8),
+				  CStringGetDatum(s),
+				  Int32GetDatum(c_as_utf8_len));
 }
 
 

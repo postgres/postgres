@@ -99,9 +99,13 @@ typedef struct core_yy_extra_type
 	int			literallen;		/* actual current string length */
 	int			literalalloc;	/* current allocated buffer size */
 
+	/*
+	 * Random assorted scanner state.
+	 */
 	int			state_before_str_stop;	/* start cond. before end quote */
 	int			xcdepth;		/* depth of nesting in slash-star comments */
 	char	   *dolqstart;		/* current $foo$ quote start string */
+	YYLTYPE		save_yylloc;	/* one-element stack for PUSH_YYLLOC() */
 
 	/* first part of UTF16 surrogate pair for Unicode escapes */
 	int32		utf16_first_part;
@@ -116,6 +120,14 @@ typedef struct core_yy_extra_type
  */
 typedef void *core_yyscan_t;
 
+/* Support for scanner_errposition_callback function */
+typedef struct ScannerCallbackState
+{
+	core_yyscan_t yyscanner;
+	int			location;
+	ErrorContextCallback errcallback;
+} ScannerCallbackState;
+
 
 /* Constant data exported from parser/scan.l */
 extern PGDLLIMPORT const uint16 ScanKeywordTokens[];
@@ -129,6 +141,10 @@ extern void scanner_finish(core_yyscan_t yyscanner);
 extern int	core_yylex(core_YYSTYPE *lvalp, YYLTYPE *llocp,
 					   core_yyscan_t yyscanner);
 extern int	scanner_errposition(int location, core_yyscan_t yyscanner);
+extern void setup_scanner_errposition_callback(ScannerCallbackState *scbstate,
+											   core_yyscan_t yyscanner,
+											   int location);
+extern void cancel_scanner_errposition_callback(ScannerCallbackState *scbstate);
 extern void scanner_yyerror(const char *message, core_yyscan_t yyscanner) pg_attribute_noreturn();
 
 #endif							/* SCANNER_H */

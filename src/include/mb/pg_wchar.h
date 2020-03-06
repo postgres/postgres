@@ -316,6 +316,15 @@ typedef enum pg_enc
 #define MAX_CONVERSION_GROWTH  4
 
 /*
+ * Maximum byte length of the string equivalent to any one Unicode code point,
+ * in any backend encoding.  The current value assumes that a 4-byte UTF-8
+ * character might expand by MAX_CONVERSION_GROWTH, which is a huge
+ * overestimate.  But in current usage we don't allocate large multiples of
+ * this, so there's little point in being stingy.
+ */
+#define MAX_UNICODE_EQUIVALENT_STRING	16
+
+/*
  * Table for mapping an encoding number to official encoding name and
  * possibly other subsidiary data.  Be careful to check encoding number
  * before accessing a table entry!
@@ -506,6 +515,12 @@ typedef uint32 (*utf_local_conversion_func) (uint32 code);
  * Some handy functions for Unicode-specific tests.
  */
 static inline bool
+is_valid_unicode_codepoint(pg_wchar c)
+{
+	return (c > 0 && c <= 0x10FFFF);
+}
+
+static inline bool
 is_utf16_surrogate_first(pg_wchar c)
 {
 	return (c >= 0xD800 && c <= 0xDBFF);
@@ -602,6 +617,8 @@ extern char *pg_client_to_server(const char *s, int len);
 extern char *pg_server_to_client(const char *s, int len);
 extern char *pg_any_to_server(const char *s, int len, int encoding);
 extern char *pg_server_to_any(const char *s, int len, int encoding);
+
+extern void pg_unicode_to_server(pg_wchar c, unsigned char *s);
 
 extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);

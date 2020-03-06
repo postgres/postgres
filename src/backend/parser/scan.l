@@ -106,6 +106,18 @@ const uint16 ScanKeywordTokens[] = {
  */
 #define ADVANCE_YYLLOC(delta)  ( *(yylloc) += (delta) )
 
+/*
+ * Sometimes, we do want yylloc to point into the middle of a token; this is
+ * useful for instance to throw an error about an escape sequence within a
+ * string literal.  But if we find no error there, we want to revert yylloc
+ * to the token start, so that that's the location reported to the parser.
+ * Use PUSH_YYLLOC/POP_YYLLOC to save/restore yylloc around such code.
+ * (Currently the implied "stack" is just one location, but someday we might
+ * need to nest these.)
+ */
+#define PUSH_YYLLOC()	(yyextra->save_yylloc = *(yylloc))
+#define POP_YYLLOC()	(*(yylloc) = yyextra->save_yylloc)
+
 #define startlit()	( yyextra->literallen = 0 )
 static void addlit(char *ytext, int yleng, core_yyscan_t yyscanner);
 static void addlitchar(unsigned char ychar, core_yyscan_t yyscanner);
@@ -605,7 +617,17 @@ other			.
 <xe>{xeunicode} {
 					pg_wchar	c = strtoul(yytext + 2, NULL, 16);
 
+					/*
+					 * For consistency with other productions, issue any
+					 * escape warning with cursor pointing to start of string.
+					 * We might want to change that, someday.
+					 */
 					check_escape_warning(yyscanner);
+
+					/* Remember start of overall string token ... */
+					PUSH_YYLLOC();
+					/* ... and set the error cursor to point at this esc seq */
+					SET_YYLLOC();
 
 					if (is_utf16_surrogate_first(c))
 					{
@@ -616,9 +638,17 @@ other			.
 						yyerror("invalid Unicode surrogate pair");
 					else
 						addunicode(c, yyscanner);
+
+					/* Restore yylloc to be start of string token */
+					POP_YYLLOC();
 				}
 <xeu>{xeunicode} {
 					pg_wchar	c = strtoul(yytext + 2, NULL, 16);
+
+					/* Remember start of overall string token ... */
+					PUSH_YYLLOC();
+					/* ... and set the error cursor to point at this esc seq */
+					SET_YYLLOC();
 
 					if (!is_utf16_surrogate_second(c))
 						yyerror("invalid Unicode surrogate pair");
@@ -627,12 +657,21 @@ other			.
 
 					addunicode(c, yyscanner);
 
+					/* Restore yylloc to be start of string token */
+					POP_YYLLOC();
+
 					BEGIN(xe);
 				}
-<xeu>.			{ yyerror("invalid Unicode surrogate pair"); }
-<xeu>\n			{ yyerror("invalid Unicode surrogate pair"); }
-<xeu><<EOF>>	{ yyerror("invalid Unicode surrogate pair"); }
+<xeu>. |
+<xeu>\n |
+<xeu><<EOF>>	{
+					/* Set the error cursor to point at missing esc seq */
+					SET_YYLLOC();
+					yyerror("invalid Unicode surrogate pair");
+				}
 <xe,xeu>{xeunicodefail}	{
+					/* Set the error cursor to point at malformed esc seq */
+					SET_YYLLOC();
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 							 errmsg("invalid Unicode escape"),
@@ -1029,12 +1068,13 @@ other			.
  * scanner_errposition
  *		Report a lexer or grammar error cursor position, if possible.
  *
- * This is expected to be used within an ereport() call.  The return value
+ * This is expected to be used within an ereport() call, or via an error
+ * callback such as setup_scanner_errposition_callback().  The return value
  * is a dummy (always 0, in fact).
  *
  * Note that this can only be used for messages emitted during raw parsing
- * (essentially, scan.l and gram.y), since it requires the yyscanner struct
- * to still be available.
+ * (essentially, scan.l, parser.c, and gram.y), since it requires the
+ * yyscanner struct to still be available.
  */
 int
 scanner_errposition(int location, core_yyscan_t yyscanner)
@@ -1048,6 +1088,62 @@ scanner_errposition(int location, core_yyscan_t yyscanner)
 	pos = pg_mbstrlen_with_len(yyextra->scanbuf, location) + 1;
 	/* And pass it to the ereport mechanism */
 	return errposition(pos);
+}
+
+/*
+ * Error context callback for inserting scanner error location.
+ *
+ * Note that this will be called for *any* error occurring while the
+ * callback is installed.  We avoid inserting an irrelevant error location
+ * if the error is a query cancel --- are there any other important cases?
+ */
+static void
+scb_error_callback(void *arg)
+{
+	ScannerCallbackState *scbstate = (ScannerCallbackState *) arg;
+
+	if (geterrcode() != ERRCODE_QUERY_CANCELED)
+		(void) scanner_errposition(scbstate->location, scbstate->yyscanner);
+}
+
+/*
+ * setup_scanner_errposition_callback
+ *		Arrange for non-scanner errors to report an error position
+ *
+ * Sometimes the scanner calls functions that aren't part of the scanner
+ * subsystem and can't reasonably be passed the yyscanner pointer; yet
+ * we would like any errors thrown in those functions to be tagged with an
+ * error location.  Use this function to set up an error context stack
+ * entry that will accomplish that.  Usage pattern:
+ *
+ *		declare a local variable "ScannerCallbackState scbstate"
+ *		...
+ *		setup_scanner_errposition_callback(&scbstate, yyscanner, location);
+ *		call function that might throw error;
+ *		cancel_scanner_errposition_callback(&scbstate);
+ */
+void
+setup_scanner_errposition_callback(ScannerCallbackState *scbstate,
+								   core_yyscan_t yyscanner,
+								   int location)
+{
+	/* Setup error traceback support for ereport() */
+	scbstate->yyscanner = yyscanner;
+	scbstate->location = location;
+	scbstate->errcallback.callback = scb_error_callback;
+	scbstate->errcallback.arg = (void *) scbstate;
+	scbstate->errcallback.previous = error_context_stack;
+	error_context_stack = &scbstate->errcallback;
+}
+
+/*
+ * Cancel a previously-set-up errposition callback.
+ */
+void
+cancel_scanner_errposition_callback(ScannerCallbackState *scbstate)
+{
+	/* Pop the error context stack */
+	error_context_stack = scbstate->errcallback.previous;
 }
 
 /*
@@ -1226,19 +1322,20 @@ process_integer_literal(const char *token, YYSTYPE *lval)
 static void
 addunicode(pg_wchar c, core_yyscan_t yyscanner)
 {
-	char		buf[8];
+	ScannerCallbackState scbstate;
+	char		buf[MAX_UNICODE_EQUIVALENT_STRING + 1];
 
-	/* See also check_unicode_value() in parser.c */
-	if (c == 0 || c > 0x10FFFF)
+	if (!is_valid_unicode_codepoint(c))
 		yyerror("invalid Unicode escape value");
-	if (c > 0x7F)
-	{
-		if (GetDatabaseEncoding() != PG_UTF8)
-			yyerror("Unicode escape values cannot be used for code point values above 007F when the server encoding is not UTF8");
-		yyextra->saw_non_ascii = true;
-	}
-	unicode_to_utf8(c, (unsigned char *) buf);
-	addlit(buf, pg_mblen(buf), yyscanner);
+
+	/*
+	 * We expect that pg_unicode_to_server() will complain about any
+	 * unconvertible code point, so we don't have to set saw_non_ascii.
+	 */
+	setup_scanner_errposition_callback(&scbstate, yyscanner, *(yylloc));
+	pg_unicode_to_server(c, (unsigned char *) buf);
+	cancel_scanner_errposition_callback(&scbstate);
+	addlit(buf, strlen(buf), yyscanner);
 }
 
 static unsigned char
