@@ -2150,7 +2150,7 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("ALTER", "TYPE", MatchAny))
 		COMPLETE_WITH("ADD ATTRIBUTE", "ADD VALUE", "ALTER ATTRIBUTE",
 					  "DROP ATTRIBUTE",
-					  "OWNER TO", "RENAME", "SET SCHEMA");
+					  "OWNER TO", "RENAME", "SET SCHEMA", "SET (");
 	/* complete ALTER TYPE <foo> ADD with actions */
 	else if (Matches("ALTER", "TYPE", MatchAny, "ADD"))
 		COMPLETE_WITH("ATTRIBUTE", "VALUE");

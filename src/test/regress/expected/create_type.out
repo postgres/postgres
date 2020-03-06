@@ -224,3 +224,81 @@ select format_type('bpchar'::regtype, -1);
  bpchar
 (1 row)
 
+--
+-- Test CREATE/ALTER TYPE using a type that's compatible with varchar,
+-- so we can re-use those support functions
+--
+CREATE TYPE myvarchar;
+CREATE FUNCTION myvarcharin(cstring, oid, integer) RETURNS myvarchar
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'varcharin';
+NOTICE:  return type myvarchar is only a shell
+CREATE FUNCTION myvarcharout(myvarchar) RETURNS cstring
+LANGUAGE internal IMMUTABLE PARALLEL SAFE STRICT AS 'varcharout';
+NOTICE:  argument type myvarchar is only a shell
+CREATE FUNCTION myvarcharsend(myvarchar) RETURNS bytea
+LANGUAGE internal STABLE PARALLEL SAFE STRICT AS 'varcharsend';
+NOTICE:  argument type myvarchar is only a shell
+CREATE FUNCTION myvarcharrecv(internal, oid, integer) RETURNS myvarchar
+LANGUAGE internal STABLE PARALLEL SAFE STRICT AS 'varcharrecv';
+NOTICE:  return type myvarchar is only a shell
+-- fail, it's still a shell:
+ALTER TYPE myvarchar SET (storage = extended);
+ERROR:  type "myvarchar" is only a shell
+CREATE TYPE myvarchar (
+    input = myvarcharin,
+    output = myvarcharout,
+    alignment = integer,
+    storage = main
+);
+-- want to check updating of a domain over the target type, too
+CREATE DOMAIN myvarchardom AS myvarchar;
+ALTER TYPE myvarchar SET (storage = plain);  -- not allowed
+ERROR:  cannot change type's storage to PLAIN
+ALTER TYPE myvarchar SET (storage = extended);
+ALTER TYPE myvarchar SET (
+    send = myvarcharsend,
+    receive = myvarcharrecv,
+    typmod_in = varchartypmodin,
+    typmod_out = varchartypmodout,
+    analyze = array_typanalyze  -- bogus, but it doesn't matter
+);
+SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
+       typanalyze, typstorage
+FROM pg_type WHERE typname = 'myvarchar';
+  typinput   |  typoutput   |  typreceive   |    typsend    |    typmodin     |    typmodout     |    typanalyze    | typstorage 
+-------------+--------------+---------------+---------------+-----------------+------------------+------------------+------------
+ myvarcharin | myvarcharout | myvarcharrecv | myvarcharsend | varchartypmodin | varchartypmodout | array_typanalyze | x
+(1 row)
+
+SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
+       typanalyze, typstorage
+FROM pg_type WHERE typname = 'myvarchardom';
+ typinput  |  typoutput   | typreceive  |    typsend    | typmodin | typmodout |    typanalyze    | typstorage 
+-----------+--------------+-------------+---------------+----------+-----------+------------------+------------
+ domain_in | myvarcharout | domain_recv | myvarcharsend | -        | -         | array_typanalyze | x
+(1 row)
+
+-- ensure dependencies are straight
+DROP FUNCTION myvarcharsend(myvarchar);  -- fail
+ERROR:  cannot drop function myvarcharsend(myvarchar) because other objects depend on it
+DETAIL:  type myvarchar depends on function myvarcharsend(myvarchar)
+function myvarcharin(cstring,oid,integer) depends on type myvarchar
+function myvarcharout(myvarchar) depends on type myvarchar
+function myvarcharrecv(internal,oid,integer) depends on type myvarchar
+type myvarchardom depends on function myvarcharsend(myvarchar)
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP TYPE myvarchar;  -- fail
+ERROR:  cannot drop type myvarchar because other objects depend on it
+DETAIL:  function myvarcharin(cstring,oid,integer) depends on type myvarchar
+function myvarcharout(myvarchar) depends on type myvarchar
+function myvarcharsend(myvarchar) depends on type myvarchar
+function myvarcharrecv(internal,oid,integer) depends on type myvarchar
+type myvarchardom depends on type myvarchar
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP TYPE myvarchar CASCADE;
+NOTICE:  drop cascades to 5 other objects
+DETAIL:  drop cascades to function myvarcharin(cstring,oid,integer)
+drop cascades to function myvarcharout(myvarchar)
+drop cascades to function myvarcharsend(myvarchar)
+drop cascades to function myvarcharrecv(internal,oid,integer)
+drop cascades to type myvarchardom

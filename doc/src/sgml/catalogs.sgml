@@ -7828,28 +7828,38 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        types (those with <structfield>typlen</structfield> = -1) if
        the type is prepared for toasting and what the default strategy
        for attributes of this type should be.
-       Possible values are
+       Possible values are:
        <itemizedlist>
         <listitem>
-         <para><literal>p</literal>: Value must always be stored plain.</para>
+         <para>
+          <literal>p</literal> (plain): Values must always be stored plain
+          (non-varlena types always use this value).
+         </para>
         </listitem>
         <listitem>
          <para>
-          <literal>e</literal>: Value can be stored in a <quote>secondary</quote>
-          relation (if relation has one, see
+          <literal>e</literal> (external): Values can be stored in a
+          secondary <quote>TOAST</quote> relation (if relation has one, see
           <literal>pg_class.reltoastrelid</literal>).
          </para>
         </listitem>
         <listitem>
-         <para><literal>m</literal>: Value can be stored compressed inline.</para>
+         <para>
+          <literal>m</literal> (main): Values can be compressed and stored
+          inline.
+         </para>
         </listitem>
         <listitem>
-         <para><literal>x</literal>: Value can be stored compressed inline or stored in <quote>secondary</quote> storage.</para>
+         <para>
+          <literal>x</literal> (extended): Values can be compressed and/or
+          moved to a secondary relation.
+         </para>
         </listitem>
        </itemizedlist>
-       Note that <literal>m</literal> columns can also be moved out to secondary
-       storage, but only as a last resort (<literal>e</literal> and <literal>x</literal> columns are
-       moved first).
+       <literal>x</literal> is the usual choice for toast-able types.
+       Note that <literal>m</literal> values can also be moved out to
+       secondary storage, but only as a last resort (<literal>e</literal>
+       and <literal>x</literal> values are moved first).
       </para></entry>
      </row>
 

@@ -23,13 +23,14 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TYPE <replaceable class="parameter">name</replaceable> <replaceable class="parameter">action</replaceable> [, ... ]
 ALTER TYPE <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME ATTRIBUTE <replaceable class="parameter">attribute_name</replaceable> TO <replaceable class="parameter">new_attribute_name</replaceable> [ CASCADE | RESTRICT ]
 ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER TYPE <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME ATTRIBUTE <replaceable class="parameter">attribute_name</replaceable> TO <replaceable class="parameter">new_attribute_name</replaceable> [ CASCADE | RESTRICT ]
+ALTER TYPE <replaceable class="parameter">name</replaceable> <replaceable class="parameter">action</replaceable> [, ... ]
 ALTER TYPE <replaceable class="parameter">name</replaceable> ADD VALUE [ IF NOT EXISTS ] <replaceable class="parameter">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="parameter">neighbor_enum_value</replaceable> ]
 ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <replaceable class="parameter">existing_enum_value</replaceable> TO <replaceable class="parameter">new_enum_value</replaceable>
+ALTER TYPE <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">property</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )
 
 <phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
@@ -47,6 +48,43 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
    There are several subforms:
 
   <variablelist>
+   <varlistentry>
+    <term><literal>OWNER</literal></term>
+    <listitem>
+     <para>
+      This form changes the owner of the type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RENAME</literal></term>
+    <listitem>
+     <para>
+      This form changes the name of the type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET SCHEMA</literal></term>
+    <listitem>
+     <para>
+      This form moves the type into another schema.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RENAME ATTRIBUTE</literal></term>
+    <listitem>
+     <para>
+      This form is only usable with composite types.
+      It changes the name of an individual attribute of the type.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><literal>ADD ATTRIBUTE</literal></term>
     <listitem>
@@ -70,38 +108,10 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET DATA TYPE</literal></term>
+    <term><literal>ALTER ATTRIBUTE ... SET DATA TYPE</literal></term>
     <listitem>
      <para>
       This form changes the type of an attribute of a composite type.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>OWNER</literal></term>
-    <listitem>
-     <para>
-      This form changes the owner of the type.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>RENAME</literal></term>
-    <listitem>
-     <para>
-      This form changes the name of the type or the name of an
-      individual attribute of a composite type.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><literal>SET SCHEMA</literal></term>
-    <listitem>
-     <para>
-      This form moves the type into another schema.
      </para>
     </listitem>
    </varlistentry>
@@ -135,6 +145,84 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <literal>SET ( <replaceable class="parameter">property</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )</literal>
+    </term>
+    <listitem>
+     <para>
+      This form is only applicable to base types.  It allows adjustment of a
+      subset of the base-type properties that can be set in <command>CREATE
+      TYPE</command>.  Specifically, these properties can be changed:
+      <itemizedlist>
+       <listitem>
+        <para>
+         <literal>RECEIVE</literal> can be set to the name of a binary input
+         function, or <literal>NONE</literal> to remove the type's binary
+         input function.  Using this option requires superuser privilege.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>SEND</literal> can be set to the name of a binary output
+         function, or <literal>NONE</literal> to remove the type's binary
+         output function.  Using this option requires superuser privilege.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>TYPMOD_IN</literal> can be set to the name of a type
+         modifier input function, or <literal>NONE</literal> to remove the
+         type's type modifier input function.  Using this option requires
+         superuser privilege.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>TYPMOD_OUT</literal> can be set to the name of a type
+         modifier output function, or <literal>NONE</literal> to remove the
+         type's type modifier output function.  Using this option requires
+         superuser privilege.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>ANALYZE</literal> can be set to the name of a type-specific
+         statistics collection function, or <literal>NONE</literal> to remove
+         the type's statistics collection function.  Using this option
+         requires superuser privilege.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         <literal>STORAGE</literal><indexterm>
+          <primary>TOAST</primary>
+          <secondary>per-type storage settings</secondary>
+         </indexterm>
+         can be set to <literal>plain</literal>,
+         <literal>extended</literal>, <literal>external</literal>,
+         or <literal>main</literal> (see <xref linkend="storage-toast"/> for
+         more information about what these mean).  However, changing
+         from <literal>plain</literal> to another setting requires superuser
+         privilege (because it requires that the type's C functions all be
+         TOAST-ready), and changing to <literal>plain</literal> from another
+         setting is not allowed at all (since the type may already have
+         TOASTed values present in the database).  Note that changing this
+         option doesn't by itself change any stored data, it just sets the
+         default TOAST strategy to be used for table columns created in the
+         future.  See <xref linkend="sql-altertable"/> to change the TOAST
+         strategy for existing table columns.
+        </para>
+       </listitem>
+      </itemizedlist>
+      See <xref linkend="sql-createtype"/> for more details about these
+      type properties.  Note that where appropriate, a change in these
+      properties for a base type will be propagated automatically to domains
+      based on that type.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
   </para>
 
@@ -156,7 +244,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
    doesn't do anything you couldn't do by dropping and recreating the type.
    However, a superuser can alter ownership of any type anyway.)
    To add an attribute or alter an attribute type, you must also
-   have <literal>USAGE</literal> privilege on the data type.
+   have <literal>USAGE</literal> privilege on the attribute's data type.
   </para>
  </refsect1>
 
@@ -263,6 +351,16 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="parameter">property</replaceable></term>
+      <listitem>
+       <para>
+        The name of a base-type property to be modified; see above for
+        possible values.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><literal>CASCADE</literal></term>
       <listitem>
        <para>
@@ -336,7 +434,7 @@ ALTER TYPE email SET SCHEMA customers;
   </para>
 
   <para>
-   To add a new attribute to a type:
+   To add a new attribute to a composite type:
 <programlisting>
 ALTER TYPE compfoo ADD ATTRIBUTE f3 int;
 </programlisting>
@@ -353,7 +451,20 @@ ALTER TYPE colors ADD VALUE 'orange' AFTER 'red';
    To rename an enum value:
 <programlisting>
 ALTER TYPE colors RENAME VALUE 'purple' TO 'mauve';
-</programlisting></para>
+</programlisting>
+  </para>
+
+  <para>
+   To create binary I/O functions for an existing base type:
+<programlisting>
+CREATE FUNCTION mytypesend(mytype) RETURNS bytea ...;
+CREATE FUNCTION mytyperecv(internal, oid, integer) RETURNS mytype ...;
+ALTER TYPE mytype SET (
+    SEND = mytypesend,
+    RECEIVE = mytyperecv
+);
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>

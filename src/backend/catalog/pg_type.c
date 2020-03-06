@@ -155,8 +155,8 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
 	 */
 	if (!IsBootstrapProcessingMode())
-		GenerateTypeDependencies(typoid,
-								 (Form_pg_type) GETSTRUCT(tup),
+		GenerateTypeDependencies(tup,
+								 pg_type_desc,
 								 NULL,
 								 NULL,
 								 0,
@@ -488,8 +488,8 @@ TypeCreate(Oid newTypeOid,
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
 	 */
 	if (!IsBootstrapProcessingMode())
-		GenerateTypeDependencies(typeObjectId,
-								 (Form_pg_type) GETSTRUCT(tup),
+		GenerateTypeDependencies(tup,
+								 pg_type_desc,
 								 (defaultTypeBin ?
 								  stringToNode(defaultTypeBin) :
 								  NULL),
@@ -516,12 +516,16 @@ TypeCreate(Oid newTypeOid,
  * GenerateTypeDependencies: build the dependencies needed for a type
  *
  * Most of what this function needs to know about the type is passed as the
- * new pg_type row, typeForm.  But we can't get at the varlena fields through
- * that, so defaultExpr and typacl are passed separately.  (typacl is really
+ * new pg_type row, typeTuple.  We make callers pass the pg_type Relation
+ * as well, so that we have easy access to a tuple descriptor for the row.
+ *
+ * While this is able to extract the defaultExpr and typacl from the tuple,
+ * doing so is relatively expensive, and callers may have those values at
+ * hand already.  Pass those if handy, otherwise pass NULL.  (typacl is really
  * "Acl *", but we declare it "void *" to avoid including acl.h in pg_type.h.)
  *
- * relationKind and isImplicitArray aren't visible in the pg_type row either,
- * so they're also passed separately.
+ * relationKind and isImplicitArray are likewise somewhat expensive to deduce
+ * from the tuple, so we make callers pass those (they're not optional).
  *
  * isDependentType is true if this is an implicit array or relation rowtype;
  * that means it doesn't need its own dependencies on owner etc.
@@ -535,8 +539,8 @@ TypeCreate(Oid newTypeOid,
  * that type will become a member of the extension.)
  */
 void
-GenerateTypeDependencies(Oid typeObjectId,
-						 Form_pg_type typeForm,
+GenerateTypeDependencies(HeapTuple typeTuple,
+						 Relation typeCatalog,
 						 Node *defaultExpr,
 						 void *typacl,
 						 char relationKind, /* only for relation rowtypes */
@@ -544,8 +548,29 @@ GenerateTypeDependencies(Oid typeObjectId,
 						 bool isDependentType,
 						 bool rebuild)
 {
+	Form_pg_type typeForm = (Form_pg_type) GETSTRUCT(typeTuple);
+	Oid			typeObjectId = typeForm->oid;
+	Datum		datum;
+	bool		isNull;
 	ObjectAddress myself,
 				referenced;
+
+	/* Extract defaultExpr if caller didn't pass it */
+	if (defaultExpr == NULL)
+	{
+		datum = heap_getattr(typeTuple, Anum_pg_type_typdefaultbin,
+							 RelationGetDescr(typeCatalog), &isNull);
+		if (!isNull)
+			defaultExpr = stringToNode(TextDatumGetCString(datum));
+	}
+	/* Extract typacl if caller didn't pass it */
+	if (typacl == NULL)
+	{
+		datum = heap_getattr(typeTuple, Anum_pg_type_typacl,
+							 RelationGetDescr(typeCatalog), &isNull);
+		if (!isNull)
+			typacl = DatumGetAclPCopy(datum);
+	}
 
 	/* If rebuild, first flush old dependencies, except extension deps */
 	if (rebuild)

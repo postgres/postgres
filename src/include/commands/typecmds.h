@@ -54,4 +54,6 @@ extern Oid	AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 									   bool errorOnTableType,
 									   ObjectAddresses *objsMoved);
 
+extern ObjectAddress AlterType(AlterTypeStmt *stmt);
+
 #endif							/* TYPECMDS_H */

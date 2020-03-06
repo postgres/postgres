@@ -33,6 +33,8 @@ typedef struct TypeCacheEntry
 	/* typeId is the hash lookup key and MUST BE FIRST */
 	Oid			type_id;		/* OID of the data type */
 
+	uint32		type_id_hash;	/* hashed value of the OID */
+
 	/* some subsidiary information copied from the pg_type row */
 	int16		typlen;
 	bool		typbyval;

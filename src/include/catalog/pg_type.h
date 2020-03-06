@@ -340,8 +340,8 @@ extern ObjectAddress TypeCreate(Oid newTypeOid,
 								bool typeNotNull,
 								Oid typeCollation);
 
-extern void GenerateTypeDependencies(Oid typeObjectId,
-									 Form_pg_type typeForm,
+extern void GenerateTypeDependencies(HeapTuple typeTuple,
+									 Relation typeCatalog,
 									 Node *defaultExpr,
 									 void *typacl,
 									 char relationKind, /* only for relation
