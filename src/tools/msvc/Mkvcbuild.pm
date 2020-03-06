@@ -43,6 +43,7 @@ my $contrib_extrasource = {
 	'seg'  => [ 'contrib/seg/segscan.l',   'contrib/seg/segparse.y' ],
 };
 my @contrib_excludes = (
+	'bool_plperl',
 	'commit_ts',        'hstore_plperl',
 	'hstore_plpython',  'intagg',
 	'jsonb_plperl',     'jsonb_plpython',
@@ -763,6 +764,9 @@ sub mkvcbuild
 		}
 
 		# Add transform modules dependent on plperl
+		my $bool_plperl = AddTransformModule(
+			'bool_plperl',  'contrib/bool_plperl',
+			'plperl',       'src/pl/plperl');
 		my $hstore_plperl = AddTransformModule(
 			'hstore_plperl', 'contrib/hstore_plperl',
 			'plperl',        'src/pl/plperl',
@@ -773,6 +777,7 @@ sub mkvcbuild
 
 		foreach my $f (@perl_embed_ccflags)
 		{
+			$bool_plperl->AddDefine($f);
 			$hstore_plperl->AddDefine($f);
 			$jsonb_plperl->AddDefine($f);
 		}

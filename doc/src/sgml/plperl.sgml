@@ -55,8 +55,11 @@
    syntax:
 
 <programlisting>
-CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
-    # PL/Perl function body
+CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>)
+RETURNS <replaceable>return-type</replaceable>
+-- function attributes can go here
+AS $$
+    # PL/Perl function body goes here
 $$ LANGUAGE plperl;
 </programlisting>
 
@@ -186,6 +189,39 @@ $$ LANGUAGE plperl;
    must be in the external text representation format. For example, the
    <function>encode_bytea</function> function can be used to
    escape binary data for a return value of type <type>bytea</type>.
+  </para>
+
+  <para>
+   One case that is particularly important is boolean values.  As just
+   stated, the default behavior for <type>bool</type> values is that they
+   are passed to Perl as text, thus either <literal>'t'</literal>
+   or <literal>'f'</literal>.  This is problematic, since Perl will not
+   treat <literal>'f'</literal> as false!  It is possible to improve matters
+   by using a <quote>transform</quote> (see
+   <xref linkend="sql-createtransform"/>).  Suitable transforms are provided
+   by the <filename>bool_plperl</filename> extension.  To use it, install
+   the extension:
+<programlisting>
+CREATE EXTENSION bool_plperl;  -- or bool_plperlu for PL/PerlU
+</programlisting>
+   Then use the <literal>TRANSFORM</literal> function attribute for a
+   PL/Perl function that takes or returns <type>bool</type>, for example:
+<programlisting>
+CREATE FUNCTION perl_and(bool, bool) RETURNS bool
+TRANSFORM FOR TYPE bool
+AS $$
+  my ($a, $b) = @_;
+  return $a &amp;&amp; $b;
+$$ LANGUAGE plperl;
+</programlisting>
+   When this transform is applied, <type>bool</type> arguments will be seen
+   by Perl as being <literal>1</literal> or empty, thus properly true or
+   false.  If the function result is type <type>bool</type>, it will be true
+   or false according to whether Perl would evaluate the returned value as
+   true.
+   Similar transformations are also performed for boolean query arguments
+   and results of SPI queries performed inside the function
+   (<xref linkend="plperl-database"/>).
   </para>
 
   <para>
@@ -381,6 +417,13 @@ use strict;
    Conversely, the <function>return</function> and <function>return_next</function>
    commands will accept any string that is acceptable input format
    for the function's declared return type.
+  </para>
+
+  <para>
+   If this behavior is inconvenient for a particular case, it can be
+   improved by using a transform, as already illustrated
+   for <type>bool</type> values.  Several examples of transform modules
+   are included in the <productname>PostgreSQL</productname> distribution.
   </para>
  </sect1>
 

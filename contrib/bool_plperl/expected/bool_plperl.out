@@ -1,0 +1,97 @@
+CREATE EXTENSION bool_plperl CASCADE;
+NOTICE:  installing required extension "plperl"
+--- test transforming from perl
+CREATE FUNCTION perl2int(int) RETURNS bool
+LANGUAGE plperl
+TRANSFORM FOR TYPE bool
+AS $$
+return shift;
+$$;
+CREATE FUNCTION perl2text(text) RETURNS bool
+LANGUAGE plperl
+TRANSFORM FOR TYPE bool
+AS $$
+return shift;
+$$;
+CREATE FUNCTION perl2undef() RETURNS bool
+LANGUAGE plperl
+TRANSFORM FOR TYPE bool
+AS $$
+return undef;
+$$;
+SELECT perl2int(1);
+ perl2int 
+----------
+ t
+(1 row)
+
+SELECT perl2int(0);
+ perl2int 
+----------
+ f
+(1 row)
+
+SELECT perl2text('foo');
+ perl2text 
+-----------
+ t
+(1 row)
+
+SELECT perl2text('');
+ perl2text 
+-----------
+ f
+(1 row)
+
+SELECT perl2undef() IS NULL AS p;
+ p 
+---
+ t
+(1 row)
+
+--- test transforming to perl
+CREATE FUNCTION bool2perl(bool, bool, bool) RETURNS void
+LANGUAGE plperl
+TRANSFORM FOR TYPE bool
+AS $$
+my ($x, $y, $z) = @_;
+
+die("NULL mistransformed") if (defined($z));
+die("TRUE mistransformed to UNDEF") if (!defined($x));
+die("FALSE mistransformed to UNDEF") if (!defined($y));
+die("TRUE mistransformed") if (!$x);
+die("FALSE mistransformed") if ($y);
+$$;
+SELECT bool2perl (true, false, NULL);
+ bool2perl 
+-----------
+ 
+(1 row)
+
+--- test selecting bool through SPI
+CREATE FUNCTION spi_test()  RETURNS void
+LANGUAGE plperl
+TRANSFORM FOR TYPE bool
+AS $$
+my $rv = spi_exec_query('SELECT true t, false f, NULL n')->{rows}->[0];
+
+die("TRUE mistransformed to UNDEF in SPI") if (!defined ($rv->{t}));
+die("FALSE mistransformed to UNDEF in SPI") if (!defined ($rv->{f}));
+die("NULL mistransformed in SPI") if (defined ($rv->{n}));
+die("TRUE mistransformed in SPI") if (!$rv->{t});
+die("FALSE mistransformed in SPI") if ($rv->{f});
+$$;
+SELECT spi_test();
+ spi_test 
+----------
+ 
+(1 row)
+
+DROP EXTENSION plperl CASCADE;
+NOTICE:  drop cascades to 6 other objects
+DETAIL:  drop cascades to function spi_test()
+drop cascades to extension bool_plperl
+drop cascades to function perl2int(integer)
+drop cascades to function perl2text(text)
+drop cascades to function perl2undef()
+drop cascades to function bool2perl(boolean,boolean,boolean)
