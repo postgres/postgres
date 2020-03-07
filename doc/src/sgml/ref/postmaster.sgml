@@ -15,7 +15,7 @@ PostgreSQL documentation
  </refmeta>
 
  <refnamediv>
-  <refname id="postmaster-ref">postmaster</refname>
+  <refname>postmaster</refname>
   <refpurpose><productname>PostgreSQL</productname> database server</refpurpose>
  </refnamediv>
 

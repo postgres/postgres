@@ -15,7 +15,7 @@ PostgreSQL documentation
  </refmeta>
 
  <refnamediv>
-  <refname id="clusterdb">clusterdb</refname>
+  <refname>clusterdb</refname>
   <refpurpose>cluster a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
 

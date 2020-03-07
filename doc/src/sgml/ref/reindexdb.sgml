@@ -15,7 +15,7 @@ PostgreSQL documentation
  </refmeta>
 
  <refnamediv>
-  <refname id="reindexdb">reindexdb</refname>
+  <refname>reindexdb</refname>
   <refpurpose>reindex a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
 

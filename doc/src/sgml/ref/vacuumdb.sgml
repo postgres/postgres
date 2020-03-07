@@ -15,7 +15,7 @@ PostgreSQL documentation
  </refmeta>
 
  <refnamediv>
-  <refname id="vacuumdb">vacuumdb</refname>
+  <refname>vacuumdb</refname>
   <refpurpose>garbage-collect and analyze a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
 
