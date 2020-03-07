@@ -63,6 +63,7 @@
    <listitem><para>ISO/IEC 9075-11 Information and Definition Schemas (SQL/Schemata)</para><indexterm><primary>SQL/Schemata</primary></indexterm></listitem>
    <listitem><para>ISO/IEC 9075-13 Routines and Types using the Java Language (SQL/JRT)</para><indexterm><primary>SQL/JRT</primary></indexterm></listitem>
    <listitem><para>ISO/IEC 9075-14 XML-related specifications (SQL/XML)</para><indexterm><primary>SQL/XML</primary></indexterm></listitem>
+   <listitem><para>ISO/IEC 9075-15 Multi-dimensional arrays (SQL/MDA)</para><indexterm><primary>SQL/MDA</primary></indexterm></listitem>
   </itemizedlist>
  </para>
 
@@ -71,7 +72,7 @@
   11, and 14.  Part 3 is covered by the ODBC driver, and part 13 is
   covered by the PL/Java plug-in, but exact conformance is currently
   not being verified for these components.  There are currently no
-  implementations of parts 4 and 10
+  implementations of parts 4, 10, and 15
   for <productname>PostgreSQL</productname>.
  </para>
 
