@@ -597,6 +597,8 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 	}
 }
 
+/* Number of output arguments (columns) for bt_metap() */
+#define BT_METAP_COLS_V1_8		9
 
 /* ------------------------------------------------
  * bt_metap()
@@ -653,13 +655,30 @@ bt_metap(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
+	/*
+	 * We need a kluge here to detect API versions prior to 1.8.  Earlier
+	 * versions incorrectly used int4 for certain columns.  This caused
+	 * various problems.  For example, an int4 version of the "oldest_xact"
+	 * column would not work with TransactionId values that happened to exceed
+	 * PG_INT32_MAX.
+	 *
+	 * There is no way to reliably avoid the problems created by the old
+	 * function definition at this point, so insist that the user update the
+	 * extension.
+	 */
+	if (tupleDesc->natts < BT_METAP_COLS_V1_8)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("function has wrong number of declared columns"),
+				 errhint("To resolve the problem, update the \"pageinspect\" extension to the latest version.")));
+
 	j = 0;
 	values[j++] = psprintf("%d", metad->btm_magic);
 	values[j++] = psprintf("%d", metad->btm_version);
-	values[j++] = psprintf("%d", metad->btm_root);
-	values[j++] = psprintf("%d", metad->btm_level);
-	values[j++] = psprintf("%d", metad->btm_fastroot);
-	values[j++] = psprintf("%d", metad->btm_fastlevel);
+	values[j++] = psprintf(INT64_FORMAT, (int64) metad->btm_root);
+	values[j++] = psprintf(INT64_FORMAT, (int64) metad->btm_level);
+	values[j++] = psprintf(INT64_FORMAT, (int64) metad->btm_fastroot);
+	values[j++] = psprintf(INT64_FORMAT, (int64) metad->btm_fastlevel);
 
 	/*
 	 * Get values of extended metadata if available, use default values

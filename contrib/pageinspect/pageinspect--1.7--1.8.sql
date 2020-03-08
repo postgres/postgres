@@ -22,12 +22,12 @@ DROP FUNCTION bt_metap(text);
 CREATE FUNCTION bt_metap(IN relname text,
     OUT magic int4,
     OUT version int4,
-    OUT root int4,
-    OUT level int4,
-    OUT fastroot int4,
-    OUT fastlevel int4,
-    OUT oldest_xact int4,
-    OUT last_cleanup_num_tuples real,
+    OUT root int8,
+    OUT level int8,
+    OUT fastroot int8,
+    OUT fastlevel int8,
+    OUT oldest_xact xid,
+    OUT last_cleanup_num_tuples float8,
     OUT allequalimage boolean)
 AS 'MODULE_PATHNAME', 'bt_metap'
 LANGUAGE C STRICT PARALLEL SAFE;
