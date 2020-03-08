@@ -53,3 +53,9 @@ select ts_lexize('intdict', '641439323669');
 select ts_lexize('intdict', '314532610153');
 
 ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = -214783648);
+
+select ts_lexize('intdict', '-40865854');
+select ts_lexize('intdict', '+40865854');
+ALTER TEXT SEARCH DICTIONARY intdict (ABSVAL = true);
+select ts_lexize('intdict', '-40865854');
+select ts_lexize('intdict', '+40865854');

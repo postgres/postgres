@@ -302,3 +302,28 @@ select ts_lexize('intdict', '314532610153');
 
 ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = -214783648);
 ERROR:  maxlen value has to be >= 1
+select ts_lexize('intdict', '-40865854');
+ ts_lexize 
+-----------
+ {-40865}
+(1 row)
+
+select ts_lexize('intdict', '+40865854');
+ ts_lexize 
+-----------
+ {+40865}
+(1 row)
+
+ALTER TEXT SEARCH DICTIONARY intdict (ABSVAL = true);
+select ts_lexize('intdict', '-40865854');
+ ts_lexize 
+-----------
+ {408658}
+(1 row)
+
+select ts_lexize('intdict', '+40865854');
+ ts_lexize 
+-----------
+ {408658}
+(1 row)
+
