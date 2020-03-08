@@ -1182,3 +1182,21 @@ drop role regress_partitioning_role;
 
 -- \d on toast table (use pg_statistic's toast table, which has a known name)
 \d pg_toast.pg_toast_2619
+
+-- check printing info about access methods
+\dA
+\dA *
+\dA h*
+\dA foo
+\dA foo bar
+\dA+
+\dA+ *
+\dA+ h*
+\dA+ foo
+\dAc brin pg*.oid*
+\dAf spgist
+\dAf btree int4
+\dAo brin uuid_minmax_ops
+\dAo * pg_catalog.jsonb_path_ops
+\dAp brin uuid_minmax_ops
+\dAp * pg_catalog.uuid_ops

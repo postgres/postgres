@@ -4809,3 +4809,165 @@ Owning table: "pg_catalog.pg_statistic"
 Indexes:
     "pg_toast_2619_index" PRIMARY KEY, btree (chunk_id, chunk_seq)
 
+-- check printing info about access methods
+\dA
+List of access methods
+  Name  | Type  
+--------+-------
+ brin   | Index
+ btree  | Index
+ gin    | Index
+ gist   | Index
+ hash   | Index
+ heap   | Table
+ heap2  | Table
+ spgist | Index
+(8 rows)
+
+\dA *
+List of access methods
+  Name  | Type  
+--------+-------
+ brin   | Index
+ btree  | Index
+ gin    | Index
+ gist   | Index
+ hash   | Index
+ heap   | Table
+ heap2  | Table
+ spgist | Index
+(8 rows)
+
+\dA h*
+List of access methods
+ Name  | Type  
+-------+-------
+ hash  | Index
+ heap  | Table
+ heap2 | Table
+(3 rows)
+
+\dA foo
+List of access methods
+ Name | Type 
+------+------
+(0 rows)
+
+\dA foo bar
+List of access methods
+ Name | Type 
+------+------
+(0 rows)
+
+\dA: extra argument "bar" ignored
+\dA+
+                             List of access methods
+  Name  | Type  |       Handler        |              Description               
+--------+-------+----------------------+----------------------------------------
+ brin   | Index | brinhandler          | block range index (BRIN) access method
+ btree  | Index | bthandler            | b-tree index access method
+ gin    | Index | ginhandler           | GIN index access method
+ gist   | Index | gisthandler          | GiST index access method
+ hash   | Index | hashhandler          | hash index access method
+ heap   | Table | heap_tableam_handler | heap table access method
+ heap2  | Table | heap_tableam_handler | 
+ spgist | Index | spghandler           | SP-GiST index access method
+(8 rows)
+
+\dA+ *
+                             List of access methods
+  Name  | Type  |       Handler        |              Description               
+--------+-------+----------------------+----------------------------------------
+ brin   | Index | brinhandler          | block range index (BRIN) access method
+ btree  | Index | bthandler            | b-tree index access method
+ gin    | Index | ginhandler           | GIN index access method
+ gist   | Index | gisthandler          | GiST index access method
+ hash   | Index | hashhandler          | hash index access method
+ heap   | Table | heap_tableam_handler | heap table access method
+ heap2  | Table | heap_tableam_handler | 
+ spgist | Index | spghandler           | SP-GiST index access method
+(8 rows)
+
+\dA+ h*
+                     List of access methods
+ Name  | Type  |       Handler        |       Description        
+-------+-------+----------------------+--------------------------
+ hash  | Index | hashhandler          | hash index access method
+ heap  | Table | heap_tableam_handler | heap table access method
+ heap2 | Table | heap_tableam_handler | 
+(3 rows)
+
+\dA+ foo
+       List of access methods
+ Name | Type | Handler | Description 
+------+------+---------+-------------
+(0 rows)
+
+\dAc brin pg*.oid*
+                   List of operator classes
+  AM  | Input type | Storage type | Operator class | Default? 
+------+------------+--------------+----------------+----------
+ brin | oid        |              | oid_minmax_ops | yes
+(1 row)
+
+\dAf spgist
+          List of operator families
+   AM   | Operator family | Applicable types 
+--------+-----------------+------------------
+ spgist | box_ops         | box
+ spgist | kd_point_ops    | point
+ spgist | network_ops     | inet
+ spgist | poly_ops        | polygon
+ spgist | quad_point_ops  | point
+ spgist | range_ops       | anyrange
+ spgist | text_ops        | text
+(7 rows)
+
+\dAf btree int4
+              List of operator families
+  AM   | Operator family |     Applicable types      
+-------+-----------------+---------------------------
+ btree | integer_ops     | smallint, integer, bigint
+(1 row)
+
+\dAo brin uuid_minmax_ops
+  List of operators of operator families
+  AM  |  Opfamily Name  |    Operator     
+------+-----------------+-----------------
+ brin | uuid_minmax_ops | < (uuid, uuid)
+ brin | uuid_minmax_ops | <= (uuid, uuid)
+ brin | uuid_minmax_ops | = (uuid, uuid)
+ brin | uuid_minmax_ops | >= (uuid, uuid)
+ brin | uuid_minmax_ops | > (uuid, uuid)
+(5 rows)
+
+\dAo * pg_catalog.jsonb_path_ops
+   List of operators of operator families
+ AM  | Opfamily Name  |       Operator       
+-----+----------------+----------------------
+ gin | jsonb_path_ops | @> (jsonb, jsonb)
+ gin | jsonb_path_ops | @? (jsonb, jsonpath)
+ gin | jsonb_path_ops | @@ (jsonb, jsonpath)
+(3 rows)
+
+\dAp brin uuid_minmax_ops
+                          List of procedures of operator families
+  AM  | Operator family | Left arg type | Right arg type | Number |       Proc name        
+------+-----------------+---------------+----------------+--------+------------------------
+ brin | uuid_minmax_ops | uuid          | uuid           |      1 | brin_minmax_opcinfo
+ brin | uuid_minmax_ops | uuid          | uuid           |      2 | brin_minmax_add_value
+ brin | uuid_minmax_ops | uuid          | uuid           |      3 | brin_minmax_consistent
+ brin | uuid_minmax_ops | uuid          | uuid           |      4 | brin_minmax_union
+(4 rows)
+
+\dAp * pg_catalog.uuid_ops
+                        List of procedures of operator families
+  AM   | Operator family | Left arg type | Right arg type | Number |     Proc name      
+-------+-----------------+---------------+----------------+--------+--------------------
+ btree | uuid_ops        | uuid          | uuid           |      1 | uuid_cmp
+ btree | uuid_ops        | uuid          | uuid           |      2 | uuid_sortsupport
+ btree | uuid_ops        | uuid          | uuid           |      4 | btequalimage
+ hash  | uuid_ops        | uuid          | uuid           |      1 | uuid_hash
+ hash  | uuid_ops        | uuid          | uuid           |      2 | uuid_hash_extended
+(5 rows)
+

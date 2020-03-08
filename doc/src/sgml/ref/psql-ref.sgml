@@ -1232,6 +1232,97 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
+        <term>
+          <literal>\dAc[+]
+            [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
+              [<link linkend="app-psql-patterns"><replaceable class="parameter">input-type-pattern</replaceable></link>]]
+          </literal>
+        </term>
+        <listitem>
+        <para>
+        Lists operator classes
+        (see <xref linkend="catalog-pg-opclass"/>).
+        If <replaceable class="parameter">access-method-patttern</replaceable>
+        is specified, only operator classes associated with access methods whose
+        names match pattern are listed.
+        If <replaceable class="parameter">input-type-pattern</replaceable>
+        is specified, only operator classes associated with input types whose
+        names match the pattern are listed.
+        If <literal>+</literal> is appended to the command name, each operator
+        class is listed with its associated operator family and owner.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <literal>\dAf[+]
+            [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
+              [<link linkend="app-psql-patterns"><replaceable class="parameter">input-type-pattern</replaceable></link>]]
+          </literal>
+        </term>
+        <listitem>
+        <para>
+        Lists operator families
+        (see <xref linkend="catalog-pg-opfamily"/>).
+        If <replaceable class="parameter">access-method-patttern</replaceable>
+        is specified, only operator families associated with access methods whose
+        names match pattern are listed.
+        If <replaceable class="parameter">input-type-pattern</replaceable>
+        is specified, only operator families associated with input types whose
+        names match the pattern are listed.
+        If <literal>+</literal> is appended to the command name, each operator
+        family is listed with its owner.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <literal>\dAo[+]
+            [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
+              [<link linkend="app-psql-patterns"><replaceable class="parameter">operator-family-pattern</replaceable></link>]]
+          </literal>
+        </term>
+
+        <listitem>
+        <para>
+        Lists operators associated with operator families
+        (<xref linkend="catalog-pg-amop"/>).
+        If <replaceable class="parameter">access-method-patttern</replaceable>
+        is specified, only members of operator families associated with access
+        methods whose names match pattern are listed.
+        If <replaceable class="parameter">input-type-pattern</replaceable>
+        is specified, only memeber of operator families whose names match the
+        pattern are listed.
+        If <literal>+</literal> is appended to the command name, each operator
+        is listed with its strategy number, purpose and sort operator family.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <literal>\dAp[+]
+            [<link linkend="app-psql-patterns"><replaceable class="parameter">access-method-pattern</replaceable></link>
+              [<link linkend="app-psql-patterns"><replaceable class="parameter">operator-family-pattern</replaceable></link>]]
+          </literal>
+        </term>
+        <listitem>
+        <para>
+        Lists procedures associated with operator families
+        (<xref linkend="catalog-pg-amproc"/>).
+        If <replaceable class="parameter">access-method-patttern</replaceable>
+        is specified, only members of operator families associated with access
+        methods whose names match pattern are listed.
+        If <replaceable class="parameter">input-type-pattern</replaceable>
+        is specified, only memeber of operator families whose names match the
+        pattern are listed.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>\db[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
 
         <listitem>
