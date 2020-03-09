@@ -43,7 +43,7 @@ int			max_standby_streaming_delay = 30 * 1000;
 static HTAB *RecoveryLockLists;
 
 static void ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
-												   ProcSignalReason reason);
+												   ProcSignalReason reason, bool report_waiting);
 static void SendRecoveryConflictWithBufferPin(ProcSignalReason reason);
 static XLogRecPtr LogCurrentRunningXacts(RunningTransactions CurrRunningXacts);
 static void LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks);
@@ -216,19 +216,24 @@ WaitExceedsMaxStandbyDelay(void)
  * recovery processing. Judgement has already been passed on it within
  * a specific rmgr. Here we just issue the orders to the procs. The procs
  * then throw the required error as instructed.
+ *
+ * If report_waiting is true, "waiting" is reported in PS display if necessary.
+ * If the caller has already reported that, report_waiting should be false.
+ * Otherwise, "waiting" is reported twice unexpectedly.
  */
 static void
 ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
-									   ProcSignalReason reason)
+									   ProcSignalReason reason, bool report_waiting)
 {
-	TimestampTz waitStart;
+	TimestampTz waitStart = 0;
 	char	   *new_status;
 
 	/* Fast exit, to avoid a kernel call if there's no work to be done. */
 	if (!VirtualTransactionIdIsValid(*waitlist))
 		return;
 
-	waitStart = GetCurrentTimestamp();
+	if (report_waiting)
+		waitStart = GetCurrentTimestamp();
 	new_status = NULL;			/* we haven't changed the ps display */
 
 	while (VirtualTransactionIdIsValid(*waitlist))
@@ -243,7 +248,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			 * Report via ps if we have been waiting for more than 500 msec
 			 * (should that be configurable?)
 			 */
-			if (update_process_title && new_status == NULL &&
+			if (update_process_title && new_status == NULL && report_waiting &&
 				TimestampDifferenceExceeds(waitStart, GetCurrentTimestamp(),
 										   500))
 			{
@@ -311,7 +316,8 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 										 node.dbNode);
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
-										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT);
+										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
+										   true);
 }
 
 void
@@ -339,7 +345,8 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 	temp_file_users = GetConflictingVirtualXIDs(InvalidTransactionId,
 												InvalidOid);
 	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
-										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE);
+										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE,
+										   true);
 }
 
 void
@@ -402,8 +409,15 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 		VirtualTransactionId *backends;
 
 		backends = GetLockConflicts(&locktag, AccessExclusiveLock, NULL);
+
+		/*
+		 * Prevent ResolveRecoveryConflictWithVirtualXIDs() from reporting
+		 * "waiting" in PS display by disabling its argument report_waiting
+		 * because the caller, WaitOnLock(), has already reported that.
+		 */
 		ResolveRecoveryConflictWithVirtualXIDs(backends,
-											   PROCSIG_RECOVERY_CONFLICT_LOCK);
+											   PROCSIG_RECOVERY_CONFLICT_LOCK,
+											   false);
 	}
 	else
 	{
