@@ -24,8 +24,15 @@
  * Sort priority for database object types.
  * Objects are sorted by type, and within a type by name.
  *
- * Because materialized views can potentially reference system views,
- * DO_REFRESH_MATVIEW should always be the last thing on the list.
+ * Triggers, event triggers, and materialized views are intentionally sorted
+ * late.  Triggers must be restored after all data modifications, so that
+ * they don't interfere with loading data.  Event triggers are restored
+ * next-to-last so that they don't interfere with object creations of any
+ * kind.  Matview refreshes are last because they should execute in the
+ * database's normal state (e.g., they must come after all ACLs are restored;
+ * also, if they choose to look at system catalogs, they should see the final
+ * restore state).  If you think to change this, see also the RestorePass
+ * mechanism in pg_backup_archiver.c.
  *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
@@ -66,18 +73,18 @@ static const int dbObjectTypePriority[] =
 	15,							/* DO_TSCONFIG */
 	16,							/* DO_FDW */
 	17,							/* DO_FOREIGN_SERVER */
-	33,							/* DO_DEFAULT_ACL */
+	38,							/* DO_DEFAULT_ACL --- done in ACL pass */
 	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
 	25,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	26,							/* DO_POST_DATA_BOUNDARY */
-	34,							/* DO_EVENT_TRIGGER */
-	39,							/* DO_REFRESH_MATVIEW */
-	35,							/* DO_POLICY */
-	36,							/* DO_PUBLICATION */
-	37,							/* DO_PUBLICATION_REL */
-	38							/* DO_SUBSCRIPTION */
+	39,							/* DO_EVENT_TRIGGER --- next to last! */
+	40,							/* DO_REFRESH_MATVIEW --- last! */
+	34,							/* DO_POLICY */
+	35,							/* DO_PUBLICATION */
+	36,							/* DO_PUBLICATION_REL */
+	37							/* DO_SUBSCRIPTION */
 };
 
 StaticAssertDecl(lengthof(dbObjectTypePriority) == (DO_SUBSCRIPTION + 1),

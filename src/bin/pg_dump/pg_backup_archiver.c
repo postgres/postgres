@@ -670,11 +670,11 @@ RestoreArchive(Archive *AHX)
 	{
 		/*
 		 * In serial mode, process everything in three phases: normal items,
-		 * then ACLs, then matview refresh items.  We might be able to skip
-		 * one or both extra phases in some cases, eg data-only restores.
+		 * then ACLs, then post-ACL items.  We might be able to skip one or
+		 * both extra phases in some cases, eg data-only restores.
 		 */
 		bool		haveACL = false;
-		bool		haveRefresh = false;
+		bool		havePostACL = false;
 
 		for (te = AH->toc->next; te != AH->toc; te = te->next)
 		{
@@ -689,8 +689,8 @@ RestoreArchive(Archive *AHX)
 				case RESTORE_PASS_ACL:
 					haveACL = true;
 					break;
-				case RESTORE_PASS_REFRESH:
-					haveRefresh = true;
+				case RESTORE_PASS_POST_ACL:
+					havePostACL = true;
 					break;
 			}
 		}
@@ -705,12 +705,12 @@ RestoreArchive(Archive *AHX)
 			}
 		}
 
-		if (haveRefresh)
+		if (havePostACL)
 		{
 			for (te = AH->toc->next; te != AH->toc; te = te->next)
 			{
 				if ((te->reqs & (REQ_SCHEMA | REQ_DATA)) != 0 &&
-					_tocEntryRestorePass(te) == RESTORE_PASS_REFRESH)
+					_tocEntryRestorePass(te) == RESTORE_PASS_POST_ACL)
 					(void) restore_toc_entry(AH, te, false);
 			}
 		}
@@ -3082,8 +3082,9 @@ _tocEntryRestorePass(TocEntry *te)
 		strcmp(te->desc, "ACL LANGUAGE") == 0 ||
 		strcmp(te->desc, "DEFAULT ACL") == 0)
 		return RESTORE_PASS_ACL;
-	if (strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0)
-		return RESTORE_PASS_REFRESH;
+	if (strcmp(te->desc, "EVENT TRIGGER") == 0 ||
+		strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0)
+		return RESTORE_PASS_POST_ACL;
 	return RESTORE_PASS_MAIN;
 }
 
