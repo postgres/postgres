@@ -74,7 +74,8 @@ lo_manage(PG_FUNCTION_ARGS)
 	 * Here, if the value of the monitored attribute changes, then the large
 	 * object associated with the original value is unlinked.
 	 */
-	if (newtuple != NULL)
+	if (newtuple != NULL &&
+		bms_is_member(attnum - FirstLowInvalidHeapAttributeNumber, trigdata->tg_updatedcols))
 	{
 		char	   *orig = SPI_getvalue(trigtuple, tupdesc, attnum);
 		char	   *newv = SPI_getvalue(newtuple, tupdesc, attnum);

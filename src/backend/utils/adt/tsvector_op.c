@@ -2416,6 +2416,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	bool		isnull;
 	text	   *txt;
 	Oid			cfgId;
+	bool		update_needed;
 
 	/* Check call context */
 	if (!CALLED_AS_TRIGGER(fcinfo)) /* internal error */
@@ -2428,9 +2429,15 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		elog(ERROR, "tsvector_update_trigger: must be fired BEFORE event");
 
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+	{
 		rettuple = trigdata->tg_trigtuple;
+		update_needed = true;
+	}
 	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+	{
 		rettuple = trigdata->tg_newtuple;
+		update_needed = false;	/* computed below */
+	}
 	else
 		elog(ERROR, "tsvector_update_trigger: must be fired for INSERT or UPDATE");
 
@@ -2518,6 +2525,9 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 					 errmsg("column \"%s\" is not of a character type",
 							trigger->tgargs[i])));
 
+		if (bms_is_member(numattr - FirstLowInvalidHeapAttributeNumber, trigdata->tg_updatedcols))
+			update_needed = true;
+
 		datum = SPI_getbinval(rettuple, rel->rd_att, numattr, &isnull);
 		if (isnull)
 			continue;
@@ -2530,16 +2540,19 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 			pfree(txt);
 	}
 
-	/* make tsvector value */
-	datum = TSVectorGetDatum(make_tsvector(&prs));
-	isnull = false;
+	if (update_needed)
+	{
+		/* make tsvector value */
+		datum = TSVectorGetDatum(make_tsvector(&prs));
+		isnull = false;
 
-	/* and insert it into tuple */
-	rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
-										 1, &tsvector_attr_num,
-										 &datum, &isnull);
+		/* and insert it into tuple */
+		rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
+											 1, &tsvector_attr_num,
+											 &datum, &isnull);
 
-	pfree(DatumGetPointer(datum));
+		pfree(DatumGetPointer(datum));
+	}
 
 	return PointerGetDatum(rettuple);
 }

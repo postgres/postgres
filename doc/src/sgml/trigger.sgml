@@ -517,6 +517,7 @@ typedef struct TriggerData
     TupleTableSlot  *tg_newslot;
     Tuplestorestate *tg_oldtable;
     Tuplestorestate *tg_newtable;
+    const Bitmapset *tg_updatedcols;
 } TriggerData;
 </programlisting>
 
@@ -759,6 +760,30 @@ typedef struct Trigger
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><structfield>tg_updatedcols</structfield></term>
+      <listitem>
+       <para>
+        For <literal>UPDATE</literal> triggers, a bitmap set indicating the
+        columns that were updated by the triggering command.  Generic trigger
+        functions can use this to optimize actions by not having to deal with
+        columns that were not changed.
+       </para>
+
+       <para>
+        As an example, to determine whether a column with attribute number
+        <varname>attnum</varname> (1-based) is a member of this bitmap set,
+        call <literal>bms_is_member(attnum -
+        FirstLowInvalidHeapAttributeNumber,
+        trigdata->tg_updatedcols))</literal>.
+       </para>
+
+       <para>
+        For triggers other than <literal>UPDATE</literal> triggers, this will
+        be <symbol>NULL</symbol>.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 
