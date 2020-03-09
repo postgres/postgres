@@ -148,6 +148,18 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
  </refsect1>
 
  <refsect1>
+  <title>Environment</title>
+
+  <para>
+   The environment variable <envar>PG_COLOR</envar> specifies whether to use
+   color in diagnostic messages. Possible values are
+   <literal>always</literal>, <literal>auto</literal> and
+   <literal>never</literal>.
+  </para>
+ </refsect1>
+ 
+ 
+ <refsect1>
   <title>Notes</title>
 
   <para>
