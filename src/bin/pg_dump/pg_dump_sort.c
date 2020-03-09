@@ -84,6 +84,16 @@ static const int oldObjectTypePriority[] =
  * Sort priority for object types when dumping newer databases.
  * Objects are sorted by type, and within a type by name.
  *
+ * Triggers, event triggers, and materialized views are intentionally sorted
+ * late.  Triggers must be restored after all data modifications, so that
+ * they don't interfere with loading data.  Event triggers are restored
+ * next-to-last so that they don't interfere with object creations of any
+ * kind.  Matview refreshes are last because they should execute in the
+ * database's normal state (e.g., they must come after all ACLs are restored;
+ * also, if they choose to look at system catalogs, they should see the final
+ * restore state).  If you think to change this, see also the RestorePass
+ * mechanism in pg_backup_archiver.c.
+ *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
@@ -120,15 +130,15 @@ static const int newObjectTypePriority[] =
 	15,							/* DO_TSCONFIG */
 	16,							/* DO_FDW */
 	17,							/* DO_FOREIGN_SERVER */
-	31,							/* DO_DEFAULT_ACL */
+	32,							/* DO_DEFAULT_ACL --- done in ACL pass */
 	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
 	24,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
 	25,							/* DO_POST_DATA_BOUNDARY */
-	32,							/* DO_EVENT_TRIGGER */
-	33,							/* DO_REFRESH_MATVIEW */
-	34							/* DO_POLICY */
+	33,							/* DO_EVENT_TRIGGER --- next to last! */
+	34,							/* DO_REFRESH_MATVIEW --- last! */
+	31							/* DO_POLICY */
 };
 
 static DumpId preDataBoundId;
