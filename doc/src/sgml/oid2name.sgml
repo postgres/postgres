@@ -223,6 +223,13 @@
    utilities, also uses the environment variables supported by
    <application>libpq</application> (see <xref linkend="libpq-envars"/>).
   </para>
+
+  <para>
+   The environment variable <envar>PG_COLOR</envar> specifies whether to use
+   color in diagnostic messages. Possible values are
+   <literal>always</literal>, <literal>auto</literal> and
+   <literal>never</literal>.
+  </para>
  </refsect1>
 
  <refsect1>
