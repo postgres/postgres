@@ -2322,7 +2322,7 @@ AC_DEFINE_UNQUOTED(PG_VERSION_STR,
 
 # Supply a numeric version string for use by 3rd party add-ons
 # awk -F is a regex on some platforms, and not on others, so make "." a tab
-[PG_VERSION_NUM="`echo "$PG_MAJORVERSION	$PG_MINORVERSION" |
+[PG_VERSION_NUM="`echo $PG_MAJORVERSION $PG_MINORVERSION |
 $AWK '{printf "%d%04d", $1, $2}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
 AC_SUBST(PG_VERSION_NUM)
