@@ -470,6 +470,41 @@ SELECT ts_lexize('synonym', 'indices');
  {index}
 (1 row)
 
+-- test altering boolean parameters
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'synonym';
+       dictinitoption        
+-----------------------------
+ synonyms = 'synonym_sample'
+(1 row)
+
+ALTER TEXT SEARCH DICTIONARY synonym (CaseSensitive = 1);
+SELECT ts_lexize('synonym', 'PoStGrEs');
+ ts_lexize 
+-----------
+ 
+(1 row)
+
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'synonym';
+                 dictinitoption                 
+------------------------------------------------
+ synonyms = 'synonym_sample', casesensitive = 1
+(1 row)
+
+ALTER TEXT SEARCH DICTIONARY synonym (CaseSensitive = 2);  -- fail
+ERROR:  casesensitive requires a Boolean value
+ALTER TEXT SEARCH DICTIONARY synonym (CaseSensitive = off);
+SELECT ts_lexize('synonym', 'PoStGrEs');
+ ts_lexize 
+-----------
+ {pgsql}
+(1 row)
+
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'synonym';
+                   dictinitoption                   
+----------------------------------------------------
+ synonyms = 'synonym_sample', casesensitive = 'off'
+(1 row)
+
 -- Create and simple test thesaurus dictionary
 -- More tests in configuration checks because ts_lexize()
 -- cannot pass more than one word to thesaurus.

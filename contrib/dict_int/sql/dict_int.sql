@@ -52,10 +52,18 @@ select ts_lexize('intdict', '313425');
 select ts_lexize('intdict', '641439323669');
 select ts_lexize('intdict', '314532610153');
 
-ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = -214783648);
+ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = -214783648);  -- fail
+-- This ought to fail, perhaps, but historically it has not:
+ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = 6.7);
 
 select ts_lexize('intdict', '-40865854');
 select ts_lexize('intdict', '+40865854');
 ALTER TEXT SEARCH DICTIONARY intdict (ABSVAL = true);
 select ts_lexize('intdict', '-40865854');
 select ts_lexize('intdict', '+40865854');
+ALTER TEXT SEARCH DICTIONARY intdict (REJECTLONG = 1);
+select ts_lexize('intdict', '-40865854');
+select ts_lexize('intdict', '-4086585');
+select ts_lexize('intdict', '-408658');
+
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'intdict';

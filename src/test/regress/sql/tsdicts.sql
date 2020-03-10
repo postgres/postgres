@@ -148,6 +148,19 @@ SELECT ts_lexize('synonym', 'PoStGrEs');
 SELECT ts_lexize('synonym', 'Gogle');
 SELECT ts_lexize('synonym', 'indices');
 
+-- test altering boolean parameters
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'synonym';
+
+ALTER TEXT SEARCH DICTIONARY synonym (CaseSensitive = 1);
+SELECT ts_lexize('synonym', 'PoStGrEs');
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'synonym';
+
+ALTER TEXT SEARCH DICTIONARY synonym (CaseSensitive = 2);  -- fail
+
+ALTER TEXT SEARCH DICTIONARY synonym (CaseSensitive = off);
+SELECT ts_lexize('synonym', 'PoStGrEs');
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'synonym';
+
 -- Create and simple test thesaurus dictionary
 -- More tests in configuration checks because ts_lexize()
 -- cannot pass more than one word to thesaurus.

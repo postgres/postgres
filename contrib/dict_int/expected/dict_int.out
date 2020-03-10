@@ -300,8 +300,10 @@ select ts_lexize('intdict', '314532610153');
  {314532}
 (1 row)
 
-ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = -214783648);
+ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = -214783648);  -- fail
 ERROR:  maxlen value has to be >= 1
+-- This ought to fail, perhaps, but historically it has not:
+ALTER TEXT SEARCH DICTIONARY intdict (MAXLEN = 6.7);
 select ts_lexize('intdict', '-40865854');
  ts_lexize 
 -----------
@@ -325,5 +327,30 @@ select ts_lexize('intdict', '+40865854');
  ts_lexize 
 -----------
  {408658}
+(1 row)
+
+ALTER TEXT SEARCH DICTIONARY intdict (REJECTLONG = 1);
+select ts_lexize('intdict', '-40865854');
+ ts_lexize 
+-----------
+ {}
+(1 row)
+
+select ts_lexize('intdict', '-4086585');
+ ts_lexize 
+-----------
+ {}
+(1 row)
+
+select ts_lexize('intdict', '-408658');
+ ts_lexize 
+-----------
+ {408658}
+(1 row)
+
+SELECT dictinitoption FROM pg_ts_dict WHERE dictname = 'intdict';
+                dictinitoption                 
+-----------------------------------------------
+ maxlen = 6.7, absval = 'true', rejectlong = 1
 (1 row)
 

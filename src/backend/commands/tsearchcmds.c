@@ -36,6 +36,7 @@
 #include "commands/alter.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
+#include "common/string.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
@@ -52,6 +53,8 @@ static void MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 									 HeapTuple tup, Relation relMap);
 static void DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
 									 HeapTuple tup, Relation relMap);
+static DefElem *buildDefItem(const char *name, const char *val,
+							 bool was_quoted);
 
 
 /* --------------------- TS Parser commands ------------------------ */
@@ -1519,9 +1522,6 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
  * For the convenience of pg_dump, the output is formatted exactly as it
  * would need to appear in CREATE TEXT SEARCH DICTIONARY to reproduce the
  * same options.
- *
- * Note that we assume that only the textual representation of an option's
- * value is interesting --- hence, non-string DefElems get forced to strings.
  */
 text *
 serialize_deflist(List *deflist)
@@ -1539,19 +1539,30 @@ serialize_deflist(List *deflist)
 
 		appendStringInfo(&buf, "%s = ",
 						 quote_identifier(defel->defname));
-		/* If backslashes appear, force E syntax to determine their handling */
-		if (strchr(val, '\\'))
-			appendStringInfoChar(&buf, ESCAPE_STRING_SYNTAX);
-		appendStringInfoChar(&buf, '\'');
-		while (*val)
-		{
-			char		ch = *val++;
 
-			if (SQL_STR_DOUBLE(ch, true))
+		/*
+		 * If the value is a T_Integer or T_Float, emit it without quotes,
+		 * otherwise with quotes.  This is essential to allow correct
+		 * reconstruction of the node type as well as the value.
+		 */
+		if (IsA(defel->arg, Integer) || IsA(defel->arg, Float))
+			appendStringInfoString(&buf, val);
+		else
+		{
+			/* If backslashes appear, force E syntax to quote them safely */
+			if (strchr(val, '\\'))
+				appendStringInfoChar(&buf, ESCAPE_STRING_SYNTAX);
+			appendStringInfoChar(&buf, '\'');
+			while (*val)
+			{
+				char		ch = *val++;
+
+				if (SQL_STR_DOUBLE(ch, true))
+					appendStringInfoChar(&buf, ch);
 				appendStringInfoChar(&buf, ch);
-			appendStringInfoChar(&buf, ch);
+			}
+			appendStringInfoChar(&buf, '\'');
 		}
-		appendStringInfoChar(&buf, '\'');
 		if (lnext(deflist, l) != NULL)
 			appendStringInfoString(&buf, ", ");
 	}
@@ -1566,7 +1577,7 @@ serialize_deflist(List *deflist)
  *
  * This is also used for prsheadline options, so for backward compatibility
  * we need to accept a few things serialize_deflist() will never emit:
- * in particular, unquoted and double-quoted values.
+ * in particular, unquoted and double-quoted strings.
  */
 List *
 deserialize_deflist(Datum txt)
@@ -1694,8 +1705,9 @@ deserialize_deflist(Datum txt)
 					{
 						*wsptr++ = '\0';
 						result = lappend(result,
-										 makeDefElem(pstrdup(workspace),
-													 (Node *) makeString(pstrdup(startvalue)), -1));
+										 buildDefItem(workspace,
+													  startvalue,
+													  true));
 						state = CS_WAITKEY;
 					}
 				}
@@ -1726,8 +1738,9 @@ deserialize_deflist(Datum txt)
 					{
 						*wsptr++ = '\0';
 						result = lappend(result,
-										 makeDefElem(pstrdup(workspace),
-													 (Node *) makeString(pstrdup(startvalue)), -1));
+										 buildDefItem(workspace,
+													  startvalue,
+													  true));
 						state = CS_WAITKEY;
 					}
 				}
@@ -1741,8 +1754,9 @@ deserialize_deflist(Datum txt)
 				{
 					*wsptr++ = '\0';
 					result = lappend(result,
-									 makeDefElem(pstrdup(workspace),
-												 (Node *) makeString(pstrdup(startvalue)), -1));
+									 buildDefItem(workspace,
+												  startvalue,
+												  false));
 					state = CS_WAITKEY;
 				}
 				else
@@ -1760,8 +1774,9 @@ deserialize_deflist(Datum txt)
 	{
 		*wsptr++ = '\0';
 		result = lappend(result,
-						 makeDefElem(pstrdup(workspace),
-									 (Node *) makeString(pstrdup(startvalue)), -1));
+						 buildDefItem(workspace,
+									  startvalue,
+									  false));
 	}
 	else if (state != CS_WAITKEY)
 		ereport(ERROR,
@@ -1772,4 +1787,37 @@ deserialize_deflist(Datum txt)
 	pfree(workspace);
 
 	return result;
+}
+
+/*
+ * Build one DefElem for deserialize_deflist
+ */
+static DefElem *
+buildDefItem(const char *name, const char *val, bool was_quoted)
+{
+	/* If input was quoted, always emit as string */
+	if (!was_quoted && val[0] != '\0')
+	{
+		int			v;
+		char	   *endptr;
+
+		/* Try to parse as an integer */
+		errno = 0;
+		v = strtoint(val, &endptr, 10);
+		if (errno == 0 && *endptr == '\0')
+			return makeDefElem(pstrdup(name),
+							   (Node *) makeInteger(v),
+							   -1);
+		/* Nope, how about as a float? */
+		errno = 0;
+		(void) strtod(val, &endptr);
+		if (errno == 0 && *endptr == '\0')
+			return makeDefElem(pstrdup(name),
+							   (Node *) makeFloat(pstrdup(val)),
+							   -1);
+	}
+	/* Just make it a string */
+	return makeDefElem(pstrdup(name),
+					   (Node *) makeString(pstrdup(val)),
+					   -1);
 }
