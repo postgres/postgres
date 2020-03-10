@@ -5984,13 +5984,13 @@ local0.*    /var/log/postgresql
         <para>
          Causes the duration of each completed statement to be logged
          if the statement ran for at least the specified amount of time.
-         If this value is specified without units, it is taken as milliseconds.
-         Setting this to zero prints all statement durations.
-         Minus-one (the default) disables logging statement durations.
          For example, if you set it to <literal>250ms</literal>
          then all SQL statements that run 250ms or longer will be
          logged.  Enabling this parameter can be helpful in tracking down
          unoptimized queries in your applications.
+         If this value is specified without units, it is taken as milliseconds.
+         Setting this to zero prints all statement durations.
+         Minus-one (the default) disables logging statement durations.
          Only superusers can change this setting.
         </para>
 
@@ -6030,49 +6030,39 @@ local0.*    /var/log/postgresql
       </term>
        <listitem>
         <para>
-         Allows to sample the logging of the duration of each completed
-         statement if the statement ran for at least the specified amount of
-         time. If this value is specified without units, it is taken as milliseconds.
+         Allows sampling the duration of completed statements that ran for
+         at least the specified amount of time.  This produces the same
+         kind of log entries as
+         <xref linkend="guc-log-min-duration-statement"/>, but only for a
+         subset of the executed statements, with sample rate controlled by
+         <xref linkend="guc-log-statement-sample-rate"/>.
+         For example, if you set it to <literal>100ms</literal> then all
+         SQL statements that run 100ms or longer will be considered for
+         sampling.  Enabling this parameter can be helpful when the
+         traffic is too high to log all queries.
+         If this value is specified without units, it is taken as milliseconds.
          Setting this to zero samples all statement durations.
          Minus-one (the default) disables sampling statement durations.
-         For example, if you set it to <literal>250ms</literal>
-         then all SQL statements that run 250ms or longer will be considered
-         for sampling, with sample rate is controlled by <xref linkend="guc-log-statement-sample-rate"/>. 
-         Enabling this parameter can be helpful when the traffic too high to
-         sample all queries.
          Only superusers can change this setting.
         </para>
 
         <para>
-         This option has lower priority than <xref linkend="guc-log-min-duration-statement"/>,
-         meaning that statements with durations exceeding <xref linkend="guc-log-min-duration-statement"/>
-         are not subject to sampling and are always logged.
+         This setting has lower priority
+         than <varname>log_min_duration_statement</varname>, meaning that
+         statements with durations
+         exceeding <varname>log_min_duration_statement</varname> are not
+         subject to sampling and are always logged.
         </para>
 
         <para>
-         For clients using extended query protocol, durations of the Parse,
-         Bind, and Execute steps are logged independently.
+         Other notes for <varname>log_min_duration_statement</varname>
+         apply also to this setting.
         </para>
-
-       <note>
-        <para>
-         When using this option together with
-         <xref linkend="guc-log-statement"/>,
-         the text of statements that are logged because of
-         <varname>log_statement</varname> will not be repeated in the
-         duration log message.
-         If you are not using <application>syslog</application>, it is recommended
-         that you log the PID or session ID using
-         <xref linkend="guc-log-line-prefix"/>
-         so that you can link the statement message to the later
-         duration message using the process ID or session ID.
-        </para>
-       </note>
        </listitem>
      </varlistentry>
 
      <varlistentry id="guc-log-statement-sample-rate" xreflabel="log_statement_sample_rate">
-      <term><varname>log_statement_sample_rate</varname> (<type>real</type>)
+      <term><varname>log_statement_sample_rate</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>log_statement_sample_rate</varname> configuration parameter</primary>
       </indexterm>
@@ -6080,43 +6070,40 @@ local0.*    /var/log/postgresql
        <listitem>
         <para>
          Determines the fraction of statements with duration exceeding
-         <xref linkend="guc-log-min-duration-sample"/> to be logged.
-         This is a statistical parameter, for example <literal>0.5</literal>
-         means there is statistically one in two chances to log the statement.
-         The default is <literal>1.0</literal>, meaning log all such
+         <xref linkend="guc-log-min-duration-sample"/> that will be logged.
+         Sampling is stochastic, for example <literal>0.5</literal> means
+         there is statistically one chance in two that any given statement
+         will be logged.
+         The default is <literal>1.0</literal>, meaning to log all sampled
          statements.
-         Setting this to zero disables sampling logging, same as setting
+         Setting this to zero disables sampled statement-duration logging,
+         the same as setting
          <varname>log_min_duration_sample</varname> to
          <literal>-1</literal>.
-         <varname>log_statement_sample_rate</varname> is helpful when the
-         traffic is too high to log all queries.
          Only superusers can change this setting.
         </para>
-       <note>
-        <para>
-         Like all statement-logging options, this option can add significant
-         overhead.
-        </para>
-       </note>
        </listitem>
      </varlistentry>
 
      <varlistentry id="guc-log-transaction-sample-rate" xreflabel="log_transaction_sample_rate">
-      <term><varname>log_transaction_sample_rate</varname> (<type>real</type>)
+      <term><varname>log_transaction_sample_rate</varname> (<type>floating point</type>)
       <indexterm>
        <primary><varname>log_transaction_sample_rate</varname> configuration parameter</primary>
       </indexterm>
       </term>
        <listitem>
         <para>
-         Set the fraction of transactions whose statements are all logged,
+         Sets the fraction of transactions whose statements are all logged,
          in addition to statements logged for other reasons.  It applies to
          each new transaction regardless of its statements' durations.
-         The default is <literal>0</literal>, meaning not to log statements
-         from any additional transaction.  Setting this to <literal>1</literal>
-         logs all statements for all transactions.
-         <varname>log_transaction_sample_rate</varname> is helpful to track a
-         sample of transaction.
+         Sampling is stochastic, for example <literal>0.1</literal> means
+         there is statistically one chance in ten that any given transaction
+         will be logged.
+         <varname>log_transaction_sample_rate</varname> can be helpful to
+         construct a sample of transactions.
+         The default is <literal>0</literal>, meaning not to log
+         statements from any additional transactions.  Setting this
+         to <literal>1</literal> logs all statements of all transactions.
          Only superusers can change this setting.
         </para>
        <note>
@@ -6632,9 +6619,9 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
        <para>
         Controls whether bind parameters are logged when a statement is logged
         as a result of <xref linkend="guc-log-min-error-statement"/>.
-        It adds some overhead, as postgres will compute and store textual
-        representations of parameter values in memory for all statements,
-        even if they eventually do not get logged.
+        It adds some overhead, as <productname>PostgreSQL</productname> will
+        compute and store textual representations of parameter values in
+        memory for all statements, even if they eventually do not get logged.
         This setting has no effect on statements logged due to
         <xref linkend="guc-log-min-duration-statement"/> or
         <xref linkend="guc-log-statement"/> settings, as they are always logged

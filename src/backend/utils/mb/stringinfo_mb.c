@@ -26,7 +26,7 @@
 /*
  * appendStringInfoStringQuoted
  *
- * Append up to maxlen characters from s to str, or the whole input string if
+ * Append up to maxlen bytes from s to str, or the whole input string if
  * maxlen <= 0, adding single quotes around it and doubling all single quotes.
  * Add an ellipsis if the copy is incomplete.
  */
