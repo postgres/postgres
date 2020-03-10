@@ -1082,6 +1082,14 @@ _bt_insertonpg(Relation rel,
 		   IndexRelationGetNumberOfKeyAttributes(rel));
 	Assert(!BTreeTupleIsPosting(itup));
 
+	/*
+	 * Every internal page should have exactly one negative infinity item at
+	 * all times.  Only _bt_split() and _bt_newroot() should add items that
+	 * become negative infinity items through truncation, since they're the
+	 * only routines that allocate new internal pages.
+	 */
+	Assert(P_ISLEAF(lpageop) || newitemoff > P_FIRSTDATAKEY(lpageop));
+
 	/* The caller should've finished any incomplete splits already. */
 	if (P_INCOMPLETE_SPLIT(lpageop))
 		elog(ERROR, "cannot insert to incompletely split page %u",
@@ -1211,18 +1219,6 @@ _bt_insertonpg(Relation rel,
 				metabuf = InvalidBuffer;
 			}
 		}
-
-		/*
-		 * Every internal page should have exactly one negative infinity item
-		 * at all times.  Only _bt_split() and _bt_newroot() should add items
-		 * that become negative infinity items through truncation, since
-		 * they're the only routines that allocate new internal pages.  Do not
-		 * allow a retail insertion of a new item at the negative infinity
-		 * offset.
-		 */
-		if (!P_ISLEAF(lpageop) && newitemoff == P_FIRSTDATAKEY(lpageop))
-			elog(ERROR, "cannot insert second negative infinity item in block %u of index \"%s\"",
-				 itup_blkno, RelationGetRelationName(rel));
 
 		/* Do the update.  No ereport(ERROR) until changes are logged */
 		START_CRIT_SECTION();
