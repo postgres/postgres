@@ -20,6 +20,7 @@
 #ifndef PG_CAST_H
 #define PG_CAST_H
 
+#include "catalog/dependency.h"
 #include "catalog/genbki.h"
 #include "catalog/pg_cast_d.h"
 
@@ -86,5 +87,13 @@ typedef enum CoercionMethod
 } CoercionMethod;
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
+
+
+extern ObjectAddress CastCreate(Oid sourcetypeid,
+								Oid targettypeid,
+								Oid funcid,
+								char castcontext,
+								char castmethod,
+								DependencyType behavior);
 
 #endif							/* PG_CAST_H */
