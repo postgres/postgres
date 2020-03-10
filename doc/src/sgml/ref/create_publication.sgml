@@ -69,14 +69,23 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       specified, the table and all its descendant tables (if any) are added.
       Optionally, <literal>*</literal> can be specified after the table name to
       explicitly indicate that descendant tables are included.
+      This does not apply to a partitioned table, however.  The partitions of
+      a partitioned table are always implicitly considered part of the
+      publication, so they are never explicitly added to the publication.
      </para>
 
      <para>
-      Only persistent base tables can be part of a publication.  Temporary
-      tables, unlogged tables, foreign tables, materialized views, regular
-      views, and partitioned tables cannot be part of a publication.  To
-      replicate a partitioned table, add the individual partitions to the
-      publication.
+      Only persistent base tables and partitioned tables can be part of a
+      publication.  Temporary tables, unlogged tables, foreign tables,
+      materialized views, and regular views cannot be part of a publication.
+     </para>
+
+     <para>
+      When a partitioned table is added to a publication, all of its existing
+      and future partitions are implicitly considered to be part of the
+      publication.  So, even operations that are performed directly on a
+      partition are also published via publications that its ancestors are
+      part of.
      </para>
     </listitem>
    </varlistentry>

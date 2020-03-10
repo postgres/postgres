@@ -50,7 +50,12 @@ static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
 										uint32 hashvalue);
 
-/* Entry in the map used to remember which relation schemas we sent. */
+/*
+ * Entry in the map used to remember which relation schemas we sent.
+ *
+ * For partitions, 'pubactions' considers not only the table's own
+ * publications, but also those of all of its ancestors.
+ */
 typedef struct RelationSyncEntry
 {
 	Oid			relid;			/* relation oid */
@@ -406,6 +411,13 @@ pgoutput_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		if (!relentry->pubactions.pubtruncate)
 			continue;
 
+		/*
+		 * Don't send partitioned tables, because partitions should be sent
+		 * instead.
+		 */
+		if (relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			continue;
+
 		relids[nrelids++] = relid;
 		maybe_send_schema(ctx, relation, relentry);
 	}
@@ -524,6 +536,11 @@ init_rel_sync_cache(MemoryContext cachectx)
 
 /*
  * Find or create entry in the relation schema cache.
+ *
+ * This looks up publications that the given relation is directly or
+ * indirectly part of (the latter if it's really the relation's ancestor that
+ * is part of a publication) and fills up the found entry with the information
+ * about which operations to publish.
  */
 static RelationSyncEntry *
 get_rel_sync_entry(PGOutputData *data, Oid relid)

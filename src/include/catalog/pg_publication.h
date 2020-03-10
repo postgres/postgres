@@ -80,7 +80,24 @@ typedef struct Publication
 extern Publication *GetPublication(Oid pubid);
 extern Publication *GetPublicationByName(const char *pubname, bool missing_ok);
 extern List *GetRelationPublications(Oid relid);
-extern List *GetPublicationRelations(Oid pubid);
+
+/*---------
+ * Expected values for pub_partopt parameter of GetRelationPublications(),
+ * which allows callers to specify which partitions of partitioned tables
+ * mentioned in the publication they expect to see.
+ *
+ *	ROOT:	only the table explicitly mentioned in the publication
+ *	LEAF:	only leaf partitions in given tree
+ *	ALL:	all partitions in given tree
+ */
+typedef enum PublicationPartOpt
+{
+	PUBLICATION_PART_ROOT,
+	PUBLICATION_PART_LEAF,
+	PUBLICATION_PART_ALL,
+}			PublicationPartOpt;
+
+extern List *GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt);
 extern List *GetAllTablesPublications(void);
 extern List *GetAllTablesPublicationRelations(void);
 

@@ -3981,8 +3981,12 @@ getPublicationTables(Archive *fout, TableInfo tblinfo[], int numTables)
 	{
 		TableInfo  *tbinfo = &tblinfo[i];
 
-		/* Only plain tables can be aded to publications. */
-		if (tbinfo->relkind != RELKIND_RELATION)
+		/*
+		 * Only regular and partitioned tables can be added to
+		 * publications.
+		 */
+		if (tbinfo->relkind != RELKIND_RELATION &&
+			tbinfo->relkind != RELKIND_PARTITIONED_TABLE)
 			continue;
 
 		/*

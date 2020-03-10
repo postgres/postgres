@@ -69,6 +69,27 @@ RESET client_min_messages;
 DROP TABLE testpub_tbl3, testpub_tbl3a;
 DROP PUBLICATION testpub3, testpub4;
 
+-- Tests for partitioned tables
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_forparted;
+CREATE PUBLICATION testpub_forparted1;
+RESET client_min_messages;
+CREATE TABLE testpub_parted1 (LIKE testpub_parted);
+ALTER PUBLICATION testpub_forparted1 SET (publish='insert');
+-- works despite missing REPLICA IDENTITY, because updates are not replicated
+UPDATE testpub_parted1 SET a = 1;
+ALTER TABLE testpub_parted ATTACH PARTITION testpub_parted1 FOR VALUES IN (1);
+-- only parent is listed as being in publication, not the partition
+ALTER PUBLICATION testpub_forparted ADD TABLE testpub_parted;
+\dRp+ testpub_forparted
+-- should now fail, because parent's publication replicates updates
+UPDATE testpub_parted1 SET a = 1;
+ALTER TABLE testpub_parted DETACH PARTITION testpub_parted1;
+-- works again, because parent's publication is no longer considered
+UPDATE testpub_parted1 SET a = 1;
+DROP TABLE testpub_parted1;
+DROP PUBLICATION testpub_forparted, testpub_forparted1;
+
 -- fail - view
 CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_view;
 SET client_min_messages = 'ERROR';
@@ -83,8 +104,6 @@ CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1;
 
 -- fail - view
 ALTER PUBLICATION testpub_default ADD TABLE testpub_view;
--- fail - partitioned table
-ALTER PUBLICATION testpub_fortbl ADD TABLE testpub_parted;
 
 ALTER PUBLICATION testpub_default ADD TABLE testpub_tbl1;
 ALTER PUBLICATION testpub_default SET TABLE testpub_tbl1;
