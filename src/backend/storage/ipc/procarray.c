@@ -59,6 +59,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/spin.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"

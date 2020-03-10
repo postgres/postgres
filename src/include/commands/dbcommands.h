@@ -17,7 +17,7 @@
 #include "access/xlogreader.h"
 #include "catalog/objectaddress.h"
 #include "lib/stringinfo.h"
-#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 
 extern Oid	createdb(ParseState *pstate, const CreatedbStmt *stmt);
 extern void dropdb(const char *dbname, bool missing_ok, bool force);

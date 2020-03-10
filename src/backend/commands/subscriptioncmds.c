@@ -38,6 +38,7 @@
 #include "replication/walsender.h"
 #include "replication/worker_internal.h"
 #include "storage/lmgr.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"

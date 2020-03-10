@@ -81,6 +81,7 @@
 #include "storage/large_object.h"
 #include "storage/lmgr.h"
 #include "storage/sinval.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"

@@ -16,7 +16,7 @@
 
 #include "catalog/objectaddress.h"
 #include "nodes/params.h"
-#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 #include "tcop/dest.h"
 #include "utils/array.h"
 

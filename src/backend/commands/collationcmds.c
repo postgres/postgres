@@ -29,6 +29,7 @@
 #include "commands/defrem.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/pg_locale.h"

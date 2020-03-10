@@ -15,7 +15,7 @@
 #define EXTENSION_H
 
 #include "catalog/objectaddress.h"
-#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 
 
 /*

@@ -64,6 +64,7 @@
 #include "storage/pmsignal.h"
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/pg_lsn.h"

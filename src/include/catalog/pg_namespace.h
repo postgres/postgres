@@ -20,6 +20,7 @@
 
 #include "catalog/genbki.h"
 #include "catalog/pg_namespace_d.h"
+#include "utils/acl.h"
 
 /* ----------------------------------------------------------------
  *		pg_namespace definition.
