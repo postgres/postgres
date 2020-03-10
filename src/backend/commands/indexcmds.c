@@ -2868,6 +2868,16 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("cannot reindex system catalogs concurrently")));
 
+				/*
+				 * Don't allow reindex for an invalid index on TOAST table, as
+				 * if rebuild it would not be possible to drop it.
+				 */
+				if (IsToastNamespace(get_rel_namespace(relationOid)) &&
+					!get_index_isvalid(relationOid))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot reindex invalid index on TOAST table concurrently")));
+
 				/* Save the list of relation OIDs in private context */
 				oldcontext = MemoryContextSwitchTo(private_context);
 

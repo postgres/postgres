@@ -3475,6 +3475,17 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 				 errmsg("cannot reindex temporary tables of other sessions")));
 
 	/*
+	 * Don't allow reindex of an invalid index on TOAST table.  This is a
+	 * leftover from a failed REINDEX CONCURRENTLY, and if rebuilt it would
+	 * not be possible to drop it anymore.
+	 */
+	if (IsToastNamespace(RelationGetNamespace(iRel)) &&
+		!get_index_isvalid(indexId))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot reindex invalid index on TOAST table")));
+
+	/*
 	 * Also check for active uses of the index in the current transaction; we
 	 * don't want to reindex underneath an open indexscan.
 	 */
@@ -3723,6 +3734,23 @@ reindex_relation(Oid relid, int flags, int options)
 		foreach(indexId, indexIds)
 		{
 			Oid			indexOid = lfirst_oid(indexId);
+			Oid			indexNamespaceId = get_rel_namespace(indexOid);
+
+			/*
+			 * Skip any invalid indexes on a TOAST table.  These can only be
+			 * duplicate leftovers from a failed REINDEX CONCURRENTLY, and if
+			 * rebuilt it would not be possible to drop them anymore.
+			 */
+			if (IsToastNamespace(indexNamespaceId) &&
+				!get_index_isvalid(indexOid))
+			{
+				ereport(WARNING,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot reindex invalid index \"%s.%s\" on TOAST table, skipping",
+								get_namespace_name(indexNamespaceId),
+								get_rel_name(indexOid))));
+				continue;
+			}
 
 			reindex_index(indexOid, !(flags & REINDEX_REL_CHECK_CONSTRAINTS),
 						  persistence, options);
