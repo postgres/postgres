@@ -19,7 +19,6 @@ sub _new
 	my $self      = {
 		projects                   => {},
 		options                    => $options,
-		numver                     => '',
 		VisualStudioVersion        => undef,
 		MinimumVisualStudioVersion => undef,
 		vcver                      => undef,
@@ -151,6 +150,7 @@ sub GenerateFiles
 	my $package_version;
 	my $package_bugreport;
 	my $package_url;
+	my ($majorver, $minorver);
 
 	# Parse configure.in to get version numbers
 	open(my $c, '<', "configure.in")
@@ -171,8 +171,8 @@ sub GenerateFiles
 			{
 				confess "Bad format of version: $self->{strver}\n";
 			}
-			$self->{numver} = sprintf("%d%04d", $1, $2 ? $2 : 0);
-			$self->{majorver} = sprintf("%d", $1);
+			$majorver = sprintf("%d", $1);
+			$minorver = sprintf("%d", $2 ? $2 : 0);
 		}
 	}
 	close($c);
@@ -440,11 +440,13 @@ sub GenerateFiles
 		PG_INT128_TYPE      => undef,
 		PG_INT64_TYPE       => 'long long int',
 		PG_KRB_SRVNAM       => qq{"postgres"},
-		PG_MAJORVERSION     => qq{"$self->{majorver}"},
+		PG_MAJORVERSION     => qq{"$majorver"},
+		PG_MAJORVERSION_NUM => $majorver,
+		PG_MINORVERSION_NUM => $minorver,
 		PG_PRINTF_ATTRIBUTE => undef,
 		PG_USE_STDBOOL      => 1,
 		PG_VERSION          => qq{"$package_version$extraver"},
-		PG_VERSION_NUM      => $self->{numver},
+		PG_VERSION_NUM      => sprintf("%d%04d", $majorver, $minorver),
 		PG_VERSION_STR =>
 		  qq{"PostgreSQL $package_version$extraver, compiled by Visual C++ build " CppAsString2(_MSC_VER) ", $bits-bit"},
 		PROFILE_PID_DIR         => undef,
@@ -778,7 +780,7 @@ EOF
 		chdir('src/backend/catalog');
 		my $bki_srcs = join(' ../../../src/include/catalog/', @bki_srcs);
 		system(
-			"perl genbki.pl --include-path ../../../src/include/ --set-version=$self->{majorver} $bki_srcs"
+			"perl genbki.pl --include-path ../../../src/include/ --set-version=$majorver $bki_srcs"
 		);
 		open(my $f, '>', 'bki-stamp')
 		  || confess "Could not touch bki-stamp";
@@ -813,7 +815,7 @@ EOF
 	  || croak "Could not write to version.sgml\n";
 	print $o <<EOF;
 <!ENTITY version "$package_version">
-<!ENTITY majorversion "$self->{majorver}">
+<!ENTITY majorversion "$majorver">
 EOF
 	close($o);
 	return;

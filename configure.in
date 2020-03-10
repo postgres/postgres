@@ -30,8 +30,12 @@ AC_PREFIX_DEFAULT(/usr/local/pgsql)
 AC_DEFINE_UNQUOTED(CONFIGURE_ARGS, ["$ac_configure_args"], [Saved arguments from configure])
 
 [PG_MAJORVERSION=`expr "$PACKAGE_VERSION" : '\([0-9][0-9]*\)'`]
+[PG_MINORVERSION=`expr "$PACKAGE_VERSION" : '.*\.\([0-9][0-9]*\)'`]
+test -n "$PG_MINORVERSION" || PG_MINORVERSION=0
 AC_SUBST(PG_MAJORVERSION)
 AC_DEFINE_UNQUOTED(PG_MAJORVERSION, "$PG_MAJORVERSION", [PostgreSQL major version as a string])
+AC_DEFINE_UNQUOTED(PG_MAJORVERSION_NUM, $PG_MAJORVERSION, [PostgreSQL major version number])
+AC_DEFINE_UNQUOTED(PG_MINORVERSION_NUM, $PG_MINORVERSION, [PostgreSQL minor version number])
 
 PGAC_ARG_REQ(with, extra-version, [STRING], [append STRING to version],
              [PG_VERSION="$PACKAGE_VERSION$withval"],
@@ -2318,8 +2322,7 @@ AC_DEFINE_UNQUOTED(PG_VERSION_STR,
 
 # Supply a numeric version string for use by 3rd party add-ons
 # awk -F is a regex on some platforms, and not on others, so make "." a tab
-[PG_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
-tr '.' '	' |
+[PG_VERSION_NUM="`echo "$PG_MAJORVERSION	$PG_MINORVERSION" |
 $AWK '{printf "%d%04d", $1, $2}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
 AC_SUBST(PG_VERSION_NUM)

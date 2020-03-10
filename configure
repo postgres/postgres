@@ -2805,10 +2805,22 @@ _ACEOF
 
 
 PG_MAJORVERSION=`expr "$PACKAGE_VERSION" : '\([0-9][0-9]*\)'`
+PG_MINORVERSION=`expr "$PACKAGE_VERSION" : '.*\.\([0-9][0-9]*\)'`
+test -n "$PG_MINORVERSION" || PG_MINORVERSION=0
 
 
 cat >>confdefs.h <<_ACEOF
 #define PG_MAJORVERSION "$PG_MAJORVERSION"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define PG_MAJORVERSION_NUM $PG_MAJORVERSION
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define PG_MINORVERSION_NUM $PG_MINORVERSION
 _ACEOF
 
 
@@ -18875,8 +18887,7 @@ _ACEOF
 
 # Supply a numeric version string for use by 3rd party add-ons
 # awk -F is a regex on some platforms, and not on others, so make "." a tab
-PG_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
-tr '.' '	' |
+PG_VERSION_NUM="`echo "$PG_MAJORVERSION	$PG_MINORVERSION" |
 $AWK '{printf "%d%04d", $1, $2}'`"
 
 cat >>confdefs.h <<_ACEOF

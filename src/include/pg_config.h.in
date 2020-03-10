@@ -780,6 +780,12 @@
 /* PostgreSQL major version as a string */
 #undef PG_MAJORVERSION
 
+/* PostgreSQL major version number */
+#undef PG_MAJORVERSION_NUM
+
+/* PostgreSQL minor version number */
+#undef PG_MINORVERSION_NUM
+
 /* Define to best printf format archetype, usually gnu_printf if available. */
 #undef PG_PRINTF_ATTRIBUTE
 
