@@ -29,3 +29,24 @@ SELECT num_nulls(VARIADIC '{}'::int[]);
 -- should fail, one or more arguments is required
 SELECT num_nonnulls();
 SELECT num_nulls();
+
+--
+-- Test some built-in SRFs
+--
+-- The outputs of these are variable, so we can't just print their results
+-- directly, but we can at least verify that the code doesn't fail.
+--
+select setting as segbsize
+from pg_settings where name = 'wal_segment_size'
+\gset
+select setting as bsize
+from pg_settings where name = 'block_size'
+\gset
+
+select count(*) > 0 as ok from pg_ls_waldir();
+-- Test ProjectSet as well as FunctionScan
+select count(*) > 0 as ok from (select pg_ls_waldir()) ss;
+-- Test not-run-to-completion cases.
+select * from pg_ls_waldir() limit 0;
+select count(*) > 0 as ok from (select * from pg_ls_waldir() limit 1) ss;
+select (pg_ls_waldir()).size = :segbsize * :bsize as ok limit 1;
