@@ -125,8 +125,7 @@ ORDER BY c.relpages DESC LIMIT 10;
       Optionally, when the <parameter>heapallindexed</parameter>
       argument is <literal>true</literal>, the function verifies the
       presence of all heap tuples that should be found within the
-      index, and that there are no missing downlinks in the index
-      structure.  When the optional <parameter>rootdescend</parameter>
+      index.  When the optional <parameter>rootdescend</parameter>
       argument is <literal>true</literal>, verification re-finds
       tuples on the leaf level by performing a new search from the
       root page for each tuple.  The checks that can be performed by
@@ -136,7 +135,8 @@ ORDER BY c.relpages DESC LIMIT 10;
       a more thorough variant of <function>bt_index_check</function>:
       unlike <function>bt_index_check</function>,
       <function>bt_index_parent_check</function> also checks
-      invariants that span parent/child relationships.
+      invariants that span parent/child relationships, including checking
+      that there are no missing downlinks in the index structure.
       <function>bt_index_parent_check</function> follows the general
       convention of raising an error if it finds a logical
       inconsistency or other problem.
