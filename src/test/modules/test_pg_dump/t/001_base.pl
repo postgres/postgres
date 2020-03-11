@@ -523,6 +523,38 @@ my %tests = (
 		like => { binary_upgrade => 1, },
 	},
 
+	'ALTER INDEX pkey DEPENDS ON extension' => {
+		create_order => 11,
+		create_sql =>
+		  'CREATE TABLE regress_pg_dump_schema.extdependtab (col1 integer primary key, col2 int);
+		CREATE INDEX ON regress_pg_dump_schema.extdependtab (col2);
+		ALTER INDEX regress_pg_dump_schema.extdependtab_col2_idx DEPENDS ON EXTENSION test_pg_dump;
+		ALTER INDEX regress_pg_dump_schema.extdependtab_pkey DEPENDS ON EXTENSION test_pg_dump;',
+		regexp => qr/^
+		\QALTER INDEX regress_pg_dump_schema.extdependtab_pkey DEPENDS ON EXTENSION test_pg_dump;\E\n
+		/xms,
+		like   => {%pgdump_runs},
+		unlike => {
+			data_only          => 1,
+			pg_dumpall_globals => 1,
+			section_data       => 1,
+			section_pre_data   => 1,
+		},
+	},
+
+	'ALTER INDEX idx DEPENDS ON extension' => {
+		regexp => qr/^
+			\QALTER INDEX regress_pg_dump_schema.extdependtab_col2_idx DEPENDS ON EXTENSION test_pg_dump;\E\n
+			/xms,
+		like   => {%pgdump_runs},
+		unlike => {
+			data_only          => 1,
+			pg_dumpall_globals => 1,
+			section_data       => 1,
+			section_pre_data   => 1,
+		},
+	},
+
 	# Objects not included in extension, part of schema created by extension
 	'CREATE TABLE regress_pg_dump_schema.external_tab' => {
 		create_order => 4,
