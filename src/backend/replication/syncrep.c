@@ -209,7 +209,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 		memcpy(new_status, old_status, len);
 		sprintf(new_status + len, " waiting for %X/%X",
 				(uint32) (lsn >> 32), (uint32) lsn);
-		set_ps_display(new_status, false);
+		set_ps_display(new_status);
 		new_status[len] = '\0'; /* truncate off " waiting ..." */
 	}
 
@@ -311,7 +311,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	if (new_status)
 	{
 		/* Reset ps display */
-		set_ps_display(new_status, false);
+		set_ps_display(new_status);
 		pfree(new_status);
 	}
 }

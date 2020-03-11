@@ -259,7 +259,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 				new_status = (char *) palloc(len + 8 + 1);
 				memcpy(new_status, old_status, len);
 				strcpy(new_status + len, " waiting");
-				set_ps_display(new_status, false);
+				set_ps_display(new_status);
 				new_status[len] = '\0'; /* truncate off " waiting" */
 			}
 
@@ -290,7 +290,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 	/* Reset ps display if we changed it */
 	if (new_status)
 	{
-		set_ps_display(new_status, false);
+		set_ps_display(new_status);
 		pfree(new_status);
 	}
 }

@@ -250,12 +250,11 @@ save_ps_display_args(int argc, char **argv)
  * values.  At this point, the original argv[] array may be overwritten.
  */
 void
-init_ps_display(const char *username, const char *dbname,
-				const char *host_info, const char *initial_str)
+init_ps_display(const char *fixed_part)
 {
-	Assert(username);
-	Assert(dbname);
-	Assert(host_info);
+	bool		save_update_process_title;
+
+	Assert(fixed_part);
 
 #ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
@@ -309,19 +308,25 @@ init_ps_display(const char *username, const char *dbname,
 	if (*cluster_name == '\0')
 	{
 		snprintf(ps_buffer, ps_buffer_size,
-				 PROGRAM_NAME_PREFIX "%s %s %s ",
-				 username, dbname, host_info);
+				 PROGRAM_NAME_PREFIX "%s ",
+				 fixed_part);
 	}
 	else
 	{
 		snprintf(ps_buffer, ps_buffer_size,
-				 PROGRAM_NAME_PREFIX "%s: %s %s %s ",
-				 cluster_name, username, dbname, host_info);
+				 PROGRAM_NAME_PREFIX "%s: %s ",
+				 cluster_name, fixed_part);
 	}
 
 	ps_buffer_cur_len = ps_buffer_fixed_size = strlen(ps_buffer);
 
-	set_ps_display(initial_str, true);
+	/*
+	 * On the first run, force the update.
+	 */
+	save_update_process_title = update_process_title;
+	update_process_title = true;
+	set_ps_display("");
+	update_process_title = save_update_process_title;
 #endif							/* not PS_USE_NONE */
 }
 
@@ -332,11 +337,11 @@ init_ps_display(const char *username, const char *dbname,
  * indication of what you're currently doing passed in the argument.
  */
 void
-set_ps_display(const char *activity, bool force)
+set_ps_display(const char *activity)
 {
 #ifndef PS_USE_NONE
-	/* update_process_title=off disables updates, unless force = true */
-	if (!force && !update_process_title)
+	/* update_process_title=off disables updates */
+	if (!update_process_title)
 		return;
 
 	/* no ps display for stand-alone backend */

@@ -2225,7 +2225,7 @@ ProcessIncomingNotify(void)
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify");
 
-	set_ps_display("notify interrupt", false);
+	set_ps_display("notify interrupt");
 
 	/*
 	 * We must run asyncQueueReadAllNotifications inside a transaction, else
@@ -2242,7 +2242,7 @@ ProcessIncomingNotify(void)
 	 */
 	pq_flush();
 
-	set_ps_display("idle", false);
+	set_ps_display("idle");
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify: done");

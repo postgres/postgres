@@ -179,7 +179,7 @@ SysLoggerMain(int argc, char *argv[])
 
 	am_syslogger = true;
 
-	init_ps_display("logger", "", "", "");
+	init_ps_display("logger");
 
 	/*
 	 * If we restarted, our stderr is already redirected into our own input

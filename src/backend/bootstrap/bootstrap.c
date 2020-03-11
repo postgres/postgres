@@ -342,7 +342,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				statmsg = "??? process";
 				break;
 		}
-		init_ps_display(statmsg, "", "", "");
+		init_ps_display(statmsg);
 	}
 
 	/* Acquire configuration parameters, unless inherited from postmaster */

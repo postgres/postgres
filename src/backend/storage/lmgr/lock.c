@@ -1737,7 +1737,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		new_status = (char *) palloc(len + 8 + 1);
 		memcpy(new_status, old_status, len);
 		strcpy(new_status + len, " waiting");
-		set_ps_display(new_status, false);
+		set_ps_display(new_status);
 		new_status[len] = '\0'; /* truncate off " waiting" */
 	}
 
@@ -1789,7 +1789,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 		/* Report change to non-waiting status */
 		if (update_process_title)
 		{
-			set_ps_display(new_status, false);
+			set_ps_display(new_status);
 			pfree(new_status);
 		}
 
@@ -1803,7 +1803,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	/* Report change to non-waiting status */
 	if (update_process_title)
 	{
-		set_ps_display(new_status, false);
+		set_ps_display(new_status);
 		pfree(new_status);
 	}
 

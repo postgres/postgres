@@ -2769,7 +2769,7 @@ retry:
 
 		snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%X",
 				 (uint32) (sentPtr >> 32), (uint32) sentPtr);
-		set_ps_display(activitymsg, false);
+		set_ps_display(activitymsg);
 	}
 }
 

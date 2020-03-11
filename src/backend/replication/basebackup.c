@@ -828,7 +828,7 @@ SendBaseBackup(BaseBackupCmd *cmd)
 
 		snprintf(activitymsg, sizeof(activitymsg), "sending backup \"%s\"",
 				 opt.label);
-		set_ps_display(activitymsg, false);
+		set_ps_display(activitymsg);
 	}
 
 	perform_base_backup(&opt);
