@@ -70,8 +70,6 @@ extern PGDLLIMPORT char *Log_filename;
 extern bool Log_truncate_on_rotation;
 extern int	Log_file_mode;
 
-extern bool am_syslogger;
-
 #ifndef WIN32
 extern int	syslogPipe[2];
 #else

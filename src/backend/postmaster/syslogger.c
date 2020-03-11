@@ -74,11 +74,6 @@ char	   *Log_filename = NULL;
 bool		Log_truncate_on_rotation = false;
 int			Log_file_mode = S_IRUSR | S_IWUSR;
 
-/*
- * Globally visible state (used by elog.c)
- */
-bool		am_syslogger = false;
-
 extern bool redirection_done;
 
 /*
@@ -176,8 +171,6 @@ SysLoggerMain(int argc, char *argv[])
 #ifdef EXEC_BACKEND
 	syslogger_parseArgs(argc, argv);
 #endif							/* EXEC_BACKEND */
-
-	am_syslogger = true;
 
 	MyBackendType = B_LOGGER;
 	init_ps_display(NULL);
@@ -1078,7 +1071,7 @@ flush_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 /*
  * Write text to the currently open logfile
  *
- * This is exported so that elog.c can call it when am_syslogger is true.
+ * This is exported so that elog.c can call it when MyBackendType is B_LOGGER.
  * This allows the syslogger process to record elog messages of its own,
  * even though its stderr does not point at the syslog pipe.
  */
