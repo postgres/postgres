@@ -167,7 +167,8 @@ select count(*) > 0 as ok from (select * from pg_ls_waldir() limit 1) ss;
  t
 (1 row)
 
-select (pg_ls_waldir()).size = :segsize as ok limit 1;
+select (w).size = :segsize as ok
+from (select pg_ls_waldir() w) ss where length((w).name) = 24 limit 1;
  ok 
 ----
  t
