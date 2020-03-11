@@ -179,7 +179,8 @@ SysLoggerMain(int argc, char *argv[])
 
 	am_syslogger = true;
 
-	init_ps_display("logger");
+	MyBackendType = B_LOGGER;
+	init_ps_display(NULL);
 
 	/*
 	 * If we restarted, our stderr is already redirected into our own input

@@ -2259,6 +2259,11 @@ retry1:
 	if (strlen(port->user_name) >= NAMEDATALEN)
 		port->user_name[NAMEDATALEN - 1] = '\0';
 
+	if (am_walsender)
+		MyBackendType = B_WAL_SENDER;
+	else
+		MyBackendType = B_BACKEND;
+
 	/*
 	 * Normal walsender backends, e.g. for streaming replication, are not
 	 * connected to a particular database. But walsenders used for logical
@@ -4422,7 +4427,7 @@ BackendInitialize(Port *port)
 	 */
 	initStringInfo(&ps_data);
 	if (am_walsender)
-		appendStringInfo(&ps_data, "%s ", pgstat_get_backend_desc(B_WAL_SENDER));
+		appendStringInfo(&ps_data, "%s ", GetBackendTypeDesc(B_WAL_SENDER));
 	appendStringInfo(&ps_data, "%s ", port->user_name);
 	if (!am_walsender)
 		appendStringInfo(&ps_data, "%s ", port->database_name);

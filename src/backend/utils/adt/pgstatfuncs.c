@@ -841,7 +841,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			}
 			else
 				values[17] =
-					CStringGetTextDatum(pgstat_get_backend_desc(beentry->st_backendType));
+					CStringGetTextDatum(GetBackendTypeDesc(beentry->st_backendType));
 
 			/* SSL information */
 			if (beentry->st_ssl)

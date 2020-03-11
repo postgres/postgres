@@ -238,10 +238,8 @@ PgArchiverMain(int argc, char *argv[])
 	pqsignal(SIGCHLD, SIG_DFL);
 	PG_SETMASK(&UnBlockSig);
 
-	/*
-	 * Identify myself via ps
-	 */
-	init_ps_display("archiver");
+	MyBackendType = B_ARCHIVER;
+	init_ps_display(NULL);
 
 	pgarch_MainLoop();
 

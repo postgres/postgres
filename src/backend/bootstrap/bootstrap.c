@@ -314,36 +314,28 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		proc_exit(1);
 	}
 
-	/*
-	 * Identify myself via ps
-	 */
-	if (IsUnderPostmaster)
+	switch (MyAuxProcType)
 	{
-		const char *statmsg;
-
-		switch (MyAuxProcType)
-		{
-			case StartupProcess:
-				statmsg = pgstat_get_backend_desc(B_STARTUP);
-				break;
-			case BgWriterProcess:
-				statmsg = pgstat_get_backend_desc(B_BG_WRITER);
-				break;
-			case CheckpointerProcess:
-				statmsg = pgstat_get_backend_desc(B_CHECKPOINTER);
-				break;
-			case WalWriterProcess:
-				statmsg = pgstat_get_backend_desc(B_WAL_WRITER);
-				break;
-			case WalReceiverProcess:
-				statmsg = pgstat_get_backend_desc(B_WAL_RECEIVER);
-				break;
-			default:
-				statmsg = "??? process";
-				break;
-		}
-		init_ps_display(statmsg);
+		case StartupProcess:
+			MyBackendType = B_STARTUP;
+			break;
+		case BgWriterProcess:
+			MyBackendType = B_BG_WRITER;
+			break;
+		case CheckpointerProcess:
+			MyBackendType = B_CHECKPOINTER;
+			break;
+		case WalWriterProcess:
+			MyBackendType = B_WAL_WRITER;
+			break;
+		case WalReceiverProcess:
+			MyBackendType = B_WAL_RECEIVER;
+			break;
+		default:
+			MyBackendType = B_INVALID;
 	}
+	if (IsUnderPostmaster)
+		init_ps_display(NULL);
 
 	/* Acquire configuration parameters, unless inherited from postmaster */
 	if (!IsUnderPostmaster)

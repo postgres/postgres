@@ -57,6 +57,8 @@
 
 ProcessingMode Mode = InitProcessing;
 
+BackendType	MyBackendType;
+
 /* List of lock files to be removed at proc exit */
 static List *lock_files = NIL;
 
@@ -187,6 +189,59 @@ SwitchBackToLocalLatch(void)
 	SetLatch(MyLatch);
 }
 
+const char *
+GetBackendTypeDesc(BackendType backendType)
+{
+	const char *backendDesc = "unknown process type";
+
+	switch (backendType)
+	{
+		case B_INVALID:
+			backendDesc = "not initialized";
+			break;
+		case B_AUTOVAC_LAUNCHER:
+			backendDesc = "autovacuum launcher";
+			break;
+		case B_AUTOVAC_WORKER:
+			backendDesc = "autovacuum worker";
+			break;
+		case B_BACKEND:
+			backendDesc = "client backend";
+			break;
+		case B_BG_WORKER:
+			backendDesc = "background worker";
+			break;
+		case B_BG_WRITER:
+			backendDesc = "background writer";
+			break;
+		case B_CHECKPOINTER:
+			backendDesc = "checkpointer";
+			break;
+		case B_STARTUP:
+			backendDesc = "startup";
+			break;
+		case B_WAL_RECEIVER:
+			backendDesc = "walreceiver";
+			break;
+		case B_WAL_SENDER:
+			backendDesc = "walsender";
+			break;
+		case B_WAL_WRITER:
+			backendDesc = "walwriter";
+			break;
+		case B_ARCHIVER:
+			backendDesc = "archiver";
+			break;
+		case B_STATS_COLLECTOR:
+			backendDesc = "stats collector";
+			break;
+		case B_LOGGER:
+			backendDesc = "logger";
+			break;
+	}
+
+	return backendDesc;
+}
 
 /* ----------------------------------------------------------------
  *				database path / name support stuff

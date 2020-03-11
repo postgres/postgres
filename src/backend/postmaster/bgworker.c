@@ -688,7 +688,7 @@ StartBackgroundWorker(void)
 
 	IsBackgroundWorker = true;
 
-	/* Identify myself via ps */
+	MyBackendType = B_BG_WORKER;
 	init_ps_display(worker->bgw_name);
 
 	/*

@@ -28,6 +28,7 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 
@@ -247,14 +248,20 @@ save_ps_display_args(int argc, char **argv)
 
 /*
  * Call this once during subprocess startup to set the identification
- * values.  At this point, the original argv[] array may be overwritten.
+ * values.
+ *
+ * If fixed_part is NULL, a default will be obtained from MyBackendType.
+ *
+ * At this point, the original argv[] array may be overwritten.
  */
 void
 init_ps_display(const char *fixed_part)
 {
 	bool		save_update_process_title;
 
-	Assert(fixed_part);
+	Assert(fixed_part || MyBackendType);
+	if (!fixed_part)
+		fixed_part = GetBackendTypeDesc(MyBackendType);
 
 #ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
