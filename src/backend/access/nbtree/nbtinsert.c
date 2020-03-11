@@ -174,11 +174,13 @@ top:
 			/*
 			 * Check if the page is still the rightmost leaf page, has enough
 			 * free space to accommodate the new tuple, and the insertion scan
-			 * key is strictly greater than the first key on the page.
+			 * key is strictly greater than the first key on the page.  Note
+			 * that _bt_insert_parent() has an assertion that catches leaf
+			 * page splits that somehow follow from a fastpath insert.
 			 */
 			if (P_ISLEAF(lpageop) && P_RIGHTMOST(lpageop) &&
 				!P_IGNORE(lpageop) &&
-				(PageGetFreeSpace(page) > insertstate.itemsz) &&
+				PageGetFreeSpace(page) > insertstate.itemsz &&
 				PageGetMaxOffsetNumber(page) >= P_FIRSTDATAKEY(lpageop) &&
 				_bt_compare(rel, itup_key, page, P_FIRSTDATAKEY(lpageop)) > 0)
 			{
@@ -1140,24 +1142,6 @@ _bt_insertonpg(Relation rel,
 		bool		is_only = P_LEFTMOST(lpageop) && P_RIGHTMOST(lpageop);
 		Buffer		rbuf;
 
-		/*
-		 * If we're here then a pagesplit is needed. We should never reach
-		 * here if we're using the fastpath since we should have checked for
-		 * all the required conditions, including the fact that this page has
-		 * enough freespace. Note that this routine can in theory deal with
-		 * the situation where a NULL stack pointer is passed (that's what
-		 * would happen if the fastpath is taken). But that path is much
-		 * slower, defeating the very purpose of the optimization.  The
-		 * following assertion should protect us from any future code changes
-		 * that invalidate those assumptions.
-		 *
-		 * Note that whenever we fail to take the fastpath, we clear the
-		 * cached block. Checking for a valid cached block at this point is
-		 * enough to decide whether we're in a fastpath or not.
-		 */
-		Assert(!(P_ISLEAF(lpageop) &&
-				 BlockNumberIsValid(RelationGetTargetBlock(rel))));
-
 		/* split the buffer into left and right halves */
 		rbuf = _bt_split(rel, itup_key, buf, cbuf, newitemoff, itemsz, itup,
 						 origitup, nposting, postingoff);
@@ -1370,12 +1354,6 @@ _bt_insertonpg(Relation rel,
 		 * the optimization for small indexes. We defer that check to this
 		 * point to ensure that we don't call _bt_getrootheight while holding
 		 * lock on any other block.
-		 *
-		 * We do this after dropping locks on all buffers. So the information
-		 * about whether the insertion block is still the rightmost block or
-		 * not may have changed in between. But we will deal with that during
-		 * next insert operation. No special care is required while setting
-		 * it.
 		 */
 		if (BlockNumberIsValid(cachedBlock) &&
 			_bt_getrootheight(rel) >= BTREE_FASTPATH_MIN_LEVEL)
@@ -2066,6 +2044,22 @@ _bt_insert_parent(Relation rel,
 
 			elog(DEBUG2, "concurrent ROOT page split");
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+
+			/*
+			 * We should never reach here when a leaf page split takes place
+			 * despite the insert of newitem being able to apply the fastpath
+			 * optimization.  Make sure of that with an assertion.
+			 *
+			 * This is more of a performance issue than a correctness issue.
+			 * The fastpath won't have a descent stack.  Using a phony stack
+			 * here works, but never rely on that.  The fastpath should be
+			 * rejected when the rightmost leaf page will split, since it's
+			 * faster to go through _bt_search() and get a stack in the usual
+			 * way.
+			 */
+			Assert(!(P_ISLEAF(lpageop) &&
+					 BlockNumberIsValid(RelationGetTargetBlock(rel))));
+
 			/* Find the leftmost page at the next level up */
 			pbuf = _bt_get_endpoint(rel, lpageop->btpo.level + 1, false,
 									NULL);
