@@ -27,6 +27,8 @@ COPY test_extdep_commands FROM stdin;
 SELECT * FROM test_extdep_commands;
 -- First, test that dependent objects go away when the extension is dropped.
 SELECT * FROM test_extdep_commands \gexec
+-- A dependent object made dependent again has no effect
+ALTER FUNCTION test_ext.b() DEPENDS ON EXTENSION test_ext5;
 -- make sure we have the right dependencies on the extension
 SELECT deptype, p.*
   FROM pg_depend, pg_identify_object(classid, objid, objsubid) AS p

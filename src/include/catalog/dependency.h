@@ -232,6 +232,8 @@ extern long changeDependencyFor(Oid classId, Oid objectId,
 
 extern Oid	getExtensionOfObject(Oid classId, Oid objectId);
 
+extern List *getAutoExtensionsOfObject(Oid classId, Oid objectId);
+
 extern bool sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId);
 
 extern void markSequenceUnowned(Oid seqId);
