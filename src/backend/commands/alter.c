@@ -433,6 +433,7 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 	ObjectAddress address;
 	ObjectAddress refAddr;
 	Relation	rel;
+	List   *currexts;
 
 	address =
 		get_object_address_rv(stmt->objectType, stmt->relation, (List *) stmt->object,
@@ -462,7 +463,11 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 	if (refAddress)
 		*refAddress = refAddr;
 
-	recordDependencyOn(&address, &refAddr, DEPENDENCY_AUTO_EXTENSION);
+	/* Avoid duplicates */
+	currexts = getAutoExtensionsOfObject(address.classId,
+										 address.objectId);
+	if (!list_member_oid(currexts, refAddr.objectId))
+		recordDependencyOn(&address, &refAddr, DEPENDENCY_AUTO_EXTENSION);
 
 	return address;
 }
