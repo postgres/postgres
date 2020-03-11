@@ -523,75 +523,82 @@ pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 	return pg_ls_dir(fcinfo);
 }
 
-/* Generic function to return a directory listing of files */
+/*
+ * Generic function to return a directory listing of files.
+ *
+ * If the directory isn't there, silently return an empty set if missing_ok.
+ * Other unreadable-directory cases throw an error.
+ */
 static Datum
 pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 {
-	FuncCallContext *funcctx;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	bool		randomAccess;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	DIR		   *dirdesc;
 	struct dirent *de;
-	directory_fctx *fctx;
+	MemoryContext oldcontext;
 
-	if (SRF_IS_FIRSTCALL())
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("materialize mode required, but it is not "
+						"allowed in this context")));
+
+	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * Now walk the directory.  Note that we must do this within a single SRF
+	 * call, not leave the directory open across multiple calls, since we
+	 * can't count on the SRF being run to completion.
+	 */
+	dirdesc = AllocateDir(dir);
+	if (!dirdesc)
 	{
-		MemoryContext oldcontext;
-		TupleDesc	tupdesc;
-
-		funcctx = SRF_FIRSTCALL_INIT();
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		fctx = palloc(sizeof(directory_fctx));
-
-		tupdesc = CreateTemplateTupleDesc(3);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "size",
-						   INT8OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "modification",
-						   TIMESTAMPTZOID, -1, 0);
-		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
-
-		fctx->location = pstrdup(dir);
-		fctx->dirdesc = AllocateDir(fctx->location);
-
-		if (!fctx->dirdesc)
+		/* Return empty tuplestore if appropriate */
+		if (missing_ok && errno == ENOENT)
 		{
-			if (missing_ok && errno == ENOENT)
-			{
-				MemoryContextSwitchTo(oldcontext);
-				SRF_RETURN_DONE(funcctx);
-			}
-			else
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not open directory \"%s\": %m",
-								fctx->location)));
+			tuplestore_donestoring(tupstore);
+			return (Datum) 0;
 		}
-
-		funcctx->user_fctx = fctx;
-		MemoryContextSwitchTo(oldcontext);
+		/* Otherwise, we can let ReadDir() throw the error */
 	}
 
-	funcctx = SRF_PERCALL_SETUP();
-	fctx = (directory_fctx *) funcctx->user_fctx;
-
-	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
+	while ((de = ReadDir(dirdesc, dir)) != NULL)
 	{
 		Datum		values[3];
 		bool		nulls[3];
 		char		path[MAXPGPATH * 2];
 		struct stat attrib;
-		HeapTuple	tuple;
 
 		/* Skip hidden files */
 		if (de->d_name[0] == '.')
 			continue;
 
 		/* Get the file info */
-		snprintf(path, sizeof(path), "%s/%s", fctx->location, de->d_name);
+		snprintf(path, sizeof(path), "%s/%s", dir, de->d_name);
 		if (stat(path, &attrib) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not stat directory \"%s\": %m", dir)));
+					 errmsg("could not stat file \"%s\": %m", path)));
 
 		/* Ignore anything but regular files */
 		if (!S_ISREG(attrib.st_mode))
@@ -602,12 +609,12 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 		values[2] = TimestampTzGetDatum(time_t_to_timestamptz(attrib.st_mtime));
 		memset(nulls, 0, sizeof(nulls));
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	FreeDir(fctx->dirdesc);
-	SRF_RETURN_DONE(funcctx);
+	FreeDir(dirdesc);
+	tuplestore_donestoring(tupstore);
+	return (Datum) 0;
 }
 
 /* Function to return the list of files in the log directory */

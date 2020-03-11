@@ -134,6 +134,52 @@ LINE 1: SELECT num_nulls();
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 --
+-- Test some built-in SRFs
+--
+-- The outputs of these are variable, so we can't just print their results
+-- directly, but we can at least verify that the code doesn't fail.
+--
+select setting as segsize
+from pg_settings where name = 'wal_segment_size'
+\gset
+select count(*) > 0 as ok from pg_ls_waldir();
+ ok 
+----
+ t
+(1 row)
+
+-- Test ProjectSet as well as FunctionScan
+select count(*) > 0 as ok from (select pg_ls_waldir()) ss;
+ ok 
+----
+ t
+(1 row)
+
+-- Test not-run-to-completion cases.
+select * from pg_ls_waldir() limit 0;
+ name | size | modification 
+------+------+--------------
+(0 rows)
+
+select count(*) > 0 as ok from (select * from pg_ls_waldir() limit 1) ss;
+ ok 
+----
+ t
+(1 row)
+
+select (pg_ls_waldir()).size = :segsize as ok limit 1;
+ ok 
+----
+ t
+(1 row)
+
+select count(*) >= 0 as ok from pg_ls_archive_statusdir();
+ ok 
+----
+ t
+(1 row)
+
+--
 -- Test adding a support function to a subject function
 --
 CREATE FUNCTION my_int_eq(int, int) RETURNS bool
