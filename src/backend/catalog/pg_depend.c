@@ -486,6 +486,49 @@ getExtensionOfObject(Oid classId, Oid objectId)
 }
 
 /*
+ * Return (possibly NIL) list of extensions that the given object depends on
+ * in DEPENDENCY_AUTO_EXTENSION mode.
+ */
+List *
+getAutoExtensionsOfObject(Oid classId, Oid objectId)
+{
+	List	   *result = NIL;
+	Relation	depRel;
+	ScanKeyData	key[2];
+	SysScanDesc	scan;
+	HeapTuple	tup;
+
+	depRel = heap_open(DependRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objectId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  NULL, 2, key);
+
+	while (HeapTupleIsValid((tup = systable_getnext(scan))))
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (depform->refclassid == ExtensionRelationId &&
+			depform->deptype == DEPENDENCY_AUTO_EXTENSION)
+			result = lappend_oid(result, depform->refobjid);
+	}
+
+	systable_endscan(scan);
+
+	heap_close(depRel, AccessShareLock);
+
+	return result;
+}
+
+/*
  * Detect whether a sequence is marked as "owned" by a column
  *
  * An ownership marker is an AUTO or INTERNAL dependency from the sequence to the
