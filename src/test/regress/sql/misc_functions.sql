@@ -49,4 +49,5 @@ select count(*) > 0 as ok from (select pg_ls_waldir()) ss;
 -- Test not-run-to-completion cases.
 select * from pg_ls_waldir() limit 0;
 select count(*) > 0 as ok from (select * from pg_ls_waldir() limit 1) ss;
-select (pg_ls_waldir()).size = :segbsize * :bsize as ok limit 1;
+select (w).size = :segbsize * :bsize as ok
+from (select pg_ls_waldir() w) ss where length((w).name) = 24 limit 1;
