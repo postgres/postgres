@@ -168,7 +168,7 @@ typedef struct BTMetaPageData
 /*
  * MaxTIDsPerBTreePage is an upper bound on the number of heap TIDs tuples
  * that may be stored on a btree leaf page.  It is used to size the
- * per-page temporary buffers used by index scans.)
+ * per-page temporary buffers used by index scans.
  *
  * Note: we don't bother considering per-tuple overheads here to keep
  * things simple (value is based on how many elements a single array of
