@@ -562,7 +562,12 @@ bt_metap(PG_FUNCTION_ARGS)
 	 */
 	if (metad->btm_version == BTREE_VERSION)
 	{
-		values[j++] = psprintf("%u", metad->btm_oldest_btpo_xact);
+		/*
+		 * kludge: btm_oldest_btpo_xact is declared as int4, which is wrong.
+		 * We should at least avoid raising an error when its value happens to
+		 * exceed PG_INT32_MAX, though.
+		 */
+		values[j++] = psprintf("%d", (int) metad->btm_oldest_btpo_xact);
 		values[j++] = psprintf("%f", metad->btm_last_cleanup_num_heap_tuples);
 	}
 	else
