@@ -72,7 +72,7 @@ COMMIT PREPARED <replaceable class="parameter">transaction_id</replaceable>
  </refsect1>
 
  <refsect1 id="sql-commit-prepared-examples">
-  <title id="sql-commit-prepared-examples-title">Examples</title>
+  <title>Examples</title>
   <para>
    Commit the transaction identified by the transaction
    identifier <literal>foobar</literal>:

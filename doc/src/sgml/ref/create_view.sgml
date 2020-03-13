@@ -284,7 +284,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
    </para>
 
   <refsect2 id="sql-createview-updatable-views">
-   <title id="sql-createview-updatable-views-title">Updatable Views</title>
+   <title>Updatable Views</title>
 
    <indexterm zone="sql-createview-updatable-views">
     <primary>updatable views</primary>

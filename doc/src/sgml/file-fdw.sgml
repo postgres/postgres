@@ -210,7 +210,7 @@
  </para>
 
  <example>
- <title id="csvlog-fdw">Create a Foreign Table for PostgreSQL CSV Logs</title>
+  <title>Create a Foreign Table for PostgreSQL CSV Logs</title>
 
   <para>
    One of the obvious uses for <literal>file_fdw</literal> is to make

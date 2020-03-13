@@ -1043,7 +1043,7 @@ struct varchar_var { int len; char arr[180]; } var;
     </para>
 
     <sect4>
-     <title id="ecpg-type-timestamp-date">timestamp, date</title>
+     <title>timestamp, date</title>
 
      <para>
       Here is a pattern for handling <type>timestamp</type> variables
@@ -1208,7 +1208,7 @@ EXEC SQL END DECLARE SECTION;
     </sect4>
 
     <sect4>
-     <title id="ecpg-type-bytea">bytea</title>
+     <title>bytea</title>
 
      <para>
       The handling of the <type>bytea</type> type is similar to

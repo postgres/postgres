@@ -400,7 +400,7 @@ CREATE FOREIGN TABLE measurement_y2016m07
  </refsect1>
 
  <refsect1 id="sql-createforeigntable-compatibility">
-  <title id="sql-createforeigntable-compatibility-title">Compatibility</title>
+  <title>Compatibility</title>
 
   <para>
    The <command>CREATE FOREIGN TABLE</command> command largely conforms to the

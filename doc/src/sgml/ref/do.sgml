@@ -101,7 +101,7 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
  </refsect1>
 
  <refsect1 id="sql-do-examples">
-  <title id="sql-do-examples-title">Examples</title>
+  <title>Examples</title>
   <para>
    Grant all privileges on all views in schema <literal>public</literal> to
    role <literal>webuser</literal>:
