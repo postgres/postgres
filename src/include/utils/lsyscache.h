@@ -158,6 +158,7 @@ extern char *get_namespace_name(Oid nspid);
 extern char *get_namespace_name_or_temp(Oid nspid);
 extern Oid	get_range_subtype(Oid rangeOid);
 extern Oid	get_range_collation(Oid rangeOid);
+extern bool	get_index_isreplident(Oid index_oid);
 
 #define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
 /* type_is_array_domain accepts both plain arrays and domains over arrays */
