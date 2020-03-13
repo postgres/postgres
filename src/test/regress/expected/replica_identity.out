@@ -179,5 +179,51 @@ SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
  n
 (1 row)
 
+---
+-- Test that ALTER TABLE rewrite preserves nondefault replica identity
+---
+-- constraint variant
+CREATE TABLE test_replica_identity2 (id int UNIQUE NOT NULL);
+ALTER TABLE test_replica_identity2 REPLICA IDENTITY USING INDEX test_replica_identity2_id_key;
+\d test_replica_identity2
+       Table "public.test_replica_identity2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+Indexes:
+    "test_replica_identity2_id_key" UNIQUE CONSTRAINT, btree (id) REPLICA IDENTITY
+
+ALTER TABLE test_replica_identity2 ALTER COLUMN id TYPE bigint;
+\d test_replica_identity2
+      Table "public.test_replica_identity2"
+ Column |  Type  | Collation | Nullable | Default 
+--------+--------+-----------+----------+---------
+ id     | bigint |           | not null | 
+Indexes:
+    "test_replica_identity2_id_key" UNIQUE CONSTRAINT, btree (id) REPLICA IDENTITY
+
+-- straight index variant
+CREATE TABLE test_replica_identity3 (id int NOT NULL);
+CREATE UNIQUE INDEX test_replica_identity3_id_key ON test_replica_identity3 (id);
+ALTER TABLE test_replica_identity3 REPLICA IDENTITY USING INDEX test_replica_identity3_id_key;
+\d test_replica_identity3
+       Table "public.test_replica_identity3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+Indexes:
+    "test_replica_identity3_id_key" UNIQUE, btree (id) REPLICA IDENTITY
+
+ALTER TABLE test_replica_identity3 ALTER COLUMN id TYPE bigint;
+\d test_replica_identity3
+      Table "public.test_replica_identity3"
+ Column |  Type  | Collation | Nullable | Default 
+--------+--------+-----------+----------+---------
+ id     | bigint |           | not null | 
+Indexes:
+    "test_replica_identity3_id_key" UNIQUE, btree (id) REPLICA IDENTITY
+
 DROP TABLE test_replica_identity;
+DROP TABLE test_replica_identity2;
+DROP TABLE test_replica_identity3;
 DROP TABLE test_replica_identity_othertable;
