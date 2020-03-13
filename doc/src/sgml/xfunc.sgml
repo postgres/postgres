@@ -2237,9 +2237,9 @@ PG_FUNCTION_INFO_V1(funcname);
     <para>
      In a version-1 function, each actual argument is fetched using a
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
-     macro that corresponds to the argument's data type.  In non-strict
+     macro that corresponds to the argument's data type.  (In non-strict
      functions there needs to be a previous check about argument null-ness
-     using <function>PG_ARGNULL_<replaceable>xxx</replaceable>()</function>.
+     using <function>PG_ARGISNULL()</function>; see below.)
      The result is returned using a
      <function>PG_RETURN_<replaceable>xxx</replaceable>()</function>
      macro for the return type.
@@ -2402,14 +2402,6 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     </para>
 
     <para>
-     At first glance, the version-1 coding conventions might appear to be just
-     pointless obscurantism, over using plain <literal>C</literal> calling
-     conventions.  They do however allow to deal with <literal>NULL</literal>able
-     arguments/return values, and <quote>toasted</quote> (compressed or
-     out-of-line) values.
-    </para>
-
-    <para>
      The macro <function>PG_ARGISNULL(<replaceable>n</replaceable>)</function>
      allows a function to test whether each input is null.  (Of course, doing
      this is only necessary in functions not declared <quote>strict</quote>.)
@@ -2421,6 +2413,14 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
      one has verified that the argument isn't null.
      To return a null result, execute <function>PG_RETURN_NULL()</function>;
      this works in both strict and nonstrict functions.
+    </para>
+
+    <para>
+     At first glance, the version-1 coding conventions might appear
+     to be just pointless obscurantism, compared to using
+     plain <literal>C</literal> calling conventions.  They do however allow
+     us to deal with <literal>NULL</literal>able arguments/return values,
+     and <quote>toasted</quote> (compressed or out-of-line) values.
     </para>
 
     <para>
