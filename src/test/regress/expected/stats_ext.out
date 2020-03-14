@@ -536,6 +536,13 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 -- create statistics
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
+-- print the detected dependencies
+SELECT dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
+                                                dependencies                                                
+------------------------------------------------------------------------------------------------------------
+ {"3 => 4": 1.000000, "3 => 6": 1.000000, "4 => 6": 1.000000, "3, 4 => 6": 1.000000, "3, 6 => 4": 1.000000}
+(1 row)
+
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
  estimated | actual 
 -----------+--------
@@ -697,6 +704,12 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi 
        102 |    714
 (1 row)
 
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE 0 = a AND 0 = b');
+ estimated | actual 
+-----------+--------
+       102 |    714
+(1 row)
+
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE c = 0 AND d = 0');
  estimated | actual 
 -----------+--------
@@ -704,6 +717,12 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi 
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+ estimated | actual 
+-----------+--------
+         1 |     64
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE 0 = a AND b = 0 AND 0 = c AND d = 0');
  estimated | actual 
 -----------+--------
          1 |     64
@@ -719,6 +738,12 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi 
        714 |    714
 (1 row)
 
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE 0 = a AND 0 = b');
+ estimated | actual 
+-----------+--------
+       714 |    714
+(1 row)
+
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE c = 0 AND d = 0');
  estimated | actual 
 -----------+--------
@@ -726,6 +751,12 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi 
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE a = 0 AND b = 0 AND c = 0 AND d = 0');
+ estimated | actual 
+-----------+--------
+        65 |     64
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies_multi WHERE 0 = a AND b = 0 AND 0 = c AND d = 0');
  estimated | actual 
 -----------+--------
         65 |     64
