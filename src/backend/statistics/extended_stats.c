@@ -994,7 +994,63 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 			return false;
 
 		/* Check if the expression the right shape (one Var, one Const) */
-		if (!examine_opclause_expression(expr, &var, NULL, NULL))
+		if (!examine_clause_args(expr->args, &var, NULL, NULL))
+			return false;
+
+		/*
+		 * If it's not one of the supported operators ("=", "<", ">", etc.),
+		 * just ignore the clause, as it's not compatible with MCV lists.
+		 *
+		 * This uses the function for estimating selectivity, not the operator
+		 * directly (a bit awkward, but well ...).
+		 */
+		switch (get_oprrest(expr->opno))
+		{
+			case F_EQSEL:
+			case F_NEQSEL:
+			case F_SCALARLTSEL:
+			case F_SCALARLESEL:
+			case F_SCALARGTSEL:
+			case F_SCALARGESEL:
+				/* supported, will continue with inspection of the Var */
+				break;
+
+			default:
+				/* other estimators are considered unknown/unsupported */
+				return false;
+		}
+
+		/*
+		 * If there are any securityQuals on the RTE from security barrier
+		 * views or RLS policies, then the user may not have access to all the
+		 * table's data, and we must check that the operator is leak-proof.
+		 *
+		 * If the operator is leaky, then we must ignore this clause for the
+		 * purposes of estimating with MCV lists, otherwise the operator might
+		 * reveal values from the MCV list that the user doesn't have
+		 * permission to see.
+		 */
+		if (rte->securityQuals != NIL &&
+			!get_func_leakproof(get_opcode(expr->opno)))
+			return false;
+
+		return statext_is_compatible_clause_internal(root, (Node *) var,
+													 relid, attnums);
+	}
+
+	/* Var IN Array */
+	if (IsA(clause, ScalarArrayOpExpr))
+	{
+		RangeTblEntry	   *rte = root->simple_rte_array[relid];
+		ScalarArrayOpExpr  *expr = (ScalarArrayOpExpr *) clause;
+		Var		   *var;
+
+		/* Only expressions with two arguments are considered compatible. */
+		if (list_length(expr->args) != 2)
+			return false;
+
+		/* Check if the expression the right shape (one Var, one Const) */
+		if (!examine_clause_args(expr->args, &var, NULL, NULL))
 			return false;
 
 		/*
@@ -1396,7 +1452,7 @@ statext_clauselist_selectivity(PlannerInfo *root, List *clauses, int varRelid,
  * on which side of the operator we found the Var node.
  */
 bool
-examine_opclause_expression(OpExpr *expr, Var **varp, Const **cstp, bool *varonleftp)
+examine_clause_args(List *args, Var **varp, Const **cstp, bool *varonleftp)
 {
 	Var	   *var;
 	Const  *cst;
@@ -1405,10 +1461,10 @@ examine_opclause_expression(OpExpr *expr, Var **varp, Const **cstp, bool *varonl
 		   *rightop;
 
 	/* enforced by statext_is_compatible_clause_internal */
-	Assert(list_length(expr->args) == 2);
+	Assert(list_length(args) == 2);
 
-	leftop = linitial(expr->args);
-	rightop = lsecond(expr->args);
+	leftop = linitial(args);
+	rightop = lsecond(args);
 
 	/* strip RelabelType from either side of the expression */
 	if (IsA(leftop, RelabelType))

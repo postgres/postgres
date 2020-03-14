@@ -1579,7 +1579,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			OpExpr	   *expr = (OpExpr *) clause;
 			FmgrInfo	opproc;
 
-			/* valid only after examine_opclause_expression returns true */
+			/* valid only after examine_clause_args returns true */
 			Var		   *var;
 			Const	   *cst;
 			bool		varonleft;
@@ -1587,7 +1587,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			fmgr_info(get_opcode(expr->opno), &opproc);
 
 			/* extract the var and const from the expression */
-			if (examine_opclause_expression(expr, &var, &cst, &varonleft))
+			if (examine_clause_args(expr->args, &var, &cst, &varonleft))
 			{
 				int			idx;
 
@@ -1646,6 +1646,113 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 															   var->varcollid,
 															   cst->constvalue,
 															   item->values[idx]));
+
+					/* update the match bitmap with the result */
+					matches[i] = RESULT_MERGE(matches[i], is_or, match);
+				}
+			}
+		}
+		else if (IsA(clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr   *expr = (ScalarArrayOpExpr *) clause;
+			FmgrInfo	opproc;
+
+			/* valid only after examine_clause_args returns true */
+			Var		   *var;
+			Const	   *cst;
+			bool		varonleft;
+
+			fmgr_info(get_opcode(expr->opno), &opproc);
+
+			/* extract the var and const from the expression */
+			if (examine_clause_args(expr->args, &var, &cst, &varonleft))
+			{
+				int			idx;
+
+				ArrayType  *arrayval;
+				int16		elmlen;
+				bool		elmbyval;
+				char		elmalign;
+				int			num_elems;
+				Datum	   *elem_values;
+				bool	   *elem_nulls;
+
+				/* ScalarArrayOpExpr has the Var always on the left */
+				Assert(varonleft);
+
+				if (!cst->constisnull)
+				{
+					arrayval = DatumGetArrayTypeP(cst->constvalue);
+					get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
+										 &elmlen, &elmbyval, &elmalign);
+					deconstruct_array(arrayval,
+									  ARR_ELEMTYPE(arrayval),
+									  elmlen, elmbyval, elmalign,
+									  &elem_values, &elem_nulls, &num_elems);
+				}
+
+				/* match the attribute to a dimension of the statistic */
+				idx = bms_member_index(keys, var->varattno);
+
+				/*
+				 * Walk through the MCV items and evaluate the current clause.
+				 * We can skip items that were already ruled out, and
+				 * terminate if there are no remaining MCV items that might
+				 * possibly match.
+				 */
+				for (i = 0; i < mcvlist->nitems; i++)
+				{
+					int			j;
+					bool		match = (expr->useOr ? false : true);
+					MCVItem    *item = &mcvlist->items[i];
+
+					/*
+					 * When the MCV item or the Const value is NULL we can treat
+					 * this as a mismatch. We must not call the operator because
+					 * of strictness.
+					 */
+					if (item->isnull[idx] || cst->constisnull)
+					{
+						matches[i] = RESULT_MERGE(matches[i], is_or, false);
+						continue;
+					}
+
+					/*
+					 * Skip MCV items that can't change result in the bitmap.
+					 * Once the value gets false for AND-lists, or true for
+					 * OR-lists, we don't need to look at more clauses.
+					 */
+					if (RESULT_IS_FINAL(matches[i], is_or))
+						continue;
+
+					for (j = 0; j < num_elems; j++)
+					{
+						Datum	elem_value = elem_values[j];
+						bool	elem_isnull = elem_nulls[j];
+						bool	elem_match;
+
+						/* NULL values always evaluate as not matching. */
+						if (elem_isnull)
+						{
+							match = RESULT_MERGE(match, expr->useOr, false);
+							continue;
+						}
+
+						/*
+						 * Stop evaluating the array elements once we reach
+						 * match value that can't change - ALL() is the same
+						 * as AND-list, ANY() is the same as OR-list.
+						 */
+						if (RESULT_IS_FINAL(match, expr->useOr))
+							break;
+
+						elem_match = DatumGetBool(FunctionCall2Coll(&opproc,
+																	var->varcollid,
+																	item->values[idx],
+																	elem_value));
+
+						match = RESULT_MERGE(match, expr->useOr, elem_match);
+					}
 
 					/* update the match bitmap with the result */
 					matches[i] = RESULT_MERGE(matches[i], is_or, match);
