@@ -157,7 +157,7 @@ static const Size max_changes_in_memory = 4096;
  * workloads.
  */
 static const Size max_cached_changes = 4096 * 2;
-static const Size max_cached_tuplebufs = 4096 * 2;		/* ~8MB */
+static const Size max_cached_tuplebufs = 4096 * 2;		/* ~64MB */
 static const Size max_cached_transactions = 512;
 
 
