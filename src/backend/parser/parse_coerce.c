@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "access/htup_details.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_inherits.h"
@@ -26,7 +25,6 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
-#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -1966,108 +1964,6 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 
 	/* we don't return a generic type; send back the original return type */
 	return rettype;
-}
-
-/*
- * resolve_generic_type()
- *		Deduce an individual actual datatype on the assumption that
- *		the rules for polymorphic types are being followed.
- *
- * declared_type is the declared datatype we want to resolve.
- * context_actual_type is the actual input datatype to some argument
- * that has declared datatype context_declared_type.
- *
- * If declared_type isn't polymorphic, we just return it.  Otherwise,
- * context_declared_type must be polymorphic, and we deduce the correct
- * return type based on the relationship of the two polymorphic types.
- */
-Oid
-resolve_generic_type(Oid declared_type,
-					 Oid context_actual_type,
-					 Oid context_declared_type)
-{
-	if (declared_type == ANYARRAYOID)
-	{
-		if (context_declared_type == ANYARRAYOID)
-		{
-			/*
-			 * Use actual type, but it must be an array; or if it's a domain
-			 * over array, use the base array type.
-			 */
-			Oid			context_base_type = getBaseType(context_actual_type);
-			Oid			array_typelem = get_element_type(context_base_type);
-
-			if (!OidIsValid(array_typelem))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared %s is not an array but type %s",
-								"anyarray", format_type_be(context_base_type))));
-			return context_base_type;
-		}
-		else if (context_declared_type == ANYELEMENTOID ||
-				 context_declared_type == ANYNONARRAYOID ||
-				 context_declared_type == ANYENUMOID ||
-				 context_declared_type == ANYRANGEOID)
-		{
-			/* Use the array type corresponding to actual type */
-			Oid			array_typeid = get_array_type(context_actual_type);
-
-			if (!OidIsValid(array_typeid))
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("could not find array type for data type %s",
-								format_type_be(context_actual_type))));
-			return array_typeid;
-		}
-	}
-	else if (declared_type == ANYELEMENTOID ||
-			 declared_type == ANYNONARRAYOID ||
-			 declared_type == ANYENUMOID ||
-			 declared_type == ANYRANGEOID)
-	{
-		if (context_declared_type == ANYARRAYOID)
-		{
-			/* Use the element type corresponding to actual type */
-			Oid			context_base_type = getBaseType(context_actual_type);
-			Oid			array_typelem = get_element_type(context_base_type);
-
-			if (!OidIsValid(array_typelem))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared %s is not an array but type %s",
-								"anyarray", format_type_be(context_base_type))));
-			return array_typelem;
-		}
-		else if (context_declared_type == ANYRANGEOID)
-		{
-			/* Use the element type corresponding to actual type */
-			Oid			context_base_type = getBaseType(context_actual_type);
-			Oid			range_typelem = get_range_subtype(context_base_type);
-
-			if (!OidIsValid(range_typelem))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared %s is not a range type but type %s",
-								"anyrange", format_type_be(context_base_type))));
-			return range_typelem;
-		}
-		else if (context_declared_type == ANYELEMENTOID ||
-				 context_declared_type == ANYNONARRAYOID ||
-				 context_declared_type == ANYENUMOID)
-		{
-			/* Use the actual type; it doesn't matter if array or not */
-			return context_actual_type;
-		}
-	}
-	else
-	{
-		/* declared_type isn't polymorphic, so return it as-is */
-		return declared_type;
-	}
-	/* If we get here, declared_type is polymorphic and context isn't */
-	/* NB: this is a calling-code logic error, not a user error */
-	elog(ERROR, "could not determine polymorphic type because context isn't polymorphic");
-	return InvalidOid;			/* keep compiler quiet */
 }
 
 

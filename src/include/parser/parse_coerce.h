@@ -79,9 +79,6 @@ extern Oid	enforce_generic_type_consistency(const Oid *actual_arg_types,
 											 int nargs,
 											 Oid rettype,
 											 bool allow_poly);
-extern Oid	resolve_generic_type(Oid declared_type,
-								 Oid context_actual_type,
-								 Oid context_declared_type);
 
 extern CoercionPathType find_coercion_pathway(Oid targetTypeId,
 											  Oid sourceTypeId,

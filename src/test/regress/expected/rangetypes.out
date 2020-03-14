@@ -1490,6 +1490,15 @@ select * from outparam_succeed(int4range(1,2));
  [1,2) | foo
 (1 row)
 
+create function outparam2_succeed(r anyrange, out lu anyarray, out ul anyarray)
+  as $$ select array[lower($1), upper($1)], array[upper($1), lower($1)] $$
+  language sql;
+select * from outparam2_succeed(int4range(1,11));
+   lu   |   ul   
+--------+--------
+ {1,11} | {11,1}
+(1 row)
+
 create function inoutparam_succeed(out i anyelement, inout r anyrange)
   as $$ select upper($1), $1 $$ language sql;
 select * from inoutparam_succeed(int4range(1,2));
@@ -1498,12 +1507,14 @@ select * from inoutparam_succeed(int4range(1,2));
  2 | [1,2)
 (1 row)
 
-create function table_succeed(i anyelement, r anyrange) returns table(i anyelement, r anyrange)
-  as $$ select $1, $2 $$ language sql;
-select * from table_succeed(123, int4range(1,11));
-  i  |   r    
------+--------
- 123 | [1,11)
+create function table_succeed(r anyrange)
+  returns table(l anyelement, u anyelement)
+  as $$ select lower($1), upper($1) $$
+  language sql;
+select * from table_succeed(int4range(1,11));
+ l | u  
+---+----
+ 1 | 11
 (1 row)
 
 -- should fail
