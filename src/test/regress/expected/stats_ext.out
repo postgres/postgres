@@ -421,6 +421,118 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
          1 |     50
 (1 row)
 
+-- IN
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         2 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b IN (''1'', ''2'')');
+ estimated | actual 
+-----------+--------
+         4 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b IN (''1'', ''2'')');
+ estimated | actual 
+-----------+--------
+         8 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c IN (1)');
+ estimated | actual 
+-----------+--------
+         1 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 26, 27, 51, 52, 76, 77) AND b IN (''1'', ''2'', ''26'', ''27'') AND c IN (1, 2)');
+ estimated | actual 
+-----------+--------
+         3 |    400
+(1 row)
+
+-- ANY
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 51]) AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         2 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 51]) AND b = ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+         4 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 2, 51, 52]) AND b = ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+         8 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 26, 51, 76]) AND b = ANY (ARRAY[''1'', ''26'']) AND c = 1');
+ estimated | actual 
+-----------+--------
+         1 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 26, 51, 76]) AND b = ANY (ARRAY[''1'', ''26'']) AND c = ANY (ARRAY[1])');
+ estimated | actual 
+-----------+--------
+         1 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 2, 26, 27, 51, 52, 76, 77]) AND b = ANY (ARRAY[''1'', ''2'', ''26'', ''27'']) AND c = ANY (ARRAY[1, 2])');
+ estimated | actual 
+-----------+--------
+         3 |    400
+(1 row)
+
+-- ANY with inequalities should not benefit from functional dependencies
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a < ANY (ARRAY[1, 51]) AND b > ''1''');
+ estimated | actual 
+-----------+--------
+      2472 |   2400
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a >= ANY (ARRAY[1, 51]) AND b <= ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+      1441 |   1250
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a <= ANY (ARRAY[1, 2, 51, 52]) AND b >= ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+      3909 |   2550
+(1 row)
+
+-- ALL (should not benefit from functional dependencies)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b = ALL (ARRAY[''1''])');
+ estimated | actual 
+-----------+--------
+         2 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b = ALL (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+         1 |      0
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b = ALL (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+         1 |      0
+(1 row)
+
 -- create statistics
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
@@ -434,6 +546,118 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
  estimated | actual 
 -----------+--------
         50 |     50
+(1 row)
+
+-- IN
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b = ''1''');
+ estimated | actual 
+-----------+--------
+       100 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b IN (''1'', ''2'')');
+ estimated | actual 
+-----------+--------
+       100 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b IN (''1'', ''2'')');
+ estimated | actual 
+-----------+--------
+       200 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c = 1');
+ estimated | actual 
+-----------+--------
+       200 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c IN (1)');
+ estimated | actual 
+-----------+--------
+       200 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 26, 27, 51, 52, 76, 77) AND b IN (''1'', ''2'', ''26'', ''27'') AND c IN (1, 2)');
+ estimated | actual 
+-----------+--------
+       400 |    400
+(1 row)
+
+-- ANY
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 51]) AND b = ''1''');
+ estimated | actual 
+-----------+--------
+       100 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 51]) AND b = ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+       100 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 2, 51, 52]) AND b = ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+       200 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 26, 51, 76]) AND b = ANY (ARRAY[''1'', ''26'']) AND c = 1');
+ estimated | actual 
+-----------+--------
+       200 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 26, 51, 76]) AND b = ANY (ARRAY[''1'', ''26'']) AND c = ANY (ARRAY[1])');
+ estimated | actual 
+-----------+--------
+       200 |    200
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 2, 26, 27, 51, 52, 76, 77]) AND b = ANY (ARRAY[''1'', ''2'', ''26'', ''27'']) AND c = ANY (ARRAY[1, 2])');
+ estimated | actual 
+-----------+--------
+       400 |    400
+(1 row)
+
+-- ANY with inequalities should not benefit from functional dependencies
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a < ANY (ARRAY[1, 51]) AND b > ''1''');
+ estimated | actual 
+-----------+--------
+      2472 |   2400
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a >= ANY (ARRAY[1, 51]) AND b <= ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+      1441 |   1250
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a <= ANY (ARRAY[1, 2, 51, 52]) AND b >= ANY (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+      3909 |   2550
+(1 row)
+
+-- ALL (should not benefit from functional dependencies)
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b = ALL (ARRAY[''1''])');
+ estimated | actual 
+-----------+--------
+         2 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 51) AND b = ALL (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+         1 |      0
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b = ALL (ARRAY[''1'', ''2''])');
+ estimated | actual 
+-----------+--------
+         1 |      0
 (1 row)
 
 -- check change of column type doesn't break it

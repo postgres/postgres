@@ -1203,7 +1203,8 @@ SELECT stxname, stxkeys, stxddependencies
 
      <para>
       Functional dependencies are currently only applied when considering
-      simple equality conditions that compare columns to constant values.
+      simple equality conditions that compare columns to constant values,
+      and <literal>IN</literal> clauses with constant values.
       They are not used to improve estimates for equality conditions
       comparing two columns or comparing a column to an expression, nor for
       range clauses, <literal>LIKE</literal> or any other type of condition.

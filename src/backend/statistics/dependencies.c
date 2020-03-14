@@ -801,6 +801,44 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 
 		/* OK to proceed with checking "var" */
 	}
+	else if (IsA(rinfo->clause, ScalarArrayOpExpr))
+	{
+		/* If it's an scalar array operator, check for Var IN Const. */
+		ScalarArrayOpExpr	   *expr = (ScalarArrayOpExpr *) rinfo->clause;
+
+		/*
+		 * Reject ALL() variant, we only care about ANY/IN.
+		 *
+		 * FIXME Maybe we should check if all the values are the same, and
+		 * allow ALL in that case? Doesn't seem very practical, though.
+		 */
+		if (!expr->useOr)
+			return false;
+
+		/* Only expressions with two arguments are candidates. */
+		if (list_length(expr->args) != 2)
+			return false;
+
+		/*
+		 * We know it's always (Var IN Const), so we assume the var is the
+		 * first argument, and pseudoconstant is the second one.
+		 */
+		if (!is_pseudo_constant_clause(lsecond(expr->args)))
+			return false;
+
+		var = linitial(expr->args);
+
+		/*
+		 * If it's not an "=" operator, just ignore the clause, as it's not
+		 * compatible with functional dependencies. The operator is identified
+		 * simply by looking at which function it uses to estimate selectivity.
+		 * That's a bit strange, but it's what other similar places do.
+		 */
+		if (get_oprrest(expr->opno) != F_EQSEL)
+			return false;
+
+		/* OK to proceed with checking "var" */
+	}
 	else if (is_notclause(rinfo->clause))
 	{
 		/*
