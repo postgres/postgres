@@ -157,7 +157,7 @@ static const Size max_changes_in_memory = 4096;
  * major bottleneck, especially when spilling to disk while decoding batch
  * workloads.
  */
-static const Size max_cached_tuplebufs = 4096 * 2;	/* ~8MB */
+static const Size max_cached_tuplebufs = 4096 * 2;	/* ~64MB */
 
 /* ---------------------------------------
  * primary reorderbuffer support routines
