@@ -58,6 +58,7 @@ extern int	bgwriter_lru_maxpages;
 extern double bgwriter_lru_multiplier;
 extern bool track_io_timing;
 extern int	effective_io_concurrency;
+extern int	maintenance_io_concurrency;
 
 extern int	checkpoint_flush_after;
 extern int	backend_flush_after;

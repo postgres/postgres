@@ -120,6 +120,13 @@ bool		track_io_timing = false;
 int			effective_io_concurrency = 0;
 
 /*
+ * Like effective_io_concurrency, but used by maintenance code paths that might
+ * benefit from a higher setting because they work on behalf of many sessions.
+ * Overridden by the tablespace setting of the same name.
+ */
+int			maintenance_io_concurrency = 0;
+
+/*
  * GUC variables about triggering kernel writeback for buffers written; OS
  * dependent defaults are set via the GUC mechanism.
  */

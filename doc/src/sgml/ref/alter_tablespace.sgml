@@ -84,13 +84,16 @@ ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="par
      <para>
       A tablespace parameter to be set or reset.  Currently, the only
       available parameters are <varname>seq_page_cost</varname>,
-      <varname>random_page_cost</varname> and <varname>effective_io_concurrency</varname>.
-      Setting either value for a particular tablespace will override the
+      <varname>random_page_cost</varname>, <varname>effective_io_concurrency</varname>
+      and <varname>maintenance_io_concurrency</varname>.
+      Setting these values for a particular tablespace will override the
       planner's usual estimate of the cost of reading pages from tables in
-      that tablespace, as established by the configuration parameters of the
+      that tablespace, and the executor's prefetching behavior, as established
+      by the configuration parameters of the
       same name (see <xref linkend="guc-seq-page-cost"/>,
       <xref linkend="guc-random-page-cost"/>,
-      <xref linkend="guc-effective-io-concurrency"/>).  This may be useful if
+      <xref linkend="guc-effective-io-concurrency"/>,
+      <xref linkend="guc-maintenance-io-concurrency"/>).  This may be useful if
       one tablespace is located on a disk which is faster or slower than the
       remainder of the I/O subsystem.
      </para>

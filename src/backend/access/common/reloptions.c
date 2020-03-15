@@ -353,6 +353,19 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
+			"maintenance_io_concurrency",
+			"Number of simultaneous requests that can be handled efficiently by the disk subsystem for maintenance work.",
+			RELOPT_KIND_TABLESPACE,
+			ShareUpdateExclusiveLock
+		},
+#ifdef USE_PREFETCH
+		-1, 0, MAX_IO_CONCURRENCY
+#else
+		0, 0, 0
+#endif
+	},
+	{
+		{
 			"parallel_workers",
 			"Number of parallel processes that can be used per executor node for this relation.",
 			RELOPT_KIND_HEAP,
@@ -1700,7 +1713,8 @@ tablespace_reloptions(Datum reloptions, bool validate)
 	static const relopt_parse_elt tab[] = {
 		{"random_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, random_page_cost)},
 		{"seq_page_cost", RELOPT_TYPE_REAL, offsetof(TableSpaceOpts, seq_page_cost)},
-		{"effective_io_concurrency", RELOPT_TYPE_INT, offsetof(TableSpaceOpts, effective_io_concurrency)}
+		{"effective_io_concurrency", RELOPT_TYPE_INT, offsetof(TableSpaceOpts, effective_io_concurrency)},
+		{"maintenance_io_concurrency", RELOPT_TYPE_INT, offsetof(TableSpaceOpts, maintenance_io_concurrency)}
 	};
 
 	return (bytea *) build_reloptions(reloptions, validate,

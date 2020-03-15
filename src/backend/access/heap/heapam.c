@@ -7003,7 +7003,6 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 	Page		hpage;
 #ifdef USE_PREFETCH
 	XidHorizonPrefetchState prefetch_state;
-	int			io_concurrency;
 	int			prefetch_distance;
 #endif
 
@@ -7026,24 +7025,15 @@ heap_compute_xid_horizon_for_tuples(Relation rel,
 	/*
 	 * Compute the prefetch distance that we will attempt to maintain.
 	 *
-	 * We don't use the regular formula to determine how much to prefetch
-	 * here, but instead just add a constant to effective_io_concurrency.
-	 * That's because it seems best to do some prefetching here even when
-	 * effective_io_concurrency is set to 0, but if the DBA thinks it's OK to
-	 * do more prefetching for other operations, then it's probably OK to do
-	 * more prefetching in this case, too. It may be that this formula is too
-	 * simplistic, but at the moment there is no evidence of that or any idea
-	 * about what would work better.
-	 *
 	 * Since the caller holds a buffer lock somewhere in rel, we'd better make
 	 * sure that isn't a catalog relation before we call code that does
 	 * syscache lookups, to avoid risk of deadlock.
 	 */
 	if (IsCatalogRelation(rel))
-		io_concurrency = effective_io_concurrency;
+		prefetch_distance = maintenance_io_concurrency;
 	else
-		io_concurrency = get_tablespace_io_concurrency(rel->rd_rel->reltablespace);
-	prefetch_distance = Min((io_concurrency) + 10, MAX_IO_CONCURRENCY);
+		prefetch_distance =
+			get_tablespace_maintenance_io_concurrency(rel->rd_rel->reltablespace);
 
 	/* Start prefetching. */
 	xid_horizon_prefetch_buffer(rel, &prefetch_state, prefetch_distance);
