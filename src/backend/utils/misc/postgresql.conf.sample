@@ -528,6 +528,7 @@
 					#   %d = database name
 					#   %r = remote host and port
 					#   %h = remote host
+					#   %b = backend type
 					#   %p = process ID
 					#   %t = timestamp without milliseconds
 					#   %m = timestamp with milliseconds

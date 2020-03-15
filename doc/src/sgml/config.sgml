@@ -6438,9 +6438,13 @@ local0.*    /var/log/postgresql
          right with spaces to give it a minimum width, whereas a positive
          value will pad on the left. Padding can be useful to aid human
          readability in log files.
+       </para>
+
+       <para>
          This parameter can only be set in the <filename>postgresql.conf</filename>
          file or on the server command line. The default is
          <literal>'%m [%p] '</literal> which logs a time stamp and the process ID.
+       </para>
 
          <informaltable>
           <tgroup cols="3">
@@ -6476,6 +6480,11 @@ local0.*    /var/log/postgresql
              <entry><literal>%h</literal></entry>
              <entry>Remote host name or IP address</entry>
              <entry>yes</entry>
+            </row>
+            <row>
+             <entry><literal>%b</literal></entry>
+             <entry>Backend type</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%p</literal></entry>
@@ -6548,6 +6557,14 @@ local0.*    /var/log/postgresql
           </tgroup>
          </informaltable>
 
+         <para>
+          The backend type corresponds to the column
+          <structfield>backend_type</structfield> in the view <xref
+          linkend="pg-stat-activity-view"/>, but additional types can appear
+          in the log that don't show in that view.
+         </para>
+
+         <para>
          The <literal>%c</literal> escape prints a quasi-unique session identifier,
          consisting of two 4-byte hexadecimal numbers (without leading zeros)
          separated by a dot.  The numbers are the process start time and the
@@ -6772,7 +6789,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         character count of the error position therein,
         location of the error in the PostgreSQL source code
         (if <varname>log_error_verbosity</varname> is set to <literal>verbose</literal>),
-        and application name.
+        application name, and backend type.
         Here is a sample table definition for storing CSV-format log output:
 
 <programlisting>
@@ -6801,6 +6818,7 @@ CREATE TABLE postgres_log
   query_pos integer,
   location text,
   application_name text,
+  backend_type text,
   PRIMARY KEY (session_id, session_line_num)
 );
 </programlisting>
