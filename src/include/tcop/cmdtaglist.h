@@ -23,7 +23,7 @@
  * textual name, so that we can bsearch on it; see GetCommandTagEnum().
  */
 
-/* symbol name, textual name, event_trigger_ok, table_rewrite_ok, rowcount, last_oid */
+/* symbol name, textual name, event_trigger_ok, table_rewrite_ok, rowcount */
 PG_CMDTAG(CMDTAG_UNKNOWN, "???", false, false, false)
 PG_CMDTAG(CMDTAG_ALTER_ACCESS_METHOD, "ALTER ACCESS METHOD", true, false, false)
 PG_CMDTAG(CMDTAG_ALTER_AGGREGATE, "ALTER AGGREGATE", true, false, false)
