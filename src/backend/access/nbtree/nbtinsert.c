@@ -29,8 +29,6 @@
 #define BTREE_FASTPATH_MIN_LEVEL	2
 
 
-static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
-
 static TransactionId _bt_check_unique(Relation rel, BTInsertState insertstate,
 									  Relation heapRel,
 									  IndexUniqueCheck checkUnique, bool *is_unique,
@@ -55,6 +53,7 @@ static Buffer _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf,
 						IndexTuple nposting, uint16 postingoff);
 static void _bt_insert_parent(Relation rel, Buffer buf, Buffer rbuf,
 							  BTStack stack, bool is_root, bool is_only);
+static Buffer _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
 						 OffsetNumber itup_off);
 static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
