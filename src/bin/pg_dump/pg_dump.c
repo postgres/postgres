@@ -4335,6 +4335,7 @@ append_depends_on_extension(Archive *fout,
 		}
 
 		PQclear(res);
+		destroyPQExpBuffer(query);
 		pg_free(nm);
 	}
 }
