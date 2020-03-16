@@ -83,8 +83,8 @@ _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp)
  * but it can omit the rightmost column(s) of the index.
  *
  * Return value is a stack of parent-page pointers.  *bufP is set to the
- * address of the leaf-page buffer, which is read-locked and pinned.
- * No locks are held on the parent pages, however!
+ * address of the leaf-page buffer, which is locked and pinned.  No locks
+ * are held on the parent pages, however!
  *
  * If the snapshot parameter is not NULL, "old snapshot" checking will take
  * place during the descent through the tree.  This is not needed when
