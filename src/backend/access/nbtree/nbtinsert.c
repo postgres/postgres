@@ -44,6 +44,7 @@ static void _bt_insertonpg(Relation rel, BTScanInsert itup_key,
 						   Buffer cbuf,
 						   BTStack stack,
 						   IndexTuple itup,
+						   Size itemsz,
 						   OffsetNumber newitemoff,
 						   int postingoff,
 						   bool split_only_page);
@@ -118,10 +119,18 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 
 	/*
 	 * Fill in the BTInsertState working area, to track the current page and
-	 * position within the page to insert on
+	 * position within the page to insert on.
+	 *
+	 * Note that itemsz is passed down to lower level code that deals with
+	 * inserting the item.  It must be MAXALIGN()'d.  This ensures that space
+	 * accounting code consistently considers the alignment overhead that we
+	 * expect PageAddItem() will add later.  (Actually, index_form_tuple() is
+	 * already conservative about alignment, but we don't rely on that from
+	 * this distance.  Besides, preserving the "true" tuple size in index
+	 * tuple headers for the benefit of nbtsplitloc.c might happen someday.
+	 * Note that heapam does not MAXALIGN() each heap tuple's lp_len field.)
 	 */
 	insertstate.itup = itup;
-	/* PageAddItem will MAXALIGN(), but be consistent */
 	insertstate.itemsz = MAXALIGN(IndexTupleSize(itup));
 	insertstate.itup_key = itup_key;
 	insertstate.bounds_valid = false;
@@ -299,7 +308,8 @@ top:
 		newitemoff = _bt_findinsertloc(rel, &insertstate, checkingunique,
 									   stack, heapRel);
 		_bt_insertonpg(rel, itup_key, insertstate.buf, InvalidBuffer, stack,
-					   itup, newitemoff, insertstate.postingoff, false);
+					   itup, insertstate.itemsz, newitemoff,
+					   insertstate.postingoff, false);
 	}
 	else
 	{
@@ -1058,13 +1068,13 @@ _bt_insertonpg(Relation rel,
 			   Buffer cbuf,
 			   BTStack stack,
 			   IndexTuple itup,
+			   Size itemsz,
 			   OffsetNumber newitemoff,
 			   int postingoff,
 			   bool split_only_page)
 {
 	Page		page;
 	BTPageOpaque lpageop;
-	Size		itemsz;
 	IndexTuple	oposting = NULL;
 	IndexTuple	origitup = NULL;
 	IndexTuple	nposting = NULL;
@@ -1082,6 +1092,7 @@ _bt_insertonpg(Relation rel,
 		   BTreeTupleGetNAtts(itup, rel) <=
 		   IndexRelationGetNumberOfKeyAttributes(rel));
 	Assert(!BTreeTupleIsPosting(itup));
+	Assert(MAXALIGN(IndexTupleSize(itup)) == itemsz);
 
 	/*
 	 * Every internal page should have exactly one negative infinity item at
@@ -1095,10 +1106,6 @@ _bt_insertonpg(Relation rel,
 	if (P_INCOMPLETE_SPLIT(lpageop))
 		elog(ERROR, "cannot insert to incompletely split page %u",
 			 BufferGetBlockNumber(buf));
-
-	itemsz = IndexTupleSize(itup);
-	itemsz = MAXALIGN(itemsz);	/* be safe, PageAddItem will do this but we
-								 * need to be consistent */
 
 	/*
 	 * Do we need to split an existing posting list item?
@@ -2103,8 +2110,8 @@ _bt_insert_parent(Relation rel,
 
 		/* Recursively insert into the parent */
 		_bt_insertonpg(rel, NULL, pbuf, buf, stack->bts_parent,
-					   new_item, stack->bts_offset + 1, 0,
-					   is_only);
+					   new_item, MAXALIGN(IndexTupleSize(new_item)),
+					   stack->bts_offset + 1, 0, is_only);
 
 		/* be tidy */
 		pfree(new_item);
