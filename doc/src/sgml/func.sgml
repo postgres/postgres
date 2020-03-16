@@ -21450,6 +21450,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     (mtime) of each file in the log directory. By default, only superusers
     and members of the <literal>pg_monitor</literal> role can use this function.
     Access may be granted to others using <command>GRANT</command>.
+    Filenames beginning with a dot, directories, and other special files are not shown.
    </para>
 
    <indexterm>
@@ -21461,6 +21462,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     default only superusers and members of the <literal>pg_monitor</literal> role
     can use this function. Access may be granted to others using
     <command>GRANT</command>.
+    Filenames beginning with a dot, directories, and other special files are not shown.
    </para>
 
    <indexterm>
@@ -21473,6 +21475,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     superusers and members of the <literal>pg_monitor</literal> role can
     use this function. Access may be granted to others using
     <command>GRANT</command>.
+    Filenames beginning with a dot, directories, and other special files are not shown.
    </para>
 
    <indexterm>
@@ -21486,6 +21489,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     default only superusers and members of the <literal>pg_monitor</literal>
     role can use this function.  Access may be granted to others using
     <command>GRANT</command>.
+    Filenames beginning with a dot, directories, and other special files are not shown.
    </para>
 
    <indexterm>
