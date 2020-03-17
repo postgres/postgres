@@ -28,7 +28,6 @@
 #include "nodes/makefuncs.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
-#include "replication/logicalfuncs.h"
 #include "replication/message.h"
 #include "storage/fd.h"
 #include "utils/array.h"
@@ -103,14 +102,6 @@ check_permissions(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser or replication role to use replication slots")));
-}
-
-int
-logical_read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
-							 int reqLen, XLogRecPtr targetRecPtr, char *cur_page)
-{
-	return read_local_xlog_page(state, targetPagePtr, reqLen,
-								targetRecPtr, cur_page);
 }
 
 /*
@@ -242,7 +233,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		ctx = CreateDecodingContext(InvalidXLogRecPtr,
 									options,
 									false,
-									logical_read_local_xlog_page,
+									read_local_xlog_page,
 									LogicalOutputPrepareWrite,
 									LogicalOutputWrite, NULL);
 

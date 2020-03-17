@@ -14,11 +14,11 @@
 
 #include "access/htup_details.h"
 #include "access/xlog_internal.h"
+#include "access/xlogutils.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
-#include "replication/logicalfuncs.h"
 #include "replication/slot.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
@@ -152,7 +152,7 @@ create_logical_replication_slot(char *name, char *plugin,
 	ctx = CreateInitDecodingContext(plugin, NIL,
 									false,	/* just catalogs is OK */
 									restart_lsn,
-									logical_read_local_xlog_page, NULL, NULL,
+									read_local_xlog_page, NULL, NULL,
 									NULL);
 
 	/*
@@ -424,7 +424,7 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 		ctx = CreateDecodingContext(InvalidXLogRecPtr,
 									NIL,
 									true,	/* fast_forward */
-									logical_read_local_xlog_page,
+									read_local_xlog_page,
 									NULL, NULL, NULL);
 
 		/*

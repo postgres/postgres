@@ -70,7 +70,6 @@
 #include "replication/basebackup.h"
 #include "replication/decode.h"
 #include "replication/logical.h"
-#include "replication/logicalfuncs.h"
 #include "replication/slot.h"
 #include "replication/snapbuild.h"
 #include "replication/syncrep.h"
@@ -759,7 +758,7 @@ StartReplication(StartReplicationCmd *cmd)
 /*
  * read_page callback for logical decoding contexts, as a walsender process.
  *
- * Inside the walsender we can do better than logical_read_local_xlog_page,
+ * Inside the walsender we can do better than read_local_xlog_page,
  * which has to do a plain sleep/busy loop, because the walsender's latch gets
  * set every time WAL is flushed.
  */
