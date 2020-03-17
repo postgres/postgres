@@ -399,7 +399,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <variablelist>
-   <varlistentry id="index-reloption-deduplication" xreflabel="deduplicate_items">
+   <varlistentry id="index-reloption-deduplicate-items" xreflabel="deduplicate_items">
     <term><literal>deduplicate_items</literal> (<type>boolean</type>)
      <indexterm>
       <primary><varname>deduplicate_items</varname> storage parameter</primary>
