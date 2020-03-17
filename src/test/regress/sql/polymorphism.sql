@@ -1,8 +1,62 @@
--- Currently this tests polymorphic aggregates and indirectly does some
--- testing of polymorphic SQL functions.  It ought to be extended.
+--
+-- Tests for polymorphic SQL functions and aggregates based on them.
 -- Tests for other features related to function-calling have snuck in, too.
+--
+
+create function polyf(x anyelement) returns anyelement as $$
+  select x + 1
+$$ language sql;
+
+select polyf(42) as int, polyf(4.5) as num;
+select polyf(point(3,4));  -- fail for lack of + operator
+
+drop function polyf(x anyelement);
+
+create function polyf(x anyelement) returns anyarray as $$
+  select array[x + 1, x + 2]
+$$ language sql;
+
+select polyf(42) as int, polyf(4.5) as num;
+
+drop function polyf(x anyelement);
+
+create function polyf(x anyarray) returns anyelement as $$
+  select x[1]
+$$ language sql;
+
+select polyf(array[2,4]) as int, polyf(array[4.5, 7.7]) as num;
+
+select polyf(stavalues1) from pg_statistic;  -- fail, can't infer element type
+
+drop function polyf(x anyarray);
+
+create function polyf(x anyarray) returns anyarray as $$
+  select x
+$$ language sql;
+
+select polyf(array[2,4]) as int, polyf(array[4.5, 7.7]) as num;
+
+select polyf(stavalues1) from pg_statistic;  -- fail, can't infer element type
+
+drop function polyf(x anyarray);
+
+-- fail, can't infer type:
+create function polyf(x anyelement) returns anyrange as $$
+  select array[x + 1, x + 2]
+$$ language sql;
+
+create function polyf(x anyrange) returns anyarray as $$
+  select array[lower(x), upper(x)]
+$$ language sql;
+
+select polyf(int4range(42, 49)) as int, polyf(float8range(4.5, 7.8)) as num;
+
+drop function polyf(x anyrange);
 
 
+--
+-- Polymorphic aggregate tests
+--
 -- Legend:
 -----------
 -- A = type is ANY
