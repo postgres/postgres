@@ -667,6 +667,10 @@ else
 fi
 AC_SUBST(TAS)
 
+#
+# Set up pkg_config in case we need it below
+#
+PKG_PROG_PKG_CONFIG
 
 #
 # Automatic dependency tracking
@@ -927,27 +931,41 @@ AC_SUBST(UUID_EXTRA_OBJS)
 #
 # XML
 #
+AC_MSG_CHECKING([whether to build with XML support])
 PGAC_ARG_BOOL(with, libxml, no, [build with XML support],
               [AC_DEFINE([USE_LIBXML], 1, [Define to 1 to build with XML support. (--with-libxml)])])
+AC_MSG_RESULT([$with_libxml])
+AC_SUBST(with_libxml)
 
 if test "$with_libxml" = yes ; then
-  PGAC_PATH_PROGS(XML2_CONFIG, xml2-config)
+  # Check pkg-config, then xml2-config.  But for backwards compatibility,
+  # setting XML2_CONFIG overrides pkg-config.
   AC_ARG_VAR(XML2_CONFIG, [path to xml2-config utility])dnl
-  if test -n "$XML2_CONFIG"; then
-    for pgac_option in `$XML2_CONFIG --cflags`; do
-      case $pgac_option in
-        -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
-      esac
-    done
-    for pgac_option in `$XML2_CONFIG --libs`; do
-      case $pgac_option in
-        -L*) LDFLAGS="$LDFLAGS $pgac_option";;
-      esac
-    done
+  have_libxml2_pkg_config=no
+  if test -z "$XML2_CONFIG" -a -n "$PKG_CONFIG"; then
+    PKG_CHECK_MODULES(XML2, [libxml-2.0 >= 2.6.23],
+                      [have_libxml2_pkg_config=yes], [# do nothing])
   fi
+  if test "$have_libxml2_pkg_config" = no ; then
+    PGAC_PATH_PROGS(XML2_CONFIG, xml2-config)
+    if test -n "$XML2_CONFIG"; then
+      XML2_CFLAGS=`$XML2_CONFIG --cflags`
+      XML2_LIBS=`$XML2_CONFIG --libs`
+    fi
+  fi
+  # Note the user could also set XML2_CFLAGS/XML2_LIBS directly
+  for pgac_option in $XML2_CFLAGS; do
+    case $pgac_option in
+      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+    esac
+  done
+  for pgac_option in $XML2_LIBS; do
+    case $pgac_option in
+      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+    esac
+  done
 fi
 
-AC_SUBST(with_libxml)
 
 #
 # XSLT
