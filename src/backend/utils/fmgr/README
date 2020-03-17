@@ -239,8 +239,6 @@ tuple toaster will decide whether toasting is needed.
 Functions Accepting or Returning Sets
 -------------------------------------
 
-[ this section revised 29-Aug-2002 for 7.3 ]
-
 If a function is marked in pg_proc as returning a set, then it is called
 with fcinfo->resultinfo pointing to a node of type ReturnSetInfo.  A
 function that desires to return a set should raise an error "called in
@@ -277,10 +275,16 @@ been returned, the next call should set isDone to ExprEndResult and return a
 null result.  (Note it is possible to return an empty set by doing this on
 the first call.)
 
-The ReturnSetInfo node also contains a link to the ExprContext within which
-the function is being evaluated.  This is useful for value-per-call functions
-that need to close down internal state when they are not run to completion:
-they can register a shutdown callback function in the ExprContext.
+Value-per-call functions MUST NOT assume that they will be run to completion;
+the executor might simply stop calling them, for example because of a LIMIT.
+Therefore, it's unsafe to attempt to perform any resource cleanup in the
+final call.  It's usually not necessary to clean up memory, anyway.  If it's
+necessary to clean up other types of resources, such as file descriptors,
+one can register a shutdown callback function in the ExprContext pointed to
+by the ReturnSetInfo node.  (But note that file descriptors are a limited
+resource, so it's generally unwise to hold those open across calls; SRFs
+that need file access are better written to do it in a single call using
+Materialize mode.)
 
 Materialize mode works like this: the function creates a Tuplestore holding
 the (possibly empty) result set, and returns it.  There are no multiple calls.
