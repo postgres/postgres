@@ -260,6 +260,6 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 
 		SRF_RETURN_NEXT(fctx, result);
 	}
-	else
-		SRF_RETURN_DONE(fctx);
+
+	SRF_RETURN_DONE(fctx);
 }

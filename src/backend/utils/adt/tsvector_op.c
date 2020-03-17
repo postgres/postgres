@@ -706,7 +706,6 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		pfree(tsin);
 		SRF_RETURN_DONE(funcctx);
 	}
 }

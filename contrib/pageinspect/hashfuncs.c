@@ -374,11 +374,8 @@ hash_page_items(PG_FUNCTION_ARGS)
 
 		SRF_RETURN_NEXT(fctx, result);
 	}
-	else
-	{
-		pfree(uargs);
-		SRF_RETURN_DONE(fctx);
-	}
+
+	SRF_RETURN_DONE(fctx);
 }
 
 /* ------------------------------------------------

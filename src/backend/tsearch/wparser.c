@@ -104,9 +104,6 @@ tt_process_call(FuncCallContext *funcctx)
 		st->cur++;
 		return result;
 	}
-	if (st->list)
-		pfree(st->list);
-	pfree(st);
 	return (Datum) 0;
 }
 
@@ -244,12 +241,6 @@ prs_process_call(FuncCallContext *funcctx)
 		pfree(values[1]);
 		st->cur++;
 		return result;
-	}
-	else
-	{
-		if (st->list)
-			pfree(st->list);
-		pfree(st);
 	}
 	return (Datum) 0;
 }

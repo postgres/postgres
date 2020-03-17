@@ -502,12 +502,8 @@ bt_page_items(PG_FUNCTION_ARGS)
 		uargs->offset++;
 		SRF_RETURN_NEXT(fctx, result);
 	}
-	else
-	{
-		pfree(uargs->page);
-		pfree(uargs);
-		SRF_RETURN_DONE(fctx);
-	}
+
+	SRF_RETURN_DONE(fctx);
 }
 
 /*-------------------------------------------------------
@@ -590,11 +586,8 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 		uargs->offset++;
 		SRF_RETURN_NEXT(fctx, result);
 	}
-	else
-	{
-		pfree(uargs);
-		SRF_RETURN_DONE(fctx);
-	}
+
+	SRF_RETURN_DONE(fctx);
 }
 
 /* Number of output arguments (columns) for bt_metap() */
