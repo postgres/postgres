@@ -211,6 +211,8 @@ StartupDecodingContext(List *output_plugin_options,
  *
  * plugin -- contains the name of the output plugin
  * output_plugin_options -- contains options passed to the output plugin
+ * need_full_snapshot -- if true, must obtain a snapshot able to read all
+ *		tables; if false, one that can read only catalogs is acceptable.
  * restart_lsn -- if given as invalid, it's this routine's responsibility to
  *		mark WAL as reserved by setting a convenient restart_lsn for the slot.
  *		Otherwise, we set for decoding to start from the given LSN without
