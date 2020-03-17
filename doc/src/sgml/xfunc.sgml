@@ -2812,22 +2812,50 @@ HeapTupleGetDatum(HeapTuple tuple)
     <title>Returning Sets</title>
 
     <para>
-     There is also a special API that provides support for returning
-     sets (multiple rows) from a C-language function.  A set-returning
-     function must follow the version-1 calling conventions.  Also,
-     source files must include <filename>funcapi.h</filename>, as
-     above.
+     C-language functions have two options for returning sets (multiple
+     rows).  In one method, called <firstterm>ValuePerCall</firstterm>
+     mode, a set-returning function is called repeatedly (passing the same
+     arguments each time) and it returns one new row on each call, until
+     it has no more rows to return and signals that by returning NULL.
+     The set-returning function (<acronym>SRF</acronym>) must therefore
+     save enough state across calls to remember what it was doing and
+     return the correct next item on each call.
+     In the other method, called <firstterm>Materialize</firstterm> mode,
+     a SRF fills and returns a tuplestore object containing its
+     entire result; then only one call occurs for the whole result, and
+     no inter-call state is needed.
     </para>
 
     <para>
-     A set-returning function (<acronym>SRF</acronym>) is called
-     once for each item it returns.  The <acronym>SRF</acronym> must
-     therefore save enough state to remember what it was doing and
-     return the next item on each call.
-     The structure <structname>FuncCallContext</structname> is provided to help
-     control this process.  Within a function, <literal>fcinfo-&gt;flinfo-&gt;fn_extra</literal>
-     is used to hold a pointer to <structname>FuncCallContext</structname>
-     across calls.
+     When using ValuePerCall mode, it is important to remember that the
+     query is not guaranteed to be run to completion; that is, due to
+     options such as <literal>LIMIT</literal>, the executor might stop
+     making calls to the set-returning function before all rows have been
+     fetched.  This means it is not safe to perform cleanup activities in
+     the last call, because that might not ever happen.  It's recommended
+     to use Materialize mode for functions that need access to external
+     resources, such as file descriptors.
+    </para>
+
+    <para>
+     The remainder of this section documents a set of helper macros that
+     are commonly used (though not required to be used) for SRFs using
+     ValuePerCall mode.  Additional details about Materialize mode can be
+     found in <filename>src/backend/utils/fmgr/README</filename>.  Also,
+     the <filename>contrib</filename> modules in
+     the <productname>PostgreSQL</productname> source distribution contain
+     many examples of SRFs using both ValuePerCall and Materialize mode.
+    </para>
+
+    <para>
+     To use the ValuePerCall support macros described here,
+     include <filename>funcapi.h</filename>.  These macros work with a
+     structure <structname>FuncCallContext</structname> that contains the
+     state that needs to be saved across calls.  Within the calling
+     SRF, <literal>fcinfo-&gt;flinfo-&gt;fn_extra</literal> is used to
+     hold a pointer to <structname>FuncCallContext</structname> across
+     calls.  The macros automatically fill that field on first use,
+     and expect to find the same pointer there on subsequent uses.
 <programlisting>
 typedef struct FuncCallContext
 {
@@ -2892,29 +2920,26 @@ typedef struct FuncCallContext
     </para>
 
     <para>
-     An <acronym>SRF</acronym> uses several functions and macros that
-     automatically manipulate the <structname>FuncCallContext</structname>
-     structure (and expect to find it via <literal>fn_extra</literal>).  Use:
+     The macros to be used by an <acronym>SRF</acronym> using this
+     infrastructure are:
 <programlisting>
 SRF_IS_FIRSTCALL()
 </programlisting>
-     to determine if your function is being called for the first or a
-     subsequent time. On the first call (only) use:
+     Use this to determine if your function is being called for the first or a
+     subsequent time. On the first call (only), call:
 <programlisting>
 SRF_FIRSTCALL_INIT()
 </programlisting>
      to initialize the <structname>FuncCallContext</structname>. On every function call,
-     including the first, use:
+     including the first, call:
 <programlisting>
 SRF_PERCALL_SETUP()
 </programlisting>
-     to properly set up for using the <structname>FuncCallContext</structname>
-     and clearing any previously returned data left over from the
-     previous pass.
+     to set up for using the <structname>FuncCallContext</structname>.
     </para>
 
     <para>
-     If your function has data to return, use:
+     If your function has data to return in the current call, use:
 <programlisting>
 SRF_RETURN_NEXT(funcctx, result)
 </programlisting>
@@ -2938,7 +2963,14 @@ SRF_RETURN_DONE(funcctx)
      <structfield>multi_call_memory_ctx</structfield> is a suitable location for any
      data that needs to survive until the <acronym>SRF</acronym> is finished running.  In most
      cases, this means that you should switch into
-     <structfield>multi_call_memory_ctx</structfield> while doing the first-call setup.
+     <structfield>multi_call_memory_ctx</structfield> while doing the
+     first-call setup.
+     Use <literal>funcctx-&gt;user_fctx</literal> to hold a pointer to
+     any such cross-call data structures.
+     (Data you allocate
+     in <structfield>multi_call_memory_ctx</structfield> will go away
+     automatically when the query ends, so it is not necessary to free
+     that data manually, either.)
     </para>
 
     <warning>
@@ -2995,8 +3027,8 @@ my_set_returning_function(PG_FUNCTION_ARGS)
     }
     else
     {
-        /* Here we are done returning items and just need to clean up: */
-        <replaceable>user code</replaceable>
+        /* Here we are done returning items, so just report that fact. */
+        /* (Resist the temptation to put cleanup code here.) */
         SRF_RETURN_DONE(funcctx);
     }
 }
@@ -3117,12 +3149,6 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
 </programlisting>
      Notice that in this method the output type of the function is formally
      an anonymous <structname>record</structname> type.
-    </para>
-
-    <para>
-     The directory <link linkend="tablefunc"><filename>contrib/tablefunc</filename></link>
-     module in the source distribution contains more examples of
-     set-returning functions.
     </para>
    </sect2>
 

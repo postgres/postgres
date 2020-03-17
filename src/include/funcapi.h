@@ -234,7 +234,7 @@ extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
 /*----------
  *		Support for Set Returning Functions (SRFs)
  *
- * The basic API for SRFs looks something like:
+ * The basic API for SRFs using ValuePerCall mode looks something like this:
  *
  * Datum
  * my_Set_Returning_Function(PG_FUNCTION_ARGS)
@@ -270,6 +270,17 @@ extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
  *	else
  *		SRF_RETURN_DONE(funcctx);
  * }
+ *
+ * NOTE: there is no guarantee that a SRF using ValuePerCall mode will be
+ * run to completion; for example, a query with LIMIT might stop short of
+ * fetching all the rows.  Therefore, do not expect that you can do resource
+ * cleanup just before SRF_RETURN_DONE().  You need not worry about releasing
+ * memory allocated in multi_call_memory_ctx, but holding file descriptors or
+ * other non-memory resources open across calls is a bug.  SRFs that need
+ * such resources should not use these macros, but instead populate a
+ * tuplestore during a single call, and return that using SFRM_Materialize
+ * mode (see fmgr/README).  Alternatively, set up a callback to release
+ * resources at query shutdown, using RegisterExprContextCallback().
  *
  *----------
  */

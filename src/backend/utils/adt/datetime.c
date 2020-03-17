@@ -4755,12 +4755,12 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 Datum
 pg_timezone_names(PG_FUNCTION_ARGS)
 {
-	MemoryContext oldcontext;
-	FuncCallContext *funcctx;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	bool		randomAccess;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
 	pg_tzenum  *tzenum;
 	pg_tz	   *tz;
-	Datum		result;
-	HeapTuple	tuple;
 	Datum		values[4];
 	bool		nulls[4];
 	int			tzoff;
@@ -4769,59 +4769,41 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	const char *tzn;
 	Interval   *resInterval;
 	struct pg_tm itm;
+	MemoryContext oldcontext;
 
-	/* stuff done only on the first call of the function */
-	if (SRF_IS_FIRSTCALL())
-	{
-		TupleDesc	tupdesc;
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
 
-		/* create a function context for cross-call persistence */
-		funcctx = SRF_FIRSTCALL_INIT();
+	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
+	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
 
-		/*
-		 * switch to memory context appropriate for multiple function calls
-		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
 
-		/* initialize timezone scanning code */
-		tzenum = pg_tzenumerate_start();
-		funcctx->user_fctx = (void *) tzenum;
+	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
 
-		/*
-		 * build tupdesc for result tuples. This must match this function's
-		 * pg_proc entry!
-		 */
-		tupdesc = CreateTemplateTupleDesc(4);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "abbrev",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "utc_offset",
-						   INTERVALOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "is_dst",
-						   BOOLOID, -1, 0);
+	MemoryContextSwitchTo(oldcontext);
 
-		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
-		MemoryContextSwitchTo(oldcontext);
-	}
-
-	/* stuff done on every call of the function */
-	funcctx = SRF_PERCALL_SETUP();
-	tzenum = (pg_tzenum *) funcctx->user_fctx;
+	/* initialize timezone scanning code */
+	tzenum = pg_tzenumerate_start();
 
 	/* search for another zone to display */
 	for (;;)
 	{
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		tz = pg_tzenumerate_next(tzenum);
-		MemoryContextSwitchTo(oldcontext);
-
 		if (!tz)
-		{
-			pg_tzenumerate_end(tzenum);
-			funcctx->user_fctx = NULL;
-			SRF_RETURN_DONE(funcctx);
-		}
+			break;
 
 		/* Convert now() to local time in this zone */
 		if (timestamp2tm(GetCurrentTransactionStartTimestamp(),
@@ -4840,25 +4822,22 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 		if (tzn && strlen(tzn) > 31)
 			continue;
 
-		/* Found a displayable zone */
-		break;
+		MemSet(nulls, 0, sizeof(nulls));
+
+		values[0] = CStringGetTextDatum(pg_get_timezone_name(tz));
+		values[1] = CStringGetTextDatum(tzn ? tzn : "");
+
+		MemSet(&itm, 0, sizeof(struct pg_tm));
+		itm.tm_sec = -tzoff;
+		resInterval = (Interval *) palloc(sizeof(Interval));
+		tm2interval(&itm, 0, resInterval);
+		values[2] = IntervalPGetDatum(resInterval);
+
+		values[3] = BoolGetDatum(tm.tm_isdst > 0);
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 
-	MemSet(nulls, 0, sizeof(nulls));
-
-	values[0] = CStringGetTextDatum(pg_get_timezone_name(tz));
-	values[1] = CStringGetTextDatum(tzn ? tzn : "");
-
-	MemSet(&itm, 0, sizeof(struct pg_tm));
-	itm.tm_sec = -tzoff;
-	resInterval = (Interval *) palloc(sizeof(Interval));
-	tm2interval(&itm, 0, resInterval);
-	values[2] = IntervalPGetDatum(resInterval);
-
-	values[3] = BoolGetDatum(tm.tm_isdst > 0);
-
-	tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-	result = HeapTupleGetDatum(tuple);
-
-	SRF_RETURN_NEXT(funcctx, result);
+	pg_tzenumerate_end(tzenum);
+	return (Datum) 0;
 }
