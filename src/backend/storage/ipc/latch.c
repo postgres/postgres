@@ -1094,8 +1094,17 @@ WaitEventAdjustKqueue(WaitEventSet *set, WaitEvent *event, int old_events)
 					 errmsg("%s failed: %m",
 							"kevent()")));
 	}
-	else if (event->events == WL_POSTMASTER_DEATH && PostmasterPid != getppid())
+	else if (event->events == WL_POSTMASTER_DEATH &&
+			 PostmasterPid != getppid() &&
+			 !PostmasterIsAlive())
+	{
+		/*
+		 * The extra PostmasterIsAliveInternal() check prevents false alarms on
+		 * systems that give a different value for getppid() while being traced
+		 * by a debugger.
+		 */
 		set->report_postmaster_not_running = true;
+	}
 }
 
 #endif
