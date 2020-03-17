@@ -256,9 +256,11 @@
      <type>anyarray</type> positions must be an array whose elements are
      the same type appearing in the <type>anyelement</type> positions.
      Similarly, if there are positions declared <type>anyrange</type>
-     and others declared <type>anyelement</type>, the actual range type in
-     the <type>anyrange</type> positions must be a range whose subtype is
-     the same type appearing in the <type>anyelement</type> positions.
+     and others declared <type>anyelement</type> or <type>anyarray</type>,
+     the actual range type in the <type>anyrange</type> positions must be a
+     range whose subtype is the same type appearing in
+     the <type>anyelement</type> positions and the same as the element type
+     of the <type>anyarray</type> positions.
      <type>anynonarray</type> is treated exactly the same as <type>anyelement</type>,
      but adds the additional constraint that the actual type must not be
      an array type.
@@ -287,6 +289,17 @@
      result type from the actual first argument's type.  Another example
      is that a function declared as <literal>f(anyarray) returns anyenum</literal>
      will only accept arrays of enum types.
+    </para>
+
+    <para>
+     In most cases, the parser can infer the actual data type for a
+     polymorphic result type from arguments that are of a different
+     polymorphic type; for example <type>anyarray</type> can be deduced
+     from <type>anyelement</type> or vice versa.  The exception is that a
+     polymorphic result of type <type>anyrange</type> requires an argument
+     of type <type>anyrange</type>; it cannot be deduced
+     from <type>anyarray</type> or <type>anyelement</type> arguments.  This
+     is because there could be multiple range types with the same subtype.
     </para>
 
     <para>
