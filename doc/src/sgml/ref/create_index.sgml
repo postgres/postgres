@@ -369,7 +369,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry id="index-reloption-fillfactor" xreflabel="fillfactor">
-    <term><literal>fillfactor</literal>
+    <term><literal>fillfactor</literal> (<type>integer</type>)
      <indexterm>
       <primary><varname>fillfactor</varname> storage parameter</primary>
      </indexterm>
@@ -400,7 +400,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry id="index-reloption-deduplication" xreflabel="deduplicate_items">
-    <term><literal>deduplicate_items</literal>
+    <term><literal>deduplicate_items</literal> (<type>boolean</type>)
      <indexterm>
       <primary><varname>deduplicate_items</varname> storage parameter</primary>
      </indexterm>
@@ -428,7 +428,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </varlistentry>
 
    <varlistentry id="index-reloption-vacuum-cleanup-index-scale-factor" xreflabel="vacuum_cleanup_index_scale_factor">
-    <term><literal>vacuum_cleanup_index_scale_factor</literal>
+    <term><literal>vacuum_cleanup_index_scale_factor</literal> (<type>floating point</type>)
      <indexterm>
       <primary><varname>vacuum_cleanup_index_scale_factor</varname></primary>
       <secondary>storage parameter</secondary>
@@ -448,7 +448,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry id="index-reloption-buffering" xreflabel="buffering">
-    <term><literal>buffering</literal>
+    <term><literal>buffering</literal> (<type>enum</type>)
      <indexterm>
       <primary><varname>buffering</varname> storage parameter</primary>
      </indexterm>
@@ -471,7 +471,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry id="index-reloption-fastupdate" xreflabel="fastupdate">
-    <term><literal>fastupdate</literal>
+    <term><literal>fastupdate</literal> (<type>boolean</type>)
      <indexterm>
       <primary><varname>fastupdate</varname> storage parameter</primary>
      </indexterm>
@@ -499,7 +499,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry id="index-reloption-gin-pending-list-limit" xreflabel="gin_pending_list_limit">
-    <term><literal>gin_pending_list_limit</literal>
+    <term><literal>gin_pending_list_limit</literal> (<type>integer</type>)
      <indexterm>
       <primary><varname>gin_pending_list_limit</varname></primary>
       <secondary>storage parameter</secondary>
@@ -520,7 +520,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry id="index-reloption-pages-per-range" xreflabel="pages_per_range">
-    <term><literal>pages_per_range</literal>
+    <term><literal>pages_per_range</literal> (<type>integer</type>)
      <indexterm>
       <primary><varname>pages_per_range</varname> storage parameter</primary>
      </indexterm>
@@ -535,7 +535,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </varlistentry>
 
    <varlistentry id="index-reloption-autosummarize" xreflabel="autosummarize">
-    <term><literal>autosummarize</literal>
+    <term><literal>autosummarize</literal> (<type>boolean</type>)
      <indexterm>
       <primary><varname>autosummarize</varname> storage parameter</primary>
      </indexterm>
