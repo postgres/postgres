@@ -51,3 +51,12 @@ select * from pg_ls_waldir() limit 0;
 select count(*) > 0 as ok from (select * from pg_ls_waldir() limit 1) ss;
 select (w).size = :segbsize * :bsize as ok
 from (select pg_ls_waldir() w) ss where length((w).name) = 24 limit 1;
+
+select * from (select pg_ls_dir('.') a) a where a = 'base' limit 1;
+
+select * from (select (pg_timezone_names()).name) ptn where name='UTC' limit 1;
+
+select count(*) > 0 from
+  (select pg_tablespace_databases(oid) as pts from pg_tablespace
+   where spcname = 'pg_default') pts
+  join pg_database db on pts.pts = db.oid;
