@@ -991,7 +991,7 @@ WaitEventAdjustKqueueAdd(struct kevent *k_ev, int filter, int action,
 {
 	k_ev->ident = event->fd;
 	k_ev->filter = filter;
-	k_ev->flags = action | EV_CLEAR;
+	k_ev->flags = action;
 	k_ev->fflags = 0;
 	k_ev->data = 0;
 	AccessWaitEvent(k_ev) = event;
@@ -1003,7 +1003,7 @@ WaitEventAdjustKqueueAddPostmaster(struct kevent *k_ev, WaitEvent *event)
 	/* For now postmaster death can only be added, not removed. */
 	k_ev->ident = PostmasterPid;
 	k_ev->filter = EVFILT_PROC;
-	k_ev->flags = EV_ADD | EV_CLEAR;
+	k_ev->flags = EV_ADD;
 	k_ev->fflags = NOTE_EXIT;
 	k_ev->data = 0;
 	AccessWaitEvent(k_ev) = event;
