@@ -93,8 +93,6 @@ AggregateCreate(const char *aggName,
 	Oid			mfinalfn = InvalidOid;	/* can be omitted */
 	Oid			sortop = InvalidOid;	/* can be omitted */
 	Oid		   *aggArgTypes = parameterTypes->values;
-	bool		hasPolyArg;
-	bool		hasInternalArg;
 	bool		mtransIsStrict = false;
 	Oid			rettype;
 	Oid			finaltype;
@@ -103,6 +101,7 @@ AggregateCreate(const char *aggName,
 	int			nargs_finalfn;
 	Oid			procOid;
 	TupleDesc	tupDesc;
+	char	   *detailmsg;
 	int			i;
 	ObjectAddress myself,
 				referenced;
@@ -131,36 +130,33 @@ AggregateCreate(const char *aggName,
 							   FUNC_MAX_ARGS - 1,
 							   FUNC_MAX_ARGS - 1)));
 
-	/* check for polymorphic and INTERNAL arguments */
-	hasPolyArg = false;
-	hasInternalArg = false;
-	for (i = 0; i < numArgs; i++)
-	{
-		if (IsPolymorphicType(aggArgTypes[i]))
-			hasPolyArg = true;
-		else if (aggArgTypes[i] == INTERNALOID)
-			hasInternalArg = true;
-	}
-
 	/*
 	 * If transtype is polymorphic, must have polymorphic argument also; else
 	 * we will have no way to deduce the actual transtype.
 	 */
-	if (IsPolymorphicType(aggTransType) && !hasPolyArg)
+	detailmsg = check_valid_polymorphic_signature(aggTransType,
+												  aggArgTypes,
+												  numArgs);
+	if (detailmsg)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine transition data type"),
-				 errdetail("An aggregate using a polymorphic transition type must have at least one polymorphic argument.")));
+				 errdetail_internal("%s", detailmsg)));
 
 	/*
 	 * Likewise for moving-aggregate transtype, if any
 	 */
-	if (OidIsValid(aggmTransType) &&
-		IsPolymorphicType(aggmTransType) && !hasPolyArg)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("cannot determine transition data type"),
-				 errdetail("An aggregate using a polymorphic transition type must have at least one polymorphic argument.")));
+	if (OidIsValid(aggmTransType))
+	{
+		detailmsg = check_valid_polymorphic_signature(aggmTransType,
+													  aggArgTypes,
+													  numArgs);
+		if (detailmsg)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("cannot determine transition data type"),
+					 errdetail_internal("%s", detailmsg)));
+	}
 
 	/*
 	 * An ordered-set aggregate that is VARIADIC must be VARIADIC ANY.  In
@@ -492,12 +488,14 @@ AggregateCreate(const char *aggName,
 	 * that itself violates the rule against polymorphic result with no
 	 * polymorphic input.)
 	 */
-	if (IsPolymorphicType(finaltype) && !hasPolyArg)
+	detailmsg = check_valid_polymorphic_signature(finaltype,
+												  aggArgTypes,
+												  numArgs);
+	if (detailmsg)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot determine result data type"),
-				 errdetail("An aggregate returning a polymorphic type "
-						   "must have at least one polymorphic argument.")));
+				 errdetail_internal("%s", detailmsg)));
 
 	/*
 	 * Also, the return type can't be INTERNAL unless there's at least one
@@ -505,11 +503,14 @@ AggregateCreate(const char *aggName,
 	 * for regular functions, but at the level of aggregates.  We must test
 	 * this explicitly because we allow INTERNAL as the transtype.
 	 */
-	if (finaltype == INTERNALOID && !hasInternalArg)
+	detailmsg = check_valid_internal_signature(finaltype,
+											   aggArgTypes,
+											   numArgs);
+	if (detailmsg)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("unsafe use of pseudo-type \"internal\""),
-				 errdetail("A function returning \"internal\" must have at least one \"internal\" argument.")));
+				 errdetail_internal("%s", detailmsg)));
 
 	/*
 	 * If a moving-aggregate implementation is supplied, look up its finalfn

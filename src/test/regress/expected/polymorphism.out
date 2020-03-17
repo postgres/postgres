@@ -61,7 +61,7 @@ create function polyf(x anyelement) returns anyrange as $$
   select array[x + 1, x + 2]
 $$ language sql;
 ERROR:  cannot determine result data type
-DETAIL:  A function returning "anyrange" must have at least one "anyrange" argument.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange.
 create function polyf(x anyrange) returns anyarray as $$
   select array[lower(x), upper(x)]
 $$ language sql;
@@ -155,7 +155,7 @@ CREATE AGGREGATE myaggp01a(*) (SFUNC = stfnp, STYPE = int4[],
 CREATE AGGREGATE myaggp02a(*) (SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --     N    P
 -- should CREATE
 CREATE AGGREGATE myaggp03a(*) (SFUNC = stfp, STYPE = int4[],
@@ -167,11 +167,11 @@ CREATE AGGREGATE myaggp03b(*) (SFUNC = stfp, STYPE = int4[],
 CREATE AGGREGATE myaggp04a(*) (SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 CREATE AGGREGATE myaggp04b(*) (SFUNC = stfp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    Case2 (R = P) && ((B = P) || (B = N))
 --    -------------------------------------
 --    S    tf1      B    tf2
@@ -226,13 +226,13 @@ ERROR:  function tfp(integer[], anyelement) does not exist
 CREATE AGGREGATE myaggp13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    N        N    P
 -- should ERROR: tf2p(anyarray, int) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggp14a(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    N        P    N
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggp15a(BASETYPE = anyelement, SFUNC = tfnp,
@@ -248,21 +248,21 @@ ERROR:  function tf2p(anyarray, anyelement) does not exist
 CREATE AGGREGATE myaggp17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 CREATE AGGREGATE myaggp17b(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    P        N    P
 -- should ERROR: tfp(anyarray, int) not matched by tfp(anyarray, anyelement)
 CREATE AGGREGATE myaggp18a(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 CREATE AGGREGATE myaggp18b(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    P        P    N
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggp19a(BASETYPE = anyelement, SFUNC = tf1p,
@@ -292,11 +292,11 @@ CREATE AGGREGATE myaggn01b(*) (SFUNC = stfnp, STYPE = int4[],
 CREATE AGGREGATE myaggn02a(*) (SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 CREATE AGGREGATE myaggn02b(*) (SFUNC = stfnp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --     N    P
 -- should CREATE
 CREATE AGGREGATE myaggn03a(*) (SFUNC = stfp, STYPE = int4[],
@@ -306,7 +306,7 @@ CREATE AGGREGATE myaggn03a(*) (SFUNC = stfp, STYPE = int4[],
 CREATE AGGREGATE myaggn04a(*) (SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    Case4 (R = N) && ((B = P) || (B = N))
 --    -------------------------------------
 --    S    tf1      B    tf2
@@ -360,21 +360,21 @@ ERROR:  function tfp(integer[], anyelement) does not exist
 CREATE AGGREGATE myaggn13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 CREATE AGGREGATE myaggn13b(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    N        N    P
 -- should ERROR: tf2p(anyarray, int) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggn14a(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 CREATE AGGREGATE myaggn14b(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    N        P    N
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggn15a(BASETYPE = anyelement, SFUNC = tfnp,
@@ -396,13 +396,13 @@ ERROR:  function tf2p(anyarray, anyelement) does not exist
 CREATE AGGREGATE myaggn17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    P        N    P
 -- should ERROR: tfp(anyarray, int) not matched by tfp(anyarray, anyelement)
 CREATE AGGREGATE myaggn18a(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
 ERROR:  cannot determine transition data type
-DETAIL:  An aggregate using a polymorphic transition type must have at least one polymorphic argument.
+DETAIL:  A result of type anyarray requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 --    P    P        P    N
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggn19a(BASETYPE = anyelement, SFUNC = tf1p,

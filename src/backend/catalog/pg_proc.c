@@ -32,6 +32,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -97,12 +98,6 @@ ProcedureCreate(const char *procedureName,
 	int			allParamCount;
 	Oid		   *allParams;
 	char	   *paramModes = NULL;
-	bool		genericInParam = false;
-	bool		genericOutParam = false;
-	bool		anyrangeInParam = false;
-	bool		anyrangeOutParam = false;
-	bool		internalInParam = false;
-	bool		internalOutParam = false;
 	Oid			variadicType = InvalidOid;
 	Acl		   *proacl = NULL;
 	Relation	rel;
@@ -116,6 +111,7 @@ ProcedureCreate(const char *procedureName,
 	bool		is_update;
 	ObjectAddress myself,
 				referenced;
+	char	   *detailmsg;
 	int			i;
 	Oid			trfid;
 
@@ -178,29 +174,34 @@ ProcedureCreate(const char *procedureName,
 	}
 
 	/*
-	 * Detect whether we have polymorphic or INTERNAL arguments.  The first
-	 * loop checks input arguments, the second output arguments.
+	 * Do not allow polymorphic return type unless there is a polymorphic
+	 * input argument that we can use to deduce the actual return type.
 	 */
-	for (i = 0; i < parameterCount; i++)
-	{
-		switch (parameterTypes->values[i])
-		{
-			case ANYARRAYOID:
-			case ANYELEMENTOID:
-			case ANYNONARRAYOID:
-			case ANYENUMOID:
-				genericInParam = true;
-				break;
-			case ANYRANGEOID:
-				genericInParam = true;
-				anyrangeInParam = true;
-				break;
-			case INTERNALOID:
-				internalInParam = true;
-				break;
-		}
-	}
+	detailmsg = check_valid_polymorphic_signature(returnType,
+												  parameterTypes->values,
+												  parameterCount);
+	if (detailmsg)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("cannot determine result data type"),
+				 errdetail_internal("%s", detailmsg)));
 
+	/*
+	 * Also, do not allow return type INTERNAL unless at least one input
+	 * argument is INTERNAL.
+	 */
+	detailmsg = check_valid_internal_signature(returnType,
+											   parameterTypes->values,
+											   parameterCount);
+	if (detailmsg)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("unsafe use of pseudo-type \"internal\""),
+				 errdetail_internal("%s", detailmsg)));
+
+	/*
+	 * Apply the same tests to any OUT arguments.
+	 */
 	if (allParameterTypes != PointerGetDatum(NULL))
 	{
 		for (i = 0; i < allParamCount; i++)
@@ -210,52 +211,26 @@ ProcedureCreate(const char *procedureName,
 				paramModes[i] == PROARGMODE_VARIADIC)
 				continue;		/* ignore input-only params */
 
-			switch (allParams[i])
-			{
-				case ANYARRAYOID:
-				case ANYELEMENTOID:
-				case ANYNONARRAYOID:
-				case ANYENUMOID:
-					genericOutParam = true;
-					break;
-				case ANYRANGEOID:
-					genericOutParam = true;
-					anyrangeOutParam = true;
-					break;
-				case INTERNALOID:
-					internalOutParam = true;
-					break;
-			}
+			detailmsg = check_valid_polymorphic_signature(allParams[i],
+														  parameterTypes->values,
+														  parameterCount);
+			if (detailmsg)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("cannot determine result data type"),
+						 errdetail_internal("%s", detailmsg)));
+			detailmsg = check_valid_internal_signature(allParams[i],
+													   parameterTypes->values,
+													   parameterCount);
+			if (detailmsg)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+						 errmsg("unsafe use of pseudo-type \"internal\""),
+						 errdetail_internal("%s", detailmsg)));
 		}
 	}
 
-	/*
-	 * Do not allow polymorphic return type unless at least one input argument
-	 * is polymorphic.  ANYRANGE return type is even stricter: must have an
-	 * ANYRANGE input (since we can't deduce the specific range type from
-	 * ANYELEMENT).  Also, do not allow return type INTERNAL unless at least
-	 * one input argument is INTERNAL.
-	 */
-	if ((IsPolymorphicType(returnType) || genericOutParam)
-		&& !genericInParam)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning a polymorphic type must have at least one polymorphic argument.")));
-
-	if ((returnType == ANYRANGEOID || anyrangeOutParam) &&
-		!anyrangeInParam)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning \"anyrange\" must have at least one \"anyrange\" argument.")));
-
-	if ((returnType == INTERNALOID || internalOutParam) && !internalInParam)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("unsafe use of pseudo-type \"internal\""),
-				 errdetail("A function returning \"internal\" must have at least one \"internal\" argument.")));
-
+	/* Identify variadic argument type, if any */
 	if (paramModes != NULL)
 	{
 		/*

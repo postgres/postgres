@@ -1971,6 +1971,77 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 	return rettype;
 }
 
+/*
+ * check_valid_polymorphic_signature()
+ *		Is a proposed function signature valid per polymorphism rules?
+ *
+ * Returns NULL if the signature is valid (either ret_type is not polymorphic,
+ * or it can be deduced from the given declared argument types).  Otherwise,
+ * returns a palloc'd, already translated errdetail string saying why not.
+ */
+char *
+check_valid_polymorphic_signature(Oid ret_type,
+								  const Oid *declared_arg_types,
+								  int nargs)
+{
+	if (ret_type == ANYRANGEOID)
+	{
+		/*
+		 * ANYRANGE requires an ANYRANGE input, else we can't tell which of
+		 * several range types with the same element type to use.
+		 */
+		for (int i = 0; i < nargs; i++)
+		{
+			if (declared_arg_types[i] == ret_type)
+				return NULL;	/* OK */
+		}
+		return psprintf(_("A result of type %s requires at least one input of type %s."),
+						format_type_be(ret_type), format_type_be(ret_type));
+	}
+	else if (IsPolymorphicType(ret_type))
+	{
+		/* Otherwise, any polymorphic type can be deduced from any other */
+		for (int i = 0; i < nargs; i++)
+		{
+			if (IsPolymorphicType(declared_arg_types[i]))
+				return NULL;	/* OK */
+		}
+		return psprintf(_("A result of type %s requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange."),
+						format_type_be(ret_type));
+	}
+	else
+		return NULL;			/* OK, ret_type is not polymorphic */
+}
+
+/*
+ * check_valid_internal_signature()
+ *		Is a proposed function signature valid per INTERNAL safety rules?
+ *
+ * Returns NULL if OK, or a suitable error message if ret_type is INTERNAL but
+ * none of the declared arg types are.  (It's unsafe to create such a function
+ * since it would allow invocation of INTERNAL-consuming functions directly
+ * from SQL.)  It's overkill to return the error detail message, since there
+ * is only one possibility, but we do it like this to keep the API similar to
+ * check_valid_polymorphic_signature().
+ */
+char *
+check_valid_internal_signature(Oid ret_type,
+							   const Oid *declared_arg_types,
+							   int nargs)
+{
+	if (ret_type == INTERNALOID)
+	{
+		for (int i = 0; i < nargs; i++)
+		{
+			if (declared_arg_types[i] == ret_type)
+				return NULL;	/* OK */
+		}
+		return pstrdup(_("A result of type internal requires at least one input of type internal."));
+	}
+	else
+		return NULL;			/* OK, ret_type is not INTERNAL */
+}
+
 
 /* TypeCategory()
  *		Assign a category to the specified type OID.

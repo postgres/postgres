@@ -1811,7 +1811,7 @@ begin
   return array[x + 1, x + 2];
 end$$ language plpgsql;
 ERROR:  cannot determine result data type
-DETAIL:  A function returning "anyrange" must have at least one "anyrange" argument.
+DETAIL:  A result of type anyrange requires at least one input of type anyrange.
 create function f1(x anyrange) returns anyarray as $$
 begin
   return array[lower(x), upper(x)];
