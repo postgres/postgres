@@ -29,3 +29,18 @@ SELECT num_nulls(VARIADIC '{}'::int[]);
 -- should fail, one or more arguments is required
 SELECT num_nonnulls();
 SELECT num_nulls();
+
+--
+-- Test some built-in SRFs
+--
+-- The outputs of these are variable, so we can't just print their results
+-- directly, but we can at least verify that the code doesn't fail.
+--
+select * from (select pg_ls_dir('.') a) a where a = 'base' limit 1;
+
+select * from (select (pg_timezone_names()).name) ptn where name='UTC' limit 1;
+
+select count(*) > 0 from
+  (select pg_tablespace_databases(oid) as pts from pg_tablespace
+   where spcname = 'pg_default') pts
+  join pg_database db on pts.pts = db.oid;
