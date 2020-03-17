@@ -1789,7 +1789,7 @@ select f1(array[2,4]) as int, f1(array[4.5, 7.7]) as num;
 (1 row)
 
 select f1(stavalues1) from pg_statistic;  -- fail, can't infer element type
-ERROR:  argument declared anyarray is not an array but type anyarray
+ERROR:  cannot determine element type of "anyarray" argument
 drop function f1(x anyarray);
 create function f1(x anyarray) returns anyarray as $$
 begin

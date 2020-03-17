@@ -1432,16 +1432,13 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  *	  which must be a varlena array type.
  * 3) All arguments declared ANYRANGE must have the same datatype,
  *	  which must be a range type.
- * 4) If there are arguments of both ANYELEMENT and ANYARRAY, make sure the
- *	  actual ANYELEMENT datatype is in fact the element type for the actual
- *	  ANYARRAY datatype.
- * 5) Similarly, if there are arguments of both ANYELEMENT and ANYRANGE,
- *	  make sure the actual ANYELEMENT datatype is in fact the subtype for
- *	  the actual ANYRANGE type.
- * 6) ANYENUM is treated the same as ANYELEMENT except that if it is used
+ * 4) If there are arguments of more than one of these polymorphic types,
+ *	  the array element type and/or range subtype must be the same as each
+ *	  other and the same as the ANYELEMENT type.
+ * 5) ANYENUM is treated the same as ANYELEMENT except that if it is used
  *	  (alone or in combination with plain ANYELEMENT), we add the extra
  *	  condition that the ANYELEMENT type must be an enum.
- * 7) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
+ * 6) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
  *	  we add the extra condition that the ANYELEMENT type must not be an array.
  *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
  *	  is an extra restriction if not.)
@@ -1460,12 +1457,6 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  * If we have UNKNOWN input (ie, an untyped literal) for any polymorphic
  * argument, assume it is okay.
  *
- * If an input is of type ANYARRAY (ie, we know it's an array, but not
- * what element type), we will accept it as a match to an argument declared
- * ANYARRAY, so long as we don't have to determine an element type ---
- * that is, so long as there is no use of ANYELEMENT.  This is mostly for
- * backwards compatibility with the pre-7.4 behavior of ANYARRAY.
- *
  * We do not ereport here, but just return false if a rule is violated.
  */
 bool
@@ -1473,13 +1464,9 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 							   const Oid *declared_arg_types,
 							   int nargs)
 {
-	int			j;
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
-	Oid			array_typelem;
 	Oid			range_typeid = InvalidOid;
-	Oid			range_typelem;
-	bool		have_anyelement = false;
 	bool		have_anynonarray = false;
 	bool		have_anyenum = false;
 
@@ -1487,7 +1474,7 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 	 * Loop through the arguments to see if we have any that are polymorphic.
 	 * If so, require the actual types to be consistent.
 	 */
-	for (j = 0; j < nargs; j++)
+	for (int j = 0; j < nargs; j++)
 	{
 		Oid			decl_type = declared_arg_types[j];
 		Oid			actual_type = actual_arg_types[j];
@@ -1496,7 +1483,6 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 			decl_type == ANYNONARRAYOID ||
 			decl_type == ANYENUMOID)
 		{
-			have_anyelement = true;
 			if (decl_type == ANYNONARRAYOID)
 				have_anynonarray = true;
 			else if (decl_type == ANYENUMOID)
@@ -1532,33 +1518,47 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 	{
 		if (array_typeid == ANYARRAYOID)
 		{
-			/* Special case for ANYARRAY input: okay iff no ANYELEMENT */
-			if (have_anyelement)
-				return false;
-			return true;
-		}
-
-		array_typelem = get_element_type(array_typeid);
-		if (!OidIsValid(array_typelem))
-			return false;		/* should be an array, but isn't */
-
-		if (!OidIsValid(elem_typeid))
-		{
 			/*
-			 * if we don't have an element type yet, use the one we just got
+			 * Special case for matching ANYARRAY input to an ANYARRAY
+			 * argument: allow it for now.  enforce_generic_type_consistency()
+			 * might complain later, depending on the presence of other
+			 * polymorphic arguments or results, but it will deliver a less
+			 * surprising error message than "function does not exist".
+			 *
+			 * (If you think to change this, note that can_coerce_type will
+			 * consider such a situation as a match, so that we might not even
+			 * get here.)
 			 */
-			elem_typeid = array_typelem;
 		}
-		else if (array_typelem != elem_typeid)
+		else
 		{
-			/* otherwise, they better match */
-			return false;
+			Oid			array_typelem;
+
+			array_typelem = get_element_type(array_typeid);
+			if (!OidIsValid(array_typelem))
+				return false;	/* should be an array, but isn't */
+
+			if (!OidIsValid(elem_typeid))
+			{
+				/*
+				 * if we don't have an element type yet, use the one we just
+				 * got
+				 */
+				elem_typeid = array_typelem;
+			}
+			else if (array_typelem != elem_typeid)
+			{
+				/* otherwise, they better match */
+				return false;
+			}
 		}
 	}
 
 	/* Get the element type based on the range type, if we have one */
 	if (OidIsValid(range_typeid))
 	{
+		Oid			range_typelem;
+
 		range_typelem = get_range_subtype(range_typeid);
 		if (!OidIsValid(range_typelem))
 			return false;		/* should be a range, but isn't */
@@ -1613,57 +1613,46 @@ check_generic_type_consistency(const Oid *actual_arg_types,
  * Rules are applied to the function's return type (possibly altering it)
  * if it is declared as a polymorphic type:
  *
- * 1) If return type is ANYARRAY, and any argument is ANYARRAY, use the
+ * 1) If return type is ANYELEMENT, and any argument is ANYELEMENT, use the
  *	  argument's actual type as the function's return type.
- * 2) Similarly, if return type is ANYRANGE, and any argument is ANYRANGE,
+ * 2) If return type is ANYARRAY, and any argument is ANYARRAY, use the
+ *	  argument's actual type as the function's return type.
+ * 3) Similarly, if return type is ANYRANGE, and any argument is ANYRANGE,
  *	  use the argument's actual type as the function's return type.
- * 3) If return type is ANYARRAY, no argument is ANYARRAY, but any argument is
- *	  ANYELEMENT, use the actual type of the argument to determine the
- *	  function's return type, i.e. the element type's corresponding array
- *	  type.  (Note: similar behavior does not exist for ANYRANGE, because it's
- *	  impossible to determine the range type from the subtype alone.)
- * 4) If return type is ANYARRAY, but no argument is ANYARRAY or ANYELEMENT,
- *	  generate an error.  Similarly, if return type is ANYRANGE, but no
- *	  argument is ANYRANGE, generate an error.  (These conditions are
- *	  prevented by CREATE FUNCTION and therefore are not expected here.)
- * 5) If return type is ANYELEMENT, and any argument is ANYELEMENT, use the
- *	  argument's actual type as the function's return type.
- * 6) If return type is ANYELEMENT, no argument is ANYELEMENT, but any argument
- *	  is ANYARRAY or ANYRANGE, use the actual type of the argument to determine
- *	  the function's return type, i.e. the array type's corresponding element
- *	  type or the range type's corresponding subtype (or both, in which case
- *	  they must match).
- * 7) If return type is ANYELEMENT, no argument is ANYELEMENT, ANYARRAY, or
- *	  ANYRANGE, generate an error.  (This condition is prevented by CREATE
- *	  FUNCTION and therefore is not expected here.)
- * 8) ANYENUM is treated the same as ANYELEMENT except that if it is used
+ * 4) Otherwise, if return type is ANYELEMENT or ANYARRAY, there should be
+ *	  at least one ANYELEMENT, ANYARRAY, or ANYRANGE input; deduce the
+ *	  return type from those inputs, or throw error if we can't.
+ * 5) Otherwise, if return type is ANYRANGE, throw error.  (There should
+ *	  be at least one ANYRANGE input, since CREATE FUNCTION enforces that.)
+ * 6) ANYENUM is treated the same as ANYELEMENT except that if it is used
  *	  (alone or in combination with plain ANYELEMENT), we add the extra
  *	  condition that the ANYELEMENT type must be an enum.
- * 9) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
+ * 7) ANYNONARRAY is treated the same as ANYELEMENT except that if it is used,
  *	  we add the extra condition that the ANYELEMENT type must not be an array.
  *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
  *	  is an extra restriction if not.)
  *
  * Domains over arrays or ranges match ANYARRAY or ANYRANGE arguments,
- * respectively, and are immediately flattened to their base type. (In
- * particular, if the return type is also ANYARRAY or ANYRANGE, we'll set it
- * to the base type not the domain type.)
+ * respectively, and are immediately flattened to their base type.  (In
+ * particular, if the return type is also ANYARRAY or ANYRANGE, we'll set
+ * it to the base type not the domain type.)
  *
  * When allow_poly is false, we are not expecting any of the actual_arg_types
  * to be polymorphic, and we should not return a polymorphic result type
  * either.  When allow_poly is true, it is okay to have polymorphic "actual"
- * arg types, and we can return ANYARRAY, ANYRANGE, or ANYELEMENT as the
- * result.  (This case is currently used only to check compatibility of an
- * aggregate's declaration with the underlying transfn.)
+ * arg types, and we can return a matching polymorphic type as the result.
+ * (This case is currently used only to check compatibility of an aggregate's
+ * declaration with the underlying transfn.)
  *
  * A special case is that we could see ANYARRAY as an actual_arg_type even
  * when allow_poly is false (this is possible only because pg_statistic has
  * columns shown as anyarray in the catalogs).  We allow this to match a
- * declared ANYARRAY argument, but only if there is no ANYELEMENT argument
- * or result (since we can't determine a specific element type to match to
- * ANYELEMENT).  Note this means that functions taking ANYARRAY had better
- * behave sanely if applied to the pg_statistic columns; they can't just
- * assume that successive inputs are of the same actual element type.
+ * declared ANYARRAY argument, but only if there is no other polymorphic
+ * argument that we would need to match it with, and no need to determine
+ * the element type to infer the result type.  Note this means that functions
+ * taking ANYARRAY had better behave sanely if applied to the pg_statistic
+ * columns; they can't just assume that successive inputs are of the same
+ * actual element type.
  */
 Oid
 enforce_generic_type_consistency(const Oid *actual_arg_types,
@@ -1672,17 +1661,11 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 								 Oid rettype,
 								 bool allow_poly)
 {
-	int			j;
-	bool		have_generics = false;
-	bool		have_unknowns = false;
+	bool		have_poly_unknowns = false;
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
 	Oid			range_typeid = InvalidOid;
-	Oid			array_typelem;
-	Oid			range_typelem;
-	bool		have_anyelement = (rettype == ANYELEMENTOID ||
-								   rettype == ANYNONARRAYOID ||
-								   rettype == ANYENUMOID);
+	int			n_poly_args = 0;
 	bool		have_anynonarray = (rettype == ANYNONARRAYOID);
 	bool		have_anyenum = (rettype == ANYENUMOID);
 
@@ -1690,7 +1673,7 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 	 * Loop through the arguments to see if we have any that are polymorphic.
 	 * If so, require the actual types to be consistent.
 	 */
-	for (j = 0; j < nargs; j++)
+	for (int j = 0; j < nargs; j++)
 	{
 		Oid			decl_type = declared_arg_types[j];
 		Oid			actual_type = actual_arg_types[j];
@@ -1699,14 +1682,14 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			decl_type == ANYNONARRAYOID ||
 			decl_type == ANYENUMOID)
 		{
-			have_generics = have_anyelement = true;
+			n_poly_args++;
 			if (decl_type == ANYNONARRAYOID)
 				have_anynonarray = true;
 			else if (decl_type == ANYENUMOID)
 				have_anyenum = true;
 			if (actual_type == UNKNOWNOID)
 			{
-				have_unknowns = true;
+				have_poly_unknowns = true;
 				continue;
 			}
 			if (allow_poly && decl_type == actual_type)
@@ -1722,10 +1705,10 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		}
 		else if (decl_type == ANYARRAYOID)
 		{
-			have_generics = true;
+			n_poly_args++;
 			if (actual_type == UNKNOWNOID)
 			{
-				have_unknowns = true;
+				have_poly_unknowns = true;
 				continue;
 			}
 			if (allow_poly && decl_type == actual_type)
@@ -1742,10 +1725,10 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		}
 		else if (decl_type == ANYRANGEOID)
 		{
-			have_generics = true;
+			n_poly_args++;
 			if (actual_type == UNKNOWNOID)
 			{
-				have_unknowns = true;
+				have_poly_unknowns = true;
 				continue;
 			}
 			if (allow_poly && decl_type == actual_type)
@@ -1766,57 +1749,71 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 	 * Fast Track: if none of the arguments are polymorphic, return the
 	 * unmodified rettype.  We assume it can't be polymorphic either.
 	 */
-	if (!have_generics)
-		return rettype;
-
-	/* Get the element type based on the array type, if we have one */
-	if (OidIsValid(array_typeid))
+	if (n_poly_args == 0)
 	{
-		if (array_typeid == ANYARRAYOID && !have_anyelement)
-		{
-			/* Special case for ANYARRAY input: okay iff no ANYELEMENT */
-			array_typelem = ANYELEMENTOID;
-		}
-		else
-		{
-			array_typelem = get_element_type(array_typeid);
-			if (!OidIsValid(array_typelem))
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared %s is not an array but type %s",
-								"anyarray", format_type_be(array_typeid))));
-		}
-
-		if (!OidIsValid(elem_typeid))
-		{
-			/*
-			 * if we don't have an element type yet, use the one we just got
-			 */
-			elem_typeid = array_typelem;
-		}
-		else if (array_typelem != elem_typeid)
-		{
-			/* otherwise, they better match */
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("argument declared %s is not consistent with argument declared %s",
-							"anyarray", "anyelement"),
-					 errdetail("%s versus %s",
-							   format_type_be(array_typeid),
-							   format_type_be(elem_typeid))));
-		}
+		Assert(!IsPolymorphicType(rettype));
+		return rettype;
 	}
 
-	/* Get the element type based on the range type, if we have one */
-	if (OidIsValid(range_typeid))
+	if (n_poly_args)
 	{
-		if (range_typeid == ANYRANGEOID && !have_anyelement)
+		/* Get the element type based on the array type, if we have one */
+		if (OidIsValid(array_typeid))
 		{
-			/* Special case for ANYRANGE input: okay iff no ANYELEMENT */
-			range_typelem = ANYELEMENTOID;
+			Oid			array_typelem;
+
+			if (array_typeid == ANYARRAYOID)
+			{
+				/*
+				 * Special case for matching ANYARRAY input to an ANYARRAY
+				 * argument: allow it iff no other arguments are polymorphic
+				 * (otherwise we couldn't be sure whether the array element
+				 * type matches up) and the result type doesn't require us to
+				 * infer a specific element type.
+				 */
+				if (n_poly_args != 1 ||
+					(rettype != ANYARRAYOID && IsPolymorphicType(rettype)))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("cannot determine element type of \"anyarray\" argument")));
+				array_typelem = ANYELEMENTOID;
+			}
+			else
+			{
+				array_typelem = get_element_type(array_typeid);
+				if (!OidIsValid(array_typelem))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("argument declared %s is not an array but type %s",
+									"anyarray", format_type_be(array_typeid))));
+			}
+
+			if (!OidIsValid(elem_typeid))
+			{
+				/*
+				 * if we don't have an element type yet, use the one we just
+				 * got
+				 */
+				elem_typeid = array_typelem;
+			}
+			else if (array_typelem != elem_typeid)
+			{
+				/* otherwise, they better match */
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared %s is not consistent with argument declared %s",
+								"anyarray", "anyelement"),
+						 errdetail("%s versus %s",
+								   format_type_be(array_typeid),
+								   format_type_be(elem_typeid))));
+			}
 		}
-		else
+
+		/* Get the element type based on the range type, if we have one */
+		if (OidIsValid(range_typeid))
 		{
+			Oid			range_typelem;
+
 			range_typelem = get_range_subtype(range_typeid);
 			if (!OidIsValid(range_typelem))
 				ereport(ERROR,
@@ -1824,72 +1821,80 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 						 errmsg("argument declared %s is not a range type but type %s",
 								"anyrange",
 								format_type_be(range_typeid))));
+
+			if (!OidIsValid(elem_typeid))
+			{
+				/*
+				 * if we don't have an element type yet, use the one we just
+				 * got
+				 */
+				elem_typeid = range_typelem;
+			}
+			else if (range_typelem != elem_typeid)
+			{
+				/* otherwise, they better match */
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared %s is not consistent with argument declared %s",
+								"anyrange", "anyelement"),
+						 errdetail("%s versus %s",
+								   format_type_be(range_typeid),
+								   format_type_be(elem_typeid))));
+			}
 		}
 
 		if (!OidIsValid(elem_typeid))
 		{
+			if (allow_poly)
+			{
+				elem_typeid = ANYELEMENTOID;
+				array_typeid = ANYARRAYOID;
+				range_typeid = ANYRANGEOID;
+			}
+			else
+			{
+				/*
+				 * Only way to get here is if all the polymorphic args have
+				 * UNKNOWN inputs
+				 */
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("could not determine polymorphic type because input has type %s",
+								"unknown")));
+			}
+		}
+
+		if (have_anynonarray && elem_typeid != ANYELEMENTOID)
+		{
 			/*
-			 * if we don't have an element type yet, use the one we just got
+			 * require the element type to not be an array or domain over
+			 * array
 			 */
-			elem_typeid = range_typelem;
+			if (type_is_array_domain(elem_typeid))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type matched to anynonarray is an array type: %s",
+								format_type_be(elem_typeid))));
 		}
-		else if (range_typelem != elem_typeid)
-		{
-			/* otherwise, they better match */
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("argument declared %s is not consistent with argument declared %s",
-							"anyrange", "anyelement"),
-					 errdetail("%s versus %s",
-							   format_type_be(range_typeid),
-							   format_type_be(elem_typeid))));
-		}
-	}
 
-	if (!OidIsValid(elem_typeid))
-	{
-		if (allow_poly)
+		if (have_anyenum && elem_typeid != ANYELEMENTOID)
 		{
-			elem_typeid = ANYELEMENTOID;
-			array_typeid = ANYARRAYOID;
-			range_typeid = ANYRANGEOID;
+			/* require the element type to be an enum */
+			if (!type_is_enum(elem_typeid))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type matched to anyenum is not an enum type: %s",
+								format_type_be(elem_typeid))));
 		}
-		else
-		{
-			/* Only way to get here is if all the generic args are UNKNOWN */
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not determine polymorphic type because input has type %s",
-							"unknown")));
-		}
-	}
-
-	if (have_anynonarray && elem_typeid != ANYELEMENTOID)
-	{
-		/* require the element type to not be an array or domain over array */
-		if (type_is_array_domain(elem_typeid))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("type matched to anynonarray is an array type: %s",
-							format_type_be(elem_typeid))));
-	}
-
-	if (have_anyenum && elem_typeid != ANYELEMENTOID)
-	{
-		/* require the element type to be an enum */
-		if (!type_is_enum(elem_typeid))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("type matched to anyenum is not an enum type: %s",
-							format_type_be(elem_typeid))));
 	}
 
 	/*
-	 * If we had any unknown inputs, re-scan to assign correct types
+	 * If we had any UNKNOWN inputs for polymorphic arguments, re-scan to
+	 * assign correct types to them.
 	 */
-	if (have_unknowns)
+	if (have_poly_unknowns)
 	{
-		for (j = 0; j < nargs; j++)
+		for (int j = 0; j < nargs; j++)
 		{
 			Oid			decl_type = declared_arg_types[j];
 			Oid			actual_type = actual_arg_types[j];
@@ -1928,6 +1933,12 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		}
 	}
 
+	/* if we return ANYELEMENT use the appropriate argument type */
+	if (rettype == ANYELEMENTOID ||
+		rettype == ANYNONARRAYOID ||
+		rettype == ANYENUMOID)
+		return elem_typeid;
+
 	/* if we return ANYARRAY use the appropriate argument type */
 	if (rettype == ANYARRAYOID)
 	{
@@ -1955,12 +1966,6 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		}
 		return range_typeid;
 	}
-
-	/* if we return ANYELEMENT use the appropriate argument type */
-	if (rettype == ANYELEMENTOID ||
-		rettype == ANYNONARRAYOID ||
-		rettype == ANYENUMOID)
-		return elem_typeid;
 
 	/* we don't return a generic type; send back the original return type */
 	return rettype;
