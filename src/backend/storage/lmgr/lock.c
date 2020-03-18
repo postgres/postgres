@@ -170,6 +170,21 @@ typedef struct TwoPhaseLockRecord
  */
 static int	FastPathLocalUseCount = 0;
 
+/*
+ * Flag to indicate if the relation extension lock is held by this backend.
+ * This flag is used to ensure that while holding the relation extension lock
+ * we don't try to acquire a heavyweight lock on any other object.  This
+ * restriction implies that the relation extension lock won't ever participate
+ * in the deadlock cycle because we can never wait for any other heavyweight
+ * lock after acquiring this lock.
+ *
+ * Such a restriction is okay for relation extension locks as unlike other
+ * heavyweight locks these are not held till the transaction end.  These are
+ * taken for a short duration to extend a particular relation and then
+ * released.
+ */
+static bool IsRelationExtensionLockHeld PG_USED_FOR_ASSERTS_ONLY = false;
+
 /* Macros for manipulating proc->fpLockBits */
 #define FAST_PATH_BITS_PER_SLOT			3
 #define FAST_PATH_LOCKNUMBER_OFFSET		1
@@ -841,6 +856,13 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	}
 
 	/*
+	 * We don't acquire any other heavyweight lock while holding the relation
+	 * extension lock.  We do allow to acquire the same relation extension
+	 * lock more than once but that case won't reach here.
+	 */
+	Assert(!IsRelationExtensionLockHeld);
+
+	/*
 	 * Prepare to emit a WAL record if acquisition of this lock needs to be
 	 * replayed in a standby server.
 	 *
@@ -1288,6 +1310,23 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 }
 
 /*
+ * Check and set/reset the flag that we hold the relation extension lock.
+ *
+ * It is callers responsibility that this function is called after
+ * acquiring/releasing the relation extension lock.
+ *
+ * Pass acquired as true if lock is acquired, false otherwise.
+ */
+static inline void
+CheckAndSetLockHeld(LOCALLOCK *locallock, bool acquired)
+{
+#ifdef USE_ASSERT_CHECKING
+	if (LOCALLOCK_LOCKTAG(*locallock) == LOCKTAG_RELATION_EXTEND)
+		IsRelationExtensionLockHeld = acquired;
+#endif
+}
+
+/*
  * Subroutine to free a locallock entry
  */
 static void
@@ -1322,6 +1361,11 @@ RemoveLocalLock(LOCALLOCK *locallock)
 					 (void *) &(locallock->tag),
 					 HASH_REMOVE, NULL))
 		elog(WARNING, "locallock table corrupted");
+
+	/*
+	 * Indicate that the lock is released for certain types of locks
+	 */
+	CheckAndSetLockHeld(locallock, false);
 }
 
 /*
@@ -1618,6 +1662,9 @@ GrantLockLocal(LOCALLOCK *locallock, ResourceOwner owner)
 	locallock->numLockOwners++;
 	if (owner != NULL)
 		ResourceOwnerRememberLock(owner, locallock);
+
+	/* Indicate that the lock is acquired for certain types of locks. */
+	CheckAndSetLockHeld(locallock, true);
 }
 
 /*
