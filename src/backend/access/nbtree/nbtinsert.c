@@ -1180,12 +1180,7 @@ _bt_insertonpg(Relation rel,
 		Buffer		metabuf = InvalidBuffer;
 		Page		metapg = NULL;
 		BTMetaPageData *metad = NULL;
-		OffsetNumber itup_off;
-		BlockNumber itup_blkno;
 		BlockNumber cachedBlock = InvalidBlockNumber;
-
-		itup_off = newitemoff;
-		itup_blkno = BufferGetBlockNumber(buf);
 
 		/*
 		 * If we are doing this insert because we split a page that was the
@@ -1218,7 +1213,7 @@ _bt_insertonpg(Relation rel,
 
 		if (!_bt_pgaddtup(page, itemsz, itup, newitemoff))
 			elog(PANIC, "failed to add new item to block %u in index \"%s\"",
-				 itup_blkno, RelationGetRelationName(rel));
+				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 
 		MarkBufferDirty(buf);
 
@@ -1227,7 +1222,7 @@ _bt_insertonpg(Relation rel,
 			/* upgrade meta-page if needed */
 			if (metad->btm_version < BTREE_NOVAC_VERSION)
 				_bt_upgrademetapage(metapg);
-			metad->btm_fastroot = itup_blkno;
+			metad->btm_fastroot = BufferGetBlockNumber(buf);
 			metad->btm_fastlevel = lpageop->btpo.level;
 			MarkBufferDirty(metabuf);
 		}
@@ -1260,7 +1255,7 @@ _bt_insertonpg(Relation rel,
 			uint8		xlinfo;
 			XLogRecPtr	recptr;
 
-			xlrec.offnum = itup_off;
+			xlrec.offnum = newitemoff;
 
 			XLogBeginInsert();
 			XLogRegisterData((char *) &xlrec, SizeOfBtreeInsert);
