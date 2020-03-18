@@ -18178,11 +18178,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
-    <primary>to_regproc</primary>
+    <primary>to_regnamespace</primary>
    </indexterm>
 
    <indexterm>
-    <primary>to_regprocedure</primary>
+    <primary>to_regrole</primary>
    </indexterm>
 
    <indexterm>
@@ -18194,15 +18194,15 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>to_regproc</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>to_regprocedure</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>to_regtype</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>to_regnamespace</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>to_regrole</primary>
    </indexterm>
 
   <para>
@@ -18390,14 +18390,9 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get the OID of the named relation</entry>
       </row>
       <row>
-       <entry><literal><function>to_regproc(<parameter>func_name</parameter>)</function></literal></entry>
-       <entry><type>regproc</type></entry>
-       <entry>get the OID of the named function</entry>
-      </row>
-      <row>
-       <entry><literal><function>to_regprocedure(<parameter>func_name</parameter>)</function></literal></entry>
-       <entry><type>regprocedure</type></entry>
-       <entry>get the OID of the named function</entry>
+       <entry><literal><function>to_regnamespace(<parameter>schema_name</parameter>)</function></literal></entry>
+       <entry><type>regnamespace</type></entry>
+       <entry>get the OID of the named schema</entry>
       </row>
       <row>
        <entry><literal><function>to_regoper(<parameter>operator_name</parameter>)</function></literal></entry>
@@ -18410,19 +18405,24 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get the OID of the named operator</entry>
       </row>
       <row>
-       <entry><literal><function>to_regtype(<parameter>type_name</parameter>)</function></literal></entry>
-       <entry><type>regtype</type></entry>
-       <entry>get the OID of the named type</entry>
-      </row>
-      <row>
-       <entry><literal><function>to_regnamespace(<parameter>schema_name</parameter>)</function></literal></entry>
-       <entry><type>regnamespace</type></entry>
-       <entry>get the OID of the named schema</entry>
-      </row>
-      <row>
        <entry><literal><function>to_regrole(<parameter>role_name</parameter>)</function></literal></entry>
        <entry><type>regrole</type></entry>
        <entry>get the OID of the named role</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regproc(<parameter>func_name</parameter>)</function></literal></entry>
+       <entry><type>regproc</type></entry>
+       <entry>get the OID of the named function</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regprocedure(<parameter>func_name</parameter>)</function></literal></entry>
+       <entry><type>regprocedure</type></entry>
+       <entry>get the OID of the named function</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regtype(<parameter>type_name</parameter>)</function></literal></entry>
+       <entry><type>regtype</type></entry>
+       <entry>get the OID of the named type</entry>
       </row>
      </tbody>
     </tgroup>
@@ -18720,20 +18720,18 @@ SELECT collation for ('foo' COLLATE "de_DE");
   </para>
 
   <para>
-   The <function>to_regclass</function>, <function>to_regproc</function>,
-   <function>to_regprocedure</function>, <function>to_regoper</function>,
-   <function>to_regoperator</function>, <function>to_regtype</function>,
-   <function>to_regnamespace</function>, and <function>to_regrole</function>
-   functions translate relation, function, operator, type, schema, and role
-   names (given as <type>text</type>) to objects of
-   type <type>regclass</type>, <type>regproc</type>, <type>regprocedure</type>,
-   <type>regoper</type>, <type>regoperator</type>, <type>regtype</type>,
-   <type>regnamespace</type>, and <type>regrole</type>
-   respectively.  These functions differ from a cast from
-   text in that they don't accept a numeric OID, and that they return null
-   rather than throwing an error if the name is not found (or, for
-   <function>to_regproc</function> and <function>to_regoper</function>, if
-   the given name matches multiple objects).
+   The functions <function>to_regclass</function>,
+   <function>to_regnamespace</function>, <function>to_regoper</function>,
+   <function>to_regoperator</function>, <function>to_regrole</function>,
+   <function>to_regproc</function>, <function>to_regprocedure</function>, and
+   <function>to_regtype</function>, functions translate relation, schema,
+   operator, role, function, and type names (given as <type>text</type>) to
+   objects of the corresponding <type>reg*</type> type (see <xref
+   linkend="datatype-oid"/> about the types).  These functions differ from a
+   cast from text in that they don't accept a numeric OID, and that they
+   return null rather than throwing an error if the name is not found (or, for
+   <function>to_regproc</function> and <function>to_regoper</function>, if the
+   given name matches multiple objects).
   </para>
 
    <indexterm>
