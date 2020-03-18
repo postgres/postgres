@@ -148,7 +148,7 @@ PageIsVerified(Page page, BlockNumber blkno)
 	if (checksum_failure)
 	{
 		ereport(WARNING,
-				(ERRCODE_DATA_CORRUPTED,
+				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("page verification failed, calculated checksum %u but expected %u",
 						checksum, p->pd_checksum)));
 
