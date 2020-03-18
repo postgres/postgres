@@ -2870,7 +2870,7 @@ ReindexRelationConcurrently(Oid relationOid, int options)
 
 				/*
 				 * Don't allow reindex for an invalid index on TOAST table, as
-				 * if rebuild it would not be possible to drop it.
+				 * if rebuilt it would not be possible to drop it.
 				 */
 				if (IsToastNamespace(get_rel_namespace(relationOid)) &&
 					!get_index_isvalid(relationOid))
