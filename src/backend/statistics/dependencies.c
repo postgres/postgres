@@ -753,24 +753,27 @@ pg_dependencies_send(PG_FUNCTION_ARGS)
 static bool
 dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 {
-	RestrictInfo *rinfo = (RestrictInfo *) clause;
 	Var		   *var;
 
-	if (!IsA(rinfo, RestrictInfo))
-		return false;
+	if (IsA(clause, RestrictInfo))
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) clause;
 
-	/* Pseudoconstants are not interesting (they couldn't contain a Var) */
-	if (rinfo->pseudoconstant)
-		return false;
+		/* Pseudoconstants are not interesting (they couldn't contain a Var) */
+		if (rinfo->pseudoconstant)
+			return false;
 
-	/* Clauses referencing multiple, or no, varnos are incompatible */
-	if (bms_membership(rinfo->clause_relids) != BMS_SINGLETON)
-		return false;
+		/* Clauses referencing multiple, or no, varnos are incompatible */
+		if (bms_membership(rinfo->clause_relids) != BMS_SINGLETON)
+			return false;
 
-	if (is_opclause(rinfo->clause))
+		clause = (Node *) rinfo->clause;
+	}
+
+	if (is_opclause(clause))
 	{
 		/* If it's an opclause, check for Var = Const or Const = Var. */
-		OpExpr	   *expr = (OpExpr *) rinfo->clause;
+		OpExpr	   *expr = (OpExpr *) clause;
 
 		/* Only expressions with two arguments are candidates. */
 		if (list_length(expr->args) != 2)
@@ -801,10 +804,10 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 
 		/* OK to proceed with checking "var" */
 	}
-	else if (IsA(rinfo->clause, ScalarArrayOpExpr))
+	else if (IsA(clause, ScalarArrayOpExpr))
 	{
 		/* If it's an scalar array operator, check for Var IN Const. */
-		ScalarArrayOpExpr	   *expr = (ScalarArrayOpExpr *) rinfo->clause;
+		ScalarArrayOpExpr	   *expr = (ScalarArrayOpExpr *) clause;
 
 		/*
 		 * Reject ALL() variant, we only care about ANY/IN.
@@ -839,13 +842,43 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 
 		/* OK to proceed with checking "var" */
 	}
-	else if (is_notclause(rinfo->clause))
+	else if (is_orclause(clause))
+	{
+		BoolExpr   *expr = (BoolExpr *) clause;
+		ListCell   *lc;
+
+		/* start with no attribute number */
+		*attnum = InvalidAttrNumber;
+
+		foreach(lc, expr->args)
+		{
+			AttrNumber	clause_attnum;
+
+			/*
+			 * Had we found incompatible clause in the arguments, treat the
+			 * whole clause as incompatible.
+			 */
+			if (!dependency_is_compatible_clause((Node *) lfirst(lc),
+												 relid, &clause_attnum))
+				return false;
+
+			if (*attnum == InvalidAttrNumber)
+				*attnum = clause_attnum;
+
+			if (*attnum != clause_attnum)
+				return false;
+		}
+
+		/* the Var is already checked by the recursive call */
+		return true;
+	}
+	else if (is_notclause(clause))
 	{
 		/*
 		 * "NOT x" can be interpreted as "x = false", so get the argument and
 		 * proceed with seeing if it's a suitable Var.
 		 */
-		var = (Var *) get_notclausearg(rinfo->clause);
+		var = (Var *) get_notclausearg(clause);
 	}
 	else
 	{
@@ -853,7 +886,7 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 		 * A boolean expression "x" can be interpreted as "x = true", so
 		 * proceed with seeing if it's a suitable Var.
 		 */
-		var = (Var *) rinfo->clause;
+		var = (Var *) clause;
 	}
 
 	/*

@@ -458,6 +458,32 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
          3 |    400
 (1 row)
 
+-- OR clauses referencing the same attribute
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR a = 51) AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         2 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR a = 51) AND (b = ''1'' OR b = ''2'')');
+ estimated | actual 
+-----------+--------
+         4 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR a = 2 OR a = 51 OR a = 52) AND (b = ''1'' OR b = ''2'')');
+ estimated | actual 
+-----------+--------
+         8 |    200
+(1 row)
+
+-- OR clauses referencing different attributes
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR b = ''1'') AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         3 |    100
+(1 row)
+
 -- ANY
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = ANY (ARRAY[1, 51]) AND b = ''1''');
  estimated | actual 
@@ -590,6 +616,32 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
  estimated | actual 
 -----------+--------
        400 |    400
+(1 row)
+
+-- OR clauses referencing the same attribute
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR a = 51) AND b = ''1''');
+ estimated | actual 
+-----------+--------
+        99 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR a = 51) AND (b = ''1'' OR b = ''2'')');
+ estimated | actual 
+-----------+--------
+        99 |    100
+(1 row)
+
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR a = 2 OR a = 51 OR a = 52) AND (b = ''1'' OR b = ''2'')');
+ estimated | actual 
+-----------+--------
+       197 |    200
+(1 row)
+
+-- OR clauses referencing different attributes are incompatible
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a = 1 OR b = ''1'') AND b = ''1''');
+ estimated | actual 
+-----------+--------
+         3 |    100
 (1 row)
 
 -- ANY
