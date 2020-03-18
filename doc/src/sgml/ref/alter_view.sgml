@@ -143,7 +143,7 @@ ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET
       Sets or resets a view option.  Currently supported options are:
       <variablelist>
        <varlistentry>
-        <term><literal>check_option</literal> (<type>string</type>)</term>
+        <term><literal>check_option</literal> (<type>enum</type>)</term>
         <listitem>
          <para>
           Changes the check option of the view.  The value must

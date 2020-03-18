@@ -131,7 +131,7 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
 
       <variablelist>
        <varlistentry>
-        <term><literal>check_option</literal> (<type>string</type>)</term>
+        <term><literal>check_option</literal> (<type>enum</type>)</term>
         <listitem>
          <para>
           This parameter may be either <literal>local</literal> or
