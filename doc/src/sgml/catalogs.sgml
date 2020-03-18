@@ -6453,6 +6453,22 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
+      <entry><structfield>stxstattarget</structfield></entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>stxstattarget</structfield> controls the level of detail
+       of statistics accumulated for this statistics object by
+       <xref linkend="sql-analyze"/>.
+       A zero value indicates that no statistics should be collected.
+       A negative value says to use the system default statistics target.
+       Positive values <structfield>stxstattarget</structfield>
+       determine the target number of <quote>most common values</quote>
+       to collect.
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>stxkeys</structfield></entry>
       <entry><type>int2vector</type></entry>
       <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
