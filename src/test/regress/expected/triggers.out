@@ -1958,10 +1958,6 @@ drop table my_table;
 create table parted_trig (a int) partition by list (a);
 create function trigger_nothing() returns trigger
   language plpgsql as $$ begin end; $$;
-create trigger failed before insert or update or delete on parted_trig
-  for each row execute procedure trigger_nothing();
-ERROR:  "parted_trig" is a partitioned table
-DETAIL:  Partitioned tables cannot have BEFORE / FOR EACH ROW triggers.
 create trigger failed instead of update on parted_trig
   for each row execute procedure trigger_nothing();
 ERROR:  "parted_trig" is a table
@@ -2246,6 +2242,80 @@ NOTICE:  aasvogel <- woof!
 NOTICE:  trigger parted_trig on parted1_irreg AFTER INSERT for ROW: (a,b)=(3,aasvogel)
 NOTICE:  trigger parted_trig_odd on parted1_irreg AFTER INSERT for ROW: (a,b)=(3,aasvogel)
 drop table parted_irreg_ancestor;
+-- Before triggers and partitions
+create table parted (a int, b int, c text) partition by list (a);
+create table parted_1 partition of parted for values in (1)
+  partition by list (b);
+create table parted_1_1 partition of parted_1 for values in (1);
+create function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.a = new.a + 1;
+  return new;
+end;
+$$;
+insert into parted values (1, 1, 'uno uno v1');    -- works
+create trigger t before insert or update or delete on parted
+  for each row execute function parted_trigfunc();
+insert into parted values (1, 1, 'uno uno v2');    -- fail
+ERROR:  moving row to another partition during a BEFORE FOR EACH ROW trigger is not supported
+DETAIL:  Before executing trigger "t", the row was to be in partition "public.parted_1_1".
+update parted set c = c || 'v3';                   -- fail
+ERROR:  moving row to another partition during a BEFORE trigger is not supported
+DETAIL:  Before executing trigger "t", the row was to be in partition "public.parted_1_1".
+create or replace function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.b = new.b + 1;
+  return new;
+end;
+$$;
+insert into parted values (1, 1, 'uno uno v4');    -- fail
+ERROR:  moving row to another partition during a BEFORE FOR EACH ROW trigger is not supported
+DETAIL:  Before executing trigger "t", the row was to be in partition "public.parted_1_1".
+update parted set c = c || 'v5';                   -- fail
+ERROR:  moving row to another partition during a BEFORE trigger is not supported
+DETAIL:  Before executing trigger "t", the row was to be in partition "public.parted_1_1".
+create or replace function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.c = new.c || ' and so';
+  return new;
+end;
+$$;
+insert into parted values (1, 1, 'uno uno');       -- works
+update parted set c = c || ' v6';                   -- works
+select tableoid::regclass, * from parted;
+  tableoid  | a | b |            c             
+------------+---+---+--------------------------
+ parted_1_1 | 1 | 1 | uno uno v1 v6 and so
+ parted_1_1 | 1 | 1 | uno uno and so v6 and so
+(2 rows)
+
+drop table parted;
+create table parted (a int, b int, c text) partition by list ((a + b));
+create or replace function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.a = new.a + new.b;
+  return new;
+end;
+$$;
+create table parted_1 partition of parted for values in (1, 2);
+create table parted_2 partition of parted for values in (3, 4);
+create trigger t before insert or update on parted
+  for each row execute function parted_trigfunc();
+insert into parted values (0, 1, 'zero win');
+insert into parted values (1, 1, 'one fail');
+ERROR:  moving row to another partition during a BEFORE FOR EACH ROW trigger is not supported
+DETAIL:  Before executing trigger "t", the row was to be in partition "public.parted_1".
+insert into parted values (1, 2, 'two fail');
+ERROR:  moving row to another partition during a BEFORE FOR EACH ROW trigger is not supported
+DETAIL:  Before executing trigger "t", the row was to be in partition "public.parted_2".
+select * from parted;
+ a | b |    c     
+---+---+----------
+ 1 | 1 | zero win
+(1 row)
+
+drop table parted;
+drop function parted_trigfunc();
 --
 -- Constraint triggers and partitioned tables
 create table parted_constr_ancestor (a int, b text)

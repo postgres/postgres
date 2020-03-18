@@ -222,18 +222,6 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		if (stmt->row)
 		{
 			/*
-			 * BEFORE triggers FOR EACH ROW are forbidden, because they would
-			 * allow the user to direct the row to another partition, which
-			 * isn't implemented in the executor.
-			 */
-			if (stmt->timing != TRIGGER_TYPE_AFTER)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("\"%s\" is a partitioned table",
-								RelationGetRelationName(rel)),
-						 errdetail("Partitioned tables cannot have BEFORE / FOR EACH ROW triggers.")));
-
-			/*
 			 * Disallow use of transition tables.
 			 *
 			 * Note that we have another restriction about transition tables
@@ -1658,6 +1646,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgtype = pg_trigger->tgtype;
 		build->tgenabled = pg_trigger->tgenabled;
 		build->tgisinternal = pg_trigger->tgisinternal;
+		build->tgisclone = OidIsValid(pg_trigger->tgparentid);
 		build->tgconstrrelid = pg_trigger->tgconstrrelid;
 		build->tgconstrindid = pg_trigger->tgconstrindid;
 		build->tgconstraint = pg_trigger->tgconstraint;
@@ -1961,6 +1950,8 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 				return false;
 			if (trig1->tgisinternal != trig2->tgisinternal)
 				return false;
+			if (trig1->tgisclone != trig2->tgisclone)
+				return false;
 			if (trig1->tgconstrrelid != trig2->tgconstrrelid)
 				return false;
 			if (trig1->tgconstrindid != trig2->tgconstrindid)
@@ -2246,6 +2237,21 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 		else if (newtuple != oldtuple)
 		{
 			ExecForceStoreHeapTuple(newtuple, slot, false);
+
+			/*
+			 * After a tuple in a partition goes through a trigger, the user
+			 * could have changed the partition key enough that the tuple
+			 * no longer fits the partition.  Verify that.
+			 */
+			if (trigger->tgisclone &&
+				!ExecPartitionCheck(relinfo, slot, estate, false))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("moving row to another partition during a BEFORE FOR EACH ROW trigger is not supported"),
+						 errdetail("Before executing trigger \"%s\", the row was to be in partition \"%s.%s\".",
+								   trigger->tgname,
+								   get_namespace_name(RelationGetNamespace(relinfo->ri_RelationDesc)),
+								   RelationGetRelationName(relinfo->ri_RelationDesc))));
 
 			if (should_free)
 				heap_freetuple(oldtuple);
@@ -2740,6 +2746,16 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 		else if (newtuple != oldtuple)
 		{
 			ExecForceStoreHeapTuple(newtuple, newslot, false);
+
+			if (trigger->tgisclone &&
+				!ExecPartitionCheck(relinfo, newslot, estate, false))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("moving row to another partition during a BEFORE trigger is not supported"),
+						 errdetail("Before executing trigger \"%s\", the row was to be in partition \"%s.%s\".",
+								   trigger->tgname,
+								   get_namespace_name(RelationGetNamespace(relinfo->ri_RelationDesc)),
+								   RelationGetRelationName(relinfo->ri_RelationDesc))));
 
 			/*
 			 * If the tuple returned by the trigger / being stored, is the old

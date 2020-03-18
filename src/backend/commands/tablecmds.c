@@ -16546,7 +16546,8 @@ CloneRowTriggersToPartition(Relation parent, Relation partition)
 		/*
 		 * Complain if we find an unexpected trigger type.
 		 */
-		if (!TRIGGER_FOR_AFTER(trigForm->tgtype))
+		if (!TRIGGER_FOR_BEFORE(trigForm->tgtype) &&
+			!TRIGGER_FOR_AFTER(trigForm->tgtype))
 			elog(ERROR, "unexpected trigger \"%s\" found",
 				 NameStr(trigForm->tgname));
 

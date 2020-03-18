@@ -307,7 +307,7 @@ CreatePartitionDirectory(MemoryContext mcxt)
  *
  * The purpose of this function is to ensure that we get the same
  * PartitionDesc for each relation every time we look it up.  In the
- * face of current DDL, different PartitionDescs may be constructed with
+ * face of concurrent DDL, different PartitionDescs may be constructed with
  * different views of the catalog state, but any single particular OID
  * will always get the same PartitionDesc for as long as the same
  * PartitionDirectory is used.

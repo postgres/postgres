@@ -1348,8 +1348,6 @@ drop table my_table;
 create table parted_trig (a int) partition by list (a);
 create function trigger_nothing() returns trigger
   language plpgsql as $$ begin end; $$;
-create trigger failed before insert or update or delete on parted_trig
-  for each row execute procedure trigger_nothing();
 create trigger failed instead of update on parted_trig
   for each row execute procedure trigger_nothing();
 create trigger failed after update on parted_trig
@@ -1560,6 +1558,59 @@ insert into parted_irreg values (1, 'aardvark'), (2, 'aanimals');
 insert into parted1_irreg values ('aardwolf', 2);
 insert into parted_irreg_ancestor values ('aasvogel', 3);
 drop table parted_irreg_ancestor;
+
+-- Before triggers and partitions
+create table parted (a int, b int, c text) partition by list (a);
+create table parted_1 partition of parted for values in (1)
+  partition by list (b);
+create table parted_1_1 partition of parted_1 for values in (1);
+create function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.a = new.a + 1;
+  return new;
+end;
+$$;
+insert into parted values (1, 1, 'uno uno v1');    -- works
+create trigger t before insert or update or delete on parted
+  for each row execute function parted_trigfunc();
+insert into parted values (1, 1, 'uno uno v2');    -- fail
+update parted set c = c || 'v3';                   -- fail
+create or replace function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.b = new.b + 1;
+  return new;
+end;
+$$;
+insert into parted values (1, 1, 'uno uno v4');    -- fail
+update parted set c = c || 'v5';                   -- fail
+create or replace function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.c = new.c || ' and so';
+  return new;
+end;
+$$;
+insert into parted values (1, 1, 'uno uno');       -- works
+update parted set c = c || ' v6';                   -- works
+select tableoid::regclass, * from parted;
+
+drop table parted;
+create table parted (a int, b int, c text) partition by list ((a + b));
+create or replace function parted_trigfunc() returns trigger language plpgsql as $$
+begin
+  new.a = new.a + new.b;
+  return new;
+end;
+$$;
+create table parted_1 partition of parted for values in (1, 2);
+create table parted_2 partition of parted for values in (3, 4);
+create trigger t before insert or update on parted
+  for each row execute function parted_trigfunc();
+insert into parted values (0, 1, 'zero win');
+insert into parted values (1, 1, 'one fail');
+insert into parted values (1, 2, 'two fail');
+select * from parted;
+drop table parted;
+drop function parted_trigfunc();
 
 --
 -- Constraint triggers and partitioned tables
