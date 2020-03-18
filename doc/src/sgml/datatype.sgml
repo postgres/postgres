@@ -4477,6 +4477,10 @@ INSERT INTO mytable VALUES(-1);  -- fails
    </indexterm>
 
    <indexterm zone="datatype-oid">
+    <primary>regcollation</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
     <primary>regconfig</primary>
    </indexterm>
 
@@ -4602,6 +4606,12 @@ SELECT * FROM pg_attribute
         <entry><literal>pg_type</literal></entry>
        </row>
 
+       <row>
+        <entry><type>regcollation</type></entry>
+        <entry><structname>pg_collation</structname></entry>
+        <entry>collation name</entry>
+        <entry><literal>"POSIX"</literal></entry>
+       </row>
 
        <row>
         <entry><type>regconfig</type></entry>

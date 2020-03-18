@@ -774,6 +774,7 @@ psql --username=postgres --file=script.sql postgres
    <application>pg_upgrade</application> does not support upgrading of databases
    containing table columns using these <type>reg*</type> OID-referencing system data types:
    <simplelist>
+    <member><type>regcollation</type></member>
     <member><type>regconfig</type></member>
     <member><type>regdictionary</type></member>
     <member><type>regnamespace</type></member>

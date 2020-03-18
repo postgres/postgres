@@ -24,6 +24,7 @@
 #include "access/htup_details.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_ts_config.h"
@@ -1037,6 +1038,157 @@ regclassrecv(PG_FUNCTION_ARGS)
  */
 Datum
 regclasssend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
+
+/*
+ * regcollationin		- converts "collationname" to collation OID
+ *
+ * We also accept a numeric OID, for symmetry with the output routine.
+ *
+ * '-' signifies unknown (OID 0).  In all other cases, the input must
+ * match an existing pg_collation entry.
+ */
+Datum
+regcollationin(PG_FUNCTION_ARGS)
+{
+	char	   *collation_name_or_oid = PG_GETARG_CSTRING(0);
+	Oid			result = InvalidOid;
+	List	   *names;
+
+	/* '-' ? */
+	if (strcmp(collation_name_or_oid, "-") == 0)
+		PG_RETURN_OID(InvalidOid);
+
+	/* Numeric OID? */
+	if (collation_name_or_oid[0] >= '0' &&
+		collation_name_or_oid[0] <= '9' &&
+		strspn(collation_name_or_oid, "0123456789") == strlen(collation_name_or_oid))
+	{
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
+													  CStringGetDatum(collation_name_or_oid)));
+		PG_RETURN_OID(result);
+	}
+
+	/* Else it's a name, possibly schema-qualified */
+
+	/* The rest of this wouldn't work in bootstrap mode */
+	if (IsBootstrapProcessingMode())
+		elog(ERROR, "regcollation values must be OIDs in bootstrap mode");
+
+	/*
+	 * Normal case: parse the name into components and see if it matches any
+	 * pg_collation entries in the current search path.
+	 */
+	names = stringToQualifiedNameList(collation_name_or_oid);
+
+	result = get_collation_oid(names, false);
+
+	PG_RETURN_OID(result);
+}
+
+/*
+ * to_regcollation		- converts "collationname" to collation OID
+ *
+ * If the name is not found, we return NULL.
+ */
+Datum
+to_regcollation(PG_FUNCTION_ARGS)
+{
+	char	   *collation_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Oid			result;
+	List	   *names;
+
+	/*
+	 * Parse the name into components and see if it matches any pg_collation
+	 * entries in the current search path.
+	 */
+	names = stringToQualifiedNameList(collation_name);
+
+	/* We might not even have permissions on this relation; don't lock it. */
+	result = get_collation_oid(names, true);
+
+	if (OidIsValid(result))
+		PG_RETURN_OID(result);
+	else
+		PG_RETURN_NULL();
+}
+
+/*
+ * regcollationout		- converts collation OID to "collation_name"
+ */
+Datum
+regcollationout(PG_FUNCTION_ARGS)
+{
+	Oid			collationid = PG_GETARG_OID(0);
+	char	   *result;
+	HeapTuple	collationtup;
+
+	if (collationid == InvalidOid)
+	{
+		result = pstrdup("-");
+		PG_RETURN_CSTRING(result);
+	}
+
+	collationtup = SearchSysCache1(COLLOID, ObjectIdGetDatum(collationid));
+
+	if (HeapTupleIsValid(collationtup))
+	{
+		Form_pg_collation collationform = (Form_pg_collation) GETSTRUCT(collationtup);
+		char	   *collationname = NameStr(collationform->collname);
+
+		/*
+		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * the collation name.  (This path is only needed for debugging output
+		 * anyway.)
+		 */
+		if (IsBootstrapProcessingMode())
+			result = pstrdup(collationname);
+		else
+		{
+			char	   *nspname;
+
+			/*
+			 * Would this collation be found by regcollationin? If not, qualify it.
+			 */
+			if (CollationIsVisible(collationid))
+				nspname = NULL;
+			else
+				nspname = get_namespace_name(collationform->collnamespace);
+
+			result = quote_qualified_identifier(nspname, collationname);
+		}
+
+		ReleaseSysCache(collationtup);
+	}
+	else
+	{
+		/* If OID doesn't match any pg_collation entry, return it numerically */
+		result = (char *) palloc(NAMEDATALEN);
+		snprintf(result, NAMEDATALEN, "%u", collationid);
+	}
+
+	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		regcollationrecv			- converts external binary format to regcollation
+ */
+Datum
+regcollationrecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regcollationsend			- converts regcollation to binary format
+ */
+Datum
+regcollationsend(PG_FUNCTION_ARGS)
 {
 	/* Exactly the same as oidsend, so share code */
 	return oidsend(fcinfo);

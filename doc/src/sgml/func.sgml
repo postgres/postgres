@@ -18178,6 +18178,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm>
+    <primary>to_regcollation</primary>
+   </indexterm>
+
+   <indexterm>
     <primary>to_regnamespace</primary>
    </indexterm>
 
@@ -18388,6 +18392,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>to_regclass(<parameter>rel_name</parameter>)</function></literal></entry>
        <entry><type>regclass</type></entry>
        <entry>get the OID of the named relation</entry>
+      </row>
+      <row>
+       <entry><literal><function>to_regcollation(<parameter>coll_name</parameter>)</function></literal></entry>
+       <entry><type>regcollation</type></entry>
+       <entry>get the OID of the named collation</entry>
       </row>
       <row>
        <entry><literal><function>to_regnamespace(<parameter>schema_name</parameter>)</function></literal></entry>
@@ -18720,11 +18729,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
   </para>
 
   <para>
-   The functions <function>to_regclass</function>,
+   The functions <function>to_regclass</function>, <function>to_regcollation</function>,
    <function>to_regnamespace</function>, <function>to_regoper</function>,
    <function>to_regoperator</function>, <function>to_regrole</function>,
    <function>to_regproc</function>, <function>to_regprocedure</function>, and
-   <function>to_regtype</function>, functions translate relation, schema,
+   <function>to_regtype</function>, functions translate relation, collation, schema,
    operator, role, function, and type names (given as <type>text</type>) to
    objects of the corresponding <type>reg*</type> type (see <xref
    linkend="datatype-oid"/> about the types).  These functions differ from a
