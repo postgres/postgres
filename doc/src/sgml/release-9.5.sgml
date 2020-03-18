@@ -593,7 +593,6 @@ Branch: REL9_4_STABLE [dbe405b78] 2020-01-21 13:47:17 +0900
 
      <para>
       This applies to
-      <literal>idle_in_transaction_session_timeout</literal>,
       <literal>lock_timeout</literal>,
       <literal>statement_timeout</literal>,
       <literal>track_activities</literal>,
