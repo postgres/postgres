@@ -29,6 +29,7 @@
 #define BTREE_FASTPATH_MIN_LEVEL	2
 
 
+static BTStack _bt_search_insert(Relation rel, BTInsertState insertstate);
 static TransactionId _bt_check_unique(Relation rel, BTInsertState insertstate,
 									  Relation heapRel,
 									  IndexUniqueCheck checkUnique, bool *is_unique,
@@ -84,9 +85,7 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	bool		is_unique = false;
 	BTInsertStateData insertstate;
 	BTScanInsert itup_key;
-	BTStack		stack = NULL;
-	Buffer		buf;
-	bool		fastpath;
+	BTStack		stack;
 	bool		checkingunique = (checkUnique != UNIQUE_CHECK_NO);
 
 	/* we need an insertion scan key to do our search, so build one */
@@ -137,102 +136,32 @@ _bt_doinsert(Relation rel, IndexTuple itup,
 	insertstate.buf = InvalidBuffer;
 	insertstate.postingoff = 0;
 
+search:
+
 	/*
-	 * It's very common to have an index on an auto-incremented or
-	 * monotonically increasing value. In such cases, every insertion happens
-	 * towards the end of the index. We try to optimize that case by caching
-	 * the right-most leaf of the index. If our cached block is still the
-	 * rightmost leaf, has enough free space to accommodate a new entry and
-	 * the insertion key is strictly greater than the first key in this page,
-	 * then we can safely conclude that the new key will be inserted in the
-	 * cached block. So we simply search within the cached block and insert
-	 * the key at the appropriate location. We call it a fastpath.
-	 *
-	 * Testing has revealed, though, that the fastpath can result in increased
-	 * contention on the exclusive-lock on the rightmost leaf page. So we
-	 * conditionally check if the lock is available. If it's not available
-	 * then we simply abandon the fastpath and take the regular path. This
-	 * makes sense because unavailability of the lock also signals that some
-	 * other backend might be concurrently inserting into the page, thus
-	 * reducing our chances to finding an insertion place in this page.
+	 * Find and lock the leaf page that the tuple should be added to by
+	 * searching from the root page.  insertstate.buf will hold a buffer that
+	 * is locked in exclusive mode afterwards.
 	 */
-top:
-	fastpath = false;
-	if (RelationGetTargetBlock(rel) != InvalidBlockNumber)
-	{
-		Page		page;
-		BTPageOpaque lpageop;
-
-		/*
-		 * Conditionally acquire exclusive lock on the buffer before doing any
-		 * checks. If we don't get the lock, we simply follow slowpath. If we
-		 * do get the lock, this ensures that the index state cannot change,
-		 * as far as the rightmost part of the index is concerned.
-		 */
-		buf = ReadBuffer(rel, RelationGetTargetBlock(rel));
-
-		if (ConditionalLockBuffer(buf))
-		{
-			_bt_checkpage(rel, buf);
-
-			page = BufferGetPage(buf);
-
-			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
-
-			/*
-			 * Check if the page is still the rightmost leaf page, has enough
-			 * free space to accommodate the new tuple, and the insertion scan
-			 * key is strictly greater than the first key on the page.  Note
-			 * that _bt_insert_parent() has an assertion that catches leaf
-			 * page splits that somehow follow from a fastpath insert.
-			 */
-			if (P_ISLEAF(lpageop) && P_RIGHTMOST(lpageop) &&
-				!P_IGNORE(lpageop) &&
-				PageGetFreeSpace(page) > insertstate.itemsz &&
-				PageGetMaxOffsetNumber(page) >= P_FIRSTDATAKEY(lpageop) &&
-				_bt_compare(rel, itup_key, page, P_FIRSTDATAKEY(lpageop)) > 0)
-			{
-				fastpath = true;
-			}
-			else
-			{
-				_bt_relbuf(rel, buf);
-
-				/*
-				 * Something did not work out. Just forget about the cached
-				 * block and follow the normal path. It might be set again if
-				 * the conditions are favourable.
-				 */
-				RelationSetTargetBlock(rel, InvalidBlockNumber);
-			}
-		}
-		else
-		{
-			ReleaseBuffer(buf);
-
-			/*
-			 * If someone's holding a lock, it's likely to change anyway, so
-			 * don't try again until we get an updated rightmost leaf.
-			 */
-			RelationSetTargetBlock(rel, InvalidBlockNumber);
-		}
-	}
-
-	if (!fastpath)
-	{
-		/*
-		 * Find the first page containing this key.  Buffer returned by
-		 * _bt_search() is locked in exclusive mode.
-		 */
-		stack = _bt_search(rel, itup_key, &buf, BT_WRITE, NULL);
-	}
-
-	insertstate.buf = buf;
-	buf = InvalidBuffer;		/* insertstate.buf now owns the buffer */
+	stack = _bt_search_insert(rel, &insertstate);
 
 	/*
-	 * If we're not allowing duplicates, make sure the key isn't already in
-	 * the index.
+	 * checkingunique inserts are not allowed to go ahead when two tuples with
+	 * equal key attribute values would be visible to new MVCC snapshots once
+	 * the xact commits.  Check for conflicts in the locked page/buffer (if
+	 * needed) here.
+	 *
+	 * It might be necessary to check a page to the right in _bt_check_unique,
+	 * though that should be very rare.  In practice the first page the value
+	 * could be on (with scantid omitted) is almost always also the only page
+	 * that a matching tuple might be found on.  This is due to the behavior
+	 * of _bt_findsplitloc with duplicate tuples -- a group of duplicates can
+	 * only be allowed to cross a page boundary when there is no candidate
+	 * leaf page split point that avoids it.  Also, _bt_check_unique can use
+	 * the leaf page high key to determine that there will be no duplicates on
+	 * the right sibling without actually visiting it (it uses the high key in
+	 * cases where the new item happens to belong at the far right of the leaf
+	 * page).
 	 *
 	 * NOTE: obviously, _bt_check_unique can only detect keys that are already
 	 * in the index; so it cannot defend against concurrent insertions of the
@@ -246,7 +175,7 @@ top:
 	 * insertion.  (This requires some care in _bt_findinsertloc.)
 	 *
 	 * If we must wait for another xact, we release the lock while waiting,
-	 * and then must start over completely.
+	 * and then must perform a new search.
 	 *
 	 * For a partial uniqueness check, we don't wait for the other xact. Just
 	 * let the tuple in and return false for possibly non-unique, or true for
@@ -260,7 +189,7 @@ top:
 		xwait = _bt_check_unique(rel, &insertstate, heapRel, checkUnique,
 								 &is_unique, &speculativeToken);
 
-		if (TransactionIdIsValid(xwait))
+		if (unlikely(TransactionIdIsValid(xwait)))
 		{
 			/* Have to wait for the other guy ... */
 			_bt_relbuf(rel, insertstate.buf);
@@ -279,7 +208,7 @@ top:
 			/* start over... */
 			if (stack)
 				_bt_freestack(stack);
-			goto top;
+			goto search;
 		}
 
 		/* Uniqueness is established -- restore heap tid as scantid */
@@ -323,6 +252,112 @@ top:
 	pfree(itup_key);
 
 	return is_unique;
+}
+
+/*
+ *	_bt_search_insert() -- _bt_search() wrapper for inserts
+ *
+ * Search the tree for a particular scankey, or more precisely for the first
+ * leaf page it could be on.  Try to make use of the fastpath optimization's
+ * rightmost leaf page cache before actually searching the tree from the root
+ * page, though.
+ *
+ * Return value is a stack of parent-page pointers (though see notes about
+ * fastpath optimization and page splits below).  insertstate->buf is set to
+ * the address of the leaf-page buffer, which is write-locked and pinned in
+ * all cases (if necessary by creating a new empty root page for caller).
+ *
+ * The fastpath optimization avoids most of the work of searching the tree
+ * repeatedly when a single backend inserts successive new tuples on the
+ * rightmost leaf page of an index.  A backend cache of the rightmost leaf
+ * page is maintained within _bt_insertonpg(), and used here.  The cache is
+ * invalidated here when an insert of a non-pivot tuple must take place on a
+ * non-rightmost leaf page.
+ *
+ * The optimization helps with indexes on an auto-incremented field.  It also
+ * helps with indexes on datetime columns, as well as indexes with lots of
+ * NULL values.  (NULLs usually get inserted in the rightmost page for single
+ * column indexes, since they usually get treated as coming after everything
+ * else in the key space.  Individual NULL tuples will generally be placed on
+ * the rightmost leaf page due to the influence of the heap TID column.)
+ *
+ * Note that we avoid applying the optimization when there is insufficient
+ * space on the rightmost page to fit caller's new item.  This is necessary
+ * because we'll need to return a real descent stack when a page split is
+ * expected (actually, caller can cope with a leaf page split that uses a NULL
+ * stack, but that's very slow and so must be avoided).  Note also that the
+ * fastpath optimization acquires the lock on the page conditionally as a way
+ * of reducing extra contention when there are concurrent insertions into the
+ * rightmost page (we give up if we'd have to wait for the lock).  We assume
+ * that it isn't useful to apply the optimization when there is contention,
+ * since each per-backend cache won't stay valid for long.
+ */
+static BTStack
+_bt_search_insert(Relation rel, BTInsertState insertstate)
+{
+	Assert(insertstate->buf == InvalidBuffer);
+	Assert(!insertstate->bounds_valid);
+	Assert(insertstate->postingoff == 0);
+
+	if (RelationGetTargetBlock(rel) != InvalidBlockNumber)
+	{
+		/* Simulate a _bt_getbuf() call with conditional locking */
+		insertstate->buf = ReadBuffer(rel, RelationGetTargetBlock(rel));
+		if (ConditionalLockBuffer(insertstate->buf))
+		{
+			Page		page;
+			BTPageOpaque lpageop;
+
+			_bt_checkpage(rel, insertstate->buf);
+			page = BufferGetPage(insertstate->buf);
+			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+
+			/*
+			 * Check if the page is still the rightmost leaf page and has
+			 * enough free space to accommodate the new tuple.  Also check
+			 * that the insertion scan key is strictly greater than the first
+			 * non-pivot tuple on the page.  (Note that we expect itup_key's
+			 * scantid to be unset when our caller is a checkingunique
+			 * inserter.)
+			 */
+			if (P_RIGHTMOST(lpageop) &&
+				P_ISLEAF(lpageop) &&
+				!P_IGNORE(lpageop) &&
+				PageGetFreeSpace(page) > insertstate->itemsz &&
+				PageGetMaxOffsetNumber(page) >= P_HIKEY &&
+				_bt_compare(rel, insertstate->itup_key, page, P_HIKEY) > 0)
+			{
+				/*
+				 * Caller can use the fastpath optimization because cached
+				 * block is still rightmost leaf page, which can fit caller's
+				 * new tuple without splitting.  Keep block in local cache for
+				 * next insert, and have caller use NULL stack.
+				 *
+				 * Note that _bt_insert_parent() has an assertion that catches
+				 * leaf page splits that somehow follow from a fastpath insert
+				 * (it should only be passed a NULL stack when it must deal
+				 * with a concurrent root page split, and never because a NULL
+				 * stack was returned here).
+				 */
+				return NULL;
+			}
+
+			/* Page unsuitable for caller, drop lock and pin */
+			_bt_relbuf(rel, insertstate->buf);
+		}
+		else
+		{
+			/* Lock unavailable, drop pin */
+			ReleaseBuffer(insertstate->buf);
+		}
+
+		/* Forget block, since cache doesn't appear to be useful */
+		RelationSetTargetBlock(rel, InvalidBlockNumber);
+	}
+
+	/* Cannot use optimization -- descend tree, return proper descent stack */
+	return _bt_search(rel, insertstate->itup_key, &insertstate->buf, BT_WRITE,
+					  NULL);
 }
 
 /*
@@ -1177,10 +1212,12 @@ _bt_insertonpg(Relation rel,
 	}
 	else
 	{
+		bool		isleaf = P_ISLEAF(lpageop);
+		bool		isrightmost = P_RIGHTMOST(lpageop);
 		Buffer		metabuf = InvalidBuffer;
 		Page		metapg = NULL;
 		BTMetaPageData *metad = NULL;
-		BlockNumber cachedBlock = InvalidBlockNumber;
+		BlockNumber blockcache;
 
 		/*
 		 * If we are doing this insert because we split a page that was the
@@ -1191,7 +1228,8 @@ _bt_insertonpg(Relation rel,
 		 */
 		if (split_only_page)
 		{
-			Assert(!P_ISLEAF(lpageop));
+			Assert(!isleaf);
+			Assert(BufferIsValid(cbuf));
 
 			metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 			metapg = BufferGetPage(metabuf);
@@ -1238,15 +1276,6 @@ _bt_insertonpg(Relation rel,
 			MarkBufferDirty(cbuf);
 		}
 
-		/*
-		 * Cache the block information if we just inserted into the rightmost
-		 * leaf page of the index and it's not the root page.  For very small
-		 * index where root is also the leaf, there is no point trying for any
-		 * optimization.
-		 */
-		if (P_RIGHTMOST(lpageop) && P_ISLEAF(lpageop) && !P_ISROOT(lpageop))
-			cachedBlock = BufferGetBlockNumber(buf);
-
 		/* XLOG stuff */
 		if (RelationNeedsWAL(rel))
 		{
@@ -1260,7 +1289,7 @@ _bt_insertonpg(Relation rel,
 			XLogBeginInsert();
 			XLogRegisterData((char *) &xlrec, SizeOfBtreeInsert);
 
-			if (P_ISLEAF(lpageop) && postingoff == 0)
+			if (isleaf && postingoff == 0)
 			{
 				/* Simple leaf insert */
 				xlinfo = XLOG_BTREE_INSERT_LEAF;
@@ -1329,36 +1358,42 @@ _bt_insertonpg(Relation rel,
 			recptr = XLogInsert(RM_BTREE_ID, xlinfo);
 
 			if (BufferIsValid(metabuf))
-			{
 				PageSetLSN(metapg, recptr);
-			}
 			if (BufferIsValid(cbuf))
-			{
 				PageSetLSN(BufferGetPage(cbuf), recptr);
-			}
 
 			PageSetLSN(page, recptr);
 		}
 
 		END_CRIT_SECTION();
 
-		/* release buffers */
+		/* Release subsidiary buffers */
 		if (BufferIsValid(metabuf))
 			_bt_relbuf(rel, metabuf);
 		if (BufferIsValid(cbuf))
 			_bt_relbuf(rel, cbuf);
+
+		/*
+		 * Cache the block number if this is the rightmost leaf page.  Cache
+		 * may be used by a future inserter within _bt_search_insert().
+		 */
+		blockcache = InvalidBlockNumber;
+		if (isrightmost && isleaf && !P_ISROOT(lpageop))
+			blockcache = BufferGetBlockNumber(buf);
+
+		/* Release buffer for insertion target block */
 		_bt_relbuf(rel, buf);
 
 		/*
-		 * If we decided to cache the insertion target block, then set it now.
-		 * But before that, check for the height of the tree and don't go for
-		 * the optimization for small indexes. We defer that check to this
-		 * point to ensure that we don't call _bt_getrootheight while holding
-		 * lock on any other block.
+		 * If we decided to cache the insertion target block before releasing
+		 * its buffer lock, then cache it now.  Check the height of the tree
+		 * first, though.  We don't go for the optimization with small
+		 * indexes.  Defer final check to this point to ensure that we don't
+		 * call _bt_getrootheight while holding a buffer lock.
 		 */
-		if (BlockNumberIsValid(cachedBlock) &&
+		if (BlockNumberIsValid(blockcache) &&
 			_bt_getrootheight(rel) >= BTREE_FASTPATH_MIN_LEVEL)
-			RelationSetTargetBlock(rel, cachedBlock);
+			RelationSetTargetBlock(rel, blockcache);
 	}
 
 	/* be tidy */
@@ -2054,9 +2089,9 @@ _bt_insert_parent(Relation rel,
 			 * This is more of a performance issue than a correctness issue.
 			 * The fastpath won't have a descent stack.  Using a phony stack
 			 * here works, but never rely on that.  The fastpath should be
-			 * rejected when the rightmost leaf page will split, since it's
-			 * faster to go through _bt_search() and get a stack in the usual
-			 * way.
+			 * rejected within _bt_search_insert() when the rightmost leaf
+			 * page will split, since it's faster to go through _bt_search()
+			 * and get a stack in the usual way.
 			 */
 			Assert(!(P_ISLEAF(lpageop) &&
 					 BlockNumberIsValid(RelationGetTargetBlock(rel))));
