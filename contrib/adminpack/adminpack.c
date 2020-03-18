@@ -128,7 +128,7 @@ pg_file_write(PG_FUNCTION_ARGS)
 
 		if (stat(filename, &fst) >= 0)
 			ereport(ERROR,
-					(ERRCODE_DUPLICATE_FILE,
+					(errcode(ERRCODE_DUPLICATE_FILE),
 					 errmsg("file \"%s\" exists", filename)));
 
 		f = AllocateFile(filename, "wb");
@@ -194,7 +194,7 @@ pg_file_rename(PG_FUNCTION_ARGS)
 	if (rc >= 0 || errno != ENOENT)
 	{
 		ereport(ERROR,
-				(ERRCODE_DUPLICATE_FILE,
+				(errcode(ERRCODE_DUPLICATE_FILE),
 				 errmsg("cannot rename to target file \"%s\"",
 						fn3 ? fn3 : fn2)));
 	}
@@ -225,7 +225,7 @@ pg_file_rename(PG_FUNCTION_ARGS)
 			else
 			{
 				ereport(ERROR,
-						(ERRCODE_UNDEFINED_FILE,
+						(errcode(ERRCODE_UNDEFINED_FILE),
 						 errmsg("renaming \"%s\" to \"%s\" was reverted",
 								fn2, fn3)));
 			}
