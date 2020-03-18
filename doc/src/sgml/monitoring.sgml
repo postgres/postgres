@@ -1278,11 +1278,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>RecoveryWalAll</literal></entry>
-         <entry>Waiting for WAL from any kind of source (local, archive or stream) at recovery.</entry>
+         <entry>Waiting for WAL from a stream at recovery.</entry>
         </row>
         <row>
          <entry><literal>RecoveryWalStream</literal></entry>
-         <entry>Waiting for WAL from a stream at recovery.</entry>
+         <entry>
+          Waiting when WAL data is not available from any kind of sources
+          (local, archive or stream) before trying again to retrieve WAL data,
+          at recovery.
+         </entry>
         </row>
         <row>
          <entry><literal>SysLoggerMain</literal></entry>
