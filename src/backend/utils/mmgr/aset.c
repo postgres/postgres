@@ -132,6 +132,7 @@ typedef struct AllocSetContext
 	Size		maxBlockSize;	/* maximum block size */
 	Size		nextBlockSize;	/* next block size to allocate */
 	Size		allocChunkLimit;	/* effective chunk size limit */
+	Size		memAllocated;	/* track memory allocated for this context */
 	AllocBlock	keeper;			/* keep this block over resets */
 	/* freelist this context could be put in, or -1 if not a candidate: */
 	int			freeListIndex;	/* index in context_freelists[], or -1 */
@@ -272,6 +273,7 @@ static void *AllocSetRealloc(MemoryContext context, void *pointer, Size size);
 static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
+static Size AllocSetMemAllocated(MemoryContext context);
 static bool AllocSetIsEmpty(MemoryContext context);
 static void AllocSetStats(MemoryContext context,
 						  MemoryStatsPrintFunc printfunc, void *passthru,
@@ -291,6 +293,7 @@ static const MemoryContextMethods AllocSetMethods = {
 	AllocSetReset,
 	AllocSetDelete,
 	AllocSetGetChunkSpace,
+	AllocSetMemAllocated,
 	AllocSetIsEmpty,
 	AllocSetStats
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -464,8 +467,7 @@ AllocSetContextCreateInternal(MemoryContext parent,
 								parent,
 								name);
 
-			((MemoryContext) set)->mem_allocated =
-				set->keeper->endptr - ((char *) set);
+			set->memAllocated = set->keeper->endptr - ((char *) set);
 
 			return (MemoryContext) set;
 		}
@@ -555,7 +557,7 @@ AllocSetContextCreateInternal(MemoryContext parent,
 						parent,
 						name);
 
-	((MemoryContext) set)->mem_allocated = firstBlockSize;
+	set->memAllocated = firstBlockSize;
 
 	return (MemoryContext) set;
 }
@@ -617,7 +619,7 @@ AllocSetReset(MemoryContext context)
 		else
 		{
 			/* Normal case, release the block */
-			context->mem_allocated -= block->endptr - ((char*) block);
+			set->memAllocated -= block->endptr - ((char*) block);
 
 #ifdef CLOBBER_FREED_MEMORY
 			wipe_mem(block, block->freeptr - ((char *) block));
@@ -627,7 +629,7 @@ AllocSetReset(MemoryContext context)
 		block = next;
 	}
 
-	Assert(context->mem_allocated == keepersize);
+	Assert(set->memAllocated == keepersize);
 
 	/* Reset block size allocation sequence, too */
 	set->nextBlockSize = set->initBlockSize;
@@ -703,7 +705,7 @@ AllocSetDelete(MemoryContext context)
 		AllocBlock	next = block->next;
 
 		if (block != set->keeper)
-			context->mem_allocated -= block->endptr - ((char *) block);
+			set->memAllocated -= block->endptr - ((char *) block);
 
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->freeptr - ((char *) block));
@@ -715,7 +717,7 @@ AllocSetDelete(MemoryContext context)
 		block = next;
 	}
 
-	Assert(context->mem_allocated == keepersize);
+	Assert(set->memAllocated == keepersize);
 
 	/* Finally, free the context header, including the keeper block */
 	free(set);
@@ -758,7 +760,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		if (block == NULL)
 			return NULL;
 
-		context->mem_allocated += blksize;
+		set->memAllocated += blksize;
 
 		block->aset = set;
 		block->freeptr = block->endptr = ((char *) block) + blksize;
@@ -955,7 +957,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 		if (block == NULL)
 			return NULL;
 
-		context->mem_allocated += blksize;
+		set->memAllocated += blksize;
 
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
@@ -1058,7 +1060,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 		if (block->next)
 			block->next->prev = block->prev;
 
-		context->mem_allocated -= block->endptr - ((char*) block);
+		set->memAllocated -= block->endptr - ((char*) block);
 
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->freeptr - ((char *) block));
@@ -1161,8 +1163,8 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		}
 
 		/* updated separately, not to underflow when (oldblksize > blksize) */
-		context->mem_allocated -= oldblksize;
-		context->mem_allocated += blksize;
+		set->memAllocated -= oldblksize;
+		set->memAllocated += blksize;
 
 		block->freeptr = block->endptr = ((char *) block) + blksize;
 
@@ -1335,6 +1337,24 @@ AllocSetGetChunkSpace(MemoryContext context, void *pointer)
 	result = chunk->size + ALLOC_CHUNKHDRSZ;
 	VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOCCHUNK_PRIVATE_LEN);
 	return result;
+}
+
+/*
+ * All memory currently allocated for this context (including fragmentation
+ * and freed chunks).
+ *
+ * Allocation sizes double (up to maxBlockSize), so the current block may
+ * represent half of the total space allocated to the context. Subtract away
+ * the free space at the tail of the current block, which may never have been
+ * touched.
+ */
+static Size
+AllocSetMemAllocated(MemoryContext context)
+{
+	AllocSet set = (AllocSet) context;
+	AllocBlock currentBlock = set->blocks;
+	Size tailSpace = currentBlock->endptr - currentBlock->freeptr;
+	return set->memAllocated - tailSpace;
 }
 
 /*
@@ -1538,7 +1558,7 @@ AllocSetCheck(MemoryContext context)
 				 name, block);
 	}
 
-	Assert(total_allocated == context->mem_allocated);
+	Assert(total_allocated == set->memAllocated);
 }
 
 #endif							/* MEMORY_CONTEXT_CHECKING */

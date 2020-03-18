@@ -63,6 +63,7 @@ typedef struct MemoryContextMethods
 	void		(*reset) (MemoryContext context);
 	void		(*delete_context) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
+	Size		(*mem_allocated) (MemoryContext context);
 	bool		(*is_empty) (MemoryContext context);
 	void		(*stats) (MemoryContext context,
 						  MemoryStatsPrintFunc printfunc, void *passthru,
@@ -79,7 +80,6 @@ typedef struct MemoryContextData
 	/* these two fields are placed here to minimize alignment wastage: */
 	bool		isReset;		/* T = no space alloced since last reset */
 	bool		allowInCritSection; /* allow palloc in critical section */
-	Size		mem_allocated;	/* track memory allocated for this context */
 	const MemoryContextMethods *methods;	/* virtual function table */
 	MemoryContext parent;		/* NULL if no parent (toplevel context) */
 	MemoryContext firstchild;	/* head of linked list of children */
