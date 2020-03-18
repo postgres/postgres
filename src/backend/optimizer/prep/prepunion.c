@@ -1072,7 +1072,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 			 numGroupCols, dNumGroups,
 			 NIL,
 			 input_path->startup_cost, input_path->total_cost,
-			 input_path->rows);
+			 input_path->rows, input_path->pathtarget->width);
 
 	/*
 	 * Now for the sorted case.  Note that the input is *always* unsorted,

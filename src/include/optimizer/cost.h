@@ -54,6 +54,8 @@ extern PGDLLIMPORT bool enable_bitmapscan;
 extern PGDLLIMPORT bool enable_tidscan;
 extern PGDLLIMPORT bool enable_sort;
 extern PGDLLIMPORT bool enable_hashagg;
+extern PGDLLIMPORT bool enable_hashagg_disk;
+extern PGDLLIMPORT bool enable_groupingsets_hash_disk;
 extern PGDLLIMPORT bool enable_nestloop;
 extern PGDLLIMPORT bool enable_material;
 extern PGDLLIMPORT bool enable_mergejoin;
@@ -114,7 +116,7 @@ extern void cost_agg(Path *path, PlannerInfo *root,
 					 int numGroupCols, double numGroups,
 					 List *quals,
 					 Cost input_startup_cost, Cost input_total_cost,
-					 double input_tuples);
+					 double input_tuples, double input_width);
 extern void cost_windowagg(Path *path, PlannerInfo *root,
 						   List *windowFuncs, int numPartCols, int numOrderCols,
 						   Cost input_startup_cost, Cost input_total_cost,

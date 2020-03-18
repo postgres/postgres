@@ -104,6 +104,7 @@ static void show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 							 List *ancestors, ExplainState *es);
 static void show_sort_info(SortState *sortstate, ExplainState *es);
 static void show_hash_info(HashState *hashstate, ExplainState *es);
+static void show_hashagg_info(AggState *hashstate, ExplainState *es);
 static void show_tidbitmap_info(BitmapHeapScanState *planstate,
 								ExplainState *es);
 static void show_instrumentation_count(const char *qlabel, int which,
@@ -1882,6 +1883,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		case T_Agg:
 			show_agg_keys(castNode(AggState, planstate), ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
+			show_hashagg_info((AggState *) planstate, es);
 			if (plan->qual)
 				show_instrumentation_count("Rows Removed by Filter", 1,
 										   planstate, es);
@@ -2766,6 +2768,41 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 							 hinstrument.nbuckets, hinstrument.nbatch,
 							 spacePeakKb);
 		}
+	}
+}
+
+/*
+ * Show information on hash aggregate memory usage and batches.
+ */
+static void
+show_hashagg_info(AggState *aggstate, ExplainState *es)
+{
+	Agg		*agg	   = (Agg *)aggstate->ss.ps.plan;
+	long	 memPeakKb = (aggstate->hash_mem_peak + 1023) / 1024;
+
+	Assert(IsA(aggstate, AggState));
+
+	if (agg->aggstrategy != AGG_HASHED &&
+		agg->aggstrategy != AGG_MIXED)
+		return;
+
+	if (es->costs && aggstate->hash_planned_partitions > 0)
+	{
+		ExplainPropertyInteger("Planned Partitions", NULL,
+							   aggstate->hash_planned_partitions, es);
+	}
+
+	if (!es->analyze)
+		return;
+
+	/* EXPLAIN ANALYZE */
+	ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb, es);
+	if (aggstate->hash_batches_used > 0)
+	{
+		ExplainPropertyInteger("Disk Usage", "kB",
+							   aggstate->hash_disk_used, es);
+		ExplainPropertyInteger("HashAgg Batches", NULL,
+							   aggstate->hash_batches_used, es);
 	}
 }
 

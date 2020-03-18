@@ -46,6 +46,68 @@ SELECT count(*) FROM
   (SELECT DISTINCT two, four, two FROM tenk1) ss;
 
 --
+-- Compare results between plans using sorting and plans using hash
+-- aggregation. Force spilling in both cases by setting work_mem low.
+--
+
+SET work_mem='64kB';
+
+-- Produce results with sorting.
+
+SET enable_hashagg=FALSE;
+
+SET jit_above_cost=0;
+
+EXPLAIN (costs off)
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+
+CREATE TABLE distinct_group_1 AS
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+
+SET jit_above_cost TO DEFAULT;
+
+CREATE TABLE distinct_group_2 AS
+SELECT DISTINCT (g%1000)::text FROM generate_series(0,9999) g;
+
+SET enable_hashagg=TRUE;
+
+-- Produce results with hash aggregation.
+
+SET enable_sort=FALSE;
+
+SET jit_above_cost=0;
+
+EXPLAIN (costs off)
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+
+CREATE TABLE distinct_hash_1 AS
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+
+SET jit_above_cost TO DEFAULT;
+
+CREATE TABLE distinct_hash_2 AS
+SELECT DISTINCT (g%1000)::text FROM generate_series(0,9999) g;
+
+SET enable_sort=TRUE;
+
+SET work_mem TO DEFAULT;
+
+-- Compare results
+
+(SELECT * FROM distinct_hash_1 EXCEPT SELECT * FROM distinct_group_1)
+  UNION ALL
+(SELECT * FROM distinct_group_1 EXCEPT SELECT * FROM distinct_hash_1);
+
+(SELECT * FROM distinct_hash_1 EXCEPT SELECT * FROM distinct_group_1)
+  UNION ALL
+(SELECT * FROM distinct_group_1 EXCEPT SELECT * FROM distinct_hash_1);
+
+DROP TABLE distinct_hash_1;
+DROP TABLE distinct_hash_2;
+DROP TABLE distinct_group_1;
+DROP TABLE distinct_group_2;
+
+--
 -- Also, some tests of IS DISTINCT FROM, which doesn't quite deserve its
 -- very own regression file.
 --

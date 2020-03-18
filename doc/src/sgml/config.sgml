@@ -4482,6 +4482,23 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-groupingsets-hash-disk" xreflabel="enable_groupingsets_hash_disk">
+      <term><varname>enable_groupingsets_hash_disk</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_groupingsets_hash_disk</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of hashed aggregation plan
+        types for grouping sets when the total size of the hash tables is
+        expected to exceed <varname>work_mem</varname>.  See <xref
+        linkend="queries-grouping-sets"/>.  The default is
+        <literal>off</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-hashagg" xreflabel="enable_hashagg">
       <term><varname>enable_hashagg</varname> (<type>boolean</type>)
       <indexterm>
@@ -4492,6 +4509,21 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Enables or disables the query planner's use of hashed
         aggregation plan types. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-enable-hashagg-disk" xreflabel="enable_hashagg_disk">
+      <term><varname>enable_hashagg_disk</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_hashagg_disk</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of hashed aggregation plan
+        types when the memory usage is expected to exceed
+        <varname>work_mem</varname>.  The default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
