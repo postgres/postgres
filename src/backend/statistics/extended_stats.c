@@ -993,7 +993,7 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		if (list_length(expr->args) != 2)
 			return false;
 
-		/* Check if the expression the right shape (one Var, one Const) */
+		/* Check if the expression has the right shape (one Var, one Const) */
 		if (!examine_clause_args(expr->args, &var, NULL, NULL))
 			return false;
 
@@ -1049,7 +1049,7 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		if (list_length(expr->args) != 2)
 			return false;
 
-		/* Check if the expression the right shape (one Var, one Const) */
+		/* Check if the expression has the right shape (one Var, one Const) */
 		if (!examine_clause_args(expr->args, &var, NULL, NULL))
 			return false;
 
