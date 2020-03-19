@@ -2531,11 +2531,6 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 /*
  *	_bt_pgaddtup() -- add a data item to a particular page during split.
  *
- *		This routine adds the tuple to the page as requested.  It does
- *		not affect pin/lock status, but you'd better have a write lock
- *		and pin on the target buffer!  Don't forget to write and release
- *		the buffer afterwards, either.
- *
  *		The difference between this routine and a bare PageAddItem call is
  *		that this code knows that the leftmost data item on an internal
  *		btree page has a key that must be treated as minus infinity.
