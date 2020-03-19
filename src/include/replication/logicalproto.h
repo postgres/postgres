@@ -49,6 +49,7 @@ typedef struct LogicalRepRelation
 	char	  **attnames;		/* column names */
 	Oid		   *atttyps;		/* column types */
 	char		replident;		/* replica identity */
+	char		relkind;		/* remote relation kind */
 	Bitmapset  *attkeys;		/* Bitmap of key columns */
 } LogicalRepRelation;
 
