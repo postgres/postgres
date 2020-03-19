@@ -185,6 +185,18 @@ static int	FastPathLocalUseCount = 0;
  */
 static bool IsRelationExtensionLockHeld PG_USED_FOR_ASSERTS_ONLY = false;
 
+/*
+ * Flag to indicate if the page lock is held by this backend.  We don't
+ * acquire any other heavyweight lock while holding the page lock except for
+ * relation extension.  However, these locks are never taken in reverse order
+ * which implies that page locks will also never participate in the deadlock
+ * cycle.
+ *
+ * Similar to relation extension, page locks are also held for a short
+ * duration, so imposing such a restriction won't hurt.
+ */
+static bool IsPageLockHeld PG_USED_FOR_ASSERTS_ONLY = false;
+
 /* Macros for manipulating proc->fpLockBits */
 #define FAST_PATH_BITS_PER_SLOT			3
 #define FAST_PATH_LOCKNUMBER_OFFSET		1
@@ -863,6 +875,13 @@ LockAcquireExtended(const LOCKTAG *locktag,
 	Assert(!IsRelationExtensionLockHeld);
 
 	/*
+	 * We don't acquire any other heavyweight lock while holding the page lock
+	 * except for relation extension.
+	 */
+	Assert(!IsPageLockHeld ||
+		   (locktag->locktag_type == LOCKTAG_RELATION_EXTEND));
+
+	/*
 	 * Prepare to emit a WAL record if acquisition of this lock needs to be
 	 * replayed in a standby server.
 	 *
@@ -1310,10 +1329,10 @@ SetupLockInTable(LockMethod lockMethodTable, PGPROC *proc,
 }
 
 /*
- * Check and set/reset the flag that we hold the relation extension lock.
+ * Check and set/reset the flag that we hold the relation extension/page lock.
  *
  * It is callers responsibility that this function is called after
- * acquiring/releasing the relation extension lock.
+ * acquiring/releasing the relation extension/page lock.
  *
  * Pass acquired as true if lock is acquired, false otherwise.
  */
@@ -1323,6 +1342,9 @@ CheckAndSetLockHeld(LOCALLOCK *locallock, bool acquired)
 #ifdef USE_ASSERT_CHECKING
 	if (LOCALLOCK_LOCKTAG(*locallock) == LOCKTAG_RELATION_EXTEND)
 		IsRelationExtensionLockHeld = acquired;
+	else if (LOCALLOCK_LOCKTAG(*locallock) == LOCKTAG_PAGE)
+		IsPageLockHeld = acquired;
+
 #endif
 }
 
