@@ -1244,7 +1244,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to acquire a pin on a buffer.</entry>
         </row>
         <row>
-         <entry morerows="13"><literal>Activity</literal></entry>
+         <entry morerows="12"><literal>Activity</literal></entry>
          <entry><literal>ArchiverMain</literal></entry>
          <entry>Waiting in main loop of the archiver process.</entry>
         </row>
@@ -1277,16 +1277,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in main loop of the statistics collector process.</entry>
         </row>
         <row>
-         <entry><literal>RecoveryWalAll</literal></entry>
-         <entry>Waiting for WAL from a stream at recovery.</entry>
-        </row>
-        <row>
          <entry><literal>RecoveryWalStream</literal></entry>
-         <entry>
-          Waiting when WAL data is not available from any kind of sources
-          (local, archive or stream) before trying again to retrieve WAL data,
-          at recovery.
-         </entry>
+         <entry>Waiting for WAL from a stream at recovery.</entry>
         </row>
         <row>
          <entry><literal>SysLoggerMain</literal></entry>
@@ -1496,7 +1488,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting for confirmation from remote server during synchronous replication.</entry>
         </row>
         <row>
-         <entry morerows="2"><literal>Timeout</literal></entry>
+         <entry morerows="3"><literal>Timeout</literal></entry>
          <entry><literal>BaseBackupThrottle</literal></entry>
          <entry>Waiting during base backup when throttling activity.</entry>
         </row>
@@ -1507,6 +1499,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>RecoveryApplyDelay</literal></entry>
          <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryRetrieveRetryInterval</literal></entry>
+         <entry>
+          Waiting when WAL data is not available from any kind of sources
+          (<filename>pg_wal</filename>, archive or stream) before trying
+          again to retrieve WAL data, at recovery.
+         </entry>
         </row>
         <row>
          <entry morerows="68"><literal>IO</literal></entry>

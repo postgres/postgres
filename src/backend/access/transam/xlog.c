@@ -12031,7 +12031,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 										 WL_LATCH_SET | WL_TIMEOUT |
 										 WL_EXIT_ON_PM_DEATH,
 										 wait_time,
-										 WAIT_EVENT_RECOVERY_WAL_STREAM);
+										 WAIT_EVENT_RECOVERY_RETRIEVE_RETRY_INTERVAL);
 						ResetLatch(&XLogCtl->recoveryWakeupLatch);
 						now = GetCurrentTimestamp();
 					}
@@ -12221,7 +12221,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					(void) WaitLatch(&XLogCtl->recoveryWakeupLatch,
 									 WL_LATCH_SET | WL_TIMEOUT |
 									 WL_EXIT_ON_PM_DEATH,
-									 5000L, WAIT_EVENT_RECOVERY_WAL_ALL);
+									 5000L, WAIT_EVENT_RECOVERY_WAL_STREAM);
 					ResetLatch(&XLogCtl->recoveryWakeupLatch);
 					break;
 				}

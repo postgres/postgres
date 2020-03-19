@@ -3602,9 +3602,6 @@ pgstat_get_wait_activity(WaitEventActivity w)
 		case WAIT_EVENT_PGSTAT_MAIN:
 			event_name = "PgStatMain";
 			break;
-		case WAIT_EVENT_RECOVERY_WAL_ALL:
-			event_name = "RecoveryWalAll";
-			break;
 		case WAIT_EVENT_RECOVERY_WAL_STREAM:
 			event_name = "RecoveryWalStream";
 			break;
@@ -3823,6 +3820,9 @@ pgstat_get_wait_timeout(WaitEventTimeout w)
 			break;
 		case WAIT_EVENT_RECOVERY_APPLY_DELAY:
 			event_name = "RecoveryApplyDelay";
+			break;
+		case WAIT_EVENT_RECOVERY_RETRIEVE_RETRY_INTERVAL:
+			event_name = "RecoveryRetrieveRetryInterval";
 			break;
 			/* no default case, so that compiler will warn */
 	}
