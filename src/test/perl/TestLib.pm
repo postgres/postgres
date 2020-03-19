@@ -15,6 +15,7 @@ our @EXPORT = qw(
   psql
   slurp_dir
   slurp_file
+  append_to_file
   system_or_bail
   system_log
   run_log
@@ -127,6 +128,33 @@ sub tempdir_short
 	# Use a separate temp dir outside the build tree for the
 	# Unix-domain socket, to avoid file name length issues.
 	return File::Temp::tempdir(CLEANUP => 1);
+}
+
+# Translate a Perl file name to a host file name.  Currently, this is a no-op
+# except for the case of Perl=msys and host=mingw32.  The subject need not
+# exist, but its parent directory must exist.
+sub perl2host
+{
+	my ($subject) = @_;
+	return $subject unless $Config{osname} eq 'msys';
+	my $here = cwd;
+	my $leaf;
+	if (chdir $subject)
+	{
+		$leaf = '';
+	}
+	else
+	{
+		$leaf = '/' . basename $subject;
+		my $parent = dirname $subject;
+		chdir $parent or die "could not chdir \"$parent\": $!";
+	}
+
+	# this odd way of calling 'pwd -W' is the only way that seems to work.
+	my $dir = qx{sh -c "pwd -W"};
+	chomp $dir;
+	chdir $here;
+	return $dir . $leaf;
 }
 
 # Initialize a new cluster for testing.
@@ -255,6 +283,15 @@ sub slurp_file
 	close $in;
 	$contents =~ s/\r//g if $Config{osname} eq 'msys';
 	return $contents;
+}
+
+sub append_to_file
+{
+	my ($filename, $str) = @_;
+	open my $fh, ">>", $filename
+	  or die "could not write \"$filename\": $!";
+	print $fh $str;
+	close $fh;
 }
 
 sub system_or_bail

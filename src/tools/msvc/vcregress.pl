@@ -37,7 +37,7 @@ if (-e "src/tools/msvc/buildenv.pl")
 
 my $what = shift || "";
 if ($what =~
-/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|taptest)$/i
+/^(check|installcheck|plcheck|contribcheck|modulescheck|ecpgcheck|isolationcheck|upgradecheck|bincheck|recoverycheck|taptest)$/i
   )
 {
 	$what = uc $what;
@@ -85,6 +85,7 @@ my %command = (
 	MODULESCHECK   => \&modulescheck,
 	ISOLATIONCHECK => \&isolationcheck,
 	BINCHECK       => \&bincheck,
+	RECOVERYCHECK  => \&recoverycheck,
 	UPGRADECHECK   => \&upgradecheck,
 	TAPTEST        => \&taptest,);
 
@@ -203,8 +204,9 @@ sub tap_check
 
 	# adjust the environment for just this test
 	local %ENV = %ENV;
-	$ENV{PERL5LIB} = "$topdir/src/test/perl;$ENV{PERL5LIB}";
+	$ENV{PERL5LIB}   = "$topdir/src/test/perl;$ENV{PERL5LIB}";
 	$ENV{PG_REGRESS} = "$topdir/$Config/pg_regress/pg_regress";
+	$ENV{REGRESS_SHLIB} = "$topdir/src/test/regress/regress.dll";
 
 	$ENV{TESTDIR} = "$dir";
 
@@ -437,6 +439,16 @@ sub modulescheck
 		$mstat ||= $status;
 	}
 	exit $mstat if $mstat;
+}
+
+sub recoverycheck
+{
+	InstallTemp();
+
+	my $mstat  = 0;
+	my $dir    = "$topdir/src/test/recovery";
+	my $status = tap_check($dir);
+	exit $status if $status;
 }
 
 # Run "initdb", then reconfigure authentication.
@@ -683,6 +695,7 @@ sub usage
 	  "  isolationcheck run isolation tests\n",
 	  "  modulescheck   run tests of modules in src/test/modules/\n",
 	  "  plcheck        run tests of PL languages\n",
+	  "  recoverycheck  run recovery test suite\n",
 	  "  taptest        run an arbitrary TAP test set\n",
 	  "  upgradecheck   run tests of pg_upgrade\n",
 	  "\nOptions for <arg>: (used by check and installcheck)\n",

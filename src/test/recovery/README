@@ -1,0 +1,17 @@
+src/test/recovery/README
+
+Regression tests for recovery and replication
+=============================================
+
+This directory contains a test suite for recovery and replication.
+
+Running the tests
+=================
+
+    make check
+
+NOTE: This creates a temporary installation, and some tests may
+create one or multiple nodes, be they master or standby(s) for the
+purpose of the tests.
+
+NOTE: This requires the --enable-tap-tests argument to configure.
