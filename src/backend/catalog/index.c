@@ -1531,7 +1531,7 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 	newIndexForm->indisclustered = oldIndexForm->indisclustered;
 
 	/*
-	 * Mark the old index as valid, and the new index as invalid similarly
+	 * Mark the new index as valid, and the old index as invalid similarly
 	 * to what index_set_state_flags() does.
 	 */
 	newIndexForm->indisvalid = true;
