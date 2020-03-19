@@ -740,6 +740,10 @@ drop view aggordview1;
 select least_agg(q1,q2) from int8_tbl;
 select least_agg(variadic array[q1,q2]) from int8_tbl;
 
+select cleast_agg(q1,q2) from int8_tbl;
+select cleast_agg(4.5,f1) from int4_tbl;
+select cleast_agg(variadic array[4.5,f1]) from int4_tbl;
+select pg_typeof(cleast_agg(variadic array[4.5,f1])) from int4_tbl;
 
 -- test aggregates with common transition functions share the same states
 begin work;

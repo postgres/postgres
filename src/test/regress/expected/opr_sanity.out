@@ -329,7 +329,7 @@ SELECT p1.oid, p1.proname
 FROM pg_proc as p1
 WHERE p1.prorettype IN
     ('anyelement'::regtype, 'anyarray'::regtype, 'anynonarray'::regtype,
-     'anyenum'::regtype, 'anyrange'::regtype)
+     'anyenum'::regtype)
   AND NOT
     ('anyelement'::regtype = ANY (p1.proargtypes) OR
      'anyarray'::regtype = ANY (p1.proargtypes) OR
@@ -337,22 +337,64 @@ WHERE p1.prorettype IN
      'anyenum'::regtype = ANY (p1.proargtypes) OR
      'anyrange'::regtype = ANY (p1.proargtypes))
 ORDER BY 2;
- oid  |     proname      
-------+------------------
+ oid  |    proname     
+------+----------------
  2296 | anyarray_in
  2502 | anyarray_recv
  2312 | anyelement_in
  3504 | anyenum_in
  2777 | anynonarray_in
- 3832 | anyrange_in
   750 | array_in
  2400 | array_recv
  3506 | enum_in
  3532 | enum_recv
+(9 rows)
+
+-- anyrange is tighter than the rest, can only resolve from anyrange input
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE p1.prorettype = 'anyrange'::regtype
+  AND NOT
+     'anyrange'::regtype = ANY (p1.proargtypes)
+ORDER BY 2;
+ oid  |     proname      
+------+------------------
+ 3832 | anyrange_in
  3876 | range_gist_union
  3834 | range_in
  3836 | range_recv
-(13 rows)
+(4 rows)
+
+-- similarly for the anycompatible family
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE p1.prorettype IN
+    ('anycompatible'::regtype, 'anycompatiblearray'::regtype,
+     'anycompatiblenonarray'::regtype)
+  AND NOT
+    ('anycompatible'::regtype = ANY (p1.proargtypes) OR
+     'anycompatiblearray'::regtype = ANY (p1.proargtypes) OR
+     'anycompatiblenonarray'::regtype = ANY (p1.proargtypes) OR
+     'anycompatiblerange'::regtype = ANY (p1.proargtypes))
+ORDER BY 2;
+ oid  |         proname          
+------+--------------------------
+ 9559 | anycompatible_in
+ 9561 | anycompatiblearray_in
+ 9563 | anycompatiblearray_recv
+ 9565 | anycompatiblenonarray_in
+(4 rows)
+
+SELECT p1.oid, p1.proname
+FROM pg_proc as p1
+WHERE p1.prorettype = 'anycompatiblerange'::regtype
+  AND NOT
+     'anycompatiblerange'::regtype = ANY (p1.proargtypes)
+ORDER BY 2;
+ oid  |        proname        
+------+-----------------------
+ 9567 | anycompatiblerange_in
+(1 row)
 
 -- Look for functions that accept cstring and are neither datatype input
 -- functions nor encoding conversion functions.  It's almost never a good

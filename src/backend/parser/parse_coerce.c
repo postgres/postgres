@@ -167,15 +167,17 @@ coerce_type(ParseState *pstate, Node *node,
 	}
 	if (targetTypeId == ANYOID ||
 		targetTypeId == ANYELEMENTOID ||
-		targetTypeId == ANYNONARRAYOID)
+		targetTypeId == ANYNONARRAYOID ||
+		targetTypeId == ANYCOMPATIBLEOID ||
+		targetTypeId == ANYCOMPATIBLENONARRAYOID)
 	{
 		/*
 		 * Assume can_coerce_type verified that implicit coercion is okay.
 		 *
 		 * Note: by returning the unmodified node here, we are saying that
 		 * it's OK to treat an UNKNOWN constant as a valid input for a
-		 * function accepting ANY, ANYELEMENT, or ANYNONARRAY.  This should be
-		 * all right, since an UNKNOWN value is still a perfectly valid Datum.
+		 * function accepting one of these pseudotypes.  This should be all
+		 * right, since an UNKNOWN value is still a perfectly valid Datum.
 		 *
 		 * NB: we do NOT want a RelabelType here: the exposed type of the
 		 * function argument must be its actual type, not the polymorphic
@@ -185,7 +187,9 @@ coerce_type(ParseState *pstate, Node *node,
 	}
 	if (targetTypeId == ANYARRAYOID ||
 		targetTypeId == ANYENUMOID ||
-		targetTypeId == ANYRANGEOID)
+		targetTypeId == ANYRANGEOID ||
+		targetTypeId == ANYCOMPATIBLEARRAYOID ||
+		targetTypeId == ANYCOMPATIBLERANGEOID)
 	{
 		/*
 		 * Assume can_coerce_type verified that implicit coercion is okay.
@@ -193,10 +197,10 @@ coerce_type(ParseState *pstate, Node *node,
 		 * These cases are unlike the ones above because the exposed type of
 		 * the argument must be an actual array, enum, or range type.  In
 		 * particular the argument must *not* be an UNKNOWN constant.  If it
-		 * is, we just fall through; below, we'll call anyarray_in,
-		 * anyenum_in, or anyrange_in, which will produce an error.  Also, if
-		 * what we have is a domain over array, enum, or range, we have to
-		 * relabel it to its base type.
+		 * is, we just fall through; below, we'll call the pseudotype's input
+		 * function, which will produce an error.  Also, if what we have is a
+		 * domain over array, enum, or range, we have to relabel it to its
+		 * base type.
 		 *
 		 * Note: currently, we can't actually see a domain-over-enum here,
 		 * since the other functions in this file will not match such a
@@ -1387,6 +1391,103 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 }
 
 /*
+ * select_common_type_from_oids()
+ *		Determine the common supertype of an array of type OIDs.
+ *
+ * This is the same logic as select_common_type(), but working from
+ * an array of type OIDs not a list of expressions.  As in that function,
+ * earlier entries in the array have some preference over later ones.
+ * On failure, return InvalidOid if noerror is true, else throw an error.
+ *
+ * Note: neither caller will pass any UNKNOWNOID entries, so the tests
+ * for that in this function are dead code.  However, they don't cost much,
+ * and it seems better to keep this logic as close to select_common_type()
+ * as possible.
+ */
+static Oid
+select_common_type_from_oids(int nargs, const Oid *typeids, bool noerror)
+{
+	Oid			ptype;
+	TYPCATEGORY pcategory;
+	bool		pispreferred;
+	int			i = 1;
+
+	Assert(nargs > 0);
+	ptype = typeids[0];
+
+	/* If all input types are valid and exactly the same, pick that type. */
+	if (ptype != UNKNOWNOID)
+	{
+		for (; i < nargs; i++)
+		{
+			if (typeids[i] != ptype)
+				break;
+		}
+		if (i == nargs)
+			return ptype;
+	}
+
+	/*
+	 * Nope, so set up for the full algorithm.  Note that at this point, we
+	 * can skip array entries before "i"; they are all equal to ptype.
+	 */
+	ptype = getBaseType(ptype);
+	get_type_category_preferred(ptype, &pcategory, &pispreferred);
+
+	for (; i < nargs; i++)
+	{
+		Oid			ntype = getBaseType(typeids[i]);
+
+		/* move on to next one if no new information... */
+		if (ntype != UNKNOWNOID && ntype != ptype)
+		{
+			TYPCATEGORY ncategory;
+			bool		nispreferred;
+
+			get_type_category_preferred(ntype, &ncategory, &nispreferred);
+			if (ptype == UNKNOWNOID)
+			{
+				/* so far, only unknowns so take anything... */
+				ptype = ntype;
+				pcategory = ncategory;
+				pispreferred = nispreferred;
+			}
+			else if (ncategory != pcategory)
+			{
+				/*
+				 * both types in different categories? then not much hope...
+				 */
+				if (noerror)
+					return InvalidOid;
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument types %s and %s cannot be matched",
+								format_type_be(ptype),
+								format_type_be(ntype))));
+			}
+			else if (!pispreferred &&
+					 can_coerce_type(1, &ptype, &ntype, COERCION_IMPLICIT) &&
+					 !can_coerce_type(1, &ntype, &ptype, COERCION_IMPLICIT))
+			{
+				/*
+				 * take new type if can coerce to it implicitly but not the
+				 * other way; but if we have a preferred type, stay on it.
+				 */
+				ptype = ntype;
+				pcategory = ncategory;
+				pispreferred = nispreferred;
+			}
+		}
+	}
+
+	/* Like select_common_type(), choose TEXT if all inputs were UNKNOWN */
+	if (ptype == UNKNOWNOID)
+		ptype = TEXTOID;
+
+	return ptype;
+}
+
+/*
  * coerce_to_common_type()
  *		Coerce an expression to the given type.
  *
@@ -1442,14 +1543,28 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  *	  we add the extra condition that the ANYELEMENT type must not be an array.
  *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
  *	  is an extra restriction if not.)
+ * 7) All arguments declared ANYCOMPATIBLE must be implicitly castable
+ *	  to a common supertype (chosen as per select_common_type's rules).
+ *	  ANYCOMPATIBLENONARRAY works like ANYCOMPATIBLE but also requires the
+ *	  common supertype to not be an array.  If there are ANYCOMPATIBLEARRAY
+ *	  or ANYCOMPATIBLERANGE arguments, their element types or subtypes are
+ *	  included while making the choice of common supertype.
+ * 8) The resolved type of ANYCOMPATIBLEARRAY arguments will be the array
+ *	  type over the common supertype (which might not be the same array type
+ *	  as any of the original arrays).
+ * 9) All ANYCOMPATIBLERANGE arguments must be the exact same range type
+ *	  (after domain flattening), since we have no preference rule that would
+ *	  let us choose one over another.  Furthermore, that range's subtype
+ *	  must exactly match the common supertype chosen by rule 7.
  *
  * Domains over arrays match ANYARRAY, and are immediately flattened to their
  * base type.  (Thus, for example, we will consider it a match if one ANYARRAY
  * argument is a domain over int4[] while another one is just int4[].)	Also
- * notice that such a domain does *not* match ANYNONARRAY.
+ * notice that such a domain does *not* match ANYNONARRAY.  The same goes
+ * for ANYCOMPATIBLEARRAY and ANYCOMPATIBLENONARRAY.
  *
- * Similarly, domains over ranges match ANYRANGE, and are immediately
- * flattened to their base type.
+ * Similarly, domains over ranges match ANYRANGE or ANYCOMPATIBLERANGE,
+ * and are immediately flattened to their base type.
  *
  * Note that domains aren't currently considered to match ANYENUM,
  * even if their base type would match.
@@ -1467,13 +1582,19 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
 	Oid			range_typeid = InvalidOid;
+	Oid			anycompatible_range_typeid = InvalidOid;
+	Oid			anycompatible_range_typelem = InvalidOid;
 	bool		have_anynonarray = false;
 	bool		have_anyenum = false;
+	bool		have_anycompatible_nonarray = false;
+	int			n_anycompatible_args = 0;
+	Oid			anycompatible_actual_types[FUNC_MAX_ARGS];
 
 	/*
 	 * Loop through the arguments to see if we have any that are polymorphic.
 	 * If so, require the actual types to be consistent.
 	 */
+	Assert(nargs <= FUNC_MAX_ARGS);
 	for (int j = 0; j < nargs; j++)
 	{
 		Oid			decl_type = declared_arg_types[j];
@@ -1510,6 +1631,50 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 			if (OidIsValid(range_typeid) && actual_type != range_typeid)
 				return false;
 			range_typeid = actual_type;
+		}
+		else if (decl_type == ANYCOMPATIBLEOID ||
+				 decl_type == ANYCOMPATIBLENONARRAYOID)
+		{
+			if (decl_type == ANYCOMPATIBLENONARRAYOID)
+				have_anycompatible_nonarray = true;
+			if (actual_type == UNKNOWNOID)
+				continue;
+			/* collect the actual types of non-unknown COMPATIBLE args */
+			anycompatible_actual_types[n_anycompatible_args++] = actual_type;
+		}
+		else if (decl_type == ANYCOMPATIBLEARRAYOID)
+		{
+			Oid			elem_type;
+
+			if (actual_type == UNKNOWNOID)
+				continue;
+			actual_type = getBaseType(actual_type); /* flatten domains */
+			elem_type = get_element_type(actual_type);
+			if (!OidIsValid(elem_type))
+				return false;	/* not an array */
+			/* collect the element type for common-supertype choice */
+			anycompatible_actual_types[n_anycompatible_args++] = elem_type;
+		}
+		else if (decl_type == ANYCOMPATIBLERANGEOID)
+		{
+			if (actual_type == UNKNOWNOID)
+				continue;
+			actual_type = getBaseType(actual_type); /* flatten domains */
+			if (OidIsValid(anycompatible_range_typeid))
+			{
+				/* All ANYCOMPATIBLERANGE arguments must be the same type */
+				if (anycompatible_range_typeid != actual_type)
+					return false;
+			}
+			else
+			{
+				anycompatible_range_typeid = actual_type;
+				anycompatible_range_typelem = get_range_subtype(actual_type);
+				if (!OidIsValid(anycompatible_range_typelem))
+					return false;	/* not a range type */
+				/* collect the subtype for common-supertype choice */
+				anycompatible_actual_types[n_anycompatible_args++] = anycompatible_range_typelem;
+			}
 		}
 	}
 
@@ -1591,6 +1756,38 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 			return false;
 	}
 
+	/* Check matching of ANYCOMPATIBLE-family arguments, if any */
+	if (n_anycompatible_args > 0)
+	{
+		Oid			anycompatible_typeid;
+
+		anycompatible_typeid =
+			select_common_type_from_oids(n_anycompatible_args,
+										 anycompatible_actual_types,
+										 true);
+
+		if (!OidIsValid(anycompatible_typeid))
+			return false;		/* there's no common supertype */
+
+		if (have_anycompatible_nonarray)
+		{
+			/*
+			 * require the anycompatible type to not be an array or domain
+			 * over array
+			 */
+			if (type_is_array_domain(anycompatible_typeid))
+				return false;
+		}
+
+		/*
+		 * the anycompatible type must exactly match the range element type,
+		 * if we were able to identify one
+		 */
+		if (OidIsValid(anycompatible_range_typelem) &&
+			anycompatible_range_typelem != anycompatible_typeid)
+			return false;
+	}
+
 	/* Looks valid */
 	return true;
 }
@@ -1609,6 +1806,11 @@ check_generic_type_consistency(const Oid *actual_arg_types,
  * argument, we attempt to deduce the actual type it should have.  If
  * successful, we alter that position of declared_arg_types[] so that
  * make_fn_arguments will coerce the literal to the right thing.
+ *
+ * If we have polymorphic arguments of the ANYCOMPATIBLE family,
+ * we similarly alter declared_arg_types[] entries to show the resolved
+ * common supertype, so that make_fn_arguments will coerce the actual
+ * arguments to the proper type.
  *
  * Rules are applied to the function's return type (possibly altering it)
  * if it is declared as a polymorphic type:
@@ -1631,11 +1833,20 @@ check_generic_type_consistency(const Oid *actual_arg_types,
  *	  we add the extra condition that the ANYELEMENT type must not be an array.
  *	  (This is a no-op if used in combination with ANYARRAY or ANYENUM, but
  *	  is an extra restriction if not.)
+ * 8) ANYCOMPATIBLE, ANYCOMPATIBLEARRAY, ANYCOMPATIBLENONARRAY, and
+ *	  ANYCOMPATIBLERANGE are handled by resolving the common supertype
+ *	  of those arguments (or their element types/subtypes, for array and range
+ *	  inputs), and then coercing all those arguments to the common supertype,
+ *	  or the array type over the common supertype for ANYCOMPATIBLEARRAY.
+ *	  For ANYCOMPATIBLERANGE, there must be at least one non-UNKNOWN input,
+ *	  all such inputs must be the same range type, and that type's subtype
+ *	  must equal the common supertype.
  *
  * Domains over arrays or ranges match ANYARRAY or ANYRANGE arguments,
  * respectively, and are immediately flattened to their base type.  (In
  * particular, if the return type is also ANYARRAY or ANYRANGE, we'll set
- * it to the base type not the domain type.)
+ * it to the base type not the domain type.)  The same is true for
+ * ANYCOMPATIBLEARRAY and ANYCOMPATIBLERANGE.
  *
  * When allow_poly is false, we are not expecting any of the actual_arg_types
  * to be polymorphic, and we should not return a polymorphic result type
@@ -1652,7 +1863,12 @@ check_generic_type_consistency(const Oid *actual_arg_types,
  * the element type to infer the result type.  Note this means that functions
  * taking ANYARRAY had better behave sanely if applied to the pg_statistic
  * columns; they can't just assume that successive inputs are of the same
- * actual element type.
+ * actual element type.  There is no similar logic for ANYCOMPATIBLEARRAY;
+ * there isn't a need for it since there are no catalog columns of that type,
+ * so we won't see it as input.  We could consider matching an actual ANYARRAY
+ * input to an ANYCOMPATIBLEARRAY argument, but at present that seems useless
+ * as well, since there's no value in using ANYCOMPATIBLEARRAY unless there's
+ * at least one other ANYCOMPATIBLE-family argument or result.
  */
 Oid
 enforce_generic_type_consistency(const Oid *actual_arg_types,
@@ -1661,18 +1877,29 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 								 Oid rettype,
 								 bool allow_poly)
 {
+	bool		have_poly_anycompatible = false;
 	bool		have_poly_unknowns = false;
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
 	Oid			range_typeid = InvalidOid;
-	int			n_poly_args = 0;
+	Oid			anycompatible_typeid = InvalidOid;
+	Oid			anycompatible_array_typeid = InvalidOid;
+	Oid			anycompatible_range_typeid = InvalidOid;
+	Oid			anycompatible_range_typelem = InvalidOid;
 	bool		have_anynonarray = (rettype == ANYNONARRAYOID);
 	bool		have_anyenum = (rettype == ANYENUMOID);
+	bool		have_anycompatible_nonarray = (rettype == ANYCOMPATIBLENONARRAYOID);
+	bool		have_anycompatible_array = (rettype == ANYCOMPATIBLEARRAYOID);
+	bool		have_anycompatible_range = (rettype == ANYCOMPATIBLERANGEOID);
+	int			n_poly_args = 0;	/* this counts all family-1 arguments */
+	int			n_anycompatible_args = 0;	/* this counts only non-unknowns */
+	Oid			anycompatible_actual_types[FUNC_MAX_ARGS];
 
 	/*
 	 * Loop through the arguments to see if we have any that are polymorphic.
 	 * If so, require the actual types to be consistent.
 	 */
+	Assert(nargs <= FUNC_MAX_ARGS);
 	for (int j = 0; j < nargs; j++)
 	{
 		Oid			decl_type = declared_arg_types[j];
@@ -1743,18 +1970,87 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 								   format_type_be(actual_type))));
 			range_typeid = actual_type;
 		}
+		else if (decl_type == ANYCOMPATIBLEOID ||
+				 decl_type == ANYCOMPATIBLENONARRAYOID)
+		{
+			have_poly_anycompatible = true;
+			if (decl_type == ANYCOMPATIBLENONARRAYOID)
+				have_anycompatible_nonarray = true;
+			if (actual_type == UNKNOWNOID)
+				continue;
+			if (allow_poly && decl_type == actual_type)
+				continue;		/* no new information here */
+			/* collect the actual types of non-unknown COMPATIBLE args */
+			anycompatible_actual_types[n_anycompatible_args++] = actual_type;
+		}
+		else if (decl_type == ANYCOMPATIBLEARRAYOID)
+		{
+			Oid			anycompatible_elem_type;
+
+			have_poly_anycompatible = true;
+			have_anycompatible_array = true;
+			if (actual_type == UNKNOWNOID)
+				continue;
+			if (allow_poly && decl_type == actual_type)
+				continue;		/* no new information here */
+			actual_type = getBaseType(actual_type); /* flatten domains */
+			anycompatible_elem_type = get_element_type(actual_type);
+			if (!OidIsValid(anycompatible_elem_type))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("argument declared %s is not an array but type %s",
+								"anycompatiblearray",
+								format_type_be(actual_type))));
+			/* collect the element type for common-supertype choice */
+			anycompatible_actual_types[n_anycompatible_args++] = anycompatible_elem_type;
+		}
+		else if (decl_type == ANYCOMPATIBLERANGEOID)
+		{
+			have_poly_anycompatible = true;
+			have_anycompatible_range = true;
+			if (actual_type == UNKNOWNOID)
+				continue;
+			if (allow_poly && decl_type == actual_type)
+				continue;		/* no new information here */
+			actual_type = getBaseType(actual_type); /* flatten domains */
+			if (OidIsValid(anycompatible_range_typeid))
+			{
+				/* All ANYCOMPATIBLERANGE arguments must be the same type */
+				if (anycompatible_range_typeid != actual_type)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("arguments declared \"anycompatiblerange\" are not all alike"),
+							 errdetail("%s versus %s",
+									   format_type_be(anycompatible_range_typeid),
+									   format_type_be(actual_type))));
+			}
+			else
+			{
+				anycompatible_range_typeid = actual_type;
+				anycompatible_range_typelem = get_range_subtype(actual_type);
+				if (!OidIsValid(anycompatible_range_typelem))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("argument declared %s is not a range type but type %s",
+									"anycompatiblerange",
+									format_type_be(actual_type))));
+				/* collect the subtype for common-supertype choice */
+				anycompatible_actual_types[n_anycompatible_args++] = anycompatible_range_typelem;
+			}
+		}
 	}
 
 	/*
 	 * Fast Track: if none of the arguments are polymorphic, return the
 	 * unmodified rettype.  We assume it can't be polymorphic either.
 	 */
-	if (n_poly_args == 0)
+	if (n_poly_args == 0 && !have_poly_anycompatible)
 	{
 		Assert(!IsPolymorphicType(rettype));
 		return rettype;
 	}
 
+	/* Check matching of family-1 polymorphic arguments, if any */
 	if (n_poly_args)
 	{
 		/* Get the element type based on the array type, if we have one */
@@ -1766,13 +2062,14 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			{
 				/*
 				 * Special case for matching ANYARRAY input to an ANYARRAY
-				 * argument: allow it iff no other arguments are polymorphic
-				 * (otherwise we couldn't be sure whether the array element
-				 * type matches up) and the result type doesn't require us to
-				 * infer a specific element type.
+				 * argument: allow it iff no other arguments are family-1
+				 * polymorphics (otherwise we couldn't be sure whether the
+				 * array element type matches up) and the result type doesn't
+				 * require us to infer a specific element type.
 				 */
 				if (n_poly_args != 1 ||
-					(rettype != ANYARRAYOID && IsPolymorphicType(rettype)))
+					(rettype != ANYARRAYOID &&
+					 IsPolymorphicTypeFamily1(rettype)))
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("cannot determine element type of \"anyarray\" argument")));
@@ -1888,9 +2185,108 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 		}
 	}
 
+	/* Check matching of family-2 polymorphic arguments, if any */
+	if (have_poly_anycompatible)
+	{
+		if (n_anycompatible_args > 0)
+		{
+			anycompatible_typeid =
+				select_common_type_from_oids(n_anycompatible_args,
+											 anycompatible_actual_types,
+											 false);
+
+			if (have_anycompatible_array)
+			{
+				anycompatible_array_typeid = get_array_type(anycompatible_typeid);
+				if (!OidIsValid(anycompatible_array_typeid))
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_OBJECT),
+							 errmsg("could not find array type for data type %s",
+									format_type_be(anycompatible_typeid))));
+			}
+
+			if (have_anycompatible_range)
+			{
+				/* we can't infer a range type from the others */
+				if (!OidIsValid(anycompatible_range_typeid))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine polymorphic type %s because input has type %s",
+									"anycompatiblerange", "unknown")));
+
+				/*
+				 * the anycompatible type must exactly match the range element
+				 * type
+				 */
+				if (anycompatible_range_typelem != anycompatible_typeid)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("anycompatiblerange type %s does not match anycompatible type %s",
+									format_type_be(anycompatible_range_typeid),
+									format_type_be(anycompatible_typeid))));
+			}
+
+			if (have_anycompatible_nonarray)
+			{
+				/*
+				 * require the element type to not be an array or domain over
+				 * array
+				 */
+				if (type_is_array_domain(anycompatible_typeid))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("type matched to anycompatiblenonarray is an array type: %s",
+									format_type_be(anycompatible_typeid))));
+			}
+		}
+		else
+		{
+			if (allow_poly)
+			{
+				anycompatible_typeid = ANYCOMPATIBLEOID;
+				anycompatible_array_typeid = ANYCOMPATIBLEARRAYOID;
+				anycompatible_range_typeid = ANYCOMPATIBLERANGEOID;
+			}
+			else
+			{
+				/*
+				 * Only way to get here is if all the ANYCOMPATIBLE args have
+				 * UNKNOWN inputs.  Resolve to TEXT as select_common_type()
+				 * would do.  That doesn't license us to use TEXTRANGE,
+				 * though.
+				 */
+				anycompatible_typeid = TEXTOID;
+				anycompatible_array_typeid = TEXTARRAYOID;
+				if (have_anycompatible_range)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine polymorphic type %s because input has type %s",
+									"anycompatiblerange", "unknown")));
+			}
+		}
+
+		/* replace polymorphic types by selected types */
+		for (int j = 0; j < nargs; j++)
+		{
+			Oid			decl_type = declared_arg_types[j];
+
+			if (decl_type == ANYCOMPATIBLEOID ||
+				decl_type == ANYCOMPATIBLENONARRAYOID)
+				declared_arg_types[j] = anycompatible_typeid;
+			else if (decl_type == ANYCOMPATIBLEARRAYOID)
+				declared_arg_types[j] = anycompatible_array_typeid;
+			else if (decl_type == ANYCOMPATIBLERANGEOID)
+				declared_arg_types[j] = anycompatible_range_typeid;
+		}
+	}
+
 	/*
 	 * If we had any UNKNOWN inputs for polymorphic arguments, re-scan to
 	 * assign correct types to them.
+	 *
+	 * Note: we don't have to consider unknown inputs that were matched to
+	 * ANYCOMPATIBLE-family arguments, because we forcibly updated their
+	 * declared_arg_types[] positions just above.
 	 */
 	if (have_poly_unknowns)
 	{
@@ -1923,10 +2319,11 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 			{
 				if (!OidIsValid(range_typeid))
 				{
+					/* we can't infer a range type from the others */
 					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_OBJECT),
-							 errmsg("could not find range type for data type %s",
-									format_type_be(elem_typeid))));
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("could not determine polymorphic type %s because input has type %s",
+									"anyrange", "unknown")));
 				}
 				declared_arg_types[j] = range_typeid;
 			}
@@ -1957,14 +2354,47 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 	/* if we return ANYRANGE use the appropriate argument type */
 	if (rettype == ANYRANGEOID)
 	{
+		/* this error is unreachable if the function signature is valid: */
 		if (!OidIsValid(range_typeid))
-		{
 			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("could not find range type for data type %s",
-							format_type_be(elem_typeid))));
-		}
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("could not determine polymorphic type %s because input has type %s",
+							"anyrange", "unknown")));
 		return range_typeid;
+	}
+
+	/* if we return ANYCOMPATIBLE use the appropriate type */
+	if (rettype == ANYCOMPATIBLEOID ||
+		rettype == ANYCOMPATIBLENONARRAYOID)
+	{
+		/* this error is unreachable if the function signature is valid: */
+		if (!OidIsValid(anycompatible_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg_internal("could not identify anycompatible type")));
+		return anycompatible_typeid;
+	}
+
+	/* if we return ANYCOMPATIBLEARRAY use the appropriate type */
+	if (rettype == ANYCOMPATIBLEARRAYOID)
+	{
+		/* this error is unreachable if the function signature is valid: */
+		if (!OidIsValid(anycompatible_array_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg_internal("could not identify anycompatiblearray type")));
+		return anycompatible_array_typeid;
+	}
+
+	/* if we return ANYCOMPATIBLERANGE use the appropriate argument type */
+	if (rettype == ANYCOMPATIBLERANGEOID)
+	{
+		/* this error is unreachable if the function signature is valid: */
+		if (!OidIsValid(anycompatible_range_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg_internal("could not identify anycompatiblerange type")));
+		return anycompatible_range_typeid;
 	}
 
 	/* we don't return a generic type; send back the original return type */
@@ -1984,11 +2414,12 @@ check_valid_polymorphic_signature(Oid ret_type,
 								  const Oid *declared_arg_types,
 								  int nargs)
 {
-	if (ret_type == ANYRANGEOID)
+	if (ret_type == ANYRANGEOID || ret_type == ANYCOMPATIBLERANGEOID)
 	{
 		/*
 		 * ANYRANGE requires an ANYRANGE input, else we can't tell which of
-		 * several range types with the same element type to use.
+		 * several range types with the same element type to use.  Likewise
+		 * for ANYCOMPATIBLERANGE.
 		 */
 		for (int i = 0; i < nargs; i++)
 		{
@@ -1998,15 +2429,28 @@ check_valid_polymorphic_signature(Oid ret_type,
 		return psprintf(_("A result of type %s requires at least one input of type %s."),
 						format_type_be(ret_type), format_type_be(ret_type));
 	}
-	else if (IsPolymorphicType(ret_type))
+	else if (IsPolymorphicTypeFamily1(ret_type))
 	{
-		/* Otherwise, any polymorphic type can be deduced from any other */
+		/* Otherwise, any family-1 type can be deduced from any other */
 		for (int i = 0; i < nargs; i++)
 		{
-			if (IsPolymorphicType(declared_arg_types[i]))
+			if (IsPolymorphicTypeFamily1(declared_arg_types[i]))
 				return NULL;	/* OK */
 		}
+		/* Keep this list in sync with IsPolymorphicTypeFamily1! */
 		return psprintf(_("A result of type %s requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange."),
+						format_type_be(ret_type));
+	}
+	else if (IsPolymorphicTypeFamily2(ret_type))
+	{
+		/* Otherwise, any family-2 type can be deduced from any other */
+		for (int i = 0; i < nargs; i++)
+		{
+			if (IsPolymorphicTypeFamily2(declared_arg_types[i]))
+				return NULL;	/* OK */
+		}
+		/* Keep this list in sync with IsPolymorphicTypeFamily2! */
+		return psprintf(_("A result of type %s requires at least one input of type anycompatible, anycompatiblearray, anycompatiblenonarray, or anycompatiblerange."),
 						format_type_be(ret_type));
 	}
 	else
@@ -2113,8 +2557,9 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 	if (srctype == targettype)
 		return true;
 
-	/* Anything is coercible to ANY or ANYELEMENT */
-	if (targettype == ANYOID || targettype == ANYELEMENTOID)
+	/* Anything is coercible to ANY or ANYELEMENT or ANYCOMPATIBLE */
+	if (targettype == ANYOID || targettype == ANYELEMENTOID ||
+		targettype == ANYCOMPATIBLEOID)
 		return true;
 
 	/* If srctype is a domain, reduce to its base type */
@@ -2125,13 +2570,13 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 	if (srctype == targettype)
 		return true;
 
-	/* Also accept any array type as coercible to ANYARRAY */
-	if (targettype == ANYARRAYOID)
+	/* Also accept any array type as coercible to ANY[COMPATIBLE]ARRAY */
+	if (targettype == ANYARRAYOID || targettype == ANYCOMPATIBLEARRAYOID)
 		if (type_is_array(srctype))
 			return true;
 
-	/* Also accept any non-array type as coercible to ANYNONARRAY */
-	if (targettype == ANYNONARRAYOID)
+	/* Also accept any non-array type as coercible to ANY[COMPATIBLE]NONARRAY */
+	if (targettype == ANYNONARRAYOID || targettype == ANYCOMPATIBLENONARRAYOID)
 		if (!type_is_array(srctype))
 			return true;
 
@@ -2140,8 +2585,8 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 		if (type_is_enum(srctype))
 			return true;
 
-	/* Also accept any range type as coercible to ANYRANGE */
-	if (targettype == ANYRANGEOID)
+	/* Also accept any range type as coercible to ANY[COMPATIBLE]RANGE */
+	if (targettype == ANYRANGEOID || targettype == ANYCOMPATIBLERANGEOID)
 		if (type_is_range(srctype))
 			return true;
 

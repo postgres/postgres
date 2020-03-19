@@ -72,13 +72,45 @@ create aggregate aggfns(integer,integer,text) (
    initcond = '{}'
 );
 
--- variadic aggregate
+-- check error cases that would require run-time type coercion
+create function least_accum(int8, int8) returns int8 language sql as
+  'select least($1, $2)';
+
+create aggregate least_agg(int4) (
+  stype = int8, sfunc = least_accum
+);  -- fails
+
+drop function least_accum(int8, int8);
+
+create function least_accum(anycompatible, anycompatible)
+returns anycompatible language sql as
+  'select least($1, $2)';
+
+create aggregate least_agg(int4) (
+  stype = int8, sfunc = least_accum
+);  -- fails
+
+create aggregate least_agg(int8) (
+  stype = int8, sfunc = least_accum
+);
+
+drop function least_accum(anycompatible, anycompatible) cascade;
+
+-- variadic aggregates
 create function least_accum(anyelement, variadic anyarray)
 returns anyelement language sql as
   'select least($1, min($2[i])) from generate_subscripts($2,1) g(i)';
 
 create aggregate least_agg(variadic items anyarray) (
   stype = anyelement, sfunc = least_accum
+);
+
+create function cleast_accum(anycompatible, variadic anycompatiblearray)
+returns anycompatible language sql as
+  'select least($1, min($2[i])) from generate_subscripts($2,1) g(i)';
+
+create aggregate cleast_agg(variadic items anycompatiblearray) (
+  stype = anycompatible, sfunc = cleast_accum
 );
 
 -- test ordered-set aggs using built-in support functions

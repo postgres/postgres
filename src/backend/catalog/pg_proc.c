@@ -262,6 +262,9 @@ ProcedureCreate(const char *procedureName,
 						case ANYARRAYOID:
 							variadicType = ANYELEMENTOID;
 							break;
+						case ANYCOMPATIBLEARRAYOID:
+							variadicType = ANYCOMPATIBLEOID;
+							break;
 						default:
 							variadicType = get_element_type(allParams[i]);
 							if (!OidIsValid(variadicType))

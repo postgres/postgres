@@ -1950,6 +1950,30 @@ select least_agg(variadic array[q1,q2]) from int8_tbl;
  -4567890123456789
 (1 row)
 
+select cleast_agg(q1,q2) from int8_tbl;
+    cleast_agg     
+-------------------
+ -4567890123456789
+(1 row)
+
+select cleast_agg(4.5,f1) from int4_tbl;
+ cleast_agg  
+-------------
+ -2147483647
+(1 row)
+
+select cleast_agg(variadic array[4.5,f1]) from int4_tbl;
+ cleast_agg  
+-------------
+ -2147483647
+(1 row)
+
+select pg_typeof(cleast_agg(variadic array[4.5,f1])) from int4_tbl;
+ pg_typeof 
+-----------
+ numeric
+(1 row)
+
 -- test aggregates with common transition functions share the same states
 begin work;
 create type avg_state as (total bigint, count bigint);

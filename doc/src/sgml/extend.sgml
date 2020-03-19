@@ -229,21 +229,114 @@
    </indexterm>
 
     <para>
-     Five pseudo-types of special interest are <type>anyelement</type>,
-     <type>anyarray</type>, <type>anynonarray</type>, <type>anyenum</type>,
-     and <type>anyrange</type>,
-     which are collectively called <firstterm>polymorphic types</firstterm>.
-     Any function declared using these types is said to be
-     a <firstterm>polymorphic function</firstterm>.  A polymorphic function can
-     operate on many different data types, with the specific data type(s)
-     being determined by the data types actually passed to it in a particular
-     call.
+     Some pseudo-types of special interest are the <firstterm>polymorphic
+     types</firstterm>, which are used to declare <firstterm>polymorphic
+     functions</firstterm>.  This powerful feature allows a single function
+     definition to operate on many different data types, with the specific
+     data type(s) being determined by the data types actually passed to it
+     in a particular call.  The polymorphic types are shown in
+     <xref linkend="extend-types-polymorphic-table"/>.  Some examples of
+     their use appear in <xref linkend="xfunc-sql-polymorphic-functions"/>.
     </para>
+
+    <table id="extend-types-polymorphic-table">
+     <title>Polymorphic Types</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Name</entry>
+        <entry>Family</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><type>anyelement</type></entry>
+        <entry>Simple</entry>
+        <entry>Indicates that a function accepts any data type</entry>
+       </row>
+
+       <row>
+        <entry><type>anyarray</type></entry>
+        <entry>Simple</entry>
+        <entry>Indicates that a function accepts any array data type</entry>
+       </row>
+
+       <row>
+        <entry><type>anynonarray</type></entry>
+        <entry>Simple</entry>
+        <entry>Indicates that a function accepts any non-array data type</entry>
+       </row>
+
+       <row>
+        <entry><type>anyenum</type></entry>
+        <entry>Simple</entry>
+        <entry>Indicates that a function accepts any enum data type
+        (see <xref linkend="datatype-enum"/>)
+        </entry>
+       </row>
+
+       <row>
+        <entry><type>anyrange</type></entry>
+        <entry>Simple</entry>
+        <entry>Indicates that a function accepts any range data type
+        (see <xref linkend="rangetypes"/>)
+        </entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatible</type></entry>
+        <entry>Common</entry>
+        <entry>Indicates that a function accepts any data type,
+        with automatic promotion of multiple arguments to a common data type
+        </entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatiblearray</type></entry>
+        <entry>Common</entry>
+        <entry>Indicates that a function accepts any array data type,
+        with automatic promotion of multiple arguments to a common data type
+        </entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatiblenonarray</type></entry>
+        <entry>Common</entry>
+        <entry>Indicates that a function accepts any non-array data type,
+        with automatic promotion of multiple arguments to a common data type
+        </entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatiblerange</type></entry>
+        <entry>Common</entry>
+        <entry>Indicates that a function accepts any range data type,
+        with automatic promotion of multiple arguments to a common data type
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
 
     <para>
      Polymorphic arguments and results are tied to each other and are resolved
-     to a specific data type when a query calling a polymorphic function is
-     parsed.  Each position (either argument or return value) declared as
+     to specific data types when a query calling a polymorphic function is
+     parsed.  When there is more than one polymorphic argument, the actual
+     data types of the input values must match up as described below.  If the
+     function's result type is polymorphic, or it has output parameters of
+     polymorphic types, the types of those results are deduced from the
+     actual types of the polymorphic inputs as described below.
+    </para>
+
+    <para>
+     For the <quote>simple</quote> family of polymorphic types, the
+     matching and deduction rules work like this:
+    </para>
+
+    <para>
+     Each position (either argument or return value) declared as
      <type>anyelement</type> is allowed to have any specific actual
      data type, but in any given call they must all be the
      <emphasis>same</emphasis> actual type. Each
@@ -280,7 +373,8 @@
     <para>
      When the return value of a function is declared as a polymorphic type,
      there must be at least one argument position that is also polymorphic,
-     and the actual data type supplied as the argument determines the actual
+     and the actual data type(s) supplied for the polymorphic arguments
+     determine the actual
      result type for that call.  For example, if there were not already
      an array subscripting mechanism, one could define a function that
      implements subscripting as <literal>subscript(anyarray, integer)
@@ -294,8 +388,9 @@
     <para>
      In most cases, the parser can infer the actual data type for a
      polymorphic result type from arguments that are of a different
-     polymorphic type; for example <type>anyarray</type> can be deduced
-     from <type>anyelement</type> or vice versa.  The exception is that a
+     polymorphic type in the same family; for example <type>anyarray</type>
+     can be deduced from <type>anyelement</type> or vice versa.
+     An exception is that a
      polymorphic result of type <type>anyrange</type> requires an argument
      of type <type>anyrange</type>; it cannot be deduced
      from <type>anyarray</type> or <type>anyelement</type> arguments.  This
@@ -312,13 +407,69 @@
     </para>
 
     <para>
+     For the <quote>common</quote> family of polymorphic types, the
+     matching and deduction rules work approximately the same as for
+     the <quote>simple</quote> family, with one major difference: the
+     actual types of the arguments need not be identical, so long as they
+     can be implicitly cast to a single common type.  The common type is
+     selected following the same rules as for <literal>UNION</literal> and
+     related constructs (see <xref linkend="typeconv-union-case"/>).
+     Selection of the common type considers the actual types
+     of <type>anycompatible</type> and <type>anycompatiblenonarray</type>
+     inputs, the array element types of <type>anycompatiblearray</type>
+     inputs, and the range subtypes of <type>anycompatiblerange</type>
+     inputs.  If <type>anycompatiblenonarray</type> is present then the
+     common type is required to be a non-array type.  Once a common type is
+     identified, arguments in <type>anycompatible</type>
+     and <type>anycompatiblenonarray</type> positions are automatically
+     cast to that type, and arguments in <type>anycompatiblearray</type>
+     positions are automatically cast to the array type for that type.
+    </para>
+
+    <para>
+     Since there is no way to select a range type knowing only its subtype,
+     use of <type>anycompatiblerange</type> requires that all arguments
+     declared with that type have the same actual range type, and that that
+     type's subtype agree with the selected common type, so that no casting
+     of the range values is required.  As with <type>anyrange</type>, use
+     of <type>anycompatiblerange</type> as a function result type requires
+     that there be an <type>anycompatiblerange</type> argument.
+    </para>
+
+    <para>
+     Notice that there is no <type>anycompatibleenum</type> type.  Such a
+     type would not be very useful, since there normally are not any
+     implicit casts to enum types, meaning that there would be no way to
+     resolve a common type for dissimilar enum inputs.
+    </para>
+
+    <para>
+     The <quote>simple</quote> and <quote>common</quote> polymorphic
+     families represent two independent sets of type variables.  Consider
+     for example
+<programlisting>
+CREATE FUNCTION myfunc(a anyelement, b anyelement,
+                       c anycompatible, d anycompatible)
+RETURNS anycompatible AS ...
+</programlisting>
+     In an actual call of this function, the first two inputs must have
+     exactly the same type.  The last two inputs must be promotable to a
+     common type, but this type need not have anything to do with the type
+     of the first two inputs.  The result will have the common type of the
+     last two inputs.
+    </para>
+
+    <para>
      A variadic function (one taking a variable number of arguments, as in
      <xref linkend="xfunc-sql-variadic-functions"/>) can be
      polymorphic: this is accomplished by declaring its last parameter as
-     <literal>VARIADIC</literal> <type>anyarray</type>.  For purposes of argument
+     <literal>VARIADIC</literal> <type>anyarray</type> or
+     <literal>VARIADIC</literal> <type>anycompatiblearray</type>.
+     For purposes of argument
      matching and determining the actual result type, such a function behaves
      the same as if you had written the appropriate number of
-     <type>anynonarray</type> parameters.
+     <type>anynonarray</type> or <type>anycompatiblenonarray</type>
+     parameters.
     </para>
    </sect2>
   </sect1>

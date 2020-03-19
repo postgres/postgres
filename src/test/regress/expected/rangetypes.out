@@ -1405,6 +1405,32 @@ ERROR:  function rangetypes_sql(numrange, integer[]) does not exist
 LINE 1: select rangetypes_sql(numrange(1,10), ARRAY[2,20]);
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+create function anycompatiblearray_anycompatiblerange_func(a anycompatiblearray, r anycompatiblerange)
+  returns anycompatible as 'select $1[1] + lower($2);' language sql;
+select anycompatiblearray_anycompatiblerange_func(ARRAY[1,2], int4range(10,20));
+ anycompatiblearray_anycompatiblerange_func 
+--------------------------------------------
+                                         11
+(1 row)
+
+select anycompatiblearray_anycompatiblerange_func(ARRAY[1,2], numrange(10,20));
+ anycompatiblearray_anycompatiblerange_func 
+--------------------------------------------
+                                         11
+(1 row)
+
+-- should fail
+select anycompatiblearray_anycompatiblerange_func(ARRAY[1.1,2], int4range(10,20));
+ERROR:  function anycompatiblearray_anycompatiblerange_func(numeric[], int4range) does not exist
+LINE 1: select anycompatiblearray_anycompatiblerange_func(ARRAY[1.1,...
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function anycompatiblearray_anycompatiblerange_func(anycompatiblearray, anycompatiblerange);
+-- should fail
+create function bogus_func(anycompatible)
+  returns anycompatiblerange as 'select int4range(1,10)' language sql;
+ERROR:  cannot determine result data type
+DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange.
 --
 -- Arrays of ranges
 --

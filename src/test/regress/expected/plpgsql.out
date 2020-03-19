@@ -1823,6 +1823,88 @@ select f1(int4range(42, 49)) as int, f1(float8range(4.5, 7.8)) as num;
 (1 row)
 
 drop function f1(x anyrange);
+create function f1(x anycompatible, y anycompatible) returns anycompatiblearray as $$
+begin
+  return array[x, y];
+end$$ language plpgsql;
+select f1(2, 4) as int, f1(2, 4.5) as num;
+  int  |   num   
+-------+---------
+ {2,4} | {2,4.5}
+(1 row)
+
+drop function f1(x anycompatible, y anycompatible);
+create function f1(x anycompatiblerange, y anycompatible, z anycompatible) returns anycompatiblearray as $$
+begin
+  return array[lower(x), upper(x), y, z];
+end$$ language plpgsql;
+select f1(int4range(42, 49), 11, 2::smallint) as int, f1(float8range(4.5, 7.8), 7.8, 11::real) as num;
+     int      |       num        
+--------------+------------------
+ {42,49,11,2} | {4.5,7.8,7.8,11}
+(1 row)
+
+select f1(int4range(42, 49), 11, 4.5) as fail;  -- range type doesn't fit
+ERROR:  function f1(int4range, integer, numeric) does not exist
+LINE 1: select f1(int4range(42, 49), 11, 4.5) as fail;
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function f1(x anycompatiblerange, y anycompatible, z anycompatible);
+-- fail, can't infer type:
+create function f1(x anycompatible) returns anycompatiblerange as $$
+begin
+  return array[x + 1, x + 2];
+end$$ language plpgsql;
+ERROR:  cannot determine result data type
+DETAIL:  A result of type anycompatiblerange requires at least one input of type anycompatiblerange.
+create function f1(x anycompatiblerange, y anycompatiblearray) returns anycompatiblerange as $$
+begin
+  return x;
+end$$ language plpgsql;
+select f1(int4range(42, 49), array[11]) as int, f1(float8range(4.5, 7.8), array[7]) as num;
+   int   |    num    
+---------+-----------
+ [42,49) | [4.5,7.8)
+(1 row)
+
+drop function f1(x anycompatiblerange, y anycompatiblearray);
+create function f1(a anyelement, b anyarray,
+                   c anycompatible, d anycompatible,
+                   OUT x anyarray, OUT y anycompatiblearray)
+as $$
+begin
+  x := a || b;
+  y := array[c, d];
+end$$ language plpgsql;
+select x, pg_typeof(x), y, pg_typeof(y)
+  from f1(11, array[1, 2], 42, 34.5);
+    x     | pg_typeof |     y     | pg_typeof 
+----------+-----------+-----------+-----------
+ {11,1,2} | integer[] | {42,34.5} | numeric[]
+(1 row)
+
+select x, pg_typeof(x), y, pg_typeof(y)
+  from f1(11, array[1, 2], point(1,2), point(3,4));
+    x     | pg_typeof |         y         | pg_typeof 
+----------+-----------+-------------------+-----------
+ {11,1,2} | integer[] | {"(1,2)","(3,4)"} | point[]
+(1 row)
+
+select x, pg_typeof(x), y, pg_typeof(y)
+  from f1(11, '{1,2}', point(1,2), '(3,4)');
+    x     | pg_typeof |         y         | pg_typeof 
+----------+-----------+-------------------+-----------
+ {11,1,2} | integer[] | {"(1,2)","(3,4)"} | point[]
+(1 row)
+
+select x, pg_typeof(x), y, pg_typeof(y)
+  from f1(11, array[1, 2.2], 42, 34.5);  -- fail
+ERROR:  function f1(integer, numeric[], integer, numeric) does not exist
+LINE 2:   from f1(11, array[1, 2.2], 42, 34.5);
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+drop function f1(a anyelement, b anyarray,
+                 c anycompatible, d anycompatible);
 --
 -- Test handling of OUT parameters, including polymorphic cases.
 -- Note that RETURN is optional with OUT params; we try both ways.
@@ -1940,6 +2022,25 @@ select * from duplic('foo'::text);
 (1 row)
 
 drop function duplic(anyelement);
+create function duplic(in i anycompatiblerange, out j anycompatible, out k anycompatiblearray) as $$
+begin
+  j := lower(i);
+  k := array[lower(i),upper(i)];
+  return;
+end$$ language plpgsql;
+select * from duplic(int4range(42,49));
+ j  |    k    
+----+---------
+ 42 | {42,49}
+(1 row)
+
+select * from duplic(textrange('aaa', 'bbb'));
+  j  |     k     
+-----+-----------
+ aaa | {aaa,bbb}
+(1 row)
+
+drop function duplic(anycompatiblerange);
 --
 -- test PERFORM
 --

@@ -552,7 +552,9 @@ resolve_anyrange_from_others(polymorphic_actuals *actuals)
  * with concrete data types deduced from the input arguments.
  * declared_args is an oidvector of the function's declared input arg types
  * (showing which are polymorphic), and call_expr is the call expression.
- * Returns true if able to deduce all types, false if not.
+ *
+ * Returns true if able to deduce all types, false if necessary information
+ * is not provided (call_expr is NULL or arg types aren't identifiable).
  */
 static bool
 resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
@@ -564,8 +566,13 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 	bool		have_anyelement_result = false;
 	bool		have_anyarray_result = false;
 	bool		have_anyrange_result = false;
+	bool		have_anycompatible_result = false;
+	bool		have_anycompatible_array_result = false;
+	bool		have_anycompatible_range_result = false;
 	polymorphic_actuals poly_actuals;
+	polymorphic_actuals anyc_actuals;
 	Oid			anycollation = InvalidOid;
+	Oid			anycompatcollation = InvalidOid;
 	int			i;
 
 	/* See if there are any polymorphic outputs; quick out if not */
@@ -587,6 +594,19 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 				have_polymorphic_result = true;
 				have_anyrange_result = true;
 				break;
+			case ANYCOMPATIBLEOID:
+			case ANYCOMPATIBLENONARRAYOID:
+				have_polymorphic_result = true;
+				have_anycompatible_result = true;
+				break;
+			case ANYCOMPATIBLEARRAYOID:
+				have_polymorphic_result = true;
+				have_anycompatible_array_result = true;
+				break;
+			case ANYCOMPATIBLERANGEOID:
+				have_polymorphic_result = true;
+				have_anycompatible_range_result = true;
+				break;
 			default:
 				break;
 		}
@@ -596,12 +616,16 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 
 	/*
 	 * Otherwise, extract actual datatype(s) from input arguments.  (We assume
-	 * the parser already validated consistency of the arguments.)
+	 * the parser already validated consistency of the arguments.  Also, for
+	 * the ANYCOMPATIBLE pseudotype family, we expect that all matching
+	 * arguments were coerced to the selected common supertype, so that it
+	 * doesn't matter which one's exposed type we look at.)
 	 */
 	if (!call_expr)
 		return false;			/* no hope */
 
 	memset(&poly_actuals, 0, sizeof(poly_actuals));
+	memset(&anyc_actuals, 0, sizeof(anyc_actuals));
 
 	for (i = 0; i < nargs; i++)
 	{
@@ -636,6 +660,34 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 						return false;
 				}
 				break;
+			case ANYCOMPATIBLEOID:
+			case ANYCOMPATIBLENONARRAYOID:
+				if (!OidIsValid(anyc_actuals.anyelement_type))
+				{
+					anyc_actuals.anyelement_type =
+						get_call_expr_argtype(call_expr, i);
+					if (!OidIsValid(anyc_actuals.anyelement_type))
+						return false;
+				}
+				break;
+			case ANYCOMPATIBLEARRAYOID:
+				if (!OidIsValid(anyc_actuals.anyarray_type))
+				{
+					anyc_actuals.anyarray_type =
+						get_call_expr_argtype(call_expr, i);
+					if (!OidIsValid(anyc_actuals.anyarray_type))
+						return false;
+				}
+				break;
+			case ANYCOMPATIBLERANGEOID:
+				if (!OidIsValid(anyc_actuals.anyrange_type))
+				{
+					anyc_actuals.anyrange_type =
+						get_call_expr_argtype(call_expr, i);
+					if (!OidIsValid(anyc_actuals.anyrange_type))
+						return false;
+				}
+				break;
 			default:
 				break;
 		}
@@ -651,18 +703,33 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 	if (have_anyrange_result && !OidIsValid(poly_actuals.anyrange_type))
 		resolve_anyrange_from_others(&poly_actuals);
 
+	if (have_anycompatible_result && !OidIsValid(anyc_actuals.anyelement_type))
+		resolve_anyelement_from_others(&anyc_actuals);
+
+	if (have_anycompatible_array_result && !OidIsValid(anyc_actuals.anyarray_type))
+		resolve_anyarray_from_others(&anyc_actuals);
+
+	if (have_anycompatible_range_result && !OidIsValid(anyc_actuals.anyrange_type))
+		resolve_anyrange_from_others(&anyc_actuals);
+
 	/*
 	 * Identify the collation to use for polymorphic OUT parameters. (It'll
-	 * necessarily be the same for both anyelement and anyarray.)  Note that
-	 * range types are not collatable, so any possible internal collation of a
-	 * range type is not considered here.
+	 * necessarily be the same for both anyelement and anyarray, likewise for
+	 * anycompatible and anycompatiblearray.)  Note that range types are not
+	 * collatable, so any possible internal collation of a range type is not
+	 * considered here.
 	 */
 	if (OidIsValid(poly_actuals.anyelement_type))
 		anycollation = get_typcollation(poly_actuals.anyelement_type);
 	else if (OidIsValid(poly_actuals.anyarray_type))
 		anycollation = get_typcollation(poly_actuals.anyarray_type);
 
-	if (OidIsValid(anycollation))
+	if (OidIsValid(anyc_actuals.anyelement_type))
+		anycompatcollation = get_typcollation(anyc_actuals.anyelement_type);
+	else if (OidIsValid(anyc_actuals.anyarray_type))
+		anycompatcollation = get_typcollation(anyc_actuals.anyarray_type);
+
+	if (OidIsValid(anycollation) || OidIsValid(anycompatcollation))
 	{
 		/*
 		 * The types are collatable, so consider whether to use a nondefault
@@ -672,7 +739,12 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		Oid			inputcollation = exprInputCollation(call_expr);
 
 		if (OidIsValid(inputcollation))
-			anycollation = inputcollation;
+		{
+			if (OidIsValid(anycollation))
+				anycollation = inputcollation;
+			if (OidIsValid(anycompatcollation))
+				anycompatcollation = inputcollation;
+		}
 	}
 
 	/* And finally replace the tuple column types as needed */
@@ -708,6 +780,31 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 								   0);
 				/* no collation should be attached to a range type */
 				break;
+			case ANYCOMPATIBLEOID:
+			case ANYCOMPATIBLENONARRAYOID:
+				TupleDescInitEntry(tupdesc, i + 1,
+								   NameStr(att->attname),
+								   anyc_actuals.anyelement_type,
+								   -1,
+								   0);
+				TupleDescInitEntryCollation(tupdesc, i + 1, anycompatcollation);
+				break;
+			case ANYCOMPATIBLEARRAYOID:
+				TupleDescInitEntry(tupdesc, i + 1,
+								   NameStr(att->attname),
+								   anyc_actuals.anyarray_type,
+								   -1,
+								   0);
+				TupleDescInitEntryCollation(tupdesc, i + 1, anycompatcollation);
+				break;
+			case ANYCOMPATIBLERANGEOID:
+				TupleDescInitEntry(tupdesc, i + 1,
+								   NameStr(att->attname),
+								   anyc_actuals.anyrange_type,
+								   -1,
+								   0);
+				/* no collation should be attached to a range type */
+				break;
 			default:
 				break;
 		}
@@ -720,7 +817,9 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
  * Given the declared argument types and modes for a function, replace any
  * polymorphic types (ANYELEMENT etc) in argtypes[] with concrete data types
  * deduced from the input arguments found in call_expr.
- * Returns true if able to deduce all types, false if not.
+ *
+ * Returns true if able to deduce all types, false if necessary information
+ * is not provided (call_expr is NULL or arg types aren't identifiable).
  *
  * This is the same logic as resolve_polymorphic_tupdesc, but with a different
  * argument representation, and slightly different output responsibilities.
@@ -735,16 +834,21 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 	bool		have_anyelement_result = false;
 	bool		have_anyarray_result = false;
 	bool		have_anyrange_result = false;
+	bool		have_anycompatible_result = false;
+	bool		have_anycompatible_array_result = false;
+	bool		have_anycompatible_range_result = false;
 	polymorphic_actuals poly_actuals;
+	polymorphic_actuals anyc_actuals;
 	int			inargno;
 	int			i;
 
 	/*
 	 * First pass: resolve polymorphic inputs, check for outputs.  As in
 	 * resolve_polymorphic_tupdesc, we rely on the parser to have enforced
-	 * type consistency.
+	 * type consistency and coerced ANYCOMPATIBLE args to a common supertype.
 	 */
 	memset(&poly_actuals, 0, sizeof(poly_actuals));
+	memset(&anyc_actuals, 0, sizeof(anyc_actuals));
 	inargno = 0;
 	for (i = 0; i < numargs; i++)
 	{
@@ -808,6 +912,61 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 					argtypes[i] = poly_actuals.anyrange_type;
 				}
 				break;
+			case ANYCOMPATIBLEOID:
+			case ANYCOMPATIBLENONARRAYOID:
+				if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE)
+				{
+					have_polymorphic_result = true;
+					have_anycompatible_result = true;
+				}
+				else
+				{
+					if (!OidIsValid(anyc_actuals.anyelement_type))
+					{
+						anyc_actuals.anyelement_type =
+							get_call_expr_argtype(call_expr, inargno);
+						if (!OidIsValid(anyc_actuals.anyelement_type))
+							return false;
+					}
+					argtypes[i] = anyc_actuals.anyelement_type;
+				}
+				break;
+			case ANYCOMPATIBLEARRAYOID:
+				if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE)
+				{
+					have_polymorphic_result = true;
+					have_anycompatible_array_result = true;
+				}
+				else
+				{
+					if (!OidIsValid(anyc_actuals.anyarray_type))
+					{
+						anyc_actuals.anyarray_type =
+							get_call_expr_argtype(call_expr, inargno);
+						if (!OidIsValid(anyc_actuals.anyarray_type))
+							return false;
+					}
+					argtypes[i] = anyc_actuals.anyarray_type;
+				}
+				break;
+			case ANYCOMPATIBLERANGEOID:
+				if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE)
+				{
+					have_polymorphic_result = true;
+					have_anycompatible_range_result = true;
+				}
+				else
+				{
+					if (!OidIsValid(anyc_actuals.anyrange_type))
+					{
+						anyc_actuals.anyrange_type =
+							get_call_expr_argtype(call_expr, inargno);
+						if (!OidIsValid(anyc_actuals.anyrange_type))
+							return false;
+					}
+					argtypes[i] = anyc_actuals.anyrange_type;
+				}
+				break;
 			default:
 				break;
 		}
@@ -829,6 +988,15 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 	if (have_anyrange_result && !OidIsValid(poly_actuals.anyrange_type))
 		resolve_anyrange_from_others(&poly_actuals);
 
+	if (have_anycompatible_result && !OidIsValid(anyc_actuals.anyelement_type))
+		resolve_anyelement_from_others(&anyc_actuals);
+
+	if (have_anycompatible_array_result && !OidIsValid(anyc_actuals.anyarray_type))
+		resolve_anyarray_from_others(&anyc_actuals);
+
+	if (have_anycompatible_range_result && !OidIsValid(anyc_actuals.anyrange_type))
+		resolve_anyrange_from_others(&anyc_actuals);
+
 	/* And finally replace the output column types as needed */
 	for (i = 0; i < numargs; i++)
 	{
@@ -844,6 +1012,16 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 				break;
 			case ANYRANGEOID:
 				argtypes[i] = poly_actuals.anyrange_type;
+				break;
+			case ANYCOMPATIBLEOID:
+			case ANYCOMPATIBLENONARRAYOID:
+				argtypes[i] = anyc_actuals.anyelement_type;
+				break;
+			case ANYCOMPATIBLEARRAYOID:
+				argtypes[i] = anyc_actuals.anyarray_type;
+				break;
+			case ANYCOMPATIBLERANGEOID:
+				argtypes[i] = anyc_actuals.anyrange_type;
 				break;
 			default:
 				break;

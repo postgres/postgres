@@ -4799,6 +4799,22 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>anycompatible</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>anycompatiblearray</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>anycompatiblenonarray</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>anycompatiblerange</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>void</primary>
    </indexterm>
 
@@ -4820,6 +4836,10 @@ SELECT * FROM pg_attribute
 
    <indexterm zone="datatype-pseudo">
     <primary>fdw_handler</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>table_am_handler</primary>
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
@@ -4904,6 +4924,35 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>anycompatible</type></entry>
+        <entry>Indicates that a function accepts any data type,
+        with automatic promotion of multiple arguments to a common data type
+        (see <xref linkend="extend-types-polymorphic"/>).</entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatiblearray</type></entry>
+        <entry>Indicates that a function accepts any array data type,
+        with automatic promotion of multiple arguments to a common data type
+        (see <xref linkend="extend-types-polymorphic"/>).</entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatiblenonarray</type></entry>
+        <entry>Indicates that a function accepts any non-array data type,
+        with automatic promotion of multiple arguments to a common data type
+        (see <xref linkend="extend-types-polymorphic"/>).</entry>
+       </row>
+
+       <row>
+        <entry><type>anycompatiblerange</type></entry>
+        <entry>Indicates that a function accepts any range data type,
+        with automatic promotion of multiple arguments to a common data type
+        (see <xref linkend="extend-types-polymorphic"/> and
+        <xref linkend="rangetypes"/>).</entry>
+       </row>
+
+       <row>
         <entry><type>cstring</type></entry>
         <entry>Indicates that a function accepts or returns a null-terminated C string.</entry>
        </row>
@@ -4922,6 +4971,11 @@ SELECT * FROM pg_attribute
        <row>
         <entry><type>fdw_handler</type></entry>
         <entry>A foreign-data wrapper handler is declared to return <type>fdw_handler</type>.</entry>
+       </row>
+
+       <row>
+        <entry><type>table_am_handler</type></entry>
+        <entry>A table access method handler is declared to return <type>table_am_handler</type>.</entry>
        </row>
 
        <row>
@@ -4970,7 +5024,7 @@ SELECT * FROM pg_attribute
 
    <para>
     Functions coded in C (whether built-in or dynamically loaded) can be
-    declared to accept or return any of these pseudo data types.  It is up to
+    declared to accept or return any of these pseudo-types.  It is up to
     the function author to ensure that the function will behave safely
     when a pseudo-type is used as an argument type.
    </para>
@@ -4981,10 +5035,9 @@ SELECT * FROM pg_attribute
     languages forbid use of a pseudo-type as an argument type, and allow
     only <type>void</type> and <type>record</type> as a result type (plus
     <type>trigger</type> or <type>event_trigger</type> when the function is used
-    as a trigger or event trigger).  Some also
-    support polymorphic functions using the types <type>anyelement</type>,
-    <type>anyarray</type>, <type>anynonarray</type>, <type>anyenum</type>, and
-    <type>anyrange</type>.
+    as a trigger or event trigger).  Some also support polymorphic functions
+    using the polymorphic pseudo-types, which are shown above and discussed
+    in detail in <xref linkend="extend-types-polymorphic"/>.
    </para>
 
    <para>

@@ -407,6 +407,27 @@ DROP FUNCTION dup(anyelement);
 CREATE FUNCTION bad (f1 int, out f2 anyelement, out f3 anyarray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
 
+CREATE FUNCTION dup (f1 anycompatible, f2 anycompatiblearray, f3 out anycompatible, f4 out anycompatiblearray)
+AS 'select $1, $2' LANGUAGE sql;
+SELECT dup(22, array[44]);
+SELECT dup(4.5, array[44]);
+SELECT dup(22, array[44::bigint]);
+SELECT *, pg_typeof(f3), pg_typeof(f4) FROM dup(22, array[44::bigint]);
+
+DROP FUNCTION dup(f1 anycompatible, f2 anycompatiblearray);
+
+CREATE FUNCTION dup (f1 anycompatiblerange, f2 out anycompatible, f3 out anycompatiblearray, f4 out anycompatiblerange)
+AS 'select lower($1), array[lower($1), upper($1)], $1' LANGUAGE sql;
+SELECT dup(int4range(4,7));
+SELECT dup(numrange(4,7));
+SELECT dup(textrange('aaa', 'bbb'));
+
+DROP FUNCTION dup(f1 anycompatiblerange);
+
+-- fails, no way to deduce outputs
+CREATE FUNCTION bad (f1 anyarray, out f2 anycompatible, out f3 anycompatiblearray)
+AS 'select $1, array[$1,$1]' LANGUAGE sql;
+
 --
 -- table functions
 --

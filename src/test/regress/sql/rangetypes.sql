@@ -456,6 +456,22 @@ create function rangetypes_sql(q anyrange, b anyarray, out c anyelement)
 select rangetypes_sql(int4range(1,10), ARRAY[2,20]);
 select rangetypes_sql(numrange(1,10), ARRAY[2,20]);  -- match failure
 
+create function anycompatiblearray_anycompatiblerange_func(a anycompatiblearray, r anycompatiblerange)
+  returns anycompatible as 'select $1[1] + lower($2);' language sql;
+
+select anycompatiblearray_anycompatiblerange_func(ARRAY[1,2], int4range(10,20));
+
+select anycompatiblearray_anycompatiblerange_func(ARRAY[1,2], numrange(10,20));
+
+-- should fail
+select anycompatiblearray_anycompatiblerange_func(ARRAY[1.1,2], int4range(10,20));
+
+drop function anycompatiblearray_anycompatiblerange_func(anycompatiblearray, anycompatiblerange);
+
+-- should fail
+create function bogus_func(anycompatible)
+  returns anycompatiblerange as 'select int4range(1,10)' language sql;
+
 --
 -- Arrays of ranges
 --

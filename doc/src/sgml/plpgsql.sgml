@@ -138,13 +138,11 @@
     </para>
 
     <para>
-     <application>PL/pgSQL</application> functions can also be declared to accept
-     and return the polymorphic types
-     <type>anyelement</type>, <type>anyarray</type>, <type>anynonarray</type>,
-     <type>anyenum</type>, and <type>anyrange</type>.  The actual
-     data types handled by a polymorphic function can vary from call to
-     call, as discussed in <xref linkend="extend-types-polymorphic"/>.
-     An example is shown in <xref linkend="plpgsql-declaration-parameters"/>.
+     <application>PL/pgSQL</application> functions can also be declared to
+     accept and return the polymorphic types described in
+     <xref linkend="extend-types-polymorphic"/>, thus allowing the actual data
+     types handled by the function to vary from call to call.
+     Examples appear in <xref linkend="plpgsql-declaration-parameters"/>.
     </para>
 
     <para>
@@ -519,13 +517,11 @@ $$ LANGUAGE plpgsql;
      </para>
 
      <para>
-      When the return type of a <application>PL/pgSQL</application>
-      function is declared as a polymorphic type (<type>anyelement</type>,
-      <type>anyarray</type>, <type>anynonarray</type>, <type>anyenum</type>,
-      or <type>anyrange</type>), a special parameter <literal>$0</literal>
-      is created.  Its data type is the actual return type of the function,
-      as deduced from the actual input types (see <xref
-      linkend="extend-types-polymorphic"/>).
+      When the return type of a <application>PL/pgSQL</application> function
+      is declared as a polymorphic type (see
+      <xref linkend="extend-types-polymorphic"/>), a special
+      parameter <literal>$0</literal> is created.  Its data type is the actual
+      return type of the function, as deduced from the actual input types.
       This allows the function to access its actual return type
       as shown in <xref linkend="plpgsql-declaration-type"/>.
       <literal>$0</literal> is initialized to null and can be modified by
@@ -562,6 +558,32 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
+     </para>
+
+     <para>
+      In practice it might be more useful to declare a polymorphic function
+      using the <type>anycompatible</type> family of types, so that automatic
+      promotion of the input arguments to a common type will occur.
+      For example:
+
+<programlisting>
+CREATE FUNCTION add_three_values(v1 anycompatible, v2 anycompatible, v3 anycompatible)
+RETURNS anycompatible AS $$
+BEGIN
+    RETURN v1 + v2 + v3;
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+      With this example, a call such as
+
+<programlisting>
+SELECT add_three_values(1, 2, 4.7);
+</programlisting>
+
+      will work, automatically promoting the integer inputs to numeric.
+      The function using <type>anyelement</type> would require you to
+      cast the three inputs to the same type manually.
      </para>
     </sect2>
 

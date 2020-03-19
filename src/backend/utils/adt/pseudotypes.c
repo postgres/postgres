@@ -169,6 +169,26 @@ anyarray_send(PG_FUNCTION_ARGS)
 }
 
 /*
+ * anycompatiblearray
+ *
+ * We may as well allow output, since we do for anyarray.
+ */
+PSEUDOTYPE_DUMMY_INPUT_FUNC(anycompatiblearray);
+PSEUDOTYPE_DUMMY_RECEIVE_FUNC(anycompatiblearray);
+
+Datum
+anycompatiblearray_out(PG_FUNCTION_ARGS)
+{
+	return array_out(fcinfo);
+}
+
+Datum
+anycompatiblearray_send(PG_FUNCTION_ARGS)
+{
+	return array_send(fcinfo);
+}
+
+/*
  * anyenum
  *
  * We may as well allow output, since enum_out will in fact work.
@@ -190,6 +210,19 @@ PSEUDOTYPE_DUMMY_INPUT_FUNC(anyrange);
 
 Datum
 anyrange_out(PG_FUNCTION_ARGS)
+{
+	return range_out(fcinfo);
+}
+
+/*
+ * anycompatiblerange
+ *
+ * We may as well allow output, since range_out will in fact work.
+ */
+PSEUDOTYPE_DUMMY_INPUT_FUNC(anycompatiblerange);
+
+Datum
+anycompatiblerange_out(PG_FUNCTION_ARGS)
 {
 	return range_out(fcinfo);
 }
@@ -316,3 +349,5 @@ PSEUDOTYPE_DUMMY_IO_FUNCS(tsm_handler);
 PSEUDOTYPE_DUMMY_IO_FUNCS(internal);
 PSEUDOTYPE_DUMMY_IO_FUNCS(anyelement);
 PSEUDOTYPE_DUMMY_IO_FUNCS(anynonarray);
+PSEUDOTYPE_DUMMY_IO_FUNCS(anycompatible);
+PSEUDOTYPE_DUMMY_IO_FUNCS(anycompatiblenonarray);

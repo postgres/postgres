@@ -1226,16 +1226,13 @@ $$ LANGUAGE SQL;
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="xfunc-sql-polymorphic-functions">
     <title>Polymorphic <acronym>SQL</acronym> Functions</title>
 
     <para>
      <acronym>SQL</acronym> functions can be declared to accept and
-     return the polymorphic types <type>anyelement</type>,
-     <type>anyarray</type>, <type>anynonarray</type>,
-     <type>anyenum</type>, and <type>anyrange</type>.  See <xref
-     linkend="extend-types-polymorphic"/> for a more detailed
-     explanation of polymorphic functions. Here is a polymorphic
+     return the polymorphic types described in <xref
+     linkend="extend-types-polymorphic"/>.  Here is a polymorphic
      function <function>make_array</function> that builds up an array
      from two arbitrary data type elements:
 <screen>
@@ -1260,9 +1257,43 @@ SELECT make_array(1, 2) AS intarray, make_array('a'::text, 'b') AS textarray;
      type.
      Without the typecast, you will get errors like this:
 <screen>
-<computeroutput>
 ERROR:  could not determine polymorphic type because input has type unknown
-</computeroutput>
+</screen>
+    </para>
+
+    <para>
+     With <function>make_array</function> declared as above, you must
+     provide two arguments that are of exactly the same data type; the
+     system will not attempt to resolve any type differences.  Thus for
+     example this does not work:
+<screen>
+SELECT make_array(1, 2.5) AS numericarray;
+ERROR:  function make_array(integer, numeric) does not exist
+</screen>
+     An alternative approach is to use the <quote>common</quote> family of
+     polymorphic types, which allows the system to try to identify a
+     suitable common type:
+<screen>
+CREATE FUNCTION make_array2(anycompatible, anycompatible)
+RETURNS anycompatiblearray AS $$
+    SELECT ARRAY[$1, $2];
+$$ LANGUAGE SQL;
+
+SELECT make_array2(1, 2.5) AS numericarray;
+ numericarray
+--------------
+ {1,2.5}
+(1 row)
+</screen>
+     Because the rules for common type resolution default to choosing
+     type <type>text</type> when all inputs are of unknown types, this
+     also works:
+<screen>
+SELECT make_array2('a', 'b') AS textarray;
+ textarray 
+-----------
+ {a,b}
+(1 row)
 </screen>
     </para>
 
@@ -1284,7 +1315,7 @@ CREATE FUNCTION invalid_func() RETURNS anyelement AS $$
     SELECT 1;
 $$ LANGUAGE SQL;
 ERROR:  cannot determine result data type
-DETAIL:  A function returning a polymorphic type must have at least one polymorphic argument.
+DETAIL:  A result of type anyelement requires at least one input of type anyelement, anyarray, anynonarray, anyenum, or anyrange.
 </screen>
     </para>
 
@@ -3157,11 +3188,9 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
 
     <para>
      C-language functions can be declared to accept and
-     return the polymorphic types
-     <type>anyelement</type>, <type>anyarray</type>, <type>anynonarray</type>,
-     <type>anyenum</type>, and <type>anyrange</type>.
-     See <xref linkend="extend-types-polymorphic"/> for a more detailed explanation
-     of polymorphic functions. When function arguments or return types
+     return the polymorphic types described in <xref
+     linkend="extend-types-polymorphic"/>.
+     When a function's arguments or return types
      are defined as polymorphic types, the function author cannot know
      in advance what data type it will be called with, or
      need to return. There are two routines provided in <filename>fmgr.h</filename>

@@ -106,15 +106,17 @@ WHERE p1.typinput = p2.oid AND NOT
 
 -- Check for type of the variadic array parameter's elements.
 -- provariadic should be ANYOID if the type of the last element is ANYOID,
--- ANYELEMENTOID if the type of the last element is ANYARRAYOID, and otherwise
--- the element type corresponding to the array type.
+-- ANYELEMENTOID if the type of the last element is ANYARRAYOID,
+-- ANYCOMPATIBLEOID if the type of the last element is ANYCOMPATIBLEARRAYOID,
+-- and otherwise the element type corresponding to the array type.
 
 SELECT oid::regprocedure, provariadic::regtype, proargtypes::regtype[]
 FROM pg_proc
 WHERE provariadic != 0
 AND case proargtypes[array_length(proargtypes, 1)-1]
-    WHEN 2276 THEN 2276 -- any -> any
-	WHEN 2277 THEN 2283 -- anyarray -> anyelement
+	WHEN '"any"'::regtype THEN '"any"'::regtype
+	WHEN 'anyarray'::regtype THEN 'anyelement'::regtype
+	WHEN 'anycompatiblearray'::regtype THEN 'anycompatible'::regtype
 	ELSE (SELECT t.oid
 		  FROM pg_type t
 		  WHERE t.typarray = proargtypes[array_length(proargtypes, 1)-1])
