@@ -4392,10 +4392,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><structfield>backup_total</structfield></entry>
      <entry><type>bigint</type></entry>
      <entry>
-      Total amount of data that will be streamed. If progress reporting
-      is not enabled in <application>pg_basebackup</application>
-      (i.e., <literal>--progress</literal> option is not specified),
-      this is <literal>0</literal>. Otherwise, this is estimated and
+      Total amount of data that will be streamed. This is estimated and
       reported as of the beginning of
       <literal>streaming database files</literal> phase. Note that
       this is only an approximation since the database
@@ -4403,7 +4400,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       and WAL log may be included in the backup later. This is always
       the same value as <structfield>backup_streamed</structfield>
       once the amount of data streamed exceeds the estimated
-      total size.
+      total size. If the estimation is disabled in
+      <application>pg_basebackup</application>
+      (i.e., <literal>--no-estimate-size</literal> option is specified),
+      this is <literal>0</literal>.
      </entry>
     </row>
     <row>

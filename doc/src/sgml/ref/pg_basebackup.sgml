@@ -460,21 +460,6 @@ PostgreSQL documentation
         in this case the estimated target size will increase once it passes the
         total estimate without WAL.
        </para>
-       <para>
-        When this is enabled, the backup will start by enumerating the size of
-        the entire database, and then go back and send the actual contents.
-        This may make the backup take slightly longer, and in particular it
-        will take longer before the first data is sent.
-       </para>
-       <para>
-        Whether this is enabled or not, the
-        <structname>pg_stat_progress_basebackup</structname> view
-        report the progress of the backup in the server side. But note
-        that the total amount of data that will be streamed is estimated
-        and reported only when this option is enabled. In other words,
-        <literal>backup_total</literal> column in the view always
-        indicates <literal>0</literal> if this option is disabled.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -549,6 +534,30 @@ PostgreSQL documentation
         removed in such a case, as if the <option>--no-clean</option> option
         had been used.  Checksum verifications failures will also be reported
         in the <xref linkend="pg-stat-database-view"/> view.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-estimate-size</option></term>
+      <listitem>
+       <para>
+        This option prevents the server from estimating the total
+        amount of backup data that will be streamed, resulting in the
+        <literal>backup_total</literal> column in the
+        <structname>pg_stat_progress_basebackup</structname>
+        to be <literal>0</literal>.
+       </para>
+       <para>
+        Without this option, the backup will start by enumerating
+        the size of the entire database, and then go back and send
+        the actual contents. This may make the backup take slightly
+        longer, and in particular it will take longer before the first
+        data is sent. This option is useful to avoid such estimation
+        time if it's too long.
+       </para>
+       <para>
+        This option is not allowed when using <option>--progress</option>.
        </para>
       </listitem>
      </varlistentry>

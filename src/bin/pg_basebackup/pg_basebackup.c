@@ -121,6 +121,7 @@ static char *label = "pg_basebackup base backup";
 static bool noclean = false;
 static bool checksum_failure = false;
 static bool showprogress = false;
+static bool estimatesize = true;
 static int	verbose = 0;
 static int	compresslevel = 0;
 static IncludeWal includewal = STREAM_WAL;
@@ -386,6 +387,7 @@ usage(void)
 	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
 	printf(_("      --no-verify-checksums\n"
 			 "                         do not verify checksums\n"));
+	printf(_("      --no-estimate-size do not estimate backup size in server side\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));
@@ -1741,7 +1743,7 @@ BaseBackup(void)
 	basebkp =
 		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s",
 				 escaped_label,
-				 showprogress ? "PROGRESS" : "",
+				 estimatesize ? "PROGRESS" : "",
 				 includewal == FETCH_WAL ? "WAL" : "",
 				 fastcheckpoint ? "FAST" : "",
 				 includewal == NO_WAL ? "" : "NOWAIT",
@@ -2066,6 +2068,7 @@ main(int argc, char **argv)
 		{"waldir", required_argument, NULL, 1},
 		{"no-slot", no_argument, NULL, 2},
 		{"no-verify-checksums", no_argument, NULL, 3},
+		{"no-estimate-size", no_argument, NULL, 4},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -2234,6 +2237,9 @@ main(int argc, char **argv)
 			case 3:
 				verify_checksums = false;
 				break;
+			case 4:
+				estimatesize = false;
+				break;
 			default:
 
 				/*
@@ -2355,6 +2361,14 @@ main(int argc, char **argv)
 		exit(1);
 	}
 #endif
+
+	if (showprogress && !estimatesize)
+	{
+		pg_log_error("--progress and --no-estimate-size are incompatible options");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
 
 	/* connection in replication mode to server */
 	conn = GetConnection();
