@@ -61,7 +61,6 @@ typedef struct GenerationContext
 
 	/* Generational context parameters */
 	Size		blockSize;		/* standard block size */
-	Size		memAllocated;	/* track memory allocated for this context */
 
 	GenerationBlock *block;		/* current (most recently allocated) block */
 	dlist_head	blocks;			/* list of blocks */
@@ -153,7 +152,6 @@ static void *GenerationRealloc(MemoryContext context, void *pointer, Size size);
 static void GenerationReset(MemoryContext context);
 static void GenerationDelete(MemoryContext context);
 static Size GenerationGetChunkSpace(MemoryContext context, void *pointer);
-static Size GenerationMemAllocated(MemoryContext context);
 static bool GenerationIsEmpty(MemoryContext context);
 static void GenerationStats(MemoryContext context,
 							MemoryStatsPrintFunc printfunc, void *passthru,
@@ -173,7 +171,6 @@ static const MemoryContextMethods GenerationMethods = {
 	GenerationReset,
 	GenerationDelete,
 	GenerationGetChunkSpace,
-	GenerationMemAllocated,
 	GenerationIsEmpty,
 	GenerationStats
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -261,7 +258,6 @@ GenerationContextCreate(MemoryContext parent,
 
 	/* Fill in GenerationContext-specific header fields */
 	set->blockSize = blockSize;
-	set->memAllocated = 0;
 	set->block = NULL;
 	dlist_init(&set->blocks);
 
@@ -301,7 +297,7 @@ GenerationReset(MemoryContext context)
 
 		dlist_delete(miter.cur);
 
-		set->memAllocated -= block->blksize;
+		context->mem_allocated -= block->blksize;
 
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->blksize);
@@ -358,7 +354,7 @@ GenerationAlloc(MemoryContext context, Size size)
 		if (block == NULL)
 			return NULL;
 
-		set->memAllocated += blksize;
+		context->mem_allocated += blksize;
 
 		/* block with a single (used) chunk */
 		block->blksize = blksize;
@@ -415,7 +411,7 @@ GenerationAlloc(MemoryContext context, Size size)
 		if (block == NULL)
 			return NULL;
 
-		set->memAllocated += blksize;
+		context->mem_allocated += blksize;
 
 		block->blksize = blksize;
 		block->nchunks = 0;
@@ -532,7 +528,7 @@ GenerationFree(MemoryContext context, void *pointer)
 	if (set->block == block)
 		set->block = NULL;
 
-	set->memAllocated -= block->blksize;
+	context->mem_allocated -= block->blksize;
 	free(block);
 }
 
@@ -668,17 +664,6 @@ GenerationGetChunkSpace(MemoryContext context, void *pointer)
 	result = chunk->size + Generation_CHUNKHDRSZ;
 	VALGRIND_MAKE_MEM_NOACCESS(chunk, GENERATIONCHUNK_PRIVATE_LEN);
 	return result;
-}
-
-/*
- * All memory currently allocated for this context (including fragmentation
- * and freed chunks).
- */
-static Size
-GenerationMemAllocated(MemoryContext context)
-{
-	GenerationContext *set = (GenerationContext *) context;
-	return set->memAllocated;
 }
 
 /*
@@ -859,7 +844,7 @@ GenerationCheck(MemoryContext context)
 				 name, nfree, block, block->nfree);
 	}
 
-	Assert(total_allocated == gen->memAllocated);
+	Assert(total_allocated == context->mem_allocated);
 }
 
 #endif							/* MEMORY_CONTEXT_CHECKING */

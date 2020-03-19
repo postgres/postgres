@@ -469,7 +469,7 @@ MemoryContextIsEmpty(MemoryContext context)
 Size
 MemoryContextMemAllocated(MemoryContext context, bool recurse)
 {
-	Size	total = context->methods->mem_allocated(context);
+	Size	total = context->mem_allocated;
 
 	AssertArg(MemoryContextIsValid(context));
 
@@ -760,6 +760,7 @@ MemoryContextCreate(MemoryContext node,
 	node->methods = methods;
 	node->parent = parent;
 	node->firstchild = NULL;
+	node->mem_allocated = 0;
 	node->prevchild = NULL;
 	node->name = name;
 	node->ident = NULL;
