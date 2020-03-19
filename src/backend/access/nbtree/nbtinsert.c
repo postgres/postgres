@@ -1249,7 +1249,8 @@ _bt_insertonpg(Relation rel,
 		if (postingoff != 0)
 			memcpy(oposting, nposting, MAXALIGN(IndexTupleSize(nposting)));
 
-		if (!_bt_pgaddtup(page, itemsz, itup, newitemoff))
+		if (PageAddItem(page, (Item) itup, itemsz, newitemoff, false,
+						false) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add new item to block %u in index \"%s\"",
 				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 
@@ -2528,19 +2529,30 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 }
 
 /*
- *	_bt_pgaddtup() -- add a tuple to a particular page in the index.
+ *	_bt_pgaddtup() -- add a data item to a particular page during split.
  *
  *		This routine adds the tuple to the page as requested.  It does
  *		not affect pin/lock status, but you'd better have a write lock
  *		and pin on the target buffer!  Don't forget to write and release
  *		the buffer afterwards, either.
  *
- *		The main difference between this routine and a bare PageAddItem call
- *		is that this code knows that the leftmost index tuple on a non-leaf
+ *		The difference between this routine and a bare PageAddItem call is
+ *		that this code knows that the leftmost data item on an internal
  *		btree page has a key that must be treated as minus infinity.
- *		Therefore, it truncates away all attributes.  CAUTION: this works
- *		ONLY if we insert the tuples in order, so that the given itup_off
- *		does represent the final position of the tuple!
+ *		Therefore, it truncates away all attributes.  This extra step is
+ *		only needed during internal page splits.
+ *
+ *		Truncation of an internal page data item can be thought of as one
+ *		of the steps used to "move" a boundary separator key during an
+ *		internal page split.  Conceptually, _bt_split() caller splits
+ *		internal pages "inside" the firstright data item: firstright's
+ *		separator key is used as the high key for the left page, while its
+ *		downlink is used within the first data item (also the negative
+ *		infinity item) for the right page.  Each distinct separator key
+ *		should appear no more than once per level of the tree.
+ *
+ *		CAUTION: this works ONLY if we insert the tuples in order, so that
+ *		the given itup_off does represent the final position of the tuple!
  */
 static bool
 _bt_pgaddtup(Page page,
