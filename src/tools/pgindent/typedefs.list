@@ -537,6 +537,7 @@ DropSubscriptionStmt
 DropTableSpaceStmt
 DropUserMappingStmt
 DropdbStmt
+DummyAmEnum
 DummyIndexOptions
 DumpComponents
 DumpId
@@ -909,6 +910,7 @@ GistBulkDeleteResult
 GistEntryVector
 GistInetKey
 GistNSN
+GistOptBufferingMode
 GistSplitUnion
 GistSplitVector
 GistVacState
@@ -2590,6 +2592,7 @@ VariableSubstituteHook
 VersionedQuery
 Vfd
 ViewCheckOption
+ViewOptCheckOption
 ViewOptions
 ViewStmt
 VirtualTransactionId
@@ -3182,6 +3185,8 @@ regmatch_t
 regoff_t
 regproc
 relopt_bool
+relopt_enum
+relopt_enum_elt_def
 relopt_gen
 relopt_int
 relopt_kind
