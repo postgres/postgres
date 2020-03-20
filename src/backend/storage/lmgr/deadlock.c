@@ -555,6 +555,14 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 	int			numLockModes,
 				lm;
 
+	/*
+	 * The relation extension lock can never participate in actual deadlock
+	 * cycle.  See Assert in LockAcquireExtended.  So, there is no advantage
+	 * in checking wait edges from it.
+	 */
+	if (LOCK_LOCKTAG(*lock) == LOCKTAG_RELATION_EXTEND)
+		return false;
+
 	lockMethodTable = GetLocksMethodTable(lock);
 	numLockModes = lockMethodTable->numLockModes;
 	conflictMask = lockMethodTable->conflictTab[checkProc->waitLockMode];

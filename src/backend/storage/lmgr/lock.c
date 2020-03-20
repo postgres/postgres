@@ -1470,6 +1470,16 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	}
 
 	/*
+	 * The relation extension lock conflict even between the group members.
+	 */
+	if (LOCK_LOCKTAG(*lock) == LOCKTAG_RELATION_EXTEND)
+	{
+		PROCLOCK_PRINT("LockCheckConflicts: conflicting (group)",
+					   proclock);
+		return true;
+	}
+
+	/*
 	 * Locks held in conflicting modes by members of our own lock group are
 	 * not real conflicts; we can subtract those out and see if we still have
 	 * a conflict.  This is O(N) in the number of processes holding or
