@@ -17466,7 +17466,7 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 
 	if (tginfo->tgenabled != 't' && tginfo->tgenabled != 'O')
 	{
-		appendPQExpBuffer(query, "\nALTER %sTABLE %s ", foreign,
+		appendPQExpBuffer(query, "\nALTER %sTABLE %s ",
 						  tbinfo->relkind == RELKIND_FOREIGN_TABLE ? "FOREIGN " : "",
 						  fmtQualifiedDumpable(tbinfo));
 		switch (tginfo->tgenabled)
