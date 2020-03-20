@@ -708,6 +708,7 @@ static bool
 PrintQueryTuples(const PGresult *results)
 {
 	printQueryOpt my_popt = pset.popt;
+	bool result = true;
 
 	/* one-shot expanded output requested via \gx */
 	if (pset.g_expanded)
@@ -725,6 +726,11 @@ PrintQueryTuples(const PGresult *results)
 			disable_sigpipe_trap();
 
 		printQuery(results, &my_popt, fout, false, pset.logfile);
+		if (ferror(fout))
+		{
+			pg_log_error("could not print result table: %m");
+			result = false;
+		}
 
 		if (is_pipe)
 		{
@@ -735,9 +741,16 @@ PrintQueryTuples(const PGresult *results)
 			fclose(fout);
 	}
 	else
+	{
 		printQuery(results, &my_popt, pset.queryFout, false, pset.logfile);
+		if (ferror(pset.queryFout))
+		{
+			pg_log_error("could not print result table: %m");
+			result = false;
+		}
+	}
 
-	return true;
+	return result;
 }
 
 
