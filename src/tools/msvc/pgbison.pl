@@ -45,5 +45,7 @@ close($mf);
 my $basetarg = basename($output);
 my $headerflag = ($make =~ /^$basetarg:\s+BISONFLAGS\b.*-d/m ? '-d' : '');
 
-system("bison $headerflag $input -o $output");
+my $nodep = $bisonver ge '3.0' ? "-Wno-deprecated" : "";
+
+system("bison $nodep $headerflag $input -o $output");
 exit $? >> 8;
