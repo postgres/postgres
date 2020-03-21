@@ -3035,10 +3035,7 @@ AtEOXact_cleanup(Relation relation, bool isCommit)
 	 *
 	 * During commit, reset the flag to zero, since we are now out of the
 	 * creating transaction.  During abort, simply delete the relcache entry
-	 * --- it isn't interesting any longer.  (NOTE: if we have forgotten the
-	 * new-ness of a new relation due to a forced cache flush, the entry will
-	 * get deleted anyway by shared-cache-inval processing of the aborted
-	 * pg_class insertion.)
+	 * --- it isn't interesting any longer.
 	 */
 	if (relation->rd_createSubid != InvalidSubTransactionId)
 	{
