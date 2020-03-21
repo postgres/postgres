@@ -26,6 +26,7 @@
  /* #define XLOG_GIST_INSERT_COMPLETE	 0x40 */	/* not used anymore */
  /* #define XLOG_GIST_CREATE_INDEX		 0x50 */	/* not used anymore */
 #define XLOG_GIST_PAGE_DELETE		0x60
+#define XLOG_GIST_ASSIGN_LSN		0x70	/* nop, assign new LSN */
 
 /*
  * Backup Blk 0: updated page.

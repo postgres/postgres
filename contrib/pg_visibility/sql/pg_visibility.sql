@@ -1,6 +1,25 @@
 CREATE EXTENSION pg_visibility;
 
 --
+-- recently-dropped table
+--
+\set VERBOSITY sqlstate
+BEGIN;
+CREATE TABLE droppedtest (c int);
+SELECT 'droppedtest'::regclass::oid AS oid \gset
+SAVEPOINT q; DROP TABLE droppedtest; RELEASE q;
+SAVEPOINT q; SELECT * FROM pg_visibility_map(:oid); ROLLBACK TO q;
+-- ERROR:  could not open relation with OID 16xxx
+SAVEPOINT q; SELECT 1; ROLLBACK TO q;
+SAVEPOINT q; SELECT 1; ROLLBACK TO q;
+SELECT pg_relation_size(:oid), pg_relation_filepath(:oid),
+  has_table_privilege(:oid, 'SELECT');
+SELECT * FROM pg_visibility_map(:oid);
+-- ERROR:  could not open relation with OID 16xxx
+ROLLBACK;
+\set VERBOSITY default
+
+--
 -- check that using the module's functions with unsupported relations will fail
 --
 
