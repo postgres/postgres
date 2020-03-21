@@ -562,16 +562,13 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	myState->rel = intoRelationDesc;
 	myState->reladdr = intoRelationAddr;
 	myState->output_cid = GetCurrentCommandId(true);
-
-	/*
-	 * We can skip WAL-logging the insertions, unless PITR or streaming
-	 * replication is in use. We can skip the FSM in any case.
-	 */
-	myState->hi_options = HEAP_INSERT_SKIP_FSM |
-		(XLogIsNeeded() ? 0 : HEAP_INSERT_SKIP_WAL);
+	myState->hi_options = HEAP_INSERT_SKIP_FSM;
 	myState->bistate = GetBulkInsertState();
 
-	/* Not using WAL requires smgr_targblock be initially invalid */
+	/*
+	 * Valid smgr_targblock implies something already wrote to the relation.
+	 * This may be harmless, but this function hasn't planned for it.
+	 */
 	Assert(RelationGetTargetBlock(intoRelationDesc) == InvalidBlockNumber);
 }
 
@@ -616,10 +613,6 @@ intorel_shutdown(DestReceiver *self)
 	DR_intorel *myState = (DR_intorel *) self;
 
 	FreeBulkInsertState(myState->bistate);
-
-	/* If we skipped using WAL, must heap_sync before commit */
-	if (myState->hi_options & HEAP_INSERT_SKIP_WAL)
-		heap_sync(myState->rel);
 
 	/* close rel, but keep lock until commit */
 	heap_close(myState->rel, NoLock);

@@ -505,6 +505,9 @@ gist_redo(XLogReaderState *record)
 		case XLOG_GIST_CREATE_INDEX:
 			gistRedoCreateIndex(record);
 			break;
+		case XLOG_GIST_ASSIGN_LSN:
+			/* nop. See gistGetFakeLSN(). */
+			break;
 		default:
 			elog(PANIC, "gist_redo: unknown op code %u", info);
 	}
@@ -621,6 +624,24 @@ gistXLogSplit(bool page_is_leaf,
 	recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_PAGE_SPLIT);
 
 	return recptr;
+}
+
+/*
+ * Write an empty XLOG record to assign a distinct LSN.
+ */
+XLogRecPtr
+gistXLogAssignLSN(void)
+{
+	int			dummy = 0;
+
+	/*
+	 * Records other than SWITCH_WAL must have content. We use an integer 0 to
+	 * follow the restriction.
+	 */
+	XLogBeginInsert();
+	XLogSetRecordFlags(XLOG_MARK_UNIMPORTANT);
+	XLogRegisterData((char *) &dummy, sizeof(dummy));
+	return XLogInsert(RM_GIST_ID, XLOG_GIST_ASSIGN_LSN);
 }
 
 /*

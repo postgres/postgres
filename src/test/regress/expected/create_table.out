@@ -275,6 +275,19 @@ DEALLOCATE select1;
 -- check that the oid column is added before the primary key is checked
 CREATE TABLE oid_pk (f1 INT, PRIMARY KEY(oid)) WITH OIDS;
 DROP TABLE oid_pk;
+-- Verify that subtransaction rollback restores rd_createSubid.
+BEGIN;
+CREATE TABLE remember_create_subid (c int);
+SAVEPOINT q; DROP TABLE remember_create_subid; ROLLBACK TO q;
+COMMIT;
+DROP TABLE remember_create_subid;
+-- Verify that subtransaction rollback restores rd_firstRelfilenodeSubid.
+CREATE TABLE remember_node_subid (c int);
+BEGIN;
+ALTER TABLE remember_node_subid ALTER c TYPE bigint;
+SAVEPOINT q; DROP TABLE remember_node_subid; ROLLBACK TO q;
+COMMIT;
+DROP TABLE remember_node_subid;
 --
 -- Partitioned tables
 --
