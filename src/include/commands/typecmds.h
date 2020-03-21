@@ -16,7 +16,7 @@
 
 #include "access/htup.h"
 #include "catalog/dependency.h"
-#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 
 
 #define DEFAULT_TYPDELIM		','

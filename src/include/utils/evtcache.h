@@ -14,6 +14,7 @@
 #ifndef EVTCACHE_H
 #define EVTCACHE_H
 
+#include "nodes/bitmapset.h"
 #include "nodes/pg_list.h"
 
 typedef enum
