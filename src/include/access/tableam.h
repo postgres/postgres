@@ -128,7 +128,7 @@ typedef struct TM_FailureData
 } TM_FailureData;
 
 /* "options" flag bits for table_tuple_insert */
-#define TABLE_INSERT_SKIP_WAL		0x0001
+/* TABLE_INSERT_SKIP_WAL was 0x0001; RelationNeedsWAL() now governs */
 #define TABLE_INSERT_SKIP_FSM		0x0002
 #define TABLE_INSERT_FROZEN			0x0004
 #define TABLE_INSERT_NO_LOGICAL		0x0008
@@ -410,9 +410,8 @@ typedef struct TableAmRoutine
 
 	/*
 	 * Perform operations necessary to complete insertions made via
-	 * tuple_insert and multi_insert with a BulkInsertState specified. This
-	 * may for example be used to flush the relation, when the
-	 * TABLE_INSERT_SKIP_WAL option was used.
+	 * tuple_insert and multi_insert with a BulkInsertState specified. In-tree
+	 * access methods ceased to use this.
 	 *
 	 * Typically callers of tuple_insert and multi_insert will just pass all
 	 * the flags that apply to them, and each AM has to decide which of them
@@ -1119,10 +1118,6 @@ table_compute_xid_horizon_for_tuples(Relation rel,
  * The options bitmask allows the caller to specify options that may change the
  * behaviour of the AM. The AM will ignore options that it does not support.
  *
- * If the TABLE_INSERT_SKIP_WAL option is specified, the new tuple doesn't
- * need to be logged to WAL, even for a non-temp relation. It is the AMs
- * choice whether this optimization is supported.
- *
  * If the TABLE_INSERT_SKIP_FSM option is specified, AMs are free to not reuse
  * free space in the relation. This can save some cycles when we know the
  * relation is new and doesn't contain useful amounts of free space.
@@ -1342,9 +1337,7 @@ table_tuple_lock(Relation rel, ItemPointer tid, Snapshot snapshot,
 
 /*
  * Perform operations necessary to complete insertions made via
- * tuple_insert and multi_insert with a BulkInsertState specified. This
- * e.g. may e.g. used to flush the relation when inserting with
- * TABLE_INSERT_SKIP_WAL specified.
+ * tuple_insert and multi_insert with a BulkInsertState specified.
  */
 static inline void
 table_finish_bulk_insert(Relation rel, int options)

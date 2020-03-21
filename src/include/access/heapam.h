@@ -31,7 +31,6 @@
 
 
 /* "options" flag bits for heap_insert */
-#define HEAP_INSERT_SKIP_WAL	TABLE_INSERT_SKIP_WAL
 #define HEAP_INSERT_SKIP_FSM	TABLE_INSERT_SKIP_FSM
 #define HEAP_INSERT_FROZEN		TABLE_INSERT_FROZEN
 #define HEAP_INSERT_NO_LOGICAL	TABLE_INSERT_NO_LOGICAL
@@ -167,8 +166,6 @@ extern void simple_heap_insert(Relation relation, HeapTuple tup);
 extern void simple_heap_delete(Relation relation, ItemPointer tid);
 extern void simple_heap_update(Relation relation, ItemPointer otid,
 							   HeapTuple tup);
-
-extern void heap_sync(Relation relation);
 
 extern TransactionId heap_compute_xid_horizon_for_tuples(Relation rel,
 														 ItemPointerData *items,

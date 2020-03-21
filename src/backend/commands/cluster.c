@@ -1111,6 +1111,25 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	}
 
 	/*
+	 * Recognize that rel1's relfilenode (swapped from rel2) is new in this
+	 * subtransaction. The rel2 storage (swapped from rel1) may or may not be
+	 * new.
+	 */
+	{
+		Relation	rel1,
+					rel2;
+
+		rel1 = relation_open(r1, NoLock);
+		rel2 = relation_open(r2, NoLock);
+		rel2->rd_createSubid = rel1->rd_createSubid;
+		rel2->rd_newRelfilenodeSubid = rel1->rd_newRelfilenodeSubid;
+		rel2->rd_firstRelfilenodeSubid = rel1->rd_firstRelfilenodeSubid;
+		RelationAssumeNewRelfilenode(rel1);
+		relation_close(rel1, NoLock);
+		relation_close(rel2, NoLock);
+	}
+
+	/*
 	 * In the case of a shared catalog, these next few steps will only affect
 	 * our own database's pg_class row; but that's okay, because they are all
 	 * noncritical updates.  That's also an important fact for the case of a
