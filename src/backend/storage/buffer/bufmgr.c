@@ -64,7 +64,7 @@
 #define BUF_WRITTEN				0x01
 #define BUF_REUSABLE			0x02
 
-#define DROP_RELS_BSEARCH_THRESHOLD		20
+#define RELS_BSEARCH_THRESHOLD		20
 
 typedef struct PrivateRefCountEntry
 {
@@ -74,6 +74,19 @@ typedef struct PrivateRefCountEntry
 
 /* 64 bytes, about the size of a cache line on common systems */
 #define REFCOUNT_ARRAY_ENTRIES 8
+
+/*
+ * Type for array used to sort SMgrRelations
+ *
+ * FlushRelationsAllBuffers shares the same comparator function with
+ * DropRelFileNodesAllBuffers. Pointer to this struct and RelFileNode must be
+ * compatible.
+ */
+typedef struct SMgrSortArray
+{
+	RelFileNode rnode;			/* This must be the first member */
+	SMgrRelation srel;
+} SMgrSortArray;
 
 /* GUC variables */
 bool		zero_damaged_pages = false;
@@ -2638,7 +2651,7 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 	 * an exactly determined value, as it depends on many factors (CPU and RAM
 	 * speeds, amount of shared buffers etc.).
 	 */
-	use_bsearch = n > DROP_RELS_BSEARCH_THRESHOLD;
+	use_bsearch = n > RELS_BSEARCH_THRESHOLD;
 
 	/* sort the list of rnodes if necessary */
 	if (use_bsearch)
@@ -2881,6 +2894,103 @@ FlushRelationBuffers(Relation rel)
 }
 
 /* ---------------------------------------------------------------------
+ *		FlushRelationsAllBuffers
+ *
+ *		This function flushes out of the buffer pool all the pages of all
+ *		forks of the specified smgr relations.  It's equivalent to calling
+ *		FlushRelationBuffers once per fork per relation.  The relations are
+ *		assumed not to use local buffers.
+ * --------------------------------------------------------------------
+ */
+void
+FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
+{
+	int			i;
+	SMgrSortArray *srels;
+	bool		use_bsearch;
+
+	if (nrels == 0)
+		return;
+
+	/* fill-in array for qsort */
+	srels = palloc(sizeof(SMgrSortArray) * nrels);
+
+	for (i = 0; i < nrels; i++)
+	{
+		Assert(!RelFileNodeBackendIsTemp(smgrs[i]->smgr_rnode));
+
+		srels[i].rnode = smgrs[i]->smgr_rnode.node;
+		srels[i].srel = smgrs[i];
+	}
+
+	/*
+	 * Save the bsearch overhead for low number of relations to sync. See
+	 * DropRelFileNodesAllBuffers for details.
+	 */
+	use_bsearch = nrels > RELS_BSEARCH_THRESHOLD;
+
+	/* sort the list of SMgrRelations if necessary */
+	if (use_bsearch)
+		pg_qsort(srels, nrels, sizeof(SMgrSortArray), rnode_comparator);
+
+	/* Make sure we can handle the pin inside the loop */
+	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+
+	for (i = 0; i < NBuffers; i++)
+	{
+		SMgrSortArray *srelent = NULL;
+		BufferDesc *bufHdr = GetBufferDescriptor(i);
+
+		/*
+		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
+		 * and saves some cycles.
+		 */
+
+		if (!use_bsearch)
+		{
+			int			j;
+
+			for (j = 0; j < nrels; j++)
+			{
+				if (RelFileNodeEquals(bufHdr->tag.rnode, srels[j].rnode))
+				{
+					srelent = &srels[j];
+					break;
+				}
+			}
+
+		}
+		else
+		{
+			srelent = bsearch((const void *) &(bufHdr->tag.rnode),
+							  srels, nrels, sizeof(SMgrSortArray),
+							  rnode_comparator);
+		}
+
+		/* buffer doesn't belong to any of the given relfilenodes; skip it */
+		if (srelent == NULL)
+			continue;
+
+		ReservePrivateRefCountEntry();
+
+		LockBufHdr(bufHdr);
+		if (RelFileNodeEquals(bufHdr->tag.rnode, srelent->rnode) &&
+			(bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_DIRTY))
+		{
+			PinBuffer_Locked(bufHdr);
+			LWLockAcquire(bufHdr->content_lock, LW_SHARED);
+			FlushBuffer(bufHdr, srelent->srel);
+			LWLockRelease(bufHdr->content_lock);
+			UnpinBuffer(bufHdr, true);
+		}
+		else
+			UnlockBufHdr(bufHdr);
+	}
+
+	pfree(srels);
+}
+
+/* ---------------------------------------------------------------------
  *		FlushDatabaseBuffers
  *
  *		This function writes all dirty pages of a database out to disk
@@ -3077,13 +3187,15 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 		if (XLogHintBitIsNeeded() && (bufHdr->flags & BM_PERMANENT))
 		{
 			/*
-			 * If we're in recovery we cannot dirty a page because of a hint.
-			 * We can set the hint, just not dirty the page as a result so the
-			 * hint is lost when we evict the page or shutdown.
+			 * If we must not write WAL, due to a relfilenode-specific
+			 * condition or being in recovery, don't dirty the page.  We can
+			 * set the hint, just not dirty the page as a result so the hint
+			 * is lost when we evict the page or shutdown.
 			 *
 			 * See src/backend/storage/page/README for longer discussion.
 			 */
-			if (RecoveryInProgress())
+			if (RecoveryInProgress() ||
+				RelFileNodeSkippingWAL(bufHdr->tag.rnode))
 				return;
 
 			/*

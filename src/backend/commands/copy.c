@@ -2274,49 +2274,14 @@ CopyFrom(CopyState cstate)
 
 	tupDesc = RelationGetDescr(cstate->rel);
 
-	/*----------
-	 * Check to see if we can avoid writing WAL
-	 *
-	 * If archive logging/streaming is not enabled *and* either
-	 *	- table was created in same transaction as this COPY
-	 *	- data is being written to relfilenode created in this transaction
-	 * then we can skip writing WAL.  It's safe because if the transaction
-	 * doesn't commit, we'll discard the table (or the new relfilenode file).
-	 * If it does commit, we'll have done the heap_sync at the bottom of this
-	 * routine first.
-	 *
-	 * As mentioned in comments in utils/rel.h, the in-same-transaction test
-	 * is not always set correctly, since in rare cases rd_newRelfilenodeSubid
-	 * can be cleared before the end of the transaction. The exact case is
-	 * when a relation sets a new relfilenode twice in same transaction, yet
-	 * the second one fails in an aborted subtransaction, e.g.
-	 *
-	 * BEGIN;
-	 * TRUNCATE t;
-	 * SAVEPOINT save;
-	 * TRUNCATE t;
-	 * ROLLBACK TO save;
-	 * COPY ...
-	 *
-	 * Also, if the target file is new-in-transaction, we assume that checking
-	 * FSM for free space is a waste of time, even if we must use WAL because
-	 * of archiving.  This could possibly be wrong, but it's unlikely.
-	 *
-	 * The comments for heap_insert and RelationGetBufferForTuple specify that
-	 * skipping WAL logging is only safe if we ensure that our tuples do not
-	 * go into pages containing tuples from any other transactions --- but this
-	 * must be the case if we have a new table or new relfilenode, so we need
-	 * no additional work to enforce that.
-	 *----------
+	/*
+	 * If the target file is new-in-transaction, we assume that checking FSM
+	 * for free space is a waste of time.  This could possibly be wrong, but
+	 * it's unlikely.
 	 */
-	/* createSubid is creation check, newRelfilenodeSubid is truncation check */
 	if (cstate->rel->rd_createSubid != InvalidSubTransactionId ||
-		cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId)
-	{
+		cstate->rel->rd_firstRelfilenodeSubid != InvalidSubTransactionId)
 		hi_options |= HEAP_INSERT_SKIP_FSM;
-		if (!XLogIsNeeded())
-			hi_options |= HEAP_INSERT_SKIP_WAL;
-	}
 
 	/*
 	 * Optimize if new relfilenode was created in this subxact or one of its
@@ -2574,13 +2539,6 @@ CopyFrom(CopyState cstate)
 	ExecCloseIndices(resultRelInfo);
 
 	FreeExecutorState(estate);
-
-	/*
-	 * If we skipped writing WAL, then we need to sync the heap (but not
-	 * indexes since those use WAL anyway)
-	 */
-	if (hi_options & HEAP_INSERT_SKIP_WAL)
-		heap_sync(cstate->rel);
 
 	return processed;
 }

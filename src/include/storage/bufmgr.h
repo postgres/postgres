@@ -45,6 +45,9 @@ typedef enum
 								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
 
+/* forward declared, to avoid including smgr.h here */
+struct SMgrRelationData;
+
 /* in globals.c ... this duplicates miscadmin.h */
 extern PGDLLIMPORT int NBuffers;
 
@@ -171,6 +174,7 @@ extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
 								ForkNumber forkNum);
 extern void FlushOneBuffer(Buffer buffer);
 extern void FlushRelationBuffers(Relation rel);
+extern void FlushRelationsAllBuffers(struct SMgrRelationData **smgrs, int nrels);
 extern void FlushDatabaseBuffers(Oid dbid);
 extern void DropRelFileNodeBuffers(RelFileNodeBackend rnode,
 					   ForkNumber forkNum, BlockNumber firstDelBlock);

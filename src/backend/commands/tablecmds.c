@@ -4013,19 +4013,14 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		newrel = NULL;
 
 	/*
-	 * Prepare a BulkInsertState and options for heap_insert. Because we're
-	 * building a new heap, we can skip WAL-logging and fsync it to disk at
-	 * the end instead (unless WAL-logging is required for archiving or
-	 * streaming replication). The FSM is empty too, so don't bother using it.
+	 * Prepare a BulkInsertState and options for heap_insert.  The FSM is
+	 * empty, so don't bother using it.
 	 */
 	if (newrel)
 	{
 		mycid = GetCurrentCommandId(true);
 		bistate = GetBulkInsertState();
-
 		hi_options = HEAP_INSERT_SKIP_FSM;
-		if (!XLogIsNeeded())
-			hi_options |= HEAP_INSERT_SKIP_WAL;
 	}
 	else
 	{
@@ -4274,10 +4269,6 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	if (newrel)
 	{
 		FreeBulkInsertState(bistate);
-
-		/* If we skipped writing WAL, then we need to sync the heap. */
-		if (hi_options & HEAP_INSERT_SKIP_WAL)
-			heap_sync(newrel);
 
 		heap_close(newrel, NoLock);
 	}
@@ -5958,14 +5949,19 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
-	 * index instead of building from scratch.  The DROP of the old edition of
-	 * this index will have scheduled the storage for deletion at commit, so
-	 * cancel that pending deletion.
+	 * index instead of building from scratch.  Restore associated fields.
+	 * This may store InvalidSubTransactionId in both fields, in which case
+	 * relcache.c will assume it can rebuild the relcache entry.  Hence, do
+	 * this after the CCI that made catalog rows visible to any rebuild.  The
+	 * DROP of the old edition of this index will have scheduled the storage
+	 * for deletion at commit, so cancel that pending deletion.
 	 */
 	if (OidIsValid(stmt->oldNode))
 	{
 		Relation	irel = index_open(address.objectId, NoLock);
 
+		irel->rd_createSubid = stmt->oldCreateSubid;
+		irel->rd_firstRelfilenodeSubid = stmt->oldFirstRelfilenodeSubid;
 		RelationPreserveStorage(irel->rd_node, true);
 		index_close(irel, NoLock);
 	}
@@ -9104,6 +9100,8 @@ TryReuseIndex(Oid oldId, IndexStmt *stmt)
 		Relation	irel = index_open(oldId, NoLock);
 
 		stmt->oldNode = irel->rd_node.relNode;
+		stmt->oldCreateSubid = irel->rd_createSubid;
+		stmt->oldFirstRelfilenodeSubid = irel->rd_firstRelfilenodeSubid;
 		index_close(irel, NoLock);
 	}
 }
@@ -9949,6 +9947,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 
 	heap_close(pg_class, RowExclusiveLock);
 
+	RelationAssumeNewRelfilenode(rel);
+
 	relation_close(rel, NoLock);
 
 	/* Make sure the reltablespace change is visible */
@@ -10163,7 +10163,9 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 
 	/*
 	 * We need to log the copied data in WAL iff WAL archiving/streaming is
-	 * enabled AND it's a permanent relation.
+	 * enabled AND it's a permanent relation.  This gives the same answer as
+	 * "RelationNeedsWAL(rel) || copying_initfork", because we know the
+	 * current operation created a new relfilenode.
 	 */
 	use_wal = XLogIsNeeded() &&
 		(relpersistence == RELPERSISTENCE_PERMANENT || copying_initfork);
@@ -10205,21 +10207,15 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	}
 
 	/*
-	 * If the rel is WAL-logged, must fsync before commit.  We use heap_sync
-	 * to ensure that the toast table gets fsync'd too.  (For a temp or
-	 * unlogged rel we don't care since the data will be gone after a crash
-	 * anyway.)
-	 *
-	 * It's obvious that we must do this when not WAL-logging the copy. It's
-	 * less obvious that we have to do it even if we did WAL-log the copied
-	 * pages. The reason is that since we're copying outside shared buffers, a
-	 * CHECKPOINT occurring during the copy has no way to flush the previously
-	 * written data to disk (indeed it won't know the new rel even exists).  A
-	 * crash later on would replay WAL from the checkpoint, therefore it
-	 * wouldn't replay our earlier WAL entries. If we do not fsync those pages
-	 * here, they might still not be on disk when the crash occurs.
+	 * When we WAL-logged rel pages, we must nonetheless fsync them.  The
+	 * reason is that since we're copying outside shared buffers, a CHECKPOINT
+	 * occurring during the copy has no way to flush the previously written
+	 * data to disk (indeed it won't know the new rel even exists).  A crash
+	 * later on would replay WAL from the checkpoint, therefore it wouldn't
+	 * replay our earlier WAL entries. If we do not fsync those pages here,
+	 * they might still not be on disk when the crash occurs.
 	 */
-	if (relpersistence == RELPERSISTENCE_PERMANENT || copying_initfork)
+	if (use_wal || copying_initfork)
 		smgrimmedsync(dst, forkNum);
 }
 

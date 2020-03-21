@@ -46,6 +46,9 @@ gist_desc(StringInfo buf, XLogReaderState *record)
 			break;
 		case XLOG_GIST_CREATE_INDEX:
 			break;
+		case XLOG_GIST_ASSIGN_LSN:
+			/* No details to write out */
+			break;
 	}
 }
 
@@ -64,6 +67,9 @@ gist_identify(uint8 info)
 			break;
 		case XLOG_GIST_CREATE_INDEX:
 			id = "CREATE_INDEX";
+			break;
+		case XLOG_GIST_ASSIGN_LSN:
+			id = "ASSIGN_LSN";
 			break;
 	}
 

@@ -1086,6 +1086,8 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 	index->idxcomment = NULL;
 	index->indexOid = InvalidOid;
 	index->oldNode = InvalidOid;
+	index->oldCreateSubid = InvalidSubTransactionId;
+	index->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
 	index->unique = idxrec->indisunique;
 	index->primary = idxrec->indisprimary;
 	index->transformed = true;	/* don't need transformIndexStmt */
@@ -1550,6 +1552,8 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 	index->idxcomment = NULL;
 	index->indexOid = InvalidOid;
 	index->oldNode = InvalidOid;
+	index->oldCreateSubid = InvalidSubTransactionId;
+	index->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
 	index->transformed = false;
 	index->concurrent = false;
 	index->if_not_exists = false;
