@@ -77,7 +77,8 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfoString(buf, xlrec->rp_name);
 	}
-	else if (info == XLOG_FPI || info == XLOG_FPI_FOR_HINT)
+	else if (info == XLOG_FPI || info == XLOG_FPI_FOR_HINT ||
+			 info == XLOG_FPI_MULTI)
 	{
 		/* no further information to print */
 	}
@@ -180,6 +181,9 @@ xlog_identify(uint8 info)
 			break;
 		case XLOG_FPI_FOR_HINT:
 			id = "FPI_FOR_HINT";
+			break;
+		case XLOG_FPI_MULTI:
+			id = "FPI_MULTI";
 			break;
 	}
 
