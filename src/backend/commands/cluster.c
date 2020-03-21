@@ -747,7 +747,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	bool	   *isnull;
 	IndexScanDesc indexScan;
 	HeapScanDesc heapScan;
-	bool		use_wal;
 	bool		is_system_catalog;
 	TransactionId OldestXmin;
 	TransactionId FreezeXid;
@@ -803,12 +802,9 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 		LockRelationOid(OldHeap->rd_rel->reltoastrelid, AccessExclusiveLock);
 
 	/*
-	 * We need to log the copied data in WAL iff WAL archiving/streaming is
-	 * enabled AND it's a WAL-logged rel.
+	 * Valid smgr_targblock implies something already wrote to the relation.
+	 * This may be harmless, but this function hasn't planned for it.
 	 */
-	use_wal = XLogIsNeeded() && RelationNeedsWAL(NewHeap);
-
-	/* use_wal off requires smgr_targblock be initially invalid */
 	Assert(RelationGetTargetBlock(NewHeap) == InvalidBlockNumber);
 
 	/*
@@ -876,7 +872,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/* Initialize the rewrite operation */
 	rwstate = begin_heap_rewrite(OldHeap, NewHeap, OldestXmin, FreezeXid,
-								 MultiXactCutoff, use_wal);
+								 MultiXactCutoff);
 
 	/*
 	 * Decide whether to use an indexscan or seqscan-and-optional-sort to scan
@@ -1244,6 +1240,25 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 
 		/* Pass OIDs of mapped r2 tables back to caller */
 		*mapped_tables++ = r2;
+	}
+
+	/*
+	 * Recognize that rel1's relfilenode (swapped from rel2) is new in this
+	 * subtransaction. The rel2 storage (swapped from rel1) may or may not be
+	 * new.
+	 */
+	{
+		Relation	rel1,
+					rel2;
+
+		rel1 = relation_open(r1, NoLock);
+		rel2 = relation_open(r2, NoLock);
+		rel2->rd_createSubid = rel1->rd_createSubid;
+		rel2->rd_newRelfilenodeSubid = rel1->rd_newRelfilenodeSubid;
+		rel2->rd_firstRelfilenodeSubid = rel1->rd_firstRelfilenodeSubid;
+		RelationAssumeNewRelfilenode(rel1);
+		relation_close(rel1, NoLock);
+		relation_close(rel2, NoLock);
 	}
 
 	/*
