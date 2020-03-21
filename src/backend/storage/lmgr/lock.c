@@ -1470,9 +1470,11 @@ LockCheckConflicts(LockMethod lockMethodTable,
 	}
 
 	/*
-	 * The relation extension lock conflict even between the group members.
+	 * The relation extension or page lock conflict even between the group
+	 * members.
 	 */
-	if (LOCK_LOCKTAG(*lock) == LOCKTAG_RELATION_EXTEND)
+	if (LOCK_LOCKTAG(*lock) == LOCKTAG_RELATION_EXTEND ||
+		(LOCK_LOCKTAG(*lock) == LOCKTAG_PAGE))
 	{
 		PROCLOCK_PRINT("LockCheckConflicts: conflicting (group)",
 					   proclock);

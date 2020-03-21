@@ -556,11 +556,12 @@ FindLockCycleRecurseMember(PGPROC *checkProc,
 				lm;
 
 	/*
-	 * The relation extension lock can never participate in actual deadlock
-	 * cycle.  See Assert in LockAcquireExtended.  So, there is no advantage
-	 * in checking wait edges from it.
+	 * The relation extension or page lock can never participate in actual
+	 * deadlock cycle.  See Asserts in LockAcquireExtended.  So, there is no
+	 * advantage in checking wait edges from them.
 	 */
-	if (LOCK_LOCKTAG(*lock) == LOCKTAG_RELATION_EXTEND)
+	if (LOCK_LOCKTAG(*lock) == LOCKTAG_RELATION_EXTEND ||
+		(LOCK_LOCKTAG(*lock) == LOCKTAG_PAGE))
 		return false;
 
 	lockMethodTable = GetLocksMethodTable(lock);
