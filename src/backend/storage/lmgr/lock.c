@@ -563,6 +563,18 @@ DoLockModesConflict(LOCKMODE mode1, LOCKMODE mode2)
 	return false;
 }
 
+#ifdef USE_ASSERT_CHECKING
+/*
+ * GetLockMethodLocalHash -- return the hash of local locks, for modules that
+ *		evaluate assertions based on all locks held.
+ */
+HTAB *
+GetLockMethodLocalHash(void)
+{
+	return LockMethodLocalHash;
+}
+#endif
+
 /*
  * LockHasWaiters -- look up 'locktag' and check if releasing this
  *		lock would wake up other processes waiting for it.

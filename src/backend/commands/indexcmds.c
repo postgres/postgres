@@ -1050,6 +1050,8 @@ DefineIndex(Oid relationId,
 					childStmt->relationId = childRelid;
 					childStmt->indexOid = InvalidOid;
 					childStmt->oldNode = InvalidOid;
+					childStmt->oldCreateSubid = InvalidSubTransactionId;
+					childStmt->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
 
 					/*
 					 * Adjust any Vars (both in expressions and in the index's
