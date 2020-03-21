@@ -1445,8 +1445,8 @@ toast_get_valid_index(Oid toastoid, LOCKMODE lock)
 	validIndexOid = RelationGetRelid(toastidxs[validIndex]);
 
 	/* Close the toast relation and all its indexes */
-	toast_close_indexes(toastidxs, num_indexes, lock);
-	heap_close(toastrel, lock);
+	toast_close_indexes(toastidxs, num_indexes, NoLock);
+	heap_close(toastrel, NoLock);
 
 	return validIndexOid;
 }
