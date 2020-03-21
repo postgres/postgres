@@ -1489,7 +1489,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 
 			/* Get the associated valid index to be renamed */
 			toastidx = toast_get_valid_index(newrel->rd_rel->reltoastrelid,
-											 AccessShareLock);
+											 NoLock);
 
 			/* rename the toast table ... */
 			snprintf(NewToastName, NAMEDATALEN, "pg_toast_%u",
