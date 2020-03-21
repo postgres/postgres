@@ -1022,6 +1022,94 @@ log_newpage_buffer(Buffer buffer, bool page_std)
 }
 
 /*
+ * WAL-log a range of blocks in a relation.
+ *
+ * An image of all pages with block numbers 'startblk' <= X < 'endblk' is
+ * written to the WAL. If the range is large, this is done in multiple WAL
+ * records.
+ *
+ * If all page follows the standard page layout, with a PageHeader and unused
+ * space between pd_lower and pd_upper, set 'page_std' to true. That allows
+ * the unused space to be left out from the WAL records, making them smaller.
+ *
+ * NOTE: This function acquires exclusive-locks on the pages. Typically, this
+ * is used on a newly-built relation, and the caller is holding a
+ * AccessExclusiveLock on it, so no other backend can be accessing it at the
+ * same time. If that's not the case, you must ensure that this does not
+ * cause a deadlock through some other means.
+ */
+void
+log_newpage_range(Relation rel, ForkNumber forkNum,
+				  BlockNumber startblk, BlockNumber endblk,
+				  bool page_std)
+{
+	int			flags;
+	BlockNumber blkno;
+
+	flags = REGBUF_FORCE_IMAGE;
+	if (page_std)
+		flags |= REGBUF_STANDARD;
+
+	/*
+	 * Iterate over all the pages in the range. They are collected into
+	 * batches of XLR_MAX_BLOCK_ID pages, and a single WAL-record is written
+	 * for each batch.
+	 */
+	XLogEnsureRecordSpace(XLR_MAX_BLOCK_ID - 1, 0);
+
+	blkno = startblk;
+	while (blkno < endblk)
+	{
+		Buffer		bufpack[XLR_MAX_BLOCK_ID];
+		XLogRecPtr	recptr;
+		int			nbufs;
+		int			i;
+
+		CHECK_FOR_INTERRUPTS();
+
+		/* Collect a batch of blocks. */
+		nbufs = 0;
+		while (nbufs < XLR_MAX_BLOCK_ID && blkno < endblk)
+		{
+			Buffer		buf = ReadBufferExtended(rel, forkNum, blkno,
+												 RBM_NORMAL, NULL);
+
+			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+
+			/*
+			 * Completely empty pages are not WAL-logged. Writing a WAL record
+			 * would change the LSN, and we don't want that. We want the page
+			 * to stay empty.
+			 */
+			if (!PageIsNew(BufferGetPage(buf)))
+				bufpack[nbufs++] = buf;
+			else
+				UnlockReleaseBuffer(buf);
+			blkno++;
+		}
+
+		/* Write WAL record for this batch. */
+		XLogBeginInsert();
+
+		START_CRIT_SECTION();
+		for (i = 0; i < nbufs; i++)
+		{
+			XLogRegisterBuffer(i, bufpack[i], flags);
+			MarkBufferDirty(bufpack[i]);
+		}
+
+		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI_MULTI);
+
+		for (i = 0; i < nbufs; i++)
+		{
+			PageSetLSN(BufferGetPage(bufpack[i]), recptr);
+			UnlockReleaseBuffer(bufpack[i]);
+		}
+		END_CRIT_SECTION();
+	}
+}
+
+/*
  * Allocate working buffers needed for WAL record construction.
  */
 void
