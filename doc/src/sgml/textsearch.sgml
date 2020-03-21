@@ -200,7 +200,7 @@ WHERE mid = 12;
 
 SELECT m.title || ' ' || m.author || ' ' || m.abstract || ' ' || d.body AS document
 FROM messages m, docs d
-WHERE mid = did AND mid = 12;
+WHERE m.mid = d.did AND m.mid = 12;
 </programlisting>
    </para>
 
