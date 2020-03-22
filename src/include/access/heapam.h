@@ -25,6 +25,7 @@
 
 
 /* "options" flag bits for heap_insert */
+#define HEAP_INSERT_SKIP_WAL	0x0001
 #define HEAP_INSERT_SKIP_FSM	0x0002
 #define HEAP_INSERT_FROZEN		0x0004
 #define HEAP_INSERT_SPECULATIVE 0x0008

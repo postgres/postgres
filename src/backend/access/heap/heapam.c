@@ -27,6 +27,7 @@
  *		heap_multi_insert - insert multiple tuples into a relation
  *		heap_delete		- delete a tuple from a relation
  *		heap_update		- replace a tuple in a relation with another tuple
+ *		heap_sync		- sync heap, for when no WAL has been written
  *
  * NOTES
  *	  This file contains the heap_ routines which implement
@@ -2395,6 +2396,12 @@ ReleaseBulkInsertStatePin(BulkInsertState bistate)
  * The new tuple is stamped with current transaction ID and the specified
  * command ID.
  *
+ * If the HEAP_INSERT_SKIP_WAL option is specified, the new tuple is not
+ * logged in WAL, even for a non-temp relation.  Safe usage of this behavior
+ * requires that we arrange that all new tuples go into new pages not
+ * containing any tuples from other transactions, and that the relation gets
+ * fsync'd before commit.  (See also heap_sync() comments)
+ *
  * The HEAP_INSERT_SKIP_FSM option is passed directly to
  * RelationGetBufferForTuple, which see for more info.
  *
@@ -2503,7 +2510,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (RelationNeedsWAL(relation))
+	if (!(options & HEAP_INSERT_SKIP_WAL) && RelationNeedsWAL(relation))
 	{
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
@@ -2713,7 +2720,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	/* currently not needed (thus unsupported) for heap_multi_insert() */
 	AssertArg(!(options & HEAP_INSERT_NO_LOGICAL));
 
-	needwal = RelationNeedsWAL(relation);
+	needwal = !(options & HEAP_INSERT_SKIP_WAL) && RelationNeedsWAL(relation);
 	saveFreeSpace = RelationGetTargetPageFreeSpace(relation,
 												   HEAP_DEFAULT_FILLFACTOR);
 
@@ -9413,13 +9420,18 @@ heap2_redo(XLogReaderState *record)
 }
 
 /*
- *	heap_sync		- for binary compatibility
+ *	heap_sync		- sync a heap, for use when no WAL has been written
  *
- * A newer PostgreSQL version removes this function.  It exists here just in
- * case an extension calls it.  See "Skipping WAL for New RelFileNode" in
- * src/backend/access/transam/README for the system that superseded it,
- * allowing removal of most calls.  Cases like copy_relation_data() should
- * call smgrimmedsync() directly.
+ * This forces the heap contents (including TOAST heap if any) down to disk.
+ * If we skipped using WAL, and WAL is otherwise needed, we must force the
+ * relation down to disk before it's safe to commit the transaction.  This
+ * requires writing out any dirty buffers and then doing a forced fsync.
+ *
+ * Indexes are not touched.  (Currently, index operations associated with
+ * the commands that use this are WAL-logged and so do not need fsync.
+ * That behavior might change someday, but in any case it's likely that
+ * any fsync decisions required would be per-index and hence not appropriate
+ * to be done here.)
  */
 void
 heap_sync(Relation rel)
