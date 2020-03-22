@@ -80,9 +80,6 @@ gist_desc(StringInfo buf, XLogReaderState *record)
 		case XLOG_GIST_PAGE_DELETE:
 			out_gistxlogPageDelete(buf, (gistxlogPageDelete *) rec);
 			break;
-		case XLOG_GIST_ASSIGN_LSN:
-			/* No details to write out */
-			break;
 	}
 }
 
@@ -107,9 +104,6 @@ gist_identify(uint8 info)
 			break;
 		case XLOG_GIST_PAGE_DELETE:
 			id = "PAGE_DELETE";
-			break;
-		case XLOG_GIST_ASSIGN_LSN:
-			id = "ASSIGN_LSN";
 			break;
 	}
 

@@ -136,6 +136,7 @@ typedef struct RewriteStateData
 	Page		rs_buffer;		/* page currently being built */
 	BlockNumber rs_blockno;		/* block where page will go */
 	bool		rs_buffer_valid;	/* T if any tuples in buffer */
+	bool		rs_use_wal;		/* must we WAL-log inserts? */
 	bool		rs_logical_rewrite; /* do we need to do logical rewriting */
 	TransactionId rs_oldest_xmin;	/* oldest xmin used by caller to determine
 									 * tuple visibility */
@@ -229,13 +230,15 @@ static void logical_end_heap_rewrite(RewriteState state);
  * oldest_xmin	xid used by the caller to determine which tuples are dead
  * freeze_xid	xid before which tuples will be frozen
  * cutoff_multi	multixact before which multis will be removed
+ * use_wal		should the inserts to the new heap be WAL-logged?
  *
  * Returns an opaque RewriteState, allocated in current memory context,
  * to be used in subsequent calls to the other functions.
  */
 RewriteState
 begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xmin,
-				   TransactionId freeze_xid, MultiXactId cutoff_multi)
+				   TransactionId freeze_xid, MultiXactId cutoff_multi,
+				   bool use_wal)
 {
 	RewriteState state;
 	MemoryContext rw_cxt;
@@ -260,6 +263,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	/* new_heap needn't be empty, just locked */
 	state->rs_blockno = RelationGetNumberOfBlocks(new_heap);
 	state->rs_buffer_valid = false;
+	state->rs_use_wal = use_wal;
 	state->rs_oldest_xmin = oldest_xmin;
 	state->rs_freeze_xid = freeze_xid;
 	state->rs_cutoff_multi = cutoff_multi;
@@ -318,7 +322,7 @@ end_heap_rewrite(RewriteState state)
 	/* Write the last page, if any */
 	if (state->rs_buffer_valid)
 	{
-		if (RelationNeedsWAL(state->rs_new_rel))
+		if (state->rs_use_wal)
 			log_newpage(&state->rs_new_rel->rd_node,
 						MAIN_FORKNUM,
 						state->rs_blockno,
@@ -333,14 +337,18 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * When we WAL-logged rel pages, we must nonetheless fsync them.  The
+	 * If the rel is WAL-logged, must fsync before commit.  We use heap_sync
+	 * to ensure that the toast table gets fsync'd too.
+	 *
+	 * It's obvious that we must do this when not WAL-logging. It's less
+	 * obvious that we have to do it even if we did WAL-log the pages. The
 	 * reason is the same as in storage.c's RelationCopyStorage(): we're
 	 * writing data that's not in shared buffers, and so a CHECKPOINT
 	 * occurring during the rewriteheap operation won't have fsync'd data we
 	 * wrote before the checkpoint.
 	 */
 	if (RelationNeedsWAL(state->rs_new_rel))
-		smgrimmedsync(state->rs_new_rel->rd_smgr, MAIN_FORKNUM);
+		heap_sync(state->rs_new_rel);
 
 	logical_end_heap_rewrite(state);
 
@@ -638,6 +646,9 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	{
 		int			options = HEAP_INSERT_SKIP_FSM;
 
+		if (!state->rs_use_wal)
+			options |= HEAP_INSERT_SKIP_WAL;
+
 		/*
 		 * While rewriting the heap for VACUUM FULL / CLUSTER, make sure data
 		 * for the TOAST table are not logically decoded.  The main heap is
@@ -676,7 +687,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			/* Doesn't fit, so write out the existing page */
 
 			/* XLOG stuff */
-			if (RelationNeedsWAL(state->rs_new_rel))
+			if (state->rs_use_wal)
 				log_newpage(&state->rs_new_rel->rd_node,
 							MAIN_FORKNUM,
 							state->rs_blockno,

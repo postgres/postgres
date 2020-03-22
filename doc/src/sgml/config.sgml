@@ -2501,19 +2501,16 @@ include_dir 'conf.d'
         levels.  This parameter can only be set at server start.
        </para>
        <para>
-        In <literal>minimal</literal> level, no information is logged for
-        permanent relations for the remainder of a transaction that creates or
-        rewrites them.  This can make operations much faster (see
-        <xref linkend="populate-pitr"/>).  Operations that initiate this
-        optimization include:
+        In <literal>minimal</literal> level, WAL-logging of some bulk
+        operations can be safely skipped, which can make those
+        operations much faster (see <xref linkend="populate-pitr"/>).
+        Operations in which this optimization can be applied include:
         <simplelist>
-         <member><command>ALTER ... SET TABLESPACE</command></member>
+         <member><command>CREATE TABLE AS</command></member>
+         <member><command>CREATE INDEX</command></member>
          <member><command>CLUSTER</command></member>
-         <member><command>CREATE TABLE</command></member>
-         <member><command>REFRESH MATERIALIZED VIEW</command>
-         (without <option>CONCURRENTLY</option>)</member>
-         <member><command>REINDEX</command></member>
-         <member><command>TRUNCATE</command></member>
+         <member><command>COPY</command> into tables that were created or truncated in the same
+         transaction</member>
         </simplelist>
         But minimal WAL does not contain enough information to reconstruct the
         data from a base backup and the WAL logs, so <literal>replica</literal> or
@@ -2906,26 +2903,6 @@ include_dir 'conf.d'
         The default is <literal>1MB</literal>.
         This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-wal-skip-threshold" xreflabel="wal_skip_threshold">
-      <term><varname>wal_skip_threshold</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>wal_skip_threshold</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        When <varname>wal_level</varname> is <literal>minimal</literal> and a
-        transaction commits after creating or rewriting a permanent relation,
-        this setting determines how to persist the new data.  If the data is
-        smaller than this setting, write it to the WAL log; otherwise, use an
-        fsync of affected files.  Depending on the properties of your storage,
-        raising or lowering this value might help if such commits are slowing
-        concurrent transactions.  The default is two megabytes
-        (<literal>2MB</literal>).
        </para>
       </listitem>
      </varlistentry>

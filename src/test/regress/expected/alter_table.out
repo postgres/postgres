@@ -1984,12 +1984,6 @@ select * from another;
 (3 rows)
 
 drop table another;
--- Create an index that skips WAL, then perform a SET DATA TYPE that skips
--- rewriting the index.
-begin;
-create table skip_wal_skip_rewrite_index (c varchar(10) primary key);
-alter table skip_wal_skip_rewrite_index alter c type varchar(20);
-commit;
 -- table's row type
 create table tab1 (a int, b text);
 create table tab2 (x int, y tab1);

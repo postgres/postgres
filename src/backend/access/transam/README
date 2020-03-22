@@ -717,38 +717,6 @@ then restart recovery.  This is part of the reason for not writing a WAL
 entry until we've successfully done the original action.
 
 
-Skipping WAL for New RelFileNode
---------------------------------
-
-Under wal_level=minimal, if a change modifies a relfilenode that ROLLBACK
-would unlink, in-tree access methods write no WAL for that change.  Code that
-writes WAL without calling RelationNeedsWAL() must check for this case.  This
-skipping is mandatory.  If a WAL-writing change preceded a WAL-skipping change
-for the same block, REDO could overwrite the WAL-skipping change.  If a
-WAL-writing change followed a WAL-skipping change for the same block, a
-related problem would arise.  When a WAL record contains no full-page image,
-REDO expects the page to match its contents from just before record insertion.
-A WAL-skipping change may not reach disk at all, violating REDO's expectation
-under full_page_writes=off.  For any access method, CommitTransaction() writes
-and fsyncs affected blocks before recording the commit.
-
-Prefer to do the same in future access methods.  However, two other approaches
-can work.  First, an access method can irreversibly transition a given fork
-from WAL-skipping to WAL-writing by calling FlushRelationBuffers() and
-smgrimmedsync().  Second, an access method can opt to write WAL
-unconditionally for permanent relations.  Under these approaches, the access
-method callbacks must not call functions that react to RelationNeedsWAL().
-
-This applies only to WAL records whose replay would modify bytes stored in the
-new relfilenode.  It does not apply to other records about the relfilenode,
-such as XLOG_SMGR_CREATE.  Because it operates at the level of individual
-relfilenodes, RelationNeedsWAL() can differ for tightly-coupled relations.
-Consider "CREATE TABLE t (); BEGIN; ALTER TABLE t ADD c text; ..." in which
-ALTER TABLE adds a TOAST relation.  The TOAST relation will skip WAL, while
-the table owning it will not.  ALTER TABLE SET TABLESPACE will cause a table
-to skip WAL, but that won't affect its indexes.
-
-
 Asynchronous Commit
 -------------------
 
@@ -852,12 +820,13 @@ Changes to a temp table are not WAL-logged, hence could reach disk in
 advance of T1's commit, but we don't care since temp table contents don't
 survive crashes anyway.
 
-Database writes that skip WAL for new relfilenodes are also safe.  In these
-cases it's entirely possible for the data to reach disk before T1's commit,
-because T1 will fsync it down to disk without any sort of interlock.  However,
-all these paths are designed to write data that no other transaction can see
-until after T1 commits.  The situation is thus not different from ordinary
-WAL-logged updates.
+Database writes made via any of the paths we have introduced to avoid WAL
+overhead for bulk updates are also safe.  In these cases it's entirely
+possible for the data to reach disk before T1's commit, because T1 will
+fsync it down to disk without any sort of interlock, as soon as it finishes
+the bulk update.  However, all these paths are designed to write data that
+no other transaction can see until after T1 commits.  The situation is thus
+not different from ordinary WAL-logged updates.
 
 Transaction Emulation during Recovery
 -------------------------------------

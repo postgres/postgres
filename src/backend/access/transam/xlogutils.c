@@ -549,8 +549,6 @@ typedef FakeRelCacheEntryData *FakeRelCacheEntry;
  * fields related to physical storage, like rd_rel, are initialized, so the
  * fake entry is only usable in low-level operations like ReadBuffer().
  *
- * This is also used for syncing WAL-skipped files.
- *
  * Caller must free the returned entry with FreeFakeRelcacheEntry().
  */
 Relation
@@ -559,20 +557,18 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 	FakeRelCacheEntry fakeentry;
 	Relation	rel;
 
+	Assert(InRecovery);
+
 	/* Allocate the Relation struct and all related space in one block. */
 	fakeentry = palloc0(sizeof(FakeRelCacheEntryData));
 	rel = (Relation) fakeentry;
 
 	rel->rd_rel = &fakeentry->pgc;
 	rel->rd_node = rnode;
-
-	/*
-	 * We will never be working with temp rels during recovery or while
-	 * syncing WAL-skipped files.
-	 */
+	/* We will never be working with temp rels during recovery */
 	rel->rd_backend = InvalidBackendId;
 
-	/* It must be a permanent table here */
+	/* It must be a permanent table if we're in recovery. */
 	rel->rd_rel->relpersistence = RELPERSISTENCE_PERMANENT;
 
 	/* We don't know the name of the relation; use relfilenode instead */
@@ -581,9 +577,9 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 	/*
 	 * We set up the lockRelId in case anything tries to lock the dummy
 	 * relation.  Note that this is fairly bogus since relNode may be
-	 * different from the relation's OID.  It shouldn't really matter though.
-	 * In recovery, we are running by ourselves and can't have any lock
-	 * conflicts.  While syncing, we already hold AccessExclusiveLock.
+	 * different from the relation's OID.  It shouldn't really matter though,
+	 * since we are presumably running by ourselves and can't have any lock
+	 * conflicts ...
 	 */
 	rel->rd_lockInfo.lockRelId.dbId = rnode.dbNode;
 	rel->rd_lockInfo.lockRelId.relId = rnode.relNode;

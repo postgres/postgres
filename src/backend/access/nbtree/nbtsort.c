@@ -31,6 +31,18 @@
  * them.  They will need to be re-read into shared buffers on first use after
  * the build finishes.
  *
+ * Since the index will never be used unless it is completely built,
+ * from a crash-recovery point of view there is no need to WAL-log the
+ * steps of the build.  After completing the index build, we can just sync
+ * the whole file to disk using smgrimmedsync() before exiting this module.
+ * This can be seen to be sufficient for crash recovery by considering that
+ * it's effectively equivalent to what would happen if a CHECKPOINT occurred
+ * just after the index build.  However, it is clearly not sufficient if the
+ * DBA is using the WAL log for PITR or replication purposes, since another
+ * machine would not be able to reconstruct the index from WAL.  Therefore,
+ * we log the completed index pages to WAL if and only if WAL archiving is
+ * active.
+ *
  * This code isn't concerned about the FSM at all. The caller is responsible
  * for initializing that.
  *
@@ -557,7 +569,12 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	wstate.inskey = _bt_mkscankey(wstate.index, NULL);
 	/* _bt_mkscankey() won't set allequalimage without metapage */
 	wstate.inskey->allequalimage = _bt_allequalimage(wstate.index, true);
-	wstate.btws_use_wal = RelationNeedsWAL(wstate.index);
+
+	/*
+	 * We need to log index creation in WAL iff WAL archiving/streaming is
+	 * enabled UNLESS the index isn't WAL-logged anyway.
+	 */
+	wstate.btws_use_wal = XLogIsNeeded() && RelationNeedsWAL(wstate.index);
 
 	/* reserve the metapage */
 	wstate.btws_pages_alloced = BTREE_METAPAGE + 1;
@@ -1407,15 +1424,21 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 	_bt_uppershutdown(wstate, state);
 
 	/*
-	 * When we WAL-logged index pages, we must nonetheless fsync index files.
-	 * Since we're building outside shared buffers, a CHECKPOINT occurring
-	 * during the build has no way to flush the previously written data to
-	 * disk (indeed it won't know the index even exists).  A crash later on
-	 * would replay WAL from the checkpoint, therefore it wouldn't replay our
-	 * earlier WAL entries. If we do not fsync those pages here, they might
-	 * still not be on disk when the crash occurs.
+	 * If the index is WAL-logged, we must fsync it down to disk before it's
+	 * safe to commit the transaction.  (For a non-WAL-logged index we don't
+	 * care since the index will be uninteresting after a crash anyway.)
+	 *
+	 * It's obvious that we must do this when not WAL-logging the build. It's
+	 * less obvious that we have to do it even if we did WAL-log the index
+	 * pages.  The reason is that since we're building outside shared buffers,
+	 * a CHECKPOINT occurring during the build has no way to flush the
+	 * previously written data to disk (indeed it won't know the index even
+	 * exists).  A crash later on would replay WAL from the checkpoint,
+	 * therefore it wouldn't replay our earlier WAL entries. If we do not
+	 * fsync those pages here, they might still not be on disk when the crash
+	 * occurs.
 	 */
-	if (wstate->btws_use_wal)
+	if (RelationNeedsWAL(wstate->index))
 	{
 		RelationOpenSmgr(wstate->index);
 		smgrimmedsync(wstate->index->rd_smgr, MAIN_FORKNUM);
