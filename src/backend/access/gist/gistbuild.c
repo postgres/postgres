@@ -190,7 +190,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 		PageSetLSN(page, recptr);
 	}
 	else
-		PageSetLSN(page, gistGetFakeLSN(index));
+		PageSetLSN(page, gistGetFakeLSN(heap));
 
 	UnlockReleaseBuffer(buffer);
 
