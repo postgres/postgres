@@ -180,7 +180,6 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
  /* #define XLOG_GIST_INSERT_COMPLETE	 0x40 */	/* not used anymore */
 #define XLOG_GIST_CREATE_INDEX		0x50
  /* #define XLOG_GIST_PAGE_DELETE		 0x60 */	/* not used anymore */
-#define XLOG_GIST_ASSIGN_LSN		0x70	/* nop, assign new LSN */
 
 /*
  * Backup Blk 0: updated page.
@@ -464,8 +463,6 @@ extern XLogRecPtr gistXLogSplit(RelFileNode node,
 			  SplitedPageLayout *dist,
 			  BlockNumber origrlink, GistNSN oldnsn,
 			  Buffer leftchild, bool markfollowright);
-
-extern XLogRecPtr gistXLogAssignLSN(void);
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);

@@ -191,7 +191,7 @@ gistbuild(PG_FUNCTION_ARGS)
 		PageSetLSN(page, recptr);
 	}
 	else
-		PageSetLSN(page, gistGetFakeLSN(index));
+		PageSetLSN(page, gistGetFakeLSN(heap));
 
 	UnlockReleaseBuffer(buffer);
 

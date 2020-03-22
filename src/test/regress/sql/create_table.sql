@@ -273,18 +273,3 @@ SELECT * FROM as_select1;
 CREATE TABLE IF NOT EXISTS as_select1 AS EXECUTE select1;
 DROP TABLE as_select1;
 DEALLOCATE select1;
-
--- Verify that subtransaction rollback restores rd_createSubid.
-BEGIN;
-CREATE TABLE remember_create_subid (c int);
-SAVEPOINT q; DROP TABLE remember_create_subid; ROLLBACK TO q;
-COMMIT;
-DROP TABLE remember_create_subid;
-
--- Verify that subtransaction rollback restores rd_firstRelfilenodeSubid.
-CREATE TABLE remember_node_subid (c int);
-BEGIN;
-ALTER TABLE remember_node_subid ALTER c TYPE bigint;
-SAVEPOINT q; DROP TABLE remember_node_subid; ROLLBACK TO q;
-COMMIT;
-DROP TABLE remember_node_subid;

@@ -27,15 +27,10 @@
 #include "catalog/catalog.h"
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
-#include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
-#include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
-
-/* GUC variables */
-int			wal_skip_threshold = 2048;	/* in kilobytes */
 
 /*
  * We keep a list of all relations (represented as RelFileNode values)
@@ -66,14 +61,7 @@ typedef struct PendingRelDelete
 	struct PendingRelDelete *next;		/* linked-list link */
 } PendingRelDelete;
 
-typedef struct pendingSync
-{
-	RelFileNode rnode;
-	bool		is_truncated;	/* Has the file experienced truncation? */
-} pendingSync;
-
 static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
-HTAB	   *pendingSyncHash = NULL;
 
 /*
  * RelationCreateStorage
@@ -128,37 +116,6 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 	pending->nestLevel = GetCurrentTransactionNestLevel();
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
-
-	/*
-	 * Queue an at-commit sync.  Bootstrap does not need syncs, because initdb
-	 * syncs at the end.  During bootstrap, mdexists() creates the specified
-	 * file; smgrDoPendingSyncs() would not cope with that.
-	 */
-	if (relpersistence == RELPERSISTENCE_PERMANENT && !XLogIsNeeded() &&
-		!IsBootstrapProcessingMode())
-	{
-		pendingSync *pending;
-		bool		found;
-
-		/* we sync only permanent relations */
-		Assert(backend == InvalidBackendId);
-
-		if (!pendingSyncHash)
-		{
-			HASHCTL		ctl;
-
-			ctl.keysize = sizeof(RelFileNode);
-			ctl.entrysize = sizeof(pendingSync);
-			ctl.hcxt = TopTransactionContext;
-			pendingSyncHash =
-				hash_create("pending sync hash",
-							16, &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
-		}
-
-		pending = hash_search(pendingSyncHash, &rnode, HASH_ENTER, &found);
-		Assert(!found);
-		pending->is_truncated = false;
-	}
 }
 
 /*
@@ -292,8 +249,6 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	if (vm)
 		visibilitymap_truncate(rel, nblocks);
 
-	RelationPreTruncate(rel);
-
 	/*
 	 * We WAL-log the truncation before actually truncating, which means
 	 * trouble if the truncation fails. If we then crash, the WAL replay
@@ -333,49 +288,6 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 
 	/* Do the real work */
 	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks);
-}
-
-/*
- * RelationPreTruncate
- *		Perform AM-independent work before a physical truncation.
- *
- * If an access method's relation_nontransactional_truncate does not call
- * RelationTruncate(), it must call this before decreasing the table size.
- */
-void
-RelationPreTruncate(Relation rel)
-{
-	pendingSync *pending;
-
-	if (!pendingSyncHash)
-		return;
-	RelationOpenSmgr(rel);
-
-	pending = hash_search(pendingSyncHash, &(rel->rd_smgr->smgr_rnode.node),
-						  HASH_FIND, NULL);
-	if (pending)
-		pending->is_truncated = true;
-}
-
-/*
- * RelFileNodeSkippingWAL - check if a BM_PERMANENT relfilenode is using WAL
- *
- *   Changes of certain relfilenodes must not write WAL; see "Skipping WAL for
- *   New RelFileNode" in src/backend/access/transam/README.  Though it is
- *   known from Relation efficiently, this function is intended for the code
- *   paths not having access to Relation.
- */
-bool
-RelFileNodeSkippingWAL(RelFileNode rnode)
-{
-	if (XLogIsNeeded())
-		return false;			/* no permanent relfilenode skips WAL */
-
-	if (!pendingSyncHash ||
-		hash_search(pendingSyncHash, &rnode, HASH_FIND, NULL) == NULL)
-		return false;
-
-	return true;
 }
 
 /*
@@ -451,144 +363,6 @@ smgrDoPendingDeletes(bool isCommit)
 		for (i = 0; i < nrels; i++)
 			smgrclose(srels[i]);
 
-		pfree(srels);
-	}
-}
-
-/*
- *	smgrDoPendingSyncs() -- Take care of relation syncs at end of xact.
- */
-void
-smgrDoPendingSyncs(bool isCommit)
-{
-	PendingRelDelete *pending;
-	int			nrels = 0,
-				maxrels = 0;
-	SMgrRelation *srels = NULL;
-	HASH_SEQ_STATUS scan;
-	pendingSync *pendingsync;
-
-	if (XLogIsNeeded())
-		return;					/* no relation can use this */
-
-	Assert(GetCurrentTransactionNestLevel() == 1);
-
-	if (!pendingSyncHash)
-		return;					/* no relation needs sync */
-
-	/* Just throw away all pending syncs if any at rollback */
-	if (!isCommit)
-	{
-		pendingSyncHash = NULL;
-		return;
-	}
-
-	AssertPendingSyncs_RelationCache();
-
-	/* Skip syncing nodes that smgrDoPendingDeletes() will delete. */
-	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
-	{
-		if (!pending->atCommit)
-			continue;
-
-		(void) hash_search(pendingSyncHash, (void *) &pending->relnode,
-						   HASH_REMOVE, NULL);
-	}
-
-	hash_seq_init(&scan, pendingSyncHash);
-	while ((pendingsync = (pendingSync *) hash_seq_search(&scan)))
-	{
-		ForkNumber	fork;
-		BlockNumber nblocks[MAX_FORKNUM + 1];
-		BlockNumber total_blocks = 0;
-		SMgrRelation srel;
-
-		srel = smgropen(pendingsync->rnode, InvalidBackendId);
-
-		/*
-		 * We emit newpage WAL records for smaller relations.
-		 *
-		 * Small WAL records have a chance to be emitted along with other
-		 * backends' WAL records.  We emit WAL records instead of syncing for
-		 * files that are smaller than a certain threshold, expecting faster
-		 * commit.  The threshold is defined by the GUC wal_skip_threshold.
-		 */
-		if (!pendingsync->is_truncated)
-		{
-			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			{
-				if (smgrexists(srel, fork))
-				{
-					BlockNumber n = smgrnblocks(srel, fork);
-
-					/* we shouldn't come here for unlogged relations */
-					Assert(fork != INIT_FORKNUM);
-					nblocks[fork] = n;
-					total_blocks += n;
-				}
-				else
-					nblocks[fork] = InvalidBlockNumber;
-			}
-		}
-
-		/*
-		 * Sync file or emit WAL records for its contents.
-		 *
-		 * Although we emit WAL record if the file is small enough, do file
-		 * sync regardless of the size if the file has experienced a
-		 * truncation. It is because the file would be followed by trailing
-		 * garbage blocks after a crash recovery if, while a past longer file
-		 * had been flushed out, we omitted syncing-out of the file and
-		 * emitted WAL instead.  You might think that we could choose WAL if
-		 * the current main fork is longer than ever, but there's a case where
-		 * main fork is longer than ever but FSM fork gets shorter.
-		 */
-		if (pendingsync->is_truncated ||
-			total_blocks * BLCKSZ / 1024 >= wal_skip_threshold)
-		{
-			/* allocate the initial array, or extend it, if needed */
-			if (maxrels == 0)
-			{
-				maxrels = 8;
-				srels = palloc(sizeof(SMgrRelation) * maxrels);
-			}
-			else if (maxrels <= nrels)
-			{
-				maxrels *= 2;
-				srels = repalloc(srels, sizeof(SMgrRelation) * maxrels);
-			}
-
-			srels[nrels++] = srel;
-		}
-		else
-		{
-			/* Emit WAL records for all blocks.  The file is small enough. */
-			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			{
-				int			n = nblocks[fork];
-				Relation	rel;
-
-				if (!BlockNumberIsValid(n))
-					continue;
-
-				/*
-				 * Emit WAL for the whole file.  Unfortunately we don't know
-				 * what kind of a page this is, so we have to log the full
-				 * page including any unused space.  ReadBufferExtended()
-				 * counts some pgstat events; unfortunately, we discard them.
-				 */
-				rel = CreateFakeRelcacheEntry(srel->smgr_rnode.node);
-				log_newpage_range(rel, fork, 0, n, false);
-				FreeFakeRelcacheEntry(rel);
-			}
-		}
-	}
-
-	pendingSyncHash = NULL;
-
-	if (nrels > 0)
-	{
-		smgrdosyncall(srels, nrels);
 		pfree(srels);
 	}
 }

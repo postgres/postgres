@@ -32,7 +32,6 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-#include "catalog/storage.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
 #include "commands/vacuum.h"
@@ -2239,17 +2238,6 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&WalWriterDelay,
 		200, 1, 10000,
-		NULL, NULL, NULL
-	},
-
-	{
-		{"wal_skip_threshold", PGC_USERSET, WAL_SETTINGS,
-			gettext_noop("Size of new file to fsync instead of writing WAL."),
-			NULL,
-			GUC_UNIT_KB
-		},
-		&wal_skip_threshold,
-		2048, 0, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
