@@ -2361,8 +2361,6 @@ TBlockState
 TIDBitmap
 TM_FailureData
 TM_Result
-ToastAttrInfo
-ToastTupleContext
 TOKEN_DEFAULT_DACL
 TOKEN_INFORMATION_CLASS
 TOKEN_PRIVILEGES
@@ -2458,6 +2456,8 @@ Timestamp
 TimestampTz
 TmFromChar
 TmToChar
+ToastAttrInfo
+ToastTupleContext
 TocEntry
 TokenAuxData
 TokenizedLine
