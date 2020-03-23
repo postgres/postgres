@@ -1366,7 +1366,8 @@ check_default_partition_contents(Relation parent, Relation default_rel,
 				ereport(ERROR,
 						(errcode(ERRCODE_CHECK_VIOLATION),
 						 errmsg("updated partition constraint for default partition \"%s\" would be violated by some row",
-								RelationGetRelationName(default_rel))));
+								RelationGetRelationName(default_rel)),
+						 errtable(default_rel)));
 
 			ResetExprContext(econtext);
 			CHECK_FOR_INTERRUPTS();

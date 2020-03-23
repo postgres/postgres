@@ -1878,7 +1878,8 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 			(errcode(ERRCODE_CHECK_VIOLATION),
 			 errmsg("new row for relation \"%s\" violates partition constraint",
 					RelationGetRelationName(resultRelInfo->ri_RelationDesc)),
-			 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0));
+			 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
+			 errtable(resultRelInfo->ri_RelationDesc)));
 }
 
 /*

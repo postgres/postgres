@@ -346,7 +346,8 @@ ExecFindPartition(ModifyTableState *mtstate,
 							RelationGetRelationName(rel)),
 					 val_desc ?
 					 errdetail("Partition key of the failing row contains %s.",
-							   val_desc) : 0));
+							   val_desc) : 0,
+					 errtable(rel)));
 		}
 
 		if (partdesc->is_leaf[partidx])

@@ -2452,7 +2452,8 @@ ri_ReportViolation(const RI_ConstraintInfo *riinfo,
 						NameStr(riinfo->conname)),
 				 errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 						   key_names.data, key_values.data,
-						   RelationGetRelationName(fk_rel))));
+						   RelationGetRelationName(fk_rel)),
+				 errtableconstraint(fk_rel, NameStr(riinfo->conname))));
 	else if (onfk)
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
