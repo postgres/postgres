@@ -1461,7 +1461,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry id="reloption-autovacuum-vauum-scale-factor" xreflabel="autovacuum_vacuum_scale_factor">
-    <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</type>)
+    <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>floating point</type>)
     <indexterm>
      <primary><varname>autovacuum_vacuum_scale_factor</varname> </primary>
      <secondary>storage parameter</secondary>
@@ -1491,7 +1491,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry id="reloption-autovacuum-analyze-scale-factor" xreflabel="autovacuum_analyze_scale_factor">
-    <term><literal>autovacuum_analyze_scale_factor</literal> (<type>float4</type>)
+    <term><literal>autovacuum_analyze_scale_factor</literal> (<type>floating point</type>)
     <indexterm>
      <primary><varname>autovacuum_analyze_scale_factor</varname></primary>
      <secondary>storage parameter</secondary>
