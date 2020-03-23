@@ -2778,7 +2778,7 @@ static void
 show_hashagg_info(AggState *aggstate, ExplainState *es)
 {
 	Agg		*agg	   = (Agg *)aggstate->ss.ps.plan;
-	long	 memPeakKb = (aggstate->hash_mem_peak + 1023) / 1024;
+	int64	 memPeakKb = (aggstate->hash_mem_peak + 1023) / 1024;
 
 	Assert(IsA(aggstate, AggState));
 

@@ -1873,17 +1873,12 @@ hash_agg_update_metrics(AggState *aggstate, bool from_tape, int npartitions)
 			aggstate->hash_disk_used = disk_used;
 	}
 
-	/*
-	 * Update hashentrysize estimate based on contents. Don't include meta_mem
-	 * in the memory used, because empty buckets would inflate the per-entry
-	 * cost. An underestimate of the per-entry size is better than an
-	 * overestimate, because an overestimate could compound with each level of
-	 * recursion.
-	 */
+	/* update hashentrysize estimate based on contents */
 	if (aggstate->hash_ngroups_current > 0)
 	{
 		aggstate->hashentrysize =
-			hash_mem / (double)aggstate->hash_ngroups_current;
+			sizeof(TupleHashEntryData) +
+			(hash_mem / (double)aggstate->hash_ngroups_current);
 	}
 }
 
@@ -1899,10 +1894,10 @@ hash_choose_num_buckets(double hashentrysize, long ngroups, Size memory)
 	max_nbuckets = memory / hashentrysize;
 
 	/*
-	 * Leave room for slop to avoid a case where the initial hash table size
-	 * exceeds the memory limit (though that may still happen in edge cases).
+	 * Underestimating is better than overestimating. Too many buckets crowd
+	 * out space for group keys and transition state values.
 	 */
-	max_nbuckets *= 0.75;
+	max_nbuckets >>= 1;
 
 	if (nbuckets > max_nbuckets)
 		nbuckets = max_nbuckets;
@@ -3548,7 +3543,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * reasonable.
 		 */
 		for (i = 0; i < aggstate->num_hashes; i++)
-			totalGroups = aggstate->perhash[i].aggnode->numGroups;
+			totalGroups += aggstate->perhash[i].aggnode->numGroups;
 
 		hash_agg_set_limits(aggstate->hashentrysize, totalGroups, 0,
 							&aggstate->hash_mem_limit,
