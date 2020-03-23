@@ -1932,7 +1932,8 @@ ExecPartitionCheckEmitError(ResultRelInfo *resultRelInfo,
 		if (map != NULL)
 		{
 			tuple = do_convert_tuple(tuple, map);
-			ExecSetSlotDescriptor(slot, tupdesc);
+			/* one off slot for building error message */
+			slot = MakeTupleTableSlot(tupdesc);
 			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 		}
 	}
@@ -2011,7 +2012,8 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 					if (map != NULL)
 					{
 						tuple = do_convert_tuple(tuple, map);
-						ExecSetSlotDescriptor(slot, tupdesc);
+						/* one off slot for building error message */
+						slot = MakeTupleTableSlot(tupdesc);
 						ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 					}
 				}
@@ -2059,7 +2061,8 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				if (map != NULL)
 				{
 					tuple = do_convert_tuple(tuple, map);
-					ExecSetSlotDescriptor(slot, tupdesc);
+					/* one off slot for building error message */
+					slot = MakeTupleTableSlot(tupdesc);
 					ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 				}
 			}
@@ -2165,7 +2168,8 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 						if (map != NULL)
 						{
 							tuple = do_convert_tuple(tuple, map);
-							ExecSetSlotDescriptor(slot, tupdesc);
+							/* one off slot for building error message */
+							slot = MakeTupleTableSlot(tupdesc);
 							ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 						}
 					}
