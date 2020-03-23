@@ -963,7 +963,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_vacuum_scale_factor</>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</>)</term>
+    <term><literal>autovacuum_vacuum_scale_factor</>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>floating point</>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-scale-factor">
@@ -983,7 +983,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_scale_factor</> (<type>float4</>)</term>
+    <term><literal>autovacuum_analyze_scale_factor</> (<type>floating point</>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-scale-factor">
