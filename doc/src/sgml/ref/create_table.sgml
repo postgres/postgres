@@ -1319,7 +1319,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</type>)</term>
+    <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>floating point</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-scale-factor"/>
@@ -1339,7 +1339,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_scale_factor</literal> (<type>float4</type>)</term>
+    <term><literal>autovacuum_analyze_scale_factor</literal> (<type>floating point</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-scale-factor"/>
