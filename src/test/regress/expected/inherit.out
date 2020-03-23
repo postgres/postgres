@@ -2409,3 +2409,126 @@ reset session authorization;
 revoke all on permtest_parent from regress_no_child_access;
 drop role regress_no_child_access;
 drop table permtest_parent;
+-- Verify that constraint errors across partition root / child are
+-- handled correctly (Bug #16293)
+CREATE TABLE errtst_parent (
+    partid int not null,
+    shdata int not null,
+    data int NOT NULL DEFAULT 0,
+    CONSTRAINT shdata_small CHECK(shdata < 3)
+) PARTITION BY RANGE (partid);
+-- fast defaults lead to attribute mapping being used in one
+-- direction, but not the other
+CREATE TABLE errtst_child_fastdef (
+    partid int not null,
+    shdata int not null,
+    CONSTRAINT shdata_small CHECK(shdata < 3)
+);
+-- no remapping in either direction necessary
+CREATE TABLE errtst_child_plaindef (
+    partid int not null,
+    shdata int not null,
+    data int NOT NULL DEFAULT 0,
+    CONSTRAINT shdata_small CHECK(shdata < 3),
+    CHECK(data < 10)
+);
+-- remapping in both direction
+CREATE TABLE errtst_child_reorder (
+    data int NOT NULL DEFAULT 0,
+    shdata int not null,
+    partid int not null,
+    CONSTRAINT shdata_small CHECK(shdata < 3),
+    CHECK(data < 10)
+);
+ALTER TABLE errtst_child_fastdef ADD COLUMN data int NOT NULL DEFAULT 0;
+ALTER TABLE errtst_child_fastdef ADD CONSTRAINT errtest_child_fastdef_data_check CHECK (data < 10);
+ALTER TABLE errtst_parent ATTACH PARTITION errtst_child_fastdef FOR VALUES FROM (0) TO (10);
+ALTER TABLE errtst_parent ATTACH PARTITION errtst_child_plaindef FOR VALUES FROM (10) TO (20);
+ALTER TABLE errtst_parent ATTACH PARTITION errtst_child_reorder FOR VALUES FROM (20) TO (30);
+-- insert without child check constraint error
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ( '0', '1', '5');
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('10', '1', '5');
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('20', '1', '5');
+-- insert with child check constraint error
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ( '0', '1', '10');
+ERROR:  new row for relation "errtst_child_fastdef" violates check constraint "errtest_child_fastdef_data_check"
+DETAIL:  Failing row contains (0, 1, 10).
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('10', '1', '10');
+ERROR:  new row for relation "errtst_child_plaindef" violates check constraint "errtst_child_plaindef_data_check"
+DETAIL:  Failing row contains (10, 1, 10).
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('20', '1', '10');
+ERROR:  new row for relation "errtst_child_reorder" violates check constraint "errtst_child_reorder_data_check"
+DETAIL:  Failing row contains (20, 1, 10).
+-- insert with child not null constraint error
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ( '0', '1', NULL);
+ERROR:  null value in column "data" of relation "errtst_child_fastdef" violates not-null constraint
+DETAIL:  Failing row contains (0, 1, null).
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('10', '1', NULL);
+ERROR:  null value in column "data" of relation "errtst_child_plaindef" violates not-null constraint
+DETAIL:  Failing row contains (10, 1, null).
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('20', '1', NULL);
+ERROR:  null value in column "data" of relation "errtst_child_reorder" violates not-null constraint
+DETAIL:  Failing row contains (20, 1, null).
+-- insert with shared check constraint error
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ( '0', '5', '5');
+ERROR:  new row for relation "errtst_child_fastdef" violates check constraint "shdata_small"
+DETAIL:  Failing row contains (0, 5, 5).
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('10', '5', '5');
+ERROR:  new row for relation "errtst_child_plaindef" violates check constraint "shdata_small"
+DETAIL:  Failing row contains (10, 5, 5).
+INSERT INTO errtst_parent(partid, shdata, data) VALUES ('20', '5', '5');
+ERROR:  new row for relation "errtst_child_reorder" violates check constraint "shdata_small"
+DETAIL:  Failing row contains (20, 5, 5).
+-- within partition update without child check constraint violation
+BEGIN;
+UPDATE errtst_parent SET data = data + 1 WHERE partid = 0;
+UPDATE errtst_parent SET data = data + 1 WHERE partid = 10;
+UPDATE errtst_parent SET data = data + 1 WHERE partid = 20;
+ROLLBACK;
+-- within partition update with child check constraint violation
+UPDATE errtst_parent SET data = data + 10 WHERE partid = 0;
+ERROR:  new row for relation "errtst_child_fastdef" violates check constraint "errtest_child_fastdef_data_check"
+DETAIL:  Failing row contains (0, 1, 15).
+UPDATE errtst_parent SET data = data + 10 WHERE partid = 10;
+ERROR:  new row for relation "errtst_child_plaindef" violates check constraint "errtst_child_plaindef_data_check"
+DETAIL:  Failing row contains (10, 1, 15).
+UPDATE errtst_parent SET data = data + 10 WHERE partid = 20;
+ERROR:  new row for relation "errtst_child_reorder" violates check constraint "errtst_child_reorder_data_check"
+DETAIL:  Failing row contains (15, 1, 20).
+-- direct leaf partition update, without partition id violation
+BEGIN;
+UPDATE errtst_child_fastdef SET partid = 1 WHERE partid = 0;
+UPDATE errtst_child_plaindef SET partid = 11 WHERE partid = 10;
+UPDATE errtst_child_reorder SET partid = 21 WHERE partid = 20;
+ROLLBACK;
+-- direct leaf partition update, with partition id violation
+UPDATE errtst_child_fastdef SET partid = partid + 10 WHERE partid = 0;
+ERROR:  new row for relation "errtst_child_fastdef" violates partition constraint
+DETAIL:  Failing row contains (10, 1, 5).
+UPDATE errtst_child_plaindef SET partid = partid + 10 WHERE partid = 10;
+ERROR:  new row for relation "errtst_child_plaindef" violates partition constraint
+DETAIL:  Failing row contains (20, 1, 5).
+UPDATE errtst_child_reorder SET partid = partid + 10 WHERE partid = 20;
+ERROR:  new row for relation "errtst_child_reorder" violates partition constraint
+DETAIL:  Failing row contains (5, 1, 30).
+-- partition move, without child check constraint violation
+BEGIN;
+UPDATE errtst_parent SET partid = 10, data = data + 1 WHERE partid = 0;
+UPDATE errtst_parent SET partid = 20, data = data + 1 WHERE partid = 10;
+UPDATE errtst_parent SET partid = 0, data = data + 1 WHERE partid = 20;
+ROLLBACK;
+-- partition move, with child check constraint violation
+UPDATE errtst_parent SET partid = 10, data = data + 10 WHERE partid = 0;
+ERROR:  new row for relation "errtst_child_plaindef" violates check constraint "errtst_child_plaindef_data_check"
+DETAIL:  Failing row contains (10, 1, 15).
+UPDATE errtst_parent SET partid = 20, data = data + 10 WHERE partid = 10;
+ERROR:  new row for relation "errtst_child_reorder" violates check constraint "errtst_child_reorder_data_check"
+DETAIL:  Failing row contains (20, 1, 15).
+UPDATE errtst_parent SET partid = 0, data = data + 10 WHERE partid = 20;
+ERROR:  new row for relation "errtst_child_fastdef" violates check constraint "errtest_child_fastdef_data_check"
+DETAIL:  Failing row contains (0, 1, 15).
+-- partition move, without target partition
+UPDATE errtst_parent SET partid = 30, data = data + 10 WHERE partid = 20;
+ERROR:  no partition of relation "errtst_parent" found for row
+DETAIL:  Partition key of the failing row contains (partid) = (30).
+DROP TABLE errtst_parent;
