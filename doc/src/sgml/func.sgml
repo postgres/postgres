@@ -3565,7 +3565,23 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     <literal>!~~</literal> and <literal>!~~*</literal> operators that
     represent <function>NOT LIKE</function> and <function>NOT
     ILIKE</function>, respectively.  All of these operators are
-    <productname>PostgreSQL</productname>-specific.
+    <productname>PostgreSQL</productname>-specific.  You may see these
+    operator names in <command>EXPLAIN</command> output and similar
+    places, since the parser actually translates <function>LIKE</function>
+    et al. to these operators.
+   </para>
+
+   <para>
+    The phrases <function>LIKE</function>, <function>ILIKE</function>,
+    <function>NOT LIKE</function>, and <function>NOT ILIKE</function> are
+    generally treated as operators
+    in <productname>PostgreSQL</productname> syntax; for example they can
+    be used in <replaceable>expression</replaceable>
+    <replaceable>operator</replaceable> ANY
+    (<replaceable>subquery</replaceable>) constructs, although
+    an <literal>ESCAPE</literal> clause cannot be included there.  In some
+    obscure cases it may be necessary to use the underlying operator names
+    instead.
    </para>
 
    <para>
