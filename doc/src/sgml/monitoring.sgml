@@ -1496,7 +1496,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting for confirmation from remote server during synchronous replication.</entry>
         </row>
         <row>
-         <entry morerows="3"><literal>Timeout</literal></entry>
+         <entry morerows="4"><literal>Timeout</literal></entry>
          <entry><literal>BaseBackupThrottle</literal></entry>
          <entry>Waiting during base backup when throttling activity.</entry>
         </row>
@@ -1515,6 +1515,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
           (<filename>pg_wal</filename>, archive or stream) before trying
           again to retrieve WAL data, at recovery.
          </entry>
+        </row>
+        <row>
          <entry><literal>VacuumDelay</literal></entry>
          <entry>Waiting in a cost-based vacuum delay point.</entry>
         </row>
