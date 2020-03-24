@@ -1116,16 +1116,6 @@ errcontext_msg(const char *fmt,...)
  * translate it.  Instead, each errcontext_msg() call should be preceded by
  * a set_errcontext_domain() call to specify the domain.  This is usually
  * done transparently by the errcontext() macro.
- *
- * Although errcontext is primarily meant for use at call sites distant from
- * the original ereport call, there are a few places that invoke errcontext
- * within ereport.  The expansion of errcontext as a comma expression calling
- * set_errcontext_domain then errcontext_msg is problematic in this case,
- * because the intended comma expression becomes two arguments to errfinish,
- * which the compiler is at liberty to evaluate in either order.  But in
- * such a case, the set_errcontext_domain calls must be selecting the same
- * TEXTDOMAIN value that the errstart call did, so order does not matter
- * so long as errstart initializes context_domain along with domain.
  */
 int
 set_errcontext_domain(const char *domain)
