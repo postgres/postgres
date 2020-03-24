@@ -3682,6 +3682,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 
 	switch (w)
 	{
+		case WAIT_EVENT_BACKUP_WAIT_WAL_ARCHIVE:
+			event_name = "BackupWaitWalArchive";
+			break;
 		case WAIT_EVENT_BGWORKER_SHUTDOWN:
 			event_name = "BgWorkerShutdown";
 			break;
@@ -3780,6 +3783,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 			break;
 		case WAIT_EVENT_PROMOTE:
 			event_name = "Promote";
+			break;
+		case WAIT_EVENT_RECOVERY_PAUSE:
+			event_name = "RecoveryPause";
 			break;
 		case WAIT_EVENT_REPLICATION_ORIGIN_DROP:
 			event_name = "ReplicationOriginDrop";

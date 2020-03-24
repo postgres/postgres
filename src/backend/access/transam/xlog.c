@@ -5946,7 +5946,9 @@ recoveryPausesHere(void)
 
 	while (RecoveryIsPaused())
 	{
+		pgstat_report_wait_start(WAIT_EVENT_RECOVERY_PAUSE);
 		pg_usleep(1000000L);	/* 1000 ms */
+		pgstat_report_wait_end();
 		HandleStartupProcInterrupts();
 	}
 }
@@ -11146,7 +11148,9 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 				reported_waiting = true;
 			}
 
+			pgstat_report_wait_start(WAIT_EVENT_BACKUP_WAIT_WAL_ARCHIVE);
 			pg_usleep(1000000L);
+			pgstat_report_wait_end();
 
 			if (++waits >= seconds_before_warning)
 			{
