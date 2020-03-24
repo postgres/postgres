@@ -780,20 +780,21 @@ order.  Delaying deduplication minimizes page level fragmentation.
 Deduplication in unique indexes
 -------------------------------
 
-Very often, the range of values that can be placed on a given leaf page in
-a unique index is fixed and permanent.  For example, a primary key on an
-identity column will usually only have page splits caused by the insertion
-of new logical rows within the rightmost leaf page.  If there is a split
-of a non-rightmost leaf page, then the split must have been triggered by
-inserts associated with an UPDATE of an existing logical row.  Splitting a
-leaf page purely to store multiple versions should be considered
-pathological, since it permanently degrades the index structure in order
-to absorb a temporary burst of duplicates.  Deduplication in unique
-indexes helps to prevent these pathological page splits.  Storing
-duplicates in a space efficient manner is not the goal, since in the long
-run there won't be any duplicates anyway.  Rather, we're buying time for
-standard garbage collection mechanisms to run before a page split is
-needed.
+Very often, the number of distinct values that can ever be placed on
+almost any given leaf page in a unique index is fixed and permanent.  For
+example, a primary key on an identity column will usually only have leaf
+page splits caused by the insertion of new logical rows within the
+rightmost leaf page.  If there is a split of a non-rightmost leaf page,
+then the split must have been triggered by inserts associated with UPDATEs
+of existing logical rows.  Splitting a leaf page purely to store multiple
+versions is a false economy.  In effect, we're permanently degrading the
+index structure just to absorb a temporary burst of duplicates.
+
+Deduplication in unique indexes helps to prevent these pathological page
+splits.  Storing duplicates in a space efficient manner is not the goal,
+since in the long run there won't be any duplicates anyway.  Rather, we're
+buying time for standard garbage collection mechanisms to run before a
+page split is needed.
 
 Unique index leaf pages only get a deduplication pass when an insertion
 (that might have to split the page) observed an existing duplicate on the
@@ -838,13 +839,15 @@ list splits.
 
 Only a few isolated extra steps are required to preserve the illusion that
 the new item never overlapped with an existing posting list in the first
-place: the heap TID of the incoming tuple is swapped with the rightmost/max
-heap TID from the existing/originally overlapping posting list.  Also, the
-posting-split-with-page-split case must generate a new high key based on
-an imaginary version of the original page that has both the final new item
-and the after-list-split posting tuple (page splits usually just operate
-against an imaginary version that contains the new item/item that won't
-fit).
+place: the heap TID of the incoming tuple has its TID replaced with the
+rightmost/max heap TID from the existing/originally overlapping posting
+list.  Similarly, the original incoming item's TID is relocated to the
+appropriate offset in the posting list (we usually shift TIDs out of the
+way to make a hole for it).  Finally, the posting-split-with-page-split
+case must generate a new high key based on an imaginary version of the
+original page that has both the final new item and the after-list-split
+posting tuple (page splits usually just operate against an imaginary
+version that contains the new item/item that won't fit).
 
 This approach avoids inventing an "eager" atomic posting split operation
 that splits the posting list without simultaneously finishing the insert
