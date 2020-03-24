@@ -3590,6 +3590,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         This setting has no effect if no recovery target is set.
         If <xref linkend="guc-hot-standby"/> is not enabled, a setting of
         <literal>pause</literal> will act the same as <literal>shutdown</literal>.
+        If the recovery target is reached while a promotion is ongoing,
+        a setting of <literal>pause</literal> will act the same as
+        <literal>promote</literal>.
        </para>
        <para>
         In any case, if a recovery target is configured but the archive

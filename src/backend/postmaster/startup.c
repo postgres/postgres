@@ -39,7 +39,7 @@
  */
 static volatile sig_atomic_t got_SIGHUP = false;
 static volatile sig_atomic_t shutdown_requested = false;
-static volatile sig_atomic_t promote_triggered = false;
+static volatile sig_atomic_t promote_signaled = false;
 
 /*
  * Flag set when executing a restore command, to tell SIGTERM signal handler
@@ -63,7 +63,7 @@ StartupProcTriggerHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	promote_triggered = true;
+	promote_signaled = true;
 	WakeupRecovery();
 
 	errno = save_errno;
@@ -197,13 +197,13 @@ PostRestoreCommand(void)
 }
 
 bool
-IsPromoteTriggered(void)
+IsPromoteSignaled(void)
 {
-	return promote_triggered;
+	return promote_signaled;
 }
 
 void
-ResetPromoteTriggered(void)
+ResetPromoteSignaled(void)
 {
-	promote_triggered = false;
+	promote_signaled = false;
 }

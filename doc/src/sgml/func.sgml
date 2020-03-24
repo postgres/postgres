@@ -20178,6 +20178,13 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
    </para>
 
    <para>
+    <function>pg_wal_replay_pause</function> and
+    <function>pg_wal_replay_resume</function> cannot be executed while
+    a promotion is ongoing. If a promotion is triggered while recovery
+    is paused, the paused state ends and a promotion continues.
+   </para>
+
+   <para>
     If streaming replication is disabled, the paused state may continue
     indefinitely without problem. While streaming replication is in
     progress WAL records will continue to be received, which will

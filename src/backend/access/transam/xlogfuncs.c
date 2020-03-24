@@ -531,6 +531,13 @@ pg_wal_replay_pause(PG_FUNCTION_ARGS)
 				 errmsg("recovery is not in progress"),
 				 errhint("Recovery control functions can only be executed during recovery.")));
 
+	if (PromoteIsTriggered())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("standby promotion is ongoing"),
+				 errhint("%s cannot be executed after promotion is triggered.",
+						 "pg_wal_replay_pause()")));
+
 	SetRecoveryPause(true);
 
 	PG_RETURN_VOID();
@@ -550,6 +557,13 @@ pg_wal_replay_resume(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is not in progress"),
 				 errhint("Recovery control functions can only be executed during recovery.")));
+
+	if (PromoteIsTriggered())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("standby promotion is ongoing"),
+				 errhint("%s cannot be executed after promotion is triggered.",
+						 "pg_wal_replay_resume()")));
 
 	SetRecoveryPause(false);
 

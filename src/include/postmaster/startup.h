@@ -16,7 +16,7 @@ extern void HandleStartupProcInterrupts(void);
 extern void StartupProcessMain(void) pg_attribute_noreturn();
 extern void PreRestoreCommand(void);
 extern void PostRestoreCommand(void);
-extern bool IsPromoteTriggered(void);
-extern void ResetPromoteTriggered(void);
+extern bool IsPromoteSignaled(void);
+extern void ResetPromoteSignaled(void);
 
 #endif							/* _STARTUP_H */
