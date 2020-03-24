@@ -1066,14 +1066,14 @@ set enable_hashagg = false;
 set jit_above_cost = 0;
 
 explain (costs off)
-select g%100000 as c1, sum(g::numeric) as c2, count(*) as c3
-  from generate_series(0, 199999) g
-  group by g%100000;
+select g%10000 as c1, sum(g::numeric) as c2, count(*) as c3
+  from generate_series(0, 19999) g
+  group by g%10000;
 
 create table agg_group_1 as
-select g%100000 as c1, sum(g::numeric) as c2, count(*) as c3
-  from generate_series(0, 199999) g
-  group by g%100000;
+select g%10000 as c1, sum(g::numeric) as c2, count(*) as c3
+  from generate_series(0, 19999) g
+  group by g%10000;
 
 create table agg_group_2 as
 select * from
@@ -1106,14 +1106,14 @@ set enable_sort = false;
 set jit_above_cost = 0;
 
 explain (costs off)
-select g%100000 as c1, sum(g::numeric) as c2, count(*) as c3
-  from generate_series(0, 199999) g
-  group by g%100000;
+select g%10000 as c1, sum(g::numeric) as c2, count(*) as c3
+  from generate_series(0, 19999) g
+  group by g%10000;
 
 create table agg_hash_1 as
-select g%100000 as c1, sum(g::numeric) as c2, count(*) as c3
-  from generate_series(0, 199999) g
-  group by g%100000;
+select g%10000 as c1, sum(g::numeric) as c2, count(*) as c3
+  from generate_series(0, 19999) g
+  group by g%10000;
 
 create table agg_hash_2 as
 select * from
