@@ -1886,7 +1886,10 @@ pg_stat_progress_basebackup| SELECT s.pid,
             WHEN 5 THEN 'transferring wal files'::text
             ELSE NULL::text
         END AS phase,
-    s.param2 AS backup_total,
+        CASE s.param2
+            WHEN '-1'::integer THEN NULL::bigint
+            ELSE s.param2
+        END AS backup_total,
     s.param3 AS backup_streamed,
     s.param4 AS tablespaces_total,
     s.param5 AS tablespaces_streamed

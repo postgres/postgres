@@ -1070,7 +1070,7 @@ CREATE VIEW pg_stat_progress_basebackup AS
                       WHEN 4 THEN 'waiting for wal archiving to finish'
                       WHEN 5 THEN 'transferring wal files'
                       END AS phase,
-	S.param2 AS backup_total,
+	CASE S.param2 WHEN -1 THEN NULL ELSE S.param2 END AS backup_total,
 	S.param3 AS backup_streamed,
 	S.param4 AS tablespaces_total,
 	S.param5 AS tablespaces_streamed

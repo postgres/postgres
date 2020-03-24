@@ -123,7 +123,10 @@ static long long int total_checksum_failures;
 /* Do not verify checksums. */
 static bool noverify_checksums = false;
 
-/* Total amount of backup data that will be streamed */
+/*
+ * Total amount of backup data that will be streamed.
+ * -1 means that the size is not estimated.
+ */
 static int64 backup_total = 0;
 
 /* Amount of backup data already streamed */
@@ -257,6 +260,18 @@ perform_base_backup(basebackup_options *opt)
 	backup_total = 0;
 	backup_streamed = 0;
 	pgstat_progress_start_command(PROGRESS_COMMAND_BASEBACKUP, InvalidOid);
+
+	/*
+	 * If the estimation of the total backup size is disabled, make the
+	 * backup_total column in the view return NULL by setting the parameter to
+	 * -1.
+	 */
+	if (!opt->progress)
+	{
+		backup_total = -1;
+		pgstat_progress_update_param(PROGRESS_BASEBACKUP_BACKUP_TOTAL,
+									 backup_total);
+	}
 
 	datadirpathlen = strlen(DataDir);
 
@@ -1842,7 +1857,7 @@ update_basebackup_progress(int64 delta)
 	 * will always be wrong if WAL is included), but that's better than having
 	 * the done column be bigger than the total.
 	 */
-	if (backup_total > 0 && backup_streamed > backup_total)
+	if (backup_total > -1 && backup_streamed > backup_total)
 	{
 		backup_total = backup_streamed;
 		val[nparam++] = backup_total;

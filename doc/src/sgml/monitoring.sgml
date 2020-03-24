@@ -4403,7 +4403,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       total size. If the estimation is disabled in
       <application>pg_basebackup</application>
       (i.e., <literal>--no-estimate-size</literal> option is specified),
-      this is <literal>0</literal>.
+      this is <literal>NULL</literal>.
      </entry>
     </row>
     <row>

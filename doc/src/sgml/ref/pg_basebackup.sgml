@@ -546,7 +546,7 @@ PostgreSQL documentation
         amount of backup data that will be streamed, resulting in the
         <literal>backup_total</literal> column in the
         <structname>pg_stat_progress_basebackup</structname>
-        to be <literal>0</literal>.
+        to be <literal>NULL</literal>.
        </para>
        <para>
         Without this option, the backup will start by enumerating
