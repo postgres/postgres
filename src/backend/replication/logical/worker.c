@@ -788,7 +788,6 @@ apply_handle_update_internal(ResultRelInfo *relinfo,
 							 LogicalRepRelMapEntry *relmapentry)
 {
 	Relation	localrel = relinfo->ri_RelationDesc;
-	LogicalRepRelation *remoterel = &relmapentry->remoterel;
 	Oid			idxoid;
 	EPQState	epqstate;
 	TupleTableSlot *localslot;
@@ -806,7 +805,7 @@ apply_handle_update_internal(ResultRelInfo *relinfo,
 	 */
 	idxoid = GetRelationIdentityOrPK(localrel);
 	Assert(OidIsValid(idxoid) ||
-		   (remoterel->replident == REPLICA_IDENTITY_FULL));
+		   (relmapentry->remoterel.replident == REPLICA_IDENTITY_FULL));
 
 	if (OidIsValid(idxoid))
 		found = RelationFindReplTupleByIndex(localrel, idxoid,
