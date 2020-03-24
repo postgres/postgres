@@ -1037,11 +1037,6 @@ ReorderBufferIterTXNInit(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			nr_txns++;
 	}
 
-	/*
-	 * TODO: Consider adding fastpath for the rather common nr_txns=1 case, no
-	 * need to allocate/build a heap then.
-	 */
-
 	/* allocate iteration state */
 	state = (ReorderBufferIterTXNState *)
 		MemoryContextAllocZero(rb->context,
