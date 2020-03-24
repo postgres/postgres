@@ -1515,6 +1515,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
           (<filename>pg_wal</filename>, archive or stream) before trying
           again to retrieve WAL data, at recovery.
          </entry>
+         <entry><literal>VacuumDelay</literal></entry>
+         <entry>Waiting in a cost-based vacuum delay point.</entry>
         </row>
         <row>
          <entry morerows="68"><literal>IO</literal></entry>

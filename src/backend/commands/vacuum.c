@@ -2019,7 +2019,9 @@ vacuum_delay_point(void)
 		if (msec > VacuumCostDelay * 4)
 			msec = VacuumCostDelay * 4;
 
+		pgstat_report_wait_start(WAIT_EVENT_VACUUM_DELAY);
 		pg_usleep((long) (msec * 1000));
+		pgstat_report_wait_end();
 
 		VacuumCostBalance = 0;
 
