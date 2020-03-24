@@ -61,7 +61,7 @@ extern Node *coerce_to_specific_type_typmod(ParseState *pstate, Node *node,
 											Oid targetTypeId, int32 targetTypmod,
 											const char *constructName);
 
-extern int	parser_coercion_errposition(ParseState *pstate,
+extern void parser_coercion_errposition(ParseState *pstate,
 										int coerce_location,
 										Node *input_expr);
 

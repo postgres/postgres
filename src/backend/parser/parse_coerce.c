@@ -1246,15 +1246,15 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
  * XXX possibly this is more generally useful than coercion errors;
  * if so, should rename and place with parser_errposition.
  */
-int
+void
 parser_coercion_errposition(ParseState *pstate,
 							int coerce_location,
 							Node *input_expr)
 {
 	if (coerce_location >= 0)
-		return parser_errposition(pstate, coerce_location);
+		parser_errposition(pstate, coerce_location);
 	else
-		return parser_errposition(pstate, exprLocation(input_expr));
+		parser_errposition(pstate, exprLocation(input_expr));
 }
 
 

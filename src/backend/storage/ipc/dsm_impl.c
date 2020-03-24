@@ -92,7 +92,7 @@ static bool dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 						  void **impl_private, void **mapped_address,
 						  Size *mapped_size, int elevel);
 #endif
-static int	errcode_for_dynamic_shared_memory(void);
+static void errcode_for_dynamic_shared_memory(void);
 
 const struct config_enum_entry dynamic_shared_memory_options[] = {
 #ifdef USE_DSM_POSIX
@@ -1030,11 +1030,11 @@ dsm_impl_unpin_segment(dsm_handle handle, void **impl_private)
 	}
 }
 
-static int
+static void
 errcode_for_dynamic_shared_memory(void)
 {
 	if (errno == EFBIG || errno == ENOMEM)
-		return errcode(ERRCODE_OUT_OF_MEMORY);
+		errcode(ERRCODE_OUT_OF_MEMORY);
 	else
-		return errcode_for_file_access();
+		errcode_for_file_access();
 }

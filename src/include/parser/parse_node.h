@@ -307,7 +307,7 @@ typedef struct ParseCallbackState
 
 extern ParseState *make_parsestate(ParseState *parentParseState);
 extern void free_parsestate(ParseState *pstate);
-extern int	parser_errposition(ParseState *pstate, int location);
+extern void parser_errposition(ParseState *pstate, int location);
 
 extern void setup_parser_errposition_callback(ParseCallbackState *pcbstate,
 											  ParseState *pstate, int location);
