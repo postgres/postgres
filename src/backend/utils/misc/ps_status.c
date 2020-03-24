@@ -257,7 +257,9 @@ save_ps_display_args(int argc, char **argv)
 void
 init_ps_display(const char *fixed_part)
 {
+#ifndef PS_USE_NONE
 	bool		save_update_process_title;
+#endif
 
 	Assert(fixed_part || MyBackendType);
 	if (!fixed_part)
