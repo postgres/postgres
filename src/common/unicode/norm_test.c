@@ -63,18 +63,21 @@ main(int argc, char **argv)
 
 	for (test = UnicodeNormalizationTests; test->input[0] != 0; test++)
 	{
-		pg_wchar   *result;
-
-		result = unicode_normalize_kc(test->input);
-
-		if (pg_wcscmp(test->output, result) != 0)
+		for (int form = 0; form < 4; form++)
 		{
-			printf("FAILURE (NormalizationTest.txt line %d):\n", test->linenum);
-			printf("input:    %s\n", print_wchar_str(test->input));
-			printf("expected: %s\n", print_wchar_str(test->output));
-			printf("got:      %s\n", print_wchar_str(result));
-			printf("\n");
-			exit(1);
+			pg_wchar   *result;
+
+			result = unicode_normalize(form, test->input);
+
+			if (pg_wcscmp(test->output[form], result) != 0)
+			{
+				printf("FAILURE (NormalizationTest.txt line %d form %d):\n", test->linenum, form);
+				printf("input:    %s\n", print_wchar_str(test->input));
+				printf("expected: %s\n", print_wchar_str(test->output[form]));
+				printf("got:      %s\n", print_wchar_str(result));
+				printf("\n");
+				exit(1);
+			}
 		}
 	}
 

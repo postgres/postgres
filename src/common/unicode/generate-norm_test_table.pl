@@ -48,7 +48,7 @@ typedef struct
 {
 	int			linenum;
 	pg_wchar	input[50];
-	pg_wchar	output[50];
+	pg_wchar	output[4][50];
 } pg_unicode_test;
 
 /* test table */
@@ -89,13 +89,16 @@ while (my $line = <$INPUT>)
 	my ($source, $nfc, $nfd, $nfkc, $nfkd) = split(';', $line);
 
 	my $source_utf8 = codepoint_string_to_hex($source);
+	my $nfc_utf8    = codepoint_string_to_hex($nfc);
+	my $nfd_utf8    = codepoint_string_to_hex($nfd);
 	my $nfkc_utf8   = codepoint_string_to_hex($nfkc);
+	my $nfkd_utf8   = codepoint_string_to_hex($nfkd);
 
-	print $OUTPUT "\t{ $linenum, { $source_utf8 }, { $nfkc_utf8 } },\n";
+	print $OUTPUT "\t{ $linenum, { $source_utf8 }, { { $nfc_utf8 }, { $nfd_utf8 }, { $nfkc_utf8 }, { $nfkd_utf8 } } },\n";
 }
 
 # Output terminator entry
-print $OUTPUT "\t{ 0, { 0 }, { 0 } }";
+print $OUTPUT "\t{ 0, { 0 }, { { 0 }, { 0 }, { 0 }, { 0 } } }";
 print $OUTPUT "\n};\n";
 
 close $OUTPUT;

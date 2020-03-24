@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  * unicode_norm.c
- *		Normalize a Unicode string to NFKC form
+ *		Normalize a Unicode string
  *
  * This implements Unicode normalization, per the documentation at
  * https://www.unicode.org/reports/tr15/.
@@ -98,7 +98,7 @@ get_code_decomposition(pg_unicode_decomposition *entry, int *dec_size)
  * are, in turn, decomposable.
  */
 static int
-get_decomposed_size(pg_wchar code)
+get_decomposed_size(pg_wchar code, bool compat)
 {
 	pg_unicode_decomposition *entry;
 	int			size = 0;
@@ -131,7 +131,8 @@ get_decomposed_size(pg_wchar code)
 	 * Just count current code if no other decompositions.  A NULL entry is
 	 * equivalent to a character with class 0 and no decompositions.
 	 */
-	if (entry == NULL || DECOMPOSITION_SIZE(entry) == 0)
+	if (entry == NULL || DECOMPOSITION_SIZE(entry) == 0 ||
+		(!compat && DECOMPOSITION_IS_COMPAT(entry)))
 		return 1;
 
 	/*
@@ -143,7 +144,7 @@ get_decomposed_size(pg_wchar code)
 	{
 		uint32		lcode = decomp[i];
 
-		size += get_decomposed_size(lcode);
+		size += get_decomposed_size(lcode, compat);
 	}
 
 	return size;
@@ -224,7 +225,7 @@ recompose_code(uint32 start, uint32 code, uint32 *result)
  * in the array result.
  */
 static void
-decompose_code(pg_wchar code, pg_wchar **result, int *current)
+decompose_code(pg_wchar code, bool compat, pg_wchar **result, int *current)
 {
 	pg_unicode_decomposition *entry;
 	int			i;
@@ -272,7 +273,8 @@ decompose_code(pg_wchar code, pg_wchar **result, int *current)
 	 * character with class 0 and no decompositions, so just leave also in
 	 * this case.
 	 */
-	if (entry == NULL || DECOMPOSITION_SIZE(entry) == 0)
+	if (entry == NULL || DECOMPOSITION_SIZE(entry) == 0 ||
+		(!compat && DECOMPOSITION_IS_COMPAT(entry)))
 	{
 		pg_wchar   *res = *result;
 
@@ -290,12 +292,12 @@ decompose_code(pg_wchar code, pg_wchar **result, int *current)
 		pg_wchar	lcode = (pg_wchar) decomp[i];
 
 		/* Leave if no more decompositions */
-		decompose_code(lcode, result, current);
+		decompose_code(lcode, compat, result, current);
 	}
 }
 
 /*
- * unicode_normalize_kc - Normalize a Unicode string to NFKC form.
+ * unicode_normalize - Normalize a Unicode string to the specified form.
  *
  * The input is a 0-terminated array of codepoints.
  *
@@ -304,8 +306,10 @@ decompose_code(pg_wchar code, pg_wchar **result, int *current)
  * string is palloc'd instead, and OOM is reported with ereport().
  */
 pg_wchar *
-unicode_normalize_kc(const pg_wchar *input)
+unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 {
+	bool		compat = (form == UNICODE_NFKC || form == UNICODE_NFKD);
+	bool		recompose = (form == UNICODE_NFC || form == UNICODE_NFKC);
 	pg_wchar   *decomp_chars;
 	pg_wchar   *recomp_chars;
 	int			decomp_size,
@@ -326,7 +330,7 @@ unicode_normalize_kc(const pg_wchar *input)
 	 */
 	decomp_size = 0;
 	for (p = input; *p; p++)
-		decomp_size += get_decomposed_size(*p);
+		decomp_size += get_decomposed_size(*p, compat);
 
 	decomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
 	if (decomp_chars == NULL)
@@ -338,7 +342,7 @@ unicode_normalize_kc(const pg_wchar *input)
 	 */
 	current_size = 0;
 	for (p = input; *p; p++)
-		decompose_code(*p, &decomp_chars, &current_size);
+		decompose_code(*p, compat, &decomp_chars, &current_size);
 	decomp_chars[decomp_size] = '\0';
 	Assert(decomp_size == current_size);
 
@@ -385,8 +389,11 @@ unicode_normalize_kc(const pg_wchar *input)
 			count -= 2;
 	}
 
+	if (!recompose)
+		return decomp_chars;
+
 	/*
-	 * The last phase of NFKC is the recomposition of the reordered Unicode
+	 * The last phase of NFC and NFKC is the recomposition of the reordered Unicode
 	 * string using combining classes. The recomposed string cannot be longer
 	 * than the decomposed one, so make the allocation of the output string
 	 * based on that assumption.

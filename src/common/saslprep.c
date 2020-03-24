@@ -1156,7 +1156,7 @@ pg_saslprep(const char *input, char **output)
 	 * 2) Normalize -- Normalize the result of step 1 using Unicode
 	 * normalization.
 	 */
-	output_chars = unicode_normalize_kc(input_chars);
+	output_chars = unicode_normalize(UNICODE_NFKC, input_chars);
 	if (!output_chars)
 		goto oom;
 

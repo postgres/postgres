@@ -99,10 +99,12 @@ typedef struct
 #define DECOMP_NO_COMPOSE	0x80	/* don't use for re-composition */
 #define DECOMP_INLINE		0x40	/* decomposition is stored inline in
 									 * dec_index */
+#define DECOMP_COMPAT		0x20	/* compatibility mapping */
 
-#define DECOMPOSITION_SIZE(x) ((x)->dec_size_flags & 0x3F)
-#define DECOMPOSITION_NO_COMPOSE(x) (((x)->dec_size_flags & DECOMP_NO_COMPOSE) != 0)
+#define DECOMPOSITION_SIZE(x) ((x)->dec_size_flags & 0x1F)
+#define DECOMPOSITION_NO_COMPOSE(x) (((x)->dec_size_flags & (DECOMP_NO_COMPOSE | DECOMP_COMPAT)) != 0)
 #define DECOMPOSITION_IS_INLINE(x) (((x)->dec_size_flags & DECOMP_INLINE) != 0)
+#define DECOMPOSITION_IS_COMPAT(x) (((x)->dec_size_flags & DECOMP_COMPAT) != 0)
 
 /* Table of Unicode codepoints and their decompositions */
 static const pg_unicode_decomposition UnicodeDecompMain[$num_characters] =
@@ -136,22 +138,22 @@ foreach my $char (@characters)
 	# Decomposition size
 	# Print size of decomposition
 	my $decomp_size = scalar(@decomp_elts);
+	die if $decomp_size > 0x1F;		# to not overrun bitmask
 
 	my $first_decomp = shift @decomp_elts;
 
 	my $flags   = "";
 	my $comment = "";
 
+	if ($compat)
+	{
+		$flags .= " | DECOMP_COMPAT";
+	}
+
 	if ($decomp_size == 2)
 	{
-
 		# Should this be used for recomposition?
-		if ($compat)
-		{
-			$flags .= " | DECOMP_NO_COMPOSE";
-			$comment = "compatibility mapping";
-		}
-		elsif ($character_hash{$first_decomp}
+		if ($character_hash{$first_decomp}
 			&& $character_hash{$first_decomp}->{class} != 0)
 		{
 			$flags .= " | DECOMP_NO_COMPOSE";

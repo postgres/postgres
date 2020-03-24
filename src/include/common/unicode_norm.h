@@ -16,6 +16,14 @@
 
 #include "mb/pg_wchar.h"
 
-extern pg_wchar *unicode_normalize_kc(const pg_wchar *input);
+typedef enum
+{
+	UNICODE_NFC = 0,
+	UNICODE_NFD = 1,
+	UNICODE_NFKC = 2,
+	UNICODE_NFKD = 3,
+} UnicodeNormalizationForm;
+
+extern pg_wchar *unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input);
 
 #endif							/* UNICODE_NORM_H */
