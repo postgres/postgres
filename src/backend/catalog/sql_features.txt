@@ -147,7 +147,7 @@ E152	Basic SET TRANSACTION statement	02	SET TRANSACTION statement: READ ONLY and
 E153	Updatable queries with subqueries			YES	
 E161	SQL comments using leading double minus			YES	
 E171	SQLSTATE support			YES	
-E182	Module language			NO	
+E182	Host language binding			YES	
 F021	Basic information schema			YES	
 F021	Basic information schema	01	COLUMNS view	YES	
 F021	Basic information schema	02	TABLES view	YES	
