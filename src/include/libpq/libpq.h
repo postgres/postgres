@@ -83,8 +83,8 @@ extern char *ssl_key_file;
 extern char *ssl_ca_file;
 extern char *ssl_crl_file;
 extern char *ssl_dh_params_file;
-extern char *ssl_passphrase_command;
-extern bool ssl_passphrase_command_supports_reload;
+extern PGDLLIMPORT char *ssl_passphrase_command;
+extern PGDLLIMPORT bool ssl_passphrase_command_supports_reload;
 #ifdef USE_SSL
 extern bool ssl_loaded_verify_locations;
 #endif

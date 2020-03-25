@@ -27,7 +27,9 @@ SUBDIRS = \
 
 ifeq ($(with_openssl),yes)
 SUBDIRS += ssl_passphrase_callback
+else
+ALWAYS_SUBDIRS += ssl_passphrase_callback
 endif
 
-
 $(recurse)
+$(recurse_always)

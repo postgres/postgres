@@ -17,6 +17,8 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
+SHLIB_LINK += $(filter -lssl -lcrypto -lssleay32 -leay32, $(LIBS))
+
 check: prove-check
 
 prove-check: ssl_passphrase_func$(DLSUFFIX) | temp-install
