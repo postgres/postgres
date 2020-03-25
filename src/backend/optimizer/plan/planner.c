@@ -4868,8 +4868,8 @@ create_distinct_paths(PlannerInfo *root,
 		Size		hashentrysize = hash_agg_entry_size(
 			0, cheapest_input_path->pathtarget->width, 0);
 
-		/* Allow hashing only if hashtable is predicted to fit in work_mem */
-		allow_hash = (hashentrysize * numDistinctRows <= work_mem * 1024L);
+		allow_hash = enable_hashagg_disk ||
+			(hashentrysize * numDistinctRows <= work_mem * 1024L);
 	}
 
 	if (allow_hash && grouping_is_hashable(parse->distinctClause))
