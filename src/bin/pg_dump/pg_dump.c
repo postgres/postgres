@@ -119,6 +119,8 @@ static SimpleStringList table_exclude_patterns = {NULL, NULL};
 static SimpleOidList table_exclude_oids = {NULL, NULL};
 static SimpleStringList tabledata_exclude_patterns = {NULL, NULL};
 static SimpleOidList tabledata_exclude_oids = {NULL, NULL};
+static SimpleStringList foreign_servers_include_patterns = {NULL, NULL};
+static SimpleOidList foreign_servers_include_oids = {NULL, NULL};
 
 
 /* placeholders for the delimiters for comments */
@@ -153,6 +155,9 @@ static void expand_schema_name_patterns(Archive *fout,
 										SimpleStringList *patterns,
 										SimpleOidList *oids,
 										bool strict_names);
+static void expand_foreign_server_name_patterns(Archive *fout,
+												SimpleStringList *patterns,
+												SimpleOidList *oids);
 static void expand_table_name_patterns(Archive *fout,
 									   SimpleStringList *patterns,
 									   SimpleOidList *oids,
@@ -385,6 +390,7 @@ main(int argc, char **argv)
 		{"no-sync", no_argument, NULL, 7},
 		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 10},
+		{"include-foreign-data", required_argument, NULL, 11},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -600,6 +606,11 @@ main(int argc, char **argv)
 				dopt.dump_inserts = (int) rowsPerInsert;
 				break;
 
+			case 11:			/* include foreign data */
+				simple_string_list_append(&foreign_servers_include_patterns,
+										  optarg);
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit_nicely(1);
@@ -640,6 +651,12 @@ main(int argc, char **argv)
 		pg_log_error("options -s/--schema-only and -a/--data-only cannot be used together");
 		exit_nicely(1);
 	}
+
+	if (dopt.schemaOnly && foreign_servers_include_patterns.head != NULL)
+		fatal("options -s/--schema-only and --include-foreign-data cannot be used together");
+
+	if (numWorkers > 1 && foreign_servers_include_patterns.head != NULL)
+		fatal("option --include-foreign-data is not supported with parallel backup");
 
 	if (dopt.dataOnly && dopt.outputClean)
 	{
@@ -807,6 +824,9 @@ main(int argc, char **argv)
 	expand_table_name_patterns(fout, &tabledata_exclude_patterns,
 							   &tabledata_exclude_oids,
 							   false);
+
+	expand_foreign_server_name_patterns(fout, &foreign_servers_include_patterns,
+										&foreign_servers_include_oids);
 
 	/* non-matching exclusion patterns aren't an error */
 
@@ -1011,6 +1031,9 @@ help(const char *progname)
 	printf(_("  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"));
 	printf(_("  --extra-float-digits=NUM     override default setting for extra_float_digits\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
+	printf(_("  --include-foreign-data=PATTERN\n"
+			 "                               include data of foreign tables in\n"
+			 "                               foreign servers matching PATTERN\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --no-comments                do not dump comments\n"));
@@ -1322,6 +1345,51 @@ expand_schema_name_patterns(Archive *fout,
 		{
 			simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
 		}
+
+		PQclear(res);
+		resetPQExpBuffer(query);
+	}
+
+	destroyPQExpBuffer(query);
+}
+
+/*
+ * Find the OIDs of all foreign servers matching the given list of patterns,
+ * and append them to the given OID list.
+ */
+static void
+expand_foreign_server_name_patterns(Archive *fout,
+									SimpleStringList *patterns,
+									SimpleOidList *oids)
+{
+	PQExpBuffer query;
+	PGresult   *res;
+	SimpleStringListCell *cell;
+	int			i;
+
+	if (patterns->head == NULL)
+		return;					/* nothing to do */
+
+	query = createPQExpBuffer();
+
+	/*
+	 * The loop below runs multiple SELECTs might sometimes result in
+	 * duplicate entries in the OID list, but we don't care.
+	 */
+
+	for (cell = patterns->head; cell; cell = cell->next)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT oid FROM pg_catalog.pg_foreign_server s\n");
+		processSQLNamePattern(GetConnection(fout), query, cell->val, false,
+							  false, NULL, "s.srvname", NULL, NULL);
+
+		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
+		if (PQntuples(res) == 0)
+			fatal("no matching foreign servers were found for pattern \"%s\"", cell->val);
+
+		for (i = 0; i < PQntuples(res); i++)
+			simple_oid_list_append(oids, atooid(PQgetvalue(res, i, 0)));
 
 		PQclear(res);
 		resetPQExpBuffer(query);
@@ -1775,7 +1843,6 @@ selectDumpableObject(DumpableObject *dobj, Archive *fout)
  *	- this routine is called by the Archiver when it wants the table
  *	  to be dumped.
  */
-
 static int
 dumpTableData_copy(Archive *fout, void *dcontext)
 {
@@ -1806,7 +1873,12 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 	 */
 	column_list = fmtCopyColumnList(tbinfo, clistBuf);
 
-	if (tdinfo->filtercond)
+	/*
+	 * Use COPY (SELECT ...) TO when dumping a foreign table's data, and when
+	 * a filter condition was specified.  For other cases a simple COPY
+	 * suffices.
+	 */
+	if (tdinfo->filtercond || tbinfo->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		/* Note: this syntax is only supported in 8.2 and up */
 		appendPQExpBufferStr(q, "COPY (SELECT ");
@@ -1818,9 +1890,10 @@ dumpTableData_copy(Archive *fout, void *dcontext)
 		}
 		else
 			appendPQExpBufferStr(q, "* ");
+
 		appendPQExpBuffer(q, "FROM %s %s) TO stdout;",
 						  fmtQualifiedDumpable(tbinfo),
-						  tdinfo->filtercond);
+						  tdinfo->filtercond ? tdinfo->filtercond : "");
 	}
 	else
 	{
@@ -2336,8 +2409,11 @@ makeTableDataInfo(DumpOptions *dopt, TableInfo *tbinfo)
 	/* Skip VIEWs (no data to dump) */
 	if (tbinfo->relkind == RELKIND_VIEW)
 		return;
-	/* Skip FOREIGN TABLEs (no data to dump) */
-	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE)
+	/* Skip FOREIGN TABLEs (no data to dump) unless requested explicitly */
+	if (tbinfo->relkind == RELKIND_FOREIGN_TABLE &&
+		(foreign_servers_include_oids.head == NULL ||
+		!simple_oid_list_member(&foreign_servers_include_oids,
+								tbinfo->foreign_server)))
 		return;
 	/* Skip partitioned tables (data in partitions) */
 	if (tbinfo->relkind == RELKIND_PARTITIONED_TABLE)
@@ -5999,6 +6075,7 @@ getTables(Archive *fout, int *numTables)
 	int			i_toastreloptions;
 	int			i_reloftype;
 	int			i_relpages;
+	int			i_foreignserver;
 	int			i_is_identity_sequence;
 	int			i_changed_acl;
 	int			i_partkeydef;
@@ -6095,6 +6172,9 @@ getTables(Archive *fout, int *numTables)
 						  "tc.relminmxid AS tminmxid, "
 						  "c.relpersistence, c.relispopulated, "
 						  "c.relreplident, c.relpages, am.amname, "
+						  "CASE WHEN c.relkind = 'f' THEN "
+						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
+						  "ELSE 0 END AS foreignserver, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6185,6 +6265,9 @@ getTables(Archive *fout, int *numTables)
 						  "c.relpersistence, c.relispopulated, "
 						  "c.relreplident, c.relpages, "
 						  "NULL AS amname, "
+						  "CASE WHEN c.relkind = 'f' THEN "
+						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
+						  "ELSE 0 END AS foreignserver, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6235,6 +6318,9 @@ getTables(Archive *fout, int *numTables)
 						  "c.relpersistence, c.relispopulated, "
 						  "c.relreplident, c.relpages, "
 						  "NULL AS amname, "
+						  "CASE WHEN c.relkind = 'f' THEN "
+						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
+						  "ELSE 0 END AS foreignserver, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6285,6 +6371,9 @@ getTables(Archive *fout, int *numTables)
 						  "c.relpersistence, c.relispopulated, "
 						  "'d' AS relreplident, c.relpages, "
 						  "NULL AS amname, "
+						  "CASE WHEN c.relkind = 'f' THEN "
+						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
+						  "ELSE 0 END AS foreignserver, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6335,6 +6424,9 @@ getTables(Archive *fout, int *numTables)
 						  "c.relpersistence, 't' as relispopulated, "
 						  "'d' AS relreplident, c.relpages, "
 						  "NULL AS amname, "
+						  "CASE WHEN c.relkind = 'f' THEN "
+						  "(SELECT ftserver FROM pg_catalog.pg_foreign_table WHERE ftrelid = c.oid) "
+						  "ELSE 0 END AS foreignserver, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6383,6 +6475,7 @@ getTables(Archive *fout, int *numTables)
 						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "'d' AS relreplident, c.relpages, "
 						  "NULL AS amname, "
+						  "NULL AS foreignserver, "
 						  "CASE WHEN c.reloftype <> 0 THEN c.reloftype::pg_catalog.regtype ELSE NULL END AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6430,6 +6523,7 @@ getTables(Archive *fout, int *numTables)
 						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "'d' AS relreplident, c.relpages, "
 						  "NULL AS amname, "
+						  "NULL AS foreignserver, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6477,6 +6571,7 @@ getTables(Archive *fout, int *numTables)
 						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "'d' AS relreplident, c.relpages, "
 						  "NULL AS amname, "
+						  "NULL AS foreignserver, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6523,6 +6618,7 @@ getTables(Archive *fout, int *numTables)
 						  "'p' AS relpersistence, 't' as relispopulated, "
 						  "'d' AS relreplident, relpages, "
 						  "NULL AS amname, "
+						  "NULL AS foreignserver, "
 						  "NULL AS reloftype, "
 						  "d.refobjid AS owning_tab, "
 						  "d.refobjsubid AS owning_col, "
@@ -6590,6 +6686,7 @@ getTables(Archive *fout, int *numTables)
 	i_relispopulated = PQfnumber(res, "relispopulated");
 	i_relreplident = PQfnumber(res, "relreplident");
 	i_relpages = PQfnumber(res, "relpages");
+	i_foreignserver = PQfnumber(res, "foreignserver");
 	i_owning_tab = PQfnumber(res, "owning_tab");
 	i_owning_col = PQfnumber(res, "owning_col");
 	i_reltablespace = PQfnumber(res, "reltablespace");
@@ -6713,6 +6810,9 @@ getTables(Archive *fout, int *numTables)
 		tblinfo[i].partkeydef = pg_strdup(PQgetvalue(res, i, i_partkeydef));
 		tblinfo[i].ispartition = (strcmp(PQgetvalue(res, i, i_ispartition), "t") == 0);
 		tblinfo[i].partbound = pg_strdup(PQgetvalue(res, i, i_partbound));
+
+		/* foreign server */
+		tblinfo[i].foreign_server = atooid(PQgetvalue(res, i, i_foreignserver));
 
 		/*
 		 * Read-lock target tables to make sure they aren't DROPPED or altered

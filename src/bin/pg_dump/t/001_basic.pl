@@ -4,7 +4,7 @@ use warnings;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 74;
+use Test::More tests => 78;
 
 my $tempdir       = TestLib::tempdir;
 my $tempdir_short = TestLib::tempdir_short;
@@ -47,6 +47,18 @@ command_fails_like(
 	[ 'pg_dump', '-s', '-a' ],
 	qr/\Qpg_dump: error: options -s\/--schema-only and -a\/--data-only cannot be used together\E/,
 	'pg_dump: options -s/--schema-only and -a/--data-only cannot be used together'
+);
+
+command_fails_like(
+	[ 'pg_dump', '-s', '--include-foreign-data=xxx' ],
+	qr/\Qpg_dump: error: options -s\/--schema-only and --include-foreign-data cannot be used together\E/,
+	'pg_dump: options -s/--schema-only and --include-foreign-data cannot be used together'
+);
+
+command_fails_like(
+	[ 'pg_dump', '-j2', '--include-foreign-data=xxx' ],
+	qr/\Qpg_dump: error: option --include-foreign-data is not supported with parallel backup\E/,
+	'pg_dump: option --include-foreign-data is not supported with parallel backup'
 );
 
 command_fails_like(
