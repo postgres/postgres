@@ -400,7 +400,8 @@ static int hash_choose_num_partitions(uint64 input_groups,
 									  double hashentrysize,
 									  int used_bits,
 									  int *log2_npartittions);
-static AggStatePerGroup lookup_hash_entry(AggState *aggstate, uint32 hash);
+static AggStatePerGroup lookup_hash_entry(AggState *aggstate, uint32 hash,
+										  bool *in_hash_table);
 static void lookup_hash_entries(AggState *aggstate);
 static TupleTableSlot *agg_retrieve_direct(AggState *aggstate);
 static void agg_fill_hash_table(AggState *aggstate);
@@ -1968,10 +1969,11 @@ hash_choose_num_partitions(uint64 input_groups, double hashentrysize,
  *
  * If in "spill mode", then only find existing hashtable entries; don't create
  * new ones. If a tuple's group is not already present in the hash table for
- * the current grouping set, return NULL and the caller will spill it to disk.
+ * the current grouping set, assign *in_hash_table=false and the caller will
+ * spill it to disk.
  */
 static AggStatePerGroup
-lookup_hash_entry(AggState *aggstate, uint32 hash)
+lookup_hash_entry(AggState *aggstate, uint32 hash, bool *in_hash_table)
 {
 	AggStatePerHash perhash = &aggstate->perhash[aggstate->current_set];
 	TupleTableSlot *hashslot = perhash->hashslot;
@@ -1987,7 +1989,12 @@ lookup_hash_entry(AggState *aggstate, uint32 hash)
 									 hash);
 
 	if (entry == NULL)
+	{
+		*in_hash_table = false;
 		return NULL;
+	}
+	else
+		*in_hash_table = true;
 
 	if (isnew)
 	{
@@ -1997,9 +2004,14 @@ lookup_hash_entry(AggState *aggstate, uint32 hash)
 		aggstate->hash_ngroups_current++;
 		hash_agg_check_limits(aggstate);
 
+		/* no need to allocate or initialize per-group state */
+		if (aggstate->numtrans == 0)
+			return NULL;
+
 		pergroup = (AggStatePerGroup)
 			MemoryContextAlloc(perhash->hashtable->tablecxt,
 							   sizeof(AggStatePerGroupData) * aggstate->numtrans);
+
 		entry->additional = pergroup;
 
 		/*
@@ -2046,14 +2058,15 @@ lookup_hash_entries(AggState *aggstate)
 	{
 		AggStatePerHash	perhash = &aggstate->perhash[setno];
 		uint32			hash;
+		bool			in_hash_table;
 
 		select_current_set(aggstate, setno, true);
 		prepare_hash_slot(aggstate);
 		hash = TupleHashTableHash(perhash->hashtable, perhash->hashslot);
-		pergroup[setno] = lookup_hash_entry(aggstate, hash);
+		pergroup[setno] = lookup_hash_entry(aggstate, hash, &in_hash_table);
 
 		/* check to see if we need to spill the tuple for this grouping set */
-		if (pergroup[setno] == NULL)
+		if (!in_hash_table)
 		{
 			HashAggSpill	*spill	 = &aggstate->hash_spills[setno];
 			TupleTableSlot	*slot	 = aggstate->tmpcontext->ecxt_outertuple;
@@ -2587,6 +2600,7 @@ agg_refill_hash_table(AggState *aggstate)
 		TupleTableSlot	*slot = aggstate->hash_spill_slot;
 		MinimalTuple	 tuple;
 		uint32			 hash;
+		bool			 in_hash_table;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -2598,9 +2612,10 @@ agg_refill_hash_table(AggState *aggstate)
 		aggstate->tmpcontext->ecxt_outertuple = slot;
 
 		prepare_hash_slot(aggstate);
-		aggstate->hash_pergroup[batch->setno] = lookup_hash_entry(aggstate, hash);
+		aggstate->hash_pergroup[batch->setno] = lookup_hash_entry(
+			aggstate, hash, &in_hash_table);
 
-		if (aggstate->hash_pergroup[batch->setno] != NULL)
+		if (in_hash_table)
 		{
 			/* Advance the aggregates (or combine functions) */
 			advance_aggregates(aggstate);
