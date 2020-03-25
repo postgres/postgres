@@ -1505,10 +1505,6 @@ pg_newlocale_from_collation(Oid collid)
 /*
  * Get provider-specific collation version string for the given collation from
  * the operating system/library.
- *
- * A particular provider must always either return a non-NULL string or return
- * NULL (if it doesn't support versions).  It must not return NULL for some
- * collcollate and not NULL for others.
  */
 char *
 get_collation_actual_version(char collprovider, const char *collcollate)
@@ -1540,6 +1536,23 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 	if (collprovider == COLLPROVIDER_LIBC)
 	{
 #if defined(__GLIBC__)
+		char	   *copy = pstrdup(collcollate);
+		char	   *copy_suffix = strstr(copy, ".");
+		bool		need_version = true;
+
+		/*
+		 * Check for names like C.UTF-8 by chopping off the encoding suffix on
+		 * our temporary copy, so we can skip the version.
+		 */
+		if (copy_suffix)
+			*copy_suffix = '\0';
+		if (pg_strcasecmp("c", copy) == 0 ||
+			pg_strcasecmp("posix", copy) == 0)
+			need_version = false;
+		pfree(copy);
+		if (!need_version)
+			return NULL;
+
 		/* Use the glibc version because we don't have anything better. */
 		collversion = pstrdup(gnu_get_libc_version());
 #endif
