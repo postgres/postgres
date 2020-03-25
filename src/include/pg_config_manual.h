@@ -123,6 +123,19 @@
 #define ALIGNOF_BUFFER	32
 
 /*
+ * If EXEC_BACKEND is defined, the postmaster uses an alternative method for
+ * starting subprocesses: Instead of simply using fork(), as is standard on
+ * Unix platforms, it uses fork()+exec() or something equivalent on Windows,
+ * as well as lots of extra code to bring the required global state to those
+ * new processes.  This must be enabled on Windows (because there is no
+ * fork()).  On other platforms, it's only useful for verifying those
+ * otherwise Windows-specific code paths.
+ */
+#if defined(WIN32) && !defined(__CYGWIN__)
+#define EXEC_BACKEND
+#endif
+
+/*
  * Disable UNIX sockets for certain operating systems.
  */
 #if defined(WIN32)

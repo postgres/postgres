@@ -600,7 +600,7 @@ fi
 
 # We already have this in Makefile.win32, but configure needs it too
 if test "$PORTNAME" = "win32"; then
-  CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32 -DEXEC_BACKEND"
+  CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32"
 fi
 
 # Now that we're done automatically adding stuff to C[XX]FLAGS, put back the
