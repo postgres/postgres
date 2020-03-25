@@ -329,7 +329,7 @@ typedef struct JsObject
 			hash_destroy((jso)->val.json_hash); \
 	} while (0)
 
-static void report_json_context(JsonLexContext *lex);
+static int	report_json_context(JsonLexContext *lex);
 
 /* semantic action functions for json_object_keys */
 static void okeys_object_field_start(void *state, char *fname, bool isnull);
@@ -631,7 +631,7 @@ json_ereport_error(JsonParseErrorType error, JsonLexContext *lex)
  * The return value isn't meaningful, but we make it non-void so that this
  * can be invoked inside ereport().
  */
-static void
+static int
 report_json_context(JsonLexContext *lex)
 {
 	const char *context_start;
@@ -689,8 +689,8 @@ report_json_context(JsonLexContext *lex)
 	prefix = (context_start > line_start) ? "..." : "";
 	suffix = (lex->token_type != JSON_TOKEN_END && context_end - lex->input < lex->input_length && *context_end != '\n' && *context_end != '\r') ? "..." : "";
 
-	errcontext("JSON data, line %d: %s%s%s",
-			   line_number, prefix, ctxt, suffix);
+	return errcontext("JSON data, line %d: %s%s%s",
+					  line_number, prefix, ctxt, suffix);
 }
 
 

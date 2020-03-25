@@ -1076,18 +1076,18 @@ other			.
  * (essentially, scan.l, parser.c, and gram.y), since it requires the
  * yyscanner struct to still be available.
  */
-void
+int
 scanner_errposition(int location, core_yyscan_t yyscanner)
 {
 	int			pos;
 
 	if (location < 0)
-		return;				/* no-op if location is unknown */
+		return 0;				/* no-op if location is unknown */
 
 	/* Convert byte offset to character number */
 	pos = pg_mbstrlen_with_len(yyextra->scanbuf, location) + 1;
 	/* And pass it to the ereport mechanism */
-	errposition(pos);
+	return errposition(pos);
 }
 
 /*

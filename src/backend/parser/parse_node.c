@@ -106,21 +106,21 @@ free_parsestate(ParseState *pstate)
  * normal non-error case: computing character indexes would be much more
  * expensive than storing token offsets.)
  */
-void
+int
 parser_errposition(ParseState *pstate, int location)
 {
 	int			pos;
 
 	/* No-op if location was not provided */
 	if (location < 0)
-		return;
+		return 0;
 	/* Can't do anything if source text is not available */
 	if (pstate == NULL || pstate->p_sourcetext == NULL)
-		return;
+		return 0;
 	/* Convert offset to character number */
 	pos = pg_mbstrlen_with_len(pstate->p_sourcetext, location) + 1;
 	/* And pass it to the ereport mechanism */
-	errposition(pos);
+	return errposition(pos);
 }
 
 

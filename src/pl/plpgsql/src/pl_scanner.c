@@ -468,20 +468,20 @@ plpgsql_peek2(int *tok1_p, int *tok2_p, int *tok1_loc, int *tok2_loc)
  * parsing of a plpgsql function, since it requires the scanorig string
  * to still be available.
  */
-void
+int
 plpgsql_scanner_errposition(int location)
 {
 	int			pos;
 
 	if (location < 0 || scanorig == NULL)
-		return;					/* no-op if location is unknown */
+		return 0;				/* no-op if location is unknown */
 
 	/* Convert byte offset to character number */
 	pos = pg_mbstrlen_with_len(scanorig, location) + 1;
 	/* And pass it to the ereport mechanism */
 	(void) internalerrposition(pos);
 	/* Also pass the function body string */
-	internalerrquery(scanorig);
+	return internalerrquery(scanorig);
 }
 
 /*

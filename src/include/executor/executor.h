@@ -546,7 +546,7 @@ exec_rt_fetch(Index rti, EState *estate)
 
 extern Relation ExecGetRangeTableRelation(EState *estate, Index rti);
 
-extern void executor_errposition(EState *estate, int location);
+extern int	executor_errposition(EState *estate, int location);
 
 extern void RegisterExprContextCallback(ExprContext *econtext,
 										ExprContextCallbackFunction function,
