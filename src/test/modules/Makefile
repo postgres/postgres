@@ -25,4 +25,9 @@ SUBDIRS = \
 		  unsafe_tests \
 		  worker_spi
 
+ifeq ($(with_openssl),yes)
+SUBDIRS += ssl_passphrase_callback
+endif
+
+
 $(recurse)

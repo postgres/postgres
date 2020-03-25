@@ -45,6 +45,9 @@
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 
+/* default init hook can be overridden by a shared library */
+static void  default_openssl_tls_init(SSL_CTX *context, bool isServerStart);
+openssl_tls_init_hook_typ openssl_tls_init_hook = default_openssl_tls_init;
 
 static int	my_sock_read(BIO *h, char *buf, int size);
 static int	my_sock_write(BIO *h, const char *buf, int size);
@@ -117,27 +120,10 @@ be_tls_init(bool isServerStart)
 	SSL_CTX_set_mode(context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 	/*
-	 * Set password callback
+	 * Call init hook (usually to set password callback)
 	 */
-	if (isServerStart)
-	{
-		if (ssl_passphrase_command[0])
-			SSL_CTX_set_default_passwd_cb(context, ssl_external_passwd_cb);
-	}
-	else
-	{
-		if (ssl_passphrase_command[0] && ssl_passphrase_command_supports_reload)
-			SSL_CTX_set_default_passwd_cb(context, ssl_external_passwd_cb);
-		else
+	(* openssl_tls_init_hook)(context, isServerStart);
 
-			/*
-			 * If reloading and no external command is configured, override
-			 * OpenSSL's default handling of passphrase-protected files,
-			 * because we don't want to prompt for a passphrase in an
-			 * already-running server.
-			 */
-			SSL_CTX_set_default_passwd_cb(context, dummy_ssl_passwd_cb);
-	}
 	/* used by the callback */
 	ssl_is_server_start = isServerStart;
 
@@ -1337,4 +1323,28 @@ ssl_protocol_version_to_openssl(int v)
 	}
 
 	return -1;
+}
+
+
+static void
+default_openssl_tls_init(SSL_CTX *context, bool isServerStart)
+{
+	if (isServerStart)
+	{
+		if (ssl_passphrase_command[0])
+			SSL_CTX_set_default_passwd_cb(context, ssl_external_passwd_cb);
+	}
+	else
+	{
+		if (ssl_passphrase_command[0] && ssl_passphrase_command_supports_reload)
+			SSL_CTX_set_default_passwd_cb(context, ssl_external_passwd_cb);
+		else
+			/*
+			 * If reloading and no external command is configured, override
+			 * OpenSSL's default handling of passphrase-protected files,
+			 * because we don't want to prompt for a passphrase in an
+			 * already-running server.
+			 */
+			SSL_CTX_set_default_passwd_cb(context, dummy_ssl_passwd_cb);
+	}
 }

@@ -430,7 +430,7 @@ sub mkvcbuild
 
 	if (!$solution->{options}->{openssl})
 	{
-		push @contrib_excludes, 'sslinfo';
+		push @contrib_excludes, 'sslinfo', 'ssl_passphrase_callback';
 	}
 
 	if (!$solution->{options}->{uuid})
