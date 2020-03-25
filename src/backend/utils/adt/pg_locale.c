@@ -1555,6 +1555,33 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 
 		/* Use the glibc version because we don't have anything better. */
 		collversion = pstrdup(gnu_get_libc_version());
+#elif defined(WIN32) && _WIN32_WINNT >= 0x0600
+		/*
+		 * If we are targeting Windows Vista and above, we can ask for a name
+		 * given a collation name (earlier versions required a location code
+		 * that we don't have).
+		 */
+		NLSVERSIONINFOEX version = {sizeof(NLSVERSIONINFOEX)};
+		WCHAR		wide_collcollate[LOCALE_NAME_MAX_LENGTH];
+
+		/* These would be invalid arguments, but have no version. */
+		if (pg_strcasecmp("c", collcollate) == 0 ||
+			pg_strcasecmp("posix", collcollate) == 0)
+			return NULL;
+
+		/* For all other names, ask the OS. */
+		MultiByteToWideChar(CP_ACP, 0, collcollate, -1, wide_collcollate,
+							LOCALE_NAME_MAX_LENGTH);
+		if (!GetNLSVersionEx(COMPARE_STRING, wide_collcollate, &version))
+			ereport(ERROR,
+					(errmsg("could not get collation version for locale \"%s\": error code %lu",
+							collcollate,
+							GetLastError())));
+		collversion = psprintf("%d.%d,%d.%d",
+							   (version.dwNLSVersion >> 8) & 0xFFFF,
+							   version.dwNLSVersion & 0xFF,
+							   (version.dwDefinedVersion >> 8) & 0xFFFF,
+							   version.dwDefinedVersion & 0xFF);
 #endif
 	}
 
