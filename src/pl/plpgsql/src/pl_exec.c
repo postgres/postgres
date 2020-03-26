@@ -7117,7 +7117,9 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 	 * expect the regular abort recovery procedures to release everything of
 	 * interest.
 	 */
-	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
+	if (event == XACT_EVENT_COMMIT ||
+		event == XACT_EVENT_PARALLEL_COMMIT ||
+		event == XACT_EVENT_PREPARE)
 	{
 		/* Shouldn't be any econtext stack entries left at commit */
 		Assert(simple_econtext_stack == NULL);
@@ -7126,7 +7128,8 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 			FreeExecutorState(shared_simple_eval_estate);
 		shared_simple_eval_estate = NULL;
 	}
-	else if (event == XACT_EVENT_ABORT)
+	else if (event == XACT_EVENT_ABORT ||
+			 event == XACT_EVENT_PARALLEL_ABORT)
 	{
 		simple_econtext_stack = NULL;
 		shared_simple_eval_estate = NULL;
