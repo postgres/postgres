@@ -28,7 +28,6 @@ $node->append_conf('postgresql.conf',
 	"ssl_passphrase.passphrase = '$rot13pass'");
 $node->append_conf('postgresql.conf',
 	"shared_preload_libraries = 'ssl_passphrase_func'");
-$node->append_conf('postgresql.conf', "listen_addresses = 'localhost'");
 $node->append_conf('postgresql.conf', "ssl = 'on'");
 
 my $ddir = $node->data_dir;
