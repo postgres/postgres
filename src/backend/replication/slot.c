@@ -1257,6 +1257,12 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	fd = OpenTransientFile(tmppath, O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
 	if (fd < 0)
 	{
+		/*
+		 * If not an ERROR, then release the lock before returning.  In case
+		 * of an ERROR, the error recovery path automatically releases the
+		 * lock, but no harm in explicitly releasing even in that case.
+		 */
+		LWLockRelease(&slot->io_in_progress_lock);
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m",
@@ -1288,6 +1294,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 
 		pgstat_report_wait_end();
 		CloseTransientFile(fd);
+		LWLockRelease(&slot->io_in_progress_lock);
 
 		/* if write didn't set errno, assume problem is no disk space */
 		errno = save_errno ? save_errno : ENOSPC;
@@ -1307,6 +1314,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 
 		pgstat_report_wait_end();
 		CloseTransientFile(fd);
+		LWLockRelease(&slot->io_in_progress_lock);
 		errno = save_errno;
 		ereport(elevel,
 				(errcode_for_file_access(),
@@ -1321,6 +1329,7 @@ SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel)
 	/* rename to permanent file, fsync file and directory */
 	if (rename(tmppath, path) != 0)
 	{
+		LWLockRelease(&slot->io_in_progress_lock);
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
