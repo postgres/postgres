@@ -20,6 +20,8 @@
 #include "nodes/params.h"
 #include "tcop/cmdtag.h"
 #include "utils/queryenvironment.h"
+#include "utils/resowner.h"
+
 
 /* Forward declaration, to avoid including parsenodes.h here */
 struct RawStmt;
@@ -219,6 +221,12 @@ extern CachedPlan *GetCachedPlan(CachedPlanSource *plansource,
 								 bool useResOwner,
 								 QueryEnvironment *queryEnv);
 extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
+
+extern bool CachedPlanAllowsSimpleValidityCheck(CachedPlanSource *plansource,
+												CachedPlan *plan);
+extern bool CachedPlanIsSimplyValid(CachedPlanSource *plansource,
+									CachedPlan *plan,
+									ResourceOwner owner);
 
 extern CachedExpression *GetCachedExpression(Node *expr);
 extern void FreeCachedExpression(CachedExpression *cexpr);

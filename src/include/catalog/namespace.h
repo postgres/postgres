@@ -49,12 +49,17 @@ typedef enum TempNamespaceStatus
 
 /*
  *	Structure for xxxOverrideSearchPath functions
+ *
+ * The generation counter is private to namespace.c and shouldn't be touched
+ * by other code.  It can be initialized to zero if necessary (that means
+ * "not known equal to the current active path").
  */
 typedef struct OverrideSearchPath
 {
 	List	   *schemas;		/* OIDs of explicitly named schemas */
 	bool		addCatalog;		/* implicitly prepend pg_catalog? */
 	bool		addTemp;		/* implicitly prepend temp schema? */
+	uint64		generation;		/* for quick detection of equality to active */
 } OverrideSearchPath;
 
 /*

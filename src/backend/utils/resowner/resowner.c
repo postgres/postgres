@@ -679,6 +679,30 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 }
 
 /*
+ * ResourceOwnerReleaseAllPlanCacheRefs
+ *		Release the plancache references (only) held by this owner.
+ *
+ * We might eventually add similar functions for other resource types,
+ * but for now, only this is needed.
+ */
+void
+ResourceOwnerReleaseAllPlanCacheRefs(ResourceOwner owner)
+{
+	ResourceOwner save;
+	Datum		foundres;
+
+	save = CurrentResourceOwner;
+	CurrentResourceOwner = owner;
+	while (ResourceArrayGetAny(&(owner->planrefarr), &foundres))
+	{
+		CachedPlan *res = (CachedPlan *) DatumGetPointer(foundres);
+
+		ReleaseCachedPlan(res, true);
+	}
+	CurrentResourceOwner = save;
+}
+
+/*
  * ResourceOwnerDelete
  *		Delete an owner object and its descendants.
  *

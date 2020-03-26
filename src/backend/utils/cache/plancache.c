@@ -1278,6 +1278,160 @@ ReleaseCachedPlan(CachedPlan *plan, bool useResOwner)
 }
 
 /*
+ * CachedPlanAllowsSimpleValidityCheck: can we use CachedPlanIsSimplyValid?
+ *
+ * This function, together with CachedPlanIsSimplyValid, provides a fast path
+ * for revalidating "simple" generic plans.  The core requirement to be simple
+ * is that the plan must not require taking any locks, which translates to
+ * not touching any tables; this happens to match up well with an important
+ * use-case in PL/pgSQL.  This function tests whether that's true, along
+ * with checking some other corner cases that we'd rather not bother with
+ * handling in the fast path.  (Note that it's still possible for such a plan
+ * to be invalidated, for example due to a change in a function that was
+ * inlined into the plan.)
+ *
+ * This must only be called on known-valid generic plans (eg, ones just
+ * returned by GetCachedPlan).  If it returns true, the caller may re-use
+ * the cached plan as long as CachedPlanIsSimplyValid returns true; that
+ * check is much cheaper than the full revalidation done by GetCachedPlan.
+ * Nonetheless, no required checks are omitted.
+ */
+bool
+CachedPlanAllowsSimpleValidityCheck(CachedPlanSource *plansource,
+									CachedPlan *plan)
+{
+	ListCell   *lc;
+
+	/* Sanity-check that the caller gave us a validated generic plan. */
+	Assert(plansource->magic == CACHEDPLANSOURCE_MAGIC);
+	Assert(plan->magic == CACHEDPLAN_MAGIC);
+	Assert(plansource->is_valid);
+	Assert(plan->is_valid);
+	Assert(plan == plansource->gplan);
+
+	/* We don't support oneshot plans here. */
+	if (plansource->is_oneshot)
+		return false;
+	Assert(!plan->is_oneshot);
+
+	/*
+	 * If the plan is dependent on RLS considerations, or it's transient,
+	 * reject.  These things probably can't ever happen for table-free
+	 * queries, but for safety's sake let's check.
+	 */
+	if (plansource->dependsOnRLS)
+		return false;
+	if (plan->dependsOnRole)
+		return false;
+	if (TransactionIdIsValid(plan->saved_xmin))
+		return false;
+
+	/*
+	 * Reject if AcquirePlannerLocks would have anything to do.  This is
+	 * simplistic, but there's no need to inquire any more carefully; indeed,
+	 * for current callers it shouldn't even be possible to hit any of these
+	 * checks.
+	 */
+	foreach(lc, plansource->query_list)
+	{
+		Query	   *query = lfirst_node(Query, lc);
+
+		if (query->commandType == CMD_UTILITY)
+			return false;
+		if (query->rtable || query->cteList || query->hasSubLinks)
+			return false;
+	}
+
+	/*
+	 * Reject if AcquireExecutorLocks would have anything to do.  This is
+	 * probably unnecessary given the previous check, but let's be safe.
+	 */
+	foreach(lc, plan->stmt_list)
+	{
+		PlannedStmt *plannedstmt = lfirst_node(PlannedStmt, lc);
+		ListCell   *lc2;
+
+		if (plannedstmt->commandType == CMD_UTILITY)
+			return false;
+
+		/*
+		 * We have to grovel through the rtable because it's likely to contain
+		 * an RTE_RESULT relation, rather than being totally empty.
+		 */
+		foreach(lc2, plannedstmt->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
+
+			if (rte->rtekind == RTE_RELATION)
+				return false;
+		}
+	}
+
+	/*
+	 * Okay, it's simple.  Note that what we've primarily established here is
+	 * that no locks need be taken before checking the plan's is_valid flag.
+	 */
+	return true;
+}
+
+/*
+ * CachedPlanIsSimplyValid: quick check for plan still being valid
+ *
+ * This function must not be used unless CachedPlanAllowsSimpleValidityCheck
+ * previously said it was OK.
+ *
+ * If the plan is valid, and "owner" is not NULL, record a refcount on
+ * the plan in that resowner before returning.  It is caller's responsibility
+ * to be sure that a refcount is held on any plan that's being actively used.
+ *
+ * The code here is unconditionally safe as long as the only use of this
+ * CachedPlanSource is in connection with the particular CachedPlan pointer
+ * that's passed in.  If the plansource were being used for other purposes,
+ * it's possible that its generic plan could be invalidated and regenerated
+ * while the current caller wasn't looking, and then there could be a chance
+ * collision of address between this caller's now-stale plan pointer and the
+ * actual address of the new generic plan.  For current uses, that scenario
+ * can't happen; but with a plansource shared across multiple uses, it'd be
+ * advisable to also save plan->generation and verify that that still matches.
+ */
+bool
+CachedPlanIsSimplyValid(CachedPlanSource *plansource, CachedPlan *plan,
+						ResourceOwner owner)
+{
+	/*
+	 * Careful here: since the caller doesn't necessarily hold a refcount on
+	 * the plan to start with, it's possible that "plan" is a dangling
+	 * pointer.  Don't dereference it until we've verified that it still
+	 * matches the plansource's gplan (which is either valid or NULL).
+	 */
+	Assert(plansource->magic == CACHEDPLANSOURCE_MAGIC);
+
+	/*
+	 * Has cache invalidation fired on this plan?  We can check this right
+	 * away since there are no locks that we'd need to acquire first.
+	 */
+	if (!plansource->is_valid || plan != plansource->gplan || !plan->is_valid)
+		return false;
+
+	Assert(plan->magic == CACHEDPLAN_MAGIC);
+
+	/* Is the search_path still the same as when we made it? */
+	Assert(plansource->search_path != NULL);
+	if (!OverrideSearchPathMatchesCurrent(plansource->search_path))
+		return false;
+
+	/* It's still good.  Bump refcount if requested. */
+	if (owner)
+	{
+		ResourceOwnerEnlargePlanCacheRefs(owner);
+		plan->refcount++;
+		ResourceOwnerRememberPlanCacheRef(owner, plan);
+	}
+
+	return true;
+}
+
+/*
  * CachedPlanSetParentContext: move a CachedPlanSource to a new memory context
  *
  * This can only be applied to unsaved plans; once saved, a plan always
