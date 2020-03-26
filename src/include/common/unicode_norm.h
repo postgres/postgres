@@ -24,6 +24,16 @@ typedef enum
 	UNICODE_NFKD = 3,
 } UnicodeNormalizationForm;
 
+/* see UAX #15 */
+typedef enum
+{
+	UNICODE_NORM_QC_NO = 0,
+	UNICODE_NORM_QC_YES = 1,
+	UNICODE_NORM_QC_MAYBE = -1,
+} UnicodeNormalizationQC;
+
 extern pg_wchar *unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input);
+
+extern UnicodeNormalizationQC unicode_is_normalized_quickcheck(UnicodeNormalizationForm form, const pg_wchar *input);
 
 #endif							/* UNICODE_NORM_H */

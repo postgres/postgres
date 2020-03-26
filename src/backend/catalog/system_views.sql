@@ -1400,6 +1400,21 @@ LANGUAGE INTERNAL
 STRICT STABLE PARALLEL SAFE
 AS 'jsonb_path_query_first_tz';
 
+-- default normalization form is NFC, per SQL standard
+CREATE OR REPLACE FUNCTION
+  "normalize"(text, text DEFAULT 'NFC')
+RETURNS text
+LANGUAGE internal
+STRICT IMMUTABLE PARALLEL SAFE
+AS 'unicode_normalize_func';
+
+CREATE OR REPLACE FUNCTION
+  is_normalized(text, text DEFAULT 'NFC')
+RETURNS boolean
+LANGUAGE internal
+STRICT IMMUTABLE PARALLEL SAFE
+AS 'unicode_is_normalized';
+
 --
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather

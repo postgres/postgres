@@ -49,6 +49,7 @@ test: opr_sanity
 test: misc_sanity
 test: comments
 test: expressions
+test: unicode
 test: create_function_1
 test: create_type
 test: create_table

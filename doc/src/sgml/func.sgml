@@ -1563,6 +1563,30 @@
       <row>
        <entry>
         <indexterm>
+         <primary>normalized</primary>
+        </indexterm>
+        <indexterm>
+         <primary>Unicode normalization</primary>
+        </indexterm>
+        <literal><parameter>string</parameter> is <optional>not</optional> <optional><parameter>form</parameter></optional> normalized</literal>
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>
+        Checks whether the string is in the specified Unicode normalization
+        form.  The optional parameter specifies the form:
+        <literal>NFC</literal> (default), <literal>NFD</literal>,
+        <literal>NFKC</literal>, <literal>NFKD</literal>.  This expression can
+        only be used if the server encoding is <literal>UTF8</literal>.  Note
+        that checking for normalization using this expression is often faster
+        than normalizing possibly already normalized strings.
+       </entry>
+       <entry><literal>U&amp;'\0061\0308bc' IS NFD NORMALIZED</literal></entry>
+       <entry><literal>true</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
          <primary>bit_length</primary>
         </indexterm>
         <literal><function>bit_length(<parameter>string</parameter>)</function></literal>
@@ -1608,6 +1632,30 @@
        <entry>Convert string to lower case</entry>
        <entry><literal>lower('TOM')</literal></entry>
        <entry><literal>tom</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <indexterm>
+         <primary>normalize</primary>
+        </indexterm>
+        <indexterm>
+         <primary>Unicode normalization</primary>
+        </indexterm>
+        <literal><function>normalize(<parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>form</parameter> </optional>)</function></literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Converts the string in the first argument to the specified Unicode
+        normalization form.  The optional second argument specifies the form
+        as an identifier: <literal>NFC</literal> (default),
+        <literal>NFD</literal>, <literal>NFKC</literal>,
+        <literal>NFKD</literal>.  This function can only be used if the server
+        encoding is <literal>UTF8</literal>.
+       </entry>
+       <entry><literal>normalize(U&amp;'\0061\0308bc', NFC)</literal></entry>
+       <entry><literal>U&amp;'\00E4bc'</literal></entry>
       </row>
 
       <row>

@@ -18,14 +18,14 @@ LIBS += $(PTHREAD_LIBS)
 # By default, do nothing.
 all:
 
-update-unicode: unicode_norm_table.h unicode_combining_table.h
+update-unicode: unicode_norm_table.h unicode_combining_table.h unicode_normprops_table.h
 	$(MAKE) normalization-check
-	mv unicode_norm_table.h unicode_combining_table.h ../../../src/include/common/
+	mv $^ ../../../src/include/common/
 
 # These files are part of the Unicode Character Database. Download
 # them on demand.  The dependency on Makefile.global is for
 # UNICODE_VERSION.
-UnicodeData.txt CompositionExclusions.txt NormalizationTest.txt: $(top_builddir)/src/Makefile.global
+UnicodeData.txt DerivedNormalizationProps.txt CompositionExclusions.txt NormalizationTest.txt: $(top_builddir)/src/Makefile.global
 	$(DOWNLOAD) https://www.unicode.org/Public/$(UNICODE_VERSION)/ucd/$(@F)
 
 # Generation of conversion tables used for string normalization with
@@ -34,6 +34,9 @@ unicode_norm_table.h: generate-unicode_norm_table.pl UnicodeData.txt Composition
 	$(PERL) generate-unicode_norm_table.pl
 
 unicode_combining_table.h: generate-unicode_combining_table.pl UnicodeData.txt
+	$(PERL) $^ >$@
+
+unicode_normprops_table.h: generate-unicode_normprops_table.pl DerivedNormalizationProps.txt
 	$(PERL) $^ >$@
 
 # Test suite

@@ -934,6 +934,16 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
      such as pattern matching operations.  Therefore, they should be used
      only in cases where they are specifically wanted.
     </para>
+
+    <tip>
+     <para>
+      To deal with text in different Unicode normalization forms, it is also
+      an option to use the functions/expressions
+      <function>normalize</function> and <literal>is normalized</literal> to
+      preprocess or check the strings, instead of using nondeterministic
+      collations.  There are different trade-offs for each approach.
+     </para>
+    </tip>
    </sect3>
   </sect2>
  </sect1>

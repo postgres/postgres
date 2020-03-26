@@ -444,6 +444,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	substr_list trim_list
 %type <list>	opt_interval interval_second
 %type <node>	overlay_placing substr_from substr_for
+%type <str>		unicode_normal_form
 
 %type <boolean> opt_instead
 %type <boolean> opt_unique opt_concurrently opt_verbose opt_full
@@ -664,7 +665,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
 
-	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NONE
+	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NFC NFD NFKC NFKD NO NONE
+	NORMALIZE NORMALIZED
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF
 	NULLS_P NUMERIC
 
@@ -13491,6 +13493,22 @@ a_expr:		c_expr									{ $$ = $1; }
 												 list_make1($1), @2),
 									 @2);
 				}
+			| a_expr IS NORMALIZED								%prec IS
+				{
+					$$ = (Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make1($1), @2);
+				}
+			| a_expr IS unicode_normal_form NORMALIZED			%prec IS
+				{
+					$$ = (Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make2($1, makeStringConst($3, @3)), @2);
+				}
+			| a_expr IS NOT NORMALIZED							%prec IS
+				{
+					$$ = makeNotExpr((Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make1($1), @2), @2);
+				}
+			| a_expr IS NOT unicode_normal_form NORMALIZED		%prec IS
+				{
+					$$ = makeNotExpr((Node *) makeFuncCall(SystemFuncName("is_normalized"), list_make2($1, makeStringConst($4, @4)), @2), @2);
+				}
 			| DEFAULT
 				{
 					/*
@@ -13933,6 +13951,14 @@ func_expr_common_subexpr:
 			| EXTRACT '(' extract_list ')'
 				{
 					$$ = (Node *) makeFuncCall(SystemFuncName("date_part"), $3, @1);
+				}
+			| NORMALIZE '(' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(SystemFuncName("normalize"), list_make1($3), @1);
+				}
+			| NORMALIZE '(' a_expr ',' unicode_normal_form ')'
+				{
+					$$ = (Node *) makeFuncCall(SystemFuncName("normalize"), list_make2($3, makeStringConst($5, @5)), @1);
 				}
 			| OVERLAY '(' overlay_list ')'
 				{
@@ -14567,6 +14593,13 @@ extract_arg:
 			| MINUTE_P								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
 			| Sconst								{ $$ = $1; }
+		;
+
+unicode_normal_form:
+			NFC										{ $$ = "nfc"; }
+			| NFD									{ $$ = "nfd"; }
+			| NFKC									{ $$ = "nfkc"; }
+			| NFKD									{ $$ = "nfkd"; }
 		;
 
 /* OVERLAY() arguments
@@ -15315,7 +15348,12 @@ unreserved_keyword:
 			| NAMES
 			| NEW
 			| NEXT
+			| NFC
+			| NFD
+			| NFKC
+			| NFKD
 			| NO
+			| NORMALIZED
 			| NOTHING
 			| NOTIFY
 			| NOWAIT
@@ -15494,6 +15532,7 @@ col_name_keyword:
 			| NATIONAL
 			| NCHAR
 			| NONE
+			| NORMALIZE
 			| NULLIF
 			| NUMERIC
 			| OUT_P
