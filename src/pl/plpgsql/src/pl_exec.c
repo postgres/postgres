@@ -84,6 +84,13 @@ typedef struct
  * has its own simple-expression EState, which is cleaned up at exit from
  * plpgsql_inline_handler().  DO blocks still use the simple_econtext_stack,
  * though, so that subxact abort cleanup does the right thing.
+ *
+ * (However, if a DO block executes COMMIT or ROLLBACK, then exec_stmt_commit
+ * or exec_stmt_rollback will unlink it from the DO's simple-expression EState
+ * and create a new shared EState that will be used thenceforth.  The original
+ * EState will be cleaned up when we get back to plpgsql_inline_handler.  This
+ * is a bit ugly, but it isn't worth doing better, since scenarios like this
+ * can't result in indefinite accumulation of state trees.)
  */
 typedef struct SimpleEcontextStackEntry
 {
@@ -2315,8 +2322,8 @@ exec_stmt_call(PLpgSQL_execstate *estate, PLpgSQL_stmt_call *stmt)
 	else
 	{
 		/*
-		 * If we are in a new transaction after the call, we need to reset
-		 * some internal state.
+		 * If we are in a new transaction after the call, we need to build new
+		 * simple-expression infrastructure.
 		 */
 		estate->simple_eval_estate = NULL;
 		plpgsql_create_econtext(estate);
@@ -4824,6 +4831,10 @@ exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
 		SPI_start_transaction();
 	}
 
+	/*
+	 * We need to build new simple-expression infrastructure, since the old
+	 * data structures are gone.
+	 */
 	estate->simple_eval_estate = NULL;
 	plpgsql_create_econtext(estate);
 
@@ -4846,6 +4857,10 @@ exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
 		SPI_start_transaction();
 	}
 
+	/*
+	 * We need to build new simple-expression infrastructure, since the old
+	 * data structures are gone.
+	 */
 	estate->simple_eval_estate = NULL;
 	plpgsql_create_econtext(estate);
 
@@ -8208,8 +8223,13 @@ plpgsql_create_econtext(PLpgSQL_execstate *estate)
 	 * one already in the current transaction.  The EState is made a child of
 	 * TopTransactionContext so it will have the right lifespan.
 	 *
-	 * Note that this path is never taken when executing a DO block; the
-	 * required EState was already made by plpgsql_inline_handler.
+	 * Note that this path is never taken when beginning a DO block; the
+	 * required EState was already made by plpgsql_inline_handler.  However,
+	 * if the DO block executes COMMIT or ROLLBACK, then we'll come here and
+	 * make a shared EState to use for the rest of the DO block.  That's OK;
+	 * see the comments for shared_simple_eval_estate.  (Note also that a DO
+	 * block will continue to use its private cast hash table for the rest of
+	 * the block.  That's okay for now, but it might cause problems someday.)
 	 */
 	if (estate->simple_eval_estate == NULL)
 	{
@@ -8281,7 +8301,9 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 	 * expect the regular abort recovery procedures to release everything of
 	 * interest.
 	 */
-	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
+	if (event == XACT_EVENT_COMMIT ||
+		event == XACT_EVENT_PARALLEL_COMMIT ||
+		event == XACT_EVENT_PREPARE)
 	{
 		simple_econtext_stack = NULL;
 
@@ -8289,7 +8311,8 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 			FreeExecutorState(shared_simple_eval_estate);
 		shared_simple_eval_estate = NULL;
 	}
-	else if (event == XACT_EVENT_ABORT)
+	else if (event == XACT_EVENT_ABORT ||
+			 event == XACT_EVENT_PARALLEL_ABORT)
 	{
 		simple_econtext_stack = NULL;
 		shared_simple_eval_estate = NULL;

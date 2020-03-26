@@ -323,7 +323,14 @@ plpgsql_inline_handler(PG_FUNCTION_ARGS)
 	flinfo.fn_oid = InvalidOid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 
-	/* Create a private EState for simple-expression execution */
+	/*
+	 * Create a private EState for simple-expression execution.  Notice that
+	 * this is NOT tied to transaction-level resources; it must survive any
+	 * COMMIT/ROLLBACK the DO block executes, since we will unconditionally
+	 * try to clean it up below.  (Hence, be wary of adding anything that
+	 * could fail between here and the PG_TRY block.)  See the comments for
+	 * shared_simple_eval_estate.
+	 */
 	simple_eval_estate = CreateExecutorState();
 
 	/* And run the function */
