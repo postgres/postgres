@@ -1,10 +1,12 @@
-# ssl_passphrase Makefile
+# ssl_passphrase_callback Makefile
 
 export with_openssl
 
 MODULE_big = ssl_passphrase_func
 OBJS = ssl_passphrase_func.o $(WIN32RES)
 PGFILEDESC = "callback function to provide a passphrase"
+
+TAP_TESTS = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -18,9 +20,3 @@ include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
 SHLIB_LINK += $(filter -lssl -lcrypto -lssleay32 -leay32, $(LIBS))
-
-check: prove-check
-
-prove-check: ssl_passphrase_func$(DLSUFFIX) | temp-install
-	@echo running prove ...
-	$(prove_check)
