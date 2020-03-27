@@ -4163,11 +4163,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         Specifies whether a WAL receiver should create a temporary replication
         slot on the remote instance when no permanent replication slot to use
         has been configured (using <xref linkend="guc-primary-slot-name"/>).
-        The default is on.  The only reason to turn this off would be if the
-        remote instance is currently out of available replication slots.  This
-        parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.  Changes only take effect when the
-        WAL receiver process starts a new connection.
+        The default is off.  This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>

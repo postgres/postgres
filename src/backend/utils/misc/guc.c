@@ -2050,11 +2050,11 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"wal_receiver_create_temp_slot", PGC_SIGHUP, REPLICATION_STANDBY,
+		{"wal_receiver_create_temp_slot", PGC_POSTMASTER, REPLICATION_STANDBY,
 			gettext_noop("Sets whether a WAL receiver should create a temporary replication slot if no permanent slot is configured."),
 		},
 		&wal_receiver_create_temp_slot,
-		true,
+		false,
 		NULL, NULL, NULL
 	},
 

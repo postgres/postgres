@@ -15,6 +15,12 @@
  * WalRcv->receivedUpto variable in shared memory, to inform the startup
  * process of how far it can proceed with XLOG replay.
  *
+ * A WAL receiver cannot directly load GUC parameters used when establishing
+ * its connection to the primary. Instead it relies on parameter values
+ * that are passed down by the startup process when streaming is requested.
+ * This applies, for example, to the replication slot and the connection
+ * string to be used for the connection with the primary.
+ *
  * If the primary server ends streaming, but doesn't disconnect, walreceiver
  * goes into "waiting" mode, and waits for the startup process to give new
  * instructions. The startup process will treat that the same as
@@ -73,8 +79,11 @@
 #include "utils/timestamp.h"
 
 
-/* GUC variables */
-bool		wal_receiver_create_temp_slot;
+/*
+ * GUC variables.  (Other variables that affect walreceiver are in xlog.c
+ * because they're passed down from the startup process, for better
+ * synchronization.)
+ */
 int			wal_receiver_status_interval;
 int			wal_receiver_timeout;
 bool		hot_standby_feedback;
@@ -236,6 +245,12 @@ WalReceiverMain(void)
 	startpoint = walrcv->receiveStart;
 	startpointTLI = walrcv->receiveStartTLI;
 
+	/*
+	 * At most one of is_temp_slot and slotname can be set; otherwise,
+	 * RequestXLogStreaming messed up.
+	 */
+	Assert(!is_temp_slot || (slotname[0] == '\0'));
+
 	/* Initialise to a sanish value */
 	walrcv->lastMsgSendTime =
 		walrcv->lastMsgReceiptTime = walrcv->latestWalEndTime = now;
@@ -349,42 +364,21 @@ WalReceiverMain(void)
 		WalRcvFetchTimeLineHistoryFiles(startpointTLI, primaryTLI);
 
 		/*
-		 * Create temporary replication slot if no slot name is configured or
-		 * the slot from the previous run was temporary, unless
-		 * wal_receiver_create_temp_slot is disabled.  We also need to handle
-		 * the case where the previous run used a temporary slot but
-		 * wal_receiver_create_temp_slot was changed in the meantime.  In that
-		 * case, we delete the old slot name in shared memory.  (This would
-		 * all be a bit easier if we just didn't copy the slot name into
-		 * shared memory, since we won't need it again later, but then we
-		 * can't see the slot name in the stats views.)
+		 * Create temporary replication slot if requested, and update slot
+		 * name in shared memory.  (Note the slot name cannot already be set
+		 * in this case.)
 		 */
-		if (slotname[0] == '\0' || is_temp_slot)
+		if (is_temp_slot)
 		{
-			bool		changed = false;
+			snprintf(slotname, sizeof(slotname),
+					 "pg_walreceiver_%lld",
+					 (long long int) walrcv_get_backend_pid(wrconn));
 
-			if (wal_receiver_create_temp_slot)
-			{
-				snprintf(slotname, sizeof(slotname),
-						 "pg_walreceiver_%lld",
-						 (long long int) walrcv_get_backend_pid(wrconn));
+			walrcv_create_slot(wrconn, slotname, true, 0, NULL);
 
-				walrcv_create_slot(wrconn, slotname, true, 0, NULL);
-				changed = true;
-			}
-			else if (slotname[0] != '\0')
-			{
-				slotname[0] = '\0';
-				changed = true;
-			}
-
-			if (changed)
-			{
-				SpinLockAcquire(&walrcv->mutex);
-				strlcpy(walrcv->slotname, slotname, NAMEDATALEN);
-				walrcv->is_temp_slot = wal_receiver_create_temp_slot;
-				SpinLockRelease(&walrcv->mutex);
-			}
+			SpinLockAcquire(&walrcv->mutex);
+			strlcpy(walrcv->slotname, slotname, NAMEDATALEN);
+			SpinLockRelease(&walrcv->mutex);
 		}
 
 		/*

@@ -23,7 +23,6 @@
 #include "utils/tuplestore.h"
 
 /* user-settable parameters */
-extern bool wal_receiver_create_temp_slot;
 extern int	wal_receiver_status_interval;
 extern int	wal_receiver_timeout;
 extern bool hot_standby_feedback;
@@ -321,7 +320,8 @@ extern void ShutdownWalRcv(void);
 extern bool WalRcvStreaming(void);
 extern bool WalRcvRunning(void);
 extern void RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr,
-								 const char *conninfo, const char *slotname);
+								 const char *conninfo, const char *slotname,
+								 bool create_temp_slot);
 extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
