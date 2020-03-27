@@ -2128,8 +2128,17 @@ _bt_insert_parent(Relation rel,
 		pbuf = _bt_getstackbuf(rel, stack, bknum);
 
 		/*
-		 * Now we can unlock the right child. The left child will be unlocked
-		 * by _bt_insertonpg().
+		 * Unlock the right child.  The left child will be unlocked in
+		 * _bt_insertonpg().
+		 *
+		 * Unlocking the right child must be delayed until here to ensure that
+		 * no concurrent VACUUM operation can become confused.  Page deletion
+		 * cannot be allowed to fail to re-find a downlink for the rbuf page.
+		 * (Actually, this is just a vestige of how things used to work.  The
+		 * page deletion code is expected to check for the INCOMPLETE_SPLIT
+		 * flag on the left child.  It won't attempt deletion of the right
+		 * child until the split is complete.  Despite all this, we opt to
+		 * conservatively delay unlocking the right child until here.)
 		 */
 		_bt_relbuf(rel, rbuf);
 
