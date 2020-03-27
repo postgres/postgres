@@ -233,7 +233,7 @@ F302	INTERSECT table operator			YES
 F302	INTERSECT table operator	01	INTERSECT DISTINCT table operator	YES	
 F302	INTERSECT table operator	02	INTERSECT ALL table operator	YES	
 F304	EXCEPT ALL table operator			YES	
-F311	Schema definition statement			NO	
+F311	Schema definition statement			YES	
 F311	Schema definition statement	01	CREATE SCHEMA	YES	
 F311	Schema definition statement	02	CREATE TABLE for persistent base tables	YES	
 F311	Schema definition statement	03	CREATE VIEW	YES	
