@@ -1290,6 +1290,10 @@ ReleaseCachedPlan(CachedPlan *plan, bool useResOwner)
  * to be invalidated, for example due to a change in a function that was
  * inlined into the plan.)
  *
+ * If the plan is simply valid, and "owner" is not NULL, record a refcount on
+ * the plan in that resowner before returning.  It is caller's responsibility
+ * to be sure that a refcount is held on any plan that's being actively used.
+ *
  * This must only be called on known-valid generic plans (eg, ones just
  * returned by GetCachedPlan).  If it returns true, the caller may re-use
  * the cached plan as long as CachedPlanIsSimplyValid returns true; that
@@ -1298,16 +1302,24 @@ ReleaseCachedPlan(CachedPlan *plan, bool useResOwner)
  */
 bool
 CachedPlanAllowsSimpleValidityCheck(CachedPlanSource *plansource,
-									CachedPlan *plan)
+									CachedPlan *plan, ResourceOwner owner)
 {
 	ListCell   *lc;
 
-	/* Sanity-check that the caller gave us a validated generic plan. */
+	/*
+	 * Sanity-check that the caller gave us a validated generic plan.  Notice
+	 * that we *don't* assert plansource->is_valid as you might expect; that's
+	 * because it's possible that that's already false when GetCachedPlan
+	 * returns, e.g. because ResetPlanCache happened partway through.  We
+	 * should accept the plan as long as plan->is_valid is true, and expect to
+	 * replan after the next CachedPlanIsSimplyValid call.
+	 */
 	Assert(plansource->magic == CACHEDPLANSOURCE_MAGIC);
 	Assert(plan->magic == CACHEDPLAN_MAGIC);
-	Assert(plansource->is_valid);
 	Assert(plan->is_valid);
 	Assert(plan == plansource->gplan);
+	Assert(plansource->search_path != NULL);
+	Assert(OverrideSearchPathMatchesCurrent(plansource->search_path));
 
 	/* We don't support oneshot plans here. */
 	if (plansource->is_oneshot)
@@ -1371,6 +1383,15 @@ CachedPlanAllowsSimpleValidityCheck(CachedPlanSource *plansource,
 	 * Okay, it's simple.  Note that what we've primarily established here is
 	 * that no locks need be taken before checking the plan's is_valid flag.
 	 */
+
+	/* Bump refcount if requested. */
+	if (owner)
+	{
+		ResourceOwnerEnlargePlanCacheRefs(owner);
+		plan->refcount++;
+		ResourceOwnerRememberPlanCacheRef(owner, plan);
+	}
+
 	return true;
 }
 
@@ -1408,7 +1429,9 @@ CachedPlanIsSimplyValid(CachedPlanSource *plansource, CachedPlan *plan,
 
 	/*
 	 * Has cache invalidation fired on this plan?  We can check this right
-	 * away since there are no locks that we'd need to acquire first.
+	 * away since there are no locks that we'd need to acquire first.  Note
+	 * that here we *do* check plansource->is_valid, so as to force plan
+	 * rebuild if that's become false.
 	 */
 	if (!plansource->is_valid || plan != plansource->gplan || !plan->is_valid)
 		return false;
