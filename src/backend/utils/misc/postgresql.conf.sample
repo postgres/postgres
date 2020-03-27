@@ -309,9 +309,7 @@
 # These settings are ignored on a master server.
 
 #primary_conninfo = ''			# connection string to sending server
-					# (change requires restart)
 #primary_slot_name = ''			# replication slot on sending server
-					# (change requires restart)
 #promote_trigger_file = ''		# file name whose presence ends recovery
 #hot_standby = on			# "off" disallows queries during recovery
 					# (change requires restart)
@@ -323,7 +321,6 @@
 					# -1 allows indefinite delay
 #wal_receiver_create_temp_slot = off	# Create temp slot if primary_slot_name
 					# is not set.
-					# (change requires restart)
 #wal_receiver_status_interval = 10s	# send replies at least this often
 					# 0 disables
 #hot_standby_feedback = off		# send info from standby to prevent

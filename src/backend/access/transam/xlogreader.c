@@ -585,9 +585,9 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	/*
 	 * Data is not in our buffer.
 	 *
-	 * Every time we actually read the page, even if we looked at parts of it
-	 * before, we need to do verification as the read_page callback might now
-	 * be rereading data from a different source.
+	 * Every time we actually read the segment, even if we looked at parts of
+	 * it before, we need to do verification as the read_page callback might
+	 * now be rereading data from a different source.
 	 *
 	 * Whenever switching to a new WAL segment, we read the first page of the
 	 * file and validate its header, even if that's not where the target

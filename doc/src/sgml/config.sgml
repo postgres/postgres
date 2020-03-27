@@ -4028,7 +4028,12 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           <varname>primary_conninfo</varname> string.
          </para>
          <para>
-          This parameter can only be set at server start.
+          This parameter can only be set in the <filename>postgresql.conf</filename>
+          file or on the server command line.
+          If this parameter is changed while the WAL receiver process is
+          running, that process is signalled to shut down and expected to
+          restart with the new setting (except if <varname>primary_conninfo</varname>
+          is an empty string).
           This setting has no effect if the server is not in standby mode.
          </para>
         </listitem>
@@ -4045,9 +4050,13 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           connecting to the sending server via streaming replication to control
           resource removal on the upstream node
           (see <xref linkend="streaming-replication-slots"/>).
-          This parameter can only be set at server start.
+          This parameter can only be set in the <filename>postgresql.conf</filename>
+          file or on the server command line.
+          If this parameter is changed while the WAL receiver process is running,
+          that process is signalled to shut down and expected to restart with the
+          new setting.
           This setting has no effect if <varname>primary_conninfo</varname> is not
-          set.
+          set or the server is not in standby mode.
          </para>
         </listitem>
        </varlistentry>
@@ -4160,10 +4169,14 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        Specifies whether a WAL receiver should create a temporary replication
+        Specifies whether the WAL receiver process should create a temporary replication
         slot on the remote instance when no permanent replication slot to use
         has been configured (using <xref linkend="guc-primary-slot-name"/>).
-        The default is off.  This parameter can only be set at server start.
+        The default is off.  This parameter can only be set in the 
+        <filename>postgresql.conf</filename> file or on the server command line.
+        If this parameter is changed while the WAL receiver process is running,
+        that process is signalled to shut down and expected to restart with
+        the new setting.
        </para>
       </listitem>
      </varlistentry>

@@ -816,8 +816,8 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
     When the standby is started and <varname>primary_conninfo</varname> is set
     correctly, the standby will connect to the primary after replaying all
     WAL files available in the archive. If the connection is established
-    successfully, you will see a walreceiver process in the standby, and
-    a corresponding walsender process in the primary.
+    successfully, you will see a <literal>walreceiver</literal> in the standby, and
+    a corresponding <literal>walsender</literal> process in the primary.
    </para>
 
    <sect3 id="streaming-replication-authentication">
