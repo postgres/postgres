@@ -7313,6 +7313,28 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-autovacuum-vacuum-insert-threshold" xreflabel="autovacuum_vacuum_insert_threshold">
+      <term><varname>autovacuum_vacuum_insert_threshold</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>autovacuum_vacuum_insert_threshold</varname></primary>
+       <secondary>configuration parameter</secondary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the number of inserted tuples needed to trigger a
+        <command>VACUUM</command> in any one table.
+        The default is 1000 tuples.  If -1 is specified, autovacuum will not
+        trigger a <command>VACUUM</command> operation on any tables based on
+        the number of inserts.
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
       <term><varname>autovacuum_analyze_threshold</varname> (<type>integer</type>)
       <indexterm>
@@ -7344,6 +7366,27 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         Specifies a fraction of the table size to add to
         <varname>autovacuum_vacuum_threshold</varname>
+        when deciding whether to trigger a <command>VACUUM</command>.
+        The default is 0.2 (20% of table size).
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line;
+        but the setting can be overridden for individual tables by
+        changing table storage parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-vacuum-insert-scale-factor" xreflabel="autovacuum_vacuum_insert_scale_factor">
+      <term><varname>autovacuum_vacuum_insert_scale_factor</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>autovacuum_vacuum_insert_scale_factor</varname></primary>
+       <secondary>configuration parameter</secondary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies a fraction of the table size to add to
+        <varname>autovacuum_vacuum_insert_threshold</varname>
         when deciding whether to trigger a <command>VACUUM</command>.
         The default is 0.2 (20% of table size).
         This parameter can only be set in the <filename>postgresql.conf</filename>

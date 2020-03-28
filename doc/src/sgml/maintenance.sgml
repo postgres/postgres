@@ -777,13 +777,33 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
     <xref linkend="guc-autovacuum-vacuum-scale-factor"/>,
     and the number of tuples is
     <structname>pg_class</structname>.<structfield>reltuples</structfield>.
-    The number of obsolete tuples is obtained from the statistics
-    collector; it is a semi-accurate count updated by each
-    <command>UPDATE</command> and <command>DELETE</command> operation.  (It
-    is only semi-accurate because some information might be lost under heavy
-    load.)  If the <structfield>relfrozenxid</structfield> value of the table is more
-    than <varname>vacuum_freeze_table_age</varname> transactions old, an aggressive
-    vacuum is performed to freeze old tuples and advance
+   </para>
+
+   <para>
+    The table is also vacuumed if the number of tuples inserted since the last
+    vacuum has exceeded the defined insert threshold, which is defined as:
+<programlisting>
+vacuum insert threshold = vacuum base insert threshold + vacuum insert scale factor * number of tuples
+</programlisting>
+    where the vacuum insert base threshold is
+    <xref linkend="guc-autovacuum-vacuum-insert-threshold"/>,
+    and vacuum insert scale factor is
+    <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>.
+    Such vacuums may allow portions of the table to be marked as
+    <firstterm>all visible</firstterm> and also allow tuples to be frozen, which
+    can reduce the work required in subsequent vacuums.
+    For tables which receive <command>INSERT</command> operations but no or
+    almost no <command>UPDATE</command>/<command>DELETE</command> operations,
+    it may be beneficial to lower the table's
+    <xref linkend="reloption-autovacuum-freeze-min-age"/> as this may allow
+    tuples to be frozen by earlier vacuums.  The number of obsolete tuples and
+    the number of inserted tuples are obtained from the statistics collector;
+    it is a semi-accurate count updated by each <command>UPDATE</command>,
+    <command>DELETE</command> and <command>INSERT</command> operation.  (It is
+    only semi-accurate because some information might be lost under heavy
+    load.)  If the <structfield>relfrozenxid</structfield> value of the table
+    is more than <varname>vacuum_freeze_table_age</varname> transactions old,
+    an aggressive vacuum is performed to freeze old tuples and advance
     <structfield>relfrozenxid</structfield>; otherwise, only pages that have been modified
     since the last vacuum are scanned.
    </para>

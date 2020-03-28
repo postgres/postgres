@@ -1475,6 +1475,36 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+   <varlistentry id="reloption-autovacuum-vacuum-insert-threshold" xreflabel="autovacuum_vacuum_insert_threshold">
+    <term><literal>autovacuum_vacuum_insert_threshold</literal>, <literal>toast.autovacuum_vacuum_insert_threshold</literal> (<type>integer</type>)
+    <indexterm>
+     <primary><varname>autovacuum_vacuum_insert_threshold</varname></primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Per-table value for <xref linkend="guc-autovacuum-vacuum-insert-threshold"/>
+      parameter.  The special value of -1 may be used to disable insert vacuums on the table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry id="reloption-autovacuum-vacuum-insert-scale-factor" xreflabel="autovacuum_vacuum_insert_scale_factor">
+    <term><literal>autovacuum_vacuum_insert_scale_factor</literal>, <literal>toast.autovacuum_vacuum_insert_scale_factor</literal> (<type>float4</type>)
+    <indexterm>
+     <primary><varname>autovacuum_vacuum_insert_scale_factor</varname> </primary>
+     <secondary>storage parameter</secondary>
+    </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Per-table value for <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>
+      parameter.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="reloption-autovacuum-analyze-threshold" xreflabel="autovacuum_analyze_threshold">
     <term><literal>autovacuum_analyze_threshold</literal> (<type>integer</type>)
     <indexterm>

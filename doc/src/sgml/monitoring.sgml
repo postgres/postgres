@@ -2862,6 +2862,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry>Estimated number of rows modified since this table was last analyzed</entry>
     </row>
     <row>
+     <entry><structfield>n_ins_since_vacuum</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Estimated number of rows inserted since this table was last vacuumed</entry>
+    </row>
+    <row>
      <entry><structfield>last_vacuum</structfield></entry>
      <entry><type>timestamp with time zone</type></entry>
      <entry>Last time at which this table was manually vacuumed

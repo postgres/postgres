@@ -235,6 +235,15 @@ static relopt_int intRelOpts[] =
 	},
 	{
 		{
+			"autovacuum_vacuum_insert_threshold",
+			"Minimum number of tuple inserts prior to vacuum, or -1 to disable insert vacuums",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		},
+		-2, -1, INT_MAX
+	},
+	{
+		{
 			"autovacuum_analyze_threshold",
 			"Minimum number of tuple inserts, updates or deletes prior to analyze",
 			RELOPT_KIND_HEAP,
@@ -393,6 +402,15 @@ static relopt_real realRelOpts[] =
 		{
 			"autovacuum_vacuum_scale_factor",
 			"Number of tuple updates or deletes prior to vacuum as a fraction of reltuples",
+			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
+			ShareUpdateExclusiveLock
+		},
+		-1, 0.0, 100.0
+	},
+	{
+		{
+			"autovacuum_vacuum_insert_scale_factor",
+			"Number of tuple inserts prior to vacuum as a fraction of reltuples",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
 			ShareUpdateExclusiveLock
 		},
@@ -1514,6 +1532,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, enabled)},
 		{"autovacuum_vacuum_threshold", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_threshold)},
+		{"autovacuum_vacuum_insert_threshold", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_ins_threshold)},
 		{"autovacuum_analyze_threshold", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_threshold)},
 		{"autovacuum_vacuum_cost_limit", RELOPT_TYPE_INT,
@@ -1538,6 +1558,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_cost_delay)},
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_scale_factor)},
+		{"autovacuum_vacuum_insert_scale_factor", RELOPT_TYPE_REAL,
+		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_ins_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, analyze_scale_factor)},
 		{"user_catalog_table", RELOPT_TYPE_BOOL,

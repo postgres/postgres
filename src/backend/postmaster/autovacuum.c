@@ -117,6 +117,8 @@ int			autovacuum_work_mem = -1;
 int			autovacuum_naptime;
 int			autovacuum_vac_thresh;
 double		autovacuum_vac_scale;
+int			autovacuum_vac_ins_thresh;
+double		autovacuum_vac_ins_scale;
 int			autovacuum_anl_thresh;
 double		autovacuum_anl_scale;
 int			autovacuum_freeze_max_age;
@@ -2969,16 +2971,20 @@ relation_needs_vacanalyze(Oid relid,
 
 	/* constants from reloptions or GUC variables */
 	int			vac_base_thresh,
+				vac_ins_base_thresh,
 				anl_base_thresh;
 	float4		vac_scale_factor,
+				vac_ins_scale_factor,
 				anl_scale_factor;
 
 	/* thresholds calculated from above constants */
 	float4		vacthresh,
+				vacinsthresh,
 				anlthresh;
 
 	/* number of vacuum (resp. analyze) tuples at this time */
 	float4		vactuples,
+				instuples,
 				anltuples;
 
 	/* freeze parameters */
@@ -3004,6 +3010,15 @@ relation_needs_vacanalyze(Oid relid,
 	vac_base_thresh = (relopts && relopts->vacuum_threshold >= 0)
 		? relopts->vacuum_threshold
 		: autovacuum_vac_thresh;
+
+	vac_ins_scale_factor = (relopts && relopts->vacuum_ins_scale_factor >= 0)
+		? relopts->vacuum_ins_scale_factor
+		: autovacuum_vac_ins_scale;
+
+	/* -1 is used to disable insert vacuums */
+	vac_ins_base_thresh = (relopts && relopts->vacuum_ins_threshold >= -1)
+		? relopts->vacuum_ins_threshold
+		: autovacuum_vac_ins_thresh;
 
 	anl_scale_factor = (relopts && relopts->analyze_scale_factor >= 0)
 		? relopts->analyze_scale_factor
@@ -3059,9 +3074,11 @@ relation_needs_vacanalyze(Oid relid,
 	{
 		reltuples = classForm->reltuples;
 		vactuples = tabentry->n_dead_tuples;
+		instuples = tabentry->inserts_since_vacuum;
 		anltuples = tabentry->changes_since_analyze;
 
 		vacthresh = (float4) vac_base_thresh + vac_scale_factor * reltuples;
+		vacinsthresh = (float4) vac_ins_base_thresh + vac_ins_scale_factor * reltuples;
 		anlthresh = (float4) anl_base_thresh + anl_scale_factor * reltuples;
 
 		/*
@@ -3069,12 +3086,18 @@ relation_needs_vacanalyze(Oid relid,
 		 * reset, because if that happens, the last vacuum and analyze counts
 		 * will be reset too.
 		 */
-		elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
-			 NameStr(classForm->relname),
-			 vactuples, vacthresh, anltuples, anlthresh);
+		if (vac_ins_base_thresh >= 0)
+			elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), ins: %.0f (threshold %.0f), anl: %.0f (threshold %.0f)",
+				 NameStr(classForm->relname),
+				 vactuples, vacthresh, instuples, vacinsthresh, anltuples, anlthresh);
+		else
+			elog(DEBUG3, "%s: vac: %.0f (threshold %.0f), ins: (disabled), anl: %.0f (threshold %.0f)",
+				 NameStr(classForm->relname),
+				 vactuples, vacthresh, anltuples, anlthresh);
 
 		/* Determine if this table needs vacuum or analyze. */
-		*dovacuum = force_vacuum || (vactuples > vacthresh);
+		*dovacuum = force_vacuum || (vactuples > vacthresh) ||
+					(vac_ins_base_thresh >= 0 && instuples > vacinsthresh);
 		*doanalyze = (anltuples > anlthresh);
 	}
 	else

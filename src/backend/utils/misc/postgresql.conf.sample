@@ -598,9 +598,14 @@
 #autovacuum_naptime = 1min		# time between autovacuum runs
 #autovacuum_vacuum_threshold = 50	# min number of row updates before
 					# vacuum
+#autovacuum_vacuum_insert_threshold = 1000	# min number of row inserts
+					# before vacuum. -1 disables insert
+					# vacuums
 #autovacuum_analyze_threshold = 50	# min number of row updates before
 					# analyze
 #autovacuum_vacuum_scale_factor = 0.2	# fraction of table size before vacuum
+#autovacuum_vacuum_insert_scale_factor = 0.2	# fraction of inserts over table
+					# size before insert vacuum
 #autovacuum_analyze_scale_factor = 0.1	# fraction of table size before analyze
 #autovacuum_freeze_max_age = 200000000	# maximum XID age before forced vacuum
 					# (change requires restart)

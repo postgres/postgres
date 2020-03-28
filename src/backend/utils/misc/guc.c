@@ -3103,6 +3103,15 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"autovacuum_vacuum_insert_threshold", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Minimum number of tuple inserts prior to vacuum, or -1 to disable insert vacuums"),
+			NULL
+		},
+		&autovacuum_vac_ins_thresh,
+		1000, -1, INT_MAX,
+		NULL, NULL, NULL
+	},
+	{
 		{"autovacuum_analyze_threshold", PGC_SIGHUP, AUTOVACUUM,
 			gettext_noop("Minimum number of tuple inserts, updates, or deletes prior to analyze."),
 			NULL
@@ -3549,6 +3558,17 @@ static struct config_real ConfigureNamesReal[] =
 		0.2, 0.0, 100.0,
 		NULL, NULL, NULL
 	},
+
+	{
+		{"autovacuum_vacuum_insert_scale_factor", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Number of tuple inserts prior to vacuum as a fraction of reltuples."),
+			NULL
+		},
+		&autovacuum_vac_ins_scale,
+		0.2, 0.0, 100.0,
+		NULL, NULL, NULL
+	},
+
 	{
 		{"autovacuum_analyze_scale_factor", PGC_SIGHUP, AUTOVACUUM,
 			gettext_noop("Number of tuple inserts, updates, or deletes prior to analyze as a fraction of reltuples."),
