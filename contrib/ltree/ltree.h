@@ -34,7 +34,7 @@ typedef struct
 {
 	int32		val;
 	uint16		len;
-	uint8		flag;
+	uint8		flag;			/* see LVAR_xxx flags below */
 	char		name[FLEXIBLE_ARRAY_MEMBER];
 } lquery_variant;
 
@@ -47,11 +47,12 @@ typedef struct
 
 typedef struct
 {
-	uint16		totallen;
-	uint16		flag;
-	uint16		numvar;
-	uint16		low;
-	uint16		high;
+	uint16		totallen;		/* total length of this level, in bytes */
+	uint16		flag;			/* see LQL_xxx flags below */
+	uint16		numvar;			/* number of variants; 0 means '*' */
+	uint16		low;			/* minimum repeat count for '*' */
+	uint16		high;			/* maximum repeat count for '*' */
+	/* Array of maxalign'd lquery_variant structs follows: */
 	char		variants[FLEXIBLE_ARRAY_MEMBER];
 } lquery_level;
 
@@ -60,6 +61,7 @@ typedef struct
 #define LQL_FIRST(x)	( (lquery_variant*)( ((char*)(x))+LQL_HDRSIZE ) )
 
 #define LQL_NOT		0x10
+
 #ifdef LOWER_NODE
 #define FLG_CANLOOKSIGN(x) ( ( (x) & ( LQL_NOT | LVAR_ANYEND | LVAR_SUBLEXEME ) ) == 0 )
 #else
@@ -70,9 +72,10 @@ typedef struct
 typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	uint16		numlevel;
+	uint16		numlevel;		/* number of lquery_levels */
 	uint16		firstgood;
-	uint16		flag;
+	uint16		flag;			/* see LQUERY_xxx flags below */
+	/* Array of maxalign'd lquery_level structs follows: */
 	char		data[FLEXIBLE_ARRAY_MEMBER];
 } lquery;
 

@@ -959,6 +959,30 @@ SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*.!c.*';
  f
 (1 row)
 
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2}.*{2}';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{1}.*{2}.e';
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{1}.*{4}';
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{5}.*';
+ ?column? 
+----------
+ f
+(1 row)
+
 SELECT 'QWER_TY'::ltree ~ 'q%@*';
  ?column? 
 ----------

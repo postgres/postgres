@@ -179,7 +179,10 @@ SELECT 'a.b.c.d.e'::ltree ~ 'a.!b.*{1}.!c.*';
 SELECT 'a.b.c.d.e'::ltree ~ '!b.*{1}.!c.*';
 SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*{1}.!c.*';
 SELECT 'a.b.c.d.e'::ltree ~ '*.!b.*.!c.*';
-
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{2}.*{2}';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{1}.*{2}.e';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{1}.*{4}';
+SELECT 'a.b.c.d.e'::ltree ~ 'a.*{5}.*';
 
 SELECT 'QWER_TY'::ltree ~ 'q%@*';
 SELECT 'QWER_TY'::ltree ~ 'Q_t%@*';

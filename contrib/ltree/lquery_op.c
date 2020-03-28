@@ -98,6 +98,11 @@ ltree_strncasecmp(const char *a, const char *b, size_t s)
 	return res;
 }
 
+/*
+ * See if a (non-star) lquery_level matches an ltree_level
+ *
+ * Does not consider level's possible LQL_NOT flag.
+ */
 static bool
 checkLevel(lquery_level *curq, ltree_level *curt)
 {
@@ -136,42 +141,49 @@ printFieldNot(FieldNot *fn ) {
 }
 */
 
-static struct
-{
-	bool		muse;
-	uint32		high_pos;
-}			SomeStack =
-
-{
-	false, 0,
-};
-
+/*
+ * Try to match an lquery (of query_numlevel items) to an ltree (of
+ * tree_numlevel items)
+ *
+ * If the query contains any NOT flags, "ptr" must point to a FieldNot
+ * workspace initialized with ptr->q == NULL.  Otherwise it can be NULL.
+ * (LQL_NOT flags will be ignored if ptr == NULL.)
+ *
+ * high_pos is the last ltree position the first lquery item is allowed
+ * to match at; it should be zero for external calls.
+ *
+ * force_advance must be false except in internal recursive calls.
+ */
 static bool
-checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_numlevel, FieldNot *ptr)
+checkCond(lquery_level *curq, int query_numlevel,
+		  ltree_level *curt, int tree_numlevel,
+		  FieldNot *ptr,
+		  uint32 high_pos,
+		  bool force_advance)
 {
-	uint32		low_pos = 0,
-				high_pos = 0,
-				cur_tpos = 0;
-	int			tlen = tree_numlevel,
+	uint32		low_pos = 0,	/* first allowed ltree position for match */
+				cur_tpos = 0;	/* ltree position of curt */
+	int			tlen = tree_numlevel,	/* counts of remaining items */
 				qlen = query_numlevel;
-	int			isok;
 	lquery_level *prevq = NULL;
-	ltree_level *prevt = NULL;
 
-	if (SomeStack.muse)
+	/* advance curq (setting up prevq) if requested */
+	if (force_advance)
 	{
-		high_pos = SomeStack.high_pos;
-		qlen--;
+		Assert(qlen > 0);
 		prevq = curq;
 		curq = LQL_NEXT(curq);
-		SomeStack.muse = false;
+		qlen--;
 	}
 
 	while (tlen > 0 && qlen > 0)
 	{
 		if (curq->numvar)
 		{
-			prevt = curt;
+			/* Current query item is not '*' */
+			ltree_level *prevt = curt;
+
+			/* skip tree items that must be ignored due to prior * items */
 			while (cur_tpos < low_pos)
 			{
 				curt = LEVEL_NEXT(curt);
@@ -183,8 +195,9 @@ checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_nu
 					ptr->nt++;
 			}
 
-			if (ptr && curq->flag & LQL_NOT)
+			if (ptr && (curq->flag & LQL_NOT))
 			{
+				/* Deal with a NOT item */
 				if (!(prevq && prevq->numvar == 0))
 					prevq = curq;
 				if (ptr->q == NULL)
@@ -212,25 +225,30 @@ checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_nu
 			}
 			else
 			{
-				isok = false;
+				/* Not a NOT item, check for normal match */
+				bool		isok = false;
+
 				while (cur_tpos <= high_pos && tlen > 0 && !isok)
 				{
 					isok = checkLevel(curq, curt);
 					curt = LEVEL_NEXT(curt);
 					tlen--;
 					cur_tpos++;
-					if (isok && prevq && prevq->numvar == 0 && tlen > 0 && cur_tpos <= high_pos)
+					if (isok && prevq && prevq->numvar == 0 &&
+						tlen > 0 && cur_tpos <= high_pos)
 					{
 						FieldNot	tmpptr;
 
 						if (ptr)
 							memcpy(&tmpptr, ptr, sizeof(FieldNot));
-						SomeStack.high_pos = high_pos - cur_tpos;
-						SomeStack.muse = true;
-						if (checkCond(prevq, qlen + 1, curt, tlen, (ptr) ? &tmpptr : NULL))
+						if (checkCond(prevq, qlen + 1,
+									  curt, tlen,
+									  (ptr) ? &tmpptr : NULL,
+									  high_pos - cur_tpos,
+									  true))
 							return true;
 					}
-					if (!isok && ptr)
+					if (!isok && ptr && ptr->q)
 						ptr->nt++;
 				}
 				if (!isok)
@@ -238,7 +256,11 @@ checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_nu
 
 				if (ptr && ptr->q)
 				{
-					if (checkCond(ptr->q, ptr->nq, ptr->t, ptr->nt, NULL))
+					if (checkCond(ptr->q, ptr->nq,
+								  ptr->t, ptr->nt,
+								  NULL,
+								  0,
+								  false))
 						return false;
 					ptr->q = NULL;
 				}
@@ -248,8 +270,14 @@ checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_nu
 		}
 		else
 		{
-			low_pos = cur_tpos + curq->low;
-			high_pos = cur_tpos + curq->high;
+			/* Current query item is '*' */
+			low_pos += curq->low;
+
+			if (low_pos > tree_numlevel)
+				return false;
+
+			high_pos = Min(high_pos + curq->high, tree_numlevel);
+
 			if (ptr && ptr->q)
 			{
 				ptr->nq++;
@@ -263,9 +291,11 @@ checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_nu
 		qlen--;
 	}
 
+	/* Fail if we've already run out of ltree items */
 	if (low_pos > tree_numlevel || tree_numlevel > high_pos)
 		return false;
 
+	/* Remaining lquery items must be NOT or '*' items */
 	while (qlen > 0)
 	{
 		if (curq->numvar)
@@ -275,18 +305,29 @@ checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_nu
 		}
 		else
 		{
-			low_pos = cur_tpos + curq->low;
-			high_pos = cur_tpos + curq->high;
+			low_pos += curq->low;
+
+			if (low_pos > tree_numlevel)
+				return false;
+
+			high_pos = Min(high_pos + curq->high, tree_numlevel);
 		}
 
 		curq = LQL_NEXT(curq);
 		qlen--;
 	}
 
+	/* Fail if trailing '*'s require more ltree items than we have */
 	if (low_pos > tree_numlevel || tree_numlevel > high_pos)
 		return false;
 
-	if (ptr && ptr->q && checkCond(ptr->q, ptr->nq, ptr->t, ptr->nt, NULL))
+	/* Finish pending NOT check, if any */
+	if (ptr && ptr->q &&
+		checkCond(ptr->q, ptr->nq,
+				  ptr->t, ptr->nt,
+				  NULL,
+				  0,
+				  false))
 		return false;
 
 	return true;
@@ -306,12 +347,18 @@ ltq_regex(PG_FUNCTION_ARGS)
 		fn.q = NULL;
 
 		res = checkCond(LQUERY_FIRST(query), query->numlevel,
-						LTREE_FIRST(tree), tree->numlevel, &fn);
+						LTREE_FIRST(tree), tree->numlevel,
+						&fn,
+						0,
+						false);
 	}
 	else
 	{
 		res = checkCond(LQUERY_FIRST(query), query->numlevel,
-						LTREE_FIRST(tree), tree->numlevel, NULL);
+						LTREE_FIRST(tree), tree->numlevel,
+						NULL,
+						0,
+						false);
 	}
 
 	PG_FREE_IF_COPY(tree, 0);
