@@ -457,6 +457,52 @@ SELECT nlevel('1.2.3.4');
       4
 (1 row)
 
+SELECT nlevel(('1' || repeat('.1', 65534))::ltree);
+ nlevel 
+--------
+  65535
+(1 row)
+
+SELECT nlevel(('1' || repeat('.1', 65535))::ltree);
+ERROR:  number of ltree levels (65536) exceeds the maximum allowed (65535)
+SELECT nlevel(('1' || repeat('.1', 65534))::ltree || '1');
+ERROR:  number of ltree levels (65536) exceeds the maximum allowed (65535)
+SELECT ('1' || repeat('.1', 65534))::lquery IS NULL;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT ('1' || repeat('.1', 65535))::lquery IS NULL;
+ERROR:  number of lquery levels (65536) exceeds the maximum allowed (65535)
+SELECT '*{65535}'::lquery;
+  lquery  
+----------
+ *{65535}
+(1 row)
+
+SELECT '*{65536}'::lquery;
+ERROR:  lquery syntax error
+LINE 1: SELECT '*{65536}'::lquery;
+               ^
+DETAIL:  Low limit (65536) exceeds the maximum allowed (65535).
+SELECT '*{,65534}'::lquery;
+  lquery   
+-----------
+ *{,65534}
+(1 row)
+
+SELECT '*{,65535}'::lquery;
+ lquery 
+--------
+ *
+(1 row)
+
+SELECT '*{,65536}'::lquery;
+ERROR:  lquery syntax error
+LINE 1: SELECT '*{,65536}'::lquery;
+               ^
+DETAIL:  High limit (65536) exceeds the maximum allowed (65535).
 SELECT '1.2'::ltree  < '2.2'::ltree;
  ?column? 
 ----------
