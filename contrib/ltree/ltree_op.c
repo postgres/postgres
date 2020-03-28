@@ -274,10 +274,17 @@ static ltree *
 ltree_concat(ltree *a, ltree *b)
 {
 	ltree	   *r;
+	int			numlevel = (int) a->numlevel + b->numlevel;
+
+	if (numlevel > LTREE_MAX_LEVELS)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("number of ltree levels (%d) exceeds the maximum allowed (%d)",
+						numlevel, LTREE_MAX_LEVELS)));
 
 	r = (ltree *) palloc0(VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
 	SET_VARSIZE(r, VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
-	r->numlevel = a->numlevel + b->numlevel;
+	r->numlevel = (uint16) numlevel;
 
 	memcpy(LTREE_FIRST(r), LTREE_FIRST(a), VARSIZE(a) - LTREE_HDRSIZE);
 	memcpy(((char *) LTREE_FIRST(r)) + VARSIZE(a) - LTREE_HDRSIZE,
