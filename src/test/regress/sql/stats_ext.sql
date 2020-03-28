@@ -280,6 +280,8 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b IN (''1'', ''2'')');
 
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b = ''1''');
+
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c = 1');
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c IN (1)');
@@ -342,6 +344,8 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b IN (''1'', ''2'')');
 
+SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b = ''1''');
+
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c = 1');
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 26, 51, 76) AND b IN (''1'', ''26'') AND c IN (1)');
@@ -385,7 +389,9 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a IN (1, 2, 51, 52) AND b = ALL (ARRAY[''1'', ''2''])');
 
--- check change of column type doesn't break it
+-- changing the type of column c causes its single-column stats to be dropped,
+-- giving a default estimate of 0.005 * 5000 = 25 for (c = 1); check multiple
+-- clauses estimated with functional dependencies does not exceed this
 ALTER TABLE functional_dependencies ALTER COLUMN c TYPE numeric;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');

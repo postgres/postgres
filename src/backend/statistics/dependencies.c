@@ -30,6 +30,7 @@
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
+#include "utils/selfuncs.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -73,13 +74,18 @@ static double dependency_degree(int numrows, HeapTuple *rows, int k,
 								AttrNumber *dependency, VacAttrStats **stats, Bitmapset *attrs);
 static bool dependency_is_fully_matched(MVDependency *dependency,
 										Bitmapset *attnums);
-static bool dependency_implies_attribute(MVDependency *dependency,
-										 AttrNumber attnum);
 static bool dependency_is_compatible_clause(Node *clause, Index relid,
 											AttrNumber *attnum);
 static MVDependency *find_strongest_dependency(MVDependencies **dependencies,
 											   int ndependencies,
 											   Bitmapset *attnums);
+static Selectivity clauselist_apply_dependencies(PlannerInfo *root, List *clauses,
+												 int varRelid, JoinType jointype,
+												 SpecialJoinInfo *sjinfo,
+												 MVDependency **dependencies,
+												 int ndependencies,
+												 AttrNumber *list_attnums,
+												 Bitmapset **estimatedclauses);
 
 static void
 generate_dependencies_recurse(DependencyGenerator state, int index,
@@ -614,19 +620,6 @@ dependency_is_fully_matched(MVDependency *dependency, Bitmapset *attnums)
 }
 
 /*
- * dependency_implies_attribute
- *		check that the attnum matches is implied by the functional dependency
- */
-static bool
-dependency_implies_attribute(MVDependency *dependency, AttrNumber attnum)
-{
-	if (attnum == dependency->attributes[dependency->nattributes - 1])
-		return true;
-
-	return false;
-}
-
-/*
  * statext_dependencies_load
  *		Load the functional dependencies for the indicated pg_statistic_ext tuple
  */
@@ -986,6 +979,183 @@ find_strongest_dependency(MVDependencies **dependencies, int ndependencies,
 }
 
 /*
+ * clauselist_apply_dependencies
+ *		Apply the specified functional dependencies to a list of clauses and
+ *		return the estimated selecvitity of the clauses that are compatible
+ *		with any of the given dependencies.
+ *
+ * This will estimate all not-already-estimated clauses that are compatible
+ * with functional dependencies, and which have an attribute mentioned by any
+ * of the given dependencies (either as an implying or implied attribute).
+ *
+ * Given (lists of) clauses on attributes (a,b) and a functional dependency
+ * (a=>b), the per-column selectivities P(a) and P(b) are notionally combined
+ * using the formula
+ *
+ *		P(a,b) = f * P(a) + (1-f) * P(a) * P(b)
+ *
+ * where 'f' is the degree of dependency.  This reflects the fact that we
+ * expect a fraction f of all rows to be consistent with the dependency
+ * (a=>b), and so have a selectivity of P(a), while the remaining rows are
+ * treated as independent.
+ *
+ * In practice, we use a slightly modified version of this formula, which uses
+ * a selectivity of Min(P(a), P(b)) for the dependent rows, since the result
+ * should obviously not exceed either column's individual selectivity.  I.e.,
+ * we actually combine selectivities using the formula
+ *
+ *		P(a,b) = f * Min(P(a), P(b)) + (1-f) * P(a) * P(b)
+ *
+ * This can make quite a difference if the specific values matching the
+ * clauses are not consistent with the functional dependency.
+ */
+static Selectivity
+clauselist_apply_dependencies(PlannerInfo *root, List *clauses,
+							  int varRelid, JoinType jointype,
+							  SpecialJoinInfo *sjinfo,
+							  MVDependency **dependencies, int ndependencies,
+							  AttrNumber *list_attnums,
+							  Bitmapset **estimatedclauses)
+{
+	Bitmapset  *attnums;
+	int			i;
+	int			j;
+	int			nattrs;
+	Selectivity *attr_sel;
+	int			attidx;
+	int			listidx;
+	ListCell   *l;
+	Selectivity s1;
+
+	/*
+	 * Extract the attnums of all implying and implied attributes from all the
+	 * given dependencies.  Each of these attributes is expected to have at
+	 * least 1 not-already-estimated compatible clause that we will estimate
+	 * here.
+	 */
+	attnums = NULL;
+	for (i = 0; i < ndependencies; i++)
+	{
+		for (j = 0; j < dependencies[i]->nattributes; j++)
+		{
+			AttrNumber	attnum = dependencies[i]->attributes[j];
+
+			attnums = bms_add_member(attnums, attnum);
+		}
+	}
+
+	/*
+	 * Compute per-column selectivity estimates for each of these attributes,
+	 * and mark all the corresponding clauses as estimated.
+	 */
+	nattrs = bms_num_members(attnums);
+	attr_sel = (Selectivity *) palloc(sizeof(Selectivity) * nattrs);
+
+	attidx = 0;
+	i = -1;
+	while ((i = bms_next_member(attnums, i)) >= 0)
+	{
+		List	   *attr_clauses = NIL;
+		Selectivity simple_sel;
+
+		listidx = -1;
+		foreach(l, clauses)
+		{
+			Node	   *clause = (Node *) lfirst(l);
+
+			listidx++;
+			if (list_attnums[listidx] == i)
+			{
+				attr_clauses = lappend(attr_clauses, clause);
+				*estimatedclauses = bms_add_member(*estimatedclauses, listidx);
+			}
+		}
+
+		simple_sel = clauselist_selectivity_simple(root, attr_clauses, varRelid,
+												   jointype, sjinfo, NULL);
+		attr_sel[attidx++] = simple_sel;
+	}
+
+	/*
+	 * Now combine these selectivities using the dependency information.  For
+	 * chains of dependencies such as a -> b -> c, the b -> c dependency will
+	 * come before the a -> b dependency in the array, so we traverse the
+	 * array backwards to ensure such chains are computed in the right order.
+	 *
+	 * As explained above, pairs of selectivities are combined using the
+	 * formula
+	 *
+	 * P(a,b) = f * Min(P(a), P(b)) + (1-f) * P(a) * P(b)
+	 *
+	 * to ensure that the combined selectivity is never greater than either
+	 * individual selectivity.
+	 *
+	 * Where multiple dependencies apply (e.g., a -> b -> c), we use
+	 * conditional probabilities to compute the overall result as follows:
+	 *
+	 * P(a,b,c) = P(c|a,b) * P(a,b) = P(c|a,b) * P(b|a) * P(a)
+	 *
+	 * so we replace the selectivities of all implied attributes with
+	 * conditional probabilities, that are conditional on all their implying
+	 * attributes.  The selectivities of all other non-implied attributes are
+	 * left as they are.
+	 */
+	for (i = ndependencies - 1; i >= 0; i--)
+	{
+		MVDependency *dependency = dependencies[i];
+		AttrNumber	attnum;
+		Selectivity s2;
+		double		f;
+
+		/* Selectivity of all the implying attributes */
+		s1 = 1.0;
+		for (j = 0; j < dependency->nattributes - 1; j++)
+		{
+			attnum = dependency->attributes[j];
+			attidx = bms_member_index(attnums, attnum);
+			s1 *= attr_sel[attidx];
+		}
+
+		/* Original selectivity of the implied attribute */
+		attnum = dependency->attributes[j];
+		attidx = bms_member_index(attnums, attnum);
+		s2 = attr_sel[attidx];
+
+		/*
+		 * Replace s2 with the conditional probability s2 given s1, computed
+		 * using the formula P(b|a) = P(a,b) / P(a), which simplifies to
+		 *
+		 * P(b|a) = f * Min(P(a), P(b)) / P(a) + (1-f) * P(b)
+		 *
+		 * where P(a) = s1, the selectivity of the implying attributes, and
+		 * P(b) = s2, the selectivity of the implied attribute.
+		 */
+		f = dependency->degree;
+
+		if (s1 <= s2)
+			attr_sel[attidx] = f + (1 - f) * s2;
+		else
+			attr_sel[attidx] = f * s2 / s1 + (1 - f) * s2;
+	}
+
+	/*
+	 * The overall selectivity of all the clauses on all these attributes is
+	 * then the product of all the original (non-implied) probabilities and
+	 * the new conditional (implied) probabilities.
+	 */
+	s1 = 1.0;
+	for (i = 0; i < nattrs; i++)
+		s1 *= attr_sel[i];
+
+	CLAMP_PROBABILITY(s1);
+
+	pfree(attr_sel);
+	bms_free(attnums);
+
+	return s1;
+}
+
+/*
  * dependencies_clauselist_selectivity
  *		Return the estimated selectivity of (a subset of) the given clauses
  *		using functional dependency statistics, or 1.0 if no useful functional
@@ -999,15 +1169,16 @@ find_strongest_dependency(MVDependencies **dependencies, int ndependencies,
  * between them, i.e. either (a=>b) or (b=>a). Assuming (a=>b) is the selected
  * dependency, we then combine the per-clause selectivities using the formula
  *
- *	   P(a,b) = P(a) * [f + (1-f)*P(b)]
+ *	   P(a,b) = f * P(a) + (1-f) * P(a) * P(b)
  *
- * where 'f' is the degree of the dependency.
+ * where 'f' is the degree of the dependency.  (Actually we use a slightly
+ * modified version of this formula -- see clauselist_apply_dependencies()).
  *
  * With clauses on more than two attributes, the dependencies are applied
  * recursively, starting with the widest/strongest dependencies. For example
  * P(a,b,c) is first split like this:
  *
- *	   P(a,b,c) = P(a,b) * [f + (1-f)*P(c)]
+ *	   P(a,b,c) = f * P(a,b) + (1-f) * P(a,b) * P(c)
  *
  * assuming (a,b=>c) is the strongest dependency.
  */
@@ -1023,17 +1194,20 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	Selectivity s1 = 1.0;
 	ListCell   *l;
 	Bitmapset  *clauses_attnums = NULL;
-	Bitmapset **list_attnums;
+	AttrNumber *list_attnums;
 	int			listidx;
-	MVDependencies    **dependencies = NULL;
-	int					ndependencies = 0;
+	MVDependencies **func_dependencies;
+	int			nfunc_dependencies;
+	int			total_ndeps;
+	MVDependency **dependencies;
+	int			ndependencies;
 	int			i;
 
 	/* check if there's any stats that might be useful for us. */
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_DEPENDENCIES))
 		return 1.0;
 
-	list_attnums = (Bitmapset **) palloc(sizeof(Bitmapset *) *
+	list_attnums = (AttrNumber *) palloc(sizeof(AttrNumber) *
 										 list_length(clauses));
 
 	/*
@@ -1056,11 +1230,11 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 		if (!bms_is_member(listidx, *estimatedclauses) &&
 			dependency_is_compatible_clause(clause, rel->relid, &attnum))
 		{
-			list_attnums[listidx] = bms_make_singleton(attnum);
+			list_attnums[listidx] = attnum;
 			clauses_attnums = bms_add_member(clauses_attnums, attnum);
 		}
 		else
-			list_attnums[listidx] = NULL;
+			list_attnums[listidx] = InvalidAttrNumber;
 
 		listidx++;
 	}
@@ -1072,6 +1246,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	 */
 	if (bms_num_members(clauses_attnums) < 2)
 	{
+		bms_free(clauses_attnums);
 		pfree(list_attnums);
 		return 1.0;
 	}
@@ -1083,19 +1258,20 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	 *
 	 * To not waste cycles and memory, we deserialize dependencies only for
 	 * statistics that match at least two attributes. The array is allocated
-	 * with the assumption that all objects match - we could grow the array
-	 * to make it just the right size, but it's likely wasteful anyway thanks
-	 * to moving the freed chunks to freelists etc.
+	 * with the assumption that all objects match - we could grow the array to
+	 * make it just the right size, but it's likely wasteful anyway thanks to
+	 * moving the freed chunks to freelists etc.
 	 */
-	ndependencies = 0;
-	dependencies = (MVDependencies **) palloc(sizeof(MVDependencies *) *
-											  list_length(rel->statlist));
+	func_dependencies = (MVDependencies **) palloc(sizeof(MVDependencies *) *
+												   list_length(rel->statlist));
+	nfunc_dependencies = 0;
+	total_ndeps = 0;
 
-	foreach(l,rel->statlist)
+	foreach(l, rel->statlist)
 	{
-		StatisticExtInfo   *stat = (StatisticExtInfo *) lfirst(l);
-		Bitmapset		   *matched;
-		int					num_matched;
+		StatisticExtInfo *stat = (StatisticExtInfo *) lfirst(l);
+		Bitmapset  *matched;
+		int			num_matched;
 
 		/* skip statistics that are not of the correct type */
 		if (stat->kind != STATS_EXT_DEPENDENCIES)
@@ -1109,104 +1285,65 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 		if (num_matched < 2)
 			continue;
 
-		dependencies[ndependencies++]
+		func_dependencies[nfunc_dependencies]
 			= statext_dependencies_load(stat->statOid);
+
+		total_ndeps += func_dependencies[nfunc_dependencies]->ndeps;
+		nfunc_dependencies++;
 	}
 
 	/* if no matching stats could be found then we've nothing to do */
-	if (!ndependencies)
+	if (nfunc_dependencies == 0)
 	{
+		pfree(func_dependencies);
+		bms_free(clauses_attnums);
 		pfree(list_attnums);
 		return 1.0;
 	}
 
 	/*
-	 * Apply the dependencies recursively, starting with the widest/strongest
-	 * ones, and proceeding to the smaller/weaker ones. At the end of each
-	 * round we factor in the selectivity of clauses on the implied attribute,
-	 * and remove the clauses from the list.
+	 * Work out which dependencies we can apply, starting with the
+	 * widest/stongest ones, and proceeding to smaller/weaker ones.
 	 */
+	dependencies = (MVDependency **) palloc(sizeof(MVDependency *) *
+											total_ndeps);
+	ndependencies = 0;
+
 	while (true)
 	{
-		Selectivity s2 = 1.0;
 		MVDependency *dependency;
+		AttrNumber	attnum;
 
 		/* the widest/strongest dependency, fully matched by clauses */
-		dependency = find_strongest_dependency(dependencies, ndependencies,
+		dependency = find_strongest_dependency(func_dependencies,
+											   nfunc_dependencies,
 											   clauses_attnums);
-
-		/* if no suitable dependency was found, we're done */
 		if (!dependency)
 			break;
 
-		/*
-		 * We found an applicable dependency, so find all the clauses on the
-		 * implied attribute - with dependency (a,b => c) we look for clauses
-		 * on 'c'.
-		 */
-		listidx = -1;
-		foreach(l, clauses)
-		{
-			Node	   *clause;
-			AttrNumber	attnum;
+		dependencies[ndependencies++] = dependency;
 
-			listidx++;
-
-			/*
-			 * Skip incompatible clauses, and ones we've already estimated on.
-			 */
-			if (!list_attnums[listidx])
-				continue;
-
-			/*
-			 * We expect the bitmaps ton contain a single attribute number.
-			 */
-			attnum = bms_singleton_member(list_attnums[listidx]);
-
-			/*
-			 * Technically we could find more than one clause for a given
-			 * attnum. Since these clauses must be equality clauses, we choose
-			 * to only take the selectivity estimate from the final clause in
-			 * the list for this attnum. If the attnum happens to be compared
-			 * to a different Const in another clause then no rows will match
-			 * anyway. If it happens to be compared to the same Const, then
-			 * ignoring the additional clause is just the thing to do.
-			 */
-			if (dependency_implies_attribute(dependency, attnum))
-			{
-				clause = (Node *) lfirst(l);
-
-				s2 = clause_selectivity(root, clause, varRelid, jointype,
-										sjinfo);
-
-				/* mark this one as done, so we don't touch it again. */
-				*estimatedclauses = bms_add_member(*estimatedclauses, listidx);
-
-				/*
-				 * Mark that we've got and used the dependency on this clause.
-				 * We'll want to ignore this when looking for the next
-				 * strongest dependency above.
-				 */
-				clauses_attnums = bms_del_member(clauses_attnums, attnum);
-			}
-		}
-
-		/*
-		 * Now factor in the selectivity for all the "implied" clauses into
-		 * the final one, using this formula:
-		 *
-		 * P(a,b) = P(a) * (f + (1-f) * P(b))
-		 *
-		 * where 'f' is the degree of validity of the dependency.
-		 */
-		s1 *= (dependency->degree + (1 - dependency->degree) * s2);
+		/* Ignore dependencies using this implied attribute in later loops */
+		attnum = dependency->attributes[dependency->nattributes - 1];
+		clauses_attnums = bms_del_member(clauses_attnums, attnum);
 	}
 
+	/*
+	 * If we found applicable dependencies, use them to estimate all
+	 * compatible clauses on attributes that they refer to.
+	 */
+	if (ndependencies != 0)
+		s1 = clauselist_apply_dependencies(root, clauses, varRelid, jointype,
+										   sjinfo, dependencies, ndependencies,
+										   list_attnums, estimatedclauses);
+
 	/* free deserialized functional dependencies (and then the array) */
-	for (i = 0; i < ndependencies; i++)
-		pfree(dependencies[i]);
+	for (i = 0; i < nfunc_dependencies; i++)
+		pfree(func_dependencies[i]);
 
 	pfree(dependencies);
+	pfree(func_dependencies);
+	bms_free(clauses_attnums);
 	pfree(list_attnums);
 
 	return s1;
