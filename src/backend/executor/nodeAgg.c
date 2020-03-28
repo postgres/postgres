@@ -1728,6 +1728,8 @@ hash_agg_set_limits(double hashentrysize, uint64 input_groups, int used_bits,
 	/* if not expected to spill, use all of work_mem */
 	if (input_groups * hashentrysize < work_mem * 1024L)
 	{
+		if (num_partitions != NULL)
+			*num_partitions = 0;
 		*mem_limit = work_mem * 1024L;
 		*ngroups_limit = *mem_limit / hashentrysize;
 		return;

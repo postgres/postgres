@@ -2257,6 +2257,7 @@ cost_agg(Path *path, PlannerInfo *root,
 	 */
 	if (aggstrategy == AGG_HASHED || aggstrategy == AGG_MIXED)
 	{
+		double	pages;
 		double	pages_written = 0.0;
 		double	pages_read	  = 0.0;
 		double	hashentrysize;
@@ -2264,7 +2265,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		Size	mem_limit;
 		uint64	ngroups_limit;
 		int		num_partitions;
-
+		int		depth;
 
 		/*
 		 * Estimate number of batches based on the computed limits. If less
@@ -2279,25 +2280,22 @@ cost_agg(Path *path, PlannerInfo *root,
 		nbatches = Max( (numGroups * hashentrysize) / mem_limit,
 						numGroups / ngroups_limit );
 
+		nbatches = Max(ceil(nbatches), 1.0);
+		num_partitions = Max(num_partitions, 2);
+
+		/*
+		 * The number of partitions can change at different levels of
+		 * recursion; but for the purposes of this calculation assume it stays
+		 * constant.
+		 */
+		depth = ceil( log(nbatches) / log(num_partitions) );
+
 		/*
 		 * Estimate number of pages read and written. For each level of
 		 * recursion, a tuple must be written and then later read.
 		 */
-		if (nbatches > 1.0)
-		{
-			double depth;
-			double pages;
-
-			pages = relation_byte_size(input_tuples, input_width) / BLCKSZ;
-
-			/*
-			 * The number of partitions can change at different levels of
-			 * recursion; but for the purposes of this calculation assume it
-			 * stays constant.
-			 */
-			depth = ceil( log(nbatches - 1) / log(num_partitions) );
-			pages_written = pages_read = pages * depth;
-		}
+		pages = relation_byte_size(input_tuples, input_width) / BLCKSZ;
+		pages_written = pages_read = pages * depth;
 
 		startup_cost += pages_written * random_page_cost;
 		total_cost += pages_written * random_page_cost;
