@@ -14096,7 +14096,10 @@ ac_fn_c_check_type "$LINENO" "struct sockaddr_un" "ac_cv_type_struct_sockaddr_un
 "
 if test "x$ac_cv_type_struct_sockaddr_un" = xyes; then :
 
-$as_echo "#define HAVE_UNIX_SOCKETS 1" >>confdefs.h
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_UN 1
+_ACEOF
+
 
 fi
 

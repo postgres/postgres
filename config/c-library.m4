@@ -102,10 +102,11 @@ AC_DEFUN([PGAC_UNION_SEMUN],
 
 # PGAC_STRUCT_SOCKADDR_UN
 # -----------------------
-# If `struct sockaddr_un' exists, define HAVE_UNIX_SOCKETS.
+# If `struct sockaddr_un' exists, define HAVE_STRUCT_SOCKADDR_UN.
+# If it is missing then one could define it.
 # (Requires test for <sys/un.h>!)
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
-[AC_CHECK_TYPE([struct sockaddr_un], [AC_DEFINE(HAVE_UNIX_SOCKETS, 1, [Define to 1 if you have unix sockets.])], [],
+[AC_CHECK_TYPES([struct sockaddr_un], [], [],
 [#include <sys/types.h>
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>

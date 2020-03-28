@@ -210,7 +210,7 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 
 	socket_string[0] = '\0';
 
-#ifdef HAVE_UNIX_SOCKETS
+#if defined(HAVE_UNIX_SOCKETS) && !defined(WIN32)
 	/* prevent TCP/IP connections, restrict socket access */
 	strcat(socket_string,
 		   " -c listen_addresses='' -c unix_socket_permissions=0700");

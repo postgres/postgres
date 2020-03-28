@@ -136,13 +136,6 @@
 #endif
 
 /*
- * Disable UNIX sockets for certain operating systems.
- */
-#if defined(WIN32)
-#undef HAVE_UNIX_SOCKETS
-#endif
-
-/*
  * USE_POSIX_FADVISE controls whether Postgres will attempt to use the
  * posix_fadvise() kernel call.  Usually the automatic configure tests are
  * sufficient, but some older Linux distributions had broken versions of
@@ -202,8 +195,16 @@
  * server will not create an AF_UNIX socket unless the run-time configuration
  * is changed, a client will connect via TCP/IP by default and will only use
  * an AF_UNIX socket if one is explicitly specified.
+ *
+ * This is done by default on Windows because there is no good standard
+ * location for AF_UNIX sockets and many installations on Windows don't
+ * support them yet.
  */
+#ifndef WIN32
 #define DEFAULT_PGSOCKET_DIR  "/tmp"
+#else
+#define DEFAULT_PGSOCKET_DIR ""
+#endif
 
 /*
  * This is the default event source for Windows event log.
