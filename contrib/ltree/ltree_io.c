@@ -58,11 +58,11 @@ ltree_in(PG_FUNCTION_ARGS)
 		ptr += charlen;
 	}
 
-	if (num + 1 > MaxAllocSize / sizeof(nodeitem))
+	if (num + 1 > LTREE_MAX_LEVELS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("number of levels (%d) exceeds the maximum allowed (%d)",
-						num + 1, (int) (MaxAllocSize / sizeof(nodeitem)))));
+				 errmsg("number of ltree levels (%d) exceeds the maximum allowed (%d)",
+						num + 1, LTREE_MAX_LEVELS)));
 	list = lptr = (nodeitem *) palloc(sizeof(nodeitem) * (num + 1));
 	ptr = buf;
 	while (*ptr)
@@ -227,11 +227,11 @@ lquery_in(PG_FUNCTION_ARGS)
 	}
 
 	num++;
-	if (num > MaxAllocSize / ITEMSIZE)
+	if (num > LQUERY_MAX_LEVELS)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("number of levels (%d) exceeds the maximum allowed (%d)",
-						num, (int) (MaxAllocSize / ITEMSIZE))));
+				 errmsg("number of lquery levels (%d) exceeds the maximum allowed (%d)",
+						num, LQUERY_MAX_LEVELS)));
 	curqlevel = tmpql = (lquery_level *) palloc0(ITEMSIZE * num);
 	ptr = buf;
 	while (*ptr)
@@ -344,7 +344,7 @@ lquery_in(PG_FUNCTION_ARGS)
 			else if (charlen == 1 && t_iseq(ptr, '.'))
 			{
 				curqlevel->low = 0;
-				curqlevel->high = 0xffff;
+				curqlevel->high = LTREE_MAX_LEVELS;
 				curqlevel = NEXTLEV(curqlevel);
 				state = LQPRS_WAITLEVEL;
 			}
@@ -357,7 +357,16 @@ lquery_in(PG_FUNCTION_ARGS)
 				state = LQPRS_WAITSNUM;
 			else if (t_isdigit(ptr))
 			{
-				curqlevel->low = atoi(ptr);
+				int			low = atoi(ptr);
+
+				if (low < 0 || low > LTREE_MAX_LEVELS)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("lquery syntax error"),
+							 errdetail("Low limit (%d) exceeds the maximum allowed (%d).",
+									   low, LTREE_MAX_LEVELS)));
+
+				curqlevel->low = (uint16) low;
 				state = LQPRS_WAITND;
 			}
 			else
@@ -367,12 +376,21 @@ lquery_in(PG_FUNCTION_ARGS)
 		{
 			if (t_isdigit(ptr))
 			{
-				curqlevel->high = atoi(ptr);
+				int			high = atoi(ptr);
+
+				if (high < 0 || high > LTREE_MAX_LEVELS)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("lquery syntax error"),
+							 errdetail("High limit (%d) exceeds the maximum allowed (%d).",
+									   high, LTREE_MAX_LEVELS)));
+
+				curqlevel->high = (uint16) high;
 				state = LQPRS_WAITCLOSE;
 			}
 			else if (charlen == 1 && t_iseq(ptr, '}'))
 			{
-				curqlevel->high = 0xffff;
+				curqlevel->high = LTREE_MAX_LEVELS;
 				state = LQPRS_WAITEND;
 			}
 			else
@@ -422,7 +440,7 @@ lquery_in(PG_FUNCTION_ARGS)
 		if (lptr->start == ptr)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("syntax error"),
+					 errmsg("lquery syntax error"),
 					 errdetail("Unexpected end of line.")));
 
 		lptr->len = ptr - lptr->start -
@@ -432,7 +450,7 @@ lquery_in(PG_FUNCTION_ARGS)
 		if (lptr->len == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("syntax error"),
+					 errmsg("lquery syntax error"),
 					 errdetail("Unexpected end of line.")));
 
 		if (lptr->wlen > 255)
@@ -444,11 +462,11 @@ lquery_in(PG_FUNCTION_ARGS)
 							   lptr->wlen, pos)));
 	}
 	else if (state == LQPRS_WAITOPEN)
-		curqlevel->high = 0xffff;
+		curqlevel->high = LTREE_MAX_LEVELS;
 	else if (state != LQPRS_WAITEND)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("syntax error"),
+				 errmsg("lquery syntax error"),
 				 errdetail("Unexpected end of line.")));
 
 	curqlevel = tmpql;
@@ -468,8 +486,8 @@ lquery_in(PG_FUNCTION_ARGS)
 		else if (curqlevel->low > curqlevel->high)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("syntax error"),
-					 errdetail("Low limit(%d) is greater than upper(%d).",
+					 errmsg("lquery syntax error"),
+					 errdetail("Low limit (%d) is greater than upper (%d).",
 							   curqlevel->low, curqlevel->high)));
 
 		curqlevel = NEXTLEV(curqlevel);
@@ -593,7 +611,7 @@ lquery_out(PG_FUNCTION_ARGS)
 			}
 			else if (curqlevel->low == 0)
 			{
-				if (curqlevel->high == 0xffff)
+				if (curqlevel->high == LTREE_MAX_LEVELS)
 				{
 					*ptr = '*';
 					*(ptr + 1) = '\0';
@@ -601,7 +619,7 @@ lquery_out(PG_FUNCTION_ARGS)
 				else
 					sprintf(ptr, "*{,%d}", curqlevel->high);
 			}
-			else if (curqlevel->high == 0xffff)
+			else if (curqlevel->high == LTREE_MAX_LEVELS)
 			{
 				sprintf(ptr, "*{%d,}", curqlevel->low);
 			}
