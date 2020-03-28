@@ -1,4 +1,3 @@
-C011	Core
 E011	Core
 E021	Core
 E031	Core
