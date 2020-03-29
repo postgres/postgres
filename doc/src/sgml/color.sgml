@@ -1,0 +1,101 @@
+<!-- doc/src/sgml/color.sgml -->
+
+<appendix id="color">
+ <title>Color Support</title>
+
+ <indexterm zone="color">
+  <primary>color</primary>
+ </indexterm>
+
+ <para>
+  Most programs in the PostgreSQL package can produce colorized console
+  output.  This appendix describes how that is configured.
+ </para>
+
+ <sect1 id="color-when">
+  <title>When Color is Used</title>
+
+  <para>
+   To use colorized output, set the environment variable
+   <envar>PG_COLOR</envar><indexterm><primary>PG_COLOR</primary></indexterm>
+   as follows:
+
+   <orderedlist>
+    <listitem>
+     <para>
+      If the value is <literal>always</literal>, then color is used.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If the value is <literal>auto</literal> and the standard error stream
+      is associated with a terminal device, then color is used.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Otherwise, color is not used.
+     </para>
+    </listitem>
+   </orderedlist>
+  </para>
+ </sect1>
+
+ <sect1 id="color-which">
+  <title>Configuring the Colors</title>
+
+  <para>
+   The actual colors to be used are configured using the environment variable
+   <envar>PG_COLORS</envar><indexterm><primary>PG_COLORS</primary></indexterm>
+   (note plural).  The value is a colon-separated list of
+   <literal><replaceable>key</replaceable>=<replaceable>value</replaceable></literal>
+   pairs.  The keys specify what the color is to be used for.  The values are
+   SGR (Select Graphic Rendition) specifications, which are interpreted by the
+   terminal.
+  </para>
+
+  <para>
+   The following keys are currently in use:
+   <variablelist>
+    <varlistentry>
+     <term><literal>error</literal></term>
+     <listitem>
+      <para>used to highlight the text <quote>error</quote> in error messages</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>warning</literal></term>
+     <listitem>
+      <para>used to highlight the text <quote>warning</quote> in warning
+      messages</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>locus</literal></term>
+     <listitem>
+      <para>used to highlight location information (e.g., program name and
+      file name) in messages</para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   The default value is <literal>error=01;31:warning=01;35:locus=01</literal>
+   (<literal>01;31</literal> = bold red, <literal>01;35</literal> = bold
+   magenta, <literal>01</literal> = bold default color).
+  </para>
+
+  <tip>
+   <para>
+    This color specification format is also used by other software packages
+    such as <productname>GCC</productname>, <productname>GNU
+    coreutils</productname>, and <productname>GNU grep</productname>.
+   </para>
+  </tip>
+ </sect1>
+</appendix>
