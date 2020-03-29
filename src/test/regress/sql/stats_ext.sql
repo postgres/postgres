@@ -454,7 +454,7 @@ CREATE TABLE mcv_lists (
 INSERT INTO mcv_lists (a, b, c, filler1)
      SELECT mod(i,37), mod(i,41), mod(i,43), mod(i,47) FROM generate_series(1,5000) s(i);
 
-ANALYZE mcv_lists;
+VACUUM (ANALYZE) mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
@@ -476,7 +476,7 @@ DROP STATISTICS mcv_lists_stats;
 INSERT INTO mcv_lists (a, b, c, filler1)
      SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
 
-ANALYZE mcv_lists;
+VACUUM (ANALYZE) mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
@@ -589,7 +589,7 @@ ALTER TABLE mcv_lists ALTER COLUMN c TYPE numeric;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
-ANALYZE mcv_lists;
+VACUUM (ANALYZE) mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
@@ -605,7 +605,7 @@ INSERT INTO mcv_lists (a, b, c, filler1)
          i
      FROM generate_series(1,5000) s(i);
 
-ANALYZE mcv_lists;
+VACUUM (ANALYZE) mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND b IS NULL');
 
@@ -635,8 +635,7 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IN (0, 1) AN
 -- test pg_mcv_list_items with a very simple (single item) MCV list
 TRUNCATE mcv_lists;
 INSERT INTO mcv_lists (a, b, c) SELECT 1, 2, 3 FROM generate_series(1,1000) s(i);
-ANALYZE mcv_lists;
-
+VACUUM (ANALYZE) mcv_lists;
 SELECT m.*
   FROM pg_statistic_ext s, pg_statistic_ext_data d,
        pg_mcv_list_items(d.stxdmcv) m
@@ -655,7 +654,7 @@ INSERT INTO mcv_lists (a, b, c, d)
          (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 'x' END)
      FROM generate_series(1,5000) s(i);
 
-ANALYZE mcv_lists;
+VACUUM (ANALYZE) mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE b = ''x'' OR d = ''x''');
 
