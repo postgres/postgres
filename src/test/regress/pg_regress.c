@@ -330,7 +330,8 @@ signal_remove_temp(int signum)
 static const char *
 make_temp_sockdir(void)
 {
-	char	   *template = pg_strdup("/tmp/pg_regress-XXXXXX");
+	char	   *template = psprintf("%s/pg_regress-XXXXXX",
+									getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
 
 	temp_sockdir = mkdtemp(template);
 	if (temp_sockdir == NULL)
