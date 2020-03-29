@@ -7,9 +7,19 @@
 #include "tsearch/ts_locale.h"
 #include "utils/memutils.h"
 
+
+/* ltree */
+
+/*
+ * We want the maximum length of a label to be encoding-independent, so
+ * set it somewhat arbitrarily at 255 characters (not bytes), while using
+ * uint16 fields to hold the byte length.
+ */
+#define LTREE_LABEL_MAX_CHARS 255
+
 typedef struct
 {
-	uint16		len;
+	uint16		len;			/* label string length in bytes */
 	char		name[FLEXIBLE_ARRAY_MEMBER];
 } ltree_level;
 
@@ -19,7 +29,8 @@ typedef struct
 typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	uint16		numlevel;
+	uint16		numlevel;		/* number of labels */
+	/* Array of maxalign'd ltree_level structs follows: */
 	char		data[FLEXIBLE_ARRAY_MEMBER];
 } ltree;
 
@@ -30,25 +41,35 @@ typedef struct
 
 /* lquery */
 
+/* lquery_variant: one branch of some OR'ed alternatives */
 typedef struct
 {
-	int32		val;
-	uint16		len;
+	int32		val;			/* CRC of label string */
+	uint16		len;			/* label string length in bytes */
 	uint8		flag;			/* see LVAR_xxx flags below */
 	char		name[FLEXIBLE_ARRAY_MEMBER];
 } lquery_variant;
 
+/*
+ * Note: these macros contain too many MAXALIGN calls and so will sometimes
+ * overestimate the space needed for an lquery_variant.  However, we can't
+ * change it without breaking on-disk compatibility for lquery.
+ */
 #define LVAR_HDRSIZE   MAXALIGN(offsetof(lquery_variant, name))
 #define LVAR_NEXT(x)	( (lquery_variant*)( ((char*)(x)) + MAXALIGN(((lquery_variant*)(x))->len) + LVAR_HDRSIZE ) )
 
-#define LVAR_ANYEND 0x01
-#define LVAR_INCASE 0x02
-#define LVAR_SUBLEXEME	0x04
+#define LVAR_ANYEND 0x01		/* '*' flag: prefix match */
+#define LVAR_INCASE 0x02		/* '@' flag: case-insensitive match */
+#define LVAR_SUBLEXEME	0x04	/* '%' flag: word-wise match */
 
+/*
+ * In an lquery_level, "flag" contains the union of the variants' flags
+ * along with possible LQL_xxx flags; so those bit sets can't overlap.
+ */
 typedef struct
 {
 	uint16		totallen;		/* total length of this level, in bytes */
-	uint16		flag;			/* see LQL_xxx flags below */
+	uint16		flag;			/* see LQL_xxx and LVAR_xxx flags */
 	uint16		numvar;			/* number of variants; 0 means '*' */
 	uint16		low;			/* minimum repeat count for '*' */
 	uint16		high;			/* maximum repeat count for '*' */
@@ -60,7 +81,7 @@ typedef struct
 #define LQL_NEXT(x) ( (lquery_level*)( ((char*)(x)) + MAXALIGN(((lquery_level*)(x))->totallen) ) )
 #define LQL_FIRST(x)	( (lquery_variant*)( ((char*)(x))+LQL_HDRSIZE ) )
 
-#define LQL_NOT		0x10
+#define LQL_NOT		0x10		/* level has '!' (NOT) prefix */
 
 #ifdef LOWER_NODE
 #define FLG_CANLOOKSIGN(x) ( ( (x) & ( LQL_NOT | LVAR_ANYEND | LVAR_SUBLEXEME ) ) == 0 )
@@ -73,7 +94,7 @@ typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint16		numlevel;		/* number of lquery_levels */
-	uint16		firstgood;
+	uint16		firstgood;		/* number of leading simple-match levels */
 	uint16		flag;			/* see LQUERY_xxx flags below */
 	/* Array of maxalign'd lquery_level structs follows: */
 	char		data[FLEXIBLE_ARRAY_MEMBER];

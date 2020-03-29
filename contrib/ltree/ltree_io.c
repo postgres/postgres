@@ -85,7 +85,7 @@ ltree_in(PG_FUNCTION_ARGS)
 			if (charlen == 1 && t_iseq(ptr, '.'))
 			{
 				lptr->len = ptr - lptr->start;
-				if (lptr->wlen > 255)
+				if (lptr->wlen > LTREE_LABEL_MAX_CHARS)
 					ereport(ERROR,
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
@@ -112,7 +112,7 @@ ltree_in(PG_FUNCTION_ARGS)
 	if (state == LTPRS_WAITDELIM)
 	{
 		lptr->len = ptr - lptr->start;
-		if (lptr->wlen > 255)
+		if (lptr->wlen > LTREE_LABEL_MAX_CHARS)
 			ereport(ERROR,
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("name of level is too long"),
@@ -302,7 +302,7 @@ lquery_in(PG_FUNCTION_ARGS)
 					((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
 					((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 					((lptr->flag & LVAR_ANYEND) ? 1 : 0);
-				if (lptr->wlen > 255)
+				if (lptr->wlen > LTREE_LABEL_MAX_CHARS)
 					ereport(ERROR,
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
@@ -318,7 +318,7 @@ lquery_in(PG_FUNCTION_ARGS)
 					((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
 					((lptr->flag & LVAR_INCASE) ? 1 : 0) -
 					((lptr->flag & LVAR_ANYEND) ? 1 : 0);
-				if (lptr->wlen > 255)
+				if (lptr->wlen > LTREE_LABEL_MAX_CHARS)
 					ereport(ERROR,
 							(errcode(ERRCODE_NAME_TOO_LONG),
 							 errmsg("name of level is too long"),
@@ -453,7 +453,7 @@ lquery_in(PG_FUNCTION_ARGS)
 					 errmsg("lquery syntax error"),
 					 errdetail("Unexpected end of line.")));
 
-		if (lptr->wlen > 255)
+		if (lptr->wlen > LTREE_LABEL_MAX_CHARS)
 			ereport(ERROR,
 					(errcode(ERRCODE_NAME_TOO_LONG),
 					 errmsg("name of level is too long"),
@@ -522,12 +522,21 @@ lquery_in(PG_FUNCTION_ARGS)
 			}
 			pfree(GETVAR(curqlevel));
 			if (cur->numvar > 1 || cur->flag != 0)
+			{
+				/* Not a simple match */
 				wasbad = true;
+			}
 			else if (wasbad == false)
+			{
+				/* count leading simple matches */
 				(result->firstgood)++;
+			}
 		}
 		else
+		{
+			/* '*', so this isn't a simple match */
 			wasbad = true;
+		}
 		curqlevel = NEXTLEV(curqlevel);
 		cur = LQL_NEXT(cur);
 	}
