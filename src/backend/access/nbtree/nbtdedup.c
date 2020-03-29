@@ -68,7 +68,7 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 	int			ndeletable = 0;
 	Size		pagesaving = 0;
 	bool		singlevalstrat = false;
-	int			natts = IndexRelationGetNumberOfAttributes(rel);
+	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 
 	/*
 	 * We can't assume that there are no LP_DEAD items.  For one thing, VACUUM
@@ -182,7 +182,7 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 			_bt_dedup_start_pending(state, itup, offnum);
 		}
 		else if (state->deduplicate &&
-				 _bt_keep_natts_fast(rel, state->base, itup) > natts &&
+				 _bt_keep_natts_fast(rel, state->base, itup) > nkeyatts &&
 				 _bt_dedup_save_htid(state, itup))
 		{
 			/*
@@ -519,19 +519,19 @@ static bool
 _bt_do_singleval(Relation rel, Page page, BTDedupState state,
 				 OffsetNumber minoff, IndexTuple newitem)
 {
-	int			natts = IndexRelationGetNumberOfAttributes(rel);
+	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	ItemId		itemid;
 	IndexTuple	itup;
 
 	itemid = PageGetItemId(page, minoff);
 	itup = (IndexTuple) PageGetItem(page, itemid);
 
-	if (_bt_keep_natts_fast(rel, newitem, itup) > natts)
+	if (_bt_keep_natts_fast(rel, newitem, itup) > nkeyatts)
 	{
 		itemid = PageGetItemId(page, PageGetMaxOffsetNumber(page));
 		itup = (IndexTuple) PageGetItem(page, itemid);
 
-		if (_bt_keep_natts_fast(rel, newitem, itup) > natts)
+		if (_bt_keep_natts_fast(rel, newitem, itup) > nkeyatts)
 			return true;
 	}
 
