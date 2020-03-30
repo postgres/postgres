@@ -2565,6 +2565,7 @@ UserMapping
 UserOpts
 VacAttrStats
 VacAttrStatsP
+VacErrPhase
 VacOptTernaryValue
 VacuumParams
 VacuumRelation
