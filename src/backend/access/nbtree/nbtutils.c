@@ -2180,10 +2180,10 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 			 BTScanInsert itup_key)
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
-	int16		natts = IndexRelationGetNumberOfAttributes(rel);
 	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 	int			keepnatts;
 	IndexTuple	pivot;
+	IndexTuple	tidpivot;
 	ItemPointer pivotheaptid;
 	Size		newsize;
 
@@ -2201,95 +2201,56 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	keepnatts = nkeyatts + 1;
 #endif
 
-	if (keepnatts <= natts)
-	{
-		IndexTuple	tidpivot;
+	pivot = index_truncate_tuple(itupdesc, firstright,
+								 Min(keepnatts, nkeyatts));
 
-		pivot = index_truncate_tuple(itupdesc, firstright,
-									 Min(keepnatts, nkeyatts));
-
-		if (BTreeTupleIsPosting(pivot))
-		{
-			/*
-			 * index_truncate_tuple() just returns a straight copy of
-			 * firstright when it has no key attributes to truncate.  We need
-			 * to truncate away the posting list ourselves.
-			 */
-			Assert(keepnatts == nkeyatts);
-			Assert(natts == nkeyatts);
-			pivot->t_info &= ~INDEX_SIZE_MASK;
-			pivot->t_info |= MAXALIGN(BTreeTupleGetPostingOffset(firstright));
-		}
-
-		/*
-		 * If there is a distinguishing key attribute within new pivot tuple,
-		 * there is no need to add an explicit heap TID attribute
-		 */
-		if (keepnatts <= nkeyatts)
-		{
-			BTreeTupleSetNAtts(pivot, keepnatts);
-			return pivot;
-		}
-
-		/*
-		 * Only truncation of non-key attributes was possible, since key
-		 * attributes are all equal.  It's necessary to add a heap TID
-		 * attribute to the new pivot tuple.
-		 */
-		Assert(natts != nkeyatts);
-		Assert(!BTreeTupleIsPosting(lastleft) &&
-			   !BTreeTupleIsPosting(firstright));
-		newsize = IndexTupleSize(pivot) + MAXALIGN(sizeof(ItemPointerData));
-		tidpivot = palloc0(newsize);
-		memcpy(tidpivot, pivot, IndexTupleSize(pivot));
-		/* cannot leak memory here */
-		pfree(pivot);
-		pivot = tidpivot;
-	}
-	else
+	if (BTreeTupleIsPosting(pivot))
 	{
 		/*
-		 * No truncation was possible, since key attributes are all equal.
-		 * It's necessary to add a heap TID attribute to the new pivot tuple.
-		 *
-		 * This path is only taken when rel is not an INCLUDE index.  It
-		 * avoids a second palloc0() by avoiding the index_truncate_tuple()
-		 * call completely.
+		 * index_truncate_tuple() just returns a straight copy of firstright
+		 * when it has no attributes to truncate.  When that happens, we may
+		 * need to truncate away a posting list here instead.
 		 */
-		Assert(natts == nkeyatts);
-		newsize = IndexTupleSize(firstright) + MAXALIGN(sizeof(ItemPointerData));
-		pivot = palloc0(newsize);
-		memcpy(pivot, firstright, IndexTupleSize(firstright));
-
-		if (BTreeTupleIsPosting(firstright))
-		{
-			/*
-			 * New pivot tuple was copied from firstright, which happens to be
-			 * a posting list tuple.  We will have to include the max lastleft
-			 * heap TID in the final pivot tuple, but we can remove the
-			 * posting list now. (Pivot tuples should never contain a posting
-			 * list.)
-			 */
-			newsize = MAXALIGN(BTreeTupleGetPostingOffset(firstright)) +
-				MAXALIGN(sizeof(ItemPointerData));
-		}
+		Assert(keepnatts == nkeyatts || keepnatts == nkeyatts + 1);
+		Assert(IndexRelationGetNumberOfAttributes(rel) == nkeyatts);
+		pivot->t_info &= ~INDEX_SIZE_MASK;
+		pivot->t_info |= MAXALIGN(BTreeTupleGetPostingOffset(firstright));
 	}
 
 	/*
-	 * We have to use heap TID as a unique-ifier in the new pivot tuple, since
-	 * no non-TID key attribute in the right item readily distinguishes the
-	 * right side of the split from the left side.  Use enlarged space that
-	 * holds a copy of first right tuple; place a heap TID value within the
-	 * extra space that remains at the end.
-	 *
-	 * nbtree conceptualizes this case as an inability to truncate away any
-	 * key attribute.  We must use an alternative representation of heap TID
-	 * within pivots because heap TID is only treated as an attribute within
-	 * nbtree (e.g., there is no pg_attribute entry).
+	 * If there is a distinguishing key attribute within pivot tuple, we're
+	 * done
 	 */
-	Assert(itup_key->heapkeyspace);
-	pivot->t_info &= ~INDEX_SIZE_MASK;
-	pivot->t_info |= newsize;
+	if (keepnatts <= nkeyatts)
+	{
+		BTreeTupleSetNAtts(pivot, keepnatts);
+		return pivot;
+	}
+
+	/*
+	 * We have to store a heap TID in the new pivot tuple, since no non-TID
+	 * key attribute value in firstright distinguishes the right side of the
+	 * split from the left side.  nbtree conceptualizes this case as an
+	 * inability to truncate away any key attributes, since heap TID is
+	 * treated as just another key attribute (despite lacking a pg_attribute
+	 * entry).
+	 *
+	 * Use enlarged space that holds a copy of pivot.  We need the extra space
+	 * to store a heap TID at the end (using the special pivot tuple
+	 * representation).  Note that the original pivot already has firstright's
+	 * possible posting list/non-key attribute values removed at this point.
+	 */
+	newsize = MAXALIGN(IndexTupleSize(pivot)) + MAXALIGN(sizeof(ItemPointerData));
+	tidpivot = palloc0(newsize);
+	memcpy(tidpivot, pivot, MAXALIGN(IndexTupleSize(pivot)));
+	/* Cannot leak memory here */
+	pfree(pivot);
+
+	/* Store heap TID in enlarged pivot tuple */
+	tidpivot->t_info &= ~INDEX_SIZE_MASK;
+	tidpivot->t_info |= newsize;
+	BTreeTupleSetNAtts(tidpivot, nkeyatts);
+	BTreeTupleSetAltHeapTID(tidpivot);
 
 	/*
 	 * Lehman & Yao use lastleft as the leaf high key in all cases, but don't
@@ -2298,11 +2259,13 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	 * TID.  (This is also the closest value to negative infinity that's
 	 * legally usable.)
 	 */
-	pivotheaptid = (ItemPointer) ((char *) pivot + newsize -
+	pivotheaptid = (ItemPointer) ((char *) tidpivot + newsize -
 								  sizeof(ItemPointerData));
 	ItemPointerCopy(BTreeTupleGetMaxHeapTID(lastleft), pivotheaptid);
 
 	/*
+	 * We're done.  Assert() that heap TID invariants hold before returning.
+	 *
 	 * Lehman and Yao require that the downlink to the right page, which is to
 	 * be inserted into the parent page in the second phase of a page split be
 	 * a strict lower bound on items on the right page, and a non-strict upper
@@ -2342,10 +2305,7 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 							  BTreeTupleGetHeapTID(firstright)) < 0);
 #endif
 
-	BTreeTupleSetNAtts(pivot, nkeyatts);
-	BTreeTupleSetAltHeapTID(pivot);
-
-	return pivot;
+	return tidpivot;
 }
 
 /*
