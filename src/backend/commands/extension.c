@@ -751,7 +751,7 @@ execute_sql_string(const char *sql)
 										   NULL,
 										   0,
 										   NULL);
-		stmt_list = pg_plan_queries(stmt_list, CURSOR_OPT_PARALLEL_OK, NULL);
+		stmt_list = pg_plan_queries(stmt_list, sql, CURSOR_OPT_PARALLEL_OK, NULL);
 
 		foreach(lc2, stmt_list)
 		{
