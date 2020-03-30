@@ -1147,8 +1147,6 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 
 		if (PageIsNew(page))
 		{
-			bool		still_new;
-
 			/*
 			 * All-zeroes pages can be left over if either a backend extends
 			 * the relation by a single page, but crashes before the newly
@@ -1156,36 +1154,28 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			 * the relation (which creates a number of empty pages at the tail
 			 * end of the relation, but enters them into the FSM).
 			 *
-			 * Make sure these pages are in the FSM, to ensure they can be
-			 * reused. Do that by testing if there's any space recorded for
-			 * the page. If not, enter it.
-			 *
 			 * Note we do not enter the page into the visibilitymap. That has
 			 * the downside that we repeatedly visit this page in subsequent
 			 * vacuums, but otherwise we'll never not discover the space on a
 			 * promoted standby. The harm of repeated checking ought to
 			 * normally not be too bad - the space usually should be used at
 			 * some point, otherwise there wouldn't be any regular vacuums.
+			 *
+			 * Make sure these pages are in the FSM, to ensure they can be
+			 * reused. Do that by testing if there's any space recorded for
+			 * the page. If not, enter it. We do so after releasing the lock
+			 * on the heap page, the FSM is approximate, after all.
 			 */
-
-			/*
-			 * Perform checking of FSM after releasing lock, the fsm is
-			 * approximate, after all.
-			 */
-			still_new = PageIsNew(page);
 			UnlockReleaseBuffer(buf);
 
-			if (still_new)
+			empty_pages++;
+
+			if (GetRecordedFreeSpace(onerel, blkno) == 0)
 			{
-				empty_pages++;
+				Size		freespace;
 
-				if (GetRecordedFreeSpace(onerel, blkno) == 0)
-				{
-					Size		freespace;
-
-					freespace = BufferGetPageSize(buf) - SizeOfPageHeaderData;
-					RecordPageWithFreeSpace(onerel, blkno, freespace);
-				}
+				freespace = BufferGetPageSize(buf) - SizeOfPageHeaderData;
+				RecordPageWithFreeSpace(onerel, blkno, freespace);
 			}
 			continue;
 		}
