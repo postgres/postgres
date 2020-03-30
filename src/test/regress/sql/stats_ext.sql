@@ -191,7 +191,7 @@ INSERT INTO ndistinct (a, b, c, filler1)
             cash_words(mod(i,33)::int::money)
        FROM generate_series(1,5000) s(i);
 
-ANALYZE ndistinct;
+VACUUM (ANALYZE) ndistinct;
 
 SELECT s.stxkind, d.stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
@@ -245,7 +245,7 @@ CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
 INSERT INTO functional_dependencies (a, b, c, filler1)
      SELECT mod(i, 23), mod(i, 29), mod(i, 31), i FROM generate_series(1,5000) s(i);
 
-ANALYZE functional_dependencies;
+VACUUM (ANALYZE) functional_dependencies;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
@@ -267,7 +267,7 @@ DROP STATISTICS func_deps_stat;
 INSERT INTO functional_dependencies (a, b, c, filler1)
      SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
 
-ANALYZE functional_dependencies;
+VACUUM (ANALYZE) functional_dependencies;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
@@ -396,7 +396,7 @@ ALTER TABLE functional_dependencies ALTER COLUMN c TYPE numeric;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
-ANALYZE functional_dependencies;
+VACUUM (ANALYZE) functional_dependencies;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
@@ -742,7 +742,7 @@ INSERT INTO mcv_lists_bool (a, b, c)
          (mod(i,2) = 0), (mod(i,4) = 0), (mod(i,8) = 0)
      FROM generate_series(1,10000) s(i);
 
-ANALYZE mcv_lists_bool;
+VACUUM (ANALYZE) mcv_lists_bool;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE a AND b AND c');
 
