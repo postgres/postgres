@@ -1016,30 +1016,8 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		rows = (qc && qc->commandTag == CMDTAG_COPY) ? qc->nprocessed : 0;
 
 		/* calc differences of buffer counters. */
-		bufusage.shared_blks_hit =
-			pgBufferUsage.shared_blks_hit - bufusage_start.shared_blks_hit;
-		bufusage.shared_blks_read =
-			pgBufferUsage.shared_blks_read - bufusage_start.shared_blks_read;
-		bufusage.shared_blks_dirtied =
-			pgBufferUsage.shared_blks_dirtied - bufusage_start.shared_blks_dirtied;
-		bufusage.shared_blks_written =
-			pgBufferUsage.shared_blks_written - bufusage_start.shared_blks_written;
-		bufusage.local_blks_hit =
-			pgBufferUsage.local_blks_hit - bufusage_start.local_blks_hit;
-		bufusage.local_blks_read =
-			pgBufferUsage.local_blks_read - bufusage_start.local_blks_read;
-		bufusage.local_blks_dirtied =
-			pgBufferUsage.local_blks_dirtied - bufusage_start.local_blks_dirtied;
-		bufusage.local_blks_written =
-			pgBufferUsage.local_blks_written - bufusage_start.local_blks_written;
-		bufusage.temp_blks_read =
-			pgBufferUsage.temp_blks_read - bufusage_start.temp_blks_read;
-		bufusage.temp_blks_written =
-			pgBufferUsage.temp_blks_written - bufusage_start.temp_blks_written;
-		bufusage.blk_read_time = pgBufferUsage.blk_read_time;
-		INSTR_TIME_SUBTRACT(bufusage.blk_read_time, bufusage_start.blk_read_time);
-		bufusage.blk_write_time = pgBufferUsage.blk_write_time;
-		INSTR_TIME_SUBTRACT(bufusage.blk_write_time, bufusage_start.blk_write_time);
+		memset(&bufusage, 0, sizeof(BufferUsage));
+		BufferUsageAccumDiff(&bufusage, &pgBufferUsage, &bufusage_start);
 
 		pgss_store(queryString,
 				   0,			/* signal that it's a utility stmt */
