@@ -108,6 +108,9 @@ btvalidate(Oid opclassoid)
 				ok = check_amproc_signature(procform->amproc, BOOLOID, true,
 											1, 1, OIDOID);
 				break;
+			case BTOPTIONS_PROC:
+				ok = check_amoptsproc_signature(procform->amproc);
+				break;
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

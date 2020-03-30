@@ -25,7 +25,8 @@
 #define GIN_CONSISTENT_PROC			   4
 #define GIN_COMPARE_PARTIAL_PROC	   5
 #define GIN_TRICONSISTENT_PROC		   6
-#define GINNProcs					   6
+#define GIN_OPTIONS_PROC	   7
+#define GINNProcs					   7
 
 /*
  * searchMode settings for extractQueryFn.

@@ -112,6 +112,7 @@ bthandler(PG_FUNCTION_ARGS)
 
 	amroutine->amstrategies = BTMaxStrategyNumber;
 	amroutine->amsupport = BTNProcs;
+	amroutine->amoptsprocnum = BTOPTIONS_PROC;
 	amroutine->amcanorder = true;
 	amroutine->amcanorderbyop = false;
 	amroutine->amcanbackward = true;

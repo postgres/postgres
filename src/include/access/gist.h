@@ -16,6 +16,7 @@
 #ifndef GIST_H
 #define GIST_H
 
+#include "access/itup.h"
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
@@ -35,7 +36,8 @@
 #define GIST_EQUAL_PROC					7
 #define GIST_DISTANCE_PROC				8
 #define GIST_FETCH_PROC					9
-#define GISTNProcs					9
+#define GIST_OPTIONS_PROC				10
+#define GISTNProcs						10
 
 /*
  * Page opaque data in a GiST index page.
@@ -72,6 +74,24 @@ typedef struct GISTPageOpaqueData
 } GISTPageOpaqueData;
 
 typedef GISTPageOpaqueData *GISTPageOpaque;
+
+/*
+ * Maximum possible sizes for GiST index tuple and index key.  Calculation is
+ * based on assumption that GiST page should fit at least 4 tuples.  In theory,
+ * GiST index can be functional when page can fit 3 tuples.  But that seems
+ * rather inefficent, so we use a bit conservative estimate.
+ *
+ * The maximum size of index key is true for unicolumn index.  Therefore, this
+ * estimation should be used to figure out which maximum size of GiST index key
+ * makes sense at all.  For multicolumn indexes, user might be able to tune
+ * key size using opclass parameters.
+ */
+#define GISTMaxIndexTupleSize	\
+	MAXALIGN_DOWN((BLCKSZ - SizeOfPageHeaderData - sizeof(GISTPageOpaqueData)) / \
+				  4 - sizeof(ItemIdData))
+
+#define GISTMaxIndexKeySize	\
+	(GISTMaxIndexTupleSize - MAXALIGN(sizeof(IndexTupleData)))
 
 /*
  * The page ID is for the convenience of pg_filedump and similar utilities,

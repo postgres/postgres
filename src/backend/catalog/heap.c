@@ -725,6 +725,7 @@ CheckAttributeType(const char *attname,
 void
 InsertPgAttributeTuple(Relation pg_attribute_rel,
 					   Form_pg_attribute new_attribute,
+					   Datum attoptions,
 					   CatalogIndexState indstate)
 {
 	Datum		values[Natts_pg_attribute];
@@ -756,10 +757,11 @@ InsertPgAttributeTuple(Relation pg_attribute_rel,
 	values[Anum_pg_attribute_attislocal - 1] = BoolGetDatum(new_attribute->attislocal);
 	values[Anum_pg_attribute_attinhcount - 1] = Int32GetDatum(new_attribute->attinhcount);
 	values[Anum_pg_attribute_attcollation - 1] = ObjectIdGetDatum(new_attribute->attcollation);
+	values[Anum_pg_attribute_attoptions - 1] = attoptions;
 
 	/* start out with empty permissions and empty options */
 	nulls[Anum_pg_attribute_attacl - 1] = true;
-	nulls[Anum_pg_attribute_attoptions - 1] = true;
+	nulls[Anum_pg_attribute_attoptions - 1] = attoptions == (Datum) 0;
 	nulls[Anum_pg_attribute_attfdwoptions - 1] = true;
 	nulls[Anum_pg_attribute_attmissingval - 1] = true;
 
@@ -813,7 +815,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		/* Make sure this is OK, too */
 		attr->attstattarget = -1;
 
-		InsertPgAttributeTuple(rel, attr, indstate);
+		InsertPgAttributeTuple(rel, attr, (Datum) 0, indstate);
 
 		/* Add dependency info */
 		myself.classId = RelationRelationId;
@@ -851,7 +853,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 			/* Fill in the correct relation OID in the copied tuple */
 			attStruct.attrelid = new_rel_oid;
 
-			InsertPgAttributeTuple(rel, &attStruct, indstate);
+			InsertPgAttributeTuple(rel, &attStruct, (Datum) 0, indstate);
 		}
 	}
 

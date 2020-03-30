@@ -188,6 +188,9 @@ extern void index_store_float8_orderby_distances(IndexScanDesc scan,
 												 Oid *orderByTypes,
 												 IndexOrderByDistance *distances,
 												 bool recheckOrderBy);
+extern bytea *index_opclass_options(Relation relation, AttrNumber attnum,
+									Datum attoptions, bool validate);
+
 
 /*
  * index access method support routines (in genam.c)

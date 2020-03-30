@@ -209,15 +209,16 @@ int			ltree_strncasecmp(const char *a, const char *b, size_t s);
 
 /* GiST support for ltree */
 
+#define SIGLEN_MAX		GISTMaxIndexKeySize
+#define SIGLEN_DEFAULT	(2 * sizeof(int32))
 #define BITBYTE 8
-#define SIGLENINT  2
-#define SIGLEN	( sizeof(int32)*SIGLENINT )
-#define SIGLENBIT (SIGLEN*BITBYTE)
-typedef unsigned char BITVEC[SIGLEN];
+#define SIGLEN	(sizeof(int32) * SIGLENINT)
+#define SIGLENBIT(siglen) ((siglen) * BITBYTE)
+
 typedef unsigned char *BITVECP;
 
-#define LOOPBYTE \
-			for(i=0;i<SIGLEN;i++)
+#define LOOPBYTE(siglen) \
+			for(i = 0; i < (siglen); i++)
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
 #define GETBITBYTE(x,i) ( ((unsigned char)(x)) >> i & 0x01 )
@@ -225,8 +226,8 @@ typedef unsigned char *BITVECP;
 #define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
 #define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITBYTE )) & 0x01 )
 
-#define HASHVAL(val) (((unsigned int)(val)) % SIGLENBIT)
-#define HASH(sign, val) SETBIT((sign), HASHVAL(val))
+#define HASHVAL(val, siglen) (((unsigned int)(val)) % SIGLENBIT(siglen))
+#define HASH(sign, val, siglen) SETBIT((sign), HASHVAL(val, siglen))
 
 /*
  * type of index key for ltree. Tree are combined B-Tree and R-Tree
@@ -256,26 +257,37 @@ typedef struct
 #define LTG_ISONENODE(x) ( ((ltree_gist*)(x))->flag & LTG_ONENODE )
 #define LTG_ISALLTRUE(x) ( ((ltree_gist*)(x))->flag & LTG_ALLTRUE )
 #define LTG_ISNORIGHT(x) ( ((ltree_gist*)(x))->flag & LTG_NORIGHT )
-#define LTG_LNODE(x)	( (ltree*)( ( ((char*)(x))+LTG_HDRSIZE ) + ( LTG_ISALLTRUE(x) ? 0 : SIGLEN ) ) )
-#define LTG_RENODE(x)	( (ltree*)( ((char*)LTG_LNODE(x)) + VARSIZE(LTG_LNODE(x))) )
-#define LTG_RNODE(x)	( LTG_ISNORIGHT(x) ? LTG_LNODE(x) : LTG_RENODE(x) )
+#define LTG_LNODE(x, siglen)	( (ltree*)( ( ((char*)(x))+LTG_HDRSIZE ) + ( LTG_ISALLTRUE(x) ? 0 : (siglen) ) ) )
+#define LTG_RENODE(x, siglen)	( (ltree*)( ((char*)LTG_LNODE(x, siglen)) + VARSIZE(LTG_LNODE(x, siglen))) )
+#define LTG_RNODE(x, siglen)	( LTG_ISNORIGHT(x) ? LTG_LNODE(x, siglen) : LTG_RENODE(x, siglen) )
 
-#define LTG_GETLNODE(x) ( LTG_ISONENODE(x) ? LTG_NODE(x) : LTG_LNODE(x) )
-#define LTG_GETRNODE(x) ( LTG_ISONENODE(x) ? LTG_NODE(x) : LTG_RNODE(x) )
+#define LTG_GETLNODE(x, siglen) ( LTG_ISONENODE(x) ? LTG_NODE(x) : LTG_LNODE(x, siglen) )
+#define LTG_GETRNODE(x, siglen) ( LTG_ISONENODE(x) ? LTG_NODE(x) : LTG_RNODE(x, siglen) )
 
+extern ltree_gist *ltree_gist_alloc(bool isalltrue, BITVECP sign, int siglen,
+				 ltree *left, ltree *right);
 
 /* GiST support for ltree[] */
 
-#define ASIGLENINT	(7)
-#define ASIGLEN		(sizeof(int32)*ASIGLENINT)
-#define ASIGLENBIT (ASIGLEN*BITBYTE)
-typedef unsigned char ABITVEC[ASIGLEN];
+#define LTREE_ASIGLEN_DEFAULT	(7 * sizeof(int32))
+#define LTREE_ASIGLEN_MAX		GISTMaxIndexKeySize
+#define LTREE_GET_ASIGLEN()		(PG_HAS_OPCLASS_OPTIONS() ? \
+								 ((LtreeGistOptions *) PG_GET_OPCLASS_OPTIONS())->siglen : \
+								 LTREE_ASIGLEN_DEFAULT)
+#define ASIGLENBIT(siglen)		((siglen) * BITBYTE)
 
-#define ALOOPBYTE \
-			for(i=0;i<ASIGLEN;i++)
+#define ALOOPBYTE(siglen) \
+			for (i = 0; i < (siglen); i++)
 
-#define AHASHVAL(val) (((unsigned int)(val)) % ASIGLENBIT)
-#define AHASH(sign, val) SETBIT((sign), AHASHVAL(val))
+#define AHASHVAL(val, siglen) (((unsigned int)(val)) % ASIGLENBIT(siglen))
+#define AHASH(sign, val, siglen) SETBIT((sign), AHASHVAL(val, siglen))
+
+/* gist_ltree_ops and gist__ltree_ops opclass options */
+typedef struct
+{
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
+	int			siglen;			/* signature length in bytes */
+} LtreeGistOptions;
 
 /* type of key is the same to ltree_gist */
 

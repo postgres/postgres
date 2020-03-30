@@ -180,3 +180,6 @@ VACUUM delete_test_table;
 -- The vacuum above should've turned the leaf page into a fast root. We just
 -- need to insert some rows to cause the fast root page to split.
 INSERT INTO delete_test_table SELECT i, 1, 2, 3 FROM generate_series(1,1000) i;
+
+-- Test unsupported btree opclass parameters
+create index on btree_tall_tbl (id int4_ops(foo=1));

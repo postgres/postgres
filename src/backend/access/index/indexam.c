@@ -45,17 +45,23 @@
 
 #include "access/amapi.h"
 #include "access/heapam.h"
+#include "access/reloptions.h"
 #include "access/relscan.h"
 #include "access/tableam.h"
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "catalog/index.h"
+#include "catalog/pg_amproc.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
+#include "nodes/makefuncs.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
+#include "utils/ruleutils.h"
 #include "utils/snapmgr.h"
+#include "utils/syscache.h"
 
 
 /* ----------------------------------------------------------------
@@ -767,9 +773,9 @@ index_getprocid(Relation irel,
 
 	nproc = irel->rd_indam->amsupport;
 
-	Assert(procnum > 0 && procnum <= (uint16) nproc);
+	Assert(procnum >= 0 && procnum <= (uint16) nproc);
 
-	procindex = (nproc * (attnum - 1)) + (procnum - 1);
+	procindex = ((nproc + 1) * (attnum - 1)) + procnum;
 
 	loc = irel->rd_support;
 
@@ -797,13 +803,15 @@ index_getprocinfo(Relation irel,
 {
 	FmgrInfo   *locinfo;
 	int			nproc;
+	int			optsproc;
 	int			procindex;
 
 	nproc = irel->rd_indam->amsupport;
+	optsproc = irel->rd_indam->amoptsprocnum;
 
-	Assert(procnum > 0 && procnum <= (uint16) nproc);
+	Assert(procnum >= 0 && procnum <= (uint16) nproc);
 
-	procindex = (nproc * (attnum - 1)) + (procnum - 1);
+	procindex = ((nproc + 1) * (attnum - 1)) + procnum;
 
 	locinfo = irel->rd_supportinfo;
 
@@ -832,6 +840,17 @@ index_getprocinfo(Relation irel,
 				 procnum, attnum, RelationGetRelationName(irel));
 
 		fmgr_info_cxt(procId, locinfo, irel->rd_indexcxt);
+
+		if (procnum != optsproc)
+		{
+			/* Initialize locinfo->fn_expr with opclass options Const */
+			bytea	  **attoptions = RelationGetIndexAttOptions(irel, false);
+			MemoryContext oldcxt = MemoryContextSwitchTo(irel->rd_indexcxt);
+
+			set_fn_opclass_options(locinfo, attoptions[attnum - 1]);
+
+			MemoryContextSwitchTo(oldcxt);
+		}
 	}
 
 	return locinfo;
@@ -905,4 +924,54 @@ index_store_float8_orderby_distances(IndexScanDesc scan, Oid *orderByTypes,
 			scan->xs_orderbynulls[i] = true;
 		}
 	}
+}
+
+/* ----------------
+ *      index_opclass_options
+ *
+ *      Parse opclass-specific options for index column.
+ * ----------------
+ */
+bytea *
+index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
+					  bool validate)
+{
+	int			amoptsprocnum = indrel->rd_indam->amoptsprocnum;
+	Oid			procid = index_getprocid(indrel, attnum, amoptsprocnum);
+	FmgrInfo   *procinfo;
+	local_relopts relopts;
+
+	if (!OidIsValid(procid))
+	{
+		Oid			opclass;
+		Datum		indclassDatum;
+		oidvector  *indclass;
+		bool		isnull;
+
+		if (!DatumGetPointer(attoptions))
+			return NULL;	/* ok, no options, no procedure */
+
+		/*
+		 * Report an error if the opclass's options-parsing procedure does not
+		 * exist but the opclass options are specified.
+		 */
+		indclassDatum = SysCacheGetAttr(INDEXRELID, indrel->rd_indextuple,
+										Anum_pg_index_indclass, &isnull);
+		Assert(!isnull);
+		indclass = (oidvector *) DatumGetPointer(indclassDatum);
+		opclass = indclass->values[attnum - 1];
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("operator class %s has no options",
+						generate_opclass_name(opclass))));
+	}
+
+	init_local_reloptions(&relopts, 0);
+
+	procinfo = index_getprocinfo(indrel, attnum, amoptsprocnum);
+
+	(void) FunctionCall1(procinfo, PointerGetDatum(&relopts));
+
+	return build_local_reloptions(&relopts, attoptions, validate);
 }

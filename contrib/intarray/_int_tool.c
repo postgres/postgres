@@ -319,14 +319,14 @@ _int_unique(ArrayType *r)
 }
 
 void
-gensign(BITVEC sign, int *a, int len)
+gensign(BITVECP sign, int *a, int len, int siglen)
 {
 	int			i;
 
 	/* we assume that the sign vector is previously zeroed */
 	for (i = 0; i < len; i++)
 	{
-		HASH(sign, *a);
+		HASH(sign, *a, siglen);
 		a++;
 	}
 }

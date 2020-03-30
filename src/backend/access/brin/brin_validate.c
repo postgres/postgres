@@ -105,6 +105,9 @@ brinvalidate(Oid opclassoid)
 											3, 3, INTERNALOID, INTERNALOID,
 											INTERNALOID);
 				break;
+			case BRIN_PROCNUM_OPTIONS:
+				ok = check_amoptsproc_signature(procform->amproc);
+				break;
 			default:
 				/* Complain if it's not a valid optional proc number */
 				if (procform->amprocnum < BRIN_FIRST_OPTIONAL_PROCNUM ||

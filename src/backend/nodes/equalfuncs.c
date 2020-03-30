@@ -2572,6 +2572,7 @@ _equalIndexElem(const IndexElem *a, const IndexElem *b)
 	COMPARE_STRING_FIELD(indexcolname);
 	COMPARE_NODE_FIELD(collation);
 	COMPARE_NODE_FIELD(opclass);
+	COMPARE_NODE_FIELD(opclassopts);
 	COMPARE_SCALAR_FIELD(ordering);
 	COMPARE_SCALAR_FIELD(nulls_ordering);
 

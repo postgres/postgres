@@ -126,6 +126,10 @@ hashvalidate(Oid opclassoid)
 											   procform->amproclefttype);
 				}
 				break;
+			case HASHOPTIONS_PROC:
+				if (!check_amoptsproc_signature(procform->amproc))
+					result = false;
+				break;
 			default:
 				ereport(INFO,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

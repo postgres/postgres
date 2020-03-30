@@ -8735,6 +8735,9 @@
   proname => 'gtsvector_consistent', prorettype => 'bool',
   proargtypes => 'internal gtsvector int4 oid internal',
   prosrc => 'gtsvector_consistent_oldsig' },
+{ oid => '3434', descr => 'GiST tsvector support',
+  proname => 'gtsvector_options', prorettype => 'void', proisstrict => 'f',
+  proargtypes => 'internal', prosrc => 'gtsvector_options' },
 
 { oid => '3656', descr => 'GIN tsvector support',
   proname => 'gin_extract_tsvector', prorettype => 'internal',

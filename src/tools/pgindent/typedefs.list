@@ -841,6 +841,8 @@ GISTBuildState
 GISTENTRY
 GISTInsertStack
 GISTInsertState
+GISTIntArrayBigOptions
+GISTIntArrayOptions
 GISTNodeBuffer
 GISTNodeBufferPage
 GISTPageOpaque
@@ -908,11 +910,13 @@ GinVacuumState
 GistBufferingMode
 GistBulkDeleteResult
 GistEntryVector
+GistHstoreOptions
 GistInetKey
 GistNSN
 GistOptBufferingMode
 GistSplitUnion
 GistSplitVector
+GistTsVectorOptions
 GistVacState
 GlobalTransaction
 GrantRoleStmt
@@ -1303,6 +1307,8 @@ LogicalRepWorkerId
 LogicalRewriteMappingData
 LogicalTape
 LogicalTapeSet
+LtreeGistOptions
+LtreeSignature
 MAGIC
 MBuf
 MCVItem
@@ -2477,6 +2483,7 @@ TrgmArcInfo
 TrgmBound
 TrgmColor
 TrgmColorInfo
+TrgmGistOptions
 TrgmNFA
 TrgmPackArcInfo
 TrgmPackedArc
@@ -2875,6 +2882,7 @@ file_action_t
 file_entry_t
 file_type_t
 filemap_t
+fill_string_relopt
 finalize_primnode_context
 find_dependent_phvs_context
 find_expr_references_context
@@ -2998,6 +3006,8 @@ leaf_item
 line_t
 lineno_t
 list_qsort_comparator
+local_relopt
+local_relopts
 locale_t
 locate_agg_of_level_context
 locate_var_of_level_context
@@ -3196,6 +3206,7 @@ relopt_real
 relopt_string
 relopt_type
 relopt_value
+relopts_validator
 remoteConn
 remoteConnHashEnt
 remoteDep

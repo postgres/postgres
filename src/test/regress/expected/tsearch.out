@@ -260,6 +260,182 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
    508
 (1 row)
 
+-- Test siglen parameter of GiST tsvector_ops
+CREATE INDEX wowidx1 ON test_tsvector USING gist (a tsvector_ops(foo=1));
+ERROR:  unrecognized parameter "foo"
+CREATE INDEX wowidx1 ON test_tsvector USING gist (a tsvector_ops(siglen=0));
+ERROR:  value 0 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+CREATE INDEX wowidx1 ON test_tsvector USING gist (a tsvector_ops(siglen=2048));
+ERROR:  value 2048 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+CREATE INDEX wowidx1 ON test_tsvector USING gist (a tsvector_ops(siglen=100,foo='bar'));
+ERROR:  unrecognized parameter "foo"
+CREATE INDEX wowidx1 ON test_tsvector USING gist (a tsvector_ops(siglen=100, siglen = 200));
+ERROR:  parameter "siglen" specified more than once
+CREATE INDEX wowidx2 ON test_tsvector USING gist (a tsvector_ops(siglen=1));
+\d test_tsvector
+            Table "public.test_tsvector"
+ Column |   Type   | Collation | Nullable | Default 
+--------+----------+-----------+----------+---------
+ t      | text     |           |          | 
+ a      | tsvector |           |          | 
+Indexes:
+    "wowidx" gist (a)
+    "wowidx2" gist (a tsvector_ops (siglen='1'))
+
+DROP INDEX wowidx;
+EXPLAIN (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_tsvector
+         Recheck Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+         ->  Bitmap Index Scan on wowidx2
+               Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+(5 rows)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+ count 
+-------
+   494
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+ count 
+-------
+   508
+(1 row)
+
+DROP INDEX wowidx2;
+CREATE INDEX wowidx ON test_tsvector USING gist (a tsvector_ops(siglen=484));
+\d test_tsvector
+            Table "public.test_tsvector"
+ Column |   Type   | Collation | Nullable | Default 
+--------+----------+-----------+----------+---------
+ t      | text     |           |          | 
+ a      | tsvector |           |          | 
+Indexes:
+    "wowidx" gist (a tsvector_ops (siglen='484'))
+
+EXPLAIN (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_tsvector
+         Recheck Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+         ->  Bitmap Index Scan on wowidx
+               Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+(5 rows)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+ count 
+-------
+   494
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+ count 
+-------
+   508
+(1 row)
+
 RESET enable_seqscan;
 RESET enable_indexscan;
 RESET enable_bitmapscan;

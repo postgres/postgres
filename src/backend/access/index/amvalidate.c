@@ -21,6 +21,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "parser/parse_coerce.h"
 #include "utils/syscache.h"
 
@@ -180,6 +181,16 @@ check_amproc_signature(Oid funcid, Oid restype, bool exact,
 
 	ReleaseSysCache(tp);
 	return result;
+}
+
+/*
+ * Validate the signature of an opclass options support function, that should
+ * be 'void(internal)'.
+ */
+bool
+check_amoptsproc_signature(Oid funcid)
+{
+	return check_amproc_signature(funcid, VOIDOID, true, 1, 1, INTERNALOID);
 }
 
 /*

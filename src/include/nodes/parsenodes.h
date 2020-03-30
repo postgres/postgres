@@ -701,6 +701,7 @@ typedef struct IndexElem
 	char	   *indexcolname;	/* name for index column; NULL = default */
 	List	   *collation;		/* name of collation; NIL = default */
 	List	   *opclass;		/* name of desired opclass; NIL = default */
+	List	   *opclassopts;	/* opclass-specific options, or NIL */
 	SortByDir	ordering;		/* ASC/DESC/default */
 	SortByNulls nulls_ordering; /* FIRST/LAST/default */
 } IndexElem;

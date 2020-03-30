@@ -22,7 +22,8 @@
 
 /* Support procedures numbers */
 #define BLOOM_HASH_PROC			1
-#define BLOOM_NPROC				1
+#define BLOOM_OPTIONS_PROC		2
+#define BLOOM_NPROC				2
 
 /* Scan strategies */
 #define BLOOM_EQUAL_STRATEGY	1

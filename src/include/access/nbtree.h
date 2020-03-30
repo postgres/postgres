@@ -587,7 +587,8 @@ BTreeTupleGetMaxHeapTID(IndexTuple itup)
 #define BTSORTSUPPORT_PROC	2
 #define BTINRANGE_PROC		3
 #define BTEQUALIMAGE_PROC	4
-#define BTNProcs			4
+#define BTOPTIONS_PROC		5
+#define BTNProcs			5
 
 /*
  *	We need to be able to tell the difference between read and write

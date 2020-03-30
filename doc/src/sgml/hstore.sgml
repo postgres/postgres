@@ -468,6 +468,23 @@ CREATE INDEX hidx ON testhstore USING GIN (h);
 </programlisting>
 
   <para>
+   <literal>gist_hstore_ops</literal> GiST opclass approximates set of
+   key/value pairs as a bitmap signature.  Optional integer parameter
+   <literal>siglen</literal> of <literal>gist_hstore_ops</literal> determines
+   signature length in bytes.  Default signature length is 16 bytes.
+   Valid values of signature length are between 1 and 2024 bytes.  Longer
+   signatures leads to more precise search (scan less fraction of index, scan
+   less heap pages), but larger index.
+  </para>
+
+  <para>
+   Example of creating such an index with a signature length of 32 bytes:
+  </para>
+<programlisting>
+  CREATE INDEX hidx ON testhstore USING GIST (h gist_hstore_ops(siglen=32));
+</programlisting>
+
+  <para>
    <type>hstore</type> also supports <type>btree</type> or <type>hash</type> indexes for
    the <literal>=</literal> operator. This allows <type>hstore</type> columns to be
    declared <literal>UNIQUE</literal>, or to be used in <literal>GROUP BY</literal>,

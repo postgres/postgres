@@ -548,6 +548,166 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
 (1 row)
 
 DROP INDEX text_idx;
+CREATE INDEX text_idx on test__int using gist (a gist__int_ops(numranges = 0));
+ERROR:  value 0 out of bounds for option "numranges"
+DETAIL:  Valid values are between "1" and "252".
+CREATE INDEX text_idx on test__int using gist (a gist__int_ops(numranges = 253));
+ERROR:  value 253 out of bounds for option "numranges"
+DETAIL:  Valid values are between "1" and "252".
+CREATE INDEX text_idx on test__int using gist (a gist__int_ops(numranges = 252));
+SELECT count(*) from test__int WHERE a && '{23,50}';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23|50';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from test__int WHERE a @> '{23,50}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23&50';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @> '{20,23}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a <@ '{73,23,20}';
+ count 
+-------
+    10
+(1 row)
+
+SELECT count(*) from test__int WHERE a = '{73,23,20}';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '50&68';
+ count 
+-------
+     9
+(1 row)
+
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '20 | !21';
+ count 
+-------
+  6566
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!20 & !21';
+ count 
+-------
+  6343
+(1 row)
+
+DROP INDEX text_idx;
+CREATE INDEX text_idx on test__int using gist (a gist__intbig_ops(siglen = 0));
+ERROR:  value 0 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+CREATE INDEX text_idx on test__int using gist (a gist__intbig_ops(siglen = 2025));
+ERROR:  value 2025 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+CREATE INDEX text_idx on test__int using gist (a gist__intbig_ops(siglen = 2024));
+SELECT count(*) from test__int WHERE a && '{23,50}';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23|50';
+ count 
+-------
+   403
+(1 row)
+
+SELECT count(*) from test__int WHERE a @> '{23,50}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '23&50';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a @> '{20,23}';
+ count 
+-------
+    12
+(1 row)
+
+SELECT count(*) from test__int WHERE a <@ '{73,23,20}';
+ count 
+-------
+    10
+(1 row)
+
+SELECT count(*) from test__int WHERE a = '{73,23,20}';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '50&68';
+ count 
+-------
+     9
+(1 row)
+
+SELECT count(*) from test__int WHERE a @> '{20,23}' or a @> '{50,68}';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '(20&23)|(50&68)';
+ count 
+-------
+    21
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '20 | !21';
+ count 
+-------
+  6566
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!20 & !21';
+ count 
+-------
+  6343
+(1 row)
+
+DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
  count 

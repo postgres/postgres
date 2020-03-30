@@ -888,3 +888,10 @@ test_support_func(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(ret);
 }
+
+PG_FUNCTION_INFO_V1(test_opclass_options_func);
+Datum
+test_opclass_options_func(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_NULL();
+}

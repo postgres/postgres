@@ -64,6 +64,10 @@ CREATE FUNCTION test_support_func(internal)
     RETURNS internal
     AS '@libdir@/regress@DLSUFFIX@', 'test_support_func'
     LANGUAGE C STRICT;
+CREATE FUNCTION test_opclass_options_func(internal)
+    RETURNS void
+    AS '@libdir@/regress@DLSUFFIX@', 'test_opclass_options_func'
+    LANGUAGE C;
 -- Things that shouldn't work:
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'SELECT ''not an integer'';';

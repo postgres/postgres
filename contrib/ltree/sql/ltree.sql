@@ -280,6 +280,26 @@ SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
 SELECT * FROM ltreetest WHERE t ~ '23.*.2' order by t asc;
 SELECT * FROM ltreetest WHERE t ? '{23.*.1,23.*.2}' order by t asc;
 
+drop index tstidx;
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=0));
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2025));
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2024));
+
+SELECT count(*) FROM ltreetest WHERE t <  '12.3';
+SELECT count(*) FROM ltreetest WHERE t <= '12.3';
+SELECT count(*) FROM ltreetest WHERE t =  '12.3';
+SELECT count(*) FROM ltreetest WHERE t >= '12.3';
+SELECT count(*) FROM ltreetest WHERE t >  '12.3';
+SELECT count(*) FROM ltreetest WHERE t @> '1.1.1';
+SELECT count(*) FROM ltreetest WHERE t <@ '1.1.1';
+SELECT count(*) FROM ltreetest WHERE t @ '23 & 1';
+SELECT count(*) FROM ltreetest WHERE t ~ '1.1.1.*';
+SELECT count(*) FROM ltreetest WHERE t ~ '*.1';
+SELECT count(*) FROM ltreetest WHERE t ~ '23.*{1}.1';
+SELECT count(*) FROM ltreetest WHERE t ~ '23.*.1';
+SELECT count(*) FROM ltreetest WHERE t ~ '23.*.2';
+SELECT count(*) FROM ltreetest WHERE t ? '{23.*.1,23.*.2}';
+
 create table _ltreetest (t ltree[]);
 \copy _ltreetest FROM 'data/_ltree.data'
 
@@ -295,6 +315,21 @@ SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
 
 create index _tstidx on _ltreetest using gist (t);
 set enable_seqscan=off;
+
+SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
+SELECT count(*) FROM _ltreetest WHERE t <@ '1.1.1' ;
+SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.2' ;
+SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
+
+drop index _tstidx;
+create index _tstidx on _ltreetest using gist (t gist__ltree_ops(siglen=0));
+create index _tstidx on _ltreetest using gist (t gist__ltree_ops(siglen=2025));
+create index _tstidx on _ltreetest using gist (t gist__ltree_ops(siglen=2024));
 
 SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
 SELECT count(*) FROM _ltreetest WHERE t <@ '1.1.1' ;

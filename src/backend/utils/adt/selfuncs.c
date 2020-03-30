@@ -6367,6 +6367,7 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 				Oid clause_op, Datum query,
 				GinQualCounts *counts)
 {
+	FmgrInfo	flinfo;
 	Oid			extractProcOid;
 	Oid			collation;
 	int			strategy_op;
@@ -6416,15 +6417,19 @@ gincost_pattern(IndexOptInfo *index, int indexcol,
 	else
 		collation = DEFAULT_COLLATION_OID;
 
-	OidFunctionCall7Coll(extractProcOid,
-						 collation,
-						 query,
-						 PointerGetDatum(&nentries),
-						 UInt16GetDatum(strategy_op),
-						 PointerGetDatum(&partial_matches),
-						 PointerGetDatum(&extra_data),
-						 PointerGetDatum(&nullFlags),
-						 PointerGetDatum(&searchMode));
+	fmgr_info(extractProcOid, &flinfo);
+
+	set_fn_opclass_options(&flinfo, index->opclassoptions[indexcol]);
+
+	FunctionCall7Coll(&flinfo,
+					  collation,
+					  query,
+					  PointerGetDatum(&nentries),
+					  UInt16GetDatum(strategy_op),
+					  PointerGetDatum(&partial_matches),
+					  PointerGetDatum(&extra_data),
+					  PointerGetDatum(&nullFlags),
+					  PointerGetDatum(&searchMode));
 
 	if (nentries <= 0 && searchMode == GIN_SEARCH_MODE_DEFAULT)
 	{

@@ -265,7 +265,7 @@
   </para>
 
   <para>
-   Two GiST index operator classes are provided:
+   Two parametrized GiST index operator classes are provided:
    <literal>gist__int_ops</literal> (used by default) is suitable for
    small- to medium-size data sets, while
    <literal>gist__intbig_ops</literal> uses a larger signature and is more
@@ -273,6 +273,25 @@
    a large number of distinct array values).
    The implementation uses an RD-tree data structure with
    built-in lossy compression.
+  </para>
+   
+  <para>
+   <literal>gist__int_ops</literal> approximates integer set as an array of
+   integer ranges.  Optional integer parameter <literal>numranges</literal> of
+   <literal>gist__int_ops</literal> determines maximum number of ranges in
+   one index key.  Default value of <literal>numranges</literal> is 100.
+   Valid values are between 1 and 253.  Using larger arrays as GiST index
+   keys leads to more precise search (scan less fraction of index, scan less
+   heap pages), but larger index.
+  </para>
+   
+  <para>
+   <literal>gist__intbig_ops</literal> approximates integer set as a bitmap
+   signature.  Optional integer parameter <literal>siglen</literal> of
+   <literal>gist__intbig_ops</literal> determines signature length in bytes.
+   Default signature length is 16 bytes.  Valid values of signature length
+   are between 1 and 2024 bytes.  Longer signatures leads to more precise
+   search (scan less fraction of index, scan less heap pages), but larger index.
   </para>
 
   <para>
@@ -293,8 +312,8 @@
 -- a message can be in one or more <quote>sections</quote>
 CREATE TABLE message (mid INT PRIMARY KEY, sections INT[], ...);
 
--- create specialized index
-CREATE INDEX message_rdtree_idx ON message USING GIST (sections gist__int_ops);
+-- create specialized index with sigature length of 32 bytes
+CREATE INDEX message_rdtree_idx ON message USING GIST (sections gist__int_ops(siglen=32));
 
 -- select messages in section 1 OR 2 - OVERLAP operator
 SELECT message.mid FROM message WHERE message.sections &amp;&amp; '{1,2}';

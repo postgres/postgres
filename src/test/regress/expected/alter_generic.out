@@ -353,10 +353,10 @@ ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 0 < (int4, int2); -- ope
 ERROR:  invalid operator number 0, must be between 1 and 5
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 1 < ; -- operator without argument types
 ERROR:  operator argument types must be specified in ALTER OPERATOR FAMILY
-ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 0 btint42cmp(int4, int2); -- function number should be between 1 and 5
-ERROR:  invalid function number 0, must be between 1 and 4
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 0 btint42cmp(int4, int2); -- invalid options parsing function
+ERROR:  invalid function number 0, must be between 1 and 5
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 6 btint42cmp(int4, int2); -- function number should be between 1 and 5
-ERROR:  invalid function number 6, must be between 1 and 4
+ERROR:  invalid function number 6, must be between 1 and 5
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD STORAGE invalid_storage; -- Ensure STORAGE is not a part of ALTER OPERATOR FAMILY
 ERROR:  STORAGE cannot be specified in ALTER OPERATOR FAMILY
 DROP OPERATOR FAMILY alt_opf4 USING btree;
@@ -500,6 +500,18 @@ ERROR:  btree equal image functions must not be cross-type
 ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
 ERROR:  function 2(integer,integer) does not exist in operator family "alt_opf18"
 DROP OPERATOR FAMILY alt_opf18 USING btree;
+-- Should fail. Invalid opclass options function (#5) specifications.
+CREATE OPERATOR FAMILY alt_opf19 USING btree;
+ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 test_opclass_options_func(internal, text[], bool);
+ERROR:  function test_opclass_options_func(internal, text[], boolean) does not exist
+ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 (int4) btint42cmp(int4, int2);
+ERROR:  invalid opclass options parsing function
+HINT:  opclass options parsing function must have signature '(internal) RETURNS void'
+ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 (int4, int2) btint42cmp(int4, int2);
+ERROR:  left and right associated data types for opclass options parsing functions must match
+ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 (int4) test_opclass_options_func(internal); -- Ok
+ALTER OPERATOR FAMILY alt_opf19 USING btree DROP FUNCTION 5 (int4, int4);
+DROP OPERATOR FAMILY alt_opf19 USING btree;
 --
 -- Statistics
 --

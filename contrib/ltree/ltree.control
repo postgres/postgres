@@ -1,6 +1,6 @@
 # ltree extension
 comment = 'data type for hierarchical tree-like structures'
-default_version = '1.1'
+default_version = '1.2'
 module_pathname = '$libdir/ltree'
 relocatable = true
 trusted = true

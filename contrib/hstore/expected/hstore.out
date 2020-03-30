@@ -1345,6 +1345,51 @@ select count(*) from testhstore where h ?& ARRAY['public','disabled'];
 (1 row)
 
 drop index hidx;
+create index hidx on testhstore using gist(h gist_hstore_ops(siglen=0));
+ERROR:  value 0 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+create index hidx on testhstore using gist(h gist_hstore_ops(siglen=2025));
+ERROR:  value 2025 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+create index hidx on testhstore using gist(h gist_hstore_ops(siglen=2024));
+set enable_seqscan=off;
+select count(*) from testhstore where h @> 'wait=>NULL';
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from testhstore where h @> 'wait=>CC';
+ count 
+-------
+    15
+(1 row)
+
+select count(*) from testhstore where h @> 'wait=>CC, public=>t';
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from testhstore where h ? 'public';
+ count 
+-------
+   194
+(1 row)
+
+select count(*) from testhstore where h ?| ARRAY['public','disabled'];
+ count 
+-------
+   337
+(1 row)
+
+select count(*) from testhstore where h ?& ARRAY['public','disabled'];
+ count 
+-------
+    42
+(1 row)
+
+drop index hidx;
 create index hidx on testhstore using gin (h);
 set enable_seqscan=off;
 select count(*) from testhstore where h @> 'wait=>NULL';

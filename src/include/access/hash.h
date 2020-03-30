@@ -352,7 +352,8 @@ typedef struct HashOptions
  */
 #define HASHSTANDARD_PROC		1
 #define HASHEXTENDED_PROC		2
-#define HASHNProcs				2
+#define HASHOPTIONS_PROC		3
+#define HASHNProcs				3
 
 
 /* public routines */

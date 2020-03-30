@@ -73,17 +73,16 @@ typedef struct
 #define TRGMHDRSIZE		  (VARHDRSZ + sizeof(uint8))
 
 /* gist */
+#define SIGLEN_DEFAULT	(sizeof(int) * 3)
+#define SIGLEN_MAX		GISTMaxIndexKeySize
 #define BITBYTE 8
-#define SIGLENINT  3			/* >122 => key will toast, so very slow!!! */
-#define SIGLEN	( sizeof(int)*SIGLENINT )
 
-#define SIGLENBIT (SIGLEN*BITBYTE - 1)	/* see makesign */
+#define SIGLENBIT(siglen) ((siglen) * BITBYTE - 1)	/* see makesign */
 
-typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
 
-#define LOOPBYTE \
-			for(i=0;i<SIGLEN;i++)
+#define LOOPBYTE(siglen) \
+			for (i = 0; i < (siglen); i++)
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
 #define GETBITBYTE(x,i) ( (((char)(x)) >> (i)) & 0x01 )
@@ -91,8 +90,8 @@ typedef char *BITVECP;
 #define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
 #define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITBYTE )) & 0x01 )
 
-#define HASHVAL(val) (((unsigned int)(val)) % SIGLENBIT)
-#define HASH(sign, val) SETBIT((sign), HASHVAL(val))
+#define HASHVAL(val, siglen) (((unsigned int)(val)) % SIGLENBIT(siglen))
+#define HASH(sign, val, siglen) SETBIT((sign), HASHVAL(val, siglen))
 
 #define ARRKEY			0x01
 #define SIGNKEY			0x02
@@ -102,7 +101,7 @@ typedef char *BITVECP;
 #define ISSIGNKEY(x)	( ((TRGM*)x)->flag & SIGNKEY )
 #define ISALLTRUE(x)	( ((TRGM*)x)->flag & ALLISTRUE )
 
-#define CALCGTSIZE(flag, len) ( TRGMHDRSIZE + ( ( (flag) & ARRKEY ) ? ((len)*sizeof(trgm)) : (((flag) & ALLISTRUE) ? 0 : SIGLEN) ) )
+#define CALCGTSIZE(flag, len) ( TRGMHDRSIZE + ( ( (flag) & ARRKEY ) ? ((len)*sizeof(trgm)) : (((flag) & ALLISTRUE) ? 0 : (len)) ) )
 #define GETSIGN(x)		( (BITVECP)( (char*)x+TRGMHDRSIZE ) )
 #define GETARR(x)		( (trgm*)( (char*)x+TRGMHDRSIZE ) )
 #define ARRNELEM(x) ( ( VARSIZE(x) - TRGMHDRSIZE )/sizeof(trgm) )

@@ -29,6 +29,7 @@ typedef struct OpFamilyOpFuncGroup
 extern List *identify_opfamily_groups(CatCList *oprlist, CatCList *proclist);
 extern bool check_amproc_signature(Oid funcid, Oid restype, bool exact,
 								   int minargs, int maxargs,...);
+extern bool check_amoptsproc_signature(Oid funcid);
 extern bool check_amop_signature(Oid opno, Oid restype,
 								 Oid lefttype, Oid righttype);
 extern bool opfamily_can_sort_type(Oid opfamilyoid, Oid datatypeoid);

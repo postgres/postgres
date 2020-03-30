@@ -177,6 +177,7 @@ typedef struct RelationData
 	Oid		   *rd_exclprocs;	/* OIDs of exclusion ops' procs, if any */
 	uint16	   *rd_exclstrats;	/* exclusion ops' strategy numbers, if any */
 	Oid		   *rd_indcollation;	/* OIDs of index collations */
+	bytea	  **rd_opcoptions;	/* parsed opclass-specific options */
 
 	/*
 	 * rd_amcache is available for index and table AMs to cache private data

@@ -1426,7 +1426,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	amsupport = relation->rd_indam->amsupport;
 	if (amsupport > 0)
 	{
-		int			nsupport = indnatts * amsupport;
+		int			nsupport = indnatts * (amsupport + 1);
 
 		relation->rd_support = (RegProcedure *)
 			MemoryContextAllocZero(indexcxt, nsupport * sizeof(RegProcedure));
@@ -1490,6 +1490,8 @@ RelationInitIndexAccessInfo(Relation relation)
 	indoption = (int2vector *) DatumGetPointer(indoptionDatum);
 	memcpy(relation->rd_indoption, indoption->values, indnkeyatts * sizeof(int16));
 
+	(void) RelationGetIndexAttOptions(relation, false);
+
 	/*
 	 * expressions, predicate, exclusion caches will be filled later
 	 */
@@ -1539,9 +1541,9 @@ IndexSupportInitialize(oidvector *indclass,
 		opFamily[attIndex] = opcentry->opcfamily;
 		opcInType[attIndex] = opcentry->opcintype;
 		if (maxSupportNumber > 0)
-			memcpy(&indexSupport[attIndex * maxSupportNumber],
+			memcpy(&indexSupport[attIndex * (maxSupportNumber + 1)],
 				   opcentry->supportProcs,
-				   maxSupportNumber * sizeof(RegProcedure));
+				   (maxSupportNumber + 1) * sizeof(RegProcedure));
 	}
 }
 
@@ -1606,7 +1608,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 		if (numSupport > 0)
 			opcentry->supportProcs = (RegProcedure *)
 				MemoryContextAllocZero(CacheMemoryContext,
-									   numSupport * sizeof(RegProcedure));
+									   (numSupport + 1) * sizeof(RegProcedure));
 		else
 			opcentry->supportProcs = NULL;
 	}
@@ -1693,13 +1695,12 @@ LookupOpclassInfo(Oid operatorClassOid,
 		{
 			Form_pg_amproc amprocform = (Form_pg_amproc) GETSTRUCT(htup);
 
-			if (amprocform->amprocnum <= 0 ||
+			if (amprocform->amprocnum < 0 ||
 				(StrategyNumber) amprocform->amprocnum > numSupport)
 				elog(ERROR, "invalid amproc number %d for opclass %u",
 					 amprocform->amprocnum, operatorClassOid);
 
-			opcentry->supportProcs[amprocform->amprocnum - 1] =
-				amprocform->amproc;
+			opcentry->supportProcs[amprocform->amprocnum] = amprocform->amproc;
 		}
 
 		systable_endscan(scan);
@@ -3980,6 +3981,8 @@ load_critical_index(Oid indexoid, Oid heapoid)
 	ird->rd_refcnt = 1;
 	UnlockRelationOid(indexoid, AccessShareLock);
 	UnlockRelationOid(heapoid, AccessShareLock);
+
+	(void) RelationGetIndexAttOptions(ird, false);
 }
 
 /*
@@ -5186,6 +5189,100 @@ GetRelationPublicationActions(Relation relation)
 }
 
 /*
+ * RelationGetIndexRawAttOptions -- get AM/opclass-specific options for the index
+ */
+Datum *
+RelationGetIndexRawAttOptions(Relation indexrel)
+{
+	Oid			indexrelid = RelationGetRelid(indexrel);
+	int16		natts = RelationGetNumberOfAttributes(indexrel);
+	Datum	   *options = NULL;
+	int16		attnum;
+
+	for (attnum = 1; attnum <= natts; attnum++)
+	{
+		if (!OidIsValid(index_getprocid(indexrel, attnum,
+										indexrel->rd_indam->amoptsprocnum)))
+			continue;
+
+		if (!options)
+			options = palloc0(sizeof(Datum) * natts);
+
+		options[attnum - 1] = get_attoptions(indexrelid, attnum);
+	}
+
+	return options;
+}
+
+static bytea **
+CopyIndexAttOptions(bytea **srcopts, int natts)
+{
+	bytea	  **opts = palloc(sizeof(*opts) * natts);
+
+	for (int i = 0; i < natts; i++)
+	{
+		bytea	   *opt = srcopts[i];
+
+		opts[i] = !opt ? NULL : (bytea *)
+			DatumGetPointer(datumCopy(PointerGetDatum(opt), false, -1));
+	}
+
+	return opts;
+}
+
+/*
+ * RelationGetIndexAttOptions
+ *		get AM/opclass-specific options for an index parsed into a binary form
+ */
+bytea **
+RelationGetIndexAttOptions(Relation relation, bool copy)
+{
+	MemoryContext oldcxt;
+	bytea	  **opts = relation->rd_opcoptions;
+	Oid			relid = RelationGetRelid(relation);
+	int			natts = RelationGetNumberOfAttributes(relation);	/* XXX IndexRelationGetNumberOfKeyAttributes */
+	int			i;
+
+	/* Try to copy cached options. */
+	if (opts)
+		return copy ? CopyIndexAttOptions(opts, natts) : opts;
+
+	/* Get and parse opclass options. */
+	opts = palloc0(sizeof(*opts) * natts);
+
+	for (i = 0; i < natts; i++)
+	{
+		if (criticalRelcachesBuilt && relid != AttributeRelidNumIndexId)
+		{
+			Datum		attoptions = get_attoptions(relid, i + 1);
+
+			opts[i] = index_opclass_options(relation, i + 1, attoptions, false);
+
+			if (attoptions != (Datum) 0)
+				pfree(DatumGetPointer(attoptions));
+		}
+	}
+
+	/* Copy parsed options to the cache. */
+	oldcxt = MemoryContextSwitchTo(relation->rd_indexcxt);
+	relation->rd_opcoptions = CopyIndexAttOptions(opts, natts);
+	MemoryContextSwitchTo(oldcxt);
+
+	if (copy)
+		return opts;
+
+	for (i = 0; i < natts; i++)
+	{
+		if (opts[i])
+			pfree(opts[i]);
+	}
+
+	pfree(opts);
+
+	return relation->rd_opcoptions;
+}
+
+/*
  * Routines to support ereport() reports of relation-related errors
  *
  * These could have been put into elog.c, but it seems like a module layering
@@ -5546,8 +5643,25 @@ load_relcache_init_file(bool shared)
 
 			rel->rd_indoption = indoption;
 
+			/* finally, read the vector of opcoptions values */
+			rel->rd_opcoptions = (bytea **)
+				MemoryContextAllocZero(indexcxt, sizeof(*rel->rd_opcoptions) * relform->relnatts);
+
+			for (i = 0; i < relform->relnatts; i++)
+			{
+				if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
+					goto read_failed;
+
+				if (len > 0)
+				{
+					rel->rd_opcoptions[i] = (bytea *) MemoryContextAlloc(indexcxt, len);
+					if (fread(rel->rd_opcoptions[i], 1, len, fp) != len)
+						goto read_failed;
+				}
+			}
+
 			/* set up zeroed fmgr-info vector */
-			nsupport = relform->relnatts * rel->rd_indam->amsupport;
+			nsupport = relform->relnatts * (rel->rd_indam->amsupport + 1);
 			rel->rd_supportinfo = (FmgrInfo *)
 				MemoryContextAllocZero(indexcxt, nsupport * sizeof(FmgrInfo));
 		}
@@ -5574,6 +5688,7 @@ load_relcache_init_file(bool shared)
 			Assert(rel->rd_supportinfo == NULL);
 			Assert(rel->rd_indoption == NULL);
 			Assert(rel->rd_indcollation == NULL);
+			Assert(rel->rd_opcoptions == NULL);
 		}
 
 		/*
@@ -5847,7 +5962,7 @@ write_relcache_init_file(bool shared)
 
 			/* next, write the vector of support procedure OIDs */
 			write_item(rel->rd_support,
-					   relform->relnatts * (rel->rd_indam->amsupport * sizeof(RegProcedure)),
+					   relform->relnatts * ((rel->rd_indam->amsupport + 1) * sizeof(RegProcedure)),
 					   fp);
 
 			/* next, write the vector of collation OIDs */
@@ -5859,6 +5974,16 @@ write_relcache_init_file(bool shared)
 			write_item(rel->rd_indoption,
 					   relform->relnatts * sizeof(int16),
 					   fp);
+
+			Assert(rel->rd_opcoptions);
+
+			/* finally, write the vector of opcoptions values */
+			for (i = 0; i < relform->relnatts; i++)
+			{
+				bytea	   *opt = rel->rd_opcoptions[i];
+
+				write_item(opt, opt ? VARSIZE(opt) : 0, fp);
+			}
 		}
 	}
 

@@ -6085,7 +6085,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	ReleaseSysCache(typeTuple);
 
-	InsertPgAttributeTuple(attrdesc, &attribute, NULL);
+	InsertPgAttributeTuple(attrdesc, &attribute, (Datum) 0, NULL);
 
 	table_close(attrdesc, RowExclusiveLock);
 

@@ -7637,6 +7637,98 @@ SELECT * FROM ltreetest WHERE t ? '{23.*.1,23.*.2}' order by t asc;
  23.3.32.21.5.14.10.17.1
 (4 rows)
 
+drop index tstidx;
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=0));
+ERROR:  value 0 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2025));
+ERROR:  value 2025 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+create index tstidx on ltreetest using gist (t gist_ltree_ops(siglen=2024));
+SELECT count(*) FROM ltreetest WHERE t <  '12.3';
+ count 
+-------
+   123
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t <= '12.3';
+ count 
+-------
+   124
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t =  '12.3';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t >= '12.3';
+ count 
+-------
+   883
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t >  '12.3';
+ count 
+-------
+   882
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t @> '1.1.1';
+ count 
+-------
+     4
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t <@ '1.1.1';
+ count 
+-------
+     4
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t @ '23 & 1';
+ count 
+-------
+    39
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t ~ '1.1.1.*';
+ count 
+-------
+     4
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t ~ '*.1';
+ count 
+-------
+    34
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t ~ '23.*{1}.1';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t ~ '23.*.1';
+ count 
+-------
+     3
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t ~ '23.*.2';
+ count 
+-------
+     1
+(1 row)
+
+SELECT count(*) FROM ltreetest WHERE t ? '{23.*.1,23.*.2}';
+ count 
+-------
+     4
+(1 row)
+
 create table _ltreetest (t ltree[]);
 \copy _ltreetest FROM 'data/_ltree.data'
 SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
@@ -7695,6 +7787,68 @@ SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
 
 create index _tstidx on _ltreetest using gist (t);
 set enable_seqscan=off;
+SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
+ count 
+-------
+    15
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t <@ '1.1.1' ;
+ count 
+-------
+    19
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t @ '23 & 1' ;
+ count 
+-------
+   147
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
+ count 
+-------
+    19
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
+ count 
+-------
+   109
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
+ count 
+-------
+     5
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
+ count 
+-------
+    11
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.2' ;
+ count 
+-------
+     5
+(1 row)
+
+SELECT count(*) FROM _ltreetest WHERE t ? '{23.*.1,23.*.2}' ;
+ count 
+-------
+    15
+(1 row)
+
+drop index _tstidx;
+create index _tstidx on _ltreetest using gist (t gist__ltree_ops(siglen=0));
+ERROR:  value 0 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+create index _tstidx on _ltreetest using gist (t gist__ltree_ops(siglen=2025));
+ERROR:  value 2025 out of bounds for option "siglen"
+DETAIL:  Valid values are between "1" and "2024".
+create index _tstidx on _ltreetest using gist (t gist__ltree_ops(siglen=2024));
 SELECT count(*) FROM _ltreetest WHERE t @> '1.1.1' ;
  count 
 -------
