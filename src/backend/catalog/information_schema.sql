@@ -1670,6 +1670,7 @@ INSERT INTO sql_parts VALUES ('10', 'Object Language Bindings (SQL/OLB)', 'NO', 
 INSERT INTO sql_parts VALUES ('11', 'Information and Definition Schema (SQL/Schemata)', 'NO', NULL, '');
 INSERT INTO sql_parts VALUES ('13', 'Routines and Types Using the Java Programming Language (SQL/JRT)', 'NO', NULL, '');
 INSERT INTO sql_parts VALUES ('14', 'XML-Related Specifications (SQL/XML)', 'NO', NULL, '');
+INSERT INTO sql_parts VALUES ('15', 'Multi-Dimensional Arrays (SQL/MDA)', 'NO', NULL, '');
 
 
 /*
