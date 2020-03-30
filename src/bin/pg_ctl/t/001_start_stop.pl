@@ -29,7 +29,7 @@ print $conf "port = $node_port\n";
 print $conf TestLib::slurp_file($ENV{TEMP_CONFIG})
   if defined $ENV{TEMP_CONFIG};
 
-if (!$windows_os)
+if ($use_unix_sockets)
 {
 	print $conf "listen_addresses = ''\n";
 	print $conf "unix_socket_directories = '$tempdir_short'\n";

@@ -292,7 +292,7 @@ stop_postmaster(void)
  * remove the directory.  Ignore errors; leaking a temporary directory is
  * unimportant.  This can run from a signal handler.  The code is not
  * acceptable in a Windows signal handler (see initdb.c:trapsig()), but
- * on Windows, pg_regress does not use Unix sockets.
+ * on Windows, pg_regress does not use Unix sockets by default.
  */
 static void
 remove_temp(void)
@@ -2106,6 +2106,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{NULL, 0, NULL, 0}
 	};
 
+	bool		use_unix_sockets;
 	_stringlist *sl;
 	int			c;
 	int			i;
@@ -2121,14 +2122,22 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 
 	atexit(stop_postmaster);
 
-#if !defined(HAVE_UNIX_SOCKETS) || defined(WIN32)
+#if !defined(HAVE_UNIX_SOCKETS)
+	use_unix_sockets = false;
+#elif defined(WIN32)
+
 	/*
-	 * No Unix-domain sockets available, so change default.  For now, we also
-	 * don't use them on Windows, even if the build supports them.  (See
-	 * comment at remove_temp() for a reason.)
+	 * We don't use Unix-domain sockets on Windows by default, even if the
+	 * build supports them.  (See comment at remove_temp() for a reason.)
+	 * Override at your own risk.
 	 */
-	hostname = "localhost";
+	use_unix_sockets = getenv("PG_TEST_USE_UNIX_SOCKETS") ? true : false;
+#else
+	use_unix_sockets = true;
 #endif
+
+	if (!use_unix_sockets)
+		hostname = "localhost";
 
 	/*
 	 * We call the initialization function here because that way we can set
@@ -2243,7 +2252,8 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 	if (config_auth_datadir)
 	{
 #ifdef ENABLE_SSPI
-		config_sspi_auth(config_auth_datadir, user);
+		if (!use_unix_sockets)
+			config_sspi_auth(config_auth_datadir, user);
 #endif
 		exit(0);
 	}
@@ -2364,13 +2374,15 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		fclose(pg_conf);
 
 #ifdef ENABLE_SSPI
-
-		/*
-		 * Since we successfully used the same buffer for the much-longer
-		 * "initdb" command, this can't truncate.
-		 */
-		snprintf(buf, sizeof(buf), "%s/data", temp_instance);
-		config_sspi_auth(buf, NULL);
+		if (!use_unix_sockets)
+		{
+			/*
+			 * Since we successfully used the same buffer for the much-longer
+			 * "initdb" command, this can't truncate.
+			 */
+			snprintf(buf, sizeof(buf), "%s/data", temp_instance);
+			config_sspi_auth(buf, NULL);
+		}
 #elif !defined(HAVE_UNIX_SOCKETS)
 #error Platform has no means to secure the test installation.
 #endif

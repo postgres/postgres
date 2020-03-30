@@ -1,16 +1,15 @@
 # Test password normalization in SCRAM.
 #
-# This test cannot run on Windows as Postgres cannot be set up with Unix
-# sockets and needs to go through SSPI.
+# This test can only run with Unix-domain sockets.
 
 use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
 use Test::More;
-if ($windows_os)
+if (!$use_unix_sockets)
 {
-	plan skip_all => "authentication tests cannot run on Windows";
+	plan skip_all => "authentication tests cannot run without Unix-domain sockets";
 }
 else
 {
