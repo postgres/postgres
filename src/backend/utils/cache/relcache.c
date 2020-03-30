@@ -1426,7 +1426,7 @@ RelationInitIndexAccessInfo(Relation relation)
 	amsupport = relation->rd_indam->amsupport;
 	if (amsupport > 0)
 	{
-		int			nsupport = indnatts * (amsupport + 1);
+		int			nsupport = indnatts * amsupport;
 
 		relation->rd_support = (RegProcedure *)
 			MemoryContextAllocZero(indexcxt, nsupport * sizeof(RegProcedure));
@@ -1541,9 +1541,9 @@ IndexSupportInitialize(oidvector *indclass,
 		opFamily[attIndex] = opcentry->opcfamily;
 		opcInType[attIndex] = opcentry->opcintype;
 		if (maxSupportNumber > 0)
-			memcpy(&indexSupport[attIndex * (maxSupportNumber + 1)],
+			memcpy(&indexSupport[attIndex * maxSupportNumber],
 				   opcentry->supportProcs,
-				   (maxSupportNumber + 1) * sizeof(RegProcedure));
+				   maxSupportNumber * sizeof(RegProcedure));
 	}
 }
 
@@ -1695,12 +1695,13 @@ LookupOpclassInfo(Oid operatorClassOid,
 		{
 			Form_pg_amproc amprocform = (Form_pg_amproc) GETSTRUCT(htup);
 
-			if (amprocform->amprocnum < 0 ||
+			if (amprocform->amprocnum <= 0 ||
 				(StrategyNumber) amprocform->amprocnum > numSupport)
 				elog(ERROR, "invalid amproc number %d for opclass %u",
 					 amprocform->amprocnum, operatorClassOid);
 
-			opcentry->supportProcs[amprocform->amprocnum] = amprocform->amproc;
+			opcentry->supportProcs[amprocform->amprocnum - 1] =
+				amprocform->amproc;
 		}
 
 		systable_endscan(scan);
@@ -5201,6 +5202,9 @@ RelationGetIndexRawAttOptions(Relation indexrel)
 
 	for (attnum = 1; attnum <= natts; attnum++)
 	{
+		if (indexrel->rd_indam->amoptsprocnum == 0)
+			continue;
+
 		if (!OidIsValid(index_getprocid(indexrel, attnum,
 										indexrel->rd_indam->amoptsprocnum)))
 			continue;
@@ -5661,7 +5665,7 @@ load_relcache_init_file(bool shared)
 			}
 
 			/* set up zeroed fmgr-info vector */
-			nsupport = relform->relnatts * (rel->rd_indam->amsupport + 1);
+			nsupport = relform->relnatts * rel->rd_indam->amsupport;
 			rel->rd_supportinfo = (FmgrInfo *)
 				MemoryContextAllocZero(indexcxt, nsupport * sizeof(FmgrInfo));
 		}
@@ -5962,7 +5966,7 @@ write_relcache_init_file(bool shared)
 
 			/* next, write the vector of support procedure OIDs */
 			write_item(rel->rd_support,
-					   relform->relnatts * ((rel->rd_indam->amsupport + 1) * sizeof(RegProcedure)),
+					   relform->relnatts * (rel->rd_indam->amsupport * sizeof(RegProcedure)),
 					   fp);
 
 			/* next, write the vector of collation OIDs */

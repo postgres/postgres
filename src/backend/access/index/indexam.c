@@ -773,9 +773,9 @@ index_getprocid(Relation irel,
 
 	nproc = irel->rd_indam->amsupport;
 
-	Assert(procnum >= 0 && procnum <= (uint16) nproc);
+	Assert(procnum > 0 && procnum <= (uint16) nproc);
 
-	procindex = ((nproc + 1) * (attnum - 1)) + procnum;
+	procindex = (nproc * (attnum - 1)) + (procnum - 1);
 
 	loc = irel->rd_support;
 
@@ -809,9 +809,9 @@ index_getprocinfo(Relation irel,
 	nproc = irel->rd_indam->amsupport;
 	optsproc = irel->rd_indam->amoptsprocnum;
 
-	Assert(procnum >= 0 && procnum <= (uint16) nproc);
+	Assert(procnum > 0 && procnum <= (uint16) nproc);
 
-	procindex = ((nproc + 1) * (attnum - 1)) + procnum;
+	procindex = (nproc * (attnum - 1)) + (procnum - 1);
 
 	locinfo = irel->rd_supportinfo;
 
@@ -937,9 +937,13 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 					  bool validate)
 {
 	int			amoptsprocnum = indrel->rd_indam->amoptsprocnum;
-	Oid			procid = index_getprocid(indrel, attnum, amoptsprocnum);
+	Oid			procid = InvalidOid;
 	FmgrInfo   *procinfo;
 	local_relopts relopts;
+
+	/* fetch options support procedure if specified */
+	if (amoptsprocnum != 0)
+		procid =index_getprocid(indrel, attnum, amoptsprocnum);
 
 	if (!OidIsValid(procid))
 	{
