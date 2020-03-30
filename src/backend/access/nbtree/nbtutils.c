@@ -2205,7 +2205,8 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	{
 		IndexTuple	tidpivot;
 
-		pivot = index_truncate_tuple(itupdesc, firstright, keepnatts);
+		pivot = index_truncate_tuple(itupdesc, firstright,
+									 Min(keepnatts, nkeyatts));
 
 		if (BTreeTupleIsPosting(pivot))
 		{
@@ -2250,6 +2251,10 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 		/*
 		 * No truncation was possible, since key attributes are all equal.
 		 * It's necessary to add a heap TID attribute to the new pivot tuple.
+		 *
+		 * This path is only taken when rel is not an INCLUDE index.  It
+		 * avoids a second palloc0() by avoiding the index_truncate_tuple()
+		 * call completely.
 		 */
 		Assert(natts == nkeyatts);
 		newsize = IndexTupleSize(firstright) + MAXALIGN(sizeof(ItemPointerData));
