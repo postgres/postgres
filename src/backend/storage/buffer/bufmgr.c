@@ -49,6 +49,7 @@
 #include "storage/proc.h"
 #include "storage/smgr.h"
 #include "storage/standby.h"
+#include "utils/ps_status.h"
 #include "utils/rel.h"
 #include "utils/resowner_private.h"
 #include "utils/timestamp.h"
@@ -3616,6 +3617,7 @@ void
 LockBufferForCleanup(Buffer buffer)
 {
 	BufferDesc *bufHdr;
+	char	   *new_status = NULL;
 
 	Assert(BufferIsValid(buffer));
 	Assert(PinCountWaitBuf == NULL);
@@ -3650,6 +3652,13 @@ LockBufferForCleanup(Buffer buffer)
 		{
 			/* Successfully acquired exclusive lock with pincount 1 */
 			UnlockBufHdr(bufHdr, buf_state);
+
+			/* Report change to non-waiting status */
+			if (new_status)
+			{
+				set_ps_display(new_status);
+				pfree(new_status);
+			}
 			return;
 		}
 		/* Failed, so mark myself as waiting for pincount 1 */
@@ -3668,6 +3677,20 @@ LockBufferForCleanup(Buffer buffer)
 		/* Wait to be signaled by UnpinBuffer() */
 		if (InHotStandby)
 		{
+			/* Report change to waiting status */
+			if (update_process_title && new_status == NULL)
+			{
+				const char *old_status;
+				int			len;
+
+				old_status = get_ps_display(&len);
+				new_status = (char *) palloc(len + 8 + 1);
+				memcpy(new_status, old_status, len);
+				strcpy(new_status + len, " waiting");
+				set_ps_display(new_status);
+				new_status[len] = '\0'; /* truncate off " waiting" */
+			}
+
 			/* Publish the bufid that Startup process waits on */
 			SetStartupBufferPinWaitBufId(buffer - 1);
 			/* Set alarm and then wait to be signaled by UnpinBuffer() */
