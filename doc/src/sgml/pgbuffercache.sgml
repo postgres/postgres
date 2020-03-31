@@ -148,27 +148,28 @@
   <title>Sample Output</title>
 
 <screen>
-regression=# SELECT c.relname, count(*) AS buffers
+regression=# SELECT n.nspname, c.relname, count(*) AS buffers
              FROM pg_buffercache b INNER JOIN pg_class c
              ON b.relfilenode = pg_relation_filenode(c.oid) AND
                 b.reldatabase IN (0, (SELECT oid FROM pg_database
                                       WHERE datname = current_database()))
-             GROUP BY c.relname
-             ORDER BY 2 DESC
+             JOIN pg_namespace n ON n.oid = c.relnamespace
+             GROUP BY n.nspname, c.relname
+             ORDER BY 3 DESC
              LIMIT 10;
 
-             relname             | buffers
----------------------------------+---------
- tenk2                           |     345
- tenk1                           |     141
- pg_proc                         |      46
- pg_class                        |      45
- pg_attribute                    |      43
- pg_class_relname_nsp_index      |      30
- pg_proc_proname_args_nsp_index  |      28
- pg_attribute_relid_attnam_index |      26
- pg_depend                       |      22
- pg_depend_reference_index       |      20
+  nspname   |        relname         | buffers
+------------+------------------------+---------
+ public     | delete_test_table      |     593
+ public     | delete_test_table_pkey |     494
+ pg_catalog | pg_attribute           |     472
+ public     | quad_poly_tbl          |     353
+ public     | tenk2                  |     349
+ public     | tenk1                  |     349
+ public     | gin_test_idx           |     306
+ pg_catalog | pg_largeobject         |     206
+ public     | gin_test_tbl           |     188
+ public     | spgist_text_tbl        |     182
 (10 rows)
 </screen>
  </sect2>
