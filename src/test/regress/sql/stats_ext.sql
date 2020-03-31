@@ -1,8 +1,10 @@
 -- Generic extended statistics support
 
--- We will be checking execution plans without/with statistics, so
--- let's make sure we get simple non-parallel plans. Also set the
--- work_mem low so that we can use small amounts of data.
+--
+-- Note: tables for which we check estimated row counts should be created
+-- with autovacuum_enabled = off, so that we don't have unstable results
+-- from auto-analyze happening when we didn't expect it.
+--
 
 -- check the number of estimated/actual rows in the top node
 create function check_estimated_rows(text) returns table (estimated int, actual int)
@@ -137,7 +139,8 @@ CREATE TABLE ndistinct (
     filler3 DATE,
     c INT,
     d INT
-);
+)
+WITH (autovacuum_enabled = off);
 
 -- over-estimates when using only per-column statistics
 INSERT INTO ndistinct (a, b, c, filler1)
@@ -191,7 +194,7 @@ INSERT INTO ndistinct (a, b, c, filler1)
             cash_words(mod(i,33)::int::money)
        FROM generate_series(1,5000) s(i);
 
-VACUUM (ANALYZE) ndistinct;
+ANALYZE ndistinct;
 
 SELECT s.stxkind, d.stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
@@ -236,7 +239,8 @@ CREATE TABLE functional_dependencies (
     filler3 DATE,
     c INT,
     d TEXT
-);
+)
+WITH (autovacuum_enabled = off);
 
 CREATE INDEX fdeps_ab_idx ON functional_dependencies (a, b);
 CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
@@ -245,7 +249,7 @@ CREATE INDEX fdeps_abc_idx ON functional_dependencies (a, b, c);
 INSERT INTO functional_dependencies (a, b, c, filler1)
      SELECT mod(i, 23), mod(i, 29), mod(i, 31), i FROM generate_series(1,5000) s(i);
 
-VACUUM (ANALYZE) functional_dependencies;
+ANALYZE functional_dependencies;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
@@ -267,7 +271,7 @@ DROP STATISTICS func_deps_stat;
 INSERT INTO functional_dependencies (a, b, c, filler1)
      SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
 
-VACUUM (ANALYZE) functional_dependencies;
+ANALYZE functional_dependencies;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
@@ -396,7 +400,7 @@ ALTER TABLE functional_dependencies ALTER COLUMN c TYPE numeric;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
-VACUUM (ANALYZE) functional_dependencies;
+ANALYZE functional_dependencies;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1'' AND c = 1');
 
@@ -406,7 +410,8 @@ CREATE TABLE functional_dependencies_multi (
 	b INTEGER,
 	c INTEGER,
 	d INTEGER
-);
+)
+WITH (autovacuum_enabled = off);
 
 INSERT INTO functional_dependencies_multi (a, b, c, d)
     SELECT
@@ -448,13 +453,14 @@ CREATE TABLE mcv_lists (
     filler3 DATE,
     c INT,
     d TEXT
-);
+)
+WITH (autovacuum_enabled = off);
 
 -- random data (no MCV list)
 INSERT INTO mcv_lists (a, b, c, filler1)
      SELECT mod(i,37), mod(i,41), mod(i,43), mod(i,47) FROM generate_series(1,5000) s(i);
 
-VACUUM (ANALYZE) mcv_lists;
+ANALYZE mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
@@ -476,7 +482,7 @@ DROP STATISTICS mcv_lists_stats;
 INSERT INTO mcv_lists (a, b, c, filler1)
      SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
 
-VACUUM (ANALYZE) mcv_lists;
+ANALYZE mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
@@ -589,7 +595,7 @@ ALTER TABLE mcv_lists ALTER COLUMN c TYPE numeric;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
-VACUUM (ANALYZE) mcv_lists;
+ANALYZE mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = 1 AND b = ''1''');
 
@@ -605,7 +611,7 @@ INSERT INTO mcv_lists (a, b, c, filler1)
          i
      FROM generate_series(1,5000) s(i);
 
-VACUUM (ANALYZE) mcv_lists;
+ANALYZE mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IS NULL AND b IS NULL');
 
@@ -635,7 +641,8 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a IN (0, 1) AN
 -- test pg_mcv_list_items with a very simple (single item) MCV list
 TRUNCATE mcv_lists;
 INSERT INTO mcv_lists (a, b, c) SELECT 1, 2, 3 FROM generate_series(1,1000) s(i);
-VACUUM (ANALYZE) mcv_lists;
+ANALYZE mcv_lists;
+
 SELECT m.*
   FROM pg_statistic_ext s, pg_statistic_ext_data d,
        pg_mcv_list_items(d.stxdmcv) m
@@ -654,7 +661,7 @@ INSERT INTO mcv_lists (a, b, c, d)
          (CASE WHEN mod(i,2) = 0 THEN NULL ELSE 'x' END)
      FROM generate_series(1,5000) s(i);
 
-VACUUM (ANALYZE) mcv_lists;
+ANALYZE mcv_lists;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE b = ''x'' OR d = ''x''');
 
@@ -685,7 +692,8 @@ CREATE TABLE mcv_lists_uuid (
     a UUID,
     b UUID,
     c UUID
-);
+)
+WITH (autovacuum_enabled = off);
 
 INSERT INTO mcv_lists_uuid (a, b, c)
      SELECT
@@ -716,7 +724,8 @@ CREATE TABLE mcv_lists_arrays (
     a TEXT[],
     b NUMERIC[],
     c INT[]
-);
+)
+WITH (autovacuum_enabled = off);
 
 INSERT INTO mcv_lists_arrays (a, b, c)
      SELECT
@@ -735,14 +744,15 @@ CREATE TABLE mcv_lists_bool (
     a BOOL,
     b BOOL,
     c BOOL
-);
+)
+WITH (autovacuum_enabled = off);
 
 INSERT INTO mcv_lists_bool (a, b, c)
      SELECT
          (mod(i,2) = 0), (mod(i,4) = 0), (mod(i,8) = 0)
      FROM generate_series(1,10000) s(i);
 
-VACUUM (ANALYZE) mcv_lists_bool;
+ANALYZE mcv_lists_bool;
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists_bool WHERE a AND b AND c');
 
@@ -771,7 +781,8 @@ CREATE TABLE mcv_lists_multi (
 	b INTEGER,
 	c INTEGER,
 	d INTEGER
-);
+)
+WITH (autovacuum_enabled = off);
 
 INSERT INTO mcv_lists_multi (a, b, c, d)
     SELECT
