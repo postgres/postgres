@@ -24,6 +24,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 
 SHLIB_LINK_INTERNAL = -lpgcommon_shlib -lpgport_shlib
 SHLIB_LINK += $(filter -lintl -lm, $(LIBS))
+SHLIB_PREREQS = submake-libpgport
 
 SHLIB_EXPORTS = exports.txt
 
