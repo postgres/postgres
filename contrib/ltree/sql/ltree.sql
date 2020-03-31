@@ -100,6 +100,7 @@ SELECT '*{65536}'::lquery;
 SELECT '*{,65534}'::lquery;
 SELECT '*{,65535}'::lquery;
 SELECT '*{,65536}'::lquery;
+SELECT '*{4,3}'::lquery;
 
 SELECT '1.2'::ltree  < '2.2'::ltree;
 SELECT '1.2'::ltree  <= '2.2'::ltree;

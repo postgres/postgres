@@ -38,6 +38,6 @@ $$;
 -- because it will try to parse the Python list as an ltree input
 -- string.
 SELECT test2();
-ERROR:  syntax error at position 0
+ERROR:  ltree syntax error at character 1
 CONTEXT:  while creating return value
 PL/Python function "test2"
