@@ -22,15 +22,13 @@
   </indexterm>
 
   <para>
-   A database is a named collection of <acronym>SQL</acronym> objects
-   (<quote>database objects</quote>).  Generally, every database
-   object (tables, functions, etc.) belongs to one and only one
-   database.  (However there are a few system catalogs, for example
-   <literal>pg_database</literal>, that belong to a whole cluster and
-   are accessible from each database within the cluster.)  More
-   accurately, a database is a collection of schemas and the schemas
-   contain the tables, functions, etc.  So the full hierarchy is:
-   server, database, schema, table (or some other kind of object,
+   A small number of objects, like role, database, and tablespace
+   names, are defined at the cluster level and stored in the
+   <literal>pg_global</literal> tablespace.  Inside the cluster are
+   multiple databases, which are isolated from each other but can access
+   cluster-level objects.  Inside each database are multiple schemas,
+   which contain objects like tables and functions.  So the full hierarchy
+   is: cluster, database, schema, table (or some other kind of object,
    such as a function).
   </para>
 
