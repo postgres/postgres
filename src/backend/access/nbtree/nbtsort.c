@@ -908,6 +908,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 	 * assume that suffix truncation neither enlarges nor shrinks new high key
 	 * when applying soft limit, except when last tuple has a posting list.)
 	 */
+	Assert(last_truncextra == 0 || isleaf);
 	if (pgspc < itupsz + (isleaf ? MAXALIGN(sizeof(ItemPointerData)) : 0) ||
 		(pgspc + last_truncextra < state->btps_full && last_off > P_FIRSTKEY))
 	{
@@ -983,6 +984,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 			ii = PageGetItemId(opage, OffsetNumberPrev(last_off));
 			lastleft = (IndexTuple) PageGetItem(opage, ii);
 
+			Assert(IndexTupleSize(oitup) > last_truncextra);
 			truncated = _bt_truncate(wstate->index, lastleft, oitup,
 									 wstate->inskey);
 			if (!PageIndexTupleOverwrite(opage, P_HIKEY, (Item) truncated,
