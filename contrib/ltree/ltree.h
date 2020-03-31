@@ -65,14 +65,20 @@ typedef struct
 /*
  * In an lquery_level, "flag" contains the union of the variants' flags
  * along with possible LQL_xxx flags; so those bit sets can't overlap.
+ *
+ * "low" and "high" are nominally the minimum and maximum number of matches.
+ * However, for backwards compatibility with pre-v13 on-disk lqueries,
+ * non-'*' levels (those with numvar > 0) only have valid low/high if the
+ * LQL_COUNT flag is set; otherwise those fields are zero, but the behavior
+ * is as if they were both 1.
  */
 typedef struct
 {
 	uint16		totallen;		/* total length of this level, in bytes */
 	uint16		flag;			/* see LQL_xxx and LVAR_xxx flags */
 	uint16		numvar;			/* number of variants; 0 means '*' */
-	uint16		low;			/* minimum repeat count for '*' */
-	uint16		high;			/* maximum repeat count for '*' */
+	uint16		low;			/* minimum repeat count */
+	uint16		high;			/* maximum repeat count */
 	/* Array of maxalign'd lquery_variant structs follows: */
 	char		variants[FLEXIBLE_ARRAY_MEMBER];
 } lquery_level;
@@ -82,6 +88,7 @@ typedef struct
 #define LQL_FIRST(x)	( (lquery_variant*)( ((char*)(x))+LQL_HDRSIZE ) )
 
 #define LQL_NOT		0x10		/* level has '!' (NOT) prefix */
+#define LQL_COUNT	0x20		/* level is non-'*' and has repeat counts */
 
 #ifdef LOWER_NODE
 #define FLG_CANLOOKSIGN(x) ( ( (x) & ( LQL_NOT | LVAR_ANYEND | LVAR_SUBLEXEME ) ) == 0 )

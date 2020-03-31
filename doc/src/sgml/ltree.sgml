@@ -60,7 +60,8 @@
      <type>lquery</type> represents a regular-expression-like pattern
      for matching <type>ltree</type> values.  A simple word matches that
      label within a path.  A star symbol (<literal>*</literal>) matches zero
-     or more labels.  For example:
+     or more labels.  These can be joined with dots to form a pattern that
+     must match the whole label path.  For example:
 <synopsis>
 foo         <lineannotation>Match the exact label path <literal>foo</literal></lineannotation>
 *.foo.*     <lineannotation>Match any label path containing the label <literal>foo</literal></lineannotation>
@@ -69,19 +70,25 @@ foo         <lineannotation>Match the exact label path <literal>foo</literal></l
     </para>
 
     <para>
-     Star symbols can also be quantified to restrict how many labels
-     they can match:
+     Both star symbols and simple words can be quantified to restrict how many
+     labels they can match:
 <synopsis>
 *{<replaceable>n</replaceable>}        <lineannotation>Match exactly <replaceable>n</replaceable> labels</lineannotation>
 *{<replaceable>n</replaceable>,}       <lineannotation>Match at least <replaceable>n</replaceable> labels</lineannotation>
 *{<replaceable>n</replaceable>,<replaceable>m</replaceable>}      <lineannotation>Match at least <replaceable>n</replaceable> but not more than <replaceable>m</replaceable> labels</lineannotation>
-*{,<replaceable>m</replaceable>}       <lineannotation>Match at most <replaceable>m</replaceable> labels &mdash; same as </lineannotation> *{0,<replaceable>m</replaceable>}
+*{,<replaceable>m</replaceable>}       <lineannotation>Match at most <replaceable>m</replaceable> labels &mdash; same as </lineannotation>*{0,<replaceable>m</replaceable>}
+foo{<replaceable>n</replaceable>,<replaceable>m</replaceable>}    <lineannotation>Match at least <replaceable>n</replaceable> but not more than <replaceable>m</replaceable> occurrences of <literal>foo</literal></lineannotation>
+foo{,}      <lineannotation>Match any number of occurrences of <literal>foo</literal>, including zero</lineannotation>
 </synopsis>
+     In the absence of any explicit quantifier, the default for a star symbol
+     is to match any number of labels (that is, <literal>{,}</literal>) while
+     the default for a non-star item is to match exactly once (that
+     is, <literal>{1}</literal>).
     </para>
 
     <para>
      There are several modifiers that can be put at the end of a non-star
-     label in <type>lquery</type> to make it match more than just the exact match:
+     <type>lquery</type> item to make it match more than just the exact match:
 <synopsis>
 @           <lineannotation>Match case-insensitively, for example <literal>a@</literal> matches <literal>A</literal></lineannotation>
 *           <lineannotation>Match any label with this prefix, for example <literal>foo*</literal> matches <literal>foobar</literal></lineannotation>
@@ -97,17 +104,20 @@ foo         <lineannotation>Match the exact label path <literal>foo</literal></l
     </para>
 
     <para>
-     Also, you can write several possibly-modified labels separated with
-     <literal>|</literal> (OR) to match any of those labels, and you can put
-     <literal>!</literal> (NOT) at the start to match any label that doesn't
-     match any of the alternatives.
+     Also, you can write several possibly-modified non-star items separated with
+     <literal>|</literal> (OR) to match any of those items, and you can put
+     <literal>!</literal> (NOT) at the start of a non-star group to match any
+     label that doesn't match any of the alternatives.  A quantifier, if any,
+     goes at the end of the group; it means some number of matches for the
+     group as a whole (that is, some number of labels matching or not matching
+     any of the alternatives).
     </para>
 
     <para>
      Here's an annotated example of <type>lquery</type>:
 <programlisting>
-Top.*{0,2}.sport*@.!football|tennis.Russ*|Spain
-a.  b.     c.      d.               e.
+Top.*{0,2}.sport*@.!football|tennis{1,}.Russ*|Spain
+a.  b.     c.      d.                   e.
 </programlisting>
      This query will match any label path that:
     </para>
@@ -129,8 +139,8 @@ a.  b.     c.      d.               e.
      </listitem>
      <listitem>
       <para>
-       then a label not matching <literal>football</literal> nor
-       <literal>tennis</literal>
+       then has one or more labels, none of which
+       match <literal>football</literal> nor <literal>tennis</literal>
       </para>
      </listitem>
      <listitem>
@@ -632,7 +642,7 @@ ltreetest=&gt; SELECT path FROM test WHERE path ~ '*.Astronomy.*';
  Top.Collections.Pictures.Astronomy.Astronauts
 (7 rows)
 
-ltreetest=&gt; SELECT path FROM test WHERE path ~ '*.!pictures@.*.Astronomy.*';
+ltreetest=&gt; SELECT path FROM test WHERE path ~ '*.!pictures@.Astronomy.*';
                 path
 ------------------------------------
  Top.Science.Astronomy

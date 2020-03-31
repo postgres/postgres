@@ -317,6 +317,23 @@ lquery_in(PG_FUNCTION_ARGS)
 
 				state = LQPRS_WAITVAR;
 			}
+			else if (charlen == 1 && t_iseq(ptr, '{'))
+			{
+				lptr->len = ptr - lptr->start -
+					((lptr->flag & LVAR_SUBLEXEME) ? 1 : 0) -
+					((lptr->flag & LVAR_INCASE) ? 1 : 0) -
+					((lptr->flag & LVAR_ANYEND) ? 1 : 0);
+				if (lptr->wlen > LTREE_LABEL_MAX_CHARS)
+					ereport(ERROR,
+							(errcode(ERRCODE_NAME_TOO_LONG),
+							 errmsg("label string is too long"),
+							 errdetail("Label length is %d, must be at most %d, at character %d.",
+									   lptr->wlen, LTREE_LABEL_MAX_CHARS,
+									   pos)));
+
+				curqlevel->flag |= LQL_COUNT;
+				state = LQPRS_WAITFNUM;
+			}
 			else if (charlen == 1 && t_iseq(ptr, '.'))
 			{
 				lptr->len = ptr - lptr->start -
@@ -348,6 +365,7 @@ lquery_in(PG_FUNCTION_ARGS)
 				state = LQPRS_WAITFNUM;
 			else if (charlen == 1 && t_iseq(ptr, '.'))
 			{
+				/* We only get here for '*', so these are correct defaults */
 				curqlevel->low = 0;
 				curqlevel->high = LTREE_MAX_LEVELS;
 				curqlevel = NEXTLEV(curqlevel);
@@ -567,7 +585,11 @@ lquery_out(PG_FUNCTION_ARGS)
 	{
 		totallen++;
 		if (curqlevel->numvar)
+		{
 			totallen += 1 + (curqlevel->numvar * 4) + curqlevel->totallen;
+			if (curqlevel->flag & LQL_COUNT)
+				totallen += 2 * 11 + 3;
+		}
 		else
 			totallen += 2 * 11 + 4;
 		curqlevel = LQL_NEXT(curqlevel);
@@ -619,26 +641,37 @@ lquery_out(PG_FUNCTION_ARGS)
 		}
 		else
 		{
+			*ptr = '*';
+			ptr++;
+		}
+
+		if ((curqlevel->flag & LQL_COUNT) || curqlevel->numvar == 0)
+		{
 			if (curqlevel->low == curqlevel->high)
 			{
-				sprintf(ptr, "*{%d}", curqlevel->low);
+				sprintf(ptr, "{%d}", curqlevel->low);
 			}
 			else if (curqlevel->low == 0)
 			{
 				if (curqlevel->high == LTREE_MAX_LEVELS)
 				{
-					*ptr = '*';
-					*(ptr + 1) = '\0';
+					if (curqlevel->numvar == 0)
+					{
+						/* This is default for '*', so print nothing */
+						*ptr = '\0';
+					}
+					else
+						sprintf(ptr, "{,}");
 				}
 				else
-					sprintf(ptr, "*{,%d}", curqlevel->high);
+					sprintf(ptr, "{,%d}", curqlevel->high);
 			}
 			else if (curqlevel->high == LTREE_MAX_LEVELS)
 			{
-				sprintf(ptr, "*{%d,}", curqlevel->low);
+				sprintf(ptr, "{%d,}", curqlevel->low);
 			}
 			else
-				sprintf(ptr, "*{%d,%d}", curqlevel->low, curqlevel->high);
+				sprintf(ptr, "{%d,%d}", curqlevel->low, curqlevel->high);
 			ptr = strchr(ptr, '\0');
 		}
 
