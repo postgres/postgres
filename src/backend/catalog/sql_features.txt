@@ -522,7 +522,7 @@ T631	IN predicate with one list element			YES
 T641	Multiple column assignment			NO	only some syntax variants supported
 T651	SQL-schema statements in SQL routines			YES	
 T652	SQL-dynamic statements in SQL routines			NO	
-T653	SQL-schema statements in external routines			NO	
+T653	SQL-schema statements in external routines			YES	
 T654	SQL-dynamic statements in external routines			NO	
 T655	Cyclically dependent routines			YES	
 T811	Basic SQL/JSON constructor functions			NO	
