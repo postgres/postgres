@@ -636,8 +636,8 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 			}
 			appendStringInfo(&buf, msgfmt,
 							 get_database_name(MyDatabaseId),
-							 get_namespace_name(RelationGetNamespace(onerel)),
-							 RelationGetRelationName(onerel),
+							 vacrelstats->relnamespace,
+							 vacrelstats->relname,
 							 vacrelstats->num_index_scans);
 			appendStringInfo(&buf, _("pages: %u removed, %u remain, %u skipped due to pins, %u skipped frozen\n"),
 							 vacrelstats->pages_removed,
@@ -808,7 +808,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 			if (params->nworkers > 0)
 				ereport(WARNING,
 						(errmsg("disabling parallel option of vacuum on \"%s\" --- cannot vacuum temporary tables in parallel",
-								RelationGetRelationName(onerel))));
+								vacrelstats->relname)));
 		}
 		else
 			lps = begin_parallel_vacuum(RelationGetRelid(onerel), Irel,
@@ -1693,7 +1693,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 	if (vacuumed_pages)
 		ereport(elevel,
 				(errmsg("\"%s\": removed %.0f row versions in %u pages",
-						RelationGetRelationName(onerel),
+						vacrelstats->relname,
 						tups_vacuumed, vacuumed_pages)));
 
 	/*
@@ -1722,7 +1722,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 
 	ereport(elevel,
 			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages",
-					RelationGetRelationName(onerel),
+					vacrelstats->relname,
 					tups_vacuumed, num_tuples,
 					vacrelstats->scanned_pages, nblocks),
 			 errdetail_internal("%s", buf.data)));
@@ -1854,7 +1854,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 
 	ereport(elevel,
 			(errmsg("\"%s\": removed %d row versions in %d pages",
-					RelationGetRelationName(onerel),
+					vacrelstats->relname,
 					tupindex, npages),
 			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 
@@ -2402,7 +2402,7 @@ lazy_vacuum_index(Relation indrel, IndexBulkDeleteResult **stats,
 
 	ereport(elevel,
 			(errmsg(msg,
-					RelationGetRelationName(indrel),
+					vacrelstats->indname,
 					dead_tuples->num_tuples),
 			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 
@@ -2565,7 +2565,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 				vacrelstats->lock_waiter_detected = true;
 				ereport(elevel,
 						(errmsg("\"%s\": stopping truncate due to conflicting lock request",
-								RelationGetRelationName(onerel))));
+								vacrelstats->relname)));
 				return;
 			}
 
@@ -2631,7 +2631,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 
 		ereport(elevel,
 				(errmsg("\"%s\": truncated %u to %u pages",
-						RelationGetRelationName(onerel),
+						vacrelstats->relname,
 						old_rel_pages, new_rel_pages),
 				 errdetail_internal("%s",
 									pg_rusage_show(&ru0))));
@@ -2696,7 +2696,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 				{
 					ereport(elevel,
 							(errmsg("\"%s\": suspending truncate due to conflicting lock request",
-									RelationGetRelationName(onerel))));
+									vacrelstats->relname)));
 
 					vacrelstats->lock_waiter_detected = true;
 					return blkno;
