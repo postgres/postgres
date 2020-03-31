@@ -21,6 +21,7 @@
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
+#include "access/xlogarchive.h"
 #include "common/archive.h"
 #include "miscadmin.h"
 #include "postmaster/startup.h"
