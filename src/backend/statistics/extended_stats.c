@@ -493,12 +493,14 @@ statext_store(Oid statOid,
 			  MVNDistinct *ndistinct, MVDependencies *dependencies,
 			  MCVList *mcv, VacAttrStats **stats)
 {
+	Relation	pg_stextdata;
 	HeapTuple	stup,
 				oldtup;
 	Datum		values[Natts_pg_statistic_ext_data];
 	bool		nulls[Natts_pg_statistic_ext_data];
 	bool		replaces[Natts_pg_statistic_ext_data];
-	Relation	pg_stextdata;
+
+	pg_stextdata = table_open(StatisticExtDataRelationId, RowExclusiveLock);
 
 	memset(nulls, true, sizeof(nulls));
 	memset(replaces, false, sizeof(replaces));
@@ -542,8 +544,6 @@ statext_store(Oid statOid,
 		elog(ERROR, "cache lookup failed for statistics object %u", statOid);
 
 	/* replace it */
-	pg_stextdata = table_open(StatisticExtDataRelationId, RowExclusiveLock);
-
 	stup = heap_modify_tuple(oldtup,
 							 RelationGetDescr(pg_stextdata),
 							 values,
