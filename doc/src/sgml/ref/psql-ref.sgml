@@ -1293,7 +1293,7 @@ testdb=&gt;
         is specified, only members of operator families associated with access
         methods whose names match pattern are listed.
         If <replaceable class="parameter">input-type-pattern</replaceable>
-        is specified, only memeber of operator families whose names match the
+        is specified, only members of operator families whose names match the
         pattern are listed.
         If <literal>+</literal> is appended to the command name, each operator
         is listed with its strategy number, purpose and sort operator family.
@@ -1316,7 +1316,7 @@ testdb=&gt;
         is specified, only members of operator families associated with access
         methods whose names match pattern are listed.
         If <replaceable class="parameter">input-type-pattern</replaceable>
-        is specified, only memeber of operator families whose names match the
+        is specified, only members of operator families whose names match the
         pattern are listed.
         </para>
         </listitem>

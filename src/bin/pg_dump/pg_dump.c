@@ -16719,7 +16719,7 @@ dumpStatisticsExt(Archive *fout, StatsExtInfo *statsextinfo)
 
 	/*
 	 * We only issue an ALTER STATISTICS statement if the stxstattarget entry
-	 * for this statictics object is non-negative (i.e. it's not the default
+	 * for this statistics object is non-negative (i.e. it's not the default
 	 * value).
 	 */
 	if (statsextinfo->stattarget >= 0)

@@ -489,7 +489,7 @@ static void transform_string_values_scalar(void *state, char *token, JsonTokenTy
 /*
  * pg_parse_json_or_ereport
  *
- * This fuction is like pg_parse_json, except that it does not return a
+ * This function is like pg_parse_json, except that it does not return a
  * JsonParseErrorType. Instead, in case of any failure, this function will
  * ereport(ERROR).
  */

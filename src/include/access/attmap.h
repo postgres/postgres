@@ -40,7 +40,7 @@ typedef struct AttrMap
 extern AttrMap *make_attrmap(int maplen);
 extern void free_attrmap(AttrMap *map);
 
-/* Convertion routines to build mappings */
+/* Conversion routines to build mappings */
 extern AttrMap *build_attrmap_by_name(TupleDesc indesc,
 									  TupleDesc outdesc);
 extern AttrMap *build_attrmap_by_name_if_req(TupleDesc indesc,

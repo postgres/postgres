@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * stringinfo_mb.c
- *		Multibyte encoding-aware additional StringInfo facilites
+ *		Multibyte encoding-aware additional StringInfo facilities
  *
  * This is separate from common/stringinfo.c so that frontend users
  * of that file need not pull in unnecessary multibyte-encoding support

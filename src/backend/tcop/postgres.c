@@ -2338,7 +2338,7 @@ check_log_duration(char *msec_str, bool was_logged)
 
 		/*
 		 * Do not log if log_statement_sample_rate = 0. Log a sample if
-		 * log_statement_sample_rate <= 1 and avoid unecessary random() call
+		 * log_statement_sample_rate <= 1 and avoid unnecessary random() call
 		 * if log_statement_sample_rate = 1.
 		 */
 		if (exceeded_sample_duration)
