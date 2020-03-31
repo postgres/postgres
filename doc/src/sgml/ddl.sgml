@@ -4103,8 +4103,8 @@ ALTER INDEX measurement_city_id_logdate_key
      <title>Example</title>
 
      <para>
-      We use the same <structname>measurement</structname> table we used
-      above.  To implement partitioning using inheritance, use
+      We use the non-partitioned <structname>measurement</structname>
+      table above.  To implement partitioning using inheritance, use
       the following steps:
 
       <orderedlist spacing="compact">
