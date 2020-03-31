@@ -1039,9 +1039,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      </tip>
 
    <para>
-    Once acquired, a lock is normally held until the end of the transaction.  But if a
+    Once acquired, a lock is normally held till end of transaction.  But if a
     lock is acquired after establishing a savepoint, the lock is released
-    immediately if the savepoint is rolled back.  This is consistent with
+    immediately if the savepoint is rolled back to.  This is consistent with
     the principle that <command>ROLLBACK</command> cancels all effects of the
     commands since the savepoint.  The same holds for locks acquired within a
     <application>PL/pgSQL</application> exception block: an error escape from the block
@@ -1178,10 +1178,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      conflicting locks on the same row, even in different subtransactions;
      but other than that, two transactions can never hold conflicting locks
      on the same row.  Row-level locks do not affect data querying; they
-     block only <emphasis>writers and lockers</emphasis> to the same
-     row.  Row-level locks are released at transaction end or during
-     savepoint rollback, just like table-level locks.
-
+     block only <emphasis>writers and lockers</emphasis> to the same row.
     </para>
 
      <variablelist>
