@@ -387,4 +387,6 @@ SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'inc
 SELECT pg_drop_replication_slot('regression_slot');
 
 /* check that the slot is gone */
+\x
 SELECT * FROM pg_replication_slots;
+\x
