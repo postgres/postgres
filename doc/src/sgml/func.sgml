@@ -732,9 +732,8 @@
    </table>
 
    <para>
-    The bitwise operators work only on integral data types, whereas
-    the others are available for all numeric data types.  The bitwise
-    operators are also available for the bit
+    The bitwise operators work only on integral data types, and are also
+    available for the bit
     string types <type>bit</type> and <type>bit varying</type>, as
     shown in <xref linkend="functions-bit-string-op-table"/>.
    </para>
