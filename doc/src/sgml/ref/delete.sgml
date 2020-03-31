@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
 DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-    [ USING <replaceable class="parameter">using_list</replaceable> ]
+    [ USING <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> | WHERE CURRENT OF <replaceable class="parameter">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
@@ -117,17 +117,17 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">using_list</replaceable></term>
+    <term><replaceable class="parameter">from_item</replaceable></term>
     <listitem>
      <para>
-      A list of table expressions, allowing columns from other tables
-      to appear in the <literal>WHERE</literal> condition.  This is similar
-      to the list of tables that can be specified in the <xref
-      linkend="sql-from" endterm="sql-from-title"/> of a
-      <command>SELECT</command> statement; for example, an alias for
-      the table name can be specified.  Do not repeat the target table
-      in the <replaceable class="parameter">using_list</replaceable>,
-      unless you wish to set up a self-join.
+      A table expression allowing columns from other tables to appear
+      in the <literal>WHERE</literal> condition.  This uses the same
+      syntax as the <xref linkend="sql-from" endterm="sql-from-title"/>
+      of a <command>SELECT</command> statement; for example, an alias
+      for the table name can be specified.  Do not repeat the target
+      table as a <replaceable class="parameter">from_item</replaceable>
+      unless you wish to set up a self-join (in which case it must appear
+      with an alias in the <replaceable>from_item</replaceable>).
      </para>
     </listitem>
    </varlistentry>
