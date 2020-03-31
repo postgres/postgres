@@ -808,7 +808,9 @@ rewriteTargetListIU(List *targetList,
 		{
 			if (att_tup->attidentity == ATTRIBUTE_IDENTITY_ALWAYS && !apply_default)
 			{
-				if (override != OVERRIDING_SYSTEM_VALUE)
+				if (override == OVERRIDING_USER_VALUE)
+					apply_default = true;
+				else if (override != OVERRIDING_SYSTEM_VALUE)
 					ereport(ERROR,
 							(errcode(ERRCODE_GENERATED_ALWAYS),
 							 errmsg("cannot insert into column \"%s\"", NameStr(att_tup->attname)),

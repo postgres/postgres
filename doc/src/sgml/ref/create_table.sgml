@@ -842,15 +842,27 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       The clauses <literal>ALWAYS</literal> and <literal>BY DEFAULT</literal>
-      determine how the sequence value is given precedence over a
-      user-specified value in an <command>INSERT</command> statement.
-      If <literal>ALWAYS</literal> is specified, a user-specified value is
-      only accepted if the <command>INSERT</command> statement
-      specifies <literal>OVERRIDING SYSTEM VALUE</literal>.  If <literal>BY
-      DEFAULT</literal> is specified, then the user-specified value takes
-      precedence.  See <xref linkend="sql-insert"/> for details.  (In
-      the <command>COPY</command> command, user-specified values are always
-      used regardless of this setting.)
+      determine how explicitly user-specified values are handled in
+      <command>INSERT</command> and <command>UPDATE</command> commands.
+     </para>
+
+     <para>
+      In an <command>INSERT</command> command, if <literal>ALWAYS</literal> is
+      selected, a user-specified value is only accepted if the
+      <command>INSERT</command> statement specifies <literal>OVERRIDING SYSTEM
+      VALUE</literal>.  If <literal>BY DEFAULT</literal> is selected, then the
+      user-specified value takes precedence.  See <xref linkend="sql-insert"/>
+      for details.  (In the <command>COPY</command> command, user-specified
+      values are always used regardless of this setting.)
+     </para>
+
+     <para>
+      In an <command>UPDATE</command> command, if <literal>ALWAYS</literal> is
+      selected, any update of the column to any value other than
+      <literal>DEFAULT</literal> will be rejected.  If <literal>BY
+      DEFAULT</literal> is selected, the column can be updated normally.
+      (There is no <literal>OVERRIDING</literal> clause for the
+      <command>UPDATE</command> command.)
      </para>
 
      <para>
