@@ -8,6 +8,7 @@
 #include <ctype.h>
 
 #include "catalog/pg_collation.h"
+#include "miscadmin.h"
 #include "utils/formatting.h"
 #include "ltree.h"
 
@@ -164,6 +165,12 @@ checkCond(lquery_level *curq, int query_numlevel, ltree_level *curt, int tree_nu
 	int			isok;
 	lquery_level *prevq = NULL;
 	ltree_level *prevt = NULL;
+
+	/* Since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
+	/* Pathological patterns could take awhile, too */
+	CHECK_FOR_INTERRUPTS();
 
 	if (SomeStack.muse)
 	{
