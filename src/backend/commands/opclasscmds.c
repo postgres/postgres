@@ -1156,16 +1156,14 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 				(OidIsValid(member->righttype) && member->righttype != typeoid))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("associated data types for opclass options "
-								"parsing functions must match opclass input type")));
+						 errmsg("associated data types for opclass options parsing functions must match opclass input type")));
 		}
 		else
 		{
 			if (member->lefttype != member->righttype)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("left and right associated data types for "
-								"opclass options parsing functions must match")));
+						 errmsg("left and right associated data types for opclass options parsing functions must match")));
 		}
 
 		if (procform->prorettype != VOIDOID ||
@@ -1174,9 +1172,10 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("invalid opclass options parsing function"),
-					 errhint("opclass options parsing function must have signature '%s'",
+					 errhint("Valid signature of opclass options parsing function is '%s'.",
 							 "(internal) RETURNS void")));
 	}
+
 	/*
 	 * btree comparison procs must be 2-arg procs returning int4.  btree
 	 * sortsupport procs must take internal and return void.  btree in_range

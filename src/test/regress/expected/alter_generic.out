@@ -506,7 +506,7 @@ ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 test_opclass_options_
 ERROR:  function test_opclass_options_func(internal, text[], boolean) does not exist
 ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 (int4) btint42cmp(int4, int2);
 ERROR:  invalid opclass options parsing function
-HINT:  opclass options parsing function must have signature '(internal) RETURNS void'
+HINT:  Valid signature of opclass options parsing function is '(internal) RETURNS void'.
 ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 (int4, int2) btint42cmp(int4, int2);
 ERROR:  left and right associated data types for opclass options parsing functions must match
 ALTER OPERATOR FAMILY alt_opf19 USING btree ADD FUNCTION 5 (int4) test_opclass_options_func(internal); -- Ok
