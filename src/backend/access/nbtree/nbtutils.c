@@ -2251,6 +2251,7 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	tidpivot->t_info |= newsize;
 	BTreeTupleSetNAtts(tidpivot, nkeyatts);
 	BTreeTupleSetAltHeapTID(tidpivot);
+	pivotheaptid = BTreeTupleGetHeapTID(tidpivot);
 
 	/*
 	 * Lehman & Yao use lastleft as the leaf high key in all cases, but don't
@@ -2259,8 +2260,6 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	 * TID.  (This is also the closest value to negative infinity that's
 	 * legally usable.)
 	 */
-	pivotheaptid = (ItemPointer) ((char *) tidpivot + newsize -
-								  sizeof(ItemPointerData));
 	ItemPointerCopy(BTreeTupleGetMaxHeapTID(lastleft), pivotheaptid);
 
 	/*
