@@ -1041,7 +1041,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
    <para>
     Once acquired, a lock is normally held until the end of the transaction.  But if a
     lock is acquired after establishing a savepoint, the lock is released
-    immediately if the savepoint is rolled back.  This is consistent with
+    immediately if the savepoint is rolled back to.  This is consistent with
     the principle that <command>ROLLBACK</command> cancels all effects of the
     commands since the savepoint.  The same holds for locks acquired within a
     <application>PL/pgSQL</application> exception block: an error escape from the block
