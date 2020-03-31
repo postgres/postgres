@@ -27,7 +27,7 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
           ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
           ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
         } [, ...]
-    [ FROM <replaceable class="parameter">from_list</replaceable> ]
+    [ FROM <replaceable class="parameter">from_item</replaceable> [, ...] ]
     [ WHERE <replaceable class="parameter">condition</replaceable> | WHERE CURRENT OF <replaceable class="parameter">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
@@ -164,17 +164,17 @@ UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">from_list</replaceable></term>
+    <term><replaceable class="parameter">from_item</replaceable></term>
     <listitem>
      <para>
-      A list of table expressions, allowing columns from other tables
-      to appear in the <literal>WHERE</literal> condition and the update
-      expressions. This is similar to the list of tables that can be
-      specified in the <xref linkend="sql-from"
-      endterm="sql-from-title"/> of a <command>SELECT</command>
-      statement.  Note that the target table must not appear in the
-      <replaceable>from_list</replaceable>, unless you intend a self-join (in which
-      case it must appear with an alias in the <replaceable>from_list</replaceable>).
+      A table expression allowing columns from other tables to appear in
+      the <literal>WHERE</literal> condition and update expressions. This
+      uses the same syntax as the <xref linkend="sql-from"
+      endterm="sql-from-title"/> of a <command>SELECT</command> statement;
+      for example, an alias for the table name can be specified.  Do not
+      repeat the target table as a <replaceable>from_item</replaceable>
+      unless you intend a self-join (in which case it must appear with
+      an alias in the <replaceable>from_item</replaceable>).
      </para>
     </listitem>
    </varlistentry>
@@ -264,7 +264,7 @@ UPDATE <replaceable class="parameter">count</replaceable>
   <para>
    When a <literal>FROM</literal> clause is present, what essentially happens
    is that the target table is joined to the tables mentioned in the
-   <replaceable>from_list</replaceable>, and each output row of the join
+   <replaceable>from_item</replaceable> list, and each output row of the join
    represents an update operation for the target table.  When using
    <literal>FROM</literal> you should ensure that the join
    produces at most one output row for each row to be modified.  In
