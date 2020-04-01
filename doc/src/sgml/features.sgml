@@ -78,8 +78,8 @@
 
  <para>
   PostgreSQL supports most of the major features of SQL:2016.  Out of
-  179 mandatory features required for full Core conformance,
-  PostgreSQL conforms to at least 160.  In addition, there is a long
+  177 mandatory features required for full Core conformance,
+  PostgreSQL conforms to at least 170.  In addition, there is a long
   list of supported optional features.  It might be worth noting that at
   the time of writing, no current version of any database management
   system claims full conformance to Core SQL:2016.
