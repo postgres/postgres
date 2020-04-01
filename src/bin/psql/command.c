@@ -2974,6 +2974,11 @@ do_connect(enum trivalue reuse_previous_specification,
 			reuse_previous = !has_connection_string;
 			break;
 	}
+
+	/* If the old connection does not exist, there is nothing to reuse. */
+	if (!o_conn)
+		reuse_previous = false;
+
 	/* Silently ignore arguments subsequent to a connection string. */
 	if (has_connection_string)
 	{
