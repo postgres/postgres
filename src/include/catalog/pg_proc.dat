@@ -10628,6 +10628,15 @@
   prosrc => 'shift_jis_2004_to_euc_jis_2004',
   probin => '$libdir/euc2004_sjis2004' },
 
+{ oid => '8387',
+  descr => 'restriction selectivity for generic matching operators',
+  proname => 'matchingsel', provolatile => 's', prorettype => 'float8',
+  proargtypes => 'internal oid internal int4', prosrc => 'matchingsel' },
+{ oid => '8388', descr => 'join selectivity for generic matching operators',
+  proname => 'matchingjoinsel', provolatile => 's', prorettype => 'float8',
+  proargtypes => 'internal oid internal int2 internal',
+  prosrc => 'matchingjoinsel' },
+
 # replication/origin.h
 { oid => '6003', descr => 'create a replication origin',
   proname => 'pg_replication_origin_create', provolatile => 'v',

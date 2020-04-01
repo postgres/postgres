@@ -830,6 +830,132 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 }
 
 /*
+ *	generic_restriction_selectivity		- Selectivity for almost anything
+ *
+ * This function estimates selectivity for operators that we don't have any
+ * special knowledge about, but are on data types that we collect standard
+ * MCV and/or histogram statistics for.  (Additional assumptions are that
+ * the operator is strict and immutable, or at least stable.)
+ *
+ * If we have "VAR OP CONST" or "CONST OP VAR", selectivity is estimated by
+ * applying the operator to each element of the column's MCV and/or histogram
+ * stats, and merging the results using the assumption that the histogram is
+ * a reasonable random sample of the column's non-MCV population.  Note that
+ * if the operator's semantics are related to the histogram ordering, this
+ * might not be such a great assumption; other functions such as
+ * scalarineqsel() are probably a better match in such cases.
+ *
+ * Otherwise, fall back to the default selectivity provided by the caller.
+ */
+double
+generic_restriction_selectivity(PlannerInfo *root, Oid operator,
+								List *args, int varRelid,
+								double default_selectivity)
+{
+	double		selec;
+	VariableStatData vardata;
+	Node	   *other;
+	bool		varonleft;
+
+	/*
+	 * If expression is not variable OP something or something OP variable,
+	 * then punt and return the default estimate.
+	 */
+	if (!get_restriction_variable(root, args, varRelid,
+								  &vardata, &other, &varonleft))
+		return default_selectivity;
+
+	/*
+	 * If the something is a NULL constant, assume operator is strict and
+	 * return zero, ie, operator will never return TRUE.
+	 */
+	if (IsA(other, Const) &&
+		((Const *) other)->constisnull)
+	{
+		ReleaseVariableStats(vardata);
+		return 0.0;
+	}
+
+	if (IsA(other, Const))
+	{
+		/* Variable is being compared to a known non-null constant */
+		Datum		constval = ((Const *) other)->constvalue;
+		FmgrInfo	opproc;
+		double		mcvsum;
+		double		mcvsel;
+		double		nullfrac;
+		int			hist_size;
+
+		fmgr_info(get_opcode(operator), &opproc);
+
+		/*
+		 * Calculate the selectivity for the column's most common values.
+		 */
+		mcvsel = mcv_selectivity(&vardata, &opproc, constval, varonleft,
+								 &mcvsum);
+
+		/*
+		 * If the histogram is large enough, see what fraction of it matches
+		 * the query, and assume that's representative of the non-MCV
+		 * population.  Otherwise use the default selectivity for the non-MCV
+		 * population.
+		 */
+		selec = histogram_selectivity(&vardata, &opproc,
+									  constval, varonleft,
+									  10, 1, &hist_size);
+		if (selec < 0)
+		{
+			/* Nope, fall back on default */
+			selec = default_selectivity;
+		}
+		else if (hist_size < 100)
+		{
+			/*
+			 * For histogram sizes from 10 to 100, we combine the histogram
+			 * and default selectivities, putting increasingly more trust in
+			 * the histogram for larger sizes.
+			 */
+			double		hist_weight = hist_size / 100.0;
+
+			selec = selec * hist_weight +
+				default_selectivity * (1.0 - hist_weight);
+		}
+
+		/* In any case, don't believe extremely small or large estimates. */
+		if (selec < 0.0001)
+			selec = 0.0001;
+		else if (selec > 0.9999)
+			selec = 0.9999;
+
+		/* Don't forget to account for nulls. */
+		if (HeapTupleIsValid(vardata.statsTuple))
+			nullfrac = ((Form_pg_statistic) GETSTRUCT(vardata.statsTuple))->stanullfrac;
+		else
+			nullfrac = 0.0;
+
+		/*
+		 * Now merge the results from the MCV and histogram calculations,
+		 * realizing that the histogram covers only the non-null values that
+		 * are not listed in MCV.
+		 */
+		selec *= 1.0 - nullfrac - mcvsum;
+		selec += mcvsel;
+	}
+	else
+	{
+		/* Comparison value is not constant, so we can't do anything */
+		selec = default_selectivity;
+	}
+
+	ReleaseVariableStats(vardata);
+
+	/* result should be in range, but make sure... */
+	CLAMP_PROBABILITY(selec);
+
+	return selec;
+}
+
+/*
  *	ineq_histogram_selectivity	- Examine the histogram for scalarineqsel
  *
  * Determine the fraction of the variable's histogram population that
@@ -2913,6 +3039,40 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 fail:
 	ReleaseVariableStats(leftvar);
 	ReleaseVariableStats(rightvar);
+}
+
+
+/*
+ *	matchingsel -- generic matching-operator selectivity support
+ *
+ * Use these for any operators that (a) are on data types for which we collect
+ * standard statistics, and (b) have behavior for which the default estimate
+ * (twice DEFAULT_EQ_SEL) is sane.  Typically that is good for match-like
+ * operators.
+ */
+
+Datum
+matchingsel(PG_FUNCTION_ARGS)
+{
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
+	Oid			operator = PG_GETARG_OID(1);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	int			varRelid = PG_GETARG_INT32(3);
+	double		selec;
+
+	/* Use generic restriction selectivity logic. */
+	selec = generic_restriction_selectivity(root, operator,
+											args, varRelid,
+											DEFAULT_MATCHING_SEL);
+
+	PG_RETURN_FLOAT8((float8) selec);
+}
+
+Datum
+matchingjoinsel(PG_FUNCTION_ARGS)
+{
+	/* Just punt, for the moment. */
+	PG_RETURN_FLOAT8(DEFAULT_MATCHING_SEL);
 }
 
 

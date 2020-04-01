@@ -42,6 +42,9 @@
 /* default selectivity estimate for pattern-match operators such as LIKE */
 #define DEFAULT_MATCH_SEL	0.005
 
+/* default selectivity estimate for other matching operators */
+#define DEFAULT_MATCHING_SEL	0.010
+
 /* default number of distinct values in a table */
 #define DEFAULT_NUM_DISTINCT  200
 
@@ -148,6 +151,9 @@ extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 									Datum constval, bool varonleft,
 									int min_hist_size, int n_skip,
 									int *hist_size);
+extern double generic_restriction_selectivity(PlannerInfo *root, Oid operator,
+											  List *args, int varRelid,
+											  double default_selectivity);
 extern double ineq_histogram_selectivity(PlannerInfo *root,
 										 VariableStatData *vardata,
 										 FmgrInfo *opproc, bool isgt, bool iseq,
