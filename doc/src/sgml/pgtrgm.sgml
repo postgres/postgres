@@ -391,13 +391,13 @@ CREATE INDEX trgm_idx ON test_trgm USING GIN (t gin_trgm_ops);
   </para>
 
   <para>
-   <literal>gist_trgm_ops</literal> GiST opclass approximates set of
-   trigrams as a bitmap signature.  Optional integer parameter
-   <literal>siglen</literal> of <literal>gist_trgm_ops</literal> determines
-   signature length in bytes.  Default signature length is 12 bytes.
+   <literal>gist_trgm_ops</literal> GiST opclass approximates a set of
+   trigrams as a bitmap signature.  Its optional integer parameter
+   <literal>siglen</literal> determines the
+   signature length in bytes.  The default length is 12 bytes.
    Valid values of signature length are between 1 and 2024 bytes.  Longer
-   signatures leads to more precise search (scan less fraction of index, scan
-   less heap pages), but larger index.
+   signatures lead to a more precise search (scanning a smaller fraction of the index and
+   fewer heap pages), at the cost of a larger index.
   </para>
 
   <para>

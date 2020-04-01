@@ -265,7 +265,7 @@
   </para>
 
   <para>
-   Two parametrized GiST index operator classes are provided:
+   Two parameterized GiST index operator classes are provided:
    <literal>gist__int_ops</literal> (used by default) is suitable for
    small- to medium-size data sets, while
    <literal>gist__intbig_ops</literal> uses a larger signature and is more
@@ -276,22 +276,23 @@
   </para>
    
   <para>
-   <literal>gist__int_ops</literal> approximates integer set as an array of
-   integer ranges.  Optional integer parameter <literal>numranges</literal> of
-   <literal>gist__int_ops</literal> determines maximum number of ranges in
-   one index key.  Default value of <literal>numranges</literal> is 100.
+   <literal>gist__int_ops</literal> approximates an integer set as an array of
+   integer ranges.  Its optional integer parameter <literal>numranges</literal>
+   determines the maximum number of ranges in
+   one index key.  The default value of <literal>numranges</literal> is 100.
    Valid values are between 1 and 253.  Using larger arrays as GiST index
-   keys leads to more precise search (scan less fraction of index, scan less
-   heap pages), but larger index.
+   keys leads to a more precise search (scaning a smaller fraction of the index and
+   fewer heap pages), at the cost of a larger index.
   </para>
    
   <para>
-   <literal>gist__intbig_ops</literal> approximates integer set as a bitmap
-   signature.  Optional integer parameter <literal>siglen</literal> of
-   <literal>gist__intbig_ops</literal> determines signature length in bytes.
-   Default signature length is 16 bytes.  Valid values of signature length
-   are between 1 and 2024 bytes.  Longer signatures leads to more precise
-   search (scan less fraction of index, scan less heap pages), but larger index.
+   <literal>gist__intbig_ops</literal> approximates an integer set as a bitmap
+   signature.  Its optional integer parameter <literal>siglen</literal>
+   determines the signature length in bytes.
+   The default signature length is 16 bytes.  Valid values of signature length
+   are between 1 and 2024 bytes.  Longer signatures lead to a more precise
+   search (scanning a smaller fraction of the index and fewer heap pages), at
+   the cost of a larger index.
   </para>
 
   <para>

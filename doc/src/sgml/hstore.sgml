@@ -468,13 +468,13 @@ CREATE INDEX hidx ON testhstore USING GIN (h);
 </programlisting>
 
   <para>
-   <literal>gist_hstore_ops</literal> GiST opclass approximates set of
-   key/value pairs as a bitmap signature.  Optional integer parameter
-   <literal>siglen</literal> of <literal>gist_hstore_ops</literal> determines
-   signature length in bytes.  Default signature length is 16 bytes.
+   <literal>gist_hstore_ops</literal> GiST opclass approximates a set of
+   key/value pairs as a bitmap signature.  Its optional integer parameter
+   <literal>siglen</literal> determines the
+   signature length in bytes.  The default length is 16 bytes.
    Valid values of signature length are between 1 and 2024 bytes.  Longer
-   signatures leads to more precise search (scan less fraction of index, scan
-   less heap pages), but larger index.
+   signatures lead to a more precise search (scanning a smaller fraction of the index and
+   fewer heap pages), at the cost of a larger index.
   </para>
 
   <para>

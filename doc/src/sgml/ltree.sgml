@@ -516,16 +516,16 @@ Europe &amp; Russia*@ &amp; !Transportation
      <literal>@</literal>, <literal>~</literal>, <literal>?</literal>
     </para>
     <para>
-     <literal>gist_ltree_ops</literal> GiST opclass approximates set of
-     path labels as a bitmap signature.  Optional integer parameter
-     <literal>siglen</literal> of <literal>gist_ltree_ops</literal> determines
-     signature length in bytes.  Default signature length is 8 bytes.
+     <literal>gist_ltree_ops</literal> GiST opclass approximates a set of
+     path labels as a bitmap signature.  Its optional integer parameter
+     <literal>siglen</literal> determines the
+     signature length in bytes.  The default signature length is 8 bytes.
      Valid values of signature length are between 1 and 2024 bytes.  Longer
-     signatures leads to more precise search (scan less fraction of index, scan
-     less heap pages), but larger index.
+     signatures lead to a more precise search (scanning a smaller fraction of the index and
+     fewer heap pages), at the cost of a larger index.
     </para>
     <para>
-     Example of creating such an index with a default signature length of 8 bytes:
+     Example of creating such an index with the default signature length of 8 bytes:
     </para>
 <programlisting>
 CREATE INDEX path_gist_idx ON test USING GIST (path);
@@ -545,13 +545,13 @@ CREATE INDEX path_gist_idx ON test USING GIST (path gist_ltree_ops(siglen=100));
      <literal>@</literal>, <literal>~</literal>, <literal>?</literal>
     </para>
     <para>
-     <literal>gist__ltree_ops</literal> GiST opclass works similar to
+     <literal>gist__ltree_ops</literal> GiST opclass works similarly to
      <literal>gist_ltree_ops</literal> and also takes signature length as
-     a parameter.  Default value of <literal>siglen</literal> in
+     a parameter.  The default value of <literal>siglen</literal> in
       <literal>gist__ltree_ops</literal> is 28 bytes.
     </para>
     <para>
-     Example of creating such an index with a default signature length of 28 bytes:
+     Example of creating such an index with the default signature length of 28 bytes:
     </para>
 <programlisting>
 CREATE INDEX path_gist_idx ON test USING GIST (array_path);
