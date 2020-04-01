@@ -3,6 +3,43 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION ltree UPDATE TO '1.2'" to load this file. \quit
 
+CREATE FUNCTION ltree_recv(internal)
+RETURNS ltree
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION ltree_send(ltree)
+RETURNS bytea
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+ALTER TYPE ltree SET ( RECEIVE = ltree_recv, SEND = ltree_send );
+
+CREATE FUNCTION lquery_recv(internal)
+RETURNS lquery
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION lquery_send(lquery)
+RETURNS bytea
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+ALTER TYPE lquery SET ( RECEIVE = lquery_recv, SEND = lquery_send );
+
+CREATE FUNCTION ltxtq_recv(internal)
+RETURNS ltxtquery
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION ltxtq_send(ltxtquery)
+RETURNS bytea
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+ALTER TYPE ltxtquery SET ( RECEIVE = ltxtq_recv, SEND = ltxtq_send );
+
+
 CREATE FUNCTION ltree_gist_options(internal)
 RETURNS void
 AS 'MODULE_PATHNAME', 'ltree_gist_options'

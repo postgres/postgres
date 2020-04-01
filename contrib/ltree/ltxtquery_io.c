@@ -8,11 +8,9 @@
 #include <ctype.h>
 
 #include "crc32.h"
+#include "libpq/pqformat.h"
 #include "ltree.h"
 #include "miscadmin.h"
-
-PG_FUNCTION_INFO_V1(ltxtq_in);
-PG_FUNCTION_INFO_V1(ltxtq_out);
 
 
 /* parser's states */
@@ -381,10 +379,39 @@ queryin(char *buf)
 /*
  * in without morphology
  */
+PG_FUNCTION_INFO_V1(ltxtq_in);
 Datum
 ltxtq_in(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER(queryin((char *) PG_GETARG_POINTER(0)));
+}
+
+/*
+ * ltxtquery type recv function
+ *
+ * The type is sent as text in binary mode, so this is almost the same
+ * as the input function, but it's prefixed with a version number so we
+ * can change the binary format sent in future if necessary. For now,
+ * only version 1 is supported.
+ */
+PG_FUNCTION_INFO_V1(ltxtq_recv);
+Datum
+ltxtq_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	int			version = pq_getmsgint(buf, 1);
+	char	   *str;
+	int			nbytes;
+	ltxtquery  *res;
+
+	if (version != 1)
+		elog(ERROR, "unsupported ltxtquery version number %d", version);
+
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	res = queryin(str);
+	pfree(str);
+
+	PG_RETURN_POINTER(res);
 }
 
 /*
@@ -511,6 +538,7 @@ infix(INFIX *in, bool first)
 	}
 }
 
+PG_FUNCTION_INFO_V1(ltxtq_out);
 Datum
 ltxtq_out(PG_FUNCTION_ARGS)
 {
@@ -530,6 +558,43 @@ ltxtq_out(PG_FUNCTION_ARGS)
 	nrm.op = GETOPERAND(query);
 	infix(&nrm, true);
 
-	PG_FREE_IF_COPY(query, 0);
 	PG_RETURN_POINTER(nrm.buf);
+}
+
+/*
+ * ltxtquery type send function
+ *
+ * The type is sent as text in binary mode, so this is almost the same
+ * as the output function, but it's prefixed with a version number so we
+ * can change the binary format sent in future if necessary. For now,
+ * only version 1 is supported.
+ */
+PG_FUNCTION_INFO_V1(ltxtq_send);
+Datum
+ltxtq_send(PG_FUNCTION_ARGS)
+{
+	ltxtquery  *query = PG_GETARG_LTXTQUERY_P(0);
+	StringInfoData buf;
+	int			version = 1;
+	INFIX		nrm;
+
+	if (query->size == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("syntax error"),
+				 errdetail("Empty query.")));
+
+	nrm.curpol = GETQUERY(query);
+	nrm.buflen = 32;
+	nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
+	*(nrm.cur) = '\0';
+	nrm.op = GETOPERAND(query);
+	infix(&nrm, true);
+
+	pq_begintypsend(&buf);
+	pq_sendint8(&buf, version);
+	pq_sendtext(&buf, nrm.buf, strlen(nrm.buf));
+	pfree(nrm.buf);
+
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
