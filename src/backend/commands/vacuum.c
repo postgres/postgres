@@ -2077,7 +2077,7 @@ compute_parallel_delay(void)
 	VacuumCostBalanceLocal += VacuumCostBalance;
 
 	if ((shared_balance >= VacuumCostLimit) &&
-		(VacuumCostBalanceLocal > 0.5 * (VacuumCostLimit / nworkers)))
+		(VacuumCostBalanceLocal > 0.5 * ((double) VacuumCostLimit / nworkers)))
 	{
 		/* Compute sleep time based on the local cost balance */
 		msec = VacuumCostDelay * VacuumCostBalanceLocal / VacuumCostLimit;
