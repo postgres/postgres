@@ -139,8 +139,8 @@ sub mkvcbuild
 	}
 
 	our @pgcommonfrontendfiles = (
-		@pgcommonallfiles, qw(fe_memutils.c file_utils.c
-		  logging.c restricted_token.c));
+		@pgcommonallfiles, qw(fe_archive.c fe_memutils.c
+		  file_utils.c logging.c restricted_token.c));
 
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 

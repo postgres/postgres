@@ -66,11 +66,11 @@ PostgreSQL documentation
    can be found either on the target timeline, the source timeline, or their common
    ancestor. In the typical failover scenario where the target cluster was
    shut down soon after the divergence, this is not a problem, but if the
-   target cluster ran for a long time after the divergence, the old WAL
-   files might no longer be present. In that case, they can be manually
-   copied from the WAL archive to the <filename>pg_wal</filename> directory, or
-   fetched on startup by configuring <xref linkend="guc-primary-conninfo"/> or
-   <xref linkend="guc-restore-command"/>.  The use of
+   target cluster ran for a long time after the divergence, its old WAL
+   files might no longer be present. In this case, you can manually copy them
+   from the WAL archive to the <filename>pg_wal</filename> directory, or run
+   <application>pg_rewind</application> with the <literal>-c</literal> option to
+   automatically retrieve them from the WAL archive. The use of
    <application>pg_rewind</application> is not limited to failover, e.g.  a standby
    server can be promoted, run some write transactions, and then rewinded
    to become a standby again.
@@ -233,6 +233,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-c</option></term>
+      <term><option>--restore-target-wal</option></term>
+      <listitem>
+       <para>
+        Use <varname>restore_command</varname> defined in the target cluster
+        configuration to retrieve WAL files from the WAL archive if these
+        files are no longer available in the <filename>pg_wal</filename>
+        directory.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--debug</option></term>
       <listitem>
        <para>
@@ -318,7 +331,10 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
       history forked off from the target cluster. For each WAL record,
       record each data block that was touched. This yields a list of all
       the data blocks that were changed in the target cluster, after the
-      source cluster forked off.
+      source cluster forked off. If some of the WAL files are no longer
+      available, try re-running <application>pg_rewind</application> with
+      the <option>-c</option> option to search for the missing files in
+      the WAL archive.
      </para>
     </step>
     <step>

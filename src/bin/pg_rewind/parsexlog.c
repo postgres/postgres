@@ -19,6 +19,7 @@
 #include "catalog/pg_control.h"
 #include "catalog/storage_xlog.h"
 #include "commands/dbcommands_xlog.h"
+#include "common/fe_archive.h"
 #include "filemap.h"
 #include "pg_rewind.h"
 
@@ -41,6 +42,7 @@ static char xlogfpath[MAXPGPATH];
 
 typedef struct XLogPageReadPrivate
 {
+	const char *restoreCommand;
 	int			tliIndex;
 } XLogPageReadPrivate;
 
@@ -55,7 +57,7 @@ static int	SimpleXLogPageRead(XLogReaderState *xlogreader,
  */
 void
 extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
-			   XLogRecPtr endpoint)
+			   XLogRecPtr endpoint, const char *restoreCommand)
 {
 	XLogRecord *record;
 	XLogReaderState *xlogreader;
@@ -63,6 +65,7 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 	XLogPageReadPrivate private;
 
 	private.tliIndex = tliIndex;
+	private.restoreCommand = restoreCommand;
 	xlogreader = XLogReaderAllocate(WalSegSz, datadir, &SimpleXLogPageRead,
 									&private);
 	if (xlogreader == NULL)
@@ -146,7 +149,7 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex)
 void
 findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 				   XLogRecPtr *lastchkptrec, TimeLineID *lastchkpttli,
-				   XLogRecPtr *lastchkptredo)
+				   XLogRecPtr *lastchkptredo, const char *restoreCommand)
 {
 	/* Walk backwards, starting from the given record */
 	XLogRecord *record;
@@ -170,6 +173,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 	}
 
 	private.tliIndex = tliIndex;
+	private.restoreCommand = restoreCommand;
 	xlogreader = XLogReaderAllocate(WalSegSz, datadir, &SimpleXLogPageRead,
 									&private);
 	if (xlogreader == NULL)
@@ -281,8 +285,29 @@ SimpleXLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 
 		if (xlogreadfd < 0)
 		{
-			pg_log_error("could not open file \"%s\": %m", xlogfpath);
-			return -1;
+			/*
+			 * If we have no restore_command to execute, then exit.
+			 */
+			if (private->restoreCommand == NULL)
+			{
+				pg_log_error("could not open file \"%s\": %m", xlogfpath);
+				return -1;
+			}
+
+			/*
+			 * Since we have restore_command, then try to retrieve missing WAL
+			 * file from the archive.
+			 */
+			xlogreadfd = RestoreArchivedFile(xlogreader->segcxt.ws_dir,
+											 xlogfname,
+											 WalSegSz,
+											 private->restoreCommand);
+
+			if (xlogreadfd < 0)
+				return -1;
+			else
+				pg_log_debug("using file \"%s\" restored from archive",
+							 xlogfpath);
 		}
 	}
 
