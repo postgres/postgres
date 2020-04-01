@@ -281,7 +281,7 @@
    determines the maximum number of ranges in
    one index key.  The default value of <literal>numranges</literal> is 100.
    Valid values are between 1 and 253.  Using larger arrays as GiST index
-   keys leads to a more precise search (scaning a smaller fraction of the index and
+   keys leads to a more precise search (scanning a smaller fraction of the index and
    fewer heap pages), at the cost of a larger index.
   </para>
    
