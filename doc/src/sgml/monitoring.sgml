@@ -3296,7 +3296,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     </row>
     <row>
      <entry><structfield>blks_hit</structfield></entry>
-     <entry><type>biging</type></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of times disk blocks were found already in the SLRU,
       so that a read was not necessary (this only includes hits in the
       SLRU, not the operating system's file system cache)
