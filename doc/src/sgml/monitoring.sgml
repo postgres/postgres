@@ -575,6 +575,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       yet included in <structname>pg_stat_user_functions</structname>).</entry>
      </row>
 
+     <row>
+      <entry><structname>pg_stat_slru</structname><indexterm><primary>pg_stat_slru</primary></indexterm></entry>
+      <entry>One row per SLRU, showing statistics of operations. See
+       <xref linkend="pg-stat-slru-view"/> for details.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
@@ -3260,6 +3267,76 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
   </table>
 
   <para>
+   The <structname>pg_stat_slru</structname> view will contain
+   one row for each tracked SLRU cache, showing statistics about access
+   to cached pages.
+  </para>
+
+  <table id="pg-stat-slru-view" xreflabel="pg_stat_slru">
+   <title><structname>pg_stat_slru</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>name</structfield></entry>
+     <entry><type>name</type></entry>
+     <entry>name of the SLRU</entry>
+    </row>
+    <row>
+     <entry><structfield>blks_zeroed</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of blocks zeroed during initializations</entry>
+    </row>
+    <row>
+     <entry><structfield>blks_hit</structfield></entry>
+     <entry><type>biging</type></entry>
+     <entry>Number of times disk blocks were found already in the SLRU,
+      so that a read was not necessary (this only includes hits in the
+      SLRU, not the operating system's file system cache)
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of disk blocks read for this SLRU</entry>
+    </row>
+    <row>
+     <entry><structfield>blks_written</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of disk blocks written for this SLRU</entry>
+    </row>
+    <row>
+     <entry><structfield>blks_exists</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of blocks checked for existence for this SLRU</entry>
+    </row>
+    <row>
+     <entry><structfield>flushes</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of flushes of dirty data for this SLRU</entry>
+    </row>
+    <row>
+     <entry><structfield>truncates</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Number of truncates for this SLRU</entry>
+    </row>
+    <row>
+     <entry><structfield>stats_reset</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
+     <entry>Time at which these statistics were last reset</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
    The <structname>pg_stat_user_functions</structname> view will contain
    one row for each tracked function, showing statistics about executions of
    that function.  The <xref linkend="guc-track-functions"/> parameter
@@ -3381,6 +3458,26 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        Reset statistics for a single function in the current database to
        zero (requires superuser privileges by default, but EXECUTE for this
        function can be granted to others)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_reset_slru</function>(text)</literal><indexterm><primary>pg_stat_reset_slru</primary></indexterm></entry>
+      <entry><type>void</type></entry>
+      <entry>
+       Reset statistics either for a single SLRU or all SLRUs in the cluster
+       to zero (requires superuser privileges by default, but EXECUTE for this
+       function can be granted to others).
+       Calling <literal>pg_stat_reset_slru(NULL)</literal> will zero all the
+       counters shown in the <structname>pg_stat_slru</structname> view for
+       all SLRU caches.
+       Calling <literal>pg_stat_reset_slru(name)</literal> with names from a
+       predefined list (<literal>async</literal>, <literal>clog</literal>,
+       <literal>commit_timestamp</literal>, <literal>multixact_offset</literal>,
+       <literal>multixact_member</literal>, <literal>oldserxid</literal>,
+       <literal>pg_xact</literal>, <literal>subtrans</literal> and
+       <literal>other</literal>) resets counters for only that entry.
+       Names not included in this list are treated as <literal>other</literal>.
       </entry>
      </row>
     </tbody>

@@ -5436,6 +5436,16 @@
   proname => 'pg_stat_get_buf_alloc', provolatile => 's', proparallel => 'r',
   prorettype => 'int8', proargtypes => '', prosrc => 'pg_stat_get_buf_alloc' },
 
+{ oid => '2306',
+  descr => 'statistics: information about SLRU caches',
+  proname => 'pg_stat_get_slru', prorows => '100', proisstrict => 'f',
+  proretset => 't', provolatile => 's', proparallel => 'r',
+  prorettype => 'record', proargtypes => '',
+  proallargtypes => '{text,int8,int8,int8,int8,int8,int8,int8,timestamptz}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o}',
+  proargnames => '{name,blks_zeroed,blks_hit,blks_read,blks_written,blks_exists,flushes,truncates,stats_reset}',
+  prosrc => 'pg_stat_get_slru' },
+
 { oid => '2978', descr => 'statistics: number of function calls',
   proname => 'pg_stat_get_function_calls', provolatile => 's',
   proparallel => 'r', prorettype => 'int8', proargtypes => 'oid',
@@ -5540,6 +5550,11 @@
   proname => 'pg_stat_reset_single_function_counters', provolatile => 'v',
   prorettype => 'void', proargtypes => 'oid',
   prosrc => 'pg_stat_reset_single_function_counters' },
+{ oid => '2307',
+  descr => 'statistics: reset collected statistics for a single SLRU',
+  proname => 'pg_stat_reset_slru', provolatile => 'v', proisstrict => 'f',
+  prorettype => 'void', proargtypes => 'text',
+  prosrc => 'pg_stat_reset_slru' },
 
 { oid => '3163', descr => 'current trigger depth',
   proname => 'pg_trigger_depth', provolatile => 's', proparallel => 'r',
