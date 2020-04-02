@@ -751,6 +751,8 @@ include_dir 'conf.d'
         only TCP/IP sockets can be used to connect to the server.
         The default value is normally
         <filename>/tmp</filename>, but that can be changed at build time.
+        On Windows, the default is empty, which means no Unix-domain socket is
+        created by default.
         This parameter can only be set at server start.
        </para>
 
@@ -761,11 +763,6 @@ include_dir 'conf.d'
         named <literal>.s.PGSQL.<replaceable>nnnn</replaceable>.lock</literal> will be
         created in each of the <varname>unix_socket_directories</varname> directories.
         Neither file should ever be removed manually.
-       </para>
-
-       <para>
-        This parameter is irrelevant on Windows, which does not have
-        Unix-domain sockets.
        </para>
       </listitem>
      </varlistentry>
@@ -789,8 +786,8 @@ include_dir 'conf.d'
        </para>
 
        <para>
-        This parameter is irrelevant on Windows, which does not have
-        Unix-domain sockets.
+        This parameter is not supported on Windows.  Any setting will be
+        ignored.
        </para>
       </listitem>
      </varlistentry>
@@ -836,8 +833,6 @@ include_dir 'conf.d'
         10, that ignore socket permissions entirely.  There, one can achieve a
         similar effect by pointing <varname>unix_socket_directories</varname> to a
         directory having search permission limited to the desired audience.
-        This parameter is also irrelevant on Windows, which does not have
-        Unix-domain sockets.
        </para>
       </listitem>
      </varlistentry>

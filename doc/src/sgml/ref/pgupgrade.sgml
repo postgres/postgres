@@ -751,7 +751,7 @@ psql --username=postgres --file=script.sql postgres
    can use the <option>-s</option> option to put the socket files in some
    directory with a shorter path name.  For security, be sure that that
    directory is not readable or writable by any other users.
-   (This is not relevant on Windows.)
+   (This is not supported on Windows.)
   </para>
 
   <para>

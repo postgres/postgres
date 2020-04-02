@@ -959,8 +959,9 @@ postgresql://[2001:db8::1234]/database
    <para>
     The host component is interpreted as described for the parameter <xref
     linkend="libpq-connect-host"/>.  In particular, a Unix-domain socket
-    connection is chosen if the host part is either empty or starts with a
-    slash, otherwise a TCP/IP connection is initiated.  Note, however, that the
+    connection is chosen if the host part is either empty or looks like an
+    absolute path name,
+    otherwise a TCP/IP connection is initiated.  Note, however, that the
     slash is a reserved character in the hierarchical part of the URI.  So, to
     specify a non-standard Unix-domain socket directory, either omit the host
     specification in the URI and specify the host as a parameter, or
@@ -1035,16 +1036,19 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>host</literal></term>
       <listitem>
        <para>
-        Name of host to connect to.<indexterm><primary>host name</primary></indexterm>
-        If a host name begins with a slash, it specifies Unix-domain
-        communication rather than TCP/IP communication; the value is the
-        name of the directory in which the socket file is stored.
-        The default behavior when <literal>host</literal> is
-        not specified, or is empty, is to connect to a Unix-domain
+        Name of host to connect to.<indexterm><primary>host
+        name</primary></indexterm> If a host name looks like an absolute path
+        name, it specifies Unix-domain communication rather than TCP/IP
+        communication; the value is the name of the directory in which the
+        socket file is stored.  (On Unix, an absolute path name begins with a
+        slash.  On Windows, paths starting with drive letters are also
+        recognized.)  The default behavior when <literal>host</literal> is not
+        specified, or is empty, is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</primary></indexterm> in
         <filename>/tmp</filename> (or whatever socket directory was specified
-        when <productname>PostgreSQL</productname> was built). On machines without
-        Unix-domain sockets, the default is to connect to <literal>localhost</literal>.
+        when <productname>PostgreSQL</productname> was built).  On Windows and
+        on machines without Unix-domain sockets, the default is to connect to
+        <literal>localhost</literal>.
        </para>
        <para>
         A comma-separated list of host names is also accepted, in which case
@@ -1123,8 +1127,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
        <para>
         Without either a host name or host address,
-        <application>libpq</application> will connect using a
-        local Unix-domain socket; or on machines without Unix-domain
+        <application>libpq</application> will connect using a local
+        Unix-domain socket; or on Windows and on machines without Unix-domain
         sockets, it will attempt to connect to <literal>localhost</literal>.
        </para>
        </listitem>

@@ -169,7 +169,7 @@ last started with</entry>
   cluster data directory path,
   postmaster start timestamp,
   port number,
-  Unix-domain socket directory path (empty on Windows),
+  Unix-domain socket directory path (could be empty),
   first valid listen_address (IP address or <literal>*</literal>, or empty if
   not listening on TCP),
   and shared memory segment ID
