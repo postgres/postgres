@@ -9,7 +9,8 @@
 
  <para>
   The <filename>pg_stat_statements</filename> module provides a means for
-  tracking execution statistics of all SQL statements executed by a server.
+  tracking planning and execution statistics of all SQL statements executed by
+  a server.
  </para>
 
  <para>
@@ -83,6 +84,48 @@
      </row>
 
      <row>
+      <entry><structfield>plans</structfield></entry>
+      <entry><type>bigint</type></entry>
+      <entry></entry>
+      <entry>Number of times the statement was planned</entry>
+     </row>
+
+     <row>
+      <entry><structfield>total_plan_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Total time spent planning the statement, in milliseconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>min_plan_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Minimum time spent planning the statement, in milliseconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>max_plan_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Maximum time spent planning the statement, in milliseconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>mean_plan_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Mean time spent planning the statement, in milliseconds</entry>
+     </row>
+
+     <row>
+      <entry><structfield>stddev_plan_time</structfield></entry>
+      <entry><type>double precision</type></entry>
+      <entry></entry>
+      <entry>Population standard deviation of time spent planning the statement, in milliseconds</entry>
+     </row>
+
+     <row>
       <entry><structfield>calls</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
@@ -90,38 +133,38 @@
      </row>
 
      <row>
-      <entry><structfield>total_time</structfield></entry>
+      <entry><structfield>total_exec_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
-      <entry>Total time spent in the statement, in milliseconds</entry>
+      <entry>Total time spent executing the statement, in milliseconds</entry>
      </row>
 
      <row>
-      <entry><structfield>min_time</structfield></entry>
+      <entry><structfield>min_exec_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
-      <entry>Minimum time spent in the statement, in milliseconds</entry>
+      <entry>Minimum time spent executing the statement, in milliseconds</entry>
      </row>
 
      <row>
-      <entry><structfield>max_time</structfield></entry>
+      <entry><structfield>max_exec_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
-      <entry>Maximum time spent in the statement, in milliseconds</entry>
+      <entry>Maximum time spent executing the statement, in milliseconds</entry>
      </row>
 
      <row>
-      <entry><structfield>mean_time</structfield></entry>
+      <entry><structfield>mean_exec_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
-      <entry>Mean time spent in the statement, in milliseconds</entry>
+      <entry>Mean time spent executing the statement, in milliseconds</entry>
      </row>
 
      <row>
-      <entry><structfield>stddev_time</structfield></entry>
+      <entry><structfield>stddev_exec_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry></entry>
-      <entry>Population standard deviation of time spent in the statement, in milliseconds</entry>
+      <entry>Population standard deviation of time spent executing the statement, in milliseconds</entry>
      </row>
 
      <row>
@@ -450,6 +493,21 @@
 
    <varlistentry>
     <term>
+     <varname>pg_stat_statements.track_planning</varname> (<type>boolean</type>)
+    </term>
+
+    <listitem>
+     <para>
+      <varname>pg_stat_statements.track_planning</varname> controls whether
+      planning operations and duration are tracked by the module.
+      The default value is <literal>on</literal>.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <varname>pg_stat_statements.save</varname> (<type>boolean</type>)
     </term>
 
@@ -498,89 +556,97 @@ $ pgbench -i bench
 $ pgbench -c10 -t300 bench
 
 bench=# \x
-bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
+bench=# SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
-          FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
--[ RECORD 1 ]--------------------------------------------------------------------
-query       | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2
-calls       | 3000
-total_time  | 25565.855387
-rows        | 3000
-hit_percent | 100.0000000000000000
--[ RECORD 2 ]--------------------------------------------------------------------
-query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
-calls       | 3000
-total_time  | 20756.669379
-rows        | 3000
-hit_percent | 100.0000000000000000
--[ RECORD 3 ]--------------------------------------------------------------------
-query       | copy pgbench_accounts from stdin
-calls       | 1
-total_time  | 291.865911
-rows        | 100000
-hit_percent | 100.0000000000000000
--[ RECORD 4 ]--------------------------------------------------------------------
-query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
-calls       | 3000
-total_time  | 271.232977
-rows        | 3000
-hit_percent | 98.5723926698852723
--[ RECORD 5 ]--------------------------------------------------------------------
-query       | alter table pgbench_accounts add primary key (aid)
-calls       | 1
-total_time  | 160.588563
-rows        | 0
-hit_percent | 100.0000000000000000
+          FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
+-[ RECORD 1 ]---+--------------------------------------------------------------------
+query           | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2
+calls           | 3000
+total_exec_time | 25565.855387
+rows            | 3000
+hit_percent     | 100.0000000000000000
+-[ RECORD 2 ]---+--------------------------------------------------------------------
+query           | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
+calls           | 3000
+total_exec_time | 20756.669379
+rows            | 3000
+hit_percent     | 100.0000000000000000
+-[ RECORD 3 ]---+--------------------------------------------------------------------
+query           | copy pgbench_accounts from stdin
+calls           | 1
+total_exec_time | 291.865911
+rows            | 100000
+hit_percent     | 100.0000000000000000
+-[ RECORD 4 ]---+--------------------------------------------------------------------
+query           | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
+calls           | 3000
+total_exec_time | 271.232977
+rows            | 3000
+hit_percent     | 98.8454011741682975
+-[ RECORD 5 ]---+--------------------------------------------------------------------
+query           | alter table pgbench_accounts add primary key (aid)
+calls           | 1
+total_exec_time | 160.588563
+rows            | 0
+hit_percent     | 100.0000000000000000
 
 
 bench=# SELECT pg_stat_statements_reset(0,0,s.queryid) FROM pg_stat_statements AS s
             WHERE s.query = 'UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2';
 
-bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
+bench=# SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
-          FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
--[ RECORD 1 ]--------------------------------------------------------------------
-query       | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
-calls       | 3000
-total_time  | 20756.669379
-rows        | 3000
-hit_percent | 100.0000000000000000
--[ RECORD 2 ]--------------------------------------------------------------------
-query       | copy pgbench_accounts from stdin
-calls       | 1
-total_time  | 291.865911
-rows        | 100000
-hit_percent | 100.0000000000000000
--[ RECORD 3 ]--------------------------------------------------------------------
-query       | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
-calls       | 3000
-total_time  | 271.232977
-rows        | 3000
-hit_percent | 98.5723926698852723
--[ RECORD 4 ]--------------------------------------------------------------------
-query       | alter table pgbench_accounts add primary key (aid)
-calls       | 1
-total_time  | 160.588563
-rows        | 0
-hit_percent | 100.0000000000000000
--[ RECORD 5 ]--------------------------------------------------------------------
-query       | vacuum analyze pgbench_accounts
-calls       | 1
-total_time  | 136.448116
-rows        | 0
-hit_percent | 99.9201915403032721
+          FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
+-[ RECORD 1 ]---+--------------------------------------------------------------------
+query           | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
+calls           | 3000
+total_exec_time | 20756.669379
+rows            | 3000
+hit_percent     | 100.0000000000000000
+-[ RECORD 2 ]---+--------------------------------------------------------------------
+query           | copy pgbench_accounts from stdin
+calls           | 1
+total_exec_time | 291.865911
+rows            | 100000
+hit_percent     | 100.0000000000000000
+-[ RECORD 3 ]---+--------------------------------------------------------------------
+query           | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
+calls           | 3000
+total_exec_time | 271.232977
+rows            | 3000
+hit_percent     | 98.8454011741682975
+-[ RECORD 4 ]---+--------------------------------------------------------------------
+query           | alter table pgbench_accounts add primary key (aid)
+calls           | 1
+total_exec_time | 160.588563
+rows            | 0
+hit_percent     | 100.0000000000000000
+-[ RECORD 5 ]---+--------------------------------------------------------------------
+query           | vacuum analyze pgbench_accounts
+calls           | 1
+total_exec_time | 136.448116
+rows            | 0
+hit_percent     | 99.9201915403032721
 
 bench=# SELECT pg_stat_statements_reset(0,0,0);
 
-bench=# SELECT query, calls, total_time, rows, 100.0 * shared_blks_hit /
+bench=# SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
-          FROM pg_stat_statements ORDER BY total_time DESC LIMIT 5;
--[ RECORD 1 ]---------------------------------------
-query       | SELECT pg_stat_statements_reset(0,0,0)
-calls       | 1
-total_time  | 0.189497
-rows        | 1
-hit_percent | 
+          FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
+-[ RECORD 1 ]---+-----------------------------------------------------------------------------
+query           | SELECT pg_stat_statements_reset(0,0,0)
+calls           | 1
+total_exec_time | 0.189497
+rows            | 1
+hit_percent     | 
+-[ RECORD 2 ]---+-----------------------------------------------------------------------------
+query           | SELECT query, calls, total_exec_time, rows, $1 * shared_blks_hit /          +
+                |                nullif(shared_blks_hit + shared_blks_read, $2) AS hit_percent+
+                |           FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT $3
+calls           | 0
+total_exec_time | 0
+rows            | 0
+hit_percent     | 
 
 </screen>
  </sect2>

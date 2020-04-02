@@ -96,25 +96,26 @@ EXECUTE pgss_test(1);
 
 DEALLOCATE pgss_test;
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-                       query                       | calls | rows 
----------------------------------------------------+-------+------
- PREPARE pgss_test (int) AS SELECT $1, $2 LIMIT $3 |     1 |    1
- SELECT $1                                        +|     4 |    4
-                                                  +|       | 
-   AS "text"                                       |       | 
- SELECT $1 + $2                                    |     2 |    2
- SELECT $1 + $2 + $3 AS "add"                      |     3 |    3
- SELECT $1 AS "float"                              |     1 |    1
- SELECT $1 AS "int"                                |     2 |    2
- SELECT $1 AS i UNION SELECT $2 ORDER BY i         |     1 |    2
- SELECT $1 || $2                                   |     1 |    1
- SELECT pg_stat_statements_reset()                 |     1 |    1
- WITH t(f) AS (                                   +|     1 |    2
-   VALUES ($1), ($2)                              +|       | 
- )                                                +|       | 
-   SELECT f FROM t ORDER BY f                      |       | 
- select $1::jsonb ? $2                             |     1 |    1
-(11 rows)
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ PREPARE pgss_test (int) AS SELECT $1, $2 LIMIT $3                            |     1 |    1
+ SELECT $1                                                                   +|     4 |    4
+                                                                             +|       | 
+   AS "text"                                                                  |       | 
+ SELECT $1 + $2                                                               |     2 |    2
+ SELECT $1 + $2 + $3 AS "add"                                                 |     3 |    3
+ SELECT $1 AS "float"                                                         |     1 |    1
+ SELECT $1 AS "int"                                                           |     2 |    2
+ SELECT $1 AS i UNION SELECT $2 ORDER BY i                                    |     1 |    2
+ SELECT $1 || $2                                                              |     1 |    1
+ SELECT pg_stat_statements_reset()                                            |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     0 |    0
+ WITH t(f) AS (                                                              +|     1 |    2
+   VALUES ($1), ($2)                                                         +|       | 
+ )                                                                           +|       | 
+   SELECT f FROM t ORDER BY f                                                 |       | 
+ select $1::jsonb ? $2                                                        |     1 |    1
+(12 rows)
 
 --
 -- CRUD: INSERT SELECT UPDATE DELETE on test table
@@ -196,18 +197,19 @@ SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
 (8 rows)
 
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-                            query                            | calls | rows 
--------------------------------------------------------------+-------+------
- DELETE FROM test WHERE a > $1                               |     1 |    1
- INSERT INTO test (a, b) VALUES ($1, $2), ($3, $4), ($5, $6) |     1 |    3
- INSERT INTO test VALUES(generate_series($1, $2), $3)        |     1 |   10
- SELECT * FROM test ORDER BY a                               |     1 |   12
- SELECT * FROM test WHERE a > $1 ORDER BY a                  |     2 |    4
- SELECT * FROM test WHERE a IN ($1, $2, $3, $4, $5)          |     1 |    8
- SELECT pg_stat_statements_reset()                           |     1 |    1
- UPDATE test SET b = $1 WHERE a = $2                         |     6 |    6
- UPDATE test SET b = $1 WHERE a > $2                         |     1 |    3
-(9 rows)
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ DELETE FROM test WHERE a > $1                                                |     1 |    1
+ INSERT INTO test (a, b) VALUES ($1, $2), ($3, $4), ($5, $6)                  |     1 |    3
+ INSERT INTO test VALUES(generate_series($1, $2), $3)                         |     1 |   10
+ SELECT * FROM test ORDER BY a                                                |     1 |   12
+ SELECT * FROM test WHERE a > $1 ORDER BY a                                   |     2 |    4
+ SELECT * FROM test WHERE a IN ($1, $2, $3, $4, $5)                           |     1 |    8
+ SELECT pg_stat_statements_reset()                                            |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     0 |    0
+ UPDATE test SET b = $1 WHERE a = $2                                          |     6 |    6
+ UPDATE test SET b = $1 WHERE a > $2                                          |     1 |    3
+(10 rows)
 
 --
 -- pg_stat_statements.track = none
@@ -288,13 +290,14 @@ SELECT PLUS_ONE(10);
 (1 row)
 
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-               query               | calls | rows 
------------------------------------+-------+------
- SELECT $1::TEXT                   |     1 |    1
- SELECT PLUS_ONE($1)               |     2 |    2
- SELECT PLUS_TWO($1)               |     2 |    2
- SELECT pg_stat_statements_reset() |     1 |    1
-(4 rows)
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ SELECT $1::TEXT                                                              |     1 |    1
+ SELECT PLUS_ONE($1)                                                          |     2 |    2
+ SELECT PLUS_TWO($1)                                                          |     2 |    2
+ SELECT pg_stat_statements_reset()                                            |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     0 |    0
+(5 rows)
 
 --
 -- pg_stat_statements.track = all
@@ -345,14 +348,15 @@ SELECT PLUS_ONE(1);
 (1 row)
 
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-               query               | calls | rows 
------------------------------------+-------+------
- SELECT (i + $2 + $3)::INTEGER     |     2 |    2
- SELECT (i + $2)::INTEGER LIMIT $3 |     2 |    2
- SELECT PLUS_ONE($1)               |     2 |    2
- SELECT PLUS_TWO($1)               |     2 |    2
- SELECT pg_stat_statements_reset() |     1 |    1
-(5 rows)
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ SELECT (i + $2 + $3)::INTEGER                                                |     2 |    2
+ SELECT (i + $2)::INTEGER LIMIT $3                                            |     2 |    2
+ SELECT PLUS_ONE($1)                                                          |     2 |    2
+ SELECT PLUS_TWO($1)                                                          |     2 |    2
+ SELECT pg_stat_statements_reset()                                            |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     0 |    0
+(6 rows)
 
 --
 -- queries with locking clauses
@@ -437,8 +441,9 @@ SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 | SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE OF pgss_b
      1 | SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE OF pgss_b, pgss_a
      1 | SELECT * FROM pgss_a JOIN pgss_b ON pgss_b.a_id = pgss_a.id FOR UPDATE SKIP LOCKED
+     0 | SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C"
      1 | SELECT pg_stat_statements_reset()
-(11 rows)
+(12 rows)
 
 DROP TABLE pgss_a, pgss_b CASCADE;
 --
@@ -470,17 +475,18 @@ NOTICE:  table "test" does not exist, skipping
 NOTICE:  function plus_one(pg_catalog.int4) does not exist, skipping
 DROP FUNCTION PLUS_TWO(INTEGER);
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-                   query                   | calls | rows 
--------------------------------------------+-------+------
- CREATE INDEX test_b ON test(b)            |     1 |    0
- DROP FUNCTION IF EXISTS PLUS_ONE(INTEGER) |     1 |    0
- DROP FUNCTION PLUS_ONE(INTEGER)           |     1 |    0
- DROP FUNCTION PLUS_TWO(INTEGER)           |     1 |    0
- DROP TABLE IF EXISTS test                 |     3 |    0
- DROP TABLE test                           |     1 |    0
- SELECT $1                                 |     1 |    1
- SELECT pg_stat_statements_reset()         |     1 |    1
-(8 rows)
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ CREATE INDEX test_b ON test(b)                                               |     1 |    0
+ DROP FUNCTION IF EXISTS PLUS_ONE(INTEGER)                                    |     1 |    0
+ DROP FUNCTION PLUS_ONE(INTEGER)                                              |     1 |    0
+ DROP FUNCTION PLUS_TWO(INTEGER)                                              |     1 |    0
+ DROP TABLE IF EXISTS test                                                    |     3 |    0
+ DROP TABLE test                                                              |     1 |    0
+ SELECT $1                                                                    |     1 |    1
+ SELECT pg_stat_statements_reset()                                            |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     0 |    0
+(9 rows)
 
 --
 -- Track user activity and reset them
@@ -522,19 +528,20 @@ SELECT 1+1 AS "TWO";
 
 RESET ROLE;
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-               query               | calls | rows 
------------------------------------+-------+------
- CREATE ROLE regress_stats_user1   |     1 |    0
- CREATE ROLE regress_stats_user2   |     1 |    0
- RESET ROLE                        |     2 |    0
- SELECT $1 AS "ONE"                |     1 |    1
- SELECT $1 AS "ONE"                |     1 |    1
- SELECT $1+$2 AS "TWO"             |     1 |    1
- SELECT $1+$2 AS "TWO"             |     1 |    1
- SELECT pg_stat_statements_reset() |     1 |    1
- SET ROLE regress_stats_user1      |     1 |    0
- SET ROLE regress_stats_user2      |     1 |    0
-(10 rows)
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ CREATE ROLE regress_stats_user1                                              |     1 |    0
+ CREATE ROLE regress_stats_user2                                              |     1 |    0
+ RESET ROLE                                                                   |     2 |    0
+ SELECT $1 AS "ONE"                                                           |     1 |    1
+ SELECT $1 AS "ONE"                                                           |     1 |    1
+ SELECT $1+$2 AS "TWO"                                                        |     1 |    1
+ SELECT $1+$2 AS "TWO"                                                        |     1 |    1
+ SELECT pg_stat_statements_reset()                                            |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     0 |    0
+ SET ROLE regress_stats_user1                                                 |     1 |    0
+ SET ROLE regress_stats_user2                                                 |     1 |    0
+(11 rows)
 
 --
 -- Don't reset anything if any of the parameter is NULL
@@ -557,7 +564,7 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
  SELECT $1+$2 AS "TWO"                                                        |     1 |    1
  SELECT pg_stat_statements_reset($1)                                          |     1 |    1
  SELECT pg_stat_statements_reset()                                            |     1 |    1
- SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |   10
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |   11
  SET ROLE regress_stats_user1                                                 |     1 |    0
  SET ROLE regress_stats_user2                                                 |     1 |    0
 (12 rows)
@@ -592,7 +599,7 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
                                  WHERE s.query = $2 LIMIT $3))                    |       | 
  SELECT pg_stat_statements_reset($1)                                              |     1 |    1
  SELECT pg_stat_statements_reset()                                                |     1 |    1
- SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     2 |   22
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     2 |   23
  SET ROLE regress_stats_user1                                                     |     1 |    0
  SET ROLE regress_stats_user2                                                     |     1 |    0
 (12 rows)
@@ -624,7 +631,7 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
  SELECT pg_stat_statements_reset($1,$2,s.queryid)                                +|     1 |    2
          FROM pg_stat_statements AS s WHERE s.query = $3                          |       | 
  SELECT pg_stat_statements_reset()                                                |     1 |    1
- SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     3 |   34
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     3 |   35
  SET ROLE regress_stats_user1                                                     |     1 |    0
  SET ROLE regress_stats_user2                                                     |     1 |    0
 (11 rows)
@@ -656,7 +663,7 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
  SELECT pg_stat_statements_reset()                                                |     1 |    1
  SELECT pg_stat_statements_reset(r.oid)                                          +|     1 |    1
                  FROM pg_roles AS r WHERE r.rolname = $1                          |       | 
- SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     4 |   45
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C"     |     4 |   46
  SET ROLE regress_stats_user2                                                     |     1 |    0
 (10 rows)
 
@@ -670,14 +677,80 @@ SELECT pg_stat_statements_reset(0,0,0);
 (1 row)
 
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
-                 query                  | calls | rows 
-----------------------------------------+-------+------
- SELECT pg_stat_statements_reset(0,0,0) |     1 |    1
-(1 row)
+                                    query                                     | calls | rows 
+------------------------------------------------------------------------------+-------+------
+ SELECT pg_stat_statements_reset(0,0,0)                                       |     1 |    1
+ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     0 |    0
+(2 rows)
 
 --
 -- cleanup
 --
 DROP ROLE regress_stats_user1;
 DROP ROLE regress_stats_user2;
+--
+-- [re]plan counting
+--
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+CREATE TABLE test ();
+PREPARE prep1 AS SELECT COUNT(*) FROM test;
+EXECUTE prep1;
+ count 
+-------
+     0
+(1 row)
+
+EXECUTE prep1;
+ count 
+-------
+     0
+(1 row)
+
+EXECUTE prep1;
+ count 
+-------
+     0
+(1 row)
+
+ALTER TABLE test ADD COLUMN x int;
+EXECUTE prep1;
+ count 
+-------
+     0
+(1 row)
+
+SELECT 42;
+ ?column? 
+----------
+       42
+(1 row)
+
+SELECT 42;
+ ?column? 
+----------
+       42
+(1 row)
+
+SELECT 42;
+ ?column? 
+----------
+       42
+(1 row)
+
+SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                        query                                        | plans | calls | rows 
+-------------------------------------------------------------------------------------+-------+-------+------
+ ALTER TABLE test ADD COLUMN x int                                                   |     0 |     1 |    0
+ CREATE TABLE test ()                                                                |     0 |     1 |    0
+ PREPARE prep1 AS SELECT COUNT(*) FROM test                                          |     2 |     4 |    4
+ SELECT $1                                                                           |     3 |     3 |    3
+ SELECT pg_stat_statements_reset()                                                   |     0 |     1 |    1
+ SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |     0 |    0
+(6 rows)
+
 DROP EXTENSION pg_stat_statements;
