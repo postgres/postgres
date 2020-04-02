@@ -8771,7 +8771,7 @@ format_expr_params(PLpgSQL_execstate *estate,
 										 convert_value_to_string(estate,
 																 paramdatum,
 																 paramtypeid),
-										 0);
+										 -1);
 
 		paramno++;
 	}
@@ -8813,7 +8813,7 @@ format_preparedparamsdata(PLpgSQL_execstate *estate,
 										 convert_value_to_string(estate,
 																 ppd->values[paramno],
 																 ppd->types[paramno]),
-										 0);
+										 -1);
 	}
 
 	MemoryContextSwitchTo(oldcontext);

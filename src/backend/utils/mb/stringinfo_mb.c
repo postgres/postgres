@@ -27,7 +27,7 @@
  * appendStringInfoStringQuoted
  *
  * Append up to maxlen bytes from s to str, or the whole input string if
- * maxlen <= 0, adding single quotes around it and doubling all single quotes.
+ * maxlen < 0, adding single quotes around it and doubling all single quotes.
  * Add an ellipsis if the copy is incomplete.
  */
 void
@@ -43,9 +43,9 @@ appendStringInfoStringQuoted(StringInfo str, const char *s, int maxlen)
 	Assert(str != NULL);
 
 	slen = strlen(s);
-	if (maxlen > 0 && maxlen < slen)
+	if (maxlen >= 0 && maxlen < slen)
 	{
-		int		finallen = pg_mbcliplen(s, slen, maxlen);
+		int			finallen = pg_mbcliplen(s, slen, maxlen);
 
 		copy = pnstrdup(s, finallen);
 		chunk_search_start = copy;

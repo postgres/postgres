@@ -545,8 +545,13 @@
 					#   %% = '%'
 					# e.g. '<%u%%%d> '
 #log_lock_waits = off			# log lock waits >= deadlock_timeout
+#log_parameter_max_length = -1		# when logging statements, limit logged
+					# bind-parameter values to N bytes;
+					# -1 means print in full, 0 disables
+#log_parameter_max_length_on_error = 0	# when logging an error, limit logged
+					# bind-parameter values to N bytes;
+					# -1 means print in full, 0 disables
 #log_statement = 'none'			# none, ddl, mod, all
-#log_parameters_on_error = off	# on error log statements with bind parameters
 #log_replication_commands = off
 #log_temp_files = -1			# log temporary files equal or larger
 					# than the specified size in kilobytes;

@@ -2243,7 +2243,7 @@ include_dir 'conf.d'
         </para>
        </listitem>
       </varlistentry>
- 
+
       <varlistentry id="guc-max-worker-processes" xreflabel="max_worker_processes">
        <term><varname>max_worker_processes</varname> (<type>integer</type>)
        <indexterm>
@@ -4167,7 +4167,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         Specifies whether the WAL receiver process should create a temporary replication
         slot on the remote instance when no permanent replication slot to use
         has been configured (using <xref linkend="guc-primary-slot-name"/>).
-        The default is off.  This parameter can only be set in the 
+        The default is off.  This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command line.
         If this parameter is changed while the WAL receiver process is running,
         that process is signalled to shut down and expected to restart with
@@ -6685,25 +6685,57 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-log-parameters-on-error" xreflabel="log_parameters_on_error">
-      <term><varname>log_parameters_on_error</varname> (<type>boolean</type>)
+     <varlistentry id="guc-log-parameter-max-length" xreflabel="log_parameter_max_length">
+      <term><varname>log_parameter_max_length</varname> (<type>integer</type>)
       <indexterm>
-       <primary><varname>log_parameters_on_error</varname> configuration parameter</primary>
+       <primary><varname>log_parameter_max_length</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        Controls whether bind parameters are logged when a statement is logged
-        as a result of <xref linkend="guc-log-min-error-statement"/>.
-        It adds some overhead, as <productname>PostgreSQL</productname> will
-        compute and store textual representations of parameter values in
-        memory for all statements, even if they eventually do not get logged.
-        This setting has no effect on statements logged due to
-        <xref linkend="guc-log-min-duration-statement"/> or
-        <xref linkend="guc-log-statement"/> settings, as they are always logged
-        with parameters.
-        The default is <literal>off</literal>.
+        If greater than zero, each bind parameter value reported in
+        non-error statement-logging messages is trimmed to this many bytes.
+        Zero disables logging bind parameters with statements.
+        <literal>-1</literal> (the default) allows bind parameters to be
+        logged in full.
+        If this value is specified without units, it is taken as bytes.
         Only superusers can change this setting.
+       </para>
+
+       <para>
+        This setting only affects log messages printed as a result of
+        <xref linkend="guc-log-statement"/>,
+        <xref linkend="guc-log-duration"/>, and related settings.  Non-zero
+        values of this setting add some overhead, particularly if parameters
+        are sent in binary form, since then conversion to text is required.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-parameter-max-length-on-error" xreflabel="log_parameter_max_length_on_error">
+      <term><varname>log_parameter_max_length_on_error</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>log_parameter_max_length_on_error</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        If greater than zero, each bind parameter value reported in error
+        messages is trimmed to this many bytes.
+        Zero (the default) disables including bind parameters in error
+        messages.
+        <literal>-1</literal> allows bind parameters to be printed in full.
+        If this value is specified without units, it is taken as bytes.
+       </para>
+
+       <para>
+        Non-zero values of this setting add overhead, as
+        <productname>PostgreSQL</productname> will need to store textual
+        representations of parameter values in memory at the start of each
+        statement, whether or not an error eventually occurs.  The overhead
+        is greater when bind parameters are sent in binary form than when
+        they are sent as text, since the former case requires data
+        conversion while the latter only requires copying the string.
        </para>
       </listitem>
      </varlistentry>
