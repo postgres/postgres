@@ -43,7 +43,9 @@ int			max_standby_streaming_delay = 30 * 1000;
 static HTAB *RecoveryLockLists;
 
 static void ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
-												   ProcSignalReason reason, bool report_waiting);
+												   ProcSignalReason reason,
+												   uint32 wait_event_info,
+												   bool report_waiting);
 static void SendRecoveryConflictWithBufferPin(ProcSignalReason reason);
 static XLogRecPtr LogCurrentRunningXacts(RunningTransactions CurrRunningXacts);
 static void LogAccessExclusiveLocks(int nlocks, xl_standby_lock *locks);
@@ -184,7 +186,7 @@ static int	standbyWait_us = STANDBY_INITIAL_WAIT_US;
  * more then we return true, if we can wait some more return false.
  */
 static bool
-WaitExceedsMaxStandbyDelay(void)
+WaitExceedsMaxStandbyDelay(uint32 wait_event_info)
 {
 	TimestampTz ltime;
 
@@ -198,7 +200,9 @@ WaitExceedsMaxStandbyDelay(void)
 	/*
 	 * Sleep a bit (this is essential to avoid busy-waiting).
 	 */
+	pgstat_report_wait_start(wait_event_info);
 	pg_usleep(standbyWait_us);
+	pgstat_report_wait_end();
 
 	/*
 	 * Progressively increase the sleep times, but not to more than 1s, since
@@ -223,7 +227,8 @@ WaitExceedsMaxStandbyDelay(void)
  */
 static void
 ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
-									   ProcSignalReason reason, bool report_waiting)
+									   ProcSignalReason reason, uint32 wait_event_info,
+									   bool report_waiting)
 {
 	TimestampTz waitStart = 0;
 	char	   *new_status;
@@ -264,7 +269,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 			}
 
 			/* Is it time to kill it? */
-			if (WaitExceedsMaxStandbyDelay())
+			if (WaitExceedsMaxStandbyDelay(wait_event_info))
 			{
 				pid_t		pid;
 
@@ -317,6 +322,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
 										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
+										   WAIT_EVENT_RECOVERY_CONFLICT_SNAPSHOT,
 										   true);
 }
 
@@ -346,6 +352,7 @@ ResolveRecoveryConflictWithTablespace(Oid tsid)
 												InvalidOid);
 	ResolveRecoveryConflictWithVirtualXIDs(temp_file_users,
 										   PROCSIG_RECOVERY_CONFLICT_TABLESPACE,
+										   WAIT_EVENT_RECOVERY_CONFLICT_TABLESPACE,
 										   true);
 }
 
@@ -417,6 +424,7 @@ ResolveRecoveryConflictWithLock(LOCKTAG locktag)
 		 */
 		ResolveRecoveryConflictWithVirtualXIDs(backends,
 											   PROCSIG_RECOVERY_CONFLICT_LOCK,
+											   PG_WAIT_LOCK | locktag.locktag_type,
 											   false);
 	}
 	else

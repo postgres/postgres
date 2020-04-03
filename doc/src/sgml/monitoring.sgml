@@ -1346,7 +1346,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="38"><literal>IPC</literal></entry>
+         <entry morerows="40"><literal>IPC</literal></entry>
          <entry><literal>BackupWaitWalArchive</literal></entry>
          <entry>Waiting for WAL files required for the backup to be successfully archived.</entry>
         </row>
@@ -1481,6 +1481,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>Promote</literal></entry>
          <entry>Waiting for standby promotion.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryConflictSnapshot</literal></entry>
+         <entry>Waiting for recovery conflict resolution on a vacuum cleanup.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryConflictTablespace</literal></entry>
+         <entry>Waiting for recovery conflict resolution on dropping tablespace.</entry>
         </row>
         <row>
          <entry><literal>RecoveryPause</literal></entry>
