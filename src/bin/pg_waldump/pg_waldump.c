@@ -1098,7 +1098,7 @@ main(int argc, char **argv)
 			break;
 	}
 
-	if (config.stats == true)
+	if (config.stats == true && !config.quiet)
 		XLogDumpDisplayStats(&config, &stats);
 
 	if (errormsg)
