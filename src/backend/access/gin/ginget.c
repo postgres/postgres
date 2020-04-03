@@ -753,9 +753,8 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 		/* A bitmap result */
 		BlockNumber advancePastBlk = GinItemPointerGetBlockNumber(&advancePast);
 		OffsetNumber advancePastOff = GinItemPointerGetOffsetNumber(&advancePast);
-		bool		gotitem = false;
 
-		do
+		for (;;)
 		{
 			/*
 			 * If we've exhausted all items on this block, move to next block
@@ -804,7 +803,6 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 				 * estimate number of results on this page to support correct
 				 * reducing of result even if it's enabled.
 				 */
-				gotitem = true;
 				break;
 			}
 
@@ -817,7 +815,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 				/*
 				 * First, do a quick check against the last offset on the
 				 * page. If that's > advancePast, so are all the other
-				 * offsets.
+				 * offsets, so just go back to the top to get the next page.
 				 */
 				if (entry->matchResult->offsets[entry->matchResult->ntuples - 1] <= advancePastOff)
 				{
@@ -834,8 +832,11 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 						   entry->matchResult->blockno,
 						   entry->matchResult->offsets[entry->offset]);
 			entry->offset++;
-			gotitem = true;
-		} while (!gotitem || (entry->reduceResult == TRUE && dropItem(entry)));
+
+			/* Done unless we need to reduce the result */
+			if (!entry->reduceResult || !dropItem(entry))
+				break;
+		}
 	}
 	else if (!BufferIsValid(entry->buffer))
 	{
@@ -843,7 +844,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 		 * A posting list from an entry tuple, or the last page of a posting
 		 * tree.
 		 */
-		do
+		for (;;)
 		{
 			if (entry->offset >= entry->nlist)
 			{
@@ -853,13 +854,20 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			}
 
 			entry->curItem = entry->list[entry->offset++];
-		} while (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0);
-		/* XXX: shouldn't we apply the fuzzy search limit here? */
+
+			/* If we're not past advancePast, keep scanning */
+			if (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0)
+				continue;
+
+			/* Done unless we need to reduce the result */
+			if (!entry->reduceResult || !dropItem(entry))
+				break;
+		}
 	}
 	else
 	{
 		/* A posting tree */
-		do
+		for (;;)
 		{
 			/* If we've processed the current batch, load more items */
 			while (entry->offset >= entry->nlist)
@@ -875,8 +883,20 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 
 			entry->curItem = entry->list[entry->offset++];
 
-		} while (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0 ||
-				 (entry->reduceResult == TRUE && dropItem(entry)));
+			/* If we're not past advancePast, keep scanning */
+			if (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0)
+				continue;
+
+			/* Done unless we need to reduce the result */
+			if (!entry->reduceResult || !dropItem(entry))
+				break;
+
+			/*
+			 * Advance advancePast (so that entryLoadMoreItems will load the
+			 * right data), and keep scanning
+			 */
+			advancePast = entry->curItem;
+		}
 	}
 }
 
