@@ -170,6 +170,7 @@
 
 <!ENTITY limits     SYSTEM "limits.sgml">
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">
+<!ENTITY glossary   SYSTEM "glossary.sgml">
 <!ENTITY color      SYSTEM "color.sgml">
 
 <!ENTITY features-supported   SYSTEM "features-supported.sgml">
