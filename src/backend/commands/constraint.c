@@ -37,7 +37,7 @@
 Datum
 unique_key_recheck(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata = castNode(TriggerData, fcinfo->context);
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	const char *funcname = "unique_key_recheck";
 	HeapTuple	new_row;
 	ItemPointerData tmptid;
