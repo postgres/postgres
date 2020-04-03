@@ -33,8 +33,7 @@ lo_manage(PG_FUNCTION_ARGS)
 	HeapTuple	trigtuple;		/* The original value of tuple	*/
 
 	if (!CALLED_AS_TRIGGER(fcinfo)) /* internal error */
-		elog(ERROR, "%s: not fired by trigger manager",
-			 trigdata->tg_trigger->tgname);
+		elog(ERROR, "lo_manage: not fired by trigger manager");
 
 	if (!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event)) /* internal error */
 		elog(ERROR, "%s: must be fired for row",
