@@ -126,6 +126,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-q</option></term>
+      <term><option>--quiet</option></term>
+      <listitem>
+       <para>
+        Do not print any output, except for errors. This option can be useful
+        when you want to know whether a range of WAL records can be
+        successfully parsed but don't care about the record contents.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-r <replaceable>rmgr</replaceable></option></term>
       <term><option>--rmgr=<replaceable>rmgr</replaceable></option></term>
       <listitem>
