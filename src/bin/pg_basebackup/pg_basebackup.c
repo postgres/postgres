@@ -88,6 +88,12 @@ typedef struct UnpackTarState
 	FILE	   *file;
 } UnpackTarState;
 
+typedef struct WriteManifestState
+{
+	char		filename[MAXPGPATH];
+	FILE	   *file;
+} WriteManifestState;
+
 typedef void (*WriteDataCallback) (size_t nbytes, char *buf,
 								   void *callback_data);
 
@@ -136,6 +142,9 @@ static bool temp_replication_slot = true;
 static bool create_slot = false;
 static bool no_slot = false;
 static bool verify_checksums = true;
+static bool manifest = true;
+static bool manifest_force_encode = false;
+static char *manifest_checksums = NULL;
 
 static bool success = false;
 static bool made_new_pgdata = false;
@@ -181,6 +190,12 @@ static void ReceiveTarCopyChunk(size_t r, char *copybuf, void *callback_data);
 static void ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum);
 static void ReceiveTarAndUnpackCopyChunk(size_t r, char *copybuf,
 										 void *callback_data);
+static void ReceiveBackupManifest(PGconn *conn);
+static void ReceiveBackupManifestChunk(size_t r, char *copybuf,
+									   void *callback_data);
+static void ReceiveBackupManifestInMemory(PGconn *conn, PQExpBuffer buf);
+static void ReceiveBackupManifestInMemoryChunk(size_t r, char *copybuf,
+											   void *callback_data);
 static void BaseBackup(void);
 
 static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
@@ -388,6 +403,11 @@ usage(void)
 	printf(_("      --no-verify-checksums\n"
 			 "                         do not verify checksums\n"));
 	printf(_("      --no-estimate-size do not estimate backup size in server side\n"));
+	printf(_("      --no-manifest      suppress generation of backup manifest\n"));
+	printf(_("      --manifest-force-encode\n"
+			 "                         hex encode all filenames in manifest\n"));
+	printf(_("      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+			 "                         use algorithm for manifest checksums\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));
@@ -1186,6 +1206,31 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		}
 	}
 
+	/*
+	 * Normally, we emit the backup manifest as a separate file, but when
+	 * we're writing a tarfile to stdout, we don't have that option, so
+	 * include it in the one tarfile we've got.
+	 */
+	if (strcmp(basedir, "-") == 0)
+	{
+		char		header[512];
+		PQExpBufferData	buf;
+
+		initPQExpBuffer(&buf);
+		ReceiveBackupManifestInMemory(conn, &buf);
+		if (PQExpBufferDataBroken(buf))
+		{
+			pg_log_error("out of memory");
+			exit(1);
+		}
+		tarCreateHeader(header, "backup_manifest", NULL, buf.len,
+						pg_file_create_mode, 04000, 02000,
+						time(NULL));
+		writeTarData(&state, header, sizeof(header));
+		writeTarData(&state, buf.data, buf.len);
+		termPQExpBuffer(&buf);
+	}
+
 	/* 2 * 512 bytes empty data at end of file */
 	writeTarData(&state, zerobuf, sizeof(zerobuf));
 
@@ -1657,6 +1702,64 @@ ReceiveTarAndUnpackCopyChunk(size_t r, char *copybuf, void *callback_data)
 	}							/* continuing data in existing file */
 }
 
+/*
+ * Receive the backup manifest file and write it out to a file.
+ */
+static void
+ReceiveBackupManifest(PGconn *conn)
+{
+	WriteManifestState state;
+
+	snprintf(state.filename, sizeof(state.filename),
+			 "%s/backup_manifest.tmp", basedir);
+	state.file = fopen(state.filename, "wb");
+	if (state.file == NULL)
+	{
+		pg_log_error("could not create file \"%s\": %m", state.filename);
+		exit(1);
+	}
+
+	ReceiveCopyData(conn, ReceiveBackupManifestChunk, &state);
+
+	fclose(state.file);
+}
+
+/*
+ * Receive one chunk of the backup manifest file and write it out to a file.
+ */
+static void
+ReceiveBackupManifestChunk(size_t r, char *copybuf, void *callback_data)
+{
+	WriteManifestState *state = callback_data;
+
+	if (fwrite(copybuf, r, 1, state->file) != 1)
+	{
+		pg_log_error("could not write to file \"%s\": %m", state->filename);
+		exit(1);
+	}
+}
+
+/*
+ * Receive the backup manifest file and write it out to a file.
+ */
+static void
+ReceiveBackupManifestInMemory(PGconn *conn, PQExpBuffer buf)
+{
+	ReceiveCopyData(conn, ReceiveBackupManifestInMemoryChunk, buf);
+}
+
+/*
+ * Receive one chunk of the backup manifest file and write it out to a file.
+ */
+static void
+ReceiveBackupManifestInMemoryChunk(size_t r, char *copybuf,
+								   void *callback_data)
+{
+	PQExpBuffer buf = callback_data;
+
+	appendPQExpBuffer(buf, copybuf, r);
+}
+
 static void
 BaseBackup(void)
 {
@@ -1667,6 +1770,8 @@ BaseBackup(void)
 	char	   *basebkp;
 	char		escaped_label[MAXPGPATH];
 	char	   *maxrate_clause = NULL;
+	char	   *manifest_clause;
+	char	   *manifest_checksums_clause = "";
 	int			i;
 	char		xlogstart[64];
 	char		xlogend[64];
@@ -1674,6 +1779,7 @@ BaseBackup(void)
 				maxServerMajor;
 	int			serverVersion,
 				serverMajor;
+	int			writing_to_stdout;
 
 	Assert(conn != NULL);
 
@@ -1728,6 +1834,33 @@ BaseBackup(void)
 	if (maxrate > 0)
 		maxrate_clause = psprintf("MAX_RATE %u", maxrate);
 
+	if (manifest)
+	{
+		if (serverMajor < 1300)
+		{
+			const char *serverver = PQparameterStatus(conn, "server_version");
+
+			pg_log_error("backup manifests are not supported by server version %s",
+						 serverver ? serverver : "'unknown'");
+			exit(1);
+		}
+
+		if (manifest_force_encode)
+			manifest_clause = "MANIFEST 'force-encode'";
+		else
+			manifest_clause = "MANIFEST 'yes'";
+		if (manifest_checksums != NULL)
+			manifest_checksums_clause = psprintf("MANIFEST_CHECKSUMS '%s'",
+												 manifest_checksums);
+	}
+	else
+	{
+		if (serverMajor < 1300)
+			manifest_clause = "";
+		else
+			manifest_clause = "MANIFEST 'no'";
+	}
+
 	if (verbose)
 		pg_log_info("initiating base backup, waiting for checkpoint to complete");
 
@@ -1741,7 +1874,7 @@ BaseBackup(void)
 	}
 
 	basebkp =
-		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s",
+		psprintf("BASE_BACKUP LABEL '%s' %s %s %s %s %s %s %s %s %s",
 				 escaped_label,
 				 estimatesize ? "PROGRESS" : "",
 				 includewal == FETCH_WAL ? "WAL" : "",
@@ -1749,7 +1882,9 @@ BaseBackup(void)
 				 includewal == NO_WAL ? "" : "NOWAIT",
 				 maxrate_clause ? maxrate_clause : "",
 				 format == 't' ? "TABLESPACE_MAP" : "",
-				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS");
+				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS",
+				 manifest_clause,
+				 manifest_checksums_clause);
 
 	if (PQsendQuery(conn, basebkp) == 0)
 	{
@@ -1837,7 +1972,8 @@ BaseBackup(void)
 	/*
 	 * When writing to stdout, require a single tablespace
 	 */
-	if (format == 't' && strcmp(basedir, "-") == 0 && PQntuples(res) > 1)
+	writing_to_stdout = format == 't' && strcmp(basedir, "-") == 0;
+	if (writing_to_stdout && PQntuples(res) > 1)
 	{
 		pg_log_error("can only write single tablespace to stdout, database has %d",
 					 PQntuples(res));
@@ -1865,6 +2001,19 @@ BaseBackup(void)
 		else
 			ReceiveAndUnpackTarFile(conn, res, i);
 	}							/* Loop over all tablespaces */
+
+	/*
+	 * Now receive backup manifest, if appropriate.
+	 *
+	 * If we're writing a tarfile to stdout, ReceiveTarFile will have already
+	 * processed the backup manifest and included it in the output tarfile.
+	 * Such a configuration doesn't allow for writing multiple files.
+	 *
+	 * If we're talking to an older server, it won't send a backup manifest,
+	 * so don't try to receive one.
+	 */
+	if (!writing_to_stdout && manifest)
+		ReceiveBackupManifest(conn);
 
 	if (showprogress)
 	{
@@ -2031,6 +2180,29 @@ BaseBackup(void)
 		}
 	}
 
+	/*
+	 * After synchronizing data to disk, perform a durable rename of
+	 * backup_manifest.tmp to backup_manifest, if we wrote such a file. This
+	 * way, a failure or system crash before we reach this point will leave us
+	 * without a backup_manifest file, decreasing the chances that a directory
+	 * we leave behind will be mistaken for a valid backup.
+	 */
+	if (!writing_to_stdout && manifest)
+	{
+		char		tmp_filename[MAXPGPATH];
+		char		filename[MAXPGPATH];
+
+		if (verbose)
+			pg_log_info("renaming backup_manifest.tmp to backup_manifest");
+
+		snprintf(tmp_filename, MAXPGPATH, "%s/backup_manifest.tmp", basedir);
+		snprintf(filename, MAXPGPATH, "%s/backup_manifest", basedir);
+
+		/* durable_rename emits its own log message in case of failure */
+		if (durable_rename(tmp_filename, filename) != 0)
+			exit(1);
+	}
+
 	if (verbose)
 		pg_log_info("base backup completed");
 }
@@ -2069,6 +2241,9 @@ main(int argc, char **argv)
 		{"no-slot", no_argument, NULL, 2},
 		{"no-verify-checksums", no_argument, NULL, 3},
 		{"no-estimate-size", no_argument, NULL, 4},
+		{"no-manifest", no_argument, NULL, 5},
+		{"manifest-force-encode", no_argument, NULL, 6},
+		{"manifest-checksums", required_argument, NULL, 7},
 		{NULL, 0, NULL, 0}
 	};
 	int			c;
@@ -2096,7 +2271,7 @@ main(int argc, char **argv)
 
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWkvP",
+	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWkvPm:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2240,6 +2415,15 @@ main(int argc, char **argv)
 			case 4:
 				estimatesize = false;
 				break;
+			case 5:
+				manifest = false;
+				break;
+			case 6:
+				manifest_force_encode = true;
+				break;
+			case 7:
+				manifest_checksums = pg_strdup(optarg);
+				break;
 			default:
 
 				/*
@@ -2365,6 +2549,22 @@ main(int argc, char **argv)
 	if (showprogress && !estimatesize)
 	{
 		pg_log_error("--progress and --no-estimate-size are incompatible options");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
+	if (!manifest && manifest_checksums != NULL)
+	{
+		pg_log_error("--no-manifest and --manifest-checksums are incompatible options");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
+	if (!manifest && manifest_force_encode)
+	{
+		pg_log_error("--no-manifest and --manifest-force-encode are incompatible options");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);

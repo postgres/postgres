@@ -10642,7 +10642,8 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			ti->oid = pstrdup(de->d_name);
 			ti->path = pstrdup(buflinkpath.data);
 			ti->rpath = relpath ? pstrdup(relpath) : NULL;
-			ti->size = infotbssize ? sendTablespace(fullpath, true) : -1;
+			ti->size = infotbssize ?
+				sendTablespace(fullpath, ti->oid, true, NULL) : -1;
 
 			if (tablespaces)
 				*tablespaces = lappend(*tablespaces, ti);

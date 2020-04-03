@@ -6,7 +6,7 @@ use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use PostgresNode;
 use TestLib;
-use Test::More tests => 107;
+use Test::More tests => 109;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -104,6 +104,7 @@ foreach my $filename (@tempRelationFiles)
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
+ok(-f "$tempdir/backup/backup_manifest", 'backup manifest included');
 
 # Permissions on backup should be default
 SKIP:
@@ -160,11 +161,12 @@ rmtree("$tempdir/backup");
 
 $node->command_ok(
 	[
-		'pg_basebackup', '-D', "$tempdir/backup2", '--waldir',
-		"$tempdir/xlog2"
+		'pg_basebackup', '-D', "$tempdir/backup2", '--no-manifest',
+		'--waldir', "$tempdir/xlog2"
 	],
 	'separate xlog directory');
 ok(-f "$tempdir/backup2/PG_VERSION", 'backup was created');
+ok(! -f "$tempdir/backup2/backup_manifest", 'manifest was suppressed');
 ok(-d "$tempdir/xlog2/",             'xlog directory was created');
 rmtree("$tempdir/backup2");
 rmtree("$tempdir/xlog2");

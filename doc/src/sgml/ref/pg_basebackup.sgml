@@ -561,6 +561,70 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-manifest</option></term>
+      <listitem>
+       <para>
+        Disables generation of a backup manifest. If this option is not
+        specified, the server will generate and send a backup manifest
+        which can be verified using <xref linkend="app-pgvalidatebackup" />.
+        The manifest is a list of every file present in the backup with the
+        exception of any WAL files that may be included. It also stores the
+        size, last modification time, and an optional checksum for each file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--manifest-force-encode</option></term>
+      <listitem>
+       <para>
+        Forces all filenames in the backup manifest to be hex-encoded.
+        If this option is not specified, only non-UTF8 filenames are
+        hex-encoded. This option is mostly intended to test that tools which
+        read a backup manifest file properly handle this case.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--manifest-checksums=<replaceable class="parameter">algorithm</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the checksum algorithm that should be applied to each file
+        included in the backup manifest. Currently, the available
+        algorithms are <literal>NONE</literal>, <literal>CRC32C</literal>,
+        <literal>SHA224</literal>, <literal>SHA256</literal>,
+        <literal>SHA384</literal>, and <literal>SHA512</literal>.
+        The default is <literal>CRC32C</literal>.
+       </para>
+       <para>
+        If <literal>NONE</literal> is selected, the backup manifest will
+        not contain any checksums. Otherwise, it will contain a checksum
+        of each file in the backup using the specified algorithm. In addition,
+        the manifest will always contain a <literal>SHA256</literal>
+        checksum of its own contents. The <literal>SHA</literal> algorithms
+        are significantly more CPU-intensive than <literal>CRC32C</literal>,
+        so selecting one of them may increase the time required to complete
+        the backup.
+       </para>
+       <para>
+        Using a SHA hash function provides a cryptographically secure digest
+        of each file for users who wish to verify that the backup has not been
+        tampered with, while the CRC32C algorithm provides a checksum which is
+        much faster to calculate and good at catching errors due to accidental
+        changes but is not resistant to targeted modifications.  Note that, to
+        be useful against an adversary who has access to the backup, the backup
+        manifest would need to be stored securely elsewhere or otherwise
+        verified not to have been modified since the backup was taken.
+       </para>
+       <para>
+        <xref linkend="app-pgvalidatebackup" /> can be used to check the
+        integrity of a backup against the backup manifest.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 

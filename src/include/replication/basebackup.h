@@ -12,6 +12,7 @@
 #ifndef _BASEBACKUP_H
 #define _BASEBACKUP_H
 
+#include "lib/stringinfo.h"
 #include "nodes/replnodes.h"
 
 /*
@@ -29,8 +30,12 @@ typedef struct
 	int64		size;
 } tablespaceinfo;
 
+struct manifest_info;
+typedef struct manifest_info manifest_info;
+
 extern void SendBaseBackup(BaseBackupCmd *cmd);
 
-extern int64 sendTablespace(char *path, bool sizeonly);
+extern int64 sendTablespace(char *path, char *oid, bool sizeonly,
+							manifest_info *manifest);
 
 #endif							/* _BASEBACKUP_H */
