@@ -80,6 +80,7 @@ my @scenario = (
 	{
 		'name' => 'open_directory_fails',
 		'mutilate' => \&mutilate_open_directory_fails,
+		'cleanup' => \&cleanup_open_directory_fails,
 		'fails_like' => qr/could not open directory/,
 		'skip_on_windows' => 1
 	},
@@ -242,6 +243,15 @@ sub mutilate_open_directory_fails
 	my ($backup_path) = @_;
 	my $pathname = "$backup_path/pg_subtrans";
 	chmod(0, $pathname) || die "chmod $pathname: $!";
+	return;
+}
+
+# restore permissions on the unreadable directory we created.
+sub cleanup_open_directory_fails
+{
+	my ($backup_path) = @_;
+	my $pathname = "$backup_path/pg_subtrans";
+	chmod(0700, $pathname) || die "chmod $pathname: $!";
 	return;
 }
 
