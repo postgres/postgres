@@ -20,7 +20,6 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "partitioning/partbounds.h"
-#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
 
@@ -46,8 +45,6 @@ static void try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1,
 static SpecialJoinInfo *build_child_join_sjinfo(PlannerInfo *root,
 												SpecialJoinInfo *parent_sjinfo,
 												Relids left_relids, Relids right_relids);
-static int	match_expr_to_partition_keys(Expr *expr, RelOptInfo *rel,
-										 bool strict_op);
 
 
 /*
@@ -1572,169 +1569,4 @@ build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
 	pfree(right_appinfos);
 
 	return sjinfo;
-}
-
-/*
- * Returns true if there exists an equi-join condition for each pair of
- * partition keys from given relations being joined.
- */
-bool
-have_partkey_equi_join(RelOptInfo *joinrel,
-					   RelOptInfo *rel1, RelOptInfo *rel2,
-					   JoinType jointype, List *restrictlist)
-{
-	PartitionScheme part_scheme = rel1->part_scheme;
-	ListCell   *lc;
-	int			cnt_pks;
-	bool		pk_has_clause[PARTITION_MAX_KEYS];
-	bool		strict_op;
-
-	/*
-	 * This function should be called when the joining relations have same
-	 * partitioning scheme.
-	 */
-	Assert(rel1->part_scheme == rel2->part_scheme);
-	Assert(part_scheme);
-
-	memset(pk_has_clause, 0, sizeof(pk_has_clause));
-	foreach(lc, restrictlist)
-	{
-		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
-		OpExpr	   *opexpr;
-		Expr	   *expr1;
-		Expr	   *expr2;
-		int			ipk1;
-		int			ipk2;
-
-		/* If processing an outer join, only use its own join clauses. */
-		if (IS_OUTER_JOIN(jointype) &&
-			RINFO_IS_PUSHED_DOWN(rinfo, joinrel->relids))
-			continue;
-
-		/* Skip clauses which can not be used for a join. */
-		if (!rinfo->can_join)
-			continue;
-
-		/* Skip clauses which are not equality conditions. */
-		if (!rinfo->mergeopfamilies && !OidIsValid(rinfo->hashjoinoperator))
-			continue;
-
-		opexpr = castNode(OpExpr, rinfo->clause);
-
-		/*
-		 * The equi-join between partition keys is strict if equi-join between
-		 * at least one partition key is using a strict operator. See
-		 * explanation about outer join reordering identity 3 in
-		 * optimizer/README
-		 */
-		strict_op = op_strict(opexpr->opno);
-
-		/* Match the operands to the relation. */
-		if (bms_is_subset(rinfo->left_relids, rel1->relids) &&
-			bms_is_subset(rinfo->right_relids, rel2->relids))
-		{
-			expr1 = linitial(opexpr->args);
-			expr2 = lsecond(opexpr->args);
-		}
-		else if (bms_is_subset(rinfo->left_relids, rel2->relids) &&
-				 bms_is_subset(rinfo->right_relids, rel1->relids))
-		{
-			expr1 = lsecond(opexpr->args);
-			expr2 = linitial(opexpr->args);
-		}
-		else
-			continue;
-
-		/*
-		 * Only clauses referencing the partition keys are useful for
-		 * partitionwise join.
-		 */
-		ipk1 = match_expr_to_partition_keys(expr1, rel1, strict_op);
-		if (ipk1 < 0)
-			continue;
-		ipk2 = match_expr_to_partition_keys(expr2, rel2, strict_op);
-		if (ipk2 < 0)
-			continue;
-
-		/*
-		 * If the clause refers to keys at different ordinal positions, it can
-		 * not be used for partitionwise join.
-		 */
-		if (ipk1 != ipk2)
-			continue;
-
-		/*
-		 * The clause allows partitionwise join if only it uses the same
-		 * operator family as that specified by the partition key.
-		 */
-		if (rel1->part_scheme->strategy == PARTITION_STRATEGY_HASH)
-		{
-			if (!op_in_opfamily(rinfo->hashjoinoperator,
-								part_scheme->partopfamily[ipk1]))
-				continue;
-		}
-		else if (!list_member_oid(rinfo->mergeopfamilies,
-								  part_scheme->partopfamily[ipk1]))
-			continue;
-
-		/* Mark the partition key as having an equi-join clause. */
-		pk_has_clause[ipk1] = true;
-	}
-
-	/* Check whether every partition key has an equi-join condition. */
-	for (cnt_pks = 0; cnt_pks < part_scheme->partnatts; cnt_pks++)
-	{
-		if (!pk_has_clause[cnt_pks])
-			return false;
-	}
-
-	return true;
-}
-
-/*
- * Find the partition key from the given relation matching the given
- * expression. If found, return the index of the partition key, else return -1.
- */
-static int
-match_expr_to_partition_keys(Expr *expr, RelOptInfo *rel, bool strict_op)
-{
-	int			cnt;
-
-	/* This function should be called only for partitioned relations. */
-	Assert(rel->part_scheme);
-
-	/* Remove any relabel decorations. */
-	while (IsA(expr, RelabelType))
-		expr = (Expr *) (castNode(RelabelType, expr))->arg;
-
-	for (cnt = 0; cnt < rel->part_scheme->partnatts; cnt++)
-	{
-		ListCell   *lc;
-
-		Assert(rel->partexprs);
-		foreach(lc, rel->partexprs[cnt])
-		{
-			if (equal(lfirst(lc), expr))
-				return cnt;
-		}
-
-		if (!strict_op)
-			continue;
-
-		/*
-		 * If it's a strict equi-join a NULL partition key on one side will
-		 * not join a NULL partition key on the other side. So, rows with NULL
-		 * partition key from a partition on one side can not join with those
-		 * from a non-matching partition on the other side. So, search the
-		 * nullable partition keys as well.
-		 */
-		Assert(rel->nullable_partexprs);
-		foreach(lc, rel->nullable_partexprs[cnt])
-		{
-			if (equal(lfirst(lc), expr))
-				return cnt;
-		}
-	}
-
-	return -1;
 }

@@ -574,6 +574,24 @@ typedef struct PartitionSchemeData *PartitionScheme;
  * we know we will need it at least once (to price the sequential scan)
  * and may need it multiple times to price index scans.
  *
+ * A join relation is considered to be partitioned if it is formed from a
+ * join of two relations that are partitioned, have matching partitioning
+ * schemes, and are joined on an equijoin of the partitioning columns.
+ * Under those conditions we can consider the join relation to be partitioned
+ * by either relation's partitioning keys, though some care is needed if
+ * either relation can be forced to null by outer-joining.  For example, an
+ * outer join like (A LEFT JOIN B ON A.a = B.b) may produce rows with B.b
+ * NULL.  These rows may not fit the partitioning conditions imposed on B.
+ * Hence, strictly speaking, the join is not partitioned by B.b and thus
+ * partition keys of an outer join should include partition key expressions
+ * from the non-nullable side only.  However, if a subsequent join uses
+ * strict comparison operators (and all commonly-used equijoin operators are
+ * strict), the presence of nulls doesn't cause a problem: such rows couldn't
+ * match anything on the other side and thus they don't create a need to do
+ * any cross-partition sub-joins.  Hence we can treat such values as still
+ * partitioning the join output for the purpose of additional partitionwise
+ * joining, so long as a strict join operator is used by the next join.
+ *
  * If the relation is partitioned, these fields will be set:
  *
  *		part_scheme - Partitioning scheme of the relation
@@ -586,16 +604,15 @@ typedef struct PartitionSchemeData *PartitionScheme;
  *								 this relation that are partitioned tables
  *								 themselves, in hierarchical order
  *
- * Note: A base relation always has only one set of partition keys, but a join
- * relation may have as many sets of partition keys as the number of relations
- * being joined. partexprs and nullable_partexprs are arrays containing
- * part_scheme->partnatts elements each. Each of these elements is a list of
- * partition key expressions.  For a base relation each list in partexprs
- * contains only one expression and nullable_partexprs is not populated. For a
- * join relation, partexprs and nullable_partexprs contain partition key
- * expressions from non-nullable and nullable relations resp. Lists at any
- * given position in those arrays together contain as many elements as the
- * number of joining relations.
+ * The partexprs and nullable_partexprs arrays each contain
+ * part_scheme->partnatts elements.  Each of the elements is a list of
+ * partition key expressions.  For partitioned base relations, there is one
+ * expression in each partexprs element, and nullable_partexprs is empty.
+ * For partitioned join relations, each base relation within the join
+ * contributes one partition key expression per partitioning column;
+ * that expression goes in the partexprs[i] list if the base relation
+ * is not nullable by this join or any lower outer join, or in the
+ * nullable_partexprs[i] list if the base relation is nullable.
  *----------
  */
 typedef enum RelOptKind
@@ -716,16 +733,16 @@ typedef struct RelOptInfo
 	Relids		top_parent_relids;	/* Relids of topmost parents (if "other"
 									 * rel) */
 
-	/* used for partitioned relations */
-	PartitionScheme part_scheme;	/* Partitioning scheme. */
-	int			nparts;			/* number of partitions */
+	/* used for partitioned relations: */
+	PartitionScheme part_scheme;	/* Partitioning scheme */
+	int			nparts;			/* Number of partitions */
 	struct PartitionBoundInfoData *boundinfo;	/* Partition bounds */
-	List	   *partition_qual; /* partition constraint */
+	List	   *partition_qual; /* Partition constraint, if not the root */
 	struct RelOptInfo **part_rels;	/* Array of RelOptInfos of partitions,
-									 * stored in the same order of bounds */
-	List	  **partexprs;		/* Non-nullable partition key expressions. */
-	List	  **nullable_partexprs; /* Nullable partition key expressions. */
-	List	   *partitioned_child_rels; /* List of RT indexes. */
+									 * stored in the same order as bounds */
+	List	  **partexprs;		/* Non-nullable partition key expressions */
+	List	  **nullable_partexprs; /* Nullable partition key expressions */
+	List	   *partitioned_child_rels; /* List of RT indexes */
 } RelOptInfo;
 
 /*
