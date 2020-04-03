@@ -480,6 +480,7 @@ typedef enum MetaCommand
 	META_SHELL,					/* \shell */
 	META_SLEEP,					/* \sleep */
 	META_GSET,					/* \gset */
+	META_ASET,					/* \aset */
 	META_IF,					/* \if */
 	META_ELIF,					/* \elif */
 	META_ELSE,					/* \else */
@@ -504,14 +505,16 @@ static const char *QUERYMODE[] = {"simple", "extended", "prepared"};
  *				not applied.
  * first_line	A short, single-line extract of 'lines', for error reporting.
  * type			SQL_COMMAND or META_COMMAND
- * meta			The type of meta-command, or META_NONE if command is SQL
+ * meta			The type of meta-command, with META_NONE/GSET/ASET if command
+ *				is SQL.
  * argc			Number of arguments of the command, 0 if not yet processed.
  * argv			Command arguments, the first of which is the command or SQL
  *				string itself.  For SQL commands, after post-processing
  *				argv[0] is the same as 'lines' with variables substituted.
- * varprefix 	SQL commands terminated with \gset have this set
+ * varprefix 	SQL commands terminated with \gset or \aset have this set
  *				to a non NULL value.  If nonempty, it's used to prefix the
  *				variable name that receives the value.
+ * aset			do gset on all possible queries of a combined query (\;).
  * expr			Parsed expression, if needed.
  * stats		Time spent in this command.
  */
@@ -2489,6 +2492,8 @@ getMetaCommand(const char *cmd)
 		mc = META_ENDIF;
 	else if (pg_strcasecmp(cmd, "gset") == 0)
 		mc = META_GSET;
+	else if (pg_strcasecmp(cmd, "aset") == 0)
+		mc = META_ASET;
 	else
 		mc = META_NONE;
 	return mc;
@@ -2711,16 +2716,24 @@ sendCommand(CState *st, Command *command)
  * Process query response from the backend.
  *
  * If varprefix is not NULL, it's the variable name prefix where to store
- * the results of the *last* command.
+ * the results of the *last* command (META_GSET) or *all* commands
+ * (META_ASET).
  *
  * Returns true if everything is A-OK, false if any error occurs.
  */
 static bool
-readCommandResponse(CState *st, char *varprefix)
+readCommandResponse(CState *st, MetaCommand meta, char *varprefix)
 {
 	PGresult   *res;
 	PGresult   *next_res;
 	int			qrynum = 0;
+
+	/*
+	 * varprefix should be set only with \gset or \aset, and SQL commands do
+	 * not need it.
+	 */
+	Assert((meta == META_NONE && varprefix == NULL) ||
+		   ((meta == META_GSET || meta == META_ASET) && varprefix != NULL));
 
 	res = PQgetResult(st->con);
 
@@ -2736,7 +2749,7 @@ readCommandResponse(CState *st, char *varprefix)
 		{
 			case PGRES_COMMAND_OK:	/* non-SELECT commands */
 			case PGRES_EMPTY_QUERY: /* may be used for testing no-op overhead */
-				if (is_last && varprefix != NULL)
+				if (is_last && meta == META_GSET)
 				{
 					pg_log_error("client %d script %d command %d query %d: expected one row, got %d",
 								 st->id, st->use_file, st->command, qrynum, 0);
@@ -2745,13 +2758,21 @@ readCommandResponse(CState *st, char *varprefix)
 				break;
 
 			case PGRES_TUPLES_OK:
-				if (is_last && varprefix != NULL)
+				if ((is_last && meta == META_GSET) || meta == META_ASET)
 				{
-					if (PQntuples(res) != 1)
+					int			ntuples = PQntuples(res);
+
+					if (meta == META_GSET && ntuples != 1)
 					{
+						/* under \gset, report the error */
 						pg_log_error("client %d script %d command %d query %d: expected one row, got %d",
 									 st->id, st->use_file, st->command, qrynum, PQntuples(res));
 						goto error;
+					}
+					else if (meta == META_ASET && ntuples <= 0)
+					{
+						/* coldly skip empty result under \aset */
+						break;
 					}
 
 					/* store results into variables */
@@ -2763,9 +2784,9 @@ readCommandResponse(CState *st, char *varprefix)
 						if (*varprefix != '\0')
 							varname = psprintf("%s%s", varprefix, varname);
 
-						/* store result as a string */
-						if (!putVariable(st, "gset", varname,
-										 PQgetvalue(res, 0, fld)))
+						/* store last row result as a string */
+						if (!putVariable(st, meta == META_ASET ? "aset" : "gset", varname,
+										 PQgetvalue(res, ntuples - 1, fld)))
 						{
 							/* internal error */
 							pg_log_error("client %d script %d command %d query %d: error storing into variable %s",
@@ -3181,7 +3202,9 @@ advanceConnectionState(TState *thread, CState *st, StatsData *agg)
 					return;		/* don't have the whole result yet */
 
 				/* store or discard the query results */
-				if (readCommandResponse(st, sql_script[st->use_file].commands[st->command]->varprefix))
+				if (readCommandResponse(st,
+										sql_script[st->use_file].commands[st->command]->meta,
+										sql_script[st->use_file].commands[st->command]->varprefix))
 					st->state = CSTATE_END_COMMAND;
 				else
 					st->state = CSTATE_ABORTED;
@@ -4660,7 +4683,7 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 			syntax_error(source, lineno, my_command->first_line, my_command->argv[0],
 						 "unexpected argument", NULL, -1);
 	}
-	else if (my_command->meta == META_GSET)
+	else if (my_command->meta == META_GSET || my_command->meta == META_ASET)
 	{
 		if (my_command->argc > 2)
 			syntax_error(source, lineno, my_command->first_line, my_command->argv[0],
@@ -4804,10 +4827,10 @@ ParseScript(const char *script, const char *desc, int weight)
 			if (command)
 			{
 				/*
-				 * If this is gset, merge into the preceding command. (We
-				 * don't use a command slot in this case).
+				 * If this is gset or aset, merge into the preceding command.
+				 * (We don't use a command slot in this case).
 				 */
-				if (command->meta == META_GSET)
+				if (command->meta == META_GSET || command->meta == META_ASET)
 				{
 					Command    *cmd;
 
@@ -4829,6 +4852,9 @@ ParseScript(const char *script, const char *desc, int weight)
 						cmd->varprefix = pg_strdup("");
 					else
 						cmd->varprefix = pg_strdup(command->argv[1]);
+
+					/* update the sql command meta */
+					cmd->meta = command->meta;
 
 					/* cleanup unused command */
 					free_command(command);

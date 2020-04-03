@@ -1057,18 +1057,29 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
    <varlistentry id='pgbench-metacommand-gset'>
     <term>
      <literal>\gset [<replaceable>prefix</replaceable>]</literal>
+     <literal>\aset [<replaceable>prefix</replaceable>]</literal>
     </term>
 
     <listitem>
      <para>
-      This command may be used to end SQL queries, taking the place of the
+      These commands may be used to end SQL queries, taking the place of the
       terminating semicolon (<literal>;</literal>).
      </para>
 
      <para>
-      When this command is used, the preceding SQL query is expected to
-      return one row, the columns of which are stored into variables named after
-      column names, and prefixed with <replaceable>prefix</replaceable> if provided.
+      When the <literal>\gset</literal> command is used, the preceding SQL query is
+      expected to return one row, the columns of which are stored into variables
+      named after column names, and prefixed with <replaceable>prefix</replaceable>
+      if provided.
+     </para>
+
+     <para>
+      When the <literal>\aset</literal> command is used, all combined SQL queries
+      (separated by <literal>\;</literal>) have their columns stored into variables
+      named after column names, and prefixed with <replaceable>prefix</replaceable>
+      if provided. If a query returns no row, no assignment is made and the variable
+      can be tested for existence to detect this. If a query returns more than one
+      row, the last value is kept.
      </para>
 
      <para>
@@ -1077,6 +1088,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <replaceable>p_two</replaceable> and <replaceable>p_three</replaceable>
       with integers from the third query.
       The result of the second query is discarded.
+      The result of the two last combined queries are stored in variables
+      <replaceable>four</replaceable> and <replaceable>five</replaceable>.
 <programlisting>
 UPDATE pgbench_accounts
   SET abalance = abalance + :delta
@@ -1085,6 +1098,7 @@ UPDATE pgbench_accounts
 -- compound of two queries
 SELECT 1 \;
 SELECT 2 AS two, 3 AS three \gset p_
+SELECT 4 AS four \; SELECT 5 AS five \aset
 </programlisting>
      </para>
     </listitem>

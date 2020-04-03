@@ -701,6 +701,51 @@ SELECT 0 AS i4, 4 AS i4 \gset
 \set i debug(:i5)
 }
 	});
+# \gset cannot accept more than one row, causing command to fail.
+pgbench(
+	'-t 1', 2,
+	[ qr{type: .*/001_pgbench_gset_two_rows}, qr{processed: 0/1} ],
+	[qr{expected one row, got 2\b}],
+	'pgbench gset command with two rows',
+	{
+		'001_pgbench_gset_two_rows' => q{
+SELECT 5432 AS fail UNION SELECT 5433 ORDER BY 1 \gset
+}
+	});
+
+# working \aset
+# Valid cases.
+pgbench(
+	'-t 1', 0,
+	[ qr{type: .*/001_pgbench_aset}, qr{processed: 1/1} ],
+	[ qr{command=3.: int 8\b},       qr{command=4.: int 7\b} ],
+	'pgbench aset command',
+	{
+		'001_pgbench_aset' => q{
+-- test aset, which applies to a combined query
+\; SELECT 6 AS i6 \; SELECT 7 AS i7 \; \aset
+-- unless it returns more than one row, last is kept
+SELECT 8 AS i6 UNION SELECT 9 ORDER BY 1 DESC \aset
+\set i debug(:i6)
+\set i debug(:i7)
+}
+	});
+# Empty result set with \aset, causing command to fail.
+pgbench(
+	'-t 1', 2,
+	[ qr{type: .*/001_pgbench_aset_empty}, qr{processed: 0/1} ],
+	[
+		qr{undefined variable \"i8\"},
+		qr{evaluation of meta-command failed\b}
+	],
+	'pgbench aset command with empty result',
+	{
+		'001_pgbench_aset_empty' => q{
+-- empty result
+\; SELECT 5432 AS i8 WHERE FALSE \; \aset
+\set i debug(:i8)
+}
+	});
 
 # trigger many expression errors
 my @errors = (
