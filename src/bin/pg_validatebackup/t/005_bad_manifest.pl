@@ -177,6 +177,7 @@ sub test_parse_error
 	test_bad_manifest($test_name,
 					  qr/could not parse backup manifest: $test_name/,
 					  $manifest_contents);
+	return;
 }
 
 sub test_fatal_error
@@ -186,6 +187,7 @@ sub test_fatal_error
 	test_bad_manifest($test_name,
 					  qr/fatal: $test_name/,
 					  $manifest_contents);
+	return;
 }
 
 sub test_bad_manifest
@@ -198,4 +200,5 @@ sub test_bad_manifest
 
 	command_fails_like(['pg_validatebackup', $tempdir], $regexp,
 					   $test_name);
+	return;
 }

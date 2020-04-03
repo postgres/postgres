@@ -134,6 +134,7 @@ sub create_extra_file
 	open(my $fh, '>', $pathname) || die "open $pathname: $!";
 	print $fh "This is an extra file.\n";
 	close($fh);
+	return;
 }
 
 # Add a file into the root directory of the backup.
@@ -141,6 +142,7 @@ sub mutilate_extra_file
 {
 	my ($backup_path) = @_;
 	create_extra_file($backup_path, "extra_file");
+	return;
 }
 
 # Add a file inside the user-defined tablespace.
@@ -155,6 +157,7 @@ sub mutilate_extra_tablespace_file
 		 slurp_dir("$backup_path/pg_tblspc/$tsoid/$catvdir");
 	create_extra_file($backup_path,
 					  "pg_tblspc/$tsoid/$catvdir/$tsdboid/extra_ts_file");
+	return;
 }
 
 # Remove a file.
@@ -163,6 +166,7 @@ sub mutilate_missing_file
 	my ($backup_path) = @_;
 	my $pathname = "$backup_path/pg_xact/0000";
 	unlink($pathname) || die "$pathname: $!";
+	return;
 }
 
 # Remove the symlink to the user-defined tablespace.
@@ -180,6 +184,7 @@ sub mutilate_missing_tablespace
 	{
 		unlink($pathname) || die "$pathname: $!";
 	}
+	return;
 }
 
 # Append an additional bytes to a file.
@@ -187,6 +192,7 @@ sub mutilate_append_to_file
 {
 	my ($backup_path) = @_;
 	append_to_file "$backup_path/global/pg_control", 'x';
+	return;
 }
 
 # Truncate a file to zero length.
@@ -196,6 +202,7 @@ sub mutilate_truncate_file
 	my $pathname = "$backup_path/global/pg_control";
 	open(my $fh, '>', $pathname) || die "open $pathname: $!";
 	close($fh);
+	return;
 }
 
 # Replace a file's contents without changing the length of the file. This is
@@ -209,6 +216,7 @@ sub mutilate_replace_file
 	open(my $fh, '>', $pathname) || die "open $pathname: $!";
 	print $fh 'q' x length($contents);
 	close($fh);
+	return;
 }
 
 # Corrupt the backup manifest.
@@ -216,6 +224,7 @@ sub mutilate_bad_manifest
 {
 	my ($backup_path) = @_;
 	append_to_file "$backup_path/backup_manifest", "\n";
+	return;
 }
 
 # Create a file that can't be opened. (This is skipped on Windows.)
@@ -224,6 +233,7 @@ sub mutilate_open_file_fails
 	my ($backup_path) = @_;
 	my $pathname = "$backup_path/PG_VERSION";
 	chmod(0, $pathname) || die "chmod $pathname: $!";
+	return;
 }
 
 # Create a directory that can't be opened. (This is skipped on Windows.)
@@ -232,6 +242,7 @@ sub mutilate_open_directory_fails
 	my ($backup_path) = @_;
 	my $pathname = "$backup_path/pg_subtrans";
 	chmod(0, $pathname) || die "chmod $pathname: $!";
+	return;
 }
 
 # Create a directory that can't be searched. (This is skipped on Windows.)
@@ -240,6 +251,7 @@ sub mutilate_search_directory_fails
 	my ($backup_path) = @_;
 	my $pathname = "$backup_path/base";
 	chmod(0400, $pathname) || die "chmod $pathname: $!";
+	return;
 }
 
 # rmtree can't cope with a mode 400 directory, so change back to 700.
@@ -248,4 +260,5 @@ sub cleanup_search_directory_fails
 	my ($backup_path) = @_;
 	my $pathname = "$backup_path/base";
 	chmod(0700, $pathname) || die "chmod $pathname: $!";
+	return;
 }
