@@ -15,7 +15,7 @@ $master->start;
 
 # Include a user-defined tablespace in the hopes of detecting problems in that
 # area.
-my $source_ts_path = TestLib::tempdir;
+my $source_ts_path = TestLib::tempdir_short;
 $master->safe_psql('postgres', <<EOM);
 CREATE TABLE x1 (a int);
 INSERT INTO x1 VALUES (111);
@@ -103,7 +103,7 @@ for my $scenario (@scenario)
 
 		# Take a backup and check that it validates OK.
 		my $backup_path = $master->backup_dir . '/' . $name;
-		my $backup_ts_path = TestLib::tempdir;
+		my $backup_ts_path = TestLib::tempdir_short;
 		$master->command_ok(['pg_basebackup', '-D', $backup_path, '--no-sync',
 							'-T', "${source_ts_path}=${backup_ts_path}"],
 							"base backup ok");
