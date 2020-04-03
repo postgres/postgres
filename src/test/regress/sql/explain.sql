@@ -22,8 +22,9 @@ begin
         ln := regexp_replace(ln, '\m\d+\M', 'N', 'g');
         -- In sort output, the above won't match units-suffixed numbers
         ln := regexp_replace(ln, '\m\d+kB', 'NkB', 'g');
-        -- Text-mode buffers output varies depending on the system state
-        ln := regexp_replace(ln, '^( +Buffers: shared)( hit=N)?( read=N)?', '\1 [read]');
+        -- Ignore text-mode buffers output because it varies depending
+        -- on the system state
+        CONTINUE WHEN (ln ~ ' +Buffers: .*');
         return next ln;
     end loop;
 end;

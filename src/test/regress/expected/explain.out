@@ -20,8 +20,9 @@ begin
         ln := regexp_replace(ln, '\m\d+\M', 'N', 'g');
         -- In sort output, the above won't match units-suffixed numbers
         ln := regexp_replace(ln, '\m\d+kB', 'NkB', 'g');
-        -- Text-mode buffers output varies depending on the system state
-        ln := regexp_replace(ln, '^( +Buffers: shared)( hit=N)?( read=N)?', '\1 [read]');
+        -- Ignore text-mode buffers output because it varies depending
+        -- on the system state
+        CONTINUE WHEN (ln ~ ' +Buffers: .*');
         return next ln;
     end loop;
 end;
@@ -71,10 +72,9 @@ select explain_filter('explain (analyze, buffers, format text) select * from int
                                         explain_filter                                         
 -----------------------------------------------------------------------------------------------
  Seq Scan on int8_tbl i8  (cost=N.N..N.N rows=N width=N) (actual time=N.N..N.N rows=N loops=N)
-   Buffers: shared [read]
  Planning Time: N.N ms
  Execution Time: N.N ms
-(4 rows)
+(3 rows)
 
 select explain_filter('explain (analyze, buffers, format json) select * from int8_tbl i8');
            explain_filter           
