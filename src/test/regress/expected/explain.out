@@ -105,7 +105,19 @@ select explain_filter('explain (analyze, buffers, format json) select * from int
        "Temp Read Blocks": N,      +
        "Temp Written Blocks": N    +
      },                            +
-     "Planning Time": N.N,         +
+     "Planning": {                 +
+       "Planning Time": N.N,       +
+       "Shared Hit Blocks": N,     +
+       "Shared Read Blocks": N,    +
+       "Shared Dirtied Blocks": N, +
+       "Shared Written Blocks": N, +
+       "Local Hit Blocks": N,      +
+       "Local Read Blocks": N,     +
+       "Local Dirtied Blocks": N,  +
+       "Local Written Blocks": N,  +
+       "Temp Read Blocks": N,      +
+       "Temp Written Blocks": N    +
+     },                            +
      "Triggers": [                 +
      ],                            +
      "Execution Time": N.N         +
@@ -142,7 +154,19 @@ select explain_filter('explain (analyze, buffers, format xml) select * from int8
        <Temp-Read-Blocks>N</Temp-Read-Blocks>          +
        <Temp-Written-Blocks>N</Temp-Written-Blocks>    +
      </Plan>                                           +
-     <Planning-Time>N.N</Planning-Time>                +
+     <Planning>                                        +
+       <Planning-Time>N.N</Planning-Time>              +
+       <Shared-Hit-Blocks>N</Shared-Hit-Blocks>        +
+       <Shared-Read-Blocks>N</Shared-Read-Blocks>      +
+       <Shared-Dirtied-Blocks>N</Shared-Dirtied-Blocks>+
+       <Shared-Written-Blocks>N</Shared-Written-Blocks>+
+       <Local-Hit-Blocks>N</Local-Hit-Blocks>          +
+       <Local-Read-Blocks>N</Local-Read-Blocks>        +
+       <Local-Dirtied-Blocks>N</Local-Dirtied-Blocks>  +
+       <Local-Written-Blocks>N</Local-Written-Blocks>  +
+       <Temp-Read-Blocks>N</Temp-Read-Blocks>          +
+       <Temp-Written-Blocks>N</Temp-Written-Blocks>    +
+     </Planning>                                       +
      <Triggers>                                        +
      </Triggers>                                       +
      <Execution-Time>N.N</Execution-Time>              +
@@ -176,7 +200,18 @@ select explain_filter('explain (analyze, buffers, format yaml) select * from int
      Local Written Blocks: N  +
      Temp Read Blocks: N      +
      Temp Written Blocks: N   +
-   Planning Time: N.N         +
+   Planning:                  +
+     Planning Time: N.N       +
+     Shared Hit Blocks: N     +
+     Shared Read Blocks: N    +
+     Shared Dirtied Blocks: N +
+     Shared Written Blocks: N +
+     Local Hit Blocks: N      +
+     Local Read Blocks: N     +
+     Local Dirtied Blocks: N  +
+     Local Written Blocks: N  +
+     Temp Read Blocks: N      +
+     Temp Written Blocks: N   +
    Triggers:                  +
    Execution Time: N.N
 (1 row)
@@ -366,9 +401,21 @@ select jsonb_pretty(
              "Shared Dirtied Blocks": 0,                    +
              "Shared Written Blocks": 0                     +
          },                                                 +
+         "Planning": {                                      +
+             "Planning Time": 0.0,                          +
+             "Local Hit Blocks": 0,                         +
+             "Temp Read Blocks": 0,                         +
+             "Local Read Blocks": 0,                        +
+             "Shared Hit Blocks": 0,                        +
+             "Shared Read Blocks": 0,                       +
+             "Temp Written Blocks": 0,                      +
+             "Local Dirtied Blocks": 0,                     +
+             "Local Written Blocks": 0,                     +
+             "Shared Dirtied Blocks": 0,                    +
+             "Shared Written Blocks": 0                     +
+         },                                                 +
          "Triggers": [                                      +
          ],                                                 +
-         "Planning Time": 0.0,                              +
          "Execution Time": 0.0                              +
      }                                                      +
  ]
