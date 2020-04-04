@@ -99,7 +99,8 @@ static void InitializeManifest(manifest_info *manifest,
 							   basebackup_options *opt);
 static void AppendStringToManifest(manifest_info *manifest, char *s);
 static void AddFileToManifest(manifest_info *manifest, const char *spcoid,
-							  const char *pathname, size_t size, time_t mtime,
+							  const char *pathname, size_t size,
+							  pg_time_t mtime,
 							  pg_checksum_context *checksum_ctx);
 static void AddWALInfoToManifest(manifest_info *manifest, XLogRecPtr startptr,
 								 TimeLineID starttli, XLogRecPtr endptr,
@@ -1124,7 +1125,7 @@ AppendStringToManifest(manifest_info *manifest, char *s)
  */
 static void
 AddFileToManifest(manifest_info *manifest, const char *spcoid,
-				  const char *pathname, size_t size, time_t mtime,
+				  const char *pathname, size_t size, pg_time_t mtime,
 				  pg_checksum_context *checksum_ctx)
 {
 	char		pathbuf[MAXPGPATH];
@@ -1507,7 +1508,8 @@ sendFileWithContent(const char *filename, const char *content,
 	}
 
 	pg_checksum_update(&checksum_ctx, (uint8 *) content, len);
-	AddFileToManifest(manifest, NULL, filename, len, statbuf.st_mtime,
+	AddFileToManifest(manifest, NULL, filename, len,
+					  (pg_time_t) statbuf.st_mtime,
 					  &checksum_ctx);
 }
 
@@ -2188,7 +2190,7 @@ sendFile(const char *readfilename, const char *tarfilename,
 	total_checksum_failures += checksum_failures;
 
 	AddFileToManifest(manifest, spcoid, tarfilename, statbuf->st_size,
-					  statbuf->st_mtime, &checksum_ctx);
+					  (pg_time_t) statbuf->st_mtime, &checksum_ctx);
 
 	return true;
 }
