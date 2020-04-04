@@ -139,6 +139,7 @@
 #define PARALLEL_VACUUM_KEY_DEAD_TUPLES		2
 #define PARALLEL_VACUUM_KEY_QUERY_TEXT		3
 #define PARALLEL_VACUUM_KEY_BUFFER_USAGE	4
+#define PARALLEL_VACUUM_KEY_WAL_USAGE		5
 
 /*
  * Macro to check if we are in a parallel vacuum.  If true, we are in the
@@ -274,6 +275,9 @@ typedef struct LVParallelState
 
 	/* Points to buffer usage area in DSM */
 	BufferUsage *buffer_usage;
+
+	/* Points to WAL usage area in DSM */
+	WalUsage   *wal_usage;
 
 	/*
 	 * The number of indexes that support parallel index bulk-deletion and
@@ -2143,8 +2147,8 @@ lazy_parallel_vacuum_indexes(Relation *Irel, IndexBulkDeleteResult **stats,
 						  vacrelstats->dead_tuples, nindexes, vacrelstats);
 
 	/*
-	 * Next, accumulate buffer usage.  (This must wait for the workers to
-	 * finish, or we might get incomplete data.)
+	 * Next, accumulate buffer and WAL usage.  (This must wait for the workers
+	 * to finish, or we might get incomplete data.)
 	 */
 	if (nworkers > 0)
 	{
@@ -2154,7 +2158,7 @@ lazy_parallel_vacuum_indexes(Relation *Irel, IndexBulkDeleteResult **stats,
 		WaitForParallelWorkersToFinish(lps->pcxt);
 
 		for (i = 0; i < lps->pcxt->nworkers_launched; i++)
-			InstrAccumParallelQuery(&lps->buffer_usage[i]);
+			InstrAccumParallelQuery(&lps->buffer_usage[i], &lps->wal_usage[i]);
 	}
 
 	/*
@@ -3171,6 +3175,7 @@ begin_parallel_vacuum(Oid relid, Relation *Irel, LVRelStats *vacrelstats,
 	LVShared   *shared;
 	LVDeadTuples *dead_tuples;
 	BufferUsage *buffer_usage;
+	WalUsage   *wal_usage;
 	bool	   *can_parallel_vacuum;
 	long		maxtuples;
 	char	   *sharedquery;
@@ -3255,14 +3260,18 @@ begin_parallel_vacuum(Oid relid, Relation *Irel, LVRelStats *vacrelstats,
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/*
-	 * Estimate space for BufferUsage -- PARALLEL_VACUUM_KEY_BUFFER_USAGE.
+	 * Estimate space for BufferUsage and WalUsage --
+	 * PARALLEL_VACUUM_KEY_BUFFER_USAGE and PARALLEL_VACUUM_KEY_WAL_USAGE.
 	 *
 	 * If there are no extensions loaded that care, we could skip this.  We
-	 * have no way of knowing whether anyone's looking at pgBufferUsage, so do
-	 * it unconditionally.
+	 * have no way of knowing whether anyone's looking at pgBufferUsage or
+	 * pgWalUsage, so do it unconditionally.
 	 */
 	shm_toc_estimate_chunk(&pcxt->estimator,
 						   mul_size(sizeof(BufferUsage), pcxt->nworkers));
+	shm_toc_estimate_keys(&pcxt->estimator, 1);
+	shm_toc_estimate_chunk(&pcxt->estimator,
+						   mul_size(sizeof(WalUsage), pcxt->nworkers));
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/* Finally, estimate PARALLEL_VACUUM_KEY_QUERY_TEXT space */
@@ -3299,11 +3308,18 @@ begin_parallel_vacuum(Oid relid, Relation *Irel, LVRelStats *vacrelstats,
 	shm_toc_insert(pcxt->toc, PARALLEL_VACUUM_KEY_DEAD_TUPLES, dead_tuples);
 	vacrelstats->dead_tuples = dead_tuples;
 
-	/* Allocate space for each worker's BufferUsage; no need to initialize */
+	/*
+	 * Allocate space for each worker's BufferUsage and WalUsage; no need to
+	 * initialize
+	 */
 	buffer_usage = shm_toc_allocate(pcxt->toc,
 									mul_size(sizeof(BufferUsage), pcxt->nworkers));
 	shm_toc_insert(pcxt->toc, PARALLEL_VACUUM_KEY_BUFFER_USAGE, buffer_usage);
 	lps->buffer_usage = buffer_usage;
+	wal_usage = shm_toc_allocate(pcxt->toc,
+								 mul_size(sizeof(WalUsage), pcxt->nworkers));
+	shm_toc_insert(pcxt->toc, PARALLEL_VACUUM_KEY_WAL_USAGE, wal_usage);
+	lps->wal_usage = wal_usage;
 
 	/* Store query string for workers */
 	sharedquery = (char *) shm_toc_allocate(pcxt->toc, querylen + 1);
@@ -3435,6 +3451,7 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	LVShared   *lvshared;
 	LVDeadTuples *dead_tuples;
 	BufferUsage *buffer_usage;
+	WalUsage   *wal_usage;
 	int			nindexes;
 	char	   *sharedquery;
 	IndexBulkDeleteResult **stats;
@@ -3511,9 +3528,11 @@ parallel_vacuum_main(dsm_segment *seg, shm_toc *toc)
 	parallel_vacuum_index(indrels, stats, lvshared, dead_tuples, nindexes,
 						  &vacrelstats);
 
-	/* Report buffer usage during parallel execution */
+	/* Report buffer/WAL usage during parallel execution */
 	buffer_usage = shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_BUFFER_USAGE, false);
-	InstrEndParallelQuery(&buffer_usage[ParallelWorkerNumber]);
+	wal_usage = shm_toc_lookup(toc, PARALLEL_VACUUM_KEY_WAL_USAGE, false);
+	InstrEndParallelQuery(&buffer_usage[ParallelWorkerNumber],
+						  &wal_usage[ParallelWorkerNumber]);
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;

@@ -19,8 +19,11 @@
 
 BufferUsage pgBufferUsage;
 static BufferUsage save_pgBufferUsage;
+WalUsage	pgWalUsage;
+static WalUsage save_pgWalUsage;
 
 static void BufferUsageAdd(BufferUsage *dst, const BufferUsage *add);
+static void WalUsageAdd(WalUsage *dst, WalUsage *add);
 
 
 /* Allocate new instrumentation structure(s) */
@@ -31,15 +34,17 @@ InstrAlloc(int n, int instrument_options)
 
 	/* initialize all fields to zeroes, then modify as needed */
 	instr = palloc0(n * sizeof(Instrumentation));
-	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER))
+	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER | INSTRUMENT_WAL))
 	{
 		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;
+		bool		need_wal = (instrument_options & INSTRUMENT_WAL) != 0;
 		bool		need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
 		int			i;
 
 		for (i = 0; i < n; i++)
 		{
 			instr[i].need_bufusage = need_buffers;
+			instr[i].need_walusage = need_wal;
 			instr[i].need_timer = need_timer;
 		}
 	}
@@ -53,6 +58,7 @@ InstrInit(Instrumentation *instr, int instrument_options)
 {
 	memset(instr, 0, sizeof(Instrumentation));
 	instr->need_bufusage = (instrument_options & INSTRUMENT_BUFFERS) != 0;
+	instr->need_walusage = (instrument_options & INSTRUMENT_WAL) != 0;
 	instr->need_timer = (instrument_options & INSTRUMENT_TIMER) != 0;
 }
 
@@ -67,6 +73,9 @@ InstrStartNode(Instrumentation *instr)
 	/* save buffer usage totals at node entry, if needed */
 	if (instr->need_bufusage)
 		instr->bufusage_start = pgBufferUsage;
+
+	if (instr->need_walusage)
+		instr->walusage_start = pgWalUsage;
 }
 
 /* Exit from a plan node */
@@ -94,6 +103,10 @@ InstrStopNode(Instrumentation *instr, double nTuples)
 	if (instr->need_bufusage)
 		BufferUsageAccumDiff(&instr->bufusage,
 							 &pgBufferUsage, &instr->bufusage_start);
+
+	if (instr->need_walusage)
+		WalUsageAccumDiff(&instr->walusage,
+						  &pgWalUsage, &instr->walusage_start);
 
 	/* Is this the first tuple of this cycle? */
 	if (!instr->running)
@@ -158,6 +171,9 @@ InstrAggNode(Instrumentation *dst, Instrumentation *add)
 	/* Add delta of buffer usage since entry to node's totals */
 	if (dst->need_bufusage)
 		BufferUsageAdd(&dst->bufusage, &add->bufusage);
+
+	if (dst->need_walusage)
+		WalUsageAdd(&dst->walusage, &add->walusage);
 }
 
 /* note current values during parallel executor startup */
@@ -165,21 +181,29 @@ void
 InstrStartParallelQuery(void)
 {
 	save_pgBufferUsage = pgBufferUsage;
+	save_pgWalUsage = pgWalUsage;
 }
 
 /* report usage after parallel executor shutdown */
 void
-InstrEndParallelQuery(BufferUsage *result)
+InstrEndParallelQuery(BufferUsage *bufusage, WalUsage *walusage)
 {
-	memset(result, 0, sizeof(BufferUsage));
-	BufferUsageAccumDiff(result, &pgBufferUsage, &save_pgBufferUsage);
+	if (bufusage)
+	{
+		memset(bufusage, 0, sizeof(BufferUsage));
+		BufferUsageAccumDiff(bufusage, &pgBufferUsage, &save_pgBufferUsage);
+	}
+	memset(walusage, 0, sizeof(WalUsage));
+	WalUsageAccumDiff(walusage, &pgWalUsage, &save_pgWalUsage);
 }
 
 /* accumulate work done by workers in leader's stats */
 void
-InstrAccumParallelQuery(BufferUsage *result)
+InstrAccumParallelQuery(BufferUsage *bufusage, WalUsage *walusage)
 {
-	BufferUsageAdd(&pgBufferUsage, result);
+	if (bufusage)
+		BufferUsageAdd(&pgBufferUsage, bufusage);
+	WalUsageAdd(&pgWalUsage, walusage);
 }
 
 /* dst += add */
@@ -220,4 +244,21 @@ BufferUsageAccumDiff(BufferUsage *dst,
 						  add->blk_read_time, sub->blk_read_time);
 	INSTR_TIME_ACCUM_DIFF(dst->blk_write_time,
 						  add->blk_write_time, sub->blk_write_time);
+}
+
+/* helper functions for WAL usage accumulation */
+static void
+WalUsageAdd(WalUsage *dst, WalUsage *add)
+{
+	dst->wal_bytes += add->wal_bytes;
+	dst->wal_records += add->wal_records;
+	dst->wal_num_fpw += add->wal_num_fpw;
+}
+
+void
+WalUsageAccumDiff(WalUsage *dst, const WalUsage *add, const WalUsage *sub)
+{
+	dst->wal_bytes += add->wal_bytes - sub->wal_bytes;
+	dst->wal_records += add->wal_records - sub->wal_records;
+	dst->wal_num_fpw += add->wal_num_fpw - sub->wal_num_fpw;
 }
