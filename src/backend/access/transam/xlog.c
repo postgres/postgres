@@ -266,8 +266,6 @@ bool		InArchiveRecovery = false;
 static bool standby_signal_file_found = false;
 static bool recovery_signal_file_found = false;
 
-static bool need_restart_for_parameter_values = false;
-
 /* Was the last xlog file restored from archive, or local? */
 static bool restoredFromArchive = false;
 
@@ -6021,54 +6019,6 @@ SetRecoveryPause(bool recoveryPause)
 }
 
 /*
- * If in hot standby, pause recovery because of a parameter conflict.
- *
- * Similar to recoveryPausesHere() but with a different messaging.  The user
- * is expected to make the parameter change and restart the server.  If they
- * just unpause recovery, they will then run into whatever error is after this
- * function call for the non-hot-standby case.
- *
- * We intentionally do not give advice about specific parameters or values
- * here because it might be misleading.  For example, if we run out of lock
- * space, then in the single-server case we would recommend raising
- * max_locks_per_transaction, but in recovery it could equally be the case
- * that max_connections is out of sync with the primary.  If we get here, we
- * have already logged any parameter discrepancies in
- * RecoveryRequiresIntParameter(), so users can go back to that and get
- * concrete and accurate information.
- */
-void
-StandbyParamErrorPauseRecovery(void)
-{
-	TimestampTz last_warning = 0;
-
-	if (!AmStartupProcess() || !need_restart_for_parameter_values)
-		return;
-
-	SetRecoveryPause(true);
-
-	do
-	{
-		TimestampTz now = GetCurrentTimestamp();
-
-		if (TimestampDifferenceExceeds(last_warning, now, 60000))
-		{
-			ereport(WARNING,
-					(errmsg("recovery paused because of insufficient parameter settings"),
-					 errdetail("See earlier in the log about which settings are insufficient."),
-					 errhint("Recovery cannot continue unless the configuration is changed and the server restarted.")));
-			last_warning = now;
-		}
-
-		pgstat_report_wait_start(WAIT_EVENT_RECOVERY_PAUSE);
-		pg_usleep(1000000L);    /* 1000 ms */
-		pgstat_report_wait_end();
-		HandleStartupProcInterrupts();
-	}
-	while (RecoveryIsPaused());
-}
-
-/*
  * When recovery_min_apply_delay is set, we wait long enough to make sure
  * certain record types are applied at least that interval behind the master.
  *
@@ -6247,20 +6197,16 @@ GetXLogReceiptTime(TimestampTz *rtime, bool *fromStream)
  * Note that text field supplied is a parameter name and does not require
  * translation
  */
-static void
-RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue)
-{
-	if (currValue < minValue)
-	{
-		ereport(WARNING,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("insufficient setting for parameter %s", param_name),
-				 errdetail("%s = %d is a lower setting than on the master server (where its value was %d).",
-						   param_name, currValue, minValue),
-				 errhint("Change parameters and restart the server, or there may be resource exhaustion errors sooner or later.")));
-		need_restart_for_parameter_values = true;
-	}
-}
+#define RecoveryRequiresIntParameter(param_name, currValue, minValue) \
+do { \
+	if ((currValue) < (minValue)) \
+		ereport(ERROR, \
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
+				 errmsg("hot standby is not possible because %s = %d is a lower setting than on the master server (its value was %d)", \
+						param_name, \
+						currValue, \
+						minValue))); \
+} while(0)
 
 /*
  * Check to see if required parameters are set high enough on this server

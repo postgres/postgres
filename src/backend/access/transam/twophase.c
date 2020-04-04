@@ -2360,14 +2360,11 @@ PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
 
 	/* Get a free gxact from the freelist */
 	if (TwoPhaseState->freeGXacts == NULL)
-	{
-		StandbyParamErrorPauseRecovery();
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("maximum number of prepared transactions reached"),
 				 errhint("Increase max_prepared_transactions (currently %d).",
 						 max_prepared_xacts)));
-	}
 	gxact = TwoPhaseState->freeGXacts;
 	TwoPhaseState->freeGXacts = gxact->next;
 
