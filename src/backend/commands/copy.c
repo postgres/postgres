@@ -2714,63 +2714,15 @@ CopyFrom(CopyState cstate)
 							RelationGetRelationName(cstate->rel))));
 	}
 
-	/*----------
-	 * Check to see if we can avoid writing WAL
-	 *
-	 * If archive logging/streaming is not enabled *and* either
-	 *	- table was created in same transaction as this COPY
-	 *	- data is being written to relfilenode created in this transaction
-	 * then we can skip writing WAL.  It's safe because if the transaction
-	 * doesn't commit, we'll discard the table (or the new relfilenode file).
-	 * If it does commit, we'll have done the table_finish_bulk_insert() at
-	 * the bottom of this routine first.
-	 *
-	 * As mentioned in comments in utils/rel.h, the in-same-transaction test
-	 * is not always set correctly, since in rare cases rd_newRelfilenodeSubid
-	 * can be cleared before the end of the transaction. The exact case is
-	 * when a relation sets a new relfilenode twice in same transaction, yet
-	 * the second one fails in an aborted subtransaction, e.g.
-	 *
-	 * BEGIN;
-	 * TRUNCATE t;
-	 * SAVEPOINT save;
-	 * TRUNCATE t;
-	 * ROLLBACK TO save;
-	 * COPY ...
-	 *
-	 * Also, if the target file is new-in-transaction, we assume that checking
-	 * FSM for free space is a waste of time, even if we must use WAL because
-	 * of archiving.  This could possibly be wrong, but it's unlikely.
-	 *
-	 * The comments for table_tuple_insert and RelationGetBufferForTuple
-	 * specify that skipping WAL logging is only safe if we ensure that our
-	 * tuples do not go into pages containing tuples from any other
-	 * transactions --- but this must be the case if we have a new table or
-	 * new relfilenode, so we need no additional work to enforce that.
-	 *
-	 * We currently don't support this optimization if the COPY target is a
-	 * partitioned table as we currently only lazily initialize partition
-	 * information when routing the first tuple to the partition.  We cannot
-	 * know at this stage if we can perform this optimization.  It should be
-	 * possible to improve on this, but it does mean maintaining heap insert
-	 * option flags per partition and setting them when we first open the
-	 * partition.
-	 *
-	 * This optimization is not supported for relation types which do not
-	 * have any physical storage, with foreign tables and views using
-	 * INSTEAD OF triggers entering in this category.  Partitioned tables
-	 * are not supported as per the description above.
-	 *----------
+	/*
+	 * If the target file is new-in-transaction, we assume that checking FSM
+	 * for free space is a waste of time.  This could possibly be wrong, but
+	 * it's unlikely.
 	 */
-	/* createSubid is creation check, newRelfilenodeSubid is truncation check */
 	if (RELKIND_HAS_STORAGE(cstate->rel->rd_rel->relkind) &&
 		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
-		 cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId))
-	{
+		 cstate->rel->rd_firstRelfilenodeSubid != InvalidSubTransactionId))
 		ti_options |= TABLE_INSERT_SKIP_FSM;
-		if (!XLogIsNeeded())
-			ti_options |= TABLE_INSERT_SKIP_WAL;
-	}
 
 	/*
 	 * Optimize if new relfilenode was created in this subxact or one of its

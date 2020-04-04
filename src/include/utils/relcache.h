@@ -109,9 +109,10 @@ extern Relation RelationBuildLocalRelation(const char *relname,
 										   char relkind);
 
 /*
- * Routine to manage assignment of new relfilenode to a relation
+ * Routines to manage assignment of new relfilenode to a relation
  */
 extern void RelationSetNewRelfilenode(Relation relation, char persistence);
+extern void RelationAssumeNewRelfilenode(Relation relation);
 
 /*
  * Routines for flushing/rebuilding relcache entries in various scenarios
@@ -124,6 +125,11 @@ extern void RelationCacheInvalidate(void);
 
 extern void RelationCloseSmgrByOid(Oid relationId);
 
+#ifdef USE_ASSERT_CHECKING
+extern void AssertPendingSyncs_RelationCache(void);
+#else
+#define AssertPendingSyncs_RelationCache() do {} while (0)
+#endif
 extern void AtEOXact_RelationCache(bool isCommit);
 extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 									  SubTransactionId parentSubid);

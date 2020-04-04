@@ -455,6 +455,8 @@ extern XLogRecPtr gistXLogSplit(bool page_is_leaf,
 								BlockNumber origrlink, GistNSN oldnsn,
 								Buffer leftchild, bool markfollowright);
 
+extern XLogRecPtr gistXLogAssignLSN(void);
+
 /* gistget.c */
 extern bool gistgettuple(IndexScanDesc scan, ScanDirection dir);
 extern int64 gistgetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
