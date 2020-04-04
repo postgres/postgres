@@ -852,6 +852,19 @@ where histogram_bounds is not null;
 -- (WHERE clause here is to avoid possibly getting a collation error instead)
 select max(histogram_bounds) from pg_stats where tablename = 'pg_am';
 ERROR:  cannot compare arrays of different element types
+-- another corner case is the input functions for polymorphic pseudotypes
+select array_in('{1,2,3}','int4'::regtype,-1);  -- this has historically worked
+ array_in 
+----------
+ {1,2,3}
+(1 row)
+
+select * from array_in('{1,2,3}','int4'::regtype,-1);  -- this not
+ERROR:  function "array_in" in FROM has unsupported return type anyarray
+LINE 1: select * from array_in('{1,2,3}','int4'::regtype,-1);
+                      ^
+select anyrange_in('[10,20)','int4range'::regtype,-1);
+ERROR:  cannot accept a value of type anyrange
 -- test variadic polymorphic functions
 create function myleast(variadic anyarray) returns anyelement as $$
   select min($1[i]) from generate_subscripts($1,1) g(i)
