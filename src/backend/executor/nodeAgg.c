@@ -298,6 +298,12 @@
 #define HASHAGG_MIN_BUCKETS 256
 
 /*
+ * Estimate chunk overhead as a constant 16 bytes. XXX: should this be
+ * improved?
+ */
+#define CHUNKHDRSZ 16
+
+/*
  * Track all tapes needed for a HashAgg that spills. We don't know the maximum
  * number of tapes needed at the start of the algorithm (because it can
  * recurse), so one tape set is allocated and extended as needed for new
@@ -1639,14 +1645,32 @@ find_hash_columns(AggState *aggstate)
  * Estimate per-hash-table-entry overhead.
  */
 Size
-hash_agg_entry_size(int numAggs, Size tupleWidth, Size transitionSpace)
+hash_agg_entry_size(int numTrans, Size tupleWidth, Size transitionSpace)
 {
+	Size    tupleChunkSize;
+	Size    pergroupChunkSize;
+	Size    transitionChunkSize;
+	Size    tupleSize	 = (MAXALIGN(SizeofMinimalTupleHeader) +
+							tupleWidth);
+	Size    pergroupSize = numTrans * sizeof(AggStatePerGroupData);
+
+	tupleChunkSize = CHUNKHDRSZ + tupleSize;
+
+	if (pergroupSize > 0)
+		pergroupChunkSize = CHUNKHDRSZ + pergroupSize;
+	else
+		pergroupChunkSize = 0;
+
+	if (transitionSpace > 0)
+		transitionChunkSize = CHUNKHDRSZ + transitionSpace;
+	else
+		transitionChunkSize = 0;
+
 	return
-		MAXALIGN(SizeofMinimalTupleHeader) +
-		MAXALIGN(tupleWidth) +
-		MAXALIGN(sizeof(TupleHashEntryData) +
-				 numAggs * sizeof(AggStatePerGroupData)) +
-		transitionSpace;
+		sizeof(TupleHashEntryData) +
+		tupleChunkSize +
+		pergroupChunkSize +
+		transitionChunkSize;
 }
 
 /*
