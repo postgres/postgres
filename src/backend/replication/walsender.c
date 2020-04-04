@@ -315,7 +315,13 @@ WalSndErrorCleanup(void)
 
 	replication_active = false;
 
-	WalSndResourceCleanup(false);
+	/*
+	 * If there is a transaction in progress, it will clean up our
+	 * ResourceOwner, but if a replication command set up a resource owner
+	 * without a transaction, we've got to clean that up now.
+	 */
+	if (!IsTransactionOrTransactionBlock())
+		WalSndResourceCleanup(false);
 
 	if (got_STOPPING || got_SIGUSR2)
 		proc_exit(0);
