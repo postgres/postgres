@@ -348,7 +348,7 @@ ScanPgRelation(Oid targetRelId, bool indexOK, bool force_non_historic)
 	 * The caller might need a tuple that's newer than the one the historic
 	 * snapshot; currently the only case requiring to do so is looking up the
 	 * relfilenode of non mapped system relations during decoding. That
-	 * snapshot cant't change in the midst of a relcache build, so there's no
+	 * snapshot can't change in the midst of a relcache build, so there's no
 	 * need to register the snapshot.
 	 */
 	if (force_non_historic)
