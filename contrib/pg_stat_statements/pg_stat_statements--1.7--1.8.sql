@@ -41,7 +41,10 @@ CREATE FUNCTION pg_stat_statements(IN showtext boolean,
     OUT temp_blks_read int8,
     OUT temp_blks_written int8,
     OUT blk_read_time float8,
-    OUT blk_write_time float8
+    OUT blk_write_time float8,
+    OUT wal_records int8,
+    OUT wal_num_fpw int8,
+    OUT wal_bytes numeric
 )
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pg_stat_statements_1_8'

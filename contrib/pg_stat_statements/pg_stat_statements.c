@@ -188,6 +188,9 @@ typedef struct Counters
 	double		blk_read_time;	/* time spent reading, in msec */
 	double		blk_write_time; /* time spent writing, in msec */
 	double		usage;			/* usage factor */
+	int64		wal_records;	/* # of WAL records generated */
+	int64		wal_num_fpw;	/* # of WAL full page image records generated */
+	uint64		wal_bytes;		/* total amount of WAL bytes generated */
 } Counters;
 
 /*
@@ -348,6 +351,7 @@ static void pgss_store(const char *query, uint64 queryId,
 					   pgssStoreKind kind,
 					   double total_time, uint64 rows,
 					   const BufferUsage *bufusage,
+					   const WalUsage *walusage,
 					   pgssJumbleState *jstate);
 static void pg_stat_statements_internal(FunctionCallInfo fcinfo,
 										pgssVersion api_version,
@@ -891,6 +895,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query)
 				   0,
 				   0,
 				   NULL,
+				   NULL,
 				   &jstate);
 }
 
@@ -926,9 +931,17 @@ pgss_planner(Query *parse,
 		instr_time	duration;
 		BufferUsage bufusage_start,
 					bufusage;
+		WalUsage	walusage_start,
+					walusage;
 
 		/* We need to track buffer usage as the planner can access them. */
 		bufusage_start = pgBufferUsage;
+
+		/*
+		 * Similarly the planner could write some WAL records in some cases
+		 * (e.g. setting a hint bit with those being WAL-logged)
+		 */
+		walusage_start = pgWalUsage;
 		INSTR_TIME_SET_CURRENT(start);
 
 		plan_nested_level++;
@@ -954,6 +967,10 @@ pgss_planner(Query *parse,
 		memset(&bufusage, 0, sizeof(BufferUsage));
 		BufferUsageAccumDiff(&bufusage, &pgBufferUsage, &bufusage_start);
 
+		/* calc differences of WAL counters. */
+		memset(&walusage, 0, sizeof(WalUsage));
+		WalUsageAccumDiff(&walusage, &pgWalUsage, &walusage_start);
+
 		pgss_store(query_string,
 				   parse->queryId,
 				   parse->stmt_location,
@@ -962,6 +979,7 @@ pgss_planner(Query *parse,
 				   INSTR_TIME_GET_MILLISEC(duration),
 				   0,
 				   &bufusage,
+				   &walusage,
 				   NULL);
 	}
 	else
@@ -1079,6 +1097,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 				   queryDesc->totaltime->total * 1000.0,	/* convert to msec */
 				   queryDesc->estate->es_processed,
 				   &queryDesc->totaltime->bufusage,
+				   &queryDesc->totaltime->walusage,
 				   NULL);
 	}
 
@@ -1123,8 +1142,11 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		uint64		rows;
 		BufferUsage bufusage_start,
 					bufusage;
+		WalUsage	walusage_start,
+					walusage;
 
 		bufusage_start = pgBufferUsage;
+		walusage_start = pgWalUsage;
 		INSTR_TIME_SET_CURRENT(start);
 
 		exec_nested_level++;
@@ -1154,6 +1176,10 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		memset(&bufusage, 0, sizeof(BufferUsage));
 		BufferUsageAccumDiff(&bufusage, &pgBufferUsage, &bufusage_start);
 
+		/* calc differences of WAL counters. */
+		memset(&walusage, 0, sizeof(WalUsage));
+		WalUsageAccumDiff(&walusage, &pgWalUsage, &walusage_start);
+
 		pgss_store(queryString,
 				   0,			/* signal that it's a utility stmt */
 				   pstmt->stmt_location,
@@ -1162,6 +1188,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 				   INSTR_TIME_GET_MILLISEC(duration),
 				   rows,
 				   &bufusage,
+				   &walusage,
 				   NULL);
 	}
 	else
@@ -1197,7 +1224,8 @@ pgss_hash_string(const char *str, int len)
  *
  * If jstate is not NULL then we're trying to create an entry for which
  * we have no statistics as yet; we just want to record the normalized
- * query string.  total_time, rows, bufusage are ignored in this case.
+ * query string.  total_time, rows, bufusage and walusage are ignored in this
+ * case.
  *
  * If kind is PGSS_PLAN or PGSS_EXEC, its value is used as the array position
  * for the arrays in the Counters field.
@@ -1208,6 +1236,7 @@ pgss_store(const char *query, uint64 queryId,
 		   pgssStoreKind kind,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
+		   const WalUsage *walusage,
 		   pgssJumbleState *jstate)
 {
 	pgssHashKey key;
@@ -1402,6 +1431,9 @@ pgss_store(const char *query, uint64 queryId,
 		e->counters.blk_read_time += INSTR_TIME_GET_MILLISEC(bufusage->blk_read_time);
 		e->counters.blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->blk_write_time);
 		e->counters.usage += USAGE_EXEC(total_time);
+		e->counters.wal_records += walusage->wal_records;
+		e->counters.wal_num_fpw += walusage->wal_num_fpw;
+		e->counters.wal_bytes += walusage->wal_bytes;
 
 		SpinLockRelease(&e->mutex);
 	}
@@ -1449,8 +1481,8 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 #define PG_STAT_STATEMENTS_COLS_V1_1	18
 #define PG_STAT_STATEMENTS_COLS_V1_2	19
 #define PG_STAT_STATEMENTS_COLS_V1_3	23
-#define PG_STAT_STATEMENTS_COLS_V1_8	29
-#define PG_STAT_STATEMENTS_COLS			29	/* maximum of above */
+#define PG_STAT_STATEMENTS_COLS_V1_8	32
+#define PG_STAT_STATEMENTS_COLS			32	/* maximum of above */
 
 /*
  * Retrieve statement statistics.
@@ -1785,6 +1817,23 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 		{
 			values[i++] = Float8GetDatumFast(tmp.blk_read_time);
 			values[i++] = Float8GetDatumFast(tmp.blk_write_time);
+		}
+		if (api_version >= PGSS_V1_8)
+		{
+			char		buf[256];
+			Datum		wal_bytes;
+
+			values[i++] = Int64GetDatumFast(tmp.wal_records);
+			values[i++] = Int64GetDatumFast(tmp.wal_num_fpw);
+
+			snprintf(buf, sizeof buf, UINT64_FORMAT, tmp.wal_bytes);
+
+			/* Convert to numeric. */
+			wal_bytes = DirectFunctionCall3(numeric_in,
+											CStringGetDatum(buf),
+											ObjectIdGetDatum(0),
+											Int32GetDatum(-1));
+			values[i++] = wal_bytes;
 		}
 
 		Assert(i == (api_version == PGSS_V1_0 ? PG_STAT_STATEMENTS_COLS_V1_0 :

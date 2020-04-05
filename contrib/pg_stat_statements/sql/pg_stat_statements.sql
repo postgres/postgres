@@ -102,6 +102,29 @@ SELECT * FROM test WHERE a IN (1, 2, 3, 4, 5);
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --
+-- INSERT, UPDATE, DELETE on test table to validate WAL generation metrics
+--
+SELECT pg_stat_statements_reset();
+
+-- utility "create table" should not be shown
+CREATE TABLE pgss_test (a int, b char(20));
+
+INSERT INTO pgss_test VALUES(generate_series(1, 10), 'aaa');
+UPDATE pgss_test SET b = 'bbb' WHERE a > 7;
+DELETE FROM pgss_test WHERE a > 9;
+-- DROP test table
+SET pg_stat_statements.track_utility = TRUE;
+DROP TABLE pgss_test;
+SET pg_stat_statements.track_utility = FALSE;
+
+-- Check WAL is generated for the above statements
+SELECT query, calls, rows,
+wal_bytes > 0 as wal_bytes_generated,
+wal_records > 0 as wal_records_generated,
+wal_records = rows as wal_records_as_rows
+FROM pg_stat_statements ORDER BY query COLLATE "C";
+
+--
 -- pg_stat_statements.track = none
 --
 SET pg_stat_statements.track = 'none';
