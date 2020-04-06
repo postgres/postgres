@@ -177,6 +177,10 @@
   typtype => 'p', typcategory => 'P', typinput => 'pg_ddl_command_in',
   typoutput => 'pg_ddl_command_out', typreceive => 'pg_ddl_command_recv',
   typsend => 'pg_ddl_command_send', typalign => 'ALIGNOF_POINTER' },
+{ oid => '9419', array_type_oid => '271', descr => 'full transaction id',
+  typname => 'xid8', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typcategory => 'U', typinput => 'xid8in', typoutput => 'xid8out',
+  typreceive => 'xid8recv', typsend => 'xid8send', typalign => 'd' },
 
 # OIDS 600 - 699
 

@@ -4517,6 +4517,10 @@ INSERT INTO mytable VALUES(-1);  -- fails
    </indexterm>
 
    <indexterm zone="datatype-oid">
+    <primary>xid8</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
     <primary>cid</primary>
    </indexterm>
 
@@ -4719,6 +4723,9 @@ SELECT * FROM pg_attribute
     Another identifier type used by the system is <type>xid</type>, or transaction
     (abbreviated <abbrev>xact</abbrev>) identifier.  This is the data type of the system columns
     <structfield>xmin</structfield> and <structfield>xmax</structfield>.  Transaction identifiers are 32-bit quantities.
+    In some contexts, a 64-bit variant <type>xid8</type> is used.  Unlike
+    <type>xid</type> values, <type>xid8</type> values increase strictly
+    monotonically and cannot be reused in the lifetime of a database cluster.
    </para>
 
    <para>

@@ -1,0 +1,136 @@
+-- xid and xid8
+-- values in range, in octal, decimal, hex
+select '010'::xid,
+       '42'::xid,
+       '0xffffffff'::xid,
+       '-1'::xid,
+	   '010'::xid8,
+	   '42'::xid8,
+	   '0xffffffffffffffff'::xid8,
+	   '-1'::xid8;
+ xid | xid |    xid     |    xid     | xid8 | xid8 |         xid8         |         xid8         
+-----+-----+------------+------------+------+------+----------------------+----------------------
+   8 |  42 | 4294967295 | 4294967295 |    8 |   42 | 18446744073709551615 | 18446744073709551615
+(1 row)
+
+-- garbage values are not yet rejected (perhaps they should be)
+select ''::xid;
+ xid 
+-----
+   0
+(1 row)
+
+select 'asdf'::xid;
+ xid 
+-----
+   0
+(1 row)
+
+select ''::xid8;
+ xid8 
+------
+    0
+(1 row)
+
+select 'asdf'::xid8;
+ xid8 
+------
+    0
+(1 row)
+
+-- equality
+select '1'::xid = '1'::xid;
+ ?column? 
+----------
+ t
+(1 row)
+
+select '1'::xid != '1'::xid;
+ ?column? 
+----------
+ f
+(1 row)
+
+select '1'::xid8 = '1'::xid8;
+ ?column? 
+----------
+ t
+(1 row)
+
+select '1'::xid8 != '1'::xid8;
+ ?column? 
+----------
+ f
+(1 row)
+
+-- conversion
+select '1'::xid = '1'::xid8::xid;
+ ?column? 
+----------
+ t
+(1 row)
+
+select '1'::xid != '1'::xid8::xid;
+ ?column? 
+----------
+ f
+(1 row)
+
+-- we don't want relational operators for xid, due to use of modular arithmetic
+select '1'::xid < '2'::xid;
+ERROR:  operator does not exist: xid < xid
+LINE 1: select '1'::xid < '2'::xid;
+                        ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+select '1'::xid <= '2'::xid;
+ERROR:  operator does not exist: xid <= xid
+LINE 1: select '1'::xid <= '2'::xid;
+                        ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+select '1'::xid > '2'::xid;
+ERROR:  operator does not exist: xid > xid
+LINE 1: select '1'::xid > '2'::xid;
+                        ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+select '1'::xid >= '2'::xid;
+ERROR:  operator does not exist: xid >= xid
+LINE 1: select '1'::xid >= '2'::xid;
+                        ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+-- we want them for xid8 though
+select '1'::xid8 < '2'::xid8, '2'::xid8 < '2'::xid8, '2'::xid8 < '1'::xid8;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ t        | f        | f
+(1 row)
+
+select '1'::xid8 <= '2'::xid8, '2'::xid8 <= '2'::xid8, '2'::xid8 <= '1'::xid8;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ t        | t        | f
+(1 row)
+
+select '1'::xid8 > '2'::xid8, '2'::xid8 > '2'::xid8, '2'::xid8 > '1'::xid8;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ f        | f        | t
+(1 row)
+
+select '1'::xid8 >= '2'::xid8, '2'::xid8 >= '2'::xid8, '2'::xid8 >= '1'::xid8;
+ ?column? | ?column? | ?column? 
+----------+----------+----------
+ f        | t        | t
+(1 row)
+
+-- we also have a 3way compare for btrees
+select xid8cmp('1', '2'), xid8cmp('2', '2'), xid8cmp('2', '1');
+ xid8cmp | xid8cmp | xid8cmp 
+---------+---------+---------
+      -1 |       0 |       1
+(1 row)
+
+-- xid8 has btree and hash opclasses
+create table xid8_t1 (x xid8);
+create index on xid8_t1 using btree(x);
+create index on xid8_t1 using hash(x);
+drop table xid8_t1;

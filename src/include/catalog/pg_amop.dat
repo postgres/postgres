@@ -180,6 +180,24 @@
 { amopfamily => 'btree/oid_ops', amoplefttype => 'oid', amoprighttype => 'oid',
   amopstrategy => '5', amopopr => '>(oid,oid)', amopmethod => 'btree' },
 
+# btree xid8_ops
+
+{ amopfamily => 'btree/xid8_ops', amoplefttype => 'xid8',
+  amoprighttype => 'xid8', amopstrategy => '1', amopopr => '<(xid8,xid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/xid8_ops', amoplefttype => 'xid8',
+  amoprighttype => 'xid8', amopstrategy => '2', amopopr => '<=(xid8,xid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/xid8_ops', amoplefttype => 'xid8',
+  amoprighttype => 'xid8', amopstrategy => '3', amopopr => '=(xid8,xid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/xid8_ops', amoplefttype => 'xid8',
+  amoprighttype => 'xid8', amopstrategy => '4', amopopr => '>=(xid8,xid8)',
+  amopmethod => 'btree' },
+{ amopfamily => 'btree/xid8_ops', amoplefttype => 'xid8',
+  amoprighttype => 'xid8', amopstrategy => '5', amopopr => '>(xid8,xid8)',
+  amopmethod => 'btree' },
+
 # btree tid_ops
 
 { amopfamily => 'btree/tid_ops', amoplefttype => 'tid', amoprighttype => 'tid',
@@ -1008,6 +1026,10 @@
 # xid_ops
 { amopfamily => 'hash/xid_ops', amoplefttype => 'xid', amoprighttype => 'xid',
   amopstrategy => '1', amopopr => '=(xid,xid)', amopmethod => 'hash' },
+
+# xid8_ops
+{ amopfamily => 'hash/xid8_ops', amoplefttype => 'xid8', amoprighttype => 'xid8',
+  amopstrategy => '1', amopopr => '=(xid8,xid8)', amopmethod => 'hash' },
 
 # cid_ops
 { amopfamily => 'hash/cid_ops', amoplefttype => 'cid', amoprighttype => 'cid',

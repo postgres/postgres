@@ -93,6 +93,10 @@
 { castsource => 'bool', casttarget => 'int4', castfunc => 'int4(bool)',
   castcontext => 'e', castmethod => 'f' },
 
+# Allow explicit coercions between xid8 and xid
+{ castsource => 'xid8', casttarget => 'xid', castfunc => 'xid(xid8)',
+  castcontext => 'e', castmethod => 'f' },
+
 # OID category: allow implicit conversion from any integral type (including
 # int8, to support OID literals > 2G) to OID, as well as assignment coercion
 # from OID to int4 or int8.  Similarly for each OID-alias type.  Also allow

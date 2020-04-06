@@ -287,6 +287,10 @@
   amprocrighttype => 'anyrange', amprocnum => '1', amproc => 'range_cmp' },
 { amprocfamily => 'btree/jsonb_ops', amproclefttype => 'jsonb',
   amprocrighttype => 'jsonb', amprocnum => '1', amproc => 'jsonb_cmp' },
+{ amprocfamily => 'btree/xid8_ops', amproclefttype => 'xid8',
+  amprocrighttype => 'xid8', amprocnum => '1', amproc => 'xid8cmp' },
+{ amprocfamily => 'btree/xid8_ops', amproclefttype => 'xid8',
+  amprocrighttype => 'xid8', amprocnum => '4', amproc => 'btequalimage' },
 
 # hash
 { amprocfamily => 'hash/bpchar_ops', amproclefttype => 'bpchar',
@@ -399,6 +403,10 @@
   amprocrighttype => 'xid', amprocnum => '1', amproc => 'hashint4' },
 { amprocfamily => 'hash/xid_ops', amproclefttype => 'xid',
   amprocrighttype => 'xid', amprocnum => '2', amproc => 'hashint4extended' },
+{ amprocfamily => 'hash/xid8_ops', amproclefttype => 'xid8',
+  amprocrighttype => 'xid8', amprocnum => '1', amproc => 'hashint8' },
+{ amprocfamily => 'hash/xid8_ops', amproclefttype => 'xid8',
+  amprocrighttype => 'xid8', amprocnum => '2', amproc => 'hashint8extended' },
 { amprocfamily => 'hash/cid_ops', amproclefttype => 'cid',
   amprocrighttype => 'cid', amprocnum => '1', amproc => 'hashint4' },
 { amprocfamily => 'hash/cid_ops', amproclefttype => 'cid',

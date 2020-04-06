@@ -20,7 +20,7 @@ test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeri
 # strings depends on char, varchar and text
 # numerology depends on int2, int4, int8, float4, float8
 # ----------
-test: strings numerology point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes
+test: strings numerology point lseg line box path polygon circle date time timetz timestamp timestamptz interval inet macaddr macaddr8 tstypes xid
 
 # ----------
 # Another group of parallel tests

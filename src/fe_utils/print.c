@@ -3509,6 +3509,7 @@ column_type_alignment(Oid ftype)
 		case NUMERICOID:
 		case OIDOID:
 		case XIDOID:
+		case XID8OID:
 		case CIDOID:
 		case CASHOID:
 			align = 'r';
