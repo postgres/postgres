@@ -2778,7 +2778,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 	{
 		if (indent)
 			appendStringInfoSpaces(es->str, es->indent * 2);
-		appendStringInfo(es->str, "%s Groups: %ld Sort Method", groupLabel,
+		appendStringInfo(es->str, "%s Groups: " INT64_FORMAT " Sort Method", groupLabel,
 						 groupInfo->groupCount);
 		/* plural/singular based on methodNames size */
 		if (list_length(methodNames) > 1)
