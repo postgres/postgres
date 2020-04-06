@@ -402,16 +402,19 @@
 
    <listitem>
     <para>
-     Replication is only supported by tables, partitioned or not, although a
-     given table must either be partitioned on both servers or not partitioned
-     at all.  Also, when replicating between partitioned tables, the actual
-     replication occurs between leaf partitions, so partitions on the two
-     servers must match one-to-one.
-    </para>
-
-    <para>
+     Replication is only supported by tables, including partitioned tables.
      Attempts to replicate other types of relations such as views, materialized
      views, or foreign tables, will result in an error.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     When replicating between partitioned tables, the actual replication
+     originates from the leaf partitions on the publisher, so partitions on
+     the publisher must also exist on the subscriber as valid target tables.
+     (They could either be leaf partitions themselves, or they could be
+     further subpartitioned, or they could even be independent tables.)
     </para>
    </listitem>
   </itemizedlist>

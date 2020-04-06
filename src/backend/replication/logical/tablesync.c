@@ -762,7 +762,6 @@ copy_table(Relation rel)
 	/* Map the publisher relation to local one. */
 	relmapentry = logicalrep_rel_open(lrel.remoteid, NoLock);
 	Assert(rel == relmapentry->localrel);
-	Assert(relmapentry->localrel->rd_rel->relkind == RELKIND_RELATION);
 
 	/* Start copy on the publisher. */
 	initStringInfo(&cmd);
