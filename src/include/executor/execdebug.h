@@ -86,10 +86,12 @@
 #define SO_nodeDisplay(l)				nodeDisplay(l)
 #define SO_printf(s)					printf(s)
 #define SO1_printf(s, p)				printf(s, p)
+#define SO2_printf(s, p1, p2)			printf(s, p1, p2)
 #else
 #define SO_nodeDisplay(l)
 #define SO_printf(s)
 #define SO1_printf(s, p)
+#define SO2_printf(s, p1, p2)
 #endif							/* EXEC_SORTDEBUG */
 
 /* ----------------

@@ -128,6 +128,7 @@ bool		enable_indexonlyscan = true;
 bool		enable_bitmapscan = true;
 bool		enable_tidscan = true;
 bool		enable_sort = true;
+bool		enable_incrementalsort = true;
 bool		enable_hashagg = true;
 bool		enable_hashagg_disk = true;
 bool		enable_groupingsets_hash_disk = false;
@@ -1648,9 +1649,9 @@ cost_recursive_union(Path *runion, Path *nrterm, Path *rterm)
 }
 
 /*
- * cost_sort
- *	  Determines and returns the cost of sorting a relation, including
- *	  the cost of reading the input data.
+ * cost_tuplesort
+ *	  Determines and returns the cost of sorting a relation using tuplesort,
+ *    not including the cost of reading the input data.
  *
  * If the total volume of data to sort is less than sort_mem, we will do
  * an in-memory sort, which requires no I/O and about t*log2(t) tuple
@@ -1677,38 +1678,22 @@ cost_recursive_union(Path *runion, Path *nrterm, Path *rterm)
  * specifying nonzero comparison_cost; typically that's used for any extra
  * work that has to be done to prepare the inputs to the comparison operators.
  *
- * 'pathkeys' is a list of sort keys
- * 'input_cost' is the total cost for reading the input data
  * 'tuples' is the number of tuples in the relation
  * 'width' is the average tuple width in bytes
  * 'comparison_cost' is the extra cost per comparison, if any
  * 'sort_mem' is the number of kilobytes of work memory allowed for the sort
  * 'limit_tuples' is the bound on the number of output tuples; -1 if no bound
- *
- * NOTE: some callers currently pass NIL for pathkeys because they
- * can't conveniently supply the sort keys.  Since this routine doesn't
- * currently do anything with pathkeys anyway, that doesn't matter...
- * but if it ever does, it should react gracefully to lack of key data.
- * (Actually, the thing we'd most likely be interested in is just the number
- * of sort keys, which all callers *could* supply.)
  */
-void
-cost_sort(Path *path, PlannerInfo *root,
-		  List *pathkeys, Cost input_cost, double tuples, int width,
-		  Cost comparison_cost, int sort_mem,
-		  double limit_tuples)
+static void
+cost_tuplesort(Cost *startup_cost, Cost *run_cost,
+			   double tuples, int width,
+			   Cost comparison_cost, int sort_mem,
+			   double limit_tuples)
 {
-	Cost		startup_cost = input_cost;
-	Cost		run_cost = 0;
 	double		input_bytes = relation_byte_size(tuples, width);
 	double		output_bytes;
 	double		output_tuples;
 	long		sort_mem_bytes = sort_mem * 1024L;
-
-	if (!enable_sort)
-		startup_cost += disable_cost;
-
-	path->rows = tuples;
 
 	/*
 	 * We want to be sure the cost of a sort is never estimated as zero, even
@@ -1748,7 +1733,7 @@ cost_sort(Path *path, PlannerInfo *root,
 		 *
 		 * Assume about N log2 N comparisons
 		 */
-		startup_cost += comparison_cost * tuples * LOG2(tuples);
+		*startup_cost = comparison_cost * tuples * LOG2(tuples);
 
 		/* Disk costs */
 
@@ -1759,7 +1744,7 @@ cost_sort(Path *path, PlannerInfo *root,
 			log_runs = 1.0;
 		npageaccesses = 2.0 * npages * log_runs;
 		/* Assume 3/4ths of accesses are sequential, 1/4th are not */
-		startup_cost += npageaccesses *
+		*startup_cost += npageaccesses *
 			(seq_page_cost * 0.75 + random_page_cost * 0.25);
 	}
 	else if (tuples > 2 * output_tuples || input_bytes > sort_mem_bytes)
@@ -1770,12 +1755,12 @@ cost_sort(Path *path, PlannerInfo *root,
 		 * factor is a bit higher than for quicksort.  Tweak it so that the
 		 * cost curve is continuous at the crossover point.
 		 */
-		startup_cost += comparison_cost * tuples * LOG2(2.0 * output_tuples);
+		*startup_cost = comparison_cost * tuples * LOG2(2.0 * output_tuples);
 	}
 	else
 	{
 		/* We'll use plain quicksort on all the input tuples */
-		startup_cost += comparison_cost * tuples * LOG2(tuples);
+		*startup_cost = comparison_cost * tuples * LOG2(tuples);
 	}
 
 	/*
@@ -1786,8 +1771,143 @@ cost_sort(Path *path, PlannerInfo *root,
 	 * here --- the upper LIMIT will pro-rate the run cost so we'd be double
 	 * counting the LIMIT otherwise.
 	 */
-	run_cost += cpu_operator_cost * tuples;
+	*run_cost = cpu_operator_cost * tuples;
+}
 
+/*
+ * cost_incremental_sort
+ * 	Determines and returns the cost of sorting a relation incrementally, when
+ *  the input path is presorted by a prefix of the pathkeys.
+ *
+ * 'presorted_keys' is the number of leading pathkeys by which the input path
+ * is sorted.
+ *
+ * We estimate the number of groups into which the relation is divided by the
+ * leading pathkeys, and then calculate the cost of sorting a single group
+ * with tuplesort using cost_tuplesort().
+ */
+void
+cost_incremental_sort(Path *path,
+					  PlannerInfo *root, List *pathkeys, int presorted_keys,
+					  Cost input_startup_cost, Cost input_total_cost,
+					  double input_tuples, int width, Cost comparison_cost, int sort_mem,
+					  double limit_tuples)
+{
+	Cost		startup_cost = 0,
+				run_cost = 0,
+				input_run_cost = input_total_cost - input_startup_cost;
+	double		group_tuples,
+				input_groups;
+	Cost		group_startup_cost,
+				group_run_cost,
+				group_input_run_cost;
+	List	   *presortedExprs = NIL;
+	ListCell   *l;
+	int			i = 0;
+
+	Assert(presorted_keys != 0);
+
+	/*
+	 * We want to be sure the cost of a sort is never estimated as zero, even
+	 * if passed-in tuple count is zero.  Besides, mustn't do log(0)...
+	 */
+	if (input_tuples < 2.0)
+		input_tuples = 2.0;
+
+	/* Extract presorted keys as list of expressions */
+	foreach(l, pathkeys)
+	{
+		PathKey    *key = (PathKey *) lfirst(l);
+		EquivalenceMember *member = (EquivalenceMember *)
+		linitial(key->pk_eclass->ec_members);
+
+		presortedExprs = lappend(presortedExprs, member->em_expr);
+
+		i++;
+		if (i >= presorted_keys)
+			break;
+	}
+
+	/* Estimate number of groups with equal presorted keys */
+	input_groups = estimate_num_groups(root, presortedExprs, input_tuples, NULL);
+	group_tuples = input_tuples / input_groups;
+	group_input_run_cost = input_run_cost / input_groups;
+
+	/*
+	 * Estimate average cost of sorting of one group where presorted keys are
+	 * equal.  Incremental sort is sensitive to distribution of tuples to the
+	 * groups, where we're relying on quite rough assumptions.  Thus, we're
+	 * pessimistic about incremental sort performance and increase its average
+	 * group size by half.
+	 */
+	cost_tuplesort(&group_startup_cost, &group_run_cost,
+				   1.5 * group_tuples, width, comparison_cost, sort_mem,
+				   limit_tuples);
+
+	/*
+	 * Startup cost of incremental sort is the startup cost of its first group
+	 * plus the cost of its input.
+	 */
+	startup_cost += group_startup_cost
+		+ input_startup_cost + group_input_run_cost;
+
+	/*
+	 * After we started producing tuples from the first group, the cost of
+	 * producing all the tuples is given by the cost to finish processing this
+	 * group, plus the total cost to process the remaining groups, plus the
+	 * remaining cost of input.
+	 */
+	run_cost += group_run_cost
+		+ (group_run_cost + group_startup_cost) * (input_groups - 1)
+		+ group_input_run_cost * (input_groups - 1);
+
+	/*
+	 * Incremental sort adds some overhead by itself. Firstly, it has to
+	 * detect the sort groups. This is roughly equal to one extra copy and
+	 * comparison per tuple. Secondly, it has to reset the tuplesort context
+	 * for every group.
+	 */
+	run_cost += (cpu_tuple_cost + comparison_cost) * input_tuples;
+	run_cost += 2.0 * cpu_tuple_cost * input_groups;
+
+	path->rows = input_tuples;
+	path->startup_cost = startup_cost;
+	path->total_cost = startup_cost + run_cost;
+}
+
+/*
+ * cost_sort
+ *	  Determines and returns the cost of sorting a relation, including
+ *	  the cost of reading the input data.
+ *
+ * NOTE: some callers currently pass NIL for pathkeys because they
+ * can't conveniently supply the sort keys.  Since this routine doesn't
+ * currently do anything with pathkeys anyway, that doesn't matter...
+ * but if it ever does, it should react gracefully to lack of key data.
+ * (Actually, the thing we'd most likely be interested in is just the number
+ * of sort keys, which all callers *could* supply.)
+ */
+void
+cost_sort(Path *path, PlannerInfo *root,
+		  List *pathkeys, Cost input_cost, double tuples, int width,
+		  Cost comparison_cost, int sort_mem,
+		  double limit_tuples)
+
+{
+	Cost		startup_cost;
+	Cost		run_cost;
+
+	cost_tuplesort(&startup_cost, &run_cost,
+				   tuples, width,
+				   comparison_cost, sort_mem,
+				   limit_tuples);
+
+	if (!enable_sort)
+		startup_cost += disable_cost;
+
+	startup_cost += input_cost;
+
+	path->rows = tuples;
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
 }

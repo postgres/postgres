@@ -335,6 +335,60 @@ pathkeys_contained_in(List *keys1, List *keys2)
 }
 
 /*
+ * pathkeys_count_contained_in
+ *    Same as pathkeys_contained_in, but also sets length of longest
+ *    common prefix of keys1 and keys2.
+ */
+bool
+pathkeys_count_contained_in(List *keys1, List *keys2, int *n_common)
+{
+	int			n = 0;
+	ListCell   *key1,
+			   *key2;
+
+	/*
+	 * See if we can avoiding looping through both lists. This optimization
+	 * gains us several percent in planning time in a worst-case test.
+	 */
+	if (keys1 == keys2)
+	{
+		*n_common = list_length(keys1);
+		return true;
+	}
+	else if (keys1 == NIL)
+	{
+		*n_common = 0;
+		return true;
+	}
+	else if (keys2 == NIL)
+	{
+		*n_common = 0;
+		return false;
+	}
+
+	/*
+	 * If both lists are non-empty, iterate through both to find out how many
+	 * items are shared.
+	 */
+	forboth(key1, keys1, key2, keys2)
+	{
+		PathKey    *pathkey1 = (PathKey *) lfirst(key1);
+		PathKey    *pathkey2 = (PathKey *) lfirst(key2);
+
+		if (pathkey1 != pathkey2)
+		{
+			*n_common = n;
+			return false;
+		}
+		n++;
+	}
+
+	/* If we ended with a null value, then we've processed the whole list. */
+	*n_common = n;
+	return (key1 == NULL);
+}
+
+/*
  * get_cheapest_path_for_pathkeys
  *	  Find the cheapest path (according to the specified criterion) that
  *	  satisfies the given pathkeys and parameterization.
@@ -1786,26 +1840,26 @@ right_merge_direction(PlannerInfo *root, PathKey *pathkey)
  *		Count the number of pathkeys that are useful for meeting the
  *		query's requested output ordering.
  *
- * Unlike merge pathkeys, this is an all-or-nothing affair: it does us
- * no good to order by just the first key(s) of the requested ordering.
- * So the result is always either 0 or list_length(root->query_pathkeys).
+ * Because we the have the possibility of incremental sort, a prefix list of
+ * keys is potentially useful for improving the performance of the requested
+ * ordering. Thus we return 0, if no valuable keys are found, or the number
+ * of leading keys shared by the list and the requested ordering..
  */
 static int
 pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
 {
+	int			n_common_pathkeys;
+
 	if (root->query_pathkeys == NIL)
 		return 0;				/* no special ordering requested */
 
 	if (pathkeys == NIL)
 		return 0;				/* unordered path */
 
-	if (pathkeys_contained_in(root->query_pathkeys, pathkeys))
-	{
-		/* It's useful ... or at least the first N keys are */
-		return list_length(root->query_pathkeys);
-	}
+	(void) pathkeys_count_contained_in(root->query_pathkeys, pathkeys,
+										&n_common_pathkeys);
 
-	return 0;					/* path ordering not useful */
+	return n_common_pathkeys;
 }
 
 /*

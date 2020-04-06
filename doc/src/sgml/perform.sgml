@@ -291,7 +291,47 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 = 42;
     often see this plan type for queries that fetch just a single row.  It's
     also often used for queries that have an <literal>ORDER BY</literal> condition
     that matches the index order, because then no extra sorting step is needed
-    to satisfy the <literal>ORDER BY</literal>.
+    to satisfy the <literal>ORDER BY</literal>.  In this example, adding
+    <literal>ORDER BY unique1</literal> would use the same plan because the
+    index already implicitly provides the requested ordering.
+   </para>
+
+   <para>
+     The planner may implement an <literal>ORDER BY</literal> clause in several
+     ways.  The above example shows that such an ordering clause may be
+     implemented implicitly.  The planner may also add an explicit
+     <literal>sort</literal> step:
+
+<screen>
+EXPLAIN SELECT * FROM tenk1 ORDER BY unique1;
+                            QUERY PLAN
+-------------------------------------------------------------------
+ Sort  (cost=1109.39..1134.39 rows=10000 width=244)
+   Sort Key: unique1
+   ->  Seq Scan on tenk1  (cost=0.00..445.00 rows=10000 width=244)
+</screen>
+
+    If the a part of the plan guarantess an ordering on a prefix of the
+    required sort keys, then the planner may instead decide to use an
+    <literal>incremental sort</literal> step:
+
+<screen>
+EXPLAIN SELECT * FROM tenk1 ORDER BY four, ten LIMIT 100;
+                                              QUERY PLAN
+------------------------------------------------------------------------------------------------------
+ Limit  (cost=521.06..538.05 rows=100 width=244)
+   ->  Incremental Sort  (cost=521.06..2220.95 rows=10000 width=244)
+         Sort Key: four, ten
+         Presorted Key: four
+         ->  Index Scan using index_tenk1_on_four on tenk1  (cost=0.29..1510.08 rows=10000 width=244)
+</screen>
+
+    Compared to regular sorts, sorting incrementally allows returning tuples
+    before the entire result set has been sorted, which particularly enables
+    optimizations with <literal>LIMIT</literal> queries.  It may also reduce
+    memory usage and the likelihood of spilling sorts to disk, but it comes at
+    the cost of the increased overhead of splitting the result set into multiple
+    sorting batches.
    </para>
 
    <para>

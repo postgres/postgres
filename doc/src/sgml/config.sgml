@@ -4573,6 +4573,20 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-incrementalsort" xreflabel="enable_incrementalsort">
+      <term><varname>enable_incrementalsort</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_incrementalsort</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of incremental sort steps.
+        The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-indexscan" xreflabel="enable_indexscan">
       <term><varname>enable_indexscan</varname> (<type>boolean</type>)
       <indexterm>

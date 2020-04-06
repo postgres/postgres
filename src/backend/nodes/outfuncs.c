@@ -837,10 +837,8 @@ _outMaterial(StringInfo str, const Material *node)
 }
 
 static void
-_outSort(StringInfo str, const Sort *node)
+_outSortInfo(StringInfo str, const Sort *node)
 {
-	WRITE_NODE_TYPE("SORT");
-
 	_outPlanInfo(str, (const Plan *) node);
 
 	WRITE_INT_FIELD(numCols);
@@ -848,6 +846,24 @@ _outSort(StringInfo str, const Sort *node)
 	WRITE_OID_ARRAY(sortOperators, node->numCols);
 	WRITE_OID_ARRAY(collations, node->numCols);
 	WRITE_BOOL_ARRAY(nullsFirst, node->numCols);
+}
+
+static void
+_outSort(StringInfo str, const Sort *node)
+{
+	WRITE_NODE_TYPE("SORT");
+
+	_outSortInfo(str, node);
+}
+
+static void
+_outIncrementalSort(StringInfo str, const IncrementalSort *node)
+{
+	WRITE_NODE_TYPE("INCREMENTALSORT");
+
+	_outSortInfo(str, (const Sort *) node);
+
+	WRITE_INT_FIELD(nPresortedCols);
 }
 
 static void
@@ -3785,6 +3801,9 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_Sort:
 				_outSort(str, obj);
+				break;
+			case T_IncrementalSort:
+				_outIncrementalSort(str, obj);
 				break;
 			case T_Unique:
 				_outUnique(str, obj);

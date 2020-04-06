@@ -61,14 +61,17 @@ typedef struct SortCoordinateData *SortCoordinate;
  * Data structures for reporting sort statistics.  Note that
  * TuplesortInstrumentation can't contain any pointers because we
  * sometimes put it in shared memory.
+ *
+ * TuplesortMethod is used in a bitmask in Increment Sort's shared memory
+ * instrumentation so needs to have each value be a separate bit.
  */
 typedef enum
 {
-	SORT_TYPE_STILL_IN_PROGRESS = 0,
-	SORT_TYPE_TOP_N_HEAPSORT,
-	SORT_TYPE_QUICKSORT,
-	SORT_TYPE_EXTERNAL_SORT,
-	SORT_TYPE_EXTERNAL_MERGE
+	SORT_TYPE_STILL_IN_PROGRESS = 1 << 0,
+	SORT_TYPE_TOP_N_HEAPSORT = 1 << 1,
+	SORT_TYPE_QUICKSORT = 1 << 2,
+	SORT_TYPE_EXTERNAL_SORT = 1 << 3,
+	SORT_TYPE_EXTERNAL_MERGE = 1 << 4
 } TuplesortMethod;
 
 typedef enum
@@ -215,6 +218,7 @@ extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 											 bool randomAccess);
 
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);
+extern bool tuplesort_used_bound(Tuplesortstate *state);
 
 extern void tuplesort_puttupleslot(Tuplesortstate *state,
 								   TupleTableSlot *slot);
@@ -238,6 +242,8 @@ extern bool tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples,
 								 bool forward);
 
 extern void tuplesort_end(Tuplesortstate *state);
+
+extern void tuplesort_reset(Tuplesortstate *state);
 
 extern void tuplesort_get_stats(Tuplesortstate *state,
 								TuplesortInstrumentation *stats);

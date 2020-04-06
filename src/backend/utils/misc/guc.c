@@ -992,6 +992,15 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_incrementalsort", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's use of incremental sort steps."),
+			NULL
+		},
+		&enable_incrementalsort,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"enable_hashagg", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of hashed aggregation plans."),
 			NULL,

@@ -21,7 +21,7 @@ QUERY PLAN
 
 Sort           
   Sort Key: id, data
-  ->  Seq Scan on test_dc
+  ->  Index Scan using test_dc_pkey on test_dc
         Filter: ((data)::text = '34'::text)
 step select2: SELECT * FROM test_dc WHERE data=34 ORDER BY id,data;
 id             data           

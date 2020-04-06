@@ -89,6 +89,7 @@ test: select_distinct_on
 test: select_implicit
 test: select_having
 test: subselect
+test: incremental_sort
 test: union
 test: case
 test: join

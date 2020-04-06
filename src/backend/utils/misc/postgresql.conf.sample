@@ -360,6 +360,7 @@
 #enable_parallel_append = on
 #enable_seqscan = on
 #enable_sort = on
+#enable_incrementalsort = on
 #enable_tidscan = on
 #enable_partitionwise_join = off
 #enable_partitionwise_aggregate = off

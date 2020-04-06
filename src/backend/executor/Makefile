@@ -46,6 +46,7 @@ OBJS = \
 	nodeGroup.o \
 	nodeHash.o \
 	nodeHashjoin.o \
+	nodeIncrementalSort.o \
 	nodeIndexonlyscan.o \
 	nodeIndexscan.o \
 	nodeLimit.o \
