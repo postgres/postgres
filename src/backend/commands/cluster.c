@@ -139,21 +139,9 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			/* We need to find the index that has indisclustered set. */
 			foreach(index, RelationGetIndexList(rel))
 			{
-				HeapTuple	idxtuple;
-				Form_pg_index indexForm;
-
 				indexOid = lfirst_oid(index);
-				idxtuple = SearchSysCache1(INDEXRELID,
-										   ObjectIdGetDatum(indexOid));
-				if (!HeapTupleIsValid(idxtuple))
-					elog(ERROR, "cache lookup failed for index %u", indexOid);
-				indexForm = (Form_pg_index) GETSTRUCT(idxtuple);
-				if (indexForm->indisclustered)
-				{
-					ReleaseSysCache(idxtuple);
+				if (get_index_isclustered(indexOid))
 					break;
-				}
-				ReleaseSysCache(idxtuple);
 				indexOid = InvalidOid;
 			}
 
@@ -304,9 +292,6 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 	 */
 	if (recheck)
 	{
-		HeapTuple	tuple;
-		Form_pg_index indexForm;
-
 		/* Check that the user still owns the relation */
 		if (!pg_class_ownercheck(tableOid, GetUserId()))
 		{
@@ -345,22 +330,12 @@ cluster_rel(Oid tableOid, Oid indexOid, int options)
 			/*
 			 * Check that the index is still the one with indisclustered set.
 			 */
-			tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
+			if (!get_index_isclustered(indexOid))
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
 				pgstat_progress_end_command();
 				return;
 			}
-			indexForm = (Form_pg_index) GETSTRUCT(tuple);
-			if (!indexForm->indisclustered)
-			{
-				ReleaseSysCache(tuple);
-				relation_close(OldHeap, AccessExclusiveLock);
-				pgstat_progress_end_command();
-				return;
-			}
-			ReleaseSysCache(tuple);
 		}
 	}
 
@@ -519,18 +494,8 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 	 */
 	if (OidIsValid(indexOid))
 	{
-		indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "cache lookup failed for index %u", indexOid);
-		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
-
-		if (indexForm->indisclustered)
-		{
-			ReleaseSysCache(indexTuple);
+		if (get_index_isclustered(indexOid))
 			return;
-		}
-
-		ReleaseSysCache(indexTuple);
 	}
 
 	/*
