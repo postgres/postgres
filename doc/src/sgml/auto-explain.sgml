@@ -111,6 +111,26 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
+     <varname>auto_explain.log_wal</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_wal</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <varname>auto_explain.log_wal</varname> controls whether WAL
+      usage statistics are printed when an execution plan is logged; it's
+      equivalent to the <literal>WAL</literal> option of <command>EXPLAIN</command>.
+      This parameter has no effect
+      unless <varname>auto_explain.log_analyze</varname> is enabled.
+      This parameter is off by default.
+      Only superusers can change this setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <varname>auto_explain.log_timing</varname> (<type>boolean</type>)
      <indexterm>
       <primary><varname>auto_explain.log_timing</varname> configuration parameter</primary>

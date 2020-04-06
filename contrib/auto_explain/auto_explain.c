@@ -27,6 +27,7 @@ static int	auto_explain_log_min_duration = -1; /* msec or -1 */
 static bool auto_explain_log_analyze = false;
 static bool auto_explain_log_verbose = false;
 static bool auto_explain_log_buffers = false;
+static bool auto_explain_log_wal = false;
 static bool auto_explain_log_triggers = false;
 static bool auto_explain_log_timing = true;
 static bool auto_explain_log_settings = false;
@@ -141,6 +142,17 @@ _PG_init(void)
 							 "Log buffers usage.",
 							 NULL,
 							 &auto_explain_log_buffers,
+							 false,
+							 PGC_SUSET,
+							 0,
+							 NULL,
+							 NULL,
+							 NULL);
+
+	DefineCustomBoolVariable("auto_explain.log_wal",
+							 "Log WAL usage.",
+							 NULL,
+							 &auto_explain_log_wal,
 							 false,
 							 PGC_SUSET,
 							 0,
@@ -280,6 +292,8 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
 				queryDesc->instrument_options |= INSTRUMENT_ROWS;
 			if (auto_explain_log_buffers)
 				queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
+			if (auto_explain_log_wal)
+				queryDesc->instrument_options |= INSTRUMENT_WAL;
 		}
 	}
 
@@ -374,6 +388,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 			es->analyze = (queryDesc->instrument_options && auto_explain_log_analyze);
 			es->verbose = auto_explain_log_verbose;
 			es->buffers = (es->analyze && auto_explain_log_buffers);
+			es->wal = (es->analyze && auto_explain_log_wal);
 			es->timing = (es->analyze && auto_explain_log_timing);
 			es->summary = es->analyze;
 			es->format = auto_explain_log_format;

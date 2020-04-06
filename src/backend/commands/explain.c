@@ -113,6 +113,7 @@ static void show_foreignscan_info(ForeignScanState *fsstate, ExplainState *es);
 static void show_eval_params(Bitmapset *bms_params, ExplainState *es);
 static const char *explain_get_index_name(Oid indexId);
 static void show_buffer_usage(ExplainState *es, const BufferUsage *usage);
+static void show_wal_usage(ExplainState *es, const WalUsage *usage);
 static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
 									ExplainState *es);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
@@ -175,6 +176,8 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 			es->costs = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "buffers") == 0)
 			es->buffers = defGetBoolean(opt);
+		else if (strcmp(opt->defname, "wal") == 0)
+			es->wal = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "settings") == 0)
 			es->settings = defGetBoolean(opt);
 		else if (strcmp(opt->defname, "timing") == 0)
@@ -218,6 +221,11 @@ ExplainQuery(ParseState *pstate, ExplainStmt *stmt,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("EXPLAIN option BUFFERS requires ANALYZE")));
+
+	if (es->wal && !es->analyze)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("EXPLAIN option WAL requires ANALYZE")));
 
 	/* if the timing was not set explicitly, set default value */
 	es->timing = (timing_set) ? es->timing : es->analyze;
@@ -506,6 +514,8 @@ ExplainOnePlan(PlannedStmt *plannedstmt, IntoClause *into, ExplainState *es,
 
 	if (es->buffers)
 		instrument_option |= INSTRUMENT_BUFFERS;
+	if (es->wal)
+		instrument_option |= INSTRUMENT_WAL;
 
 	/*
 	 * We always collect timing for the entire statement, even when node-level
@@ -1970,12 +1980,14 @@ ExplainNode(PlanState *planstate, List *ancestors,
 		}
 	}
 
-	/* Show buffer usage */
+	/* Show buffer/WAL usage */
 	if (es->buffers && planstate->instrument)
 		show_buffer_usage(es, &planstate->instrument->bufusage);
+	if (es->wal && planstate->instrument)
+		show_wal_usage(es, &planstate->instrument->walusage);
 
-	/* Prepare per-worker buffer usage */
-	if (es->workers_state && es->buffers && es->verbose)
+	/* Prepare per-worker buffer/WAL usage */
+	if (es->workers_state && (es->buffers || es->wal) && es->verbose)
 	{
 		WorkerInstrumentation *w = planstate->worker_instrument;
 
@@ -1988,7 +2000,10 @@ ExplainNode(PlanState *planstate, List *ancestors,
 				continue;
 
 			ExplainOpenWorker(n, es);
-			show_buffer_usage(es, &instrument->bufusage);
+			if (es->buffers)
+				show_buffer_usage(es, &instrument->bufusage);
+			if (es->wal)
+				show_wal_usage(es, &instrument->walusage);
 			ExplainCloseWorker(n, es);
 		}
 	}
@@ -3088,6 +3103,44 @@ show_buffer_usage(ExplainState *es, const BufferUsage *usage)
 }
 
 /*
+ * Show WAL usage details.
+ */
+static void
+show_wal_usage(ExplainState *es, const WalUsage *usage)
+{
+	if (es->format == EXPLAIN_FORMAT_TEXT)
+	{
+		/* Show only positive counter values. */
+		if ((usage->wal_records > 0) || (usage->wal_num_fpw > 0) ||
+			(usage->wal_bytes > 0))
+		{
+			ExplainIndentText(es);
+			appendStringInfoString(es->str, "WAL:");
+
+			if (usage->wal_records > 0)
+				appendStringInfo(es->str, "  records=%ld",
+								 usage->wal_records);
+			if (usage->wal_num_fpw > 0)
+				appendStringInfo(es->str, "  full page writes=%ld",
+								 usage->wal_num_fpw);
+			if (usage->wal_bytes > 0)
+				appendStringInfo(es->str, "  bytes=" UINT64_FORMAT,
+								 usage->wal_bytes);
+			appendStringInfoChar(es->str, '\n');
+		}
+	}
+	else
+	{
+		ExplainPropertyInteger("WAL records", NULL,
+							   usage->wal_records, es);
+		ExplainPropertyInteger("WAL full page writes", NULL,
+							   usage->wal_num_fpw, es);
+		ExplainPropertyUInteger("WAL bytes", NULL,
+								usage->wal_bytes, es);
+	}
+}
+
+/*
  * Add some additional details about an IndexScan or IndexOnlyScan
  */
 static void
@@ -3868,6 +3921,19 @@ ExplainPropertyInteger(const char *qlabel, const char *unit, int64 value,
 	char		buf[32];
 
 	snprintf(buf, sizeof(buf), INT64_FORMAT, value);
+	ExplainProperty(qlabel, unit, buf, true, es);
+}
+
+/*
+ * Explain an unsigned integer-valued property.
+ */
+void
+ExplainPropertyUInteger(const char *qlabel, const char *unit, uint64 value,
+						ExplainState *es)
+{
+	char		buf[32];
+
+	snprintf(buf, sizeof(buf), UINT64_FORMAT, value);
 	ExplainProperty(qlabel, unit, buf, true, es);
 }
 

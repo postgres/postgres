@@ -41,6 +41,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
     COSTS [ <replaceable class="parameter">boolean</replaceable> ]
     SETTINGS [ <replaceable class="parameter">boolean</replaceable> ]
     BUFFERS [ <replaceable class="parameter">boolean</replaceable> ]
+    WAL [ <replaceable class="parameter">boolean</replaceable> ]
     TIMING [ <replaceable class="parameter">boolean</replaceable> ]
     SUMMARY [ <replaceable class="parameter">boolean</replaceable> ]
     FORMAT { TEXT | XML | JSON | YAML }
@@ -188,6 +189,19 @@ ROLLBACK;
       format, only non-zero values are printed.  This parameter may only be
       used when <literal>ANALYZE</literal> is also enabled.  It defaults to
       <literal>FALSE</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WAL</literal></term>
+    <listitem>
+     <para>
+      Include information on WAL record generation. Specifically, include the
+      number of records, number of full page image records and amount of WAL
+      bytes generated.  In text format, only non-zero values are printed.  This
+      parameter may only be used when <literal>ANALYZE</literal> is also
+      enabled.  It defaults to <literal>FALSE</literal>.
      </para>
     </listitem>
    </varlistentry>
