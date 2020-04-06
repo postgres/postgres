@@ -3334,3 +3334,26 @@ get_index_isvalid(Oid index_oid)
 
 	return isvalid;
 }
+
+/*
+ * get_index_isclustered
+ *
+ *		Given the index OID, return pg_index.indisclustered.
+ */
+bool
+get_index_isclustered(Oid index_oid)
+{
+	bool		isclustered;
+	HeapTuple	tuple;
+	Form_pg_index rd_index;
+
+	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(index_oid));
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for index %u", index_oid);
+
+	rd_index = (Form_pg_index) GETSTRUCT(tuple);
+	isclustered = rd_index->indisclustered;
+	ReleaseSysCache(tuple);
+
+	return isclustered;
+}

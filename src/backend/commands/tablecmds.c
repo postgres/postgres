@@ -177,6 +177,7 @@ typedef struct AlteredTableInfo
 	List	   *changedIndexOids;	/* OIDs of indexes to rebuild */
 	List	   *changedIndexDefs;	/* string definitions of same */
 	char	   *replicaIdentityIndex;	/* index to reset as REPLICA IDENTITY */
+	char	   *clusterOnIndex;	/* index to use for CLUSTER */
 } AlteredTableInfo;
 
 /* Struct describing one new constraint to check in Phase 3 scan */
@@ -11582,6 +11583,21 @@ RememberReplicaIdentityForRebuilding(Oid indoid, AlteredTableInfo *tab)
 }
 
 /*
+ * Subroutine for ATExecAlterColumnType: remember any clustered index.
+ */
+static void
+RememberClusterOnForRebuilding(Oid indoid, AlteredTableInfo *tab)
+{
+	if (!get_index_isclustered(indoid))
+		return;
+
+	if (tab->clusterOnIndex)
+		elog(ERROR, "relation %u has multiple clustered indexes", tab->relid);
+
+	tab->clusterOnIndex = get_rel_name(indoid);
+}
+
+/*
  * Subroutine for ATExecAlterColumnType: remember that a constraint needs
  * to be rebuilt (which we might already know).
  */
@@ -11606,9 +11622,18 @@ RememberConstraintForRebuilding(Oid conoid, AlteredTableInfo *tab)
 		tab->changedConstraintDefs = lappend(tab->changedConstraintDefs,
 											 defstring);
 
+		/*
+		 * For the index of a constraint, if any, remember if it is used for
+		 * the table's replica identity or if it is a clustered index, so that
+		 * ATPostAlterTypeCleanup() can queue up commands necessary to restore
+		 * those properties.
+		 */
 		indoid = get_constraint_index(conoid);
 		if (OidIsValid(indoid))
+		{
 			RememberReplicaIdentityForRebuilding(indoid, tab);
+			RememberClusterOnForRebuilding(indoid, tab);
+		}
 	}
 }
 
@@ -11652,7 +11677,13 @@ RememberIndexForRebuilding(Oid indoid, AlteredTableInfo *tab)
 			tab->changedIndexDefs = lappend(tab->changedIndexDefs,
 											defstring);
 
+			/*
+			 * Remember if this index is used for the table's replica identity
+			 * or if it is a clustered index, so that ATPostAlterTypeCleanup()
+			 * can queue up commands necessary to restore those properties.
+			 */
 			RememberReplicaIdentityForRebuilding(indoid, tab);
+			RememberClusterOnForRebuilding(indoid, tab);
 		}
 	}
 }
@@ -11773,6 +11804,21 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		subcmd->name = tab->replicaIdentityIndex;
 		cmd->subtype = AT_ReplicaIdentity;
 		cmd->def = (Node *) subcmd;
+
+		/* do it after indexes and constraints */
+		tab->subcmds[AT_PASS_OLD_CONSTR] =
+			lappend(tab->subcmds[AT_PASS_OLD_CONSTR], cmd);
+	}
+
+	/*
+	 * Queue up command to restore marking of index used for cluster.
+	 */
+	if (tab->clusterOnIndex)
+	{
+		AlterTableCmd *cmd = makeNode(AlterTableCmd);
+
+		cmd->subtype = AT_ClusterOn;
+		cmd->name = tab->clusterOnIndex;
 
 		/* do it after indexes and constraints */
 		tab->subcmds[AT_PASS_OLD_CONSTR] =
