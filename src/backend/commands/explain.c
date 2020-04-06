@@ -2880,19 +2880,22 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 
 	fullsortGroupInfo = &incrsortstate->incsort_info.fullsortGroupInfo;
 
-	if (!(es->analyze && fullsortGroupInfo->groupCount > 0))
+	if (!es->analyze)
 		return;
 
-	show_incremental_sort_group_info(fullsortGroupInfo, "Full-sort", true, es);
-	prefixsortGroupInfo = &incrsortstate->incsort_info.prefixsortGroupInfo;
-	if (prefixsortGroupInfo->groupCount > 0)
+	if (fullsortGroupInfo->groupCount > 0)
 	{
+		show_incremental_sort_group_info(fullsortGroupInfo, "Full-sort", true, es);
+		prefixsortGroupInfo = &incrsortstate->incsort_info.prefixsortGroupInfo;
+		if (prefixsortGroupInfo->groupCount > 0)
+		{
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+				appendStringInfo(es->str, " ");
+			show_incremental_sort_group_info(prefixsortGroupInfo, "Presorted", false, es);
+		}
 		if (es->format == EXPLAIN_FORMAT_TEXT)
-			appendStringInfo(es->str, " ");
-		show_incremental_sort_group_info(prefixsortGroupInfo, "Presorted", false, es);
+			appendStringInfo(es->str, "\n");
 	}
-	if (es->format == EXPLAIN_FORMAT_TEXT)
-		appendStringInfo(es->str, "\n");
 
 	if (incrsortstate->shared_info != NULL)
 	{
