@@ -101,7 +101,6 @@ OBJS = \
 	tsvector.o \
 	tsvector_op.o \
 	tsvector_parser.o \
-	txid.o \
 	uuid.o \
 	varbit.o \
 	varchar.o \
@@ -109,6 +108,7 @@ OBJS = \
 	version.o \
 	windowfuncs.o \
 	xid.o \
+	xid8funcs.o \
 	xml.o
 
 jsonpath_scan.c: FLEXFLAGS = -CF -p -p

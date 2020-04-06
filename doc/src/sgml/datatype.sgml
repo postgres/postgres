@@ -199,6 +199,12 @@
       </row>
 
       <row>
+       <entry><type>pg_snapshot</type></entry>
+       <entry></entry>
+       <entry>user-level transaction ID snapshot</entry>
+      </row>
+
+      <row>
        <entry><type>point</type></entry>
        <entry></entry>
        <entry>geometric point on a plane</entry>
@@ -279,7 +285,7 @@
       <row>
        <entry><type>txid_snapshot</type></entry>
        <entry></entry>
-       <entry>user-level transaction ID snapshot</entry>
+       <entry>user-level transaction ID snapshot (deprecated; see <type>pg_snapshot</type>)</entry>
       </row>
 
       <row>

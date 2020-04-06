@@ -460,6 +460,11 @@
   typcategory => 'U', typinput => 'txid_snapshot_in',
   typoutput => 'txid_snapshot_out', typreceive => 'txid_snapshot_recv',
   typsend => 'txid_snapshot_send', typalign => 'd', typstorage => 'x' },
+{ oid => '8355', array_type_oid => '8356', descr => 'snapshot',
+  typname => 'pg_snapshot', typlen => '-1', typbyval => 'f',
+  typcategory => 'U', typinput => 'pg_snapshot_in',
+  typoutput => 'pg_snapshot_out', typreceive => 'pg_snapshot_recv',
+  typsend => 'pg_snapshot_send', typalign => 'd', typstorage => 'x' },
 
 # range types
 { oid => '3904', array_type_oid => '3905', descr => 'range of integers',

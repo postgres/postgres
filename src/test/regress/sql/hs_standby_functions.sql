@@ -5,9 +5,9 @@
 --
 
 -- should fail
-select txid_current();
+select pg_current_xact_id();
 
-select length(txid_current_snapshot()::text) >= 4;
+select length(pg_current_snapshot()::text) >= 4;
 
 select pg_start_backup('should fail');
 select pg_switch_wal();

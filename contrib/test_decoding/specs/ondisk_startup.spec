@@ -25,7 +25,7 @@ session "s2"
 setup { SET synchronous_commit=on; }
 
 step "s2b" { BEGIN; }
-step "s2txid" { SELECT txid_current() IS NULL; }
+step "s2txid" { SELECT pg_current_xact_id() IS NULL; }
 step "s2alter" { ALTER TABLE do_write ADD COLUMN addedbys2 int; }
 step "s2c" { COMMIT; }
 
@@ -34,7 +34,7 @@ session "s3"
 setup { SET synchronous_commit=on; }
 
 step "s3b" { BEGIN; }
-step "s3txid" { SELECT txid_current() IS NULL; }
+step "s3txid" { SELECT pg_current_xact_id() IS NULL; }
 step "s3c" { COMMIT; }
 
 # Force usage of ondisk snapshot by starting and not finishing a

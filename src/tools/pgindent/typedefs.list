@@ -3099,6 +3099,7 @@ pg_sha224_ctx
 pg_sha256_ctx
 pg_sha384_ctx
 pg_sha512_ctx
+pg_snapshot
 pg_stack_base_t
 pg_time_t
 pg_tz

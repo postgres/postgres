@@ -418,7 +418,7 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
 </programlisting>
      Any actions leading to transaction ID assignment are prohibited. That, among others,
      includes writing to tables, performing DDL changes, and
-     calling <literal>txid_current()</literal>.
+     calling <literal>pg_current_xact_id()</literal>.
     </para>
    </sect2>
 

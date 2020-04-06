@@ -68,7 +68,7 @@ $node_master->backup('my_backup');
 $node_master->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
 my $ret = $node_master->safe_psql('postgres',
-	"SELECT pg_current_wal_lsn(), txid_current();");
+	"SELECT pg_current_wal_lsn(), pg_current_xact_id();");
 my ($lsn2, $recovery_txid) = split /\|/, $ret;
 
 # More data, with recovery target timestamp

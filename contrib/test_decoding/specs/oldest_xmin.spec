@@ -19,7 +19,7 @@ teardown
 session "s0"
 setup { SET synchronous_commit=on; }
 step "s0_begin" { BEGIN; }
-step "s0_getxid" { SELECT txid_current() IS NULL; }
+step "s0_getxid" { SELECT pg_current_xact_id() IS NULL; }
 step "s0_alter" { ALTER TYPE basket DROP ATTRIBUTE mangos; }
 step "s0_commit" { COMMIT; }
 step "s0_checkpoint" { CHECKPOINT; }

@@ -4,9 +4,9 @@
 -- hs_standby_functions.sql
 --
 -- should fail
-select txid_current();
-ERROR:  cannot execute txid_current() during recovery
-select length(txid_current_snapshot()::text) >= 4;
+select pg_current_xact_id();
+ERROR:  cannot execute pg_current_xact_id() during recovery
+select length(pg_current_snapshot()::text) >= 4;
  ?column? 
 ----------
  t

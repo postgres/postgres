@@ -44,7 +44,7 @@ CREATE TABLE datatype_table (
     v_json         JSON,
     v_xml          XML,
     v_uuid         UUID,
-    v_txid_snapshot txid_snapshot,
+    v_pg_snapshot  pg_snapshot,
     v_enum         ENUM_TEST,
     v_postal_code  japanese_postal_code,
     v_int2range    int2range,

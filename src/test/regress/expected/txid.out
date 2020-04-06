@@ -1,4 +1,7 @@
 -- txid_snapshot data type and related functions
+-- Note: these are backward-compatibility functions and types, and have been
+-- replaced by new xid8-based variants.  See xid.sql.  The txid variants will
+-- be removed in a future release.
 -- i/o
 select '12:13:'::txid_snapshot;
  txid_snapshot 
@@ -20,19 +23,19 @@ select '12:16:14,14'::txid_snapshot;
 
 -- errors
 select '31:12:'::txid_snapshot;
-ERROR:  invalid input syntax for type txid_snapshot: "31:12:"
+ERROR:  invalid input syntax for type pg_snapshot: "31:12:"
 LINE 1: select '31:12:'::txid_snapshot;
                ^
 select '0:1:'::txid_snapshot;
-ERROR:  invalid input syntax for type txid_snapshot: "0:1:"
+ERROR:  invalid input syntax for type pg_snapshot: "0:1:"
 LINE 1: select '0:1:'::txid_snapshot;
                ^
 select '12:13:0'::txid_snapshot;
-ERROR:  invalid input syntax for type txid_snapshot: "12:13:0"
+ERROR:  invalid input syntax for type pg_snapshot: "12:13:0"
 LINE 1: select '12:13:0'::txid_snapshot;
                ^
 select '12:16:14,13'::txid_snapshot;
-ERROR:  invalid input syntax for type txid_snapshot: "12:16:14,13"
+ERROR:  invalid input syntax for type pg_snapshot: "12:16:14,13"
 LINE 1: select '12:16:14,13'::txid_snapshot;
                ^
 create temp table snapshot_test (
@@ -235,7 +238,7 @@ SELECT txid_snapshot '1:9223372036854775807:3';
 (1 row)
 
 SELECT txid_snapshot '1:9223372036854775808:3';
-ERROR:  invalid input syntax for type txid_snapshot: "1:9223372036854775808:3"
+ERROR:  invalid input syntax for type pg_snapshot: "1:9223372036854775808:3"
 LINE 1: SELECT txid_snapshot '1:9223372036854775808:3';
                              ^
 -- test txid_current_if_assigned

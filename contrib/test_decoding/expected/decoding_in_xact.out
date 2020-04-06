@@ -2,7 +2,7 @@
 SET synchronous_commit = on;
 -- fail because we're creating a slot while in an xact with xid
 BEGIN;
-SELECT txid_current() = 0;
+SELECT pg_current_xact_id() = '0';
  ?column? 
 ----------
  f
@@ -13,7 +13,7 @@ ERROR:  cannot create logical replication slot in transaction that has performed
 ROLLBACK;
 -- fail because we're creating a slot while in a subxact whose topxact has an xid
 BEGIN;
-SELECT txid_current() = 0;
+SELECT pg_current_xact_id() = '0';
  ?column? 
 ----------
  f
@@ -50,7 +50,7 @@ CREATE TABLE nobarf(id serial primary key, data text);
 INSERT INTO nobarf(data) VALUES('1');
 -- decoding works in transaction with xid
 BEGIN;
-SELECT txid_current() = 0;
+SELECT pg_current_xact_id() = '0';
  ?column? 
 ----------
  f

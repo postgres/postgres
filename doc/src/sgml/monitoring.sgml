@@ -1112,7 +1112,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>CLogTruncationLock</literal></entry>
-         <entry>Waiting to execute <function>txid_status</function> or update
+         <entry>Waiting to execute <function>pg_xact_status</function> or update
          the oldest transaction id available to it.</entry>
         </row>
         <row>

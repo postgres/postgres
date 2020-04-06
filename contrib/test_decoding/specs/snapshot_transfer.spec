@@ -20,7 +20,7 @@ session "s0"
 setup { SET synchronous_commit=on; }
 step "s0_begin" { BEGIN; }
 step "s0_begin_sub0" { SAVEPOINT s0; }
-step "s0_log_assignment" { SELECT txid_current() IS NULL; }
+step "s0_log_assignment" { SELECT pg_current_xact_id() IS NULL; }
 step "s0_begin_sub1" { SAVEPOINT s1; }
 step "s0_sub_get_base_snap" { INSERT INTO dummy VALUES (0); }
 step "s0_insert" { INSERT INTO harvest VALUES (1, 2, 3); }
