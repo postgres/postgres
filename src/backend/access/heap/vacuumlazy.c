@@ -410,6 +410,8 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 	int			nindexes;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
+	WalUsage	walusage_start = pgWalUsage;
+	WalUsage	walusage = {0, 0, 0};
 	long		secs;
 	int			usecs;
 	double		read_rate,
@@ -614,6 +616,9 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 
 			TimestampDifference(starttime, endtime, &secs, &usecs);
 
+			memset(&walusage, 0, sizeof(WalUsage));
+			WalUsageAccumDiff(&walusage, &pgWalUsage, &walusage_start);
+
 			read_rate = 0;
 			write_rate = 0;
 			if ((secs > 0) || (usecs > 0))
@@ -666,7 +671,13 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 							 (long long) VacuumPageDirty);
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
-			appendStringInfo(&buf, _("system usage: %s"), pg_rusage_show(&ru0));
+			appendStringInfo(&buf, _("system usage: %s\n"), pg_rusage_show(&ru0));
+			appendStringInfo(&buf,
+							 _("WAL usage: %ld records, %ld full page writes, "
+							   UINT64_FORMAT " bytes"),
+							 walusage.wal_records,
+							 walusage.wal_num_fpw,
+							 walusage.wal_bytes);
 
 			ereport(LOG,
 					(errmsg_internal("%s", buf.data)));
