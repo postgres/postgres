@@ -32,8 +32,8 @@ extern int	errdatatype(Oid datatypeOid);
 extern int	errdomainconstraint(Oid datatypeOid, const char *conname);
 
 /* encode.c */
-extern unsigned hex_encode(const char *src, unsigned len, char *dst);
-extern unsigned hex_decode(const char *src, unsigned len, char *dst);
+extern uint64 hex_encode(const char *src, size_t len, char *dst);
+extern uint64 hex_decode(const char *src, size_t len, char *dst);
 
 /* int.c */
 extern int2vector *buildint2vector(const int16 *int2s, int n);

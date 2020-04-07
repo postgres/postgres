@@ -389,7 +389,7 @@ byteaout(PG_FUNCTION_ARGS)
 	{
 		/* Print traditional escaped format */
 		char	   *vp;
-		int			len;
+		uint64		len;
 		int			i;
 
 		len = 1;				/* empty string has 1 char */
@@ -403,7 +403,18 @@ byteaout(PG_FUNCTION_ARGS)
 			else
 				len++;
 		}
+
+		/*
+		 * In principle len can't overflow uint32 if the input fit in 1GB, but
+		 * for safety let's check rather than relying on palloc's internal
+		 * check.
+		 */
+		if (len > MaxAllocSize)
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg_internal("result of bytea output conversion is too large")));
 		rp = result = (char *) palloc(len);
+
 		vp = VARDATA_ANY(vlena);
 		for (i = VARSIZE_ANY_EXHDR(vlena); i != 0; i--, vp++)
 		{
@@ -3456,7 +3467,7 @@ Datum
 byteaGetBit(PG_FUNCTION_ARGS)
 {
 	bytea	   *v = PG_GETARG_BYTEA_PP(0);
-	int32		n = PG_GETARG_INT32(1);
+	int64		n = PG_GETARG_INT64(1);
 	int			byteNo,
 				bitNo;
 	int			len;
@@ -3464,14 +3475,15 @@ byteaGetBit(PG_FUNCTION_ARGS)
 
 	len = VARSIZE_ANY_EXHDR(v);
 
-	if (n < 0 || n >= len * 8)
+	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("index %d out of valid range, 0..%d",
-						n, len * 8 - 1)));
+				 errmsg("index %lld out of valid range, 0..%lld",
+						(long long) n, (long long) len * 8 - 1)));
 
-	byteNo = n / 8;
-	bitNo = n % 8;
+	/* n/8 is now known < len, so safe to cast to int */
+	byteNo = (int) (n / 8);
+	bitNo = (int) (n % 8);
 
 	byte = ((unsigned char *) VARDATA_ANY(v))[byteNo];
 
@@ -3525,7 +3537,7 @@ Datum
 byteaSetBit(PG_FUNCTION_ARGS)
 {
 	bytea	   *res = PG_GETARG_BYTEA_P_COPY(0);
-	int32		n = PG_GETARG_INT32(1);
+	int64		n = PG_GETARG_INT64(1);
 	int32		newBit = PG_GETARG_INT32(2);
 	int			len;
 	int			oldByte,
@@ -3535,14 +3547,15 @@ byteaSetBit(PG_FUNCTION_ARGS)
 
 	len = VARSIZE(res) - VARHDRSZ;
 
-	if (n < 0 || n >= len * 8)
+	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
-				 errmsg("index %d out of valid range, 0..%d",
-						n, len * 8 - 1)));
+				 errmsg("index %lld out of valid range, 0..%lld",
+						(long long) n, (long long) len * 8 - 1)));
 
-	byteNo = n / 8;
-	bitNo = n % 8;
+	/* n/8 is now known < len, so safe to cast to int */
+	byteNo = (int) (n / 8);
+	bitNo = (int) (n % 8);
 
 	/*
 	 * sanity check!

@@ -2905,7 +2905,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         <indexterm>
          <primary>get_bit</primary>
         </indexterm>
-        <literal><function>get_bit(<parameter>bytes</parameter> <type>bytea</type>, <parameter>offset</parameter> <type>int</type>)</function></literal>
+        <literal><function>get_bit(<parameter>bytes</parameter> <type>bytea</type>, <parameter>offset</parameter> <type>bigint</type>)</function></literal>
        </entry>
        <entry><type>int</type></entry>
        <entry>
@@ -2990,7 +2990,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
          <primary>set_bit</primary>
         </indexterm>
         <literal><function>set_bit(<parameter>bytes</parameter> <type>bytea</type>,
-        <parameter>offset</parameter> <type>int</type>,
+        <parameter>offset</parameter> <type>bigint</type>,
         <parameter>newvalue</parameter> <type>int</type>)</function></literal>
        </entry>
        <entry><type>bytea</type></entry>
