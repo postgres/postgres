@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</replaceable> [, ...] ]
+BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</replaceable> [, ...] ] [ WAIT FOR LSN <replaceable class="parameter">lsn_value</replaceable> [TIMEOUT <replaceable class="parameter">number_of_milliseconds</replaceable> ] ]
 
 <phrase>where <replaceable class="parameter">transaction_mode</replaceable> is one of:</phrase>
 
@@ -62,6 +62,17 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
    transaction has those characteristics, as if
    <xref linkend="sql-set-transaction"/>
    was executed.
+  </para>
+
+  <para>
+   The <literal>WAIT FOR</literal> clause allows to wait for the target log
+   sequence number (<acronym>LSN</acronym>) to be replayed on standby before
+   starting the transaction in <productname>PostgreSQL</productname> databases
+   with master-standby asynchronous replication. Wait time can be limited by
+   specifying a timeout, which is measured in milliseconds and must be a positive
+   integer. If <acronym>LSN</acronym> was not reached before timeout, transaction
+   doesn't begin. Waiting can be interrupted by cancelling
+   <literal>BEGIN</literal> command.
   </para>
  </refsect1>
 
@@ -145,6 +156,10 @@ BEGIN;
    Incidentally, the <literal>BEGIN</literal> key word is used for a
    different purpose in embedded SQL. You are advised to be careful
    about the transaction semantics when porting database applications.
+  </para>
+
+  <para>
+   There is no <literal>WAIT FOR</literal> clause in the SQL standard.
   </para>
  </refsect1>
 

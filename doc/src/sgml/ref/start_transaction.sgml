@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable> [, ...] ]
+START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable> [, ...] ] [ WAIT FOR LSN <replaceable class="parameter">lsn_value</replaceable> [TIMEOUT <replaceable class="parameter">number_of_milliseconds</replaceable> ] ]
 
 <phrase>where <replaceable class="parameter">transaction_mode</replaceable> is one of:</phrase>
 
@@ -39,6 +39,17 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
    read/write mode, or deferrable mode is specified, the new transaction has those
    characteristics, as if <xref linkend="sql-set-transaction"/> was executed. This is the same
    as the <xref linkend="sql-begin"/> command.
+  </para>
+
+  <para>
+   The <literal>WAIT FOR</literal> clause allows to wait for the target log
+   sequence number (<acronym>LSN</acronym>) to be replayed on standby before
+   starting the transaction in <productname>PostgreSQL</productname> databases
+   with master-standby asynchronous replication. Wait time can be limited by
+   specifying a timeout, which is measured in milliseconds and must be a positive
+   integer. If <acronym>LSN</acronym> was not reached before timeout, transaction
+   doesn't begin. Waiting can be interrupted by cancelling
+   <literal>START TRANSACTION</literal> command.
   </para>
  </refsect1>
 
@@ -76,6 +87,10 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
    class="parameter">transaction_modes</replaceable>, but for historical
    reasons <productname>PostgreSQL</productname> allows the commas to be
    omitted.
+  </para>
+
+  <para>
+   There is no <literal>WAIT FOR</literal> clause in the SQL standard.
   </para>
 
   <para>

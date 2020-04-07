@@ -2621,6 +2621,7 @@ WSABUF
 WSADATA
 WSANETWORKEVENTS
 WSAPROTOCOL_INFO
+WaitClause
 WaitEvent
 WaitEventActivity
 WaitEventClient
@@ -2628,6 +2629,7 @@ WaitEventIO
 WaitEventIPC
 WaitEventSet
 WaitEventTimeout
+WaitLSNState
 WaitPMResult
 WalCloseMethod
 WalLevel
