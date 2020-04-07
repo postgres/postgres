@@ -136,6 +136,9 @@ XLogReaderFree(XLogReaderState *state)
 {
 	int			block_id;
 
+	if (state->seg.ws_file != -1)
+		close(state->seg.ws_file);
+
 	for (block_id = 0; block_id <= XLR_MAX_BLOCK_ID; block_id++)
 	{
 		if (state->blocks[block_id].data)
