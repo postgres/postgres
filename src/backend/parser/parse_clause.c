@@ -1745,7 +1745,8 @@ transformWhereClause(ParseState *pstate, Node *clause,
  */
 Node *
 transformLimitClause(ParseState *pstate, Node *clause,
-					 ParseExprKind exprKind, const char *constructName)
+					 ParseExprKind exprKind, const char *constructName,
+					 LimitOption limitOption)
 {
 	Node	   *qual;
 
@@ -1758,6 +1759,18 @@ transformLimitClause(ParseState *pstate, Node *clause,
 
 	/* LIMIT can't refer to any variables of the current query */
 	checkExprIsVarFree(pstate, qual, constructName);
+
+	/*
+	 * Don't allow NULLs in FETCH FIRST .. WITH TIES.  This test is ugly and
+	 * extremely simplistic, in that you can pass a NULL anyway by hiding it
+	 * inside an expression -- but this protects ruleutils against emitting an
+	 * unadorned NULL that's not accepted back by the grammar.
+	 */
+	if (exprKind == EXPR_KIND_LIMIT && limitOption == LIMIT_OPTION_WITH_TIES &&
+		IsA(clause, A_Const) && ((A_Const *) clause)->val.type == T_Null)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE),
+				 errmsg("row count cannot be NULL in FETCH FIRST ... WITH TIES clause")));
 
 	return qual;
 }

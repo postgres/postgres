@@ -5243,7 +5243,10 @@ get_select_query_def(Query *query, deparse_context *context,
 						 force_colno, context);
 	}
 
-	/* Add the LIMIT clause if given */
+	/*
+	 * Add the LIMIT/OFFSET clauses if given. If non-default options, use the
+	 * standard spelling of LIMIT.
+	 */
 	if (query->limitOffset != NULL)
 	{
 		appendContextKeyword(context, " OFFSET ",
@@ -5252,13 +5255,23 @@ get_select_query_def(Query *query, deparse_context *context,
 	}
 	if (query->limitCount != NULL)
 	{
-		appendContextKeyword(context, " LIMIT ",
-							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
-		if (IsA(query->limitCount, Const) &&
-			((Const *) query->limitCount)->constisnull)
-			appendStringInfoString(buf, "ALL");
-		else
+		if (query->limitOption == LIMIT_OPTION_WITH_TIES)
+		{
+			appendContextKeyword(context, " FETCH FIRST ",
+								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
 			get_rule_expr(query->limitCount, context, false);
+			appendStringInfo(buf, " ROWS WITH TIES");
+		}
+		else
+		{
+			appendContextKeyword(context, " LIMIT ",
+								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+			if (IsA(query->limitCount, Const) &&
+				((Const *) query->limitCount)->constisnull)
+				appendStringInfoString(buf, "ALL");
+			else
+				get_rule_expr(query->limitCount, context, false);
+		}
 	}
 
 	/* Add FOR [KEY] UPDATE/SHARE clauses if present */

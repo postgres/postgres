@@ -2319,6 +2319,7 @@ grouping_planner(PlannerInfo *root, bool inheritance_update,
 			path = (Path *) create_limit_path(root, final_rel, path,
 											  parse->limitOffset,
 											  parse->limitCount,
+											  parse->limitOption,
 											  offset_est, count_est);
 		}
 

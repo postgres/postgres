@@ -345,7 +345,7 @@ F863	Nested <result offset clause> in <query expression>			YES
 F864	Top-level <result offset clause> in views			YES	
 F865	<offset row count> in <result offset clause>			YES	
 F866	FETCH FIRST clause: PERCENT option			NO	
-F867	FETCH FIRST clause: WITH TIES option			NO	
+F867	FETCH FIRST clause: WITH TIES option			YES	
 R010	Row pattern recognition: FROM clause			NO	
 R020	Row pattern recognition: WINDOW clause			NO	
 R030	Row pattern recognition: full aggregate support			NO	

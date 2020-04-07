@@ -44,7 +44,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> [ ROW | ROWS ] ]
-    [ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } ONLY ]
+    [ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } { ONLY | WITH TIES } ]
     [ FOR { UPDATE | NO KEY UPDATE | SHARE | KEY SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT | SKIP LOCKED ] [...] ]
 
 <phrase>where <replaceable class="parameter">from_item</replaceable> can be one of:</phrase>
@@ -1438,7 +1438,7 @@ OFFSET <replaceable class="parameter">start</replaceable>
     which <productname>PostgreSQL</productname> also supports.  It is:
 <synopsis>
 OFFSET <replaceable class="parameter">start</replaceable> { ROW | ROWS }
-FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } ONLY
+FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { ROW | ROWS } { ONLY | WITH TIES }
 </synopsis>
     In this syntax, the <replaceable class="parameter">start</replaceable>
     or <replaceable class="parameter">count</replaceable> value is required by
@@ -1448,10 +1448,13 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
     ambiguity.
     If <replaceable class="parameter">count</replaceable> is
     omitted in a <literal>FETCH</literal> clause, it defaults to 1.
-    <literal>ROW</literal>
-    and <literal>ROWS</literal> as well as <literal>FIRST</literal>
-    and <literal>NEXT</literal> are noise words that don't influence
-    the effects of these clauses.
+    The <literal>WITH TIES</literal> option is used to return any additional
+    rows that tie for the last place in the result set according to
+    <literal>ORDER BY</literal> clause; <literal>ORDER BY</literal>
+    is mandatory in this case.
+    <literal>ROW</literal> and <literal>ROWS</literal> as well as
+    <literal>FIRST</literal> and <literal>NEXT</literal> are noise
+    words that don't influence the effects of these clauses.
     According to the standard, the <literal>OFFSET</literal> clause must come
     before the <literal>FETCH</literal> clause if both are present; but
     <productname>PostgreSQL</productname> is laxer and allows either order.

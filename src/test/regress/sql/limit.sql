@@ -71,6 +71,16 @@ fetch backward all in c4;
 fetch backward 1 in c4;
 fetch all in c4;
 
+declare c5 cursor for select * from int8_tbl order by q1 fetch first 2 rows with ties;
+fetch all in c5;
+fetch 1 in c5;
+fetch backward 1 in c5;
+fetch backward 1 in c5;
+fetch all in c5;
+fetch backward all in c5;
+fetch all in c5;
+fetch backward all in c5;
+
 rollback;
 
 -- Stress test for variable LIMIT in conjunction with bounded-heap sorting
@@ -141,3 +151,41 @@ select sum(tenthous) as s1, sum(tenthous) + random()*0 as s2
 
 select sum(tenthous) as s1, sum(tenthous) + random()*0 as s2
   from tenk1 group by thousand order by thousand limit 3;
+
+--
+-- FETCH FIRST
+-- Check the WITH TIES clause
+--
+
+SELECT  thousand
+		FROM onek WHERE thousand < 5
+		ORDER BY thousand FETCH FIRST 2 ROW WITH TIES;
+
+SELECT  thousand
+		FROM onek WHERE thousand < 5
+		ORDER BY thousand FETCH FIRST 1 ROW WITH TIES;
+
+SELECT  thousand
+		FROM onek WHERE thousand < 5
+		ORDER BY thousand FETCH FIRST 2 ROW ONLY;
+-- should fail
+SELECT ''::text AS two, unique1, unique2, stringu1
+		FROM onek WHERE unique1 > 50
+		FETCH FIRST 2 ROW WITH TIES;
+
+-- test ruleutils
+CREATE VIEW limit_thousand_v_1 AS SELECT thousand FROM onek WHERE thousand < 995
+		ORDER BY thousand FETCH FIRST 5 ROWS WITH TIES OFFSET 10;
+\d+ limit_thousand_v_1
+CREATE VIEW limit_thousand_v_2 AS SELECT thousand FROM onek WHERE thousand < 995
+		ORDER BY thousand OFFSET 10 FETCH FIRST 5 ROWS ONLY;
+\d+ limit_thousand_v_2
+CREATE VIEW limit_thousand_v_3 AS SELECT thousand FROM onek WHERE thousand < 995
+		ORDER BY thousand FETCH FIRST NULL ROWS WITH TIES;		-- fails
+CREATE VIEW limit_thousand_v_3 AS SELECT thousand FROM onek WHERE thousand < 995
+		ORDER BY thousand FETCH FIRST (NULL+1) ROWS WITH TIES;
+\d+ limit_thousand_v_3
+CREATE VIEW limit_thousand_v_4 AS SELECT thousand FROM onek WHERE thousand < 995
+		ORDER BY thousand FETCH FIRST NULL ROWS ONLY;
+\d+ limit_thousand_v_4
+-- leave these views

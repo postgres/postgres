@@ -23,7 +23,8 @@ extern int	setTargetTable(ParseState *pstate, RangeVar *relation,
 extern Node *transformWhereClause(ParseState *pstate, Node *clause,
 								  ParseExprKind exprKind, const char *constructName);
 extern Node *transformLimitClause(ParseState *pstate, Node *clause,
-								  ParseExprKind exprKind, const char *constructName);
+								  ParseExprKind exprKind, const char *constructName,
+								  LimitOption limitOption);
 extern List *transformGroupClause(ParseState *pstate, List *grouplist,
 								  List **groupingSets,
 								  List **targetlist, List *sortClause,

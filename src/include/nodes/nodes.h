@@ -826,4 +826,17 @@ typedef enum OnConflictAction
 	ONCONFLICT_UPDATE			/* ON CONFLICT ... DO UPDATE */
 } OnConflictAction;
 
+/*
+ * LimitOption -
+ *	LIMIT option of query
+ *
+ * This is needed in both parsenodes.h and plannodes.h, so put it here...
+ */
+typedef enum LimitOption
+{
+	LIMIT_OPTION_COUNT,			/* FETCH FIRST... ONLY */
+	LIMIT_OPTION_WITH_TIES,		/* FETCH FIRST... WITH TIES */
+	LIMIT_OPTION_DEFAULT,		/* No limit present */
+} LimitOption;
+
 #endif							/* NODES_H */
