@@ -2413,7 +2413,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	left_item = (IndexTuple) palloc(left_item_sz);
 	left_item->t_info = left_item_sz;
 	BTreeTupleSetDownLink(left_item, lbkno);
-	BTreeTupleSetNAtts(left_item, 0);
+	BTreeTupleSetNAtts(left_item, 0, false);
 
 	/*
 	 * Create downlink item for right page.  The key for it is obtained from
@@ -2571,7 +2571,7 @@ _bt_pgaddtup(Page page,
 	{
 		trunctuple = *itup;
 		trunctuple.t_info = sizeof(IndexTupleData);
-		BTreeTupleSetNAtts(&trunctuple, 0);
+		BTreeTupleSetNAtts(&trunctuple, 0, false);
 		itup = &trunctuple;
 		itemsize = sizeof(IndexTupleData);
 	}

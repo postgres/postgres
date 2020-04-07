@@ -2239,7 +2239,7 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	 */
 	if (keepnatts <= nkeyatts)
 	{
-		BTreeTupleSetNAtts(pivot, keepnatts);
+		BTreeTupleSetNAtts(pivot, keepnatts, false);
 		return pivot;
 	}
 
@@ -2262,11 +2262,13 @@ _bt_truncate(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	/* Cannot leak memory here */
 	pfree(pivot);
 
-	/* Store heap TID in enlarged pivot tuple */
+	/*
+	 * Store all of firstright's key attribute values plus a tiebreaker heap
+	 * TID value in enlarged pivot tuple
+	 */
 	tidpivot->t_info &= ~INDEX_SIZE_MASK;
 	tidpivot->t_info |= newsize;
-	BTreeTupleSetNAtts(tidpivot, nkeyatts);
-	BTreeTupleSetAltHeapTID(tidpivot);
+	BTreeTupleSetNAtts(tidpivot, nkeyatts, true);
 	pivotheaptid = BTreeTupleGetHeapTID(tidpivot);
 
 	/*

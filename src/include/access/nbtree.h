@@ -460,32 +460,28 @@ BTreeTupleSetDownLink(IndexTuple pivot, BlockNumber blkno)
 	)
 
 /*
- * Set number of attributes in tuple, making it into a pivot tuple
+ * Set number of key attributes in tuple.
+ *
+ * The heap TID tiebreaker attribute bit may also be set here, indicating that
+ * a heap TID value will be stored at the end of the tuple (i.e. using the
+ * special pivot tuple representation).
  */
 static inline void
-BTreeTupleSetNAtts(IndexTuple itup, int natts)
+BTreeTupleSetNAtts(IndexTuple itup, uint16 nkeyatts, bool heaptid)
 {
-	Assert(natts <= INDEX_MAX_KEYS);
+	Assert(nkeyatts <= INDEX_MAX_KEYS);
+	Assert((nkeyatts & BT_RESERVED_OFFSET_MASK) == 0);
+	Assert(!heaptid || nkeyatts > 0);
+	Assert(!BTreeTupleIsPivot(itup) || nkeyatts == 0);
 
 	itup->t_info |= INDEX_ALT_TID_MASK;
-	/* BT_IS_POSTING bit may be unset -- tuple always becomes a pivot tuple */
-	ItemPointerSetOffsetNumber(&itup->t_tid, natts);
+
+	if (heaptid)
+		nkeyatts |= BT_PIVOT_HEAP_TID_ATTR;
+
+	/* BT_IS_POSTING bit is deliberately unset here */
+	ItemPointerSetOffsetNumber(&itup->t_tid, nkeyatts);
 	Assert(BTreeTupleIsPivot(itup));
-}
-
-/*
- * Set the bit indicating heap TID attribute present in pivot tuple
- */
-static inline void
-BTreeTupleSetAltHeapTID(IndexTuple pivot)
-{
-	OffsetNumber existing;
-
-	Assert(BTreeTupleIsPivot(pivot));
-
-	existing = ItemPointerGetOffsetNumberNoCheck(&pivot->t_tid);
-	ItemPointerSetOffsetNumber(&pivot->t_tid,
-							   existing | BT_PIVOT_HEAP_TID_ATTR);
 }
 
 /*
@@ -505,7 +501,7 @@ static inline void
 BTreeTupleSetTopParent(IndexTuple leafhikey, BlockNumber blkno)
 {
 	ItemPointerSetBlockNumber(&leafhikey->t_tid, blkno);
-	BTreeTupleSetNAtts(leafhikey, 0);
+	BTreeTupleSetNAtts(leafhikey, 0, false);
 }
 
 /*

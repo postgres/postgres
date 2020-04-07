@@ -771,7 +771,7 @@ _bt_sortaddtup(Page page,
 	{
 		trunctuple = *itup;
 		trunctuple.t_info = sizeof(IndexTupleData);
-		BTreeTupleSetNAtts(&trunctuple, 0);
+		BTreeTupleSetNAtts(&trunctuple, 0, false);
 		itup = &trunctuple;
 		itemsize = sizeof(IndexTupleData);
 	}
@@ -1045,7 +1045,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 		Assert(state->btps_lowkey == NULL);
 		state->btps_lowkey = palloc0(sizeof(IndexTupleData));
 		state->btps_lowkey->t_info = sizeof(IndexTupleData);
-		BTreeTupleSetNAtts(state->btps_lowkey, 0);
+		BTreeTupleSetNAtts(state->btps_lowkey, 0, false);
 	}
 
 	/*
