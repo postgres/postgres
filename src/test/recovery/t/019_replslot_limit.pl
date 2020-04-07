@@ -192,6 +192,7 @@ sub advance_wal
 	{
 		$node->safe_psql('postgres', "CREATE TABLE t (); DROP TABLE t; SELECT pg_switch_wal();");
 	}
+	return;
 }
 
 # return the size of logfile of $node in bytes
