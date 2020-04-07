@@ -234,7 +234,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_GET_REPLICATION_SLOTS_COLS 11
+#define PG_GET_REPLICATION_SLOTS_COLS 13
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
@@ -288,6 +288,8 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		Oid			database;
 		NameData	slot_name;
 		NameData	plugin;
+		WALAvailability walstate;
+		XLogSegNo	last_removed_seg;
 		int			i;
 
 		if (!slot->in_use)
@@ -355,6 +357,40 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 			nulls[i++] = true;
 
+		walstate = GetWALAvailability(restart_lsn);
+
+		switch (walstate)
+		{
+			case WALAVAIL_INVALID_LSN:
+				nulls[i++] = true;
+				break;
+
+			case WALAVAIL_NORMAL:
+				values[i++] = CStringGetTextDatum("normal");
+				break;
+
+			case WALAVAIL_RESERVED:
+				values[i++] = CStringGetTextDatum("reserved");
+				break;
+
+			case WALAVAIL_REMOVED:
+				values[i++] = CStringGetTextDatum("lost");
+				break;
+		}
+
+		if (max_slot_wal_keep_size_mb >= 0 &&
+			(walstate == WALAVAIL_NORMAL || walstate == WALAVAIL_RESERVED) &&
+			((last_removed_seg = XLogGetLastRemovedSegno()) != 0))
+		{
+			XLogRecPtr	min_safe_lsn;
+
+			XLogSegNoOffsetToRecPtr(last_removed_seg + 1, 0,
+									wal_segment_size, min_safe_lsn);
+			values[i++] = Int64GetDatum(min_safe_lsn);
+		}
+		else
+			nulls[i++] = true;
+
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
 	LWLockRelease(ReplicationSlotControlLock);
@@ -376,6 +412,8 @@ pg_physical_replication_slot_advance(XLogRecPtr moveto)
 {
 	XLogRecPtr	startlsn = MyReplicationSlot->data.restart_lsn;
 	XLogRecPtr	retlsn = startlsn;
+
+	Assert(moveto != InvalidXLogRecPtr);
 
 	if (startlsn < moveto)
 	{
@@ -413,6 +451,8 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 	LogicalDecodingContext *ctx;
 	ResourceOwner old_resowner = CurrentResourceOwner;
 	XLogRecPtr	retlsn;
+
+	Assert(moveto != InvalidXLogRecPtr);
 
 	PG_TRY();
 	{
@@ -552,7 +592,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 		moveto = Min(moveto, GetXLogReplayRecPtr(&ThisTimeLineID));
 
 	/* Acquire the slot so we "own" it */
-	ReplicationSlotAcquire(NameStr(*slotname), true);
+	(void) ReplicationSlotAcquire(NameStr(*slotname), SAB_Error);
 
 	/* A slot whose restart_lsn has never been reserved cannot be advanced */
 	if (XLogRecPtrIsInvalid(MyReplicationSlot->data.restart_lsn))

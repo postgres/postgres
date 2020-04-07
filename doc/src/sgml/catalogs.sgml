@@ -9907,6 +9907,44 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </entry>
      </row>
 
+     <row>
+      <entry><structfield>wal_status</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+
+      <entry>Availability of WAL files claimed by this slot.
+      Possible values are:
+       <simplelist>
+        <member>
+         <literal>normal</literal> means that the claimed files
+         are within <varname>max_wal_size</varname>
+        </member>
+        <member>
+         <literal>reserved</literal> means that <varname>max_wal_size</varname>
+         is exceeded but the files are still held, either by some replication
+         slot or by <varname>wal_keep_segments</varname>
+        </member>
+        <member>
+         <literal>lost</literal> means that some WAL files are definitely lost
+         and this slot cannot be used to resume replication anymore.
+        </member>
+       </simplelist>
+      The last two states are seen only when
+      <xref linkend="guc-max-slot-wal-keep-size"/> is
+      non-negative. If <structfield>restart_lsn</structfield> is NULL, this
+      field is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>min_safe_lsn</structfield></entry>
+      <entry><type>pg_lsn</type></entry>
+      <entry></entry>
+      <entry>
+       The minimum LSN currently available for walsenders.
+      </entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>

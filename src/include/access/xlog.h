@@ -108,6 +108,7 @@ extern int	wal_segment_size;
 extern int	min_wal_size_mb;
 extern int	max_wal_size_mb;
 extern int	wal_keep_segments;
+extern int	max_slot_wal_keep_size_mb;
 extern int	XLOGbuffers;
 extern int	XLogArchiveTimeout;
 extern int	wal_retrieve_retry_interval;
@@ -255,6 +256,17 @@ typedef struct CheckpointStatsData
 
 extern CheckpointStatsData CheckpointStats;
 
+/*
+ * GetWALAvailability return codes
+ */
+typedef enum WALAvailability
+{
+	WALAVAIL_INVALID_LSN,		/* parameter error */
+	WALAVAIL_NORMAL,			/* WAL segment is within max_wal_size */
+	WALAVAIL_RESERVED,			/* WAL segment is reserved by a slot */
+	WALAVAIL_REMOVED			/* WAL segment has been removed */
+} WALAvailability;
+
 struct XLogRecData;
 
 extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
@@ -305,6 +317,8 @@ extern void ShutdownXLOG(int code, Datum arg);
 extern void InitXLOGAccess(void);
 extern void CreateCheckPoint(int flags);
 extern bool CreateRestartPoint(int flags);
+extern WALAvailability GetWALAvailability(XLogRecPtr restart_lsn);
+extern XLogRecPtr CalculateMaxmumSafeLSN(void);
 extern void XLogPutNextOid(Oid nextOid);
 extern XLogRecPtr XLogRestorePoint(const char *rpName);
 extern void UpdateFullPageWrites(void);
