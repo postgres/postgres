@@ -85,7 +85,7 @@ begin
     for group_key in select unnest(array['Full-sort Groups', 'Presorted Groups']::text[]) t loop
       for space_key in select unnest(array['Sort Space Memory', 'Sort Space Disk']::text[]) t loop
         node := jsonb_set(node, array[group_key, space_key, 'Average Sort Space Used'], '"NN"', false);
-        node := jsonb_set(node, array[group_key, space_key, 'Maximum Sort Space Used'], '"NN"', false);
+        node := jsonb_set(node, array[group_key, space_key, 'Peak Sort Space Used'], '"NN"', false);
       end loop;
     end loop;
     nodes := nodes || node;
@@ -108,7 +108,7 @@ begin
     for group_key in select unnest(array['Full-sort Groups', 'Presorted Groups']::text[]) t loop
       group_stats := node->group_key;
       for space_key in select unnest(array['Sort Space Memory', 'Sort Space Disk']::text[]) t loop
-        if (group_stats->space_key->'Maximum Sort Space Used')::bigint < (group_stats->space_key->'Maximum Sort Space Used')::bigint then
+        if (group_stats->space_key->'Peak Sort Space Used')::bigint < (group_stats->space_key->'Peak Sort Space Used')::bigint then
           raise exception '% has invalid max space < average space', group_key;
         end if;
       end loop;
