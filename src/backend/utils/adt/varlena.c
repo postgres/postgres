@@ -3443,11 +3443,12 @@ byteaGetBit(PG_FUNCTION_ARGS)
 
 	len = VARSIZE_ANY_EXHDR(v);
 
-	if (n < 0 || n >= len * 8)
+	/* Do comparison arithmetic in int64 in case len exceeds INT_MAX/8 */
+	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("index %d out of valid range, 0..%d",
-						n, len * 8 - 1)));
+						n, (int) Min((int64) len * 8 - 1, INT_MAX))));
 
 	byteNo = n / 8;
 	bitNo = n % 8;
@@ -3514,11 +3515,12 @@ byteaSetBit(PG_FUNCTION_ARGS)
 
 	len = VARSIZE(res) - VARHDRSZ;
 
-	if (n < 0 || n >= len * 8)
+	/* Do comparison arithmetic in int64 in case len exceeds INT_MAX/8 */
+	if (n < 0 || n >= (int64) len * 8)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("index %d out of valid range, 0..%d",
-						n, len * 8 - 1)));
+						n, (int) Min((int64) len * 8 - 1, INT_MAX))));
 
 	byteNo = n / 8;
 	bitNo = n % 8;
