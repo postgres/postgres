@@ -556,7 +556,7 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 */
 	if (rel->reloptkind == RELOPT_BASEREL &&
 		bms_membership(root->all_baserels) != BMS_SINGLETON)
-		generate_gather_paths(root, rel, false);
+		generate_useful_gather_paths(root, rel, false);
 
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(rel);
@@ -2728,6 +2728,219 @@ generate_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_rows)
 }
 
 /*
+ * get_useful_pathkeys_for_relation
+ *		Determine which orderings of a relation might be useful.
+ *
+ * Getting data in sorted order can be useful either because the requested
+ * order matches the final output ordering for the overall query we're
+ * planning, or because it enables an efficient merge join.  Here, we try
+ * to figure out which pathkeys to consider.
+ *
+ * This allows us to do incremental sort on top of an index scan under a gather
+ * merge node, i.e. parallelized.
+ *
+ * XXX At the moment this can only ever return a list with a single element,
+ * because it looks at query_pathkeys only. So we might return the pathkeys
+ * directly, but it seems plausible we'll want to consider other orderings
+ * in the future. For example, we might want to consider pathkeys useful for
+ * merge joins.
+ */
+static List *
+get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
+{
+	List	   *useful_pathkeys_list = NIL;
+
+	/*
+	 * Considering query_pathkeys is always worth it, because it might allow us
+	 * to avoid a total sort when we have a partially presorted path available.
+	 */
+	if (root->query_pathkeys)
+	{
+		ListCell   *lc;
+		int		npathkeys = 0;	/* useful pathkeys */
+
+		foreach(lc, root->query_pathkeys)
+		{
+			PathKey    *pathkey = (PathKey *) lfirst(lc);
+			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
+
+			/*
+			 * We can only build an Incremental Sort for pathkeys which contain
+			 * an EC member in the current relation, so ignore any suffix of the
+			 * list as soon as we find a pathkey without an EC member the
+			 * relation.
+			 *
+			 * By still returning the prefix of the pathkeys list that does meet
+			 * criteria of EC membership in the current relation, we enable not
+			 * just an incremental sort on the entirety of query_pathkeys but
+			 * also incremental sort below a JOIN.
+			 */
+			if (!find_em_expr_for_rel(pathkey_ec, rel))
+				break;
+
+			npathkeys++;
+		}
+
+		/*
+		 * The whole query_pathkeys list matches, so append it directly, to allow
+		 * comparing pathkeys easily by comparing list pointer. If we have to truncate
+		 * the pathkeys, we gotta do a copy though.
+		 */
+		if (npathkeys == list_length(root->query_pathkeys))
+			useful_pathkeys_list = lappend(useful_pathkeys_list,
+										   root->query_pathkeys);
+		else if (npathkeys > 0)
+			useful_pathkeys_list = lappend(useful_pathkeys_list,
+										   list_truncate(list_copy(root->query_pathkeys),
+														 npathkeys));
+	}
+
+	return useful_pathkeys_list;
+}
+
+/*
+ * generate_useful_gather_paths
+ *		Generate parallel access paths for a relation by pushing a Gather or
+ *		Gather Merge on top of a partial path.
+ *
+ * Unlike plain generate_gather_paths, this looks both at pathkeys of input
+ * paths (aiming to preserve the ordering), but also considers ordering that
+ * might be useful for nodes above the gather merge node, and tries to add
+ * a sort (regular or incremental) to provide that.
+ */
+void
+generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_rows)
+{
+	ListCell   *lc;
+	double		rows;
+	double	   *rowsp = NULL;
+	List	   *useful_pathkeys_list = NIL;
+	Path	   *cheapest_partial_path = NULL;
+
+	/* If there are no partial paths, there's nothing to do here. */
+	if (rel->partial_pathlist == NIL)
+		return;
+
+	/* Should we override the rel's rowcount estimate? */
+	if (override_rows)
+		rowsp = &rows;
+
+	/* generate the regular gather (merge) paths */
+	generate_gather_paths(root, rel, override_rows);
+
+	/* consider incremental sort for interesting orderings */
+	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
+
+	/* used for explicit (full) sort paths */
+	cheapest_partial_path = linitial(rel->partial_pathlist);
+
+	/*
+	 * Consider incremental sort paths for each interesting ordering.
+	 */
+	foreach(lc, useful_pathkeys_list)
+	{
+		List	   *useful_pathkeys = lfirst(lc);
+		ListCell   *lc2;
+		bool		is_sorted;
+		int			presorted_keys;
+
+		foreach(lc2, rel->partial_pathlist)
+		{
+			Path	   *subpath = (Path *) lfirst(lc2);
+			GatherMergePath *path;
+
+			/*
+			 * If the path has no ordering at all, then we can't use either
+			 * incremental sort or rely on implict sorting with a gather merge.
+			 */
+			if (subpath->pathkeys == NIL)
+				continue;
+
+			is_sorted = pathkeys_count_contained_in(useful_pathkeys,
+													 subpath->pathkeys,
+													 &presorted_keys);
+
+			/*
+			 * We don't need to consider the case where a subpath is already
+			 * fully sorted because generate_gather_paths already creates a
+			 * gather merge path for every subpath that has pathkeys present.
+			 *
+			 * But since the subpath is already sorted, we know we don't need
+			 * to consider adding a sort (other either kind) on top of it, so
+			 * we can continue here.
+			 */
+			if (is_sorted)
+				continue;
+
+			/*
+			 * Consider regular sort for the cheapest partial path (for each
+			 * useful pathkeys). We know the path is not sorted, because we'd
+			 * not get here otherwise.
+			 *
+			 * This is not redundant with the gather paths created in
+			 * generate_gather_paths, because that doesn't generate ordered
+			 * output. Here we add an explicit sort to match the useful
+			 * ordering.
+			 */
+			if (cheapest_partial_path == subpath)
+			{
+				Path	   *tmp;
+
+				tmp = (Path *) create_sort_path(root,
+												rel,
+												subpath,
+												useful_pathkeys,
+												-1.0);
+
+				rows = tmp->rows * tmp->parallel_workers;
+
+				path = create_gather_merge_path(root, rel,
+												tmp,
+												rel->reltarget,
+												tmp->pathkeys,
+												NULL,
+												rowsp);
+
+				add_path(rel, &path->path);
+
+				/* Fall through */
+			}
+
+			/*
+			 * Consider incremental sort, but only when the subpath is already
+			 * partially sorted on a pathkey prefix.
+			 */
+			if (enable_incrementalsort && presorted_keys > 0)
+			{
+				Path	   *tmp;
+
+				/*
+				 * We should have already excluded pathkeys of length 1 because
+				 * then presorted_keys > 0 would imply is_sorted was true.
+				 */
+				Assert(list_length(useful_pathkeys) != 1);
+
+				tmp = (Path *) create_incremental_sort_path(root,
+															rel,
+															subpath,
+															useful_pathkeys,
+															presorted_keys,
+															-1);
+
+				path = create_gather_merge_path(root, rel,
+												tmp,
+												rel->reltarget,
+												tmp->pathkeys,
+												NULL,
+												rowsp);
+
+				add_path(rel, &path->path);
+			}
+		}
+	}
+}
+
+/*
  * make_rel_from_joinlist
  *	  Build access paths using a "joinlist" to guide the join path search.
  *
@@ -2899,7 +3112,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 			 * once we know the final targetlist (see grouping_planner).
 			 */
 			if (lev < levels_needed)
-				generate_gather_paths(root, rel, false);
+				generate_useful_gather_paths(root, rel, false);
 
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(rel);

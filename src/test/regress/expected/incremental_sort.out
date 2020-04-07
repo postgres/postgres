@@ -1425,18 +1425,20 @@ explain (costs off) select a,b,sum(c) from t group by 1,2 order by 1,2,3 limit 1
 
 set enable_incrementalsort = on;
 explain (costs off) select a,b,sum(c) from t group by 1,2 order by 1,2,3 limit 1;
-                      QUERY PLAN                      
-------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Limit
-   ->  Sort
+   ->  Incremental Sort
          Sort Key: a, b, (sum(c))
-         ->  Finalize HashAggregate
+         Presorted Key: a, b
+         ->  GroupAggregate
                Group Key: a, b
-               ->  Gather
+               ->  Gather Merge
                      Workers Planned: 2
-                     ->  Partial HashAggregate
-                           Group Key: a, b
-                           ->  Parallel Seq Scan on t
-(10 rows)
+                     ->  Incremental Sort
+                           Sort Key: a, b
+                           Presorted Key: a
+                           ->  Parallel Index Scan using t_a_idx on t
+(12 rows)
 
 drop table t;

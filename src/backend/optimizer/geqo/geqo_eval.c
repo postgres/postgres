@@ -274,7 +274,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 				 * grouping_planner).
 				 */
 				if (old_clump->size + new_clump->size < num_gene)
-					generate_gather_paths(root, joinrel, false);
+					generate_useful_gather_paths(root, joinrel, false);
 
 				/* Find and save the cheapest paths for this joinrel */
 				set_cheapest(joinrel);
