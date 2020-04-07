@@ -121,8 +121,8 @@ $node_standby->stop;
 advance_wal($node_master, 6);
 
 # Slot gets into 'reserved' state
-$result = $node_master->safe_psql('postgres', "SELECT restart_lsn, wal_status, pg_size_pretty(restart_lsn - min_safe_lsn) as remain FROM pg_replication_slots WHERE slot_name = 'rep1'");
-is($result, "$start_lsn|reserved|216 bytes", 'check that the slot state changes to "reserved"');
+$result = $node_master->safe_psql('postgres', "SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep1'");
+is($result, "reserved", 'check that the slot state changes to "reserved"');
 
 # do checkpoint so that the next checkpoint runs too early
 $node_master->safe_psql('postgres', "CHECKPOINT;");
@@ -131,8 +131,8 @@ $node_master->safe_psql('postgres', "CHECKPOINT;");
 advance_wal($node_master, 1);
 
 # Slot gets into 'lost' state
-$result = $node_master->safe_psql('postgres', "SELECT restart_lsn, wal_status, min_safe_lsn is NULL FROM pg_replication_slots WHERE slot_name = 'rep1'");
-is($result, "$start_lsn|lost|t", 'check that the slot state changes to "lost"');
+$result = $node_master->safe_psql('postgres', "SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep1'");
+is($result, "lost", 'check that the slot state changes to "lost"');
 
 # The standby still can connect to master before a checkpoint
 $node_standby->start;
