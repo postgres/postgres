@@ -1510,6 +1510,82 @@ SELECT sha512('The quick brown fox jumps over the lazy dog.');
 (1 row)
 
 --
+-- encode/decode
+--
+SELECT encode('\x1234567890abcdef00', 'hex');
+       encode       
+--------------------
+ 1234567890abcdef00
+(1 row)
+
+SELECT decode('1234567890abcdef00', 'hex');
+        decode        
+----------------------
+ \x1234567890abcdef00
+(1 row)
+
+SELECT encode(('\x' || repeat('1234567890abcdef0001', 7))::bytea, 'base64');
+                                    encode                                    
+------------------------------------------------------------------------------
+ EjRWeJCrze8AARI0VniQq83vAAESNFZ4kKvN7wABEjRWeJCrze8AARI0VniQq83vAAESNFZ4kKvN+
+ 7wABEjRWeJCrze8AAQ==
+(1 row)
+
+SELECT decode(encode(('\x' || repeat('1234567890abcdef0001', 7))::bytea,
+                     'base64'), 'base64');
+                                                                     decode                                                                     
+------------------------------------------------------------------------------------------------------------------------------------------------
+ \x1234567890abcdef00011234567890abcdef00011234567890abcdef00011234567890abcdef00011234567890abcdef00011234567890abcdef00011234567890abcdef0001
+(1 row)
+
+SELECT encode('\x1234567890abcdef00', 'escape');
+           encode            
+-----------------------------
+ \x124Vx\220\253\315\357\000
+(1 row)
+
+SELECT decode(encode('\x1234567890abcdef00', 'escape'), 'escape');
+        decode        
+----------------------
+ \x1234567890abcdef00
+(1 row)
+
+--
+-- get_bit/set_bit etc
+--
+SELECT get_bit('\x1234567890abcdef00'::bytea, 43);
+ get_bit 
+---------
+       1
+(1 row)
+
+SELECT get_bit('\x1234567890abcdef00'::bytea, 99);  -- error
+ERROR:  index 99 out of valid range, 0..71
+SELECT set_bit('\x1234567890abcdef00'::bytea, 43, 0);
+       set_bit        
+----------------------
+ \x1234567890a3cdef00
+(1 row)
+
+SELECT set_bit('\x1234567890abcdef00'::bytea, 99, 0);  -- error
+ERROR:  index 99 out of valid range, 0..71
+SELECT get_byte('\x1234567890abcdef00'::bytea, 3);
+ get_byte 
+----------
+      120
+(1 row)
+
+SELECT get_byte('\x1234567890abcdef00'::bytea, 99);  -- error
+ERROR:  index 99 out of valid range, 0..8
+SELECT set_byte('\x1234567890abcdef00'::bytea, 7, 11);
+       set_byte       
+----------------------
+ \x1234567890abcd0b00
+(1 row)
+
+SELECT set_byte('\x1234567890abcdef00'::bytea, 99, 11);  -- error
+ERROR:  index 99 out of valid range, 0..8
+--
 -- test behavior of escape_string_warning and standard_conforming_strings options
 --
 set escape_string_warning = off;
