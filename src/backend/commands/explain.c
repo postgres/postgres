@@ -2762,14 +2762,14 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 	List	   *methodNames = NIL;
 
 	/* Generate a list of sort methods used across all groups. */
-	for (int bit = 0; bit < sizeof(bits32); ++bit)
+	for (int bit = 0; bit < NUM_TUPLESORTMETHODS; bit++)
 	{
-		if (groupInfo->sortMethods & (1 << bit))
-		{
-			TuplesortMethod sortMethod = (1 << bit);
-			const char *methodName;
+		TuplesortMethod sortMethod = (1 << bit);
 
-			methodName = tuplesort_method_name(sortMethod);
+		if (groupInfo->sortMethods & sortMethod)
+		{
+			const char *methodName = tuplesort_method_name(sortMethod);
+
 			methodNames = lappend(methodNames, unconstify(char *, methodName));
 		}
 	}

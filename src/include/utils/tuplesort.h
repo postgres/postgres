@@ -62,17 +62,23 @@ typedef struct SortCoordinateData *SortCoordinate;
  * TuplesortInstrumentation can't contain any pointers because we
  * sometimes put it in shared memory.
  *
- * TuplesortMethod is used in a bitmask in Increment Sort's shared memory
- * instrumentation so needs to have each value be a separate bit.
+ * The parallel-sort infrastructure relies on having a zero TuplesortMethod
+ * indicate that a worker never did anything, so we assign zero to
+ * SORT_TYPE_STILL_IN_PROGRESS.  The other values of this enum can be
+ * OR'ed together to represent a situation where different workers used
+ * different methods, so we need a separate bit for each one.  Keep the
+ * NUM_TUPLESORTMETHODS constant in sync with the number of bits!
  */
 typedef enum
 {
-	SORT_TYPE_STILL_IN_PROGRESS = 1 << 0,
-	SORT_TYPE_TOP_N_HEAPSORT = 1 << 1,
-	SORT_TYPE_QUICKSORT = 1 << 2,
-	SORT_TYPE_EXTERNAL_SORT = 1 << 3,
-	SORT_TYPE_EXTERNAL_MERGE = 1 << 4
+	SORT_TYPE_STILL_IN_PROGRESS = 0,
+	SORT_TYPE_TOP_N_HEAPSORT = 1 << 0,
+	SORT_TYPE_QUICKSORT = 1 << 1,
+	SORT_TYPE_EXTERNAL_SORT = 1 << 2,
+	SORT_TYPE_EXTERNAL_MERGE = 1 << 3
 } TuplesortMethod;
+
+#define NUM_TUPLESORTMETHODS 4
 
 typedef enum
 {
