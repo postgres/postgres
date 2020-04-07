@@ -38,6 +38,13 @@ SELECT 3 as three, 4 as four \gx
 
 \unset FETCH_COUNT
 
+-- \g/\gx with pset options
+
+SELECT 1 as one, 2 as two \g (format=csv csv_fieldsep='\t')
+\g
+SELECT 1 as one, 2 as two \gx (title='foo bar')
+\g
+
 -- \gset
 
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_

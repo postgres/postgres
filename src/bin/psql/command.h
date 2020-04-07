@@ -36,6 +36,10 @@ extern bool do_pset(const char *param,
 					printQueryOpt *popt,
 					bool quiet);
 
+extern printQueryOpt *savePsetInfo(const printQueryOpt *popt);
+
+extern void restorePsetInfo(printQueryOpt *popt, printQueryOpt *save);
+
 extern void connection_warnings(bool in_startup);
 
 extern void SyncVariables(void);

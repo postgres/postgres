@@ -2105,12 +2105,34 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
-        <term><literal>\g [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
-        <term><literal>\g [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
+        <term><literal>\g [ (<replaceable class="parameter">option</replaceable>=<replaceable class="parameter">value</replaceable> [...]) ] [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
+        <term><literal>\g [ (<replaceable class="parameter">option</replaceable>=<replaceable class="parameter">value</replaceable> [...]) ] [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
         Sends the current query buffer to the server for execution.
-        If an argument is given, the query's output is written to the named
+        </para>
+        <para>
+        If parentheses appear after <literal>\g</literal>, they surround a
+        space-separated list
+        of <replaceable class="parameter">option</replaceable><literal>=</literal><replaceable class="parameter">value</replaceable>
+        formatting-option clauses, which are interpreted in the same way
+        as <literal>\pset</literal>
+        <replaceable class="parameter">option</replaceable>
+        <replaceable class="parameter">value</replaceable> commands, but take
+        effect only for the duration of this query.  In this list, spaces are
+        not allowed around <literal>=</literal> signs, but are required
+        between option clauses.
+        If <literal>=</literal><replaceable class="parameter">value</replaceable>
+        is omitted, the
+        named <replaceable class="parameter">option</replaceable> is changed
+        in the same way as for
+        <literal>\pset</literal> <replaceable class="parameter">option</replaceable>
+        with no explicit <replaceable class="parameter">value</replaceable>.
+        </para>
+        <para>
+        If a <replaceable class="parameter">filename</replaceable>
+        or <literal>|</literal><replaceable class="parameter">command</replaceable>
+        argument is given, the query's output is written to the named
         file or piped to the given shell command, instead of displaying it as
         usual.  The file or command is written to only if the query
         successfully returns zero or more tuples, not if the query fails or
@@ -2119,13 +2141,15 @@ Tue Oct 26 21:40:57 CEST 1999
         <para>
         If the current query buffer is empty, the most recently sent query is
         re-executed instead.  Except for that behavior, <literal>\g</literal>
-        without an argument is essentially equivalent to a semicolon.
-        A <literal>\g</literal> with argument is a <quote>one-shot</quote>
-        alternative to the <command>\o</command> command.
+        without any arguments is essentially equivalent to a semicolon.
+        With arguments, <literal>\g</literal> provides
+        a <quote>one-shot</quote> alternative to the <command>\o</command>
+        command, and additionally allows one-shot adjustments of the
+        output formatting options normally set by <literal>\pset</literal>.
         </para>
         <para>
-        If the argument begins with <literal>|</literal>, then the entire remainder
-        of the line is taken to be
+        When the last argument begins with <literal>|</literal>, the entire
+        remainder of the line is taken to be
         the <replaceable class="parameter">command</replaceable> to execute,
         and neither variable interpolation nor backquote expansion are
         performed in it.  The rest of the line is simply passed literally to
@@ -2246,12 +2270,14 @@ hello 10
 
 
       <varlistentry>
-        <term><literal>\gx [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
-        <term><literal>\gx [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
+        <term><literal>\gx [ (<replaceable class="parameter">option</replaceable>=<replaceable class="parameter">value</replaceable> [...]) ] [ <replaceable class="parameter">filename</replaceable> ]</literal></term>
+        <term><literal>\gx [ (<replaceable class="parameter">option</replaceable>=<replaceable class="parameter">value</replaceable> [...]) ] [ |<replaceable class="parameter">command</replaceable> ]</literal></term>
         <listitem>
         <para>
-        <literal>\gx</literal> is equivalent to <literal>\g</literal>, but
-        forces expanded output mode for this query.  See <literal>\x</literal>.
+        <literal>\gx</literal> is equivalent to <literal>\g</literal>, except
+        that it forces expanded output mode for this query, as
+        if <literal>expanded=on</literal> were included in the list of
+        <literal>\pset</literal> options.  See also <literal>\x</literal>.
         </para>
         </listitem>
       </varlistentry>
@@ -4879,9 +4905,31 @@ second | three
 -[ RECORD 4 ]-
 first  | 4
 second | four
-</programlisting></para>
+</programlisting>
+  </para>
 
-<para>
+  <para>
+  Also, these output format options can be set for just one query by using
+  <literal>\g</literal>:
+<programlisting>
+peter@localhost testdb=&gt; <userinput>SELECT * FROM my_table</userinput>
+peter@localhost testdb-&gt; <userinput>\g (format=aligned tuples_only=off expanded=on)</userinput>
+-[ RECORD 1 ]-
+first  | 1
+second | one
+-[ RECORD 2 ]-
+first  | 2
+second | two
+-[ RECORD 3 ]-
+first  | 3
+second | three
+-[ RECORD 4 ]-
+first  | 4
+second | four
+</programlisting>
+  </para>
+
+  <para>
   When suitable, query results can be shown in a crosstab representation
   with the <command>\crosstabview</command> command:
 <programlisting>

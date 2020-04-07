@@ -76,6 +76,28 @@ four  | 4
 (1 row)
 
 \unset FETCH_COUNT
+-- \g/\gx with pset options
+SELECT 1 as one, 2 as two \g (format=csv csv_fieldsep='\t')
+one	two
+1	2
+\g
+ one | two 
+-----+-----
+   1 |   2
+(1 row)
+
+SELECT 1 as one, 2 as two \gx (title='foo bar')
+foo bar
+-[ RECORD 1 ]
+one | 1
+two | 2
+
+\g
+ one | two 
+-----+-----
+   1 |   2
+(1 row)
+
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03
