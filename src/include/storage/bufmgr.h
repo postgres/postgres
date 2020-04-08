@@ -46,6 +46,15 @@ typedef enum
 								 * replay; otherwise same as RBM_NORMAL */
 } ReadBufferMode;
 
+/*
+ * Type returned by PrefetchBuffer().
+ */
+typedef struct PrefetchBufferResult
+{
+	Buffer		recent_buffer;	/* If valid, a hit (recheck needed!) */
+	bool		initiated_io;	/* If true, a miss resulting in async I/O */
+} PrefetchBufferResult;
+
 /* forward declared, to avoid having to expose buf_internals.h here */
 struct WritebackContext;
 
@@ -162,8 +171,11 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 /*
  * prototypes for functions in bufmgr.c
  */
-extern void PrefetchBuffer(Relation reln, ForkNumber forkNum,
-						   BlockNumber blockNum);
+extern PrefetchBufferResult PrefetchSharedBuffer(struct SMgrRelationData *smgr_reln,
+												 ForkNumber forkNum,
+												 BlockNumber blockNum);
+extern PrefetchBufferResult PrefetchBuffer(Relation reln, ForkNumber forkNum,
+										   BlockNumber blockNum);
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
 								 BlockNumber blockNum, ReadBufferMode mode,

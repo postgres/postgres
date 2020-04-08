@@ -54,17 +54,17 @@ static Block GetLocalBufferStorage(void);
 
 
 /*
- * LocalPrefetchBuffer -
+ * PrefetchLocalBuffer -
  *	  initiate asynchronous read of a block of a relation
  *
  * Do PrefetchBuffer's work for temporary relations.
  * No-op if prefetching isn't compiled in.
  */
-void
-LocalPrefetchBuffer(SMgrRelation smgr, ForkNumber forkNum,
+PrefetchBufferResult
+PrefetchLocalBuffer(SMgrRelation smgr, ForkNumber forkNum,
 					BlockNumber blockNum)
 {
-#ifdef USE_PREFETCH
+	PrefetchBufferResult result = {InvalidBuffer, false};
 	BufferTag	newTag;			/* identity of requested block */
 	LocalBufferLookupEnt *hresult;
 
@@ -81,12 +81,18 @@ LocalPrefetchBuffer(SMgrRelation smgr, ForkNumber forkNum,
 	if (hresult)
 	{
 		/* Yes, so nothing to do */
-		return;
+		result.recent_buffer = -hresult->id - 1;
+	}
+	else
+	{
+#ifdef USE_PREFETCH
+		/* Not in buffers, so initiate prefetch */
+		smgrprefetch(smgr, forkNum, blockNum);
+		result.initiated_io = true;
+#endif							/* USE_PREFETCH */
 	}
 
-	/* Not in buffers, so initiate prefetch */
-	smgrprefetch(smgr, forkNum, blockNum);
-#endif							/* USE_PREFETCH */
+	return result;
 }
 
 

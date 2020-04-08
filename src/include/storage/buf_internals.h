@@ -327,8 +327,9 @@ extern int	BufTableInsert(BufferTag *tagPtr, uint32 hashcode, int buf_id);
 extern void BufTableDelete(BufferTag *tagPtr, uint32 hashcode);
 
 /* localbuf.c */
-extern void LocalPrefetchBuffer(SMgrRelation smgr, ForkNumber forkNum,
-								BlockNumber blockNum);
+extern PrefetchBufferResult PrefetchLocalBuffer(SMgrRelation smgr,
+												ForkNumber forkNum,
+												BlockNumber blockNum);
 extern BufferDesc *LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 									BlockNumber blockNum, bool *foundPtr);
 extern void MarkLocalBufferDirty(Buffer buffer);
