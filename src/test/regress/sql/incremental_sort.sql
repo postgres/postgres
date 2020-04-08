@@ -119,7 +119,8 @@ end;
 $$;
 
 -- A single large group tested around each mode transition point.
-insert into t(a, b) select 1, i from generate_series(1, 100) n(i);
+insert into t(a, b) select i/100 + 1, i + 1 from generate_series(0, 999) n(i);
+analyze t;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 31;
 select * from (select * from t order by a) s order by a, b limit 31;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 32;
@@ -133,7 +134,8 @@ select * from (select * from t order by a) s order by a, b limit 66;
 delete from t;
 
 -- An initial large group followed by a small group.
-insert into t(a, b) select (case when i < 50 then 1 else 2 end), i from generate_series(1, 100) n(i);
+insert into t(a, b) select i/50 + 1, i + 1 from generate_series(0, 999) n(i);
+analyze t;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 55;
 select * from (select * from t order by a) s order by a, b limit 55;
 -- Test EXPLAIN ANALYZE with only a fullsort group.
@@ -143,7 +145,8 @@ select explain_analyze_inc_sort_nodes_verify_invariants('select * from (select *
 delete from t;
 
 -- An initial small group followed by a large group.
-insert into t(a, b) select (case when i < 5 then i else 9 end), i from generate_series(1, 100) n(i);
+insert into t(a, b) select (case when i < 5 then i else 9 end), i from generate_series(1, 1000) n(i);
+analyze t;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 70;
 select * from (select * from t order by a) s order by a, b limit 70;
 -- Test rescan.
@@ -164,7 +167,8 @@ select explain_analyze_inc_sort_nodes_verify_invariants('select * from (select *
 delete from t;
 
 -- Small groups of 10 tuples each tested around each mode transition point.
-insert into t(a, b) select i / 10, i from generate_series(1, 70) n(i);
+insert into t(a, b) select i / 10, i from generate_series(1, 1000) n(i);
+analyze t;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 31;
 select * from (select * from t order by a) s order by a, b limit 31;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 32;
@@ -178,7 +182,8 @@ select * from (select * from t order by a) s order by a, b limit 66;
 delete from t;
 
 -- Small groups of only 1 tuple each tested around each mode transition point.
-insert into t(a, b) select i, i from generate_series(1, 70) n(i);
+insert into t(a, b) select i, i from generate_series(1, 1000) n(i);
+analyze t;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 31;
 select * from (select * from t order by a) s order by a, b limit 31;
 explain (costs off) select * from (select * from t order by a) s order by a, b limit 32;
