@@ -376,6 +376,8 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 		/* Create the otherrel RelOptInfo too. */
 		childrelinfo = build_simple_rel(root, childRTindex, relinfo);
 		relinfo->part_rels[i] = childrelinfo;
+		relinfo->all_partrels = bms_add_members(relinfo->all_partrels,
+												childrelinfo->relids);
 
 		/* If this child is itself partitioned, recurse */
 		if (childrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)

@@ -1106,6 +1106,33 @@ into joins between their partitions is called partitionwise join. We will use
 term "partitioned relation" for either a partitioned table or a join between
 compatibly partitioned tables.
 
+Even if the joining relations don't have exactly the same partition bounds,
+partitionwise join can still be applied by using an advanced
+partition-matching algorithm.  For both the joining relations, the algorithm
+checks wether every partition of one joining relation only matches one
+partition of the other joining relation at most.  In such a case the join
+between the joining relations can be broken down into joins between the
+matching partitions.  The join relation can then be considerd partitioned.
+The algorithm produces the pairs of the matching partitions, plus the
+partition bounds for the join relation, to allow partitionwise join for
+computing the join.  The algorithm is implemented in partition_bounds_merge().
+For an N-way join relation considered partitioned this way, not every pair of
+joining relations can use partitionwise join.  For example:
+
+	(A leftjoin B on (Pab)) innerjoin C on (Pac)
+
+where A, B, and C are partitioned tables, and A has an extra partition
+compared to B and C.  When considering partitionwise join for the join {A B},
+the extra partition of A doesn't have a matching partition on the nullable
+side, which is the case that the current implementation of partitionwise join
+can't handle.  So {A B} is not considered partitioned, and the pair of {A B}
+and C considered for the 3-way join can't use partitionwise join.  On the
+other hand, the pair of {A C} and B can use partitionwise join because {A C}
+is considered partitioned by eliminating the extra partition (see identity 1
+on outer join reordering).  Whether an N-way join can use partitionwise join
+is determined based on the first pair of joining relations that are both
+partitioned and can use partitionwise join.
+
 The partitioning properties of a partitioned relation are stored in its
 RelOptInfo.  The information about data types of partition keys are stored in
 PartitionSchemeData structure. The planner maintains a list of canonical

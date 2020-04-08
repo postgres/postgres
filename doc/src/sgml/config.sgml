@@ -4749,9 +4749,9 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         which allows a join between partitioned tables to be performed by
         joining the matching partitions.  Partitionwise join currently applies
         only when the join conditions include all the partition keys, which
-        must be of the same data type and have exactly matching sets of child
-        partitions.  Because partitionwise join planning can use significantly
-        more CPU time and memory during planning, the default is
+        must be of the same data type and have one-to-one matching sets of
+        child partitions.  Because partitionwise join planning can use
+        significantly more CPU time and memory during planning, the default is
         <literal>off</literal>.
        </para>
       </listitem>

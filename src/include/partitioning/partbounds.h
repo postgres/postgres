@@ -16,6 +16,7 @@
 #include "nodes/pg_list.h"
 #include "partitioning/partdefs.h"
 #include "utils/relcache.h"
+struct RelOptInfo;				/* avoid including pathnodes.h here */
 
 
 /*
@@ -87,6 +88,14 @@ extern bool partition_bounds_equal(int partnatts, int16 *parttyplen,
 								   PartitionBoundInfo b2);
 extern PartitionBoundInfo partition_bounds_copy(PartitionBoundInfo src,
 												PartitionKey key);
+extern PartitionBoundInfo partition_bounds_merge(int partnatts,
+												 FmgrInfo *partsupfunc,
+												 Oid *partcollation,
+												 struct RelOptInfo *outer_rel,
+												 struct RelOptInfo *inner_rel,
+												 JoinType jointype,
+												 List **outer_parts,
+												 List **inner_parts);
 extern bool partitions_are_ordered(PartitionBoundInfo boundinfo, int nparts);
 extern void check_new_partition_bound(char *relname, Relation parent,
 									  PartitionBoundSpec *spec);
