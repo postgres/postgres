@@ -23,6 +23,7 @@ ALTER PUBLICATION testpub_default SET (publish = update);
 -- error cases
 CREATE PUBLICATION testpub_xxx WITH (foo);
 CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
+CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publish_via_partition_root = '0');
 
 \dRp
 
@@ -87,6 +88,8 @@ UPDATE testpub_parted1 SET a = 1;
 ALTER TABLE testpub_parted DETACH PARTITION testpub_parted1;
 -- works again, because parent's publication is no longer considered
 UPDATE testpub_parted1 SET a = 1;
+ALTER PUBLICATION testpub_forparted SET (publish_via_partition_root = true);
+\dRp+ testpub_forparted
 DROP TABLE testpub_parted1;
 DROP PUBLICATION testpub_forparted, testpub_forparted1;
 

@@ -5437,6 +5437,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry>If true, <command>TRUNCATE</command> operations are replicated for
        tables in the publication.</entry>
      </row>
+
+     <row>
+      <entry><structfield>pubviaroot</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>If true, operations on a leaf partition are replicated using the
+       identity and schema of its topmost partitioned ancestor mentioned in the
+       publication instead of its own.
+      </entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

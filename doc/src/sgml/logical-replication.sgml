@@ -411,10 +411,14 @@
    <listitem>
     <para>
      When replicating between partitioned tables, the actual replication
-     originates from the leaf partitions on the publisher, so partitions on
-     the publisher must also exist on the subscriber as valid target tables.
-     (They could either be leaf partitions themselves, or they could be
-     further subpartitioned, or they could even be independent tables.)
+     originates, by default, from the leaf partitions on the publisher, so
+     partitions on the publisher must also exist on the subscriber as valid
+     target tables. (They could either be leaf partitions themselves, or they
+     could be further subpartitioned, or they could even be independent
+     tables.)  Publications can also specify that changes are to be replicated
+     using the identity and schema of the partitioned root table instead of
+     that of the individual leaf partitions in which the changes actually
+     originate (see <xref linkend="sql-createpublication"/>).
     </para>
    </listitem>
   </itemizedlist>

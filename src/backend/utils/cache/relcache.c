@@ -44,6 +44,7 @@
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/partition.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
@@ -5314,6 +5315,20 @@ GetRelationPublicationActions(Relation relation)
 
 	/* Fetch the publication membership info. */
 	puboids = GetRelationPublications(RelationGetRelid(relation));
+	if (relation->rd_rel->relispartition)
+	{
+		/* Add publications that the ancestors are in too. */
+		List   *ancestors = get_partition_ancestors(RelationGetRelid(relation));
+		ListCell *lc;
+
+		foreach(lc, ancestors)
+		{
+			Oid		ancestor = lfirst_oid(lc);
+
+			puboids = list_concat_unique_oid(puboids,
+											 GetRelationPublications(ancestor));
+		}
+	}
 	puboids = list_concat_unique_oid(puboids, GetAllTablesPublications());
 
 	foreach(lc, puboids)
