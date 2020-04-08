@@ -3277,10 +3277,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	}
 
 	if (use_hashing)
-	{
-		ExecAssignExprContext(estate, &aggstate->ss.ps);
-		aggstate->hashcontext = aggstate->ss.ps.ps_ExprContext;
-	}
+		aggstate->hashcontext = CreateWorkExprContext(estate);
 
 	ExecAssignExprContext(estate, &aggstate->ss.ps);
 

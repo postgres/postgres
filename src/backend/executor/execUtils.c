@@ -53,6 +53,7 @@
 #include "executor/executor.h"
 #include "jit/jit.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "partitioning/partdesc.h"
@@ -227,21 +228,13 @@ FreeExecutorState(EState *estate)
 	MemoryContextDelete(estate->es_query_cxt);
 }
 
-/* ----------------
- *		CreateExprContext
- *
- *		Create a context for expression evaluation within an EState.
- *
- * An executor run may require multiple ExprContexts (we usually make one
- * for each Plan node, and a separate one for per-output-tuple processing
- * such as constraint checking).  Each ExprContext has its own "per-tuple"
- * memory context.
- *
- * Note we make no assumption about the caller's memory context.
- * ----------------
+/*
+ * Internal implementation for CreateExprContext() and CreateWorkExprContext()
+ * that allows control over the AllocSet parameters.
  */
-ExprContext *
-CreateExprContext(EState *estate)
+static ExprContext *
+CreateExprContextInternal(EState *estate, Size minContextSize,
+						  Size initBlockSize, Size maxBlockSize)
 {
 	ExprContext *econtext;
 	MemoryContext oldcontext;
@@ -264,7 +257,9 @@ CreateExprContext(EState *estate)
 	econtext->ecxt_per_tuple_memory =
 		AllocSetContextCreate(estate->es_query_cxt,
 							  "ExprContext",
-							  ALLOCSET_DEFAULT_SIZES);
+							  minContextSize,
+							  initBlockSize,
+							  maxBlockSize);
 
 	econtext->ecxt_param_exec_vals = estate->es_param_exec_vals;
 	econtext->ecxt_param_list_info = estate->es_param_list_info;
@@ -292,6 +287,52 @@ CreateExprContext(EState *estate)
 	MemoryContextSwitchTo(oldcontext);
 
 	return econtext;
+}
+
+/* ----------------
+ *		CreateExprContext
+ *
+ *		Create a context for expression evaluation within an EState.
+ *
+ * An executor run may require multiple ExprContexts (we usually make one
+ * for each Plan node, and a separate one for per-output-tuple processing
+ * such as constraint checking).  Each ExprContext has its own "per-tuple"
+ * memory context.
+ *
+ * Note we make no assumption about the caller's memory context.
+ * ----------------
+ */
+ExprContext *
+CreateExprContext(EState *estate)
+{
+	return CreateExprContextInternal(estate, ALLOCSET_DEFAULT_SIZES);
+}
+
+
+/* ----------------
+ *		CreateWorkExprContext
+ *
+ * Like CreateExprContext, but specifies the AllocSet sizes to be reasonable
+ * in proportion to work_mem. If the maximum block allocation size is too
+ * large, it's easy to skip right past work_mem with a single allocation.
+ * ----------------
+ */
+ExprContext *
+CreateWorkExprContext(EState *estate)
+{
+	Size minContextSize = ALLOCSET_DEFAULT_MINSIZE;
+	Size initBlockSize = ALLOCSET_DEFAULT_INITSIZE;
+	Size maxBlockSize = ALLOCSET_DEFAULT_MAXSIZE;
+
+	/* choose the maxBlockSize to be no larger than 1/16 of work_mem */
+	while (16 * maxBlockSize > work_mem * 1024L)
+		maxBlockSize >>= 1;
+
+	if (maxBlockSize < ALLOCSET_DEFAULT_INITSIZE)
+		maxBlockSize = ALLOCSET_DEFAULT_INITSIZE;
+
+	return CreateExprContextInternal(estate, minContextSize,
+									 initBlockSize, maxBlockSize);
 }
 
 /* ----------------
