@@ -24,6 +24,7 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/supportnodes.h"
 #include "optimizer/optimizer.h"
+#include "port/pg_bitutils.h"
 #include "utils/array.h"
 #include "utils/arrayaccess.h"
 #include "utils/builtins.h"
@@ -5313,9 +5314,7 @@ accumArrayResultArr(ArrayBuildStateArr *astate,
 		memcpy(&astate->lbs[1], lbs, ndims * sizeof(int));
 
 		/* Allocate at least enough data space for this item */
-		astate->abytes = 1024;
-		while (astate->abytes <= ndatabytes)
-			astate->abytes *= 2;
+		astate->abytes = pg_nextpower2_32(Max(1024, ndatabytes + 1));
 		astate->data = (char *) palloc(astate->abytes);
 	}
 	else
@@ -5362,9 +5361,7 @@ accumArrayResultArr(ArrayBuildStateArr *astate,
 			 * First input with nulls; we must retrospectively handle any
 			 * previous inputs by marking all their items non-null.
 			 */
-			astate->aitems = 256;
-			while (astate->aitems <= newnitems)
-				astate->aitems *= 2;
+			astate->aitems = pg_nextpower2_32(Max(256, newnitems + 1));
 			astate->nullbitmap = (bits8 *) palloc((astate->aitems + 7) / 8);
 			array_bitmap_copy(astate->nullbitmap, 0,
 							  NULL, 0,

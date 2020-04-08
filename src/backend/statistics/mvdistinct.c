@@ -576,15 +576,7 @@ n_choose_k(int n, int k)
 static int
 num_combinations(int n)
 {
-	int			k;
-	int			ncombs = 1;
-
-	for (k = 1; k <= n; k++)
-		ncombs *= 2;
-
-	ncombs -= (n + 1);
-
-	return ncombs;
+	return (1 << n) - (n + 1);
 }
 
 /*

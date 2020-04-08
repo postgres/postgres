@@ -25,6 +25,7 @@
 #include "catalog/pg_am.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "postmaster/autovacuum.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
@@ -503,10 +504,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 		 * initially.  Make it a power of 2 to avoid wasting memory when
 		 * resizing (since palloc likes powers of 2).
 		 */
-		collector->lentuples = 16;
-		while (collector->lentuples < nentries)
-			collector->lentuples *= 2;
-
+		collector->lentuples = pg_nextpower2_32(Max(16, nentries));
 		collector->tuples = (IndexTuple *) palloc(sizeof(IndexTuple) * collector->lentuples);
 	}
 	else if (collector->lentuples < collector->ntuples + nentries)
@@ -516,11 +514,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 		 * overflow, though we could get to a value that exceeds
 		 * MaxAllocSize/sizeof(IndexTuple), causing an error in repalloc.
 		 */
-		do
-		{
-			collector->lentuples *= 2;
-		} while (collector->lentuples < collector->ntuples + nentries);
-
+		collector->lentuples = pg_nextpower2_32(collector->ntuples + nentries);
 		collector->tuples = (IndexTuple *) repalloc(collector->tuples,
 													sizeof(IndexTuple) * collector->lentuples);
 	}

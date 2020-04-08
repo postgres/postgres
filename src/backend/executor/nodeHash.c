@@ -831,9 +831,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		dbatch = ceil(inner_rel_bytes / (hash_table_bytes - bucket_bytes));
 		dbatch = Min(dbatch, max_pointers);
 		minbatch = (int) dbatch;
-		nbatch = 2;
-		while (nbatch < minbatch)
-			nbatch <<= 1;
+		nbatch = pg_nextpower2_32(Max(2, minbatch));
 	}
 
 	Assert(nbuckets > 0);
@@ -2272,9 +2270,7 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 		 * MaxAllocSize/sizeof(void *)/8, but that is not currently possible
 		 * since we limit pg_statistic entries to much less than that.
 		 */
-		nbuckets = 2;
-		while (nbuckets <= mcvsToUse)
-			nbuckets <<= 1;
+		nbuckets = pg_nextpower2_32(mcvsToUse + 1);
 		/* use two more bits just to help avoid collisions */
 		nbuckets <<= 2;
 

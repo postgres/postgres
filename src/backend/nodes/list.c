@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "nodes/pg_list.h"
+#include "port/pg_bitutils.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 
@@ -119,9 +120,7 @@ new_list(NodeTag type, int min_size)
 	 * that's more than twice the size of an existing list, so the size limits
 	 * within palloc will ensure that we don't overflow here.
 	 */
-	max_size = 8;				/* semi-arbitrary small power of 2 */
-	while (max_size < min_size + LIST_HEADER_OVERHEAD)
-		max_size *= 2;
+	max_size = pg_nextpower2_32(Max(8, min_size + LIST_HEADER_OVERHEAD));
 	max_size -= LIST_HEADER_OVERHEAD;
 #else
 
@@ -160,12 +159,12 @@ enlarge_list(List *list, int min_size)
 
 	/*
 	 * As above, we prefer power-of-two total allocations; but here we need
-	 * not account for list header overhead.  The existing max length might
-	 * not be a power of 2, so don't rely on that.
+	 * not account for list header overhead.
 	 */
-	new_max_len = 16;			/* semi-arbitrary small power of 2 */
-	while (new_max_len < min_size)
-		new_max_len *= 2;
+
+	/* clamp the minimum value to 16, a semi-arbitrary small power of 2 */
+	new_max_len = pg_nextpower2_32(Max(16, min_size));
+
 #else
 	/* As above, don't allocate anything extra */
 	new_max_len = min_size;
