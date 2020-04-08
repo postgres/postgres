@@ -147,9 +147,8 @@ main(int argc, char *argv[])
 				conn_limit = strtol(optarg, &endptr, 10);
 				if (*endptr != '\0' || conn_limit < -1)	/* minimum valid value */
 				{
-					fprintf(stderr,
-							_("%s: invalid value for --connection-limit: %s\n"),
-							progname, optarg);
+					pg_log_error("invalid value for --connection-limit: %s",
+								 optarg);
 					exit(1);
 				}
 				break;
