@@ -142,6 +142,8 @@ struct PGPROC
 	LOCKMASK	heldLocks;		/* bitmask for lock types already held on this
 								 * lock object by this backend */
 
+	bool		delayChkpt;		/* true if this proc delays checkpoint start */
+
 	/*
 	 * Info to allow us to wait for synchronous replication, if needed.
 	 * waitLSN is InvalidXLogRecPtr if not waiting; set only by user backend.
@@ -232,8 +234,6 @@ typedef struct PGXACT
 
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 	bool		overflowed;
-	bool		delayChkpt;		/* true if this proc delays checkpoint start;
-								 * previously called InCommit */
 
 	uint8		nxids;
 } PGXACT;

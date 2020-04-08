@@ -1307,7 +1307,7 @@ RecordTransactionCommit(void)
 		 * a bit fuzzy, but it doesn't matter.
 		 */
 		START_CRIT_SECTION();
-		MyPgXact->delayChkpt = true;
+		MyProc->delayChkpt = true;
 
 		SetCurrentTransactionStopTimestamp();
 
@@ -1408,7 +1408,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted)
 	{
-		MyPgXact->delayChkpt = false;
+		MyProc->delayChkpt = false;
 		END_CRIT_SECTION();
 	}
 
