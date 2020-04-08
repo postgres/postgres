@@ -3085,6 +3085,18 @@ _tocEntryRestorePass(TocEntry *te)
 	if (strcmp(te->desc, "EVENT TRIGGER") == 0 ||
 		strcmp(te->desc, "MATERIALIZED VIEW DATA") == 0)
 		return RESTORE_PASS_POST_ACL;
+
+	/*
+	 * Comments need to be emitted in the same pass as their parent objects.
+	 * ACLs haven't got comments, and neither do matview data objects, but
+	 * event triggers do.  (Fortunately, event triggers haven't got ACLs, or
+	 * we'd need yet another weird special case.)
+	 */
+	if (strcmp(te->desc, "COMMENT") == 0 &&
+		strncmp(te->tag, "EVENT TRIGGER ", 14) == 0)
+		return RESTORE_PASS_POST_ACL;
+
+	/* All else can be handled in the main pass. */
 	return RESTORE_PASS_MAIN;
 }
 
