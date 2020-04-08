@@ -4081,6 +4081,30 @@ transformPartitionBoundValue(ParseState *pstate, Node *val,
 	{
 		Oid			exprCollOid = exprCollation(value);
 
+		/*
+		 * Check we have a collation iff it is a collatable type.  The only
+		 * expected failures here are (1) COLLATE applied to a noncollatable
+		 * type, or (2) partition bound expression had an unresolved
+		 * collation.  But we might as well code this to be a complete
+		 * consistency check.
+		 */
+		if (type_is_collatable(colType))
+		{
+			if (!OidIsValid(exprCollOid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INDETERMINATE_COLLATION),
+						 errmsg("could not determine which collation to use for partition bound expression"),
+						 errhint("Use the COLLATE clause to set the collation explicitly.")));
+		}
+		else
+		{
+			if (OidIsValid(exprCollOid))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("collations are not supported by type %s",
+								format_type_be(colType))));
+		}
+
 		if (OidIsValid(exprCollOid) &&
 			exprCollOid != DEFAULT_COLLATION_OID &&
 			exprCollOid != partCollation)

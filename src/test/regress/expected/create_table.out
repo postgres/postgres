@@ -652,6 +652,12 @@ CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN (genera
 ERROR:  set-returning functions are not allowed in partition bound
 LINE 1: ...expr_fail PARTITION OF list_parted FOR VALUES IN (generate_s...
                                                              ^
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN ('1' collate "POSIX");
+ERROR:  collations are not supported by type integer
+CREATE TABLE part_bogus_expr_fail PARTITION OF list_parted FOR VALUES IN ((1+1) collate "POSIX");
+ERROR:  collations are not supported by type integer
+LINE 1: ...ail PARTITION OF list_parted FOR VALUES IN ((1+1) collate "P...
+                                                             ^
 -- syntax does not allow empty list of values for list partitions
 CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES IN ();
 ERROR:  syntax error at or near ")"
