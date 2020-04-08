@@ -29,6 +29,7 @@
 #include "commands/progress.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "port/pg_bitutils.h"
 #include "utils/tuplesort.h"
 
 
@@ -69,7 +70,7 @@ _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 	 * NOTE : This hash mask calculation should be in sync with similar
 	 * calculation in _hash_init_metabuffer.
 	 */
-	hspool->high_mask = (((uint32) 1) << _hash_log2(num_buckets + 1)) - 1;
+	hspool->high_mask = pg_nextpower2_32(num_buckets + 1) - 1;
 	hspool->low_mask = (hspool->high_mask >> 1);
 	hspool->max_buckets = num_buckets - 1;
 

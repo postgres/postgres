@@ -17,6 +17,7 @@
 #include "access/hash.h"
 #include "access/reloptions.h"
 #include "access/relscan.h"
+#include "port/pg_bitutils.h"
 #include "storage/buf_internals.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -135,21 +136,6 @@ _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 }
 
 /*
- * _hash_log2 -- returns ceil(lg2(num))
- */
-uint32
-_hash_log2(uint32 num)
-{
-	uint32		i,
-				limit;
-
-	limit = 1;
-	for (i = 0; limit < num; limit <<= 1, i++)
-		;
-	return i;
-}
-
-/*
  * _hash_spareindex -- returns spare index / global splitpoint phase of the
  *					   bucket
  */
@@ -158,8 +144,7 @@ _hash_spareindex(uint32 num_bucket)
 {
 	uint32		splitpoint_group;
 	uint32		splitpoint_phases;
-
-	splitpoint_group = _hash_log2(num_bucket);
+	splitpoint_group = pg_ceil_log2_32(num_bucket);
 
 	if (splitpoint_group < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
 		return splitpoint_group;

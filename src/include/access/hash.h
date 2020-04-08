@@ -451,7 +451,6 @@ extern uint32 _hash_datum2hashkey(Relation rel, Datum key);
 extern uint32 _hash_datum2hashkey_type(Relation rel, Datum key, Oid keytype);
 extern Bucket _hash_hashkey2bucket(uint32 hashkey, uint32 maxbucket,
 								   uint32 highmask, uint32 lowmask);
-extern uint32 _hash_log2(uint32 num);
 extern uint32 _hash_spareindex(uint32 num_bucket);
 extern uint32 _hash_get_totalbuckets(uint32 splitpoint_phase);
 extern void _hash_checkpage(Relation rel, Buffer buf, int flags);

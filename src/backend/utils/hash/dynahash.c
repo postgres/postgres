@@ -87,6 +87,7 @@
 
 #include "access/xact.h"
 #include "common/hashfn.h"
+#include "port/pg_bitutils.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
 #include "utils/dynahash.h"
@@ -1718,16 +1719,15 @@ hash_corrupted(HTAB *hashp)
 int
 my_log2(long num)
 {
-	int			i;
-	long		limit;
-
-	/* guard against too-large input, which would put us into infinite loop */
+	/* guard against too-large input, which would be invalid for pg_ceil_log2_*() */
 	if (num > LONG_MAX / 2)
 		num = LONG_MAX / 2;
 
-	for (i = 0, limit = 1; limit < num; i++, limit <<= 1)
-		;
-	return i;
+#if SIZEOF_LONG < 8
+	return pg_ceil_log2_32(num);
+#else
+	return pg_ceil_log2_64(num);
+#endif
 }
 
 /* calculate first power of 2 >= num, bounded to what will fit in a long */
