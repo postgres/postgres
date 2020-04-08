@@ -750,6 +750,116 @@ SELECT t1.a, t1.c, t2.b, t2.c, t3.a + t3.b, t3.c FROM (prt1 t1 LEFT JOIN prt2 t2
  550 | 0550 |     |      |     1100 | 0
 (12 rows)
 
+--
+-- 3-way full join
+--
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b) FULL JOIN prt2 p3(b,a,c) USING (a, b)
+  WHERE a BETWEEN 490 AND 510;
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Hash Full Join
+               Hash Cond: ((COALESCE(prt1_1.a, p2_1.a) = p3_1.a) AND (COALESCE(prt1_1.b, p2_1.b) = p3_1.b))
+               Filter: ((COALESCE(COALESCE(prt1_1.a, p2_1.a), p3_1.a) >= 490) AND (COALESCE(COALESCE(prt1_1.a, p2_1.a), p3_1.a) <= 510))
+               ->  Hash Full Join
+                     Hash Cond: ((prt1_1.a = p2_1.a) AND (prt1_1.b = p2_1.b))
+                     ->  Seq Scan on prt1_p1 prt1_1
+                     ->  Hash
+                           ->  Seq Scan on prt2_p1 p2_1
+               ->  Hash
+                     ->  Seq Scan on prt2_p1 p3_1
+         ->  Hash Full Join
+               Hash Cond: ((COALESCE(prt1_2.a, p2_2.a) = p3_2.a) AND (COALESCE(prt1_2.b, p2_2.b) = p3_2.b))
+               Filter: ((COALESCE(COALESCE(prt1_2.a, p2_2.a), p3_2.a) >= 490) AND (COALESCE(COALESCE(prt1_2.a, p2_2.a), p3_2.a) <= 510))
+               ->  Hash Full Join
+                     Hash Cond: ((prt1_2.a = p2_2.a) AND (prt1_2.b = p2_2.b))
+                     ->  Seq Scan on prt1_p2 prt1_2
+                     ->  Hash
+                           ->  Seq Scan on prt2_p2 p2_2
+               ->  Hash
+                     ->  Seq Scan on prt2_p2 p3_2
+         ->  Hash Full Join
+               Hash Cond: ((COALESCE(prt1_3.a, p2_3.a) = p3_3.a) AND (COALESCE(prt1_3.b, p2_3.b) = p3_3.b))
+               Filter: ((COALESCE(COALESCE(prt1_3.a, p2_3.a), p3_3.a) >= 490) AND (COALESCE(COALESCE(prt1_3.a, p2_3.a), p3_3.a) <= 510))
+               ->  Hash Full Join
+                     Hash Cond: ((prt1_3.a = p2_3.a) AND (prt1_3.b = p2_3.b))
+                     ->  Seq Scan on prt1_p3 prt1_3
+                     ->  Hash
+                           ->  Seq Scan on prt2_p3 p2_3
+               ->  Hash
+                     ->  Seq Scan on prt2_p3 p3_3
+(32 rows)
+
+SELECT COUNT(*) FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b) FULL JOIN prt2 p3(b,a,c) USING (a, b)
+  WHERE a BETWEEN 490 AND 510;
+ count 
+-------
+    14
+(1 row)
+
+--
+-- 4-way full join
+--
+EXPLAIN (COSTS OFF)
+SELECT COUNT(*) FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b) FULL JOIN prt2 p3(b,a,c) USING (a, b) FULL JOIN prt1 p4 (a,b,c) USING (a, b)
+  WHERE a BETWEEN 490 AND 510;
+                                                                                 QUERY PLAN                                                                                  
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Append
+         ->  Hash Full Join
+               Hash Cond: ((COALESCE(COALESCE(prt1_1.a, p2_1.a), p3_1.a) = p4_1.a) AND (COALESCE(COALESCE(prt1_1.b, p2_1.b), p3_1.b) = p4_1.b))
+               Filter: ((COALESCE(COALESCE(COALESCE(prt1_1.a, p2_1.a), p3_1.a), p4_1.a) >= 490) AND (COALESCE(COALESCE(COALESCE(prt1_1.a, p2_1.a), p3_1.a), p4_1.a) <= 510))
+               ->  Hash Full Join
+                     Hash Cond: ((COALESCE(prt1_1.a, p2_1.a) = p3_1.a) AND (COALESCE(prt1_1.b, p2_1.b) = p3_1.b))
+                     ->  Hash Full Join
+                           Hash Cond: ((prt1_1.a = p2_1.a) AND (prt1_1.b = p2_1.b))
+                           ->  Seq Scan on prt1_p1 prt1_1
+                           ->  Hash
+                                 ->  Seq Scan on prt2_p1 p2_1
+                     ->  Hash
+                           ->  Seq Scan on prt2_p1 p3_1
+               ->  Hash
+                     ->  Seq Scan on prt1_p1 p4_1
+         ->  Hash Full Join
+               Hash Cond: ((COALESCE(COALESCE(prt1_2.a, p2_2.a), p3_2.a) = p4_2.a) AND (COALESCE(COALESCE(prt1_2.b, p2_2.b), p3_2.b) = p4_2.b))
+               Filter: ((COALESCE(COALESCE(COALESCE(prt1_2.a, p2_2.a), p3_2.a), p4_2.a) >= 490) AND (COALESCE(COALESCE(COALESCE(prt1_2.a, p2_2.a), p3_2.a), p4_2.a) <= 510))
+               ->  Hash Full Join
+                     Hash Cond: ((COALESCE(prt1_2.a, p2_2.a) = p3_2.a) AND (COALESCE(prt1_2.b, p2_2.b) = p3_2.b))
+                     ->  Hash Full Join
+                           Hash Cond: ((prt1_2.a = p2_2.a) AND (prt1_2.b = p2_2.b))
+                           ->  Seq Scan on prt1_p2 prt1_2
+                           ->  Hash
+                                 ->  Seq Scan on prt2_p2 p2_2
+                     ->  Hash
+                           ->  Seq Scan on prt2_p2 p3_2
+               ->  Hash
+                     ->  Seq Scan on prt1_p2 p4_2
+         ->  Hash Full Join
+               Hash Cond: ((COALESCE(COALESCE(prt1_3.a, p2_3.a), p3_3.a) = p4_3.a) AND (COALESCE(COALESCE(prt1_3.b, p2_3.b), p3_3.b) = p4_3.b))
+               Filter: ((COALESCE(COALESCE(COALESCE(prt1_3.a, p2_3.a), p3_3.a), p4_3.a) >= 490) AND (COALESCE(COALESCE(COALESCE(prt1_3.a, p2_3.a), p3_3.a), p4_3.a) <= 510))
+               ->  Hash Full Join
+                     Hash Cond: ((COALESCE(prt1_3.a, p2_3.a) = p3_3.a) AND (COALESCE(prt1_3.b, p2_3.b) = p3_3.b))
+                     ->  Hash Full Join
+                           Hash Cond: ((prt1_3.a = p2_3.a) AND (prt1_3.b = p2_3.b))
+                           ->  Seq Scan on prt1_p3 prt1_3
+                           ->  Hash
+                                 ->  Seq Scan on prt2_p3 p2_3
+                     ->  Hash
+                           ->  Seq Scan on prt2_p3 p3_3
+               ->  Hash
+                     ->  Seq Scan on prt1_p3 p4_3
+(44 rows)
+
+SELECT COUNT(*) FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b) FULL JOIN prt2 p3(b,a,c) USING (a, b) FULL JOIN prt1 p4 (a,b,c) USING (a, b)
+  WHERE a BETWEEN 490 AND 510;
+ count 
+-------
+    14
+(1 row)
+
 -- Cases with non-nullable expressions in subquery results;
 -- make sure these go to null as expected
 EXPLAIN (COSTS OFF)

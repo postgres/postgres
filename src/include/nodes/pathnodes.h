@@ -615,6 +615,9 @@ typedef struct PartitionSchemeData *PartitionScheme;
  * that expression goes in the partexprs[i] list if the base relation
  * is not nullable by this join or any lower outer join, or in the
  * nullable_partexprs[i] list if the base relation is nullable.
+ * Furthermore, FULL JOINs add extra nullable_partexprs expressions
+ * corresponding to COALESCE expressions of the left and right join columns,
+ * to simplify matching join clauses to those lists.
  *----------
  */
 typedef enum RelOptKind
