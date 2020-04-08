@@ -2787,28 +2787,6 @@ _outDefElem(StringInfo str, const DefElem *node)
 }
 
 static void
-_outTransactionStmt(StringInfo str, const TransactionStmt *node)
-{
-	WRITE_NODE_TYPE("TRANSACTIONSTMT");
-
-	WRITE_STRING_FIELD(savepoint_name);
-	WRITE_STRING_FIELD(gid);
-	WRITE_NODE_FIELD(options);
-	WRITE_BOOL_FIELD(chain);
-	WRITE_ENUM_FIELD(kind, TransactionStmtKind);
-	WRITE_NODE_FIELD(wait);
-}
-
-static void
-_outWaitClause(StringInfo str, const WaitClause *node)
-{
-	WRITE_NODE_TYPE("WAITCLAUSE");
-
-	WRITE_STRING_FIELD(lsn);
-	WRITE_UINT_FIELD(timeout);
-}
-
-static void
 _outTableLikeClause(StringInfo str, const TableLikeClause *node)
 {
 	WRITE_NODE_TYPE("TABLELIKECLAUSE");
@@ -4357,12 +4335,6 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_PartitionRangeDatum:
 				_outPartitionRangeDatum(str, obj);
-				break;
-			case T_TransactionStmt:
-				_outTransactionStmt(str, obj);
-				break;
-			case T_WaitClause:
-				_outWaitClause(str, obj);
 				break;
 
 			default:

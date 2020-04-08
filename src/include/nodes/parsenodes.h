@@ -1432,17 +1432,6 @@ typedef struct OnConflictClause
 } OnConflictClause;
 
 /*
- * WaitClause -
- *		representation of WAIT FOR clause for BEGIN and START TRANSACTION.
- */
-typedef struct WaitClause
-{
-	NodeTag		type;
-	char	   *lsn;			/* LSN to wait for */
-	int			timeout;		/* Number of milliseconds to limit wait time */
-} WaitClause;
-
-/*
  * CommonTableExpr -
  *	   representation of WITH list element
  *
@@ -3071,7 +3060,6 @@ typedef struct TransactionStmt
 	char	   *savepoint_name; /* for savepoint commands */
 	char	   *gid;			/* for two-phase-commit related commands */
 	bool		chain;			/* AND CHAIN option */
-	Node	   *wait;			/* WAIT FOR clause */
 } TransactionStmt;
 
 /* ----------------------

@@ -372,6 +372,8 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * less than the specified time when WaitLatch is terminated early by a
 	 * non-query-canceling signal such as SIGHUP.
 	 */
+#define GetNowFloat()	((float8) GetCurrentTimestamp() / 1000000.0)
+
 	endtime = GetNowFloat() + secs;
 
 	for (;;)

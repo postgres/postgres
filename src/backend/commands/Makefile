@@ -57,7 +57,6 @@ OBJS = \
 	user.o \
 	vacuum.o \
 	variable.o \
-	view.o \
-	wait.o
+	view.o
 
 include $(top_srcdir)/src/backend/common.mk

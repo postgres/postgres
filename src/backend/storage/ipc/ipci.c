@@ -22,7 +22,6 @@
 #include "access/subtrans.h"
 #include "access/twophase.h"
 #include "commands/async.h"
-#include "commands/wait.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
@@ -148,7 +147,6 @@ CreateSharedMemoryAndSemaphores(void)
 		size = add_size(size, BTreeShmemSize());
 		size = add_size(size, SyncScanShmemSize());
 		size = add_size(size, AsyncShmemSize());
-		size = add_size(size, WaitLSNShmemSize());
 #ifdef EXEC_BACKEND
 		size = add_size(size, ShmemBackendArraySize());
 #endif
@@ -265,11 +263,6 @@ CreateSharedMemoryAndSemaphores(void)
 	BTreeShmemInit();
 	SyncScanShmemInit();
 	AsyncShmemInit();
-
-	/*
-	 * Init array of Latches in shared memory for WAIT
-	 */
-	WaitLSNShmemInit();
 
 #ifdef EXEC_BACKEND
 

@@ -3748,21 +3748,9 @@ _copyTransactionStmt(const TransactionStmt *from)
 	COPY_STRING_FIELD(savepoint_name);
 	COPY_STRING_FIELD(gid);
 	COPY_SCALAR_FIELD(chain);
-	COPY_NODE_FIELD(wait);
 
 	return newnode;
 }
-
-static WaitClause *
-_copyWaitClause(const WaitClause *from)
-{
-	WaitClause *newnode = makeNode(WaitClause);
-
-	COPY_STRING_FIELD(lsn);
-	COPY_SCALAR_FIELD(timeout);
-
-	return newnode;
-};
 
 static CompositeTypeStmt *
 _copyCompositeTypeStmt(const CompositeTypeStmt *from)
@@ -5350,9 +5338,6 @@ copyObjectImpl(const void *from)
 			break;
 		case T_TransactionStmt:
 			retval = _copyTransactionStmt(from);
-			break;
-		case T_WaitClause:
-			retval = _copyWaitClause(from);
 			break;
 		case T_CompositeTypeStmt:
 			retval = _copyCompositeTypeStmt(from);

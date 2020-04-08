@@ -57,7 +57,6 @@
 #include "commands/user.h"
 #include "commands/vacuum.h"
 #include "commands/view.h"
-#include "commands/wait.h"
 #include "miscadmin.h"
 #include "parser/parse_utilcmd.h"
 #include "postmaster/bgwriter.h"
@@ -592,18 +591,6 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 					case TRANS_STMT_START:
 						{
 							ListCell   *lc;
-							WaitClause *waitstmt = (WaitClause *) stmt->wait;
-
-							/* WAIT FOR cannot be used on master */
-							if (stmt->wait && !RecoveryInProgress())
-								ereport(ERROR,
-										(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										 errmsg("WAIT FOR can only be "
-												"used on standby")));
-
-							/* If needed to WAIT FOR something but failed */
-							if (stmt->wait && WaitLSNMain(waitstmt, dest) == 0)
-								break;
 
 							BeginTransactionBlock();
 							foreach(lc, stmt->options)

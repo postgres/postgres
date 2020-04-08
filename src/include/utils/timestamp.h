@@ -109,6 +109,4 @@ extern int	date2isoyearday(int year, int mon, int mday);
 
 extern bool TimestampTimestampTzRequiresRewrite(void);
 
-#define GetNowFloat() ((float8) GetCurrentTimestamp() / 1000000.0)
-
 #endif							/* TIMESTAMP_H */

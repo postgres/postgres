@@ -492,7 +492,6 @@ typedef enum NodeTag
 	T_StartReplicationCmd,
 	T_TimeLineHistoryCmd,
 	T_SQLCmd,
-	T_WaitClause,
 
 	/*
 	 * TAGS FOR RANDOM OTHER STUFF
