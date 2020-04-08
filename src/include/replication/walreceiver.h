@@ -16,6 +16,7 @@
 #include "access/xlogdefs.h"
 #include "getaddrinfo.h"		/* for NI_MAXHOST */
 #include "pgtime.h"
+#include "port/atomics.h"
 #include "replication/logicalproto.h"
 #include "replication/walsender.h"
 #include "storage/latch.h"
@@ -73,19 +74,19 @@ typedef struct
 	TimeLineID	receiveStartTLI;
 
 	/*
-	 * receivedUpto-1 is the last byte position that has already been
+	 * flushedUpto-1 is the last byte position that has already been
 	 * received, and receivedTLI is the timeline it came from.  At the first
 	 * startup of walreceiver, these are set to receiveStart and
 	 * receiveStartTLI. After that, walreceiver updates these whenever it
 	 * flushes the received WAL to disk.
 	 */
-	XLogRecPtr	receivedUpto;
+	XLogRecPtr	flushedUpto;
 	TimeLineID	receivedTLI;
 
 	/*
 	 * latestChunkStart is the starting byte position of the current "batch"
 	 * of received WAL.  It's actually the same as the previous value of
-	 * receivedUpto before the last flush to disk.  Startup process can use
+	 * flushedUpto before the last flush to disk.  Startup process can use
 	 * this to detect whether it's keeping up or not.
 	 */
 	XLogRecPtr	latestChunkStart;
@@ -140,6 +141,14 @@ typedef struct
 	Latch	   *latch;
 
 	slock_t		mutex;			/* locks shared variables shown above */
+
+	/*
+	 * Like flushedUpto, but advanced after writing and before flushing,
+	 * without the need to acquire the spin lock.  Data can be read by another
+	 * process up to this point, but shouldn't be used for data integrity
+	 * purposes.
+	 */
+	pg_atomic_uint64 writtenUpto;
 
 	/*
 	 * force walreceiver reply?  This doesn't need to be locked; memory
@@ -322,7 +331,8 @@ extern bool WalRcvRunning(void);
 extern void RequestXLogStreaming(TimeLineID tli, XLogRecPtr recptr,
 								 const char *conninfo, const char *slotname,
 								 bool create_temp_slot);
-extern XLogRecPtr GetWalRcvWriteRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI);
+extern XLogRecPtr GetWalRcvFlushRecPtr(XLogRecPtr *latestChunkStart, TimeLineID *receiveTLI);
+extern XLogRecPtr GetWalRcvWriteRecPtr(void);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
 extern void WalRcvForceReply(void);
