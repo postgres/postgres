@@ -129,7 +129,7 @@
       <entry><structfield>calls</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry></entry>
-      <entry>Number of times executed</entry>
+      <entry>Number of times the statement was executed</entry>
      </row>
 
      <row>
@@ -397,6 +397,16 @@
    each <structfield>queryid</structfield> are preserved.  If this happens, consider
    reducing <varname>pg_stat_statements.max</varname> to prevent
    recurrences.
+  </para>
+
+  <para>
+   <structfield>plans</structfield> and <structfield>calls</structfield> aren't
+   always expected to match because planning and execution statistics are
+   updated at their respective end phase, and only for successful operations.
+   For example, if a statement is successfully planned but fails during
+   the execution phase, only its planning statistics will be updated.
+   If planning is skipped because a cached plan is used, only its execution
+   statistics will be updated.
   </para>
  </sect2>
 
