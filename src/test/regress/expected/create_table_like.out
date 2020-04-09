@@ -159,14 +159,15 @@ SELECT * FROM test_like_gen_3;
 (1 row)
 
 DROP TABLE test_like_gen_1, test_like_gen_2, test_like_gen_3;
-CREATE TABLE test_like_4 (a int, b int DEFAULT 42, c int GENERATED ALWAYS AS (a * 2) STORED);
+-- also test generated column with a "forward" reference (bug #16342)
+CREATE TABLE test_like_4 (b int DEFAULT 42, c int GENERATED ALWAYS AS (a * 2) STORED, a int);
 \d test_like_4
                           Table "public.test_like_4"
  Column |  Type   | Collation | Nullable |              Default               
 --------+---------+-----------+----------+------------------------------------
- a      | integer |           |          | 
  b      | integer |           |          | 42
  c      | integer |           |          | generated always as (a * 2) stored
+ a      | integer |           |          | 
 
 CREATE TABLE test_like_4a (LIKE test_like_4);
 CREATE TABLE test_like_4b (LIKE test_like_4 INCLUDING DEFAULTS);
@@ -176,12 +177,12 @@ CREATE TABLE test_like_4d (LIKE test_like_4 INCLUDING DEFAULTS INCLUDING GENERAT
             Table "public.test_like_4a"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           |          | 
  b      | integer |           |          | 
  c      | integer |           |          | 
+ a      | integer |           |          | 
 
-INSERT INTO test_like_4a VALUES(11);
-TABLE test_like_4a;
+INSERT INTO test_like_4a (a) VALUES(11);
+SELECT a, b, c FROM test_like_4a;
  a  | b | c 
 ----+---+---
  11 |   |  
@@ -191,12 +192,12 @@ TABLE test_like_4a;
             Table "public.test_like_4b"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           |          | 
  b      | integer |           |          | 42
  c      | integer |           |          | 
+ a      | integer |           |          | 
 
-INSERT INTO test_like_4b VALUES(11);
-TABLE test_like_4b;
+INSERT INTO test_like_4b (a) VALUES(11);
+SELECT a, b, c FROM test_like_4b;
  a  | b  | c 
 ----+----+---
  11 | 42 |  
@@ -206,12 +207,12 @@ TABLE test_like_4b;
                          Table "public.test_like_4c"
  Column |  Type   | Collation | Nullable |              Default               
 --------+---------+-----------+----------+------------------------------------
- a      | integer |           |          | 
  b      | integer |           |          | 
  c      | integer |           |          | generated always as (a * 2) stored
+ a      | integer |           |          | 
 
-INSERT INTO test_like_4c VALUES(11);
-TABLE test_like_4c;
+INSERT INTO test_like_4c (a) VALUES(11);
+SELECT a, b, c FROM test_like_4c;
  a  | b | c  
 ----+---+----
  11 |   | 22
@@ -221,12 +222,12 @@ TABLE test_like_4c;
                          Table "public.test_like_4d"
  Column |  Type   | Collation | Nullable |              Default               
 --------+---------+-----------+----------+------------------------------------
- a      | integer |           |          | 
  b      | integer |           |          | 42
  c      | integer |           |          | generated always as (a * 2) stored
+ a      | integer |           |          | 
 
-INSERT INTO test_like_4d VALUES(11);
-TABLE test_like_4d;
+INSERT INTO test_like_4d (a) VALUES(11);
+SELECT a, b, c FROM test_like_4d;
  a  | b  | c  
 ----+----+----
  11 | 42 | 22
