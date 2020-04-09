@@ -2337,22 +2337,24 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, bool highlightall,
 			/* Mark the chosen fragments (covers) */
 			mark_fragment(prs, highlightall, startpos, endpos);
 			num_f++;
-			/* exclude overlapping covers */
+			/* Exclude covers overlapping this one from future consideration */
 			for (i = 0; i < numcovers; i++)
 			{
 				if (i != minI &&
-					((covers[i].startpos >= covers[minI].startpos &&
-					  covers[i].startpos <= covers[minI].endpos) ||
-					 (covers[i].endpos >= covers[minI].startpos &&
-					  covers[i].endpos <= covers[minI].endpos)))
+					((covers[i].startpos >= startpos &&
+					  covers[i].startpos <= endpos) ||
+					 (covers[i].endpos >= startpos &&
+					  covers[i].endpos <= endpos) ||
+					 (covers[i].startpos < startpos &&
+					  covers[i].endpos > endpos)))
 					covers[i].excluded = true;
 			}
 		}
 		else
-			break;
+			break;				/* no selectable covers remain */
 	}
 
-	/* show at least min_words if we have not marked anything */
+	/* show the first min_words words if we have not marked anything */
 	if (num_f <= 0)
 	{
 		startpos = endpos = curlen = 0;
@@ -2510,6 +2512,7 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, bool highlightall,
 		if (bestlen < 0)
 		{
 			curlen = 0;
+			pose = 0;
 			for (i = 0; i < prs->curwords && curlen < min_words; i++)
 			{
 				if (!NONWORDTOKEN(prs->words[i].type))
