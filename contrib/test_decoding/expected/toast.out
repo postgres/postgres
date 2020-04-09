@@ -305,6 +305,10 @@ ALTER TABLE toasted_several REPLICA IDENTITY FULL;
 ALTER TABLE toasted_several ALTER COLUMN toasted_key SET STORAGE EXTERNAL;
 ALTER TABLE toasted_several ALTER COLUMN toasted_col1 SET STORAGE EXTERNAL;
 ALTER TABLE toasted_several ALTER COLUMN toasted_col2 SET STORAGE EXTERNAL;
+-- Change the storage of the index back to EXTENDED, separately from
+-- the table.  This is currently not doable via DDL, but it is
+-- supported internally.
+UPDATE pg_attribute SET attstorage = 'x' WHERE attrelid = 'toasted_several_pkey'::regclass AND attname = 'toasted_key';
 INSERT INTO toasted_several(toasted_key) VALUES(repeat('9876543210', 10000));
 SELECT pg_column_size(toasted_key) > 2^16 FROM toasted_several;
  ?column? 

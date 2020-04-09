@@ -2172,6 +2172,26 @@ where oid = 'test_storage'::regclass;
  t
 (1 row)
 
+-- test that SET STORAGE propagates to index correctly
+create index test_storage_idx on test_storage (b, a);
+alter table test_storage alter column a set storage external;
+\d+ test_storage
+                                Table "public.test_storage"
+ Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------+----------+--------------+-------------
+ a      | text    |           |          |         | external |              | 
+ b      | integer |           |          | 0       | plain    |              | 
+Indexes:
+    "test_storage_idx" btree (b, a)
+
+\d+ test_storage_idx
+                Index "public.test_storage_idx"
+ Column |  Type   | Key? | Definition | Storage  | Stats target 
+--------+---------+------+------------+----------+--------------
+ b      | integer | yes  | b          | plain    | 
+ a      | text    | yes  | a          | external | 
+btree, for table "public.test_storage"
+
 -- ALTER COLUMN TYPE with a check constraint and a child table (bug #13779)
 CREATE TABLE test_inh_check (a float check (a > 10.2), b float);
 CREATE TABLE test_inh_check_child() INHERITS(test_inh_check);
