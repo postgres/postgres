@@ -1942,9 +1942,10 @@ prsd_end(PG_FUNCTION_ARGS)
 #define INTERESTINGWORD(j) \
 	(prs->words[j].item && !prs->words[j].repeated)
 
-/* Don't want to end at a non-word or a short word */
+/* Don't want to end at a non-word or a short word, unless interesting */
 #define BADENDPOINT(j) \
-	(NOENDTOKEN(prs->words[j].type) || prs->words[j].len <= shortword)
+	((NOENDTOKEN(prs->words[j].type) || prs->words[j].len <= shortword) && \
+	 !INTERESTINGWORD(j))
 
 typedef struct
 {
@@ -2003,75 +2004,97 @@ checkcondition_HL(void *opaque, QueryOperand *val, ExecPhraseData *data)
 	return false;
 }
 
+/*
+ * hlFirstIndex: find first index >= pos containing any word used in query
+ *
+ * Returns -1 if no such index
+ */
+static int
+hlFirstIndex(HeadlineParsedText *prs, TSQuery query, int pos)
+{
+	int			i;
 
+	/* For each word ... */
+	for (i = pos; i < prs->curwords; i++)
+	{
+		/* ... scan the query to see if this word matches any operand */
+		QueryItem  *item = GETQUERY(query);
+		int			j;
+
+		for (j = 0; j < query->size; j++)
+		{
+			if (item->type == QI_VAL &&
+				prs->words[i].item == &item->qoperand)
+				return i;
+			item++;
+		}
+	}
+	return -1;
+}
+
+/*
+ * hlCover: try to find a substring of prs' word list that satisfies query
+ *
+ * At entry, *p must be the first word index to consider (initialize this to
+ * zero, or to the next index after a previous successful search).
+ *
+ * On success, sets *p to first word index and *q to last word index of the
+ * cover substring, and returns true.
+ *
+ * The result is a minimal cover, in the sense that both *p and *q will be
+ * words used in the query.
+ */
 static bool
 hlCover(HeadlineParsedText *prs, TSQuery query, int *p, int *q)
 {
-	int			i,
-				j;
-	QueryItem  *item = GETQUERY(query);
-	int			pos = *p;
+	int			pmin,
+				pmax,
+				nextpmin,
+				nextpmax;
+	hlCheck		ch;
 
-	*q = -1;
-	*p = INT_MAX;
-
-	for (j = 0; j < query->size; j++)
+	/*
+	 * We look for the earliest, shortest substring of prs->words that
+	 * satisfies the query.  Both the pmin and pmax indices must be words
+	 * appearing in the query; there's no point in trying endpoints in between
+	 * such points.
+	 */
+	pmin = hlFirstIndex(prs, query, *p);
+	while (pmin >= 0)
 	{
-		if (item->type != QI_VAL)
+		/* This useless assignment just keeps stupider compilers quiet */
+		nextpmin = -1;
+		/* Consider substrings starting at pmin */
+		ch.words = &(prs->words[pmin]);
+		/* Consider the length-one substring first, then longer substrings */
+		pmax = pmin;
+		do
 		{
-			item++;
-			continue;
-		}
-		for (i = pos; i < prs->curwords; i++)
-		{
-			if (prs->words[i].item == &item->qoperand)
+			/* Try to match query against pmin .. pmax substring */
+			ch.len = pmax - pmin + 1;
+			if (TS_execute(GETQUERY(query), &ch,
+						   TS_EXEC_EMPTY, checkcondition_HL))
 			{
-				if (i > *q)
-					*q = i;
-				break;
+				*p = pmin;
+				*q = pmax;
+				return true;
 			}
+			/* Nope, so advance pmax to next feasible endpoint */
+			nextpmax = hlFirstIndex(prs, query, pmax + 1);
+
+			/*
+			 * If this is our first advance past pmin, then the result is also
+			 * the next feasible value of pmin; remember it to save a
+			 * redundant search.
+			 */
+			if (pmax == pmin)
+				nextpmin = nextpmax;
+			pmax = nextpmax;
 		}
-		item++;
+		while (pmax >= 0);
+		/* No luck here, so try next feasible startpoint */
+		pmin = nextpmin;
 	}
-
-	if (*q < 0)
-		return false;
-
-	item = GETQUERY(query);
-	for (j = 0; j < query->size; j++)
-	{
-		if (item->type != QI_VAL)
-		{
-			item++;
-			continue;
-		}
-		for (i = *q; i >= pos; i--)
-		{
-			if (prs->words[i].item == &item->qoperand)
-			{
-				if (i < *p)
-					*p = i;
-				break;
-			}
-		}
-		item++;
-	}
-
-	if (*p <= *q)
-	{
-		hlCheck		ch;
-
-		ch.words = &(prs->words[*p]);
-		ch.len = *q - *p + 1;
-		if (TS_execute(GETQUERY(query), &ch, TS_EXEC_EMPTY, checkcondition_HL))
-			return true;
-		else
-		{
-			(*p)++;
-			return hlCover(prs, query, p, q);
-		}
-	}
-
 	return false;
 }
 
@@ -2357,11 +2380,12 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, bool highlightall,
 	int			bestb = -1,
 				beste = -1;
 	int			bestlen = -1;
+	bool		bestcover = false;
 	int			pose,
 				posb,
 				poslen,
 				curlen;
-
+	bool		poscover;
 	int			i;
 
 	if (!highlightall)
@@ -2385,14 +2409,6 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, bool highlightall,
 				if (INTERESTINGWORD(i))
 					poslen++;
 				pose = i;
-			}
-
-			/* XXX this optimization seems unnecessary and wrong */
-			if (poslen < bestlen && !BADENDPOINT(beste))
-			{
-				/* better cover already found, so try next cover */
-				p++;
-				continue;
 			}
 
 			if (curlen < max_words)
@@ -2449,29 +2465,38 @@ mark_hl_words(HeadlineParsedText *prs, TSQuery query, bool highlightall,
 					i = q;
 				for (; curlen > min_words; i--)
 				{
+					if (!BADENDPOINT(i))
+						break;
 					if (!NONWORDTOKEN(prs->words[i].type))
 						curlen--;
 					if (INTERESTINGWORD(i))
 						poslen--;
-					pose = i;
-					if (!BADENDPOINT(i))
-						break;
+					pose = i - 1;
 				}
 			}
 
 			/*
-			 * Adopt this headline if it's the first, or if it has more
-			 * interesting words and isn't ending at a bad endpoint, or if it
-			 * replaces a bad endpoint with a good one (XXX even if it has
-			 * fewer interesting words?  Really?)
+			 * Check whether the proposed headline includes the original
+			 * cover; it might not if we trimmed it due to max_words.
 			 */
-			if (bestlen < 0 ||
-				(poslen > bestlen && !BADENDPOINT(pose)) ||
-				(!BADENDPOINT(pose) && BADENDPOINT(beste)))
+			poscover = (posb <= p && pose >= q);
+
+			/*
+			 * Adopt this headline if it's better than the last one, giving
+			 * highest priority to headlines including the cover, then to
+			 * headlines with more interesting words, then to headlines with
+			 * good stopping points.  (Since bestlen is initially -1, we will
+			 * certainly adopt the first headline.)
+			 */
+			if (poscover > bestcover ||
+				(poscover == bestcover && poslen > bestlen) ||
+				(poscover == bestcover && poslen == bestlen &&
+				 !BADENDPOINT(pose) && BADENDPOINT(beste)))
 			{
 				bestb = posb;
 				beste = pose;
 				bestlen = poslen;
+				bestcover = poscover;
 			}
 
 			/* move p to generate the next cover */

@@ -1301,12 +1301,12 @@ Water, water, every where,
   Nor any drop to drink.
 S. T. Coleridge (1772-1834)
 ', phraseto_tsquery('english', 'painted Ocean'));
-           ts_headline            
-----------------------------------
- <b>painted</b> <b>Ocean</b>.    +
- Water, water, every where       +
-   And all the boards did shrink;+
- Water, water, every
+              ts_headline              
+---------------------------------------
+ <b>painted</b> Ship                  +
+   Upon a <b>painted</b> <b>Ocean</b>.+
+ Water, water, every where            +
+   And all the boards did shrink
 (1 row)
 
 SELECT ts_headline('english', '
@@ -1326,6 +1326,15 @@ S. T. Coleridge (1772-1834)
    Upon a <b>painted</b> Ocean.             +
  Water, water, every where                  +
    And all the boards
+(1 row)
+
+SELECT ts_headline('english',
+'Lorem ipsum urna.  Nullam nullam ullamcorper urna.',
+to_tsquery('english','Lorem') && phraseto_tsquery('english','ullamcorper urna'),
+'MaxWords=100, MinWords=1');
+                                  ts_headline                                  
+-------------------------------------------------------------------------------
+ <b>Lorem</b> ipsum <b>urna</b>.  Nullam nullam <b>ullamcorper</b> <b>urna</b>
 (1 row)
 
 SELECT ts_headline('english', '
@@ -1364,15 +1373,15 @@ SELECT ts_headline('simple', '1 2 3 1 3'::text, '1 <-> 3', 'MaxWords=2, MinWords
 (1 row)
 
 SELECT ts_headline('simple', '1 2 3 1 3'::text, '1 & 3', 'MaxWords=4, MinWords=1');
-         ts_headline          
-------------------------------
- <b>1</b> 2 <b>3</b> <b>1</b>
+     ts_headline     
+---------------------
+ <b>1</b> 2 <b>3</b>
 (1 row)
 
 SELECT ts_headline('simple', '1 2 3 1 3'::text, '1 <-> 3', 'MaxWords=4, MinWords=1');
-    ts_headline    
--------------------
- <b>1</b> <b>3</b>
+        ts_headline         
+----------------------------
+ <b>3</b> <b>1</b> <b>3</b>
 (1 row)
 
 --Check if headline fragments work
@@ -1465,6 +1474,16 @@ S. T. Coleridge (1772-1834)
    And all the boards did shrink;          +
  Water, water, every where***drop to drink.+
  S. T. <b>Coleridge</b>
+(1 row)
+
+--Fragments with phrase search
+SELECT ts_headline('english',
+'Lorem ipsum urna.  Nullam nullam ullamcorper urna.',
+to_tsquery('english','Lorem') && phraseto_tsquery('english','ullamcorper urna'),
+'MaxFragments=100, MaxWords=100, MinWords=1');
+                                  ts_headline                                  
+-------------------------------------------------------------------------------
+ <b>Lorem</b> ipsum <b>urna</b>.  Nullam nullam <b>ullamcorper</b> <b>urna</b>
 (1 row)
 
 --Rewrite sub system
