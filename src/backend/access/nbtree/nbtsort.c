@@ -71,6 +71,7 @@
 #define PARALLEL_KEY_TUPLESORT_SPOOL2	UINT64CONST(0xA000000000000003)
 #define PARALLEL_KEY_QUERY_TEXT			UINT64CONST(0xA000000000000004)
 #define PARALLEL_KEY_WAL_USAGE			UINT64CONST(0xA000000000000005)
+#define PARALLEL_KEY_BUFFER_USAGE		UINT64CONST(0xA000000000000006)
 
 /*
  * DISABLE_LEADER_PARTICIPATION disables the leader's participation in
@@ -194,6 +195,7 @@ typedef struct BTLeader
 	Sharedsort *sharedsort2;
 	Snapshot	snapshot;
 	WalUsage   *walusage;
+	BufferUsage *bufferusage;
 } BTLeader;
 
 /*
@@ -1457,6 +1459,7 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	BTSpool    *btspool = buildstate->spool;
 	BTLeader   *btleader = (BTLeader *) palloc0(sizeof(BTLeader));
 	WalUsage   *walusage;
+	BufferUsage *bufferusage;
 	bool		leaderparticipates = true;
 	char	   *sharedquery;
 	int			querylen;
@@ -1510,15 +1513,18 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	}
 
 	/*
-	 * Estimate space for WalUsage -- PARALLEL_KEY_WAL_USAGE
+	 * Estimate space for WalUsage and BufferUsage -- PARALLEL_KEY_WAL_USAGE
+	 * and PARALLEL_KEY_BUFFER_USAGE.
 	 *
-	 * WalUsage during execution of maintenance command can be used by an
-	 * extension that reports the WAL usage, such as pg_stat_statements. We
-	 * have no way of knowing whether anyone's looking at pgWalUsage, so do it
-	 * unconditionally.
+	 * If there are no extensions loaded that care, we could skip this.  We
+	 * have no way of knowing whether anyone's looking at pgWalUsage or
+	 * pgBufferUsage, so do it unconditionally.
 	 */
 	shm_toc_estimate_chunk(&pcxt->estimator,
 						   mul_size(sizeof(WalUsage), pcxt->nworkers));
+	shm_toc_estimate_keys(&pcxt->estimator, 1);
+	shm_toc_estimate_chunk(&pcxt->estimator,
+						   mul_size(sizeof(BufferUsage), pcxt->nworkers));
 	shm_toc_estimate_keys(&pcxt->estimator, 1);
 
 	/* Finally, estimate PARALLEL_KEY_QUERY_TEXT space */
@@ -1592,10 +1598,16 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	memcpy(sharedquery, debug_query_string, querylen + 1);
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_QUERY_TEXT, sharedquery);
 
-	/* Allocate space for each worker's WalUsage; no need to initialize */
+	/*
+	 * Allocate space for each worker's WalUsage and BufferUsage; no need to
+	 * initialize.
+	 */
 	walusage = shm_toc_allocate(pcxt->toc,
 								mul_size(sizeof(WalUsage), pcxt->nworkers));
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_WAL_USAGE, walusage);
+	bufferusage = shm_toc_allocate(pcxt->toc,
+								   mul_size(sizeof(BufferUsage), pcxt->nworkers));
+	shm_toc_insert(pcxt->toc, PARALLEL_KEY_BUFFER_USAGE, bufferusage);
 
 	/* Launch workers, saving status for leader/caller */
 	LaunchParallelWorkers(pcxt);
@@ -1608,6 +1620,7 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	btleader->sharedsort2 = sharedsort2;
 	btleader->snapshot = snapshot;
 	btleader->walusage = walusage;
+	btleader->bufferusage = bufferusage;
 
 	/* If no workers were successfully launched, back out (do serial build) */
 	if (pcxt->nworkers_launched == 0)
@@ -1646,7 +1659,7 @@ _bt_end_parallel(BTLeader *btleader)
 	 * or we might get incomplete data.)
 	 */
 	for (i = 0; i < btleader->pcxt->nworkers_launched; i++)
-		InstrAccumParallelQuery(NULL, &btleader->walusage[i]);
+		InstrAccumParallelQuery(&btleader->bufferusage[i], &btleader->walusage[i]);
 
 	/* Free last reference to MVCC snapshot, if one was used */
 	if (IsMVCCSnapshot(btleader->snapshot))
@@ -1779,6 +1792,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	LOCKMODE	heapLockmode;
 	LOCKMODE	indexLockmode;
 	WalUsage   *walusage;
+	BufferUsage *bufferusage;
 	int			sortmem;
 
 #ifdef BTREE_BUILD_STATS
@@ -1848,9 +1862,11 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	_bt_parallel_scan_and_sort(btspool, btspool2, btshared, sharedsort,
 							   sharedsort2, sortmem, false);
 
-	/* Report WAL usage during parallel execution */
+	/* Report WAL/buffer usage during parallel execution */
+	bufferusage = shm_toc_lookup(toc, PARALLEL_KEY_BUFFER_USAGE, false);
 	walusage = shm_toc_lookup(toc, PARALLEL_KEY_WAL_USAGE, false);
-	InstrEndParallelQuery(NULL, &walusage[ParallelWorkerNumber]);
+	InstrEndParallelQuery(&bufferusage[ParallelWorkerNumber],
+						  &walusage[ParallelWorkerNumber]);
 
 #ifdef BTREE_BUILD_STATS
 	if (log_btree_build_stats)

@@ -188,11 +188,8 @@ InstrStartParallelQuery(void)
 void
 InstrEndParallelQuery(BufferUsage *bufusage, WalUsage *walusage)
 {
-	if (bufusage)
-	{
-		memset(bufusage, 0, sizeof(BufferUsage));
-		BufferUsageAccumDiff(bufusage, &pgBufferUsage, &save_pgBufferUsage);
-	}
+	memset(bufusage, 0, sizeof(BufferUsage));
+	BufferUsageAccumDiff(bufusage, &pgBufferUsage, &save_pgBufferUsage);
 	memset(walusage, 0, sizeof(WalUsage));
 	WalUsageAccumDiff(walusage, &pgWalUsage, &save_pgWalUsage);
 }
@@ -201,8 +198,7 @@ InstrEndParallelQuery(BufferUsage *bufusage, WalUsage *walusage)
 void
 InstrAccumParallelQuery(BufferUsage *bufusage, WalUsage *walusage)
 {
-	if (bufusage)
-		BufferUsageAdd(&pgBufferUsage, bufusage);
+	BufferUsageAdd(&pgBufferUsage, bufusage);
 	WalUsageAdd(&pgWalUsage, walusage);
 }
 
