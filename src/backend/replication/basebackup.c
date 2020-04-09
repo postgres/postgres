@@ -266,6 +266,14 @@ static const struct exclude_list_item excludeFiles[] =
 	{BACKUP_LABEL_FILE, false},
 	{TABLESPACE_MAP, false},
 
+	/*
+	 * If there's a backup_manifest, it belongs to a backup that was used to
+	 * start this server. It is *not* correct for this backup. Our
+	 * backup_manifest is injected into the backup separately if users want
+	 * it.
+	 */
+	{"backup_manifest", false},
+
 	{"postmaster.pid", false},
 	{"postmaster.opts", false},
 
