@@ -1295,64 +1295,75 @@ ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type
     <itemizedlist  spacing="compact" mark="bullet">
      <listitem>
       <para>
-       <literal>StartSel</literal>, <literal>StopSel</literal>: the strings with
-       which to delimit query words appearing in the document, to distinguish
-       them from other excerpted words.  You must double-quote these strings
-       if they contain spaces or commas.
+       <literal>MaxWords</literal>, <literal>MinWords</literal> (integers):
+       these numbers determine the longest and shortest headlines to output.
+       The default values are 35 and 15.
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>MaxWords</literal>, <literal>MinWords</literal>: these numbers
-       determine the longest and shortest headlines to output.
+       <literal>ShortWord</literal> (integer): words of this length or less
+       will be dropped at the start and end of a headline, unless they are
+       query terms.  The default value of three eliminates common English
+       articles.
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>ShortWord</literal>: words of this length or less will be
-       dropped at the start and end of a headline. The default
-       value of three eliminates common English articles.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       <literal>HighlightAll</literal>: Boolean flag;  if
+       <literal>HighlightAll</literal> (boolean): if
        <literal>true</literal> the whole document will be used as the
-       headline, ignoring the preceding three parameters.
+       headline, ignoring the preceding three parameters.  The default
+       is <literal>false</literal>.
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>MaxFragments</literal>: maximum number of text excerpts
-       or fragments to display.  The default value of zero selects a
-       non-fragment-oriented headline generation method.  A value greater than
-       zero selects fragment-based headline generation.  This method
-       finds text fragments with as many query words as possible and
-       stretches those fragments around the query words.  As a result
-       query words are close to the middle of each fragment and have words on
-       each side. Each fragment will be of at most <literal>MaxWords</literal> and
-       words of length <literal>ShortWord</literal> or less are dropped at the start
-       and end of each fragment. If not all query words are found in the
-       document, then a single fragment of the first <literal>MinWords</literal>
-       in the document will be displayed.
+       <literal>MaxFragments</literal> (integer): maximum number of text
+       fragments to display.  The default value of zero selects a
+       non-fragment-based headline generation method.  A value greater
+       than zero selects fragment-based headline generation (see below).
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>FragmentDelimiter</literal>: When more than one fragment is
-       displayed, the fragments will be separated by this string.
+       <literal>StartSel</literal>, <literal>StopSel</literal> (strings):
+       the strings with which to delimit query words appearing in the
+       document, to distinguish them from other excerpted words.  The
+       default values are <quote><literal>&lt;b&gt;</literal></quote> and
+       <quote><literal>&lt;/b&gt;</literal></quote>, which can be suitable
+       for HTML output.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <literal>FragmentDelimiter</literal> (string): When more than one
+       fragment is displayed, the fragments will be separated by this string.
+       The default is <quote><literal> ... </literal></quote>.
       </para>
      </listitem>
     </itemizedlist>
 
     These option names are recognized case-insensitively.
-    Any unspecified options receive these defaults:
+    You must double-quote string values if they contain spaces or commas.
+   </para>
 
-<programlisting>
-StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;,
-MaxWords=35, MinWords=15, ShortWord=3, HighlightAll=FALSE,
-MaxFragments=0, FragmentDelimiter=" ... "
-</programlisting>
+   <para>
+    In non-fragment-based headline
+    generation, <function>ts_headline</function> locates matches for the
+    given <replaceable class="parameter">query</replaceable> and chooses a
+    single one to display, preferring matches that have more query words
+    within the allowed headline length.
+    In fragment-based headline generation, <function>ts_headline</function>
+    locates the query matches and splits each match
+    into <quote>fragments</quote> of no more than <literal>MaxWords</literal>
+    words each, preferring fragments with more query words, and when
+    possible <quote>stretching</quote> fragments to include surrounding
+    words.  The fragment-based mode is thus more useful when the query
+    matches span large sections of the document, or when it's desirable to
+    display multiple matches.
+    In either mode, if no query matches can be identified, then a single
+    fragment of the first <literal>MinWords</literal> words in the document
+    will be displayed.
    </para>
 
    <para>
@@ -1364,25 +1375,24 @@ SELECT ts_headline('english',
 is to find all documents containing given query terms
 and return them in order of their similarity to the
 query.',
-  to_tsquery('query &amp; similarity'));
-                        ts_headline                         
+  to_tsquery('english', 'query &amp; similarity'));
+                        ts_headline
 ------------------------------------------------------------
- containing given &lt;b&gt;query&lt;/b&gt; terms
- and return them in order of their &lt;b&gt;similarity&lt;/b&gt; to the
+ containing given &lt;b&gt;query&lt;/b&gt; terms                       +
+ and return them in order of their &lt;b&gt;similarity&lt;/b&gt; to the+
  &lt;b&gt;query&lt;/b&gt;.
 
 SELECT ts_headline('english',
-  'The most common type of search
-is to find all documents containing given query terms
-and return them in order of their similarity to the
-query.',
-  to_tsquery('query &amp; similarity'),
-  'StartSel = &lt;, StopSel = &gt;');
-                      ts_headline                      
--------------------------------------------------------
- containing given &lt;query&gt; terms
- and return them in order of their &lt;similarity&gt; to the
- &lt;query&gt;.
+  'Search terms may occur
+many times in a document,
+requiring ranking of the search matches to decide which
+occurrences to display in the result.',
+  to_tsquery('english', 'search &amp; term'),
+  'MaxFragments=10, MaxWords=7, MinWords=3, StartSel=&lt;&lt;, StopSel=&gt;&gt;');
+                        ts_headline
+------------------------------------------------------------
+ &lt;&lt;Search&gt;&gt; &lt;&lt;terms&gt;&gt; may occur                            +
+ many times ... ranking of the &lt;&lt;search&gt;&gt; matches to decide
 </screen>
    </para>
 
