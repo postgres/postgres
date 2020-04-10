@@ -1021,7 +1021,6 @@ partition_bounds_merge(int partnatts,
 					   List **outer_parts, List **inner_parts)
 {
 	PartitionBoundInfo outer_binfo = outer_rel->boundinfo;
-	PartitionBoundInfo inner_binfo = inner_rel->boundinfo;
 
 	/*
 	 * Currently, this function is called only from try_partitionwise_join(),
@@ -1032,7 +1031,7 @@ partition_bounds_merge(int partnatts,
 		   jointype == JOIN_ANTI);
 
 	/* The partitioning strategies should be the same. */
-	Assert(outer_binfo->strategy == inner_binfo->strategy);
+	Assert(outer_binfo->strategy == inner_rel->boundinfo->strategy);
 
 	*outer_parts = *inner_parts = NIL;
 	switch (outer_binfo->strategy)
