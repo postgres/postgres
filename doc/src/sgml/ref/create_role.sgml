@@ -44,6 +44,11 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
 </synopsis>
  </refsynopsisdiv>
 
+<!--
+CAUTION: remember to keep create_user.sgml and create_group.sgml
+in sync when changing the above synopsis!
+-->
+
  <refsect1>
   <title>Description</title>
 
