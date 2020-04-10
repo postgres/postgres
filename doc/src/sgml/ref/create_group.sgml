@@ -30,7 +30,10 @@ CREATE GROUP <replaceable class="parameter">name</replaceable> [ [ WITH ] <repla
     | CREATEROLE | NOCREATEROLE
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
-    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>'
+    | REPLICATION | NOREPLICATION
+    | BYPASSRLS | NOBYPASSRLS
+    | CONNECTION LIMIT <replaceable class="parameter">connlimit</replaceable>
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>' | PASSWORD NULL
     | VALID UNTIL '<replaceable class="parameter">timestamp</replaceable>'
     | IN ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="parameter">role_name</replaceable> [, ...]
