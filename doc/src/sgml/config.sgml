@@ -112,7 +112,7 @@
        For example, <literal>30.1 GB</literal> will be converted
        to <literal>30822 MB</literal> not <literal>32319628902 B</literal>.
        If the parameter is of integer type, a final rounding to integer
-       occurs after any units conversion.
+       occurs after any unit conversion.
       </para>
      </listitem>
 
@@ -6110,8 +6110,8 @@ local0.*    /var/log/postgresql
          unoptimized queries in your applications.
          If this value is specified without units, it is taken as milliseconds.
          Setting this to zero prints all statement durations.
-         Minus-one (the default) disables logging statement durations.
-         Only superusers can change this setting.
+         <literal>-1</literal> (the default) disables logging statement
+         durations. Only superusers can change this setting.
         </para>
 
         <para>
@@ -6162,8 +6162,8 @@ local0.*    /var/log/postgresql
          traffic is too high to log all queries.
          If this value is specified without units, it is taken as milliseconds.
          Setting this to zero samples all statement durations.
-         Minus-one (the default) disables sampling statement durations.
-         Only superusers can change this setting.
+         <literal>-1</literal> (the default) disables sampling statement
+         durations. Only superusers can change this setting.
         </para>
 
         <para>

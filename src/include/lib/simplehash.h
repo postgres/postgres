@@ -633,7 +633,7 @@ restart:
 			/* shift forward, starting at last occupied element */
 
 			/*
-			 * TODO: This could be optimized to be one memcpy in may cases,
+			 * TODO: This could be optimized to be one memcpy in many cases,
 			 * excepting wrapping around at the end of ->data. Hasn't shown up
 			 * in profiles so far though.
 			 */

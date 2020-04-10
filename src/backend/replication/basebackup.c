@@ -1157,7 +1157,7 @@ AddFileToManifest(manifest_info *manifest, const char *spcoid,
 	}
 
 	/*
-	 * Each file's entry need to be separated from any entry that follows by a
+	 * Each file's entry needs to be separated from any entry that follows by a
 	 * comma, but there's no comma before the first one or after the last one.
 	 * To make that work, adding a file to the manifest starts by terminating
 	 * the most recently added line, with a comma if appropriate, but does not

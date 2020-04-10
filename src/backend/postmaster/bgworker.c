@@ -1149,7 +1149,7 @@ WaitForBackgroundWorkerShutdown(BackgroundWorkerHandle *handle)
  * Instruct the postmaster to terminate a background worker.
  *
  * Note that it's safe to do this without regard to whether the worker is
- * still running, or even if the worker may already have existed and been
+ * still running, or even if the worker may already have exited and been
  * unregistered.
  */
 void

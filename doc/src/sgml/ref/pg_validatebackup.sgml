@@ -41,7 +41,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   It is important to note that that the validation which is performed by
+   It is important to note that the validation which is performed by
    <application>pg_validatebackup</application> does not and can not include
    every check which will be performed by a running server when attempting
    to make use of the backup. Even if you use this tool, you should still
@@ -73,7 +73,7 @@ PostgreSQL documentation
    a <literal>backup_manifest</literal> file in the target directory or
    about anything inside <literal>pg_wal</literal>, even though these
    files won't be listed in the backup manifest. Only files are checked;
-   the presence or absence or directories is not verified, except
+   the presence or absence of directories is not verified, except
    indirectly: if a directory is missing, any files it should have contained
    will necessarily also be missing. 
   </para>

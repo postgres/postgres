@@ -10006,7 +10006,7 @@ gen_random_uuid() returns uuid
    <title>Producing XML Content</title>
 
    <para>
-    A set of functions and function-like expressions are available for
+    A set of functions and function-like expressions is available for
     producing XML content from SQL data.  As such, they are
     particularly suitable for formatting query results into XML
     documents for processing in client applications.
@@ -12360,7 +12360,7 @@ table2-mapping
 
   <note>
    <para>
-    Some of the <literal>jsonb_path_*</literal> functions have the
+    Some of the <literal>jsonb_path_*</literal> functions have a
     <literal>_tz</literal> suffix. These functions have been implemented to
     support comparison of date/time values that involves implicit
     timezone-aware casts. Since operations with time zones are not immutable,
@@ -18795,8 +18795,8 @@ SELECT collation for ('foo' COLLATE "de_DE");
    The functions <function>to_regclass</function>, <function>to_regcollation</function>,
    <function>to_regnamespace</function>, <function>to_regoper</function>,
    <function>to_regoperator</function>, <function>to_regrole</function>,
-   <function>to_regproc</function>, <function>to_regprocedure</function>, and
-   <function>to_regtype</function>, functions translate relation, collation, schema,
+   <function>to_regproc</function>, <function>to_regprocedure</function> and
+   <function>to_regtype</function> translate relation, collation, schema,
    operator, role, function, and type names (given as <type>text</type>) to
    objects of the corresponding <type>reg*</type> type (see <xref
    linkend="datatype-oid"/> about the types).  These functions differ from a

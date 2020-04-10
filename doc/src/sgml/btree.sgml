@@ -685,7 +685,7 @@ equalimage(<replaceable>opcintype</replaceable> <type>oid</type>) returns bool
    Deduplication cannot be used in all cases due to
    implementation-level restrictions.  Deduplication safety is
    determined when <command>CREATE INDEX</command> or
-   <command>REINDEX</command> run.
+   <command>REINDEX</command> is run.
   </para>
   <para>
    Note that deduplication is deemed unsafe and cannot be used in the

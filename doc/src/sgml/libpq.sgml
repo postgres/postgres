@@ -797,7 +797,7 @@ void PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook);
        its default <function>PQdefaultSSLKeyPassHook</function> handler. The callback
        should determine the password for the key and copy it to result-buffer
        <literal>buf</literal> of size <literal>size</literal>. The string in <literal>
-       buf</literal> must be null-terminated. The calback must return the length of
+       buf</literal> must be null-terminated. The callback must return the length of
        the password stored in <literal>buf</literal> excluding the null terminator.
        On failure, the callback should set <literal>buf[0] = '\0'</literal> and return 0.
        See <function>PQdefaultSSLKeyPassHook</function> in <literal>libpq</literal>'s

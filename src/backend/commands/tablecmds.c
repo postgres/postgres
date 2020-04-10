@@ -16846,7 +16846,7 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	list_free_deep(fks);
 
 	/*
-	 * Any sub-constrains that are in the referenced-side of a larger
+	 * Any sub-constraints that are in the referenced-side of a larger
 	 * constraint have to be removed.  This partition is no longer part of the
 	 * key space of the constraint.
 	 */
