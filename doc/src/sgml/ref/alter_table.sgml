@@ -92,9 +92,9 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
   <para>
    <command>ALTER TABLE</command> changes the definition of an existing table.
    There are several subforms described below. Note that the lock level required
-   may differ for each subform. An <literal>ACCESS EXCLUSIVE</literal> lock is held
-   unless explicitly noted. When multiple subcommands are listed, the lock
-   held will be the strictest one required from any subcommand.
+   may differ for each subform. An <literal>ACCESS EXCLUSIVE</literal> lock is
+   acquired unless explicitly noted. When multiple subcommands are given, the
+   lock acquired will be the strictest one required by any subcommand.
 
   <variablelist>
    <varlistentry>
@@ -258,8 +258,8 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
-      This form adds a new constraint to a table using the same syntax as
-      <xref linkend="SQL-CREATETABLE">, plus the option <literal>NOT
+      This form adds a new constraint to a table using the same constraint
+      syntax as <xref linkend="sql-createtable">, plus the option <literal>NOT
       VALID</literal>, which is currently only allowed for foreign key
       and CHECK constraints.
      </para>
@@ -279,6 +279,17 @@ ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
       See <xref linkend="sql-altertable-notes"
       endterm="sql-altertable-notes-title"> below for more information
       about using the <literal>NOT VALID</literal> option.
+     </para>
+
+     <para>
+      Although most forms of <literal>ADD
+      <replaceable class="parameter">table_constraint</replaceable></literal>
+      require an <literal>ACCESS EXCLUSIVE</literal> lock, <literal>ADD
+      FOREIGN KEY</literal> requires only a <literal>SHARE ROW
+      EXCLUSIVE</literal> lock.  Note that <literal>ADD FOREIGN KEY</literal>
+      also acquires a <literal>SHARE ROW EXCLUSIVE</literal> lock on the
+      referenced table, in addition to the lock on the table on which the
+      constraint is declared.
      </para>
     </listitem>
    </varlistentry>
