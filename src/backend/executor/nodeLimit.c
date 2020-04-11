@@ -138,17 +138,18 @@ ExecLimit(PlanState *pstate)
 				/*
 				 * Forwards scan, so check for stepping off end of window.  At
 				 * the end of the window, the behavior depends on whether WITH
-				 * TIES was specified: in that case, we need to change the
-				 * state machine to LIMIT_WINDOWTIES.  If not (nothing was
-				 * specified, or ONLY was) return NULL without advancing the
-				 * subplan or the position variable but change the state
-				 * machine to record having done so
+				 * TIES was specified: if so, we need to change the state
+				 * machine to WINDOWEND_TIES, and fall through to the code for
+				 * that case.  If not (nothing was specified, or ONLY was)
+				 * return NULL without advancing the subplan or the position
+				 * variable, but change the state machine to record having
+				 * done so.
 				 *
-				 * Once at the end, ideally, we can shut down parallel
-				 * resources but that would destroy the parallel context which
-				 * would be required for rescans.  To do that, we need to find
-				 * a way to pass down more information about whether rescans
-				 * are possible.
+				 * Once at the end, ideally, we would shut down parallel
+				 * resources; but that would destroy the parallel context
+				 * which might be required for rescans.  To do that, we'll
+				 * need to find a way to pass down more information about
+				 * whether rescans are possible.
 				 */
 				if (!node->noCount &&
 					node->position - node->offset >= node->count)
@@ -161,7 +162,7 @@ ExecLimit(PlanState *pstate)
 					else
 					{
 						node->lstate = LIMIT_WINDOWEND_TIES;
-						/* fall-through */
+						/* we'll fall through to the next case */
 					}
 				}
 				else
@@ -177,8 +178,9 @@ ExecLimit(PlanState *pstate)
 					}
 
 					/*
-					 * Tuple at limit is needed for comparation in subsequent
-					 * execution to detect ties.
+					 * If WITH TIES is active, and this is the last in-window
+					 * tuple, save it to be used in subsequent WINDOWEND_TIES
+					 * processing.
 					 */
 					if (node->limitOption == LIMIT_OPTION_WITH_TIES &&
 						node->position - node->offset == node->count - 1)
@@ -194,7 +196,7 @@ ExecLimit(PlanState *pstate)
 			{
 				/*
 				 * Backwards scan, so check for stepping off start of window.
-				 * As above, change only state-machine status if so.
+				 * As above, only change state-machine status if so.
 				 */
 				if (node->position <= node->offset + 1)
 				{
@@ -212,6 +214,9 @@ ExecLimit(PlanState *pstate)
 				node->position--;
 				break;
 			}
+
+			Assert(node->lstate == LIMIT_WINDOWEND_TIES);
+			/* FALL THRU */
 
 		case LIMIT_WINDOWEND_TIES:
 			if (ScanDirectionIsForward(direction))
