@@ -1336,6 +1336,12 @@ ExecReScanHashJoin(HashJoinState *node)
 		else
 		{
 			/* must destroy and rebuild hash table */
+			HashState  *hashNode = castNode(HashState, innerPlanState(node));
+
+			/* for safety, be sure to clear child plan node's pointer too */
+			Assert(hashNode->hashtable == node->hj_HashTable);
+			hashNode->hashtable = NULL;
+
 			ExecHashTableDestroy(node->hj_HashTable);
 			node->hj_HashTable = NULL;
 			node->hj_JoinState = HJ_BUILD_HASHTABLE;
