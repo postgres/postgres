@@ -2597,7 +2597,10 @@ ExecHashInitializeDSM(HashState *node, ParallelContext *pcxt)
 	size = offsetof(SharedHashInfo, hinstrument) +
 		pcxt->nworkers * sizeof(HashInstrumentation);
 	node->shared_info = (SharedHashInfo *) shm_toc_allocate(pcxt->toc, size);
+
+	/* Each per-worker area must start out as zeroes. */
 	memset(node->shared_info, 0, size);
+
 	node->shared_info->num_workers = pcxt->nworkers;
 	shm_toc_insert(pcxt->toc, node->ps.plan->plan_node_id,
 				   node->shared_info);
@@ -2616,22 +2619,33 @@ ExecHashInitializeWorker(HashState *node, ParallelWorkerContext *pwcxt)
 	if (!node->ps.instrument)
 		return;
 
+	/*
+	 * Find our entry in the shared area, and set up a pointer to it so that
+	 * we'll accumulate stats there when shutting down or rebuilding the hash
+	 * table.
+	 */
 	shared_info = (SharedHashInfo *)
 		shm_toc_lookup(pwcxt->toc, node->ps.plan->plan_node_id, false);
 	node->hinstrument = &shared_info->hinstrument[ParallelWorkerNumber];
 }
 
 /*
- * Copy instrumentation data from this worker's hash table (if it built one)
- * to DSM memory so the leader can retrieve it.  This must be done in an
- * ExecShutdownHash() rather than ExecEndHash() because the latter runs after
- * we've detached from the DSM segment.
+ * Collect EXPLAIN stats if needed, saving them into DSM memory if
+ * ExecHashInitializeWorker was called, or local storage if not.  In the
+ * parallel case, this must be done in ExecShutdownHash() rather than
+ * ExecEndHash() because the latter runs after we've detached from the DSM
+ * segment.
  */
 void
 ExecShutdownHash(HashState *node)
 {
+	/* Allocate save space if EXPLAIN'ing and we didn't do so already */
+	if (node->ps.instrument && !node->hinstrument)
+		node->hinstrument = (HashInstrumentation *)
+			palloc0(sizeof(HashInstrumentation));
+	/* Now accumulate data for the current (final) hash table */
 	if (node->hinstrument && node->hashtable)
-		ExecHashGetInstrumentation(node->hinstrument, node->hashtable);
+		ExecHashAccumInstrumentation(node->hinstrument, node->hashtable);
 }
 
 /*
@@ -2655,18 +2669,34 @@ ExecHashRetrieveInstrumentation(HashState *node)
 }
 
 /*
- * Copy the instrumentation data from 'hashtable' into a HashInstrumentation
- * struct.
+ * Accumulate instrumentation data from 'hashtable' into an
+ * initially-zeroed HashInstrumentation struct.
+ *
+ * This is used to merge information across successive hash table instances
+ * within a single plan node.  We take the maximum values of each interesting
+ * number.  The largest nbuckets and largest nbatch values might have occurred
+ * in different instances, so there's some risk of confusion from reporting
+ * unrelated numbers; but there's a bigger risk of misdiagnosing a performance
+ * issue if we don't report the largest values.  Similarly, we want to report
+ * the largest spacePeak regardless of whether it happened in the same
+ * instance as the largest nbuckets or nbatch.  All the instances should have
+ * the same nbuckets_original and nbatch_original; but there's little value
+ * in depending on that here, so handle them the same way.
  */
 void
-ExecHashGetInstrumentation(HashInstrumentation *instrument,
-						   HashJoinTable hashtable)
+ExecHashAccumInstrumentation(HashInstrumentation *instrument,
+							 HashJoinTable hashtable)
 {
-	instrument->nbuckets = hashtable->nbuckets;
-	instrument->nbuckets_original = hashtable->nbuckets_original;
-	instrument->nbatch = hashtable->nbatch;
-	instrument->nbatch_original = hashtable->nbatch_original;
-	instrument->space_peak = hashtable->spacePeak;
+	instrument->nbuckets = Max(instrument->nbuckets,
+							   hashtable->nbuckets);
+	instrument->nbuckets_original = Max(instrument->nbuckets_original,
+										hashtable->nbuckets_original);
+	instrument->nbatch = Max(instrument->nbatch,
+							 hashtable->nbatch);
+	instrument->nbatch_original = Max(instrument->nbatch_original,
+									  hashtable->nbatch_original);
+	instrument->space_peak = Max(instrument->space_peak,
+								 hashtable->spacePeak);
 }
 
 /*

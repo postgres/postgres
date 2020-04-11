@@ -2964,22 +2964,25 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 	HashInstrumentation hinstrument = {0};
 
 	/*
+	 * Collect stats from the local process, even when it's a parallel query.
 	 * In a parallel query, the leader process may or may not have run the
 	 * hash join, and even if it did it may not have built a hash table due to
 	 * timing (if it started late it might have seen no tuples in the outer
 	 * relation and skipped building the hash table).  Therefore we have to be
 	 * prepared to get instrumentation data from all participants.
 	 */
-	if (hashstate->hashtable)
-		ExecHashGetInstrumentation(&hinstrument, hashstate->hashtable);
+	if (hashstate->hinstrument)
+		memcpy(&hinstrument, hashstate->hinstrument,
+			   sizeof(HashInstrumentation));
 
 	/*
 	 * Merge results from workers.  In the parallel-oblivious case, the
 	 * results from all participants should be identical, except where
 	 * participants didn't run the join at all so have no data.  In the
 	 * parallel-aware case, we need to consider all the results.  Each worker
-	 * may have seen a different subset of batches and we want to find the
-	 * highest memory usage for any one batch across all batches.
+	 * may have seen a different subset of batches and we want to report the
+	 * highest memory usage across all batches.  We take the maxima of other
+	 * values too, for the same reasons as in ExecHashAccumInstrumentation.
 	 */
 	if (hashstate->shared_info)
 	{
@@ -2990,31 +2993,16 @@ show_hash_info(HashState *hashstate, ExplainState *es)
 		{
 			HashInstrumentation *worker_hi = &shared_info->hinstrument[i];
 
-			if (worker_hi->nbatch > 0)
-			{
-				/*
-				 * Every participant should agree on the buckets, so to be
-				 * sure we have a value we'll just overwrite each time.
-				 */
-				hinstrument.nbuckets = worker_hi->nbuckets;
-				hinstrument.nbuckets_original = worker_hi->nbuckets_original;
-
-				/*
-				 * Normally every participant should agree on the number of
-				 * batches too, but it's possible for a backend that started
-				 * late and missed the whole join not to have the final nbatch
-				 * number.  So we'll take the largest number.
-				 */
-				hinstrument.nbatch = Max(hinstrument.nbatch, worker_hi->nbatch);
-				hinstrument.nbatch_original = worker_hi->nbatch_original;
-
-				/*
-				 * In a parallel-aware hash join, for now we report the
-				 * maximum peak memory reported by any worker.
-				 */
-				hinstrument.space_peak =
-					Max(hinstrument.space_peak, worker_hi->space_peak);
-			}
+			hinstrument.nbuckets = Max(hinstrument.nbuckets,
+									   worker_hi->nbuckets);
+			hinstrument.nbuckets_original = Max(hinstrument.nbuckets_original,
+												worker_hi->nbuckets_original);
+			hinstrument.nbatch = Max(hinstrument.nbatch,
+									 worker_hi->nbatch);
+			hinstrument.nbatch_original = Max(hinstrument.nbatch_original,
+											  worker_hi->nbatch_original);
+			hinstrument.space_peak = Max(hinstrument.space_peak,
+										 worker_hi->space_peak);
 		}
 	}
 

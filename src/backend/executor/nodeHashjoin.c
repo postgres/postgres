@@ -1338,8 +1338,16 @@ ExecReScanHashJoin(HashJoinState *node)
 			/* must destroy and rebuild hash table */
 			HashState  *hashNode = castNode(HashState, innerPlanState(node));
 
-			/* for safety, be sure to clear child plan node's pointer too */
 			Assert(hashNode->hashtable == node->hj_HashTable);
+			/* accumulate stats from old hash table, if wanted */
+			/* (this should match ExecShutdownHash) */
+			if (hashNode->ps.instrument && !hashNode->hinstrument)
+				hashNode->hinstrument = (HashInstrumentation *)
+					palloc0(sizeof(HashInstrumentation));
+			if (hashNode->hinstrument)
+				ExecHashAccumInstrumentation(hashNode->hinstrument,
+											 hashNode->hashtable);
+			/* for safety, be sure to clear child plan node's pointer too */
 			hashNode->hashtable = NULL;
 
 			ExecHashTableDestroy(node->hj_HashTable);

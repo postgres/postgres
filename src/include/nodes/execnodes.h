@@ -2358,7 +2358,7 @@ typedef struct HashInstrumentation
 	int			nbuckets_original;	/* planned number of buckets */
 	int			nbatch;			/* number of batches at end of execution */
 	int			nbatch_original;	/* planned number of batches */
-	size_t		space_peak;		/* peak memory usage in bytes */
+	Size		space_peak;		/* peak memory usage in bytes */
 } HashInstrumentation;
 
 /* ----------------
@@ -2381,8 +2381,20 @@ typedef struct HashState
 	HashJoinTable hashtable;	/* hash table for the hashjoin */
 	List	   *hashkeys;		/* list of ExprState nodes */
 
-	SharedHashInfo *shared_info;	/* one entry per worker */
-	HashInstrumentation *hinstrument;	/* this worker's entry */
+	/*
+	 * In a parallelized hash join, the leader retains a pointer to the
+	 * shared-memory stats area in its shared_info field, and then copies the
+	 * shared-memory info back to local storage before DSM shutdown.  The
+	 * shared_info field remains NULL in workers, or in non-parallel joins.
+	 */
+	SharedHashInfo *shared_info;
+
+	/*
+	 * If we are collecting hash stats, this points to an initially-zeroed
+	 * collection area, which could be either local storage or in shared
+	 * memory; either way it's for just one process.
+	 */
+	HashInstrumentation *hinstrument;
 
 	/* Parallel hash state. */
 	struct ParallelHashJoinState *parallel_state;
