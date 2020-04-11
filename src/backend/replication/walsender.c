@@ -1428,8 +1428,10 @@ WalSndWaitForWal(XLogRecPtr loc)
 		/*
 		 * We only send regular messages to the client for full decoded
 		 * transactions, but a synchronous replication and walsender shutdown
-		 * possibly are waiting for a later location. So we send pings
-		 * containing the flush location every now and then.
+		 * possibly are waiting for a later location. So, before sleeping, we
+		 * send a ping containing the flush location. If the receiver is
+		 * otherwise idle, this keepalive will trigger a reply. Processing the
+		 * reply will update these MyWalSnd locations.
 		 */
 		if (MyWalSnd->flush < sentPtr &&
 			MyWalSnd->write < sentPtr &&
@@ -2314,29 +2316,22 @@ WalSndLoop(WalSndSendDataCallback send_data)
 		WalSndKeepaliveIfNecessary();
 
 		/*
-		 * We don't block if not caught up, unless there is unsent data
-		 * pending in which case we'd better block until the socket is
-		 * write-ready.  This test is only needed for the case where the
-		 * send_data callback handled a subset of the available data but then
-		 * pq_flush_if_writable flushed it all --- we should immediately try
-		 * to send more.
+		 * Block if we have unsent data.  Let WalSndWaitForWal() handle any
+		 * other blocking; idle receivers need its additional actions.
 		 */
-		if ((WalSndCaughtUp && !streamingDoneSending) || pq_is_send_pending())
+		if (pq_is_send_pending())
 		{
 			long		sleeptime;
 			int			wakeEvents;
 
 			wakeEvents = WL_LATCH_SET | WL_EXIT_ON_PM_DEATH | WL_TIMEOUT |
-				WL_SOCKET_READABLE;
+				WL_SOCKET_READABLE | WL_SOCKET_WRITEABLE;
 
 			/*
 			 * Use fresh timestamp, not last_processing, to reduce the chance
 			 * of reaching wal_sender_timeout before sending a keepalive.
 			 */
 			sleeptime = WalSndComputeSleeptime(GetCurrentTimestamp());
-
-			if (pq_is_send_pending())
-				wakeEvents |= WL_SOCKET_WRITEABLE;
 
 			/* Sleep until something happens or we time out */
 			(void) WaitLatchOrSocket(MyLatch, wakeEvents,
