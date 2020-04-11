@@ -305,7 +305,8 @@ maybe_send_schema(LogicalDecodingContext *ctx,
 
 		/* Map must live as long as the session does. */
 		oldctx = MemoryContextSwitchTo(CacheMemoryContext);
-		relentry->map = convert_tuples_by_name(indesc, outdesc);
+		relentry->map = convert_tuples_by_name(CreateTupleDescCopy(indesc),
+											   CreateTupleDescCopy(outdesc));
 		MemoryContextSwitchTo(oldctx);
 		send_relation_and_attrs(ancestor, ctx);
 		RelationClose(ancestor);
