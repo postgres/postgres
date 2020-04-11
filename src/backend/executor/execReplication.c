@@ -225,7 +225,8 @@ retry:
  * Compare the tuples in the slots by checking if they have equal values.
  */
 static bool
-tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2)
+tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2,
+			 TypeCacheEntry **eq)
 {
 	int			attrnum;
 
@@ -256,12 +257,18 @@ tuples_equal(TupleTableSlot *slot1, TupleTableSlot *slot2)
 
 		att = TupleDescAttr(slot1->tts_tupleDescriptor, attrnum);
 
-		typentry = lookup_type_cache(att->atttypid, TYPECACHE_EQ_OPR_FINFO);
-		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("could not identify an equality operator for type %s",
-							format_type_be(att->atttypid))));
+		typentry = eq[attrnum];
+		if (typentry == NULL)
+		{
+			typentry = lookup_type_cache(att->atttypid,
+										 TYPECACHE_EQ_OPR_FINFO);
+			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("could not identify an equality operator for type %s",
+								format_type_be(att->atttypid))));
+			eq[attrnum] = typentry;
+		}
 
 		if (!DatumGetBool(FunctionCall2Coll(&typentry->eq_opr_finfo,
 											att->attcollation,
@@ -290,11 +297,14 @@ RelationFindReplTupleSeq(Relation rel, LockTupleMode lockmode,
 	TupleTableSlot *scanslot;
 	TableScanDesc scan;
 	SnapshotData snap;
+	TypeCacheEntry **eq;
 	TransactionId xwait;
 	bool		found;
 	TupleDesc	desc PG_USED_FOR_ASSERTS_ONLY = RelationGetDescr(rel);
 
 	Assert(equalTupleDescs(desc, outslot->tts_tupleDescriptor));
+
+	eq = palloc0(sizeof(*eq) * outslot->tts_tupleDescriptor->natts);
 
 	/* Start a heap scan. */
 	InitDirtySnapshot(snap);
@@ -309,7 +319,7 @@ retry:
 	/* Try to find the tuple */
 	while (table_scan_getnextslot(scan, ForwardScanDirection, scanslot))
 	{
-		if (!tuples_equal(scanslot, searchslot))
+		if (!tuples_equal(scanslot, searchslot, eq))
 			continue;
 
 		found = true;
