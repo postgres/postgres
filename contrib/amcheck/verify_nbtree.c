@@ -411,6 +411,13 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	BtreeLevel	current;
 	Snapshot	snapshot = SnapshotAny;
 
+	if (!readonly)
+		elog(DEBUG1, "verifying consistency of tree structure for index \"%s\"",
+			 RelationGetRelationName(rel));
+	else
+		elog(DEBUG1, "verifying consistency of tree structure for index \"%s\" with cross-level checks",
+			 RelationGetRelationName(rel));
+
 	/*
 	 * RecentGlobalXmin assertion matches index_getnext_tid().  See note on
 	 * RecentGlobalXmin/B-Tree page deletion.
@@ -654,7 +661,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 	/* Use page-level context for duration of this call */
 	oldcontext = MemoryContextSwitchTo(state->targetcontext);
 
-	elog(DEBUG2, "verifying level %u%s", level.level,
+	elog(DEBUG1, "verifying level %u%s", level.level,
 		 level.istruerootlevel ?
 		 " (true root level)" : level.level == 0 ? " (leaf level)" : "");
 

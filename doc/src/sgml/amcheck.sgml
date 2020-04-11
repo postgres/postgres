@@ -166,6 +166,27 @@ ORDER BY c.relpages DESC LIMIT 10;
     </listitem>
    </varlistentry>
   </variablelist>
+  <tip>
+   <para>
+    <function>bt_index_parent_check</function> and
+    <function>bt_index_parent_check</function> both output log
+    messages about the verification process at
+    <literal>DEBUG1</literal> and <literal>DEBUG2</literal> severity
+    levels.  These messages provide detailed information about the
+    verification process that may be of interest to
+    <productname>PostgreSQL</productname> developers.  Advanced users
+    may also find this information helpful, since it provides
+    additional context should verification actually detect an
+    inconsistency.  Running:
+<programlisting>
+SET client_min_messages = DEBUG1;
+</programlisting>
+    in an interactive <application>psql</application> session before
+    running a verification query will display messages about the
+    progress of verification with a manageable level of detail.
+   </para>
+  </tip>
+
  </sect2>
 
  <sect2>
