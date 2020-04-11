@@ -398,9 +398,9 @@ GetAllTablesPublicationRelations(bool pubviaroot)
 		}
 
 		table_endscan(scan);
-		table_close(classRel, AccessShareLock);
 	}
 
+	table_close(classRel, AccessShareLock);
 	return result;
 }
 
