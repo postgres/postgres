@@ -49,6 +49,12 @@
   <xsl:call-template name="inline.charseq"/>
 </xsl:template>
 
+<!-- Render <returnvalue> with a right arrow then the type name -->
+<xsl:template match="returnvalue">
+  &#x2192;
+  <xsl:call-template name="inline.monoseq"/>
+</xsl:template>
+
 <xsl:template match="structfield">
   <xsl:call-template name="inline.monoseq"/>
 </xsl:template>

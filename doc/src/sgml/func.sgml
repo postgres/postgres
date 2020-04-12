@@ -6744,127 +6744,256 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
      <title>Date/Time Operators</title>
 
      <tgroup cols="3">
+      <colspec colname="col1" colwidth="0.25*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="1*"/>
+      <spanspec spanname="name" namest="col1" nameend="col1" align="left"/>
+      <spanspec spanname="sig" namest="col2" nameend="col3" align="left"/>
+      <spanspec spanname="desc" namest="col2" nameend="col3" align="left"/>
+      <spanspec spanname="example" namest="col2" nameend="col2" align="left"/>
+      <spanspec spanname="exresult" namest="col3" nameend="col3" align="left"/>
       <thead>
        <row>
-        <entry>Operator</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
+        <entry spanname="name" align="center" valign="middle" morerows="2">Operator</entry>
+        <entry spanname="sig" align="center">Signature</entry>
+       </row>
+       <row>
+        <entry spanname="desc" align="center">Description</entry>
+       </row>
+       <row>
+        <entry spanname="example" align="center">Example</entry>
+        <entry spanname="exresult" align="center">Example Result</entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-        <entry> <literal>+</literal> </entry>
-        <entry><literal>date '2001-09-28' + integer '7'</literal></entry>
-        <entry><literal>date '2001-10-05'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
+        <entry spanname="sig"><type>date</type> <literal>+</literal> <type>integer</type>
+         <returnvalue>date</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Add a number of days to a date</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date '2001-09-28' + 7</literal></entry>
+        <entry spanname="exresult"><literal>2001-10-05</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>+</literal> </entry>
-        <entry><literal>date '2001-09-28' + interval '1 hour'</literal></entry>
-        <entry><literal>timestamp '2001-09-28 01:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
+        <entry spanname="sig"><type>date</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Add an interval to a date</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date '2001-09-28' + interval '1 hour'</literal></entry>
+        <entry spanname="exresult"><literal>2001-09-28 01:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>+</literal> </entry>
-        <entry><literal>date '2001-09-28' + time '03:00'</literal></entry>
-        <entry><literal>timestamp '2001-09-28 03:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
+        <entry spanname="sig"><type>date</type> <literal>+</literal> <type>time</type>
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Add a time-of-day to a date</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date '2001-09-28' + time '03:00'</literal></entry>
+        <entry spanname="exresult"><literal>2001-09-28 03:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>+</literal> </entry>
-        <entry><literal>interval '1 day' + interval '1 hour'</literal></entry>
-        <entry><literal>interval '1 day 01:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
+        <entry spanname="sig"><type>interval</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Add intervals</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>interval '1 day' + interval '1 hour'</literal></entry>
+        <entry spanname="exresult"><literal>1 day 01:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>+</literal> </entry>
-        <entry><literal>timestamp '2001-09-28 01:00' + interval '23 hours'</literal></entry>
-        <entry><literal>timestamp '2001-09-29 00:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
+        <entry spanname="sig"><type>timestamp</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Add an interval to a timestamp</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>timestamp '2001-09-28 01:00' + interval '23 hours'</literal></entry>
+        <entry spanname="exresult"><literal>2001-09-29 00:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>+</literal> </entry>
-        <entry><literal>time '01:00' + interval '3 hours'</literal></entry>
-        <entry><literal>time '04:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
+        <entry spanname="sig"><type>time</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>time</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Add an interval to a time</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>time '01:00' + interval '3 hours'</literal></entry>
+        <entry spanname="exresult"><literal>04:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>- interval '23 hours'</literal></entry>
-        <entry><literal>interval '-23:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><literal>-</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Negate an interval</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>- interval '23 hours'</literal></entry>
+        <entry spanname="exresult"><literal>-23:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>date '2001-10-01' - date '2001-09-28'</literal></entry>
-        <entry><literal>integer '3'</literal> (days)</entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>date</type> <literal>-</literal> <type>date</type>
+         <returnvalue>integer</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract dates</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date '2001-10-01' - date '2001-09-28'</literal></entry>
+        <entry spanname="exresult"><literal>3</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>date '2001-10-01' - integer '7'</literal></entry>
-        <entry><literal>date '2001-09-24'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>date</type> <literal>-</literal> <type>integer</type>
+         <returnvalue>date</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract a number of days from a date</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date '2001-10-01' - 7</literal></entry>
+        <entry spanname="exresult"><literal>2001-09-24</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>date '2001-09-28' - interval '1 hour'</literal></entry>
-        <entry><literal>timestamp '2001-09-27 23:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>date</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract an interval from a date</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date '2001-09-28' - interval '1 hour'</literal></entry>
+        <entry spanname="exresult"><literal>2001-09-27 23:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>time '05:00' - time '03:00'</literal></entry>
-        <entry><literal>interval '02:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>time</type> <literal>-</literal> <type>time</type>
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract times</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>time '05:00' - time '03:00'</literal></entry>
+        <entry spanname="exresult"><literal>02:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>time '05:00' - interval '2 hours'</literal></entry>
-        <entry><literal>time '03:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>time</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>time</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract an interval from a time</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>time '05:00' - interval '2 hours'</literal></entry>
+        <entry spanname="exresult"><literal>03:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>timestamp '2001-09-28 23:00' - interval '23 hours'</literal></entry>
-        <entry><literal>timestamp '2001-09-28 00:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>timestamp</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract an interval from a timestamp</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>timestamp '2001-09-28 23:00' - interval '23 hours'</literal></entry>
+        <entry spanname="exresult"><literal>2001-09-28 00:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>interval '1 day' - interval '1 hour'</literal></entry>
-        <entry><literal>interval '1 day -01:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>interval</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract intervals</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>interval '1 day' - interval '1 hour'</literal></entry>
+        <entry spanname="exresult"><literal>1 day -01:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>-</literal> </entry>
-        <entry><literal>timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</literal></entry>
-        <entry><literal>interval '1 day 15:00:00'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
+        <entry spanname="sig"><type>timestamp</type> <literal>-</literal> <type>timestamp</type>
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract timestamps</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</literal></entry>
+        <entry spanname="exresult"><literal>1 day 15:00:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>*</literal> </entry>
-        <entry><literal>900 * interval '1 second'</literal></entry>
-        <entry><literal>interval '00:15:00'</literal></entry>
+        <entry spanname="name" morerows="4"> <literal>*</literal> </entry>
+        <entry spanname="sig"><type>double precision</type> <literal>*</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Multiply an interval by a scalar</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>900 * interval '1 second'</literal></entry>
+        <entry spanname="exresult"><literal>00:15:00</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>21 * interval '1 day'</literal></entry>
+        <entry spanname="exresult"><literal>21 days</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>3.5 * interval '1 hour'</literal></entry>
+        <entry spanname="exresult"><literal>03:30:00</literal></entry>
        </row>
 
        <row>
-        <entry> <literal>*</literal> </entry>
-        <entry><literal>21 * interval '1 day'</literal></entry>
-        <entry><literal>interval '21 days'</literal></entry>
+        <entry spanname="name" morerows="2"> <literal>/</literal> </entry>
+        <entry spanname="sig"><type>interval</type> <literal>/</literal> <type>double precision</type>
+         <returnvalue>interval</returnvalue></entry>
        </row>
-
        <row>
-        <entry> <literal>*</literal> </entry>
-        <entry><literal>double precision '3.5' * interval '1 hour'</literal></entry>
-        <entry><literal>interval '03:30:00'</literal></entry>
+        <entry spanname="desc">Divide an interval by a scalar</entry>
        </row>
-
        <row>
-        <entry> <literal>/</literal> </entry>
-        <entry><literal>interval '1 hour' / double precision '1.5'</literal></entry>
-        <entry><literal>interval '00:40:00'</literal></entry>
+        <entry spanname="example"><literal>interval '1 hour' / 1.5</literal></entry>
+        <entry spanname="exresult"><literal>00:40:00</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -6872,471 +7001,677 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
     <table id="functions-datetime-table">
      <title>Date/Time Functions</title>
-     <tgroup cols="5">
+     <tgroup cols="3">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="1*"/>
+      <spanspec spanname="name" namest="col1" nameend="col1" align="left"/>
+      <spanspec spanname="sig" namest="col2" nameend="col3" align="left"/>
+      <spanspec spanname="desc" namest="col2" nameend="col3" align="left"/>
+      <spanspec spanname="example" namest="col2" nameend="col2" align="left"/>
+      <spanspec spanname="exresult" namest="col3" nameend="col3" align="left"/>
       <thead>
        <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
+        <entry spanname="name" align="center" valign="middle" morerows="2">Function</entry>
+        <entry spanname="sig" align="center">Signature</entry>
+       </row>
+       <row>
+        <entry spanname="desc" align="center">Description</entry>
+       </row>
+       <row>
+        <entry spanname="example" align="center">Example</entry>
+        <entry spanname="exresult" align="center">Example Result</entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>age</primary>
          </indexterm>
-         <literal><function>age(<type>timestamp</type>, <type>timestamp</type>)</function></literal>
+         <function>age</function>
         </entry>
-        <entry><type>interval</type></entry>
-        <entry>Subtract arguments, producing a <quote>symbolic</quote> result that
+        <entry spanname="sig"><function>age</function>(<type>timestamp</type>, <type>timestamp</type>)
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract arguments, producing a <quote>symbolic</quote> result that
         uses years and months, rather than just days</entry>
-        <entry><literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal></entry>
-        <entry><literal>43 years 9 mons 27 days</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal></entry>
+        <entry spanname="exresult"><literal>43 years 9 mons 27 days</literal></entry>
        </row>
 
        <row>
-        <entry><literal><function>age(<type>timestamp</type>)</function></literal></entry>
-        <entry><type>interval</type></entry>
-        <entry>Subtract from <function>current_date</function> (at midnight)</entry>
-        <entry><literal>age(timestamp '1957-06-13')</literal></entry>
-        <entry><literal>43 years 8 mons 3 days</literal></entry>
+        <entry spanname="name" morerows="2"><function>age</function></entry>
+        <entry spanname="sig"><function>age</function>(<type>timestamp</type>)
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Subtract from <function>current_date</function> (at midnight)</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>age(timestamp '1957-06-13')</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>clock_timestamp</primary>
          </indexterm>
-         <literal><function>clock_timestamp()</function></literal>
+         <function>clock_timestamp</function>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (changes during statement execution);
+        <entry spanname="sig"><function>clock_timestamp</function>()
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time (changes during statement execution);
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>clock_timestamp()</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>current_date</primary>
          </indexterm>
-         <literal><function>current_date</function></literal>
+         <function>current_date</function>
         </entry>
-        <entry><type>date</type></entry>
-        <entry>Current date;
+        <entry spanname="sig"><function>current_date</function>
+         <returnvalue>date</returnvalue></entry>
+       </row>
+       <row>
+         <entry spanname="desc">Current date;
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>current_date</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>current_time</primary>
          </indexterm>
-         <literal><function>current_time</function></literal>
+         <function>current_time</function>
         </entry>
-        <entry><type>time with time zone</type></entry>
-        <entry>Current time of day;
+        <entry spanname="sig"><function>current_time</function>
+         <returnvalue>time with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current time of day;
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>current_time</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2"><function>current_time</function></entry>
+        <entry spanname="sig"><function>current_time</function>(<type>integer</type>)
+         <returnvalue>time with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current time of day, with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>current_time(2)</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
+       </row>
+
+       <row>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>current_timestamp</primary>
          </indexterm>
-         <literal><function>current_timestamp</function></literal>
+         <function>current_timestamp</function>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (start of current transaction);
+        <entry spanname="sig"><function>current_timestamp</function>
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time (start of current transaction);
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>current_timestamp</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2"><function>current_timestamp</function></entry>
+        <entry spanname="sig"><function>current_timestamp</function>(<type>integer</type>)
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time (start of current transaction), with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>current_timestamp(0)</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
+       </row>
+
+       <row>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>date_part</primary>
          </indexterm>
-         <literal><function>date_part(<type>text</type>, <type>timestamp</type>)</function></literal>
+         <function>date_part</function>
         </entry>
-        <entry><type>double precision</type></entry>
-        <entry>Get subfield (equivalent to <function>extract</function>);
+        <entry spanname="sig"><function>date_part</function>(<type>text</type>, <type>timestamp</type>)
+         <returnvalue>double precision</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Get timestamp subfield (equivalent to <function>extract</function>);
          see <xref linkend="functions-datetime-extract"/>
         </entry>
-        <entry><literal>date_part('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
-        <entry><literal>20</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date_part('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
+        <entry spanname="exresult"><literal>20</literal></entry>
        </row>
 
        <row>
-        <entry><literal><function>date_part(<type>text</type>, <type>interval</type>)</function></literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>Get subfield (equivalent to
+        <entry spanname="name" morerows="2"><function>date_part</function></entry>
+        <entry spanname="sig"><function>date_part</function>(<type>text</type>, <type>interval</type>)
+         <returnvalue>double precision</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Get interval subfield (equivalent to
          <function>extract</function>); see <xref linkend="functions-datetime-extract"/>
         </entry>
-        <entry><literal>date_part('month', interval '2 years 3 months')</literal></entry>
-        <entry><literal>3</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date_part('month', interval '2 years 3 months')</literal></entry>
+        <entry spanname="exresult"><literal>3</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>date_trunc</primary>
          </indexterm>
-         <literal><function>date_trunc(<type>text</type>, <type>timestamp</type>)</function></literal>
+         <function>date_trunc</function>
         </entry>
-        <entry><type>timestamp</type></entry>
-        <entry>Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
+        <entry spanname="sig"><function>date_trunc</function>(<type>text</type>, <type>timestamp</type>)
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
         </entry>
-        <entry><literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
-        <entry><literal>2001-02-16 20:00:00</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
+        <entry spanname="exresult"><literal>2001-02-16 20:00:00</literal></entry>
        </row>
 
        <row>
-        <entry><literal><function>date_trunc(<type>text</type>, <type>timestamp with time zone</type>, <type>text</type>)</function></literal></entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Truncate to specified precision in the specified time zone; see <xref linkend="functions-datetime-trunc"/>
+        <entry spanname="name" morerows="2"><function>date_trunc</function></entry>
+        <entry spanname="sig"><function>date_trunc</function>(<type>text</type>, <type>timestamp with time zone</type>, <type>text</type>)
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Truncate to specified precision in the specified time zone; see <xref linkend="functions-datetime-trunc"/>
         </entry>
-        <entry><literal>date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney')</literal></entry>
-        <entry><literal>2001-02-16 13:00:00+00</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney')</literal></entry>
+        <entry spanname="exresult"><literal>2001-02-16 13:00:00+00</literal></entry>
        </row>
 
        <row>
-        <entry><literal><function>date_trunc(<type>text</type>, <type>interval</type>)</function></literal></entry>
-        <entry><type>interval</type></entry>
-        <entry>Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
+        <entry spanname="name" morerows="2"><function>date_trunc</function></entry>
+        <entry spanname="sig"><function>date_trunc</function>(<type>text</type>, <type>interval</type>)
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
         </entry>
-        <entry><literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal></entry>
-        <entry><literal>2 days 03:00:00</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal></entry>
+        <entry spanname="exresult"><literal>2 days 03:00:00</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>extract</primary>
          </indexterm>
-         <literal><function>extract</function>(<parameter>field</parameter> from
-         <type>timestamp</type>)</literal>
+         <function>extract</function>
         </entry>
-        <entry><type>double precision</type></entry>
-        <entry>Get subfield; see <xref linkend="functions-datetime-extract"/>
+        <entry spanname="sig"><function>extract</function>(<parameter>field</parameter> <literal>from</literal> <type>timestamp</type>)
+         <returnvalue>double precision</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Get timestamp subfield; see <xref linkend="functions-datetime-extract"/>
         </entry>
-        <entry><literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal></entry>
-        <entry><literal>20</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal></entry>
+        <entry spanname="exresult"><literal>20</literal></entry>
        </row>
 
        <row>
-        <entry><literal><function>extract</function>(<parameter>field</parameter> from
-         <type>interval</type>)</literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>Get subfield; see <xref linkend="functions-datetime-extract"/>
+        <entry spanname="name" morerows="2"><function>extract</function></entry>
+        <entry spanname="sig"><function>extract</function>(<parameter>field</parameter> <literal>from</literal> <type>interval</type>)
+         <returnvalue>double precision</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Get interval subfield; see <xref linkend="functions-datetime-extract"/>
         </entry>
-        <entry><literal>extract(month from interval '2 years 3 months')</literal></entry>
-        <entry><literal>3</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>extract(month from interval '2 years 3 months')</literal></entry>
+        <entry spanname="exresult"><literal>3</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>isfinite</primary>
          </indexterm>
-         <literal><function>isfinite(<type>date</type>)</function></literal>
+         <function>isfinite</function>
         </entry>
-        <entry><type>boolean</type></entry>
-        <entry>Test for finite date (not +/-infinity)</entry>
-        <entry><literal>isfinite(date '2001-02-16')</literal></entry>
-        <entry><literal>true</literal></entry>
+        <entry spanname="sig"><function>isfinite</function>(<type>date</type>)
+         <returnvalue>boolean</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Test for finite date (not +/-infinity)</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>isfinite(date '2001-02-16')</literal></entry>
+        <entry spanname="exresult"><literal>true</literal></entry>
        </row>
 
        <row>
-        <entry><literal><function>isfinite(<type>timestamp</type>)</function></literal></entry>
-        <entry><type>boolean</type></entry>
-        <entry>Test for finite time stamp (not +/-infinity)</entry>
-        <entry><literal>isfinite(timestamp '2001-02-16 21:28:30')</literal></entry>
-        <entry><literal>true</literal></entry>
+        <entry spanname="name" morerows="2"><function>isfinite</function></entry>
+        <entry spanname="sig"><function>isfinite</function>(<type>timestamp</type>)
+         <returnvalue>boolean</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Test for finite timestamp (not +/-infinity)</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>isfinite(timestamp 'infinity')</literal></entry>
+        <entry spanname="exresult"><literal>false</literal></entry>
        </row>
 
        <row>
-        <entry><literal><function>isfinite(<type>interval</type>)</function></literal></entry>
-        <entry><type>boolean</type></entry>
-        <entry>Test for finite interval</entry>
-        <entry><literal>isfinite(interval '4 hours')</literal></entry>
-        <entry><literal>true</literal></entry>
+        <entry spanname="name" morerows="2"><function>isfinite</function></entry>
+        <entry spanname="sig"><function>isfinite</function>(<type>interval</type>)
+         <returnvalue>boolean</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Test for finite interval (currently always true)</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>isfinite(interval '4 hours')</literal></entry>
+        <entry spanname="exresult"><literal>true</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>justify_days</primary>
          </indexterm>
-         <literal><function>justify_days(<type>interval</type>)</function></literal>
+         <function>justify_days</function>
         </entry>
-        <entry><type>interval</type></entry>
-        <entry>Adjust interval so 30-day time periods are represented as months</entry>
-        <entry><literal>justify_days(interval '35 days')</literal></entry>
-        <entry><literal>1 mon 5 days</literal></entry>
+        <entry spanname="sig"><function>justify_days</function>(<type>interval</type>)
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Adjust interval so 30-day time periods are represented as months</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>justify_days(interval '35 days')</literal></entry>
+        <entry spanname="exresult"><literal>1 mon 5 days</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>justify_hours</primary>
          </indexterm>
-         <literal><function>justify_hours(<type>interval</type>)</function></literal>
+         <function>justify_hours</function>
         </entry>
-        <entry><type>interval</type></entry>
-        <entry>Adjust interval so 24-hour time periods are represented as days</entry>
-        <entry><literal>justify_hours(interval '27 hours')</literal></entry>
-        <entry><literal>1 day 03:00:00</literal></entry>
+        <entry spanname="sig"><function>justify_hours</function>(<type>interval</type>)
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Adjust interval so 24-hour time periods are represented as days</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>justify_hours(&zwsp;interval '27 hours')</literal></entry>
+        <entry spanname="exresult"><literal>1 day 03:00:00</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>justify_interval</primary>
          </indexterm>
-         <literal><function>justify_interval(<type>interval</type>)</function></literal>
+         <function>justify_interval</function>
         </entry>
-        <entry><type>interval</type></entry>
-        <entry>Adjust interval using <function>justify_days</function> and <function>justify_hours</function>, with additional sign adjustments</entry>
-        <entry><literal>justify_interval(interval '1 mon -1 hour')</literal></entry>
-        <entry><literal>29 days 23:00:00</literal></entry>
+        <entry spanname="sig"><function>justify_interval</function>(<type>interval</type>)
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Adjust interval using <function>justify_days</function> and <function>justify_hours</function>, with additional sign adjustments</entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>justify_interval(&zwsp;interval '1 mon -1 hour')</literal></entry>
+        <entry spanname="exresult"><literal>29 days 23:00:00</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>localtime</primary>
          </indexterm>
-         <literal><function>localtime</function></literal>
+         <function>localtime</function>
         </entry>
-        <entry><type>time</type></entry>
-        <entry>Current time of day;
+        <entry spanname="sig"><function>localtime</function>
+         <returnvalue>time</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current time of day;
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>localtime</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2"><function>localtime</function></entry>
+        <entry spanname="sig"><function>localtime</function>(<type>integer</type>)
+         <returnvalue>time</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current time of day, with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>localtime(0)</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
+       </row>
+
+       <row>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>localtimestamp</primary>
          </indexterm>
-         <literal><function>localtimestamp</function></literal>
+         <function>localtimestamp</function>
         </entry>
-        <entry><type>timestamp</type></entry>
-        <entry>Current date and time (start of current transaction);
+        <entry spanname="sig"><function>localtimestamp</function>
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time (start of current transaction);
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>localtimestamp</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2"><function>localtimestamp</function></entry>
+        <entry spanname="sig"><function>localtimestamp</function>(<type>integer</type>)
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time (start of current
+         transaction), with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>localtimestamp(2)</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
+       </row>
+
+       <row>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>make_date</primary>
          </indexterm>
-         <literal>
-            <function>
-             make_date(<parameter>year</parameter> <type>int</type>,
-             <parameter>month</parameter> <type>int</type>,
-             <parameter>day</parameter> <type>int</type>)
-            </function>
-         </literal>
+         <function>make_date</function>
         </entry>
-        <entry><type>date</type></entry>
-        <entry>
+        <entry spanname="sig"><function>make_date</function>(<parameter>year</parameter> <type>int</type>,
+         <parameter>month</parameter> <type>int</type>,
+         <parameter>day</parameter> <type>int</type>)
+         <returnvalue>date</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">
          Create date from year, month and day fields
         </entry>
-        <entry><literal>make_date(2013, 7, 15)</literal></entry>
-        <entry><literal>2013-07-15</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>make_date(2013, 7, 15)</literal></entry>
+        <entry spanname="exresult"><literal>2013-07-15</literal></entry>
        </row>
 
        <row>
-        <entry>
-         <indexterm>
+        <entry spanname="name" morerows="2"><indexterm>
           <primary>make_interval</primary>
          </indexterm>
-         <literal>
-          <function>
-           make_interval(<parameter>years</parameter> <type>int</type> DEFAULT 0,
-           <parameter>months</parameter> <type>int</type> DEFAULT 0,
-           <parameter>weeks</parameter> <type>int</type> DEFAULT 0,
-           <parameter>days</parameter> <type>int</type> DEFAULT 0,
-           <parameter>hours</parameter> <type>int</type> DEFAULT 0,
-           <parameter>mins</parameter> <type>int</type> DEFAULT 0,
-           <parameter>secs</parameter> <type>double precision</type> DEFAULT 0.0)
-          </function>
-         </literal>
+         <function>make_interval</function>
         </entry>
-        <entry><type>interval</type></entry>
-        <entry>
+        <entry spanname="sig"><function>make_interval</function>(<optional> <parameter>year</parameter> <type>int</type>
+         <optional>, <parameter>month</parameter> <type>int</type>
+         <optional>, <parameter>week</parameter> <type>int</type>
+         <optional>, <parameter>day</parameter> <type>int</type>
+         <optional>, <parameter>hour</parameter> <type>int</type>
+         <optional>, <parameter>min</parameter> <type>int</type>
+         <optional>, <parameter>sec</parameter> <type>double precision</type>
+         </optional></optional></optional></optional></optional></optional></optional>)
+         <returnvalue>interval</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">
          Create interval from years, months, weeks, days, hours, minutes and
-         seconds fields
+         seconds fields, each of which can default to zero
         </entry>
-        <entry><literal>make_interval(days =&gt; 10)</literal></entry>
-        <entry><literal>10 days</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>make_interval(days =&gt; 10)</literal></entry>
+        <entry spanname="exresult"><literal>10 days</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>make_time</primary>
          </indexterm>
-         <literal>
-          <function>
-           make_time(<parameter>hour</parameter> <type>int</type>,
-           <parameter>min</parameter> <type>int</type>,
-           <parameter>sec</parameter> <type>double precision</type>)
-          </function>
-         </literal>
+         <function>make_time</function>
         </entry>
-        <entry><type>time</type></entry>
-        <entry>
+        <entry spanname="sig"><function>make_time</function>(<parameter>hour</parameter> <type>int</type>,
+         <parameter>min</parameter> <type>int</type>,
+         <parameter>sec</parameter> <type>double precision</type>)
+         <returnvalue>time</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">
          Create time from hour, minute and seconds fields
         </entry>
-        <entry><literal>make_time(8, 15, 23.5)</literal></entry>
-        <entry><literal>08:15:23.5</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>make_time(8, 15, 23.5)</literal></entry>
+        <entry spanname="exresult"><literal>08:15:23.5</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>make_timestamp</primary>
          </indexterm>
-         <literal>
-          <function>
-           make_timestamp(<parameter>year</parameter> <type>int</type>,
-           <parameter>month</parameter> <type>int</type>,
-           <parameter>day</parameter> <type>int</type>,
-           <parameter>hour</parameter> <type>int</type>,
-           <parameter>min</parameter> <type>int</type>,
-           <parameter>sec</parameter> <type>double precision</type>)
-          </function>
-         </literal>
+         <function>make_timestamp</function>
         </entry>
-        <entry><type>timestamp</type></entry>
-        <entry>
+        <entry spanname="sig"><function>make_timestamp</function>(<parameter>year</parameter> <type>int</type>,
+         <parameter>month</parameter> <type>int</type>,
+         <parameter>day</parameter> <type>int</type>,
+         <parameter>hour</parameter> <type>int</type>,
+         <parameter>min</parameter> <type>int</type>,
+         <parameter>sec</parameter> <type>double precision</type>)
+         <returnvalue>timestamp</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">
          Create timestamp from year, month, day, hour, minute and seconds fields
         </entry>
-        <entry><literal>make_timestamp(2013, 7, 15, 8, 15, 23.5)</literal></entry>
-        <entry><literal>2013-07-15 08:15:23.5</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>make_timestamp(&zwsp;2013, 7, 15, 8, 15, 23.5)</literal></entry>
+        <entry spanname="exresult"><literal>2013-07-15 08:15:23.5</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>make_timestamptz</primary>
          </indexterm>
-         <literal>
-          <function>
-           make_timestamptz(<parameter>year</parameter> <type>int</type>,
-           <parameter>month</parameter> <type>int</type>,
-           <parameter>day</parameter> <type>int</type>,
-           <parameter>hour</parameter> <type>int</type>,
-           <parameter>min</parameter> <type>int</type>,
-           <parameter>sec</parameter> <type>double precision</type>,
-           <optional> <parameter>timezone</parameter> <type>text</type> </optional>)
-          </function>
-         </literal>
+         <function>make_timestamptz</function>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>
+        <entry spanname="sig"><function>make_timestamptz</function>(<parameter>year</parameter> <type>int</type>,
+         <parameter>month</parameter> <type>int</type>,
+         <parameter>day</parameter> <type>int</type>,
+         <parameter>hour</parameter> <type>int</type>,
+         <parameter>min</parameter> <type>int</type>,
+         <parameter>sec</parameter> <type>double precision</type>
+         <optional>, <parameter>timezone</parameter> <type>text</type> </optional>)
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">
          Create timestamp with time zone from year, month, day, hour, minute
          and seconds fields; if <parameter>timezone</parameter> is not
          specified, the current time zone is used
         </entry>
-        <entry><literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5)</literal></entry>
-        <entry><literal>2013-07-15 08:15:23.5+01</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>make_timestamptz(&zwsp;2013, 7, 15, 8, 15, 23.5)</literal></entry>
+        <entry spanname="exresult"><literal>2013-07-15 08:15:23.5+01</literal></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>now</primary>
          </indexterm>
-         <literal><function>now()</function></literal>
+         <function>now</function>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (start of current transaction);
+        <entry spanname="sig"><function>now</function>()
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time (start of current transaction);
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>now()</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>statement_timestamp</primary>
          </indexterm>
-         <literal><function>statement_timestamp()</function></literal>
+         <function>statement_timestamp</function>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (start of current statement);
+        <entry spanname="sig"><function>statement_timestamp</function>()
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time (start of current statement);
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>statement_timestamp()</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>timeofday</primary>
          </indexterm>
-         <literal><function>timeofday()</function></literal>
+         <function>timeofday</function>
         </entry>
-        <entry><type>text</type></entry>
-        <entry>Current date and time
+        <entry spanname="sig"><function>timeofday</function>()
+         <returnvalue>text</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Current date and time
          (like <function>clock_timestamp</function>, but as a <type>text</type> string);
          see <xref linkend="functions-datetime-current"/>
         </entry>
-        <entry></entry>
-        <entry></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>timeofday()</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>transaction_timestamp</primary>
          </indexterm>
-         <literal><function>transaction_timestamp()</function></literal>
+         <function>transaction_timestamp</function>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Current date and time (start of current transaction);
-         see <xref linkend="functions-datetime-current"/>
-        </entry>
-        <entry></entry>
-        <entry></entry>
+        <entry spanname="sig"><function>transaction_timestamp</function>()
+         <returnvalue>timestamp with time zone</returnvalue></entry>
        </row>
        <row>
-        <entry>
+        <entry spanname="desc">Current date and time (start of current transaction);
+         see <xref linkend="functions-datetime-current"/>
+        </entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>transaction_&zwsp;timestamp()</literal></entry>
+        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
+       </row>
+       <row>
+        <entry spanname="name" morerows="2">
          <indexterm>
           <primary>to_timestamp</primary>
          </indexterm>
-         <literal><function>to_timestamp(<type>double precision</type>)</function></literal>
+         <function>to_timestamp</function>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Convert Unix epoch (seconds since 1970-01-01 00:00:00+00) to
+        <entry spanname="sig"><function>to_timestamp</function>(<type>double precision</type>)
+         <returnvalue>timestamp with time zone</returnvalue></entry>
+       </row>
+       <row>
+        <entry spanname="desc">Convert Unix epoch (seconds since 1970-01-01 00:00:00+00) to
          timestamp</entry>
-        <entry><literal>to_timestamp(1284352323)</literal></entry>
-        <entry><literal>2010-09-13 04:32:03+00</literal></entry>
+       </row>
+       <row>
+        <entry spanname="example"><literal>to_timestamp(&zwsp;1284352323)</literal></entry>
+        <entry spanname="exresult"><literal>2010-09-13 04:32:03+00</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -8310,52 +8645,83 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
   <table id="functions-enum-table">
     <title>Enum Support Functions</title>
-    <tgroup cols="4">
+    <tgroup cols="3">
+     <colspec colname="col1" colwidth="0.5*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <colspec colname="col3" colwidth="1*"/>
+     <spanspec spanname="name" namest="col1" nameend="col1" align="left"/>
+     <spanspec spanname="sig" namest="col2" nameend="col3" align="left"/>
+     <spanspec spanname="desc" namest="col2" nameend="col3" align="left"/>
+     <spanspec spanname="example" namest="col2" nameend="col2" align="left"/>
+     <spanspec spanname="exresult" namest="col3" nameend="col3" align="left"/>
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Example Result</entry>
+       <entry spanname="name" align="center" valign="middle" morerows="2">Function</entry>
+       <entry spanname="sig" align="center">Signature</entry>
+      </row>
+      <row>
+       <entry spanname="desc" align="center">Description</entry>
+      </row>
+      <row>
+       <entry spanname="example" align="center">Example</entry>
+       <entry spanname="exresult" align="center">Example Result</entry>
       </row>
      </thead>
      <tbody>
       <row>
-       <entry>
-         <indexterm>
-          <primary>enum_first</primary>
-         </indexterm>
-         <literal>enum_first(anyenum)</literal>
+       <entry spanname="name" morerows="2">
+        <indexterm>
+         <primary>enum_first</primary>
+        </indexterm>
+        <function>enum_first</function>
        </entry>
-       <entry>Returns the first value of the input enum type</entry>
-       <entry><literal>enum_first(null::rainbow)</literal></entry>
-       <entry><literal>red</literal></entry>
+       <entry spanname="sig"><function>enum_first</function>(<type>anyenum</type>) <returnvalue>anyenum</returnvalue></entry>
       </row>
       <row>
-       <entry>
-         <indexterm>
-          <primary>enum_last</primary>
-         </indexterm>
-         <literal>enum_last(anyenum)</literal>
-       </entry>
-       <entry>Returns the last value of the input enum type</entry>
-       <entry><literal>enum_last(null::rainbow)</literal></entry>
-       <entry><literal>purple</literal></entry>
+       <entry spanname="desc">Returns the first value of the input enum type</entry>
       </row>
       <row>
-       <entry>
-         <indexterm>
-          <primary>enum_range</primary>
-         </indexterm>
-         <literal>enum_range(anyenum)</literal>
-       </entry>
-       <entry>Returns all values of the input enum type in an ordered array</entry>
-       <entry><literal>enum_range(null::rainbow)</literal></entry>
-       <entry><literal>{red,orange,yellow,green,blue,purple}</literal></entry>
+       <entry spanname="example"><literal>enum_first(&zwsp;null::rainbow)</literal></entry>
+       <entry spanname="exresult"><literal>red</literal></entry>
       </row>
       <row>
-       <entry morerows="2"><literal>enum_range(anyenum, anyenum)</literal></entry>
-       <entry morerows="2">
+       <entry spanname="name" morerows="2">
+        <indexterm>
+         <primary>enum_last</primary>
+        </indexterm>
+        <function>enum_last</function>
+       </entry>
+       <entry spanname="sig"><function>enum_last</function>(<type>anyenum</type>) <returnvalue>anyenum</returnvalue></entry>
+      </row>
+      <row>
+       <entry spanname="desc">Returns the last value of the input enum type</entry>
+      </row>
+      <row>
+       <entry spanname="example"><literal>enum_last(&zwsp;null::rainbow)</literal></entry>
+       <entry spanname="exresult"><literal>purple</literal></entry>
+      </row>
+      <row>
+       <entry spanname="name" morerows="2">
+        <indexterm>
+         <primary>enum_range</primary>
+        </indexterm>
+        <function>enum_range</function>
+       </entry>
+       <entry spanname="sig"><function>enum_range</function>(<type>anyenum</type>) <returnvalue>anyarray</returnvalue></entry>
+      </row>
+      <row>
+       <entry spanname="desc">Returns all values of the input enum type in an ordered array</entry>
+      </row>
+      <row>
+       <entry spanname="example"><literal>enum_range(&zwsp;null::rainbow)</literal></entry>
+       <entry spanname="exresult"><literal>{red,orange,yellow,&zwsp;green,blue,purple}</literal></entry>
+      </row>
+      <row>
+       <entry spanname="name" morerows="4"><function>enum_range</function></entry>
+       <entry spanname="sig"><function>enum_range</function>(<type>anyenum</type>, <type>anyenum</type>) <returnvalue>anyarray</returnvalue></entry>
+      </row>
+      <row>
+       <entry spanname="desc">
         Returns the range between the two given enum values, as an ordered
         array. The values must be from the same enum type. If the first
         parameter is null, the result will start with the first value of
@@ -8363,16 +8729,18 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         If the second parameter is null, the result will end with the last
         value of the enum type.
        </entry>
-       <entry><literal>enum_range('orange'::rainbow, 'green'::rainbow)</literal></entry>
-       <entry><literal>{orange,yellow,green}</literal></entry>
       </row>
       <row>
-       <entry><literal>enum_range(NULL, 'green'::rainbow)</literal></entry>
-       <entry><literal>{red,orange,yellow,green}</literal></entry>
+       <entry spanname="example"><literal>enum_range(&zwsp;'orange'::rainbow, 'green'::rainbow)</literal></entry>
+       <entry spanname="exresult"><literal>{orange,yellow,green}</literal></entry>
       </row>
       <row>
-       <entry><literal>enum_range('orange'::rainbow, NULL)</literal></entry>
-       <entry><literal>{orange,yellow,green,blue,purple}</literal></entry>
+       <entry spanname="example"><literal>enum_range(NULL, 'green'::rainbow)</literal></entry>
+       <entry spanname="exresult"><literal>{red,orange,yellow,&zwsp;green}</literal></entry>
+      </row>
+      <row>
+       <entry spanname="example"><literal>enum_range(&zwsp;'orange'::rainbow, NULL)</literal></entry>
+       <entry spanname="exresult"><literal>{orange,yellow,green,&zwsp;blue,purple}</literal></entry>
       </row>
      </tbody>
     </tgroup>
@@ -8384,7 +8752,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     only about its declared data type.  Either null or a specific value of
     the type can be passed, with the same result.  It is more common to
     apply these functions to a table column or function argument than to
-    a hardwired type name as suggested by the examples.
+    a hardwired type name as used in the examples.
    </para>
  </sect1>
 

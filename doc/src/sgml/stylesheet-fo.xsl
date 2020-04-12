@@ -63,6 +63,13 @@
   </fo:inline>
 </xsl:template>
 
+<!-- overrides stylesheet-common.xsl -->
+<!-- FOP needs us to be explicit about the font to use for right arrow -->
+<xsl:template match="returnvalue">
+  <fo:inline font-family="{$symbol.font.family}">&#x2192; </fo:inline>
+  <xsl:call-template name="inline.monoseq"/>
+</xsl:template>
+
 <!-- bug fix from <https://sourceforge.net/p/docbook/bugs/1360/#831b> -->
 
 <xsl:template match="varlistentry/term" mode="xref-to">
