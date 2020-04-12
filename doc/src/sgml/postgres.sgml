@@ -11,6 +11,13 @@
 
 <!ENTITY reference  SYSTEM "reference.sgml">
 
+<!--
+Zero-width space.  Use this to allow line breaks at desirable places in
+table cells, examples, etc. without causing an unwanted space when the
+break is not needed in a wider output rendering.
+-->
+<!ENTITY zwsp "&#x200B;">
+
 ]>
 
 <book id="postgres">

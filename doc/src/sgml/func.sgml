@@ -2981,7 +2981,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         the result written in hexadecimal
        </entry>
        <entry><literal>md5('Th\000omas'::bytea)</literal></entry>
-       <entry><literal>8ab2d3c9689aaf18&#x200B;b4958c334c82d8b1</literal></entry>
+       <entry><literal>8ab2d3c9689aaf18&zwsp;b4958c334c82d8b1</literal></entry>
       </row>
 
       <row>
@@ -3032,7 +3032,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         SHA-224 <link linkend="functions-hash-note">hash</link>
        </entry>
        <entry><literal>sha224('abc'::bytea)</literal></entry>
-       <entry><literal>\x23097d223405d8228642a477bda2&#x200B;55b32aadbce4bda0b3f7e36c9da7</literal></entry>
+       <entry><literal>\x23097d223405d8228642a477bda2&zwsp;55b32aadbce4bda0b3f7e36c9da7</literal></entry>
       </row>
 
       <row>
@@ -3047,7 +3047,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         SHA-256 <link linkend="functions-hash-note">hash</link>
        </entry>
        <entry><literal>sha256('abc'::bytea)</literal></entry>
-       <entry><literal>\xba7816bf8f01cfea414140de5dae2223&#x200B;b00361a396177a9cb410ff61f20015ad</literal></entry>
+       <entry><literal>\xba7816bf8f01cfea414140de5dae2223&zwsp;b00361a396177a9cb410ff61f20015ad</literal></entry>
       </row>
 
       <row>
@@ -3062,7 +3062,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
         SHA-384 <link linkend="functions-hash-note">hash</link>
        </entry>
        <entry><literal>sha384('abc'::bytea)</literal></entry>
-       <entry><literal>\xcb00753f45a35e8bb5a03d699ac65007&#x200B;272c32ab0eded1631a8b605a43ff5bed&#x200B;8086072ba1e7cc2358baeca134c825a7</literal></entry>
+       <entry><literal>\xcb00753f45a35e8bb5a03d699ac65007&zwsp;272c32ab0eded1631a8b605a43ff5bed&zwsp;8086072ba1e7cc2358baeca134c825a7</literal></entry>
       </row>
 
       <row>
@@ -3077,7 +3077,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
          SHA-512 <link linkend="functions-hash-note">hash</link>
        </entry>
        <entry><literal>sha512('abc'::bytea)</literal></entry>
-       <entry><literal>\xddaf35a193617abacc417349ae204131&#x200B;12e6fa4e89a97ea20a9eeee64b55d39a&#x200B;2192992a274fc1a836ba3c23a3feebbd&#x200B;454d4423643ce80e2a9ac94fa54ca49f</literal></entry>
+       <entry><literal>\xddaf35a193617abacc417349ae204131&zwsp;12e6fa4e89a97ea20a9eeee64b55d39a&zwsp;2192992a274fc1a836ba3c23a3feebbd&zwsp;454d4423643ce80e2a9ac94fa54ca49f</literal></entry>
       </row>
 
       <row>
