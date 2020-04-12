@@ -1,4 +1,4 @@
-# Verify that pg_validatebackup handles hex-encoded filenames correctly.
+# Verify that pg_verifybackup handles hex-encoded filenames correctly.
 
 use strict;
 use warnings;
@@ -22,6 +22,6 @@ my $count_of_encoded_path_in_manifest =
 cmp_ok($count_of_encoded_path_in_manifest, '>', 100,
 	   "many paths are encoded in the manifest");
 
-command_like(['pg_validatebackup', '-s', $backup_path ],
+command_like(['pg_verifybackup', '-s', $backup_path ],
 			 qr/backup successfully verified/,
-			 'backup with forced encoding validated');
+			 'backup with forced encoding verified');

@@ -568,7 +568,7 @@ PostgreSQL documentation
        <para>
         Disables generation of a backup manifest. If this option is not
         specified, the server will generate and send a backup manifest
-        which can be verified using <xref linkend="app-pgvalidatebackup" />.
+        which can be verified using <xref linkend="app-pgverifybackup" />.
         The manifest is a list of every file present in the backup with the
         exception of any WAL files that may be included. It also stores the
         size, last modification time, and an optional checksum for each file.
@@ -620,7 +620,7 @@ PostgreSQL documentation
         verified not to have been modified since the backup was taken.
        </para>
        <para>
-        <xref linkend="app-pgvalidatebackup" /> can be used to check the
+        <xref linkend="app-pgverifybackup" /> can be used to check the
         integrity of a backup against the backup manifest.
        </para>
       </listitem>

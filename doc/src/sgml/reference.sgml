@@ -255,7 +255,7 @@
    &pgReceivewal;
    &pgRecvlogical;
    &pgRestore;
-   &pgValidateBackup;
+   &pgVerifyBackup;
    &psqlRef;
    &reindexdb;
    &vacuumdb;

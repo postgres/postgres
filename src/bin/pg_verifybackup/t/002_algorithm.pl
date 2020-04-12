@@ -1,4 +1,4 @@
-# Verify that we can take and validate backups with various checksum types.
+# Verify that we can take and verify backups with various checksum types.
 
 use strict;
 use warnings;
@@ -19,7 +19,7 @@ for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
 	my @backup = ('pg_basebackup', '-D', $backup_path,
 				  '--manifest-checksums', $algorithm,
 				  '--no-sync');
-	my @validate = ('pg_validatebackup', '-e', $backup_path);
+	my @verify = ('pg_verifybackup', '-e', $backup_path);
 
 	# A backup with a bogus algorithm should fail.
 	if ($algorithm eq 'bogus')
@@ -49,9 +49,9 @@ for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
 			   "$algorithm is mentioned many times in the manifest");
 	}
 
-	# Make sure that it validates OK.
-	$master->command_ok(\@validate,
-						"validate backup with algorithm \"$algorithm\"");
+	# Make sure that it verifies OK.
+	$master->command_ok(\@verify,
+						"verify backup with algorithm \"$algorithm\"");
 
 	# Remove backup immediately to save disk space.
 	rmtree($backup_path);

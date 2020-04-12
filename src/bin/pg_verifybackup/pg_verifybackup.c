@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * pg_validatebackup.c
- *	  Validate a backup against a backup manifest.
+ * pg_verifybackup.c
+ *	  Verify a backup against a backup manifest.
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/bin/pg_validatebackup/pg_validatebackup.c
+ * src/bin/pg_verifybackup/pg_verifybackup.c
  *
  *-------------------------------------------------------------------------
  */
@@ -101,14 +101,14 @@ typedef struct parser_context
 /*
  * All of the context information we need while checking a backup manifest.
  */
-typedef struct validator_context
+typedef struct verifier_context
 {
 	manifest_files_hash *ht;
 	char	   *backup_directory;
 	SimpleStringList ignore_list;
 	bool		exit_on_error;
 	bool		saw_any_error;
-} validator_context;
+} verifier_context;
 
 static void parse_manifest_file(char *manifest_path,
 								manifest_files_hash **ht_p,
@@ -127,25 +127,25 @@ static void report_manifest_error(JsonManifestParseContext *context,
 								  char *fmt,...)
 			pg_attribute_printf(2, 3) pg_attribute_noreturn();
 
-static void validate_backup_directory(validator_context *context,
-									  char *relpath, char *fullpath);
-static void validate_backup_file(validator_context *context,
-								 char *relpath, char *fullpath);
-static void report_extra_backup_files(validator_context *context);
-static void validate_backup_checksums(validator_context *context);
-static void validate_file_checksum(validator_context *context,
-								   manifest_file *m, char *pathname);
-static void parse_required_wal(validator_context *context,
+static void verify_backup_directory(verifier_context *context,
+									char *relpath, char *fullpath);
+static void verify_backup_file(verifier_context *context,
+							   char *relpath, char *fullpath);
+static void report_extra_backup_files(verifier_context *context);
+static void verify_backup_checksums(verifier_context *context);
+static void verify_file_checksum(verifier_context *context,
+								 manifest_file *m, char *pathname);
+static void parse_required_wal(verifier_context *context,
 							   char *pg_waldump_path,
 							   char *wal_directory,
 							   manifest_wal_range *first_wal_range);
 
-static void report_backup_error(validator_context *context,
+static void report_backup_error(verifier_context *context,
 								const char *pg_restrict fmt,...)
 			pg_attribute_printf(2, 3);
 static void report_fatal_error(const char *pg_restrict fmt,...)
 			pg_attribute_printf(1, 2) pg_attribute_noreturn();
-static bool should_ignore_relpath(validator_context *context, char *relpath);
+static bool should_ignore_relpath(verifier_context *context, char *relpath);
 
 static void usage(void);
 
@@ -170,7 +170,7 @@ main(int argc, char **argv)
 	};
 
 	int			c;
-	validator_context context;
+	verifier_context context;
 	manifest_wal_range *first_wal_range;
 	char	   *manifest_path = NULL;
 	bool		no_parse_wal = false;
@@ -180,7 +180,7 @@ main(int argc, char **argv)
 	char	   *pg_waldump_path = NULL;
 
 	pg_logging_init(argv[0]);
-	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_validatebackup"));
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_verifybackup"));
 	progname = get_progname(argv[0]);
 
 	memset(&context, 0, sizeof(context));
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_validatebackup (PostgreSQL) " PG_VERSION);
+			puts("pg_verifybackup (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 	 *
 	 * Ignore the pg_wal directory, because those files are not included in
 	 * the backup manifest either, since they are fetched separately from the
-	 * backup itself, and validated via a separate mechanism.
+	 * backup itself, and verified via a separate mechanism.
 	 *
 	 * Ignore postgresql.auto.conf, recovery.signal, and standby.signal,
 	 * because we expect that those files may sometimes be created or changed
@@ -299,12 +299,12 @@ main(int argc, char **argv)
 				pg_log_fatal("The program \"%s\" is needed by %s but was\n"
 							 "not found in the same directory as \"%s\".\n"
 							 "Check your installation.",
-							 "pg_waldump", "pg_validatebackup", full_path);
+							 "pg_waldump", "pg_verifybackup", full_path);
 			else
 				pg_log_fatal("The program \"%s\" was found by \"%s\" but was\n"
 							 "not the same version as %s.\n"
 							 "Check your installation.",
-							 "pg_waldump", full_path, "pg_validatebackup");
+							 "pg_waldump", full_path, "pg_verifybackup");
 		}
 	}
 
@@ -320,7 +320,7 @@ main(int argc, char **argv)
 	/*
 	 * Try to read the manifest. We treat any errors encountered while parsing
 	 * the manifest as fatal; there doesn't seem to be much point in trying to
-	 * validate the backup directory against a corrupted manifest.
+	 * verify the backup directory against a corrupted manifest.
 	 */
 	parse_manifest_file(manifest_path, &context.ht, &first_wal_range);
 
@@ -330,7 +330,7 @@ main(int argc, char **argv)
 	 * match. We also set the "matched" flag on every manifest entry that
 	 * corresponds to a file on disk.
 	 */
-	validate_backup_directory(&context, NULL, context.backup_directory);
+	verify_backup_directory(&context, NULL, context.backup_directory);
 
 	/*
 	 * The "matched" flag should now be set on every entry in the hash table.
@@ -344,7 +344,7 @@ main(int argc, char **argv)
 	 * told to skip it.
 	 */
 	if (!skip_checksums)
-		validate_backup_checksums(&context);
+		verify_backup_checksums(&context);
 
 	/*
 	 * Try to parse the required ranges of WAL records, unless we were told
@@ -512,17 +512,17 @@ record_manifest_details_for_wal_range(JsonManifestParseContext *context,
 }
 
 /*
- * Validate one directory.
+ * Verify one directory.
  *
- * 'relpath' is NULL if we are to validate the top-level backup directory,
- * and otherwise the relative path to the directory that is to be validated.
+ * 'relpath' is NULL if we are to verify the top-level backup directory,
+ * and otherwise the relative path to the directory that is to be verified.
  *
  * 'fullpath' is the backup directory with 'relpath' appended; i.e. the actual
  * filesystem path at which it can be found.
  */
 static void
-validate_backup_directory(validator_context *context, char *relpath,
-						  char *fullpath)
+verify_backup_directory(verifier_context *context, char *relpath,
+						char *fullpath)
 {
 	DIR		   *dir;
 	struct dirent *dirent;
@@ -565,7 +565,7 @@ validate_backup_directory(validator_context *context, char *relpath,
 			newrelpath = psprintf("%s/%s", relpath, filename);
 
 		if (!should_ignore_relpath(context, newrelpath))
-			validate_backup_file(context, newrelpath, newfullpath);
+			verify_backup_file(context, newrelpath, newfullpath);
 
 		pfree(newfullpath);
 		pfree(newrelpath);
@@ -580,13 +580,13 @@ validate_backup_directory(validator_context *context, char *relpath,
 }
 
 /*
- * Validate one file (which might actually be a directory or a symlink).
+ * Verify one file (which might actually be a directory or a symlink).
  *
  * The arguments to this function have the same meaning as the arguments to
- * validate_backup_directory.
+ * verify_backup_directory.
  */
 static void
-validate_backup_file(validator_context *context, char *relpath, char *fullpath)
+verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 {
 	struct stat sb;
 	manifest_file *m;
@@ -609,7 +609,7 @@ validate_backup_file(validator_context *context, char *relpath, char *fullpath)
 	/* If it's a directory, just recurse. */
 	if (S_ISDIR(sb.st_mode))
 	{
-		validate_backup_directory(context, relpath, fullpath);
+		verify_backup_directory(context, relpath, fullpath);
 		return;
 	}
 
@@ -645,7 +645,7 @@ validate_backup_file(validator_context *context, char *relpath, char *fullpath)
 	}
 
 	/*
-	 * We don't validate checksums at this stage. We first finish validating
+	 * We don't verify checksums at this stage. We first finish verifying
 	 * that we have the expected set of files with the expected sizes, and
 	 * only afterwards verify the checksums. That's because computing
 	 * checksums may take a while, and we'd like to report more obvious
@@ -658,7 +658,7 @@ validate_backup_file(validator_context *context, char *relpath, char *fullpath)
  * that such files are present in the manifest but not on disk.
  */
 static void
-report_extra_backup_files(validator_context *context)
+report_extra_backup_files(verifier_context *context)
 {
 	manifest_files_iterator it;
 	manifest_file *m;
@@ -672,12 +672,12 @@ report_extra_backup_files(validator_context *context)
 }
 
 /*
- * Validate checksums for hash table entries that are otherwise unproblematic.
+ * Verify checksums for hash table entries that are otherwise unproblematic.
  * If we've already reported some problem related to a hash table entry, or
  * if it has no checksum, just skip it.
  */
 static void
-validate_backup_checksums(validator_context *context)
+verify_backup_checksums(verifier_context *context)
 {
 	manifest_files_iterator it;
 	manifest_file *m;
@@ -694,8 +694,8 @@ validate_backup_checksums(validator_context *context)
 			fullpath = psprintf("%s/%s", context->backup_directory,
 								m->pathname);
 
-			/* Do the actual checksum validation. */
-			validate_file_checksum(context, m, fullpath);
+			/* Do the actual checksum verification. */
+			verify_file_checksum(context, m, fullpath);
 
 			/* Avoid leaking memory. */
 			pfree(fullpath);
@@ -704,10 +704,10 @@ validate_backup_checksums(validator_context *context)
 }
 
 /*
- * Validate the checksum of a single file.
+ * Verify the checksum of a single file.
  */
 static void
-validate_file_checksum(validator_context *context, manifest_file *m,
+verify_file_checksum(verifier_context *context, manifest_file *m,
 					   char *fullpath)
 {
 	pg_checksum_context checksum_ctx;
@@ -754,7 +754,7 @@ validate_file_checksum(validator_context *context, manifest_file *m,
 
 	/*
 	 * Double-check that we read the expected number of bytes from the file.
-	 * Normally, a file size mismatch would be caught in validate_backup_file
+	 * Normally, a file size mismatch would be caught in verify_backup_file
 	 * and this check would never be reached, but this provides additional
 	 * safety and clarity in the event of concurrent modifications or
 	 * filesystem misbehavior.
@@ -786,7 +786,7 @@ validate_file_checksum(validator_context *context, manifest_file *m,
  * pg_waldump.
  */
 static void
-parse_required_wal(validator_context *context, char *pg_waldump_path,
+parse_required_wal(verifier_context *context, char *pg_waldump_path,
 				   char *wal_directory, manifest_wal_range *first_wal_range)
 {
 	manifest_wal_range *this_wal_range = first_wal_range;
@@ -817,7 +817,7 @@ parse_required_wal(validator_context *context, char *pg_waldump_path,
  * context says we should.
  */
 static void
-report_backup_error(validator_context *context, const char *pg_restrict fmt,...)
+report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
 {
 	va_list		ap;
 
@@ -853,7 +853,7 @@ report_fatal_error(const char *pg_restrict fmt,...)
  * "aa/bb" is not a prefix of "aa/bbb", but it is a prefix of "aa/bb/cc".
  */
 static bool
-should_ignore_relpath(validator_context *context, char *relpath)
+should_ignore_relpath(verifier_context *context, char *relpath)
 {
 	SimpleStringListCell *cell;
 
@@ -889,7 +889,7 @@ hash_string_pointer(char *s)
 static void
 usage(void)
 {
-	printf(_("%s validates a backup against the backup manifest.\n\n"), progname);
+	printf(_("%s verifies a backup against the backup manifest.\n\n"), progname);
 	printf(_("Usage:\n  %s [OPTION]... BACKUPDIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -e, --exit-on-error         exit immediately on error\n"));

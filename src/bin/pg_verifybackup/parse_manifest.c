@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/bin/pg_validatebackup/parse_manifest.c
+ * src/bin/pg_verifybackup/parse_manifest.c
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ json_parse_manifest(JsonManifestParseContext *context, char *buffer,
 	if (parse.state != JM_EXPECT_EOF)
 		json_manifest_parse_failure(context, "manifest ended unexpectedly");
 
-	/* Validate the checksum. */
+	/* Verify the manifest checksum. */
 	verify_manifest_checksum(&parse, buffer, size);
 }
 

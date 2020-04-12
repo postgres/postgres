@@ -1,4 +1,4 @@
-# Test the behavior of pg_validatebackup when the backup manifest has
+# Test the behavior of pg_verifybackup when the backup manifest has
 # problems.
 
 use strict;
@@ -198,7 +198,7 @@ sub test_bad_manifest
 	print $fh $manifest_contents;
 	close($fh);
 
-	command_fails_like(['pg_validatebackup', $tempdir], $regexp,
+	command_fails_like(['pg_verifybackup', $tempdir], $regexp,
 					   $test_name);
 	return;
 }

@@ -1,4 +1,4 @@
-# Test pg_validatebackup's WAL validation.
+# Test pg_verifybackup's WAL verification.
 
 use strict;
 use warnings;
@@ -22,17 +22,17 @@ my $original_pg_wal = $backup_path . '/pg_wal';
 my $relocated_pg_wal = $master->backup_dir . '/relocated_pg_wal';
 rename($original_pg_wal, $relocated_pg_wal) || die "rename pg_wal: $!";
 
-# WAL validation should fail.
-command_fails_like(['pg_validatebackup', $backup_path ],
+# WAL verification should fail.
+command_fails_like(['pg_verifybackup', $backup_path ],
 				   qr/WAL parsing failed for timeline 1/,
 				   'missing pg_wal causes failure');
 
 # Should work if we skip WAL verification.
-command_ok(['pg_validatebackup', '-n', $backup_path ],
+command_ok(['pg_verifybackup', '-n', $backup_path ],
 		   'missing pg_wal OK if not verifying WAL');
 
 # Should also work if we specify the correct WAL location.
-command_ok(['pg_validatebackup', '-w', $relocated_pg_wal, $backup_path ],
+command_ok(['pg_verifybackup', '-w', $relocated_pg_wal, $backup_path ],
 		   '-w can be used to specify WAL directory');
 
 # Move directory back to original location.
@@ -49,7 +49,7 @@ open(my $fh, '>', $wal_corruption_target)
 print $fh 'w' x $wal_size;
 close($fh);
 
-# WAL validation should fail.
-command_fails_like(['pg_validatebackup', $backup_path ],
+# WAL verification should fail.
+command_fails_like(['pg_verifybackup', $backup_path ],
 				   qr/WAL parsing failed for timeline 1/,
 				   'corrupt WAL file causes failure');
