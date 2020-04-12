@@ -168,7 +168,7 @@ ORDER BY c.relpages DESC LIMIT 10;
   </variablelist>
   <tip>
    <para>
-    <function>bt_index_parent_check</function> and
+    <function>bt_index_check</function> and
     <function>bt_index_parent_check</function> both output log
     messages about the verification process at
     <literal>DEBUG1</literal> and <literal>DEBUG2</literal> severity
