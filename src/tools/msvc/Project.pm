@@ -420,13 +420,10 @@ sub read_file
 {
 	my $filename = shift;
 	my $F;
-	my $t = $/;
-
-	undef $/;
+	local $/ = undef;
 	open($F, '<', $filename) || croak "Could not open file $filename\n";
 	my $txt = <$F>;
 	close($F);
-	$/ = $t;
 
 	return $txt;
 }
@@ -435,15 +432,12 @@ sub read_makefile
 {
 	my $reldir = shift;
 	my $F;
-	my $t = $/;
-
-	undef $/;
+	local $/ = undef;
 	open($F, '<', "$reldir/GNUmakefile")
 	  || open($F, '<', "$reldir/Makefile")
 	  || confess "Could not open $reldir/Makefile\n";
 	my $txt = <$F>;
 	close($F);
-	$/ = $t;
 
 	return $txt;
 }

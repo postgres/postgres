@@ -60,12 +60,13 @@ $basekey->Close();
 # Fetch all timezones currently in the file
 #
 my @file_zones;
+my $pgtz;
 open(my $tzfh, '<', $tzfile) or die "Could not open $tzfile!\n";
-my $t = $/;
-undef $/;
-my $pgtz = <$tzfh>;
+{
+	local $/ = undef;
+	$pgtz = <$tzfh>;
+}
 close($tzfh);
-$/ = $t;
 
 # Attempt to locate and extract the complete win32_tzmap struct
 $pgtz =~ /win32_tzmap\[\] =\s+{\s+\/\*[^\/]+\*\/\s+(.+?)};/gs

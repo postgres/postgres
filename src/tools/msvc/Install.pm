@@ -762,13 +762,10 @@ sub read_file
 {
 	my $filename = shift;
 	my $F;
-	my $t = $/;
-
-	undef $/;
+	local $/ = undef;
 	open($F, '<', $filename) || die "Could not open file $filename\n";
 	my $txt = <$F>;
 	close($F);
-	$/ = $t;
 
 	return $txt;
 }
