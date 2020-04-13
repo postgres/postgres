@@ -99,9 +99,9 @@ typedef struct xl_btree_insert
  * left or right split page (and thus, whether the new item is stored or not).
  * We always log the left page high key because suffix truncation can generate
  * a new leaf high key using user-defined code.  This is also necessary on
- * internal pages, since the first right item that the left page's high key
- * was based on will have been truncated to zero attributes in the right page
- * (the original is unavailable from the right page).
+ * internal pages, since the firstright item that the left page's high key was
+ * based on will have been truncated to zero attributes in the right page (the
+ * separator key is unavailable from the right page).
  *
  * Backup Blk 0: original page / new left page
  *
@@ -153,7 +153,7 @@ typedef struct xl_btree_insert
 typedef struct xl_btree_split
 {
 	uint32		level;			/* tree level of page being split */
-	OffsetNumber firstright;	/* first item moved to right page */
+	OffsetNumber firstrightoff; /* first origpage item on rightpage */
 	OffsetNumber newitemoff;	/* new item's offset */
 	uint16		postingoff;		/* offset inside orig posting tuple */
 } xl_btree_split;

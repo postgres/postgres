@@ -251,7 +251,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, bool posting,
 }
 
 static void
-btree_xlog_split(bool onleft, XLogReaderState *record)
+btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
@@ -323,7 +323,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 
 		datapos = XLogRecGetBlockData(record, 0, &datalen);
 
-		if (onleft || xlrec->postingoff != 0)
+		if (newitemonleft || xlrec->postingoff != 0)
 		{
 			newitem = (IndexTuple) datapos;
 			newitemsz = MAXALIGN(IndexTupleSize(newitem));
@@ -368,7 +368,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 			elog(PANIC, "failed to add high key to left page after split");
 		leftoff = OffsetNumberNext(leftoff);
 
-		for (off = P_FIRSTDATAKEY(lopaque); off < xlrec->firstright; off++)
+		for (off = P_FIRSTDATAKEY(lopaque); off < xlrec->firstrightoff; off++)
 		{
 			ItemId		itemid;
 			Size		itemsz;
@@ -377,7 +377,8 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 			/* Add replacement posting list when required */
 			if (off == replacepostingoff)
 			{
-				Assert(onleft || xlrec->firstright == xlrec->newitemoff);
+				Assert(newitemonleft ||
+					   xlrec->firstrightoff == xlrec->newitemoff);
 				if (PageAddItem(newlpage, (Item) nposting,
 								MAXALIGN(IndexTupleSize(nposting)), leftoff,
 								false, false) == InvalidOffsetNumber)
@@ -387,7 +388,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 			}
 
 			/* add the new item if it was inserted on left page */
-			else if (onleft && off == xlrec->newitemoff)
+			else if (newitemonleft && off == xlrec->newitemoff)
 			{
 				if (PageAddItem(newlpage, (Item) newitem, newitemsz, leftoff,
 								false, false) == InvalidOffsetNumber)
@@ -405,7 +406,7 @@ btree_xlog_split(bool onleft, XLogReaderState *record)
 		}
 
 		/* cope with possibility that newitem goes at the end */
-		if (onleft && off == xlrec->newitemoff)
+		if (newitemonleft && off == xlrec->newitemoff)
 		{
 			if (PageAddItem(newlpage, (Item) newitem, newitemsz, leftoff,
 							false, false) == InvalidOffsetNumber)

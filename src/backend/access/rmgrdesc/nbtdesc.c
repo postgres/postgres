@@ -39,8 +39,8 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_split *xlrec = (xl_btree_split *) rec;
 
-				appendStringInfo(buf, "level %u, firstright %d, newitemoff %d, postingoff %d",
-								 xlrec->level, xlrec->firstright,
+				appendStringInfo(buf, "level %u, firstrightoff %d, newitemoff %d, postingoff %d",
+								 xlrec->level, xlrec->firstrightoff,
 								 xlrec->newitemoff, xlrec->postingoff);
 				break;
 			}

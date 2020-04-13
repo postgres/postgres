@@ -2346,17 +2346,12 @@ _bt_keep_natts(Relation rel, IndexTuple lastleft, IndexTuple firstright,
 	ScanKey		scankey;
 
 	/*
-	 * Be consistent about the representation of BTREE_VERSION 2/3 tuples
-	 * across Postgres versions; don't allow new pivot tuples to have
-	 * truncated key attributes there.  _bt_compare() treats truncated key
-	 * attributes as having the value minus infinity, which would break
-	 * searches within !heapkeyspace indexes.
+	 * _bt_compare() treats truncated key attributes as having the value minus
+	 * infinity, which would break searches within !heapkeyspace indexes.  We
+	 * must still truncate away non-key attribute values, though.
 	 */
 	if (!itup_key->heapkeyspace)
-	{
-		Assert(nkeyatts != IndexRelationGetNumberOfAttributes(rel));
 		return nkeyatts;
-	}
 
 	scankey = itup_key->scankeys;
 	keepnatts = 1;

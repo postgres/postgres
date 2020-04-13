@@ -1121,7 +1121,7 @@ bt_target_page_check(BtreeCheckState *state)
 		 * designated purpose.  Enforce the lower limit for pivot tuples when
 		 * an explicit heap TID isn't actually present. (In all other cases
 		 * suffix truncation is guaranteed to generate a pivot tuple that's no
-		 * larger than the first right tuple provided to it by its caller.)
+		 * larger than the firstright tuple provided to it by its caller.)
 		 */
 		lowersizelimit = skey->heapkeyspace &&
 			(P_ISLEAF(topaque) || BTreeTupleGetHeapTID(itup) == NULL);

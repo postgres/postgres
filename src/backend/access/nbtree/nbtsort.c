@@ -269,7 +269,8 @@ static Page _bt_blnewpage(uint32 level);
 static BTPageState *_bt_pagestate(BTWriteState *wstate, uint32 level);
 static void _bt_slideleft(Page page);
 static void _bt_sortaddtup(Page page, Size itemsize,
-						   IndexTuple itup, OffsetNumber itup_off);
+						   IndexTuple itup, OffsetNumber itup_off,
+						   bool newfirstdataitem);
 static void _bt_buildadd(BTWriteState *wstate, BTPageState *state,
 						 IndexTuple itup, Size truncextra);
 static void _bt_sort_dedup_finish_pending(BTWriteState *wstate,
@@ -750,26 +751,24 @@ _bt_slideleft(Page page)
 /*
  * Add an item to a page being built.
  *
- * The main difference between this routine and a bare PageAddItem call
- * is that this code knows that the leftmost data item on a non-leaf btree
- * page has a key that must be treated as minus infinity.  Therefore, it
- * truncates away all attributes.
+ * This is very similar to nbtinsert.c's _bt_pgaddtup(), but this variant
+ * raises an error directly.
  *
- * This is almost like nbtinsert.c's _bt_pgaddtup(), but we can't use
- * that because it assumes that P_RIGHTMOST() will return the correct
- * answer for the page.  Here, we don't know yet if the page will be
- * rightmost.  Offset P_FIRSTKEY is always the first data key.
+ * Note that our nbtsort.c caller does not know yet if the page will be
+ * rightmost.  Offset P_FIRSTKEY is always assumed to be the first data key by
+ * caller.  Page that turns out to be the rightmost on its level is fixed by
+ * calling _bt_slideleft().
  */
 static void
 _bt_sortaddtup(Page page,
 			   Size itemsize,
 			   IndexTuple itup,
-			   OffsetNumber itup_off)
+			   OffsetNumber itup_off,
+			   bool newfirstdataitem)
 {
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	IndexTupleData trunctuple;
 
-	if (!P_ISLEAF(opaque) && itup_off == P_FIRSTKEY)
+	if (newfirstdataitem)
 	{
 		trunctuple = *itup;
 		trunctuple.t_info = sizeof(IndexTupleData);
@@ -867,12 +866,13 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 	 * Every newly built index will treat heap TID as part of the keyspace,
 	 * which imposes the requirement that new high keys must occasionally have
 	 * a heap TID appended within _bt_truncate().  That may leave a new pivot
-	 * tuple one or two MAXALIGN() quantums larger than the original first
-	 * right tuple it's derived from.  v4 deals with the problem by decreasing
-	 * the limit on the size of tuples inserted on the leaf level by the same
-	 * small amount.  Enforce the new v4+ limit on the leaf level, and the old
-	 * limit on internal levels, since pivot tuples may need to make use of
-	 * the reserved space.  This should never fail on internal pages.
+	 * tuple one or two MAXALIGN() quantums larger than the original
+	 * firstright tuple it's derived from.  v4 deals with the problem by
+	 * decreasing the limit on the size of tuples inserted on the leaf level
+	 * by the same small amount.  Enforce the new v4+ limit on the leaf level,
+	 * and the old limit on internal levels, since pivot tuples may need to
+	 * make use of the reserved space.  This should never fail on internal
+	 * pages.
 	 */
 	if (unlikely(itupsz > BTMaxItemSize(npage)))
 		_bt_check_third_page(wstate->index, wstate->heap, isleaf, npage,
@@ -925,7 +925,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 		Assert(last_off > P_FIRSTKEY);
 		ii = PageGetItemId(opage, last_off);
 		oitup = (IndexTuple) PageGetItem(opage, ii);
-		_bt_sortaddtup(npage, ItemIdGetLength(ii), oitup, P_FIRSTKEY);
+		_bt_sortaddtup(npage, ItemIdGetLength(ii), oitup, P_FIRSTKEY,
+					   !isleaf);
 
 		/*
 		 * Move 'last' into the high key position on opage.  _bt_blnewpage()
@@ -1054,7 +1055,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 	 * Add the new item into the current page.
 	 */
 	last_off = OffsetNumberNext(last_off);
-	_bt_sortaddtup(npage, itupsz, itup, last_off);
+	_bt_sortaddtup(npage, itupsz, itup, last_off,
+				   !isleaf && last_off == P_FIRSTKEY);
 
 	state->btps_page = npage;
 	state->btps_blkno = nblkno;
