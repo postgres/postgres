@@ -132,7 +132,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Exit as soon as a problem with the backup is detected. If this option
-        is not specified, <literal>pg_validatebackup</literal> will continue
+        is not specified, <literal>pg_verifybackup</literal> will continue
         checking the backup even after a problem has been detected, and will
         report all problems detected as errors.
        </para>
