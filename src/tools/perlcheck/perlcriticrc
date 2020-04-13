@@ -19,6 +19,10 @@ verbose = %f: %m at line %l, column %c.  %e.  ([%p] Severity: %s)\n
 # allow octal constants with leading zeros
 [-ValuesAndExpressions::ProhibitLeadingZeros]
 
+# insist on use of the warnings pragma
+[TestingAndDebugging::RequireUseWarnings]
+severity = 5
+
 # for now raise severity of this to level 5
 [Subroutines::RequireFinalReturn]
 severity = 5

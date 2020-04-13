@@ -8,6 +8,8 @@
 # "sjis-0213-2004-std.txt" (http://x0213.org)
 
 use strict;
+use warnings;
+
 use convutils;
 
 # first generate UTF-8 --> SHIFT_JIS_2004 table

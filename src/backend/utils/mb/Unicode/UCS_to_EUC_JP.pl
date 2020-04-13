@@ -12,6 +12,8 @@
 # organization's ftp site.
 
 use strict;
+use warnings;
+
 use convutils;
 
 my $this_script = 'src/backend/utils/mb/Unicode/UCS_to_EUC_JP.pl';

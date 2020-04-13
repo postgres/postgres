@@ -3,6 +3,8 @@
 # contrib/intarray/bench/create_test.pl
 
 use strict;
+use warnings;
+
 print <<EOT;
 create table message (
 	mid	int not null,

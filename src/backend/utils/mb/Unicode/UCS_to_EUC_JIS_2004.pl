@@ -8,6 +8,8 @@
 # "euc-jis-2004-std.txt" (http://x0213.org)
 
 use strict;
+use warnings;
+
 use convutils;
 
 my $this_script = 'src/backend/utils/mb/Unicode/UCS_to_EUC_JIS_2004.pl';

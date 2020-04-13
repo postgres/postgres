@@ -9,6 +9,7 @@
 
 package SimpleTee;
 use strict;
+use warnings;
 
 sub TIEHANDLE
 {

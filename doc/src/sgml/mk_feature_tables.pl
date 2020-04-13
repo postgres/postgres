@@ -1,8 +1,9 @@
-# /usr/bin/perl -w
+# /usr/bin/perl
 
 # doc/src/sgml/mk_feature_tables.pl
 
 use strict;
+use warnings;
 
 my $yesno = $ARGV[0];
 

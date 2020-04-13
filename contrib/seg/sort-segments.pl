@@ -3,6 +3,7 @@
 # this script will sort any table with the segment data type in its last column
 
 use strict;
+use warnings;
 
 my @rows;
 

@@ -3,6 +3,7 @@
 # src/tools/msvc/vcregress.pl
 
 use strict;
+use warnings;
 
 our $config;
 

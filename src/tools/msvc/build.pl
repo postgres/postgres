@@ -3,6 +3,7 @@
 # src/tools/msvc/build.pl
 
 use strict;
+use warnings;
 
 use File::Basename;
 use File::Spec;

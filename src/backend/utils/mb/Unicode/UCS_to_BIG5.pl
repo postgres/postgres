@@ -25,6 +25,8 @@
 #		 # and Unicode name (not used in this script)
 
 use strict;
+use warnings;
+
 use convutils;
 
 my $this_script = 'src/backend/utils/mb/Unicode/UCS_to_BIG5.pl';

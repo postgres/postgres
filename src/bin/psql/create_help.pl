@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 
 #################################################################
 # create_help.pl -- converts SGML docs to internal psql help
@@ -20,6 +20,7 @@
 #
 
 use strict;
+use warnings;
 
 my $docdir = $ARGV[0] or die "$0: missing required argument: docdir\n";
 my $hfile = $ARGV[1] . '.h'

@@ -6,6 +6,7 @@
 package convutils;
 
 use strict;
+use warnings;
 
 use Carp;
 use Exporter 'import';

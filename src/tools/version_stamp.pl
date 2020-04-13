@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/perl
 
 #################################################################
 # version_stamp.pl -- update version stamps throughout the source tree
@@ -21,6 +21,7 @@
 #
 
 use strict;
+use warnings;
 
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
