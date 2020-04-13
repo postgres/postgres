@@ -189,7 +189,7 @@ typedef struct Counters
 	double		blk_write_time; /* time spent writing, in msec */
 	double		usage;			/* usage factor */
 	int64		wal_records;	/* # of WAL records generated */
-	int64		wal_num_fpw;	/* # of WAL full page image records generated */
+	int64		wal_fpw;	/* # of WAL full page writes generated */
 	uint64		wal_bytes;		/* total amount of WAL bytes generated */
 } Counters;
 
@@ -1432,7 +1432,7 @@ pgss_store(const char *query, uint64 queryId,
 		e->counters.blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->blk_write_time);
 		e->counters.usage += USAGE_EXEC(total_time);
 		e->counters.wal_records += walusage->wal_records;
-		e->counters.wal_num_fpw += walusage->wal_num_fpw;
+		e->counters.wal_fpw += walusage->wal_fpw;
 		e->counters.wal_bytes += walusage->wal_bytes;
 
 		SpinLockRelease(&e->mutex);
@@ -1824,7 +1824,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			Datum		wal_bytes;
 
 			values[i++] = Int64GetDatumFast(tmp.wal_records);
-			values[i++] = Int64GetDatumFast(tmp.wal_num_fpw);
+			values[i++] = Int64GetDatumFast(tmp.wal_fpw);
 
 			snprintf(buf, sizeof buf, UINT64_FORMAT, tmp.wal_bytes);
 

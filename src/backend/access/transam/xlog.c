@@ -1258,7 +1258,7 @@ XLogInsertRecord(XLogRecData *rdata,
 	{
 		pgWalUsage.wal_bytes += rechdr->xl_tot_len;
 		pgWalUsage.wal_records++;
-		pgWalUsage.wal_num_fpw += num_fpw;
+		pgWalUsage.wal_fpw += num_fpw;
 	}
 
 	return EndPos;

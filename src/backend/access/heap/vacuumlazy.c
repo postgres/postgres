@@ -676,7 +676,7 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 							 _("WAL usage: %ld records, %ld full page writes, "
 							   UINT64_FORMAT " bytes"),
 							 walusage.wal_records,
-							 walusage.wal_num_fpw,
+							 walusage.wal_fpw,
 							 walusage.wal_bytes);
 
 			ereport(LOG,
