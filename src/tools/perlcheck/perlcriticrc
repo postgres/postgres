@@ -10,6 +10,12 @@ severity = 5
 
 theme = core
 
+# print the policy name as well as the normal output
+verbose = %f: %m at line %l, column %c.  %e.  ([%p] Severity: %s)\n
+
+# Note: for policy descriptions see https://metacpan.org/release/Perl-Critic
+
+
 # allow octal constants with leading zeros
 [-ValuesAndExpressions::ProhibitLeadingZeros]
 
