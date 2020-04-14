@@ -311,7 +311,7 @@ EXPLAIN SELECT * FROM tenk1 ORDER BY unique1;
    ->  Seq Scan on tenk1  (cost=0.00..445.00 rows=10000 width=244)
 </screen>
 
-    If the a part of the plan guarantess an ordering on a prefix of the
+    If a part of the plan guarantees an ordering on a prefix of the
     required sort keys, then the planner may instead decide to use an
     <literal>incremental sort</literal> step:
 

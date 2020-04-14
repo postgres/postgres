@@ -63,7 +63,7 @@ typedef struct SortCoordinateData *SortCoordinate;
  * sometimes put it in shared memory.
  *
  * The parallel-sort infrastructure relies on having a zero TuplesortMethod
- * indicate that a worker never did anything, so we assign zero to
+ * to indicate that a worker never did anything, so we assign zero to
  * SORT_TYPE_STILL_IN_PROGRESS.  The other values of this enum can be
  * OR'ed together to represent a situation where different workers used
  * different methods, so we need a separate bit for each one.  Keep the

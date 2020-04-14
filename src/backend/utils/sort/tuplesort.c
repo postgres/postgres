@@ -808,7 +808,7 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate,
  *
  * Setup, or reset, all state need for processing a new set of tuples with this
  * sort state. Called both from tuplesort_begin_common (the first time sorting
- * with this sort state) and tuplesort_reseti (for subsequent usages).
+ * with this sort state) and tuplesort_reset (for subsequent usages).
  */
 static void
 tuplesort_begin_batch(Tuplesortstate *state)

@@ -270,7 +270,7 @@ isCurrentGroup(IncrementalSortState *node, TupleTableSlot *pivot, TupleTableSlot
  * verify they're all part of the same prefix key group before sorting them
  * solely by unsorted suffix keys.
  *
- * While it's likely that all already fetch tuples are all part of a single
+ * While it's likely that all tuples already fetched are all part of a single
  * prefix group, we also have to handle the possibility that there is at least
  * one different prefix key group before the large prefix key group.
  * ----------------------------------------------------------------
@@ -381,7 +381,7 @@ switchToPresortedPrefixMode(PlanState *pstate)
 				 * node->transfer_tuple slot, and, even though that slot
 				 * points to memory inside the full sort tuplesort, we can't
 				 * reset that tuplesort anyway until we've fully transferred
-				 * out of its tuples, so this reference is safe. We do need to
+				 * out its tuples, so this reference is safe. We do need to
 				 * reset the group pivot tuple though since we've finished the
 				 * current prefix key group.
 				 */
@@ -603,7 +603,7 @@ ExecIncrementalSort(PlanState *pstate)
 			/*
 			 * Initialize presorted column support structures for
 			 * isCurrentGroup(). It's correct to do this along with the
-			 * initial intialization for the full sort state (and not for the
+			 * initial initialization for the full sort state (and not for the
 			 * prefix sort state) since we always load the full sort state
 			 * first.
 			 */
@@ -723,7 +723,7 @@ ExecIncrementalSort(PlanState *pstate)
 				nTuples++;
 
 				/*
-				 * If we've reach our minimum group size, then we need to
+				 * If we've reached our minimum group size, then we need to
 				 * store the most recent tuple as a pivot.
 				 */
 				if (nTuples == minGroupSize)
@@ -752,7 +752,7 @@ ExecIncrementalSort(PlanState *pstate)
 				{
 					/*
 					 * Since the tuple we fetched isn't part of the current
-					 * prefix key group we don't want to  sort it as part of
+					 * prefix key group we don't want to sort it as part of
 					 * the current batch. Instead we use the group_pivot slot
 					 * to carry it over to the next batch (even though we
 					 * won't actually treat it as a group pivot).
@@ -792,12 +792,12 @@ ExecIncrementalSort(PlanState *pstate)
 			}
 
 			/*
-			 * Unless we've alrady transitioned modes to reading from the full
+			 * Unless we've already transitioned modes to reading from the full
 			 * sort state, then we assume that having read at least
 			 * DEFAULT_MAX_FULL_SORT_GROUP_SIZE tuples means it's likely we're
 			 * processing a large group of tuples all having equal prefix keys
 			 * (but haven't yet found the final tuple in that prefix key
-			 * group), so we need to transition in to presorted prefix mode.
+			 * group), so we need to transition into presorted prefix mode.
 			 */
 			if (nTuples > DEFAULT_MAX_FULL_SORT_GROUP_SIZE &&
 				node->execution_status != INCSORT_READFULLSORT)
@@ -849,7 +849,7 @@ ExecIncrementalSort(PlanState *pstate)
 
 				/*
 				 * We might have multiple prefix key groups in the full sort
-				 * state, so the mode transition function needs to know the it
+				 * state, so the mode transition function needs to know that it
 				 * needs to move from the fullsort to presorted prefix sort.
 				 */
 				node->n_fullsort_remaining = nTuples;
@@ -913,7 +913,7 @@ ExecIncrementalSort(PlanState *pstate)
 			/*
 			 * If the tuple's prefix keys match our pivot tuple, we're not
 			 * done yet and can load it into the prefix sort state. If not, we
-			 * don't want to  sort it as part of the current batch. Instead we
+			 * don't want to sort it as part of the current batch. Instead we
 			 * use the group_pivot slot to carry it over to the next batch
 			 * (even though we won't actually treat it as a group pivot).
 			 */
@@ -1121,14 +1121,14 @@ ExecReScanIncrementalSort(IncrementalSortState *node)
 	PlanState  *outerPlan = outerPlanState(node);
 
 	/*
-	 * Incremental sort doesn't support efficient rescan even when paramters
+	 * Incremental sort doesn't support efficient rescan even when parameters
 	 * haven't changed (e.g., rewind) because unlike regular sort we don't
 	 * store all tuples at once for the full sort.
 	 *
 	 * So even if EXEC_FLAG_REWIND is set we just reset all of our state and
 	 * reexecute the sort along with the child node below us.
 	 *
-	 * In theory if we've only fill the full sort with one batch (and haven't
+	 * In theory if we've only filled the full sort with one batch (and haven't
 	 * reset it for a new batch yet) then we could efficiently rewind, but
 	 * that seems a narrow enough case that it's not worth handling specially
 	 * at this time.

@@ -2596,14 +2596,14 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>datname</structfield></entry>
      <entry><type>name</type></entry>
-     <entry>Name of this database, or <literal>NULL</literal> for the shared
+     <entry>Name of this database, or <literal>NULL</literal> for shared
      objects.</entry>
     </row>
     <row>
      <entry><structfield>numbackends</structfield></entry>
      <entry><type>integer</type></entry>
      <entry>Number of backends currently connected to this database, or
-     <literal>NULL</literal> for the shared objects.  This is the only column
+     <literal>NULL</literal> for shared objects.  This is the only column
      in this view that returns a value reflecting current state; all other
      columns return the accumulated values since the last reset.</entry>
     </row>
@@ -2725,7 +2725,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <para>
    The <structname>pg_stat_database</structname> view will contain one row
-   for each database in the cluster, plus one for the shared objects, showing
+   for each database in the cluster, plus one for shared objects, showing
    database-wide statistics.
   </para>
 
@@ -4483,7 +4483,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    is taking a base backup, the
    <structname>pg_stat_progress_basebackup</structname>
    view will contain a row for each WAL sender process that is currently
-   running <command>BASE_BACKUP</command> replication command
+   running the <command>BASE_BACKUP</command> replication command
    and streaming the backup. The tables below describe the information
    that will be reported and provide information about how to interpret it.
   </para>
