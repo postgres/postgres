@@ -1183,6 +1183,8 @@ _bt_insertonpg(Relation rel,
 		bool		is_only = P_LEFTMOST(lpageop) && P_RIGHTMOST(lpageop);
 		Buffer		rbuf;
 
+		Assert(!split_only_page);
+
 		/* split the buffer into left and right halves */
 		rbuf = _bt_split(rel, itup_key, buf, cbuf, newitemoff, itemsz, itup,
 						 origitup, nposting, postingoff);
