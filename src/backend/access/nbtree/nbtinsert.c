@@ -1306,6 +1306,7 @@ _bt_insertonpg(Relation rel,
 				 * Leaf insert with posting list split.  Must include
 				 * postingoff field before newitem/orignewitem.
 				 */
+				Assert(isleaf);
 				xlinfo = XLOG_BTREE_INSERT_POST;
 			}
 			else
@@ -1313,31 +1314,34 @@ _bt_insertonpg(Relation rel,
 				/* Internal page insert, which finishes a split on cbuf */
 				xlinfo = XLOG_BTREE_INSERT_UPPER;
 				XLogRegisterBuffer(1, cbuf, REGBUF_STANDARD);
-			}
 
-			if (BufferIsValid(metabuf))
-			{
-				Assert(metad->btm_version >= BTREE_NOVAC_VERSION);
-				xlmeta.version = metad->btm_version;
-				xlmeta.root = metad->btm_root;
-				xlmeta.level = metad->btm_level;
-				xlmeta.fastroot = metad->btm_fastroot;
-				xlmeta.fastlevel = metad->btm_fastlevel;
-				xlmeta.oldest_btpo_xact = metad->btm_oldest_btpo_xact;
-				xlmeta.last_cleanup_num_heap_tuples =
-					metad->btm_last_cleanup_num_heap_tuples;
-				xlmeta.allequalimage = metad->btm_allequalimage;
+				if (BufferIsValid(metabuf))
+				{
+					/* Actually, it's an internal page insert + meta update */
+					xlinfo = XLOG_BTREE_INSERT_META;
 
-				XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
-				XLogRegisterBufData(2, (char *) &xlmeta, sizeof(xl_btree_metadata));
+					Assert(metad->btm_version >= BTREE_NOVAC_VERSION);
+					xlmeta.version = metad->btm_version;
+					xlmeta.root = metad->btm_root;
+					xlmeta.level = metad->btm_level;
+					xlmeta.fastroot = metad->btm_fastroot;
+					xlmeta.fastlevel = metad->btm_fastlevel;
+					xlmeta.oldest_btpo_xact = metad->btm_oldest_btpo_xact;
+					xlmeta.last_cleanup_num_heap_tuples =
+						metad->btm_last_cleanup_num_heap_tuples;
+					xlmeta.allequalimage = metad->btm_allequalimage;
 
-				xlinfo = XLOG_BTREE_INSERT_META;
+					XLogRegisterBuffer(2, metabuf,
+									   REGBUF_WILL_INIT | REGBUF_STANDARD);
+					XLogRegisterBufData(2, (char *) &xlmeta,
+										sizeof(xl_btree_metadata));
+				}
 			}
 
 			XLogRegisterBuffer(0, buf, REGBUF_STANDARD);
 			if (postingoff == 0)
 			{
-				/* Simple, common case -- log itup from caller */
+				/* Just log itup from caller */
 				XLogRegisterBufData(0, (char *) itup, IndexTupleSize(itup));
 			}
 			else
