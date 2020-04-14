@@ -268,6 +268,7 @@ break is not needed in a wider output rendering.
   &storage;
   &bki;
   &planstats;
+  &backup-manifest;
 
  </part>
 
