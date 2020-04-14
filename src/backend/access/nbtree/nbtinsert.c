@@ -1266,8 +1266,11 @@ _bt_insertonpg(Relation rel,
 			MarkBufferDirty(metabuf);
 		}
 
-		/* clear INCOMPLETE_SPLIT flag on child if inserting a downlink */
-		if (BufferIsValid(cbuf))
+		/*
+		 * Clear INCOMPLETE_SPLIT flag on child if inserting the new item
+		 * finishes a split
+		 */
+		if (!isleaf)
 		{
 			Page		cpage = BufferGetPage(cbuf);
 			BTPageOpaque cpageop = (BTPageOpaque) PageGetSpecialPointer(cpage);
@@ -1305,13 +1308,9 @@ _bt_insertonpg(Relation rel,
 			}
 			else
 			{
-				/*
-				 * Register the left child whose INCOMPLETE_SPLIT flag was
-				 * cleared.
-				 */
-				XLogRegisterBuffer(1, cbuf, REGBUF_STANDARD);
-
+				/* Internal page insert, which finishes a split on cbuf */
 				xlinfo = XLOG_BTREE_INSERT_UPPER;
+				XLogRegisterBuffer(1, cbuf, REGBUF_STANDARD);
 			}
 
 			if (BufferIsValid(metabuf))
@@ -1360,7 +1359,7 @@ _bt_insertonpg(Relation rel,
 
 			if (BufferIsValid(metabuf))
 				PageSetLSN(metapg, recptr);
-			if (BufferIsValid(cbuf))
+			if (!isleaf)
 				PageSetLSN(BufferGetPage(cbuf), recptr);
 
 			PageSetLSN(page, recptr);
@@ -1371,7 +1370,7 @@ _bt_insertonpg(Relation rel,
 		/* Release subsidiary buffers */
 		if (BufferIsValid(metabuf))
 			_bt_relbuf(rel, metabuf);
-		if (BufferIsValid(cbuf))
+		if (!isleaf)
 			_bt_relbuf(rel, cbuf);
 
 		/*
@@ -1928,7 +1927,7 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 
 	/*
 	 * Clear INCOMPLETE_SPLIT flag on child if inserting the new item finishes
-	 * a split.
+	 * a split
 	 */
 	if (!isleaf)
 	{
