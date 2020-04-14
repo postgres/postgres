@@ -130,7 +130,8 @@ cmp_ok(
 	'xmin on physical slot must not be lower than catalog_xmin');
 
 $node_master->safe_psql('postgres', 'CHECKPOINT');
-$node_master->wait_for_catchup($node_replica, 'write');
+$node_master->wait_for_catchup($node_replica, 'write',
+	$node_master->lsn('insert'));
 
 # Boom, crash
 $node_master->stop('immediate');
