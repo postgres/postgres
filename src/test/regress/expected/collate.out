@@ -536,6 +536,18 @@ SELECT a, CAST(b AS varchar) FROM collate_test2 ORDER BY 2;
  3 | bbc
 (4 rows)
 
+-- result of a SQL function
+CREATE FUNCTION vc (text) RETURNS text LANGUAGE sql
+    AS 'select $1::varchar';
+SELECT a, b FROM collate_test1 ORDER BY a, vc(b);
+ a |  b  
+---+-----
+ 1 | abc
+ 2 | Abc
+ 3 | bbc
+ 4 | ABD
+(4 rows)
+
 -- polymorphism
 SELECT * FROM unnest((SELECT array_agg(b ORDER BY b) FROM collate_test1)) ORDER BY 1;
  unnest 
@@ -682,7 +694,7 @@ SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 -- must get rid of them.
 --
 DROP SCHEMA collate_tests CASCADE;
-NOTICE:  drop cascades to 17 other objects
+NOTICE:  drop cascades to 18 other objects
 DETAIL:  drop cascades to table collate_test1
 drop cascades to table collate_test_like
 drop cascades to table collate_test2
@@ -694,6 +706,7 @@ drop cascades to view collview1
 drop cascades to view collview2
 drop cascades to view collview3
 drop cascades to type testdomain
+drop cascades to function vc(text)
 drop cascades to function dup(anyelement)
 drop cascades to table collate_test20
 drop cascades to table collate_test21
