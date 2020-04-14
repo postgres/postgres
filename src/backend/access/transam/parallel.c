@@ -505,7 +505,7 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 
 /*
  * Reinitialize parallel workers for a parallel context such that we could
- * launch the different number of workers.  This is required for cases where
+ * launch a different number of workers.  This is required for cases where
  * we need to reuse the same DSM segment, but the number of workers can
  * vary from run-to-run.
  */

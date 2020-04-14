@@ -225,7 +225,7 @@ typedef struct VacuumParams
 
 	/*
 	 * The number of parallel vacuum workers.  0 by default which means choose
-	 * based on the number of indexes.  -1 indicates a parallel vacuum is
+	 * based on the number of indexes.  -1 indicates parallel vacuum is
 	 * disabled.
 	 */
 	int			nworkers;

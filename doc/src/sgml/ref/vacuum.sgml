@@ -232,15 +232,15 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <term><literal>PARALLEL</literal></term>
     <listitem>
      <para>
-      Perform vacuum index and cleanup index phases of <command>VACUUM</command>
+      Perform index vacuum and index cleanup phases of <command>VACUUM</command>
       in parallel using <replaceable class="parameter">integer</replaceable>
-      background workers (for the detail of each vacuum phases, please
+      background workers (for the details of each vacuum phase, please
       refer to <xref linkend="vacuum-phases"/>).  If the
-      <literal>PARALLEL</literal> option is omitted, then
-      <command>VACUUM</command> decides the number of workers based on number
-      of indexes that support parallel vacuum operation on the relation which
-      is further limited by <xref linkend="guc-max-parallel-workers-maintenance"/>.
-      The index can participate in a parallel vacuum if and only if the size
+      <literal>PARALLEL</literal> option is omitted, then the number of workers
+      is determined based on the number of indexes that support parallel vacuum
+      operation on the relation, and is further limited by <xref
+      linkend="guc-max-parallel-workers-maintenance"/>.
+      An index can participate in parallel vacuum if and only if the size
       of the index is more than <xref linkend="guc-min-parallel-index-scan-size"/>.
       Please note that it is not guaranteed that the number of parallel workers
       specified in <replaceable class="parameter">integer</replaceable> will
@@ -248,7 +248,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       workers than specified, or even with no workers at all.  Only one worker
       can be used per index.  So parallel workers are launched only when there
       are at least <literal>2</literal> indexes in the table.  Workers for
-      vacuum launches before starting each phase and exit at the end of
+      vacuum are launched before the start of each phase and exit at the end of
       the phase.  These behaviors might change in a future release.  This
       option can't be used with the <literal>FULL</literal> option.
      </para>
@@ -358,8 +358,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
    </para>
 
    <para>
-     The <option>PARALLEL</option> option is used only for vacuum purpose.
-     Even if this option is specified with <option>ANALYZE</option> option
+     The <option>PARALLEL</option> option is used only for vacuum purposes.
+     If this option is specified with the <option>ANALYZE</option> option,
      it does not affect <option>ANALYZE</option>.
    </para>
 
@@ -367,7 +367,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <command>VACUUM</command> causes a substantial increase in I/O traffic,
     which might cause poor performance for other active sessions.  Therefore,
     it is sometimes advisable to use the cost-based vacuum delay feature.  For
-    parallel vacuum, each worker sleeps proportional to the work done by that
+    parallel vacuum, each worker sleeps in proportion to the work done by that
     worker.  See <xref linkend="runtime-config-resource-vacuum-cost"/> for
     details.
    </para>
