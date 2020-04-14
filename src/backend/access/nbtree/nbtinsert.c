@@ -1909,15 +1909,8 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * By here, the original data page has been split into two new halves, and
 	 * these are correct.  The algorithm requires that the left page never
 	 * move during a split, so we copy the new left page back on top of the
-	 * original.  Note that this is not a waste of time, since we also require
-	 * (in the page management code) that the center of a page always be
-	 * clean, and the most efficient way to guarantee this is just to compact
-	 * the data by reinserting it into a new left page.  (XXX the latter
-	 * comment is probably obsolete; but in any case it's good to not scribble
-	 * on the original page until we enter the critical section.)
-	 *
-	 * We need to do this before writing the WAL record, so that XLogInsert
-	 * can WAL log an image of the page if necessary.
+	 * original.  We need to do this before writing the WAL record, so that
+	 * XLogInsert can WAL log an image of the page if necessary.
 	 */
 	PageRestoreTempPage(leftpage, origpage);
 	/* leftpage, lopaque must not be used below here */
