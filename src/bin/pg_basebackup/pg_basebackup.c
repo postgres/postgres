@@ -1211,7 +1211,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	 * we're writing a tarfile to stdout, we don't have that option, so
 	 * include it in the one tarfile we've got.
 	 */
-	if (strcmp(basedir, "-") == 0)
+	if (strcmp(basedir, "-") == 0 && manifest)
 	{
 		char		header[512];
 		PQExpBufferData	buf;
@@ -2271,7 +2271,7 @@ main(int argc, char **argv)
 
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWkvPm:",
+	while ((c = getopt_long(argc, argv, "CD:F:r:RS:T:X:l:nNzZ:d:c:h:p:U:s:wWkvP",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)

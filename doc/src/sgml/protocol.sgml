@@ -2578,19 +2578,19 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>MANIFEST</literal></term>
+        <term><literal>MANIFEST</literal> <replaceable>manifest_option</replaceable></term>
         <listitem>
          <para>
           When this option is specified with a value of <literal>yes</literal>
-          or <literal>force-escape</literal>, a backup manifest is created
+          or <literal>force-encode</literal>, a backup manifest is created
           and sent along with the backup.  The manifest is a list of every
           file present in the backup with the exception of any WAL files that
           may be included. It also stores the size, last modification time, and
           an optional checksum for each file.
-          A value of <literal>force-escape</literal> forces all filenames
+          A value of <literal>force-encode</literal> forces all filenames
           to be hex-encoded; otherwise, this type of encoding is performed only
           for files whose names are non-UTF8 octet sequences.
-          <literal>force-escape</literal> is intended primarily for testing
+          <literal>force-encode</literal> is intended primarily for testing
           purposes, to be sure that clients which read the backup manifest
           can handle this case. For compatibility with previous releases,
           the default is <literal>MANIFEST 'no'</literal>.
@@ -2599,7 +2599,7 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>MANIFEST_CHECKSUMS</literal></term>
+        <term><literal>MANIFEST_CHECKSUMS</literal> <replaceable>checksum_algorithm</replaceable></term>
         <listitem>
          <para>
           Specifies the algorithm that should be applied to each file included
