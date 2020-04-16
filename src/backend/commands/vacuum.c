@@ -104,7 +104,6 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	bool		freeze = false;
 	bool		full = false;
 	bool		disable_page_skipping = false;
-	bool		parallel_option = false;
 	ListCell   *lc;
 
 	/* Set default value */
@@ -145,7 +144,6 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 			params.truncate = get_vacopt_ternary_value(opt);
 		else if (strcmp(opt->defname, "parallel") == 0)
 		{
-			parallel_option = true;
 			if (opt->arg == NULL)
 			{
 				ereport(ERROR,
@@ -199,10 +197,10 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		   !(params.options & (VACOPT_FULL | VACOPT_FREEZE)));
 	Assert(!(params.options & VACOPT_SKIPTOAST));
 
-	if ((params.options & VACOPT_FULL) && parallel_option)
+	if ((params.options & VACOPT_FULL) && params.nworkers > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot specify both FULL and PARALLEL options")));
+				 errmsg("VACUUM FULL cannot be performed in parallel")));
 
 	/*
 	 * Make sure VACOPT_ANALYZE is specified if any column lists are present.

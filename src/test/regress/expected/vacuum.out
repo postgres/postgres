@@ -115,15 +115,17 @@ LINE 1: VACUUM (PARALLEL -1) pvactst;
                 ^
 VACUUM (PARALLEL 2, INDEX_CLEANUP FALSE) pvactst;
 VACUUM (PARALLEL 2, FULL TRUE) pvactst; -- error, cannot use both PARALLEL and FULL
-ERROR:  cannot specify both FULL and PARALLEL options
+ERROR:  VACUUM FULL cannot be performed in parallel
 VACUUM (PARALLEL) pvactst; -- error, cannot use PARALLEL option without parallel degree
 ERROR:  parallel option requires a value between 0 and 1024
 LINE 1: VACUUM (PARALLEL) pvactst;
                 ^
+-- Test different combinations of parallel and full options for temporary tables
 CREATE TEMPORARY TABLE tmp (a int PRIMARY KEY);
 CREATE INDEX tmp_idx1 ON tmp (a);
-VACUUM (PARALLEL 1) tmp; -- disables parallel vacuum option
+VACUUM (PARALLEL 1, FULL FALSE) tmp; -- parallel vacuum disabled for temp tables
 WARNING:  disabling parallel option of vacuum on "tmp" --- cannot vacuum temporary tables in parallel
+VACUUM (PARALLEL 0, FULL TRUE) tmp; -- can specify parallel disabled (even though that's implied by FULL)
 RESET min_parallel_index_scan_size;
 DROP TABLE pvactst;
 -- INDEX_CLEANUP option

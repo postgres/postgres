@@ -235,22 +235,22 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       Perform index vacuum and index cleanup phases of <command>VACUUM</command>
       in parallel using <replaceable class="parameter">integer</replaceable>
       background workers (for the details of each vacuum phase, please
-      refer to <xref linkend="vacuum-phases"/>).  If the
-      <literal>PARALLEL</literal> option is omitted, then the number of workers
-      is determined based on the number of indexes that support parallel vacuum
-      operation on the relation, and is further limited by <xref
-      linkend="guc-max-parallel-workers-maintenance"/>.
-      An index can participate in parallel vacuum if and only if the size
-      of the index is more than <xref linkend="guc-min-parallel-index-scan-size"/>.
-      Please note that it is not guaranteed that the number of parallel workers
-      specified in <replaceable class="parameter">integer</replaceable> will
-      be used during execution.  It is possible for a vacuum to run with fewer
-      workers than specified, or even with no workers at all.  Only one worker
-      can be used per index.  So parallel workers are launched only when there
-      are at least <literal>2</literal> indexes in the table.  Workers for
-      vacuum are launched before the start of each phase and exit at the end of
-      the phase.  These behaviors might change in a future release.  This
-      option can't be used with the <literal>FULL</literal> option.
+      refer to <xref linkend="vacuum-phases"/>).  In plain <command>VACUUM</command>
+      (without <literal>FULL</literal>), if the <literal>PARALLEL</literal> option
+      is omitted, then the number of workers is determined based on the number of
+      indexes on the relation that support parallel vacuum operation and is further
+      limited by <xref linkend="guc-max-parallel-workers-maintenance"/>.  An index
+      can participate in parallel vacuum if and only if the size of the index is
+      more than <xref linkend="guc-min-parallel-index-scan-size"/>.  Please note
+      that it is not guaranteed that the number of parallel workers specified in
+      <replaceable class="parameter">integer</replaceable> will be used during
+      execution.  It is possible for a vacuum to run with fewer workers than
+      specified, or even with no workers at all.  Only one worker can be used per
+      index.  So parallel workers are launched only when there are at least
+      <literal>2</literal> indexes in the table.  Workers for vacuum are launched
+      before the start of each phase and exit at the end of the phase.  These
+      behaviors might change in a future release.  This option can't be used with
+      the <literal>FULL</literal> option.
      </para>
     </listitem>
    </varlistentry>
