@@ -109,6 +109,11 @@ typedef void (*WriteDataCallback) (size_t nbytes, char *buf,
 #define MINIMUM_VERSION_FOR_TEMP_SLOTS 100000
 
 /*
+ * Backup manifests are supported from version 13.
+ */
+#define MINIMUM_VERSION_FOR_MANIFESTS	130000
+
+/*
  * Different ways to include WAL
  */
 typedef enum
@@ -1770,7 +1775,7 @@ BaseBackup(void)
 	char	   *basebkp;
 	char		escaped_label[MAXPGPATH];
 	char	   *maxrate_clause = NULL;
-	char	   *manifest_clause;
+	char	   *manifest_clause = NULL;
 	char	   *manifest_checksums_clause = "";
 	int			i;
 	char		xlogstart[64];
@@ -1836,15 +1841,6 @@ BaseBackup(void)
 
 	if (manifest)
 	{
-		if (serverMajor < 1300)
-		{
-			const char *serverver = PQparameterStatus(conn, "server_version");
-
-			pg_log_error("backup manifests are not supported by server version %s",
-						 serverver ? serverver : "'unknown'");
-			exit(1);
-		}
-
 		if (manifest_force_encode)
 			manifest_clause = "MANIFEST 'force-encode'";
 		else
@@ -1852,13 +1848,6 @@ BaseBackup(void)
 		if (manifest_checksums != NULL)
 			manifest_checksums_clause = psprintf("MANIFEST_CHECKSUMS '%s'",
 												 manifest_checksums);
-	}
-	else
-	{
-		if (serverMajor < 1300)
-			manifest_clause = "";
-		else
-			manifest_clause = "MANIFEST 'no'";
 	}
 
 	if (verbose)
@@ -1883,7 +1872,7 @@ BaseBackup(void)
 				 maxrate_clause ? maxrate_clause : "",
 				 format == 't' ? "TABLESPACE_MAP" : "",
 				 verify_checksums ? "" : "NOVERIFY_CHECKSUMS",
-				 manifest_clause,
+				 manifest_clause ? manifest_clause : "",
 				 manifest_checksums_clause);
 
 	if (PQsendQuery(conn, basebkp) == 0)
@@ -2588,6 +2577,10 @@ main(int argc, char **argv)
 	 * RetrieveDataDirCreatePerm() and then call SetDataDirectoryCreatePerm().
 	 */
 	umask(pg_mode_mask);
+
+	/* Backup manifests are supported in 13 and newer versions */
+	if (PQserverVersion(conn) < MINIMUM_VERSION_FOR_MANIFESTS)
+		manifest = false;
 
 	/*
 	 * Verify that the target directory exists, or create it. For plaintext
