@@ -5,8 +5,9 @@
 --
 -- Setup
 --
-CREATE TABLE t1 (a int, b text);
+CREATE TABLE t1 (a int, junk int, b text);
 SECURITY LABEL ON TABLE t1 IS 'system_u:object_r:sepgsql_table_t:s0';
+ALTER TABLE t1 DROP COLUMN junk;
 INSERT INTO t1 VALUES (1, 'aaa'), (2, 'bbb'), (3, 'ccc');
 
 CREATE TABLE t2 (x int, y text);
@@ -17,8 +18,9 @@ CREATE TABLE t3 (s int, t text);
 SECURITY LABEL ON TABLE t3 IS 'system_u:object_r:sepgsql_fixed_table_t:s0';
 INSERT INTO t3 VALUES (1, 'sss'), (2, 'ttt'), (3, 'uuu');
 
-CREATE TABLE t4 (m int, n text);
+CREATE TABLE t4 (m int, junk int, n text);
 SECURITY LABEL ON TABLE t4 IS 'system_u:object_r:sepgsql_secret_table_t:s0';
+ALTER TABLE t4 DROP COLUMN junk;
 INSERT INTO t4 VALUES (1, 'mmm'), (2, 'nnn'), (3, 'ooo');
 
 CREATE TABLE t5 (e text, f text, g text);
@@ -95,6 +97,8 @@ SELECT * FROM t3;			-- ok
 SELECT * FROM t4;			-- failed
 SELECT * FROM t5;			-- failed
 SELECT e,f FROM t5;			-- ok
+SELECT (t1.*)::record FROM t1;		-- ok
+SELECT (t4.*)::record FROM t4;		-- failed
 
 ---
 -- partitioned table parent
