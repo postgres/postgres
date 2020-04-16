@@ -3056,14 +3056,16 @@ limit_needed(Query *parse)
  * Since some other DBMSes do not allow references to ungrouped columns, it's
  * not unusual to find all columns listed in GROUP BY even though listing the
  * primary-key columns would be sufficient.  Deleting such excess columns
- * avoids redundant sorting work, so it's worth doing.  When we do this, we
- * must mark the plan as dependent on the pkey constraint (compare the
- * parser's check_ungrouped_columns() and check_functional_grouping()).
+ * avoids redundant sorting work, so it's worth doing.
  *
- * In principle, we could treat any NOT-NULL columns appearing in a UNIQUE
- * index as the determining columns.  But as with check_functional_grouping(),
- * there's currently no way to represent dependency on a NOT NULL constraint,
- * so we consider only the pkey for now.
+ * Relcache invalidations will ensure that cached plans become invalidated
+ * when the underlying index of the pkey constraint is dropped.
+ *
+ * Currently, we only make use of pkey constraints for this, however, we may
+ * wish to take this further in the future and also use unique constraints
+ * which have NOT NULL columns.  In that case, plan invalidation will still
+ * work since relations will receive a relcache invalidation when a NOT NULL
+ * constraint is dropped.
  */
 static void
 remove_useless_groupby_columns(PlannerInfo *root)
@@ -3172,10 +3174,6 @@ remove_useless_groupby_columns(PlannerInfo *root)
 
 			/* Remember the attnos of the removable columns */
 			surplusvars[relid] = bms_difference(relattnos, pkattnos);
-
-			/* Also, mark the resulting plan as dependent on this constraint */
-			parse->constraintDeps = lappend_oid(parse->constraintDeps,
-												constraintOid);
 		}
 	}
 
