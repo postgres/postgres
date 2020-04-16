@@ -4,8 +4,9 @@
 --
 -- Setup
 --
-CREATE TABLE t1 (a int, b text);
+CREATE TABLE t1 (a int, junk int, b text);
 SECURITY LABEL ON TABLE t1 IS 'system_u:object_r:sepgsql_table_t:s0';
+ALTER TABLE t1 DROP COLUMN junk;
 INSERT INTO t1 VALUES (1, 'aaa'), (2, 'bbb'), (3, 'ccc');
 CREATE TABLE t2 (x int, y text);
 SECURITY LABEL ON TABLE t2 IS 'system_u:object_r:sepgsql_ro_table_t:s0';
@@ -13,8 +14,9 @@ INSERT INTO t2 VALUES (1, 'xxx'), (2, 'yyy'), (3, 'zzz');
 CREATE TABLE t3 (s int, t text);
 SECURITY LABEL ON TABLE t3 IS 'system_u:object_r:sepgsql_fixed_table_t:s0';
 INSERT INTO t3 VALUES (1, 'sss'), (2, 'ttt'), (3, 'uuu');
-CREATE TABLE t4 (m int, n text);
+CREATE TABLE t4 (m int, junk int, n text);
 SECURITY LABEL ON TABLE t4 IS 'system_u:object_r:sepgsql_secret_table_t:s0';
+ALTER TABLE t4 DROP COLUMN junk;
 INSERT INTO t4 VALUES (1, 'mmm'), (2, 'nnn'), (3, 'ooo');
 CREATE TABLE t5 (e text, f text, g text);
 SECURITY LABEL ON TABLE t5 IS 'system_u:object_r:sepgsql_table_t:s0';
@@ -136,6 +138,16 @@ SELECT e,f FROM t5;			-- ok
 ---+---
 (0 rows)
 
+SELECT (t1.*)::record FROM t1;		-- ok
+   t1    
+---------
+ (1,aaa)
+ (2,bbb)
+ (3,ccc)
+(3 rows)
+
+SELECT (t4.*)::record FROM t4;		-- failed
+ERROR:  SELinux: security policy violation
 ---
 -- partitioned table parent
 SELECT * FROM t1p;			-- failed
