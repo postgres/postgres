@@ -5580,19 +5580,22 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 			elog(ERROR, "cache lookup failed for relation %u", objoid);
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
 
-		/* Indexes don't have permissions */
+		/*
+		 * Indexes don't have permissions, neither do the pg_class rows for
+		 * composite types.  (These cases are unreachable given the
+		 * restrictions in ALTER EXTENSION ADD, but let's check anyway.)
+		 */
 		if (pg_class_tuple->relkind == RELKIND_INDEX ||
-			pg_class_tuple->relkind == RELKIND_PARTITIONED_INDEX)
+			pg_class_tuple->relkind == RELKIND_PARTITIONED_INDEX ||
+			pg_class_tuple->relkind == RELKIND_COMPOSITE_TYPE)
+		{
+			ReleaseSysCache(tuple);
 			return;
-
-		/* Composite types don't have permissions either */
-		if (pg_class_tuple->relkind == RELKIND_COMPOSITE_TYPE)
-			return;
+		}
 
 		/*
-		 * If this isn't a sequence, index, or composite type then it's
-		 * possibly going to have columns associated with it that might have
-		 * ACLs.
+		 * If this isn't a sequence then it's possibly going to have
+		 * column-level ACLs associated with it.
 		 */
 		if (pg_class_tuple->relkind != RELKIND_SEQUENCE)
 		{
@@ -5724,6 +5727,11 @@ recordExtObjInitPriv(Oid objoid, Oid classoid)
 		SysScanDesc scan;
 		Relation	relation;
 
+		/*
+		 * Note: this is dead code, given that we don't allow large objects to
+		 * be made extension members.  But it seems worth carrying in case
+		 * some future caller of this function has need for it.
+		 */
 		relation = table_open(LargeObjectMetadataRelationId, RowExclusiveLock);
 
 		/* There's no syscache for pg_largeobject_metadata */
@@ -5866,19 +5874,22 @@ removeExtObjInitPriv(Oid objoid, Oid classoid)
 			elog(ERROR, "cache lookup failed for relation %u", objoid);
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
 
-		/* Indexes don't have permissions */
+		/*
+		 * Indexes don't have permissions, neither do the pg_class rows for
+		 * composite types.  (These cases are unreachable given the
+		 * restrictions in ALTER EXTENSION DROP, but let's check anyway.)
+		 */
 		if (pg_class_tuple->relkind == RELKIND_INDEX ||
-			pg_class_tuple->relkind == RELKIND_PARTITIONED_INDEX)
+			pg_class_tuple->relkind == RELKIND_PARTITIONED_INDEX ||
+			pg_class_tuple->relkind == RELKIND_COMPOSITE_TYPE)
+		{
+			ReleaseSysCache(tuple);
 			return;
-
-		/* Composite types don't have permissions either */
-		if (pg_class_tuple->relkind == RELKIND_COMPOSITE_TYPE)
-			return;
+		}
 
 		/*
-		 * If this isn't a sequence, index, or composite type then it's
-		 * possibly going to have columns associated with it that might have
-		 * ACLs.
+		 * If this isn't a sequence then it's possibly going to have
+		 * column-level ACLs associated with it.
 		 */
 		if (pg_class_tuple->relkind != RELKIND_SEQUENCE)
 		{
