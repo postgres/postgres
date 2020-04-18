@@ -336,6 +336,13 @@ ExecComputeStoredGenerated(EState *estate, TupleTableSlot *slot, CmdType cmdtype
 
 			val = ExecEvalExpr(resultRelInfo->ri_GeneratedExprs[i], econtext, &isnull);
 
+			/*
+			 * We must make a copy of val as we have no guarantees about where
+			 * memory for a pass-by-reference Datum is located.
+			 */
+			if (!isnull)
+				val = datumCopy(val, attr->attbyval, attr->attlen);
+
 			values[i] = val;
 			nulls[i] = isnull;
 		}

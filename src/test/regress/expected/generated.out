@@ -320,6 +320,18 @@ SELECT * FROM gtest2;
  1 |  
 (1 row)
 
+-- simple column reference for varlena types
+CREATE TABLE gtest_varlena (a varchar, b varchar GENERATED ALWAYS AS (a) STORED);
+INSERT INTO gtest_varlena (a) VALUES('01234567890123456789');
+INSERT INTO gtest_varlena (a) VALUES(NULL);
+SELECT * FROM gtest_varlena ORDER BY a;
+          a           |          b           
+----------------------+----------------------
+ 01234567890123456789 | 01234567890123456789
+                      | 
+(2 rows)
+
+DROP TABLE gtest_varlena;
 -- composite types
 CREATE TYPE double_int as (a int, b int);
 CREATE TABLE gtest4 (
