@@ -37,6 +37,24 @@
 #define SYNC_REP_QUORUM		1
 
 /*
+ * SyncRepGetCandidateStandbys returns an array of these structs,
+ * one per candidate synchronous walsender.
+ */
+typedef struct SyncRepStandbyData
+{
+	/* Copies of relevant fields from WalSnd shared-memory struct */
+	pid_t		pid;
+	XLogRecPtr	write;
+	XLogRecPtr	flush;
+	XLogRecPtr	apply;
+	int			sync_standby_priority;
+	/* Index of this walsender in the WalSnd shared-memory array */
+	int			walsnd_index;
+	/* This flag indicates whether this struct is about our own process */
+	bool		is_me;
+} SyncRepStandbyData;
+
+/*
  * Struct for the configuration of synchronous replication.
  *
  * Note: this must be a flat representation that can be held in a single
@@ -74,6 +92,9 @@ extern void SyncRepInitConfig(void);
 extern void SyncRepReleaseWaiters(void);
 
 /* called by wal sender and user backend */
+extern int	SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys);
+
+/* obsolete, do not use in new code */
 extern List *SyncRepGetSyncStandbys(bool *am_sync);
 
 /* called by checkpointer */
