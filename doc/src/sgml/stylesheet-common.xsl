@@ -103,4 +103,11 @@
   <xsl:apply-templates select="." mode="xref"/>
 </xsl:template>
 
+
+<!-- Support for explicit line breaks <?br?> within table cells -->
+
+<xsl:template match="processing-instruction('br')">
+  <br/>
+</xsl:template>
+
 </xsl:stylesheet>

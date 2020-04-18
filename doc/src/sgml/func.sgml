@@ -1750,7 +1750,7 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Remove the longest string containing only characters from
+        Remove the longest string containing only characters in
         <parameter>characters</parameter> (a space by default) from the
         start, end, or both ends (<literal>both</literal> is the default)
         of <parameter>string</parameter>
@@ -1798,243 +1798,240 @@
 
    <table id="functions-string-other">
     <title>Other String Functions</title>
-    <tgroup cols="5">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Return Type</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>ascii</primary>
         </indexterm>
-        <literal><function>ascii(<parameter>string</parameter>)</function></literal>
+        <function>ascii</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the numeric code of the first character of the argument.
+        In <acronym>UTF8</acronym> encoding, returns the Unicode code point
+        of the character.  In other multibyte encodings, the argument must
+        be an <acronym>ASCII</acronym> character.
+       <?br?>
+        <literal>ascii('x')</literal>
+        <returnvalue>120</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>
-        <acronym>ASCII</acronym> code of the first character of the
-        argument.  For <acronym>UTF8</acronym> returns the Unicode code
-        point of the character.  For other multibyte encodings, the
-        argument must be an <acronym>ASCII</acronym> character.
-       </entry>
-       <entry><literal>ascii('x')</literal></entry>
-       <entry><literal>120</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>btrim</primary>
         </indexterm>
-        <literal><function>btrim(<parameter>string</parameter> <type>text</type>
-        <optional>, <parameter>characters</parameter> <type>text</type></optional>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Remove the longest string consisting only of characters
+        <function>btrim</function> ( <parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Removes the longest string consisting only of characters
         in <parameter>characters</parameter> (a space by default)
-        from the start and end of <parameter>string</parameter>
+        from the start and end of <parameter>string</parameter>.
+       <?br?>
+        <literal>btrim('xyxtrimyyx', 'xyz')</literal>
+        <returnvalue>trim</returnvalue>
        </entry>
-       <entry><literal>btrim('xyxtrimyyx', 'xyz')</literal></entry>
-       <entry><literal>trim</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>chr</primary>
         </indexterm>
-        <literal><function>chr(<type>int</type>)</function></literal>
+        <function>chr</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Returns the character with the given code. In <acronym>UTF8</acronym>
+        encoding the argument is treated as a Unicode code point. In other
+        multibyte encodings the argument must designate
+        an <acronym>ASCII</acronym> character.  <literal>chr(0)</literal> is
+        disallowed because text data types cannot store that character.
+      <?br?>
+        <literal>chr(65)</literal>
+        <returnvalue>A</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Character with the given code. For <acronym>UTF8</acronym> the
-        argument is treated as a Unicode code point. For other multibyte
-        encodings the argument must designate an
-        <acronym>ASCII</acronym> character.  The NULL (0) character is not
-        allowed because text data types cannot store such bytes.
-       </entry>
-       <entry><literal>chr(65)</literal></entry>
-       <entry><literal>A</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>concat</primary>
         </indexterm>
-        <literal><function>concat(<parameter>str</parameter> <type>"any"</type>
-         [, <parameter>str</parameter> <type>"any"</type> [, ...] ])</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Concatenate the text representations of all the arguments.
+        <function>concat</function> ( <parameter>val1</parameter> <type>"any"</type>
+         [, <parameter>val2</parameter> <type>"any"</type> [, ...] ] )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Concatenates the text representations of all the arguments.
         NULL arguments are ignored.
+       <?br?>
+        <literal>concat('abcde', 2, NULL, 22)</literal>
+        <returnvalue>abcde222</returnvalue>
        </entry>
-       <entry><literal>concat('abcde', 2, NULL, 22)</literal></entry>
-       <entry><literal>abcde222</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>concat_ws</primary>
         </indexterm>
-        <literal><function>concat_ws(<parameter>sep</parameter> <type>text</type>,
-        <parameter>str</parameter> <type>"any"</type>
-        [, <parameter>str</parameter> <type>"any"</type> [, ...] ])</function></literal>
+        <function>concat_ws</function> ( <parameter>sep</parameter> <type>text</type>,
+        <parameter>val1</parameter> <type>"any"</type>
+        [, <parameter>val2</parameter> <type>"any"</type> [, ...] ] )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Concatenates all but the first argument, with separators. The first
+        argument is used as the separator string, and should not be NULL.
+        Other NULL arguments are ignored.
+       <?br?>
+        <literal>concat_ws(',', 'abcde', 2, NULL, 22)</literal>
+        <returnvalue>abcde,2,22</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Concatenate all but the first argument with separators. The first
-        argument is used as the separator string. NULL arguments are ignored.
-       </entry>
-       <entry><literal>concat_ws(',', 'abcde', 2, NULL, 22)</literal></entry>
-       <entry><literal>abcde,2,22</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>format</primary>
         </indexterm>
-        <literal><function>format</function>(<parameter>formatstr</parameter> <type>text</type>
-        [, <parameter>formatarg</parameter> <type>"any"</type> [, ...] ])</literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-         Format arguments according to a format string.
+        <function>format</function> ( <parameter>formatstr</parameter> <type>text</type>
+        [, <parameter>formatarg</parameter> <type>"any"</type> [, ...] ] )
+        <returnvalue>text</returnvalue>
+       <?br?>
+         Formats arguments according to a format string;
+         see <xref linkend="functions-string-format"/>.
          This function is similar to the C function <function>sprintf</function>.
-         See <xref linkend="functions-string-format"/>.
+       <?br?>
+        <literal>format('Hello %s, %1$s', 'World')</literal>
+        <returnvalue>Hello World, World</returnvalue>
        </entry>
-       <entry><literal>format('Hello %s, %1$s', 'World')</literal></entry>
-       <entry><literal>Hello World, World</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>initcap</primary>
         </indexterm>
-        <literal><function>initcap(<parameter>string</parameter>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Convert the first letter of each word to upper case and the
+        <function>initcap</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts the first letter of each word to upper case and the
         rest to lower case. Words are sequences of alphanumeric
         characters separated by non-alphanumeric characters.
+       <?br?>
+        <literal>initcap('hi THOMAS')</literal>
+        <returnvalue>Hi Thomas</returnvalue>
        </entry>
-       <entry><literal>initcap('hi THOMAS')</literal></entry>
-       <entry><literal>Hi Thomas</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>left</primary>
         </indexterm>
-        <literal><function>left(<parameter>string</parameter> <type>text</type>,
-        <parameter>n</parameter> <type>int</type>)</function></literal>
+        <function>left</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Returns first <replaceable>n</replaceable> characters in the
+        string, or when <replaceable>n</replaceable> is negative, returns
+        all but last |<replaceable>n</replaceable>| characters.
+       <?br?>
+        <literal>left('abcde', 2)</literal>
+        <returnvalue>ab</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Return first <replaceable>n</replaceable> characters in the
-        string, or when <replaceable>n</replaceable> is negative, return
-        all but last |<replaceable>n</replaceable>| characters
-        </entry>
-       <entry><literal>left('abcde', 2)</literal></entry>
-       <entry><literal>ab</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>length</primary>
         </indexterm>
-        <literal><function>length(<parameter>string</parameter>)</function></literal>
+        <function>length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of characters in the string.
+       <?br?>
+        <literal>length('jose')</literal>
+        <returnvalue>4</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Number of characters in <parameter>string</parameter>
-       </entry>
-       <entry><literal>length('jose')</literal></entry>
-       <entry><literal>4</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>lpad</primary>
         </indexterm>
-        <literal><function>lpad(<parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>int</type>
-        <optional>, <parameter>fill</parameter> <type>text</type></optional>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Extend the <parameter>string</parameter> to length
+        <function>lpad</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Extends the <parameter>string</parameter> to length
         <parameter>length</parameter> by prepending the characters
         <parameter>fill</parameter> (a space by default).  If the
         <parameter>string</parameter> is already longer than
-        <parameter>length</parameter> then it is truncated (on the
-        right).
+        <parameter>length</parameter> then it is truncated (on the right).
+       <?br?>
+        <literal>lpad('hi', 5, 'xy')</literal>
+        <returnvalue>xyxhi</returnvalue>
        </entry>
-       <entry><literal>lpad('hi', 5, 'xy')</literal></entry>
-       <entry><literal>xyxhi</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>ltrim</primary>
         </indexterm>
-        <literal><function>ltrim(<parameter>string</parameter> <type>text</type>
-        <optional>, <parameter>characters</parameter> <type>text</type></optional>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Remove the longest string containing only characters from
+        <function>ltrim</function> ( <parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Removes the longest string containing only characters in
         <parameter>characters</parameter> (a space by default) from the start of
-        <parameter>string</parameter>
+        <parameter>string</parameter>.
+       <?br?>
+        <literal>ltrim('zzzytest', 'xyz')</literal>
+        <returnvalue>test</returnvalue>
        </entry>
-       <entry><literal>ltrim('zzzytest', 'xyz')</literal></entry>
-       <entry><literal>test</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>md5</primary>
         </indexterm>
-        <literal><function>md5(<parameter>string</parameter>)</function></literal>
+        <function>md5</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Computes the MD5 <link linkend="functions-hash-note">hash</link> of
+        the argument, with the result written in hexadecimal.
+       <?br?>
+        <literal>md5('abc')</literal>
+        <returnvalue>900150983cd24fb0&zwsp;d6963f7d28e17f72</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        MD5 <link linkend="functions-hash-note">hash</link>, with
-        the result written in hexadecimal
-       </entry>
-       <entry><literal>md5('abc')</literal></entry>
-       <entry><literal>900150983cd24fb0 d6963f7d28e17f72</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>parse_ident</primary>
         </indexterm>
-        <literal><function>parse_ident(<parameter>qualified_identifier</parameter> <type>text</type>
-           [, <parameter>strictmode</parameter> <type>boolean</type> DEFAULT true ] )</function></literal>
-       </entry>
-       <entry><type>text[]</type></entry>
-       <entry>
-        Split <parameter>qualified_identifier</parameter> into an array of
+        <function>parse_ident</function> ( <parameter>qualified_identifier</parameter> <type>text</type>
+        [, <parameter>strict_mode</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> ] )
+        <returnvalue>text[]</returnvalue>
+       <?br?>
+        Splits <parameter>qualified_identifier</parameter> into an array of
         identifiers, removing any quoting of individual identifiers.  By
         default, extra characters after the last identifier are considered an
         error; but if the second parameter is <literal>false</literal>, then such
@@ -2042,417 +2039,445 @@
         names for objects like functions.) Note that this function does not
         truncate over-length identifiers. If you want truncation you can cast
         the result to <type>name[]</type>.
+       <?br?>
+        <literal>parse_ident('"SomeSchema".someTable')</literal>
+        <returnvalue>{SomeSchema,sometable}</returnvalue>
        </entry>
-       <entry><literal>parse_ident('"SomeSchema".someTable')</literal></entry>
-       <entry><literal>{SomeSchema,sometable}</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>pg_client_encoding</primary>
         </indexterm>
-        <literal><function>pg_client_encoding()</function></literal>
+        <function>pg_client_encoding</function> ( )
+        <returnvalue>name</returnvalue>
+       <?br?>
+        Returns current client encoding name.
+       <?br?>
+        <literal>pg_client_encoding()</literal>
+        <returnvalue>UTF8</returnvalue>
        </entry>
-       <entry><type>name</type></entry>
-       <entry>
-        Current client encoding name
-       </entry>
-       <entry><literal>pg_client_encoding()</literal></entry>
-       <entry><literal>SQL_ASCII</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>quote_ident</primary>
         </indexterm>
-        <literal><function>quote_ident(<parameter>string</parameter> <type>text</type>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Return the given string suitably quoted to be used as an identifier
+        <function>quote_ident</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Returns the given string suitably quoted to be used as an identifier
         in an <acronym>SQL</acronym> statement string.
         Quotes are added only if necessary (i.e., if the string contains
         non-identifier characters or would be case-folded).
         Embedded quotes are properly doubled.
         See also <xref linkend="plpgsql-quote-literal-example"/>.
+       <?br?>
+        <literal>quote_ident('Foo bar')</literal>
+        <returnvalue>"Foo bar"</returnvalue>
        </entry>
-       <entry><literal>quote_ident('Foo bar')</literal></entry>
-       <entry><literal>"Foo bar"</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>quote_literal</primary>
         </indexterm>
-        <literal><function>quote_literal(<parameter>string</parameter> <type>text</type>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Return the given string suitably quoted to be used as a string literal
+        <function>quote_literal</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Returns the given string suitably quoted to be used as a string literal
         in an <acronym>SQL</acronym> statement string.
         Embedded single-quotes and backslashes are properly doubled.
         Note that <function>quote_literal</function> returns null on null
         input; if the argument might be null,
         <function>quote_nullable</function> is often more suitable.
         See also <xref linkend="plpgsql-quote-literal-example"/>.
+       <?br?>
+        <literal>quote_literal(E'O\'Reilly')</literal>
+        <returnvalue>'O''Reilly'</returnvalue>
        </entry>
-       <entry><literal>quote_literal(E'O\'Reilly')</literal></entry>
-       <entry><literal>'O''Reilly'</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>quote_literal(<parameter>value</parameter> <type>anyelement</type>)</function></literal></entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Coerce the given value to text and then quote it as a literal.
+       <entry role="functableentry">
+        <function>quote_literal</function> ( <type>anyelement</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts the given value to text and then quotes it as a literal.
         Embedded single-quotes and backslashes are properly doubled.
+       <?br?>
+        <literal>quote_literal(42.5)</literal>
+        <returnvalue>'42.5'</returnvalue>
        </entry>
-       <entry><literal>quote_literal(42.5)</literal></entry>
-       <entry><literal>'42.5'</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>quote_nullable</primary>
         </indexterm>
-        <literal><function>quote_nullable(<parameter>string</parameter> <type>text</type>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Return the given string suitably quoted to be used as a string literal
+        <function>quote_nullable</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Returns the given string suitably quoted to be used as a string literal
         in an <acronym>SQL</acronym> statement string; or, if the argument
-        is null, return <literal>NULL</literal>.
+        is null, returns <literal>NULL</literal>.
         Embedded single-quotes and backslashes are properly doubled.
         See also <xref linkend="plpgsql-quote-literal-example"/>.
+       <?br?>
+        <literal>quote_nullable(NULL)</literal>
+        <returnvalue>NULL</returnvalue>
        </entry>
-       <entry><literal>quote_nullable(NULL)</literal></entry>
-       <entry><literal>NULL</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>quote_nullable(<parameter>value</parameter> <type>anyelement</type>)</function></literal></entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Coerce the given value to text and then quote it as a literal;
-        or, if the argument is null, return <literal>NULL</literal>.
+       <entry role="functableentry">
+        <function>quote_nullable</function> ( <type>anyelement</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts the given value to text and then quotes it as a literal;
+        or, if the argument is null, returns <literal>NULL</literal>.
         Embedded single-quotes and backslashes are properly doubled.
+       <?br?>
+        <literal>quote_nullable(42.5)</literal>
+        <returnvalue>'42.5'</returnvalue>
        </entry>
-       <entry><literal>quote_nullable(42.5)</literal></entry>
-       <entry><literal>'42.5'</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>regexp_match</primary>
         </indexterm>
-        <literal><function>regexp_match(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type>])</function></literal>
+        <function>regexp_match</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <returnvalue>text[]</returnvalue>
+       <?br?>
+        Returns captured substring(s) resulting from the first match of a POSIX
+        regular expression to the <parameter>string</parameter>; see
+        <xref linkend="functions-posix-regexp"/>.
+       <?br?>
+        <literal>regexp_match('foobarbequebaz', '(bar)(beque)')</literal>
+        <returnvalue>{bar,beque}</returnvalue>
        </entry>
-       <entry><type>text[]</type></entry>
-       <entry>
-        Return captured substring(s) resulting from the first match of a POSIX
-        regular expression to the <parameter>string</parameter> (see
-        <xref linkend="functions-posix-regexp"/> for more information)
-       </entry>
-       <entry><literal>regexp_match('foobarbequebaz', '(bar)(beque)')</literal></entry>
-       <entry><literal>{bar,beque}</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>regexp_matches</primary>
         </indexterm>
-        <literal><function>regexp_matches(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type>])</function></literal>
+        <function>regexp_matches</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <returnvalue>setof text[]</returnvalue>
+       <?br?>
+        Returns captured substring(s) resulting from matching a POSIX regular
+        expression to the <parameter>string</parameter>; see
+        <xref linkend="functions-posix-regexp"/>.
+       <?br?>
+        <literal>regexp_matches('foobarbequebaz', 'ba.', 'g')</literal>
+        <returnvalue>{bar}<?br?>{baz}</returnvalue><?br?>(2 rows in result)
        </entry>
-       <entry><type>setof text[]</type></entry>
-       <entry>
-        Return captured substring(s) resulting from matching a POSIX regular
-        expression to the <parameter>string</parameter> (see
-        <xref linkend="functions-posix-regexp"/> for more information)
-       </entry>
-       <entry><literal>regexp_matches('foobarbequebaz', 'ba.', 'g')</literal></entry>
-       <entry><literal>{bar}</literal><para><literal>{baz}</literal></para> (2 rows)</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>regexp_replace</primary>
         </indexterm>
-        <literal><function>regexp_replace(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type>])</function></literal>
+        <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Replaces substring(s) matching a POSIX regular expression; see
+        <xref linkend="functions-posix-regexp"/>.
+       <?br?>
+        <literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal>
+        <returnvalue>ThM</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Replace substring(s) matching a POSIX regular expression (see
-        <xref linkend="functions-posix-regexp"/> for more information)
-       </entry>
-       <entry><literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal></entry>
-       <entry><literal>ThM</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>regexp_split_to_array</primary>
         </indexterm>
-        <literal><function>regexp_split_to_array(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ])</function></literal>
+        <function>regexp_split_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <returnvalue>text[]</returnvalue>
+       <?br?>
+        Splits <parameter>string</parameter> using a POSIX regular
+        expression as the delimiter; see
+        <xref linkend="functions-posix-regexp"/>.
+       <?br?>
+        <literal>regexp_split_to_array('hello world', '\s+')</literal>
+        <returnvalue>{hello,world}</returnvalue>
        </entry>
-       <entry><type>text[]</type></entry>
-       <entry>
-        Split <parameter>string</parameter> using a POSIX regular expression as
-        the delimiter (see <xref linkend="functions-posix-regexp"/> for more
-        information)
-       </entry>
-       <entry><literal>regexp_split_to_array('hello world', '\s+')</literal></entry>
-       <entry><literal>{hello,world}</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>regexp_split_to_table</primary>
         </indexterm>
-        <literal><function>regexp_split_to_table(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type>])</function></literal>
+        <function>regexp_split_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ] )
+        <returnvalue>setof text</returnvalue>
+       <?br?>
+        Splits <parameter>string</parameter> using a POSIX regular
+        expression as the delimiter; see
+        <xref linkend="functions-posix-regexp"/>.
+       <?br?>
+        <literal>regexp_split_to_table('hello world', '\s+')</literal>
+        <returnvalue>hello<?br?>world</returnvalue><?br?>(2 rows in result)
        </entry>
-       <entry><type>setof text</type></entry>
-       <entry>
-        Split <parameter>string</parameter> using a POSIX regular expression as
-        the delimiter (see <xref linkend="functions-posix-regexp"/> for more
-        information)
-       </entry>
-       <entry><literal>regexp_split_to_table('hello world', '\s+')</literal></entry>
-       <entry><literal>hello</literal><para><literal>world</literal></para> (2 rows)</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>repeat</primary>
         </indexterm>
-        <literal><function>repeat(<parameter>string</parameter> <type>text</type>, <parameter>number</parameter> <type>int</type>)</function></literal>
+        <function>repeat</function> ( <parameter>string</parameter> <type>text</type>, <parameter>number</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Repeats <parameter>string</parameter> the specified
+        <parameter>number</parameter> of times.
+       <?br?>
+        <literal>repeat('Pg', 4)</literal>
+        <returnvalue>PgPgPgPg</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>Repeat <parameter>string</parameter> the specified
-       <parameter>number</parameter> of times</entry>
-       <entry><literal>repeat('Pg', 4)</literal></entry>
-       <entry><literal>PgPgPgPg</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>replace</primary>
         </indexterm>
-        <literal><function>replace(<parameter>string</parameter> <type>text</type>,
+        <function>replace</function> ( <parameter>string</parameter> <type>text</type>,
         <parameter>from</parameter> <type>text</type>,
-        <parameter>to</parameter> <type>text</type>)</function></literal>
+        <parameter>to</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Replaces all occurrences in <parameter>string</parameter> of
+        substring <parameter>from</parameter> with
+        substring <parameter>to</parameter>.
+       <?br?>
+        <literal>replace('abcdefabcdef', 'cd', 'XX')</literal>
+        <returnvalue>abXXefabXXef</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>Replace all occurrences in <parameter>string</parameter> of substring
-        <parameter>from</parameter> with substring <parameter>to</parameter>
-       </entry>
-       <entry><literal>replace('abcdefabcdef', 'cd', 'XX')</literal></entry>
-       <entry><literal>abXXefabXXef</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>reverse</primary>
         </indexterm>
-        <literal><function>reverse(<parameter>str</parameter>)</function></literal>
+        <function>reverse</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Reverses the order of the characters in the string.
+       <?br?>
+        <literal>reverse('abcde')</literal>
+        <returnvalue>edcba</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Reverse the order of the characters in <parameter>string</parameter>
-       </entry>
-       <entry><literal>reverse('abcde')</literal></entry>
-       <entry><literal>edcba</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>right</primary>
         </indexterm>
-        <literal><function>right(<parameter>string</parameter> <type>text</type>,
-         <parameter>n</parameter> <type>int</type>)</function></literal>
+        <function>right</function> ( <parameter>string</parameter> <type>text</type>,
+         <parameter>n</parameter> <type>integer</type> )
+<type></type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Returns last <replaceable>n</replaceable> characters in the string,
+        or when <replaceable>n</replaceable> is negative, returns all but
+        first |<replaceable>n</replaceable>| characters.
+       <?br?>
+        <literal>right('abcde', 2)</literal>
+        <returnvalue>de</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Return last <replaceable>n</replaceable> characters in the string,
-        or when <replaceable>n</replaceable> is negative, return all but
-        first |<replaceable>n</replaceable>| characters
-       </entry>
-       <entry><literal>right('abcde', 2)</literal></entry>
-       <entry><literal>de</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>rpad</primary>
         </indexterm>
-        <literal><function>rpad(<parameter>string</parameter> <type>text</type>,
-        <parameter>length</parameter> <type>int</type>
-        <optional>, <parameter>fill</parameter> <type>text</type></optional>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Extend the <parameter>string</parameter> to length
+        <function>rpad</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
+<type></type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Extends the <parameter>string</parameter> to length
         <parameter>length</parameter> by appending the characters
         <parameter>fill</parameter> (a space by default).  If the
         <parameter>string</parameter> is already longer than
         <parameter>length</parameter> then it is truncated.
+       <?br?>
+        <literal>rpad('hi', 5, 'xy')</literal>
+        <returnvalue>hixyx</returnvalue>
        </entry>
-       <entry><literal>rpad('hi', 5, 'xy')</literal></entry>
-       <entry><literal>hixyx</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>rtrim</primary>
         </indexterm>
-        <literal><function>rtrim(<parameter>string</parameter> <type>text</type>
-         <optional>, <parameter>characters</parameter> <type>text</type></optional>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Remove the longest string containing only characters from
+        <function>rtrim</function> ( <parameter>string</parameter> <type>text</type>
+         <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Removes the longest string containing only characters in
         <parameter>characters</parameter> (a space by default) from the end of
-        <parameter>string</parameter>
+        <parameter>string</parameter>.
+       <?br?>
+        <literal>rtrim('testxxzx', 'xyz')</literal>
+        <returnvalue>test</returnvalue>
        </entry>
-       <entry><literal>rtrim('testxxzx', 'xyz')</literal></entry>
-       <entry><literal>test</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>split_part</primary>
         </indexterm>
-        <literal><function>split_part(<parameter>string</parameter> <type>text</type>,
+        <function>split_part</function> ( <parameter>string</parameter> <type>text</type>,
         <parameter>delimiter</parameter> <type>text</type>,
-        <parameter>field</parameter> <type>int</type>)</function></literal>
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Splits <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and returns
+        the <parameter>n</parameter>'th field (counting from one).
+       <?br?>
+        <literal>split_part('abc~@~def~@~ghi', '~@~', 2)</literal>
+        <returnvalue>def</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>Split <parameter>string</parameter> on <parameter>delimiter</parameter>
-        and return the given field (counting from one)
-       </entry>
-       <entry><literal>split_part('abc~@~def~@~ghi', '~@~', 2)</literal></entry>
-       <entry><literal>def</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>strpos</primary>
         </indexterm>
-        <literal><function>strpos(<parameter>string</parameter>, <parameter>substring</parameter>)</function></literal>
+        <function>strpos</function> ( <parameter>string</parameter> <type>text</type>, <parameter>substring</parameter> <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns location of specified <parameter>substring</parameter>
+        within <parameter>string</parameter>, or zero if it's not present.
+        (Same as <literal>position(<parameter>substring</parameter> in
+        <parameter>string</parameter>)</literal>, but note the reversed
+        argument order.)
+       <?br?>
+        <literal>strpos('high', 'ig')</literal>
+        <returnvalue>2</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Location of specified substring (same as
-        <literal>position(<parameter>substring</parameter> in
-         <parameter>string</parameter>)</literal>, but note the reversed
-        argument order)
-       </entry>
-       <entry><literal>strpos('high', 'ig')</literal></entry>
-       <entry><literal>2</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>substr</primary>
         </indexterm>
-        <literal><function>substr(<parameter>string</parameter>, <parameter>from</parameter> <optional>, <parameter>count</parameter></optional>)</function></literal>
+        <function>substr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>start</parameter> <type>integer</type> <optional>, <parameter>count</parameter> <type>integer</type> </optional> )
+<type></type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Extracts substring starting at index <parameter>start</parameter>,
+        and extending for <parameter>count</parameter> characters if that is
+        specified.  (Same
+        as <literal>substring(<parameter>string</parameter>
+        from <parameter>start</parameter>
+        for <parameter>count</parameter>)</literal>.)
+       <?br?>
+        <literal>substr('alphabet', 3)</literal>
+        <returnvalue>phabet</returnvalue>
+       <?br?>
+        <literal>substr('alphabet', 3, 2)</literal>
+        <returnvalue>ph</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Extract substring (same as
-        <literal>substring(<parameter>string</parameter> from <parameter>from</parameter> for <parameter>count</parameter>)</literal>)
-       </entry>
-       <entry><literal>substr('alphabet', 3, 2)</literal></entry>
-       <entry><literal>ph</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>starts_with</primary>
         </indexterm>
-        <literal><function>starts_with(<parameter>string</parameter>, <parameter>prefix</parameter>)</function></literal>
+        <function>starts_with</function> ( <parameter>string</parameter> <type>text</type>, <parameter>prefix</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Returns true if <parameter>string</parameter> starts
+        with <parameter>prefix</parameter>.
+       <?br?>
+        <literal>starts_with('alphabet', 'alph')</literal>
+        <returnvalue>t</returnvalue>
        </entry>
-       <entry><type>bool</type></entry>
-       <entry>
-        Return true if <parameter>string</parameter> starts
-        with <parameter>prefix</parameter>
-       </entry>
-       <entry><literal>starts_with('alphabet', 'alph')</literal></entry>
-       <entry><literal>t</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>to_ascii</primary>
         </indexterm>
-        <literal><function>to_ascii(<parameter>string</parameter> <type>text</type>
-        <optional>, <parameter>encoding</parameter> <type>text</type></optional>)</function></literal>
+        <function>to_ascii</function> ( <parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>encoding</parameter> <type>name</type> or <type>integer</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts <parameter>string</parameter> to <acronym>ASCII</acronym>
+        from another encoding, which may be identified by name or number;
+        if <parameter>encoding</parameter> is omitted the database encoding
+        is assumed.  The conversion consists primarily of dropping accents.
+        Conversion is only supported
+        from <literal>LATIN1</literal>, <literal>LATIN2</literal>,
+        <literal>LATIN9</literal>, and <literal>WIN1250</literal> encodings.
+       <?br?>
+        <literal>to_ascii('Kar&eacute;l')</literal>
+        <returnvalue>Karel</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-       Convert <parameter>string</parameter> to <acronym>ASCII</acronym> from another encoding
-       (only supports conversion from  <literal>LATIN1</literal>, <literal>LATIN2</literal>, <literal>LATIN9</literal>,
-       and <literal>WIN1250</literal> encodings)
-       </entry>
-       <entry><literal>to_ascii('Karel')</literal></entry>
-       <entry><literal>Karel</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>to_hex</primary>
         </indexterm>
-        <literal><function>to_hex(<parameter>number</parameter> <type>int</type>
-        or <type>bigint</type>)</function></literal>
+        <function>to_hex</function> ( <parameter>number</parameter>
+        <type>integer</type>
+        or <type>bigint</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts <parameter>number</parameter> to its equivalent hexadecimal
+        representation.
+       <?br?>
+        <literal>to_hex(2147483647)</literal>
+        <returnvalue>7fffffff</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>Convert <parameter>number</parameter> to its equivalent hexadecimal
-        representation
-       </entry>
-       <entry><literal>to_hex(2147483647)</literal></entry>
-       <entry><literal>7fffffff</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>translate</primary>
         </indexterm>
-        <literal><function>translate(<parameter>string</parameter> <type>text</type>,
+        <function>translate</function> ( <parameter>string</parameter> <type>text</type>,
         <parameter>from</parameter> <type>text</type>,
-        <parameter>to</parameter> <type>text</type>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Any character in <parameter>string</parameter> that matches a
-        character in the <parameter>from</parameter> set is replaced by
-        the corresponding character in the <parameter>to</parameter>
+        <parameter>to</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Replaces each character in <parameter>string</parameter> that
+        matches a character in the <parameter>from</parameter> set with the
+        corresponding character in the <parameter>to</parameter>
         set. If <parameter>from</parameter> is longer than
         <parameter>to</parameter>, occurrences of the extra characters in
-        <parameter>from</parameter> are removed.
+        <parameter>from</parameter> are deleted.
+       <?br?>
+        <literal>translate('12345', '143', 'ax')</literal>
+        <returnvalue>a2x5</returnvalue>
        </entry>
-       <entry><literal>translate('12345', '143', 'ax')</literal></entry>
-       <entry><literal>a2x5</literal></entry>
       </row>
 
      </tbody>
@@ -6743,257 +6768,224 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     <table id="operators-datetime-table">
      <title>Date/Time Operators</title>
 
-     <tgroup cols="3">
-      <colspec colname="col1" colwidth="0.25*"/>
-      <colspec colname="col2" colwidth="1*"/>
-      <colspec colname="col3" colwidth="1*"/>
-      <spanspec spanname="name" namest="col1" nameend="col1" align="left"/>
-      <spanspec spanname="sig" namest="col2" nameend="col3" align="left"/>
-      <spanspec spanname="desc" namest="col2" nameend="col3" align="left"/>
-      <spanspec spanname="example" namest="col2" nameend="col2" align="left"/>
-      <spanspec spanname="exresult" namest="col3" nameend="col3" align="left"/>
+     <tgroup cols="1">
       <thead>
        <row>
-        <entry spanname="name" align="center" valign="middle" morerows="2">Operator</entry>
-        <entry spanname="sig" align="center">Signature</entry>
-       </row>
-       <row>
-        <entry spanname="desc" align="center">Description</entry>
-       </row>
-       <row>
-        <entry spanname="example" align="center">Example</entry>
-        <entry spanname="exresult" align="center">Example Result</entry>
+        <entry role="functableentry">
+         Operator<?br?>Description<?br?>Example(s)
+        </entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
-        <entry spanname="sig"><type>date</type> <literal>+</literal> <type>integer</type>
-         <returnvalue>date</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Add a number of days to a date</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date '2001-09-28' + 7</literal></entry>
-        <entry spanname="exresult"><literal>2001-10-05</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
-        <entry spanname="sig"><type>date</type> <literal>+</literal> <type>interval</type>
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Add an interval to a date</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date '2001-09-28' + interval '1 hour'</literal></entry>
-        <entry spanname="exresult"><literal>2001-09-28 01:00:00</literal></entry>
+        <entry role="functableentry">
+         <type>date</type> <literal>+</literal> <type>integer</type>
+         <returnvalue>date</returnvalue>
+        <?br?>
+         Add a number of days to a date
+        <?br?>
+         <literal>date '2001-09-28' + 7</literal>
+         <returnvalue>2001-10-05</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
-        <entry spanname="sig"><type>date</type> <literal>+</literal> <type>time</type>
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Add a time-of-day to a date</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date '2001-09-28' + time '03:00'</literal></entry>
-        <entry spanname="exresult"><literal>2001-09-28 03:00:00</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
-        <entry spanname="sig"><type>interval</type> <literal>+</literal> <type>interval</type>
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Add intervals</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>interval '1 day' + interval '1 hour'</literal></entry>
-        <entry spanname="exresult"><literal>1 day 01:00:00</literal></entry>
+        <entry role="functableentry">
+         <type>date</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Add an interval to a date
+        <?br?>
+         <literal>date '2001-09-28' + interval '1 hour'</literal>
+         <returnvalue>2001-09-28 01:00:00</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
-        <entry spanname="sig"><type>timestamp</type> <literal>+</literal> <type>interval</type>
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Add an interval to a timestamp</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>timestamp '2001-09-28 01:00' + interval '23 hours'</literal></entry>
-        <entry spanname="exresult"><literal>2001-09-29 00:00:00</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"> <literal>+</literal> </entry>
-        <entry spanname="sig"><type>time</type> <literal>+</literal> <type>interval</type>
-         <returnvalue>time</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Add an interval to a time</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>time '01:00' + interval '3 hours'</literal></entry>
-        <entry spanname="exresult"><literal>04:00:00</literal></entry>
+        <entry role="functableentry">
+         <type>date</type> <literal>+</literal> <type>time</type>
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Add a time-of-day to a date
+        <?br?>
+         <literal>date '2001-09-28' + time '03:00'</literal>
+         <returnvalue>2001-09-28 03:00:00</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><literal>-</literal> <type>interval</type>
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Negate an interval</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>- interval '23 hours'</literal></entry>
-        <entry spanname="exresult"><literal>-23:00:00</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>date</type> <literal>-</literal> <type>date</type>
-         <returnvalue>integer</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract dates</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date '2001-10-01' - date '2001-09-28'</literal></entry>
-        <entry spanname="exresult"><literal>3</literal></entry>
+        <entry role="functableentry">
+         <type>interval</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Add intervals
+        <?br?>
+         <literal>interval '1 day' + interval '1 hour'</literal>
+         <returnvalue>1 day 01:00:00</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>date</type> <literal>-</literal> <type>integer</type>
-         <returnvalue>date</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract a number of days from a date</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date '2001-10-01' - 7</literal></entry>
-        <entry spanname="exresult"><literal>2001-09-24</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>date</type> <literal>-</literal> <type>interval</type>
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract an interval from a date</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date '2001-09-28' - interval '1 hour'</literal></entry>
-        <entry spanname="exresult"><literal>2001-09-27 23:00:00</literal></entry>
+        <entry role="functableentry">
+         <type>timestamp</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Add an interval to a timestamp
+        <?br?>
+         <literal>timestamp '2001-09-28 01:00' + interval '23 hours'</literal>
+         <returnvalue>2001-09-29 00:00:00</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>time</type> <literal>-</literal> <type>time</type>
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract times</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>time '05:00' - time '03:00'</literal></entry>
-        <entry spanname="exresult"><literal>02:00:00</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>time</type> <literal>-</literal> <type>interval</type>
-         <returnvalue>time</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract an interval from a time</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>time '05:00' - interval '2 hours'</literal></entry>
-        <entry spanname="exresult"><literal>03:00:00</literal></entry>
+        <entry role="functableentry">
+         <type>time</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>time</returnvalue>
+        <?br?>
+         Add an interval to a time
+        <?br?>
+         <literal>time '01:00' + interval '3 hours'</literal>
+         <returnvalue>04:00:00</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>timestamp</type> <literal>-</literal> <type>interval</type>
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract an interval from a timestamp</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>timestamp '2001-09-28 23:00' - interval '23 hours'</literal></entry>
-        <entry spanname="exresult"><literal>2001-09-28 00:00:00</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>interval</type> <literal>-</literal> <type>interval</type>
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract intervals</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>interval '1 day' - interval '1 hour'</literal></entry>
-        <entry spanname="exresult"><literal>1 day -01:00:00</literal></entry>
+        <entry role="functableentry">
+         <literal>-</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Negate an interval
+        <?br?>
+         <literal>- interval '23 hours'</literal>
+         <returnvalue>-23:00:00</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>-</literal> </entry>
-        <entry spanname="sig"><type>timestamp</type> <literal>-</literal> <type>timestamp</type>
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract timestamps</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</literal></entry>
-        <entry spanname="exresult"><literal>1 day 15:00:00</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="4"> <literal>*</literal> </entry>
-        <entry spanname="sig"><type>double precision</type> <literal>*</literal> <type>interval</type>
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Multiply an interval by a scalar</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>900 * interval '1 second'</literal></entry>
-        <entry spanname="exresult"><literal>00:15:00</literal></entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>21 * interval '1 day'</literal></entry>
-        <entry spanname="exresult"><literal>21 days</literal></entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>3.5 * interval '1 hour'</literal></entry>
-        <entry spanname="exresult"><literal>03:30:00</literal></entry>
+        <entry role="functableentry">
+         <type>date</type> <literal>-</literal> <type>date</type>
+         <returnvalue>integer</returnvalue>
+        <?br?>
+         Subtract dates, producing the number of days elapsed
+        <?br?>
+         <literal>date '2001-10-01' - date '2001-09-28'</literal>
+         <returnvalue>3</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"> <literal>/</literal> </entry>
-        <entry spanname="sig"><type>interval</type> <literal>/</literal> <type>double precision</type>
-         <returnvalue>interval</returnvalue></entry>
+        <entry role="functableentry">
+         <type>date</type> <literal>-</literal> <type>integer</type>
+         <returnvalue>date</returnvalue>
+        <?br?>
+         Subtract a number of days from a date
+        <?br?>
+         <literal>date '2001-10-01' - 7</literal>
+         <returnvalue>2001-09-24</returnvalue>
+        </entry>
        </row>
+
        <row>
-        <entry spanname="desc">Divide an interval by a scalar</entry>
+        <entry role="functableentry">
+         <type>date</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Subtract an interval from a date
+        <?br?>
+         <literal>date '2001-09-28' - interval '1 hour'</literal>
+         <returnvalue>2001-09-27 23:00:00</returnvalue>
+        </entry>
        </row>
+
        <row>
-        <entry spanname="example"><literal>interval '1 hour' / 1.5</literal></entry>
-        <entry spanname="exresult"><literal>00:40:00</literal></entry>
+        <entry role="functableentry">
+         <type>time</type> <literal>-</literal> <type>time</type>
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Subtract times
+        <?br?>
+         <literal>time '05:00' - time '03:00'</literal>
+         <returnvalue>02:00:00</returnvalue>
+        </entry>
+       </row>
+
+       <row>
+        <entry role="functableentry">
+         <type>time</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>time</returnvalue>
+        <?br?>
+         Subtract an interval from a time
+        <?br?>
+         <literal>time '05:00' - interval '2 hours'</literal>
+         <returnvalue>03:00:00</returnvalue>
+        </entry>
+       </row>
+
+       <row>
+        <entry role="functableentry">
+         <type>timestamp</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Subtract an interval from a timestamp
+        <?br?>
+         <literal>timestamp '2001-09-28 23:00' - interval '23 hours'</literal>
+         <returnvalue>2001-09-28 00:00:00</returnvalue>
+        </entry>
+       </row>
+
+       <row>
+        <entry role="functableentry">
+         <type>interval</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Subtract intervals
+        <?br?>
+         <literal>interval '1 day' - interval '1 hour'</literal>
+         <returnvalue>1 day -01:00:00</returnvalue>
+        </entry>
+       </row>
+
+       <row>
+        <entry role="functableentry">
+         <type>timestamp</type> <literal>-</literal> <type>timestamp</type>
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Subtract timestamps
+        <?br?>
+         <literal>timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</literal>
+         <returnvalue>1 day 15:00:00</returnvalue>
+        </entry>
+       </row>
+
+       <row>
+        <entry role="functableentry">
+         <type>interval</type> <literal>*</literal> <type>double precision</type>
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Multiply an interval by a scalar
+        <?br?>
+         <literal>interval '1 second' * 900</literal>
+         <returnvalue>00:15:00</returnvalue>
+        <?br?>
+         <literal>interval '1 day' * 21</literal>
+         <returnvalue>21 days</returnvalue>
+        <?br?>
+         <literal>interval '1 hour' * 3.5</literal>
+         <returnvalue>03:30:00</returnvalue>
+        </entry>
+       </row>
+
+       <row>
+        <entry role="functableentry">
+         <type>interval</type> <literal>/</literal> <type>double precision</type>
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Divide an interval by a scalar
+        <?br?>
+         <literal>interval '1 hour' / 1.5</literal>
+         <returnvalue>00:40:00</returnvalue>
+        </entry>
        </row>
       </tbody>
      </tgroup>
@@ -7001,677 +6993,552 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
     <table id="functions-datetime-table">
      <title>Date/Time Functions</title>
-     <tgroup cols="3">
-      <colspec colname="col1" colwidth="1*"/>
-      <colspec colname="col2" colwidth="1*"/>
-      <colspec colname="col3" colwidth="1*"/>
-      <spanspec spanname="name" namest="col1" nameend="col1" align="left"/>
-      <spanspec spanname="sig" namest="col2" nameend="col3" align="left"/>
-      <spanspec spanname="desc" namest="col2" nameend="col3" align="left"/>
-      <spanspec spanname="example" namest="col2" nameend="col2" align="left"/>
-      <spanspec spanname="exresult" namest="col3" nameend="col3" align="left"/>
+     <tgroup cols="1">
       <thead>
        <row>
-        <entry spanname="name" align="center" valign="middle" morerows="2">Function</entry>
-        <entry spanname="sig" align="center">Signature</entry>
-       </row>
-       <row>
-        <entry spanname="desc" align="center">Description</entry>
-       </row>
-       <row>
-        <entry spanname="example" align="center">Example</entry>
-        <entry spanname="exresult" align="center">Example Result</entry>
+        <entry role="functableentry">
+         Function<?br?>Description<?br?>Example(s)
+        </entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>age</primary>
          </indexterm>
-         <function>age</function>
+         <function>age</function> ( <type>timestamp</type>, <type>timestamp</type> )
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Subtract arguments, producing a <quote>symbolic</quote> result that
+         uses years and months, rather than just days
+        <?br?>
+         <literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal>
+         <returnvalue>43 years 9 mons 27 days</returnvalue>
         </entry>
-        <entry spanname="sig"><function>age</function>(<type>timestamp</type>, <type>timestamp</type>)
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract arguments, producing a <quote>symbolic</quote> result that
-        uses years and months, rather than just days</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal></entry>
-        <entry spanname="exresult"><literal>43 years 9 mons 27 days</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>age</function></entry>
-        <entry spanname="sig"><function>age</function>(<type>timestamp</type>)
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Subtract from <function>current_date</function> (at midnight)</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>age(timestamp '1957-06-13')</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
+        <entry role="functableentry">
+         <function>age</function> ( <type>timestamp</type> )
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Subtract argument from <function>current_date</function> (at midnight)
+        <?br?>
+         <literal>age(timestamp '1957-06-13')</literal>
+         <returnvalue>62 years 6 mons 10 days</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>clock_timestamp</primary>
          </indexterm>
-         <function>clock_timestamp</function>
-        </entry>
-        <entry spanname="sig"><function>clock_timestamp</function>()
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (changes during statement execution);
+         <function>clock_timestamp</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Current date and time (changes during statement execution);
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>clock_timestamp()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>clock_timestamp()</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>current_date</primary>
          </indexterm>
          <function>current_date</function>
+         <returnvalue>date</returnvalue>
+        <?br?>
+         Current date; see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>current_date</literal>
+         <returnvalue>2019-12-23</returnvalue>
         </entry>
-        <entry spanname="sig"><function>current_date</function>
-         <returnvalue>date</returnvalue></entry>
-       </row>
-       <row>
-         <entry spanname="desc">Current date;
-         see <xref linkend="functions-datetime-current"/>
-        </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>current_date</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>current_time</primary>
          </indexterm>
          <function>current_time</function>
+         <returnvalue>time with time zone</returnvalue>
+        <?br?>
+         Current time of day; see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>current_time</literal>
+         <returnvalue>14:39:53.662522-05</returnvalue>
         </entry>
-        <entry spanname="sig"><function>current_time</function>
-         <returnvalue>time with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current time of day;
-         see <xref linkend="functions-datetime-current"/>
-        </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>current_time</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>current_time</function></entry>
-        <entry spanname="sig"><function>current_time</function>(<type>integer</type>)
-         <returnvalue>time with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current time of day, with limited precision;
+        <entry role="functableentry">
+         <function>current_time</function> ( <type>integer</type> )
+         <returnvalue>time with time zone</returnvalue>
+        <?br?>
+         Current time of day, with limited precision;
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>current_time(2)</literal>
+         <returnvalue>14:39:53.66-05</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>current_time(2)</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>current_timestamp</primary>
          </indexterm>
          <function>current_timestamp</function>
-        </entry>
-        <entry spanname="sig"><function>current_timestamp</function>
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (start of current transaction);
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Current date and time (start of current transaction);
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>current_timestamp</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>current_timestamp</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>current_timestamp</function></entry>
-        <entry spanname="sig"><function>current_timestamp</function>(<type>integer</type>)
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (start of current transaction), with limited precision;
+        <entry role="functableentry">
+         <function>current_timestamp</function> ( <type>integer</type> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Current date and time (start of current transaction), with limited precision;
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>current_timestamp(0)</literal>
+         <returnvalue>2019-12-23 14:39:53-05</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>current_timestamp(0)</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>date_part</primary>
          </indexterm>
-         <function>date_part</function>
-        </entry>
-        <entry spanname="sig"><function>date_part</function>(<type>text</type>, <type>timestamp</type>)
-         <returnvalue>double precision</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Get timestamp subfield (equivalent to <function>extract</function>);
+         <function>date_part</function> ( <type>text</type>, <type>timestamp</type> )
+         <returnvalue>double precision</returnvalue>
+        <?br?>
+         Get timestamp subfield (equivalent to <function>extract</function>);
          see <xref linkend="functions-datetime-extract"/>
+        <?br?>
+         <literal>date_part('hour', timestamp '2001-02-16 20:38:40')</literal>
+         <returnvalue>20</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date_part('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
-        <entry spanname="exresult"><literal>20</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>date_part</function></entry>
-        <entry spanname="sig"><function>date_part</function>(<type>text</type>, <type>interval</type>)
-         <returnvalue>double precision</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Get interval subfield (equivalent to
-         <function>extract</function>); see <xref linkend="functions-datetime-extract"/>
+        <entry role="functableentry">
+         <function>date_part</function> ( <type>text</type>, <type>interval</type> )
+         <returnvalue>double precision</returnvalue>
+        <?br?>
+         Get interval subfield (equivalent to <function>extract</function>);
+         see <xref linkend="functions-datetime-extract"/>
+        <?br?>
+         <literal>date_part('month', interval '2 years 3 months')</literal>
+         <returnvalue>3</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date_part('month', interval '2 years 3 months')</literal></entry>
-        <entry spanname="exresult"><literal>3</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>date_trunc</primary>
          </indexterm>
-         <function>date_trunc</function>
+         <function>date_trunc</function> ( <type>text</type>, <type>timestamp</type> )
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
+        <?br?>
+         <literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal>
+         <returnvalue>2001-02-16 20:00:00</returnvalue>
         </entry>
-        <entry spanname="sig"><function>date_trunc</function>(<type>text</type>, <type>timestamp</type>)
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
-        </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal></entry>
-        <entry spanname="exresult"><literal>2001-02-16 20:00:00</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>date_trunc</function></entry>
-        <entry spanname="sig"><function>date_trunc</function>(<type>text</type>, <type>timestamp with time zone</type>, <type>text</type>)
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Truncate to specified precision in the specified time zone; see <xref linkend="functions-datetime-trunc"/>
+        <entry role="functableentry">
+         <function>date_trunc</function> ( <type>text</type>, <type>timestamp with time zone</type>, <type>text</type> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Truncate to specified precision in the specified time zone; see
+         <xref linkend="functions-datetime-trunc"/>
+        <?br?>
+         <literal>date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney')</literal>
+         <returnvalue>2001-02-16 13:00:00+00</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney')</literal></entry>
-        <entry spanname="exresult"><literal>2001-02-16 13:00:00+00</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>date_trunc</function></entry>
-        <entry spanname="sig"><function>date_trunc</function>(<type>text</type>, <type>interval</type>)
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
+        <entry role="functableentry">
+         <function>date_trunc</function> ( <type>text</type>, <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Truncate to specified precision; see
+         <xref linkend="functions-datetime-trunc"/>
+        <?br?>
+         <literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal>
+         <returnvalue>2 days 03:00:00</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal></entry>
-        <entry spanname="exresult"><literal>2 days 03:00:00</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>extract</primary>
          </indexterm>
-         <function>extract</function>
+         <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>timestamp</type> )
+         <returnvalue>double precision</returnvalue>
+        <?br?>
+         Get timestamp subfield; see <xref linkend="functions-datetime-extract"/>
+        <?br?>
+         <literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal>
+         <returnvalue>20</returnvalue>
         </entry>
-        <entry spanname="sig"><function>extract</function>(<parameter>field</parameter> <literal>from</literal> <type>timestamp</type>)
-         <returnvalue>double precision</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Get timestamp subfield; see <xref linkend="functions-datetime-extract"/>
-        </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal></entry>
-        <entry spanname="exresult"><literal>20</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>extract</function></entry>
-        <entry spanname="sig"><function>extract</function>(<parameter>field</parameter> <literal>from</literal> <type>interval</type>)
-         <returnvalue>double precision</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Get interval subfield; see <xref linkend="functions-datetime-extract"/>
+        <entry role="functableentry">
+         <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>interval</type> )
+         <returnvalue>double precision</returnvalue>
+        <?br?>
+         Get interval subfield; see <xref linkend="functions-datetime-extract"/>
+        <?br?>
+         <literal>extract(month from interval '2 years 3 months')</literal>
+         <returnvalue>3</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>extract(month from interval '2 years 3 months')</literal></entry>
-        <entry spanname="exresult"><literal>3</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>isfinite</primary>
          </indexterm>
-         <function>isfinite</function>
+         <function>isfinite</function> ( <type>date</type> )
+         <returnvalue>boolean</returnvalue>
+        <?br?>
+         Test for finite date (not +/-infinity)
+        <?br?>
+         <literal>isfinite(date '2001-02-16')</literal>
+         <returnvalue>true</returnvalue>
         </entry>
-        <entry spanname="sig"><function>isfinite</function>(<type>date</type>)
-         <returnvalue>boolean</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Test for finite date (not +/-infinity)</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>isfinite(date '2001-02-16')</literal></entry>
-        <entry spanname="exresult"><literal>true</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>isfinite</function></entry>
-        <entry spanname="sig"><function>isfinite</function>(<type>timestamp</type>)
-         <returnvalue>boolean</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Test for finite timestamp (not +/-infinity)</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>isfinite(timestamp 'infinity')</literal></entry>
-        <entry spanname="exresult"><literal>false</literal></entry>
-       </row>
-
-       <row>
-        <entry spanname="name" morerows="2"><function>isfinite</function></entry>
-        <entry spanname="sig"><function>isfinite</function>(<type>interval</type>)
-         <returnvalue>boolean</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Test for finite interval (currently always true)</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>isfinite(interval '4 hours')</literal></entry>
-        <entry spanname="exresult"><literal>true</literal></entry>
+        <entry role="functableentry">
+         <function>isfinite</function> ( <type>timestamp</type> )
+         <returnvalue>boolean</returnvalue>
+        <?br?>
+         Test for finite timestamp (not +/-infinity)
+        <?br?>
+         <literal>isfinite(timestamp 'infinity')</literal>
+         <returnvalue>false</returnvalue>
+        </entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
+         <function>isfinite</function> ( <type>interval</type> )
+         <returnvalue>boolean</returnvalue>
+        <?br?>
+         Test for finite interval (currently always true)
+        <?br?>
+         <literal>isfinite(interval '4 hours')</literal>
+         <returnvalue>true</returnvalue>
+        </entry>
+       </row>
+
+       <row>
+        <entry role="functableentry">
          <indexterm>
           <primary>justify_days</primary>
          </indexterm>
-         <function>justify_days</function>
+         <function>justify_days</function> ( <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Adjust interval so 30-day time periods are represented as months
+        <?br?>
+         <literal>justify_days(interval '35 days')</literal>
+         <returnvalue>1 mon 5 days</returnvalue>
         </entry>
-        <entry spanname="sig"><function>justify_days</function>(<type>interval</type>)
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Adjust interval so 30-day time periods are represented as months</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>justify_days(interval '35 days')</literal></entry>
-        <entry spanname="exresult"><literal>1 mon 5 days</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>justify_hours</primary>
          </indexterm>
-         <function>justify_hours</function>
+         <function>justify_hours</function> ( <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Adjust interval so 24-hour time periods are represented as days
+        <?br?>
+         <literal>justify_hours(interval '27 hours')</literal>
+         <returnvalue>1 day 03:00:00</returnvalue>
         </entry>
-        <entry spanname="sig"><function>justify_hours</function>(<type>interval</type>)
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Adjust interval so 24-hour time periods are represented as days</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>justify_hours(&zwsp;interval '27 hours')</literal></entry>
-        <entry spanname="exresult"><literal>1 day 03:00:00</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>justify_interval</primary>
          </indexterm>
-         <function>justify_interval</function>
+         <function>justify_interval</function> ( <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        <?br?>
+         Adjust interval using <function>justify_days</function>
+         and <function>justify_hours</function>, with additional sign
+         adjustments
+        <?br?>
+         <literal>justify_interval(interval '1 mon -1 hour')</literal>
+         <returnvalue>29 days 23:00:00</returnvalue>
         </entry>
-        <entry spanname="sig"><function>justify_interval</function>(<type>interval</type>)
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Adjust interval using <function>justify_days</function> and <function>justify_hours</function>, with additional sign adjustments</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>justify_interval(&zwsp;interval '1 mon -1 hour')</literal></entry>
-        <entry spanname="exresult"><literal>29 days 23:00:00</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>localtime</primary>
          </indexterm>
          <function>localtime</function>
-        </entry>
-        <entry spanname="sig"><function>localtime</function>
-         <returnvalue>time</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current time of day;
+         <returnvalue>time</returnvalue>
+        <?br?>
+         Current time of day;
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>localtime</literal>
+         <returnvalue>14:39:53.662522</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>localtime</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>localtime</function></entry>
-        <entry spanname="sig"><function>localtime</function>(<type>integer</type>)
-         <returnvalue>time</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current time of day, with limited precision;
+        <entry role="functableentry">
+         <function>localtime</function> ( <type>integer</type> )
+         <returnvalue>time</returnvalue>
+        <?br?>
+         Current time of day, with limited precision;
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>localtime(0)</literal>
+         <returnvalue>14:39:53</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>localtime(0)</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>localtimestamp</primary>
          </indexterm>
          <function>localtimestamp</function>
-        </entry>
-        <entry spanname="sig"><function>localtimestamp</function>
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (start of current transaction);
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Current date and time (start of current transaction);
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>localtimestamp</literal>
+         <returnvalue>2019-12-23 14:39:53.662522</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>localtimestamp</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><function>localtimestamp</function></entry>
-        <entry spanname="sig"><function>localtimestamp</function>(<type>integer</type>)
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (start of current
+        <entry role="functableentry">
+         <function>localtimestamp</function> ( <type>integer</type> )
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
+         Current date and time (start of current
          transaction), with limited precision;
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>localtimestamp(2)</literal>
+         <returnvalue>2019-12-23 14:39:53.66</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>localtimestamp(2)</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>make_date</primary>
          </indexterm>
-         <function>make_date</function>
-        </entry>
-        <entry spanname="sig"><function>make_date</function>(<parameter>year</parameter> <type>int</type>,
+         <function>make_date</function> ( <parameter>year</parameter> <type>int</type>,
          <parameter>month</parameter> <type>int</type>,
-         <parameter>day</parameter> <type>int</type>)
-         <returnvalue>date</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">
+         <parameter>day</parameter> <type>int</type> )
+         <returnvalue>date</returnvalue>
+        <?br?>
          Create date from year, month and day fields
+        <?br?>
+         <literal>make_date(2013, 7, 15)</literal>
+         <returnvalue>2013-07-15</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>make_date(2013, 7, 15)</literal></entry>
-        <entry spanname="exresult"><literal>2013-07-15</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2"><indexterm>
+        <entry role="functableentry"><indexterm>
           <primary>make_interval</primary>
          </indexterm>
-         <function>make_interval</function>
-        </entry>
-        <entry spanname="sig"><function>make_interval</function>(<optional> <parameter>year</parameter> <type>int</type>
+         <function>make_interval</function> ( <optional> <parameter>year</parameter> <type>int</type>
          <optional>, <parameter>month</parameter> <type>int</type>
          <optional>, <parameter>week</parameter> <type>int</type>
          <optional>, <parameter>day</parameter> <type>int</type>
          <optional>, <parameter>hour</parameter> <type>int</type>
          <optional>, <parameter>min</parameter> <type>int</type>
          <optional>, <parameter>sec</parameter> <type>double precision</type>
-         </optional></optional></optional></optional></optional></optional></optional>)
-         <returnvalue>interval</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">
+         </optional></optional></optional></optional></optional></optional></optional> )
+         <returnvalue>interval</returnvalue>
+        <?br?>
          Create interval from years, months, weeks, days, hours, minutes and
          seconds fields, each of which can default to zero
+        <?br?>
+         <literal>make_interval(days =&gt; 10)</literal>
+         <returnvalue>10 days</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>make_interval(days =&gt; 10)</literal></entry>
-        <entry spanname="exresult"><literal>10 days</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>make_time</primary>
          </indexterm>
-         <function>make_time</function>
-        </entry>
-        <entry spanname="sig"><function>make_time</function>(<parameter>hour</parameter> <type>int</type>,
+         <function>make_time</function> ( <parameter>hour</parameter> <type>int</type>,
          <parameter>min</parameter> <type>int</type>,
-         <parameter>sec</parameter> <type>double precision</type>)
-         <returnvalue>time</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">
+         <parameter>sec</parameter> <type>double precision</type> )
+         <returnvalue>time</returnvalue>
+        <?br?>
          Create time from hour, minute and seconds fields
+        <?br?>
+         <literal>make_time(8, 15, 23.5)</literal>
+         <returnvalue>08:15:23.5</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>make_time(8, 15, 23.5)</literal></entry>
-        <entry spanname="exresult"><literal>08:15:23.5</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>make_timestamp</primary>
          </indexterm>
-         <function>make_timestamp</function>
-        </entry>
-        <entry spanname="sig"><function>make_timestamp</function>(<parameter>year</parameter> <type>int</type>,
+         <function>make_timestamp</function> ( <parameter>year</parameter> <type>int</type>,
          <parameter>month</parameter> <type>int</type>,
          <parameter>day</parameter> <type>int</type>,
          <parameter>hour</parameter> <type>int</type>,
          <parameter>min</parameter> <type>int</type>,
-         <parameter>sec</parameter> <type>double precision</type>)
-         <returnvalue>timestamp</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">
+         <parameter>sec</parameter> <type>double precision</type> )
+         <returnvalue>timestamp</returnvalue>
+        <?br?>
          Create timestamp from year, month, day, hour, minute and seconds fields
+        <?br?>
+         <literal>make_timestamp(2013, 7, 15, 8, 15, 23.5)</literal>
+         <returnvalue>2013-07-15 08:15:23.5</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>make_timestamp(&zwsp;2013, 7, 15, 8, 15, 23.5)</literal></entry>
-        <entry spanname="exresult"><literal>2013-07-15 08:15:23.5</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>make_timestamptz</primary>
          </indexterm>
-         <function>make_timestamptz</function>
-        </entry>
-        <entry spanname="sig"><function>make_timestamptz</function>(<parameter>year</parameter> <type>int</type>,
+         <function>make_timestamptz</function> ( <parameter>year</parameter> <type>int</type>,
          <parameter>month</parameter> <type>int</type>,
          <parameter>day</parameter> <type>int</type>,
          <parameter>hour</parameter> <type>int</type>,
          <parameter>min</parameter> <type>int</type>,
          <parameter>sec</parameter> <type>double precision</type>
-         <optional>, <parameter>timezone</parameter> <type>text</type> </optional>)
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">
+         <optional>, <parameter>timezone</parameter> <type>text</type> </optional> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
          Create timestamp with time zone from year, month, day, hour, minute
          and seconds fields; if <parameter>timezone</parameter> is not
          specified, the current time zone is used
+        <?br?>
+         <literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5)</literal>
+         <returnvalue>2013-07-15 08:15:23.5+01</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>make_timestamptz(&zwsp;2013, 7, 15, 8, 15, 23.5)</literal></entry>
-        <entry spanname="exresult"><literal>2013-07-15 08:15:23.5+01</literal></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>now</primary>
          </indexterm>
-         <function>now</function>
-        </entry>
-        <entry spanname="sig"><function>now</function>()
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (start of current transaction);
+         <function>now</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Current date and time (start of current transaction);
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>now()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>now()</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>statement_timestamp</primary>
          </indexterm>
-         <function>statement_timestamp</function>
-        </entry>
-        <entry spanname="sig"><function>statement_timestamp</function>()
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (start of current statement);
+         <function>statement_timestamp</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Current date and time (start of current statement);
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>statement_timestamp()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>statement_timestamp()</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>timeofday</primary>
          </indexterm>
-         <function>timeofday</function>
-        </entry>
-        <entry spanname="sig"><function>timeofday</function>()
-         <returnvalue>text</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time
+         <function>timeofday</function> ( )
+         <returnvalue>text</returnvalue>
+        <?br?>
+         Current date and time
          (like <function>clock_timestamp</function>, but as a <type>text</type> string);
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>timeofday()</literal>
+         <returnvalue>Mon Dec 23 14:39:53.662522 2019 EST</returnvalue>
         </entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>timeofday()</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
        </row>
 
        <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>transaction_timestamp</primary>
          </indexterm>
-         <function>transaction_timestamp</function>
-        </entry>
-        <entry spanname="sig"><function>transaction_timestamp</function>()
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Current date and time (start of current transaction);
+         <function>transaction_timestamp</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Current date and time (start of current transaction);
          see <xref linkend="functions-datetime-current"/>
+        <?br?>
+         <literal>transaction_timestamp()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
         </entry>
        </row>
+
        <row>
-        <entry spanname="example"><literal>transaction_&zwsp;timestamp()</literal></entry>
-        <entry spanname="exresult"><replaceable>variable</replaceable></entry>
-       </row>
-       <row>
-        <entry spanname="name" morerows="2">
+        <entry role="functableentry">
          <indexterm>
           <primary>to_timestamp</primary>
          </indexterm>
-         <function>to_timestamp</function>
+         <function>to_timestamp</function> ( <type>double precision</type> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Convert Unix epoch (seconds since 1970-01-01 00:00:00+00) to
+         timestamp with time zone
+        <?br?>
+         <literal>to_timestamp(1284352323)</literal>
+         <returnvalue>2010-09-13 04:32:03+00</returnvalue>
         </entry>
-        <entry spanname="sig"><function>to_timestamp</function>(<type>double precision</type>)
-         <returnvalue>timestamp with time zone</returnvalue></entry>
-       </row>
-       <row>
-        <entry spanname="desc">Convert Unix epoch (seconds since 1970-01-01 00:00:00+00) to
-         timestamp</entry>
-       </row>
-       <row>
-        <entry spanname="example"><literal>to_timestamp(&zwsp;1284352323)</literal></entry>
-        <entry spanname="exresult"><literal>2010-09-13 04:32:03+00</literal></entry>
        </row>
       </tbody>
      </tgroup>
@@ -8468,16 +8335,16 @@ SELECT CURRENT_TIME;
 <lineannotation>Result: </lineannotation><computeroutput>14:39:53.662522-05</computeroutput>
 
 SELECT CURRENT_DATE;
-<lineannotation>Result: </lineannotation><computeroutput>2001-12-23</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23</computeroutput>
 
 SELECT CURRENT_TIMESTAMP;
-<lineannotation>Result: </lineannotation><computeroutput>2001-12-23 14:39:53.662522-05</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.662522-05</computeroutput>
 
 SELECT CURRENT_TIMESTAMP(2);
-<lineannotation>Result: </lineannotation><computeroutput>2001-12-23 14:39:53.66-05</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.66-05</computeroutput>
 
 SELECT LOCALTIMESTAMP;
-<lineannotation>Result: </lineannotation><computeroutput>2001-12-23 14:39:53.662522</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.662522</computeroutput>
 </screen>
    </para>
 
@@ -8645,102 +8512,79 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
   <table id="functions-enum-table">
     <title>Enum Support Functions</title>
-    <tgroup cols="3">
-     <colspec colname="col1" colwidth="0.5*"/>
-     <colspec colname="col2" colwidth="1*"/>
-     <colspec colname="col3" colwidth="1*"/>
-     <spanspec spanname="name" namest="col1" nameend="col1" align="left"/>
-     <spanspec spanname="sig" namest="col2" nameend="col3" align="left"/>
-     <spanspec spanname="desc" namest="col2" nameend="col3" align="left"/>
-     <spanspec spanname="example" namest="col2" nameend="col2" align="left"/>
-     <spanspec spanname="exresult" namest="col3" nameend="col3" align="left"/>
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry spanname="name" align="center" valign="middle" morerows="2">Function</entry>
-       <entry spanname="sig" align="center">Signature</entry>
-      </row>
-      <row>
-       <entry spanname="desc" align="center">Description</entry>
-      </row>
-      <row>
-       <entry spanname="example" align="center">Example</entry>
-       <entry spanname="exresult" align="center">Example Result</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
+
      <tbody>
       <row>
-       <entry spanname="name" morerows="2">
+       <entry role="functableentry">
         <indexterm>
          <primary>enum_first</primary>
         </indexterm>
-        <function>enum_first</function>
+        <function>enum_first</function> ( <type>anyenum</type> )
+        <returnvalue>anyenum</returnvalue>
+       <?br?>
+        Returns the first value of the input enum type.
+       <?br?>
+        <literal>enum_first(null::rainbow)</literal>
+        <returnvalue>red</returnvalue>
        </entry>
-       <entry spanname="sig"><function>enum_first</function>(<type>anyenum</type>) <returnvalue>anyenum</returnvalue></entry>
       </row>
       <row>
-       <entry spanname="desc">Returns the first value of the input enum type</entry>
-      </row>
-      <row>
-       <entry spanname="example"><literal>enum_first(&zwsp;null::rainbow)</literal></entry>
-       <entry spanname="exresult"><literal>red</literal></entry>
-      </row>
-      <row>
-       <entry spanname="name" morerows="2">
+       <entry role="functableentry">
         <indexterm>
          <primary>enum_last</primary>
         </indexterm>
-        <function>enum_last</function>
+        <function>enum_last</function> ( <type>anyenum</type> )
+        <returnvalue>anyenum</returnvalue>
+       <?br?>
+        Returns the last value of the input enum type.
+       <?br?>
+        <literal>enum_last(null::rainbow)</literal>
+        <returnvalue>purple</returnvalue>
        </entry>
-       <entry spanname="sig"><function>enum_last</function>(<type>anyenum</type>) <returnvalue>anyenum</returnvalue></entry>
       </row>
       <row>
-       <entry spanname="desc">Returns the last value of the input enum type</entry>
-      </row>
-      <row>
-       <entry spanname="example"><literal>enum_last(&zwsp;null::rainbow)</literal></entry>
-       <entry spanname="exresult"><literal>purple</literal></entry>
-      </row>
-      <row>
-       <entry spanname="name" morerows="2">
+       <entry role="functableentry">
         <indexterm>
          <primary>enum_range</primary>
         </indexterm>
-        <function>enum_range</function>
+        <function>enum_range</function> ( <type>anyenum</type> )
+        <returnvalue>anyarray</returnvalue>
+       <?br?>
+        Returns all values of the input enum type in an ordered array.
+       <?br?>
+        <literal>enum_range(null::rainbow)</literal>
+        <returnvalue>{red,orange,yellow,&zwsp;green,blue,purple}</returnvalue>
        </entry>
-       <entry spanname="sig"><function>enum_range</function>(<type>anyenum</type>) <returnvalue>anyarray</returnvalue></entry>
       </row>
       <row>
-       <entry spanname="desc">Returns all values of the input enum type in an ordered array</entry>
-      </row>
-      <row>
-       <entry spanname="example"><literal>enum_range(&zwsp;null::rainbow)</literal></entry>
-       <entry spanname="exresult"><literal>{red,orange,yellow,&zwsp;green,blue,purple}</literal></entry>
-      </row>
-      <row>
-       <entry spanname="name" morerows="4"><function>enum_range</function></entry>
-       <entry spanname="sig"><function>enum_range</function>(<type>anyenum</type>, <type>anyenum</type>) <returnvalue>anyarray</returnvalue></entry>
-      </row>
-      <row>
-       <entry spanname="desc">
+       <entry role="functableentry">
+        <function>enum_range</function> ( <type>anyenum</type>, <type>anyenum</type> )
+        <returnvalue>anyarray</returnvalue>
+       <?br?>
         Returns the range between the two given enum values, as an ordered
         array. The values must be from the same enum type. If the first
         parameter is null, the result will start with the first value of
         the enum type.
         If the second parameter is null, the result will end with the last
         value of the enum type.
+       <?br?>
+        <literal>enum_range('orange'::rainbow, 'green'::rainbow)</literal>
+        <returnvalue>{orange,yellow,green}</returnvalue>
+       <?br?>
+        <literal>enum_range(NULL, 'green'::rainbow)</literal>
+        <returnvalue>{red,orange,&zwsp;yellow,green}</returnvalue>
+       <?br?>
+        <literal>enum_range('orange'::rainbow, NULL)</literal>
+        <returnvalue>{orange,yellow,green,&zwsp;blue,purple}</returnvalue>
        </entry>
-      </row>
-      <row>
-       <entry spanname="example"><literal>enum_range(&zwsp;'orange'::rainbow, 'green'::rainbow)</literal></entry>
-       <entry spanname="exresult"><literal>{orange,yellow,green}</literal></entry>
-      </row>
-      <row>
-       <entry spanname="example"><literal>enum_range(NULL, 'green'::rainbow)</literal></entry>
-       <entry spanname="exresult"><literal>{red,orange,yellow,&zwsp;green}</literal></entry>
-      </row>
-      <row>
-       <entry spanname="example"><literal>enum_range(&zwsp;'orange'::rainbow, NULL)</literal></entry>
-       <entry spanname="exresult"><literal>{orange,yellow,green,&zwsp;blue,purple}</literal></entry>
       </row>
      </tbody>
     </tgroup>

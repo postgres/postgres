@@ -63,11 +63,42 @@
   </fo:inline>
 </xsl:template>
 
+<!-- overrides built-in DocBook template -->
+<xsl:template name="table.cell.block.properties">
+  <!-- highlight this entry? -->
+  <xsl:choose>
+    <xsl:when test="ancestor::thead or ancestor::tfoot">
+      <xsl:attribute name="font-weight">bold</xsl:attribute>
+    </xsl:when>
+    <!-- Make row headers bold too -->
+    <xsl:when test="ancestor::tbody and
+                    (ancestor::table[@rowheader = 'firstcol'] or
+                    ancestor::informaltable[@rowheader = 'firstcol']) and
+                    ancestor-or-self::entry[1][count(preceding-sibling::entry) = 0]">
+      <xsl:attribute name="font-weight">bold</xsl:attribute>
+    </xsl:when>
+  </xsl:choose>
+  <!-- Postgres additions start here -->
+  <!-- indent all but first line of entries in tables of functions -->
+  <xsl:choose>
+    <xsl:when test="self::entry[@role='functableentry']">
+      <xsl:attribute name="margin-left">5em</xsl:attribute>
+      <xsl:attribute name="text-indent">-5em</xsl:attribute>
+      <xsl:attribute name="text-align">left</xsl:attribute>
+    </xsl:when>
+  </xsl:choose>
+</xsl:template>
+
 <!-- overrides stylesheet-common.xsl -->
 <!-- FOP needs us to be explicit about the font to use for right arrow -->
 <xsl:template match="returnvalue">
   <fo:inline font-family="{$symbol.font.family}">&#x2192; </fo:inline>
   <xsl:call-template name="inline.monoseq"/>
+</xsl:template>
+
+<!-- overrides stylesheet-common.xsl -->
+<xsl:template match="processing-instruction('br')">
+  <fo:block/>
 </xsl:template>
 
 <!-- bug fix from <https://sourceforge.net/p/docbook/bugs/1360/#831b> -->

@@ -76,6 +76,20 @@ div.example {
 	margin: 0.5ex;
 }
 
+/* formatting for entries in tables of functions: indent all but first line */
+
+th.functableentry {
+	padding-left: 5em;
+	text-indent: -5em;
+	text-align: left;
+}
+
+td.functableentry {
+	padding-left: 5em;
+	text-indent: -5em;
+	text-align: left;
+}
+
 /* Put these here instead of inside the HTML (see unsetting of
    admon.style in XSL) so that the web site stylesheet can set its own
    style. */
