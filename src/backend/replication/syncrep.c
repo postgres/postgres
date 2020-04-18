@@ -719,8 +719,15 @@ SyncRepGetSyncStandbys(bool *am_sync)
 		priority = next_highest_priority;
 	}
 
-	/* never reached, but keep compiler quiet */
-	Assert(false);
+	/*
+	 * We might get here if the set of sync_standby_priority values in shared
+	 * memory is inconsistent, as can happen transiently after a change in the
+	 * synchronous_standby_names setting.  In that case, just return the
+	 * incomplete list we have so far.  That will cause the caller to decide
+	 * there aren't enough synchronous candidates, which should be a safe
+	 * choice until the priority values become consistent again.
+	 */
+	list_free(pending);
 	return result;
 }
 
