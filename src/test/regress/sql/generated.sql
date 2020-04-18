@@ -145,6 +145,13 @@ CREATE TABLE gtest2 (a int PRIMARY KEY, b int GENERATED ALWAYS AS (NULL) STORED)
 INSERT INTO gtest2 VALUES (1);
 SELECT * FROM gtest2;
 
+-- simple column reference for varlena types
+CREATE TABLE gtest_varlena (a varchar, b varchar GENERATED ALWAYS AS (a) STORED);
+INSERT INTO gtest_varlena (a) VALUES('01234567890123456789');
+INSERT INTO gtest_varlena (a) VALUES(NULL);
+SELECT * FROM gtest_varlena ORDER BY a;
+DROP TABLE gtest_varlena;
+
 -- composite types
 CREATE TYPE double_int as (a int, b int);
 CREATE TABLE gtest4 (
