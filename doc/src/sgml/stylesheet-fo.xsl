@@ -82,8 +82,8 @@
   <!-- indent all but first line of entries in tables of functions -->
   <xsl:choose>
     <xsl:when test="self::entry[@role='functableentry']">
-      <xsl:attribute name="margin-left">5em</xsl:attribute>
-      <xsl:attribute name="text-indent">-5em</xsl:attribute>
+      <xsl:attribute name="margin-left">4em</xsl:attribute>
+      <xsl:attribute name="text-indent">-3.5em</xsl:attribute>
       <xsl:attribute name="text-align">left</xsl:attribute>
     </xsl:when>
   </xsl:choose>

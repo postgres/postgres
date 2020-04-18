@@ -78,15 +78,10 @@ div.example {
 
 /* formatting for entries in tables of functions: indent all but first line */
 
-th.functableentry {
-	padding-left: 5em;
-	text-indent: -5em;
-	text-align: left;
-}
-
+th.functableentry,
 td.functableentry {
-	padding-left: 5em;
-	text-indent: -5em;
+	padding-left: 4em;
+	text-indent: -3.5em;
 	text-align: left;
 }
 
