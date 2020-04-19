@@ -2030,10 +2030,12 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
     This section describes functions and operators for examining and
     manipulating string values.  Strings in this context include values
     of the types <type>character</type>, <type>character varying</type>,
-    and <type>text</type>.  Unless otherwise noted, all
-    of the functions listed below work on all of these types, but be
-    wary of potential effects of automatic space-padding when using the
-    <type>character</type> type.
+    and <type>text</type>.  Except where noted, these functions and operators
+    are declared to accept and return type <type>text</type>.  They will
+    interchangeably accept <type>character varying</type> arguments.
+    Values of type <type>character</type> will be converted
+    to <type>text</type> before the function or operator is applied, resulting
+    in stripping any trailing spaces in the <type>character</type> value.
    </para>
 
    <para>
@@ -2062,96 +2064,94 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 
    <table id="functions-string-sql">
     <title><acronym>SQL</acronym> String Functions and Operators</title>
-    <tgroup cols="5">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Return Type</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Function/Operator<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry><literal><parameter>string</parameter> <literal>||</literal>
-        <parameter>string</parameter></literal></entry>
-       <entry> <type>text</type> </entry>
-       <entry>
-        String concatenation
+       <entry role="functableentry">
         <indexterm>
          <primary>character string</primary>
          <secondary>concatenation</secondary>
         </indexterm>
+        <type>text</type> <literal>||</literal> <type>text</type>
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Concatenates the two strings.
+       <?br?>
+        <literal>'Post' || 'greSQL'</literal>
+        <returnvalue>PostgreSQL</returnvalue>
        </entry>
-       <entry><literal>'Post' || 'greSQL'</literal></entry>
-       <entry><literal>PostgreSQL</literal></entry>
       </row>
 
       <row>
-       <entry>
-        <literal><parameter>string</parameter> <literal>||</literal>
-        <parameter>non-string</parameter></literal>
-        or
-        <literal><parameter>non-string</parameter> <literal>||</literal>
-        <parameter>string</parameter></literal>
+       <entry role="functableentry">
+        <type>text</type> <literal>||</literal> <type>anynonarray</type>
+        or <type>anynonarray</type> <literal>||</literal> <type>text</type>
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts the non-string input to text, then concatenates the two
+        strings.  (The non-string input cannot be of an array type, because
+        that would create ambiguity with the array <literal>||</literal>
+        operators.  If you want to concatenate an array's text equivalent,
+        cast it to <type>text</type> explicitly.)
+       <?br?>
+        <literal>'Value: ' || 42</literal>
+        <returnvalue>Value: 42</returnvalue>
        </entry>
-       <entry> <type>text</type> </entry>
-       <entry>
-        String concatenation with one non-string input
-       </entry>
-       <entry><literal>'Value: ' || 42</literal></entry>
-       <entry><literal>Value: 42</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>normalized</primary>
         </indexterm>
         <indexterm>
          <primary>Unicode normalization</primary>
         </indexterm>
-        <literal><parameter>string</parameter> is <optional>not</optional> <optional><parameter>form</parameter></optional> normalized</literal>
-       </entry>
-       <entry><type>boolean</type></entry>
-       <entry>
+         <type>text</type> <literal>IS</literal> <optional><literal>NOT</literal></optional> <optional><parameter>form</parameter></optional> <literal>NORMALIZED</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
         Checks whether the string is in the specified Unicode normalization
-        form.  The optional parameter specifies the form:
-        <literal>NFC</literal> (default), <literal>NFD</literal>,
-        <literal>NFKC</literal>, <literal>NFKD</literal>.  This expression can
-        only be used if the server encoding is <literal>UTF8</literal>.  Note
+        form.  The optional <parameter>form</parameter> key word specifies the
+        form: <literal>NFC</literal> (the default), <literal>NFD</literal>,
+        <literal>NFKC</literal>, or <literal>NFKD</literal>.  This expression can
+        only be used when the server encoding is <literal>UTF8</literal>.  Note
         that checking for normalization using this expression is often faster
         than normalizing possibly already normalized strings.
+       <?br?>
+        <literal>U&amp;'\0061\0308bc' IS NFD NORMALIZED</literal>
+        <returnvalue>t</returnvalue>
        </entry>
-       <entry><literal>U&amp;'\0061\0308bc' IS NFD NORMALIZED</literal></entry>
-       <entry><literal>true</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>bit_length</primary>
         </indexterm>
-        <literal><function>bit_length(<parameter>string</parameter>)</function></literal>
+        <function>bit_length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bits in the string (8
+        times the <function>octet_length</function>).
+       <?br?>
+        <literal>bit_length('jose')</literal>
+        <returnvalue>32</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>Number of bits in string</entry>
-       <entry><literal>bit_length('jose')</literal></entry>
-       <entry><literal>32</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>char_length</primary>
         </indexterm>
-        <literal><function>char_length(<parameter>string</parameter>)</function></literal> or <literal><function>character_length(<parameter>string</parameter>)</function></literal>
-       </entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Number of characters in string
         <indexterm>
          <primary>character string</primary>
          <secondary>length</secondary>
@@ -2161,175 +2161,224 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
          <secondary sortas="character string">of a character string</secondary>
          <see>character string, length</see>
         </indexterm>
+        <function>char_length</function> ( <type>text</type> )
+        or <function>character_length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of characters in the string.
+       <?br?>
+        <literal>char_length('jos&eacute;')</literal>
+        <returnvalue>4</returnvalue>
        </entry>
-       <entry><literal>char_length('jose')</literal></entry>
-       <entry><literal>4</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>lower</primary>
         </indexterm>
-        <literal><function>lower(<parameter>string</parameter>)</function></literal>
+        <function>lower</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts the string to all lower case, according to the rules of the
+        database's locale.
+       <?br?>
+        <literal>lower('TOM')</literal>
+        <returnvalue>tom</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>Convert string to lower case</entry>
-       <entry><literal>lower('TOM')</literal></entry>
-       <entry><literal>tom</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>normalize</primary>
         </indexterm>
         <indexterm>
          <primary>Unicode normalization</primary>
         </indexterm>
-        <literal><function>normalize(<parameter>string</parameter> <type>text</type>
-        <optional>, <parameter>form</parameter> </optional>)</function></literal>
+        <function>normalize</function> ( <type>text</type>
+        <optional>, <parameter>form</parameter> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts the string to the specified Unicode
+        normalization form.  The optional <parameter>form</parameter> key word
+        specifies the form: <literal>NFC</literal> (the default),
+        <literal>NFD</literal>, <literal>NFKC</literal>, or
+        <literal>NFKD</literal>.  This function can only be used when the
+        server encoding is <literal>UTF8</literal>.
+       <?br?>
+        <literal>normalize(U&amp;'\0061\0308bc', NFC)</literal>
+        <returnvalue>U&amp;'\00E4bc'</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Converts the string in the first argument to the specified Unicode
-        normalization form.  The optional second argument specifies the form
-        as an identifier: <literal>NFC</literal> (default),
-        <literal>NFD</literal>, <literal>NFKC</literal>,
-        <literal>NFKD</literal>.  This function can only be used if the server
-        encoding is <literal>UTF8</literal>.
-       </entry>
-       <entry><literal>normalize(U&amp;'\0061\0308bc', NFC)</literal></entry>
-       <entry><literal>U&amp;'\00E4bc'</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>octet_length</primary>
         </indexterm>
-        <literal><function>octet_length(<parameter>string</parameter>)</function></literal>
+        <function>octet_length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bytes in the string.
+       <?br?>
+        <literal>octet_length('jos&eacute;')</literal>
+        <returnvalue>5</returnvalue> (if server encoding is UTF8)
        </entry>
-       <entry><type>int</type></entry>
-       <entry>Number of bytes in string</entry>
-       <entry><literal>octet_length('jose')</literal></entry>
-       <entry><literal>4</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>octet_length</primary>
+        </indexterm>
+        <function>octet_length</function> ( <type>character</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bytes in the string.  Since this version of the
+        function accepts type <type>character</type> directly, it will not
+        strip trailing spaces.
+       <?br?>
+        <literal>octet_length('abc '::character(4))</literal>
+        <returnvalue>4</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>overlay</primary>
         </indexterm>
-        <literal><function>overlay(<parameter>string</parameter> placing <parameter>string</parameter> from <type>int</type> <optional>for <type>int</type></optional>)</function></literal>
+        <function>overlay</function> ( <parameter>string</parameter> <type>text</type> <literal>PLACING</literal> <parameter>newsubstring</parameter> <type>text</type> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Replaces the substring of <parameter>string</parameter> that starts at
+        the <parameter>start</parameter>'th character and extends
+        for <parameter>count</parameter> characters
+        with <parameter>newsubstring</parameter>.
+        If <parameter>count</parameter> is omitted, it defaults to the length
+        of <parameter>newsubstring</parameter>.
+       <?br?>
+        <literal>overlay('Txxxxas' placing 'hom' from 2 for 4)</literal>
+        <returnvalue>Thomas</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Replace substring
-       </entry>
-       <entry><literal>overlay('Txxxxas' placing 'hom' from 2 for 4)</literal></entry>
-       <entry><literal>Thomas</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>position</primary>
         </indexterm>
-        <literal><function>position(<parameter>substring</parameter> in <parameter>string</parameter>)</function></literal>
+        <function>position</function> ( <parameter>substring</parameter> <type>text</type> <literal>IN</literal> <parameter>string</parameter> <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns starting index of specified <parameter>substring</parameter>
+        within <parameter>string</parameter>, or zero if it's not present.
+       <?br?>
+        <literal>position('om' in 'Thomas')</literal>
+        <returnvalue>3</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>Location of specified substring</entry>
-       <entry><literal>position('om' in 'Thomas')</literal></entry>
-       <entry><literal>3</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>substring</primary>
         </indexterm>
-        <literal><function>substring(<parameter>string</parameter> <optional>from <type>int</type></optional> <optional>for <type>int</type></optional>)</function></literal>
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <optional> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> </optional> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Extracts the substring of <parameter>string</parameter> starting at
+        the <parameter>start</parameter>'th character if that is specified,
+        and stopping after <parameter>count</parameter> characters if that is
+        specified.  Provide at least one of <parameter>start</parameter>
+        and <parameter>count</parameter>.
+       <?br?>
+        <literal>substring('Thomas' from 2 for 3)</literal>
+        <returnvalue>hom</returnvalue>
+       <?br?>
+        <literal>substring('Thomas' from 3)</literal>
+        <returnvalue>omas</returnvalue>
+       <?br?>
+        <literal>substring('Thomas' for 2)</literal>
+        <returnvalue>Th</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Extract substring (provide at least one of <literal>from</literal>
-        and <literal>for</literal>)
-       </entry>
-       <entry><literal>substring('Thomas' from 2 for 3)</literal></entry>
-       <entry><literal>hom</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>substring(<parameter>string</parameter> from <replaceable>pattern</replaceable>)</function></literal></entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Extract substring matching POSIX regular expression (see
-        <xref linkend="functions-matching"/> for more information on pattern
-        matching)
+       <entry role="functableentry">
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <replaceable>pattern</replaceable> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Extracts substring matching POSIX regular expression; see
+        <xref linkend="functions-posix-regexp"/>.
+       <?br?>
+        <literal>substring('Thomas' from '...$')</literal>
+        <returnvalue>mas</returnvalue>
        </entry>
-       <entry><literal>substring('Thomas' from '...$')</literal></entry>
-       <entry><literal>mas</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>substring(<parameter>string</parameter> from <replaceable>pattern</replaceable> for <replaceable>escape</replaceable>)</function></literal></entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Extract substring matching <acronym>SQL</acronym> regular expression
-        (see <xref linkend="functions-matching"/> for more information on
-        pattern matching)
+       <entry role="functableentry">
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <replaceable>pattern</replaceable> <type>text</type> <literal>FOR</literal> <replaceable>escape</replaceable> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Extracts substring matching <acronym>SQL</acronym> regular expression;
+        see <xref linkend="functions-similarto-regexp"/>.
+       <?br?>
+        <literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal>
+        <returnvalue>oma</returnvalue>
        </entry>
-       <entry><literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal></entry>
-       <entry><literal>oma</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>trim</primary>
         </indexterm>
-        <literal><function>trim(<optional>leading | trailing | both</optional>
-        <optional><parameter>characters</parameter></optional> from
-        <parameter>string</parameter>)</function></literal>
-       </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Remove the longest string containing only characters in
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional>
+        <optional> <parameter>characters</parameter> <type>text</type> </optional> <literal>FROM</literal>
+        <parameter>string</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Removes the longest string containing only characters in
         <parameter>characters</parameter> (a space by default) from the
-        start, end, or both ends (<literal>both</literal> is the default)
-        of <parameter>string</parameter>
+        start, end, or both ends (<literal>BOTH</literal> is the default)
+        of <parameter>string</parameter>.
+       <?br?>
+        <literal>trim(both 'xyz' from 'yxTomxx')</literal>
+        <returnvalue>Tom</returnvalue>
        </entry>
-       <entry><literal>trim(both 'xyz' from 'yxTomxx')</literal></entry>
-       <entry><literal>Tom</literal></entry>
       </row>
 
       <row>
-       <entry>
-        <literal><function>trim(<optional>leading | trailing
-        | both</optional> <optional>from</optional>
-        <parameter>string</parameter> <optional>,
-        <parameter>characters</parameter></optional>)</function></literal>
+       <entry role="functableentry">
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional> <optional> <literal>FROM</literal> </optional>
+        <parameter>string</parameter> <type>text</type> <optional>,
+        <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        This is a non-standard syntax for <function>trim()</function>.
+       <?br?>
+        <literal>trim(both from 'yxTomxx', 'xyz')</literal>
+        <returnvalue>Tom</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        Non-standard syntax for <function>trim()</function>
-       </entry>
-       <entry><literal>trim(both from 'yxTomxx', 'xyz')</literal></entry>
-       <entry><literal>Tom</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>upper</primary>
         </indexterm>
-        <literal><function>upper(<parameter>string</parameter>)</function></literal>
+        <function>upper</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts the string to all upper case, according to the rules of the
+        database's locale.
+       <?br?>
+        <literal>upper('tom')</literal>
+        <returnvalue>TOM</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>Convert string to upper case</entry>
-       <entry><literal>upper('tom')</literal></entry>
-       <entry><literal>TOM</literal></entry>
       </row>
      </tbody>
     </tgroup>
@@ -2380,7 +2429,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
         <returnvalue>text</returnvalue>
        <?br?>
-        Removes the longest string consisting only of characters
+        Removes the longest string containing only characters
         in <parameter>characters</parameter> (a space by default)
         from the start and end of <parameter>string</parameter>.
        <?br?>
@@ -2912,7 +2961,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <function>strpos</function> ( <parameter>string</parameter> <type>text</type>, <parameter>substring</parameter> <type>text</type> )
         <returnvalue>integer</returnvalue>
        <?br?>
-        Returns location of specified <parameter>substring</parameter>
+        Returns starting index of specified <parameter>substring</parameter>
         within <parameter>string</parameter>, or zero if it's not present.
         (Same as <literal>position(<parameter>substring</parameter> in
         <parameter>string</parameter>)</literal>, but note the reversed
@@ -2932,7 +2981,8 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 <type></type> )
         <returnvalue>text</returnvalue>
        <?br?>
-        Extracts substring starting at index <parameter>start</parameter>,
+        Extracts the substring of <parameter>string</parameter> starting at
+        the <parameter>start</parameter>'th character,
         and extending for <parameter>count</parameter> characters if that is
         specified.  (Same
         as <literal>substring(<parameter>string</parameter>
