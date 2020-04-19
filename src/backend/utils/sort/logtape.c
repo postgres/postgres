@@ -660,6 +660,7 @@ LogicalTapeSetClose(LogicalTapeSet *lts)
 		if (lt->buffer)
 			pfree(lt->buffer);
 	}
+	pfree(lts->tapes);
 	pfree(lts->freeBlocks);
 	pfree(lts);
 }
