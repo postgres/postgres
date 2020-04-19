@@ -19,8 +19,8 @@ LIBS += $(PTHREAD_LIBS)
 all:
 
 update-unicode: unicode_norm_table.h unicode_combining_table.h unicode_normprops_table.h
-	$(MAKE) normalization-check
 	mv $^ ../../../src/include/common/
+	$(MAKE) normalization-check
 
 # These files are part of the Unicode Character Database. Download
 # them on demand.  The dependency on Makefile.global is for
@@ -43,9 +43,14 @@ unicode_normprops_table.h: generate-unicode_normprops_table.pl DerivedNormalizat
 normalization-check: norm_test
 	./norm_test
 
-norm_test: norm_test.o ../unicode_norm.o
+norm_test: norm_test.o ../unicode_norm.o | submake-common
 
 norm_test.o: norm_test_table.h
+
+.PHONY: submake-common
+
+submake-common:
+	$(MAKE) -C .. all
 
 norm_test_table.h: generate-norm_test_table.pl NormalizationTest.txt
 	perl generate-norm_test_table.pl NormalizationTest.txt $@
