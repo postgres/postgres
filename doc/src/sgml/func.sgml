@@ -13,12 +13,28 @@
 
   <para>
    <productname>PostgreSQL</productname> provides a large number of
-   functions and operators for the built-in data types.  Users can also
+   functions and operators for the built-in data types.  This chapter
+   describes most of them, although additional special-purpose functions
+   appear in relevant sections of the manual.  Users can also
    define their own functions and operators, as described in
    <xref linkend="server-programming"/>.  The
    <application>psql</application> commands <command>\df</command> and
    <command>\do</command> can be used to list all
    available functions and operators, respectively.
+  </para>
+
+  <para>
+   The notation used throughout this chapter to describe the argument and
+   result data types of a function or operator is like this:
+<synopsis>
+<function>repeat</function> ( <type>text</type>, <type>integer</type> ) <returnvalue>text</returnvalue>
+</synopsis>
+   which says that the function <function>repeat</function> takes one text and
+   one integer argument and returns a result of type text.  The right arrow
+   is also used to indicate the result of an example, thus:
+<programlisting>
+repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
+</programlisting>
   </para>
 
   <para>
@@ -29,9 +45,7 @@
    <acronym>SQL</acronym> standard. Some of this extended functionality
    is present in other <acronym>SQL</acronym> database management
    systems, and in many cases this functionality is compatible and
-   consistent between the various implementations.  This chapter is also
-   not exhaustive;  additional functions appear in relevant sections of
-   the manual.
+   consistent between the various implementations.
   </para>
 
 
@@ -76,11 +90,11 @@
      <primary>negation</primary>
     </indexterm>
 
-    <simplelist>
-     <member><literal>AND</literal></member>
-     <member><literal>OR</literal></member>
-     <member><literal>NOT</literal></member>
-    </simplelist>
+<synopsis>
+<type>boolean</type> <literal>AND</literal> <type>boolean</type> <returnvalue>boolean</returnvalue>
+<type>boolean</type> <literal>OR</literal> <type>boolean</type> <returnvalue>boolean</returnvalue>
+<literal>NOT</literal> <type>boolean</type> <returnvalue>boolean</returnvalue>
+</synopsis>
 
     <acronym>SQL</acronym> uses a three-valued logic system with true,
     false, and <literal>null</literal>, which represents <quote>unknown</quote>.
@@ -174,10 +188,11 @@
 
    <para>
     The operators <literal>AND</literal> and <literal>OR</literal> are
-    commutative, that is, you can switch the left and right operand
-    without affecting the result.  But see <xref
+    commutative, that is, you can switch the left and right operands
+    without affecting the result.  (However, it is not guaranteed that
+    the left operand is evaluated before the right operand.  See <xref
     linkend="syntax-express-eval"/> for more information about the
-    order of evaluation of subexpressions.
+    order of evaluation of subexpressions.)
    </para>
   </sect1>
 
@@ -206,33 +221,59 @@
 
      <tbody>
       <row>
-       <entry> <literal>&lt;</literal> </entry>
-       <entry>less than</entry>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&lt;</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Less than</entry>
       </row>
 
       <row>
-       <entry> <literal>&gt;</literal> </entry>
-       <entry>greater than</entry>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&gt;</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Greater than</entry>
       </row>
 
       <row>
-       <entry> <literal>&lt;=</literal> </entry>
-       <entry>less than or equal to</entry>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&lt;=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Less than or equal to</entry>
       </row>
 
       <row>
-       <entry> <literal>&gt;=</literal> </entry>
-       <entry>greater than or equal to</entry>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&gt;=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Greater than or equal to</entry>
       </row>
 
       <row>
-       <entry> <literal>=</literal> </entry>
-       <entry>equal</entry>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Equal</entry>
       </row>
 
       <row>
-       <entry> <literal>&lt;&gt;</literal> or <literal>!=</literal> </entry>
-       <entry>not equal</entry>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&lt;&gt;</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Not equal</entry>
+      </row>
+
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>!=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Not equal</entry>
       </row>
      </tbody>
     </tgroup>
@@ -240,20 +281,37 @@
 
    <note>
     <para>
-     The <literal>!=</literal> operator is converted to
-     <literal>&lt;&gt;</literal> in the parser stage.  It is not
-     possible to implement <literal>!=</literal> and
-     <literal>&lt;&gt;</literal> operators that do different things.
+     <literal>&lt;&gt;</literal> is the standard SQL notation for <quote>not
+     equal</quote>.  <literal>!=</literal> is an alias, which is converted
+     to <literal>&lt;&gt;</literal> at a very early stage of parsing.
+     Hence, it is not possible to implement <literal>!=</literal>
+     and <literal>&lt;&gt;</literal> operators that do different things.
     </para>
    </note>
 
    <para>
-    Comparison operators are available for all relevant data types.
-    All comparison operators are binary operators that
-    return values of type <type>boolean</type>; expressions like
+    These comparison operators are available for all built-in data types
+    that have a natural ordering, including numeric, string, and date/time
+    types.  In addition, arrays, composite types, and ranges can be compared
+    if their component data types are comparable.
+   </para>
+
+   <para>
+    It is usually possible to compare values of related data
+    types as well; for example <type>integer</type> <literal>&gt;</literal>
+    <type>bigint</type> will work.  Some cases of this sort are implemented
+    directly by <quote>cross-type</quote> comparison operators, but if no
+    such operator is available, the parser will coerce the less-general type
+    to the more-general type and apply the latter's comparison operator.
+   </para>
+
+   <para>
+    As shown above, all comparison operators are binary operators that
+    return values of type <type>boolean</type>.  Thus, expressions like
     <literal>1 &lt; 2 &lt; 3</literal> are not valid (because there is
     no <literal>&lt;</literal> operator to compare a Boolean value with
-    <literal>3</literal>).
+    <literal>3</literal>).  Use the <literal>BETWEEN</literal> predicates
+    shown below to perform range tests.
    </para>
 
    <para>
@@ -264,93 +322,227 @@
 
    <table id="functions-comparison-pred-table">
     <title>Comparison Predicates</title>
-    <tgroup cols="2">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Predicate</entry>
-       <entry>Description</entry>
+       <entry role="functableentry">
+        Predicate<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry> <replaceable>a</replaceable> <literal>BETWEEN</literal> <replaceable>x</replaceable> <literal>AND</literal> <replaceable>y</replaceable> </entry>
-       <entry>between</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>BETWEEN</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Between (inclusive of the range endpoints).
+       <?br?>
+        <literal>2 BETWEEN 1 AND 3</literal>
+        <returnvalue>t</returnvalue>
+       <?br?>
+        <literal>2 BETWEEN 3 AND 1</literal>
+        <returnvalue>f</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>a</replaceable> <literal>NOT BETWEEN</literal> <replaceable>x</replaceable> <literal>AND</literal> <replaceable>y</replaceable> </entry>
-       <entry>not between</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>NOT BETWEEN</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Not between (the negation of <literal>BETWEEN</literal>).
+       <?br?>
+        <literal>2 NOT BETWEEN 1 AND 3</literal>
+        <returnvalue>f</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>a</replaceable> <literal>BETWEEN SYMMETRIC</literal> <replaceable>x</replaceable> <literal>AND</literal> <replaceable>y</replaceable> </entry>
-       <entry>between, after sorting the comparison values</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>BETWEEN SYMMETRIC</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Between, after sorting the two endpoint values.
+       <?br?>
+        <literal>2 BETWEEN SYMMETRIC 3 AND 1</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>a</replaceable> <literal>NOT BETWEEN SYMMETRIC</literal> <replaceable>x</replaceable> <literal>AND</literal> <replaceable>y</replaceable> </entry>
-       <entry>not between, after sorting the comparison values</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>NOT BETWEEN SYMMETRIC</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Not between, after sorting the two endpoint values.
+       <?br?>
+        <literal>2 NOT BETWEEN SYMMETRIC 3 AND 1</literal>
+        <returnvalue>f</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>a</replaceable> <literal>IS DISTINCT FROM</literal> <replaceable>b</replaceable> </entry>
-       <entry>not equal, treating null like an ordinary value</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>IS DISTINCT FROM</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Not equal, treating null as a comparable value.
+       <?br?>
+        <literal>1 IS DISTINCT FROM NULL</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       <?br?>
+        <literal>NULL IS DISTINCT FROM NULL</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
 
       <row>
-       <entry><replaceable>a</replaceable> <literal>IS NOT DISTINCT FROM</literal> <replaceable>b</replaceable></entry>
-       <entry>equal, treating null like an ordinary value</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>IS NOT DISTINCT FROM</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Equal, treating null as a comparable value.
+       <?br?>
+        <literal>1 IS NOT DISTINCT FROM NULL</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       <?br?>
+        <literal>NULL IS NOT DISTINCT FROM NULL</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>expression</replaceable> <literal>IS NULL</literal> </entry>
-       <entry>is null</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>IS NULL</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether value is null.
+       <?br?>
+        <literal>1.5 IS NULL</literal>
+        <returnvalue>f</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>expression</replaceable> <literal>IS NOT NULL</literal> </entry>
-       <entry>is not null</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>IS NOT NULL</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether value is not null.
+       <?br?>
+        <literal>'null' IS NOT NULL</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>expression</replaceable> <literal>ISNULL</literal> </entry>
-       <entry>is null (nonstandard syntax)</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>ISNULL</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether value is null (nonstandard syntax).
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>expression</replaceable> <literal>NOTNULL</literal> </entry>
-       <entry>is not null (nonstandard syntax)</entry>
+       <entry role="functableentry">
+        <replaceable>datatype</replaceable> <literal>NOTNULL</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether value is not null (nonstandard syntax).
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>boolean_expression</replaceable> <literal>IS TRUE</literal> </entry>
-       <entry>is true</entry>
+       <entry role="functableentry">
+        <type>boolean</type> <literal>IS TRUE</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether boolean expression yields true.
+       <?br?>
+        <literal>true IS TRUE</literal>
+        <returnvalue>t</returnvalue>
+       <?br?>
+        <literal>NULL::boolean IS TRUE</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>boolean_expression</replaceable> <literal>IS NOT TRUE</literal> </entry>
-       <entry>is false or unknown</entry>
+       <entry role="functableentry">
+        <type>boolean</type> <literal>IS NOT TRUE</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether boolean expression yields false or unknown.
+       <?br?>
+        <literal>true IS NOT TRUE</literal>
+        <returnvalue>f</returnvalue>
+       <?br?>
+        <literal>NULL::boolean IS NOT TRUE</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>boolean_expression</replaceable> <literal>IS FALSE</literal> </entry>
-       <entry>is false</entry>
+       <entry role="functableentry">
+        <type>boolean</type> <literal>IS FALSE</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether boolean expression yields false.
+       <?br?>
+        <literal>true IS FALSE</literal>
+        <returnvalue>f</returnvalue>
+       <?br?>
+        <literal>NULL::boolean IS FALSE</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>boolean_expression</replaceable> <literal>IS NOT FALSE</literal> </entry>
-       <entry>is true or unknown</entry>
+       <entry role="functableentry">
+        <type>boolean</type> <literal>IS NOT FALSE</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether boolean expression yields true or unknown.
+       <?br?>
+        <literal>true IS NOT FALSE</literal>
+        <returnvalue>t</returnvalue>
+       <?br?>
+        <literal>NULL::boolean IS NOT FALSE</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>boolean_expression</replaceable> <literal>IS UNKNOWN</literal> </entry>
-       <entry>is unknown</entry>
+       <entry role="functableentry">
+        <type>boolean</type> <literal>IS UNKNOWN</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether boolean expression yields unknown.
+       <?br?>
+        <literal>true IS UNKNOWN</literal>
+        <returnvalue>f</returnvalue>
+       <?br?>
+        <literal>NULL::boolean IS UNKNOWN</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
 
       <row>
-       <entry> <replaceable>boolean_expression</replaceable> <literal>IS NOT UNKNOWN</literal> </entry>
-       <entry>is true or false</entry>
+       <entry role="functableentry">
+        <type>boolean</type> <literal>IS NOT UNKNOWN</literal>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Test whether boolean expression yields true or false.
+       <?br?>
+        <literal>true IS NOT UNKNOWN</literal>
+        <returnvalue>t</returnvalue>
+       <?br?>
+        <literal>NULL::boolean IS NOT UNKNOWN</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </entry>
       </row>
      </tbody>
     </tgroup>
@@ -359,6 +551,9 @@
    <para>
     <indexterm>
      <primary>BETWEEN</primary>
+    </indexterm>
+    <indexterm>
+     <primary>BETWEEN SYMMETRIC</primary>
     </indexterm>
     The <token>BETWEEN</token> predicate simplifies range tests:
 <synopsis>
@@ -370,23 +565,30 @@
 </synopsis>
     Notice that <token>BETWEEN</token> treats the endpoint values as included
     in the range.
-    <literal>NOT BETWEEN</literal> does the opposite comparison:
-<synopsis>
-<replaceable>a</replaceable> NOT BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
-</synopsis>
-    is equivalent to
-<synopsis>
-<replaceable>a</replaceable> &lt; <replaceable>x</replaceable> OR <replaceable>a</replaceable> &gt; <replaceable>y</replaceable>
-</synopsis>
-    <indexterm>
-     <primary>BETWEEN SYMMETRIC</primary>
-    </indexterm>
     <literal>BETWEEN SYMMETRIC</literal> is like <literal>BETWEEN</literal>
     except there is no requirement that the argument to the left of
     <literal>AND</literal> be less than or equal to the argument on the right.
     If it is not, those two arguments are automatically swapped, so that
     a nonempty range is always implied.
    </para>
+
+   <para>
+    The various variants of <literal>BETWEEN</literal> are implemented in
+    terms of the ordinary comparison operators, and therefore will work for
+    any data type(s) that can be compared.
+   </para>
+
+   <note>
+    <para>
+     The use of <literal>AND</literal> in the <literal>BETWEEN</literal>
+     syntax creates an ambiguity with the use of <literal>AND</literal> as a
+     logical operator.  To resolve this, only a limited set of expression
+     types are allowed as the second argument of a <literal>BETWEEN</literal>
+     clause.  If you need to write a more complex sub-expression
+     in <literal>BETWEEN</literal>, write parentheses around the
+     sub-expression.
+    </para>
+   </note>
 
    <para>
     <indexterm>
@@ -541,37 +743,43 @@
 
   <table id="functions-comparison-func-table">
     <title>Comparison Functions</title>
-    <tgroup cols="4">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Example Result</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
+
      <tbody>
       <row>
-       <entry>
-         <indexterm>
-          <primary>num_nonnulls</primary>
-         </indexterm>
-         <literal>num_nonnulls(VARIADIC "any")</literal>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>num_nonnulls</primary>
+        </indexterm>
+        <function>num_nonnulls</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of non-null arguments.
+       <?br?>
+        <literal>num_nonnulls(1, NULL, 2)</literal>
+        <returnvalue>2</returnvalue>
        </entry>
-       <entry>returns the number of non-null arguments</entry>
-       <entry><literal>num_nonnulls(1, NULL, 2)</literal></entry>
-       <entry><literal>2</literal></entry>
       </row>
       <row>
-       <entry>
-         <indexterm>
-          <primary>num_nulls</primary>
-         </indexterm>
-         <literal>num_nulls(VARIADIC "any")</literal>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>num_nulls</primary>
+        </indexterm>
+        <function>num_nulls</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of null arguments.
+       <?br?>
+        <literal>num_nulls(1, NULL, 2)</literal>
+        <returnvalue>1</returnvalue>
        </entry>
-       <entry>returns the number of null arguments</entry>
-       <entry><literal>num_nulls(1, NULL, 2)</literal></entry>
-       <entry><literal>1</literal></entry>
       </row>
      </tbody>
     </tgroup>
@@ -591,160 +799,290 @@
    </para>
 
    <para>
-    <xref linkend="functions-math-op-table"/> shows the available mathematical operators.
+    <xref linkend="functions-math-op-table"/> shows the mathematical
+    operators that are available for the standard numeric types.
+    Unless otherwise noted, operators shown as
+    accepting <replaceable>numeric_type</replaceable> are available for all
+    the types <type>smallint</type>, <type>integer</type>,
+    <type>bigint</type>, <type>numeric</type>, <type>real</type>,
+    and <type>double precision</type>.
+    Operators shown as accepting <replaceable>integral_type</replaceable>
+    are available for the types <type>smallint</type>, <type>integer</type>,
+    and <type>bigint</type>.
+    Operators shown as accepting <replaceable>numeric_or_dp</replaceable>
+    are available for the types <type>numeric</type> and <type>double
+    precision</type>.
+    Except where noted, each form of an operator returns the same data type
+    as its argument(s).  Calls involving multiple argument data types, such
+    as <type>integer</type> <literal>+</literal> <type>numeric</type>,
+    are resolved by using the type appearing later in these lists.
    </para>
 
    <table id="functions-math-op-table">
     <title>Mathematical Operators</title>
 
-    <tgroup cols="4">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Operator</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Operator<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry> <literal>+</literal> </entry>
-       <entry>addition</entry>
-       <entry><literal>2 + 3</literal></entry>
-       <entry><literal>5</literal></entry>
+       <entry role="functableentry">
+        <replaceable>numeric_type</replaceable> <literal>+</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Addition
+       <?br?>
+        <literal>2 + 3</literal>
+        <returnvalue>5</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>-</literal> </entry>
-       <entry>subtraction</entry>
-       <entry><literal>2 - 3</literal></entry>
-       <entry><literal>-1</literal></entry>
+       <entry role="functableentry">
+        <literal>+</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Unary plus (no operation)
+       <?br?>
+        <literal>+ 3.5</literal>
+        <returnvalue>3.5</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>*</literal> </entry>
-       <entry>multiplication</entry>
-       <entry><literal>2 * 3</literal></entry>
-       <entry><literal>6</literal></entry>
+       <entry role="functableentry">
+        <replaceable>numeric_type</replaceable> <literal>-</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Subtraction
+       <?br?>
+        <literal>2 - 3</literal>
+        <returnvalue>-1</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>/</literal> </entry>
-       <entry>division (integer division truncates the result)</entry>
-       <entry><literal>4 / 2</literal></entry>
-       <entry><literal>2</literal></entry>
+       <entry role="functableentry">
+        <literal>-</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Negation
+       <?br?>
+        <literal>- (-4)</literal>
+        <returnvalue>4</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>%</literal> </entry>
-       <entry>modulo (remainder)</entry>
-       <entry><literal>5 % 4</literal></entry>
-       <entry><literal>1</literal></entry>
+       <entry role="functableentry">
+        <replaceable>numeric_type</replaceable> <literal>*</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Multiplication
+       <?br?>
+        <literal>2 * 3</literal>
+        <returnvalue>6</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>^</literal> </entry>
-       <entry>exponentiation (associates left to right)</entry>
-       <entry><literal>2.0 ^ 3.0</literal></entry>
-       <entry><literal>8</literal></entry>
+       <entry role="functableentry">
+        <replaceable>numeric_type</replaceable> <literal>/</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Division (for integral types, division truncates the result towards
+        zero)
+       <?br?>
+        <literal>5.0 / 2</literal>
+        <returnvalue>2.5000000000000000</returnvalue>
+       <?br?>
+        <literal>5 / 2</literal>
+        <returnvalue>2</returnvalue>
+       <?br?>
+        <literal>(-5) / 2</literal>
+        <returnvalue>-2</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>|/</literal> </entry>
-       <entry>square root</entry>
-       <entry><literal>|/ 25.0</literal></entry>
-       <entry><literal>5</literal></entry>
+       <entry role="functableentry">
+        <replaceable>numeric_type</replaceable> <literal>%</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Modulo (remainder); available for <type>smallint</type>,
+        <type>integer</type>, <type>bigint</type>, and <type>numeric</type>
+       <?br?>
+        <literal>5 % 4</literal>
+        <returnvalue>1</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>||/</literal> </entry>
-       <entry>cube root</entry>
-       <entry><literal>||/ 27.0</literal></entry>
-       <entry><literal>3</literal></entry>
+       <entry role="functableentry">
+        <replaceable>numeric_or_dp</replaceable> <literal>^</literal> <replaceable>numeric_or_dp</replaceable>
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Exponentiation (unlike typical mathematical practice, multiple uses of
+        <literal>^</literal> will associate left to right)
+       <?br?>
+        <literal>2 ^ 3</literal>
+        <returnvalue>8</returnvalue>
+       <?br?>
+        <literal>2 ^ 3 ^ 3</literal>
+        <returnvalue>512</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>!</literal> </entry>
-       <entry>factorial</entry>
-       <entry><literal>5 !</literal></entry>
-       <entry><literal>120</literal></entry>
+       <entry role="functableentry">
+        <literal>|/</literal> <type>double precision</type>
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Square root
+       <?br?>
+        <literal>|/ 25.0</literal>
+        <returnvalue>5</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>!!</literal> </entry>
-       <entry>factorial (prefix operator)</entry>
-       <entry><literal>!! 5</literal></entry>
-       <entry><literal>120</literal></entry>
+       <entry role="functableentry">
+        <literal>||/</literal> <type>double precision</type>
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Cube root
+       <?br?>
+        <literal>||/ 64.0</literal>
+        <returnvalue>4</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>@</literal> </entry>
-       <entry>absolute value</entry>
-       <entry><literal>@ -5.0</literal></entry>
-       <entry><literal>5</literal></entry>
+       <entry role="functableentry">
+        <type>bigint</type> <literal>!</literal>
+        <returnvalue>numeric</returnvalue>
+       <?br?>
+        Factorial
+       <?br?>
+        <literal>5 !</literal>
+        <returnvalue>120</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>&amp;</literal> </entry>
-       <entry>bitwise AND</entry>
-       <entry><literal>91 &amp; 15</literal></entry>
-       <entry><literal>11</literal></entry>
+       <entry role="functableentry">
+        <literal>!!</literal> <type>bigint</type>
+        <returnvalue>numeric</returnvalue>
+       <?br?>
+        Factorial (as a prefix operator)
+       <?br?>
+        <literal>!! 5</literal>
+        <returnvalue>120</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>|</literal> </entry>
-       <entry>bitwise OR</entry>
-       <entry><literal>32 | 3</literal></entry>
-       <entry><literal>35</literal></entry>
+       <entry role="functableentry">
+        <literal>@</literal> <replaceable>numeric_type</replaceable>
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Absolute value
+       <?br?>
+        <literal>@ -5.0</literal>
+        <returnvalue>5</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>#</literal> </entry>
-       <entry>bitwise XOR</entry>
-       <entry><literal>17 # 5</literal></entry>
-       <entry><literal>20</literal></entry>
+       <entry role="functableentry">
+        <replaceable>integral_type</replaceable> <literal>&amp;</literal> <replaceable>integral_type</replaceable>
+        <returnvalue><replaceable>integral_type</replaceable></returnvalue>
+       <?br?>
+        Bitwise AND
+       <?br?>
+        <literal>91 &amp; 15</literal>
+        <returnvalue>11</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>~</literal> </entry>
-       <entry>bitwise NOT</entry>
-       <entry><literal>~1</literal></entry>
-       <entry><literal>-2</literal></entry>
+       <entry role="functableentry">
+        <replaceable>integral_type</replaceable> <literal>|</literal> <replaceable>integral_type</replaceable>
+        <returnvalue><replaceable>integral_type</replaceable></returnvalue>
+       <?br?>
+        Bitwise OR
+       <?br?>
+        <literal>32 | 3</literal>
+        <returnvalue>35</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>&lt;&lt;</literal> </entry>
-       <entry>bitwise shift left</entry>
-       <entry><literal>1 &lt;&lt; 4</literal></entry>
-       <entry><literal>16</literal></entry>
+       <entry role="functableentry">
+        <replaceable>integral_type</replaceable> <literal>#</literal> <replaceable>integral_type</replaceable>
+        <returnvalue><replaceable>integral_type</replaceable></returnvalue>
+       <?br?>
+        Bitwise exclusive OR
+       <?br?>
+        <literal>17 # 5</literal>
+        <returnvalue>20</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>&gt;&gt;</literal> </entry>
-       <entry>bitwise shift right</entry>
-       <entry><literal>8 &gt;&gt; 2</literal></entry>
-       <entry><literal>2</literal></entry>
+       <entry role="functableentry">
+        <literal>~</literal> <replaceable>integral_type</replaceable>
+        <returnvalue><replaceable>integral_type</replaceable></returnvalue>
+       <?br?>
+        Bitwise NOT
+       <?br?>
+        <literal>~1</literal>
+        <returnvalue>-2</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>integral_type</replaceable> <literal>&lt;&lt;</literal> <type>integer</type>
+        <returnvalue><replaceable>integral_type</replaceable></returnvalue>
+       <?br?>
+        Bitwise shift left
+       <?br?>
+        <literal>1 &lt;&lt; 4</literal>
+        <returnvalue>16</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>integral_type</replaceable> <literal>&gt;&gt;</literal> <type>integer</type>
+        <returnvalue><replaceable>integral_type</replaceable></returnvalue>
+       <?br?>
+        Bitwise shift right
+       <?br?>
+        <literal>8 &gt;&gt; 2</literal>
+        <returnvalue>2</returnvalue>
+       </entry>
       </row>
 
      </tbody>
     </tgroup>
    </table>
 
-   <para>
-    The bitwise operators work only on integral data types and are also
-    available for the bit
-    string types <type>bit</type> and <type>bit varying</type>, as
-    shown in <xref linkend="functions-bit-string-op-table"/>.
-   </para>
-
   <para>
    <xref linkend="functions-math-func-table"/> shows the available
-   mathematical functions.  In the table, <literal>dp</literal>
-   indicates <type>double precision</type>.  Many of these functions
-   are provided in multiple forms with different argument types.
+   mathematical functions.
+   Many of these functions are provided in multiple forms with different
+   argument types.
    Except where noted, any given form of a function returns the same
-   data type as its argument.
+   data type as its argument(s); cross-type cases are resolved in the
+   same way as explained above for operators.
    The functions working with <type>double precision</type> data are mostly
    implemented on top of the host system's C library; accuracy and behavior in
    boundary cases can therefore vary depending on the host system.
@@ -752,415 +1090,478 @@
 
    <table id="functions-math-func-table">
     <title>Mathematical Functions</title>
-    <tgroup cols="5">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Return Type</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>abs</primary>
         </indexterm>
-        <literal><function>abs(<replaceable>x</replaceable>)</function></literal>
+        <function>abs</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Absolute value
+       <?br?>
+        <literal>abs(-17.4)</literal>
+        <returnvalue>17.4</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>absolute value</entry>
-       <entry><literal>abs(-17.4)</literal></entry>
-       <entry><literal>17.4</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>cbrt</primary>
         </indexterm>
-        <literal><function>cbrt(<type>dp</type>)</function></literal>
+        <function>cbrt</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Cube root
+       <?br?>
+        <literal>cbrt(64.0)</literal>
+        <returnvalue>4</returnvalue>
        </entry>
-       <entry><type>dp</type></entry>
-       <entry>cube root</entry>
-       <entry><literal>cbrt(27.0)</literal></entry>
-       <entry><literal>3</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>ceil</primary>
         </indexterm>
-        <literal><function>ceil(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>ceil</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Nearest integer greater than or equal to argument
+       <?br?>
+        <literal>ceil(42.2)</literal>
+        <returnvalue>43</returnvalue>
+       <?br?>
+        <literal>ceil(-42.8)</literal>
+        <returnvalue>-42</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>nearest integer greater than or equal to argument</entry>
-       <entry><literal>ceil(-42.8)</literal></entry>
-       <entry><literal>-42</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>ceiling</primary>
         </indexterm>
-        <literal><function>ceiling(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>ceiling</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Nearest integer greater than or equal to argument (same
+        as <function>ceil</function>)
+       <?br?>
+        <literal>ceiling(95.3)</literal>
+        <returnvalue>96</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>nearest integer greater than or equal to argument (same as <function>ceil</function>)</entry>
-       <entry><literal>ceiling(-95.3)</literal></entry>
-       <entry><literal>-95</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>degrees</primary>
         </indexterm>
-        <literal><function>degrees(<type>dp</type>)</function></literal>
+        <function>degrees</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Converts radians to degrees
+       <?br?>
+        <literal>degrees(0.5)</literal>
+        <returnvalue>28.64788975654116</returnvalue>
        </entry>
-       <entry><type>dp</type></entry>
-       <entry>radians to degrees</entry>
-       <entry><literal>degrees(0.5)</literal></entry>
-       <entry><literal>28.6478897565412</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>div</primary>
         </indexterm>
-        <literal><function>div(<parameter>y</parameter> <type>numeric</type>,
-         <parameter>x</parameter> <type>numeric</type>)</function></literal>
+        <function>div</function> ( <parameter>y</parameter> <type>numeric</type>,
+        <parameter>x</parameter> <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       <?br?>
+        Integer quotient of <parameter>y</parameter>/<parameter>x</parameter>
+        (truncates towards zero)
+       <?br?>
+        <literal>div(9,4)</literal>
+        <returnvalue>2</returnvalue>
        </entry>
-       <entry><type>numeric</type></entry>
-       <entry>integer quotient of <parameter>y</parameter>/<parameter>x</parameter></entry>
-       <entry><literal>div(9,4)</literal></entry>
-       <entry><literal>2</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>exp</primary>
         </indexterm>
-        <literal><function>exp(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>exp</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Exponential (<literal>e</literal> raised to the given power)
+       <?br?>
+        <literal>exp(1.0)</literal>
+        <returnvalue>2.7182818284590452</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>exponential</entry>
-       <entry><literal>exp(1.0)</literal></entry>
-       <entry><literal>2.71828182845905</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>floor</primary>
         </indexterm>
-        <literal><function>floor(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>floor</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Nearest integer less than or equal to argument
+       <?br?>
+        <literal>floor(42.8)</literal>
+        <returnvalue>42</returnvalue>
+       <?br?>
+        <literal>floor(-42.8)</literal>
+        <returnvalue>-43</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>nearest integer less than or equal to argument</entry>
-       <entry><literal>floor(-42.8)</literal></entry>
-       <entry><literal>-43</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>gcd</primary>
         </indexterm>
-        <literal><function>gcd(<replaceable>a</replaceable>, <replaceable>b</replaceable>)</function></literal>
-       </entry>
-       <entry>(same as argument types)</entry>
-       <entry>
-        greatest common divisor (the largest positive number that divides both
+        <function>gcd</function> ( <replaceable>numeric_type</replaceable>, <replaceable>numeric_type</replaceable> )
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Greatest common divisor (the largest positive number that divides both
         inputs with no remainder); returns <literal>0</literal> if both inputs
-        are zero
+        are zero; available for <type>integer</type>, <type>bigint</type>,
+        and <type>numeric</type>
+       <?br?>
+        <literal>gcd(1071, 462)</literal>
+        <returnvalue>21</returnvalue>
        </entry>
-       <entry><literal>gcd(1071, 462)</literal></entry>
-       <entry><literal>21</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>lcm</primary>
         </indexterm>
-        <literal><function>lcm(<replaceable>a</replaceable>, <replaceable>b</replaceable>)</function></literal>
-       </entry>
-       <entry>(same as argument types)</entry>
-       <entry>
-        least common multiple (the smallest strictly positive number that is
+        <function>lcm</function> ( <replaceable>numeric_type</replaceable>, <replaceable>numeric_type</replaceable> )
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Least common multiple (the smallest strictly positive number that is
         an integral multiple of both inputs); returns <literal>0</literal> if
-        either input is zero
+        either input is zero; available for <type>integer</type>,
+        <type>bigint</type>, and <type>numeric</type>
+       <?br?>
+        <literal>lcm(1071, 462)</literal>
+        <returnvalue>23562</returnvalue>
        </entry>
-       <entry><literal>lcm(1071, 462)</literal></entry>
-       <entry><literal>23562</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>ln</primary>
         </indexterm>
-        <literal><function>ln(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>ln</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Natural logarithm
+       <?br?>
+        <literal>ln(2.0)</literal>
+        <returnvalue>0.6931471805599453</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>natural logarithm</entry>
-       <entry><literal>ln(2.0)</literal></entry>
-       <entry><literal>0.693147180559945</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>log</primary>
         </indexterm>
-        <literal><function>log(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>log</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Base 10 logarithm
+       <?br?>
+        <literal>log(100)</literal>
+        <returnvalue>2</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>base 10 logarithm</entry>
-       <entry><literal>log(100.0)</literal></entry>
-       <entry><literal>2</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>log10</primary>
         </indexterm>
-        <literal><function>log10(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>log10</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Base 10 logarithm (same as <function>log</function>)
+       <?br?>
+        <literal>log10(1000)</literal>
+        <returnvalue>3</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>base 10 logarithm</entry>
-       <entry><literal>log10(100.0)</literal></entry>
-       <entry><literal>2</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>log(<parameter>b</parameter> <type>numeric</type>,
-        <parameter>x</parameter> <type>numeric</type>)</function></literal></entry>
-       <entry><type>numeric</type></entry>
-       <entry>logarithm to base <parameter>b</parameter></entry>
-       <entry><literal>log(2.0, 64.0)</literal></entry>
-       <entry><literal>6.0000000000</literal></entry>
+       <entry role="functableentry">
+        <function>log</function> ( <parameter>b</parameter> <type>numeric</type>,
+        <parameter>x</parameter> <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       <?br?>
+        Logarithm of <parameter>x</parameter> to base <parameter>b</parameter>
+       <?br?>
+       <literal>log(2.0, 64.0)</literal>
+       <returnvalue>6.0000000000</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>min_scale</primary>
         </indexterm>
-        <literal><function>min_scale(<type>numeric</type>)</function></literal>
+        <function>min_scale</function> ( <type>numeric</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Minimum scale (number of fractional decimal digits) needed
+        to represent the supplied value precisely
+       <?br?>
+        <literal>min_scale(8.4100)</literal>
+        <returnvalue>2</returnvalue>
        </entry>
-       <entry><type>integer</type></entry>
-       <entry>minimum scale (number of fractional decimal digits) needed
-        to represent the supplied value</entry>
-       <entry><literal>min_scale(8.4100)</literal></entry>
-       <entry><literal>2</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>mod</primary>
         </indexterm>
-        <literal><function>mod(<parameter>y</parameter>,
-         <parameter>x</parameter>)</function></literal>
+        <function>mod</function> ( <parameter>y</parameter> <replaceable>numeric_type</replaceable>,
+        <parameter>x</parameter> <replaceable>numeric_type</replaceable> )
+        <returnvalue><replaceable>numeric_type</replaceable></returnvalue>
+       <?br?>
+        Remainder of <parameter>y</parameter>/<parameter>x</parameter>;
+        available for <type>smallint</type>, <type>integer</type>,
+        <type>bigint</type>, and <type>numeric</type>
+       <?br?>
+        <literal>mod(9,4)</literal>
+        <returnvalue>1</returnvalue>
        </entry>
-       <entry>(same as argument types)</entry>
-       <entry>remainder of <parameter>y</parameter>/<parameter>x</parameter></entry>
-       <entry><literal>mod(9,4)</literal></entry>
-       <entry><literal>1</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>pi</primary>
         </indexterm>
-        <literal><function>pi()</function></literal>
+        <function>pi</function> (  )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Approximate value of &pi;
+       <?br?>
+        <literal>pi()</literal>
+        <returnvalue>3.141592653589793</returnvalue>
        </entry>
-       <entry><type>dp</type></entry>
-       <entry><quote>&pi;</quote> constant</entry>
-       <entry><literal>pi()</literal></entry>
-       <entry><literal>3.14159265358979</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>power</primary>
         </indexterm>
-        <literal><function>power(<parameter>a</parameter> <type>dp</type>,
-        <parameter>b</parameter> <type>dp</type>)</function></literal>
+        <function>power</function> ( <parameter>a</parameter> <replaceable>numeric_or_dp</replaceable>,
+        <parameter>b</parameter> <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        <parameter>a</parameter> raised to the power of <parameter>b</parameter>
+       <?br?>
+        <literal>power(9, 3)</literal>
+        <returnvalue>729</returnvalue>
        </entry>
-       <entry><type>dp</type></entry>
-       <entry><parameter>a</parameter> raised to the power of <parameter>b</parameter></entry>
-       <entry><literal>power(9.0, 3.0)</literal></entry>
-       <entry><literal>729</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>power(<parameter>a</parameter> <type>numeric</type>,
-        <parameter>b</parameter> <type>numeric</type>)</function></literal></entry>
-       <entry><type>numeric</type></entry>
-       <entry><parameter>a</parameter> raised to the power of <parameter>b</parameter></entry>
-       <entry><literal>power(9.0, 3.0)</literal></entry>
-       <entry><literal>729</literal></entry>
-      </row>
-
-      <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>radians</primary>
         </indexterm>
-        <literal><function>radians(<type>dp</type>)</function></literal>
+        <function>radians</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Converts degrees to radians
+       <?br?>
+        <literal>radians(45.0)</literal>
+        <returnvalue>0.7853981633974483</returnvalue>
        </entry>
-       <entry><type>dp</type></entry>
-       <entry>degrees to radians</entry>
-       <entry><literal>radians(45.0)</literal></entry>
-       <entry><literal>0.785398163397448</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>round</primary>
         </indexterm>
-        <literal><function>round(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>round</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Rounds to nearest integer
+       <?br?>
+        <literal>round(42.4)</literal>
+        <returnvalue>42</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>round to nearest integer</entry>
-       <entry><literal>round(42.4)</literal></entry>
-       <entry><literal>42</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>round(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>int</type>)</function></literal></entry>
-       <entry><type>numeric</type></entry>
-       <entry>round to <parameter>s</parameter> decimal places</entry>
-       <entry><literal>round(42.4382, 2)</literal></entry>
-       <entry><literal>42.44</literal></entry>
+       <entry role="functableentry">
+        <function>round</function> ( <parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type> )
+        <returnvalue>numeric</returnvalue>
+       <?br?>
+        Rounds <parameter>v</parameter> to <parameter>s</parameter> decimal
+        places
+       <?br?>
+        <literal>round(42.4382, 2)</literal>
+        <returnvalue>42.44</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>scale</primary>
         </indexterm>
-        <literal><function>scale(<type>numeric</type>)</function></literal>
+        <function>scale</function> ( <type>numeric</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Scale of the argument (the number of decimal digits in the fractional part)
+       <?br?>
+        <literal>scale(8.4100)</literal>
+        <returnvalue>4</returnvalue>
        </entry>
-       <entry><type>integer</type></entry>
-       <entry>scale of the argument (the number of decimal digits in the fractional part)</entry>
-       <entry><literal>scale(8.4100)</literal></entry>
-       <entry><literal>4</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sign</primary>
         </indexterm>
-        <literal><function>sign(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>sign</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Sign of the argument (-1, 0, or +1)
+       <?br?>
+        <literal>sign(-8.4)</literal>
+        <returnvalue>-1</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>sign of the argument (-1, 0, +1)</entry>
-       <entry><literal>sign(-8.4)</literal></entry>
-       <entry><literal>-1</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sqrt</primary>
         </indexterm>
-        <literal><function>sqrt(<type>dp</type> or <type>numeric</type>)</function></literal>
+         <function>sqrt</function> ( <replaceable>numeric_or_dp</replaceable> )
+         <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Square root
+       <?br?>
+        <literal>sqrt(2)</literal>
+        <returnvalue>1.4142135623730951</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>square root</entry>
-       <entry><literal>sqrt(2.0)</literal></entry>
-       <entry><literal>1.4142135623731</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>trim_scale</primary>
         </indexterm>
-        <literal><function>trim_scale(<type>numeric</type>)</function></literal>
+        <function>trim_scale</function> ( <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       <?br?>
+        Reduces the value's scale (number of fractional decimal digits) by
+        removing trailing zeroes
+       <?br?>
+        <literal>trim_scale(8.4100)</literal>
+        <returnvalue>8.41</returnvalue>
        </entry>
-       <entry><type>numeric</type></entry>
-       <entry>reduce the scale (number of fractional decimal digits) by
-        removing trailing zeroes</entry>
-       <entry><literal>trim_scale(8.4100)</literal></entry>
-       <entry><literal>8.41</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>trunc</primary>
         </indexterm>
-        <literal><function>trunc(<type>dp</type> or <type>numeric</type>)</function></literal>
+        <function>trunc</function> ( <replaceable>numeric_or_dp</replaceable> )
+        <returnvalue><replaceable>numeric_or_dp</replaceable></returnvalue>
+       <?br?>
+        Truncates to integer (towards zero)
+       <?br?>
+        <literal>trunc(42.8)</literal>
+        <returnvalue>42</returnvalue>
+       <?br?>
+        <literal>trunc(-42.8)</literal>
+        <returnvalue>-42</returnvalue>
        </entry>
-       <entry>(same as input)</entry>
-       <entry>truncate toward zero</entry>
-       <entry><literal>trunc(42.8)</literal></entry>
-       <entry><literal>42</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>trunc(<parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>int</type>)</function></literal></entry>
-       <entry><type>numeric</type></entry>
-       <entry>truncate to <parameter>s</parameter> decimal places</entry>
-       <entry><literal>trunc(42.4382, 2)</literal></entry>
-       <entry><literal>42.43</literal></entry>
+       <entry role="functableentry">
+        <function>trunc</function> ( <parameter>v</parameter> <type>numeric</type>, <parameter>s</parameter> <type>integer</type> )
+       <returnvalue>numeric</returnvalue>
+       <?br?>
+        Truncates <parameter>v</parameter> to <parameter>s</parameter>
+        decimal places
+       <?br?>
+        <literal>trunc(42.4382, 2)</literal>
+        <returnvalue>42.43</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>width_bucket</primary>
         </indexterm>
-        <literal><function>width_bucket(<parameter>operand</parameter> <type>dp</type>, <parameter>b1</parameter> <type>dp</type>, <parameter>b2</parameter> <type>dp</type>, <parameter>count</parameter> <type>int</type>)</function></literal></entry>
-       <entry><type>int</type></entry>
-       <entry>return the bucket number to which <parameter>operand</parameter> would
-       be assigned in a histogram having <parameter>count</parameter> equal-width
-       buckets spanning the range <parameter>b1</parameter> to <parameter>b2</parameter>;
-       returns <literal>0</literal> or <literal><parameter>count</parameter>+1</literal> for
-       an input outside the range</entry>
-       <entry><literal>width_bucket(5.35, 0.024, 10.06, 5)</literal></entry>
-       <entry><literal>3</literal></entry>
+        <function>width_bucket</function> ( <parameter>operand</parameter> <replaceable>numeric_or_dp</replaceable>, <parameter>low</parameter> <replaceable>numeric_or_dp</replaceable>, <parameter>high</parameter> <replaceable>numeric_or_dp</replaceable>, <parameter>count</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of the bucket in
+        which <parameter>operand</parameter> falls in a histogram
+        having <parameter>count</parameter> equal-width buckets spanning the
+        range <parameter>low</parameter> to <parameter>high</parameter>.
+        Returns <literal>0</literal>
+        or <literal><parameter>count</parameter>+1</literal> for an input
+        outside that range.
+       <?br?>
+        <literal>width_bucket(5.35, 0.024, 10.06, 5)</literal>
+        <returnvalue>3</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry><literal><function>width_bucket(<parameter>operand</parameter> <type>numeric</type>, <parameter>b1</parameter> <type>numeric</type>, <parameter>b2</parameter> <type>numeric</type>, <parameter>count</parameter> <type>int</type>)</function></literal></entry>
-       <entry><type>int</type></entry>
-       <entry>return the bucket number to which <parameter>operand</parameter> would
-       be assigned in a histogram having <parameter>count</parameter> equal-width
-       buckets spanning the range <parameter>b1</parameter> to <parameter>b2</parameter>;
-       returns <literal>0</literal> or <literal><parameter>count</parameter>+1</literal> for
-       an input outside the range</entry>
-       <entry><literal>width_bucket(5.35, 0.024, 10.06, 5)</literal></entry>
-       <entry><literal>3</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal><function>width_bucket(<parameter>operand</parameter> <type>anyelement</type>, <parameter>thresholds</parameter> <type>anyarray</type>)</function></literal></entry>
-       <entry><type>int</type></entry>
-       <entry>return the bucket number to which <parameter>operand</parameter> would
-       be assigned given an array listing the lower bounds of the buckets;
-       returns <literal>0</literal> for an input less than the first lower bound;
-       the <parameter>thresholds</parameter> array <emphasis>must be sorted</emphasis>,
-       smallest first, or unexpected results will be obtained</entry>
-       <entry><literal>width_bucket(now(), array['yesterday', 'today', 'tomorrow']::timestamptz[])</literal></entry>
-       <entry><literal>2</literal></entry>
+       <entry role="functableentry">
+        <function>width_bucket</function> ( <parameter>operand</parameter> <type>anyelement</type>, <parameter>thresholds</parameter> <type>anyarray</type> )
+       <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of the bucket in
+        which <parameter>operand</parameter> falls given an array listing the
+        lower bounds of the buckets.  Returns <literal>0</literal> for an
+        input less than the first lower
+        bound.  <parameter>operand</parameter> and the array elements can be
+        of any type having standard comparison operators.
+        The <parameter>thresholds</parameter> array <emphasis>must be
+        sorted</emphasis>, smallest first, or unexpected results will be
+        obtained.
+       <?br?>
+        <literal>width_bucket(now(), array['yesterday', 'today', 'tomorrow']::timestamptz[])</literal>
+        <returnvalue>2</returnvalue>
+       </entry>
       </row>
      </tbody>
     </tgroup>
@@ -1174,36 +1575,44 @@
    <table id="functions-math-random-table">
     <title>Random Functions</title>
 
-    <tgroup cols="3">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Return Type</entry>
-       <entry>Description</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
+
      <tbody>
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>random</primary>
         </indexterm>
-        <literal><function>random()</function></literal>
+        <function>random</function> ( )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Returns a random value in the range 0.0 &lt;= x &lt; 1.0
+       <?br?>
+        <literal>random()</literal>
+        <returnvalue>0.897124072839091</returnvalue>
        </entry>
-       <entry><type>dp</type></entry>
-       <entry>random value in the range 0.0 &lt;= x &lt; 1.0</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>setseed</primary>
         </indexterm>
-        <literal><function>setseed(<type>dp</type>)</function></literal>
+        <function>setseed</function> ( <type>double precision</type> )
+        <returnvalue>void</returnvalue>
+       <?br?>
+        Sets the seed for subsequent <literal>random()</literal> calls;
+        argument must be between -1.0 and 1.0, inclusive
+       <?br?>
+        <literal>setseed(0.12345)</literal>
        </entry>
-       <entry><type>void</type></entry>
-       <entry>set seed for subsequent <literal>random()</literal> calls (value between -1.0 and
-       1.0, inclusive)</entry>
       </row>
      </tbody>
     </tgroup>
@@ -1214,17 +1623,15 @@
    congruential algorithm.  It is fast but not suitable for cryptographic
    applications; see the <xref linkend="pgcrypto"/> module for a more
    secure alternative.
-   If <function>setseed()</function> is called, the results of
-   subsequent <function>random()</function> calls in the current session are
-   repeatable by re-issuing <function>setseed()</function> with the same
+   If <function>setseed()</function> is called, the series of results of
+   subsequent <function>random()</function> calls in the current session
+   can be repeated by re-issuing <function>setseed()</function> with the same
    argument.
   </para>
 
   <para>
    <xref linkend="functions-math-trig-table"/> shows the
-   available trigonometric functions.  All these functions
-   take arguments and return values of type <type>double
-   precision</type>.  Each of the trigonometric functions comes in
+   available trigonometric functions.  Each of these functions comes in
    two variants, one that measures angles in radians and one that
    measures angles in degrees.
   </para>
@@ -1232,143 +1639,260 @@
    <table id="functions-math-trig-table">
     <title>Trigonometric Functions</title>
 
-    <tgroup cols="3">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function (radians)</entry>
-       <entry>Function (degrees)</entry>
-       <entry>Description</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>acos</primary>
-        </indexterm><literal><function>acos(<replaceable>x</replaceable>)</function></literal>
+        </indexterm>
+        <function>acos</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse cosine, result in radians
+       <?br?>
+        <literal>acos(1)</literal>
+        <returnvalue>0</returnvalue>
        </entry>
-       <entry>
-        <indexterm>
-         <primary>acosd</primary>
-        </indexterm><literal><function>acosd(<replaceable>x</replaceable>)</function></literal>
-       </entry>
-       <entry>inverse cosine</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>acosd</primary>
+        </indexterm>
+        <function>acosd</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse cosine, result in degrees
+       <?br?>
+        <literal>acosd(0.5)</literal>
+        <returnvalue>60</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>asin</primary>
         </indexterm>
-        <literal><function>asin(<replaceable>x</replaceable>)</function></literal>
+        <function>asin</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse sine, result in radians
+       <?br?>
+        <literal>asin(1)</literal>
+        <returnvalue>1.5707963267948966</returnvalue>
        </entry>
-       <entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>asind</primary>
         </indexterm>
-        <literal><function>asind(<replaceable>x</replaceable>)</function></literal>
+        <function>asind</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse sine, result in degrees
+       <?br?>
+        <literal>asind(0.5)</literal>
+        <returnvalue>30</returnvalue>
        </entry>
-       <entry>inverse sine</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>atan</primary>
         </indexterm>
-        <literal><function>atan(<replaceable>x</replaceable>)</function></literal>
+        <function>atan</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse tangent, result in radians
+       <?br?>
+        <literal>atan(1)</literal>
+        <returnvalue>0.7853981633974483</returnvalue>
        </entry>
-       <entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>atand</primary>
         </indexterm>
-        <literal><function>atand(<replaceable>x</replaceable>)</function></literal>
+        <function>atand</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse tangent, result in degrees
+       <?br?>
+        <literal>atand(1)</literal>
+        <returnvalue>45</returnvalue>
        </entry>
-       <entry>inverse tangent</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>atan2</primary>
         </indexterm>
-        <literal><function>atan2(<replaceable>y</replaceable>,
-        <replaceable>x</replaceable>)</function></literal>
+        <function>atan2</function> ( <replaceable>y</replaceable> <type>double precision</type>,
+        <replaceable>x</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse tangent of
+        <replaceable>y</replaceable>/<replaceable>x</replaceable>,
+        result in radians
+       <?br?>
+        <literal>atan2(1,0)</literal>
+        <returnvalue>1.5707963267948966</returnvalue>
        </entry>
-       <entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>atan2d</primary>
         </indexterm>
-        <literal><function>atan2d(<replaceable>y</replaceable>,
-        <replaceable>x</replaceable>)</function></literal>
+        <function>atan2d</function> ( <replaceable>y</replaceable> <type>double precision</type>,
+        <replaceable>x</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse tangent of
+        <replaceable>y</replaceable>/<replaceable>x</replaceable>,
+        result in degrees
+       <?br?>
+        <literal>atan2d(1,0)</literal>
+        <returnvalue>90</returnvalue>
        </entry>
-       <entry>inverse tangent of
-        <literal><replaceable>y</replaceable>/<replaceable>x</replaceable></literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>cos</primary>
         </indexterm>
-        <literal><function>cos(<replaceable>x</replaceable>)</function></literal>
+        <function>cos</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Cosine, argument in radians
+       <?br?>
+        <literal>cos(0)</literal>
+        <returnvalue>1</returnvalue>
        </entry>
-       <entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>cosd</primary>
         </indexterm>
-        <literal><function>cosd(<replaceable>x</replaceable>)</function></literal>
+        <function>cosd</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Cosine, argument in degrees
+       <?br?>
+        <literal>cosd(60)</literal>
+        <returnvalue>0.5</returnvalue>
        </entry>
-       <entry>cosine</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>cot</primary>
         </indexterm>
-        <literal><function>cot(<replaceable>x</replaceable>)</function></literal>
+        <function>cot</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Cotangent, argument in radians
+       <?br?>
+        <literal>cot(0.5)</literal>
+        <returnvalue>1.830487721712452</returnvalue>
        </entry>
-       <entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>cotd</primary>
         </indexterm>
-        <literal><function>cotd(<replaceable>x</replaceable>)</function></literal>
+        <function>cotd</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Cotangent, argument in degrees
+       <?br?>
+        <literal>cotd(45)</literal>
+        <returnvalue>1</returnvalue>
        </entry>
-       <entry>cotangent</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sin</primary>
         </indexterm>
-        <literal><function>sin(<replaceable>x</replaceable>)</function></literal>
+        <function>sin</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Sine, argument in radians
+       <?br?>
+        <literal>sin(1)</literal>
+        <returnvalue>0.8414709848078965</returnvalue>
        </entry>
-       <entry>
-        <indexterm>
-         <primary>sind</primary>
-        </indexterm>
-        <literal><function>sind(<replaceable>x</replaceable>)</function></literal>
-       </entry>
-       <entry>sine</entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>sind</primary>
+        </indexterm>
+        <function>sind</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Sine, argument in degrees
+       <?br?>
+        <literal>sind(30)</literal>
+        <returnvalue>0.5</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>tan</primary>
         </indexterm>
-        <literal><function>tan(<replaceable>x</replaceable>)</function></literal>
+        <function>tan</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Tangent, argument in radians
+       <?br?>
+        <literal>tan(1)</literal>
+        <returnvalue>1.5574077246549023</returnvalue>
        </entry>
-       <entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
         <indexterm>
          <primary>tand</primary>
         </indexterm>
-        <literal><function>tand(<replaceable>x</replaceable>)</function></literal>
+        <function>tand</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Tangent, argument in degrees
+       <?br?>
+        <literal>tand(45)</literal>
+        <returnvalue>1</returnvalue>
        </entry>
-       <entry>tangent</entry>
       </row>
      </tbody>
     </tgroup>
@@ -1387,89 +1911,110 @@
 
   <para>
    <xref linkend="functions-math-hyp-table"/> shows the
-   available hyperbolic functions.  All these functions
-   take arguments and return values of type <type>double
-   precision</type>.
+   available hyperbolic functions.
   </para>
 
   <table id="functions-math-hyp-table">
     <title>Hyperbolic Functions</title>
 
-    <tgroup cols="4">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
+
      <tbody>
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sinh</primary>
         </indexterm>
-        <literal><function>sinh(<replaceable>x</replaceable>)</function></literal>
+        <function>sinh</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Hyperbolic sine
+       <?br?>
+        <literal>sinh(1)</literal>
+        <returnvalue>1.1752011936438014</returnvalue>
        </entry>
-       <entry>hyperbolic sine</entry>
-       <entry><literal>sinh(0)</literal></entry>
-       <entry><literal>0</literal></entry>
       </row>
+
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>cosh</primary>
         </indexterm>
-        <literal><function>cosh(<replaceable>x</replaceable>)</function></literal>
+        <function>cosh</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Hyperbolic cosine
+       <?br?>
+        <literal>cosh(0)</literal>
+        <returnvalue>1</returnvalue>
        </entry>
-       <entry>hyperbolic cosine</entry>
-       <entry><literal>cosh(0)</literal></entry>
-       <entry><literal>1</literal></entry>
       </row>
+
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>tanh</primary>
         </indexterm>
-        <literal><function>tanh(<replaceable>x</replaceable>)</function></literal>
+        <function>tanh</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Hyperbolic tangent
+       <?br?>
+        <literal>tanh(1)</literal>
+        <returnvalue>0.7615941559557649</returnvalue>
        </entry>
-       <entry>hyperbolic tangent</entry>
-       <entry><literal>tanh(0)</literal></entry>
-       <entry><literal>0</literal></entry>
       </row>
+
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>asinh</primary>
         </indexterm>
-        <literal><function>asinh(<replaceable>x</replaceable>)</function></literal>
+        <function>asinh</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse hyperbolic sine
+       <?br?>
+        <literal>asinh(1)</literal>
+        <returnvalue>0.881373587019543</returnvalue>
        </entry>
-       <entry>inverse hyperbolic sine</entry>
-       <entry><literal>asinh(0)</literal></entry>
-       <entry><literal>0</literal></entry>
       </row>
+
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>acosh</primary>
         </indexterm>
-        <literal><function>acosh(<replaceable>x</replaceable>)</function></literal>
+        <function>acosh</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse hyperbolic cosine
+       <?br?>
+        <literal>acosh(1)</literal>
+        <returnvalue>0</returnvalue>
        </entry>
-       <entry>inverse hyperbolic cosine</entry>
-       <entry><literal>acosh(1)</literal></entry>
-       <entry><literal>0</literal></entry>
       </row>
+
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>atanh</primary>
         </indexterm>
-        <literal><function>atanh(<replaceable>x</replaceable>)</function></literal>
+        <function>atanh</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Inverse hyperbolic tangent
+       <?br?>
+        <literal>atanh(0.5)</literal>
+        <returnvalue>0.5493061443340548</returnvalue>
        </entry>
-       <entry>inverse hyperbolic tangent</entry>
-       <entry><literal>atanh(0)</literal></entry>
-       <entry><literal>0</literal></entry>
       </row>
      </tbody>
     </tgroup>
