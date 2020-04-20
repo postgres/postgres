@@ -1709,7 +1709,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER INDEX <name> */
 	else if (Matches("ALTER", "INDEX", MatchAny))
 		COMPLETE_WITH("ALTER COLUMN", "OWNER TO", "RENAME TO", "SET",
-					  "RESET", "ATTACH PARTITION");
+					  "RESET", "ATTACH PARTITION", "DEPENDS", "NO DEPENDS");
 	else if (Matches("ALTER", "INDEX", MatchAny, "ATTACH"))
 		COMPLETE_WITH("PARTITION");
 	else if (Matches("ALTER", "INDEX", MatchAny, "ATTACH", "PARTITION"))
@@ -1755,6 +1755,10 @@ psql_completion(const char *text, int start, int end)
 					  "buffering =",	/* GiST */
 					  "pages_per_range =", "autosummarize ="	/* BRIN */
 			);
+	else if (Matches("ALTER", "INDEX", MatchAny, "NO", "DEPENDS"))
+		COMPLETE_WITH("ON EXTENSION");
+	else if (Matches("ALTER", "INDEX", MatchAny, "DEPENDS"))
+		COMPLETE_WITH("ON EXTENSION");
 
 	/* ALTER LANGUAGE <name> */
 	else if (Matches("ALTER", "LANGUAGE", MatchAny))
