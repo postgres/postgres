@@ -30,7 +30,7 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
 ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     SET SCHEMA <replaceable>new_schema</replaceable>
 ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
-    DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
+    [ NO ] DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
 
 <phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
@@ -153,10 +153,14 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">extension_name</replaceable></term>
+    <term><literal>DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable></literal></term>
+    <term><literal>NO DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable></literal></term>
     <listitem>
      <para>
-      The name of the extension that the function is to depend on.
+      This form marks the function as dependent on the extension, or no longer
+      dependent on that extension if <literal>NO</literal> is specified.
+      A function that's marked as dependent on an extension is automatically
+      dropped when the extension is dropped.
      </para>
     </listitem>
    </varlistentry>

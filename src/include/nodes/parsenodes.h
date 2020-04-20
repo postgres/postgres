@@ -2936,6 +2936,7 @@ typedef struct AlterObjectDependsStmt
 	RangeVar   *relation;		/* in case a table is involved */
 	Node	   *object;			/* name of the object */
 	Value	   *extname;		/* extension name */
+	bool		remove;			/* set true to remove dep rather than add */
 } AlterObjectDependsStmt;
 
 /* ----------------------

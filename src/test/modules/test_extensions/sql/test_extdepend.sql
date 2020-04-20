@@ -70,6 +70,21 @@ SELECT deptype, i.*
         refobjid=(SELECT oid FROM pg_extension WHERE extname='test_ext5'))
 	OR (refclassid='pg_class'::regclass AND refobjid='test_ext.a'::regclass)
    AND NOT deptype IN ('i', 'a');
-
 DROP TABLE a;
+RESET search_path;
+DROP SCHEMA test_ext CASCADE;
+
+-- Fourth test: we can mark the objects as dependent, then unmark; then the
+-- drop of the extension does nothing
+SELECT * FROM test_extdep_commands \gexec
+SET search_path TO test_ext;
+ALTER FUNCTION b() NO DEPENDS ON EXTENSION test_ext5;
+ALTER TRIGGER c ON a NO DEPENDS ON EXTENSION test_ext5;
+ALTER MATERIALIZED VIEW d NO DEPENDS ON EXTENSION test_ext5;
+ALTER INDEX e NO DEPENDS ON EXTENSION test_ext5;
+DROP EXTENSION test_ext5;
+DROP TRIGGER c ON a;
+DROP FUNCTION b();
+DROP MATERIALIZED VIEW d;
+DROP INDEX e;
 DROP SCHEMA test_ext CASCADE;

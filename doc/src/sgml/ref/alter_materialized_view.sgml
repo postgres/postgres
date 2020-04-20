@@ -69,12 +69,6 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
   </para>
 
   <para>
-   The <literal>DEPENDS ON EXTENSION</literal> form marks the materialized view
-   as dependent on an extension, such that the materialized view will
-   automatically be dropped if the extension is dropped.
-  </para>
-
-  <para>
    The statement subforms and actions available for
    <command>ALTER MATERIALIZED VIEW</command> are a subset of those available
    for <command>ALTER TABLE</command>, and have the same meaning when used for
@@ -110,7 +104,10 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
      <term><replaceable class="parameter">extension_name</replaceable></term>
      <listitem>
       <para>
-       The name of the extension that the materialized view is to depend on.
+       The name of the extension that the materialized view is to depend on (or no longer
+       dependent on, if <literal>NO</literal> is specified).  A materialized view
+       that's marked as dependent on an extension is automatically dropped when
+       the extension is dropped.
       </para>
      </listitem>
     </varlistentry>

@@ -279,6 +279,55 @@ deleteDependencyRecordsForClass(Oid classId, Oid objectId,
 }
 
 /*
+ * deleteDependencyRecordsForSpecific -- delete all records with given depender
+ * classId/objectId, dependee classId/objectId, of the given deptype.
+ * Returns the number of records deleted.
+ */
+long
+deleteDependencyRecordsForSpecific(Oid classId, Oid objectId, char deptype,
+								   Oid refclassId, Oid refobjectId)
+{
+	long		count = 0;
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
+
+	depRel = table_open(DependRelationId, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objectId));
+
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
+							  NULL, 2, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+		if (depform->refclassid == refclassId &&
+			depform->refobjid == refobjectId &&
+			depform->deptype == deptype)
+		{
+			CatalogTupleDelete(depRel, &tup->t_self);
+			count++;
+		}
+	}
+
+	systable_endscan(scan);
+
+	table_close(depRel, RowExclusiveLock);
+
+	return count;
+}
+
+/*
  * Adjust dependency record(s) to point to a different object of the same type
  *
  * classId/objectId specify the referencing object.

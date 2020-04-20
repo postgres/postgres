@@ -100,11 +100,14 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DEPENDS ON EXTENSION</literal></term>
+    <term><literal>DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable></literal></term>
+    <term><literal>NO DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable></literal></term>
     <listitem>
      <para>
-      This form marks the index as dependent on the extension, such that if the
-      extension is dropped, the index will automatically be dropped as well.
+      This form marks the index as dependent on the extension, or no longer
+      dependent on that extension if <literal>NO</literal> is specified.
+      An index that's marked as dependent on an extension is automatically
+      dropped when the extension is dropped.
      </para>
     </listitem>
    </varlistentry>

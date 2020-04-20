@@ -150,5 +150,39 @@ SELECT deptype, i.*
 (0 rows)
 
 DROP TABLE a;
+RESET search_path;
 DROP SCHEMA test_ext CASCADE;
 NOTICE:  drop cascades to extension test_ext5
+-- Fourth test: we can mark the objects as dependent, then unmark; then the
+-- drop of the extension does nothing
+SELECT * FROM test_extdep_commands \gexec
+ CREATE SCHEMA test_ext
+ CREATE EXTENSION test_ext5 SCHEMA test_ext
+ SET search_path TO test_ext
+ CREATE TABLE a (a1 int)
+
+ CREATE FUNCTION b() RETURNS TRIGGER LANGUAGE plpgsql AS
+   $$ BEGIN NEW.a1 := NEW.a1 + 42; RETURN NEW; END; $$
+ ALTER FUNCTION b() DEPENDS ON EXTENSION test_ext5
+
+ CREATE TRIGGER c BEFORE INSERT ON a FOR EACH ROW EXECUTE PROCEDURE b()
+ ALTER TRIGGER c ON a DEPENDS ON EXTENSION test_ext5
+
+ CREATE MATERIALIZED VIEW d AS SELECT * FROM a
+ ALTER MATERIALIZED VIEW d DEPENDS ON EXTENSION test_ext5
+
+ CREATE INDEX e ON a (a1)
+ ALTER INDEX e DEPENDS ON EXTENSION test_ext5
+ RESET search_path
+SET search_path TO test_ext;
+ALTER FUNCTION b() NO DEPENDS ON EXTENSION test_ext5;
+ALTER TRIGGER c ON a NO DEPENDS ON EXTENSION test_ext5;
+ALTER MATERIALIZED VIEW d NO DEPENDS ON EXTENSION test_ext5;
+ALTER INDEX e NO DEPENDS ON EXTENSION test_ext5;
+DROP EXTENSION test_ext5;
+DROP TRIGGER c ON a;
+DROP FUNCTION b();
+DROP MATERIALIZED VIEW d;
+DROP INDEX e;
+DROP SCHEMA test_ext CASCADE;
+NOTICE:  drop cascades to table a

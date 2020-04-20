@@ -1449,6 +1449,7 @@ _equalAlterObjectDependsStmt(const AlterObjectDependsStmt *a, const AlterObjectD
 	COMPARE_NODE_FIELD(relation);
 	COMPARE_NODE_FIELD(object);
 	COMPARE_NODE_FIELD(extname);
+	COMPARE_SCALAR_FIELD(remove);
 
 	return true;
 }
