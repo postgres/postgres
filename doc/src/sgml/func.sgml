@@ -2978,7 +2978,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
          <primary>substr</primary>
         </indexterm>
         <function>substr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>start</parameter> <type>integer</type> <optional>, <parameter>count</parameter> <type>integer</type> </optional> )
-<type></type> )
         <returnvalue>text</returnvalue>
        <?br?>
         Extracts the substring of <parameter>string</parameter> starting at
@@ -3335,146 +3334,151 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
     (see <xref linkend="functions-binarystring-other"/>).
    </para>
 
-   <note>
-    <para>
-     The sample results shown on this page assume that the server parameter
-     <link linkend="guc-bytea-output"><varname>bytea_output</varname></link> is set
-     to <literal>escape</literal> (the traditional PostgreSQL format).
-     The output will look different when using the default setting
-     (<literal>hex</literal>).
-    </para>
-   </note>
-
    <table id="functions-binarystring-sql">
     <title><acronym>SQL</acronym> Binary String Functions and Operators</title>
-    <tgroup cols="5">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Return Type</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Function/Operator<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry><literal><parameter>bytes</parameter> <literal>||</literal>
-        <parameter>bytes</parameter></literal></entry>
-       <entry> <type>bytea</type> </entry>
-       <entry>
-        Binary string concatenation
+       <entry role="functableentry">
         <indexterm>
          <primary>binary string</primary>
          <secondary>concatenation</secondary>
         </indexterm>
+        <type>bytea</type> <literal>||</literal> <type>bytea</type>
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Concatenates the two binary strings.
+       <?br?>
+        <literal>'\x123456'::bytea || '\x789a00bcde'::bytea</literal>
+        <returnvalue>\x123456789a00bcde</returnvalue>
        </entry>
-       <entry><literal>'\\Post'::bytea || '\047gres\000'::bytea</literal></entry>
-       <entry><literal>\\Post'gres\000</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>bit_length</primary>
         </indexterm>
-        <literal><function>bit_length(<parameter>bytes</parameter>)</function></literal>
+        <function>bit_length</function> ( <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bits in the binary string (8
+        times the <function>octet_length</function>).
+       <?br?>
+        <literal>bit_length('\x123456'::bytea)</literal>
+        <returnvalue>24</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>Number of bits in binary string</entry>
-       <entry><literal>bit_length('jo\000se':bytea)</literal></entry>
-       <entry><literal>40</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>octet_length</primary>
         </indexterm>
-        <literal><function>octet_length(<parameter>bytes</parameter>)</function></literal>
+        <function>octet_length</function> ( <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bytes in the binary string.
+       <?br?>
+        <literal>octet_length('\x123456'::bytea)</literal>
+        <returnvalue>3</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>Number of bytes in binary string</entry>
-       <entry><literal>octet_length('jo\000se'::bytea)</literal></entry>
-       <entry><literal>5</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>overlay</primary>
         </indexterm>
-        <literal><function>overlay(<parameter>bytes</parameter> placing <parameter>bytes</parameter> from <type>int</type> <optional>for <type>int</type></optional>)</function></literal>
+        <function>overlay</function> ( <parameter>bytes</parameter> <type>bytea</type> <literal>PLACING</literal> <parameter>newsubstring</parameter> <type>bytea</type> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Replaces the substring of <parameter>bytes</parameter> that starts at
+        the <parameter>start</parameter>'th byte and extends
+        for <parameter>count</parameter> bytes
+        with <parameter>newsubstring</parameter>.
+        If <parameter>count</parameter> is omitted, it defaults to the length
+        of <parameter>newsubstring</parameter>.
+       <?br?>
+        <literal>overlay('\x1234567890'::bytea placing '\002\003'::bytea from 2 for 3)</literal>
+        <returnvalue>\x12020390</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Replace substring
-       </entry>
-       <entry><literal>overlay('Th\000omas'::bytea placing '\002\003'::bytea from 2 for 3)</literal></entry>
-       <entry><literal>T\\002\\003mas</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>position</primary>
         </indexterm>
-        <literal><function>position(<parameter>bytesubstring</parameter> in <parameter>bytes</parameter>)</function></literal>
+        <function>position</function> ( <parameter>substring</parameter> <type>bytea</type> <literal>IN</literal> <parameter>bytes</parameter> <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns starting index of specified <parameter>substring</parameter>
+        within <parameter>bytes</parameter>, or zero if it's not present.
+       <?br?>
+        <literal>position('\x5678'::bytea in '\x1234567890'::bytea)</literal>
+        <returnvalue>3</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>Location of specified substring</entry>
-      <entry><literal>position('\000om'::bytea in 'Th\000omas'::bytea)</literal></entry>
-       <entry><literal>3</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>substring</primary>
         </indexterm>
-        <literal><function>substring(<parameter>bytes</parameter> <optional>from <type>int</type></optional> <optional>for <type>int</type></optional>)</function></literal>
+        <function>substring</function> ( <parameter>bytes</parameter> <type>bytea</type> <optional> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> </optional> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Extracts the substring of <parameter>bytes</parameter> starting at
+        the <parameter>start</parameter>'th byte if that is specified,
+        and stopping after <parameter>count</parameter> bytes if that is
+        specified.  Provide at least one of <parameter>start</parameter>
+        and <parameter>count</parameter>.
+       <?br?>
+        <literal>substring('\x1234567890'::bytea from 3 for 2)</literal>
+        <returnvalue>\x5678</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Extract substring (provide at least one of <literal>from</literal>
-        and <literal>for</literal>)
-       </entry>
-       <entry><literal>substring('Th\000omas'::bytea from 2 for 3)</literal></entry>
-       <entry><literal>h\000o</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>trim</primary>
         </indexterm>
-        <literal><function>trim(<optional>both</optional>
-        <parameter>bytesremoved</parameter> from
-        <parameter>bytes</parameter>)</function></literal>
-       </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Remove the longest string containing only bytes appearing in
+        <function>trim</function> ( <optional> <literal>BOTH</literal> </optional>
+        <parameter>bytesremoved</parameter> <type>bytea</type> <literal>FROM</literal>
+        <parameter>bytes</parameter> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Removes the longest string containing only bytes appearing in
         <parameter>bytesremoved</parameter> from the start
-        and end of <parameter>bytes</parameter>
+        and end of <parameter>bytes</parameter>.
+       <?br?>
+        <literal>trim('\x9012'::bytea from '\x1234567890'::bytea)</literal>
+        <returnvalue>\x345678</returnvalue>
        </entry>
-       <entry><literal>trim('\000\001'::bytea from '\000Tom\001'::bytea)</literal></entry>
-       <entry><literal>Tom</literal></entry>
       </row>
 
       <row>
-       <entry>
-        <literal><function>trim(<optional>both</optional> <optional>from</optional>
-        <parameter>bytes</parameter>,
-        <parameter>bytesremoved</parameter>)</function></literal>
+       <entry role="functableentry">
+        <function>trim</function> ( <optional> <literal>BOTH</literal> </optional> <optional> <literal>FROM</literal> </optional>
+        <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>bytesremoved</parameter> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        This is a non-standard syntax for <function>trim()</function>.
+       <?br?>
+        <literal>trim(both from '\x1234567890'::bytea, '\x9012'::bytea)</literal>
+        <returnvalue>\x345678</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Non-standard syntax for <function>trim()</function>
-       </entry>
-       <entry><literal>trim(both from 'yxTomxx'::bytea, 'xyz'::bytea)</literal></entry>
-       <entry><literal>Tom</literal></entry>
       </row>
      </tbody>
     </tgroup>
@@ -3490,78 +3494,73 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
    <table id="functions-binarystring-other">
     <title>Other Binary String Functions</title>
-    <tgroup cols="5">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Function</entry>
-       <entry>Return Type</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>btrim</primary>
         </indexterm>
-        <literal><function>btrim(<parameter>bytes</parameter>
-        <type>bytea</type>, <parameter>bytesremoved</parameter> <type>bytea</type>)</function></literal>
-       </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Remove the longest string containing only bytes appearing in
+        <function>btrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>bytesremoved</parameter> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Removes the longest string containing only bytes appearing in
         <parameter>bytesremoved</parameter> from the start and end of
-        <parameter>bytes</parameter>
-       </entry>
-      <entry><literal>btrim('\000trim\001'::bytea, '\000\001'::bytea)</literal></entry>
-      <entry><literal>trim</literal></entry>
+        <parameter>bytes</parameter>.
+       <?br?>
+       <literal>btrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+       <returnvalue>\x345678</returnvalue>
+      </entry>
      </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>get_bit</primary>
         </indexterm>
-        <literal><function>get_bit(<parameter>bytes</parameter> <type>bytea</type>, <parameter>offset</parameter> <type>bigint</type>)</function></literal>
+        <function>get_bit</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>bigint</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Extracts <link linkend="functions-zerobased-note">n'th</link> bit
+        from binary string.
+       <?br?>
+        <literal>get_bit('\x1234567890'::bytea, 30)</literal>
+        <returnvalue>1</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Extract <link linkend="functions-zerobased-note">n'th</link> bit
-        from binary string
-       </entry>
-       <entry><literal>get_bit('Th\000omas'::bytea, 45)</literal></entry>
-       <entry><literal>1</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>get_byte</primary>
         </indexterm>
-        <literal><function>get_byte(<parameter>bytes</parameter> <type>bytea</type>, <parameter>offset</parameter> <type>int</type>)</function></literal>
+        <function>get_byte</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Extracts <link linkend="functions-zerobased-note">n'th</link> byte
+        from binary string.
+       <?br?>
+        <literal>get_byte('\x1234567890'::bytea, 4)</literal>
+        <returnvalue>144</returnvalue>
        </entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Extract <link linkend="functions-zerobased-note">n'th</link> byte
-        from binary string
-       </entry>
-       <entry><literal>get_byte('Th\000omas'::bytea, 4)</literal></entry>
-       <entry><literal>109</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>length</primary>
         </indexterm>
-        <literal><function>length(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
-       </entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Number of bytes in binary string
         <indexterm>
          <primary>binary string</primary>
          <secondary>length</secondary>
@@ -3571,149 +3570,165 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
          <secondary sortas="binary string">of a binary string</secondary>
          <see>binary strings, length</see>
         </indexterm>
+        <function>length</function> ( <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of bytes in the binary string.
+       <?br?>
+        <literal>length('\x1234567890'::bytea)</literal>
+        <returnvalue>5</returnvalue>
        </entry>
-       <entry><literal>length('jo\000se'::bytea)</literal></entry>
-       <entry><literal>5</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>length(<parameter>bytes</parameter> <type>bytea</type>,
-        <parameter>encoding</parameter> <type>name</type>)</function></literal></entry>
-       <entry><type>int</type></entry>
-       <entry>
-        Number of characters in <parameter>bytes</parameter>, assuming
-        that it is text in the given <parameter>encoding</parameter>
+       <entry role="functableentry">
+        <function>length</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>encoding</parameter> <type>name</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of characters in the binary string, assuming
+        that it is text in the given <parameter>encoding</parameter>.
+       <?br?>
+        <literal>length('jose'::bytea, 'UTF8')</literal>
+        <returnvalue>4</returnvalue>
        </entry>
-       <entry><literal>length('jose'::bytea, 'UTF8')</literal></entry>
-       <entry><literal>4</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>md5</primary>
         </indexterm>
-        <literal><function>md5(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+        <function>md5</function> ( <type>bytea</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Computes the MD5 <link linkend="functions-hash-note">hash</link> of
+        the binary string, with the result written in hexadecimal.
+       <?br?>
+        <literal>md5('Th\000omas'::bytea)</literal>
+        <returnvalue>8ab2d3c9689aaf18&zwsp;b4958c334c82d8b1</returnvalue>
        </entry>
-       <entry><type>text</type></entry>
-       <entry>
-        MD5 <link linkend="functions-hash-note">hash</link>, with
-        the result written in hexadecimal
-       </entry>
-       <entry><literal>md5('Th\000omas'::bytea)</literal></entry>
-       <entry><literal>8ab2d3c9689aaf18&zwsp;b4958c334c82d8b1</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>set_bit</primary>
         </indexterm>
-        <literal><function>set_bit(<parameter>bytes</parameter> <type>bytea</type>,
-        <parameter>offset</parameter> <type>bigint</type>,
-        <parameter>newvalue</parameter> <type>int</type>)</function></literal>
+        <function>set_bit</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>bigint</type>,
+        <parameter>newvalue</parameter> <type>integer</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Sets <link linkend="functions-zerobased-note">n'th</link> bit in
+        binary string to <parameter>newvalue</parameter>.
+       <?br?>
+        <literal>set_bit('\x1234567890'::bytea, 30, 0)</literal>
+        <returnvalue>\x1234563890</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Set <link linkend="functions-zerobased-note">n'th</link> bit in
-        binary string
-       </entry>
-       <entry><literal>set_bit('Th\000omas'::bytea, 45, 0)</literal></entry>
-       <entry><literal>Th\000omAs</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>set_byte</primary>
         </indexterm>
-        <literal><function>set_byte(<parameter>bytes</parameter> <type>bytea</type>,
-        <parameter>offset</parameter> <type>int</type>,
-        <parameter>newvalue</parameter> <type>int</type>)</function></literal>
+        <function>set_byte</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>integer</type>,
+        <parameter>newvalue</parameter> <type>integer</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Sets <link linkend="functions-zerobased-note">n'th</link> byte in
+        binary string to <parameter>newvalue</parameter>.
+       <?br?>
+        <literal>set_byte('\x1234567890'::bytea, 4, 64)</literal>
+        <returnvalue>\x1234567840</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Set <link linkend="functions-zerobased-note">n'th</link> byte in
-        binary string
-       </entry>
-       <entry><literal>set_byte('Th\000omas'::bytea, 4, 64)</literal></entry>
-       <entry><literal>Th\000o@as</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sha224</primary>
         </indexterm>
-        <literal><function>sha224(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+        <function>sha224</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Computes the SHA-224 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       <?br?>
+        <literal>sha224('abc'::bytea)</literal>
+        <returnvalue>\x23097d223405d8228642a477bda2&zwsp;55b32aadbce4bda0b3f7e36c9da7</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        SHA-224 <link linkend="functions-hash-note">hash</link>
-       </entry>
-       <entry><literal>sha224('abc'::bytea)</literal></entry>
-       <entry><literal>\x23097d223405d8228642a477bda2&zwsp;55b32aadbce4bda0b3f7e36c9da7</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sha256</primary>
         </indexterm>
-        <literal><function>sha256(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+        <function>sha256</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Computes the SHA-256 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       <?br?>
+        <literal>sha256('abc'::bytea)</literal>
+        <returnvalue>\xba7816bf8f01cfea414140de5dae2223&zwsp;b00361a396177a9cb410ff61f20015ad</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        SHA-256 <link linkend="functions-hash-note">hash</link>
-       </entry>
-       <entry><literal>sha256('abc'::bytea)</literal></entry>
-       <entry><literal>\xba7816bf8f01cfea414140de5dae2223&zwsp;b00361a396177a9cb410ff61f20015ad</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sha384</primary>
         </indexterm>
-        <literal><function>sha384(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+        <function>sha384</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Computes the SHA-384 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       <?br?>
+        <literal>sha384('abc'::bytea)</literal>
+        <returnvalue>\xcb00753f45a35e8bb5a03d699ac65007&zwsp;272c32ab0eded1631a8b605a43ff5bed&zwsp;8086072ba1e7cc2358baeca134c825a7</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        SHA-384 <link linkend="functions-hash-note">hash</link>
-       </entry>
-       <entry><literal>sha384('abc'::bytea)</literal></entry>
-       <entry><literal>\xcb00753f45a35e8bb5a03d699ac65007&zwsp;272c32ab0eded1631a8b605a43ff5bed&zwsp;8086072ba1e7cc2358baeca134c825a7</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>sha512</primary>
         </indexterm>
-        <literal><function>sha512(<parameter>bytes</parameter> <type>bytea</type>)</function></literal>
+        <function>sha512</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Computes the SHA-512 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       <?br?>
+        <literal>sha512('abc'::bytea)</literal>
+        <returnvalue>\xddaf35a193617abacc417349ae204131&zwsp;12e6fa4e89a97ea20a9eeee64b55d39a&zwsp;2192992a274fc1a836ba3c23a3feebbd&zwsp;454d4423643ce80e2a9ac94fa54ca49f</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-         SHA-512 <link linkend="functions-hash-note">hash</link>
-       </entry>
-       <entry><literal>sha512('abc'::bytea)</literal></entry>
-       <entry><literal>\xddaf35a193617abacc417349ae204131&zwsp;12e6fa4e89a97ea20a9eeee64b55d39a&zwsp;2192992a274fc1a836ba3c23a3feebbd&zwsp;454d4423643ce80e2a9ac94fa54ca49f</literal></entry>
       </row>
 
       <row>
-       <entry>
+       <entry role="functableentry">
         <indexterm>
          <primary>substr</primary>
         </indexterm>
-        <literal><function>substr(<parameter>bytes</parameter> <type>bytea</type>, <parameter>from</parameter> <type>int</type> <optional>, <parameter>count</parameter> <type>int</type></optional>)</function></literal>
+        <function>substr</function> ( <parameter>bytes</parameter> <type>bytea</type>, <parameter>start</parameter> <type>integer</type> <optional>, <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       <?br?>
+        Extracts the substring of <parameter>bytes</parameter> starting at
+        the <parameter>start</parameter>'th byte,
+        and extending for <parameter>count</parameter> bytes if that is
+        specified.  (Same
+        as <literal>substring(<parameter>bytes</parameter>
+        from <parameter>start</parameter>
+        for <parameter>count</parameter>)</literal>.)
+       <?br?>
+        <literal>substr('\x1234567890'::bytea, 3, 2)</literal>
+        <returnvalue>\x5678</returnvalue>
        </entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Extract substring (same as
-        <literal>substring(<parameter>bytea</parameter> from <parameter>from</parameter> for <parameter>count</parameter>)</literal>)
-       </entry>
-       <entry><literal>substr('alphabet', 3, 2)</literal></entry>
-       <entry><literal>ph</literal></entry>
       </row>
     </tbody>
    </tgroup>
@@ -3760,116 +3775,112 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
 
   <table id="functions-binarystring-conversions">
    <title>Text/Binary String Conversion Functions</title>
-   <tgroup cols="5">
+   <tgroup cols="1">
     <thead>
      <row>
-      <entry>Function</entry>
-      <entry>Return Type</entry>
-      <entry>Description</entry>
-      <entry>Example</entry>
-      <entry>Result</entry>
+      <entry role="functableentry">
+       Function<?br?>Description<?br?>Example(s)
+      </entry>
      </row>
     </thead>
 
     <tbody>
      <row>
-      <entry>
+      <entry role="functableentry">
        <indexterm>
         <primary>convert</primary>
        </indexterm>
-       <literal><function>convert(<parameter>bytes</parameter> <type>bytea</type>,
+       <function>convert</function> ( <parameter>bytes</parameter> <type>bytea</type>,
        <parameter>src_encoding</parameter> <type>name</type>,
-       <parameter>dest_encoding</parameter> <type>name</type>)</function></literal>
-      </entry>
-      <entry><type>bytea</type></entry>
-      <entry>
-       Convert binary string representing text in
+       <parameter>dest_encoding</parameter> <type>name</type> )
+       <returnvalue>bytea</returnvalue>
+      <?br?>
+       Converts a binary string representing text in
        encoding <parameter>src_encoding</parameter>
        to a binary string in encoding <parameter>dest_encoding</parameter>
        (see <xref linkend="multibyte-conversions-supported"/> for
-       available conversions)
+       available conversions).
+      <?br?>
+       <literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal>
+       <returnvalue>\x746578745f696e5f75746638</returnvalue>
       </entry>
-      <entry><literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
-      <entry><literal>text_in_utf8</literal> represented in Latin-1 encoding</entry>
      </row>
 
      <row>
-      <entry>
+      <entry role="functableentry">
        <indexterm>
         <primary>convert_from</primary>
        </indexterm>
-       <literal><function>convert_from(<parameter>bytes</parameter> <type>bytea</type>,
-        <parameter>src_encoding</parameter> <type>name</type>)</function></literal>
-      </entry>
-      <entry><type>text</type></entry>
-      <entry>
-       Convert binary string representing text in
+       <function>convert_from</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+       <parameter>src_encoding</parameter> <type>name</type> )
+       <returnvalue>text</returnvalue>
+      <?br?>
+       Converts a binary string representing text in
        encoding <parameter>src_encoding</parameter>
        to <type>text</type> in the database encoding
        (see <xref linkend="multibyte-conversions-supported"/> for
-       available conversions)
+       available conversions).
+      <?br?>
+       <literal>convert_from('text_in_utf8', 'UTF8')</literal>
+       <returnvalue>text_in_utf8</returnvalue>
       </entry>
-      <entry><literal>convert_from('text_in_utf8', 'UTF8')</literal></entry>
-      <entry><literal>text_in_utf8</literal> represented in the
-       database encoding</entry>
      </row>
 
      <row>
-      <entry>
+      <entry role="functableentry">
        <indexterm>
         <primary>convert_to</primary>
        </indexterm>
-       <literal><function>convert_to(<parameter>string</parameter> <type>text</type>,
-        <parameter>dest_encoding</parameter> <type>name</type>)</function></literal>
-      </entry>
-      <entry><type>bytea</type></entry>
-      <entry>
-       Convert <type>text</type> (in the database encoding) to a binary
-       string encoded in encoding <parameter>dest_encoding</parameter>
+       <function>convert_to</function> ( <parameter>string</parameter> <type>text</type>,
+       <parameter>dest_encoding</parameter> <type>name</type> )
+       <returnvalue>bytea</returnvalue>
+      <?br?>
+       Converts a <type>text</type> string (in the database encoding) to a
+       binary string encoded in encoding <parameter>dest_encoding</parameter>
        (see <xref linkend="multibyte-conversions-supported"/> for
-       available conversions)
+       available conversions).
+      <?br?>
+       <literal>convert_to('some_text', 'UTF8')</literal>
+       <returnvalue>\x736f6d655f74657874</returnvalue>
       </entry>
-      <entry><literal>convert_to('some text', 'UTF8')</literal></entry>
-      <entry><literal>some text</literal> represented in UTF8 encoding</entry>
      </row>
 
      <row id="function-encode">
-      <entry>
+      <entry role="functableentry">
        <indexterm>
         <primary>encode</primary>
        </indexterm>
-       <literal><function>encode(<parameter>bytes</parameter> <type>bytea</type>,
-        <parameter>format</parameter> <type>text</type>)</function></literal>
-      </entry>
-      <entry><type>text</type></entry>
-      <entry>
-       Encode binary data into a textual representation; supported
+       <function>encode</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+       <parameter>format</parameter> <type>text</type> )
+       <returnvalue>text</returnvalue>
+      <?br?>
+       Encodes binary data into a textual representation; supported
        <parameter>format</parameter> values are:
        <link linkend="encode-format-base64"><literal>base64</literal></link>,
        <link linkend="encode-format-escape"><literal>escape</literal></link>,
-       <link linkend="encode-format-hex"><literal>hex</literal></link>
+       <link linkend="encode-format-hex"><literal>hex</literal></link>.
+      <?br?>
+       <literal>encode('123\000\001', 'base64')</literal>
+       <returnvalue>MTIzAAE=</returnvalue>
       </entry>
-      <entry><literal>encode('123\000\001', 'base64')</literal></entry>
-      <entry><literal>MTIzAAE=</literal></entry>
      </row>
 
      <row id="function-decode">
-      <entry>
+      <entry role="functableentry">
        <indexterm>
         <primary>decode</primary>
        </indexterm>
-       <literal><function>decode(<parameter>string</parameter> <type>text</type>,
-        <parameter>format</parameter> <type>text</type>)</function></literal>
-      </entry>
-      <entry><type>bytea</type></entry>
-      <entry>
-       Decode binary data from a textual representation given
-       in <parameter>string</parameter>; allowed
+       <function>decode</function> ( <parameter>string</parameter> <type>text</type>,
+       <parameter>format</parameter> <type>text</type> )
+       <returnvalue>bytea</returnvalue>
+      <?br?>
+       Decodes binary data from a textual representation; supported
        <parameter>format</parameter> values are the same as
-       for <function>encode</function>
+       for <function>encode</function>.
+      <?br?>
+       <literal>decode('MTIzAAE=', 'base64')</literal>
+       <returnvalue>\x3132330001</returnvalue>
       </entry>
-      <entry><literal>decode('MTIzAAE=', 'base64')</literal></entry>
-      <entry><literal>\x3132330001</literal></entry>
      </row>
     </tbody>
    </tgroup>
@@ -3963,102 +3974,281 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
    <para>
     This section describes functions and operators for examining and
     manipulating bit strings, that is values of the types
-    <type>bit</type> and <type>bit varying</type>.  Aside from the
-    usual comparison operators, the operators
-    shown in <xref linkend="functions-bit-string-op-table"/> can be used.
-    Bit string operands of <literal>&amp;</literal>, <literal>|</literal>,
-    and <literal>#</literal> must be of equal length.  When bit
-    shifting, the original length of the string is preserved, as shown
-    in the examples.
+    <type>bit</type> and <type>bit varying</type>.  (While only
+    type <type>bit</type> is mentioned in the tables, values of
+    type <type>bit varying</type> can be used interchangeably.)
+    Bit strings support the usual comparison operators shown in
+    <xref linkend="functions-comparison-op-table"/>, as well as the
+    operators shown in <xref linkend="functions-bit-string-op-table"/>.
    </para>
 
    <table id="functions-bit-string-op-table">
     <title>Bit String Operators</title>
-
-    <tgroup cols="4">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Operator</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
-       <entry>Result</entry>
+       <entry role="functableentry">
+        Operator<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
      <tbody>
       <row>
-       <entry> <literal>||</literal> </entry>
-       <entry>concatenation</entry>
-       <entry><literal>B'10001' || B'011'</literal></entry>
-       <entry><literal>10001011</literal></entry>
+       <entry role="functableentry">
+        <type>bit</type> <literal>||</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Concatenation
+       <?br?>
+        <literal>B'10001' || B'011'</literal>
+        <returnvalue>10001011</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>&amp;</literal> </entry>
-       <entry>bitwise AND</entry>
-       <entry><literal>B'10001' &amp; B'01101'</literal></entry>
-       <entry><literal>00001</literal></entry>
+       <entry role="functableentry">
+        <type>bit</type> <literal>&amp;</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Bitwise AND (inputs must be of equal length)
+       <?br?>
+        <literal>B'10001' &amp; B'01101'</literal>
+        <returnvalue>00001</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>|</literal> </entry>
-       <entry>bitwise OR</entry>
-       <entry><literal>B'10001' | B'01101'</literal></entry>
-       <entry><literal>11101</literal></entry>
+       <entry role="functableentry">
+        <type>bit</type> <literal>|</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Bitwise OR (inputs must be of equal length)
+       <?br?>
+        <literal>B'10001' | B'01101'</literal>
+        <returnvalue>11101</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>#</literal> </entry>
-       <entry>bitwise XOR</entry>
-       <entry><literal>B'10001' # B'01101'</literal></entry>
-       <entry><literal>11100</literal></entry>
+       <entry role="functableentry">
+        <type>bit</type> <literal>#</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Bitwise exclusive OR (inputs must be of equal length)
+       <?br?>
+        <literal>B'10001' # B'01101'</literal>
+        <returnvalue>11100</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>~</literal> </entry>
-       <entry>bitwise NOT</entry>
-       <entry><literal>~ B'10001'</literal></entry>
-       <entry><literal>01110</literal></entry>
+       <entry role="functableentry">
+        <literal>~</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Bitwise NOT
+       <?br?>
+        <literal>~ B'10001'</literal>
+        <returnvalue>01110</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>&lt;&lt;</literal> </entry>
-       <entry>bitwise shift left</entry>
-       <entry><literal>B'10001' &lt;&lt; 3</literal></entry>
-       <entry><literal>01000</literal></entry>
+       <entry role="functableentry">
+        <type>bit</type> <literal>&lt;&lt;</literal> <type>integer</type>
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Bitwise shift left
+        (string length is preserved)
+       <?br?>
+        <literal>B'10001' &lt;&lt; 3</literal>
+        <returnvalue>01000</returnvalue>
+       </entry>
       </row>
 
       <row>
-       <entry> <literal>&gt;&gt;</literal> </entry>
-       <entry>bitwise shift right</entry>
-       <entry><literal>B'10001' &gt;&gt; 2</literal></entry>
-       <entry><literal>00100</literal></entry>
+       <entry role="functableentry">
+        <type>bit</type> <literal>&gt;&gt;</literal> <type>integer</type>
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Bitwise shift right
+        (string length is preserved)
+       <?br?>
+        <literal>B'10001' &gt;&gt; 2</literal>
+        <returnvalue>00100</returnvalue>
+       </entry>
       </row>
      </tbody>
     </tgroup>
    </table>
 
    <para>
-    Some of the binary-string functions shown in
-    <xref linkend="functions-binarystring-sql"/> and
-    <xref linkend="functions-binarystring-other"/> are also available
-    for bit strings, specifically:
-    <literal><function>length</function></literal>,
-    <literal><function>bit_length</function></literal>,
-    <literal><function>octet_length</function></literal>,
-    <literal><function>position</function></literal>,
-    <literal><function>substring</function></literal>,
-    <literal><function>overlay</function></literal>,
-    <literal><function>get_bit</function></literal>,
-    <literal><function>set_bit</function></literal>.
-    When working with a bit string, <function>get_bit</function>
-    and <function>set_bit</function> number the first
-    (leftmost) bit of the string as bit 0.
+    Some of the functions available for binary strings are also available
+    for bit strings, as shown in <xref linkend="functions-bit-string-table"/>.
    </para>
+
+   <table id="functions-bit-string-table">
+    <title>Bit String Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>bit_length</primary>
+        </indexterm>
+        <function>bit_length</function> ( <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bits in the bit string.
+       <?br?>
+        <literal>bit_length(B'10111')</literal>
+        <returnvalue>5</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>length</primary>
+        </indexterm>
+        <indexterm>
+         <primary>bit string</primary>
+         <secondary>length</secondary>
+        </indexterm>
+        <function>length</function> ( <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bits in the bit string.
+       <?br?>
+        <literal>length(B'10111')</literal>
+        <returnvalue>5</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>octet_length</primary>
+        </indexterm>
+        <function>octet_length</function> ( <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns number of bytes in the bit string.
+       <?br?>
+        <literal>octet_length(B'1011111011')</literal>
+        <returnvalue>2</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>overlay</primary>
+        </indexterm>
+        <function>overlay</function> ( <parameter>bits</parameter> <type>bit</type> <literal>PLACING</literal> <parameter>newsubstring</parameter> <type>bit</type> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Replaces the substring of <parameter>bits</parameter> that starts at
+        the <parameter>start</parameter>'th bit and extends
+        for <parameter>count</parameter> bits
+        with <parameter>newsubstring</parameter>.
+        If <parameter>count</parameter> is omitted, it defaults to the length
+        of <parameter>newsubstring</parameter>.
+       <?br?>
+        <literal>overlay(B'01010101010101010' placing B'11111' from 2 for 3)</literal>
+        <returnvalue>0111110101010101010</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>position</primary>
+        </indexterm>
+        <function>position</function> ( <parameter>substring</parameter> <type>bit</type> <literal>IN</literal> <parameter>bits</parameter> <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns starting index of specified <parameter>substring</parameter>
+        within <parameter>bits</parameter>, or zero if it's not present.
+       <?br?>
+        <literal>position(B'010' in B'000001101011')</literal>
+        <returnvalue>8</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>substring</primary>
+        </indexterm>
+        <function>substring</function> ( <parameter>bits</parameter> <type>bit</type> <optional> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> </optional> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Extracts the substring of <parameter>bits</parameter> starting at
+        the <parameter>start</parameter>'th bit if that is specified,
+        and stopping after <parameter>count</parameter> bits if that is
+        specified.  Provide at least one of <parameter>start</parameter>
+        and <parameter>count</parameter>.
+       <?br?>
+        <literal>substring(B'110010111111' from 3 for 2)</literal>
+        <returnvalue>00</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>get_bit</primary>
+        </indexterm>
+        <function>get_bit</function> ( <parameter>bits</parameter> <type>bit</type>,
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Extracts <parameter>n</parameter>'th bit
+        from bit string; the first (leftmost) bit is bit 0.
+       <?br?>
+        <literal>get_bit(B'101010101010101010', 6)</literal>
+        <returnvalue>1</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>set_bit</primary>
+        </indexterm>
+        <function>set_bit</function> ( <parameter>bits</parameter> <type>bit</type>,
+        <parameter>n</parameter> <type>integer</type>,
+        <parameter>newvalue</parameter> <type>integer</type> )
+        <returnvalue>bit</returnvalue>
+       <?br?>
+        Sets <parameter>n</parameter>'th bit in
+        bit string to <parameter>newvalue</parameter>;
+        the first (leftmost) bit is bit 0.
+       <?br?>
+        <literal>set_bit(B'101010101010101010', 6, 0)</literal>
+        <returnvalue>101010001010101010</returnvalue>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <para>
     In addition, it is possible to cast integral values to and from type
     <type>bit</type>.
+    Casting an integer to <type>bit(n)</type> copies the rightmost
+    <literal>n</literal> bits.  Casting an integer to a bit string width wider
+    than the integer itself will sign-extend on the left.
     Some examples:
 <programlisting>
 44::bit(10)                    <lineannotation>0000101100</lineannotation>
@@ -4070,15 +4260,6 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     <literal>bit(1)</literal>, and so will deliver only the least significant
     bit of the integer.
    </para>
-
-    <note>
-     <para>
-      Casting an integer to <type>bit(n)</type> copies the rightmost
-      <literal>n</literal> bits.  Casting an integer to a bit string width wider
-      than the integer itself will sign-extend on the left.
-     </para>
-    </note>
-
   </sect1>
 
 
