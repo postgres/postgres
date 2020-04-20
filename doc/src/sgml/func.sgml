@@ -3975,7 +3975,7 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
     This section describes functions and operators for examining and
     manipulating bit strings, that is values of the types
     <type>bit</type> and <type>bit varying</type>.  (While only
-    type <type>bit</type> is mentioned in the tables, values of
+    type <type>bit</type> is mentioned in these tables, values of
     type <type>bit varying</type> can be used interchangeably.)
     Bit strings support the usual comparison operators shown in
     <xref linkend="functions-comparison-op-table"/>, as well as the
@@ -4670,38 +4670,62 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
    <table id="functions-posix-table">
     <title>Regular Expression Match Operators</title>
 
-    <tgroup cols="3">
+    <tgroup cols="1">
      <thead>
       <row>
-       <entry>Operator</entry>
-       <entry>Description</entry>
-       <entry>Example</entry>
+       <entry role="functableentry">
+        Operator<?br?>Description<?br?>Example(s)
+       </entry>
       </row>
      </thead>
 
       <tbody>
        <row>
-        <entry> <literal>~</literal> </entry>
-        <entry>Matches regular expression, case sensitive</entry>
-        <entry><literal>'thomas' ~ '.*thomas.*'</literal></entry>
+       <entry role="functableentry">
+        <type>text</type> <literal>~</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        String matches regular expression, case sensitively
+       <?br?>
+        <literal>'thomas' ~ '.*thom.*'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
        </row>
 
        <row>
-        <entry> <literal>~*</literal> </entry>
-        <entry>Matches regular expression, case insensitive</entry>
-        <entry><literal>'thomas' ~* '.*Thomas.*'</literal></entry>
+       <entry role="functableentry">
+        <type>text</type> <literal>~*</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        String matches regular expression, case insensitively
+       <?br?>
+        <literal>'thomas' ~* '.*Thom.*'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
        </row>
 
        <row>
-        <entry> <literal>!~</literal> </entry>
-        <entry>Does not match regular expression, case sensitive</entry>
-        <entry><literal>'thomas' !~ '.*Thomas.*'</literal></entry>
+       <entry role="functableentry">
+        <type>text</type> <literal>!~</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        String does not match regular expression, case sensitively
+       <?br?>
+        <literal>'thomas' !~ '.*thomas.*'</literal>
+        <returnvalue>f</returnvalue>
+       </entry>
        </row>
 
        <row>
-        <entry> <literal>!~*</literal> </entry>
-        <entry>Does not match regular expression, case insensitive</entry>
-        <entry><literal>'thomas' !~* '.*vadim.*'</literal></entry>
+       <entry role="functableentry">
+        <type>text</type> <literal>!~*</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        String does not match regular expression, case insensitively
+       <?br?>
+        <literal>'thomas' !~* '.*vadim.*'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
        </row>
       </tbody>
      </tgroup>
@@ -6417,97 +6441,114 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     template that defines the output or input format.
    </para>
 
-    <table id="functions-formatting-table">
-     <title>Formatting Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>to_char</primary>
-         </indexterm>
-         <literal><function>to_char(<type>timestamp</type>, <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>text</type></entry>
-        <entry>convert time stamp to string</entry>
-        <entry><literal>to_char(current_timestamp, 'HH12:MI:SS')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>to_char(<type>interval</type>, <type>text</type>)</function></literal></entry>
-        <entry><type>text</type></entry>
-        <entry>convert interval to string</entry>
-        <entry><literal>to_char(interval '15h&nbsp;2m&nbsp;12s', 'HH24:MI:SS')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>to_char(<type>int</type>, <type>text</type>)</function></literal></entry>
-        <entry><type>text</type></entry>
-        <entry>convert integer to string</entry>
-        <entry><literal>to_char(125, '999')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>to_char</function>(<type>double precision</type>,
-        <type>text</type>)</literal></entry>
-        <entry><type>text</type></entry>
-        <entry>convert real/double precision to string</entry>
-        <entry><literal>to_char(125.8::real, '999D9')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>to_char(<type>numeric</type>, <type>text</type>)</function></literal></entry>
-        <entry><type>text</type></entry>
-        <entry>convert numeric to string</entry>
-        <entry><literal>to_char(-125.8, '999D99S')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>to_date</primary>
-         </indexterm>
-         <literal><function>to_date(<type>text</type>, <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>date</type></entry>
-        <entry>convert string to date</entry>
-        <entry><literal>to_date('05&nbsp;Dec&nbsp;2000', 'DD&nbsp;Mon&nbsp;YYYY')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>to_number</primary>
-         </indexterm>
-         <literal><function>to_number(<type>text</type>, <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>numeric</type></entry>
-        <entry>convert string to numeric</entry>
-        <entry><literal>to_number('12,454.8-', '99G999D9S')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>to_timestamp</primary>
-         </indexterm>
-         <literal><function>to_timestamp(<type>text</type>, <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>convert string to time stamp</entry>
-        <entry><literal>to_timestamp('05&nbsp;Dec&nbsp;2000', 'DD&nbsp;Mon&nbsp;YYYY')</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+   <table id="functions-formatting-table">
+    <title>Formatting Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
 
-   <note>
-    <para>
-     There is also a single-argument <function>to_timestamp</function>
-     function; see <xref linkend="functions-datetime-table"/>.
-    </para>
-   </note>
+     <tbody>
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>to_char</primary>
+        </indexterm>
+        <function>to_char</function> ( <type>timestamp</type> <optional><literal>with time zone</literal></optional>, <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts time stamp to string according to the given format.
+       <?br?>
+        <literal>to_char(timestamp '2002-04-20 17:31:12.66', 'HH12:MI:SS')</literal>
+        <returnvalue>05:31:12</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>to_char</function> ( <type>interval</type>, <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts interval to string according to the given format.
+       <?br?>
+       <literal>to_char(interval '15h 2m 12s', 'HH24:MI:SS')</literal>
+       <returnvalue>15:02:12</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>to_char</function> ( <replaceable>numeric_type</replaceable>, <type>text</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Converts number to string according to the given format; available
+        for <type>integer</type>, <type>bigint</type>, <type>numeric</type>,
+        <type>real</type>, <type>double precision</type>.
+       <?br?>
+        <literal>to_char(125, '999')</literal>
+        <returnvalue>125</returnvalue>
+       <?br?>
+        <literal>to_char(125.8::real, '999D9')</literal>
+        <returnvalue>125.8</returnvalue>
+       <?br?>
+        <literal>to_char(-125.8, '999D99S')</literal>
+        <returnvalue>125.80-</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>to_date</primary>
+        </indexterm>
+        <function>to_date</function> ( <type>text</type>, <type>text</type> )
+        <returnvalue>date</returnvalue>
+       <?br?>
+        Converts string to date according to the given format.
+       <?br?>
+        <literal>to_date('05 Dec 2000', 'DD Mon YYYY')</literal>
+        <returnvalue>2000-12-05</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>to_number</primary>
+        </indexterm>
+        <function>to_number</function> ( <type>text</type>, <type>text</type> )
+        <returnvalue>numeric</returnvalue>
+       <?br?>
+        Converts string to numeric according to the given format.
+       <?br?>
+        <literal>to_number('12,454.8-', '99G999D9S')</literal>
+        <returnvalue>-12454.8</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>to_timestamp</primary>
+        </indexterm>
+        <function>to_timestamp</function> ( <type>text</type>, <type>text</type> )
+        <returnvalue>timestamp with time zone</returnvalue>
+       <?br?>
+        Converts string to time stamp according to the given format.
+        (See also <function>to_timestamp(double precision)</function> in
+        <xref linkend="functions-datetime-table"/>.)
+       <?br?>
+        <literal>to_timestamp('05 Dec 2000', 'DD Mon YYYY')</literal>
+        <returnvalue>2000-12-05 00:00:00-05</returnvalue>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <tip>
     <para>
@@ -8739,9 +8780,7 @@ SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>second</literal></term>
       <listitem>
        <para>
-        The seconds field, including fractional parts (0 -
-        59<footnote><simpara>60 if leap seconds are
-        implemented by the operating system</simpara></footnote>)
+        The seconds field, including any fractional seconds
        </para>
 
 <screen>
@@ -8969,48 +9008,66 @@ SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
    </indexterm>
 
    <para>
-    The <literal>AT TIME ZONE</literal> converts time
-    stamp <emphasis>without time zone</emphasis> to/from
-    time stamp <emphasis>with time zone</emphasis>, and
-    <emphasis>time</emphasis> values to different time zones. <xref
-    linkend="functions-datetime-zoneconvert-table"/> shows its variants.
+    The <literal>AT TIME ZONE</literal> operator converts time
+    stamp <emphasis>without</emphasis> time zone to/from
+    time stamp <emphasis>with</emphasis> time zone, and
+    <type>time with time zone</type> values to different time
+    zones. <xref linkend="functions-datetime-zoneconvert-table"/> shows its
+    variants.
    </para>
 
     <table id="functions-datetime-zoneconvert-table">
      <title><literal>AT TIME ZONE</literal> Variants</title>
-     <tgroup cols="3">
+     <tgroup cols="1">
       <thead>
        <row>
-        <entry>Expression</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
+        <entry role="functableentry">
+         Operator<?br?>Description<?br?>Example(s)
+        </entry>
        </row>
       </thead>
 
       <tbody>
        <row>
-        <entry>
-         <literal><type>timestamp without time zone</type> AT TIME ZONE <replaceable>zone</replaceable></literal>
+        <entry role="functableentry">
+         <type>timestamp without time zone</type> <literal>AT TIME ZONE</literal> <replaceable>zone</replaceable>
+         <returnvalue>timestamp with time zone</returnvalue>
+        <?br?>
+         Converts given time stamp <emphasis>without</emphasis> time zone to
+         time stamp <emphasis>with</emphasis> time zone, assuming the given
+         value is in the named time zone.
+        <?br?>
+         <literal>timestamp '2001-02-16 20:38:40' at time zone 'America/Denver'</literal>
+         <returnvalue>2001-02-17 03:38:40+00</returnvalue>
         </entry>
-        <entry><type>timestamp with time zone</type></entry>
-        <entry>Treat given time stamp <emphasis>without time zone</emphasis> as located in the specified time zone</entry>
        </row>
 
        <row>
-        <entry>
-         <literal><type>timestamp with time zone</type> AT TIME ZONE <replaceable>zone</replaceable></literal>
+        <entry role="functableentry">
+         <type>timestamp with time zone</type> <literal>AT TIME ZONE</literal> <replaceable>zone</replaceable>
+         <returnvalue>timestamp without time zone</returnvalue>
+        <?br?>
+         Converts given time stamp <emphasis>with</emphasis> time zone to
+         time stamp <emphasis>without</emphasis> time zone, as the time would
+         appear in that zone.
+        <?br?>
+         <literal>timestamp with time zone '2001-02-16 20:38:40-05' at time zone 'America/Denver'</literal>
+         <returnvalue>2001-02-16 18:38:40</returnvalue>
         </entry>
-        <entry><type>timestamp without time zone</type></entry>
-        <entry>Convert given time stamp <emphasis>with time zone</emphasis> to the new time
-        zone, with no time zone designation</entry>
        </row>
 
        <row>
-        <entry>
-         <literal><type>time with time zone</type> AT TIME ZONE <replaceable>zone</replaceable></literal>
+        <entry role="functableentry">
+         <type>time with time zone</type> <literal>AT TIME ZONE</literal> <replaceable>zone</replaceable>
+         <returnvalue>time with time zone</returnvalue>
+        <?br?>
+         Converts given time <emphasis>with</emphasis> time zone to a new time
+         zone.  Since no date is supplied, this uses the currently active UTC
+         offset for the named destination zone.
+        <?br?>
+         <literal>time with time zone '05:34:17-05' at time zone 'UTC'</literal>
+         <returnvalue>10:34:17+00</returnvalue>
         </entry>
-        <entry><type>time with time zone</type></entry>
-        <entry>Convert given time <emphasis>with time zone</emphasis> to the new time zone</entry>
        </row>
       </tbody>
      </tgroup>
@@ -9018,14 +9075,17 @@ SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
 
    <para>
     In these expressions, the desired time zone <replaceable>zone</replaceable> can be
-    specified either as a text string (e.g., <literal>'America/Los_Angeles'</literal>)
+    specified either as a text value (e.g., <literal>'America/Los_Angeles'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
     In the text case, a time zone name can be specified in any of the ways
     described in <xref linkend="datatype-timezones"/>.
+    The interval case is only useful for zones that have fixed offsets from
+    UTC, so it is not very common in practice.
    </para>
 
    <para>
-    Examples (assuming the local time zone is <literal>America/Los_Angeles</literal>):
+    Examples (assuming the current <xref linkend="guc-timezone"/> setting
+    is <literal>America/Los_Angeles</literal>):
 <screen>
 SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'America/Denver';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 19:38:40-08</computeroutput>
@@ -9033,7 +9093,7 @@ SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'America/Denver';
 SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'America/Denver';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 18:38:40</computeroutput>
 
-SELECT TIMESTAMP '2001-02-16 20:38:40-05' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'America/Chicago';
+SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'America/Chicago';
 <lineannotation>Result: </lineannotation><computeroutput>2001-02-16 05:38:40</computeroutput>
 </screen>
     The first example adds a time zone to a value that lacks it, and
@@ -9042,9 +9102,7 @@ SELECT TIMESTAMP '2001-02-16 20:38:40-05' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE
     to the specified time zone, and returns the value without a time zone.
     This allows storage and display of values different from the current
     <varname>TimeZone</varname> setting.  The third example converts
-    Tokyo time to Chicago time.   Converting <emphasis>time</emphasis>
-    values to other time zones uses the currently active time zone rules
-    since no date is supplied.
+    Tokyo time to Chicago time.
    </para>
 
    <para>
@@ -9225,17 +9283,16 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
     The following functions are available to delay execution of the server
     process:
 <synopsis>
-pg_sleep(<replaceable>seconds</replaceable>)
-pg_sleep_for(<type>interval</type>)
-pg_sleep_until(<type>timestamp with time zone</type>)
+pg_sleep ( <type>double precision</type> )
+pg_sleep_for ( <type>interval</type> )
+pg_sleep_until ( <type>timestamp with time zone</type> )
 </synopsis>
 
     <function>pg_sleep</function> makes the current session's process
-    sleep until <replaceable>seconds</replaceable> seconds have
-    elapsed.  <replaceable>seconds</replaceable> is a value of type
-    <type>double precision</type>, so fractional-second delays can be specified.
-    <function>pg_sleep_for</function> is a convenience function for larger
-    sleep times specified as an <type>interval</type>.
+    sleep until the given number of seconds have
+    elapsed.  Fractional-second delays can be specified.
+    <function>pg_sleep_for</function> is a convenience function to
+    allow the sleep time to be specified as an <type>interval</type>.
     <function>pg_sleep_until</function> is a convenience function for when
     a specific wake-up time is desired.
     For example:
