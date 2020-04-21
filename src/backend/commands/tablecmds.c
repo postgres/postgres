@@ -494,6 +494,7 @@ static void QueuePartitionConstraintValidation(List **wqueue, Relation scanrel,
 								   List *partConstraint,
 								   bool validate_default);
 static void CloneRowTriggersToPartition(Relation parent, Relation partition);
+static void DropClonedTriggersFromPartition(Oid partitionId);
 static ObjectAddress ATExecDetachPartition(Relation rel, RangeVar *name);
 static ObjectAddress ATExecAttachPartitionIdx(List **wqueue, Relation rel,
 						 RangeVar *name);
@@ -15656,6 +15657,9 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	}
 	heap_close(classRel, RowExclusiveLock);
 
+	/* Drop any triggers that were cloned on creation/attach. */
+	DropClonedTriggersFromPartition(RelationGetRelid(partRel));
+
 	/*
 	 * Detach any foreign keys that are inherited.  This includes creating
 	 * additional action triggers.
@@ -15716,6 +15720,66 @@ ATExecDetachPartition(Relation rel, RangeVar *name)
 	heap_close(partRel, NoLock);
 
 	return address;
+}
+
+/*
+ * DropClonedTriggersFromPartition
+ *		subroutine for ATExecDetachPartition to remove any triggers that were
+ *		cloned to the partition when it was created-as-partition or attached.
+ *		This undoes what CloneRowTriggersToPartition did.
+ */
+static void
+DropClonedTriggersFromPartition(Oid partitionId)
+{
+	ScanKeyData skey;
+	SysScanDesc	scan;
+	HeapTuple	trigtup;
+	Relation	tgrel;
+	ObjectAddresses *objects;
+
+	objects = new_object_addresses();
+
+	/*
+	 * Scan pg_trigger to search for all triggers on this rel.
+	 */
+	ScanKeyInit(&skey, Anum_pg_trigger_tgrelid, BTEqualStrategyNumber,
+				F_OIDEQ, ObjectIdGetDatum(partitionId));
+	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
+	scan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
+							  true, NULL, 1, &skey);
+	while (HeapTupleIsValid(trigtup = systable_getnext(scan)))
+	{
+		Oid			trigoid = HeapTupleGetOid(trigtup);
+		ObjectAddress trig;
+
+		/* Ignore triggers that weren't cloned */
+		if (!isPartitionTrigger(trigoid))
+			continue;
+
+		/*
+		 * This is ugly, but necessary: remove the dependency markings on the
+		 * trigger so that it can be removed.
+		 */
+		deleteDependencyRecordsForClass(TriggerRelationId, trigoid,
+										TriggerRelationId,
+										DEPENDENCY_INTERNAL_AUTO);
+		deleteDependencyRecordsForClass(TriggerRelationId, trigoid,
+										RelationRelationId,
+										DEPENDENCY_INTERNAL_AUTO);
+
+		/* remember this trigger to remove it below */
+		ObjectAddressSet(trig, TriggerRelationId, trigoid);
+		add_exact_object_address(&trig, objects);
+	}
+
+	/* make the dependency removal visible to the deletion below */
+	CommandCounterIncrement();
+	performMultipleDeletions(objects, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
+
+	/* done */
+	free_object_addresses(objects);
+	systable_endscan(scan);
+	heap_close(tgrel, RowExclusiveLock);
 }
 
 /*

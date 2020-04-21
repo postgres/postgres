@@ -524,6 +524,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    Creating a row-level trigger on a partitioned table will cause identical
    triggers to be created in all its existing partitions; and any partitions
    created or attached later will contain an identical trigger, too.
+   If the partition is detached from its parent, the trigger is removed.
    Triggers on partitioned tables may only be <literal>AFTER</literal>.
   </para>
 
