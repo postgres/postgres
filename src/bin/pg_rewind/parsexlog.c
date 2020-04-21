@@ -106,7 +106,8 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
  * doing anything with the record itself.
  */
 XLogRecPtr
-readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex)
+readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex,
+			  const char *restoreCommand)
 {
 	XLogRecord *record;
 	XLogReaderState *xlogreader;
@@ -115,6 +116,7 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex)
 	XLogRecPtr	endptr;
 
 	private.tliIndex = tliIndex;
+	private.restoreCommand = restoreCommand;
 	xlogreader = XLogReaderAllocate(WalSegSz, datadir, &SimpleXLogPageRead,
 									&private);
 	if (xlogreader == NULL)

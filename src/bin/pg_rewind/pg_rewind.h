@@ -50,7 +50,7 @@ extern void findLastCheckpoint(const char *datadir, XLogRecPtr searchptr,
 							   XLogRecPtr *lastchkptredo,
 							   const char *restoreCommand);
 extern XLogRecPtr readOneRecord(const char *datadir, XLogRecPtr ptr,
-								int tliIndex);
+								int tliIndex, const char *restoreCommand);
 
 /* in pg_rewind.c */
 extern void progress_report(bool force);

@@ -339,7 +339,8 @@ main(int argc, char **argv)
 			/* Read the checkpoint record on the target to see where it ends. */
 			chkptendrec = readOneRecord(datadir_target,
 										ControlFile_target.checkPoint,
-										targetNentries - 1);
+										targetNentries - 1,
+										restore_command);
 
 			/*
 			 * If the histories diverged exactly at the end of the shutdown
