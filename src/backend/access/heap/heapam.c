@@ -1271,21 +1271,6 @@ heap_endscan(TableScanDesc sscan)
 	pfree(scan);
 }
 
-#ifdef HEAPDEBUGALL
-#define HEAPDEBUG_1 \
-	elog(DEBUG2, "heap_getnext([%s,nkeys=%d],dir=%d) called", \
-		 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, (int) direction)
-#define HEAPDEBUG_2 \
-	elog(DEBUG2, "heap_getnext returning EOS")
-#define HEAPDEBUG_3 \
-	elog(DEBUG2, "heap_getnext returning tuple")
-#else
-#define HEAPDEBUG_1
-#define HEAPDEBUG_2
-#define HEAPDEBUG_3
-#endif							/* !defined(HEAPDEBUGALL) */
-
-
 HeapTuple
 heap_getnext(TableScanDesc sscan, ScanDirection direction)
 {
@@ -1305,8 +1290,6 @@ heap_getnext(TableScanDesc sscan, ScanDirection direction)
 
 	/* Note: no locking manipulations needed */
 
-	HEAPDEBUG_1;				/* heap_getnext( info ) */
-
 	if (scan->rs_base.rs_flags & SO_ALLOW_PAGEMODE)
 		heapgettup_pagemode(scan, direction,
 							scan->rs_base.rs_nkeys, scan->rs_base.rs_key);
@@ -1315,35 +1298,17 @@ heap_getnext(TableScanDesc sscan, ScanDirection direction)
 				   scan->rs_base.rs_nkeys, scan->rs_base.rs_key);
 
 	if (scan->rs_ctup.t_data == NULL)
-	{
-		HEAPDEBUG_2;			/* heap_getnext returning EOS */
 		return NULL;
-	}
 
 	/*
 	 * if we get here it means we have a new current scan tuple, so point to
 	 * the proper return buffer and return the tuple.
 	 */
-	HEAPDEBUG_3;				/* heap_getnext returning tuple */
 
 	pgstat_count_heap_getnext(scan->rs_base.rs_rd);
 
 	return &scan->rs_ctup;
 }
-
-#ifdef HEAPAMSLOTDEBUGALL
-#define HEAPAMSLOTDEBUG_1 \
-	elog(DEBUG2, "heapam_getnextslot([%s,nkeys=%d],dir=%d) called", \
-		 RelationGetRelationName(scan->rs_base.rs_rd), scan->rs_base.rs_nkeys, (int) direction)
-#define HEAPAMSLOTDEBUG_2 \
-	elog(DEBUG2, "heapam_getnextslot returning EOS")
-#define HEAPAMSLOTDEBUG_3 \
-	elog(DEBUG2, "heapam_getnextslot returning tuple")
-#else
-#define HEAPAMSLOTDEBUG_1
-#define HEAPAMSLOTDEBUG_2
-#define HEAPAMSLOTDEBUG_3
-#endif
 
 bool
 heap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot *slot)
@@ -1352,8 +1317,6 @@ heap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot *s
 
 	/* Note: no locking manipulations needed */
 
-	HEAPAMSLOTDEBUG_1;			/* heap_getnextslot( info ) */
-
 	if (sscan->rs_flags & SO_ALLOW_PAGEMODE)
 		heapgettup_pagemode(scan, direction, sscan->rs_nkeys, sscan->rs_key);
 	else
@@ -1361,7 +1324,6 @@ heap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot *s
 
 	if (scan->rs_ctup.t_data == NULL)
 	{
-		HEAPAMSLOTDEBUG_2;		/* heap_getnextslot returning EOS */
 		ExecClearTuple(slot);
 		return false;
 	}
@@ -1370,7 +1332,6 @@ heap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot *s
 	 * if we get here it means we have a new current scan tuple, so point to
 	 * the proper return buffer and return the tuple.
 	 */
-	HEAPAMSLOTDEBUG_3;			/* heap_getnextslot returning tuple */
 
 	pgstat_count_heap_getnext(scan->rs_base.rs_rd);
 

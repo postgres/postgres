@@ -352,5 +352,4 @@
 /*
  * Other debug #defines (documentation, anyone?)
  */
-/* #define HEAPDEBUGALL */
 /* #define ACLDEBUG */
