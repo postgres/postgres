@@ -133,6 +133,11 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
  * caller must still check fcinfo->isnull!	Also, if function is strict,
  * it is caller's responsibility to verify that no null arguments are present
  * before calling.
+ *
+ * Some code performs multiple calls without redoing InitFunctionCallInfoData,
+ * possibly altering the argument values.  This is okay, but be sure to reset
+ * the fcinfo->isnull flag before each call, since callees are permitted to
+ * assume that starts out false.
  */
 #define FunctionCallInvoke(fcinfo)	((* (fcinfo)->flinfo->fn_addr) (fcinfo))
 

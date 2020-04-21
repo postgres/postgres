@@ -1670,6 +1670,7 @@ finalize_partialaggregate(AggState *aggstate,
 														pergroupstate->transValueIsNull,
 														pertrans->transtypeLen);
 			fcinfo->argnull[0] = pergroupstate->transValueIsNull;
+			fcinfo->isnull = false;
 
 			*resultVal = FunctionCallInvoke(fcinfo);
 			*resultIsNull = fcinfo->isnull;
