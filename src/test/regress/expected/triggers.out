@@ -2033,7 +2033,7 @@ create trigger trg1 after insert on trigpart for each row execute procedure trig
  b      | integer |           |          | 
 Partition of: trigpart FOR VALUES FROM (2000) TO (3000)
 Triggers:
-    trg1 AFTER INSERT ON trigpart3 FOR EACH ROW EXECUTE FUNCTION trigger_nothing()
+    trg1 AFTER INSERT ON trigpart3 FOR EACH ROW EXECUTE FUNCTION trigger_nothing(), ON TABLE trigpart
 
 alter table trigpart detach partition trigpart3;
 drop trigger trg1 on trigpart3; -- fail due to "does not exist"
