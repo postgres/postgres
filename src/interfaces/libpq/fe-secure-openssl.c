@@ -627,7 +627,7 @@ verify_peer_name_matches_certificate(PGconn *conn)
 			if (found_match || got_error)
 				break;
 		}
-		sk_GENERAL_NAME_free(peer_san);
+		sk_GENERAL_NAME_pop_free(peer_san, GENERAL_NAME_free);
 	}
 
 	/*
