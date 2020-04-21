@@ -17,10 +17,6 @@
 #include "access/nbtree.h"
 #include "storage/lmgr.h"
 
-/* limits on split interval (default strategy only) */
-#define MAX_LEAF_INTERVAL			9
-#define MAX_INTERNAL_INTERVAL		18
-
 typedef enum
 {
 	/* strategy for searching through materialized list of split points */
@@ -76,6 +72,7 @@ static bool _bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
 static bool _bt_adjacenthtid(ItemPointer lowhtid, ItemPointer highhtid);
 static OffsetNumber _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 									 bool *newitemonleft, FindSplitStrat strategy);
+static int _bt_defaultinterval(FindSplitData *state);
 static int	_bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 						 SplitPoint *rightpage, FindSplitStrat *strategy);
 static void _bt_interval_edges(FindSplitData *state,
@@ -279,7 +276,7 @@ _bt_findsplitloc(Relation rel,
 	 * left side of the split, in order to maximize the number of trailing
 	 * attributes that can be truncated away.  Only candidate split points
 	 * that imply an acceptable balance of free space on each side are
-	 * considered.
+	 * considered.  See _bt_defaultinterval().
 	 */
 	if (!state.is_leaf)
 	{
@@ -339,19 +336,6 @@ _bt_findsplitloc(Relation rel,
 	}
 
 	/*
-	 * Set an initial limit on the split interval/number of candidate split
-	 * points as appropriate.  The "Prefix B-Trees" paper refers to this as
-	 * sigma l for leaf splits and sigma b for internal ("branch") splits.
-	 * It's hard to provide a theoretical justification for the initial size
-	 * of the split interval, though it's clear that a small split interval
-	 * makes suffix truncation much more effective without noticeably
-	 * affecting space utilization over time.
-	 */
-	state.interval = Min(Max(1, state.nsplits * 0.05),
-						 state.is_leaf ? MAX_LEAF_INTERVAL :
-						 MAX_INTERNAL_INTERVAL);
-
-	/*
 	 * Save leftmost and rightmost splits for page before original ordinal
 	 * sort order is lost by delta/fillfactormult sort
 	 */
@@ -360,6 +344,9 @@ _bt_findsplitloc(Relation rel,
 
 	/* Give split points a fillfactormult-wise delta, and sort on deltas */
 	_bt_deltasortsplits(&state, fillfactormult, usemult);
+
+	/* Determine split interval for default strategy */
+	state.interval = _bt_defaultinterval(&state);
 
 	/*
 	 * Determine if default strategy/split interval will produce a
@@ -850,17 +837,92 @@ _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 	 */
 	if (strategy == SPLIT_MANY_DUPLICATES && !state->is_rightmost &&
 		!final->newitemonleft && final->firstrightoff >= state->newitemoff &&
-		final->firstrightoff < state->newitemoff + MAX_LEAF_INTERVAL)
+		final->firstrightoff < state->newitemoff + 9)
 	{
 		/*
 		 * Avoid the problem by performing a 50:50 split when the new item is
 		 * just to the right of the would-be "many duplicates" split point.
+		 * (Note that the test used for an insert that is "just to the right"
+		 * of the split point is conservative.)
 		 */
 		final = &state->splits[0];
 	}
 
 	*newitemonleft = final->newitemonleft;
 	return final->firstrightoff;
+}
+
+#define LEAF_SPLIT_DISTANCE			0.050
+#define INTERNAL_SPLIT_DISTANCE		0.075
+
+/*
+ * Return a split interval to use for the default strategy.  This is a limit
+ * on the number of candidate split points to give further consideration to.
+ * Only a fraction of all candidate splits points (those located at the start
+ * of the now-sorted splits array) fall within the split interval.  Split
+ * interval is applied within _bt_bestsplitloc().
+ *
+ * Split interval represents an acceptable range of split points -- those that
+ * have leftfree and rightfree values that are acceptably balanced.  The final
+ * split point chosen is the split point with the lowest "penalty" among split
+ * points in this split interval (unless we change our entire strategy, in
+ * which case the interval also changes -- see _bt_strategy()).
+ *
+ * The "Prefix B-Trees" paper calls split interval sigma l for leaf splits,
+ * and sigma b for internal ("branch") splits.  It's hard to provide a
+ * theoretical justification for the size of the split interval, though it's
+ * clear that a small split interval can make tuples on level L+1 much smaller
+ * on average, without noticeably affecting space utilization on level L.
+ * (Note that the way that we calculate split interval might need to change if
+ * suffix truncation is taught to truncate tuples "within" the last
+ * attribute/datum for data types like text, which is more or less how it is
+ * assumed to work in the paper.)
+ */
+static int
+_bt_defaultinterval(FindSplitData *state)
+{
+	SplitPoint *spaceoptimal;
+	int16		tolerance,
+				lowleftfree,
+				lowrightfree,
+				highleftfree,
+				highrightfree;
+
+	/*
+	 * Determine leftfree and rightfree values that are higher and lower than
+	 * we're willing to tolerate.  Note that the final split interval will be
+	 * about 10% of nsplits in the common case where all non-pivot tuples
+	 * (data items) from a leaf page are uniformly sized.  We're a bit more
+	 * aggressive when splitting internal pages.
+	 */
+	if (state->is_leaf)
+		tolerance = state->olddataitemstotal * LEAF_SPLIT_DISTANCE;
+	else
+		tolerance = state->olddataitemstotal * INTERNAL_SPLIT_DISTANCE;
+
+	/* First candidate split point is the most evenly balanced */
+	spaceoptimal = state->splits;
+	lowleftfree = spaceoptimal->leftfree - tolerance;
+	lowrightfree = spaceoptimal->rightfree - tolerance;
+	highleftfree = spaceoptimal->leftfree + tolerance;
+	highrightfree = spaceoptimal->rightfree + tolerance;
+
+	/*
+	 * Iterate through split points, starting from the split immediately after
+	 * 'spaceoptimal'.  Find the first split point that divides free space so
+	 * unevenly that including it in the split interval would be unacceptable.
+	 */
+	for (int i = 1; i < state->nsplits; i++)
+	{
+		SplitPoint *split = state->splits + i;
+
+		/* Cannot use curdelta here, since its value is often weighted */
+		if (split->leftfree < lowleftfree || split->rightfree < lowrightfree ||
+			split->leftfree > highleftfree || split->rightfree > highrightfree)
+			return i;
+	}
+
+	return state->nsplits;
 }
 
 /*
@@ -1097,7 +1159,7 @@ _bt_split_penalty(FindSplitData *state, SplitPoint *split)
 }
 
 /*
- * Subroutine to get a lastleft IndexTuple for a split point from page
+ * Subroutine to get a lastleft IndexTuple for a split point
  */
 static inline IndexTuple
 _bt_split_lastleft(FindSplitData *state, SplitPoint *split)
@@ -1113,7 +1175,7 @@ _bt_split_lastleft(FindSplitData *state, SplitPoint *split)
 }
 
 /*
- * Subroutine to get a firstright IndexTuple for a split point from page
+ * Subroutine to get a firstright IndexTuple for a split point
  */
 static inline IndexTuple
 _bt_split_firstright(FindSplitData *state, SplitPoint *split)
