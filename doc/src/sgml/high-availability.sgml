@@ -644,7 +644,8 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     Standby mode is exited and the server switches to normal operation
-    when <command>pg_ctl promote</command> is run or a trigger file is found
+    when <command>pg_ctl promote</command> is run,
+    <function>pg_promote()</function> is called, or a trigger file is found
     (<varname>promote_trigger_file</varname>). Before failover,
     any WAL immediately available in the archive or in <filename>pg_wal</filename> will be
     restored, but no attempt is made to connect to the master.
@@ -1470,11 +1471,11 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
 
    <para>
     To trigger failover of a log-shipping standby server, run
-    <command>pg_ctl promote</command>, call <function>pg_promote</function>,
+    <command>pg_ctl promote</command>, call <function>pg_promote()</function>,
     or create a trigger file with the file name and path specified by the
     <varname>promote_trigger_file</varname>. If you're planning to use
     <command>pg_ctl promote</command> or to call
-    <function>pg_promote</function> to fail over,
+    <function>pg_promote()</function> to fail over,
     <varname>promote_trigger_file</varname> is not required. If you're
     setting up the reporting servers that are only used to offload read-only
     queries from the primary, not for high availability purposes, you don't

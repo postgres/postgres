@@ -4114,7 +4114,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           Specifies a trigger file whose presence ends recovery in the
           standby.  Even if this value is not set, you can still promote
           the standby using <command>pg_ctl promote</command> or calling
-          <function>pg_promote</function>.
+          <function>pg_promote()</function>.
           This parameter can only be set in the <filename>postgresql.conf</filename>
           file or on the server command line.
          </para>
