@@ -3668,7 +3668,7 @@ array_eq(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * Apply the operator to the element pair
+			 * Apply the operator to the element pair; treat NULL as false
 			 */
 			locfcinfo->args[0].value = elt1;
 			locfcinfo->args[0].isnull = false;
@@ -3676,7 +3676,7 @@ array_eq(PG_FUNCTION_ARGS)
 			locfcinfo->args[1].isnull = false;
 			locfcinfo->isnull = false;
 			oprresult = DatumGetBool(FunctionCallInvoke(locfcinfo));
-			if (!oprresult)
+			if (locfcinfo->isnull || !oprresult)
 			{
 				result = false;
 				break;
@@ -3841,8 +3841,10 @@ array_cmp(FunctionCallInfo fcinfo)
 		locfcinfo->args[0].isnull = false;
 		locfcinfo->args[1].value = elt2;
 		locfcinfo->args[1].isnull = false;
-		locfcinfo->isnull = false;
 		cmpresult = DatumGetInt32(FunctionCallInvoke(locfcinfo));
+
+		/* We don't expect comparison support functions to return null */
+		Assert(!locfcinfo->isnull);
 
 		if (cmpresult == 0)
 			continue;			/* equal */
@@ -3983,8 +3985,9 @@ hash_array(PG_FUNCTION_ARGS)
 			/* Apply the hash function */
 			locfcinfo->args[0].value = elt;
 			locfcinfo->args[0].isnull = false;
-			locfcinfo->isnull = false;
 			elthash = DatumGetUInt32(FunctionCallInvoke(locfcinfo));
+			/* We don't expect hash functions to return null */
+			Assert(!locfcinfo->isnull);
 		}
 
 		/*
@@ -4074,6 +4077,8 @@ hash_array_extended(PG_FUNCTION_ARGS)
 			locfcinfo->args[1].value = Int64GetDatum(seed);
 			locfcinfo->args[1].isnull = false;
 			elthash = DatumGetUInt64(FunctionCallInvoke(locfcinfo));
+			/* We don't expect hash functions to return null */
+			Assert(!locfcinfo->isnull);
 		}
 
 		result = (result << 5) - result + elthash;
@@ -4207,7 +4212,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 				continue;		/* can't match */
 
 			/*
-			 * Apply the operator to the element pair
+			 * Apply the operator to the element pair; treat NULL as false
 			 */
 			locfcinfo->args[0].value = elt1;
 			locfcinfo->args[0].isnull = false;
@@ -4215,7 +4220,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 			locfcinfo->args[1].isnull = false;
 			locfcinfo->isnull = false;
 			oprresult = DatumGetBool(FunctionCallInvoke(locfcinfo));
-			if (oprresult)
+			if (!locfcinfo->isnull && oprresult)
 				break;
 		}
 
@@ -6202,7 +6207,7 @@ array_replace_internal(ArrayType *array,
 			else
 			{
 				/*
-				 * Apply the operator to the element pair
+				 * Apply the operator to the element pair; treat NULL as false
 				 */
 				locfcinfo->args[0].value = elt;
 				locfcinfo->args[0].isnull = false;
@@ -6210,7 +6215,7 @@ array_replace_internal(ArrayType *array,
 				locfcinfo->args[1].isnull = false;
 				locfcinfo->isnull = false;
 				oprresult = DatumGetBool(FunctionCallInvoke(locfcinfo));
-				if (!oprresult)
+				if (locfcinfo->isnull || !oprresult)
 				{
 					/* no match, keep element */
 					values[nresult] = elt;
@@ -6517,9 +6522,11 @@ width_bucket_array_fixed(Datum operand,
 		locfcinfo->args[0].isnull = false;
 		locfcinfo->args[1].value = fetch_att(ptr, typbyval, typlen);
 		locfcinfo->args[1].isnull = false;
-		locfcinfo->isnull = false;
 
 		cmpresult = DatumGetInt32(FunctionCallInvoke(locfcinfo));
+
+		/* We don't expect comparison support functions to return null */
+		Assert(!locfcinfo->isnull);
 
 		if (cmpresult < 0)
 			right = mid;
@@ -6576,6 +6583,9 @@ width_bucket_array_variable(Datum operand,
 		locfcinfo->args[1].isnull = false;
 
 		cmpresult = DatumGetInt32(FunctionCallInvoke(locfcinfo));
+
+		/* We don't expect comparison support functions to return null */
+		Assert(!locfcinfo->isnull);
 
 		if (cmpresult < 0)
 			right = mid;

@@ -966,8 +966,10 @@ record_cmp(FunctionCallInfo fcinfo)
 			locfcinfo->args[0].isnull = false;
 			locfcinfo->args[1].value = values2[i2];
 			locfcinfo->args[1].isnull = false;
-			locfcinfo->isnull = false;
 			cmpresult = DatumGetInt32(FunctionCallInvoke(locfcinfo));
+
+			/* We don't expect comparison support functions to return null */
+			Assert(!locfcinfo->isnull);
 
 			if (cmpresult < 0)
 			{
@@ -1200,9 +1202,8 @@ record_eq(PG_FUNCTION_ARGS)
 			locfcinfo->args[0].isnull = false;
 			locfcinfo->args[1].value = values2[i2];
 			locfcinfo->args[1].isnull = false;
-			locfcinfo->isnull = false;
 			oprresult = DatumGetBool(FunctionCallInvoke(locfcinfo));
-			if (!oprresult)
+			if (locfcinfo->isnull || !oprresult)
 			{
 				result = false;
 				break;
