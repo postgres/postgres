@@ -345,25 +345,42 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 							 STATISTIC_KIND_MCV, InvalidOid,
 							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
 		{
+			LOCAL_FCINFO(fcinfo, 2);
 			FmgrInfo	eqproc;
 
 			fmgr_info(opfuncoid, &eqproc);
 
+			/*
+			 * Save a few cycles by setting up the fcinfo struct just once.
+			 * Using FunctionCallInvoke directly also avoids failure if the
+			 * eqproc returns NULL, though really equality functions should
+			 * never do that.
+			 */
+			InitFunctionCallInfoData(*fcinfo, &eqproc, 2, sslot.stacoll,
+									 NULL, NULL);
+			fcinfo->args[0].isnull = false;
+			fcinfo->args[1].isnull = false;
+			/* be careful to apply operator right way 'round */
+			if (varonleft)
+				fcinfo->args[1].value = constval;
+			else
+				fcinfo->args[0].value = constval;
+
 			for (i = 0; i < sslot.nvalues; i++)
 			{
-				/* be careful to apply operator right way 'round */
+				Datum		fresult;
+
 				if (varonleft)
-					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-														   sslot.stacoll,
-														   sslot.values[i],
-														   constval));
+					fcinfo->args[0].value = sslot.values[i];
 				else
-					match = DatumGetBool(FunctionCall2Coll(&eqproc,
-														   sslot.stacoll,
-														   constval,
-														   sslot.values[i]));
-				if (match)
+					fcinfo->args[1].value = sslot.values[i];
+				fcinfo->isnull = false;
+				fresult = FunctionCallInvoke(fcinfo);
+				if (!fcinfo->isnull && DatumGetBool(fresult))
+				{
+					match = true;
 					break;
+				}
 			}
 		}
 		else
@@ -723,17 +740,36 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 						 STATISTIC_KIND_MCV, InvalidOid,
 						 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
 	{
+		LOCAL_FCINFO(fcinfo, 2);
+
+		/*
+		 * We invoke the opproc "by hand" so that we won't fail on NULL
+		 * results.  Such cases won't arise for normal comparison functions,
+		 * but generic_restriction_selectivity could perhaps be used with
+		 * operators that can return NULL.  A small side benefit is to not
+		 * need to re-initialize the fcinfo struct from scratch each time.
+		 */
+		InitFunctionCallInfoData(*fcinfo, opproc, 2, sslot.stacoll,
+								 NULL, NULL);
+		fcinfo->args[0].isnull = false;
+		fcinfo->args[1].isnull = false;
+		/* be careful to apply operator right way 'round */
+		if (varonleft)
+			fcinfo->args[1].value = constval;
+		else
+			fcinfo->args[0].value = constval;
+
 		for (i = 0; i < sslot.nvalues; i++)
 		{
-			if (varonleft ?
-				DatumGetBool(FunctionCall2Coll(opproc,
-											   sslot.stacoll,
-											   sslot.values[i],
-											   constval)) :
-				DatumGetBool(FunctionCall2Coll(opproc,
-											   sslot.stacoll,
-											   constval,
-											   sslot.values[i])))
+			Datum		fresult;
+
+			if (varonleft)
+				fcinfo->args[0].value = sslot.values[i];
+			else
+				fcinfo->args[1].value = sslot.values[i];
+			fcinfo->isnull = false;
+			fresult = FunctionCallInvoke(fcinfo);
+			if (!fcinfo->isnull && DatumGetBool(fresult))
 				mcv_selec += sslot.numbers[i];
 			sumcommon += sslot.numbers[i];
 		}
@@ -798,20 +834,39 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 		*hist_size = sslot.nvalues;
 		if (sslot.nvalues >= min_hist_size)
 		{
+			LOCAL_FCINFO(fcinfo, 2);
 			int			nmatch = 0;
 			int			i;
 
+			/*
+			 * We invoke the opproc "by hand" so that we won't fail on NULL
+			 * results.  Such cases won't arise for normal comparison
+			 * functions, but generic_restriction_selectivity could perhaps be
+			 * used with operators that can return NULL.  A small side benefit
+			 * is to not need to re-initialize the fcinfo struct from scratch
+			 * each time.
+			 */
+			InitFunctionCallInfoData(*fcinfo, opproc, 2, sslot.stacoll,
+									 NULL, NULL);
+			fcinfo->args[0].isnull = false;
+			fcinfo->args[1].isnull = false;
+			/* be careful to apply operator right way 'round */
+			if (varonleft)
+				fcinfo->args[1].value = constval;
+			else
+				fcinfo->args[0].value = constval;
+
 			for (i = n_skip; i < sslot.nvalues - n_skip; i++)
 			{
-				if (varonleft ?
-					DatumGetBool(FunctionCall2Coll(opproc,
-												   sslot.stacoll,
-												   sslot.values[i],
-												   constval)) :
-					DatumGetBool(FunctionCall2Coll(opproc,
-												   sslot.stacoll,
-												   constval,
-												   sslot.values[i])))
+				Datum		fresult;
+
+				if (varonleft)
+					fcinfo->args[0].value = sslot.values[i];
+				else
+					fcinfo->args[1].value = sslot.values[i];
+				fcinfo->isnull = false;
+				fresult = FunctionCallInvoke(fcinfo);
+				if (!fcinfo->isnull && DatumGetBool(fresult))
 					nmatch++;
 			}
 			result = ((double) nmatch) / ((double) (sslot.nvalues - 2 * n_skip));
@@ -2292,6 +2347,7 @@ eqjoinsel_inner(Oid opfuncoid,
 		 * results", Technical Report 1018, Computer Science Dept., University
 		 * of Wisconsin, Madison, March 1991 (available from ftp.cs.wisc.edu).
 		 */
+		LOCAL_FCINFO(fcinfo, 2);
 		FmgrInfo	eqproc;
 		bool	   *hasmatch1;
 		bool	   *hasmatch2;
@@ -2310,6 +2366,18 @@ eqjoinsel_inner(Oid opfuncoid,
 					nmatches;
 
 		fmgr_info(opfuncoid, &eqproc);
+
+		/*
+		 * Save a few cycles by setting up the fcinfo struct just once. Using
+		 * FunctionCallInvoke directly also avoids failure if the eqproc
+		 * returns NULL, though really equality functions should never do
+		 * that.
+		 */
+		InitFunctionCallInfoData(*fcinfo, &eqproc, 2, sslot1->stacoll,
+								 NULL, NULL);
+		fcinfo->args[0].isnull = false;
+		fcinfo->args[1].isnull = false;
+
 		hasmatch1 = (bool *) palloc0(sslot1->nvalues * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(sslot2->nvalues * sizeof(bool));
 
@@ -2325,14 +2393,18 @@ eqjoinsel_inner(Oid opfuncoid,
 		{
 			int			j;
 
+			fcinfo->args[0].value = sslot1->values[i];
+
 			for (j = 0; j < sslot2->nvalues; j++)
 			{
+				Datum		fresult;
+
 				if (hasmatch2[j])
 					continue;
-				if (DatumGetBool(FunctionCall2Coll(&eqproc,
-												   sslot1->stacoll,
-												   sslot1->values[i],
-												   sslot2->values[j])))
+				fcinfo->args[1].value = sslot2->values[j];
+				fcinfo->isnull = false;
+				fresult = FunctionCallInvoke(fcinfo);
+				if (!fcinfo->isnull && DatumGetBool(fresult))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					matchprodfreq += sslot1->numbers[i] * sslot2->numbers[j];
@@ -2502,6 +2574,7 @@ eqjoinsel_semi(Oid opfuncoid,
 		 * lists.  We still have to estimate for the remaining population, but
 		 * in a skewed distribution this gives us a big leg up in accuracy.
 		 */
+		LOCAL_FCINFO(fcinfo, 2);
 		FmgrInfo	eqproc;
 		bool	   *hasmatch1;
 		bool	   *hasmatch2;
@@ -2523,6 +2596,18 @@ eqjoinsel_semi(Oid opfuncoid,
 		clamped_nvalues2 = Min(sslot2->nvalues, nd2);
 
 		fmgr_info(opfuncoid, &eqproc);
+
+		/*
+		 * Save a few cycles by setting up the fcinfo struct just once. Using
+		 * FunctionCallInvoke directly also avoids failure if the eqproc
+		 * returns NULL, though really equality functions should never do
+		 * that.
+		 */
+		InitFunctionCallInfoData(*fcinfo, &eqproc, 2, sslot1->stacoll,
+								 NULL, NULL);
+		fcinfo->args[0].isnull = false;
+		fcinfo->args[1].isnull = false;
+
 		hasmatch1 = (bool *) palloc0(sslot1->nvalues * sizeof(bool));
 		hasmatch2 = (bool *) palloc0(clamped_nvalues2 * sizeof(bool));
 
@@ -2537,14 +2622,18 @@ eqjoinsel_semi(Oid opfuncoid,
 		{
 			int			j;
 
+			fcinfo->args[0].value = sslot1->values[i];
+
 			for (j = 0; j < clamped_nvalues2; j++)
 			{
+				Datum		fresult;
+
 				if (hasmatch2[j])
 					continue;
-				if (DatumGetBool(FunctionCall2Coll(&eqproc,
-												   sslot1->stacoll,
-												   sslot1->values[i],
-												   sslot2->values[j])))
+				fcinfo->args[1].value = sslot2->values[j];
+				fcinfo->isnull = false;
+				fresult = FunctionCallInvoke(fcinfo);
+				if (!fcinfo->isnull && DatumGetBool(fresult))
 				{
 					hasmatch1[i] = hasmatch2[j] = true;
 					nmatches++;
@@ -3687,8 +3776,9 @@ double
 estimate_hashagg_tablesize(Path *path, const AggClauseCosts *agg_costs,
 						   double dNumGroups)
 {
-	Size		hashentrysize = hash_agg_entry_size(
-		agg_costs->numAggs, path->pathtarget->width, agg_costs->transitionSpace);
+	Size		hashentrysize = hash_agg_entry_size(agg_costs->numAggs,
+													path->pathtarget->width,
+													agg_costs->transitionSpace);
 
 	/*
 	 * Note that this disregards the effect of fill-factor and growth policy
