@@ -118,6 +118,8 @@ extern void validate_index(Oid heapId, Oid indexId, Snapshot snapshot);
 
 extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
 
+extern Oid	IndexGetRelation(Oid indexId, bool missing_ok);
+
 extern void reindex_index(Oid indexId, bool skip_constraint_checks,
 			  char relpersistence, int options);
 
@@ -132,6 +134,7 @@ extern bool reindex_relation(Oid relid, int flags, int options);
 
 extern bool ReindexIsProcessingHeap(Oid heapOid);
 extern bool ReindexIsProcessingIndex(Oid indexOid);
-extern Oid	IndexGetRelation(Oid indexId, bool missing_ok);
+
+extern void ResetReindexState(int nestLevel);
 
 #endif							/* INDEX_H */
