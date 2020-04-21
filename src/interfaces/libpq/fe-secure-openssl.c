@@ -550,7 +550,7 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 			if (rc != 0)
 				break;
 		}
-		sk_GENERAL_NAME_free(peer_san);
+		sk_GENERAL_NAME_pop_free(peer_san, GENERAL_NAME_free);
 	}
 
 	/*
