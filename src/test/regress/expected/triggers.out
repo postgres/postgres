@@ -2023,6 +2023,51 @@ select tgrelid::regclass, tgname, tgfoid::regproc from pg_trigger
 ---------+--------+--------
 (0 rows)
 
+-- check detach behavior
+create trigger trg1 after insert on trigpart for each row execute procedure trigger_nothing();
+\d trigpart3
+             Table "public.trigpart3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Partition of: trigpart FOR VALUES FROM (2000) TO (3000)
+Triggers:
+    trg1 AFTER INSERT ON trigpart3 FOR EACH ROW EXECUTE FUNCTION trigger_nothing()
+
+alter table trigpart detach partition trigpart3;
+drop trigger trg1 on trigpart3; -- fail due to "does not exist"
+ERROR:  trigger "trg1" for table "trigpart3" does not exist
+alter table trigpart detach partition trigpart4;
+drop trigger trg1 on trigpart41; -- fail due to "does not exist"
+ERROR:  trigger "trg1" for table "trigpart41" does not exist
+drop table trigpart4;
+alter table trigpart attach partition trigpart3 for values from (2000) to (3000);
+alter table trigpart detach partition trigpart3;
+alter table trigpart attach partition trigpart3 for values from (2000) to (3000);
+drop table trigpart3;
+select tgrelid::regclass::text, tgname, tgfoid::regproc, tgenabled, tgisinternal from pg_trigger
+  where tgname ~ '^trg1' order by 1;
+  tgrelid  | tgname |     tgfoid      | tgenabled | tgisinternal 
+-----------+--------+-----------------+-----------+--------------
+ trigpart  | trg1   | trigger_nothing | O         | f
+ trigpart1 | trg1   | trigger_nothing | O         | t
+(2 rows)
+
+create table trigpart3 (like trigpart);
+create trigger trg1 after insert on trigpart3 for each row execute procedure trigger_nothing();
+\d trigpart3
+             Table "public.trigpart3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+Triggers:
+    trg1 AFTER INSERT ON trigpart3 FOR EACH ROW EXECUTE FUNCTION trigger_nothing()
+
+alter table trigpart attach partition trigpart3 FOR VALUES FROM (2000) to (3000); -- fail
+ERROR:  trigger "trg1" for relation "trigpart3" already exists
+drop table trigpart3;
 drop table trigpart;
 drop function trigger_nothing();
 --
