@@ -12176,7 +12176,7 @@ table2-mapping
     converted into other XML-based formats.
    </para>
 
-   <figure id="xslt-xml-html">
+   <example id="xslt-xml-html">
     <title>XSLT Stylesheet for Converting SQL/XML Output to HTML</title>
 <programlisting><![CDATA[
 <?xml version="1.0"?>
@@ -12224,7 +12224,7 @@ table2-mapping
 
 </xsl:stylesheet>
 ]]></programlisting>
-   </figure>
+   </example>
   </sect2>
  </sect1>
 
