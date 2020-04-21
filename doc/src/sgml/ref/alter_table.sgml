@@ -872,7 +872,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Note that if the existing table is a foreign table, it is currently not
       allowed to attach the table as a partition of the target table if there
       are <literal>UNIQUE</literal> indexes on the target table.  (See also
-      <xref linkend="sql-createforeigntable"/>.)
+      <xref linkend="sql-createforeigntable"/>.)  For each user-defined
+      row-level trigger that exists in the target table, a corresponding one
+      is created in the attached table.
      </para>
 
      <para>
@@ -941,10 +943,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <term><literal>DETACH PARTITION</literal> <replaceable class="parameter">partition_name</replaceable></term>
     <listitem>
      <para>
-      This form detaches specified partition of the target table.  The detached
+      This form detaches the specified partition of the target table.  The detached
       partition continues to exist as a standalone table, but no longer has any
       ties to the table from which it was detached.  Any indexes that were
-      attached to the target table's indexes are detached.
+      attached to the target table's indexes are detached.  Any triggers that
+      were created as clones of those in the target table are removed.
      </para>
     </listitem>
    </varlistentry>
