@@ -151,7 +151,7 @@ extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 									Datum constval, bool varonleft,
 									int min_hist_size, int n_skip,
 									int *hist_size);
-extern double generic_restriction_selectivity(PlannerInfo *root, Oid operator,
+extern double generic_restriction_selectivity(PlannerInfo *root, Oid oproid,
 											  List *args, int varRelid,
 											  double default_selectivity);
 extern double ineq_histogram_selectivity(PlannerInfo *root,

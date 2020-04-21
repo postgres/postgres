@@ -848,7 +848,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  * Otherwise, fall back to the default selectivity provided by the caller.
  */
 double
-generic_restriction_selectivity(PlannerInfo *root, Oid operator,
+generic_restriction_selectivity(PlannerInfo *root, Oid oproid,
 								List *args, int varRelid,
 								double default_selectivity)
 {
@@ -886,7 +886,7 @@ generic_restriction_selectivity(PlannerInfo *root, Oid operator,
 		double		nullfrac;
 		int			hist_size;
 
-		fmgr_info(get_opcode(operator), &opproc);
+		fmgr_info(get_opcode(oproid), &opproc);
 
 		/*
 		 * Calculate the selectivity for the column's most common values.
