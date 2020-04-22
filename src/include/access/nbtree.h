@@ -282,7 +282,7 @@ typedef struct BTMetaPageData
  *
  * We store the number of columns present inside pivot tuples by abusing
  * their t_tid offset field, since pivot tuples never need to store a real
- * offset (downlinks only need to store a block number in t_tid).  The
+ * offset (pivot tuples generally store a downlink in t_tid, though).  The
  * offset field only stores the number of columns/attributes when the
  * INDEX_ALT_TID_MASK bit is set, which doesn't count the trailing heap
  * TID column sometimes stored in pivot tuples -- that's represented by
@@ -290,21 +290,19 @@ typedef struct BTMetaPageData
  * t_info is always set on BTREE_VERSION 4 pivot tuples, since
  * BTreeTupleIsPivot() must work reliably on heapkeyspace versions.
  *
- * In version 3 indexes, the INDEX_ALT_TID_MASK flag might not be set in
- * pivot tuples.  In that case, the number of key columns is implicitly
- * the same as the number of key columns in the index.  It is not usually
- * set on version 2 indexes, which predate the introduction of INCLUDE
- * indexes.  (Only explicitly truncated pivot tuples explicitly represent
- * the number of key columns on versions 2 and 3, whereas all pivot tuples
- * are formed using truncation on version 4.  A version 2 index will have
- * it set for an internal page negative infinity item iff internal page
- * split occurred after upgrade to Postgres 11+.)
+ * In version 2 or version 3 (!heapkeyspace) indexes, INDEX_ALT_TID_MASK
+ * might not be set in pivot tuples.  BTreeTupleIsPivot() won't work
+ * reliably as a result.  The number of columns stored is implicitly the
+ * same as the number of columns in the index, just like any non-pivot
+ * tuple. (The number of columns stored should not vary, since suffix
+ * truncation of key columns is unsafe within any !heapkeyspace index.)
  *
- * The 12 least significant offset bits from t_tid are used to represent
- * the number of columns in INDEX_ALT_TID_MASK tuples, leaving 4 status
- * bits (BT_RESERVED_OFFSET_MASK bits), 3 of which that are reserved for
- * future use.  BT_OFFSET_MASK should be large enough to store any number
- * of columns/attributes <= INDEX_MAX_KEYS.
+ * The 12 least significant bits from t_tid's offset number are used to
+ * represent the number of key columns within a pivot tuple.  This leaves 4
+ * status bits (BT_STATUS_OFFSET_MASK bits), which are shared by all tuples
+ * that have the INDEX_ALT_TID_MASK bit set (set in t_info) to store basic
+ * tuple metadata.  BTreeTupleIsPivot() and BTreeTupleIsPosting() use the
+ * BT_STATUS_OFFSET_MASK bits.
  *
  * Sometimes non-pivot tuples also use a representation that repurposes
  * t_tid to store metadata rather than a TID.  PostgreSQL v13 introduced a
@@ -321,31 +319,24 @@ typedef struct BTMetaPageData
  *
  * Posting list tuples are recognized as such by having the
  * INDEX_ALT_TID_MASK status bit set in t_info and the BT_IS_POSTING status
- * bit set in t_tid.  These flags redefine the content of the posting
- * tuple's t_tid to store an offset to the posting list, as well as the
- * total number of posting list array elements.
+ * bit set in t_tid's offset number.  These flags redefine the content of
+ * the posting tuple's t_tid to store the location of the posting list
+ * (instead of a block number), as well as the total number of heap TIDs
+ * present in the tuple (instead of a real offset number).
  *
- * The 12 least significant offset bits from t_tid are used to represent
- * the number of posting items present in the tuple, leaving 4 status
- * bits (BT_RESERVED_OFFSET_MASK bits), 3 of which that are reserved for
- * future use.  Like any non-pivot tuple, the number of columns stored is
- * always implicitly the total number in the index (in practice there can
- * never be non-key columns stored, since deduplication is not supported
- * with INCLUDE indexes).  BT_OFFSET_MASK should be large enough to store
- * any number of posting list TIDs that might be present in a tuple (since
- * tuple size is subject to the INDEX_SIZE_MASK limit).
- *
- * Note well: The macros that deal with the number of attributes in tuples
- * assume that a tuple with INDEX_ALT_TID_MASK set must be a pivot tuple or
- * non-pivot posting tuple, and that a tuple without INDEX_ALT_TID_MASK set
- * must be a non-pivot tuple (or must have the same number of attributes as
- * the index has generally in the case of !heapkeyspace indexes).
+ * The 12 least significant bits from t_tid's offset number are used to
+ * represent the number of heap TIDs present in the tuple, leaving 4 status
+ * bits (the BT_STATUS_OFFSET_MASK bits).  Like any non-pivot tuple, the
+ * number of columns stored is always implicitly the total number in the
+ * index (in practice there can never be non-key columns stored, since
+ * deduplication is not supported with INCLUDE indexes).
  */
 #define INDEX_ALT_TID_MASK			INDEX_AM_RESERVED_BIT
 
-/* Item pointer offset bits */
-#define BT_RESERVED_OFFSET_MASK		0xF000
+/* Item pointer offset bit masks */
 #define BT_OFFSET_MASK				0x0FFF
+#define BT_STATUS_OFFSET_MASK		0xF000
+/* BT_STATUS_OFFSET_MASK status bits */
 #define BT_PIVOT_HEAP_TID_ATTR		0x1000
 #define BT_IS_POSTING				0x2000
 
@@ -378,11 +369,13 @@ BTreeTupleIsPosting(IndexTuple itup)
 }
 
 static inline void
-BTreeTupleSetPosting(IndexTuple itup, int nhtids, int postingoffset)
+BTreeTupleSetPosting(IndexTuple itup, uint16 nhtids, int postingoffset)
 {
-	Assert(nhtids > 1 && (nhtids & BT_OFFSET_MASK) == nhtids);
+	Assert(nhtids > 1);
+	Assert((nhtids & BT_STATUS_OFFSET_MASK) == 0);
 	Assert((size_t) postingoffset == MAXALIGN(postingoffset));
 	Assert(postingoffset < INDEX_SIZE_MASK);
+	Assert(!BTreeTupleIsPivot(itup));
 
 	itup->t_info |= INDEX_ALT_TID_MASK;
 	ItemPointerSetOffsetNumber(&itup->t_tid, (nhtids | BT_IS_POSTING));
@@ -470,7 +463,7 @@ static inline void
 BTreeTupleSetNAtts(IndexTuple itup, uint16 nkeyatts, bool heaptid)
 {
 	Assert(nkeyatts <= INDEX_MAX_KEYS);
-	Assert((nkeyatts & BT_RESERVED_OFFSET_MASK) == 0);
+	Assert((nkeyatts & BT_STATUS_OFFSET_MASK) == 0);
 	Assert(!heaptid || nkeyatts > 0);
 	Assert(!BTreeTupleIsPivot(itup) || nkeyatts == 0);
 
