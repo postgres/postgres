@@ -1447,4 +1447,24 @@ explain (costs off) select a,b,sum(c) from t group by 1,2 order by 1,2,3 limit 1
                            ->  Parallel Index Scan using t_a_idx on t
 (12 rows)
 
+-- Incremental sort vs. set operations with varno 0
+set enable_hashagg to off;
+explain (costs off) select * from t union select * from t order by 1,3;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Incremental Sort
+   Sort Key: t.a, t.c
+   Presorted Key: t.a
+   ->  Unique
+         ->  Sort
+               Sort Key: t.a, t.b, t.c
+               ->  Append
+                     ->  Gather
+                           Workers Planned: 2
+                           ->  Parallel Seq Scan on t
+                     ->  Gather
+                           Workers Planned: 2
+                           ->  Parallel Seq Scan on t t_1
+(13 rows)
+
 drop table t;

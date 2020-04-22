@@ -1804,6 +1804,7 @@ cost_incremental_sort(Path *path,
 	List	   *presortedExprs = NIL;
 	ListCell   *l;
 	int			i = 0;
+	bool		unknown_varno = false;
 
 	Assert(presorted_keys != 0);
 
@@ -1814,13 +1815,58 @@ cost_incremental_sort(Path *path,
 	if (input_tuples < 2.0)
 		input_tuples = 2.0;
 
-	/* Extract presorted keys as list of expressions */
+	/* Default estimate of number of groups, capped to one group per row. */
+	input_groups = Min(input_tuples, DEFAULT_NUM_DISTINCT);
+
+	/*
+	 * Extract presorted keys as list of expressions.
+	 *
+	 * We need to be careful about Vars containing "varno 0" which might
+	 * have been introduced by generate_append_tlist, which would confuse
+	 * estimate_num_groups (in fact it'd fail for such expressions). See
+	 * recurse_set_operations which has to deal with the same issue.
+	 *
+	 * Unlike recurse_set_operations we can't access the original target
+	 * list here, and even if we could it's not very clear how useful would
+	 * that be for a set operation combining multiple tables. So we simply
+	 * detect if there are any expressions with "varno 0" and use the
+	 * default DEFAULT_NUM_DISTINCT in that case.
+	 *
+	 * We might also use either 1.0 (a single group) or input_tuples (each
+	 * row being a separate group), pretty much the worst and best case for
+	 * incremental sort. But those are extreme cases and using something in
+	 * between seems reasonable. Furthermore, generate_append_tlist is used
+	 * for set operations, which are likely to produce mostly unique output
+	 * anyway - from that standpoint the DEFAULT_NUM_DISTINCT is defensive
+	 * while maintaining lower startup cost.
+	 */
 	foreach(l, pathkeys)
 	{
+		Node	   *expr;
+		Relids		varnos;
+
 		PathKey    *key = (PathKey *) lfirst(l);
 		EquivalenceMember *member = (EquivalenceMember *)
 		linitial(key->pk_eclass->ec_members);
 
+		/*
+		 * Check if the expression contains Var with "varno 0" so that we
+		 * don't call estimate_num_groups in that case.
+		 */
+		expr = (Node *) member->em_expr;
+
+		if (IsA(expr, RelabelType))
+			expr = (Node *) ((RelabelType *) expr)->arg;
+
+		varnos = pull_varnos(expr);
+
+		if (bms_is_member(0, varnos))
+		{
+			unknown_varno = true;
+			break;
+		}
+
+		/* expression not containing any Vars with "varno 0" */
 		presortedExprs = lappend(presortedExprs, member->em_expr);
 
 		i++;
@@ -1828,8 +1874,10 @@ cost_incremental_sort(Path *path,
 			break;
 	}
 
-	/* Estimate number of groups with equal presorted keys */
-	input_groups = estimate_num_groups(root, presortedExprs, input_tuples, NULL);
+	/* Estimate number of groups with equal presorted keys. */
+	if (!unknown_varno)
+		input_groups = estimate_num_groups(root, presortedExprs, input_tuples, NULL);
+
 	group_tuples = input_tuples / input_groups;
 	group_input_run_cost = input_run_cost / input_groups;
 

@@ -216,4 +216,8 @@ explain (costs off) select a,b,sum(c) from t group by 1,2 order by 1,2,3 limit 1
 set enable_incrementalsort = on;
 explain (costs off) select a,b,sum(c) from t group by 1,2 order by 1,2,3 limit 1;
 
+-- Incremental sort vs. set operations with varno 0
+set enable_hashagg to off;
+explain (costs off) select * from t union select * from t order by 1,3;
+
 drop table t;
