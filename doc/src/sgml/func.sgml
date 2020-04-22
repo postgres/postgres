@@ -9446,187 +9446,575 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     linkend="functions-geometry-conv-table"/>.
    </para>
 
+   <table id="functions-geometry-op-table">
+    <title>Geometric Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Operator<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>+</literal> <type>point</type>
+        <returnvalue><replaceable>geometric_type</replaceable></returnvalue>
+       <?br?>
+        Adds the coordinates of the second <type>point</type> to those of each
+        point of the first argument, thus performing translation.
+        Available for <type>point</type>, <type>box</type>, <type>path</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(1,1),(0,0)' + point '(2,0)'</literal>
+        <returnvalue>(3,1),(2,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>path</type> <literal>+</literal> <type>path</type>
+        <returnvalue>path</returnvalue>
+       <?br?>
+        Concatenates two open paths (returns NULL if either path is closed).
+       <?br?>
+        <literal>path '[(0,0),(1,1)]' + path '[(2,2),(3,3),(4,4)]'</literal>
+        <returnvalue>[(0,0),(1,1),(2,2),(3,3),(4,4)]</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>-</literal> <type>point</type>
+        <returnvalue><replaceable>geometric_type</replaceable></returnvalue>
+       <?br?>
+        Subtracts the coordinates of the second <type>point</type> from those
+        of each point of the first argument, thus performing translation.
+        Available for <type>point</type>, <type>box</type>, <type>path</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(1,1),(0,0)' - point '(2,0)'</literal>
+        <returnvalue>(-1,1),(-2,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>*</literal> <type>point</type>
+        <returnvalue><replaceable>geometric_type</replaceable></returnvalue>
+       <?br?>
+        Multiplies each point of the first argument by the second
+        <type>point</type><footnote><para>For this purpose, the
+        product of two points
+        (<replaceable>x1</replaceable>,<replaceable>y1</replaceable>) and
+        (<replaceable>x2</replaceable>,<replaceable>y2</replaceable>) is
+        defined as
+        (<replaceable>x1</replaceable>*<replaceable>x2</replaceable> -
+        <replaceable>y1</replaceable>*<replaceable>y2</replaceable>,
+        <replaceable>x1</replaceable>*<replaceable>y2</replaceable> +
+        <replaceable>y1</replaceable>*<replaceable>x2</replaceable>).</para></footnote>.
+        Interpreting the <type>point</type> as a vector, this is equivalent to
+        scaling the object's size and distance from the origin by the length
+        of the vector, and rotating it counterclockwise around the origin by
+        the vector's angle from the <replaceable>x</replaceable> axis.
+        Available for <type>point</type>, <type>box</type>, <type>path</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>path '((0,0),(1,0),(1,1))' * point '(3.0,0)'</literal>
+        <returnvalue>((0,0),(3,0),(3,3))</returnvalue>
+       <?br?>
+        <literal>path '((0,0),(1,0),(1,1))' * point(cosd(45), sind(45))</literal>
+        <returnvalue>((0,0),&zwsp;(0.7071067811865475,0.7071067811865475),&zwsp;(0,1.414213562373095))</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>/</literal> <type>point</type>
+        <returnvalue><replaceable>geometric_type</replaceable></returnvalue>
+       <?br?>
+        Divides each point of the first argument by the
+        second <type>point</type><footnote><para>For this purpose, the
+        quotient of two points
+        (<replaceable>x1</replaceable>,<replaceable>y1</replaceable>) and
+        (<replaceable>x2</replaceable>,<replaceable>y2</replaceable>) is
+        defined as
+        ((<replaceable>x1</replaceable>*<replaceable>x2</replaceable> +
+        <replaceable>y1</replaceable>*<replaceable>y2</replaceable>) /
+        <replaceable>L</replaceable>,
+        (<replaceable>y1</replaceable>*<replaceable>x2</replaceable> -
+        <replaceable>x1</replaceable>*<replaceable>y2</replaceable>) /
+        <replaceable>L</replaceable>),
+        where <replaceable>L</replaceable> =
+        <replaceable>x2</replaceable>*<replaceable>x2</replaceable> +
+        <replaceable>y2</replaceable>*<replaceable>y2</replaceable>.</para></footnote>.
+        Interpreting the <type>point</type> as a vector, this is equivalent to
+        scaling the object's size and distance from the origin down by the
+        length of the vector, and rotating it clockwise around the origin by
+        the vector's angle from the <replaceable>x</replaceable> axis.
+        Available for <type>point</type>, <type>box</type>, <type>path</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>path '((0,0),(1,0),(1,1))' / point '(2.0,0)'</literal>
+        <returnvalue>((0,0),(0.5,0),(0.5,0.5))</returnvalue>
+       <?br?>
+        <literal>path '((0,0),(1,0),(1,1))' / point(cosd(45), sind(45))</literal>
+        <returnvalue>((0,0),&zwsp;(0.7071067811865476,-0.7071067811865476),&zwsp;(1.4142135623730951,0))</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <literal>@-@</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes the total length.
+        Available for <type>lseg</type>, <type>path</type>.
+       <?br?>
+        <literal>@-@ path '[(0,0),(1,0),(1,1)]'</literal>
+        <returnvalue>2</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <literal>@@</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes the center point.
+        Available for <type>box</type>, <type>lseg</type>, <type>path</type>,
+        <type>polygon</type>, <type>circle</type>.
+       <?br?>
+        <literal>@@ box '(2,2),(0,0)'</literal>
+        <returnvalue>(1,1)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <literal>#</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of points.
+        Available for <type>path</type>, <type>polygon</type>.
+       <?br?>
+        <literal># path '((1,0),(0,1),(-1,0))'</literal>
+        <returnvalue>3</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>#</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes the point of intersection, or NULL if there is none.
+        Available for <type>lseg</type>, <type>line</type>.
+       <?br?>
+        <literal>lseg '[(0,0),(1,1)]' # lseg '[(1,0),(0,1)]'</literal>
+        <returnvalue>(0.5,0.5)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>box</type> <literal>#</literal> <type>box</type>
+        <returnvalue>box</returnvalue>
+       <?br?>
+        Computes the intersection of two boxes, or NULL if there is none.
+       <?br?>
+        <literal>box '(2,2),(-1,-1)' # box '(1,1),(-2,-2)'</literal>
+        <returnvalue>(1,1),(-1,-1)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>##</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes the closest point to the first object on the second object.
+        Available for these pairs of types:
+        (<type>point</type>, <type>box</type>),
+        (<type>point</type>, <type>lseg</type>),
+        (<type>point</type>, <type>line</type>),
+        (<type>lseg</type>, <type>box</type>),
+        (<type>lseg</type>, <type>lseg</type>),
+        (<type>lseg</type>, <type>line</type>),
+        (<type>line</type>, <type>box</type>),
+        (<type>line</type>, <type>lseg</type>).
+       <?br?>
+        <literal>point '(0,0)' ## lseg '[(2,0),(0,2)]'</literal>
+        <returnvalue>(1,1)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&lt;-&gt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes the distance between the objects.
+        Available for all seven geometric types, for all combinations
+        of <type>point</type> with another geometric type, and for
+        these additional pairs of types:
+        (<type>box</type>, <type>lseg</type>),
+        (<type>box</type>, <type>line</type>),
+        (<type>lseg</type>, <type>line</type>),
+        (<type>polygon</type>, <type>circle</type>)
+        (and the commutator cases).
+       <?br?>
+        <literal>circle '&lt;(0,0),1&gt;' &lt;-&gt; circle '&lt;(5,0),1&gt;'</literal>
+        <returnvalue>3</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>@&gt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does first object contain second?
+        Available for these pairs of types:
+        (<literal>box</literal>, <literal>point</literal>),
+        (<literal>box</literal>, <literal>box</literal>),
+        (<literal>path</literal>, <literal>point</literal>),
+        (<literal>polygon</literal>, <literal>point</literal>),
+        (<literal>polygon</literal>, <literal>polygon</literal>),
+        (<literal>circle</literal>, <literal>point</literal>),
+        (<literal>circle</literal>, <literal>circle</literal>).
+       <?br?>
+        <literal>circle '&lt;(0,0),2&gt;' @&gt; point '(1,1)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&lt;@</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object contained in or on second?
+        Available for these pairs of types:
+        (<literal>point</literal>, <literal>box</literal>),
+        (<literal>point</literal>, <literal>lseg</literal>),
+        (<literal>point</literal>, <literal>line</literal>),
+        (<literal>point</literal>, <literal>path</literal>),
+        (<literal>point</literal>, <literal>polygon</literal>),
+        (<literal>point</literal>, <literal>circle</literal>),
+        (<literal>box</literal>, <literal>box</literal>),
+        (<literal>lseg</literal>, <literal>box</literal>),
+        (<literal>lseg</literal>, <literal>line</literal>),
+        (<literal>polygon</literal>, <literal>polygon</literal>),
+        (<literal>circle</literal>, <literal>circle</literal>).
+       <?br?>
+        <literal>point '(1,1)' &lt;@ circle '&lt;(0,0),2&gt;'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&amp;&amp;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Do these objects overlap?  (One point in common makes this true.)
+        Available for <type>box</type>, <type>polygon</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(1,1),(0,0)' &amp;&amp; box '(2,2),(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&lt;&lt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object strictly left of second?
+        Available for <type>point</type>, <type>box</type>,
+        <type>polygon</type>, <type>circle</type>.
+       <?br?>
+        <literal>circle '&lt;(0,0),1&gt;' &lt;&lt; circle '&lt;(5,0),1&gt;'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&gt;&gt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object strictly right of second?
+        Available for <type>point</type>, <type>box</type>,
+        <type>polygon</type>, <type>circle</type>.
+       <?br?>
+        <literal>circle '&lt;(5,0),1&gt;' &gt;&gt; circle '&lt;(0,0),1&gt;'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&amp;&lt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does first object not extend to the right of second?
+        Available for <type>box</type>, <type>polygon</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(1,1),(0,0)' &amp;&lt; box '(2,2),(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&amp;&gt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does first object not extend to the left of second?
+        Available for <type>box</type>, <type>polygon</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(3,3),(0,0)' &amp;&gt; box '(2,2),(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&lt;&lt;|</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object strictly below second?
+        Available for <type>box</type>, <type>polygon</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(3,3),(0,0)' &lt;&lt;| box '(5,5),(3,4)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>|&gt;&gt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object strictly above second?
+        Available for <type>box</type>, <type>polygon</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(5,5),(3,4)' |&gt;&gt; box '(3,3),(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>&amp;&lt;|</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does first object not extend above second?
+        Available for <type>box</type>, <type>polygon</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(1,1),(0,0)' &amp;&lt;| box '(2,2),(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>|&amp;&gt;</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does first object not extend below second?
+        Available for <type>box</type>, <type>polygon</type>,
+        <type>circle</type>.
+       <?br?>
+        <literal>box '(3,3),(0,0)' |&amp;&gt; box '(2,2),(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>box</type> <literal>&lt;^</literal> <type>box</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object below second (allows edges to touch)?
+       <?br?>
+        <literal>box '((1,1),(0,0))' &lt;^ box '((2,2),(1,1))'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>point</type> <literal>&lt;^</literal> <type>point</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object strictly below second?
+        (This operator is misnamed; it should be <literal>&lt;&lt;|</literal>.)
+       <?br?>
+        <literal>point '(1,0)' &lt;^ point '(1,1)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>box</type> <literal>&gt;^</literal> <type>box</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object above second (allows edges to touch)?
+       <?br?>
+        <literal>box '((2,2),(1,1))' &gt;^ box '((1,1),(0,0))'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>point</type> <literal>&gt;^</literal> <type>point</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first object strictly above second?
+        (This operator is misnamed; it should be <literal>|&gt;&gt;</literal>.)
+       <?br?>
+        <literal>point '(1,1)' &gt;^ point '(1,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>?#</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Do these objects intersect?
+        Available for these pairs of types:
+        (<type>box</type>, <type>box</type>),
+        (<type>lseg</type>, <type>box</type>),
+        (<type>lseg</type>, <type>lseg</type>),
+        (<type>lseg</type>, <type>line</type>),
+        (<type>line</type>, <type>box</type>),
+        (<type>line</type>, <type>line</type>),
+        (<type>path</type>, <type>path</type>).
+       <?br?>
+        <literal>lseg '[(-1,0),(1,0)]' ?# box '(2,2),(-2,-2)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <literal>?-</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is line horizontal?
+        Available for <type>lseg</type>, <type>line</type>.
+       <?br?>
+        <literal>?- lseg '[(-1,0),(1,0)]'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>point</type> <literal>?-</literal> <type>point</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Are points horizontally aligned (that is, have same y coordinate)?
+       <?br?>
+        <literal>point '(1,0)' ?- point '(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <literal>?|</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is line vertical?
+        Available for <type>lseg</type>, <type>line</type>.
+       <?br?>
+        <literal>?| lseg '[(-1,0),(1,0)]'</literal>
+        <returnvalue>f</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>point</type> <literal>?|</literal> <type>point</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Are points vertically aligned (that is, have same x coordinate)?
+       <?br?>
+        <literal>point '(0,1)' ?| point '(0,0)'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>?-|</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Are lines perpendicular?
+        Available for <type>lseg</type>, <type>line</type>.
+       <?br?>
+        <literal>lseg '[(0,0),(0,1)]' ?-| lseg '[(0,0),(1,0)]'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>?||</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Are lines parallel?
+        Available for <type>lseg</type>, <type>line</type>.
+       <?br?>
+        <literal>lseg '[(-1,0),(1,0)]' ?|| lseg '[(-1,2),(1,2)]'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <replaceable>geometric_type</replaceable> <literal>~=</literal> <replaceable>geometric_type</replaceable>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Are these objects the same?
+        Available for <type>point</type>, <type>box</type>,
+        <type>polygon</type>, <type>circle</type>.
+       <?br?>
+        <literal>polygon '((0,0),(1,1))' ~= polygon '((1,1),(0,0))'</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
    <caution>
     <para>
-     Note that the <quote>same as</quote> operator, <literal>~=</literal>, represents
-     the usual notion of equality for the <type>point</type>,
+     Note that the <quote>same as</quote> operator, <literal>~=</literal>,
+     represents the usual notion of equality for the <type>point</type>,
      <type>box</type>, <type>polygon</type>, and <type>circle</type> types.
-     Some of these types also have an <literal>=</literal> operator, but
-     <literal>=</literal> compares
-     for equal <emphasis>areas</emphasis> only.  The other scalar comparison operators
-     (<literal>&lt;=</literal> and so on) likewise compare areas for these types.
+     Some of the geometric types also have an <literal>=</literal> operator, but
+     <literal>=</literal> compares for equal <emphasis>areas</emphasis> only.
+     The other scalar comparison operators (<literal>&lt;=</literal> and so
+     on), where available for these types, likewise compare areas.
     </para>
    </caution>
-
-   <table id="functions-geometry-op-table">
-     <title>Geometric Operators</title>
-     <tgroup cols="3">
-      <thead>
-       <row>
-        <entry>Operator</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry> <literal>+</literal> </entry>
-        <entry>Translation</entry>
-        <entry><literal>box '((0,0),(1,1))' + point '(2.0,0)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>-</literal> </entry>
-        <entry>Translation</entry>
-        <entry><literal>box '((0,0),(1,1))' - point '(2.0,0)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>*</literal> </entry>
-        <entry>Scaling/rotation</entry>
-        <entry><literal>box '((0,0),(1,1))' * point '(2.0,0)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>/</literal> </entry>
-        <entry>Scaling/rotation</entry>
-        <entry><literal>box '((0,0),(2,2))' / point '(2.0,0)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>#</literal> </entry>
-        <entry>Point or box of intersection</entry>
-        <entry><literal>box '((1,-1),(-1,1))' # box '((1,1),(-2,-2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>#</literal> </entry>
-        <entry>Number of points in path or polygon</entry>
-        <entry><literal># path '((1,0),(0,1),(-1,0))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>@-@</literal> </entry>
-        <entry>Length or circumference</entry>
-        <entry><literal>@-@ path '((0,0),(1,0))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>@@</literal> </entry>
-        <entry>Center</entry>
-        <entry><literal>@@ circle '((0,0),10)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>##</literal> </entry>
-        <entry>Closest point to first operand on second operand</entry>
-        <entry><literal>point '(0,0)' ## lseg '((2,0),(0,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&lt;-&gt;</literal> </entry>
-        <entry>Distance between</entry>
-        <entry><literal>circle '((0,0),1)' &lt;-&gt; circle '((5,0),1)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&amp;&amp;</literal> </entry>
-        <entry>Overlaps?  (One point in common makes this true.)</entry>
-        <entry><literal>box '((0,0),(1,1))' &amp;&amp; box '((0,0),(2,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&lt;&lt;</literal> </entry>
-        <entry>Is strictly left of?</entry>
-        <entry><literal>circle '((0,0),1)' &lt;&lt; circle '((5,0),1)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&gt;&gt;</literal> </entry>
-        <entry>Is strictly right of?</entry>
-        <entry><literal>circle '((5,0),1)' &gt;&gt; circle '((0,0),1)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&amp;&lt;</literal> </entry>
-        <entry>Does not extend to the right of?</entry>
-        <entry><literal>box '((0,0),(1,1))' &amp;&lt; box '((0,0),(2,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&amp;&gt;</literal> </entry>
-        <entry>Does not extend to the left of?</entry>
-        <entry><literal>box '((0,0),(3,3))' &amp;&gt; box '((0,0),(2,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&lt;&lt;|</literal> </entry>
-        <entry>Is strictly below?</entry>
-        <entry><literal>box '((0,0),(3,3))' &lt;&lt;| box '((3,4),(5,5))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>|&gt;&gt;</literal> </entry>
-        <entry>Is strictly above?</entry>
-        <entry><literal>box '((3,4),(5,5))' |&gt;&gt; box '((0,0),(3,3))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&amp;&lt;|</literal> </entry>
-        <entry>Does not extend above?</entry>
-        <entry><literal>box '((0,0),(1,1))' &amp;&lt;| box '((0,0),(2,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>|&amp;&gt;</literal> </entry>
-        <entry>Does not extend below?</entry>
-        <entry><literal>box '((0,0),(3,3))' |&amp;&gt; box '((0,0),(2,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&lt;^</literal> </entry>
-        <entry>Is below (allows touching)?</entry>
-        <entry><literal>circle '((0,0),1)' &lt;^ circle '((0,5),1)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&gt;^</literal> </entry>
-        <entry>Is above (allows touching)?</entry>
-        <entry><literal>circle '((0,5),1)' &gt;^ circle '((0,0),1)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>?#</literal> </entry>
-        <entry>Intersects?</entry>
-        <entry><literal>lseg '((-1,0),(1,0))' ?# box '((-2,-2),(2,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>?-</literal> </entry>
-        <entry>Is horizontal?</entry>
-        <entry><literal>?- lseg '((-1,0),(1,0))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>?-</literal> </entry>
-        <entry>Are horizontally aligned?</entry>
-        <entry><literal>point '(1,0)' ?- point '(0,0)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>?|</literal> </entry>
-        <entry>Is vertical?</entry>
-        <entry><literal>?| lseg '((-1,0),(1,0))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>?|</literal> </entry>
-        <entry>Are vertically aligned?</entry>
-        <entry><literal>point '(0,1)' ?| point '(0,0)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>?-|</literal> </entry>
-        <entry>Is perpendicular?</entry>
-        <entry><literal>lseg '((0,0),(0,1))' ?-| lseg '((0,0),(1,0))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>?||</literal> </entry>
-        <entry>Are parallel?</entry>
-        <entry><literal>lseg '((-1,0),(1,0))' ?|| lseg '((-1,2),(1,2))'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>@&gt;</literal> </entry>
-        <entry>Contains?</entry>
-        <entry><literal>circle '((0,0),2)' @&gt; point '(1,1)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&lt;@</literal> </entry>
-        <entry>Contained in or on?</entry>
-        <entry><literal>point '(1,1)' &lt;@ circle '((0,0),2)'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>~=</literal> </entry>
-        <entry>Same as?</entry>
-        <entry><literal>polygon '((0,0),(1,1))' ~= polygon '((1,1),(0,0))'</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-   </table>
 
    <note>
     <para>
@@ -9637,308 +10025,532 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
     </para>
    </note>
 
-   <indexterm>
-    <primary>area</primary>
-   </indexterm>
-   <indexterm>
-    <primary>center</primary>
-   </indexterm>
-   <indexterm>
-    <primary>diameter</primary>
-   </indexterm>
-   <indexterm>
-    <primary>height</primary>
-   </indexterm>
-   <indexterm>
-    <primary>isclosed</primary>
-   </indexterm>
-   <indexterm>
-    <primary>isopen</primary>
-   </indexterm>
-   <indexterm>
-    <primary>length</primary>
-   </indexterm>
-   <indexterm>
-    <primary>npoints</primary>
-   </indexterm>
-   <indexterm>
-    <primary>pclose</primary>
-   </indexterm>
-   <indexterm>
-    <primary>popen</primary>
-   </indexterm>
-   <indexterm>
-    <primary>radius</primary>
-   </indexterm>
-   <indexterm>
-    <primary>width</primary>
-   </indexterm>
-
    <table id="functions-geometry-func-table">
-     <title>Geometric Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry><literal><function>area(<replaceable>object</replaceable>)</function></literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>area</entry>
-        <entry><literal>area(box '((0,0),(1,1))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>center(<replaceable>object</replaceable>)</function></literal></entry>
-        <entry><type>point</type></entry>
-        <entry>center</entry>
-        <entry><literal>center(box '((0,0),(1,2))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>diameter(<type>circle</type>)</function></literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>diameter of circle</entry>
-        <entry><literal>diameter(circle '((0,0),2.0)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>height(<type>box</type>)</function></literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>vertical size of box</entry>
-        <entry><literal>height(box '((0,0),(1,1))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>isclosed(<type>path</type>)</function></literal></entry>
-        <entry><type>boolean</type></entry>
-        <entry>a closed path?</entry>
-        <entry><literal>isclosed(path '((0,0),(1,1),(2,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>isopen(<type>path</type>)</function></literal></entry>
-        <entry><type>boolean</type></entry>
-        <entry>an open path?</entry>
-        <entry><literal>isopen(path '[(0,0),(1,1),(2,0)]')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>length(<replaceable>object</replaceable>)</function></literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>length</entry>
-        <entry><literal>length(path '((-1,0),(1,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>npoints(<type>path</type>)</function></literal></entry>
-        <entry><type>int</type></entry>
-        <entry>number of points</entry>
-        <entry><literal>npoints(path '[(0,0),(1,1),(2,0)]')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>npoints(<type>polygon</type>)</function></literal></entry>
-        <entry><type>int</type></entry>
-        <entry>number of points</entry>
-        <entry><literal>npoints(polygon '((1,1),(0,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>pclose(<type>path</type>)</function></literal></entry>
-        <entry><type>path</type></entry>
-        <entry>convert path to closed</entry>
-        <entry><literal>pclose(path '[(0,0),(1,1),(2,0)]')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>popen(<type>path</type>)</function></literal></entry>
-        <entry><type>path</type></entry>
-        <entry>convert path to open</entry>
-        <entry><literal>popen(path '((0,0),(1,1),(2,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>radius(<type>circle</type>)</function></literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>radius of circle</entry>
-        <entry><literal>radius(circle '((0,0),2.0)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>width(<type>box</type>)</function></literal></entry>
-        <entry><type>double precision</type></entry>
-        <entry>horizontal size of box</entry>
-        <entry><literal>width(box '((0,0),(1,1))')</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
+    <title>Geometric Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>area</primary>
+        </indexterm>
+        <function>area</function> ( <replaceable>geometric_type</replaceable> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes area.
+        Available for <type>box</type>, <type>path</type>, <type>circle</type>.
+        A <type>path</type> input must be closed, else NULL is returned.
+        Also, if the <type>path</type> is self-intersecting, the result may be
+        meaningless.
+       <?br?>
+        <literal>area(box '(2,2),(0,0)')</literal>
+        <returnvalue>4</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>center</primary>
+        </indexterm>
+        <function>center</function> ( <replaceable>geometric_type</replaceable> )
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes center point.
+        Available for <type>box</type>, <type>circle</type>.
+       <?br?>
+        <literal>center(box '(1,2),(0,0)')</literal>
+        <returnvalue>(0.5,1)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>diagonal</primary>
+        </indexterm>
+        <function>diagonal</function> ( <type>box</type> )
+        <returnvalue>lseg</returnvalue>
+       <?br?>
+        Extracts box's diagonal as a line segment
+        (same as <function>lseg(box)</function>).
+       <?br?>
+        <literal>diagonal(box '(1,2),(0,0)')</literal>
+        <returnvalue>[(1,2),(0,0)]</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>diameter</primary>
+        </indexterm>
+        <function>diameter</function> ( <type>circle</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes diameter of circle.
+       <?br?>
+        <literal>diameter(circle '&lt;(0,0),2&gt;')</literal>
+        <returnvalue>4</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>height</primary>
+        </indexterm>
+        <function>height</function> ( <type>box</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes vertical size of box.
+       <?br?>
+        <literal>height(box '(1,2),(0,0)')</literal>
+        <returnvalue>2</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>isclosed</primary>
+        </indexterm>
+        <function>isclosed</function> ( <type>path</type> )
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is path closed?
+       <?br?>
+        <literal>isclosed(path '((0,0),(1,1),(2,0))')</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>isopen</primary>
+        </indexterm>
+        <function>isopen</function> ( <type>path</type> )
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is path open?
+       <?br?>
+        <literal>isopen(path '[(0,0),(1,1),(2,0)]')</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>length</primary>
+        </indexterm>
+        <function>length</function> ( <replaceable>geometric_type</replaceable> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes the total length.
+        Available for <type>lseg</type>, <type>path</type>.
+       <?br?>
+        <literal>length(path '((-1,0),(1,0))')</literal>
+        <returnvalue>4</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>npoints</primary>
+        </indexterm>
+        <function>npoints</function> ( <replaceable>geometric_type</replaceable> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of points.
+        Available for <type>path</type>, <type>polygon</type>.
+       <?br?>
+        <literal>npoints(path '[(0,0),(1,1),(2,0)]')</literal>
+        <returnvalue>3</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>pclose</primary>
+        </indexterm>
+        <function>pclose</function> ( <type>path</type> )
+        <returnvalue>path</returnvalue>
+       <?br?>
+        Converts path to closed form.
+       <?br?>
+        <literal>pclose(path '[(0,0),(1,1),(2,0)]')</literal>
+        <returnvalue>((0,0),(1,1),(2,0))</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>popen</primary>
+        </indexterm>
+        <function>popen</function> ( <type>path</type> )
+        <returnvalue>path</returnvalue>
+       <?br?>
+        Converts path to open form.
+       <?br?>
+        <literal>popen(path '((0,0),(1,1),(2,0))')</literal>
+        <returnvalue>[(0,0),(1,1),(2,0)]</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>radius</primary>
+        </indexterm>
+        <function>radius</function> ( <type>circle</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes radius of circle.
+       <?br?>
+        <literal>radius(circle '&lt;(0,0),2&gt;')</literal>
+        <returnvalue>2</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>slope</primary>
+        </indexterm>
+        <function>slope</function> ( <type>point</type>, <type>point</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes slope of a line drawn through the two points.
+       <?br?>
+        <literal>slope(point '(0,0)', point '(2,1)')</literal>
+        <returnvalue>0.5</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>width</primary>
+        </indexterm>
+        <function>width</function> ( <type>box</type> )
+        <returnvalue>double precision</returnvalue>
+       <?br?>
+        Computes horizontal size of box.
+       <?br?>
+        <literal>width(box '(1,2),(0,0)')</literal>
+        <returnvalue>1</returnvalue>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
    </table>
 
    <table id="functions-geometry-conv-table">
-     <title>Geometric Type Conversion Functions</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>box</primary>
-         </indexterm>
-         <literal><function>box(<type>circle</type>)</function></literal>
-        </entry>
-        <entry><type>box</type></entry>
-        <entry>circle to box</entry>
-        <entry><literal>box(circle '((0,0),2.0)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>box(<type>point</type>)</function></literal></entry>
-        <entry><type>box</type></entry>
-        <entry>point to empty box</entry>
-        <entry><literal>box(point '(0,0)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>box(<type>point</type>, <type>point</type>)</function></literal></entry>
-        <entry><type>box</type></entry>
-        <entry>points to box</entry>
-        <entry><literal>box(point '(0,0)', point '(1,1)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>box(<type>polygon</type>)</function></literal></entry>
-        <entry><type>box</type></entry>
-        <entry>polygon to box</entry>
-        <entry><literal>box(polygon '((0,0),(1,1),(2,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>bound_box(<type>box</type>, <type>box</type>)</function></literal></entry>
-        <entry><type>box</type></entry>
-        <entry>boxes to bounding box</entry>
-        <entry><literal>bound_box(box '((0,0),(1,1))', box '((3,3),(4,4))')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>circle</primary>
-         </indexterm>
-         <literal><function>circle(<type>box</type>)</function></literal>
-        </entry>
-        <entry><type>circle</type></entry>
-        <entry>box to circle</entry>
-        <entry><literal>circle(box '((0,0),(1,1))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>circle(<type>point</type>, <type>double precision</type>)</function></literal></entry>
-        <entry><type>circle</type></entry>
-        <entry>center and radius to circle</entry>
-        <entry><literal>circle(point '(0,0)', 2.0)</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>circle(<type>polygon</type>)</function></literal></entry>
-        <entry><type>circle</type></entry>
-        <entry>polygon to circle</entry>
-        <entry><literal>circle(polygon '((0,0),(1,1),(2,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>line(<type>point</type>, <type>point</type>)</function></literal></entry>
-        <entry><type>line</type></entry>
-        <entry>points to line</entry>
-        <entry><literal>line(point '(-1,0)', point '(1,0)')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>lseg</primary>
-         </indexterm>
-         <literal><function>lseg(<type>box</type>)</function></literal>
-        </entry>
-        <entry><type>lseg</type></entry>
-        <entry>box diagonal to line segment</entry>
-        <entry><literal>lseg(box '((-1,0),(1,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>lseg(<type>point</type>, <type>point</type>)</function></literal></entry>
-        <entry><type>lseg</type></entry>
-        <entry>points to line segment</entry>
-        <entry><literal>lseg(point '(-1,0)', point '(1,0)')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>path</primary>
-         </indexterm>
-         <literal><function>path(<type>polygon</type>)</function></literal>
-        </entry>
-        <entry><type>path</type></entry>
-        <entry>polygon to path</entry>
-        <entry><literal>path(polygon '((0,0),(1,1),(2,0))')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>point</primary>
-         </indexterm>
-         <literal><function>point</function>(<type>double
-         precision</type>, <type>double precision</type>)</literal>
-        </entry>
-        <entry><type>point</type></entry>
-        <entry>construct point</entry>
-        <entry><literal>point(23.4, -44.5)</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>point(<type>box</type>)</function></literal></entry>
-        <entry><type>point</type></entry>
-        <entry>center of box</entry>
-        <entry><literal>point(box '((-1,0),(1,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>point(<type>circle</type>)</function></literal></entry>
-        <entry><type>point</type></entry>
-        <entry>center of circle</entry>
-        <entry><literal>point(circle '((0,0),2.0)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>point(<type>lseg</type>)</function></literal></entry>
-        <entry><type>point</type></entry>
-        <entry>center of line segment</entry>
-        <entry><literal>point(lseg '((-1,0),(1,0))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>point(<type>polygon</type>)</function></literal></entry>
-        <entry><type>point</type></entry>
-        <entry>center of polygon</entry>
-        <entry><literal>point(polygon '((0,0),(1,1),(2,0))')</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>polygon</primary>
-         </indexterm>
-         <literal><function>polygon(<type>box</type>)</function></literal>
-        </entry>
-        <entry><type>polygon</type></entry>
-        <entry>box to 4-point polygon</entry>
-        <entry><literal>polygon(box '((0,0),(1,1))')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>polygon(<type>circle</type>)</function></literal></entry>
-        <entry><type>polygon</type></entry>
-        <entry>circle to 12-point polygon</entry>
-        <entry><literal>polygon(circle '((0,0),2.0)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>polygon(<replaceable class="parameter">npts</replaceable>, <type>circle</type>)</function></literal></entry>
-        <entry><type>polygon</type></entry>
-        <entry>circle to <replaceable class="parameter">npts</replaceable>-point polygon</entry>
-        <entry><literal>polygon(12, circle '((0,0),2.0)')</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>polygon(<type>path</type>)</function></literal></entry>
-        <entry><type>polygon</type></entry>
-        <entry>path to polygon</entry>
-        <entry><literal>polygon(path '((0,0),(1,1),(2,0))')</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
+    <title>Geometric Type Conversion Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
+     <tbody>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>box</primary>
+        </indexterm>
+        <function>box</function> ( <type>circle</type> )
+        <returnvalue>box</returnvalue>
+       <?br?>
+        Computes box inscribed within the circle.
+       <?br?>
+        <literal>box(circle '&lt;(0,0),2&gt;')</literal>
+        <returnvalue>(1.414213562373095,1.414213562373095),&zwsp;(-1.414213562373095,-1.414213562373095)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>box</function> ( <type>point</type> )
+        <returnvalue>box</returnvalue>
+       <?br?>
+        Converts point to empty box.
+       <?br?>
+        <literal>box(point '(1,0)')</literal>
+        <returnvalue>(1,0),(1,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>box</function> ( <type>point</type>, <type>point</type> )
+        <returnvalue>box</returnvalue>
+       <?br?>
+        Converts any two corner points to box.
+       <?br?>
+        <literal>box(point '(0,1)', point '(1,0)')</literal>
+        <returnvalue>(1,1),(0,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>box</function> ( <type>polygon</type> )
+        <returnvalue>box</returnvalue>
+       <?br?>
+        Computes bounding box of polygon.
+       <?br?>
+        <literal>box(polygon '((0,0),(1,1),(2,0))')</literal>
+        <returnvalue>(2,1),(0,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>bound_box</primary>
+        </indexterm>
+        <function>bound_box</function> ( <type>box</type>, <type>box</type> )
+        <returnvalue>box</returnvalue>
+       <?br?>
+        Computes bounding box of two boxes.
+       <?br?>
+        <literal>bound_box(box '(1,1),(0,0)', box '(4,4),(3,3)')</literal>
+        <returnvalue>(4,4),(0,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>circle</primary>
+        </indexterm>
+        <function>circle</function> ( <type>box</type> )
+        <returnvalue>circle</returnvalue>
+       <?br?>
+        Computes smallest circle enclosing box.
+       <?br?>
+        <literal>circle(box '(1,1),(0,0)')</literal>
+        <returnvalue>&lt;(0.5,0.5),0.7071067811865476&gt;</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>circle</function> ( <type>point</type>, <type>double precision</type> )
+        <returnvalue>circle</returnvalue>
+       <?br?>
+        Constructs circle from center and radius.
+       <?br?>
+        <literal>circle(point '(0,0)', 2.0)</literal>
+        <returnvalue>&lt;(0,0),2&gt;</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>circle</function> ( <type>polygon</type> )
+        <returnvalue>circle</returnvalue>
+       <?br?>
+        Converts polygon to circle.  The circle's center is the mean of the
+        positions of the polygon's points, and the radius is the average
+        distance of the polygon's points from that center.
+       <?br?>
+        <literal>circle(polygon '((0,0),(1,3),(2,0))')</literal>
+        <returnvalue>&lt;(1,1),1.6094757082487299&gt;</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>line</primary>
+        </indexterm>
+        <function>line</function> ( <type>point</type>, <type>point</type> )
+        <returnvalue>line</returnvalue>
+       <?br?>
+        Converts two points to the line through them.
+       <?br?>
+        <literal>line(point '(-1,0)', point '(1,0)')</literal>
+        <returnvalue>{0,-1,0}</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>lseg</primary>
+        </indexterm>
+        <function>lseg</function> ( <type>box</type> )
+        <returnvalue>lseg</returnvalue>
+       <?br?>
+        Extracts box's diagonal as a line segment.
+       <?br?>
+        <literal>lseg(box '(1,0),(-1,0)')</literal>
+        <returnvalue>[(1,0),(-1,0)]</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>lseg</function> ( <type>point</type>, <type>point</type> )
+        <returnvalue>lseg</returnvalue>
+       <?br?>
+        Constructs line segment from two endpoints.
+       <?br?>
+        <literal>lseg(point '(-1,0)', point '(1,0)')</literal>
+        <returnvalue>[(-1,0),(1,0)]</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>path</primary>
+        </indexterm>
+        <function>path</function> ( <type>polygon</type> )
+        <returnvalue>path</returnvalue>
+       <?br?>
+        Converts polygon to a closed path with the same list of points.
+       <?br?>
+        <literal>path(polygon '((0,0),(1,1),(2,0))')</literal>
+        <returnvalue>((0,0),(1,1),(2,0))</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>point</primary>
+        </indexterm>
+        <function>point</function> ( <type>double precision</type>, <type>double precision</type> )
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Constructs point from its coordinates.
+       <?br?>
+        <literal>point(23.4, -44.5)</literal>
+        <returnvalue>(23.4,-44.5)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>point</function> ( <type>box</type> )
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes center of box.
+       <?br?>
+        <literal>point(box '(1,0),(-1,0)')</literal>
+        <returnvalue>(0,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>point</function> ( <type>circle</type> )
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes center of circle.
+       <?br?>
+        <literal>point(circle '&lt;(0,0),2&gt;')</literal>
+        <returnvalue>(0,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>point</function> ( <type>lseg</type> )
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes center of line segment.
+       <?br?>
+        <literal>point(lseg '[(-1,0),(1,0)]')</literal>
+        <returnvalue>(0,0)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>point</function> ( <type>polygon</type> )
+        <returnvalue>point</returnvalue>
+       <?br?>
+        Computes center of polygon (the mean of the
+        positions of the polygon's points).
+       <?br?>
+        <literal>point(polygon '((0,0),(1,1),(2,0))')</literal>
+        <returnvalue>(1,0.3333333333333333)</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>polygon</primary>
+        </indexterm>
+        <function>polygon</function> ( <type>box</type> )
+        <returnvalue>polygon</returnvalue>
+       <?br?>
+        Converts box to a 4-point polygon.
+       <?br?>
+        <literal>polygon(box '(1,1),(0,0)')</literal>
+        <returnvalue>((0,0),(0,1),(1,1),(1,0))</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>polygon</function> ( <type>circle</type> )
+        <returnvalue>polygon</returnvalue>
+       <?br?>
+        Converts circle to a 12-point polygon.
+       <?br?>
+        <literal>polygon(circle '&lt;(0,0),2&gt;')</literal>
+        <returnvalue>((-2,0),&zwsp;(-1.7320508075688774,0.9999999999999999),&zwsp;(-1.0000000000000002,1.7320508075688772),&zwsp;(-1.2246063538223773e-16,2),&zwsp;(0.9999999999999996,1.7320508075688774),&zwsp;(1.732050807568877,1.0000000000000007),&zwsp;(2,2.4492127076447545e-16),&zwsp;(1.7320508075688776,-0.9999999999999994),&zwsp;(1.0000000000000009,-1.7320508075688767),&zwsp;(3.673819061467132e-16,-2),&zwsp;(-0.9999999999999987,-1.732050807568878),&zwsp;(-1.7320508075688767,-1.0000000000000009))</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>polygon</function> ( <type>integer</type>, <type>circle</type> )
+        <returnvalue>polygon</returnvalue>
+       <?br?>
+        Converts circle to an <replaceable>n</replaceable>-point polygon.
+       <?br?>
+        <literal>polygon(4, circle '&lt;(3,0),1&gt;')</literal>
+        <returnvalue>((2,0),&zwsp;(3,1),&zwsp;(4,1.2246063538223773e-16),&zwsp;(3,-1))</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>polygon</function> ( <type>path</type> )
+        <returnvalue>polygon</returnvalue>
+       <?br?>
+        Converts closed path to a polygon with the same list of points.
+       <?br?>
+        <literal>polygon(path '((0,0),(1,1),(2,0))')</literal>
+        <returnvalue>((0,0),(1,1),(2,0))</returnvalue>
+       </entry>
+      </row>
+
+     </tbody>
+    </tgroup>
    </table>
 
     <para>
@@ -9949,22 +10561,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
      <literal>UPDATE t SET p[1] = ...</literal> changes the Y coordinate.
      In the same way, a value of type <type>box</type> or <type>lseg</type> can be treated
      as an array of two <type>point</type> values.
-    </para>
-
-    <para>
-     The <function>area</function> function works for the types
-     <type>box</type>, <type>circle</type>, and <type>path</type>.
-     The <function>area</function> function only works on the
-     <type>path</type> data type if the points in the
-     <type>path</type> are non-intersecting.  For example, the
-     <type>path</type>
-     <literal>'((0,0),(0,1),(2,1),(2,2),(1,2),(1,0),(0,0))'::PATH</literal>
-     will not work;  however, the following visually identical
-     <type>path</type>
-     <literal>'((0,0),(0,1),(1,1),(1,2),(2,2),(2,1),(1,1),(1,0),(0,0))'::PATH</literal>
-     will work.  If the concept of an intersecting versus
-     non-intersecting <type>path</type> is confusing, draw both of the
-     above <type>path</type>s side by side on a piece of graph paper.
     </para>
 
   </sect1>
