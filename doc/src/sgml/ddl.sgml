@@ -3157,7 +3157,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 CREATE TABLE cities (
     name            text,
     population      float,
-    altitude        int     -- in feet
+    elevation       int     -- in feet
 );
 
 CREATE TABLE capitals (
@@ -3177,40 +3177,40 @@ CREATE TABLE capitals (
    rows of a table or all rows of a table plus all of its descendant tables.
    The latter behavior is the default.
    For example, the following query finds the names of all cities,
-   including state capitals, that are located at an altitude over
+   including state capitals, that are located at an elevation over
    500 feet:
 
 <programlisting>
-SELECT name, altitude
+SELECT name, elevation
     FROM cities
-    WHERE altitude &gt; 500;
+    WHERE elevation &gt; 500;
 </programlisting>
 
    Given the sample data from the <productname>PostgreSQL</productname>
    tutorial (see <xref linkend="tutorial-sql-intro"/>), this returns:
 
 <programlisting>
-   name    | altitude
------------+----------
- Las Vegas |     2174
- Mariposa  |     1953
- Madison   |      845
+   name    | elevation
+-----------+-----------
+ Las Vegas |      2174
+ Mariposa  |      1953
+ Madison   |       845
 </programlisting>
   </para>
 
   <para>
    On the other hand, the following query finds all the cities that
-   are not state capitals and are situated at an altitude over 500 feet:
+   are not state capitals and are situated at an elevation over 500 feet:
 
 <programlisting>
-SELECT name, altitude
+SELECT name, elevation
     FROM ONLY cities
-    WHERE altitude &gt; 500;
+    WHERE elevation &gt; 500;
 
-   name    | altitude
------------+----------
- Las Vegas |     2174
- Mariposa  |     1953
+   name    | elevation
+-----------+-----------
+ Las Vegas |      2174
+ Mariposa  |      1953
 </programlisting>
   </para>
 
@@ -3229,9 +3229,9 @@ SELECT name, altitude
    to explicitly specify that descendant tables are included:
 
 <programlisting>
-SELECT name, altitude
+SELECT name, elevation
     FROM cities*
-    WHERE altitude &gt; 500;
+    WHERE elevation &gt; 500;
 </programlisting>
 
    Writing <literal>*</literal> is not necessary, since this behavior is always
@@ -3246,19 +3246,19 @@ SELECT name, altitude
    originating table:
 
 <programlisting>
-SELECT c.tableoid, c.name, c.altitude
+SELECT c.tableoid, c.name, c.elevation
 FROM cities c
-WHERE c.altitude &gt; 500;
+WHERE c.elevation &gt; 500;
 </programlisting>
 
    which returns:
 
 <programlisting>
- tableoid |   name    | altitude
-----------+-----------+----------
-   139793 | Las Vegas |     2174
-   139793 | Mariposa  |     1953
-   139798 | Madison   |      845
+ tableoid |   name    | elevation
+----------+-----------+-----------
+   139793 | Las Vegas |      2174
+   139793 | Mariposa  |      1953
+   139798 | Madison   |       845
 </programlisting>
 
    (If you try to reproduce this example, you will probably get
@@ -3266,19 +3266,19 @@ WHERE c.altitude &gt; 500;
    <structname>pg_class</structname> you can see the actual table names:
 
 <programlisting>
-SELECT p.relname, c.name, c.altitude
+SELECT p.relname, c.name, c.elevation
 FROM cities c, pg_class p
-WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;
+WHERE c.elevation &gt; 500 AND c.tableoid = p.oid;
 </programlisting>
 
    which returns:
 
 <programlisting>
- relname  |   name    | altitude
-----------+-----------+----------
- cities   | Las Vegas |     2174
- cities   | Mariposa  |     1953
- capitals | Madison   |      845
+ relname  |   name    | elevation
+----------+-----------+-----------
+ cities   | Las Vegas |      2174
+ cities   | Mariposa  |      1953
+ capitals | Madison   |       845
 </programlisting>
   </para>
 
@@ -3287,9 +3287,9 @@ WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;
    alias type, which will print the table OID symbolically:
 
 <programlisting>
-SELECT c.tableoid::regclass, c.name, c.altitude
+SELECT c.tableoid::regclass, c.name, c.elevation
 FROM cities c
-WHERE c.altitude &gt; 500;
+WHERE c.elevation &gt; 500;
 </programlisting>
   </para>
 
@@ -3299,7 +3299,7 @@ WHERE c.altitude &gt; 500;
    other tables in the inheritance hierarchy. In our example, the
    following <command>INSERT</command> statement will fail:
 <programlisting>
-INSERT INTO cities (name, population, altitude, state)
+INSERT INTO cities (name, population, elevation, state)
 VALUES ('Albany', NULL, NULL, 'NY');
 </programlisting>
    We might hope that the data would somehow be routed to the
