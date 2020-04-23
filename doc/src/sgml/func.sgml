@@ -9506,21 +9506,19 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <returnvalue><replaceable>geometric_type</replaceable></returnvalue>
        <?br?>
         Multiplies each point of the first argument by the second
-        <type>point</type><footnote><para>For this purpose, the
-        product of two points
-        (<replaceable>x1</replaceable>,<replaceable>y1</replaceable>) and
-        (<replaceable>x2</replaceable>,<replaceable>y2</replaceable>) is
-        defined as
-        (<replaceable>x1</replaceable>*<replaceable>x2</replaceable> -
-        <replaceable>y1</replaceable>*<replaceable>y2</replaceable>,
-        <replaceable>x1</replaceable>*<replaceable>y2</replaceable> +
-        <replaceable>y1</replaceable>*<replaceable>x2</replaceable>).</para></footnote>.
-        Interpreting the <type>point</type> as a vector, this is equivalent to
+        <type>point</type> (treating a point as being a complex number
+        represented by real and imaginary parts, and performing standard
+        complex multiplication).  If one interprets
+        the second <type>point</type> as a vector, this is equivalent to
         scaling the object's size and distance from the origin by the length
         of the vector, and rotating it counterclockwise around the origin by
         the vector's angle from the <replaceable>x</replaceable> axis.
-        Available for <type>point</type>, <type>box</type>, <type>path</type>,
-        <type>circle</type>.
+        Available for <type>point</type>, <type>box</type>,<footnote
+        id="functions-geometry-rotation-fn"><para><quote>Rotating</quote> a
+        box with these operators only moves its corner points: the box is
+        still considered to have sides parallel to the axes.  Hence the box's
+        size is not preserved, as a true rotation would do.</para></footnote>
+        <type>path</type>, <type>circle</type>.
        <?br?>
         <literal>path '((0,0),(1,0),(1,1))' * point '(3.0,0)'</literal>
         <returnvalue>((0,0),(3,0),(3,3))</returnvalue>
@@ -9535,26 +9533,16 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <replaceable>geometric_type</replaceable> <literal>/</literal> <type>point</type>
         <returnvalue><replaceable>geometric_type</replaceable></returnvalue>
        <?br?>
-        Divides each point of the first argument by the
-        second <type>point</type><footnote><para>For this purpose, the
-        quotient of two points
-        (<replaceable>x1</replaceable>,<replaceable>y1</replaceable>) and
-        (<replaceable>x2</replaceable>,<replaceable>y2</replaceable>) is
-        defined as
-        ((<replaceable>x1</replaceable>*<replaceable>x2</replaceable> +
-        <replaceable>y1</replaceable>*<replaceable>y2</replaceable>) /
-        <replaceable>L</replaceable>,
-        (<replaceable>y1</replaceable>*<replaceable>x2</replaceable> -
-        <replaceable>x1</replaceable>*<replaceable>y2</replaceable>) /
-        <replaceable>L</replaceable>),
-        where <replaceable>L</replaceable> =
-        <replaceable>x2</replaceable>*<replaceable>x2</replaceable> +
-        <replaceable>y2</replaceable>*<replaceable>y2</replaceable>.</para></footnote>.
-        Interpreting the <type>point</type> as a vector, this is equivalent to
+        Divides each point of the first argument by the second
+        <type>point</type> (treating a point as being a complex number
+        represented by real and imaginary parts, and performing standard
+        complex division).  If one interprets
+        the second <type>point</type> as a vector, this is equivalent to
         scaling the object's size and distance from the origin down by the
         length of the vector, and rotating it clockwise around the origin by
         the vector's angle from the <replaceable>x</replaceable> axis.
-        Available for <type>point</type>, <type>box</type>, <type>path</type>,
+        Available for <type>point</type>, <type>box</type>,<footnoteref
+        linkend="functions-geometry-rotation-fn"/> <type>path</type>,
         <type>circle</type>.
        <?br?>
         <literal>path '((0,0),(1,0),(1,1))' / point '(2.0,0)'</literal>
