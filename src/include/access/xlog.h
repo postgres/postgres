@@ -166,6 +166,14 @@ typedef enum WalLevel
 	WAL_LEVEL_LOGICAL
 } WalLevel;
 
+/* Recovery states */
+typedef enum RecoveryState
+{
+	RECOVERY_STATE_CRASH = 0,	/* crash recovery */
+	RECOVERY_STATE_ARCHIVE,		/* archive recovery */
+	RECOVERY_STATE_DONE			/* currently in production */
+} RecoveryState;
+
 extern PGDLLIMPORT int wal_level;
 
 /* Is WAL archiving enabled (always or only while server is running normally)? */
@@ -291,6 +299,7 @@ extern const char *xlog_identify(uint8 info);
 extern void issue_xlog_fsync(int fd, XLogSegNo segno);
 
 extern bool RecoveryInProgress(void);
+extern RecoveryState GetRecoveryState(void);
 extern bool HotStandbyActive(void);
 extern bool HotStandbyActiveInReplay(void);
 extern bool XLogInsertAllowed(void);

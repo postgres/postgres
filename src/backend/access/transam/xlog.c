@@ -221,8 +221,9 @@ static TimeLineID receiveTLI = 0;
 static bool lastFullPageWrites;
 
 /*
- * Local copy of SharedRecoveryInProgress variable. True actually means "not
- * known, need to check the shared state".
+ * Local copy of the state tracked by SharedRecoveryState in shared memory,
+ * It is false if SharedRecoveryState is RECOVERY_STATE_DONE.  True actually
+ * means "not known, need to check the shared state".
  */
 static bool LocalRecoveryInProgress = true;
 
@@ -653,10 +654,10 @@ typedef struct XLogCtlData
 	TimeLineID	PrevTimeLineID;
 
 	/*
-	 * SharedRecoveryInProgress indicates if we're still in crash or archive
+	 * SharedRecoveryState indicates if we're still in crash or archive
 	 * recovery.  Protected by info_lck.
 	 */
-	bool		SharedRecoveryInProgress;
+	RecoveryState SharedRecoveryState;
 
 	/*
 	 * SharedHotStandbyActive indicates if we allow hot standby queries to be
@@ -4434,6 +4435,16 @@ ReadRecord(XLogReaderState *xlogreader, int emode,
 				updateMinRecoveryPoint = true;
 
 				UpdateControlFile();
+
+				/*
+				 * We update SharedRecoveryState while holding the lock on
+				 * ControlFileLock so both states are consistent in shared
+				 * memory.
+				 */
+				SpinLockAcquire(&XLogCtl->info_lck);
+				XLogCtl->SharedRecoveryState = RECOVERY_STATE_ARCHIVE;
+				SpinLockRelease(&XLogCtl->info_lck);
+
 				LWLockRelease(ControlFileLock);
 
 				CheckRecoveryConsistency();
@@ -5166,7 +5177,7 @@ XLOGShmemInit(void)
 	 * in additional info.)
 	 */
 	XLogCtl->XLogCacheBlck = XLOGbuffers - 1;
-	XLogCtl->SharedRecoveryInProgress = true;
+	XLogCtl->SharedRecoveryState = RECOVERY_STATE_CRASH;
 	XLogCtl->SharedHotStandbyActive = false;
 	XLogCtl->SharedPromoteIsTriggered = false;
 	XLogCtl->WalWriterSleeping = false;
@@ -6871,7 +6882,13 @@ StartupXLOG(void)
 		 */
 		dbstate_at_startup = ControlFile->state;
 		if (InArchiveRecovery)
+		{
 			ControlFile->state = DB_IN_ARCHIVE_RECOVERY;
+
+			SpinLockAcquire(&XLogCtl->info_lck);
+			XLogCtl->SharedRecoveryState = RECOVERY_STATE_ARCHIVE;
+			SpinLockRelease(&XLogCtl->info_lck);
+		}
 		else
 		{
 			ereport(LOG,
@@ -6884,6 +6901,10 @@ StartupXLOG(void)
 								ControlFile->checkPointCopy.ThisTimeLineID,
 								recoveryTargetTLI)));
 			ControlFile->state = DB_IN_CRASH_RECOVERY;
+
+			SpinLockAcquire(&XLogCtl->info_lck);
+			XLogCtl->SharedRecoveryState = RECOVERY_STATE_CRASH;
+			SpinLockRelease(&XLogCtl->info_lck);
 		}
 		ControlFile->checkPoint = checkPointLoc;
 		ControlFile->checkPointCopy = checkPoint;
@@ -7911,7 +7932,7 @@ StartupXLOG(void)
 	ControlFile->time = (pg_time_t) time(NULL);
 
 	SpinLockAcquire(&XLogCtl->info_lck);
-	XLogCtl->SharedRecoveryInProgress = false;
+	XLogCtl->SharedRecoveryState = RECOVERY_STATE_DONE;
 	SpinLockRelease(&XLogCtl->info_lck);
 
 	UpdateControlFile();
@@ -8057,7 +8078,7 @@ RecoveryInProgress(void)
 		 */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
-		LocalRecoveryInProgress = xlogctl->SharedRecoveryInProgress;
+		LocalRecoveryInProgress = (xlogctl->SharedRecoveryState != RECOVERY_STATE_DONE);
 
 		/*
 		 * Initialize TimeLineID and RedoRecPtr when we discover that recovery
@@ -8069,8 +8090,8 @@ RecoveryInProgress(void)
 		{
 			/*
 			 * If we just exited recovery, make sure we read TimeLineID and
-			 * RedoRecPtr after SharedRecoveryInProgress (for machines with
-			 * weak memory ordering).
+			 * RedoRecPtr after SharedRecoveryState (for machines with weak
+			 * memory ordering).
 			 */
 			pg_memory_barrier();
 			InitXLOGAccess();
@@ -8084,6 +8105,24 @@ RecoveryInProgress(void)
 
 		return LocalRecoveryInProgress;
 	}
+}
+
+/*
+ * Returns current recovery state from shared memory.
+ *
+ * This returned state is kept consistent with the contents of the control
+ * file.  See details about the possible values of RecoveryState in xlog.h.
+ */
+RecoveryState
+GetRecoveryState(void)
+{
+	RecoveryState retval;
+
+	SpinLockAcquire(&XLogCtl->info_lck);
+	retval = XLogCtl->SharedRecoveryState;
+	SpinLockRelease(&XLogCtl->info_lck);
+
+	return retval;
 }
 
 /*
