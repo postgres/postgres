@@ -178,22 +178,6 @@ static const MemoryContextMethods GenerationMethods = {
 #endif
 };
 
-/* ----------
- * Debug macros
- * ----------
- */
-#ifdef HAVE_ALLOCINFO
-#define GenerationFreeInfo(_cxt, _chunk) \
-			fprintf(stderr, "GenerationFree: %s: %p, %lu\n", \
-				(_cxt)->name, (_chunk), (_chunk)->size)
-#define GenerationAllocInfo(_cxt, _chunk) \
-			fprintf(stderr, "GenerationAlloc: %s: %p, %lu\n", \
-				(_cxt)->name, (_chunk), (_chunk)->size)
-#else
-#define GenerationFreeInfo(_cxt, _chunk)
-#define GenerationAllocInfo(_cxt, _chunk)
-#endif
-
 
 /*
  * Public routines
@@ -383,8 +367,6 @@ GenerationAlloc(MemoryContext context, Size size)
 		/* add the block to the list of allocated blocks */
 		dlist_push_head(&set->blocks, &block->node);
 
-		GenerationAllocInfo(set, chunk);
-
 		/* Ensure any padding bytes are marked NOACCESS. */
 		VALGRIND_MAKE_MEM_NOACCESS((char *) GenerationChunkGetPointer(chunk) + size,
 								   chunk_size - size);
@@ -459,8 +441,6 @@ GenerationAlloc(MemoryContext context, Size size)
 	/* fill the allocated space with junk */
 	randomize_mem((char *) GenerationChunkGetPointer(chunk), size);
 #endif
-
-	GenerationAllocInfo(set, chunk);
 
 	/* Ensure any padding bytes are marked NOACCESS. */
 	VALGRIND_MAKE_MEM_NOACCESS((char *) GenerationChunkGetPointer(chunk) + size,

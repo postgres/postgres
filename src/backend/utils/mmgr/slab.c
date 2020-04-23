@@ -157,22 +157,6 @@ static const MemoryContextMethods SlabMethods = {
 #endif
 };
 
-/* ----------
- * Debug macros
- * ----------
- */
-#ifdef HAVE_ALLOCINFO
-#define SlabFreeInfo(_cxt, _chunk) \
-			fprintf(stderr, "SlabFree: %s: %p, %zu\n", \
-				(_cxt)->header.name, (_chunk), (_chunk)->header.size)
-#define SlabAllocInfo(_cxt, _chunk) \
-			fprintf(stderr, "SlabAlloc: %s: %p, %zu\n", \
-				(_cxt)->header.name, (_chunk), (_chunk)->header.size)
-#else
-#define SlabFreeInfo(_cxt, _chunk)
-#define SlabAllocInfo(_cxt, _chunk)
-#endif
-
 
 /*
  * SlabContextCreate
@@ -499,8 +483,6 @@ SlabAlloc(MemoryContext context, Size size)
 	randomize_mem((char *) SlabChunkGetPointer(chunk), size);
 #endif
 
-	SlabAllocInfo(slab, chunk);
-
 	Assert(slab->nblocks * slab->blockSize == context->mem_allocated);
 
 	return SlabChunkGetPointer(chunk);
@@ -517,8 +499,6 @@ SlabFree(MemoryContext context, void *pointer)
 	SlabContext *slab = castNode(SlabContext, context);
 	SlabChunk  *chunk = SlabPointerGetChunk(pointer);
 	SlabBlock  *block = chunk->block;
-
-	SlabFreeInfo(slab, chunk);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
