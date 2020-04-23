@@ -162,7 +162,6 @@ main(int argc, char **argv)
 		{"ignore", required_argument, NULL, 'i'},
 		{"manifest-path", required_argument, NULL, 'm'},
 		{"no-parse-wal", no_argument, NULL, 'n'},
-		{"print-parse-wal", no_argument, NULL, 'p'},
 		{"quiet", no_argument, NULL, 'q'},
 		{"skip-checksums", no_argument, NULL, 's'},
 		{"wal-directory", required_argument, NULL, 'w'},
@@ -894,8 +893,9 @@ usage(void)
 	printf(_("Options:\n"));
 	printf(_("  -e, --exit-on-error         exit immediately on error\n"));
 	printf(_("  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"));
-	printf(_("  -m, --manifest=PATH         use specified path for manifest\n"));
+	printf(_("  -m, --manifest-path=PATH    use specified path for manifest\n"));
 	printf(_("  -n, --no-parse-wal          do not try to parse WAL files\n"));
+	printf(_("  -q, --quiet                 do not print any output, except for errors\n"));
 	printf(_("  -s, --skip-checksums        skip checksum verification\n"));
 	printf(_("  -w, --wal-directory=PATH    use specified path for WAL files\n"));
 	printf(_("  -V, --version               output version information, then exit\n"));
