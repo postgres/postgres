@@ -2854,7 +2854,7 @@ SELECT EXTRACT(days from '80 hours'::interval);
           <entry><literal>iso_8601</literal></entry>
           <entry>P1Y2M</entry>
           <entry>P3DT4H5M6S</entry>
-          <entry>P-1Y-2M3DT-4H-5M-6S</entry>
+          <entry>P-1Y-2M3D&zwsp;T-4H-5M-6S</entry>
          </row>
         </tbody>
        </tgroup>
@@ -3559,8 +3559,9 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
       <replaceable class="parameter">y</replaceable>
       is the number of bits in the netmask.  If the
       <replaceable class="parameter">/y</replaceable>
-      portion is missing, the
-      netmask is 32 for IPv4 and 128 for IPv6, so the value represents
+      portion is omitted, the
+      netmask is taken to be 32 for IPv4 or 128 for IPv6,
+      so the value represents
       just a single host.  On display, the
       <replaceable class="parameter">/y</replaceable>
       portion is suppressed if the netmask specifies a single host.
@@ -3580,7 +3581,8 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
      conventions.
      The format for specifying networks is <replaceable
      class="parameter">address/y</replaceable> where <replaceable
-     class="parameter">address</replaceable> is the network represented as an
+     class="parameter">address</replaceable> is the network's lowest
+     address represented as an
      IPv4 or IPv6 address, and <replaceable
      class="parameter">y</replaceable> is the number of bits in the netmask.  If
      <replaceable class="parameter">y</replaceable> is omitted, it is calculated
@@ -3668,12 +3670,12 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
         <row>
          <entry>2001:4f8:3:ba::/64</entry>
          <entry>2001:4f8:3:ba::/64</entry>
-         <entry>2001:4f8:3:ba::/64</entry>
+         <entry>2001:4f8:3:ba/64</entry>
         </row>
         <row>
-         <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
-         <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1/128</entry>
-         <entry>2001:4f8:3:ba:2e0:81ff:fe22:d1f1</entry>
+         <entry>2001:4f8:3:ba:&zwsp;2e0:81ff:fe22:d1f1/128</entry>
+         <entry>2001:4f8:3:ba:&zwsp;2e0:81ff:fe22:d1f1/128</entry>
+         <entry>2001:4f8:3:ba:&zwsp;2e0:81ff:fe22:d1f1/128</entry>
         </row>
         <row>
          <entry>::ffff:1.2.3.0/120</entry>
@@ -3738,7 +3740,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
       <member><literal>'08002b010203'</literal></member>
      </simplelist>
 
-     These examples would all specify the same address.  Upper and
+     These examples all specify the same address.  Upper and
      lower case is accepted for the digits
      <literal>a</literal> through <literal>f</literal>.  Output is always in the
      first of the forms shown.
@@ -3805,14 +3807,17 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
       <member><literal>'08002b0102030405'</literal></member>
      </simplelist>
 
-     These examples would all specify the same address.  Upper and
+     These examples all specify the same address.  Upper and
      lower case is accepted for the digits
      <literal>a</literal> through <literal>f</literal>.  Output is always in the
      first of the forms shown.
+    </para>
 
-     The last six input formats that are mentioned above are not part
-     of any standard.
+    <para>
+     The last six input formats shown above are not part of any standard.
+    </para>
 
+    <para>
      To convert a traditional 48 bit MAC address in EUI-48 format to
      modified EUI-64 format to be included as the host portion of an
      IPv6 address, use <function>macaddr8_set7bit</function> as shown:
@@ -4655,7 +4660,8 @@ SELECT * FROM pg_attribute
         <entry><type>regoperator</type></entry>
         <entry><structname>pg_operator</structname></entry>
         <entry>operator with argument types</entry>
-        <entry><literal>*(integer,integer)</literal> or <literal>-(NONE,integer)</literal></entry>
+        <entry><literal>*(integer,&zwsp;integer)</literal>
+         or <literal>-(NONE,&zwsp;integer)</literal></entry>
        </row>
 
        <row>
