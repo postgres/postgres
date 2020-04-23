@@ -14,7 +14,7 @@
 
 #include "nodes/replnodes.h"
 
-struct manifest_info;			/* avoid including backup_manifest.h */
+struct backup_manifest_info;	/* avoid including backup_manifest.h */
 
 
 /*
@@ -34,6 +34,6 @@ typedef struct
 extern void SendBaseBackup(BaseBackupCmd *cmd);
 
 extern int64 sendTablespace(char *path, char *oid, bool sizeonly,
-							struct manifest_info *manifest);
+							struct backup_manifest_info *manifest);
 
 #endif							/* _BASEBACKUP_H */

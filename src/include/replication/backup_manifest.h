@@ -24,7 +24,7 @@ typedef enum manifest_option
 	MANIFEST_OPTION_FORCE_ENCODE
 } backup_manifest_option;
 
-typedef struct manifest_info
+typedef struct backup_manifest_info
 {
 	BufFile    *buffile;
 	pg_checksum_type checksum_type;
