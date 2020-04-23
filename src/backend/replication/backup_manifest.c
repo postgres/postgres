@@ -20,6 +20,8 @@
 #include "utils/builtins.h"
 #include "utils/json.h"
 
+static void AppendStringToManifest(backup_manifest_info *manifest, char *s);
+
 /*
  * Does the user want a backup manifest?
  *
@@ -28,7 +30,7 @@
  * want a manifest, we set manifest->buffile to NULL.
  */
 static inline bool
-IsManifestEnabled(manifest_info *manifest)
+IsManifestEnabled(backup_manifest_info *manifest)
 {
 	return (manifest->buffile != NULL);
 }
@@ -51,8 +53,9 @@ IsManifestEnabled(manifest_info *manifest)
  * SendBackupManifest.
  */
 void
-InitializeManifest(manifest_info *manifest, manifest_option want_manifest,
-				   pg_checksum_type manifest_checksum_type)
+InitializeBackupManifest(backup_manifest_info *manifest,
+						 backup_manifest_option want_manifest,
+						 pg_checksum_type manifest_checksum_type)
 {
 	if (want_manifest == MANIFEST_OPTION_NO)
 		manifest->buffile = NULL;
@@ -72,32 +75,12 @@ InitializeManifest(manifest_info *manifest, manifest_option want_manifest,
 }
 
 /*
- * Append a cstring to the manifest.
- */
-void
-AppendStringToManifest(manifest_info *manifest, char *s)
-{
-	int			len = strlen(s);
-	size_t		written;
-
-	Assert(manifest != NULL);
-	if (manifest->still_checksumming)
-		pg_sha256_update(&manifest->manifest_ctx, (uint8 *) s, len);
-	written = BufFileWrite(manifest->buffile, s, len);
-	if (written != len)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to temporary file: %m")));
-	manifest->manifest_size += len;
-}
-
-/*
  * Add an entry to the backup manifest for a file.
  */
 void
-AddFileToManifest(manifest_info *manifest, const char *spcoid,
-				  const char *pathname, size_t size, pg_time_t mtime,
-				  pg_checksum_context *checksum_ctx)
+AddFileToBackupManifest(backup_manifest_info *manifest, const char *spcoid,
+						const char *pathname, size_t size, pg_time_t mtime,
+						pg_checksum_context * checksum_ctx)
 {
 	char		pathbuf[MAXPGPATH];
 	int			pathlen;
@@ -203,8 +186,9 @@ AddFileToManifest(manifest_info *manifest, const char *spcoid,
  * this backup to the manifest.
  */
 void
-AddWALInfoToManifest(manifest_info *manifest, XLogRecPtr startptr,
-					 TimeLineID starttli, XLogRecPtr endptr, TimeLineID endtli)
+AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
+						   TimeLineID starttli, XLogRecPtr endptr,
+						   TimeLineID endtli)
 {
 	List	   *timelines;
 	ListCell   *lc;
@@ -299,7 +283,7 @@ AddWALInfoToManifest(manifest_info *manifest, XLogRecPtr startptr,
  * Finalize the backup manifest, and send it to the client.
  */
 void
-SendBackupManifest(manifest_info *manifest)
+SendBackupManifest(backup_manifest_info *manifest)
 {
 	StringInfoData protobuf;
 	uint8		checksumbuf[PG_SHA256_DIGEST_LENGTH];
@@ -372,4 +356,24 @@ SendBackupManifest(manifest_info *manifest)
 
 	/* Release resources */
 	BufFileClose(manifest->buffile);
+}
+
+/*
+ * Append a cstring to the manifest.
+ */
+static void
+AppendStringToManifest(backup_manifest_info *manifest, char *s)
+{
+	int			len = strlen(s);
+	size_t		written;
+
+	Assert(manifest != NULL);
+	if (manifest->still_checksumming)
+		pg_sha256_update(&manifest->manifest_ctx, (uint8 *) s, len);
+	written = BufFileWrite(manifest->buffile, s, len);
+	if (written != len)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write to temporary file: %m")));
+	manifest->manifest_size += len;
 }

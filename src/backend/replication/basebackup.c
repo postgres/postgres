@@ -54,18 +54,18 @@ typedef struct
 	bool		includewal;
 	uint32		maxrate;
 	bool		sendtblspcmapfile;
-	manifest_option manifest;
+	backup_manifest_option manifest;
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
 
 static int64 sendDir(const char *path, int basepathlen, bool sizeonly,
 					 List *tablespaces, bool sendtblspclinks,
-					 manifest_info *manifest, const char *spcoid);
+					 backup_manifest_info *manifest, const char *spcoid);
 static bool sendFile(const char *readfilename, const char *tarfilename,
 					 struct stat *statbuf, bool missing_ok, Oid dboid,
-					 manifest_info *manifest, const char *spcoid);
+					 backup_manifest_info *manifest, const char *spcoid);
 static void sendFileWithContent(const char *filename, const char *content,
-								manifest_info *manifest);
+								backup_manifest_info *manifest);
 static int64 _tarWriteHeader(const char *filename, const char *linktarget,
 							 struct stat *statbuf, bool sizeonly);
 static int64 _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
@@ -268,7 +268,7 @@ perform_base_backup(basebackup_options *opt)
 	TimeLineID	endtli;
 	StringInfo	labelfile;
 	StringInfo	tblspc_map_file = NULL;
-	manifest_info manifest;
+	backup_manifest_info manifest;
 	int			datadirpathlen;
 	List	   *tablespaces = NIL;
 
@@ -298,7 +298,8 @@ perform_base_backup(basebackup_options *opt)
 
 	labelfile = makeStringInfo();
 	tblspc_map_file = makeStringInfo();
-	InitializeManifest(&manifest, opt->manifest, opt->manifest_checksum_type);
+	InitializeBackupManifest(&manifest, opt->manifest,
+							 opt->manifest_checksum_type);
 
 	total_checksum_failures = 0;
 
@@ -710,7 +711,7 @@ perform_base_backup(basebackup_options *opt)
 		pq_putemptymessage('c');
 	}
 
-	AddWALInfoToManifest(&manifest, startptr, starttli, endptr, endtli);
+	AddWALInfoToBackupManifest(&manifest, startptr, starttli, endptr, endtli);
 
 	SendBackupManifest(&manifest);
 
@@ -1085,7 +1086,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
  */
 static void
 sendFileWithContent(const char *filename, const char *content,
-					manifest_info *manifest)
+					backup_manifest_info *manifest)
 {
 	struct stat statbuf;
 	int			pad,
@@ -1129,9 +1130,8 @@ sendFileWithContent(const char *filename, const char *content,
 	}
 
 	pg_checksum_update(&checksum_ctx, (uint8 *) content, len);
-	AddFileToManifest(manifest, NULL, filename, len,
-					  (pg_time_t) statbuf.st_mtime,
-					  &checksum_ctx);
+	AddFileToBackupManifest(manifest, NULL, filename, len,
+							(pg_time_t) statbuf.st_mtime, &checksum_ctx);
 }
 
 /*
@@ -1143,7 +1143,7 @@ sendFileWithContent(const char *filename, const char *content,
  */
 int64
 sendTablespace(char *path, char *spcoid, bool sizeonly,
-			   manifest_info *manifest)
+			   backup_manifest_info *manifest)
 {
 	int64		size;
 	char		pathbuf[MAXPGPATH];
@@ -1196,7 +1196,8 @@ sendTablespace(char *path, char *spcoid, bool sizeonly,
  */
 static int64
 sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
-		bool sendtblspclinks, manifest_info *manifest, const char *spcoid)
+		bool sendtblspclinks, backup_manifest_info *manifest,
+		const char *spcoid)
 {
 	DIR		   *dir;
 	struct dirent *de;
@@ -1558,7 +1559,7 @@ is_checksummed_file(const char *fullpath, const char *filename)
 static bool
 sendFile(const char *readfilename, const char *tarfilename,
 		 struct stat *statbuf, bool missing_ok, Oid dboid,
-		 manifest_info *manifest, const char *spcoid)
+		 backup_manifest_info *manifest, const char *spcoid)
 {
 	FILE	   *fp;
 	BlockNumber blkno = 0;
@@ -1810,8 +1811,8 @@ sendFile(const char *readfilename, const char *tarfilename,
 
 	total_checksum_failures += checksum_failures;
 
-	AddFileToManifest(manifest, spcoid, tarfilename, statbuf->st_size,
-					  (pg_time_t) statbuf->st_mtime, &checksum_ctx);
+	AddFileToBackupManifest(manifest, spcoid, tarfilename, statbuf->st_size,
+							(pg_time_t) statbuf->st_mtime, &checksum_ctx);
 
 	return true;
 }
