@@ -114,10 +114,23 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 	ReturnSetInfo rsinfo;
 	HeapTupleData tmptup;
 	MemoryContext callerContext;
-	MemoryContext oldcontext;
 	bool		first_time = true;
 
-	callerContext = CurrentMemoryContext;
+	/*
+	 * Execute per-tablefunc actions in appropriate context.
+	 *
+	 * The FunctionCallInfo needs to live across all the calls to a
+	 * ValuePerCall function, so it can't be allocated in the per-tuple
+	 * context. Similarly, the function arguments need to be evaluated in a
+	 * context that is longer lived than the per-tuple context: The argument
+	 * values would otherwise disappear when we reset that context in the
+	 * inner loop.  As the caller's CurrentMemoryContext is typically a
+	 * query-lifespan context, we don't want to leak memory there.  We require
+	 * the caller to pass a separate memory context that can be used for this,
+	 * and can be reset each time through to avoid bloat.
+	 */
+	MemoryContextReset(argContext);
+	callerContext = MemoryContextSwitchTo(argContext);
 
 	funcrettype = exprType((Node *) setexpr->expr);
 
@@ -163,21 +176,9 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 								 list_length(setexpr->args),
 								 setexpr->fcinfo->fncollation,
 								 NULL, (Node *) &rsinfo);
-
-		/*
-		 * Evaluate the function's argument list.
-		 *
-		 * We can't do this in the per-tuple context: the argument values
-		 * would disappear when we reset that context in the inner loop.  And
-		 * the caller's CurrentMemoryContext is typically a query-lifespan
-		 * context, so we don't want to leak memory there.  We require the
-		 * caller to pass a separate memory context that can be used for this,
-		 * and can be reset each time through to avoid bloat.
-		 */
-		MemoryContextReset(argContext);
-		oldcontext = MemoryContextSwitchTo(argContext);
+		/* evaluate the function's argument list */
+		Assert(CurrentMemoryContext == argContext);
 		ExecEvalFuncArgs(fcinfo, setexpr->args, econtext);
-		MemoryContextSwitchTo(oldcontext);
 
 		/*
 		 * If function is strict, and there are any NULL arguments, skip
@@ -217,7 +218,7 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		 * reset per-tuple memory context before each call of the function or
+		 * Reset per-tuple memory context before each call of the function or
 		 * expression. This cleans up any local memory the function may leak
 		 * when called.
 		 */
@@ -257,7 +258,9 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 			 */
 			if (first_time)
 			{
-				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+				MemoryContext oldcontext =
+					MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+
 				tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 				rsinfo.setResult = tupstore;
 				if (!returnsTuple)
@@ -285,13 +288,15 @@ ExecMakeTableFunctionResult(SetExprState *setexpr,
 
 					if (tupdesc == NULL)
 					{
+						MemoryContext oldcontext =
+							MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+
 						/*
 						 * This is the first non-NULL result from the
 						 * function.  Use the type info embedded in the
 						 * rowtype Datum to look up the needed tupdesc.  Make
 						 * a copy for the query.
 						 */
-						oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 						tupdesc = lookup_rowtype_tupdesc_copy(HeapTupleHeaderGetTypeId(td),
 															  HeapTupleHeaderGetTypMod(td));
 						rsinfo.setDesc = tupdesc;
@@ -378,15 +383,18 @@ no_function_result:
 	 */
 	if (rsinfo.setResult == NULL)
 	{
-		MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+		MemoryContext oldcontext =
+			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+
 		tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 		rsinfo.setResult = tupstore;
+		MemoryContextSwitchTo(oldcontext);
+
 		if (!returnsSet)
 		{
 			int			natts = expectedDesc->natts;
 			bool	   *nullflags;
 
-			MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 			nullflags = (bool *) palloc(natts * sizeof(bool));
 			memset(nullflags, true, natts * sizeof(bool));
 			tuplestore_putvalues(tupstore, expectedDesc, NULL, nullflags);
