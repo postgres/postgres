@@ -742,590 +742,719 @@ static const struct
 	 * listed in the win32 display name (in the comment here) in most cases.
 	 */
 	{
+		/* (UTC+04:30) Kabul */
 		"Afghanistan Standard Time", "Afghanistan Daylight Time",
 		"Asia/Kabul"
-	},							/* (UTC+04:30) Kabul */
+	},
 	{
+		/* (UTC-09:00) Alaska */
 		"Alaskan Standard Time", "Alaskan Daylight Time",
 		"US/Alaska"
-	},							/* (UTC-09:00) Alaska */
+	},
 	{
+		/* (UTC-10:00) Aleutian Islands */
 		"Aleutian Standard Time", "Aleutian Daylight Time",
 		"US/Aleutan"
-	},							/* (UTC-10:00) Aleutian Islands */
+	},
 	{
+		/* (UTC+07:00) Barnaul, Gorno-Altaysk */
 		"Altai Standard Time", "Altai Daylight Time",
 		"Asia/Barnaul"
-	},							/* (UTC+07:00) Barnaul, Gorno-Altaysk */
+	},
 	{
+		/* (UTC+03:00) Kuwait, Riyadh */
 		"Arab Standard Time", "Arab Daylight Time",
 		"Asia/Kuwait"
-	},							/* (UTC+03:00) Kuwait, Riyadh */
+	},
 	{
+		/* (UTC+04:00) Abu Dhabi, Muscat */
 		"Arabian Standard Time", "Arabian Daylight Time",
 		"Asia/Muscat"
-	},							/* (UTC+04:00) Abu Dhabi, Muscat */
+	},
 	{
+		/* (UTC+03:00) Baghdad */
 		"Arabic Standard Time", "Arabic Daylight Time",
 		"Asia/Baghdad"
-	},							/* (UTC+03:00) Baghdad */
+	},
 	{
+		/* (UTC-03:00) City of Buenos Aires */
 		"Argentina Standard Time", "Argentina Daylight Time",
 		"America/Buenos_Aires"
-	},							/* (UTC-03:00) City of Buenos Aires */
+	},
 	{
+		/* (UTC+04:00) Baku, Tbilisi, Yerevan */
 		"Armenian Standard Time", "Armenian Daylight Time",
 		"Asia/Yerevan"
-	},							/* (UTC+04:00) Baku, Tbilisi, Yerevan */
+	},
 	{
+		/* (UTC+04:00) Astrakhan, Ulyanovsk */
 		"Astrakhan Standard Time", "Astrakhan Daylight Time",
 		"Europe/Astrakhan"
-	},							/* (UTC+04:00) Astrakhan, Ulyanovsk */
+	},
 	{
+		/* (UTC-04:00) Atlantic Time (Canada) */
 		"Atlantic Standard Time", "Atlantic Daylight Time",
 		"Canada/Atlantic"
-	},							/* (UTC-04:00) Atlantic Time (Canada) */
+	},
 	{
+		/* (UTC+09:30) Darwin */
 		"AUS Central Standard Time", "AUS Central Daylight Time",
 		"Australia/Darwin"
-	},							/* (UTC+09:30) Darwin */
+	},
 	{
+		/* (UTC+08:45) Eucla */
 		"Aus Central W. Standard Time", "Aus Central W. Daylight Time",
 		"Australia/Eucla"
-	},							/* (UTC+08:45) Eucla */
+	},
 	{
+		/* (UTC+10:00) Canberra, Melbourne, Sydney */
 		"AUS Eastern Standard Time", "AUS Eastern Daylight Time",
 		"Australia/Canberra"
-	},							/* (UTC+10:00) Canberra, Melbourne, Sydney */
+	},
 	{
+		/* (UTC+04:00) Baku */
 		"Azerbaijan Standard Time", "Azerbaijan Daylight Time",
 		"Asia/Baku"
-	},							/* (UTC+04:00) Baku */
+	},
 	{
+		/* (UTC-01:00) Azores */
 		"Azores Standard Time", "Azores Daylight Time",
 		"Atlantic/Azores"
-	},							/* (UTC-01:00) Azores */
+	},
 	{
+		/* (UTC-03:00) Salvador */
 		"Bahia Standard Time", "Bahia Daylight Time",
 		"America/Salvador"
-	},							/* (UTC-03:00) Salvador */
+	},
 	{
+		/* (UTC+06:00) Dhaka */
 		"Bangladesh Standard Time", "Bangladesh Daylight Time",
 		"Asia/Dhaka"
-	},							/* (UTC+06:00) Dhaka */
+	},
 	{
+		/* (UTC+11:00) Bougainville Island */
 		"Bougainville Standard Time", "Bougainville Daylight Time",
 		"Pacific/Bougainville"
-	},							/* (UTC+11:00) Bougainville Island */
+	},
 	{
+		/* (UTC+03:00) Minsk */
 		"Belarus Standard Time", "Belarus Daylight Time",
 		"Europe/Minsk"
-	},							/* (UTC+03:00) Minsk */
+	},
 	{
+		/* (UTC-01:00) Cabo Verde Is. */
 		"Cabo Verde Standard Time", "Cabo Verde Daylight Time",
 		"Atlantic/Cape_Verde"
-	},							/* (UTC-01:00) Cabo Verde Is. */
+	},
 	{
+		/* (UTC+12:45) Chatham Islands */
 		"Chatham Islands Standard Time", "Chatham Islands Daylight Time",
 		"Pacific/Chatham"
-	},							/* (UTC+12:45) Chatham Islands */
+	},
 	{
+		/* (UTC-06:00) Saskatchewan */
 		"Canada Central Standard Time", "Canada Central Daylight Time",
 		"Canada/Saskatchewan"
-	},							/* (UTC-06:00) Saskatchewan */
+	},
 	{
+		/* (UTC-01:00) Cape Verde Is. */
 		"Cape Verde Standard Time", "Cape Verde Daylight Time",
 		"Atlantic/Cape_Verde"
-	},							/* (UTC-01:00) Cape Verde Is. */
+	},
 	{
+		/* (UTC+04:00) Yerevan */
 		"Caucasus Standard Time", "Caucasus Daylight Time",
 		"Asia/Baku"
-	},							/* (UTC+04:00) Yerevan */
+	},
 	{
+		/* (UTC+09:30) Adelaide */
 		"Cen. Australia Standard Time", "Cen. Australia Daylight Time",
 		"Australia/Adelaide"
-	},							/* (UTC+09:30) Adelaide */
+	},
 	/* Central America (other than Mexico) generally does not observe DST */
 	{
+		/* (UTC-06:00) Central America */
 		"Central America Standard Time", "Central America Daylight Time",
 		"CST6"
-	},							/* (UTC-06:00) Central America */
+	},
 	{
+		/* (UTC+06:00) Astana */
 		"Central Asia Standard Time", "Central Asia Daylight Time",
 		"Asia/Dhaka"
-	},							/* (UTC+06:00) Astana */
+	},
 	{
+		/* (UTC-04:00) Cuiaba */
 		"Central Brazilian Standard Time", "Central Brazilian Daylight Time",
 		"America/Cuiaba"
-	},							/* (UTC-04:00) Cuiaba */
+	},
 	{
+		/* (UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague */
 		"Central Europe Standard Time", "Central Europe Daylight Time",
 		"Europe/Belgrade"
-	},							/* (UTC+01:00) Belgrade, Bratislava, Budapest,
-								 * Ljubljana, Prague */
+	},
 	{
+		/* (UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb */
 		"Central European Standard Time", "Central European Daylight Time",
 		"Europe/Sarajevo"
-	},							/* (UTC+01:00) Sarajevo, Skopje, Warsaw,
-								 * Zagreb */
+	},
 	{
+		/* (UTC+11:00) Solomon Is., New Caledonia */
 		"Central Pacific Standard Time", "Central Pacific Daylight Time",
 		"Pacific/Noumea"
-	},							/* (UTC+11:00) Solomon Is., New Caledonia */
+	},
 	{
+		/* (UTC-06:00) Central Time (US & Canada) */
 		"Central Standard Time", "Central Daylight Time",
 		"US/Central"
-	},							/* (UTC-06:00) Central Time (US & Canada) */
+	},
 	{
+		/* (UTC-06:00) Guadalajara, Mexico City, Monterrey */
 		"Central Standard Time (Mexico)", "Central Daylight Time (Mexico)",
 		"America/Mexico_City"
-	},							/* (UTC-06:00) Guadalajara, Mexico City,
-								 * Monterrey */
+	},
 	{
+		/* (UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi */
 		"China Standard Time", "China Daylight Time",
 		"Asia/Hong_Kong"
-	},							/* (UTC+08:00) Beijing, Chongqing, Hong Kong,
-								 * Urumqi */
+	},
 	{
+		/* (UTC-05:00) Havana */
 		"Cuba Standard Time", "Cuba Daylight Time",
 		"America/Havana"
-	},							/* (UTC-05:00) Havana */
+	},
 	{
+		/* (UTC-12:00) International Date Line West */
 		"Dateline Standard Time", "Dateline Daylight Time",
 		"Etc/UTC+12"
-	},							/* (UTC-12:00) International Date Line West */
+	},
 	{
+		/* (UTC+03:00) Nairobi */
 		"E. Africa Standard Time", "E. Africa Daylight Time",
 		"Africa/Nairobi"
-	},							/* (UTC+03:00) Nairobi */
+	},
 	{
+		/* (UTC+10:00) Brisbane */
 		"E. Australia Standard Time", "E. Australia Daylight Time",
 		"Australia/Brisbane"
-	},							/* (UTC+10:00) Brisbane */
+	},
 	{
+		/* (UTC+02:00) E. Europe */
 		"E. Europe Standard Time", "E. Europe Daylight Time",
 		"Europe/Bucharest"
-	},							/* (UTC+02:00) E. Europe */
+	},
 	{
+		/* (UTC-03:00) Brasilia */
 		"E. South America Standard Time", "E. South America Daylight Time",
 		"America/Araguaina"
-	},							/* (UTC-03:00) Brasilia */
+	},
 	{
+		/* (UTC-05:00) Eastern Time (US & Canada) */
 		"Eastern Standard Time", "Eastern Daylight Time",
 		"US/Eastern"
-	},							/* (UTC-05:00) Eastern Time (US & Canada) */
+	},
 	{
+		/* (UTC-05:00) Chetumal */
 		"Eastern Standard Time (Mexico)", "Eastern Daylight Time (Mexico)",
 		"America/Mexico_City"
-	},							/* (UTC-05:00) Chetumal */
+	},
 	{
+		/* (UTC-06:00) Easter Island */
 		"Easter Island Standard Time", "Easter Island Daylight Time",
 		"Pacific/Easter"
-	},							/* (UTC-06:00) Easter Island */
+	},
 	{
+		/* (UTC+02:00) Cairo */
 		"Egypt Standard Time", "Egypt Daylight Time",
 		"Africa/Cairo"
-	},							/* (UTC+02:00) Cairo */
+	},
 	{
+		/* (UTC+05:00) Ekaterinburg */
 		"Ekaterinburg Standard Time (RTZ 4)", "Ekaterinburg Daylight Time",
 		"Asia/Yekaterinburg"
-	},							/* (UTC+05:00) Ekaterinburg */
+	},
 	{
+		/* (UTC+12:00) Fiji */
 		"Fiji Standard Time", "Fiji Daylight Time",
 		"Pacific/Fiji"
-	},							/* (UTC+12:00) Fiji */
+	},
 	{
+		/* (UTC+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius */
 		"FLE Standard Time", "FLE Daylight Time",
 		"Europe/Helsinki"
-	},							/* (UTC+02:00) Helsinki, Kyiv, Riga, Sofia,
-								 * Tallinn, Vilnius */
+	},
 	{
+		/* (UTC+04:00) Tbilisi */
 		"Georgian Standard Time", "Georgian Daylight Time",
 		"Asia/Tbilisi"
-	},							/* (UTC+04:00) Tbilisi */
+	},
 	{
+		/* (UTC) Dublin, Edinburgh, Lisbon, London */
 		"GMT Standard Time", "GMT Daylight Time",
 		"Europe/London"
-	},							/* (UTC) Dublin, Edinburgh, Lisbon, London */
+	},
 	{
+		/* (UTC-03:00) Greenland */
 		"Greenland Standard Time", "Greenland Daylight Time",
 		"America/Godthab"
-	},							/* (UTC-03:00) Greenland */
+	},
 	{
+		/* (UTC) Monrovia, Reykjavik */
 		"Greenwich Standard Time", "Greenwich Daylight Time",
 		"Africa/Casablanca"
-	},							/* (UTC) Monrovia, Reykjavik */
+	},
 	{
+		/* (UTC+02:00) Athens, Bucharest */
 		"GTB Standard Time", "GTB Daylight Time",
 		"Europe/Athens"
-	},							/* (UTC+02:00) Athens, Bucharest */
+	},
 	{
+		/* (UTC-05:00) Haiti */
 		"Haiti Standard Time", "Haiti Daylight Time",
 		"US/Eastern"
-	},							/* (UTC-05:00) Haiti */
+	},
 	{
+		/* (UTC-10:00) Hawaii */
 		"Hawaiian Standard Time", "Hawaiian Daylight Time",
 		"US/Hawaii"
-	},							/* (UTC-10:00) Hawaii */
+	},
 	{
+		/* (UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi */
 		"India Standard Time", "India Daylight Time",
 		"Asia/Calcutta"
-	},							/* (UTC+05:30) Chennai, Kolkata, Mumbai, New
-								 * Delhi */
+	},
 	{
+		/* (UTC+03:30) Tehran */
 		"Iran Standard Time", "Iran Daylight Time",
 		"Asia/Tehran"
-	},							/* (UTC+03:30) Tehran */
+	},
 	{
+		/* (UTC+02:00) Jerusalem */
 		"Jerusalem Standard Time", "Jerusalem Daylight Time",
 		"Asia/Jerusalem"
-	},							/* (UTC+02:00) Jerusalem */
+	},
 	{
+		/* (UTC+02:00) Amman */
 		"Jordan Standard Time", "Jordan Daylight Time",
 		"Asia/Amman"
-	},							/* (UTC+02:00) Amman */
+	},
 	{
+		/* (UTC+12:00) Petropavlovsk-Kamchatsky - Old */
 		"Kamchatka Standard Time", "Kamchatka Daylight Time",
 		"Asia/Kamchatka"
-	},							/* (UTC+12:00) Petropavlovsk-Kamchatsky - Old */
+	},
 	{
+		/* (UTC+09:00) Seoul */
 		"Korea Standard Time", "Korea Daylight Time",
 		"Asia/Seoul"
-	},							/* (UTC+09:00) Seoul */
+	},
 	{
+		/* (UTC+02:00) Tripoli */
 		"Libya Standard Time", "Libya Daylight Time",
 		"Africa/Tripoli"
-	},							/* (UTC+02:00) Tripoli */
+	},
 	{
+		/* (UTC+14:00) Kiritimati Island */
 		"Line Islands Standard Time", "Line Islands Daylight Time",
 		"Pacific/Kiritimati"
-	},							/* (UTC+14:00) Kiritimati Island */
+	},
 	{
+		/* (UTC+10:30) Lord Howe Island */
 		"Lord Howe Standard Time", "Lord Howe Daylight Time",
 		"Australia/Lord_Howe"
-	},							/* (UTC+10:30) Lord Howe Island */
+	},
 	{
+		/* (UTC+10:00) Magadan */
 		"Magadan Standard Time", "Magadan Daylight Time",
 		"Asia/Magadan"
-	},							/* (UTC+10:00) Magadan */
+	},
 	{
+		/* (UTC-09:30) Marquesas Islands */
 		"Marquesas Standard Time", "Marquesas Daylight Time",
 		"Pacific/Marquesas"
-	},							/* (UTC-09:30) Marquesas Islands */
+	},
 	{
+		/* (UTC+04:00) Port Louis */
 		"Mauritius Standard Time", "Mauritius Daylight Time",
 		"Indian/Mauritius"
-	},							/* (UTC+04:00) Port Louis */
+	},
 	{
+		/* (UTC-06:00) Guadalajara, Mexico City, Monterrey */
 		"Mexico Standard Time", "Mexico Daylight Time",
 		"America/Mexico_City"
-	},							/* (UTC-06:00) Guadalajara, Mexico City,
-								 * Monterrey */
+	},
 	{
+		/* (UTC-07:00) Chihuahua, La Paz, Mazatlan */
 		"Mexico Standard Time 2", "Mexico Daylight Time 2",
 		"America/Chihuahua"
-	},							/* (UTC-07:00) Chihuahua, La Paz, Mazatlan */
+	},
 	{
+		/* (UTC-02:00) Mid-Atlantic - Old */
 		"Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time",
 		"Atlantic/South_Georgia"
-	},							/* (UTC-02:00) Mid-Atlantic - Old */
+	},
 	{
+		/* (UTC+02:00) Beirut */
 		"Middle East Standard Time", "Middle East Daylight Time",
 		"Asia/Beirut"
-	},							/* (UTC+02:00) Beirut */
+	},
 	{
+		/* (UTC-03:00) Montevideo */
 		"Montevideo Standard Time", "Montevideo Daylight Time",
 		"America/Montevideo"
-	},							/* (UTC-03:00) Montevideo */
+	},
 	{
+		/* (UTC) Casablanca */
 		"Morocco Standard Time", "Morocco Daylight Time",
 		"Africa/Casablanca"
-	},							/* (UTC) Casablanca */
+	},
 	{
+		/* (UTC-07:00) Mountain Time (US & Canada) */
 		"Mountain Standard Time", "Mountain Daylight Time",
 		"US/Mountain"
-	},							/* (UTC-07:00) Mountain Time (US & Canada) */
+	},
 	{
+		/* (UTC-07:00) Chihuahua, La Paz, Mazatlan */
 		"Mountain Standard Time (Mexico)", "Mountain Daylight Time (Mexico)",
 		"America/Chihuahua"
-	},							/* (UTC-07:00) Chihuahua, La Paz, Mazatlan */
+	},
 	{
+		/* (UTC+06:30) Yangon (Rangoon) */
 		"Myanmar Standard Time", "Myanmar Daylight Time",
 		"Asia/Rangoon"
-	},							/* (UTC+06:30) Yangon (Rangoon) */
+	},
 	{
+		/* (UTC+06:00) Novosibirsk (RTZ 5) */
 		"N. Central Asia Standard Time", "N. Central Asia Daylight Time",
 		"Asia/Novosibirsk"
-	},							/* (UTC+06:00) Novosibirsk (RTZ 5) */
+	},
 	{
+		/* (UTC+01:00) Windhoek */
 		"Namibia Standard Time", "Namibia Daylight Time",
 		"Africa/Windhoek"
-	},							/* (UTC+01:00) Windhoek */
+	},
 	{
+		/* (UTC+05:45) Kathmandu */
 		"Nepal Standard Time", "Nepal Daylight Time",
 		"Asia/Katmandu"
-	},							/* (UTC+05:45) Kathmandu */
+	},
 	{
+		/* (UTC+12:00) Auckland, Wellington */
 		"New Zealand Standard Time", "New Zealand Daylight Time",
 		"Pacific/Auckland"
-	},							/* (UTC+12:00) Auckland, Wellington */
+	},
 	{
+		/* (UTC-03:30) Newfoundland */
 		"Newfoundland Standard Time", "Newfoundland Daylight Time",
 		"Canada/Newfoundland"
-	},							/* (UTC-03:30) Newfoundland */
+	},
 	{
+		/* (UTC+11:00) Norfolk Island */
 		"Norfolk Standard Time", "Norfolk Daylight Time",
 		"Pacific/Norfolk"
-	},							/* (UTC+11:00) Norfolk Island */
+	},
 	{
+		/* (UTC+08:00) Irkutsk, Ulaan Bataar */
 		"North Asia East Standard Time", "North Asia East Daylight Time",
 		"Asia/Irkutsk"
-	},							/* (UTC+08:00) Irkutsk, Ulaan Bataar */
+	},
 	{
+		/* (UTC+07:00) Krasnoyarsk */
 		"North Asia Standard Time", "North Asia Daylight Time",
 		"Asia/Krasnoyarsk"
-	},							/* (UTC+07:00) Krasnoyarsk */
+	},
 	{
+		/* (UTC+08:30) Pyongyang */
 		"North Korea Standard Time", "North Korea Daylight Time",
 		"Asia/Pyongyang"
-	},							/* (UTC+08:30) Pyongyang */
+	},
 	{
+		/* (UTC-03:00) Santiago */
 		"Pacific SA Standard Time", "Pacific SA Daylight Time",
 		"America/Santiago"
-	},							/* (UTC-03:00) Santiago */
+	},
 	{
+		/* (UTC-08:00) Pacific Time (US & Canada) */
 		"Pacific Standard Time", "Pacific Daylight Time",
 		"US/Pacific"
-	},							/* (UTC-08:00) Pacific Time (US & Canada) */
+	},
 	{
+		/* (UTC-08:00) Baja California */
 		"Pacific Standard Time (Mexico)", "Pacific Daylight Time (Mexico)",
 		"America/Tijuana"
-	},							/* (UTC-08:00) Baja California */
+	},
 	{
+		/* (UTC+05:00) Islamabad, Karachi */
 		"Pakistan Standard Time", "Pakistan Daylight Time",
 		"Asia/Karachi"
-	},							/* (UTC+05:00) Islamabad, Karachi */
+	},
 	{
+		/* (UTC-04:00) Asuncion */
 		"Paraguay Standard Time", "Paraguay Daylight Time",
 		"America/Asuncion"
-	},							/* (UTC-04:00) Asuncion */
+	},
 	{
+		/* (UTC+01:00) Brussels, Copenhagen, Madrid, Paris */
 		"Romance Standard Time", "Romance Daylight Time",
 		"Europe/Brussels"
-	},							/* (UTC+01:00) Brussels, Copenhagen, Madrid,
-								 * Paris */
+	},
 	{
+		/* (UTC+02:00) Kaliningrad (RTZ 1) */
 		"Russia TZ 1 Standard Time", "Russia TZ 1 Daylight Time",
 		"Europe/Kaliningrad"
-	},							/* (UTC+02:00) Kaliningrad (RTZ 1) */
+	},
 	{
+		/* (UTC+03:00) Moscow, St. Petersburg, Volgograd (RTZ 2) */
 		"Russia TZ 2 Standard Time", "Russia TZ 2 Daylight Time",
 		"Europe/Moscow"
-	},							/* (UTC+03:00) Moscow, St. Petersburg,
-								 * Volgograd (RTZ 2) */
+	},
 	{
+		/* (UTC+04:00) Izhevsk, Samara (RTZ 3) */
 		"Russia TZ 3 Standard Time", "Russia TZ 3 Daylight Time",
 		"Europe/Samara"
-	},							/* (UTC+04:00) Izhevsk, Samara (RTZ 3) */
+	},
 	{
+		/* (UTC+05:00) Ekaterinburg (RTZ 4) */
 		"Russia TZ 4 Standard Time", "Russia TZ 4 Daylight Time",
 		"Asia/Yekaterinburg"
-	},							/* (UTC+05:00) Ekaterinburg (RTZ 4) */
+	},
 	{
+		/* (UTC+06:00) Novosibirsk (RTZ 5) */
 		"Russia TZ 5 Standard Time", "Russia TZ 5 Daylight Time",
 		"Asia/Novosibirsk"
-	},							/* (UTC+06:00) Novosibirsk (RTZ 5) */
+	},
 	{
+		/* (UTC+07:00) Krasnoyarsk (RTZ 6) */
 		"Russia TZ 6 Standard Time", "Russia TZ 6 Daylight Time",
 		"Asia/Krasnoyarsk"
-	},							/* (UTC+07:00) Krasnoyarsk (RTZ 6) */
+	},
 	{
+		/* (UTC+08:00) Irkutsk (RTZ 7) */
 		"Russia TZ 7 Standard Time", "Russia TZ 7 Daylight Time",
 		"Asia/Irkutsk"
-	},							/* (UTC+08:00) Irkutsk (RTZ 7) */
+	},
 	{
+		/* (UTC+09:00) Yakutsk (RTZ 8) */
 		"Russia TZ 8 Standard Time", "Russia TZ 8 Daylight Time",
 		"Asia/Yakutsk"
-	},							/* (UTC+09:00) Yakutsk (RTZ 8) */
+	},
 	{
+		/* (UTC+10:00) Vladivostok, Magadan (RTZ 9) */
 		"Russia TZ 9 Standard Time", "Russia TZ 9 Daylight Time",
 		"Asia/Vladivostok"
-	},							/* (UTC+10:00) Vladivostok, Magadan (RTZ 9) */
+	},
 	{
+		/* (UTC+11:00) Chokurdakh (RTZ 10) */
 		"Russia TZ 10 Standard Time", "Russia TZ 10 Daylight Time",
 		"Asia/Magadan"
-	},							/* (UTC+11:00) Chokurdakh (RTZ 10) */
+	},
 	{
+		/* (UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky (RTZ 11) */
 		"Russia TZ 11 Standard Time", "Russia TZ 11 Daylight Time",
 		"Asia/Anadyr"
-	},							/* (UTC+12:00) Anadyr,
-								 * Petropavlovsk-Kamchatsky (RTZ 11) */
+	},
 	{
+		/* (UTC+03:00) Moscow, St. Petersburg, Volgograd */
 		"Russian Standard Time", "Russian Daylight Time",
 		"Europe/Moscow"
-	},							/* (UTC+03:00) Moscow, St. Petersburg,
-								 * Volgograd */
+	},
 	{
+		/* (UTC-03:00) Cayenne, Fortaleza */
 		"SA Eastern Standard Time", "SA Eastern Daylight Time",
 		"America/Buenos_Aires"
-	},							/* (UTC-03:00) Cayenne, Fortaleza */
+	},
 	{
+		/* (UTC-05:00) Bogota, Lima, Quito, Rio Branco */
 		"SA Pacific Standard Time", "SA Pacific Daylight Time",
 		"America/Bogota"
-	},							/* (UTC-05:00) Bogota, Lima, Quito, Rio Branco */
+	},
 	{
+		/* (UTC-04:00) Georgetown, La Paz, Manaus, San Juan */
 		"SA Western Standard Time", "SA Western Daylight Time",
 		"America/Caracas"
-	},							/* (UTC-04:00) Georgetown, La Paz, Manaus, San
-								 * Juan */
+	},
 	{
+		/* (UTC-03:00) Saint Pierre and Miquelon */
 		"Saint Pierre Standard Time", "Saint Pierre Daylight Time",
 		"America/Miquelon"
-	},							/* (UTC-03:00) Saint Pierre and Miquelon */
+	},
 	{
+		/* (UTC+13:00) Samoa */
 		"Samoa Standard Time", "Samoa Daylight Time",
 		"Pacific/Samoa"
-	},							/* (UTC+13:00) Samoa */
+	},
 	{
+		/* (UTC+07:00) Bangkok, Hanoi, Jakarta */
 		"SE Asia Standard Time", "SE Asia Daylight Time",
 		"Asia/Bangkok"
-	},							/* (UTC+07:00) Bangkok, Hanoi, Jakarta */
+	},
 	{
+		/* (UTC+08:00) Kuala Lumpur, Singapore */
 		"Malay Peninsula Standard Time", "Malay Peninsula Daylight Time",
 		"Asia/Kuala_Lumpur"
-	},							/* (UTC+08:00) Kuala Lumpur, Singapore */
+	},
 	{
+		/* (UTC+11:00) Sakhalin */
 		"Sakhalin Standard Time", "Sakhalin Daylight Time",
 		"Asia/Sakhalin"
-	},							/* (UTC+11:00) Sakhalin */
+	},
 	{
+		/* (UTC+02:00) Harare, Pretoria */
 		"South Africa Standard Time", "South Africa Daylight Time",
 		"Africa/Harare"
-	},							/* (UTC+02:00) Harare, Pretoria */
+	},
 	{
+		/* (UTC+05:30) Sri Jayawardenepura */
 		"Sri Lanka Standard Time", "Sri Lanka Daylight Time",
 		"Asia/Colombo"
-	},							/* (UTC+05:30) Sri Jayawardenepura */
+	},
 	{
+		/* (UTC+02:00) Damascus */
 		"Syria Standard Time", "Syria Daylight Time",
 		"Asia/Damascus"
-	},							/* (UTC+02:00) Damascus */
+	},
 	{
+		/* (UTC+08:00) Taipei */
 		"Taipei Standard Time", "Taipei Daylight Time",
 		"Asia/Taipei"
-	},							/* (UTC+08:00) Taipei */
+	},
 	{
+		/* (UTC+10:00) Hobart */
 		"Tasmania Standard Time", "Tasmania Daylight Time",
 		"Australia/Hobart"
-	},							/* (UTC+10:00) Hobart */
+	},
 	{
+		/* (UTC-03:00) Araguaina */
 		"Tocantins Standard Time", "Tocantins Daylight Time",
 		"America/Araguaina"
-	},							/* (UTC-03:00) Araguaina */
+	},
 	{
+		/* (UTC+09:00) Osaka, Sapporo, Tokyo */
 		"Tokyo Standard Time", "Tokyo Daylight Time",
 		"Asia/Tokyo"
-	},							/* (UTC+09:00) Osaka, Sapporo, Tokyo */
+	},
 	{
+		/* (UTC+13:00) Nuku'alofa */
 		"Tonga Standard Time", "Tonga Daylight Time",
 		"Pacific/Tongatapu"
-	},							/* (UTC+13:00) Nuku'alofa */
+	},
 	{
+		/* (UTC+07:00) Tomsk */
 		"Tomsk Standard Time", "Tomsk Daylight Time",
 		"Asia/Tomsk"
-	},							/* (UTC+07:00) Tomsk */
+	},
 	{
+		/* (UTC+09:00) Chita */
 		"Transbaikal Standard Time", "Transbaikal Daylight Time",
 		"Asia/Chita"
-	},							/* (UTC+09:00) Chita */
+	},
 	{
+		/* (UTC+02:00) Istanbul */
 		"Turkey Standard Time", "Turkey Daylight Time",
 		"Europe/Istanbul"
-	},							/* (UTC+02:00) Istanbul */
+	},
 	{
+		/* (UTC-04:00) Turks and Caicos */
 		"Turks and Caicos Standard Time", "Turks and Caicos Daylight Time",
 		"America/Grand_Turk"
-	},							/* (UTC-04:00) Turks and Caicos */
+	},
 	{
+		/* (UTC+08:00) Ulaanbaatar */
 		"Ulaanbaatar Standard Time", "Ulaanbaatar Daylight Time",
 		"Asia/Ulaanbaatar",
-	},							/* (UTC+08:00) Ulaanbaatar */
+	},
 	{
+		/* (UTC-05:00) Indiana (East) */
 		"US Eastern Standard Time", "US Eastern Daylight Time",
 		"US/Eastern"
-	},							/* (UTC-05:00) Indiana (East) */
+	},
 	{
+		/* (UTC-07:00) Arizona */
 		"US Mountain Standard Time", "US Mountain Daylight Time",
 		"US/Arizona"
-	},							/* (UTC-07:00) Arizona */
+	},
 	{
+		/* (UTC) Coordinated Universal Time */
 		"Coordinated Universal Time", "Coordinated Universal Time",
 		"UTC"
-	},							/* (UTC) Coordinated Universal Time */
+	},
 	{
+		/* (UTC+12:00) Coordinated Universal Time+12 */
 		"UTC+12", "UTC+12",
 		"Etc/GMT+12"
-	},							/* (UTC+12:00) Coordinated Universal Time+12 */
+	},
 	{
+		/* (UTC-02:00) Coordinated Universal Time-02 */
 		"UTC-02", "UTC-02",
 		"Etc/GMT-02"
-	},							/* (UTC-02:00) Coordinated Universal Time-02 */
+	},
 	{
+		/* (UTC-08:00) Coordinated Universal Time-08 */
 		"UTC-08", "UTC-08",
 		"Etc/GMT-08"
-	},							/* (UTC-08:00) Coordinated Universal Time-08 */
+	},
 	{
+		/* (UTC-09:00) Coordinated Universal Time-09 */
 		"UTC-09", "UTC-09",
 		"Etc/GMT-09"
-	},							/* (UTC-09:00) Coordinated Universal Time-09 */
+	},
 	{
+		/* (UTC-11:00) Coordinated Universal Time-11 */
 		"UTC-11", "UTC-11",
 		"Etc/GMT-11"
-	},							/* (UTC-11:00) Coordinated Universal Time-11 */
+	},
 	{
+		/* (UTC-04:30) Caracas */
 		"Venezuela Standard Time", "Venezuela Daylight Time",
 		"America/Caracas",
-	},							/* (UTC-04:30) Caracas */
+	},
 	{
+		/* (UTC+10:00) Vladivostok (RTZ 9) */
 		"Vladivostok Standard Time", "Vladivostok Daylight Time",
 		"Asia/Vladivostok"
-	},							/* (UTC+10:00) Vladivostok (RTZ 9) */
+	},
 	{
+		/* (UTC+08:00) Perth */
 		"W. Australia Standard Time", "W. Australia Daylight Time",
 		"Australia/Perth"
-	},							/* (UTC+08:00) Perth */
+	},
 #ifdef NOT_USED
 	/* Could not find a match for this one (just a guess). Excluded for now. */
 	{
+		/* (UTC+01:00) West Central Africa */
 		"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
 		"WAT"
-	},							/* (UTC+01:00) West Central Africa */
+	},
 #endif
 	{
+		/* (UTC+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna */
 		"W. Europe Standard Time", "W. Europe Daylight Time",
 		"CET"
-	},							/* (UTC+01:00) Amsterdam, Berlin, Bern, Rome,
-								 * Stockholm, Vienna */
+	},
 	{
+		/* (UTC+07:00) Hovd */
 		"W. Mongolia Standard Time", "W. Mongolia Daylight Time",
 		"Asia/Hovd"
-	},							/* (UTC+07:00) Hovd */
+	},
 	{
+		/* (UTC+05:00) Ashgabat, Tashkent */
 		"West Asia Standard Time", "West Asia Daylight Time",
 		"Asia/Karachi"
-	},							/* (UTC+05:00) Ashgabat, Tashkent */
+	},
 	{
+		/* (UTC+02:00) Gaza, Hebron */
 		"West Bank Gaza Standard Time", "West Bank Gaza Daylight Time",
 		"Asia/Gaza"
-	},							/* (UTC+02:00) Gaza, Hebron */
+	},
 	{
+		/* (UTC+10:00) Guam, Port Moresby */
 		"West Pacific Standard Time", "West Pacific Daylight Time",
 		"Pacific/Guam"
-	},							/* (UTC+10:00) Guam, Port Moresby */
+	},
 	{
+		/* (UTC+09:00) Yakutsk */
 		"Yakutsk Standard Time", "Yakutsk Daylight Time",
 		"Asia/Yakutsk"
-	},							/* (UTC+09:00) Yakutsk */
+	},
 	{
 		NULL, NULL, NULL
 	}
