@@ -362,10 +362,10 @@ DOWNLOAD = wget -O $@ --no-use-server-timestamps
 # Pick a release from here: <https://www.unicode.org/Public/>.  Note
 # that the most recent release listed there is often a pre-release;
 # don't pick that one, except for testing.
-UNICODE_VERSION = 12.1.0
+UNICODE_VERSION = 13.0.0
 
 # Pick a release from here: <http://cldr.unicode.org/index/downloads>
-CLDR_VERSION = 34
+CLDR_VERSION = 37
 
 
 # Tree-wide build support
