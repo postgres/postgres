@@ -11091,479 +11091,713 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    facility.
   </para>
 
-    <table id="textsearch-operators-table">
-     <title>Text Search Operators</title>
-     <tgroup cols="5">
-      <thead>
-       <row>
-        <entry>Operator</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry> <literal>@@</literal> </entry>
-        <entry><type>boolean</type></entry>
-        <entry><type>tsvector</type> matches <type>tsquery</type> ?</entry>
-        <entry><literal>to_tsvector('fat cats ate rats') @@ to_tsquery('cat &amp; rat')</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>@@@</literal> </entry>
-        <entry><type>boolean</type></entry>
-        <entry>deprecated synonym for <literal>@@</literal></entry>
-        <entry><literal>to_tsvector('fat cats ate rats') @@@ to_tsquery('cat &amp; rat')</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>||</literal> </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>concatenate <type>tsvector</type>s</entry>
-        <entry><literal>'a:1 b:2'::tsvector || 'c:1 d:2 b:3'::tsvector</literal></entry>
-        <entry><literal>'a':1 'b':2,5 'c':3 'd':4</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&amp;&amp;</literal> </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>AND <type>tsquery</type>s together</entry>
-        <entry><literal>'fat | rat'::tsquery &amp;&amp; 'cat'::tsquery</literal></entry>
-        <entry><literal>( 'fat' | 'rat' ) &amp; 'cat'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>||</literal> </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>OR <type>tsquery</type>s together</entry>
-        <entry><literal>'fat | rat'::tsquery || 'cat'::tsquery</literal></entry>
-        <entry><literal>( 'fat' | 'rat' ) | 'cat'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>!!</literal> </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>negate a <type>tsquery</type></entry>
-        <entry><literal>!! 'cat'::tsquery</literal></entry>
-        <entry><literal>!'cat'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&lt;-&gt;</literal> </entry>
-        <entry><type>tsquery</type></entry>
-        <entry><type>tsquery</type> followed by <type>tsquery</type></entry>
-        <entry><literal>to_tsquery('fat') &lt;-&gt; to_tsquery('rat')</literal></entry>
-        <entry><literal>'fat' &lt;-&gt; 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>@&gt;</literal> </entry>
-        <entry><type>boolean</type></entry>
-        <entry><type>tsquery</type> contains another ?</entry>
-        <entry><literal>'cat'::tsquery @&gt; 'cat &amp; rat'::tsquery</literal></entry>
-        <entry><literal>f</literal></entry>
-       </row>
-       <row>
-        <entry> <literal>&lt;@</literal> </entry>
-        <entry><type>boolean</type></entry>
-        <entry><type>tsquery</type> is contained in ?</entry>
-        <entry><literal>'cat'::tsquery &lt;@ 'cat &amp; rat'::tsquery</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+   <table id="textsearch-operators-table">
+    <title>Text Search Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Operator<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
 
-    <note>
-     <para>
-      The <type>tsquery</type> containment operators consider only the lexemes
-      listed in the two queries, ignoring the combining operators.
-     </para>
-    </note>
+     <tbody>
+      <row>
+       <entry role="functableentry">
+        <type>tsvector</type> <literal>@@</literal> <type>tsquery</type>
+        or
+        <type>tsquery</type> <literal>@@</literal> <type>tsvector</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does <type>tsvector</type> match <type>tsquery</type>?
+       <?br?>
+        <literal>to_tsvector('fat cats ate rats') @@ to_tsquery('cat &amp; rat')</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>text</type> <literal>@@</literal> <type>tsquery</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does text string, after implicit invocation
+        of <function>to_tsvector()</function>, match <type>tsquery</type>?
+       <?br?>
+        <literal>'fat cats ate rats' @@ to_tsquery('cat &amp; rat')</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>tsvector</type> <literal>@@@</literal> <type>tsquery</type>
+        or
+        <type>tsquery</type> <literal>@@@</literal> <type>tsvector</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        This is a deprecated synonym for <literal>@@</literal>.
+       <?br?>
+        <literal>to_tsvector('fat cats ate rats') @@@ to_tsquery('cat &amp; rat')</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>tsvector</type> <literal>||</literal> <type>tsvector</type>
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Concatenates two <type>tsvector</type>s.  If both inputs contain
+        lexeme positions, the second input's positions are adjusted
+        accordingly.
+       <?br?>
+        <literal>'a:1 b:2'::tsvector || 'c:1 d:2 b:3'::tsvector</literal>
+        <returnvalue>'a':1 'b':2,5 'c':3 'd':4</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>tsquery</type> <literal>&amp;&amp;</literal> <type>tsquery</type>
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        ANDs two <type>tsquery</type>s together, producing a query that
+        matches documents that match both input queries.
+       <?br?>
+        <literal>'fat | rat'::tsquery &amp;&amp; 'cat'::tsquery</literal>
+        <returnvalue>( 'fat' | 'rat' ) &amp; 'cat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>tsquery</type> <literal>||</literal> <type>tsquery</type>
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        ORs two <type>tsquery</type>s together, producing a query that
+        matches documents that match either input query.
+       <?br?>
+        <literal>'fat | rat'::tsquery || 'cat'::tsquery</literal>
+        <returnvalue>'fat' | 'rat' | 'cat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <literal>!!</literal> <type>tsquery</type>
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Negates a <type>tsquery</type>, producing a query that matches
+        documents that do not match the input query.
+       <?br?>
+        <literal>!! 'cat'::tsquery</literal>
+        <returnvalue>!'cat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>tsquery</type> <literal>&lt;-&gt;</literal> <type>tsquery</type>
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Constructs a phrase query, which matches if the two input queries
+        match at successive lexemes.
+       <?br?>
+        <literal>to_tsquery('fat') &lt;-&gt; to_tsquery('rat')</literal>
+        <returnvalue>'fat' &lt;-&gt; 'rat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>tsquery</type> <literal>@&gt;</literal> <type>tsquery</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Does first <type>tsquery</type> contain the second?  (This considers
+        only whether all the lexemes appearing in one query appear in the
+        other, ignoring the combining operators.)
+       <?br?>
+        <literal>'cat'::tsquery @&gt; 'cat &amp; rat'::tsquery</literal>
+        <returnvalue>f</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <type>tsquery</type> <literal>&lt;@</literal> <type>tsquery</type>
+        <returnvalue>boolean</returnvalue>
+       <?br?>
+        Is first <type>tsquery</type> contained in the second?  (This
+        considers only whether all the lexemes appearing in one query appear
+        in the other, ignoring the combining operators.)
+       <?br?>
+        <literal>'cat'::tsquery &lt;@ 'cat &amp; rat'::tsquery</literal>
+        <returnvalue>t</returnvalue>
+       <?br?>
+        <literal>'cat'::tsquery &lt;@ '!cat &amp; rat'::tsquery</literal>
+        <returnvalue>t</returnvalue>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
     <para>
-     In addition to the operators shown in the table, the ordinary B-tree
-     comparison operators (<literal>=</literal>, <literal>&lt;</literal>, etc) are defined
-     for types <type>tsvector</type> and <type>tsquery</type>.  These are not very
+     In addition to these specialized operators, the usual comparison
+     operators shown in <xref linkend="functions-comparison-op-table"/> are
+     available for types <type>tsvector</type> and <type>tsquery</type>.
+     These are not very
      useful for text searching but allow, for example, unique indexes to be
      built on columns of these types.
     </para>
 
-    <table id="textsearch-functions-table">
-     <title>Text Search Functions</title>
-     <tgroup cols="5">
-      <thead>
-       <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>array_to_tsvector</primary>
-         </indexterm>
-         <literal><function>array_to_tsvector(<type>text[]</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>convert array of lexemes to <type>tsvector</type></entry>
-        <entry><literal>array_to_tsvector('{fat,cat,rat}'::text[])</literal></entry>
-        <entry><literal>'cat' 'fat' 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>get_current_ts_config</primary>
-         </indexterm>
-         <literal><function>get_current_ts_config()</function></literal>
-        </entry>
-        <entry><type>regconfig</type></entry>
-        <entry>get default text search configuration</entry>
-        <entry><literal>get_current_ts_config()</literal></entry>
-        <entry><literal>english</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>length</primary>
-         </indexterm>
-         <literal><function>length(<type>tsvector</type>)</function></literal>
-        </entry>
-        <entry><type>integer</type></entry>
-        <entry>number of lexemes in <type>tsvector</type></entry>
-        <entry><literal>length('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
-        <entry><literal>3</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>numnode</primary>
-         </indexterm>
-         <literal><function>numnode(<type>tsquery</type>)</function></literal>
-        </entry>
-        <entry><type>integer</type></entry>
-        <entry>number of lexemes plus operators in <type>tsquery</type></entry>
-        <entry><literal> numnode('(fat &amp; rat) | cat'::tsquery)</literal></entry>
-        <entry><literal>5</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>plainto_tsquery</primary>
-         </indexterm>
-         <literal><function>plainto_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type> , </optional> <replaceable class="parameter">query</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>produce <type>tsquery</type> ignoring punctuation</entry>
-        <entry><literal>plainto_tsquery('english', 'The Fat Rats')</literal></entry>
-        <entry><literal>'fat' &amp; 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>phraseto_tsquery</primary>
-         </indexterm>
-         <literal><function>phraseto_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type> , </optional> <replaceable class="parameter">query</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>produce <type>tsquery</type> that searches for a phrase,
-         ignoring punctuation</entry>
-        <entry><literal>phraseto_tsquery('english', 'The Fat Rats')</literal></entry>
-        <entry><literal>'fat' &lt;-&gt; 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>websearch_to_tsquery</primary>
-         </indexterm>
-          <literal><function>websearch_to_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type> , </optional> <replaceable class="parameter">query</replaceable> <type>text</type>)</function></literal>
-         </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>produce <type>tsquery</type> from a web search style query</entry>
-        <entry><literal>websearch_to_tsquery('english', '"fat rat" or rat')</literal></entry>
-        <entry><literal>'fat' &lt;-&gt; 'rat' | 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>querytree</primary>
-         </indexterm>
-         <literal><function>querytree(<replaceable class="parameter">query</replaceable> <type>tsquery</type>)</function></literal>
-        </entry>
-        <entry><type>text</type></entry>
-        <entry>get indexable part of a <type>tsquery</type></entry>
-        <entry><literal>querytree('foo &amp; ! bar'::tsquery)</literal></entry>
-        <entry><literal>'foo'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>setweight</primary>
-         </indexterm>
-         <literal><function>setweight(<replaceable class="parameter">vector</replaceable> <type>tsvector</type>, <replaceable class="parameter">weight</replaceable> <type>"char"</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>assign <replaceable class="parameter">weight</replaceable> to each element of <replaceable class="parameter">vector</replaceable></entry>
-        <entry><literal>setweight('fat:2,4 cat:3 rat:5B'::tsvector, 'A')</literal></entry>
-        <entry><literal>'cat':3A 'fat':2A,4A 'rat':5A</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>setweight</primary>
-          <secondary>setweight for specific lexeme(s)</secondary>
-         </indexterm>
-         <literal><function>setweight(<replaceable class="parameter">vector</replaceable> <type>tsvector</type>, <replaceable class="parameter">weight</replaceable> <type>"char"</type>, <replaceable class="parameter">lexemes</replaceable> <type>text[]</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>assign <replaceable class="parameter">weight</replaceable> to elements of <replaceable class="parameter">vector</replaceable> that are listed in <replaceable class="parameter">lexemes</replaceable></entry>
-        <entry><literal>setweight('fat:2,4 cat:3 rat:5B'::tsvector, 'A', '{cat,rat}')</literal></entry>
-        <entry><literal>'cat':3A 'fat':2,4 'rat':5A</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>strip</primary>
-         </indexterm>
-         <literal><function>strip(<type>tsvector</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>remove positions and weights from <type>tsvector</type></entry>
-        <entry><literal>strip('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
-        <entry><literal>'cat' 'fat' 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>to_tsquery</primary>
-         </indexterm>
-         <literal><function>to_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type> , </optional> <replaceable class="parameter">query</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>normalize words and convert to <type>tsquery</type></entry>
-        <entry><literal>to_tsquery('english', 'The &amp; Fat &amp; Rats')</literal></entry>
-        <entry><literal>'fat' &amp; 'rat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>to_tsvector</primary>
-         </indexterm>
-         <literal><function>to_tsvector(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type> , </optional> <replaceable class="parameter">document</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>reduce document text to <type>tsvector</type></entry>
-        <entry><literal>to_tsvector('english', 'The Fat Rats')</literal></entry>
-        <entry><literal>'fat':2 'rat':3</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal><function>to_tsvector(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type> , </optional> <replaceable class="parameter">document</replaceable> <type>json(b)</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>
-          reduce each string value in the document to a <type>tsvector</type>, and then
-          concatenate those in document order to produce a single <type>tsvector</type>
-        </entry>
-        <entry><literal>to_tsvector('english', '{"a": "The Fat Rats"}'::json)</literal></entry>
-        <entry><literal>'fat':2 'rat':3</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal><function>json(b)_to_tsvector(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type>,
-         </optional> <replaceable class="parameter">document</replaceable> <type>json(b)</type>,
-         <replaceable class="parameter">filter</replaceable> <type>json(b)</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>
-          reduce each value in the document, specified by <replaceable class="parameter">filter</replaceable> to a <type>tsvector</type>,
-          and then concatenate those in document order to produce a single <type>tsvector</type>.
-          <replaceable class="parameter">filter</replaceable> is a <type>jsonb</type> array, that enumerates what kind of elements need to be included
-          into the resulting <type>tsvector</type>. Possible values for <replaceable class="parameter">filter</replaceable> are
-          <literal>"string"</literal> (to include all string values), <literal>"numeric"</literal> (to include all numeric values in the string format),
-          <literal>"boolean"</literal> (to include all Boolean values in the string format <literal>"true"</literal>/<literal>"false"</literal>),
-          <literal>"key"</literal> (to include all keys) or <literal>"all"</literal> (to include all above). These values
-          can be combined together to include, e.g. all string and numeric values.
-        </entry>
-        <entry><literal>json_to_tsvector('english', '{"a": "The Fat Rats", "b": 123}'::json, '["string", "numeric"]')</literal></entry>
-        <entry><literal>'123':5 'fat':2 'rat':3</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_delete</primary>
-         </indexterm>
-         <literal><function>ts_delete(<replaceable class="parameter">vector</replaceable> <type>tsvector</type>, <replaceable class="parameter">lexeme</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>remove given <replaceable class="parameter">lexeme</replaceable> from <replaceable class="parameter">vector</replaceable></entry>
-        <entry><literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal></entry>
-        <entry><literal>'cat':3 'rat':5A</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <!-- previous indexterm entry covers this too -->
-         <literal><function>ts_delete(<replaceable class="parameter">vector</replaceable> <type>tsvector</type>, <replaceable class="parameter">lexemes</replaceable> <type>text[]</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>remove any occurrence of lexemes in <replaceable class="parameter">lexemes</replaceable> from <replaceable class="parameter">vector</replaceable></entry>
-        <entry><literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal></entry>
-        <entry><literal>'cat':3</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_filter</primary>
-         </indexterm>
-         <literal><function>ts_filter(<replaceable class="parameter">vector</replaceable> <type>tsvector</type>, <replaceable class="parameter">weights</replaceable> <type>"char"[]</type>)</function></literal>
-        </entry>
-        <entry><type>tsvector</type></entry>
-        <entry>select only elements with given <replaceable class="parameter">weights</replaceable> from <replaceable class="parameter">vector</replaceable></entry>
-        <entry><literal>ts_filter('fat:2,4 cat:3b rat:5A'::tsvector, '{a,b}')</literal></entry>
-        <entry><literal>'cat':3B 'rat':5A</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_headline</primary>
-         </indexterm>
-         <literal><function>ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type>, </optional> <replaceable class="parameter">document</replaceable> <type>text</type>, <replaceable class="parameter">query</replaceable> <type>tsquery</type> <optional>, <replaceable class="parameter">options</replaceable> <type>text</type> </optional>)</function></literal>
-        </entry>
-        <entry><type>text</type></entry>
-        <entry>display a query match</entry>
-        <entry><literal>ts_headline('x y z', 'z'::tsquery)</literal></entry>
-        <entry><literal>x y &lt;b&gt;z&lt;/b&gt;</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal><function>ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type>, </optional> <replaceable class="parameter">document</replaceable> <type>json(b)</type>, <replaceable class="parameter">query</replaceable> <type>tsquery</type> <optional>, <replaceable class="parameter">options</replaceable> <type>text</type> </optional>)</function></literal>
-        </entry>
-        <entry><type>text</type></entry>
-        <entry>display a query match</entry>
-        <entry><literal>ts_headline('{"a":"x y z"}'::json, 'z'::tsquery)</literal></entry>
-        <entry><literal>{"a":"x y &lt;b&gt;z&lt;/b&gt;"}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_rank</primary>
-         </indexterm>
-         <literal><function>ts_rank(<optional> <replaceable class="parameter">weights</replaceable> <type>float4[]</type>, </optional> <replaceable class="parameter">vector</replaceable> <type>tsvector</type>, <replaceable class="parameter">query</replaceable> <type>tsquery</type> <optional>, <replaceable class="parameter">normalization</replaceable> <type>integer</type> </optional>)</function></literal>
-        </entry>
-        <entry><type>float4</type></entry>
-        <entry>rank document for query</entry>
-        <entry><literal>ts_rank(textsearch, query)</literal></entry>
-        <entry><literal>0.818</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_rank_cd</primary>
-         </indexterm>
-         <literal><function>ts_rank_cd(<optional> <replaceable class="parameter">weights</replaceable> <type>float4[]</type>, </optional> <replaceable class="parameter">vector</replaceable> <type>tsvector</type>, <replaceable class="parameter">query</replaceable> <type>tsquery</type> <optional>, <replaceable class="parameter">normalization</replaceable> <type>integer</type> </optional>)</function></literal>
-        </entry>
-        <entry><type>float4</type></entry>
-        <entry>rank document for query using cover density</entry>
-        <entry><literal>ts_rank_cd('{0.1, 0.2, 0.4, 1.0}', textsearch, query)</literal></entry>
-        <entry><literal>2.01317</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_rewrite</primary>
-         </indexterm>
-         <literal><function>ts_rewrite(<replaceable class="parameter">query</replaceable> <type>tsquery</type>, <replaceable class="parameter">target</replaceable> <type>tsquery</type>, <replaceable class="parameter">substitute</replaceable> <type>tsquery</type>)</function></literal>
-        </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>replace <replaceable>target</replaceable> with <replaceable>substitute</replaceable>
-         within query</entry>
-        <entry><literal>ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'foo|bar'::tsquery)</literal></entry>
-        <entry><literal>'b' &amp; ( 'foo' | 'bar' )</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>ts_rewrite(<replaceable class="parameter">query</replaceable> <type>tsquery</type>, <replaceable class="parameter">select</replaceable> <type>text</type>)</function></literal></entry>
-        <entry><type>tsquery</type></entry>
-        <entry>replace using targets and substitutes from a <command>SELECT</command> command</entry>
-        <entry><literal>SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases')</literal></entry>
-        <entry><literal>'b' &amp; ( 'foo' | 'bar' )</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>tsquery_phrase</primary>
-         </indexterm>
-         <literal><function>tsquery_phrase(<replaceable class="parameter">query1</replaceable> <type>tsquery</type>, <replaceable class="parameter">query2</replaceable> <type>tsquery</type>)</function></literal>
-        </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>make query that searches for <replaceable>query1</replaceable> followed
-         by <replaceable>query2</replaceable> (same as <literal>&lt;-&gt;</literal>
-         operator)</entry>
-        <entry><literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'))</literal></entry>
-        <entry><literal>'fat' &lt;-&gt; 'cat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal><function>tsquery_phrase(<replaceable class="parameter">query1</replaceable> <type>tsquery</type>, <replaceable class="parameter">query2</replaceable> <type>tsquery</type>, <replaceable class="parameter">distance</replaceable> <type>integer</type>)</function></literal>
-        </entry>
-        <entry><type>tsquery</type></entry>
-        <entry>make query that searches for <replaceable>query1</replaceable> followed by
-         <replaceable>query2</replaceable> at distance <replaceable>distance</replaceable></entry>
-        <entry><literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10)</literal></entry>
-        <entry><literal>'fat' &lt;10&gt; 'cat'</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>tsvector_to_array</primary>
-         </indexterm>
-         <literal><function>tsvector_to_array(<type>tsvector</type>)</function></literal>
-        </entry>
-        <entry><type>text[]</type></entry>
-        <entry>convert <type>tsvector</type> to array of lexemes</entry>
-        <entry><literal>tsvector_to_array('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
-        <entry><literal>{cat,fat,rat}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>tsvector_update_trigger</primary>
-         </indexterm>
-         <literal><function>tsvector_update_trigger()</function></literal>
-        </entry>
-        <entry><type>trigger</type></entry>
-        <entry>trigger function for automatic <type>tsvector</type> column update</entry>
-        <entry><literal>CREATE TRIGGER ... tsvector_update_trigger(tsvcol, 'pg_catalog.swedish', title, body)</literal></entry>
-        <entry><literal></literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>tsvector_update_trigger_column</primary>
-         </indexterm>
-         <literal><function>tsvector_update_trigger_column()</function></literal>
-        </entry>
-        <entry><type>trigger</type></entry>
-        <entry>trigger function for automatic <type>tsvector</type> column update</entry>
-        <entry><literal>CREATE TRIGGER ... tsvector_update_trigger_column(tsvcol, configcol, title, body)</literal></entry>
-        <entry><literal></literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>unnest</primary>
-          <secondary>for tsvector</secondary>
-         </indexterm>
-         <literal><function>unnest(<type>tsvector</type>, OUT <replaceable class="parameter">lexeme</replaceable> <type>text</type>, OUT <replaceable class="parameter">positions</replaceable> <type>smallint[]</type>, OUT <replaceable class="parameter">weights</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>setof record</type></entry>
-        <entry>expand a <type>tsvector</type> to a set of rows</entry>
-        <entry><literal>unnest('fat:2,4 cat:3 rat:5A'::tsvector)</literal></entry>
-        <entry><literal>(cat,{3},{D}) ...</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+   <table id="textsearch-functions-table">
+    <title>Text Search Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>array_to_tsvector</primary>
+        </indexterm>
+        <function>array_to_tsvector</function> ( <type>text[]</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Converts an array of lexemes to a <type>tsvector</type>.
+        The given strings are used as-is without further processing.
+       <?br?>
+        <literal>array_to_tsvector('{fat,cat,rat}'::text[])</literal>
+        <returnvalue>'cat' 'fat' 'rat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>get_current_ts_config</primary>
+        </indexterm>
+        <function>get_current_ts_config</function> ( )
+        <returnvalue>regconfig</returnvalue>
+       <?br?>
+        Returns the OID of the current default text search configuration
+        (as set by <xref linkend="guc-default-text-search-config"/>).
+       <?br?>
+        <literal>get_current_ts_config()</literal>
+        <returnvalue>english</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>length</primary>
+        </indexterm>
+        <function>length</function> ( <type>tsvector</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of lexemes in the <type>tsvector</type>.
+       <?br?>
+        <literal>length('fat:2,4 cat:3 rat:5A'::tsvector)</literal>
+        <returnvalue>3</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>numnode</primary>
+        </indexterm>
+        <function>numnode</function> ( <type>tsquery</type> )
+        <returnvalue>integer</returnvalue>
+       <?br?>
+        Returns the number of lexemes plus operators in
+        the <type>tsquery</type>.
+       <?br?>
+        <literal>numnode('(fat &amp; rat) | cat'::tsquery)</literal>
+        <returnvalue>5</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>plainto_tsquery</primary>
+        </indexterm>
+        <function>plainto_tsquery</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>query</replaceable> <type>text</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Converts text to a <type>tsquery</type>, normalizing words according to
+        the specified or default configuration.  Any punctuation in the string
+        is ignored (it does not determine query operators).  The resulting
+        query matches documents containing all non-stopwords in the text.
+       <?br?>
+        <literal>plainto_tsquery('english', 'The Fat Rats')</literal>
+        <returnvalue>'fat' &amp; 'rat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>phraseto_tsquery</primary>
+        </indexterm>
+        <function>phraseto_tsquery</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>query</replaceable> <type>text</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Converts text to a <type>tsquery</type>, normalizing words according to
+        the specified or default configuration.  Any punctuation in the string
+        is ignored (it does not determine query operators).  The resulting
+        query matches phrases containing all non-stopwords in the text.
+       <?br?>
+        <literal>phraseto_tsquery('english', 'The Fat Rats')</literal>
+        <returnvalue>'fat' &lt;-&gt; 'rat'</returnvalue>
+       <?br?>
+        <literal>phraseto_tsquery('english', 'The Cat and Rats')</literal>
+        <returnvalue>'cat' &lt;2&gt; 'rat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>websearch_to_tsquery</primary>
+        </indexterm>
+        <function>websearch_to_tsquery</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>query</replaceable> <type>text</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Converts text to a <type>tsquery</type>, normalizing words according to
+        the specified or default configuration.  Quoted word sequences are
+        converted to phrase tests, and the word <quote>or</quote> is
+        understood as producing an OR operator.  This approximates the
+        behavior of some common web search tools.
+       <?br?>
+        <literal>websearch_to_tsquery('english', '"fat rat" or cat dog')</literal>
+        <returnvalue>'fat' &lt;-&gt; 'rat' | 'cat' &amp; 'dog'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>querytree</primary>
+        </indexterm>
+        <function>querytree</function> ( <type>tsquery</type> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Produces a representation of the indexable portion of
+        a <type>tsquery</type>.  A result that is empty or
+        just <literal>T</literal> indicates a non-indexable query.
+       <?br?>
+        <literal>querytree('foo &amp; ! bar'::tsquery)</literal>
+        <returnvalue>'foo'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>setweight</primary>
+        </indexterm>
+        <function>setweight</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>weight</replaceable> <type>"char"</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Assigns the specified <replaceable>weight</replaceable> to each element
+        of the <replaceable>vector</replaceable>.
+       <?br?>
+        <literal>setweight('fat:2,4 cat:3 rat:5B'::tsvector, 'A')</literal>
+        <returnvalue>'cat':3A 'fat':2A,4A 'rat':5A</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>setweight</primary>
+         <secondary>setweight for specific lexeme(s)</secondary>
+        </indexterm>
+        <function>setweight</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>weight</replaceable> <type>"char"</type>, <replaceable>lexemes</replaceable> <type>text[]</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Assigns the specified <replaceable>weight</replaceable> to elements
+        of the <replaceable>vector</replaceable> that are listed
+        in <replaceable>lexemes</replaceable>.
+       <?br?>
+        <literal>setweight('fat:2,4 cat:3 rat:5,6B'::tsvector, 'A', '{cat,rat}')</literal>
+        <returnvalue>'cat':3A 'fat':2,4 'rat':5A,6A</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>strip</primary>
+        </indexterm>
+        <function>strip</function> ( <type>tsvector</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Removes positions and weights from the <type>tsvector</type>.
+       <?br?>
+        <literal>strip('fat:2,4 cat:3 rat:5A'::tsvector)</literal>
+        <returnvalue>'cat' 'fat' 'rat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>to_tsquery</primary>
+        </indexterm>
+        <function>to_tsquery</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>query</replaceable> <type>text</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Converts text to a <type>tsquery</type>, normalizing words according to
+        the specified or default configuration.  The words must be combined
+        by valid <type>tsquery</type> operators.
+       <?br?>
+        <literal>to_tsquery('english', 'The &amp; Fat &amp; Rats')</literal>
+        <returnvalue>'fat' &amp; 'rat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>to_tsvector</primary>
+        </indexterm>
+        <function>to_tsvector</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+         <replaceable>document</replaceable> <type>text</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Converts text to a <type>tsvector</type>, normalizing words according
+        to the specified or default configuration.  Position information is
+        included in the result.
+       <?br?>
+        <literal>to_tsvector('english', 'The Fat Rats')</literal>
+        <returnvalue>'fat':2 'rat':3</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>to_tsvector</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>document</replaceable> <type>json(b)</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Converts each string value in the JSON document to
+        a <type>tsvector</type>, normalizing words according to the specified
+        or default configuration.  The results are then concatenated in
+        document order to produce the output.  Position information is
+        generated as though one stopword exists between each pair of string
+        values.  (Beware that <quote>document order</quote> of the fields of a
+        JSON object is implementation-dependent when the input
+        is <type>jsonb</type>; observe the difference in the examples.)
+       <?br?>
+        <literal>to_tsvector('english', '{"aa": "The Fat Rats", "b": "dog"}'::json)</literal>
+        <returnvalue>'dog':5 'fat':2 'rat':3</returnvalue>
+       <?br?>
+        <literal>to_tsvector('english', '{"aa": "The Fat Rats", "b": "dog"}'::jsonb)</literal>
+        <returnvalue>'dog':1 'fat':4 'rat':5</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>json(b)_to_tsvector</primary>
+        </indexterm>
+        <function>json(b)_to_tsvector</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>document</replaceable> <type>json(b)</type>,
+        <replaceable>filter</replaceable> <type>jsonb</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Selects each item in the JSON document that is requested by
+        the <replaceable>filter</replaceable> and converts each one to
+        a <type>tsvector</type>, normalizing words according to the specified
+        or default configuration.  The results are then concatenated in
+        document order to produce the output.  Position information is
+        generated as though one stopword exists between each pair of selected
+        items.  (Beware that <quote>document order</quote> of the fields of a
+        JSON object is implementation-dependent when the input
+        is <type>jsonb</type>.)
+        The <replaceable>filter</replaceable> must be a <type>jsonb</type>
+        array containing zero or more of these keywords:
+        <literal>"string"</literal> (to include all string values),
+        <literal>"numeric"</literal> (to include all numeric values),
+        <literal>"boolean"</literal> (to include all boolean values),
+        <literal>"key"</literal> (to include all keys), or
+        <literal>"all"</literal> (to include all the above).
+        As a special case, the <replaceable>filter</replaceable> can also be a
+        simple JSON value that is one of these keywords.
+       <?br?>
+        <literal>json_to_tsvector('english', '{"a": "The Fat Rats", "b": 123}'::json, '["string", "numeric"]')</literal>
+        <returnvalue>'123':5 'fat':2 'rat':3</returnvalue>
+       <?br?>
+        <literal>json_to_tsvector('english', '{"cat": "The Fat Rats", "dog": 123}'::json, '"all"')</literal>
+        <returnvalue>'123':9 'cat':1 'dog':7 'fat':4 'rat':5</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_delete</primary>
+        </indexterm>
+        <function>ts_delete</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>lexeme</replaceable> <type>text</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Removes any occurrence of the given <replaceable>lexeme</replaceable>
+        from the <replaceable>vector</replaceable>.
+       <?br?>
+        <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal>
+        <returnvalue>'cat':3 'rat':5A</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>ts_delete</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>lexemes</replaceable> <type>text[]</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Removes any occurrences of the lexemes
+        in <replaceable>lexemes</replaceable>
+        from the <replaceable>vector</replaceable>.
+       <?br?>
+        <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal>
+        <returnvalue>'cat':3</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_filter</primary>
+        </indexterm>
+        <function>ts_filter</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>weights</replaceable> <type>"char"[]</type> )
+        <returnvalue>tsvector</returnvalue>
+       <?br?>
+        Selects only elements with the given <replaceable>weights</replaceable>
+        from the <replaceable>vector</replaceable>.
+       <?br?>
+        <literal>ts_filter('fat:2,4 cat:3b,7c rat:5A'::tsvector, '{a,b}')</literal>
+        <returnvalue>'cat':3B 'rat':5A</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_headline</primary>
+        </indexterm>
+        <function>ts_headline</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>document</replaceable> <type>text</type>,
+        <replaceable>query</replaceable> <type>tsquery</type>
+        <optional>, <replaceable>options</replaceable> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Displays, in an abbreviated form, the match(es) for
+        the <replaceable>query</replaceable> in
+        the <replaceable>document</replaceable>, which must be raw text not
+        a <type>tsvector</type>.  Words in the document are normalized
+        according to the specified or default configuration before matching to
+        the query.  Use of this function is discussed in
+        <xref linkend="textsearch-headline"/>, which also describes the
+        available <replaceable>options</replaceable>.
+       <?br?>
+        <literal>ts_headline('The fat cat ate the rat.', 'cat')</literal>
+        <returnvalue>The fat &lt;b&gt;cat&lt;/b&gt; ate the rat.</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>ts_headline</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>document</replaceable> <type>json(b)</type>,
+        <replaceable>query</replaceable> <type>tsquery</type>
+        <optional>, <replaceable>options</replaceable> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       <?br?>
+        Displays, in an abbreviated form, match(es) for
+        the <replaceable>query</replaceable> that occur in string values
+        within the JSON <replaceable>document</replaceable>.
+        See <xref linkend="textsearch-headline"/> for more details.
+       <?br?>
+        <literal>ts_headline('{"cat":"raining cats and dogs"}'::jsonb, 'cat')</literal>
+        <returnvalue>{"cat": "raining &lt;b&gt;cats&lt;/b&gt; and dogs"}</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_rank</primary>
+        </indexterm>
+        <function>ts_rank</function> (
+        <optional> <replaceable>weights</replaceable> <type>real[]</type>, </optional>
+        <replaceable>vector</replaceable> <type>tsvector</type>,
+        <replaceable>query</replaceable> <type>tsquery</type>
+        <optional>, <replaceable>normalization</replaceable> <type>integer</type> </optional> )
+        <returnvalue>real</returnvalue>
+       <?br?>
+        Computes a score showing how well
+        the <replaceable>vector</replaceable> matches
+        the <replaceable>query</replaceable>.  See
+        <xref linkend="textsearch-ranking"/> for details.
+       <?br?>
+        <literal>ts_rank(to_tsvector('raining cats and dogs'), 'cat')</literal>
+        <returnvalue>0.06079271</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_rank_cd</primary>
+        </indexterm>
+        <function>ts_rank_cd</function> (
+        <optional> <replaceable>weights</replaceable> <type>real[]</type>, </optional>
+        <replaceable>vector</replaceable> <type>tsvector</type>,
+        <replaceable>query</replaceable> <type>tsquery</type>
+        <optional>, <replaceable>normalization</replaceable> <type>integer</type> </optional> )
+        <returnvalue>real</returnvalue>
+       <?br?>
+        Computes a score showing how well
+        the <replaceable>vector</replaceable> matches
+        the <replaceable>query</replaceable>, using a cover density
+        algorithm.  See <xref linkend="textsearch-ranking"/> for details.
+       <?br?>
+        <literal>ts_rank_cd(to_tsvector('raining cats and dogs'), 'cat')</literal>
+        <returnvalue>0.1</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_rewrite</primary>
+        </indexterm>
+        <function>ts_rewrite</function> ( <replaceable>query</replaceable> <type>tsquery</type>,
+        <replaceable>target</replaceable> <type>tsquery</type>,
+        <replaceable>substitute</replaceable> <type>tsquery</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Replaces occurrences of <replaceable>target</replaceable>
+        with <replaceable>substitute</replaceable>
+        within the <replaceable>query</replaceable>.
+        See <xref linkend="textsearch-query-rewriting"/> for details.
+       <?br?>
+        <literal>ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'foo|bar'::tsquery)</literal>
+        <returnvalue>'b' &amp; ( 'foo' | 'bar' )</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>ts_rewrite</function> ( <replaceable>query</replaceable> <type>tsquery</type>,
+        <replaceable>select</replaceable> <type>text</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Replaces portions of the <replaceable>query</replaceable> according to
+        target(s) and substitute(s) obtained by executing
+        a <command>SELECT</command> command.
+        See <xref linkend="textsearch-query-rewriting"/> for details.
+       <?br?>
+        <literal>SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases')</literal>
+        <returnvalue>'b' &amp; ( 'foo' | 'bar' )</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>tsquery_phrase</primary>
+        </indexterm>
+        <function>tsquery_phrase</function> ( <replaceable>query1</replaceable> <type>tsquery</type>, <replaceable>query2</replaceable> <type>tsquery</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Constructs a phrase query that searches
+        for matches of <replaceable>query1</replaceable>
+        and <replaceable>query2</replaceable> at successive lexemes (same
+        as <literal>&lt;-&gt;</literal> operator).
+       <?br?>
+        <literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'))</literal>
+        <returnvalue>'fat' &lt;-&gt; 'cat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>tsquery_phrase</function> ( <replaceable>query1</replaceable> <type>tsquery</type>, <replaceable>query2</replaceable> <type>tsquery</type>, <replaceable>distance</replaceable> <type>integer</type> )
+        <returnvalue>tsquery</returnvalue>
+       <?br?>
+        Constructs a phrase query that searches
+        for matches of <replaceable>query1</replaceable> and
+        <replaceable>query2</replaceable> that occur exactly
+        <replaceable>distance</replaceable> lexemes apart.
+       <?br?>
+        <literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10)</literal>
+        <returnvalue>'fat' &lt;10&gt; 'cat'</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>tsvector_to_array</primary>
+        </indexterm>
+        <function>tsvector_to_array</function> ( <type>tsvector</type> )
+        <returnvalue>text[]</returnvalue>
+       <?br?>
+        Converts a <type>tsvector</type> to an array of lexemes.
+       <?br?>
+        <literal>tsvector_to_array('fat:2,4 cat:3 rat:5A'::tsvector)</literal>
+        <returnvalue>{cat,fat,rat}</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>unnest</primary>
+         <secondary>for tsvector</secondary>
+        </indexterm>
+        <function>unnest</function> ( <type>tsvector</type>,
+        <literal>OUT</literal> <replaceable>lexeme</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>positions</replaceable> <type>smallint[]</type>,
+        <literal>OUT</literal> <replaceable>weights</replaceable> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+       <?br?>
+        Expands a <type>tsvector</type> into a set of rows, one per lexeme.
+       <?br?>
+        <literal>unnest('cat:3 fat:2,4 rat:5A'::tsvector)</literal>
+        <returnvalue>(cat,{3},{D})<?br?>(fat,"{2,4}","{D,D}")<?br?>(rat,{5},{A})</returnvalue><?br?>(3 rows in result)
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <note>
    <para>
@@ -11578,100 +11812,165 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    The functions in
    <xref linkend="textsearch-functions-debug-table"/>
    are listed separately because they are not usually used in everyday text
-   searching operations.  They are helpful for development and debugging
-   of new text search configurations.
+   searching operations.  They are primarily helpful for development and
+   debugging of new text search configurations.
   </para>
 
-    <table id="textsearch-functions-debug-table">
-     <title>Text Search Debugging Functions</title>
-     <tgroup cols="5">
-      <thead>
-       <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_debug</primary>
-         </indexterm>
-         <literal><function>ts_debug(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</type>, </optional> <replaceable class="parameter">document</replaceable> <type>text</type>, OUT <replaceable class="parameter">alias</replaceable> <type>text</type>, OUT <replaceable class="parameter">description</replaceable> <type>text</type>, OUT <replaceable class="parameter">token</replaceable> <type>text</type>, OUT <replaceable class="parameter">dictionaries</replaceable> <type>regdictionary[]</type>, OUT <replaceable class="parameter">dictionary</replaceable> <type>regdictionary</type>, OUT <replaceable class="parameter">lexemes</replaceable> <type>text[]</type>)</function></literal>
-        </entry>
-        <entry><type>setof record</type></entry>
-        <entry>test a configuration</entry>
-        <entry><literal>ts_debug('english', 'The Brightest supernovaes')</literal></entry>
-        <entry><literal>(asciiword,"Word, all ASCII",The,{english_stem},english_stem,{}) ...</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_lexize</primary>
-         </indexterm>
-         <literal><function>ts_lexize(<replaceable class="parameter">dict</replaceable> <type>regdictionary</type>, <replaceable class="parameter">token</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>text[]</type></entry>
-        <entry>test a dictionary</entry>
-        <entry><literal>ts_lexize('english_stem', 'stars')</literal></entry>
-        <entry><literal>{star}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_parse</primary>
-         </indexterm>
-         <literal><function>ts_parse(<replaceable class="parameter">parser_name</replaceable> <type>text</type>, <replaceable class="parameter">document</replaceable> <type>text</type>, OUT <replaceable class="parameter">tokid</replaceable> <type>integer</type>, OUT <replaceable class="parameter">token</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>setof record</type></entry>
-        <entry>test a parser</entry>
-        <entry><literal>ts_parse('default', 'foo - bar')</literal></entry>
-        <entry><literal>(1,foo) ...</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>ts_parse(<replaceable class="parameter">parser_oid</replaceable> <type>oid</type>, <replaceable class="parameter">document</replaceable> <type>text</type>, OUT <replaceable class="parameter">tokid</replaceable> <type>integer</type>, OUT <replaceable class="parameter">token</replaceable> <type>text</type>)</function></literal></entry>
-        <entry><type>setof record</type></entry>
-        <entry>test a parser</entry>
-        <entry><literal>ts_parse(3722, 'foo - bar')</literal></entry>
-        <entry><literal>(1,foo) ...</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_token_type</primary>
-         </indexterm>
-         <literal><function>ts_token_type(<replaceable class="parameter">parser_name</replaceable> <type>text</type>, OUT <replaceable class="parameter">tokid</replaceable> <type>integer</type>, OUT <replaceable class="parameter">alias</replaceable> <type>text</type>, OUT <replaceable class="parameter">description</replaceable> <type>text</type>)</function></literal>
-        </entry>
-        <entry><type>setof record</type></entry>
-        <entry>get token types defined by parser</entry>
-        <entry><literal>ts_token_type('default')</literal></entry>
-        <entry><literal>(1,asciiword,"Word, all ASCII") ...</literal></entry>
-       </row>
-       <row>
-        <entry><literal><function>ts_token_type(<replaceable class="parameter">parser_oid</replaceable> <type>oid</type>, OUT <replaceable class="parameter">tokid</replaceable> <type>integer</type>, OUT <replaceable class="parameter">alias</replaceable> <type>text</type>, OUT <replaceable class="parameter">description</replaceable> <type>text</type>)</function></literal></entry>
-        <entry><type>setof record</type></entry>
-        <entry>get token types defined by parser</entry>
-        <entry><literal>ts_token_type(3722)</literal></entry>
-        <entry><literal>(1,asciiword,"Word, all ASCII") ...</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <indexterm>
-          <primary>ts_stat</primary>
-         </indexterm>
-         <literal><function>ts_stat(<replaceable class="parameter">sqlquery</replaceable> <type>text</type>, <optional> <replaceable class="parameter">weights</replaceable> <type>text</type>, </optional> OUT <replaceable class="parameter">word</replaceable> <type>text</type>, OUT <replaceable class="parameter">ndoc</replaceable> <type>integer</type>, OUT <replaceable class="parameter">nentry</replaceable> <type>integer</type>)</function></literal>
-        </entry>
-        <entry><type>setof record</type></entry>
-        <entry>get statistics of a <type>tsvector</type> column</entry>
-        <entry><literal>ts_stat('SELECT vector from apod')</literal></entry>
-        <entry><literal>(foo,10,15) ...</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+   <table id="textsearch-functions-debug-table">
+    <title>Text Search Debugging Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example(s)
+       </entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_debug</primary>
+        </indexterm>
+        <function>ts_debug</function> (
+        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
+        <replaceable>document</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>alias</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>description</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>token</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>dictionaries</replaceable> <type>regdictionary[]</type>,
+        <literal>OUT</literal> <replaceable>dictionary</replaceable> <type>regdictionary</type>,
+        <literal>OUT</literal> <replaceable>lexemes</replaceable> <type>text[]</type> )
+        <returnvalue>setof record</returnvalue>
+       <?br?>
+        Extracts and normalizes tokens from
+        the <replaceable>document</replaceable> according to the specified or
+        default text search configuration, and returns information about how
+        each token was processed.
+        See <xref linkend="textsearch-configuration-testing"/> for details.
+       <?br?>
+        <literal>ts_debug('english', 'The Brightest supernovaes')</literal>
+        <returnvalue>(asciiword,"Word, all ASCII",The,{english_stem},english_stem,{}) ...</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_lexize</primary>
+        </indexterm>
+        <function>ts_lexize</function> ( <replaceable>dict</replaceable> <type>regdictionary</type>, <replaceable>token</replaceable> <type>text</type> )
+        <returnvalue>text[]</returnvalue>
+       <?br?>
+        Returns an array of replacement lexemes if the input token is known to
+        the dictionary, or an empty array if the token is known to the
+        dictionary but it is a stop word, or NULL if it is not a known word.
+        See <xref linkend="textsearch-dictionary-testing"/> for details.
+       <?br?>
+        <literal>ts_lexize('english_stem', 'stars')</literal>
+        <returnvalue>{star}</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_parse</primary>
+        </indexterm>
+        <function>ts_parse</function> ( <replaceable>parser_name</replaceable> <type>text</type>,
+        <replaceable>document</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>tokid</replaceable> <type>integer</type>,
+        <literal>OUT</literal> <replaceable>token</replaceable> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+       <?br?>
+        Extracts tokens from the <replaceable>document</replaceable> using the
+        named parser.
+        See <xref linkend="textsearch-parser-testing"/> for details.
+       <?br?>
+        <literal>ts_parse('default', 'foo - bar')</literal>
+        <returnvalue>(1,foo) ...</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>ts_parse</function> ( <replaceable>parser_oid</replaceable> <type>oid</type>,
+        <replaceable>document</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>tokid</replaceable> <type>integer</type>,
+        <literal>OUT</literal> <replaceable>token</replaceable> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+       <?br?>
+        Extracts tokens from the <replaceable>document</replaceable> using a
+        parser specified by OID.
+        See <xref linkend="textsearch-parser-testing"/> for details.
+       <?br?>
+        <literal>ts_parse(3722, 'foo - bar')</literal>
+        <returnvalue>(1,foo) ...</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_token_type</primary>
+        </indexterm>
+        <function>ts_token_type</function> ( <replaceable>parser_name</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>tokid</replaceable> <type>integer</type>,
+        <literal>OUT</literal> <replaceable>alias</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>description</replaceable> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+       <?br?>
+        Returns a table that describes each type of token the named parser can
+        recognize.
+        See <xref linkend="textsearch-parser-testing"/> for details.
+       <?br?>
+        <literal>ts_token_type('default')</literal>
+        <returnvalue>(1,asciiword,"Word, all ASCII") ...</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <function>ts_token_type</function> ( <replaceable>parser_oid</replaceable> <type>oid</type>,
+        <literal>OUT</literal> <replaceable>tokid</replaceable> <type>integer</type>,
+        <literal>OUT</literal> <replaceable>alias</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>description</replaceable> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+       <?br?>
+        Returns a table that describes each type of token a parser specified
+        by OID can recognize.
+        See <xref linkend="textsearch-parser-testing"/> for details.
+       <?br?>
+        <literal>ts_token_type(3722)</literal>
+        <returnvalue>(1,asciiword,"Word, all ASCII") ...</returnvalue>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>ts_stat</primary>
+        </indexterm>
+        <function>ts_stat</function> ( <replaceable>sqlquery</replaceable> <type>text</type>,
+        <optional> <replaceable>weights</replaceable> <type>text</type>, </optional>
+        <literal>OUT</literal> <replaceable>word</replaceable> <type>text</type>,
+        <literal>OUT</literal> <replaceable>ndoc</replaceable> <type>integer</type>,
+        <literal>OUT</literal> <replaceable>nentry</replaceable> <type>integer</type> )
+        <returnvalue>setof record</returnvalue>
+       <?br?>
+        Executes the <replaceable>sqlquery</replaceable>, which must return a
+        single <type>tsvector</type> column, and returns statistics about each
+        distinct lexeme contained in the data.
+        See <xref linkend="textsearch-statistics"/> for details.
+       <?br?>
+        <literal>ts_stat('SELECT vector FROM apod')</literal>
+        <returnvalue>(foo,10,15) ...</returnvalue>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
  </sect1>
 
@@ -23714,23 +24013,97 @@ SELECT (pg_stat_file('filename')).modification;
   <sect1 id="functions-trigger">
    <title>Trigger Functions</title>
 
-   <indexterm>
-     <primary>suppress_redundant_updates_trigger</primary>
-   </indexterm>
+  <para>
+   While many uses of triggers involve user-written trigger functions,
+   <productname>PostgreSQL</productname> provides a few built-in trigger
+   functions that can be used directly in user-defined triggers.  These
+   are summarized in <xref linkend="builtin-triggers-table"/>.
+   (Additional built-in trigger functions exist, which implement foreign
+   key constraints and deferred index constraints.  Those are not documented
+   here since users need not use them directly.)
+  </para>
+
+  <para>
+   For more information about creating triggers, see
+   <xref linkend="sql-createtrigger"/>.
+  </para>
+
+   <table id="builtin-triggers-table">
+    <title>Built-In Trigger Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="functableentry">
+        Function<?br?>Description<?br?>Example Usage
+       </entry>
+      </row>
+     </thead>
+
+     <tbody>
+       <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>suppress_redundant_updates_trigger</primary>
+        </indexterm>
+        <function>suppress_redundant_updates_trigger</function> ( )
+        <returnvalue>trigger</returnvalue>
+       <?br?>
+        Suppresses do-nothing update operations.  See below for details.
+       <?br?>
+        <literal>CREATE TRIGGER ... suppress_redundant_updates_trigger()</literal>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>tsvector_update_trigger</primary>
+        </indexterm>
+        <function>tsvector_update_trigger</function> ( )
+        <returnvalue>trigger</returnvalue>
+       <?br?>
+        Automatically updates a <type>tsvector</type> column from associated
+        plain-text document column(s).  The text search configuration to use
+        is specified by name as a trigger argument.  See
+        <xref linkend="textsearch-update-triggers"/> for details.
+       <?br?>
+        <literal>CREATE TRIGGER ... tsvector_update_trigger(tsvcol, 'pg_catalog.swedish', title, body)</literal>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="functableentry">
+        <indexterm>
+         <primary>tsvector_update_trigger_column</primary>
+        </indexterm>
+        <function>tsvector_update_trigger_column</function> ( )
+        <returnvalue>trigger</returnvalue>
+       <?br?>
+        Automatically updates a <type>tsvector</type> column from associated
+        plain-text document column(s).  The text search configuration to use
+        is taken from a <type>regconfig</type> column of the table.  See
+        <xref linkend="textsearch-update-triggers"/> for details.
+       <?br?>
+        <literal>CREATE TRIGGER ... tsvector_update_trigger_column(tsvcol, tsconfigcol, title, body)</literal>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <para>
-      Currently <productname>PostgreSQL</productname> provides one built in trigger
-      function, <function>suppress_redundant_updates_trigger</function>,
-      which will prevent any update
-      that does not actually change the data in the row from taking place, in
-      contrast to the normal behavior which always performs the update
+      The <function>suppress_redundant_updates_trigger</function> function,
+      when applied as a row-level <literal>BEFORE UPDATE</literal> trigger,
+      will prevent any update that does not actually change the data in the
+      row from taking place.  This overrides the normal behavior which always
+      performs a physical row update
       regardless of whether or not the data has changed. (This normal behavior
       makes updates run faster, since no checking is required, and is also
       useful in certain cases.)
     </para>
 
     <para>
-      Ideally, you should normally avoid running updates that don't actually
+      Ideally, you should avoid running updates that don't actually
       change the data in the record. Redundant updates can cost considerable
       unnecessary time, especially if there are lots of indexes to alter,
       and space in dead rows that will eventually have to be vacuumed.
@@ -23740,8 +24113,8 @@ SELECT (pg_stat_file('filename')).modification;
       <function>suppress_redundant_updates_trigger</function>, which will skip
       updates that don't change the data. You should use this with care,
       however. The trigger takes a small but non-trivial time for each record,
-      so if most of the records affected by an update are actually changed,
-      use of this trigger will actually make the update run slower.
+      so if most of the records affected by updates do actually change,
+      use of this trigger will make updates run slower on average.
     </para>
 
     <para>
@@ -23752,14 +24125,12 @@ CREATE TRIGGER z_min_update
 BEFORE UPDATE ON tablename
 FOR EACH ROW EXECUTE FUNCTION suppress_redundant_updates_trigger();
 </programlisting>
-      In most cases, you would want to fire this trigger last for each row.
-      Bearing in mind that triggers fire in name order, you would then
+      In most cases, you need to fire this trigger last for each row, so that
+      it does not override other triggers that might wish to alter the row.
+      Bearing in mind that triggers fire in name order, you would therefore
       choose a trigger name that comes after the name of any other trigger
-      you might have on the table.
-    </para>
-    <para>
-       For more information about creating triggers, see
-        <xref linkend="sql-createtrigger"/>.
+      you might have on the table.  (Hence the <quote>z</quote> prefix in the
+      example.)
     </para>
   </sect1>
 

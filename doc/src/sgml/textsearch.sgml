@@ -1705,10 +1705,15 @@ SELECT numnode('foo &amp; bar'::tsquery);
        or only negated terms.  For example:
 
 <screen>
+SELECT querytree(to_tsquery('defined'));
+ querytree
+-----------
+ 'defin'
+
 SELECT querytree(to_tsquery('!defined'));
  querytree
 -----------
-
+ T
 </screen>
       </para>
      </listitem>
