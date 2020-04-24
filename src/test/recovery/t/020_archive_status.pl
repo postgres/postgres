@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 16;
+use Test::More tests => 13;
 use Config;
 
 my $primary = get_new_node('master');
@@ -154,22 +154,10 @@ $standby1->poll_query_until('postgres',
 # Second restartpoint.
 $standby1->safe_psql('postgres', q{CHECKPOINT});
 
-# Recovery with archive_mode=on removed .ready signal files inherited
-# from backup after two checkpoints.  Note that this WAL segment
-# existed in the backup.
-ok( !-f "$standby1_data/$segment_path_1_ready",
-	".ready file for WAL segment $segment_name_1 present in backup removed with archive_mode=on on standby"
-);
-
 # Recovery with archive_mode=on should not create .ready files.
 # Note that this segment did not exist in the backup.
 ok( !-f "$standby1_data/$segment_path_2_ready",
 	".ready file for WAL segment $segment_name_2 not created on standby when archive_mode=on on standby"
-);
-
-# Recovery with archive_mode = on creates .done files.
-ok( -f "$standby1_data/$segment_path_2_done",
-	".done file for WAL segment $segment_name_2 created when archive_mode=on on standby"
 );
 
 # Test recovery with archive_mode = always, which should always keep
@@ -187,10 +175,6 @@ $standby2->safe_psql('postgres', q{CHECKPOINT});
 
 ok( -f "$standby2_data/$segment_path_1_ready",
 	".ready file for WAL segment $segment_name_1 existing in backup is kept with archive_mode=always on standby"
-);
-
-ok( -f "$standby2_data/$segment_path_2_ready",
-	".ready file for WAL segment $segment_name_2 created with archive_mode=always on standby"
 );
 
 # Reset statistics of the archiver for the next checks.
