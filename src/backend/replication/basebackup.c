@@ -665,7 +665,11 @@ perform_base_backup(basebackup_options *opt)
 						 errmsg("unexpected WAL file size \"%s\"", walFileName)));
 			}
 
-			/* wal_segment_size is a multiple of 512, so no need for padding */
+			/*
+			 * wal_segment_size is a multiple of TAR_BLOCK_SIZE, so no need
+			 * for padding.
+			 */
+			Assert(wal_segment_size % TAR_BLOCK_SIZE == 0);
 
 			FreeFile(fp);
 
@@ -1118,11 +1122,11 @@ sendFileWithContent(const char *filename, const char *content,
 	pq_putmessage('d', content, len);
 	update_basebackup_progress(len);
 
-	/* Pad to 512 byte boundary, per tar format requirements */
-	pad = ((len + 511) & ~511) - len;
+	/* Pad to a multiple of the tar block size. */
+	pad = tarPaddingBytesRequired(len);
 	if (pad > 0)
 	{
-		char		buf[512];
+		char		buf[TAR_BLOCK_SIZE];
 
 		MemSet(buf, 0, pad);
 		pq_putmessage('d', buf, pad);
@@ -1491,9 +1495,14 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 
 			if (sent || sizeonly)
 			{
-				/* Add size, rounded up to 512byte block */
-				size += ((statbuf.st_size + 511) & ~511);
-				size += 512;	/* Size of the header of the file */
+				/* Add size. */
+				size += statbuf.st_size;
+
+				/* Pad to a multiple of the tar block size. */
+				size += tarPaddingBytesRequired(statbuf.st_size);
+
+				/* Size of the header for the file. */
+				size += TAR_BLOCK_SIZE;
 			}
 		}
 		else
@@ -1784,11 +1793,11 @@ sendFile(const char *readfilename, const char *tarfilename,
 	}
 
 	/*
-	 * Pad to 512 byte boundary, per tar format requirements. (This small
+	 * Pad to a block boundary, per tar format requirements. (This small
 	 * piece of data is probably not worth throttling, and is not checksummed
 	 * because it's not actually part of the file.)
 	 */
-	pad = ((len + 511) & ~511) - len;
+	pad = tarPaddingBytesRequired(len);
 	if (pad > 0)
 	{
 		MemSet(buf, 0, pad);
@@ -1822,7 +1831,7 @@ static int64
 _tarWriteHeader(const char *filename, const char *linktarget,
 				struct stat *statbuf, bool sizeonly)
 {
-	char		h[512];
+	char		h[TAR_BLOCK_SIZE];
 	enum tarError rc;
 
 	if (!sizeonly)

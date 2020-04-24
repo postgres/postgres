@@ -386,7 +386,7 @@ typedef struct TarMethodFile
 {
 	off_t		ofs_start;		/* Where does the *header* for this file start */
 	off_t		currpos;
-	char		header[512];
+	char		header[TAR_BLOCK_SIZE];
 	char	   *pathname;
 	size_t		pad_to_size;
 } TarMethodFile;
@@ -625,7 +625,8 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	if (!tar_data->compression)
 	{
 		errno = 0;
-		if (write(tar_data->fd, tar_data->currentfile->header, 512) != 512)
+		if (write(tar_data->fd, tar_data->currentfile->header,
+				  TAR_BLOCK_SIZE) != TAR_BLOCK_SIZE)
 		{
 			save_errno = errno;
 			pg_free(tar_data->currentfile);
@@ -639,7 +640,8 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	else
 	{
 		/* Write header through the zlib APIs but with no compression */
-		if (!tar_write_compressed_data(tar_data->currentfile->header, 512, true))
+		if (!tar_write_compressed_data(tar_data->currentfile->header,
+									   TAR_BLOCK_SIZE, true))
 			return NULL;
 
 		/* Re-enable compression for the rest of the file */
@@ -665,7 +667,9 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 			/* Uncompressed, so pad now */
 			tar_write_padding_data(tar_data->currentfile, pad_to_size);
 			/* Seek back to start */
-			if (lseek(tar_data->fd, tar_data->currentfile->ofs_start + 512, SEEK_SET) != tar_data->currentfile->ofs_start + 512)
+			if (lseek(tar_data->fd,
+					  tar_data->currentfile->ofs_start + TAR_BLOCK_SIZE,
+					  SEEK_SET) != tar_data->currentfile->ofs_start + TAR_BLOCK_SIZE)
 				return NULL;
 
 			tar_data->currentfile->currpos = 0;
@@ -778,14 +782,14 @@ tar_close(Walfile f, WalCloseMethod method)
 	}
 
 	/*
-	 * Get the size of the file, and pad the current data up to the nearest
-	 * 512 byte boundary.
+	 * Get the size of the file, and pad out to a multiple of the tar block
+	 * size.
 	 */
 	filesize = tar_get_current_pos(f);
-	padding = ((filesize + 511) & ~511) - filesize;
+	padding = tarPaddingBytesRequired(filesize);
 	if (padding)
 	{
-		char		zerobuf[512];
+		char		zerobuf[TAR_BLOCK_SIZE];
 
 		MemSet(zerobuf, 0, padding);
 		if (tar_write(f, zerobuf, padding) != padding)
@@ -826,7 +830,7 @@ tar_close(Walfile f, WalCloseMethod method)
 	if (!tar_data->compression)
 	{
 		errno = 0;
-		if (write(tar_data->fd, tf->header, 512) != 512)
+		if (write(tar_data->fd, tf->header, TAR_BLOCK_SIZE) != TAR_BLOCK_SIZE)
 		{
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
@@ -845,7 +849,8 @@ tar_close(Walfile f, WalCloseMethod method)
 		}
 
 		/* Overwrite the header, assuming the size will be the same */
-		if (!tar_write_compressed_data(tar_data->currentfile->header, 512, true))
+		if (!tar_write_compressed_data(tar_data->currentfile->header,
+									   TAR_BLOCK_SIZE, true))
 			return -1;
 
 		/* Turn compression back on */
