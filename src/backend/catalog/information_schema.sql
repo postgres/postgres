@@ -2119,8 +2119,15 @@ CREATE VIEW triggers AS
            CAST(
              -- To determine action order, partition by schema, table,
              -- event_manipulation (INSERT/DELETE/UPDATE), ROW/STATEMENT (1),
-             -- BEFORE/AFTER (66), then order by trigger name
-             rank() OVER (PARTITION BY n.oid, c.oid, em.num, t.tgtype & 1, t.tgtype & 66 ORDER BY t.tgname)
+             -- BEFORE/AFTER (66), then order by trigger name.  It's preferable
+             -- to partition by view output columns, so that query constraints
+             -- can be pushed down below the window function.
+             rank() OVER (PARTITION BY CAST(n.nspname AS sql_identifier),
+                                       CAST(c.relname AS sql_identifier),
+                                       em.num,
+                                       t.tgtype & 1,
+                                       t.tgtype & 66
+                                       ORDER BY t.tgname)
              AS cardinal_number) AS action_order,
            CAST(
              CASE WHEN pg_has_role(c.relowner, 'USAGE')
