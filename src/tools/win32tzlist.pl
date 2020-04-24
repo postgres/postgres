@@ -124,7 +124,7 @@ if (@add)
 	for my $z (@add)
 	{
 		print
-		  "\t{\n\t\t\"$z->{std}\", \"$z->{dlt}\",\n\t\t\"FIXME\"\n\t},\t\t\t\t\t\t\t/* $z->{display} */\n";
+		  "\t{\n\t\t/* $z->{display} */\n\t\t\"$z->{std}\", \"$z->{dlt}\",\n\t\t\"FIXME\"\n\t},\n";
 	}
 }
 
