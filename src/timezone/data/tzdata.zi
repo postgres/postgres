@@ -1,4 +1,4 @@
-# version 2019c
+# version 2020a
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -187,7 +187,7 @@ R M 2018 o - Jun 17 2 1 -
 R M 2019 o - May 5 3 -1 -
 R M 2019 o - Jun 9 2 0 -
 R M 2020 o - Ap 19 3 -1 -
-R M 2020 o - May 24 2 0 -
+R M 2020 o - May 31 2 0 -
 R M 2021 o - Ap 11 3 -1 -
 R M 2021 o - May 16 2 0 -
 R M 2022 o - Mar 27 3 -1 -
@@ -203,7 +203,7 @@ R M 2026 o - Mar 22 2 0 -
 R M 2027 o - F 7 3 -1 -
 R M 2027 o - Mar 14 2 0 -
 R M 2028 o - Ja 23 3 -1 -
-R M 2028 o - F 27 2 0 -
+R M 2028 o - Mar 5 2 0 -
 R M 2029 o - Ja 14 3 -1 -
 R M 2029 o - F 18 2 0 -
 R M 2029 o - D 30 3 -1 -
@@ -219,7 +219,7 @@ R M 2033 o - D 25 2 0 -
 R M 2034 o - N 5 3 -1 -
 R M 2034 o - D 17 2 0 -
 R M 2035 o - O 28 3 -1 -
-R M 2035 o - D 2 2 0 -
+R M 2035 o - D 9 2 0 -
 R M 2036 o - O 19 3 -1 -
 R M 2036 o - N 23 2 0 -
 R M 2037 o - O 4 3 -1 -
@@ -235,7 +235,7 @@ R M 2041 o - S 29 2 0 -
 R M 2042 o - Au 10 3 -1 -
 R M 2042 o - S 21 2 0 -
 R M 2043 o - Au 2 3 -1 -
-R M 2043 o - S 6 2 0 -
+R M 2043 o - S 13 2 0 -
 R M 2044 o - Jul 24 3 -1 -
 R M 2044 o - Au 28 2 0 -
 R M 2045 o - Jul 9 3 -1 -
@@ -251,7 +251,7 @@ R M 2049 o - Jul 4 2 0 -
 R M 2050 o - May 15 3 -1 -
 R M 2050 o - Jun 26 2 0 -
 R M 2051 o - May 7 3 -1 -
-R M 2051 o - Jun 11 2 0 -
+R M 2051 o - Jun 18 2 0 -
 R M 2052 o - Ap 28 3 -1 -
 R M 2052 o - Jun 2 2 0 -
 R M 2053 o - Ap 13 3 -1 -
@@ -267,7 +267,7 @@ R M 2057 o - Ap 8 2 0 -
 R M 2058 o - F 17 3 -1 -
 R M 2058 o - Mar 31 2 0 -
 R M 2059 o - F 9 3 -1 -
-R M 2059 o - Mar 16 2 0 -
+R M 2059 o - Mar 23 2 0 -
 R M 2060 o - F 1 3 -1 -
 R M 2060 o - Mar 7 2 0 -
 R M 2061 o - Ja 16 3 -1 -
@@ -277,13 +277,13 @@ R M 2062 o - F 12 2 0 -
 R M 2062 o - D 31 3 -1 -
 R M 2063 o - F 4 2 0 -
 R M 2063 o - D 16 3 -1 -
-R M 2064 o - Ja 20 2 0 -
+R M 2064 o - Ja 27 2 0 -
 R M 2064 o - D 7 3 -1 -
 R M 2065 o - Ja 11 2 0 -
 R M 2065 o - N 22 3 -1 -
 R M 2066 o - Ja 3 2 0 -
 R M 2066 o - N 14 3 -1 -
-R M 2066 o - D 19 2 0 -
+R M 2066 o - D 26 2 0 -
 R M 2067 o - N 6 3 -1 -
 R M 2067 o - D 11 2 0 -
 R M 2068 o - O 21 3 -1 -
@@ -293,13 +293,13 @@ R M 2069 o - N 17 2 0 -
 R M 2070 o - O 5 3 -1 -
 R M 2070 o - N 9 2 0 -
 R M 2071 o - S 20 3 -1 -
-R M 2071 o - O 25 2 0 -
+R M 2071 o - N 1 2 0 -
 R M 2072 o - S 11 3 -1 -
 R M 2072 o - O 16 2 0 -
 R M 2073 o - Au 27 3 -1 -
 R M 2073 o - O 8 2 0 -
 R M 2074 o - Au 19 3 -1 -
-R M 2074 o - S 23 2 0 -
+R M 2074 o - S 30 2 0 -
 R M 2075 o - Au 11 3 -1 -
 R M 2075 o - S 15 2 0 -
 R M 2076 o - Jul 26 3 -1 -
@@ -309,7 +309,7 @@ R M 2077 o - Au 22 2 0 -
 R M 2078 o - Jul 10 3 -1 -
 R M 2078 o - Au 14 2 0 -
 R M 2079 o - Jun 25 3 -1 -
-R M 2079 o - Jul 30 2 0 -
+R M 2079 o - Au 6 2 0 -
 R M 2080 o - Jun 16 3 -1 -
 R M 2080 o - Jul 21 2 0 -
 R M 2081 o - Jun 1 3 -1 -
@@ -325,7 +325,7 @@ R M 2085 o - May 27 2 0 -
 R M 2086 o - Ap 14 3 -1 -
 R M 2086 o - May 19 2 0 -
 R M 2087 o - Mar 30 3 -1 -
-R M 2087 o - May 4 2 0 -
+R M 2087 o - May 11 2 0 -
 Z Africa/Casablanca -0:30:20 - LMT 1913 O 26
 0 M +00/+01 1984 Mar 16
 1 - +01 1986
@@ -498,6 +498,8 @@ Z Asia/Yangon 6:24:47 - LMT 1880
 6:30 - +0630 1942 May
 9 - +09 1945 May 3
 6:30 - +0630
+R Sh 1919 o - Ap 12 24 1 D
+R Sh 1919 o - S 30 24 0 S
 R Sh 1940 o - Jun 1 0 1 D
 R Sh 1940 o - O 12 24 0 S
 R Sh 1941 o - Mar 15 0 1 D
@@ -1921,7 +1923,7 @@ Z America/Scoresbysund -1:27:52 - LMT 1916 Jul 28
 -2 - -02 1980 Ap 6 2
 -2 c -02/-01 1981 Mar 29
 -1 E -01/+00
-Z America/Godthab -3:26:56 - LMT 1916 Jul 28
+Z America/Nuuk -3:26:56 - LMT 1916 Jul 28
 -3 - -03 1980 Ap 6 2
 -3 E -03/-02
 Z America/Thule -4:35:8 - LMT 1916 Jul 28
@@ -3411,11 +3413,13 @@ Z America/Inuvik 0 - -00 1953
 Z America/Whitehorse -9:0:12 - LMT 1900 Au 20
 -9 Y Y%sT 1967 May 28
 -8 Y P%sT 1980
--8 C P%sT
+-8 C P%sT 2020 Mar 8 2
+-7 - MST
 Z America/Dawson -9:17:40 - LMT 1900 Au 20
 -9 Y Y%sT 1973 O 28
 -8 Y P%sT 1980
--8 C P%sT
+-8 C P%sT 2020 Mar 8 2
+-7 - MST
 R m 1939 o - F 5 0 1 D
 R m 1939 o - Jun 25 0 0 S
 R m 1940 o - D 9 0 1 D
@@ -4294,6 +4298,7 @@ L America/Atikokan America/Coral_Harbour
 L America/Argentina/Cordoba America/Cordoba
 L America/Tijuana America/Ensenada
 L America/Indiana/Indianapolis America/Fort_Wayne
+L America/Nuuk America/Godthab
 L America/Indiana/Indianapolis America/Indianapolis
 L America/Argentina/Jujuy America/Jujuy
 L America/Indiana/Knox America/Knox_IN
