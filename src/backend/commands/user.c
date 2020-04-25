@@ -433,19 +433,31 @@ CreateRole(CreateRoleStmt *stmt)
 	/*
 	 * Add the new role to the specified existing roles.
 	 */
-	foreach(item, addroleto)
+	if (addroleto)
 	{
-		RoleSpec   *oldrole = lfirst(item);
-		HeapTuple	oldroletup = get_rolespec_tuple((Node *) oldrole);
-		Oid			oldroleid = HeapTupleGetOid(oldroletup);
-		char	   *oldrolename = NameStr(((Form_pg_authid) GETSTRUCT(oldroletup))->rolname);
+		RoleSpec   *thisrole = makeNode(RoleSpec);
+		List	   *thisrole_list = list_make1(thisrole);
+		List	   *thisrole_oidlist = list_make1_oid(roleid);
 
-		AddRoleMems(oldrolename, oldroleid,
-					list_make1(makeString(stmt->role)),
-					list_make1_oid(roleid),
-					GetUserId(), false);
+		thisrole->roletype = ROLESPEC_CSTRING;
+		thisrole->rolename = stmt->role;
+		thisrole->location = -1;
 
-		ReleaseSysCache(oldroletup);
+		foreach(item, addroleto)
+		{
+			RoleSpec   *oldrole = lfirst(item);
+			HeapTuple	oldroletup = get_rolespec_tuple((Node *) oldrole);
+			Form_pg_authid oldroleform = (Form_pg_authid) GETSTRUCT(oldroletup);
+			Oid			oldroleid = HeapTupleGetOid(oldroletup);
+			char	   *oldrolename = NameStr(oldroleform->rolname);
+
+			AddRoleMems(oldrolename, oldroleid,
+						thisrole_list,
+						thisrole_oidlist,
+						GetUserId(), false);
+
+			ReleaseSysCache(oldroletup);
+		}
 	}
 
 	/*
@@ -1461,7 +1473,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 
 	forboth(specitem, memberSpecs, iditem, memberIds)
 	{
-		RoleSpec   *memberRole = lfirst(specitem);
+		RoleSpec   *memberRole = lfirst_node(RoleSpec, specitem);
 		Oid			memberid = lfirst_oid(iditem);
 		HeapTuple	authmem_tuple;
 		HeapTuple	tuple;
