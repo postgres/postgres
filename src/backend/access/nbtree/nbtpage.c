@@ -1611,7 +1611,7 @@ _bt_pagedel(Relation rel, Buffer buf)
 				 * to-be-deleted doesn't have a downlink, and the page
 				 * deletion algorithm isn't prepared to handle that.
 				 */
-				if (!P_LEFTMOST(opaque))
+				if (leftsib != P_NONE)
 				{
 					BTPageOpaque lopaque;
 					Page		lpage;
@@ -1695,6 +1695,12 @@ _bt_pagedel(Relation rel, Buffer buf)
 		 * the only child of the parent, and could be removed. It would be
 		 * picked up by the next vacuum anyway, but might as well try to
 		 * remove it now, so loop back to process the right sibling.
+		 *
+		 * Note: This relies on the assumption that _bt_getstackbuf() will be
+		 * able to reuse our original descent stack with a different child
+		 * block (provided that the child block is to the right of the
+		 * original leaf page reached by _bt_search()). It will even update
+		 * the descent stack each time we loop around, avoiding repeated work.
 		 */
 		if (!rightsib_empty)
 			break;
@@ -1904,8 +1910,8 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
  * leaf page is deleted.
  *
  * Returns 'false' if the page could not be unlinked (shouldn't happen).
- * If the (new) right sibling of the page is empty, *rightsib_empty is set
- * to true.
+ * If the (current) right sibling of the page is empty, *rightsib_empty is
+ * set to true.
  *
  * Must hold pin and lock on leafbuf at entry (read or write doesn't matter).
  * On success exit, we'll be holding pin and write lock.  On failure exit,
