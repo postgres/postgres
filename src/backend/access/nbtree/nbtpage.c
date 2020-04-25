@@ -1951,6 +1951,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 */
 	itemid = PageGetItemId(page, P_HIKEY);
 	leafhikey = (IndexTuple) PageGetItem(page, itemid);
+	target = BTreeTupleGetTopParent(leafhikey);
 	leafleftsib = opaque->btpo_prev;
 	leafrightsib = opaque->btpo_next;
 
@@ -1965,35 +1966,35 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	/*
 	 * If the leaf page still has a parent pointing to it (or a chain of
 	 * parents), we don't unlink the leaf page yet, but the topmost remaining
-	 * parent in the branch.  Set 'target' and 'buf' to reference the page
-	 * actually being unlinked.
+	 * parent in the branch (i.e. the "top parent")
 	 */
-	target = BTreeTupleGetTopParent(leafhikey);
-
-	if (target != InvalidBlockNumber)
+	if (!BlockNumberIsValid(target))
 	{
+		/* No top parent, so target is leaf page */
+		target = leafblkno;
+
+		buf = leafbuf;
+		leftsib = leafleftsib;
+		targetlevel = 0;
+	}
+	else
+	{
+		/* Target is the internal page taken from leaf's top parent */
 		Assert(target != leafblkno);
 
-		/* fetch the block number of the topmost parent's left sibling */
+		/* Fetch the block number of the target's left sibling */
 		buf = _bt_getbuf(rel, target, BT_READ);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		leftsib = opaque->btpo_prev;
 		targetlevel = opaque->btpo.level;
+		Assert(targetlevel > 0);
 
 		/*
 		 * To avoid deadlocks, we'd better drop the target page lock before
 		 * going further.
 		 */
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-	}
-	else
-	{
-		target = leafblkno;
-
-		buf = leafbuf;
-		leftsib = leafleftsib;
-		targetlevel = 0;
 	}
 
 	/*
@@ -2181,6 +2182,12 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 	 * If we deleted a parent of the targeted leaf page, instead of the leaf
 	 * itself, update the leaf to point to the next remaining child in the
 	 * branch.
+	 *
+	 * Note: We rely on the fact that a buffer pin on the leaf page has been
+	 * held since leafhikey was initialized.  This is safe, though only
+	 * because the page was already half-dead at that point.  The leaf page
+	 * cannot have been modified by any other backend during the period when
+	 * no lock was held.
 	 */
 	if (target != leafblkno)
 		BTreeTupleSetTopParent(leafhikey, nextchild);
