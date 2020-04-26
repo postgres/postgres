@@ -11381,11 +11381,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <replaceable>query</replaceable> <type>text</type> )
         <returnvalue>tsquery</returnvalue>
        <?br?>
-        Converts text to a <type>tsquery</type>, normalizing words according to
-        the specified or default configuration.  Quoted word sequences are
-        converted to phrase tests, and the word <quote>or</quote> is
-        understood as producing an OR operator.  This approximates the
-        behavior of some common web search tools.
+        Converts text to a <type>tsquery</type>, normalizing words according
+        to the specified or default configuration.  Quoted word sequences are
+        converted to phrase tests.  The word <quote>or</quote> is understood
+        as producing an OR operator, and a dash produces a NOT operator;
+        other punctuation is ignored.
+        This approximates the behavior of some common web search tools.
        <?br?>
         <literal>websearch_to_tsquery('english', '"fat rat" or cat dog')</literal>
         <returnvalue>'fat' &lt;-&gt; 'rat' | 'cat' &amp; 'dog'</returnvalue>

@@ -913,7 +913,7 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
  'fat' &amp; 'rat' &amp; 'c'
 </screen>
 
-    Here, all the input punctuation was discarded as being space symbols.
+    Here, all the input punctuation was discarded.
    </para>
 
    <indexterm>
@@ -969,16 +969,16 @@ websearch_to_tsquery(<optional> <replaceable class="parameter">config</replaceab
     syntax in which simple unformatted text is a valid query.
     Unlike <function>plainto_tsquery</function>
     and <function>phraseto_tsquery</function>, it also recognizes certain
-    operators. Moreover, this function should never raise syntax errors,
+    operators. Moreover, this function will never raise syntax errors,
     which makes it possible to use raw user-supplied input for search.
     The following syntax is supported:
+
     <itemizedlist  spacing="compact" mark="bullet">
      <listitem>
        <para>
         <literal>unquoted text</literal>: text not inside quote marks will be
         converted to terms separated by <literal>&amp;</literal> operators, as
-        if processed by
-        <function>plainto_tsquery</function>.
+        if processed by <function>plainto_tsquery</function>.
       </para>
      </listitem>
      <listitem>
@@ -990,18 +990,26 @@ websearch_to_tsquery(<optional> <replaceable class="parameter">config</replaceab
      </listitem>
      <listitem>
       <para>
-       <literal>OR</literal>: logical or will be converted to
+       <literal>OR</literal>: the word <quote>or</quote> will be converted to
        the <literal>|</literal> operator.
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>-</literal>: the logical not operator, converted to the
+       <literal>-</literal>: a dash will be converted to
        the <literal>!</literal> operator.
       </para>
      </listitem>
     </itemizedlist>
+
+    Other punctuation is ignored.  So
+    like <function>plainto_tsquery</function>
+    and <function>phraseto_tsquery</function>,
+    the <function>websearch_to_tsquery</function> function will not
+    recognize <type>tsquery</type> operators, weight labels, or prefix-match
+    labels in its input.
    </para>
+
    <para>
     Examples:
 <screen>
