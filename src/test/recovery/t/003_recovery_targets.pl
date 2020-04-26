@@ -158,8 +158,8 @@ $node_standby->append_conf('postgresql.conf',
 run_log(['pg_ctl', '-D', $node_standby->data_dir,
 		 '-l', $node_standby->logfile, 'start']);
 
-# wait up to 10 seconds for postgres to terminate
-foreach my $i (0..100)
+# wait up to 180s for postgres to terminate
+foreach my $i (0..1800)
 {
 	last if ! -f $node_standby->data_dir . '/postmaster.pid';
 	usleep(100_000);
