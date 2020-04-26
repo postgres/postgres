@@ -11431,7 +11431,7 @@ do_pg_abort_backup(int code, Datum arg)
 
 	if (emit_warning)
 		ereport(WARNING,
-				(errmsg("aborting backup due to backend exiting before pg_stop_back up was called")));
+				(errmsg("aborting backup due to backend exiting before pg_stop_backup was called")));
 }
 
 /*
