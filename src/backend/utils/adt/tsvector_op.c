@@ -67,8 +67,21 @@ typedef struct
 	StatEntry  *root;
 } TSVectorStat;
 
-static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
+/* TS_execute requires ternary logic to handle NOT with phrase matches */
+typedef enum
+{
+	TS_NO,						/* definitely no match */
+	TS_YES,						/* definitely does match */
+	TS_MAYBE					/* can't verify match for lack of pos data */
+} TSTernaryValue;
+
+
+static TSTernaryValue TS_execute_recurse(QueryItem *curitem, void *arg,
+										 uint32 flags,
+										 TSExecuteCallback chkcond);
 static int	tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len);
+static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
+
 
 /*
  * Order: haspos, len, word, for all positions (pos, weight)
@@ -1374,14 +1387,17 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
  * Loffset and Roffset should not be negative, else we risk trying to output
  * negative positions, which won't fit into WordEntryPos.
  *
- * Returns true if any positions were emitted to *data; or if data is NULL,
- * returns true if any positions would have been emitted.
+ * The result is boolean (TS_YES or TS_NO), but for the caller's convenience
+ * we return it as TSTernaryValue.
+ *
+ * Returns TS_YES if any positions were emitted to *data; or if data is NULL,
+ * returns TS_YES if any positions would have been emitted.
  */
 #define TSPO_L_ONLY		0x01	/* emit positions appearing only in L */
 #define TSPO_R_ONLY		0x02	/* emit positions appearing only in R */
 #define TSPO_BOTH		0x04	/* emit positions appearing in both L&R */
 
-static bool
+static TSTernaryValue
 TS_phrase_output(ExecPhraseData *data,
 				 ExecPhraseData *Ldata,
 				 ExecPhraseData *Rdata,
@@ -1464,10 +1480,10 @@ TS_phrase_output(ExecPhraseData *data,
 			else
 			{
 				/*
-				 * Exact positions not needed, so return true as soon as we
+				 * Exact positions not needed, so return TS_YES as soon as we
 				 * know there is at least one.
 				 */
-				return true;
+				return TS_YES;
 			}
 		}
 	}
@@ -1476,9 +1492,9 @@ TS_phrase_output(ExecPhraseData *data,
 	{
 		/* Let's assert we didn't overrun the array */
 		Assert(data->npos <= max_npos);
-		return true;
+		return TS_YES;
 	}
-	return false;
+	return TS_NO;
 }
 
 /*
@@ -1496,17 +1512,16 @@ TS_phrase_output(ExecPhraseData *data,
  * This is OK because an outside call always starts from an OP_PHRASE node.
  *
  * The detailed semantics of the match data, given that the function returned
- * "true" (successful match, or possible match), are:
+ * TS_YES (successful match), are:
  *
  * npos > 0, negate = false:
  *	 query is matched at specified position(s) (and only those positions)
  * npos > 0, negate = true:
  *	 query is matched at all positions *except* specified position(s)
- * npos = 0, negate = false:
- *	 query is possibly matched, matching position(s) are unknown
- *	 (this should only be returned when TS_EXEC_PHRASE_NO_POS flag is set)
  * npos = 0, negate = true:
  *	 query is matched at all positions
+ * npos = 0, negate = false:
+ *	 disallowed (this should result in TS_NO or TS_MAYBE, as appropriate)
  *
  * Successful matches also return a "width" value which is the match width in
  * lexemes, less one.  Hence, "width" is zero for simple one-lexeme matches,
@@ -1515,18 +1530,22 @@ TS_phrase_output(ExecPhraseData *data,
  * the starts.  (This unintuitive rule is needed to avoid possibly generating
  * negative positions, which wouldn't fit into the WordEntryPos arrays.)
  *
- * When the function returns "false" (no match), it must return npos = 0,
+ * If the TSExecuteCallback function reports that an operand is present
+ * but fails to provide position(s) for it, we will return TS_MAYBE when
+ * it is possible but not certain that the query is matched.
+ *
+ * When the function returns TS_NO or TS_MAYBE, it must return npos = 0,
  * negate = false (which is the state initialized by the caller); but the
  * "width" output in such cases is undefined.
  */
-static bool
+static TSTernaryValue
 TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 				  TSExecuteCallback chkcond,
 				  ExecPhraseData *data)
 {
 	ExecPhraseData Ldata,
 				Rdata;
-	bool		lmatch,
+	TSTernaryValue lmatch,
 				rmatch;
 	int			Loffset,
 				Roffset,
@@ -1536,67 +1555,80 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
-		return chkcond(arg, (QueryOperand *) curitem, data);
+	{
+		if (!chkcond(arg, (QueryOperand *) curitem, data))
+			return TS_NO;
+		if (data->npos > 0 || data->negate)
+			return TS_YES;
+		/* If we have no position data, we must return TS_MAYBE */
+		return TS_MAYBE;
+	}
 
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
 
 			/*
-			 * Because a "true" result with no specific positions is taken as
-			 * uncertain, we need no special care here for !TS_EXEC_CALC_NOT.
-			 * If it's a false positive, the right things happen anyway.
-			 *
-			 * Also, we need not touch data->width, since a NOT operation does
-			 * not change the match width.
+			 * We need not touch data->width, since a NOT operation does not
+			 * change the match width.
 			 */
-			if (TS_phrase_execute(curitem + 1, arg, flags, chkcond, data))
+			if (!(flags & TS_EXEC_CALC_NOT))
 			{
-				if (data->npos > 0)
-				{
-					/* we have some positions, invert negate flag */
-					data->negate = !data->negate;
-					return true;
-				}
-				else if (data->negate)
-				{
-					/* change "match everywhere" to "match nowhere" */
-					data->negate = false;
-					return false;
-				}
-				/* match positions are, and remain, uncertain */
-				return true;
-			}
-			else
-			{
-				/* change "match nowhere" to "match everywhere" */
+				/* without CALC_NOT, report NOT as "match everywhere" */
 				Assert(data->npos == 0 && !data->negate);
 				data->negate = true;
-				return true;
+				return TS_YES;
 			}
+			switch (TS_phrase_execute(curitem + 1, arg, flags, chkcond, data))
+			{
+				case TS_NO:
+					/* change "match nowhere" to "match everywhere" */
+					Assert(data->npos == 0 && !data->negate);
+					data->negate = true;
+					return TS_YES;
+				case TS_YES:
+					if (data->npos > 0)
+					{
+						/* we have some positions, invert negate flag */
+						data->negate = !data->negate;
+						return TS_YES;
+					}
+					else if (data->negate)
+					{
+						/* change "match everywhere" to "match nowhere" */
+						data->negate = false;
+						return TS_NO;
+					}
+					/* Should not get here if result was TS_YES */
+					Assert(false);
+					break;
+				case TS_MAYBE:
+					/* match positions are, and remain, uncertain */
+					return TS_MAYBE;
+			}
+			break;
 
 		case OP_PHRASE:
 		case OP_AND:
 			memset(&Ldata, 0, sizeof(Ldata));
 			memset(&Rdata, 0, sizeof(Rdata));
 
-			if (!TS_phrase_execute(curitem + curitem->qoperator.left,
-								   arg, flags, chkcond, &Ldata))
-				return false;
+			lmatch = TS_phrase_execute(curitem + curitem->qoperator.left,
+									   arg, flags, chkcond, &Ldata);
+			if (lmatch == TS_NO)
+				return TS_NO;
 
-			if (!TS_phrase_execute(curitem + 1,
-								   arg, flags, chkcond, &Rdata))
-				return false;
+			rmatch = TS_phrase_execute(curitem + 1,
+									   arg, flags, chkcond, &Rdata);
+			if (rmatch == TS_NO)
+				return TS_NO;
 
 			/*
 			 * If either operand has no position information, then we can't
-			 * return position data, only a "possible match" result. "Possible
-			 * match" answers are only wanted when TS_EXEC_PHRASE_NO_POS flag
-			 * is set, otherwise return false.
+			 * return reliable position data, only a MAYBE result.
 			 */
-			if ((Ldata.npos == 0 && !Ldata.negate) ||
-				(Rdata.npos == 0 && !Rdata.negate))
-				return (flags & TS_EXEC_PHRASE_NO_POS) ? true : false;
+			if (lmatch == TS_MAYBE || rmatch == TS_MAYBE)
+				return TS_MAYBE;
 
 			if (curitem->qoperator.oper == OP_PHRASE)
 			{
@@ -1632,7 +1664,7 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 										Ldata.npos + Rdata.npos);
 				if (data)
 					data->negate = true;
-				return true;
+				return TS_YES;
 			}
 			else if (Ldata.negate)
 			{
@@ -1668,27 +1700,24 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 			rmatch = TS_phrase_execute(curitem + 1,
 									   arg, flags, chkcond, &Rdata);
 
-			if (!lmatch && !rmatch)
-				return false;
+			if (lmatch == TS_NO && rmatch == TS_NO)
+				return TS_NO;
 
 			/*
-			 * If a valid operand has no position information, then we can't
-			 * return position data, only a "possible match" result. "Possible
-			 * match" answers are only wanted when TS_EXEC_PHRASE_NO_POS flag
-			 * is set, otherwise return false.
+			 * If either operand has no position information, then we can't
+			 * return reliable position data, only a MAYBE result.
 			 */
-			if ((lmatch && Ldata.npos == 0 && !Ldata.negate) ||
-				(rmatch && Rdata.npos == 0 && !Rdata.negate))
-				return (flags & TS_EXEC_PHRASE_NO_POS) ? true : false;
+			if (lmatch == TS_MAYBE || rmatch == TS_MAYBE)
+				return TS_MAYBE;
 
 			/*
 			 * Cope with undefined output width from failed submatch.  (This
 			 * takes less code than trying to ensure that all failure returns
 			 * set data->width to zero.)
 			 */
-			if (!lmatch)
+			if (lmatch == TS_NO)
 				Ldata.width = 0;
-			if (!rmatch)
+			if (rmatch == TS_NO)
 				Rdata.width = 0;
 
 			/*
@@ -1710,7 +1739,7 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 										Loffset, Roffset,
 										Min(Ldata.npos, Rdata.npos));
 				data->negate = true;
-				return true;
+				return TS_YES;
 			}
 			else if (Ldata.negate)
 			{
@@ -1720,7 +1749,7 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 										Loffset, Roffset,
 										Ldata.npos);
 				data->negate = true;
-				return true;
+				return TS_YES;
 			}
 			else if (Rdata.negate)
 			{
@@ -1730,7 +1759,7 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 										Loffset, Roffset,
 										Rdata.npos);
 				data->negate = true;
-				return true;
+				return TS_YES;
 			}
 			else
 			{
@@ -1746,7 +1775,7 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 	}
 
 	/* not reachable, but keep compiler quiet */
-	return false;
+	return TS_NO;
 }
 
 
@@ -1757,51 +1786,113 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
  * arg: opaque value to pass through to callback function
  * flags: bitmask of flag bits shown in ts_utils.h
  * chkcond: callback function to check whether a primitive value is present
- *
- * The logic here deals only with operators above any phrase operator, for
- * which we do not need to worry about lexeme positions.  As soon as we hit an
- * OP_PHRASE operator, we pass it off to TS_phrase_execute which does worry.
  */
 bool
 TS_execute(QueryItem *curitem, void *arg, uint32 flags,
 		   TSExecuteCallback chkcond)
 {
+	/*
+	 * If we get TS_MAYBE from the recursion, return true.  We could only see
+	 * that result if the caller passed TS_EXEC_PHRASE_NO_POS, so there's no
+	 * need to check again.
+	 */
+	return TS_execute_recurse(curitem, arg, flags, chkcond) != TS_NO;
+}
+
+/*
+ * TS_execute recursion for operators above any phrase operator.  Here we do
+ * not need to worry about lexeme positions.  As soon as we hit an OP_PHRASE
+ * operator, we pass it off to TS_phrase_execute which does worry.
+ */
+static TSTernaryValue
+TS_execute_recurse(QueryItem *curitem, void *arg, uint32 flags,
+				   TSExecuteCallback chkcond)
+{
+	TSTernaryValue lmatch;
+
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
 		return chkcond(arg, (QueryOperand *) curitem,
-					   NULL /* we don't need position info */ );
+					   NULL /* don't need position info */ ) ? TS_YES : TS_NO;
 
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
-			if (flags & TS_EXEC_CALC_NOT)
-				return !TS_execute(curitem + 1, arg, flags, chkcond);
-			else
-				return true;
+			if (!(flags & TS_EXEC_CALC_NOT))
+				return TS_YES;
+			switch (TS_execute_recurse(curitem + 1, arg, flags, chkcond))
+			{
+				case TS_NO:
+					return TS_YES;
+				case TS_YES:
+					return TS_NO;
+				case TS_MAYBE:
+					return TS_MAYBE;
+			}
+			break;
 
 		case OP_AND:
-			if (TS_execute(curitem + curitem->qoperator.left, arg, flags, chkcond))
-				return TS_execute(curitem + 1, arg, flags, chkcond);
-			else
-				return false;
+			lmatch = TS_execute_recurse(curitem + curitem->qoperator.left, arg,
+										flags, chkcond);
+			if (lmatch == TS_NO)
+				return TS_NO;
+			switch (TS_execute_recurse(curitem + 1, arg, flags, chkcond))
+			{
+				case TS_NO:
+					return TS_NO;
+				case TS_YES:
+					return lmatch;
+				case TS_MAYBE:
+					return TS_MAYBE;
+			}
+			break;
 
 		case OP_OR:
-			if (TS_execute(curitem + curitem->qoperator.left, arg, flags, chkcond))
-				return true;
-			else
-				return TS_execute(curitem + 1, arg, flags, chkcond);
+			lmatch = TS_execute_recurse(curitem + curitem->qoperator.left, arg,
+										flags, chkcond);
+			if (lmatch == TS_YES)
+				return TS_YES;
+			switch (TS_execute_recurse(curitem + 1, arg, flags, chkcond))
+			{
+				case TS_NO:
+					return lmatch;
+				case TS_YES:
+					return TS_YES;
+				case TS_MAYBE:
+					return TS_MAYBE;
+			}
+			break;
 
 		case OP_PHRASE:
-			return TS_phrase_execute(curitem, arg, flags, chkcond, NULL);
+
+			/*
+			 * If we get a MAYBE result, and the caller doesn't want that,
+			 * convert it to NO.  It would be more consistent, perhaps, to
+			 * return the result of TS_phrase_execute() verbatim and then
+			 * convert MAYBE results at the top of the recursion.  But
+			 * converting at the topmost phrase operator gives results that
+			 * are bug-compatible with the old implementation, so do it like
+			 * this for now.
+			 */
+			switch (TS_phrase_execute(curitem, arg, flags, chkcond, NULL))
+			{
+				case TS_NO:
+					return TS_NO;
+				case TS_YES:
+					return TS_YES;
+				case TS_MAYBE:
+					return (flags & TS_EXEC_PHRASE_NO_POS) ? TS_MAYBE : TS_NO;
+			}
+			break;
 
 		default:
 			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
 	}
 
 	/* not reachable, but keep compiler quiet */
-	return false;
+	return TS_NO;
 }
 
 /*

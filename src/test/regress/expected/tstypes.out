@@ -769,7 +769,85 @@ select to_tsvector('simple', 'z q') @@ '(!x | y <-> z) <-> q' AS "true";
  t
 (1 row)
 
+select to_tsvector('simple', 'x y q') @@ '(!x | y) <-> y <-> q' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'x y q') @@ '(!x | !y) <-> y <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q') @@ '(x | !y) <-> y <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q') @@ '(x | !!z) <-> y <-> q' AS "true";
+ true 
+------
+ t
+(1 row)
+
 select to_tsvector('simple', 'x y q y') @@ '!x <-> y' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q y') @@ '!x <-> !y' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q y') @@ '!x <-> !!y' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select to_tsvector('simple', 'x y q y') @@ '!(x <-> y)' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select to_tsvector('simple', 'x y q y') @@ '!(x <2> y)' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select strip(to_tsvector('simple', 'x y q y')) @@ '!x <-> y' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select strip(to_tsvector('simple', 'x y q y')) @@ '!x <-> !y' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select strip(to_tsvector('simple', 'x y q y')) @@ '!x <-> !!y' AS "false";
+ false 
+-------
+ f
+(1 row)
+
+select strip(to_tsvector('simple', 'x y q y')) @@ '!(x <-> y)' AS "true";
+ true 
+------
+ t
+(1 row)
+
+select strip(to_tsvector('simple', 'x y q y')) @@ '!(x <2> y)' AS "true";
  true 
 ------
  t

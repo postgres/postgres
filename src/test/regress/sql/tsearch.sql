@@ -51,6 +51,16 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
 SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> !yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
 
 create index wowidx on test_tsvector using gist (a);
 
@@ -70,6 +80,16 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
 SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> !yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
 
 SET enable_indexscan=OFF;
 SET enable_bitmapscan=ON;
@@ -86,6 +106,16 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
 SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> !yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
 
 -- Test siglen parameter of GiST tsvector_ops
 CREATE INDEX wowidx1 ON test_tsvector USING gist (a tsvector_ops(foo=1));
@@ -112,6 +142,16 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
 SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> !yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
 
 DROP INDEX wowidx2;
 
@@ -131,6 +171,16 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
 SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> !yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
 
 RESET enable_seqscan;
 RESET enable_indexscan;
@@ -155,6 +205,16 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
 SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!pl <-> !yh';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!yh <-> pl';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
 
 -- Test optimization of non-empty GIN_SEARCH_MODE_ALL queries
 EXPLAIN (COSTS OFF)
