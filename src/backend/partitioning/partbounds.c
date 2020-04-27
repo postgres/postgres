@@ -1224,7 +1224,7 @@ merge_list_bounds(FmgrInfo *partsupfunc, Oid *partcollation,
 			Assert(inner_index >= 0);
 
 			/*
-			 * Try merging both paritions.  If successful, add the list value
+			 * Try merging both partitions.  If successful, add the list value
 			 * and index of the merged partition below.
 			 */
 			merged_index = merge_matching_partitions(&outer_map, &inner_map,

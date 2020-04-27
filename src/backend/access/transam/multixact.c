@@ -2666,7 +2666,7 @@ SetOffsetVacuumLimit(bool is_startup)
  * We use this to determine whether the addition is "wrapping around" the
  * boundary point, hence the name.  The reason we don't want to use the regular
  * 2^31-modulo arithmetic here is that we want to be able to use the whole of
- * the 2^32-1 space here, allowing for more multixacts that would fit
+ * the 2^32-1 space here, allowing for more multixacts than would fit
  * otherwise.
  */
 static bool
