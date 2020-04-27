@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 13;
+use Test::More tests => 16;
 use Config;
 
 my $primary = get_new_node('master');
@@ -119,8 +119,14 @@ my $segment_path_2_done  = "$segment_path_2.done";
 $primary->safe_psql(
 	'postgres', q{
 	INSERT INTO mine SELECT generate_series(10,20) AS x;
-	SELECT pg_switch_wal();
 	CHECKPOINT;
+});
+
+# Switch to a new segment and use the returned LSN to make sure that
+# standbys have caught up to this point.
+my $primary_lsn = $primary->safe_psql(
+	'postgres', q{
+	SELECT pg_switch_wal();
 });
 
 $primary->poll_query_until('postgres',
@@ -134,12 +140,30 @@ $standby1->init_from_backup($primary, 'backup', has_restoring => 1);
 $standby1->append_conf('postgresql.conf', "archive_mode = on");
 my $standby1_data = $standby1->data_dir;
 $standby1->start;
+
+# Wait for the replay of the segment switch done previously, ensuring
+# that all segments needed are restored from the archives.
+$standby1->poll_query_until('postgres',
+	qq{ SELECT pg_wal_lsn_diff(pg_last_wal_replay_lsn(), '$primary_lsn') >= 0 }
+) or die "Timed out while waiting for xlog replay on standby2";
+
 $standby1->safe_psql('postgres', q{CHECKPOINT});
+
+# Recovery with archive_mode=on does not keep .ready signal files inherited
+# from backup.  Note that this WAL segment existed in the backup.
+ok( !-f "$standby1_data/$segment_path_1_ready",
+	".ready file for WAL segment $segment_name_1 present in backup got removed with archive_mode=on on standby"
+);
 
 # Recovery with archive_mode=on should not create .ready files.
 # Note that this segment did not exist in the backup.
 ok( !-f "$standby1_data/$segment_path_2_ready",
 	".ready file for WAL segment $segment_name_2 not created on standby when archive_mode=on on standby"
+);
+
+# Recovery with archive_mode = on creates .done files.
+ok( -f "$standby1_data/$segment_path_2_done",
+	".done file for WAL segment $segment_name_2 created when archive_mode=on on standby"
 );
 
 # Test recovery with archive_mode = always, which should always keep
@@ -153,10 +177,20 @@ $standby2->append_conf('postgresql.conf', 'archive_mode = always');
 my $standby2_data = $standby2->data_dir;
 $standby2->start;
 
+# Wait for the replay of the segment switch done previously, ensuring
+# that all segments needed are restored from the archives.
+$standby2->poll_query_until('postgres',
+	qq{ SELECT pg_wal_lsn_diff(pg_last_wal_replay_lsn(), '$primary_lsn') >= 0 }
+) or die "Timed out while waiting for xlog replay on standby2";
+
 $standby2->safe_psql('postgres', q{CHECKPOINT});
 
 ok( -f "$standby2_data/$segment_path_1_ready",
 	".ready file for WAL segment $segment_name_1 existing in backup is kept with archive_mode=always on standby"
+);
+
+ok( -f "$standby2_data/$segment_path_2_ready",
+	".ready file for WAL segment $segment_name_2 created with archive_mode=always on standby"
 );
 
 # Reset statistics of the archiver for the next checks.
