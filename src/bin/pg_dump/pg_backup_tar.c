@@ -515,6 +515,8 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 	size_t		used = 0;
 	size_t		res = 0;
 
+	Assert(th || fh);
+
 	avail = AH->lookaheadLen - AH->lookaheadPos;
 	if (avail > 0)
 	{
@@ -567,8 +569,6 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 					READ_ERROR_EXIT(th->nFH);
 			}
 		}
-		else
-			fatal("internal error -- neither th nor fh specified in _tarReadRaw()");
 	}
 
 	ctx->tarFHpos += res + used;
