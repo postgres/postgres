@@ -1131,7 +1131,12 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 									time(NULL));
 
 					WRITE_TAR_DATA(header, sizeof(header));
-					WRITE_TAR_DATA(zerobuf, 511);
+
+					/*
+					 * we don't need to pad out to a multiple of the tar block
+					 * size here, because the file is zero length, which is a
+					 * multiple of any block size.
+					 */
 				}
 			}
 
