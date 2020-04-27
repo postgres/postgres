@@ -1528,7 +1528,7 @@ SELECT 4 AS four \; SELECT 5 AS five \aset
       <row>
        <entry><literal><function>pi()</function></literal></entry>
        <entry>double</entry>
-       <entry>value of the constant PI</entry>
+       <entry>value of the constant <phrase role="symbol_font">&pi;</phrase></entry>
        <entry><literal>pi()</literal></entry>
        <entry><literal>3.14159265358979323846</literal></entry>
       </row>

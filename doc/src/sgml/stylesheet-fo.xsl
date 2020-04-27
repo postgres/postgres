@@ -101,6 +101,11 @@
   <fo:block/>
 </xsl:template>
 
+<!-- FOP needs us to be explicit about use of symbol font in some cases -->
+<xsl:template match="phrase[@role='symbol_font']">
+  <fo:inline font-family="{$symbol.font.family}"><xsl:value-of select="."/></fo:inline>
+</xsl:template>
+
 <!-- bug fix from <https://sourceforge.net/p/docbook/bugs/1360/#831b> -->
 
 <xsl:template match="varlistentry/term" mode="xref-to">

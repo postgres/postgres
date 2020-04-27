@@ -1365,7 +1365,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <function>pi</function> (  )
         <returnvalue>double precision</returnvalue>
        <?br?>
-        Approximate value of &pi;
+        Approximate value of <phrase role="symbol_font">&pi;</phrase>
        <?br?>
         <literal>pi()</literal>
         <returnvalue>3.141592653589793</returnvalue>
