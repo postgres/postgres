@@ -284,14 +284,21 @@ BEGIN
         INSERT INTO dedup_unique_test_table SELECT 1;
     END LOOP;
 END$$;
+-- Exercise the LP_DEAD-bit-set tuple deletion code with a posting list tuple.
+-- The implementation prefers deleting existing items to merging any duplicate
+-- tuples into a posting list, so we need an explicit test to make sure we get
+-- coverage (note that this test also assumes BLCKSZ is 8192 or less):
+DROP INDEX plain_unique;
+DELETE FROM dedup_unique_test_table WHERE a = 1;
+INSERT INTO dedup_unique_test_table SELECT i FROM generate_series(0,450) i;
 --
 -- Test B-tree fast path (cache rightmost leaf page) optimization.
 --
 -- First create a tree that's at least three levels deep (i.e. has one level
 -- between the root and leaf levels). The text inserted is long.  It won't be
--- compressed because we use plain storage in the table.  Only a few index
--- tuples fit on each internal page, allowing us to get a tall tree with few
--- pages.  (A tall tree is required to trigger caching.)
+-- TOAST compressed because we use plain storage in the table.  Only a few
+-- index tuples fit on each internal page, allowing us to get a tall tree with
+-- few pages.  (A tall tree is required to trigger caching.)
 --
 -- The text column must be the leading column in the index, since suffix
 -- truncation would otherwise truncate tuples on internal pages, leaving us
