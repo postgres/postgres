@@ -226,12 +226,14 @@ be_tls_init(bool isServerStart)
 		 * as the code above would have already generated an error.
 		 */
 		if (ssl_ver_min > ssl_ver_max)
+		{
 			ereport(isServerStart ? FATAL : LOG,
 					(errmsg("could not set SSL protocol version range"),
 					 errdetail("\"%s\" cannot be higher than \"%s\"",
 							   "ssl_min_protocol_version",
 							   "ssl_max_protocol_version")));
-		goto error;
+			goto error;
+		}
 	}
 
 	/* disallow SSL session tickets */
