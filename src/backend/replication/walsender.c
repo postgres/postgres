@@ -600,6 +600,12 @@ StartReplication(StartReplicationCmd *cmd)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("cannot use a logical replication slot for physical replication")));
+
+		/*
+		 * We don't need to verify the slot's restart_lsn here; instead we
+		 * rely on the caller requesting the starting point to use.  If the
+		 * WAL segment doesn't exist, we'll fail later.
+		 */
 	}
 
 	/*
@@ -1134,6 +1140,13 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 
 	(void) ReplicationSlotAcquire(cmd->slotname, SAB_Error);
 
+	if (XLogRecPtrIsInvalid(MyReplicationSlot->data.restart_lsn))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("cannot read from logical replication slot \"%s\"",
+						cmd->slotname),
+				 errdetail("This slot has been invalidated because it exceeded the maximum reserved size.")));
+
 	/*
 	 * Force a disconnect, so that the decoding code doesn't need to care
 	 * about an eventual switch from running in recovery, to running in a
@@ -1158,7 +1171,6 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 							  logical_read_xlog_page,
 							  WalSndPrepareWrite, WalSndWriteData,
 							  WalSndUpdateProgress);
-
 
 	WalSndSetState(WALSNDSTATE_CATCHUP);
 
