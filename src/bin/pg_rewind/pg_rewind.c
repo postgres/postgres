@@ -225,7 +225,7 @@ main(int argc, char **argv)
 
 	if (writerecoveryconf && connstr_source == NULL)
 	{
-		pg_log_error("no source server information (--source--server) specified for --write-recovery-conf");
+		pg_log_error("no source server information (--source-server) specified for --write-recovery-conf");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
