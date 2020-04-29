@@ -495,6 +495,13 @@ CheckpointerMain(void)
 		pgstat_send_bgwriter();
 
 		/*
+		 * If any checkpoint flags have been set, redo the loop to handle the
+		 * checkpoint without sleeping.
+		 */
+		if (((volatile CheckpointerShmemStruct *) CheckpointerShmem)->ckpt_flags)
+			continue;
+
+		/*
 		 * Sleep until we are signaled or it's time for another checkpoint or
 		 * xlog file switch.
 		 */

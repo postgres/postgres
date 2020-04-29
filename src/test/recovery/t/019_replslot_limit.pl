@@ -8,7 +8,7 @@ use TestLib;
 use PostgresNode;
 
 use File::Path qw(rmtree);
-use Test::More tests => 13;
+use Test::More tests => 14;
 use Time::HiRes qw(usleep);
 
 $ENV{PGDATABASE} = 'postgres';
@@ -179,7 +179,47 @@ for (my $i = 0; $i < 10000; $i++)
 }
 ok($failed, 'check that replication has been broken');
 
-$node_standby->stop;
+$node_master->stop('immediate');
+$node_standby->stop('immediate');
+
+my $node_master2 = get_new_node('master2');
+$node_master2->init(allows_streaming => 1);
+$node_master2->append_conf(
+	'postgresql.conf', qq(
+min_wal_size = 32MB
+max_wal_size = 32MB
+log_checkpoints = yes
+));
+$node_master2->start;
+$node_master2->safe_psql('postgres',
+	"SELECT pg_create_physical_replication_slot('rep1')");
+$backup_name = 'my_backup2';
+$node_master2->backup($backup_name);
+
+$node_master2->stop;
+$node_master2->append_conf(
+	'postgresql.conf', qq(
+max_slot_wal_keep_size = 0
+));
+$node_master2->start;
+
+$node_standby = get_new_node('standby_2');
+$node_standby->init_from_backup($node_master2, $backup_name,
+	has_streaming => 1);
+$node_standby->append_conf('postgresql.conf', "primary_slot_name = 'rep1'");
+$node_standby->start;
+my @result =
+  split(
+	'\n',
+	$node_master2->safe_psql(
+		'postgres',
+		"CREATE TABLE tt();
+		 DROP TABLE tt;
+		 SELECT pg_switch_wal();
+		 CHECKPOINT;
+		 SELECT 'finished';",
+		timeout => '60'));
+is($result[1], 'finished', 'check if checkpoint command is not blocked');
 
 #####################################
 # Advance WAL of $node by $n segments
