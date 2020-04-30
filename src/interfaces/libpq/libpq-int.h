@@ -367,8 +367,8 @@ struct pg_conn
 	char	   *krbsrvname;		/* Kerberos service name */
 	char	   *gsslib;			/* What GSS library to use ("gssapi" or
 								 * "sspi") */
-	char	   *sslminprotocolversion;	/* minimum TLS protocol version */
-	char	   *sslmaxprotocolversion;	/* maximum TLS protocol version */
+	char	   *ssl_min_protocol_version;	/* minimum TLS protocol version */
+	char	   *ssl_max_protocol_version;	/* maximum TLS protocol version */
 
 	/* Type of connection to make.  Possible values: any, read-write. */
 	char	   *target_session_attrs;

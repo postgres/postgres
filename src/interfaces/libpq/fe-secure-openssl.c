@@ -842,18 +842,18 @@ initialize_SSL(PGconn *conn)
 	SSL_CTX_set_options(SSL_context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	/* Set the minimum and maximum protocol versions if necessary */
-	if (conn->sslminprotocolversion &&
-		strlen(conn->sslminprotocolversion) != 0)
+	if (conn->ssl_min_protocol_version &&
+		strlen(conn->ssl_min_protocol_version) != 0)
 	{
 		int			ssl_min_ver;
 
-		ssl_min_ver = ssl_protocol_version_to_openssl(conn->sslminprotocolversion);
+		ssl_min_ver = ssl_protocol_version_to_openssl(conn->ssl_min_protocol_version);
 
 		if (ssl_min_ver == -1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("invalid value \"%s\" for minimum version of SSL protocol\n"),
-							  conn->sslminprotocolversion);
+							  conn->ssl_min_protocol_version);
 			SSL_CTX_free(SSL_context);
 			return -1;
 		}
@@ -871,18 +871,18 @@ initialize_SSL(PGconn *conn)
 		}
 	}
 
-	if (conn->sslmaxprotocolversion &&
-		strlen(conn->sslmaxprotocolversion) != 0)
+	if (conn->ssl_max_protocol_version &&
+		strlen(conn->ssl_max_protocol_version) != 0)
 	{
 		int			ssl_max_ver;
 
-		ssl_max_ver = ssl_protocol_version_to_openssl(conn->sslmaxprotocolversion);
+		ssl_max_ver = ssl_protocol_version_to_openssl(conn->ssl_max_protocol_version);
 
 		if (ssl_max_ver == -1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("invalid value \"%s\" for maximum version of SSL protocol\n"),
-							  conn->sslmaxprotocolversion);
+							  conn->ssl_max_protocol_version);
 			SSL_CTX_free(SSL_context);
 			return -1;
 		}

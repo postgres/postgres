@@ -357,22 +357,22 @@ command_like(
 # Test min/max SSL protocol versions.
 test_connect_ok(
 	$common_connstr,
-	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslminprotocolversion=TLSv1.2 sslmaxprotocolversion=TLSv1.2",
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_min_protocol_version=TLSv1.2 ssl_max_protocol_version=TLSv1.2",
 	"connection success with correct range of TLS protocol versions");
 test_connect_fails(
 	$common_connstr,
-	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslminprotocolversion=TLSv1.2 sslmaxprotocolversion=TLSv1.1",
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_min_protocol_version=TLSv1.2 ssl_max_protocol_version=TLSv1.1",
 	qr/invalid SSL protocol version range/,
 	"connection failure with incorrect range of TLS protocol versions");
 test_connect_fails(
 	$common_connstr,
-	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslminprotocolversion=incorrect_tls",
-	qr/invalid sslminprotocolversion value/,
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_min_protocol_version=incorrect_tls",
+	qr/invalid ssl_min_protocol_version value/,
 	"connection failure with an incorrect SSL protocol minimum bound");
 test_connect_fails(
 	$common_connstr,
-	"sslrootcert=ssl/root+server_ca.crt sslmode=require sslmaxprotocolversion=incorrect_tls",
-	qr/invalid sslmaxprotocolversion value/,
+	"sslrootcert=ssl/root+server_ca.crt sslmode=require ssl_max_protocol_version=incorrect_tls",
+	qr/invalid ssl_max_protocol_version value/,
 	"connection failure with an incorrect SSL protocol maximum bound");
 
 ### Server-side tests.

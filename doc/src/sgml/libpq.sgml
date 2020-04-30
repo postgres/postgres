@@ -1736,8 +1736,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-connect-sslminprotocolversion" xreflabel="sslminprotocolversion">
-      <term><literal>sslminprotocolversion</literal></term>
+     <varlistentry id="libpq-connect-ssl-min-protocol-version" xreflabel="ssl_min_protocol_version">
+      <term><literal>ssl_min_protocol_version</literal></term>
       <listitem>
        <para>
         This parameter specifies the minimum SSL/TLS protocol version to allow
@@ -1752,8 +1752,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-connect-sslmaxprotocolversion" xreflabel="sslmaxprotocolversion">
-      <term><literal>sslmaxprotocolversion</literal></term>
+     <varlistentry id="libpq-connect-ssl-max-protocol-version" xreflabel="ssl_max_protocol_version">
+      <term><literal>ssl_max_protocol_version</literal></term>
       <listitem>
        <para>
         This parameter specifies the maximum SSL/TLS protocol version to allow
@@ -7164,7 +7164,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLMINPROTOCOLVERSION</envar></primary>
       </indexterm>
       <envar>PGSSLMINPROTOCOLVERSION</envar> behaves the same as the <xref
-      linkend="libpq-connect-sslminprotocolversion"/> connection parameter.
+      linkend="libpq-connect-ssl-min-protocol-version"/> connection parameter.
      </para>
     </listitem>
 
@@ -7174,7 +7174,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSSLMAXPROTOCOLVERSION</envar></primary>
       </indexterm>
       <envar>PGSSLMAXPROTOCOLVERSION</envar> behaves the same as the <xref
-      linkend="libpq-connect-sslminprotocolversion"/> connection parameter.
+      linkend="libpq-connect-ssl-min-protocol-version"/> connection parameter.
      </para>
     </listitem>
 
