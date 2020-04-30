@@ -78,11 +78,22 @@ div.example {
 
 /* formatting for entries in tables of functions: indent all but first line */
 
-th.functableentry,
-td.functableentry {
+th.func_table_entry p,
+td.func_table_entry p {
+	margin-top: 0.1em;
+	margin-bottom: 0.1em;
 	padding-left: 4em;
-	text-indent: -3.5em;
 	text-align: left;
+}
+
+p.func_signature {
+	text-indent: -3.5em;
+}
+
+td.func_table_entry pre.programlisting {
+	margin-top: 0.1em;
+	margin-bottom: 0.1em;
+	padding-left: 4em;
 }
 
 /* Put these here instead of inside the HTML (see unsetting of

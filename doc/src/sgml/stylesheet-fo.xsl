@@ -63,30 +63,14 @@
   </fo:inline>
 </xsl:template>
 
-<!-- overrides built-in DocBook template -->
-<xsl:template name="table.cell.block.properties">
-  <!-- highlight this entry? -->
-  <xsl:choose>
-    <xsl:when test="ancestor::thead or ancestor::tfoot">
-      <xsl:attribute name="font-weight">bold</xsl:attribute>
-    </xsl:when>
-    <!-- Make row headers bold too -->
-    <xsl:when test="ancestor::tbody and
-                    (ancestor::table[@rowheader = 'firstcol'] or
-                    ancestor::informaltable[@rowheader = 'firstcol']) and
-                    ancestor-or-self::entry[1][count(preceding-sibling::entry) = 0]">
-      <xsl:attribute name="font-weight">bold</xsl:attribute>
-    </xsl:when>
-  </xsl:choose>
-  <!-- Postgres additions start here -->
-  <!-- indent all but first line of entries in tables of functions -->
-  <xsl:choose>
-    <xsl:when test="self::entry[@role='functableentry']">
-      <xsl:attribute name="margin-left">4em</xsl:attribute>
+<!-- formatting for entries in tables of functions -->
+<xsl:template match="entry[@role='func_table_entry']/para">
+  <fo:block margin-left="4em" text-align="left">
+    <xsl:if test="self::para[@role='func_signature']">
       <xsl:attribute name="text-indent">-3.5em</xsl:attribute>
-      <xsl:attribute name="text-align">left</xsl:attribute>
-    </xsl:when>
-  </xsl:choose>
+    </xsl:if>
+    <xsl:apply-templates/>
+  </fo:block>
 </xsl:template>
 
 <!-- overrides stylesheet-common.xsl -->
@@ -94,11 +78,6 @@
 <xsl:template match="returnvalue">
   <fo:inline font-family="{$symbol.font.family}">&#x2192; </fo:inline>
   <xsl:call-template name="inline.monoseq"/>
-</xsl:template>
-
-<!-- overrides stylesheet-common.xsl -->
-<xsl:template match="processing-instruction('br')">
-  <fo:block/>
 </xsl:template>
 
 <!-- FOP needs us to be explicit about use of symbol font in some cases -->
