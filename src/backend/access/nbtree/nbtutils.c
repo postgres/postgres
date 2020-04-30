@@ -1756,10 +1756,6 @@ _bt_killitems(IndexScanDesc scan)
 		/* Attempt to re-read the buffer, getting pin and lock. */
 		buf = _bt_getbuf(scan->indexRelation, so->currPos.currPage, BT_READ);
 
-		/* It might not exist anymore; in which case we can't hint it. */
-		if (!BufferIsValid(buf))
-			return;
-
 		page = BufferGetPage(buf);
 		if (BufferGetLSNAtomic(buf) == so->currPos.lsn)
 			so->currPos.buf = buf;
