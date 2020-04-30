@@ -6176,6 +6176,53 @@ where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1;
    1 |   2 |   1 |   2
 (2 rows)
 
+-- Exercise array keys mark/restore B-Tree code
+explain (costs off) select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1 and j2.id1 = any (array[1]);
+                     QUERY PLAN                     
+----------------------------------------------------
+ Merge Join
+   Merge Cond: (j1.id1 = j2.id1)
+   Join Filter: (j1.id2 = j2.id2)
+   ->  Index Scan using j1_id1_idx on j1
+   ->  Index Scan using j2_id1_idx on j2
+         Index Cond: (id1 = ANY ('{1}'::integer[]))
+(6 rows)
+
+select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1 and j2.id1 = any (array[1]);
+ id1 | id2 | id1 | id2 
+-----+-----+-----+-----
+   1 |   1 |   1 |   1
+   1 |   2 |   1 |   2
+(2 rows)
+
+-- Exercise array keys "find extreme element" B-Tree code
+explain (costs off) select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1 and j2.id1 >= any (array[1,5]);
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Merge Join
+   Merge Cond: (j1.id1 = j2.id1)
+   Join Filter: (j1.id2 = j2.id2)
+   ->  Index Scan using j1_id1_idx on j1
+   ->  Index Only Scan using j2_pkey on j2
+         Index Cond: (id1 >= ANY ('{1,5}'::integer[]))
+         Filter: ((id1 % 1000) = 1)
+(7 rows)
+
+select * from j1
+inner join j2 on j1.id1 = j2.id1 and j1.id2 = j2.id2
+where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1 and j2.id1 >= any (array[1,5]);
+ id1 | id2 | id1 | id2 
+-----+-----+-----+-----
+   1 |   1 |   1 |   1
+   1 |   2 |   1 |   2
+(2 rows)
+
 reset enable_nestloop;
 reset enable_hashjoin;
 reset enable_sort;
