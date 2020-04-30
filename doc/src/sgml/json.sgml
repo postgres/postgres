@@ -648,8 +648,8 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
 
   <para>
    The semantics of SQL/JSON path predicates and operators generally follow SQL.
-   At the same time, to provide a most natural way of working with JSON data,
-   SQL/JSON path syntax uses some of the JavaScript conventions:
+   At the same time, to provide a natural way of working with JSON data,
+   SQL/JSON path syntax uses some JavaScript conventions:
   </para>
 
   <itemizedlist>
@@ -701,7 +701,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
 
   <para>
    A path expression consists of a sequence of path elements,
-   which can be the following:
+   which can be any of the following:
    <itemizedlist>
     <listitem>
      <para>
@@ -722,7 +722,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
     <listitem>
      <para>
       <type>jsonpath</type> operators and methods listed
-      in <xref linkend="functions-sqljson-path-operators"/>
+      in <xref linkend="functions-sqljson-path-operators"/>.
      </para>
     </listitem>
     <listitem>
@@ -751,7 +751,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
     <tbody>
      <row>
       <entry><literal>$</literal></entry>
-      <entry>A variable representing the JSON text to be queried
+      <entry>A variable representing the JSON value being queried
       (the <firstterm>context item</firstterm>).
       </entry>
      </row>
@@ -759,9 +759,8 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
       <entry><literal>$varname</literal></entry>
       <entry>
         A named variable. Its value can be set by the parameter
-        <parameter>vars</parameter> of several JSON processing functions.
-        See <xref linkend="functions-json-processing-table"/> and
-        its notes for details.
+        <parameter>vars</parameter> of several JSON processing functions;
+        see <xref linkend="functions-json-processing-table"/> for details.
         <!-- TODO: describe PASSING clause once implemented !-->
       </entry>
      </row>
@@ -797,10 +796,10 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
       <entry>
        <para>
         Member accessor that returns an object member with
-        the specified key. If the key name is a named variable
+        the specified key. If the key name matches some named variable
         starting with <literal>$</literal> or does not meet the
-        JavaScript rules of an identifier, it must be enclosed in
-        double quotes as a character string literal.
+        JavaScript rules for an identifier, it must be enclosed in
+        double quotes to make it a string literal.
        </para>
       </entry>
      </row>
@@ -845,9 +844,9 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
       </entry>
       <entry>
        <para>
-        Same as <literal>.**</literal>, but with a filter over nesting
-        levels of JSON hierarchy. Nesting levels are specified as integers.
-        Zero level corresponds to the current object. To access the lowest
+        Like <literal>.**</literal>, but selects only the specified
+        levels of the JSON hierarchy. Nesting levels are specified as integers.
+        Level zero corresponds to the current object. To access the lowest
         nesting level, you can use the <literal>last</literal> keyword.
         This is a <productname>PostgreSQL</productname> extension of
         the SQL/JSON standard.
@@ -874,7 +873,7 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
        <para>
         The specified <replaceable>index</replaceable> can be an integer, as
         well as an expression returning a single numeric value, which is
-        automatically cast to integer. Zero index corresponds to the first
+        automatically cast to integer. Index zero corresponds to the first
         array element. You can also use the <literal>last</literal> keyword
         to denote the last array element, which is useful for handling arrays
         of unknown length.
