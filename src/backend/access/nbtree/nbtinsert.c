@@ -1289,6 +1289,7 @@ _bt_insertonpg(Relation rel,
 			xl_btree_metadata xlmeta;
 			uint8		xlinfo;
 			XLogRecPtr	recptr;
+			uint16		upostingoff;
 
 			xlrec.offnum = newitemoff;
 
@@ -1354,7 +1355,7 @@ _bt_insertonpg(Relation rel,
 				 * must reconstruct final itup (as well as nposting) using
 				 * _bt_swap_posting().
 				 */
-				uint16		upostingoff = postingoff;
+				upostingoff = postingoff;
 
 				XLogRegisterBufData(0, (char *) &upostingoff, sizeof(uint16));
 				XLogRegisterBufData(0, (char *) origitup,
