@@ -1842,9 +1842,6 @@ cost_incremental_sort(Path *path,
 	 */
 	foreach(l, pathkeys)
 	{
-		Node	   *expr;
-		Relids		varnos;
-
 		PathKey    *key = (PathKey *) lfirst(l);
 		EquivalenceMember *member = (EquivalenceMember *)
 		linitial(key->pk_eclass->ec_members);
@@ -1853,14 +1850,7 @@ cost_incremental_sort(Path *path,
 		 * Check if the expression contains Var with "varno 0" so that we
 		 * don't call estimate_num_groups in that case.
 		 */
-		expr = (Node *) member->em_expr;
-
-		if (IsA(expr, RelabelType))
-			expr = (Node *) ((RelabelType *) expr)->arg;
-
-		varnos = pull_varnos(expr);
-
-		if (bms_is_member(0, varnos))
+		if (bms_is_member(0, pull_varnos((Node *) member->em_expr)))
 		{
 			unknown_varno = true;
 			break;
