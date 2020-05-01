@@ -158,7 +158,7 @@ typedef struct HashScanPosData
 		(scanpos).firstItem = 0; \
 		(scanpos).lastItem = 0; \
 		(scanpos).itemIndex = 0; \
-	} while (0);
+	} while (0)
 
 /*
  *	HashScanOpaqueData is private state for a hash index scan.

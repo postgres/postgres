@@ -48,7 +48,7 @@ typedef char trgm[3];
 	*(((char*)(a))+0) = *(((char*)(b))+0);	\
 	*(((char*)(a))+1) = *(((char*)(b))+1);	\
 	*(((char*)(a))+2) = *(((char*)(b))+2);	\
-} while(0);
+} while(0)
 
 #ifdef KEEPONLYALNUM
 #define ISWORDCHR(c)	(t_isalpha(c) || t_isdigit(c))
