@@ -479,7 +479,7 @@ typedef struct
 			(_X)->mode, (_X)->hh, (_X)->pm, (_X)->mi, (_X)->ss, (_X)->ssss, \
 			(_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, (_X)->year, \
 			(_X)->bc, (_X)->ww, (_X)->w, (_X)->cc, (_X)->j, (_X)->us, \
-			(_X)->yysz, (_X)->clock);
+			(_X)->yysz, (_X)->clock)
 #define DEBUG_TM(_X) \
 		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
 			(_X)->tm_sec, (_X)->tm_year,\
@@ -2731,11 +2731,13 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
+
 #define DCH_to_char_fsec(frac_fmt, frac_val) \
 				sprintf(s, frac_fmt, (int) (frac_val)); \
 				if (S_THth(n->suffix)) \
 					str_numth(s, s, S_TH_TYPE(n->suffix)); \
-				s += strlen(s);
+				s += strlen(s)
+
 			case DCH_FF1:		/* tenth of second */
 				DCH_to_char_fsec("%01d", in->fsec / 100000);
 				break;

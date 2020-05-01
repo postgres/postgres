@@ -3859,7 +3859,7 @@ do { \
 	(path) = reparameterize_path_by_child(root, (path), child_rel); \
 	if ((path) == NULL) \
 		return NULL; \
-} while(0);
+} while(0)
 
 #define REPARAMETERIZE_CHILD_PATH_LIST(pathlist) \
 do { \
@@ -3870,7 +3870,7 @@ do { \
 		if ((pathlist) == NIL) \
 			return NULL; \
 	} \
-} while(0);
+} while(0)
 
 	Path	   *new_path;
 	ParamPathInfo *new_ppi;
