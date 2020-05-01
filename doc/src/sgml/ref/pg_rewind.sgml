@@ -48,14 +48,16 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The result is equivalent to replacing the target data directory with the
-   source one. Only changed blocks from relation files are copied;
-   all other files are copied in full, including configuration files. The
-   advantage of <application>pg_rewind</application> over taking a new base backup, or
-   tools like <application>rsync</application>, is that <application>pg_rewind</application> does
-   not require reading through unchanged blocks in the cluster. This makes
-   it a lot faster when the database is large and only a small
-   fraction of blocks differ between the clusters.
+   After a successful rewind, the state of the target data directory is
+   analogous to a base backup of the source data directory. Unlike taking
+   a new base backup or using a tool like <application>rsync</application>,
+   <application>pg_rewind</application> does not require comparing or copying
+   unchanged relation blocks in the cluster. Only changed blocks from existing
+   relation files are copied; all other files, including new relation files,
+   configuration files, and WAL segments, are copied in full. As such the
+   rewind operation is significantly faster than other approaches when the
+   database is large and only a small fraction of blocks differ between the
+   clusters.
   </para>
 
   <para>
@@ -77,16 +79,18 @@ PostgreSQL documentation
   </para>
 
   <para>
-   When the target server is started for the first time after running
-   <application>pg_rewind</application>, it will go into recovery mode and replay all
-   WAL generated in the source server after the point of divergence.
-   If some of the WAL was no longer available in the source server when
-   <application>pg_rewind</application> was run, and therefore could not be copied by the
-   <application>pg_rewind</application> session, it must be made available when the
-   target server is started. This can be done by creating a
-   <filename>recovery.signal</filename> file in the target data directory
-   and configuring suitable <xref linkend="guc-restore-command"/>
-   in <filename>postgresql.conf</filename>.
+   After running <application>pg_rewind</application>, WAL replay needs to
+   complete for the data directory to be in a consistent state. When the
+   target server is started again it will enter archive recovery and replay
+   all WAL generated in the source server from the last checkpoint before
+   the point of divergence. If some of the WAL was no longer available in the
+   source server when <application>pg_rewind</application> was run, and
+   therefore could not be copied by the <application>pg_rewind</application>
+   session, it must be made available when the target server is started.
+   This can be done by creating a <filename>recovery.signal</filename> file
+   in the target data directory and by configuring a suitable
+   <xref linkend="guc-restore-command"/> in
+   <filename>postgresql.conf</filename>.
   </para>
 
   <para>
@@ -103,6 +107,15 @@ PostgreSQL documentation
     If <application>pg_rewind</application> fails while processing, then
     the data folder of the target is likely not in a state that can be
     recovered.  In such a case, taking a new fresh backup is recommended.
+   </para>
+
+   <para>
+    As <application>pg_rewind</application> copies configuration files
+    entirely from the source, it may be required to correct the configuration
+    used for recovery before restarting the target server, especially if
+    the target is reintroduced as a standby of the source. If you restart
+    the server after the rewind operation has finished but without configuring
+    recovery, the target may again diverge from the primary.
    </para>
 
    <para>
@@ -342,34 +355,45 @@ GRANT EXECUTE ON function pg_catalog.pg_read_binary_file(text, bigint, bigint, b
       Copy all those changed blocks from the source cluster to
       the target cluster, either using direct file system access
       (<option>--source-pgdata</option>) or SQL (<option>--source-server</option>).
+      Relation files are now in a state equivalent to the moment of the last
+      completed checkpoint prior to the point at which the WAL timelines of the
+      source and target diverged plus the current state on the source of any
+      blocks changed on the target after that divergence.
      </para>
     </step>
     <step>
      <para>
-      Copy all other files such as <filename>pg_xact</filename> and
-      configuration files from the source cluster to the target cluster
-      (everything except the relation files). Similarly to base backups,
-      the contents of the directories <filename>pg_dynshmem/</filename>,
+      Copy all other files, including new relation files, WAL segments,
+      <filename>pg_xact</filename>, and configuration files from the source
+      cluster to the target cluster. Similarly to base backups, the contents
+      of the directories <filename>pg_dynshmem/</filename>,
       <filename>pg_notify/</filename>, <filename>pg_replslot/</filename>,
       <filename>pg_serial/</filename>, <filename>pg_snapshots/</filename>,
-      <filename>pg_stat_tmp/</filename>, and
-      <filename>pg_subtrans/</filename> are omitted from the data copied
-      from the source cluster. Any file or directory beginning with
-      <filename>pgsql_tmp</filename> is omitted, as well as are
+      <filename>pg_stat_tmp/</filename>, and <filename>pg_subtrans/</filename>
+      are omitted from the data copied from the source cluster. The files
       <filename>backup_label</filename>,
       <filename>tablespace_map</filename>,
       <filename>pg_internal.init</filename>,
-      <filename>postmaster.opts</filename> and
-      <filename>postmaster.pid</filename>.
+      <filename>postmaster.opts</filename>, and
+      <filename>postmaster.pid</filename>, as well as any file or directory
+      beginning with <filename>pgsql_tmp</filename>, are omitted.
      </para>
     </step>
     <step>
      <para>
-      Apply the WAL from the source cluster, starting from the checkpoint
-      created at failover. (Strictly speaking, <application>pg_rewind</application>
-      doesn't apply the WAL, it just creates a backup label file that
-      makes <productname>PostgreSQL</productname> start by replaying all WAL from
-      that checkpoint forward.)
+      Create a <filename>backup_label</filename> file to begin WAL replay at
+      the checkpoint created at failover and configure the
+      <filename>pg_control</filename> file with a minimum consistency LSN
+      defined as the result of <literal>pg_current_wal_insert_lsn()</literal>
+      when rewinding from a live source or the last checkpoint LSN when
+      rewinding from a stopped source.
+     </para>
+    </step>
+    <step>
+     <para>
+      When starting the target, <productname>PostgreSQL</productname> replays
+      all the required WAL, resulting in a data directory in a consistent
+      state.
      </para>
     </step>
    </procedure>
