@@ -80,7 +80,7 @@ do {		\
 } while (0)
 
 #define SWAPINIT(a, es) swaptype = ((char *)(a) - (char *)0) % sizeof(long) || \
-	(es) % sizeof(long) ? 2 : (es) == sizeof(long)? 0 : 1;
+	(es) % sizeof(long) ? 2 : (es) == sizeof(long)? 0 : 1
 
 static void
 swapfunc(char *a, char *b, size_t n, int swaptype)
