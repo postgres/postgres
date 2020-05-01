@@ -38,8 +38,10 @@ static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
 static bool _bt_mark_page_halfdead(Relation rel, Buffer leafbuf,
 								   BTStack stack);
 static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
+									 BlockNumber scanblkno,
 									 bool *rightsib_empty,
-									 TransactionId *oldestBtpoXact);
+									 TransactionId *oldestBtpoXact,
+									 uint32 *ndeleted);
 static TransactionId _bt_xid_horizon(Relation rel, Relation heapRel, Page page,
 									 OffsetNumber *deletable, int ndeletable);
 static bool _bt_lock_branch_parent(Relation rel, BlockNumber child,
@@ -1489,7 +1491,9 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
  *
  * Returns the number of pages successfully deleted (zero if page cannot
  * be deleted now; could be more than one if parent or right sibling pages
- * were deleted too).
+ * were deleted too).  Note that this does not include pages that we delete
+ * that the btvacuumscan scan has yet to reach; they'll get counted later
+ * instead.
  *
  * Maintains *oldestBtpoXact for any pages that get deleted.  Caller is
  * responsible for maintaining *oldestBtpoXact in the case of pages that were
@@ -1499,14 +1503,20 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
  * carefully, it's better to run it in a temp context that can be reset
  * frequently.
  */
-int
+uint32
 _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 {
-	int			ndeleted = 0;
+	uint32		ndeleted = 0;
 	BlockNumber rightsib;
 	bool		rightsib_empty;
 	Page		page;
 	BTPageOpaque opaque;
+
+	/*
+	 * Save original leafbuf block number from caller.  Only deleted blocks
+	 * that are <= scanblkno get counted in ndeleted return value.
+	 */
+	BlockNumber scanblkno = BufferGetBlockNumber(leafbuf);
 
 	/*
 	 * "stack" is a search stack leading (approximately) to the target page.
@@ -1558,8 +1568,9 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 			if (P_ISDELETED(opaque))
 				ereport(LOG,
 						(errcode(ERRCODE_INDEX_CORRUPTED),
-						 errmsg_internal("found deleted block %u while following right link in index \"%s\"",
+						 errmsg_internal("found deleted block %u while following right link from block %u in index \"%s\"",
 										 BufferGetBlockNumber(leafbuf),
+										 scanblkno,
 										 RelationGetRelationName(rel))));
 
 			_bt_relbuf(rel, leafbuf);
@@ -1709,13 +1720,13 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 		while (P_ISHALFDEAD(opaque))
 		{
 			/* Check for interrupts in _bt_unlink_halfdead_page */
-			if (!_bt_unlink_halfdead_page(rel, leafbuf, &rightsib_empty,
-										  oldestBtpoXact))
+			if (!_bt_unlink_halfdead_page(rel, leafbuf, scanblkno,
+										  &rightsib_empty, oldestBtpoXact,
+										  &ndeleted))
 			{
 				/* _bt_unlink_halfdead_page failed, released buffer */
 				return ndeleted;
 			}
-			ndeleted++;
 		}
 
 		Assert(P_ISLEAF(opaque) && P_ISDELETED(opaque));
@@ -1974,8 +1985,9 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
  * to avoid having to reacquire a lock we already released).
  */
 static bool
-_bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty,
-						 TransactionId *oldestBtpoXact)
+_bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
+						 bool *rightsib_empty, TransactionId *oldestBtpoXact,
+						 uint32 *ndeleted)
 {
 	BlockNumber leafblkno = BufferGetBlockNumber(leafbuf);
 	BlockNumber leafleftsib;
@@ -2369,6 +2381,14 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty,
 	if (!TransactionIdIsValid(*oldestBtpoXact) ||
 		TransactionIdPrecedes(opaque->btpo.xact, *oldestBtpoXact))
 		*oldestBtpoXact = opaque->btpo.xact;
+
+	/*
+	 * If btvacuumscan won't revisit this page in a future btvacuumpage call
+	 * and count it as deleted then, we count it as deleted by current
+	 * btvacuumpage call
+	 */
+	if (target <= scanblkno)
+		(*ndeleted)++;
 
 	/*
 	 * Release the target, if it was not the leaf block.  The leaf is always

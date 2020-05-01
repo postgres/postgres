@@ -1362,17 +1362,17 @@ restart:
 	if (delete_now)
 	{
 		MemoryContext oldcontext;
-		int			ndel;
 
 		/* Run pagedel in a temp context to avoid memory leakage */
 		MemoryContextReset(vstate->pagedelcontext);
 		oldcontext = MemoryContextSwitchTo(vstate->pagedelcontext);
 
-		ndel = _bt_pagedel(rel, buf, &vstate->oldestBtpoXact);
-
-		/* count only this page, else may double-count parent */
-		if (ndel)
-			stats->pages_deleted++;
+		/*
+		 * We trust the _bt_pagedel return value because it does not include
+		 * any page that a future call here from btvacuumscan is expected to
+		 * count.  There will be no double-counting.
+		 */
+		stats->pages_deleted += _bt_pagedel(rel, buf, &vstate->oldestBtpoXact);
 
 		MemoryContextSwitchTo(oldcontext);
 		/* pagedel released buffer, so we shouldn't */
