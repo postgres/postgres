@@ -35,6 +35,13 @@
 #include "utils/snapmgr.h"
 
 static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
+static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
+							   TransactionId latestRemovedXid);
+static TransactionId _bt_xid_horizon(Relation rel, Relation heapRel, Page page,
+									 OffsetNumber *deletable, int ndeletable);
+static bool _bt_lock_branch_parent(Relation rel, BlockNumber child,
+								   BTStack stack, Buffer *topparent, OffsetNumber *topoff,
+								   BlockNumber *target, BlockNumber *rightsib);
 static bool _bt_mark_page_halfdead(Relation rel, Buffer leafbuf,
 								   BTStack stack);
 static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
@@ -42,13 +49,6 @@ static bool _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf,
 									 bool *rightsib_empty,
 									 TransactionId *oldestBtpoXact,
 									 uint32 *ndeleted);
-static TransactionId _bt_xid_horizon(Relation rel, Relation heapRel, Page page,
-									 OffsetNumber *deletable, int ndeletable);
-static bool _bt_lock_branch_parent(Relation rel, BlockNumber child,
-								   BTStack stack, Buffer *topparent, OffsetNumber *topoff,
-								   BlockNumber *target, BlockNumber *rightsib);
-static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
-							   TransactionId latestRemovedXid);
 
 /*
  *	_bt_initmetapage() -- Fill a page buffer with a correct metapage image
