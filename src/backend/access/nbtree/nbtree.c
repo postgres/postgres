@@ -824,12 +824,6 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 		 * If any oldest btpo.xact from a previously deleted page in the index
 		 * is older than RecentGlobalXmin, then at least one deleted page can
 		 * be recycled -- don't skip cleanup.
-		 *
-		 * Note that btvacuumpage currently doesn't make any effort to
-		 * recognize when a recycled page is already in the FSM (i.e. put
-		 * there by a previous VACUUM operation).  We have to be conservative
-		 * because the FSM isn't crash safe.  Hopefully recycled pages get
-		 * reused before too long.
 		 */
 		result = true;
 	}
@@ -1045,15 +1039,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	MemoryContextDelete(vstate.pagedelcontext);
 
 	/*
-	 * Maintain a count of the oldest btpo.xact and current number of heap
-	 * tuples in the metapage (for the benefit of _bt_vacuum_needs_cleanup).
-	 * The oldest page is typically a page deleted by a previous VACUUM
-	 * operation.
-	 */
-	_bt_update_meta_cleanup_info(rel, vstate.oldestBtpoXact,
-								 info->num_heap_tuples);
-
-	/*
 	 * If we found any recyclable pages (and recorded them in the FSM), then
 	 * forcibly update the upper-level FSM pages to ensure that searchers can
 	 * find them.  It's possible that the pages were also found during
@@ -1067,6 +1052,21 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 */
 	if (vstate.totFreePages > 0)
 		IndexFreeSpaceMapVacuum(rel);
+
+	/*
+	 * Maintain the oldest btpo.xact and a count of the current number of heap
+	 * tuples in the metapage (for the benefit of _bt_vacuum_needs_cleanup).
+	 *
+	 * The page with the oldest btpo.xact is typically a page deleted by this
+	 * VACUUM operation, since pages deleted by a previous VACUUM operation
+	 * tend to be placed in the FSM (by the current VACUUM operation) -- such
+	 * pages are not candidates to be the oldest btpo.xact.  (Note that pages
+	 * placed in the FSM are reported as deleted pages in the bulk delete
+	 * statistics, despite not counting as deleted pages for the purposes of
+	 * determining the oldest btpo.xact.)
+	 */
+	_bt_update_meta_cleanup_info(rel, vstate.oldestBtpoXact,
+								 info->num_heap_tuples);
 
 	/* update statistics */
 	stats->num_pages = num_pages;
