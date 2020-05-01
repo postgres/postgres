@@ -404,15 +404,15 @@ usage(void)
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
+	printf(_("      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+			 "                         use algorithm for manifest checksums\n"));
+	printf(_("      --manifest-force-encode\n"
+			 "                         hex encode all file names in manifest\n"));
+	printf(_("      --no-estimate-size do not estimate backup size in server side\n"));
+	printf(_("      --no-manifest      suppress generation of backup manifest\n"));
 	printf(_("      --no-slot          prevent creation of temporary replication slot\n"));
 	printf(_("      --no-verify-checksums\n"
 			 "                         do not verify checksums\n"));
-	printf(_("      --no-estimate-size do not estimate backup size in server side\n"));
-	printf(_("      --no-manifest      suppress generation of backup manifest\n"));
-	printf(_("      --manifest-force-encode\n"
-			 "                         hex encode all filenames in manifest\n"));
-	printf(_("      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
-			 "                         use algorithm for manifest checksums\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));

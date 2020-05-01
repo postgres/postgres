@@ -165,8 +165,8 @@ help(const char *progname)
 	printf(_("  %s [OPTION]... DBNAME\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
-	printf(_("  -i, --interactive         prompt before deleting anything\n"));
 	printf(_("  -f, --force               try to terminate other connections before dropping\n"));
+	printf(_("  -i, --interactive         prompt before deleting anything\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  --if-exists               don't report error if database doesn't exist\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
