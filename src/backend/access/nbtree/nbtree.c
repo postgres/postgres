@@ -92,7 +92,7 @@ typedef struct BTParallelScanDescData *BTParallelScanDesc;
 
 static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 						 IndexBulkDeleteCallback callback, void *callback_state,
-						 BTCycleId cycleid, TransactionId *oldestBtpoXact);
+						 BTCycleId cycleid);
 static void btvacuumpage(BTVacState *vstate, BlockNumber blkno,
 						 BlockNumber orig_blkno);
 static BTVacuumPosting btreevacuumposting(BTVacState *vstate,
@@ -787,8 +787,14 @@ _bt_parallel_advance_array_keys(IndexScanDesc scan)
 }
 
 /*
- * _bt_vacuum_needs_cleanup() -- Checks if index needs cleanup assuming that
- *			btbulkdelete() wasn't called.
+ * _bt_vacuum_needs_cleanup() -- Checks if index needs cleanup
+ *
+ * Called by btvacuumcleanup when btbulkdelete was never called because no
+ * tuples need to be deleted.
+ *
+ * When we return false, VACUUM can even skip the cleanup-only call to
+ * btvacuumscan (i.e. there will be no btvacuumscan call for this index at
+ * all).  Otherwise, a cleanup-only btvacuumscan call is required.
  */
 static bool
 _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
@@ -815,8 +821,15 @@ _bt_vacuum_needs_cleanup(IndexVacuumInfo *info)
 								   RecentGlobalXmin))
 	{
 		/*
-		 * If oldest btpo.xact in the deleted pages is older than
-		 * RecentGlobalXmin, then at least one deleted page can be recycled.
+		 * If any oldest btpo.xact from a previously deleted page in the index
+		 * is older than RecentGlobalXmin, then at least one deleted page can
+		 * be recycled -- don't skip cleanup.
+		 *
+		 * Note that btvacuumpage currently doesn't make any effort to
+		 * recognize when a recycled page is already in the FSM (i.e. put
+		 * there by a previous VACUUM operation).  We have to be conservative
+		 * because the FSM isn't crash safe.  Hopefully recycled pages get
+		 * reused before too long.
 		 */
 		result = true;
 	}
@@ -873,20 +886,9 @@ btbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	/* The ENSURE stuff ensures we clean up shared memory on failure */
 	PG_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
 	{
-		TransactionId oldestBtpoXact;
-
 		cycleid = _bt_start_vacuum(rel);
 
-		btvacuumscan(info, stats, callback, callback_state, cycleid,
-					 &oldestBtpoXact);
-
-		/*
-		 * Update cleanup-related information in metapage. This information is
-		 * used only for cleanup but keeping them up to date can avoid
-		 * unnecessary cleanup even after bulkdelete.
-		 */
-		_bt_update_meta_cleanup_info(info->index, oldestBtpoXact,
-									 info->num_heap_tuples);
+		btvacuumscan(info, stats, callback, callback_state, cycleid);
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(_bt_end_vacuum_callback, PointerGetDatum(rel));
 	_bt_end_vacuum(rel);
@@ -918,18 +920,12 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 */
 	if (stats == NULL)
 	{
-		TransactionId oldestBtpoXact;
-
 		/* Check if we need a cleanup */
 		if (!_bt_vacuum_needs_cleanup(info))
 			return NULL;
 
 		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
-		btvacuumscan(info, stats, NULL, NULL, 0, &oldestBtpoXact);
-
-		/* Update cleanup-related information in the metapage */
-		_bt_update_meta_cleanup_info(info->index, oldestBtpoXact,
-									 info->num_heap_tuples);
+		btvacuumscan(info, stats, NULL, NULL, 0);
 	}
 
 	/*
@@ -954,7 +950,9 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
  * according to the vacuum callback, looking for empty pages that can be
  * deleted, and looking for old deleted pages that can be recycled.  Both
  * btbulkdelete and btvacuumcleanup invoke this (the latter only if no
- * btbulkdelete call occurred).
+ * btbulkdelete call occurred and _bt_vacuum_needs_cleanup returned true).
+ * Note that this is also where the metadata used by _bt_vacuum_needs_cleanup
+ * is maintained.
  *
  * The caller is responsible for initially allocating/zeroing a stats struct
  * and for obtaining a vacuum cycle ID if necessary.
@@ -962,7 +960,7 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 static void
 btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 			 IndexBulkDeleteCallback callback, void *callback_state,
-			 BTCycleId cycleid, TransactionId *oldestBtpoXact)
+			 BTCycleId cycleid)
 {
 	Relation	rel = info->index;
 	BTVacState	vstate;
@@ -1047,6 +1045,15 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	MemoryContextDelete(vstate.pagedelcontext);
 
 	/*
+	 * Maintain a count of the oldest btpo.xact and current number of heap
+	 * tuples in the metapage (for the benefit of _bt_vacuum_needs_cleanup).
+	 * The oldest page is typically a page deleted by a previous VACUUM
+	 * operation.
+	 */
+	_bt_update_meta_cleanup_info(rel, vstate.oldestBtpoXact,
+								 info->num_heap_tuples);
+
+	/*
 	 * If we found any recyclable pages (and recorded them in the FSM), then
 	 * forcibly update the upper-level FSM pages to ensure that searchers can
 	 * find them.  It's possible that the pages were also found during
@@ -1064,9 +1071,6 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	/* update statistics */
 	stats->num_pages = num_pages;
 	stats->pages_free = vstate.totFreePages;
-
-	if (oldestBtpoXact)
-		*oldestBtpoXact = vstate.oldestBtpoXact;
 }
 
 /*
@@ -1137,24 +1141,30 @@ restart:
 	/* Page is valid, see what to do with it */
 	if (_bt_page_recyclable(page))
 	{
-		/* Okay to recycle this page */
+		/* Okay to recycle this page (which could be leaf or internal) */
 		RecordFreeIndexPage(rel, blkno);
 		vstate->totFreePages++;
 		stats->pages_deleted++;
 	}
 	else if (P_ISDELETED(opaque))
 	{
-		/* Already deleted, but can't recycle yet */
+		/*
+		 * Already deleted page (which could be leaf or internal).  Can't
+		 * recycle yet.
+		 */
 		stats->pages_deleted++;
 
-		/* Update the oldest btpo.xact */
+		/* Maintain the oldest btpo.xact */
 		if (!TransactionIdIsValid(vstate->oldestBtpoXact) ||
 			TransactionIdPrecedes(opaque->btpo.xact, vstate->oldestBtpoXact))
 			vstate->oldestBtpoXact = opaque->btpo.xact;
 	}
 	else if (P_ISHALFDEAD(opaque))
 	{
-		/* Half-dead, try to delete */
+		/*
+		 * Half-dead leaf page.  Try to delete now.  Might update
+		 * oldestBtpoXact and pages_deleted below.
+		 */
 		delete_now = true;
 	}
 	else if (P_ISLEAF(opaque))
@@ -1316,10 +1326,11 @@ restart:
 		else
 		{
 			/*
-			 * If the page has been split during this vacuum cycle, it seems
-			 * worth expending a write to clear btpo_cycleid even if we don't
-			 * have any deletions to do.  (If we do, _bt_delitems_vacuum takes
-			 * care of this.)  This ensures we won't process the page again.
+			 * If the leaf page has been split during this vacuum cycle, it
+			 * seems worth expending a write to clear btpo_cycleid even if we
+			 * don't have any deletions to do.  (If we do, _bt_delitems_vacuum
+			 * takes care of this.)  This ensures we won't process the page
+			 * again.
 			 *
 			 * We treat this like a hint-bit update because there's no need to
 			 * WAL-log it.
@@ -1334,11 +1345,11 @@ restart:
 		}
 
 		/*
-		 * If it's now empty, try to delete; else count the live tuples (live
-		 * table TIDs in posting lists are counted as separate live tuples).
-		 * We don't delete when recursing, though, to avoid putting entries
-		 * into freePages out-of-order (doesn't seem worth any extra code to
-		 * handle the case).
+		 * If the leaf page is now empty, try to delete it; else count the
+		 * live tuples (live table TIDs in posting lists are counted as
+		 * separate live tuples).  We don't delete when recursing, though, to
+		 * avoid putting entries into freePages out-of-order (doesn't seem
+		 * worth any extra code to handle the case).
 		 */
 		if (minoff > maxoff)
 			delete_now = (blkno == orig_blkno);
@@ -1357,16 +1368,11 @@ restart:
 		MemoryContextReset(vstate->pagedelcontext);
 		oldcontext = MemoryContextSwitchTo(vstate->pagedelcontext);
 
-		ndel = _bt_pagedel(rel, buf);
+		ndel = _bt_pagedel(rel, buf, &vstate->oldestBtpoXact);
 
 		/* count only this page, else may double-count parent */
 		if (ndel)
-		{
 			stats->pages_deleted++;
-			if (!TransactionIdIsValid(vstate->oldestBtpoXact) ||
-				TransactionIdPrecedes(opaque->btpo.xact, vstate->oldestBtpoXact))
-				vstate->oldestBtpoXact = opaque->btpo.xact;
-		}
 
 		MemoryContextSwitchTo(oldcontext);
 		/* pagedel released buffer, so we shouldn't */
