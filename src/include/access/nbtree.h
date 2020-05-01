@@ -764,7 +764,8 @@ extern void _bt_delitems_delete(Relation rel, Buffer buf,
 extern void _bt_delitems_vacuum(Relation rel, Buffer buf,
 								OffsetNumber *itemnos, int nitems,
 								BlockNumber lastBlockVacuumed);
-extern int	_bt_pagedel(Relation rel, Buffer buf);
+extern int	_bt_pagedel(Relation rel, Buffer leafbuf,
+						TransactionId *oldestBtpoXact);
 
 /*
  * prototypes for functions in nbtsearch.c
