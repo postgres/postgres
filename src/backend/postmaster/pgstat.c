@@ -152,7 +152,7 @@ PgStat_MsgBgWriter BgWriterStats;
  */
 static char *slru_names[] = {"async", "clog", "commit_timestamp",
 							  "multixact_offset", "multixact_member",
-							  "oldserxid", "pg_xact", "subtrans",
+							  "oldserxid", "subtrans",
 							  "other" /* has to be last */};
 
 /* number of elemenents of slru_name array */
