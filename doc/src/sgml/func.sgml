@@ -16818,18 +16818,6 @@ $ ? (@ like_regex "^\\d+$")
   <indexterm>
    <primary>sequence</primary>
   </indexterm>
-  <indexterm>
-   <primary>nextval</primary>
-  </indexterm>
-  <indexterm>
-   <primary>currval</primary>
-  </indexterm>
-  <indexterm>
-   <primary>lastval</primary>
-  </indexterm>
-  <indexterm>
-   <primary>setval</primary>
-  </indexterm>
 
   <para>
    This section describes functions for operating on <firstterm>sequence
@@ -16845,42 +16833,157 @@ $ ? (@ like_regex "^\\d+$")
 
    <table id="functions-sequence-table">
     <title>Sequence Functions</title>
-    <tgroup cols="3">
+    <tgroup cols="1">
      <thead>
-      <row><entry>Function</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
      </thead>
 
      <tbody>
       <row>
-        <entry><literal><function>currval(<type>regclass</type>)</function></literal></entry>
-        <entry><type>bigint</type></entry>
-        <entry>Return value most recently obtained with
-        <function>nextval</function> for specified sequence</entry>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>nextval</primary>
+        </indexterm>
+        <function>nextval</function> ( <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Advances the sequence object to its next value and returns that value.
+        This is done atomically: even if multiple sessions
+        execute <function>nextval</function> concurrently, each will safely
+        receive a distinct sequence value.
+        If the sequence object has been created with default parameters,
+        successive <function>nextval</function> calls will return successive
+        values beginning with 1.  Other behaviors can be obtained by using
+        appropriate parameters in the <xref linkend="sql-createsequence"/>
+        command.
+      </para>
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>UPDATE</literal> privilege on the sequence.
+       </para></entry>
       </row>
+
       <row>
-        <entry><literal><function>lastval()</function></literal></entry>
-        <entry><type>bigint</type></entry>
-        <entry>Return value most recently obtained with
-        <function>nextval</function> for any sequence</entry>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>setval</primary>
+        </indexterm>
+        <function>setval</function> ( <type>regclass</type>, <type>bigint</type> <optional>, <type>boolean</type> </optional> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Sets the sequence object's current value, and optionally
+        its <literal>is_called</literal> flag.  The two-parameter
+        form sets the sequence's <literal>last_value</literal> field to the
+        specified value and sets its <literal>is_called</literal> field to
+        <literal>true</literal>, meaning that the next
+        <function>nextval</function> will advance the sequence before
+        returning a value.  The value that will be reported
+        by <function>currval</function> is also set to the specified value.
+        In the three-parameter form, <literal>is_called</literal> can be set
+        to either <literal>true</literal>
+        or <literal>false</literal>.  <literal>true</literal> has the same
+        effect as the two-parameter form. If it is set
+        to <literal>false</literal>, the next <function>nextval</function>
+        will return exactly the specified value, and sequence advancement
+        commences with the following <function>nextval</function>.
+        Furthermore, the value reported by <function>currval</function> is not
+        changed in this case.  For example,
+<programlisting>
+SELECT setval('myseq', 42);           <lineannotation>Next <function>nextval</function> will return 43</lineannotation>
+SELECT setval('myseq', 42, true);     <lineannotation>Same as above</lineannotation>
+SELECT setval('myseq', 42, false);    <lineannotation>Next <function>nextval</function> will return 42</lineannotation>
+</programlisting>
+        The result returned by <function>setval</function> is just the value of its
+        second argument.
+       </para>
+       <para>
+        This function requires <literal>UPDATE</literal> privilege on the
+        sequence.
+       </para></entry>
       </row>
+
       <row>
-        <entry><literal><function>nextval(<type>regclass</type>)</function></literal></entry>
-        <entry><type>bigint</type></entry>
-        <entry>Advance sequence and return new value</entry>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>currval</primary>
+        </indexterm>
+        <function>currval</function> ( <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the value most recently obtained
+        by <function>nextval</function> for this sequence in the current
+        session.  (An error is reported if <function>nextval</function> has
+        never been called for this sequence in this session.)  Because this is
+        returning a session-local value, it gives a predictable answer whether
+        or not other sessions have executed <function>nextval</function> since
+        the current session did.
+       </para>
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>SELECT</literal> privilege on the sequence.
+       </para></entry>
       </row>
+
       <row>
-        <entry><literal><function>setval(<type>regclass</type>, <type>bigint</type>)</function></literal></entry>
-        <entry><type>bigint</type></entry>
-        <entry>Set sequence's current value</entry>
-      </row>
-      <row>
-        <entry><literal><function>setval(<type>regclass</type>, <type>bigint</type>, <type>boolean</type>)</function></literal></entry>
-        <entry><type>bigint</type></entry>
-        <entry>Set sequence's current value and <literal>is_called</literal> flag</entry>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lastval</primary>
+        </indexterm>
+        <function>lastval</function> ()
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the value most recently returned by
+        <function>nextval</function> in the current session. This function is
+        identical to <function>currval</function>, except that instead
+        of taking the sequence name as an argument it refers to whichever
+        sequence <function>nextval</function> was most recently applied to
+        in the current session. It is an error to call
+        <function>lastval</function> if <function>nextval</function>
+        has not yet been called in the current session.
+       </para>
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>SELECT</literal> privilege on the last used sequence.
+       </para></entry>
       </row>
      </tbody>
     </tgroup>
    </table>
+
+  <caution>
+   <para>
+    To avoid blocking concurrent transactions that obtain numbers from
+    the same sequence, a <function>nextval</function> operation is never
+    rolled back; that is, once a value has been fetched it is considered
+    used and will not be returned again.  This is true even if the
+    surrounding transaction later aborts, or if the calling query ends
+    up not using the value.  For example an <command>INSERT</command> with
+    an <literal>ON CONFLICT</literal> clause will compute the to-be-inserted
+    tuple, including doing any required <function>nextval</function>
+    calls, before detecting any conflict that would cause it to follow
+    the <literal>ON CONFLICT</literal> rule instead.  Such cases will leave
+    unused <quote>holes</quote> in the sequence of assigned values.
+    Thus, <productname>PostgreSQL</productname> sequence
+    objects <emphasis>cannot be used to obtain <quote>gapless</quote>
+    sequences</emphasis>.
+   </para>
+
+   <para>
+    Likewise, any sequence state changes made by <function>setval</function>
+    are not undone if the transaction rolls back.
+   </para>
+  </caution>
 
   <para>
    The sequence to be operated on by a sequence function is specified by
@@ -16942,139 +17045,6 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
     coercion will result in a run-time lookup.
    </para>
   </note>
-
-  <para>
-   The available sequence functions are:
-
-    <variablelist>
-     <varlistentry>
-      <term><function>nextval</function></term>
-      <listitem>
-       <para>
-        Advance the sequence object to its next value and return that
-        value.  This is done atomically: even if multiple sessions
-        execute <function>nextval</function> concurrently, each will safely receive
-        a distinct sequence value.
-       </para>
-
-       <para>
-        If a sequence object has been created with default parameters,
-        successive <function>nextval</function> calls will return successive
-        values beginning with 1.  Other behaviors can be obtained by using
-        special parameters in the <xref linkend="sql-createsequence"/> command;
-        see its command reference page for more information.
-       </para>
-
-       <important>
-        <para>
-         To avoid blocking concurrent transactions that obtain numbers from
-         the same sequence, a <function>nextval</function> operation is never
-         rolled back; that is, once a value has been fetched it is considered
-         used and will not be returned again.  This is true even if the
-         surrounding transaction later aborts, or if the calling query ends
-         up not using the value.  For example an <command>INSERT</command> with
-         an <literal>ON CONFLICT</literal> clause will compute the to-be-inserted
-         tuple, including doing any required <function>nextval</function>
-         calls, before detecting any conflict that would cause it to follow
-         the <literal>ON CONFLICT</literal> rule instead.  Such cases will leave
-         unused <quote>holes</quote> in the sequence of assigned values.
-         Thus, <productname>PostgreSQL</productname> sequence objects <emphasis>cannot
-         be used to obtain <quote>gapless</quote> sequences</emphasis>.
-        </para>
-       </important>
-
-       <para>
-        This function requires <literal>USAGE</literal>
-        or <literal>UPDATE</literal> privilege on the sequence.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><function>currval</function></term>
-      <listitem>
-       <para>
-        Return the value most recently obtained by <function>nextval</function>
-        for this sequence in the current session.  (An error is
-        reported if <function>nextval</function> has never been called for this
-        sequence in this session.)  Because this is returning
-        a session-local value, it gives a predictable answer whether or not
-        other sessions have executed <function>nextval</function> since the
-        current session did.
-       </para>
-
-       <para>
-        This function requires <literal>USAGE</literal>
-        or <literal>SELECT</literal> privilege on the sequence.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><function>lastval</function></term>
-      <listitem>
-       <para>
-        Return the value most recently returned by
-        <function>nextval</function> in the current session. This function is
-        identical to <function>currval</function>, except that instead
-        of taking the sequence name as an argument it refers to whichever
-        sequence <function>nextval</function> was most recently applied to
-        in the current session. It is an error to call
-        <function>lastval</function> if <function>nextval</function>
-        has not yet been called in the current session.
-       </para>
-
-       <para>
-        This function requires <literal>USAGE</literal>
-        or <literal>SELECT</literal> privilege on the last used sequence.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><function>setval</function></term>
-      <listitem>
-       <para>
-        Reset the sequence object's counter value.  The two-parameter
-        form sets the sequence's <literal>last_value</literal> field to the
-        specified value and sets its <literal>is_called</literal> field to
-        <literal>true</literal>, meaning that the next
-        <function>nextval</function> will advance the sequence before
-        returning a value.  The value reported by <function>currval</function> is
-        also set to the specified value.  In the three-parameter form,
-        <literal>is_called</literal> can be set to either <literal>true</literal>
-        or <literal>false</literal>.  <literal>true</literal> has the same effect as
-        the two-parameter form. If it is set to <literal>false</literal>, the
-        next <function>nextval</function> will return exactly the specified
-        value, and sequence advancement commences with the following
-        <function>nextval</function>.  Furthermore, the value reported by
-        <function>currval</function> is not changed in this case.  For example,
-
-<screen>
-SELECT setval('foo', 42);           <lineannotation>Next <function>nextval</function> will return 43</lineannotation>
-SELECT setval('foo', 42, true);     <lineannotation>Same as above</lineannotation>
-SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</function> will return 42</lineannotation>
-</screen>
-
-        The result returned by <function>setval</function> is just the value of its
-        second argument.
-       </para>
-       <important>
-        <para>
-         Because sequences are non-transactional, changes made by
-         <function>setval</function> are not undone if the transaction rolls
-         back.
-        </para>
-       </important>
-
-       <para>
-        This function requires <literal>UPDATE</literal> privilege on the
-        sequence.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-  </para>
 
  </sect1>
 
@@ -17346,119 +17316,11 @@ SELECT NULLIF(value, '(none)') ...
   <title>Array Functions and Operators</title>
 
   <para>
-   <xref linkend="array-operators-table"/> shows the operators
+   <xref linkend="array-operators-table"/> shows the specialized operators
    available for array types.
-  </para>
-
-    <table id="array-operators-table">
-     <title>Array Operators</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-        <entry>Operator</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry> <literal>=</literal> </entry>
-        <entry>equal</entry>
-        <entry><literal>ARRAY[1.1,2.1,3.1]::int[] = ARRAY[1,2,3]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&lt;&gt;</literal> </entry>
-        <entry>not equal</entry>
-        <entry><literal>ARRAY[1,2,3] &lt;&gt; ARRAY[1,2,4]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&lt;</literal> </entry>
-        <entry>less than</entry>
-        <entry><literal>ARRAY[1,2,3] &lt; ARRAY[1,2,4]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&gt;</literal> </entry>
-        <entry>greater than</entry>
-        <entry><literal>ARRAY[1,4,3] &gt; ARRAY[1,2,4]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&lt;=</literal> </entry>
-        <entry>less than or equal</entry>
-        <entry><literal>ARRAY[1,2,3] &lt;= ARRAY[1,2,3]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&gt;=</literal> </entry>
-        <entry>greater than or equal</entry>
-        <entry><literal>ARRAY[1,4,3] &gt;= ARRAY[1,4,3]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>@&gt;</literal> </entry>
-        <entry>contains</entry>
-        <entry><literal>ARRAY[1,4,3] @&gt; ARRAY[3,1,3]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&lt;@</literal> </entry>
-        <entry>is contained by</entry>
-        <entry><literal>ARRAY[2,2,7] &lt;@ ARRAY[1,7,4,2,6]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&amp;&amp;</literal> </entry>
-        <entry>overlap (have elements in common)</entry>
-        <entry><literal>ARRAY[1,4,3] &amp;&amp; ARRAY[2,1]</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>||</literal> </entry>
-        <entry>array-to-array concatenation</entry>
-        <entry><literal>ARRAY[1,2,3] || ARRAY[4,5,6]</literal></entry>
-        <entry><literal>{1,2,3,4,5,6}</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>||</literal> </entry>
-        <entry>array-to-array concatenation</entry>
-        <entry><literal>ARRAY[1,2,3] || ARRAY[[4,5,6],[7,8,9]]</literal></entry>
-        <entry><literal>{{1,2,3},{4,5,6},{7,8,9}}</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>||</literal> </entry>
-        <entry>element-to-array concatenation</entry>
-        <entry><literal>3 || ARRAY[4,5,6]</literal></entry>
-        <entry><literal>{3,4,5,6}</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>||</literal> </entry>
-        <entry>array-to-element concatenation</entry>
-        <entry><literal>ARRAY[4,5,6] || 7</literal></entry>
-        <entry><literal>{4,5,6,7}</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
-
-  <para>
-   The array ordering operators (<literal>&lt;</literal>,
-   <literal>&gt;=</literal>, etc) compare the array contents
+   In addition to those, the usual comparison operators shown in <xref
+   linkend="functions-comparison-op-table"/> are available for
+   arrays.  The comparison operators compare the array contents
    element-by-element, using the default B-tree comparison function for
    the element data type, and sort based on the first difference.
    In multidimensional arrays the elements are visited in row-major order
@@ -17471,14 +17333,123 @@ SELECT NULLIF(value, '(none)') ...
    number of dimensions or subscript ranges were different.)
   </para>
 
-  <para>
-   The array containment operators (<literal>&lt;@</literal>
-   and <literal>@&gt;</literal>) consider one array to be contained in
-   another one if each of its elements appears in the other one.
-   Duplicates are not treated specially, thus <literal>ARRAY[1]</literal>
-   and <literal>ARRAY[1,1]</literal> are each considered to contain the
-   other.
-  </para>
+   <table id="array-operators-table">
+    <title>Array Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>@&gt;</literal> <type>anyarray</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first array contain the second, that is, does each element
+        appearing in the second array equal some element of the first array?
+        (Duplicates are not treated specially,
+        thus <literal>ARRAY[1]</literal> and <literal>ARRAY[1,1]</literal> are
+        each considered to contain the other.)
+       </para>
+       <para>
+        <literal>ARRAY[1,4,3] @&gt; ARRAY[3,1,3]</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>&lt;@</literal> <type>anyarray</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first array contained by the second?
+       </para>
+       <para>
+        <literal>ARRAY[2,2,7] &lt;@ ARRAY[1,7,4,2,6]</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>&amp;&amp;</literal> <type>anyarray</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do the arrays overlap, that is, have any elements in common?
+       </para>
+       <para>
+        <literal>ARRAY[1,4,3] &amp;&amp; ARRAY[2,1]</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>||</literal> <type>anyarray</type>
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Concatenates the two arrays.  Concatenating a null or empty array is a
+        no-op; otherwise the arrays must have the same number of dimensions
+        (as illustrated by the first example) or differ in number of
+        dimensions by one (as illustrated by the second).
+       </para>
+       <para>
+        <literal>ARRAY[1,2,3] || ARRAY[4,5,6,7]</literal>
+        <returnvalue>{1,2,3,4,5,6,7}</returnvalue>
+       </para>
+       <para>
+        <literal>ARRAY[1,2,3] || ARRAY[[4,5,6],[7,8,9]]</literal>
+        <returnvalue>{{1,2,3},{4,5,6},{7,8,9}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyelement</type> <literal>||</literal> <type>anyarray</type>
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Concatenates an element onto the front of an array (which must be
+        empty or one-dimensional).
+       </para>
+       <para>
+        <literal>3 || ARRAY[4,5,6]</literal>
+        <returnvalue>{3,4,5,6}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>||</literal> <type>anyelement</type>
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Concatenates an element onto the end of an array (which must be
+        empty or one-dimensional).
+       </para>
+       <para>
+        <literal>ARRAY[4,5,6] || 7</literal>
+        <returnvalue>{4,5,6,7}</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
    See <xref linkend="arrays"/> for more details about array operator
@@ -17492,329 +17463,400 @@ SELECT NULLIF(value, '(none)') ...
    for more information  and examples of the use of these functions.
   </para>
 
-  <indexterm>
-    <primary>array_append</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_cat</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_ndims</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_dims</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_fill</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_length</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_lower</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_position</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_positions</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_prepend</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_remove</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_replace</primary>
-  </indexterm>
-  <indexterm>
-    <primary>array_to_string</primary>
-  </indexterm>
- <indexterm>
-    <primary>array_upper</primary>
-  </indexterm>
-  <indexterm>
-    <primary>cardinality</primary>
-  </indexterm>
-  <indexterm>
-    <primary>string_to_array</primary>
-  </indexterm>
-  <indexterm>
-    <primary>unnest</primary>
-  </indexterm>
+   <table id="array-functions-table">
+    <title>Array Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-    <table id="array-functions-table">
-     <title>Array Functions</title>
-     <tgroup cols="5">
-      <thead>
-       <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>
-         <literal>
-          <function>array_append</function>(<type>anyarray</type>, <type>anyelement</type>)
-         </literal>
-        </entry>
-        <entry><type>anyarray</type></entry>
-        <entry>append an element to the end of an array</entry>
-        <entry><literal>array_append(ARRAY[1,2], 3)</literal></entry>
-        <entry><literal>{1,2,3}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_cat</function>(<type>anyarray</type>, <type>anyarray</type>)
-         </literal>
-        </entry>
-        <entry><type>anyarray</type></entry>
-        <entry>concatenate two arrays</entry>
-        <entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal></entry>
-        <entry><literal>{1,2,3,4,5}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_ndims</function>(<type>anyarray</type>)
-         </literal>
-        </entry>
-        <entry><type>int</type></entry>
-        <entry>returns the number of dimensions of the array</entry>
-        <entry><literal>array_ndims(ARRAY[[1,2,3], [4,5,6]])</literal></entry>
-        <entry><literal>2</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_dims</function>(<type>anyarray</type>)
-         </literal>
-        </entry>
-        <entry><type>text</type></entry>
-        <entry>returns a text representation of array's dimensions</entry>
-        <entry><literal>array_dims(ARRAY[[1,2,3], [4,5,6]])</literal></entry>
-        <entry><literal>[1:2][1:3]</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_fill</function>(<type>anyelement</type>, <type>int[]</type>
-          <optional>, <type>int[]</type></optional>)
-         </literal>
-        </entry>
-        <entry><type>anyarray</type></entry>
-        <entry>returns an array initialized with supplied value and
-         dimensions, optionally with lower bounds other than 1</entry>
-        <entry><literal>array_fill(7, ARRAY[3], ARRAY[2])</literal></entry>
-        <entry><literal>[2:4]={7,7,7}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_length</function>(<type>anyarray</type>, <type>int</type>)
-         </literal>
-        </entry>
-        <entry><type>int</type></entry>
-        <entry>returns the length of the requested array dimension</entry>
-        <entry><literal>array_length(array[1,2,3], 1)</literal></entry>
-        <entry><literal>3</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_lower</function>(<type>anyarray</type>, <type>int</type>)
-         </literal>
-        </entry>
-        <entry><type>int</type></entry>
-        <entry>returns lower bound of the requested array dimension</entry>
-        <entry><literal>array_lower('[0:2]={1,2,3}'::int[], 1)</literal></entry>
-        <entry><literal>0</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_position</function>(<type>anyarray</type>, <type>anyelement</type> <optional>, <type>int</type></optional>)
-         </literal>
-        </entry>
-        <entry><type>int</type></entry>
-        <entry>returns the subscript of the first occurrence of the second
-        argument in the array, starting at the element indicated by the third
-        argument or at the first element (array must be one-dimensional)</entry>
-        <entry><literal>array_position(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon')</literal></entry>
-        <entry><literal>2</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_positions</function>(<type>anyarray</type>, <type>anyelement</type>)
-         </literal>
-        </entry>
-        <entry><type>int[]</type></entry>
-        <entry>returns an array of subscripts of all occurrences of the second
-        argument in the array given as first argument (array must be
-        one-dimensional)</entry>
-        <entry><literal>array_positions(ARRAY['A','A','B','A'], 'A')</literal></entry>
-        <entry><literal>{1,2,4}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_prepend</function>(<type>anyelement</type>, <type>anyarray</type>)
-         </literal>
-        </entry>
-        <entry><type>anyarray</type></entry>
-        <entry>append an element to the beginning of an array</entry>
-        <entry><literal>array_prepend(1, ARRAY[2,3])</literal></entry>
-        <entry><literal>{1,2,3}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_remove</function>(<type>anyarray</type>, <type>anyelement</type>)
-         </literal>
-        </entry>
-        <entry><type>anyarray</type></entry>
-        <entry>remove all elements equal to the given value from the array
-         (array must be one-dimensional)</entry>
-        <entry><literal>array_remove(ARRAY[1,2,3,2], 2)</literal></entry>
-        <entry><literal>{1,3}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_replace</function>(<type>anyarray</type>, <type>anyelement</type>, <type>anyelement</type>)
-         </literal>
-        </entry>
-        <entry><type>anyarray</type></entry>
-        <entry>replace each array element equal to the given value with a new value</entry>
-        <entry><literal>array_replace(ARRAY[1,2,5,4], 5, 3)</literal></entry>
-        <entry><literal>{1,2,3,4}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_to_string</function>(<type>anyarray</type>, <type>text</type> <optional>, <type>text</type></optional>)
-         </literal>
-        </entry>
-        <entry><type>text</type></entry>
-        <entry>concatenates array elements using supplied delimiter and
-         optional null string</entry>
-        <entry><literal>array_to_string(ARRAY[1, 2, 3, NULL, 5], ',', '*')</literal></entry>
-        <entry><literal>1,2,3,*,5</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>array_upper</function>(<type>anyarray</type>, <type>int</type>)
-         </literal>
-        </entry>
-        <entry><type>int</type></entry>
-        <entry>returns upper bound of the requested array dimension</entry>
-        <entry><literal>array_upper(ARRAY[1,8,3,7], 1)</literal></entry>
-        <entry><literal>4</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>cardinality</function>(<type>anyarray</type>)
-         </literal>
-        </entry>
-        <entry><type>int</type></entry>
-        <entry>returns the total number of elements in the array, or 0 if the array is empty</entry>
-        <entry><literal>cardinality(ARRAY[[1,2],[3,4]])</literal></entry>
-        <entry><literal>4</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>string_to_array</function>(<type>text</type>, <type>text</type> <optional>, <type>text</type></optional>)
-         </literal>
-        </entry>
-        <entry><type>text[]</type></entry>
-        <entry>splits string into array elements using supplied delimiter and
-         optional null string</entry>
-        <entry><literal>string_to_array('xx~^~yy~^~zz', '~^~', 'yy')</literal></entry>
-        <entry><literal>{xx,NULL,zz}</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>unnest</function>(<type>anyarray</type>)
-         </literal>
-        </entry>
-        <entry><type>setof anyelement</type></entry>
-        <entry>expand an array to a set of rows</entry>
-        <entry><literal>unnest(ARRAY[1,2])</literal></entry>
-        <entry><literallayout class="monospaced">1
-2</literallayout>(2 rows)</entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>unnest</function>(<type>anyarray</type>, <type>anyarray</type> [, ...])
-         </literal>
-        </entry>
-        <entry><type>setof anyelement, anyelement [, ...]</type></entry>
-        <entry>expand multiple arrays (possibly of different types) to a set
-         of rows.  This is only allowed in the FROM clause; see
-         <xref linkend="queries-tablefunctions"/></entry>
-        <entry><literal>unnest(ARRAY[1,2],ARRAY['foo','bar','baz'])</literal></entry>
-        <entry><literallayout class="monospaced">1    foo
-2    bar
-NULL baz</literallayout>(3 rows)</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_append</primary>
+        </indexterm>
+        <function>array_append</function> ( <type>anyarray</type>, <type>anyelement</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Appends an element to the end of an array (same as
+        the <type>anyarray</type> <literal>||</literal> <type>anyelement</type>
+        operator).
+       </para>
+       <para>
+        <literal>array_append(ARRAY[1,2], 3)</literal>
+        <returnvalue>{1,2,3}</returnvalue>
+       </para></entry>
+      </row>
 
-   <para>
-    In <function>array_position</function> and <function>array_positions</function>,
-    each array element is compared to the searched value using
-    <literal>IS NOT DISTINCT FROM</literal> semantics.
-   </para>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_cat</primary>
+        </indexterm>
+        <function>array_cat</function> ( <type>anyarray</type>, <type>anyarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Concatenates two arrays (same as
+        the <type>anyarray</type> <literal>||</literal> <type>anyarray</type>
+        operator).
+       </para>
+       <para>
+        <literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal>
+        <returnvalue>{1,2,3,4,5}</returnvalue>
+       </para></entry>
+      </row>
 
-   <para>
-    In <function>array_position</function>, <literal>NULL</literal> is returned
-    if the value is not found.
-   </para>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_dims</primary>
+        </indexterm>
+        <function>array_dims</function> ( <type>anyarray</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns a text representation of the array's dimensions.
+       </para>
+       <para>
+        <literal>array_dims(ARRAY[[1,2,3], [4,5,6]])</literal>
+        <returnvalue>[1:2][1:3]</returnvalue>
+       </para></entry>
+      </row>
 
-   <para>
-    In <function>array_positions</function>, <literal>NULL</literal> is returned
-    only if the array is <literal>NULL</literal>; if the value is not found in
-    the array, an empty array is returned instead.
-   </para>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_fill</primary>
+        </indexterm>
+        <function>array_fill</function> ( <type>anyelement</type>, <type>integer[]</type>
+          <optional>, <type>integer[]</type> </optional> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Returns an array filled with copies of the given value, having
+        dimensions of the lengths specified by the second argument.
+        The optional third argument supplies lower-bound values for each
+        dimension (which default to all <literal>1</literal>).
+       </para>
+       <para>
+        <literal>array_fill(11, ARRAY[2,3])</literal>
+        <returnvalue>{{11,11,11},{11,11,11}}</returnvalue>
+       </para>
+       <para>
+        <literal>array_fill(7, ARRAY[3], ARRAY[2])</literal>
+        <returnvalue>[2:4]={7,7,7}</returnvalue>
+       </para></entry>
+      </row>
 
-   <para>
-    In <function>string_to_array</function>, if the delimiter parameter is
-    NULL, each character in the input string will become a separate element in
-    the resulting array.  If the delimiter is an empty string, then the entire
-    input string is returned as a one-element array.  Otherwise the input
-    string is split at each occurrence of the delimiter string.
-   </para>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_length</primary>
+        </indexterm>
+        <function>array_length</function> ( <type>anyarray</type>, <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the length of the requested array dimension.
+       </para>
+       <para>
+        <literal>array_length(array[1,2,3], 1)</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
 
-   <para>
-    In <function>string_to_array</function>, if the null-string parameter
-    is omitted or NULL, none of the substrings of the input will be replaced
-    by NULL.
-    In <function>array_to_string</function>, if the null-string parameter
-    is omitted or NULL, any null elements in the array are simply skipped
-    and not represented in the output string.
-   </para>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_lower</primary>
+        </indexterm>
+        <function>array_lower</function> ( <type>anyarray</type>, <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the lower bound of the requested array dimension.
+       </para>
+       <para>
+        <literal>array_lower('[0:2]={1,2,3}'::integer[], 1)</literal>
+        <returnvalue>0</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_ndims</primary>
+        </indexterm>
+        <function>array_ndims</function> ( <type>anyarray</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of dimensions of the array.
+       </para>
+       <para>
+        <literal>array_ndims(ARRAY[[1,2,3], [4,5,6]])</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_position</primary>
+        </indexterm>
+        <function>array_position</function> ( <type>anyarray</type>, <type>anyelement</type> <optional>, <type>integer</type> </optional> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the subscript of the first occurrence of the second argument
+        in the array, or <literal>NULL</literal> if it's not present.
+        If the third argument is given, the search begins at that subscript.
+        The array must be one-dimensional.
+        Comparisons are done using <literal>IS NOT DISTINCT FROM</literal>
+        semantics, so it is possible to search for <literal>NULL</literal>.
+       </para>
+       <para>
+        <literal>array_position(ARRAY['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'], 'mon')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_positions</primary>
+        </indexterm>
+        <function>array_positions</function> ( <type>anyarray</type>, <type>anyelement</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Returns an array of the subscripts of all occurrences of the second
+        argument in the array given as first argument.
+        The array must be one-dimensional.
+        Comparisons are done using <literal>IS NOT DISTINCT FROM</literal>
+        semantics, so it is possible to search for <literal>NULL</literal>.
+        <literal>NULL</literal> is returned only if the array
+        is <literal>NULL</literal>; if the value is not found in the array, an
+        empty array is returned.
+       </para>
+       <para>
+        <literal>array_positions(ARRAY['A','A','B','A'], 'A')</literal>
+        <returnvalue>{1,2,4}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_prepend</primary>
+        </indexterm>
+        <function>array_prepend</function> ( <type>anyelement</type>, <type>anyarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Prepends an element to the beginning of an array (same as
+        the <type>anyelement</type> <literal>||</literal> <type>anyarray</type>
+        operator).
+       </para>
+       <para>
+        <literal>array_prepend(1, ARRAY[2,3])</literal>
+        <returnvalue>{1,2,3}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_remove</primary>
+        </indexterm>
+        <function>array_remove</function> ( <type>anyarray</type>, <type>anyelement</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Removes all elements equal to the given value from the array.
+        The array must be one-dimensional.
+        Comparisons are done using <literal>IS NOT DISTINCT FROM</literal>
+        semantics, so it is possible to remove <literal>NULL</literal>s.
+       </para>
+       <para>
+        <literal>array_remove(ARRAY[1,2,3,2], 2)</literal>
+        <returnvalue>{1,3}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_replace</primary>
+        </indexterm>
+        <function>array_replace</function> ( <type>anyarray</type>, <type>anyelement</type>, <type>anyelement</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Replaces each array element equal to the second argument with the
+        third argument.
+       </para>
+       <para>
+        <literal>array_replace(ARRAY[1,2,5,4], 5, 3)</literal>
+        <returnvalue>{1,2,3,4}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_to_string</primary>
+        </indexterm>
+        <function>array_to_string</function> ( <replaceable>array</replaceable> <type>anyarray</type>, <replaceable>delimiter</replaceable> <type>text</type> <optional>, <replaceable>null_string</replaceable> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts each array element to its text representation, and
+        concatenates those separated by
+        the <replaceable>delimiter</replaceable> string.
+        If <replaceable>null_string</replaceable> is given and is
+        not <literal>NULL</literal>, then <literal>NULL</literal> array
+        entries are represented by that string; otherwise, they are omitted.
+       </para>
+       <para>
+        <literal>array_to_string(ARRAY[1, 2, 3, NULL, 5], ',', '*')</literal>
+        <returnvalue>1,2,3,*,5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_upper</primary>
+        </indexterm>
+        <function>array_upper</function> ( <type>anyarray</type>, <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the upper bound of the requested array dimension.
+       </para>
+       <para>
+        <literal>array_upper(ARRAY[1,8,3,7], 1)</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>cardinality</primary>
+        </indexterm>
+        <function>cardinality</function> ( <type>anyarray</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the total number of elements in the array, or 0 if the array
+        is empty.
+       </para>
+       <para>
+        <literal>cardinality(ARRAY[[1,2],[3,4]])</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>string_to_array</primary>
+        </indexterm>
+        <function>string_to_array</function> ( <replaceable>string</replaceable> <type>text</type>, <replaceable>delimiter</replaceable> <type>text</type> <optional>, <replaceable>null_string</replaceable> <type>text</type> </optional> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Splits the <replaceable>string</replaceable> at occurrences
+        of <replaceable>delimiter</replaceable> and forms the remaining data
+        into a <type>text</type> array.
+        If <replaceable>delimiter</replaceable> is <literal>NULL</literal>,
+        each character in the <replaceable>string</replaceable> will become a
+        separate element in the array.
+        If <replaceable>delimiter</replaceable> is an empty string, then
+        the <replaceable>string</replaceable> is treated as a single field.
+        If <replaceable>null_string</replaceable> is supplied and is
+        not <literal>NULL</literal>, fields matching that string are converted
+        to <literal>NULL</literal> entries.
+       </para>
+       <para>
+        <literal>string_to_array('xx~~yy~~zz', '~~', 'yy')</literal>
+        <returnvalue>{xx,NULL,zz}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>unnest</primary>
+        </indexterm>
+        <function>unnest</function> ( <type>anyarray</type> )
+        <returnvalue>setof anyelement</returnvalue>
+       </para>
+       <para>
+        Expands an array to a set of rows.
+       </para>
+       <para>
+        <literal>unnest(ARRAY[1,2])</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ 1
+ 2
+</programlisting>
+        (2 rows in result)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>unnest</function> ( <type>anyarray</type>, <type>anyarray</type> <optional>, ... </optional> )
+        <returnvalue>setof anyelement, anyelement [, ... ]</returnvalue>
+       </para>
+       <para>
+        Expands multiple arrays (possibly of different data types) to a set of
+        rows.  If the arrays are not all the same length then the shorter ones
+        are padded with <literal>NULL</literal>s.  This is only allowed in a
+        query's FROM clause; see <xref linkend="queries-tablefunctions"/>.
+       </para>
+       <para>
+        <literal>select * from unnest(ARRAY[1,2], ARRAY['foo','bar','baz']) as x(a,b)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a |  b
+---+-----
+ 1 | foo
+ 2 | bar
+   | baz
+</programlisting>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <note>
     <para>
      There are two differences in the behavior of <function>string_to_array</function>
      from pre-9.1 versions of <productname>PostgreSQL</productname>.
-     First, it will return an empty (zero-element) array rather than NULL when
-     the input string is of zero length.  Second, if the delimiter string is
-     NULL, the function splits the input into individual characters, rather
-     than returning NULL as before.
+     First, it will return an empty (zero-element) array rather
+     than <literal>NULL</literal> when the input string is of zero length.
+     Second, if the delimiter string is <literal>NULL</literal>, the function
+     splits the input into individual characters, rather than
+     returning <literal>NULL</literal> as before.
     </para>
    </note>
 
@@ -17832,167 +17874,222 @@ NULL baz</literallayout>(3 rows)</entry>
   </para>
 
   <para>
-   <xref linkend="range-operators-table"/> shows the operators
+   <xref linkend="range-operators-table"/> shows the specialized operators
    available for range types.
+   In addition to those, the usual comparison operators shown in
+   <xref linkend="functions-comparison-op-table"/> are available for range
+   types.  The comparison operators order first by the range lower bounds, and
+   only if those are equal do they compare the upper bounds.  This does not
+   usually result in a useful overall ordering, but the operators are provided
+   to allow unique indexes to be constructed on ranges.
   </para>
 
-    <table id="range-operators-table">
-     <title>Range Operators</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-        <entry>Operator</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry> <literal>=</literal> </entry>
-        <entry>equal</entry>
-        <entry><literal>int4range(1,5) = '[1,4]'::int4range</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+   <table id="range-operators-table">
+    <title>Range Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-       <row>
-        <entry> <literal>&lt;&gt;</literal> </entry>
-        <entry>not equal</entry>
-        <entry><literal>numrange(1.1,2.2) &lt;&gt; numrange(1.1,2.3)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>@&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first range contain the second?
+       </para>
+       <para>
+        <literal>int4range(2,4) @&gt; int4range(2,3)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&lt;</literal> </entry>
-        <entry>less than</entry>
-        <entry><literal>int4range(1,10) &lt; int4range(2,3)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>@&gt;</literal> <type>anyelement</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range contain the element?
+       </para>
+       <para>
+        <literal>'[2011-01-01,2011-03-01)'::tsrange @&gt; '2011-01-10'::timestamp</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&gt;</literal> </entry>
-        <entry>greater than</entry>
-        <entry><literal>int4range(1,10) &gt; int4range(1,5)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&lt;@</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first range contained by the second?
+       </para>
+       <para>
+        <literal>int4range(2,4) &lt;@ int4range(1,7)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&lt;=</literal> </entry>
-        <entry>less than or equal</entry>
-        <entry><literal>numrange(1.1,2.2) &lt;= numrange(1.1,2.2)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyelement</type> <literal>&lt;@</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the element contained in the range?
+       </para>
+       <para>
+        <literal>42 &lt;@ int4range(1,7)</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&gt;=</literal> </entry>
-        <entry>greater than or equal</entry>
-        <entry><literal>numrange(1.1,2.2) &gt;= numrange(1.1,2.0)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&amp;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do the ranges overlap, that is, have any elements in common?
+       </para>
+       <para>
+        <literal>int8range(3,7) &amp;&amp; int8range(4,12)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>@&gt;</literal> </entry>
-        <entry>contains range</entry>
-        <entry><literal>int4range(2,4) @&gt; int4range(2,3)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&lt;&lt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first range strictly left of the second?
+       </para>
+       <para>
+        <literal>int8range(1,10) &lt;&lt; int8range(100,110)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>@&gt;</literal> </entry>
-        <entry>contains element</entry>
-        <entry><literal>'[2011-01-01,2011-03-01)'::tsrange @&gt; '2011-01-10'::timestamp</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&gt;&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first range strictly right of the second?
+       </para>
+       <para>
+        <literal>int8range(50,60) &gt;&gt; int8range(20,30)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&lt;@</literal> </entry>
-        <entry>range is contained by</entry>
-        <entry><literal>int4range(2,4) &lt;@ int4range(1,7)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&lt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first range not extend to the right of the second?
+       </para>
+       <para>
+        <literal>int8range(1,20) &amp;&lt; int8range(18,20)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&lt;@</literal> </entry>
-        <entry>element is contained by</entry>
-        <entry><literal>42 &lt;@ int4range(1,7)</literal></entry>
-        <entry><literal>f</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first range not extend to the left of the second?
+       </para>
+       <para>
+        <literal>int8range(7,20) &amp;&gt; int8range(5,10)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&amp;&amp;</literal> </entry>
-        <entry>overlap (have points in common)</entry>
-        <entry><literal>int8range(3,7) &amp;&amp; int8range(4,12)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>-|-</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Are the ranges adjacent?
+       </para>
+       <para>
+        <literal>numrange(1.1,2.2) -|- numrange(2.2,3.3)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&lt;&lt;</literal> </entry>
-        <entry>strictly left of</entry>
-        <entry><literal>int8range(1,10) &lt;&lt; int8range(100,110)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>+</literal> <type>anyrange</type>
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the union of the ranges.  The ranges must overlap or be
+        adjacent, so that the union is a single range (but
+        see <function>range_merge()</function>).
+       </para>
+       <para>
+        <literal>numrange(5,15) + numrange(10,20)</literal>
+        <returnvalue>[5,20)</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&gt;&gt;</literal> </entry>
-        <entry>strictly right of</entry>
-        <entry><literal>int8range(50,60) &gt;&gt; int8range(20,30)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>*</literal> <type>anyrange</type>
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the intersection of the ranges.
+       </para>
+       <para>
+        <literal>int8range(5,15) * int8range(10,20)</literal>
+        <returnvalue>[10,15)</returnvalue>
+       </para></entry>
+      </row>
 
-       <row>
-        <entry> <literal>&amp;&lt;</literal> </entry>
-        <entry>does not extend to the right of</entry>
-        <entry><literal>int8range(1,20) &amp;&lt; int8range(18,20)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>&amp;&gt;</literal> </entry>
-        <entry>does not extend to the left of</entry>
-        <entry><literal>int8range(7,20) &amp;&gt; int8range(5,10)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>-|-</literal> </entry>
-        <entry>is adjacent to</entry>
-        <entry><literal>numrange(1.1,2.2) -|- numrange(2.2,3.3)</literal></entry>
-        <entry><literal>t</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>+</literal> </entry>
-        <entry>union</entry>
-        <entry><literal>numrange(5,15) + numrange(10,20)</literal></entry>
-        <entry><literal>[5,20)</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>*</literal> </entry>
-        <entry>intersection</entry>
-        <entry><literal>int8range(5,15) * int8range(10,20)</literal></entry>
-        <entry><literal>[10,15)</literal></entry>
-       </row>
-
-       <row>
-        <entry> <literal>-</literal> </entry>
-        <entry>difference</entry>
-        <entry><literal>int8range(5,15) - int8range(10,20)</literal></entry>
-        <entry><literal>[5,10)</literal></entry>
-       </row>
-
-      </tbody>
-     </tgroup>
-    </table>
-
-  <para>
-   The simple comparison operators <literal>&lt;</literal>,
-   <literal>&gt;</literal>, <literal>&lt;=</literal>, and
-   <literal>&gt;=</literal> compare the lower bounds first, and only if those
-   are equal, compare the upper bounds.  These comparisons are not usually
-   very useful for ranges, but are provided to allow B-tree indexes to be
-   constructed on ranges.
-  </para>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>-</literal> <type>anyrange</type>
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the difference of the ranges.  The second range must not be
+        contained in the first in such a way that the difference would not be
+        a single range.
+       </para>
+       <para>
+        <literal>int8range(5,15) - int8range(10,20)</literal>
+        <returnvalue>[5,10)</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
    The left-of/right-of/adjacent operators always return false when an empty
@@ -18001,146 +18098,170 @@ NULL baz</literallayout>(3 rows)</entry>
   </para>
 
   <para>
-   The union and difference operators will fail if the resulting range would
-   need to contain two disjoint sub-ranges, as such a range cannot be
-   represented.
-  </para>
-
-  <para>
    <xref linkend="range-functions-table"/> shows the functions
    available for use with range types.
   </para>
 
-  <indexterm>
-    <primary>lower</primary>
-  </indexterm>
-  <indexterm>
-    <primary>upper</primary>
-  </indexterm>
-  <indexterm>
-    <primary>isempty</primary>
-  </indexterm>
-  <indexterm>
-    <primary>lower_inc</primary>
-  </indexterm>
-  <indexterm>
-    <primary>upper_inc</primary>
-  </indexterm>
-  <indexterm>
-    <primary>lower_inf</primary>
-  </indexterm>
-  <indexterm>
-    <primary>upper_inf</primary>
-  </indexterm>
+   <table id="range-functions-table">
+    <title>Range Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-    <table id="range-functions-table">
-     <title>Range Functions</title>
-     <tgroup cols="5">
-      <thead>
-       <row>
-        <entry>Function</entry>
-        <entry>Return Type</entry>
-        <entry>Description</entry>
-        <entry>Example</entry>
-        <entry>Result</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-        <entry>
-         <literal>
-          <function>lower</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry>range's element type</entry>
-        <entry>lower bound of range</entry>
-        <entry><literal>lower(numrange(1.1,2.2))</literal></entry>
-        <entry><literal>1.1</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>upper</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry>range's element type</entry>
-        <entry>upper bound of range</entry>
-        <entry><literal>upper(numrange(1.1,2.2))</literal></entry>
-        <entry><literal>2.2</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>isempty</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry><type>boolean</type></entry>
-        <entry>is the range empty?</entry>
-        <entry><literal>isempty(numrange(1.1,2.2))</literal></entry>
-        <entry><literal>false</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>lower_inc</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry><type>boolean</type></entry>
-        <entry>is the lower bound inclusive?</entry>
-        <entry><literal>lower_inc(numrange(1.1,2.2))</literal></entry>
-        <entry><literal>true</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>upper_inc</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry><type>boolean</type></entry>
-        <entry>is the upper bound inclusive?</entry>
-        <entry><literal>upper_inc(numrange(1.1,2.2))</literal></entry>
-        <entry><literal>false</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>lower_inf</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry><type>boolean</type></entry>
-        <entry>is the lower bound infinite?</entry>
-        <entry><literal>lower_inf('(,)'::daterange)</literal></entry>
-        <entry><literal>true</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>upper_inf</function>(<type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry><type>boolean</type></entry>
-        <entry>is the upper bound infinite?</entry>
-        <entry><literal>upper_inf('(,)'::daterange)</literal></entry>
-        <entry><literal>true</literal></entry>
-       </row>
-       <row>
-        <entry>
-         <literal>
-          <function>range_merge</function>(<type>anyrange</type>, <type>anyrange</type>)
-         </literal>
-        </entry>
-        <entry><type>anyrange</type></entry>
-        <entry>the smallest range which includes both of the given ranges</entry>
-        <entry><literal>range_merge('[1,2)'::int4range, '[3,4)'::int4range)</literal></entry>
-        <entry><literal>[1,4)</literal></entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower</primary>
+        </indexterm>
+        <function>lower</function> ( <type>anyrange</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Extracts the lower bound of the range (<literal>NULL</literal> if the
+        range is empty or the lower bound is infinite).
+       </para>
+       <para>
+        <literal>lower(numrange(1.1,2.2))</literal>
+        <returnvalue>1.1</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper</primary>
+        </indexterm>
+        <function>upper</function> ( <type>anyrange</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Extracts the upper bound of the range (<literal>NULL</literal> if the
+        range is empty or the upper bound is infinite).
+       </para>
+       <para>
+        <literal>upper(numrange(1.1,2.2))</literal>
+        <returnvalue>2.2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>isempty</primary>
+        </indexterm>
+        <function>isempty</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range empty?
+       </para>
+       <para>
+        <literal>isempty(numrange(1.1,2.2))</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower_inc</primary>
+        </indexterm>
+        <function>lower_inc</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range's lower bound inclusive?
+       </para>
+       <para>
+        <literal>lower_inc(numrange(1.1,2.2))</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper_inc</primary>
+        </indexterm>
+        <function>upper_inc</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range's upper bound inclusive?
+       </para>
+       <para>
+        <literal>upper_inc(numrange(1.1,2.2))</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower_inf</primary>
+        </indexterm>
+        <function>lower_inf</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range's lower bound infinite?
+       </para>
+       <para>
+        <literal>lower_inf('(,)'::daterange)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper_inf</primary>
+        </indexterm>
+        <function>upper_inf</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range's upper bound infinite?
+       </para>
+       <para>
+        <literal>upper_inf('(,)'::daterange)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>range_merge</primary>
+        </indexterm>
+        <function>range_merge</function> ( <type>anyrange</type>, <type>anyrange</type> )
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the smallest range that includes both of the given ranges.
+       </para>
+       <para>
+        <literal>range_merge('[1,2)'::int4range, '[3,4)'::int4range)</literal>
+        <returnvalue>[1,4)</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
-   The <function>lower</function> and  <function>upper</function> functions return null
-   if the range is empty or the requested bound is infinite.
    The <function>lower_inc</function>, <function>upper_inc</function>,
    <function>lower_inf</function>, and <function>upper_inf</function>
    functions all return false for an empty range.
@@ -18159,7 +18280,7 @@ NULL baz</literallayout>(3 rows)</entry>
    <firstterm>Aggregate functions</firstterm> compute a single result
    from a set of input values.  The built-in general-purpose aggregate
    functions are listed in <xref linkend="functions-aggregate-table"/>
-   and statistical aggregates in <xref
+   while statistical aggregates are in <xref
    linkend="functions-aggregate-statistics-table"/>.
    The built-in within-group ordered-set aggregate functions
    are listed in <xref linkend="functions-orderedset-table"/>
@@ -18173,359 +18294,389 @@ NULL baz</literallayout>(3 rows)</entry>
    information.
   </para>
 
-  <table id="functions-aggregate-table">
-   <title>General-Purpose Aggregate Functions</title>
+  <para>
+   Aggregate functions that support <firstterm>Partial Mode</firstterm>
+   are eligible to participate in various optimizations, such as parallel
+   aggregation.
+  </para>
 
-   <tgroup cols="5">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Argument Type(s)</entry>
-      <entry>Return Type</entry>
-      <entry>Partial Mode</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+   <table id="functions-aggregate-table">
+    <title>General-Purpose Aggregate Functions</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry>
-       <indexterm>
-        <primary>array_agg</primary>
-       </indexterm>
-       <function>array_agg(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       any non-array type
-      </entry>
-      <entry>
-       array of the argument type
-      </entry>
-      <entry>No</entry>
-      <entry>input values, including nulls, concatenated into an array</entry>
-     </row>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_agg</primary>
+        </indexterm>
+        <function>array_agg</function> ( <type>anynonarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Collects all the input values, including nulls, into an array.
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <function>array_agg(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       any array type
-      </entry>
-      <entry>
-       same as argument data type
-      </entry>
-      <entry>No</entry>
-      <entry>input arrays concatenated into array of one higher dimension
-       (inputs must all have same dimensionality,
-        and cannot be empty or null)</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>array_agg</function> ( <type>anyarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Concatenates all the input arrays into an array of one higher
+        dimension.  (The inputs must all have the same dimensionality, and
+        cannot be empty or null.)
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>average</primary>
-       </indexterm>
-       <indexterm>
-        <primary>avg</primary>
-       </indexterm>
-       <function>avg(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, <type>numeric</type>, or <type>interval</type>
-      </entry>
-      <entry>
-       <type>numeric</type> for any integer-type argument,
-       <type>double precision</type> for a floating-point argument,
-       otherwise the same as the argument data type
-      </entry>
-      <entry>Yes</entry>
-      <entry>the average (arithmetic mean) of all non-null input values</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>average</primary>
+        </indexterm>
+        <indexterm>
+         <primary>avg</primary>
+        </indexterm>
+        <function>avg</function> ( <type>smallint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>integer</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>bigint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>real</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>interval</type> )
+        <returnvalue>interval</returnvalue>
+       </para>
+       <para>
+        Computes the average (arithmetic mean) of all the non-null input
+        values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>bit_and</primary>
-       </indexterm>
-       <function>bit_and(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>, <type>bigint</type>, or
-       <type>bit</type>
-      </entry>
-      <entry>
-        same as argument data type
-      </entry>
-      <entry>Yes</entry>
-      <entry>the bitwise AND of all non-null input values, or null if none</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_and</primary>
+        </indexterm>
+        <function>bit_and</function> ( <type>smallint</type> )
+        <returnvalue>smallint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_and</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_and</function> ( <type>bigint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_and</function> ( <type>bit</type> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Computes the bitwise AND of all non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>bit_or</primary>
-       </indexterm>
-       <function>bit_or(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>, <type>bigint</type>, or
-       <type>bit</type>
-      </entry>
-      <entry>
-        same as argument data type
-      </entry>
-      <entry>Yes</entry>
-      <entry>the bitwise OR of all non-null input values, or null if none</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_or</primary>
+        </indexterm>
+        <function>bit_or</function> ( <type>smallint</type> )
+        <returnvalue>smallint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_or</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_or</function> ( <type>bigint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_or</function> ( <type>bit</type> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Computes the bitwise OR of all non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>bool_and</primary>
-       </indexterm>
-       <function>bool_and(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>true if all input values are true, otherwise false</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bool_and</primary>
+        </indexterm>
+        <function>bool_and</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if all non-null input values are true, otherwise false.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>bool_or</primary>
-       </indexterm>
-       <function>bool_or(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>true if at least one input value is true, otherwise false</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bool_or</primary>
+        </indexterm>
+        <function>bool_or</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if any non-null input value is true, otherwise false.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>count</primary>
-       </indexterm>
-       <function>count(*)</function>
-      </entry>
-      <entry></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Yes</entry>
-      <entry>number of input rows</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>count</primary>
+        </indexterm>
+        <function>count</function> ( <literal>*</literal> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the number of input rows.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry><function>count(<replaceable class="parameter">expression</replaceable>)</function></entry>
-      <entry>any</entry>
-      <entry><type>bigint</type></entry>
-      <entry>Yes</entry>
-      <entry>
-       number of input rows for which the value of <replaceable
-       class="parameter">expression</replaceable> is not null
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>count</function> ( <type>"any"</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the number of input rows in which the input value is not
+        null.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>every</primary>
-       </indexterm>
-       <function>every(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>equivalent to <function>bool_and</function></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>every</primary>
+        </indexterm>
+        <function>every</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        This is the SQL standard's equivalent to <function>bool_and</function>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>json_agg</primary>
-       </indexterm>
-       <function>json_agg(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>any</type>
-      </entry>
-      <entry>
-       <type>json</type>
-      </entry>
-      <entry>No</entry>
-      <entry>aggregates values, including nulls, as a JSON array</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_agg</primary>
+        </indexterm>
+        <function>json_agg</function> ( <type>anyelement</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_agg</primary>
+        </indexterm>
+        <function>jsonb_agg</function> ( <type>anyelement</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the input values, including nulls, into a JSON array.
+        Values are converted to JSON as per <function>to_json</function>
+        or <function>to_jsonb</function>.
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>jsonb_agg</primary>
-       </indexterm>
-       <function>jsonb_agg(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>any</type>
-      </entry>
-      <entry>
-       <type>jsonb</type>
-      </entry>
-      <entry>No</entry>
-      <entry>aggregates values, including nulls, as a JSON array</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg</primary>
+        </indexterm>
+        <function>json_object_agg</function> ( <replaceable>key</replaceable>
+         <type>"any"</type>, <replaceable>value</replaceable>
+         <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg</primary>
+        </indexterm>
+        <function>jsonb_object_agg</function> ( <replaceable>key</replaceable>
+         <type>"any"</type>, <replaceable>value</replaceable>
+         <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as
+        per <function>to_json</function> or <function>to_jsonb</function>.
+        Values can be null, but not keys.
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>json_object_agg</primary>
-       </indexterm>
-       <function>json_object_agg(<replaceable class="parameter">name</replaceable>, <replaceable class="parameter">value</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>(any, any)</type>
-      </entry>
-      <entry>
-       <type>json</type>
-      </entry>
-      <entry>No</entry>
-      <entry>aggregates name/value pairs as a JSON object; values can be
-       null, but not names</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>max</primary>
+        </indexterm>
+        <function>max</function> ( <replaceable>see text</replaceable> )
+        <returnvalue><replaceable>same as input type</replaceable></returnvalue>
+       </para>
+       <para>
+        Computes the maximum of the non-null input
+        values.  Available for any numeric, string, date/time, or enum type,
+        as well as <type>inet</type>, <type>interval</type>,
+        <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
+        <type>tid</type>,
+        and arrays of any of these types.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>jsonb_object_agg</primary>
-       </indexterm>
-       <function>jsonb_object_agg(<replaceable class="parameter">name</replaceable>, <replaceable class="parameter">value</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>(any, any)</type>
-      </entry>
-      <entry>
-       <type>jsonb</type>
-      </entry>
-      <entry>No</entry>
-      <entry>aggregates name/value pairs as a JSON object; values can be
-       null, but not names</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>min</primary>
+        </indexterm>
+        <function>min</function> ( <replaceable>see text</replaceable> )
+        <returnvalue><replaceable>same as input type</replaceable></returnvalue>
+       </para>
+       <para>
+        Computes the minimum of the non-null input
+        values.  Available for any numeric, string, date/time, or enum type,
+        as well as <type>inet</type>, <type>interval</type>,
+        <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
+        <type>tid</type>,
+        and arrays of any of these types.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>max</primary>
-       </indexterm>
-       <function>max(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>any numeric, string, date/time, network, pg_lsn, or enum type,
-             or arrays of these types</entry>
-      <entry>same as argument type</entry>
-      <entry>Yes</entry>
-      <entry>
-       maximum value of <replaceable
-       class="parameter">expression</replaceable> across all non-null input
-       values
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>string_agg</primary>
+        </indexterm>
+        <function>string_agg</function> ( <replaceable>value</replaceable>
+         <type>text</type>, <replaceable>delimiter</replaceable> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>string_agg</function> ( <replaceable>value</replaceable>
+         <type>bytea</type>, <replaceable>delimiter</replaceable> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Concatenates the non-null input values into a string.  Each value
+        after the first is preceded by the
+        corresponding <replaceable>delimiter</replaceable> (if it's not null).
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>min</primary>
-       </indexterm>
-       <function>min(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>any numeric, string, date/time, network, pg_lsn, or enum type,
-             or arrays of these types</entry>
-      <entry>same as argument type</entry>
-      <entry>Yes</entry>
-      <entry>
-       minimum value of <replaceable
-       class="parameter">expression</replaceable> across all non-null input
-       values
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>sum</primary>
+        </indexterm>
+        <function>sum</function> ( <type>smallint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>integer</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>bigint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>real</type> )
+        <returnvalue>real</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>interval</type> )
+        <returnvalue>interval</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>money</type> )
+        <returnvalue>money</returnvalue>
+       </para>
+       <para>
+        Computes the sum of the non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>string_agg</primary>
-       </indexterm>
-       <function>
-         string_agg(<replaceable class="parameter">expression</replaceable>,
-                    <replaceable class="parameter">delimiter</replaceable>)
-       </function>
-      </entry>
-      <entry>
-       (<type>text</type>, <type>text</type>) or (<type>bytea</type>, <type>bytea</type>)
-      </entry>
-      <entry>
-       same as argument types
-      </entry>
-      <entry>No</entry>
-      <entry>non-null input values concatenated into a string, separated by delimiter</entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>sum</primary>
-       </indexterm>
-       <function>sum(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, <type>numeric</type>,
-       <type>interval</type>, or <type>money</type>
-      </entry>
-      <entry>
-       <type>bigint</type> for <type>smallint</type> or
-       <type>int</type> arguments, <type>numeric</type> for
-       <type>bigint</type> arguments, otherwise the same as the
-       argument data type
-      </entry>
-      <entry>Yes</entry>
-      <entry>sum of <replaceable class="parameter">expression</replaceable>
-       across all non-null input values</entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>xmlagg</primary>
-       </indexterm>
-       <function>xmlagg(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>xml</type>
-      </entry>
-      <entry>
-       <type>xml</type>
-      </entry>
-      <entry>No</entry>
-      <entry>concatenation of non-null XML values
-       (see also <xref linkend="functions-xml-xmlagg"/>)</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>xmlagg</primary>
+        </indexterm>
+        <function>xmlagg</function> ( <type>xml</type> )
+        <returnvalue>xml</returnvalue>
+       </para>
+       <para>
+        Concatenates the non-null XML input values (see
+        <xref linkend="functions-xml-xmlagg"/>).
+       </para></entry>
+       <entry>No</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
    It should be noted that except for <function>count</function>,
@@ -18536,52 +18687,6 @@ NULL baz</literallayout>(3 rows)</entry>
    rows.  The <function>coalesce</function> function can be used to
    substitute zero or an empty array for null when necessary.
   </para>
-
-  <para>
-   Aggregate functions which support <firstterm>Partial Mode</firstterm>
-   are eligible to participate in various optimizations, such as parallel
-   aggregation.
-  </para>
-
-  <note>
-    <indexterm>
-      <primary>ANY</primary>
-    </indexterm>
-    <indexterm>
-      <primary>SOME</primary>
-    </indexterm>
-    <para>
-      Boolean aggregates <function>bool_and</function> and
-      <function>bool_or</function> correspond to standard SQL aggregates
-      <function>every</function> and <function>any</function> or
-      <function>some</function>.
-      As for <function>any</function> and <function>some</function>,
-      it seems that there is an ambiguity built into the standard syntax:
-<programlisting>
-SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
-</programlisting>
-      Here <function>ANY</function> can be considered either as introducing
-      a subquery, or as being an aggregate function, if the subquery
-      returns one row with a Boolean value.
-      Thus the standard name cannot be given to these aggregates.
-    </para>
-  </note>
-
-  <note>
-   <para>
-    Users accustomed to working with other SQL database management
-    systems might be disappointed by the performance of the
-    <function>count</function> aggregate when it is applied to the
-    entire table. A query like:
-<programlisting>
-SELECT count(*) FROM sometable;
-</programlisting>
-    will require effort proportional to the size of the table:
-    <productname>PostgreSQL</productname> will need to scan either the
-    entire table or the entirety of an index which includes all rows in
-    the table.
-   </para>
-  </note>
 
   <para>
    The aggregate functions <function>array_agg</function>,
@@ -18606,11 +18711,58 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    subquery's output to be reordered before the aggregate is computed.
   </para>
 
+  <note>
+    <indexterm>
+      <primary>ANY</primary>
+    </indexterm>
+    <indexterm>
+      <primary>SOME</primary>
+    </indexterm>
+    <para>
+      The boolean aggregates <function>bool_and</function> and
+      <function>bool_or</function> correspond to the standard SQL aggregates
+      <function>every</function> and <function>any</function> or
+      <function>some</function>.
+      <productname>PostgreSQL</productname>
+      supports <function>every</function>, but not <function>any</function>
+      or <function>some</function>, because there is an ambiguity built into
+      the standard syntax:
+<programlisting>
+SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
+</programlisting>
+      Here <function>ANY</function> can be considered either as introducing
+      a subquery, or as being an aggregate function, if the subquery
+      returns one row with a Boolean value.
+      Thus the standard name cannot be given to these aggregates.
+    </para>
+  </note>
+
+  <note>
+   <para>
+    Users accustomed to working with other SQL database management
+    systems might be disappointed by the performance of the
+    <function>count</function> aggregate when it is applied to the
+    entire table. A query like:
+<programlisting>
+SELECT count(*) FROM sometable;
+</programlisting>
+    will require effort proportional to the size of the table:
+    <productname>PostgreSQL</productname> will need to scan either the
+    entire table or the entirety of an index that includes all rows in
+    the table.
+   </para>
+  </note>
+
   <para>
    <xref linkend="functions-aggregate-statistics-table"/> shows
    aggregate functions typically used in statistical analysis.
    (These are separated out merely to avoid cluttering the listing
-   of more-commonly-used aggregates.)  Where the description mentions
+   of more-commonly-used aggregates.)  Functions shown as
+   accepting <replaceable>numeric_type</replaceable> are available for all
+   the types <type>smallint</type>, <type>integer</type>,
+   <type>bigint</type>, <type>numeric</type>, <type>real</type>,
+   and <type>double precision</type>.
+   Where the description mentions
    <replaceable class="parameter">N</replaceable>, it means the
    number of input rows for which all the input expressions are non-null.
    In all cases, null is returned if the computation is meaningless,
@@ -18624,412 +18776,353 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    <primary>linear regression</primary>
   </indexterm>
 
-  <table id="functions-aggregate-statistics-table">
-   <title>Aggregate Functions for Statistics</title>
+   <table id="functions-aggregate-statistics-table">
+    <title>Aggregate Functions for Statistics</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
 
-   <tgroup cols="5">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Argument Type</entry>
-      <entry>Return Type</entry>
-      <entry>Partial Mode</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>correlation</primary>
+        </indexterm>
+        <indexterm>
+         <primary>corr</primary>
+        </indexterm>
+        <function>corr</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the correlation coefficient.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-    <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>covariance</primary>
+         <secondary>population</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>covar_pop</primary>
+        </indexterm>
+        <function>covar_pop</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the population covariance.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>correlation</primary>
-       </indexterm>
-       <indexterm>
-        <primary>corr</primary>
-       </indexterm>
-       <function>corr(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>correlation coefficient</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>covariance</primary>
+         <secondary>sample</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>covar_samp</primary>
+        </indexterm>
+        <function>covar_samp</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the sample covariance.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>covariance</primary>
-        <secondary>population</secondary>
-       </indexterm>
-       <indexterm>
-        <primary>covar_pop</primary>
-       </indexterm>
-       <function>covar_pop(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>population covariance</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_avgx</primary>
+        </indexterm>
+        <function>regr_avgx</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the average of the independent variable,
+        <literal>sum(<replaceable>X</replaceable>)/<replaceable>N</replaceable></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>covariance</primary>
-        <secondary>sample</secondary>
-       </indexterm>
-       <indexterm>
-        <primary>covar_samp</primary>
-       </indexterm>
-       <function>covar_samp(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>sample covariance</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_avgy</primary>
+        </indexterm>
+        <function>regr_avgy</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the average of the dependent variable,
+        <literal>sum(<replaceable>Y</replaceable>)/<replaceable>N</replaceable></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regr_avgx</primary>
-       </indexterm>
-       <function>regr_avgx(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>average of the independent variable
-      (<literal>sum(<replaceable class="parameter">X</replaceable>)/<replaceable class="parameter">N</replaceable></literal>)</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_count</primary>
+        </indexterm>
+        <function>regr_count</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the number of rows in which both inputs are non-null.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regr_avgy</primary>
-       </indexterm>
-       <function>regr_avgy(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>average of the dependent variable
-      (<literal>sum(<replaceable class="parameter">Y</replaceable>)/<replaceable class="parameter">N</replaceable></literal>)</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regression intercept</primary>
+        </indexterm>
+        <indexterm>
+         <primary>regr_intercept</primary>
+        </indexterm>
+        <function>regr_intercept</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the y-intercept of the least-squares-fit linear equation
+        determined by the
+        (<replaceable>X</replaceable>, <replaceable>Y</replaceable>) pairs.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regr_count</primary>
-       </indexterm>
-       <function>regr_count(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>bigint</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>number of input rows in which both expressions are nonnull</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_r2</primary>
+        </indexterm>
+        <function>regr_r2</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the square of the correlation coefficient.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regression intercept</primary>
-       </indexterm>
-       <indexterm>
-        <primary>regr_intercept</primary>
-       </indexterm>
-       <function>regr_intercept(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>y-intercept of the least-squares-fit linear equation
-      determined by the (<replaceable
-      class="parameter">X</replaceable>, <replaceable
-      class="parameter">Y</replaceable>) pairs</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regression slope</primary>
+        </indexterm>
+        <indexterm>
+         <primary>regr_slope</primary>
+        </indexterm>
+        <function>regr_slope</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the slope of the least-squares-fit linear equation determined
+        by the (<replaceable>X</replaceable>, <replaceable>Y</replaceable>)
+        pairs.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regr_r2</primary>
-       </indexterm>
-       <function>regr_r2(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>square of the correlation coefficient</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_sxx</primary>
+        </indexterm>
+        <function>regr_sxx</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the <quote>sum of squares</quote> of the independent
+        variable,
+        <literal>sum(<replaceable>X</replaceable>^2) - sum(<replaceable>X</replaceable>)^2/<replaceable>N</replaceable></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regression slope</primary>
-       </indexterm>
-       <indexterm>
-        <primary>regr_slope</primary>
-       </indexterm>
-       <function>regr_slope(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>slope of the least-squares-fit linear equation determined
-      by the (<replaceable class="parameter">X</replaceable>,
-      <replaceable class="parameter">Y</replaceable>) pairs</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_sxy</primary>
+        </indexterm>
+        <function>regr_sxy</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the <quote>sum of products</quote> of independent times
+        dependent variables,
+        <literal>sum(<replaceable>X</replaceable>*<replaceable>Y</replaceable>) - sum(<replaceable>X</replaceable>) * sum(<replaceable>Y</replaceable>)/<replaceable>N</replaceable></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regr_sxx</primary>
-       </indexterm>
-       <function>regr_sxx(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry><literal>sum(<replaceable
-      class="parameter">X</replaceable>^2) - sum(<replaceable
-      class="parameter">X</replaceable>)^2/<replaceable
-      class="parameter">N</replaceable></literal> (<quote>sum of
-      squares</quote> of the independent variable)</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_syy</primary>
+        </indexterm>
+        <function>regr_syy</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the <quote>sum of squares</quote> of the dependent
+        variable,
+        <literal>sum(<replaceable>Y</replaceable>^2) - sum(<replaceable>Y</replaceable>)^2/<replaceable>N</replaceable></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regr_sxy</primary>
-       </indexterm>
-       <function>regr_sxy(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry><literal>sum(<replaceable
-      class="parameter">X</replaceable>*<replaceable
-      class="parameter">Y</replaceable>) - sum(<replaceable
-      class="parameter">X</replaceable>) * sum(<replaceable
-      class="parameter">Y</replaceable>)/<replaceable
-      class="parameter">N</replaceable></literal> (<quote>sum of
-      products</quote> of independent times dependent
-      variable)</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>standard deviation</primary>
+        </indexterm>
+        <indexterm>
+         <primary>stddev</primary>
+        </indexterm>
+        <function>stddev</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        This is a historical alias for <function>stddev_samp</function>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>regr_syy</primary>
-       </indexterm>
-       <function>regr_syy(<replaceable class="parameter">Y</replaceable>, <replaceable class="parameter">X</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry><literal>sum(<replaceable
-      class="parameter">Y</replaceable>^2) - sum(<replaceable
-      class="parameter">Y</replaceable>)^2/<replaceable
-      class="parameter">N</replaceable></literal> (<quote>sum of
-      squares</quote> of the dependent variable)</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>standard deviation</primary>
+         <secondary>population</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>stddev_pop</primary>
+        </indexterm>
+        <function>stddev_pop</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the population standard deviation of the input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>standard deviation</primary>
-       </indexterm>
-       <indexterm>
-        <primary>stddev</primary>
-       </indexterm>
-       <function>stddev(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, or <type>numeric</type>
-      </entry>
-      <entry>
-       <type>double precision</type> for floating-point arguments,
-       otherwise <type>numeric</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>historical alias for <function>stddev_samp</function></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>standard deviation</primary>
+         <secondary>sample</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>stddev_samp</primary>
+        </indexterm>
+        <function>stddev_samp</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the sample standard deviation of the input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>standard deviation</primary>
-        <secondary>population</secondary>
-       </indexterm>
-       <indexterm>
-        <primary>stddev_pop</primary>
-       </indexterm>
-       <function>stddev_pop(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, or <type>numeric</type>
-      </entry>
-      <entry>
-       <type>double precision</type> for floating-point arguments,
-       otherwise <type>numeric</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>population standard deviation of the input values</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>variance</primary>
+        </indexterm>
+        <function>variance</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        This is a historical alias for <function>var_samp</function>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>standard deviation</primary>
-        <secondary>sample</secondary>
-       </indexterm>
-       <indexterm>
-        <primary>stddev_samp</primary>
-       </indexterm>
-       <function>stddev_samp(<replaceable class="parameter">expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, or <type>numeric</type>
-      </entry>
-      <entry>
-       <type>double precision</type> for floating-point arguments,
-       otherwise <type>numeric</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>sample standard deviation of the input values</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>variance</primary>
+         <secondary>population</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>var_pop</primary>
+        </indexterm>
+        <function>var_pop</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the population variance of the input values (square of the
+        population standard deviation).
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>variance</primary>
-       </indexterm>
-       <function>variance</function>(<replaceable class="parameter">expression</replaceable>)
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, or <type>numeric</type>
-      </entry>
-      <entry>
-       <type>double precision</type> for floating-point arguments,
-       otherwise <type>numeric</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>historical alias for <function>var_samp</function></entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>variance</primary>
-        <secondary>population</secondary>
-       </indexterm>
-       <indexterm>
-        <primary>var_pop</primary>
-       </indexterm>
-       <function>var_pop</function>(<replaceable class="parameter">expression</replaceable>)
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, or <type>numeric</type>
-      </entry>
-      <entry>
-       <type>double precision</type> for floating-point arguments,
-       otherwise <type>numeric</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>population variance of the input values (square of the population standard deviation)</entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>variance</primary>
-        <secondary>sample</secondary>
-       </indexterm>
-       <indexterm>
-        <primary>var_samp</primary>
-       </indexterm>
-       <function>var_samp</function>(<replaceable class="parameter">expression</replaceable>)
-      </entry>
-      <entry>
-       <type>smallint</type>, <type>int</type>,
-       <type>bigint</type>, <type>real</type>, <type>double
-       precision</type>, or <type>numeric</type>
-      </entry>
-      <entry>
-       <type>double precision</type> for floating-point arguments,
-       otherwise <type>numeric</type>
-      </entry>
-      <entry>Yes</entry>
-      <entry>sample variance of the input values (square of the sample standard deviation)</entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>variance</primary>
+         <secondary>sample</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>var_samp</primary>
+        </indexterm>
+        <function>var_samp</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the sample variance of the input values (square of the sample
+        standard deviation).
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
    <xref linkend="functions-orderedset-table"/> shows some
    aggregate functions that use the <firstterm>ordered-set aggregate</firstterm>
    syntax.  These functions are sometimes referred to as <quote>inverse
-   distribution</quote> functions.
+   distribution</quote> functions.  Their aggregated input is introduced by
+   <literal>ORDER BY</literal>, and they may also take a <firstterm>direct
+   argument</firstterm> that is not aggregated, but is computed only once.
+   All these functions ignore null values in their aggregated input.
+   For those that take a <replaceable>fraction</replaceable> parameter, the
+   fraction value must be between 0 and 1; an error is thrown if not.
+   However, a null <replaceable>fraction</replaceable> value simply produces a
+   null result.
   </para>
 
   <indexterm>
@@ -19040,148 +19133,118 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    <primary>inverse distribution</primary>
   </indexterm>
 
-  <table id="functions-orderedset-table">
-   <title>Ordered-Set Aggregate Functions</title>
+   <table id="functions-orderedset-table">
+    <title>Ordered-Set Aggregate Functions</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
 
-   <tgroup cols="6">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Direct Argument Type(s)</entry>
-      <entry>Aggregated Argument Type(s)</entry>
-      <entry>Return Type</entry>
-      <entry>Partial Mode</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>mode</primary>
+         <secondary>statistical</secondary>
+        </indexterm>
+        <function>mode</function> () <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Computes the <firstterm>mode</firstterm>, the most frequent
+        value of the aggregated argument (arbitrarily choosing the first one
+        if there are multiple equally-frequent values).  The aggregated
+        argument must be of a sortable type.
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-    <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>percentile</primary>
+         <secondary>continuous</secondary>
+        </indexterm>
+        <function>percentile_cont</function> ( <replaceable>fraction</replaceable> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>percentile_cont</function> ( <replaceable>fraction</replaceable> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
+        <returnvalue>interval</returnvalue>
+       </para>
+       <para>
+        Computes the <firstterm>continuous percentile</firstterm>, a value
+        corresponding to the specified <replaceable>fraction</replaceable>
+        within the ordered set of aggregated argument values.  This will
+        interpolate between adjacent input items if needed.
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>mode</primary>
-        <secondary>statistical</secondary>
-       </indexterm>
-       <function>mode() WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
-      </entry>
-      <entry>
-      </entry>
-      <entry>
-       any sortable type
-      </entry>
-      <entry>
-       same as sort expression
-      </entry>
-      <entry>No</entry>
-      <entry>
-       returns the most frequent input value (arbitrarily choosing the first
-       one if there are multiple equally-frequent results)
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>percentile_cont</function> ( <replaceable>fractions</replaceable> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
+        <returnvalue>double precision[]</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>percentile_cont</function> ( <replaceable>fractions</replaceable> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
+        <returnvalue>interval[]</returnvalue>
+       </para>
+       <para>
+        Computes multiple continuous percentiles.  The result is an array of
+        the same dimensions as the <replaceable>fractions</replaceable>
+        parameter, with each non-null element replaced by the (possibly
+        interpolated) value corresponding to that percentile.
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>percentile</primary>
-        <secondary>continuous</secondary>
-       </indexterm>
-       <function>percentile_cont(<replaceable class="parameter">fraction</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       <type>double precision</type> or <type>interval</type>
-      </entry>
-      <entry>
-       same as sort expression
-      </entry>
-      <entry>No</entry>
-      <entry>
-       continuous percentile: returns a value corresponding to the specified
-       fraction in the ordering, interpolating between adjacent input items if
-       needed
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>percentile</primary>
+         <secondary>discrete</secondary>
+        </indexterm>
+        <function>percentile_disc</function> ( <replaceable>fraction</replaceable> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Computes the <firstterm>discrete percentile</firstterm>, the first
+        value within the ordered set of aggregated argument values whose
+        position in the ordering equals or exceeds the
+        specified <replaceable>fraction</replaceable>.  The aggregated
+        argument must be of a sortable type.
+       </para></entry>
+       <entry>No</entry>
+      </row>
 
-     <row>
-      <entry>
-       <function>percentile_cont(<replaceable class="parameter">fractions</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision[]</type>
-      </entry>
-      <entry>
-       <type>double precision</type> or <type>interval</type>
-      </entry>
-      <entry>
-       array of sort expression's type
-      </entry>
-      <entry>No</entry>
-      <entry>
-       multiple continuous percentile: returns an array of results matching
-       the shape of the <replaceable>fractions</replaceable> parameter, with each
-       non-null element replaced by the value corresponding to that percentile
-      </entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>percentile</primary>
-        <secondary>discrete</secondary>
-       </indexterm>
-       <function>percentile_disc(<replaceable class="parameter">fraction</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>
-       any sortable type
-      </entry>
-      <entry>
-       same as sort expression
-      </entry>
-      <entry>No</entry>
-      <entry>
-       discrete percentile: returns the first input value whose position in
-       the ordering equals or exceeds the specified fraction
-      </entry>
-     </row>
-
-     <row>
-      <entry>
-       <function>percentile_disc(<replaceable class="parameter">fractions</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sort_expression</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>double precision[]</type>
-      </entry>
-      <entry>
-       any sortable type
-      </entry>
-      <entry>
-       array of sort expression's type
-      </entry>
-      <entry>No</entry>
-      <entry>
-       multiple discrete percentile: returns an array of results matching the
-       shape of the <replaceable>fractions</replaceable> parameter, with each non-null
-       element replaced by the input value corresponding to that percentile
-      </entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   All the aggregates listed in <xref linkend="functions-orderedset-table"/>
-   ignore null values in their sorted input.  For those that take
-   a <replaceable>fraction</replaceable> parameter, the fraction value must be
-   between 0 and 1; an error is thrown if not.  However, a null fraction value
-   simply produces a null result.
-  </para>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>percentile_disc</function> ( <replaceable>fractions</replaceable> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Computes multiple discrete percentiles.  The result is an array of the
+        same dimensions as the <replaceable>fractions</replaceable> parameter,
+        with each non-null element replaced by the input value corresponding
+        to that percentile.
+        The aggregated argument must be of a sortable type.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <indexterm>
    <primary>hypothetical-set aggregate</primary>
@@ -19189,132 +19252,15 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
   </indexterm>
 
   <para>
-   Each of the aggregates listed in
+   Each of the <quote>hypothetical-set</quote> aggregates listed in
    <xref linkend="functions-hypothetical-table"/> is associated with a
    window function of the same name defined in
-   <xref linkend="functions-window"/>.  In each case, the aggregate result
+   <xref linkend="functions-window"/>.  In each case, the aggregate's result
    is the value that the associated window function would have
    returned for the <quote>hypothetical</quote> row constructed from
    <replaceable>args</replaceable>, if such a row had been added to the sorted
-   group of rows computed from the <replaceable>sorted_args</replaceable>.
-  </para>
-
-  <table id="functions-hypothetical-table">
-   <title>Hypothetical-Set Aggregate Functions</title>
-
-   <tgroup cols="6">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Direct Argument Type(s)</entry>
-      <entry>Aggregated Argument Type(s)</entry>
-      <entry>Return Type</entry>
-      <entry>Partial Mode</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>rank</primary>
-        <secondary>hypothetical</secondary>
-       </indexterm>
-       <function>rank(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <type>bigint</type>
-      </entry>
-      <entry>No</entry>
-      <entry>
-       rank of the hypothetical row, with gaps for duplicate rows
-      </entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>dense_rank</primary>
-        <secondary>hypothetical</secondary>
-       </indexterm>
-       <function>dense_rank(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <type>bigint</type>
-      </entry>
-      <entry>No</entry>
-      <entry>
-       rank of the hypothetical row, without gaps
-      </entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>percent_rank</primary>
-        <secondary>hypothetical</secondary>
-       </indexterm>
-       <function>percent_rank(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>No</entry>
-      <entry>
-       relative rank of the hypothetical row, ranging from 0 to 1
-      </entry>
-     </row>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>cume_dist</primary>
-        <secondary>hypothetical</secondary>
-       </indexterm>
-       <function>cume_dist(<replaceable class="parameter">args</replaceable>) WITHIN GROUP (ORDER BY <replaceable class="parameter">sorted_args</replaceable>)</function>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <literal>VARIADIC</literal> <type>"any"</type>
-      </entry>
-      <entry>
-       <type>double precision</type>
-      </entry>
-      <entry>No</entry>
-      <entry>
-       relative rank of the hypothetical row, ranging from
-       1/<replaceable>N</replaceable> to 1
-      </entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
-
-  <para>
-   For each of these hypothetical-set aggregates, the list of direct arguments
+   group of rows represented by the <replaceable>sorted_args</replaceable>.
+   For each of these functions, the list of direct arguments
    given in <replaceable>args</replaceable> must match the number and types of
    the aggregated arguments given in <replaceable>sorted_args</replaceable>.
    Unlike most built-in aggregates, these aggregates are not strict, that is
@@ -19322,48 +19268,137 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    to the rule specified in the <literal>ORDER BY</literal> clause.
   </para>
 
+   <table id="functions-hypothetical-table">
+    <title>Hypothetical-Set Aggregate Functions</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>rank</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>rank</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the rank of the hypothetical row, with gaps; that is, the row
+        number of the first row in its peer group.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>dense_rank</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>dense_rank</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the rank of the hypothetical row, without gaps; this function
+        effectively counts peer groups.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>percent_rank</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>percent_rank</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the relative rank of the hypothetical row, that is
+        (<function>rank</function> - 1) / (total rows - 1).
+        The value thus ranges from 0 to 1 inclusive.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>cume_dist</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>cume_dist</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the cumulative distribution, that is (number of rows
+        preceding or peers with hypothetical row) / (total rows).  The value
+        thus ranges from 1/<replaceable>N</replaceable> to 1.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
   <table id="functions-grouping-table">
    <title>Grouping Operations</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Return Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-
-     <row>
-      <entry>
-       <indexterm>
-        <primary>GROUPING</primary>
-       </indexterm>
-       <function>GROUPING(<replaceable class="parameter">args...</replaceable>)</function>
-      </entry>
-      <entry>
-       <type>integer</type>
-      </entry>
-      <entry>
-       Integer bit mask indicating which arguments are not being included in the current
-       grouping set
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>GROUPING</primary>
+        </indexterm>
+        <function>GROUPING</function> ( <replaceable>group_by_expression(s)</replaceable> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns a bit mask indicating which <literal>GROUP BY</literal>
+        expressions are not included in the current grouping set.
+        Bits are assigned with the rightmost argument corresponding to the
+        least-significant bit; each bit is 0 if the corresponding expression
+        is included in the grouping criteria of the grouping set generating
+        the current result row, and 1 if it is not included.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
    <para>
-    Grouping operations are used in conjunction with grouping sets (see
-    <xref linkend="queries-grouping-sets"/>) to distinguish result rows.  The
-    arguments to the <literal>GROUPING</literal> operation are not actually evaluated,
-    but they must match exactly expressions given in the <literal>GROUP BY</literal>
-    clause of the associated query level.  Bits are assigned with the rightmost
-    argument being the least-significant bit; each bit is 0 if the corresponding
-    expression is included in the grouping criteria of the grouping set generating
-    the result row, and 1 if it is not.  For example:
+    The grouping operations shown in
+    <xref linkend="functions-grouping-table"/> are used in conjunction with
+    grouping sets (see <xref linkend="queries-grouping-sets"/>) to distinguish
+    result rows.  The arguments to the <literal>GROUPING</literal> function
+    are not actually evaluated, but they must exactly match expressions given
+    in the <literal>GROUP BY</literal> clause of the associated query level.
+    For example:
 <screen>
 <prompt>=&gt;</prompt> <userinput>SELECT * FROM items_sold;</userinput>
  make  | model | sales
@@ -19386,6 +19421,14 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
        |       |        3 | 50
 (7 rows)
 </screen>
+    Here, the <literal>grouping</literal> value <literal>0</literal> in the
+    first four rows shows that those have been grouped normally, over both the
+    grouping columns.  The value <literal>1</literal> indicates
+    that <literal>model</literal> was not grouped by in the next-to-last two
+    rows, and the value <literal>3</literal> indicates that
+    neither <literal>make</literal> nor <literal>model</literal> was grouped
+    by in the last row (which therefore is an aggregate over all the input
+    rows).
    </para>
 
  </sect1>
