@@ -125,7 +125,7 @@ swapfunc(SortTuple *a, SortTuple *b, size_t n)
 		SortTuple t = *(a);				\
 		*(a) = *(b);					\
 		*(b) = t;						\
-	} while (0);
+	} while (0)
 
 #define vecswap(a, b, n) if ((n) > 0) swapfunc(a, b, n)
 
