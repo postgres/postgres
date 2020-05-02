@@ -6233,8 +6233,6 @@ pgstat_recv_resetslrucounter(PgStat_MsgResetslrucounter *msg, int len)
 	int			i;
 	TimestampTz	ts = GetCurrentTimestamp();
 
-	memset(&slruStats, 0, sizeof(slruStats));
-
 	for (i = 0; i < SLRU_NUM_ELEMENTS; i++)
 	{
 		/* reset entry with the given index, or all entries (index is -1) */
