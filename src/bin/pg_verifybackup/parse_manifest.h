@@ -29,7 +29,7 @@ typedef void (*json_manifest_perwalrange_callback)(JsonManifestParseContext *,
 								 TimeLineID tli,
 								 XLogRecPtr start_lsn, XLogRecPtr end_lsn);
 typedef void (*json_manifest_error_callback)(JsonManifestParseContext *,
-								 char *fmt, ...) pg_attribute_printf(2, 3)
+								 const char *fmt, ...) pg_attribute_printf(2, 3)
 								 pg_attribute_noreturn();
 
 struct JsonManifestParseContext

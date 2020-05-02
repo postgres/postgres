@@ -124,7 +124,7 @@ static void record_manifest_details_for_wal_range(JsonManifestParseContext *cont
 												  XLogRecPtr start_lsn,
 												  XLogRecPtr end_lsn);
 static void report_manifest_error(JsonManifestParseContext *context,
-								  char *fmt,...)
+								  const char *fmt,...)
 			pg_attribute_printf(2, 3) pg_attribute_noreturn();
 
 static void verify_backup_directory(verifier_context *context,
@@ -358,7 +358,7 @@ main(int argc, char **argv)
 	 * work quietly.
 	 */
 	if (!context.saw_any_error && !quiet)
-		printf("backup successfully verified\n");
+		printf(_("backup successfully verified\n"));
 
 	return context.saw_any_error ? 1 : 0;
 }
@@ -443,12 +443,12 @@ parse_manifest_file(char *manifest_path, manifest_files_hash **ht_p,
  * expects this function not to return.
  */
 static void
-report_manifest_error(JsonManifestParseContext *context, char *fmt,...)
+report_manifest_error(JsonManifestParseContext *context, const char *fmt,...)
 {
 	va_list		ap;
 
 	va_start(ap, fmt);
-	pg_log_generic_v(PG_LOG_FATAL, fmt, ap);
+	pg_log_generic_v(PG_LOG_FATAL, gettext(fmt), ap);
 	va_end(ap);
 
 	exit(1);
@@ -821,7 +821,7 @@ report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
 	va_list		ap;
 
 	va_start(ap, fmt);
-	pg_log_generic_v(PG_LOG_ERROR, fmt, ap);
+	pg_log_generic_v(PG_LOG_ERROR, gettext(fmt), ap);
 	va_end(ap);
 
 	context->saw_any_error = true;
@@ -838,7 +838,7 @@ report_fatal_error(const char *pg_restrict fmt,...)
 	va_list		ap;
 
 	va_start(ap, fmt);
-	pg_log_generic_v(PG_LOG_FATAL, fmt, ap);
+	pg_log_generic_v(PG_LOG_FATAL, gettext(fmt), ap);
 	va_end(ap);
 
 	exit(1);
