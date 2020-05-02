@@ -3483,9 +3483,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        predefined list (<literal>async</literal>, <literal>clog</literal>,
        <literal>commit_timestamp</literal>, <literal>multixact_offset</literal>,
        <literal>multixact_member</literal>, <literal>oldserxid</literal>,
-       <literal>pg_xact</literal>, <literal>subtrans</literal> and
-       <literal>other</literal>) resets counters for only that entry.
-       Names not included in this list are treated as <literal>other</literal>.
+       <literal>subtrans</literal> and <literal>other</literal>) resets counters
+       for only that entry. Names not included in this list are treated as
+       <literal>other</literal>.
       </entry>
      </row>
     </tbody>
