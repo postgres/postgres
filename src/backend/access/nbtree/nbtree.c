@@ -93,8 +93,7 @@ typedef struct BTParallelScanDescData *BTParallelScanDesc;
 static void btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 						 IndexBulkDeleteCallback callback, void *callback_state,
 						 BTCycleId cycleid);
-static void btvacuumpage(BTVacState *vstate, BlockNumber blkno,
-						 BlockNumber orig_blkno);
+static void btvacuumpage(BTVacState *vstate, BlockNumber scanblkno);
 static BTVacuumPosting btreevacuumposting(BTVacState *vstate,
 										  IndexTuple posting,
 										  OffsetNumber updatedoffset,
@@ -959,7 +958,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	Relation	rel = info->index;
 	BTVacState	vstate;
 	BlockNumber num_pages;
-	BlockNumber blkno;
+	BlockNumber scanblkno;
 	bool		needLock;
 
 	/*
@@ -1009,7 +1008,7 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 */
 	needLock = !RELATION_IS_LOCAL(rel);
 
-	blkno = BTREE_METAPAGE + 1;
+	scanblkno = BTREE_METAPAGE + 1;
 	for (;;)
 	{
 		/* Get the current relation length */
@@ -1024,15 +1023,15 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 										 num_pages);
 
 		/* Quit if we've scanned the whole relation */
-		if (blkno >= num_pages)
+		if (scanblkno >= num_pages)
 			break;
 		/* Iterate over pages, then loop back to recheck length */
-		for (; blkno < num_pages; blkno++)
+		for (; scanblkno < num_pages; scanblkno++)
 		{
-			btvacuumpage(&vstate, blkno, blkno);
+			btvacuumpage(&vstate, scanblkno);
 			if (info->report_progress)
 				pgstat_progress_update_param(PROGRESS_SCAN_BLOCKS_DONE,
-											 blkno);
+											 scanblkno);
 		}
 	}
 
@@ -1076,31 +1075,33 @@ btvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 /*
  * btvacuumpage --- VACUUM one page
  *
- * This processes a single page for btvacuumscan().  In some cases we
- * must go back and re-examine previously-scanned pages; this routine
- * recurses when necessary to handle that case.
- *
- * blkno is the page to process.  orig_blkno is the highest block number
- * reached by the outer btvacuumscan loop (the same as blkno, unless we
- * are recursing to re-examine a previous page).
+ * This processes a single page for btvacuumscan().  In some cases we must
+ * backtrack to re-examine and VACUUM pages that were the scanblkno during
+ * a previous call here.  This is how we handle page splits (that happened
+ * after our cycleid was acquired) whose right half page happened to reuse
+ * a block that we might have processed at some point before it was
+ * recycled (i.e. before the page split).
  */
 static void
-btvacuumpage(BTVacState *vstate, BlockNumber blkno, BlockNumber orig_blkno)
+btvacuumpage(BTVacState *vstate, BlockNumber scanblkno)
 {
 	IndexVacuumInfo *info = vstate->info;
 	IndexBulkDeleteResult *stats = vstate->stats;
 	IndexBulkDeleteCallback callback = vstate->callback;
 	void	   *callback_state = vstate->callback_state;
 	Relation	rel = info->index;
-	bool		delete_now;
-	BlockNumber recurse_to;
+	bool		attempt_pagedel;
+	BlockNumber blkno, backtrack_to;
 	Buffer		buf;
 	Page		page;
-	BTPageOpaque opaque = NULL;
+	BTPageOpaque opaque;
 
-restart:
-	delete_now = false;
-	recurse_to = P_NONE;
+	blkno = scanblkno;
+
+backtrack:
+
+	attempt_pagedel = false;
+	backtrack_to = P_NONE;
 
 	/* call vacuum_delay_point while not holding any buffer lock */
 	vacuum_delay_point();
@@ -1115,24 +1116,59 @@ restart:
 							 info->strategy);
 	LockBuffer(buf, BT_READ);
 	page = BufferGetPage(buf);
+	opaque = NULL;
 	if (!PageIsNew(page))
 	{
 		_bt_checkpage(rel, buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	}
 
-	/*
-	 * If we are recursing, the only case we want to do anything with is a
-	 * live leaf page having the current vacuum cycle ID.  Any other state
-	 * implies we already saw the page (eg, deleted it as being empty).
-	 */
-	if (blkno != orig_blkno)
+	Assert(blkno <= scanblkno);
+	if (blkno != scanblkno)
 	{
-		if (_bt_page_recyclable(page) ||
-			P_IGNORE(opaque) ||
-			!P_ISLEAF(opaque) ||
-			opaque->btpo_cycleid != vstate->cycleid)
+		/*
+		 * We're backtracking.
+		 *
+		 * We followed a right link to a sibling leaf page (a page that
+		 * happens to be from a block located before scanblkno).  The only
+		 * case we want to do anything with is a live leaf page having the
+		 * current vacuum cycle ID.
+		 *
+		 * The page had better be in a state that's consistent with what we
+		 * expect.  Check for conditions that imply corruption in passing.  It
+		 * can't be half-dead because only an interrupted VACUUM process can
+		 * leave pages in that state, so we'd definitely have dealt with it
+		 * back when the page was the scanblkno page (half-dead pages are
+		 * always marked fully deleted by _bt_pagedel()).  This assumes that
+		 * there can be only one vacuum process running at a time.
+		 */
+		if (!opaque || !P_ISLEAF(opaque) || P_ISHALFDEAD(opaque))
 		{
+			Assert(false);
+			ereport(LOG,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg_internal("right sibling %u of scanblkno %u unexpectedly in an inconsistent state in index \"%s\"",
+									 blkno, scanblkno, RelationGetRelationName(rel))));
+			_bt_relbuf(rel, buf);
+			return;
+		}
+
+		/*
+		 * We may have already processed the page in an earlier call, when the
+		 * page was scanblkno.  This happens when the leaf page split occurred
+		 * after the scan began, but before the right sibling page became the
+		 * scanblkno.
+		 *
+		 * Page may also have been deleted by current btvacuumpage() call,
+		 * since _bt_pagedel() sometimes deletes the right sibling page of
+		 * scanblkno in passing (it does so after we decided where to
+		 * backtrack to).  We don't need to process this page as a deleted
+		 * page a second time now (in fact, it would be wrong to count it as a
+		 * deleted page in the bulk delete statistics a second time).
+		 */
+		if (opaque->btpo_cycleid != vstate->cycleid || P_ISDELETED(opaque))
+		{
+			/* Done with current scanblkno (and all lower split pages) */
 			_bt_relbuf(rel, buf);
 			return;
 		}
@@ -1165,7 +1201,7 @@ restart:
 		 * Half-dead leaf page.  Try to delete now.  Might update
 		 * oldestBtpoXact and pages_deleted below.
 		 */
-		delete_now = true;
+		attempt_pagedel = true;
 	}
 	else if (P_ISLEAF(opaque))
 	{
@@ -1189,18 +1225,20 @@ restart:
 		LockBufferForCleanup(buf);
 
 		/*
-		 * Check whether we need to recurse back to earlier pages.  What we
-		 * are concerned about is a page split that happened since we started
-		 * the vacuum scan.  If the split moved some tuples to a lower page
-		 * then we might have missed 'em.  If so, set up for tail recursion.
-		 * (Must do this before possibly clearing btpo_cycleid below!)
+		 * Check whether we need to backtrack to earlier pages.  What we are
+		 * concerned about is a page split that happened since we started the
+		 * vacuum scan.  If the split moved tuples on the right half of the
+		 * split (i.e. the tuples that sort high) to a block that we already
+		 * passed over, then we might have missed the tuples.  We need to
+		 * backtrack now.  (Must do this before possibly clearing btpo_cycleid
+		 * or deleting scanblkno page below!)
 		 */
 		if (vstate->cycleid != 0 &&
 			opaque->btpo_cycleid == vstate->cycleid &&
 			!(opaque->btpo_flags & BTP_SPLIT_END) &&
 			!P_RIGHTMOST(opaque) &&
-			opaque->btpo_next < orig_blkno)
-			recurse_to = opaque->btpo_next;
+			opaque->btpo_next < scanblkno)
+			backtrack_to = opaque->btpo_next;
 
 		/*
 		 * When each VACUUM begins, it determines an OldestXmin cutoff value.
@@ -1311,7 +1349,7 @@ restart:
 		 */
 		if (ndeletable > 0 || nupdatable > 0)
 		{
-			Assert(nhtidsdead >= Max(ndeletable, 1));
+			Assert(nhtidsdead >= ndeletable + nupdatable);
 			_bt_delitems_vacuum(rel, buf, deletable, ndeletable, updatable,
 								nupdatable);
 
@@ -1347,19 +1385,19 @@ restart:
 		/*
 		 * If the leaf page is now empty, try to delete it; else count the
 		 * live tuples (live table TIDs in posting lists are counted as
-		 * separate live tuples).  We don't delete when recursing, though, to
-		 * avoid putting entries into freePages out-of-order (doesn't seem
-		 * worth any extra code to handle the case).
+		 * separate live tuples).  We don't delete when backtracking, though,
+		 * since that would require teaching _bt_pagedel() about backtracking
+		 * (doesn't seem worth adding more complexity to deal with that).
 		 */
 		if (minoff > maxoff)
-			delete_now = (blkno == orig_blkno);
+			attempt_pagedel = (blkno == scanblkno);
 		else
 			stats->num_index_tuples += nhtidslive;
 
-		Assert(!delete_now || nhtidslive == 0);
+		Assert(!attempt_pagedel || nhtidslive == 0);
 	}
 
-	if (delete_now)
+	if (attempt_pagedel)
 	{
 		MemoryContext oldcontext;
 
@@ -1372,6 +1410,7 @@ restart:
 		 * any page that a future call here from btvacuumscan is expected to
 		 * count.  There will be no double-counting.
 		 */
+		Assert(blkno == scanblkno);
 		stats->pages_deleted += _bt_pagedel(rel, buf, &vstate->oldestBtpoXact);
 
 		MemoryContextSwitchTo(oldcontext);
@@ -1380,18 +1419,10 @@ restart:
 	else
 		_bt_relbuf(rel, buf);
 
-	/*
-	 * This is really tail recursion, but if the compiler is too stupid to
-	 * optimize it as such, we'd eat an uncomfortably large amount of stack
-	 * space per recursion level (due to the arrays used to track details of
-	 * deletable/updatable items).  A failure is improbable since the number
-	 * of levels isn't likely to be large ...  but just in case, let's
-	 * hand-optimize into a loop.
-	 */
-	if (recurse_to != P_NONE)
+	if (backtrack_to != P_NONE)
 	{
-		blkno = recurse_to;
-		goto restart;
+		blkno = backtrack_to;
+		goto backtrack;
 	}
 }
 

@@ -1703,6 +1703,9 @@ _bt_split(Relation rel, BTScanInsert itup_key, Buffer buf, Buffer cbuf,
 	 * Finish off remaining leftpage special area fields.  They cannot be set
 	 * before both origpage (leftpage) and rightpage buffers are acquired and
 	 * locked.
+	 *
+	 * btpo_cycleid is only used with leaf pages, though we set it here in all
+	 * cases just to be consistent.
 	 */
 	lopaque->btpo_next = rightpagenumber;
 	lopaque->btpo_cycleid = _bt_vacuum_cycleid(rel);
