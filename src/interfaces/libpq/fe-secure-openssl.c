@@ -1675,7 +1675,7 @@ PQdefaultSSLKeyPassHook(char *buf, int size, PGconn *conn)
 	if (conn->sslpassword)
 	{
 		if (strlen(conn->sslpassword) + 1 > size)
-			fprintf(stderr, libpq_gettext("WARNING: sslpassword truncated"));
+			fprintf(stderr, libpq_gettext("WARNING: sslpassword truncated\n"));
 		strncpy(buf, conn->sslpassword, size);
 		buf[size-1] = '\0';
 		return strlen(buf);

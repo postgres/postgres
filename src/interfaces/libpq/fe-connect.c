@@ -1333,7 +1333,7 @@ connectOptions2(PGconn *conn)
 	{
 		conn->status = CONNECTION_BAD;
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("invalid SSL protocol version range"));
+						  libpq_gettext("invalid SSL protocol version range\n"));
 		return false;
 	}
 
