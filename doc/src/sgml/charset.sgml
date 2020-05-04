@@ -95,6 +95,8 @@ initdb --locale=sv_SE
 
     <informaltable>
      <tgroup cols="2">
+      <colspec colname="col1" align="left" colwidth="1*"/>
+      <colspec colname="col2" align="left" colwidth="3*"/>
       <tbody>
        <row>
         <entry><envar>LC_COLLATE</envar></entry>
@@ -993,6 +995,13 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
      <table id="charset-table">
       <title><productname>PostgreSQL</productname> Character Sets</title>
       <tgroup cols="7">
+       <colspec colname="col1" align="left" colwidth="3*"/>
+       <colspec colname="col2" align="left" colwidth="2*"/>
+       <colspec colname="col3" align="left" colwidth="2*"/>
+       <colspec colname="col4" align="left" colwidth="1.25*"/>
+       <colspec colname="col5" align="left" colwidth="1*"/>
+       <colspec colname="col6" align="left" colwidth="1*"/>
+       <colspec colname="col7" align="left" colwidth="2*"/>
        <thead>
         <row>
          <entry>Name</entry>
@@ -1004,7 +1013,7 @@ CREATE COLLATION ignore_accents (provider = icu, locale = 'und-u-ks-level1-kc-tr
           The Bytes/Char field is populated by looking at the values returned
           by pg_wchar_table.mblen function for each encoding.
          -->
-         <entry>Bytes/Char</entry>
+         <entry>Bytes/&zwsp;Char</entry>
          <entry>Aliases</entry>
         </row>
        </thead>
@@ -1635,6 +1644,8 @@ RESET client_encoding;
     <table id="multibyte-translation-table">
      <title>Built-in Client/Server Character Set Conversions</title>
      <tgroup cols="2">
+      <colspec colname="col1" align="left" colwidth="1*"/>
+      <colspec colname="col2" align="left" colwidth="3*"/>
       <thead>
        <row>
         <entry>Server Character Set</entry>
@@ -1933,6 +1944,9 @@ RESET client_encoding;
     <table id="builtin-conversions-table">
      <title>All Built-in Character Set Conversions</title>
      <tgroup cols="3">
+      <colspec colname="col1" align="left" colwidth="2*"/>
+      <colspec colname="col2" align="left" colwidth="1*"/>
+      <colspec colname="col3" align="left" colwidth="1*"/>
       <thead>
        <row>
         <entry>Conversion Name

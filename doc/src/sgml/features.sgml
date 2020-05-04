@@ -111,6 +111,10 @@
    <para>
     <informaltable>
      <tgroup cols="4">
+      <colspec colname="col1" align="left" colwidth="1.5*"/>
+      <colspec colname="col2" align="left" colwidth="1*"/>
+      <colspec colname="col3" align="left" colwidth="7*"/>
+      <colspec colname="col4" align="left" colwidth="3*"/>
       <thead>
        <row>
         <entry>Identifier</entry>
@@ -138,6 +142,10 @@
 
     <informaltable>
      <tgroup cols="4">
+      <colspec colname="col1" align="left" colwidth="1.5*"/>
+      <colspec colname="col2" align="left" colwidth="1*"/>
+      <colspec colname="col3" align="left" colwidth="7*"/>
+      <colspec colname="col4" align="left" colwidth="3*"/>
       <thead>
        <row>
         <entry>Identifier</entry>
