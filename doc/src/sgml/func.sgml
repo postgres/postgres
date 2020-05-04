@@ -1995,13 +1995,13 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <indexterm>
          <primary>atan2</primary>
         </indexterm>
-        <function>atan2</function> ( <replaceable>y</replaceable> <type>double precision</type>,
-        <replaceable>x</replaceable> <type>double precision</type> )
+        <function>atan2</function> ( <parameter>y</parameter> <type>double precision</type>,
+        <parameter>x</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Inverse tangent of
-        <replaceable>y</replaceable>/<replaceable>x</replaceable>,
+        <parameter>y</parameter>/<parameter>x</parameter>,
         result in radians
        </para>
        <para>
@@ -2015,13 +2015,13 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <indexterm>
          <primary>atan2d</primary>
         </indexterm>
-        <function>atan2d</function> ( <replaceable>y</replaceable> <type>double precision</type>,
-        <replaceable>x</replaceable> <type>double precision</type> )
+        <function>atan2d</function> ( <parameter>y</parameter> <type>double precision</type>,
+        <parameter>x</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Inverse tangent of
-        <replaceable>y</replaceable>/<replaceable>x</replaceable>,
+        <parameter>y</parameter>/<parameter>x</parameter>,
         result in degrees
        </para>
        <para>
@@ -2637,7 +2637,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <replaceable>pattern</replaceable> <type>text</type> )
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <parameter>pattern</parameter> <type>text</type> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -2652,7 +2652,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <replaceable>pattern</replaceable> <type>text</type> <literal>FOR</literal> <replaceable>escape</replaceable> <type>text</type> )
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <parameter>pattern</parameter> <type>text</type> <literal>FOR</literal> <parameter>escape</parameter> <type>text</type> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -2898,9 +2898,9 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Returns first <replaceable>n</replaceable> characters in the
-        string, or when <replaceable>n</replaceable> is negative, returns
-        all but last |<replaceable>n</replaceable>| characters.
+        Returns first <parameter>n</parameter> characters in the
+        string, or when <parameter>n</parameter> is negative, returns
+        all but last |<parameter>n</parameter>| characters.
        </para>
        <para>
         <literal>left('abcde', 2)</literal>
@@ -3296,9 +3296,9 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Returns last <replaceable>n</replaceable> characters in the string,
-        or when <replaceable>n</replaceable> is negative, returns all but
-        first |<replaceable>n</replaceable>| characters.
+        Returns last <parameter>n</parameter> characters in the string,
+        or when <parameter>n</parameter> is negative, returns all but
+        first |<parameter>n</parameter>| characters.
        </para>
        <para>
         <literal>right('abcde', 2)</literal>
@@ -3558,12 +3558,12 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 <synopsis>
 <function>format</function>(<parameter>formatstr</parameter> <type>text</type> [, <parameter>formatarg</parameter> <type>"any"</type> [, ...] ])
 </synopsis>
-     <replaceable>formatstr</replaceable> is a format string that specifies how the
+     <parameter>formatstr</parameter> is a format string that specifies how the
      result should be formatted.  Text in the format string is copied
      directly to the result, except where <firstterm>format specifiers</firstterm> are
      used.  Format specifiers act as placeholders in the string, defining how
      subsequent function arguments should be formatted and inserted into the
-     result.  Each <replaceable>formatarg</replaceable> argument is converted to text
+     result.  Each <parameter>formatarg</parameter> argument is converted to text
      according to the usual output rules for its data type, and then formatted
      and inserted into the result string according to the format specifier(s).
     </para>
@@ -3572,39 +3572,39 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
      Format specifiers are introduced by a <literal>%</literal> character and have
      the form
 <synopsis>
-%[<replaceable>position</replaceable>][<replaceable>flags</replaceable>][<replaceable>width</replaceable>]<replaceable>type</replaceable>
+%[<parameter>position</parameter>][<parameter>flags</parameter>][<parameter>width</parameter>]<parameter>type</parameter>
 </synopsis>
      where the component fields are:
 
      <variablelist>
       <varlistentry>
-       <term><replaceable>position</replaceable> (optional)</term>
+       <term><parameter>position</parameter> (optional)</term>
        <listitem>
         <para>
-         A string of the form <literal><replaceable>n</replaceable>$</literal> where
-         <replaceable>n</replaceable> is the index of the argument to print.
+         A string of the form <literal><parameter>n</parameter>$</literal> where
+         <parameter>n</parameter> is the index of the argument to print.
          Index 1 means the first argument after
-         <replaceable>formatstr</replaceable>.  If the <replaceable>position</replaceable> is
+         <parameter>formatstr</parameter>.  If the <parameter>position</parameter> is
          omitted, the default is to use the next argument in sequence.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable>flags</replaceable> (optional)</term>
+       <term><parameter>flags</parameter> (optional)</term>
        <listitem>
         <para>
          Additional options controlling how the format specifier's output is
          formatted.  Currently the only supported flag is a minus sign
          (<literal>-</literal>) which will cause the format specifier's output to be
-         left-justified.  This has no effect unless the <replaceable>width</replaceable>
+         left-justified.  This has no effect unless the <parameter>width</parameter>
          field is also specified.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable>width</replaceable> (optional)</term>
+       <term><parameter>width</parameter> (optional)</term>
        <listitem>
         <para>
          Specifies the <emphasis>minimum</emphasis> number of characters to use to
@@ -3614,8 +3614,8 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
          truncation of the output, but is simply ignored.  The width may be
          specified using any of the following: a positive integer; an
          asterisk (<literal>*</literal>) to use the next function argument as the
-         width; or a string of the form <literal>*<replaceable>n</replaceable>$</literal> to
-         use the <replaceable>n</replaceable>th function argument as the width.
+         width; or a string of the form <literal>*<parameter>n</parameter>$</literal> to
+         use the <parameter>n</parameter>th function argument as the width.
         </para>
 
         <para>
@@ -3623,13 +3623,13 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
          consumed before the argument that is used for the format specifier's
          value.  If the width argument is negative, the result is left
          aligned (as if the <literal>-</literal> flag had been specified) within a
-         field of length <function>abs</function>(<replaceable>width</replaceable>).
+         field of length <function>abs</function>(<parameter>width</parameter>).
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable>type</replaceable> (required)</term>
+       <term><parameter>type</parameter> (required)</term>
        <listitem>
         <para>
          The type of format conversion to use to produce the format
@@ -3687,7 +3687,7 @@ SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\Program Files');
     </para>
 
     <para>
-     Here are examples using <replaceable>width</replaceable> fields
+     Here are examples using <parameter>width</parameter> fields
      and the <literal>-</literal> flag:
 
 <screen>
@@ -3712,7 +3712,7 @@ SELECT format('|%-*s|', -10, 'foo');
     </para>
 
     <para>
-     These examples show use of <replaceable>position</replaceable> fields:
+     These examples show use of <parameter>position</parameter> fields:
 
 <screen>
 SELECT format('Testing %3$s, %2$s, %1$s', 'one', 'two', 'three');
@@ -3729,9 +3729,9 @@ SELECT format('|%1$*2$s|', 'foo', 10, 'bar');
     <para>
      Unlike the standard C function <function>sprintf</function>,
      <productname>PostgreSQL</productname>'s <function>format</function> function allows format
-     specifiers with and without <replaceable>position</replaceable> fields to be mixed
+     specifiers with and without <parameter>position</parameter> fields to be mixed
      in the same format string.  A format specifier without a
-     <replaceable>position</replaceable> field always uses the next argument after the
+     <parameter>position</parameter> field always uses the next argument after the
      last argument consumed.
      In addition, the <function>format</function> function does not require all
      function arguments to be used in the format string.
@@ -12372,8 +12372,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>plainto_tsquery</primary>
         </indexterm>
         <function>plainto_tsquery</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>query</replaceable> <type>text</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>query</parameter> <type>text</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
@@ -12394,8 +12394,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>phraseto_tsquery</primary>
         </indexterm>
         <function>phraseto_tsquery</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>query</replaceable> <type>text</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>query</parameter> <type>text</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
@@ -12420,8 +12420,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>websearch_to_tsquery</primary>
         </indexterm>
         <function>websearch_to_tsquery</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>query</replaceable> <type>text</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>query</parameter> <type>text</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
@@ -12462,12 +12462,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>setweight</primary>
         </indexterm>
-        <function>setweight</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>weight</replaceable> <type>"char"</type> )
+        <function>setweight</function> ( <parameter>vector</parameter> <type>tsvector</type>, <parameter>weight</parameter> <type>"char"</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
-        Assigns the specified <replaceable>weight</replaceable> to each element
-        of the <replaceable>vector</replaceable>.
+        Assigns the specified <parameter>weight</parameter> to each element
+        of the <parameter>vector</parameter>.
        </para>
        <para>
         <literal>setweight('fat:2,4 cat:3 rat:5B'::tsvector, 'A')</literal>
@@ -12481,13 +12481,13 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>setweight</primary>
          <secondary>setweight for specific lexeme(s)</secondary>
         </indexterm>
-        <function>setweight</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>weight</replaceable> <type>"char"</type>, <replaceable>lexemes</replaceable> <type>text[]</type> )
+        <function>setweight</function> ( <parameter>vector</parameter> <type>tsvector</type>, <parameter>weight</parameter> <type>"char"</type>, <parameter>lexemes</parameter> <type>text[]</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
-        Assigns the specified <replaceable>weight</replaceable> to elements
-        of the <replaceable>vector</replaceable> that are listed
-        in <replaceable>lexemes</replaceable>.
+        Assigns the specified <parameter>weight</parameter> to elements
+        of the <parameter>vector</parameter> that are listed
+        in <parameter>lexemes</parameter>.
        </para>
        <para>
         <literal>setweight('fat:2,4 cat:3 rat:5,6B'::tsvector, 'A', '{cat,rat}')</literal>
@@ -12518,8 +12518,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>to_tsquery</primary>
         </indexterm>
         <function>to_tsquery</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>query</replaceable> <type>text</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>query</parameter> <type>text</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
@@ -12539,8 +12539,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>to_tsvector</primary>
         </indexterm>
         <function>to_tsvector</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-         <replaceable>document</replaceable> <type>text</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+         <parameter>document</parameter> <type>text</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
@@ -12557,14 +12557,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <function>to_tsvector</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>json</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>json</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para role="func_signature">
         <function>to_tsvector</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>jsonb</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>jsonb</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
@@ -12593,9 +12593,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>json_to_tsvector</primary>
         </indexterm>
         <function>json_to_tsvector</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>json</type>,
-        <replaceable>filter</replaceable> <type>jsonb</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>json</type>,
+        <parameter>filter</parameter> <type>jsonb</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para role="func_signature">
@@ -12603,14 +12603,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>jsonb_to_tsvector</primary>
         </indexterm>
         <function>jsonb_to_tsvector</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>jsonb</type>,
-        <replaceable>filter</replaceable> <type>jsonb</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>jsonb</type>,
+        <parameter>filter</parameter> <type>jsonb</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
         Selects each item in the JSON document that is requested by
-        the <replaceable>filter</replaceable> and converts each one to
+        the <parameter>filter</parameter> and converts each one to
         a <type>tsvector</type>, normalizing words according to the specified
         or default configuration.  The results are then concatenated in
         document order to produce the output.  Position information is
@@ -12618,14 +12618,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         items.  (Beware that <quote>document order</quote> of the fields of a
         JSON object is implementation-dependent when the input
         is <type>jsonb</type>.)
-        The <replaceable>filter</replaceable> must be a <type>jsonb</type>
+        The <parameter>filter</parameter> must be a <type>jsonb</type>
         array containing zero or more of these keywords:
         <literal>"string"</literal> (to include all string values),
         <literal>"numeric"</literal> (to include all numeric values),
         <literal>"boolean"</literal> (to include all boolean values),
         <literal>"key"</literal> (to include all keys), or
         <literal>"all"</literal> (to include all the above).
-        As a special case, the <replaceable>filter</replaceable> can also be a
+        As a special case, the <parameter>filter</parameter> can also be a
         simple JSON value that is one of these keywords.
        </para>
        <para>
@@ -12643,12 +12643,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_delete</primary>
         </indexterm>
-        <function>ts_delete</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>lexeme</replaceable> <type>text</type> )
+        <function>ts_delete</function> ( <parameter>vector</parameter> <type>tsvector</type>, <parameter>lexeme</parameter> <type>text</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
-        Removes any occurrence of the given <replaceable>lexeme</replaceable>
-        from the <replaceable>vector</replaceable>.
+        Removes any occurrence of the given <parameter>lexeme</parameter>
+        from the <parameter>vector</parameter>.
        </para>
        <para>
         <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal>
@@ -12658,13 +12658,13 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>ts_delete</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>lexemes</replaceable> <type>text[]</type> )
+        <function>ts_delete</function> ( <parameter>vector</parameter> <type>tsvector</type>, <parameter>lexemes</parameter> <type>text[]</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
         Removes any occurrences of the lexemes
-        in <replaceable>lexemes</replaceable>
-        from the <replaceable>vector</replaceable>.
+        in <parameter>lexemes</parameter>
+        from the <parameter>vector</parameter>.
        </para>
        <para>
         <literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal>
@@ -12677,12 +12677,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_filter</primary>
         </indexterm>
-        <function>ts_filter</function> ( <replaceable>vector</replaceable> <type>tsvector</type>, <replaceable>weights</replaceable> <type>"char"[]</type> )
+        <function>ts_filter</function> ( <parameter>vector</parameter> <type>tsvector</type>, <parameter>weights</parameter> <type>"char"[]</type> )
         <returnvalue>tsvector</returnvalue>
        </para>
        <para>
-        Selects only elements with the given <replaceable>weights</replaceable>
-        from the <replaceable>vector</replaceable>.
+        Selects only elements with the given <parameter>weights</parameter>
+        from the <parameter>vector</parameter>.
        </para>
        <para>
         <literal>ts_filter('fat:2,4 cat:3b,7c rat:5A'::tsvector, '{a,b}')</literal>
@@ -12696,21 +12696,21 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>ts_headline</primary>
         </indexterm>
         <function>ts_headline</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>text</type>,
-        <replaceable>query</replaceable> <type>tsquery</type>
-        <optional>, <replaceable>options</replaceable> <type>text</type> </optional> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>text</type>,
+        <parameter>query</parameter> <type>tsquery</type>
+        <optional>, <parameter>options</parameter> <type>text</type> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
         Displays, in an abbreviated form, the match(es) for
-        the <replaceable>query</replaceable> in
-        the <replaceable>document</replaceable>, which must be raw text not
+        the <parameter>query</parameter> in
+        the <parameter>document</parameter>, which must be raw text not
         a <type>tsvector</type>.  Words in the document are normalized
         according to the specified or default configuration before matching to
         the query.  Use of this function is discussed in
         <xref linkend="textsearch-headline"/>, which also describes the
-        available <replaceable>options</replaceable>.
+        available <parameter>options</parameter>.
        </para>
        <para>
         <literal>ts_headline('The fat cat ate the rat.', 'cat')</literal>
@@ -12721,24 +12721,24 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <function>ts_headline</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>json</type>,
-        <replaceable>query</replaceable> <type>tsquery</type>
-        <optional>, <replaceable>options</replaceable> <type>text</type> </optional> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>json</type>,
+        <parameter>query</parameter> <type>tsquery</type>
+        <optional>, <parameter>options</parameter> <type>text</type> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para role="func_signature">
         <function>ts_headline</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>jsonb</type>,
-        <replaceable>query</replaceable> <type>tsquery</type>
-        <optional>, <replaceable>options</replaceable> <type>text</type> </optional> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>jsonb</type>,
+        <parameter>query</parameter> <type>tsquery</type>
+        <optional>, <parameter>options</parameter> <type>text</type> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
         Displays, in an abbreviated form, match(es) for
-        the <replaceable>query</replaceable> that occur in string values
-        within the JSON <replaceable>document</replaceable>.
+        the <parameter>query</parameter> that occur in string values
+        within the JSON <parameter>document</parameter>.
         See <xref linkend="textsearch-headline"/> for more details.
        </para>
        <para>
@@ -12753,16 +12753,16 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>ts_rank</primary>
         </indexterm>
         <function>ts_rank</function> (
-        <optional> <replaceable>weights</replaceable> <type>real[]</type>, </optional>
-        <replaceable>vector</replaceable> <type>tsvector</type>,
-        <replaceable>query</replaceable> <type>tsquery</type>
-        <optional>, <replaceable>normalization</replaceable> <type>integer</type> </optional> )
+        <optional> <parameter>weights</parameter> <type>real[]</type>, </optional>
+        <parameter>vector</parameter> <type>tsvector</type>,
+        <parameter>query</parameter> <type>tsquery</type>
+        <optional>, <parameter>normalization</parameter> <type>integer</type> </optional> )
         <returnvalue>real</returnvalue>
        </para>
        <para>
         Computes a score showing how well
-        the <replaceable>vector</replaceable> matches
-        the <replaceable>query</replaceable>.  See
+        the <parameter>vector</parameter> matches
+        the <parameter>query</parameter>.  See
         <xref linkend="textsearch-ranking"/> for details.
        </para>
        <para>
@@ -12777,16 +12777,16 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>ts_rank_cd</primary>
         </indexterm>
         <function>ts_rank_cd</function> (
-        <optional> <replaceable>weights</replaceable> <type>real[]</type>, </optional>
-        <replaceable>vector</replaceable> <type>tsvector</type>,
-        <replaceable>query</replaceable> <type>tsquery</type>
-        <optional>, <replaceable>normalization</replaceable> <type>integer</type> </optional> )
+        <optional> <parameter>weights</parameter> <type>real[]</type>, </optional>
+        <parameter>vector</parameter> <type>tsvector</type>,
+        <parameter>query</parameter> <type>tsquery</type>
+        <optional>, <parameter>normalization</parameter> <type>integer</type> </optional> )
         <returnvalue>real</returnvalue>
        </para>
        <para>
         Computes a score showing how well
-        the <replaceable>vector</replaceable> matches
-        the <replaceable>query</replaceable>, using a cover density
+        the <parameter>vector</parameter> matches
+        the <parameter>query</parameter>, using a cover density
         algorithm.  See <xref linkend="textsearch-ranking"/> for details.
        </para>
        <para>
@@ -12800,15 +12800,15 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_rewrite</primary>
         </indexterm>
-        <function>ts_rewrite</function> ( <replaceable>query</replaceable> <type>tsquery</type>,
-        <replaceable>target</replaceable> <type>tsquery</type>,
-        <replaceable>substitute</replaceable> <type>tsquery</type> )
+        <function>ts_rewrite</function> ( <parameter>query</parameter> <type>tsquery</type>,
+        <parameter>target</parameter> <type>tsquery</type>,
+        <parameter>substitute</parameter> <type>tsquery</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
-        Replaces occurrences of <replaceable>target</replaceable>
-        with <replaceable>substitute</replaceable>
-        within the <replaceable>query</replaceable>.
+        Replaces occurrences of <parameter>target</parameter>
+        with <parameter>substitute</parameter>
+        within the <parameter>query</parameter>.
         See <xref linkend="textsearch-query-rewriting"/> for details.
        </para>
        <para>
@@ -12819,12 +12819,12 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>ts_rewrite</function> ( <replaceable>query</replaceable> <type>tsquery</type>,
-        <replaceable>select</replaceable> <type>text</type> )
+        <function>ts_rewrite</function> ( <parameter>query</parameter> <type>tsquery</type>,
+        <parameter>select</parameter> <type>text</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
-        Replaces portions of the <replaceable>query</replaceable> according to
+        Replaces portions of the <parameter>query</parameter> according to
         target(s) and substitute(s) obtained by executing
         a <command>SELECT</command> command.
         See <xref linkend="textsearch-query-rewriting"/> for details.
@@ -12840,13 +12840,13 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>tsquery_phrase</primary>
         </indexterm>
-        <function>tsquery_phrase</function> ( <replaceable>query1</replaceable> <type>tsquery</type>, <replaceable>query2</replaceable> <type>tsquery</type> )
+        <function>tsquery_phrase</function> ( <parameter>query1</parameter> <type>tsquery</type>, <parameter>query2</parameter> <type>tsquery</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
         Constructs a phrase query that searches
-        for matches of <replaceable>query1</replaceable>
-        and <replaceable>query2</replaceable> at successive lexemes (same
+        for matches of <parameter>query1</parameter>
+        and <parameter>query2</parameter> at successive lexemes (same
         as <literal>&lt;-&gt;</literal> operator).
        </para>
        <para>
@@ -12857,14 +12857,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>tsquery_phrase</function> ( <replaceable>query1</replaceable> <type>tsquery</type>, <replaceable>query2</replaceable> <type>tsquery</type>, <replaceable>distance</replaceable> <type>integer</type> )
+        <function>tsquery_phrase</function> ( <parameter>query1</parameter> <type>tsquery</type>, <parameter>query2</parameter> <type>tsquery</type>, <parameter>distance</parameter> <type>integer</type> )
         <returnvalue>tsquery</returnvalue>
        </para>
        <para>
         Constructs a phrase query that searches
-        for matches of <replaceable>query1</replaceable> and
-        <replaceable>query2</replaceable> that occur exactly
-        <replaceable>distance</replaceable> lexemes apart.
+        for matches of <parameter>query1</parameter> and
+        <parameter>query2</parameter> that occur exactly
+        <parameter>distance</parameter> lexemes apart.
        </para>
        <para>
         <literal>tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10)</literal>
@@ -12897,9 +12897,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         </indexterm>
         <function>unnest</function> ( <type>tsvector</type> )
         <returnvalue>setof record</returnvalue>
-        ( <replaceable>lexeme</replaceable> <type>text</type>,
-        <replaceable>positions</replaceable> <type>smallint[]</type>,
-        <replaceable>weights</replaceable> <type>text</type> )
+        ( <parameter>lexeme</parameter> <type>text</type>,
+        <parameter>positions</parameter> <type>smallint[]</type>,
+        <parameter>weights</parameter> <type>text</type> )
        </para>
        <para>
         Expands a <type>tsvector</type> into a set of rows, one per lexeme.
@@ -12961,19 +12961,19 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <primary>ts_debug</primary>
         </indexterm>
         <function>ts_debug</function> (
-        <optional> <replaceable>config</replaceable> <type>regconfig</type>, </optional>
-        <replaceable>document</replaceable> <type>text</type> )
+        <optional> <parameter>config</parameter> <type>regconfig</type>, </optional>
+        <parameter>document</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
-        ( <replaceable>alias</replaceable> <type>text</type>,
-        <replaceable>description</replaceable> <type>text</type>,
-        <replaceable>token</replaceable> <type>text</type>,
-        <replaceable>dictionaries</replaceable> <type>regdictionary[]</type>,
-        <replaceable>dictionary</replaceable> <type>regdictionary</type>,
-        <replaceable>lexemes</replaceable> <type>text[]</type> )
+        ( <parameter>alias</parameter> <type>text</type>,
+        <parameter>description</parameter> <type>text</type>,
+        <parameter>token</parameter> <type>text</type>,
+        <parameter>dictionaries</parameter> <type>regdictionary[]</type>,
+        <parameter>dictionary</parameter> <type>regdictionary</type>,
+        <parameter>lexemes</parameter> <type>text[]</type> )
        </para>
        <para>
         Extracts and normalizes tokens from
-        the <replaceable>document</replaceable> according to the specified or
+        the <parameter>document</parameter> according to the specified or
         default text search configuration, and returns information about how
         each token was processed.
         See <xref linkend="textsearch-configuration-testing"/> for details.
@@ -12989,7 +12989,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_lexize</primary>
         </indexterm>
-        <function>ts_lexize</function> ( <replaceable>dict</replaceable> <type>regdictionary</type>, <replaceable>token</replaceable> <type>text</type> )
+        <function>ts_lexize</function> ( <parameter>dict</parameter> <type>regdictionary</type>, <parameter>token</parameter> <type>text</type> )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
@@ -13009,14 +13009,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_parse</primary>
         </indexterm>
-        <function>ts_parse</function> ( <replaceable>parser_name</replaceable> <type>text</type>,
-        <replaceable>document</replaceable> <type>text</type> )
+        <function>ts_parse</function> ( <parameter>parser_name</parameter> <type>text</type>,
+        <parameter>document</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
-        ( <replaceable>tokid</replaceable> <type>integer</type>,
-        <replaceable>token</replaceable> <type>text</type> )
+        ( <parameter>tokid</parameter> <type>integer</type>,
+        <parameter>token</parameter> <type>text</type> )
        </para>
        <para>
-        Extracts tokens from the <replaceable>document</replaceable> using the
+        Extracts tokens from the <parameter>document</parameter> using the
         named parser.
         See <xref linkend="textsearch-parser-testing"/> for details.
        </para>
@@ -13028,14 +13028,14 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>ts_parse</function> ( <replaceable>parser_oid</replaceable> <type>oid</type>,
-        <replaceable>document</replaceable> <type>text</type> )
+        <function>ts_parse</function> ( <parameter>parser_oid</parameter> <type>oid</type>,
+        <parameter>document</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
-        ( <replaceable>tokid</replaceable> <type>integer</type>,
-        <replaceable>token</replaceable> <type>text</type> )
+        ( <parameter>tokid</parameter> <type>integer</type>,
+        <parameter>token</parameter> <type>text</type> )
        </para>
        <para>
-        Extracts tokens from the <replaceable>document</replaceable> using a
+        Extracts tokens from the <parameter>document</parameter> using a
         parser specified by OID.
         See <xref linkend="textsearch-parser-testing"/> for details.
        </para>
@@ -13050,11 +13050,11 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_token_type</primary>
         </indexterm>
-        <function>ts_token_type</function> ( <replaceable>parser_name</replaceable> <type>text</type> )
+        <function>ts_token_type</function> ( <parameter>parser_name</parameter> <type>text</type> )
         <returnvalue>setof record</returnvalue>
-        ( <replaceable>tokid</replaceable> <type>integer</type>,
-        <replaceable>alias</replaceable> <type>text</type>,
-        <replaceable>description</replaceable> <type>text</type> )
+        ( <parameter>tokid</parameter> <type>integer</type>,
+        <parameter>alias</parameter> <type>text</type>,
+        <parameter>description</parameter> <type>text</type> )
        </para>
        <para>
         Returns a table that describes each type of token the named parser can
@@ -13069,11 +13069,11 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>ts_token_type</function> ( <replaceable>parser_oid</replaceable> <type>oid</type> )
+        <function>ts_token_type</function> ( <parameter>parser_oid</parameter> <type>oid</type> )
         <returnvalue>setof record</returnvalue>
-        ( <replaceable>tokid</replaceable> <type>integer</type>,
-        <replaceable>alias</replaceable> <type>text</type>,
-        <replaceable>description</replaceable> <type>text</type> )
+        ( <parameter>tokid</parameter> <type>integer</type>,
+        <parameter>alias</parameter> <type>text</type>,
+        <parameter>description</parameter> <type>text</type> )
        </para>
        <para>
         Returns a table that describes each type of token a parser specified
@@ -13091,15 +13091,15 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <indexterm>
          <primary>ts_stat</primary>
         </indexterm>
-        <function>ts_stat</function> ( <replaceable>sqlquery</replaceable> <type>text</type>
-        <optional>, <replaceable>weights</replaceable> <type>text</type> </optional> )
+        <function>ts_stat</function> ( <parameter>sqlquery</parameter> <type>text</type>
+        <optional>, <parameter>weights</parameter> <type>text</type> </optional> )
         <returnvalue>setof record</returnvalue>
-        ( <replaceable>word</replaceable> <type>text</type>,
-        <replaceable>ndoc</replaceable> <type>integer</type>,
-        <replaceable>nentry</replaceable> <type>integer</type> )
+        ( <parameter>word</parameter> <type>text</type>,
+        <parameter>ndoc</parameter> <type>integer</type>,
+        <parameter>nentry</parameter> <type>integer</type> )
        </para>
        <para>
-        Executes the <replaceable>sqlquery</replaceable>, which must return a
+        Executes the <parameter>sqlquery</parameter>, which must return a
         single <type>tsvector</type> column, and returns statistics about each
         distinct lexeme contained in the data.
         See <xref linkend="textsearch-statistics"/> for details.
@@ -13756,14 +13756,14 @@ SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuf
     </indexterm>
 
 <synopsis>
-<function>xpath</function> ( <replaceable>xpath</replaceable> <type>text</type>, <replaceable>xml</replaceable> <type>xml</type> <optional>, <replaceable>nsarray</replaceable> <type>text[]</type> </optional> ) <returnvalue>xml[]</returnvalue>
+<function>xpath</function> ( <parameter>xpath</parameter> <type>text</type>, <parameter>xml</parameter> <type>xml</type> <optional>, <parameter>nsarray</parameter> <type>text[]</type> </optional> ) <returnvalue>xml[]</returnvalue>
 </synopsis>
 
     <para>
      The function <function>xpath</function> evaluates the XPath 1.0
-     expression <replaceable>xpath</replaceable> (given as text)
+     expression <parameter>xpath</parameter> (given as text)
      against the XML value
-     <replaceable>xml</replaceable>.  It returns an array of XML values
+     <parameter>xml</parameter>.  It returns an array of XML values
      corresponding to the node-set produced by the XPath expression.
      If the XPath expression returns a scalar value rather than a node-set,
      a single-element array is returned.
@@ -13821,7 +13821,7 @@ SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a
     </indexterm>
 
 <synopsis>
-<function>xpath_exists</function> ( <replaceable>xpath</replaceable> <type>text</type>, <replaceable>xml</replaceable> <type>xml</type> <optional>, <replaceable>nsarray</replaceable> <type>text[]</type> </optional> ) <returnvalue>boolean</returnvalue>
+<function>xpath_exists</function> ( <parameter>xpath</parameter> <type>text</type>, <parameter>xml</parameter> <type>xml</type> <optional>, <parameter>nsarray</parameter> <type>text[]</type> </optional> ) <returnvalue>boolean</returnvalue>
 </synopsis>
 
     <para>
@@ -14143,32 +14143,32 @@ SELECT xmltable.*
     The following functions map the contents of relational tables to
     XML values.  They can be thought of as XML export functionality:
 <synopsis>
-<function>table_to_xml</function> ( <replaceable>table</replaceable> <type>regclass</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-               <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>query_to_xml</function> ( <replaceable>query</replaceable> <type>text</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-               <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>cursor_to_xml</function> ( <replaceable>cursor</replaceable> <type>refcursor</type>, <replaceable>count</replaceable> <type>integer</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>table_to_xml</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+               <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>query_to_xml</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
+               <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>cursor_to_xml</function> ( <parameter>cursor</parameter> <type>refcursor</type>, <parameter>count</parameter> <type>integer</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 </synopsis>
    </para>
 
    <para>
     <function>table_to_xml</function> maps the content of the named
-    table, passed as parameter <replaceable>table</replaceable>.  The
+    table, passed as parameter <parameter>table</parameter>.  The
     <type>regclass</type> type accepts strings identifying tables using the
     usual notation, including optional schema qualifications and
     double quotes.  <function>query_to_xml</function> executes the
     query whose text is passed as parameter
-    <replaceable>query</replaceable> and maps the result set.
+    <parameter>query</parameter> and maps the result set.
     <function>cursor_to_xml</function> fetches the indicated number of
     rows from the cursor specified by the parameter
-    <replaceable>cursor</replaceable>.  This variant is recommended if
+    <parameter>cursor</parameter>.  This variant is recommended if
     large tables have to be mapped, because the result value is built
     up in memory by each function.
    </para>
 
    <para>
-    If <replaceable>tableforest</replaceable> is false, then the resulting
+    If <parameter>tableforest</parameter> is false, then the resulting
     XML document looks like this:
 <screen><![CDATA[
 <tablename>
@@ -14185,7 +14185,7 @@ SELECT xmltable.*
 </tablename>
 ]]></screen>
 
-    If <replaceable>tableforest</replaceable> is true, the result is an
+    If <parameter>tableforest</parameter> is true, the result is an
     XML content fragment that looks like this:
 <screen><![CDATA[
 <tablename>
@@ -14222,7 +14222,7 @@ SELECT xmltable.*
    </para>
 
    <para>
-    The parameter <replaceable>nulls</replaceable> determines whether null
+    The parameter <parameter>nulls</parameter> determines whether null
     values should be included in the output.  If true, null values in
     columns are represented as:
 <screen><![CDATA[
@@ -14235,7 +14235,7 @@ SELECT xmltable.*
    </para>
 
    <para>
-    The parameter <replaceable>targetns</replaceable> specifies the
+    The parameter <parameter>targetns</parameter> specifies the
     desired XML namespace of the result.  If no particular namespace
     is wanted, an empty string should be passed.
    </para>
@@ -14244,12 +14244,12 @@ SELECT xmltable.*
     The following functions return XML Schema documents describing the
     mappings performed by the corresponding functions above:
 <synopsis>
-<function>table_to_xmlschema</function> ( <replaceable>table</replaceable> <type>regclass</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                     <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>query_to_xmlschema</function> ( <replaceable>query</replaceable> <type>text</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                     <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>cursor_to_xmlschema</function> ( <replaceable>cursor</replaceable> <type>refcursor</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                      <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>table_to_xmlschema</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                     <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>query_to_xmlschema</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                     <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>cursor_to_xmlschema</function> ( <parameter>cursor</parameter> <type>refcursor</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                      <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 </synopsis>
     It is essential that the same parameters are passed in order to
     obtain matching XML data mappings and XML Schema documents.
@@ -14261,10 +14261,10 @@ SELECT xmltable.*
     together.  They can be useful where self-contained and
     self-describing results are wanted:
 <synopsis>
-<function>table_to_xml_and_xmlschema</function> ( <replaceable>table</replaceable> <type>regclass</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                             <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>query_to_xml_and_xmlschema</function> ( <replaceable>query</replaceable> <type>text</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                             <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>table_to_xml_and_xmlschema</function> ( <parameter>table</parameter> <type>regclass</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                             <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>query_to_xml_and_xmlschema</function> ( <parameter>query</parameter> <type>text</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                             <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 </synopsis>
    </para>
 
@@ -14273,19 +14273,19 @@ SELECT xmltable.*
     analogous mappings of entire schemas or the entire current
     database:
 <synopsis>
-<function>schema_to_xml</function> ( <replaceable>schema</replaceable> <type>name</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>schema_to_xmlschema</function> ( <replaceable>schema</replaceable> <type>name</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                      <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>schema_to_xml_and_xmlschema</function> ( <replaceable>schema</replaceable> <type>name</type>, <replaceable>nulls</replaceable> <type>boolean</type>,
-                              <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>schema_to_xml</function> ( <parameter>schema</parameter> <type>name</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>schema_to_xmlschema</function> ( <parameter>schema</parameter> <type>name</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                      <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>schema_to_xml_and_xmlschema</function> ( <parameter>schema</parameter> <type>name</type>, <parameter>nulls</parameter> <type>boolean</type>,
+                              <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 
-<function>database_to_xml</function> ( <replaceable>nulls</replaceable> <type>boolean</type>,
-                  <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>database_to_xmlschema</function> ( <replaceable>nulls</replaceable> <type>boolean</type>,
-                        <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
-<function>database_to_xml_and_xmlschema</function> ( <replaceable>nulls</replaceable> <type>boolean</type>,
-                                <replaceable>tableforest</replaceable> <type>boolean</type>, <replaceable>targetns</replaceable> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>database_to_xml</function> ( <parameter>nulls</parameter> <type>boolean</type>,
+                  <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>database_to_xmlschema</function> ( <parameter>nulls</parameter> <type>boolean</type>,
+                        <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
+<function>database_to_xml_and_xmlschema</function> ( <parameter>nulls</parameter> <type>boolean</type>,
+                                <parameter>tableforest</parameter> <type>boolean</type>, <parameter>targetns</parameter> <type>text</type> ) <returnvalue>xml</returnvalue>
 </synopsis>
 
     These functions ignore tables that are not readable by the current user.
@@ -14475,7 +14475,7 @@ table2-mapping
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        Extracts <replaceable>n</replaceable>'th element of JSON array
+        Extracts <parameter>n</parameter>'th element of JSON array
         (array elements are indexed from zero, but negative integers count
         from the end).
        </para>
@@ -14517,7 +14517,7 @@ table2-mapping
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Extracts <replaceable>n</replaceable>'th element of JSON array,
+        Extracts <parameter>n</parameter>'th element of JSON array,
         as <type>text</type>.
        </para>
        <para>
@@ -15020,11 +15020,11 @@ table2-mapping
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>json_object</function> ( <replaceable>keys</replaceable> <type>text[]</type>, <replaceable>values</replaceable> <type>text[]</type> )
+        <function>json_object</function> ( <parameter>keys</parameter> <type>text[]</type>, <parameter>values</parameter> <type>text[]</type> )
         <returnvalue>json</returnvalue>
        </para>
        <para role="func_signature">
-        <function>jsonb_object</function> ( <replaceable>keys</replaceable> <type>text[]</type>, <replaceable>values</replaceable> <type>text[]</type> )
+        <function>jsonb_object</function> ( <parameter>keys</parameter> <type>text[]</type>, <parameter>values</parameter> <type>text[]</type> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
@@ -15155,16 +15155,18 @@ table2-mapping
          <primary>json_each</primary>
         </indexterm>
         <function>json_each</function> ( <type>json</type> )
-        <returnvalue>setof <replaceable>key</replaceable> text,
-         <replaceable>value</replaceable> json</returnvalue>
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>json</type> )
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_each</primary>
         </indexterm>
         <function>jsonb_each</function> ( <type>jsonb</type> )
-        <returnvalue>setof <replaceable>key</replaceable> text,
-         <replaceable>value</replaceable> jsonb</returnvalue>
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>jsonb</type> )
        </para>
        <para>
         Expands the top-level JSON object into a set of key/value pairs.
@@ -15187,20 +15189,22 @@ table2-mapping
          <primary>json_each_text</primary>
         </indexterm>
         <function>json_each_text</function> ( <type>json</type> )
-        <returnvalue>setof <replaceable>key</replaceable> text,
-         <replaceable>value</replaceable> text</returnvalue>
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>text</type> )
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_each_text</primary>
         </indexterm>
         <function>jsonb_each_text</function> ( <type>jsonb</type> )
-        <returnvalue>setof <replaceable>key</replaceable> text,
-         <replaceable>value</replaceable> text</returnvalue>
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>text</type> )
        </para>
        <para>
         Expands the top-level JSON object into a set of key/value pairs.
-        The returned <replaceable>value</replaceable>s will be of
+        The returned <parameter>value</parameter>s will be of
         type <type>text</type>.
        </para>
        <para>
@@ -15220,14 +15224,14 @@ table2-mapping
         <indexterm>
          <primary>json_extract_path</primary>
         </indexterm>
-        <function>json_extract_path</function> ( <replaceable>from_json</replaceable> <type>json</type>, <literal>VARIADIC</literal> <replaceable>path_elems</replaceable> <type>text[]</type> )
+        <function>json_extract_path</function> ( <parameter>from_json</parameter> <type>json</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
         <returnvalue>json</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_extract_path</primary>
         </indexterm>
-        <function>jsonb_extract_path</function> ( <replaceable>from_json</replaceable> <type>jsonb</type>, <literal>VARIADIC</literal> <replaceable>path_elems</replaceable> <type>text[]</type> )
+        <function>jsonb_extract_path</function> ( <parameter>from_json</parameter> <type>jsonb</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
@@ -15247,14 +15251,14 @@ table2-mapping
         <indexterm>
          <primary>json_extract_path_text</primary>
         </indexterm>
-        <function>json_extract_path_text</function> ( <replaceable>from_json</replaceable> <type>json</type>, <literal>VARIADIC</literal> <replaceable>path_elems</replaceable> <type>text[]</type> )
+        <function>json_extract_path_text</function> ( <parameter>from_json</parameter> <type>json</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
         <returnvalue>text</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_extract_path_text</primary>
         </indexterm>
-        <function>jsonb_extract_path_text</function> ( <replaceable>from_json</replaceable> <type>jsonb</type>, <literal>VARIADIC</literal> <replaceable>path_elems</replaceable> <type>text[]</type> )
+        <function>jsonb_extract_path_text</function> ( <parameter>from_json</parameter> <type>jsonb</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -15303,26 +15307,26 @@ table2-mapping
         <indexterm>
          <primary>json_populate_record</primary>
         </indexterm>
-        <function>json_populate_record</function> ( <replaceable>base</replaceable> <type>anyelement</type>, <replaceable>from_json</replaceable> <type>json</type> )
+        <function>json_populate_record</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>json</type> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_populate_record</primary>
         </indexterm>
-        <function>jsonb_populate_record</function> ( <replaceable>base</replaceable> <type>anyelement</type>, <replaceable>from_json</replaceable> <type>jsonb</type> )
+        <function>jsonb_populate_record</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>jsonb</type> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
         Expands the top-level JSON object to a row having the composite type
-        of the <replaceable>base</replaceable> argument.  The JSON object
+        of the <parameter>base</parameter> argument.  The JSON object
         is scanned for fields whose names match column names of the output row
         type, and their values are inserted into those columns of the output.
         (Fields that do not correspond to any output column name are ignored.)
-        In typical use, the value of <replaceable>base</replaceable> is just
+        In typical use, the value of <parameter>base</parameter> is just
         <literal>NULL</literal>, which means that any output columns that do
         not match any object field will be filled with nulls.  However,
-        if <replaceable>base</replaceable> isn't <literal>NULL</literal> then
+        if <parameter>base</parameter> isn't <literal>NULL</literal> then
         the values it contains will be used for unmatched columns.
        </para>
        <para>
@@ -15395,19 +15399,19 @@ table2-mapping
         <indexterm>
          <primary>json_populate_recordset</primary>
         </indexterm>
-        <function>json_populate_recordset</function> ( <replaceable>base</replaceable> <type>anyelement</type>, <replaceable>from_json</replaceable> <type>json</type> )
+        <function>json_populate_recordset</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>json</type> )
         <returnvalue>setof anyelement</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_populate_recordset</primary>
         </indexterm>
-        <function>jsonb_populate_recordset</function> ( <replaceable>base</replaceable> <type>anyelement</type>, <replaceable>from_json</replaceable> <type>jsonb</type> )
+        <function>jsonb_populate_recordset</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>jsonb</type> )
         <returnvalue>setof anyelement</returnvalue>
        </para>
        <para>
         Expands the top-level JSON array of objects to a set of rows having
-        the composite type of the <replaceable>base</replaceable> argument.
+        the composite type of the <parameter>base</parameter> argument.
         Each element of the JSON array is processed as described above
         for <function>json[b]_populate_record</function>.
        </para>
@@ -15500,24 +15504,24 @@ table2-mapping
         <indexterm>
          <primary>jsonb_set</primary>
         </indexterm>
-        <function>jsonb_set</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>text[]</type>, <replaceable>new_value</replaceable> <type>jsonb</type> <optional>, <replaceable>create_if_missing</replaceable> <type>boolean</type> </optional> )
+        <function>jsonb_set</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        Returns <replaceable>target</replaceable>
-        with the item designated by <replaceable>path</replaceable>
-        replaced by <replaceable>new_value</replaceable>, or with
-        <replaceable>new_value</replaceable> added if
-        <replaceable>create_if_missing</replaceable> is true (which is the
-        default) and the item designated by <replaceable>path</replaceable>
+        Returns <parameter>target</parameter>
+        with the item designated by <parameter>path</parameter>
+        replaced by <parameter>new_value</parameter>, or with
+        <parameter>new_value</parameter> added if
+        <parameter>create_if_missing</parameter> is true (which is the
+        default) and the item designated by <parameter>path</parameter>
         does not exist.
         All earlier steps in the path must exist, or
-        the <replaceable>target</replaceable> is returned unchanged.
+        the <parameter>target</parameter> is returned unchanged.
         As with the path oriented operators, negative integers that
-        appear in the <replaceable>path</replaceable> count from the end
+        appear in the <parameter>path</parameter> count from the end
         of JSON arrays.
         If the last path step is an array index that is out of range,
-        and <replaceable>create_if_missing</replaceable> is true, the new
+        and <parameter>create_if_missing</parameter> is true, the new
         value is added at the beginning of the array if the index is negative,
         or at the end of the array if it is positive.
        </para>
@@ -15536,14 +15540,14 @@ table2-mapping
         <indexterm>
          <primary>jsonb_set_lax</primary>
         </indexterm>
-        <function>jsonb_set_lax</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>text[]</type>, <replaceable>new_value</replaceable> <type>jsonb</type> <optional>, <replaceable>create_if_missing</replaceable> <type>boolean</type> <optional>, <replaceable>null_value_treatment</replaceable> <type>text</type> </optional></optional> )
+        <function>jsonb_set_lax</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> <optional>, <parameter>null_value_treatment</parameter> <type>text</type> </optional></optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        If <replaceable>new_value</replaceable> is not <literal>NULL</literal>,
+        If <parameter>new_value</parameter> is not <literal>NULL</literal>,
         behaves identically to <literal>jsonb_set</literal>. Otherwise behaves
         according to the value
-        of <replaceable>null_value_treatment</replaceable> which must be one
+        of <parameter>null_value_treatment</parameter> which must be one
         of <literal>'raise_exception'</literal>,
         <literal>'use_json_null'</literal>, <literal>'delete_key'</literal>, or
         <literal>'return_target'</literal>. The default is
@@ -15564,24 +15568,24 @@ table2-mapping
         <indexterm>
          <primary>jsonb_insert</primary>
         </indexterm>
-        <function>jsonb_insert</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>text[]</type>, <replaceable>new_value</replaceable> <type>jsonb</type> <optional>, <replaceable>insert_after</replaceable> <type>boolean</type> </optional> )
+        <function>jsonb_insert</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>insert_after</parameter> <type>boolean</type> </optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
-        Returns <replaceable>target</replaceable>
-        with <replaceable>new_value</replaceable> inserted.  If the item
-        designated by the <replaceable>path</replaceable> is an array
-        element, <replaceable>new_value</replaceable> will be inserted before
-        that item if <replaceable>insert_after</replaceable> is false (which
+        Returns <parameter>target</parameter>
+        with <parameter>new_value</parameter> inserted.  If the item
+        designated by the <parameter>path</parameter> is an array
+        element, <parameter>new_value</parameter> will be inserted before
+        that item if <parameter>insert_after</parameter> is false (which
         is the default), or after it
-        if <replaceable>insert_after</replaceable> is true.  If the item
-        designated by the <replaceable>path</replaceable> is an object
-        field, <replaceable>new_value</replaceable> will be inserted only if
+        if <parameter>insert_after</parameter> is true.  If the item
+        designated by the <parameter>path</parameter> is an object
+        field, <parameter>new_value</parameter> will be inserted only if
         the object does not already contain that key.
         All earlier steps in the path must exist, or
-        the <replaceable>target</replaceable> is returned unchanged.
+        the <parameter>target</parameter> is returned unchanged.
         As with the path oriented operators, negative integers that
-        appear in the <replaceable>path</replaceable> count from the end
+        appear in the <parameter>path</parameter> count from the end
         of JSON arrays.
         If the last path step is an array index that is out of range, the new
         value is added at the beginning of the array if the index is negative,
@@ -15628,16 +15632,16 @@ table2-mapping
         <indexterm>
          <primary>jsonb_path_exists</primary>
         </indexterm>
-        <function>jsonb_path_exists</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_exists</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
         Checks whether the JSON path returns any item for the specified JSON
         value.
-        If the <replaceable>vars</replaceable> argument is specified, it must
+        If the <parameter>vars</parameter> argument is specified, it must
         be a JSON object, and its fields provide named values to be
         substituted into the <type>jsonpath</type> expression.
-        If the <replaceable>silent</replaceable> argument is specified and
+        If the <parameter>silent</parameter> argument is specified and
         is <literal>true</literal>, the function suppresses the same errors
         as the <literal>@?</literal> and <literal>@@</literal> operators do.
        </para>
@@ -15652,15 +15656,15 @@ table2-mapping
         <indexterm>
          <primary>jsonb_path_match</primary>
         </indexterm>
-        <function>jsonb_path_match</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_match</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
         Returns the result of a JSON path predicate check for the specified
         JSON value.  Only the first item of the result is taken into account.
         If the result is not Boolean, then <literal>NULL</literal> is returned.
-        The optional <replaceable>vars</replaceable>
-        and <replaceable>silent</replaceable> arguments act the same as
+        The optional <parameter>vars</parameter>
+        and <parameter>silent</parameter> arguments act the same as
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
@@ -15674,14 +15678,14 @@ table2-mapping
         <indexterm>
          <primary>jsonb_path_query</primary>
         </indexterm>
-        <function>jsonb_path_query</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_query</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>setof jsonb</returnvalue>
        </para>
        <para>
         Returns all JSON items returned by the JSON path for the specified
         JSON value.
-        The optional <replaceable>vars</replaceable>
-        and <replaceable>silent</replaceable> arguments act the same as
+        The optional <parameter>vars</parameter>
+        and <parameter>silent</parameter> arguments act the same as
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
@@ -15702,14 +15706,14 @@ table2-mapping
         <indexterm>
          <primary>jsonb_path_query_array</primary>
         </indexterm>
-        <function>jsonb_path_query_array</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_query_array</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
         Returns all JSON items returned by the JSON path for the specified
         JSON value, as a JSON array.
-        The optional <replaceable>vars</replaceable>
-        and <replaceable>silent</replaceable> arguments act the same as
+        The optional <parameter>vars</parameter>
+        and <parameter>silent</parameter> arguments act the same as
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
@@ -15723,15 +15727,15 @@ table2-mapping
         <indexterm>
          <primary>jsonb_path_query_first</primary>
         </indexterm>
-        <function>jsonb_path_query_first</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_query_first</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
         Returns the first JSON item returned by the JSON path for the
         specified JSON value.  Returns <literal>NULL</literal> if there are no
         results.
-        The optional <replaceable>vars</replaceable>
-        and <replaceable>silent</replaceable> arguments act the same as
+        The optional <parameter>vars</parameter>
+        and <parameter>silent</parameter> arguments act the same as
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
@@ -15745,35 +15749,35 @@ table2-mapping
         <indexterm>
          <primary>jsonb_path_exists_tz</primary>
         </indexterm>
-        <function>jsonb_path_exists_tz</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_exists_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>boolean</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_path_match_tz</primary>
         </indexterm>
-        <function>jsonb_path_match_tz</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_match_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>boolean</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_path_query_tz</primary>
         </indexterm>
-        <function>jsonb_path_query_tz</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_query_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>setof jsonb</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_path_query_array_tz</primary>
         </indexterm>
-        <function>jsonb_path_query_array_tz</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_query_array_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para role="func_signature">
         <indexterm>
          <primary>jsonb_path_query_first_tz</primary>
         </indexterm>
-        <function>jsonb_path_query_first_tz</function> ( <replaceable>target</replaceable> <type>jsonb</type>, <replaceable>path</replaceable> <type>jsonpath</type> <optional>, <replaceable>vars</replaceable> <type>jsonb</type> <optional>, <replaceable>silent</replaceable> <type>boolean</type> </optional></optional> )
+        <function>jsonb_path_query_first_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
         <returnvalue>jsonb</returnvalue>
        </para>
        <para>
@@ -17720,14 +17724,14 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>array_to_string</primary>
         </indexterm>
-        <function>array_to_string</function> ( <replaceable>array</replaceable> <type>anyarray</type>, <replaceable>delimiter</replaceable> <type>text</type> <optional>, <replaceable>null_string</replaceable> <type>text</type> </optional> )
+        <function>array_to_string</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
         Converts each array element to its text representation, and
         concatenates those separated by
-        the <replaceable>delimiter</replaceable> string.
-        If <replaceable>null_string</replaceable> is given and is
+        the <parameter>delimiter</parameter> string.
+        If <parameter>null_string</parameter> is given and is
         not <literal>NULL</literal>, then <literal>NULL</literal> array
         entries are represented by that string; otherwise, they are omitted.
        </para>
@@ -17777,19 +17781,19 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>string_to_array</primary>
         </indexterm>
-        <function>string_to_array</function> ( <replaceable>string</replaceable> <type>text</type>, <replaceable>delimiter</replaceable> <type>text</type> <optional>, <replaceable>null_string</replaceable> <type>text</type> </optional> )
+        <function>string_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
         <returnvalue>text[]</returnvalue>
        </para>
        <para>
-        Splits the <replaceable>string</replaceable> at occurrences
-        of <replaceable>delimiter</replaceable> and forms the remaining data
+        Splits the <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and forms the remaining data
         into a <type>text</type> array.
-        If <replaceable>delimiter</replaceable> is <literal>NULL</literal>,
-        each character in the <replaceable>string</replaceable> will become a
+        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
+        each character in the <parameter>string</parameter> will become a
         separate element in the array.
-        If <replaceable>delimiter</replaceable> is an empty string, then
-        the <replaceable>string</replaceable> is treated as a single field.
-        If <replaceable>null_string</replaceable> is supplied and is
+        If <parameter>delimiter</parameter> is an empty string, then
+        the <parameter>string</parameter> is treated as a single field.
+        If <parameter>null_string</parameter> is supplied and is
         not <literal>NULL</literal>, fields matching that string are converted
         to <literal>NULL</literal> entries.
        </para>
@@ -18535,8 +18539,8 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>json_object_agg</primary>
         </indexterm>
-        <function>json_object_agg</function> ( <replaceable>key</replaceable>
-         <type>"any"</type>, <replaceable>value</replaceable>
+        <function>json_object_agg</function> ( <parameter>key</parameter>
+         <type>"any"</type>, <parameter>value</parameter>
          <type>"any"</type> )
         <returnvalue>json</returnvalue>
        </para>
@@ -18544,8 +18548,8 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>jsonb_object_agg</primary>
         </indexterm>
-        <function>jsonb_object_agg</function> ( <replaceable>key</replaceable>
-         <type>"any"</type>, <replaceable>value</replaceable>
+        <function>jsonb_object_agg</function> ( <parameter>key</parameter>
+         <type>"any"</type>, <parameter>value</parameter>
          <type>"any"</type> )
         <returnvalue>jsonb</returnvalue>
        </para>
@@ -18601,19 +18605,19 @@ SELECT NULLIF(value, '(none)') ...
         <indexterm>
          <primary>string_agg</primary>
         </indexterm>
-        <function>string_agg</function> ( <replaceable>value</replaceable>
-         <type>text</type>, <replaceable>delimiter</replaceable> <type>text</type> )
+        <function>string_agg</function> ( <parameter>value</parameter>
+         <type>text</type>, <parameter>delimiter</parameter> <type>text</type> )
         <returnvalue>text</returnvalue>
        </para>
        <para role="func_signature">
-        <function>string_agg</function> ( <replaceable>value</replaceable>
-         <type>bytea</type>, <replaceable>delimiter</replaceable> <type>bytea</type> )
+        <function>string_agg</function> ( <parameter>value</parameter>
+         <type>bytea</type>, <parameter>delimiter</parameter> <type>bytea</type> )
         <returnvalue>bytea</returnvalue>
        </para>
        <para>
         Concatenates the non-null input values into a string.  Each value
         after the first is preceded by the
-        corresponding <replaceable>delimiter</replaceable> (if it's not null).
+        corresponding <parameter>delimiter</parameter> (if it's not null).
        </para></entry>
        <entry>No</entry>
       </row>
@@ -18763,10 +18767,10 @@ SELECT count(*) FROM sometable;
    <type>bigint</type>, <type>numeric</type>, <type>real</type>,
    and <type>double precision</type>.
    Where the description mentions
-   <replaceable class="parameter">N</replaceable>, it means the
+   <parameter>N</parameter>, it means the
    number of input rows for which all the input expressions are non-null.
    In all cases, null is returned if the computation is meaningless,
-   for example when <replaceable class="parameter">N</replaceable> is zero.
+   for example when <parameter>N</parameter> is zero.
   </para>
 
   <indexterm>
@@ -18802,7 +18806,7 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>corr</primary>
         </indexterm>
-        <function>corr</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>corr</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
@@ -18820,7 +18824,7 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>covar_pop</primary>
         </indexterm>
-        <function>covar_pop</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>covar_pop</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
@@ -18838,7 +18842,7 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>covar_samp</primary>
         </indexterm>
-        <function>covar_samp</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>covar_samp</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
@@ -18852,12 +18856,12 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_avgx</primary>
         </indexterm>
-        <function>regr_avgx</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_avgx</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Computes the average of the independent variable,
-        <literal>sum(<replaceable>X</replaceable>)/<replaceable>N</replaceable></literal>.
+        <literal>sum(<parameter>X</parameter>)/<parameter>N</parameter></literal>.
        </para></entry>
        <entry>Yes</entry>
       </row>
@@ -18867,12 +18871,12 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_avgy</primary>
         </indexterm>
-        <function>regr_avgy</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_avgy</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Computes the average of the dependent variable,
-        <literal>sum(<replaceable>Y</replaceable>)/<replaceable>N</replaceable></literal>.
+        <literal>sum(<parameter>Y</parameter>)/<parameter>N</parameter></literal>.
        </para></entry>
        <entry>Yes</entry>
       </row>
@@ -18882,7 +18886,7 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_count</primary>
         </indexterm>
-        <function>regr_count</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_count</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>bigint</returnvalue>
        </para>
        <para>
@@ -18899,13 +18903,13 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_intercept</primary>
         </indexterm>
-        <function>regr_intercept</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_intercept</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Computes the y-intercept of the least-squares-fit linear equation
         determined by the
-        (<replaceable>X</replaceable>, <replaceable>Y</replaceable>) pairs.
+        (<parameter>X</parameter>, <parameter>Y</parameter>) pairs.
        </para></entry>
        <entry>Yes</entry>
       </row>
@@ -18915,7 +18919,7 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_r2</primary>
         </indexterm>
-        <function>regr_r2</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_r2</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
@@ -18932,12 +18936,12 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_slope</primary>
         </indexterm>
-        <function>regr_slope</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_slope</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Computes the slope of the least-squares-fit linear equation determined
-        by the (<replaceable>X</replaceable>, <replaceable>Y</replaceable>)
+        by the (<parameter>X</parameter>, <parameter>Y</parameter>)
         pairs.
        </para></entry>
        <entry>Yes</entry>
@@ -18948,13 +18952,13 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_sxx</primary>
         </indexterm>
-        <function>regr_sxx</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_sxx</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Computes the <quote>sum of squares</quote> of the independent
         variable,
-        <literal>sum(<replaceable>X</replaceable>^2) - sum(<replaceable>X</replaceable>)^2/<replaceable>N</replaceable></literal>.
+        <literal>sum(<parameter>X</parameter>^2) - sum(<parameter>X</parameter>)^2/<parameter>N</parameter></literal>.
        </para></entry>
        <entry>Yes</entry>
       </row>
@@ -18964,13 +18968,13 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_sxy</primary>
         </indexterm>
-        <function>regr_sxy</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_sxy</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Computes the <quote>sum of products</quote> of independent times
         dependent variables,
-        <literal>sum(<replaceable>X</replaceable>*<replaceable>Y</replaceable>) - sum(<replaceable>X</replaceable>) * sum(<replaceable>Y</replaceable>)/<replaceable>N</replaceable></literal>.
+        <literal>sum(<parameter>X</parameter>*<parameter>Y</parameter>) - sum(<parameter>X</parameter>) * sum(<parameter>Y</parameter>)/<parameter>N</parameter></literal>.
        </para></entry>
        <entry>Yes</entry>
       </row>
@@ -18980,13 +18984,13 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>regr_syy</primary>
         </indexterm>
-        <function>regr_syy</function> ( <replaceable>Y</replaceable> <type>double precision</type>, <replaceable>X</replaceable> <type>double precision</type> )
+        <function>regr_syy</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para>
         Computes the <quote>sum of squares</quote> of the dependent
         variable,
-        <literal>sum(<replaceable>Y</replaceable>^2) - sum(<replaceable>Y</replaceable>)^2/<replaceable>N</replaceable></literal>.
+        <literal>sum(<parameter>Y</parameter>^2) - sum(<parameter>Y</parameter>)^2/<parameter>N</parameter></literal>.
        </para></entry>
        <entry>Yes</entry>
       </row>
@@ -19119,9 +19123,9 @@ SELECT count(*) FROM sometable;
    <literal>ORDER BY</literal>, and they may also take a <firstterm>direct
    argument</firstterm> that is not aggregated, but is computed only once.
    All these functions ignore null values in their aggregated input.
-   For those that take a <replaceable>fraction</replaceable> parameter, the
+   For those that take a <parameter>fraction</parameter> parameter, the
    fraction value must be between 0 and 1; an error is thrown if not.
-   However, a null <replaceable>fraction</replaceable> value simply produces a
+   However, a null <parameter>fraction</parameter> value simply produces a
    null result.
   </para>
 
@@ -19175,16 +19179,16 @@ SELECT count(*) FROM sometable;
          <primary>percentile</primary>
          <secondary>continuous</secondary>
         </indexterm>
-        <function>percentile_cont</function> ( <replaceable>fraction</replaceable> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
+        <function>percentile_cont</function> ( <parameter>fraction</parameter> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
         <returnvalue>double precision</returnvalue>
        </para>
        <para role="func_signature">
-        <function>percentile_cont</function> ( <replaceable>fraction</replaceable> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
+        <function>percentile_cont</function> ( <parameter>fraction</parameter> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
         <returnvalue>interval</returnvalue>
        </para>
        <para>
         Computes the <firstterm>continuous percentile</firstterm>, a value
-        corresponding to the specified <replaceable>fraction</replaceable>
+        corresponding to the specified <parameter>fraction</parameter>
         within the ordered set of aggregated argument values.  This will
         interpolate between adjacent input items if needed.
        </para></entry>
@@ -19193,16 +19197,16 @@ SELECT count(*) FROM sometable;
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>percentile_cont</function> ( <replaceable>fractions</replaceable> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
+        <function>percentile_cont</function> ( <parameter>fractions</parameter> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
         <returnvalue>double precision[]</returnvalue>
        </para>
        <para role="func_signature">
-        <function>percentile_cont</function> ( <replaceable>fractions</replaceable> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
+        <function>percentile_cont</function> ( <parameter>fractions</parameter> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
         <returnvalue>interval[]</returnvalue>
        </para>
        <para>
         Computes multiple continuous percentiles.  The result is an array of
-        the same dimensions as the <replaceable>fractions</replaceable>
+        the same dimensions as the <parameter>fractions</parameter>
         parameter, with each non-null element replaced by the (possibly
         interpolated) value corresponding to that percentile.
        </para></entry>
@@ -19215,14 +19219,14 @@ SELECT count(*) FROM sometable;
          <primary>percentile</primary>
          <secondary>discrete</secondary>
         </indexterm>
-        <function>percentile_disc</function> ( <replaceable>fraction</replaceable> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <function>percentile_disc</function> ( <parameter>fraction</parameter> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
         Computes the <firstterm>discrete percentile</firstterm>, the first
         value within the ordered set of aggregated argument values whose
         position in the ordering equals or exceeds the
-        specified <replaceable>fraction</replaceable>.  The aggregated
+        specified <parameter>fraction</parameter>.  The aggregated
         argument must be of a sortable type.
        </para></entry>
        <entry>No</entry>
@@ -19230,12 +19234,12 @@ SELECT count(*) FROM sometable;
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <function>percentile_disc</function> ( <replaceable>fractions</replaceable> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <function>percentile_disc</function> ( <parameter>fractions</parameter> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
         <returnvalue>anyarray</returnvalue>
        </para>
        <para>
         Computes multiple discrete percentiles.  The result is an array of the
-        same dimensions as the <replaceable>fractions</replaceable> parameter,
+        same dimensions as the <parameter>fractions</parameter> parameter,
         with each non-null element replaced by the input value corresponding
         to that percentile.
         The aggregated argument must be of a sortable type.
@@ -19347,7 +19351,7 @@ SELECT count(*) FROM sometable;
        <para>
         Computes the cumulative distribution, that is (number of rows
         preceding or peers with hypothetical row) / (total rows).  The value
-        thus ranges from 1/<replaceable>N</replaceable> to 1.
+        thus ranges from 1/<parameter>N</parameter> to 1.
        </para></entry>
        <entry>No</entry>
       </row>
@@ -19550,7 +19554,7 @@ SELECT count(*) FROM sometable;
        <para>
         Returns the cumulative distribution, that is (number of partition rows
         preceding or peers with current row) / (total partition rows).
-        The value thus ranges from 1/<replaceable>N</replaceable> to 1.
+        The value thus ranges from 1/<parameter>N</parameter> to 1.
        </para></entry>
       </row>
 
@@ -19559,7 +19563,7 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>ntile</primary>
         </indexterm>
-        <function>ntile</function> ( <replaceable>num_buckets</replaceable> <type>integer</type> )
+        <function>ntile</function> ( <parameter>num_buckets</parameter> <type>integer</type> )
         <returnvalue>integer</returnvalue>
        </para>
        <para>
@@ -19573,23 +19577,23 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>lag</primary>
         </indexterm>
-        <function>lag</function> ( <replaceable>value</replaceable> <type>anyelement</type>
-          <optional>, <replaceable>offset</replaceable> <type>integer</type>
-          <optional>, <replaceable>default</replaceable> <type>anyelement</type> </optional></optional> )
+        <function>lag</function> ( <parameter>value</parameter> <type>anyelement</type>
+          <optional>, <parameter>offset</parameter> <type>integer</type>
+          <optional>, <parameter>default</parameter> <type>anyelement</type> </optional></optional> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
-        Returns <replaceable>value</replaceable> evaluated at
-        the row that is <replaceable>offset</replaceable>
+        Returns <parameter>value</parameter> evaluated at
+        the row that is <parameter>offset</parameter>
         rows before the current row within the partition; if there is no such
-        row, instead returns <replaceable>default</replaceable>
+        row, instead returns <parameter>default</parameter>
         (which must be of the same type as
-        <replaceable>value</replaceable>).
-        Both <replaceable>offset</replaceable> and
-        <replaceable>default</replaceable> are evaluated
+        <parameter>value</parameter>).
+        Both <parameter>offset</parameter> and
+        <parameter>default</parameter> are evaluated
         with respect to the current row.  If omitted,
-        <replaceable>offset</replaceable> defaults to 1 and
-        <replaceable>default</replaceable> to <literal>NULL</literal>.
+        <parameter>offset</parameter> defaults to 1 and
+        <parameter>default</parameter> to <literal>NULL</literal>.
        </para></entry>
       </row>
 
@@ -19598,23 +19602,23 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>lead</primary>
         </indexterm>
-        <function>lead</function> ( <replaceable>value</replaceable> <type>anyelement</type>
-          <optional>, <replaceable>offset</replaceable> <type>integer</type>
-          <optional>, <replaceable>default</replaceable> <type>anyelement</type> </optional></optional> )
+        <function>lead</function> ( <parameter>value</parameter> <type>anyelement</type>
+          <optional>, <parameter>offset</parameter> <type>integer</type>
+          <optional>, <parameter>default</parameter> <type>anyelement</type> </optional></optional> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
-        Returns <replaceable>value</replaceable> evaluated at
-        the row that is <replaceable>offset</replaceable>
+        Returns <parameter>value</parameter> evaluated at
+        the row that is <parameter>offset</parameter>
         rows after the current row within the partition; if there is no such
-        row, instead returns <replaceable>default</replaceable>
+        row, instead returns <parameter>default</parameter>
         (which must be of the same type as
-        <replaceable>value</replaceable>).
-        Both <replaceable>offset</replaceable> and
-        <replaceable>default</replaceable> are evaluated
+        <parameter>value</parameter>).
+        Both <parameter>offset</parameter> and
+        <parameter>default</parameter> are evaluated
         with respect to the current row.  If omitted,
-        <replaceable>offset</replaceable> defaults to 1 and
-        <replaceable>default</replaceable> to <literal>NULL</literal>.
+        <parameter>offset</parameter> defaults to 1 and
+        <parameter>default</parameter> to <literal>NULL</literal>.
        </para></entry>
       </row>
 
@@ -19623,11 +19627,11 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>first_value</primary>
         </indexterm>
-        <function>first_value</function> ( <replaceable>value</replaceable> <type>anyelement</type> )
+        <function>first_value</function> ( <parameter>value</parameter> <type>anyelement</type> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
-        Returns <replaceable>value</replaceable> evaluated
+        Returns <parameter>value</parameter> evaluated
         at the row that is the first row of the window frame.
        </para></entry>
       </row>
@@ -19637,11 +19641,11 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>last_value</primary>
         </indexterm>
-        <function>last_value</function> ( <replaceable>value</replaceable> <type>anyelement</type> )
+        <function>last_value</function> ( <parameter>value</parameter> <type>anyelement</type> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
-        Returns <replaceable>value</replaceable> evaluated
+        Returns <parameter>value</parameter> evaluated
         at the row that is the last row of the window frame.
        </para></entry>
       </row>
@@ -19651,12 +19655,12 @@ SELECT count(*) FROM sometable;
         <indexterm>
          <primary>nth_value</primary>
         </indexterm>
-        <function>nth_value</function> ( <replaceable>value</replaceable> <type>anyelement</type>, <replaceable>n</replaceable> <type>integer</type> )
+        <function>nth_value</function> ( <parameter>value</parameter> <type>anyelement</type>, <parameter>n</parameter> <type>integer</type> )
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
-        Returns <replaceable>value</replaceable> evaluated
-        at the row that is the <replaceable>n</replaceable>'th
+        Returns <parameter>value</parameter> evaluated
+        at the row that is the <parameter>n</parameter>'th
         row of the window frame (counting from 1);
         returns <literal>NULL</literal> if there is no such row.
        </para></entry>
