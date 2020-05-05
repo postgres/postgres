@@ -1050,7 +1050,7 @@ extern Buffer _bt_getstackbuf(Relation rel, BTStack stack, BlockNumber child);
 /*
  * prototypes for functions in nbtsplitloc.c
  */
-extern OffsetNumber _bt_findsplitloc(Relation rel, Page page,
+extern OffsetNumber _bt_findsplitloc(Relation rel, Page origpage,
 									 OffsetNumber newitemoff, Size newitemsz, IndexTuple newitem,
 									 bool *newitemonleft);
 
