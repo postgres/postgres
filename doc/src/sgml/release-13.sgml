@@ -1248,6 +1248,8 @@ Allow WAL recovery to continue even if invalid pages are referenced (Fujii Masao
 This is enabled using ignore_invalid_pages.
 </para>
 
+</listitem>
+
     </itemizedlist>
 
    </sect3>
