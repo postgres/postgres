@@ -86,7 +86,7 @@ else
 test_connect_fails(
 	$common_connstr,
 	"user=md5testuser channel_binding=require",
-	qr/Channel binding required but not supported by server's authentication request/,
+	qr/channel binding required but not supported by server's authentication request/,
 	"MD5 with SSL and channel_binding=require");
 
 # Now test with auth method 'cert' by connecting to 'certdb'. Should
@@ -96,7 +96,7 @@ chmod 0600, "ssl/client_tmp.key";
 test_connect_fails(
 	"sslcert=ssl/client.crt sslkey=ssl/client_tmp.key hostaddr=$SERVERHOSTADDR",
 	"dbname=certdb user=ssltestuser channel_binding=require",
-	qr/Channel binding required, but server authenticated client without channel binding/,
+	qr/channel binding required, but server authenticated client without channel binding/,
 	"Cert authentication and channel_binding=require");
 
 done_testing($number_of_tests);

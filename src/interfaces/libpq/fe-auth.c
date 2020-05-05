@@ -426,7 +426,7 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		!conn->ssl_in_use)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("Channel binding required, but SSL not in use\n"));
+						  libpq_gettext("channel binding required, but SSL not in use\n"));
 		goto error;
 	}
 
@@ -833,13 +833,13 @@ check_expected_areq(AuthRequest areq, PGconn *conn)
 				if (!pg_fe_scram_channel_bound(conn->sasl_state))
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("Channel binding required, but server authenticated client without channel binding\n"));
+									  libpq_gettext("channel binding required, but server authenticated client without channel binding\n"));
 					result = false;
 				}
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("Channel binding required but not supported by server's authentication request\n"));
+								  libpq_gettext("channel binding required but not supported by server's authentication request\n"));
 				result = false;
 				break;
 		}
