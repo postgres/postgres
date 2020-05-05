@@ -827,12 +827,14 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive %r'
      It is very important that the access privileges for replication be set up
      so that only trusted users can read the WAL stream, because it is
      easy to extract privileged information from it.  Standby servers must
-     authenticate to the primary as a superuser or an account that has the
-     <literal>REPLICATION</literal> privilege. It is recommended to create a
-     dedicated user account with <literal>REPLICATION</literal> and <literal>LOGIN</literal>
-     privileges for replication. While <literal>REPLICATION</literal> privilege gives
-     very high permissions, it does not allow the user to modify any data on
-     the primary system, which the <literal>SUPERUSER</literal> privilege does.
+     authenticate to the primary as an account that has the
+     <literal>REPLICATION</literal> privilege or a superuser. It is
+     recommended to create a dedicated user account with
+     <literal>REPLICATION</literal> and <literal>LOGIN</literal>
+     privileges for replication. While <literal>REPLICATION</literal>
+     privilege gives very high permissions, it does not allow the user to
+     modify any data on the primary system, which the
+     <literal>SUPERUSER</literal> privilege does.
     </para>
 
     <para>
