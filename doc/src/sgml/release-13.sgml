@@ -532,7 +532,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Implement incremental sorting (James Coleman, Alexander Korotkov)
+Implement incremental sorting (James Coleman, Alexander Korotkov, Tomas Vondra)
 </para>
 
 <para>
@@ -582,7 +582,7 @@ Allow grouping sets to use hash aggregation with disk storage for large grouping
 </para>
 
 <para>
-Previously, hash aggregation was not used if it was expected to use more than work_mem memory.  This is controlled by enable_hashagg_disk.
+Previously, hash aggregation was avoided if it was expected to use more than work_mem memory.  This is controlled by enable_hashagg_disk.
 WHAT USED TO HAPPEN?
 </para>
 
@@ -627,7 +627,7 @@ Allow skipping of WAL for new tables and indexes if wal_level is 'minimal' (Noah
 </para>
 
 <para>
-Relations larger than wal_skip_threshold will have their files fynsced rather than writing their WAL records.
+Relations larger than wal_skip_threshold will have their files fsync'ed rather than writing their WAL records.
 </para>
 
 </listitem>
@@ -797,7 +797,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve control of prepared statement parameter logging (Alexey Bashtanov, &Aacute;lvaro Herrera)
+Improve control of prepared statement parameter logging (Alexey Bashtanov, &Aacute;lvaro Herrera, Tom Lane)
 </para>
 
 <para>
