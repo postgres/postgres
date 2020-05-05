@@ -35,7 +35,7 @@ typedef struct BufferUsage
 typedef struct WalUsage
 {
 	long		wal_records;	/* # of WAL records produced */
-	long		wal_fpw;	/* # of WAL full page writes produced */
+	long		wal_fpi;		/* # of WAL full page images produced */
 	uint64		wal_bytes;		/* size of WAL records produced */
 } WalUsage;
 

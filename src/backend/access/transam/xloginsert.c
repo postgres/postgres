@@ -109,7 +109,7 @@ static MemoryContext xloginsert_cxt;
 
 static XLogRecData *XLogRecordAssemble(RmgrId rmid, uint8 info,
 									   XLogRecPtr RedoRecPtr, bool doPageWrites,
-									   XLogRecPtr *fpw_lsn, int *num_fpw);
+									   XLogRecPtr *fpw_lsn, int *num_fpi);
 static bool XLogCompressBackupBlock(char *page, uint16 hole_offset,
 									uint16 hole_length, char *dest, uint16 *dlen);
 
@@ -449,7 +449,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 		bool		doPageWrites;
 		XLogRecPtr	fpw_lsn;
 		XLogRecData *rdt;
-		int			num_fpw = 0;
+		int			num_fpi = 0;
 
 		/*
 		 * Get values needed to decide whether to do full-page writes. Since
@@ -459,9 +459,9 @@ XLogInsert(RmgrId rmid, uint8 info)
 		GetFullPageWriteInfo(&RedoRecPtr, &doPageWrites);
 
 		rdt = XLogRecordAssemble(rmid, info, RedoRecPtr, doPageWrites,
-								 &fpw_lsn, &num_fpw);
+								 &fpw_lsn, &num_fpi);
 
-		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags, num_fpw);
+		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags, num_fpi);
 	} while (EndPos == InvalidXLogRecPtr);
 
 	XLogResetInsertion();
@@ -484,7 +484,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 static XLogRecData *
 XLogRecordAssemble(RmgrId rmid, uint8 info,
 				   XLogRecPtr RedoRecPtr, bool doPageWrites,
-				   XLogRecPtr *fpw_lsn, int *num_fpw)
+				   XLogRecPtr *fpw_lsn, int *num_fpi)
 {
 	XLogRecData *rdt;
 	uint32		total_len = 0;
@@ -638,7 +638,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			bkpb.fork_flags |= BKPBLOCK_HAS_IMAGE;
 
 			/* Report a full page image constructed for the WAL record */
-			*num_fpw += 1;
+			*num_fpi += 1;
 
 			/*
 			 * Construct XLogRecData entries for the page content.

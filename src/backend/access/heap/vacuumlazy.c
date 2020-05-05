@@ -673,10 +673,10 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 							 read_rate, write_rate);
 			appendStringInfo(&buf, _("system usage: %s\n"), pg_rusage_show(&ru0));
 			appendStringInfo(&buf,
-							 _("WAL usage: %ld records, %ld full page writes, "
+							 _("WAL usage: %ld records, %ld full page images, "
 							   UINT64_FORMAT " bytes"),
 							 walusage.wal_records,
-							 walusage.wal_fpw,
+							 walusage.wal_fpi,
 							 walusage.wal_bytes);
 
 			ereport(LOG,

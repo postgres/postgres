@@ -3343,31 +3343,31 @@ show_wal_usage(ExplainState *es, const WalUsage *usage)
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 	{
 		/* Show only positive counter values. */
-		if ((usage->wal_records > 0) || (usage->wal_fpw > 0) ||
+		if ((usage->wal_records > 0) || (usage->wal_fpi > 0) ||
 			(usage->wal_bytes > 0))
 		{
 			ExplainIndentText(es);
 			appendStringInfoString(es->str, "WAL:");
 
 			if (usage->wal_records > 0)
-				appendStringInfo(es->str, "  records=%ld",
+				appendStringInfo(es->str, " records=%ld",
 								 usage->wal_records);
-			if (usage->wal_fpw > 0)
-				appendStringInfo(es->str, "  full page writes=%ld",
-								 usage->wal_fpw);
+			if (usage->wal_fpi > 0)
+				appendStringInfo(es->str, " fpi=%ld",
+								 usage->wal_fpi);
 			if (usage->wal_bytes > 0)
-				appendStringInfo(es->str, "  bytes=" UINT64_FORMAT,
+				appendStringInfo(es->str, " bytes=" UINT64_FORMAT,
 								 usage->wal_bytes);
 			appendStringInfoChar(es->str, '\n');
 		}
 	}
 	else
 	{
-		ExplainPropertyInteger("WAL records", NULL,
+		ExplainPropertyInteger("WAL Records", NULL,
 							   usage->wal_records, es);
-		ExplainPropertyInteger("WAL full page writes", NULL,
-							   usage->wal_fpw, es);
-		ExplainPropertyUInteger("WAL bytes", NULL,
+		ExplainPropertyInteger("WAL FPI", NULL,
+							   usage->wal_fpi, es);
+		ExplainPropertyUInteger("WAL Bytes", NULL,
 								usage->wal_bytes, es);
 	}
 }

@@ -998,7 +998,7 @@ XLogRecPtr
 XLogInsertRecord(XLogRecData *rdata,
 				 XLogRecPtr fpw_lsn,
 				 uint8 flags,
-				 int num_fpw)
+				 int num_fpi)
 {
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
 	pg_crc32c	rdata_crc;
@@ -1259,7 +1259,7 @@ XLogInsertRecord(XLogRecData *rdata,
 	{
 		pgWalUsage.wal_bytes += rechdr->xl_tot_len;
 		pgWalUsage.wal_records++;
-		pgWalUsage.wal_fpw += num_fpw;
+		pgWalUsage.wal_fpi += num_fpi;
 	}
 
 	return EndPos;

@@ -43,7 +43,7 @@ CREATE FUNCTION pg_stat_statements(IN showtext boolean,
     OUT blk_read_time float8,
     OUT blk_write_time float8,
     OUT wal_records int8,
-    OUT wal_fpw int8,
+    OUT wal_fpi int8,
     OUT wal_bytes numeric
 )
 RETURNS SETOF record
