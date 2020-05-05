@@ -3468,6 +3468,16 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         The precise stopping point is also influenced by
         <xref linkend="guc-recovery-target-inclusive"/>.
        </para>
+
+       <para>
+        The value of this parameter is a time stamp in the same format
+        accepted by the <type>timestamp with time zone</type> data type,
+        except that you cannot use a time zone abbreviation (unless the
+        <xref linkend="guc-timezone-abbreviations"/> variable has been set
+        earlier in the configuration file).  Preferred style is to use a
+        numeric offset from UTC, or you can write a full time zone name,
+        e.g. <literal>Europe/Helsinki</literal> not <literal>EEST</literal>.
+       </para>
       </listitem>
      </varlistentry>
 
