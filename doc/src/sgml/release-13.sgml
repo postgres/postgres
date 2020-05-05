@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2020-05-03</para>
+   <para>2020-XX-XX, CURRENT AS OF 2020-05-03</para>
   </formalpara>
 
   <sect2>
@@ -284,7 +284,7 @@ Allow BEFORE row-level triggers on partitioned tables (&Aacute;lvaro Herrera)
 </para>
 
 <para>
-These triggers cannot change the destination partition.
+These triggers "cannot change which partition is the destination.
 </para>
 
 </listitem>
@@ -532,11 +532,11 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Allow incremental sorting (James Coleman, Alexander Korotkov)
+Implement incremental sorting (James Coleman, Alexander Korotkov)
 </para>
 
 <para>
-If a result is already sorted by several keys, this allows for batch sorting of additional trailing keys because the previous keys are already equal.  This is controlled by enable_incrementalsort.
+If a result is already sorted by several leading keys, this allows for batch sorting of additional trailing keys because the previous keys are already equal.  This is controlled by enable_incrementalsort.
 </para>
 
 </listitem>
@@ -566,7 +566,7 @@ Allow hash aggregation to use disk storage for large aggregation result sets (Je
 </para>
 
 <para>
-Previously, hash aggregation was not used if it was expected to use more than work_mem memory.  This is controlled by enable_hashagg_disk.
+Previously, hash aggregation was avoided if it was expected to use more than work_mem memory.  This is controlled by enable_hashagg_disk.
 </para>
 
 </listitem>
@@ -599,7 +599,7 @@ Allow inserts to trigger autovacuum activity (Laurenz Albe, Darafei Praliaskousk
 </para>
 
 <para>
-This new behavior sets pages as all-visible, allowing for index-only scans, and reduces the work necessary when the table needs to be frozen.
+This new behavior allows pages to be set as all-visible, which then allows index-only scans, and reduces the work necessary when the table needs to be frozen.
 </para>
 
 </listitem>
@@ -627,7 +627,7 @@ Allow skipping of WAL for new tables and indexes if wal_level is 'minimal' (Noah
 </para>
 
 <para>
-This is controlled by GUC wal_skip_threshold.
+The WAL write amount where this happens is controlled by wal_skip_threshold.
 </para>
 
 </listitem>
@@ -651,7 +651,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Improve the performance of replay of DROP DATABASE commands that use many tablespaces (Fujii Masao)
+Improve the performance when replaying DROP DATABASE commands when many tablespaces are in use (Fujii Masao)
 </para>
 
 </listitem>
@@ -663,7 +663,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Improve performance for truncation of very larger relations (Kirk Jamison)
+Improve performance for truncation of very large relations (Kirk Jamison)
 </para>
 
 </listitem>
@@ -1147,7 +1147,7 @@ Allow streaming replication configuration settings to be changed by reload (Serg
 </para>
 
 <para>
-Previously, server restart was required to change primary_conninfo and primary_slot_name.
+Previously, a server restart was required to change primary_conninfo and primary_slot_name.
 </para>
 
 </listitem>
@@ -1354,7 +1354,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Fix bugs in ALTER TABLE where later clauses overlap changes made by earlier clauses in the same command (Tom Lane)
+Fix bugs in ALTER TABLE when later clauses overlap changes made by earlier clauses in the same command (Tom Lane)
 </para>
 
 </listitem>
@@ -1565,7 +1565,7 @@ Add alternate version of jsonb_set with special NULL handling (Andrew Dunstan)
 </para>
 
 <para>
-The new function, jsonb_set_lax(), allows null new values to either set the specified key to JSON null, delete the key, raise exception, or ignore operation.
+The new function, jsonb_set_lax(), allows null new values to either set the specified key to JSON null, delete the key, raise exception, or ignore the operation.
 IS 'return_target' CLEAR?
 </para>
 
@@ -1967,7 +1967,7 @@ Allow \g and \gx to change any pset output options for a single command (Tom Lan
 </para>
 
 <para>
-This makes \gx equivalent to \g (expanded=on).
+This allows syntax like \g (expand=on), which is equivalent to \gx.
 </para>
 
 </listitem>
@@ -2181,7 +2181,7 @@ Allow pg_rewind to use the target cluster's restore_command to retrieve needed W
 </para>
 
 <para>
-This is enable using the -c/--restore-target-wal option.
+This is enabled using the -c/--restore-target-wal option.
 </para>
 
 </listitem>
@@ -2293,7 +2293,7 @@ Remove --adduser and --no-adduser from createuser (Alexander Lakhin)
 </para>
 
 <para>
-These long-supported options for this are called --superuser and --no-superuser.
+The long-supported options for this are called --superuser and --no-superuser.
 </para>
 
 </listitem>
