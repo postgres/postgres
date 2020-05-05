@@ -2113,7 +2113,7 @@ DOCUMENT THE DEFAULT GENERATION METHOD
 <listitem>
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
-2019-07-16 [5823677ac] Provide pgbench --show-script to dump built-in scripts.
+2019-07-16 [5823677ac] Provide pgbench - -show-script to dump built-in scripts.
 -->
 
 <para>
