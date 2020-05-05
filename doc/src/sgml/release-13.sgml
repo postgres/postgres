@@ -2110,6 +2110,18 @@ DOCUMENT THE DEFAULT GENERATION METHOD
 
 </listitem>
 
+<listitem>
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2019-07-16 [ce8f94676] Report the time taken by pgbench initialization steps.
+-->
+
+<para>
+Allow pgbench to dump script contents using --show-script (Fabien Coelho)
+</para>
+
+</listitem>
+
      </itemizedlist>
 
     </sect4>
