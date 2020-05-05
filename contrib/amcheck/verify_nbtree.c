@@ -463,9 +463,6 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 		 * happen before index fingerprinting begins, so we can later be
 		 * certain that index fingerprinting should have reached all tuples
 		 * returned by table_index_build_scan().
-		 *
-		 * In readonly case, we also check for problems with missing
-		 * downlinks. A second Bloom filter is used for this.
 		 */
 		if (!state->readonly)
 		{
