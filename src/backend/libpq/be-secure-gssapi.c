@@ -215,6 +215,9 @@ be_gssapi_write(Port *port, void *ptr, size_t len)
 
 		memcpy(PqGSSSendBuffer + PqGSSSendLength, output.value, output.length);
 		PqGSSSendLength += output.length;
+
+		/* Release buffer storage allocated by GSSAPI */
+		gss_release_buffer(&minor, &output);
 	}
 
 	/* If we get here, our counters should all match up. */
@@ -371,6 +374,7 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 		/* Our receive buffer is now empty, reset it */
 		PqGSSRecvLength = 0;
 
+		/* Release buffer storage allocated by GSSAPI */
 		gss_release_buffer(&minor, &output);
 	}
 
@@ -590,7 +594,10 @@ secure_open_gssapi(Port *port)
 				 */
 				if (ret < 0 &&
 					!(errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR))
+				{
+					gss_release_buffer(&minor, &output);
 					return -1;
+				}
 
 				/* Wait and retry if we couldn't write yet */
 				if (ret <= 0)
