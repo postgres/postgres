@@ -284,7 +284,7 @@ Allow BEFORE row-level triggers on partitioned tables (&Aacute;lvaro Herrera)
 </para>
 
 <para>
-These triggers "cannot change which partition is the destination.
+These triggers cannot change which partition is the destination.
 </para>
 
 </listitem>
@@ -627,7 +627,7 @@ Allow skipping of WAL for new tables and indexes if wal_level is 'minimal' (Noah
 </para>
 
 <para>
-The WAL write amount where this happens is controlled by wal_skip_threshold.
+Relations larger than wal_skip_threshold will have their files fynsced rather than writing their WAL records.
 </para>
 
 </listitem>
@@ -801,7 +801,8 @@ Improve control of prepared statement parameter logging (Alexey Bashtanov, &Aacu
 </para>
 
 <para>
-The GUC setting log_parameter_max_length controls the maximum length of parameter values output during statement logging, and log_parameter_max_length_on_error allows parameters to be output on
+The GUC setting log_parameter_max_length controls the maximum length of parameter values output during statement non-error logging, and log_parameter_max_length_on_error does the same for error statement logging.
+Previously, prepared statement parameters were not logged during errors.
 error.
 </para>
 
@@ -943,7 +944,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
 <para>
-Allow track_activity_query_size to be set to 1MB (Vyacheslav Makarov)
+Allow track_activity_query_size to be set up to 1MB (Vyacheslav Makarov)
 </para>
 
 <para>
@@ -1041,7 +1042,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
 <para>
-Only allow super users to view the ssl_passphrase_command setting (Insung Moon)
+Only allow superusers to view the ssl_passphrase_command setting (Insung Moon)
 </para>
 
 <para>
@@ -1115,11 +1116,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Disallow non-super users from modifying system tables when allow_system_table_mods is set (Peter Eisentraut)
+Disallow non-superusers from modifying system tables when allow_system_table_mods is set (Peter Eisentraut)
 </para>
 
 <para>
-Previously, if allow_system_table_mods was set at server start, non-super users could issue INSERT/UPDATE/DELETE commands on system tables.
+Previously, if allow_system_table_mods was set at server start, non-superusers could issue INSERT/UPDATE/DELETE commands on system tables.
 </para>
 
 </listitem>
@@ -2245,7 +2246,11 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Add parallel control of the vacuumdb command using --parallel (Masahiko Sawada)
+Allow vacuum commands run by vacuumdb to operate in parallel mode (Masahiko Sawada)
+</para>
+
+<para>
+This is enabled with the new --parallel option.
 </para>
 
 </listitem>
@@ -2615,7 +2620,7 @@ Allow extensions to be specified as trusted (Tom Lane)
 </para>
 
 <para>
-Such extensions can be installed in a database by users with creation rights, even if they are not super users.  This change also removes the pg_pltemplate system catalog.
+Such extensions can be installed in a database by users with creation rights, even if they are not superusers.  This change also removes the pg_pltemplate system catalog.
 </para>
 
 </listitem>
@@ -2639,11 +2644,11 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 -->
 
 <para>
-Allow non-super users to connect to postgres_fdw foreign servers without using a password (Craig Ringer)
+Allow non-superusers to connect to postgres_fdw foreign servers without using a password (Craig Ringer)
 </para>
 
 <para>
-Specifically, allow ALTER USER MAPPING to set password_required to false.  Care must still be taken to avoid non-super users from using super user credentials to connect to the foreign server.
+Specifically, allow ALTER USER MAPPING to set password_required to false.  Care must still be taken to avoid non-superusers from using superuser credentials to connect to the foreign server.
 </para>
 
 </listitem>
