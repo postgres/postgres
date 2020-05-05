@@ -1788,11 +1788,12 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add the ability to remove a function's dependency on an extension (Alvaro Herrera)
+Add the ability to remove an object's dependency on an extension (Álvaro
+Herrera)
 </para>
 
 <para>
-The syntax is ALTER FUNCTION .. NO DEPENDS ON.
+The object can be a function, materialized view, index, or trigger.  The syntax is ALTER .. NO DEPENDS ON.
 </para>
 
 </listitem>
@@ -2326,7 +2327,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add a glossary to the documentation
+Add a glossary to the documentation (Corey Huinker, Jürgen Purtz, Roger Harkavy, Álvaro Herrera)
 </para>
 
 </listitem>
