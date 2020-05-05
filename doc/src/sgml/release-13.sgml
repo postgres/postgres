@@ -797,7 +797,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve control of prepared statement parameter logging (Alexey Bashtanov, &Aacute;lvaro Herrera, Tom Lane)
+Improve control of prepared statement parameter logging (Alexey Bashtanov, &Aacute;lvaro Herrera)
 </para>
 
 <para>
@@ -2113,7 +2113,7 @@ DOCUMENT THE DEFAULT GENERATION METHOD
 <listitem>
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
-2019-07-16 [ce8f94676] Report the time taken by pgbench initialization steps.
+2019-07-16 [5823677ac] Provide pgbench --show-script to dump built-in scripts.
 -->
 
 <para>
