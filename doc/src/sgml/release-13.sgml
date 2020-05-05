@@ -383,6 +383,19 @@ Allow GiST and SP-GiST indexes for box/point distance lookups (Nikita Glukhov)
 <listitem>
 <!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
+2020-01-18 [4b754d6c1] Avoid full scan of GIN indexes when possible
+-->
+
+<para>
+Allow GIN indexes to more efficiently handle NOT restrictions (Nikita
+Glukhov, Alexander Korotkov, Tom Lane, Julien Rouhaud)
+</para>
+
+</listitem>
+
+<listitem>
+<!--
+Author: Alexander Korotkov <akorotkov@postgresql.org>
 2020-03-30 [911e70207] Implement operator class parameters
 -->
 
@@ -1235,20 +1248,6 @@ Allow WAL recovery to continue even if invalid pages are referenced (Fujii Masao
 This is enabled using ignore_invalid_pages.
 </para>
 
-</listitem>
-
-<listitem>
-<!--
-Author: Thomas Munro <tmunro@postgresql.org>
-2020-04-08 [3985b600f] Support PrefetchBuffer() in recovery.
--->
-
-<para>
-Speedup recovery by prefetching pages (Thomas Munro)
-</para>
-
-</listitem>
-
     </itemizedlist>
 
    </sect3>
@@ -1393,7 +1392,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add CREATE DATABASE LOCALE option (Fabien COELHO)
+Add CREATE DATABASE LOCALE option (Peter Eisentraut)
 </para>
 
 <para>
@@ -1457,6 +1456,22 @@ WHAT IS THIS ABOUT?
 
 <listitem>
 <!--
+Tom Lane <tgl@sss.pgh.pa.us>
+2020-03-19 [24e2885ee] Introduce "anycompatible" family of polymorphic types.
+-->
+
+<para>
+Add polymorphic data types for use by functions requiring compatible arguments (Pavel Stehule)
+</para>
+
+<para>
+The new data types are anycompatible, anycompatiblearray, anycompatiblenonarray, and anycompatiblerange.
+</para>
+
+</listitem>
+
+<listitem>
+<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2020-04-07 [aeec457de] Add SQL type xid8 to expose FullTransactionId to users.
 -->
@@ -1490,7 +1505,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Use the glibc version as the collation version (Thomas Munro)
+Use the glibc version in some cases as the collation version (Thomas Munro)
 </para>
 
 <para>
@@ -1506,7 +1521,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Add support for collation versions on Windows (Juan José Santamaría Flecha)
+Add support for collation versions on Windows (Thomas Munro)
 </para>
 
 </listitem>
@@ -1589,11 +1604,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow UTF-8 escapes, e.g., E'\u####', in clients that don't use UTF-8 encoding (Tom Lane)
+Allow Unicode escapes, e.g., E'\u####', in clients that don't use UTF-8 encoding (Tom Lane)
 </para>
 
 <para>
-The UTF-8 characters must be available in the server encoding.
+The Unicode characters must be available in the server encoding.
 </para>
 
 </listitem>
@@ -1605,7 +1620,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow to_date() and to_timestamp() to recognize non-English month/day names (Juan José Santamaría Flecha)
+Allow to_date() and to_timestamp() to recognize non-English month/day names (Juan José Santamaría Flecha, Tom Lane)
 </para>
 
 <para>
@@ -1649,7 +1664,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Add function gen_random_uuid to generate version 4 UUIDs (Fabien COELHO)
+Add function gen_random_uuid to generate version 4 UUIDs (Peter Eisentraut)
 </para>
 
 <para>
@@ -1731,11 +1746,11 @@ Author: Thomas Munro <tmunro@postgresql.org>
 -->
 
 <para>
-Update all transaction id functions to support xid8 (Thomas Munro)
+Create xid8 versions of all transaction id functions (Thomas Munro)
 </para>
 
 <para>
-They use the same names as the xid data type versions.
+The old function names were kept for backward compatibility.
 </para>
 
 </listitem>
