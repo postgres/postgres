@@ -254,7 +254,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve cases where pruning of partitions can happen (Amit Langote, Yuzuko Hosoya, Álvaro Herrera)
+Improve cases where pruning of partitions can happen (Amit Langote, Yuzuko Hosoya, &Aacute;lvaro Herrera)
 </para>
 
 </listitem>
@@ -280,7 +280,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Allow BEFORE row-level triggers on partitioned tables (Alvaro Herrera)
+Allow BEFORE row-level triggers on partitioned tables (&Aacute;lvaro Herrera)
 </para>
 
 <para>
@@ -639,7 +639,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Enable Unix-domain sockets support on Windows (Andrew Dunstan)
+Enable Unix-domain sockets support on Windows (Peter Eisentraut)
 </para>
 
 </listitem>
@@ -797,7 +797,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Improve control of prepared statement parameter logging (Alexey Bashtanov, Álvaro Herrera)
+Improve control of prepared statement parameter logging (Alexey Bashtanov, &Aacute;lvaro Herrera)
 </para>
 
 <para>
@@ -814,7 +814,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Make vacuum buffer counters 64-bits wide to avoid overflow (Alvaro Herrera)
+Make vacuum buffer counters 64-bits wide to avoid overflow (&Aacute;lvaro Herrera)
 </para>
 
 </listitem>
@@ -826,7 +826,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Allow function call backtraces of errors to be logged (Peter Eisentraut, Álvaro Herrera)
+Allow function call backtraces of errors to be logged (Peter Eisentraut, &Aacute;lvaro Herrera)
 </para>
 
 <para>
@@ -842,7 +842,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
 <para>
-Add min() and max() aggregates for pg_lsn (Fabrízio de Royes Mello)
+Add min() and max() aggregates for pg_lsn (Fabr&iacute;zio de Royes Mello)
 </para>
 
 <para>
@@ -891,7 +891,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add system view pg_stat_progress_analyze to report analyze progress (Álvaro Herrera, Tatsuro Yamada)
+Add system view pg_stat_progress_analyze to report analyze progress (&Aacute;lvaro Herrera, Tatsuro Yamada)
 </para>
 
 </listitem>
@@ -1177,7 +1177,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Allow replication slot storage to be limited by max_slot_wal_keep_size (Kyotaro HORIGUCHI)
+Allow replication slot storage to be limited by max_slot_wal_keep_size (Kyotaro Horiguchi)
 </para>
 
 <para>
@@ -1622,7 +1622,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow to_date() and to_timestamp() to recognize non-English month/day names (Juan José Santamaría Flecha, Tom Lane)
+Allow to_date() and to_timestamp() to recognize non-English month/day names (Juan Jos&eacute; Santamar&iacute;a Flecha, Tom Lane)
 </para>
 
 <para>
@@ -1788,8 +1788,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add the ability to remove an object's dependency on an extension (Álvaro
-Herrera)
+Add the ability to remove an object's dependency on an extension (&Aacute;lvaro Herrera)
 </para>
 
 <para>
@@ -2073,7 +2072,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
 <para>
-Allow pgbench to partition its 'accounts' table (Fabien COELHO)
+Allow pgbench to partition its 'accounts' table (Fabien Coelho)
 </para>
 
 <para>
@@ -2327,7 +2326,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add a glossary to the documentation (Corey Huinker, Jürgen Purtz, Roger Harkavy, Álvaro Herrera)
+Add a glossary to the documentation (Corey Huinker, J&uuml;rgen Purtz, Roger Harkavy, &Aacute;lvaro Herrera)
 </para>
 
 </listitem>

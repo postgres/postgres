@@ -33,6 +33,8 @@ non-ASCII characters            find using grep -P '[\x80-\xFF]'
         we can only use Latin1.
 
         Example: Alvaro Herrera is &Aacute;lvaro Herrera
+        Find non-ASCII characters (remove 'X'):
+             grep -X-color='auto' -P -n "[\x80-\xFF]"
 
 wrap long lines
 
