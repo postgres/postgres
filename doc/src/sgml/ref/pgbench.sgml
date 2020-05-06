@@ -198,6 +198,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
            <para>
             Generate data and load it into the standard tables,
             replacing any data already present.
+            The default is to generate data client-side (<literal>g</literal>)
+            and transmit it over the connection.
            </para>
            <para>
             With <literal>g</literal> (client-side data generation),
@@ -217,9 +219,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
             Using <literal>G</literal> causes logging not to print any progress
             message when generating data into
             <structname>pgbench_accounts</structname> table.
-           </para>
-           <para>
-            
            </para>
           </listitem>
          </varlistentry>
