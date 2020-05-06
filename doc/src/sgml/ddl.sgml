@@ -324,6 +324,32 @@ CREATE TABLE people (
       linkend="sql-createforeigntable"/> for details.
      </para>
     </listitem>
+    <listitem>
+     <para>For inheritance:</para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        If a parent column is a generated column, a child column must also be
+        a generated column using the same expression.  In the definition of
+        the child column, leave off the <literal>GENERATED</literal> clause,
+        as it will be copied from the parent.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        In case of multiple inheritance, if one parent column is a generated
+        column, then all parent columns must be generated columns and with the
+        same expression.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        If a parent column is not a generated column, a child column may be
+        defined to be a generated column or not.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </listitem>
    </itemizedlist>
   </para>
 
