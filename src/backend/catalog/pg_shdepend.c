@@ -1325,7 +1325,10 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 											sdepForm->objid);
 					break;
 				case SHARED_DEPENDENCY_POLICY:
-					/* If unable to remove role from policy, remove policy. */
+					/*
+					 * Try to remove role from policy; if unable to, remove
+					 * policy.
+					 */
 					if (!RemoveRoleFromObjectPolicy(roleid,
 													sdepForm->classid,
 													sdepForm->objid))
@@ -1333,6 +1336,18 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 						obj.classId = sdepForm->classid;
 						obj.objectId = sdepForm->objid;
 						obj.objectSubId = sdepForm->objsubid;
+						/*
+						 * Acquire lock on object, then verify this dependency
+						 * is still relevant.  If not, the object might have
+						 * been dropped or the policy modified.  Ignore the
+						 * object in that case.
+						 */
+						AcquireDeletionLock(&obj, 0);
+						if (!systable_recheck_tuple(scan, tuple))
+						{
+							ReleaseDeletionLock(&obj);
+							break;
+						}
 						add_exact_object_address(&obj, deleteobjs);
 					}
 					break;
@@ -1343,6 +1358,13 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 						obj.classId = sdepForm->classid;
 						obj.objectId = sdepForm->objid;
 						obj.objectSubId = sdepForm->objsubid;
+						/* as above */
+						AcquireDeletionLock(&obj, 0);
+						if (!systable_recheck_tuple(scan, tuple))
+						{
+							ReleaseDeletionLock(&obj);
+							break;
+						}
 						add_exact_object_address(&obj, deleteobjs);
 					}
 					break;
