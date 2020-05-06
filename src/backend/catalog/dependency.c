@@ -200,8 +200,6 @@ static void reportDependentObjects(const ObjectAddresses *targetObjects,
 static void deleteOneObject(const ObjectAddress *object,
 							Relation *depRel, int32 flags);
 static void doDeletion(const ObjectAddress *object, int flags);
-static void AcquireDeletionLock(const ObjectAddress *object, int flags);
-static void ReleaseDeletionLock(const ObjectAddress *object);
 static bool find_expr_references_walker(Node *node,
 										find_expr_references_context *context);
 static void eliminate_duplicate_dependencies(ObjectAddresses *addrs);
@@ -1527,11 +1525,14 @@ doDeletion(const ObjectAddress *object, int flags)
 /*
  * AcquireDeletionLock - acquire a suitable lock for deleting an object
  *
+ * Accepts the same flags as performDeletion (though currently only
+ * PERFORM_DELETION_CONCURRENTLY does anything).
+ *
  * We use LockRelation for relations, LockDatabaseObject for everything
- * else.  Note that dependency.c is not concerned with deleting any kind of
- * shared-across-databases object, so we have no need for LockSharedObject.
+ * else.  Shared-across-databases objects are not currently supported
+ * because no caller cares, but could be modified to use LockSharedObject.
  */
-static void
+void
 AcquireDeletionLock(const ObjectAddress *object, int flags)
 {
 	if (object->classId == RelationRelationId)
@@ -1557,8 +1558,10 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 
 /*
  * ReleaseDeletionLock - release an object deletion lock
+ *
+ * Companion to AcquireDeletionLock.
  */
-static void
+void
 ReleaseDeletionLock(const ObjectAddress *object)
 {
 	if (object->classId == RelationRelationId)
