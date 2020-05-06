@@ -709,6 +709,9 @@ psql: could not connect to server: No such file or directory
     <title><systemitem class="osname">System V</systemitem> <acronym>IPC</acronym> Parameters</title>
 
     <tgroup cols="3">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
+     <colspec colname="col3" colwidth="3*"/>
      <thead>
       <row>
        <entry>Name</entry>

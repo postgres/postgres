@@ -31,6 +31,9 @@
    <table id="datatype-table">
     <title>Data Types</title>
     <tgroup cols="3">
+     <colspec colname="col1" colwidth="2*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <colspec colname="col3" colwidth="2*"/>
      <thead>
       <row>
        <entry>Name</entry>
@@ -349,6 +352,10 @@
     <table id="datatype-numeric-table">
      <title>Numeric Types</title>
      <tgroup cols="4">
+      <colspec colname="col1" colwidth="2*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="2*"/>
+      <colspec colname="col4" colwidth="2*"/>
       <thead>
        <row>
         <entry>Name</entry>
@@ -965,6 +972,10 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
     <table id="datatype-money-table">
      <title>Monetary Types</title>
      <tgroup cols="4">
+      <colspec colname="col1" colwidth="2*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="2*"/>
+      <colspec colname="col4" colwidth="2*"/>
       <thead>
        <row>
         <entry>Name</entry>
@@ -1299,6 +1310,9 @@ SELECT b, char_length(b) FROM test2;
    <table id="datatype-binary-table">
     <title>Binary Data Types</title>
     <tgroup cols="3">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
+     <colspec colname="col3" colwidth="2*"/>
      <thead>
       <row>
        <entry>Name</entry>
@@ -1415,6 +1429,11 @@ SELECT '\xDEADBEEF';
    <table id="datatype-binary-sqlesc">
     <title><type>bytea</type> Literal Escaped Octets</title>
     <tgroup cols="5">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <colspec colname="col3" colwidth="1*"/>
+     <colspec colname="col4" colwidth="1.25*"/>
+     <colspec colname="col5" colwidth="1*"/>
      <thead>
       <row>
        <entry>Decimal Octet Value</entry>
@@ -1430,7 +1449,7 @@ SELECT '\xDEADBEEF';
        <entry>0</entry>
        <entry>zero octet</entry>
        <entry><literal>'\000'</literal></entry>
-       <entry><literal>SELECT '\000'::bytea;</literal></entry>
+       <entry><literal>'\000'::bytea</literal></entry>
        <entry><literal>\x00</literal></entry>
       </row>
 
@@ -1438,7 +1457,7 @@ SELECT '\xDEADBEEF';
        <entry>39</entry>
        <entry>single quote</entry>
        <entry><literal>''''</literal> or <literal>'\047'</literal></entry>
-       <entry><literal>SELECT ''''::bytea;</literal></entry>
+       <entry><literal>''''::bytea</literal></entry>
        <entry><literal>\x27</literal></entry>
       </row>
 
@@ -1446,7 +1465,7 @@ SELECT '\xDEADBEEF';
        <entry>92</entry>
        <entry>backslash</entry>
        <entry><literal>'\\'</literal> or <literal>'\134'</literal></entry>
-       <entry><literal>SELECT '\\'::bytea;</literal></entry>
+       <entry><literal>'\\'::bytea</literal></entry>
        <entry><literal>\x5c</literal></entry>
       </row>
 
@@ -1454,7 +1473,7 @@ SELECT '\xDEADBEEF';
        <entry>0 to 31 and 127 to 255</entry>
        <entry><quote>non-printable</quote> octets</entry>
        <entry><literal>'\<replaceable>xxx'</replaceable></literal> (octal value)</entry>
-       <entry><literal>SELECT '\001'::bytea;</literal></entry>
+       <entry><literal>'\001'::bytea</literal></entry>
        <entry><literal>\x01</literal></entry>
       </row>
 
@@ -1514,6 +1533,11 @@ SELECT 'abc \153\154\155 \052\251\124'::bytea;
    <table id="datatype-binary-resesc">
     <title><type>bytea</type> Output Escaped Octets</title>
     <tgroup cols="5">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <colspec colname="col3" colwidth="1*"/>
+     <colspec colname="col4" colwidth="1.25*"/>
+     <colspec colname="col5" colwidth="1*"/>
      <thead>
       <row>
        <entry>Decimal Octet Value</entry>
@@ -1530,7 +1554,7 @@ SELECT 'abc \153\154\155 \052\251\124'::bytea;
        <entry>92</entry>
        <entry>backslash</entry>
        <entry><literal>\\</literal></entry>
-       <entry><literal>SELECT '\134'::bytea;</literal></entry>
+       <entry><literal>'\134'::bytea</literal></entry>
        <entry><literal>\\</literal></entry>
       </row>
 
@@ -1538,7 +1562,7 @@ SELECT 'abc \153\154\155 \052\251\124'::bytea;
        <entry>0 to 31 and 127 to 255</entry>
        <entry><quote>non-printable</quote> octets</entry>
        <entry><literal>\<replaceable>xxx</replaceable></literal> (octal value)</entry>
-       <entry><literal>SELECT '\001'::bytea;</literal></entry>
+       <entry><literal>'\001'::bytea</literal></entry>
        <entry><literal>\001</literal></entry>
       </row>
 
@@ -1546,7 +1570,7 @@ SELECT 'abc \153\154\155 \052\251\124'::bytea;
        <entry>32 to 126</entry>
        <entry><quote>printable</quote> octets</entry>
        <entry>client character set representation</entry>
-       <entry><literal>SELECT '\176'::bytea;</literal></entry>
+       <entry><literal>'\176'::bytea</literal></entry>
        <entry><literal>~</literal></entry>
       </row>
 
@@ -1789,6 +1813,8 @@ MINUTE TO SECOND
      <table id="datatype-datetime-date-table">
       <title>Date Input</title>
       <tgroup cols="2">
+       <colspec colname="col1" colwidth="1*"/>
+       <colspec colname="col2" colwidth="2*"/>
        <thead>
         <row>
          <entry>Example</entry>
@@ -1910,6 +1936,8 @@ MINUTE TO SECOND
       <table id="datatype-datetime-time-table">
        <title>Time Input</title>
        <tgroup cols="2">
+        <colspec colname="col1" colwidth="3*"/>
+        <colspec colname="col2" colwidth="2*"/>
         <thead>
          <row>
           <entry>Example</entry>
@@ -2252,6 +2280,9 @@ January 8 04:05:06 1999 PST
      <table id="datatype-datetime-output-table">
       <title>Date/Time Output Styles</title>
       <tgroup cols="3">
+       <colspec colname="col1" colwidth="1*"/>
+       <colspec colname="col2" colwidth="1*"/>
+       <colspec colname="col3" colwidth="2*"/>
        <thead>
         <row>
          <entry>Style Specification</entry>
@@ -2306,6 +2337,9 @@ January 8 04:05:06 1999 PST
      <table id="datatype-datetime-output2-table">
       <title>Date Order Conventions</title>
       <tgroup cols="3">
+       <colspec colname="col1" colwidth="1*"/>
+       <colspec colname="col2" colwidth="1*"/>
+       <colspec colname="col3" colwidth="2*"/>
        <thead>
         <row>
          <entry><varname>datestyle</varname> Setting</entry>
@@ -2721,23 +2755,23 @@ P <optional> <replaceable>years</replaceable>-<replaceable>months</replaceable>-
        </thead>
        <tbody>
         <row>
-         <entry>1-2</entry>
+         <entry><literal>1-2</literal></entry>
          <entry>SQL standard format: 1 year 2 months</entry>
         </row>
         <row>
-         <entry>3 4:05:06</entry>
+         <entry><literal>3 4:05:06</literal></entry>
          <entry>SQL standard format: 3 days 4 hours 5 minutes 6 seconds</entry>
         </row>
         <row>
-         <entry>1 year 2 months 3 days 4 hours 5 minutes 6 seconds</entry>
+         <entry><literal>1 year 2 months 3 days 4 hours 5 minutes 6 seconds</literal></entry>
          <entry>Traditional Postgres format: 1 year 2 months 3 days 4 hours 5 minutes 6 seconds</entry>
         </row>
         <row>
-         <entry>P1Y2M3DT4H5M6S</entry>
+         <entry><literal>P1Y2M3DT4H5M6S</literal></entry>
          <entry>ISO 8601 <quote>format with designators</quote>: same meaning as above</entry>
         </row>
         <row>
-         <entry>P0001-02-03T04:05:06</entry>
+         <entry><literal>P0001-02-03T04:05:06</literal></entry>
          <entry>ISO 8601 <quote>alternative format</quote>: same meaning as above</entry>
         </row>
        </tbody>
@@ -3159,6 +3193,10 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <table id="datatype-geo-table">
      <title>Geometric Types</title>
      <tgroup cols="4">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="2*"/>
+      <colspec colname="col4" colwidth="1*"/>
       <thead>
        <row>
         <entry>Name</entry>
@@ -3485,6 +3523,9 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <table tocentry="1" id="datatype-net-types-table">
      <title>Network Address Types</title>
      <tgroup cols="3">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="2*"/>
       <thead>
        <row>
         <entry>Name</entry>
@@ -4897,6 +4938,8 @@ SELECT * FROM pg_attribute
     <table id="datatype-pseudotypes-table">
      <title>Pseudo-Types</title>
      <tgroup cols="2">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="2*"/>
       <thead>
        <row>
         <entry>Name</entry>

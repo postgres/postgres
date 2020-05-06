@@ -132,6 +132,9 @@
   <table id="json-type-mapping-table">
      <title>JSON Primitive Types and Corresponding <productname>PostgreSQL</productname> Types</title>
      <tgroup cols="3">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="2*"/>
       <thead>
        <row>
         <entry>JSON primitive type</entry>
@@ -742,6 +745,8 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   <table id="type-jsonpath-variables">
    <title><type>jsonpath</type> Variables</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
      <row>
       <entry>Variable</entry>
@@ -777,6 +782,8 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   <table id="type-jsonpath-accessors">
    <title><type>jsonpath</type> Accessors</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
      <row>
       <entry>Accessor Operator</entry>

@@ -508,6 +508,8 @@ DROP ROLE doomed_role;
    <table tocentry="1" id="default-roles-table">
     <title>Default Roles</title>
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="2*"/>
      <thead>
       <row>
        <entry>Role</entry>

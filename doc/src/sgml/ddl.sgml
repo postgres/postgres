@@ -1882,6 +1882,9 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <table id="privilege-abbrevs-table">
    <title>ACL Privilege Abbreviations</title>
    <tgroup cols="3">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="1*"/>
+    <colspec colname="col3" colwidth="2*"/>
     <thead>
      <row>
       <entry>Privilege</entry>
@@ -1987,6 +1990,10 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <table id="privileges-summary-table">
    <title>Summary of Access Privileges</title>
    <tgroup cols="4">
+    <colspec colname="col1" colwidth="2*"/>
+    <colspec colname="col2" colwidth="1*"/>
+    <colspec colname="col3" colwidth="1*"/>
+    <colspec colname="col4" colwidth="1*"/>
     <thead>
      <row>
       <entry>Object Type</entry>

@@ -32,6 +32,11 @@
   <xsl:attribute name="text-align">center</xsl:attribute>
 </xsl:attribute-set>
 
+<!-- Make all tables default to left alignment, for consistency with HTML -->
+<xsl:attribute-set name="table.table.properties">
+  <xsl:attribute name="text-align">left</xsl:attribute>
+</xsl:attribute-set>
+
 <!-- fix missing space after vertical simplelist
      https://github.com/docbook/xslt10-stylesheets/issues/31 -->
 <xsl:attribute-set name="normal.para.spacing">

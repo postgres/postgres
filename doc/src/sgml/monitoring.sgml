@@ -3784,6 +3784,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <table id="analyze-phases">
    <title>ANALYZE phases</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
      <row>
       <entry>Phase</entry>
@@ -3988,6 +3990,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <table id="create-index-phases">
    <title>CREATE INDEX Phases</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
      <row>
       <entry>Phase</entry>
@@ -4217,6 +4221,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <table id="vacuum-phases">
    <title>VACUUM Phases</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
     <row>
       <entry>Phase</entry>
@@ -4411,6 +4417,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <table id="cluster-phases">
    <title>CLUSTER and VACUUM FULL Phases</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
     <row>
       <entry>Phase</entry>
@@ -4559,6 +4567,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <table id="basebackup-phases">
    <title>Base backup phases</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
      <row>
       <entry>Phase</entry>
@@ -4686,6 +4696,9 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
  <table id="dtrace-probe-point-table">
   <title>Built-in DTrace Probes</title>
   <tgroup cols="3">
+   <colspec colname="col1" colwidth="2*"/>
+   <colspec colname="col2" colwidth="3*"/>
+   <colspec colname="col3" colwidth="3*"/>
    <thead>
     <row>
      <entry>Name</entry>

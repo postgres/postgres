@@ -6258,6 +6258,10 @@ local0.*    /var/log/postgresql
     <table id="runtime-config-severity-levels">
      <title>Message Severity Levels</title>
      <tgroup cols="4">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="2*"/>
+      <colspec colname="col3" colwidth="1*"/>
+      <colspec colname="col4" colwidth="1*"/>
       <thead>
        <row>
         <entry>Severity</entry>
@@ -6269,7 +6273,7 @@ local0.*    /var/log/postgresql
 
       <tbody>
        <row>
-        <entry><literal>DEBUG1..DEBUG5</literal></entry>
+        <entry><literal>DEBUG1 .. DEBUG5</literal></entry>
         <entry>Provides successively-more-detailed information for use by
          developers.</entry>
         <entry><literal>DEBUG</literal></entry>
@@ -10288,6 +10292,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
     <table id="runtime-config-short-table">
      <title>Short Option Key</title>
      <tgroup cols="2">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="2*"/>
       <thead>
        <row>
         <entry>Short Option</entry>

@@ -2074,6 +2074,9 @@ LIMIT 10;
   <table id="textsearch-default-parser">
    <title>Default Parser's Token Types</title>
    <tgroup cols="3">
+    <colspec colname="col1" colwidth="2*"/>
+    <colspec colname="col2" colwidth="2*"/>
+    <colspec colname="col3" colwidth="3*"/>
     <thead>
      <row>
       <entry>Alias</entry>

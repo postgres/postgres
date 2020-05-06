@@ -1289,8 +1289,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     <table tocentry="1" id="row-lock-compatibility">
      <title>Conflicting Row-Level Locks</title>
      <tgroup cols="5">
-      <colspec colnum="2" colname="lockst"/>
-      <colspec colnum="5" colname="lockend"/>
+      <colspec colname="col1"    colwidth="1.5*"/>
+      <colspec colname="lockst"  colwidth="1*"/>
+      <colspec colname="col3"    colwidth="1*"/>
+      <colspec colname="col4"    colwidth="1*"/>
+      <colspec colname="lockend" colwidth="1*"/>
       <spanspec namest="lockst" nameend="lockend" spanname="lockreq"/>
       <thead>
        <row>

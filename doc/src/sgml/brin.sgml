@@ -121,6 +121,9 @@ LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was 
  <table id="brin-builtin-opclasses-table">
   <title>Built-in <acronym>BRIN</acronym> Operator Classes</title>
   <tgroup cols="3">
+   <colspec colname="col1" colwidth="2*"/>
+   <colspec colname="col2" colwidth="2*"/>
+   <colspec colname="col3" colwidth="1*"/>
    <thead>
     <row>
      <entry>Name</entry>
@@ -587,6 +590,8 @@ typedef struct BrinOpcInfo
  <table id="brin-extensibility-minmax-table">
   <title>Function and Support Numbers for Minmax Operator Classes</title>
   <tgroup cols="2">
+   <colspec colname="col1" colwidth="1*"/>
+   <colspec colname="col2" colwidth="2*"/>
    <thead>
     <row>
      <entry>Operator class member</entry>
@@ -648,6 +653,9 @@ typedef struct BrinOpcInfo
  <table id="brin-extensibility-inclusion-table">
   <title>Function and Support Numbers for Inclusion Operator Classes</title>
   <tgroup cols="3">
+   <colspec colname="col1" colwidth="1*"/>
+   <colspec colname="col2" colwidth="2*"/>
+   <colspec colname="col3" colwidth="1*"/>
    <thead>
     <row>
      <entry>Operator class member</entry>

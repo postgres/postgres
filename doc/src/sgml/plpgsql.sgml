@@ -1493,6 +1493,9 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
      <table id="plpgsql-current-diagnostics-values">
       <title>Available Diagnostics Items</title>
       <tgroup cols="3">
+       <colspec colname="col1" colwidth="1*"/>
+       <colspec colname="col2" colwidth="1*"/>
+       <colspec colname="col3" colwidth="2*"/>
        <thead>
         <row>
          <entry>Name</entry>
@@ -2820,6 +2823,9 @@ GET STACKED DIAGNOSTICS <replaceable>variable</replaceable> { = | := } <replacea
      <table id="plpgsql-exception-diagnostics-values">
       <title>Error Diagnostics Items</title>
       <tgroup cols="3">
+       <colspec colname="col1" colwidth="2*"/>
+       <colspec colname="col2" colwidth="1*"/>
+       <colspec colname="col3" colwidth="2*"/>
        <thead>
         <row>
          <entry>Name</entry>

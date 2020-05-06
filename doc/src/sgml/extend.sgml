@@ -242,6 +242,9 @@
     <table id="extend-types-polymorphic-table">
      <title>Polymorphic Types</title>
      <tgroup cols="3">
+      <colspec colname="col1" colwidth="2*"/>
+      <colspec colname="col2" colwidth="1*"/>
+      <colspec colname="col3" colwidth="2*"/>
       <thead>
        <row>
         <entry>Name</entry>

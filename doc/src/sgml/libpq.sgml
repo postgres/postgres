@@ -7763,6 +7763,10 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
   <table id="libpq-ssl-sslmode-statements">
    <title>SSL Mode Descriptions</title>
    <tgroup cols="4">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="1*"/>
+    <colspec colname="col3" colwidth="1*"/>
+    <colspec colname="col4" colwidth="2*"/>
     <thead>
      <row>
       <entry><literal>sslmode</literal></entry>

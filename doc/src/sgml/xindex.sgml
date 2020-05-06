@@ -412,6 +412,8 @@
    <table tocentry="1" id="xindex-btree-support-table">
     <title>B-Tree Support Functions</title>
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="3*"/>
+     <colspec colname="col2" colwidth="1*"/>
      <thead>
       <row>
        <entry>Function</entry>
@@ -461,6 +463,8 @@
    <table tocentry="1" id="xindex-hash-support-table">
     <title>Hash Support Functions</title>
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="3*"/>
+     <colspec colname="col2" colwidth="1*"/>
      <thead>
       <row>
        <entry>Function</entry>
@@ -494,6 +498,9 @@
    <table tocentry="1" id="xindex-gist-support-table">
     <title>GiST Support Functions</title>
     <tgroup cols="3">
+     <colspec colname="col1" colwidth="2*"/>
+     <colspec colname="col2" colwidth="3*"/>
+     <colspec colname="col3" colwidth="1*"/>
      <thead>
       <row>
        <entry>Function</entry>
@@ -566,6 +573,9 @@
    <table tocentry="1" id="xindex-spgist-support-table">
     <title>SP-GiST Support Functions</title>
     <tgroup cols="3">
+     <colspec colname="col1" colwidth="2*"/>
+     <colspec colname="col2" colwidth="3*"/>
+     <colspec colname="col3" colwidth="1*"/>
      <thead>
       <row>
        <entry>Function</entry>
@@ -614,6 +624,9 @@
    <table tocentry="1" id="xindex-gin-support-table">
     <title>GIN Support Functions</title>
     <tgroup cols="3">
+     <colspec colname="col1" colwidth="2*"/>
+     <colspec colname="col2" colwidth="3*"/>
+     <colspec colname="col3" colwidth="1*"/>
      <thead>
       <row>
        <entry>Function</entry>
@@ -681,6 +694,9 @@
    <table tocentry="1" id="xindex-brin-support-table">
     <title>BRIN Support Functions</title>
     <tgroup cols="3">
+     <colspec colname="col1" colwidth="2*"/>
+     <colspec colname="col2" colwidth="3*"/>
+     <colspec colname="col3" colwidth="1*"/>
      <thead>
       <row>
        <entry>Function</entry>
