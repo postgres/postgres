@@ -899,7 +899,6 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	if (slotname)
 		PreventTransactionChain(isTopLevel, "DROP SUBSCRIPTION");
 
-
 	ObjectAddressSet(myself, SubscriptionRelationId, subid);
 	EventTriggerSQLDropAddObject(&myself, true, true);
 
