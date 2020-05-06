@@ -219,9 +219,51 @@ SELECT * FROM gtest1;
  4 | 8
 (2 rows)
 
--- test inheritance mismatch
+CREATE TABLE gtest_normal (a int, b int);
+CREATE TABLE gtest_normal_child (a int, b int GENERATED ALWAYS AS (a * 2) STORED) INHERITS (gtest_normal);
+NOTICE:  merging column "a" with inherited definition
+NOTICE:  merging column "b" with inherited definition
+\d gtest_normal_child
+                      Table "public.gtest_normal_child"
+ Column |  Type   | Collation | Nullable |              Default               
+--------+---------+-----------+----------+------------------------------------
+ a      | integer |           |          | 
+ b      | integer |           |          | generated always as (a * 2) stored
+Inherits: gtest_normal
+
+INSERT INTO gtest_normal (a) VALUES (1);
+INSERT INTO gtest_normal_child (a) VALUES (2);
+SELECT * FROM gtest_normal;
+ a | b 
+---+---
+ 1 |  
+ 2 | 4
+(2 rows)
+
+-- test inheritance mismatches between parent and child
+CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS (a * 22) STORED) INHERITS (gtest1);  -- error
+NOTICE:  merging column "b" with inherited definition
+ERROR:  child column "b" specifies generation expression
+HINT:  Omit the generation expression in the definition of the child table column to inherit the generation expression from the parent table.
+CREATE TABLE gtestx (x int, b int DEFAULT 10) INHERITS (gtest1);  -- error
+NOTICE:  merging column "b" with inherited definition
+ERROR:  column "b" inherits from generated column but specifies default
+CREATE TABLE gtestx (x int, b int GENERATED ALWAYS AS IDENTITY) INHERITS (gtest1);  -- error
+NOTICE:  merging column "b" with inherited definition
+ERROR:  column "b" inherits from generated column but specifies identity
+-- test multiple inheritance mismatches
 CREATE TABLE gtesty (x int, b int);
 CREATE TABLE gtest1_2 () INHERITS (gtest1, gtesty);  -- error
+NOTICE:  merging multiple inherited definitions of column "b"
+ERROR:  inherited column "b" has a generation conflict
+DROP TABLE gtesty;
+CREATE TABLE gtesty (x int, b int GENERATED ALWAYS AS (x * 22) STORED);
+CREATE TABLE gtest1_2 () INHERITS (gtest1, gtesty);  -- error
+NOTICE:  merging multiple inherited definitions of column "b"
+ERROR:  column "b" inherits conflicting generation expressions
+DROP TABLE gtesty;
+CREATE TABLE gtesty (x int, b int DEFAULT 55);
+CREATE TABLE gtest1_2 () INHERITS (gtest0, gtesty);  -- error
 NOTICE:  merging multiple inherited definitions of column "b"
 ERROR:  inherited column "b" has a generation conflict
 DROP TABLE gtesty;

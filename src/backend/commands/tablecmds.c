@@ -2618,12 +2618,55 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def->is_local = true;
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= newdef->is_not_null;
+
+				/*
+				 * Check for conflicts related to generated columns.
+				 *
+				 * If the parent column is generated, the child column must be
+				 * unadorned and will be made a generated column.  (We could
+				 * in theory allow the child column definition specifying the
+				 * exact same generation expression, but that's a bit
+				 * complicated to implement and doesn't seem very useful.)  We
+				 * also check that the child column doesn't specify a default
+				 * value or identity, which matches the rules for a single
+				 * column in parse_util.c.
+				 */
+				if (def->generated)
+				{
+					if (newdef->generated)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+								 errmsg("child column \"%s\" specifies generation expression",
+										def->colname),
+								 errhint("Omit the generation expression in the definition of the child table column to inherit the generation expression from the parent table.")));
+					if (newdef->raw_default && !newdef->generated)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+								 errmsg("column \"%s\" inherits from generated column but specifies default",
+										def->colname)));
+					if (newdef->identity)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+								 errmsg("column \"%s\" inherits from generated column but specifies identity",
+										def->colname)));
+				}
+				/*
+				 * If the parent column is not generated, then take whatever
+				 * the child column definition says.
+				 */
+				else
+				{
+					if (newdef->generated)
+						def->generated = newdef->generated;
+				}
+
 				/* If new def has a default, override previous default */
 				if (newdef->raw_default != NULL)
 				{
 					def->raw_default = newdef->raw_default;
 					def->cooked_default = newdef->cooked_default;
 				}
+
 			}
 			else
 			{
@@ -2709,11 +2752,19 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			ColumnDef  *def = lfirst(entry);
 
 			if (def->cooked_default == &bogus_marker)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-						 errmsg("column \"%s\" inherits conflicting default values",
-								def->colname),
-						 errhint("To resolve the conflict, specify a default explicitly.")));
+			{
+				if (def->generated)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+							 errmsg("column \"%s\" inherits conflicting generation expressions",
+									def->colname)));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+							 errmsg("column \"%s\" inherits conflicting default values",
+									def->colname),
+							 errhint("To resolve the conflict, specify a default explicitly.")));
+			}
 		}
 	}
 
