@@ -66,8 +66,8 @@
  <title><productname>PostgreSQL</productname> Error Codes</title>
 
  <tgroup cols="2">
-  <colspec colnum="1" colname="errorcode" align="left" colwidth="1*"/>
-  <colspec colnum="2" colname="condname" align="left" colwidth="8*"/>
+  <colspec colnum="1" colname="errorcode" colwidth="1*"/>
+  <colspec colnum="2" colname="condname" colwidth="8*"/>
   <spanspec namest="errorcode" nameend="condname" spanname="span12"/>
 
   <thead>
