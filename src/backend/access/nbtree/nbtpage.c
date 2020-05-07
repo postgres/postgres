@@ -1315,20 +1315,87 @@ _bt_xid_horizon(Relation rel, Relation heapRel, Page page,
 }
 
 /*
- * Returns true, if the given block has the half-dead flag set.
+ * Check that leftsib page (the btpo_prev of target page) is not marked with
+ * INCOMPLETE_SPLIT flag.
+ *
+ * Returning true indicates that page flag is set in leftsib (which is
+ * definitely still the left sibling of target).  When that happens, the
+ * target doesn't have a downlink in parent, and the page deletion algorithm
+ * isn't prepared to handle that.  Deletion of the target page (or the whole
+ * subtree that contains the target page) cannot take place.
  */
 static bool
-_bt_is_page_halfdead(Relation rel, BlockNumber blk)
+_bt_leftsib_splitflag(Relation rel, BlockNumber leftsib, BlockNumber target)
 {
 	Buffer		buf;
 	Page		page;
 	BTPageOpaque opaque;
 	bool		result;
 
-	buf = _bt_getbuf(rel, blk, BT_READ);
+	/* Easy case: No left sibling */
+	if (leftsib == P_NONE)
+		return false;
+
+	buf = _bt_getbuf(rel, leftsib, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
+	/*
+	 * If the left sibling was concurrently split, so that its next-pointer
+	 * doesn't point to the current page anymore, the split that created
+	 * target must be completed.  Caller can reasonably expect that there will
+	 * be a downlink to the target page that it can relocate using its stack.
+	 * (We don't allow splitting an incompletely split page again until the
+	 * previous split has been completed.)
+	 */
+	result = (opaque->btpo_next == target && P_INCOMPLETE_SPLIT(opaque));
+	_bt_relbuf(rel, buf);
+
+	return result;
+}
+
+/*
+ * Check that leafrightsib page (the btpo_next of target leaf page) is not
+ * marked with ISHALFDEAD flag.
+ *
+ * Returning true indicates that page flag is set in leafrightsib, so page
+ * deletion cannot go ahead.  Our caller is not prepared to deal with the case
+ * where the parent page does not have a pivot tuples whose downlink points to
+ * leafrightsib (due to an earlier interrupted VACUUM operation).  It doesn't
+ * seem worth going to the trouble of teaching our caller to deal with it.
+ * The situation will be resolved after VACUUM finishes the deletion of the
+ * half-dead page (when a future VACUUM operation reaches the target page
+ * again).
+ *
+ * _bt_leftsib_splitflag() is called for both leaf pages and internal pages.
+ * _bt_rightsib_halfdeadflag() is only called for leaf pages, though.  This is
+ * okay because of the restriction on deleting pages that are the rightmost
+ * page of their parent (i.e. that such deletions can only take place when the
+ * entire subtree must be deleted).  The leaf level check made here will apply
+ * to a right "cousin" leaf page rather than a simple right sibling leaf page
+ * in cases where caller actually goes on to attempt deleting pages that are
+ * above the leaf page.  The right cousin leaf page is representative of the
+ * left edge of the subtree to the right of the to-be-deleted subtree as a
+ * whole, which is exactly the condition that our caller cares about.
+ * (Besides, internal pages are never marked half-dead, so it isn't even
+ * possible to _directly_ assess if an internal page is part of some other
+ * to-be-deleted subtree.)
+ */
+static bool
+_bt_rightsib_halfdeadflag(Relation rel, BlockNumber leafrightsib)
+{
+	Buffer		buf;
+	Page		page;
+	BTPageOpaque opaque;
+	bool		result;
+
+	Assert(leafrightsib != P_NONE);
+
+	buf = _bt_getbuf(rel, leafrightsib, BT_READ);
+	page = BufferGetPage(buf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	Assert(P_ISLEAF(opaque) && !P_ISDELETED(opaque));
 	result = P_ISHALFDEAD(opaque);
 	_bt_relbuf(rel, buf);
 
@@ -1374,7 +1441,6 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	Buffer		pbuf;
 	Page		page;
 	BTPageOpaque opaque;
-	BlockNumber leftsib;
 
 	/*
 	 * Locate the downlink of "child" in the parent, updating the stack entry
@@ -1399,11 +1465,14 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	 * If the target is the rightmost child of its parent, then we can't
 	 * delete, unless it's also the only child.
 	 */
+	Assert(poffset <= maxoff);
 	if (poffset >= maxoff)
 	{
 		/* It's rightmost child... */
 		if (poffset == P_FIRSTDATAKEY(opaque))
 		{
+			BlockNumber leftsibparent;
+
 			/*
 			 * It's only child, so safe if parent would itself be removable.
 			 * We have to check the parent itself, and then recurse to test
@@ -1418,41 +1487,16 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 
 			*target = parent;
 			*rightsib = opaque->btpo_next;
-			leftsib = opaque->btpo_prev;
+			leftsibparent = opaque->btpo_prev;
 
 			_bt_relbuf(rel, pbuf);
 
 			/*
-			 * Like in _bt_pagedel, check that the left sibling is not marked
-			 * with INCOMPLETE_SPLIT flag.  That would mean that there is no
-			 * downlink to the page to be deleted, and the page deletion
-			 * algorithm isn't prepared to handle that.
+			 * Check that the left sibling of parent (if any) is not marked
+			 * with INCOMPLETE_SPLIT flag before proceeding
 			 */
-			if (leftsib != P_NONE)
-			{
-				Buffer		lbuf;
-				Page		lpage;
-				BTPageOpaque lopaque;
-
-				lbuf = _bt_getbuf(rel, leftsib, BT_READ);
-				lpage = BufferGetPage(lbuf);
-				lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
-
-				/*
-				 * If the left sibling was concurrently split, so that its
-				 * next-pointer doesn't point to the current page anymore, the
-				 * split that created the current page must be completed. (We
-				 * don't allow splitting an incompletely split page again
-				 * until the previous split has been completed)
-				 */
-				if (lopaque->btpo_next == parent &&
-					P_INCOMPLETE_SPLIT(lopaque))
-				{
-					_bt_relbuf(rel, lbuf);
-					return false;
-				}
-				_bt_relbuf(rel, lbuf);
-			}
+			if (_bt_leftsib_splitflag(rel, leftsibparent, parent))
+				return false;
 
 			return _bt_lock_branch_parent(rel, parent, stack->bts_parent,
 										  topparent, topoff, target, rightsib);
@@ -1525,7 +1569,9 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 	 *
 	 * Also, when "stack" is not NULL, we have already checked that the
 	 * current page is not the right half of an incomplete split, i.e. the
-	 * left sibling does not have its INCOMPLETE_SPLIT flag set.
+	 * left sibling does not have its INCOMPLETE_SPLIT flag set, including
+	 * when the current target page is to the right of caller's initial page
+	 * (the scanblkno page).
 	 */
 	BTStack		stack = NULL;
 
@@ -1589,11 +1635,12 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 		 * The INCOMPLETE_SPLIT flag on the page tells us if the page is the
 		 * left half of an incomplete split, but ensuring that it's not the
 		 * right half is more complicated.  For that, we have to check that
-		 * the left sibling doesn't have its INCOMPLETE_SPLIT flag set.  On
-		 * the first iteration, we temporarily release the lock on the current
-		 * page, and check the left sibling and also construct a search stack
-		 * to.  On subsequent iterations, we know we stepped right from a page
-		 * that passed these tests, so it's OK.
+		 * the left sibling doesn't have its INCOMPLETE_SPLIT flag set using
+		 * _bt_leftsib_splitflag().  On the first iteration, we temporarily
+		 * release the lock on scanblkno/leafbuf, check the left sibling, and
+		 * construct a search stack to scanblkno.  On subsequent iterations,
+		 * we know we stepped right from a page that passed these tests, so
+		 * it's OK.
 		 */
 		if (P_RIGHTMOST(opaque) || P_ISROOT(opaque) ||
 			P_FIRSTDATAKEY(opaque) <= PageGetMaxOffsetNumber(page) ||
@@ -1628,13 +1675,14 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 				BTScanInsert itup_key;
 				ItemId		itemid;
 				IndexTuple	targetkey;
+				BlockNumber leftsib, target;
 				Buffer		lbuf;
-				BlockNumber leftsib;
 
 				itemid = PageGetItemId(page, P_HIKEY);
 				targetkey = CopyIndexTuple((IndexTuple) PageGetItem(page, itemid));
 
 				leftsib = opaque->btpo_prev;
+				target = BufferGetBlockNumber(leafbuf);
 
 				/*
 				 * To avoid deadlocks, we'd better drop the leaf page lock
@@ -1643,35 +1691,14 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 				LockBuffer(leafbuf, BUFFER_LOCK_UNLOCK);
 
 				/*
-				 * Fetch the left sibling, to check that it's not marked with
-				 * INCOMPLETE_SPLIT flag.  That would mean that the page
-				 * to-be-deleted doesn't have a downlink, and the page
-				 * deletion algorithm isn't prepared to handle that.
+				 * Check that the left sibling of leafbuf (if any) is not
+				 * marked with INCOMPLETE_SPLIT flag before proceeding
 				 */
-				if (leftsib != P_NONE)
+				Assert(target == scanblkno);
+				if (_bt_leftsib_splitflag(rel, leftsib, target))
 				{
-					BTPageOpaque lopaque;
-					Page		lpage;
-
-					lbuf = _bt_getbuf(rel, leftsib, BT_READ);
-					lpage = BufferGetPage(lbuf);
-					lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
-
-					/*
-					 * If the left sibling is split again by another backend,
-					 * after we released the lock, we know that the first
-					 * split must have finished, because we don't allow an
-					 * incompletely-split page to be split again.  So we don't
-					 * need to walk right here.
-					 */
-					if (lopaque->btpo_next == BufferGetBlockNumber(leafbuf) &&
-						P_INCOMPLETE_SPLIT(lopaque))
-					{
-						ReleaseBuffer(leafbuf);
-						_bt_relbuf(rel, lbuf);
-						return ndeleted;
-					}
-					_bt_relbuf(rel, lbuf);
+					ReleaseBuffer(leafbuf);
+					return ndeleted;
 				}
 
 				/* we need an insertion scan key for the search, so build one */
@@ -1679,7 +1706,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 				/* find the leftmost leaf page with matching pivot/high key */
 				itup_key->pivotsearch = true;
 				stack = _bt_search(rel, itup_key, &lbuf, BT_READ, NULL);
-				/* don't need a lock or second pin on the page */
+				/* won't need a second lock or pin on leafbuf */
 				_bt_relbuf(rel, lbuf);
 
 				/*
@@ -1804,12 +1831,11 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * Before attempting to lock the parent page, check that the right sibling
 	 * is not in half-dead state.  A half-dead right sibling would have no
 	 * downlink in the parent, which would be highly confusing later when we
-	 * delete the downlink that follows the current page's downlink. (I
-	 * believe the deletion would work correctly, but it would fail the
-	 * cross-check we make that the following downlink points to the right
-	 * sibling of the delete page.)
+	 * delete the downlink that follows the leafbuf page's downlink.  It would
+	 * fail the "right sibling of target page is also the next child in parent
+	 * page" cross-check below.
 	 */
-	if (_bt_is_page_halfdead(rel, leafrightsib))
+	if (_bt_rightsib_halfdeadflag(rel, leafrightsib))
 	{
 		elog(DEBUG1, "could not delete page %u because its right sibling %u is half-dead",
 			 leafblkno, leafrightsib);
@@ -1822,16 +1848,6 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	 * be deleted too, and the same condition applies recursively to it. We
 	 * have to check this condition all the way up before trying to delete,
 	 * and lock the final parent of the to-be-deleted subtree.
-	 *
-	 * However, we won't need to repeat the above _bt_is_page_halfdead() check
-	 * for parent/ancestor pages because of the rightmost restriction. The
-	 * leaf check will apply to a right "cousin" leaf page rather than a
-	 * simple right sibling leaf page in cases where we actually go on to
-	 * perform internal page deletion. The right cousin leaf page is
-	 * representative of the left edge of the subtree to the right of the
-	 * to-be-deleted subtree as a whole.  (Besides, internal pages are never
-	 * marked half-dead, so it isn't even possible to directly assess if an
-	 * internal page is part of some other to-be-deleted subtree.)
 	 */
 	rightsib = leafrightsib;
 	target = leafblkno;
