@@ -533,6 +533,24 @@ SELECT 'a b:89  ca:23A,64c cb:80b d:34c'::tsvector @@ 'd:AC & c:*B' as "true";
  t
 (1 row)
 
+SELECT 'wa:1D wb:2A'::tsvector @@ 'w:*D & w:*A'::tsquery as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'wa:1D wb:2A'::tsvector @@ 'w:*D <-> w:*A'::tsquery as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'wa:1A wb:2D'::tsvector @@ 'w:*D <-> w:*A'::tsquery as "false";
+ false 
+-------
+ f
+(1 row)
+
 SELECT 'supernova'::tsvector @@ 'super'::tsquery AS "false";
  false 
 -------

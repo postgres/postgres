@@ -1276,12 +1276,13 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 	WordEntry  *StopLow = chkval->arrb;
 	WordEntry  *StopHigh = chkval->arre;
 	WordEntry  *StopMiddle = StopHigh;
-	int			difference = -1;
 	bool		res = false;
 
 	/* Loop invariant: StopLow <= val < StopHigh */
 	while (StopLow < StopHigh)
 	{
+		int			difference;
+
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
 		difference = tsCompareString(chkval->operand + val->distance,
 									 val->length,
@@ -1346,6 +1347,11 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 
 					memcpy(allpos + npos, data->pos, sizeof(WordEntryPos) * data->npos);
 					npos += data->npos;
+				}
+				else
+				{
+					/* at loop exit, res must be true if we found matches */
+					res = (npos > 0);
 				}
 			}
 			else
