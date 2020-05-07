@@ -271,6 +271,10 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 Allow partitionwise joins to happen in more cases (Ashutosh Bapat, Etsuro Fujita, Amit Langote, Tom Lane)
 </para>
 
+<para>
+For example, partitionwise joins can now happen between partitioned
+tables where the ancestors do not exactly match.
+</para>
 </listitem>
 
 <listitem>
@@ -303,7 +307,7 @@ Allow partitioned tables to be logically replicated via publications (Amit Lango
 
 <para>
 Previously, partitions had to be replicated individually.  Now partitioned tables can be published explicitly causing all partitions to be automatically published.  Addition/removal of partitions from
-partitioned tables are automatically added/removed from publications.  The CREATE PUBLICATION option publish_via_partition_root controls whether partitioned tables are published as themselves or their ancestors.
+partitioned tables are automatically added/removed from publications.  The CREATE PUBLICATION option publish_via_partition_root controls whether partitioned tables are published as their own or their ancestors.
 </para>
 
 </listitem>
@@ -315,9 +319,12 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
 <para>
-Allow non-partitioned tables to be logically replicated to subscribers that receive the rows into partitioned tables (Amit Langote)
+Allow logical replication into partitioned tables on subscribers (Amit Langote)
 </para>
 
+<para>
+Previously, subscribers could only receive rows into non-partitioned tables.
+</para>
 </listitem>
 
 <listitem>
