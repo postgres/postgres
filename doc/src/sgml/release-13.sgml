@@ -254,7 +254,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Improve cases where pruning of partitions can happen (Amit Langote, Yuzuko Hosoya, &Aacute;lvaro Herrera)
+Improve cases where pruning of partitions can happen (Yuzuko Hosoya, Amit Langote, &Aacute;lvaro Herrera)
 </para>
 
 </listitem>
@@ -268,7 +268,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow partitionwise joins to happen in more cases (Ashutosh Bapat, Etsuro Fujita, Amit Langote)
+Allow partitionwise joins to happen in more cases (Ashutosh Bapat, Etsuro Fujita, Amit Langote, Tom Lane)
 </para>
 
 </listitem>
@@ -292,43 +292,30 @@ These triggers cannot change which partition is the destination.
 <listitem>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
-2020-04-06 [f1ac27bfd] Add logical replication support to replicate into partit
--->
-
-<para>
-Allow logical replication to replicate partitioned tables (Amit Langote)
-</para>
-
-</listitem>
-
-<listitem>
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
 2020-03-10 [17b9e7f9f] Support adding partitioned tables to publication
--->
-
-<para>
-Allow partitioned tables to be added to replicated publications (Amit Langote)
-</para>
-
-<para>
-Partition additions/removals are replicated as well.  Previously, partitions had to be replicated individually.  HOW IS THIS DIFFERENT FROM THE ITEM ABOVE?
-</para>
-
-</listitem>
-
-<listitem>
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2020-04-08 [83fd4532a] Allow publishing partition changes via ancestors
 -->
 
 <para>
-Allow CREATE PUBLICATION to control whether partitioned tables are published as themselves or their ancestors (Amit Langote)
+Allow partitioned tables to be logically replicated via publications (Amit Langote)
 </para>
 
 <para>
-The option is publish_via_partition_root.
+Previously, partitions had to be replicated individually.  Now partitioned tables can be published explicitly causing all partitions to be automatically published.  Addition/removal of partitions from
+partitioned tables are automatically added/removed from publications.  The CREATE PUBLICATION option publish_via_partition_root controls whether partitioned tables are published as themselves or their ancestors.
+</para>
+
+</listitem>
+
+<listitem>
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2020-04-06 [f1ac27bfd] Add logical replication support to replicate into partit
+-->
+
+<para>
+Allow non-partitioned tables to be logically replicated to subscribers that receive the rows into partitioned tables (Amit Langote)
 </para>
 
 </listitem>
@@ -623,7 +610,7 @@ Author: Noah Misch <noah@leadboat.com>
 -->
 
 <para>
-Allow skipping of WAL for new tables and indexes if wal_level is 'minimal' (Noah Misch)
+Allow skipping of WAL for new tables and indexes if wal_level is 'minimal' (Kyotaro Horiguchi)
 </para>
 
 <para>
