@@ -70,83 +70,106 @@
 
   <table id="pgtrgm-func-table">
    <title><filename>pg_trgm</filename> Functions</title>
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry><function>similarity(text, text)</function><indexterm><primary>similarity</primary></indexterm></entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Returns a number that indicates how similar the two arguments are.
-       The range of the result is zero (indicating that the two strings are
-       completely dissimilar) to one (indicating that the two strings are
-       identical).
-      </entry>
-     </row>
-     <row>
-      <entry><function>show_trgm(text)</function><indexterm><primary>show_trgm</primary></indexterm></entry>
-      <entry><type>text[]</type></entry>
-      <entry>
-       Returns an array of all the trigrams in the given string.
-       (In practice this is seldom useful except for debugging.)
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <function>word_similarity(text, text)</function>
-       <indexterm><primary>word_similarity</primary></indexterm>
-      </entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Returns a number that indicates the greatest similarity between
-       the set of trigrams in the first string and any continuous extent
-       of an ordered set of trigrams in the second string.  For details, see
-       the explanation below.
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <function>strict_word_similarity(text, text)</function>
-       <indexterm><primary>strict_word_similarity</primary></indexterm>
-      </entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Same as <function>word_similarity(text, text)</function>, but forces
-       extent boundaries to match word boundaries.  Since we don't have
-       cross-word trigrams, this function actually returns greatest similarity
-       between first string and any continuous extent of words of the second
-       string.
-      </entry>
-     </row>
-     <row>
-      <entry><function>show_limit()</function><indexterm><primary>show_limit</primary></indexterm></entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Returns the current similarity threshold used by the <literal>%</literal>
-       operator.  This sets the minimum similarity between
-       two words for them to be considered similar enough to
-       be misspellings of each other, for example
-       (<emphasis>deprecated</emphasis>).
-      </entry>
-     </row>
-     <row>
-      <entry><function>set_limit(real)</function><indexterm><primary>set_limit</primary></indexterm></entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Sets the current similarity threshold that is used by the <literal>%</literal>
-       operator.  The threshold must be between 0 and 1 (default is 0.3).
-       Returns the same value passed in (<emphasis>deprecated</emphasis>).
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>similarity</primary></indexterm>
+        <function>similarity</function> ( <type>text</type>, <type>text</type> )
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Returns a number that indicates how similar the two arguments are.
+        The range of the result is zero (indicating that the two strings are
+        completely dissimilar) to one (indicating that the two strings are
+        identical).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>show_trgm</primary></indexterm>
+        <function>show_trgm</function> ( <type>text</type> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Returns an array of all the trigrams in the given string.
+        (In practice this is seldom useful except for debugging.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>word_similarity</primary></indexterm>
+        <function>word_similarity</function> ( <type>text</type>, <type>text</type> )
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Returns a number that indicates the greatest similarity between
+        the set of trigrams in the first string and any continuous extent
+        of an ordered set of trigrams in the second string.  For details, see
+        the explanation below.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>strict_word_similarity</primary></indexterm>
+        <function>strict_word_similarity</function> ( <type>text</type>, <type>text</type> )
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Same as <function>word_similarity</function>, but forces
+        extent boundaries to match word boundaries.  Since we don't have
+        cross-word trigrams, this function actually returns greatest similarity
+        between first string and any continuous extent of words of the second
+        string.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>show_limit</primary></indexterm>
+        <function>show_limit</function> ()
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Returns the current similarity threshold used by the <literal>%</literal>
+        operator.  This sets the minimum similarity between
+        two words for them to be considered similar enough to
+        be misspellings of each other, for example.
+        (<emphasis>Deprecated</emphasis>; instead use <command>SHOW</command>
+        <varname>pg_trgm.similarity_threshold</varname>.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>set_limit</primary></indexterm>
+        <function>set_limit</function> ( <type>real</type> )
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Sets the current similarity threshold that is used by the <literal>%</literal>
+        operator.  The threshold must be between 0 and 1 (default is 0.3).
+        Returns the same value passed in.
+        (<emphasis>Deprecated</emphasis>; instead use <command>SET</command>
+        <varname>pg_trgm.similarity_threshold</varname>.)
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
 
   <para>
@@ -178,9 +201,9 @@
   </para>
 
   <para>
-   At the same time, <function>strict_word_similarity(text, text)</function>
+   At the same time, <function>strict_word_similarity</function>
    selects an extent of words in the second string.  In the example above,
-   <function>strict_word_similarity(text, text)</function> would select the
+   <function>strict_word_similarity</function> would select the
    extent of a single word <literal>'words'</literal>, whose set of trigrams is
    <literal>{"  w"," wo","wor","ord","rds","ds "}</literal>.
 
@@ -194,117 +217,141 @@
   </para>
 
   <para>
-   Thus, the <function>strict_word_similarity(text, text)</function> function
+   Thus, the <function>strict_word_similarity</function> function
    is useful for finding the similarity to whole words, while
-   <function>word_similarity(text, text)</function> is more suitable for
+   <function>word_similarity</function> is more suitable for
    finding the similarity for parts of words.
   </para>
 
   <table id="pgtrgm-op-table">
    <title><filename>pg_trgm</filename> Operators</title>
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Operator</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry><type>text</type> <literal>%</literal> <type>text</type></entry>
-      <entry><type>boolean</type></entry>
-      <entry>
-       Returns <literal>true</literal> if its arguments have a similarity that is
-       greater than the current similarity threshold set by
-       <varname>pg_trgm.similarity_threshold</varname>.
-      </entry>
-     </row>
-     <row>
-      <entry><type>text</type> <literal>&lt;%</literal> <type>text</type></entry>
-      <entry><type>boolean</type></entry>
-      <entry>
-       Returns <literal>true</literal> if the similarity between the trigram
-       set in the first argument and a continuous extent of an ordered trigram
-       set in the second argument is greater than the current word similarity
-       threshold set by <varname>pg_trgm.word_similarity_threshold</varname>
-       parameter.
-      </entry>
-     </row>
-     <row>
-      <entry><type>text</type> <literal>%&gt;</literal> <type>text</type></entry>
-      <entry><type>boolean</type></entry>
-      <entry>
-       Commutator of the <literal>&lt;%</literal> operator.
-      </entry>
-     </row>
-     <row>
-      <entry><type>text</type> <literal>&lt;&lt;%</literal> <type>text</type></entry>
-      <entry><type>boolean</type></entry>
-      <entry>
-       Returns <literal>true</literal> if its second argument has a continuous
-       extent of an ordered trigram set that matches word boundaries,
-       and its similarity to the trigram set of the first argument is greater
-       than the current strict word similarity threshold set by the
-       <varname>pg_trgm.strict_word_similarity_threshold</varname> parameter.
-      </entry>
-     </row>
-     <row>
-      <entry><type>text</type> <literal>%&gt;&gt;</literal> <type>text</type></entry>
-      <entry><type>boolean</type></entry>
-      <entry>
-       Commutator of the <literal>&lt;&lt;%</literal> operator.
-      </entry>
-     </row>
-     <row>
-      <entry><type>text</type> <literal>&lt;-&gt;</literal> <type>text</type></entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Returns the <quote>distance</quote> between the arguments, that is
-       one minus the <function>similarity()</function> value.
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <type>text</type> <literal>&lt;&lt;-&gt;</literal> <type>text</type>
-      </entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Returns the <quote>distance</quote> between the arguments, that is
-       one minus the <function>word_similarity()</function> value.
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <type>text</type> <literal>&lt;-&gt;&gt;</literal> <type>text</type>
-      </entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Commutator of the <literal>&lt;&lt;-&gt;</literal> operator.
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <type>text</type> <literal>&lt;&lt;&lt;-&gt;</literal> <type>text</type>
-      </entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Returns the <quote>distance</quote> between the arguments, that is
-       one minus the <function>strict_word_similarity()</function> value.
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <type>text</type> <literal>&lt;-&gt;&gt;&gt;</literal> <type>text</type>
-      </entry>
-      <entry><type>real</type></entry>
-      <entry>
-       Commutator of the <literal>&lt;&lt;&lt;-&gt;</literal> operator.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>%</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns <literal>true</literal> if its arguments have a similarity
+        that is greater than the current similarity threshold set by
+        <varname>pg_trgm.similarity_threshold</varname>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>&lt;%</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns <literal>true</literal> if the similarity between the trigram
+        set in the first argument and a continuous extent of an ordered trigram
+        set in the second argument is greater than the current word similarity
+        threshold set by <varname>pg_trgm.word_similarity_threshold</varname>
+        parameter.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>%&gt;</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Commutator of the <literal>&lt;%</literal> operator.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>&lt;&lt;%</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns <literal>true</literal> if its second argument has a continuous
+        extent of an ordered trigram set that matches word boundaries,
+        and its similarity to the trigram set of the first argument is greater
+        than the current strict word similarity threshold set by the
+        <varname>pg_trgm.strict_word_similarity_threshold</varname> parameter.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>%&gt;&gt;</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Commutator of the <literal>&lt;&lt;%</literal> operator.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>&lt;-&gt;</literal> <type>text</type>
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Returns the <quote>distance</quote> between the arguments, that is
+        one minus the <function>similarity()</function> value.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>&lt;&lt;-&gt;</literal> <type>text</type>
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Returns the <quote>distance</quote> between the arguments, that is
+        one minus the <function>word_similarity()</function> value.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>&lt;-&gt;&gt;</literal> <type>text</type>
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Commutator of the <literal>&lt;&lt;-&gt;</literal> operator.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>&lt;&lt;&lt;-&gt;</literal> <type>text</type>
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Returns the <quote>distance</quote> between the arguments, that is
+        one minus the <function>strict_word_similarity()</function> value.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>&lt;-&gt;&gt;&gt;</literal> <type>text</type>
+        <returnvalue>real</returnvalue>
+       </para>
+       <para>
+        Commutator of the <literal>&lt;&lt;&lt;-&gt;</literal> operator.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
  </sect2>
 

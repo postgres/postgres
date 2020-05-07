@@ -29,49 +29,69 @@
 
  <table id="functions-adminpack-table">
   <title><filename>adminpack</filename> Functions</title>
-  <tgroup cols="3">
-   <thead>
-    <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry>
-    </row>
-   </thead>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-   <tbody>
-    <row>
-     <entry><function>pg_catalog.pg_file_write(filename text, data text, append boolean)</function></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Write, or append to, a text file
-     </entry>
-    </row>
-    <row>
-     <entry><function>pg_catalog.pg_file_sync(filename text)</function></entry>
-     <entry><type>void</type></entry>
-     <entry>
-      Flush a file or directory to disk
-     </entry>
-    </row>
-    <row>
-     <entry><function>pg_catalog.pg_file_rename(oldname text, newname text <optional>, archivename text</optional>)</function></entry>
-     <entry><type>boolean</type></entry>
-     <entry>
-      Rename a file
-     </entry>
-    </row>
-    <row>
-     <entry><function>pg_catalog.pg_file_unlink(filename text)</function></entry>
-     <entry><type>boolean</type></entry>
-     <entry>
-      Remove a file
-     </entry>
-    </row>
-    <row>
-     <entry><function>pg_catalog.pg_logdir_ls()</function></entry>
-     <entry><type>setof record</type></entry>
-     <entry>
-      List the log files in the <varname>log_directory</varname> directory
-     </entry>
-    </row>
-   </tbody>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>pg_catalog.pg_file_write</function> ( <parameter>filename</parameter> <type>text</type>, <parameter>data</parameter> <type>text</type>, <parameter>append</parameter> <type>boolean</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Writes, or appends to, a text file.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>pg_catalog.pg_file_sync</function> ( <parameter>filename</parameter> <type>text</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Flushes a file or directory to disk.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>pg_catalog.pg_file_rename</function> ( <parameter>oldname</parameter> <type>text</type>, <parameter>newname</parameter> <type>text</type> <optional>, <parameter>archivename</parameter> <type>text</type> </optional> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Renames a file.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>pg_catalog.pg_file_unlink</function> ( <parameter>filename</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Removes a file.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>pg_catalog.pg_logdir_ls</function> ()
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Lists the log files in the <varname>log_directory</varname> directory.
+       </para></entry>
+      </row>
+     </tbody>
   </tgroup>
  </table>
 

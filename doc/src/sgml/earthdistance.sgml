@@ -67,76 +67,120 @@
 
   <table id="earthdistance-cube-functions">
    <title>Cube-Based Earthdistance Functions</title>
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry><function>earth()</function><indexterm><primary>earth</primary></indexterm></entry>
-      <entry><type>float8</type></entry>
-      <entry>Returns the assumed radius of the Earth.</entry>
-     </row>
-     <row>
-      <entry><function>sec_to_gc(float8)</function><indexterm><primary>sec_to_gc</primary></indexterm></entry>
-      <entry><type>float8</type></entry>
-      <entry>Converts the normal straight line
-       (secant) distance between two points on the surface of the Earth
-       to the great circle distance between them.
-      </entry>
-     </row>
-     <row>
-      <entry><function>gc_to_sec(float8)</function><indexterm><primary>gc_to_sec</primary></indexterm></entry>
-      <entry><type>float8</type></entry>
-      <entry>Converts the great circle distance between two points on the
-       surface of the Earth to the normal straight line (secant) distance
-       between them.
-      </entry>
-     </row>
-     <row>
-      <entry><function>ll_to_earth(float8, float8)</function><indexterm><primary>ll_to_earth</primary></indexterm></entry>
-      <entry><type>earth</type></entry>
-      <entry>Returns the location of a point on the surface of the Earth given
-       its latitude (argument 1) and longitude (argument 2) in degrees.
-      </entry>
-     </row>
-     <row>
-      <entry><function>latitude(earth)</function><indexterm><primary>latitude</primary></indexterm></entry>
-      <entry><type>float8</type></entry>
-      <entry>Returns the latitude in degrees of a point on the surface of the
-       Earth.
-      </entry>
-     </row>
-     <row>
-      <entry><function>longitude(earth)</function><indexterm><primary>longitude</primary></indexterm></entry>
-      <entry><type>float8</type></entry>
-      <entry>Returns the longitude in degrees of a point on the surface of the
-       Earth.
-      </entry>
-     </row>
-     <row>
-      <entry><function>earth_distance(earth, earth)</function><indexterm><primary>earth_distance</primary></indexterm></entry>
-      <entry><type>float8</type></entry>
-      <entry>Returns the great circle distance between two points on the
-       surface of the Earth.
-      </entry>
-     </row>
-     <row>
-      <entry><function>earth_box(earth, float8)</function><indexterm><primary>earth_box</primary></indexterm></entry>
-      <entry><type>cube</type></entry>
-      <entry>Returns a box suitable for an indexed search using the cube
-       <literal>@&gt;</literal>
-       operator for points within a given great circle distance of a location.
-       Some points in this box are further than the specified great circle
-       distance from the location, so a second check using
-       <function>earth_distance</function> should be included in the query.
-      </entry>
-     </row>
-    </tbody>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>earth</primary></indexterm>
+        <function>earth</function> ()
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Returns the assumed radius of the Earth.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>sec_to_gc</primary></indexterm>
+        <function>sec_to_gc</function> ( <type>float8</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Converts the normal straight line
+        (secant) distance between two points on the surface of the Earth
+        to the great circle distance between them.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>gc_to_sec</primary></indexterm>
+        <function>gc_to_sec</function> ( <type>float8</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Converts the great circle distance between two points on the
+        surface of the Earth to the normal straight line (secant) distance
+        between them.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>ll_to_earth</primary></indexterm>
+        <function>ll_to_earth</function> ( <type>float8</type>, <type>float8</type> )
+        <returnvalue>earth</returnvalue>
+       </para>
+       <para>
+        Returns the location of a point on the surface of the Earth given
+        its latitude (argument 1) and longitude (argument 2) in degrees.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>latitude</primary></indexterm>
+        <function>latitude</function> ( <type>earth</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Returns the latitude in degrees of a point on the surface of the
+        Earth.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>longitude</primary></indexterm>
+        <function>longitude</function> ( <type>earth</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Returns the longitude in degrees of a point on the surface of the
+        Earth.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>earth_distance</primary></indexterm>
+        <function>earth_distance</function> ( <type>earth</type>, <type>earth</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Returns the great circle distance between two points on the
+        surface of the Earth.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>earth_box</primary></indexterm>
+        <function>earth_box</function> ( <type>earth</type>, <type>float8</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Returns a box suitable for an indexed search using the <type>cube</type>
+        <literal>@&gt;</literal>
+        operator for points within a given great circle distance of a location.
+        Some points in this box are further than the specified great circle
+        distance from the location, so a second check using
+        <function>earth_distance</function> should be included in the query.
+       </para></entry>
+      </row>
+     </tbody>
    </tgroup>
   </table>
 
@@ -161,23 +205,29 @@
 
   <table id="earthdistance-point-operators">
    <title>Point-Based Earthdistance Operators</title>
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Operator</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry><type>point</type> <literal>&lt;@&gt;</literal> <type>point</type></entry>
-      <entry><type>float8</type></entry>
-      <entry>Gives the distance in statute miles between
-       two points on the Earth's surface.
-      </entry>
-     </row>
-    </tbody>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>point</type> <literal>&lt;@&gt;</literal> <type>point</type>
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Computes the distance in statute miles between
+        two points on the Earth's surface.
+       </para></entry>
+      </row>
+     </tbody>
    </tgroup>
   </table>
 

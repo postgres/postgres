@@ -99,118 +99,223 @@ key =&gt; NULL
 
   <table id="hstore-op-table">
    <title><type>hstore</type> Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Operator</entry>
-      <entry>Description</entry>
-      <entry>Example</entry>
-      <entry>Result</entry>
-     </row>
-    </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>-&gt;</literal> <type>text</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns value associated with given key, or <literal>NULL</literal> if
+        not present.
+       </para>
+       <para>
+        <literal>'a=&gt;x, b=&gt;y'::hstore -&gt; 'a'</literal>
+        <returnvalue>x</returnvalue>
+       </para></entry>
+      </row>
 
-    <tbody>
-     <row>
-      <entry><type>hstore</type> <literal>-&gt;</literal> <type>text</type></entry>
-      <entry>get value for key (<literal>NULL</literal> if not present)</entry>
-      <entry><literal>'a=&gt;x, b=&gt;y'::hstore -&gt; 'a'</literal></entry>
-      <entry><literal>x</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>-&gt;</literal> <type>text[]</type>
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Returns values associated with given keys, or <literal>NULL</literal>
+        if not present.
+       </para>
+       <para>
+        <literal>'a=&gt;x, b=&gt;y, c=&gt;z'::hstore -&gt; ARRAY['c','a']</literal>
+        <returnvalue>{"z","x"}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>-&gt;</literal> <type>text[]</type></entry>
-      <entry>get values for keys (<literal>NULL</literal> if not present)</entry>
-      <entry><literal>'a=&gt;x, b=&gt;y, c=&gt;z'::hstore -&gt; ARRAY['c','a']</literal></entry>
-      <entry><literal>{"z","x"}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>||</literal> <type>hstore</type>
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Concatenates two <type>hstore</type>s.
+       </para>
+       <para>
+        <literal>'a=&gt;b, c=&gt;d'::hstore || 'c=&gt;x, d=&gt;q'::hstore</literal>
+        <returnvalue>"a"=&gt;"b", "c"=&gt;"x", "d"=&gt;"q"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>||</literal> <type>hstore</type></entry>
-      <entry>concatenate <type>hstore</type>s</entry>
-      <entry><literal>'a=&gt;b, c=&gt;d'::hstore || 'c=&gt;x, d=&gt;q'::hstore</literal></entry>
-      <entry><literal>"a"=&gt;"b", "c"=&gt;"x", "d"=&gt;"q"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>?</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does <type>hstore</type> contain key?
+       </para>
+       <para>
+        <literal>'a=&gt;1'::hstore ? 'a'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>?</literal> <type>text</type></entry>
-      <entry>does <type>hstore</type> contain key?</entry>
-      <entry><literal>'a=&gt;1'::hstore ? 'a'</literal></entry>
-      <entry><literal>t</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>?&amp;</literal> <type>text[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does <type>hstore</type> contain all the specified keys?
+       </para>
+       <para>
+        <literal>'a=&gt;1,b=&gt;2'::hstore ?&amp; ARRAY['a','b']</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>?&amp;</literal> <type>text[]</type></entry>
-      <entry>does <type>hstore</type> contain all specified keys?</entry>
-      <entry><literal>'a=&gt;1,b=&gt;2'::hstore ?&amp; ARRAY['a','b']</literal></entry>
-      <entry><literal>t</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>?|</literal> <type>text[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does <type>hstore</type> contain any of the specified keys?
+       </para>
+       <para>
+        <literal>'a=&gt;1,b=&gt;2'::hstore ?| ARRAY['b','c']</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>?|</literal> <type>text[]</type></entry>
-      <entry>does <type>hstore</type> contain any of the specified keys?</entry>
-      <entry><literal>'a=&gt;1,b=&gt;2'::hstore ?| ARRAY['b','c']</literal></entry>
-      <entry><literal>t</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>@&gt;</literal> <type>hstore</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does left operand contain right?
+       </para>
+       <para>
+        <literal>'a=&gt;b, b=&gt;1, c=&gt;NULL'::hstore @&gt; 'b=&gt;1'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>@&gt;</literal> <type>hstore</type></entry>
-      <entry>does left operand contain right?</entry>
-      <entry><literal>'a=&gt;b, b=&gt;1, c=&gt;NULL'::hstore @&gt; 'b=&gt;1'</literal></entry>
-      <entry><literal>t</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>&lt;@</literal> <type>hstore</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is left operand contained in right?
+       </para>
+       <para>
+        <literal>'a=&gt;c'::hstore &lt;@ 'a=&gt;b, b=&gt;1, c=&gt;NULL'</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>&lt;@</literal> <type>hstore</type></entry>
-      <entry>is left operand contained in right?</entry>
-      <entry><literal>'a=&gt;c'::hstore &lt;@ 'a=&gt;b, b=&gt;1, c=&gt;NULL'</literal></entry>
-      <entry><literal>f</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>-</literal> <type>text</type>
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Deletes key from left operand.
+       </para>
+       <para>
+        <literal>'a=&gt;1, b=&gt;2, c=&gt;3'::hstore - 'b'::text</literal>
+        <returnvalue>"a"=&gt;"1", "c"=&gt;"3"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>-</literal> <type>text</type></entry>
-      <entry>delete key from left operand</entry>
-      <entry><literal>'a=&gt;1, b=&gt;2, c=&gt;3'::hstore - 'b'::text</literal></entry>
-      <entry><literal>"a"=&gt;"1", "c"=&gt;"3"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>-</literal> <type>text[]</type>
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Deletes keys from left operand.
+       </para>
+       <para>
+        <literal>'a=&gt;1, b=&gt;2, c=&gt;3'::hstore - ARRAY['a','b']</literal>
+        <returnvalue>"c"=&gt;"3"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>-</literal> <type>text[]</type></entry>
-      <entry>delete keys from left operand</entry>
-      <entry><literal>'a=&gt;1, b=&gt;2, c=&gt;3'::hstore - ARRAY['a','b']</literal></entry>
-      <entry><literal>"c"=&gt;"3"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>hstore</type> <literal>-</literal> <type>hstore</type>
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Deletes pairs from left operand that match pairs in the right operand.
+       </para>
+       <para>
+        <literal>'a=&gt;1, b=&gt;2, c=&gt;3'::hstore - 'a=&gt;4, b=&gt;2'::hstore</literal>
+        <returnvalue>"a"=&gt;"1", "c"=&gt;"3"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>hstore</type> <literal>-</literal> <type>hstore</type></entry>
-      <entry>delete matching pairs from left operand</entry>
-      <entry><literal>'a=&gt;1, b=&gt;2, c=&gt;3'::hstore - 'a=&gt;4, b=&gt;2'::hstore</literal></entry>
-      <entry><literal>"a"=&gt;"1", "c"=&gt;"3"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyelement</type> <literal>#=</literal> <type>hstore</type>
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Replaces fields in the left operand (which must be a composite type)
+        with matching values from <type>hstore</type>.
+       </para>
+       <para>
+        <literal>ROW(1,3) #= 'f1=>11'::hstore</literal>
+        <returnvalue>(11,3)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><type>record</type> <literal>#=</literal> <type>hstore</type></entry>
-      <entry>replace fields in <type>record</type> with matching values from <type>hstore</type></entry>
-      <entry>see Examples section</entry>
-      <entry></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>%%</literal> <type>hstore</type>
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Converts <type>hstore</type> to an array of alternating keys and
+        values.
+       </para>
+       <para>
+        <literal>%% 'a=&gt;foo, b=&gt;bar'::hstore</literal>
+        <returnvalue>{a,foo,b,bar}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>%%</literal> <type>hstore</type></entry>
-      <entry>convert <type>hstore</type> to array of alternating keys and values</entry>
-      <entry><literal>%% 'a=&gt;foo, b=&gt;bar'::hstore</literal></entry>
-      <entry><literal>{a,foo,b,bar}</literal></entry>
-     </row>
-
-     <row>
-      <entry><literal>%#</literal> <type>hstore</type></entry>
-      <entry>convert <type>hstore</type> to two-dimensional key/value array</entry>
-      <entry><literal>%# 'a=&gt;foo, b=&gt;bar'::hstore</literal></entry>
-      <entry><literal>{{a,foo},{b,bar}}</literal></entry>
-     </row>
-
-    </tbody>
-   </tgroup>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>%#</literal> <type>hstore</type>
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Converts <type>hstore</type> to a two-dimensional key/value array.
+       </para>
+       <para>
+        <literal>%# 'a=&gt;foo, b=&gt;bar'::hstore</literal>
+        <returnvalue>{{a,foo},{b,bar}}</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
 
   <note>
@@ -225,233 +330,389 @@ key =&gt; NULL
 
   <table id="hstore-func-table">
    <title><type>hstore</type> Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-   <tgroup cols="5">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Return Type</entry>
-      <entry>Description</entry>
-      <entry>Example</entry>
-      <entry>Result</entry>
-     </row>
-    </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>hstore</primary></indexterm>
+        <function>hstore</function> ( <type>record</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Constructs an <type>hstore</type> from a record or row.
+       </para>
+       <para>
+        <literal>hstore(ROW(1,2))</literal>
+        <returnvalue>"f1"=&gt;"1", "f2"=&gt;"2"</returnvalue>
+       </para></entry>
+      </row>
 
-    <tbody>
-     <row>
-      <entry><function>hstore(record)</function><indexterm><primary>hstore</primary></indexterm></entry>
-      <entry><type>hstore</type></entry>
-      <entry>construct an <type>hstore</type> from a record or row</entry>
-      <entry><literal>hstore(ROW(1,2))</literal></entry>
-      <entry><literal>f1=&gt;1,f2=&gt;2</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>hstore</function> ( <type>text[]</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Constructs an <type>hstore</type> from an array, which may be either
+        a key/value array, or a two-dimensional array.
+       </para>
+       <para>
+        <literal>hstore(ARRAY['a','1','b','2'])</literal>
+        <returnvalue>"a"=&gt;"1", "b"=&gt;"2"</returnvalue>
+       </para>
+       <para>
+        <literal>hstore(ARRAY[['c','3'],['d','4']])</literal>
+        <returnvalue>"c"=&gt;"3", "d"=&gt;"4"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore(text[])</function></entry>
-      <entry><type>hstore</type></entry>
-      <entry>construct an <type>hstore</type> from an array, which may be either
-       a key/value array, or a two-dimensional array</entry>
-      <entry><literal>hstore(ARRAY['a','1','b','2']) || hstore(ARRAY[['c','3'],['d','4']])</literal></entry>
-      <entry><literal>a=&gt;1, b=&gt;2, c=&gt;3, d=&gt;4</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>hstore</function> ( <type>text[]</type>, <type>text[]</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Constructs an <type>hstore</type> from separate key and value arrays.
+       </para>
+       <para>
+        <literal>hstore(ARRAY['a','b'], ARRAY['1','2'])</literal>
+        <returnvalue>"a"=&gt;"1", "b"=&gt;"2"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore(text[], text[])</function></entry>
-      <entry><type>hstore</type></entry>
-      <entry>construct an <type>hstore</type> from separate key and value arrays</entry>
-      <entry><literal>hstore(ARRAY['a','b'], ARRAY['1','2'])</literal></entry>
-      <entry><literal>"a"=&gt;"1","b"=&gt;"2"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>hstore</function> ( <type>text</type>, <type>text</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Makes a single-item <type>hstore</type>.
+       </para>
+       <para>
+        <literal>hstore('a', 'b')</literal>
+        <returnvalue>"a"=&gt;"b"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore(text, text)</function></entry>
-      <entry><type>hstore</type></entry>
-      <entry>make single-item <type>hstore</type></entry>
-      <entry><literal>hstore('a', 'b')</literal></entry>
-      <entry><literal>"a"=&gt;"b"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>akeys</primary></indexterm>
+        <function>akeys</function> ( <type>hstore</type> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Extracts an <type>hstore</type>'s keys as an array.
+       </para>
+       <para>
+        <literal>akeys('a=&gt;1,b=&gt;2')</literal>
+        <returnvalue>{a,b}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>akeys(hstore)</function><indexterm><primary>akeys</primary></indexterm></entry>
-      <entry><type>text[]</type></entry>
-      <entry>get <type>hstore</type>'s keys as an array</entry>
-      <entry><literal>akeys('a=&gt;1,b=&gt;2')</literal></entry>
-      <entry><literal>{a,b}</literal></entry>
-     </row>
-
-     <row>
-      <entry><function>skeys(hstore)</function><indexterm><primary>skeys</primary></indexterm></entry>
-      <entry><type>setof text</type></entry>
-      <entry>get <type>hstore</type>'s keys as a set</entry>
-      <entry><literal>skeys('a=&gt;1,b=&gt;2')</literal></entry>
-      <entry>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>skeys</primary></indexterm>
+        <function>skeys</function> ( <type>hstore</type> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Extracts an <type>hstore</type>'s keys as a set.
+       </para>
+       <para>
+        <literal>skeys('a=&gt;1,b=&gt;2')</literal>
+        <returnvalue></returnvalue>
 <programlisting>
 a
 b
-</programlisting></entry>
-     </row>
+</programlisting>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>avals(hstore)</function><indexterm><primary>avals</primary></indexterm></entry>
-      <entry><type>text[]</type></entry>
-      <entry>get <type>hstore</type>'s values as an array</entry>
-      <entry><literal>avals('a=&gt;1,b=&gt;2')</literal></entry>
-      <entry><literal>{1,2}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>avals</primary></indexterm>
+        <function>avals</function> ( <type>hstore</type> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Extracts an <type>hstore</type>'s values as an array.
+       </para>
+       <para>
+        <literal>avals('a=&gt;1,b=&gt;2')</literal>
+        <returnvalue>{1,2}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>svals(hstore)</function><indexterm><primary>svals</primary></indexterm></entry>
-      <entry><type>setof text</type></entry>
-      <entry>get <type>hstore</type>'s values as a set</entry>
-      <entry><literal>svals('a=&gt;1,b=&gt;2')</literal></entry>
-      <entry>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>svals</primary></indexterm>
+        <function>svals</function> ( <type>hstore</type> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Extracts an <type>hstore</type>'s values as a set.
+       </para>
+       <para>
+        <literal>svals('a=&gt;1,b=&gt;2')</literal>
+        <returnvalue></returnvalue>
 <programlisting>
 1
 2
-</programlisting></entry>
-     </row>
+</programlisting>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore_to_array(hstore)</function><indexterm><primary>hstore_to_array</primary></indexterm></entry>
-      <entry><type>text[]</type></entry>
-      <entry>get <type>hstore</type>'s keys and values as an array of alternating
-       keys and values</entry>
-      <entry><literal>hstore_to_array('a=&gt;1,b=&gt;2')</literal></entry>
-      <entry><literal>{a,1,b,2}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>hstore_to_array</primary></indexterm>
+        <function>hstore_to_array</function> ( <type>hstore</type> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Extracts an <type>hstore</type>'s keys and values as an array of
+        alternating keys and values.
+       </para>
+       <para>
+        <literal>hstore_to_array('a=&gt;1,b=&gt;2')</literal>
+        <returnvalue>{a,1,b,2}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore_to_matrix(hstore)</function><indexterm><primary>hstore_to_matrix</primary></indexterm></entry>
-      <entry><type>text[]</type></entry>
-      <entry>get <type>hstore</type>'s keys and values as a two-dimensional array</entry>
-      <entry><literal>hstore_to_matrix('a=&gt;1,b=&gt;2')</literal></entry>
-      <entry><literal>{{a,1},{b,2}}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>hstore_to_matrix</primary></indexterm>
+        <function>hstore_to_matrix</function> ( <type>hstore</type> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Extracts an <type>hstore</type>'s keys and values as a two-dimensional
+        array.
+       </para>
+       <para>
+        <literal>hstore_to_matrix('a=&gt;1,b=&gt;2')</literal>
+        <returnvalue>{{a,1},{b,2}}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore_to_json(hstore)</function><indexterm><primary>hstore_to_json</primary></indexterm></entry>
-      <entry><type>json</type></entry>
-      <entry>get <type>hstore</type> as a <type>json</type> value, converting
-       all non-null values to JSON strings</entry>
-      <entry><literal>hstore_to_json('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
-      <entry><literal>{"a key": "1", "b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4"}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>hstore_to_json</primary></indexterm>
+        <function>hstore_to_json</function> ( <type>hstore</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para>
+        Converts an <type>hstore</type> to a <type>json</type> value,
+        converting all non-null values to JSON strings.
+       </para>
+       <para>
+        This function is used implicitly when an <type>hstore</type> value is
+        cast to <type>json</type>.
+       </para>
+       <para>
+        <literal>hstore_to_json('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal>
+        <returnvalue>{"a key": "1", "b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4"}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore_to_jsonb(hstore)</function><indexterm><primary>hstore_to_jsonb</primary></indexterm></entry>
-      <entry><type>jsonb</type></entry>
-      <entry>get <type>hstore</type> as a <type>jsonb</type> value, converting
-       all non-null values to JSON strings</entry>
-      <entry><literal>hstore_to_jsonb('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
-      <entry><literal>{"a key": "1", "b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4"}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>hstore_to_jsonb</primary></indexterm>
+        <function>hstore_to_jsonb</function> ( <type>hstore</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Converts an <type>hstore</type> to a <type>jsonb</type> value,
+        converting all non-null values to JSON strings.
+       </para>
+       <para>
+        This function is used implicitly when an <type>hstore</type> value is
+        cast to <type>jsonb</type>.
+       </para>
+       <para>
+        <literal>hstore_to_jsonb('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal>
+        <returnvalue>{"a key": "1", "b": "t", "c": null, "d": "12345", "e": "012345", "f": "1.234", "g": "2.345e+4"}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore_to_json_loose(hstore)</function><indexterm><primary>hstore_to_json_loose</primary></indexterm></entry>
-      <entry><type>json</type></entry>
-      <entry>get <type>hstore</type> as a <type>json</type> value, but attempt to distinguish numerical and Boolean values so they are unquoted in the JSON</entry>
-      <entry><literal>hstore_to_json_loose('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
-      <entry><literal>{"a key": 1, "b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>hstore_to_json_loose</primary></indexterm>
+        <function>hstore_to_json_loose</function> ( <type>hstore</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para>
+        Converts an <type>hstore</type> to a <type>json</type> value, but
+        attempts to distinguish numerical and Boolean values so they are
+        unquoted in the JSON.
+       </para>
+       <para>
+        <literal>hstore_to_json_loose('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal>
+        <returnvalue>{"a key": 1, "b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>hstore_to_jsonb_loose(hstore)</function><indexterm><primary>hstore_to_jsonb_loose</primary></indexterm></entry>
-      <entry><type>jsonb</type></entry>
-      <entry>get <type>hstore</type> as a <type>jsonb</type> value, but attempt to distinguish numerical and Boolean values so they are unquoted in the JSON</entry>
-      <entry><literal>hstore_to_jsonb_loose('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal></entry>
-      <entry><literal>{"a key": 1, "b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>hstore_to_jsonb_loose</primary></indexterm>
+        <function>hstore_to_jsonb_loose</function> ( <type>hstore</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Converts an <type>hstore</type> to a <type>jsonb</type> value, but
+        attempts to distinguish numerical and Boolean values so they are
+        unquoted in the JSON.
+       </para>
+       <para>
+        <literal>hstore_to_jsonb_loose('"a key"=&gt;1, b=&gt;t, c=&gt;null, d=&gt;12345, e=&gt;012345, f=&gt;1.234, g=&gt;2.345e+4')</literal>
+        <returnvalue>{"a key": 1, "b": true, "c": null, "d": 12345, "e": "012345", "f": 1.234, "g": 2.345e+4}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>slice(hstore, text[])</function><indexterm><primary>slice</primary></indexterm></entry>
-      <entry><type>hstore</type></entry>
-      <entry>extract a subset of an <type>hstore</type></entry>
-      <entry><literal>slice('a=&gt;1,b=&gt;2,c=&gt;3'::hstore, ARRAY['b','c','x'])</literal></entry>
-      <entry><literal>"b"=&gt;"2", "c"=&gt;"3"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>slice</primary></indexterm>
+        <function>slice</function> ( <type>hstore</type>, <type>text[]</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Extracts a subset of an <type>hstore</type> containing only the
+        specified keys.
+       </para>
+       <para>
+        <literal>slice('a=&gt;1,b=&gt;2,c=&gt;3'::hstore, ARRAY['b','c','x'])</literal>
+        <returnvalue>"b"=&gt;"2", "c"=&gt;"3"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>each(hstore)</function><indexterm><primary>each</primary></indexterm></entry>
-      <entry><type>setof(key text, value text)</type></entry>
-      <entry>get <type>hstore</type>'s keys and values as a set</entry>
-      <entry><literal>select * from each('a=&gt;1,b=&gt;2')</literal></entry>
-      <entry>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>each</primary></indexterm>
+        <function>each</function> ( <type>hstore</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>text</type> )
+       </para>
+       <para>
+        Extracts an <type>hstore</type>'s keys and values as a set of records.
+       </para>
+       <para>
+        <literal>select * from each('a=&gt;1,b=&gt;2')</literal>
+        <returnvalue></returnvalue>
 <programlisting>
  key | value
 -----+-------
  a   | 1
  b   | 2
-</programlisting></entry>
-     </row>
+</programlisting>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>exist(hstore,text)</function><indexterm><primary>exist</primary></indexterm></entry>
-      <entry><type>boolean</type></entry>
-      <entry>does <type>hstore</type> contain key?</entry>
-      <entry><literal>exist('a=&gt;1','a')</literal></entry>
-      <entry><literal>t</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>exist</primary></indexterm>
+        <function>exist</function> ( <type>hstore</type>, <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does <type>hstore</type> contain key?
+       </para>
+       <para>
+        <literal>exist('a=&gt;1','a')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>defined(hstore,text)</function><indexterm><primary>defined</primary></indexterm></entry>
-      <entry><type>boolean</type></entry>
-      <entry>does <type>hstore</type> contain non-<literal>NULL</literal> value for key?</entry>
-      <entry><literal>defined('a=&gt;NULL','a')</literal></entry>
-      <entry><literal>f</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>defined</primary></indexterm>
+        <function>defined</function> ( <type>hstore</type>, <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does <type>hstore</type> contain a non-<literal>NULL</literal> value
+        for key?
+       </para>
+       <para>
+        <literal>defined('a=&gt;NULL','a')</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>delete(hstore,text)</function><indexterm><primary>delete</primary></indexterm></entry>
-      <entry><type>hstore</type></entry>
-      <entry>delete pair with matching key</entry>
-      <entry><literal>delete('a=&gt;1,b=&gt;2','b')</literal></entry>
-      <entry><literal>"a"=&gt;"1"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>delete</primary></indexterm>
+        <function>delete</function> ( <type>hstore</type>, <type>text</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Deletes pair with matching key.
+       </para>
+       <para>
+        <literal>delete('a=&gt;1,b=&gt;2','b')</literal>
+        <returnvalue>"a"=&gt;"1"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>delete(hstore,text[])</function></entry>
-      <entry><type>hstore</type></entry>
-      <entry>delete pairs with matching keys</entry>
-      <entry><literal>delete('a=&gt;1,b=&gt;2,c=&gt;3',ARRAY['a','b'])</literal></entry>
-      <entry><literal>"c"=&gt;"3"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>delete</function> ( <type>hstore</type>, <type>text[]</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Deletes pairs with matching keys.
+       </para>
+       <para>
+        <literal>delete('a=&gt;1,b=&gt;2,c=&gt;3',ARRAY['a','b'])</literal>
+        <returnvalue>"c"=&gt;"3"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>delete(hstore,hstore)</function></entry>
-      <entry><type>hstore</type></entry>
-      <entry>delete pairs matching those in the second argument</entry>
-      <entry><literal>delete('a=&gt;1,b=&gt;2','a=&gt;4,b=&gt;2'::hstore)</literal></entry>
-      <entry><literal>"a"=&gt;"1"</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>delete</function> ( <type>hstore</type>, <type>hstore</type> )
+        <returnvalue>hstore</returnvalue>
+       </para>
+       <para>
+        Deletes pairs matching those in the second argument.
+       </para>
+       <para>
+        <literal>delete('a=&gt;1,b=&gt;2','a=&gt;4,b=&gt;2'::hstore)</literal>
+        <returnvalue>"a"=&gt;"1"</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>populate_record(record,hstore)</function><indexterm><primary>populate_record</primary></indexterm></entry>
-      <entry><type>record</type></entry>
-      <entry>replace fields in <type>record</type> with matching values from <type>hstore</type></entry>
-      <entry>see Examples section</entry>
-      <entry></entry>
-     </row>
-
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>populate_record</primary></indexterm>
+        <function>populate_record</function> ( <type>anyelement</type>, <type>hstore</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Replaces fields in the left operand (which must be a composite type)
+        with matching values from <type>hstore</type>.
+       </para>
+       <para>
+        <literal>populate_record(ROW(1,2), 'f1=>42'::hstore)</literal>
+        <returnvalue>(42,2)</returnvalue>
+       </para></entry>
+      </row>
     </tbody>
    </tgroup>
   </table>
-
-  <note>
-   <para>
-     The function <function>hstore_to_json</function> is used when
-     an <type>hstore</type> value is cast to <type>json</type>.
-     Likewise, <function>hstore_to_jsonb</function> is used when
-     an <type>hstore</type> value is cast to <type>jsonb</type>.
-   </para>
-  </note>
-
-  <note>
-   <para>
-    The function <function>populate_record</function> is actually declared
-    with <type>anyelement</type>, not <type>record</type>, as its first argument,
-    but it will reject non-record types with a run-time error.
-   </para>
-  </note>
  </sect2>
 
  <sect2>

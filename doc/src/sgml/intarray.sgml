@@ -41,186 +41,325 @@
 
   <table id="intarray-func-table">
    <title><filename>intarray</filename> Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-   <tgroup cols="5">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Return Type</entry>
-      <entry>Description</entry>
-      <entry>Example</entry>
-      <entry>Result</entry>
-     </row>
-    </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>icount</primary></indexterm>
+        <function>icount</function> ( <type>integer[]</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of elements in the array.
+       </para>
+       <para>
+        <literal>icount('{1,2,3}'::integer[])</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
 
-    <tbody>
-     <row>
-      <entry><function>icount(int[])</function><indexterm><primary>icount</primary></indexterm></entry>
-      <entry><type>int</type></entry>
-      <entry>number of elements in array</entry>
-      <entry><literal>icount('{1,2,3}'::int[])</literal></entry>
-      <entry><literal>3</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>sort</primary></indexterm>
+        <function>sort</function> ( <type>integer[]</type>, <parameter>dir</parameter> <type>text</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Sorts the array in either ascending or descending order.
+        <parameter>dir</parameter> must be <literal>asc</literal>
+        or <literal>desc</literal>.
+       </para>
+       <para>
+        <literal>sort('{1,3,2}'::integer[], 'desc')</literal>
+        <returnvalue>{3,2,1}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>sort(int[], text dir)</function><indexterm><primary>sort</primary></indexterm></entry>
-      <entry><type>int[]</type></entry>
-      <entry>sort array &mdash; <parameter>dir</parameter> must be <literal>asc</literal> or <literal>desc</literal></entry>
-      <entry><literal>sort('{1,2,3}'::int[], 'desc')</literal></entry>
-      <entry><literal>{3,2,1}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>sort</function> ( <type>integer[]</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm><primary>sort_asc</primary></indexterm>
+        <function>sort_asc</function> ( <type>integer[]</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Sorts in ascending order.
+       </para>
+       <para>
+        <literal>sort(array[11,77,44])</literal>
+        <returnvalue>{11,44,77}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>sort(int[])</function></entry>
-      <entry><type>int[]</type></entry>
-      <entry>sort in ascending order</entry>
-      <entry><literal>sort(array[11,77,44])</literal></entry>
-      <entry><literal>{11,44,77}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>sort_desc</primary></indexterm>
+        <function>sort_desc</function> ( <type>integer[]</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Sorts in descending order.
+       </para>
+       <para>
+        <literal>sort_desc(array[11,77,44])</literal>
+        <returnvalue>{77,44,11}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>sort_asc(int[])</function><indexterm><primary>sort_asc</primary></indexterm></entry>
-      <entry><type>int[]</type></entry>
-      <entry>sort in ascending order</entry>
-      <entry><literal></literal></entry>
-      <entry><literal></literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>uniq</primary></indexterm>
+        <function>uniq</function> ( <type>integer[]</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Removes adjacent duplicates.
+       </para>
+       <para>
+        <literal>uniq(sort('{1,2,3,2,1}'::integer[]))</literal>
+        <returnvalue>{1,2,3}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>sort_desc(int[])</function><indexterm><primary>sort_desc</primary></indexterm></entry>
-      <entry><type>int[]</type></entry>
-      <entry>sort in descending order</entry>
-      <entry><literal></literal></entry>
-      <entry><literal></literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>idx</primary></indexterm>
+        <function>idx</function> ( <type>integer[]</type>, <parameter>item</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns index of the first array element
+        matching <parameter>item</parameter>, or 0 if no match.
+       </para>
+       <para>
+        <literal>idx(array[11,22,33,22,11], 22)</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>uniq(int[])</function><indexterm><primary>uniq</primary></indexterm></entry>
-      <entry><type>int[]</type></entry>
-      <entry>remove adjacent duplicates</entry>
-      <entry><literal>uniq(sort('{1,2,3,2,1}'::int[]))</literal></entry>
-      <entry><literal>{1,2,3}</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>subarray</primary></indexterm>
+        <function>subarray</function> ( <type>integer[]</type>, <parameter>start</parameter> <type>integer</type>, <parameter>len</parameter> <type>integer</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Extracts the portion of the array starting at
+        position <parameter>start</parameter>, with <parameter>len</parameter>
+        elements.
+       </para>
+       <para>
+        <literal>subarray('{1,2,3,2,1}'::integer[], 2, 3)</literal>
+        <returnvalue>{2,3,2}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>idx(int[], int item)</function><indexterm><primary>idx</primary></indexterm></entry>
-      <entry><type>int</type></entry>
-      <entry>index of first element matching <parameter>item</parameter> (0 if none)</entry>
-      <entry><literal>idx(array[11,22,33,22,11], 22)</literal></entry>
-      <entry><literal>2</literal></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>subarray</function> ( <type>integer[]</type>, <parameter>start</parameter> <type>integer</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Extracts the portion of the array starting at
+        position <parameter>start</parameter>.
+       </para>
+       <para>
+        <literal>subarray('{1,2,3,2,1}'::integer[], 2)</literal>
+        <returnvalue>{2,3,2,1}</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><function>subarray(int[], int start, int len)</function><indexterm><primary>subarray</primary></indexterm></entry>
-      <entry><type>int[]</type></entry>
-      <entry>portion of array starting at position <parameter>start</parameter>, <parameter>len</parameter> elements</entry>
-      <entry><literal>subarray('{1,2,3,2,1}'::int[], 2, 3)</literal></entry>
-      <entry><literal>{2,3,2}</literal></entry>
-     </row>
-
-     <row>
-      <entry><function>subarray(int[], int start)</function></entry>
-      <entry><type>int[]</type></entry>
-      <entry>portion of array starting at position <parameter>start</parameter></entry>
-      <entry><literal>subarray('{1,2,3,2,1}'::int[], 2)</literal></entry>
-      <entry><literal>{2,3,2,1}</literal></entry>
-     </row>
-
-     <row>
-      <entry><function>intset(int)</function><indexterm><primary>intset</primary></indexterm></entry>
-      <entry><type>int[]</type></entry>
-      <entry>make single-element array</entry>
-      <entry><literal>intset(42)</literal></entry>
-      <entry><literal>{42}</literal></entry>
-     </row>
-
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>intset</primary></indexterm>
+        <function>intset</function> ( <type>integer</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Makes a single-element array.
+       </para>
+       <para>
+        <literal>intset(42)</literal>
+        <returnvalue>{42}</returnvalue>
+       </para></entry>
+      </row>
     </tbody>
    </tgroup>
   </table>
 
   <table id="intarray-op-table">
    <title><filename>intarray</filename> Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Operator</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>&amp;&amp;</literal> <type>integer[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do arrays overlap (have at least one element in common)?
+       </para></entry>
+      </row>
 
-    <tbody>
-     <row>
-      <entry><literal>int[] &amp;&amp; int[]</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>overlap &mdash; <literal>true</literal> if arrays have at least one common element</entry>
-     </row>
-     <row>
-      <entry><literal>int[] @&gt; int[]</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>contains &mdash; <literal>true</literal> if left array contains right array</entry>
-     </row>
-     <row>
-      <entry><literal>int[] &lt;@ int[]</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>contained &mdash; <literal>true</literal> if left array is contained in right array</entry>
-     </row>
-     <row>
-      <entry><literal># int[]</literal></entry>
-      <entry><type>int</type></entry>
-      <entry>number of elements in array</entry>
-     </row>
-     <row>
-      <entry><literal>int[] # int</literal></entry>
-      <entry><type>int</type></entry>
-      <entry>index (same as <function>idx</function> function)</entry>
-     </row>
-     <row>
-      <entry><literal>int[] + int</literal></entry>
-      <entry><type>int[]</type></entry>
-      <entry>push element onto array (add it to end of array)</entry>
-     </row>
-     <row>
-      <entry><literal>int[] + int[]  </literal></entry>
-      <entry><type>int[]</type></entry>
-      <entry>array concatenation (right array added to the end of left one)</entry>
-     </row>
-     <row>
-      <entry><literal>int[] - int</literal></entry>
-      <entry><type>int[]</type></entry>
-      <entry>remove entries matching right argument from array</entry>
-     </row>
-     <row>
-      <entry><literal>int[] - int[]</literal></entry>
-      <entry><type>int[]</type></entry>
-      <entry>remove elements of right array from left</entry>
-     </row>
-     <row>
-      <entry><literal>int[] | int</literal></entry>
-      <entry><type>int[]</type></entry>
-      <entry>union of arguments</entry>
-     </row>
-     <row>
-      <entry><literal>int[] | int[]</literal></entry>
-      <entry><type>int[]</type></entry>
-      <entry>union of arrays</entry>
-     </row>
-     <row>
-      <entry><literal>int[] &amp; int[]</literal></entry>
-      <entry><type>int[]</type></entry>
-      <entry>intersection of arrays</entry>
-     </row>
-     <row>
-      <entry><literal>int[] @@ query_int</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry><literal>true</literal> if array satisfies query (see below)</entry>
-     </row>
-     <row>
-      <entry><literal>query_int ~~ int[]</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry><literal>true</literal> if array satisfies query (commutator of <literal>@@</literal>)</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>@&gt;</literal> <type>integer[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does left array contain right array?
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>&lt;@</literal> <type>integer[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is left array contained in right array?
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type></type> <literal>#</literal> <type>integer[]</type>
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of elements in the array.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>#</literal> <type>integer</type>
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns index of the first array element
+        matching the right argument, or 0 if no match.
+        (Same as <function>idx</function> function.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>+</literal> <type>integer</type>
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Adds element to end of array.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>+</literal> <type>integer[]</type>
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Concatenates the arrays.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>-</literal> <type>integer</type>
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Removes entries matching the right argument from the array.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>-</literal> <type>integer[]</type>
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Removes elements of the right array from the left array.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>|</literal> <type>integer</type>
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Computes the union of the arguments.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>|</literal> <type>integer[]</type>
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Computes the union of the arguments.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>&amp;</literal> <type>integer[]</type>
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Computes the intersection of the arguments.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>integer[]</type> <literal>@@</literal> <type>query_int</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does array satisfy query?  (see below)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>query_int</type> <literal>~~</literal> <type>integer[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does array satisfy query?  (commutator of <literal>@@</literal>)
+       </para></entry>
+      </row>
     </tbody>
    </tgroup>
   </table>
@@ -274,7 +413,7 @@
    The implementation uses an RD-tree data structure with
    built-in lossy compression.
   </para>
-   
+
   <para>
    <literal>gist__int_ops</literal> approximates an integer set as an array of
    integer ranges.  Its optional integer parameter <literal>numranges</literal>
@@ -284,7 +423,7 @@
    keys leads to a more precise search (scanning a smaller fraction of the index and
    fewer heap pages), at the cost of a larger index.
   </para>
-   
+
   <para>
    <literal>gist__intbig_ops</literal> approximates an integer set as a bitmap
    signature.  Its optional integer parameter <literal>siglen</literal>

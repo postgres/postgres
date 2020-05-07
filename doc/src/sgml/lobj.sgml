@@ -542,69 +542,82 @@ int lo_unlink(PGconn *conn, Oid lobjId);
    listed in <xref linkend="lo-funcs-table"/>.
   </para>
 
-  <table id="lo-funcs-table">
-   <title>SQL-Oriented Large Object Functions</title>
-   <tgroup cols="5">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Return Type</entry>
-      <entry>Description</entry>
-      <entry>Example</entry>
-      <entry>Result</entry>
-     </row>
-    </thead>
+   <table id="lo-funcs-table">
+    <title>SQL-Oriented Large Object Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry>
-       <indexterm>
-        <primary>lo_from_bytea</primary>
-       </indexterm>
-       <literal><function>lo_from_bytea(<parameter>loid</parameter> <type>oid</type>, <parameter>string</parameter> <type>bytea</type>)</function></literal>
-      </entry>
-      <entry><type>oid</type></entry>
-      <entry>
-       Create a large object and store data there, returning its OID.
-       Pass <literal>0</literal> to have the system choose an OID.
-      </entry>
-      <entry><literal>lo_from_bytea(0, '\xffffff00')</literal></entry>
-      <entry><literal>24528</literal></entry>
-     </row>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lo_from_bytea</primary>
+        </indexterm>
+        <function>lo_from_bytea</function> ( <parameter>loid</parameter> <type>oid</type>, <parameter>data</parameter> <type>bytea</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Creates a large object and stores <parameter>data</parameter> in it.
+        If <parameter>loid</parameter> is zero then the system will choose a
+        free OID, otherwise that OID is used (with an error if some large
+        object already has that OID).  On success, the large object's OID is
+        returned.
+       </para>
+       <para>
+        <literal>lo_from_bytea(0, '\xffffff00')</literal>
+        <returnvalue>24528</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>lo_put</primary>
-       </indexterm>
-       <literal><function>lo_put(<parameter>loid</parameter> <type>oid</type>, <parameter>offset</parameter> <type>bigint</type>, <parameter>str</parameter> <type>bytea</type>)</function></literal>
-      </entry>
-      <entry><type>void</type></entry>
-      <entry>
-       Write data at the given offset.
-      </entry>
-      <entry><literal>lo_put(24528, 1, '\xaa')</literal></entry>
-      <entry></entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lo_put</primary>
+        </indexterm>
+        <function>lo_put</function> ( <parameter>loid</parameter> <type>oid</type>, <parameter>offset</parameter> <type>bigint</type>, <parameter>data</parameter> <type>bytea</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Writes <parameter>data</parameter> starting at the given offset within
+        the large object; the large object is enlarged if necessary.
+       </para>
+       <para>
+        <literal>lo_put(24528, 1, '\xaa')</literal>
+        <returnvalue></returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry>
-       <indexterm>
-        <primary>lo_get</primary>
-       </indexterm>
-       <literal><function>lo_get(<parameter>loid</parameter> <type>oid</type> <optional>, <parameter>from</parameter> <type>bigint</type>, <parameter>for</parameter> <type>int</type></optional>)</function></literal>
-      </entry>
-      <entry><type>bytea</type></entry>
-      <entry>
-       Extract contents or a substring thereof.
-      </entry>
-      <entry><literal>lo_get(24528, 0, 3)</literal></entry>
-      <entry><literal>\xffaaff</literal></entry>
-     </row>
-
-    </tbody>
-   </tgroup>
-  </table>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lo_get</primary>
+        </indexterm>
+        <function>lo_get</function> ( <parameter>loid</parameter> <type>oid</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>integer</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Extracts the large object's contents, or a substring thereof.
+       </para>
+       <para>
+        <literal>lo_get(24528, 0, 3)</literal>
+        <returnvalue>\xffaaff</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
    There are additional server-side functions corresponding to each of the

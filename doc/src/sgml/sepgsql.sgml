@@ -605,7 +605,7 @@ regression=# select sepgsql_getcon();
 (1 row)
 
 regression=# SELECT sepgsql_setcon('unconfined_u:unconfined_r:unconfined_t:s0-s0:c1.c4');
- sepgsql_setcon 
+ sepgsql_setcon
 ----------------
  t
 (1 row)
@@ -659,45 +659,77 @@ ERROR:  SELinux: security policy violation
 
   <table id="sepgsql-functions-table">
    <title>Sepgsql Functions</title>
-   <tgroup cols="2">
-    <tbody>
-     <row>
-      <entry><literal>sepgsql_getcon() returns text</literal></entry>
-      <entry>
-       Returns the client domain, the current security label of the client.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>sepgsql_setcon(text) returns bool</literal></entry>
-      <entry>
-       Switches the client domain of the current session to the new domain,
-       if allowed by the security policy.
-       It also accepts <literal>NULL</literal> input as a request to transition
-       to the client's original domain.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>sepgsql_mcstrans_in(text) returns text</literal></entry>
-      <entry>Translates the given qualified MLS/MCS range into raw format if
-      the mcstrans daemon is running.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>sepgsql_mcstrans_out(text) returns text</literal></entry>
-      <entry>Translates the given raw MLS/MCS range into qualified format if
-      the mcstrans daemon is running.
-      </entry>
-     </row>
-     <row>
-      <entry><literal>sepgsql_restorecon(text) returns bool</literal></entry>
-      <entry>
-       Sets up initial security labels for all objects within the
-       current database. The argument may be NULL, or the name of a specfile
-       to be used as alternative of the system default.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>sepgsql_getcon</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the client domain, the current security label of the client.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>sepgsql_setcon</function> ( <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Switches the client domain of the current session to the new domain,
+        if allowed by the security policy.
+        It also accepts <literal>NULL</literal> input as a request to transition
+        to the client's original domain.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>sepgsql_mcstrans_in</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Translates the given qualified MLS/MCS range into raw format if
+        the mcstrans daemon is running.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>sepgsql_mcstrans_out</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Translates the given raw MLS/MCS range into qualified format if
+        the mcstrans daemon is running.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>sepgsql_restorecon</function> ( <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Sets up initial security labels for all objects within the
+        current database. The argument may be <literal>NULL</literal>, or the
+        name of a specfile to be used as alternative of the system default.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
  </sect2>
 

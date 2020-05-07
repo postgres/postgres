@@ -112,114 +112,113 @@
   <title>Usage</title>
 
   <para>
-   <xref linkend="cube-operators-table"/> shows the operators provided for
-   type <type>cube</type>.
+   <xref linkend="cube-operators-table"/> shows the specialized operators
+   provided for type <type>cube</type>.
   </para>
 
   <table id="cube-operators-table">
    <title>Cube Operators</title>
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Operator</entry>
-      <entry>Result</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry><literal>a = b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cubes a and b are identical.</entry>
-     </row>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>&amp;&amp;</literal> <type>cube</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do the cubes overlap?
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>a &amp;&amp; b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cubes a and b overlap.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>@&gt;</literal> <type>cube</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first cube contain the second?
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>a @&gt; b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cube a contains the cube b.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>&lt;@</literal> <type>cube</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first cube contained in the second?
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>a &lt;@ b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cube a is contained in the cube b.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>-&gt;</literal> <type>integer</type>
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Extracts the <parameter>n</parameter>-th coordinate of the cube
+        (counting from 1).
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>a &lt; b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cube a is less than the cube b.</entry>
-     </row>
-
-     <row>
-      <entry><literal>a &lt;= b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cube a is less than or equal to the cube b.</entry>
-     </row>
-
-     <row>
-      <entry><literal>a &gt; b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cube a is greater than the cube b.</entry>
-     </row>
-
-     <row>
-      <entry><literal>a &gt;= b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cube a is greater than or equal to the cube b.</entry>
-     </row>
-
-     <row>
-      <entry><literal>a &lt;&gt; b</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>The cube a is not equal to the cube b.</entry>
-     </row>
-
-     <row>
-      <entry><literal>a -&gt; n</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>Get <replaceable>n</replaceable>-th coordinate of cube (counting from 1).</entry>
-     </row>
-
-     <row>
-      <entry><literal>a ~&gt; n</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>
-        Get <replaceable>n</replaceable>-th coordinate of cube in following way:
-        n = 2 * k - 1 means lower bound of <replaceable>k</replaceable>-th
-        dimension, n = 2 * k means upper bound of
-        <replaceable>k</replaceable>-th dimension.  Negative
-        <replaceable>n</replaceable> denotes the inverse value of the corresponding
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>~&gt;</literal> <type>integer</type>
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Extracts the <parameter>n</parameter>-th coordinate of the cube,
+        counting in the following way: <parameter>n</parameter> = 2
+        * <parameter>k</parameter> - 1 means lower bound
+        of <parameter>k</parameter>-th dimension, <parameter>n</parameter> = 2
+        * <parameter>k</parameter> means upper bound of
+        <parameter>k</parameter>-th dimension.  Negative
+        <parameter>n</parameter> denotes the inverse value of the corresponding
         positive coordinate.  This operator is designed for KNN-GiST support.
-      </entry>
-     </row>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>a &lt;-&gt; b</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>Euclidean distance between a and b.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>&lt;-&gt;</literal> <type>cube</type>
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Computes the Euclidean distance between the two cubes.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>a &lt;#&gt; b</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>Taxicab (L-1 metric) distance between a and b.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>&lt;#&gt;</literal> <type>cube</type>
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Computes the taxicab (L-1 metric) distance between the two cubes.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>a &lt;=&gt; b</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>Chebyshev (L-inf metric) distance between a and b.</entry>
-     </row>
-
-    </tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>cube</type> <literal>&lt;=&gt;</literal> <type>cube</type>
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Computes the Chebyshev (L-inf metric) distance between the two cubes.
+       </para></entry>
+      </row>
+     </tbody>
    </tgroup>
   </table>
 
@@ -232,12 +231,14 @@
   </para>
 
   <para>
-   The scalar ordering operators (<literal>&lt;</literal>, <literal>&gt;=</literal>, etc)
-   do not make a lot of sense for any practical purpose but sorting.  These
+   In addition to the above operators, the usual comparison
+   operators shown in <xref linkend="functions-comparison-op-table"/> are
+   available for type <type>cube</type>.  These
    operators first compare the first coordinates, and if those are equal,
    compare the second coordinates, etc.  They exist mainly to support the
    b-tree index operator class for <type>cube</type>, which can be useful for
    example if you would like a UNIQUE constraint on a <type>cube</type> column.
+   Otherwise, this ordering is not of much practical use.
   </para>
 
   <para>
@@ -281,195 +282,262 @@ SELECT c FROM test ORDER BY c ~&gt; 3 DESC LIMIT 5;
 
   <table id="cube-functions-table">
    <title>Cube Functions</title>
-   <tgroup cols="4">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Result</entry>
-      <entry>Description</entry>
-      <entry>Example</entry>
-     </row>
-    </thead>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry><literal>cube(float8)</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Makes a one dimensional cube with both coordinates the same.
-      </entry>
-      <entry>
-       <literal>cube(1) == '(1)'</literal>
-      </entry>
-     </row>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube</function> ( <type>float8</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Makes a one dimensional cube with both coordinates the same.
+       </para>
+       <para>
+        <literal>cube(1)</literal>
+        <returnvalue>(1)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube(float8, float8)</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Makes a one dimensional cube.
-      </entry>
-      <entry>
-       <literal>cube(1,2) == '(1),(2)'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube</function> ( <type>float8</type>, <type>float8</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Makes a one dimensional cube.
+       </para>
+       <para>
+        <literal>cube(1,2)</literal>
+        <returnvalue>(1),(2)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube(float8[])</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Makes a zero-volume cube using the coordinates
-       defined by the array.
-      </entry>
-      <entry>
-       <literal>cube(ARRAY[1,2]) == '(1,2)'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube</function> ( <type>float8[]</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Makes a zero-volume cube using the coordinates defined by the array.
+       </para>
+       <para>
+        <literal>cube(ARRAY[1,2,3])</literal>
+        <returnvalue>(1, 2, 3)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube(float8[], float8[])</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Makes a cube with upper right and lower left
-       coordinates as defined by the two arrays, which must be of the
-       same length.
-      </entry>
-      <entry>
-       <literal>cube(ARRAY[1,2], ARRAY[3,4]) == '(1,2),(3,4)'
-       </literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube</function> ( <type>float8[]</type>, <type>float8[]</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Makes a cube with upper right and lower left coordinates as defined by
+        the two arrays, which must be of the same length.
+       </para>
+       <para>
+        <literal>cube(ARRAY[1,2], ARRAY[3,4])</literal>
+        <returnvalue>(1, 2),(3, 4)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube(cube, float8)</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Makes a new cube by adding a dimension on to an existing cube,
-       with the same values for both endpoints of the new coordinate.  This
-       is useful for building cubes piece by piece from calculated values.
-      </entry>
-      <entry>
-       <literal>cube('(1,2),(3,4)'::cube, 5) == '(1,2,5),(3,4,5)'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube</function> ( <type>cube</type>, <type>float8</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Makes a new cube by adding a dimension on to an existing cube,
+        with the same values for both endpoints of the new coordinate.  This
+        is useful for building cubes piece by piece from calculated values.
+       </para>
+       <para>
+        <literal>cube('(1,2),(3,4)'::cube, 5)</literal>
+        <returnvalue>(1, 2, 5),(3, 4, 5)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube(cube, float8, float8)</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Makes a new cube by adding a dimension on to an existing
-       cube. This is useful for building cubes piece by piece from calculated
-       values.
-      </entry>
-      <entry>
-       <literal>cube('(1,2),(3,4)'::cube, 5, 6) == '(1,2,5),(3,4,6)'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube</function> ( <type>cube</type>, <type>float8</type>, <type>float8</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Makes a new cube by adding a dimension on to an existing cube. This is
+        useful for building cubes piece by piece from calculated values.
+       </para>
+       <para>
+        <literal>cube('(1,2),(3,4)'::cube, 5, 6)</literal>
+        <returnvalue>(1, 2, 5),(3, 4, 6)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_dim(cube)</literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>Returns the number of dimensions of the cube.
-      </entry>
-      <entry>
-       <literal>cube_dim('(1,2),(3,4)') == '2'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_dim</function> ( <type>cube</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of dimensions of the cube.
+       </para>
+       <para>
+        <literal>cube_dim('(1,2),(3,4)')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_ll_coord(cube, integer)</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>Returns the <replaceable>n</replaceable>-th coordinate value for the lower
-       left corner of the cube.
-      </entry>
-      <entry>
-       <literal>cube_ll_coord('(1,2),(3,4)', 2) == '2'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_ll_coord</function> ( <type>cube</type>, <type>integer</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Returns the <parameter>n</parameter>-th coordinate value for the lower
+        left corner of the cube.
+       </para>
+       <para>
+        <literal>cube_ll_coord('(1,2),(3,4)', 2)</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
 
-    <row>
-      <entry><literal>cube_ur_coord(cube, integer)</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>Returns the <replaceable>n</replaceable>-th coordinate value for the
-       upper right corner of the cube.
-      </entry>
-      <entry>
-       <literal>cube_ur_coord('(1,2),(3,4)', 2) == '4'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_ur_coord</function> ( <type>cube</type>, <type>integer</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Returns the <parameter>n</parameter>-th coordinate value for the
+        upper right corner of the cube.
+       </para>
+       <para>
+        <literal>cube_ur_coord('(1,2),(3,4)', 2)</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_is_point(cube)</literal></entry>
-      <entry><type>boolean</type></entry>
-      <entry>Returns true if the cube is a point, that is,
-       the two defining corners are the same.</entry>
-      <entry>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_is_point</function> ( <type>cube</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if the cube is a point, that is,
+        the two defining corners are the same.
+       </para>
+       <para>
+        <literal>cube_is_point(cube(1,1))</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_distance(cube, cube)</literal></entry>
-      <entry><type>float8</type></entry>
-      <entry>Returns the distance between two cubes. If both
-       cubes are points, this is the normal distance function.
-      </entry>
-      <entry>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_distance</function> ( <type>cube</type>, <type>cube</type> )
+        <returnvalue>float8</returnvalue>
+       </para>
+       <para>
+        Returns the distance between two cubes. If both
+        cubes are points, this is the normal distance function.
+       </para>
+       <para>
+        <literal>cube_distance('(1,2)', '(3,4)')</literal>
+        <returnvalue>2.8284271247461903</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_subset(cube, integer[])</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Makes a new cube from an existing cube, using a list of
-       dimension indexes from an array. Can be used to extract the endpoints
-       of a single dimension, or to drop dimensions, or to reorder them as
-       desired.
-      </entry>
-      <entry>
-       <literal>cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[2]) == '(3),(7)'</literal>
-       <literal>cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[3,2,1,1]) ==
-        '(5,3,1,1),(8,7,6,6)'</literal>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_subset</function> ( <type>cube</type>, <type>integer[]</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Makes a new cube from an existing cube, using a list of
+        dimension indexes from an array. Can be used to extract the endpoints
+        of a single dimension, or to drop dimensions, or to reorder them as
+        desired.
+       </para>
+       <para>
+        <literal>cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[2])</literal>
+        <returnvalue>(3),(7)</returnvalue>
+       </para>
+       <para>
+        <literal>cube_subset(cube('(1,3,5),(6,7,8)'), ARRAY[3,2,1,1])</literal>
+        <returnvalue>(5, 3, 1, 1),(8, 7, 6, 6)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_union(cube, cube)</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Produces the union of two cubes.
-      </entry>
-      <entry>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_union</function> ( <type>cube</type>, <type>cube</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Produces the union of two cubes.
+       </para>
+       <para>
+        <literal>cube_union('(1,2)', '(3,4)')</literal>
+        <returnvalue>(1, 2),(3, 4)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_inter(cube, cube)</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Produces the intersection of two cubes.
-      </entry>
-      <entry>
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_inter</function> ( <type>cube</type>, <type>cube</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Produces the intersection of two cubes.
+       </para>
+       <para>
+        <literal>cube_inter('(1,2)', '(3,4)')</literal>
+        <returnvalue>(3, 4),(1, 2)</returnvalue>
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>cube_enlarge(c cube, r double, n integer)</literal></entry>
-      <entry><type>cube</type></entry>
-      <entry>Increases the size of the cube by the specified
-       radius <replaceable>r</replaceable> in at least <replaceable>n</replaceable> dimensions.
-       If the radius is negative the cube is shrunk instead.
-       All defined dimensions are changed by the radius <replaceable>r</replaceable>.
-       Lower-left coordinates are decreased by <replaceable>r</replaceable> and
-       upper-right coordinates are increased by <replaceable>r</replaceable>.  If a
-       lower-left coordinate is increased to more than the corresponding
-       upper-right coordinate (this can only happen when <replaceable>r</replaceable>
-       &lt; 0) than both coordinates are set to their average.
-       If <replaceable>n</replaceable> is greater than the number of defined dimensions
-       and the cube is being enlarged (<replaceable>r</replaceable> &gt; 0), then extra
-       dimensions are added to make <replaceable>n</replaceable> altogether;
-       0 is used as the initial value for the extra coordinates.
-       This function is useful for creating bounding boxes around a point for
-       searching for nearby points.
-      </entry>
-      <entry>
-       <literal>cube_enlarge('(1,2),(3,4)', 0.5, 3) ==
-        '(0.5,1.5,-0.5),(3.5,4.5,0.5)'</literal>
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>cube_enlarge</function> ( <parameter>c</parameter> <type>cube</type>, <parameter>r</parameter> <type>double</type>, <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>cube</returnvalue>
+       </para>
+       <para>
+        Increases the size of the cube by the specified
+        radius <parameter>r</parameter> in at least <parameter>n</parameter>
+        dimensions.  If the radius is negative the cube is shrunk instead.
+        All defined dimensions are changed by the
+        radius <parameter>r</parameter>.  Lower-left coordinates are decreased
+        by <parameter>r</parameter> and upper-right coordinates are increased
+        by <parameter>r</parameter>.  If a lower-left coordinate is increased
+        to more than the corresponding upper-right coordinate (this can only
+        happen when <parameter>r</parameter> &lt; 0) than both coordinates are
+        set to their average.  If <parameter>n</parameter> is greater than the
+        number of defined dimensions and the cube is being enlarged
+        (<parameter>r</parameter> &gt; 0), then extra dimensions are added to
+        make <parameter>n</parameter> altogether; 0 is used as the initial
+        value for the extra coordinates.  This function is useful for creating
+        bounding boxes around a point for searching for nearby points.
+       </para>
+       <para>
+        <literal>cube_enlarge('(1,2),(3,4)', 0.5, 3)</literal>
+        <returnvalue>(0.5, 1.5, -0.5),(3.5, 4.5, 0.5)</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
  </sect2>
 

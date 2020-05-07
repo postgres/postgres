@@ -3375,122 +3375,179 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    linkend="monitoring-stats-funcs-table"/>.
   </para>
 
-  <table id="monitoring-stats-funcs-table">
-   <title>Additional Statistics Functions</title>
+   <table id="monitoring-stats-funcs-table">
+    <title>Additional Statistics Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Return Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-
-     <row>
+     <tbody>
+      <row>
        <!-- See also the entry for this in func.sgml -->
-      <entry><literal><function>pg_backend_pid()</function></literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>
-       Process ID of the server process handling the current session
-      </entry>
-     </row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>pg_backend_pid</function> ()
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the process ID of the server process attached to the current
+        session.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_get_activity</function>(<type>integer</type>)</literal><indexterm><primary>pg_stat_get_activity</primary></indexterm></entry>
-      <entry><type>setof record</type></entry>
-      <entry>
-       Returns a record of information about the backend with the specified PID, or
-       one record for each active backend in the system if <symbol>NULL</symbol> is
-       specified. The fields returned are a subset of those in the
-       <structname>pg_stat_activity</structname> view.
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_activity</primary>
+        </indexterm>
+        <function>pg_stat_get_activity</function> ( <type>integer</type> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Returns a record of information about the backend with the specified
+        process ID, or one record for each active backend in the system
+        if <literal>NULL</literal> is specified.  The fields returned are a
+        subset of those in the <structname>pg_stat_activity</structname> view.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_get_snapshot_timestamp()</function></literal><indexterm><primary>pg_stat_get_snapshot_timestamp</primary></indexterm></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>
-       Returns the timestamp of the current statistics snapshot
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_snapshot_timestamp</primary>
+        </indexterm>
+        <function>pg_stat_get_snapshot_timestamp</function> ()
+        <returnvalue>timestamp with time zone</returnvalue>
+       </para>
+       <para>
+        Returns the timestamp of the current statistics snapshot.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_clear_snapshot()</function></literal><indexterm><primary>pg_stat_clear_snapshot</primary></indexterm></entry>
-      <entry><type>void</type></entry>
-      <entry>
-       Discard the current statistics snapshot
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_clear_snapshot</primary>
+        </indexterm>
+        <function>pg_stat_clear_snapshot</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Discards the current statistics snapshot.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_reset()</function></literal><indexterm><primary>pg_stat_reset</primary></indexterm></entry>
-      <entry><type>void</type></entry>
-      <entry>
-       Reset all statistics counters for the current database to zero
-       (requires superuser privileges by default, but EXECUTE for this
-       function can be granted to others.)
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_reset</primary>
+        </indexterm>
+        <function>pg_stat_reset</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets all statistics counters for the current database to zero.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_reset_shared</function>(text)</literal><indexterm><primary>pg_stat_reset_shared</primary></indexterm></entry>
-      <entry><type>void</type></entry>
-      <entry>
-       Reset some cluster-wide statistics counters to zero, depending on the
-       argument (requires superuser privileges by default, but EXECUTE for
-       this function can be granted to others).
-       Calling <literal>pg_stat_reset_shared('bgwriter')</literal> will zero all the
-       counters shown in the <structname>pg_stat_bgwriter</structname> view.
-       Calling <literal>pg_stat_reset_shared('archiver')</literal> will zero all the
-       counters shown in the <structname>pg_stat_archiver</structname> view.
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_reset_shared</primary>
+        </indexterm>
+        <function>pg_stat_reset_shared</function> ( <type>text</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets some cluster-wide statistics counters to zero, depending on the
+        argument.  The argument can be <literal>bgwriter</literal> to reset
+        all the counters shown in
+        the <structname>pg_stat_bgwriter</structname>
+        view,or <literal>archiver</literal> to reset all the counters shown in
+        the <structname>pg_stat_archiver</structname> view.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_reset_single_table_counters</function>(oid)</literal><indexterm><primary>pg_stat_reset_single_table_counters</primary></indexterm></entry>
-      <entry><type>void</type></entry>
-      <entry>
-       Reset statistics for a single table or index in the current database to
-       zero (requires superuser privileges by default, but EXECUTE for this
-       function can be granted to others)
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_reset_single_table_counters</primary>
+        </indexterm>
+        <function>pg_stat_reset_single_table_counters</function> ( <type>oid</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets statistics for a single table or index in the current database
+        to zero.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_reset_single_function_counters</function>(oid)</literal><indexterm><primary>pg_stat_reset_single_function_counters</primary></indexterm></entry>
-      <entry><type>void</type></entry>
-      <entry>
-       Reset statistics for a single function in the current database to
-       zero (requires superuser privileges by default, but EXECUTE for this
-       function can be granted to others)
-      </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_reset_single_function_counters</primary>
+        </indexterm>
+        <function>pg_stat_reset_single_function_counters</function> ( <type>oid</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets statistics for a single function in the current database to
+        zero.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_reset_slru</function>(text)</literal><indexterm><primary>pg_stat_reset_slru</primary></indexterm></entry>
-      <entry><type>void</type></entry>
-      <entry>
-       Reset statistics either for a single SLRU or all SLRUs in the cluster
-       to zero (requires superuser privileges by default, but EXECUTE for this
-       function can be granted to others).
-       Calling <literal>pg_stat_reset_slru(NULL)</literal> will zero all the
-       counters shown in the <structname>pg_stat_slru</structname> view for
-       all SLRU caches.
-       Calling <literal>pg_stat_reset_slru(name)</literal> with names from a
-       predefined list (<literal>async</literal>, <literal>clog</literal>,
-       <literal>commit_timestamp</literal>, <literal>multixact_offset</literal>,
-       <literal>multixact_member</literal>, <literal>oldserxid</literal>,
-       <literal>subtrans</literal> and <literal>other</literal>) resets counters
-       for only that entry. Names not included in this list are treated as
-       <literal>other</literal>.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_reset_slru</primary>
+        </indexterm>
+        <function>pg_stat_reset_slru</function> ( <type>text</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Resets statistics to zero for a single SLRU cache, or for all SLRUs in
+        the cluster.  If the argument is NULL, all counters shown in
+        the <structname>pg_stat_slru</structname> view for all SLRU caches are
+        reset.  The argument can be one of <literal>async</literal>,
+        <literal>clog</literal>, <literal>commit_timestamp</literal>,
+        <literal>multixact_offset</literal>,
+        <literal>multixact_member</literal>, <literal>oldserxid</literal>, or
+        <literal>subtrans</literal> to reset the counters for only that entry.
+        If the argument is <literal>other</literal> (or indeed, any
+        unrecognized name), then the counters for all other SLRU caches, such
+        as extension-defined caches, are reset.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
   <para>
    <function>pg_stat_get_activity</function>, the underlying function of
@@ -3514,100 +3571,182 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 </programlisting>
   </para>
 
-  <table id="monitoring-stats-backend-funcs-table">
-   <title>Per-Backend Statistics Functions</title>
-
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Return Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-    <tbody>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_idset()</function></literal></entry>
-      <entry><type>setof integer</type></entry>
-      <entry>Set of currently active backend ID numbers (from 1 to the
-       number of active backends)</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_activity(integer)</function></literal></entry>
-      <entry><type>text</type></entry>
-      <entry>Text of this backend's most recent query</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_activity_start(integer)</function></literal></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>Time when the most recent query was started</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_client_addr(integer)</function></literal></entry>
-      <entry><type>inet</type></entry>
-      <entry>IP address of the client connected to this backend</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_client_port(integer)</function></literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>TCP port number that the client is using for communication</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_dbid(integer)</function></literal></entry>
-      <entry><type>oid</type></entry>
-      <entry>OID of the database this backend is connected to</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_pid(integer)</function></literal></entry>
-      <entry><type>integer</type></entry>
-      <entry>Process ID of this backend</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_start(integer)</function></literal></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>Time when this process was started</entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_backend_userid(integer)</function></literal></entry>
-      <entry><type>oid</type></entry>
-      <entry>OID of the user logged into this backend</entry>
-     </row>
-
+   <table id="monitoring-stats-backend-funcs-table">
+    <title>Per-Backend Statistics Functions</title>
+    <tgroup cols="1">
+     <thead>
       <row>
-       <entry><literal><function>pg_stat_get_backend_wait_event_type(integer)</function></literal></entry>
-       <entry><type>text</type></entry>
-        <entry>Wait event type name if backend is currently waiting, otherwise NULL.
-        See <xref linkend="wait-event-table"/> for details.
-        </entry>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_idset</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_idset</function> ()
+        <returnvalue>setof integer</returnvalue>
+       </para>
+       <para>
+        Returns the set of currently active backend ID numbers (from 1 to the
+        number of active backends).
+       </para></entry>
       </row>
 
-     <row>
-      <entry><literal><function>pg_stat_get_backend_wait_event(integer)</function></literal></entry>
-      <entry><type>text</type></entry>
-       <entry>Wait event name if backend is currently waiting, otherwise NULL.
-       See <xref linkend="wait-event-table"/> for details.
-       </entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_activity</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_activity</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the text of this backend's most recent query.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal><function>pg_stat_get_backend_xact_start(integer)</function></literal></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>Time when the current transaction was started</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_activity_start</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_activity_start</function> ( <type>integer</type> )
+        <returnvalue>timestamp with time zone</returnvalue>
+       </para>
+       <para>
+        Returns the time when the backend's most recent query was started.
+       </para></entry>
+      </row>
 
-    </tbody>
-   </tgroup>
-  </table>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_client_addr</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_client_addr</function> ( <type>integer</type> )
+        <returnvalue>inet</returnvalue>
+       </para>
+       <para>
+        Returns the IP address of the client connected to this backend.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_client_port</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_client_port</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the TCP port number that the client is using for communication.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_dbid</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_dbid</function> ( <type>integer</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Returns the OID of the database this backend is connected to.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_pid</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_pid</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the process ID of this backend.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_start</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_start</function> ( <type>integer</type> )
+        <returnvalue>timestamp with time zone</returnvalue>
+       </para>
+       <para>
+        Returns the time when this process was started.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_userid</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_userid</function> ( <type>integer</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Returns the OID of the user logged into this backend.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_wait_event_type</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_wait_event_type</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the wait event type name if this backend is currently waiting,
+        otherwise NULL.  See <xref linkend="wait-event-table"/> for details.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_wait_event</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_wait_event</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the wait event name if this backend is currently waiting,
+        otherwise NULL.  See <xref linkend="wait-event-table"/> for details.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_xact_start</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_xact_start</function> ( <type>integer</type> )
+        <returnvalue>timestamp with time zone</returnvalue>
+       </para>
+       <para>
+        Returns the time when the backend's current transaction was started.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
  </sect2>
  </sect1>
@@ -3834,7 +3973,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <row>
       <entry><literal>finalizing analyze</literal></entry>
       <entry>
-       The command is updating pg_class. When this phase is completed, 
+       The command is updating pg_class. When this phase is completed,
        <command>ANALYZE</command> will end.
       </entry>
      </row>

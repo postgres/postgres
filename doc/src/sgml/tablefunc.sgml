@@ -24,83 +24,99 @@
   <title>Functions Provided</title>
 
   <para>
-   <xref linkend="tablefunc-functions"/> shows the functions provided
+   <xref linkend="tablefunc-functions"/> summarizes the functions provided
    by the <filename>tablefunc</filename> module.
   </para>
 
   <table id="tablefunc-functions">
    <title><filename>tablefunc</filename> Functions</title>
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry><function>normal_rand(int numvals, float8 mean, float8 stddev)</function></entry>
-      <entry><type>setof float8</type></entry>
-      <entry>
-       Produces a set of normally distributed random values
-      </entry>
-     </row>
-     <row>
-      <entry><function>crosstab(text sql)</function></entry>
-      <entry><type>setof record</type></entry>
-      <entry>
-       Produces a <quote>pivot table</quote> containing
-       row names plus <replaceable>N</replaceable> value columns, where
-       <replaceable>N</replaceable> is determined by the row type specified in the calling
-       query
-      </entry>
-     </row>
-     <row>
-      <entry><function>crosstab<replaceable>N</replaceable>(text sql)</function></entry>
-      <entry><type>setof table_crosstab_<replaceable>N</replaceable></type></entry>
-      <entry>
-       Produces a <quote>pivot table</quote> containing
-       row names plus <replaceable>N</replaceable> value columns.
-       <function>crosstab2</function>, <function>crosstab3</function>, and
-       <function>crosstab4</function> are predefined, but you can create additional
-       <function>crosstab<replaceable>N</replaceable></function> functions as described below
-      </entry>
-     </row>
-     <row>
-      <entry><function>crosstab(text source_sql, text category_sql)</function></entry>
-      <entry><type>setof record</type></entry>
-      <entry>
-       Produces a <quote>pivot table</quote>
-       with the value columns specified by a second query
-      </entry>
-     </row>
-     <row>
-      <entry><function>crosstab(text sql, int N)</function></entry>
-      <entry><type>setof record</type></entry>
-      <entry>
-       <para>Obsolete version of <function>crosstab(text)</function>.
-        The parameter <replaceable>N</replaceable> is now ignored, since the number of
-        value columns is always determined by the calling query
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <function>
-        connectby(text relname, text keyid_fld, text parent_keyid_fld
-        [, text orderby_fld ], text start_with, int max_depth
-        [, text branch_delim ])
-       </function>
-       <indexterm><primary>connectby</primary></indexterm>
-      </entry>
-      <entry><type>setof record</type></entry>
-      <entry>
-       Produces a representation of a hierarchical tree structure
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>normal_rand</function> ( <parameter>numvals</parameter> <type>integer</type>, <parameter>mean</parameter> <type>float8</type>, <parameter>stddev</parameter> <type>float8</type> )
+        <returnvalue>setof float8</returnvalue>
+       </para>
+       <para>
+        Produces a set of normally distributed random values.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>crosstab</function> ( <parameter>sql</parameter> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Produces a <quote>pivot table</quote> containing
+        row names plus <replaceable>N</replaceable> value columns, where
+        <replaceable>N</replaceable> is determined by the row type specified
+        in the calling query.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>crosstab<replaceable>N</replaceable></function> ( <parameter>sql</parameter> <type>text</type> )
+        <returnvalue>setof table_crosstab_<replaceable>N</replaceable></returnvalue>
+       </para>
+       <para>
+        Produces a <quote>pivot table</quote> containing
+        row names plus <replaceable>N</replaceable> value columns.
+        <function>crosstab2</function>, <function>crosstab3</function>, and
+        <function>crosstab4</function> are predefined, but you can create additional
+        <function>crosstab<replaceable>N</replaceable></function> functions as described below.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>crosstab</function> ( <parameter>source_sql</parameter> <type>text</type>, <parameter>category_sql</parameter> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Produces a <quote>pivot table</quote>
+        with the value columns specified by a second query.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>crosstab</function> ( <parameter>sql</parameter> <type>text</type>, <parameter>N</parameter> <type>integer</type> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Obsolete version of <function>crosstab(text)</function>.
+        The parameter <parameter>N</parameter> is now ignored, since the
+        number of value columns is always determined by the calling query.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>connectby</primary></indexterm>
+        <function>connectby</function> ( <parameter>relname</parameter> <type>text</type>, <parameter>keyid_fld</parameter> <type>text</type>, <parameter>parent_keyid_fld</parameter> <type>text</type>
+        <optional>, <parameter>orderby_fld</parameter> <type>text</type> </optional>, <parameter>start_with</parameter> <type>text</type>, <parameter>max_depth</parameter> <type>integer</type>
+        <optional>, <parameter>branch_delim</parameter> <type>text</type> </optional> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Produces a representation of a hierarchical tree structure.
+        </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
 
   <sect3>

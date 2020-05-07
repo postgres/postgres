@@ -37,46 +37,59 @@
 
   <table id="uuid-ossp-functions">
    <title>Functions for UUID Generation</title>
-   <tgroup cols="2">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry><function>uuid_generate_v1()</function><indexterm><primary>uuid_generate_v1</primary></indexterm></entry>
-      <entry>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
        <para>
-        This function generates a version 1 UUID.  This involves the MAC
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>uuid_generate_v1</primary></indexterm>
+        <function>uuid_generate_v1</function> ()
+        <returnvalue>uuid</returnvalue>
+       </para>
+       <para>
+        Generates a version 1 UUID.  This involves the MAC
         address of the computer and a time stamp.  Note that UUIDs of this
         kind reveal the identity of the computer that created the identifier
         and the time at which it did so, which might make it unsuitable for
         certain security-sensitive applications.
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry><function>uuid_generate_v1mc()</function><indexterm><primary>uuid_generate_v1mc</primary></indexterm></entry>
-      <entry>
-       <para>
-        This function generates a version 1 UUID but uses a random multicast
-        MAC address instead of the real MAC address of the computer.
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry><function>uuid_generate_v3(namespace uuid, name text)</function><indexterm><primary>uuid_generate_v3</primary></indexterm></entry>
-      <entry>
-       <para>
-        This function generates a version 3 UUID in the given namespace using
-        the specified input name.  The namespace should be one of the special
-        constants produced by the <function>uuid_ns_*()</function> functions shown
-        in <xref linkend="uuid-ossp-constants"/>.  (It could be any UUID in theory.)  The name is an identifier
-        in the selected namespace.
-       </para>
+       </para></entry>
+      </row>
 
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>uuid_generate_v1mc</primary></indexterm>
+        <function>uuid_generate_v1mc</function> ()
+        <returnvalue>uuid</returnvalue>
+       </para>
+       <para>
+        Generates a version 1 UUID, but uses a random multicast
+        MAC address instead of the real MAC address of the computer.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>uuid_generate_v3</primary></indexterm>
+        <function>uuid_generate_v3</function> ( <parameter>namespace</parameter> <type>uuid</type>, <parameter>name</parameter> <type>text</type> )
+        <returnvalue>uuid</returnvalue>
+       </para>
+       <para>
+        Generates a version 3 UUID in the given namespace using
+        the specified input name.  The namespace should be one of the special
+        constants produced by the <function>uuid_ns_*()</function> functions
+        shown in <xref linkend="uuid-ossp-constants"/>.  (It could be any UUID
+        in theory.)  The name is an identifier in the selected namespace.
+       </para>
        <para>
         For example:
 
@@ -88,82 +101,106 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
         derived from the generated UUID.
         The generation of UUIDs by this method has no random or
         environment-dependent element and is therefore reproducible.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>uuid_generate_v4</function> ()
+        <returnvalue>uuid</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>uuid_generate_v4()</literal></entry>
-      <entry>
        <para>
-        This function generates a version 4 UUID, which is derived entirely
+        Generates a version 4 UUID, which is derived entirely
         from random numbers.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>uuid_generate_v5</function> ( <parameter>namespace</parameter> <type>uuid</type>, <parameter>name</parameter> <type>text</type> )
+        <returnvalue>uuid</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>uuid_generate_v5(namespace uuid, name text)</literal></entry>
-      <entry>
        <para>
-        This function generates a version 5 UUID, which works like a version 3
+        Generates a version 5 UUID, which works like a version 3
         UUID except that SHA-1 is used as a hashing method.  Version 5 should
         be preferred over version 3 because SHA-1 is thought to be more secure
         than MD5.
-       </para>
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
 
   <table id="uuid-ossp-constants">
    <title>Functions Returning UUID Constants</title>
-   <tgroup cols="2">
-    <tbody>
-     <row>
-      <entry><literal>uuid_nil()</literal></entry>
-      <entry>
-       <para>
-        A <quote>nil</quote> UUID constant, which does not occur as a real UUID.
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>uuid_ns_dns()</literal></entry>
-      <entry>
        <para>
-        Constant designating the DNS namespace for UUIDs.
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>uuid_nil</function> ()
+        <returnvalue>uuid</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>uuid_ns_url()</literal></entry>
-      <entry>
        <para>
-        Constant designating the URL namespace for UUIDs.
+        Returns a <quote>nil</quote> UUID constant, which does not occur as a
+        real UUID.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>uuid_ns_dns</function> ()
+        <returnvalue>uuid</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>uuid_ns_oid()</literal></entry>
-      <entry>
        <para>
-        Constant designating the ISO object identifier (OID) namespace for
+        Returns a constant designating the DNS namespace for UUIDs.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>uuid_ns_url</function> ()
+        <returnvalue>uuid</returnvalue>
+       </para>
+       <para>
+        Returns a constant designating the URL namespace for UUIDs.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>uuid_ns_oid</function> ()
+        <returnvalue>uuid</returnvalue>
+       </para>
+       <para>
+        Returns a constant designating the ISO object identifier (OID) namespace for
         UUIDs.  (This pertains to ASN.1 OIDs, which are unrelated to the OIDs
         used in <productname>PostgreSQL</productname>.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>uuid_ns_x500</function> ()
+        <returnvalue>uuid</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>uuid_ns_x500()</literal></entry>
-      <entry>
        <para>
-        Constant designating the X.500 distinguished name (DN) namespace for
-        UUIDs.
-       </para>
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+        Returns a constant designating the X.500 distinguished name (DN)
+        namespace for UUIDs.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
  </sect2>
 

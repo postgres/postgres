@@ -36,161 +36,135 @@
   <para>
    <xref linkend="xml2-functions-table"/> shows the functions provided by this module.
    These functions provide straightforward XML parsing and XPath queries.
-   All arguments are of type <type>text</type>, so for brevity that is not shown.
   </para>
 
   <table id="xml2-functions-table">
-   <title>Functions</title>
-   <tgroup cols="3">
-   <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-    <tbody>
-     <row>
-      <entry>
-       <function>
-        xml_valid(document)
-       </function>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-      <entry>
+   <title><filename>xml2</filename> Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
        <para>
-        This parses the document text in its parameter and returns true if the
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xml_valid</function> ( <parameter>document</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Parses the given document and returns true if the
         document is well-formed XML.  (Note: this is an alias for the standard
         PostgreSQL function <function>xml_is_well_formed()</function>.  The
         name <function>xml_valid()</function> is technically incorrect since validity
         and well-formedness have different meanings in XML.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_string</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry>
-        <function>
-         xpath_string(document, query)
-        </function>
-      </entry>
-      <entry>
-       <type>text</type>
-      </entry>
-      <entry morerows="2">
        <para>
-        These functions evaluate the XPath query on the supplied document, and
-        cast the result to the specified type.
+        Evaluates the XPath query on the supplied document, and
+        casts the result to <type>text</type>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_number</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type> )
+        <returnvalue>real</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <function>
-        xpath_number(document, query)
-       </function>
-      </entry>
-      <entry>
-       <type>float4</type>
-      </entry>
-     </row>
-     <row>
-      <entry>
-       <function>
-        xpath_bool(document, query)
-       </function>
-      </entry>
-      <entry>
-       <type>bool</type>
-      </entry>
-     </row>
-     <row>
-      <entry>
-        <function>
-         xpath_nodeset(document, query, toptag, itemtag)
-        </function>
-      </entry>
-      <entry>
-       <type>text</type>
-      </entry>
-      <entry>
        <para>
-       This evaluates query on document and wraps the result in XML tags. If
-       the result is multivalued, the output will look like:
+        Evaluates the XPath query on the supplied document, and
+        casts the result to <type>real</type>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_bool</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Evaluates the XPath query on the supplied document, and
+        casts the result to <type>boolean</type>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_nodeset</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type>, <parameter>toptag</parameter> <type>text</type>, <parameter>itemtag</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Evaluates the query on the document and wraps the result in XML
+        tags. If the result is multivalued, the output will look like:
 <synopsis>
 &lt;toptag&gt;
 &lt;itemtag&gt;Value 1 which could be an XML fragment&lt;/itemtag&gt;
 &lt;itemtag&gt;Value 2....&lt;/itemtag&gt;
 &lt;/toptag&gt;
 </synopsis>
-        If either <literal>toptag</literal> or <literal>itemtag</literal> is an empty string, the relevant tag is omitted.
+        If either <parameter>toptag</parameter>
+        or <parameter>itemtag</parameter> is an empty string, the relevant tag
+        is omitted.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_nodeset</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type>, <parameter>itemtag</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry>
-        <function>
-         xpath_nodeset(document, query)
-        </function>
-      </entry>
-      <entry>
-       <type>text</type>
-      </entry>
-      <entry>
+       <para>
+        Like <function>xpath_nodeset(document, query, toptag, itemtag)</function> but result omits <parameter>toptag</parameter>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_nodeset</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
        <para>
         Like <function>xpath_nodeset(document, query, toptag, itemtag)</function> but result omits both tags.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_list</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type>, <parameter>separator</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry>
-        <function>
-         xpath_nodeset(document, query, itemtag)
-        </function>
-      </entry>
-      <entry>
-       <type>text</type>
-      </entry>
-      <entry>
        <para>
-        Like <function>xpath_nodeset(document, query, toptag, itemtag)</function> but result omits <literal>toptag</literal>.
+        Evaluates the query on the document and returns multiple values
+        separated by the specified separator, for example <literal>Value
+        1,Value 2,Value 3</literal> if <parameter>separator</parameter>
+        is <literal>,</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>xpath_list</function> ( <parameter>document</parameter> <type>text</type>, <parameter>query</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
        </para>
-      </entry>
-     </row>
-     <row>
-      <entry>
-        <function>
-         xpath_list(document, query, separator)
-        </function>
-      </entry>
-      <entry>
-       <type>text</type>
-      </entry>
-      <entry>
        <para>
-        This function returns multiple values separated by the specified
-        separator, for example <literal>Value 1,Value 2,Value 3</literal> if
-        separator is <literal>,</literal>.
-       </para>
-      </entry>
-     </row>
-     <row>
-      <entry>
-        <function>
-         xpath_list(document, query)
-        </function>
-      </entry>
-      <entry>
-       <type>text</type>
-      </entry>
-      <entry>
-       This is a wrapper for the above function that uses <literal>,</literal>
-       as the separator.
-      </entry>
-     </row>
-    </tbody>
-   </tgroup>
+        This is a wrapper for the above function that uses <literal>,</literal>
+        as the separator.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
  </sect2>
 
@@ -217,6 +191,8 @@ xpath_table(text key, text document, text relation, text xpaths, text criteria) 
   <table id="xml2-xpath-table-parameters">
    <title><function>xpath_table</function> Parameters</title>
    <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="2*"/>
      <thead>
      <row>
       <entry>Parameter</entry>

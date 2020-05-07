@@ -38,6 +38,8 @@
   <table id="isn-datatypes">
    <title><filename>isn</filename> Data Types</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <thead>
      <row>
       <entry>Data Type</entry>
@@ -235,38 +237,63 @@
 
   <table id="isn-functions">
    <title><filename>isn</filename> Functions</title>
-   <tgroup cols="3">
-    <thead>
-     <row>
-      <entry>Function</entry>
-      <entry>Returns</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry><function>isn_weak(boolean)</function><indexterm><primary>isn_weak</primary></indexterm></entry>
-      <entry><type>boolean</type></entry>
-      <entry>Sets the weak input mode (returns new setting)</entry>
-     </row>
-     <row>
-      <entry><function>isn_weak()</function></entry>
-      <entry><type>boolean</type></entry>
-      <entry>Gets the current status of the weak mode</entry>
-     </row>
-     <row>
-      <entry><function>make_valid(isn)</function><indexterm><primary>make_valid</primary></indexterm></entry>
-      <entry><type>isn</type></entry>
-      <entry>Validates an invalid number (clears the invalid flag)</entry>
-     </row>
-     <row>
-      <entry><function>is_valid(isn)</function><indexterm><primary>is_valid</primary></indexterm></entry>
-      <entry><type>boolean</type></entry>
-      <entry>Checks for the presence of the invalid flag</entry>
-     </row>
-    </tbody>
-   </tgroup>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>isn_weak</primary></indexterm>
+        <function>isn_weak</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Sets the weak input mode, and returns new setting.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>isn_weak</function> ()
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns the current status of the weak mode.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>make_valid</primary></indexterm>
+        <function>make_valid</function> ( <type>isn</type> )
+        <returnvalue>isn</returnvalue>
+       </para>
+       <para>
+        Validates an invalid number (clears the invalid flag).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>is_valid</primary></indexterm>
+        <function>is_valid</function> ( <type>isn</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Checks for the presence of the invalid flag.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
 
   <para>

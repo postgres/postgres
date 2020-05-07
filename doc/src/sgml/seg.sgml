@@ -141,6 +141,8 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   <table id="seg-input-examples">
    <title>Examples of Valid <type>seg</type> Input</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
     <tbody>
      <row>
       <entry><literal>5.0</literal></entry>
@@ -248,65 +250,106 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
 
   <table id="seg-gist-operators">
    <title>Seg GiST Operators</title>
-   <tgroup cols="2">
-    <thead>
-     <row>
-      <entry>Operator</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
 
-    <tbody>
-     <row>
-      <entry><literal>[a, b] &lt;&lt; [c, d]</literal></entry>
-      <entry>[a, b] is entirely to the left of [c, d].  That is, [a,
-       b] &lt;&lt; [c, d] is true if b &lt; c and false otherwise.</entry>
-     </row>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>&lt;&lt;</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first <type>seg</type> entirely to the left of the second?
+        [a, b] &lt;&lt; [c, d] is true if b &lt; c.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>[a, b] &gt;&gt; [c, d]</literal></entry>
-      <entry>[a, b] is entirely to the right of [c, d].  That is, [a,
-       b] &gt;&gt; [c, d] is true if a &gt; d and false otherwise.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>&gt;&gt;</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first <type>seg</type> entirely to the right of the second?
+        [a, b] &gt;&gt; [c, d] is true if a &gt; d.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>[a, b] &amp;&lt; [c, d]</literal></entry>
-      <entry>Overlaps or is left of &mdash; This might be better read
-       as <quote>does not extend to right of</quote>.  It is true when
-       b &lt;= d.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>&amp;&lt;</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first <type>seg</type> not extend to the right of the
+        second?
+        [a, b] &amp;&lt; [c, d] is true if b &lt;= d.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>[a, b] &amp;&gt; [c, d]</literal></entry>
-      <entry>Overlaps or is right of &mdash; This might be better read
-       as <quote>does not extend to left of</quote>.  It is true when
-       a &gt;= c.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>&amp;&gt;</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first <type>seg</type> not extend to the left of the
+        second?
+        [a, b] &amp;&gt; [c, d] is true if a &gt;= c.
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>[a, b] = [c, d]</literal></entry>
-      <entry>Same as &mdash; The segments [a, b] and [c, d] are
-       identical, that is, a = c and b = d.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>=</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Are the two <type>seg</type>s equal?
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>[a, b] &amp;&amp; [c, d]</literal></entry>
-      <entry>The segments [a, b] and [c, d] overlap.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>&amp;&amp;</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do the two <type>seg</type>s overlap?
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>[a, b] @&gt; [c, d]</literal></entry>
-      <entry>The segment [a, b] contains the segment [c, d], that is,
-       a &lt;= c and b &gt;= d.</entry>
-     </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>@&gt;</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first <type>seg</type> contain the second?
+       </para></entry>
+      </row>
 
-     <row>
-      <entry><literal>[a, b] &lt;@ [c, d]</literal></entry>
-      <entry>The segment [a, b] is contained in [c, d], that is, a
-       &gt;= c and b &lt;= d.</entry>
-     </row>
-    </tbody>
-   </tgroup>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>seg</type> <literal>&lt;@</literal> <type>seg</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first <type>seg</type> contained in the second?
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
   </table>
 
   <para>
@@ -318,33 +361,10 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </para>
 
   <para>
-   The standard B-tree operators are also provided, for example
-
-  <informaltable>
-    <tgroup cols="2">
-     <thead>
-      <row>
-       <entry>Operator</entry>
-       <entry>Description</entry>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry><literal>[a, b] &lt; [c, d]</literal></entry>
-       <entry>Less than</entry>
-      </row>
-
-      <row>
-       <entry><literal>[a, b] &gt; [c, d]</literal></entry>
-       <entry>Greater than</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </informaltable>
-
-   These operators do not make a lot of sense for any practical
-   purpose but sorting. These operators first compare (a) to (c),
+   In addition to the above operators, the usual comparison
+   operators shown in <xref linkend="functions-comparison-op-table"/> are
+   available for type <type>seg</type>.  These operators
+   first compare (a) to (c),
    and if these are equal, compare (b) to (d). That results in
    reasonably good sorting in most cases, which is useful if
    you want to use ORDER BY with this type.
