@@ -662,7 +662,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
 <para>
-Improve speed of TOAST decompression and the retrievel of only the leading bytes of TOAST values (Binguo Bao, Andrey Borodin)
+Improve speed of TOAST decompression and the retrieval of only the leading bytes of TOAST values (Binguo Bao, Andrey Borodin)
 </para>
 
 <para>
@@ -1594,11 +1594,11 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow Unicode escapes, e.g., E'\u####', in clients that don't use UTF-8 encoding (Tom Lane)
+Allow Unicode escapes, e.g., E'\u####', in databases that do not use UTF-8 encoding (Tom Lane)
 </para>
 
 <para>
-The Unicode characters must be available in the server encoding.
+The Unicode characters must be available in the database encoding.
 </para>
 
 </listitem>
@@ -2089,10 +2089,6 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <para>
 Allow pgbench to generate its data server-side, rather than client side (Fabien Coelho)
-</para>
-
-<para>
-DOCUMENT THE DEFAULT GENERATION METHOD
 </para>
 
 </listitem>
