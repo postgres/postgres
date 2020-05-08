@@ -50,6 +50,11 @@ extern void FreeFakeRelcacheEntry(Relation fakerel);
 extern int	read_local_xlog_page(XLogReaderState *state,
 								 XLogRecPtr targetPagePtr, int reqLen,
 								 XLogRecPtr targetRecPtr, char *cur_page);
+extern int	wal_segment_open(XLogReaderState *state,
+							 XLogSegNo nextSegNo,
+							 WALSegmentContext *segcxt,
+							 TimeLineID *tli_p);
+extern void wal_segment_close(XLogReaderState *state);
 
 extern void XLogReadDetermineTimeline(XLogReaderState *state,
 									  XLogRecPtr wantPage, uint32 wantLength);

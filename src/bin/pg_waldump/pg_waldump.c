@@ -279,9 +279,10 @@ identify_target_directory(char *directory, char *fname)
 	return NULL;				/* not reached */
 }
 
-/* pg_waldump's openSegment callback for WALRead */
+/* pg_waldump's XLogReaderRoutine->segment_open callback */
 static int
-WALDumpOpenSegment(XLogSegNo nextSegNo, WALSegmentContext *segcxt,
+WALDumpOpenSegment(XLogReaderState *state,
+				   XLogSegNo nextSegNo, WALSegmentContext *segcxt,
 				   TimeLineID *tli_p)
 {
 	TimeLineID	tli = *tli_p;
@@ -321,8 +322,18 @@ WALDumpOpenSegment(XLogSegNo nextSegNo, WALSegmentContext *segcxt,
 }
 
 /*
- * XLogReader read_page callback
+ * pg_waldump's XLogReaderRoutine->segment_close callback.  Same as
+ * wal_segment_close
  */
+static void
+WALDumpCloseSegment(XLogReaderState *state)
+{
+	close(state->seg.ws_file);
+	/* need to check errno? */
+	state->seg.ws_file = -1;
+}
+
+/* pg_waldump's XLogReaderRoutine->page_read callback */
 static int
 WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 				XLogRecPtr targetPtr, char *readBuff)
@@ -344,8 +355,9 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 		}
 	}
 
-	if (!WALRead(readBuff, targetPagePtr, count, private->timeline,
-				 &state->seg, &state->segcxt, WALDumpOpenSegment, &errinfo))
+	if (!WALRead(state, readBuff, targetPagePtr, count, private->timeline,
+				 &state->seg, &state->segcxt,
+				 &errinfo))
 	{
 		WALOpenSegment *seg = &errinfo.wre_seg;
 		char		fname[MAXPGPATH];
@@ -1031,8 +1043,12 @@ main(int argc, char **argv)
 	/* done with argument parsing, do the actual work */
 
 	/* we have everything we need, start reading */
-	xlogreader_state = XLogReaderAllocate(WalSegSz, waldir, WALDumpReadPage,
-										  &private);
+	xlogreader_state =
+		XLogReaderAllocate(WalSegSz, waldir,
+						   XL_ROUTINE(.page_read = WALDumpReadPage,
+									  .segment_open = WALDumpOpenSegment,
+									  .segment_close = WALDumpCloseSegment),
+						   &private);
 	if (!xlogreader_state)
 		fatal_error("out of memory");
 

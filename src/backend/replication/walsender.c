@@ -54,8 +54,8 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
+#include "access/xlogreader.h"
 #include "access/xlogutils.h"
-
 #include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
@@ -248,8 +248,8 @@ static void LagTrackerWrite(XLogRecPtr lsn, TimestampTz local_flush_time);
 static TimeOffset LagTrackerRead(int head, XLogRecPtr lsn, TimestampTz now);
 static bool TransactionIdInRecentPast(TransactionId xid, uint32 epoch);
 
-static int	WalSndSegmentOpen(XLogSegNo nextSegNo, WALSegmentContext *segcxt,
-							  TimeLineID *tli_p);
+static int	WalSndSegmentOpen(XLogReaderState *state, XLogSegNo nextSegNo,
+							  WALSegmentContext *segcxt, TimeLineID *tli_p);
 static void UpdateSpillStats(LogicalDecodingContext *ctx);
 
 
@@ -798,7 +798,8 @@ StartReplication(StartReplicationCmd *cmd)
 }
 
 /*
- * read_page callback for logical decoding contexts, as a walsender process.
+ * XLogReaderRoutine->page_read callback for logical decoding contexts, as a
+ * walsender process.
  *
  * Inside the walsender we can do better than read_local_xlog_page,
  * which has to do a plain sleep/busy loop, because the walsender's latch gets
@@ -832,7 +833,8 @@ logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int req
 		count = flushptr - targetPagePtr;	/* part of the page available */
 
 	/* now actually read the data, we know it's there */
-	if (!WALRead(cur_page,
+	if (!WALRead(state,
+				 cur_page,
 				 targetPagePtr,
 				 XLOG_BLCKSZ,
 				 sendSeg->ws_tli,	/* Pass the current TLI because only
@@ -840,7 +842,6 @@ logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int req
 									 * TLI is needed. */
 				 sendSeg,
 				 sendCxt,
-				 WalSndSegmentOpen,
 				 &errinfo))
 		WALReadRaiseError(&errinfo);
 
@@ -1005,7 +1006,9 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL, need_full_snapshot,
 										InvalidXLogRecPtr,
-										logical_read_xlog_page,
+										XL_ROUTINE(.page_read = logical_read_xlog_page,
+												   .segment_open = WalSndSegmentOpen,
+												   .segment_close = wal_segment_close),
 										WalSndPrepareWrite, WalSndWriteData,
 										WalSndUpdateProgress);
 
@@ -1168,7 +1171,9 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 	 */
 	logical_decoding_ctx =
 		CreateDecodingContext(cmd->startpoint, cmd->options, false,
-							  logical_read_xlog_page,
+							  XL_ROUTINE(.page_read = logical_read_xlog_page,
+										 .segment_open = WalSndSegmentOpen,
+										 .segment_close = wal_segment_close),
 							  WalSndPrepareWrite, WalSndWriteData,
 							  WalSndUpdateProgress);
 
@@ -2441,9 +2446,10 @@ WalSndKill(int code, Datum arg)
 	SpinLockRelease(&walsnd->mutex);
 }
 
-/* walsender's openSegment callback for WALRead */
+/* XLogReaderRoutine->segment_open callback */
 static int
-WalSndSegmentOpen(XLogSegNo nextSegNo, WALSegmentContext *segcxt,
+WalSndSegmentOpen(XLogReaderState *state,
+				  XLogSegNo nextSegNo, WALSegmentContext *segcxt,
 				  TimeLineID *tli_p)
 {
 	char		path[MAXPGPATH];
@@ -2531,6 +2537,12 @@ XLogSendPhysical(void)
 	Size		nbytes;
 	XLogSegNo	segno;
 	WALReadError errinfo;
+	static XLogReaderState fake_xlogreader =
+	{
+		/* Fake xlogreader state for WALRead */
+		.routine.segment_open = WalSndSegmentOpen,
+		.routine.segment_close = wal_segment_close
+	};
 
 	/* If requested switch the WAL sender to the stopping state. */
 	if (got_STOPPING)
@@ -2748,7 +2760,8 @@ XLogSendPhysical(void)
 	enlargeStringInfo(&output_message, nbytes);
 
 retry:
-	if (!WALRead(&output_message.data[output_message.len],
+	if (!WALRead(&fake_xlogreader,
+				 &output_message.data[output_message.len],
 				 startptr,
 				 nbytes,
 				 sendSeg->ws_tli,	/* Pass the current TLI because only
@@ -2756,7 +2769,6 @@ retry:
 									 * TLI is needed. */
 				 sendSeg,
 				 sendCxt,
-				 WalSndSegmentOpen,
 				 &errinfo))
 		WALReadRaiseError(&errinfo);
 

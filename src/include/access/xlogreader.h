@@ -17,6 +17,13 @@
  *		XLogBeginRead() or XLogFindNextRecord(), and call XLogReadRecord()
  *		until it returns NULL.
  *
+ *		Callers supply a page_read callback if they want to to call
+ *		XLogReadRecord or XLogFindNextRecord; it can be passed in as NULL
+ *		otherwise.  The WALRead function can be used as a helper to write
+ *		page_read callbacks, but it is not mandatory; callers that use it,
+ *		must supply open_segment callbacks.  The close_segment callback
+ *		must always be supplied.
+ *
  *		After reading a record with XLogReadRecord(), it's decomposed into
  *		the per-block and main data parts, and the parts can be accessed
  *		with the XLogRec* macros and functions. You can also decode a
@@ -50,12 +57,69 @@ typedef struct WALSegmentContext
 
 typedef struct XLogReaderState XLogReaderState;
 
-/* Function type definition for the read_page callback */
+/* Function type definitions for various xlogreader interactions */
 typedef int (*XLogPageReadCB) (XLogReaderState *xlogreader,
 							   XLogRecPtr targetPagePtr,
 							   int reqLen,
 							   XLogRecPtr targetRecPtr,
 							   char *readBuf);
+typedef int (*WALSegmentOpenCB) (XLogReaderState *xlogreader,
+								 XLogSegNo nextSegNo,
+								 WALSegmentContext *segcxt,
+								 TimeLineID *tli_p);
+typedef void (*WALSegmentCloseCB) (XLogReaderState *xlogreader);
+
+typedef struct XLogReaderRoutine
+{
+	/*
+	 * Data input callback
+	 *
+	 * This callback shall read at least reqLen valid bytes of the xlog page
+	 * starting at targetPagePtr, and store them in readBuf.  The callback
+	 * shall return the number of bytes read (never more than XLOG_BLCKSZ), or
+	 * -1 on failure.  The callback shall sleep, if necessary, to wait for the
+	 * requested bytes to become available.  The callback will not be invoked
+	 * again for the same page unless more than the returned number of bytes
+	 * are needed.
+	 *
+	 * targetRecPtr is the position of the WAL record we're reading.  Usually
+	 * it is equal to targetPagePtr + reqLen, but sometimes xlogreader needs
+	 * to read and verify the page or segment header, before it reads the
+	 * actual WAL record it's interested in.  In that case, targetRecPtr can
+	 * be used to determine which timeline to read the page from.
+	 *
+	 * The callback shall set ->seg.ws_tli to the TLI of the file the page was
+	 * read from.
+	 */
+	XLogPageReadCB page_read;
+
+	/*
+	 * Callback to open the specified WAL segment for reading.  The file
+	 * descriptor of the opened segment shall be returned.  In case of
+	 * failure, an error shall be raised by the callback and it shall not
+	 * return.
+	 *
+	 * "nextSegNo" is the number of the segment to be opened.
+	 *
+	 * "segcxt" is additional information about the segment.
+	 *
+	 * "tli_p" is an input/output argument. XLogRead() uses it to pass the
+	 * timeline in which the new segment should be found, but the callback can
+	 * use it to return the TLI that it actually opened.
+	 *
+	 * BasicOpenFile() is the preferred way to open the segment file in
+	 * backend code, whereas open(2) should be used in frontend.
+	 */
+	WALSegmentOpenCB segment_open;
+
+	/*
+	 * WAL segment close callback.  ->seg.ws_file shall be set to a negative
+	 * number.
+	 */
+	WALSegmentCloseCB segment_close;
+} XLogReaderRoutine;
+
+#define XL_ROUTINE(...) &(XLogReaderRoutine){__VA_ARGS__}
 
 typedef struct
 {
@@ -88,32 +152,15 @@ typedef struct
 
 struct XLogReaderState
 {
+	/*
+	 * Operational callbacks
+	 */
+	XLogReaderRoutine routine;
+
 	/* ----------------------------------------
 	 * Public parameters
 	 * ----------------------------------------
 	 */
-
-	/*
-	 * Data input callback (mandatory).
-	 *
-	 * This callback shall read at least reqLen valid bytes of the xlog page
-	 * starting at targetPagePtr, and store them in readBuf.  The callback
-	 * shall return the number of bytes read (never more than XLOG_BLCKSZ), or
-	 * -1 on failure.  The callback shall sleep, if necessary, to wait for the
-	 * requested bytes to become available.  The callback will not be invoked
-	 * again for the same page unless more than the returned number of bytes
-	 * are needed.
-	 *
-	 * targetRecPtr is the position of the WAL record we're reading.  Usually
-	 * it is equal to targetPagePtr + reqLen, but sometimes xlogreader needs
-	 * to read and verify the page or segment header, before it reads the
-	 * actual WAL record it's interested in.  In that case, targetRecPtr can
-	 * be used to determine which timeline to read the page from.
-	 *
-	 * The callback shall set ->seg.ws_tli to the TLI of the file the page was
-	 * read from.
-	 */
-	XLogPageReadCB read_page;
 
 	/*
 	 * System identifier of the xlog files we're about to read.  Set to zero
@@ -214,29 +261,12 @@ struct XLogReaderState
 /* Get a new XLogReader */
 extern XLogReaderState *XLogReaderAllocate(int wal_segment_size,
 										   const char *waldir,
-										   XLogPageReadCB pagereadfunc,
+										   XLogReaderRoutine *routine,
 										   void *private_data);
+extern XLogReaderRoutine *LocalXLogReaderRoutine(void);
 
 /* Free an XLogReader */
 extern void XLogReaderFree(XLogReaderState *state);
-
-/*
- * Callback to open the specified WAL segment for reading.  Returns a valid
- * file descriptor when the file was opened successfully.
- *
- * "nextSegNo" is the number of the segment to be opened.
- *
- * "segcxt" is additional information about the segment.
- *
- * "tli_p" is an input/output argument. XLogRead() uses it to pass the
- * timeline in which the new segment should be found, but the callback can use
- * it to return the TLI that it actually opened.
- *
- * BasicOpenFile() is the preferred way to open the segment file in backend
- * code, whereas open(2) should be used in frontend.
- */
-typedef int (*WALSegmentOpen) (XLogSegNo nextSegNo, WALSegmentContext *segcxt,
-							   TimeLineID *tli_p);
 
 /* Initialize supporting structures */
 extern void WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
@@ -269,9 +299,10 @@ typedef struct WALReadError
 	WALOpenSegment wre_seg;		/* Segment we tried to read from. */
 } WALReadError;
 
-extern bool WALRead(char *buf, XLogRecPtr startptr, Size count,
+extern bool WALRead(XLogReaderState *state,
+					char *buf, XLogRecPtr startptr, Size count,
 					TimeLineID tli, WALOpenSegment *seg,
-					WALSegmentContext *segcxt, WALSegmentOpen openSegment,
+					WALSegmentContext *segcxt,
 					WALReadError *errinfo);
 
 /* Functions for decoding an XLogRecord */

@@ -66,7 +66,8 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 
 	private.tliIndex = tliIndex;
 	private.restoreCommand = restoreCommand;
-	xlogreader = XLogReaderAllocate(WalSegSz, datadir, &SimpleXLogPageRead,
+	xlogreader = XLogReaderAllocate(WalSegSz, datadir,
+									XL_ROUTINE(.page_read = &SimpleXLogPageRead),
 									&private);
 	if (xlogreader == NULL)
 		pg_fatal("out of memory");
@@ -117,7 +118,8 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex,
 
 	private.tliIndex = tliIndex;
 	private.restoreCommand = restoreCommand;
-	xlogreader = XLogReaderAllocate(WalSegSz, datadir, &SimpleXLogPageRead,
+	xlogreader = XLogReaderAllocate(WalSegSz, datadir,
+									XL_ROUTINE(.page_read = &SimpleXLogPageRead),
 									&private);
 	if (xlogreader == NULL)
 		pg_fatal("out of memory");
@@ -176,7 +178,8 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 
 	private.tliIndex = tliIndex;
 	private.restoreCommand = restoreCommand;
-	xlogreader = XLogReaderAllocate(WalSegSz, datadir, &SimpleXLogPageRead,
+	xlogreader = XLogReaderAllocate(WalSegSz, datadir,
+									XL_ROUTINE(.page_read = &SimpleXLogPageRead),
 									&private);
 	if (xlogreader == NULL)
 		pg_fatal("out of memory");
