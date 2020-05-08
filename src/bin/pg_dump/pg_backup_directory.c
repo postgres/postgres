@@ -411,8 +411,8 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 
 	free(buf);
 	if (cfclose(cfp) !=0)
-		exit_horribly(modulename, "could not close data file: %s\n",
-					  strerror(errno));
+		exit_horribly(modulename, "could not close data file \"%s\": %s\n",
+					  filename, strerror(errno));
 }
 
 /*
