@@ -1032,8 +1032,8 @@ help(const char *progname)
 	printf(_("  --extra-float-digits=NUM     override default setting for extra_float_digits\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --include-foreign-data=PATTERN\n"
-			 "                               include data of foreign tables in\n"
-			 "                               foreign servers matching PATTERN\n"));
+			 "                               include data of foreign tables on foreign\n"
+			 "                               servers matching PATTERN\n"));
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --no-comments                do not dump comments\n"));

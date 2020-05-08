@@ -567,7 +567,7 @@ run_reindex_command(PGconn *conn, ReindexType type, const char *name,
 							 name, PQdb(conn), PQerrorMessage(conn));
 				break;
 			case REINDEX_SYSTEM:
-				pg_log_error("reindexing of system catalogs on database \"%s\" failed: %s",
+				pg_log_error("reindexing of system catalogs in database \"%s\" failed: %s",
 							 PQdb(conn), PQerrorMessage(conn));
 				break;
 			case REINDEX_TABLE:

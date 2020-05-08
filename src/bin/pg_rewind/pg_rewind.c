@@ -873,7 +873,7 @@ getRestoreCommand(const char *argv0)
 	(void) pg_strip_crlf(cmd_output);
 
 	if (strcmp(cmd_output, "") == 0)
-		pg_fatal("restore_command is not set on the target cluster");
+		pg_fatal("restore_command is not set in the target cluster");
 
 	restore_command = pg_strdup(cmd_output);
 
@@ -936,7 +936,7 @@ ensureCleanShutdown(const char *argv0)
 
 	if (system(cmd) != 0)
 	{
-		pg_log_error("postgres single-user mode of target instance failed");
+		pg_log_error("postgres single-user mode in target cluster failed");
 		pg_fatal("Command was: %s", cmd);
 	}
 }
