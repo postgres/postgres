@@ -77,7 +77,6 @@ readTimeLineHistory(TimeLineID targetTLI)
 	List	   *result;
 	char		path[MAXPGPATH];
 	char		histfname[MAXFNAMELEN];
-	char		fline[MAXPGPATH];
 	FILE	   *fd;
 	TimeLineHistoryEntry *entry;
 	TimeLineID	lasttli = 0;
@@ -122,15 +121,30 @@ readTimeLineHistory(TimeLineID targetTLI)
 	 * Parse the file...
 	 */
 	prevend = InvalidXLogRecPtr;
-	while (fgets(fline, sizeof(fline), fd) != NULL)
+	for (;;)
 	{
-		/* skip leading whitespace and check for # comment */
+		char		fline[MAXPGPATH];
+		char	   *res;
 		char	   *ptr;
 		TimeLineID	tli;
 		uint32		switchpoint_hi;
 		uint32		switchpoint_lo;
 		int			nfields;
 
+		pgstat_report_wait_start(WAIT_EVENT_TIMELINE_HISTORY_READ);
+		res = fgets(fline, sizeof(fline), fd);
+		pgstat_report_wait_end();
+		if (res == NULL)
+		{
+			if (ferror(fd))
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not read file \"%s\": %m", path)));
+
+			break;
+		}
+
+		/* skip leading whitespace and check for # comment */
 		for (ptr = fline; *ptr; ptr++)
 		{
 			if (!isspace((unsigned char) *ptr))
@@ -392,6 +406,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 
 	nbytes = strlen(buffer);
 	errno = 0;
+	pgstat_report_wait_start(WAIT_EVENT_TIMELINE_HISTORY_WRITE);
 	if ((int) write(fd, buffer, nbytes) != nbytes)
 	{
 		int			save_errno = errno;
@@ -407,6 +422,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", tmppath)));
 	}
+	pgstat_report_wait_end();
 
 	pgstat_report_wait_start(WAIT_EVENT_TIMELINE_HISTORY_SYNC);
 	if (pg_fsync(fd) != 0)
