@@ -135,12 +135,11 @@
   </para>
 
   <para>
-   When the <structname>pg_buffercache</structname> view is accessed, internal buffer
-   manager locks are taken for long enough to copy all the buffer state
-   data that the view will display.
-   This ensures that the view produces a consistent set of results, while not
-   blocking normal buffer activity longer than necessary.  Nonetheless there
-   could be some impact on database performance if this view is read often.
+   Since buffer manager locks are not taken to copy the buffer state data that
+   the view will display, accessing <structname>pg_buffercache</structname> view
+   has less impact on normal buffer activity but it doesn't provide a consistent
+   set of results across all buffers.  However, we ensure that the information of
+   each buffer is self-consistent.
   </para>
  </sect2>
 
