@@ -196,15 +196,15 @@ main(int argc, char *argv[])
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-			pg_log_error("The program \"pg_dump\" is needed by %s but was not found in the\n"
+			pg_log_error("The program \"%s\" is needed by %s but was not found in the\n"
 						 "same directory as \"%s\".\n"
 						 "Check your installation.",
-						 progname, full_path);
+						 "pg_dump", progname, full_path);
 		else
-			pg_log_error("The program \"pg_dump\" was found by \"%s\"\n"
+			pg_log_error("The program \"%s\" was found by \"%s\"\n"
 						 "but was not the same version as %s.\n"
 						 "Check your installation.",
-						 full_path, progname);
+						 "pg_dump", full_path, progname);
 		exit_nicely(1);
 	}
 

@@ -295,13 +295,13 @@ main(int argc, char **argv)
 			if (find_my_exec(argv[0], full_path) < 0)
 				strlcpy(full_path, progname, sizeof(full_path));
 			if (ret == -1)
-				pg_log_fatal("The program \"%s\" is needed by %s but was\n"
-							 "not found in the same directory as \"%s\".\n"
+				pg_log_fatal("The program \"%s\" is needed by %s but was not found in the\n"
+							 "same directory as \"%s\".\n"
 							 "Check your installation.",
 							 "pg_waldump", "pg_verifybackup", full_path);
 			else
-				pg_log_fatal("The program \"%s\" was found by \"%s\" but was\n"
-							 "not the same version as %s.\n"
+				pg_log_fatal("The program \"%s\" was found by \"%s\"\n"
+							 "but was not the same version as %s.\n"
 							 "Check your installation.",
 							 "pg_waldump", full_path, "pg_verifybackup");
 		}

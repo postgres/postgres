@@ -810,8 +810,7 @@ find_other_exec_or_die(const char *argv0, const char *target, const char *versio
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-			write_stderr(_("The program \"%s\" is needed by %s "
-						   "but was not found in the\n"
+			write_stderr(_("The program \"%s\" is needed by %s but was not found in the\n"
 						   "same directory as \"%s\".\n"
 						   "Check your installation.\n"),
 						 target, progname, full_path);

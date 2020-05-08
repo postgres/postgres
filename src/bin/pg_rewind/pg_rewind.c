@@ -847,15 +847,15 @@ getRestoreCommand(const char *argv0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (rc == -1)
-			pg_log_error("The program \"postgres\" is needed by %s but was not found in the\n"
+			pg_log_error("The program \"%s\" is needed by %s but was not found in the\n"
 						 "same directory as \"%s\".\n"
 						 "Check your installation.",
-						 progname, full_path);
+						 "postgres", progname, full_path);
 		else
-			pg_log_error("The program \"postgres\" was found by \"%s\"\n"
+			pg_log_error("The program \"%s\" was found by \"%s\"\n"
 						 "but was not the same version as %s.\n"
 						 "Check your installation.",
-						 full_path, progname);
+						 "postgres", full_path, progname);
 		exit(1);
 	}
 
@@ -905,13 +905,13 @@ ensureCleanShutdown(const char *argv0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-			pg_fatal("The program \"%s\" is needed by %s but was\n"
-					 "not found in the same directory as \"%s\".\n"
+			pg_fatal("The program \"%s\" is needed by %s but was not found in the\n"
+					 "same directory as \"%s\".\n"
 					 "Check your installation.",
 					 "postgres", progname, full_path);
 		else
-			pg_fatal("The program \"%s\" was found by \"%s\" but was\n"
-					 "not the same version as %s.\n"
+			pg_fatal("The program \"%s\" was found by \"%s\"\n"
+					 "but was not the same version as %s.\n"
 					 "Check your installation.",
 					 "postgres", full_path, progname);
 	}
