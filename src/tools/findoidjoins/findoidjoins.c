@@ -7,6 +7,7 @@
  */
 #include "postgres_fe.h"
 
+#include "access/transam.h"
 #include "catalog/pg_class_d.h"
 
 #include "fe_utils/connect.h"
@@ -55,18 +56,20 @@ main(int argc, char **argv)
 	}
 	PQclear(res);
 
-	/* Get a list of relations that have OIDs */
+	/* Get a list of system relations that have OIDs */
 
-	printfPQExpBuffer(&sql, "%s",
+	printfPQExpBuffer(&sql,
 					  "SET search_path = public;"
 					  "SELECT c.relname, (SELECT nspname FROM "
 					  "pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
 					  "FROM pg_catalog.pg_class c "
 					  "WHERE c.relkind = " CppAsString2(RELKIND_RELATION)
+					  " AND c.oid < '%u'"
 					  " AND EXISTS(SELECT * FROM pg_attribute a"
 					  "            WHERE a.attrelid = c.oid AND a.attname = 'oid' "
 					  "                  AND a.atttypid = 'oid'::regtype)"
-					  "ORDER BY nspname, c.relname"
+					  "ORDER BY nspname, c.relname",
+					  FirstNormalObjectId
 		);
 
 	res = PQexec(conn, sql.data);
@@ -77,15 +80,17 @@ main(int argc, char **argv)
 	}
 	pkrel_res = res;
 
-	/* Get a list of columns of OID type (or any OID-alias type) */
+	/* Get a list of system columns of OID type (or any OID-alias type) */
 
-	printfPQExpBuffer(&sql, "%s",
+	printfPQExpBuffer(&sql,
 					  "SELECT c.relname, "
 					  "(SELECT nspname FROM pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname, "
 					  "a.attname "
 					  "FROM pg_catalog.pg_class c, pg_catalog.pg_attribute a "
 					  "WHERE a.attnum > 0"
+					  " AND a.attname != 'oid'"
 					  " AND c.relkind = " CppAsString2(RELKIND_RELATION)
+					  " AND c.oid < '%u'"
 					  " AND a.attrelid = c.oid"
 					  " AND a.atttypid IN ('pg_catalog.oid'::regtype, "
 					  " 'pg_catalog.regclass'::regtype, "
@@ -96,7 +101,8 @@ main(int argc, char **argv)
 					  " 'pg_catalog.regtype'::regtype, "
 					  " 'pg_catalog.regconfig'::regtype, "
 					  " 'pg_catalog.regdictionary'::regtype) "
-					  "ORDER BY nspname, c.relname, a.attnum"
+					  "ORDER BY nspname, c.relname, a.attnum",
+					  FirstNormalObjectId
 		);
 
 	res = PQexec(conn, sql.data);

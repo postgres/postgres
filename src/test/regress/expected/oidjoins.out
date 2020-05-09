@@ -961,6 +961,46 @@ WHERE	staop5 != 0 AND
 ------+--------
 (0 rows)
 
+SELECT	ctid, stacoll1
+FROM	pg_catalog.pg_statistic fk
+WHERE	stacoll1 != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.stacoll1);
+ ctid | stacoll1 
+------+----------
+(0 rows)
+
+SELECT	ctid, stacoll2
+FROM	pg_catalog.pg_statistic fk
+WHERE	stacoll2 != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.stacoll2);
+ ctid | stacoll2 
+------+----------
+(0 rows)
+
+SELECT	ctid, stacoll3
+FROM	pg_catalog.pg_statistic fk
+WHERE	stacoll3 != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.stacoll3);
+ ctid | stacoll3 
+------+----------
+(0 rows)
+
+SELECT	ctid, stacoll4
+FROM	pg_catalog.pg_statistic fk
+WHERE	stacoll4 != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.stacoll4);
+ ctid | stacoll4 
+------+----------
+(0 rows)
+
+SELECT	ctid, stacoll5
+FROM	pg_catalog.pg_statistic fk
+WHERE	stacoll5 != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.stacoll5);
+ ctid | stacoll5 
+------+----------
+(0 rows)
+
 SELECT	ctid, stxrelid
 FROM	pg_catalog.pg_statistic_ext fk
 WHERE	stxrelid != 0 AND
@@ -1039,6 +1079,14 @@ WHERE	tgrelid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.tgrelid);
  ctid | tgrelid 
 ------+---------
+(0 rows)
+
+SELECT	ctid, tgparentid
+FROM	pg_catalog.pg_trigger fk
+WHERE	tgparentid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_trigger pk WHERE pk.oid = fk.tgparentid);
+ ctid | tgparentid 
+------+------------
 (0 rows)
 
 SELECT	ctid, tgfoid
