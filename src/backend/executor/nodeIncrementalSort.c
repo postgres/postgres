@@ -986,12 +986,11 @@ ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 	SO_printf("ExecInitIncrementalSort: initializing sort node\n");
 
 	/*
-	 * Incremental sort can't be used with either EXEC_FLAG_REWIND,
-	 * EXEC_FLAG_BACKWARD or EXEC_FLAG_MARK, because we only one of many sort
-	 * batches in the current sort state.
+	 * Incremental sort can't be used with EXEC_FLAG_BACKWARD or EXEC_FLAG_MARK,
+	 * because the current sort state contains only one sort batch rather than
+	 * the full result set.
 	 */
-	Assert((eflags & (EXEC_FLAG_BACKWARD |
-					  EXEC_FLAG_MARK)) == 0);
+	Assert((eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)) == 0);
 
 	/* Initialize state structure. */
 	incrsortstate = makeNode(IncrementalSortState);
@@ -1041,11 +1040,11 @@ ExecInitIncrementalSort(IncrementalSort *node, EState *estate, int eflags)
 	/*
 	 * Initialize child nodes.
 	 *
-	 * We shield the child node from the need to support REWIND, BACKWARD, or
-	 * MARK/RESTORE.
+	 * Incremental sort does not support backwards scans and mark/restore, so
+	 * we don't bother removing the flags from eflags here. We allow passing
+	 * a REWIND flag, because although incremental sort can't use it, the child
+	 * nodes may be able to do something more useful.
 	 */
-	eflags &= ~(EXEC_FLAG_REWIND | EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK);
-
 	outerPlanState(incrsortstate) = ExecInitNode(outerPlan(node), estate, eflags);
 
 	/*
@@ -1126,7 +1125,8 @@ ExecReScanIncrementalSort(IncrementalSortState *node)
 	 * store all tuples at once for the full sort.
 	 *
 	 * So even if EXEC_FLAG_REWIND is set we just reset all of our state and
-	 * reexecute the sort along with the child node below us.
+	 * re-execute the sort along with the child node. Incremental sort itself
+	 * can't do anything smarter, but maybe the child nodes can.
 	 *
 	 * In theory if we've only filled the full sort with one batch (and haven't
 	 * reset it for a new batch yet) then we could efficiently rewind, but
