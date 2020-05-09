@@ -235,6 +235,11 @@ Join pg_catalog.pg_constraint.conpfeqop []=> pg_catalog.pg_operator.oid
 Join pg_catalog.pg_constraint.conppeqop []=> pg_catalog.pg_operator.oid
 Join pg_catalog.pg_constraint.conffeqop []=> pg_catalog.pg_operator.oid
 Join pg_catalog.pg_constraint.conexclop []=> pg_catalog.pg_operator.oid
+Join pg_catalog.pg_index.indcollation []=> pg_catalog.pg_collation.oid
+Join pg_catalog.pg_index.indclass []=> pg_catalog.pg_opclass.oid
+Join pg_catalog.pg_partitioned_table.partclass []=> pg_catalog.pg_opclass.oid
+Join pg_catalog.pg_partitioned_table.partcollation []=> pg_catalog.pg_collation.oid
+Join pg_catalog.pg_proc.proargtypes []=> pg_catalog.pg_type.oid
 Join pg_catalog.pg_proc.proallargtypes []=> pg_catalog.pg_type.oid
 
 ---------------------------------------------------------------------------

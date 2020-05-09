@@ -701,6 +701,26 @@ SELECT	ctid, conexclop
 FROM	(SELECT ctid, unnest(conexclop) AS conexclop FROM pg_catalog.pg_constraint) fk
 WHERE	conexclop != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.conexclop);
+SELECT	ctid, indcollation
+FROM	(SELECT ctid, unnest(indcollation) AS indcollation FROM pg_catalog.pg_index) fk
+WHERE	indcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.indcollation);
+SELECT	ctid, indclass
+FROM	(SELECT ctid, unnest(indclass) AS indclass FROM pg_catalog.pg_index) fk
+WHERE	indclass != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opclass pk WHERE pk.oid = fk.indclass);
+SELECT	ctid, partclass
+FROM	(SELECT ctid, unnest(partclass) AS partclass FROM pg_catalog.pg_partitioned_table) fk
+WHERE	partclass != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opclass pk WHERE pk.oid = fk.partclass);
+SELECT	ctid, partcollation
+FROM	(SELECT ctid, unnest(partcollation) AS partcollation FROM pg_catalog.pg_partitioned_table) fk
+WHERE	partcollation != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_collation pk WHERE pk.oid = fk.partcollation);
+SELECT	ctid, proargtypes
+FROM	(SELECT ctid, unnest(proargtypes) AS proargtypes FROM pg_catalog.pg_proc) fk
+WHERE	proargtypes != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.proargtypes);
 SELECT	ctid, proallargtypes
 FROM	(SELECT ctid, unnest(proallargtypes) AS proallargtypes FROM pg_catalog.pg_proc) fk
 WHERE	proallargtypes != 0 AND

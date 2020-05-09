@@ -59,7 +59,6 @@ main(int argc, char **argv)
 	/* Get a list of system relations that have OIDs */
 
 	printfPQExpBuffer(&sql,
-					  "SET search_path = public;"
 					  "SELECT c.relname, (SELECT nspname FROM "
 					  "pg_catalog.pg_namespace n WHERE n.oid = c.relnamespace) AS nspname "
 					  "FROM pg_catalog.pg_class c "
@@ -170,6 +169,7 @@ main(int argc, char **argv)
 					  " AND c.relkind = " CppAsString2(RELKIND_RELATION)
 					  " AND a.attrelid = c.oid"
 					  " AND a.atttypid IN ('pg_catalog.oid[]'::regtype, "
+					  " 'pg_catalog.oidvector'::regtype, "
 					  " 'pg_catalog.regclass[]'::regtype, "
 					  " 'pg_catalog.regoper[]'::regtype, "
 					  " 'pg_catalog.regoperator[]'::regtype, "
