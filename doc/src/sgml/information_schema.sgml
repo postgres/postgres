@@ -4498,7 +4498,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry><literal>result_cast_char_octet_length</literal></entry>
-      <entry><type>character_data</type></entry>
+      <entry><type>cardinal_number</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
@@ -4558,7 +4558,7 @@ ORDER BY c.ordinal_position;
 
      <row>
       <entry><literal>result_cast_datetime_precision</literal></entry>
-      <entry><type>character_data</type></entry>
+      <entry><type>cardinal_number</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 

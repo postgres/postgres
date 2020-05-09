@@ -2044,11 +2044,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry>Send time of last reply message received from standby server</entry>
     </row>
     <row>
-     <entry><structfield>spill_bytes</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Amount of decoded transaction data spilled to disk.</entry>
-    </row>
-    <row>
      <entry><structfield>spill_txns</structfield></entry>
      <entry><type>bigint</type></entry>
      <entry>Number of transactions spilled to disk after the memory used by
@@ -2062,6 +2057,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <entry>Number of times transactions were spilled to disk. Transactions
       may get spilled repeatedly, and this counter gets incremented on every
       such invocation.</entry>
+    </row>
+    <row>
+     <entry><structfield>spill_bytes</structfield></entry>
+     <entry><type>bigint</type></entry>
+     <entry>Amount of decoded transaction data spilled to disk.</entry>
     </row>
    </tbody>
    </tgroup>
@@ -2242,7 +2242,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     </row>
     <row>
      <entry><structfield>subname</structfield></entry>
-     <entry><type>text</type></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the subscription</entry>
     </row>
     <row>
@@ -3294,7 +3294,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    <tbody>
     <row>
      <entry><structfield>name</structfield></entry>
-     <entry><type>name</type></entry>
+     <entry><type>text</type></entry>
      <entry>name of the SLRU</entry>
     </row>
     <row>

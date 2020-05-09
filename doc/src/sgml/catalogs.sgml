@@ -3313,6 +3313,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
     <tbody>
      <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Row identifier</entry>
+     </row>
+
+     <row>
       <entry><structfield>evtname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
@@ -4879,7 +4886,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      <row>
       <entry><structfield>partcollation</structfield></entry>
       <entry><type>oidvector</type></entry>
-      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-collation"><structname>pg_collation</structname></link>.oid</literal></entry>
       <entry>
        For each column in the partition key, this contains the OID of the
        collation to use for partitioning, or zero if the column is not
@@ -4938,6 +4945,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     </thead>
 
     <tbody>
+     <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Row identifier</entry>
+     </row>
+
      <row>
       <entry><structfield>polname</structfield></entry>
       <entry><type>name</type></entry>
@@ -5480,6 +5494,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     </thead>
 
     <tbody>
+     <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Row identifier</entry>
+     </row>
+
      <row>
       <entry><structfield>prpubid</structfield></entry>
       <entry><type>oid</type></entry>
@@ -6433,6 +6454,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     <tbody>
 
      <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Row identifier</entry>
+     </row>
+
+     <row>
       <entry><structfield>stxrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
@@ -6678,16 +6706,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
-      <entry><structfield>subsynccommit</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>
-       Contains the value of the <varname>synchronous_commit</varname>
-       setting for the subscription workers.
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>subconninfo</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -6700,6 +6718,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>Name of the replication slot in the upstream database. Also used
        for local replication origin name.</entry>
+     </row>
+
+     <row>
+      <entry><structfield>subsynccommit</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       Contains the value of the <varname>synchronous_commit</varname>
+       setting for the subscription workers.
+      </entry>
      </row>
 
      <row>
@@ -6894,6 +6922,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
     </thead>
 
     <tbody>
+     <row>
+      <entry><structfield>oid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry></entry>
+      <entry>Row identifier</entry>
+     </row>
+
      <row>
       <entry><structfield>trftype</structfield></entry>
       <entry><type>oid</type></entry>
@@ -9447,7 +9482,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry>Name of policy</entry>
      </row>
      <row>
-      <entry><structfield>polpermissive</structfield></entry>
+      <entry><structfield>permissive</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
       <entry>Is the policy permissive or restrictive?</entry>
@@ -9844,7 +9879,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>database</structfield></entry>
-      <entry><type>text</type></entry>
+      <entry><type>name</type></entry>
       <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.datname</literal></entry>
       <entry>The name of the database this slot is associated with, or
       null. Only logical slots have an associated database.</entry>
@@ -10297,7 +10332,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <row>
       <entry><structfield>data_type</structfield></entry>
       <entry><type>regtype</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>Data type of the sequence</entry>
      </row>
      <row>
@@ -11075,8 +11110,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>statistics_owner</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.rolname</literal></entry>
       <entry>Owner of the extended statistics</entry>
      </row>
 
@@ -11089,7 +11124,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>kinds</structfield></entry>
-      <entry><type>text[]</type></entry>
+      <entry><type>char[]</type></entry>
       <entry></entry>
       <entry>Types of extended statistics enabled for this record</entry>
      </row>
@@ -11120,7 +11155,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>most_common_vals</structfield></entry>
-      <entry><type>anyarray</type></entry>
+      <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
        A list of the most common combinations of values in the columns.
@@ -11130,7 +11165,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>most_common_val_nulls</structfield></entry>
-      <entry><type>anyarray</type></entry>
+      <entry><type>bool[]</type></entry>
       <entry></entry>
       <entry>
        A list of NULL flags for the most common combinations of values.
@@ -11140,7 +11175,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>most_common_freqs</structfield></entry>
-      <entry><type>real[]</type></entry>
+      <entry><type>float8[]</type></entry>
       <entry></entry>
       <entry>
        A list of the frequencies of the most common combinations,
@@ -11151,7 +11186,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry><structfield>most_common_base_freqs</structfield></entry>
-      <entry><type>real[]</type></entry>
+      <entry><type>float8[]</type></entry>
       <entry></entry>
       <entry>
        A list of the base frequencies of the most common combinations,
