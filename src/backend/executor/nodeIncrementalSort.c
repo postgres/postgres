@@ -1142,7 +1142,6 @@ ExecReScanIncrementalSort(IncrementalSortState *node)
 	if (node->transfer_tuple != NULL)
 		ExecClearTuple(node->transfer_tuple);
 
-	node->bounded = false;
 	node->outerNodeDone = false;
 	node->n_fullsort_remaining = 0;
 	node->bound_Done = 0;
