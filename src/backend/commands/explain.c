@@ -2922,7 +2922,6 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 			 * contribute anything meaningful.
 			 */
 			fullsortGroupInfo = &incsort_info->fullsortGroupInfo;
-			prefixsortGroupInfo = &incsort_info->prefixsortGroupInfo;
 
 			/*
 			 * Since we never have any prefix groups unless we've first sorted
@@ -2930,8 +2929,7 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 			 * prefix group), we don't need to do anything if there were 0 full
 			 * groups.
 			 */
-			if (fullsortGroupInfo->groupCount == 0 &&
-				prefixsortGroupInfo->groupCount == 0)
+			if (fullsortGroupInfo->groupCount == 0)
 				continue;
 
 			if (es->workers_state)
@@ -2940,6 +2938,7 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 			indent_first_line = es->workers_state == NULL || es->verbose;
 			show_incremental_sort_group_info(fullsortGroupInfo, "Full-sort",
 											 indent_first_line, es);
+			prefixsortGroupInfo = &incsort_info->prefixsortGroupInfo;
 			if (prefixsortGroupInfo->groupCount > 0)
 			{
 				if (es->format == EXPLAIN_FORMAT_TEXT)
