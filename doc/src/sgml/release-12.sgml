@@ -602,18 +602,6 @@ Branch: REL9_5_STABLE [36714f8ca] 2020-04-21 15:58:43 -0400
 
     <listitem>
 <!--
-Author: Andres Freund <andres@anarazel.de>
-Branch: REL_11_STABLE [d35631e37] 2020-03-23 14:52:18 -0700
-Branch: REL_10_STABLE [44170a580] 2020-03-23 14:52:18 -0700
--->
-     <para>
-      Fix low-probability crash after constraint violation errors in
-      partitioned tables (Andres Freund)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [5c27bce7f] 2020-04-11 12:29:06 -0400
 Branch: REL_12_STABLE [8ffb86644] 2020-04-11 12:29:06 -0400
@@ -655,9 +643,6 @@ Branch: REL_11_STABLE [d3944c364] 2020-05-01 09:51:06 -0700
      <para>
       Fix possible undercounting of deleted B-tree index pages
       in <command>VACUUM VERBOSE</command> output (Peter Geoghegan)
-     </para>
-
-     <para>
      </para>
     </listitem>
 
@@ -838,6 +823,27 @@ Branch: REL9_5_STABLE [a4726998d] 2020-04-24 11:34:16 +0900
 
     <listitem>
 <!--
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master [4bd0ad9e4] 2020-04-08 00:49:29 +0900
+Branch: REL_12_STABLE [683e0ef55] 2020-05-09 12:00:27 +0900
+Branch: REL_11_STABLE [dcd1569fb] 2020-05-09 12:04:51 +0900
+Branch: REL_10_STABLE [660f1fc40] 2020-05-09 12:11:11 +0900
+Branch: REL9_6_STABLE [70b597974] 2020-05-09 12:16:37 +0900
+Branch: REL9_5_STABLE [e3f5b148e] 2020-05-09 12:19:47 +0900
+-->
+     <para>
+      Avoid scanning irrelevant timelines during archive recovery (Kyotaro
+      Horiguchi)
+     </para>
+
+     <para>
+      This can eliminate many attempts to fetch non-existent WAL files from
+      archive storage, which is helpful if archive access is slow.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Amit Kapila <akapila@postgresql.org>
 Branch: master [e3ff789ac] 2020-02-19 08:15:49 +0530
 Branch: REL_12_STABLE [59112f235] 2020-02-19 08:27:15 +0530
@@ -930,26 +936,6 @@ Branch: REL9_6_STABLE [c65c1aa82] 2020-04-18 14:02:45 -0400
       synchronous commit.  Another hazard for similarly wrong decisions
       existed if a walsender process exited and was immediately replaced
       by another.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Thomas Munro <tmunro@postgresql.org>
-Branch: REL_11_STABLE [a493f9334] 2020-03-12 18:06:54 +1300
-Branch: REL_10_STABLE [05e0aff58] 2020-03-12 18:09:14 +1300
-Branch: REL9_6_STABLE [4e8cad2da] 2020-03-12 18:16:44 +1300
-Branch: REL9_5_STABLE [d22ac5378] 2020-03-12 18:15:59 +1300
--->
-     <para>
-      Ensure <varname>nextXid</varname> can't go backwards on a standby
-      server (Eka Palamadai)
-     </para>
-
-     <para>
-      This race condition could allow incorrect hot standby feedback
-      messages to be sent back to the primary server, potentially allowing
-      <command>VACUUM</command> to run too soon on the primary.
      </para>
     </listitem>
 
@@ -1149,7 +1135,6 @@ Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [428a2609e] 2020-02-27 15:31:27 +0900
 Branch: REL_12_STABLE [f6e8e8b38] 2020-02-27 15:31:48 +0900
 Branch: REL_11_STABLE [8f9aba187] 2020-02-27 15:31:52 +0900
-XXX: it's pg_verify_checksums in v11
 -->
      <para>
       Make <application>pg_checksums</application> skip tablespace
@@ -1170,7 +1155,6 @@ Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [bf883b211] 2020-02-24 18:13:25 +0900
 Branch: REL_12_STABLE [a8beece95] 2020-02-24 18:14:16 +0900
 Branch: REL_11_STABLE [da2a7180a] 2020-02-24 18:14:22 +0900
-XXX: it's pg_verify_checksums in v11
 -->
      <para>
       Ignore temporary copies of <filename>pg_internal.init</filename>
@@ -1373,22 +1357,6 @@ Branch: REL_12_STABLE [297a174d2] 2020-03-31 14:17:32 -0400
      <para>
       Fix Makefile dependencies for <application>libpq</application>
       and <application>ecpg</application> (Dagfinn Ilmari Mannsåker)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Bruce Momjian <bruce@momjian.us>
-Branch: REL_10_STABLE [f1e8362ae] 2020-03-31 22:26:11 -0400
--->
-     <para>
-      Include <varname>CFLAGS_SL</varname> in <varname>CXXFLAGS</varname>
-      when building a shared library (Oleksii Kliukin)
-     </para>
-
-     <para>
-      This ensures that C++ source files are compiled correctly, for
-      example by adding <literal>-fPIC</literal> when needed.
      </para>
     </listitem>
 
