@@ -88,7 +88,6 @@ extern void smgrclose(SMgrRelation reln);
 extern void smgrcloseall(void);
 extern void smgrclosenode(RelFileNodeBackend rnode);
 extern void smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
-extern void smgrdounlink(SMgrRelation reln, bool isRedo);
 extern void smgrdosyncall(SMgrRelation *rels, int nrels);
 extern void smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo);
 extern void smgrextend(SMgrRelation reln, ForkNumber forknum,
