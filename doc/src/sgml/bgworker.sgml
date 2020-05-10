@@ -98,7 +98,7 @@ typedef struct BackgroundWorker
      <term><literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal></term>
      <listitem>
       <para>
-       <indexterm><primary>BGWORKER_BACKEND_DATABASE_CONNECTION</primary></indexterm>
+       <indexterm><primary>BGWORKER_BACKEND_&zwsp;DATABASE_CONNECTION</primary></indexterm>
        Requests the ability to establish a database connection through which it
        can later run transactions and queries.  A background worker using
        <literal>BGWORKER_BACKEND_DATABASE_CONNECTION</literal> to connect to a

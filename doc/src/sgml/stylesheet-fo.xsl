@@ -12,6 +12,7 @@
 <xsl:param name="ulink.footnotes" select="1"></xsl:param>
 <xsl:param name="use.extensions" select="1"></xsl:param>
 <xsl:param name="variablelist.as.blocks" select="1"></xsl:param>
+<xsl:param name="orderedlist.label.width">1.5em</xsl:param>
 
 <xsl:attribute-set name="monospace.verbatim.properties"
                    use-attribute-sets="verbatim.properties monospace.properties">

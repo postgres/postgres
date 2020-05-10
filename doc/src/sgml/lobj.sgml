@@ -712,7 +712,7 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
   <example id="lo-example">
    <title>Large Objects with <application>libpq</application> Example Program</title>
 <programlisting><![CDATA[
-/*-------------------------------------------------------------------------
+/*-----------------------------------------------------------------
  *
  * testlo.c
  *    test using large objects with libpq
@@ -724,7 +724,7 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
  * IDENTIFICATION
  *    src/test/examples/testlo.c
  *
- *-------------------------------------------------------------------------
+ *-----------------------------------------------------------------
  */
 #include <stdio.h>
 #include <stdlib.h>

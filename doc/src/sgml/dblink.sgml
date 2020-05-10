@@ -147,7 +147,6 @@ SELECT dblink_connect('myconn', 'dbname=postgres options=-csearch_path=');
 -- FOREIGN DATA WRAPPER functionality
 -- Note: local connection must require password authentication for this to work properly
 --       Otherwise, you will receive the following error from dblink_connect():
---       ----------------------------------------------------------------------
 --       ERROR:  password is required
 --       DETAIL:  Non-superuser cannot connect if the server does not request a password.
 --       HINT:  Target server's authentication method must be changed.

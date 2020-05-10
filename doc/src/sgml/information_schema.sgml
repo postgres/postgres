@@ -174,7 +174,7 @@
  </sect1>
 
  <sect1 id="infoschema-administrable-role-authorizations">
-  <title><literal>administrable_role_authorizations</literal></title>
+  <title><literal>administrable_role_&zwsp;authorizations</literal></title>
 
   <para>
    The view <literal>administrable_role_authorizations</literal>
@@ -888,7 +888,7 @@
  </sect1>
 
  <sect1 id="infoschema-collation-character-set-applicab"> <!-- max 44 characters -->
-  <title><literal>collation_character_set_applicability</literal></title>
+  <title><literal>collation_character_set_&zwsp;applicability</literal></title>
 
   <para>
    The view <literal>collation_character_set_applicability</literal>
