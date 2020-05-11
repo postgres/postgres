@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-01-22 01:14+0000\n"
-"PO-Revision-Date: 2020-01-23 14:02+0100\n"
+"POT-Creation-Date: 2020-04-01 03:15+0000\n"
+"PO-Revision-Date: 2020-04-01 06:54+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -1108,8 +1108,8 @@ msgstr "  -D, --new-datadir=DATAKAT     nya klustrets datakatalog\n"
 
 #: option.c:300
 #, c-format
-msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs                    antal samtidiga processer eller trådar att använda\n"
+msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
+msgstr "  -j, --jobs=NUM                antal samtidiga processer eller trådar att använda\n"
 
 #: option.c:301
 #, c-format
@@ -1512,13 +1512,13 @@ msgstr ""
 
 #: server.c:168
 #, c-format
-msgid "could not open version file: %s\n"
-msgstr "kunde inte öppna versionsfil: %s\n"
+msgid "could not open version file \"%s\": %m\n"
+msgstr "kunde inte öppna versionsfil \"%s\": %m\n"
 
 #: server.c:172
 #, c-format
-msgid "could not parse PG_VERSION file from %s\n"
-msgstr "kunde inte parsa PG_VERSION-fil från %s\n"
+msgid "could not parse version file \"%s\"\n"
+msgstr "kunde inte tolka versionsfil \"%s\"\n"
 
 #: server.c:295
 #, c-format
@@ -1822,3 +1822,6 @@ msgstr ""
 
 #~ msgid "error while checking for file existence \"%s.%s\" (\"%s\"): %s\n"
 #~ msgstr "fel vid kontroll av filexistens \"%s.%s\" (\"%s\"): %s\n"
+
+#~ msgid "could not parse PG_VERSION file from %s\n"
+#~ msgstr "kunde inte parsa PG_VERSION-fil från %s\n"

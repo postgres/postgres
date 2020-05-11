@@ -1,5 +1,5 @@
 # Swedish message translation file for postgresql
-# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004, 2005, 2006, 2017, 2018, 2019.
+# Dennis Björklund <db@zigo.dhs.org>, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
 # Peter Eisentraut <peter_e@gmx.net>, 2013.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-08-30 17:14+0000\n"
-"PO-Revision-Date: 2019-08-31 18:14+0200\n"
+"POT-Creation-Date: 2020-04-09 19:57+0000\n"
+"PO-Revision-Date: 2020-04-10 07:29+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "fatalt: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "varning: "
@@ -85,14 +85,14 @@ msgid "invalid output format (internal error): %d"
 msgstr "ogiltigt utdataformat (internt fel): %d"
 
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:121 createdb.c:140
-#: createuser.c:168 createuser.c:183 dropdb.c:96 dropdb.c:105 dropdb.c:113
+#: createuser.c:176 createuser.c:191 dropdb.c:96 dropdb.c:105 dropdb.c:113
 #: dropuser.c:92 dropuser.c:107 dropuser.c:122 pg_isready.c:95 pg_isready.c:109
 #: reindexdb.c:139 reindexdb.c:158 vacuumdb.c:244 vacuumdb.c:263
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: clusterdb.c:130 createdb.c:138 createuser.c:181 dropdb.c:111 dropuser.c:105
+#: clusterdb.c:130 createdb.c:138 createuser.c:189 dropdb.c:111 dropuser.c:105
 #: pg_isready.c:107 reindexdb.c:156 vacuumdb.c:261
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -132,7 +132,7 @@ msgstr ""
 "%s klustrar alla tidigare klustrade tabeller i en databas.\n"
 "\n"
 
-#: clusterdb.c:274 createdb.c:250 createuser.c:344 dropdb.c:157 dropuser.c:163
+#: clusterdb.c:274 createdb.c:259 createuser.c:352 dropdb.c:157 dropuser.c:163
 #: pg_isready.c:224 reindexdb.c:425 vacuumdb.c:1226
 #, c-format
 msgid "Usage:\n"
@@ -143,7 +143,7 @@ msgstr "Användning:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN]\n"
 
-#: clusterdb.c:276 createdb.c:252 createuser.c:346 dropdb.c:159 dropuser.c:165
+#: clusterdb.c:276 createdb.c:261 createuser.c:354 dropdb.c:159 dropuser.c:165
 #: pg_isready.c:227 reindexdb.c:427 vacuumdb.c:1228
 #, c-format
 msgid ""
@@ -163,7 +163,7 @@ msgstr "  -a, --all                 klustra alla databaser\n"
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       databas att klustra\n"
 
-#: clusterdb.c:279 createuser.c:350 dropdb.c:160 dropuser.c:166 reindexdb.c:431
+#: clusterdb.c:279 createuser.c:358 dropdb.c:160 dropuser.c:166 reindexdb.c:431
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                visa kommandon som skickas till servern\n"
@@ -183,17 +183,17 @@ msgstr "  -t, --table=TABELL        klustra enbart ingivna tabeller\n"
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             skriv massor med utdata\n"
 
-#: clusterdb.c:283 createuser.c:362 dropdb.c:162 dropuser.c:169 reindexdb.c:438
+#: clusterdb.c:283 createuser.c:370 dropdb.c:162 dropuser.c:169 reindexdb.c:438
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             visa versionsinformation, avsluta sedan\n"
 
-#: clusterdb.c:284 createuser.c:367 dropdb.c:164 dropuser.c:171 reindexdb.c:439
+#: clusterdb.c:284 createuser.c:375 dropdb.c:164 dropuser.c:171 reindexdb.c:439
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
 
-#: clusterdb.c:285 createdb.c:263 createuser.c:368 dropdb.c:165 dropuser.c:172
+#: clusterdb.c:285 createdb.c:272 createuser.c:376 dropdb.c:165 dropuser.c:172
 #: pg_isready.c:233 reindexdb.c:440 vacuumdb.c:1248
 #, c-format
 msgid ""
@@ -203,13 +203,13 @@ msgstr ""
 "\n"
 "Flaggor för anslutning:\n"
 
-#: clusterdb.c:286 createuser.c:369 dropdb.c:166 dropuser.c:173 reindexdb.c:441
+#: clusterdb.c:286 createuser.c:377 dropdb.c:166 dropuser.c:173 reindexdb.c:441
 #: vacuumdb.c:1249
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=VÄRDNAMN       databasens värdnamn eller socketkatalog\n"
 
-#: clusterdb.c:287 createuser.c:370 dropdb.c:167 dropuser.c:174 reindexdb.c:442
+#: clusterdb.c:287 createuser.c:378 dropdb.c:167 dropuser.c:174 reindexdb.c:442
 #: vacuumdb.c:1250
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
@@ -220,13 +220,13 @@ msgstr "  -p, --port=PORT           databasserverns port\n"
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=ANVÄNDARE  användarnamn att ansluta som\n"
 
-#: clusterdb.c:289 createuser.c:372 dropdb.c:169 dropuser.c:176 reindexdb.c:444
+#: clusterdb.c:289 createuser.c:380 dropdb.c:169 dropuser.c:176 reindexdb.c:444
 #: vacuumdb.c:1252
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         fråga ej efter lösenord\n"
 
-#: clusterdb.c:290 createuser.c:373 dropdb.c:170 dropuser.c:177 reindexdb.c:445
+#: clusterdb.c:290 createuser.c:381 dropdb.c:170 dropuser.c:177 reindexdb.c:445
 #: vacuumdb.c:1253
 #, c-format
 msgid "  -W, --password            force password prompt\n"
@@ -246,7 +246,7 @@ msgstr ""
 "\n"
 "Läs beskrivningen av SQL-kommandot CLUSTER för detaljer.\n"
 
-#: clusterdb.c:293 createdb.c:271 createuser.c:374 dropdb.c:172 dropuser.c:178
+#: clusterdb.c:293 createdb.c:280 createuser.c:382 dropdb.c:172 dropuser.c:178
 #: pg_isready.c:238 reindexdb.c:448 vacuumdb.c:1256
 #, c-format
 msgid ""
@@ -334,17 +334,17 @@ msgstr "endast en av --locale och --lc-collate kan anges"
 msgid "\"%s\" is not a valid encoding name"
 msgstr "\"%s\" är inte ett giltigt kodningsnamn"
 
-#: createdb.c:212
+#: createdb.c:221
 #, c-format
 msgid "database creation failed: %s"
 msgstr "misslyckades att skapa databas: %s"
 
-#: createdb.c:231
+#: createdb.c:240
 #, c-format
 msgid "comment creation failed (database was created): %s"
 msgstr "misslyckades att skapa kommentar (databasen skapades): %s"
 
-#: createdb.c:249
+#: createdb.c:258
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -353,92 +353,92 @@ msgstr ""
 "%s skapar en PostgreSQL-databas.\n"
 "\n"
 
-#: createdb.c:251
+#: createdb.c:260
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [FLAGGA]... [DBNAMN] [BESKRIVNING]\n"
 
-#: createdb.c:253
+#: createdb.c:262
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABELLRYMD  förvalt tabellutrymme för databasen\n"
 
-#: createdb.c:254
+#: createdb.c:263
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   visa kommandon som skickas till servern\n"
 
-#: createdb.c:255
+#: createdb.c:264
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=KODNING       teckenkodning för databasen\n"
 
-#: createdb.c:256
+#: createdb.c:265
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=LOKAL           lokalnamn för databasen\n"
 
-#: createdb.c:257
+#: createdb.c:266
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=LOKAL       värde på LC_COLLATE för databasen\n"
 
-#: createdb.c:258
+#: createdb.c:267
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=LOKAL         värde på LC_CTYPE för databasen\n"
 
-#: createdb.c:259
+#: createdb.c:268
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=ÄGARE            databasanvändare som äger nya databasen\n"
 
-#: createdb.c:260
+#: createdb.c:269
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=MALL          databasmall att kopiera\n"
 
-#: createdb.c:261
+#: createdb.c:270
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                visa versionsinformation, avsluta sedan\n"
 
-#: createdb.c:262
+#: createdb.c:271
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   visa denna hjälp, avsluta sedan\n"
 
-#: createdb.c:264
+#: createdb.c:273
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=VÄRDNAMN          databasens värdnamn eller socketkatalog\n"
 
-#: createdb.c:265
+#: createdb.c:274
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              databasserverns port\n"
 
-#: createdb.c:266
+#: createdb.c:275
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=ANVÄNDARE     användarnamn att ansluta som\n"
 
-#: createdb.c:267
+#: createdb.c:276
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            fråga ej efter lösenord\n"
 
-#: createdb.c:268
+#: createdb.c:277
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               framtvinga fråga om lösenord\n"
 
-#: createdb.c:269
+#: createdb.c:278
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAMN      annat val av underhållsdatabas\n"
 
-#: createdb.c:270
+#: createdb.c:279
 #, c-format
 msgid ""
 "\n"
@@ -447,46 +447,51 @@ msgstr ""
 "\n"
 "Som standard skapas en databas med samma namn som den nuvarande användares namn.\n"
 
-#: createuser.c:191
+#: createuser.c:155
+#, c-format
+msgid "invalid value for --connection-limit: %s"
+msgstr "ogiltigt värde på --connection-limit: %s"
+
+#: createuser.c:199
 msgid "Enter name of role to add: "
 msgstr "Mata in namn på den roll som skall läggas till: "
 
-#: createuser.c:208
+#: createuser.c:216
 msgid "Enter password for new role: "
 msgstr "Mata in lösenord för den nya rollen: "
 
-#: createuser.c:210
+#: createuser.c:218
 msgid "Enter it again: "
 msgstr "Mata in det igen: "
 
-#: createuser.c:213
+#: createuser.c:221
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Lösenorden stämde inte överens.\n"
 
-#: createuser.c:221
+#: createuser.c:229
 msgid "Shall the new role be a superuser?"
 msgstr "Skall den nya rollen vara en superanvändare?"
 
-#: createuser.c:236
+#: createuser.c:244
 msgid "Shall the new role be allowed to create databases?"
 msgstr "Skall den nya rollen tillåtas skapa databaser?"
 
-#: createuser.c:244
+#: createuser.c:252
 msgid "Shall the new role be allowed to create more new roles?"
 msgstr "Skall den nya rollen tillåtas skapa fler nya roller?"
 
-#: createuser.c:274
+#: createuser.c:282
 #, c-format
 msgid "password encryption failed: %s"
 msgstr "misslyckades med lösenordskryptering: %s"
 
-#: createuser.c:329
+#: createuser.c:337
 #, c-format
 msgid "creation of new role failed: %s"
 msgstr "misslyckades med att skapa ny roll: %s"
 
-#: createuser.c:343
+#: createuser.c:351
 #, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
@@ -495,32 +500,32 @@ msgstr ""
 "%s skapar en ny PostgreSQL-roll.\n"
 "\n"
 
-#: createuser.c:345 dropuser.c:164
+#: createuser.c:353 dropuser.c:164
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [FLAGGA]... [ROLLNAMN]\n"
 
-#: createuser.c:347
+#: createuser.c:355
 #, c-format
 msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr "  -c, --connection-limit=N  anslutningsgräns för roll (standard: ingen gräns)\n"
 
-#: createuser.c:348
+#: createuser.c:356
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            rollen kan skapa nya databaser\n"
 
-#: createuser.c:349
+#: createuser.c:357
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
 msgstr "  -D, --no-createdb         rollen kan inte skapa databaser (standard)\n"
 
-#: createuser.c:351
+#: createuser.c:359
 #, c-format
 msgid "  -g, --role=ROLE           new role will be a member of this role\n"
 msgstr "  -g, --role=ROLL           nya rollen kommer bli medlem i denna roll\n"
 
-#: createuser.c:352
+#: createuser.c:360
 #, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
@@ -529,47 +534,47 @@ msgstr ""
 "  -i, --inherit             rollen ärver rättigheter från roller den\n"
 "                            är medlem i (standard)\n"
 
-#: createuser.c:354
+#: createuser.c:362
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          rollen ärver inga rättigheter\n"
 
-#: createuser.c:355
+#: createuser.c:363
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               rollen kan logga in (standard)\n"
 
-#: createuser.c:356
+#: createuser.c:364
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            rollen kan inte logga in\n"
 
-#: createuser.c:357
+#: createuser.c:365
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            tilldela den nya rollen ett lösenord\n"
 
-#: createuser.c:358
+#: createuser.c:366
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          rollen kan skapa nya roller\n"
 
-#: createuser.c:359
+#: createuser.c:367
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
 msgstr "  -R, --no-createrole       rollen kan inte skapa roller (standard)\n"
 
-#: createuser.c:360
+#: createuser.c:368
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           rollen blir en superanvändare\n"
 
-#: createuser.c:361
+#: createuser.c:369
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
 msgstr "  -S, --no-superuser        rollen blir inte superanvändare (standard)\n"
 
-#: createuser.c:363
+#: createuser.c:371
 #, c-format
 msgid ""
 "  --interactive             prompt for missing role name and attributes rather\n"
@@ -578,17 +583,17 @@ msgstr ""
 "  --interactive             fråga efter rollnamn och egenskaper, snarare än\n"
 "                            att falla tillbaka på förval\n"
 
-#: createuser.c:365
+#: createuser.c:373
 #, c-format
 msgid "  --replication             role can initiate replication\n"
 msgstr "  --replication             rollen kan starta replikering\n"
 
-#: createuser.c:366
+#: createuser.c:374
 #, c-format
 msgid "  --no-replication          role cannot initiate replication\n"
 msgstr "  --no-replication          rollen får inte starta replikering\n"
 
-#: createuser.c:371
+#: createuser.c:379
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr "  -U, --username=ANVÄNDARE  användarnamn att ansluta som (ej den som skapas)\n"

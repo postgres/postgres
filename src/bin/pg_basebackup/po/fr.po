@@ -8,15 +8,15 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-11-21 21:44+0000\n"
-"PO-Revision-Date: 2019-11-22 10:15+0100\n"
-"Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
+"PO-Revision-Date: 2020-02-28 14:11+0100\n"
+"Last-Translator: Christophe Courtois <christophe.courtois@dalibo.com>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.2.4\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: ../../../src/common/logging.c:188
 #, c-format
@@ -321,7 +321,7 @@ msgstr "      --no-verify-checksums           ne vérifie pas les sommes de cont
 #: pg_basebackup.c:358 pg_receivewal.c:96 pg_recvlogical.c:101
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
-msgstr "  -?, --help                 affiche cette aide puis quitte\n"
+msgstr "  -?, --help                   affiche cette aide puis quitte\n"
 
 #: pg_basebackup.c:359 pg_receivewal.c:97 pg_recvlogical.c:102
 #, c-format
@@ -844,13 +844,13 @@ msgstr ""
 #: pg_receivewal.c:85 pg_recvlogical.c:85
 #, c-format
 msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
-msgstr "  -E, --endpos=LSN       quitte après avoir reçu le LSN spécifié\n"
+msgstr "  -E, --endpos=LSN             quitte après avoir reçu le LSN spécifié\n"
 
 #: pg_receivewal.c:86 pg_recvlogical.c:89
 #, c-format
 msgid "      --if-not-exists    do not error if slot already exists when creating a slot\n"
 msgstr ""
-"      --if-not-exists          ne pas renvoyer une erreur si le slot existe\\n\n"
+"      --if-not-exists          ne pas renvoyer une erreur si le slot existe\n"
 "                               déjà lors de sa création\n"
 
 #: pg_receivewal.c:87 pg_recvlogical.c:91
@@ -899,15 +899,15 @@ msgstr ""
 #, c-format
 msgid "      --create-slot      create a new replication slot (for the slot's name see --slot)\n"
 msgstr ""
-"      --create-slot            créer un nouveau slot de réplication (pour le\n"
-"                               nom du slot, voir --slot)\n"
+"      --create-slot            créer un nouveau slot de réplication\n"
+"                               (pour le nom du slot, voir --slot)\n"
 
 #: pg_receivewal.c:106 pg_recvlogical.c:82
 #, c-format
 msgid "      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"
 msgstr ""
-"      --drop-slot              supprimer un nouveau slot de réplication (pour\n"
-"                               le nom du slot, voir --slot)\n"
+"      --drop-slot              supprimer un nouveau slot de réplication\n"
+"                               (pour le nom du slot, voir --slot)\n"
 
 #: pg_receivewal.c:118
 #, c-format

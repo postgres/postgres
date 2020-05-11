@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-09 12:21+0300\n"
+"POT-Creation-Date: 2020-05-02 06:52+0300\n"
 "PO-Revision-Date: 2019-08-28 14:04+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -17,17 +17,17 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "важно: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "ошибка: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "предупреждение: "

@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-08 14:45+0000\n"
-"PO-Revision-Date: 2019-12-20 20:30\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2020-02-19 12:15+0000\n"
+"PO-Revision-Date: 2020-02-23 17:34\n"
+"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -53,7 +53,7 @@ msgstr "неможливо знайти \"%s\" для виконання"
 #: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "не вдалося змінити каталог в \"%s\": %m"
+msgstr "не вдалося змінити каталог на \"%s\": %m"
 
 #: ../../common/exec.c:288
 #, c-format
@@ -106,12 +106,12 @@ msgstr "не можливо відкрити файл \"%s\": %m"
 #: ../../common/file_utils.c:297 ../../common/file_utils.c:367
 #, c-format
 msgid "could not fsync file \"%s\": %m"
-msgstr "не вдалося відкрити файл \"%s\": %m"
+msgstr "не вдалося fsync файл \"%s\": %m"
 
 #: ../../common/file_utils.c:377
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
-msgstr "не можливо перейменувати файл \"%s\" на \"%s\": %m"
+msgstr "не вдалося перейменувати файл \"%s\" на \"%s\": %m"
 
 #: ../../common/pgfnames.c:74
 #, c-format
@@ -702,7 +702,7 @@ msgstr "Перезапустіть %s з параметром -E.\n"
 #: initdb.c:2568 initdb.c:3196 initdb.c:3217
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
 
 #: initdb.c:2581
 #, c-format
@@ -783,7 +783,7 @@ msgstr "Якщо ви хочете створити нову систему ба
 #: initdb.c:2781 initdb.c:2863 initdb.c:3232
 #, c-format
 msgid "could not access directory \"%s\": %m"
-msgstr "помилка доступу до каталогу \"%s\": %m"
+msgstr "немає доступу до каталогу \"%s\": %m"
 
 #: initdb.c:2804
 #, c-format
@@ -799,7 +799,7 @@ msgstr "Якщо ви хочете зберегти WAL, видаліть або
 #: initdb.c:2870
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
-msgstr "не можливо створити символічне послання \"%s\": %m"
+msgstr "не вдалося створити символічне послання \"%s\": %m"
 
 #: initdb.c:2875
 #, c-format

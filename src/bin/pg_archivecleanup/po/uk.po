@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-08 14:46+0000\n"
-"PO-Revision-Date: 2019-12-20 20:23\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2020-02-19 12:16+0000\n"
+"PO-Revision-Date: 2020-03-07 16:55\n"
+"Last-Translator: Pavlo Golub <pavlo.golub@cybertec.at>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -64,7 +64,7 @@ msgstr "недійсна назва файла з аргументом"
 #: pg_archivecleanup.c:349 pg_archivecleanup.c:356
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
 
 #: pg_archivecleanup.c:256
 #, c-format

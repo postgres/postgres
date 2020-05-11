@@ -1,14 +1,14 @@
 # German message translation file for pg_upgrade
-# Copyright (C) 2019 PostgreSQL Global Development Group
+# Copyright (C) 2020 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut <peter@eisentraut.org>, 2018 - 2019.
+# Peter Eisentraut <peter@eisentraut.org>, 2018 - 2020.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-11-07 07:44+0000\n"
-"PO-Revision-Date: 2019-11-07 09:57+0100\n"
+"POT-Creation-Date: 2020-04-04 11:15+0000\n"
+"PO-Revision-Date: 2020-04-05 09:31+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -170,8 +170,8 @@ msgid "Creating script to analyze new cluster"
 msgstr "Erzeuge Skript zum Analysieren des neuen Clusters"
 
 #: check.c:473 check.c:601 check.c:865 check.c:944 check.c:1053 check.c:1144
-#: file.c:341 function.c:246 option.c:495 version.c:57 version.c:184
-#: version.c:309 version.c:391 version.c:539
+#: file.c:341 function.c:246 option.c:495 version.c:57 version.c:202
+#: version.c:344
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "konnte Datei »%s« nicht öffnen: %s\n"
@@ -260,7 +260,7 @@ msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Prüfe auf contrib/isn mit unpassender bigint-Übergabe"
 
 #: check.c:887 check.c:966 check.c:1076 check.c:1167 function.c:268
-#: version.c:207 version.c:332 version.c:562
+#: version.c:248 version.c:285 version.c:428
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
@@ -1112,8 +1112,8 @@ msgstr "  -D, --new-datadir=DATENVERZ   Datenverzeichnis des neuen Clusters\n"
 
 #: option.c:300
 #, c-format
-msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs                    Anzahl paralleler Prozesse oder Threads\n"
+msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
+msgstr "  -j, --jobs=NUM                Anzahl paralleler Prozesse oder Threads\n"
 
 #: option.c:301
 #, c-format
@@ -1516,13 +1516,13 @@ msgstr ""
 
 #: server.c:168
 #, c-format
-msgid "could not open version file: %s\n"
-msgstr "konnte Versionsdatei nicht öffnen: %s\n"
+msgid "could not open version file \"%s\": %m\n"
+msgstr "konnte Versionsdatei »%s« nicht öffnen: %m\n"
 
 #: server.c:172
 #, c-format
-msgid "could not parse PG_VERSION file from %s\n"
-msgstr "konnte PG_VERSION-Datei von %s nicht parsen\n"
+msgid "could not parse version file \"%s\"\n"
+msgstr "konnte Versionsdatei »%s« nicht interpretieren\n"
 
 #: server.c:295
 #, c-format
@@ -1615,7 +1615,7 @@ msgstr "ok"
 msgid "Checking for large objects"
 msgstr "Prüfe auf Large Objects"
 
-#: version.c:80 version.c:434
+#: version.c:80 version.c:387
 #, c-format
 msgid "warning"
 msgstr "Warnung"
@@ -1658,12 +1658,12 @@ msgstr ""
 "Standardrechte zu setzen.\n"
 "\n"
 
-#: version.c:118
+#: version.c:242
 #, c-format
 msgid "Checking for incompatible \"line\" data type"
 msgstr "Prüfe auf inkompatiblen Datentyp »line«"
 
-#: version.c:208
+#: version.c:249
 #, c-format
 msgid ""
 "Your installation contains the \"line\" data type in user tables.  This\n"
@@ -1683,12 +1683,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:244
+#: version.c:279
 #, c-format
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Prüfe auf ungültige Benutzerspalten mit Typ »unknown«"
 
-#: version.c:333
+#: version.c:286
 #, c-format
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.  This\n"
@@ -1706,12 +1706,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:356
+#: version.c:309
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Prüfe auf Hash-Indexe"
 
-#: version.c:436
+#: version.c:389
 #, c-format
 msgid ""
 "\n"
@@ -1728,7 +1728,7 @@ msgstr ""
 "werden Sie Anweisungen zum REINDEX erhalten.\n"
 "\n"
 
-#: version.c:442
+#: version.c:395
 #, c-format
 msgid ""
 "\n"
@@ -1750,12 +1750,12 @@ msgstr ""
 "verwendet werden.\n"
 "\n"
 
-#: version.c:475
+#: version.c:421
 #, c-format
 msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr "Prüfe auf ungültige Benutzerspalten mit Typ »sql_identifier«"
 
-#: version.c:563
+#: version.c:429
 #, c-format
 msgid ""
 "Your installation contains the \"sql_identifier\" data type in user tables\n"

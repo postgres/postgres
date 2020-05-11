@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-05 11:03+0300\n"
-"PO-Revision-Date: 2020-02-06 13:11+0300\n"
+"POT-Creation-Date: 2020-05-02 06:52+0300\n"
+"PO-Revision-Date: 2020-05-06 11:08+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -1261,10 +1261,10 @@ msgstr "  -D, --new-datadir=КАТ_DATA    каталог данных ново�
 #: option.c:300
 #, c-format
 msgid ""
-"  -j, --jobs                    number of simultaneous processes or threads "
+"  -j, --jobs=NUM                number of simultaneous processes or threads "
 "to use\n"
 msgstr ""
-"  -j, --jobs                    число одновременно используемых процессов "
+"  -j, --jobs=ЧИСЛО              число одновременно используемых процессов "
 "или\n"
 "                                потоков\n"
 
@@ -1708,13 +1708,13 @@ msgstr ""
 
 #: server.c:168
 #, c-format
-msgid "could not open version file: %s\n"
-msgstr "не удалось открыть файл с версией: %s\n"
+msgid "could not open version file \"%s\": %m\n"
+msgstr "не удалось открыть файл с версией \"%s\": %m\n"
 
 #: server.c:172
 #, c-format
-msgid "could not parse PG_VERSION file from %s\n"
-msgstr "не удалось разобрать файл PG_VERSION из %s\n"
+msgid "could not parse version file \"%s\"\n"
+msgstr "не удалось разобрать файл с версией \"%s\"\n"
 
 #: server.c:295
 #, c-format
@@ -1977,6 +1977,9 @@ msgstr ""
 "Список проблемных столбцов приведён в файле:\n"
 "    %s\n"
 "\n"
+
+#~ msgid "could not parse PG_VERSION file from %s\n"
+#~ msgstr "не удалось разобрать файл PG_VERSION из %s\n"
 
 #~ msgid ""
 #~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"

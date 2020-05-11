@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-05 11:03+0300\n"
+"POT-Creation-Date: 2020-05-06 11:00+0300\n"
 "PO-Revision-Date: 2019-09-23 09:30+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -63,7 +63,7 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-connect.c:5739 fe-connect.c:5840 fe-connect.c:5849 fe-connect.c:6205
 #: fe-connect.c:6355 fe-exec.c:2748 fe-exec.c:3495 fe-exec.c:3660
 #: fe-gssapi-common.c:111 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:999
-#: fe-protocol3.c:1703 fe-secure-common.c:110 fe-secure-gssapi.c:498
+#: fe-protocol3.c:1703 fe-secure-common.c:110 fe-secure-gssapi.c:504
 #: fe-secure-openssl.c:438 fe-secure-openssl.c:1025
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -1084,28 +1084,28 @@ msgstr "исходящее сообщение GSSAPI не будет защищ�
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "клиент попытался передать чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:350 fe-secure-gssapi.c:590
+#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:596
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "сервер передал чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:389
+#: fe-secure-gssapi.c:393
 msgid "GSSAPI unwrap error"
 msgstr "ошибка развёртывания сообщения в GSSAPI"
 
-#: fe-secure-gssapi.c:399
+#: fe-secure-gssapi.c:403
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "входящее сообщение GSSAPI не защищено\n"
 
-#: fe-secure-gssapi.c:636
+#: fe-secure-gssapi.c:642
 msgid "could not initiate GSSAPI security context"
 msgstr "не удалось инициализировать контекст безопасности GSSAPI"
 
-#: fe-secure-gssapi.c:666
+#: fe-secure-gssapi.c:673
 msgid "GSSAPI size check error"
 msgstr "ошибка проверки размера в GSSAPI"
 
-#: fe-secure-gssapi.c:677
+#: fe-secure-gssapi.c:684
 msgid "GSSAPI context establishment error"
 msgstr "ошибка установления контекста в GSSAPI"
 
