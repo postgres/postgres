@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-11-08 17:51+0000\n"
+"POT-Creation-Date: 2020-04-08 16:12+0000\n"
 "PO-Revision-Date: 2019-05-14 15:50+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
@@ -70,8 +70,8 @@ msgid "invalid output format (internal error): %d"
 msgstr "ungültiges Ausgabeformat (interner Fehler): %d"
 
 #: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
-#: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:169
-#: createuser.c:184 dropdb.c:94 dropdb.c:103 dropdb.c:111 droplang.c:88
+#: createlang.c:89 createlang.c:119 createlang.c:174 createuser.c:178
+#: createuser.c:193 dropdb.c:94 dropdb.c:103 dropdb.c:111 droplang.c:88
 #: droplang.c:118 droplang.c:174 dropuser.c:89 dropuser.c:104 dropuser.c:115
 #: pg_isready.c:93 pg_isready.c:107 reindexdb.c:131 reindexdb.c:150
 #: vacuumdb.c:213 vacuumdb.c:232
@@ -79,7 +79,7 @@ msgstr "ungültiges Ausgabeformat (interner Fehler): %d"
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
-#: clusterdb.c:128 createdb.c:136 createlang.c:117 createuser.c:182
+#: clusterdb.c:128 createdb.c:136 createlang.c:117 createuser.c:191
 #: dropdb.c:109 droplang.c:116 dropuser.c:102 pg_isready.c:105 reindexdb.c:148
 #: vacuumdb.c:230
 #, c-format
@@ -120,7 +120,7 @@ msgstr ""
 "%s clustert alle vorher geclusterten Tabellen in einer Datenbank.\n"
 "\n"
 
-#: clusterdb.c:274 createdb.c:252 createlang.c:236 createuser.c:349
+#: clusterdb.c:274 createdb.c:261 createlang.c:236 createuser.c:358
 #: dropdb.c:156 droplang.c:231 dropuser.c:156 pg_isready.c:222 reindexdb.c:402
 #: vacuumdb.c:1008
 #, c-format
@@ -132,7 +132,7 @@ msgstr "Aufruf:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
-#: clusterdb.c:276 createdb.c:254 createlang.c:238 createuser.c:351
+#: clusterdb.c:276 createdb.c:263 createlang.c:238 createuser.c:360
 #: dropdb.c:158 droplang.c:233 dropuser.c:158 pg_isready.c:225 reindexdb.c:404
 #: vacuumdb.c:1010
 #, c-format
@@ -153,7 +153,7 @@ msgstr "  -a, --all                 clustere alle Datenbanken\n"
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       zu clusternde Datenbank\n"
 
-#: clusterdb.c:279 createlang.c:240 createuser.c:355 dropdb.c:159
+#: clusterdb.c:279 createlang.c:240 createuser.c:364 dropdb.c:159
 #: droplang.c:235 dropuser.c:159 reindexdb.c:407
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
@@ -176,19 +176,19 @@ msgstr "  -t, --table=TABELLE       clustere nur bestimmte Tabelle(n)\n"
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             erzeuge viele Meldungen\n"
 
-#: clusterdb.c:283 createlang.c:242 createuser.c:369 dropdb.c:161
+#: clusterdb.c:283 createlang.c:242 createuser.c:378 dropdb.c:161
 #: droplang.c:237 dropuser.c:162 reindexdb.c:414
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             Versionsinformationen anzeigen, dann beenden\n"
 
-#: clusterdb.c:284 createlang.c:243 createuser.c:374 dropdb.c:163
+#: clusterdb.c:284 createlang.c:243 createuser.c:383 dropdb.c:163
 #: droplang.c:238 dropuser.c:164 reindexdb.c:415
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 
-#: clusterdb.c:285 createdb.c:265 createlang.c:244 createuser.c:375
+#: clusterdb.c:285 createdb.c:274 createlang.c:244 createuser.c:384
 #: dropdb.c:164 droplang.c:239 dropuser.c:165 pg_isready.c:231 reindexdb.c:416
 #: vacuumdb.c:1026
 #, c-format
@@ -199,13 +199,13 @@ msgstr ""
 "\n"
 "Verbindungsoptionen:\n"
 
-#: clusterdb.c:286 createlang.c:245 createuser.c:376 dropdb.c:165
+#: clusterdb.c:286 createlang.c:245 createuser.c:385 dropdb.c:165
 #: droplang.c:240 dropuser.c:166 reindexdb.c:417 vacuumdb.c:1027
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME       Name des Datenbankservers oder Socket-Verzeichnis\n"
 
-#: clusterdb.c:287 createlang.c:246 createuser.c:377 dropdb.c:166
+#: clusterdb.c:287 createlang.c:246 createuser.c:386 dropdb.c:166
 #: droplang.c:241 dropuser.c:167 reindexdb.c:418 vacuumdb.c:1028
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
@@ -217,13 +217,13 @@ msgstr "  -p, --port=PORT           Port des Datenbankservers\n"
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=NAME       Datenbankbenutzername\n"
 
-#: clusterdb.c:289 createlang.c:248 createuser.c:379 dropdb.c:168
+#: clusterdb.c:289 createlang.c:248 createuser.c:388 dropdb.c:168
 #: droplang.c:243 dropuser.c:169 reindexdb.c:420 vacuumdb.c:1030
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         niemals nach Passwort fragen\n"
 
-#: clusterdb.c:290 createlang.c:249 createuser.c:380 dropdb.c:169
+#: clusterdb.c:290 createlang.c:249 createuser.c:389 dropdb.c:169
 #: droplang.c:244 dropuser.c:170 reindexdb.c:421 vacuumdb.c:1031
 #, c-format
 msgid "  -W, --password            force password prompt\n"
@@ -244,7 +244,7 @@ msgstr ""
 "Für weitere Informationen lesen Sie bitte die Beschreibung des\n"
 "SQL-Befehls CLUSTER.\n"
 
-#: clusterdb.c:293 createdb.c:273 createlang.c:250 createuser.c:381
+#: clusterdb.c:293 createdb.c:282 createlang.c:250 createuser.c:390
 #: dropdb.c:171 droplang.c:245 dropuser.c:171 pg_isready.c:236 reindexdb.c:424
 #: vacuumdb.c:1034
 #, c-format
@@ -333,17 +333,17 @@ msgstr "%s: --locale und --lc-collate können nicht zusammen angegeben werden\n"
 msgid "%s: \"%s\" is not a valid encoding name\n"
 msgstr "%s: »%s« ist kein gültiger Kodierungsname\n"
 
-#: createdb.c:213
+#: createdb.c:222
 #, c-format
 msgid "%s: database creation failed: %s"
 msgstr "%s: Erzeugen der Datenbank ist fehlgeschlagen: %s"
 
-#: createdb.c:233
+#: createdb.c:242
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
 msgstr "%s: Erzeugen des Kommentars ist fehlgeschlagen (Datenbank wurde erzeugt): %s"
 
-#: createdb.c:251
+#: createdb.c:260
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -352,94 +352,94 @@ msgstr ""
 "%s erzeugt eine PostgreSQL-Datenbank.\n"
 "\n"
 
-#: createdb.c:253
+#: createdb.c:262
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [OPTION]... [DBNAME] [BESCHREIBUNG]\n"
 
-#: createdb.c:255
+#: createdb.c:264
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TABLESPACE  Standard-Tablespace der Datenbank\n"
 
-#: createdb.c:256
+#: createdb.c:265
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr ""
 "  -e, --echo                   zeige die Befehle, die an den Server\n"
 "                               gesendet werden\n"
 
-#: createdb.c:257
+#: createdb.c:266
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=KODIERUNG     Kodierung für die Datenbank\n"
 
-#: createdb.c:258
+#: createdb.c:267
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=LOCALE          Lokale-Einstellungen für die Datenbank\n"
 
-#: createdb.c:259
+#: createdb.c:268
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=LOCALE      LC_COLLATE-Einstellung für die Datenbank\n"
 
-#: createdb.c:260
+#: createdb.c:269
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=LOCALE        LC_CTYPE-Einstellung für die Datenbank\n"
 
-#: createdb.c:261
+#: createdb.c:270
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=EIGENTÜMER       Eigentümer der neuen Datenbank\n"
 
-#: createdb.c:262
+#: createdb.c:271
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      zu kopierende Template-Datenbank\n"
 
-#: createdb.c:263
+#: createdb.c:272
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                Versionsinformationen anzeigen, dann beenden\n"
 
-#: createdb.c:264
+#: createdb.c:273
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   diese Hilfe anzeigen, dann beenden\n"
 
-#: createdb.c:266
+#: createdb.c:275
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME          Name des Datenbankservers oder Socket-Verzeichnis\n"
 
-#: createdb.c:267
+#: createdb.c:276
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              Port des Datenbankservers\n"
 
-#: createdb.c:268
+#: createdb.c:277
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=NAME          Datenbankbenutzername\n"
 
-#: createdb.c:269
+#: createdb.c:278
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            niemals nach Passwort fragen\n"
 
-#: createdb.c:270
+#: createdb.c:279
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               Passwortfrage erzwingen\n"
 
-#: createdb.c:271
+#: createdb.c:280
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME      alternative Wartungsdatenbank\n"
 
-#: createdb.c:272
+#: createdb.c:281
 #, c-format
 msgid ""
 "\n"
@@ -510,46 +510,51 @@ msgstr ""
 msgid "  -l, --list                show a list of currently installed languages\n"
 msgstr "  -l, --list                zeige Liste gegenwärtig installierter Sprachen\n"
 
-#: createuser.c:191
+#: createuser.c:154
+#, c-format
+msgid "%s: invalid value for --connection-limit: %s\n"
+msgstr "%s: ungültiger Wert für --connection-limit: %s\n"
+
+#: createuser.c:200
 msgid "Enter name of role to add: "
 msgstr "Geben Sie den Namen der neuen Rolle ein: "
 
-#: createuser.c:206
+#: createuser.c:215
 msgid "Enter password for new role: "
 msgstr "Geben Sie das Passwort der neuen Rolle ein: "
 
-#: createuser.c:207
+#: createuser.c:216
 msgid "Enter it again: "
 msgstr "Geben Sie es noch einmal ein: "
 
-#: createuser.c:210
+#: createuser.c:219
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Passwörter stimmten nicht überein.\n"
 
-#: createuser.c:219
+#: createuser.c:228
 msgid "Shall the new role be a superuser?"
 msgstr "Soll die neue Rolle ein Superuser sein?"
 
-#: createuser.c:234
+#: createuser.c:243
 msgid "Shall the new role be allowed to create databases?"
 msgstr "Soll die neue Rolle Datenbanken erzeugen dürfen?"
 
-#: createuser.c:242
+#: createuser.c:251
 msgid "Shall the new role be allowed to create more new roles?"
 msgstr "Soll die neue Rolle weitere neue Rollen erzeugen dürfen?"
 
-#: createuser.c:276
+#: createuser.c:285
 #, c-format
 msgid "Password encryption failed.\n"
 msgstr "Passwortverschlüsselung ist fehlgeschlagen.\n"
 
-#: createuser.c:333
+#: createuser.c:342
 #, c-format
 msgid "%s: creation of new role failed: %s"
 msgstr "%s: Erzeugen der neuen Rolle fehlgeschlagen: %s"
 
-#: createuser.c:348
+#: createuser.c:357
 #, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
@@ -558,39 +563,39 @@ msgstr ""
 "%s erzeugt eine neue PostgreSQL-Rolle.\n"
 "\n"
 
-#: createuser.c:350 dropuser.c:157
+#: createuser.c:359 dropuser.c:157
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [OPTION]... [ROLLENNAME]\n"
 
-#: createuser.c:352
+#: createuser.c:361
 #, c-format
 msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
 msgstr ""
 "  -c, --connection-limit=N  Hochzahl an Verbindungen für Rolle\n"
 "                            (Voreinstellung: keine Begrenzung)\n"
 
-#: createuser.c:353
+#: createuser.c:362
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            Rolle kann neue Datenbanken erzeugen\n"
 
-#: createuser.c:354
+#: createuser.c:363
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
 msgstr "  -D, --no-createdb         Rolle kann keine Datenbanken erzeugen (Voreinstellung)\n"
 
-#: createuser.c:356
+#: createuser.c:365
 #, c-format
 msgid "  -E, --encrypted           encrypt stored password\n"
 msgstr "  -E, --encrypted           verschlüssle das gespeicherte Passwort\n"
 
-#: createuser.c:357
+#: createuser.c:366
 #, c-format
 msgid "  -g, --role=ROLE           new role will be a member of this role\n"
 msgstr "  -g, --role=ROLLE          neue Rolle wird Mitglied dieser Rolle\n"
 
-#: createuser.c:358
+#: createuser.c:367
 #, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
@@ -599,52 +604,52 @@ msgstr ""
 "  -i, --inherit             Rolle erbt alle Privilegien von Rollen, deren\n"
 "                            Mitglied sie ist (Voreinstellung)\n"
 
-#: createuser.c:360
+#: createuser.c:369
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          Rolle erbt keine Privilegien\n"
 
-#: createuser.c:361
+#: createuser.c:370
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr "  -l, --login               Rolle kann sich anmelden (Voreinstellung)\n"
 
-#: createuser.c:362
+#: createuser.c:371
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            Rolle kann sich nicht anmelden\n"
 
-#: createuser.c:363
+#: createuser.c:372
 #, c-format
 msgid "  -N, --unencrypted         do not encrypt stored password\n"
 msgstr "  -N, --unencrypted         verschlüssle das gespeicherte Passwort nicht\n"
 
-#: createuser.c:364
+#: createuser.c:373
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            weise der neuen Rolle ein Passwort zu\n"
 
-#: createuser.c:365
+#: createuser.c:374
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          Rolle kann neue Rollen erzeugen\n"
 
-#: createuser.c:366
+#: createuser.c:375
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
 msgstr "  -R, --no-createrole       Rolle kann keine Rollen erzeugen (Voreinstellung)\n"
 
-#: createuser.c:367
+#: createuser.c:376
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           Rolle wird Superuser\n"
 
-#: createuser.c:368
+#: createuser.c:377
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
 msgstr "  -S, --no-superuser        Rolle wird kein Superuser (Voreinstellung)\n"
 
-#: createuser.c:370
+#: createuser.c:379
 #, c-format
 msgid ""
 "  --interactive             prompt for missing role name and attributes rather\n"
@@ -653,17 +658,17 @@ msgstr ""
 "  --interactive             nach fehlenden Rollennamen und -attributen fragen\n"
 "                            anstatt Vorgabewerte zu nehmen\n"
 
-#: createuser.c:372
+#: createuser.c:381
 #, c-format
 msgid "  --replication             role can initiate replication\n"
 msgstr "  --replication             Rolle kann Replikation einleiten\n"
 
-#: createuser.c:373
+#: createuser.c:382
 #, c-format
 msgid "  --no-replication          role cannot initiate replication\n"
 msgstr "  --no-replication          Rolle kann Replikation nicht einleiten\n"
 
-#: createuser.c:378
+#: createuser.c:387
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr ""
