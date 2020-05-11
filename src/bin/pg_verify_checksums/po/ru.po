@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-06-17 21:28+0300\n"
+"POT-Creation-Date: 2020-05-02 06:52+0300\n"
 "PO-Revision-Date: 2019-06-17 21:48+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -12,7 +12,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_verify_checksums.c:39
+#: pg_verify_checksums.c:40
 #, c-format
 msgid ""
 "%s verifies data checksums in a PostgreSQL database cluster.\n"
@@ -21,17 +21,17 @@ msgstr ""
 "%s проверяет контрольные суммы данных в кластере БД PostgreSQL.\n"
 "\n"
 
-#: pg_verify_checksums.c:40
+#: pg_verify_checksums.c:41
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: pg_verify_checksums.c:41
+#: pg_verify_checksums.c:42
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [ПАРАМЕТР]... [КАТАЛОГ]\n"
 
-#: pg_verify_checksums.c:42
+#: pg_verify_checksums.c:43
 #, c-format
 msgid ""
 "\n"
@@ -40,17 +40,17 @@ msgstr ""
 "\n"
 "Параметры:\n"
 
-#: pg_verify_checksums.c:43
+#: pg_verify_checksums.c:44
 #, c-format
 msgid " [-D, --pgdata=]DATADIR  data directory\n"
 msgstr " [-D, --pgdata=]КАТ_ДАННЫХ каталог данных\n"
 
-#: pg_verify_checksums.c:44
+#: pg_verify_checksums.c:45
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          выводить подробные сообщения\n"
 
-#: pg_verify_checksums.c:45
+#: pg_verify_checksums.c:46
 #, c-format
 msgid ""
 "  -r RELFILENODE         check only relation with specified relfilenode\n"
@@ -58,17 +58,17 @@ msgstr ""
 "  -r RELFILENODE         проверить только отношение с указанным файловым "
 "узлом\n"
 
-#: pg_verify_checksums.c:46
+#: pg_verify_checksums.c:47
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          показать версию и выйти\n"
 
-#: pg_verify_checksums.c:47
+#: pg_verify_checksums.c:48
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             показать эту справку и выйти\n"
 
-#: pg_verify_checksums.c:48
+#: pg_verify_checksums.c:49
 #, c-format
 msgid ""
 "\n"
@@ -82,23 +82,23 @@ msgstr ""
 "переменной окружения PGDATA.\n"
 "\n"
 
-#: pg_verify_checksums.c:50
+#: pg_verify_checksums.c:51
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_verify_checksums.c:93
+#: pg_verify_checksums.c:111
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
 
-#: pg_verify_checksums.c:109
+#: pg_verify_checksums.c:127
 #, c-format
 msgid "%s: could not read block %u in file \"%s\": read %d of %d\n"
 msgstr ""
 "%s: не удалось прочитать блок %u в файле \"%s\" (прочитано байт: %d из %d)\n"
 
-#: pg_verify_checksums.c:123
+#: pg_verify_checksums.c:141
 #, c-format
 msgid ""
 "%s: checksum verification failed in file \"%s\", block %u: calculated "
@@ -107,65 +107,65 @@ msgstr ""
 "%s: ошибка контрольных сумм в файле \"%s\", блоке %u: вычислена контрольная "
 "сумма %X, но блок содержит %X\n"
 
-#: pg_verify_checksums.c:131
+#: pg_verify_checksums.c:149
 #, c-format
 msgid "%s: checksums verified in file \"%s\"\n"
 msgstr "%s: контрольные суммы в файле \"%s\" проверены\n"
 
-#: pg_verify_checksums.c:147
+#: pg_verify_checksums.c:165
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: не удалось открыть каталог \"%s\": %s\n"
 
-#: pg_verify_checksums.c:175
+#: pg_verify_checksums.c:193 pg_verify_checksums.c:266
 #, c-format
 msgid "%s: could not stat file \"%s\": %s\n"
 msgstr "%s: не удалось получить информацию о файле \"%s\": %s\n"
 
-#: pg_verify_checksums.c:203
+#: pg_verify_checksums.c:221
 #, c-format
 msgid "%s: invalid segment number %d in file name \"%s\"\n"
 msgstr "%s: неверный номер сегмента %d в имени файла \"%s\"\n"
 
-#: pg_verify_checksums.c:274
+#: pg_verify_checksums.c:336
 #, c-format
 msgid "%s: invalid relfilenode specification, must be numeric: %s\n"
 msgstr ""
 "%s: неверное указание файлового узла (relfilenode), требуется число: %s\n"
 
-#: pg_verify_checksums.c:280 pg_verify_checksums.c:296
-#: pg_verify_checksums.c:306
+#: pg_verify_checksums.c:342 pg_verify_checksums.c:358
+#: pg_verify_checksums.c:368
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_verify_checksums.c:295
+#: pg_verify_checksums.c:357
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: каталог данных не указан\n"
 
-#: pg_verify_checksums.c:304
+#: pg_verify_checksums.c:366
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: pg_verify_checksums.c:315
+#: pg_verify_checksums.c:377
 #, c-format
 msgid "%s: pg_control CRC value is incorrect\n"
 msgstr "%s: ошибка контрольного значения в pg_control\n"
 
-#: pg_verify_checksums.c:321
+#: pg_verify_checksums.c:383
 #, c-format
 msgid ""
 "%s: cluster is not compatible with this version of pg_verify_checksums\n"
 msgstr "%s: кластер несовместим с этой версией pg_verify_checksums\n"
 
-#: pg_verify_checksums.c:328
+#: pg_verify_checksums.c:390
 #, c-format
 msgid "%s: database cluster is not compatible\n"
 msgstr "%s: несовместимый кластер баз данных\n"
 
-#: pg_verify_checksums.c:330
+#: pg_verify_checksums.c:392
 #, c-format
 msgid ""
 "The database cluster was initialized with block size %u, but "
@@ -174,37 +174,37 @@ msgstr ""
 "Кластер баз данных был инициализирован с размером блока %u, а утилита "
 "pg_verify_checksums скомпилирована для размера блока %u.\n"
 
-#: pg_verify_checksums.c:338
+#: pg_verify_checksums.c:400
 #, c-format
 msgid "%s: cluster must be shut down to verify checksums\n"
 msgstr "%s: для проверки контрольных сумм кластер должен быть отключён\n"
 
-#: pg_verify_checksums.c:344
+#: pg_verify_checksums.c:406
 #, c-format
 msgid "%s: data checksums are not enabled in cluster\n"
 msgstr "%s: контрольные суммы в кластере не включены\n"
 
-#: pg_verify_checksums.c:353
+#: pg_verify_checksums.c:415
 #, c-format
 msgid "Checksum scan completed\n"
 msgstr "Проверка контрольных сумм завершена\n"
 
-#: pg_verify_checksums.c:354
+#: pg_verify_checksums.c:416
 #, c-format
 msgid "Data checksum version: %d\n"
 msgstr "Версия контрольных сумм данных: %d\n"
 
-#: pg_verify_checksums.c:355
+#: pg_verify_checksums.c:417
 #, c-format
 msgid "Files scanned:  %s\n"
 msgstr "Просканировано файлов: %s\n"
 
-#: pg_verify_checksums.c:356
+#: pg_verify_checksums.c:418
 #, c-format
 msgid "Blocks scanned: %s\n"
 msgstr "Просканировано блоков: %s\n"
 
-#: pg_verify_checksums.c:357
+#: pg_verify_checksums.c:419
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "Неверные контрольные суммы: %s\n"

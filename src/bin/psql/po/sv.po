@@ -1,6 +1,6 @@
 # Swedish message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2009, 2010.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
 #
 # Use these quotes: "%s"
 #
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-09-23 22:44+0000\n"
-"PO-Revision-Date: 2018-09-24 06:49+0200\n"
+"PO-Revision-Date: 2020-04-01 07:01+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -4398,7 +4398,7 @@ msgstr "prenumerationsparameter"
 
 #: sql_help.c:1273 sql_help.c:1276
 msgid "partition_name"
-msgstr "paritionsnamn"
+msgstr "partitionsnamn"
 
 #: sql_help.c:1274 sql_help.c:2241 sql_help.c:2768
 msgid "partition_bound_spec"

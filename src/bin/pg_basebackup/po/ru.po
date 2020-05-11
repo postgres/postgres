@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-09 12:22+0300\n"
+"POT-Creation-Date: 2020-05-02 06:52+0300\n"
 "PO-Revision-Date: 2019-09-02 12:28+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -397,7 +397,7 @@ msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: не удалось прочитать из готового канала: %s\n"
 
 #: pg_basebackup.c:432 pg_basebackup.c:566 pg_basebackup.c:2068
-#: streamutil.c:460
+#: streamutil.c:462
 #, c-format
 msgid "%s: could not parse write-ahead log location \"%s\"\n"
 msgstr "%s: не удалось разобрать положение в журнале предзаписи \"%s\"\n"
@@ -603,8 +603,8 @@ msgstr ""
 "контрольной точки\n"
 
 #: pg_basebackup.c:1833 pg_recvlogical.c:271 receivelog.c:493 receivelog.c:546
-#: receivelog.c:586 streamutil.c:303 streamutil.c:377 streamutil.c:430
-#: streamutil.c:544 streamutil.c:590
+#: receivelog.c:586 streamutil.c:303 streamutil.c:379 streamutil.c:432
+#: streamutil.c:546 streamutil.c:592
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: не удалось передать команду репликации \"%s\": %s"
@@ -1348,7 +1348,7 @@ msgstr ""
 "%s: несовместимая версия сервера %s; клиент не поддерживает репликацию с "
 "серверов версии выше %s\n"
 
-#: receivelog.c:501 streamutil.c:439 streamutil.c:478
+#: receivelog.c:501 streamutil.c:441 streamutil.c:480
 #, c-format
 msgid ""
 "%s: could not identify system: got %d rows and %d fields, expected %d rows "
@@ -1481,7 +1481,7 @@ msgstr ""
 msgid "%s: WAL segment size could not be parsed\n"
 msgstr "%s: разобрать размер сегмента WAL не удалось\n"
 
-#: streamutil.c:339
+#: streamutil.c:342
 #, c-format
 msgid ""
 "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the "
@@ -1499,7 +1499,7 @@ msgstr[2] ""
 "%s: размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до "
 "1 ГБ, но удалённый сервер сообщил значение: %d\n"
 
-#: streamutil.c:386
+#: streamutil.c:388
 #, c-format
 msgid ""
 "%s: could not fetch group access flag: got %d rows and %d fields, expected "
@@ -1508,12 +1508,12 @@ msgstr ""
 "%s: не удалось извлечь флаг доступа группы; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d (или более))\n"
 
-#: streamutil.c:395
+#: streamutil.c:397
 #, c-format
 msgid "%s: group access flag could not be parsed: %s\n"
 msgstr "%s: не удалось разобрать флаг доступа группы: %s\n"
 
-#: streamutil.c:556
+#: streamutil.c:558
 #, c-format
 msgid ""
 "%s: could not create replication slot \"%s\": got %d rows and %d fields, "
@@ -1522,7 +1522,7 @@ msgstr ""
 "%s: создать слот репликации \"%s\" не удалось; получено строк: %d, полей: %d "
 "(ожидалось: %d и %d)\n"
 
-#: streamutil.c:601
+#: streamutil.c:603
 #, c-format
 msgid ""
 "%s: could not drop replication slot \"%s\": got %d rows and %d fields, "
