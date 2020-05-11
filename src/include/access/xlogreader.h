@@ -103,7 +103,7 @@ typedef struct XLogReaderRoutine
 	 *
 	 * "segcxt" is additional information about the segment.
 	 *
-	 * "tli_p" is an input/output argument. XLogRead() uses it to pass the
+	 * "tli_p" is an input/output argument. WALRead() uses it to pass the
 	 * timeline in which the new segment should be found, but the callback can
 	 * use it to return the TLI that it actually opened.
 	 *
