@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2020-02-06 17:00+0000\n"
-"PO-Revision-Date: 2020-02-06 21:58+0100\n"
+"PO-Revision-Date: 2020-03-10 14:30+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -8488,7 +8488,7 @@ msgstr "»%s« ist keine Tabelle oder Fremdtabelle"
 #: commands/tablecmds.c:4800
 #, c-format
 msgid "\"%s\" is not a table, composite type, or foreign table"
-msgstr "»%s« ist weder Tabelle, Sicht, zusammengesetzter Typ noch Fremdtabelle"
+msgstr "»%s« ist weder Tabelle, zusammengesetzter Typ noch Fremdtabelle"
 
 #: commands/tablecmds.c:4803 commands/tablecmds.c:6193
 #, c-format

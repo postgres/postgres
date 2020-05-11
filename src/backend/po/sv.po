@@ -18,7 +18,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2020-01-22 01:32+0000\n"
-"PO-Revision-Date: 2020-01-23 14:28+0100\n"
+"PO-Revision-Date: 2020-04-29 22:39+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -15089,7 +15089,7 @@ msgstr "saknar FROM-klausulpost för tabell \"%s\""
 #: parser/parse_relation.c:3289
 #, c-format
 msgid "Perhaps you meant to reference the column \"%s.%s\"."
-msgstr "Kanske tänkte du referera trill kolumnen \"%s.%s\"."
+msgstr "Kanske tänkte du referera till kolumnen \"%s.%s\"."
 
 #: parser/parse_relation.c:3291
 #, c-format

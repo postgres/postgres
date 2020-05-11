@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-10-01 13:03+0300\n"
+"POT-Creation-Date: 2020-05-02 06:53+0300\n"
 "PO-Revision-Date: 2019-08-28 08:55+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -109,7 +109,7 @@ msgstr "тип \"%s\" — лишь пустышка"
 msgid "unrecognized exception condition \"%s\""
 msgstr "нераспознанное условие исключения \"%s\""
 
-#: pl_comp.c:2510
+#: pl_comp.c:2517
 #, c-format
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
@@ -412,7 +412,7 @@ msgstr "в запросе нет назначения для данных рез
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Если вам нужно отбросить результаты SELECT, используйте PERFORM."
 
-#: pl_exec.c:3856 pl_exec.c:7318
+#: pl_exec.c:3856 pl_exec.c:7321
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "в качестве текста запроса в EXECUTE передан NULL"

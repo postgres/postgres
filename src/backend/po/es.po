@@ -59,7 +59,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2019-09-28 11:26+0000\n"
-"PO-Revision-Date: 2019-06-12 14:11-0400\n"
+"PO-Revision-Date: 2020-04-02 13:19-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -17493,7 +17493,7 @@ msgstr "no se puede insertar en la columna «%s»"
 #: rewrite/rewriteHandler.c:811 rewrite/rewriteHandler.c:826
 #, c-format
 msgid "Column \"%s\" is an identity column defined as GENERATED ALWAYS."
-msgstr "La columna \"% s\" es una columna de identidad definida como GENERATED ALWAYS."
+msgstr "La columna \"%s\" es una columna de identidad definida como GENERATED ALWAYS."
 
 #: rewrite/rewriteHandler.c:813
 #, c-format

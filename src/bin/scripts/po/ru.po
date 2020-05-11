@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-08-28 07:05+0300\n"
-"PO-Revision-Date: 2019-09-02 12:33+0300\n"
+"POT-Creation-Date: 2020-05-02 06:53+0300\n"
+"PO-Revision-Date: 2020-05-06 11:09+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -77,14 +77,14 @@ msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"
 
 #: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
-#: createuser.c:166 createuser.c:181 dropdb.c:94 dropdb.c:103 dropdb.c:111
+#: createuser.c:175 createuser.c:190 dropdb.c:94 dropdb.c:103 dropdb.c:111
 #: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93 pg_isready.c:107
 #: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:215 vacuumdb.c:234
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: clusterdb.c:128 createdb.c:136 createuser.c:179 dropdb.c:109 dropuser.c:103
+#: clusterdb.c:128 createdb.c:136 createuser.c:188 dropdb.c:109 dropuser.c:103
 #: pg_isready.c:105 reindexdb.c:148 vacuumdb.c:232
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
@@ -124,7 +124,7 @@ msgstr ""
 "%s упорядочивает данные всех кластеризованных таблиц в базе данных.\n"
 "\n"
 
-#: clusterdb.c:274 createdb.c:252 createuser.c:343 dropdb.c:156 dropuser.c:161
+#: clusterdb.c:274 createdb.c:261 createuser.c:352 dropdb.c:156 dropuser.c:161
 #: pg_isready.c:222 reindexdb.c:402 vacuumdb.c:1014
 #, c-format
 msgid "Usage:\n"
@@ -135,7 +135,7 @@ msgstr "Использование:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
-#: clusterdb.c:276 createdb.c:254 createuser.c:345 dropdb.c:158 dropuser.c:163
+#: clusterdb.c:276 createdb.c:263 createuser.c:354 dropdb.c:158 dropuser.c:163
 #: pg_isready.c:225 reindexdb.c:404 vacuumdb.c:1016
 #, c-format
 msgid ""
@@ -155,7 +155,7 @@ msgstr "  -a, --all                 кластеризовать все базы
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=ИМЯ_БД       имя базы данных для кластеризации\n"
 
-#: clusterdb.c:279 createuser.c:349 dropdb.c:159 dropuser.c:164 reindexdb.c:407
+#: clusterdb.c:279 createuser.c:358 dropdb.c:159 dropuser.c:164 reindexdb.c:407
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
@@ -177,17 +177,17 @@ msgstr ""
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             выводить исчерпывающие сообщения\n"
 
-#: clusterdb.c:283 createuser.c:361 dropdb.c:161 dropuser.c:167 reindexdb.c:414
+#: clusterdb.c:283 createuser.c:370 dropdb.c:161 dropuser.c:167 reindexdb.c:414
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             показать версию и выйти\n"
 
-#: clusterdb.c:284 createuser.c:366 dropdb.c:163 dropuser.c:169 reindexdb.c:415
+#: clusterdb.c:284 createuser.c:375 dropdb.c:163 dropuser.c:169 reindexdb.c:415
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
-#: clusterdb.c:285 createdb.c:265 createuser.c:367 dropdb.c:164 dropuser.c:170
+#: clusterdb.c:285 createdb.c:274 createuser.c:376 dropdb.c:164 dropuser.c:170
 #: pg_isready.c:231 reindexdb.c:416 vacuumdb.c:1032
 #, c-format
 msgid ""
@@ -197,14 +197,14 @@ msgstr ""
 "\n"
 "Параметры подключения:\n"
 
-#: clusterdb.c:286 createuser.c:368 dropdb.c:165 dropuser.c:171 reindexdb.c:417
+#: clusterdb.c:286 createuser.c:377 dropdb.c:165 dropuser.c:171 reindexdb.c:417
 #: vacuumdb.c:1033
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ            имя сервера баз данных или каталог сокетов\n"
 
-#: clusterdb.c:287 createuser.c:369 dropdb.c:166 dropuser.c:172 reindexdb.c:418
+#: clusterdb.c:287 createuser.c:378 dropdb.c:166 dropuser.c:172 reindexdb.c:418
 #: vacuumdb.c:1034
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
@@ -216,13 +216,13 @@ msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ        имя пользователя для подключения к серверу\n"
 
-#: clusterdb.c:289 createuser.c:371 dropdb.c:168 dropuser.c:174 reindexdb.c:420
+#: clusterdb.c:289 createuser.c:380 dropdb.c:168 dropuser.c:174 reindexdb.c:420
 #: vacuumdb.c:1036
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         не запрашивать пароль\n"
 
-#: clusterdb.c:290 createuser.c:372 dropdb.c:169 dropuser.c:175 reindexdb.c:421
+#: clusterdb.c:290 createuser.c:381 dropdb.c:169 dropuser.c:175 reindexdb.c:421
 #: vacuumdb.c:1037
 #, c-format
 msgid "  -W, --password            force password prompt\n"
@@ -242,7 +242,7 @@ msgstr ""
 "\n"
 "Подробнее о кластеризации вы можете узнать в описании SQL-команды CLUSTER.\n"
 
-#: clusterdb.c:293 createdb.c:273 createuser.c:373 dropdb.c:171 dropuser.c:176
+#: clusterdb.c:293 createdb.c:282 createuser.c:382 dropdb.c:171 dropuser.c:176
 #: pg_isready.c:236 reindexdb.c:424 vacuumdb.c:1040
 #, c-format
 msgid ""
@@ -331,17 +331,17 @@ msgstr "%s: можно указать только --locale и --lc-collate\n"
 msgid "%s: \"%s\" is not a valid encoding name\n"
 msgstr "%s: \"%s\" не является верным названием кодировки\n"
 
-#: createdb.c:213
+#: createdb.c:222
 #, c-format
 msgid "%s: database creation failed: %s"
 msgstr "%s: создать базу данных не удалось: %s"
 
-#: createdb.c:233
+#: createdb.c:242
 #, c-format
 msgid "%s: comment creation failed (database was created): %s"
 msgstr "%s: создать комментарий не удалось (база данных была создана): %s"
 
-#: createdb.c:251
+#: createdb.c:260
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -350,102 +350,102 @@ msgstr ""
 "%s создаёт базу данных PostgreSQL.\n"
 "\n"
 
-#: createdb.c:253
+#: createdb.c:262
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД] [ОПИСАНИЕ]\n"
 
 # well-spelled: ПРОСТР
-#: createdb.c:255
+#: createdb.c:264
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr ""
 "  -D, --tablespace=ТАБЛ_ПРОСТР табличное пространство по умолчанию для базы "
 "данных\n"
 
-#: createdb.c:256
+#: createdb.c:265
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr ""
 "  -e, --echo                   отображать команды, отправляемые серверу\n"
 
-#: createdb.c:257
+#: createdb.c:266
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=КОДИРОВКА     кодировка базы данных\n"
 
-#: createdb.c:258
+#: createdb.c:267
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=ЛОКАЛЬ          локаль для базы данных\n"
 
-#: createdb.c:259
+#: createdb.c:268
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=ЛОКАЛЬ      параметр LC_COLLATE для базы данных\n"
 
-#: createdb.c:260
+#: createdb.c:269
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=ЛОКАЛЬ        параметр LC_CTYPE для базы данных\n"
 
-#: createdb.c:261
+#: createdb.c:270
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr ""
 "  -O, --owner=ВЛАДЕЛЕЦ         пользователь-владелец новой базы данных\n"
 
-#: createdb.c:262
+#: createdb.c:271
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=ШАБЛОН        исходная база данных для копирования\n"
 
-#: createdb.c:263
+#: createdb.c:272
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                показать версию и выйти\n"
 
-#: createdb.c:264
+#: createdb.c:273
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   показать эту справку и выйти\n"
 
-#: createdb.c:266
+#: createdb.c:275
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ               имя сервера баз данных или каталог сокетов\n"
 
-#: createdb.c:267
+#: createdb.c:276
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=ПОРТ              порт сервера баз данных\n"
 
-#: createdb.c:268
+#: createdb.c:277
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ           имя пользователя для подключения к серверу\n"
 
-#: createdb.c:269
+#: createdb.c:278
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            не запрашивать пароль\n"
 
-#: createdb.c:270
+#: createdb.c:279
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               запросить пароль\n"
 
-#: createdb.c:271
+#: createdb.c:280
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr ""
 "  --maintenance-db=ИМЯ_БД      выбор другой обслуживаемой базы данных\n"
 
-#: createdb.c:272
+#: createdb.c:281
 #, c-format
 msgid ""
 "\n"
@@ -454,46 +454,51 @@ msgstr ""
 "\n"
 "По умолчанию именем базы данных считается имя текущего пользователя.\n"
 
-#: createuser.c:189
+#: createuser.c:154
+#, c-format
+msgid "%s: invalid value for --connection-limit: %s\n"
+msgstr "%s: неверное значение параметра --connection-limit: %s\n"
+
+#: createuser.c:198
 msgid "Enter name of role to add: "
 msgstr "Введите имя новой роли: "
 
-#: createuser.c:206
+#: createuser.c:215
 msgid "Enter password for new role: "
 msgstr "Введите пароль для новой роли: "
 
-#: createuser.c:208
+#: createuser.c:217
 msgid "Enter it again: "
 msgstr "Повторите его: "
 
-#: createuser.c:211
+#: createuser.c:220
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Пароли не совпадают.\n"
 
-#: createuser.c:219
+#: createuser.c:228
 msgid "Shall the new role be a superuser?"
 msgstr "Должна ли новая роль иметь полномочия суперпользователя?"
 
-#: createuser.c:234
+#: createuser.c:243
 msgid "Shall the new role be allowed to create databases?"
 msgstr "Новая роль должна иметь право создавать базы данных?"
 
-#: createuser.c:242
+#: createuser.c:251
 msgid "Shall the new role be allowed to create more new roles?"
 msgstr "Новая роль должна иметь право создавать другие роли?"
 
-#: createuser.c:272
+#: createuser.c:281
 #, c-format
 msgid "%s: password encryption failed: %s"
 msgstr "%s: ошибка при шифровании пароля: %s"
 
-#: createuser.c:327
+#: createuser.c:336
 #, c-format
 msgid "%s: creation of new role failed: %s"
 msgstr "%s: создать роль не удалось: %s"
 
-#: createuser.c:342
+#: createuser.c:351
 #, c-format
 msgid ""
 "%s creates a new PostgreSQL role.\n"
@@ -502,12 +507,12 @@ msgstr ""
 "%s создаёт роль пользователя PostgreSQL.\n"
 "\n"
 
-#: createuser.c:344 dropuser.c:162
+#: createuser.c:353 dropuser.c:162
 #, c-format
 msgid "  %s [OPTION]... [ROLENAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_РОЛИ]\n"
 
-#: createuser.c:346
+#: createuser.c:355
 #, c-format
 msgid ""
 "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
@@ -515,24 +520,24 @@ msgstr ""
 "  -c, --connection-limit=N  предел подключений для роли\n"
 "                            (по умолчанию предела нет)\n"
 
-#: createuser.c:347
+#: createuser.c:356
 #, c-format
 msgid "  -d, --createdb            role can create new databases\n"
 msgstr "  -d, --createdb            роль с правом создания баз данных\n"
 
-#: createuser.c:348
+#: createuser.c:357
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
 msgstr ""
 "  -D, --no-createdb         роль без права создания баз данных (по "
 "умолчанию)\n"
 
-#: createuser.c:350
+#: createuser.c:359
 #, c-format
 msgid "  -g, --role=ROLE           new role will be a member of this role\n"
 msgstr "  -g, --role=РОЛЬ           новая роль будет включена в эту роль\n"
 
-#: createuser.c:351
+#: createuser.c:360
 #, c-format
 msgid ""
 "  -i, --inherit             role inherits privileges of roles it is a\n"
@@ -542,52 +547,52 @@ msgstr ""
 "она\n"
 "                            включена (по умолчанию)\n"
 
-#: createuser.c:353
+#: createuser.c:362
 #, c-format
 msgid "  -I, --no-inherit          role does not inherit privileges\n"
 msgstr "  -I, --no-inherit          роль не наследует права\n"
 
-#: createuser.c:354
+#: createuser.c:363
 #, c-format
 msgid "  -l, --login               role can login (default)\n"
 msgstr ""
 "  -l, --login               роль с правом подключения к серверу (по "
 "умолчанию)\n"
 
-#: createuser.c:355
+#: createuser.c:364
 #, c-format
 msgid "  -L, --no-login            role cannot login\n"
 msgstr "  -L, --no-login            роль без права подключения\n"
 
-#: createuser.c:356
+#: createuser.c:365
 #, c-format
 msgid "  -P, --pwprompt            assign a password to new role\n"
 msgstr "  -P, --pwprompt            назначить пароль новой роли\n"
 
-#: createuser.c:357
+#: createuser.c:366
 #, c-format
 msgid "  -r, --createrole          role can create new roles\n"
 msgstr "  -r, --createrole          роль с правом создания других ролей\n"
 
-#: createuser.c:358
+#: createuser.c:367
 #, c-format
 msgid "  -R, --no-createrole       role cannot create roles (default)\n"
 msgstr ""
 "  -R, --no-createrole       роль без права создания ролей (по умолчанию)\n"
 
-#: createuser.c:359
+#: createuser.c:368
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
 msgstr "  -s, --superuser           роль с полномочиями суперпользователя\n"
 
-#: createuser.c:360
+#: createuser.c:369
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
 msgstr ""
 "  -S, --no-superuser        роль без полномочий суперпользователя (по "
 "умолчанию)\n"
 
-#: createuser.c:362
+#: createuser.c:371
 #, c-format
 msgid ""
 "  --interactive             prompt for missing role name and attributes "
@@ -597,17 +602,17 @@ msgstr ""
 "  --interactive             запрашивать отсутствующие атрибуты и имя роли,\n"
 "                            а не использовать значения по умолчанию\n"
 
-#: createuser.c:364
+#: createuser.c:373
 #, c-format
 msgid "  --replication             role can initiate replication\n"
 msgstr "  --replication             роль может инициировать репликацию\n"
 
-#: createuser.c:365
+#: createuser.c:374
 #, c-format
 msgid "  --no-replication          role cannot initiate replication\n"
 msgstr "  --no-replication          роль не может инициировать репликацию\n"
 
-#: createuser.c:370
+#: createuser.c:379
 #, c-format
 msgid ""
 "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
