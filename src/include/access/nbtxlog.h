@@ -250,7 +250,7 @@ typedef struct xl_btree_vacuum
 #define SizeOfBtreeVacuum	(offsetof(xl_btree_vacuum, nupdated) + sizeof(uint16))
 
 /*
- * This is what we need to know about marking an empty branch for deletion.
+ * This is what we need to know about marking an empty subtree for deletion.
  * The target identifies the tuple removed from the parent page (note that we
  * remove this tuple's downlink and the *following* tuple's key).  Note that
  * the leaf page is empty, so we don't need to store its content --- it is
@@ -267,7 +267,7 @@ typedef struct xl_btree_mark_page_halfdead
 	BlockNumber leafblk;		/* leaf block ultimately being deleted */
 	BlockNumber leftblk;		/* leaf block's left sibling, if any */
 	BlockNumber rightblk;		/* leaf block's right sibling */
-	BlockNumber topparent;		/* topmost internal page in the branch */
+	BlockNumber topparent;		/* topmost internal page in the subtree */
 } xl_btree_mark_page_halfdead;
 
 #define SizeOfBtreeMarkPageHalfDead (offsetof(xl_btree_mark_page_halfdead, topparent) + sizeof(BlockNumber))
@@ -294,7 +294,7 @@ typedef struct xl_btree_unlink_page
 	 */
 	BlockNumber leafleftsib;
 	BlockNumber leafrightsib;
-	BlockNumber topparent;		/* next child down in the branch */
+	BlockNumber topparent;		/* next child down in the subtree */
 
 	TransactionId btpo_xact;	/* value of btpo.xact for use in recovery */
 	/* xl_btree_metadata FOLLOWS IF XLOG_BTREE_UNLINK_PAGE_META */

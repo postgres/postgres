@@ -2278,7 +2278,8 @@ _bt_finish_split(Relation rel, Buffer lbuf, BTStack stack)
  *		stack.  For example, the checkingunique _bt_doinsert() case may
  *		have to step right when there are many physical duplicates, and its
  *		scantid forces an insertion to the right of the "first page the
- *		value could be on".
+ *		value could be on".  (This is also relied on by all of our callers
+ *		when dealing with !heapkeyspace indexes.)
  *
  *		Returns write-locked parent page buffer, or InvalidBuffer if pivot
  *		tuple not found (should not happen).  Adjusts bts_blkno &

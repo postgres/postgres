@@ -704,7 +704,7 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 	 * target page or not (since it's surely empty).
 	 */
 
-	/* parent page */
+	/* to-be-deleted subtree's parent page */
 	if (XLogReadBufferForRedo(record, 1, &buffer) == BLK_NEEDS_REDO)
 	{
 		OffsetNumber poffset;
@@ -749,8 +749,8 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 	pageop->btpo_cycleid = 0;
 
 	/*
-	 * Construct a dummy hikey item that points to the next parent to be
-	 * deleted (if any).
+	 * Construct a dummy high key item that points to top parent page (value
+	 * is InvalidBlockNumber when the top parent page is the leaf page itself)
 	 */
 	MemSet(&trunctuple, 0, sizeof(IndexTupleData));
 	trunctuple.t_info = sizeof(IndexTupleData);
@@ -837,7 +837,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 	/*
 	 * If we deleted a parent of the targeted leaf page, instead of the leaf
 	 * itself, update the leaf to point to the next remaining child in the
-	 * branch.
+	 * to-be-deleted subtree
 	 */
 	if (XLogRecHasBlockRef(record, 3))
 	{
