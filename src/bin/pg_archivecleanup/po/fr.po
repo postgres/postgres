@@ -5,70 +5,70 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-17 01:17+0000\n"
-"PO-Revision-Date: 2019-05-17 15:55+0200\n"
+"POT-Creation-Date: 2020-04-16 06:16+0000\n"
+"PO-Revision-Date: 2020-04-16 13:39+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.3\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "fatal : "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "erreur : "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "attention : "
 
-#: pg_archivecleanup.c:68
+#: pg_archivecleanup.c:66
 #, c-format
 msgid "archive location \"%s\" does not exist"
 msgstr "l'emplacement d'archivage « %s » n'existe pas"
 
-#: pg_archivecleanup.c:153
+#: pg_archivecleanup.c:152
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "n'a pas pu supprimer le fichier « %s » : %m"
 
-#: pg_archivecleanup.c:161
+#: pg_archivecleanup.c:160
 #, c-format
 msgid "could not read archive location \"%s\": %m"
 msgstr "n'a pas pu lire l'emplacement de l'archive « %s » : %m"
 
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:163
 #, c-format
 msgid "could not close archive location \"%s\": %m"
 msgstr "n'a pas pu fermer l'emplacement de l'archive « %s » : %m"
 
-#: pg_archivecleanup.c:168
+#: pg_archivecleanup.c:167
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "n'a pas pu ouvrir l'emplacement de l'archive « %s » : %m"
 
-#: pg_archivecleanup.c:241
+#: pg_archivecleanup.c:240
 #, c-format
 msgid "invalid file name argument"
 msgstr "argument du nom de fichier invalide"
 
-#: pg_archivecleanup.c:242 pg_archivecleanup.c:315 pg_archivecleanup.c:336
+#: pg_archivecleanup.c:241 pg_archivecleanup.c:315 pg_archivecleanup.c:336
 #: pg_archivecleanup.c:348 pg_archivecleanup.c:355
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:254
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
@@ -77,17 +77,17 @@ msgstr ""
 "%s supprime les anciens fichiers WAL des archives de PostgreSQL.\n"
 "\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:255
 #, c-format
 msgid "Usage:\n"
 msgstr "Usage :\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:256
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 msgstr "  %s [OPTION]... EMPLACEMENTARCHIVE PLUSANCIENFICHIERWALCONSERVÉ\n"
 
-#: pg_archivecleanup.c:258
+#: pg_archivecleanup.c:257
 #, c-format
 msgid ""
 "\n"
@@ -96,77 +96,72 @@ msgstr ""
 "\n"
 "Options :\n"
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:258
 #, c-format
 msgid "  -d             generate debug output (verbose mode)\n"
-msgstr ""
-"  -d             affiche des informations de débugage (mode verbeux)\n"
+msgstr "  -d             affiche des informations de débugage (mode verbeux)\n"
+
+#: pg_archivecleanup.c:259
+#, c-format
+msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgstr "  -n             test, affiche le nom des fichiers qui seraient supprimés\n"
 
 #: pg_archivecleanup.c:260
-#, c-format
-msgid ""
-"  -n             dry run, show the names of the files that would be "
-"removed\n"
-msgstr ""
-"  -n             test, affiche le nom des fichiers qui seraient supprimés\n"
-
-#: pg_archivecleanup.c:261
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
 msgstr "  -V, --version  affiche la version et quitte\n"
 
-#: pg_archivecleanup.c:262
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "  -x EXT         clean up files if they have this extension\n"
 msgstr "  -x EXT         nettoie les fichiers s'ils ont cette extension\n"
 
-#: pg_archivecleanup.c:263
+#: pg_archivecleanup.c:262
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
 msgstr "  -?, --help     affiche cette aide et quitte\n"
 
-#: pg_archivecleanup.c:264
+#: pg_archivecleanup.c:263
 #, c-format
 msgid ""
 "\n"
 "For use as archive_cleanup_command in postgresql.conf:\n"
-"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION "
-"%%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 "e.g.\n"
-"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir "
-"%%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 msgstr ""
 "\n"
 "Pour utiliser comme archive_cleanup_command dans postgresql.conf :\n"
-"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... "
-"EMPLACEMENTARCHIVE %%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... EMPLACEMENTARCHIVE %%r'\n"
 "e.g.\n"
-"  archive_cleanup_command = 'pg_archivecleanup /mnt/serveur/reparchives "
-"%%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/serveur/reparchives %%r'\n"
 
-#: pg_archivecleanup.c:269
+#: pg_archivecleanup.c:268
 #, c-format
 msgid ""
 "\n"
 "Or for use as a standalone archive cleaner:\n"
 "e.g.\n"
-"  pg_archivecleanup /mnt/server/archiverdir "
-"000000010000000000000010.00000020.backup\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 msgstr ""
 "\n"
 "Ou pour utiliser comme nettoyeur autonome d'archives :\n"
 "e.g.\n"
-"  pg_archivecleanup /mnt/serveur/reparchives "
-"000000010000000000000010.00000020.backup\n"
+"  pg_archivecleanup /mnt/serveur/reparchives 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:273
+#: pg_archivecleanup.c:272
 #, c-format
 msgid ""
 "\n"
-"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+"Report bugs to <%s>.\n"
 msgstr ""
 "\n"
-"Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
+"Rapporter les bogues à <%s>.\n"
+
+#: pg_archivecleanup.c:273
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "page d'accueil de %s : <%s>\n"
 
 #: pg_archivecleanup.c:335
 #, c-format
@@ -183,17 +178,24 @@ msgstr "doit spécifier le plus ancien journal de transactions conservé"
 msgid "too many command-line arguments"
 msgstr "trop d'arguments en ligne de commande"
 
-#~ msgid "%s: too many parameters\n"
-#~ msgstr "%s : trop de paramètres\n"
-
-#~ msgid "%s: keeping WAL file \"%s\" and later\n"
-#~ msgstr "%s : conservation du fichier WAL « %s » et des suivants\n"
-
-#~ msgid "%s: ERROR: could not remove file \"%s\": %s\n"
-#~ msgstr "%s : ERREUR : n'a pas pu supprimer le fichier « %s » : %s\n"
+#~ msgid "%s: file \"%s\" would be removed\n"
+#~ msgstr "%s : le fichier « %s » serait supprimé\n"
 
 #~ msgid "%s: removing file \"%s\"\n"
 #~ msgstr "%s : suppression du fichier « %s »\n"
 
-#~ msgid "%s: file \"%s\" would be removed\n"
-#~ msgstr "%s : le fichier « %s » serait supprimé\n"
+#~ msgid "%s: ERROR: could not remove file \"%s\": %s\n"
+#~ msgstr "%s : ERREUR : n'a pas pu supprimer le fichier « %s » : %s\n"
+
+#~ msgid "%s: keeping WAL file \"%s\" and later\n"
+#~ msgstr "%s : conservation du fichier WAL « %s » et des suivants\n"
+
+#~ msgid "%s: too many parameters\n"
+#~ msgstr "%s : trop de paramètres\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"

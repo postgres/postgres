@@ -5,13 +5,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009, 2012.
 # Andrey Sudnik <sudnikand@gmail.com>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL current)\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 23:14+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-09-09 12:21+0300\n"
+"PO-Revision-Date: 2019-08-29 12:50+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -29,40 +29,44 @@ msgstr ""
 msgid "not recorded"
 msgstr "не записано"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "не удалось определить текущий каталог: %s"
+msgid "could not identify current directory: %m"
+msgstr "не удалось определить текущий каталог: %m"
 
-#: ../../common/exec.c:146
+#: ../../common/exec.c:157
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "неверный исполняемый файл \"%s\""
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:207
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "не удалось прочитать исполняемый файл \"%s\""
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:215
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "не удалось найти запускаемый файл \"%s\""
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "не удалось перейти в каталог \"%s\": %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "не удалось перейти в каталог \"%s\": %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:288
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "не удалось прочитать символическую ссылку \"%s\""
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:541
 #, c-format
-msgid "pclose failed: %s"
-msgstr "ошибка pclose: %s"
+msgid "pclose failed: %m"
+msgstr "ошибка pclose: %m"
+
+#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+msgid "out of memory"
+msgstr "нехватка памяти"
 
 #: pg_config.c:74
 #, c-format
@@ -275,8 +279,8 @@ msgstr ""
 
 #: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr "Об ошибках сообщайте по адресу <pgsql-bugs@lists.postgresql.org>.\n"
 
 #: pg_config.c:111
 #, c-format

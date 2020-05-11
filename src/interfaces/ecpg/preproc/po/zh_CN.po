@@ -5,16 +5,16 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpg (PostgreSQL) 11\n"
+"Project-Id-Version: ecpg (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-04 12:08+0000\n"
-"PO-Revision-Date: 2019-05-16 17:21+0800\n"
+"POT-Creation-Date: 2019-05-22 17:56+0800\n"
+"PO-Revision-Date: 2019-05-23 18:42+0800\n"
 "Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
-"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.5.4\n"
 
@@ -84,7 +84,7 @@ msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
 "                 this affects EXEC SQL TYPE\n"
 msgstr ""
-"-c              从嵌入式SQL代码中自动产生C代码;\n"
+"  -c             从嵌入式SQL代码中自动产生C代码;\n"
 "                 这将影响EXEC SQL TYPE\n"
 
 #: ecpg.c:44
@@ -143,7 +143,7 @@ msgstr "  --regression   在回归测试模式下运行\n"
 #: ecpg.c:57
 #, c-format
 msgid "  -t             turn on autocommit of transactions\n"
-msgstr " -t              打开事务的自动提交功能\n"
+msgstr "  -t             打开事务的自动提交功能\n"
 
 #: ecpg.c:58
 #, c-format
@@ -167,16 +167,13 @@ msgstr ""
 "加上.c的后缀名组成.\n"
 
 #: ecpg.c:62
-#, fuzzy, c-format
-#| msgid ""
-#| "\n"
-#| "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#, c-format
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
 msgstr ""
 "\n"
-"错误报告至 <pgsql-bugs@postgresql.org>.\n"
+"错误报告至 <pgsql-bugs@lists.postgresql.org>.\n"
 
 #: ecpg.c:182
 #, c-format
@@ -283,7 +280,7 @@ msgstr "在EXEC SQL UNDEF命令中丢失标识符"
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "丢失匹配 \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 
-#: pgc.l:1182 pgc.l:1195 pgc.l:1373
+#: pgc.l:1182 pgc.l:1195 pgc.l:1371
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "\"EXEC SQL ENDIF;\"丢失"
@@ -303,33 +300,32 @@ msgstr "EXEC SQL ENDIF不匹配"
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "嵌套EXEC SQL IFDEF条件太多"
 
-#: pgc.l:1321
+#: pgc.l:1319
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "在EXEC SQL IFDEF命令中丢失标识符"
 
-#: pgc.l:1330
+#: pgc.l:1328
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "在EXEC SQL DEFINE命令中丢失标识符"
 
-#: pgc.l:1363
+#: pgc.l:1361
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "在EXEC SQL INCLUDE命令中出现语法错误"
 
-#: pgc.l:1413
-#, fuzzy, c-format
-#| msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
+#: pgc.l:1411
+#, c-format
 msgid "internal error: unreachable state; please report this to <pgsql-bugs@lists.postgresql.org>"
-msgstr "内部错误：不可到达的状态；请向<pgsql-bugs@postgresql.org>发送报告"
+msgstr "内部错误：不可到达的状态；请向<pgsql-bugs@lists.postgresql.org>发送报告"
 
-#: pgc.l:1564
+#: pgc.l:1562
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr "错误:在第%3$d行上包含路径\"%1$s/%2$s\"太长，跳过\n"
 
-#: pgc.l:1587
+#: pgc.l:1585
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "在第%2$d行无法打开应用文件\"%1$s\""
@@ -501,10 +497,9 @@ msgid "unrecognized token \"%s\""
 msgstr "无法识别的符号\"%s\""
 
 #: preproc.y:15422
-#, fuzzy, c-format
-#| msgid "cursor \"%s\" is already defined"
+#, c-format
 msgid "declared name %s is already defined"
-msgstr "已经定义了游标\"%s\""
+msgstr "已定义声明的名称%s"
 
 #: preproc.y:15680
 #, c-format

@@ -1,0 +1,232 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: postgresql\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-12-04 20:35+0100\n"
+"PO-Revision-Date: 2019-05-07 12:57\n"
+"Last-Translator: pasha_golub\n"
+"Language-Team: Ukrainian\n"
+"Language: uk_UA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"X-Generator: crowdin.com\n"
+"X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Language: uk\n"
+"X-Crowdin-File: /REL_11_STABLE/src/bin/pg_config/po/pg_config.pot\n"
+
+#: ../../common/config_info.c:130 ../../common/config_info.c:138
+#: ../../common/config_info.c:146 ../../common/config_info.c:154
+#: ../../common/config_info.c:162 ../../common/config_info.c:170
+#: ../../common/config_info.c:178 ../../common/config_info.c:186
+#: ../../common/config_info.c:194
+msgid "not recorded"
+msgstr "не записано"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "не вдалося визначити поточний каталог: %s"
+
+#: ../../common/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "невірний бінарний файл \"%s\""
+
+#: ../../common/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "неможливо прочитати бінарний файл \"%s\""
+
+#: ../../common/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "неможливо знайти \"%s\" для виконання"
+
+#: ../../common/exec.c:257 ../../common/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "неможливо змінити директорію на \"%s\": %s"
+
+#: ../../common/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "неможливо прочитати символічне посилання \"%s\""
+
+#: ../../common/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "помилка pclose: %s"
+
+#: pg_config.c:74
+#, c-format
+msgid "\n"
+"%s provides information about the installed version of PostgreSQL.\n\n"
+msgstr "\n"
+"%s надає інформацію про інстальовану версію PostgreSQL.\n\n"
+
+#: pg_config.c:75
+#, c-format
+msgid "Usage:\n"
+msgstr "Використання:\n"
+
+#: pg_config.c:76
+#, c-format
+msgid "  %s [OPTION]...\n\n"
+msgstr "  %s: [OPTION]...\n\n"
+
+#: pg_config.c:77
+#, c-format
+msgid "Options:\n"
+msgstr "Параметри:\n"
+
+#: pg_config.c:78
+#, c-format
+msgid "  --bindir              show location of user executables\n"
+msgstr "  --bindir              показує розташування виконуваних файлів користувача\n"
+
+#: pg_config.c:79
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir          показує розташування файлів документації\n"
+
+#: pg_config.c:80
+#, c-format
+msgid "  --htmldir             show location of HTML documentation files\n"
+msgstr "  --htmldir             показує розташування файлів документації HTML\n"
+
+#: pg_config.c:81
+#, c-format
+msgid "  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr "  -includedir показує розташування заголовків файлів С клієнтських інтерфейсів\n"
+
+#: pg_config.c:83
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  -pkgincludedir показує розташування інших файлів з заголовками C\n"
+
+#: pg_config.c:84
+#, c-format
+msgid "  --includedir-server   show location of C header files for the server\n"
+msgstr "  -includedir-server показує розташування заголовків файлів С сервера\n"
+
+#: pg_config.c:85
+#, c-format
+msgid "  --libdir              show location of object code libraries\n"
+msgstr "  --libdir показує розташування бібліотек об'єктного коду\n"
+
+#: pg_config.c:86
+#, c-format
+msgid "  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr "  --pkglibdir показує місце динамічно завантажувальних модулів\n"
+
+#: pg_config.c:87
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir показує місце файлів перекладу\n"
+
+#: pg_config.c:88
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir показує розташування сторінок мануала\n"
+
+#: pg_config.c:89
+#, c-format
+msgid "  --sharedir            show location of architecture-independent support files\n"
+msgstr "  --sharedir показує місцерозташування архітектурно незалежних файлів підтримки\n"
+
+#: pg_config.c:90
+#, c-format
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir показує розташування всесистемних файлів конфігурації\n"
+
+#: pg_config.c:91
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr "  --pgxs показує місцерозташування makefile для розширень\n"
+
+#: pg_config.c:92
+#, c-format
+msgid "  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr "  --configure показує параметри скрипта \"configure\" збірки PostgreSQL\n"
+
+#: pg_config.c:94
+#, c-format
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr "  --cc показує значення CC збірки PostgreSQL\n"
+
+#: pg_config.c:95
+#, c-format
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags показує значення CPPFLAGS збірки PostgreSQL \n"
+
+#: pg_config.c:96
+#, c-format
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cflags показує значення CFLAGS збірки PostgreSQL\n"
+
+#: pg_config.c:97
+#, c-format
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl показує значення CFLAGS_SL збірки PostgreSQL\n"
+
+#: pg_config.c:98
+#, c-format
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags показує значення LDFLAGS збірки PostgreSQL\n"
+
+#: pg_config.c:99
+#, c-format
+msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
+msgstr "  --ldflags_ex показує значення LDFLAGS_EX збірки PostgreSQL\n"
+
+#: pg_config.c:100
+#, c-format
+msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --ldflags_sl показує значення LDFLAGS_SL збірки PostgreSQL\n"
+
+#: pg_config.c:101
+#, c-format
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs показує значення LIBS збірки PostgreSQL\n"
+
+#: pg_config.c:102
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version показує версію PostgreSQL\n"
+
+#: pg_config.c:103
+#, c-format
+msgid "  -?, --help            show this help, then exit\n"
+msgstr "  -?, --help показує цю довідку, потім вихід\n"
+
+#: pg_config.c:104
+#, c-format
+msgid "\n"
+"With no arguments, all known items are shown.\n\n"
+msgstr "\n"
+"Без аргументів, всі відображаються відомі елементи.\n\n"
+
+#: pg_config.c:105
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Про помилки повідомляйте <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_config.c:111
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+
+#: pg_config.c:153
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: не вдалося знайти ехе файл власної програми\n"
+
+#: pg_config.c:180
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: недопустимий аргумент: %s\n"
+

@@ -6,62 +6,62 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pltcl-cs (PostgreSQL 9.3)\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-07-13 19:37+0000\n"
-"PO-Revision-Date: 2018-07-13 23:54+0200\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-09-27 08:07+0000\n"
+"PO-Revision-Date: 2019-09-27 21:02+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 2.2.3\n"
 
-#: pltcl.c:466
+#: pltcl.c:464
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "PL/Tcl funkce kterou zavolat jednou při prvním použití pltcl."
 
-#: pltcl.c:473
+#: pltcl.c:471
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "PL/TclU funkce kterou zavolat jednou při prvním použití pltclu."
 
-#: pltcl.c:640
+#: pltcl.c:636
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "funkce \"%s\" je ve špatném jazyce"
 
-#: pltcl.c:651
+#: pltcl.c:647
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "funkce \"%s\" nesmí být SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:685
+#: pltcl.c:681
 #, c-format
 msgid "processing %s parameter"
 msgstr "zpracovávám %s parametr"
 
-#: pltcl.c:846
+#: pltcl.c:842
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "set-valued funkce volána v kontextu který nemůže přijmout více řádek"
 
-#: pltcl.c:1019
+#: pltcl.c:1015
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "funkce vracející záznam volána v kontextu který nemůže přijmout záznam"
 
-#: pltcl.c:1296
+#: pltcl.c:1299
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "z triggeru nelze oddělit návratovou hodnotu: %s"
 
-#: pltcl.c:1376 pltcl.c:1806
+#: pltcl.c:1379 pltcl.c:1809
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1377
+#: pltcl.c:1380
 #, c-format
 msgid ""
 "%s\n"
@@ -70,43 +70,48 @@ msgstr ""
 "%s\n"
 "v PL/Tcl funkci \"%s\""
 
-#: pltcl.c:1541
+#: pltcl.c:1544
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funkce pro obsluhu triggerů mohou být volané pouze prostřednictvím triggerů"
 
-#: pltcl.c:1545
+#: pltcl.c:1548
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl funkce nemohou vracet datový typ %s"
 
-#: pltcl.c:1584
+#: pltcl.c:1587
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl funkce nemohou přijímat datový typ %s"
 
-#: pltcl.c:1698
+#: pltcl.c:1701
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "nelze vytvořit interní proceduru \"%s\": %s"
 
-#: pltcl.c:3220
+#: pltcl.c:3208
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "seznam názvů sloupců a hodnot musí mít sudý počet položek"
 
-#: pltcl.c:3238
+#: pltcl.c:3226
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "seznam názvů sloupců a hodnot obsahuje neexistující název sloupce \"%s\""
 
-#: pltcl.c:3245
+#: pltcl.c:3233
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "nelze nastavit systémový atribut \"%s\""
 
-#~ msgid "out of memory"
-#~ msgstr "paměť vyčerpána"
+#: pltcl.c:3239
+#, c-format
+msgid "cannot set generated column \"%s\""
+msgstr "nelze přiřazovat do generovaného sloupce \"%s\""
 
 #~ msgid "PL/Tcl functions cannot return composite types"
 #~ msgstr "PL/Tcl funkce nemohou vracet složené datové typy"
+
+#~ msgid "out of memory"
+#~ msgstr "paměť vyčerpána"

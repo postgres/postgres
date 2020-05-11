@@ -1,15 +1,15 @@
-# LANGUAGE message translation file for plpython
-# Copyright (C) 2018 PostgreSQL Global Development Group
-# This file is distributed under the same license as the PostgreSQL package.
+# Japanese message translation file for plpython
+# Copyright (C) 2019 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # Honda Shigehiro <honda@postgresql.jp>, 2012.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plpython (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-08-31 16:22+0900\n"
-"PO-Revision-Date: 2018-08-21 20:45+0900\n"
-"Last-Translator: Kyotaro Horiguchi <horiguchi.kyotaro@lab.ntt.co.jp>\n"
+"Project-Id-Version: plpython (PostgreSQL 12 beta 1)\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-06-11 11:34+0900\n"
+"PO-Revision-Date: 2019-06-11 13:46+0900\n"
+"Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -18,163 +18,186 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: plpy_cursorobject.c:101
+#: plpy_cursorobject.c:78
 #, c-format
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor は問い合わせもしくは実行計画を期待していました"
 
-#: plpy_cursorobject.c:184
+#: plpy_cursorobject.c:161
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor は第二引数としてシーケンスを取ります"
 
-#: plpy_cursorobject.c:200 plpy_spi.c:211
+#: plpy_cursorobject.c:177 plpy_spi.c:211
 #, c-format
 msgid "could not execute plan"
 msgstr "実行計画を実行できませんでした"
 
-#: plpy_cursorobject.c:203 plpy_spi.c:214
+#: plpy_cursorobject.c:180 plpy_spi.c:214
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "%d 個の引数のシーケンスを期待していましたが、個数は %d でした：%s"
 
-#: plpy_cursorobject.c:352
+#: plpy_cursorobject.c:329
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "反復利用しようとしているカーソルは、すでにクローズされています"
 
-#: plpy_cursorobject.c:360 plpy_cursorobject.c:426
+#: plpy_cursorobject.c:337 plpy_cursorobject.c:403
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
-msgstr "中断されたサブトランザクションの中でカーソルを反復利用しようとしています"
+msgstr ""
+"中断されたサブトランザクションの中でカーソルを反復利用しようとしています"
 
-#: plpy_cursorobject.c:418
+#: plpy_cursorobject.c:395
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "クローズされたカーソルからのフェッチ"
 
-#: plpy_cursorobject.c:461 plpy_spi.c:409
+#: plpy_cursorobject.c:438 plpy_spi.c:409
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "問い合わせの結果に含まれる行数が、Python のリストに対して多すぎます"
 
-#: plpy_cursorobject.c:512
+#: plpy_cursorobject.c:490
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
-msgstr "中断されたサブトランザクションの中でカーソルをクローズしようとしています"
+msgstr ""
+"中断されたサブトランザクションの中でカーソルをクローズしようとしています"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:559
+#: plpy_elog.c:129 plpy_elog.c:130 plpy_plpymodule.c:553
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plpy_exec.c:142
-#, c-format
-msgid "unsupported set function return mode"
-msgstr "未サポートの集合関数リターンモードです。"
-
 #: plpy_exec.c:143
 #, c-format
-msgid "PL/Python set-returning functions only support returning one value per call."
-msgstr "PL/Python の集合を返す関数では、１回の呼び出しに対して１つの値を返すことのみがサポートされています。"
+msgid "unsupported set function return mode"
+msgstr "非サポートの集合関数リターンモードです。"
 
-#: plpy_exec.c:156
+#: plpy_exec.c:144
+#, c-format
+msgid ""
+"PL/Python set-returning functions only support returning one value per call."
+msgstr ""
+"PL/Python の集合を返す関数では、１回の呼び出しに対して１つの値を返すことのみ"
+"がサポートされています。"
+
+#: plpy_exec.c:157
 #, c-format
 msgid "returned object cannot be iterated"
 msgstr "返されたオブジェクトは反復利用できません"
 
-#: plpy_exec.c:157
+#: plpy_exec.c:158
 #, c-format
 msgid "PL/Python set-returning functions must return an iterable object."
-msgstr "PL/Python の集合を返す関数は、イテレータ（反復利用可能）オブジェクトを返さなければなりません。"
+msgstr ""
+"PL/Python の集合を返す関数は、イテレータ（反復利用可能）オブジェクトを返さな"
+"ければなりません。"
 
-#: plpy_exec.c:171
+#: plpy_exec.c:172
 #, c-format
 msgid "error fetching next item from iterator"
 msgstr "イテレータ（反復子）から次の項目をフェッチ（取り出し）できません"
 
-#: plpy_exec.c:214
+#: plpy_exec.c:215
 #, c-format
 msgid "PL/Python procedure did not return None"
 msgstr "PL/Python プロシージャが None を返しませんでした"
 
-#: plpy_exec.c:218
+#: plpy_exec.c:219
 #, c-format
 msgid "PL/Python function with return type \"void\" did not return None"
 msgstr "戻り値が \"void\" 型である PL/Python 関数が None を返しませんでした"
 
-#: plpy_exec.c:374 plpy_exec.c:400
+#: plpy_exec.c:375 plpy_exec.c:401
 #, c-format
 msgid "unexpected return value from trigger procedure"
 msgstr "トリガプロシージャから期待しない戻り値が返されました"
 
-#: plpy_exec.c:375
+#: plpy_exec.c:376
 #, c-format
 msgid "Expected None or a string."
 msgstr "None もしくは文字列を期待していました。"
 
-#: plpy_exec.c:390
+#: plpy_exec.c:391
 #, c-format
-msgid "PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
-msgstr "PL/Python トリガ関数が、DELETE トリガで \"MODIFY\" を返しました-- 無視されました"
+msgid ""
+"PL/Python trigger function returned \"MODIFY\" in a DELETE trigger -- ignored"
+msgstr ""
+"PL/Python トリガ関数が、DELETE トリガで \"MODIFY\" を返しました-- 無視されま"
+"した"
 
-#: plpy_exec.c:401
+#: plpy_exec.c:402
 #, c-format
 msgid "Expected None, \"OK\", \"SKIP\", or \"MODIFY\"."
 msgstr "None, \"OK\", \"SKIP\", \"MODIFY\" のいずれかを期待していました。"
 
-#: plpy_exec.c:451
+#: plpy_exec.c:452
 #, c-format
 msgid "PyList_SetItem() failed, while setting up arguments"
 msgstr "引数を設定する際に、PyList_SetItem() に失敗しました"
 
-#: plpy_exec.c:455
+#: plpy_exec.c:456
 #, c-format
 msgid "PyDict_SetItemString() failed, while setting up arguments"
 msgstr "引数を設定する際に、PyDict_SetItemString() に失敗しました"
 
-#: plpy_exec.c:467
+#: plpy_exec.c:468
 #, c-format
-msgid "function returning record called in context that cannot accept type record"
-msgstr "レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されました"
+msgid ""
+"function returning record called in context that cannot accept type record"
+msgstr ""
+"レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されまし"
+"た"
 
-#: plpy_exec.c:684
+#: plpy_exec.c:685
 #, c-format
 msgid "while creating return value"
 msgstr "戻り値を生成する際に"
 
-#: plpy_exec.c:909
+#: plpy_exec.c:919
 #, c-format
 msgid "TD[\"new\"] deleted, cannot modify row"
 msgstr "TD[\"new\"] は削除されました。行を変更できません。"
 
-#: plpy_exec.c:914
+#: plpy_exec.c:924
 #, c-format
 msgid "TD[\"new\"] is not a dictionary"
 msgstr "TD[\"new\"] は辞書ではありません"
 
-#: plpy_exec.c:941
+#: plpy_exec.c:951
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr "TD[\"new\"] 辞書の%d番目のキーが文字列ではありません"
 
-#: plpy_exec.c:948
+#: plpy_exec.c:958
 #, c-format
-msgid "key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering row"
-msgstr "TD[\"new\"] で見つかったキー \"%s\" は、行レベルトリガにおけるカラムとしては存在しません"
+msgid ""
+"key \"%s\" found in TD[\"new\"] does not exist as a column in the triggering "
+"row"
+msgstr ""
+"TD[\"new\"] で見つかったキー \"%s\" は、行レベルトリガにおけるカラムとしては"
+"存在しません"
 
-#: plpy_exec.c:953
+#: plpy_exec.c:963
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "システム属性 \"%s\" を設定できません"
 
-#: plpy_exec.c:1011
+#: plpy_exec.c:968
+#, c-format
+#| msgid "cannot alter inherited column \"%s\""
+msgid "cannot set generated column \"%s\""
+msgstr "生成列\"%s\"は変更できません"
+
+#: plpy_exec.c:1026
 #, c-format
 msgid "while modifying trigger row"
 msgstr "トリガ行を変更する際に"
 
-#: plpy_exec.c:1072
+#: plpy_exec.c:1087
 #, c-format
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "終了していないサブトランザクションを強制的にアボートしています"
@@ -187,7 +210,8 @@ msgstr "セッションに複数の Python ライブラリが存在します"
 #: plpy_main.c:126
 #, c-format
 msgid "Only one Python major version can be used in one session."
-msgstr "１個のセッション中で使える Python のメジャーバージョンは１種類だけです。"
+msgstr ""
+"１個のセッション中で使える Python のメジャーバージョンは１種類だけです。"
 
 #: plpy_main.c:142
 #, c-format
@@ -219,46 +243,46 @@ msgstr "PL/Python 関数 \"%s\""
 msgid "PL/Python anonymous code block"
 msgstr "PL/Python の無名コードブロック"
 
-#: plpy_plpymodule.c:192 plpy_plpymodule.c:195
+#: plpy_plpymodule.c:186 plpy_plpymodule.c:189
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "\"plpy\" モジュールをインポートできませんでした"
 
-#: plpy_plpymodule.c:210
+#: plpy_plpymodule.c:204
 #, c-format
 msgid "could not create the spiexceptions module"
 msgstr "spiexceptions モジュールを生成できませんでした"
 
-#: plpy_plpymodule.c:218
+#: plpy_plpymodule.c:212
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "spiexceptions モジュールを追加できませんでした"
 
-#: plpy_plpymodule.c:286
+#: plpy_plpymodule.c:280
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "SPI 例外を生成できませんでした"
 
-#: plpy_plpymodule.c:454
+#: plpy_plpymodule.c:448
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "plpy.elog で引数を展開できませんでした"
 
-#: plpy_plpymodule.c:463
+#: plpy_plpymodule.c:457
 msgid "could not parse error message in plpy.elog"
 msgstr "plpy.elog でエラーメッセージをパースできませんでした"
 
-#: plpy_plpymodule.c:480
+#: plpy_plpymodule.c:474
 #, c-format
 msgid "argument 'message' given by name and position"
 msgstr "名前と位置で 'message' 引数が渡されました"
 
-#: plpy_plpymodule.c:507
+#: plpy_plpymodule.c:501
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "この関数に対して '%s' は無効なキーワード引数です"
 
-#: plpy_plpymodule.c:518 plpy_plpymodule.c:524
+#: plpy_plpymodule.c:512 plpy_plpymodule.c:518
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "無効な SQLSTATE コードです"
@@ -288,7 +312,7 @@ msgstr "PL/Python 関数 \"%s\" をコンパイルできませんでした"
 msgid "could not compile anonymous PL/Python code block"
 msgstr "匿名の PL/Python コードブロックをコンパイルできませんでした"
 
-#: plpy_resultobject.c:150 plpy_resultobject.c:176 plpy_resultobject.c:202
+#: plpy_resultobject.c:121 plpy_resultobject.c:147 plpy_resultobject.c:173
 #, c-format
 msgid "command did not produce a result set"
 msgstr "コマンドは結果セットを生成しませんでした"
@@ -323,22 +347,22 @@ msgstr "SPI_execute_plan が失敗しました：%s"
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute が失敗しました：%s"
 
-#: plpy_subxactobject.c:122
+#: plpy_subxactobject.c:97
 #, c-format
 msgid "this subtransaction has already been entered"
 msgstr "すでにこのサブトランザクションの中に入っています"
 
-#: plpy_subxactobject.c:128 plpy_subxactobject.c:186
+#: plpy_subxactobject.c:103 plpy_subxactobject.c:161
 #, c-format
 msgid "this subtransaction has already been exited"
 msgstr "このサブトランザクションからすでに抜けています"
 
-#: plpy_subxactobject.c:180
+#: plpy_subxactobject.c:155
 #, c-format
 msgid "this subtransaction has not been entered"
 msgstr "このサブトランザクションには入っていません"
 
-#: plpy_subxactobject.c:192
+#: plpy_subxactobject.c:167
 #, c-format
 msgid "there is no subtransaction to exit from"
 msgstr "抜けるべきサブトランザクションがありません"
@@ -358,90 +382,112 @@ msgstr "モジュールの中に Decimal 属性が含まれていません"
 msgid "conversion from numeric to Decimal failed"
 msgstr "numeric から Decimal への変換に失敗しました"
 
-#: plpy_typeio.c:908
+#: plpy_typeio.c:915
 #, c-format
 msgid "could not create bytes representation of Python object"
 msgstr "バイト表現の Python オブジェクトを生成できませんでした"
 
-#: plpy_typeio.c:1056
+#: plpy_typeio.c:1063
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "文字列表現の Python オブジェクトを生成できませんでした"
 
-#: plpy_typeio.c:1067
+#: plpy_typeio.c:1074
 #, c-format
-msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
-msgstr "Python オブジェクトを cstring に変換できませんでした：Python の文字列表現に null バイトが含まれているようです"
+msgid ""
+"could not convert Python object into cstring: Python string representation "
+"appears to contain null bytes"
+msgstr ""
+"Python オブジェクトを cstring に変換できませんでした：Python の文字列表現に "
+"null バイトが含まれているようです"
 
-#: plpy_typeio.c:1176
+#: plpy_typeio.c:1183
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "配列の次元数が制限値(%d)を超えています"
 
-#: plpy_typeio.c:1180
+#: plpy_typeio.c:1187
 #, c-format
 msgid "could not determine sequence length for function return value"
 msgstr "関数の戻り値について、シーケンスの長さを決定できませんでした"
 
-#: plpy_typeio.c:1183 plpy_typeio.c:1187
+#: plpy_typeio.c:1190 plpy_typeio.c:1194
 #, c-format
 msgid "array size exceeds the maximum allowed"
 msgstr "配列のサイズが制限値を超えています"
 
-#: plpy_typeio.c:1213
+#: plpy_typeio.c:1220
 #, c-format
-msgid "return value of function with array return type is not a Python sequence"
+msgid ""
+"return value of function with array return type is not a Python sequence"
 msgstr "配列型を返す関数の戻り値が Python のシーケンスではありません"
 
-#: plpy_typeio.c:1259
+#: plpy_typeio.c:1266
 #, c-format
 msgid "wrong length of inner sequence: has length %d, but %d was expected"
-msgstr "内部シーケンスで長さが異常です：長さは %d ですが、期待する値は %d でした"
+msgstr ""
+"内部シーケンスで長さが異常です：長さは %d ですが、期待する値は %d でした"
 
-#: plpy_typeio.c:1261
+#: plpy_typeio.c:1268
 #, c-format
-msgid "To construct a multidimensional array, the inner sequences must all have the same length."
-msgstr "多次元配列を生成する場合、内部シーケンスはすべて同じ長さでなければなりません。"
+msgid ""
+"To construct a multidimensional array, the inner sequences must all have the "
+"same length."
+msgstr ""
+"多次元配列を生成する場合、内部シーケンスはすべて同じ長さでなければなりませ"
+"ん。"
 
-#: plpy_typeio.c:1340
+#: plpy_typeio.c:1347
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "不正な形式のレコードリテラルです: \"%s\""
 
-#: plpy_typeio.c:1341
+#: plpy_typeio.c:1348
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "左括弧がありません。"
 
-#: plpy_typeio.c:1342 plpy_typeio.c:1543
+#: plpy_typeio.c:1349 plpy_typeio.c:1550
 #, c-format
-msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
-msgstr "複合型を配列に入れて返したい場合、 \"[('foo',)]\" のように複合型を Pythonのタプルとして返すようにしてください。"
+msgid ""
+"To return a composite type in an array, return the composite type as a "
+"Python tuple, e.g., \"[('foo',)]\"."
+msgstr ""
+"複合型を配列に入れて返したい場合、 \"[('foo',)]\" のように複合型を Pythonのタ"
+"プルとして返すようにしてください。"
 
-#: plpy_typeio.c:1389
+#: plpy_typeio.c:1396
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "マッピング上にキー \"%s\" が見つかりません"
 
-#: plpy_typeio.c:1390
+#: plpy_typeio.c:1397
 #, c-format
-msgid "To return null in a column, add the value None to the mapping with the key named after the column."
-msgstr "カラムに null を入れて返す場合、カラム名をキーとして値が None のエントリをマッピングに追加してください"
+msgid ""
+"To return null in a column, add the value None to the mapping with the key "
+"named after the column."
+msgstr ""
+"カラムに null を入れて返す場合、カラム名をキーとして値が None のエントリを"
+"マッピングに追加してください"
 
-#: plpy_typeio.c:1443
+#: plpy_typeio.c:1450
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "返されたシーケンスの長さが行のカラム数とマッチしませんでした"
 
-#: plpy_typeio.c:1541
+#: plpy_typeio.c:1548
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "属性 \"%s\" が Python オブジェクト中に存在しません"
 
-#: plpy_typeio.c:1544
+#: plpy_typeio.c:1551
 #, c-format
-msgid "To return null in a column, let the returned object have an attribute named after column with value None."
-msgstr "カラムに null を入れて返す場合、カラム名をキーとして値が None である属性を持つオブジェクトを返すようにしてください。"
+msgid ""
+"To return null in a column, let the returned object have an attribute named "
+"after column with value None."
+msgstr ""
+"カラムに null を入れて返す場合、カラム名をキーとして値が None である属性を持"
+"つオブジェクトを返すようにしてください。"
 
 #: plpy_util.c:35
 #, c-format
@@ -453,14 +499,14 @@ msgstr "Python の Unicode オブジェクトをバイト列に変換できま�
 msgid "could not extract bytes from encoded string"
 msgstr "エンコードされた文字列からバイト列を抽出できませんでした"
 
-#~ msgid "could not create new dictionary"
-#~ msgstr "新しい辞書を作れませんでした"
-
-#~ msgid "could not create exception \"%s\""
-#~ msgstr "例外 \"%s \"を作成できませんでした"
+#~ msgid "could not create new dictionary while building trigger arguments"
+#~ msgstr "トリガの引数を構成中、新しい辞書を生成できませんでした"
 
 #~ msgid "could not create globals"
 #~ msgstr "グローバル変数(globals)を作成できませんでした"
 
-#~ msgid "could not create new dictionary while building trigger arguments"
-#~ msgstr "トリガの引数を構成中、新しい辞書を生成できませんでした"
+#~ msgid "could not create exception \"%s\""
+#~ msgstr "例外 \"%s \"を作成できませんでした"
+
+#~ msgid "could not create new dictionary"
+#~ msgstr "新しい辞書を作れませんでした"

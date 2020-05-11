@@ -1,0 +1,304 @@
+# LANGUAGE message translation file for pg_checksums
+# Copyright (C) 2019 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_checksums (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+# Abdullah GÜLNER <agulner@gmail.com>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_checksums (PostgreSQL) 12\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-06-17 07:45+0000\n"
+"PO-Revision-Date: 2019-06-17 14:27+0300\n"
+"Last-Translator: Abdullah GÜLNER\n"
+"Language-Team: \n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: ../../../src/common/logging.c:188
+#, c-format
+msgid "fatal: "
+msgstr "ölümcül (fatal): "
+
+#: ../../../src/common/logging.c:195
+#, c-format
+msgid "error: "
+msgstr "hata (error): "
+
+#: ../../../src/common/logging.c:202
+#, c-format
+msgid "warning: "
+msgstr "uyarı: "
+
+#: pg_checksums.c:75
+#, c-format
+msgid ""
+"%s enables, disables or verifies data checksums in a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"%s bir PostgreSQL veritabanı kümesinde, veri sağlama toplamlarını etkinleştirir, devre dışı bırakır veya doğrulamasını yapar.\n"
+"\n"
+
+#: pg_checksums.c:76
+#, c-format
+msgid "Usage:\n"
+msgstr "Kullanımı:\n"
+
+#: pg_checksums.c:77
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr "  %s [SEÇENEK]... [DATADIR]\n"
+
+#: pg_checksums.c:78
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Seçenekler:\n"
+
+#: pg_checksums.c:79
+#, c-format
+msgid " [-D, --pgdata=]DATADIR    data directory\n"
+msgstr " [-D, --pgdata=]DATADIR    veri dizini\n"
+
+#: pg_checksums.c:80
+#, c-format
+msgid "  -c, --check              check data checksums (default)\n"
+msgstr "  -c, --check              veri sağlama toplamlarını denetle (varsayılan)\n"
+
+#: pg_checksums.c:81
+#, c-format
+msgid "  -d, --disable            disable data checksums\n"
+msgstr "  -d, --disable            veri sağlama toplamlarını devre dışı bırak\n"
+
+#: pg_checksums.c:82
+#, c-format
+msgid "  -e, --enable             enable data checksums\n"
+msgstr "  -e, --enable             veri sağlama toplamlarını etkinleştir\n"
+
+#: pg_checksums.c:83
+#, c-format
+msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
+msgstr "  -f, --filenode=FILENODE  sadece belirtilen filenode'lu nesneyi denetle\n"
+
+#: pg_checksums.c:84
+#, c-format
+msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --no-sync            değişikliklerin diske yazılmasını bekleme\n"
+
+#: pg_checksums.c:85
+#, c-format
+msgid "  -P, --progress           show progress information\n"
+msgstr "  -P, --progress           ilerleme bilgisini göster\n"
+
+#: pg_checksums.c:86
+#, c-format
+msgid "  -v, --verbose            output verbose messages\n"
+msgstr "  -v, --verbose            detaylı (verbose) mesajlar göster\n"
+
+#: pg_checksums.c:87
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            sürüm bilgisini gösterir ve sonra çıkar\n"
+
+#: pg_checksums.c:88
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help               bu yardımı gösterir ve sonra çıkar\n"
+
+#: pg_checksums.c:89
+#, c-format
+msgid ""
+"\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
+"is used.\n"
+"\n"
+msgstr ""
+"\n"
+"Eğer hiçbir veri dizini (DATADIR) belirtilmezse, PGDATA çevresel değişkeni\n"
+"kullanılır.\n"
+"\n"
+
+#: pg_checksums.c:91
+#, c-format
+msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr "Hataları <pgsql-bugs@lists.postgresql.org> adresine bildirebilirsiniz.\n"
+
+#: pg_checksums.c:149
+#, c-format
+msgid "%*s/%s MB (%d%%) computed"
+msgstr "%*s/%s MB (%d%%) hesaplandı"
+
+#: pg_checksums.c:186
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" dosyası açılamıyor: %m"
+
+#: pg_checksums.c:201
+#, c-format
+msgid "could not read block %u in file \"%s\": read %d of %d"
+msgstr "\"%2$s\" dosyasında %1$u bloğu okunamadı: %4$d nin %3$d si okundu"
+
+#: pg_checksums.c:218
+#, c-format
+msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
+msgstr "\"%s\" dosyasında sağlama toplamı doğrulaması başarısız oldu, blok %u: %X sağlama toplamı hesaplandı fakat blok %X içeriyor"
+
+#: pg_checksums.c:231
+#, c-format
+msgid "seek failed for block %u in file \"%s\": %m"
+msgstr "\"%2$s\" dosyasında %1$u bloğu için arama (seek) başarısız oldu: %3$m"
+
+#: pg_checksums.c:238
+#, c-format
+msgid "could not update checksum of block %u in file \"%s\": %m"
+msgstr "\"%2$s\" dosyasında %1$u bloğu güncellenemedi: %3$m"
+
+#: pg_checksums.c:251
+#, c-format
+msgid "checksums verified in file \"%s\""
+msgstr "\"%s\" dosyasında sağlama toplamları doğrulandı"
+
+#: pg_checksums.c:253
+#, c-format
+msgid "checksums enabled in file \"%s\""
+msgstr "\"%s\" dosyasında sağlama toplamları etkinleştirildi"
+
+#: pg_checksums.c:278
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" dizini açılamıyor: %m"
+
+#: pg_checksums.c:305
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" dosyası durumlanamadı: %m"
+
+#: pg_checksums.c:332
+#, c-format
+msgid "invalid segment number %d in file name \"%s\""
+msgstr "\"%2$s\" dosyasında geçersiz segment numarası %1$d"
+
+#: pg_checksums.c:420
+#, c-format
+msgid "invalid filenode specification, must be numeric: %s"
+msgstr "geçersiz filenode tanımlaması, sayısal olmalı: %s"
+
+#: pg_checksums.c:438 pg_checksums.c:454 pg_checksums.c:464 pg_checksums.c:473
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Daha fazla bilgi için \"%s --help\" yazın\n"
+
+#: pg_checksums.c:453
+#, c-format
+msgid "no data directory specified"
+msgstr "hiçbir veri dizini belirtilmemiş"
+
+#: pg_checksums.c:462
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "çok fazla komut satırı argümanı (ilki \"%s\")"
+
+#: pg_checksums.c:472
+#, c-format
+msgid "--filenode option only possible with --check"
+msgstr "--filenode seçeneği sadece --check ile kullanılabilir"
+
+#: pg_checksums.c:482
+#, c-format
+msgid "pg_control CRC value is incorrect"
+msgstr "pg_control CRC değeri yanlış"
+
+#: pg_checksums.c:488
+#, c-format
+msgid "cluster is not compatible with this version of pg_checksums"
+msgstr "küme (cluster), pg_verify_checksums'ın bu sürümüyle uyumlu değil"
+
+#: pg_checksums.c:494
+#, c-format
+msgid "database cluster is not compatible"
+msgstr "veritabanı kümesi uyumlu değil"
+
+#: pg_checksums.c:495
+#, c-format
+msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"
+msgstr "Veritabanı kümesi (cluster) %u blok boyutu ile ilklendirilmiştir, ancak pg_checksums %u blok boyutu ile derlenmiştir.\n"
+
+#: pg_checksums.c:508
+#, c-format
+msgid "cluster must be shut down"
+msgstr "küme (cluster) kapatılmalı"
+
+#: pg_checksums.c:515
+#, c-format
+msgid "data checksums are not enabled in cluster"
+msgstr "kümede (cluster) veri sağlama toplamaları etkinleştirilmemiş"
+
+#: pg_checksums.c:522
+#, c-format
+msgid "data checksums are already disabled in cluster"
+msgstr "kümede (cluster) veri sağlama toplamları zaten devre dışı bırakılmış"
+
+#: pg_checksums.c:529
+#, c-format
+msgid "data checksums are already enabled in cluster"
+msgstr "kümede (cluster) veri sağlama toplamları zaten etkinleştirilmiş"
+
+#: pg_checksums.c:558
+#, c-format
+msgid "Checksum operation completed\n"
+msgstr "Sağlama toplamı işlemi tamamlandı\n"
+
+#: pg_checksums.c:559
+#, c-format
+msgid "Files scanned:  %s\n"
+msgstr "Taranan dosyalar: %s\n"
+
+#: pg_checksums.c:560
+#, c-format
+msgid "Blocks scanned: %s\n"
+msgstr "Taranan bloklar: %s\n"
+
+#: pg_checksums.c:563
+#, c-format
+msgid "Bad checksums:  %s\n"
+msgstr "Yanlış sağlama toplamları: %s\n"
+
+#: pg_checksums.c:564 pg_checksums.c:591
+#, c-format
+msgid "Data checksum version: %d\n"
+msgstr "Veri sağlama toplamı sürümü: %d\n"
+
+#: pg_checksums.c:583
+#, c-format
+msgid "syncing data directory"
+msgstr "veri dizini senkronize ediliyor"
+
+#: pg_checksums.c:587
+#, c-format
+msgid "updating control file"
+msgstr "kontrol dosyası güncelleniyor"
+
+#: pg_checksums.c:593
+#, c-format
+msgid "Checksums enabled in cluster\n"
+msgstr "Kümede sağlama toplamları etkinleştirildi\n"
+
+#: pg_checksums.c:595
+#, c-format
+msgid "Checksums disabled in cluster\n"
+msgstr "Kümede sağlama toplamları devre dışı bırakıldı\n"
+
+#~ msgid "  -?, --help             show this help, then exit\n"
+#~ msgstr "  -?, --help             bu yardımı göster, sonra çık\n"
+
+#~ msgid "  -V, --version          output version information, then exit\n"
+#~ msgstr "  -V, --version          sürüm bilgisini göster, sonra çık\n"
+
+#~ msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
+#~ msgstr "  -N, --no-sync          değişikliklerin diske yazılmasını bekleme\n"

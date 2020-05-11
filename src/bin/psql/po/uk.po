@@ -1,0 +1,5993 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: postgresql\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-09-27 15:12+0000\n"
+"PO-Revision-Date: 2019-12-20 20:17\n"
+"Last-Translator: pasha_golub\n"
+"Language-Team: Ukrainian\n"
+"Language: uk_UA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Language: uk\n"
+"X-Crowdin-File: /REL_12_STABLE/psql.pot\n"
+
+#: ../../../src/common/logging.c:188
+#, c-format
+msgid "fatal: "
+msgstr "збій: "
+
+#: ../../../src/common/logging.c:195
+#, c-format
+msgid "error: "
+msgstr "помилка: "
+
+#: ../../../src/common/logging.c:202
+#, c-format
+msgid "warning: "
+msgstr "попередження: "
+
+#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
+#, c-format
+msgid "could not identify current directory: %m"
+msgstr "не вдалося визначити поточний каталог: %m"
+
+#: ../../common/exec.c:157
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "невірний бінарний файл \"%s\""
+
+#: ../../common/exec.c:207
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "неможливо прочитати бінарний файл \"%s\""
+
+#: ../../common/exec.c:215
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "неможливо знайти \"%s\" для виконання"
+
+#: ../../common/exec.c:271 ../../common/exec.c:310
+#, c-format
+msgid "could not change directory to \"%s\": %m"
+msgstr "не вдалося змінити каталог в \"%s\": %m"
+
+#: ../../common/exec.c:288
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "не можливо прочитати символічне послання \"%s\": %m"
+
+#: ../../common/exec.c:541
+#, c-format
+msgid "pclose failed: %m"
+msgstr "помилка pclose: %m"
+
+#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+#: command.c:1218 input.c:228 mainloop.c:82 mainloop.c:386
+#, c-format
+msgid "out of memory"
+msgstr "недостатньо пам'яті"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
+#, c-format
+msgid "out of memory\n"
+msgstr "недостатньо пам'яті\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "не можу знайти користувача з ефективним ID %ld: %s"
+
+#: ../../common/username.c:45 command.c:555
+msgid "user does not exist"
+msgstr "користувача не існує"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "невдала підстановка імені користувача: код помилки %lu"
+
+#: ../../common/wait_error.c:45
+#, c-format
+msgid "command not executable"
+msgstr "неможливо виконати команду"
+
+#: ../../common/wait_error.c:49
+#, c-format
+msgid "command not found"
+msgstr "команду не знайдено"
+
+#: ../../common/wait_error.c:54
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "дочірній процес завершився з кодом виходу %d"
+
+#: ../../common/wait_error.c:62
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "дочірній процес перервано через помилку 0х%X"
+
+#: ../../common/wait_error.c:66
+#, c-format
+msgid "child process was terminated by signal %d: %s"
+msgstr "дочірній процес перервано через сигнал %d: %s"
+
+#: ../../common/wait_error.c:72
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "дочірній процес завершився з невизнаним статусом %d"
+
+#: ../../fe_utils/print.c:353
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(%lu рядок)"
+msgstr[1] "(%lu рядки)"
+msgstr[2] "(%lu рядків)"
+msgstr[3] "(%lu рядка)"
+
+#: ../../fe_utils/print.c:3058
+#, c-format
+msgid "Interrupted\n"
+msgstr "Перервано\n"
+
+#: ../../fe_utils/print.c:3122
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "Неможливо додати заголовок до вмісту таблиці: кількість колонок %d перевищено.\n"
+
+#: ../../fe_utils/print.c:3162
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "Неможливо додати комірку до вмісту таблиці: перевищено загальну кількість комірок %d.\n"
+
+#: ../../fe_utils/print.c:3417
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "невірний формат виводу (внутрішня помилка): %d"
+
+#: ../../fe_utils/psqlscan.l:729
+#, c-format
+msgid "skipping recursive expansion of variable \"%s\""
+msgstr "пропуск рекурсивного розгортання змінної \"%s\""
+
+#: command.c:221
+#, c-format
+msgid "invalid command \\%s"
+msgstr "Невірна команда \\%s"
+
+#: command.c:223
+#, c-format
+msgid "Try \\? for help."
+msgstr "Спробуйте \\? для отримання довідки."
+
+#: command.c:241
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored"
+msgstr "\\%s: зайвий аргумент \"%s\" проігноровано"
+
+#: command.c:293
+#, c-format
+msgid "\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block"
+msgstr "\\%s команду проігноровано; скористайтесь \\endif або Ctrl-C, щоб вийти з поточного блоку \\if"
+
+#: command.c:553
+#, c-format
+msgid "could not get home directory for user ID %ld: %s"
+msgstr "неможливо отримати домашню директорію для користувача ID %ld: %s"
+
+#: command.c:571
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %m"
+msgstr "\\%s: неможливо змінити директорію на \"%s\": %m"
+
+#: command.c:596
+#, c-format
+msgid "You are currently not connected to a database.\n"
+msgstr "На даний момент ви від'єднанні від бази даних.\n"
+
+#: command.c:609
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"
+msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" за аресою \"%s\" на порту \"%s\".\n"
+
+#: command.c:612
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
+msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" через сокет в \"%s\" на порту \"%s\".\n"
+
+#: command.c:618
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"
+msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" (за аресою \"%s\") на порту \"%s\".\n"
+
+#: command.c:621
+#, c-format
+msgid "You are connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
+msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" на порту \"%s\".\n"
+
+#: command.c:930 command.c:1026 command.c:2411
+#, c-format
+msgid "no query buffer"
+msgstr "немає буферу запитів"
+
+#: command.c:963 command.c:4832
+#, c-format
+msgid "invalid line number: %s"
+msgstr "невірний номер рядка: %s"
+
+#: command.c:1017
+#, c-format
+msgid "The server (version %s) does not support editing function source."
+msgstr "Сервер (версія %s) не пітдримує редагування вихідного коду функцій."
+
+#: command.c:1020
+#, c-format
+msgid "The server (version %s) does not support editing view definitions."
+msgstr "Сервер (версія %s) не підтримує редагування визначення подання."
+
+#: command.c:1102
+msgid "No changes"
+msgstr "Без змін"
+
+#: command.c:1179
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found"
+msgstr "%s: невірне ім'я кодування або не знайдено процедуру конверсії"
+
+#: command.c:1214 command.c:1853 command.c:3109 command.c:4934 common.c:175
+#: common.c:224 common.c:535 common.c:1376 common.c:1404 common.c:1512
+#: common.c:1615 common.c:1653 copy.c:490 copy.c:709 help.c:63 large_obj.c:157
+#: large_obj.c:192 large_obj.c:254
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1221
+msgid "There is no previous error."
+msgstr "Попередня помилка відсутня."
+
+#: command.c:1409 command.c:1714 command.c:1728 command.c:1745 command.c:1905
+#: command.c:2142 command.c:2378 command.c:2418
+#, c-format
+msgid "\\%s: missing required argument"
+msgstr "\\%s: не вистачає обов'язкового аргументу"
+
+#: command.c:1540
+#, c-format
+msgid "\\elif: cannot occur after \\else"
+msgstr "\\elif: не може йти після \\else"
+
+#: command.c:1545
+#, c-format
+msgid "\\elif: no matching \\if"
+msgstr "\\elif: немає відповідного \\if"
+
+#: command.c:1609
+#, c-format
+msgid "\\else: cannot occur after \\else"
+msgstr "\\else: не може йти після \\else"
+
+#: command.c:1614
+#, c-format
+msgid "\\else: no matching \\if"
+msgstr "\\else: немає відповідного \\if"
+
+#: command.c:1654
+#, c-format
+msgid "\\endif: no matching \\if"
+msgstr "\\endif: немає відповідного \\if"
+
+#: command.c:1809
+msgid "Query buffer is empty."
+msgstr "Буфер запиту порожній."
+
+#: command.c:1831
+msgid "Enter new password: "
+msgstr "Введіть новий пароль:"
+
+#: command.c:1832
+msgid "Enter it again: "
+msgstr "Введіть знову: "
+
+#: command.c:1836
+#, c-format
+msgid "Passwords didn't match."
+msgstr "Паролі не співпадають."
+
+#: command.c:1935
+#, c-format
+msgid "\\%s: could not read value for variable"
+msgstr "\\%s: не вдалося прочитати значення змінної"
+
+#: command.c:2038
+msgid "Query buffer reset (cleared)."
+msgstr "Буфер запитів скинуто (очищено)."
+
+#: command.c:2060
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "Історію записано до файлу \"%s\".\n"
+
+#: command.c:2147
+#, c-format
+msgid "\\%s: environment variable name must not contain \"=\""
+msgstr "\\%s: змінна середовища не повинна містити \"=\""
+
+#: command.c:2208
+#, c-format
+msgid "The server (version %s) does not support showing function source."
+msgstr "Сервер (версія %s) не пітдримує відображнення вихідного коду функцій."
+
+#: command.c:2211
+#, c-format
+msgid "The server (version %s) does not support showing view definitions."
+msgstr "Сервер (версія %s) не підтримує відображення визначення подання."
+
+#: command.c:2218
+#, c-format
+msgid "function name is required"
+msgstr "необхідне ім'я функції"
+
+#: command.c:2220
+#, c-format
+msgid "view name is required"
+msgstr "необхідне ім'я подання"
+
+#: command.c:2350
+msgid "Timing is on."
+msgstr "Таймер увімкнено."
+
+#: command.c:2352
+msgid "Timing is off."
+msgstr "Таймер вимкнено."
+
+#: command.c:2437 command.c:2465 command.c:3516 command.c:3519 command.c:3522
+#: command.c:3528 command.c:3530 command.c:3538 command.c:3548 command.c:3557
+#: command.c:3571 command.c:3588 command.c:3646 common.c:71 copy.c:333
+#: copy.c:405 psqlscanslash.l:784 psqlscanslash.l:795 psqlscanslash.l:805
+#, c-format
+msgid "%s: %m"
+msgstr "%s: %m"
+
+#: command.c:2849 startup.c:240 startup.c:291
+msgid "Password: "
+msgstr "Пароль: "
+
+#: command.c:2854 startup.c:288
+#, c-format
+msgid "Password for user %s: "
+msgstr "Пароль користувача %s:"
+
+#: command.c:2925
+#, c-format
+msgid "All connection parameters must be supplied because no database connection exists"
+msgstr "Мають бути введені усі параметри з'єднання, оскільки відсутнє підключення до бази даних"
+
+#: command.c:3113
+#, c-format
+msgid "Previous connection kept"
+msgstr "Попереднє підключення триває"
+
+#: command.c:3117
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\connect: %s"
+
+#: command.c:3166
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" on address \"%s\" at port \"%s\".\n"
+msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" за адресою \"%s\" на порту \"%s\".\n"
+
+#: command.c:3169
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" via socket in \"%s\" at port \"%s\".\n"
+msgstr "Ви тепер під'єднані до бази даних \"%s\" як користувач \"%s\" через сокет в \"%s\" на порту \"%s\".\n"
+
+#: command.c:3175
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" (address \"%s\") at port \"%s\".\n"
+msgstr "Ви під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" (за адресою \"%s\") на порту \"%s\".\n"
+
+#: command.c:3178
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\" on host \"%s\" at port \"%s\".\n"
+msgstr "Ви тепер під'єднані до бази даних \"%s\" як користувач \"%s\" на хості \"%s\" на порту \"%s\".\n"
+
+#: command.c:3183
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "Ви тепер під'єднані до бази даних \"%s\" як користувач \"%s\".\n"
+
+#: command.c:3216
+#, c-format
+msgid "%s (%s, server %s)\n"
+msgstr "%s (%s, сервер %s)\n"
+
+#: command.c:3224
+#, c-format
+msgid "WARNING: %s major version %s, server major version %s.\n"
+"         Some psql features might not work.\n"
+msgstr "УВАГА: мажорна версія %s %s, мажорна версія сервера %s.\n"
+"         Деякі функції psql можуть не працювати.\n"
+
+#: command.c:3263
+#, c-format
+msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
+msgstr "З'єднання SSL (протокол: %s, шифр: %s, біти: %s, компресія: %s)\n"
+
+#: command.c:3264 command.c:3265 command.c:3266
+msgid "unknown"
+msgstr "невідомо"
+
+#: command.c:3267 help.c:46
+msgid "off"
+msgstr "вимк"
+
+#: command.c:3267 help.c:46
+msgid "on"
+msgstr "увімк"
+
+#: command.c:3281
+#, c-format
+msgid "GSSAPI-encrypted connection\n"
+msgstr "З'єднання зашифровано GSSAPI\n"
+
+#: command.c:3301
+#, c-format
+msgid "WARNING: Console code page (%u) differs from Windows code page (%u)\n"
+"         8-bit characters might not work correctly. See psql reference\n"
+"         page \"Notes for Windows users\" for details.\n"
+msgstr "УВАГА: Кодова сторінка консолі (%u) відрізняється від кодової сторінки Windows (%u)\n"
+"         8-бітові символи можуть працювати неправильно. Детальніше у розділі \n"
+"         \"Нотатки для користувачів Windows\" у документації psql.\n"
+
+#: command.c:3405
+#, c-format
+msgid "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a line number"
+msgstr "змінна середовища PSQL_EDITOR_LINENUMBER_ARG має бути встановлена, щоб вказувати номер рядка"
+
+#: command.c:3434
+#, c-format
+msgid "could not start editor \"%s\""
+msgstr "неможливо запустити редактор \"%s\""
+
+#: command.c:3436
+#, c-format
+msgid "could not start /bin/sh"
+msgstr "неможливо запустити /bin/sh"
+
+#: command.c:3474
+#, c-format
+msgid "could not locate temporary directory: %s"
+msgstr "неможливо знайти тимчасову директорію: %s"
+
+#: command.c:3501
+#, c-format
+msgid "could not open temporary file \"%s\": %m"
+msgstr "неможливо відкрити тимчасовий файл \"%s\": %m"
+
+#: command.c:3794
+#, c-format
+msgid "\\pset: ambiguous abbreviation \"%s\" matches both \"%s\" and \"%s\""
+msgstr "\\pset: неоднозначна абревіатура \"%s\" відповідає обом \"%s\" і \"%s"
+
+#: command.c:3814
+#, c-format
+msgid "\\pset: allowed formats are aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
+msgstr "\\pset: дозволені формати: aligned, asciidoc, csv, html, latex, latex-longtable, troff-ms, unaligned, wrapped"
+
+#: command.c:3833
+#, c-format
+msgid "\\pset: allowed line styles are ascii, old-ascii, unicode"
+msgstr "\\pset: дозволені стилі ліній: ascii, old-ascii, unicode"
+
+#: command.c:3848
+#, c-format
+msgid "\\pset: allowed Unicode border line styles are single, double"
+msgstr "\\pset: дозволені стилі ліній рамок Unicode: single, double"
+
+#: command.c:3863
+#, c-format
+msgid "\\pset: allowed Unicode column line styles are single, double"
+msgstr "\\pset: дозволені стилі ліній стовпців для Unicode: single, double"
+
+#: command.c:3878
+#, c-format
+msgid "\\pset: allowed Unicode header line styles are single, double"
+msgstr "\\pset: дозволені стилі ліній заголовків для Unicode: single, double"
+
+#: command.c:3921
+#, c-format
+msgid "\\pset: csv_fieldsep must be a single one-byte character"
+msgstr "\\pset: csv_fieldsep повинен бути однобайтовим символом"
+
+#: command.c:3926
+#, c-format
+msgid "\\pset: csv_fieldsep cannot be a double quote, a newline, or a carriage return"
+msgstr "\\pset: csv_fieldsep не може бути подвійною лапкою, новим рядком або поверненням каретки"
+
+#: command.c:4063 command.c:4249
+#, c-format
+msgid "\\pset: unknown option: %s"
+msgstr "\\pset: невідомий параметр: %s"
+
+#: command.c:4081
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "Стиль рамки %d.\n"
+
+#: command.c:4087
+#, c-format
+msgid "Target width is unset.\n"
+msgstr "Цільова ширина не встановлена.\n"
+
+#: command.c:4089
+#, c-format
+msgid "Target width is %d.\n"
+msgstr "Цільова ширина %d.\n"
+
+#: command.c:4096
+#, c-format
+msgid "Expanded display is on.\n"
+msgstr "Розширене відображення увімкнуто.\n"
+
+#: command.c:4098
+#, c-format
+msgid "Expanded display is used automatically.\n"
+msgstr "Розширене відображення використовується автоматично.\n"
+
+#: command.c:4100
+#, c-format
+msgid "Expanded display is off.\n"
+msgstr "Розширене відображення вимкнуто.\n"
+
+#: command.c:4106
+#, c-format
+msgid "Field separator for CSV is \"%s\".\n"
+msgstr "Розділювач полів CSV: \"%s\".\n"
+
+#: command.c:4114 command.c:4122
+#, c-format
+msgid "Field separator is zero byte.\n"
+msgstr "Розділювач полів - нульовий байт.\n"
+
+#: command.c:4116
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "Розділювач полів \"%s\".\n"
+
+#: command.c:4129
+#, c-format
+msgid "Default footer is on.\n"
+msgstr "Нинжній колонтитул увімкнуто за замовчуванням.\n"
+
+#: command.c:4131
+#, c-format
+msgid "Default footer is off.\n"
+msgstr "Нинжній колонтитул вимкнуто за замовчуванням.\n"
+
+#: command.c:4137
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "Формат виводу %s.\n"
+
+#: command.c:4143
+#, c-format
+msgid "Line style is %s.\n"
+msgstr "Стиль лінії %s.\n"
+
+#: command.c:4150
+#, c-format
+msgid "Null display is \"%s\".\n"
+msgstr "Null відображається як \"%s\".\n"
+
+#: command.c:4158
+#, c-format
+msgid "Locale-adjusted numeric output is on.\n"
+msgstr "Локалізоване виведення чисел ввімкнено.\n"
+
+#: command.c:4160
+#, c-format
+msgid "Locale-adjusted numeric output is off.\n"
+msgstr "Локалізоване виведення чисел вимкнено.\n"
+
+#: command.c:4167
+#, c-format
+msgid "Pager is used for long output.\n"
+msgstr "Пейджер використовується для виведення довгого тексту.\n"
+
+#: command.c:4169
+#, c-format
+msgid "Pager is always used.\n"
+msgstr "Завжди використовується пейджер.\n"
+
+#: command.c:4171
+#, c-format
+msgid "Pager usage is off.\n"
+msgstr "Пейджер не використовується.\n"
+
+#: command.c:4177
+#, c-format
+msgid "Pager won't be used for less than %d line.\n"
+msgid_plural "Pager won't be used for less than %d lines.\n"
+msgstr[0] "Пейджер не буде використовуватися для менш ніж %d рядка.\n"
+msgstr[1] "Пейджер не буде використовуватися для менш ніж %d рядків.\n"
+msgstr[2] "Пейджер не буде використовуватися для менш ніж %d рядків.\n"
+msgstr[3] "Пейджер не буде використовуватися для менш ніж %d рядка.\n"
+
+#: command.c:4187 command.c:4197
+#, c-format
+msgid "Record separator is zero byte.\n"
+msgstr "Розділювач записів - нульовий байт.\n"
+
+#: command.c:4189
+#, c-format
+msgid "Record separator is <newline>.\n"
+msgstr "Розділювач записів: <newline>.\n"
+
+#: command.c:4191
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "Розділювач записів: \"%s\".\n"
+
+#: command.c:4204
+#, c-format
+msgid "Table attributes are \"%s\".\n"
+msgstr "Табличні атрибути \"%s\".\n"
+
+#: command.c:4207
+#, c-format
+msgid "Table attributes unset.\n"
+msgstr "Атрибути таблиць не задані.\n"
+
+#: command.c:4214
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "Заголовок: \"%s\".\n"
+
+#: command.c:4216
+#, c-format
+msgid "Title is unset.\n"
+msgstr "Заголовок не встановлено.\n"
+
+#: command.c:4223
+#, c-format
+msgid "Tuples only is on.\n"
+msgstr "Увімкнуто тільки кортежі.\n"
+
+#: command.c:4225
+#, c-format
+msgid "Tuples only is off.\n"
+msgstr "Вимкнуто тільки кортежі.\n"
+
+#: command.c:4231
+#, c-format
+msgid "Unicode border line style is \"%s\".\n"
+msgstr "Стиль ліній рамки для Unicode: \"%s\".\n"
+
+#: command.c:4237
+#, c-format
+msgid "Unicode column line style is \"%s\".\n"
+msgstr "Стиль ліній стовпців для Unicode: \"%s\".\n"
+
+#: command.c:4243
+#, c-format
+msgid "Unicode header line style is \"%s\".\n"
+msgstr "Стиль ліній заголовків для Unicode: \"%s\".\n"
+
+#: command.c:4405
+#, c-format
+msgid "\\!: failed"
+msgstr "\\!: помилка"
+
+#: command.c:4430 common.c:795
+#, c-format
+msgid "\\watch cannot be used with an empty query"
+msgstr "\\watch не може бути використано із пустим запитом"
+
+#: command.c:4471
+#, c-format
+msgid "%s\t%s (every %gs)\n"
+msgstr "%s\t%s (кожні %g сек)\n"
+
+#: command.c:4474
+#, c-format
+msgid "%s (every %gs)\n"
+msgstr "%s (кожні %g сек)\n"
+
+#: command.c:4528 command.c:4535 common.c:695 common.c:702 common.c:1359
+#, c-format
+msgid "********* QUERY **********\n"
+"%s\n"
+"**************************\n\n"
+msgstr "********* ЗАПИТ **********\n"
+"%s\n"
+"**************************\n\n"
+
+#: command.c:4727
+#, c-format
+msgid "\"%s.%s\" is not a view"
+msgstr "\"%s.%s\" не є поданням"
+
+#: command.c:4743
+#, c-format
+msgid "could not parse reloptions array"
+msgstr "неможливо розібрати масив reloptions"
+
+#: common.c:160
+#, c-format
+msgid "cannot escape without active connection"
+msgstr "не можна вийти без активного з'єднання"
+
+#: common.c:201
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\""
+msgstr "аргумент командної оболонки містить символ нового рядка або повернення каретки: \"%s\""
+
+#: common.c:395
+#, c-format
+msgid "connection to server was lost"
+msgstr "з'єднання із сервером втрачено"
+
+#: common.c:399
+#, c-format
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "З'єднання із сервером втрачено. Спроба перевстановити:"
+
+#: common.c:404
+#, c-format
+msgid "Failed.\n"
+msgstr "Помилка.\n"
+
+#: common.c:417
+#, c-format
+msgid "Succeeded.\n"
+msgstr "Вдало.\n"
+
+#: common.c:525 common.c:1077 common.c:1294
+#, c-format
+msgid "unexpected PQresultStatus: %d"
+msgstr "неочікуваний PQresultStatus: %d"
+
+#: common.c:634
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Час: %.3f мс\n"
+
+#: common.c:649
+#, c-format
+msgid "Time: %.3f ms (%02d:%06.3f)\n"
+msgstr "Час: %.3f мс (%02d:%06.3f)\n"
+
+#: common.c:658
+#, c-format
+msgid "Time: %.3f ms (%02d:%02d:%06.3f)\n"
+msgstr "Час: %.3f мс (%02d:%02d:%06.3f)\n"
+
+#: common.c:665
+#, c-format
+msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
+msgstr "Час: %.3f мс (%.0f d %02d:%02d:%06.3f)\n"
+
+#: common.c:689 common.c:747 common.c:1330
+#, c-format
+msgid "You are currently not connected to a database."
+msgstr "На даний момент ви від'єднанні від бази даних."
+
+#: common.c:802
+#, c-format
+msgid "\\watch cannot be used with COPY"
+msgstr "\\watch не може бути використано з COPY"
+
+#: common.c:807
+#, c-format
+msgid "unexpected result status for \\watch"
+msgstr "неочікуваний результат статусу для \\watch"
+
+#: common.c:837
+#, c-format
+msgid "Asynchronous notification \"%s\" with payload \"%s\" received from server process with PID %d.\n"
+msgstr "Асинхронне сповіщення \"%s\" з навантаженням \"%s\" отримане від серверного процесу з PID %d.\n"
+
+#: common.c:840
+#, c-format
+msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr "Асинхронне сповіщення \"%s\" отримане від серверного процесу з PID %d.\n"
+
+#: common.c:903
+#, c-format
+msgid "no rows returned for \\gset"
+msgstr "немає рядків повернутих для \\gset"
+
+#: common.c:908
+#, c-format
+msgid "more than one row returned for \\gset"
+msgstr "більш, ніж один рядок повернуто для \\gset"
+
+#: common.c:1339
+#, c-format
+msgid "***(Single step mode: verify command)*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)********************\n"
+msgstr "***(Покроковий режим: перевірка команди)*******************************************\n"
+"%s\n"
+"***(Enter - виповнити; х і Enter - відмінити)********************\n"
+
+#: common.c:1394
+#, c-format
+msgid "The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK."
+msgstr "Сервер (версія %s) не підтримує точки збереження для ON_ERROR_ROLLBACK."
+
+#: common.c:1457
+#, c-format
+msgid "STATEMENT:  %s"
+msgstr "ІНСТРУКЦІЯ:  %s"
+
+#: common.c:1500
+#, c-format
+msgid "unexpected transaction status (%d)"
+msgstr "неочікуваний стан транзакції (%d)"
+
+#: common.c:1637 describe.c:2002
+msgid "Column"
+msgstr "Стовпець"
+
+#: common.c:1638 describe.c:179 describe.c:394 describe.c:412 describe.c:457
+#: describe.c:474 describe.c:963 describe.c:1127 describe.c:1712
+#: describe.c:1736 describe.c:2003 describe.c:3674 describe.c:3859
+#: describe.c:4092 describe.c:5298
+msgid "Type"
+msgstr "Тип"
+
+#: common.c:1687
+#, c-format
+msgid "The command has no result, or the result has no columns.\n"
+msgstr "Команда не має результату або результат не має стовпців.\n"
+
+#: copy.c:100
+#, c-format
+msgid "\\copy: arguments required"
+msgstr "\\copy: необхідні аргументи"
+
+#: copy.c:255
+#, c-format
+msgid "\\copy: parse error at \"%s\""
+msgstr "\\copy: помилка розбору аргументу біля \"%s\""
+
+#: copy.c:257
+#, c-format
+msgid "\\copy: parse error at end of line"
+msgstr "\\copy: помилка розбору в кінці рядка"
+
+#: copy.c:330
+#, c-format
+msgid "could not execute command \"%s\": %m"
+msgstr "не вдалося виконати команду \"%s\": %m"
+
+#: copy.c:346
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
+
+#: copy.c:350
+#, c-format
+msgid "%s: cannot copy from/to a directory"
+msgstr "%s: не можна копіювати з/до каталогу"
+
+#: copy.c:387
+#, c-format
+msgid "could not close pipe to external command: %m"
+msgstr "не вдалося закрити канал за допомогою зовнішньої команди: %m"
+
+#: copy.c:392
+#, c-format
+msgid "%s: %s"
+msgstr "%s: %s"
+
+#: copy.c:455 copy.c:465
+#, c-format
+msgid "could not write COPY data: %m"
+msgstr "неможливо записати дані COPY: %m"
+
+#: copy.c:471
+#, c-format
+msgid "COPY data transfer failed: %s"
+msgstr "Помилка передачі даних COPY: %s"
+
+#: copy.c:532
+msgid "canceled by user"
+msgstr "скасовано користувачем"
+
+#: copy.c:543
+msgid "Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself, or an EOF signal."
+msgstr "Введіть дані для копювання, розділяючи переносом рядка.\n"
+"Завершіть введення за допомогою \"\\.\" або за допомогою сигналу EOF."
+
+#: copy.c:671
+msgid "aborted because of read failure"
+msgstr "перервано через помилку читання"
+
+#: copy.c:705
+msgid "trying to exit copy mode"
+msgstr "спроба вийти з режиму копіювання"
+
+#: crosstabview.c:124
+#, c-format
+msgid "\\crosstabview: statement did not return a result set"
+msgstr "\\crosstabview: команда не повернула набір з результатами"
+
+#: crosstabview.c:130
+#, c-format
+msgid "\\crosstabview: query must return at least three columns"
+msgstr "\\crosstabview: запит має повернути принаймні три стовпці"
+
+#: crosstabview.c:157
+#, c-format
+msgid "\\crosstabview: vertical and horizontal headers must be different columns"
+msgstr "\\crosstabview: вертикальні і горизонтальні заголовки повинні бути різними стовпцями"
+
+#: crosstabview.c:173
+#, c-format
+msgid "\\crosstabview: data column must be specified when query returns more than three columns"
+msgstr "\\crosstabview: необхідно вказати стовпець даних, коли запит повертає більше трьох стовпців"
+
+#: crosstabview.c:229
+#, c-format
+msgid "\\crosstabview: maximum number of columns (%d) exceeded"
+msgstr "\\crosstabview: Максимальна кількість стовпців (%d) перевищена"
+
+#: crosstabview.c:398
+#, c-format
+msgid "\\crosstabview: query result contains multiple data values for row \"%s\", column \"%s\""
+msgstr "\\crosstabview: результат запиту містить кілька значень даних для рядка «%s», стовпця «%s»"
+
+#: crosstabview.c:646
+#, c-format
+msgid "\\crosstabview: column number %d is out of range 1..%d"
+msgstr "\\crosstabview: номер стовпця %d поза межами 1..%d"
+
+#: crosstabview.c:671
+#, c-format
+msgid "\\crosstabview: ambiguous column name: \"%s\""
+msgstr "\\crosstabview: неоднозначна назва стовпця: \"%s\""
+
+#: crosstabview.c:679
+#, c-format
+msgid "\\crosstabview: column name not found: \"%s\""
+msgstr "\\crosstabview: ім'я стовпця не знайдено: \"%s\""
+
+#: describe.c:77 describe.c:374 describe.c:679 describe.c:811 describe.c:955
+#: describe.c:1116 describe.c:1188 describe.c:3663 describe.c:3846
+#: describe.c:4090 describe.c:4181 describe.c:4448 describe.c:4608
+#: describe.c:4849 describe.c:4924 describe.c:4935 describe.c:4997
+#: describe.c:5422 describe.c:5505
+msgid "Schema"
+msgstr "Схема"
+
+#: describe.c:78 describe.c:176 describe.c:244 describe.c:252 describe.c:375
+#: describe.c:680 describe.c:812 describe.c:873 describe.c:956 describe.c:1189
+#: describe.c:3664 describe.c:3847 describe.c:4013 describe.c:4091
+#: describe.c:4182 describe.c:4261 describe.c:4449 describe.c:4533
+#: describe.c:4609 describe.c:4850 describe.c:4925 describe.c:4936
+#: describe.c:4998 describe.c:5195 describe.c:5279 describe.c:5503
+#: describe.c:5675 describe.c:5900
+msgid "Name"
+msgstr "Назва"
+
+#: describe.c:79 describe.c:387 describe.c:405 describe.c:451 describe.c:468
+msgid "Result data type"
+msgstr "Тип даних результату"
+
+#: describe.c:87 describe.c:100 describe.c:104 describe.c:388 describe.c:406
+#: describe.c:452 describe.c:469
+msgid "Argument data types"
+msgstr "Типи даних аргументів"
+
+#: describe.c:112 describe.c:119 describe.c:187 describe.c:275 describe.c:514
+#: describe.c:728 describe.c:827 describe.c:898 describe.c:1191 describe.c:2021
+#: describe.c:3452 describe.c:3699 describe.c:3893 describe.c:4044
+#: describe.c:4118 describe.c:4191 describe.c:4274 describe.c:4357
+#: describe.c:4476 describe.c:4542 describe.c:4610 describe.c:4751
+#: describe.c:4793 describe.c:4866 describe.c:4928 describe.c:4937
+#: describe.c:4999 describe.c:5221 describe.c:5301 describe.c:5436
+#: describe.c:5506 large_obj.c:290 large_obj.c:300
+msgid "Description"
+msgstr "Опис"
+
+#: describe.c:137
+msgid "List of aggregate functions"
+msgstr "Перелік агрегатних функцій"
+
+#: describe.c:162
+#, c-format
+msgid "The server (version %s) does not support access methods."
+msgstr "Сервер (версія %s) не підтримує методи доступу."
+
+#: describe.c:177
+msgid "Index"
+msgstr "Індекс"
+
+#: describe.c:178 describe.c:3680 describe.c:3872 describe.c:5423
+msgid "Table"
+msgstr "Таблиця"
+
+#: describe.c:186 describe.c:5200
+msgid "Handler"
+msgstr "Обробник"
+
+#: describe.c:205
+msgid "List of access methods"
+msgstr "Список методів доступу"
+
+#: describe.c:231
+#, c-format
+msgid "The server (version %s) does not support tablespaces."
+msgstr "Сервер (версія %s) не підтримує табличні простори."
+
+#: describe.c:245 describe.c:253 describe.c:502 describe.c:718 describe.c:874
+#: describe.c:1115 describe.c:3675 describe.c:3848 describe.c:4017
+#: describe.c:4263 describe.c:4534 describe.c:5196 describe.c:5280
+#: describe.c:5676 describe.c:5802 describe.c:5901 large_obj.c:289
+msgid "Owner"
+msgstr "Власник"
+
+#: describe.c:246 describe.c:254
+msgid "Location"
+msgstr "Розташування"
+
+#: describe.c:265 describe.c:3270
+msgid "Options"
+msgstr "Параметри"
+
+#: describe.c:270 describe.c:691 describe.c:890 describe.c:3691 describe.c:3695
+msgid "Size"
+msgstr "Розмір"
+
+#: describe.c:292
+msgid "List of tablespaces"
+msgstr "Список табличних просторів"
+
+#: describe.c:334
+#, c-format
+msgid "\\df only takes [anptwS+] as options"
+msgstr "\\df приймає в якості параметрів тільки [anptwS+]"
+
+#: describe.c:342 describe.c:353
+#, c-format
+msgid "\\df does not take a \"%c\" option with server version %s"
+msgstr "\\df не приймає параметр \"%c\" із сервером версії %s"
+
+#. translator: "agg" is short for "aggregate"
+#: describe.c:390 describe.c:408 describe.c:454 describe.c:471
+msgid "agg"
+msgstr "агр."
+
+#: describe.c:391 describe.c:409
+msgid "window"
+msgstr "вікно"
+
+#: describe.c:392
+msgid "proc"
+msgstr "проц"
+
+#: describe.c:393 describe.c:411 describe.c:456 describe.c:473
+msgid "func"
+msgstr "функ"
+
+#: describe.c:410 describe.c:455 describe.c:472 describe.c:1325
+msgid "trigger"
+msgstr "тригер"
+
+#: describe.c:484
+msgid "immutable"
+msgstr "постійна"
+
+#: describe.c:485
+msgid "stable"
+msgstr "стабільна"
+
+#: describe.c:486
+msgid "volatile"
+msgstr "мінлива"
+
+#: describe.c:487
+msgid "Volatility"
+msgstr "Мінливість"
+
+#: describe.c:495
+msgid "restricted"
+msgstr "обмежений"
+
+#: describe.c:496
+msgid "safe"
+msgstr "безпечний"
+
+#: describe.c:497
+msgid "unsafe"
+msgstr "небезпечний"
+
+#: describe.c:498
+msgid "Parallel"
+msgstr "Паралельність"
+
+#: describe.c:503
+msgid "definer"
+msgstr "визначник"
+
+#: describe.c:504
+msgid "invoker"
+msgstr "викликач"
+
+#: describe.c:505
+msgid "Security"
+msgstr "Безпека"
+
+#: describe.c:512
+msgid "Language"
+msgstr "Мова"
+
+#: describe.c:513
+msgid "Source code"
+msgstr "Вихідний код"
+
+#: describe.c:642
+msgid "List of functions"
+msgstr "Список функцій"
+
+#: describe.c:690
+msgid "Internal name"
+msgstr "Внутрішнє назва"
+
+#: describe.c:712
+msgid "Elements"
+msgstr "Елементи"
+
+#: describe.c:769
+msgid "List of data types"
+msgstr "Список типів даних"
+
+#: describe.c:813
+msgid "Left arg type"
+msgstr "Тип лівого аргумента"
+
+#: describe.c:814
+msgid "Right arg type"
+msgstr "Тип правого аргумента"
+
+#: describe.c:815
+msgid "Result type"
+msgstr "Результуючий тип"
+
+#: describe.c:820 describe.c:4269 describe.c:4334 describe.c:4340
+#: describe.c:4750
+msgid "Function"
+msgstr "Функція"
+
+#: describe.c:845
+msgid "List of operators"
+msgstr "Список операторів"
+
+#: describe.c:875
+msgid "Encoding"
+msgstr "Кодування"
+
+#: describe.c:880 describe.c:4450
+msgid "Collate"
+msgstr "Порядок сортування"
+
+#: describe.c:881 describe.c:4451
+msgid "Ctype"
+msgstr "Ctype"
+
+#: describe.c:894
+msgid "Tablespace"
+msgstr "Табличний простір"
+
+#: describe.c:916
+msgid "List of databases"
+msgstr "Список баз даних"
+
+#: describe.c:957 describe.c:1118 describe.c:3665
+msgid "table"
+msgstr "таблиця"
+
+#: describe.c:958 describe.c:3666
+msgid "view"
+msgstr "подання"
+
+#: describe.c:959 describe.c:3667
+msgid "materialized view"
+msgstr "матеріалізоване подання"
+
+#: describe.c:960 describe.c:1120 describe.c:3669
+msgid "sequence"
+msgstr "послідовність"
+
+#: describe.c:961 describe.c:3671
+msgid "foreign table"
+msgstr "зовнішня таблиця"
+
+#: describe.c:962 describe.c:3672 describe.c:3857
+msgid "partitioned table"
+msgstr "секційна таблиця"
+
+#: describe.c:974
+msgid "Column privileges"
+msgstr "Права для стовпців"
+
+#: describe.c:1005 describe.c:1039
+msgid "Policies"
+msgstr "Політики"
+
+#: describe.c:1071 describe.c:5957 describe.c:5961
+msgid "Access privileges"
+msgstr "Права доступу"
+
+#: describe.c:1102
+#, c-format
+msgid "The server (version %s) does not support altering default privileges."
+msgstr "Сервер (версія %s) не підтримує зміну прав за замовчуванням."
+
+#: describe.c:1122
+msgid "function"
+msgstr "функція"
+
+#: describe.c:1124
+msgid "type"
+msgstr "тип"
+
+#: describe.c:1126
+msgid "schema"
+msgstr "схема"
+
+#: describe.c:1150
+msgid "Default access privileges"
+msgstr "Права доступу за замовчуванням"
+
+#: describe.c:1190
+msgid "Object"
+msgstr "Об'єкт"
+
+#: describe.c:1204
+msgid "table constraint"
+msgstr "обмеження таблиці"
+
+#: describe.c:1226
+msgid "domain constraint"
+msgstr "обмеження домену"
+
+#: describe.c:1254
+msgid "operator class"
+msgstr "клас операторів"
+
+#: describe.c:1283
+msgid "operator family"
+msgstr "сімейство операторів"
+
+#: describe.c:1305
+msgid "rule"
+msgstr "правило"
+
+#: describe.c:1347
+msgid "Object descriptions"
+msgstr "Опис об'єкту"
+
+#: describe.c:1403 describe.c:3763
+#, c-format
+msgid "Did not find any relation named \"%s\"."
+msgstr "Не знайдено жодного відношення під назвою \"%s\"."
+
+#: describe.c:1406 describe.c:3766
+#, c-format
+msgid "Did not find any relations."
+msgstr "Не знайдено жодного відношення."
+
+#: describe.c:1661
+#, c-format
+msgid "Did not find any relation with OID %s."
+msgstr "Не знайдено жодного відношення з OID %s."
+
+#: describe.c:1713 describe.c:1737
+msgid "Start"
+msgstr "Початок"
+
+#: describe.c:1714 describe.c:1738
+msgid "Minimum"
+msgstr "Мінімум"
+
+#: describe.c:1715 describe.c:1739
+msgid "Maximum"
+msgstr "Максимум"
+
+#: describe.c:1716 describe.c:1740
+msgid "Increment"
+msgstr "Приріст"
+
+#: describe.c:1717 describe.c:1741 describe.c:1872 describe.c:4185
+#: describe.c:4351 describe.c:4465 describe.c:4470
+msgid "yes"
+msgstr "так"
+
+#: describe.c:1718 describe.c:1742 describe.c:1873 describe.c:4185
+#: describe.c:4348 describe.c:4465
+msgid "no"
+msgstr "ні"
+
+#: describe.c:1719 describe.c:1743
+msgid "Cycles?"
+msgstr "Цикли?"
+
+#: describe.c:1720 describe.c:1744
+msgid "Cache"
+msgstr "Кеш"
+
+#: describe.c:1787
+#, c-format
+msgid "Owned by: %s"
+msgstr "Власник: %s"
+
+#: describe.c:1791
+#, c-format
+msgid "Sequence for identity column: %s"
+msgstr "Послідовність для стовпця identity: %s"
+
+#: describe.c:1798
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "Послідовність \"%s.%s\""
+
+#: describe.c:1934
+#, c-format
+msgid "Unlogged table \"%s.%s\""
+msgstr "Таблиця без журналювання \"%s.%s\""
+
+#: describe.c:1937
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "Таблиця \"%s.%s\""
+
+#: describe.c:1941
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "Подання \"%s.%s\""
+
+#: describe.c:1946
+#, c-format
+msgid "Unlogged materialized view \"%s.%s\""
+msgstr "Матеріалізоване подання без журналювання \"%s.%s\""
+
+#: describe.c:1949
+#, c-format
+msgid "Materialized view \"%s.%s\""
+msgstr "Матеріалізоване подання \"%s.%s\""
+
+#: describe.c:1954
+#, c-format
+msgid "Unlogged index \"%s.%s\""
+msgstr "Індекс без журналювання \"%s.%s\""
+
+#: describe.c:1957
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "Індекс \"%s.%s\""
+
+#: describe.c:1962
+#, c-format
+msgid "Unlogged partitioned index \"%s.%s\""
+msgstr "Секційний індекс без журналювання \"%s.%s\""
+
+#: describe.c:1965
+#, c-format
+msgid "Partitioned index \"%s.%s\""
+msgstr "Секційний індекс \"%s.%s\""
+
+#: describe.c:1970
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "Спеціальне відношення \"%s.%s\""
+
+#: describe.c:1974
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "Таблиця TOAST \"%s.%s\""
+
+#: describe.c:1978
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "Композитний тип \"%s.%s\""
+
+#: describe.c:1982
+#, c-format
+msgid "Foreign table \"%s.%s\""
+msgstr "Зовнішня таблиця \"%s.%s\""
+
+#: describe.c:1987
+#, c-format
+msgid "Unlogged partitioned table \"%s.%s\""
+msgstr "Секційна таблиця без журналювання \"%s.%s\""
+
+#: describe.c:1990
+#, c-format
+msgid "Partitioned table \"%s.%s\""
+msgstr "Секційна таблиця \"%s.%s\""
+
+#: describe.c:2006 describe.c:4098
+msgid "Collation"
+msgstr "Сортування"
+
+#: describe.c:2007 describe.c:4105
+msgid "Nullable"
+msgstr "Обнуляється"
+
+#: describe.c:2008 describe.c:4106
+msgid "Default"
+msgstr "За замовчуванням"
+
+#: describe.c:2011
+msgid "Key?"
+msgstr "Ключ?"
+
+#: describe.c:2013
+msgid "Definition"
+msgstr "Визначення"
+
+#: describe.c:2015 describe.c:5216 describe.c:5300 describe.c:5371
+#: describe.c:5435
+msgid "FDW options"
+msgstr "Налаштування FDW"
+
+#: describe.c:2017
+msgid "Storage"
+msgstr "Сховище"
+
+#: describe.c:2019
+msgid "Stats target"
+msgstr "Статистична ціль"
+
+#: describe.c:2132
+#, c-format
+msgid "Partition of: %s %s"
+msgstr "Розділ: %s %s"
+
+#: describe.c:2144
+msgid "No partition constraint"
+msgstr "Відсутнє розділове обмеження"
+
+#: describe.c:2146
+#, c-format
+msgid "Partition constraint: %s"
+msgstr "Обмеження секції: %s"
+
+#: describe.c:2170
+#, c-format
+msgid "Partition key: %s"
+msgstr "Ключ розділу: %s"
+
+#: describe.c:2240
+msgid "primary key, "
+msgstr "первинний ключ,"
+
+#: describe.c:2242
+msgid "unique, "
+msgstr "унікальний,"
+
+#: describe.c:2248
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "для таблиці \"%s.%s\""
+
+#: describe.c:2252
+#, c-format
+msgid ", predicate (%s)"
+msgstr ", предикат (%s)"
+
+#: describe.c:2255
+msgid ", clustered"
+msgstr ", кластеризовано"
+
+#: describe.c:2258
+msgid ", invalid"
+msgstr ", недійсний"
+
+#: describe.c:2261
+msgid ", deferrable"
+msgstr ", відтермінований"
+
+#: describe.c:2264
+msgid ", initially deferred"
+msgstr ", від початку відтермінований"
+
+#: describe.c:2267
+msgid ", replica identity"
+msgstr ", ідентичність репліки"
+
+#: describe.c:2326
+msgid "Indexes:"
+msgstr "Індекси:"
+
+#: describe.c:2410
+msgid "Check constraints:"
+msgstr "Обмеження перевірки:"
+
+#: describe.c:2478
+msgid "Foreign-key constraints:"
+msgstr "Обмеження зовнішнього ключа:"
+
+#: describe.c:2541
+msgid "Referenced by:"
+msgstr "Посилання ззовні:"
+
+#: describe.c:2591
+msgid "Policies:"
+msgstr "Політики:"
+
+#: describe.c:2594
+msgid "Policies (forced row security enabled):"
+msgstr "Політики (посилений захист рядків активовано):"
+
+#: describe.c:2597
+msgid "Policies (row security enabled): (none)"
+msgstr "Політики (захист рядків ввімкнуто): (ні)"
+
+#: describe.c:2600
+msgid "Policies (forced row security enabled): (none)"
+msgstr "Політики (посилений захист рядків ввімкнуто): (ні)"
+
+#: describe.c:2603
+msgid "Policies (row security disabled):"
+msgstr "Політики (захист рядків вимкнуто):"
+
+#: describe.c:2666
+msgid "Statistics objects:"
+msgstr "Об'єкти статистики:"
+
+#: describe.c:2775 describe.c:2879
+msgid "Rules:"
+msgstr "Правила:"
+
+#: describe.c:2778
+msgid "Disabled rules:"
+msgstr "Вимкнені правила:"
+
+#: describe.c:2781
+msgid "Rules firing always:"
+msgstr "Правила, що завжди працюють:"
+
+#: describe.c:2784
+msgid "Rules firing on replica only:"
+msgstr "Правила, що працюють тільки на репліці:"
+
+#: describe.c:2824
+msgid "Publications:"
+msgstr "Публікації:"
+
+#: describe.c:2862
+msgid "View definition:"
+msgstr "Визначення подання:"
+
+#: describe.c:3001
+msgid "Triggers:"
+msgstr "Тригери:"
+
+#: describe.c:3005
+msgid "Disabled user triggers:"
+msgstr "Вимкнені користувацькі тригери:"
+
+#: describe.c:3007
+msgid "Disabled triggers:"
+msgstr "Вимкнені тригери:"
+
+#: describe.c:3010
+msgid "Disabled internal triggers:"
+msgstr "Вимкнені внутрішні тригери:"
+
+#: describe.c:3013
+msgid "Triggers firing always:"
+msgstr "Тригери, що завжди працюють:"
+
+#: describe.c:3016
+msgid "Triggers firing on replica only:"
+msgstr "Тригери, що працюють тільки на репліці:"
+
+#: describe.c:3075
+#, c-format
+msgid "Server: %s"
+msgstr "Сервер: %s"
+
+#: describe.c:3083
+#, c-format
+msgid "FDW options: (%s)"
+msgstr "Налаштування FDW: (%s)"
+
+#: describe.c:3102
+msgid "Inherits"
+msgstr "Успадковує"
+
+#: describe.c:3161
+#, c-format
+msgid "Number of partitions: %d"
+msgstr "Число секцій: %d"
+
+#: describe.c:3170
+#, c-format
+msgid "Number of child tables: %d (Use \\d+ to list them.)"
+msgstr "Кількість дочірніх таблиць: %d (\\d+ для списку)"
+
+#: describe.c:3172
+#, c-format
+msgid "Number of partitions: %d (Use \\d+ to list them.)"
+msgstr "Кількість розділів: %d (\\d+ для списку)"
+
+#: describe.c:3180
+msgid "Child tables"
+msgstr "Дочірні таблиці"
+
+#: describe.c:3180
+msgid "Partitions"
+msgstr "Розділи"
+
+#: describe.c:3223
+#, c-format
+msgid "Typed table of type: %s"
+msgstr "Типізована таблиця типу: %s"
+
+#: describe.c:3239
+msgid "Replica Identity"
+msgstr "Ідентичність репліки"
+
+#: describe.c:3252
+msgid "Has OIDs: yes"
+msgstr "Має OIDs: так"
+
+#: describe.c:3261
+#, c-format
+msgid "Access method: %s"
+msgstr "Метод доступу: %s"
+
+#: describe.c:3340
+#, c-format
+msgid "Tablespace: \"%s\""
+msgstr "Табличний простір: \"%s\""
+
+#. translator: before this string there's an index description like
+#. '"foo_pkey" PRIMARY KEY, btree (a)'
+#: describe.c:3352
+#, c-format
+msgid ", tablespace \"%s\""
+msgstr ", табличний простір \"%s\""
+
+#: describe.c:3445
+msgid "List of roles"
+msgstr "Список ролей"
+
+#: describe.c:3447
+msgid "Role name"
+msgstr "Ім'я ролі"
+
+#: describe.c:3448
+msgid "Attributes"
+msgstr "Атрибути"
+
+#: describe.c:3449
+msgid "Member of"
+msgstr "Член"
+
+#: describe.c:3460
+msgid "Superuser"
+msgstr "Суперкористувач"
+
+#: describe.c:3463
+msgid "No inheritance"
+msgstr "Без успадкування"
+
+#: describe.c:3466
+msgid "Create role"
+msgstr "Створити роль"
+
+#: describe.c:3469
+msgid "Create DB"
+msgstr "Створити базу даних"
+
+#: describe.c:3472
+msgid "Cannot login"
+msgstr "Не може увійти"
+
+#: describe.c:3476
+msgid "Replication"
+msgstr "Реплікація"
+
+#: describe.c:3480
+msgid "Bypass RLS"
+msgstr "Обхід RLC"
+
+#: describe.c:3489
+msgid "No connections"
+msgstr "Без підключень"
+
+#: describe.c:3491
+#, c-format
+msgid "%d connection"
+msgid_plural "%d connections"
+msgstr[0] "%d підключення"
+msgstr[1] "%d підключення"
+msgstr[2] "%d підключень"
+msgstr[3] "%d підключення"
+
+#: describe.c:3501
+msgid "Password valid until "
+msgstr "Пароль дійнсий до"
+
+#: describe.c:3551
+#, c-format
+msgid "The server (version %s) does not support per-database role settings."
+msgstr "Сервер (версія %s) не підтримує рольові налаштування побазово."
+
+#: describe.c:3564
+msgid "Role"
+msgstr "Роль"
+
+#: describe.c:3565
+msgid "Database"
+msgstr "База даних"
+
+#: describe.c:3566
+msgid "Settings"
+msgstr "Параметри"
+
+#: describe.c:3587
+#, c-format
+msgid "Did not find any settings for role \"%s\" and database \"%s\"."
+msgstr "Не знайдено жодного параметра для ролі \"%s\" і бази даних \"%s\"."
+
+#: describe.c:3590
+#, c-format
+msgid "Did not find any settings for role \"%s\"."
+msgstr "Не знайдено жодного параметру для ролі \"%s\"."
+
+#: describe.c:3593
+#, c-format
+msgid "Did not find any settings."
+msgstr "Не знайдено жодного параметру."
+
+#: describe.c:3598
+msgid "List of settings"
+msgstr "Список параметрів"
+
+#: describe.c:3668
+msgid "index"
+msgstr "індекс"
+
+#: describe.c:3670
+msgid "special"
+msgstr "спеціальний"
+
+#: describe.c:3673 describe.c:3858
+msgid "partitioned index"
+msgstr "секційний індекс"
+
+#: describe.c:3771
+msgid "List of relations"
+msgstr "Список відношень"
+
+#: describe.c:3819
+#, c-format
+msgid "The server (version %s) does not support declarative table partitioning."
+msgstr "Сервер (версія %s) не підтримує декларативне секціонування таблиць."
+
+#: describe.c:3830
+msgid "List of partitioned indexes"
+msgstr "Список секційних індексів"
+
+#: describe.c:3832
+msgid "List of partitioned tables"
+msgstr "Список секційних таблиць"
+
+#: describe.c:3836
+msgid "List of partitioned relations"
+msgstr "Список секційних відношень"
+
+#: describe.c:3867
+msgid "Parent name"
+msgstr "Батьківська назва"
+
+#: describe.c:3880
+msgid "Leaf partition size"
+msgstr "Розмір дочірньої секції"
+
+#: describe.c:3883 describe.c:3889
+msgid "Total size"
+msgstr "Загальний розмір"
+
+#: describe.c:4021
+msgid "Trusted"
+msgstr "Надійний"
+
+#: describe.c:4029
+msgid "Internal language"
+msgstr "Внутрішня мова"
+
+#: describe.c:4030
+msgid "Call handler"
+msgstr "Обробник виклику"
+
+#: describe.c:4031 describe.c:5203
+msgid "Validator"
+msgstr "Функція перевірки"
+
+#: describe.c:4034
+msgid "Inline handler"
+msgstr "Оброблювач впровадженого коду"
+
+#: describe.c:4062
+msgid "List of languages"
+msgstr "Список мов"
+
+#: describe.c:4107
+msgid "Check"
+msgstr "Перевірка"
+
+#: describe.c:4149
+msgid "List of domains"
+msgstr "Список доменів"
+
+#: describe.c:4183
+msgid "Source"
+msgstr "Джерело"
+
+#: describe.c:4184
+msgid "Destination"
+msgstr "Призначення"
+
+#: describe.c:4186
+msgid "Default?"
+msgstr "За замовчуванням?"
+
+#: describe.c:4223
+msgid "List of conversions"
+msgstr "Список перетворень"
+
+#: describe.c:4262
+msgid "Event"
+msgstr "Подія"
+
+#: describe.c:4264
+msgid "enabled"
+msgstr "увімкнено"
+
+#: describe.c:4265
+msgid "replica"
+msgstr "репліка"
+
+#: describe.c:4266
+msgid "always"
+msgstr "завжди"
+
+#: describe.c:4267
+msgid "disabled"
+msgstr "вимкнено"
+
+#: describe.c:4268 describe.c:5902
+msgid "Enabled"
+msgstr "Увімкнено"
+
+#: describe.c:4270
+msgid "Tags"
+msgstr "Теги"
+
+#: describe.c:4289
+msgid "List of event triggers"
+msgstr "Список тригерів подій"
+
+#: describe.c:4318
+msgid "Source type"
+msgstr "Початковий тип"
+
+#: describe.c:4319
+msgid "Target type"
+msgstr "Тип цілі"
+
+#: describe.c:4350
+msgid "in assignment"
+msgstr "у призначенні"
+
+#: describe.c:4352
+msgid "Implicit?"
+msgstr "Приховане?"
+
+#: describe.c:4407
+msgid "List of casts"
+msgstr "Список приведення типів"
+
+#: describe.c:4435
+#, c-format
+msgid "The server (version %s) does not support collations."
+msgstr "Сервер (версія %s) не підтримує співставлення."
+
+#: describe.c:4456 describe.c:4460
+msgid "Provider"
+msgstr "Постачальник"
+
+#: describe.c:4466 describe.c:4471
+msgid "Deterministic?"
+msgstr "Детермінований?"
+
+#: describe.c:4506
+msgid "List of collations"
+msgstr "Список правил сортування"
+
+#: describe.c:4565
+msgid "List of schemas"
+msgstr "Список схем"
+
+#: describe.c:4590 describe.c:4837 describe.c:4908 describe.c:4979
+#, c-format
+msgid "The server (version %s) does not support full text search."
+msgstr "Сервер (версія %s) не підтримує повнотекстовий пошук."
+
+#: describe.c:4625
+msgid "List of text search parsers"
+msgstr "Список парсерів текстового пошуку"
+
+#: describe.c:4670
+#, c-format
+msgid "Did not find any text search parser named \"%s\"."
+msgstr "Не знайдено жодного парсера текстового пошуку \"%s\"."
+
+#: describe.c:4673
+#, c-format
+msgid "Did not find any text search parsers."
+msgstr "Не знайдено жодного парсера текстового пошуку."
+
+#: describe.c:4748
+msgid "Start parse"
+msgstr "Почати розбір"
+
+#: describe.c:4749
+msgid "Method"
+msgstr "Метод"
+
+#: describe.c:4753
+msgid "Get next token"
+msgstr "Отримати наступний токен"
+
+#: describe.c:4755
+msgid "End parse"
+msgstr "Закінчити розбір"
+
+#: describe.c:4757
+msgid "Get headline"
+msgstr "Отримати заголовок"
+
+#: describe.c:4759
+msgid "Get token types"
+msgstr "Отримати типи токенів"
+
+#: describe.c:4770
+#, c-format
+msgid "Text search parser \"%s.%s\""
+msgstr "Парсер текстового пошуку \"%s.%s\""
+
+#: describe.c:4773
+#, c-format
+msgid "Text search parser \"%s\""
+msgstr "Парсер текстового пошуку \"%s\""
+
+#: describe.c:4792
+msgid "Token name"
+msgstr "Ім'я токену"
+
+#: describe.c:4803
+#, c-format
+msgid "Token types for parser \"%s.%s\""
+msgstr "Типи токенів для парсера \"%s.%s\""
+
+#: describe.c:4806
+#, c-format
+msgid "Token types for parser \"%s\""
+msgstr "Типи токенів для парсера \"%s\""
+
+#: describe.c:4860
+msgid "Template"
+msgstr "Шаблон"
+
+#: describe.c:4861
+msgid "Init options"
+msgstr "Параметри ініціалізації"
+
+#: describe.c:4883
+msgid "List of text search dictionaries"
+msgstr "Список словників текстового пошуку"
+
+#: describe.c:4926
+msgid "Init"
+msgstr "Ініціалізація"
+
+#: describe.c:4927
+msgid "Lexize"
+msgstr "Виділення лексем"
+
+#: describe.c:4954
+msgid "List of text search templates"
+msgstr "Список шаблонів текстового пошуку"
+
+#: describe.c:5014
+msgid "List of text search configurations"
+msgstr "Список конфігурацій текстового пошуку"
+
+#: describe.c:5060
+#, c-format
+msgid "Did not find any text search configuration named \"%s\"."
+msgstr "Не знайдено жодної конфігурації текстового пошуку під назвою \"%s\"."
+
+#: describe.c:5063
+#, c-format
+msgid "Did not find any text search configurations."
+msgstr "Не знайдено жодної конфігурації текствого пошуку."
+
+#: describe.c:5129
+msgid "Token"
+msgstr "Токен"
+
+#: describe.c:5130
+msgid "Dictionaries"
+msgstr "Словники"
+
+#: describe.c:5141
+#, c-format
+msgid "Text search configuration \"%s.%s\""
+msgstr "Конфігурація пошуку тексту \"%s.%s\""
+
+#: describe.c:5144
+#, c-format
+msgid "Text search configuration \"%s\""
+msgstr "Конфігурація пошуку тексту \"%s\""
+
+#: describe.c:5148
+#, c-format
+msgid "\n"
+"Parser: \"%s.%s\""
+msgstr "\n"
+"Парсер: \"%s.%s\""
+
+#: describe.c:5151
+#, c-format
+msgid "\n"
+"Parser: \"%s\""
+msgstr "\n"
+"Парсер: \"%s\""
+
+#: describe.c:5185
+#, c-format
+msgid "The server (version %s) does not support foreign-data wrappers."
+msgstr "Сервер (версія %s) не підтримує джерела сторонніх даних."
+
+#: describe.c:5243
+msgid "List of foreign-data wrappers"
+msgstr "Список джерел сторонніх даних"
+
+#: describe.c:5268
+#, c-format
+msgid "The server (version %s) does not support foreign servers."
+msgstr "Сервер (версія %s) не підтримує сторонні сервери."
+
+#: describe.c:5281
+msgid "Foreign-data wrapper"
+msgstr "Джерело сторонніх даних"
+
+#: describe.c:5299 describe.c:5504
+msgid "Version"
+msgstr "Версія"
+
+#: describe.c:5325
+msgid "List of foreign servers"
+msgstr "Список сторонніх серверів"
+
+#: describe.c:5350
+#, c-format
+msgid "The server (version %s) does not support user mappings."
+msgstr "Сервер (версія %s) не підтримує зіставлення користувачів."
+
+#: describe.c:5360 describe.c:5424
+msgid "Server"
+msgstr "Сервер"
+
+#: describe.c:5361
+msgid "User name"
+msgstr "Ім'я користувача"
+
+#: describe.c:5386
+msgid "List of user mappings"
+msgstr "Список зіставлень користувачів"
+
+#: describe.c:5411
+#, c-format
+msgid "The server (version %s) does not support foreign tables."
+msgstr "Сервер (версія %s) не підтримує сторонні таблиці."
+
+#: describe.c:5464
+msgid "List of foreign tables"
+msgstr "Список сторонніх таблиць"
+
+#: describe.c:5489 describe.c:5546
+#, c-format
+msgid "The server (version %s) does not support extensions."
+msgstr "Сервер (версія %s) не підтримує розширення."
+
+#: describe.c:5521
+msgid "List of installed extensions"
+msgstr "Список встановлених розширень"
+
+#: describe.c:5574
+#, c-format
+msgid "Did not find any extension named \"%s\"."
+msgstr "Не знайдено жодного розширення під назвою \"%s\"."
+
+#: describe.c:5577
+#, c-format
+msgid "Did not find any extensions."
+msgstr "Не знайдено жодного розширення."
+
+#: describe.c:5621
+msgid "Object description"
+msgstr "Опис об'єкту"
+
+#: describe.c:5631
+#, c-format
+msgid "Objects in extension \"%s\""
+msgstr "Об'єкти в розширенні \"%s\""
+
+#: describe.c:5660 describe.c:5731
+#, c-format
+msgid "The server (version %s) does not support publications."
+msgstr "Сервер (версія %s) не підтримує публікації."
+
+#: describe.c:5677 describe.c:5803
+msgid "All tables"
+msgstr "Усі таблиці"
+
+#: describe.c:5678 describe.c:5804
+msgid "Inserts"
+msgstr "Вставки"
+
+#: describe.c:5679 describe.c:5805
+msgid "Updates"
+msgstr "Оновлення"
+
+#: describe.c:5680 describe.c:5806
+msgid "Deletes"
+msgstr "Видалення"
+
+#: describe.c:5684 describe.c:5808
+msgid "Truncates"
+msgstr "Очищення"
+
+#: describe.c:5701
+msgid "List of publications"
+msgstr "Список публікацій"
+
+#: describe.c:5769
+#, c-format
+msgid "Did not find any publication named \"%s\"."
+msgstr "Не знайдено жодної публікації під назвою \"%s\"."
+
+#: describe.c:5772
+#, c-format
+msgid "Did not find any publications."
+msgstr "Не знайдено жодної публікації."
+
+#: describe.c:5799
+#, c-format
+msgid "Publication %s"
+msgstr "Публікація %s"
+
+#: describe.c:5843
+msgid "Tables:"
+msgstr "Таблиці:"
+
+#: describe.c:5887
+#, c-format
+msgid "The server (version %s) does not support subscriptions."
+msgstr "Сервер (версія %s) не підтримує підписки."
+
+#: describe.c:5903
+msgid "Publication"
+msgstr "Публікація"
+
+#: describe.c:5910
+msgid "Synchronous commit"
+msgstr "Синхронні затвердження"
+
+#: describe.c:5911
+msgid "Conninfo"
+msgstr "Conninfo"
+
+#: describe.c:5933
+msgid "List of subscriptions"
+msgstr "Список підписок"
+
+#: help.c:74
+#, c-format
+msgid "psql is the PostgreSQL interactive terminal.\n\n"
+msgstr "psql - це інтерактивний термінал PostgreSQL.\n\n"
+
+#: help.c:75 help.c:349 help.c:425 help.c:468
+#, c-format
+msgid "Usage:\n"
+msgstr "Використання:\n"
+
+#: help.c:76
+#, c-format
+msgid "  psql [OPTION]... [DBNAME [USERNAME]]\n\n"
+msgstr "  psql [ОПЦІЯ]... [БД [КОРИСТУВАЧ]]\n\n"
+
+#: help.c:78
+#, c-format
+msgid "General options:\n"
+msgstr "Основні налаштування:\n"
+
+#: help.c:83
+#, c-format
+msgid "  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"
+msgstr "  -c, --command=КОМАНДА    виконати лише одну команду (SQL або внутрішню) і вийти\n"
+
+#: help.c:84
+#, c-format
+msgid "  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"
+msgstr "  -d, --dbname=DBNAME      ім'я бази даних для підключення (за замовчання: \"%s\") \n"
+
+#: help.c:85
+#, c-format
+msgid "  -f, --file=FILENAME      execute commands from file, then exit\n"
+msgstr "  -f, --file=FILENAME      виконує команди з файлу, потім виходить\n"
+
+#: help.c:86
+#, c-format
+msgid "  -l, --list               list available databases, then exit\n"
+msgstr "  -l, --list               виводить список доступних баз даних, потім виходить\n"
+
+#: help.c:87
+#, c-format
+msgid "  -v, --set=, --variable=NAME=VALUE\n"
+"                           set psql variable NAME to VALUE\n"
+"                           (e.g., -v ON_ERROR_STOP=1)\n"
+msgstr "  -v, --set=, --variable=NAME=VALUE\n"
+"                           присвоїти змінній psql NAME значення VALUE\n"
+"                           (наприклад, -v ON_ERROR_STOP=1)\n"
+
+#: help.c:90
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            вивести інофрмацію про версію, потім вийти\n"
+
+#: help.c:91
+#, c-format
+msgid "  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"
+msgstr "  -X, --no-psqlrc          ігнорувати файл параметрів запуска (~/.psqlrc)\n"
+
+#: help.c:92
+#, c-format
+msgid "  -1 (\"one\"), --single-transaction\n"
+"                           execute as a single transaction (if non-interactive)\n"
+msgstr "  -1 (\"один\"), --single-transaction\n"
+"                           виконує як одну транзакцію (якщо не інтерактивна)\n"
+
+#: help.c:94
+#, c-format
+msgid "  -?, --help[=options]     show this help, then exit\n"
+msgstr "  -?, --help [=options]    показати цю довідку, потім вийти\n"
+
+#: help.c:95
+#, c-format
+msgid "      --help=commands      list backslash commands, then exit\n"
+msgstr "      --help=commands    перерахувати команди, потім вийти\n"
+
+#: help.c:96
+#, c-format
+msgid "      --help=variables     list special variables, then exit\n"
+msgstr "      --help=variables     перерахувати спеціальні змінні, потім вийти\n"
+
+#: help.c:98
+#, c-format
+msgid "\n"
+"Input and output options:\n"
+msgstr "\n"
+"Параметри вводу і виводу:\n"
+
+#: help.c:99
+#, c-format
+msgid "  -a, --echo-all           echo all input from script\n"
+msgstr "  -a, --echo-all           відобразити всі вхідні дані з скрипта\n"
+
+#: help.c:100
+#, c-format
+msgid "  -b, --echo-errors        echo failed commands\n"
+msgstr "  -b, --echo-errors        відобразити команди з помилками\n"
+
+#: help.c:101
+#, c-format
+msgid "  -e, --echo-queries       echo commands sent to server\n"
+msgstr "  -e, --echo-queries       відобразити команди, відправлені на сервер\n"
+
+#: help.c:102
+#, c-format
+msgid "  -E, --echo-hidden        display queries that internal commands generate\n"
+msgstr "  -E, --echo-hidden       відобразити запити, згенеровані внутрішніми командами\n"
+
+#: help.c:103
+#, c-format
+msgid "  -L, --log-file=FILENAME  send session log to file\n"
+msgstr "  -L, --log-file=FILENAME  зберегти протокол роботи у файл\n"
+
+#: help.c:104
+#, c-format
+msgid "  -n, --no-readline        disable enhanced command line editing (readline)\n"
+msgstr "  -n, --no-readline        вимкнути розширене редагування командного рядка (readline)\n"
+
+#: help.c:105
+#, c-format
+msgid "  -o, --output=FILENAME    send query results to file (or |pipe)\n"
+msgstr "  -o, --output=FILENAME    надсилати результати запиту до файлу (або до каналу |)\n"
+
+#: help.c:106
+#, c-format
+msgid "  -q, --quiet              run quietly (no messages, only query output)\n"
+msgstr "  -q, --quiet              тихий запуск (ніяких повідомлень, лише результат запитів)\n"
+
+#: help.c:107
+#, c-format
+msgid "  -s, --single-step        single-step mode (confirm each query)\n"
+msgstr "  -s, --single-step        покроковий режим (підтвердження кожного запиту)\n"
+
+#: help.c:108
+#, c-format
+msgid "  -S, --single-line        single-line mode (end of line terminates SQL command)\n"
+msgstr "  -S, --single-line        однорядковий режим (кінець рядка завершує команду)\n"
+
+#: help.c:110
+#, c-format
+msgid "\n"
+"Output format options:\n"
+msgstr "\n"
+"Параметри формату виводу:\n"
+
+#: help.c:111
+#, c-format
+msgid "  -A, --no-align           unaligned table output mode\n"
+msgstr "  -A, --no-align           режим виводу не вирівняної таблиці\n"
+
+#: help.c:112
+#, c-format
+msgid "      --csv                CSV (Comma-Separated Values) table output mode\n"
+msgstr "      --csv                режим виводу таблиць CSV (Comma-Separated Values)\n"
+
+#: help.c:113
+#, c-format
+msgid "  -F, --field-separator=STRING\n"
+"                           field separator for unaligned output (default: \"%s\")\n"
+msgstr "  -F, --field-separator=СТРОКА\n"
+"                           розділювач полів при не вирівняному виводі\n"
+"                           (за замовчуванням: \"%s\")\n"
+
+#: help.c:116
+#, c-format
+msgid "  -H, --html               HTML table output mode\n"
+msgstr "  -H, --html               вивід таблиці у форматі HTML\n"
+
+#: help.c:117
+#, c-format
+msgid "  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"
+msgstr "  -P, --pset=VAR[=ARG]     встановити параметр виводу змінної VAR значенню ARG (див. команду \"\\pset\")\n"
+
+#: help.c:118
+#, c-format
+msgid "  -R, --record-separator=STRING\n"
+"                           record separator for unaligned output (default: newline)\n"
+msgstr "  -R, --record-separator=СТРОКА\n"
+"                           розділювач записів при не вирівняному виводі\n"
+"                           (за замовчуванням: новий рядок)\n"
+
+#: help.c:120
+#, c-format
+msgid "  -t, --tuples-only        print rows only\n"
+msgstr "  -t, --tuples-only        виводити лише рядки\n"
+
+#: help.c:121
+#, c-format
+msgid "  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"
+msgstr "  -T, --table-attr=ТЕКСТ   встановити атрибути HTML-таблиці (width, border)\n"
+
+#: help.c:122
+#, c-format
+msgid "  -x, --expanded           turn on expanded table output\n"
+msgstr "  -x, --expanded           ввімкнути розширене виведення таблиці\n"
+
+#: help.c:123
+#, c-format
+msgid "  -z, --field-separator-zero\n"
+"                           set field separator for unaligned output to zero byte\n"
+msgstr "  -z, --field-separator-zero\n"
+"                           встановити розділювач полів для не вирівняного виводу в нульовий байт\n"
+
+#: help.c:125
+#, c-format
+msgid "  -0, --record-separator-zero\n"
+"                           set record separator for unaligned output to zero byte\n"
+msgstr "  -0, --record-separator-zero\n"
+"                           встановити розділювач записів для не вирівняного виводу в нульовий байт\n"
+
+#: help.c:128
+#, c-format
+msgid "\n"
+"Connection options:\n"
+msgstr "\n"
+"Налаштування з'єднання:\n"
+
+#: help.c:131
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n"
+msgstr "  -h, --host=HOSTNAME     хост сервера бази даних або каталог сокетів (за замовчуванням: \"%s)\n"
+
+#: help.c:132
+msgid "local socket"
+msgstr "локальний сокет"
+
+#: help.c:135
+#, c-format
+msgid "  -p, --port=PORT          database server port (default: \"%s\")\n"
+msgstr "  -p, --port=PORT        порт сервера бази даних (за замовчуванням: \"%s\")\n"
+
+#: help.c:141
+#, c-format
+msgid "  -U, --username=USERNAME  database user name (default: \"%s\")\n"
+msgstr "  -U, --username=USERNAME   ім'я користувача бази  даних (за змовчуванням: \"%s\")\n"
+
+#: help.c:142
+#, c-format
+msgid "  -w, --no-password        never prompt for password\n"
+msgstr "  -w, --no-password        ніколи не запитувати пароль\n"
+
+#: help.c:143
+#, c-format
+msgid "  -W, --password           force password prompt (should happen automatically)\n"
+msgstr "  -W, --password           запитувати пароль завжди (повинно траплятись автоматично)\n"
+
+#: help.c:145
+#, c-format
+msgid "\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
+"commands) from within psql, or consult the psql section in the PostgreSQL\n"
+"documentation.\n\n"
+msgstr "\n"
+"Щоб дізнатися більше, введіть \"\\?\" (для внутрішніх команд) або \"\\help\"(для команд SQL) в psql, або звіртеся з розділом psql документації PostgreSQL. \n\n"
+
+#: help.c:148
+#, c-format
+msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr "Про помилки повідомляйте на <pgsql-bugs@lists.postgresql.org>.\n"
+
+#: help.c:174
+#, c-format
+msgid "General\n"
+msgstr "Загальні\n"
+
+#: help.c:175
+#, c-format
+msgid "  \\copyright             show PostgreSQL usage and distribution terms\n"
+msgstr "  \\copyright             умови використання і розповсюдження PostgreSQL\n"
+
+#: help.c:176
+#, c-format
+msgid "  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"
+msgstr "  \\crosstabview [COLUMNS] виконати запит і відобразити результати у перехресній таблиці\n"
+
+#: help.c:177
+#, c-format
+msgid "  \\errverbose            show most recent error message at maximum verbosity\n"
+msgstr "  \\errverbose            вивести максимально докладне повідомлення про останню помилку\n"
+
+#: help.c:178
+#, c-format
+msgid "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
+msgstr "  \\g [FILE] or ;        виконати запит (та надіслати результати до файлу або до каналу |)\n"
+
+#: help.c:179
+#, c-format
+msgid "  \\gdesc                 describe result of query, without executing it\n"
+msgstr "  \\gdesc                 описати результат запиту без виконання\n"
+
+#: help.c:180
+#, c-format
+msgid "  \\gexec                 execute query, then execute each value in its result\n"
+msgstr "  \\gexec                 виконати запит, потім виконати кожне значення в його результаті\n"
+
+#: help.c:181
+#, c-format
+msgid "  \\gset [PREFIX]         execute query and store results in psql variables\n"
+msgstr "  \\gset [PREFIX]        виконати запит та зберегти результати в змінних psql \n"
+
+#: help.c:182
+#, c-format
+msgid "  \\gx [FILE]             as \\g, but forces expanded output mode\n"
+msgstr "  \\gx [FILE]             те саме, що й \"\\g\", але в режимі розширеного виводу\n"
+
+#: help.c:183
+#, c-format
+msgid "  \\q                     quit psql\n"
+msgstr "  \\q                     вийти з psql\n"
+
+#: help.c:184
+#, c-format
+msgid "  \\watch [SEC]           execute query every SEC seconds\n"
+msgstr "  \\watch [SEC]           виконувати запит кожні SEC секунд\n"
+
+#: help.c:187
+#, c-format
+msgid "Help\n"
+msgstr "Довідка\n"
+
+#: help.c:189
+#, c-format
+msgid "  \\? [commands]          show help on backslash commands\n"
+msgstr "  \\? [commands]          показати довідку по командах з \\\n"
+
+#: help.c:190
+#, c-format
+msgid "  \\? options             show help on psql command-line options\n"
+msgstr "  \\? options             показати довідку по параметрах командного рядку psql\n"
+
+#: help.c:191
+#, c-format
+msgid "  \\? variables           show help on special variables\n"
+msgstr "  \\? variables           показати довідку по спеціальних змінних\n"
+
+#: help.c:192
+#, c-format
+msgid "  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"
+msgstr "  \\h [NAME]              довідка з синтаксису команд SQL, * для всіх команд\n"
+
+#: help.c:195
+#, c-format
+msgid "Query Buffer\n"
+msgstr "Буфер запитів\n"
+
+#: help.c:196
+#, c-format
+msgid "  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"
+msgstr "  \\e [FILE] [LINE]        редагувати буфер запитів (або файл) зовнішнім редактором\n"
+
+#: help.c:197
+#, c-format
+msgid "  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"
+msgstr "  \\ef [FUNCNAME [LINE]]   редагувати визначення функції  зовнішнім редактором\n"
+
+#: help.c:198
+#, c-format
+msgid "  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"
+msgstr "  \\ev [VIEWNAME [LINE]]  редагувати визначення подання зовнішнім редактором\n"
+
+#: help.c:199
+#, c-format
+msgid "  \\p                     show the contents of the query buffer\n"
+msgstr "  \\p                     показати вміст буфера запитів\n"
+
+#: help.c:200
+#, c-format
+msgid "  \\r                     reset (clear) the query buffer\n"
+msgstr "  \\r                    скинути (очистити) буфер запитів\n"
+
+#: help.c:202
+#, c-format
+msgid "  \\s [FILE]              display history or save it to file\n"
+msgstr "  \\s [FILE]              відобразити історію або зберегти її до файлу\n"
+
+#: help.c:204
+#, c-format
+msgid "  \\w FILE                write query buffer to file\n"
+msgstr "  \\w FILE                писати буфер запитів до файлу\n"
+
+#: help.c:207
+#, c-format
+msgid "Input/Output\n"
+msgstr "Ввід/Вивід\n"
+
+#: help.c:208
+#, c-format
+msgid "  \\copy ...              perform SQL COPY with data stream to the client host\n"
+msgstr "  \\copy ...              виконати команду SQL COPY з потоком даних на клієнтський хост\n"
+
+#: help.c:209
+#, c-format
+msgid "  \\echo [STRING]         write string to standard output\n"
+msgstr "  \\echo [STRING]         вивести рядок на стандартний вивід\n"
+
+#: help.c:210
+#, c-format
+msgid "  \\i FILE                execute commands from file\n"
+msgstr "  \\i FILE              виконати команди з файлу\n"
+
+#: help.c:211
+#, c-format
+msgid "  \\ir FILE               as \\i, but relative to location of current script\n"
+msgstr "  \\ir ФАЙЛ              те саме, що \\i, але відносно розташування поточного сценарію\n"
+
+#: help.c:212
+#, c-format
+msgid "  \\o [FILE]              send all query results to file or |pipe\n"
+msgstr "  \\o [FILE]            надсилати всі результати запитів до файлу або до каналу |\n"
+
+#: help.c:213
+#, c-format
+msgid "  \\qecho [STRING]        write string to query output stream (see \\o)\n"
+msgstr "  \\qecho [STRING]        вивести рядок до потоку виводу запитів (див. \\o)\n"
+
+#: help.c:216
+#, c-format
+msgid "Conditional\n"
+msgstr "Умовний\n"
+
+#: help.c:217
+#, c-format
+msgid "  \\if EXPR               begin conditional block\n"
+msgstr "  \\if EXPR              початок умовного блоку\n"
+
+#: help.c:218
+#, c-format
+msgid "  \\elif EXPR             alternative within current conditional block\n"
+msgstr "  \\elif EXPR            альтернатива в рамках поточного блоку\n"
+
+#: help.c:219
+#, c-format
+msgid "  \\else                  final alternative within current conditional block\n"
+msgstr "  \\else                  остаточна альтернатива в рамках поточного умовного блоку\n"
+
+#: help.c:220
+#, c-format
+msgid "  \\endif                 end conditional block\n"
+msgstr "  \\endif                  кінець умовного блоку\n"
+
+#: help.c:223
+#, c-format
+msgid "Informational\n"
+msgstr "Інформаційний\n"
+
+#: help.c:224
+#, c-format
+msgid "  (options: S = show system objects, + = additional detail)\n"
+msgstr "  (параметри: S = показати системні об'єкти, + = додаткові деталі)\n"
+
+#: help.c:225
+#, c-format
+msgid "  \\d[S+]                 list tables, views, and sequences\n"
+msgstr "  \\d[S+]                 вивести таблиці, подання і послідовності\n"
+
+#: help.c:226
+#, c-format
+msgid "  \\d[S+]  NAME           describe table, view, sequence, or index\n"
+msgstr "  \\d[S+]  NAME           описати таблицю, подання, послідовність або індекс\n"
+
+#: help.c:227
+#, c-format
+msgid "  \\da[S]  [PATTERN]      list aggregates\n"
+msgstr "  \\da[S]  [PATTERN]      вивести агрегати\n"
+
+#: help.c:228
+#, c-format
+msgid "  \\dA[+]  [PATTERN]      list access methods\n"
+msgstr "  \\dA[+]  [PATTERN]      вивести методи доступу\n"
+
+#: help.c:229
+#, c-format
+msgid "  \\db[+]  [PATTERN]      list tablespaces\n"
+msgstr "  \\db[+]  [PATTERN]      вивести табличні простори\n"
+
+#: help.c:230
+#, c-format
+msgid "  \\dc[S+] [PATTERN]      list conversions\n"
+msgstr "  \\dc[S+] [PATTERN]      вивести перетворення\n"
+
+#: help.c:231
+#, c-format
+msgid "  \\dC[+]  [PATTERN]      list casts\n"
+msgstr "  \\dC[+]  [PATTERN]      вивести приведення типів\n"
+
+#: help.c:232
+#, c-format
+msgid "  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"
+msgstr "  \\dd[S]  [PATTERN]      показати опис об'єкта, що не відображається в іншому місці\n"
+
+#: help.c:233
+#, c-format
+msgid "  \\dD[S+] [PATTERN]      list domains\n"
+msgstr "  \\dD[S+] [PATTERN]      вивести домени\n"
+
+#: help.c:234
+#, c-format
+msgid "  \\ddp    [PATTERN]      list default privileges\n"
+msgstr "  \\ddp    [PATTERN]      вивести привілеї за замовчуванням\n"
+
+#: help.c:235
+#, c-format
+msgid "  \\dE[S+] [PATTERN]      list foreign tables\n"
+msgstr "  \\dE[S+] [PATTERN]      вивести зовнішні таблиці\n"
+
+#: help.c:236
+#, c-format
+msgid "  \\det[+] [PATTERN]      list foreign tables\n"
+msgstr "  \\dE[S+] [PATTERN]      вивести зовнішні таблиці\n"
+
+#: help.c:237
+#, c-format
+msgid "  \\des[+] [PATTERN]      list foreign servers\n"
+msgstr "  \\des[+] [PATTERN]      вивести зовнішні сервери\n"
+
+#: help.c:238
+#, c-format
+msgid "  \\deu[+] [PATTERN]      list user mappings\n"
+msgstr "  \\deu[+] [PATTERN]      вивести користувацькі зіставлення\n"
+
+#: help.c:239
+#, c-format
+msgid "  \\dew[+] [PATTERN]      list foreign-data wrappers\n"
+msgstr "  \\dew[+] [PATTERN]      список джерел сторонніх даних\n"
+
+#: help.c:240
+#, c-format
+msgid "  \\df[anptw][S+] [PATRN] list [only agg/normal/procedures/trigger/window] functions\n"
+msgstr "  \\df[anptw][S+] [PATRN] вивести [тільки аггрегатні/нормальні/процедурні/тригерні/віконні] функції\n"
+
+#: help.c:241
+#, c-format
+msgid "  \\dF[+]  [PATTERN]      list text search configurations\n"
+msgstr "  \\dF[+]  [PATTERN]      вивести конфігурації текстового пошуку\n"
+
+#: help.c:242
+#, c-format
+msgid "  \\dFd[+] [PATTERN]      list text search dictionaries\n"
+msgstr "  \\dFd[+] [PATTERN]      вивести словники текстового пошуку\n"
+
+#: help.c:243
+#, c-format
+msgid "  \\dFp[+] [PATTERN]      list text search parsers\n"
+msgstr "  \\dFp[+] [PATTERN]      вивести парсери текстового пошуку\n"
+
+#: help.c:244
+#, c-format
+msgid "  \\dFt[+] [PATTERN]      list text search templates\n"
+msgstr "  \\dFt[+] [PATTERN]      вивести шаблони текстового пошуку\n"
+
+#: help.c:245
+#, c-format
+msgid "  \\dg[S+] [PATTERN]      list roles\n"
+msgstr "  \\dg[S+] [PATTERN]      вивести ролі\n"
+
+#: help.c:246
+#, c-format
+msgid "  \\di[S+] [PATTERN]      list indexes\n"
+msgstr "  \\di[S+] [PATTERN]      вивести індекси\n"
+
+#: help.c:247
+#, c-format
+msgid "  \\dl                    list large objects, same as \\lo_list\n"
+msgstr "  \\dl                    вивести великі об'єкти, те саме, що \\lo_list\n"
+
+#: help.c:248
+#, c-format
+msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
+msgstr "  \\dL[S+] [PATTERN]      вивести процедурні мови\n"
+
+#: help.c:249
+#, c-format
+msgid "  \\dm[S+] [PATTERN]      list materialized views\n"
+msgstr "  \\dm[S+] [PATTERN]      вивести матеріалізовані подання\n"
+
+#: help.c:250
+#, c-format
+msgid "  \\dn[S+] [PATTERN]      list schemas\n"
+msgstr "  \\dn[S+] [PATTERN]      вивести схеми\n"
+
+#: help.c:251
+#, c-format
+msgid "  \\do[S]  [PATTERN]      list operators\n"
+msgstr "  \\do[S]  [PATTERN]      вивести оператори\n"
+
+#: help.c:252
+#, c-format
+msgid "  \\dO[S+] [PATTERN]      list collations\n"
+msgstr "  \\dO[S+] [PATTERN]      вивести правила сортування\n"
+
+#: help.c:253
+#, c-format
+msgid "  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"
+msgstr "  \\dp     [PATTERN]      вивести привілеї доступу до таблиць, подань або послідновностей \n"
+
+#: help.c:254
+#, c-format
+msgid "  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n"
+msgstr "  \\dP[itn+] [PATTERN]    вивести [тільки індекс/таблицю] секційні відношення [n=вкладені]\n"
+
+#: help.c:255
+#, c-format
+msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
+msgstr "  \\drds [PATRN1 [PATRN2]] вивести налаштування ролей побазово\n"
+
+#: help.c:256
+#, c-format
+msgid "  \\dRp[+] [PATTERN]      list replication publications\n"
+msgstr "  \\dRp[+] [PATTERN]      вивести реплікаційні публікації\n"
+
+#: help.c:257
+#, c-format
+msgid "  \\dRs[+] [PATTERN]      list replication subscriptions\n"
+msgstr "  \\dRs[+] [PATTERN]      вивести реплікаційні підписки\n"
+
+#: help.c:258
+#, c-format
+msgid "  \\ds[S+] [PATTERN]      list sequences\n"
+msgstr "  \\ds[S+] [PATTERN]      вивести послідовності\n"
+
+#: help.c:259
+#, c-format
+msgid "  \\dt[S+] [PATTERN]      list tables\n"
+msgstr "  \\dt[S+] [PATTERN]      вивести таблиці\n"
+
+#: help.c:260
+#, c-format
+msgid "  \\dT[S+] [PATTERN]      list data types\n"
+msgstr "  \\dT[S+] [PATTERN]      вивести типи даних\n"
+
+#: help.c:261
+#, c-format
+msgid "  \\du[S+] [PATTERN]      list roles\n"
+msgstr "  \\du[S+] [PATTERN]      вивести ролі\n"
+
+#: help.c:262
+#, c-format
+msgid "  \\dv[S+] [PATTERN]      list views\n"
+msgstr "  \\dv[S+] [PATTERN]      вивести подання\n"
+
+#: help.c:263
+#, c-format
+msgid "  \\dx[+]  [PATTERN]      list extensions\n"
+msgstr "  \\dx[+]  [PATTERN]      вивести розширення\n"
+
+#: help.c:264
+#, c-format
+msgid "  \\dy     [PATTERN]      list event triggers\n"
+msgstr "  \\dy     [PATTERN]      вивести тригери подій\n"
+
+#: help.c:265
+#, c-format
+msgid "  \\l[+]   [PATTERN]      list databases\n"
+msgstr "  \\l[+]   [PATTERN]      вивести бази даних\n"
+
+#: help.c:266
+#, c-format
+msgid "  \\sf[+]  FUNCNAME       show a function's definition\n"
+msgstr "  \\sf[+]  FUNCNAME       відобразити визначення функції\n"
+
+#: help.c:267
+#, c-format
+msgid "  \\sv[+]  VIEWNAME       show a view's definition\n"
+msgstr "  \\sv[+]  VIEWNAME       відобразити визначення подання\n"
+
+#: help.c:268
+#, c-format
+msgid "  \\z      [PATTERN]      same as \\dp\n"
+msgstr "  \\z      [PATTERN]      те саме, що \\dp\n"
+
+#: help.c:271
+#, c-format
+msgid "Formatting\n"
+msgstr "Форматування\n"
+
+#: help.c:272
+#, c-format
+msgid "  \\a                     toggle between unaligned and aligned output mode\n"
+msgstr "  \\a                     перемикання між режимами виводу: unaligned, aligned\n"
+
+#: help.c:273
+#, c-format
+msgid "  \\C [STRING]            set table title, or unset if none\n"
+msgstr "  \\C [STRING]           встановити заголовок таблиці або прибрати, якщо не задано\n"
+
+#: help.c:274
+#, c-format
+msgid "  \\f [STRING]            show or set field separator for unaligned query output\n"
+msgstr "  \\f [STRING]            показати або встановити розділювач полів для не вирівняного виводу запиту\n"
+
+#: help.c:275
+#, c-format
+msgid "  \\H                     toggle HTML output mode (currently %s)\n"
+msgstr "  \\H                     переключити режим виводу HTML (поточний: %s)\n"
+
+#: help.c:277
+#, c-format
+msgid "  \\pset [NAME [VALUE]]   set table output option\n"
+"                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
+"                         fieldsep_zero|footer|format|linestyle|null|\n"
+"                         numericlocale|pager|pager_min_lines|recordsep|\n"
+"                         recordsep_zero|tableattr|title|tuples_only|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|\n"
+"                         unicode_header_linestyle)\n"
+msgstr "  \\pset [NAME [VALUE]]   встановити параметр виводу таблиці\n"
+"                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
+"                         fieldsep_zero|footer|format|linestyle|null|\n"
+"                         numericlocale|pager|pager_min_lines|recordsep|\n"
+"                         recordsep_zero|tableattr|title|tuples_only|\n"
+"                         unicode_border_linestyle|unicode_column_linestyle|\n"
+"                         unicode_header_linestyle)\n"
+
+#: help.c:284
+#, c-format
+msgid "  \\t [on|off]            show only rows (currently %s)\n"
+msgstr "  \\t [on|off]          показувати лише рядки (поточно %s)\n"
+
+#: help.c:286
+#, c-format
+msgid "  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"
+msgstr "  \\T [STRING]            встановити атрибути для HTML <table> або  прибрати, якщо не задані\n"
+
+#: help.c:287
+#, c-format
+msgid "  \\x [on|off|auto]       toggle expanded output (currently %s)\n"
+msgstr "  \\x [on|off|auto]       переключити розширений вивід (поточний: %s)\n"
+
+#: help.c:291
+#, c-format
+msgid "Connection\n"
+msgstr "Підключення\n"
+
+#: help.c:293
+#, c-format
+msgid "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently \"%s\")\n"
+msgstr "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}                          під'єднатися до нової бази даних (поточно \"%s\")\n"
+
+#: help.c:297
+#, c-format
+msgid "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+"                         connect to new database (currently no connection)\n"
+msgstr "  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}                          під'єднатися до нової бази даних (зараз з'єднання відсутнє)\n"
+
+#: help.c:299
+#, c-format
+msgid "  \\conninfo              display information about current connection\n"
+msgstr "  \\conninfo             показати інформацію про поточне з'єднання\n"
+
+#: help.c:300
+#, c-format
+msgid "  \\encoding [ENCODING]   show or set client encoding\n"
+msgstr "  \\encoding [ENCODING]   показати або встановити кодування клієнта\n"
+
+#: help.c:301
+#, c-format
+msgid "  \\password [USERNAME]   securely change the password for a user\n"
+msgstr "  \\password [USERNAME]  безпечно змінити пароль користувача \n"
+
+#: help.c:304
+#, c-format
+msgid "Operating System\n"
+msgstr "Операційна система\n"
+
+#: help.c:305
+#, c-format
+msgid "  \\cd [DIR]              change the current working directory\n"
+msgstr "  \\cd [DIR]             змінити поточний робочий каталог\n"
+
+#: help.c:306
+#, c-format
+msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
+msgstr "  \\setenv NAME [VALUE]   встановити або скинути змінну середовища\n"
+
+#: help.c:307
+#, c-format
+msgid "  \\timing [on|off]       toggle timing of commands (currently %s)\n"
+msgstr "  \\timing [on|off]       переключити таймер команд (поточний: %s)\n"
+
+#: help.c:309
+#, c-format
+msgid "  \\! [COMMAND]           execute command in shell or start interactive shell\n"
+msgstr "  \\! [COMMAND]           виконати команду в оболонці або запустити інтерактивну оболонку\n"
+
+#: help.c:312
+#, c-format
+msgid "Variables\n"
+msgstr "Змінні\n"
+
+#: help.c:313
+#, c-format
+msgid "  \\prompt [TEXT] NAME    prompt user to set internal variable\n"
+msgstr "  \\prompt [TEXT] NAME    запитати користувача значення внутрішньої змінної\n"
+
+#: help.c:314
+#, c-format
+msgid "  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"
+msgstr "  \\set [NAME [VALUE]]    встановити внутрішню змінну або вивести всі, якщо не задані параметри\n"
+
+#: help.c:315
+#, c-format
+msgid "  \\unset NAME            unset (delete) internal variable\n"
+msgstr "  \\unset NAME            скинути (видалити) значення внутрішньої змінної\n"
+
+#: help.c:318
+#, c-format
+msgid "Large Objects\n"
+msgstr "Великі об'єкти\n"
+
+#: help.c:319
+#, c-format
+msgid "  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      large object operations\n"
+msgstr "  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT]\n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID      операції з великими об'єктами\n"
+
+#: help.c:346
+#, c-format
+msgid "List of specially treated variables\n\n"
+msgstr "Список спеціальних змінних\n\n"
+
+#: help.c:348
+#, c-format
+msgid "psql variables:\n"
+msgstr "змінні psql:\n"
+
+#: help.c:350
+#, c-format
+msgid "  psql --set=NAME=VALUE\n"
+"  or \\set NAME VALUE inside psql\n\n"
+msgstr "  psql --set=ІМ'Я=ЗНАЧЕННЯ\n"
+"  або \\set ІМ'Я ЗНАЧЕННЯ усередині psql\n\n"
+
+#: help.c:352
+#, c-format
+msgid "  AUTOCOMMIT\n"
+"    if set, successful SQL commands are automatically committed\n"
+msgstr "  AUTOCOMMIT\n"
+"    якщо встановлений, успішні SQL-команди підтверджуються автоматично\n"
+
+#: help.c:354
+#, c-format
+msgid "  COMP_KEYWORD_CASE\n"
+"    determines the case used to complete SQL key words\n"
+"    [lower, upper, preserve-lower, preserve-upper]\n"
+msgstr "  COMP_KEYWORD_CASE\n"
+"    визначає регістр для автодоповнення ключових слів SQL\n"
+"    [lower, upper, preserve-lower, preserve-upper]\n"
+
+#: help.c:357
+#, c-format
+msgid "  DBNAME\n"
+"    the currently connected database name\n"
+msgstr "  DBNAME     назва під'єднаної бази даних\n"
+
+#: help.c:359
+#, c-format
+msgid "  ECHO\n"
+"    controls what input is written to standard output\n"
+"    [all, errors, none, queries]\n"
+msgstr "  ECHO     контролює ввід, що виводиться на стандартний вивід    [all, errors, none, queries]\n"
+
+#: help.c:362
+#, c-format
+msgid "  ECHO_HIDDEN\n"
+"    if set, display internal queries executed by backslash commands;\n"
+"    if set to \"noexec\", just show them without execution\n"
+msgstr "  ECHO_HIDDEN\n"
+"    якщо ввімкнено, виводить внутрішні запити, виконані за допомогою  \"\\\";\n"
+"    якщо встановлено значення \"noexec\", тільки виводяться, але не виконуються\n"
+
+#: help.c:365
+#, c-format
+msgid "  ENCODING\n"
+"    current client character set encoding\n"
+msgstr "  ENCODING\n"
+"    поточне кодування набору символів клієнта\n"
+
+#: help.c:367
+#, c-format
+msgid "  ERROR\n"
+"    true if last query failed, else false\n"
+msgstr "  ERROR\n"
+"    істина, якщо в останньому запиті є помилка, в іншому разі - хибність\n"
+
+#: help.c:369
+#, c-format
+msgid "  FETCH_COUNT\n"
+"    the number of result rows to fetch and display at a time (0 = unlimited)\n"
+msgstr "  FETCH_COUNT\n"
+"    число рядків з результатами для передачі та відображення за один раз (0 = необмежено)\n"
+
+#: help.c:371
+#, c-format
+msgid "  HIDE_TABLEAM\n"
+"    if set, table access methods are not displayed\n"
+msgstr "  HIDE_TABLEAM\n"
+"    якщо вказано, методи доступу до таблиць не відображаються\n"
+
+#: help.c:373
+#, c-format
+msgid "  HISTCONTROL\n"
+"    controls command history [ignorespace, ignoredups, ignoreboth]\n"
+msgstr "  HISTCONTROL     контролює історію команд [ignorespace, ignoredups, ignoreboth]\n"
+
+#: help.c:375
+#, c-format
+msgid "  HISTFILE\n"
+"    file name used to store the command history\n"
+msgstr "  HISTFILE     ім'я файлу для зберігання історії команд\n"
+
+#: help.c:377
+#, c-format
+msgid "  HISTSIZE\n"
+"    maximum number of commands to store in the command history\n"
+msgstr "  HISTSIZE     максимальна кількість команд для зберігання в історії команд\n"
+
+#: help.c:379
+#, c-format
+msgid "  HOST\n"
+"    the currently connected database server host\n"
+msgstr "  HOST     поточний підключений хост сервера бази даних\n"
+
+#: help.c:381
+#, c-format
+msgid "  IGNOREEOF\n"
+"    number of EOFs needed to terminate an interactive session\n"
+msgstr "  IGNOREEOF     кількість EOF для завершення інтерактивної сесії\n"
+
+#: help.c:383
+#, c-format
+msgid "  LASTOID\n"
+"    value of the last affected OID\n"
+msgstr "  LASTOID     значення останнього залученого OID\n"
+
+#: help.c:385
+#, c-format
+msgid "  LAST_ERROR_MESSAGE\n"
+"  LAST_ERROR_SQLSTATE\n"
+"    message and SQLSTATE of last error, or empty string and \"00000\" if none\n"
+msgstr "  LAST_ERROR_MESSAGE\n"
+"  LAST_ERROR_SQLSTATE\n"
+"    повідомлення та код SQLSTATE останньої помилки, або пустий рядок та \"00000\", якщо помилки не було\n"
+
+#: help.c:388
+#, c-format
+msgid "  ON_ERROR_ROLLBACK\n"
+"    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"
+msgstr "  ON_ERROR_ROLLBACK\n"
+"    якщо встановлено, транзакція не припиняється у разі помилки (використовуються неявні точки збереження)\n"
+
+#: help.c:390
+#, c-format
+msgid "  ON_ERROR_STOP\n"
+"    stop batch execution after error\n"
+msgstr "  ON_ERROR_STOP\n"
+"    зупиняти виконання пакету команд після помилки\n"
+
+#: help.c:392
+#, c-format
+msgid "  PORT\n"
+"    server port of the current connection\n"
+msgstr "  PORT\n"
+"    порт сервера для поточного з'єднання\n"
+
+#: help.c:394
+#, c-format
+msgid "  PROMPT1\n"
+"    specifies the standard psql prompt\n"
+msgstr "  PROMPT1\n"
+"    визначає стандратне запрошення psql \n"
+
+#: help.c:396
+#, c-format
+msgid "  PROMPT2\n"
+"    specifies the prompt used when a statement continues from a previous line\n"
+msgstr "  PROMPT2\n"
+"    визначає запрошення, яке використовується при продовженні команди з попереднього рядка\n"
+
+#: help.c:398
+#, c-format
+msgid "  PROMPT3\n"
+"    specifies the prompt used during COPY ... FROM STDIN\n"
+msgstr "  PROMPT3\n"
+"    визначає запрошення, яке виконується під час COPY ... FROM STDIN\n"
+
+#: help.c:400
+#, c-format
+msgid "  QUIET\n"
+"    run quietly (same as -q option)\n"
+msgstr "  QUIET\n"
+"    тихий запуск ( як із параметром -q)\n"
+
+#: help.c:402
+#, c-format
+msgid "  ROW_COUNT\n"
+"    number of rows returned or affected by last query, or 0\n"
+msgstr "  ROW_COUNT\n"
+"    число повернених або оброблених рядків останнім запитом, або 0\n"
+
+#: help.c:404
+#, c-format
+msgid "  SERVER_VERSION_NAME\n"
+"  SERVER_VERSION_NUM\n"
+"    server's version (in short string or numeric format)\n"
+msgstr "  SERVER_VERSION_NAME\n"
+"  SERVER_VERSION_NUM\n"
+"    версія серевера (у короткому текстовому або числовому форматі)\n"
+
+#: help.c:407
+#, c-format
+msgid "  SHOW_CONTEXT\n"
+"    controls display of message context fields [never, errors, always]\n"
+msgstr "  SHOW_CONTEXT\n"
+"    керує відображенням полів контексту повідомлень [never, errors, always]\n"
+
+#: help.c:409
+#, c-format
+msgid "  SINGLELINE\n"
+"    if set, end of line terminates SQL commands (same as -S option)\n"
+msgstr "  SINGLELINE\n"
+"    якщо встановлено, кінець рядка завершує режим вводу SQL-команди (як з параметром -S)\n"
+
+#: help.c:411
+#, c-format
+msgid "  SINGLESTEP\n"
+"    single-step mode (same as -s option)\n"
+msgstr "  SINGLESTEP\n"
+"    покроковий режим (як з параметром -s)\n"
+
+#: help.c:413
+#, c-format
+msgid "  SQLSTATE\n"
+"    SQLSTATE of last query, or \"00000\" if no error\n"
+msgstr "  SQLSTATE\n"
+"    SQLSTATE останнього запиту, або \"00000\" якщо немає помилок\n"
+
+#: help.c:415
+#, c-format
+msgid "  USER\n"
+"    the currently connected database user\n"
+msgstr "  USER\n"
+"    поточний користувач, підключений до бази даних\n"
+
+#: help.c:417
+#, c-format
+msgid "  VERBOSITY\n"
+"    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"
+msgstr "  VERBOSITY\n"
+"    контролює докладність звітів про помилку [default, verbose, terse, sqlstate]\n"
+
+#: help.c:419
+#, c-format
+msgid "  VERSION\n"
+"  VERSION_NAME\n"
+"  VERSION_NUM\n"
+"    psql's version (in verbose string, short string, or numeric format)\n"
+msgstr "  VERSION\n"
+"  VERSION_NAME\n"
+"  VERSION_NUM\n"
+"    psql версія (в розгорнутому, в короткому текстовому або числовому форматі)\n"
+
+#: help.c:424
+#, c-format
+msgid "\n"
+"Display settings:\n"
+msgstr "\n"
+"Налаштування відобреження:\n"
+
+#: help.c:426
+#, c-format
+msgid "  psql --pset=NAME[=VALUE]\n"
+"  or \\pset NAME [VALUE] inside psql\n\n"
+msgstr "  psql --pset=NAME[=VALUE]\n"
+"  або \\pset ІМ'Я [VALUE] всередині psql\n\n"
+
+#: help.c:428
+#, c-format
+msgid "  border\n"
+"    border style (number)\n"
+msgstr "  border\n"
+"    стиль рамки (число)\n"
+
+#: help.c:430
+#, c-format
+msgid "  columns\n"
+"    target width for the wrapped format\n"
+msgstr "  columns\n"
+"    цільова ширина для формату з переносом\n"
+
+#: help.c:432
+#, c-format
+msgid "  expanded (or x)\n"
+"    expanded output [on, off, auto]\n"
+msgstr "  expanded (or x)\n"
+"    розширений вивід [on, off, auto]\n"
+
+#: help.c:434
+#, c-format
+msgid "  fieldsep\n"
+"    field separator for unaligned output (default \"%s\")\n"
+msgstr "  fieldsep\n"
+"    розділювач полів для не вирівняного виводу (за замовчуванням \"%s\")\n"
+
+#: help.c:437
+#, c-format
+msgid "  fieldsep_zero\n"
+"    set field separator for unaligned output to a zero byte\n"
+msgstr "  fieldsep_zero\n"
+"    встановити розділювач полів для невирівняного виводу на нульовий байт\n"
+
+#: help.c:439
+#, c-format
+msgid "  footer\n"
+"    enable or disable display of the table footer [on, off]\n"
+msgstr "  footer\n"
+"    вмикає або вимикає вивід підписів таблиці [on, off]\n"
+
+#: help.c:441
+#, c-format
+msgid "  format\n"
+"    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+msgstr "  format\n"
+"    встановити формат виводу [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
+
+#: help.c:443
+#, c-format
+msgid "  linestyle\n"
+"    set the border line drawing style [ascii, old-ascii, unicode]\n"
+msgstr "  linestyle\n"
+"    встановлює стиль малювання ліній рамки [ascii, old-ascii, unicode]\n"
+
+#: help.c:445
+#, c-format
+msgid "  null\n"
+"    set the string to be printed in place of a null value\n"
+msgstr "  null\n"
+"    встановлює рядок, який буде виведено замість значення (null)\n"
+
+#: help.c:447
+#, c-format
+msgid "  numericlocale\n"
+"    enable display of a locale-specific character to separate groups of digits\n"
+msgstr "  numericlocale\n"
+"    вмикає виведення заданого локалью роздільника групи цифр\n"
+
+#: help.c:449
+#, c-format
+msgid "  pager\n"
+"    control when an external pager is used [yes, no, always]\n"
+msgstr "  pager\n"
+"    контролює використання зовнішнього пейджера  [yes, no, always]\n"
+
+#: help.c:451
+#, c-format
+msgid "  recordsep\n"
+"    record (line) separator for unaligned output\n"
+msgstr "  recordsep\n"
+"    розділювач записів (рядків) для не вирівняного виводу\n"
+
+#: help.c:453
+#, c-format
+msgid "  recordsep_zero\n"
+"    set record separator for unaligned output to a zero byte\n"
+msgstr "  recordsep_zero\n"
+"    встановлює розділювач записів для невирівняного виводу  на нульовий байт\n"
+
+#: help.c:455
+#, c-format
+msgid "  tableattr (or T)\n"
+"    specify attributes for table tag in html format, or proportional\n"
+"    column widths for left-aligned data types in latex-longtable format\n"
+msgstr "  tableattr (або T)\n"
+"    вказує атрибути для тегу table у html форматі або пропорційні \n"
+"    ширини стовпців для вирівняних вліво даних, у latex-longtable форматі\n"
+
+#: help.c:458
+#, c-format
+msgid "  title\n"
+"    set the table title for subsequently printed tables\n"
+msgstr "  title\n"
+"    задає заголовок таблиці для послідовно друкованих таблиць\n"
+
+#: help.c:460
+#, c-format
+msgid "  tuples_only\n"
+"    if set, only actual table data is shown\n"
+msgstr "  tuples_only\n"
+"    якщо встановлено, виводяться лише фактичні табличні дані\n"
+
+#: help.c:462
+#, c-format
+msgid "  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"    set the style of Unicode line drawing [single, double]\n"
+msgstr "  unicode_border_linestyle\n"
+"  unicode_column_linestyle\n"
+"  unicode_header_linestyle\n"
+"    задає стиль мальювання ліній (Unicode) [single, double]\n"
+
+#: help.c:467
+#, c-format
+msgid "\n"
+"Environment variables:\n"
+msgstr "\n"
+"Змінні оточення:\n"
+
+#: help.c:471
+#, c-format
+msgid "  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n\n"
+msgstr "  ІМ'Я=ЗНАЧЕННЯ [ІМ'Я=ЗНАЧЕННЯ] psql ...\n"
+"  або \\setenv ІМ'Я [VALUE] всередині psql\n\n"
+
+#: help.c:473
+#, c-format
+msgid "  set NAME=VALUE\n"
+"  psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n\n"
+msgstr "  встановлює ІМ'Я=ЗНАЧЕННЯ\n"
+"  psql ...\n"
+"  або \\setenv ІМ'Я [VALUE]  всередині psql\n\n"
+
+#: help.c:476
+#, c-format
+msgid "  COLUMNS\n"
+"    number of columns for wrapped format\n"
+msgstr "  COLUMNS\n"
+"    число стовпців для форматування з переносом\n"
+
+#: help.c:478
+#, c-format
+msgid "  PGAPPNAME\n"
+"    same as the application_name connection parameter\n"
+msgstr "  PGAPPNAME\n"
+"     те саме, що параметр підключення application_name\n"
+
+#: help.c:480
+#, c-format
+msgid "  PGDATABASE\n"
+"    same as the dbname connection parameter\n"
+msgstr "  PGDATABASE\n"
+"    те саме, що параметр підключення dbname\n"
+
+#: help.c:482
+#, c-format
+msgid "  PGHOST\n"
+"    same as the host connection parameter\n"
+msgstr "  PGHOST\n"
+"    те саме, що параметр підключення host\n"
+
+#: help.c:484
+#, c-format
+msgid "  PGPASSWORD\n"
+"    connection password (not recommended)\n"
+msgstr "  PGPASSWORD\n"
+"    пароль для підключення (не рекомендується)\n"
+
+#: help.c:486
+#, c-format
+msgid "  PGPASSFILE\n"
+"    password file name\n"
+msgstr "  PGPASSFILE\n"
+"    назва файлу з паролем\n"
+
+#: help.c:488
+#, c-format
+msgid "  PGPORT\n"
+"    same as the port connection parameter\n"
+msgstr "  PGPORT\n"
+"    те саме, що параметр підключення port\n"
+
+#: help.c:490
+#, c-format
+msgid "  PGUSER\n"
+"    same as the user connection parameter\n"
+msgstr "  PGUSER\n"
+"    те саме, що параметр підключення user\n"
+
+#: help.c:492
+#, c-format
+msgid "  PSQL_EDITOR, EDITOR, VISUAL\n"
+"    editor used by the \\e, \\ef, and \\ev commands\n"
+msgstr "  PSQL_EDITOR, EDITOR, VISUAL\n"
+"    редактор для команд \\e, \\ef і \\ev\n"
+
+#: help.c:494
+#, c-format
+msgid "  PSQL_EDITOR_LINENUMBER_ARG\n"
+"    how to specify a line number when invoking the editor\n"
+msgstr "  PSQL_EDITOR_LINENUMBER_ARG\n"
+"    як вказати номер рядка при виклику редактора\n"
+
+#: help.c:496
+#, c-format
+msgid "  PSQL_HISTORY\n"
+"    alternative location for the command history file\n"
+msgstr "  PSQL_HISTORY\n"
+"    альтернативне розміщення файлу з історією команд\n"
+
+#: help.c:498
+#, c-format
+msgid "  PSQL_PAGER, PAGER\n"
+"    name of external pager program\n"
+msgstr "  PSQL_PAGER, PAGER\n"
+"    ім'я програми зовнішнього пейджеру\n"
+
+#: help.c:500
+#, c-format
+msgid "  PSQLRC\n"
+"    alternative location for the user's .psqlrc file\n"
+msgstr "  PSQLRC\n"
+"    альтернативне розміщення користувацького файла .psqlrc\n"
+
+#: help.c:502
+#, c-format
+msgid "  SHELL\n"
+"    shell used by the \\! command\n"
+msgstr "  SHELL\n"
+"    оболонка, що використовується командою \\!\n"
+
+#: help.c:504
+#, c-format
+msgid "  TMPDIR\n"
+"    directory for temporary files\n"
+msgstr "  TMPDIR\n"
+"    каталог для тимчасових файлів\n"
+
+#: help.c:548
+msgid "Available help:\n"
+msgstr "Доступна довідка:\n"
+
+#: help.c:636
+#, c-format
+msgid "Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n\n"
+"URL: %s\n\n"
+msgstr "Команда:     %s\n"
+"Опис:    %s\n"
+"Синтаксис:\n"
+"%s\n\n"
+"URL: %s\n\n"
+
+#: help.c:655
+#, c-format
+msgid "No help available for \"%s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr "Немає доступної довідки по команді \"%s\".\n"
+"Спробуйте \\h без аргументів, щоб подивитись доступну довідку.\n"
+
+#: input.c:218
+#, c-format
+msgid "could not read from input file: %m"
+msgstr "не вдалося прочитати з вхідного файлу: %m"
+
+#: input.c:472 input.c:510
+#, c-format
+msgid "could not save history to file \"%s\": %m"
+msgstr "не можливо зберегти історію в файлі \"%s\": %m"
+
+#: input.c:529
+#, c-format
+msgid "history is not supported by this installation"
+msgstr "ця установка не підтримує історію"
+
+#: large_obj.c:65
+#, c-format
+msgid "%s: not connected to a database"
+msgstr "%s: немає з'єднання з базою даних"
+
+#: large_obj.c:84
+#, c-format
+msgid "%s: current transaction is aborted"
+msgstr "%s: поточна транзакція перервана"
+
+#: large_obj.c:87
+#, c-format
+msgid "%s: unknown transaction status"
+msgstr "%s: невідомий стан транзакції"
+
+#: large_obj.c:288 large_obj.c:299
+msgid "ID"
+msgstr "ID"
+
+#: large_obj.c:309
+msgid "Large objects"
+msgstr "Великі об'єкти"
+
+#: mainloop.c:136
+#, c-format
+msgid "\\if: escaped"
+msgstr "\\if: вихід"
+
+#: mainloop.c:183
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "Введіть \"\\q\", щоб вийти з %s.\n"
+
+#: mainloop.c:205
+msgid "The input is a PostgreSQL custom-format dump.\n"
+"Use the pg_restore command-line client to restore this dump to a database.\n"
+msgstr "Ввід являє собою спеціальний формат дампу PostgreSQL.\n"
+"Щоб відновити базу даних з цього дампу, скористайтеся командою pg_restore.\n"
+
+#: mainloop.c:282
+msgid "Use \\? for help or press control-C to clear the input buffer."
+msgstr "Для отримання довідки введіть \\? або натисніть сontrol-C для очищення буферу вводу."
+
+#: mainloop.c:284
+msgid "Use \\? for help."
+msgstr "Введіть \\? для отримання довідки."
+
+#: mainloop.c:288
+msgid "You are using psql, the command-line interface to PostgreSQL."
+msgstr "Ви використовуєте psql — інтерфейс командного рядка до PostgreSQL."
+
+#: mainloop.c:289
+#, c-format
+msgid "Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help with psql commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+msgstr "Введіть:   \\copyright для умов розповсюдження\n"
+"       \\h для довідки по командах SQL\n"
+"       \\? для довідки по командах psql\n"
+"       \\g або крапку з комою в кінці рядка для виконання запиту\n"
+"       \\q для виходу\n"
+
+#: mainloop.c:313
+msgid "Use \\q to quit."
+msgstr "Введіть \\q, щоб вийти."
+
+#: mainloop.c:316 mainloop.c:340
+msgid "Use control-D to quit."
+msgstr "Натисніть control-D, щоб вийти."
+
+#: mainloop.c:318 mainloop.c:342
+msgid "Use control-C to quit."
+msgstr "Натисніть control-C, щоб вийти."
+
+#: mainloop.c:449 mainloop.c:591
+#, c-format
+msgid "query ignored; use \\endif or Ctrl-C to exit current \\if block"
+msgstr "запит ігнорується; введіть \\endif або натисніть Ctrl-C для завершення поточного \\if блоку"
+
+#: mainloop.c:609
+#, c-format
+msgid "reached EOF without finding closing \\endif(s)"
+msgstr "досягнуто кінця файлу без завершального \\endif"
+
+#: psqlscanslash.l:638
+#, c-format
+msgid "unterminated quoted string"
+msgstr "незавершений рядок в лапках"
+
+#: psqlscanslash.l:811
+#, c-format
+msgid "%s: out of memory"
+msgstr "%s: бракує пам'яті"
+
+#: sql_help.c:35 sql_help.c:38 sql_help.c:41 sql_help.c:65 sql_help.c:66
+#: sql_help.c:68 sql_help.c:70 sql_help.c:81 sql_help.c:83 sql_help.c:85
+#: sql_help.c:111 sql_help.c:117 sql_help.c:119 sql_help.c:121 sql_help.c:123
+#: sql_help.c:126 sql_help.c:128 sql_help.c:130 sql_help.c:235 sql_help.c:237
+#: sql_help.c:238 sql_help.c:240 sql_help.c:242 sql_help.c:245 sql_help.c:247
+#: sql_help.c:249 sql_help.c:251 sql_help.c:263 sql_help.c:264 sql_help.c:265
+#: sql_help.c:267 sql_help.c:316 sql_help.c:318 sql_help.c:320 sql_help.c:322
+#: sql_help.c:391 sql_help.c:396 sql_help.c:398 sql_help.c:440 sql_help.c:442
+#: sql_help.c:445 sql_help.c:447 sql_help.c:515 sql_help.c:520 sql_help.c:525
+#: sql_help.c:530 sql_help.c:535 sql_help.c:588 sql_help.c:590 sql_help.c:592
+#: sql_help.c:594 sql_help.c:596 sql_help.c:599 sql_help.c:601 sql_help.c:604
+#: sql_help.c:615 sql_help.c:617 sql_help.c:658 sql_help.c:660 sql_help.c:662
+#: sql_help.c:665 sql_help.c:667 sql_help.c:669 sql_help.c:702 sql_help.c:706
+#: sql_help.c:710 sql_help.c:729 sql_help.c:732 sql_help.c:735 sql_help.c:764
+#: sql_help.c:776 sql_help.c:784 sql_help.c:787 sql_help.c:790 sql_help.c:805
+#: sql_help.c:808 sql_help.c:837 sql_help.c:842 sql_help.c:847 sql_help.c:852
+#: sql_help.c:857 sql_help.c:879 sql_help.c:881 sql_help.c:883 sql_help.c:885
+#: sql_help.c:888 sql_help.c:890 sql_help.c:931 sql_help.c:975 sql_help.c:980
+#: sql_help.c:985 sql_help.c:990 sql_help.c:995 sql_help.c:1014 sql_help.c:1025
+#: sql_help.c:1027 sql_help.c:1046 sql_help.c:1056 sql_help.c:1058
+#: sql_help.c:1060 sql_help.c:1072 sql_help.c:1076 sql_help.c:1078
+#: sql_help.c:1089 sql_help.c:1091 sql_help.c:1093 sql_help.c:1109
+#: sql_help.c:1111 sql_help.c:1115 sql_help.c:1118 sql_help.c:1119
+#: sql_help.c:1120 sql_help.c:1123 sql_help.c:1125 sql_help.c:1258
+#: sql_help.c:1260 sql_help.c:1263 sql_help.c:1266 sql_help.c:1268
+#: sql_help.c:1270 sql_help.c:1273 sql_help.c:1276 sql_help.c:1386
+#: sql_help.c:1388 sql_help.c:1390 sql_help.c:1393 sql_help.c:1414
+#: sql_help.c:1417 sql_help.c:1420 sql_help.c:1423 sql_help.c:1427
+#: sql_help.c:1429 sql_help.c:1431 sql_help.c:1433 sql_help.c:1447
+#: sql_help.c:1450 sql_help.c:1452 sql_help.c:1454 sql_help.c:1464
+#: sql_help.c:1466 sql_help.c:1476 sql_help.c:1478 sql_help.c:1488
+#: sql_help.c:1491 sql_help.c:1513 sql_help.c:1515 sql_help.c:1517
+#: sql_help.c:1520 sql_help.c:1522 sql_help.c:1524 sql_help.c:1527
+#: sql_help.c:1577 sql_help.c:1619 sql_help.c:1622 sql_help.c:1624
+#: sql_help.c:1626 sql_help.c:1628 sql_help.c:1630 sql_help.c:1633
+#: sql_help.c:1683 sql_help.c:1699 sql_help.c:1920 sql_help.c:1989
+#: sql_help.c:2008 sql_help.c:2021 sql_help.c:2078 sql_help.c:2085
+#: sql_help.c:2095 sql_help.c:2115 sql_help.c:2140 sql_help.c:2158
+#: sql_help.c:2187 sql_help.c:2282 sql_help.c:2324 sql_help.c:2347
+#: sql_help.c:2368 sql_help.c:2369 sql_help.c:2406 sql_help.c:2426
+#: sql_help.c:2448 sql_help.c:2462 sql_help.c:2482 sql_help.c:2505
+#: sql_help.c:2535 sql_help.c:2560 sql_help.c:2606 sql_help.c:2884
+#: sql_help.c:2897 sql_help.c:2914 sql_help.c:2930 sql_help.c:2970
+#: sql_help.c:3022 sql_help.c:3026 sql_help.c:3028 sql_help.c:3034
+#: sql_help.c:3052 sql_help.c:3079 sql_help.c:3114 sql_help.c:3126
+#: sql_help.c:3135 sql_help.c:3179 sql_help.c:3193 sql_help.c:3221
+#: sql_help.c:3229 sql_help.c:3237 sql_help.c:3245 sql_help.c:3253
+#: sql_help.c:3261 sql_help.c:3269 sql_help.c:3277 sql_help.c:3286
+#: sql_help.c:3297 sql_help.c:3305 sql_help.c:3313 sql_help.c:3321
+#: sql_help.c:3329 sql_help.c:3339 sql_help.c:3348 sql_help.c:3357
+#: sql_help.c:3365 sql_help.c:3375 sql_help.c:3386 sql_help.c:3394
+#: sql_help.c:3403 sql_help.c:3414 sql_help.c:3423 sql_help.c:3431
+#: sql_help.c:3439 sql_help.c:3447 sql_help.c:3455 sql_help.c:3463
+#: sql_help.c:3471 sql_help.c:3479 sql_help.c:3487 sql_help.c:3495
+#: sql_help.c:3503 sql_help.c:3520 sql_help.c:3529 sql_help.c:3537
+#: sql_help.c:3554 sql_help.c:3569 sql_help.c:3839 sql_help.c:3890
+#: sql_help.c:3919 sql_help.c:3927 sql_help.c:4360 sql_help.c:4408
+#: sql_help.c:4549
+msgid "name"
+msgstr "назва"
+
+#: sql_help.c:36 sql_help.c:39 sql_help.c:42 sql_help.c:327 sql_help.c:1770
+#: sql_help.c:3194 sql_help.c:4146
+msgid "aggregate_signature"
+msgstr "сигнатура_агр_функції"
+
+#: sql_help.c:37 sql_help.c:67 sql_help.c:82 sql_help.c:118 sql_help.c:250
+#: sql_help.c:268 sql_help.c:399 sql_help.c:446 sql_help.c:524 sql_help.c:571
+#: sql_help.c:589 sql_help.c:616 sql_help.c:666 sql_help.c:731 sql_help.c:786
+#: sql_help.c:807 sql_help.c:846 sql_help.c:891 sql_help.c:932 sql_help.c:984
+#: sql_help.c:1016 sql_help.c:1026 sql_help.c:1059 sql_help.c:1079
+#: sql_help.c:1092 sql_help.c:1126 sql_help.c:1267 sql_help.c:1387
+#: sql_help.c:1430 sql_help.c:1451 sql_help.c:1465 sql_help.c:1477
+#: sql_help.c:1490 sql_help.c:1521 sql_help.c:1578 sql_help.c:1627
+msgid "new_name"
+msgstr "нова_назва"
+
+#: sql_help.c:40 sql_help.c:69 sql_help.c:84 sql_help.c:120 sql_help.c:248
+#: sql_help.c:266 sql_help.c:397 sql_help.c:482 sql_help.c:529 sql_help.c:618
+#: sql_help.c:627 sql_help.c:685 sql_help.c:705 sql_help.c:734 sql_help.c:789
+#: sql_help.c:851 sql_help.c:889 sql_help.c:989 sql_help.c:1028 sql_help.c:1057
+#: sql_help.c:1077 sql_help.c:1090 sql_help.c:1124 sql_help.c:1327
+#: sql_help.c:1389 sql_help.c:1432 sql_help.c:1453 sql_help.c:1516
+#: sql_help.c:1625 sql_help.c:2870
+msgid "new_owner"
+msgstr "новий_власник"
+
+#: sql_help.c:43 sql_help.c:71 sql_help.c:86 sql_help.c:252 sql_help.c:319
+#: sql_help.c:448 sql_help.c:534 sql_help.c:668 sql_help.c:709 sql_help.c:737
+#: sql_help.c:792 sql_help.c:856 sql_help.c:994 sql_help.c:1061 sql_help.c:1094
+#: sql_help.c:1269 sql_help.c:1434 sql_help.c:1455 sql_help.c:1467
+#: sql_help.c:1479 sql_help.c:1523 sql_help.c:1629
+msgid "new_schema"
+msgstr "нова_схема"
+
+#: sql_help.c:44 sql_help.c:1834 sql_help.c:3195 sql_help.c:4175
+msgid "where aggregate_signature is:"
+msgstr "де сигнатура_агр_функції:"
+
+#: sql_help.c:45 sql_help.c:48 sql_help.c:51 sql_help.c:337 sql_help.c:350
+#: sql_help.c:354 sql_help.c:370 sql_help.c:373 sql_help.c:376 sql_help.c:516
+#: sql_help.c:521 sql_help.c:526 sql_help.c:531 sql_help.c:536 sql_help.c:838
+#: sql_help.c:843 sql_help.c:848 sql_help.c:853 sql_help.c:858 sql_help.c:976
+#: sql_help.c:981 sql_help.c:986 sql_help.c:991 sql_help.c:996 sql_help.c:1788
+#: sql_help.c:1805 sql_help.c:1811 sql_help.c:1835 sql_help.c:1838
+#: sql_help.c:1841 sql_help.c:1990 sql_help.c:2009 sql_help.c:2012
+#: sql_help.c:2283 sql_help.c:2483 sql_help.c:3196 sql_help.c:3199
+#: sql_help.c:3202 sql_help.c:3287 sql_help.c:3376 sql_help.c:3404
+#: sql_help.c:3724 sql_help.c:4057 sql_help.c:4152 sql_help.c:4159
+#: sql_help.c:4165 sql_help.c:4176 sql_help.c:4179 sql_help.c:4182
+msgid "argmode"
+msgstr "режим_аргументу"
+
+#: sql_help.c:46 sql_help.c:49 sql_help.c:52 sql_help.c:338 sql_help.c:351
+#: sql_help.c:355 sql_help.c:371 sql_help.c:374 sql_help.c:377 sql_help.c:517
+#: sql_help.c:522 sql_help.c:527 sql_help.c:532 sql_help.c:537 sql_help.c:839
+#: sql_help.c:844 sql_help.c:849 sql_help.c:854 sql_help.c:859 sql_help.c:977
+#: sql_help.c:982 sql_help.c:987 sql_help.c:992 sql_help.c:997 sql_help.c:1789
+#: sql_help.c:1806 sql_help.c:1812 sql_help.c:1836 sql_help.c:1839
+#: sql_help.c:1842 sql_help.c:1991 sql_help.c:2010 sql_help.c:2013
+#: sql_help.c:2284 sql_help.c:2484 sql_help.c:3197 sql_help.c:3200
+#: sql_help.c:3203 sql_help.c:3288 sql_help.c:3377 sql_help.c:3405
+#: sql_help.c:4153 sql_help.c:4160 sql_help.c:4166 sql_help.c:4177
+#: sql_help.c:4180 sql_help.c:4183
+msgid "argname"
+msgstr "ім'я_аргументу"
+
+#: sql_help.c:47 sql_help.c:50 sql_help.c:53 sql_help.c:339 sql_help.c:352
+#: sql_help.c:356 sql_help.c:372 sql_help.c:375 sql_help.c:378 sql_help.c:518
+#: sql_help.c:523 sql_help.c:528 sql_help.c:533 sql_help.c:538 sql_help.c:840
+#: sql_help.c:845 sql_help.c:850 sql_help.c:855 sql_help.c:860 sql_help.c:978
+#: sql_help.c:983 sql_help.c:988 sql_help.c:993 sql_help.c:998 sql_help.c:1790
+#: sql_help.c:1807 sql_help.c:1813 sql_help.c:1837 sql_help.c:1840
+#: sql_help.c:1843 sql_help.c:2285 sql_help.c:2485 sql_help.c:3198
+#: sql_help.c:3201 sql_help.c:3204 sql_help.c:3289 sql_help.c:3378
+#: sql_help.c:3406 sql_help.c:4154 sql_help.c:4161 sql_help.c:4167
+#: sql_help.c:4178 sql_help.c:4181 sql_help.c:4184
+msgid "argtype"
+msgstr "тип_аргументу"
+
+#: sql_help.c:112 sql_help.c:394 sql_help.c:471 sql_help.c:483 sql_help.c:926
+#: sql_help.c:1074 sql_help.c:1448 sql_help.c:1572 sql_help.c:1604
+#: sql_help.c:1652 sql_help.c:1891 sql_help.c:1898 sql_help.c:2190
+#: sql_help.c:2232 sql_help.c:2239 sql_help.c:2248 sql_help.c:2325
+#: sql_help.c:2536 sql_help.c:2628 sql_help.c:2899 sql_help.c:3080
+#: sql_help.c:3102 sql_help.c:3590 sql_help.c:3758 sql_help.c:4610
+msgid "option"
+msgstr "параметр"
+
+#: sql_help.c:113 sql_help.c:927 sql_help.c:1573 sql_help.c:2326
+#: sql_help.c:2537 sql_help.c:3081
+msgid "where option can be:"
+msgstr "де параметр може бути:"
+
+#: sql_help.c:114 sql_help.c:2122
+msgid "allowconn"
+msgstr "дозвол_підкл"
+
+#: sql_help.c:115 sql_help.c:928 sql_help.c:1574 sql_help.c:2123
+#: sql_help.c:2538 sql_help.c:3082
+msgid "connlimit"
+msgstr "ліміт_підключень"
+
+#: sql_help.c:116 sql_help.c:2124
+msgid "istemplate"
+msgstr "чи_шаблон"
+
+#: sql_help.c:122 sql_help.c:606 sql_help.c:671 sql_help.c:1272 sql_help.c:1320
+msgid "new_tablespace"
+msgstr "новий_табл_простір"
+
+#: sql_help.c:124 sql_help.c:127 sql_help.c:129 sql_help.c:544 sql_help.c:546
+#: sql_help.c:547 sql_help.c:863 sql_help.c:865 sql_help.c:866 sql_help.c:935
+#: sql_help.c:939 sql_help.c:942 sql_help.c:1003 sql_help.c:1005
+#: sql_help.c:1006 sql_help.c:1137 sql_help.c:1140 sql_help.c:1581
+#: sql_help.c:1585 sql_help.c:1588 sql_help.c:2295 sql_help.c:2489
+#: sql_help.c:3944 sql_help.c:4349
+msgid "configuration_parameter"
+msgstr "параметр_конфігурації"
+
+#: sql_help.c:125 sql_help.c:395 sql_help.c:466 sql_help.c:472 sql_help.c:484
+#: sql_help.c:545 sql_help.c:598 sql_help.c:677 sql_help.c:683 sql_help.c:864
+#: sql_help.c:887 sql_help.c:936 sql_help.c:1004 sql_help.c:1075
+#: sql_help.c:1114 sql_help.c:1117 sql_help.c:1122 sql_help.c:1138
+#: sql_help.c:1139 sql_help.c:1302 sql_help.c:1322 sql_help.c:1370
+#: sql_help.c:1392 sql_help.c:1449 sql_help.c:1582 sql_help.c:1605
+#: sql_help.c:2191 sql_help.c:2233 sql_help.c:2240 sql_help.c:2249
+#: sql_help.c:2296 sql_help.c:2297 sql_help.c:2356 sql_help.c:2390
+#: sql_help.c:2490 sql_help.c:2491 sql_help.c:2508 sql_help.c:2629
+#: sql_help.c:2659 sql_help.c:2764 sql_help.c:2777 sql_help.c:2791
+#: sql_help.c:2832 sql_help.c:2856 sql_help.c:2873 sql_help.c:2900
+#: sql_help.c:3103 sql_help.c:3759 sql_help.c:4350 sql_help.c:4351
+msgid "value"
+msgstr "значення"
+
+#: sql_help.c:197
+msgid "target_role"
+msgstr "цільова_роль"
+
+#: sql_help.c:198 sql_help.c:2174 sql_help.c:2584 sql_help.c:2589
+#: sql_help.c:3706 sql_help.c:3713 sql_help.c:3727 sql_help.c:3733
+#: sql_help.c:4039 sql_help.c:4046 sql_help.c:4060 sql_help.c:4066
+msgid "schema_name"
+msgstr "ім'я_схеми"
+
+#: sql_help.c:199
+msgid "abbreviated_grant_or_revoke"
+msgstr "скорочено_GRANT_або_REVOKE"
+
+#: sql_help.c:200
+msgid "where abbreviated_grant_or_revoke is one of:"
+msgstr "де скорочено_GRANT_або_REVOKE є одним з:"
+
+#: sql_help.c:201 sql_help.c:202 sql_help.c:203 sql_help.c:204 sql_help.c:205
+#: sql_help.c:206 sql_help.c:207 sql_help.c:208 sql_help.c:209 sql_help.c:210
+#: sql_help.c:569 sql_help.c:605 sql_help.c:670 sql_help.c:810 sql_help.c:946
+#: sql_help.c:1271 sql_help.c:1592 sql_help.c:2329 sql_help.c:2330
+#: sql_help.c:2331 sql_help.c:2332 sql_help.c:2333 sql_help.c:2464
+#: sql_help.c:2541 sql_help.c:2542 sql_help.c:2543 sql_help.c:2544
+#: sql_help.c:2545 sql_help.c:3085 sql_help.c:3086 sql_help.c:3087
+#: sql_help.c:3088 sql_help.c:3089 sql_help.c:3740 sql_help.c:3741
+#: sql_help.c:3742 sql_help.c:4040 sql_help.c:4044 sql_help.c:4047
+#: sql_help.c:4049 sql_help.c:4051 sql_help.c:4053 sql_help.c:4055
+#: sql_help.c:4061 sql_help.c:4063 sql_help.c:4065 sql_help.c:4067
+#: sql_help.c:4069 sql_help.c:4071 sql_help.c:4072 sql_help.c:4073
+#: sql_help.c:4370
+msgid "role_name"
+msgstr "ім'я_ролі"
+
+#: sql_help.c:236 sql_help.c:459 sql_help.c:1287 sql_help.c:1289
+#: sql_help.c:1337 sql_help.c:1349 sql_help.c:1374 sql_help.c:1621
+#: sql_help.c:2143 sql_help.c:2147 sql_help.c:2252 sql_help.c:2257
+#: sql_help.c:2351 sql_help.c:2759 sql_help.c:2772 sql_help.c:2786
+#: sql_help.c:2795 sql_help.c:2807 sql_help.c:2836 sql_help.c:3790
+#: sql_help.c:3805 sql_help.c:3807 sql_help.c:4235 sql_help.c:4236
+#: sql_help.c:4245 sql_help.c:4286 sql_help.c:4287 sql_help.c:4288
+#: sql_help.c:4289 sql_help.c:4290 sql_help.c:4291 sql_help.c:4324
+#: sql_help.c:4325 sql_help.c:4330 sql_help.c:4335 sql_help.c:4474
+#: sql_help.c:4475 sql_help.c:4484 sql_help.c:4525 sql_help.c:4526
+#: sql_help.c:4527 sql_help.c:4528 sql_help.c:4529 sql_help.c:4530
+#: sql_help.c:4577 sql_help.c:4579 sql_help.c:4636 sql_help.c:4692
+#: sql_help.c:4693 sql_help.c:4702 sql_help.c:4743 sql_help.c:4744
+#: sql_help.c:4745 sql_help.c:4746 sql_help.c:4747 sql_help.c:4748
+msgid "expression"
+msgstr "вираз"
+
+#: sql_help.c:239
+msgid "domain_constraint"
+msgstr "обмеження_домену"
+
+#: sql_help.c:241 sql_help.c:243 sql_help.c:246 sql_help.c:474 sql_help.c:475
+#: sql_help.c:1264 sql_help.c:1308 sql_help.c:1309 sql_help.c:1310
+#: sql_help.c:1336 sql_help.c:1348 sql_help.c:1365 sql_help.c:1776
+#: sql_help.c:1778 sql_help.c:2146 sql_help.c:2251 sql_help.c:2256
+#: sql_help.c:2794 sql_help.c:2806 sql_help.c:3802
+msgid "constraint_name"
+msgstr "ім'я_обмеження"
+
+#: sql_help.c:244 sql_help.c:1265
+msgid "new_constraint_name"
+msgstr "ім'я_нового_обмеження"
+
+#: sql_help.c:317 sql_help.c:1073
+msgid "new_version"
+msgstr "нова_версія"
+
+#: sql_help.c:321 sql_help.c:323
+msgid "member_object"
+msgstr "елемент_об'єкт"
+
+#: sql_help.c:324
+msgid "where member_object is:"
+msgstr "де елемент_об'єкт є:"
+
+#: sql_help.c:325 sql_help.c:330 sql_help.c:331 sql_help.c:332 sql_help.c:333
+#: sql_help.c:334 sql_help.c:335 sql_help.c:340 sql_help.c:344 sql_help.c:346
+#: sql_help.c:348 sql_help.c:357 sql_help.c:358 sql_help.c:359 sql_help.c:360
+#: sql_help.c:361 sql_help.c:362 sql_help.c:363 sql_help.c:364 sql_help.c:367
+#: sql_help.c:368 sql_help.c:1768 sql_help.c:1773 sql_help.c:1780
+#: sql_help.c:1781 sql_help.c:1782 sql_help.c:1783 sql_help.c:1784
+#: sql_help.c:1785 sql_help.c:1786 sql_help.c:1791 sql_help.c:1793
+#: sql_help.c:1797 sql_help.c:1799 sql_help.c:1803 sql_help.c:1808
+#: sql_help.c:1809 sql_help.c:1816 sql_help.c:1817 sql_help.c:1818
+#: sql_help.c:1819 sql_help.c:1820 sql_help.c:1821 sql_help.c:1822
+#: sql_help.c:1823 sql_help.c:1824 sql_help.c:1825 sql_help.c:1826
+#: sql_help.c:1831 sql_help.c:1832 sql_help.c:4142 sql_help.c:4147
+#: sql_help.c:4148 sql_help.c:4149 sql_help.c:4150 sql_help.c:4156
+#: sql_help.c:4157 sql_help.c:4162 sql_help.c:4163 sql_help.c:4168
+#: sql_help.c:4169 sql_help.c:4170 sql_help.c:4171 sql_help.c:4172
+#: sql_help.c:4173
+msgid "object_name"
+msgstr "ім'я_об'єкту"
+
+#: sql_help.c:326 sql_help.c:1769 sql_help.c:4145
+msgid "aggregate_name"
+msgstr "ім'я_агр_функції"
+
+#: sql_help.c:328 sql_help.c:1771 sql_help.c:2055 sql_help.c:2059
+#: sql_help.c:2061 sql_help.c:3212
+msgid "source_type"
+msgstr "початковий_тип"
+
+#: sql_help.c:329 sql_help.c:1772 sql_help.c:2056 sql_help.c:2060
+#: sql_help.c:2062 sql_help.c:3213
+msgid "target_type"
+msgstr "тип_цілі"
+
+#: sql_help.c:336 sql_help.c:774 sql_help.c:1787 sql_help.c:2057
+#: sql_help.c:2098 sql_help.c:2161 sql_help.c:2407 sql_help.c:2438
+#: sql_help.c:2976 sql_help.c:4056 sql_help.c:4151 sql_help.c:4264
+#: sql_help.c:4268 sql_help.c:4272 sql_help.c:4275 sql_help.c:4503
+#: sql_help.c:4507 sql_help.c:4511 sql_help.c:4514 sql_help.c:4721
+#: sql_help.c:4725 sql_help.c:4729 sql_help.c:4732
+msgid "function_name"
+msgstr "ім'я_функції"
+
+#: sql_help.c:341 sql_help.c:767 sql_help.c:1794 sql_help.c:2431
+msgid "operator_name"
+msgstr "ім'я_оператора"
+
+#: sql_help.c:342 sql_help.c:703 sql_help.c:707 sql_help.c:711 sql_help.c:1795
+#: sql_help.c:2408 sql_help.c:3330
+msgid "left_type"
+msgstr "тип_ліворуч"
+
+#: sql_help.c:343 sql_help.c:704 sql_help.c:708 sql_help.c:712 sql_help.c:1796
+#: sql_help.c:2409 sql_help.c:3331
+msgid "right_type"
+msgstr "тип_праворуч"
+
+#: sql_help.c:345 sql_help.c:347 sql_help.c:730 sql_help.c:733 sql_help.c:736
+#: sql_help.c:765 sql_help.c:777 sql_help.c:785 sql_help.c:788 sql_help.c:791
+#: sql_help.c:1354 sql_help.c:1798 sql_help.c:1800 sql_help.c:2428
+#: sql_help.c:2449 sql_help.c:2812 sql_help.c:3340 sql_help.c:3349
+msgid "index_method"
+msgstr "метод_індексу"
+
+#: sql_help.c:349 sql_help.c:1804 sql_help.c:4158
+msgid "procedure_name"
+msgstr "назва_процедури"
+
+#: sql_help.c:353 sql_help.c:1810 sql_help.c:3723 sql_help.c:4164
+msgid "routine_name"
+msgstr "ім'я_підпрограми"
+
+#: sql_help.c:365 sql_help.c:1326 sql_help.c:1827 sql_help.c:2291
+#: sql_help.c:2488 sql_help.c:2767 sql_help.c:2943 sql_help.c:3511
+#: sql_help.c:3737 sql_help.c:4070
+msgid "type_name"
+msgstr "назва_типу"
+
+#: sql_help.c:366 sql_help.c:1828 sql_help.c:2290 sql_help.c:2487
+#: sql_help.c:2944 sql_help.c:3170 sql_help.c:3512 sql_help.c:3729
+#: sql_help.c:4062
+msgid "lang_name"
+msgstr "назва_мови"
+
+#: sql_help.c:369
+msgid "and aggregate_signature is:"
+msgstr "і сигнатура_агр_функції:"
+
+#: sql_help.c:392 sql_help.c:1922 sql_help.c:2188
+msgid "handler_function"
+msgstr "функція_обробник"
+
+#: sql_help.c:393 sql_help.c:2189
+msgid "validator_function"
+msgstr "функція_перевірки"
+
+#: sql_help.c:441 sql_help.c:519 sql_help.c:659 sql_help.c:841 sql_help.c:979
+#: sql_help.c:1259 sql_help.c:1514
+msgid "action"
+msgstr "дія"
+
+#: sql_help.c:443 sql_help.c:450 sql_help.c:454 sql_help.c:455 sql_help.c:458
+#: sql_help.c:460 sql_help.c:461 sql_help.c:462 sql_help.c:464 sql_help.c:467
+#: sql_help.c:469 sql_help.c:470 sql_help.c:663 sql_help.c:673 sql_help.c:675
+#: sql_help.c:678 sql_help.c:680 sql_help.c:1055 sql_help.c:1261
+#: sql_help.c:1279 sql_help.c:1283 sql_help.c:1284 sql_help.c:1288
+#: sql_help.c:1290 sql_help.c:1291 sql_help.c:1292 sql_help.c:1294
+#: sql_help.c:1297 sql_help.c:1298 sql_help.c:1300 sql_help.c:1303
+#: sql_help.c:1305 sql_help.c:1350 sql_help.c:1352 sql_help.c:1359
+#: sql_help.c:1368 sql_help.c:1373 sql_help.c:1620 sql_help.c:1623
+#: sql_help.c:1660 sql_help.c:1775 sql_help.c:1888 sql_help.c:1894
+#: sql_help.c:1907 sql_help.c:1908 sql_help.c:1909 sql_help.c:2230
+#: sql_help.c:2243 sql_help.c:2288 sql_help.c:2350 sql_help.c:2354
+#: sql_help.c:2387 sql_help.c:2614 sql_help.c:2642 sql_help.c:2643
+#: sql_help.c:2750 sql_help.c:2758 sql_help.c:2768 sql_help.c:2771
+#: sql_help.c:2781 sql_help.c:2785 sql_help.c:2808 sql_help.c:2810
+#: sql_help.c:2817 sql_help.c:2830 sql_help.c:2835 sql_help.c:2853
+#: sql_help.c:2979 sql_help.c:3115 sql_help.c:3708 sql_help.c:3709
+#: sql_help.c:3789 sql_help.c:3804 sql_help.c:3806 sql_help.c:3808
+#: sql_help.c:4041 sql_help.c:4042 sql_help.c:4144 sql_help.c:4295
+#: sql_help.c:4534 sql_help.c:4576 sql_help.c:4578 sql_help.c:4580
+#: sql_help.c:4624 sql_help.c:4752
+msgid "column_name"
+msgstr "назва_стовпця"
+
+#: sql_help.c:444 sql_help.c:664 sql_help.c:1262
+msgid "new_column_name"
+msgstr "нова_назва_стовпця"
+
+#: sql_help.c:449 sql_help.c:540 sql_help.c:672 sql_help.c:862 sql_help.c:1000
+#: sql_help.c:1278 sql_help.c:1530
+msgid "where action is one of:"
+msgstr "де допустима дія:"
+
+#: sql_help.c:451 sql_help.c:456 sql_help.c:1047 sql_help.c:1280
+#: sql_help.c:1285 sql_help.c:1532 sql_help.c:1536 sql_help.c:2141
+#: sql_help.c:2231 sql_help.c:2427 sql_help.c:2607 sql_help.c:2751
+#: sql_help.c:3024 sql_help.c:3891
+msgid "data_type"
+msgstr "тип_даних"
+
+#: sql_help.c:452 sql_help.c:457 sql_help.c:1281 sql_help.c:1286
+#: sql_help.c:1533 sql_help.c:1537 sql_help.c:2142 sql_help.c:2234
+#: sql_help.c:2352 sql_help.c:2752 sql_help.c:2760 sql_help.c:2773
+#: sql_help.c:2787 sql_help.c:3025 sql_help.c:3031 sql_help.c:3799
+msgid "collation"
+msgstr "правила_сортування"
+
+#: sql_help.c:453 sql_help.c:1282 sql_help.c:2235 sql_help.c:2244
+#: sql_help.c:2753 sql_help.c:2769 sql_help.c:2782
+msgid "column_constraint"
+msgstr "обмеження_стовпця"
+
+#: sql_help.c:463 sql_help.c:603 sql_help.c:674 sql_help.c:1299
+msgid "integer"
+msgstr "ціле"
+
+#: sql_help.c:465 sql_help.c:468 sql_help.c:676 sql_help.c:679 sql_help.c:1301
+#: sql_help.c:1304
+msgid "attribute_option"
+msgstr "параметр_атрибуту"
+
+#: sql_help.c:473 sql_help.c:1306 sql_help.c:2236 sql_help.c:2245
+#: sql_help.c:2754 sql_help.c:2770 sql_help.c:2783
+msgid "table_constraint"
+msgstr "обмеження_таблиці"
+
+#: sql_help.c:476 sql_help.c:477 sql_help.c:478 sql_help.c:479 sql_help.c:1311
+#: sql_help.c:1312 sql_help.c:1313 sql_help.c:1314 sql_help.c:1829
+msgid "trigger_name"
+msgstr "ім'я_тригеру"
+
+#: sql_help.c:480 sql_help.c:481 sql_help.c:1324 sql_help.c:1325
+#: sql_help.c:2237 sql_help.c:2242 sql_help.c:2757 sql_help.c:2780
+msgid "parent_table"
+msgstr "батьківська_таблиця"
+
+#: sql_help.c:539 sql_help.c:595 sql_help.c:661 sql_help.c:861 sql_help.c:999
+#: sql_help.c:1493 sql_help.c:2173
+msgid "extension_name"
+msgstr "ім'я_розширення"
+
+#: sql_help.c:541 sql_help.c:1001 sql_help.c:2292
+msgid "execution_cost"
+msgstr "вартість_виконання"
+
+#: sql_help.c:542 sql_help.c:1002 sql_help.c:2293
+msgid "result_rows"
+msgstr "рядки_результату"
+
+#: sql_help.c:543 sql_help.c:2294
+msgid "support_function"
+msgstr "функція_підтримки"
+
+#: sql_help.c:564 sql_help.c:566 sql_help.c:925 sql_help.c:933 sql_help.c:937
+#: sql_help.c:940 sql_help.c:943 sql_help.c:1571 sql_help.c:1579
+#: sql_help.c:1583 sql_help.c:1586 sql_help.c:1589 sql_help.c:2585
+#: sql_help.c:2587 sql_help.c:2590 sql_help.c:2591 sql_help.c:3707
+#: sql_help.c:3711 sql_help.c:3714 sql_help.c:3716 sql_help.c:3718
+#: sql_help.c:3720 sql_help.c:3722 sql_help.c:3728 sql_help.c:3730
+#: sql_help.c:3732 sql_help.c:3734 sql_help.c:3736 sql_help.c:3738
+msgid "role_specification"
+msgstr "вказання_ролі"
+
+#: sql_help.c:565 sql_help.c:567 sql_help.c:1602 sql_help.c:2116
+#: sql_help.c:2593 sql_help.c:3100 sql_help.c:3545 sql_help.c:4380
+msgid "user_name"
+msgstr "ім'я_користувача"
+
+#: sql_help.c:568 sql_help.c:945 sql_help.c:1591 sql_help.c:2592
+#: sql_help.c:3739
+msgid "where role_specification can be:"
+msgstr "де вказання_ролі може бути:"
+
+#: sql_help.c:570
+msgid "group_name"
+msgstr "ім'я_групи"
+
+#: sql_help.c:591 sql_help.c:1371 sql_help.c:2121 sql_help.c:2357
+#: sql_help.c:2391 sql_help.c:2765 sql_help.c:2778 sql_help.c:2792
+#: sql_help.c:2833 sql_help.c:2857 sql_help.c:2869 sql_help.c:3735
+#: sql_help.c:4068
+msgid "tablespace_name"
+msgstr "ім'я_табличного_простору"
+
+#: sql_help.c:593 sql_help.c:681 sql_help.c:1319 sql_help.c:1328
+#: sql_help.c:1366 sql_help.c:1709
+msgid "index_name"
+msgstr "назва_індексу"
+
+#: sql_help.c:597 sql_help.c:600 sql_help.c:682 sql_help.c:684 sql_help.c:1321
+#: sql_help.c:1323 sql_help.c:1369 sql_help.c:2355 sql_help.c:2389
+#: sql_help.c:2763 sql_help.c:2776 sql_help.c:2790 sql_help.c:2831
+#: sql_help.c:2855
+msgid "storage_parameter"
+msgstr "параметр_зберігання"
+
+#: sql_help.c:602
+msgid "column_number"
+msgstr "номер_стовпця"
+
+#: sql_help.c:626 sql_help.c:1792 sql_help.c:4155
+msgid "large_object_oid"
+msgstr "oid_великого_об'єкта"
+
+#: sql_help.c:713 sql_help.c:2412
+msgid "res_proc"
+msgstr "res_процедура"
+
+#: sql_help.c:714 sql_help.c:2413
+msgid "join_proc"
+msgstr "процедура_приєднання"
+
+#: sql_help.c:766 sql_help.c:778 sql_help.c:2430
+msgid "strategy_number"
+msgstr "номер_стратегії"
+
+#: sql_help.c:768 sql_help.c:769 sql_help.c:772 sql_help.c:773 sql_help.c:779
+#: sql_help.c:780 sql_help.c:782 sql_help.c:783 sql_help.c:2432 sql_help.c:2433
+#: sql_help.c:2436 sql_help.c:2437
+msgid "op_type"
+msgstr "тип_операції"
+
+#: sql_help.c:770 sql_help.c:2434
+msgid "sort_family_name"
+msgstr "ім'я_родини_сортування"
+
+#: sql_help.c:771 sql_help.c:781 sql_help.c:2435
+msgid "support_number"
+msgstr "номер_підтримки"
+
+#: sql_help.c:775 sql_help.c:2058 sql_help.c:2439 sql_help.c:2946
+#: sql_help.c:2948
+msgid "argument_type"
+msgstr "тип_аргументу"
+
+#: sql_help.c:806 sql_help.c:809 sql_help.c:880 sql_help.c:882 sql_help.c:884
+#: sql_help.c:1015 sql_help.c:1054 sql_help.c:1489 sql_help.c:1492
+#: sql_help.c:1659 sql_help.c:1708 sql_help.c:1777 sql_help.c:1802
+#: sql_help.c:1815 sql_help.c:1830 sql_help.c:1887 sql_help.c:1893
+#: sql_help.c:2229 sql_help.c:2241 sql_help.c:2348 sql_help.c:2386
+#: sql_help.c:2463 sql_help.c:2506 sql_help.c:2562 sql_help.c:2613
+#: sql_help.c:2644 sql_help.c:2749 sql_help.c:2766 sql_help.c:2779
+#: sql_help.c:2852 sql_help.c:2972 sql_help.c:3149 sql_help.c:3366
+#: sql_help.c:3415 sql_help.c:3521 sql_help.c:3705 sql_help.c:3710
+#: sql_help.c:3755 sql_help.c:3787 sql_help.c:4038 sql_help.c:4043
+#: sql_help.c:4143 sql_help.c:4250 sql_help.c:4252 sql_help.c:4301
+#: sql_help.c:4340 sql_help.c:4489 sql_help.c:4491 sql_help.c:4540
+#: sql_help.c:4574 sql_help.c:4623 sql_help.c:4707 sql_help.c:4709
+#: sql_help.c:4758
+msgid "table_name"
+msgstr "ім'я_таблиці"
+
+#: sql_help.c:811 sql_help.c:2465
+msgid "using_expression"
+msgstr "вираз_використання"
+
+#: sql_help.c:812 sql_help.c:2466
+msgid "check_expression"
+msgstr "вираз_перевірки"
+
+#: sql_help.c:886 sql_help.c:2507
+msgid "publication_parameter"
+msgstr "параметр_публікації"
+
+#: sql_help.c:929 sql_help.c:1575 sql_help.c:2327 sql_help.c:2539
+#: sql_help.c:3083
+msgid "password"
+msgstr "пароль"
+
+#: sql_help.c:930 sql_help.c:1576 sql_help.c:2328 sql_help.c:2540
+#: sql_help.c:3084
+msgid "timestamp"
+msgstr "мітка часу"
+
+#: sql_help.c:934 sql_help.c:938 sql_help.c:941 sql_help.c:944 sql_help.c:1580
+#: sql_help.c:1584 sql_help.c:1587 sql_help.c:1590 sql_help.c:3715
+#: sql_help.c:4048
+msgid "database_name"
+msgstr "назва_бази_даних"
+
+#: sql_help.c:1048 sql_help.c:2608
+msgid "increment"
+msgstr "інкремент"
+
+#: sql_help.c:1049 sql_help.c:2609
+msgid "minvalue"
+msgstr "мін_значення"
+
+#: sql_help.c:1050 sql_help.c:2610
+msgid "maxvalue"
+msgstr "макс_значення"
+
+#: sql_help.c:1051 sql_help.c:2611 sql_help.c:4248 sql_help.c:4338
+#: sql_help.c:4487 sql_help.c:4640 sql_help.c:4705
+msgid "start"
+msgstr "початок"
+
+#: sql_help.c:1052 sql_help.c:1296
+msgid "restart"
+msgstr "перезапуск"
+
+#: sql_help.c:1053 sql_help.c:2612
+msgid "cache"
+msgstr "кеш"
+
+#: sql_help.c:1110 sql_help.c:2656
+msgid "conninfo"
+msgstr "інформація_підключення"
+
+#: sql_help.c:1112 sql_help.c:2657
+msgid "publication_name"
+msgstr "назва_публікації"
+
+#: sql_help.c:1113
+msgid "set_publication_option"
+msgstr "опція_set_publication"
+
+#: sql_help.c:1116
+msgid "refresh_option"
+msgstr "опція_оновлення"
+
+#: sql_help.c:1121 sql_help.c:2658
+msgid "subscription_parameter"
+msgstr "параметр_підписки"
+
+#: sql_help.c:1274 sql_help.c:1277
+msgid "partition_name"
+msgstr "ім'я_розділу"
+
+#: sql_help.c:1275 sql_help.c:2246 sql_help.c:2784
+msgid "partition_bound_spec"
+msgstr "специфікація_рамок_розділу"
+
+#: sql_help.c:1293 sql_help.c:1340 sql_help.c:2798
+msgid "sequence_options"
+msgstr "опції_послідовності"
+
+#: sql_help.c:1295
+msgid "sequence_option"
+msgstr "опція_послідовності"
+
+#: sql_help.c:1307
+msgid "table_constraint_using_index"
+msgstr "індекс_обмеження_таблиці"
+
+#: sql_help.c:1315 sql_help.c:1316 sql_help.c:1317 sql_help.c:1318
+msgid "rewrite_rule_name"
+msgstr "ім'я_правила_перезапису"
+
+#: sql_help.c:1329 sql_help.c:2823
+msgid "and partition_bound_spec is:"
+msgstr "і специфікація_рамок_розділу:"
+
+#: sql_help.c:1330 sql_help.c:1331 sql_help.c:1332 sql_help.c:2824
+#: sql_help.c:2825 sql_help.c:2826
+msgid "partition_bound_expr"
+msgstr "код_секції"
+
+#: sql_help.c:1333 sql_help.c:1334 sql_help.c:2827 sql_help.c:2828
+msgid "numeric_literal"
+msgstr "числовий_літерал"
+
+#: sql_help.c:1335
+msgid "and column_constraint is:"
+msgstr "і обмеження_стовпця:"
+
+#: sql_help.c:1338 sql_help.c:2253 sql_help.c:2286 sql_help.c:2486
+#: sql_help.c:2796
+msgid "default_expr"
+msgstr "вираз_за_замовчуванням"
+
+#: sql_help.c:1339 sql_help.c:2254 sql_help.c:2797
+msgid "generation_expr"
+msgstr "код_генерації"
+
+#: sql_help.c:1341 sql_help.c:1342 sql_help.c:1351 sql_help.c:1353
+#: sql_help.c:1357 sql_help.c:2799 sql_help.c:2800 sql_help.c:2809
+#: sql_help.c:2811 sql_help.c:2815
+msgid "index_parameters"
+msgstr "параметри_індексу"
+
+#: sql_help.c:1343 sql_help.c:1360 sql_help.c:2801 sql_help.c:2818
+msgid "reftable"
+msgstr "залежна_таблиця"
+
+#: sql_help.c:1344 sql_help.c:1361 sql_help.c:2802 sql_help.c:2819
+msgid "refcolumn"
+msgstr "залежний_стовпець"
+
+#: sql_help.c:1345 sql_help.c:1346 sql_help.c:1362 sql_help.c:1363
+#: sql_help.c:2803 sql_help.c:2804 sql_help.c:2820 sql_help.c:2821
+msgid "referential_action"
+msgstr "дія_посилання"
+
+#: sql_help.c:1347 sql_help.c:2255 sql_help.c:2805
+msgid "and table_constraint is:"
+msgstr "і обмеження_таблиці:"
+
+#: sql_help.c:1355 sql_help.c:2813
+msgid "exclude_element"
+msgstr "об'єкт_виключення"
+
+#: sql_help.c:1356 sql_help.c:2814 sql_help.c:4246 sql_help.c:4336
+#: sql_help.c:4485 sql_help.c:4638 sql_help.c:4703
+msgid "operator"
+msgstr "оператор"
+
+#: sql_help.c:1358 sql_help.c:2358 sql_help.c:2816
+msgid "predicate"
+msgstr "предикат"
+
+#: sql_help.c:1364
+msgid "and table_constraint_using_index is:"
+msgstr "і індекс_обмеження_таблиці:"
+
+#: sql_help.c:1367 sql_help.c:2829
+msgid "index_parameters in UNIQUE, PRIMARY KEY, and EXCLUDE constraints are:"
+msgstr "параметри_індексу в обмеженнях UNIQUE, PRIMARY KEY, EXCLUDE:"
+
+#: sql_help.c:1372 sql_help.c:2834
+msgid "exclude_element in an EXCLUDE constraint is:"
+msgstr "елемент_виключення в обмеженні EXCLUDE:"
+
+#: sql_help.c:1375 sql_help.c:2353 sql_help.c:2761 sql_help.c:2774
+#: sql_help.c:2788 sql_help.c:2837 sql_help.c:3800
+msgid "opclass"
+msgstr "клас_оператора"
+
+#: sql_help.c:1391 sql_help.c:1394 sql_help.c:2872
+msgid "tablespace_option"
+msgstr "опція_табличного_простору"
+
+#: sql_help.c:1415 sql_help.c:1418 sql_help.c:1424 sql_help.c:1428
+msgid "token_type"
+msgstr "тип_токену"
+
+#: sql_help.c:1416 sql_help.c:1419
+msgid "dictionary_name"
+msgstr "ім'я_словника"
+
+#: sql_help.c:1421 sql_help.c:1425
+msgid "old_dictionary"
+msgstr "старий_словник"
+
+#: sql_help.c:1422 sql_help.c:1426
+msgid "new_dictionary"
+msgstr "новий_словник"
+
+#: sql_help.c:1518 sql_help.c:1531 sql_help.c:1534 sql_help.c:1535
+#: sql_help.c:3023
+msgid "attribute_name"
+msgstr "ім'я_атрибута"
+
+#: sql_help.c:1519
+msgid "new_attribute_name"
+msgstr "нове_ім'я_атрибута"
+
+#: sql_help.c:1525 sql_help.c:1529
+msgid "new_enum_value"
+msgstr "нове_значення_перерахування"
+
+#: sql_help.c:1526
+msgid "neighbor_enum_value"
+msgstr "сусіднє_значення_перерахування"
+
+#: sql_help.c:1528
+msgid "existing_enum_value"
+msgstr "існуюче_значення_перерахування"
+
+#: sql_help.c:1603 sql_help.c:2238 sql_help.c:2247 sql_help.c:2624
+#: sql_help.c:3101 sql_help.c:3546 sql_help.c:3721 sql_help.c:3756
+#: sql_help.c:4054
+msgid "server_name"
+msgstr "назва_серверу"
+
+#: sql_help.c:1631 sql_help.c:1634 sql_help.c:3116
+msgid "view_option_name"
+msgstr "ім'я_параметра_представлення"
+
+#: sql_help.c:1632 sql_help.c:3117
+msgid "view_option_value"
+msgstr "значення_параметра_представлення"
+
+#: sql_help.c:1653 sql_help.c:1654 sql_help.c:4611 sql_help.c:4612
+msgid "table_and_columns"
+msgstr "таблиця_і_стовпці"
+
+#: sql_help.c:1655 sql_help.c:1899 sql_help.c:3593 sql_help.c:4613
+msgid "where option can be one of:"
+msgstr "де параметр може бути одним із:"
+
+#: sql_help.c:1656 sql_help.c:1657 sql_help.c:1901 sql_help.c:1904
+#: sql_help.c:2083 sql_help.c:3594 sql_help.c:3595 sql_help.c:3596
+#: sql_help.c:3597 sql_help.c:3598 sql_help.c:3599 sql_help.c:3600
+#: sql_help.c:4614 sql_help.c:4615 sql_help.c:4616 sql_help.c:4617
+#: sql_help.c:4618 sql_help.c:4619 sql_help.c:4620 sql_help.c:4621
+msgid "boolean"
+msgstr "логічний"
+
+#: sql_help.c:1658 sql_help.c:4622
+msgid "and table_and_columns is:"
+msgstr "і таблиця_і_стовпці:"
+
+#: sql_help.c:1674 sql_help.c:4396 sql_help.c:4398 sql_help.c:4422
+msgid "transaction_mode"
+msgstr "режим_транзакції"
+
+#: sql_help.c:1675 sql_help.c:4399 sql_help.c:4423
+msgid "where transaction_mode is one of:"
+msgstr "де режим_транзакції один з:"
+
+#: sql_help.c:1684 sql_help.c:4256 sql_help.c:4265 sql_help.c:4269
+#: sql_help.c:4273 sql_help.c:4276 sql_help.c:4495 sql_help.c:4504
+#: sql_help.c:4508 sql_help.c:4512 sql_help.c:4515 sql_help.c:4713
+#: sql_help.c:4722 sql_help.c:4726 sql_help.c:4730 sql_help.c:4733
+msgid "argument"
+msgstr "аргумент"
+
+#: sql_help.c:1774
+msgid "relation_name"
+msgstr "назва_відношення"
+
+#: sql_help.c:1779 sql_help.c:3717 sql_help.c:4050
+msgid "domain_name"
+msgstr "назва_домену"
+
+#: sql_help.c:1801
+msgid "policy_name"
+msgstr "назва_політики"
+
+#: sql_help.c:1814
+msgid "rule_name"
+msgstr "назва_правила"
+
+#: sql_help.c:1833
+msgid "text"
+msgstr "текст"
+
+#: sql_help.c:1858 sql_help.c:3900 sql_help.c:4088
+msgid "transaction_id"
+msgstr "ідентифікатор_транзакції"
+
+#: sql_help.c:1889 sql_help.c:1896 sql_help.c:3826
+msgid "filename"
+msgstr "ім'я файлу"
+
+#: sql_help.c:1890 sql_help.c:1897 sql_help.c:2564 sql_help.c:2565
+#: sql_help.c:2566
+msgid "command"
+msgstr "команда"
+
+#: sql_help.c:1892 sql_help.c:2563 sql_help.c:2975 sql_help.c:3152
+#: sql_help.c:3810 sql_help.c:4239 sql_help.c:4241 sql_help.c:4329
+#: sql_help.c:4331 sql_help.c:4478 sql_help.c:4480 sql_help.c:4583
+#: sql_help.c:4696 sql_help.c:4698
+msgid "condition"
+msgstr "умова"
+
+#: sql_help.c:1895 sql_help.c:2392 sql_help.c:2858 sql_help.c:3118
+#: sql_help.c:3136 sql_help.c:3791
+msgid "query"
+msgstr "запит"
+
+#: sql_help.c:1900
+msgid "format_name"
+msgstr "назва_формату"
+
+#: sql_help.c:1902
+msgid "delimiter_character"
+msgstr "символ_роздільник"
+
+#: sql_help.c:1903
+msgid "null_string"
+msgstr "представлення_NULL"
+
+#: sql_help.c:1905
+msgid "quote_character"
+msgstr "символ_лапок"
+
+#: sql_help.c:1906
+msgid "escape_character"
+msgstr "символ_екранування"
+
+#: sql_help.c:1910
+msgid "encoding_name"
+msgstr "ім'я_кодування"
+
+#: sql_help.c:1921
+msgid "access_method_type"
+msgstr "тип_метода_доступа"
+
+#: sql_help.c:1992 sql_help.c:2011 sql_help.c:2014
+msgid "arg_data_type"
+msgstr "тип_даних_аргумента"
+
+#: sql_help.c:1993 sql_help.c:2015 sql_help.c:2023
+msgid "sfunc"
+msgstr "функція_стану"
+
+#: sql_help.c:1994 sql_help.c:2016 sql_help.c:2024
+msgid "state_data_type"
+msgstr "тип_даних_стану"
+
+#: sql_help.c:1995 sql_help.c:2017 sql_help.c:2025
+msgid "state_data_size"
+msgstr "розмір_даних_стану"
+
+#: sql_help.c:1996 sql_help.c:2018 sql_help.c:2026
+msgid "ffunc"
+msgstr "функція_завершення"
+
+#: sql_help.c:1997 sql_help.c:2027
+msgid "combinefunc"
+msgstr "комбінуюча_функція"
+
+#: sql_help.c:1998 sql_help.c:2028
+msgid "serialfunc"
+msgstr "функція_серіалізації"
+
+#: sql_help.c:1999 sql_help.c:2029
+msgid "deserialfunc"
+msgstr "функція_десеріалізації"
+
+#: sql_help.c:2000 sql_help.c:2019 sql_help.c:2030
+msgid "initial_condition"
+msgstr "початкова_умова"
+
+#: sql_help.c:2001 sql_help.c:2031
+msgid "msfunc"
+msgstr "функція_стану_рух"
+
+#: sql_help.c:2002 sql_help.c:2032
+msgid "minvfunc"
+msgstr "зворотна_функція_рух"
+
+#: sql_help.c:2003 sql_help.c:2033
+msgid "mstate_data_type"
+msgstr "тип_даних_стану_рух"
+
+#: sql_help.c:2004 sql_help.c:2034
+msgid "mstate_data_size"
+msgstr "розмір_даних_стану_рух"
+
+#: sql_help.c:2005 sql_help.c:2035
+msgid "mffunc"
+msgstr "функція_завершення_рух"
+
+#: sql_help.c:2006 sql_help.c:2036
+msgid "minitial_condition"
+msgstr "початкова_умова_рух"
+
+#: sql_help.c:2007 sql_help.c:2037
+msgid "sort_operator"
+msgstr "оператор_сортування"
+
+#: sql_help.c:2020
+msgid "or the old syntax"
+msgstr "або старий синтаксис"
+
+#: sql_help.c:2022
+msgid "base_type"
+msgstr "базовий_тип"
+
+#: sql_help.c:2079
+msgid "locale"
+msgstr "локаль"
+
+#: sql_help.c:2080 sql_help.c:2119
+msgid "lc_collate"
+msgstr "код_правила_сортування"
+
+#: sql_help.c:2081 sql_help.c:2120
+msgid "lc_ctype"
+msgstr "код_класифікації_символів"
+
+#: sql_help.c:2082 sql_help.c:4141
+msgid "provider"
+msgstr "постачальник"
+
+#: sql_help.c:2084 sql_help.c:2175
+msgid "version"
+msgstr "версія"
+
+#: sql_help.c:2086
+msgid "existing_collation"
+msgstr "існуюче_правило_сортування"
+
+#: sql_help.c:2096
+msgid "source_encoding"
+msgstr "початкове_кодування"
+
+#: sql_help.c:2097
+msgid "dest_encoding"
+msgstr "цільве_кодування"
+
+#: sql_help.c:2117 sql_help.c:2898
+msgid "template"
+msgstr "шаблон"
+
+#: sql_help.c:2118
+msgid "encoding"
+msgstr "кодування"
+
+#: sql_help.c:2144
+msgid "constraint"
+msgstr "обмеження"
+
+#: sql_help.c:2145
+msgid "where constraint is:"
+msgstr "де обмеження:"
+
+#: sql_help.c:2159 sql_help.c:2561 sql_help.c:2971
+msgid "event"
+msgstr "подія"
+
+#: sql_help.c:2160
+msgid "filter_variable"
+msgstr "змінна_фільтру"
+
+#: sql_help.c:2176
+msgid "old_version"
+msgstr "стара_версія"
+
+#: sql_help.c:2250 sql_help.c:2793
+msgid "where column_constraint is:"
+msgstr "де обмеження_стовпців:"
+
+#: sql_help.c:2287
+msgid "rettype"
+msgstr "тип_результату"
+
+#: sql_help.c:2289
+msgid "column_type"
+msgstr "тип_стовпця"
+
+#: sql_help.c:2298 sql_help.c:2492
+msgid "definition"
+msgstr "визначення"
+
+#: sql_help.c:2299 sql_help.c:2493
+msgid "obj_file"
+msgstr "об'єктний_файл"
+
+#: sql_help.c:2300 sql_help.c:2494
+msgid "link_symbol"
+msgstr "символ_експорту"
+
+#: sql_help.c:2334 sql_help.c:2546 sql_help.c:3090
+msgid "uid"
+msgstr "uid"
+
+#: sql_help.c:2349 sql_help.c:2388 sql_help.c:2762 sql_help.c:2775
+#: sql_help.c:2789 sql_help.c:2854
+msgid "method"
+msgstr "метод"
+
+#: sql_help.c:2370
+msgid "call_handler"
+msgstr "обробник_виклику"
+
+#: sql_help.c:2371
+msgid "inline_handler"
+msgstr "обробник_впровадженого_коду"
+
+#: sql_help.c:2372
+msgid "valfunction"
+msgstr "функція_перевірки"
+
+#: sql_help.c:2410
+msgid "com_op"
+msgstr "комут_оператор"
+
+#: sql_help.c:2411
+msgid "neg_op"
+msgstr "зворотній_оператор"
+
+#: sql_help.c:2429
+msgid "family_name"
+msgstr "назва_сімейства"
+
+#: sql_help.c:2440
+msgid "storage_type"
+msgstr "тип_зберігання"
+
+#: sql_help.c:2567 sql_help.c:2978
+msgid "where event can be one of:"
+msgstr "де подія може бути однією з:"
+
+#: sql_help.c:2586 sql_help.c:2588
+msgid "schema_element"
+msgstr "елемент_схеми"
+
+#: sql_help.c:2625
+msgid "server_type"
+msgstr "тип_серверу"
+
+#: sql_help.c:2626
+msgid "server_version"
+msgstr "версія_серверу"
+
+#: sql_help.c:2627 sql_help.c:3719 sql_help.c:4052
+msgid "fdw_name"
+msgstr "назва_fdw"
+
+#: sql_help.c:2640
+msgid "statistics_name"
+msgstr "назва_статистики"
+
+#: sql_help.c:2641
+msgid "statistics_kind"
+msgstr "вид_статистики"
+
+#: sql_help.c:2655
+msgid "subscription_name"
+msgstr "назва_підписки"
+
+#: sql_help.c:2755
+msgid "source_table"
+msgstr "вихідна_таблиця"
+
+#: sql_help.c:2756
+msgid "like_option"
+msgstr "параметр_породження"
+
+#: sql_help.c:2822
+msgid "and like_option is:"
+msgstr "і параметр_породження:"
+
+#: sql_help.c:2871
+msgid "directory"
+msgstr "каталог"
+
+#: sql_help.c:2885
+msgid "parser_name"
+msgstr "назва_парсера"
+
+#: sql_help.c:2886
+msgid "source_config"
+msgstr "початкова_конфігурація"
+
+#: sql_help.c:2915
+msgid "start_function"
+msgstr "функція_початку"
+
+#: sql_help.c:2916
+msgid "gettoken_function"
+msgstr "функція_видачі_токену"
+
+#: sql_help.c:2917
+msgid "end_function"
+msgstr "функція_завершення"
+
+#: sql_help.c:2918
+msgid "lextypes_function"
+msgstr "функція_лекс_типів"
+
+#: sql_help.c:2919
+msgid "headline_function"
+msgstr "функція_створення_заголовків"
+
+#: sql_help.c:2931
+msgid "init_function"
+msgstr "функція_ініціалізації"
+
+#: sql_help.c:2932
+msgid "lexize_function"
+msgstr "функція_виділення_лексем"
+
+#: sql_help.c:2945
+msgid "from_sql_function_name"
+msgstr "ім'я_функції_з_sql"
+
+#: sql_help.c:2947
+msgid "to_sql_function_name"
+msgstr "ім'я_функції_в_sql"
+
+#: sql_help.c:2973
+msgid "referenced_table_name"
+msgstr "ім'я_залежної_таблиці"
+
+#: sql_help.c:2974
+msgid "transition_relation_name"
+msgstr "ім'я_перехідного_відношення"
+
+#: sql_help.c:2977
+msgid "arguments"
+msgstr "аргументи"
+
+#: sql_help.c:3027 sql_help.c:4174
+msgid "label"
+msgstr "мітка"
+
+#: sql_help.c:3029
+msgid "subtype"
+msgstr "підтип"
+
+#: sql_help.c:3030
+msgid "subtype_operator_class"
+msgstr "клас_оператора_підтипу"
+
+#: sql_help.c:3032
+msgid "canonical_function"
+msgstr "канонічна_функція"
+
+#: sql_help.c:3033
+msgid "subtype_diff_function"
+msgstr "функція_розбіжностей_підтипу"
+
+#: sql_help.c:3035
+msgid "input_function"
+msgstr "функція_вводу"
+
+#: sql_help.c:3036
+msgid "output_function"
+msgstr "функція_виводу"
+
+#: sql_help.c:3037
+msgid "receive_function"
+msgstr "функція_отримання"
+
+#: sql_help.c:3038
+msgid "send_function"
+msgstr "функція_відправки"
+
+#: sql_help.c:3039
+msgid "type_modifier_input_function"
+msgstr "функція_введення_модифікатора_типу"
+
+#: sql_help.c:3040
+msgid "type_modifier_output_function"
+msgstr "функція_виводу_модифікатора_типу"
+
+#: sql_help.c:3041
+msgid "analyze_function"
+msgstr "функція_аналізу"
+
+#: sql_help.c:3042
+msgid "internallength"
+msgstr "внутр_довжина"
+
+#: sql_help.c:3043
+msgid "alignment"
+msgstr "вирівнювання"
+
+#: sql_help.c:3044
+msgid "storage"
+msgstr "зберігання"
+
+#: sql_help.c:3045
+msgid "like_type"
+msgstr "тип_зразок"
+
+#: sql_help.c:3046
+msgid "category"
+msgstr "категорія"
+
+#: sql_help.c:3047
+msgid "preferred"
+msgstr "привілейований"
+
+#: sql_help.c:3048
+msgid "default"
+msgstr "за_замовчуванням"
+
+#: sql_help.c:3049
+msgid "element"
+msgstr "елемент"
+
+#: sql_help.c:3050
+msgid "delimiter"
+msgstr "роздільник"
+
+#: sql_help.c:3051
+msgid "collatable"
+msgstr "сортувальний"
+
+#: sql_help.c:3148 sql_help.c:3786 sql_help.c:4234 sql_help.c:4323
+#: sql_help.c:4473 sql_help.c:4573 sql_help.c:4691
+msgid "with_query"
+msgstr "with_запит"
+
+#: sql_help.c:3150 sql_help.c:3788 sql_help.c:4253 sql_help.c:4259
+#: sql_help.c:4262 sql_help.c:4266 sql_help.c:4270 sql_help.c:4278
+#: sql_help.c:4492 sql_help.c:4498 sql_help.c:4501 sql_help.c:4505
+#: sql_help.c:4509 sql_help.c:4517 sql_help.c:4575 sql_help.c:4710
+#: sql_help.c:4716 sql_help.c:4719 sql_help.c:4723 sql_help.c:4727
+#: sql_help.c:4735
+msgid "alias"
+msgstr "псевдонім"
+
+#: sql_help.c:3151
+msgid "using_list"
+msgstr "список_using"
+
+#: sql_help.c:3153 sql_help.c:3626 sql_help.c:3867 sql_help.c:4584
+msgid "cursor_name"
+msgstr "ім'я_курсору"
+
+#: sql_help.c:3154 sql_help.c:3794 sql_help.c:4585
+msgid "output_expression"
+msgstr "вираз_результату"
+
+#: sql_help.c:3155 sql_help.c:3795 sql_help.c:4237 sql_help.c:4326
+#: sql_help.c:4476 sql_help.c:4586 sql_help.c:4694
+msgid "output_name"
+msgstr "ім'я_результату"
+
+#: sql_help.c:3171
+msgid "code"
+msgstr "код"
+
+#: sql_help.c:3570
+msgid "parameter"
+msgstr "параметр"
+
+#: sql_help.c:3591 sql_help.c:3592 sql_help.c:3892
+msgid "statement"
+msgstr "оператор"
+
+#: sql_help.c:3625 sql_help.c:3866
+msgid "direction"
+msgstr "напрямок"
+
+#: sql_help.c:3627 sql_help.c:3868
+msgid "where direction can be empty or one of:"
+msgstr "де напрямок може бути пустим або одним із:"
+
+#: sql_help.c:3628 sql_help.c:3629 sql_help.c:3630 sql_help.c:3631
+#: sql_help.c:3632 sql_help.c:3869 sql_help.c:3870 sql_help.c:3871
+#: sql_help.c:3872 sql_help.c:3873 sql_help.c:4247 sql_help.c:4249
+#: sql_help.c:4337 sql_help.c:4339 sql_help.c:4486 sql_help.c:4488
+#: sql_help.c:4639 sql_help.c:4641 sql_help.c:4704 sql_help.c:4706
+msgid "count"
+msgstr "кількість"
+
+#: sql_help.c:3712 sql_help.c:4045
+msgid "sequence_name"
+msgstr "ім'я_послідовності"
+
+#: sql_help.c:3725 sql_help.c:4058
+msgid "arg_name"
+msgstr "ім'я_аргументу"
+
+#: sql_help.c:3726 sql_help.c:4059
+msgid "arg_type"
+msgstr "тип_аргументу"
+
+#: sql_help.c:3731 sql_help.c:4064
+msgid "loid"
+msgstr "код_вел_об'єкту"
+
+#: sql_help.c:3754
+msgid "remote_schema"
+msgstr "віддалена_схема"
+
+#: sql_help.c:3757
+msgid "local_schema"
+msgstr "локальна_схема"
+
+#: sql_help.c:3792
+msgid "conflict_target"
+msgstr "ціль_конфлікту"
+
+#: sql_help.c:3793
+msgid "conflict_action"
+msgstr "дія_при_конфлікті"
+
+#: sql_help.c:3796
+msgid "where conflict_target can be one of:"
+msgstr "де ціль_конфлікту може бути одним з:"
+
+#: sql_help.c:3797
+msgid "index_column_name"
+msgstr "ім'я_стовпця_індексу"
+
+#: sql_help.c:3798
+msgid "index_expression"
+msgstr "вираз_індексу"
+
+#: sql_help.c:3801
+msgid "index_predicate"
+msgstr "предикат_індексу"
+
+#: sql_help.c:3803
+msgid "and conflict_action is one of:"
+msgstr "і дія_при_конфлікті одна з:"
+
+#: sql_help.c:3809 sql_help.c:4581
+msgid "sub-SELECT"
+msgstr "вкладений-SELECT"
+
+#: sql_help.c:3818 sql_help.c:3881 sql_help.c:4557
+msgid "channel"
+msgstr "канал"
+
+#: sql_help.c:3840
+msgid "lockmode"
+msgstr "режим_блокування"
+
+#: sql_help.c:3841
+msgid "where lockmode is one of:"
+msgstr "де режим_блокування один з:"
+
+#: sql_help.c:3882
+msgid "payload"
+msgstr "зміст"
+
+#: sql_help.c:3909
+msgid "old_role"
+msgstr "стара_роль"
+
+#: sql_help.c:3910
+msgid "new_role"
+msgstr "нова_роль"
+
+#: sql_help.c:3935 sql_help.c:4096 sql_help.c:4104
+msgid "savepoint_name"
+msgstr "ім'я_точки_збереження"
+
+#: sql_help.c:4238 sql_help.c:4280 sql_help.c:4282 sql_help.c:4328
+#: sql_help.c:4477 sql_help.c:4519 sql_help.c:4521 sql_help.c:4695
+#: sql_help.c:4737 sql_help.c:4739
+msgid "from_item"
+msgstr "джерело_даних"
+
+#: sql_help.c:4240 sql_help.c:4292 sql_help.c:4479 sql_help.c:4531
+#: sql_help.c:4697 sql_help.c:4749
+msgid "grouping_element"
+msgstr "елемент_групування"
+
+#: sql_help.c:4242 sql_help.c:4332 sql_help.c:4481 sql_help.c:4699
+msgid "window_name"
+msgstr "назва_вікна"
+
+#: sql_help.c:4243 sql_help.c:4333 sql_help.c:4482 sql_help.c:4700
+msgid "window_definition"
+msgstr "визначення_вікна"
+
+#: sql_help.c:4244 sql_help.c:4258 sql_help.c:4296 sql_help.c:4334
+#: sql_help.c:4483 sql_help.c:4497 sql_help.c:4535 sql_help.c:4701
+#: sql_help.c:4715 sql_help.c:4753
+msgid "select"
+msgstr "виберіть"
+
+#: sql_help.c:4251 sql_help.c:4490 sql_help.c:4708
+msgid "where from_item can be one of:"
+msgstr "де джерело_даних може бути одним з:"
+
+#: sql_help.c:4254 sql_help.c:4260 sql_help.c:4263 sql_help.c:4267
+#: sql_help.c:4279 sql_help.c:4493 sql_help.c:4499 sql_help.c:4502
+#: sql_help.c:4506 sql_help.c:4518 sql_help.c:4711 sql_help.c:4717
+#: sql_help.c:4720 sql_help.c:4724 sql_help.c:4736
+msgid "column_alias"
+msgstr "псевдонім_стовпця"
+
+#: sql_help.c:4255 sql_help.c:4494 sql_help.c:4712
+msgid "sampling_method"
+msgstr "метод_вибірки"
+
+#: sql_help.c:4257 sql_help.c:4496 sql_help.c:4714
+msgid "seed"
+msgstr "початкове_число"
+
+#: sql_help.c:4261 sql_help.c:4294 sql_help.c:4500 sql_help.c:4533
+#: sql_help.c:4718 sql_help.c:4751
+msgid "with_query_name"
+msgstr "ім'я_запиту_WITH"
+
+#: sql_help.c:4271 sql_help.c:4274 sql_help.c:4277 sql_help.c:4510
+#: sql_help.c:4513 sql_help.c:4516 sql_help.c:4728 sql_help.c:4731
+#: sql_help.c:4734
+msgid "column_definition"
+msgstr "визначення_стовпця"
+
+#: sql_help.c:4281 sql_help.c:4520 sql_help.c:4738
+msgid "join_type"
+msgstr "тип_поєднання"
+
+#: sql_help.c:4283 sql_help.c:4522 sql_help.c:4740
+msgid "join_condition"
+msgstr "умова_поєднання"
+
+#: sql_help.c:4284 sql_help.c:4523 sql_help.c:4741
+msgid "join_column"
+msgstr "стовпець_поєднання"
+
+#: sql_help.c:4285 sql_help.c:4524 sql_help.c:4742
+msgid "and grouping_element can be one of:"
+msgstr "і елемент_групування може бути одним з:"
+
+#: sql_help.c:4293 sql_help.c:4532 sql_help.c:4750
+msgid "and with_query is:"
+msgstr "і запит_WITH:"
+
+#: sql_help.c:4297 sql_help.c:4536 sql_help.c:4754
+msgid "values"
+msgstr "значення"
+
+#: sql_help.c:4298 sql_help.c:4537 sql_help.c:4755
+msgid "insert"
+msgstr "вставка"
+
+#: sql_help.c:4299 sql_help.c:4538 sql_help.c:4756
+msgid "update"
+msgstr "оновлення"
+
+#: sql_help.c:4300 sql_help.c:4539 sql_help.c:4757
+msgid "delete"
+msgstr "видалення"
+
+#: sql_help.c:4327
+msgid "new_table"
+msgstr "нова_таблиця"
+
+#: sql_help.c:4352
+msgid "timezone"
+msgstr "часовий пояс"
+
+#: sql_help.c:4397
+msgid "snapshot_id"
+msgstr "код_знімку"
+
+#: sql_help.c:4582
+msgid "from_list"
+msgstr "список_FROM"
+
+#: sql_help.c:4637
+msgid "sort_expression"
+msgstr "вираз_сортування"
+
+#: sql_help.c:4764 sql_help.c:5742
+msgid "abort the current transaction"
+msgstr "перервати поточну транзакцію"
+
+#: sql_help.c:4770
+msgid "change the definition of an aggregate function"
+msgstr "змінити визначення агрегатної функції"
+
+#: sql_help.c:4776
+msgid "change the definition of a collation"
+msgstr "змінити визначення правила сортування"
+
+#: sql_help.c:4782
+msgid "change the definition of a conversion"
+msgstr "змінити визначення перетворення"
+
+#: sql_help.c:4788
+msgid "change a database"
+msgstr "змінити базу даних"
+
+#: sql_help.c:4794
+msgid "define default access privileges"
+msgstr "визначити права доступу за замовчуванням"
+
+#: sql_help.c:4800
+msgid "change the definition of a domain"
+msgstr "змінити визначення домену"
+
+#: sql_help.c:4806
+msgid "change the definition of an event trigger"
+msgstr "змінити визначення тригеру події"
+
+#: sql_help.c:4812
+msgid "change the definition of an extension"
+msgstr "змінити визначення розширення"
+
+#: sql_help.c:4818
+msgid "change the definition of a foreign-data wrapper"
+msgstr "змінити визначення джерела сторонніх даних"
+
+#: sql_help.c:4824
+msgid "change the definition of a foreign table"
+msgstr "змінити визначення сторонньої таблиці"
+
+#: sql_help.c:4830
+msgid "change the definition of a function"
+msgstr "змінити визначення функції"
+
+#: sql_help.c:4836
+msgid "change role name or membership"
+msgstr "змінити назву ролі або членства"
+
+#: sql_help.c:4842
+msgid "change the definition of an index"
+msgstr "змінити визначення індексу"
+
+#: sql_help.c:4848
+msgid "change the definition of a procedural language"
+msgstr "змінити визначення процедурної мови"
+
+#: sql_help.c:4854
+msgid "change the definition of a large object"
+msgstr "змінити визначення великого об'єкту"
+
+#: sql_help.c:4860
+msgid "change the definition of a materialized view"
+msgstr "змінити визначення матеріалізованого подання"
+
+#: sql_help.c:4866
+msgid "change the definition of an operator"
+msgstr "змінити визначення оператора"
+
+#: sql_help.c:4872
+msgid "change the definition of an operator class"
+msgstr "змінити визначення класа операторів"
+
+#: sql_help.c:4878
+msgid "change the definition of an operator family"
+msgstr "змінити визначення сімейства операторів"
+
+#: sql_help.c:4884
+msgid "change the definition of a row level security policy"
+msgstr "змінити визначення політики безпеки на рівні рядків"
+
+#: sql_help.c:4890
+msgid "change the definition of a procedure"
+msgstr "змінити визначення процедури"
+
+#: sql_help.c:4896
+msgid "change the definition of a publication"
+msgstr "змінити визначення публікації"
+
+#: sql_help.c:4902 sql_help.c:5004
+msgid "change a database role"
+msgstr "змінити роль бази даних"
+
+#: sql_help.c:4908
+msgid "change the definition of a routine"
+msgstr "змінити визначення підпрограми"
+
+#: sql_help.c:4914
+msgid "change the definition of a rule"
+msgstr "змінити визначення правила"
+
+#: sql_help.c:4920
+msgid "change the definition of a schema"
+msgstr "змінити визначення схеми"
+
+#: sql_help.c:4926
+msgid "change the definition of a sequence generator"
+msgstr "змінити визначення генератору послідовності"
+
+#: sql_help.c:4932
+msgid "change the definition of a foreign server"
+msgstr "змінити визначення стороннього серверу"
+
+#: sql_help.c:4938
+msgid "change the definition of an extended statistics object"
+msgstr "змінити визначення об'єкту розширеної статистики"
+
+#: sql_help.c:4944
+msgid "change the definition of a subscription"
+msgstr "змінити визначення підписки"
+
+#: sql_help.c:4950
+msgid "change a server configuration parameter"
+msgstr "змінити параметр конфігурації сервера"
+
+#: sql_help.c:4956
+msgid "change the definition of a table"
+msgstr "змінити визначення таблиці"
+
+#: sql_help.c:4962
+msgid "change the definition of a tablespace"
+msgstr "змінити визначення табличного простору"
+
+#: sql_help.c:4968
+msgid "change the definition of a text search configuration"
+msgstr "змінити визначення конфігурації текстового пошуку"
+
+#: sql_help.c:4974
+msgid "change the definition of a text search dictionary"
+msgstr "змінити визначення словника текстового пошуку"
+
+#: sql_help.c:4980
+msgid "change the definition of a text search parser"
+msgstr "змінити визначення парсера текстового пошуку"
+
+#: sql_help.c:4986
+msgid "change the definition of a text search template"
+msgstr "змінити визначення шаблона текстового пошуку"
+
+#: sql_help.c:4992
+msgid "change the definition of a trigger"
+msgstr "змінити визначення тригеру"
+
+#: sql_help.c:4998
+msgid "change the definition of a type"
+msgstr "змінити визначення типу"
+
+#: sql_help.c:5010
+msgid "change the definition of a user mapping"
+msgstr "змінити визначення зіставлень користувачів"
+
+#: sql_help.c:5016
+msgid "change the definition of a view"
+msgstr "змінити визначення подання"
+
+#: sql_help.c:5022
+msgid "collect statistics about a database"
+msgstr "зібрати статистику про базу даних"
+
+#: sql_help.c:5028 sql_help.c:5820
+msgid "start a transaction block"
+msgstr "розпочати транзакцію"
+
+#: sql_help.c:5034
+msgid "invoke a procedure"
+msgstr "викликати процедуру"
+
+#: sql_help.c:5040
+msgid "force a write-ahead log checkpoint"
+msgstr "провести контрольну точку в журналі попереднього запису"
+
+#: sql_help.c:5046
+msgid "close a cursor"
+msgstr "закрити курсор"
+
+#: sql_help.c:5052
+msgid "cluster a table according to an index"
+msgstr "перегрупувати таблицю за індексом"
+
+#: sql_help.c:5058
+msgid "define or change the comment of an object"
+msgstr "задати або змінити коментар об'єкта"
+
+#: sql_help.c:5064 sql_help.c:5622
+msgid "commit the current transaction"
+msgstr "затвердити поточну транзакцію"
+
+#: sql_help.c:5070
+msgid "commit a transaction that was earlier prepared for two-phase commit"
+msgstr "затвердити транзакцію, раніше підготовлену до двохфазного затвердження"
+
+#: sql_help.c:5076
+msgid "copy data between a file and a table"
+msgstr "копіювати дані між файлом та таблицею"
+
+#: sql_help.c:5082
+msgid "define a new access method"
+msgstr "визначити новий метод доступу"
+
+#: sql_help.c:5088
+msgid "define a new aggregate function"
+msgstr "визначити нову агрегатну функцію"
+
+#: sql_help.c:5094
+msgid "define a new cast"
+msgstr "визначити приведення типів"
+
+#: sql_help.c:5100
+msgid "define a new collation"
+msgstr "визначити нове правило сортування"
+
+#: sql_help.c:5106
+msgid "define a new encoding conversion"
+msgstr "визначити нове перетворення кодування"
+
+#: sql_help.c:5112
+msgid "create a new database"
+msgstr "створити нову базу даних"
+
+#: sql_help.c:5118
+msgid "define a new domain"
+msgstr "визначити новий домен"
+
+#: sql_help.c:5124
+msgid "define a new event trigger"
+msgstr "визначити новий тригер події"
+
+#: sql_help.c:5130
+msgid "install an extension"
+msgstr "встановити розширення"
+
+#: sql_help.c:5136
+msgid "define a new foreign-data wrapper"
+msgstr "визначити нове джерело сторонніх даних"
+
+#: sql_help.c:5142
+msgid "define a new foreign table"
+msgstr "визначити нову сторонню таблицю"
+
+#: sql_help.c:5148
+msgid "define a new function"
+msgstr "визначити нову функцію"
+
+#: sql_help.c:5154 sql_help.c:5214 sql_help.c:5316
+msgid "define a new database role"
+msgstr "визначити нову роль бази даних"
+
+#: sql_help.c:5160
+msgid "define a new index"
+msgstr "визначити новий індекс"
+
+#: sql_help.c:5166
+msgid "define a new procedural language"
+msgstr "визначити нову процедурну мову"
+
+#: sql_help.c:5172
+msgid "define a new materialized view"
+msgstr "визначити нове матеріалізоване подання"
+
+#: sql_help.c:5178
+msgid "define a new operator"
+msgstr "визначити новий оператор"
+
+#: sql_help.c:5184
+msgid "define a new operator class"
+msgstr "визначити новий клас оператора"
+
+#: sql_help.c:5190
+msgid "define a new operator family"
+msgstr "визначити нове сімейство операторів"
+
+#: sql_help.c:5196
+msgid "define a new row level security policy for a table"
+msgstr "визначити нову політику безпеки на рівні рядків для таблиці"
+
+#: sql_help.c:5202
+msgid "define a new procedure"
+msgstr "визначити нову процедуру"
+
+#: sql_help.c:5208
+msgid "define a new publication"
+msgstr "визначити нову публікацію"
+
+#: sql_help.c:5220
+msgid "define a new rewrite rule"
+msgstr "визначити нове правило перезапису"
+
+#: sql_help.c:5226
+msgid "define a new schema"
+msgstr "визначити нову схему"
+
+#: sql_help.c:5232
+msgid "define a new sequence generator"
+msgstr "визначити новий генератор послідовностей"
+
+#: sql_help.c:5238
+msgid "define a new foreign server"
+msgstr "визначити новий сторонній сервер"
+
+#: sql_help.c:5244
+msgid "define extended statistics"
+msgstr "визначити розширену статистику"
+
+#: sql_help.c:5250
+msgid "define a new subscription"
+msgstr "визначити нову підписку"
+
+#: sql_help.c:5256
+msgid "define a new table"
+msgstr "визначити нову таблицю"
+
+#: sql_help.c:5262 sql_help.c:5778
+msgid "define a new table from the results of a query"
+msgstr "визначити нову таблицю з результатів запиту"
+
+#: sql_help.c:5268
+msgid "define a new tablespace"
+msgstr "визначити новий табличний простір"
+
+#: sql_help.c:5274
+msgid "define a new text search configuration"
+msgstr "визначити нову конфігурацію текстового пошуку"
+
+#: sql_help.c:5280
+msgid "define a new text search dictionary"
+msgstr "визначити новий словник текстового пошуку"
+
+#: sql_help.c:5286
+msgid "define a new text search parser"
+msgstr "визначити новий аналізатор текстового пошуку"
+
+#: sql_help.c:5292
+msgid "define a new text search template"
+msgstr "визначити новий шаблон текстового пошуку"
+
+#: sql_help.c:5298
+msgid "define a new transform"
+msgstr "визначити нове перетворення"
+
+#: sql_help.c:5304
+msgid "define a new trigger"
+msgstr "визначити новий тригер"
+
+#: sql_help.c:5310
+msgid "define a new data type"
+msgstr "визначити новий тип даних"
+
+#: sql_help.c:5322
+msgid "define a new mapping of a user to a foreign server"
+msgstr "визначити нове зіставлення користувача для стороннього сервера"
+
+#: sql_help.c:5328
+msgid "define a new view"
+msgstr "визначити нове подання"
+
+#: sql_help.c:5334
+msgid "deallocate a prepared statement"
+msgstr "звільнити підготовлену команду"
+
+#: sql_help.c:5340
+msgid "define a cursor"
+msgstr "визначити курсор"
+
+#: sql_help.c:5346
+msgid "delete rows of a table"
+msgstr "видалити рядки таблиці"
+
+#: sql_help.c:5352
+msgid "discard session state"
+msgstr "очистити стан сесії"
+
+#: sql_help.c:5358
+msgid "execute an anonymous code block"
+msgstr "виконати анонімний блок коду"
+
+#: sql_help.c:5364
+msgid "remove an access method"
+msgstr "видалити метод доступу"
+
+#: sql_help.c:5370
+msgid "remove an aggregate function"
+msgstr "видалити агрегатну функцію"
+
+#: sql_help.c:5376
+msgid "remove a cast"
+msgstr "видалити приведення типів"
+
+#: sql_help.c:5382
+msgid "remove a collation"
+msgstr "видалити правило сортування"
+
+#: sql_help.c:5388
+msgid "remove a conversion"
+msgstr "видалити перетворення"
+
+#: sql_help.c:5394
+msgid "remove a database"
+msgstr "видалити базу даних"
+
+#: sql_help.c:5400
+msgid "remove a domain"
+msgstr "видалити домен"
+
+#: sql_help.c:5406
+msgid "remove an event trigger"
+msgstr "видалити тригер події"
+
+#: sql_help.c:5412
+msgid "remove an extension"
+msgstr "видалити розширення"
+
+#: sql_help.c:5418
+msgid "remove a foreign-data wrapper"
+msgstr "видалити джерело сторонніх даних"
+
+#: sql_help.c:5424
+msgid "remove a foreign table"
+msgstr "видалити сторонню таблицю"
+
+#: sql_help.c:5430
+msgid "remove a function"
+msgstr "видалити функцію"
+
+#: sql_help.c:5436 sql_help.c:5502 sql_help.c:5604
+msgid "remove a database role"
+msgstr "видалити роль бази даних"
+
+#: sql_help.c:5442
+msgid "remove an index"
+msgstr "видалити індекс"
+
+#: sql_help.c:5448
+msgid "remove a procedural language"
+msgstr "видалити процедурну мову"
+
+#: sql_help.c:5454
+msgid "remove a materialized view"
+msgstr "видалити матеріалізоване подання"
+
+#: sql_help.c:5460
+msgid "remove an operator"
+msgstr "видалити оператор"
+
+#: sql_help.c:5466
+msgid "remove an operator class"
+msgstr "видалити клас операторів"
+
+#: sql_help.c:5472
+msgid "remove an operator family"
+msgstr "видалити сімейство операторів"
+
+#: sql_help.c:5478
+msgid "remove database objects owned by a database role"
+msgstr "видалити об'єкти бази даних, що належать ролі"
+
+#: sql_help.c:5484
+msgid "remove a row level security policy from a table"
+msgstr "видалити політику безпеки на рівні рядків з таблиці"
+
+#: sql_help.c:5490
+msgid "remove a procedure"
+msgstr "видалити процедуру"
+
+#: sql_help.c:5496
+msgid "remove a publication"
+msgstr "видалити публікацію"
+
+#: sql_help.c:5508
+msgid "remove a routine"
+msgstr "видалити підпрограму"
+
+#: sql_help.c:5514
+msgid "remove a rewrite rule"
+msgstr "видалити правило перезапису"
+
+#: sql_help.c:5520
+msgid "remove a schema"
+msgstr "видалити схему"
+
+#: sql_help.c:5526
+msgid "remove a sequence"
+msgstr "видалити послідовність"
+
+#: sql_help.c:5532
+msgid "remove a foreign server descriptor"
+msgstr "видалити опис стороннього серверу"
+
+#: sql_help.c:5538
+msgid "remove extended statistics"
+msgstr "видалити розширену статистику"
+
+#: sql_help.c:5544
+msgid "remove a subscription"
+msgstr "видалити підписку"
+
+#: sql_help.c:5550
+msgid "remove a table"
+msgstr "видалити таблицю"
+
+#: sql_help.c:5556
+msgid "remove a tablespace"
+msgstr "видалити табличний простір"
+
+#: sql_help.c:5562
+msgid "remove a text search configuration"
+msgstr "видалити конфігурацію тектового пошуку"
+
+#: sql_help.c:5568
+msgid "remove a text search dictionary"
+msgstr "видалити словник тектового пошуку"
+
+#: sql_help.c:5574
+msgid "remove a text search parser"
+msgstr "видалити парсер тектового пошуку"
+
+#: sql_help.c:5580
+msgid "remove a text search template"
+msgstr "видалити шаблон тектового пошуку"
+
+#: sql_help.c:5586
+msgid "remove a transform"
+msgstr "видалити перетворення"
+
+#: sql_help.c:5592
+msgid "remove a trigger"
+msgstr "видалити тригер"
+
+#: sql_help.c:5598
+msgid "remove a data type"
+msgstr "видалити тип даних"
+
+#: sql_help.c:5610
+msgid "remove a user mapping for a foreign server"
+msgstr "видалити зіставлення користувача для стороннього серверу"
+
+#: sql_help.c:5616
+msgid "remove a view"
+msgstr "видалити подання"
+
+#: sql_help.c:5628
+msgid "execute a prepared statement"
+msgstr "виконати підготовлену команду"
+
+#: sql_help.c:5634
+msgid "show the execution plan of a statement"
+msgstr "показати план виконання команди"
+
+#: sql_help.c:5640
+msgid "retrieve rows from a query using a cursor"
+msgstr "отримати рядки запиту з курсору"
+
+#: sql_help.c:5646
+msgid "define access privileges"
+msgstr "визначити права доступу"
+
+#: sql_help.c:5652
+msgid "import table definitions from a foreign server"
+msgstr "імпортувати визначення таблиць зі стороннього серверу"
+
+#: sql_help.c:5658
+msgid "create new rows in a table"
+msgstr "створити нові рядки в таблиці"
+
+#: sql_help.c:5664
+msgid "listen for a notification"
+msgstr "очікувати на повідомлення"
+
+#: sql_help.c:5670
+msgid "load a shared library file"
+msgstr "завантажити файл спільної бібліотеки"
+
+#: sql_help.c:5676
+msgid "lock a table"
+msgstr "заблокувати таблицю"
+
+#: sql_help.c:5682
+msgid "position a cursor"
+msgstr "розташувати курсор"
+
+#: sql_help.c:5688
+msgid "generate a notification"
+msgstr "згенерувати повідомлення"
+
+#: sql_help.c:5694
+msgid "prepare a statement for execution"
+msgstr "підготувати команду для виконання"
+
+#: sql_help.c:5700
+msgid "prepare the current transaction for two-phase commit"
+msgstr "підготувати поточну транзакцію для двохфазного затвердження"
+
+#: sql_help.c:5706
+msgid "change the ownership of database objects owned by a database role"
+msgstr "змінити власника об'єктів БД, що належать заданій ролі"
+
+#: sql_help.c:5712
+msgid "replace the contents of a materialized view"
+msgstr "замінити вміст матеріалізованого подання"
+
+#: sql_help.c:5718
+msgid "rebuild indexes"
+msgstr "перебудувати індекси"
+
+#: sql_help.c:5724
+msgid "destroy a previously defined savepoint"
+msgstr "видалити раніше визначену точку збереження"
+
+#: sql_help.c:5730
+msgid "restore the value of a run-time parameter to the default value"
+msgstr "відновити початкове значення параметру виконання"
+
+#: sql_help.c:5736
+msgid "remove access privileges"
+msgstr "видалити права доступу"
+
+#: sql_help.c:5748
+msgid "cancel a transaction that was earlier prepared for two-phase commit"
+msgstr "скасувати транзакцію, раніше підготовлену до двохфазного затвердження"
+
+#: sql_help.c:5754
+msgid "roll back to a savepoint"
+msgstr "відкотитися до точки збереження"
+
+#: sql_help.c:5760
+msgid "define a new savepoint within the current transaction"
+msgstr "визначити нову точку збереження в рамках поточної транзакції"
+
+#: sql_help.c:5766
+msgid "define or change a security label applied to an object"
+msgstr "визначити або змінити мітку безпеки, застосовану до об'єкта"
+
+#: sql_help.c:5772 sql_help.c:5826 sql_help.c:5862
+msgid "retrieve rows from a table or view"
+msgstr "отримати рядки з таблиці або подання"
+
+#: sql_help.c:5784
+msgid "change a run-time parameter"
+msgstr "змінити параметр виконання"
+
+#: sql_help.c:5790
+msgid "set constraint check timing for the current transaction"
+msgstr "встановити час перевірки обмеження для поточної транзакції"
+
+#: sql_help.c:5796
+msgid "set the current user identifier of the current session"
+msgstr "встановити ідентифікатор поточного користувача в поточній сесії"
+
+#: sql_help.c:5802
+msgid "set the session user identifier and the current user identifier of the current session"
+msgstr "встановити ідентифікатор користувача сесії й ідентифікатор поточного користувача в поточній сесії"
+
+#: sql_help.c:5808
+msgid "set the characteristics of the current transaction"
+msgstr "встановити характеристики поточної транзакції"
+
+#: sql_help.c:5814
+msgid "show the value of a run-time parameter"
+msgstr "показати значення параметра виконання"
+
+#: sql_help.c:5832
+msgid "empty a table or set of tables"
+msgstr "очистити таблицю або декілька таблиць"
+
+#: sql_help.c:5838
+msgid "stop listening for a notification"
+msgstr "припинити очікування повідомлень"
+
+#: sql_help.c:5844
+msgid "update rows of a table"
+msgstr "змінити рядки таблиці"
+
+#: sql_help.c:5850
+msgid "garbage-collect and optionally analyze a database"
+msgstr "виконати збір сміття і проаналізувати базу даних"
+
+#: sql_help.c:5856
+msgid "compute a set of rows"
+msgstr "отримати набір рядків"
+
+#: startup.c:216
+#, c-format
+msgid "-1 can only be used in non-interactive mode"
+msgstr "-1 можна використовувати лише в неінтерактивному режимі"
+
+#: startup.c:303
+#, c-format
+msgid "could not connect to server: %s"
+msgstr "не вдалося підключитися до сервера: %s"
+
+#: startup.c:331
+#, c-format
+msgid "could not open log file \"%s\": %m"
+msgstr "не вдалося відкрити файл протоколу \"%s\": %m"
+
+#: startup.c:443
+#, c-format
+msgid "Type \"help\" for help.\n\n"
+msgstr "Введіть \"help\", щоб отримати допомогу.\n\n"
+
+#: startup.c:593
+#, c-format
+msgid "could not set printing parameter \"%s\""
+msgstr "не вдалося встановити параметр друку \"%s\""
+
+#: startup.c:701
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
+
+#: startup.c:718
+#, c-format
+msgid "extra command-line argument \"%s\" ignored"
+msgstr "зайвий аргумент \"%s\" проігнорований"
+
+#: startup.c:767
+#, c-format
+msgid "could not find own program executable"
+msgstr "не вдалося знайти ехе файл власної програми"
+
+#: tab-complete.c:4408
+#, c-format
+msgid "tab completion query failed: %s\n"
+"Query was:\n"
+"%s"
+msgstr "помилка запиту Tab-доповнення: %s\n"
+"Запит:\n"
+"%s"
+
+#: variables.c:141
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\": Boolean expected"
+msgstr "нерозпізнане значення \"%s\" для \"%s\": очікувалося логічне значення"
+
+#: variables.c:178
+#, c-format
+msgid "invalid value \"%s\" for \"%s\": integer expected"
+msgstr "неправильне значення \"%s\" для \"%s\": очікувалося ціле число"
+
+#: variables.c:226
+#, c-format
+msgid "invalid variable name: \"%s\""
+msgstr "неправильне ім'я змінної: \"%s\""
+
+#: variables.c:395
+#, c-format
+msgid "unrecognized value \"%s\" for \"%s\"\n"
+"Available values are: %s."
+msgstr "нерозпізнане значення \"%s\" для \"%s\"\n"
+"Допустимі значення: %s."
+

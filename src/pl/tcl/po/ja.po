@@ -1,71 +1,71 @@
-# LANGUAGE message translation file for pltcl
-# Copyright (C) 2018 PostgreSQL Global Development Group
-# This file is distributed under the same license as the PostgreSQL package.
+# Japanese message translation file for pltcl
+# Copyright (C) 2019 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # KOIZUMI Satoru <koizumistr@minos.ocn.ne.jp>, 2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-26 10:21+0900\n"
-"PO-Revision-Date: 2018-01-29 10:39+0900\n"
-"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
+"Project-Id-Version: pltcl (PostgreSQL 12 beta 1)\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-06-11 11:34+0900\n"
+"PO-Revision-Date: 2019-06-11 17:26+0900\n"
+"Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 1.5.4\n"
 
-#: pltcl.c:459
+#: pltcl.c:464
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "pltcl が最初に使用される際に一度だけ呼び出される PL/Tcl 関数。"
 
-#: pltcl.c:466
+#: pltcl.c:471
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "pltclu が最初に使用される際に一度だけ呼び出される PL/TclU 関数。"
 
-#: pltcl.c:629
+#: pltcl.c:636
 #, c-format
 msgid "function \"%s\" is in the wrong language"
-msgstr "関数 \"%s\" は言語が異なります"
+msgstr "関数\"%s\"は言語が異なります"
 
-#: pltcl.c:640
+#: pltcl.c:647
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
-msgstr "関数 \"%s\" は SECURITY DEFINER であってはなりません"
+msgstr "関数\"%s\"はSECURITY DEFINERであってはなりません"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:674
+#: pltcl.c:681
 #, c-format
 msgid "processing %s parameter"
-msgstr "%s パラメーターを処理しています"
+msgstr "%sパラメーターを処理しています"
 
-#: pltcl.c:830
+#: pltcl.c:842
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "このコンテキストでは、集合値の関数は集合を受け付けられません"
 
-#: pltcl.c:994
+#: pltcl.c:1015
 #, c-format
 msgid ""
 "function returning record called in context that cannot accept type record"
 msgstr ""
-"レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されま"
-"した"
+"レコード型を受け付けられないコンテキストでレコードを返す関数が呼び出されまし"
+"た"
 
-#: pltcl.c:1263
+#: pltcl.c:1299
 #, c-format
 msgid "could not split return value from trigger: %s"
 msgstr "トリガーからの戻り値を分割できませんでした: %s"
 
-#: pltcl.c:1343 pltcl.c:1771
+#: pltcl.c:1379 pltcl.c:1809
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1344
+#: pltcl.c:1380
 #, c-format
 msgid ""
 "%s\n"
@@ -74,37 +74,43 @@ msgstr ""
 "%s\n"
 "PL/Tcl 関数 \"%s\""
 
-#: pltcl.c:1509
+#: pltcl.c:1544
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "トリガー関数はトリガーとしてのみコールできます"
 
-#: pltcl.c:1513
+#: pltcl.c:1548
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
-msgstr "PL/Tcl 関数は %s 型の戻り値を返せません"
+msgstr "PL/Tcl 関数は%s型の戻り値を返せません"
 
-#: pltcl.c:1549
+#: pltcl.c:1587
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
-msgstr "PL/Tcl 関数は %s 型を受け付けません"
+msgstr "PL/Tcl 関数は%s型を受け付けません"
 
-#: pltcl.c:1663
+#: pltcl.c:1701
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
-msgstr "内部プロシージャ \"%s\" を作成できませんでした: %s"
+msgstr "内部プロシージャ\"%s\"を作成できませんでした: %s"
 
-#: pltcl.c:3100
+#: pltcl.c:3208
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "列名/値のリストの要素は偶数個でなければなりません"
 
-#: pltcl.c:3118
+#: pltcl.c:3226
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
-msgstr "列名/値のリストの中に、存在しない列名 \"%s\" が含まれています"
+msgstr "列名/値のリストの中に、存在しない列名\"%s\"が含まれています"
 
-#: pltcl.c:3125
+#: pltcl.c:3233
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "システム属性 \"%s\" を設定できません"
+msgstr "システム属性\"%s\"は設定できません"
+
+#: pltcl.c:3239
+#, c-format
+#| msgid "cannot alter inherited column \"%s\""
+msgid "cannot set generated column \"%s\""
+msgstr "生成列\"%s\"を変更できません"

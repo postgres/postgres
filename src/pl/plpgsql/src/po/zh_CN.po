@@ -5,16 +5,16 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plpgsql (PostgreSQL) 11\n"
+"Project-Id-Version: plpgsql (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-04 12:08+0000\n"
-"PO-Revision-Date: 2019-05-16 18:20+0800\n"
+"POT-Creation-Date: 2019-05-22 17:56+0800\n"
+"PO-Revision-Date: 2019-06-04 18:20+0800\n"
 "Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
-"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.5.7\n"
 
@@ -152,17 +152,11 @@ msgstr "触发器存储过程无法返回集合"
 msgid "returned row structure does not match the structure of the triggering table"
 msgstr "所返回的记录结构与触发表的结构不匹配"
 
-#. translator: last %s is a phrase such as "during statement block
-#. local variable initialization"
-#.
 #: pl_exec.c:1198
 #, c-format
 msgid "PL/pgSQL function %s line %d %s"
 msgstr "PL/pgSQL 函数%s在第%d行%s"
 
-#. translator: last %s is a phrase such as "while storing call
-#. arguments into local variables"
-#.
 #: pl_exec.c:1209
 #, c-format
 msgid "PL/pgSQL function %s %s"
@@ -367,7 +361,7 @@ msgstr "查询返回多条记录"
 #: pl_exec.c:4255
 #, c-format
 msgid "Make sure the query returns a single row, or use LIMIT 1."
-msgstr ""
+msgstr "确保查询返回单行，或使用 LIMIT 1."
 
 #: pl_exec.c:4271
 #, c-format
@@ -478,18 +472,18 @@ msgstr "第%d个参数(%s)的类型与正在执行计划(%s)中的不匹配"
 #: pl_exec.c:6996 pl_exec.c:7030 pl_exec.c:7104 pl_exec.c:7130
 #, c-format
 msgid "number of source and target fields in assignment does not match"
-msgstr ""
+msgstr "分配中的源字段和目标字段数不匹配"
 
 #. translator: %s represents a name of an extra check
 #: pl_exec.c:6998 pl_exec.c:7032 pl_exec.c:7106 pl_exec.c:7132
 #, c-format
 msgid "%s check of %s is active."
-msgstr ""
+msgstr "%s检查%s是否激活."
 
 #: pl_exec.c:7002 pl_exec.c:7036 pl_exec.c:7110 pl_exec.c:7136
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
-msgstr ""
+msgstr "确保查询返回准确的列列表."
 
 #: pl_exec.c:7518
 #, c-format

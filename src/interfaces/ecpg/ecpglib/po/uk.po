@@ -1,0 +1,199 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: postgresql\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2018-12-04 20:35+0100\n"
+"PO-Revision-Date: 2019-08-10 13:27\n"
+"Last-Translator: pasha_golub\n"
+"Language-Team: Ukrainian\n"
+"Language: uk_UA\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=((n%10==1 && n%100!=11) ? 0 : ((n%10 >= 2 && n%10 <=4 && (n%100 < 12 || n%100 > 14)) ? 1 : ((n%10 == 0 || (n%10 >= 5 && n%10 <=9)) || (n%100 >= 11 && n%100 <= 14)) ? 2 : 3));\n"
+"X-Generator: crowdin.com\n"
+"X-Crowdin-Project: postgresql\n"
+"X-Crowdin-Language: uk\n"
+"X-Crowdin-File: /REL_11_STABLE/src/interfaces/ecpg/ecpglib/po/ecpglib.pot\n"
+
+#: connect.c:237
+msgid "empty message text"
+msgstr "пусте повідомлення"
+
+#: connect.c:401 connect.c:430 connect.c:638
+msgid "<DEFAULT>"
+msgstr "<ЗА_ЗАМОВЧУВАННЯМ>"
+
+#: descriptor.c:834 misc.c:120
+msgid "NULL"
+msgstr "NULL"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:33
+#, c-format
+msgid "no data found on line %d"
+msgstr "в рядку %d не знайдено жодних даних"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:40
+#, c-format
+msgid "out of memory on line %d"
+msgstr "не вистачає пам'яті в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:47
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "непідтримуванний тип \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:54
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "забагато аргументів в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:61
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "недостатньо аргументів в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:68
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "неприпустимий синтаксис для цілочисельного типу: \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:75
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "неприпустимий синтаксис вводу для типу цілого числа без знаку: \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:82
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "неприпустимий синтаксис вводу для типу з плаваючою комою: \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:90
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "неприпустимий синтаксис для логічного типу: \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:95
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "не вдалося перетворити логічне значення: невідповідність розміру в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:102
+#, c-format
+msgid "empty query on line %d"
+msgstr "пустий запит в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:109
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "значення NULL без індикатора в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:116
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "змінна не має типу масиву в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:123
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "дані, прочитані з сервера, не є масивом в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:130
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "вставлення масиву змінних не підтримується в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:137
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "підключення \"%s\" не існує в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "не підключено до підключення \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:151
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "неприпустимий оператор \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:158
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "дескриптор \"%s\" не знайдено в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:165
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "індекс дескриптора поза діапазоном в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:172
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "нерозпізнаний елемент дескриптора \"%s\" в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:179
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "змінна не має числового типу в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:186
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "змінна не має символьного типу в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:193
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "помилка в транзакції в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:200
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "неможливо під'єднатися до бази даних %s в рядку %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:207
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "помилка SQL %d в рядку %d"
+
+#: error.c:254
+msgid "the connection to the server was lost"
+msgstr "з'єднання із сервером втрачено"
+
+#: error.c:347
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "помилка SQL: %s\n"
+
+#: execute.c:1969
+msgid "<empty>"
+msgstr "<пусто>"
+

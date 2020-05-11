@@ -2,226 +2,221 @@
 # Copyright (C) 2014 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
-# Dennis Björklund <db@zigo.dhs.org> 2017, 2018, 2019.
+# Dennis Björklund <db@zigo.dhs.org> 2017, 2018, 2019, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plperl (PostgreSQL) 12\n"
+"Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-04-29 07:08+0000\n"
-"PO-Revision-Date: 2019-04-29 14:25+0200\n"
+"POT-Creation-Date: 2020-04-11 01:08+0000\n"
+"PO-Revision-Date: 2020-04-11 08:42+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: plperl.c:409
+#: plperl.c:405
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
 msgstr "Om sant, tillförlitlig och otillförlitlig Perl-kod kommer kompileras i strikt läge."
 
-#: plperl.c:423
+#: plperl.c:419
 msgid "Perl initialization code to execute when a Perl interpreter is initialized."
 msgstr "Perl-kod för initialisering, utföres när perl-tolken förbereds."
 
-#: plperl.c:445
+#: plperl.c:441
 msgid "Perl initialization code to execute once when plperl is first used."
 msgstr "Perl-kod för engångs-initialisering då plperl används första gången."
 
-#: plperl.c:453
+#: plperl.c:449
 msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr "Perl-kod för engångs-initialisering då plperlu används första gången."
 
-#: plperl.c:650
+#: plperl.c:646
 #, c-format
 msgid "cannot allocate multiple Perl interpreters on this platform"
 msgstr "kan inte utnyttja flera Perl-interpretorer på denna plattform"
 
-#: plperl.c:673 plperl.c:857 plperl.c:863 plperl.c:980 plperl.c:992
-#: plperl.c:1035 plperl.c:1058 plperl.c:2157 plperl.c:2267 plperl.c:2335
-#: plperl.c:2398
+#: plperl.c:669 plperl.c:853 plperl.c:859 plperl.c:976 plperl.c:988
+#: plperl.c:1031 plperl.c:1054 plperl.c:2136 plperl.c:2244 plperl.c:2312
+#: plperl.c:2375
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plperl.c:674
+#: plperl.c:670
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "vid utförande av PostgreSQL::InServer::SPI::bootstrap"
 
-#: plperl.c:858
+#: plperl.c:854
 #, c-format
 msgid "while parsing Perl initialization"
 msgstr "vid tolkning av perls initieringssteg"
 
-#: plperl.c:864
+#: plperl.c:860
 #, c-format
 msgid "while running Perl initialization"
 msgstr "vid utförande av perls initieringssteg"
 
-#: plperl.c:981
+#: plperl.c:977
 #, c-format
 msgid "while executing PLC_TRUSTED"
 msgstr "vid utförande av PLC_TRUSTED"
 
-#: plperl.c:993
+#: plperl.c:989
 #, c-format
 msgid "while executing utf8fix"
 msgstr "vid utförande av utf8fix"
 
-#: plperl.c:1036
+#: plperl.c:1032
 #, c-format
 msgid "while executing plperl.on_plperl_init"
 msgstr "vid utförande av plperl.on_plperl_init"
 
-#: plperl.c:1059
+#: plperl.c:1055
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
 msgstr "vid utförande av plperl.on_plperlu_init"
 
-#: plperl.c:1105 plperl.c:1796
+#: plperl.c:1101 plperl.c:1789
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "Perlhash innehåller en okänd kolumn \"%s\"."
 
-#: plperl.c:1110 plperl.c:1801
+#: plperl.c:1106 plperl.c:1794
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "kan inte sätta systemattribut \"%s\""
 
-#: plperl.c:1198
+#: plperl.c:1194
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "antalet array-dimensioner (%d) överskrider det maximalt tillåtna (%d)"
 
-#: plperl.c:1210 plperl.c:1227
+#: plperl.c:1206 plperl.c:1223
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "flerdimensionella vektorer måste ha array-uttryck av passande dimensioner"
 
-#: plperl.c:1263
+#: plperl.c:1259
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
 msgstr "kan inte omvandla perlvektor till icke-array av typ \"%s\"."
 
-#: plperl.c:1366
+#: plperl.c:1362
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
 msgstr "kan inte omvandla en perlhash till icke-composite-typ \"%s\"."
 
-#: plperl.c:1388 plperl.c:3309
+#: plperl.c:1384 plperl.c:3284
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "en funktion med post som värde anropades i sammanhang där poster inte kan godtagas."
 
-#: plperl.c:1447
+#: plperl.c:1443
 #, c-format
 msgid "lookup failed for type %s"
 msgstr "uppslag misslyckades för typen \"%s\""
 
-#: plperl.c:1771
+#: plperl.c:1764
 #, c-format
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} finns inte."
 
-#: plperl.c:1775
+#: plperl.c:1768
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} är inte en hash-referens."
 
-#: plperl.c:1806
+#: plperl.c:1799
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "kan inte sätta genererad kolumn \"%s\""
 
-#: plperl.c:2032 plperl.c:2874
+#: plperl.c:2011 plperl.c:2849
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "Funktioner i PL/Perl kan inte svara med typ \"%s\"."
 
-#: plperl.c:2045 plperl.c:2915
+#: plperl.c:2024 plperl.c:2890
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "Funktioner i PL/Perl kan inte hantera typ \"%s\"."
 
-#: plperl.c:2162
+#: plperl.c:2141
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "fick inte en CODE-referens vid kompilering av funktionen \"%s\"."
 
-#: plperl.c:2255
+#: plperl.c:2232
 #, c-format
 msgid "didn't get a return item from function"
 msgstr "fick inget returnvärde från funktion"
 
-#: plperl.c:2299 plperl.c:2366
+#: plperl.c:2276 plperl.c:2343
 #, c-format
 msgid "couldn't fetch $_TD"
 msgstr "kunde inte hämta $_TD"
 
-#: plperl.c:2323 plperl.c:2386
+#: plperl.c:2300 plperl.c:2363
 #, c-format
 msgid "didn't get a return item from trigger function"
 msgstr "fick inget returvärde från utlösarfunktion"
 
-#: plperl.c:2447
+#: plperl.c:2422
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "en funktion som returnerar en mängd anropades i kontext som inte godtar en mängd"
 
-#: plperl.c:2492
+#: plperl.c:2467
 #, c-format
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
 msgstr "En mängd-returnerande funktion i PL/Perl måste göra det som referens eller med return_next."
 
-#: plperl.c:2613
+#: plperl.c:2588
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
 msgstr "Lämnar ändrad rad orörd i en DELETE-triggning"
 
-#: plperl.c:2621
+#: plperl.c:2596
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "resultat av en triggningsfunktion i PL/Perl måste vara undef, \"SKIP\" eller \"MODIFY\"."
 
-#: plperl.c:2869
+#: plperl.c:2844
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "Triggningsfunktioner kan bara anropas vid triggning."
 
-#: plperl.c:3216
+#: plperl.c:3191
 #, c-format
 msgid "query result has too many rows to fit in a Perl array"
 msgstr "frågeresultatet har för många rader för att få plats i en Perl-array"
 
-#: plperl.c:3286
+#: plperl.c:3261
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "får inte nyttja return_next i funktion som ej är SETOF"
 
-#: plperl.c:3360
+#: plperl.c:3335
 #, c-format
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr "En funktion i PL/Perl med värderetur som SETOF måste anropa return_next med en hashreferens"
 
-#: plperl.c:4135
+#: plperl.c:4110
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "PL/Perl-funktion \"%s\"."
 
-#: plperl.c:4147
+#: plperl.c:4122
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "kompilering av PL/Perl-funktion \"%s\""
 
-#: plperl.c:4156
+#: plperl.c:4131
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "Anonymt kodblock i PL/Perl."
-
-#~ msgid "out of memory"
-#~ msgstr "slut på minne"
-
-#~ msgid "PL/Perl function must return reference to hash or array"
-#~ msgstr "Funktioner i PL/Perl måste svara med referens till hash eller array."

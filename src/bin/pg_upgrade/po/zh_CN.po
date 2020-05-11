@@ -1,0 +1,1719 @@
+# LANGUAGE message translation file for pg_upgrade
+# Copyright (C) 2019 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_upgrade (PostgreSQL) package.
+# FIRST AUTHOR <zhangjie2@cn.fujitsu.com>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-05-22 17:56-0700\n"
+"PO-Revision-Date: 2019-06-03 18:40+0800\n"
+"Last-Translator: Jie Zhang <zhangjie2@cn.fujitsu.com>\n"
+"Language-Team: Chinese (Simplified) <zhangjie2@cn.fujitsu.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+
+#: check.c:67
+#, c-format
+msgid ""
+"Performing Consistency Checks on Old Live Server\n"
+"------------------------------------------------\n"
+msgstr ""
+"在旧的活动的服务器上执行一致性检查\n"
+"------------------------------------------------\n"
+
+#: check.c:73
+#, c-format
+msgid ""
+"Performing Consistency Checks\n"
+"-----------------------------\n"
+msgstr ""
+"正在执行一致性检查\n"
+"-----------------------------\n"
+
+#: check.c:183
+#, c-format
+msgid ""
+"\n"
+"*Clusters are compatible*\n"
+msgstr ""
+"\n"
+"*群集是兼容的*\n"
+
+#: check.c:189
+#, c-format
+msgid ""
+"\n"
+"If pg_upgrade fails after this point, you must re-initdb the\n"
+"new cluster before continuing.\n"
+msgstr ""
+"\n"
+"如果pg_upgrade在这一点之后失败，在继续之前必须重新初始化新集群.\n"
+
+#: check.c:225
+#, c-format
+msgid ""
+"Optimizer statistics are not transferred by pg_upgrade so,\n"
+"once you start the new server, consider running:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"优化器统计数据不会通过pg_upgrade传输,因此，\n"
+"启动新服务器后，考虑运行:\n"
+"    %s\n"
+"\n"
+
+#: check.c:230
+#, c-format
+msgid ""
+"Optimizer statistics and free space information are not transferred\n"
+"by pg_upgrade so, once you start the new server, consider running:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"优化器统计信息和可用空间信息不通过pg_upgrade进行传输，因此，\n"
+"启动新服务器后，考虑运行:\n"
+"    %s\n"
+"\n"
+
+#: check.c:237
+#, c-format
+msgid ""
+"Running this script will delete the old cluster's data files:\n"
+"    %s\n"
+msgstr ""
+"运行此脚本将删除旧群集的数据文件:\n"
+"    %s\n"
+
+#: check.c:242
+#, c-format
+msgid ""
+"Could not create a script to delete the old cluster's data files\n"
+"because user-defined tablespaces or the new cluster's data directory\n"
+"exist in the old cluster directory.  The old cluster's contents must\n"
+"be deleted manually.\n"
+msgstr ""
+"无法创建删除旧群集数据文件的脚本.\n"
+"因为用户定义的表空间或新集群的数据目录存在于旧集群目录中.\n"
+"必须手动删除旧群集的内容.\n"
+
+#: check.c:252
+#, c-format
+msgid "Checking cluster versions"
+msgstr "正在检查群集版本"
+
+#: check.c:264
+#, c-format
+msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
+msgstr "此实用程序只能从PostgreSQL 8.4及更高版本升级.\n"
+
+#: check.c:268
+#, c-format
+msgid "This utility can only upgrade to PostgreSQL version %s.\n"
+msgstr "此实用程序只能升级到PostgreSQL版本%s.\n"
+
+#: check.c:277
+#, c-format
+msgid "This utility cannot be used to downgrade to older major PostgreSQL versions.\n"
+msgstr "此实用程序不能用于降级到旧的主PostgreSQL版本.\n"
+
+#: check.c:282
+#, c-format
+msgid "Old cluster data and binary directories are from different major versions.\n"
+msgstr "旧的集群数据和二进制目录来自不同的主版本.\n"
+
+#: check.c:285
+#, c-format
+msgid "New cluster data and binary directories are from different major versions.\n"
+msgstr "新的集群数据和二进制目录来自不同的主版本.\n"
+
+#: check.c:302
+#, c-format
+msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
+msgstr "在检查pre-PG 9.1之前的活动旧服务器时，必须指定旧服务器的端口号.\n"
+
+#: check.c:306
+#, c-format
+msgid "When checking a live server, the old and new port numbers must be different.\n"
+msgstr "检查活动服务器时，新端口号和旧端口号必须不同.\n"
+
+#: check.c:321
+#, c-format
+msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+msgstr "数据库\"%s\"的编码不匹配: 旧的 \"%s\", 新的 \"%s\"\n"
+
+#: check.c:326
+#, c-format
+msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+msgstr "数据库\"%s\"的lc_collate不匹配: 旧的 \"%s\", 新的 \"%s\"\n"
+
+#: check.c:329
+#, c-format
+msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+msgstr "数据库\"%s\"的lc_ctype不匹配: 旧的 \"%s\", 新的 \"%s\"\n"
+
+#: check.c:402
+#, c-format
+msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
+msgstr "新群集数据库\"%s\"不是空的:找到关系\"%s.%s\"\n"
+
+#: check.c:451
+#, c-format
+msgid "Creating script to analyze new cluster"
+msgstr "正在创建用于分析新群集的脚本"
+
+#: check.c:465 check.c:593 check.c:857 check.c:936 check.c:1045 check.c:1136
+#: file.c:341 function.c:246 option.c:493 version.c:57 version.c:156
+#: version.c:257 version.c:339
+#, c-format
+msgid "could not open file \"%s\": %s\n"
+msgstr "无法打开文件 \"%s\": %s\n"
+
+#: check.c:520 check.c:649
+#, c-format
+msgid "could not add execute permission to file \"%s\": %s\n"
+msgstr "无法向文件\"%s\"添加执行权限: %s\n"
+
+#: check.c:556
+#, c-format
+msgid ""
+"\n"
+"WARNING:  new data directory should not be inside the old data directory, e.g. %s\n"
+msgstr ""
+"\n"
+"警告：新数据目录不应位于旧数据目录中，例如 %s\n"
+
+#: check.c:580
+#, c-format
+msgid ""
+"\n"
+"WARNING:  user-defined tablespace locations should not be inside the data directory, e.g. %s\n"
+msgstr ""
+"\n"
+"警告：用户定义的表空间位置不应在数据目录中，例如 %s\n"
+
+#: check.c:590
+#, c-format
+msgid "Creating script to delete old cluster"
+msgstr "正在创建删除旧群集的脚本"
+
+#: check.c:669
+#, c-format
+msgid "Checking database user is the install user"
+msgstr "正在检查数据库用户是否为安装用户"
+
+#: check.c:685
+#, c-format
+msgid "database user \"%s\" is not the install user\n"
+msgstr "数据库用户\"%s\"不是安装用户\n"
+
+#: check.c:696
+#, c-format
+msgid "could not determine the number of users\n"
+msgstr "无法确定用户数\n"
+
+#: check.c:704
+#, c-format
+msgid "Only the install user can be defined in the new cluster.\n"
+msgstr "只能在新群集中定义安装用户.\n"
+
+#: check.c:724
+#, c-format
+msgid "Checking database connection settings"
+msgstr "正在检查数据库连接设置"
+
+#: check.c:746
+#, c-format
+msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
+msgstr "template0不能允许连接，即，其pg_database.datallowconn必须为false\n"
+
+#: check.c:756
+#, c-format
+msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
+msgstr "所有非template0数据库必须允许连接，即，它们的pg_database.dataallowconn必须为true\n"
+
+#: check.c:781
+#, c-format
+msgid "Checking for prepared transactions"
+msgstr "正在检查准备的交易记录"
+
+#: check.c:790
+#, c-format
+msgid "The source cluster contains prepared transactions\n"
+msgstr "源群集包含准备好的事务\n"
+
+#: check.c:792
+#, c-format
+msgid "The target cluster contains prepared transactions\n"
+msgstr "目标集群包含准备好的事务\n"
+
+#: check.c:818
+#, c-format
+msgid "Checking for contrib/isn with bigint-passing mismatch"
+msgstr "正在检查contrib/isn和bigint-passing是否不匹配"
+
+#: check.c:879 check.c:958 check.c:1068 check.c:1159 function.c:268
+#: version.c:179 version.c:280
+#, c-format
+msgid "fatal\n"
+msgstr "致命的\n"
+
+#: check.c:880
+#, c-format
+msgid ""
+"Your installation contains \"contrib/isn\" functions which rely on the\n"
+"bigint data type.  Your old and new clusters pass bigint values\n"
+"differently so this cluster cannot currently be upgraded.  You can\n"
+"manually upgrade databases that use \"contrib/isn\" facilities and remove\n"
+"\"contrib/isn\" from the old cluster and restart the upgrade.  A list of\n"
+"the problem functions is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"您的安装包含\"contrib/isn\"函数，这些函数依赖于bigint数据类型\n"
+"旧群集和新群集传递的bigint值不同，因此当前无法升级此群集\n"
+"您可以手动升级使用\"contrib/isn\"设施的数据库，并从旧集群中\n"
+"删除\"contrib/isn\"，然后重新启动升级。\n"
+"文件中有问题函数的列表:\n"
+"    %s\n"
+"\n"
+
+#: check.c:904
+#, c-format
+msgid "Checking for tables WITH OIDS"
+msgstr "正在检查带有OIDS的表"
+
+#: check.c:959
+#, c-format
+msgid ""
+"Your installation contains tables declared WITH OIDS, which is not supported\n"
+"anymore. Consider removing the oid column using\n"
+"    ALTER TABLE ... SET WITHOUT OIDS;\n"
+"A list of tables with the problem is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+
+#: check.c:989
+#, c-format
+msgid "Checking for reg* data types in user tables"
+msgstr "正在检查用户表中的reg*数据类型"
+
+#: check.c:1069
+#, c-format
+msgid ""
+"Your installation contains one of the reg* data types in user tables.\n"
+"These data types reference system OIDs that are not preserved by\n"
+"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+"remove the problem tables and restart the upgrade.  A list of the problem\n"
+"columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"您的安装包含用户表中的某个reg*数据类型.\n"
+"这些数据类型引用了pg_upgrade不保留的系统OID, \n"
+"因此当前无法升级此群集 .  You can\n"
+"您可以删除问题表并重新启动升级.\n"
+"文件中有问题列的列表:\n"
+"    %s\n"
+"\n"
+
+#: check.c:1094
+#, c-format
+msgid "Checking for incompatible \"jsonb\" data type"
+msgstr "正在检查不兼容的\"jsonb\"数据类型"
+
+#: check.c:1160
+#, c-format
+msgid ""
+"Your installation contains the \"jsonb\" data type in user tables.\n"
+"The internal format of \"jsonb\" changed during 9.4 beta so this cluster cannot currently\n"
+"be upgraded.  You can remove the problem tables and restart the upgrade.  A list\n"
+"of the problem columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"您的安装包含用户表中的\"jsonb\"数据类型.\n"
+"\"jsonb\"的内部格式在9.4测试版期间发生了更改，因此当前无法升级该集群。\n"
+"您可以删除问题表并重新启动升级. \n"
+"文件中有问题列的列表:\n"
+"    %s\n"
+"\n"
+
+#: check.c:1181
+#, c-format
+msgid "Checking for roles starting with \"pg_\""
+msgstr "正在检查以\"pg_\"开头的角色"
+
+#: check.c:1191
+#, c-format
+msgid "The source cluster contains roles starting with \"pg_\"\n"
+msgstr "源集群包含以\"pg_\"开头的角色\n"
+
+#: check.c:1193
+#, c-format
+msgid "The target cluster contains roles starting with \"pg_\"\n"
+msgstr "目标集群包含以\"pg_\"开头的角色\n"
+
+#: check.c:1219
+#, c-format
+msgid "failed to get the current locale\n"
+msgstr "无法获取当前区域设置\n"
+
+#: check.c:1228
+#, c-format
+msgid "failed to get system locale name for \"%s\"\n"
+msgstr "无法获取\"%s\"的系统区域设置名称\n"
+
+#: check.c:1234
+#, c-format
+msgid "failed to restore old locale \"%s\"\n"
+msgstr "还原旧区域\"%s\"失败\n"
+
+#: controldata.c:127 controldata.c:194
+#, c-format
+msgid "could not get control data using %s: %s\n"
+msgstr "无法使用%s获取控制数据：%s\n"
+
+#: controldata.c:138
+#, c-format
+msgid "%d: database cluster state problem\n"
+msgstr "%d: 数据库集群状态问题\n"
+
+#: controldata.c:155
+#, c-format
+msgid "The source cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.\n"
+msgstr "在恢复模式下，源群集已关闭。要升级，请使用文档中的\"rsync\"，或将其作为主服务器关闭。\n"
+
+#: controldata.c:157
+#, c-format
+msgid "The target cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.\n"
+msgstr "目标群集在恢复模式下关闭。要升级，请使用文档中的\"rsync\"，或将其作为主服务器关闭。\n"
+
+#: controldata.c:162
+#, c-format
+msgid "The source cluster was not shut down cleanly.\n"
+msgstr "源群集未完全关闭。\n"
+
+#: controldata.c:164
+#, c-format
+msgid "The target cluster was not shut down cleanly.\n"
+msgstr "目标群集未完全关闭。\n"
+
+#: controldata.c:175
+#, c-format
+msgid "The source cluster lacks cluster state information:\n"
+msgstr "源集群缺少集群状态信息:\n"
+
+#: controldata.c:177
+#, c-format
+msgid "The target cluster lacks cluster state information:\n"
+msgstr "目标集群缺少集群状态信息:\n"
+
+#: controldata.c:207 dump.c:51 pg_upgrade.c:336 pg_upgrade.c:373
+#: relfilenode.c:252 util.c:80
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: controldata.c:214
+#, c-format
+msgid "%d: pg_resetwal problem\n"
+msgstr "%d: pg_resetwal问题\n"
+
+#: controldata.c:224 controldata.c:234 controldata.c:245 controldata.c:256
+#: controldata.c:267 controldata.c:286 controldata.c:297 controldata.c:308
+#: controldata.c:319 controldata.c:330 controldata.c:341 controldata.c:344
+#: controldata.c:348 controldata.c:358 controldata.c:370 controldata.c:381
+#: controldata.c:392 controldata.c:403 controldata.c:414 controldata.c:425
+#: controldata.c:436 controldata.c:447 controldata.c:458 controldata.c:469
+#: controldata.c:480
+#, c-format
+msgid "%d: controldata retrieval problem\n"
+msgstr "%d: 控制数据检索问题\n"
+
+#: controldata.c:545
+#, c-format
+msgid "The source cluster lacks some required control information:\n"
+msgstr "源集群缺少一些必需的控制信息:\n"
+
+#: controldata.c:548
+#, c-format
+msgid "The target cluster lacks some required control information:\n"
+msgstr "目标集群缺少一些必需的控制信息:\n"
+
+#: controldata.c:551
+#, c-format
+msgid "  checkpoint next XID\n"
+msgstr "  下一个XID检查点\n"
+
+#: controldata.c:554
+#, c-format
+msgid "  latest checkpoint next OID\n"
+msgstr "  最新检查点下一个OID\n"
+
+#: controldata.c:557
+#, c-format
+msgid "  latest checkpoint next MultiXactId\n"
+msgstr "  最新检查点下一个MultiXactId\n"
+
+#: controldata.c:561
+#, c-format
+msgid "  latest checkpoint oldest MultiXactId\n"
+msgstr "  最新检查点最旧的MultiXactId\n"
+
+#: controldata.c:564
+#, c-format
+msgid "  latest checkpoint next MultiXactOffset\n"
+msgstr "  最新检查点下一个MultiXactOffset\n"
+
+#: controldata.c:567
+#, c-format
+msgid "  first WAL segment after reset\n"
+msgstr "  重置后的第一个WAL段\n"
+
+#: controldata.c:570
+#, c-format
+msgid "  float8 argument passing method\n"
+msgstr "  float8参数传递方法\n"
+
+#: controldata.c:573
+#, c-format
+msgid "  maximum alignment\n"
+msgstr "  最大对齐方式\n"
+
+#: controldata.c:576
+#, c-format
+msgid "  block size\n"
+msgstr "  块大小\n"
+
+#: controldata.c:579
+#, c-format
+msgid "  large relation segment size\n"
+msgstr "  大关系段大小\n"
+
+#: controldata.c:582
+#, c-format
+msgid "  WAL block size\n"
+msgstr "  WAL块大小\n"
+
+#: controldata.c:585
+#, c-format
+msgid "  WAL segment size\n"
+msgstr "  WAL段大小\n"
+
+#: controldata.c:588
+#, c-format
+msgid "  maximum identifier length\n"
+msgstr "  最大标识符长度\n"
+
+#: controldata.c:591
+#, c-format
+msgid "  maximum number of indexed columns\n"
+msgstr "  最大索引列数\n"
+
+#: controldata.c:594
+#, c-format
+msgid "  maximum TOAST chunk size\n"
+msgstr "  最大TOAST块大小\n"
+
+#: controldata.c:598
+#, c-format
+msgid "  large-object chunk size\n"
+msgstr "  大对象块大小\n"
+
+#: controldata.c:601
+#, c-format
+msgid "  dates/times are integers?\n"
+msgstr "  日期/时间是整数?\n"
+
+#: controldata.c:605
+#, c-format
+msgid "  data checksum version\n"
+msgstr "  数据校验和版本\n"
+
+#: controldata.c:607
+#, c-format
+msgid "Cannot continue without required control information, terminating\n"
+msgstr "没有所需的控制信息，无法继续，正在终止\n"
+
+#: controldata.c:622
+#, c-format
+msgid ""
+"old and new pg_controldata alignments are invalid or do not match\n"
+"Likely one cluster is a 32-bit install, the other 64-bit\n"
+msgstr ""
+"新旧pg_controldata对齐无效或不匹配\n"
+"可能一个集群是32位安装，另一个是64位安装\n"
+
+#: controldata.c:626
+#, c-format
+msgid "old and new pg_controldata block sizes are invalid or do not match\n"
+msgstr "新旧pg_controldata块大小无效或不匹配\n"
+
+#: controldata.c:629
+#, c-format
+msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n"
+msgstr "新旧pg controldata最大关系段大小无效或不匹配\n"
+
+#: controldata.c:632
+#, c-format
+msgid "old and new pg_controldata WAL block sizes are invalid or do not match\n"
+msgstr "新旧pg_controldata WAL块大小无效或不匹配\n"
+
+#: controldata.c:635
+#, c-format
+msgid "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
+msgstr "新旧pg_controldata WAL段大小无效或不匹配\n"
+
+#: controldata.c:638
+#, c-format
+msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match\n"
+msgstr "新旧pg_controldata最大标识符长度无效或不匹配\n"
+
+#: controldata.c:641
+#, c-format
+msgid "old and new pg_controldata maximum indexed columns are invalid or do not match\n"
+msgstr "新旧pg_controldata最大索引列无效或不匹配\n"
+
+#: controldata.c:644
+#, c-format
+msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n"
+msgstr "新旧pg_controldata最大TOAST块大小无效或不匹配\n"
+
+#: controldata.c:649
+#, c-format
+msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match\n"
+msgstr "旧的和新的pg_controldata大对象块大小无效或不匹配\n"
+
+#: controldata.c:652
+#, c-format
+msgid "old and new pg_controldata date/time storage types do not match\n"
+msgstr "新的和旧的pg_controldata日期/时间存储类型不匹配\n"
+
+#: controldata.c:665
+#, c-format
+msgid "old cluster does not use data checksums but the new one does\n"
+msgstr "旧群集不使用数据校验和，但新群集使用数据校验和\n"
+
+#: controldata.c:668
+#, c-format
+msgid "old cluster uses data checksums but the new one does not\n"
+msgstr "旧群集使用数据校验和，但新群集不使用\n"
+
+#: controldata.c:670
+#, c-format
+msgid "old and new cluster pg_controldata checksum versions do not match\n"
+msgstr "旧群集和新群集pg_controldata校验和版本不匹配\n"
+
+#: controldata.c:681
+#, c-format
+msgid "Adding \".old\" suffix to old global/pg_control"
+msgstr "向旧的global/pg_control添加\".old\"后缀"
+
+#: controldata.c:686
+#, c-format
+msgid "Unable to rename %s to %s.\n"
+msgstr "无法将%s重命名为%s。\n"
+
+#: controldata.c:689
+#, c-format
+msgid ""
+"\n"
+"If you want to start the old cluster, you will need to remove\n"
+"the \".old\" suffix from %s/global/pg_control.old.\n"
+"Because \"link\" mode was used, the old cluster cannot be safely\n"
+"started once the new cluster has been started.\n"
+"\n"
+msgstr ""
+"\n"
+"如果要启动旧群集，则需要从%s/global/pg_control.old中\n"
+"删除\".old\"后缀。\n"
+"由于使用了\"link\"模式，一旦新群集启动，\n"
+"旧群集就无法安全启动。\n"
+"\n"
+
+#: dump.c:22
+#, c-format
+msgid "Creating dump of global objects"
+msgstr "正在创建全局对象的转储"
+
+#: dump.c:33
+#, c-format
+msgid "Creating dump of database schemas\n"
+msgstr "正在创建数据库schemas的转储\n"
+
+#: exec.c:44
+#, c-format
+msgid "could not get pg_ctl version data using %s: %s\n"
+msgstr "无法使用using %s获取pg_ctl的版本数据: %s\n"
+
+#: exec.c:50
+#, c-format
+msgid "could not get pg_ctl version output from %s\n"
+msgstr "无法从%s获取pg_ctl版本输出\n"
+
+#: exec.c:104 exec.c:108
+#, c-format
+msgid "command too long\n"
+msgstr "命令太长了\n"
+
+#: exec.c:110 util.c:38 util.c:226
+#, c-format
+msgid "%s\n"
+msgstr "%s\n"
+
+#: exec.c:149 exec.c:204 option.c:105 option.c:227
+#, c-format
+msgid "could not write to log file \"%s\"\n"
+msgstr "不能写到日志文件\"%s\"中\n"
+
+#: exec.c:178
+#, c-format
+msgid ""
+"\n"
+"*failure*"
+msgstr ""
+"\n"
+"*失败*"
+
+#: exec.c:181
+#, c-format
+msgid "There were problems executing \"%s\"\n"
+msgstr "执行\"%s\"时出现问题\n"
+
+#: exec.c:184
+#, c-format
+msgid ""
+"Consult the last few lines of \"%s\" or \"%s\" for\n"
+"the probable cause of the failure.\n"
+msgstr "有关故障的可能原因，请查阅\"%s\"或 \"%s\"的最后几行。\n"
+
+#: exec.c:189
+#, c-format
+msgid ""
+"Consult the last few lines of \"%s\" for\n"
+"the probable cause of the failure.\n"
+msgstr "有关故障的可能原因，请查阅\"%s\"的最后几行。\n"
+
+#: exec.c:230
+#, c-format
+msgid "could not open file \"%s\" for reading: %s\n"
+msgstr "无法打开文件\"%s\"用于读取: %s\n"
+
+#: exec.c:257
+#, c-format
+msgid "You must have read and write access in the current directory.\n"
+msgstr "您必须具有当前目录中的读写权限。\n"
+
+#: exec.c:310 exec.c:372 exec.c:427
+#, c-format
+msgid "check for \"%s\" failed: %s\n"
+msgstr "检查\"%s\"失败: %s\n"
+
+#: exec.c:313 exec.c:375
+#, c-format
+msgid "\"%s\" is not a directory\n"
+msgstr "\"%s\"不是一个目录\n"
+
+#: exec.c:430
+#, c-format
+msgid "check for \"%s\" failed: not a regular file\n"
+msgstr "检查\"%s\"失败：不是常规文件\n"
+
+#: exec.c:442
+#, c-format
+msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
+msgstr "检查\"%s\"失败：无法读取文件（权限被拒绝）\n"
+
+#: exec.c:450
+#, c-format
+msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
+msgstr "检查\"%s\"失败：无法执行（权限被拒绝）\n"
+
+#: file.c:48 file.c:66
+#, c-format
+msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
+msgstr "克隆关系\"%s.%s\"时出错（从\"%s\"到\"%s\"）: %s\n"
+
+#: file.c:55
+#, c-format
+msgid "error while cloning relation \"%s.%s\": could not open file \"%s\": %s\n"
+msgstr "克隆关系\"%s.%s\"时出错：无法打开文件\"%s\": %s\n"
+
+#: file.c:60
+#, c-format
+msgid "error while cloning relation \"%s.%s\": could not create file \"%s\": %s\n"
+msgstr "克隆关系\"%s.%s\"时出错：无法创建文件\"%s\": %s\n"
+
+#: file.c:92 file.c:195
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %s\n"
+msgstr "复制关系\"%s.%s\"时出错：无法打开文件\"%s\": %s\n"
+
+#: file.c:97 file.c:204
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not create file \"%s\": %s\n"
+msgstr "复制关系\"%s.%s\"时出错：无法创建文件\"%s\": %s\n"
+
+#: file.c:111 file.c:228
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %s\n"
+msgstr "复制关系\"%s.%s\"时出错：无法读取文件\"%s\": %s\n"
+
+#: file.c:123 file.c:306
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
+msgstr "复制关系\"%s.%s\"时出错：无法写入文件 \"%s\": %s\n"
+
+#: file.c:137
+#, c-format
+msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
+msgstr "将关系\"%s.%s\"（\"%s\"复制到\"%s\"）时出错: %s\n"
+
+#: file.c:156
+#, c-format
+msgid "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
+msgstr "为关系\"%s.%s\"创建链接时出错（从\"%s\"到\"%s\"）: %s\n"
+
+#: file.c:199
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %s\n"
+msgstr "复制关系\"%s.%s\"时出错：无法统计文件\"%s\": %s\n"
+
+#: file.c:231
+#, c-format
+msgid "error while copying relation \"%s.%s\": partial page found in file \"%s\"\n"
+msgstr "复制关系\"%s.%s\"时出错：在文件\"%s\"中找到部分页\n"
+
+#: file.c:333 file.c:350
+#, c-format
+msgid "could not clone file between old and new data directories: %s\n"
+msgstr "无法在新旧数据目录之间克隆文件: %s\n"
+
+#: file.c:346
+#, c-format
+msgid "could not create file \"%s\": %s\n"
+msgstr "无法创建文件 \"%s\": %s\n"
+
+#: file.c:357
+#, c-format
+msgid "file cloning not supported on this platform\n"
+msgstr "此平台不支持文件克隆\n"
+
+#: file.c:374
+#, c-format
+msgid ""
+"could not create hard link between old and new data directories: %s\n"
+"In link mode the old and new data directories must be on the same file system.\n"
+msgstr ""
+"无法在新旧数据目录之间创建硬链接: %s\n"
+"在链接模式下，旧的和新的数据目录必须在同一文件系统上。\n"
+
+#: function.c:116
+#, c-format
+msgid ""
+"\n"
+"The old cluster has a \"plpython_call_handler\" function defined\n"
+"in the \"public\" schema which is a duplicate of the one defined\n"
+"in the \"pg_catalog\" schema.  You can confirm this by executing\n"
+"in psql:\n"
+"\n"
+"    \\df *.plpython_call_handler\n"
+"\n"
+"The \"public\" schema version of this function was created by a\n"
+"pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
+"to complete because it references a now-obsolete \"plpython\"\n"
+"shared object file.  You can remove the \"public\" schema version\n"
+"of this function by running the following command:\n"
+"\n"
+"    DROP FUNCTION public.plpython_call_handler()\n"
+"\n"
+"in each affected database:\n"
+"\n"
+msgstr ""
+"\n"
+"旧集群在\"public\"模式中定义了一个\"plpython_call_handler\"函数，\n"
+"这是\"pg_catalog\"模式中定义的函数的副本。\n"
+" 您可以通过执行\n"
+"在 psql中:\n"
+"\n"
+"    \\df *.plpython_call_handler\n"
+"\n"
+"这个函数的\"public\"模式版本是由plpython的8.1之前的安装创建的, \n"
+"必须删除才能完成pg_upgrade\n"
+"因为它引用了一个现在已经过时的\"plpython\"共享对象文件。\n"
+"通过运行以下命令，可以删除此函数的\"public\"模式版本:\n"
+"\n"
+"    DROP FUNCTION public.plpython_call_handler()\n"
+"\n"
+"在每个受影响的数据库中:\n"
+"\n"
+
+#: function.c:134
+#, c-format
+msgid "    %s\n"
+msgstr "    %s\n"
+
+#: function.c:144
+#, c-format
+msgid "Remove the problem functions from the old cluster to continue.\n"
+msgstr "从旧群集中删除问题函数以继续。\n"
+
+#: function.c:191
+#, c-format
+msgid "Checking for presence of required libraries"
+msgstr "正在检查是否存在所需的库"
+
+#: function.c:248
+#, c-format
+msgid "could not load library \"%s\": %s"
+msgstr "无法加载库 \"%s\": %s"
+
+#: function.c:259 info.c:633
+#, c-format
+msgid "Database: %s\n"
+msgstr "数据库: %s\n"
+
+#: function.c:269
+#, c-format
+msgid ""
+"Your installation references loadable libraries that are missing from the\n"
+"new installation.  You can add these libraries to the new installation,\n"
+"or remove the functions using them from the old installation.  A list of\n"
+"problem libraries is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"您的安装引用了新安装中缺少的可加载库。\n"
+"您可以将这些库添加到新安装中，或者从旧安装中删除使用它们的函数。\n"
+"文件中有问题库列表:\n"
+"    %s\n"
+"\n"
+
+#: info.c:133
+#, c-format
+msgid "Relation names for OID %u in database \"%s\" do not match: old name \"%s.%s\", new name \"%s.%s\"\n"
+msgstr "数据库\"%2$s\"中OID %1$u的关系名称不匹配：旧名称 \"%3$s.%4$s\"，新名称\"%5$s.%6$s\"\n"
+
+#: info.c:153
+#, c-format
+msgid "Failed to match up old and new tables in database \"%s\"\n"
+msgstr "未能匹配数据库\"%s\"中的新旧表\n"
+
+#: info.c:242
+#, c-format
+msgid " which is an index on \"%s.%s\""
+msgstr " 这是\"%s.%s\"上的索引"
+
+#: info.c:252
+#, c-format
+msgid " which is an index on OID %u"
+msgstr " 哪一个OID %u上的索引"
+
+#: info.c:264
+#, c-format
+msgid " which is the TOAST table for \"%s.%s\""
+msgstr " 哪一个是\"%s.%s\"的TOAST表"
+
+#: info.c:272
+#, c-format
+msgid " which is the TOAST table for OID %u"
+msgstr " 哪一个是OID %u的TOAST表"
+
+#: info.c:276
+#, c-format
+msgid "No match found in old cluster for new relation with OID %u in database \"%s\": %s\n"
+msgstr "在旧群集中找不到与数据库\"%2$s\"中OID %1$u的新关系的匹配项: %3$s\n"
+
+#: info.c:279
+#, c-format
+msgid "No match found in new cluster for old relation with OID %u in database \"%s\": %s\n"
+msgstr "在新群集中找不到与数据库\"%2$s\"中OID %1$u的旧关系的匹配项：%3$s\n"
+
+#: info.c:291
+#, c-format
+msgid "mappings for database \"%s\":\n"
+msgstr "映射为数据库\"%s\":\n"
+
+#: info.c:294
+#, c-format
+msgid "%s.%s: %u to %u\n"
+msgstr "%s.%s: %u到%u\n"
+
+#: info.c:299 info.c:635
+#, c-format
+msgid ""
+"\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+
+#: info.c:324
+#, c-format
+msgid ""
+"\n"
+"source databases:\n"
+msgstr ""
+"\n"
+"源数据库:\n"
+
+#: info.c:326
+#, c-format
+msgid ""
+"\n"
+"target databases:\n"
+msgstr ""
+"\n"
+"目标数据库:\n"
+
+#: info.c:646
+#, c-format
+msgid "relname: %s.%s: reloid: %u reltblspace: %s\n"
+msgstr "relname: %s.%s: reloid: %u reltblspace: %s\n"
+
+#: option.c:102
+#, c-format
+msgid "%s: cannot be run as root\n"
+msgstr "%s: 不能使用root用户运行\n"
+
+#: option.c:174
+#, c-format
+msgid "invalid old port number\n"
+msgstr "旧端口号无效\n"
+
+#: option.c:182
+#, c-format
+msgid "invalid new port number\n"
+msgstr "新端口号无效\n"
+
+#: option.c:208
+#, c-format
+msgid "Running in verbose mode\n"
+msgstr "以详细模式运行\n"
+
+#: option.c:217
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "请用 \"%s --help\" 获取更多的信息.\n"
+
+#: option.c:252
+msgid "old cluster binaries reside"
+msgstr "旧群集二进制文件驻留"
+
+#: option.c:254
+msgid "new cluster binaries reside"
+msgstr "新群集二进制文件驻留"
+
+#: option.c:256
+msgid "old cluster data resides"
+msgstr "旧群集数据驻留"
+
+#: option.c:258
+msgid "new cluster data resides"
+msgstr "新群集数据驻留"
+
+#: option.c:260
+msgid "sockets will be created"
+msgstr ""
+
+#: option.c:277 option.c:371
+#, c-format
+msgid "could not determine current directory\n"
+msgstr "无法确定当前目录\n"
+
+#: option.c:280
+#, c-format
+msgid "cannot run pg_upgrade from inside the new cluster data directory on Windows\n"
+msgstr "无法从Windows上的新群集数据目录内运行pg_upgrade\n"
+
+#: option.c:289
+#, c-format
+msgid ""
+"pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
+"\n"
+msgstr ""
+"pg_upgrade将PostgreSQL集群升级到其他主版本。\n"
+"\n"
+
+#: option.c:290
+#, c-format
+msgid "Usage:\n"
+msgstr "使用方法:\n"
+
+#: option.c:291
+#, c-format
+msgid ""
+"  pg_upgrade [OPTION]...\n"
+"\n"
+msgstr ""
+"  pg_upgrade [选项]...\n"
+"\n"
+
+#: option.c:292
+#, c-format
+msgid "Options:\n"
+msgstr "选项:\n"
+
+#: option.c:293
+#, c-format
+msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
+msgstr "  -b, --old-bindir=BINDIR       旧群集可执行目录\n"
+
+#: option.c:294
+#, c-format
+msgid "  -B, --new-bindir=BINDIR       new cluster executable directory\n"
+msgstr "  -B, --new-bindir=BINDIR       新群集可执行目录\n"
+
+#: option.c:295
+#, c-format
+msgid "  -c, --check                   check clusters only, don't change any data\n"
+msgstr "  -c, --check                   仅检查群集，不更改任何数据\n"
+
+#: option.c:296
+#, c-format
+msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
+msgstr "  -d, --old-datadir=DATADIR     旧群集数据目录\n"
+
+#: option.c:297
+#, c-format
+msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
+msgstr "  -D, --new-datadir=DATADIR     新群集数据目录\n"
+
+#: option.c:298
+#, c-format
+msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
+msgstr "  -j, --jobs                    要同时使用的进程或线程数\n"
+
+#: option.c:299
+#, c-format
+msgid "  -k, --link                    link instead of copying files to new cluster\n"
+msgstr "  -k, --link                    使用硬链接来代替将文件拷贝到新群集\n"
+
+#: option.c:300
+#, c-format
+msgid "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
+msgstr "  -o, --old-options=OPTIONS     要传递到服务器的旧群集选项\n"
+
+#: option.c:301
+#, c-format
+msgid "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
+msgstr "  -O, --new-options=OPTIONS     要传递到服务器的新群集选项\n"
+
+#: option.c:302
+#, c-format
+msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
+msgstr "  -p, --old-port=PORT           旧群集端口号（默认值为%d）\n"
+
+#: option.c:303
+#, c-format
+msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
+msgstr "  -P, --new-port=PORT           新群集端口号（默认值为%d）\n"
+
+#: option.c:304
+#, c-format
+msgid "  -r, --retain                  retain SQL and log files after success\n"
+msgstr "  -r, --retain                  成功后保留SQL和日志文件\n"
+
+#: option.c:305
+#, c-format
+msgid "  -s, --socketdir=DIR           socket directory to use (default CWD)\n"
+msgstr "  -s, --socketdir=DIR           要使用的套接字目录（默认值为CWD）\n"
+
+#: option.c:306
+#, c-format
+msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
+msgstr "  -U, --username=NAME           集群超级用户（默认值为\"%s\"）\n"
+
+#: option.c:307
+#, c-format
+msgid "  -v, --verbose                 enable verbose internal logging\n"
+msgstr "  -v, --verbose                 启用详细的内部日志\n"
+
+#: option.c:308
+#, c-format
+msgid "  -V, --version                 display version information, then exit\n"
+msgstr "  -V, --version                 显示版本信息，然后退出\n"
+
+#: option.c:309
+#, c-format
+msgid "  --clone                       clone instead of copying files to new cluster\n"
+msgstr "  --clone                       克隆而不是将文件复制到新群集\n"
+
+#: option.c:310
+#, c-format
+msgid "  -?, --help                    show this help, then exit\n"
+msgstr "  -?, --help                    显示此帮助，然后退出\n"
+
+#: option.c:311
+#, c-format
+msgid ""
+"\n"
+"Before running pg_upgrade you must:\n"
+"  create a new database cluster (using the new version of initdb)\n"
+"  shutdown the postmaster servicing the old cluster\n"
+"  shutdown the postmaster servicing the new cluster\n"
+msgstr ""
+"\n"
+"在运行pg_upgrade之前，您必须 :\n"
+"  创建一个新的数据库群集 (使用新版本的initdb)\n"
+"  关闭旧群集的postmaster服务\n"
+"  关闭新群集的postmaster服务\n"
+
+#: option.c:316
+#, c-format
+msgid ""
+"\n"
+"When you run pg_upgrade, you must provide the following information:\n"
+"  the data directory for the old cluster  (-d DATADIR)\n"
+"  the data directory for the new cluster  (-D DATADIR)\n"
+"  the \"bin\" directory for the old version (-b BINDIR)\n"
+"  the \"bin\" directory for the new version (-B BINDIR)\n"
+msgstr ""
+"\n"
+"运行pg_upgrade时，必须提供以下信息:\n"
+"  旧群集的数据目录 (-d DATADIR)\n"
+"  新群集的数据目录 (-D DATADIR)\n"
+"  旧版本的\"bin\"目录 (-b BINDIR)\n"
+"  新版本的\"bin\"目录 (-B BINDIR)\n"
+
+#: option.c:322
+#, c-format
+msgid ""
+"\n"
+"For example:\n"
+"  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n"
+"or\n"
+msgstr ""
+"\n"
+"例如:\n"
+"  pg_upgrade -d 旧集群/data -D 新集群/data -b 旧集群/bin -B 新集群/bin\n"
+"或者\n"
+
+#: option.c:327
+#, c-format
+msgid ""
+"  $ export PGDATAOLD=oldCluster/data\n"
+"  $ export PGDATANEW=newCluster/data\n"
+"  $ export PGBINOLD=oldCluster/bin\n"
+"  $ export PGBINNEW=newCluster/bin\n"
+"  $ pg_upgrade\n"
+msgstr ""
+"  $ export PGDATAOLD=旧集群/data\n"
+"  $ export PGDATANEW=新集群/data\n"
+"  $ export PGBINOLD=旧集群/bin\n"
+"  $ export PGBINNEW=新集群/bin\n"
+"  $ pg_upgrade\n"
+
+#: option.c:333
+#, c-format
+msgid ""
+"  C:\\> set PGDATAOLD=oldCluster/data\n"
+"  C:\\> set PGDATANEW=newCluster/data\n"
+"  C:\\> set PGBINOLD=oldCluster/bin\n"
+"  C:\\> set PGBINNEW=newCluster/bin\n"
+"  C:\\> pg_upgrade\n"
+msgstr ""
+"  C:\\> set PGDATAOLD=旧集群/data\n"
+"  C:\\> set PGDATANEW=新集群/data\n"
+"  C:\\> set PGBINOLD=旧集群/bin\n"
+"  C:\\> set PGBINNEW=新集群/bin\n"
+"  C:\\> pg_upgrade\n"
+
+#: option.c:339
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+msgstr ""
+"\n"
+"报告错误至 <pgsql-bugs@lists.postgresql.org>.\n"
+
+#: option.c:375
+#, c-format
+msgid ""
+"You must identify the directory where the %s.\n"
+"Please use the %s command-line option or the %s environment variable.\n"
+msgstr ""
+"必须标识%s所在的目录。\n"
+"请使用%s命令行选项或%s环境变量。\n"
+
+#: option.c:427
+#, c-format
+msgid "Finding the real data directory for the source cluster"
+msgstr "正在查找源群集的实际数据目录"
+
+#: option.c:429
+#, c-format
+msgid "Finding the real data directory for the target cluster"
+msgstr "正在查找目标群集的实际数据目录"
+
+#: option.c:441
+#, c-format
+msgid "could not get data directory using %s: %s\n"
+msgstr "无法使用%s获取数据目录: %s\n"
+
+#: option.c:501
+#, c-format
+msgid "could not read line %d from file \"%s\": %s\n"
+msgstr "无法从文件\"%2$s\"读取第%1$d行: %3$s\n"
+
+#: option.c:519
+#, c-format
+msgid "user-supplied old port number %hu corrected to %hu\n"
+msgstr "用户提供的旧端口号%hu已更正为%hu\n"
+
+#: parallel.c:128 parallel.c:241
+#, c-format
+msgid "could not create worker process: %s\n"
+msgstr "无法创建工作进程: %s\n"
+
+#: parallel.c:147 parallel.c:262
+#, c-format
+msgid "could not create worker thread: %s\n"
+msgstr "无法创建工作线程: %s\n"
+
+#: parallel.c:305
+#, c-format
+msgid "waitpid() failed: %s\n"
+msgstr "waitpid()失败: %s\n"
+
+#: parallel.c:309
+#, c-format
+msgid "child process exited abnormally: status %d\n"
+msgstr "子进程异常退出：状态 %d\n"
+
+#: parallel.c:324
+#, c-format
+msgid "child worker exited abnormally: %s\n"
+msgstr "子工作线程异常退出: %s\n"
+
+#: pg_upgrade.c:109
+#, c-format
+msgid "could not read permissions of directory \"%s\": %s\n"
+msgstr "无法读取目录\"%s\"的权限: %s\n"
+
+#: pg_upgrade.c:126
+#, c-format
+msgid ""
+"\n"
+"Performing Upgrade\n"
+"------------------\n"
+msgstr ""
+"\n"
+"正在执行升级\n"
+"------------\n"
+
+#: pg_upgrade.c:169
+#, c-format
+msgid "Setting next OID for new cluster"
+msgstr "为新群集设置下一个OID"
+
+#: pg_upgrade.c:176
+#, c-format
+msgid "Sync data directory to disk"
+msgstr "将数据目录同步到磁盘"
+
+#: pg_upgrade.c:188
+#, c-format
+msgid ""
+"\n"
+"Upgrade Complete\n"
+"----------------\n"
+msgstr ""
+"\n"
+"升级完成\n"
+"--------\n"
+
+#: pg_upgrade.c:234
+#, c-format
+msgid ""
+"There seems to be a postmaster servicing the old cluster.\n"
+"Please shutdown that postmaster and try again.\n"
+msgstr ""
+"好像有一个postmaster正在为旧群集服务。\n"
+"请关闭那个postmaster，然后再试一次。\n"
+
+#: pg_upgrade.c:247
+#, c-format
+msgid ""
+"There seems to be a postmaster servicing the new cluster.\n"
+"Please shutdown that postmaster and try again.\n"
+msgstr ""
+"好像有一个postmaster正在为新群集服务。\n"
+"请关闭那个postmaster，然后再试一次。\n"
+
+#: pg_upgrade.c:253
+#, c-format
+msgid "%s: could not find own program executable\n"
+msgstr "%s: 无法找到执行文件\n"
+
+#: pg_upgrade.c:270
+#, c-format
+msgid "Analyzing all rows in the new cluster"
+msgstr "正在分析新群集中的所有行"
+
+#: pg_upgrade.c:283
+#, c-format
+msgid "Freezing all rows in the new cluster"
+msgstr "正在冻结新群集中的所有行"
+
+#: pg_upgrade.c:303
+#, c-format
+msgid "Restoring global objects in the new cluster"
+msgstr "正在在新群集中还原全局对象"
+
+#: pg_upgrade.c:318
+#, c-format
+msgid "Restoring database schemas in the new cluster\n"
+msgstr "在新群集中还原数据库schemas\n"
+
+#: pg_upgrade.c:424
+#, c-format
+msgid "Deleting files from new %s"
+msgstr "正在从新%s中删除文件"
+
+#: pg_upgrade.c:428
+#, c-format
+msgid "could not delete directory \"%s\"\n"
+msgstr "无法删除目录\"%s\"\n"
+
+#: pg_upgrade.c:447
+#, c-format
+msgid "Copying old %s to new server"
+msgstr "正在将旧的 %s复制到新服务中"
+
+#: pg_upgrade.c:474
+#, c-format
+msgid "Setting next transaction ID and epoch for new cluster"
+msgstr "正在为新集群设置下一个事务ID和epoch"
+
+#: pg_upgrade.c:504
+#, c-format
+msgid "Setting next multixact ID and offset for new cluster"
+msgstr "正在为新集群设置下一个多事务ID和偏移量"
+
+#: pg_upgrade.c:528
+#, c-format
+msgid "Setting oldest multixact ID in new cluster"
+msgstr "在新集群中设置最旧的多事务ID"
+
+#: pg_upgrade.c:548
+#, c-format
+msgid "Resetting WAL archives"
+msgstr "正在重置WAL归档"
+
+#: pg_upgrade.c:591
+#, c-format
+msgid "Setting frozenxid and minmxid counters in new cluster"
+msgstr "正在在新集群中设置frozenxid和minmxid计数器"
+
+#: pg_upgrade.c:593
+#, c-format
+msgid "Setting minmxid counter in new cluster"
+msgstr "正在在新群集中设置minmxid计数器"
+
+#: relfilenode.c:36
+#, c-format
+msgid "Cloning user relation files\n"
+msgstr "正在克隆用户关系文件\n"
+
+#: relfilenode.c:39
+#, c-format
+msgid "Copying user relation files\n"
+msgstr "正在复制用户关系文件\n"
+
+#: relfilenode.c:42
+#, c-format
+msgid "Linking user relation files\n"
+msgstr "正在链接用户关系文件\n"
+
+#: relfilenode.c:118
+#, c-format
+msgid "old database \"%s\" not found in the new cluster\n"
+msgstr "在新群集中找不到旧数据库\"%s\"\n"
+
+#: relfilenode.c:239
+#, c-format
+msgid "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
+msgstr "检查文件是否存在\"%s.%s\"时出错 (\"%s\" 到 \"%s\"): %s\n"
+
+#: relfilenode.c:257
+#, c-format
+msgid "rewriting \"%s\" to \"%s\"\n"
+msgstr "正在将 \"%s\"重写为\"%s\"\n"
+
+#: relfilenode.c:265
+#, c-format
+msgid "cloning \"%s\" to \"%s\"\n"
+msgstr "正在将 \"%s\"克隆到\"%s\"\n"
+
+#: relfilenode.c:270
+#, c-format
+msgid "copying \"%s\" to \"%s\"\n"
+msgstr "正在将 \"%s\"复制到\"%s\"\n"
+
+#: relfilenode.c:275
+#, c-format
+msgid "linking \"%s\" to \"%s\"\n"
+msgstr "正在将\"%s\"链接到\"%s\"\n"
+
+#: server.c:34
+#, c-format
+msgid "connection to database failed: %s"
+msgstr "连接到数据库失败: %s"
+
+#: server.c:40 server.c:142 util.c:136 util.c:166
+#, c-format
+msgid "Failure, exiting\n"
+msgstr "故障，退出\n"
+
+#: server.c:132
+#, c-format
+msgid "executing: %s\n"
+msgstr "正在执行: %s\n"
+
+#: server.c:138
+#, c-format
+msgid ""
+"SQL command failed\n"
+"%s\n"
+"%s"
+msgstr ""
+"SQL命令失败 \n"
+"%s\n"
+"%s"
+
+#: server.c:168
+#, c-format
+msgid "could not open version file: %s\n"
+msgstr "无法打开版本文件: %s\n"
+
+#: server.c:172
+#, c-format
+msgid "could not parse PG_VERSION file from %s\n"
+msgstr "无法从%s解析PG_VERSION文件\n"
+
+#: server.c:295
+#, c-format
+msgid ""
+"\n"
+"connection to database failed: %s"
+msgstr ""
+"\n"
+"连接到数据库失败: %s"
+
+#: server.c:300
+#, c-format
+msgid ""
+"could not connect to source postmaster started with the command:\n"
+"%s\n"
+msgstr ""
+"无法连接到用命令启动的源postmaster :\n"
+"%s\n"
+
+#: server.c:304
+#, c-format
+msgid ""
+"could not connect to target postmaster started with the command:\n"
+"%s\n"
+msgstr ""
+"无法连接到用命令启动的目标postmaster :\n"
+"%s\n"
+
+#: server.c:318
+#, c-format
+msgid "pg_ctl failed to start the source server, or connection failed\n"
+msgstr "pg_ctl无法启动源服务器，或者连接失败\n"
+
+#: server.c:320
+#, c-format
+msgid "pg_ctl failed to start the target server, or connection failed\n"
+msgstr "pg_ctl无法启动目标服务器，或连接失败\n"
+
+#: server.c:365
+#, c-format
+msgid "out of memory\n"
+msgstr "内存溢出\n"
+
+#: server.c:378
+#, c-format
+msgid "libpq environment variable %s has a non-local server value: %s\n"
+msgstr "libpq环境变量%s具有非本地服务器值: %s\n"
+
+#: tablespace.c:28
+#, c-format
+msgid ""
+"Cannot upgrade to/from the same system catalog version when\n"
+"using tablespaces.\n"
+msgstr ""
+"使用表空间时无法升级到相同的系统目录版本。\n"
+"或者，使用表空间时无法从同一系统目录版本升级。\n"
+
+#: tablespace.c:87
+#, c-format
+msgid "tablespace directory \"%s\" does not exist\n"
+msgstr "表空间目录\"%s\"不存在\n"
+
+#: tablespace.c:91
+#, c-format
+msgid "could not stat tablespace directory \"%s\": %s\n"
+msgstr "无法统计表空间目录\"%s\": %s\n"
+
+#: tablespace.c:96
+#, c-format
+msgid "tablespace path \"%s\" is not a directory\n"
+msgstr "表空间路径\"%s\"不是目录\n"
+
+#: util.c:50
+#, c-format
+msgid " "
+msgstr " "
+
+#: util.c:83
+#, c-format
+msgid "%-*s"
+msgstr "%-*s"
+
+#: util.c:175
+#, c-format
+msgid "ok"
+msgstr "OK"
+
+#: version.c:32
+#, c-format
+msgid "Checking for large objects"
+msgstr "正在检查大对象"
+
+#: version.c:80 version.c:382
+#, c-format
+msgid "warning"
+msgstr "警告"
+
+#: version.c:82
+#, c-format
+msgid ""
+"\n"
+"Your installation contains large objects.  The new database has an\n"
+"additional large object permission table.  After upgrading, you will be\n"
+"given a command to populate the pg_largeobject_metadata table with\n"
+"default permissions.\n"
+"\n"
+msgstr ""
+"\n"
+"您的安装包含大对象。新数据库有一个附加的大对象权限表。\n"
+"升级后，将向您提供一个命令，以使用默认权限填充\n"
+"pg_largeobject_metadata表。\n"
+"\n"
+
+#: version.c:88
+#, c-format
+msgid ""
+"\n"
+"Your installation contains large objects.  The new database has an\n"
+"additional large object permission table, so default permissions must be\n"
+"defined for all large objects.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will set the default\n"
+"permissions.\n"
+"\n"
+msgstr ""
+"\n"
+"您的安装包含大对象。 新数据库有一个附加的大对象权限表，\n"
+"因此必须为所有大对象定义默认权限。文件\n"
+"    %s\n"
+"当数据库由psql执行时，超级用户将设置默认权限。\n"
+"\n"
+
+#: version.c:118
+#, c-format
+msgid "Checking for incompatible \"line\" data type"
+msgstr "正在检查不兼容的\"line\"数据类型"
+
+#: version.c:180
+#, c-format
+msgid ""
+"Your installation contains the \"line\" data type in user tables.  This\n"
+"data type changed its internal and input/output format between your old\n"
+"and new clusters so this cluster cannot currently be upgraded.  You can\n"
+"remove the problem tables and restart the upgrade.  A list of the problem\n"
+"columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"您的安装包含用户表中的\"line\"数据类型。\n"
+"此数据类型更改了旧群集和新群集之间的内部格式和输入/输出格式，\n"
+"因此当前无法升级此群集。\n"
+"您可以删除问题表并重新启动升级。\n"
+"文件中有问题列的列表:\n"
+"    %s\n"
+"\n"
+
+#: version.c:215
+#, c-format
+msgid "Checking for invalid \"unknown\" user columns"
+msgstr "正在检查无效的\"unknown\"用户列"
+
+#: version.c:281
+#, c-format
+msgid ""
+"Your installation contains the \"unknown\" data type in user tables.  This\n"
+"data type is no longer allowed in tables, so this cluster cannot currently\n"
+"be upgraded.  You can remove the problem tables and restart the upgrade.\n"
+"A list of the problem columns is in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"您的安装包含用户表中的\"unknown\"数据类型。\n"
+"表中不再允许此数据类型，因此当前无法升级此群集。\n"
+"您可以删除问题表并重新启动升级。\n"
+"文件中有问题列的列表 :\n"
+"    %s\n"
+"\n"
+
+#: version.c:304
+#, c-format
+msgid "Checking for hash indexes"
+msgstr "正在检查哈希索引"
+
+#: version.c:384
+#, c-format
+msgid ""
+"\n"
+"Your installation contains hash indexes.  These indexes have different\n"
+"internal formats between your old and new clusters, so they must be\n"
+"reindexed with the REINDEX command.  After upgrading, you will be given\n"
+"REINDEX instructions.\n"
+"\n"
+msgstr ""
+"\n"
+"您的安装包含哈希索引。\n"
+"这些索引在旧集群和新集群之间具有不同的内部格式，因此必须\n"
+"使用REINDEX命令重新索引它们。\n"
+"升级后，您将得到REINDEX指令。\n"
+"\n"
+
+#: version.c:390
+#, c-format
+msgid ""
+"\n"
+"Your installation contains hash indexes.  These indexes have different\n"
+"internal formats between your old and new clusters, so they must be\n"
+"reindexed with the REINDEX command.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will recreate all invalid\n"
+"indexes; until then, none of these indexes will be used.\n"
+"\n"
+msgstr ""
+"\n"
+"您的安装包含哈希索引.  These indexes have different\n"
+"这些索引在旧集群和新集群之间具有不同的内部格式，\n"
+"因此必须使用REINDEX命令重新索引它们。 文件\n"
+"    %s\n"
+"当数据库超级用户通过psql执行时，将重新创建所有无效的索引；\n"
+"在此之前，不会使用这些索引。\n"
+"\n"

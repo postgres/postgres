@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 23:15+0000\n"
-"PO-Revision-Date: 2017-10-12 10:13+0300\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2019-09-09 12:21+0300\n"
+"PO-Revision-Date: 2019-09-02 12:06+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -22,40 +22,61 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../../src/common/logging.c:188
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "не удалось определить текущий каталог: %s"
+msgid "fatal: "
+msgstr "важно: "
 
-#: ../../common/exec.c:146
+#: ../../../src/common/logging.c:195
+#, c-format
+msgid "error: "
+msgstr "ошибка: "
+
+#: ../../../src/common/logging.c:202
+#, c-format
+msgid "warning: "
+msgstr "предупреждение: "
+
+#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
+#, c-format
+msgid "could not identify current directory: %m"
+msgstr "не удалось определить текущий каталог: %m"
+
+#: ../../common/exec.c:157
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "неверный исполняемый файл \"%s\""
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:207
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "не удалось прочитать исполняемый файл \"%s\""
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:215
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "не удалось найти запускаемый файл \"%s\""
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:271 ../../common/exec.c:310
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "не удалось перейти в каталог \"%s\": %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "не удалось перейти в каталог \"%s\": %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:288
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "не удалось прочитать символическую ссылку \"%s\""
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:541
 #, c-format
-msgid "pclose failed: %s"
-msgstr "ошибка pclose: %s"
+msgid "pclose failed: %m"
+msgstr "ошибка pclose: %m"
+
+#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+#: initdb.c:339
+#, c-format
+msgid "out of memory"
+msgstr "нехватка памяти"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -68,98 +89,86 @@ msgstr "нехватка памяти\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
-#: ../../common/file_utils.c:82 ../../common/file_utils.c:186
+#: ../../common/file_utils.c:81 ../../common/file_utils.c:183
 #, c-format
-msgid "%s: could not stat file \"%s\": %s\n"
-msgstr "%s: не удалось получить информацию о файле \"%s\": %s\n"
+msgid "could not stat file \"%s\": %m"
+msgstr "не удалось получить информацию о файле \"%s\": %m"
 
-#: ../../common/file_utils.c:162
+#: ../../common/file_utils.c:160 ../../common/pgfnames.c:48
 #, c-format
-msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: не удалось открыть каталог \"%s\": %s\n"
+msgid "could not open directory \"%s\": %m"
+msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:198
+#: ../../common/file_utils.c:194 ../../common/pgfnames.c:69
 #, c-format
-msgid "%s: could not read directory \"%s\": %s\n"
-msgstr "%s: не удалось прочитать каталог \"%s\": %s\n"
+msgid "could not read directory \"%s\": %m"
+msgstr "не удалось прочитать каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:231 ../../common/file_utils.c:291
-#: ../../common/file_utils.c:367
+#: ../../common/file_utils.c:226 ../../common/file_utils.c:285
+#: ../../common/file_utils.c:359
 #, c-format
-msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: не удалось открыть файл \"%s\": %s\n"
+msgid "could not open file \"%s\": %m"
+msgstr "не удалось открыть файл \"%s\": %m"
 
-#: ../../common/file_utils.c:304 ../../common/file_utils.c:376
+#: ../../common/file_utils.c:297 ../../common/file_utils.c:367
 #, c-format
-msgid "%s: could not fsync file \"%s\": %s\n"
-msgstr "%s: не удалось синхронизировать с ФС файл \"%s\": %s\n"
+msgid "could not fsync file \"%s\": %m"
+msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
 
-#: ../../common/file_utils.c:387
+#: ../../common/file_utils.c:377
 #, c-format
-msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
-msgstr "%s: не удалось переименовать файл \"%s\" в \"%s\": %s\n"
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "не удалось переименовать файл \"%s\" в \"%s\": %m"
 
-#: ../../common/pgfnames.c:45
+#: ../../common/pgfnames.c:74
 #, c-format
-msgid "could not open directory \"%s\": %s\n"
-msgstr "не удалось открыть каталог \"%s\": %s\n"
+msgid "could not close directory \"%s\": %m"
+msgstr "не удалось закрыть каталог \"%s\": %m"
 
-#: ../../common/pgfnames.c:72
+#: ../../common/restricted_token.c:69
 #, c-format
-msgid "could not read directory \"%s\": %s\n"
-msgstr "не удалось прочитать каталог \"%s\": %s\n"
+msgid "cannot create restricted tokens on this platform"
+msgstr "в этой ОС нельзя создавать ограниченные маркеры"
 
-#: ../../common/pgfnames.c:84
+#: ../../common/restricted_token.c:78
 #, c-format
-msgid "could not close directory \"%s\": %s\n"
-msgstr "не удалось закрыть каталог \"%s\": %s\n"
+msgid "could not open process token: error code %lu"
+msgstr "не удалось открыть маркер процесса (код ошибки: %lu)"
 
-#: ../../common/restricted_token.c:68
+#: ../../common/restricted_token.c:91
 #, c-format
-msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr "%s: ПРЕДУПРЕЖДЕНИЕ: в этой ОС нельзя создавать ограниченные маркеры\n"
-
-#: ../../common/restricted_token.c:77
-#, c-format
-msgid "%s: could not open process token: error code %lu\n"
-msgstr "%s: не удалось открыть маркер процесса (код ошибки: %lu)\n"
-
-#: ../../common/restricted_token.c:90
-#, c-format
-msgid "%s: could not allocate SIDs: error code %lu\n"
-msgstr "%s: не удалось подготовить структуры SID (код ошибки: %lu)\n"
+msgid "could not allocate SIDs: error code %lu"
+msgstr "не удалось подготовить структуры SID (код ошибки: %lu)"
 
 #: ../../common/restricted_token.c:110
 #, c-format
-msgid "%s: could not create restricted token: error code %lu\n"
-msgstr "%s: не удалось создать ограниченный маркер (код ошибки: %lu)\n"
+msgid "could not create restricted token: error code %lu"
+msgstr "не удалось создать ограниченный маркер (код ошибки: %lu)"
 
-#: ../../common/restricted_token.c:132
+#: ../../common/restricted_token.c:131
 #, c-format
-msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr ""
-"%s: не удалось запустить процесс для команды \"%s\" (код ошибки: %lu)\n"
+msgid "could not start process for command \"%s\": error code %lu"
+msgstr "не удалось запустить процесс для команды \"%s\" (код ошибки: %lu)"
 
-#: ../../common/restricted_token.c:170
+#: ../../common/restricted_token.c:169
 #, c-format
-msgid "%s: could not re-execute with restricted token: error code %lu\n"
-msgstr ""
-"%s: не удалось перезапуститься с ограниченным маркером (код ошибки: %lu)\n"
+msgid "could not re-execute with restricted token: error code %lu"
+msgstr "не удалось перезапуститься с ограниченным маркером (код ошибки: %lu)"
 
-#: ../../common/restricted_token.c:186
+#: ../../common/restricted_token.c:185
 #, c-format
-msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr "%s: не удалось получить код выхода от подпроцесса (код ошибки: %lu)\n"
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "не удалось получить код выхода от подпроцесса (код ошибки: %lu)"
 
-#: ../../common/rmtree.c:77
+#: ../../common/rmtree.c:79
 #, c-format
-msgid "could not stat file or directory \"%s\": %s\n"
-msgstr "не удалось получить информацию о файле или каталоге \"%s\": %s\n"
+msgid "could not stat file or directory \"%s\": %m"
+msgstr "не удалось получить информацию о файле или каталоге \"%s\": %m"
 
-#: ../../common/rmtree.c:104 ../../common/rmtree.c:121
+#: ../../common/rmtree.c:101 ../../common/rmtree.c:113
 #, c-format
-msgid "could not remove file or directory \"%s\": %s\n"
-msgstr "ошибка при удалении файла или каталога \"%s\": %s\n"
+msgid "could not remove file or directory \"%s\": %m"
+msgstr "ошибка при удалении файла или каталога \"%s\": %m"
 
 #: ../../common/username.c:43
 #, c-format
@@ -190,22 +199,17 @@ msgstr "команда не найдена"
 msgid "child process exited with exit code %d"
 msgstr "дочерний процесс завершился с кодом возврата %d"
 
-#: ../../common/wait_error.c:61
+#: ../../common/wait_error.c:62
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "дочерний процесс прерван исключением 0x%X"
 
-#: ../../common/wait_error.c:71
+#: ../../common/wait_error.c:66
 #, c-format
-msgid "child process was terminated by signal %s"
-msgstr "дочерний процесс завершён по сигналу %s"
+msgid "child process was terminated by signal %d: %s"
+msgstr "дочерний процесс завершён по сигналу %d: %s"
 
-#: ../../common/wait_error.c:75
-#, c-format
-msgid "child process was terminated by signal %d"
-msgstr "дочерний процесс завершён по сигналу %d"
-
-#: ../../common/wait_error.c:80
+#: ../../common/wait_error.c:72
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным состоянием %d"
@@ -220,103 +224,101 @@ msgstr "не удалось создать связь для каталога \"
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "не удалось получить связь для каталога \"%s\": %s\n"
 
-#: initdb.c:331
+#: initdb.c:495 initdb.c:1534
 #, c-format
-msgid "%s: out of memory\n"
-msgstr "%s: нехватка памяти\n"
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
-#: initdb.c:441 initdb.c:1442
+#: initdb.c:550 initdb.c:858 initdb.c:884
 #, c-format
-msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: не удалось открыть файл \"%s\" для чтения: %s\n"
+msgid "could not open file \"%s\" for writing: %m"
+msgstr "не удалось открыть файл \"%s\" для записи: %m"
 
-#: initdb.c:497 initdb.c:813 initdb.c:841
+#: initdb.c:557 initdb.c:564 initdb.c:864 initdb.c:889
 #, c-format
-msgid "%s: could not open file \"%s\" for writing: %s\n"
-msgstr "%s: не удалось открыть файл \"%s\" для записи: %s\n"
+msgid "could not write file \"%s\": %m"
+msgstr "не удалось записать файл \"%s\": %m"
 
-#: initdb.c:505 initdb.c:513 initdb.c:820 initdb.c:847
+#: initdb.c:582
 #, c-format
-msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s: не удалось записать файл \"%s\": %s\n"
+msgid "could not execute command \"%s\": %m"
+msgstr "не удалось выполнить команду \"%s\": %m"
 
-#: initdb.c:532
+#: initdb.c:600
 #, c-format
-msgid "%s: could not execute command \"%s\": %s\n"
-msgstr "%s: не удалось выполнить команду \"%s\": %s\n"
+msgid "removing data directory \"%s\""
+msgstr "удаление каталога данных \"%s\""
 
-#: initdb.c:548
+#: initdb.c:602
 #, c-format
-msgid "%s: removing data directory \"%s\"\n"
-msgstr "%s: удаление каталога данных \"%s\"\n"
+msgid "failed to remove data directory"
+msgstr "ошибка при удалении каталога данных"
 
-#: initdb.c:551
+#: initdb.c:606
 #, c-format
-msgid "%s: failed to remove data directory\n"
-msgstr "%s: ошибка при удалении каталога данных\n"
+msgid "removing contents of data directory \"%s\""
+msgstr "удаление содержимого каталога данных \"%s\""
 
-#: initdb.c:557
+#: initdb.c:609
 #, c-format
-msgid "%s: removing contents of data directory \"%s\"\n"
-msgstr "%s: удаление содержимого каталога данных \"%s\"\n"
+msgid "failed to remove contents of data directory"
+msgstr "ошибка при удалении содержимого каталога данных"
 
-#: initdb.c:560
+#: initdb.c:614
 #, c-format
-msgid "%s: failed to remove contents of data directory\n"
-msgstr "%s: ошибка при удалении содержимого каталога данных\n"
+msgid "removing WAL directory \"%s\""
+msgstr "удаление каталога WAL \"%s\""
 
-#: initdb.c:566
+#: initdb.c:616
 #, c-format
-msgid "%s: removing WAL directory \"%s\"\n"
-msgstr "%s: удаление каталога WAL \"%s\"\n"
+msgid "failed to remove WAL directory"
+msgstr "ошибка при удалении каталога WAL"
 
-#: initdb.c:569
+#: initdb.c:620
 #, c-format
-msgid "%s: failed to remove WAL directory\n"
-msgstr "%s: ошибка при удалении каталога WAL\n"
+msgid "removing contents of WAL directory \"%s\""
+msgstr "удаление содержимого каталога WAL \"%s\""
 
-#: initdb.c:575
+#: initdb.c:622
 #, c-format
-msgid "%s: removing contents of WAL directory \"%s\"\n"
-msgstr "%s: удаление содержимого каталога WAL \"%s\"\n"
+msgid "failed to remove contents of WAL directory"
+msgstr "ошибка при удалении содержимого каталога WAL"
 
-#: initdb.c:578
+#: initdb.c:629
 #, c-format
-msgid "%s: failed to remove contents of WAL directory\n"
-msgstr "%s: ошибка при удалении содержимого каталога WAL\n"
+msgid "data directory \"%s\" not removed at user's request"
+msgstr "каталог данных \"%s\" не был удалён по запросу пользователя"
 
-#: initdb.c:587
+#: initdb.c:633
 #, c-format
-msgid "%s: data directory \"%s\" not removed at user's request\n"
-msgstr "%s: каталог данных \"%s\" не был удалён по запросу пользователя\n"
+msgid "WAL directory \"%s\" not removed at user's request"
+msgstr "каталог WAL \"%s\" не был удалён по запросу пользователя"
 
-#: initdb.c:592
+#: initdb.c:651
 #, c-format
-msgid "%s: WAL directory \"%s\" not removed at user's request\n"
-msgstr "%s: каталог WAL \"%s\" не был удалён по запросу пользователя\n"
+msgid "cannot be run as root"
+msgstr "программу не должен запускать root"
 
-#: initdb.c:613
+#: initdb.c:653
 #, c-format
 msgid ""
-"%s: cannot be run as root\n"
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"Запускать %s от имени root нельзя.\n"
 "Пожалуйста, переключитесь на обычного пользователя (например,\n"
 "используя \"su\"), который будет запускать серверный процесс.\n"
 
-#: initdb.c:649
+#: initdb.c:686
 #, c-format
-msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr "%s: \"%s\" - неверное имя серверной кодировки\n"
+msgid "\"%s\" is not a valid server encoding name"
+msgstr "\"%s\" — некорректное имя серверной кодировки"
 
-#: initdb.c:769
+#: initdb.c:817
 #, c-format
-msgid "%s: file \"%s\" does not exist\n"
-msgstr "%s: файл \"%s\" не существует\n"
+msgid "file \"%s\" does not exist"
+msgstr "файл \"%s\" не существует"
 
-#: initdb.c:771 initdb.c:780 initdb.c:790
+#: initdb.c:819 initdb.c:826 initdb.c:835
 #, c-format
 msgid ""
 "This might mean you have a corrupted installation or identified\n"
@@ -325,121 +327,127 @@ msgstr ""
 "Это означает, что ваша установка PostgreSQL испорчена или в параметре -L\n"
 "задан неправильный каталог.\n"
 
-#: initdb.c:777
+#: initdb.c:824
 #, c-format
-msgid "%s: could not access file \"%s\": %s\n"
-msgstr "%s: нет доступа к файлу \"%s\": %s\n"
+msgid "could not access file \"%s\": %m"
+msgstr "нет доступа к файлу \"%s\": %m"
 
-#: initdb.c:788
+#: initdb.c:833
 #, c-format
-msgid "%s: file \"%s\" is not a regular file\n"
-msgstr "%s: \"%s\" - не обычный файл\n"
+msgid "file \"%s\" is not a regular file"
+msgstr "\"%s\" — не обычный файл"
 
-#: initdb.c:933
-#, c-format
-msgid "selecting default max_connections ... "
-msgstr "выбирается значение max_connections... "
-
-#: initdb.c:963
-#, c-format
-msgid "selecting default shared_buffers ... "
-msgstr "выбирается значение shared_buffers... "
-
-#: initdb.c:996
+#: initdb.c:978
 #, c-format
 msgid "selecting dynamic shared memory implementation ... "
-msgstr "выбор реализации динамической разделяемой памяти... "
+msgstr "выбирается реализация динамической разделяемой памяти... "
 
-#: initdb.c:1014
+#: initdb.c:987
+#, c-format
+msgid "selecting default max_connections ... "
+msgstr "выбирается значение max_connections по умолчанию... "
+
+#: initdb.c:1018
+#, c-format
+msgid "selecting default shared_buffers ... "
+msgstr "выбирается значение shared_buffers по умолчанию... "
+
+#: initdb.c:1052
+#, c-format
+msgid "selecting default time zone ... "
+msgstr "выбирается часовой пояс по умолчанию... "
+
+#: initdb.c:1086
 msgid "creating configuration files ... "
 msgstr "создание конфигурационных файлов... "
 
-#: initdb.c:1146 initdb.c:1166 initdb.c:1253 initdb.c:1269
+#: initdb.c:1239 initdb.c:1258 initdb.c:1344 initdb.c:1359
 #, c-format
-msgid "%s: could not change permissions of \"%s\": %s\n"
-msgstr "%s: не удалось поменять права для \"%s\": %s\n"
+msgid "could not change permissions of \"%s\": %m"
+msgstr "не удалось поменять права для \"%s\": %m"
 
-#: initdb.c:1293
+#: initdb.c:1381
 #, c-format
 msgid "running bootstrap script ... "
 msgstr "выполняется подготовительный скрипт... "
 
-#: initdb.c:1309
+#: initdb.c:1393
+#, c-format
+msgid "input file \"%s\" does not belong to PostgreSQL %s"
+msgstr "входной файл \"%s\" не принадлежит PostgreSQL %s"
+
+#: initdb.c:1396
 #, c-format
 msgid ""
-"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
 "Check your installation or specify the correct path using the option -L.\n"
 msgstr ""
-"%s: входной файл \"%s\" не принадлежит PostgreSQL %s\n"
 "Проверьте правильность установки или укажите корректный путь в параметре -"
 "L.\n"
 
-#: initdb.c:1419
+#: initdb.c:1511
 msgid "Enter new superuser password: "
 msgstr "Введите новый пароль суперпользователя: "
 
-#: initdb.c:1420
+#: initdb.c:1512
 msgid "Enter it again: "
 msgstr "Повторите его: "
 
-#: initdb.c:1423
+#: initdb.c:1515
 #, c-format
 msgid "Passwords didn't match.\n"
 msgstr "Пароли не совпадают.\n"
 
-#: initdb.c:1449
+#: initdb.c:1541
 #, c-format
-msgid "%s: could not read password from file \"%s\": %s\n"
-msgstr "%s: не удалось прочитать пароль из файла \"%s\": %s\n"
+msgid "could not read password from file \"%s\": %m"
+msgstr "не удалось прочитать пароль из файла \"%s\": %m"
 
-#: initdb.c:1452
+#: initdb.c:1544
 #, c-format
-msgid "%s: password file \"%s\" is empty\n"
-msgstr "%s: файл пароля \"%s\" пуст\n"
+msgid "password file \"%s\" is empty"
+msgstr "файл пароля \"%s\" пуст"
 
-#: initdb.c:2027
+#: initdb.c:2107
 #, c-format
 msgid "caught signal\n"
 msgstr "получен сигнал\n"
 
-#: initdb.c:2033
+#: initdb.c:2113
 #, c-format
 msgid "could not write to child process: %s\n"
 msgstr "не удалось записать в поток дочернего процесса: %s\n"
 
-#: initdb.c:2041
+#: initdb.c:2121
 #, c-format
 msgid "ok\n"
 msgstr "ок\n"
 
-#: initdb.c:2131
+#: initdb.c:2211
 #, c-format
-msgid "%s: setlocale() failed\n"
-msgstr "%s: ошибка в setlocale()\n"
+msgid "setlocale() failed"
+msgstr "ошибка в setlocale()"
 
-#: initdb.c:2149
+#: initdb.c:2232
 #, c-format
-msgid "%s: failed to restore old locale \"%s\"\n"
-msgstr "%s: не удалось восстановить старую локаль \"%s\"\n"
+msgid "failed to restore old locale \"%s\""
+msgstr "не удалось восстановить старую локаль \"%s\""
 
-#: initdb.c:2159
+#: initdb.c:2241
 #, c-format
-msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s: ошибочное имя локали \"%s\"\n"
+msgid "invalid locale name \"%s\""
+msgstr "ошибочное имя локали \"%s\""
 
-#: initdb.c:2171
+#: initdb.c:2252
 #, c-format
-msgid ""
-"%s: invalid locale settings; check LANG and LC_* environment variables\n"
-msgstr ""
-"%s: неверные установки локали; проверьте переменные окружения LANG и LC_*\n"
+msgid "invalid locale settings; check LANG and LC_* environment variables"
+msgstr "неверные установки локали; проверьте переменные окружения LANG и LC_*"
 
-#: initdb.c:2199
+#: initdb.c:2279
 #, c-format
-msgid "%s: encoding mismatch\n"
-msgstr "%s: несоответствие кодировки\n"
+msgid "encoding mismatch"
+msgstr "несоответствие кодировки"
 
-#: initdb.c:2201
+#: initdb.c:2281
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the\n"
@@ -454,7 +462,7 @@ msgstr ""
 "Для исправления перезапустите %s, не указывая кодировку явно, \n"
 "либо выберите подходящее сочетание параметров локализации.\n"
 
-#: initdb.c:2273
+#: initdb.c:2353
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -463,17 +471,17 @@ msgstr ""
 "%s инициализирует кластер PostgreSQL.\n"
 "\n"
 
-#: initdb.c:2274
+#: initdb.c:2354
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: initdb.c:2275
+#: initdb.c:2355
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [ПАРАМЕТР]... [КАТАЛОГ]\n"
 
-#: initdb.c:2276
+#: initdb.c:2356
 #, c-format
 msgid ""
 "\n"
@@ -482,7 +490,7 @@ msgstr ""
 "\n"
 "Параметры:\n"
 
-#: initdb.c:2277
+#: initdb.c:2357
 #, c-format
 msgid ""
 "  -A, --auth=METHOD         default authentication method for local "
@@ -491,7 +499,7 @@ msgstr ""
 "  -A, --auth=МЕТОД          метод проверки подлинности по умолчанию\n"
 "                            для локальных подключений\n"
 
-#: initdb.c:2278
+#: initdb.c:2358
 #, c-format
 msgid ""
 "      --auth-host=METHOD    default authentication method for local TCP/IP "
@@ -500,7 +508,7 @@ msgstr ""
 "      --auth-host=МЕТОД     метод проверки подлинности по умолчанию\n"
 "                            для локальных TCP/IP-подключений\n"
 
-#: initdb.c:2279
+#: initdb.c:2359
 #, c-format
 msgid ""
 "      --auth-local=METHOD   default authentication method for local-socket "
@@ -509,22 +517,31 @@ msgstr ""
 "      --auth-local=МЕТОД    метод проверки подлинности по умолчанию\n"
 "                            для локальных подключений через сокет\n"
 
-#: initdb.c:2280
+#: initdb.c:2360
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]КАТАЛОГ     расположение данных этого кластера БД\n"
 
-#: initdb.c:2281
+#: initdb.c:2361
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=КОДИРОВКА  кодировка по умолчанию для новых баз\n"
 
-#: initdb.c:2282
+#: initdb.c:2362
+#, c-format
+msgid ""
+"  -g, --allow-group-access  allow group read/execute on data directory\n"
+msgstr ""
+"  -g, --allow-group-access  разрешить чтение/выполнение в каталоге данных "
+"для\n"
+"                            группы\n"
+
+#: initdb.c:2363
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=ЛОКАЛЬ       локаль по умолчанию для новых баз\n"
 
-#: initdb.c:2283
+#: initdb.c:2364
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -538,19 +555,19 @@ msgstr ""
 "                            установить соответствующий параметр локали\n"
 "                            для новых баз (вместо значения из окружения)\n"
 
-#: initdb.c:2287
+#: initdb.c:2368
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           эквивалентно --locale=C\n"
 
-#: initdb.c:2288
+#: initdb.c:2369
 #, c-format
 msgid ""
 "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr ""
 "      --pwfile=ФАЙЛ         прочитать пароль суперпользователя из файла\n"
 
-#: initdb.c:2289
+#: initdb.c:2370
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -559,24 +576,29 @@ msgstr ""
 "  -T, --text-search-config=КОНФИГУРАЦИЯ\n"
 "                            конфигурация текстового поиска по умолчанию\n"
 
-#: initdb.c:2291
+#: initdb.c:2372
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=ИМЯ        имя суперпользователя БД\n"
 
-#: initdb.c:2292
+#: initdb.c:2373
 #, c-format
 msgid ""
 "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            запросить пароль суперпользователя\n"
 
-#: initdb.c:2293
+#: initdb.c:2374
 #, c-format
 msgid ""
 "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=КАТАЛОГ      расположение журнала предзаписи\n"
 
-#: initdb.c:2294
+#: initdb.c:2375
+#, c-format
+msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
+msgstr "      --wal-segsize=РАЗМЕР  размер сегментов WAL (в мегабайтах)\n"
+
+#: initdb.c:2376
 #, c-format
 msgid ""
 "\n"
@@ -585,27 +607,27 @@ msgstr ""
 "\n"
 "Редко используемые параметры:\n"
 
-#: initdb.c:2295
+#: initdb.c:2377
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               выдавать много отладочных сообщений\n"
 
-#: initdb.c:2296
+#: initdb.c:2378
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
 msgstr "  -k, --data-checksums      включить контроль целостности страниц\n"
 
-#: initdb.c:2297
+#: initdb.c:2379
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L КАТАЛОГ                расположение входных файлов\n"
 
-#: initdb.c:2298
+#: initdb.c:2380
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean            не очищать после ошибок\n"
 
-#: initdb.c:2299
+#: initdb.c:2381
 #, c-format
 msgid ""
 "  -N, --no-sync             do not wait for changes to be written safely to "
@@ -613,18 +635,18 @@ msgid ""
 msgstr ""
 "  -N, --no-sync             не ждать завершения сохранения данных на диске\n"
 
-#: initdb.c:2300
+#: initdb.c:2382
 #, c-format
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                показать внутренние установки\n"
 
-#: initdb.c:2301
+#: initdb.c:2383
 #, c-format
 msgid "  -S, --sync-only           only sync data directory\n"
 msgstr ""
 "  -S, --sync-only           только синхронизировать с ФС каталог данных\n"
 
-#: initdb.c:2302
+#: initdb.c:2384
 #, c-format
 msgid ""
 "\n"
@@ -633,17 +655,17 @@ msgstr ""
 "\n"
 "Другие параметры:\n"
 
-#: initdb.c:2303
+#: initdb.c:2385
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             показать версию и выйти\n"
 
-#: initdb.c:2304
+#: initdb.c:2386
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
-#: initdb.c:2305
+#: initdb.c:2387
 #, c-format
 msgid ""
 "\n"
@@ -653,88 +675,75 @@ msgstr ""
 "\n"
 "Если каталог данных не указан, используется переменная окружения PGDATA.\n"
 
-#: initdb.c:2307
+#: initdb.c:2389
 #, c-format
 msgid ""
 "\n"
-"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+"Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
 msgstr ""
 "\n"
-"Об ошибках сообщайте по адресу <pgsql-bugs@postgresql.org>.\n"
+"Об ошибках сообщайте по адресу <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: initdb.c:2315
-msgid ""
-"\n"
-"WARNING: enabling \"trust\" authentication for local connections\n"
-"You can change this by editing pg_hba.conf or using the option -A, or\n"
-"--auth-local and --auth-host, the next time you run initdb.\n"
-msgstr ""
-"\n"
-"ПРЕДУПРЕЖДЕНИЕ: используется проверка подлинности \"trust\" для локальных "
-"подключений.\n"
-"Другой метод можно выбрать, отредактировав pg_hba.conf или используя ключи -"
-"A,\n"
-"--auth-local или --auth-host при следующем выполнении initdb.\n"
-
-#: initdb.c:2337
+#: initdb.c:2417
 #, c-format
-msgid "%s: invalid authentication method \"%s\" for \"%s\" connections\n"
+msgid "invalid authentication method \"%s\" for \"%s\" connections"
 msgstr ""
-"%s: нераспознанный метод проверки подлинности \"%s\" для подключений \"%s\"\n"
+"нераспознанный метод проверки подлинности \"%s\" для подключений \"%s\""
 
-#: initdb.c:2353
+#: initdb.c:2433
+#, c-format
+msgid "must specify a password for the superuser to enable %s authentication"
+msgstr "для применения метода %s необходимо указать пароль суперпользователя"
+
+#: initdb.c:2460
+#, c-format
+msgid "no data directory specified"
+msgstr "каталог данных не указан"
+
+#: initdb.c:2462
 #, c-format
 msgid ""
-"%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr ""
-"%s: для применения метода %s необходимо указать пароль суперпользователя\n"
-
-#: initdb.c:2381
-#, c-format
-msgid ""
-"%s: no data directory specified\n"
 "You must identify the directory where the data for this database system\n"
 "will reside.  Do this with either the invocation option -D or the\n"
 "environment variable PGDATA.\n"
 msgstr ""
-"%s: каталог данных не определён.\n"
 "Вы должны указать, где будут располагаться данные этой СУБД.\n"
 "Это можно сделать, добавив ключ -D или установив переменную\n"
 "окружения PGDATA.\n"
 
-#: initdb.c:2419
+#: initdb.c:2497
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
 "same directory as \"%s\".\n"
-"Check your installation.\n"
+"Check your installation."
 msgstr ""
 "Программа \"postgres\" нужна для %s, но она не найдена\n"
 "в каталоге \"%s\".\n"
-"Проверьте правильность установки СУБД.\n"
+"Проверьте правильность установки СУБД."
 
-#: initdb.c:2426
+#: initdb.c:2502
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
 "but was not the same version as %s.\n"
-"Check your installation.\n"
+"Check your installation."
 msgstr ""
 "Программа \"postgres\" найдена в \"%s\",\n"
 "но её версия отличается от версии %s.\n"
-"Проверьте правильность установки СУБД.\n"
+"Проверьте правильность установки СУБД."
 
-#: initdb.c:2445
+#: initdb.c:2521
 #, c-format
-msgid "%s: input file location must be an absolute path\n"
-msgstr "%s: расположение входных файлов должно задаваться абсолютным путём\n"
+msgid "input file location must be an absolute path"
+msgstr "расположение входных файлов должно задаваться абсолютным путём"
 
-#: initdb.c:2464
+#: initdb.c:2538
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "Кластер баз данных будет инициализирован с локалью \"%s\".\n"
 
-#: initdb.c:2467
+#: initdb.c:2541
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -753,22 +762,22 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2491
+#: initdb.c:2565
 #, c-format
-msgid "%s: could not find suitable encoding for locale \"%s\"\n"
-msgstr "%s: не удалось найти подходящую кодировку для локали \"%s\"\n"
+msgid "could not find suitable encoding for locale \"%s\""
+msgstr "не удалось найти подходящую кодировку для локали \"%s\""
 
-#: initdb.c:2493
+#: initdb.c:2567
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Перезапустите %s с параметром -E.\n"
 
-#: initdb.c:2494 initdb.c:3123 initdb.c:3144
+#: initdb.c:2568 initdb.c:3196 initdb.c:3217
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: initdb.c:2506
+#: initdb.c:2581
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -777,12 +786,12 @@ msgstr ""
 "Кодировка \"%s\", подразумеваемая локалью, не годится для сервера.\n"
 "Вместо неё в качестве кодировки БД по умолчанию будет выбрана \"%s\".\n"
 
-#: initdb.c:2514
+#: initdb.c:2586
 #, c-format
-msgid "%s: locale \"%s\" requires unsupported encoding \"%s\"\n"
-msgstr "%s: для локали \"%s\" требуется неподдерживаемая кодировка \"%s\"\n"
+msgid "locale \"%s\" requires unsupported encoding \"%s\""
+msgstr "для локали \"%s\" требуется неподдерживаемая кодировка \"%s\""
 
-#: initdb.c:2517
+#: initdb.c:2589
 #, c-format
 msgid ""
 "Encoding \"%s\" is not allowed as a server-side encoding.\n"
@@ -791,69 +800,63 @@ msgstr ""
 "Кодировка \"%s\" недопустима в качестве кодировки сервера.\n"
 "Перезапустите %s, выбрав другую локаль.\n"
 
-#: initdb.c:2526
+#: initdb.c:2598
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr ""
 "Кодировка БД по умолчанию, выбранная в соответствии с настройками: \"%s\".\n"
 
-#: initdb.c:2597
+#: initdb.c:2666
+#, c-format
+msgid "could not find suitable text search configuration for locale \"%s\""
+msgstr ""
+"не удалось найти подходящую конфигурацию текстового поиска для локали \"%s\""
+
+#: initdb.c:2677
+#, c-format
+msgid "suitable text search configuration for locale \"%s\" is unknown"
+msgstr ""
+"внимание: для локали \"%s\" нет известной конфигурации текстового поиска"
+
+#: initdb.c:2682
 #, c-format
 msgid ""
-"%s: could not find suitable text search configuration for locale \"%s\"\n"
+"specified text search configuration \"%s\" might not match locale \"%s\""
 msgstr ""
-"%s: не удалось найти подходящую конфигурацию текстового поиска для локали "
-"\"%s\"\n"
+"указанная конфигурация текстового поиска \"%s\" может не соответствовать "
+"локали \"%s\""
 
-#: initdb.c:2608
-#, c-format
-msgid ""
-"%s: warning: suitable text search configuration for locale \"%s\" is "
-"unknown\n"
-msgstr ""
-"%s: внимание: для локали \"%s\" нет известной конфигурации текстового "
-"поиска\n"
-
-#: initdb.c:2613
-#, c-format
-msgid ""
-"%s: warning: specified text search configuration \"%s\" might not match "
-"locale \"%s\"\n"
-msgstr ""
-"%s: внимание: указанная конфигурация текстового поиска \"%s\" может не "
-"соответствовать локали \"%s\"\n"
-
-#: initdb.c:2618
+#: initdb.c:2687
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Выбрана конфигурация текстового поиска по умолчанию \"%s\".\n"
 
-#: initdb.c:2662 initdb.c:2748
+#: initdb.c:2731 initdb.c:2813
 #, c-format
 msgid "creating directory %s ... "
 msgstr "создание каталога %s... "
 
-#: initdb.c:2668 initdb.c:2754 initdb.c:2822 initdb.c:2878
+#: initdb.c:2737 initdb.c:2819 initdb.c:2884 initdb.c:2946
 #, c-format
-msgid "%s: could not create directory \"%s\": %s\n"
-msgstr "%s: не удалось создать каталог \"%s\": %s\n"
+msgid "could not create directory \"%s\": %m"
+msgstr "не удалось создать каталог \"%s\": %m"
 
-#: initdb.c:2680 initdb.c:2766
+#: initdb.c:2748 initdb.c:2831
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "исправление прав для существующего каталога %s... "
 
-#: initdb.c:2686 initdb.c:2772
+#: initdb.c:2754 initdb.c:2837
 #, c-format
-msgid "%s: could not change permissions of directory \"%s\": %s\n"
-msgstr "%s: не удалось поменять права для каталога \"%s\": %s\n"
+msgid "could not change permissions of directory \"%s\": %m"
+msgstr "не удалось поменять права для каталога \"%s\": %m"
 
-#: initdb.c:2701 initdb.c:2787
+#: initdb.c:2768 initdb.c:2851
 #, c-format
-msgid "%s: directory \"%s\" exists but is not empty\n"
-msgstr "%s: каталог \"%s\" существует, но он не пуст\n"
+msgid "directory \"%s\" exists but is not empty"
+msgstr "каталог \"%s\" существует, но он не пуст"
 
-#: initdb.c:2707
+#: initdb.c:2773
 #, c-format
 msgid ""
 "If you want to create a new database system, either remove or empty\n"
@@ -864,17 +867,17 @@ msgstr ""
 "удалите или очистите каталог \"%s\",\n"
 "либо при запуске %s в качестве пути укажите не \"%s\".\n"
 
-#: initdb.c:2715 initdb.c:2800 initdb.c:3157
+#: initdb.c:2781 initdb.c:2863 initdb.c:3232
 #, c-format
-msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s: нет доступа к каталогу \"%s\": %s\n"
+msgid "could not access directory \"%s\": %m"
+msgstr "нет доступа к каталогу \"%s\": %m"
 
-#: initdb.c:2739
+#: initdb.c:2804
 #, c-format
-msgid "%s: WAL directory location must be an absolute path\n"
-msgstr "%s: расположение каталога WAL должно определяться абсолютным путём\n"
+msgid "WAL directory location must be an absolute path"
+msgstr "расположение каталога WAL должно определяться абсолютным путём"
 
-#: initdb.c:2793
+#: initdb.c:2856
 #, c-format
 msgid ""
 "If you want to store the WAL there, either remove or empty the directory\n"
@@ -883,17 +886,17 @@ msgstr ""
 "Если вы хотите хранить WAL здесь, удалите или очистите каталог\n"
 "\"%s\".\n"
 
-#: initdb.c:2808
+#: initdb.c:2870
 #, c-format
-msgid "%s: could not create symbolic link \"%s\": %s\n"
-msgstr "%s: не удалось создать символическую ссылку \"%s\": %s\n"
+msgid "could not create symbolic link \"%s\": %m"
+msgstr "не удалось создать символическую ссылку \"%s\": %m"
 
-#: initdb.c:2813
+#: initdb.c:2875
 #, c-format
-msgid "%s: symlinks are not supported on this platform"
-msgstr "%s: символические ссылки не поддерживаются в этой ОС"
+msgid "symlinks are not supported on this platform"
+msgstr "символические ссылки не поддерживаются в этой ОС"
 
-#: initdb.c:2837
+#: initdb.c:2899
 #, c-format
 msgid ""
 "It contains a dot-prefixed/invisible file, perhaps due to it being a mount "
@@ -901,13 +904,13 @@ msgid ""
 msgstr ""
 "Он содержит файл с точкой (невидимый), возможно это точка монтирования.\n"
 
-#: initdb.c:2840
+#: initdb.c:2902
 #, c-format
 msgid ""
 "It contains a lost+found directory, perhaps due to it being a mount point.\n"
 msgstr "Он содержит подкаталог lost+found, возможно это точка монтирования.\n"
 
-#: initdb.c:2843
+#: initdb.c:2905
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
@@ -917,51 +920,60 @@ msgstr ""
 "рекомендуется.\n"
 "Создайте в монтируемом ресурсе подкаталог и используйте его.\n"
 
-#: initdb.c:2863
+#: initdb.c:2931
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "создание подкаталогов... "
 
-#: initdb.c:2910
+#: initdb.c:2977
 msgid "performing post-bootstrap initialization ... "
 msgstr "выполняется заключительная инициализация... "
 
-#: initdb.c:3067
+#: initdb.c:3134
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Программа запущена в режиме отладки.\n"
 
-#: initdb.c:3071
+#: initdb.c:3138
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr ""
 "Программа запущена в режиме 'no-clean' - очистки и исправления ошибок не "
 "будет.\n"
 
-#: initdb.c:3142
+#: initdb.c:3215
 #, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "слишком много аргументов командной строки (первый: \"%s\")"
 
-#: initdb.c:3162 initdb.c:3228
+#: initdb.c:3236 initdb.c:3325
 msgid "syncing data to disk ... "
 msgstr "сохранение данных на диске... "
 
-#: initdb.c:3171
+#: initdb.c:3245
 #, c-format
-msgid "%s: password prompt and password file cannot be specified together\n"
-msgstr "%s: нельзя одновременно запросить пароль и прочитать пароль из файла\n"
+msgid "password prompt and password file cannot be specified together"
+msgstr "нельзя одновременно запросить пароль и прочитать пароль из файла"
 
-#: initdb.c:3195
+#: initdb.c:3270
+#, c-format
+msgid "argument of --wal-segsize must be a number"
+msgstr "аргументом --wal-segsize должно быть число"
+
+#: initdb.c:3275
+#, c-format
+msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
+msgstr "аргументом --wal-segsize должна быть степень 2 от 1 до 1024"
+
+#: initdb.c:3292
 #, c-format
 msgid ""
-"%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_"
-"\"\n"
+"superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
 msgstr ""
-"%s: имя \"%s\" для суперпользователя не допускается; имена ролей не могут "
-"начинаться с \"pg_\"\n"
+"имя \"%s\" для суперпользователя не допускается; имена ролей не могут "
+"начинаться с \"pg_\""
 
-#: initdb.c:3199
+#: initdb.c:3296
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -972,17 +984,17 @@ msgstr ""
 "От его имени также будет запускаться процесс сервера.\n"
 "\n"
 
-#: initdb.c:3215
+#: initdb.c:3312
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "Контроль целостности страниц данных включён.\n"
 
-#: initdb.c:3217
+#: initdb.c:3314
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "Контроль целостности страниц данных отключён.\n"
 
-#: initdb.c:3234
+#: initdb.c:3331
 #, c-format
 msgid ""
 "\n"
@@ -993,12 +1005,27 @@ msgstr ""
 "Сохранение данных на диск пропускается.\n"
 "Каталог данных может повредиться при сбое операционной системы.\n"
 
+#: initdb.c:3336
+#, c-format
+msgid "enabling \"trust\" authentication for local connections"
+msgstr "включение метода аутентификации \"trust\" для локальных подключений"
+
+#: initdb.c:3337
+#, c-format
+msgid ""
+"You can change this by editing pg_hba.conf or using the option -A, or\n"
+"--auth-local and --auth-host, the next time you run initdb.\n"
+msgstr ""
+"Другой метод можно выбрать, отредактировав pg_hba.conf или используя ключи -"
+"A,\n"
+"--auth-local или --auth-host при следующем выполнении initdb.\n"
+
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3260
+#: initdb.c:3362
 msgid "logfile"
 msgstr "файл_журнала"
 
-#: initdb.c:3262
+#: initdb.c:3364
 #, c-format
 msgid ""
 "\n"
@@ -1012,6 +1039,18 @@ msgstr ""
 "\n"
 "    %s\n"
 "\n"
+
+#~ msgid "%s: could not open directory \"%s\": %s\n"
+#~ msgstr "%s: не удалось открыть каталог \"%s\": %s\n"
+
+#~ msgid "%s: could not read directory \"%s\": %s\n"
+#~ msgstr "%s: не удалось прочитать каталог \"%s\": %s\n"
+
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "дочерний процесс завершён по сигналу %s"
+
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s: нехватка памяти\n"
 
 #~ msgid "%s: removing transaction log directory \"%s\"\n"
 #~ msgstr "%s: удаление каталога журнала транзакций \"%s\"\n"

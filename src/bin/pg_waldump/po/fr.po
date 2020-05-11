@@ -5,120 +5,101 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 11\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-17 01:16+0000\n"
-"PO-Revision-Date: 2019-05-17 15:06+0200\n"
+"POT-Creation-Date: 2020-04-16 06:15+0000\n"
+"PO-Revision-Date: 2020-04-16 14:09+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "fatal : "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "erreur : "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "attention : "
 
-#: pg_waldump.c:148
+#: pg_waldump.c:146
 #, c-format
-msgid "could not open file \"%s\": %s"
-msgstr "n'a pas pu ouvrir le fichier « %s » : %s"
+msgid "could not open file \"%s\": %m"
+msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
 
-#: pg_waldump.c:205
+#: pg_waldump.c:202
 #, c-format
-msgid ""
-"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
-"file \"%s\" header specifies %d byte"
-msgid_plural ""
-"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
-"file \"%s\" header specifies %d bytes"
-msgstr[0] ""
-"La taille du segment WAL doit être une puissance de deux entre 1 Mo et 1 Go, "
-"mais l'en-tête du fichier WAL « %s » indique %d octet"
-msgstr[1] ""
-"La taille du segment WAL doit être une puissance de deux entre 1 Mo et 1 Go, "
-"mais l'en-tête du fichier WAL « %s » indique %d octets"
+msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
+msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
+msgstr[0] "La taille du segment WAL doit être une puissance de deux entre 1 Mo et 1 Go, mais l'en-tête du fichier WAL « %s » indique %d octet"
+msgstr[1] "La taille du segment WAL doit être une puissance de deux entre 1 Mo et 1 Go, mais l'en-tête du fichier WAL « %s » indique %d octets"
+
+#: pg_waldump.c:210
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "n'a pas pu lire le fichier « %s » : %m"
 
 #: pg_waldump.c:213
-#, c-format
-msgid "could not read file \"%s\": %s"
-msgstr "n'a pas pu lire le fichier « %s » : %s"
-
-#: pg_waldump.c:216
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "n'a pas pu lire le fichier « %s » : a lu %d sur %zu"
 
-#: pg_waldump.c:294
+#: pg_waldump.c:275
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "n'a pas pu trouver le fichier WAL « %s »"
 
-#: pg_waldump.c:296
+#: pg_waldump.c:277
 #, c-format
 msgid "could not find any WAL file"
 msgstr "n'a pas pu trouver un seul fichier WAL"
 
-#: pg_waldump.c:367
+#: pg_waldump.c:319
 #, c-format
-msgid "could not find file \"%s\": %s"
-msgstr "n'a pas pu trouver le fichier « %s » : %s"
+msgid "could not find file \"%s\": %m"
+msgstr "n'a pas pu trouver le fichier « %s » : %m"
 
-#: pg_waldump.c:382
+#: pg_waldump.c:359
 #, c-format
-msgid "could not seek in log file %s to offset %u: %s"
-msgstr ""
-"n'a pas pu se déplacer dans le fichier de transactions %s au décalage %u : %s"
+msgid "could not read from file %s, offset %u: %m"
+msgstr "n'a pas pu lire à partir du fichier « %s », décalage %u : %m"
 
-#: pg_waldump.c:405
+#: pg_waldump.c:363
 #, c-format
-msgid "could not read from log file %s, offset %u, length %d: %s"
-msgstr ""
-"n'a pas pu lire à partir du segment %s du journal de transactions, décalage "
-"%u, longueur %d : %s"
+msgid "could not read from file %s, offset %u: read %d of %zu"
+msgstr "n'a pas pu lire à partir du fichier %s, décalage %u : %d lu sur %zu"
 
-#: pg_waldump.c:408
-#, c-format
-msgid "could not read from log file %s, offset %u: read %d of %zu"
-msgstr ""
-"n'a pas pu lire à partir du segment %s du journal de transactions, décalage "
-"%u: %d lu sur %zu"
-
-#: pg_waldump.c:787
+#: pg_waldump.c:712
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
 "\n"
 msgstr ""
-"%s décode et affiche les journaux de transactions PostgreSQL pour du "
-"débogage.\n"
+"%s décode et affiche les journaux de transactions PostgreSQL pour du débogage.\n"
 "\n"
 
-#: pg_waldump.c:789
+#: pg_waldump.c:714
 #, c-format
 msgid "Usage:\n"
 msgstr "Usage :\n"
 
-#: pg_waldump.c:790
+#: pg_waldump.c:715
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [OPTION]... [SEG_DEBUT [SEG_FIN]]\n"
 
-#: pg_waldump.c:791
+#: pg_waldump.c:716
 #, c-format
 msgid ""
 "\n"
@@ -127,220 +108,203 @@ msgstr ""
 "\n"
 "Options :\n"
 
-#: pg_waldump.c:792
+#: pg_waldump.c:717
 #, c-format
-msgid ""
-"  -b, --bkp-details      output detailed information about backup blocks\n"
-msgstr ""
-"  -b, --bkp-details      affiche des informations détaillées sur les blocs "
-"de sauvegarde\n"
+msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
+msgstr "  -b, --bkp-details      affiche des informations détaillées sur les blocs de sauvegarde\n"
 
-#: pg_waldump.c:793
+#: pg_waldump.c:718
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
-msgstr ""
-"  -e, --end=RECPTR       arrête la lecture des journaux de transactions à "
-"l'emplacement RECPTR\n"
+msgstr "  -e, --end=RECPTR       arrête la lecture des journaux de transactions à l'emplacement RECPTR\n"
 
-#: pg_waldump.c:794
+#: pg_waldump.c:719
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
-msgstr ""
-"  -f, --follow           continue après avoir atteint la fin des journaux de "
-"transactions\n"
+msgstr "  -f, --follow           continue après avoir atteint la fin des journaux de transactions\n"
 
-#: pg_waldump.c:795
+#: pg_waldump.c:720
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          nombre d'enregistrements à afficher\n"
 
-#: pg_waldump.c:796
+#: pg_waldump.c:721
 #, c-format
 msgid ""
 "  -p, --path=PATH        directory in which to find log segment files or a\n"
 "                         directory with a ./pg_wal that contains such files\n"
-"                         (default: current directory, ./pg_wal, $PGDATA/"
-"pg_wal)\n"
+"                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
 msgstr ""
-"  -p, --path=CHEMIN      répertoire où trouver les fichiers des segments de "
-"journaux de transactions\n"
-"                         ou un répertoire avec ./pg_wal qui contient ces "
-"fichiers\n"
-"                         (par défaut: répertoire courant, ./pg_wal, $PGDATA/"
-"pg_wal)\n"
+"  -p, --path=CHEMIN      répertoire où trouver les fichiers des segments de journaux de transactions\n"
+"                         ou un répertoire avec ./pg_wal qui contient ces fichiers\n"
+"                         (par défaut: répertoire courant, ./pg_wal, $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:799
+#: pg_waldump.c:724
+#, c-format
+msgid "  -q, --quiet            do not print any output, except for errors\n"
+msgstr "  -q, --quiet               n'écrit aucun message, sauf en cas d'erreur\n"
+
+#: pg_waldump.c:725
 #, c-format
 msgid ""
-"  -r, --rmgr=RMGR        only show records generated by resource manager "
-"RMGR;\n"
-"                         use --rmgr=list to list valid resource manager "
-"names\n"
+"  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
+"                         use --rmgr=list to list valid resource manager names\n"
 msgstr ""
-"  -r, --rmgr=RMGR        affiche seulement les enregistrements générés par "
-"le gestionnaire\n"
-"                         de ressources RMGR, utilisez --rmgr=list pour avoir "
-"une liste des noms valides\n"
+"  -r, --rmgr=RMGR        affiche seulement les enregistrements générés par le gestionnaire\n"
+"                         de ressources RMGR, utilisez --rmgr=list pour avoir une liste des noms valides\n"
 "                         de gestionnaires de ressources\n"
 "\n"
 
-#: pg_waldump.c:801
+#: pg_waldump.c:727
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
-msgstr ""
-"  -s, --start=RECPTR     commence à lire à l'emplacement RECPTR des journaux "
-"de transactions\n"
+msgstr "  -s, --start=RECPTR     commence à lire à l'emplacement RECPTR des journaux de transactions\n"
 
-#: pg_waldump.c:802
+#: pg_waldump.c:728
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read log records\n"
 "                         (default: 1 or the value used in STARTSEG)\n"
 msgstr ""
-"  -t, --timeline=TLI     timeline à partir de laquelle lire les "
-"enregistrements\n"
-"                         des journaux (par défaut: 1 ou la valeur utilisée "
-"dans SEG_DÉBUT)\n"
+"  -t, --timeline=TLI     timeline à partir de laquelle lire les enregistrements\n"
+"                         des journaux (par défaut: 1 ou la valeur utilisée dans SEG_DÉBUT)\n"
 
-#: pg_waldump.c:804
+#: pg_waldump.c:730
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version              affiche la version puis quitte\n"
 
-#: pg_waldump.c:805
+#: pg_waldump.c:731
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
-msgstr ""
-"  -x, --xid=XID          affiche seulement des enregistrements avec "
-"l'identifiant de transaction XID\n"
+msgstr "  -x, --xid=XID          affiche seulement des enregistrements avec l'identifiant de transaction XID\n"
 
-#: pg_waldump.c:806
+#: pg_waldump.c:732
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
 "                         (optionally, show per-record statistics)\n"
 msgstr ""
-"  -z, --stats[=enregistrement]   affiche des statistiques à la place "
-"d'enregistrements\n"
-"                         (en option, affiche des statistiques par "
-"enregistrement)\n"
+"  -z, --stats[=enregistrement]   affiche des statistiques à la place d'enregistrements\n"
+"                         (en option, affiche des statistiques par enregistrement)\n"
 
-#: pg_waldump.c:808
+#: pg_waldump.c:734
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help                 affiche cette aide puis quitte\n"
 
-#: pg_waldump.c:868
+#: pg_waldump.c:735
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Rapporter les bogues à <%s>.\n"
+
+#: pg_waldump.c:736
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "page d'accueil %s : <%s>\n"
+
+#: pg_waldump.c:813
 #, c-format
 msgid "no arguments specified"
 msgstr "aucun argument spécifié"
 
-#: pg_waldump.c:883
+#: pg_waldump.c:828
 #, c-format
 msgid "could not parse end WAL location \"%s\""
-msgstr ""
-"n'a pas pu analyser l'emplacement de fin du journal de transactions « %s »"
+msgstr "n'a pas pu analyser l'emplacement de fin du journal de transactions « %s »"
 
-#: pg_waldump.c:899
+#: pg_waldump.c:840
 #, c-format
 msgid "could not parse limit \"%s\""
 msgstr "n'a pas pu analyser la limite « %s »"
 
-#: pg_waldump.c:927
+#: pg_waldump.c:871
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "le gestionnaire de ressources « %s » n'existe pas"
 
-#: pg_waldump.c:936
+#: pg_waldump.c:880
 #, c-format
 msgid "could not parse start WAL location \"%s\""
-msgstr ""
-"n'a pas pu analyser l'emplacement de début du journal de transactions « %s »"
+msgstr "n'a pas pu analyser l'emplacement de début du journal de transactions « %s »"
 
-#: pg_waldump.c:946
+#: pg_waldump.c:890
 #, c-format
 msgid "could not parse timeline \"%s\""
 msgstr "n'a pas pu analyser la timeline « %s »"
 
-#: pg_waldump.c:957
+#: pg_waldump.c:897
 #, c-format
 msgid "could not parse \"%s\" as a transaction ID"
 msgstr "n'a pas pu analyser « %s » comme un identifiant de transaction"
 
-#: pg_waldump.c:972
+#: pg_waldump.c:912
 #, c-format
 msgid "unrecognized argument to --stats: %s"
 msgstr "argument non reconnu pour --stats : %s"
 
-#: pg_waldump.c:985
+#: pg_waldump.c:925
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "trop d'arguments en ligne de commande (le premier étant « %s »)"
 
-#: pg_waldump.c:995
+#: pg_waldump.c:935 pg_waldump.c:955
 #, c-format
-msgid "path \"%s\" could not be opened: %s"
-msgstr "le chemin « %s » n'a pas pu être ouvert : %s"
+msgid "could not open directory \"%s\": %m"
+msgstr "n'a pas pu ouvrir le répertoire « %s » : %m"
 
-#: pg_waldump.c:1016
-#, c-format
-msgid "could not open directory \"%s\": %s"
-msgstr "n'a pas pu ouvrir le répertoire « %s » : %s"
-
-#: pg_waldump.c:1023 pg_waldump.c:1054
+#: pg_waldump.c:961 pg_waldump.c:992
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "n'a pas pu ouvrir le fichier « %s »"
 
-#: pg_waldump.c:1033
+#: pg_waldump.c:971
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
-msgstr ""
-"l'emplacement de début des journaux de transactions %X/%X n'est pas à "
-"l'intérieur du fichier « %s »"
+msgstr "l'emplacement de début des journaux de transactions %X/%X n'est pas à l'intérieur du fichier « %s »"
 
-#: pg_waldump.c:1061
+#: pg_waldump.c:999
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "SEG_FIN %s est avant SEG_DÉBUT %s"
 
-#: pg_waldump.c:1076
+#: pg_waldump.c:1014
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
-msgstr ""
-"l'emplacement de fin des journaux de transactions %X/%X n'est pas à "
-"l'intérieur du fichier « %s »"
+msgstr "l'emplacement de fin des journaux de transactions %X/%X n'est pas à l'intérieur du fichier « %s »"
 
-#: pg_waldump.c:1089
+#: pg_waldump.c:1027
 #, c-format
 msgid "no start WAL location given"
 msgstr "pas d'emplacement donné de début du journal de transactions"
 
-#: pg_waldump.c:1099
+#: pg_waldump.c:1037
 #, c-format
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
-#: pg_waldump.c:1105
+#: pg_waldump.c:1043
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "n'a pas pu trouver un enregistrement valide après %X/%X"
 
-#: pg_waldump.c:1116
+#: pg_waldump.c:1054
 #, c-format
 msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
 msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] ""
-"le premier enregistrement se trouve après %X/%X, à %X/%X, ignore %u octet\n"
-msgstr[1] ""
-"le premier enregistrement se trouve après %X/%X, à %X/%X, ignore %u octets\n"
+msgstr[0] "le premier enregistrement se trouve après %X/%X, à %X/%X, ignore %u octet\n"
+msgstr[1] "le premier enregistrement se trouve après %X/%X, à %X/%X, ignore %u octets\n"
 
-#: pg_waldump.c:1167
+#: pg_waldump.c:1105
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "erreur dans l'enregistrement des journaux de transactions à %X/%X : %s"
 
-#: pg_waldump.c:1177
+#: pg_waldump.c:1115
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
@@ -349,12 +313,35 @@ msgstr "Essayez « %s --help » pour plus d'informations.\n"
 #~ msgstr "ne peut pas ouvrir le répertoire « %s » : %s"
 
 #~ msgid "could not seek in log segment %s to offset %u: %s"
-#~ msgstr ""
-#~ "n'a pas pu rechercher dans le segment %s du journal de transactions au "
-#~ "décalage %u : %s"
+#~ msgstr "n'a pas pu rechercher dans le segment %s du journal de transactions au décalage %u : %s"
 
 #~ msgid "not enough data in file \"%s\""
 #~ msgstr "données insuffisantes dans le fichier « %s »"
 
 #~ msgid "%s: FATAL:  "
 #~ msgstr "%s : FATAL :  "
+
+#~ msgid "could not open directory \"%s\": %s"
+#~ msgstr "n'a pas pu ouvrir le répertoire « %s » : %s"
+
+#~ msgid "path \"%s\" could not be opened: %s"
+#~ msgstr "le chemin « %s » n'a pas pu être ouvert : %s"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
+
+#~ msgid "could not read from log file %s, offset %u, length %d: %s"
+#~ msgstr "n'a pas pu lire à partir du segment %s du journal de transactions, décalage %u, longueur %d : %s"
+
+#~ msgid "could not seek in log file %s to offset %u: %s"
+#~ msgstr "n'a pas pu se déplacer dans le fichier de transactions %s au décalage %u : %s"
+
+#~ msgid "could not read file \"%s\": %s"
+#~ msgstr "n'a pas pu lire le fichier « %s » : %s"
+
+#~ msgid "could not open file \"%s\": %s"
+#~ msgstr "n'a pas pu ouvrir le fichier « %s » : %s"

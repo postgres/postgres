@@ -1,32 +1,33 @@
 # Swedish message translation file for pg_checksums
 # Copyright (C) 2019 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_checksums (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2019.
+# Dennis Björklund <db@zigo.dhs.org>, 2019, 2020.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_checksums (PostgreSQL) 12\n"
+"Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-06-07 12:16+0000\n"
-"PO-Revision-Date: 2019-06-07 23:17+0200\n"
+"POT-Creation-Date: 2020-04-11 01:17+0000\n"
+"PO-Revision-Date: 2020-04-11 07:46+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
-"Language-Team: Swedish <sv@li.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "fatalt: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "varning: "
@@ -34,7 +35,7 @@ msgstr "varning: "
 #: pg_checksums.c:75
 #, c-format
 msgid ""
-"%s enables, disables or verifies data checksums in a PostgreSQL database cluster.\n"
+"%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
 "%s slår på, slår av eller verifierar datakontrollsummor i ett PostgreSQL databaskluster.\n"
@@ -124,179 +125,185 @@ msgstr ""
 
 #: pg_checksums.c:91
 #, c-format
-msgid "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-msgstr "Rapportera buggar till <pgsql-bugs@lists.postgresql.org>.\n"
+msgid "Report bugs to <%s>.\n"
+msgstr "Rapportera fel till <%s>.\n"
 
-#: pg_checksums.c:149
+#: pg_checksums.c:92
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "hemsida för %s: <%s>\n"
+
+#: pg_checksums.c:161
 #, c-format
 msgid "%*s/%s MB (%d%%) computed"
 msgstr "%*s/%s MB (%d%%) beräknad"
 
-#: pg_checksums.c:186
+#: pg_checksums.c:204
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: pg_checksums.c:201
+#: pg_checksums.c:220
+#, c-format
+msgid "could not read block %u in file \"%s\": %m"
+msgstr "kunde inte läsa block %u i fil \"%s\": %m"
+
+#: pg_checksums.c:223
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
 msgstr "kunde inte läsa block %u i fil \"%s\": läste %d av %d"
 
-#: pg_checksums.c:218
+#: pg_checksums.c:240
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
 msgstr "verifiering av kontrollsumma misslyckades i fil \"%s\", block %u: beräknad kontrollsumma är %X men blocket innehåller %X"
 
-#: pg_checksums.c:231
+#: pg_checksums.c:255
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
 msgstr "seek misslyckades för block %u i fil \"%s\": %m"
 
-#: pg_checksums.c:238
+#: pg_checksums.c:264
 #, c-format
-msgid "could not update checksum of block %u in file \"%s\": %m"
-msgstr "kunde inte uppdatera kontrollsumma för block %u i fil \"%s\": %m"
+msgid "could not write block %u in file \"%s\": %m"
+msgstr "kunde inte skriva block %u i fil \"%s\": %m"
 
-#: pg_checksums.c:251
+#: pg_checksums.c:267
+#, c-format
+msgid "could not write block %u in file \"%s\": wrote %d of %d"
+msgstr "kunde inte skriva block %u i fil \"%s\": skrev %d av %d"
+
+#: pg_checksums.c:280
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "kontrollsummor verifierade i fil \"%s\""
 
-#: pg_checksums.c:253
+#: pg_checksums.c:282
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "kontrollsummor påslagen i fil \"%s\""
 
-#: pg_checksums.c:278
+#: pg_checksums.c:307
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: pg_checksums.c:305
+#: pg_checksums.c:334 pg_checksums.c:413
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: pg_checksums.c:332
+#: pg_checksums.c:361
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "ogiltigt segmentnummer %d i filnamn \"%s\""
 
-#: pg_checksums.c:420
+#: pg_checksums.c:494
 #, c-format
 msgid "invalid filenode specification, must be numeric: %s"
 msgstr "ogiltigt angiven filnod, måste vara numerisk: %s"
 
-#: pg_checksums.c:438 pg_checksums.c:454 pg_checksums.c:464 pg_checksums.c:473
+#: pg_checksums.c:512 pg_checksums.c:528 pg_checksums.c:538 pg_checksums.c:547
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: pg_checksums.c:453
+#: pg_checksums.c:527
 #, c-format
 msgid "no data directory specified"
 msgstr "ingen datakatalog angiven"
 
-#: pg_checksums.c:462
+#: pg_checksums.c:536
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
 
-#: pg_checksums.c:472
+#: pg_checksums.c:546
 #, c-format
-msgid "--filenode option only possible with --check"
-msgstr "inställningen --filenode tillåts bara med --check"
+msgid "option -f/--filenode can only be used with --check"
+msgstr "inställningen -f/--filenode tillåts bara med --check"
 
-#: pg_checksums.c:482
+#: pg_checksums.c:556
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "pg_control CRC-värde är inkorrekt"
 
-#: pg_checksums.c:488
+#: pg_checksums.c:562
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "klustret är inte kompatibelt med denna version av pg_checksums"
 
-#: pg_checksums.c:494
+#: pg_checksums.c:568
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "databasklustret är inte kompatibelt"
 
-#: pg_checksums.c:495
+#: pg_checksums.c:569
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"
 msgstr "Databasklustret initierades med blockstorlek %u men pg_checksums kompilerades med blockstorlek %u.\n"
 
-#: pg_checksums.c:508
+#: pg_checksums.c:582
 #, c-format
 msgid "cluster must be shut down"
 msgstr "klustret måste stängas ner"
 
-#: pg_checksums.c:515
+#: pg_checksums.c:589
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "datakontrollsummor är inte påslaget i klustret"
 
-#: pg_checksums.c:522
+#: pg_checksums.c:596
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "datakontrollsummor är redan avslaget i klustret"
 
-#: pg_checksums.c:529
+#: pg_checksums.c:603
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "datakontrollsummor är redan påslagna i klustret"
 
-#: pg_checksums.c:558
+#: pg_checksums.c:632
 #, c-format
 msgid "Checksum operation completed\n"
 msgstr "Kontrollsummeoperation avslutad\n"
 
-#: pg_checksums.c:559
+#: pg_checksums.c:633
 #, c-format
 msgid "Files scanned:  %s\n"
 msgstr "Skannade filer:           %s\n"
 
-#: pg_checksums.c:560
+#: pg_checksums.c:634
 #, c-format
 msgid "Blocks scanned: %s\n"
 msgstr "Skannade block:           %s\n"
 
-#: pg_checksums.c:563
+#: pg_checksums.c:637
 #, c-format
 msgid "Bad checksums:  %s\n"
 msgstr "Felaktiga kontrollsummor: %s\n"
 
-#: pg_checksums.c:564 pg_checksums.c:591
+#: pg_checksums.c:638 pg_checksums.c:665
 #, c-format
 msgid "Data checksum version: %d\n"
 msgstr "Datakontrollsummeversion: %d\n"
 
-#: pg_checksums.c:583
+#: pg_checksums.c:657
 #, c-format
 msgid "syncing data directory"
 msgstr "synkar datakatalogen"
 
-#: pg_checksums.c:587
+#: pg_checksums.c:661
 #, c-format
 msgid "updating control file"
 msgstr "uppdaterar kontrollfil"
 
-#: pg_checksums.c:593
+#: pg_checksums.c:667
 #, c-format
 msgid "Checksums enabled in cluster\n"
 msgstr "Kontrollsummor påslaget i klustret\n"
 
-#: pg_checksums.c:595
+#: pg_checksums.c:669
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "Kontrollsummor avslaget i klustret\n"
-
-#~ msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
-#~ msgstr "  -N, --no-sync          vänta inte på att ändringar skall skrivas säkert till disk\n"
-
-#~ msgid "  -V, --version          output version information, then exit\n"
-#~ msgstr "  -V, --version          visa versionsinformation, avsluta sedan\n"
-
-#~ msgid "  -?, --help             show this help, then exit\n"
-#~ msgstr "  -?, --help             visa den här hjälpen, avsluta sedan\n"
