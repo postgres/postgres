@@ -126,8 +126,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
         updates, or deletes on the table; whereas a standard index build
         locks out writes (but not reads) on the table until it's done.
         There are several caveats to be aware of when using this option
-        &mdash; see <xref linkend="sql-createindex-concurrently"
-        endterm="sql-createindex-concurrently-title"/>.
+        &mdash; see <xref linkend="sql-createindex-concurrently"/> below.
        </para>
        <para>
         For temporary tables, <command>CREATE INDEX</command> is always
@@ -337,7 +336,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
       <listitem>
        <para>
         The name of an index-method-specific storage parameter.  See
-        <xref linkend="sql-createindex-storage-parameters" endterm="sql-createindex-storage-parameters-title"/>
+        <xref linkend="sql-createindex-storage-parameters"/> below
         for details.
        </para>
       </listitem>
@@ -366,8 +365,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
     </variablelist>
 
-  <refsect2 id="sql-createindex-storage-parameters">
-   <title id="sql-createindex-storage-parameters-title">Index Storage Parameters</title>
+  <refsect2 id="sql-createindex-storage-parameters" xreflabel="Index Storage Parameters">
+   <title>Index Storage Parameters</title>
 
    <para>
     The optional <literal>WITH</literal> clause specifies <firstterm>storage
@@ -559,8 +558,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
   </refsect2>
 
-  <refsect2 id="sql-createindex-concurrently">
-   <title id="sql-createindex-concurrently-title">Building Indexes Concurrently</title>
+  <refsect2 id="sql-createindex-concurrently" xreflabel="Building Indexes Concurrently">
+   <title>Building Indexes Concurrently</title>
 
    <indexterm zone="sql-createindex-concurrently">
    <primary>index</primary>
@@ -688,7 +687,7 @@ Indexes:
   </para>
 
   <para>
-   An <firstterm>operator class</firstterm> with its optional parameters 
+   An <firstterm>operator class</firstterm> with optional parameters
    can be specified for each column of an index.
    The operator class identifies the operators to be
    used by the index for that column. For example, a B-tree index on

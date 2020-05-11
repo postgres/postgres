@@ -110,7 +110,7 @@ SELECT random();
    <title>The <literal>FROM</literal> Clause</title>
 
    <para>
-    The <xref linkend="sql-from" endterm="sql-from-title"/> derives a
+    The <link linkend="sql-from"><literal>FROM</literal></link> clause derives a
     table from one or more other tables given in a comma-separated
     table reference list.
 <synopsis>
@@ -907,8 +907,8 @@ WHERE pname IS NULL;
    </indexterm>
 
    <para>
-    The syntax of the <xref linkend="sql-where"
-    endterm="sql-where-title"/> is
+    The syntax of the <link linkend="sql-where"><literal>WHERE</literal></link>
+    clause is
 <synopsis>
 WHERE <replaceable>search_condition</replaceable>
 </synopsis>
@@ -1014,7 +1014,7 @@ SELECT <replaceable>select_list</replaceable>
 </synopsis>
 
    <para>
-    The <xref linkend="sql-groupby" endterm="sql-groupby-title"/> is
+    The <link linkend="sql-groupby"><literal>GROUP BY</literal></link> clause is
     used to group together those rows in a table that have the same
     values in all the columns listed. The order in which the columns
     are listed does not matter.  The effect is to combine each set

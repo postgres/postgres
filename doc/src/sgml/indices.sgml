@@ -98,8 +98,7 @@ CREATE INDEX test1_id_index ON test1 (id);
    In production environments this is often unacceptable.
    It is possible to allow writes to occur in parallel with index
    creation, but there are several caveats to be aware of &mdash;
-   for more information see <xref linkend="sql-createindex-concurrently"
-   endterm="sql-createindex-concurrently-title"/>.
+   for more information see <xref linkend="sql-createindex-concurrently"/>.
   </para>
 
   <para>

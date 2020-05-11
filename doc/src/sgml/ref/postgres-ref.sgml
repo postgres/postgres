@@ -530,8 +530,7 @@ PostgreSQL documentation
 
     <para>
      The following options only apply to the single-user mode
-     (see <xref linkend="app-postgres-single-user"
-     endterm="app-postgres-single-user-title"/>).
+     (see <xref linkend="app-postgres-single-user"/> below).
     </para>
 
     <variablelist>
@@ -753,8 +752,8 @@ PostgreSQL documentation
   </para>
  </refsect1>
 
- <refsect1 id="app-postgres-single-user">
-  <title id="app-postgres-single-user-title">Single-User Mode</title>
+ <refsect1 id="app-postgres-single-user" xreflabel="Single-User Mode">
+  <title>Single-User Mode</title>
 
    <para>
     To start a single-user mode server, use a command like

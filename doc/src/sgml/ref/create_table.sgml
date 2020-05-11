@@ -192,8 +192,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       can be written before <literal>TEMPORARY</literal> or <literal>TEMP</literal>.
       This presently makes no difference in <productname>PostgreSQL</productname>
       and is deprecated; see
-      <xref linkend="sql-createtable-compatibility"
-      endterm="sql-createtable-compatibility-title"/>.
+      <xref linkend="sql-createtable-compatibility"/> below.
      </para>
     </listitem>
    </varlistentry>
@@ -1201,8 +1200,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       This clause specifies optional storage parameters for a table or index;
-      see <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title"/> for more
+      see <xref linkend="sql-createtable-storage-parameters"/> below for more
       information.  For backward-compatibility the <literal>WITH</literal>
       clause for a table can also include <literal>OIDS=FALSE</literal> to
       specify that rows of the new table should not contain OIDs (object
@@ -1302,8 +1300,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
   </variablelist>
 
-  <refsect2 id="sql-createtable-storage-parameters">
-   <title id="sql-createtable-storage-parameters-title">Storage Parameters</title>
+  <refsect2 id="sql-createtable-storage-parameters" xreflabel="Storage Parameters">
+   <title>Storage Parameters</title>
 
  <indexterm zone="sql-createtable-storage-parameters">
   <primary>storage parameters</primary>
@@ -2063,8 +2061,8 @@ CREATE TABLE cities_partdef
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="sql-createtable-compatibility">
-  <title id="sql-createtable-compatibility-title">Compatibility</title>
+ <refsect1 id="sql-createtable-compatibility" xreflabel="Compatibility">
+  <title>Compatibility</title>
 
   <para>
    The <command>CREATE TABLE</command> command conforms to the

@@ -163,8 +163,7 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
       updates, or deletes on the table; whereas a standard index rebuild
       locks out writes (but not reads) on the table until it's done.
       There are several caveats to be aware of when using this option
-      &mdash; see <xref linkend="sql-reindex-concurrently"
-      endterm="sql-reindex-concurrently-title"/>.
+      &mdash; see <xref linkend="sql-reindex-concurrently"/> below.
      </para>
      <para>
       For temporary tables, <command>REINDEX</command> is always
@@ -264,8 +263,8 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
    Each individual partition can be reindexed separately instead.
   </para>
 
-  <refsect2 id="sql-reindex-concurrently">
-   <title id="sql-reindex-concurrently-title">Rebuilding Indexes Concurrently</title>
+  <refsect2 id="sql-reindex-concurrently" xreflabel="Rebuilding Indexes Concurrently">
+   <title>Rebuilding Indexes Concurrently</title>
 
    <indexterm zone="sql-reindex-concurrently">
     <primary>index</primary>

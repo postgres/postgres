@@ -827,8 +827,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     The default thresholds and scale factors are taken from
     <filename>postgresql.conf</filename>, but it is possible to override them
     (and many other autovacuum control parameters) on a per-table basis; see
-    <xref linkend="sql-createtable-storage-parameters"
-    endterm="sql-createtable-storage-parameters-title"/> for more information.
+    <xref linkend="sql-createtable-storage-parameters"/> for more information.
     If a setting has been changed via a table's storage parameters, that value
     is used when processing that table; otherwise the global settings are
     used. See <xref linkend="runtime-config-autovacuum"/> for more details on

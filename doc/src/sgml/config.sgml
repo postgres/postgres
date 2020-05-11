@@ -7301,8 +7301,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       These settings control the behavior of the <firstterm>autovacuum</firstterm>
       feature.  Refer to <xref linkend="autovacuum"/> for more information.
       Note that many of these settings can be overridden on a per-table
-      basis; see <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title"/>.
+      basis; see <xref linkend="sql-createtable-storage-parameters"/>.
      </para>
 
     <variablelist>

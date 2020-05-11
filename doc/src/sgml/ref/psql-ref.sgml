@@ -809,7 +809,7 @@ testdb=&gt;
     If an unquoted colon (<literal>:</literal>) followed by a
     <application>psql</application> variable name appears within an argument, it is
     replaced by the variable's value, as described in <xref
-    linkend="app-psql-interpolation" endterm="app-psql-interpolation-title"/>.
+    linkend="app-psql-interpolation"/> below.
     The forms <literal>:'<replaceable>variable_name</replaceable>'</literal> and
     <literal>:"<replaceable>variable_name</replaceable>"</literal> described there
     work as well.
@@ -1163,8 +1163,7 @@ testdb=&gt;
         also shown.  For foreign tables, the associated foreign
         server is shown as well.
         (<quote>Matching the pattern</quote> is defined in
-        <xref linkend="app-psql-patterns" endterm="app-psql-patterns-title"/>
-        below.)
+        <xref linkend="app-psql-patterns"/> below.)
         </para>
 
         <para>
@@ -1946,9 +1945,8 @@ testdb=&gt;
 
         <tip>
         <para>
-        See under <xref linkend="app-psql-environment"
-        endterm="app-psql-environment-title"/> for how to configure and
-        customize your editor.
+        See <xref linkend="app-psql-environment"/>, below, for how to
+        configure and customize your editor.
         </para>
         </tip>
         </listitem>
@@ -2022,9 +2020,8 @@ Tue Oct 26 21:40:57 CEST 1999
 
         <tip>
         <para>
-        See under <xref linkend="app-psql-environment"
-        endterm="app-psql-environment-title"/> for how to configure and
-        customize your editor.
+        See <xref linkend="app-psql-environment"/>, below, for how to
+        configure and customize your editor.
         </para>
         </tip>
         </listitem>
@@ -2230,8 +2227,8 @@ CREATE INDEX
         <listitem>
         <para>
          Sends the current query buffer to the server and stores the
-         query's output into <application>psql</application> variables (see <xref
-         linkend="app-psql-variables" endterm="app-psql-variables-title"/>).
+         query's output into <application>psql</application> variables
+         (see <xref linkend="app-psql-variables"/> below).
          The query to be executed must return exactly one row.  Each column of
          the row is stored into a separate variable, named the same as the
          column.  For example:
@@ -3078,8 +3075,7 @@ lo_import 152801
 
         <para>
         Illustrations of how these different formats look can be seen in
-        the <xref linkend="app-psql-examples"
-        endterm="app-psql-examples-title"/> section.
+        <xref linkend="app-psql-examples"/>, below.
         </para>
 
         <tip>
@@ -3163,9 +3159,7 @@ lo_import 152801
 
         <para>
         Valid variable names can contain letters, digits, and
-        underscores. See the section <xref
-        linkend="app-psql-variables"
-        endterm="app-psql-variables-title"/> below for details.
+        underscores. See <xref linkend="app-psql-variables"/> below for details.
         Variable names are case-sensitive.
         </para>
 
@@ -3173,8 +3167,7 @@ lo_import 152801
         Certain variables are special, in that they
         control <application>psql</application>'s behavior or are
         automatically set to reflect connection state.  These variables are
-        documented in <xref linkend="app-psql-variables"
-        endterm="app-psql-variables-title"/>, below.
+        documented in <xref linkend="app-psql-variables"/>, below.
         </para>
 
         <note>
@@ -3318,8 +3311,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         Most variables that control <application>psql</application>'s behavior
         cannot be unset; instead, an <literal>\unset</literal> command is interpreted
         as setting them to their default values.
-        See <xref linkend="app-psql-variables"
-        endterm="app-psql-variables-title"/>, below.
+        See <xref linkend="app-psql-variables"/> below.
         </para>
         </listitem>
       </varlistentry>
@@ -3489,8 +3481,8 @@ select 1\; select 2\; select 3;
     </variablelist>
   </para>
 
-  <refsect3 id="app-psql-patterns">
-   <title id="app-psql-patterns-title">Patterns</title>
+  <refsect3 id="app-psql-patterns" xreflabel="Patterns">
+   <title>Patterns</title>
 
    <indexterm>
     <primary>patterns</primary>
@@ -3582,8 +3574,8 @@ select 1\; select 2\; select 3;
  <refsect2>
   <title>Advanced Features</title>
 
-   <refsect3 id="app-psql-variables">
-    <title id="app-psql-variables-title">Variables</title>
+   <refsect3 id="app-psql-variables" xreflabel="Variables">
+    <title>Variables</title>
 
     <para>
     <application>psql</application> provides variable substitution
@@ -3607,8 +3599,7 @@ testdb=&gt; <userinput>\echo :foo</userinput>
 bar
 </programlisting>
     This works in both regular SQL commands and meta-commands; there is
-    more detail in <xref linkend="app-psql-interpolation"
-    endterm="app-psql-interpolation-title"/>, below.
+    more detail in <xref linkend="app-psql-interpolation"/>, below.
     </para>
 
     <para>
@@ -4016,8 +4007,7 @@ bar
         <para>
         These specify what the prompts <application>psql</application>
         issues should look like. See <xref
-        linkend="app-psql-prompting"
-        endterm="app-psql-prompting-title"/> below.
+        linkend="app-psql-prompting"/> below.
         </para>
         </listitem>
       </varlistentry>
@@ -4151,8 +4141,8 @@ bar
 
    </refsect3>
 
-   <refsect3 id="app-psql-interpolation">
-    <title id="app-psql-interpolation-title"><acronym>SQL</acronym> Interpolation</title>
+   <refsect3 id="app-psql-interpolation" xreflabel="SQL Interpolation">
+    <title><acronym>SQL</acronym> Interpolation</title>
 
     <para>
     A key feature of <application>psql</application>
@@ -4236,8 +4226,8 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
 
    </refsect3>
 
-   <refsect3 id="app-psql-prompting">
-    <title id="app-psql-prompting-title">Prompting</title>
+   <refsect3 id="app-psql-prompting" xreflabel="Prompting">
+    <title>Prompting</title>
 
     <para>
     The prompts <application>psql</application> issues can be customized
@@ -4393,9 +4383,8 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
         <listitem>
         <para>
         The value of the <application>psql</application> variable
-        <replaceable class="parameter">name</replaceable>. See the
-        section <xref linkend="app-psql-variables"
-        endterm="app-psql-variables-title"/> for details.
+        <replaceable class="parameter">name</replaceable>. See
+        <xref linkend="app-psql-variables"/>, above, for details.
         </para>
         </listitem>
       </varlistentry>
@@ -4492,8 +4481,8 @@ $endif
  </refsect1>
 
 
- <refsect1 id="app-psql-environment">
-  <title id="app-psql-environment-title">Environment</title>
+ <refsect1 id="app-psql-environment" xreflabel="Environment">
+  <title>Environment</title>
 
   <variablelist>
 
@@ -4798,8 +4787,8 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
  </refsect1>
 
 
- <refsect1 id="app-psql-examples">
-  <title id="app-psql-examples-title">Examples</title>
+ <refsect1 id="app-psql-examples" xreflabel="Examples">
+  <title>Examples</title>
 
   <para>
   The first example shows how to spread a command over several lines of

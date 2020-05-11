@@ -202,9 +202,8 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
    <command>LOCK TABLE</command> is concerned, differing only in the rules
    about which modes conflict with which. For information on how to
    acquire an actual row-level lock, see <xref linkend="locking-rows"/>
-   and the <xref linkend="sql-for-update-share"
-   endterm="sql-for-update-share-title"/> in the <command>SELECT</command>
-   reference documentation.
+   and <xref linkend="sql-for-update-share"/>
+   in the <xref linkend="sql-select"/> documentation.
   </para>
  </refsect1>
 

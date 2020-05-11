@@ -94,9 +94,8 @@ EXECUTE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
  <refsect1>
   <title>Examples</title>
   <para>
-    Examples are given in the <xref linkend="sql-prepare-examples"
-    endterm="sql-prepare-examples-title"/> section of the <xref
-    linkend="sql-prepare"/> documentation.
+    Examples are given in <xref linkend="sql-prepare-examples"/>
+    in the <xref linkend="sql-prepare"/> documentation.
    </para>
  </refsect1>
 

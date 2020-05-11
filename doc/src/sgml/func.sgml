@@ -4355,9 +4355,9 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       </para></entry>
      </row>
 
-     <row id="function-encode">
+     <row>
       <entry role="func_table_entry"><para role="func_signature">
-       <indexterm>
+       <indexterm id="function-encode">
         <primary>encode</primary>
        </indexterm>
        <function>encode</function> ( <parameter>bytes</parameter> <type>bytea</type>,
@@ -4377,9 +4377,9 @@ SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
       </para></entry>
      </row>
 
-     <row id="function-decode">
+     <row>
       <entry role="func_table_entry"><para role="func_signature">
-       <indexterm>
+       <indexterm id="function-decode">
         <primary>decode</primary>
        </indexterm>
        <function>decode</function> ( <parameter>string</parameter> <type>text</type>,

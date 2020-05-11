@@ -405,8 +405,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       database will not assume that the constraint holds for all rows in
       the table, until it is validated by using the <literal>VALIDATE
       CONSTRAINT</literal> option.
-      See <xref linkend="sql-altertable-notes"
-      endterm="sql-altertable-notes-title"/> below for more information
+      See <xref linkend="sql-altertable-notes"/> below for more information
       about using the <literal>NOT VALID</literal> option.
      </para>
 
@@ -504,9 +503,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       previously created as <literal>NOT VALID</literal>, by scanning the
       table to ensure there are no rows for which the constraint is not
       satisfied.  Nothing happens if the constraint is already marked valid.
-      (See <xref linkend="sql-altertable-notes"
-      endterm="sql-altertable-notes-title"/> below for an explanation of the
-      usefulness of this command.)
+      (See <xref linkend="sql-altertable-notes"/> below for an explanation
+      of the usefulness of this command.)
      </para>
     </listitem>
    </varlistentry>
@@ -708,8 +706,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     <listitem>
      <para>
       This form changes one or more storage parameters for the table.  See
-      <xref linkend="sql-createtable-storage-parameters"
-      endterm="sql-createtable-storage-parameters-title"/>
+      <xref linkend="sql-createtable-storage-parameters"/> in the
+      <xref linkend="sql-createtable"/> documentation
       for details on the available parameters.  Note that the table contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rewrite the table to get the desired effects.
@@ -1210,8 +1208,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </variablelist>
  </refsect1>
 
- <refsect1 id="sql-altertable-notes">
-  <title id="sql-altertable-notes-title">Notes</title>
+ <refsect1 id="sql-altertable-notes" xreflabel="Notes">
+  <title>Notes</title>
 
    <para>
     The key word <literal>COLUMN</literal> is noise and can be omitted.

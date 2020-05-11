@@ -77,8 +77,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   <para>
    <literal>ON CONFLICT</literal> can be used to specify an alternative
    action to raising a unique constraint or exclusion constraint
-   violation error. (See <xref linkend="sql-on-conflict"
-   endterm="sql-on-conflict-title"/> below.)
+   violation error. (See <xref linkend="sql-on-conflict"/> below.)
   </para>
 
   <para>
@@ -128,8 +127,8 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
  <refsect1>
   <title>Parameters</title>
 
-  <refsect2 id="sql-inserting-params">
-   <title id="sql-inserting-params-title">Inserting</title>
+  <refsect2>
+   <title>Inserting</title>
 
    <para>
     This section covers parameters that may be used when only
@@ -315,8 +314,8 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
     </variablelist>
   </refsect2>
 
-  <refsect2 id="sql-on-conflict">
-   <title id="sql-on-conflict-title"><literal>ON CONFLICT</literal> Clause</title>
+  <refsect2 id="sql-on-conflict" xreflabel="ON CONFLICT Clause">
+   <title><literal>ON CONFLICT</literal> Clause</title>
    <indexterm zone="sql-insert">
     <primary>UPSERT</primary>
    </indexterm>

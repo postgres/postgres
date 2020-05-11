@@ -208,8 +208,8 @@ EXPLAIN EXECUTE <replaceable>name</replaceable>(<replaceable>parameter_values</r
   </para>
  </refsect1>
 
- <refsect1 id="sql-prepare-examples">
-  <title id="sql-prepare-examples-title">Examples</title>
+ <refsect1 id="sql-prepare-examples" xreflabel="Examples">
+  <title>Examples</title>
   <para>
    Create a prepared statement for an <command>INSERT</command>
    statement, and then execute it:

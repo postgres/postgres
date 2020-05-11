@@ -85,7 +85,8 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
       rows.  This expression can refer to the columns of the
       <command>VALUES</command> result as <literal>column1</literal>, <literal>column2</literal>,
       etc.  For more details see
-      <xref linkend="sql-orderby" endterm="sql-orderby-title"/>.
+      <xref linkend="sql-orderby"/>
+      in the <xref linkend="sql-select"/> documentation.
      </para>
     </listitem>
    </varlistentry>
@@ -95,7 +96,8 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       A sorting operator.  For details see
-      <xref linkend="sql-orderby" endterm="sql-orderby-title"/>.
+      <xref linkend="sql-orderby"/>
+      in the <xref linkend="sql-select"/> documentation.
      </para>
     </listitem>
    </varlistentry>
@@ -105,7 +107,8 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       The maximum number of rows to return.  For details see
-      <xref linkend="sql-limit" endterm="sql-limit-title"/>.
+      <xref linkend="sql-limit"/>
+      in the <xref linkend="sql-select"/> documentation.
      </para>
     </listitem>
    </varlistentry>
@@ -115,8 +118,8 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       The number of rows to skip before starting to return rows.
-      For details see
-      <xref linkend="sql-limit" endterm="sql-limit-title"/>.
+      For details see <xref linkend="sql-limit"/>
+      in the <xref linkend="sql-select"/> documentation.
      </para>
     </listitem>
    </varlistentry>

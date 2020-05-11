@@ -99,8 +99,8 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
       <literal>NO SCROLL</literal> specifies that the cursor cannot be
       used to retrieve rows in a nonsequential fashion.  The default is to
       allow scrolling in some cases; this is not the same as specifying
-      <literal>SCROLL</literal>. See <xref linkend="sql-declare-notes"
-      endterm="sql-declare-notes-title"/> for details.
+      <literal>SCROLL</literal>. See <xref linkend="sql-declare-notes"/>
+      below for details.
      </para>
     </listitem>
    </varlistentry>
@@ -139,8 +139,8 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
   </para>
  </refsect1>
 
- <refsect1 id="sql-declare-notes">
-  <title id="sql-declare-notes-title">Notes</title>
+ <refsect1 id="sql-declare-notes" xreflabel="Notes">
+  <title>Notes</title>
 
   <para>
    Normal cursors return data in text format, the same as a

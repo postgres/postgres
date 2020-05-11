@@ -434,8 +434,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       This option specifies whether the final function is a pure function
       that does not modify its arguments.  <literal>READ_ONLY</literal> indicates
       it does not; the other two values indicate that it may change the
-      transition state value.  See <xref linkend="sql-createaggregate-notes"
-      endterm="sql-createaggregate-notes-title"/> below for more detail.  The
+      transition state value.  See <xref linkend="sql-createaggregate-notes"/>
+      below for more detail.  The
       default is <literal>READ_ONLY</literal>, except for ordered-set aggregates,
       for which the default is <literal>READ_WRITE</literal>.
      </para>
@@ -664,8 +664,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
   </para>
  </refsect1>
 
- <refsect1 id="sql-createaggregate-notes">
-  <title id="sql-createaggregate-notes-title">Notes</title>
+ <refsect1 id="sql-createaggregate-notes" xreflabel="Notes">
+  <title>Notes</title>
 
    <para>
     In parameters that specify support function names, you can write
