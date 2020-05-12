@@ -359,9 +359,9 @@ More efficiently store duplicates in btree indexes (Anastasia Lubennikova, Peter
 </para>
 
 <para>
-This allows efficient btree indexing of low cardinality columns.
-Users upgrading with pg_upgrade will need to use REINDEX to make use of
-this feature.
+This allows efficient btree indexing of low cardinality columns by storing
+duplicate keys only once.  Users upgrading with pg_upgrade will need to
+use REINDEX to make use of this feature.
 </para>
 
 </listitem>
