@@ -633,7 +633,9 @@ Allow skipping of WAL for new tables and indexes if wal_level is 'minimal' (Kyot
 </para>
 
 <para>
-Relations larger than wal_skip_threshold will have their files fsync'ed rather than writing their WAL records.
+Relations larger than wal_skip_threshold will have their files fsync'ed rather than writing their WAL records.  Previously this was done only for COPY operations, but the implementation had a bug
+that could cause data loss during crash recovery.
+
 </para>
 
 </listitem>
@@ -1605,7 +1607,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow Unicode escapes, e.g., E'\u####', U&amp;'\####', to represent any
+Allow Unicode escapes, e.g., E'\u####', U&amp;'\####', to specify any
 character available in the database encoding, even when the database
 encoding is not UTF-8 (Tom Lane)
 </para>
