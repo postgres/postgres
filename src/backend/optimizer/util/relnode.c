@@ -28,7 +28,6 @@
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
-#include "partitioning/partbounds.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 
