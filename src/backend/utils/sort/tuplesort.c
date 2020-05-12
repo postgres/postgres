@@ -1428,11 +1428,11 @@ tuplesort_updatemax(Tuplesortstate *state)
 	}
 
 	/*
-	 * Sort evicts data to the disk when it didn't manage to fit those data to
-	 * the main memory.  This is why we assume space used on the disk to be
+	 * Sort evicts data to the disk when it wasn't able to fit that data into
+	 * main memory.  This is why we assume space used on the disk to be
 	 * more important for tracking resource usage than space used in memory.
-	 * Note that amount of space occupied by some tuple set on the disk might
-	 * be less than amount of space occupied by the same tuple set in the
+	 * Note that the amount of space occupied by some tupleset on the disk might
+	 * be less than amount of space occupied by the same tupleset in
 	 * memory due to more compact representation.
 	 */
 	if ((isSpaceDisk && !state->isMaxSpaceDisk) ||

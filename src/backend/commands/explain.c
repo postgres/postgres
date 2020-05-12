@@ -2869,7 +2869,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 }
 
 /*
- * If it's EXPLAIN ANALYZE, show tuplesort stats for a incremental sort node
+ * If it's EXPLAIN ANALYZE, show tuplesort stats for an incremental sort node
  */
 static void
 show_incremental_sort_info(IncrementalSortState *incrsortstate,
@@ -2917,7 +2917,7 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 			&incrsortstate->shared_info->sinfo[n];
 
 			/*
-			 * If a worker hasn't process any sort groups at all, then exclude
+			 * If a worker hasn't processed any sort groups at all, then exclude
 			 * it from output since it either didn't launch or didn't
 			 * contribute anything meaningful.
 			 */

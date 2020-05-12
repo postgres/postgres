@@ -1152,8 +1152,10 @@ ExecReScanIncrementalSort(IncrementalSortState *node)
 	/*
 	 * If we've set up either of the sort states yet, we need to reset them.
 	 * We could end them and null out the pointers, but there's no reason to
-	 * repay the setup cost, and because guard setting up pivot comparator
-	 * state similarly, doing so might actually cause a leak.
+	 * repay the setup cost, and because ExecIncrementalSort guards
+	 * presorted column functions by checking to see if the full sort state
+	 * has been initialized yet, setting the sort states to null here might
+	 * actually cause a leak.
 	 */
 	if (node->fullsort_state != NULL)
 	{
