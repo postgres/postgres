@@ -2331,7 +2331,7 @@ Use the directory of the pg_upgrade binary as the default new 'bindir' location 
    </sect3>
 
    <sect3>
-    <title>Source Code</title>
+    <title>Documentation</title>
 
     <itemizedlist>
 
@@ -2346,6 +2346,27 @@ Add a glossary to the documentation (Corey Huinker, J&uuml;rgen Purtz, Roger Har
 </para>
 
 </listitem>
+
+<listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-04-12 [e894c6183] Doc: introduce new layout for tables of functions and op
+-->
+
+<para>
+Reformat tables containing function information for better clarity (Tom Lane)
+</para>
+
+</listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Source Code</title>
+
+    <itemizedlist>
 
 <listitem>
 <!--
