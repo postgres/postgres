@@ -1028,8 +1028,9 @@
   amopstrategy => '1', amopopr => '=(xid,xid)', amopmethod => 'hash' },
 
 # xid8_ops
-{ amopfamily => 'hash/xid8_ops', amoplefttype => 'xid8', amoprighttype => 'xid8',
-  amopstrategy => '1', amopopr => '=(xid8,xid8)', amopmethod => 'hash' },
+{ amopfamily => 'hash/xid8_ops', amoplefttype => 'xid8',
+  amoprighttype => 'xid8', amopstrategy => '1', amopopr => '=(xid8,xid8)',
+  amopmethod => 'hash' },
 
 # cid_ops
 { amopfamily => 'hash/cid_ops', amoplefttype => 'cid', amoprighttype => 'cid',

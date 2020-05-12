@@ -182,7 +182,7 @@ WHERE p1.oid < p2.oid AND
 -- or when new polymorphic built-in functions are added!
 -- Note: ignore aggregate functions here, since they all point to the same
 -- dummy built-in function.  Likewise, ignore range constructor functions.
-SELECT DISTINCT p1.prorettype, p2.prorettype
+SELECT DISTINCT p1.prorettype::regtype, p2.prorettype::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -192,15 +192,15 @@ WHERE p1.oid != p2.oid AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.prorettype < p2.prorettype)
 ORDER BY 1, 2;
- prorettype | prorettype 
-------------+------------
-         20 |       9419
-         25 |       1043
-       1114 |       1184
-       2970 |       8355
+         prorettype          |        prorettype        
+-----------------------------+--------------------------
+ bigint                      | xid8
+ text                        | character varying
+ timestamp without time zone | timestamp with time zone
+ txid_snapshot               | pg_snapshot
 (4 rows)
 
-SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
+SELECT DISTINCT p1.proargtypes[0]::regtype, p2.proargtypes[0]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -210,17 +210,17 @@ WHERE p1.oid != p2.oid AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[0] < p2.proargtypes[0])
 ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-          20 |        9419
-          25 |        1042
-          25 |        1043
-        1114 |        1184
-        1560 |        1562
-        2970 |        8355
+         proargtypes         |       proargtypes        
+-----------------------------+--------------------------
+ bigint                      | xid8
+ text                        | character
+ text                        | character varying
+ timestamp without time zone | timestamp with time zone
+ bit                         | bit varying
+ txid_snapshot               | pg_snapshot
 (6 rows)
 
-SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
+SELECT DISTINCT p1.proargtypes[1]::regtype, p2.proargtypes[1]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -230,15 +230,15 @@ WHERE p1.oid != p2.oid AND
     p2.prosrc NOT LIKE E'range\\_constructor_' AND
     (p1.proargtypes[1] < p2.proargtypes[1])
 ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-          23 |          28
-        1114 |        1184
-        1560 |        1562
-        2970 |        8355
+         proargtypes         |       proargtypes        
+-----------------------------+--------------------------
+ integer                     | xid
+ timestamp without time zone | timestamp with time zone
+ bit                         | bit varying
+ txid_snapshot               | pg_snapshot
 (4 rows)
 
-SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
+SELECT DISTINCT p1.proargtypes[2]::regtype, p2.proargtypes[2]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -246,12 +246,12 @@ WHERE p1.oid != p2.oid AND
     p1.prokind != 'a' AND p2.prokind != 'a' AND
     (p1.proargtypes[2] < p2.proargtypes[2])
 ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-        1114 |        1184
+         proargtypes         |       proargtypes        
+-----------------------------+--------------------------
+ timestamp without time zone | timestamp with time zone
 (1 row)
 
-SELECT DISTINCT p1.proargtypes[3], p2.proargtypes[3]
+SELECT DISTINCT p1.proargtypes[3]::regtype, p2.proargtypes[3]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -259,12 +259,12 @@ WHERE p1.oid != p2.oid AND
     p1.prokind != 'a' AND p2.prokind != 'a' AND
     (p1.proargtypes[3] < p2.proargtypes[3])
 ORDER BY 1, 2;
- proargtypes | proargtypes 
--------------+-------------
-        1114 |        1184
+         proargtypes         |       proargtypes        
+-----------------------------+--------------------------
+ timestamp without time zone | timestamp with time zone
 (1 row)
 
-SELECT DISTINCT p1.proargtypes[4], p2.proargtypes[4]
+SELECT DISTINCT p1.proargtypes[4]::regtype, p2.proargtypes[4]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -276,7 +276,7 @@ ORDER BY 1, 2;
 -------------+-------------
 (0 rows)
 
-SELECT DISTINCT p1.proargtypes[5], p2.proargtypes[5]
+SELECT DISTINCT p1.proargtypes[5]::regtype, p2.proargtypes[5]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -288,7 +288,7 @@ ORDER BY 1, 2;
 -------------+-------------
 (0 rows)
 
-SELECT DISTINCT p1.proargtypes[6], p2.proargtypes[6]
+SELECT DISTINCT p1.proargtypes[6]::regtype, p2.proargtypes[6]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -300,7 +300,7 @@ ORDER BY 1, 2;
 -------------+-------------
 (0 rows)
 
-SELECT DISTINCT p1.proargtypes[7], p2.proargtypes[7]
+SELECT DISTINCT p1.proargtypes[7]::regtype, p2.proargtypes[7]::regtype
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid != p2.oid AND
     p1.prosrc = p2.prosrc AND
@@ -384,10 +384,10 @@ WHERE p1.prorettype IN
 ORDER BY 2;
  oid  |         proname          
 ------+--------------------------
- 9559 | anycompatible_in
- 9561 | anycompatiblearray_in
- 9563 | anycompatiblearray_recv
- 9565 | anycompatiblenonarray_in
+ 5086 | anycompatible_in
+ 5088 | anycompatiblearray_in
+ 5090 | anycompatiblearray_recv
+ 5092 | anycompatiblenonarray_in
 (4 rows)
 
 SELECT p1.oid, p1.proname
@@ -398,7 +398,7 @@ WHERE p1.prorettype = 'anycompatiblerange'::regtype
 ORDER BY 2;
  oid  |        proname        
 ------+-----------------------
- 9567 | anycompatiblerange_in
+ 5094 | anycompatiblerange_in
 (1 row)
 
 -- Look for functions that accept cstring and are neither datatype input
