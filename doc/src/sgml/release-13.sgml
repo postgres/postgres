@@ -87,7 +87,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-In ltree, when using adjacent asterisks with braces, e.g. "*{2}.*{3}", properly interpret that as "*{5}" (Nikita Glukhov)
+In ltree, when using adjacent asterisks with braces, e.g. ".*{2}.*{3}", properly interpret that as ".*{5}" (Nikita Glukhov)
 </para>
 
 </listitem>
@@ -273,7 +273,7 @@ Allow partitionwise joins to happen in more cases (Ashutosh Bapat, Etsuro Fujita
 
 <para>
 For example, partitionwise joins can now happen between partitioned
-tables where the ancestors do not exactly match.
+tables even when their partition bounds do not match exactly.
 </para>
 </listitem>
 
@@ -307,7 +307,7 @@ Allow partitioned tables to be logically replicated via publications (Amit Lango
 
 <para>
 Previously, partitions had to be replicated individually.  Now partitioned tables can be published explicitly causing all partitions to be automatically published.  Addition/removal of partitions from
-partitioned tables are automatically added/removed from publications.  The CREATE PUBLICATION option publish_via_partition_root controls whether partitioned tables are published as their own or their ancestors.
+partitioned tables are automatically added/removed from publications.  The CREATE PUBLICATION option publish_via_partition_root controls whether changes to partitions are published as their own or their ancestor's.
 </para>
 
 </listitem>
@@ -356,6 +356,12 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
 <para>
 More efficiently store duplicates in btree indexes (Anastasia Lubennikova, Peter Geoghegan)
+</para>
+
+<para>
+This allows efficient btree indexing of low cardinality columns.
+Users upgrading with pg_upgrade will need to use REINDEX to make use of
+this feature.
 </para>
 
 </listitem>
@@ -407,6 +413,12 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 
 <para>
 Allow CREATE INDEX to specify the GiST signature length and maximum number of integer ranges (Nikita Glukhov)
+</para>
+
+<para>
+Indexes created on four and eight-byte integer array, tsvector, trigram,
+ltree, and hstore columns can now control these GiST index parameters,
+rather than using the defaults.
 </para>
 
 </listitem>
@@ -593,7 +605,7 @@ Allow inserts to trigger autovacuum activity (Laurenz Albe, Darafei Praliaskousk
 </para>
 
 <para>
-This new behavior allows pages to be set as all-visible, which then allows index-only scans, and reduces the work necessary when the table needs to be frozen.
+This new behavior reduces the work necessary when the table needs to be frozen and allows pages to be set as all-visible.  All-visible pages allow index-only scans to access fewer heap rows.
 </para>
 
 </listitem>
@@ -886,7 +898,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
 <para>
-Add system view pg_stat_progress_analyze to report analyze progress (&Aacute;lvaro Herrera, Tatsuro Yamada)
+Add system view pg_stat_progress_analyze to report analyze progress (&Aacute;lvaro Herrera, Tatsuro Yamada, Vinayak Pokale)
 </para>
 
 </listitem>
@@ -911,10 +923,6 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <para>
 Add system view pg_shmem_allocations to display shared memory usage (Andres Freund, Robert Haas)
-</para>
-
-<para>
-WHAT IS THE ENTRY WITH NO NAME?
 </para>
 
 </listitem>
@@ -1095,10 +1103,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <para>
 Allow allow_system_table_mods to be changed after server start (Peter Eisentraut)
-</para>
-
-<para>
-Previously, this could only be set at server start.
 </para>
 
 </listitem>
@@ -1601,7 +1605,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
 <para>
-Allow Unicode escapes, e.g., E'\u####', in databases that do not use UTF-8 encoding (Tom Lane)
+Allow Unicode escapes, e.g., E'\u####', U&amp;'\####', to represent any
+character available in the database encoding, even when the database
+encoding is not UTF-8 (Tom Lane)
 </para>
 
 <para>
@@ -1977,6 +1983,9 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 Add psql commands to report operator classes and operator families (Sergey Cherkashin, Nikita Glukhov, Alexander Korotkov)
 </para>
 
+<para>
+The new commands are \dAc, \dAf, \dAo, and \dAp.
+</para>
 </listitem>
 
 <listitem>
@@ -2352,22 +2361,6 @@ Upgrade to use DocBook 4.5 (Peter Eisentraut)
 
 <listitem>
 <!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2020-03-29 [e1ff78048] Document color support
--->
-
-<para>
-Document color support (Peter Eisentraut)
-</para>
-
-<para>
-THIS WAS NOT DOCUMENTED BEFORE?
-</para>
-
-</listitem>
-
-<listitem>
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2019-07-02 [2b1394fc2] Add support for Visual Studio 2019 in build scripts
 -->
@@ -2414,6 +2407,18 @@ Update Snowball stemmer dictionaries used by full text search (Panagiotis Mavrog
 
 <para>
 This adds Greek stemming and improves Danish and French stemming.
+</para>
+
+</listitem>
+
+<listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2020-02-19 [e2e02191e] Clean up some code, comments and docs referring to Windo
+-->
+
+<para>
+Remove support for Windows 2000 (Michael Paquier)
 </para>
 
 </listitem>
