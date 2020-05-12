@@ -2778,7 +2778,7 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 	{
 		if (indent)
 			appendStringInfoSpaces(es->str, es->indent * 2);
-		appendStringInfo(es->str, "%s Groups: " INT64_FORMAT " Sort Method", groupLabel,
+		appendStringInfo(es->str, "%s Groups: " INT64_FORMAT "  Sort Method", groupLabel,
 						 groupInfo->groupCount);
 		/* plural/singular based on methodNames size */
 		if (list_length(methodNames) > 1)
@@ -2798,9 +2798,9 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 			const char *spaceTypeName;
 
 			spaceTypeName = tuplesort_space_type_name(SORT_SPACE_TYPE_MEMORY);
-			appendStringInfo(es->str, " %s: avg=%ldkB peak=%ldkB",
+			appendStringInfo(es->str, "  Average %s: %ldkB  Peak %s: %ldkB",
 							 spaceTypeName, avgSpace,
-							 groupInfo->maxMemorySpaceUsed);
+							 spaceTypeName, groupInfo->maxMemorySpaceUsed);
 		}
 
 		if (groupInfo->maxDiskSpaceUsed > 0)
@@ -2810,12 +2810,9 @@ show_incremental_sort_group_info(IncrementalSortGroupInfo *groupInfo,
 			const char *spaceTypeName;
 
 			spaceTypeName = tuplesort_space_type_name(SORT_SPACE_TYPE_DISK);
-			/* Add a semicolon separator only if memory stats were printed. */
-			if (groupInfo->maxMemorySpaceUsed > 0)
-				appendStringInfo(es->str, ";");
-			appendStringInfo(es->str, " %s: avg=%ldkB peak=%ldkB",
+			appendStringInfo(es->str, "  Average %s: %ldkB  Peak %s: %ldkB",
 							 spaceTypeName, avgSpace,
-							 groupInfo->maxDiskSpaceUsed);
+							 spaceTypeName, groupInfo->maxDiskSpaceUsed);
 		}
 	}
 	else
@@ -2899,8 +2896,8 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 		if (prefixsortGroupInfo->groupCount > 0)
 		{
 			if (es->format == EXPLAIN_FORMAT_TEXT)
-				appendStringInfo(es->str, " ");
-			show_incremental_sort_group_info(prefixsortGroupInfo, "Presorted", false, es);
+				appendStringInfo(es->str, "\n");
+			show_incremental_sort_group_info(prefixsortGroupInfo, "Pre-sorted", true, es);
 		}
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 			appendStringInfo(es->str, "\n");
@@ -2942,8 +2939,8 @@ show_incremental_sort_info(IncrementalSortState *incrsortstate,
 			if (prefixsortGroupInfo->groupCount > 0)
 			{
 				if (es->format == EXPLAIN_FORMAT_TEXT)
-					appendStringInfo(es->str, " ");
-				show_incremental_sort_group_info(prefixsortGroupInfo, "Presorted", false, es);
+					appendStringInfo(es->str, "\n");
+				show_incremental_sort_group_info(prefixsortGroupInfo, "Pre-sorted", true, es);
 			}
 			if (es->format == EXPLAIN_FORMAT_TEXT)
 				appendStringInfo(es->str, "\n");

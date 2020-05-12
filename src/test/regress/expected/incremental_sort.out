@@ -106,7 +106,7 @@ declare
   space_key text;
 begin
   for node in select * from jsonb_array_elements(explain_analyze_inc_sort_nodes(query)) t loop
-    for group_key in select unnest(array['Full-sort Groups', 'Presorted Groups']::text[]) t loop
+    for group_key in select unnest(array['Full-sort Groups', 'Pre-sorted Groups']::text[]) t loop
       for space_key in select unnest(array['Sort Space Memory', 'Sort Space Disk']::text[]) t loop
         node := jsonb_set(node, array[group_key, space_key, 'Average Sort Space Used'], '"NN"', false);
         node := jsonb_set(node, array[group_key, space_key, 'Peak Sort Space Used'], '"NN"', false);
@@ -128,7 +128,7 @@ declare
   space_key text;
 begin
   for node in select * from jsonb_array_elements(explain_analyze_inc_sort_nodes(query)) t loop
-    for group_key in select unnest(array['Full-sort Groups', 'Presorted Groups']::text[]) t loop
+    for group_key in select unnest(array['Full-sort Groups', 'Pre-sorted Groups']::text[]) t loop
       group_stats := node->group_key;
       for space_key in select unnest(array['Sort Space Memory', 'Sort Space Disk']::text[]) t loop
         if (group_stats->space_key->'Peak Sort Space Used')::bigint < (group_stats->space_key->'Peak Sort Space Used')::bigint then
@@ -533,13 +533,13 @@ select * from (select * from t order by a) s order by a, b limit 55;
 
 -- Test EXPLAIN ANALYZE with only a fullsort group.
 select explain_analyze_without_memory('select * from (select * from t order by a) s order by a, b limit 55');
-                                 explain_analyze_without_memory                                 
-------------------------------------------------------------------------------------------------
+                                        explain_analyze_without_memory                                         
+---------------------------------------------------------------------------------------------------------------
  Limit (actual rows=55 loops=1)
    ->  Incremental Sort (actual rows=55 loops=1)
          Sort Key: t.a, t.b
          Presorted Key: t.a
-         Full-sort Groups: 2 Sort Methods: top-N heapsort, quicksort Memory: avg=NNkB peak=NNkB
+         Full-sort Groups: 2  Sort Methods: top-N heapsort, quicksort  Average Memory: NNkB  Peak Memory: NNkB
          ->  Sort (actual rows=101 loops=1)
                Sort Key: t.a
                Sort Method: quicksort  Memory: NNkB
@@ -708,18 +708,19 @@ select * from t left join (select * from (select * from t order by a) v order by
 rollback;
 -- Test EXPLAIN ANALYZE with both fullsort and presorted groups.
 select explain_analyze_without_memory('select * from (select * from t order by a) s order by a, b limit 70');
-                                                                    explain_analyze_without_memory                                                                    
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                         explain_analyze_without_memory                                         
+----------------------------------------------------------------------------------------------------------------
  Limit (actual rows=70 loops=1)
    ->  Incremental Sort (actual rows=70 loops=1)
          Sort Key: t.a, t.b
          Presorted Key: t.a
-         Full-sort Groups: 1 Sort Method: quicksort Memory: avg=NNkB peak=NNkB Presorted Groups: 5 Sort Methods: top-N heapsort, quicksort Memory: avg=NNkB peak=NNkB
+         Full-sort Groups: 1  Sort Method: quicksort  Average Memory: NNkB  Peak Memory: NNkB
+         Pre-sorted Groups: 5  Sort Methods: top-N heapsort, quicksort  Average Memory: NNkB  Peak Memory: NNkB
          ->  Sort (actual rows=1000 loops=1)
                Sort Key: t.a
                Sort Method: quicksort  Memory: NNkB
                ->  Seq Scan on t (actual rows=1000 loops=1)
-(9 rows)
+(10 rows)
 
 select jsonb_pretty(explain_analyze_inc_sort_nodes_without_memory('select * from (select * from t order by a) s order by a, b limit 70'));
                   jsonb_pretty                   
@@ -747,7 +748,7 @@ select jsonb_pretty(explain_analyze_inc_sort_nodes_without_memory('select * from
                  "Average Sort Space Used": "NN"+
              }                                  +
          },                                     +
-         "Presorted Groups": {                  +
+         "Pre-sorted Groups": {                 +
              "Group Count": 5,                  +
              "Sort Methods Used": [             +
                  "top-N heapsort",              +

@@ -82,7 +82,7 @@ declare
   space_key text;
 begin
   for node in select * from jsonb_array_elements(explain_analyze_inc_sort_nodes(query)) t loop
-    for group_key in select unnest(array['Full-sort Groups', 'Presorted Groups']::text[]) t loop
+    for group_key in select unnest(array['Full-sort Groups', 'Pre-sorted Groups']::text[]) t loop
       for space_key in select unnest(array['Sort Space Memory', 'Sort Space Disk']::text[]) t loop
         node := jsonb_set(node, array[group_key, space_key, 'Average Sort Space Used'], '"NN"', false);
         node := jsonb_set(node, array[group_key, space_key, 'Peak Sort Space Used'], '"NN"', false);
@@ -105,7 +105,7 @@ declare
   space_key text;
 begin
   for node in select * from jsonb_array_elements(explain_analyze_inc_sort_nodes(query)) t loop
-    for group_key in select unnest(array['Full-sort Groups', 'Presorted Groups']::text[]) t loop
+    for group_key in select unnest(array['Full-sort Groups', 'Pre-sorted Groups']::text[]) t loop
       group_stats := node->group_key;
       for space_key in select unnest(array['Sort Space Memory', 'Sort Space Disk']::text[]) t loop
         if (group_stats->space_key->'Peak Sort Space Used')::bigint < (group_stats->space_key->'Peak Sort Space Used')::bigint then
