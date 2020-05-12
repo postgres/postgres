@@ -64,7 +64,7 @@ SELECT count(*) FROM hs1;
 (1 row)
 
 COMMIT PREPARED 'foobar';
-ERROR:  COMMIT PREPARED cannot run inside a transaction block
+ERROR:  cannot execute COMMIT PREPARED during recovery
 ROLLBACK;
 BEGIN;
 SELECT count(*) FROM hs1;
@@ -86,7 +86,7 @@ SELECT count(*) FROM hs1;
 (1 row)
 
 ROLLBACK PREPARED 'foobar';
-ERROR:  ROLLBACK PREPARED cannot run inside a transaction block
+ERROR:  cannot execute ROLLBACK PREPARED during recovery
 ROLLBACK;
 -- Locks
 BEGIN;
