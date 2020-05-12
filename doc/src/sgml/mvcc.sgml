@@ -1053,28 +1053,35 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     <table tocentry="1" id="table-lock-compatibility">
      <title> Conflicting Lock Modes</title>
      <tgroup cols="9">
-      <colspec colnum="2" colname="lockst"/>
-      <colspec colnum="9" colname="lockend"/>
-      <spanspec namest="lockst" nameend="lockend" spanname="lockreq"/>
+      <colspec colnum="1" colwidth="1.25*"/>
+      <colspec colnum="2" colwidth="1*" colname="lockst"/>
+      <colspec colnum="3" colwidth="1*"/>
+      <colspec colnum="4" colwidth="1*"/>
+      <colspec colnum="5" colwidth="1*"/>
+      <colspec colnum="6" colwidth="1*"/>
+      <colspec colnum="7" colwidth="1*"/>
+      <colspec colnum="8" colwidth="1*"/>
+      <colspec colnum="9" colwidth="1*" colname="lockend"/>
+      <spanspec spanname="lockreq" namest="lockst" nameend="lockend" align="center"/>
       <thead>
        <row>
         <entry morerows="1">Requested Lock Mode</entry>
-        <entry spanname="lockreq">Current Lock Mode</entry>
+        <entry spanname="lockreq">Existing Lock Mode</entry>
        </row>
        <row>
-        <entry>ACCESS SHARE</entry>
-        <entry>ROW SHARE</entry>
-        <entry>ROW EXCLUSIVE</entry>
-        <entry>SHARE UPDATE EXCLUSIVE</entry>
-        <entry>SHARE</entry>
-        <entry>SHARE ROW EXCLUSIVE</entry>
-        <entry>EXCLUSIVE</entry>
-        <entry>ACCESS EXCLUSIVE</entry>
+        <entry><literal>ACCESS SHARE</literal></entry>
+        <entry><literal>ROW SHARE</literal></entry>
+        <entry><literal>ROW EXCL.</literal></entry>
+        <entry><literal>SHARE UPDATE EXCL.</literal></entry>
+        <entry><literal>SHARE</literal></entry>
+        <entry><literal>SHARE ROW EXCL.</literal></entry>
+        <entry><literal>EXCL.</literal></entry>
+        <entry><literal>ACCESS EXCL.</literal></entry>
        </row>
       </thead>
       <tbody>
        <row>
-        <entry>ACCESS SHARE</entry>
+        <entry><literal>ACCESS SHARE</literal></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
@@ -1085,7 +1092,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <entry align="center">X</entry>
        </row>
        <row>
-        <entry>ROW SHARE</entry>
+        <entry><literal>ROW SHARE</literal></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
@@ -1096,7 +1103,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <entry align="center">X</entry>
        </row>
        <row>
-        <entry>ROW EXCLUSIVE</entry>
+        <entry><literal>ROW EXCL.</literal></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
@@ -1107,7 +1114,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <entry align="center">X</entry>
        </row>
        <row>
-        <entry>SHARE UPDATE EXCLUSIVE</entry>
+        <entry><literal>SHARE UPDATE EXCL.</literal></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
@@ -1118,7 +1125,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <entry align="center">X</entry>
        </row>
        <row>
-        <entry>SHARE</entry>
+        <entry><literal>SHARE</literal></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
         <entry align="center">X</entry>
@@ -1129,7 +1136,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <entry align="center">X</entry>
        </row>
        <row>
-        <entry>SHARE ROW EXCLUSIVE</entry>
+        <entry><literal>SHARE ROW EXCL.</literal></entry>
         <entry align="center"></entry>
         <entry align="center"></entry>
         <entry align="center">X</entry>
@@ -1140,7 +1147,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <entry align="center">X</entry>
        </row>
        <row>
-        <entry>EXCLUSIVE</entry>
+        <entry><literal>EXCL.</literal></entry>
         <entry align="center"></entry>
         <entry align="center">X</entry>
         <entry align="center">X</entry>
@@ -1151,7 +1158,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <entry align="center">X</entry>
        </row>
        <row>
-        <entry>ACCESS EXCLUSIVE</entry>
+        <entry><literal>ACCESS EXCL.</literal></entry>
         <entry align="center">X</entry>
         <entry align="center">X</entry>
         <entry align="center">X</entry>
