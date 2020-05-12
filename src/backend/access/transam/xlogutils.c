@@ -681,10 +681,10 @@ XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
  * copied to a new timeline.
  *
  * The caller must also make sure it doesn't read past the current replay
- * position (using GetWalRcvWriteRecPtr) if executing in recovery, so it
+ * position (using GetXLogReplayRecPtr) if executing in recovery, so it
  * doesn't fail to notice that the current timeline became historical. The
  * caller must also update ThisTimeLineID with the result of
- * GetWalRcvWriteRecPtr and must check RecoveryInProgress().
+ * GetXLogReplayRecPtr and must check RecoveryInProgress().
  */
 void
 XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wantLength)
