@@ -215,7 +215,7 @@ WalReceiverMain(void)
 		case WALRCV_STOPPING:
 			/* If we've already been requested to stop, don't start up. */
 			walrcv->walRcvState = WALRCV_STOPPED;
-			/* fall through */
+			/* FALLTHROUGH */
 
 		case WALRCV_STOPPED:
 			SpinLockRelease(&walrcv->mutex);

@@ -1042,7 +1042,7 @@ hash_search_with_hash_value(HTAB *hashp,
 		case HASH_ENTER_NULL:
 			/* ENTER_NULL does not work with palloc-based allocator */
 			Assert(hashp->alloc != DynaHashAlloc);
-			/* FALL THRU */
+			/* FALLTHROUGH */
 
 		case HASH_ENTER:
 			/* Return existing element if found, else create one */

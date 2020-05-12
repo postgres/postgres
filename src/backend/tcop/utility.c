@@ -1883,7 +1883,7 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 			if (stmt->concurrent)
 				PreventInTransactionBlock(isTopLevel,
 										  "DROP INDEX CONCURRENTLY");
-			/* fall through */
+			/* FALLTHROUGH */
 
 		case OBJECT_TABLE:
 		case OBJECT_SEQUENCE:

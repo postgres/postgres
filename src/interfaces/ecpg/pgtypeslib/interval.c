@@ -391,7 +391,7 @@ DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 					tmask = DTK_M(TZ);
 					break;
 				}
-				/* FALL THROUGH */
+				/* FALLTHROUGH */
 
 			case DTK_DATE:
 			case DTK_NUMBER:

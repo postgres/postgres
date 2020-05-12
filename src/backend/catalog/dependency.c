@@ -615,7 +615,7 @@ findDependentObjects(const ObjectAddress *object,
 					break;
 
 				/* Otherwise, treat this like an internal dependency */
-				/* FALL THRU */
+				/* FALLTHROUGH */
 
 			case DEPENDENCY_INTERNAL:
 

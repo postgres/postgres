@@ -55,6 +55,11 @@ ifeq (,$(ZIC))
 ZIC= ./zic
 endif
 
+# zic.c doesn't compile cleanly with our default
+# -Wimplicit-fallthrough=4, and we don't want to touch the file since
+# it's third-party code, so downgrade to 3 for that file.
+zic.o: CFLAGS := $(subst -Wimplicit-fallthrough=4,-Wimplicit-fallthrough=3,$(CFLAGS))
+
 zic: $(ZICOBJS) | submake-libpgport
 	$(CC) $(CFLAGS) $(ZICOBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
