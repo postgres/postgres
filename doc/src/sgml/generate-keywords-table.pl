@@ -82,8 +82,13 @@ END
 
 foreach my $word (sort keys %keywords)
 {
+	# Insert zwsp's into very long keywords, so that they can be broken
+	# into multiple lines in PDF format (or narrow HTML windows).
+	my $printword = $word;
+	$printword =~ s/_/_&zwsp;/g if (length($printword) > 20);
+
 	print "   <row>\n";
-	print "    <entry><token>$word</token></entry>\n";
+	print "    <entry><token>$printword</token></entry>\n";
 
 	print "    <entry>";
 	if ($keywords{$word}{pg}{'unreserved'})
