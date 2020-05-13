@@ -2900,6 +2900,9 @@ pgstat_initialize(void)
 		MyBEEntry = &BackendStatusArray[MaxBackends + MyAuxProcType];
 	}
 
+	/* Initialize SLRU statistics to zero */
+	memset(&SLRUStats, 0, sizeof(SLRUStats));
+
 	/* Set up a process-exit hook to clean up */
 	on_shmem_exit(pgstat_beshutdown_hook, 0);
 }
