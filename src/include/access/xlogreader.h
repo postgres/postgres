@@ -63,10 +63,9 @@ typedef int (*XLogPageReadCB) (XLogReaderState *xlogreader,
 							   int reqLen,
 							   XLogRecPtr targetRecPtr,
 							   char *readBuf);
-typedef int (*WALSegmentOpenCB) (XLogReaderState *xlogreader,
-								 XLogSegNo nextSegNo,
-								 WALSegmentContext *segcxt,
-								 TimeLineID *tli_p);
+typedef void (*WALSegmentOpenCB) (XLogReaderState *xlogreader,
+								  XLogSegNo nextSegNo,
+								  TimeLineID *tli_p);
 typedef void (*WALSegmentCloseCB) (XLogReaderState *xlogreader);
 
 typedef struct XLogReaderRoutine
@@ -94,21 +93,16 @@ typedef struct XLogReaderRoutine
 	XLogPageReadCB page_read;
 
 	/*
-	 * Callback to open the specified WAL segment for reading.  The file
-	 * descriptor of the opened segment shall be returned.  In case of
+	 * Callback to open the specified WAL segment for reading.  ->seg.ws_file
+	 * shall be set to the file descriptor of the opened segment.  In case of
 	 * failure, an error shall be raised by the callback and it shall not
 	 * return.
 	 *
 	 * "nextSegNo" is the number of the segment to be opened.
 	 *
-	 * "segcxt" is additional information about the segment.
-	 *
 	 * "tli_p" is an input/output argument. WALRead() uses it to pass the
 	 * timeline in which the new segment should be found, but the callback can
 	 * use it to return the TLI that it actually opened.
-	 *
-	 * BasicOpenFile() is the preferred way to open the segment file in
-	 * backend code, whereas open(2) should be used in frontend.
 	 */
 	WALSegmentOpenCB segment_open;
 
@@ -301,9 +295,7 @@ typedef struct WALReadError
 
 extern bool WALRead(XLogReaderState *state,
 					char *buf, XLogRecPtr startptr, Size count,
-					TimeLineID tli, WALOpenSegment *seg,
-					WALSegmentContext *segcxt,
-					WALReadError *errinfo);
+					TimeLineID tli, WALReadError *errinfo);
 
 /* Functions for decoding an XLogRecord */
 

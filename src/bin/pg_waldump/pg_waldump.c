@@ -280,17 +280,15 @@ identify_target_directory(char *directory, char *fname)
 }
 
 /* pg_waldump's XLogReaderRoutine->segment_open callback */
-static int
-WALDumpOpenSegment(XLogReaderState *state,
-				   XLogSegNo nextSegNo, WALSegmentContext *segcxt,
+static void
+WALDumpOpenSegment(XLogReaderState *state, XLogSegNo nextSegNo,
 				   TimeLineID *tli_p)
 {
 	TimeLineID	tli = *tli_p;
 	char		fname[MAXPGPATH];
-	int			fd;
 	int			tries;
 
-	XLogFileName(fname, tli, nextSegNo, segcxt->ws_segsize);
+	XLogFileName(fname, tli, nextSegNo, state->segcxt.ws_segsize);
 
 	/*
 	 * In follow mode there is a short period of time after the server has
@@ -300,9 +298,9 @@ WALDumpOpenSegment(XLogReaderState *state,
 	 */
 	for (tries = 0; tries < 10; tries++)
 	{
-		fd = open_file_in_directory(segcxt->ws_dir, fname);
-		if (fd >= 0)
-			return fd;
+		state->seg.ws_file = open_file_in_directory(state->segcxt.ws_dir, fname);
+		if (state->seg.ws_file >= 0)
+			return;
 		if (errno == ENOENT)
 		{
 			int			save_errno = errno;
@@ -318,7 +316,6 @@ WALDumpOpenSegment(XLogReaderState *state,
 	}
 
 	fatal_error("could not find file \"%s\": %m", fname);
-	return -1;					/* keep compiler quiet */
 }
 
 /*
@@ -356,7 +353,6 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 	}
 
 	if (!WALRead(state, readBuff, targetPagePtr, count, private->timeline,
-				 &state->seg, &state->segcxt,
 				 &errinfo))
 	{
 		WALOpenSegment *seg = &errinfo.wre_seg;

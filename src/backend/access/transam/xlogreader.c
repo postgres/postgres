@@ -1044,13 +1044,11 @@ err:
 
 /*
  * Helper function to ease writing of XLogRoutine->page_read callbacks.
- * If this function is used, caller must supply an open_segment callback in
+ * If this function is used, caller must supply a segment_open callback in
  * 'state', as that is used here.
  *
  * Read 'count' bytes into 'buf', starting at location 'startptr', from WAL
  * fetched from timeline 'tli'.
- *
- * 'seg/segcxt' identify the last segment used.
  *
  * Returns true if succeeded, false if an error occurs, in which case
  * 'errinfo' receives error details.
@@ -1061,7 +1059,6 @@ err:
 bool
 WALRead(XLogReaderState *state,
 		char *buf, XLogRecPtr startptr, Size count, TimeLineID tli,
-		WALOpenSegment *seg, WALSegmentContext *segcxt,
 		WALReadError *errinfo)
 {
 	char	   *p;
@@ -1078,34 +1075,36 @@ WALRead(XLogReaderState *state,
 		int			segbytes;
 		int			readbytes;
 
-		startoff = XLogSegmentOffset(recptr, segcxt->ws_segsize);
+		startoff = XLogSegmentOffset(recptr, state->segcxt.ws_segsize);
 
 		/*
 		 * If the data we want is not in a segment we have open, close what we
 		 * have (if anything) and open the next one, using the caller's
 		 * provided openSegment callback.
 		 */
-		if (seg->ws_file < 0 ||
-			!XLByteInSeg(recptr, seg->ws_segno, segcxt->ws_segsize) ||
-			tli != seg->ws_tli)
+		if (state->seg.ws_file < 0 ||
+			!XLByteInSeg(recptr, state->seg.ws_segno, state->segcxt.ws_segsize) ||
+			tli != state->seg.ws_tli)
 		{
 			XLogSegNo	nextSegNo;
 
-			if (seg->ws_file >= 0)
+			if (state->seg.ws_file >= 0)
 				state->routine.segment_close(state);
 
-			XLByteToSeg(recptr, nextSegNo, segcxt->ws_segsize);
-			seg->ws_file = state->routine.segment_open(state, nextSegNo,
-													   segcxt, &tli);
+			XLByteToSeg(recptr, nextSegNo, state->segcxt.ws_segsize);
+			state->routine.segment_open(state, nextSegNo, &tli);
+
+			/* This shouldn't happen -- indicates a bug in segment_open */
+			Assert(state->seg.ws_file >= 0);
 
 			/* Update the current segment info. */
-			seg->ws_tli = tli;
-			seg->ws_segno = nextSegNo;
+			state->seg.ws_tli = tli;
+			state->seg.ws_segno = nextSegNo;
 		}
 
 		/* How many bytes are within this segment? */
-		if (nbytes > (segcxt->ws_segsize - startoff))
-			segbytes = segcxt->ws_segsize - startoff;
+		if (nbytes > (state->segcxt.ws_segsize - startoff))
+			segbytes = state->segcxt.ws_segsize - startoff;
 		else
 			segbytes = nbytes;
 
@@ -1115,7 +1114,7 @@ WALRead(XLogReaderState *state,
 
 		/* Reset errno first; eases reporting non-errno-affecting errors */
 		errno = 0;
-		readbytes = pg_pread(seg->ws_file, p, segbytes, (off_t) startoff);
+		readbytes = pg_pread(state->seg.ws_file, p, segbytes, (off_t) startoff);
 
 #ifndef FRONTEND
 		pgstat_report_wait_end();
@@ -1127,7 +1126,7 @@ WALRead(XLogReaderState *state,
 			errinfo->wre_req = segbytes;
 			errinfo->wre_read = readbytes;
 			errinfo->wre_off = startoff;
-			errinfo->wre_seg = *seg;
+			errinfo->wre_seg = state->seg;
 			return false;
 		}
 

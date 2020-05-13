@@ -784,18 +784,17 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage, uint32 wa
 }
 
 /* XLogReaderRoutine->segment_open callback for local pg_wal files */
-int
+void
 wal_segment_open(XLogReaderState *state, XLogSegNo nextSegNo,
-				 WALSegmentContext *segcxt, TimeLineID *tli_p)
+				 TimeLineID *tli_p)
 {
 	TimeLineID	tli = *tli_p;
 	char		path[MAXPGPATH];
-	int			fd;
 
-	XLogFilePath(path, tli, nextSegNo, segcxt->ws_segsize);
-	fd = BasicOpenFile(path, O_RDONLY | PG_BINARY);
-	if (fd >= 0)
-		return fd;
+	XLogFilePath(path, tli, nextSegNo, state->segcxt.ws_segsize);
+	state->seg.ws_file = BasicOpenFile(path, O_RDONLY | PG_BINARY);
+	if (state->seg.ws_file >= 0)
+		return;
 
 	if (errno == ENOENT)
 		ereport(ERROR,
@@ -807,8 +806,6 @@ wal_segment_open(XLogReaderState *state, XLogSegNo nextSegNo,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m",
 						path)));
-
-	return -1;					/* keep compiler quiet */
 }
 
 /* stock XLogReaderRoutine->segment_close callback */
@@ -947,7 +944,6 @@ read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 	 * zero-padded up to the page boundary if it's incomplete.
 	 */
 	if (!WALRead(state, cur_page, targetPagePtr, XLOG_BLCKSZ, tli,
-				 &state->seg, &state->segcxt,
 				 &errinfo))
 		WALReadRaiseError(&errinfo);
 
