@@ -11,7 +11,6 @@
 #ifndef PGSTAT_H
 #define PGSTAT_H
 
-#include "access/slru.h"
 #include "datatype/timestamp.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
@@ -438,7 +437,7 @@ typedef struct PgStat_MsgBgWriter
 } PgStat_MsgBgWriter;
 
 /* ----------
- * PgStat_MsgSLRU			Sent by the SLRU to update statistics.
+ * PgStat_MsgSLRU			Sent by a backend to update SLRU statistics.
  * ----------
  */
 typedef struct PgStat_MsgSLRU
@@ -1261,11 +1260,6 @@ extern char *pgstat_stat_filename;
 extern PgStat_MsgBgWriter BgWriterStats;
 
 /*
- * SLRU statistics counters are updated directly by slru.
- */
-extern PgStat_MsgSLRU SlruStats[];
-
-/*
  * Updated by pgstat_count_buffer_*_time macros
  */
 extern PgStat_Counter pgStatBlockReadTime;
@@ -1480,14 +1474,14 @@ extern PgStat_ArchiverStats *pgstat_fetch_stat_archiver(void);
 extern PgStat_GlobalStats *pgstat_fetch_global(void);
 extern PgStat_SLRUStats *pgstat_fetch_slru(void);
 
-extern void pgstat_count_slru_page_zeroed(SlruCtl ctl);
-extern void pgstat_count_slru_page_hit(SlruCtl ctl);
-extern void pgstat_count_slru_page_read(SlruCtl ctl);
-extern void pgstat_count_slru_page_written(SlruCtl ctl);
-extern void pgstat_count_slru_page_exists(SlruCtl ctl);
-extern void pgstat_count_slru_flush(SlruCtl ctl);
-extern void pgstat_count_slru_truncate(SlruCtl ctl);
-extern char *pgstat_slru_name(int idx);
-extern int pgstat_slru_index(const char *name);
+extern void pgstat_count_slru_page_zeroed(int slru_idx);
+extern void pgstat_count_slru_page_hit(int slru_idx);
+extern void pgstat_count_slru_page_read(int slru_idx);
+extern void pgstat_count_slru_page_written(int slru_idx);
+extern void pgstat_count_slru_page_exists(int slru_idx);
+extern void pgstat_count_slru_flush(int slru_idx);
+extern void pgstat_count_slru_truncate(int slru_idx);
+extern const char *pgstat_slru_name(int slru_idx);
+extern int	pgstat_slru_index(const char *name);
 
 #endif							/* PGSTAT_H */

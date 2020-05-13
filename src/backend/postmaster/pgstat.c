@@ -142,24 +142,30 @@ char	   *pgstat_stat_tmpname = NULL;
 PgStat_MsgBgWriter BgWriterStats;
 
 /*
- * SLRU statistics counters (unused in other processes) stored directly in
- * stats structure so it can be sent without needing to copy things around.
- * We assume this inits to zeroes. There is no central registry of SLRUs,
- * so we use this fixed list instead.
- *
- * There's a separte entry for each SLRU we have. The "other" entry is used
- * for all SLRUs without an explicit entry (e.g. SLRUs in extensions).
+ * List of SLRU names that we keep stats for.  There is no central registry of
+ * SLRUs, so we use this fixed list instead.  The "other" entry is used for
+ * all SLRUs without an explicit entry (e.g. SLRUs in extensions).
  */
-static char *slru_names[] = {"async", "clog", "commit_timestamp",
-							  "multixact_offset", "multixact_member",
-							  "oldserxid", "subtrans",
-							  "other" /* has to be last */};
+static const char *const slru_names[] = {
+	"async",
+	"clog",
+	"commit_timestamp",
+	"multixact_offset",
+	"multixact_member",
+	"oldserxid",
+	"subtrans",
+	"other"						/* has to be last */
+};
 
-/* number of elemenents of slru_name array */
-#define SLRU_NUM_ELEMENTS	(sizeof(slru_names) / sizeof(char *))
+#define SLRU_NUM_ELEMENTS	lengthof(slru_names)
 
-/* entries in the same order as slru_names */
-PgStat_MsgSLRU SLRUStats[SLRU_NUM_ELEMENTS];
+/*
+ * SLRU statistics counts waiting to be sent to the collector.  These are
+ * stored directly in stats message format so they can be sent without needing
+ * to copy things around.  We assume this variable inits to zeroes.  Entries
+ * are one-to-one with slru_names[].
+ */
+static PgStat_MsgSLRU SLRUStats[SLRU_NUM_ELEMENTS];
 
 /* ----------
  * Local data
@@ -4411,12 +4417,10 @@ pgstat_send_bgwriter(void)
 static void
 pgstat_send_slru(void)
 {
-	int		i;
-
 	/* We assume this initializes to zeroes */
 	static const PgStat_MsgSLRU all_zeroes;
 
-	for (i = 0; i < SLRU_NUM_ELEMENTS; i++)
+	for (int i = 0; i < SLRU_NUM_ELEMENTS; i++)
 	{
 		/*
 		 * This function can be called even if nothing at all has happened. In
@@ -6705,15 +6709,13 @@ pgstat_slru_index(const char *name)
  * in which case this returns NULL. This allows writing code that does not
  * know the number of entries in advance.
  */
-char *
-pgstat_slru_name(int idx)
+const char *
+pgstat_slru_name(int slru_idx)
 {
-	Assert(idx >= 0);
-
-	if (idx >= SLRU_NUM_ELEMENTS)
+	if (slru_idx < 0 || slru_idx >= SLRU_NUM_ELEMENTS)
 		return NULL;
 
-	return slru_names[idx];
+	return slru_names[slru_idx];
 }
 
 /*
@@ -6722,54 +6724,56 @@ pgstat_slru_name(int idx)
  * Returns pointer to entry with counters for given SLRU (based on the name
  * stored in SlruCtl as lwlock tranche name).
  */
-static PgStat_MsgSLRU *
-slru_entry(SlruCtl ctl)
+static inline PgStat_MsgSLRU *
+slru_entry(int slru_idx)
 {
-	int		idx = pgstat_slru_index(ctl->shared->lwlock_tranche_name);
+	Assert((slru_idx >= 0) && (slru_idx < SLRU_NUM_ELEMENTS));
 
-	Assert((idx >= 0) && (idx < SLRU_NUM_ELEMENTS));
+	return &SLRUStats[slru_idx];
+}
 
-	return &SLRUStats[idx];
+/*
+ * SLRU statistics count accumulation functions --- called from slru.c
+ */
+
+void
+pgstat_count_slru_page_zeroed(int slru_idx)
+{
+	slru_entry(slru_idx)->m_blocks_zeroed += 1;
 }
 
 void
-pgstat_count_slru_page_zeroed(SlruCtl ctl)
+pgstat_count_slru_page_hit(int slru_idx)
 {
-	slru_entry(ctl)->m_blocks_zeroed += 1;
+	slru_entry(slru_idx)->m_blocks_hit += 1;
 }
 
 void
-pgstat_count_slru_page_hit(SlruCtl ctl)
+pgstat_count_slru_page_exists(int slru_idx)
 {
-	slru_entry(ctl)->m_blocks_hit += 1;
+	slru_entry(slru_idx)->m_blocks_exists += 1;
 }
 
 void
-pgstat_count_slru_page_exists(SlruCtl ctl)
+pgstat_count_slru_page_read(int slru_idx)
 {
-	slru_entry(ctl)->m_blocks_exists += 1;
+	slru_entry(slru_idx)->m_blocks_read += 1;
 }
 
 void
-pgstat_count_slru_page_read(SlruCtl ctl)
+pgstat_count_slru_page_written(int slru_idx)
 {
-	slru_entry(ctl)->m_blocks_read += 1;
+	slru_entry(slru_idx)->m_blocks_written += 1;
 }
 
 void
-pgstat_count_slru_page_written(SlruCtl ctl)
+pgstat_count_slru_flush(int slru_idx)
 {
-	slru_entry(ctl)->m_blocks_written += 1;
+	slru_entry(slru_idx)->m_flush += 1;
 }
 
 void
-pgstat_count_slru_flush(SlruCtl ctl)
+pgstat_count_slru_truncate(int slru_idx)
 {
-	slru_entry(ctl)->m_flush += 1;
-}
-
-void
-pgstat_count_slru_truncate(SlruCtl ctl)
-{
-	slru_entry(ctl)->m_truncate += 1;
+	slru_entry(slru_idx)->m_truncate += 1;
 }

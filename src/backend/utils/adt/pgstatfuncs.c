@@ -1739,7 +1739,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 		Datum		values[PG_STAT_GET_SLRU_COLS];
 		bool		nulls[PG_STAT_GET_SLRU_COLS];
 		PgStat_SLRUStats	stat = stats[i];
-		char	   *name;
+		const char *name;
 
 		name = pgstat_slru_name(i);
 
