@@ -1757,7 +1757,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 		values[5] = Int64GetDatum(stat.blocks_exists);
 		values[6] = Int64GetDatum(stat.flush);
 		values[7] = Int64GetDatum(stat.truncate);
-		values[8] = Int64GetDatum(stat.stat_reset_timestamp);
+		values[8] = TimestampTzGetDatum(stat.stat_reset_timestamp);
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
