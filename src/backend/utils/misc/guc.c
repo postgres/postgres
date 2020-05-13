@@ -8436,7 +8436,7 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 		case VAR_SET_DEFAULT:
 			if (stmt->is_local)
 				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
-			/* FALLTHROUGH */
+			/* fall through */
 		case VAR_RESET:
 			if (strcmp(stmt->name, "transaction_isolation") == 0)
 				WarnNoTransactionBlock(isTopLevel, "RESET TRANSACTION");

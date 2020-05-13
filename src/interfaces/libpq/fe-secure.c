@@ -375,7 +375,7 @@ retry_masked:
 				REMEMBER_EPIPE(spinfo, true);
 
 #ifdef ECONNRESET
-				/* FALLTHROUGH */
+				/* FALL THRU */
 
 			case ECONNRESET:
 #endif

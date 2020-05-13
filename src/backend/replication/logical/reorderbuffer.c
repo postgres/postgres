@@ -1589,7 +1589,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					change = specinsert;
 					change->action = REORDER_BUFFER_CHANGE_INSERT;
 
-					/* FALLTHROUGH */
+					/* intentionally fall through */
 				case REORDER_BUFFER_CHANGE_INSERT:
 				case REORDER_BUFFER_CHANGE_UPDATE:
 				case REORDER_BUFFER_CHANGE_DELETE:
