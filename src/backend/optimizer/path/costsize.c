@@ -1821,19 +1821,19 @@ cost_incremental_sort(Path *path,
 	/*
 	 * Extract presorted keys as list of expressions.
 	 *
-	 * We need to be careful about Vars containing "varno 0" which might
-	 * have been introduced by generate_append_tlist, which would confuse
+	 * We need to be careful about Vars containing "varno 0" which might have
+	 * been introduced by generate_append_tlist, which would confuse
 	 * estimate_num_groups (in fact it'd fail for such expressions). See
 	 * recurse_set_operations which has to deal with the same issue.
 	 *
-	 * Unlike recurse_set_operations we can't access the original target
-	 * list here, and even if we could it's not very clear how useful would
-	 * that be for a set operation combining multiple tables. So we simply
-	 * detect if there are any expressions with "varno 0" and use the
-	 * default DEFAULT_NUM_DISTINCT in that case.
+	 * Unlike recurse_set_operations we can't access the original target list
+	 * here, and even if we could it's not very clear how useful would that be
+	 * for a set operation combining multiple tables. So we simply detect if
+	 * there are any expressions with "varno 0" and use the default
+	 * DEFAULT_NUM_DISTINCT in that case.
 	 *
-	 * We might also use either 1.0 (a single group) or input_tuples (each
-	 * row being a separate group), pretty much the worst and best case for
+	 * We might also use either 1.0 (a single group) or input_tuples (each row
+	 * being a separate group), pretty much the worst and best case for
 	 * incremental sort. But those are extreme cases and using something in
 	 * between seems reasonable. Furthermore, generate_append_tlist is used
 	 * for set operations, which are likely to produce mostly unique output
@@ -2403,40 +2403,40 @@ cost_agg(Path *path, PlannerInfo *root,
 	/*
 	 * Add the disk costs of hash aggregation that spills to disk.
 	 *
-	 * Groups that go into the hash table stay in memory until finalized,
-	 * so spilling and reprocessing tuples doesn't incur additional
-	 * invocations of transCost or finalCost. Furthermore, the computed
-	 * hash value is stored with the spilled tuples, so we don't incur
-	 * extra invocations of the hash function.
+	 * Groups that go into the hash table stay in memory until finalized, so
+	 * spilling and reprocessing tuples doesn't incur additional invocations
+	 * of transCost or finalCost. Furthermore, the computed hash value is
+	 * stored with the spilled tuples, so we don't incur extra invocations of
+	 * the hash function.
 	 *
-	 * Hash Agg begins returning tuples after the first batch is
-	 * complete. Accrue writes (spilled tuples) to startup_cost and to
-	 * total_cost; accrue reads only to total_cost.
+	 * Hash Agg begins returning tuples after the first batch is complete.
+	 * Accrue writes (spilled tuples) to startup_cost and to total_cost;
+	 * accrue reads only to total_cost.
 	 */
 	if (aggstrategy == AGG_HASHED || aggstrategy == AGG_MIXED)
 	{
-		double	pages;
-		double	pages_written = 0.0;
-		double	pages_read	  = 0.0;
-		double	hashentrysize;
-		double	nbatches;
-		Size	mem_limit;
-		uint64	ngroups_limit;
-		int		num_partitions;
-		int		depth;
+		double		pages;
+		double		pages_written = 0.0;
+		double		pages_read = 0.0;
+		double		hashentrysize;
+		double		nbatches;
+		Size		mem_limit;
+		uint64		ngroups_limit;
+		int			num_partitions;
+		int			depth;
 
 		/*
 		 * Estimate number of batches based on the computed limits. If less
 		 * than or equal to one, all groups are expected to fit in memory;
 		 * otherwise we expect to spill.
 		 */
-		hashentrysize = hash_agg_entry_size(
-			aggcosts->numAggs, input_width, aggcosts->transitionSpace);
+		hashentrysize = hash_agg_entry_size(aggcosts->numAggs, input_width,
+											aggcosts->transitionSpace);
 		hash_agg_set_limits(hashentrysize, numGroups, 0, &mem_limit,
 							&ngroups_limit, &num_partitions);
 
-		nbatches = Max( (numGroups * hashentrysize) / mem_limit,
-						numGroups / ngroups_limit );
+		nbatches = Max((numGroups * hashentrysize) / mem_limit,
+					   numGroups / ngroups_limit);
 
 		nbatches = Max(ceil(nbatches), 1.0);
 		num_partitions = Max(num_partitions, 2);
@@ -2446,7 +2446,7 @@ cost_agg(Path *path, PlannerInfo *root,
 		 * recursion; but for the purposes of this calculation assume it stays
 		 * constant.
 		 */
-		depth = ceil( log(nbatches) / log(num_partitions) );
+		depth = ceil(log(nbatches) / log(num_partitions));
 
 		/*
 		 * Estimate number of pages read and written. For each level of

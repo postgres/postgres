@@ -186,8 +186,8 @@ deccvasc(const char *cp, int len, decimal *np)
 	if (risnull(CSTRINGTYPE, cp))
 		return 0;
 
-	str = pnstrdup(cp, len);		/* decimal_in always converts the complete
-									 * string */
+	str = pnstrdup(cp, len);	/* decimal_in always converts the complete
+								 * string */
 	if (!str)
 		ret = ECPG_INFORMIX_NUM_UNDERFLOW;
 	else

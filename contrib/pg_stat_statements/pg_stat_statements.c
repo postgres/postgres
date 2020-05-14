@@ -2681,6 +2681,7 @@ JumbleRowMarks(pgssJumbleState *jstate, List *rowMarks)
 	foreach(lc, rowMarks)
 	{
 		RowMarkClause *rowmark = lfirst_node(RowMarkClause, lc);
+
 		if (!rowmark->pushedDown)
 		{
 			APP_JUMB(rowmark->rti);

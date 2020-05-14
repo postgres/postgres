@@ -44,7 +44,7 @@ bzero2(void *buf, size_t len)
 	memset(buf, 0, len);
 }
 
-static void (* volatile bzero_p)(void *, size_t) = bzero2;
+static void (*volatile bzero_p) (void *, size_t) = bzero2;
 
 void
 explicit_bzero(void *buf, size_t len)

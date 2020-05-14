@@ -300,9 +300,9 @@ TupleHashEntry
 LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 					 bool *isnew)
 {
-	TupleHashEntry	entry;
-	MemoryContext	oldContext;
-	uint32			hash;
+	TupleHashEntry entry;
+	MemoryContext oldContext;
+	uint32		hash;
 
 	/* Need to run the hash functions in short-lived context */
 	oldContext = MemoryContextSwitchTo(hashtable->tempcxt);
@@ -326,8 +326,8 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 uint32
 TupleHashTableHash(TupleHashTable hashtable, TupleTableSlot *slot)
 {
-	MemoryContext   oldContext;
-	uint32          hash;
+	MemoryContext oldContext;
+	uint32		hash;
 
 	hashtable->inputslot = slot;
 	hashtable->in_hash_funcs = hashtable->tab_hash_funcs;
@@ -350,8 +350,8 @@ TupleHashEntry
 LookupTupleHashEntryHash(TupleHashTable hashtable, TupleTableSlot *slot,
 						 bool *isnew, uint32 hash)
 {
-	TupleHashEntry	entry;
-	MemoryContext	oldContext;
+	TupleHashEntry entry;
+	MemoryContext oldContext;
 
 	/* Need to run the hash functions in short-lived context */
 	oldContext = MemoryContextSwitchTo(hashtable->tempcxt);

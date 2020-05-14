@@ -35,7 +35,7 @@ typedef struct DimensionInfo
 {
 	int			nvalues;		/* number of deduplicated values */
 	int			nbytes;			/* number of bytes (serialized) */
-	int			nbytes_aligned;	/* size of deserialized data with alignment */
+	int			nbytes_aligned; /* size of deserialized data with alignment */
 	int			typlen;			/* pg_type.typlen */
 	bool		typbyval;		/* pg_type.typbyval */
 } DimensionInfo;

@@ -43,13 +43,13 @@ ObjectAddress
 CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 		   char castmethod, DependencyType behavior)
 {
-	Relation		relation;
-	HeapTuple		tuple;
-	Oid				castid;
-	Datum			values[Natts_pg_cast];
-	bool			nulls[Natts_pg_cast];
-	ObjectAddress	myself,
-					referenced;
+	Relation	relation;
+	HeapTuple	tuple;
+	Oid			castid;
+	Datum		values[Natts_pg_cast];
+	bool		nulls[Natts_pg_cast];
+	ObjectAddress myself,
+				referenced;
 
 	relation = table_open(CastRelationId, RowExclusiveLock);
 

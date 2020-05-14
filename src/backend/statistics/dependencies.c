@@ -800,7 +800,7 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 	else if (IsA(clause, ScalarArrayOpExpr))
 	{
 		/* If it's an scalar array operator, check for Var IN Const. */
-		ScalarArrayOpExpr	   *expr = (ScalarArrayOpExpr *) clause;
+		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) clause;
 
 		/*
 		 * Reject ALL() variant, we only care about ANY/IN.
@@ -827,8 +827,9 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 		/*
 		 * If it's not an "=" operator, just ignore the clause, as it's not
 		 * compatible with functional dependencies. The operator is identified
-		 * simply by looking at which function it uses to estimate selectivity.
-		 * That's a bit strange, but it's what other similar places do.
+		 * simply by looking at which function it uses to estimate
+		 * selectivity. That's a bit strange, but it's what other similar
+		 * places do.
 		 */
 		if (get_oprrest(expr->opno) != F_EQSEL)
 			return false;
@@ -929,7 +930,8 @@ static MVDependency *
 find_strongest_dependency(MVDependencies **dependencies, int ndependencies,
 						  Bitmapset *attnums)
 {
-	int			i, j;
+	int			i,
+				j;
 	MVDependency *strongest = NULL;
 
 	/* number of attnums in clauses */
@@ -967,8 +969,8 @@ find_strongest_dependency(MVDependencies **dependencies, int ndependencies,
 
 			/*
 			 * this dependency is stronger, but we must still check that it's
-			 * fully matched to these attnums. We perform this check last as it's
-			 * slightly more expensive than the previous checks.
+			 * fully matched to these attnums. We perform this check last as
+			 * it's slightly more expensive than the previous checks.
 			 */
 			if (dependency_is_fully_matched(dependency, attnums))
 				strongest = dependency; /* save new best match */

@@ -138,7 +138,7 @@ foreach my $char (@characters)
 	# Decomposition size
 	# Print size of decomposition
 	my $decomp_size = scalar(@decomp_elts);
-	die if $decomp_size > 0x1F;		# to not overrun bitmask
+	die if $decomp_size > 0x1F;    # to not overrun bitmask
 
 	my $first_decomp = shift @decomp_elts;
 
@@ -153,7 +153,7 @@ foreach my $char (@characters)
 	if ($decomp_size == 2)
 	{
 		# Should this be used for recomposition?
-		if ($character_hash{$first_decomp}
+		if (   $character_hash{$first_decomp}
 			&& $character_hash{$first_decomp}->{class} != 0)
 		{
 			$flags .= " | DECOMP_NO_COMPOSE";

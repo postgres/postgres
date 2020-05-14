@@ -94,7 +94,8 @@ while (my $line = <$INPUT>)
 	my $nfkc_utf8   = codepoint_string_to_hex($nfkc);
 	my $nfkd_utf8   = codepoint_string_to_hex($nfkd);
 
-	print $OUTPUT "\t{ $linenum, { $source_utf8 }, { { $nfc_utf8 }, { $nfd_utf8 }, { $nfkc_utf8 }, { $nfkd_utf8 } } },\n";
+	print $OUTPUT
+	  "\t{ $linenum, { $source_utf8 }, { { $nfc_utf8 }, { $nfd_utf8 }, { $nfkc_utf8 }, { $nfkd_utf8 } } },\n";
 }
 
 # Output terminator entry

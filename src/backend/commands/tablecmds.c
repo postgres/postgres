@@ -177,7 +177,7 @@ typedef struct AlteredTableInfo
 	List	   *changedIndexOids;	/* OIDs of indexes to rebuild */
 	List	   *changedIndexDefs;	/* string definitions of same */
 	char	   *replicaIdentityIndex;	/* index to reset as REPLICA IDENTITY */
-	char	   *clusterOnIndex;	/* index to use for CLUSTER */
+	char	   *clusterOnIndex; /* index to use for CLUSTER */
 } AlteredTableInfo;
 
 /* Struct describing one new constraint to check in Phase 3 scan */
@@ -1265,9 +1265,9 @@ RemoveRelations(DropStmt *drop)
 	if (drop->concurrent)
 	{
 		/*
-		 * Note that for temporary relations this lock may get upgraded
-		 * later on, but as no other session can access a temporary
-		 * relation, this is actually fine.
+		 * Note that for temporary relations this lock may get upgraded later
+		 * on, but as no other session can access a temporary relation, this
+		 * is actually fine.
 		 */
 		lockmode = ShareUpdateExclusiveLock;
 		Assert(drop->removeType == OBJECT_INDEX);
@@ -1620,10 +1620,10 @@ ExecuteTruncate(TruncateStmt *stmt)
 				}
 
 				/*
-				 * Inherited TRUNCATE commands perform access
-				 * permission checks on the parent table only.
-				 * So we skip checking the children's permissions
-				 * and don't call truncate_check_perms() here.
+				 * Inherited TRUNCATE commands perform access permission
+				 * checks on the parent table only. So we skip checking the
+				 * children's permissions and don't call
+				 * truncate_check_perms() here.
 				 */
 				truncate_check_rel(RelationGetRelid(rel), rel->rd_rel);
 				truncate_check_activity(rel);
@@ -2650,6 +2650,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 								 errmsg("column \"%s\" inherits from generated column but specifies identity",
 										def->colname)));
 				}
+
 				/*
 				 * If the parent column is not generated, then take whatever
 				 * the child column definition says.
@@ -7500,8 +7501,8 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue, LOCKMODE loc
 	 */
 	foreach(lc, RelationGetIndexList(rel))
 	{
-		Oid         indexoid = lfirst_oid(lc);
-		Relation    indrel;
+		Oid			indexoid = lfirst_oid(lc);
+		Relation	indrel;
 		AttrNumber	indattnum = 0;
 
 		indrel = index_open(indexoid, lockmode);
@@ -16993,7 +16994,7 @@ static void
 DropClonedTriggersFromPartition(Oid partitionId)
 {
 	ScanKeyData skey;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	trigtup;
 	Relation	tgrel;
 	ObjectAddresses *objects;

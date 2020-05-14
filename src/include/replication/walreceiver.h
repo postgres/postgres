@@ -74,11 +74,11 @@ typedef struct
 	TimeLineID	receiveStartTLI;
 
 	/*
-	 * flushedUpto-1 is the last byte position that has already been
-	 * received, and receivedTLI is the timeline it came from.  At the first
-	 * startup of walreceiver, these are set to receiveStart and
-	 * receiveStartTLI. After that, walreceiver updates these whenever it
-	 * flushes the received WAL to disk.
+	 * flushedUpto-1 is the last byte position that has already been received,
+	 * and receivedTLI is the timeline it came from.  At the first startup of
+	 * walreceiver, these are set to receiveStart and receiveStartTLI. After
+	 * that, walreceiver updates these whenever it flushes the received WAL to
+	 * disk.
 	 */
 	XLogRecPtr	flushedUpto;
 	TimeLineID	receivedTLI;

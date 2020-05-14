@@ -1595,9 +1595,9 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 FullTransactionId
 XLogRecGetFullXid(XLogReaderState *record)
 {
-	TransactionId	xid,
-					next_xid;
-	uint32			epoch;
+	TransactionId xid,
+				next_xid;
+	uint32		epoch;
 
 	/*
 	 * This function is only safe during replay, because it depends on the
@@ -1610,8 +1610,8 @@ XLogRecGetFullXid(XLogReaderState *record)
 	epoch = EpochFromFullTransactionId(ShmemVariableCache->nextFullXid);
 
 	/*
-	 * If xid is numerically greater than next_xid, it has to be from the
-	 * last epoch.
+	 * If xid is numerically greater than next_xid, it has to be from the last
+	 * epoch.
 	 */
 	if (unlikely(xid > next_xid))
 		--epoch;

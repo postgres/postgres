@@ -303,8 +303,8 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		/*
 		 * Check that non-superuser has used password to establish connection;
 		 * otherwise, he's piggybacking on the postgres server's user
-		 * identity. See also dblink_security_check() in contrib/dblink
-		 * and check_conn_params.
+		 * identity. See also dblink_security_check() in contrib/dblink and
+		 * check_conn_params.
 		 */
 		if (!superuser_arg(user->userid) && UserMappingPasswordRequired(user) &&
 			!PQconnectionUsedPassword(conn))
@@ -361,6 +361,7 @@ UserMappingPasswordRequired(UserMapping *user)
 	foreach(cell, user->options)
 	{
 		DefElem    *def = (DefElem *) lfirst(cell);
+
 		if (strcmp(def->defname, "password_required") == 0)
 			return defGetBoolean(def);
 	}

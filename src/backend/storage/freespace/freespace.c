@@ -287,7 +287,8 @@ FreeSpaceMapPrepareTruncateRel(Relation rel, BlockNumber nblocks)
 	{
 		buf = fsm_readbuf(rel, first_removed_address, false);
 		if (!BufferIsValid(buf))
-			return InvalidBlockNumber;	/* nothing to do; the FSM was already smaller */
+			return InvalidBlockNumber;	/* nothing to do; the FSM was already
+										 * smaller */
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 		/* NO EREPORT(ERROR) from here till changes are logged */
@@ -317,7 +318,8 @@ FreeSpaceMapPrepareTruncateRel(Relation rel, BlockNumber nblocks)
 	{
 		new_nfsmblocks = fsm_logical_to_physical(first_removed_address);
 		if (smgrnblocks(rel->rd_smgr, FSM_FORKNUM) <= new_nfsmblocks)
-			return InvalidBlockNumber;	/* nothing to do; the FSM was already smaller */
+			return InvalidBlockNumber;	/* nothing to do; the FSM was already
+										 * smaller */
 	}
 
 	return new_nfsmblocks;

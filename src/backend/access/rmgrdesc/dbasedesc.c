@@ -35,7 +35,7 @@ dbase_desc(StringInfo buf, XLogReaderState *record)
 	else if (info == XLOG_DBASE_DROP)
 	{
 		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) rec;
-		int		i;
+		int			i;
 
 		appendStringInfo(buf, "dir");
 		for (i = 0; i < xlrec->ntablespaces; i++)

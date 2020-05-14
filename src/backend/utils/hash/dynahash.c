@@ -1719,7 +1719,10 @@ hash_corrupted(HTAB *hashp)
 int
 my_log2(long num)
 {
-	/* guard against too-large input, which would be invalid for pg_ceil_log2_*() */
+	/*
+	 * guard against too-large input, which would be invalid for
+	 * pg_ceil_log2_*()
+	 */
 	if (num > LONG_MAX / 2)
 		num = LONG_MAX / 2;
 

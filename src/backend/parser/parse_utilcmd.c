@@ -990,7 +990,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 	/*
 	 * We must fill the attmap now so that it can be used to process generated
 	 * column default expressions in the per-column loop below.
-	*/
+	 */
 	new_attno = 1;
 	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 		 parent_attno++)
@@ -2194,7 +2194,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 				 * mentioned above.
 				 */
 				Datum		attoptions =
-					get_attoptions(RelationGetRelid(index_rel), i + 1);
+				get_attoptions(RelationGetRelid(index_rel), i + 1);
 
 				defopclass = GetDefaultOpClass(attform->atttypid,
 											   index_rel->rd_rel->relam);

@@ -320,9 +320,9 @@ CreateExprContext(EState *estate)
 ExprContext *
 CreateWorkExprContext(EState *estate)
 {
-	Size minContextSize = ALLOCSET_DEFAULT_MINSIZE;
-	Size initBlockSize = ALLOCSET_DEFAULT_INITSIZE;
-	Size maxBlockSize = ALLOCSET_DEFAULT_MAXSIZE;
+	Size		minContextSize = ALLOCSET_DEFAULT_MINSIZE;
+	Size		initBlockSize = ALLOCSET_DEFAULT_INITSIZE;
+	Size		maxBlockSize = ALLOCSET_DEFAULT_MAXSIZE;
 
 	/* choose the maxBlockSize to be no larger than 1/16 of work_mem */
 	while (16 * maxBlockSize > work_mem * 1024L)

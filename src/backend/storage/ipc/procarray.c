@@ -434,7 +434,7 @@ ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
 		pgxact->xmin = InvalidTransactionId;
 		/* must be cleared with xid/xmin: */
 		pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-		proc->delayChkpt = false; /* be sure this is cleared in abort */
+		proc->delayChkpt = false;	/* be sure this is cleared in abort */
 		proc->recoveryConflictPending = false;
 
 		Assert(pgxact->nxids == 0);
@@ -456,7 +456,7 @@ ProcArrayEndTransactionInternal(PGPROC *proc, PGXACT *pgxact,
 	pgxact->xmin = InvalidTransactionId;
 	/* must be cleared with xid/xmin: */
 	pgxact->vacuumFlags &= ~PROC_VACUUM_STATE_MASK;
-	proc->delayChkpt = false; /* be sure this is cleared in abort */
+	proc->delayChkpt = false;	/* be sure this is cleared in abort */
 	proc->recoveryConflictPending = false;
 
 	/* Clear the subtransaction-XID cache too while holding the lock */

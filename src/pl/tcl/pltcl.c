@@ -768,7 +768,10 @@ pltcl_handler(PG_FUNCTION_ARGS, bool pltrusted)
 	PG_FINALLY();
 	{
 		/* Restore static pointer, then clean up the prodesc refcount if any */
-		/* (We're being paranoid in case an error is thrown in context deletion) */
+		/*
+		 * (We're being paranoid in case an error is thrown in context
+		 * deletion)
+		 */
 		pltcl_current_call_state = save_call_state;
 		if (current_call_state.prodesc != NULL)
 		{
@@ -2780,9 +2783,8 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		if (callObjc != qdesc->nargs)
 		{
 			Tcl_SetObjResult(interp,
-							 Tcl_NewStringObj(
-											  "argument list length doesn't match number of arguments for query"
-											  ,-1));
+							 Tcl_NewStringObj("argument list length doesn't match number of arguments for query",
+											  -1));
 			return TCL_ERROR;
 		}
 	}

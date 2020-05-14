@@ -482,9 +482,9 @@ typedef struct TableAmRoutine
 											  double *tups_recently_dead);
 
 	/*
-	 * React to VACUUM command on the relation. The VACUUM can be
-	 * triggered by a user or by autovacuum. The specific actions
-	 * performed by the AM will depend heavily on the individual AM.
+	 * React to VACUUM command on the relation. The VACUUM can be triggered by
+	 * a user or by autovacuum. The specific actions performed by the AM will
+	 * depend heavily on the individual AM.
 	 *
 	 * On entry a transaction is already established, and the relation is
 	 * locked with a ShareUpdateExclusive lock.
@@ -586,7 +586,7 @@ typedef struct TableAmRoutine
 	 * TOAST tables for this AM.  If the relation_needs_toast_table callback
 	 * always returns false, this callback is not required.
 	 */
-	Oid		    (*relation_toast_am) (Relation rel);
+	Oid			(*relation_toast_am) (Relation rel);
 
 	/*
 	 * This callback is invoked when detoasting a value stored in a toast

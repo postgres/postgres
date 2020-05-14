@@ -6235,7 +6235,7 @@ static void
 pgstat_recv_resetslrucounter(PgStat_MsgResetslrucounter *msg, int len)
 {
 	int			i;
-	TimestampTz	ts = GetCurrentTimestamp();
+	TimestampTz ts = GetCurrentTimestamp();
 
 	for (i = 0; i < SLRU_NUM_ELEMENTS; i++)
 	{
@@ -6292,10 +6292,10 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	/*
 	 * It is quite possible that a non-aggressive VACUUM ended up skipping
 	 * various pages, however, we'll zero the insert counter here regardless.
-	 * It's currently used only to track when we need to perform an
-	 * "insert" autovacuum, which are mainly intended to freeze newly inserted
-	 * tuples.  Zeroing this may just mean we'll not try to vacuum the table
-	 * again until enough tuples have been inserted to trigger another insert
+	 * It's currently used only to track when we need to perform an "insert"
+	 * autovacuum, which are mainly intended to freeze newly inserted tuples.
+	 * Zeroing this may just mean we'll not try to vacuum the table again
+	 * until enough tuples have been inserted to trigger another insert
 	 * autovacuum.  An anti-wraparound autovacuum will catch any persistent
 	 * stragglers.
 	 */
@@ -6687,7 +6687,7 @@ pgstat_clip_activity(const char *raw_activity)
 int
 pgstat_slru_index(const char *name)
 {
-	int	i;
+	int			i;
 
 	for (i = 0; i < SLRU_NUM_ELEMENTS; i++)
 	{

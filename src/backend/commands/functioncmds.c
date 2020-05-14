@@ -1417,7 +1417,7 @@ CreateCast(CreateCastStmt *stmt)
 	char		castmethod;
 	HeapTuple	tuple;
 	AclResult	aclresult;
-	ObjectAddress	myself;
+	ObjectAddress myself;
 
 	sourcetypeid = typenameTypeId(NULL, stmt->sourcetype);
 	targettypeid = typenameTypeId(NULL, stmt->targettype);

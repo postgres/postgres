@@ -144,6 +144,7 @@ _hash_spareindex(uint32 num_bucket)
 {
 	uint32		splitpoint_group;
 	uint32		splitpoint_phases;
+
 	splitpoint_group = pg_ceil_log2_32(num_bucket);
 
 	if (splitpoint_group < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)

@@ -2036,6 +2036,7 @@ retry1:
 		if (SSLok == 'S' && secure_open_server(port) == -1)
 			return STATUS_ERROR;
 #endif
+
 		/*
 		 * regular startup packet, cancel, etc packet should follow, but not
 		 * another SSL negotiation request, and a GSS request should only
@@ -2066,6 +2067,7 @@ retry1:
 		if (GSSok == 'G' && secure_open_gssapi(port) == -1)
 			return STATUS_ERROR;
 #endif
+
 		/*
 		 * regular startup packet, cancel, etc packet should follow, but not
 		 * another GSS negotiation request, and an SSL request should only

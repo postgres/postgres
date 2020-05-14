@@ -21,16 +21,16 @@
 struct JsonManifestParseContext;
 typedef struct JsonManifestParseContext JsonManifestParseContext;
 
-typedef void (*json_manifest_perfile_callback)(JsonManifestParseContext *,
-								 char *pathname,
-								 size_t size, pg_checksum_type checksum_type,
-								 int checksum_length, uint8 *checksum_payload);
-typedef void (*json_manifest_perwalrange_callback)(JsonManifestParseContext *,
-								 TimeLineID tli,
-								 XLogRecPtr start_lsn, XLogRecPtr end_lsn);
-typedef void (*json_manifest_error_callback)(JsonManifestParseContext *,
-								 const char *fmt, ...) pg_attribute_printf(2, 3)
-								 pg_attribute_noreturn();
+typedef void (*json_manifest_perfile_callback) (JsonManifestParseContext *,
+												char *pathname,
+												size_t size, pg_checksum_type checksum_type,
+												int checksum_length, uint8 *checksum_payload);
+typedef void (*json_manifest_perwalrange_callback) (JsonManifestParseContext *,
+													TimeLineID tli,
+													XLogRecPtr start_lsn, XLogRecPtr end_lsn);
+typedef void (*json_manifest_error_callback) (JsonManifestParseContext *,
+											  const char *fmt,...) pg_attribute_printf(2, 3)
+			pg_attribute_noreturn();
 
 struct JsonManifestParseContext
 {

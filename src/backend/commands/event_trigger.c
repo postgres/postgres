@@ -72,12 +72,6 @@ typedef struct EventTriggerQueryState
 
 static EventTriggerQueryState *currentEventTriggerState = NULL;
 
-typedef struct
-{
-	const char *obtypename;
-	bool		supported;
-} event_trigger_support_data;
-
 /* Support for dropped objects */
 typedef struct SQLDropObject
 {

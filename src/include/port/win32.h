@@ -64,6 +64,6 @@
 struct sockaddr_un
 {
 	unsigned short sun_family;
-	char sun_path[108];
+	char		sun_path[108];
 };
 #define HAVE_STRUCT_SOCKADDR_UN 1

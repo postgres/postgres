@@ -461,7 +461,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	}
 	else
 	{
-		Size	allocated_size;
+		Size		allocated_size;
 
 		/* It isn't in the table yet. allocate and initialize it */
 		structPtr = ShmemAllocRaw(size, &allocated_size);
@@ -539,7 +539,7 @@ pg_get_shmem_allocations(PG_FUNCTION_ARGS)
 	MemoryContext oldcontext;
 	HASH_SEQ_STATUS hstat;
 	ShmemIndexEnt *ent;
-	Size	named_allocated = 0;
+	Size		named_allocated = 0;
 	Datum		values[PG_GET_SHMEM_SIZES_COLS];
 	bool		nulls[PG_GET_SHMEM_SIZES_COLS];
 

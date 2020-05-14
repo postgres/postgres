@@ -692,7 +692,7 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 
 			if (!publish)
 			{
-				bool	ancestor_published = false;
+				bool		ancestor_published = false;
 
 				/*
 				 * For a partition, check if any of the ancestors are
@@ -702,13 +702,16 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 				 */
 				if (am_partition)
 				{
-					List   *ancestors = get_partition_ancestors(relid);
-					ListCell *lc2;
+					List	   *ancestors = get_partition_ancestors(relid);
+					ListCell   *lc2;
 
-					/* Find the "topmost" ancestor that is in this publication. */
+					/*
+					 * Find the "topmost" ancestor that is in this
+					 * publication.
+					 */
 					foreach(lc2, ancestors)
 					{
-						Oid		ancestor = lfirst_oid(lc2);
+						Oid			ancestor = lfirst_oid(lc2);
 
 						if (list_member_oid(GetRelationPublications(ancestor),
 											pub->oid))

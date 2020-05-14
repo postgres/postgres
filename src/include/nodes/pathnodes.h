@@ -740,8 +740,8 @@ typedef struct RelOptInfo
 
 	/* used for partitioned relations: */
 	PartitionScheme part_scheme;	/* Partitioning scheme */
-	int			nparts;			/* Number of partitions; -1 if not yet set;
-								 * in case of a join relation 0 means it's
+	int			nparts;			/* Number of partitions; -1 if not yet set; in
+								 * case of a join relation 0 means it's
 								 * considered unpartitioned */
 	struct PartitionBoundInfoData *boundinfo;	/* Partition bounds */
 	bool		partbounds_merged;	/* True if partition bounds were created
@@ -1654,7 +1654,7 @@ typedef struct SortPath
 typedef struct IncrementalSortPath
 {
 	SortPath	spath;
-	int			nPresortedCols;	/* number of presorted columns */
+	int			nPresortedCols; /* number of presorted columns */
 } IncrementalSortPath;
 
 /*

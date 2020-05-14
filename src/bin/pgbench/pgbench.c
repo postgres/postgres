@@ -200,7 +200,7 @@ typedef enum
 	PART_NONE,					/* no partitioning */
 	PART_RANGE,					/* range partitioning */
 	PART_HASH					/* hash partitioning */
-}			partition_method_t;
+} partition_method_t;
 
 static partition_method_t partition_method = PART_NONE;
 static const char *PARTITION_METHOD[] = {"none", "range", "hash"};
@@ -3321,7 +3321,7 @@ executeMetaCommand(CState *st, instr_time *now)
 
 	if (unlikely(__pg_log_level <= PG_LOG_DEBUG))
 	{
-		PQExpBufferData	buf;
+		PQExpBufferData buf;
 
 		initPQExpBuffer(&buf);
 
@@ -3992,7 +3992,7 @@ initGenerateDataServerSide(PGconn *con)
 	snprintf(sql, sizeof(sql),
 			 "insert into pgbench_accounts(aid,bid,abalance,filler) "
 			 "select aid, (aid - 1) / %d + 1, 0, '' "
-			 "from generate_series(1, "INT64_FORMAT") as aid",
+			 "from generate_series(1, " INT64_FORMAT ") as aid",
 			 naccounts, (int64) naccounts * scale);
 	executeStatement(con, sql);
 
@@ -4390,7 +4390,7 @@ syntax_error(const char *source, int lineno,
 	{
 		fprintf(stderr, "%s\n", line);
 		if (column >= 0)
-			fprintf(stderr, "%*c error found here\n", column+1, '^');
+			fprintf(stderr, "%*c error found here\n", column + 1, '^');
 	}
 
 	exit(1);

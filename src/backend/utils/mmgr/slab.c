@@ -217,10 +217,11 @@ SlabContextCreate(MemoryContext parent,
 	headerSize = offsetof(SlabContext, freelist) + freelistSize;
 
 #ifdef MEMORY_CONTEXT_CHECKING
+
 	/*
-	 * With memory checking, we need to allocate extra space for the bitmap
-	 * of free chunks. The bitmap is an array of bools, so we don't need to
-	 * worry about alignment.
+	 * With memory checking, we need to allocate extra space for the bitmap of
+	 * free chunks. The bitmap is an array of bools, so we don't need to worry
+	 * about alignment.
 	 */
 	headerSize += chunksPerBlock * sizeof(bool);
 #endif

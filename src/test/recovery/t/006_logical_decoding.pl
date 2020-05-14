@@ -93,8 +93,7 @@ $stdout_recv = $node_master->pg_recvlogical_upto(
 	'include-xids'     => '0',
 	'skip-empty-xacts' => '1');
 chomp($stdout_recv);
-is($stdout_recv, '',
-	'pg_recvlogical acknowledged changes');
+is($stdout_recv, '', 'pg_recvlogical acknowledged changes');
 
 $node_master->safe_psql('postgres', 'CREATE DATABASE otherdb');
 
@@ -143,23 +142,28 @@ is($node_master->slot('otherdb_slot')->{'slot_name'},
 # Test logical slot advancing and its durability.
 my $logical_slot = 'logical_slot';
 $node_master->safe_psql('postgres',
-	"SELECT pg_create_logical_replication_slot('$logical_slot', 'test_decoding', false);");
-$node_master->psql('postgres', "
+	"SELECT pg_create_logical_replication_slot('$logical_slot', 'test_decoding', false);"
+);
+$node_master->psql(
+	'postgres', "
 	CREATE TABLE tab_logical_slot (a int);
 	INSERT INTO tab_logical_slot VALUES (generate_series(1,10));");
-my $current_lsn = $node_master->safe_psql('postgres',
-	"SELECT pg_current_wal_lsn();");
+my $current_lsn =
+  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 chomp($current_lsn);
 my $psql_rc = $node_master->psql('postgres',
-	"SELECT pg_replication_slot_advance('$logical_slot', '$current_lsn'::pg_lsn);");
+	"SELECT pg_replication_slot_advance('$logical_slot', '$current_lsn'::pg_lsn);"
+);
 is($psql_rc, '0', 'slot advancing with logical slot');
 my $logical_restart_lsn_pre = $node_master->safe_psql('postgres',
-	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$logical_slot';");
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$logical_slot';"
+);
 chomp($logical_restart_lsn_pre);
 # Slot advance should persist across clean restarts.
 $node_master->restart;
 my $logical_restart_lsn_post = $node_master->safe_psql('postgres',
-	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$logical_slot';");
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$logical_slot';"
+);
 chomp($logical_restart_lsn_post);
 ok(($logical_restart_lsn_pre cmp $logical_restart_lsn_post) == 0,
 	"logical slot advance persists across restarts");

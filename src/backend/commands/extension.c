@@ -1402,39 +1402,39 @@ CreateExtensionInternal(char *extensionName,
 	 * does what is needed, we try to find a sequence of update scripts that
 	 * will get us there.
 	 */
-		filename = get_extension_script_filename(pcontrol, NULL, versionName);
-		if (stat(filename, &fst) == 0)
-		{
-			/* Easy, no extra scripts */
-			updateVersions = NIL;
-		}
-		else
-		{
-			/* Look for best way to install this version */
-			List	   *evi_list;
-			ExtensionVersionInfo *evi_start;
-			ExtensionVersionInfo *evi_target;
+	filename = get_extension_script_filename(pcontrol, NULL, versionName);
+	if (stat(filename, &fst) == 0)
+	{
+		/* Easy, no extra scripts */
+		updateVersions = NIL;
+	}
+	else
+	{
+		/* Look for best way to install this version */
+		List	   *evi_list;
+		ExtensionVersionInfo *evi_start;
+		ExtensionVersionInfo *evi_target;
 
-			/* Extract the version update graph from the script directory */
-			evi_list = get_ext_ver_list(pcontrol);
+		/* Extract the version update graph from the script directory */
+		evi_list = get_ext_ver_list(pcontrol);
 
-			/* Identify the target version */
-			evi_target = get_ext_ver_info(versionName, &evi_list);
+		/* Identify the target version */
+		evi_target = get_ext_ver_info(versionName, &evi_list);
 
-			/* Identify best path to reach target */
-			evi_start = find_install_path(evi_list, evi_target,
-										  &updateVersions);
+		/* Identify best path to reach target */
+		evi_start = find_install_path(evi_list, evi_target,
+									  &updateVersions);
 
-			/* Fail if no path ... */
-			if (evi_start == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("extension \"%s\" has no installation script nor update path for version \"%s\"",
-								pcontrol->name, versionName)));
+		/* Fail if no path ... */
+		if (evi_start == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("extension \"%s\" has no installation script nor update path for version \"%s\"",
+							pcontrol->name, versionName)));
 
-			/* Otherwise, install best starting point and then upgrade */
-			versionName = evi_start->name;
-		}
+		/* Otherwise, install best starting point and then upgrade */
+		versionName = evi_start->name;
+	}
 
 	/*
 	 * Fetch control parameters for installation target version

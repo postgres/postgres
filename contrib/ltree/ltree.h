@@ -272,7 +272,7 @@ typedef struct
 #define LTG_GETRNODE(x, siglen) ( LTG_ISONENODE(x) ? LTG_NODE(x) : LTG_RNODE(x, siglen) )
 
 extern ltree_gist *ltree_gist_alloc(bool isalltrue, BITVECP sign, int siglen,
-				 ltree *left, ltree *right);
+									ltree *left, ltree *right);
 
 /* GiST support for ltree[] */
 

@@ -217,7 +217,7 @@ Datum
 pg_file_sync(PG_FUNCTION_ARGS)
 {
 	char	   *filename;
-	struct stat	fst;
+	struct stat fst;
 
 	filename = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 

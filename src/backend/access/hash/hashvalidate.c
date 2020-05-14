@@ -318,7 +318,7 @@ check_hash_func_signature(Oid funcid, int16 amprocnum, Oid argtype)
 			 argtype == XIDOID || argtype == CIDOID))
 			 /* okay, allowed use of hashint4() */ ;
 		else if ((funcid == F_HASHINT8 || funcid == F_HASHINT8EXTENDED) &&
-			(argtype == XID8OID))
+				 (argtype == XID8OID))
 			 /* okay, allowed use of hashint8() */ ;
 		else if ((funcid == F_TIMESTAMP_HASH ||
 				  funcid == F_TIMESTAMP_HASH_EXTENDED) &&

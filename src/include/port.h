@@ -383,7 +383,7 @@ extern float pg_strtof(const char *nptr, char **endptr);
 #endif
 
 #ifndef HAVE_LINK
-extern int link(const char *src, const char *dst);
+extern int	link(const char *src, const char *dst);
 #endif
 
 #ifndef HAVE_MKDTEMP

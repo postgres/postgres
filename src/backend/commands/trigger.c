@@ -2240,8 +2240,8 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 
 			/*
 			 * After a tuple in a partition goes through a trigger, the user
-			 * could have changed the partition key enough that the tuple
-			 * no longer fits the partition.  Verify that.
+			 * could have changed the partition key enough that the tuple no
+			 * longer fits the partition.  Verify that.
 			 */
 			if (trigger->tgisclone &&
 				!ExecPartitionCheck(relinfo, slot, estate, false))

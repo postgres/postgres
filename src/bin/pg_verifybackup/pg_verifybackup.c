@@ -644,11 +644,10 @@ verify_backup_file(verifier_context *context, char *relpath, char *fullpath)
 	}
 
 	/*
-	 * We don't verify checksums at this stage. We first finish verifying
-	 * that we have the expected set of files with the expected sizes, and
-	 * only afterwards verify the checksums. That's because computing
-	 * checksums may take a while, and we'd like to report more obvious
-	 * problems quickly.
+	 * We don't verify checksums at this stage. We first finish verifying that
+	 * we have the expected set of files with the expected sizes, and only
+	 * afterwards verify the checksums. That's because computing checksums may
+	 * take a while, and we'd like to report more obvious problems quickly.
 	 */
 }
 
@@ -707,7 +706,7 @@ verify_backup_checksums(verifier_context *context)
  */
 static void
 verify_file_checksum(verifier_context *context, manifest_file *m,
-					   char *fullpath)
+					 char *fullpath)
 {
 	pg_checksum_context checksum_ctx;
 	char	   *relpath = m->pathname;

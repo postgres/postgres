@@ -943,7 +943,7 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 
 	/* fetch options support procedure if specified */
 	if (amoptsprocnum != 0)
-		procid =index_getprocid(indrel, attnum, amoptsprocnum);
+		procid = index_getprocid(indrel, attnum, amoptsprocnum);
 
 	if (!OidIsValid(procid))
 	{
@@ -953,7 +953,7 @@ index_opclass_options(Relation indrel, AttrNumber attnum, Datum attoptions,
 		bool		isnull;
 
 		if (!DatumGetPointer(attoptions))
-			return NULL;	/* ok, no options, no procedure */
+			return NULL;		/* ok, no options, no procedure */
 
 		/*
 		 * Report an error if the opclass's options-parsing procedure does not

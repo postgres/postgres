@@ -851,7 +851,7 @@ pg_fe_scram_build_secret(const char *password)
 	}
 
 	result = scram_build_secret(saltbuf, SCRAM_DEFAULT_SALT_LEN,
-								  SCRAM_DEFAULT_ITERATIONS, password);
+								SCRAM_DEFAULT_ITERATIONS, password);
 
 	if (prep_password)
 		free(prep_password);

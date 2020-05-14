@@ -201,7 +201,7 @@ detoast_attr(struct varlena *attr)
  */
 struct varlena *
 detoast_attr_slice(struct varlena *attr,
-							  int32 sliceoffset, int32 slicelength)
+				   int32 sliceoffset, int32 slicelength)
 {
 	struct varlena *preslice;
 	struct varlena *result;
@@ -220,12 +220,12 @@ detoast_attr_slice(struct varlena *attr,
 
 		/*
 		 * For compressed values, we need to fetch enough slices to decompress
-		 * at least the requested part (when a prefix is requested). Otherwise,
-		 * just fetch all slices.
+		 * at least the requested part (when a prefix is requested).
+		 * Otherwise, just fetch all slices.
 		 */
 		if (slicelength > 0 && sliceoffset >= 0)
 		{
-			int32 max_size;
+			int32		max_size;
 
 			/*
 			 * Determine maximum amount of compressed data needed for a prefix
@@ -253,7 +253,7 @@ detoast_attr_slice(struct varlena *attr,
 		Assert(!VARATT_IS_EXTERNAL_INDIRECT(redirect.pointer));
 
 		return detoast_attr_slice(redirect.pointer,
-											 sliceoffset, slicelength);
+								  sliceoffset, slicelength);
 	}
 	else if (VARATT_IS_EXTERNAL_EXPANDED(attr))
 	{
@@ -343,7 +343,8 @@ toast_fetch_datum(struct varlena *attr)
 		SET_VARSIZE(result, attrsize + VARHDRSZ);
 
 	if (attrsize == 0)
-		return result;		/* Probably shouldn't happen, but just in case. */
+		return result;			/* Probably shouldn't happen, but just in
+								 * case. */
 
 	/*
 	 * Open the toast relation and its indexes
@@ -387,9 +388,9 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
 
 	/*
-	 * It's nonsense to fetch slices of a compressed datum unless when it's
-	 * a prefix -- this isn't lo_* we can't return a compressed datum which
-	 * is meaningful to toast later.
+	 * It's nonsense to fetch slices of a compressed datum unless when it's a
+	 * prefix -- this isn't lo_* we can't return a compressed datum which is
+	 * meaningful to toast later.
 	 */
 	Assert(!VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer) || 0 == sliceoffset);
 

@@ -71,7 +71,7 @@ static int	initialize_SSL(PGconn *conn);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
 static char *SSLerrmessage(unsigned long ecode);
 static void SSLerrfree(char *buf);
-static int PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
+static int	PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 
 static int	my_sock_read(BIO *h, char *buf, int size);
 static int	my_sock_write(BIO *h, const char *buf, int size);
@@ -819,17 +819,16 @@ initialize_SSL(PGconn *conn)
 	}
 
 	/*
-	 * Delegate the client cert password prompt to the libpq wrapper
-	 * callback if any is defined.
+	 * Delegate the client cert password prompt to the libpq wrapper callback
+	 * if any is defined.
 	 *
 	 * If the application hasn't installed its own and the sslpassword
-	 * parameter is non-null, we install ours now to make sure we
-	 * supply PGconn->sslpassword to OpenSSL instead of letting it
-	 * prompt on stdin.
+	 * parameter is non-null, we install ours now to make sure we supply
+	 * PGconn->sslpassword to OpenSSL instead of letting it prompt on stdin.
 	 *
-	 * This will replace OpenSSL's default PEM_def_callback (which
-	 * prompts on stdin), but we're only setting it for this SSL
-	 * context so it's harmless.
+	 * This will replace OpenSSL's default PEM_def_callback (which prompts on
+	 * stdin), but we're only setting it for this SSL context so it's
+	 * harmless.
 	 */
 	if (PQsslKeyPassHook
 		|| (conn->sslpassword && strlen(conn->sslpassword) > 0))
@@ -1205,14 +1204,14 @@ initialize_SSL(PGconn *conn)
 			/*
 			 * We'll try to load the file in DER (binary ASN.1) format, and if
 			 * that fails too, report the original error. This could mask
-			 * issues where there's something wrong with a DER-format cert, but
-			 * we'd have to duplicate openssl's format detection to be smarter
-			 * than this. We can't just probe for a leading -----BEGIN because
-			 * PEM can have leading non-matching lines and blanks. OpenSSL
-			 * doesn't expose its get_name(...) and its PEM routines don't
-			 * differentiate between failure modes in enough detail to let us
-			 * tell the difference between "not PEM, try DER" and "wrong
-			 * password".
+			 * issues where there's something wrong with a DER-format cert,
+			 * but we'd have to duplicate openssl's format detection to be
+			 * smarter than this. We can't just probe for a leading -----BEGIN
+			 * because PEM can have leading non-matching lines and blanks.
+			 * OpenSSL doesn't expose its get_name(...) and its PEM routines
+			 * don't differentiate between failure modes in enough detail to
+			 * let us tell the difference between "not PEM, try DER" and
+			 * "wrong password".
 			 */
 			if (SSL_use_PrivateKey_file(conn->ssl, fnbuf, SSL_FILETYPE_ASN1) != 1)
 			{
@@ -1677,7 +1676,7 @@ PQdefaultSSLKeyPassHook(char *buf, int size, PGconn *conn)
 		if (strlen(conn->sslpassword) + 1 > size)
 			fprintf(stderr, libpq_gettext("WARNING: sslpassword truncated\n"));
 		strncpy(buf, conn->sslpassword, size);
-		buf[size-1] = '\0';
+		buf[size - 1] = '\0';
 		return strlen(buf);
 	}
 	else
@@ -1707,7 +1706,7 @@ PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook)
 static int
 PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 {
-	PGconn *conn = userdata;
+	PGconn	   *conn = userdata;
 
 	if (PQsslKeyPassHook)
 		return PQsslKeyPassHook(buf, size, conn);

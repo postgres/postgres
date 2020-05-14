@@ -338,7 +338,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				opfamilyoid,	/* oid of containing opfamily */
 				opclassoid;		/* oid of opclass we create */
 	int			maxOpNumber,	/* amstrategies value */
-				optsProcNumber,	/* amoptsprocnum value */
+				optsProcNumber, /* amoptsprocnum value */
 				maxProcNumber;	/* amsupport value */
 	bool		amstorage;		/* amstorage flag */
 	List	   *operators;		/* OpFamilyMember list for operators */
@@ -779,7 +779,7 @@ AlterOpFamily(AlterOpFamilyStmt *stmt)
 	Oid			amoid,			/* our AM's oid */
 				opfamilyoid;	/* oid of opfamily */
 	int			maxOpNumber,	/* amstrategies value */
-				optsProcNumber,	/* amopclassopts value */
+				optsProcNumber, /* amopclassopts value */
 				maxProcNumber;	/* amsupport value */
 	HeapTuple	tup;
 	Form_pg_am	amform;
@@ -1252,6 +1252,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid,
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("btree equal image functions must return boolean")));
+
 			/*
 			 * pg_amproc functions are indexed by (lefttype, righttype), but
 			 * an equalimage function can only be called at CREATE INDEX time.

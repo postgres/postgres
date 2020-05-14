@@ -348,8 +348,7 @@ is($catalog_xmin, '',
 	'catalog xmin of cascaded slot still null with hs_feedback reset');
 
 note "check change primary_conninfo without restart";
-$node_standby_2->append_conf('postgresql.conf',
-	"primary_slot_name = ''");
+$node_standby_2->append_conf('postgresql.conf', "primary_slot_name = ''");
 $node_standby_2->enable_streaming($node_master);
 $node_standby_2->reload;
 
@@ -357,7 +356,7 @@ $node_standby_2->reload;
 $node_standby_1->stop;
 
 my $newval = $node_master->safe_psql('postgres',
-'INSERT INTO replayed(val) SELECT coalesce(max(val),0) + 1 AS newval FROM replayed RETURNING val'
+	'INSERT INTO replayed(val) SELECT coalesce(max(val),0) + 1 AS newval FROM replayed RETURNING val'
 );
 $node_master->wait_for_catchup($node_standby_2, 'replay',
 	$node_master->lsn('insert'));
@@ -370,22 +369,26 @@ is($is_replayed, qq(1), "standby_2 didn't replay master value $newval");
 my $phys_slot = 'phys_slot';
 $node_master->safe_psql('postgres',
 	"SELECT pg_create_physical_replication_slot('$phys_slot', true);");
-$node_master->psql('postgres', "
+$node_master->psql(
+	'postgres', "
 	CREATE TABLE tab_phys_slot (a int);
 	INSERT INTO tab_phys_slot VALUES (generate_series(1,10));");
-my $current_lsn = $node_master->safe_psql('postgres',
-	"SELECT pg_current_wal_lsn();");
+my $current_lsn =
+  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 chomp($current_lsn);
 my $psql_rc = $node_master->psql('postgres',
-	"SELECT pg_replication_slot_advance('$phys_slot', '$current_lsn'::pg_lsn);");
+	"SELECT pg_replication_slot_advance('$phys_slot', '$current_lsn'::pg_lsn);"
+);
 is($psql_rc, '0', 'slot advancing with physical slot');
 my $phys_restart_lsn_pre = $node_master->safe_psql('postgres',
-	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$phys_slot';");
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$phys_slot';"
+);
 chomp($phys_restart_lsn_pre);
 # Slot advance should persist across clean restarts.
 $node_master->restart;
 my $phys_restart_lsn_post = $node_master->safe_psql('postgres',
-	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$phys_slot';");
+	"SELECT restart_lsn from pg_replication_slots WHERE slot_name = '$phys_slot';"
+);
 chomp($phys_restart_lsn_post);
-ok(($phys_restart_lsn_pre cmp $phys_restart_lsn_post) == 0,
+ok( ($phys_restart_lsn_pre cmp $phys_restart_lsn_post) == 0,
 	"physical slot advance persists across restarts");

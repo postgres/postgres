@@ -854,8 +854,8 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 	ListCell   *lc;
 
 	/*
-	 * If this partitioned relation has a default partition and is itself
-	 * a partition (as evidenced by partition_qual being not NIL), we first
+	 * If this partitioned relation has a default partition and is itself a
+	 * partition (as evidenced by partition_qual being not NIL), we first
 	 * check if the clauses contradict the partition constraint.  If they do,
 	 * there's no need to generate any steps as it'd already be proven that no
 	 * partitions need to be scanned.

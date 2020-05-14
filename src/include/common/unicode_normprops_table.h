@@ -9,7 +9,7 @@ typedef struct
 {
 	unsigned int codepoint:21;
 	signed int	quickcheck:4;	/* really UnicodeNormalizationQC */
-}			pg_unicode_normprops;
+} pg_unicode_normprops;
 
 static const pg_unicode_normprops UnicodeNormProps_NFC_QC[] = {
 	{0x0300, UNICODE_NORM_QC_MAYBE},

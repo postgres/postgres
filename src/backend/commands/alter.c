@@ -470,7 +470,7 @@ ExecAlterObjectDependsStmt(AlterObjectDependsStmt *stmt, ObjectAddress *refAddre
 	}
 	else
 	{
-		List   *currexts;
+		List	   *currexts;
 
 		/* Avoid duplicates */
 		currexts = getAutoExtensionsOfObject(address.classId,

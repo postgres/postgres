@@ -42,7 +42,7 @@ extern void AddFileToBackupManifest(backup_manifest_info *manifest,
 									const char *spcoid,
 									const char *pathname, size_t size,
 									pg_time_t mtime,
-									pg_checksum_context * checksum_ctx);
+									pg_checksum_context *checksum_ctx);
 extern void AddWALInfoToBackupManifest(backup_manifest_info *manifest,
 									   XLogRecPtr startptr,
 									   TimeLineID starttli, XLogRecPtr endptr,

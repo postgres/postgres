@@ -553,7 +553,7 @@ smgrnblocks(SMgrRelation reln, ForkNumber forknum)
 void
 smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nblocks)
 {
-	int		i;
+	int			i;
 
 	/*
 	 * Get rid of any buffers for the about-to-be-deleted blocks. bufmgr will
@@ -580,11 +580,11 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 
 		/*
 		 * We might as well update the local smgr_fsm_nblocks and
-		 * smgr_vm_nblocks settings. The smgr cache inval message that
-		 * this function sent will cause other backends to invalidate
-		 * their copies of smgr_fsm_nblocks and smgr_vm_nblocks,
-		 * and these ones too at the next command boundary.
-		 * But these ensure they aren't outright wrong until then.
+		 * smgr_vm_nblocks settings. The smgr cache inval message that this
+		 * function sent will cause other backends to invalidate their copies
+		 * of smgr_fsm_nblocks and smgr_vm_nblocks, and these ones too at the
+		 * next command boundary. But these ensure they aren't outright wrong
+		 * until then.
 		 */
 		if (forknum[i] == FSM_FORKNUM)
 			reln->smgr_fsm_nblocks = nblocks[i];

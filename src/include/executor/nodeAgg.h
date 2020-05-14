@@ -281,10 +281,13 @@ typedef struct AggStatePerPhaseData
 
 	ExprState  *evaltrans;		/* evaluation of transition functions  */
 
-	/* cached variants of the compiled expression */
-	ExprState  *evaltrans_cache
-				[2]		/* 0: outerops; 1: TTSOpsMinimalTuple */
-				[2];	/* 0: no NULL check; 1: with NULL check */
+	/*----------
+	 * Cached variants of the compiled expression.
+	 * first subscript: 0: outerops; 1: TTSOpsMinimalTuple
+	 * second subscript: 0: no NULL check; 1: with NULL check
+	 *----------
+	 */
+	ExprState  *evaltrans_cache[2][2];
 }			AggStatePerPhaseData;
 
 /*

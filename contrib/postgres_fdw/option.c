@@ -144,13 +144,13 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 		}
 		else if (strcmp(def->defname, "password_required") == 0)
 		{
-			bool pw_required = defGetBoolean(def);
+			bool		pw_required = defGetBoolean(def);
 
 			/*
 			 * Only the superuser may set this option on a user mapping, or
 			 * alter a user mapping on which this option is set. We allow a
-			 * user to clear this option if it's set - in fact, we don't have a
-			 * choice since we can't see the old mapping when validating an
+			 * user to clear this option if it's set - in fact, we don't have
+			 * a choice since we can't see the old mapping when validating an
 			 * alter.
 			 */
 			if (!superuser() && !pw_required)
@@ -204,11 +204,11 @@ InitPgFdwOptions(void)
 		{"fetch_size", ForeignServerRelationId, false},
 		{"fetch_size", ForeignTableRelationId, false},
 		{"password_required", UserMappingRelationId, false},
+
 		/*
 		 * sslcert and sslkey are in fact libpq options, but we repeat them
-		 * here to allow them to appear in both foreign server context
-		 * (when we generate libpq options) and user mapping context
-		 * (from here).
+		 * here to allow them to appear in both foreign server context (when
+		 * we generate libpq options) and user mapping context (from here).
 		 */
 		{"sslcert", UserMappingRelationId, true},
 		{"sslkey", UserMappingRelationId, true},

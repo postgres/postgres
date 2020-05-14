@@ -540,29 +540,29 @@ HandleCheckpointerInterrupts(void)
 		ProcessConfigFile(PGC_SIGHUP);
 
 		/*
-		 * Checkpointer is the last process to shut down, so we ask it to
-		 * hold the keys for a range of other tasks required most of which
-		 * have nothing to do with checkpointing at all.
+		 * Checkpointer is the last process to shut down, so we ask it to hold
+		 * the keys for a range of other tasks required most of which have
+		 * nothing to do with checkpointing at all.
 		 *
-		 * For various reasons, some config values can change dynamically
-		 * so the primary copy of them is held in shared memory to make
-		 * sure all backends see the same value.  We make Checkpointer
-		 * responsible for updating the shared memory copy if the
-		 * parameter setting changes because of SIGHUP.
+		 * For various reasons, some config values can change dynamically so
+		 * the primary copy of them is held in shared memory to make sure all
+		 * backends see the same value.  We make Checkpointer responsible for
+		 * updating the shared memory copy if the parameter setting changes
+		 * because of SIGHUP.
 		 */
 		UpdateSharedMemoryConfig();
 	}
 	if (ShutdownRequestPending)
 	{
 		/*
-		 * From here on, elog(ERROR) should end with exit(1), not send
-		 * control back to the sigsetjmp block above
+		 * From here on, elog(ERROR) should end with exit(1), not send control
+		 * back to the sigsetjmp block above
 		 */
 		ExitOnAnyError = true;
 		/* Close down the database */
 		ShutdownXLOG(0, 0);
 		/* Normal exit from the checkpointer is here */
-		proc_exit(0);		/* done */
+		proc_exit(0);			/* done */
 	}
 }
 

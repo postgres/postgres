@@ -672,7 +672,7 @@ sub init_from_backup
 
 	$params{has_streaming} = 0 unless defined $params{has_streaming};
 	$params{has_restoring} = 0 unless defined $params{has_restoring};
-	$params{standby} = 1 unless defined $params{standby};
+	$params{standby}       = 1 unless defined $params{standby};
 
 	print
 	  "# Initializing node \"$node_name\" from backup \"$backup_name\" of node \"$root_name\"\n";
@@ -703,7 +703,8 @@ port = $port
 			"unix_socket_directories = '$host'");
 	}
 	$self->enable_streaming($root_node) if $params{has_streaming};
-	$self->enable_restoring($root_node, $params{standby}) if $params{has_restoring};
+	$self->enable_restoring($root_node, $params{standby})
+	  if $params{has_restoring};
 	return;
 }
 

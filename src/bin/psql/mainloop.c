@@ -238,11 +238,10 @@ MainLoop(FILE *source)
 			bool		found_q = false;
 
 			/*
-			 * The assistance words, help/exit/quit, must have no
-			 * whitespace before them, and only whitespace after, with an
-			 * optional semicolon.  This prevents indented use of these
-			 * words, perhaps as identifiers, from invoking the assistance
-			 * behavior.
+			 * The assistance words, help/exit/quit, must have no whitespace
+			 * before them, and only whitespace after, with an optional
+			 * semicolon.  This prevents indented use of these words, perhaps
+			 * as identifiers, from invoking the assistance behavior.
 			 */
 			if (pg_strncasecmp(first_word, "help", 4) == 0)
 			{

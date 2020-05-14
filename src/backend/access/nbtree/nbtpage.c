@@ -1566,7 +1566,8 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 				BTScanInsert itup_key;
 				ItemId		itemid;
 				IndexTuple	targetkey;
-				BlockNumber leftsib, leafblkno;
+				BlockNumber leftsib,
+							leafblkno;
 				Buffer		sleafbuf;
 
 				itemid = PageGetItemId(page, P_HIKEY);
@@ -1777,6 +1778,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 #ifdef USE_ASSERT_CHECKING
+
 	/*
 	 * This is just an assertion because _bt_lock_subtree_parent should have
 	 * guaranteed tuple has the expected contents
@@ -2368,7 +2370,8 @@ _bt_lock_subtree_parent(Relation rel, BlockNumber child, BTStack stack,
 						Buffer *subtreeparent, OffsetNumber *poffset,
 						BlockNumber *topparent, BlockNumber *topparentrightsib)
 {
-	BlockNumber parent, leftsibparent;
+	BlockNumber parent,
+				leftsibparent;
 	OffsetNumber parentoffset,
 				maxoff;
 	Buffer		pbuf;
@@ -2439,9 +2442,9 @@ _bt_lock_subtree_parent(Relation rel, BlockNumber child, BTStack stack,
 	/*
 	 * Now make sure that the parent deletion is itself safe by examining the
 	 * child's grandparent page.  Recurse, passing the parent page as the
-	 * child page (child's grandparent is the parent on the next level up).
-	 * If parent deletion is unsafe, then child deletion must also be unsafe
-	 * (in which case caller cannot delete any pages at all).
+	 * child page (child's grandparent is the parent on the next level up). If
+	 * parent deletion is unsafe, then child deletion must also be unsafe (in
+	 * which case caller cannot delete any pages at all).
 	 */
 	*topparent = parent;
 	*topparentrightsib = opaque->btpo_next;

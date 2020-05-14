@@ -2153,8 +2153,8 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		RelationPutHeapTuple(relation, buffer, heaptuples[ndone], false);
 
 		/*
-		 * Note that heap_multi_insert is not used for catalog tuples yet,
-		 * but this will cover the gap once that is the case.
+		 * Note that heap_multi_insert is not used for catalog tuples yet, but
+		 * this will cover the gap once that is the case.
 		 */
 		if (needwal && need_cids)
 			log_heap_new_cid(relation, heaptuples[ndone]);

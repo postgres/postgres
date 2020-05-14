@@ -1698,12 +1698,12 @@ Datum
 pg_stat_get_slru(PG_FUNCTION_ARGS)
 {
 #define PG_STAT_GET_SLRU_COLS	9
-	ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc		tupdesc;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
 	Tuplestorestate *tupstore;
-	MemoryContext 	per_query_ctx;
-	MemoryContext 	oldcontext;
-	int				i;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	int			i;
 	PgStat_SLRUStats *stats;
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -1733,12 +1733,12 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	/* request SLRU stats from the stat collector */
 	stats = pgstat_fetch_slru();
 
-	for (i = 0; ; i++)
+	for (i = 0;; i++)
 	{
 		/* for each row */
 		Datum		values[PG_STAT_GET_SLRU_COLS];
 		bool		nulls[PG_STAT_GET_SLRU_COLS];
-		PgStat_SLRUStats	stat = stats[i];
+		PgStat_SLRUStats stat = stats[i];
 		const char *name;
 
 		name = pgstat_slru_name(i);

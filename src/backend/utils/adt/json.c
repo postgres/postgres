@@ -1337,7 +1337,7 @@ json_typeof(PG_FUNCTION_ARGS)
 	JsonLexContext *lex;
 	JsonTokenType tok;
 	char	   *type;
-	JsonParseErrorType	result;
+	JsonParseErrorType result;
 
 	json = PG_GETARG_TEXT_PP(0);
 	lex = makeJsonLexContext(json, false);

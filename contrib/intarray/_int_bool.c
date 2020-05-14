@@ -256,7 +256,7 @@ checkcondition_arr(void *checkval, ITEM *item, void *options)
 static bool
 checkcondition_bit(void *checkval, ITEM *item, void *siglen)
 {
-	return GETBIT(checkval, HASHVAL(item->val, (int)(intptr_t) siglen));
+	return GETBIT(checkval, HASHVAL(item->val, (int) (intptr_t) siglen));
 }
 
 /*
@@ -300,7 +300,7 @@ bool
 signconsistent(QUERYTYPE *query, BITVECP sign, int siglen, bool calcnot)
 {
 	return execute(GETQUERY(query) + query->size - 1,
-				   (void *) sign, (void *)(intptr_t) siglen, calcnot,
+				   (void *) sign, (void *) (intptr_t) siglen, calcnot,
 				   checkcondition_bit);
 }
 

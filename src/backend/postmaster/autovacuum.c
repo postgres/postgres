@@ -3097,7 +3097,7 @@ relation_needs_vacanalyze(Oid relid,
 
 		/* Determine if this table needs vacuum or analyze. */
 		*dovacuum = force_vacuum || (vactuples > vacthresh) ||
-					(vac_ins_base_thresh >= 0 && instuples > vacinsthresh);
+			(vac_ins_base_thresh >= 0 && instuples > vacinsthresh);
 		*doanalyze = (anltuples > anlthresh);
 	}
 	else

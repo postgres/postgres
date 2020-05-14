@@ -1091,7 +1091,8 @@ btvacuumpage(BTVacState *vstate, BlockNumber scanblkno)
 	void	   *callback_state = vstate->callback_state;
 	Relation	rel = info->index;
 	bool		attempt_pagedel;
-	BlockNumber blkno, backtrack_to;
+	BlockNumber blkno,
+				backtrack_to;
 	Buffer		buf;
 	Page		page;
 	BTPageOpaque opaque;

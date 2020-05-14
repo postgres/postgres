@@ -55,8 +55,10 @@ while (<$feat>)
 		print "  <entry>$feature_id</entry>\n";
 	}
 	print "  <entry>",
-		  defined($feature_packages{$feature_id}) ? $feature_packages{$feature_id} : "",
-		  "</entry>\n";
+	  defined($feature_packages{$feature_id})
+	  ? $feature_packages{$feature_id}
+	  : "",
+	  "</entry>\n";
 	if ($subfeature_id)
 	{
 		print "  <entry>$subfeature_name</entry>\n";

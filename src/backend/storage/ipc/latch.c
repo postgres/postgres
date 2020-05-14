@@ -1099,9 +1099,9 @@ WaitEventAdjustKqueue(WaitEventSet *set, WaitEvent *event, int old_events)
 			 !PostmasterIsAlive())
 	{
 		/*
-		 * The extra PostmasterIsAliveInternal() check prevents false alarms on
-		 * systems that give a different value for getppid() while being traced
-		 * by a debugger.
+		 * The extra PostmasterIsAliveInternal() check prevents false alarms
+		 * on systems that give a different value for getppid() while being
+		 * traced by a debugger.
 		 */
 		set->report_postmaster_not_running = true;
 	}

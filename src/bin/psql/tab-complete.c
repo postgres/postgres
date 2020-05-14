@@ -1743,14 +1743,14 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER INDEX <foo> SET|RESET ( */
 	else if (Matches("ALTER", "INDEX", MatchAny, "RESET", "("))
 		COMPLETE_WITH("fillfactor",
-					  "vacuum_cleanup_index_scale_factor", "deduplicate_items",	/* BTREE */
+					  "vacuum_cleanup_index_scale_factor", "deduplicate_items", /* BTREE */
 					  "fastupdate", "gin_pending_list_limit",	/* GIN */
 					  "buffering",	/* GiST */
 					  "pages_per_range", "autosummarize"	/* BRIN */
 			);
 	else if (Matches("ALTER", "INDEX", MatchAny, "SET", "("))
 		COMPLETE_WITH("fillfactor =",
-					  "vacuum_cleanup_index_scale_factor =", "deduplicate_items =",	/* BTREE */
+					  "vacuum_cleanup_index_scale_factor =", "deduplicate_items =", /* BTREE */
 					  "fastupdate =", "gin_pending_list_limit =",	/* GIN */
 					  "buffering =",	/* GiST */
 					  "pages_per_range =", "autosummarize ="	/* BRIN */

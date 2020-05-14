@@ -307,7 +307,7 @@ checkcondition_arr(void *checkval, QueryOperand *val, ExecPhraseData *data)
 static bool
 checkcondition_bit(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
-	void *key = (SignTSVector *) checkval;
+	void	   *key = (SignTSVector *) checkval;
 
 	/*
 	 * we are not able to find a prefix in signature tree
@@ -499,8 +499,8 @@ hemdistsign(BITVECP a, BITVECP b, int siglen)
 static int
 hemdist(SignTSVector *a, SignTSVector *b)
 {
-	int siglena = GETSIGLEN(a);
-	int siglenb = GETSIGLEN(b);
+	int			siglena = GETSIGLEN(a);
+	int			siglenb = GETSIGLEN(b);
 
 	if (ISALLTRUE(a))
 	{
@@ -721,9 +721,9 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			else
 				size_alpha = SIGLENBIT(siglen) -
 					sizebitvec((cache[j].allistrue) ?
-								GETSIGN(datum_l) :
-								GETSIGN(cache[j].sign),
-								siglen);
+							   GETSIGN(datum_l) :
+							   GETSIGN(cache[j].sign),
+							   siglen);
 		}
 		else
 			size_alpha = hemdistsign(cache[j].sign, GETSIGN(datum_l), siglen);

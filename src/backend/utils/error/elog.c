@@ -403,7 +403,7 @@ matches_backtrace_functions(const char *funcname)
 	p = backtrace_symbol_list;
 	for (;;)
 	{
-		if (*p == '\0')		/* end of backtrace_symbol_list */
+		if (*p == '\0')			/* end of backtrace_symbol_list */
 			break;
 
 		if (strcmp(funcname, p) == 0)
@@ -845,7 +845,7 @@ errmsg(const char *fmt,...)
 int
 errbacktrace(void)
 {
-	ErrorData   *edata = &errordata[errordata_stack_depth];
+	ErrorData  *edata = &errordata[errordata_stack_depth];
 	MemoryContext oldcontext;
 
 	recursion_depth++;

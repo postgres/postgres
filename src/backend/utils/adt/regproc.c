@@ -1152,7 +1152,8 @@ regcollationout(PG_FUNCTION_ARGS)
 			char	   *nspname;
 
 			/*
-			 * Would this collation be found by regcollationin? If not, qualify it.
+			 * Would this collation be found by regcollationin? If not,
+			 * qualify it.
 			 */
 			if (CollationIsVisible(collationid))
 				nspname = NULL;

@@ -16,16 +16,16 @@ $master->start;
 for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
 {
 	my $backup_path = $master->backup_dir . '/' . $algorithm;
-	my @backup = ('pg_basebackup', '-D', $backup_path,
-				  '--manifest-checksums', $algorithm,
-				  '--no-sync');
+	my @backup      = (
+		'pg_basebackup', '-D', $backup_path,
+		'--manifest-checksums', $algorithm, '--no-sync');
 	my @verify = ('pg_verifybackup', '-e', $backup_path);
 
 	# A backup with a bogus algorithm should fail.
 	if ($algorithm eq 'bogus')
 	{
 		$master->command_fails(\@backup,
-							   "backup fails with algorithm \"$algorithm\"");
+			"backup fails with algorithm \"$algorithm\"");
 		next;
 	}
 
@@ -44,14 +44,14 @@ for my $algorithm (qw(bogus none crc32c sha224 sha256 sha384 sha512))
 	{
 		my $manifest = slurp_file("$backup_path/backup_manifest");
 		my $count_of_algorithm_in_manifest =
-			(() = $manifest =~ /$algorithm/mig);
-		cmp_ok($count_of_algorithm_in_manifest, '>', 100,
-			   "$algorithm is mentioned many times in the manifest");
+		  (() = $manifest =~ /$algorithm/mig);
+		cmp_ok($count_of_algorithm_in_manifest,
+			'>', 100, "$algorithm is mentioned many times in the manifest");
 	}
 
 	# Make sure that it verifies OK.
 	$master->command_ok(\@verify,
-						"verify backup with algorithm \"$algorithm\"");
+		"verify backup with algorithm \"$algorithm\"");
 
 	# Remove backup immediately to save disk space.
 	rmtree($backup_path);

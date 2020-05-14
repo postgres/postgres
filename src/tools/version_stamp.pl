@@ -35,23 +35,23 @@ my ($dotneeded);
 
 if ($minor =~ m/^\d+$/)
 {
-	$dotneeded    = 1;
+	$dotneeded = 1;
 }
 elsif ($minor eq "devel")
 {
-	$dotneeded    = 0;
+	$dotneeded = 0;
 }
 elsif ($minor =~ m/^alpha\d+$/)
 {
-	$dotneeded    = 0;
+	$dotneeded = 0;
 }
 elsif ($minor =~ m/^beta\d+$/)
 {
-	$dotneeded    = 0;
+	$dotneeded = 0;
 }
 elsif ($minor =~ m/^rc\d+$/)
 {
-	$dotneeded    = 0;
+	$dotneeded = 0;
 }
 else
 {

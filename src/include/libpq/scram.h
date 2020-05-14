@@ -30,7 +30,7 @@ extern int	pg_be_scram_exchange(void *opaq, const char *input, int inputlen,
 /* Routines to handle and check SCRAM-SHA-256 secret */
 extern char *pg_be_scram_build_secret(const char *password);
 extern bool parse_scram_secret(const char *secret, int *iterations, char **salt,
-								 uint8 *stored_key, uint8 *server_key);
+							   uint8 *stored_key, uint8 *server_key);
 extern bool scram_verify_plain_password(const char *username,
 										const char *password, const char *secret);
 

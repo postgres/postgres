@@ -57,7 +57,7 @@
 
 ProcessingMode Mode = InitProcessing;
 
-BackendType	MyBackendType;
+BackendType MyBackendType;
 
 /* List of lock files to be removed at proc exit */
 static List *lock_files = NIL;

@@ -112,8 +112,8 @@ get_decomposed_size(pg_wchar code, bool compat)
 	/*
 	 * Fast path for Hangul characters not stored in tables to save memory as
 	 * decomposition is algorithmic. See
-	 * https://www.unicode.org/reports/tr15/tr15-18.html, annex 10 for details on
-	 * the matter.
+	 * https://www.unicode.org/reports/tr15/tr15-18.html, annex 10 for details
+	 * on the matter.
 	 */
 	if (code >= SBASE && code < SBASE + SCOUNT)
 	{
@@ -238,8 +238,8 @@ decompose_code(pg_wchar code, bool compat, pg_wchar **result, int *current)
 	/*
 	 * Fast path for Hangul characters not stored in tables to save memory as
 	 * decomposition is algorithmic. See
-	 * https://www.unicode.org/reports/tr15/tr15-18.html, annex 10 for details on
-	 * the matter.
+	 * https://www.unicode.org/reports/tr15/tr15-18.html, annex 10 for details
+	 * on the matter.
 	 */
 	if (code >= SBASE && code < SBASE + SCOUNT)
 	{
@@ -369,8 +369,8 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 			continue;
 
 		/*
-		 * Per Unicode (https://www.unicode.org/reports/tr15/tr15-18.html) annex 4,
-		 * a sequence of two adjacent characters in a string is an
+		 * Per Unicode (https://www.unicode.org/reports/tr15/tr15-18.html)
+		 * annex 4, a sequence of two adjacent characters in a string is an
 		 * exchangeable pair if the combining class (from the Unicode
 		 * Character Database) for the first character is greater than the
 		 * combining class for the second, and the second is not a starter.  A
@@ -396,10 +396,10 @@ unicode_normalize(UnicodeNormalizationForm form, const pg_wchar *input)
 		return decomp_chars;
 
 	/*
-	 * The last phase of NFC and NFKC is the recomposition of the reordered Unicode
-	 * string using combining classes. The recomposed string cannot be longer
-	 * than the decomposed one, so make the allocation of the output string
-	 * based on that assumption.
+	 * The last phase of NFC and NFKC is the recomposition of the reordered
+	 * Unicode string using combining classes. The recomposed string cannot be
+	 * longer than the decomposed one, so make the allocation of the output
+	 * string based on that assumption.
 	 */
 	recomp_chars = (pg_wchar *) ALLOC((decomp_size + 1) * sizeof(pg_wchar));
 	if (!recomp_chars)
@@ -551,4 +551,4 @@ unicode_is_normalized_quickcheck(UnicodeNormalizationForm form, const pg_wchar *
 	return result;
 }
 
-#endif			/* !FRONTEND */
+#endif							/* !FRONTEND */

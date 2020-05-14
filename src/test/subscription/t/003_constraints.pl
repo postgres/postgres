@@ -115,7 +115,8 @@ $node_publisher->wait_for_catchup('tap_sub');
 # The trigger should cause the update to be skipped on subscriber
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(bid), max(bid) FROM tab_fk_ref;");
-is($result, qq(2|1|2), 'check replica update column trigger applied on subscriber');
+is($result, qq(2|1|2),
+	'check replica update column trigger applied on subscriber');
 
 # Update on a column not specified in the trigger, but it will trigger
 # anyway because logical replication ships all columns in an update.
@@ -126,7 +127,8 @@ $node_publisher->wait_for_catchup('tap_sub');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(id), max(id) FROM tab_fk_ref;");
-is($result, qq(2|1|2), 'check column trigger applied on even for other column');
+is($result, qq(2|1|2),
+	'check column trigger applied on even for other column');
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');

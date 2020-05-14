@@ -98,7 +98,7 @@ typedef enum PublicationPartOpt
 	PUBLICATION_PART_ROOT,
 	PUBLICATION_PART_LEAF,
 	PUBLICATION_PART_ALL,
-}			PublicationPartOpt;
+} PublicationPartOpt;
 
 extern List *GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt);
 extern List *GetAllTablesPublications(void);

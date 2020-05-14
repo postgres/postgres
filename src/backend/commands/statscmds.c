@@ -431,7 +431,7 @@ AlterStatistics(AlterStatsStmt *stmt)
 	Datum		repl_val[Natts_pg_statistic_ext];
 	bool		repl_null[Natts_pg_statistic_ext];
 	bool		repl_repl[Natts_pg_statistic_ext];
-	ObjectAddress	address;
+	ObjectAddress address;
 	int			newtarget = stmt->stxstattarget;
 
 	/* Limit statistics target to a sane range */
@@ -455,9 +455,9 @@ AlterStatistics(AlterStatsStmt *stmt)
 	stxoid = get_statistics_object_oid(stmt->defnames, stmt->missing_ok);
 
 	/*
-	 * If we got here and the OID is not valid, it means the statistics
-	 * does not exist, but the command specified IF EXISTS. So report
-	 * this as a simple NOTICE and we're done.
+	 * If we got here and the OID is not valid, it means the statistics does
+	 * not exist, but the command specified IF EXISTS. So report this as a
+	 * simple NOTICE and we're done.
 	 */
 	if (!OidIsValid(stxoid))
 	{

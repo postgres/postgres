@@ -322,8 +322,8 @@ AlterPublicationOptions(AlterPublicationStmt *stmt, Relation rel,
 		 * invalidate all partitions contained in the respective partition
 		 * trees, not just those explicitly mentioned in the publication.
 		 */
-		List   *relids = GetPublicationRelations(pubform->oid,
-												 PUBLICATION_PART_ALL);
+		List	   *relids = GetPublicationRelations(pubform->oid,
+													 PUBLICATION_PART_ALL);
 
 		/*
 		 * We don't want to send too many individual messages, at some point
@@ -380,8 +380,8 @@ AlterPublicationTables(AlterPublicationStmt *stmt, Relation rel,
 		PublicationDropTables(pubid, rels, false);
 	else						/* DEFELEM_SET */
 	{
-		List   *oldrelids = GetPublicationRelations(pubid,
-													PUBLICATION_PART_ROOT);
+		List	   *oldrelids = GetPublicationRelations(pubid,
+														PUBLICATION_PART_ROOT);
 		List	   *delrels = NIL;
 		ListCell   *oldlc;
 

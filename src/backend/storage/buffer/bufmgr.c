@@ -2994,7 +2994,7 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber *forkNum,
 				bufHdr->tag.forkNum == forkNum[j] &&
 				bufHdr->tag.blockNum >= firstDelBlock[j])
 			{
-				InvalidateBuffer(bufHdr); /* releases spinlock */
+				InvalidateBuffer(bufHdr);	/* releases spinlock */
 				break;
 			}
 		}

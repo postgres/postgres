@@ -3464,7 +3464,7 @@ restart:
 	 */
 	foreach(cell, parent_cons)
 	{
-		Oid		parent = lfirst_oid(cell);
+		Oid			parent = lfirst_oid(cell);
 
 		ScanKeyInit(&key,
 					Anum_pg_constraint_oid,
@@ -3487,9 +3487,9 @@ restart:
 			 *
 			 * Because of this arrangement, we can correctly catch all
 			 * relevant relations by adding to 'parent_cons' all rows with
-			 * valid conparentid, and to the 'oids' list all rows with a
-			 * zero conparentid.  If any oids are added to 'oids', redo the
-			 * first loop above by setting 'restart'.
+			 * valid conparentid, and to the 'oids' list all rows with a zero
+			 * conparentid.  If any oids are added to 'oids', redo the first
+			 * loop above by setting 'restart'.
 			 */
 			if (OidIsValid(con->conparentid))
 				parent_cons = list_append_unique_oid(parent_cons,

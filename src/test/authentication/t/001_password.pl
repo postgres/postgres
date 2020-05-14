@@ -12,7 +12,8 @@ use TestLib;
 use Test::More;
 if (!$use_unix_sockets)
 {
-	plan skip_all => "authentication tests cannot run without Unix-domain sockets";
+	plan skip_all =>
+	  "authentication tests cannot run without Unix-domain sockets";
 }
 else
 {

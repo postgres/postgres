@@ -150,20 +150,26 @@ ok($logfile =~ qr/multiple recovery targets specified/,
 # Check behavior when recovery ends before target is reached
 
 $node_standby = get_new_node('standby_8');
-$node_standby->init_from_backup($node_master, 'my_backup',
-								has_restoring => 1, standby => 0);
+$node_standby->init_from_backup(
+	$node_master, 'my_backup',
+	has_restoring => 1,
+	standby       => 0);
 $node_standby->append_conf('postgresql.conf',
-						   "recovery_target_name = 'does_not_exist'");
+	"recovery_target_name = 'does_not_exist'");
 
-run_log(['pg_ctl', '-D', $node_standby->data_dir,
-		 '-l', $node_standby->logfile, 'start']);
+run_log(
+	[
+		'pg_ctl',               '-D', $node_standby->data_dir, '-l',
+		$node_standby->logfile, 'start'
+	]);
 
 # wait up to 180s for postgres to terminate
-foreach my $i (0..1800)
+foreach my $i (0 .. 1800)
 {
-	last if ! -f $node_standby->data_dir . '/postmaster.pid';
+	last if !-f $node_standby->data_dir . '/postmaster.pid';
 	usleep(100_000);
 }
 $logfile = slurp_file($node_standby->logfile());
-ok($logfile =~ qr/FATAL:  recovery ended before configured recovery target was reached/,
+ok( $logfile =~
+	  qr/FATAL:  recovery ended before configured recovery target was reached/,
 	'recovery end before target reached is a fatal error');

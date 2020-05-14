@@ -407,8 +407,8 @@ gist_te(ltree_gist *key, ltree *query, int siglen)
 
 typedef struct LtreeSignature
 {
-	BITVECP	sign;
-	int		siglen;
+	BITVECP		sign;
+	int			siglen;
 } LtreeSignature;
 
 static bool

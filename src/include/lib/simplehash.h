@@ -515,7 +515,7 @@ SH_GROW(SH_TYPE * tb, uint32 newsize)
  * This is a separate static inline function, so it can be reliably be inlined
  * into its wrapper functions even if SH_SCOPE is extern.
  */
-static inline	SH_ELEMENT_TYPE *
+static inline SH_ELEMENT_TYPE *
 SH_INSERT_HASH_INTERNAL(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash, bool *found)
 {
 	uint32		startelem;
@@ -689,7 +689,7 @@ restart:
 SH_SCOPE	SH_ELEMENT_TYPE *
 SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found)
 {
-	uint32 hash = SH_HASH_KEY(tb, key);
+	uint32		hash = SH_HASH_KEY(tb, key);
 
 	return SH_INSERT_HASH_INTERNAL(tb, key, hash, found);
 }
@@ -709,7 +709,7 @@ SH_INSERT_HASH(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash, bool *found)
  * This is a separate static inline function, so it can be reliably be inlined
  * into its wrapper functions even if SH_SCOPE is extern.
  */
-static inline	SH_ELEMENT_TYPE *
+static inline SH_ELEMENT_TYPE *
 SH_LOOKUP_HASH_INTERNAL(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash)
 {
 	const uint32 startelem = SH_INITIAL_BUCKET(tb, hash);
@@ -746,7 +746,7 @@ SH_LOOKUP_HASH_INTERNAL(SH_TYPE * tb, SH_KEY_TYPE key, uint32 hash)
 SH_SCOPE	SH_ELEMENT_TYPE *
 SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key)
 {
-	uint32 hash = SH_HASH_KEY(tb, key);
+	uint32		hash = SH_HASH_KEY(tb, key);
 
 	return SH_LOOKUP_HASH_INTERNAL(tb, key, hash);
 }
@@ -991,8 +991,8 @@ SH_STAT(SH_TYPE * tb)
 	}
 
 	sh_log("size: " UINT64_FORMAT ", members: %u, filled: %f, total chain: %u, max chain: %u, avg chain: %f, total_collisions: %u, max_collisions: %i, avg_collisions: %f",
-		 tb->size, tb->members, fillfactor, total_chain_length, max_chain_length, avg_chain_length,
-		 total_collisions, max_collisions, avg_collisions);
+		   tb->size, tb->members, fillfactor, total_chain_length, max_chain_length, avg_chain_length,
+		   total_collisions, max_collisions, avg_collisions);
 }
 
 #endif							/* SH_DEFINE */

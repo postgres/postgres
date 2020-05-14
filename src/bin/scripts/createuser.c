@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSrRiIlLc:PE",
 							long_options, &optindex)) != -1)
 	{
-		char   *endptr;
+		char	   *endptr;
 
 		switch (c)
 		{
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 				break;
 			case 'c':
 				conn_limit = strtol(optarg, &endptr, 10);
-				if (*endptr != '\0' || conn_limit < -1)	/* minimum valid value */
+				if (*endptr != '\0' || conn_limit < -1) /* minimum valid value */
 				{
 					pg_log_error("invalid value for --connection-limit: %s",
 								 optarg);

@@ -1050,7 +1050,8 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 #ifdef HAVE_LIBZ
 			if (compresslevel != 0)
 			{
-				int		fd = dup(fileno(stdout));
+				int			fd = dup(fileno(stdout));
+
 				if (fd < 0)
 				{
 					pg_log_error("could not duplicate stdout: %m");
@@ -1224,7 +1225,7 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 	if (strcmp(basedir, "-") == 0 && manifest)
 	{
 		char		header[512];
-		PQExpBufferData	buf;
+		PQExpBufferData buf;
 
 		initPQExpBuffer(&buf);
 		ReceiveBackupManifestInMemory(conn, &buf);

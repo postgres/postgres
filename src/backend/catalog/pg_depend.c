@@ -706,8 +706,8 @@ getAutoExtensionsOfObject(Oid classId, Oid objectId)
 {
 	List	   *result = NIL;
 	Relation	depRel;
-	ScanKeyData	key[2];
-	SysScanDesc	scan;
+	ScanKeyData key[2];
+	SysScanDesc scan;
 	HeapTuple	tup;
 
 	depRel = table_open(DependRelationId, AccessShareLock);

@@ -820,7 +820,7 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 int32
 pglz_maximum_compressed_size(int32 rawsize, int32 total_compressed_size)
 {
-	int32 compressed_size;
+	int32		compressed_size;
 
 	/*
 	 * pglz uses one control bit per byte, so we need (rawsize * 9) bits. We

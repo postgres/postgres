@@ -1324,6 +1324,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 											sdepForm->objid);
 					break;
 				case SHARED_DEPENDENCY_POLICY:
+
 					/*
 					 * Try to remove role from policy; if unable to, remove
 					 * policy.
@@ -1335,6 +1336,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 						obj.classId = sdepForm->classid;
 						obj.objectId = sdepForm->objid;
 						obj.objectSubId = sdepForm->objsubid;
+
 						/*
 						 * Acquire lock on object, then verify this dependency
 						 * is still relevant.  If not, the object might have

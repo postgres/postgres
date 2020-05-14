@@ -64,8 +64,8 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	TimeLineID	restartTli;
 
 	/*
-	 * Ignore restore_command when not in archive recovery (meaning
-	 * we are in crash recovery).
+	 * Ignore restore_command when not in archive recovery (meaning we are in
+	 * crash recovery).
 	 */
 	if (!ArchiveRecoveryRequested)
 		goto not_available;

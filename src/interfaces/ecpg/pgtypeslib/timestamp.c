@@ -158,7 +158,8 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 			if (tzn != NULL)
 				*tzn = TZNAME_GLOBAL[(tm->tm_isdst > 0)];
 #endif
-#else							/* not (HAVE_STRUCT_TM_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_STRUCT_TM_TM_ZONE ||
+								 * HAVE_INT_TIMEZONE) */
 			*tzp = 0;
 			/* Mark this as *no* time zone available */
 			tm->tm_isdst = -1;

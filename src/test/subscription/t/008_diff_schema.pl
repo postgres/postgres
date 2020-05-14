@@ -95,11 +95,9 @@ is($result, qq(3|3|3|3),
 # progressing.
 # (https://www.postgresql.org/message-id/flat/a9139c29-7ddd-973b-aa7f-71fed9c38d75%40minerva.info)
 
-$node_publisher->safe_psql('postgres',
-	"CREATE TABLE test_tab2 (a int)");
+$node_publisher->safe_psql('postgres', "CREATE TABLE test_tab2 (a int)");
 
-$node_subscriber->safe_psql('postgres',
-	"CREATE TABLE test_tab2 (a int)");
+$node_subscriber->safe_psql('postgres', "CREATE TABLE test_tab2 (a int)");
 
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION");
@@ -113,15 +111,14 @@ $node_subscriber->poll_query_until('postgres', $synced_query)
 $node_subscriber->safe_psql('postgres',
 	"ALTER TABLE test_tab2 ADD COLUMN b serial PRIMARY KEY");
 
-$node_publisher->safe_psql('postgres',
-	"INSERT INTO test_tab2 VALUES (1)");
+$node_publisher->safe_psql('postgres', "INSERT INTO test_tab2 VALUES (1)");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
-is($node_subscriber->safe_psql('postgres',
-							   "SELECT count(*), min(a), max(a) FROM test_tab2"),
-   qq(1|1|1),
-   'check replicated inserts on subscriber');
+is( $node_subscriber->safe_psql(
+		'postgres', "SELECT count(*), min(a), max(a) FROM test_tab2"),
+	qq(1|1|1),
+	'check replicated inserts on subscriber');
 
 
 $node_subscriber->stop;

@@ -37,13 +37,17 @@ my $common_connstr;
 #
 # This changes ssl/client.key to ssl/client_tmp.key etc for the rest
 # of the tests.
-my @keys = ("client", "client-revoked", "client-der", "client-encrypted-pem", "client-encrypted-der");
+my @keys = (
+	"client",     "client-revoked",
+	"client-der", "client-encrypted-pem",
+	"client-encrypted-der");
 foreach my $key (@keys)
 {
-    copy("ssl/${key}.key", "ssl/${key}_tmp.key")
-        or die "couldn't copy ssl/${key}.key to ssl/${key}_tmp.key for permissions change: $!";
-    chmod 0600, "ssl/${key}_tmp.key"
-        or die "failed to change permissions on ssl/${key}_tmp.key: $!";
+	copy("ssl/${key}.key", "ssl/${key}_tmp.key")
+	  or die
+	  "couldn't copy ssl/${key}.key to ssl/${key}_tmp.key for permissions change: $!";
+	chmod 0600, "ssl/${key}_tmp.key"
+	  or die "failed to change permissions on ssl/${key}_tmp.key: $!";
 }
 
 # Also make a copy of that explicitly world-readable.  We can't
@@ -99,15 +103,17 @@ $node->_update_pid(1);
 
 # Test compatibility of SSL protocols.
 # TLSv1.1 is lower than TLSv1.2, so it won't work.
-$node->append_conf('postgresql.conf',
-		   qq{ssl_min_protocol_version='TLSv1.2'
+$node->append_conf(
+	'postgresql.conf',
+	qq{ssl_min_protocol_version='TLSv1.2'
 ssl_max_protocol_version='TLSv1.1'});
 command_fails(
 	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
 	'restart fails with incorrect SSL protocol bounds');
 # Go back to the defaults, this works.
-$node->append_conf('postgresql.conf',
-		   qq{ssl_min_protocol_version='TLSv1.2'
+$node->append_conf(
+	'postgresql.conf',
+	qq{ssl_min_protocol_version='TLSv1.2'
 ssl_max_protocol_version=''});
 command_ok(
 	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
@@ -395,32 +401,37 @@ test_connect_fails(
 test_connect_ok(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client_tmp.key",
-	"certificate authorization succeeds with correct client cert in PEM format");
+	"certificate authorization succeeds with correct client cert in PEM format"
+);
 
 # correct client cert in unencrypted DER
 test_connect_ok(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-der_tmp.key",
-	"certificate authorization succeeds with correct client cert in DER format");
+	"certificate authorization succeeds with correct client cert in DER format"
+);
 
 # correct client cert in encrypted PEM
 test_connect_ok(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword='dUmmyP^#+'",
-	"certificate authorization succeeds with correct client cert in encrypted PEM format");
+	"certificate authorization succeeds with correct client cert in encrypted PEM format"
+);
 
 # correct client cert in encrypted DER
 test_connect_ok(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-der_tmp.key sslpassword='dUmmyP^#+'",
-	"certificate authorization succeeds with correct client cert in encrypted DER format");
+	"certificate authorization succeeds with correct client cert in encrypted DER format"
+);
 
 # correct client cert in encrypted PEM with wrong password
 test_connect_fails(
 	$common_connstr,
 	"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword='wrong'",
 	qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": bad decrypt\E!,
-	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format");
+	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format"
+);
 
 TODO:
 {
@@ -434,14 +445,16 @@ TODO:
 		$common_connstr,
 		"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key sslpassword=''",
 		qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
-		"certificate authorization fails with correct client cert and empty password in encrypted PEM format");
+		"certificate authorization fails with correct client cert and empty password in encrypted PEM format"
+	);
 
 	# correct client cert in encrypted PEM with no password
 	test_connect_fails(
 		$common_connstr,
 		"user=ssltestuser sslcert=ssl/client.crt sslkey=ssl/client-encrypted-pem_tmp.key",
 		qr!\Qprivate key file "ssl/client-encrypted-pem_tmp.key": processing error\E!,
-		"certificate authorization fails with correct client cert and no password in encrypted PEM format");
+		"certificate authorization fails with correct client cert and no password in encrypted PEM format"
+	);
 
 }
 
@@ -533,5 +546,5 @@ test_connect_fails($common_connstr, "sslmode=require sslcert=ssl/client.crt",
 # clean up
 foreach my $key (@keys)
 {
-    unlink("ssl/${key}_tmp.key");
+	unlink("ssl/${key}_tmp.key");
 }

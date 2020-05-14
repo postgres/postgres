@@ -244,7 +244,7 @@ scan_file(const char *fn, BlockNumber segmentno)
 		}
 		else if (mode == PG_MODE_ENABLE)
 		{
-			int		w;
+			int			w;
 
 			/* Set checksum in page header */
 			header->pd_checksum = csum;

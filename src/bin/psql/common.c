@@ -707,7 +707,7 @@ PrintNotifications(void)
 static bool
 PrintQueryTuples(const PGresult *results)
 {
-	bool result = true;
+	bool		result = true;
 
 	/* write output to \g argument, if any */
 	if (pset.gfname)

@@ -89,8 +89,7 @@ $node->command_fails(
 $node->command_fails(
 	[ 'vacuumdb', '--analyze', '--table', 'vactable(c)', 'postgres' ],
 	'incorrect column name with ANALYZE');
-$node->command_fails(
-	[ 'vacuumdb', '-P', -1, 'postgres' ],
+$node->command_fails([ 'vacuumdb', '-P', -1, 'postgres' ],
 	'negative parallel degree');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--analyze', '--table', 'vactable(a, b)', 'postgres' ],

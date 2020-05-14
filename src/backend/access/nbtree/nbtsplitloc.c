@@ -72,7 +72,7 @@ static bool _bt_afternewitemoff(FindSplitData *state, OffsetNumber maxoff,
 static bool _bt_adjacenthtid(ItemPointer lowhtid, ItemPointer highhtid);
 static OffsetNumber _bt_bestsplitloc(FindSplitData *state, int perfectpenalty,
 									 bool *newitemonleft, FindSplitStrat strategy);
-static int _bt_defaultinterval(FindSplitData *state);
+static int	_bt_defaultinterval(FindSplitData *state);
 static int	_bt_strategy(FindSplitData *state, SplitPoint *leftpage,
 						 SplitPoint *rightpage, FindSplitStrat *strategy);
 static void _bt_interval_edges(FindSplitData *state,

@@ -1213,8 +1213,9 @@ int2abs(PG_FUNCTION_ARGS)
 static int32
 int4gcd_internal(int32 arg1, int32 arg2)
 {
-	int32	swap;
-	int32	a1, a2;
+	int32		swap;
+	int32		a1,
+				a2;
 
 	/*
 	 * Put the greater absolute value in arg1.
@@ -1273,9 +1274,9 @@ int4gcd_internal(int32 arg1, int32 arg2)
 Datum
 int4gcd(PG_FUNCTION_ARGS)
 {
-	int32	arg1 = PG_GETARG_INT32(0);
-	int32	arg2 = PG_GETARG_INT32(1);
-	int32	result;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int32		result;
 
 	result = int4gcd_internal(arg1, arg2);
 
@@ -1288,10 +1289,10 @@ int4gcd(PG_FUNCTION_ARGS)
 Datum
 int4lcm(PG_FUNCTION_ARGS)
 {
-	int32	arg1 = PG_GETARG_INT32(0);
-	int32	arg2 = PG_GETARG_INT32(1);
-	int32	gcd;
-	int32	result;
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	int32		gcd;
+	int32		result;
 
 	/*
 	 * Handle lcm(x, 0) = lcm(0, x) = 0 as a special case.  This prevents a

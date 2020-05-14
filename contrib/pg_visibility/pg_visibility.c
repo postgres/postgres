@@ -384,7 +384,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	rel;
 	ForkNumber	fork;
-	BlockNumber	block;
+	BlockNumber block;
 
 	rel = relation_open(relid, AccessExclusiveLock);
 

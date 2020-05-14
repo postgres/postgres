@@ -60,8 +60,8 @@ typedef struct
 {
 	pid_t		pss_pid;
 	sig_atomic_t pss_signalFlags[NUM_PROCSIGNALS];
-	pg_atomic_uint64	pss_barrierGeneration;
-	pg_atomic_uint32	pss_barrierCheckMask;
+	pg_atomic_uint64 pss_barrierGeneration;
+	pg_atomic_uint32 pss_barrierCheckMask;
 } ProcSignalSlot;
 
 /*
@@ -72,8 +72,8 @@ typedef struct
  */
 typedef struct
 {
-	pg_atomic_uint64	psh_barrierGeneration;
-	ProcSignalSlot		psh_slot[FLEXIBLE_ARRAY_MEMBER];
+	pg_atomic_uint64 psh_barrierGeneration;
+	ProcSignalSlot psh_slot[FLEXIBLE_ARRAY_MEMBER];
 } ProcSignalHeader;
 
 /*
@@ -101,7 +101,7 @@ static void ProcessBarrierPlaceholder(void);
 Size
 ProcSignalShmemSize(void)
 {
-	Size	size;
+	Size		size;
 
 	size = mul_size(NumProcSignalSlots, sizeof(ProcSignalSlot));
 	size = add_size(size, offsetof(ProcSignalHeader, psh_slot));
@@ -124,7 +124,7 @@ ProcSignalShmemInit(void)
 	/* If we're first, initialize. */
 	if (!found)
 	{
-		int		i;
+		int			i;
 
 		pg_atomic_init_u64(&ProcSignal->psh_barrierGeneration, 0);
 
@@ -168,13 +168,13 @@ ProcSignalInit(int pss_idx)
 	/*
 	 * Initialize barrier state. Since we're a brand-new process, there
 	 * shouldn't be any leftover backend-private state that needs to be
-	 * updated. Therefore, we can broadcast the latest barrier generation
-	 * and disregard any previously-set check bits.
+	 * updated. Therefore, we can broadcast the latest barrier generation and
+	 * disregard any previously-set check bits.
 	 *
 	 * NB: This only works if this initialization happens early enough in the
 	 * startup sequence that we haven't yet cached any state that might need
-	 * to be invalidated. That's also why we have a memory barrier here, to
-	 * be sure that any later reads of memory happen strictly after this.
+	 * to be invalidated. That's also why we have a memory barrier here, to be
+	 * sure that any later reads of memory happen strictly after this.
 	 */
 	pg_atomic_write_u32(&slot->pss_barrierCheckMask, 0);
 	barrier_generation =
@@ -320,16 +320,16 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 uint64
 EmitProcSignalBarrier(ProcSignalBarrierType type)
 {
-	uint64	flagbit = UINT64CONST(1) << (uint64) type;
-	uint64	generation;
+	uint64		flagbit = UINT64CONST(1) << (uint64) type;
+	uint64		generation;
 
 	/*
 	 * Set all the flags.
 	 *
-	 * Note that pg_atomic_fetch_or_u32 has full barrier semantics, so this
-	 * is totally ordered with respect to anything the caller did before, and
-	 * anything that we do afterwards. (This is also true of the later call
-	 * to pg_atomic_add_fetch_u64.)
+	 * Note that pg_atomic_fetch_or_u32 has full barrier semantics, so this is
+	 * totally ordered with respect to anything the caller did before, and
+	 * anything that we do afterwards. (This is also true of the later call to
+	 * pg_atomic_add_fetch_u64.)
 	 */
 	for (int i = 0; i < NumProcSignalSlots; i++)
 	{
@@ -349,18 +349,18 @@ EmitProcSignalBarrier(ProcSignalBarrierType type)
 	 * generation.
 	 *
 	 * Concurrency is not a problem here. Backends that have exited don't
-	 * matter, and new backends that have joined since we entered this function
-	 * must already have current state, since the caller is responsible for
-	 * making sure that the relevant state is entirely visible before calling
-	 * this function in the first place. We still have to wake them up -
-	 * because we can't distinguish between such backends and older backends
-	 * that need to update state - but they won't actually need to change
-	 * any state.
+	 * matter, and new backends that have joined since we entered this
+	 * function must already have current state, since the caller is
+	 * responsible for making sure that the relevant state is entirely visible
+	 * before calling this function in the first place. We still have to wake
+	 * them up - because we can't distinguish between such backends and older
+	 * backends that need to update state - but they won't actually need to
+	 * change any state.
 	 */
 	for (int i = NumProcSignalSlots - 1; i >= 0; i--)
 	{
 		volatile ProcSignalSlot *slot = &ProcSignal->psh_slot[i];
-		pid_t	pid = slot->pss_pid;
+		pid_t		pid = slot->pss_pid;
 
 		if (pid != 0)
 			kill(pid, SIGUSR1);
@@ -381,17 +381,17 @@ EmitProcSignalBarrier(ProcSignalBarrierType type)
 void
 WaitForProcSignalBarrier(uint64 generation)
 {
-	long	timeout = 125L;
+	long		timeout = 125L;
 
 	for (int i = NumProcSignalSlots - 1; i >= 0; i--)
 	{
 		volatile ProcSignalSlot *slot = &ProcSignal->psh_slot[i];
-		uint64	oldval;
+		uint64		oldval;
 
 		oldval = pg_atomic_read_u64(&slot->pss_barrierGeneration);
 		while (oldval < generation)
 		{
-			int		events;
+			int			events;
 
 			CHECK_FOR_INTERRUPTS();
 
@@ -408,11 +408,11 @@ WaitForProcSignalBarrier(uint64 generation)
 	}
 
 	/*
-	 * The caller is probably calling this function because it wants to
-	 * read the shared state or perform further writes to shared state once
-	 * all backends are known to have absorbed the barrier. However, the
-	 * read of pss_barrierGeneration was performed unlocked; insert a memory
-	 * barrier to separate it from whatever follows.
+	 * The caller is probably calling this function because it wants to read
+	 * the shared state or perform further writes to shared state once all
+	 * backends are known to have absorbed the barrier. However, the read of
+	 * pss_barrierGeneration was performed unlocked; insert a memory barrier
+	 * to separate it from whatever follows.
 	 */
 	pg_memory_barrier();
 }
@@ -428,8 +428,8 @@ WaitForProcSignalBarrier(uint64 generation)
 void
 ProcessProcSignalBarrier(void)
 {
-	uint64 generation;
-	uint32 flags;
+	uint64		generation;
+	uint32		flags;
 
 	/* Exit quickly if there's no work to do. */
 	if (!ProcSignalBarrierPending)
@@ -437,8 +437,8 @@ ProcessProcSignalBarrier(void)
 	ProcSignalBarrierPending = false;
 
 	/*
-	 * Read the current barrier generation, and then get the flags that
-	 * are set for this backend. Note that pg_atomic_exchange_u32 is a full
+	 * Read the current barrier generation, and then get the flags that are
+	 * set for this backend. Note that pg_atomic_exchange_u32 is a full
 	 * barrier, so we're guaranteed that the read of the barrier generation
 	 * happens before we atomically extract the flags, and that any subsequent
 	 * state changes happen afterward.
@@ -477,8 +477,8 @@ ProcessBarrierPlaceholder(void)
 	 * machinery gets committed. Rename PROCSIGNAL_BARRIER_PLACEHOLDER to
 	 * PROCSIGNAL_BARRIER_SOMETHING_ELSE where SOMETHING_ELSE is something
 	 * appropriately descriptive. Get rid of this function and instead have
-	 * ProcessBarrierSomethingElse. Most likely, that function should live
-	 * in the file pertaining to that subsystem, rather than here.
+	 * ProcessBarrierSomethingElse. Most likely, that function should live in
+	 * the file pertaining to that subsystem, rather than here.
 	 */
 }
 
@@ -515,8 +515,8 @@ CheckProcSignalBarrier(void)
 
 	if (slot != NULL)
 	{
-		uint64	mygen;
-		uint64	curgen;
+		uint64		mygen;
+		uint64		curgen;
 
 		mygen = pg_atomic_read_u64(&slot->pss_barrierGeneration);
 		curgen = pg_atomic_read_u64(&ProcSignal->psh_barrierGeneration);

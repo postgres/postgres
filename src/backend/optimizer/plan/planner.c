@@ -4866,8 +4866,7 @@ create_distinct_paths(PlannerInfo *root,
 		allow_hash = false;		/* policy-based decision not to hash */
 	else
 	{
-		Size		hashentrysize = hash_agg_entry_size(
-			0, cheapest_input_path->pathtarget->width, 0);
+		Size		hashentrysize = hash_agg_entry_size(0, cheapest_input_path->pathtarget->width, 0);
 
 		allow_hash = enable_hashagg_disk ||
 			(hashentrysize * numDistinctRows <= work_mem * 1024L);
@@ -4972,7 +4971,7 @@ create_ordered_paths(PlannerInfo *root,
 		int			presorted_keys;
 
 		is_sorted = pathkeys_count_contained_in(root->sort_pathkeys,
-												 input_path->pathkeys, &presorted_keys);
+												input_path->pathkeys, &presorted_keys);
 
 		if (is_sorted)
 		{
@@ -4986,9 +4985,9 @@ create_ordered_paths(PlannerInfo *root,
 		else
 		{
 			/*
-			 * Try adding an explicit sort, but only to the cheapest total path
-			 * since a full sort should generally add the same cost to all
-			 * paths.
+			 * Try adding an explicit sort, but only to the cheapest total
+			 * path since a full sort should generally add the same cost to
+			 * all paths.
 			 */
 			if (input_path == cheapest_input_path)
 			{
@@ -5010,11 +5009,11 @@ create_ordered_paths(PlannerInfo *root,
 			}
 
 			/*
-			 * If incremental sort is enabled, then try it as well. Unlike with
-			 * regular sorts, we can't just look at the cheapest path, because
-			 * the cost of incremental sort depends on how well presorted the
-			 * path is. Additionally incremental sort may enable a cheaper
-			 * startup path to win out despite higher total cost.
+			 * If incremental sort is enabled, then try it as well. Unlike
+			 * with regular sorts, we can't just look at the cheapest path,
+			 * because the cost of incremental sort depends on how well
+			 * presorted the path is. Additionally incremental sort may enable
+			 * a cheaper startup path to win out despite higher total cost.
 			 */
 			if (!enable_incrementalsort)
 				continue;
@@ -5110,15 +5109,15 @@ create_ordered_paths(PlannerInfo *root,
 				double		total_groups;
 
 				/*
-				 * We don't care if this is the cheapest partial path - we can't
-				 * simply skip it, because it may be partially sorted in which
-				 * case we want to consider adding incremental sort (instead of
-				 * full sort, which is what happens above).
+				 * We don't care if this is the cheapest partial path - we
+				 * can't simply skip it, because it may be partially sorted in
+				 * which case we want to consider adding incremental sort
+				 * (instead of full sort, which is what happens above).
 				 */
 
 				is_sorted = pathkeys_count_contained_in(root->sort_pathkeys,
-														 input_path->pathkeys,
-														 &presorted_keys);
+														input_path->pathkeys,
+														&presorted_keys);
 
 				/* No point in adding incremental sort on fully sorted paths. */
 				if (is_sorted)
@@ -6510,8 +6509,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			int			presorted_keys;
 
 			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													 path->pathkeys,
-													 &presorted_keys);
+													path->pathkeys,
+													&presorted_keys);
 
 			if (path == cheapest_path || is_sorted)
 			{
@@ -6607,8 +6606,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			else if (parse->hasAggs)
 			{
 				/*
-				 * We have aggregation, possibly with plain GROUP BY. Make
-				 * an AggPath.
+				 * We have aggregation, possibly with plain GROUP BY. Make an
+				 * AggPath.
 				 */
 				add_path(grouped_rel, (Path *)
 						 create_agg_path(root,
@@ -6625,8 +6624,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			else if (parse->groupClause)
 			{
 				/*
-				 * We have GROUP BY without aggregation or grouping sets.
-				 * Make a GroupPath.
+				 * We have GROUP BY without aggregation or grouping sets. Make
+				 * a GroupPath.
 				 */
 				add_path(grouped_rel, (Path *)
 						 create_group_path(root,
@@ -6657,8 +6656,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				int			presorted_keys;
 
 				is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-														 path->pathkeys,
-														 &presorted_keys);
+														path->pathkeys,
+														&presorted_keys);
 
 				/*
 				 * Insert a Sort node, if required.  But there's no point in
@@ -6712,8 +6711,9 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 					continue;
 
 				/*
-				 * We should have already excluded pathkeys of length 1 because
-				 * then presorted_keys > 0 would imply is_sorted was true.
+				 * We should have already excluded pathkeys of length 1
+				 * because then presorted_keys > 0 would imply is_sorted was
+				 * true.
 				 */
 				Assert(list_length(root->group_pathkeys) != 1);
 
@@ -7032,8 +7032,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 				int			presorted_keys;
 
 				is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-														 path->pathkeys,
-														 &presorted_keys);
+														path->pathkeys,
+														&presorted_keys);
 
 				/* Ignore already sorted paths */
 				if (is_sorted)
@@ -7086,8 +7086,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 			int			presorted_keys;
 
 			is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-													 path->pathkeys,
-													 &presorted_keys);
+													path->pathkeys,
+													&presorted_keys);
 
 			if (path == cheapest_partial_path || is_sorted)
 			{
@@ -7301,8 +7301,8 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * Consider incremental sort on all partial paths, if enabled.
 	 *
 	 * We can also skip the entire loop when we only have a single-item
-	 * group_pathkeys because then we can't possibly have a presorted
-	 * prefix of the list without having the list be fully sorted.
+	 * group_pathkeys because then we can't possibly have a presorted prefix
+	 * of the list without having the list be fully sorted.
 	 */
 	if (!enable_incrementalsort || list_length(root->group_pathkeys) == 1)
 		return;
@@ -7316,8 +7316,8 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 		double		total_groups;
 
 		is_sorted = pathkeys_count_contained_in(root->group_pathkeys,
-												 path->pathkeys,
-												 &presorted_keys);
+												path->pathkeys,
+												&presorted_keys);
 
 		if (is_sorted)
 			continue;

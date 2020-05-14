@@ -1857,7 +1857,7 @@ pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
 		return 0;				/* unordered path */
 
 	(void) pathkeys_count_contained_in(root->query_pathkeys, pathkeys,
-										&n_common_pathkeys);
+									   &n_common_pathkeys);
 
 	return n_common_pathkeys;
 }

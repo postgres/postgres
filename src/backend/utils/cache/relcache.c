@@ -5318,12 +5318,12 @@ GetRelationPublicationActions(Relation relation)
 	if (relation->rd_rel->relispartition)
 	{
 		/* Add publications that the ancestors are in too. */
-		List   *ancestors = get_partition_ancestors(RelationGetRelid(relation));
-		ListCell *lc;
+		List	   *ancestors = get_partition_ancestors(RelationGetRelid(relation));
+		ListCell   *lc;
 
 		foreach(lc, ancestors)
 		{
-			Oid		ancestor = lfirst_oid(lc);
+			Oid			ancestor = lfirst_oid(lc);
 
 			puboids = list_concat_unique_oid(puboids,
 											 GetRelationPublications(ancestor));
@@ -5424,13 +5424,14 @@ CopyIndexAttOptions(bytea **srcopts, int natts)
  * RelationGetIndexAttOptions
  *		get AM/opclass-specific options for an index parsed into a binary form
  */
-bytea **
+bytea	  **
 RelationGetIndexAttOptions(Relation relation, bool copy)
 {
 	MemoryContext oldcxt;
 	bytea	  **opts = relation->rd_opcoptions;
 	Oid			relid = RelationGetRelid(relation);
-	int			natts = RelationGetNumberOfAttributes(relation);	/* XXX IndexRelationGetNumberOfKeyAttributes */
+	int			natts = RelationGetNumberOfAttributes(relation);	/* XXX
+																	 * IndexRelationGetNumberOfKeyAttributes */
 	int			i;
 
 	/* Try to copy cached options. */

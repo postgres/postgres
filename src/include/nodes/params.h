@@ -115,7 +115,7 @@ typedef struct ParamListInfoData
 	void	   *paramCompileArg;
 	ParserSetupHook parserSetup;	/* parser setup hook */
 	void	   *parserSetupArg;
-	char	   *paramValuesStr;		/* params as a single string for errors */
+	char	   *paramValuesStr; /* params as a single string for errors */
 	int			numParams;		/* nominal/maximum # of Params represented */
 
 	/*
@@ -153,7 +153,7 @@ typedef struct ParamExecData
 /* type of argument for ParamsErrorCallback */
 typedef struct ParamsErrorCbData
 {
-	const char	 *portalName;
+	const char *portalName;
 	ParamListInfo params;
 } ParamsErrorCbData;
 
@@ -164,7 +164,7 @@ extern Size EstimateParamListSpace(ParamListInfo paramLI);
 extern void SerializeParamList(ParamListInfo paramLI, char **start_address);
 extern ParamListInfo RestoreParamList(char **start_address);
 extern char *BuildParamLogString(ParamListInfo params, char **paramTextValues,
-								int valueLen);
+								 int valueLen);
 extern void ParamsErrorCallback(void *arg);
 
 #endif							/* PARAMS_H */

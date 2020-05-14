@@ -162,7 +162,7 @@ static char *build_server_final_message(scram_state *state);
 static bool verify_client_proof(scram_state *state);
 static bool verify_final_nonce(scram_state *state);
 static void mock_scram_secret(const char *username, int *iterations,
-								char **salt, uint8 *stored_key, uint8 *server_key);
+							  char **salt, uint8 *stored_key, uint8 *server_key);
 static bool is_scram_printable(char *p);
 static char *sanitize_char(char c);
 static char *sanitize_str(const char *s);
@@ -257,7 +257,7 @@ pg_be_scram_init(Port *port,
 		if (password_type == PASSWORD_TYPE_SCRAM_SHA_256)
 		{
 			if (parse_scram_secret(shadow_pass, &state->iterations, &state->salt,
-									 state->StoredKey, state->ServerKey))
+								   state->StoredKey, state->ServerKey))
 				got_secret = true;
 			else
 			{
@@ -293,15 +293,15 @@ pg_be_scram_init(Port *port,
 	}
 
 	/*
-	 * If the user did not have a valid SCRAM secret, we still go through
-	 * the motions with a mock one, and fail as if the client supplied an
+	 * If the user did not have a valid SCRAM secret, we still go through the
+	 * motions with a mock one, and fail as if the client supplied an
 	 * incorrect password.  This is to avoid revealing information to an
 	 * attacker.
 	 */
 	if (!got_secret)
 	{
 		mock_scram_secret(state->port->user_name, &state->iterations,
-							&state->salt, state->StoredKey, state->ServerKey);
+						  &state->salt, state->StoredKey, state->ServerKey);
 		state->doomed = true;
 	}
 
@@ -471,7 +471,7 @@ pg_be_scram_build_secret(const char *password)
 				 errmsg("could not generate random salt")));
 
 	result = scram_build_secret(saltbuf, SCRAM_DEFAULT_SALT_LEN,
-								  SCRAM_DEFAULT_ITERATIONS, password);
+								SCRAM_DEFAULT_ITERATIONS, password);
 
 	if (prep_password)
 		pfree(prep_password);
@@ -500,7 +500,7 @@ scram_verify_plain_password(const char *username, const char *password,
 	pg_saslprep_rc rc;
 
 	if (!parse_scram_secret(secret, &iterations, &encoded_salt,
-							  stored_key, server_key))
+							stored_key, server_key))
 	{
 		/*
 		 * The password looked like a SCRAM secret, but could not be parsed.
@@ -554,7 +554,7 @@ scram_verify_plain_password(const char *username, const char *password,
  */
 bool
 parse_scram_secret(const char *secret, int *iterations, char **salt,
-					 uint8 *stored_key, uint8 *server_key)
+				   uint8 *stored_key, uint8 *server_key)
 {
 	char	   *v;
 	char	   *p;
@@ -645,7 +645,7 @@ invalid_secret:
  */
 static void
 mock_scram_secret(const char *username, int *iterations, char **salt,
-					uint8 *stored_key, uint8 *server_key)
+				  uint8 *stored_key, uint8 *server_key)
 {
 	char	   *raw_salt;
 	char	   *encoded_salt;

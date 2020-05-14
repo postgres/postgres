@@ -156,11 +156,10 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 
 		/*
 		 * We need to save the location of the pivot tuple we chose in the
-		 * parent page on a stack.  If we need to split a page, we'll use
-		 * the stack to work back up to its parent page.  If caller ends up
-		 * splitting a page one level down, it usually ends up inserting a
-		 * new pivot tuple/downlink immediately after the location recorded
-		 * here.
+		 * parent page on a stack.  If we need to split a page, we'll use the
+		 * stack to work back up to its parent page.  If caller ends up
+		 * splitting a page one level down, it usually ends up inserting a new
+		 * pivot tuple/downlink immediately after the location recorded here.
 		 */
 		new_stack = (BTStack) palloc(sizeof(BTStackData));
 		new_stack->bts_blkno = par_blkno;

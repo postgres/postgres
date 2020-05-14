@@ -190,7 +190,7 @@ scram_ServerKey(const uint8 *salted_password, uint8 *result)
  */
 char *
 scram_build_secret(const char *salt, int saltlen, int iterations,
-					 const char *password)
+				   const char *password)
 {
 	uint8		salted_password[SCRAM_KEY_LEN];
 	uint8		stored_key[SCRAM_KEY_LEN];

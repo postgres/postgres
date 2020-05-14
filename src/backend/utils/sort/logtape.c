@@ -191,8 +191,8 @@ struct LogicalTapeSet
 	Size		freeBlocksLen;	/* current allocated length of freeBlocks[] */
 
 	/* The array of logical tapes. */
-	int				nTapes;	/* # of logical tapes in set */
-	LogicalTape	   *tapes;	/* has nTapes nentries */
+	int			nTapes;			/* # of logical tapes in set */
+	LogicalTape *tapes;			/* has nTapes nentries */
 };
 
 static void ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer);
@@ -348,9 +348,9 @@ parent_offset(unsigned long i)
 static long
 ltsGetFreeBlock(LogicalTapeSet *lts)
 {
-	long	*heap = lts->freeBlocks;
-	long	 blocknum;
-	int		 heapsize;
+	long	   *heap = lts->freeBlocks;
+	long		blocknum;
+	int			heapsize;
 	unsigned long pos;
 
 	/* freelist empty; allocate a new block */
@@ -374,7 +374,7 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 	heapsize = lts->nFreeBlocks;
 	while (true)
 	{
-		unsigned long left  = left_offset(pos);
+		unsigned long left = left_offset(pos);
 		unsigned long right = right_offset(pos);
 		unsigned long min_child;
 
@@ -403,7 +403,7 @@ ltsGetFreeBlock(LogicalTapeSet *lts)
 static void
 ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 {
-	long	*heap;
+	long	   *heap;
 	unsigned long pos;
 
 	/*
@@ -440,6 +440,7 @@ ltsReleaseBlock(LogicalTapeSet *lts, long blocknum)
 	while (pos != 0)
 	{
 		unsigned long parent = parent_offset(pos);
+
 		if (heap[parent] < heap[pos])
 			break;
 
@@ -543,19 +544,19 @@ ltsConcatWorkerTapes(LogicalTapeSet *lts, TapeShare *shared,
 static void
 ltsInitTape(LogicalTape *lt)
 {
-	lt->writing           = true;
-	lt->frozen            = false;
-	lt->dirty             = false;
-	lt->firstBlockNumber  = -1L;
-	lt->curBlockNumber    = -1L;
-	lt->nextBlockNumber   = -1L;
+	lt->writing = true;
+	lt->frozen = false;
+	lt->dirty = false;
+	lt->firstBlockNumber = -1L;
+	lt->curBlockNumber = -1L;
+	lt->nextBlockNumber = -1L;
 	lt->offsetBlockNumber = 0L;
-	lt->buffer            = NULL;
-	lt->buffer_size       = 0;
+	lt->buffer = NULL;
+	lt->buffer_size = 0;
 	/* palloc() larger than MaxAllocSize would fail */
-	lt->max_size          = MaxAllocSize;
-	lt->pos               = 0;
-	lt->nbytes            = 0;
+	lt->max_size = MaxAllocSize;
+	lt->pos = 0;
+	lt->nbytes = 0;
 }
 
 /*
@@ -1012,13 +1013,13 @@ LogicalTapeFreeze(LogicalTapeSet *lts, int tapenum, TapeShare *share)
 void
 LogicalTapeSetExtend(LogicalTapeSet *lts, int nAdditional)
 {
-	int     i;
-	int		nTapesOrig = lts->nTapes;
+	int			i;
+	int			nTapesOrig = lts->nTapes;
 
 	lts->nTapes += nAdditional;
 
-	lts->tapes = (LogicalTape *) repalloc(
-		lts->tapes, lts->nTapes * sizeof(LogicalTape));
+	lts->tapes = (LogicalTape *) repalloc(lts->tapes,
+										  lts->nTapes * sizeof(LogicalTape));
 
 	for (i = nTapesOrig; i < lts->nTapes; i++)
 		ltsInitTape(&lts->tapes[i]);

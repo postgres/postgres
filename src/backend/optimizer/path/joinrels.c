@@ -1378,8 +1378,8 @@ try_partitionwise_join(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	Assert(joinrel->consider_partitionwise_join);
 
 	/*
-	 * We can not perform partitionwise join if either of the joining relations
-	 * is not partitioned.
+	 * We can not perform partitionwise join if either of the joining
+	 * relations is not partitioned.
 	 */
 	if (!IS_PARTITIONED_REL(rel1) || !IS_PARTITIONED_REL(rel2))
 		return;
@@ -1622,8 +1622,8 @@ compute_partition_bounds(PlannerInfo *root, RelOptInfo *rel1,
 		 * partition bounds as inputs, and the partitions with the same
 		 * cardinal positions form the pairs.
 		 *
-		 * Note: even in cases where one or both inputs have merged bounds,
-		 * it would be possible for both the bounds to be exactly the same, but
+		 * Note: even in cases where one or both inputs have merged bounds, it
+		 * would be possible for both the bounds to be exactly the same, but
 		 * it seems unlikely to be worth the cycles to check.
 		 */
 		if (!rel1->partbounds_merged &&
@@ -1670,8 +1670,8 @@ compute_partition_bounds(PlannerInfo *root, RelOptInfo *rel1,
 		/*
 		 * If the join rel's partbounds_merged flag is true, it means inputs
 		 * are not guaranteed to have the same partition bounds, therefore we
-		 * can't assume that the partitions at the same cardinal positions form
-		 * the pairs; let get_matching_part_pairs() generate the pairs.
+		 * can't assume that the partitions at the same cardinal positions
+		 * form the pairs; let get_matching_part_pairs() generate the pairs.
 		 * Otherwise, nothing to do since we can assume that.
 		 */
 		if (joinrel->partbounds_merged)
@@ -1695,7 +1695,7 @@ get_matching_part_pairs(PlannerInfo *root, RelOptInfo *joinrel,
 {
 	bool		rel1_is_simple = IS_SIMPLE_REL(rel1);
 	bool		rel2_is_simple = IS_SIMPLE_REL(rel2);
-	int 		cnt_parts;
+	int			cnt_parts;
 
 	*parts1 = NIL;
 	*parts2 = NIL;
@@ -1735,9 +1735,10 @@ get_matching_part_pairs(PlannerInfo *root, RelOptInfo *joinrel,
 		 * Get a child rel for rel1 with the relids.  Note that we should have
 		 * the child rel even if rel1 is a join rel, because in that case the
 		 * partitions specified in the relids would have matching/overlapping
-		 * boundaries, so the specified partitions should be considered as ones
-		 * to be joined when planning partitionwise joins of rel1, meaning that
-		 * the child rel would have been built by the time we get here.
+		 * boundaries, so the specified partitions should be considered as
+		 * ones to be joined when planning partitionwise joins of rel1,
+		 * meaning that the child rel would have been built by the time we get
+		 * here.
 		 */
 		if (rel1_is_simple)
 		{

@@ -224,8 +224,8 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 				/*
 				 * Surprisingly, ALTER SYSTEM meets all our definitions of
 				 * read-only: it changes nothing that affects the output of
-				 * pg_dump, it doesn't write WAL or imperil the application
-				 * of future WAL, and it doesn't depend on any state that needs
+				 * pg_dump, it doesn't write WAL or imperil the application of
+				 * future WAL, and it doesn't depend on any state that needs
 				 * to be synchronized with parallel workers.
 				 *
 				 * So, despite the fact that it writes to a file, it's read
@@ -271,10 +271,10 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 		case T_VariableSetStmt:
 			{
 				/*
-				 * These modify only backend-local state, so they're OK to
-				 * run in a read-only transaction or on a standby. However,
-				 * they are disallowed in parallel mode, because they either
-				 * rely upon or modify backend-local state that might not be
+				 * These modify only backend-local state, so they're OK to run
+				 * in a read-only transaction or on a standby. However, they
+				 * are disallowed in parallel mode, because they either rely
+				 * upon or modify backend-local state that might not be
 				 * synchronized among cooperating backends.
 				 */
 				return COMMAND_OK_IN_RECOVERY | COMMAND_OK_IN_READ_ONLY_TXN;
@@ -285,8 +285,9 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 		case T_VacuumStmt:
 			{
 				/*
-				 * These commands write WAL, so they're not strictly read-only,
-				 * and running them in parallel workers isn't supported.
+				 * These commands write WAL, so they're not strictly
+				 * read-only, and running them in parallel workers isn't
+				 * supported.
 				 *
 				 * However, they don't change the database state in a way that
 				 * would affect pg_dump output, so it's fine to run them in a
@@ -299,11 +300,11 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 
 		case T_CopyStmt:
 			{
-				CopyStmt *stmt = (CopyStmt *) parsetree;
+				CopyStmt   *stmt = (CopyStmt *) parsetree;
 
 				/*
-				 * You might think that COPY FROM is not at all read only,
-				 * but it's OK to copy into a temporary table, because that
+				 * You might think that COPY FROM is not at all read only, but
+				 * it's OK to copy into a temporary table, because that
 				 * wouldn't change the output of pg_dump.  If the target table
 				 * turns out to be non-temporary, DoCopy itself will call
 				 * PreventCommandIfReadOnly.
@@ -318,8 +319,8 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 		case T_VariableShowStmt:
 			{
 				/*
-				 * These commands don't modify any data and are safe to run
-				 * in a parallel worker.
+				 * These commands don't modify any data and are safe to run in
+				 * a parallel worker.
 				 */
 				return COMMAND_IS_STRICTLY_READ_ONLY;
 			}
@@ -329,8 +330,8 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 			{
 				/*
 				 * NOTIFY requires an XID assignment, so it can't be permitted
-				 * on a standby. Perhaps LISTEN could, since without NOTIFY
-				 * it would be OK to just do nothing, at least until promotion,
+				 * on a standby. Perhaps LISTEN could, since without NOTIFY it
+				 * would be OK to just do nothing, at least until promotion,
 				 * but we currently prohibit it lest the user get the wrong
 				 * idea.
 				 *
@@ -342,11 +343,12 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 
 		case T_LockStmt:
 			{
-				LockStmt *stmt = (LockStmt *) parsetree;
+				LockStmt   *stmt = (LockStmt *) parsetree;
 
 				/*
 				 * Only weaker locker modes are allowed during recovery. The
-				 * restrictions here must match those in LockAcquireExtended().
+				 * restrictions here must match those in
+				 * LockAcquireExtended().
 				 */
 				if (stmt->mode > RowExclusiveLock)
 					return COMMAND_OK_IN_READ_ONLY_TXN;
@@ -359,10 +361,10 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
 				/*
-				 * PREPARE, COMMIT PREPARED, and ROLLBACK PREPARED all
-				 * write WAL, so they're not read-only in the strict sense;
-				 * but the first and third do not change pg_dump output, so
-				 * they're OK in a read-only transactions.
+				 * PREPARE, COMMIT PREPARED, and ROLLBACK PREPARED all write
+				 * WAL, so they're not read-only in the strict sense; but the
+				 * first and third do not change pg_dump output, so they're OK
+				 * in a read-only transactions.
 				 *
 				 * We also consider COMMIT PREPARED to be OK in a read-only
 				 * transaction environment, by way of exception.

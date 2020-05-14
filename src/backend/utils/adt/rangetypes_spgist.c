@@ -47,11 +47,11 @@ static int16 getQuadrant(TypeCacheEntry *typcache, const RangeType *centroid,
 						 const RangeType *tst);
 static int	bound_cmp(const void *a, const void *b, void *arg);
 
-static int adjacent_inner_consistent(TypeCacheEntry *typcache,
-									 const RangeBound *arg, const RangeBound *centroid,
-									 const RangeBound *prev);
-static int adjacent_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *arg,
-							   const RangeBound *centroid);
+static int	adjacent_inner_consistent(TypeCacheEntry *typcache,
+									  const RangeBound *arg, const RangeBound *centroid,
+									  const RangeBound *prev);
+static int	adjacent_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *arg,
+								const RangeBound *centroid);
 
 /*
  * SP-GiST 'config' interface function.

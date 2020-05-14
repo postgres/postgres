@@ -425,10 +425,9 @@ pg_physical_replication_slot_advance(XLogRecPtr moveto)
 		retlsn = moveto;
 
 		/*
-		 * Dirty the slot so as it is written out at the next checkpoint.
-		 * Note that the LSN position advanced may still be lost in the
-		 * event of a crash, but this makes the data consistent after a
-		 * clean shutdown.
+		 * Dirty the slot so as it is written out at the next checkpoint. Note
+		 * that the LSN position advanced may still be lost in the event of a
+		 * crash, but this makes the data consistent after a clean shutdown.
 		 */
 		ReplicationSlotMarkDirty();
 	}
@@ -532,9 +531,9 @@ pg_logical_replication_slot_advance(XLogRecPtr moveto)
 			 * keep track of their progress, so we should make more of an
 			 * effort to save it for them.
 			 *
-			 * Dirty the slot so it is written out at the next checkpoint.
-			 * The LSN position advanced to may still be lost on a crash
-			 * but this makes the data consistent after a clean shutdown.
+			 * Dirty the slot so it is written out at the next checkpoint. The
+			 * LSN position advanced to may still be lost on a crash but this
+			 * makes the data consistent after a clean shutdown.
 			 */
 			ReplicationSlotMarkDirty();
 		}

@@ -1039,7 +1039,8 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm *tm, char **tzn)
 	}
 	else
 		tm->tm_isdst = -1;
-#else							/* not (HAVE_STRUCT_TM_TM_ZONE || HAVE_INT_TIMEZONE) */
+#else							/* not (HAVE_STRUCT_TM_TM_ZONE ||
+								 * HAVE_INT_TIMEZONE) */
 	if (tzp != NULL)
 	{
 		/* default to UTC */

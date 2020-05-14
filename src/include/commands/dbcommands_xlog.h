@@ -33,7 +33,7 @@ typedef struct xl_dbase_create_rec
 typedef struct xl_dbase_drop_rec
 {
 	Oid			db_id;
-	int			ntablespaces;		/* number of tablespace IDs */
+	int			ntablespaces;	/* number of tablespace IDs */
 	Oid			tablespace_ids[FLEXIBLE_ARRAY_MEMBER];
 } xl_dbase_drop_rec;
 #define MinSizeOfDbaseDropRec offsetof(xl_dbase_drop_rec, tablespace_ids)

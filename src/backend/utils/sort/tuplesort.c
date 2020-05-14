@@ -256,8 +256,8 @@ struct Tuplesortstate
 	bool		isMaxSpaceDisk; /* true when maxSpace is value for on-disk
 								 * space, false when it's value for in-memory
 								 * space */
-	TupSortStatus	maxSpaceStatus;	/* sort status when maxSpace was reached */
-	MemoryContext	maincontext;	/* memory context for tuple sort metadata that
+	TupSortStatus maxSpaceStatus;	/* sort status when maxSpace was reached */
+	MemoryContext maincontext;	/* memory context for tuple sort metadata that
 								 * persists across multiple batches */
 	MemoryContext sortcontext;	/* memory context holding most sort data */
 	MemoryContext tuplecontext; /* sub-context of sortcontext for tuple data */
@@ -1429,11 +1429,11 @@ tuplesort_updatemax(Tuplesortstate *state)
 
 	/*
 	 * Sort evicts data to the disk when it wasn't able to fit that data into
-	 * main memory.  This is why we assume space used on the disk to be
-	 * more important for tracking resource usage than space used in memory.
-	 * Note that the amount of space occupied by some tupleset on the disk might
-	 * be less than amount of space occupied by the same tupleset in
-	 * memory due to more compact representation.
+	 * main memory.  This is why we assume space used on the disk to be more
+	 * important for tracking resource usage than space used in memory. Note
+	 * that the amount of space occupied by some tupleset on the disk might be
+	 * less than amount of space occupied by the same tupleset in memory due
+	 * to more compact representation.
 	 */
 	if ((isSpaceDisk && !state->isMaxSpaceDisk) ||
 		(isSpaceDisk == state->isMaxSpaceDisk && spaceUsed > state->maxSpace))

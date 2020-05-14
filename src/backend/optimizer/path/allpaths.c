@@ -2751,13 +2751,14 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	List	   *useful_pathkeys_list = NIL;
 
 	/*
-	 * Considering query_pathkeys is always worth it, because it might allow us
-	 * to avoid a total sort when we have a partially presorted path available.
+	 * Considering query_pathkeys is always worth it, because it might allow
+	 * us to avoid a total sort when we have a partially presorted path
+	 * available.
 	 */
 	if (root->query_pathkeys)
 	{
 		ListCell   *lc;
-		int		npathkeys = 0;	/* useful pathkeys */
+		int			npathkeys = 0;	/* useful pathkeys */
 
 		foreach(lc, root->query_pathkeys)
 		{
@@ -2765,15 +2766,15 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
 
 			/*
-			 * We can only build an Incremental Sort for pathkeys which contain
-			 * an EC member in the current relation, so ignore any suffix of the
-			 * list as soon as we find a pathkey without an EC member the
-			 * relation.
+			 * We can only build an Incremental Sort for pathkeys which
+			 * contain an EC member in the current relation, so ignore any
+			 * suffix of the list as soon as we find a pathkey without an EC
+			 * member the relation.
 			 *
-			 * By still returning the prefix of the pathkeys list that does meet
-			 * criteria of EC membership in the current relation, we enable not
-			 * just an incremental sort on the entirety of query_pathkeys but
-			 * also incremental sort below a JOIN.
+			 * By still returning the prefix of the pathkeys list that does
+			 * meet criteria of EC membership in the current relation, we
+			 * enable not just an incremental sort on the entirety of
+			 * query_pathkeys but also incremental sort below a JOIN.
 			 */
 			if (!find_em_expr_for_rel(pathkey_ec, rel))
 				break;
@@ -2782,9 +2783,9 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 		}
 
 		/*
-		 * The whole query_pathkeys list matches, so append it directly, to allow
-		 * comparing pathkeys easily by comparing list pointer. If we have to truncate
-		 * the pathkeys, we gotta do a copy though.
+		 * The whole query_pathkeys list matches, so append it directly, to
+		 * allow comparing pathkeys easily by comparing list pointer. If we
+		 * have to truncate the pathkeys, we gotta do a copy though.
 		 */
 		if (npathkeys == list_length(root->query_pathkeys))
 			useful_pathkeys_list = lappend(useful_pathkeys_list,
@@ -2851,14 +2852,15 @@ generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_r
 
 			/*
 			 * If the path has no ordering at all, then we can't use either
-			 * incremental sort or rely on implict sorting with a gather merge.
+			 * incremental sort or rely on implict sorting with a gather
+			 * merge.
 			 */
 			if (subpath->pathkeys == NIL)
 				continue;
 
 			is_sorted = pathkeys_count_contained_in(useful_pathkeys,
-													 subpath->pathkeys,
-													 &presorted_keys);
+													subpath->pathkeys,
+													&presorted_keys);
 
 			/*
 			 * We don't need to consider the case where a subpath is already
@@ -2915,8 +2917,9 @@ generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_r
 				Path	   *tmp;
 
 				/*
-				 * We should have already excluded pathkeys of length 1 because
-				 * then presorted_keys > 0 would imply is_sorted was true.
+				 * We should have already excluded pathkeys of length 1
+				 * because then presorted_keys > 0 would imply is_sorted was
+				 * true.
 				 */
 				Assert(list_length(useful_pathkeys) != 1);
 

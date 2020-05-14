@@ -937,7 +937,7 @@ get_attoptions(Oid relid, int16 attnum)
 	if (isnull)
 		result = (Datum) 0;
 	else
-		result = datumCopy(attopts, false, -1);		/* text[] */
+		result = datumCopy(attopts, false, -1); /* text[] */
 
 	ReleaseSysCache(tuple);
 
@@ -3297,9 +3297,9 @@ get_index_column_opclass(Oid index_oid, int attno)
 bool
 get_index_isreplident(Oid index_oid)
 {
-	HeapTuple		tuple;
-	Form_pg_index	rd_index;
-	bool			result;
+	HeapTuple	tuple;
+	Form_pg_index rd_index;
+	bool		result;
 
 	tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(index_oid));
 	if (!HeapTupleIsValid(tuple))

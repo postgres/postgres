@@ -52,7 +52,7 @@ typedef struct LogicalRepPartMapEntry
 {
 	Oid			partoid;		/* LogicalRepPartMap's key */
 	LogicalRepRelMapEntry relmapentry;
-}			LogicalRepPartMapEntry;
+} LogicalRepPartMapEntry;
 
 /*
  * Relcache invalidation callback for our relation map cache.

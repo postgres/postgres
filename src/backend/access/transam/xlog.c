@@ -6071,7 +6071,7 @@ recoveryApplyDelay(XLogReaderState *record)
 {
 	uint8		xact_info;
 	TimestampTz xtime;
-	TimestampTz	delayUntil;
+	TimestampTz delayUntil;
 	long		secs;
 	int			microsecs;
 
@@ -6341,7 +6341,11 @@ StartupXLOG(void)
 	switch (ControlFile->state)
 	{
 		case DB_SHUTDOWNED:
-			/* This is the expected case, so don't be chatty in standalone mode */
+
+			/*
+			 * This is the expected case, so don't be chatty in standalone
+			 * mode
+			 */
 			ereport(IsPostmasterEnvironment ? LOG : NOTICE,
 					(errmsg("database system was shut down at %s",
 							str_time(ControlFile->time))));
@@ -10691,8 +10695,8 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		datadirpathlen = strlen(DataDir);
 
 		/*
-		 * Report that we are now estimating the total backup size
-		 * if we're streaming base backup as requested by pg_basebackup
+		 * Report that we are now estimating the total backup size if we're
+		 * streaming base backup as requested by pg_basebackup
 		 */
 		if (tablespaces)
 			pgstat_progress_update_param(PROGRESS_BASEBACKUP_PHASE,
@@ -11410,7 +11414,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 void
 do_pg_abort_backup(int code, Datum arg)
 {
-	bool	emit_warning = DatumGetBool(arg);
+	bool		emit_warning = DatumGetBool(arg);
 
 	/*
 	 * Quick exit if session is not keeping around a non-exclusive backup
@@ -12154,8 +12158,8 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 */
 
 					/*
-					 * We should be able to move to XLOG_FROM_STREAM
-					 * only in standby mode.
+					 * We should be able to move to XLOG_FROM_STREAM only in
+					 * standby mode.
 					 */
 					Assert(StandbyMode);
 
@@ -12242,6 +12246,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 		{
 			case XLOG_FROM_ARCHIVE:
 			case XLOG_FROM_PG_WAL:
+
 				/*
 				 * WAL receiver must not be running when reading WAL from
 				 * archive or pg_wal.
@@ -12279,8 +12284,8 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					bool		havedata;
 
 					/*
-					 * We should be able to move to XLOG_FROM_STREAM
-					 * only in standby mode.
+					 * We should be able to move to XLOG_FROM_STREAM only in
+					 * standby mode.
 					 */
 					Assert(StandbyMode);
 

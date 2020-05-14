@@ -11,9 +11,10 @@ use Test::More tests => 58;
 
 my $tempdir = TestLib::tempdir;
 
-test_bad_manifest('input string ended unexpectedly',
-	  qr/could not parse backup manifest: The input string ended unexpectedly/,
-	  <<EOM);
+test_bad_manifest(
+	'input string ended unexpectedly',
+	qr/could not parse backup manifest: The input string ended unexpectedly/,
+	<<EOM);
 {
 EOM
 
@@ -163,7 +164,7 @@ my $manifest_without_newline = <<EOM;
 EOM
 chomp($manifest_without_newline);
 test_parse_error('last line not newline-terminated',
-				 $manifest_without_newline);
+	$manifest_without_newline);
 
 test_fatal_error('invalid manifest checksum', <<EOM);
 {"PostgreSQL-Backup-Manifest-Version": 1, "Files": [],
@@ -175,8 +176,8 @@ sub test_parse_error
 	my ($test_name, $manifest_contents) = @_;
 
 	test_bad_manifest($test_name,
-					  qr/could not parse backup manifest: $test_name/,
-					  $manifest_contents);
+		qr/could not parse backup manifest: $test_name/,
+		$manifest_contents);
 	return;
 }
 
@@ -184,9 +185,7 @@ sub test_fatal_error
 {
 	my ($test_name, $manifest_contents) = @_;
 
-	test_bad_manifest($test_name,
-					  qr/fatal: $test_name/,
-					  $manifest_contents);
+	test_bad_manifest($test_name, qr/fatal: $test_name/, $manifest_contents);
 	return;
 }
 
@@ -198,7 +197,6 @@ sub test_bad_manifest
 	print $fh $manifest_contents;
 	close($fh);
 
-	command_fails_like(['pg_verifybackup', $tempdir], $regexp,
-					   $test_name);
+	command_fails_like([ 'pg_verifybackup', $tempdir ], $regexp, $test_name);
 	return;
 }

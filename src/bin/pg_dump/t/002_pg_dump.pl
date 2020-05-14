@@ -1378,7 +1378,7 @@ my %tests = (
 	'CREATE COLLATION test0 FROM "C"' => {
 		create_order => 76,
 		create_sql   => 'CREATE COLLATION test0 FROM "C";',
-		regexp       =>
+		regexp =>
 		  qr/CREATE COLLATION public.test0 \(provider = libc, locale = 'C'(, version = '[^']*')?\);/m,
 		collation => 1,
 		like      => { %full_runs, section_pre_data => 1, },
@@ -1411,8 +1411,9 @@ my %tests = (
 
 	"CREATE DATABASE dump_test2 LOCALE = 'C'" => {
 		create_order => 47,
-		create_sql   => "CREATE DATABASE dump_test2 LOCALE = 'C' TEMPLATE = template0;",
-		regexp       => qr/^
+		create_sql =>
+		  "CREATE DATABASE dump_test2 LOCALE = 'C' TEMPLATE = template0;",
+		regexp => qr/^
 			\QCREATE DATABASE dump_test2 \E.*\QLOCALE = 'C';\E
 			/xm,
 		like => { pg_dumpall_dbprivs => 1, },
@@ -1575,7 +1576,7 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
-    # verify that a custom operator/opclass/range type is dumped in right order
+	# verify that a custom operator/opclass/range type is dumped in right order
 	'CREATE OPERATOR CLASS dump_test.op_class_custom' => {
 		create_order => 74,
 		create_sql   => 'CREATE OPERATOR dump_test.~~ (
@@ -2574,7 +2575,8 @@ my %tests = (
 
 	'ALTER STATISTICS extended_stats_options' => {
 		create_order => 98,
-		create_sql   => 'ALTER STATISTICS dump_test.test_ext_stats_opts SET STATISTICS 1000',
+		create_sql =>
+		  'ALTER STATISTICS dump_test.test_ext_stats_opts SET STATISTICS 1000',
 		regexp => qr/^
 			\QALTER STATISTICS dump_test.test_ext_stats_opts SET STATISTICS 1000;\E
 		    /xms,

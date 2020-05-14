@@ -1,3 +1,4 @@
+
 =pod
 
 =head1 NAME
@@ -122,7 +123,8 @@ BEGIN
 	# Specifies whether to use Unix sockets for test setups.  On
 	# Windows we don't use them by default since it's not universally
 	# supported, but it can be overridden if desired.
-	$use_unix_sockets = (!$windows_os || defined $ENV{PG_TEST_USE_UNIX_SOCKETS});
+	$use_unix_sockets =
+	  (!$windows_os || defined $ENV{PG_TEST_USE_UNIX_SOCKETS});
 }
 
 =pod

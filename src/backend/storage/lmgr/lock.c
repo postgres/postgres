@@ -1035,7 +1035,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		found_conflict = true;
 	else
 		found_conflict = LockCheckConflicts(lockMethodTable, lockmode,
-									lock, proclock);
+											lock, proclock);
 
 	if (!found_conflict)
 	{

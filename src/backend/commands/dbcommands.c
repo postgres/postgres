@@ -1947,11 +1947,11 @@ remove_dbtablespaces(Oid db_id)
 	Relation	rel;
 	TableScanDesc scan;
 	HeapTuple	tuple;
-	List		*ltblspc = NIL;
-	ListCell	*cell;
-	int		ntblspc;
-	int		i;
-	Oid		*tablespace_ids;
+	List	   *ltblspc = NIL;
+	ListCell   *cell;
+	int			ntblspc;
+	int			i;
+	Oid		   *tablespace_ids;
 
 	rel = table_open(TableSpaceRelationId, AccessShareLock);
 	scan = table_beginscan_catalog(rel, 0, NULL);

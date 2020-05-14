@@ -346,14 +346,14 @@ WalSndErrorCleanup(void)
 void
 WalSndResourceCleanup(bool isCommit)
 {
-	ResourceOwner	resowner;
+	ResourceOwner resowner;
 
 	if (CurrentResourceOwner == NULL)
 		return;
 
 	/*
-	 * Deleting CurrentResourceOwner is not allowed, so we must save a
-	 * pointer in a local variable and clear it first.
+	 * Deleting CurrentResourceOwner is not allowed, so we must save a pointer
+	 * in a local variable and clear it first.
 	 */
 	resowner = CurrentResourceOwner;
 	CurrentResourceOwner = NULL;
