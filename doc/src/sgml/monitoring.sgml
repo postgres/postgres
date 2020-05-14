@@ -775,79 +775,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </para>
       <para>
        The type of event for which the backend is waiting, if any;
-       otherwise NULL. Possible values are:
-       <itemizedlist>
-        <listitem>
-         <para>
-          <literal>LWLock</literal>: The backend is waiting for a lightweight lock.
-          Each such lock protects a particular data structure in shared memory.
-          <literal>wait_event</literal> will contain a name identifying the purpose
-          of the lightweight lock.  (Some locks have specific names; others
-          are part of a group of locks each with a similar purpose.)
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>Lock</literal>: The backend is waiting for a heavyweight lock.
-          Heavyweight locks, also known as lock manager locks or simply locks,
-          primarily protect SQL-visible objects such as tables.  However,
-          they are also used to ensure mutual exclusion for certain internal
-          operations such as relation extension.  <literal>wait_event</literal> will
-          identify the type of lock awaited.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>BufferPin</literal>: The server process is waiting to access to
-          a data buffer during a period when no other process can be
-          examining that buffer.  Buffer pin waits can be protracted if
-          another process holds an open cursor which last read data from the
-          buffer in question.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>Activity</literal>: The server process is idle.  This is used by
-          system processes waiting for activity in their main processing loop.
-          <literal>wait_event</literal> will identify the specific wait point.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>Extension</literal>: The server process is waiting for activity
-          in an extension module.  This category is useful for modules to
-          track custom waiting points.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>Client</literal>: The server process is waiting for some activity
-          on a socket from user applications, and that the server expects
-          something to happen that is independent from its internal processes.
-          <literal>wait_event</literal> will identify the specific wait point.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>IPC</literal>: The server process is waiting for some activity
-          from another process in the server.  <literal>wait_event</literal> will
-          identify the specific wait point.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>Timeout</literal>: The server process is waiting for a timeout
-          to expire.  <literal>wait_event</literal> will identify the specific wait
-          point.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>IO</literal>: The server process is waiting for a IO to complete.
-          <literal>wait_event</literal> will identify the specific wait point.
-         </para>
-        </listitem>
-       </itemizedlist>
+       otherwise NULL.  See <xref linkend="wait-event-table"/>.
       </para></entry>
      </row>
 
@@ -857,7 +785,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </para>
       <para>
        Wait event name if backend is currently waiting, otherwise NULL.
-       See <xref linkend="wait-event-table"/> for details.
+       See <xref linkend="wait-event-activity-table"/> through
+       <xref linkend="wait-event-timeout-table"/>.
       </para></entry>
      </row>
 
@@ -978,927 +907,1182 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </note>
 
   <table id="wait-event-table">
-   <title><structname>wait_event</structname> Description</title>
+   <title>Wait Event Types</title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry>Wait Event Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
 
-    <tgroup cols="3">
-      <thead>
-       <row>
-        <entry>Wait Event Type</entry>
-        <entry>Wait Event Name</entry>
-        <entry>Description</entry>
-       </row>
-      </thead>
+    <tbody>
+     <row>
+      <entry><literal>Activity</literal></entry>
+      <entry>The server process is idle.  This is used by
+       system processes waiting for activity in their main processing loop.
+       <literal>wait_event</literal> will identify the specific wait point.
+       See <xref linkend="wait-event-activity-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>BufferPin</literal></entry>
+      <entry>The server process is waiting to access to
+       a data buffer during a period when no other process can be
+       examining that buffer.  Buffer pin waits can be protracted if
+       another process holds an open cursor which last read data from the
+       buffer in question. See <xref linkend="wait-event-bufferpin-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>Client</literal></entry>
+      <entry>The server process is waiting for some activity
+       on a socket from user applications, and that the server expects
+       something to happen that is independent from its internal processes.
+       <literal>wait_event</literal> will identify the specific wait point.
+       See <xref linkend="wait-event-client-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>Extension</literal></entry>
+      <entry>The server process is waiting for activity
+       in an extension module.  This category is useful for modules to
+       track custom waiting points.
+       See <xref linkend="wait-event-extension-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>IO</literal></entry>
+      <entry>The server process is waiting for a IO to complete.
+       <literal>wait_event</literal> will identify the specific wait point.
+       See <xref linkend="wait-event-io-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>IPC</literal></entry>
+      <entry>The server process is waiting for some activity
+       from another process in the server.  <literal>wait_event</literal> will
+       identify the specific wait point.
+       See <xref linkend="wait-event-ipc-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>Lock</literal></entry>
+      <entry>The backend is waiting for a heavyweight lock.
+       Heavyweight locks, also known as lock manager locks or simply locks,
+       primarily protect SQL-visible objects such as tables.  However,
+       they are also used to ensure mutual exclusion for certain internal
+       operations such as relation extension.  <literal>wait_event</literal>
+       will identify the type of lock awaited.
+       See <xref linkend="wait-event-lock-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>LWLock</literal></entry>
+      <entry> The backend is waiting for a lightweight lock.
+       Each such lock protects a particular data structure in shared memory.
+       <literal>wait_event</literal> will contain a name identifying the purpose
+       of the lightweight lock.  (Some locks have specific names; others
+       are part of a group of locks each with a similar purpose.)
+       See <xref linkend="wait-event-lwlock-table"/>.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>Timeout</literal></entry>
+      <entry>The server process is waiting for a timeout
+       to expire.  <literal>wait_event</literal> will identify the specific wait
+       point.  See <xref linkend="wait-event-timeout-table"/>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
-      <tbody>
-       <row>
-        <entry morerows="64"><literal>LWLock</literal></entry>
-        <entry><literal>ShmemIndexLock</literal></entry>
-        <entry>Waiting to find or allocate space in shared memory.</entry>
-       </row>
-       <row>
-        <entry><literal>OidGenLock</literal></entry>
-        <entry>Waiting to allocate or assign an OID.</entry>
-       </row>
-        <row>
-         <entry><literal>XidGenLock</literal></entry>
-         <entry>Waiting to allocate or assign a transaction id.</entry>
-        </row>
-        <row>
-         <entry><literal>ProcArrayLock</literal></entry>
-         <entry>Waiting to get a snapshot or clearing a transaction id at
-         transaction end.</entry>
-        </row>
-        <row>
-         <entry><literal>SInvalReadLock</literal></entry>
-         <entry>Waiting to retrieve or remove messages from shared invalidation
-         queue.</entry>
-        </row>
-        <row>
-         <entry><literal>SInvalWriteLock</literal></entry>
-         <entry>Waiting to add a message in shared invalidation queue.</entry>
-        </row>
-        <row>
-         <entry><literal>WALBufMappingLock</literal></entry>
-         <entry>Waiting to replace a page in WAL buffers.</entry>
-        </row>
-        <row>
-         <entry><literal>WALWriteLock</literal></entry>
-         <entry>Waiting for WAL buffers to be written to disk.</entry>
-        </row>
-        <row>
-         <entry><literal>ControlFileLock</literal></entry>
-         <entry>Waiting to read or update the control file or creation of a
-         new WAL file.</entry>
-        </row>
-        <row>
-         <entry><literal>CheckpointLock</literal></entry>
-         <entry>Waiting to perform checkpoint.</entry>
-        </row>
-        <row>
-         <entry><literal>CLogControlLock</literal></entry>
-         <entry>Waiting to read or update transaction status.</entry>
-        </row>
-        <row>
-         <entry><literal>SubtransControlLock</literal></entry>
-         <entry>Waiting to read or update sub-transaction information.</entry>
-        </row>
-        <row>
-         <entry><literal>MultiXactGenLock</literal></entry>
-         <entry>Waiting to read or update shared multixact state.</entry>
-        </row>
-        <row>
-         <entry><literal>MultiXactOffsetControlLock</literal></entry>
-         <entry>Waiting to read or update multixact offset mappings.</entry>
-        </row>
-        <row>
-         <entry><literal>MultiXactMemberControlLock</literal></entry>
-         <entry>Waiting to read or update multixact member mappings.</entry>
-        </row>
-        <row>
-         <entry><literal>RelCacheInitLock</literal></entry>
-         <entry>Waiting to read or write relation cache initialization
-         file.</entry>
-        </row>
-        <row>
-         <entry><literal>CheckpointerCommLock</literal></entry>
-         <entry>Waiting to manage fsync requests.</entry>
-        </row>
-        <row>
-         <entry><literal>TwoPhaseStateLock</literal></entry>
-         <entry>Waiting to read or update the state of prepared transactions.</entry>
-        </row>
-        <row>
-         <entry><literal>TablespaceCreateLock</literal></entry>
-         <entry>Waiting to create or drop the tablespace.</entry>
-        </row>
-        <row>
-         <entry><literal>BtreeVacuumLock</literal></entry>
-          <entry>Waiting to read or update vacuum-related information for a
-          B-tree index.</entry>
-        </row>
-        <row>
-         <entry><literal>AddinShmemInitLock</literal></entry>
-         <entry>Waiting to manage space allocation in shared memory.</entry>
-        </row>
-        <row>
-         <entry><literal>AutovacuumLock</literal></entry>
-         <entry>Autovacuum worker or launcher waiting to update or
-         read the current state of autovacuum workers.</entry>
-        </row>
-        <row>
-         <entry><literal>AutovacuumScheduleLock</literal></entry>
-         <entry>Waiting to ensure that the table it has selected for a vacuum
-         still needs vacuuming.
-         </entry>
-        </row>
-        <row>
-         <entry><literal>SyncScanLock</literal></entry>
-         <entry>Waiting to get the start location of a scan on a table for
-         synchronized scans.</entry>
-        </row>
-        <row>
-         <entry><literal>RelationMappingLock</literal></entry>
-         <entry>Waiting to update the relation map file used to store catalog
-         to filenode mapping.
-         </entry>
-        </row>
-        <row>
-         <entry><literal>AsyncCtlLock</literal></entry>
-         <entry>Waiting to read or update shared notification state.</entry>
-        </row>
-        <row>
-         <entry><literal>AsyncQueueLock</literal></entry>
-          <entry>Waiting to read or update notification messages.</entry>
-        </row>
-        <row>
-         <entry><literal>SerializableXactHashLock</literal></entry>
-         <entry>Waiting to retrieve or store information about serializable
-         transactions.</entry>
-        </row>
-        <row>
-         <entry><literal>SerializableFinishedListLock</literal></entry>
-         <entry>Waiting to access the list of finished serializable
-         transactions.</entry>
-        </row>
-        <row>
-         <entry><literal>SerializablePredicateLockListLock</literal></entry>
-         <entry>Waiting to perform an operation on a list of locks held by
-         serializable transactions.</entry>
-        </row>
-        <row>
-         <entry><literal>OldSerXidLock</literal></entry>
-         <entry>Waiting to read or record conflicting serializable
-         transactions.</entry>
-        </row>
-        <row>
-         <entry><literal>SyncRepLock</literal></entry>
-         <entry>Waiting to read or update information about synchronous
-         replicas.</entry>
-        </row>
-        <row>
-         <entry><literal>BackgroundWorkerLock</literal></entry>
-         <entry>Waiting to read or update background worker state.</entry>
-        </row>
-        <row>
-         <entry><literal>DynamicSharedMemoryControlLock</literal></entry>
-         <entry>Waiting to read or update dynamic shared memory state.</entry>
-        </row>
-        <row>
-         <entry><literal>AutoFileLock</literal></entry>
-         <entry>Waiting to update the <filename>postgresql.auto.conf</filename> file.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationSlotAllocationLock</literal></entry>
-         <entry>Waiting to allocate or free a replication slot.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationSlotControlLock</literal></entry>
-         <entry>Waiting to read or update replication slot state.</entry>
-        </row>
-        <row>
-         <entry><literal>CommitTsControlLock</literal></entry>
-         <entry>Waiting to read or update transaction commit timestamps.</entry>
-        </row>
-        <row>
-         <entry><literal>CommitTsLock</literal></entry>
-         <entry>Waiting to read or update the last value set for the
-         transaction timestamp.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationOriginLock</literal></entry>
-         <entry>Waiting to setup, drop or use replication origin.</entry>
-        </row>
-        <row>
-         <entry><literal>MultiXactTruncationLock</literal></entry>
-         <entry>Waiting to read or truncate multixact information.</entry>
-        </row>
-        <row>
-         <entry><literal>OldSnapshotTimeMapLock</literal></entry>
-         <entry>Waiting to read or update old snapshot control information.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalRepWorkerLock</literal></entry>
-         <entry>Waiting for action on logical replication worker to finish.</entry>
-        </row>
-        <row>
-         <entry><literal>CLogTruncationLock</literal></entry>
-         <entry>Waiting to execute <function>pg_xact_status</function> or update
-         the oldest transaction id available to it.</entry>
-        </row>
-        <row>
-         <entry><literal>clog</literal></entry>
-         <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>commit_timestamp</literal></entry>
-         <entry>Waiting for I/O on commit timestamp buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>subtrans</literal></entry>
-         <entry>Waiting for I/O a subtransaction buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>multixact_offset</literal></entry>
-         <entry>Waiting for I/O on a multixact offset buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>multixact_member</literal></entry>
-         <entry>Waiting for I/O on a multixact_member buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>async</literal></entry>
-         <entry>Waiting for I/O on an async (notify) buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>oldserxid</literal></entry>
-         <entry>Waiting for I/O on an oldserxid buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>wal_insert</literal></entry>
-         <entry>Waiting to insert WAL into a memory buffer.</entry>
-        </row>
-        <row>
-         <entry><literal>buffer_content</literal></entry>
-         <entry>Waiting to read or write a data page in memory.</entry>
-        </row>
-        <row>
-         <entry><literal>buffer_io</literal></entry>
-         <entry>Waiting for I/O on a data page.</entry>
-        </row>
-        <row>
-         <entry><literal>replication_origin</literal></entry>
-         <entry>Waiting to read or update the replication progress.</entry>
-        </row>
-        <row>
-         <entry><literal>replication_slot_io</literal></entry>
-         <entry>Waiting for I/O on a replication slot.</entry>
-        </row>
-        <row>
-         <entry><literal>proc</literal></entry>
-         <entry>Waiting to read or update the fast-path lock information.</entry>
-        </row>
-        <row>
-         <entry><literal>buffer_mapping</literal></entry>
-         <entry>Waiting to associate a data block with a buffer in the buffer
-         pool.</entry>
-        </row>
-        <row>
-         <entry><literal>lock_manager</literal></entry>
-         <entry>Waiting to add or examine locks for backends, or waiting to
-         join or exit a locking group (used by parallel query).</entry>
-        </row>
-        <row>
-         <entry><literal>predicate_lock_manager</literal></entry>
-         <entry>Waiting to add or examine predicate lock information.</entry>
-        </row>
-        <row>
-         <entry><literal>serializable_xact</literal></entry>
-         <entry>Waiting to perform an operation on a serializable transaction
-         in a parallel query.</entry>
-        </row>
-        <row>
-         <entry><literal>parallel_query_dsa</literal></entry>
-         <entry>Waiting for parallel query dynamic shared memory allocation lock.</entry>
-        </row>
-        <row>
-         <entry><literal>tbm</literal></entry>
-         <entry>Waiting for TBM shared iterator lock.</entry>
-        </row>
-        <row>
-         <entry><literal>parallel_append</literal></entry>
-         <entry>Waiting to choose the next subplan during Parallel Append plan
-         execution.</entry>
-        </row>
-        <row>
-         <entry><literal>parallel_hash_join</literal></entry>
-         <entry>Waiting to allocate or exchange a chunk of memory or update
-         counters during Parallel Hash plan execution.</entry>
-        </row>
-        <row>
-         <entry morerows="9"><literal>Lock</literal></entry>
-         <entry><literal>relation</literal></entry>
-         <entry>Waiting to acquire a lock on a relation.</entry>
-        </row>
-        <row>
-         <entry><literal>extend</literal></entry>
-         <entry>Waiting to extend a relation.</entry>
-        </row>
-        <row>
-         <entry><literal>page</literal></entry>
-         <entry>Waiting to acquire a lock on page of a relation.</entry>
-        </row>
-        <row>
-         <entry><literal>tuple</literal></entry>
-         <entry>Waiting to acquire a lock on a tuple.</entry>
-        </row>
-        <row>
-         <entry><literal>transactionid</literal></entry>
-         <entry>Waiting for a transaction to finish.</entry>
-        </row>
-        <row>
-         <entry><literal>virtualxid</literal></entry>
-         <entry>Waiting to acquire a virtual xid lock.</entry>
-        </row>
-        <row>
-         <entry><literal>speculative token</literal></entry>
-         <entry>Waiting to acquire a speculative insertion lock.</entry>
-        </row>
-        <row>
-         <entry><literal>object</literal></entry>
-         <entry>Waiting to acquire a lock on a non-relation database object.</entry>
-        </row>
-        <row>
-         <entry><literal>userlock</literal></entry>
-         <entry>Waiting to acquire a user lock.</entry>
-        </row>
-        <row>
-         <entry><literal>advisory</literal></entry>
-         <entry>Waiting to acquire an advisory user lock.</entry>
-        </row>
-        <row>
-         <entry><literal>BufferPin</literal></entry>
-         <entry><literal>BufferPin</literal></entry>
-         <entry>Waiting to acquire a pin on a buffer.</entry>
-        </row>
-        <row>
-         <entry morerows="12"><literal>Activity</literal></entry>
-         <entry><literal>ArchiverMain</literal></entry>
-         <entry>Waiting in main loop of the archiver process.</entry>
-        </row>
-        <row>
-         <entry><literal>AutoVacuumMain</literal></entry>
-         <entry>Waiting in main loop of autovacuum launcher process.</entry>
-        </row>
-        <row>
-         <entry><literal>BgWriterHibernate</literal></entry>
-         <entry>Waiting in background writer process, hibernating.</entry>
-        </row>
-        <row>
-         <entry><literal>BgWriterMain</literal></entry>
-         <entry>Waiting in main loop of background writer process background worker.</entry>
-        </row>
-        <row>
-         <entry><literal>CheckpointerMain</literal></entry>
-         <entry>Waiting in main loop of checkpointer process.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalApplyMain</literal></entry>
-         <entry>Waiting in main loop of logical apply process.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalLauncherMain</literal></entry>
-         <entry>Waiting in main loop of logical launcher process.</entry>
-        </row>
-        <row>
-         <entry><literal>PgStatMain</literal></entry>
-         <entry>Waiting in main loop of the statistics collector process.</entry>
-        </row>
-        <row>
-         <entry><literal>RecoveryWalStream</literal></entry>
-         <entry>Waiting for WAL from a stream at recovery.</entry>
-        </row>
-        <row>
-         <entry><literal>SysLoggerMain</literal></entry>
-         <entry>Waiting in main loop of syslogger process.</entry>
-        </row>
-        <row>
-         <entry><literal>WalReceiverMain</literal></entry>
-         <entry>Waiting in main loop of WAL receiver process.</entry>
-        </row>
-        <row>
-         <entry><literal>WalSenderMain</literal></entry>
-         <entry>Waiting in main loop of WAL sender process.</entry>
-        </row>
-        <row>
-         <entry><literal>WalWriterMain</literal></entry>
-         <entry>Waiting in main loop of WAL writer process.</entry>
-        </row>
-        <row>
-         <entry morerows="8"><literal>Client</literal></entry>
-         <entry><literal>ClientRead</literal></entry>
-         <entry>Waiting to read data from the client.</entry>
-        </row>
-        <row>
-         <entry><literal>ClientWrite</literal></entry>
-         <entry>Waiting to write data to the client.</entry>
-        </row>
-        <row>
-         <entry><literal>GSSOpenServer</literal></entry>
-         <entry>Waiting to read data from the client while establishing the GSSAPI session.</entry>
-        </row>
-        <row>
-         <entry><literal>LibPQWalReceiverConnect</literal></entry>
-         <entry>Waiting in WAL receiver to establish connection to remote server.</entry>
-        </row>
-        <row>
-         <entry><literal>LibPQWalReceiverReceive</literal></entry>
-         <entry>Waiting in WAL receiver to receive data from remote server.</entry>
-        </row>
-        <row>
-         <entry><literal>SSLOpenServer</literal></entry>
-         <entry>Waiting for SSL while attempting connection.</entry>
-        </row>
-        <row>
-         <entry><literal>WalReceiverWaitStart</literal></entry>
-         <entry>Waiting for startup process to send initial data for streaming replication.</entry>
-        </row>
-        <row>
-         <entry><literal>WalSenderWaitForWAL</literal></entry>
-         <entry>Waiting for WAL to be flushed in WAL sender process.</entry>
-        </row>
-        <row>
-         <entry><literal>WalSenderWriteData</literal></entry>
-         <entry>Waiting for any activity when processing replies from WAL receiver in WAL sender process.</entry>
-        </row>
-        <row>
-         <entry><literal>Extension</literal></entry>
-         <entry><literal>Extension</literal></entry>
-         <entry>Waiting in an extension.</entry>
-        </row>
-        <row>
-         <entry morerows="40"><literal>IPC</literal></entry>
-         <entry><literal>BackupWaitWalArchive</literal></entry>
-         <entry>Waiting for WAL files required for the backup to be successfully archived.</entry>
-        </row>
-        <row>
-         <entry><literal>BgWorkerShutdown</literal></entry>
-         <entry>Waiting for background worker to shut down.</entry>
-        </row>
-        <row>
-         <entry><literal>BgWorkerStartup</literal></entry>
-         <entry>Waiting for background worker to start up.</entry>
-        </row>
-        <row>
-         <entry><literal>BtreePage</literal></entry>
-         <entry>Waiting for the page number needed to continue a parallel B-tree scan to become available.</entry>
-        </row>
-        <row>
-         <entry><literal>CheckpointDone</literal></entry>
-         <entry>Waiting for a checkpoint to complete.</entry>
-        </row>
-        <row>
-         <entry><literal>CheckpointStart</literal></entry>
-         <entry>Waiting for a checkpoint to start.</entry>
-        </row>
-        <row>
-         <entry><literal>ClogGroupUpdate</literal></entry>
-         <entry>Waiting for group leader to update transaction status at transaction end.</entry>
-        </row>
-        <row>
-         <entry><literal>ExecuteGather</literal></entry>
-         <entry>Waiting for activity from child process when executing <literal>Gather</literal> node.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/Batch/Allocating</literal></entry>
-          <entry>Waiting for an elected Parallel Hash participant to allocate a hash table.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/Batch/Electing</literal></entry>
-          <entry>Electing a Parallel Hash participant to allocate a hash table.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/Batch/Loading</literal></entry>
-          <entry>Waiting for other Parallel Hash participants to finish loading a hash table.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/Build/Allocating</literal></entry>
-          <entry>Waiting for an elected Parallel Hash participant to allocate the initial hash table.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/Build/Electing</literal></entry>
-          <entry>Electing a Parallel Hash participant to allocate the initial hash table.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/Build/HashingInner</literal></entry>
-          <entry>Waiting for other Parallel Hash participants to finish hashing the inner relation.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/Build/HashingOuter</literal></entry>
-          <entry>Waiting for other Parallel Hash participants to finish partitioning the outer relation.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBatches/Allocating</literal></entry>
-          <entry>Waiting for an elected Parallel Hash participant to allocate more batches.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBatches/Deciding</literal></entry>
-          <entry>Electing a Parallel Hash participant to decide on future batch growth.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBatches/Electing</literal></entry>
-          <entry>Electing a Parallel Hash participant to allocate more batches.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBatches/Finishing</literal></entry>
-          <entry>Waiting for an elected Parallel Hash participant to decide on future batch growth.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBatches/Repartitioning</literal></entry>
-          <entry>Waiting for other Parallel Hash participants to finishing repartitioning.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBuckets/Allocating</literal></entry>
-          <entry>Waiting for an elected Parallel Hash participant to finish allocating more buckets.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBuckets/Electing</literal></entry>
-          <entry>Electing a Parallel Hash participant to allocate more buckets.</entry>
-        </row>
-        <row>
-          <entry><literal>Hash/GrowBuckets/Reinserting</literal></entry>
-          <entry>Waiting for other Parallel Hash participants to finish inserting tuples into new buckets.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalSyncData</literal></entry>
-         <entry>Waiting for logical replication remote server to send data for initial table synchronization.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalSyncStateChange</literal></entry>
-         <entry>Waiting for logical replication remote server to change state.</entry>
-        </row>
-        <row>
-         <entry><literal>MessageQueueInternal</literal></entry>
-         <entry>Waiting for other process to be attached in shared message queue.</entry>
-        </row>
-        <row>
-         <entry><literal>MessageQueuePutMessage</literal></entry>
-         <entry>Waiting to write a protocol message to a shared message queue.</entry>
-        </row>
-        <row>
-         <entry><literal>MessageQueueReceive</literal></entry>
-         <entry>Waiting to receive bytes from a shared message queue.</entry>
-        </row>
-        <row>
-         <entry><literal>MessageQueueSend</literal></entry>
-         <entry>Waiting to send bytes to a shared message queue.</entry>
-        </row>
-        <row>
-         <entry><literal>ParallelBitmapScan</literal></entry>
-         <entry>Waiting for parallel bitmap scan to become initialized.</entry>
-        </row>
-        <row>
-         <entry><literal>ParallelCreateIndexScan</literal></entry>
-         <entry>Waiting for parallel <command>CREATE INDEX</command> workers to finish heap scan.</entry>
-        </row>
-        <row>
-         <entry><literal>ParallelFinish</literal></entry>
-         <entry>Waiting for parallel workers to finish computing.</entry>
-        </row>
-        <row>
-         <entry><literal>ProcArrayGroupUpdate</literal></entry>
-         <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
-        </row>
-        <row>
-         <entry><literal>Promote</literal></entry>
-         <entry>Waiting for standby promotion.</entry>
-        </row>
-        <row>
-         <entry><literal>RecoveryConflictSnapshot</literal></entry>
-         <entry>Waiting for recovery conflict resolution on a vacuum cleanup.</entry>
-        </row>
-        <row>
-         <entry><literal>RecoveryConflictTablespace</literal></entry>
-         <entry>Waiting for recovery conflict resolution on dropping tablespace.</entry>
-        </row>
-        <row>
-         <entry><literal>RecoveryPause</literal></entry>
-         <entry>Waiting for recovery to be resumed.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationOriginDrop</literal></entry>
-         <entry>Waiting for a replication origin to become inactive to be dropped.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationSlotDrop</literal></entry>
-         <entry>Waiting for a replication slot to become inactive to be dropped.</entry>
-        </row>
-        <row>
-         <entry><literal>SafeSnapshot</literal></entry>
-         <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</literal> transaction.</entry>
-        </row>
-        <row>
-         <entry><literal>SyncRep</literal></entry>
-         <entry>Waiting for confirmation from remote server during synchronous replication.</entry>
-        </row>
-        <row>
-         <entry morerows="4"><literal>Timeout</literal></entry>
-         <entry><literal>BaseBackupThrottle</literal></entry>
-         <entry>Waiting during base backup when throttling activity.</entry>
-        </row>
-        <row>
-         <entry><literal>PgSleep</literal></entry>
-         <entry>Waiting in process that called <function>pg_sleep</function>.</entry>
-        </row>
-        <row>
-         <entry><literal>RecoveryApplyDelay</literal></entry>
-         <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
-        </row>
-        <row>
-         <entry><literal>RecoveryRetrieveRetryInterval</literal></entry>
-         <entry>
-          Waiting when WAL data is not available from any kind of sources
-          (<filename>pg_wal</filename>, archive or stream) before trying
-          again to retrieve WAL data, at recovery.
-         </entry>
-        </row>
-        <row>
-         <entry><literal>VacuumDelay</literal></entry>
-         <entry>Waiting in a cost-based vacuum delay point.</entry>
-        </row>
-        <row>
-         <entry morerows="68"><literal>IO</literal></entry>
-         <entry><literal>BufFileRead</literal></entry>
-         <entry>Waiting for a read from a buffered file.</entry>
-        </row>
-        <row>
-         <entry><literal>BufFileWrite</literal></entry>
-         <entry>Waiting for a write to a buffered file.</entry>
-        </row>
-        <row>
-         <entry><literal>ControlFileRead</literal></entry>
-         <entry>Waiting for a read from the control file.</entry>
-        </row>
-        <row>
-         <entry><literal>ControlFileSync</literal></entry>
-         <entry>Waiting for the control file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>ControlFileSyncUpdate</literal></entry>
-         <entry>Waiting for an update to the control file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>ControlFileWrite</literal></entry>
-         <entry>Waiting for a write to the control file.</entry>
-        </row>
-        <row>
-         <entry><literal>ControlFileWriteUpdate</literal></entry>
-         <entry>Waiting for a write to update the control file.</entry>
-        </row>
-        <row>
-         <entry><literal>CopyFileRead</literal></entry>
-         <entry>Waiting for a read during a file copy operation.</entry>
-        </row>
-        <row>
-         <entry><literal>CopyFileWrite</literal></entry>
-         <entry>Waiting for a write during a file copy operation.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFileExtend</literal></entry>
-         <entry>Waiting for a relation data file to be extended.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFileFlush</literal></entry>
-         <entry>Waiting for a relation data file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFileImmediateSync</literal></entry>
-         <entry>Waiting for an immediate synchronization of a relation data file to stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFilePrefetch</literal></entry>
-         <entry>Waiting for an asynchronous prefetch from a relation data file.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFileRead</literal></entry>
-         <entry>Waiting for a read from a relation data file.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFileSync</literal></entry>
-         <entry>Waiting for changes to a relation data file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFileTruncate</literal></entry>
-         <entry>Waiting for a relation data file to be truncated.</entry>
-        </row>
-        <row>
-         <entry><literal>DataFileWrite</literal></entry>
-         <entry>Waiting for a write to a relation data file.</entry>
-        </row>
-        <row>
-         <entry><literal>DSMFillZeroWrite</literal></entry>
-         <entry>Waiting to write zero bytes to a dynamic shared memory backing file.</entry>
-        </row>
-        <row>
-         <entry><literal>LockFileAddToDataDirRead</literal></entry>
-         <entry>Waiting for a read while adding a line to the data directory lock file.</entry>
-        </row>
-        <row>
-         <entry><literal>LockFileAddToDataDirSync</literal></entry>
-         <entry>Waiting for data to reach stable storage while adding a line to the data directory lock file.</entry>
-        </row>
-        <row>
-         <entry><literal>LockFileAddToDataDirWrite</literal></entry>
-         <entry>Waiting for a write while adding a line to the data directory lock file.</entry>
-        </row>
-        <row>
-         <entry><literal>LockFileCreateRead</literal></entry>
-         <entry>Waiting to read while creating the data directory lock file.</entry>
-        </row>
-        <row>
-         <entry><literal>LockFileCreateSync</literal></entry>
-         <entry>Waiting for data to reach stable storage while creating the data directory lock file.</entry>
-        </row>
-        <row>
-         <entry><literal>LockFileCreateWrite</literal></entry>
-         <entry>Waiting for a write while creating the data directory lock file.</entry>
-        </row>
-        <row>
-         <entry><literal>LockFileReCheckDataDirRead</literal></entry>
-         <entry>Waiting for a read during recheck of the data directory lock file.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalRewriteCheckpointSync</literal></entry>
-         <entry>Waiting for logical rewrite mappings to reach stable storage during a checkpoint.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalRewriteMappingSync</literal></entry>
-         <entry>Waiting for mapping data to reach stable storage during a logical rewrite.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalRewriteMappingWrite</literal></entry>
-         <entry>Waiting for a write of mapping data during a logical rewrite.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalRewriteSync</literal></entry>
-         <entry>Waiting for logical rewrite mappings to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalRewriteTruncate</literal></entry>
-         <entry>Waiting for truncate of mapping data during a logical rewrite.</entry>
-        </row>
-        <row>
-         <entry><literal>LogicalRewriteWrite</literal></entry>
-         <entry>Waiting for a write of logical rewrite mappings.</entry>
-        </row>
-        <row>
-         <entry><literal>ProcSignalBarrier</literal></entry>
-         <entry>Waiting for a barrier event to be processed by all backends.</entry>
-        </row>
-        <row>
-         <entry><literal>RelationMapRead</literal></entry>
-         <entry>Waiting for a read of the relation map file.</entry>
-        </row>
-        <row>
-         <entry><literal>RelationMapSync</literal></entry>
-         <entry>Waiting for the relation map file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>RelationMapWrite</literal></entry>
-         <entry>Waiting for a write to the relation map file.</entry>
-        </row>
-        <row>
-         <entry><literal>ReorderBufferRead</literal></entry>
-         <entry>Waiting for a read during reorder buffer management.</entry>
-        </row>
-        <row>
-         <entry><literal>ReorderBufferWrite</literal></entry>
-         <entry>Waiting for a write during reorder buffer management.</entry>
-        </row>
-        <row>
-         <entry><literal>ReorderLogicalMappingRead</literal></entry>
-         <entry>Waiting for a read of a logical mapping during reorder buffer management.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationSlotRead</literal></entry>
-         <entry>Waiting for a read from a replication slot control file.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationSlotRestoreSync</literal></entry>
-         <entry>Waiting for a replication slot control file to reach stable storage while restoring it to memory.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationSlotSync</literal></entry>
-         <entry>Waiting for a replication slot control file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>ReplicationSlotWrite</literal></entry>
-         <entry>Waiting for a write to a replication slot control file.</entry>
-        </row>
-        <row>
-         <entry><literal>SLRUFlushSync</literal></entry>
-         <entry>Waiting for SLRU data to reach stable storage during a checkpoint or database shutdown.</entry>
-        </row>
-        <row>
-         <entry><literal>SLRURead</literal></entry>
-         <entry>Waiting for a read of an SLRU page.</entry>
-        </row>
-        <row>
-         <entry><literal>SLRUSync</literal></entry>
-         <entry>Waiting for SLRU data to reach stable storage following a page write.</entry>
-        </row>
-        <row>
-         <entry><literal>SLRUWrite</literal></entry>
-         <entry>Waiting for a write of an SLRU page.</entry>
-        </row>
-        <row>
-         <entry><literal>SnapbuildRead</literal></entry>
-         <entry>Waiting for a read of a serialized historical catalog snapshot.</entry>
-        </row>
-        <row>
-         <entry><literal>SnapbuildSync</literal></entry>
-         <entry>Waiting for a serialized historical catalog snapshot to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>SnapbuildWrite</literal></entry>
-         <entry>Waiting for a write of a serialized historical catalog snapshot.</entry>
-        </row>
-        <row>
-         <entry><literal>TimelineHistoryFileSync</literal></entry>
-         <entry>Waiting for a timeline history file received via streaming replication to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>TimelineHistoryFileWrite</literal></entry>
-         <entry>Waiting for a write of a timeline history file received via streaming replication.</entry>
-        </row>
-        <row>
-         <entry><literal>TimelineHistoryRead</literal></entry>
-         <entry>Waiting for a read of a timeline history file.</entry>
-        </row>
-        <row>
-         <entry><literal>TimelineHistorySync</literal></entry>
-         <entry>Waiting for a newly created timeline history file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>TimelineHistoryWrite</literal></entry>
-         <entry>Waiting for a write of a newly created timeline history file.</entry>
-        </row>
-        <row>
-         <entry><literal>TwophaseFileRead</literal></entry>
-         <entry>Waiting for a read of a two phase state file.</entry>
-        </row>
-        <row>
-         <entry><literal>TwophaseFileSync</literal></entry>
-         <entry>Waiting for a two phase state file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>TwophaseFileWrite</literal></entry>
-         <entry>Waiting for a write of a two phase state file.</entry>
-        </row>
-        <row>
-         <entry><literal>WALBootstrapSync</literal></entry>
-         <entry>Waiting for WAL to reach stable storage during bootstrapping.</entry>
-        </row>
-        <row>
-         <entry><literal>WALBootstrapWrite</literal></entry>
-         <entry>Waiting for a write of a WAL page during bootstrapping.</entry>
-        </row>
-        <row>
-         <entry><literal>WALCopyRead</literal></entry>
-         <entry>Waiting for a read when creating a new WAL segment by copying an existing one.</entry>
-        </row>
-        <row>
-         <entry><literal>WALCopySync</literal></entry>
-         <entry>Waiting a new WAL segment created by copying an existing one to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>WALCopyWrite</literal></entry>
-         <entry>Waiting for a write when creating a new WAL segment by copying an existing one.</entry>
-        </row>
-        <row>
-         <entry><literal>WALInitSync</literal></entry>
-         <entry>Waiting for a newly initialized WAL file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>WALInitWrite</literal></entry>
-         <entry>Waiting for a write while initializing a new WAL file.</entry>
-        </row>
-        <row>
-         <entry><literal>WALRead</literal></entry>
-         <entry>Waiting for a read from a WAL file.</entry>
-        </row>
-        <row>
-         <entry><literal>WALSenderTimelineHistoryRead</literal></entry>
-         <entry>Waiting for a read from a timeline history file during walsender timeline command.</entry>
-        </row>
-        <row>
-         <entry><literal>WALSync</literal></entry>
-         <entry>Waiting for a WAL file to reach stable storage.</entry>
-        </row>
-        <row>
-         <entry><literal>WALSyncMethodAssign</literal></entry>
-         <entry>Waiting for data to reach stable storage while assigning WAL sync method.</entry>
-        </row>
-        <row>
-         <entry><literal>WALWrite</literal></entry>
-         <entry>Waiting for a write to a WAL file.</entry>
-        </row>
-      </tbody>
-     </tgroup>
-    </table>
+  <table id="wait-event-activity-table">
+   <title>Wait Events of Type <literal>Activity</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>Activity</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>ArchiverMain</literal></entry>
+      <entry>Waiting in main loop of the archiver process.</entry>
+     </row>
+     <row>
+      <entry><literal>AutoVacuumMain</literal></entry>
+      <entry>Waiting in main loop of autovacuum launcher process.</entry>
+     </row>
+     <row>
+      <entry><literal>BgWriterHibernate</literal></entry>
+      <entry>Waiting in background writer process, hibernating.</entry>
+     </row>
+     <row>
+      <entry><literal>BgWriterMain</literal></entry>
+      <entry>Waiting in main loop of background writer process background
+       worker.</entry>
+     </row>
+     <row>
+      <entry><literal>CheckpointerMain</literal></entry>
+      <entry>Waiting in main loop of checkpointer process.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalApplyMain</literal></entry>
+      <entry>Waiting in main loop of logical apply process.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalLauncherMain</literal></entry>
+      <entry>Waiting in main loop of logical launcher process.</entry>
+     </row>
+     <row>
+      <entry><literal>PgStatMain</literal></entry>
+      <entry>Waiting in main loop of the statistics collector process.</entry>
+     </row>
+     <row>
+      <entry><literal>RecoveryWalStream</literal></entry>
+      <entry>Waiting for WAL from a stream at recovery.</entry>
+     </row>
+     <row>
+      <entry><literal>SysLoggerMain</literal></entry>
+      <entry>Waiting in main loop of syslogger process.</entry>
+     </row>
+     <row>
+      <entry><literal>WalReceiverMain</literal></entry>
+      <entry>Waiting in main loop of WAL receiver process.</entry>
+     </row>
+     <row>
+      <entry><literal>WalSenderMain</literal></entry>
+      <entry>Waiting in main loop of WAL sender process.</entry>
+     </row>
+     <row>
+      <entry><literal>WalWriterMain</literal></entry>
+      <entry>Waiting in main loop of WAL writer process.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="wait-event-bufferpin-table">
+   <title>Wait Events of Type <literal>BufferPin</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>BufferPin</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>BufferPin</literal></entry>
+      <entry>Waiting to acquire a pin on a buffer.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="wait-event-client-table">
+   <title>Wait Events of Type <literal>Client</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>Client</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>ClientRead</literal></entry>
+      <entry>Waiting to read data from the client.</entry>
+     </row>
+     <row>
+      <entry><literal>ClientWrite</literal></entry>
+      <entry>Waiting to write data to the client.</entry>
+     </row>
+     <row>
+      <entry><literal>GSSOpenServer</literal></entry>
+      <entry>Waiting to read data from the client while establishing the GSSAPI
+       session.</entry>
+     </row>
+     <row>
+      <entry><literal>LibPQWalReceiverConnect</literal></entry>
+      <entry>Waiting in WAL receiver to establish connection to remote
+       server.</entry>
+     </row>
+     <row>
+      <entry><literal>LibPQWalReceiverReceive</literal></entry>
+      <entry>Waiting in WAL receiver to receive data from remote server.</entry>
+     </row>
+     <row>
+      <entry><literal>SSLOpenServer</literal></entry>
+      <entry>Waiting for SSL while attempting connection.</entry>
+     </row>
+     <row>
+      <entry><literal>WalReceiverWaitStart</literal></entry>
+      <entry>Waiting for startup process to send initial data for streaming
+       replication.</entry>
+     </row>
+     <row>
+      <entry><literal>WalSenderWaitForWAL</literal></entry>
+      <entry>Waiting for WAL to be flushed in WAL sender process.</entry>
+     </row>
+     <row>
+      <entry><literal>WalSenderWriteData</literal></entry>
+      <entry>Waiting for any activity when processing replies from WAL
+       receiver in WAL sender process.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="wait-event-extension-table">
+   <title>Wait Events of Type <literal>Extension</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>Extension</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>Extension</literal></entry>
+      <entry>Waiting in an extension.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="wait-event-io-table">
+   <title>Wait Events of Type <literal>IO</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>IO</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>BufFileRead</literal></entry>
+      <entry>Waiting for a read from a buffered file.</entry>
+     </row>
+     <row>
+      <entry><literal>BufFileWrite</literal></entry>
+      <entry>Waiting for a write to a buffered file.</entry>
+     </row>
+     <row>
+      <entry><literal>ControlFileRead</literal></entry>
+      <entry>Waiting for a read from the control file.</entry>
+     </row>
+     <row>
+      <entry><literal>ControlFileSync</literal></entry>
+      <entry>Waiting for the control file to reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>ControlFileSyncUpdate</literal></entry>
+      <entry>Waiting for an update to the control file to reach stable
+       storage.</entry>
+     </row>
+     <row>
+      <entry><literal>ControlFileWrite</literal></entry>
+      <entry>Waiting for a write to the control file.</entry>
+     </row>
+     <row>
+      <entry><literal>ControlFileWriteUpdate</literal></entry>
+      <entry>Waiting for a write to update the control file.</entry>
+     </row>
+     <row>
+      <entry><literal>CopyFileRead</literal></entry>
+      <entry>Waiting for a read during a file copy operation.</entry>
+     </row>
+     <row>
+      <entry><literal>CopyFileWrite</literal></entry>
+      <entry>Waiting for a write during a file copy operation.</entry>
+     </row>
+     <row>
+      <entry><literal>DSMFillZeroWrite</literal></entry>
+      <entry>Waiting to write zero bytes to a dynamic shared memory backing
+       file.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFileExtend</literal></entry>
+      <entry>Waiting for a relation data file to be extended.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFileFlush</literal></entry>
+      <entry>Waiting for a relation data file to reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFileImmediateSync</literal></entry>
+      <entry>Waiting for an immediate synchronization of a relation data file to
+       stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFilePrefetch</literal></entry>
+      <entry>Waiting for an asynchronous prefetch from a relation data
+       file.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFileRead</literal></entry>
+      <entry>Waiting for a read from a relation data file.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFileSync</literal></entry>
+      <entry>Waiting for changes to a relation data file to reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFileTruncate</literal></entry>
+      <entry>Waiting for a relation data file to be truncated.</entry>
+     </row>
+     <row>
+      <entry><literal>DataFileWrite</literal></entry>
+      <entry>Waiting for a write to a relation data file.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFileAddToDataDirRead</literal></entry>
+      <entry>Waiting for a read while adding a line to the data directory lock
+       file.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFileAddToDataDirSync</literal></entry>
+      <entry>Waiting for data to reach stable storage while adding a line to the
+       data directory lock file.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFileAddToDataDirWrite</literal></entry>
+      <entry>Waiting for a write while adding a line to the data directory
+       lock file.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFileCreateRead</literal></entry>
+      <entry>Waiting to read while creating the data directory lock
+       file.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFileCreateSync</literal></entry>
+      <entry>Waiting for data to reach stable storage while creating the data
+       directory lock file.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFileCreateWrite</literal></entry>
+      <entry>Waiting for a write while creating the data directory lock
+       file.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFileReCheckDataDirRead</literal></entry>
+      <entry>Waiting for a read during recheck of the data directory lock
+       file.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRewriteCheckpointSync</literal></entry>
+      <entry>Waiting for logical rewrite mappings to reach stable storage
+       during a checkpoint.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRewriteMappingSync</literal></entry>
+      <entry>Waiting for mapping data to reach stable storage during a logical
+       rewrite.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRewriteMappingWrite</literal></entry>
+      <entry>Waiting for a write of mapping data during a logical
+       rewrite.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRewriteSync</literal></entry>
+      <entry>Waiting for logical rewrite mappings to reach stable
+       storage.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRewriteTruncate</literal></entry>
+      <entry>Waiting for truncate of mapping data during a logical
+       rewrite.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRewriteWrite</literal></entry>
+      <entry>Waiting for a write of logical rewrite mappings.</entry>
+     </row>
+     <row>
+      <entry><literal>ProcSignalBarrier</literal></entry>
+      <entry>Waiting for a barrier event to be processed by all
+       backends.</entry>
+     </row>
+     <row>
+      <entry><literal>RelationMapRead</literal></entry>
+      <entry>Waiting for a read of the relation map file.</entry>
+     </row>
+     <row>
+      <entry><literal>RelationMapSync</literal></entry>
+      <entry>Waiting for the relation map file to reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>RelationMapWrite</literal></entry>
+      <entry>Waiting for a write to the relation map file.</entry>
+     </row>
+     <row>
+      <entry><literal>ReorderBufferRead</literal></entry>
+      <entry>Waiting for a read during reorder buffer management.</entry>
+     </row>
+     <row>
+      <entry><literal>ReorderBufferWrite</literal></entry>
+      <entry>Waiting for a write during reorder buffer management.</entry>
+     </row>
+     <row>
+      <entry><literal>ReorderLogicalMappingRead</literal></entry>
+      <entry>Waiting for a read of a logical mapping during reorder buffer
+       management.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationSlotRead</literal></entry>
+      <entry>Waiting for a read from a replication slot control file.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationSlotRestoreSync</literal></entry>
+      <entry>Waiting for a replication slot control file to reach stable storage
+       while restoring it to memory.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationSlotSync</literal></entry>
+      <entry>Waiting for a replication slot control file to reach stable
+       storage.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationSlotWrite</literal></entry>
+      <entry>Waiting for a write to a replication slot control file.</entry>
+     </row>
+     <row>
+      <entry><literal>SLRUFlushSync</literal></entry>
+      <entry>Waiting for SLRU data to reach stable storage during a checkpoint
+       or database shutdown.</entry>
+     </row>
+     <row>
+      <entry><literal>SLRURead</literal></entry>
+      <entry>Waiting for a read of an SLRU page.</entry>
+     </row>
+     <row>
+      <entry><literal>SLRUSync</literal></entry>
+      <entry>Waiting for SLRU data to reach stable storage following a page
+       write.</entry>
+     </row>
+     <row>
+      <entry><literal>SLRUWrite</literal></entry>
+      <entry>Waiting for a write of an SLRU page.</entry>
+     </row>
+     <row>
+      <entry><literal>SnapbuildRead</literal></entry>
+      <entry>Waiting for a read of a serialized historical catalog
+       snapshot.</entry>
+     </row>
+     <row>
+      <entry><literal>SnapbuildSync</literal></entry>
+      <entry>Waiting for a serialized historical catalog snapshot to reach
+       stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>SnapbuildWrite</literal></entry>
+      <entry>Waiting for a write of a serialized historical catalog
+       snapshot.</entry>
+     </row>
+     <row>
+      <entry><literal>TimelineHistoryFileSync</literal></entry>
+      <entry>Waiting for a timeline history file received via streaming
+       replication to reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>TimelineHistoryFileWrite</literal></entry>
+      <entry>Waiting for a write of a timeline history file received via
+       streaming replication.</entry>
+     </row>
+     <row>
+      <entry><literal>TimelineHistoryRead</literal></entry>
+      <entry>Waiting for a read of a timeline history file.</entry>
+     </row>
+     <row>
+      <entry><literal>TimelineHistorySync</literal></entry>
+      <entry>Waiting for a newly created timeline history file to reach stable
+       storage.</entry>
+     </row>
+     <row>
+      <entry><literal>TimelineHistoryWrite</literal></entry>
+      <entry>Waiting for a write of a newly created timeline history
+       file.</entry>
+     </row>
+     <row>
+      <entry><literal>TwophaseFileRead</literal></entry>
+      <entry>Waiting for a read of a two phase state file.</entry>
+     </row>
+     <row>
+      <entry><literal>TwophaseFileSync</literal></entry>
+      <entry>Waiting for a two phase state file to reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>TwophaseFileWrite</literal></entry>
+      <entry>Waiting for a write of a two phase state file.</entry>
+     </row>
+     <row>
+      <entry><literal>WALBootstrapSync</literal></entry>
+      <entry>Waiting for WAL to reach stable storage during
+       bootstrapping.</entry>
+     </row>
+     <row>
+      <entry><literal>WALBootstrapWrite</literal></entry>
+      <entry>Waiting for a write of a WAL page during bootstrapping.</entry>
+     </row>
+     <row>
+      <entry><literal>WALCopyRead</literal></entry>
+      <entry>Waiting for a read when creating a new WAL segment by copying an
+       existing one.</entry>
+     </row>
+     <row>
+      <entry><literal>WALCopySync</literal></entry>
+      <entry>Waiting for a new WAL segment created by copying an existing one to
+       reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>WALCopyWrite</literal></entry>
+      <entry>Waiting for a write when creating a new WAL segment by copying an
+       existing one.</entry>
+     </row>
+     <row>
+      <entry><literal>WALInitSync</literal></entry>
+      <entry>Waiting for a newly initialized WAL file to reach stable
+       storage.</entry>
+     </row>
+     <row>
+      <entry><literal>WALInitWrite</literal></entry>
+      <entry>Waiting for a write while initializing a new WAL file.</entry>
+     </row>
+     <row>
+      <entry><literal>WALRead</literal></entry>
+      <entry>Waiting for a read from a WAL file.</entry>
+     </row>
+     <row>
+      <entry><literal>WALSenderTimelineHistoryRead</literal></entry>
+      <entry>Waiting for a read from a timeline history file during walsender
+       timeline command.</entry>
+     </row>
+     <row>
+      <entry><literal>WALSync</literal></entry>
+      <entry>Waiting for a WAL file to reach stable storage.</entry>
+     </row>
+     <row>
+      <entry><literal>WALSyncMethodAssign</literal></entry>
+      <entry>Waiting for data to reach stable storage while assigning WAL sync
+       method.</entry>
+     </row>
+     <row>
+      <entry><literal>WALWrite</literal></entry>
+      <entry>Waiting for a write to a WAL file.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="wait-event-ipc-table">
+   <title>Wait Events of Type <literal>IPC</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>IPC</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>BackupWaitWalArchive</literal></entry>
+      <entry>Waiting for WAL files required for the backup to be successfully
+       archived.</entry>
+     </row>
+     <row>
+      <entry><literal>BgWorkerShutdown</literal></entry>
+      <entry>Waiting for background worker to shut down.</entry>
+     </row>
+     <row>
+      <entry><literal>BgWorkerStartup</literal></entry>
+      <entry>Waiting for background worker to start up.</entry>
+     </row>
+     <row>
+      <entry><literal>BtreePage</literal></entry>
+      <entry>Waiting for the page number needed to continue a parallel B-tree
+       scan to become available.</entry>
+     </row>
+     <row>
+      <entry><literal>CheckpointDone</literal></entry>
+      <entry>Waiting for a checkpoint to complete.</entry>
+     </row>
+     <row>
+      <entry><literal>CheckpointStart</literal></entry>
+      <entry>Waiting for a checkpoint to start.</entry>
+     </row>
+     <row>
+      <entry><literal>ClogGroupUpdate</literal></entry>
+      <entry>Waiting for group leader to update transaction status at
+       transaction end.</entry>
+     </row>
+     <row>
+      <entry><literal>ExecuteGather</literal></entry>
+      <entry>Waiting for activity from child process while
+       executing <literal>Gather</literal> node.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/Batch/Allocating</literal></entry>
+      <entry>Waiting for an elected Parallel Hash participant to allocate a hash
+       table.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/Batch/Electing</literal></entry>
+      <entry>Electing a Parallel Hash participant to allocate a hash table.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/Batch/Loading</literal></entry>
+      <entry>Waiting for other Parallel Hash participants to finish loading a
+       hash table.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/Build/Allocating</literal></entry>
+      <entry>Waiting for an elected Parallel Hash participant to allocate the
+       initial hash table.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/Build/Electing</literal></entry>
+      <entry>Electing a Parallel Hash participant to allocate the initial hash table.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/Build/HashingInner</literal></entry>
+      <entry>Waiting for other Parallel Hash participants to finish hashing the
+       inner relation.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/Build/HashingOuter</literal></entry>
+      <entry>Waiting for other Parallel Hash participants to finish partitioning
+       the outer relation.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBatches/Allocating</literal></entry>
+      <entry>Waiting for an elected Parallel Hash participant to allocate more
+       batches.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBatches/Deciding</literal></entry>
+      <entry>Electing a Parallel Hash participant to decide on future batch growth.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBatches/Electing</literal></entry>
+      <entry>Electing a Parallel Hash participant to allocate more batches.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBatches/Finishing</literal></entry>
+      <entry>Waiting for an elected Parallel Hash participant to decide on
+       future batch growth.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBatches/Repartitioning</literal></entry>
+      <entry>Waiting for other Parallel Hash participants to finishing
+       repartitioning.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBuckets/Allocating</literal></entry>
+      <entry>Waiting for an elected Parallel Hash participant to finish
+       allocating more buckets.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBuckets/Electing</literal></entry>
+      <entry>Electing a Parallel Hash participant to allocate more buckets.</entry>
+     </row>
+     <row>
+      <entry><literal>Hash/GrowBuckets/Reinserting</literal></entry>
+      <entry>Waiting for other Parallel Hash participants to finish inserting
+       tuples into new buckets.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalSyncData</literal></entry>
+      <entry>Waiting for logical replication remote server to send data for
+       initial table synchronization.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalSyncStateChange</literal></entry>
+      <entry>Waiting for logical replication remote server to change state.</entry>
+     </row>
+     <row>
+      <entry><literal>MessageQueueInternal</literal></entry>
+      <entry>Waiting for other process to be attached in shared message queue.</entry>
+     </row>
+     <row>
+      <entry><literal>MessageQueuePutMessage</literal></entry>
+      <entry>Waiting to write a protocol message to a shared message queue.</entry>
+     </row>
+     <row>
+      <entry><literal>MessageQueueReceive</literal></entry>
+      <entry>Waiting to receive bytes from a shared message queue.</entry>
+     </row>
+     <row>
+      <entry><literal>MessageQueueSend</literal></entry>
+      <entry>Waiting to send bytes to a shared message queue.</entry>
+     </row>
+     <row>
+      <entry><literal>ParallelBitmapScan</literal></entry>
+      <entry>Waiting for parallel bitmap scan to become initialized.</entry>
+     </row>
+     <row>
+      <entry><literal>ParallelCreateIndexScan</literal></entry>
+      <entry>Waiting for parallel <command>CREATE INDEX</command> workers to
+       finish heap scan.</entry>
+     </row>
+     <row>
+      <entry><literal>ParallelFinish</literal></entry>
+      <entry>Waiting for parallel workers to finish computing.</entry>
+     </row>
+     <row>
+      <entry><literal>ProcArrayGroupUpdate</literal></entry>
+      <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+     </row>
+     <row>
+      <entry><literal>Promote</literal></entry>
+      <entry>Waiting for standby promotion.</entry>
+     </row>
+     <row>
+      <entry><literal>RecoveryConflictSnapshot</literal></entry>
+      <entry>Waiting for recovery conflict resolution on a vacuum cleanup.</entry>
+     </row>
+     <row>
+      <entry><literal>RecoveryConflictTablespace</literal></entry>
+      <entry>Waiting for recovery conflict resolution on dropping tablespace.</entry>
+     </row>
+     <row>
+      <entry><literal>RecoveryPause</literal></entry>
+      <entry>Waiting for recovery to be resumed.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationOriginDrop</literal></entry>
+      <entry>Waiting for a replication origin to become inactive to be dropped.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationSlotDrop</literal></entry>
+      <entry>Waiting for a replication slot to become inactive to be dropped.</entry>
+     </row>
+     <row>
+      <entry><literal>SafeSnapshot</literal></entry>
+      <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</literal>
+       transaction.</entry>
+     </row>
+     <row>
+      <entry><literal>SyncRep</literal></entry>
+      <entry>Waiting for confirmation from remote server during synchronous
+       replication.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="wait-event-lock-table">
+   <title>Wait Events of Type <literal>Lock</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>Lock</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>advisory</literal></entry>
+      <entry>Waiting to acquire an advisory user lock.</entry>
+     </row>
+     <row>
+      <entry><literal>extend</literal></entry>
+      <entry>Waiting to extend a relation.</entry>
+     </row>
+     <row>
+      <entry><literal>object</literal></entry>
+      <entry>Waiting to acquire a lock on a non-relation database object.</entry>
+     </row>
+     <row>
+      <entry><literal>page</literal></entry>
+      <entry>Waiting to acquire a lock on page of a relation.</entry>
+     </row>
+     <row>
+      <entry><literal>relation</literal></entry>
+      <entry>Waiting to acquire a lock on a relation.</entry>
+     </row>
+     <row>
+      <entry><literal>speculative token</literal></entry>
+      <entry>Waiting to acquire a speculative insertion lock.</entry>
+     </row>
+     <row>
+      <entry><literal>transactionid</literal></entry>
+      <entry>Waiting for a transaction to finish.</entry>
+     </row>
+     <row>
+      <entry><literal>tuple</literal></entry>
+      <entry>Waiting to acquire a lock on a tuple.</entry>
+     </row>
+     <row>
+      <entry><literal>userlock</literal></entry>
+      <entry>Waiting to acquire a user lock.</entry>
+     </row>
+     <row>
+      <entry><literal>virtualxid</literal></entry>
+      <entry>Waiting to acquire a virtual xid lock.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="wait-event-lwlock-table">
+   <title>Wait Events of Type <literal>LWLock</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>LWLock</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>AddinShmemInitLock</literal></entry>
+      <entry>Waiting to manage space allocation in shared memory.</entry>
+     </row>
+     <row>
+      <entry><literal>AsyncCtlLock</literal></entry>
+      <entry>Waiting to read or update shared notification state.</entry>
+     </row>
+     <row>
+      <entry><literal>AsyncQueueLock</literal></entry>
+      <entry>Waiting to read or update notification messages.</entry>
+     </row>
+     <row>
+      <entry><literal>AutoFileLock</literal></entry>
+      <entry>Waiting to update the <filename>postgresql.auto.conf</filename> file.</entry>
+     </row>
+     <row>
+      <entry><literal>AutovacuumLock</literal></entry>
+      <entry>Autovacuum worker or launcher waiting to update or
+       read the current state of autovacuum workers.</entry>
+     </row>
+     <row>
+      <entry><literal>AutovacuumScheduleLock</literal></entry>
+      <entry>Waiting to ensure that the table selected for a vacuum
+       still needs vacuuming.</entry>
+     </row>
+     <row>
+      <entry><literal>BackgroundWorkerLock</literal></entry>
+      <entry>Waiting to read or update background worker state.</entry>
+     </row>
+     <row>
+      <entry><literal>BtreeVacuumLock</literal></entry>
+      <entry>Waiting to read or update vacuum-related information for a
+       B-tree index.</entry>
+     </row>
+     <row>
+      <entry><literal>CLogControlLock</literal></entry>
+      <entry>Waiting to read or update transaction status.</entry>
+     </row>
+     <row>
+      <entry><literal>CLogTruncationLock</literal></entry>
+      <entry>Waiting to execute <function>pg_xact_status</function> or update
+       the oldest transaction id available to it.</entry>
+     </row>
+     <row>
+      <entry><literal>CheckpointLock</literal></entry>
+      <entry>Waiting to perform checkpoint.</entry>
+     </row>
+     <row>
+      <entry><literal>CheckpointerCommLock</literal></entry>
+      <entry>Waiting to manage fsync requests.</entry>
+     </row>
+     <row>
+      <entry><literal>CommitTsControlLock</literal></entry>
+      <entry>Waiting to read or update transaction commit timestamps.</entry>
+     </row>
+     <row>
+      <entry><literal>CommitTsLock</literal></entry>
+      <entry>Waiting to read or update the last value set for the
+       transaction timestamp.</entry>
+     </row>
+     <row>
+      <entry><literal>ControlFileLock</literal></entry>
+      <entry>Waiting to read or update the control file or creation of a
+       new WAL file.</entry>
+     </row>
+     <row>
+      <entry><literal>DynamicSharedMemoryControlLock</literal></entry>
+      <entry>Waiting to read or update dynamic shared memory state.</entry>
+     </row>
+     <row>
+      <entry><literal>LogicalRepWorkerLock</literal></entry>
+      <entry>Waiting for action on logical replication worker to finish.</entry>
+     </row>
+     <row>
+      <entry><literal>MultiXactGenLock</literal></entry>
+      <entry>Waiting to read or update shared multixact state.</entry>
+     </row>
+     <row>
+      <entry><literal>MultiXactMemberControlLock</literal></entry>
+      <entry>Waiting to read or update multixact member mappings.</entry>
+     </row>
+     <row>
+      <entry><literal>MultiXactOffsetControlLock</literal></entry>
+      <entry>Waiting to read or update multixact offset mappings.</entry>
+     </row>
+     <row>
+      <entry><literal>MultiXactTruncationLock</literal></entry>
+      <entry>Waiting to read or truncate multixact information.</entry>
+     </row>
+     <row>
+      <entry><literal>OidGenLock</literal></entry>
+      <entry>Waiting to allocate or assign an OID.</entry>
+     </row>
+     <row>
+      <entry><literal>OldSerXidLock</literal></entry>
+      <entry>Waiting to read or record conflicting serializable
+       transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>OldSnapshotTimeMapLock</literal></entry>
+      <entry>Waiting to read or update old snapshot control information.</entry>
+     </row>
+     <row>
+      <entry><literal>ProcArrayLock</literal></entry>
+      <entry>Waiting to get a snapshot or clearing a transaction id at
+       transaction end.</entry>
+     </row>
+     <row>
+      <entry><literal>RelCacheInitLock</literal></entry>
+      <entry>Waiting to read or write relation cache initialization file.</entry>
+     </row>
+     <row>
+      <entry><literal>RelationMappingLock</literal></entry>
+      <entry>Waiting to update the relation map file used to store catalog
+       to filenode mapping.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationOriginLock</literal></entry>
+      <entry>Waiting to setup, drop or use replication origin.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationSlotAllocationLock</literal></entry>
+      <entry>Waiting to allocate or free a replication slot.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationSlotControlLock</literal></entry>
+      <entry>Waiting to read or update replication slot state.</entry>
+     </row>
+     <row>
+      <entry><literal>SInvalReadLock</literal></entry>
+      <entry>Waiting to retrieve or remove messages from shared invalidation
+       queue.</entry>
+     </row>
+     <row>
+      <entry><literal>SInvalWriteLock</literal></entry>
+      <entry>Waiting to add a message in shared invalidation queue.</entry>
+     </row>
+     <row>
+      <entry><literal>SerializableFinishedListLock</literal></entry>
+      <entry>Waiting to access the list of finished serializable
+       transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>SerializablePredicateLockListLock</literal></entry>
+      <entry>Waiting to perform an operation on a list of locks held by
+       serializable transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>SerializableXactHashLock</literal></entry>
+      <entry>Waiting to retrieve or store information about serializable
+       transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>ShmemIndexLock</literal></entry>
+      <entry>Waiting to find or allocate space in shared memory.</entry>
+     </row>
+     <row>
+      <entry><literal>SubtransControlLock</literal></entry>
+      <entry>Waiting to read or update sub-transaction information.</entry>
+     </row>
+     <row>
+      <entry><literal>SyncRepLock</literal></entry>
+      <entry>Waiting to read or update information about synchronous
+       replicas.</entry>
+     </row>
+     <row>
+      <entry><literal>SyncScanLock</literal></entry>
+      <entry>Waiting to get the start location of a scan on a table for
+       synchronized scans.</entry>
+     </row>
+     <row>
+      <entry><literal>TablespaceCreateLock</literal></entry>
+      <entry>Waiting to create or drop the tablespace.</entry>
+     </row>
+     <row>
+      <entry><literal>TwoPhaseStateLock</literal></entry>
+      <entry>Waiting to read or update the state of prepared transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>WALBufMappingLock</literal></entry>
+      <entry>Waiting to replace a page in WAL buffers.</entry>
+     </row>
+     <row>
+      <entry><literal>WALWriteLock</literal></entry>
+      <entry>Waiting for WAL buffers to be written to disk.</entry>
+     </row>
+     <row>
+      <entry><literal>XidGenLock</literal></entry>
+      <entry>Waiting to allocate or assign a transaction id.</entry>
+     </row>
+     <row>
+      <entry><literal>async</literal></entry>
+      <entry>Waiting for I/O on an async (notify) buffer.</entry>
+     </row>
+     <row>
+      <entry><literal>buffer_content</literal></entry>
+      <entry>Waiting to read or write a data page in memory.</entry>
+     </row>
+     <row>
+      <entry><literal>buffer_io</literal></entry>
+      <entry>Waiting for I/O on a data page.</entry>
+     </row>
+     <row>
+      <entry><literal>buffer_mapping</literal></entry>
+      <entry>Waiting to associate a data block with a buffer in the buffer
+       pool.</entry>
+     </row>
+     <row>
+      <entry><literal>clog</literal></entry>
+      <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
+     </row>
+     <row>
+      <entry><literal>commit_timestamp</literal></entry>
+      <entry>Waiting for I/O on commit timestamp buffer.</entry>
+     </row>
+     <row>
+      <entry><literal>lock_manager</literal></entry>
+      <entry>Waiting to add or examine locks for backends, or waiting to
+       join or exit a locking group (used by parallel query).</entry>
+     </row>
+     <row>
+      <entry><literal>multixact_member</literal></entry>
+      <entry>Waiting for I/O on a multixact_member buffer.</entry>
+     </row>
+     <row>
+      <entry><literal>multixact_offset</literal></entry>
+      <entry>Waiting for I/O on a multixact offset buffer.</entry>
+     </row>
+     <row>
+      <entry><literal>oldserxid</literal></entry>
+      <entry>Waiting for I/O on an oldserxid buffer.</entry>
+     </row>
+     <row>
+      <entry><literal>parallel_append</literal></entry>
+      <entry>Waiting to choose the next subplan during Parallel Append plan
+       execution.</entry>
+     </row>
+     <row>
+      <entry><literal>parallel_hash_join</literal></entry>
+      <entry>Waiting to allocate or exchange a chunk of memory or update
+       counters during Parallel Hash plan execution.</entry>
+     </row>
+     <row>
+      <entry><literal>parallel_query_dsa</literal></entry>
+      <entry>Waiting for parallel query dynamic shared memory allocation lock.</entry>
+     </row>
+     <row>
+      <entry><literal>predicate_lock_manager</literal></entry>
+      <entry>Waiting to add or examine predicate lock information.</entry>
+     </row>
+     <row>
+      <entry><literal>proc</literal></entry>
+      <entry>Waiting to read or update the fast-path lock information.</entry>
+     </row>
+     <row>
+      <entry><literal>replication_origin</literal></entry>
+      <entry>Waiting to read or update the replication progress.</entry>
+     </row>
+     <row>
+      <entry><literal>replication_slot_io</literal></entry>
+      <entry>Waiting for I/O on a replication slot.</entry>
+     </row>
+     <row>
+      <entry><literal>serializable_xact</literal></entry>
+      <entry>Waiting to perform an operation on a serializable transaction
+       in a parallel query.</entry>
+     </row>
+     <row>
+      <entry><literal>subtrans</literal></entry>
+      <entry>Waiting for I/O on a subtransaction buffer.</entry>
+     </row>
+     <row>
+      <entry><literal>tbm</literal></entry>
+      <entry>Waiting for TBM shared iterator lock.</entry>
+     </row>
+     <row>
+      <entry><literal>wal_insert</literal></entry>
+      <entry>Waiting to insert WAL into a memory buffer.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
 
    <note>
     <para>
-     For tranches registered by extensions, the name is specified by extension
-     and this will be displayed as <structfield>wait_event</structfield>.  It is quite
-     possible that user has registered the tranche in one of the backends (by
-     having allocation in dynamic shared memory) in which case other backends
-     won't have that information, so we display <literal>extension</literal> for such
-     cases.
+     Extensions can add <literal>LWLock</literal> types to the list shown in
+     <xref linkend="wait-event-lwlock-table"/>.  In some cases, the name
+     assigned by an extension will not be available in all server processes;
+     so a wait event might be reported as
+     just <quote><literal>extension</literal></quote> rather than the
+     extension-assigned name.
     </para>
    </note>
 
+  <table id="wait-event-timeout-table">
+   <title>Wait Events of Type <literal>Timeout</literal></title>
+   <tgroup cols="2">
+    <thead>
+     <row>
+      <entry><literal>Timeout</literal> Wait Event</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>BaseBackupThrottle</literal></entry>
+      <entry>Waiting during base backup when throttling activity.</entry>
+     </row>
+     <row>
+      <entry><literal>PgSleep</literal></entry>
+      <entry>Waiting in process that called <function>pg_sleep</function>.</entry>
+     </row>
+     <row>
+      <entry><literal>RecoveryApplyDelay</literal></entry>
+      <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
+     </row>
+     <row>
+      <entry><literal>RecoveryRetrieveRetryInterval</literal></entry>
+      <entry>Waiting when WAL data is not available from any kind of sources
+       (<filename>pg_wal</filename>, archive or stream) before trying
+       again to retrieve WAL data, at recovery.</entry>
+     </row>
+     <row>
+      <entry><literal>VacuumDelay</literal></entry>
+      <entry>Waiting in a cost-based vacuum delay point.</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
    <para>
-     Here is an example of how wait events can be viewed
+     Here is an example of how wait events can be viewed:
 
 <programlisting>
 SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event is NOT NULL;
@@ -4497,7 +4681,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
        </para>
        <para>
         Returns the wait event name if this backend is currently waiting,
-        otherwise NULL.  See <xref linkend="wait-event-table"/> for details.
+        otherwise NULL. See <xref linkend="wait-event-activity-table"/> through
+        <xref linkend="wait-event-timeout-table"/>.
        </para></entry>
       </row>
 
