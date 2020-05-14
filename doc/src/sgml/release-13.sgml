@@ -2361,15 +2361,6 @@ Reformat tables containing function information for better clarity (Tom Lane)
 
 </listitem>
 
-    </itemizedlist>
-
-   </sect3>
-
-   <sect3>
-    <title>Source Code</title>
-
-    <itemizedlist>
-
 <listitem>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
@@ -2381,6 +2372,15 @@ Upgrade to use DocBook 4.5 (Peter Eisentraut)
 </para>
 
 </listitem>
+
+    </itemizedlist>
+
+   </sect3>
+
+   <sect3>
+    <title>Source Code</title>
+
+    <itemizedlist>
 
 <listitem>
 <!--
