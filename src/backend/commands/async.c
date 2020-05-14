@@ -200,7 +200,10 @@ typedef struct QueuePosition
 	} while (0)
 
 #define QUEUE_POS_EQUAL(x,y) \
-	 ((x).page == (y).page && (x).offset == (y).offset)
+	((x).page == (y).page && (x).offset == (y).offset)
+
+#define QUEUE_POS_IS_ZERO(x) \
+	((x).page == 0 && (x).offset == 0)
 
 /* choose logically smaller QueuePosition */
 #define QUEUE_POS_MIN(x,y) \
@@ -515,7 +518,6 @@ void
 AsyncShmemInit(void)
 {
 	bool		found;
-	int			slotno;
 	Size		size;
 
 	/*
@@ -562,13 +564,6 @@ AsyncShmemInit(void)
 		 * During start or reboot, clean out the pg_notify directory.
 		 */
 		(void) SlruScanDirectory(AsyncCtl, SlruScanDirCbDeleteAll, NULL);
-
-		/* Now initialize page zero to empty */
-		LWLockAcquire(AsyncCtlLock, LW_EXCLUSIVE);
-		slotno = SimpleLruZeroPage(AsyncCtl, QUEUE_POS_PAGE(QUEUE_HEAD));
-		/* This write is just to verify that pg_notify/ is writable */
-		SimpleLruWritePage(AsyncCtl, slotno);
-		LWLockRelease(AsyncCtlLock);
 	}
 }
 
@@ -1470,9 +1465,21 @@ asyncQueueAddEntries(ListCell *nextNotify)
 	 */
 	queue_head = QUEUE_HEAD;
 
-	/* Fetch the current page */
+	/*
+	 * If this is the first write since the postmaster started, we need to
+	 * initialize the first page of the async SLRU.  Otherwise, the current
+	 * page should be initialized already, so just fetch it.
+	 *
+	 * (We could also take the first path when the SLRU position has just
+	 * wrapped around, but re-zeroing the page is harmless in that case.)
+	 */
 	pageno = QUEUE_POS_PAGE(queue_head);
-	slotno = SimpleLruReadPage(AsyncCtl, pageno, true, InvalidTransactionId);
+	if (QUEUE_POS_IS_ZERO(queue_head))
+		slotno = SimpleLruZeroPage(AsyncCtl, pageno);
+	else
+		slotno = SimpleLruReadPage(AsyncCtl, pageno, true,
+								   InvalidTransactionId);
+
 	/* Note we mark the page dirty before writing in it */
 	AsyncCtl->shared->page_dirty[slotno] = true;
 

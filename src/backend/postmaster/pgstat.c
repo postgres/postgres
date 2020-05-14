@@ -2906,9 +2906,6 @@ pgstat_initialize(void)
 		MyBEEntry = &BackendStatusArray[MaxBackends + MyAuxProcType];
 	}
 
-	/* Initialize SLRU statistics to zero */
-	memset(&SLRUStats, 0, sizeof(SLRUStats));
-
 	/* Set up a process-exit hook to clean up */
 	on_shmem_exit(pgstat_beshutdown_hook, 0);
 }
@@ -6727,6 +6724,12 @@ pgstat_slru_name(int slru_idx)
 static inline PgStat_MsgSLRU *
 slru_entry(int slru_idx)
 {
+	/*
+	 * The postmaster should never register any SLRU statistics counts; if it
+	 * did, the counts would be duplicated into child processes via fork().
+	 */
+	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
+
 	Assert((slru_idx >= 0) && (slru_idx < SLRU_NUM_ELEMENTS));
 
 	return &SLRUStats[slru_idx];
