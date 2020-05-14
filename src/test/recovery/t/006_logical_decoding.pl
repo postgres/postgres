@@ -71,6 +71,11 @@ my $endpos = $node_master->safe_psql('postgres',
 );
 print "waiting to replay $endpos\n";
 
+# Insert some rows after $endpos, which we won't read.
+$node_master->safe_psql('postgres',
+	qq[INSERT INTO decoding_test(x,y) SELECT s, s::text FROM generate_series(5,50) s;]
+);
+
 my $stdout_recv = $node_master->pg_recvlogical_upto(
 	'postgres', 'test_slot', $endpos, 180,
 	'include-xids'     => '0',
@@ -89,7 +94,7 @@ $stdout_recv = $node_master->pg_recvlogical_upto(
 	'skip-empty-xacts' => '1');
 chomp($stdout_recv);
 is($stdout_recv, '',
-	'pg_recvlogical acknowledged changes, nothing pending on slot');
+	'pg_recvlogical acknowledged changes');
 
 $node_master->safe_psql('postgres', 'CREATE DATABASE otherdb');
 
