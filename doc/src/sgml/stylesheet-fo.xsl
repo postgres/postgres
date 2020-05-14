@@ -79,6 +79,16 @@
   </fo:block>
 </xsl:template>
 
+<!-- formatting for entries in tables of catalog/view columns -->
+<xsl:template match="entry[@role='catalog_table_entry']/para">
+  <fo:block margin-left="4em" text-align="left">
+    <xsl:if test="self::para[@role='column_definition']">
+      <xsl:attribute name="text-indent">-3.5em</xsl:attribute>
+    </xsl:if>
+    <xsl:apply-templates/>
+  </fo:block>
+</xsl:template>
+
 <!-- overrides stylesheet-common.xsl -->
 <!-- FOP needs us to be explicit about the font to use for right arrow -->
 <xsl:template match="returnvalue">

@@ -96,6 +96,36 @@ td.func_table_entry pre.programlisting {
 	padding-left: 4em;
 }
 
+/* formatting for entries in tables of catalog/view columns */
+
+th.catalog_table_entry p,
+td.catalog_table_entry p {
+	margin-top: 0.1em;
+	margin-bottom: 0.1em;
+	padding-left: 4em;
+	text-align: left;
+}
+
+th.catalog_table_entry p.column_definition {
+	text-indent: -3.5em;
+	word-spacing: 0.25em;
+}
+
+td.catalog_table_entry p.column_definition {
+	text-indent: -3.5em;
+}
+
+p.column_definition code.type {
+	padding-left: 0.25em;
+	padding-right: 0.25em;
+}
+
+td.catalog_table_entry pre.programlisting {
+	margin-top: 0.1em;
+	margin-bottom: 0.1em;
+	padding-left: 4em;
+}
+
 /* Put these here instead of inside the HTML (see unsetting of
    admon.style in XSL) so that the web site stylesheet can set its own
    style. */
@@ -113,6 +143,10 @@ td.func_table_entry pre.programlisting {
 
 pre.literallayout, .screen, .synopsis, .programlisting {
 	margin-left: 4ex;
+}
+
+ul.itemizedlist {
+	margin-left: 2.5rem;
 }
 
 .comment	{ color: red; }

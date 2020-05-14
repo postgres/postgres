@@ -611,119 +611,170 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <table id="pg-stat-activity-view" xreflabel="pg_stat_activity">
    <title><structname>pg_stat_activity</structname> View</title>
-
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>datid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the database this backend is connected to</entry>
-    </row>
-    <row>
-     <entry><structfield>datname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the database this backend is connected to</entry>
-    </row>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of this backend</entry>
-    </row>
-    <row>
-     <entry><structfield>leader_pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>
-      Process ID of the parallel group leader if this process is or
-      has been involved in parallel query, or null. This field is set
-      when a process wants to cooperate with parallel workers, and
-      remains set as long as the process exists. For a parallel group leader,
-      this field is set to its own process ID. For a parallel worker,
-      this field is set to the process ID of the parallel group leader.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>usesysid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the user logged into this backend</entry>
-    </row>
-    <row>
-     <entry><structfield>usename</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the user logged into this backend</entry>
-    </row>
-    <row>
-     <entry><structfield>application_name</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Name of the application that is connected
-      to this backend</entry>
-    </row>
-    <row>
-     <entry><structfield>client_addr</structfield></entry>
-     <entry><type>inet</type></entry>
-     <entry>IP address of the client connected to this backend.
-      If this field is null, it indicates either that the client is
-      connected via a Unix socket on the server machine or that this is an
-      internal process such as autovacuum.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>client_hostname</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Host name of the connected client, as reported by a
-      reverse DNS lookup of <structfield>client_addr</structfield>. This field will
-      only be non-null for IP connections, and only when <xref
-      linkend="guc-log-hostname"/> is enabled.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>client_port</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>TCP port number that the client is using for communication
-      with this backend, or <literal>-1</literal> if a Unix socket is used.
-      If this field is null, it indicates that this is an internal server process.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backend_start</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time when this process was started.  For client backends,
-      this is the time the client connected to the server.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>xact_start</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time when this process' current transaction was started, or null
-      if no transaction is active. If the current
-      query is the first of its transaction, this column is equal to the
-      <structfield>query_start</structfield> column.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>query_start</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time when the currently active query was started, or if
-      <structfield>state</structfield> is not <literal>active</literal>, when the last query
-      was started
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>state_change</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time when the <structfield>state</structfield> was last changed</entry>
-    </row>
+    <tbody>
      <row>
-      <entry><structfield>wait_event_type</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>The type of event for which the backend is waiting, if any;
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database this backend is connected to
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database this backend is connected to
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of this backend
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>leader_pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of the parallel group leader if this process is or
+       has been involved in parallel query, or null. This field is set
+       when a process wants to cooperate with parallel workers, and
+       remains set as long as the process exists. For a parallel group leader,
+       this field is set to its own process ID. For a parallel worker,
+       this field is set to the process ID of the parallel group leader.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usesysid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the user logged into this backend
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usename</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the user logged into this backend
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>application_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the application that is connected
+       to this backend
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_addr</structfield> <type>inet</type>
+      </para>
+      <para>
+       IP address of the client connected to this backend.
+       If this field is null, it indicates either that the client is
+       connected via a Unix socket on the server machine or that this is an
+       internal process such as autovacuum.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_hostname</structfield> <type>text</type>
+      </para>
+      <para>
+       Host name of the connected client, as reported by a
+       reverse DNS lookup of <structfield>client_addr</structfield>. This field will
+       only be non-null for IP connections, and only when <xref linkend="guc-log-hostname"/> is enabled.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_port</structfield> <type>integer</type>
+      </para>
+      <para>
+       TCP port number that the client is using for communication
+       with this backend, or <literal>-1</literal> if a Unix socket is used.
+       If this field is null, it indicates that this is an internal server process.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backend_start</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time when this process was started.  For client backends,
+       this is the time the client connected to the server.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>xact_start</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time when this process' current transaction was started, or null
+       if no transaction is active. If the current
+       query is the first of its transaction, this column is equal to the
+       <structfield>query_start</structfield> column.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>query_start</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time when the currently active query was started, or if
+       <structfield>state</structfield> is not <literal>active</literal>, when the last query
+       was started
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>state_change</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time when the <structfield>state</structfield> was last changed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wait_event_type</structfield> <type>text</type>
+      </para>
+      <para>
+       The type of event for which the backend is waiting, if any;
        otherwise NULL. Possible values are:
        <itemizedlist>
         <listitem>
@@ -797,96 +848,115 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          </para>
         </listitem>
        </itemizedlist>
-      </entry>
+      </para></entry>
      </row>
-    <row>
-     <entry><structfield>wait_event</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Wait event name if backend is currently waiting, otherwise NULL.
-     See <xref linkend="wait-event-table"/> for details.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>state</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Current overall state of this backend.
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wait_event</structfield> <type>text</type>
+      </para>
+      <para>
+       Wait event name if backend is currently waiting, otherwise NULL.
+       See <xref linkend="wait-event-table"/> for details.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>state</structfield> <type>text</type>
+      </para>
+      <para>
+       Current overall state of this backend.
        Possible values are:
        <itemizedlist>
-         <listitem>
-          <para>
-           <literal>active</literal>: The backend is executing a query.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>idle</literal>: The backend is waiting for a new client command.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>idle in transaction</literal>: The backend is in a transaction,
-           but is not currently executing a query.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>idle in transaction (aborted)</literal>: This state is similar to
-           <literal>idle in transaction</literal>, except one of the statements in
-           the transaction caused an error.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>fastpath function call</literal>: The backend is executing a
-           fast-path function.
-          </para>
-         </listitem>
-         <listitem>
-           <para>
-           <literal>disabled</literal>: This state is reported if <xref
-           linkend="guc-track-activities"/> is disabled in this backend.
-          </para>
-         </listitem>
+        <listitem>
+        <para>
+          <literal>active</literal>: The backend is executing a query.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>idle</literal>: The backend is waiting for a new client command.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>idle in transaction</literal>: The backend is in a transaction,
+          but is not currently executing a query.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>idle in transaction (aborted)</literal>: This state is similar to
+          <literal>idle in transaction</literal>, except one of the statements in
+          the transaction caused an error.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>fastpath function call</literal>: The backend is executing a
+          fast-path function.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>disabled</literal>: This state is reported if <xref linkend="guc-track-activities"/> is disabled in this backend.
+         </para>
+       </listitem>
        </itemizedlist>
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backend_xid</structfield></entry>
-     <entry><type>xid</type></entry>
-     <entry>Top-level transaction identifier of this backend, if any.</entry>
-    </row>
-    <row>
-     <entry><structfield>backend_xmin</structfield></entry>
-     <entry><type>xid</type></entry>
-     <entry>The current backend's <literal>xmin</literal> horizon.</entry>
-    </row>
-    <row>
-     <entry><structfield>query</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Text of this backend's most recent query. If
-      <structfield>state</structfield> is <literal>active</literal> this field shows the
-      currently executing query. In all other states, it shows the last query
-      that was executed. By default the query text is truncated at 1024
-      characters; this value can be changed via the parameter
-      <xref linkend="guc-track-activity-query-size"/>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backend_type</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Type of current backend. Possible types are
-      <literal>autovacuum launcher</literal>, <literal>autovacuum worker</literal>,
-      <literal>logical replication launcher</literal>,
-      <literal>logical replication worker</literal>,
-      <literal>parallel worker</literal>, <literal>background writer</literal>,
-      <literal>client backend</literal>, <literal>checkpointer</literal>,
-      <literal>startup</literal>, <literal>walreceiver</literal>,
-      <literal>walsender</literal> and <literal>walwriter</literal>.
-      In addition, background workers registered by extensions may have
-      additional types.
-     </entry>
-    </row>
-   </tbody>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backend_xid</structfield> <type>xid</type>
+      </para>
+      <para>
+       Top-level transaction identifier of this backend, if any.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backend_xmin</structfield> <type>xid</type>
+      </para>
+      <para>
+       The current backend's <literal>xmin</literal> horizon.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>query</structfield> <type>text</type>
+      </para>
+      <para>
+       Text of this backend's most recent query. If
+       <structfield>state</structfield> is <literal>active</literal> this field shows the
+       currently executing query. In all other states, it shows the last query
+       that was executed. By default the query text is truncated at 1024
+       characters; this value can be changed via the parameter
+       <xref linkend="guc-track-activity-query-size"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backend_type</structfield> <type>text</type>
+      </para>
+      <para>
+       Type of current backend. Possible types are
+       <literal>autovacuum launcher</literal>, <literal>autovacuum worker</literal>,
+       <literal>logical replication launcher</literal>,
+       <literal>logical replication worker</literal>,
+       <literal>parallel worker</literal>, <literal>background writer</literal>,
+       <literal>client backend</literal>, <literal>checkpointer</literal>,
+       <literal>startup</literal>, <literal>walreceiver</literal>,
+       <literal>walsender</literal> and <literal>walwriter</literal>.
+       In addition, background workers registered by extensions may have
+       additional types.
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -1842,228 +1912,315 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-replication-view" xreflabel="pg_stat_replication">
    <title><structname>pg_stat_replication</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of a WAL sender process</entry>
-    </row>
-    <row>
-     <entry><structfield>usesysid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the user logged into this WAL sender process</entry>
-    </row>
-    <row>
-     <entry><structfield>usename</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the user logged into this WAL sender process</entry>
-    </row>
-    <row>
-     <entry><structfield>application_name</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Name of the application that is connected
-      to this WAL sender</entry>
-    </row>
-    <row>
-     <entry><structfield>client_addr</structfield></entry>
-     <entry><type>inet</type></entry>
-     <entry>IP address of the client connected to this WAL sender.
-      If this field is null, it indicates that the client is
-      connected via a Unix socket on the server machine.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>client_hostname</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Host name of the connected client, as reported by a
-      reverse DNS lookup of <structfield>client_addr</structfield>. This field will
-      only be non-null for IP connections, and only when <xref
-      linkend="guc-log-hostname"/> is enabled.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>client_port</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>TCP port number that the client is using for communication
-      with this WAL sender, or <literal>-1</literal> if a Unix socket is used
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backend_start</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time when this process was started, i.e., when the
-      client connected to this WAL sender
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backend_xmin</structfield></entry>
-     <entry><type>xid</type></entry>
-     <entry>This standby's <literal>xmin</literal> horizon reported
-     by <xref linkend="guc-hot-standby-feedback"/>.</entry>
-    </row>
-    <row>
-     <entry><structfield>state</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Current WAL sender state.
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of a WAL sender process
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usesysid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the user logged into this WAL sender process
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usename</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the user logged into this WAL sender process
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>application_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the application that is connected
+       to this WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_addr</structfield> <type>inet</type>
+      </para>
+      <para>
+       IP address of the client connected to this WAL sender.
+       If this field is null, it indicates that the client is
+       connected via a Unix socket on the server machine.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_hostname</structfield> <type>text</type>
+      </para>
+      <para>
+       Host name of the connected client, as reported by a
+       reverse DNS lookup of <structfield>client_addr</structfield>. This field will
+       only be non-null for IP connections, and only when <xref linkend="guc-log-hostname"/> is enabled.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_port</structfield> <type>integer</type>
+      </para>
+      <para>
+       TCP port number that the client is using for communication
+       with this WAL sender, or <literal>-1</literal> if a Unix socket is used
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backend_start</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time when this process was started, i.e., when the
+       client connected to this WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backend_xmin</structfield> <type>xid</type>
+      </para>
+      <para>
+       This standby's <literal>xmin</literal> horizon reported
+       by <xref linkend="guc-hot-standby-feedback"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>state</structfield> <type>text</type>
+      </para>
+      <para>
+       Current WAL sender state.
        Possible values are:
        <itemizedlist>
-         <listitem>
-          <para>
-           <literal>startup</literal>: This WAL sender is starting up.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>catchup</literal>: This WAL sender's connected standby is
-           catching up with the primary.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>streaming</literal>: This WAL sender is streaming changes
-           after its connected standby server has caught up with the primary.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>backup</literal>: This WAL sender is sending a backup.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>stopping</literal>: This WAL sender is stopping.
-          </para>
-         </listitem>
+        <listitem>
+         <para>
+          <literal>startup</literal>: This WAL sender is starting up.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>catchup</literal>: This WAL sender's connected standby is
+          catching up with the primary.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>streaming</literal>: This WAL sender is streaming changes
+          after its connected standby server has caught up with the primary.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>backup</literal>: This WAL sender is sending a backup.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>stopping</literal>: This WAL sender is stopping.
+         </para>
+        </listitem>
        </itemizedlist>
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>sent_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location sent on this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>write_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location written to disk by this standby
-      server</entry>
-    </row>
-    <row>
-     <entry><structfield>flush_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location flushed to disk by this standby
-      server</entry>
-    </row>
-    <row>
-     <entry><structfield>replay_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location replayed into the database on this
-      standby server</entry>
-    </row>
-    <row>
-     <entry><structfield>write_lag</structfield></entry>
-     <entry><type>interval</type></entry>
-     <entry>Time elapsed between flushing recent WAL locally and receiving
-      notification that this standby server has written it (but not yet
-      flushed it or applied it).  This can be used to gauge the delay that
-      <literal>synchronous_commit</literal> level
-      <literal>remote_write</literal> incurred while committing if this
-      server was configured as a synchronous standby.</entry>
-    </row>
-    <row>
-     <entry><structfield>flush_lag</structfield></entry>
-     <entry><type>interval</type></entry>
-     <entry>Time elapsed between flushing recent WAL locally and receiving
-      notification that this standby server has written and flushed it
-      (but not yet applied it).  This can be used to gauge the delay that
-      <literal>synchronous_commit</literal> level
-      <literal>on</literal> incurred while committing if this
-      server was configured as a synchronous standby.</entry>
-    </row>
-    <row>
-     <entry><structfield>replay_lag</structfield></entry>
-     <entry><type>interval</type></entry>
-     <entry>Time elapsed between flushing recent WAL locally and receiving
-      notification that this standby server has written, flushed and
-      applied it.  This can be used to gauge the delay that
-      <literal>synchronous_commit</literal> level
-      <literal>remote_apply</literal> incurred while committing if this
-      server was configured as a synchronous standby.</entry>
-    </row>
-    <row>
-     <entry><structfield>sync_priority</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Priority of this standby server for being chosen as the
-      synchronous standby in a priority-based synchronous replication.
-      This has no effect in a quorum-based synchronous replication.</entry>
-    </row>
-    <row>
-     <entry><structfield>sync_state</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Synchronous state of this standby server.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sent_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location sent on this connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>write_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location written to disk by this standby
+       server
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>flush_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location flushed to disk by this standby
+       server
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>replay_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location replayed into the database on this
+       standby server
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>write_lag</structfield> <type>interval</type>
+      </para>
+      <para>
+       Time elapsed between flushing recent WAL locally and receiving
+       notification that this standby server has written it (but not yet
+       flushed it or applied it).  This can be used to gauge the delay that
+       <literal>synchronous_commit</literal> level
+       <literal>remote_write</literal> incurred while committing if this
+       server was configured as a synchronous standby.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>flush_lag</structfield> <type>interval</type>
+      </para>
+      <para>
+       Time elapsed between flushing recent WAL locally and receiving
+       notification that this standby server has written and flushed it
+       (but not yet applied it).  This can be used to gauge the delay that
+       <literal>synchronous_commit</literal> level
+       <literal>on</literal> incurred while committing if this
+       server was configured as a synchronous standby.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>replay_lag</structfield> <type>interval</type>
+      </para>
+      <para>
+       Time elapsed between flushing recent WAL locally and receiving
+       notification that this standby server has written, flushed and
+       applied it.  This can be used to gauge the delay that
+       <literal>synchronous_commit</literal> level
+       <literal>remote_apply</literal> incurred while committing if this
+       server was configured as a synchronous standby.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sync_priority</structfield> <type>integer</type>
+      </para>
+      <para>
+       Priority of this standby server for being chosen as the
+       synchronous standby in a priority-based synchronous replication.
+       This has no effect in a quorum-based synchronous replication.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sync_state</structfield> <type>text</type>
+      </para>
+      <para>
+       Synchronous state of this standby server.
        Possible values are:
        <itemizedlist>
-         <listitem>
-          <para>
-           <literal>async</literal>: This standby server is asynchronous.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>potential</literal>: This standby server is now asynchronous,
-           but can potentially become synchronous if one of current
-           synchronous ones fails.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>sync</literal>: This standby server is synchronous.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>quorum</literal>: This standby server is considered as a candidate
-           for quorum standbys.
-          </para>
-         </listitem>
+        <listitem>
+         <para>
+          <literal>async</literal>: This standby server is asynchronous.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>potential</literal>: This standby server is now asynchronous,
+          but can potentially become synchronous if one of current
+          synchronous ones fails.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>sync</literal>: This standby server is synchronous.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>quorum</literal>: This standby server is considered as a candidate
+          for quorum standbys.
+         </para>
+        </listitem>
        </itemizedlist>
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>reply_time</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Send time of last reply message received from standby server</entry>
-    </row>
-    <row>
-     <entry><structfield>spill_txns</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of transactions spilled to disk after the memory used by
-      logical decoding exceeds <literal>logical_decoding_work_mem</literal>. The
-      counter gets incremented both for toplevel transactions and
-      subtransactions.</entry>
-    </row>
-    <row>
-     <entry><structfield>spill_count</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times transactions were spilled to disk. Transactions
-      may get spilled repeatedly, and this counter gets incremented on every
-      such invocation.</entry>
-    </row>
-    <row>
-     <entry><structfield>spill_bytes</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Amount of decoded transaction data spilled to disk.</entry>
-    </row>
-   </tbody>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>reply_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Send time of last reply message received from standby server
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>spill_txns</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of transactions spilled to disk after the memory used by
+       logical decoding exceeds <literal>logical_decoding_work_mem</literal>. The
+       counter gets incremented both for toplevel transactions and
+       subtransactions.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>spill_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times transactions were spilled to disk. Transactions
+       may get spilled repeatedly, and this counter gets incremented on every
+       such invocation.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>spill_bytes</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Amount of decoded transaction data spilled to disk.
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2115,105 +2272,156 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-wal-receiver-view" xreflabel="pg_stat_wal_receiver">
    <title><structname>pg_stat_wal_receiver</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of the WAL receiver process</entry>
-    </row>
-    <row>
-     <entry><structfield>status</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Activity status of the WAL receiver process</entry>
-    </row>
-    <row>
-     <entry><structfield>receive_start_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>First write-ahead log location used when WAL receiver is
-      started</entry>
-    </row>
-    <row>
-     <entry><structfield>receive_start_tli</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>First timeline number used when WAL receiver is started</entry>
-    </row>
-    <row>
-     <entry><structfield>received_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location already received and flushed to
-      disk, the initial value of this field being the first log location used
-      when WAL receiver is started</entry>
-    </row>
-    <row>
-     <entry><structfield>received_tli</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Timeline number of last write-ahead log location received and
-      flushed to disk, the initial value of this field being the timeline
-      number of the first log location used when WAL receiver is started
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>last_msg_send_time</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Send time of last message received from origin WAL sender</entry>
-    </row>
-    <row>
-     <entry><structfield>last_msg_receipt_time</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Receipt time of last message received from origin WAL sender</entry>
-    </row>
-    <row>
-     <entry><structfield>latest_end_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location reported to origin WAL sender</entry>
-    </row>
-    <row>
-     <entry><structfield>latest_end_time</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time of last write-ahead log location reported to origin WAL sender</entry>
-    </row>
-    <row>
-     <entry><structfield>slot_name</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Replication slot name used by this WAL receiver</entry>
-    </row>
-    <row>
-     <entry><structfield>sender_host</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>
-      Host of the <productname>PostgreSQL</productname> instance
-      this WAL receiver is connected to. This can be a host name,
-      an IP address, or a directory path if the connection is via
-      Unix socket.  (The path case can be distinguished because it
-      will always be an absolute path, beginning with <literal>/</literal>.)
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>sender_port</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>
-      Port number of the <productname>PostgreSQL</productname> instance
-      this WAL receiver is connected to.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>conninfo</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>
-      Connection string used by this WAL receiver,
-      with security-sensitive fields obfuscated.
-     </entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of the WAL receiver process
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>status</structfield> <type>text</type>
+      </para>
+      <para>
+       Activity status of the WAL receiver process
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>receive_start_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       First write-ahead log location used when WAL receiver is
+       started
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>receive_start_tli</structfield> <type>integer</type>
+      </para>
+      <para>
+       First timeline number used when WAL receiver is started
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>received_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location already received and flushed to
+       disk, the initial value of this field being the first log location used
+       when WAL receiver is started
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>received_tli</structfield> <type>integer</type>
+      </para>
+      <para>
+       Timeline number of last write-ahead log location received and
+       flushed to disk, the initial value of this field being the timeline
+       number of the first log location used when WAL receiver is started
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_msg_send_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Send time of last message received from origin WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_msg_receipt_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Receipt time of last message received from origin WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>latest_end_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location reported to origin WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>latest_end_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time of last write-ahead log location reported to origin WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>slot_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Replication slot name used by this WAL receiver
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sender_host</structfield> <type>text</type>
+      </para>
+      <para>
+       Host of the <productname>PostgreSQL</productname> instance
+       this WAL receiver is connected to. This can be a host name,
+       an IP address, or a directory path if the connection is via
+       Unix socket.  (The path case can be distinguished because it
+       will always be an absolute path, beginning with <literal>/</literal>.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sender_port</structfield> <type>integer</type>
+      </para>
+      <para>
+       Port number of the <productname>PostgreSQL</productname> instance
+       this WAL receiver is connected to.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>conninfo</structfield> <type>text</type>
+      </para>
+      <para>
+       Connection string used by this WAL receiver,
+       with security-sensitive fields obfuscated.
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2225,67 +2433,103 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-subscription" xreflabel="pg_stat_subscription">
    <title><structname>pg_stat_subscription</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>subid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the subscription</entry>
-    </row>
-    <row>
-     <entry><structfield>subname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the subscription</entry>
-    </row>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of the subscription worker process</entry>
-    </row>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>Oid</type></entry>
-     <entry>OID of the relation that the worker is synchronizing; null for the
-     main apply worker</entry>
-    </row>
-    <row>
-     <entry><structfield>received_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location received, the initial value of
-      this field being 0</entry>
-    </row>
-    <row>
-     <entry><structfield>last_msg_send_time</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Send time of last message received from origin WAL sender</entry>
-    </row>
-    <row>
-     <entry><structfield>last_msg_receipt_time</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Receipt time of last message received from origin WAL sender
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>latest_end_lsn</structfield></entry>
-     <entry><type>pg_lsn</type></entry>
-     <entry>Last write-ahead log location reported to origin WAL sender
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>latest_end_time</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time of last write-ahead log location reported to origin WAL
-      sender</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the subscription
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the subscription
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of the subscription worker process
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the relation that the worker is synchronizing; null for the
+       main apply worker
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>received_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location received, the initial value of
+       this field being 0
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_msg_send_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Send time of last message received from origin WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_msg_receipt_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Receipt time of last message received from origin WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>latest_end_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location reported to origin WAL sender
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>latest_end_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time of last write-ahead log location reported to origin WAL
+       sender
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2298,77 +2542,114 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-ssl-view" xreflabel="pg_stat_ssl">
    <title><structname>pg_stat_ssl</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of a backend or WAL sender process</entry>
-    </row>
-    <row>
-     <entry><structfield>ssl</structfield></entry>
-     <entry><type>boolean</type></entry>
-     <entry>True if SSL is used on this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>version</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Version of SSL in use, or NULL if SSL is not in use
-      on this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>cipher</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Name of SSL cipher in use, or NULL if SSL is not in use
-      on this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>bits</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Number of bits in the encryption algorithm used, or NULL
-     if SSL is not used on this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>compression</structfield></entry>
-     <entry><type>boolean</type></entry>
-     <entry>True if SSL compression is in use, false if not,
-      or NULL if SSL is not in use on this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>client_dn</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Distinguished Name (DN) field from the client certificate
-      used, or NULL if no client certificate was supplied or if SSL
-      is not in use on this connection. This field is truncated if the
-      DN field is longer than <symbol>NAMEDATALEN</symbol> (64 characters
-      in a standard build).
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>client_serial</structfield></entry>
-     <entry><type>numeric</type></entry>
-     <entry>Serial number of the client certificate, or NULL if no client
-     certificate was supplied or if SSL is not in use on this connection.  The
-     combination of certificate serial number and certificate issuer uniquely
-     identifies a certificate (unless the issuer erroneously reuses serial
-     numbers).</entry>
-    </row>
-    <row>
-     <entry><structfield>issuer_dn</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>DN of the issuer of the client certificate, or NULL if no client
-     certificate was supplied or if SSL is not in use on this connection.
-     This field is truncated like <structfield>client_dn</structfield>.</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of a backend or WAL sender process
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>ssl</structfield> <type>boolean</type>
+      </para>
+      <para>
+       True if SSL is used on this connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>version</structfield> <type>text</type>
+      </para>
+      <para>
+       Version of SSL in use, or NULL if SSL is not in use
+       on this connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>cipher</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of SSL cipher in use, or NULL if SSL is not in use
+       on this connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>bits</structfield> <type>integer</type>
+      </para>
+      <para>
+       Number of bits in the encryption algorithm used, or NULL
+       if SSL is not used on this connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>compression</structfield> <type>boolean</type>
+      </para>
+      <para>
+       True if SSL compression is in use, false if not,
+       or NULL if SSL is not in use on this connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_dn</structfield> <type>text</type>
+      </para>
+      <para>
+       Distinguished Name (DN) field from the client certificate
+       used, or NULL if no client certificate was supplied or if SSL
+       is not in use on this connection. This field is truncated if the
+       DN field is longer than <symbol>NAMEDATALEN</symbol> (64 characters
+       in a standard build).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>client_serial</structfield> <type>numeric</type>
+      </para>
+      <para>
+       Serial number of the client certificate, or NULL if no client
+       certificate was supplied or if SSL is not in use on this connection.  The
+       combination of certificate serial number and certificate issuer uniquely
+       identifies a certificate (unless the issuer erroneously reuses serial
+       numbers).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>issuer_dn</structfield> <type>text</type>
+      </para>
+      <para>
+       DN of the issuer of the client certificate, or NULL if no client
+       certificate was supplied or if SSL is not in use on this connection.
+       This field is truncated like <structfield>client_dn</structfield>.
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2383,41 +2664,58 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-gssapi-view" xreflabel="pg_stat_gssapi">
    <title><structname>pg_stat_gssapi</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of a backend</entry>
-    </row>
-    <row>
-     <entry><structfield>gss_authenticated</structfield></entry>
-     <entry><type>boolean</type></entry>
-     <entry>True if GSSAPI authentication was used for this connection</entry>
-    </row>
-    <row>
-     <entry><structfield>principal</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Principal used to authenticate this connection, or NULL
-      if GSSAPI was not used to authenticate this connection.  This
-      field is truncated if the principal is longer than
-      <symbol>NAMEDATALEN</symbol> (64 characters in a standard build).
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>encrypted</structfield></entry>
-     <entry><type>boolean</type></entry>
-     <entry>True if GSSAPI encryption is in use on this connection</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of a backend
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>gss_authenticated</structfield> <type>boolean</type>
+      </para>
+      <para>
+       True if GSSAPI authentication was used for this connection
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>principal</structfield> <type>text</type>
+      </para>
+      <para>
+       Principal used to authenticate this connection, or NULL
+       if GSSAPI was not used to authenticate this connection.  This
+       field is truncated if the principal is longer than
+       <symbol>NAMEDATALEN</symbol> (64 characters in a standard build).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>encrypted</structfield> <type>boolean</type>
+      </para>
+      <para>
+       True if GSSAPI encryption is in use on this connection
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2433,51 +2731,80 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-archiver-view" xreflabel="pg_stat_archiver">
    <title><structname>pg_stat_archiver</structname> View</title>
-
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
      <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
     <tbody>
      <row>
-      <entry><structfield>archived_count</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of WAL files that have been successfully archived</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>archived_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of WAL files that have been successfully archived
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>last_archived_wal</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>Name of the last WAL file successfully archived</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_archived_wal</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the last WAL file successfully archived
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>last_archived_time</structfield></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>Time of the last successful archive operation</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_archived_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time of the last successful archive operation
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>failed_count</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of failed attempts for archiving WAL files</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>failed_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of failed attempts for archiving WAL files
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>last_failed_wal</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>Name of the WAL file of the last failed archival operation</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_failed_wal</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the WAL file of the last failed archival operation
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>last_failed_time</structfield></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>Time of the last failed archival operation</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_failed_time</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time of the last failed archival operation
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>stats_reset</structfield></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>Time at which these statistics were last reset</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which these statistics were last reset
+      </para></entry>
      </row>
     </tbody>
    </tgroup>
@@ -2490,84 +2817,125 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-bgwriter-view" xreflabel="pg_stat_bgwriter">
    <title><structname>pg_stat_bgwriter</structname> View</title>
-
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
     <tbody>
      <row>
-      <entry><structfield>checkpoints_timed</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of scheduled checkpoints that have been performed</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>checkpoints_timed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of scheduled checkpoints that have been performed
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>checkpoints_req</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of requested checkpoints that have been performed</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>checkpoints_req</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of requested checkpoints that have been performed
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>checkpoint_write_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry>
-        Total amount of time that has been spent in the portion of
-        checkpoint processing where files are written to disk, in milliseconds
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>checkpoint_write_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total amount of time that has been spent in the portion of
+       checkpoint processing where files are written to disk, in milliseconds
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>checkpoint_sync_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry>
-        Total amount of time that has been spent in the portion of
-        checkpoint processing where files are synchronized to disk, in
-        milliseconds
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>checkpoint_sync_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total amount of time that has been spent in the portion of
+       checkpoint processing where files are synchronized to disk, in
+       milliseconds
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>buffers_checkpoint</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of buffers written during checkpoints</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_checkpoint</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffers written during checkpoints
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>buffers_clean</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of buffers written by the background writer</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_clean</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffers written by the background writer
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>maxwritten_clean</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of times the background writer stopped a cleaning
-       scan because it had written too many buffers</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>maxwritten_clean</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the background writer stopped a cleaning
+       scan because it had written too many buffers
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>buffers_backend</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of buffers written directly by a backend</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_backend</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffers written directly by a backend
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>buffers_backend_fsync</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of times a backend had to execute its own
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_backend_fsync</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times a backend had to execute its own
        <function>fsync</function> call (normally the background writer handles those
-       even when the backend does its own write)</entry>
+       even when the backend does its own write)
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>buffers_alloc</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>Number of buffers allocated</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_alloc</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffers allocated
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>stats_reset</structfield></entry>
-      <entry><type>timestamp with time zone</type></entry>
-      <entry>Time at which these statistics were last reset</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which these statistics were last reset
+      </para></entry>
      </row>
     </tbody>
-    </tgroup>
+   </tgroup>
   </table>
 
   <para>
@@ -2577,149 +2945,231 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-database-view" xreflabel="pg_stat_database">
    <title><structname>pg_stat_database</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>datid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of this database, or 0 for objects belonging to a shared
-     relation</entry>
-    </row>
-    <row>
-     <entry><structfield>datname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this database, or <literal>NULL</literal> for shared
-     objects.</entry>
-    </row>
-    <row>
-     <entry><structfield>numbackends</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Number of backends currently connected to this database, or
-     <literal>NULL</literal> for shared objects.  This is the only column
-     in this view that returns a value reflecting current state; all other
-     columns return the accumulated values since the last reset.</entry>
-    </row>
-    <row>
-     <entry><structfield>xact_commit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of transactions in this database that have been
-      committed</entry>
-    </row>
-    <row>
-     <entry><structfield>xact_rollback</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of transactions in this database that have been
-      rolled back</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read in this database</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times disk blocks were found already in the buffer
-      cache, so that a read was not necessary (this only includes hits in the
-      PostgreSQL buffer cache, not the operating system's file system cache)
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>tup_returned</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows returned by queries in this database</entry>
-    </row>
-    <row>
-     <entry><structfield>tup_fetched</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows fetched by queries in this database</entry>
-    </row>
-    <row>
-     <entry><structfield>tup_inserted</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows inserted by queries in this database</entry>
-    </row>
-    <row>
-     <entry><structfield>tup_updated</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows updated by queries in this database</entry>
-    </row>
-    <row>
-     <entry><structfield>tup_deleted</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows deleted by queries in this database</entry>
-    </row>
-    <row>
-     <entry><structfield>conflicts</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of queries canceled due to conflicts with recovery
-      in this database. (Conflicts occur only on standby servers; see
-      <xref linkend="pg-stat-database-conflicts-view"/> for details.)
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>temp_files</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of temporary files created by queries in this database.
-      All temporary files are counted, regardless of why the temporary file
-      was created (e.g., sorting or hashing), and regardless of the
-      <xref linkend="guc-log-temp-files"/> setting.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>temp_bytes</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Total amount of data written to temporary files by queries in
-      this database. All temporary files are counted, regardless of why
-      the temporary file was created, and
-      regardless of the <xref linkend="guc-log-temp-files"/> setting.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>deadlocks</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of deadlocks detected in this database</entry>
-    </row>
-    <row>
-     <entry><structfield>checksum_failures</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of data page checksum failures detected in this
-      database (or on a shared object), or NULL if data checksums are not
-      enabled.</entry>
-    </row>
-    <row>
-     <entry><structfield>checksum_last_failure</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time at which the last data page checksum failure was detected in
-      this database (or on a shared object), or NULL if data checksums are not
-      enabled.</entry>
-    </row>
-    <row>
-     <entry><structfield>blk_read_time</structfield></entry>
-     <entry><type>double precision</type></entry>
-     <entry>Time spent reading data file blocks by backends in this database,
-      in milliseconds</entry>
-    </row>
-    <row>
-     <entry><structfield>blk_write_time</structfield></entry>
-     <entry><type>double precision</type></entry>
-     <entry>Time spent writing data file blocks by backends in this database,
-      in milliseconds</entry>
-    </row>
-    <row>
-     <entry><structfield>stats_reset</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time at which these statistics were last reset</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of this database, or 0 for objects belonging to a shared
+       relation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this database, or <literal>NULL</literal> for shared
+       objects.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>numbackends</structfield> <type>integer</type>
+      </para>
+      <para>
+       Number of backends currently connected to this database, or
+       <literal>NULL</literal> for shared objects.  This is the only column
+       in this view that returns a value reflecting current state; all other
+       columns return the accumulated values since the last reset.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>xact_commit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of transactions in this database that have been
+       committed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>xact_rollback</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of transactions in this database that have been
+       rolled back
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read in this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times disk blocks were found already in the buffer
+       cache, so that a read was not necessary (this only includes hits in the
+       PostgreSQL buffer cache, not the operating system's file system cache)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tup_returned</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows returned by queries in this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tup_fetched</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows fetched by queries in this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tup_inserted</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows inserted by queries in this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tup_updated</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows updated by queries in this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tup_deleted</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows deleted by queries in this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>conflicts</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of queries canceled due to conflicts with recovery
+       in this database. (Conflicts occur only on standby servers; see
+       <xref linkend="pg-stat-database-conflicts-view"/> for details.)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>temp_files</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of temporary files created by queries in this database.
+       All temporary files are counted, regardless of why the temporary file
+       was created (e.g., sorting or hashing), and regardless of the
+       <xref linkend="guc-log-temp-files"/> setting.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>temp_bytes</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total amount of data written to temporary files by queries in
+       this database. All temporary files are counted, regardless of why
+       the temporary file was created, and
+       regardless of the <xref linkend="guc-log-temp-files"/> setting.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>deadlocks</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of deadlocks detected in this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>checksum_failures</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of data page checksum failures detected in this
+       database (or on a shared object), or NULL if data checksums are not
+       enabled.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>checksum_last_failure</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which the last data page checksum failure was detected in
+       this database (or on a shared object), or NULL if data checksums are not
+       enabled.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blk_read_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Time spent reading data file blocks by backends in this database,
+       in milliseconds
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blk_write_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Time spent writing data file blocks by backends in this database,
+       in milliseconds
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which these statistics were last reset
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2731,57 +3181,87 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">
    <title><structname>pg_stat_database_conflicts</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>datid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of a database</entry>
-    </row>
-    <row>
-     <entry><structfield>datname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this database</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_tablespace</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      dropped tablespaces</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_lock</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      lock timeouts</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_snapshot</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      old snapshots</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_bufferpin</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      pinned buffers</entry>
-    </row>
-    <row>
-     <entry><structfield>confl_deadlock</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of queries in this database that have been canceled due to
-      deadlocks</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of a database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_tablespace</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of queries in this database that have been canceled due to
+       dropped tablespaces
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_lock</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of queries in this database that have been canceled due to
+       lock timeouts
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_snapshot</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of queries in this database that have been canceled due to
+       old snapshots
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_bufferpin</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of queries in this database that have been canceled due to
+       pinned buffers
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_deadlock</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of queries in this database that have been canceled due to
+       deadlocks
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2795,139 +3275,233 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-all-tables-view" xreflabel="pg_stat_all_tables">
    <title><structname>pg_stat_all_tables</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of a table</entry>
-    </row>
-    <row>
-     <entry><structfield>schemaname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the schema that this table is in</entry>
-    </row>
-    <row>
-     <entry><structfield>relname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this table</entry>
-    </row>
-    <row>
-     <entry><structfield>seq_scan</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of sequential scans initiated on this table</entry>
-    </row>
-    <row>
-     <entry><structfield>seq_tup_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of live rows fetched by sequential scans</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_scan</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of index scans initiated on this table</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_tup_fetch</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of live rows fetched by index scans</entry>
-    </row>
-    <row>
-     <entry><structfield>n_tup_ins</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows inserted</entry>
-    </row>
-    <row>
-     <entry><structfield>n_tup_upd</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows updated (includes HOT updated rows)</entry>
-    </row>
-    <row>
-     <entry><structfield>n_tup_del</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows deleted</entry>
-    </row>
-    <row>
-     <entry><structfield>n_tup_hot_upd</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of rows HOT updated (i.e., with no separate index
-      update required)</entry>
-    </row>
-    <row>
-     <entry><structfield>n_live_tup</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Estimated number of live rows</entry>
-    </row>
-    <row>
-     <entry><structfield>n_dead_tup</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Estimated number of dead rows</entry>
-    </row>
-    <row>
-     <entry><structfield>n_mod_since_analyze</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Estimated number of rows modified since this table was last analyzed</entry>
-    </row>
-    <row>
-     <entry><structfield>n_ins_since_vacuum</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Estimated number of rows inserted since this table was last vacuumed</entry>
-    </row>
-    <row>
-     <entry><structfield>last_vacuum</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Last time at which this table was manually vacuumed
-      (not counting <command>VACUUM FULL</command>)</entry>
-    </row>
-    <row>
-     <entry><structfield>last_autovacuum</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Last time at which this table was vacuumed by the autovacuum
-      daemon</entry>
-    </row>
-    <row>
-     <entry><structfield>last_analyze</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Last time at which this table was manually analyzed</entry>
-    </row>
-    <row>
-     <entry><structfield>last_autoanalyze</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Last time at which this table was analyzed by the autovacuum
-      daemon</entry>
-    </row>
-    <row>
-     <entry><structfield>vacuum_count</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times this table has been manually vacuumed
-      (not counting <command>VACUUM FULL</command>)</entry>
-    </row>
-    <row>
-     <entry><structfield>autovacuum_count</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times this table has been vacuumed by the autovacuum
-      daemon</entry>
-    </row>
-    <row>
-     <entry><structfield>analyze_count</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times this table has been manually analyzed</entry>
-    </row>
-    <row>
-     <entry><structfield>autoanalyze_count</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times this table has been analyzed by the autovacuum
-      daemon</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of a table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema that this table is in
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>seq_scan</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of sequential scans initiated on this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>seq_tup_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of live rows fetched by sequential scans
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_scan</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of index scans initiated on this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_tup_fetch</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of live rows fetched by index scans
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_tup_ins</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows inserted
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_tup_upd</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows updated (includes HOT updated rows)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_tup_del</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows deleted
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_tup_hot_upd</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of rows HOT updated (i.e., with no separate index
+       update required)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_live_tup</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Estimated number of live rows
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_dead_tup</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Estimated number of dead rows
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_mod_since_analyze</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Estimated number of rows modified since this table was last analyzed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>n_ins_since_vacuum</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Estimated number of rows inserted since this table was last vacuumed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_vacuum</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Last time at which this table was manually vacuumed
+       (not counting <command>VACUUM FULL</command>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_autovacuum</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Last time at which this table was vacuumed by the autovacuum
+       daemon
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_analyze</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Last time at which this table was manually analyzed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_autoanalyze</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Last time at which this table was analyzed by the autovacuum
+       daemon
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>vacuum_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times this table has been manually vacuumed
+       (not counting <command>VACUUM FULL</command>)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>autovacuum_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times this table has been vacuumed by the autovacuum
+       daemon
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>analyze_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times this table has been manually analyzed
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>autoanalyze_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times this table has been analyzed by the autovacuum
+       daemon
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -2943,58 +3517,92 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-all-indexes-view" xreflabel="pg_stat_all_indexes">
    <title><structname>pg_stat_all_indexes</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the table for this index</entry>
-    </row>
-    <row>
-     <entry><structfield>indexrelid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of this index</entry>
-    </row>
-    <row>
-     <entry><structfield>schemaname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the schema this index is in</entry>
-    </row>
-    <row>
-     <entry><structfield>relname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the table for this index</entry>
-    </row>
-    <row>
-     <entry><structfield>indexrelname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this index</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_scan</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of index scans initiated on this index</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_tup_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of index entries returned by scans on this index</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_tup_fetch</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of live table rows fetched by simple index scans using this
-      index</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table for this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>indexrelid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema this index is in
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the table for this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>indexrelname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_scan</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of index scans initiated on this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_tup_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of index entries returned by scans on this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_tup_fetch</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of live table rows fetched by simple index scans using this
+       index
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -3039,72 +3647,118 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-statio-all-tables-view" xreflabel="pg_statio_all_tables">
    <title><structname>pg_statio_all_tables</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of a table</entry>
-    </row>
-    <row>
-     <entry><structfield>schemaname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the schema that this table is in</entry>
-    </row>
-    <row>
-     <entry><structfield>relname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this table</entry>
-    </row>
-    <row>
-     <entry><structfield>heap_blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read from this table</entry>
-    </row>
-    <row>
-     <entry><structfield>heap_blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of buffer hits in this table</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read from all indexes on this table</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of buffer hits in all indexes on this table</entry>
-    </row>
-    <row>
-     <entry><structfield>toast_blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read from this table's TOAST table (if any)</entry>
-    </row>
-    <row>
-     <entry><structfield>toast_blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of buffer hits in this table's TOAST table (if any)</entry>
-    </row>
-    <row>
-     <entry><structfield>tidx_blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read from this table's TOAST table indexes (if any)</entry>
-    </row>
-    <row>
-     <entry><structfield>tidx_blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of buffer hits in this table's TOAST table indexes (if any)</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of a table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema that this table is in
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read from this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffer hits in this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read from all indexes on this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffer hits in all indexes on this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>toast_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read from this table's TOAST table (if any)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>toast_blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffer hits in this table's TOAST table (if any)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tidx_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read from this table's TOAST table indexes (if any)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tidx_blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffer hits in this table's TOAST table indexes (if any)
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -3120,52 +3774,82 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-statio-all-indexes-view" xreflabel="pg_statio_all_indexes">
    <title><structname>pg_statio_all_indexes</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the table for this index</entry>
-    </row>
-    <row>
-     <entry><structfield>indexrelid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of this index</entry>
-    </row>
-    <row>
-     <entry><structfield>schemaname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the schema this index is in</entry>
-    </row>
-    <row>
-     <entry><structfield>relname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the table for this index</entry>
-    </row>
-    <row>
-     <entry><structfield>indexrelname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this index</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read from this index</entry>
-    </row>
-    <row>
-     <entry><structfield>idx_blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of buffer hits in this index</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table for this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>indexrelid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema this index is in
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the table for this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>indexrelname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read from this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>idx_blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffer hits in this index
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -3181,42 +3865,64 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-statio-all-sequences-view" xreflabel="pg_statio_all_sequences">
    <title><structname>pg_statio_all_sequences</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of a sequence</entry>
-    </row>
-    <row>
-     <entry><structfield>schemaname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the schema this sequence is in</entry>
-    </row>
-    <row>
-     <entry><structfield>relname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this sequence</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read from this sequence</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of buffer hits in this sequence</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of a sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema this sequence is in
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read from this sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of buffer hits in this sequence
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -3228,49 +3934,75 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-user-functions-view" xreflabel="pg_stat_user_functions">
    <title><structname>pg_stat_user_functions</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>funcid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of a function</entry>
-    </row>
-    <row>
-     <entry><structfield>schemaname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the schema this function is in</entry>
-    </row>
-    <row>
-     <entry><structfield>funcname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of this function</entry>
-    </row>
-    <row>
-     <entry><structfield>calls</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times this function has been called</entry>
-    </row>
-    <row>
-     <entry><structfield>total_time</structfield></entry>
-     <entry><type>double precision</type></entry>
-     <entry>Total time spent in this function and all other functions
-     called by it, in milliseconds</entry>
-    </row>
-    <row>
-     <entry><structfield>self_time</structfield></entry>
-     <entry><type>double precision</type></entry>
-     <entry>Total time spent in this function itself, not including
-     other functions called by it, in milliseconds</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>funcid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of a function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the schema this function is in
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>funcname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of this function
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>calls</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times this function has been called
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>total_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total time spent in this function and all other functions
+       called by it, in milliseconds
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>self_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total time spent in this function itself, not including
+       other functions called by it, in milliseconds
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -3282,65 +4014,102 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <table id="pg-stat-slru-view" xreflabel="pg_stat_slru">
    <title><structname>pg_stat_slru</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>name</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>name of the SLRU</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_zeroed</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks zeroed during initializations</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of times disk blocks were found already in the SLRU,
-      so that a read was not necessary (this only includes hits in the
-      SLRU, not the operating system's file system cache)
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>blks_read</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks read for this SLRU</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_written</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of disk blocks written for this SLRU</entry>
-    </row>
-    <row>
-     <entry><structfield>blks_exists</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks checked for existence for this SLRU</entry>
-    </row>
-    <row>
-     <entry><structfield>flushes</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of flushes of dirty data for this SLRU</entry>
-    </row>
-    <row>
-     <entry><structfield>truncates</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of truncates for this SLRU</entry>
-    </row>
-    <row>
-     <entry><structfield>stats_reset</structfield></entry>
-     <entry><type>timestamp with time zone</type></entry>
-     <entry>Time at which these statistics were last reset</entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       name of the SLRU
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_zeroed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of blocks zeroed during initializations
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times disk blocks were found already in the SLRU,
+       so that a read was not necessary (this only includes hits in the
+       SLRU, not the operating system's file system cache)
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks read for this SLRU
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of disk blocks written for this SLRU
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blks_exists</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of blocks checked for existence for this SLRU
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>flushes</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of flushes of dirty data for this SLRU
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>truncates</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of truncates for this SLRU
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+      </para>
+      <para>
+       Time at which these statistics were last reset
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -3828,95 +4597,131 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <table id="pg-stat-progress-analyze-view" xreflabel="pg_stat_progress_analyze">
    <title><structname>pg_stat_progress_analyze</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of backend.</entry>
-    </row>
-    <row>
-     <entry><structfield>datid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the database to which this backend is connected.</entry>
-    </row>
-    <row>
-     <entry><structfield>datname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the database to which this backend is connected.</entry>
-    </row>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the table being analyzed.</entry>
-    </row>
-    <row>
-     <entry><structfield>phase</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Current processing phase. See <xref linkend="analyze-phases" />.</entry>
-    </row>
-    <row>
-     <entry><structfield>sample_blks_total</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Total number of heap blocks that will be sampled.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>sample_blks_scanned</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Number of heap blocks scanned.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>ext_stats_total</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Number of extended statistics.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>ext_stats_computed</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Number of extended statistics computed. This counter only advances
-      when the phase is <literal>computing extended statistics</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>child_tables_total</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Number of child tables.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>child_tables_done</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Number of child tables scanned. This counter only advances when the
-      phase is <literal>acquiring inherited sample rows</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>current_child_table_relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>
-      OID of the child table currently being scanned. This field is
-      only valid when the phase is
-      <literal>acquiring inherited sample rows</literal>.
-     </entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table being analyzed.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>phase</structfield> <type>text</type>
+      </para>
+      <para>
+       Current processing phase. See <xref linkend="analyze-phases"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sample_blks_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of heap blocks that will be sampled.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sample_blks_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap blocks scanned.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>ext_stats_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of extended statistics.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>ext_stats_computed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of extended statistics computed. This counter only advances
+       when the phase is <literal>computing extended statistics</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>child_tables_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of child tables.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>child_tables_done</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of child tables scanned. This counter only advances when the
+       phase is <literal>acquiring inherited sample rows</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>current_child_table_relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the child table currently being scanned. This field is
+       only valid when the phase is
+       <literal>acquiring inherited sample rows</literal>.
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -4005,122 +4810,166 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <table id="pg-stat-progress-create-index-view" xreflabel="pg_stat_progress_create_index">
    <title><structname>pg_stat_progress_create_index</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
      <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
     <tbody>
      <row>
-      <entry><structfield>pid</structfield></entry>
-      <entry><type>integer</type></entry>
-      <entry>Process ID of backend.</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>datid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry>OID of the database to which this backend is connected.</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>datname</structfield></entry>
-      <entry><type>name</type></entry>
-      <entry>Name of the database to which this backend is connected.</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>relid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry>OID of the table on which the index is being created.</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table on which the index is being created.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>index_relid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry>OID of the index being created or reindexed.  During a
-      non-concurrent <command>CREATE INDEX</command>, this is 0.</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>index_relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the index being created or reindexed.  During a
+       non-concurrent <command>CREATE INDEX</command>, this is 0.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>command</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>command</structfield> <type>text</type>
+      </para>
+      <para>
        The command that is running: <literal>CREATE INDEX</literal>,
        <literal>CREATE INDEX CONCURRENTLY</literal>,
        <literal>REINDEX</literal>, or <literal>REINDEX CONCURRENTLY</literal>.
-      </entry>
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>phase</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry>
-        Current processing phase of index creation.  See <xref linkend='create-index-phases'/>.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>phase</structfield> <type>text</type>
+      </para>
+      <para>
+       Current processing phase of index creation.  See <xref linkend="create-index-phases"/>.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>lockers_total</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-        Total number of lockers to wait for, when applicable.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>lockers_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of lockers to wait for, when applicable.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>lockers_done</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-        Number of lockers already waited for.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>lockers_done</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of lockers already waited for.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>current_locker_pid</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-        Process ID of the locker currently being waited for.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>current_locker_pid</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Process ID of the locker currently being waited for.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>blocks_total</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-        Total number of blocks to be processed in the current phase.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blocks_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of blocks to be processed in the current phase.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>blocks_done</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-        Number of blocks already processed in the current phase.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blocks_done</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of blocks already processed in the current phase.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>tuples_total</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-        Total number of tuples to be processed in the current phase.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tuples_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of tuples to be processed in the current phase.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>tuples_done</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-        Number of tuples already processed in the current phase.
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tuples_done</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of tuples already processed in the current phase.
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>partitions_total</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>partitions_total</structfield> <type>bigint</type>
+      </para>
+      <para>
        When creating an index on a partitioned table, this column is set to
        the total number of partitions on which the index is to be created.
-      </entry>
+      </para></entry>
      </row>
+
      <row>
-      <entry><structfield>partitions_done</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>partitions_done</structfield> <type>bigint</type>
+      </para>
+      <para>
        When creating an index on a partitioned table, this column is set to
        the number of partitions on which the index has been completed.
-      </entry>
+      </para></entry>
      </row>
     </tbody>
    </tgroup>
@@ -4262,98 +5111,130 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <table id="pg-stat-progress-vacuum-view" xreflabel="pg_stat_progress_vacuum">
    <title><structname>pg_stat_progress_vacuum</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of backend.</entry>
-    </row>
-    <row>
-     <entry><structfield>datid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the database to which this backend is connected.</entry>
-    </row>
-    <row>
-     <entry><structfield>datname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the database to which this backend is connected.</entry>
-    </row>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the table being vacuumed.</entry>
-    </row>
-    <row>
-     <entry><structfield>phase</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>
-       Current processing phase of vacuum.  See <xref linkend='vacuum-phases'/>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>heap_blks_total</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table being vacuumed.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>phase</structfield> <type>text</type>
+      </para>
+      <para>
+       Current processing phase of vacuum.  See <xref linkend="vacuum-phases"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_total</structfield> <type>bigint</type>
+      </para>
+      <para>
        Total number of heap blocks in the table.  This number is reported
        as of the beginning of the scan; blocks added later will not be (and
        need not be) visited by this <command>VACUUM</command>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>heap_blks_scanned</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of heap blocks scanned.  Because the
        <link linkend="storage-vm">visibility map</link> is used to optimize scans,
        some blocks will be skipped without inspection; skipped blocks are
        included in this total, so that this number will eventually become
        equal to <structfield>heap_blks_total</structfield> when the vacuum is complete.
        This counter only advances when the phase is <literal>scanning heap</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>heap_blks_vacuumed</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_vacuumed</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of heap blocks vacuumed.  Unless the table has no indexes, this
        counter only advances when the phase is <literal>vacuuming heap</literal>.
        Blocks that contain no dead tuples are skipped, so the counter may
        sometimes skip forward in large increments.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>index_vacuum_count</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>index_vacuum_count</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of completed index vacuum cycles.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>max_dead_tuples</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Number of dead tuples that we can store before needing to perform
-      an index vacuum cycle, based on
-      <xref linkend="guc-maintenance-work-mem"/>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>num_dead_tuples</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>max_dead_tuples</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of dead tuples that we can store before needing to perform
+       an index vacuum cycle, based on
+       <xref linkend="guc-maintenance-work-mem"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>num_dead_tuples</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of dead tuples collected since the last index vacuum cycle.
-     </entry>
-    </row>
-   </tbody>
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -4451,105 +5332,139 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <table id="pg-stat-progress-cluster-view" xreflabel="pg_stat_progress_cluster">
    <title><structname>pg_stat_progress_cluster</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of backend.</entry>
-    </row>
-    <row>
-     <entry><structfield>datid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the database to which this backend is connected.</entry>
-    </row>
-    <row>
-     <entry><structfield>datname</structfield></entry>
-     <entry><type>name</type></entry>
-     <entry>Name of the database to which this backend is connected.</entry>
-    </row>
-    <row>
-     <entry><structfield>relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>OID of the table being clustered.</entry>
-    </row>
-    <row>
-     <entry><structfield>command</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>
-      The command that is running. Either <literal>CLUSTER</literal> or <literal>VACUUM FULL</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>phase</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>
-       Current processing phase. See <xref linkend='cluster-phases' />.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>cluster_index_relid</structfield></entry>
-     <entry><type>oid</type></entry>
-     <entry>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table being clustered.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>command</structfield> <type>text</type>
+      </para>
+      <para>
+       The command that is running. Either <literal>CLUSTER</literal> or <literal>VACUUM FULL</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>phase</structfield> <type>text</type>
+      </para>
+      <para>
+       Current processing phase. See <xref linkend="cluster-phases"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>cluster_index_relid</structfield> <type>oid</type>
+      </para>
+      <para>
        If the table is being scanned using an index, this is the OID of the
        index being used; otherwise, it is zero.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>heap_tuples_scanned</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of heap tuples scanned.
        This counter only advances when the phase is
        <literal>seq scanning heap</literal>,
        <literal>index scanning heap</literal>
        or <literal>writing new heap</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>heap_tuples_written</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_written</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of heap tuples written.
        This counter only advances when the phase is
        <literal>seq scanning heap</literal>,
        <literal>index scanning heap</literal>
        or <literal>writing new heap</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>heap_blks_total</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_total</structfield> <type>bigint</type>
+      </para>
+      <para>
        Total number of heap blocks in the table.  This number is reported
        as of the beginning of <literal>seq scanning heap</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>heap_blks_scanned</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of heap blocks scanned.  This counter only advances when the
        phase is <literal>seq scanning heap</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>index_rebuild_count</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>index_rebuild_count</structfield> <type>bigint</type>
+      </para>
+      <para>
        Number of indexes rebuilt.  This counter only advances when the phase
        is <literal>rebuilding index</literal>.
-     </entry>
-    </row>
-   </tbody>
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 
@@ -4637,69 +5552,87 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
   <table id="pg-stat-progress-basebackup-view" xreflabel="pg_stat_progress_basebackup">
    <title><structname>pg_stat_progress_basebackup</structname> View</title>
-   <tgroup cols="3">
+   <tgroup cols="1">
     <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
 
-   <tbody>
-    <row>
-     <entry><structfield>pid</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>Process ID of a WAL sender process.</entry>
-    </row>
-    <row>
-     <entry><structfield>phase</structfield></entry>
-     <entry><type>text</type></entry>
-     <entry>Current processing phase. See <xref linkend="basebackup-phases" />.</entry>
-    </row>
-    <row>
-     <entry><structfield>backup_total</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Total amount of data that will be streamed. This is estimated and
-      reported as of the beginning of
-      <literal>streaming database files</literal> phase. Note that
-      this is only an approximation since the database
-      may change during <literal>streaming database files</literal> phase
-      and WAL log may be included in the backup later. This is always
-      the same value as <structfield>backup_streamed</structfield>
-      once the amount of data streamed exceeds the estimated
-      total size. If the estimation is disabled in
-      <application>pg_basebackup</application>
-      (i.e., <literal>--no-estimate-size</literal> option is specified),
-      this is <literal>NULL</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>backup_streamed</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Amount of data streamed. This counter only advances
-      when the phase is <literal>streaming database files</literal> or
-      <literal>transferring wal files</literal>.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>tablespaces_total</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Total number of tablespaces that will be streamed.
-     </entry>
-    </row>
-    <row>
-     <entry><structfield>tablespaces_streamed</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>
-      Number of tablespaces streamed. This counter only
-      advances when the phase is <literal>streaming database files</literal>.
-     </entry>
-    </row>
-   </tbody>
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of a WAL sender process.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>phase</structfield> <type>text</type>
+      </para>
+      <para>
+       Current processing phase. See <xref linkend="basebackup-phases"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backup_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total amount of data that will be streamed. This is estimated and
+       reported as of the beginning of
+       <literal>streaming database files</literal> phase. Note that
+       this is only an approximation since the database
+       may change during <literal>streaming database files</literal> phase
+       and WAL log may be included in the backup later. This is always
+       the same value as <structfield>backup_streamed</structfield>
+       once the amount of data streamed exceeds the estimated
+       total size. If the estimation is disabled in
+       <application>pg_basebackup</application>
+       (i.e., <literal>--no-estimate-size</literal> option is specified),
+       this is <literal>NULL</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>backup_streamed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Amount of data streamed. This counter only advances
+       when the phase is <literal>streaming database files</literal> or
+       <literal>transferring wal files</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablespaces_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of tablespaces that will be streamed.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tablespaces_streamed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of tablespaces streamed. This counter only
+       advances when the phase is <literal>streaming database files</literal>.
+      </para></entry>
+     </row>
+    </tbody>
    </tgroup>
   </table>
 

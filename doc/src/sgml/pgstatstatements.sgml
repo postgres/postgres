@@ -44,253 +44,310 @@
 
   <table id="pgstatstatements-columns">
    <title><structname>pg_stat_statements</structname> Columns</title>
-
-   <tgroup cols="4">
+   <tgroup cols="1">
     <thead>
      <row>
-      <entry>Name</entry>
-      <entry>Type</entry>
-      <entry>References</entry>
-      <entry>Description</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
      </row>
     </thead>
+
     <tbody>
      <row>
-      <entry><structfield>userid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
-      <entry>OID of user who executed the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>userid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of user who executed the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>dbid</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
-      <entry>OID of database in which the statement was executed</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>dbid</structfield> <type>oid</type>
+       (references <link linkend="catalog-pg-database"><structname>pg_database</structname></link>.<structfield>oid</structfield>)
+      </para>
+      <para>
+       OID of database in which the statement was executed
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>queryid</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Internal hash code, computed from the statement's parse tree</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>queryid</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Internal hash code, computed from the statement's parse tree
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>query</structfield></entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>Text of a representative statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>query</structfield> <type>text</type>
+      </para>
+      <para>
+       Text of a representative statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>plans</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Number of times the statement was planned</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>plans</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the statement was planned
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>total_plan_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Total time spent planning the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>total_plan_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total time spent planning the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>min_plan_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Minimum time spent planning the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>min_plan_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Minimum time spent planning the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>max_plan_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Maximum time spent planning the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>max_plan_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Maximum time spent planning the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>mean_plan_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Mean time spent planning the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>mean_plan_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Mean time spent planning the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>stddev_plan_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Population standard deviation of time spent planning the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stddev_plan_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Population standard deviation of time spent planning the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>calls</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Number of times the statement was executed</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>calls</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the statement was executed
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>total_exec_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Total time spent executing the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>total_exec_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total time spent executing the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>min_exec_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Minimum time spent executing the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>min_exec_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Minimum time spent executing the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>max_exec_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Maximum time spent executing the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>max_exec_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Maximum time spent executing the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>mean_exec_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Mean time spent executing the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>mean_exec_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Mean time spent executing the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>stddev_exec_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>Population standard deviation of time spent executing the statement, in milliseconds</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stddev_exec_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Population standard deviation of time spent executing the statement, in milliseconds
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>rows</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of rows retrieved or affected by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rows</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of rows retrieved or affected by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>shared_blks_hit</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of shared block cache hits by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>shared_blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of shared block cache hits by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>shared_blks_read</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of shared blocks read by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>shared_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of shared blocks read by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>shared_blks_dirtied</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of shared blocks dirtied by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>shared_blks_dirtied</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of shared blocks dirtied by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>shared_blks_written</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of shared blocks written by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>shared_blks_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of shared blocks written by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>local_blks_hit</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of local block cache hits by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>local_blks_hit</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of local block cache hits by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>local_blks_read</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of local blocks read by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>local_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of local blocks read by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>local_blks_dirtied</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of local blocks dirtied by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>local_blks_dirtied</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of local blocks dirtied by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>local_blks_written</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of local blocks written by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>local_blks_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of local blocks written by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>temp_blks_read</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of temp blocks read by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>temp_blks_read</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of temp blocks read by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>temp_blks_written</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>Total number of temp blocks written by the statement</entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>temp_blks_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of temp blocks written by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>blk_read_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>
-        Total time the statement spent reading blocks, in milliseconds
-        (if <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blk_read_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total time the statement spent reading blocks, in milliseconds
+       (if <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>blk_write_time</structfield></entry>
-      <entry><type>double precision</type></entry>
-      <entry></entry>
-      <entry>
-        Total time the statement spent writing blocks, in milliseconds
-        (if <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>blk_write_time</structfield> <type>double precision</type>
+      </para>
+      <para>
+       Total time the statement spent writing blocks, in milliseconds
+       (if <xref linkend="guc-track-io-timing"/> is enabled, otherwise zero)
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>wal_bytes</structfield></entry>
-      <entry><type>numeric</type></entry>
-      <entry></entry>
-      <entry>
-        Total amount of WAL bytes generated by the statement
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_records</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of WAL records generated by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>wal_records</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>
-        Total number of WAL records generated by the statement
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_fpi</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of WAL full page images generated by the statement
+      </para></entry>
      </row>
 
      <row>
-      <entry><structfield>wal_fpi</structfield></entry>
-      <entry><type>bigint</type></entry>
-      <entry></entry>
-      <entry>
-        Total number of WAL full page images generated by the statement
-      </entry>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_bytes</structfield> <type>numeric</type>
+      </para>
+      <para>
+       Total amount of WAL bytes generated by the statement
+      </para></entry>
      </row>
-
     </tbody>
    </tgroup>
   </table>
