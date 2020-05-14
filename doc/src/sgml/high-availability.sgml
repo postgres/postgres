@@ -198,11 +198,11 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
   <varlistentry>
-   <term>Statement-Based Replication Middleware</term>
+   <term>SQL-Based Replication Middleware</term>
    <listitem>
 
     <para>
-     With statement-based replication middleware, a program intercepts
+     With SQL-based replication middleware, a program intercepts
      every SQL query and sends it to one or all servers.  Each server
      operates independently.  Read-write queries must be sent to all servers,
      so that every server receives any changes.  But read-only queries can be
@@ -279,19 +279,6 @@ protocol to make nodes agree on a serializable transactional order.
    </listitem>
   </varlistentry>
 
-  <varlistentry>
-   <term>Commercial Solutions</term>
-   <listitem>
-
-    <para>
-     Because <productname>PostgreSQL</productname> is open source and easily
-     extended, a number of companies have taken <productname>PostgreSQL</productname>
-     and created commercial closed-source solutions with unique
-     failover, replication, and load balancing capabilities.
-    </para>
-   </listitem>
-  </varlistentry>
-
  </variablelist>
 
  <para>
@@ -302,28 +289,37 @@ protocol to make nodes agree on a serializable transactional order.
  <table id="high-availability-matrix">
   <title>High Availability, Load Balancing, and Replication Feature Matrix</title>
   <tgroup cols="9">
+   <colspec colname="col1" colwidth="1.1*"/>
+   <colspec colname="col2" colwidth="1*"/>
+   <colspec colname="col3" colwidth="1*"/>
+   <colspec colname="col4" colwidth="1*"/>
+   <colspec colname="col5" colwidth="1*"/>
+   <colspec colname="col6" colwidth="1*"/>
+   <colspec colname="col7" colwidth="1*"/>
+   <colspec colname="col8" colwidth="1*"/>
+   <colspec colname="col9" colwidth="1*"/>
    <thead>
     <row>
      <entry>Feature</entry>
-     <entry>Shared Disk Failover</entry>
-     <entry>File System Replication</entry>
+     <entry>Shared Disk</entry>
+     <entry>File System Repl.</entry>
      <entry>Write-Ahead Log Shipping</entry>
-     <entry>Logical Replication</entry>
-     <entry>Trigger-Based Master-Standby Replication</entry>
-     <entry>Statement-Based Replication Middleware</entry>
-     <entry>Asynchronous Multimaster Replication</entry>
-     <entry>Synchronous Multimaster Replication</entry>
+     <entry>Logical Repl.</entry>
+     <entry>Trigger-Based Repl.</entry>
+     <entry>SQL Repl. Middle-ware</entry>
+     <entry>Async. MM Repl.</entry>
+     <entry>Sync. MM Repl.</entry>
     </row>
    </thead>
 
    <tbody>
 
     <row>
-     <entry>Most common implementations</entry>
+     <entry>Popular examples</entry>
      <entry align="center">NAS</entry>
      <entry align="center">DRBD</entry>
-     <entry align="center">built-in streaming replication</entry>
-     <entry align="center">built-in logical replication, pglogical</entry>
+     <entry align="center">built-in streaming repl.</entry>
+     <entry align="center">built-in logical repl., pglogical</entry>
      <entry align="center">Londiste, Slony</entry>
      <entry align="center">pgpool-II</entry>
      <entry align="center">Bucardo</entry>
@@ -331,7 +327,7 @@ protocol to make nodes agree on a serializable transactional order.
     </row>
 
     <row>
-     <entry>Communication method</entry>
+     <entry>Comm. method</entry>
      <entry align="center">shared disk</entry>
      <entry align="center">disk blocks</entry>
      <entry align="center">WAL</entry>
@@ -484,6 +480,14 @@ protocol to make nodes agree on a serializable transactional order.
   </varlistentry>
 
  </variablelist>
+
+  <para>
+   It should also be noted that because <productname>PostgreSQL</productname>
+   is open source and easily extended, a number of companies have
+   taken <productname>PostgreSQL</productname> and created commercial
+   closed-source solutions with unique failover, replication, and load
+   balancing capabilities.  These are not discussed here.
+  </para>
 
  </sect1>
 
