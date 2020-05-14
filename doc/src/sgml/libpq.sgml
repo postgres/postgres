@@ -790,9 +790,9 @@ void PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook);
 </synopsis>
 
        The application passes a pointer to a callback function with signature:
-       <programlisting>
-       int callback_fn(char *buf, int size, PGconn *conn);
-       </programlisting>
+<programlisting>
+int callback_fn(char *buf, int size, PGconn *conn);
+</programlisting>
        which <literal>libpq</literal> will then call <emphasis>instead of</emphasis>
        its default <function>PQdefaultSSLKeyPassHook</function> handler. The callback
        should determine the password for the key and copy it to result-buffer
@@ -1668,7 +1668,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
        <para>
         Specifying this parameter with any non-empty value suppresses the
-        <literal>Enter PEM passphrase:</literal>
+        <literal>Enter PEM pass phrase:</literal>
         prompt that OpenSSL will emit by default when an encrypted client
         certificate key is provided to <literal>libpq</literal>.
        </para>
@@ -7667,10 +7667,7 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    may be provided in the <xref linkend="libpq-connect-sslpassword"/> connection
    option. If an encrypted key is supplied and the <literal>sslpassword</literal>
    option is absent or blank, a password will be prompted for interactively by
-   OpenSSL with a
-   <programlisting>
-    Enter PEM Passphrase:
-   </programlisting>
+   OpenSSL with a <literal>Enter PEM pass phrase:</literal>
    prompt if a TTY is available. Applications can override the client certificate
    prompt and the handling of the <literal>sslpassword</literal> parameter by supplying
    their own key password callback; see <xref linkend="libpq-pqsetsslkeypasshook"/>.
