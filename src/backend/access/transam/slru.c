@@ -235,9 +235,6 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 	else
 		Assert(found);
 
-	/* Register SLRU tranche in the main tranches array */
-	LWLockRegisterTranche(tranche_id, name);
-
 	/*
 	 * Initialize the unshared control struct, including directory path. We
 	 * assume caller set PagePrecedes.

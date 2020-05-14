@@ -517,9 +517,6 @@ ReplicationOriginShmemInit(void)
 			ConditionVariableInit(&replication_states[i].origin_cv);
 		}
 	}
-
-	LWLockRegisterTranche(replication_states_ctl->tranche_id,
-						  "replication_origin");
 }
 
 /* ---------------------------------------------------------------------------

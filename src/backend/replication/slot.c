@@ -140,9 +140,6 @@ ReplicationSlotsShmemInit(void)
 		ShmemInitStruct("ReplicationSlot Ctl", ReplicationSlotsShmemSize(),
 						&found);
 
-	LWLockRegisterTranche(LWTRANCHE_REPLICATION_SLOT_IO_IN_PROGRESS,
-						  "replication_slot_io");
-
 	if (!found)
 	{
 		int			i;

@@ -267,8 +267,6 @@ CreateSharedProcArray(void)
 							mul_size(sizeof(bool), TOTAL_MAX_CACHED_SUBXIDS),
 							&found);
 	}
-
-	LWLockRegisterTranche(LWTRANCHE_PROC, "proc");
 }
 
 /*

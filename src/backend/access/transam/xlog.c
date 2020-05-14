@@ -5116,10 +5116,8 @@ XLOGShmemInit(void)
 		/* both should be present or neither */
 		Assert(foundCFile && foundXLog);
 
-		/* Initialize local copy of WALInsertLocks and register the tranche */
+		/* Initialize local copy of WALInsertLocks */
 		WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
-		LWLockRegisterTranche(LWTRANCHE_WAL_INSERT,
-							  "wal_insert");
 
 		if (localControlFile)
 			pfree(localControlFile);
@@ -5155,7 +5153,6 @@ XLOGShmemInit(void)
 		(WALInsertLockPadded *) allocptr;
 	allocptr += sizeof(WALInsertLockPadded) * NUM_XLOGINSERT_LOCKS;
 
-	LWLockRegisterTranche(LWTRANCHE_WAL_INSERT, "wal_insert");
 	for (i = 0; i < NUM_XLOGINSERT_LOCKS; i++)
 	{
 		LWLockInitialize(&WALInsertLocks[i].l.lock, LWTRANCHE_WAL_INSERT);
