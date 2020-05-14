@@ -126,7 +126,7 @@ sendFeedback(PGconn *conn, TimestampTz now, bool force, bool replyRequested)
 	 */
 	if (!force &&
 		last_written_lsn == output_written_lsn &&
-		last_fsync_lsn != output_fsync_lsn)
+		last_fsync_lsn == output_fsync_lsn)
 		return true;
 
 	if (verbose)
