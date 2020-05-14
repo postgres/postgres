@@ -1702,7 +1702,7 @@ PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook)
 /*
  * Supply a password to decrypt a client certificate.
  *
- * This must match OpenSSL type pem_passwd_cb.
+ * This must match OpenSSL type pem_password_cb.
  */
 static int
 PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
