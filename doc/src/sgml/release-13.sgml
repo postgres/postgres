@@ -629,11 +629,11 @@ Author: Noah Misch <noah@leadboat.com>
 -->
 
 <para>
-Allow skipping of WAL for new tables and indexes if wal_level is 'minimal' (Kyotaro Horiguchi)
+Allow skipping of WAL for full table writes if wal_level is 'minimal' (Kyotaro Horiguchi)
 </para>
 
 <para>
-Relations larger than wal_skip_threshold will have their files fsync'ed rather than writing their WAL records.  Previously this was done only for COPY operations, but the implementation had a bug
+Relations larger than wal_skip_threshold will have their files fsync'ed rather than generating WAL.  Previously this was done only for COPY operations, but the implementation had a bug
 that could cause data loss during crash recovery.
 
 </para>
