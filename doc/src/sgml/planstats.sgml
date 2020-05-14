@@ -80,7 +80,7 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
 
                                    QUERY PLAN
---------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------
  Bitmap Heap Scan on tenk1  (cost=24.06..394.64 rows=1007 width=244)
    Recheck Cond: (unique1 &lt; 1000)
    -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..23.80 rows=1007 width=0)
@@ -160,8 +160,8 @@ WHERE tablename='tenk1' AND attname='stringu1';
 
 null_frac         | 0
 n_distinct        | 676
-most_common_vals  | {EJAAAA,BBAAAA,CRAAAA,FCAAAA,FEAAAA,GSAAAA,JOAAAA,MCAAAA,NAAAAA,WGAAAA}
-most_common_freqs | {0.00333333,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003}
+most_common_vals  | {EJAAAA,BBAAAA,CRAAAA,FCAAAA,FEAAAA,GSAAAA,&zwsp;JOAAAA,MCAAAA,NAAAAA,WGAAAA}
+most_common_freqs | {0.00333333,0.003,0.003,0.003,0.003,0.003,&zwsp;0.003,0.003,0.003,0.003}
 
 </programlisting>
 
@@ -261,8 +261,8 @@ SELECT histogram_bounds FROM pg_stats
 WHERE tablename='tenk1' AND attname='stringu1';
 
                                 histogram_bounds
---------------------------------------------------------------------------------
- {AAAAAA,CQAAAA,FRAAAA,IBAAAA,KRAAAA,NFAAAA,PSAAAA,SGAAAA,VAAAAA,XLAAAA,ZZAAAA}
+-------------------------------------------------------------------&zwsp;-------------
+ {AAAAAA,CQAAAA,FRAAAA,IBAAAA,KRAAAA,NFAAAA,PSAAAA,SGAAAA,VAAAAA,&zwsp;XLAAAA,ZZAAAA}
 </programlisting>
 
    Checking the MCV list, we find that the condition <literal>stringu1 &lt;
@@ -312,7 +312,7 @@ rows        = 10000 * 0.307669
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000 AND stringu1 = 'xxx';
 
                                    QUERY PLAN
---------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------
  Bitmap Heap Scan on tenk1  (cost=23.80..396.91 rows=1 width=244)
    Recheck Cond: (unique1 &lt; 1000)
    Filter: (stringu1 = 'xxx'::name)
@@ -346,7 +346,7 @@ EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2
 WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
 
                                       QUERY PLAN
---------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------
  Nested Loop  (cost=4.64..456.23 rows=50 width=488)
    -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=4.64..142.17 rows=50 width=244)
          Recheck Cond: (unique1 &lt; 50)
@@ -491,7 +491,7 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 't';
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
                                  QUERY PLAN                                  
--------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;------------
  Seq Scan on t  (cost=0.00..170.00 rows=100 width=8) (actual rows=100 loops=1)
    Filter: (a = 1)
    Rows Removed by Filter: 9900
@@ -508,7 +508,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                  QUERY PLAN                                  
------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;----------
  Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=100 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
@@ -532,7 +532,7 @@ CREATE STATISTICS stts (dependencies) ON a, b FROM t;
 ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                   QUERY PLAN                                   
--------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;------------
  Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
@@ -553,7 +553,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a;
                                        QUERY PLAN                                        
------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;----------------------
  HashAggregate  (cost=195.00..196.00 rows=100 width=12) (actual rows=100 loops=1)
    Group Key: a
    -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=4) (actual rows=10000 loops=1)
@@ -564,7 +564,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a;
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
                                        QUERY PLAN                                        
---------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------------
  HashAggregate  (cost=220.00..230.00 rows=1000 width=16) (actual rows=100 loops=1)
    Group Key: a, b
    -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000 loops=1)
@@ -577,7 +577,7 @@ CREATE STATISTICS stts (dependencies, ndistinct) ON a, b FROM t;
 ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF) SELECT COUNT(*) FROM t GROUP BY a, b;
                                        QUERY PLAN                                        
---------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------------
  HashAggregate  (cost=220.00..221.00 rows=100 width=16) (actual rows=100 loops=1)
    Group Key: a, b
    -&gt;  Seq Scan on t  (cost=0.00..145.00 rows=10000 width=8) (actual rows=10000 loops=1)
@@ -617,7 +617,7 @@ CREATE STATISTICS stts2 (mcv) ON a, b FROM t;
 ANALYZE t;
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
                                    QUERY PLAN
--------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;------------
  Seq Scan on t  (cost=0.00..195.00 rows=100 width=8) (actual rows=100 loops=1)
    Filter: ((a = 1) AND (b = 1))
    Rows Removed by Filter: 9900
@@ -674,7 +674,7 @@ SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
                                  QUERY PLAN
----------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;--------
  Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0 loops=1)
    Filter: ((a = 1) AND (b = 10))
    Rows Removed by Filter: 10000
@@ -687,7 +687,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 10;
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a &lt;= 49 AND b &gt; 49;
                                 QUERY PLAN
----------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;--------
  Seq Scan on t  (cost=0.00..195.00 rows=1 width=8) (actual rows=0 loops=1)
    Filter: ((a &lt;= 49) AND (b &gt; 49))
    Rows Removed by Filter: 10000

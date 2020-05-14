@@ -131,7 +131,7 @@ CREATE INDEX
 <programlisting>
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
                                                  QUERY PLAN
-------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------------------------------------
  Seq Scan on tbloom  (cost=0.00..213694.08 rows=1 width=24) (actual time=1445.438..1445.438 rows=0 loops=1)
    Filter: ((i2 = 898732) AND (i5 = 123451))
    Rows Removed by Filter: 10000000
@@ -147,7 +147,7 @@ CREATE INDEX
 <programlisting>
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
                                                            QUERY PLAN
---------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------------------------------------------------
  Index Only Scan using btreeidx on tbloom  (cost=0.56..298311.96 rows=1 width=24) (actual time=445.709..445.709 rows=0 loops=1)
    Index Cond: ((i2 = 898732) AND (i5 = 123451))
    Heap Fetches: 0
@@ -162,7 +162,7 @@ CREATE INDEX
 <programlisting>
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
                                                         QUERY PLAN
----------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;--------------------------------------------------------
  Bitmap Heap Scan on tbloom  (cost=178435.39..178439.41 rows=1 width=24) (actual time=76.698..76.698 rows=0 loops=1)
    Recheck Cond: ((i2 = 898732) AND (i5 = 123451))
    Rows Removed by Index Recheck: 2439
@@ -189,7 +189,7 @@ CREATE INDEX
 <programlisting>
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
                                                           QUERY PLAN
-------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------------------------------------------------------
  Bitmap Heap Scan on tbloom  (cost=9.29..13.30 rows=1 width=24) (actual time=0.148..0.148 rows=0 loops=1)
    Recheck Cond: ((i5 = 123451) AND (i2 = 898732))
    -&gt;  BitmapAnd  (cost=9.29..9.29 rows=1 width=0) (actual time=0.145..0.145 rows=0 loops=1)

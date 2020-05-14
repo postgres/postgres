@@ -229,7 +229,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 7000;
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
 
                                   QUERY PLAN
-------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------
  Bitmap Heap Scan on tenk1  (cost=5.07..229.20 rows=101 width=244)
    Recheck Cond: (unique1 &lt; 100)
    -&gt;  Bitmap Index Scan on tenk1_unique1  (cost=0.00..5.04 rows=101 width=0)
@@ -256,7 +256,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND stringu1 = 'xxx';
 
                                   QUERY PLAN
-------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------
  Bitmap Heap Scan on tenk1  (cost=5.04..229.43 rows=1 width=244)
    Recheck Cond: (unique1 &lt; 100)
    Filter: (stringu1 = 'xxx'::name)
@@ -280,7 +280,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND stringu1 = 'xxx';
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 = 42;
 
                                  QUERY PLAN
------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;----------
  Index Scan using tenk1_unique1 on tenk1  (cost=0.29..8.30 rows=1 width=244)
    Index Cond: (unique1 = 42)
 </screen>
@@ -318,7 +318,7 @@ EXPLAIN SELECT * FROM tenk1 ORDER BY unique1;
 <screen>
 EXPLAIN SELECT * FROM tenk1 ORDER BY four, ten LIMIT 100;
                                               QUERY PLAN
-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------------------------------
  Limit  (cost=521.06..538.05 rows=100 width=244)
    ->  Incremental Sort  (cost=521.06..2220.95 rows=10000 width=244)
          Sort Key: four, ten
@@ -343,7 +343,7 @@ EXPLAIN SELECT * FROM tenk1 ORDER BY four, ten LIMIT 100;
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
 
                                      QUERY PLAN
--------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;------------------
  Bitmap Heap Scan on tenk1  (cost=25.08..60.21 rows=10 width=244)
    Recheck Cond: ((unique1 &lt; 100) AND (unique2 &gt; 9000))
    -&gt;  BitmapAnd  (cost=25.08..25.08 rows=10 width=0)
@@ -366,7 +366,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
 EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000 LIMIT 2;
 
                                      QUERY PLAN
--------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;------------------
  Limit  (cost=0.29..14.48 rows=2 width=244)
    -&gt;  Index Scan using tenk1_unique2 on tenk1  (cost=0.29..71.27 rows=10 width=244)
          Index Cond: (unique2 &gt; 9000)
@@ -396,7 +396,7 @@ FROM tenk1 t1, tenk2 t2
 WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
 
                                       QUERY PLAN
---------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------
  Nested Loop  (cost=4.65..118.62 rows=10 width=488)
    -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=4.36..39.47 rows=10 width=244)
          Recheck Cond: (unique1 &lt; 10)
@@ -445,7 +445,7 @@ FROM tenk1 t1, tenk2 t2
 WHERE t1.unique1 &lt; 10 AND t2.unique2 &lt; 10 AND t1.hundred &lt; t2.hundred;
 
                                          QUERY PLAN
----------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;--------------------------
  Nested Loop  (cost=4.65..49.46 rows=33 width=488)
    Join Filter: (t1.hundred &lt; t2.hundred)
    -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=4.36..39.47 rows=10 width=244)
@@ -493,7 +493,7 @@ FROM tenk1 t1, tenk2 t2
 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
                                         QUERY PLAN
-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------------------
  Hash Join  (cost=230.47..713.98 rows=101 width=488)
    Hash Cond: (t2.unique2 = t1.unique2)
    -&gt;  Seq Scan on tenk2 t2  (cost=0.00..445.00 rows=10000 width=244)
@@ -524,7 +524,7 @@ FROM tenk1 t1, onek t2
 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
                                         QUERY PLAN
-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------------------
  Merge Join  (cost=198.11..268.19 rows=10 width=488)
    Merge Cond: (t1.unique2 = t2.unique2)
    -&gt;  Index Scan using tenk1_unique2 on tenk1 t1  (cost=0.29..656.28 rows=101 width=244)
@@ -562,7 +562,7 @@ FROM tenk1 t1, onek t2
 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2;
 
                                         QUERY PLAN
-------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------------------
  Merge Join  (cost=0.56..292.65 rows=10 width=488)
    Merge Cond: (t1.unique2 = t2.unique2)
    -&gt;  Index Scan using tenk1_unique2 on tenk1 t1  (cost=0.29..656.28 rows=101 width=244)
@@ -596,7 +596,7 @@ FROM tenk1 t1, tenk2 t2
 WHERE t1.unique1 &lt; 10 AND t1.unique2 = t2.unique2;
 
                                                            QUERY PLAN
----------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;--------------------------------------------------------------
  Nested Loop  (cost=4.65..118.62 rows=10 width=488) (actual time=0.128..0.377 rows=10 loops=1)
    -&gt;  Bitmap Heap Scan on tenk1 t1  (cost=4.36..39.47 rows=10 width=244) (actual time=0.057..0.121 rows=10 loops=1)
          Recheck Cond: (unique1 &lt; 10)
@@ -640,7 +640,7 @@ FROM tenk1 t1, tenk2 t2
 WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2 ORDER BY t1.fivethous;
 
                                                                  QUERY PLAN
---------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------------------------------------------------------&zwsp;------
  Sort  (cost=717.34..717.59 rows=101 width=488) (actual time=7.761..7.774 rows=100 loops=1)
    Sort Key: t1.fivethous
    Sort Method: quicksort  Memory: 77kB
@@ -673,7 +673,7 @@ WHERE t1.unique1 &lt; 100 AND t1.unique2 = t2.unique2 ORDER BY t1.fivethous;
 EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE ten &lt; 7;
 
                                                QUERY PLAN
----------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;--------------------------------------
  Seq Scan on tenk1  (cost=0.00..483.00 rows=7000 width=244) (actual time=0.016..5.107 rows=7000 loops=1)
    Filter: (ten &lt; 7)
    Rows Removed by Filter: 3000
@@ -696,7 +696,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE ten &lt; 7;
 EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
 
                                               QUERY PLAN
-------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-----------------------------------
  Seq Scan on polygon_tbl  (cost=0.00..1.05 rows=1 width=32) (actual time=0.044..0.044 rows=0 loops=1)
    Filter: (f1 @&gt; '((0.5,2))'::polygon)
    Rows Removed by Filter: 4
@@ -715,7 +715,7 @@ SET enable_seqscan TO off;
 EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
 
                                                         QUERY PLAN
---------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------------------------------------------
  Index Scan using gpolygonind on polygon_tbl  (cost=0.13..8.15 rows=1 width=32) (actual time=0.062..0.062 rows=0 loops=1)
    Index Cond: (f1 @&gt; '((0.5,2))'::polygon)
    Rows Removed by Index Recheck: 1
@@ -738,7 +738,7 @@ EXPLAIN ANALYZE SELECT * FROM polygon_tbl WHERE f1 @&gt; polygon '(0.5,2.0)';
 EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000;
 
                                                            QUERY PLAN
----------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;--------------------------------------------------------------
  Bitmap Heap Scan on tenk1  (cost=25.08..60.21 rows=10 width=244) (actual time=0.323..0.342 rows=10 loops=1)
    Recheck Cond: ((unique1 &lt; 100) AND (unique2 &gt; 9000))
    Buffers: shared hit=15
@@ -772,7 +772,7 @@ BEGIN;
 EXPLAIN ANALYZE UPDATE tenk1 SET hundred = hundred + 1 WHERE unique1 &lt; 100;
 
                                                            QUERY PLAN
---------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;-------------------------------------------------------------
  Update on tenk1  (cost=5.07..229.46 rows=101 width=250) (actual time=14.628..14.628 rows=0 loops=1)
    -&gt;  Bitmap Heap Scan on tenk1  (cost=5.07..229.46 rows=101 width=250) (actual time=0.101..0.439 rows=100 loops=1)
          Recheck Cond: (unique1 &lt; 100)
@@ -808,7 +808,7 @@ ROLLBACK;
 <screen>
 EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
                                     QUERY PLAN
------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;----------------
  Update on parent  (cost=0.00..24.53 rows=4 width=14)
    Update on parent
    Update on child1
@@ -896,7 +896,7 @@ EXPLAIN UPDATE parent SET f2 = f2 + 1 WHERE f1 = 101;
 EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE unique1 &lt; 100 AND unique2 &gt; 9000 LIMIT 2;
 
                                                           QUERY PLAN
--------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------&zwsp;------------------------------------------------------------
  Limit  (cost=0.29..14.71 rows=2 width=244) (actual time=0.177..0.249 rows=2 loops=1)
    -&gt;  Index Scan using tenk1_unique2 on tenk1  (cost=0.29..72.42 rows=10 width=244) (actual time=0.174..0.244 rows=2 loops=1)
          Index Cond: (unique2 &gt; 9000)
@@ -1311,7 +1311,7 @@ ANALYZE zipcodes;
 SELECT stxkeys AS k, stxdndistinct AS nd
   FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid)
   WHERE stxname = 'stts2';
--[ RECORD 1 ]--------------------------------------------------------
+-[ RECORD 1 ]------------------------------------------------------&zwsp;--
 k  | 1 2 5
 nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
 (1 row)

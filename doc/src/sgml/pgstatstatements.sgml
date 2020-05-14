@@ -653,31 +653,31 @@ bench=# \x
 bench=# SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
           FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
--[ RECORD 1 ]---+--------------------------------------------------------------------
+-[ RECORD 1 ]---+--------------------------------------------------&zwsp;------------------
 query           | UPDATE pgbench_branches SET bbalance = bbalance + $1 WHERE bid = $2
 calls           | 3000
 total_exec_time | 25565.855387
 rows            | 3000
 hit_percent     | 100.0000000000000000
--[ RECORD 2 ]---+--------------------------------------------------------------------
+-[ RECORD 2 ]---+--------------------------------------------------&zwsp;------------------
 query           | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
 calls           | 3000
 total_exec_time | 20756.669379
 rows            | 3000
 hit_percent     | 100.0000000000000000
--[ RECORD 3 ]---+--------------------------------------------------------------------
+-[ RECORD 3 ]---+--------------------------------------------------&zwsp;------------------
 query           | copy pgbench_accounts from stdin
 calls           | 1
 total_exec_time | 291.865911
 rows            | 100000
 hit_percent     | 100.0000000000000000
--[ RECORD 4 ]---+--------------------------------------------------------------------
+-[ RECORD 4 ]---+--------------------------------------------------&zwsp;------------------
 query           | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
 calls           | 3000
 total_exec_time | 271.232977
 rows            | 3000
 hit_percent     | 98.8454011741682975
--[ RECORD 5 ]---+--------------------------------------------------------------------
+-[ RECORD 5 ]---+--------------------------------------------------&zwsp;------------------
 query           | alter table pgbench_accounts add primary key (aid)
 calls           | 1
 total_exec_time | 160.588563
@@ -691,31 +691,31 @@ bench=# SELECT pg_stat_statements_reset(0,0,s.queryid) FROM pg_stat_statements A
 bench=# SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
           FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
--[ RECORD 1 ]---+--------------------------------------------------------------------
+-[ RECORD 1 ]---+--------------------------------------------------&zwsp;------------------
 query           | UPDATE pgbench_tellers SET tbalance = tbalance + $1 WHERE tid = $2
 calls           | 3000
 total_exec_time | 20756.669379
 rows            | 3000
 hit_percent     | 100.0000000000000000
--[ RECORD 2 ]---+--------------------------------------------------------------------
+-[ RECORD 2 ]---+--------------------------------------------------&zwsp;------------------
 query           | copy pgbench_accounts from stdin
 calls           | 1
 total_exec_time | 291.865911
 rows            | 100000
 hit_percent     | 100.0000000000000000
--[ RECORD 3 ]---+--------------------------------------------------------------------
+-[ RECORD 3 ]---+--------------------------------------------------&zwsp;------------------
 query           | UPDATE pgbench_accounts SET abalance = abalance + $1 WHERE aid = $2
 calls           | 3000
 total_exec_time | 271.232977
 rows            | 3000
 hit_percent     | 98.8454011741682975
--[ RECORD 4 ]---+--------------------------------------------------------------------
+-[ RECORD 4 ]---+--------------------------------------------------&zwsp;------------------
 query           | alter table pgbench_accounts add primary key (aid)
 calls           | 1
 total_exec_time | 160.588563
 rows            | 0
 hit_percent     | 100.0000000000000000
--[ RECORD 5 ]---+--------------------------------------------------------------------
+-[ RECORD 5 ]---+--------------------------------------------------&zwsp;------------------
 query           | vacuum analyze pgbench_accounts
 calls           | 1
 total_exec_time | 136.448116
@@ -727,13 +727,13 @@ bench=# SELECT pg_stat_statements_reset(0,0,0);
 bench=# SELECT query, calls, total_exec_time, rows, 100.0 * shared_blks_hit /
                nullif(shared_blks_hit + shared_blks_read, 0) AS hit_percent
           FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 5;
--[ RECORD 1 ]---+-----------------------------------------------------------------------------
+-[ RECORD 1 ]---+--------------------------------------------------&zwsp;---------------------------
 query           | SELECT pg_stat_statements_reset(0,0,0)
 calls           | 1
 total_exec_time | 0.189497
 rows            | 1
 hit_percent     | 
--[ RECORD 2 ]---+-----------------------------------------------------------------------------
+-[ RECORD 2 ]---+--------------------------------------------------&zwsp;---------------------------
 query           | SELECT query, calls, total_exec_time, rows, $1 * shared_blks_hit /          +
                 |                nullif(shared_blks_hit + shared_blks_read, $2) AS hit_percent+
                 |           FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT $3
