@@ -1854,7 +1854,15 @@ _bt_killitems(IndexScanDesc scan)
 			else if (ItemPointerEquals(&ituple->t_tid, &kitem->heapTid))
 				killtuple = true;
 
-			if (killtuple)
+			/*
+			 * Mark index item as dead, if it isn't already.  Since this
+			 * happens while holding a buffer lock possibly in shared mode,
+			 * it's possible that multiple processes attempt to do this
+			 * simultaneously, leading to multiple full-page images being
+			 * set to WAL (if wal_log_hints or data checksums are enabled),
+			 * which is undesirable.
+			 */
+			if (killtuple && !ItemIdIsDead(iid))
 			{
 				/* found the item/all posting list items */
 				ItemIdMarkDead(iid);
