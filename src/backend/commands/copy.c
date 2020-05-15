@@ -1081,13 +1081,8 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 		EndCopyTo(cstate);
 	}
 
-	/*
-	 * Close the relation. If reading, we can release the AccessShareLock we
-	 * got; if writing, we should hold the lock until end of transaction to
-	 * ensure that updates will be committed before lock is released.
-	 */
 	if (rel != NULL)
-		table_close(rel, (is_from ? NoLock : AccessShareLock));
+		table_close(rel, NoLock);
 }
 
 /*
