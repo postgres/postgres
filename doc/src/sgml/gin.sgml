@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/gin.sgml -->
 
-<chapter id="gin">
+<chapter id="gin" xreflabel="gin">
 <title>GIN Indexes</title>
 
    <indexterm>
