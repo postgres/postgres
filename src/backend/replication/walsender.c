@@ -315,7 +315,7 @@ WalSndErrorCleanup(void)
 	ConditionVariableCancelSleep();
 	pgstat_report_wait_end();
 
-	if (xlogreader->seg.ws_file >= 0)
+	if (xlogreader != NULL && xlogreader->seg.ws_file >= 0)
 		wal_segment_close(xlogreader);
 
 	if (MyReplicationSlot != NULL)

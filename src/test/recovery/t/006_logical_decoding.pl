@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 12;
+use Test::More tests => 13;
 use Config;
 
 # Initialize master node
@@ -27,12 +27,21 @@ $node_master->safe_psql('postgres',
 	qq[SELECT pg_create_logical_replication_slot('test_slot', 'test_decoding');]
 );
 
+# Cover walsender error shutdown code
+my ($result, $stdout, $stderr) = $node_master->psql(
+	'template1',
+	qq[START_REPLICATION SLOT test_slot LOGICAL 0/0],
+	replication => 'database');
+ok( $stderr =~
+	  m/replication slot "test_slot" was not created in this database/,
+	"Logical decoding correctly fails to start");
+
 $node_master->safe_psql('postgres',
 	qq[INSERT INTO decoding_test(x,y) SELECT s, s::text FROM generate_series(1,10) s;]
 );
 
 # Basic decoding works
-my ($result) = $node_master->safe_psql('postgres',
+$result = $node_master->safe_psql('postgres',
 	qq[SELECT pg_logical_slot_get_changes('test_slot', NULL, NULL);]);
 is(scalar(my @foobar = split /^/m, $result),
 	12, 'Decoding produced 12 rows inc BEGIN/COMMIT');
