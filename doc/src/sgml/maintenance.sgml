@@ -707,7 +707,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
    </sect3>
   </sect2>
 
-  <sect2 id="autovacuum">
+  <sect2 id="autovacuum" xreflabel="autovacuum">
    <title>The Autovacuum Daemon</title>
 
    <indexterm>
