@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/pgupgrade.sgml -->
+<!--
+doc/src/sgml/ref/pgupgrade.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="pgupgrade">
  <indexterm zone="pgupgrade">

@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/pgtesttiming.sgml -->
+<!--
+doc/src/sgml/ref/pgtesttiming.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="pgtesttiming">
  <indexterm zone="pgtesttiming">

@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/create_conversion.sgml -->
+<!--
+doc/src/sgml/ref/create_conversion.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="SQL-CREATECONVERSION">
  <indexterm zone="sql-createconversion">

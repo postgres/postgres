@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/checkpoint.sgml -->
+<!--
+doc/src/sgml/ref/checkpoint.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="sql-checkpoint">
  <indexterm zone="sql-checkpoint">
