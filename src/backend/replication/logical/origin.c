@@ -144,6 +144,7 @@ typedef struct ReplicationStateCtl
 {
 	int			tranche_id;
 	LWLockTranche tranche;
+	/* Array of length max_replication_slots */
 	ReplicationState states[FLEXIBLE_ARRAY_MEMBER];
 } ReplicationStateCtl;
 
@@ -160,6 +161,10 @@ TimestampTz replorigin_session_origin_timestamp = 0;
  * max_replication_slots?
  */
 static ReplicationState *replication_states;
+
+/*
+ * Actual shared memory block (replication_states[] is now part of this).
+ */
 static ReplicationStateCtl *replication_states_ctl;
 
 /*
@@ -447,7 +452,7 @@ ReplicationOriginShmemSize(void)
 	/*
 	 * XXX: max_replication_slots is arguably the wrong thing to use, as here
 	 * we keep the replay state of *remote* transactions. But for now it seems
-	 * sufficient to reuse it, lest we introduce a separate guc.
+	 * sufficient to reuse it, rather than introduce a separate GUC.
 	 */
 	if (max_replication_slots == 0)
 		return size;
@@ -477,14 +482,14 @@ ReplicationOriginShmemInit(void)
 	{
 		int			i;
 
+		MemSet(replication_states_ctl, 0, ReplicationOriginShmemSize());
+
 		replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN;
 		replication_states_ctl->tranche.name = "replication_origin";
 		replication_states_ctl->tranche.array_base =
 			&replication_states[0].lock;
 		replication_states_ctl->tranche.array_stride =
 			sizeof(ReplicationState);
-
-		MemSet(replication_states, 0, ReplicationOriginShmemSize());
 
 		for (i = 0; i < max_replication_slots; i++)
 			LWLockInitialize(&replication_states[i].lock,
