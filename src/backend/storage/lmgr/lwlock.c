@@ -111,7 +111,7 @@ extern slock_t *ShmemLock;
  * There are three sorts of LWLock "tranches":
  *
  * 1. The individually-named locks defined in lwlocknames.h each have their
- * own tranche.  The names of these tranches appear in MainLWLockNames[]
+ * own tranche.  The names of these tranches appear in IndividualLWLockNames[]
  * in lwlocknames.c.
  *
  * 2. There are some predefined tranches for built-in groups of locks.
@@ -125,6 +125,7 @@ extern slock_t *ShmemLock;
  * All these names are user-visible as wait event names, so choose with care
  * ... and do not forget to update the documentation's list of wait events.
  */
+extern const char *const IndividualLWLockNames[];	/* in lwlocknames.c */
 
 static const char *const BuiltinTrancheNames[] = {
 	/* LWTRANCHE_XACT_BUFFER: */
@@ -781,7 +782,7 @@ GetLWTrancheName(uint16 trancheId)
 {
 	/* Individual LWLock? */
 	if (trancheId < NUM_INDIVIDUAL_LWLOCKS)
-		return MainLWLockNames[trancheId];
+		return IndividualLWLockNames[trancheId];
 
 	/* Built-in tranche? */
 	if (trancheId < LWTRANCHE_FIRST_USER_DEFINED)

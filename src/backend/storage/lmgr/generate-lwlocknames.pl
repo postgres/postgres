@@ -23,7 +23,7 @@ print $h $autogen;
 print $h "/* there is deliberately not an #ifndef LWLOCKNAMES_H here */\n\n";
 print $c $autogen, "\n";
 
-print $c "const char *const MainLWLockNames[] = {";
+print $c "const char *const IndividualLWLockNames[] = {";
 
 while (<$lwlocknames>)
 {
@@ -38,6 +38,10 @@ while (<$lwlocknames>)
 
 	(my $lockname, my $lockidx) = ($1, $2);
 
+	my $trimmedlockname = $lockname;
+	$trimmedlockname =~ s/Lock$//;
+	die "lock names must end with 'Lock'" if $trimmedlockname eq $lockname;
+
 	die "lwlocknames.txt not in order"   if $lockidx < $lastlockidx;
 	die "lwlocknames.txt has duplicates" if $lockidx == $lastlockidx;
 
@@ -47,7 +51,7 @@ while (<$lwlocknames>)
 		printf $c "%s	\"<unassigned:%d>\"", $continue, $lastlockidx;
 		$continue = ",\n";
 	}
-	printf $c "%s	\"%s\"", $continue, $lockname;
+	printf $c "%s	\"%s\"", $continue, $trimmedlockname;
 	$lastlockidx = $lockidx;
 	$continue    = ",\n";
 

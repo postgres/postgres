@@ -88,7 +88,6 @@ typedef union LWLockMinimallyPadded
 } LWLockMinimallyPadded;
 
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
-extern const char *const MainLWLockNames[];
 
 /* struct for storing named tranche information */
 typedef struct NamedLWLockTranche
