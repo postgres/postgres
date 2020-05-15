@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/libpq.sgml -->
 
-<chapter id="libpq">
+<chapter id="libpq" xreflabel="libpq">
  <title><application>libpq</application> &mdash; C Library</title>
 
  <indexterm zone="libpq">
