@@ -1754,12 +1754,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to manage space allocation in shared memory.</entry>
      </row>
      <row>
-      <entry><literal>AsyncCtlLock</literal></entry>
-      <entry>Waiting to read or update shared notification state.</entry>
+      <entry><literal>NotifySLRULock</literal></entry>
+      <entry>Waiting to access the <command>NOTIFY</command> message SLRU
+       cache.</entry>
      </row>
      <row>
-      <entry><literal>AsyncQueueLock</literal></entry>
-      <entry>Waiting to read or update notification messages.</entry>
+      <entry><literal>NotifyQueueLock</literal></entry>
+      <entry>Waiting to read or update <command>NOTIFY</command> messages.</entry>
      </row>
      <row>
       <entry><literal>AutoFileLock</literal></entry>
@@ -1785,13 +1786,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        B-tree index.</entry>
      </row>
      <row>
-      <entry><literal>CLogControlLock</literal></entry>
-      <entry>Waiting to read or update transaction status.</entry>
+      <entry><literal>XactSLRULock</literal></entry>
+      <entry>Waiting to access the transaction status SLRU cache.</entry>
      </row>
      <row>
-      <entry><literal>CLogTruncationLock</literal></entry>
+      <entry><literal>XactTruncationLock</literal></entry>
       <entry>Waiting to execute <function>pg_xact_status</function> or update
-       the oldest transaction id available to it.</entry>
+       the oldest transaction ID available to it.</entry>
      </row>
      <row>
       <entry><literal>CheckpointLock</literal></entry>
@@ -1802,8 +1803,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to manage fsync requests.</entry>
      </row>
      <row>
-      <entry><literal>CommitTsControlLock</literal></entry>
-      <entry>Waiting to read or update transaction commit timestamps.</entry>
+      <entry><literal>CommitTsSLRULock</literal></entry>
+      <entry>Waiting to access the commit timestamp SLRU cache.</entry>
      </row>
      <row>
       <entry><literal>CommitTsLock</literal></entry>
@@ -1828,12 +1829,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to read or update shared multixact state.</entry>
      </row>
      <row>
-      <entry><literal>MultiXactMemberControlLock</literal></entry>
-      <entry>Waiting to read or update multixact member mappings.</entry>
+      <entry><literal>MultiXactMemberSLRULock</literal></entry>
+      <entry>Waiting to access the multixact member SLRU cache.</entry>
      </row>
      <row>
-      <entry><literal>MultiXactOffsetControlLock</literal></entry>
-      <entry>Waiting to read or update multixact offset mappings.</entry>
+      <entry><literal>MultiXactOffsetSLRULock</literal></entry>
+      <entry>Waiting to access the multixact offset SLRU cache.</entry>
      </row>
      <row>
       <entry><literal>MultiXactTruncationLock</literal></entry>
@@ -1844,9 +1845,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to allocate or assign an OID.</entry>
      </row>
      <row>
-      <entry><literal>OldSerXidLock</literal></entry>
-      <entry>Waiting to read or record conflicting serializable
-       transactions.</entry>
+      <entry><literal>SerialSLRULock</literal></entry>
+      <entry>Waiting to access the serializable transaction conflict SLRU
+       cache.</entry>
      </row>
      <row>
       <entry><literal>OldSnapshotTimeMapLock</literal></entry>
@@ -1907,8 +1908,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to find or allocate space in shared memory.</entry>
      </row>
      <row>
-      <entry><literal>SubtransControlLock</literal></entry>
-      <entry>Waiting to read or update sub-transaction information.</entry>
+      <entry><literal>SubtransSLRULock</literal></entry>
+      <entry>Waiting to access the sub-transaction SLRU cache.</entry>
      </row>
      <row>
       <entry><literal>SyncRepLock</literal></entry>
@@ -1941,8 +1942,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to allocate or assign a transaction id.</entry>
      </row>
      <row>
-      <entry><literal>async</literal></entry>
-      <entry>Waiting for I/O on an async (notify) buffer.</entry>
+      <entry><literal>NotifyBuffer</literal></entry>
+      <entry>Waiting for I/O on a <command>NOTIFY</command> message SLRU
+       buffer.</entry>
      </row>
      <row>
       <entry><literal>buffer_content</literal></entry>
@@ -1958,12 +1960,12 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        pool.</entry>
      </row>
      <row>
-      <entry><literal>clog</literal></entry>
-      <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
+      <entry><literal>XactBuffer</literal></entry>
+      <entry>Waiting for I/O on a transaction status SLRU buffer.</entry>
      </row>
      <row>
-      <entry><literal>commit_timestamp</literal></entry>
-      <entry>Waiting for I/O on commit timestamp buffer.</entry>
+      <entry><literal>CommitTsBuffer</literal></entry>
+      <entry>Waiting for I/O on a commit timestamp SLRU buffer.</entry>
      </row>
      <row>
       <entry><literal>lock_manager</literal></entry>
@@ -1971,16 +1973,17 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        join or exit a locking group (used by parallel query).</entry>
      </row>
      <row>
-      <entry><literal>multixact_member</literal></entry>
-      <entry>Waiting for I/O on a multixact_member buffer.</entry>
+      <entry><literal>MultiXactMember</literal></entry>
+      <entry>Waiting for I/O on a multixact member SLRU buffer.</entry>
      </row>
      <row>
-      <entry><literal>multixact_offset</literal></entry>
-      <entry>Waiting for I/O on a multixact offset buffer.</entry>
+      <entry><literal>MultiXactOffsetBuffer</literal></entry>
+      <entry>Waiting for I/O on a multixact offset SLRU buffer.</entry>
      </row>
      <row>
-      <entry><literal>oldserxid</literal></entry>
-      <entry>Waiting for I/O on an oldserxid buffer.</entry>
+      <entry><literal>SerialBuffer</literal></entry>
+      <entry>Waiting for I/O on a serializable transaction conflict SLRU
+       buffer.</entry>
      </row>
      <row>
       <entry><literal>parallel_append</literal></entry>
@@ -2018,8 +2021,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        in a parallel query.</entry>
      </row>
      <row>
-      <entry><literal>subtrans</literal></entry>
-      <entry>Waiting for I/O on a subtransaction buffer.</entry>
+      <entry><literal>SubtransBuffer</literal></entry>
+      <entry>Waiting for I/O on a sub-transaction SLRU buffer.</entry>
      </row>
      <row>
       <entry><literal>tbm</literal></entry>
@@ -4190,7 +4193,13 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+  <indexterm>
+   <primary>SLRU</primary>
+  </indexterm>
+
   <para>
+   <productname>PostgreSQL</productname> accesses certain on-disk information
+   via <firstterm>SLRU</firstterm> (simple least-recently-used) caches.
    The <structname>pg_stat_slru</structname> view will contain
    one row for each tracked SLRU cache, showing statistics about access
    to cached pages.
@@ -4484,11 +4493,15 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         Resets statistics to zero for a single SLRU cache, or for all SLRUs in
         the cluster.  If the argument is NULL, all counters shown in
         the <structname>pg_stat_slru</structname> view for all SLRU caches are
-        reset.  The argument can be one of <literal>async</literal>,
-        <literal>clog</literal>, <literal>commit_timestamp</literal>,
-        <literal>multixact_offset</literal>,
-        <literal>multixact_member</literal>, <literal>oldserxid</literal>, or
-        <literal>subtrans</literal> to reset the counters for only that entry.
+        reset.  The argument can be one of
+        <literal>CommitTs</literal>,
+        <literal>MultiXactMember</literal>,
+        <literal>MultiXactOffset</literal>,
+        <literal>Notify</literal>,
+        <literal>Serial</literal>,
+        <literal>Subtrans</literal>, or
+        <literal>Xact</literal>
+        to reset the counters for only that entry.
         If the argument is <literal>other</literal> (or indeed, any
         unrecognized name), then the counters for all other SLRU caches, such
         as extension-defined caches, are reset.

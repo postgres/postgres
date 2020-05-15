@@ -124,20 +124,20 @@ extern slock_t *ShmemLock;
  */
 
 static const char *const BuiltinTrancheNames[] = {
-	/* LWTRANCHE_CLOG_BUFFERS: */
-	"clog",
-	/* LWTRANCHE_COMMITTS_BUFFERS: */
-	"commit_timestamp",
-	/* LWTRANCHE_SUBTRANS_BUFFERS: */
-	"subtrans",
-	/* LWTRANCHE_MXACTOFFSET_BUFFERS: */
-	"multixact_offset",
-	/* LWTRANCHE_MXACTMEMBER_BUFFERS: */
-	"multixact_member",
-	/* LWTRANCHE_ASYNC_BUFFERS: */
-	"async",
-	/* LWTRANCHE_OLDSERXID_BUFFERS: */
-	"oldserxid",
+	/* LWTRANCHE_XACT_BUFFER: */
+	"XactBuffer",
+	/* LWTRANCHE_COMMITTS_BUFFER: */
+	"CommitTSBuffer",
+	/* LWTRANCHE_SUBTRANS_BUFFER: */
+	"SubtransBuffer",
+	/* LWTRANCHE_MULTIXACTOFFSET_BUFFER: */
+	"MultiXactOffsetBuffer",
+	/* LWTRANCHE_MULTIXACTMEMBER_BUFFER: */
+	"MultiXactMemberBuffer",
+	/* LWTRANCHE_NOTIFY_BUFFER: */
+	"NotifyBuffer",
+	/* LWTRANCHE_SERIAL_BUFFER: */
+	"SerialBuffer",
 	/* LWTRANCHE_WAL_INSERT: */
 	"wal_insert",
 	/* LWTRANCHE_BUFFER_CONTENT: */

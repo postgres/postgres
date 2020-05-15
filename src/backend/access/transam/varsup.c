@@ -303,22 +303,22 @@ AdvanceNextFullTransactionIdPastXid(TransactionId xid)
 /*
  * Advance the cluster-wide value for the oldest valid clog entry.
  *
- * We must acquire CLogTruncationLock to advance the oldestClogXid. It's not
+ * We must acquire XactTruncationLock to advance the oldestClogXid. It's not
  * necessary to hold the lock during the actual clog truncation, only when we
  * advance the limit, as code looking up arbitrary xids is required to hold
- * CLogTruncationLock from when it tests oldestClogXid through to when it
+ * XactTruncationLock from when it tests oldestClogXid through to when it
  * completes the clog lookup.
  */
 void
 AdvanceOldestClogXid(TransactionId oldest_datfrozenxid)
 {
-	LWLockAcquire(CLogTruncationLock, LW_EXCLUSIVE);
+	LWLockAcquire(XactTruncationLock, LW_EXCLUSIVE);
 	if (TransactionIdPrecedes(ShmemVariableCache->oldestClogXid,
 							  oldest_datfrozenxid))
 	{
 		ShmemVariableCache->oldestClogXid = oldest_datfrozenxid;
 	}
-	LWLockRelease(CLogTruncationLock);
+	LWLockRelease(XactTruncationLock);
 }
 
 /*

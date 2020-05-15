@@ -160,6 +160,17 @@ SimpleLruShmemSize(int nslots, int nlsns)
 	return BUFFERALIGN(sz) + BLCKSZ * nslots;
 }
 
+/*
+ * Initialize, or attach to, a simple LRU cache in shared memory.
+ *
+ * ctl: address of local (unshared) control structure.
+ * name: name of SLRU.  (This is user-visible, pick with care!)
+ * nslots: number of page slots to use.
+ * nlsns: number of LSN groups per page (set to zero if not relevant).
+ * ctllock: LWLock to use to control access to the shared control structure.
+ * subdir: PGDATA-relative subdirectory that will contain the files.
+ * tranche_id: LWLock tranche ID to use for the SLRU's per-buffer LWLocks.
+ */
 void
 SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 			  LWLock *ctllock, const char *subdir, int tranche_id)
