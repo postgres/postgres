@@ -1815,9 +1815,19 @@ _bt_killitems(IndexScanDesc scan)
 
 			if (ItemPointerEquals(&ituple->t_tid, &kitem->heapTid))
 			{
-				/* found the item */
-				ItemIdMarkDead(iid);
-				killedsomething = true;
+				/*
+				 * Found the item.  Mark it as dead, if it isn't already.
+				 * Since this happens while holding a buffer lock possibly in
+				 * shared mode, it's possible that multiple processes attempt
+				 * to do this simultaneously, leading to multiple full-page
+				 * images being sent to WAL (if wal_log_hints or data checksums
+				 * are enabled), which is undesirable.
+				 */
+				if (!ItemIdIsDead(iid))
+				{
+					ItemIdMarkDead(iid);
+					killedsomething = true;
+				}
 				break;			/* out of inner search loop */
 			}
 			offnum = OffsetNumberNext(offnum);
