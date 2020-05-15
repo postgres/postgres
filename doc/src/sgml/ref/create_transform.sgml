@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/create_transform.sgml -->
+<!--
+doc/src/sgml/ref/create_transform.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="sql-createtransform">
  <indexterm zone="sql-createtransform">

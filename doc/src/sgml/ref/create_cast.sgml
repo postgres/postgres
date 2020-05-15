@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/create_cast.sgml -->
+<!--
+doc/src/sgml/ref/create_cast.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="sql-createcast">
  <indexterm zone="sql-createcast">

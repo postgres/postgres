@@ -1,4 +1,8 @@
-<!-- doc/src/sgml/ref/set_session_auth.sgml -->
+<!--
+doc/src/sgml/ref/set_session_auth.sgml
+PostgreSQL documentation
+-->
+
 <refentry id="sql-set-session-authorization">
  <indexterm zone="sql-set-session-authorization">
   <primary>SET SESSION AUTHORIZATION</primary>

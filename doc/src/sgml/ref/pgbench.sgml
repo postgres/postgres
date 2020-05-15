@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/pgbench.sgml -->
+<!--
+doc/src/sgml/ref/pgbench.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="pgbench">
  <indexterm zone="pgbench">
