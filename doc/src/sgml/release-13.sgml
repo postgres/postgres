@@ -338,10 +338,10 @@ Author: Peter Eisentraut <peter@eisentraut.org>
         partitioned tables can be published explicitly causing all partitions
         to be automatically published.  Addition/removal of partitions from
         partitioned tables are automatically added/removed from publications.
-        The <link linkend="sql-createpublication"><command>CREATE
-        PUBLICATION</command></link> option
-        <literal>publish_via_partition_root</literal> controls whether changes
-        to partitions are published as their own or their ancestor's.
+        The <xref linkend="sql-createpublication"/> option
+        <literal>publish_via_partition_root</literal> controls whether
+        changes to partitions are published as their own or their
+        ancestor's.
        </para>
       </listitem>
 
@@ -397,11 +397,9 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
        <para>
         This allows efficient btree indexing of low cardinality columns
-        by storing duplicate keys only once.  Users upgrading with <link
-        linkend="pgupgrade"><application>pg_upgrade</application></link>
-        will need to use <link
-        linkend="sql-reindex"><command>REINDEX</command></link> to make use
-        of this feature.
+        by storing duplicate keys only once.  Users upgrading
+        with <xref linkend="pgupgrade"/> will need to use <xref
+        linkend="sql-reindex"/> to make use of this feature.
        </para>
       </listitem>
 
@@ -414,8 +412,8 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
        <para>
-        Allow <link linkend="gist">GiST</link> and <link
-        linkend="spgist">SP-GiST</link> indexes for <link
+        Allow <xref linkend="gist"/> and <xref
+        linkend="spgist"/> indexes for <link
         linkend="datatype-line">box</link>/point distance lookups (Nikita
         Glukhov)
        </para>
@@ -428,9 +426,9 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
 -->
 
        <para>
-        Allow <link linkend="gin"><acronym>GIN</acronym></link> indexes to
-        more efficiently handle <literal>NOT</literal> restrictions (Nikita
-        Glukhov, Alexander Korotkov, Tom Lane, Julien Rouhaud)
+        Allow <xref linkend="gin"/> indexes to more efficiently handle
+        <literal>NOT</literal> restrictions (Nikita Glukhov, Alexander
+        Korotkov, Tom Lane, Julien Rouhaud)
        </para>
       </listitem>
 
@@ -658,8 +656,8 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 
        <para>
-        Allow inserts to trigger <link linkend="autovacuum">autovacuum</link>
-        activity (Laurenz Albe, Darafei Praliaskouski)
+        Allow inserts to trigger <xref linkend="autovacuum"/> activity
+        (Laurenz Albe, Darafei Praliaskouski)
        </para>
 
        <para>
@@ -722,9 +720,9 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
        <para>
-        Improve the performance when replaying <link
-        linkend="sql-dropdatabase"><command>DROP DATABASE</command></link>
-        commands when many tablespaces are in use (Fujii Masao)
+        Improve the performance when replaying <xref
+        linkend="sql-dropdatabase"/> commands when many tablespaces are
+        in use (Fujii Masao)
        </para>
       </listitem>
 
@@ -747,9 +745,8 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 -->
 
        <para>
-        Improve speed of <link
-        linkend="storage-toast"><acronym>TOAST</acronym></link> decompression
-        and the retrieval of only the leading bytes of <acronym>TOAST</acronym>
+        Improve speed of <xref linkend="storage-toast"/> decompression and
+        the retrieval of only the leading bytes of <acronym>TOAST</acronym>
         values (Binguo Bao, Andrey Borodin)
        </para>
 
@@ -769,9 +766,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve performance of <link
-        linkend="sql-listen"><command>LISTEN</command></link>/<command>NOTIFY</command>
-        (Martijn van Oosterhout)
+        Improve performance of <xref
+        linkend="sql-listen"/>/<command>NOTIFY</command> (Martijn van
+        Oosterhout)
        </para>
       </listitem>
 
@@ -782,8 +779,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
        <para>
-        Improve the efficiency of removing duplicate <link
-        linkend="sql-notify"><command>NOTIFY</command></link> events (Tom Lane)
+        Improve the efficiency of removing duplicate <xref
+        linkend="sql-notify"/> events (Tom Lane)
        </para>
       </listitem>
 
@@ -830,9 +827,9 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
        <para>
-        Allow <link linkend="sql-explain"><command>EXPLAIN</command></link>,
-        <xref linkend="auto-explain"/>, <link
-        linkend="autovacuum">autovacuum</link>, and <xref
+        Allow <xref linkend="sql-explain"/>,
+        <xref linkend="auto-explain"/>, <xref
+        linkend="autovacuum"/>, and <xref
         linkend="pgstatstatements"/> to track <acronym>WAL</acronym> usage
         statistics (Kirill Bychik, Julien Rouhaud)
        </para>
@@ -898,7 +895,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
        <para>
-        Make <link linkend="sql-vacuum">vacuum</link> buffer counters 64-bits
+        Make <xref linkend="sql-vacuum"/> buffer counters 64-bits
         wide to avoid overflow (&Aacute;lvaro Herrera)
        </para>
       </listitem>
@@ -982,8 +979,8 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
        <para>
         Add system view <link
         linkend="monitoring-stats-dynamic-views-table"><structname>pg_stat_progress_analyze</structname></link>
-        to report <link linkend="sql-analyze">analyze</link> progress
-        (&Aacute;lvaro Herrera, Tatsuro Yamada, Vinayak Pokale)
+        to report <xref linkend="sql-analyze"/> progress (&Aacute;lvaro
+        Herrera, Tatsuro Yamada, Vinayak Pokale)
        </para>
       </listitem>
 
@@ -1363,8 +1360,8 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
       <para>
-       Allow <link linkend="sql-vacuum"><command>VACUUM</command></link>
-       to process indexes in parallel (Masahiko Sawada, Amit Kapila)
+       Allow <xref linkend="sql-vacuum"/> to process indexes in parallel
+       (Masahiko Sawada, Amit Kapila)
       </para>
 
       <para>
@@ -1392,8 +1389,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Report planning-time buffer usage in <link
-       linkend="sql-explain"><command>EXPLAIN</command></link>'s
+       Report planning-time buffer usage in <xref linkend="sql-explain"/>'s
        <literal>BUFFER</literal> output (Julien Rouhaud)
       </para>
      </listitem>
@@ -1444,9 +1440,9 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Add <link linkend="sql-altertable"><command>ALTER
-       TABLE</command></link> clause <literal>DROP EXPRESSION</literal>
-       to remove generated properties from columns (Peter Eisentraut)
+       Add <xref linkend="sql-altertable"/> clause <literal>DROP
+       EXPRESSION</literal> to remove generated properties from columns
+       (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -1469,8 +1465,8 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Add <link linkend="sql-alterview"><command>ALTER VIEW</command></link>
-       syntax to rename view columns (Fujii Masao)
+       Add <xref linkend="sql-alterview"/> syntax to rename view columns
+       (Fujii Masao)
       </para>
 
       <para>
@@ -1486,9 +1482,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Add <link linkend="sql-altertype"><command>ALTER TYPE</command></link>
-       options useful for extensions, like <acronym>TOAST</acronym> and I/O
-       functions control (Tomas Vondra, Tom Lane)
+       Add <xref linkend="sql-altertype"/> options useful for extensions,
+       like <acronym>TOAST</acronym> and I/O functions control (Tomas
+       Vondra, Tom Lane)
       </para>
      </listitem>
 
@@ -1499,9 +1495,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Add <link linkend="sql-createdatabase"><command>CREATE
-       DATABASE</command></link> <literal>LOCALE</literal> option (Peter
-       Eisentraut)
+       Add <xref linkend="sql-createdatabase"/> <literal>LOCALE</literal>
+       option (Peter Eisentraut)
       </para>
 
       <para>
@@ -1517,9 +1512,8 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
       <para>
-       Allow <link linkend="sql-dropdatabase"><command>DROP
-       DATABASE</command></link> to disconnect users so drop succeeds (Pavel
-       Stehule, Amit Kapila)
+       Allow <xref linkend="sql-dropdatabase"/> to disconnect users so
+       drop succeeds (Pavel Stehule, Amit Kapila)
       </para>
 
       <para>
@@ -1952,7 +1946,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
    </sect3>
 
    <sect3>
-    <title><link linkend="plpgsql">PL/pgSQL</link></title>
+    <title><xref linkend="plpgsql"/></title>
 
     <itemizedlist>
 
@@ -2306,9 +2300,8 @@ Author: Robert Haas <rhaas@postgresql.org>
       </para>
 
       <para>
-       A new tool <link
-       linkend="app-pgverifybackup"><application>pg_verifybackup</application>"</link>
-       can verify backups.
+       A new tool <application><xref
+       linkend="app-pgverifybackup"/></application> can verify backups.
       </para>
      </listitem>
 
@@ -2319,9 +2312,9 @@ Author: Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Have <link
-       linkend="app-pgbasebackup"><application>pg_basebackup</application></link>
-       estimate the total backup size by default (Fujii Masao)
+       Have <application><xref
+       linkend="app-pgbasebackup"/></application> estimate the
+       total backup size by default (Fujii Masao)
       </para>
 
       <para>
@@ -2340,14 +2333,13 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
       <para>
-       Add <link
-       linkend="app-pgrewind"><application>pg_rewind</application></link>
+       Add <application><xref linkend="app-pgrewind"/></application>
        option to configure standbys (Paul Guo, Jimmy Yih, Ashwin Agrawal)
       </para>
 
       <para>
-       This matches <link
-       linkend="app-pgbasebackup"><application>pg_basebackup</application></link>'s
+       This matches <application><xref
+       linkend="app-pgbasebackup"/></application>'s
        <option>--write-recovery-conf</option> option.
       </para>
      </listitem>
@@ -2393,9 +2385,8 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Increase <link linkend="sql-prepare-transaction"><command>PREPARE
-       TRANSACTION</command></link> information reported by
-       <application>pg_waldump</application> (Fujii Masao)
+       Increase <xref linkend="sql-prepare-transaction"/> information
+       reported by <application>pg_waldump</application> (Fujii Masao)
       </para>
      </listitem>
 
@@ -2406,10 +2397,9 @@ Author: Robert Haas <rhaas@postgresql.org>
 -->
 
       <para>
-       Add <link
-       linkend="pgwaldump"><application>pg_waldump</application></link>
-       option <option>--quiet</option> to suppress non-error output (Andres
-       Freund, Robert Haas)
+       Add <application><xref linkend="pgwaldump"/></application>
+       option <option>--quiet</option> to suppress non-error output
+       (Andres Freund, Robert Haas)
       </para>
      </listitem>
 
@@ -2420,8 +2410,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
       <para>
-       Allow <link
-       linkend="app-pgdump"><application>pg_dump</application></link>
+       Allow <application><xref linkend="app-pgdump"/></application>
        <option>--include-foreign-data</option> to dump data from foreign
        servers (Luis Carril)
       </para>
@@ -2434,8 +2423,8 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
       <para>
-       Allow vacuum commands run by <link
-       linkend="app-vacuumdb">vacuumdb</link> to operate in parallel mode
+       Allow vacuum commands run by <application><xref
+       linkend="app-vacuumdb"/></application> to operate in parallel mode
        (Masahiko Sawada)
       </para>
 
@@ -2451,8 +2440,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 -->
 
       <para>
-       Allow <link linkend="app-reindexdb">reindexdb</link> to operate in
-       parallel (Julien Rouhaud)
+       Allow <application><xref linkend="app-reindexdb"/></application>
+       to operate in parallel (Julien Rouhaud)
       </para>
 
       <para>
@@ -2467,8 +2456,8 @@ Author: Amit Kapila <akapila@postgresql.org>
 -->
 
       <para>
-       Allow <link linkend="app-dropdb">dropdb</link> to force disconnections
-       so the drop succeeds (Pavel Stehule)
+       Allow <application><xref linkend="app-dropdb"/></application>
+       to force disconnections so the drop succeeds (Pavel Stehule)
       </para>
 
       <para>
@@ -2484,7 +2473,7 @@ Author: Author: Michael Paquier <michael@paquier.xyz>
 
       <para>
        Remove <option>--adduser</option> and <option>--no-adduser</option>
-       from <link linkend="app-createuser">createuser</link> (Alexander
+       from <application><xref linkend="app-createuser"/></application> (Alexander
        Lakhin)
       </para>
 
@@ -2501,9 +2490,9 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
       <para>
-       Use the directory of the <link
-       linkend="pgupgrade"><application>pg_upgrade</application></link>
-       binary as the default new 'bindir' location when running
+       Use the directory of the <application><xref
+       linkend="pgupgrade"/></application> binary
+       as the default new 'bindir' location when running
        <application>pg_upgrade</application> (Daniel Gustafsson)
       </para>
      </listitem>
@@ -2712,8 +2701,7 @@ Author: Joe Conway <mail@joeconway.com>
 -->
 
       <para>
-       Add <link linkend="sql-truncate"><command>TRUNCATE</command></link>
-       command hook (Yuli Khodorkovskiy)
+       Add <xref linkend="sql-truncate"/> command hook (Yuli Khodorkovskiy)
       </para>
      </listitem>
 
@@ -2860,8 +2848,7 @@ Author: Andrew Dunstan <andrew@dunslane.net>
       </para>
 
       <para>
-       Specifically, allow <link linkend="sql-alterusermapping"><command>ALTER
-       USER MAPPING</command></link> to set
+       Specifically, allow <xref linkend="sql-alterusermapping"/> to set
        <literal>password_required</literal> to false.  Care must still be
        taken to avoid non-superusers from using superuser credentials to
        connect to the foreign server.
