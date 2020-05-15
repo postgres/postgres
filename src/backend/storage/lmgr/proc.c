@@ -221,7 +221,7 @@ InitProcGlobal(void)
 		/* Common initialization for all PGPROCs, regardless of type. */
 
 		/*
-		 * Set up per-PGPROC semaphore, latch, and backendLock. Prepared xact
+		 * Set up per-PGPROC semaphore, latch, and fpInfoLock.  Prepared xact
 		 * dummy PGPROCs don't need these though - they're never associated
 		 * with a real process
 		 */
@@ -229,7 +229,7 @@ InitProcGlobal(void)
 		{
 			procs[i].sem = PGSemaphoreCreate();
 			InitSharedLatch(&(procs[i].procLatch));
-			LWLockInitialize(&(procs[i].backendLock), LWTRANCHE_PROC);
+			LWLockInitialize(&(procs[i].fpInfoLock), LWTRANCHE_LOCK_FASTPATH);
 		}
 		procs[i].pgprocno = i;
 

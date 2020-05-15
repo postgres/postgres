@@ -188,10 +188,8 @@ struct PGPROC
 	XLogRecPtr	clogGroupMemberLsn; /* WAL location of commit record for clog
 									 * group member */
 
-	/* Per-backend LWLock.  Protects fields below (but not group fields). */
-	LWLock		backendLock;
-
 	/* Lock manager data, recording fast-path locks taken by this backend. */
+	LWLock		fpInfoLock;		/* protects per-backend fast-path state */
 	uint64		fpLockBits;		/* lock modes held for each fast-path slot */
 	Oid			fpRelId[FP_LOCK_SLOTS_PER_BACKEND]; /* slots for rel oids */
 	bool		fpVXIDLock;		/* are we holding a fast-path VXID lock? */

@@ -132,7 +132,7 @@ InitBufferPool(void)
 							 LWTRANCHE_BUFFER_CONTENT);
 
 			LWLockInitialize(BufferDescriptorGetIOLock(buf),
-							 LWTRANCHE_BUFFER_IO_IN_PROGRESS);
+							 LWTRANCHE_BUFFER_IO);
 		}
 
 		/* Correct last entry of linked list */

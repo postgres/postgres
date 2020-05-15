@@ -117,7 +117,7 @@ GetSessionDsmHandle(void)
 	dsa_space = shm_toc_allocate(toc, SESSION_DSA_SIZE);
 	dsa = dsa_create_in_place(dsa_space,
 							  SESSION_DSA_SIZE,
-							  LWTRANCHE_SESSION_DSA,
+							  LWTRANCHE_PER_SESSION_DSA,
 							  seg);
 	shm_toc_insert(toc, SESSION_KEY_DSA, dsa_space);
 

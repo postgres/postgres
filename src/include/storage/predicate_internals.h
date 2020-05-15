@@ -92,8 +92,12 @@ typedef struct SERIALIZABLEXACT
 	SHM_QUEUE	finishedLink;	/* list link in
 								 * FinishedSerializableTransactions */
 
-	LWLock		predicateLockListLock;	/* protects predicateLocks in parallel
-										 * mode */
+	/*
+	 * perXactPredicateListLock is only used in parallel queries: it protects
+	 * this SERIALIZABLEXACT's predicate lock list against other workers of
+	 * the same session.
+	 */
+	LWLock		perXactPredicateListLock;
 
 	/*
 	 * for r/o transactions: list of concurrent r/w transactions that we could

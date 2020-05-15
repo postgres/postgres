@@ -2,7 +2,8 @@
 # these are defined here.  If you add a lock, add it to the end to avoid
 # renumbering the existing locks; if you remove a lock, consider leaving a gap
 # in the numbering sequence for the benefit of DTrace and other external
-# debugging scripts.
+# debugging scripts.  Also, do not forget to update the list of wait events
+# in the user documentation.
 
 # 0 is available; was formerly BufFreelistLock
 ShmemIndexLock						1
@@ -34,7 +35,7 @@ NotifySLRULock						26
 NotifyQueueLock						27
 SerializableXactHashLock			28
 SerializableFinishedListLock		29
-SerializablePredicateLockListLock	30
+SerializablePredicateListLock		30
 SerialSLRULock						31
 SyncRepLock							32
 BackgroundWorkerLock				33

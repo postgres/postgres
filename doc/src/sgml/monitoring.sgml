@@ -1751,29 +1751,22 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     <tbody>
      <row>
       <entry><literal>AddinShmemInitLock</literal></entry>
-      <entry>Waiting to manage space allocation in shared memory.</entry>
-     </row>
-     <row>
-      <entry><literal>NotifySLRULock</literal></entry>
-      <entry>Waiting to access the <command>NOTIFY</command> message SLRU
-       cache.</entry>
-     </row>
-     <row>
-      <entry><literal>NotifyQueueLock</literal></entry>
-      <entry>Waiting to read or update <command>NOTIFY</command> messages.</entry>
+      <entry>Waiting to manage an extension's space allocation in shared
+       memory.</entry>
      </row>
      <row>
       <entry><literal>AutoFileLock</literal></entry>
-      <entry>Waiting to update the <filename>postgresql.auto.conf</filename> file.</entry>
+      <entry>Waiting to update the <filename>postgresql.auto.conf</filename>
+       file.</entry>
      </row>
      <row>
       <entry><literal>AutovacuumLock</literal></entry>
-      <entry>Autovacuum worker or launcher waiting to update or
-       read the current state of autovacuum workers.</entry>
+      <entry>Waiting to read or update the current state of autovacuum
+       workers.</entry>
      </row>
      <row>
       <entry><literal>AutovacuumScheduleLock</literal></entry>
-      <entry>Waiting to ensure that the table selected for a vacuum
+      <entry>Waiting to ensure that a table selected for autovacuum
        still needs vacuuming.</entry>
      </row>
      <row>
@@ -1786,51 +1779,79 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        B-tree index.</entry>
      </row>
      <row>
-      <entry><literal>XactSLRULock</literal></entry>
-      <entry>Waiting to access the transaction status SLRU cache.</entry>
+      <entry><literal>BufferContent</literal></entry>
+      <entry>Waiting to access a data page in memory.</entry>
      </row>
      <row>
-      <entry><literal>XactTruncationLock</literal></entry>
-      <entry>Waiting to execute <function>pg_xact_status</function> or update
-       the oldest transaction ID available to it.</entry>
+      <entry><literal>BufferIO</literal></entry>
+      <entry>Waiting for I/O on a data page.</entry>
+     </row>
+     <row>
+      <entry><literal>BufferMapping</literal></entry>
+      <entry>Waiting to associate a data block with a buffer in the buffer
+       pool.</entry>
      </row>
      <row>
       <entry><literal>CheckpointLock</literal></entry>
-      <entry>Waiting to perform checkpoint.</entry>
+      <entry>Waiting to begin a checkpoint.</entry>
      </row>
      <row>
       <entry><literal>CheckpointerCommLock</literal></entry>
       <entry>Waiting to manage fsync requests.</entry>
      </row>
      <row>
+      <entry><literal>CommitTsLock</literal></entry>
+      <entry>Waiting to read or update the last value set for a
+       transaction commit timestamp.</entry>
+     </row>
+     <row>
+      <entry><literal>CommitTsBuffer</literal></entry>
+      <entry>Waiting for I/O on a commit timestamp SLRU buffer.</entry>
+     </row>
+     <row>
       <entry><literal>CommitTsSLRULock</literal></entry>
       <entry>Waiting to access the commit timestamp SLRU cache.</entry>
      </row>
      <row>
-      <entry><literal>CommitTsLock</literal></entry>
-      <entry>Waiting to read or update the last value set for the
-       transaction timestamp.</entry>
-     </row>
-     <row>
       <entry><literal>ControlFileLock</literal></entry>
-      <entry>Waiting to read or update the control file or creation of a
-       new WAL file.</entry>
+      <entry>Waiting to read or update the <filename>pg_control</filename>
+       file or create a new WAL file.</entry>
      </row>
      <row>
       <entry><literal>DynamicSharedMemoryControlLock</literal></entry>
-      <entry>Waiting to read or update dynamic shared memory state.</entry>
+      <entry>Waiting to read or update dynamic shared memory allocation
+       information.</entry>
+     </row>
+     <row>
+      <entry><literal>LockFastPath</literal></entry>
+      <entry>Waiting to read or update a process' fast-path lock
+       information.</entry>
+     </row>
+     <row>
+      <entry><literal>LockManager</literal></entry>
+      <entry>Waiting to read or update information
+       about <quote>heavyweight</quote> locks.</entry>
      </row>
      <row>
       <entry><literal>LogicalRepWorkerLock</literal></entry>
-      <entry>Waiting for action on logical replication worker to finish.</entry>
+      <entry>Waiting to read or update the state of logical replication
+       workers.</entry>
      </row>
      <row>
       <entry><literal>MultiXactGenLock</literal></entry>
       <entry>Waiting to read or update shared multixact state.</entry>
      </row>
      <row>
+      <entry><literal>MultiXactMemberBuffer</literal></entry>
+      <entry>Waiting for I/O on a multixact member SLRU buffer.</entry>
+     </row>
+     <row>
       <entry><literal>MultiXactMemberSLRULock</literal></entry>
       <entry>Waiting to access the multixact member SLRU cache.</entry>
+     </row>
+     <row>
+      <entry><literal>MultiXactOffsetBuffer</literal></entry>
+      <entry>Waiting for I/O on a multixact offset SLRU buffer.</entry>
      </row>
      <row>
       <entry><literal>MultiXactOffsetSLRULock</literal></entry>
@@ -1841,35 +1862,90 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to read or truncate multixact information.</entry>
      </row>
      <row>
-      <entry><literal>OidGenLock</literal></entry>
-      <entry>Waiting to allocate or assign an OID.</entry>
+      <entry><literal>NotifyBuffer</literal></entry>
+      <entry>Waiting for I/O on a <command>NOTIFY</command> message SLRU
+       buffer.</entry>
      </row>
      <row>
-      <entry><literal>SerialSLRULock</literal></entry>
-      <entry>Waiting to access the serializable transaction conflict SLRU
+      <entry><literal>NotifyQueueLock</literal></entry>
+      <entry>Waiting to read or update <command>NOTIFY</command> messages.</entry>
+     </row>
+     <row>
+      <entry><literal>NotifySLRULock</literal></entry>
+      <entry>Waiting to access the <command>NOTIFY</command> message SLRU
        cache.</entry>
+     </row>
+     <row>
+      <entry><literal>OidGenLock</literal></entry>
+      <entry>Waiting to allocate a new OID.</entry>
      </row>
      <row>
       <entry><literal>OldSnapshotTimeMapLock</literal></entry>
       <entry>Waiting to read or update old snapshot control information.</entry>
      </row>
      <row>
-      <entry><literal>ProcArrayLock</literal></entry>
-      <entry>Waiting to get a snapshot or clearing a transaction id at
-       transaction end.</entry>
+      <entry><literal>ParallelAppend</literal></entry>
+      <entry>Waiting to choose the next subplan during Parallel Append plan
+       execution.</entry>
      </row>
      <row>
-      <entry><literal>RelCacheInitLock</literal></entry>
-      <entry>Waiting to read or write relation cache initialization file.</entry>
+      <entry><literal>ParallelHashJoin</literal></entry>
+      <entry>Waiting to synchronize workers during Parallel Hash Join plan
+       execution.</entry>
+     </row>
+     <row>
+      <entry><literal>ParallelQueryDSA</literal></entry>
+      <entry>Waiting for parallel query dynamic shared memory allocation.</entry>
+     </row>
+     <row>
+      <entry><literal>PerSessionDSA</literal></entry>
+      <entry>Waiting for parallel query dynamic shared memory allocation.</entry>
+     </row>
+     <row>
+      <entry><literal>PerSessionRecordType</literal></entry>
+      <entry>Waiting to access a parallel query's information about composite
+       types.</entry>
+     </row>
+     <row>
+      <entry><literal>PerSessionRecordTypmod</literal></entry>
+      <entry>Waiting to access a parallel query's information about type
+       modifiers that identify anonymous record types.</entry>
+     </row>
+     <row>
+      <entry><literal>PerXactPredicateList</literal></entry>
+      <entry>Waiting to access the list of predicate locks held by the current
+       serializable transaction during a parallel query.</entry>
+     </row>
+     <row>
+      <entry><literal>PredicateLockManager</literal></entry>
+      <entry>Waiting to access predicate lock information used by
+       serializable transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>ProcArrayLock</literal></entry>
+      <entry>Waiting to access the shared per-process data structures
+       (typically, to get a snapshot or report a session's transaction
+       ID).</entry>
      </row>
      <row>
       <entry><literal>RelationMappingLock</literal></entry>
-      <entry>Waiting to update the relation map file used to store catalog
-       to filenode mapping.</entry>
+      <entry>Waiting to read or update
+       a <filename>pg_filenode.map</filename> file (used to track the
+       filenode assignments of certain system catalogs).</entry>
+     </row>
+     <row>
+      <entry><literal>RelCacheInitLock</literal></entry>
+      <entry>Waiting to read or update a <filename>pg_internal.init</filename>
+       relation cache initialization file.</entry>
      </row>
      <row>
       <entry><literal>ReplicationOriginLock</literal></entry>
-      <entry>Waiting to setup, drop or use replication origin.</entry>
+      <entry>Waiting to create, drop or use a replication origin.</entry>
+     </row>
+     <row>
+      <entry><literal>ReplicationOriginState</literal></entry>
+      <entry>Waiting to read or update the progress of one replication
+       origin.</entry>
      </row>
      <row>
       <entry><literal>ReplicationSlotAllocationLock</literal></entry>
@@ -1880,13 +1956,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to read or update replication slot state.</entry>
      </row>
      <row>
-      <entry><literal>SInvalReadLock</literal></entry>
-      <entry>Waiting to retrieve or remove messages from shared invalidation
-       queue.</entry>
+      <entry><literal>ReplicationSlotIO</literal></entry>
+      <entry>Waiting for I/O on a replication slot.</entry>
      </row>
      <row>
-      <entry><literal>SInvalWriteLock</literal></entry>
-      <entry>Waiting to add a message in shared invalidation queue.</entry>
+      <entry><literal>SerialBuffer</literal></entry>
+      <entry>Waiting for I/O on a serializable transaction conflict SLRU
+       buffer.</entry>
      </row>
      <row>
       <entry><literal>SerializableFinishedListLock</literal></entry>
@@ -1894,18 +1970,47 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        transactions.</entry>
      </row>
      <row>
-      <entry><literal>SerializablePredicateLockListLock</literal></entry>
-      <entry>Waiting to perform an operation on a list of locks held by
+      <entry><literal>SerializablePredicateListLock</literal></entry>
+      <entry>Waiting to access the list of predicate locks held by
        serializable transactions.</entry>
      </row>
      <row>
       <entry><literal>SerializableXactHashLock</literal></entry>
-      <entry>Waiting to retrieve or store information about serializable
+      <entry>Waiting to read or update information about serializable
        transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>SerialSLRULock</literal></entry>
+      <entry>Waiting to access the serializable transaction conflict SLRU
+       cache.</entry>
+     </row>
+     <row>
+      <entry><literal>SharedTidBitmap</literal></entry>
+      <entry>Waiting to access a shared TID bitmap during a parallel bitmap
+       index scan.</entry>
+     </row>
+     <row>
+      <entry><literal>SharedTupleStore</literal></entry>
+      <entry>Waiting to access a shared tuple store during parallel
+       query.</entry>
      </row>
      <row>
       <entry><literal>ShmemIndexLock</literal></entry>
       <entry>Waiting to find or allocate space in shared memory.</entry>
+     </row>
+     <row>
+      <entry><literal>SInvalReadLock</literal></entry>
+      <entry>Waiting to retrieve messages from the shared catalog invalidation
+       queue.</entry>
+     </row>
+     <row>
+      <entry><literal>SInvalWriteLock</literal></entry>
+      <entry>Waiting to add a message to the shared catalog invalidation
+      queue.</entry>
+     </row>
+     <row>
+      <entry><literal>SubtransBuffer</literal></entry>
+      <entry>Waiting for I/O on a sub-transaction SLRU buffer.</entry>
      </row>
      <row>
       <entry><literal>SubtransSLRULock</literal></entry>
@@ -1913,17 +2018,17 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>SyncRepLock</literal></entry>
-      <entry>Waiting to read or update information about synchronous
-       replicas.</entry>
+      <entry>Waiting to read or update information about the state of
+       synchronous replication.</entry>
      </row>
      <row>
       <entry><literal>SyncScanLock</literal></entry>
-      <entry>Waiting to get the start location of a scan on a table for
-       synchronized scans.</entry>
+      <entry>Waiting to select the starting location of a synchronized table
+       scan.</entry>
      </row>
      <row>
       <entry><literal>TablespaceCreateLock</literal></entry>
-      <entry>Waiting to create or drop the tablespace.</entry>
+      <entry>Waiting to create or drop a tablespace.</entry>
      </row>
      <row>
       <entry><literal>TwoPhaseStateLock</literal></entry>
@@ -1934,103 +2039,29 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting to replace a page in WAL buffers.</entry>
      </row>
      <row>
+      <entry><literal>WALInsert</literal></entry>
+      <entry>Waiting to insert WAL data into a memory buffer.</entry>
+     </row>
+     <row>
       <entry><literal>WALWriteLock</literal></entry>
       <entry>Waiting for WAL buffers to be written to disk.</entry>
-     </row>
-     <row>
-      <entry><literal>XidGenLock</literal></entry>
-      <entry>Waiting to allocate or assign a transaction id.</entry>
-     </row>
-     <row>
-      <entry><literal>NotifyBuffer</literal></entry>
-      <entry>Waiting for I/O on a <command>NOTIFY</command> message SLRU
-       buffer.</entry>
-     </row>
-     <row>
-      <entry><literal>buffer_content</literal></entry>
-      <entry>Waiting to read or write a data page in memory.</entry>
-     </row>
-     <row>
-      <entry><literal>buffer_io</literal></entry>
-      <entry>Waiting for I/O on a data page.</entry>
-     </row>
-     <row>
-      <entry><literal>buffer_mapping</literal></entry>
-      <entry>Waiting to associate a data block with a buffer in the buffer
-       pool.</entry>
      </row>
      <row>
       <entry><literal>XactBuffer</literal></entry>
       <entry>Waiting for I/O on a transaction status SLRU buffer.</entry>
      </row>
      <row>
-      <entry><literal>CommitTsBuffer</literal></entry>
-      <entry>Waiting for I/O on a commit timestamp SLRU buffer.</entry>
+      <entry><literal>XactSLRULock</literal></entry>
+      <entry>Waiting to access the transaction status SLRU cache.</entry>
      </row>
      <row>
-      <entry><literal>lock_manager</literal></entry>
-      <entry>Waiting to add or examine locks for backends, or waiting to
-       join or exit a locking group (used by parallel query).</entry>
+      <entry><literal>XactTruncationLock</literal></entry>
+      <entry>Waiting to execute <function>pg_xact_status</function> or update
+       the oldest transaction ID available to it.</entry>
      </row>
      <row>
-      <entry><literal>MultiXactMember</literal></entry>
-      <entry>Waiting for I/O on a multixact member SLRU buffer.</entry>
-     </row>
-     <row>
-      <entry><literal>MultiXactOffsetBuffer</literal></entry>
-      <entry>Waiting for I/O on a multixact offset SLRU buffer.</entry>
-     </row>
-     <row>
-      <entry><literal>SerialBuffer</literal></entry>
-      <entry>Waiting for I/O on a serializable transaction conflict SLRU
-       buffer.</entry>
-     </row>
-     <row>
-      <entry><literal>parallel_append</literal></entry>
-      <entry>Waiting to choose the next subplan during Parallel Append plan
-       execution.</entry>
-     </row>
-     <row>
-      <entry><literal>parallel_hash_join</literal></entry>
-      <entry>Waiting to allocate or exchange a chunk of memory or update
-       counters during Parallel Hash plan execution.</entry>
-     </row>
-     <row>
-      <entry><literal>parallel_query_dsa</literal></entry>
-      <entry>Waiting for parallel query dynamic shared memory allocation lock.</entry>
-     </row>
-     <row>
-      <entry><literal>predicate_lock_manager</literal></entry>
-      <entry>Waiting to add or examine predicate lock information.</entry>
-     </row>
-     <row>
-      <entry><literal>proc</literal></entry>
-      <entry>Waiting to read or update the fast-path lock information.</entry>
-     </row>
-     <row>
-      <entry><literal>replication_origin</literal></entry>
-      <entry>Waiting to read or update the replication progress.</entry>
-     </row>
-     <row>
-      <entry><literal>replication_slot_io</literal></entry>
-      <entry>Waiting for I/O on a replication slot.</entry>
-     </row>
-     <row>
-      <entry><literal>serializable_xact</literal></entry>
-      <entry>Waiting to perform an operation on a serializable transaction
-       in a parallel query.</entry>
-     </row>
-     <row>
-      <entry><literal>SubtransBuffer</literal></entry>
-      <entry>Waiting for I/O on a sub-transaction SLRU buffer.</entry>
-     </row>
-     <row>
-      <entry><literal>tbm</literal></entry>
-      <entry>Waiting for TBM shared iterator lock.</entry>
-     </row>
-     <row>
-      <entry><literal>wal_insert</literal></entry>
-      <entry>Waiting to insert WAL into a memory buffer.</entry>
+      <entry><literal>XidGenLock</literal></entry>
+      <entry>Waiting to allocate a new transaction ID.</entry>
      </row>
     </tbody>
    </tgroup>

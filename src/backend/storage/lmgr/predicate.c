@@ -89,7 +89,7 @@
  *		- Protects the list of transactions which have completed but which
  *			may yet matter because they overlap still-active transactions.
  *
- *	SerializablePredicateLockListLock
+ *	SerializablePredicateListLock
  *		- Protects the linked list of locks held by a transaction.  Note
  *			that the locks themselves are also covered by the partition
  *			locks of their respective lock targets; this lock only affects
@@ -118,11 +118,11 @@
  *			than its own active transaction must acquire an exclusive
  *			lock.
  *
- *	SERIALIZABLEXACT's member 'predicateLockListLock'
- *		- Protects the linked list of locks held by a transaction.  Only
- *			needed for parallel mode, where multiple backends share the
+ *	SERIALIZABLEXACT's member 'perXactPredicateListLock'
+ *		- Protects the linked list of predicate locks held by a transaction.
+ *			Only needed for parallel mode, where multiple backends share the
  *			same SERIALIZABLEXACT object.  Not needed if
- *			SerializablePredicateLockListLock is held exclusively.
+ *			SerializablePredicateListLock is held exclusively.
  *
  *	PredicateLockHashPartitionLock(hashcode)
  *		- The same lock protects a target, all locks on that target, and
@@ -1186,8 +1186,8 @@ InitPredicateLocks(void)
 		memset(PredXact->element, 0, requestSize);
 		for (i = 0; i < max_table_size; i++)
 		{
-			LWLockInitialize(&PredXact->element[i].sxact.predicateLockListLock,
-							 LWTRANCHE_SXACT);
+			LWLockInitialize(&PredXact->element[i].sxact.perXactPredicateListLock,
+							 LWTRANCHE_PER_XACT_PREDICATE_LIST);
 			SHMQueueInsertBefore(&(PredXact->availableList),
 								 &(PredXact->element[i].link));
 		}
@@ -2042,7 +2042,7 @@ CoarserLockCovers(const PREDICATELOCKTARGETTAG *newtargettag)
 
 /*
  * Remove the dummy entry from the predicate lock target hash, to free up some
- * scratch space. The caller must be holding SerializablePredicateLockListLock,
+ * scratch space. The caller must be holding SerializablePredicateListLock,
  * and must restore the entry with RestoreScratchTarget() before releasing the
  * lock.
  *
@@ -2054,7 +2054,7 @@ RemoveScratchTarget(bool lockheld)
 {
 	bool		found;
 
-	Assert(LWLockHeldByMe(SerializablePredicateLockListLock));
+	Assert(LWLockHeldByMe(SerializablePredicateListLock));
 
 	if (!lockheld)
 		LWLockAcquire(ScratchPartitionLock, LW_EXCLUSIVE);
@@ -2075,7 +2075,7 @@ RestoreScratchTarget(bool lockheld)
 {
 	bool		found;
 
-	Assert(LWLockHeldByMe(SerializablePredicateLockListLock));
+	Assert(LWLockHeldByMe(SerializablePredicateListLock));
 
 	if (!lockheld)
 		LWLockAcquire(ScratchPartitionLock, LW_EXCLUSIVE);
@@ -2097,7 +2097,7 @@ RemoveTargetIfNoLongerUsed(PREDICATELOCKTARGET *target, uint32 targettaghash)
 {
 	PREDICATELOCKTARGET *rmtarget PG_USED_FOR_ASSERTS_ONLY;
 
-	Assert(LWLockHeldByMe(SerializablePredicateLockListLock));
+	Assert(LWLockHeldByMe(SerializablePredicateListLock));
 
 	/* Can't remove it until no locks at this target. */
 	if (!SHMQueueEmpty(&target->predicateLocks))
@@ -2129,10 +2129,10 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 	SERIALIZABLEXACT *sxact;
 	PREDICATELOCK *predlock;
 
-	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
+	LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 	sxact = MySerializableXact;
 	if (IsInParallelMode())
-		LWLockAcquire(&sxact->predicateLockListLock, LW_EXCLUSIVE);
+		LWLockAcquire(&sxact->perXactPredicateListLock, LW_EXCLUSIVE);
 	predlock = (PREDICATELOCK *)
 		SHMQueueNext(&(sxact->predicateLocks),
 					 &(sxact->predicateLocks),
@@ -2187,8 +2187,8 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 		predlock = nextpredlock;
 	}
 	if (IsInParallelMode())
-		LWLockRelease(&sxact->predicateLockListLock);
-	LWLockRelease(SerializablePredicateLockListLock);
+		LWLockRelease(&sxact->perXactPredicateListLock);
+	LWLockRelease(SerializablePredicateListLock);
 }
 
 /*
@@ -2385,9 +2385,9 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 
 	partitionLock = PredicateLockHashPartitionLock(targettaghash);
 
-	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
+	LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 	if (IsInParallelMode())
-		LWLockAcquire(&sxact->predicateLockListLock, LW_EXCLUSIVE);
+		LWLockAcquire(&sxact->perXactPredicateListLock, LW_EXCLUSIVE);
 	LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 
 	/* Make sure that the target is represented. */
@@ -2426,8 +2426,8 @@ CreatePredicateLock(const PREDICATELOCKTARGETTAG *targettag,
 
 	LWLockRelease(partitionLock);
 	if (IsInParallelMode())
-		LWLockRelease(&sxact->predicateLockListLock);
-	LWLockRelease(SerializablePredicateLockListLock);
+		LWLockRelease(&sxact->perXactPredicateListLock);
+	LWLockRelease(SerializablePredicateListLock);
 }
 
 /*
@@ -2586,7 +2586,7 @@ PredicateLockTID(Relation relation, ItemPointer tid, Snapshot snapshot,
  *
  * Remove a predicate lock target along with any locks held for it.
  *
- * Caller must hold SerializablePredicateLockListLock and the
+ * Caller must hold SerializablePredicateListLock and the
  * appropriate hash partition lock for the target.
  */
 static void
@@ -2597,7 +2597,7 @@ DeleteLockTarget(PREDICATELOCKTARGET *target, uint32 targettaghash)
 	PREDICATELOCK *nextpredlock;
 	bool		found;
 
-	Assert(LWLockHeldByMeInMode(SerializablePredicateLockListLock,
+	Assert(LWLockHeldByMeInMode(SerializablePredicateListLock,
 								LW_EXCLUSIVE));
 	Assert(LWLockHeldByMe(PredicateLockHashPartitionLock(targettaghash)));
 
@@ -2658,7 +2658,7 @@ DeleteLockTarget(PREDICATELOCKTARGET *target, uint32 targettaghash)
  * covers it, or if we are absolutely certain that no one will need to
  * refer to that lock in the future.
  *
- * Caller must hold SerializablePredicateLockListLock exclusively.
+ * Caller must hold SerializablePredicateListLock exclusively.
  */
 static bool
 TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
@@ -2673,7 +2673,7 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 	bool		found;
 	bool		outOfShmem = false;
 
-	Assert(LWLockHeldByMeInMode(SerializablePredicateLockListLock,
+	Assert(LWLockHeldByMeInMode(SerializablePredicateListLock,
 								LW_EXCLUSIVE));
 
 	oldtargettaghash = PredicateLockTargetTagHashCode(&oldtargettag);
@@ -2924,7 +2924,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 	heaptarget = NULL;
 
 	/* Acquire locks on all lock partitions */
-	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
+	LWLockAcquire(SerializablePredicateListLock, LW_EXCLUSIVE);
 	for (i = 0; i < NUM_PREDICATELOCK_PARTITIONS; i++)
 		LWLockAcquire(PredicateLockHashPartitionLockByIndex(i), LW_EXCLUSIVE);
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
@@ -3065,7 +3065,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 	LWLockRelease(SerializableXactHashLock);
 	for (i = NUM_PREDICATELOCK_PARTITIONS - 1; i >= 0; i--)
 		LWLockRelease(PredicateLockHashPartitionLockByIndex(i));
-	LWLockRelease(SerializablePredicateLockListLock);
+	LWLockRelease(SerializablePredicateListLock);
 }
 
 /*
@@ -3131,7 +3131,7 @@ PredicateLockPageSplit(Relation relation, BlockNumber oldblkno,
 									relation->rd_id,
 									newblkno);
 
-	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
+	LWLockAcquire(SerializablePredicateListLock, LW_EXCLUSIVE);
 
 	/*
 	 * Try copying the locks over to the new page's tag, creating it if
@@ -3167,7 +3167,7 @@ PredicateLockPageSplit(Relation relation, BlockNumber oldblkno,
 		Assert(success);
 	}
 
-	LWLockRelease(SerializablePredicateLockListLock);
+	LWLockRelease(SerializablePredicateListLock);
 }
 
 /*
@@ -3748,7 +3748,7 @@ ClearOldPredicateLocks(void)
 	/*
 	 * Loop through predicate locks on dummy transaction for summarized data.
 	 */
-	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
+	LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 	predlock = (PREDICATELOCK *)
 		SHMQueueNext(&OldCommittedSxact->predicateLocks,
 					 &OldCommittedSxact->predicateLocks,
@@ -3804,7 +3804,7 @@ ClearOldPredicateLocks(void)
 		predlock = nextpredlock;
 	}
 
-	LWLockRelease(SerializablePredicateLockListLock);
+	LWLockRelease(SerializablePredicateListLock);
 	LWLockRelease(SerializableFinishedListLock);
 }
 
@@ -3845,9 +3845,9 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 	 * First release all the predicate locks held by this xact (or transfer
 	 * them to OldCommittedSxact if summarize is true)
 	 */
-	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
+	LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 	if (IsInParallelMode())
-		LWLockAcquire(&sxact->predicateLockListLock, LW_EXCLUSIVE);
+		LWLockAcquire(&sxact->perXactPredicateListLock, LW_EXCLUSIVE);
 	predlock = (PREDICATELOCK *)
 		SHMQueueNext(&(sxact->predicateLocks),
 					 &(sxact->predicateLocks),
@@ -3928,8 +3928,8 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 	SHMQueueInit(&sxact->predicateLocks);
 
 	if (IsInParallelMode())
-		LWLockRelease(&sxact->predicateLockListLock);
-	LWLockRelease(SerializablePredicateLockListLock);
+		LWLockRelease(&sxact->perXactPredicateListLock);
+	LWLockRelease(SerializablePredicateListLock);
 
 	sxidtag.xid = sxact->topXid;
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
@@ -4302,9 +4302,9 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 		uint32		predlockhashcode;
 		PREDICATELOCK *rmpredlock;
 
-		LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
+		LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 		if (IsInParallelMode())
-			LWLockAcquire(&MySerializableXact->predicateLockListLock, LW_EXCLUSIVE);
+			LWLockAcquire(&MySerializableXact->perXactPredicateListLock, LW_EXCLUSIVE);
 		LWLockAcquire(partitionLock, LW_EXCLUSIVE);
 		LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
 
@@ -4340,8 +4340,8 @@ CheckTargetForConflictsIn(PREDICATELOCKTARGETTAG *targettag)
 		LWLockRelease(SerializableXactHashLock);
 		LWLockRelease(partitionLock);
 		if (IsInParallelMode())
-			LWLockRelease(&MySerializableXact->predicateLockListLock);
-		LWLockRelease(SerializablePredicateLockListLock);
+			LWLockRelease(&MySerializableXact->perXactPredicateListLock);
+		LWLockRelease(SerializablePredicateListLock);
 
 		if (rmpredlock != NULL)
 		{
@@ -4485,7 +4485,7 @@ CheckTableForSerializableConflictIn(Relation relation)
 	dbId = relation->rd_node.dbNode;
 	heapId = relation->rd_id;
 
-	LWLockAcquire(SerializablePredicateLockListLock, LW_EXCLUSIVE);
+	LWLockAcquire(SerializablePredicateListLock, LW_EXCLUSIVE);
 	for (i = 0; i < NUM_PREDICATELOCK_PARTITIONS; i++)
 		LWLockAcquire(PredicateLockHashPartitionLockByIndex(i), LW_SHARED);
 	LWLockAcquire(SerializableXactHashLock, LW_EXCLUSIVE);
@@ -4535,7 +4535,7 @@ CheckTableForSerializableConflictIn(Relation relation)
 	LWLockRelease(SerializableXactHashLock);
 	for (i = NUM_PREDICATELOCK_PARTITIONS - 1; i >= 0; i--)
 		LWLockRelease(PredicateLockHashPartitionLockByIndex(i));
-	LWLockRelease(SerializablePredicateLockListLock);
+	LWLockRelease(SerializablePredicateListLock);
 }
 
 
@@ -4887,12 +4887,12 @@ AtPrepare_PredicateLocks(void)
 	 * than using the local predicate lock table because the latter is not
 	 * guaranteed to be accurate.
 	 */
-	LWLockAcquire(SerializablePredicateLockListLock, LW_SHARED);
+	LWLockAcquire(SerializablePredicateListLock, LW_SHARED);
 
 	/*
-	 * No need to take sxact->predicateLockListLock in parallel mode because
-	 * there cannot be any parallel workers running while we are preparing a
-	 * transaction.
+	 * No need to take sxact->perXactPredicateListLock in parallel mode
+	 * because there cannot be any parallel workers running while we are
+	 * preparing a transaction.
 	 */
 	Assert(!IsParallelWorker() && !ParallelContextActive());
 
@@ -4915,7 +4915,7 @@ AtPrepare_PredicateLocks(void)
 						 offsetof(PREDICATELOCK, xactLink));
 	}
 
-	LWLockRelease(SerializablePredicateLockListLock);
+	LWLockRelease(SerializablePredicateListLock);
 }
 
 /*

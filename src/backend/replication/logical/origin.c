@@ -506,7 +506,7 @@ ReplicationOriginShmemInit(void)
 	{
 		int			i;
 
-		replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN;
+		replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN_STATE;
 
 		MemSet(replication_states, 0, ReplicationOriginShmemSize());
 
