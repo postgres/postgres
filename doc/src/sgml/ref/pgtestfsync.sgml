@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/pgtestfsync.sgml -->
+<!--
+doc/src/sgml/ref/pgtestfsync.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="pgtestfsync">
  <indexterm zone="pgtestfsync">

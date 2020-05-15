@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/create_collation.sgml -->
+<!--
+doc/src/sgml/ref/create_collation.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="SQL-CREATECOLLATION">
  <indexterm zone="sql-createcollation">
