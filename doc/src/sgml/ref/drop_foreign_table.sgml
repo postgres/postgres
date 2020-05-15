@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/drop_foreign_table.sgml -->
+<!--
+doc/src/sgml/ref/drop_foreign_table.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="sql-dropforeigntable">
  <indexterm zone="sql-dropforeigntable">

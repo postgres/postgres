@@ -1,4 +1,8 @@
-<!-- doc/src/sgml/ref/set_transaction.sgml -->
+<!--
+doc/src/sgml/ref/set_transaction.sgml
+PostgreSQL documentation
+-->
+
 <refentry id="sql-set-transaction">
  <indexterm zone="sql-set-transaction">
   <primary>SET TRANSACTION</primary>

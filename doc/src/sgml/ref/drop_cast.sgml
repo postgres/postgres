@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/drop_cast.sgml -->
+<!--
+doc/src/sgml/ref/drop_cast.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="sql-dropcast">
  <indexterm zone="sql-dropcast">

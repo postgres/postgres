@@ -1,4 +1,8 @@
-<!-- doc/src/sgml/ref/set_constraints.sgml -->
+<!--
+doc/src/sgml/ref/set_constraints.sgml
+PostgreSQL documentation
+-->
+
 <refentry id="sql-set-constraints">
  <indexterm zone="sql-set-constraints">
   <primary>SET CONSTRAINTS</primary>
