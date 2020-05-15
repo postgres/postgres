@@ -935,7 +935,7 @@
      of parameter values output during statement non-error logging, and
      <xref linkend="guc-log-parameter-max-length-on-error"/> does the
      same for error statement logging.  Previously, prepared statement
-     parameters were not logged during errors.  error.
+     parameters were not logged during errors.
     </para>
 
     </listitem>
@@ -3067,7 +3067,7 @@
     -->
 
     <para>
-     Allow <link linkend="sepgsql"/> to control access to the
+     Allow <xref linkend="sepgsql"/> to control access to the
      <command>TRUNCATE</command> command (Yuli Khodorkovskiy)
     </para>
 
