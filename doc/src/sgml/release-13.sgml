@@ -1806,7 +1806,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Previously <acronym>UUID</acronym> generation functions were only
-       available external modules <xref linkend="uuid-ossp"/> or <xref
+       available via external modules <xref linkend="uuid-ossp"/> and <xref
        linkend="pgcrypto"/> were installed.
       </para>
      </listitem>
