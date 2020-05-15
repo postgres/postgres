@@ -118,6 +118,12 @@ static char *_fmt(const char *, const struct pg_tm *, char *, const char *,
 static char *_yconv(int, int, bool, bool, char *, char const *);
 
 
+/*
+ * Convert timestamp t to string s, a caller-allocated buffer of size maxsize,
+ * using the given format pattern.
+ *
+ * See also timestamptz_to_str.
+ */
 size_t
 pg_strftime(char *s, size_t maxsize, const char *format, const struct pg_tm *t)
 {

@@ -1738,6 +1738,8 @@ timestamptz_to_time_t(TimestampTz t)
  * This is mostly for use in emitting messages.  The primary difference
  * from timestamptz_out is that we force the output format to ISO.  Note
  * also that the result is in a static buffer, not pstrdup'd.
+ *
+ * See also pg_strftime.
  */
 const char *
 timestamptz_to_str(TimestampTz t)
