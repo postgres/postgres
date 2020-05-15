@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/drop_collation.sgml -->
+<!--
+doc/src/sgml/ref/drop_collation.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="sql-dropcollation">
  <indexterm zone="sql-dropcollation">

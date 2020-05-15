@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/pg_restore.sgml -->
+<!--
+doc/src/sgml/ref/pg_restore.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="app-pgrestore">
  <indexterm zone="app-pgrestore">

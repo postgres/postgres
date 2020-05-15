@@ -1,4 +1,7 @@
-<!-- doc/src/sgml/ref/pgarchivecleanup.sgml -->
+<!--
+doc/src/sgml/ref/pgarchivecleanup.sgml
+PostgreSQL documentation
+-->
 
 <refentry id="pgarchivecleanup">
  <indexterm zone="pgarchivecleanup">
