@@ -12,16 +12,16 @@ Intra-document Linking
         is a refentry;  has no close tag
 	http://www.oasis-open.org/docbook/documentation/reference/html/xref.html
 
-<link>
-	use to supply text for the link, requires </link>
-	http://www.oasis-open.org/docbook/documentation/reference/html/link.html
-
 linkend=
 	controls the target of the link/xref, required
 
 endterm=
 	for <xref>, allows the text of the link/xref to be taken from a
 	different link target title
+
+<link>
+	use to supply text for the link, only uses linkend, requires </link>
+	http://www.oasis-open.org/docbook/documentation/reference/html/link.html
 
 
 External Linking
