@@ -668,7 +668,7 @@
      Contains the values of <glossterm linkend="glossary-tuple">row</glossterm>
      attributes (i.e. the data) for a
      <glossterm linkend="glossary-relation">relation</glossterm>.
-     The heap is realized within one of more
+     The heap is realized within one or more
      <glossterm linkend="glossary-file-segment">file segments</glossterm>
      in the relation's <glossterm linkend="glossary-fork">main fork</glossterm>.
     </para>
