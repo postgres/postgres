@@ -777,16 +777,16 @@ PGPing PQping(const char *conninfo);
     </varlistentry>
 
     <varlistentry id="libpq-pqsetsslkeypasshook">
-     <term><function>PQsetSSLKeyPassHook</function><indexterm><primary>PQsetSSLKeyPassHook</primary></indexterm></term>
+     <term><function>PQsetSSLKeyPassHook_OpenSSL</function><indexterm><primary>PQsetSSLKeyPassHook_OpenSSL</primary></indexterm></term>
      <listitem>
       <para>
-       <function>PQsetSSLKeyPassHook</function> lets an application override
+       <function>PQsetSSLKeyPassHook_OpenSSL</function> lets an application override
        <literal>libpq</literal>'s <link linkend="libpq-ssl-clientcert">default
        handling of encrypted client certificate key files</link> using
        <xref linkend="libpq-connect-sslpassword"/> or interactive prompting.
 
 <synopsis>
-void PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook);
+void PQsetSSLKeyPassHook_OpenSSL(PQsslKeyPassHook_OpenSSL_type hook);
 </synopsis>
 
        The application passes a pointer to a callback function with signature:
@@ -794,13 +794,13 @@ void PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook);
 int callback_fn(char *buf, int size, PGconn *conn);
 </programlisting>
        which <literal>libpq</literal> will then call <emphasis>instead of</emphasis>
-       its default <function>PQdefaultSSLKeyPassHook</function> handler. The callback
+       its default <function>PQdefaultSSLKeyPassHook_OpenSSL</function> handler. The callback
        should determine the password for the key and copy it to result-buffer
        <literal>buf</literal> of size <literal>size</literal>. The string in <literal>
        buf</literal> must be null-terminated. The callback must return the length of
        the password stored in <literal>buf</literal> excluding the null terminator.
        On failure, the callback should set <literal>buf[0] = '\0'</literal> and return 0.
-       See <function>PQdefaultSSLKeyPassHook</function> in <literal>libpq</literal>'s
+       See <function>PQdefaultSSLKeyPassHook_OpenSSL</function> in <literal>libpq</literal>'s
        source code for an example.
       </para>
        
@@ -814,7 +814,7 @@ int callback_fn(char *buf, int size, PGconn *conn);
 
       <para>
        The app callback may choose to delegate unhandled cases to
-       <function>PQdefaultSSLKeyPassHook</function>,
+       <function>PQdefaultSSLKeyPassHook_OpenSSL</function>,
        or call it first and try something else if it returns 0, or completely override it.
       </para>
 
@@ -835,7 +835,7 @@ int callback_fn(char *buf, int size, PGconn *conn);
        if none has been set.
 
 <synopsis>
-PQsslKeyPassHook_type PQgetSSLKeyPassHook(void);
+PQsslKeyPassHook_OpenSSL_type PQgetSSLKeyPassHook(void);
 </synopsis>
       </para>
 

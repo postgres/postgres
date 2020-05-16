@@ -95,7 +95,7 @@ static long win32_ssl_create_mutex = 0;
 #endif
 #endif							/* ENABLE_THREAD_SAFETY */
 
-static PQsslKeyPassHook_type PQsslKeyPassHook = NULL;
+static PQsslKeyPassHook_OpenSSL_type PQsslKeyPassHook = NULL;
 static int	ssl_protocol_version_to_openssl(const char *protocol);
 
 /* ------------------------------------------------------------ */
@@ -1669,7 +1669,7 @@ err:
  * prevent openssl from ever prompting on stdin.
  */
 int
-PQdefaultSSLKeyPassHook(char *buf, int size, PGconn *conn)
+PQdefaultSSLKeyPassHook_OpenSSL(char *buf, int size, PGconn *conn)
 {
 	if (conn->sslpassword)
 	{
@@ -1686,14 +1686,14 @@ PQdefaultSSLKeyPassHook(char *buf, int size, PGconn *conn)
 	}
 }
 
-PQsslKeyPassHook_type
+PQsslKeyPassHook_OpenSSL_type
 PQgetSSLKeyPassHook(void)
 {
 	return PQsslKeyPassHook;
 }
 
 void
-PQsetSSLKeyPassHook(PQsslKeyPassHook_type hook)
+PQsetSSLKeyPassHook_OpenSSL(PQsslKeyPassHook_OpenSSL_type hook)
 {
 	PQsslKeyPassHook = hook;
 }
@@ -1711,7 +1711,7 @@ PQssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 	if (PQsslKeyPassHook)
 		return PQsslKeyPassHook(buf, size, conn);
 	else
-		return PQdefaultSSLKeyPassHook(buf, size, conn);
+		return PQdefaultSSLKeyPassHook_OpenSSL(buf, size, conn);
 }
 
 /*
