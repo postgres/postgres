@@ -57,7 +57,8 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 	int2vector *indkey = &idxrel->rd_index->indkey;
 	bool		hasnulls = false;
 
-	Assert(RelationGetReplicaIndex(rel) == RelationGetRelid(idxrel));
+	Assert(RelationGetReplicaIndex(rel) == RelationGetRelid(idxrel) ||
+		   RelationGetPrimaryKeyIndex(rel) == RelationGetRelid(idxrel));
 
 	indclassDatum = SysCacheGetAttr(INDEXRELID, idxrel->rd_indextuple,
 									Anum_pg_index_indclass, &isnull);
