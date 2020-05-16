@@ -221,7 +221,7 @@ transformOptionalSelectInto(ParseState *pstate, Node *parseTree)
 		/* If it's a set-operation tree, drill down to leftmost SelectStmt */
 		while (stmt && stmt->op != SETOP_NONE)
 			stmt = stmt->larg;
-		Assert(stmt && IsA(stmt, SelectStmt) &&stmt->larg == NULL);
+		Assert(stmt && IsA(stmt, SelectStmt) && stmt->larg == NULL);
 
 		if (stmt->intoClause)
 		{
@@ -641,7 +641,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			if (tle->resjunk)
 				continue;
 			if (tle->expr &&
-				(IsA(tle->expr, Const) ||IsA(tle->expr, Param)) &&
+				(IsA(tle->expr, Const) || IsA(tle->expr, Param)) &&
 				exprType((Node *) tle->expr) == UNKNOWNOID)
 				expr = tle->expr;
 			else

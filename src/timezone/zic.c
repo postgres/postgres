@@ -652,7 +652,7 @@ main(int argc, char **argv)
 	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
 #endif
 	progname = argv[0];
-	if (TYPE_BIT(zic_t) <64)
+	if (TYPE_BIT(zic_t) < 64)
 	{
 		fprintf(stderr, "%s: %s\n", progname,
 				_("wild compilation-time specification of zic_t"));
@@ -3444,7 +3444,7 @@ yearistype(zic_t year, const char *type)
 	if (type == NULL || *type == '\0')
 		return true;
 	buf = emalloc(1 + 4 * strlen(yitcommand) + 2
-				  + INT_STRLEN_MAXIMUM(zic_t) +2 + 4 * strlen(type) + 2);
+				  + INT_STRLEN_MAXIMUM(zic_t) + 2 + 4 * strlen(type) + 2);
 	b = shellquote(buf, yitcommand);
 	*b++ = ' ';
 	b += sprintf(b, INT64_FORMAT, year);

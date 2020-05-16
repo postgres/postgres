@@ -396,7 +396,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 	}
 
 	free(buf);
-	if (cfclose(cfp) !=0)
+	if (cfclose(cfp) != 0)
 		fatal("could not close data file \"%s\": %m", filename);
 }
 

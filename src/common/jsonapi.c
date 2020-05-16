@@ -129,7 +129,7 @@ IsValidJsonNumber(const char *str, int len)
 	 */
 	if (*str == '-')
 	{
-		dummy_lex.input = unconstify(char *, str) +1;
+		dummy_lex.input = unconstify(char *, str) + 1;
 		dummy_lex.input_length = len - 1;
 	}
 	else

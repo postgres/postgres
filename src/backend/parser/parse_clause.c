@@ -1767,7 +1767,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 	 * unadorned NULL that's not accepted back by the grammar.
 	 */
 	if (exprKind == EXPR_KIND_LIMIT && limitOption == LIMIT_OPTION_WITH_TIES &&
-		IsA(clause, A_Const) &&((A_Const *) clause)->val.type == T_Null)
+		IsA(clause, A_Const) && ((A_Const *) clause)->val.type == T_Null)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ROW_COUNT_IN_LIMIT_CLAUSE),
 				 errmsg("row count cannot be NULL in FETCH FIRST ... WITH TIES clause")));

@@ -12,7 +12,7 @@ use IO::Handle;
 use Getopt::Long;
 
 # Update for pg_bsd_indent version
-my $INDENT_VERSION = "2.1";
+my $INDENT_VERSION = "2.1.1";
 
 # Our standard indent settings
 my $indent_opts =
@@ -79,7 +79,7 @@ sub check_indent
 		exit 1;
 	}
 
-	if (`$indent --version` !~ m/ $INDENT_VERSION$/)
+	if (`$indent --version` !~ m/ $INDENT_VERSION /)
 	{
 		print STDERR
 		  "You do not appear to have $indent version $INDENT_VERSION installed on your system.\n";

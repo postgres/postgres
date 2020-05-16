@@ -750,8 +750,8 @@ check_agg_arguments_walker(Node *node,
 	 */
 	if (context->sublevels_up == 0)
 	{
-		if ((IsA(node, FuncExpr) &&((FuncExpr *) node)->funcretset) ||
-			(IsA(node, OpExpr) &&((OpExpr *) node)->opretset))
+		if ((IsA(node, FuncExpr) && ((FuncExpr *) node)->funcretset) ||
+			(IsA(node, OpExpr) && ((OpExpr *) node)->opretset))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("aggregate function calls cannot contain set-returning function calls"),

@@ -1479,13 +1479,13 @@ examine_clause_args(List *args, Var **varp, Const **cstp, bool *varonleftp)
 	if (IsA(rightop, RelabelType))
 		rightop = (Node *) ((RelabelType *) rightop)->arg;
 
-	if (IsA(leftop, Var) &&IsA(rightop, Const))
+	if (IsA(leftop, Var) && IsA(rightop, Const))
 	{
 		var = (Var *) leftop;
 		cst = (Const *) rightop;
 		varonleft = true;
 	}
-	else if (IsA(leftop, Const) &&IsA(rightop, Var))
+	else if (IsA(leftop, Const) && IsA(rightop, Var))
 	{
 		var = (Var *) rightop;
 		cst = (Const *) leftop;

@@ -132,7 +132,7 @@ replace_variables(char **text, int lineno)
 
 			for (len = 1; (*text)[ptr + len] && isvarchar((*text)[ptr + len]); len++)
 				 /* skip */ ;
-			if (!(newcopy = (char *) ecpg_alloc(strlen(*text) -len + strlen(buffer) + 1, lineno)))
+			if (!(newcopy = (char *) ecpg_alloc(strlen(*text) - len + strlen(buffer) + 1, lineno)))
 			{
 				ecpg_free(buffer);
 				return false;

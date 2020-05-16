@@ -1410,7 +1410,7 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 		*colnos = bms_add_member(*colnos, var->varattno);
 		return false;
 	}
-	if (IsA(node, Aggref) ||IsA(node, GroupingFunc))
+	if (IsA(node, Aggref) || IsA(node, GroupingFunc))
 	{
 		/* do not descend into aggregate exprs */
 		return false;

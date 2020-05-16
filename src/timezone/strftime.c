@@ -505,7 +505,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 static char *
 _conv(int n, const char *format, char *pt, const char *ptlim)
 {
-	char		buf[INT_STRLEN_MAXIMUM(int) +1];
+	char		buf[INT_STRLEN_MAXIMUM(int) + 1];
 
 	sprintf(buf, format, n);
 	return _add(buf, pt, ptlim);

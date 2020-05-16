@@ -277,8 +277,8 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 		TargetEntry *te = (TargetEntry *) lfirst(lc);
 		Expr	   *expr = te->expr;
 
-		if ((IsA(expr, FuncExpr) &&((FuncExpr *) expr)->funcretset) ||
-			(IsA(expr, OpExpr) &&((OpExpr *) expr)->opretset))
+		if ((IsA(expr, FuncExpr) && ((FuncExpr *) expr)->funcretset) ||
+			(IsA(expr, OpExpr) && ((OpExpr *) expr)->opretset))
 		{
 			state->elems[off] = (Node *)
 				ExecInitFunctionResultSet(expr, state->ps.ps_ExprContext,

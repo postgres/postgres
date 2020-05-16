@@ -2176,7 +2176,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 		 * DefineDomain.)
 		 */
 		if (defaultExpr == NULL ||
-			(IsA(defaultExpr, Const) &&((Const *) defaultExpr)->constisnull))
+			(IsA(defaultExpr, Const) && ((Const *) defaultExpr)->constisnull))
 		{
 			/* Default is NULL, drop it */
 			defaultExpr = NULL;
