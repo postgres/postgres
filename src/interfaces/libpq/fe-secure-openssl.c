@@ -1687,7 +1687,7 @@ PQdefaultSSLKeyPassHook_OpenSSL(char *buf, int size, PGconn *conn)
 }
 
 PQsslKeyPassHook_OpenSSL_type
-PQgetSSLKeyPassHook(void)
+PQgetSSLKeyPassHook_OpenSSL(void)
 {
 	return PQsslKeyPassHook;
 }

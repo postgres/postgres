@@ -776,7 +776,7 @@ PGPing PQping(const char *conninfo);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqsetsslkeypasshook">
+    <varlistentry id="libpq-pqsetsslkeypasshook-openssl">
      <term><function>PQsetSSLKeyPassHook_OpenSSL</function><indexterm><primary>PQsetSSLKeyPassHook_OpenSSL</primary></indexterm></term>
      <listitem>
       <para>
@@ -826,16 +826,16 @@ int callback_fn(char *buf, int size, PGconn *conn);
      </listitem>
     </varlistentry>
 
-    <varlistentry id="libpq-pqgetsslkeypasshook">
-     <term><function>PQgetSSLKeyPassHook</function><indexterm><primary>PQgetSSLKeyPassHook</primary></indexterm></term>
+    <varlistentry id="libpq-pqgetsslkeypasshook-openssl">
+     <term><function>PQgetSSLKeyPassHook_OpenSSL</function><indexterm><primary>PQgetSSLKeyPassHook_OpenSSL</primary></indexterm></term>
      <listitem>
       <para>
-       <function>PQgetSSLKeyPassHook</function> returns the current
+       <function>PQgetSSLKeyPassHook_OpenSSL</function> returns the current
        client certificate key password hook, or <literal>NULL</literal>
        if none has been set.
 
 <synopsis>
-PQsslKeyPassHook_OpenSSL_type PQgetSSLKeyPassHook(void);
+PQsslKeyPassHook_OpenSSL_type PQgetSSLKeyPassHook_OpenSSL(void);
 </synopsis>
       </para>
 
@@ -7670,7 +7670,8 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    OpenSSL with a <literal>Enter PEM pass phrase:</literal>
    prompt if a TTY is available. Applications can override the client certificate
    prompt and the handling of the <literal>sslpassword</literal> parameter by supplying
-   their own key password callback; see <xref linkend="libpq-pqsetsslkeypasshook"/>.
+   their own key password callback; see
+   <xref linkend="libpq-pqsetsslkeypasshook-openssl"/>.
   </para>
 
   <para>

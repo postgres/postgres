@@ -176,6 +176,6 @@ PQresultMemorySize        173
 PQhostaddr                174
 PQgssEncInUse             175
 PQgetgssctx               176
-PQsetSSLKeyPassHook		  177
-PQgetSSLKeyPassHook		  178
-PQdefaultSSLKeyPassHook	  179
+PQsetSSLKeyPassHook_OpenSSL         177
+PQgetSSLKeyPassHook_OpenSSL         178
+PQdefaultSSLKeyPassHook_OpenSSL     179
