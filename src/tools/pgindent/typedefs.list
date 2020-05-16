@@ -2212,6 +2212,7 @@ SeqScanState
 SeqTable
 SeqTableData
 SerCommitSeqNo
+SerialControl
 SerializableXactHandle
 SerializedActiveRelMaps
 SerializedReindexState
@@ -3291,6 +3292,7 @@ remoteDep
 rendezvousHashEntry
 replace_rte_variables_callback
 replace_rte_variables_context
+ret_type
 rewrite_event
 rijndael_ctx
 rm_detail_t

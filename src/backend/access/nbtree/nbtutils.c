@@ -1858,9 +1858,9 @@ _bt_killitems(IndexScanDesc scan)
 			 * Mark index item as dead, if it isn't already.  Since this
 			 * happens while holding a buffer lock possibly in shared mode,
 			 * it's possible that multiple processes attempt to do this
-			 * simultaneously, leading to multiple full-page images being
-			 * set to WAL (if wal_log_hints or data checksums are enabled),
-			 * which is undesirable.
+			 * simultaneously, leading to multiple full-page images being sent
+			 * to WAL (if wal_log_hints or data checksums are enabled), which
+			 * is undesirable.
 			 */
 			if (killtuple && !ItemIdIsDead(iid))
 			{
