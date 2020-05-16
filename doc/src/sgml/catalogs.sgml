@@ -10238,7 +10238,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <literal>tuple</literal>,
        <literal>transactionid</literal>,
        <literal>virtualxid</literal>,
-       <literal>speculative token</literal>,
+       <literal>spectoken</literal>,
        <literal>object</literal>,
        <literal>userlock</literal>, or
        <literal>advisory</literal>.

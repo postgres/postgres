@@ -362,16 +362,16 @@ step controller_print_speculative_locks:
     SELECT pa.application_name, locktype, mode, granted
     FROM pg_locks pl JOIN pg_stat_activity pa USING (pid)
     WHERE
-        locktype IN ('speculative token', 'transactionid')
+        locktype IN ('spectoken', 'transactionid')
         AND pa.datname = current_database()
         AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
     ORDER BY 1, 2, 3, 4;
 
 application_namelocktype       mode           granted        
 
-isolation/insert-conflict-specconflict-s1speculative tokenShareLock      f              
+isolation/insert-conflict-specconflict-s1spectoken      ShareLock      f              
 isolation/insert-conflict-specconflict-s1transactionid  ExclusiveLock  t              
-isolation/insert-conflict-specconflict-s2speculative tokenExclusiveLock  t              
+isolation/insert-conflict-specconflict-s2spectoken      ExclusiveLock  t              
 isolation/insert-conflict-specconflict-s2transactionid  ExclusiveLock  t              
 step controller_unlock_2_4: SELECT pg_advisory_unlock(2, 4);
 pg_advisory_unlock
@@ -384,7 +384,7 @@ step controller_print_speculative_locks:
     SELECT pa.application_name, locktype, mode, granted
     FROM pg_locks pl JOIN pg_stat_activity pa USING (pid)
     WHERE
-        locktype IN ('speculative token', 'transactionid')
+        locktype IN ('spectoken', 'transactionid')
         AND pa.datname = current_database()
         AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
     ORDER BY 1, 2, 3, 4;
@@ -406,7 +406,7 @@ step controller_print_speculative_locks:
     SELECT pa.application_name, locktype, mode, granted
     FROM pg_locks pl JOIN pg_stat_activity pa USING (pid)
     WHERE
-        locktype IN ('speculative token', 'transactionid')
+        locktype IN ('spectoken', 'transactionid')
         AND pa.datname = current_database()
         AND pa.application_name LIKE 'isolation/insert-conflict-specconflict-s%'
     ORDER BY 1, 2, 3, 4;
