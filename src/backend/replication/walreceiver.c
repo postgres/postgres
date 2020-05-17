@@ -1348,7 +1348,8 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	WalRcvState state;
 	XLogRecPtr	receive_start_lsn;
 	TimeLineID	receive_start_tli;
-	XLogRecPtr	received_lsn;
+	XLogRecPtr	written_lsn;
+	XLogRecPtr	flushed_lsn;
 	TimeLineID	received_tli;
 	TimestampTz last_send_time;
 	TimestampTz last_receipt_time;
@@ -1366,7 +1367,8 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	state = WalRcv->walRcvState;
 	receive_start_lsn = WalRcv->receiveStart;
 	receive_start_tli = WalRcv->receiveStartTLI;
-	received_lsn = WalRcv->flushedUpto;
+	written_lsn = pg_atomic_read_u64(&WalRcv->writtenUpto);
+	flushed_lsn = WalRcv->flushedUpto;
 	received_tli = WalRcv->receivedTLI;
 	last_send_time = WalRcv->lastMsgSendTime;
 	last_receipt_time = WalRcv->lastMsgReceiptTime;
@@ -1413,43 +1415,47 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 		else
 			values[2] = LSNGetDatum(receive_start_lsn);
 		values[3] = Int32GetDatum(receive_start_tli);
-		if (XLogRecPtrIsInvalid(received_lsn))
+		if (XLogRecPtrIsInvalid(written_lsn))
 			nulls[4] = true;
 		else
-			values[4] = LSNGetDatum(received_lsn);
-		values[5] = Int32GetDatum(received_tli);
-		if (last_send_time == 0)
-			nulls[6] = true;
+			values[4] = LSNGetDatum(written_lsn);
+		if (XLogRecPtrIsInvalid(flushed_lsn))
+			nulls[5] = true;
 		else
-			values[6] = TimestampTzGetDatum(last_send_time);
-		if (last_receipt_time == 0)
+			values[5] = LSNGetDatum(flushed_lsn);
+		values[6] = Int32GetDatum(received_tli);
+		if (last_send_time == 0)
 			nulls[7] = true;
 		else
-			values[7] = TimestampTzGetDatum(last_receipt_time);
-		if (XLogRecPtrIsInvalid(latest_end_lsn))
+			values[7] = TimestampTzGetDatum(last_send_time);
+		if (last_receipt_time == 0)
 			nulls[8] = true;
 		else
-			values[8] = LSNGetDatum(latest_end_lsn);
-		if (latest_end_time == 0)
+			values[8] = TimestampTzGetDatum(last_receipt_time);
+		if (XLogRecPtrIsInvalid(latest_end_lsn))
 			nulls[9] = true;
 		else
-			values[9] = TimestampTzGetDatum(latest_end_time);
-		if (*slotname == '\0')
+			values[9] = LSNGetDatum(latest_end_lsn);
+		if (latest_end_time == 0)
 			nulls[10] = true;
 		else
-			values[10] = CStringGetTextDatum(slotname);
-		if (*sender_host == '\0')
+			values[10] = TimestampTzGetDatum(latest_end_time);
+		if (*slotname == '\0')
 			nulls[11] = true;
 		else
-			values[11] = CStringGetTextDatum(sender_host);
-		if (sender_port == 0)
+			values[11] = CStringGetTextDatum(slotname);
+		if (*sender_host == '\0')
 			nulls[12] = true;
 		else
-			values[12] = Int32GetDatum(sender_port);
-		if (*conninfo == '\0')
+			values[12] = CStringGetTextDatum(sender_host);
+		if (sender_port == 0)
 			nulls[13] = true;
 		else
-			values[13] = CStringGetTextDatum(conninfo);
+			values[13] = Int32GetDatum(sender_port);
+		if (*conninfo == '\0')
+			nulls[14] = true;
+		else
+			values[14] = CStringGetTextDatum(conninfo);
 	}
 
 	/* Returns the record as Datum */

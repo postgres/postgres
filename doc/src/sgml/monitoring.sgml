@@ -2541,7 +2541,17 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>received_lsn</structfield> <type>pg_lsn</type>
+       <structfield>written_lsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Last write-ahead log location already received and written to disk,
+       but not flushed. This should not be used for data integrity checks.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>flushed_lsn</structfield> <type>pg_lsn</type>
       </para>
       <para>
        Last write-ahead log location already received and flushed to
