@@ -6060,8 +6060,7 @@ listOperatorClasses(const char *access_method_pattern,
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	bool		have_where = false;
-	static const bool translate_columns[] = {false, false, false, false, false,
-	false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, false, false, false};
 
 	initPQExpBuffer(&buf);
 
@@ -6149,8 +6148,7 @@ listOperatorFamilies(const char *access_method_pattern,
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	bool		have_where = false;
-	static const bool translate_columns[] = {false, false, false, false, false,
-	false, false, false};
+	static const bool translate_columns[] = {false, false, false, false};
 
 	initPQExpBuffer(&buf);
 
@@ -6230,8 +6228,7 @@ listOpFamilyOperators(const char *access_method_pattern,
 	printQueryOpt myopt = pset.popt;
 	bool		have_where = false;
 
-	static const bool translate_columns[] = {false, false, false, false, false,
-	false, false, true, false};
+	static const bool translate_columns[] = {false, false, false, false, false, false};
 
 	initPQExpBuffer(&buf);
 
@@ -6326,7 +6323,7 @@ listOpFamilyProcedures(const char *access_method_pattern,
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	bool		have_where = false;
-	static const bool translate_columns[] = {false, false, false, false, false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, false, false};
 
 	initPQExpBuffer(&buf);
 
