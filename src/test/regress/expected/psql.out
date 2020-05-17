@@ -4953,38 +4953,38 @@ List of access methods
 (1 row)
 
 \dAo+ btree float_ops
-                                List of operators of operator families
-  AM   | Opfamily Name |                Operator                 | Strategy | Purpose | Sort opfamily 
--------+---------------+-----------------------------------------+----------+---------+---------------
- btree | float_ops     | < (double precision, double precision)  |        1 | search  | 
- btree | float_ops     | <= (double precision, double precision) |        2 | search  | 
- btree | float_ops     | = (double precision, double precision)  |        3 | search  | 
- btree | float_ops     | >= (double precision, double precision) |        4 | search  | 
- btree | float_ops     | > (double precision, double precision)  |        5 | search  | 
- btree | float_ops     | < (real, real)                          |        1 | search  | 
- btree | float_ops     | <= (real, real)                         |        2 | search  | 
- btree | float_ops     | = (real, real)                          |        3 | search  | 
- btree | float_ops     | >= (real, real)                         |        4 | search  | 
- btree | float_ops     | > (real, real)                          |        5 | search  | 
- btree | float_ops     | < (double precision, real)              |        1 | search  | 
- btree | float_ops     | <= (double precision, real)             |        2 | search  | 
- btree | float_ops     | = (double precision, real)              |        3 | search  | 
- btree | float_ops     | >= (double precision, real)             |        4 | search  | 
- btree | float_ops     | > (double precision, real)              |        5 | search  | 
- btree | float_ops     | < (real, double precision)              |        1 | search  | 
- btree | float_ops     | <= (real, double precision)             |        2 | search  | 
- btree | float_ops     | = (real, double precision)              |        3 | search  | 
- btree | float_ops     | >= (real, double precision)             |        4 | search  | 
- btree | float_ops     | > (real, double precision)              |        5 | search  | 
+                                 List of operators of operator families
+  AM   | Operator family |                Operator                 | Strategy | Purpose | Sort opfamily 
+-------+-----------------+-----------------------------------------+----------+---------+---------------
+ btree | float_ops       | < (double precision, double precision)  |        1 | search  | 
+ btree | float_ops       | <= (double precision, double precision) |        2 | search  | 
+ btree | float_ops       | = (double precision, double precision)  |        3 | search  | 
+ btree | float_ops       | >= (double precision, double precision) |        4 | search  | 
+ btree | float_ops       | > (double precision, double precision)  |        5 | search  | 
+ btree | float_ops       | < (real, real)                          |        1 | search  | 
+ btree | float_ops       | <= (real, real)                         |        2 | search  | 
+ btree | float_ops       | = (real, real)                          |        3 | search  | 
+ btree | float_ops       | >= (real, real)                         |        4 | search  | 
+ btree | float_ops       | > (real, real)                          |        5 | search  | 
+ btree | float_ops       | < (double precision, real)              |        1 | search  | 
+ btree | float_ops       | <= (double precision, real)             |        2 | search  | 
+ btree | float_ops       | = (double precision, real)              |        3 | search  | 
+ btree | float_ops       | >= (double precision, real)             |        4 | search  | 
+ btree | float_ops       | > (double precision, real)              |        5 | search  | 
+ btree | float_ops       | < (real, double precision)              |        1 | search  | 
+ btree | float_ops       | <= (real, double precision)             |        2 | search  | 
+ btree | float_ops       | = (real, double precision)              |        3 | search  | 
+ btree | float_ops       | >= (real, double precision)             |        4 | search  | 
+ btree | float_ops       | > (real, double precision)              |        5 | search  | 
 (20 rows)
 
 \dAo * pg_catalog.jsonb_path_ops
-   List of operators of operator families
- AM  | Opfamily Name  |       Operator       
------+----------------+----------------------
- gin | jsonb_path_ops | @> (jsonb, jsonb)
- gin | jsonb_path_ops | @? (jsonb, jsonpath)
- gin | jsonb_path_ops | @@ (jsonb, jsonpath)
+    List of operators of operator families
+ AM  | Operator family |       Operator       
+-----+-----------------+----------------------
+ gin | jsonb_path_ops  | @> (jsonb, jsonb)
+ gin | jsonb_path_ops  | @? (jsonb, jsonpath)
+ gin | jsonb_path_ops  | @@ (jsonb, jsonpath)
 (3 rows)
 
 \dAp btree float_ops

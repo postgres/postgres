@@ -6102,7 +6102,7 @@ listOperatorClasses(const char *access_method_pattern,
 					  "\nFROM pg_catalog.pg_opclass c\n"
 					  "  LEFT JOIN pg_catalog.pg_am am on am.oid = c.opcmethod\n"
 					  "  LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.opcnamespace\n"
-					  "  LEFT JOIN pg_catalog.pg_type t1 ON t1.oid = c.opcintype\n"
+					  "  LEFT JOIN pg_catalog.pg_type t ON t.oid = c.opcintype\n"
 		);
 	if (verbose)
 		appendPQExpBuffer(&buf,
@@ -6114,7 +6114,7 @@ listOperatorClasses(const char *access_method_pattern,
 										   false, false, NULL, "am.amname", NULL, NULL);
 	if (type_pattern)
 		processSQLNamePattern(pset.db, &buf, type_pattern, have_where, false,
-							  NULL, "t1.typname", NULL, NULL);
+							  NULL, "t.typname", NULL, NULL);
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 4;");
 	res = PSQLexec(buf.data);
@@ -6250,7 +6250,7 @@ listOpFamilyOperators(const char *access_method_pattern,
 					  "    pg_catalog.format_type(o.amoprighttype, NULL)\n"
 					  "  ) AS \"%s\"\n",
 					  gettext_noop("AM"),
-					  gettext_noop("Opfamily Name"),
+					  gettext_noop("Operator family"),
 					  gettext_noop("Operator"));
 
 	if (verbose)
