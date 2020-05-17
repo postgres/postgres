@@ -4952,16 +4952,31 @@ List of access methods
  btree | integer_ops     | smallint, integer, bigint
 (1 row)
 
-\dAo brin uuid_minmax_ops
-  List of operators of operator families
-  AM  |  Opfamily Name  |    Operator     
-------+-----------------+-----------------
- brin | uuid_minmax_ops | < (uuid, uuid)
- brin | uuid_minmax_ops | <= (uuid, uuid)
- brin | uuid_minmax_ops | = (uuid, uuid)
- brin | uuid_minmax_ops | >= (uuid, uuid)
- brin | uuid_minmax_ops | > (uuid, uuid)
-(5 rows)
+\dAo+ btree float_ops
+                                List of operators of operator families
+  AM   | Opfamily Name |                Operator                 | Strategy | Purpose | Sort opfamily 
+-------+---------------+-----------------------------------------+----------+---------+---------------
+ btree | float_ops     | < (double precision, double precision)  |        1 | search  | 
+ btree | float_ops     | <= (double precision, double precision) |        2 | search  | 
+ btree | float_ops     | = (double precision, double precision)  |        3 | search  | 
+ btree | float_ops     | >= (double precision, double precision) |        4 | search  | 
+ btree | float_ops     | > (double precision, double precision)  |        5 | search  | 
+ btree | float_ops     | < (real, real)                          |        1 | search  | 
+ btree | float_ops     | <= (real, real)                         |        2 | search  | 
+ btree | float_ops     | = (real, real)                          |        3 | search  | 
+ btree | float_ops     | >= (real, real)                         |        4 | search  | 
+ btree | float_ops     | > (real, real)                          |        5 | search  | 
+ btree | float_ops     | < (double precision, real)              |        1 | search  | 
+ btree | float_ops     | <= (double precision, real)             |        2 | search  | 
+ btree | float_ops     | = (double precision, real)              |        3 | search  | 
+ btree | float_ops     | >= (double precision, real)             |        4 | search  | 
+ btree | float_ops     | > (double precision, real)              |        5 | search  | 
+ btree | float_ops     | < (real, double precision)              |        1 | search  | 
+ btree | float_ops     | <= (real, double precision)             |        2 | search  | 
+ btree | float_ops     | = (real, double precision)              |        3 | search  | 
+ btree | float_ops     | >= (real, double precision)             |        4 | search  | 
+ btree | float_ops     | > (real, double precision)              |        5 | search  | 
+(20 rows)
 
 \dAo * pg_catalog.jsonb_path_ops
    List of operators of operator families
@@ -4972,15 +4987,19 @@ List of access methods
  gin | jsonb_path_ops | @@ (jsonb, jsonpath)
 (3 rows)
 
-\dAp brin uuid_minmax_ops
-                          List of procedures of operator families
-  AM  | Operator family | Left arg type | Right arg type | Number |       Proc name        
-------+-----------------+---------------+----------------+--------+------------------------
- brin | uuid_minmax_ops | uuid          | uuid           |      1 | brin_minmax_opcinfo
- brin | uuid_minmax_ops | uuid          | uuid           |      2 | brin_minmax_add_value
- brin | uuid_minmax_ops | uuid          | uuid           |      3 | brin_minmax_consistent
- brin | uuid_minmax_ops | uuid          | uuid           |      4 | brin_minmax_union
-(4 rows)
+\dAp btree float_ops
+                           List of procedures of operator families
+  AM   | Operator family |  Left arg type   |  Right arg type  | Number |      Proc name      
+-------+-----------------+------------------+------------------+--------+---------------------
+ btree | float_ops       | double precision | double precision |      1 | btfloat8cmp
+ btree | float_ops       | double precision | double precision |      2 | btfloat8sortsupport
+ btree | float_ops       | double precision | double precision |      3 | in_range
+ btree | float_ops       | real             | real             |      1 | btfloat4cmp
+ btree | float_ops       | real             | real             |      2 | btfloat4sortsupport
+ btree | float_ops       | double precision | real             |      1 | btfloat84cmp
+ btree | float_ops       | real             | double precision |      1 | btfloat48cmp
+ btree | float_ops       | real             | double precision |      3 | in_range
+(8 rows)
 
 \dAp * pg_catalog.uuid_ops
                         List of procedures of operator families

@@ -1203,7 +1203,7 @@ drop role regress_partitioning_role;
 \dAc brin pg*.oid*
 \dAf spgist
 \dAf btree int4
-\dAo brin uuid_minmax_ops
+\dAo+ btree float_ops
 \dAo * pg_catalog.jsonb_path_ops
-\dAp brin uuid_minmax_ops
+\dAp btree float_ops
 \dAp * pg_catalog.uuid_ops

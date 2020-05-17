@@ -6288,7 +6288,11 @@ listOpFamilyOperators(const char *access_method_pattern,
 		processSQLNamePattern(pset.db, &buf, family_pattern, have_where, false,
 							  "nsf.nspname", "of.opfname", NULL, NULL);
 
-	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, o.amopstrategy, 3;");
+	appendPQExpBufferStr(&buf, "ORDER BY 1, 2,\n"
+						 "  o.amoplefttype = o.amoprighttype DESC,\n"
+						 "  pg_catalog.format_type(o.amoplefttype, NULL),\n"
+						 "  pg_catalog.format_type(o.amoprighttype, NULL),\n"
+						 "  o.amopstrategy;");
 
 	res = PSQLexec(buf.data);
 	termPQExpBuffer(&buf);
@@ -6327,7 +6331,7 @@ listOpFamilyProcedures(const char *access_method_pattern,
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-					  "SELECT DISTINCT\n"
+					  "SELECT\n"
 					  "  am.amname AS \"%s\",\n"
 					  "  CASE\n"
 					  "    WHEN pg_catalog.pg_opfamily_is_visible(of.oid)\n"
@@ -6360,8 +6364,9 @@ listOpFamilyProcedures(const char *access_method_pattern,
 		processSQLNamePattern(pset.db, &buf, family_pattern, have_where, false,
 							  "ns.nspname", "of.opfname", NULL, NULL);
 
-	appendPQExpBufferStr(&buf,
-						 "ORDER BY 1, 2, 3, 4, 5;");
+	appendPQExpBufferStr(&buf, "ORDER BY 1, 2,\n"
+						 "  ap.amproclefttype = ap.amprocrighttype DESC,\n"
+						 "  3, 4, 5;");
 
 	res = PSQLexec(buf.data);
 	termPQExpBuffer(&buf);
