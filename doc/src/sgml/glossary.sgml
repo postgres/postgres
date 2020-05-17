@@ -67,7 +67,7 @@
    <glossdef>
     <para>
      In reference to a <glossterm linkend="glossary-datum">datum</glossterm>:
-     the fact that its value that cannot be broken down into smaller
+     the fact that its value cannot be broken down into smaller
      components.
     </para>
    </glossdef>
@@ -360,7 +360,7 @@
      <glossterm linkend="glossary-constraint">integrity constraints</glossterm>.
      Transactions may be allowed to violate some of the constraints
      transiently before it commits, but if such violations are not resolved
-     by the time it commits, such transaction is automatically
+     by the time it commits, such a transaction is automatically
      <glossterm linkend="glossary-rollback">rolled back</glossterm>.
      This is one of the <acronym>ACID</acronym> properties.
     </para>
@@ -649,8 +649,8 @@
    <glossterm>Grant</glossterm>
    <glossdef>
     <para>
-     An <acronym>SQL</acronym> command that is used to allow
-     <glossterm linkend="glossary-user">users</glossterm> or
+     An <acronym>SQL</acronym> command that is used to allow a
+     <glossterm linkend="glossary-user">user</glossterm> or
      <glossterm linkend="glossary-role">role</glossterm> to access
      specific objects within the <glossterm linkend="glossary-database">database</glossterm>.
     </para>
@@ -887,7 +887,7 @@
    <glossdef>
     <para>
      A <glossterm linkend="glossary-relation">relation</glossterm> that is
-     defined in the same way that a a <glossterm linkend="glossary-view">view</glossterm>
+     defined in the same way that a <glossterm linkend="glossary-view">view</glossterm>
      is, but stores data in the same way that a
      <glossterm linkend="glossary-table">table</glossterm> does. It cannot be
      modified via <command>INSERT</command>, <command>UPDATE</command>, or
@@ -962,7 +962,7 @@
    <glossdef>
     <para>
      In reference to a <glossterm linkend="glossary-window-function">window function</glossterm>:
-     a partition is a user-defined criteria that identifies which neighboring
+     a partition is a user-defined criterion that identifies which neighboring
      <glossterm linkend="glossary-tuple">rows</glossterm> can be considered by the
      function.
     </para>
@@ -1446,8 +1446,8 @@
      The system catalog resides in the schema <literal>pg_catalog</literal>.
      These tables contain data in internal representation and are
      not typically considered useful for user examination;
-     a number of user-friendlier <glossterm linkend="glossary-view">views</glossterm>
-     also in schema <literal>pg_catalog</literal> offer more convenient access to
+     a number of user-friendlier <glossterm linkend="glossary-view">views</glossterm>,
+     also in schema <literal>pg_catalog</literal>, offer more convenient access to
      some of that information, while additional tables and views
      exist in schema <literal>information_schema</literal>
      (see <xref linkend="information-schema" />) that expose some
@@ -1739,7 +1739,7 @@
      each page stores two bits: the first one
      (<literal>all-visible</literal>) indicates that all tuples
      in the page are visible to all transactions.  The second one
-     (<literal>all-frozen</literal>) indicate that all tuples
+     (<literal>all-frozen</literal>) indicates that all tuples
      in the page are marked frozen.
     </para>
    </glossdef>
@@ -1755,7 +1755,7 @@
    <glossdef>
     <para>
      A process that saves copies of <glossterm linkend="glossary-wal-file">WAL files</glossterm>
-     for the purposes of creating backups or keeping
+     for the purpose of creating backups or keeping
      <glossterm linkend="glossary-replica">replicas</glossterm> current.
     </para>
     <para>
@@ -1777,7 +1777,7 @@
      and are written in sequential order, interspersing changes
      as they occur in multiple simultaneous sessions.
      If the system crashes, the files are read in order, and each of the
-     changes is replayed to restore the system to the state as it was
+     changes is replayed to restore the system to the state it was in
      before the crash.
     </para>
     <para>
