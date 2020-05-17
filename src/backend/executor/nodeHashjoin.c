@@ -327,7 +327,7 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 						if (hashtable->nbatch > 1)
 							ExecParallelHashJoinPartitionOuter(node);
 						BarrierArriveAndWait(build_barrier,
-											 WAIT_EVENT_HASH_BUILD_HASHING_OUTER);
+											 WAIT_EVENT_HASH_BUILD_HASH_OUTER);
 					}
 					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_DONE);
 
@@ -1135,14 +1135,14 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 
 					/* One backend allocates the hash table. */
 					if (BarrierArriveAndWait(batch_barrier,
-											 WAIT_EVENT_HASH_BATCH_ELECTING))
+											 WAIT_EVENT_HASH_BATCH_ELECT))
 						ExecParallelHashTableAlloc(hashtable, batchno);
 					/* Fall through. */
 
 				case PHJ_BATCH_ALLOCATING:
 					/* Wait for allocation to complete. */
 					BarrierArriveAndWait(batch_barrier,
-										 WAIT_EVENT_HASH_BATCH_ALLOCATING);
+										 WAIT_EVENT_HASH_BATCH_ALLOCATE);
 					/* Fall through. */
 
 				case PHJ_BATCH_LOADING:
@@ -1162,7 +1162,7 @@ ExecParallelHashJoinNewBatch(HashJoinState *hjstate)
 					}
 					sts_end_parallel_scan(inner_tuples);
 					BarrierArriveAndWait(batch_barrier,
-										 WAIT_EVENT_HASH_BATCH_LOADING);
+										 WAIT_EVENT_HASH_BATCH_LOAD);
 					/* Fall through. */
 
 				case PHJ_BATCH_PROBING:

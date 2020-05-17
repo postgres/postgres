@@ -3774,56 +3774,53 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_CHECKPOINT_START:
 			event_name = "CheckpointStart";
 			break;
-		case WAIT_EVENT_CLOG_GROUP_UPDATE:
-			event_name = "ClogGroupUpdate";
-			break;
 		case WAIT_EVENT_EXECUTE_GATHER:
 			event_name = "ExecuteGather";
 			break;
-		case WAIT_EVENT_HASH_BATCH_ALLOCATING:
-			event_name = "Hash/Batch/Allocating";
+		case WAIT_EVENT_HASH_BATCH_ALLOCATE:
+			event_name = "HashBatchAllocate";
 			break;
-		case WAIT_EVENT_HASH_BATCH_ELECTING:
-			event_name = "Hash/Batch/Electing";
+		case WAIT_EVENT_HASH_BATCH_ELECT:
+			event_name = "HashBatchElect";
 			break;
-		case WAIT_EVENT_HASH_BATCH_LOADING:
-			event_name = "Hash/Batch/Loading";
+		case WAIT_EVENT_HASH_BATCH_LOAD:
+			event_name = "HashBatchLoad";
 			break;
-		case WAIT_EVENT_HASH_BUILD_ALLOCATING:
-			event_name = "Hash/Build/Allocating";
+		case WAIT_EVENT_HASH_BUILD_ALLOCATE:
+			event_name = "HashBuildAllocate";
 			break;
-		case WAIT_EVENT_HASH_BUILD_ELECTING:
-			event_name = "Hash/Build/Electing";
+		case WAIT_EVENT_HASH_BUILD_ELECT:
+			event_name = "HashBuildElect";
 			break;
-		case WAIT_EVENT_HASH_BUILD_HASHING_INNER:
-			event_name = "Hash/Build/HashingInner";
+		case WAIT_EVENT_HASH_BUILD_HASH_INNER:
+			event_name = "HashBuildHashInner";
 			break;
-		case WAIT_EVENT_HASH_BUILD_HASHING_OUTER:
-			event_name = "Hash/Build/HashingOuter";
+		case WAIT_EVENT_HASH_BUILD_HASH_OUTER:
+			event_name = "HashBuildHashOuter";
 			break;
-		case WAIT_EVENT_HASH_GROW_BATCHES_ALLOCATING:
-			event_name = "Hash/GrowBatches/Allocating";
+		case WAIT_EVENT_HASH_GROW_BATCHES_ALLOCATE:
+			event_name = "HashGrowBatchesAllocate";
 			break;
-		case WAIT_EVENT_HASH_GROW_BATCHES_DECIDING:
-			event_name = "Hash/GrowBatches/Deciding";
+		case WAIT_EVENT_HASH_GROW_BATCHES_DECIDE:
+			event_name = "HashGrowBatchesDecide";
 			break;
-		case WAIT_EVENT_HASH_GROW_BATCHES_ELECTING:
-			event_name = "Hash/GrowBatches/Electing";
+		case WAIT_EVENT_HASH_GROW_BATCHES_ELECT:
+			event_name = "HashGrowBatchesElect";
 			break;
-		case WAIT_EVENT_HASH_GROW_BATCHES_FINISHING:
-			event_name = "Hash/GrowBatches/Finishing";
+		case WAIT_EVENT_HASH_GROW_BATCHES_FINISH:
+			event_name = "HashGrowBatchesFinish";
 			break;
-		case WAIT_EVENT_HASH_GROW_BATCHES_REPARTITIONING:
-			event_name = "Hash/GrowBatches/Repartitioning";
+		case WAIT_EVENT_HASH_GROW_BATCHES_REPARTITION:
+			event_name = "HashGrowBatchesRepartition";
 			break;
-		case WAIT_EVENT_HASH_GROW_BUCKETS_ALLOCATING:
-			event_name = "Hash/GrowBuckets/Allocating";
+		case WAIT_EVENT_HASH_GROW_BUCKETS_ALLOCATE:
+			event_name = "HashGrowBucketsAllocate";
 			break;
-		case WAIT_EVENT_HASH_GROW_BUCKETS_ELECTING:
-			event_name = "Hash/GrowBuckets/Electing";
+		case WAIT_EVENT_HASH_GROW_BUCKETS_ELECT:
+			event_name = "HashGrowBucketsElect";
 			break;
-		case WAIT_EVENT_HASH_GROW_BUCKETS_REINSERTING:
-			event_name = "Hash/GrowBuckets/Reinserting";
+		case WAIT_EVENT_HASH_GROW_BUCKETS_REINSERT:
+			event_name = "HashGrowBucketsReinsert";
 			break;
 		case WAIT_EVENT_LOGICAL_SYNC_DATA:
 			event_name = "LogicalSyncData";
@@ -3855,6 +3852,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_PROCARRAY_GROUP_UPDATE:
 			event_name = "ProcArrayGroupUpdate";
 			break;
+		case WAIT_EVENT_PROC_SIGNAL_BARRIER:
+			event_name = "ProcSignalBarrier";
+			break;
 		case WAIT_EVENT_PROMOTE:
 			event_name = "Promote";
 			break;
@@ -3878,6 +3878,9 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 			break;
 		case WAIT_EVENT_SYNC_REP:
 			event_name = "SyncRep";
+			break;
+		case WAIT_EVENT_XACT_GROUP_UPDATE:
+			event_name = "XactGroupUpdate";
 			break;
 			/* no default case, so that compiler will warn */
 	}
@@ -4024,9 +4027,6 @@ pgstat_get_wait_io(WaitEventIO w)
 			break;
 		case WAIT_EVENT_LOGICAL_REWRITE_WRITE:
 			event_name = "LogicalRewriteWrite";
-			break;
-		case WAIT_EVENT_PROC_SIGNAL_BARRIER:
-			event_name = "ProcSignalBarrier";
 			break;
 		case WAIT_EVENT_RELATION_MAP_READ:
 			event_name = "RelationMapRead";

@@ -1178,24 +1178,28 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>ControlFileRead</literal></entry>
-      <entry>Waiting for a read from the control file.</entry>
+      <entry>Waiting for a read from the <filename>pg_control</filename>
+       file.</entry>
      </row>
      <row>
       <entry><literal>ControlFileSync</literal></entry>
-      <entry>Waiting for the control file to reach stable storage.</entry>
+      <entry>Waiting for the <filename>pg_control</filename> file to reach
+       stable storage.</entry>
      </row>
      <row>
       <entry><literal>ControlFileSyncUpdate</literal></entry>
-      <entry>Waiting for an update to the control file to reach stable
-       storage.</entry>
+      <entry>Waiting for an update to the <filename>pg_control</filename> file
+       to reach stable storage.</entry>
      </row>
      <row>
       <entry><literal>ControlFileWrite</literal></entry>
-      <entry>Waiting for a write to the control file.</entry>
+      <entry>Waiting for a write to the <filename>pg_control</filename>
+       file.</entry>
      </row>
      <row>
       <entry><literal>ControlFileWriteUpdate</literal></entry>
-      <entry>Waiting for a write to update the control file.</entry>
+      <entry>Waiting for a write to update the <filename>pg_control</filename>
+       file.</entry>
      </row>
      <row>
       <entry><literal>CopyFileRead</literal></entry>
@@ -1207,8 +1211,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>DSMFillZeroWrite</literal></entry>
-      <entry>Waiting to write zero bytes to a dynamic shared memory backing
-       file.</entry>
+      <entry>Waiting to fill a dynamic shared memory backing file with
+       zeroes.</entry>
      </row>
      <row>
       <entry><literal>DataFileExtend</literal></entry>
@@ -1307,11 +1311,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>LogicalRewriteWrite</literal></entry>
       <entry>Waiting for a write of logical rewrite mappings.</entry>
-     </row>
-     <row>
-      <entry><literal>ProcSignalBarrier</literal></entry>
-      <entry>Waiting for a barrier event to be processed by all
-       backends.</entry>
      </row>
      <row>
       <entry><literal>RelationMapRead</literal></entry>
@@ -1464,7 +1463,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>WALSenderTimelineHistoryRead</literal></entry>
-      <entry>Waiting for a read from a timeline history file during walsender
+      <entry>Waiting for a read from a timeline history file during a walsender
        timeline command.</entry>
      </row>
      <row>
@@ -1473,8 +1472,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>WALSyncMethodAssign</literal></entry>
-      <entry>Waiting for data to reach stable storage while assigning WAL sync
-       method.</entry>
+      <entry>Waiting for data to reach stable storage while assigning a new
+       WAL sync method.</entry>
      </row>
      <row>
       <entry><literal>WALWrite</literal></entry>
@@ -1497,7 +1496,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     <tbody>
      <row>
       <entry><literal>BackupWaitWalArchive</literal></entry>
-      <entry>Waiting for WAL files required for the backup to be successfully
+      <entry>Waiting for WAL files required for a backup to be successfully
        archived.</entry>
      </row>
      <row>
@@ -1522,97 +1521,99 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for a checkpoint to start.</entry>
      </row>
      <row>
-      <entry><literal>ClogGroupUpdate</literal></entry>
-      <entry>Waiting for group leader to update transaction status at
-       transaction end.</entry>
-     </row>
-     <row>
       <entry><literal>ExecuteGather</literal></entry>
-      <entry>Waiting for activity from child process while
-       executing <literal>Gather</literal> node.</entry>
+      <entry>Waiting for activity from a child process while
+       executing a <literal>Gather</literal> plan node.</entry>
      </row>
      <row>
-      <entry><literal>Hash/Batch/Allocating</literal></entry>
+      <entry><literal>HashBatchAllocate</literal></entry>
       <entry>Waiting for an elected Parallel Hash participant to allocate a hash
        table.</entry>
      </row>
      <row>
-      <entry><literal>Hash/Batch/Electing</literal></entry>
-      <entry>Electing a Parallel Hash participant to allocate a hash table.</entry>
+      <entry><literal>HashBatchElect</literal></entry>
+      <entry>Waiting to elect a Parallel Hash participant to allocate a hash
+       table.</entry>
      </row>
      <row>
-      <entry><literal>Hash/Batch/Loading</literal></entry>
+      <entry><literal>HashBatchLoad</literal></entry>
       <entry>Waiting for other Parallel Hash participants to finish loading a
        hash table.</entry>
      </row>
      <row>
-      <entry><literal>Hash/Build/Allocating</literal></entry>
+      <entry><literal>HashBuildAllocate</literal></entry>
       <entry>Waiting for an elected Parallel Hash participant to allocate the
        initial hash table.</entry>
      </row>
      <row>
-      <entry><literal>Hash/Build/Electing</literal></entry>
-      <entry>Electing a Parallel Hash participant to allocate the initial hash table.</entry>
+      <entry><literal>HashBuildElect</literal></entry>
+      <entry>Waiting to elect a Parallel Hash participant to allocate the
+       initial hash table.</entry>
      </row>
      <row>
-      <entry><literal>Hash/Build/HashingInner</literal></entry>
+      <entry><literal>HashBuildHashInner</literal></entry>
       <entry>Waiting for other Parallel Hash participants to finish hashing the
        inner relation.</entry>
      </row>
      <row>
-      <entry><literal>Hash/Build/HashingOuter</literal></entry>
+      <entry><literal>HashBuildHashOuter</literal></entry>
       <entry>Waiting for other Parallel Hash participants to finish partitioning
        the outer relation.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBatches/Allocating</literal></entry>
+      <entry><literal>HashGrowBatchesAllocate</literal></entry>
       <entry>Waiting for an elected Parallel Hash participant to allocate more
        batches.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBatches/Deciding</literal></entry>
-      <entry>Electing a Parallel Hash participant to decide on future batch growth.</entry>
+      <entry><literal>HashGrowBatchesDecide</literal></entry>
+      <entry>Waiting to elect a Parallel Hash participant to decide on future
+       batch growth.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBatches/Electing</literal></entry>
-      <entry>Electing a Parallel Hash participant to allocate more batches.</entry>
+      <entry><literal>HashGrowBatchesElect</literal></entry>
+      <entry>Waiting to elect a Parallel Hash participant to allocate more
+       batches.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBatches/Finishing</literal></entry>
+      <entry><literal>HashGrowBatchesFinish</literal></entry>
       <entry>Waiting for an elected Parallel Hash participant to decide on
        future batch growth.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBatches/Repartitioning</literal></entry>
-      <entry>Waiting for other Parallel Hash participants to finishing
+      <entry><literal>HashGrowBatchesRepartition</literal></entry>
+      <entry>Waiting for other Parallel Hash participants to finish
        repartitioning.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBuckets/Allocating</literal></entry>
+      <entry><literal>HashGrowBucketsAllocate</literal></entry>
       <entry>Waiting for an elected Parallel Hash participant to finish
        allocating more buckets.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBuckets/Electing</literal></entry>
-      <entry>Electing a Parallel Hash participant to allocate more buckets.</entry>
+      <entry><literal>HashGrowBucketsElect</literal></entry>
+      <entry>Waiting to elect a Parallel Hash participant to allocate more
+       buckets.</entry>
      </row>
      <row>
-      <entry><literal>Hash/GrowBuckets/Reinserting</literal></entry>
+      <entry><literal>HashGrowBucketsReinsert</literal></entry>
       <entry>Waiting for other Parallel Hash participants to finish inserting
        tuples into new buckets.</entry>
      </row>
      <row>
       <entry><literal>LogicalSyncData</literal></entry>
-      <entry>Waiting for logical replication remote server to send data for
+      <entry>Waiting for a logical replication remote server to send data for
        initial table synchronization.</entry>
      </row>
      <row>
       <entry><literal>LogicalSyncStateChange</literal></entry>
-      <entry>Waiting for logical replication remote server to change state.</entry>
+      <entry>Waiting for a logical replication remote server to change
+       state.</entry>
      </row>
      <row>
       <entry><literal>MessageQueueInternal</literal></entry>
-      <entry>Waiting for other process to be attached in shared message queue.</entry>
+      <entry>Waiting for another process to be attached to a shared message
+       queue.</entry>
      </row>
      <row>
       <entry><literal>MessageQueuePutMessage</literal></entry>
@@ -1641,7 +1642,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>ProcArrayGroupUpdate</literal></entry>
-      <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+      <entry>Waiting for the group leader to clear the transaction ID at
+       end of a parallel operation.</entry>
+     </row>
+     <row>
+      <entry><literal>ProcSignalBarrier</literal></entry>
+      <entry>Waiting for a barrier event to be processed by all
+       backends.</entry>
      </row>
      <row>
       <entry><literal>Promote</literal></entry>
@@ -1649,11 +1656,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>RecoveryConflictSnapshot</literal></entry>
-      <entry>Waiting for recovery conflict resolution on a vacuum cleanup.</entry>
+      <entry>Waiting for recovery conflict resolution for a vacuum
+       cleanup.</entry>
      </row>
      <row>
       <entry><literal>RecoveryConflictTablespace</literal></entry>
-      <entry>Waiting for recovery conflict resolution on dropping tablespace.</entry>
+      <entry>Waiting for recovery conflict resolution for dropping a
+       tablespace.</entry>
      </row>
      <row>
       <entry><literal>RecoveryPause</literal></entry>
@@ -1661,21 +1670,28 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>ReplicationOriginDrop</literal></entry>
-      <entry>Waiting for a replication origin to become inactive to be dropped.</entry>
+      <entry>Waiting for a replication origin to become inactive so it can be
+       dropped.</entry>
      </row>
      <row>
       <entry><literal>ReplicationSlotDrop</literal></entry>
-      <entry>Waiting for a replication slot to become inactive to be dropped.</entry>
+      <entry>Waiting for a replication slot to become inactive so it can be
+       dropped.</entry>
      </row>
      <row>
       <entry><literal>SafeSnapshot</literal></entry>
-      <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</literal>
-       transaction.</entry>
+      <entry>Waiting to obtain a valid snapshot for a <literal>READ ONLY
+       DEFERRABLE</literal> transaction.</entry>
      </row>
      <row>
       <entry><literal>SyncRep</literal></entry>
-      <entry>Waiting for confirmation from remote server during synchronous
+      <entry>Waiting for confirmation from a remote server during synchronous
        replication.</entry>
+     </row>
+     <row>
+      <entry><literal>XactGroupUpdate</literal></entry>
+      <entry>Waiting for the group leader to update transaction status at
+       end of a parallel operation.</entry>
      </row>
     </tbody>
    </tgroup>
