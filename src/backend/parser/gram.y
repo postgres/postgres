@@ -11816,6 +11816,14 @@ limit_clause:
 					n->limitOption = LIMIT_OPTION_COUNT;
 					$$ = n;
 				}
+			| FETCH first_or_next row_or_rows WITH TIES
+				{
+					SelectLimit *n = (SelectLimit *) palloc(sizeof(SelectLimit));
+					n->limitOffset = NULL;
+					n->limitCount = makeIntConst(1, -1);
+					n->limitOption = LIMIT_OPTION_WITH_TIES;
+					$$ = n;
+				}
 		;
 
 offset_clause:

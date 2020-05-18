@@ -578,6 +578,23 @@ SELECT  thousand
 
 SELECT  thousand
 		FROM onek WHERE thousand < 5
+		ORDER BY thousand FETCH FIRST ROWS WITH TIES;
+ thousand 
+----------
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+(10 rows)
+
+SELECT  thousand
+		FROM onek WHERE thousand < 5
 		ORDER BY thousand FETCH FIRST 1 ROW WITH TIES;
  thousand 
 ----------

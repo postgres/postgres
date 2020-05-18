@@ -163,11 +163,16 @@ SELECT  thousand
 
 SELECT  thousand
 		FROM onek WHERE thousand < 5
+		ORDER BY thousand FETCH FIRST ROWS WITH TIES;
+
+SELECT  thousand
+		FROM onek WHERE thousand < 5
 		ORDER BY thousand FETCH FIRST 1 ROW WITH TIES;
 
 SELECT  thousand
 		FROM onek WHERE thousand < 5
 		ORDER BY thousand FETCH FIRST 2 ROW ONLY;
+
 -- should fail
 SELECT ''::text AS two, unique1, unique2, stringu1
 		FROM onek WHERE unique1 > 50
