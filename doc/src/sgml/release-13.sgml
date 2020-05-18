@@ -215,7 +215,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       Remove support for defining <link linkend="sql-createopclass">operator
-      classes</link> using pre-<productname>PostgresSQL</productname>
+      classes</link> using pre-<productname>PostgreSQL</productname>
       8.0 syntax (Daniel Gustafsson)
      </para>
     </listitem>
@@ -228,7 +228,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       Remove support for defining <link linkend="sql-altertable">foreign key
-      constraints</link> using pre-<productname>PostgresSQL</productname>
+      constraints</link> using pre-<productname>PostgreSQL</productname>
       7.3 syntax (Daniel Gustafsson)
      </para>
     </listitem>
@@ -242,7 +242,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
      <para>
       Remove support for "opaque" <link
       linkend="sql-createtype">pseudo-types</link> used by
-      pre-<productname>PostgresSQL</productname> 7.3 servers (Daniel
+      pre-<productname>PostgreSQL</productname> 7.3 servers (Daniel
       Gustafsson)
      </para>
     </listitem>
