@@ -1109,10 +1109,10 @@ compatibly partitioned tables.
 Even if the joining relations don't have exactly the same partition bounds,
 partitionwise join can still be applied by using an advanced
 partition-matching algorithm.  For both the joining relations, the algorithm
-checks wether every partition of one joining relation only matches one
+checks whether every partition of one joining relation only matches one
 partition of the other joining relation at most.  In such a case the join
 between the joining relations can be broken down into joins between the
-matching partitions.  The join relation can then be considerd partitioned.
+matching partitions.  The join relation can then be considered partitioned.
 The algorithm produces the pairs of the matching partitions, plus the
 partition bounds for the join relation, to allow partitionwise join for
 computing the join.  The algorithm is implemented in partition_bounds_merge().
