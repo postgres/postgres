@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-29 23:38+0000\n"
+"POT-Creation-Date: 2020-05-17 02:39+0000\n"
 "PO-Revision-Date: 2019-06-06 17:20-0400\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -22,11 +22,11 @@ msgstr ""
 msgid "empty message text"
 msgstr "mensaje de texto vacío"
 
-#: connect.c:401 connect.c:430 connect.c:638
+#: connect.c:401 connect.c:430 connect.c:653
 msgid "<DEFAULT>"
 msgstr "<POR OMISIÓN>"
 
-#: descriptor.c:876 misc.c:120
+#: descriptor.c:871 misc.c:119
 msgid "NULL"
 msgstr "NULL"
 
@@ -195,9 +195,6 @@ msgstr "se ha perdido la conexión al servidor"
 msgid "SQL error: %s\n"
 msgstr "error SQL: %s\n"
 
-#: execute.c:2187 execute.c:2194
+#: execute.c:2196 execute.c:2203
 msgid "<empty>"
 msgstr "<vacío>"
-
-#~ msgid "The cursor is invalid on line %d"
-#~ msgstr "el cursor no es válido en línea %d"
