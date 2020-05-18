@@ -639,10 +639,6 @@ typedef struct _extensionMemberId
 	ExtensionInfo *ext;			/* owning extension */
 } ExtensionMemberId;
 
-/* placeholders for comment starting and ending delimiters */
-extern char g_comment_start[10];
-extern char g_comment_end[10];
-
 /*
  *	common utility functions
  */

@@ -122,11 +122,6 @@ static SimpleOidList tabledata_exclude_oids = {NULL, NULL};
 static SimpleStringList foreign_servers_include_patterns = {NULL, NULL};
 static SimpleOidList foreign_servers_include_oids = {NULL, NULL};
 
-
-/* placeholders for the delimiters for comments */
-char		g_comment_start[10];
-char		g_comment_end[10];
-
 static const CatalogId nilCatalogId = {0, 0};
 
 /* override for standard extra_float_digits setting */
@@ -404,9 +399,6 @@ main(int argc, char **argv)
 	 * support on Windows.
 	 */
 	init_parallel_dump_utils();
-
-	strcpy(g_comment_start, "-- ");
-	g_comment_end[0] = '\0';
 
 	progname = get_progname(argv[0]);
 
