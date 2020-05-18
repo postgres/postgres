@@ -124,7 +124,7 @@ ReplicationSlotsShmemSize(void)
 }
 
 /*
- * Allocate and initialize walsender-related shared memory.
+ * Allocate and initialize shared memory for replication slots.
  */
 void
 ReplicationSlotsShmemInit(void)
