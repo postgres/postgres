@@ -595,7 +595,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <boolean> opt_if_not_exists
 %type <ival>	generated_when override_kind
 %type <partspec>	PartitionSpec OptPartitionSpec
-%type <str>			part_strategy
 %type <partelem>	part_elem
 %type <list>		part_params
 %type <partboundspec> PartitionBoundSpec
@@ -3894,7 +3893,7 @@ OptPartitionSpec: PartitionSpec	{ $$ = $1; }
 			| /*EMPTY*/			{ $$ = NULL; }
 		;
 
-PartitionSpec: PARTITION BY part_strategy '(' part_params ')'
+PartitionSpec: PARTITION BY ColId '(' part_params ')'
 				{
 					PartitionSpec *n = makeNode(PartitionSpec);
 
@@ -3904,10 +3903,6 @@ PartitionSpec: PARTITION BY part_strategy '(' part_params ')'
 
 					$$ = n;
 				}
-		;
-
-part_strategy:	IDENT					{ $$ = $1; }
-				| unreserved_keyword	{ $$ = pstrdup($1); }
 		;
 
 part_params:	part_elem						{ $$ = list_make1($1); }
