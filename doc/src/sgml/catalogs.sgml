@@ -2141,8 +2141,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        Columns used to form <quote>replica identity</quote> for rows:
        <literal>d</literal> = default (primary key, if any),
        <literal>n</literal> = nothing,
-       <literal>f</literal> = all columns
-       <literal>i</literal> = index with <structfield>indisreplident</structfield> set, or default
+       <literal>f</literal> = all columns,
+       <literal>i</literal> = index with
+       <structfield>indisreplident</structfield> set (same as nothing if the
+       index used has been dropped)
       </para></entry>
      </row>
 
