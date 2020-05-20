@@ -1832,8 +1832,10 @@
        Columns used to form <quote>replica identity</> for rows:
        <literal>d</> = default (primary key, if any),
        <literal>n</> = nothing,
-       <literal>f</> = all columns
-       <literal>i</> = index with <structfield>indisreplident</structfield> set, or default
+       <literal>f</> = all columns,
+       <literal>i</> = index with
+       <structfield>indisreplident</structfield> set (same as nothing if the
+       index used has been dropped)
       </entry>
      </row>
 
