@@ -906,7 +906,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
      On a hot standby, the status of the WAL receiver process can be retrieved
      via the <xref linkend="pg-stat-wal-receiver-view"/> view.  A large
      difference between <function>pg_last_wal_replay_lsn</function> and the
-     view's <literal>received_lsn</literal> indicates that WAL is being
+     view's <literal>flushed_lsn</literal> indicates that WAL is being
      received faster than it can be replayed.
     </para>
    </sect3>
