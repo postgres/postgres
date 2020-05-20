@@ -4121,8 +4121,8 @@ ALTER INDEX measurement_city_id_logdate_key
       <listitem>
        <para>
         Some operations require a stronger lock when using declarative
-        partitioning than when using table inheritance.  For example, adding
-        or removing a partition to or from a partitioned table requires taking
+        partitioning than when using table inheritance.  For example,
+        removing a partition from a partitioned table requires taking
         an <literal>ACCESS EXCLUSIVE</literal> lock on the parent table,
         whereas a <literal>SHARE UPDATE EXCLUSIVE</literal> lock is enough
         in the case of regular inheritance.
