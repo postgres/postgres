@@ -22,9 +22,7 @@ static PyObject *PLy_result_str(PyObject *arg);
 static PyObject *PLy_result_subscript(PyObject *arg, PyObject *item);
 static int	PLy_result_ass_subscript(PyObject *self, PyObject *item, PyObject *value);
 
-static char PLy_result_doc[] = {
-	"Results of a PostgreSQL query"
-};
+static char PLy_result_doc[] = "Results of a PostgreSQL query";
 
 static PySequenceMethods PLy_result_as_sequence = {
 	.sq_length = PLy_result_length,

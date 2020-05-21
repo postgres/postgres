@@ -834,7 +834,7 @@ HandleAutoVacLauncherInterrupts(void)
  * Perform a normal exit from the autovac launcher.
  */
 static void
-AutoVacLauncherShutdown()
+AutoVacLauncherShutdown(void)
 {
 	ereport(DEBUG1,
 			(errmsg("autovacuum launcher shutting down")));

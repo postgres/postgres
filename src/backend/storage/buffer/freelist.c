@@ -177,7 +177,7 @@ ClockSweepTick(void)
  * should not call this.
  */
 bool
-have_free_buffer()
+have_free_buffer(void)
 {
 	if (StrategyControl->firstFreeBuffer >= 0)
 		return true;

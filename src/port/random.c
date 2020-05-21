@@ -19,7 +19,7 @@
 
 
 long
-random()
+random(void)
 {
 	return pg_lrand48();
 }

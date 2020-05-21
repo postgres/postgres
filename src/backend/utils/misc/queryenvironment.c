@@ -36,7 +36,7 @@ struct QueryEnvironment
 
 
 QueryEnvironment *
-create_queryEnv()
+create_queryEnv(void)
 {
 	return (QueryEnvironment *) palloc0(sizeof(QueryEnvironment));
 }

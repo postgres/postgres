@@ -1250,7 +1250,7 @@ PQenv2encoding(void)
 #ifdef ENABLE_NLS
 
 static void
-libpq_binddomain()
+libpq_binddomain(void)
 {
 	static bool already_bound = false;
 
