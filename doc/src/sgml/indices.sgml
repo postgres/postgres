@@ -705,15 +705,6 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
   </para>
 
   <para>
-   Expression indexes also allow control over the scope of unique indexes.
-   For example, this unique index prevents duplicate integer values from
-   being stored in a <type>double precision</type>-typed column:
-<programlisting>
-CREATE UNIQUE INDEX test1_uniq_int ON tests ((floor(double_col)))
-</programlisting>
-  </para>
-
-  <para>
    If we were to declare this index <literal>UNIQUE</literal>, it would prevent
    creation of rows whose <literal>col1</literal> values differ only in case,
    as well as rows whose <literal>col1</literal> values are actually identical.
@@ -952,18 +943,11 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     WHERE success;
 </programlisting>
     This is a particularly efficient approach when there are few
-    successful tests and many unsuccessful ones.
+    successful tests and many unsuccessful ones.  It is also possible to
+    allow only one null in a column by creating a unique partial index
+    with an <literal>IS NULL</literal> restriction.
    </para>
 
-   <para>
-    This index allows only one null in the indexed column by using a
-    partial index clause to process only null column values, and using
-    an expression index clause to index <literal>true</literal> instead
-    of <literal>null</literal>:
-<programlisting>
-CREATE UNIQUE INDEX tests_target_one_null ON tests ((target IS NULL)) WHERE target IS NULL;
-</programlisting>
-   </para>
   </example>
 
   <para>
