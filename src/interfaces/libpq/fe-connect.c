@@ -4037,7 +4037,10 @@ freePGconn(PGconn *conn)
 	if (conn->sslkey)
 		free(conn->sslkey);
 	if (conn->sslpassword)
+	{
+		explicit_bzero(conn->sslpassword, strlen(conn->sslpassword));
 		free(conn->sslpassword);
+	}
 	if (conn->sslrootcert)
 		free(conn->sslrootcert);
 	if (conn->sslcrl)
