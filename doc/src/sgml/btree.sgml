@@ -622,12 +622,13 @@ equalimage(<replaceable>opcintype</replaceable> <type>oid</type>) returns bool
   </para>
   <note>
    <para>
-    While NULL is generally not considered to be equal to any other
-    value, including NULL, NULL is nevertheless treated as just
-    another value from the domain of indexed values by the B-Tree
-    implementation (except when enforcing uniqueness in a unique
-    index).  B-Tree deduplication is therefore just as effective with
-    <quote>duplicates</quote> that contain a NULL value.
+    B-Tree deduplication is just as effective with
+    <quote>duplicates</quote> that contain a NULL value, even though
+    NULL values are never equal to each other according to the
+    <literal>=</literal> member of any B-Tree operator class.  As far
+    as any part of the implementation that understands the on-disk
+    B-Tree structure is concerned, NULL is just another value from the
+    domain of indexed values.
    </para>
   </note>
   <para>
@@ -641,6 +642,20 @@ equalimage(<replaceable>opcintype</replaceable> <type>oid</type>) returns bool
    mixed read-write workloads.  Most client applications will at least
    see a moderate performance benefit from using deduplication.
    Deduplication is enabled by default.
+  </para>
+  <para>
+   <command>CREATE INDEX</command> and <command>REINDEX</command>
+   apply deduplication to create posting list tuples, though the
+   strategy they use is slightly different.  Each group of duplicate
+   ordinary tuples encountered in the sorted input taken from the
+   table is merged into a posting list tuple
+   <emphasis>before</emphasis> being added to the current pending leaf
+   page.  Individual posting list tuples are packed with as many
+   <acronym>TID</acronym>s as possible.  Leaf pages are written out in
+   the usual way, without any separate deduplication pass.  This
+   strategy is well-suited to <command>CREATE INDEX</command> and
+   <command>REINDEX</command> because they are once-off batch
+   operations.
   </para>
   <para>
    Write-heavy workloads that don't benefit from deduplication due to
@@ -657,17 +672,22 @@ equalimage(<replaceable>opcintype</replaceable> <type>oid</type>) returns bool
    B-Tree indexes are not directly aware that under MVCC, there might
    be multiple extant versions of the same logical table row; to an
    index, each tuple is an independent object that needs its own index
-   entry.  Thus, an update of a row always creates all-new index
-   entries for the row, even if the key values did not change.  Some
-   workloads suffer from index bloat caused by these
-   implementation-level version duplicates (this is typically a
-   problem for <command>UPDATE</command>-heavy workloads that cannot
-   apply the <acronym>HOT</acronym> optimization due to modifying at
-   least one indexed column).  B-Tree deduplication does not
-   distinguish between these implementation-level version duplicates
-   and conventional duplicates.  Deduplication can nevertheless help
-   with controlling index bloat caused by implementation-level version
-   churn.
+   entry.  <quote>Version duplicates</quote> may sometimes accumulate
+   and adversely affect query latency and throughput.  This typically
+   occurs with <command>UPDATE</command>-heavy workloads where most
+   individual updates cannot apply the <acronym>HOT</acronym>
+   optimization (often because at least one indexed column gets
+   modified, necessitating a new set of index tuple versions &mdash;
+   one new tuple for <emphasis>each and every</emphasis> index).  In
+   effect, B-Tree deduplication ameliorates index bloat caused by
+   version churn.  Note that even the tuples from a unique index are
+   not necessarily <emphasis>physically</emphasis> unique when stored
+   on disk due to version churn.  The deduplication optimization is
+   selectively applied within unique indexes.  It targets those pages
+   that appear to have version duplicates.  The high level goal is to
+   give <command>VACUUM</command> more time to run before an
+   <quote>unnecessary</quote> page split caused by version churn can
+   take place.
   </para>
   <tip>
    <para>
