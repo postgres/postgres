@@ -135,7 +135,7 @@ AddFileToBackupManifest(backup_manifest_info *manifest, const char *spcoid,
 	{
 		appendStringInfoString(&buf, "{ \"Encoded-Path\": \"");
 		enlargeStringInfo(&buf, 2 * pathlen);
-		buf.len += hex_encode((char *) pathname, pathlen,
+		buf.len += hex_encode(pathname, pathlen,
 							  &buf.data[buf.len]);
 		appendStringInfoString(&buf, "\", ");
 	}
