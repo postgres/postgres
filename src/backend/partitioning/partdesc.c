@@ -150,9 +150,9 @@ RelationBuildPartitionDesc(Relation rel)
 		 * tuple or an old one where relpartbound is NULL.  In that case, try
 		 * the table directly.  We can't just AcceptInvalidationMessages() and
 		 * retry the system cache lookup because it's possible that a
-		 * concurrent ATTACH PARTITION operation has removed itself to the
-		 * ProcArray but yet added invalidation messages to the shared queue;
-		 * InvalidateSystemCaches() would work, but seems excessive.
+		 * concurrent ATTACH PARTITION operation has removed itself from the
+		 * ProcArray but not yet added invalidation messages to the shared
+		 * queue; InvalidateSystemCaches() would work, but seems excessive.
 		 *
 		 * Note that this algorithm assumes that PartitionBoundSpec we manage
 		 * to fetch is the right one -- so this is only good enough for
