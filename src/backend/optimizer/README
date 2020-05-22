@@ -315,7 +315,7 @@ set up for recursive handling of subqueries
   preprocess target list for non-SELECT queries
   handle UNION/INTERSECT/EXCEPT, GROUP BY, HAVING, aggregates,
 	ORDER BY, DISTINCT, LIMIT
---query_planner()
+---query_planner()
    make list of base relations used in query
    split up the qual into restrictions (a=1) and joins (b=c)
    find qual clauses that enable merge and hash joins
@@ -325,7 +325,7 @@ set up for recursive handling of subqueries
       find selectivity of columns used in joins
      make_rel_from_joinlist()
       hand off join subproblems to a plugin, GEQO, or standard_join_search()
------standard_join_search()
+------standard_join_search()
       call join_search_one_level() for each level of join tree needed
       join_search_one_level():
         For each joinrel of the prior level, do make_rels_by_clause_joins()
