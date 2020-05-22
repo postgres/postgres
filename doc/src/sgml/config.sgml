@@ -4925,7 +4925,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         the database is smaller than the total server memory, decreasing
         random_page_cost can be appropriate.  Storage that has a low random
         read cost relative to sequential, e.g. solid-state drives, might
-        also be better modeled with a lower value for random_page_cost.
+        also be better modeled with a lower value for random_page_cost,
+        e.g., <literal>1.1</literal>.
        </para>
 
        <tip>
