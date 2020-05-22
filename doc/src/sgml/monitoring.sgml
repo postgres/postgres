@@ -3390,7 +3390,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </para>
       <para>
        Time spent reading data file blocks by backends in this database,
-       in milliseconds
+       in milliseconds (if <xref linkend="guc-track-io-timing"/> is enabled,
+       otherwise zero)
       </para></entry>
      </row>
 
@@ -3400,7 +3401,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </para>
       <para>
        Time spent writing data file blocks by backends in this database,
-       in milliseconds
+       in milliseconds (if <xref linkend="guc-track-io-timing"/> is enabled,
+       otherwise zero)
       </para></entry>
      </row>
 
