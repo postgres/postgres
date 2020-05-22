@@ -1376,7 +1376,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
       <para>
-       Allow <link linkend="sql-fetch"><command>FETCH FIRST</command></link>
+       Allow <link linkend="sql-select"><command>FETCH FIRST</command></link>
        to use <literal>WITH TIES</literal> to return any additional rows
        that match the last result row (Surafel Temesgen)
       </para>
