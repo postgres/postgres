@@ -1343,6 +1343,9 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 
 	CatalogTupleUpdate(rel, &tp->t_self, tp);
 
+	InvokeObjectPostAlterHook(UserMappingRelationId,
+							  umId, 0);
+
 	ObjectAddressSet(address, UserMappingRelationId, umId);
 
 	heap_freetuple(tp);

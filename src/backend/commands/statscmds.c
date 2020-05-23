@@ -374,6 +374,8 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 	relation_close(datarel, RowExclusiveLock);
 
+	InvokeObjectPostCreateHook(StatisticExtRelationId, statoid, 0);
+
 	/*
 	 * Invalidate relcache so that others see the new statistics object.
 	 */
