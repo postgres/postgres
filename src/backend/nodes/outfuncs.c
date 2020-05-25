@@ -319,7 +319,7 @@ _outPlannedStmt(StringInfo str, const PlannedStmt *node)
 	WRITE_NODE_FIELD(paramExecTypes);
 	WRITE_NODE_FIELD(utilityStmt);
 	WRITE_LOCATION_FIELD(stmt_location);
-	WRITE_LOCATION_FIELD(stmt_len);
+	WRITE_INT_FIELD(stmt_len);
 }
 
 /*
@@ -2135,6 +2135,7 @@ _outLimitPath(StringInfo str, const LimitPath *node)
 	WRITE_NODE_FIELD(subpath);
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
+	WRITE_ENUM_FIELD(limitOption, LimitOption);
 }
 
 static void
@@ -2966,7 +2967,7 @@ _outQuery(StringInfo str, const Query *node)
 	WRITE_NODE_FIELD(constraintDeps);
 	WRITE_NODE_FIELD(withCheckOptions);
 	WRITE_LOCATION_FIELD(stmt_location);
-	WRITE_LOCATION_FIELD(stmt_len);
+	WRITE_INT_FIELD(stmt_len);
 }
 
 static void

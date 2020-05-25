@@ -284,7 +284,7 @@ _readQuery(void)
 	READ_NODE_FIELD(constraintDeps);
 	READ_NODE_FIELD(withCheckOptions);
 	READ_LOCATION_FIELD(stmt_location);
-	READ_LOCATION_FIELD(stmt_len);
+	READ_INT_FIELD(stmt_len);
 
 	READ_DONE();
 }
@@ -1552,7 +1552,7 @@ _readPlannedStmt(void)
 	READ_NODE_FIELD(paramExecTypes);
 	READ_NODE_FIELD(utilityStmt);
 	READ_LOCATION_FIELD(stmt_location);
-	READ_LOCATION_FIELD(stmt_len);
+	READ_INT_FIELD(stmt_len);
 
 	READ_DONE();
 }
