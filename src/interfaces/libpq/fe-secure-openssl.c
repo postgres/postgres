@@ -851,7 +851,7 @@ initialize_SSL(PGconn *conn)
 		if (ssl_min_ver == -1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("invalid value \"%s\" for minimum version of SSL protocol\n"),
+							  libpq_gettext("invalid value \"%s\" for minimum SSL protocol version\n"),
 							  conn->ssl_min_protocol_version);
 			SSL_CTX_free(SSL_context);
 			return -1;
@@ -862,7 +862,7 @@ initialize_SSL(PGconn *conn)
 			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not set minimum version of SSL protocol: %s\n"),
+							  libpq_gettext("could not set minimum SSL protocol version: %s\n"),
 							  err);
 			SSLerrfree(err);
 			SSL_CTX_free(SSL_context);
@@ -880,7 +880,7 @@ initialize_SSL(PGconn *conn)
 		if (ssl_max_ver == -1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("invalid value \"%s\" for maximum version of SSL protocol\n"),
+							  libpq_gettext("invalid value \"%s\" for maximum SSL protocol version\n"),
 							  conn->ssl_max_protocol_version);
 			SSL_CTX_free(SSL_context);
 			return -1;
@@ -891,7 +891,7 @@ initialize_SSL(PGconn *conn)
 			char	   *err = SSLerrmessage(ERR_get_error());
 
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not set maximum version of SSL protocol: %s\n"),
+							  libpq_gettext("could not set maximum SSL protocol version: %s\n"),
 							  err);
 			SSLerrfree(err);
 			SSL_CTX_free(SSL_context);
