@@ -9,17 +9,21 @@
 # are authenticated, which PostgreSQL user names they can use, which
 # databases they can access.  Records take one of these forms:
 #
-# local      DATABASE  USER  METHOD  [OPTIONS]
-# host       DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
-# hostssl    DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
-# hostnossl  DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# local         DATABASE  USER  METHOD  [OPTIONS]
+# host          DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostssl       DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostnossl     DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostgssenc    DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
+# hostnogssenc  DATABASE  USER  ADDRESS  METHOD  [OPTIONS]
 #
 # (The uppercase items must be replaced by actual values.)
 #
 # The first field is the connection type: "local" is a Unix-domain
 # socket, "host" is either a plain or SSL-encrypted TCP/IP socket,
 # "hostssl" is an SSL-encrypted TCP/IP socket, and "hostnossl" is a
-# plain TCP/IP socket.
+# non-SSL TCP/IP socket.  Similarly, "hostgssenc" uses a
+# GSSAPI-encrypted TCP/IP socket, while "hostnogssenc" uses a
+# non-GSSAPI socket.
 #
 # DATABASE can be "all", "sameuser", "samerole", "replication", a
 # database name, or a comma-separated list thereof. The "all"
