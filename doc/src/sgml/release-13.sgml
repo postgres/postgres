@@ -2890,9 +2890,10 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 -->
 
       <para>
-       Add extension <application>bool_plperl</application> which transforms
-       <acronym>SQL</acronym> booleans to/from PL/Perl booleans (Ivan
-       Panchenko) WHERE IS THIS DOCUMENTED?
+       Add extension <link
+       linkend="plperl"><application>bool_plperl</application></link>
+       which transforms <acronym>SQL</acronym> booleans to/from PL/Perl
+       booleans (Ivan Panchenko)
       </para>
      </listitem>
 
