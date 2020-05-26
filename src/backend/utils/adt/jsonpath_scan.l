@@ -43,6 +43,8 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 	ereport(ERROR, (errmsg_internal("%s", msg)));
 }
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option 8bit
@@ -270,6 +272,8 @@ hex_fail	\\x{hex_dig}{0,1}
 <<EOF>>							{ yyterminate(); }
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 void
 jsonpath_yyerror(JsonPathParseResult **result, const char *message)
