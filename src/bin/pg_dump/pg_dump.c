@@ -16346,7 +16346,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 				tbinfo->attfdwoptions[j][0] != '\0')
 				appendPQExpBuffer(q,
 								  "ALTER FOREIGN TABLE %s ALTER COLUMN %s OPTIONS (\n"
-								  "	  %s\n"
+								  "    %s\n"
 								  ");\n",
 								  qualrelname,
 								  fmtId(tbinfo->attnames[j]),
