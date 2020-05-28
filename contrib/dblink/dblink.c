@@ -272,8 +272,13 @@ dblink_connect(PG_FUNCTION_ARGS)
 		conname_or_str = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	if (connname)
+	{
 		rconn = (remoteConn *) MemoryContextAlloc(TopMemoryContext,
 												  sizeof(remoteConn));
+		rconn->conn = NULL;
+		rconn->openCursorCount = 0;
+		rconn->newXactForCursor = false;
+	}
 
 	/* first check for valid foreign data server */
 	connstr = get_connect_string(conname_or_str);
