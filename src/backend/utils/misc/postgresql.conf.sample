@@ -149,7 +149,7 @@
 # - Disk -
 
 #temp_file_limit = -1			# limits per-process temp file space
-					# in kB, or -1 for no limit
+					# in kilobytes, or -1 for no limit
 
 # - Kernel Resources -
 
@@ -289,7 +289,7 @@
 #max_wal_senders = 10		# max number of walsender processes
 				# (change requires restart)
 #wal_keep_segments = 0		# in logfile segments; 0 disables
-#max_slot_wal_keep_size = -1	# measured in bytes; -1 disables
+#max_slot_wal_keep_size = -1	# in megabytes; -1 disables
 #wal_sender_timeout = 60s	# in milliseconds; 0 disables
 
 #max_replication_slots = 10	# max number of replication slots
