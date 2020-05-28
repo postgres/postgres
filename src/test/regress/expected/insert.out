@@ -388,7 +388,7 @@ select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_p
 
 -- direct partition inserts should check hash partition bound constraint
 -- Use hand-rolled hash functions and operator classes to get predictable
--- result on different matchines.  The hash function for int4 simply returns
+-- result on different machines.  The hash function for int4 simply returns
 -- the sum of the values passed to it and the one for text returns the length
 -- of the non-empty string value passed to it or 0.
 create or replace function part_hashint4_noop(value int4, seed int8)
