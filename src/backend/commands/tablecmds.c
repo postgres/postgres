@@ -17191,7 +17191,8 @@ ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx, RangeVar *name)
 		}
 		if (!found)
 			ereport(ERROR,
-					(errmsg("cannot attach index \"%s\" as a partition of index \"%s\"",
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("cannot attach index \"%s\" as a partition of index \"%s\"",
 							RelationGetRelationName(partIdx),
 							RelationGetRelationName(parentIdx)),
 					 errdetail("Index \"%s\" is not an index on any partition of table \"%s\".",
