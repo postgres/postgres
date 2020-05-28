@@ -21,7 +21,7 @@
  *		XLogReadRecord or XLogFindNextRecord; it can be passed in as NULL
  *		otherwise.  The WALRead function can be used as a helper to write
  *		page_read callbacks, but it is not mandatory; callers that use it,
- *		must supply open_segment callbacks.  The close_segment callback
+ *		must supply segment_open callbacks.  The segment_close callback
  *		must always be supplied.
  *
  *		After reading a record with XLogReadRecord(), it's decomposed into
