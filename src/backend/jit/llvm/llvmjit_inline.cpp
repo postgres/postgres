@@ -56,7 +56,6 @@ extern "C"
 #include <llvm/Support/Error.h>
 #endif
 #include <llvm/IR/Attributes.h>
-#include <llvm/IR/CallSite.h>
 #include <llvm/IR/DebugInfo.h>
 #include <llvm/IR/IntrinsicInst.h>
 #include <llvm/IR/IRBuilder.h>
