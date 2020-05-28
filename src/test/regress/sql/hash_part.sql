@@ -3,7 +3,7 @@
 --
 
 -- Use hand-rolled hash functions and operator classes to get predictable
--- result on different matchines.  See the definitions of
+-- result on different machines.  See the definitions of
 -- part_part_test_int4_ops and part_test_text_ops in insert.sql.
 
 CREATE TABLE mchash (a int, b text, c jsonb)
