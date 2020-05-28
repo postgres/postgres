@@ -18,7 +18,7 @@
 #include "utils/builtins.h"
 #include "utils/formatting.h"
 #include "mb/pg_wchar.h"
-
+#include "miscadmin.h"
 
 static text *dotrim(const char *string, int stringlen,
 	   const char *set, int setlen,
@@ -1068,6 +1068,7 @@ repeat(PG_FUNCTION_ARGS)
 	{
 		memcpy(cp, sp, slen);
 		cp += slen;
+		CHECK_FOR_INTERRUPTS();
 	}
 
 	PG_RETURN_TEXT_P(result);
