@@ -495,7 +495,8 @@
 
   <para>
    The monitoring information about subscription is visible in
-   <link linkend="pg-stat-subscription"><literal>pg_stat_subscription</literal></link>.
+   <link linkend="monitoring-pg-stat-subscription">
+   <structname>pg_stat_subscription</structname></link>.
    This view contains one row for every subscription worker.  A subscription
    can have zero or more active subscription workers depending on its state.
   </para>

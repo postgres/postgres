@@ -16,7 +16,8 @@
 
  <para>
   Some of the information available through this module can also be obtained
-  using the built-in system view <xref linkend="pg-stat-ssl-view"/>.
+  using the built-in system view <link linkend="monitoring-pg-stat-ssl-view">
+  <structname>pg_stat_ssl</structname></link>.
  </para>
 
  <para>

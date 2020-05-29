@@ -219,7 +219,8 @@ PostgreSQL documentation
         may incur a noticeable performance penalty. If set, checksums
         are calculated for all objects, in all databases. All checksum
         failures will be reported in the
-        <xref linkend="pg-stat-database-view"/> view.
+        <link linkend="monitoring-pg-stat-database-view">
+        <structname>pg_stat_database</structname></link> view.
        </para>
       </listitem>
      </varlistentry>

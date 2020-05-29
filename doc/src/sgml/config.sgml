@@ -3889,9 +3889,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         The synchronous standbys will be those whose names appear
         in this list, and
         that are both currently connected and streaming data in real-time
-        (as shown by a state of <literal>streaming</literal> in the <link
-        linkend="pg-stat-replication-view"><literal>pg_stat_replication</literal></link>
-        view).
+        (as shown by a state of <literal>streaming</literal> in the
+        <link linkend="monitoring-pg-stat-replication-view">
+        <structname>pg_stat_replication</structname></link> view).
         Specifying more than one synchronous standby can allow for very high
         availability and protection against data loss.
        </para>
@@ -4244,8 +4244,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        Specifies the minimum frequency for the WAL receiver
        process on the standby to send information about replication progress
        to the primary or upstream standby, where it can be seen using the
-       <link
-       linkend="pg-stat-replication-view"><literal>pg_stat_replication</literal></link>
+       <link linkend="monitoring-pg-stat-replication-view">
+       <structname>pg_stat_replication</structname></link>
        view.  The standby will report
        the last write-ahead log location it has written, the last position it
        has flushed to disk, and the last position it has applied.
@@ -6694,8 +6694,10 @@ local0.*    /var/log/postgresql
 
          <para>
           The backend type corresponds to the column
-          <structfield>backend_type</structfield> in the view <xref
-          linkend="pg-stat-activity-view"/>, but additional types can appear
+          <structfield>backend_type</structfield> in the view
+          <link linkend="monitoring-pg-stat-activity-view">
+          <structname>pg_stat_activity</structname></link>,
+          but additional types can appear
           in the log that don't show in that view.
          </para>
 
@@ -7191,7 +7193,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         platforms.  You can use the <xref linkend="pgtesttiming"/> tool to
         measure the overhead of timing on your system.
         I/O timing information is
-        displayed in <xref linkend="pg-stat-database-view"/>, in the output of
+        displayed in <link linkend="monitoring-pg-stat-database-view">
+        <structname>pg_stat_database</structname></link>, in the output of
         <xref linkend="sql-explain"/> when the <literal>BUFFERS</literal> option is
         used, and by <xref linkend="pgstatstatements"/>.  Only superusers can
         change this setting.

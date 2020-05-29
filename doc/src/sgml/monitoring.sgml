@@ -300,7 +300,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row per server process, showing information related to
        the current activity of that process, such as state and current query.
-       See <xref linkend="pg-stat-activity-view"/> for details.
+       See <link linkend="monitoring-pg-stat-activity-view">
+       <structname>pg_stat_activity</structname></link> for details.
       </entry>
      </row>
 
@@ -308,7 +309,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_replication</structname><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
       <entry>One row per WAL sender process, showing statistics about
        replication to that sender's connected standby server.
-       See <xref linkend="pg-stat-replication-view"/> for details.
+       See <link linkend="monitoring-pg-stat-replication-view">
+       <structname>pg_stat_replication</structname></link> for details.
       </entry>
      </row>
 
@@ -316,7 +318,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_wal_receiver</structname><indexterm><primary>pg_stat_wal_receiver</primary></indexterm></entry>
       <entry>Only one row, showing statistics about the WAL receiver from
        that receiver's connected server.
-       See <xref linkend="pg-stat-wal-receiver-view"/> for details.
+       See <link linkend="monitoring-pg-stat-wal-receiver-view">
+       <structname>pg_stat_wal_receiver</structname></link> for details.
       </entry>
      </row>
 
@@ -324,7 +327,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_subscription</structname><indexterm><primary>pg_stat_subscription</primary></indexterm></entry>
       <entry>At least one row per subscription, showing information about
        the subscription workers.
-       See <xref linkend="pg-stat-subscription"/> for details.
+       See <link linkend="monitoring-pg-stat-subscription">
+       <structname>pg_stat_subscription</structname></link> for details.
       </entry>
      </row>
 
@@ -332,7 +336,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_ssl</structname><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        SSL used on this connection.
-       See <xref linkend="pg-stat-ssl-view"/> for details.
+       See <link linkend="monitoring-pg-stat-ssl-view">
+       <structname>pg_stat_ssl</structname></link> for details.
       </entry>
      </row>
 
@@ -340,7 +345,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_gssapi</structname><indexterm><primary>pg_stat_gssapi</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        GSSAPI authentication and encryption used on this connection.
-       See <xref linkend="pg-stat-gssapi-view"/> for details.
+       See <link linkend="monitoring-pg-stat-gssapi-view">
+       <structname>pg_stat_gssapi</structname></link> for details.
       </entry>
      </row>
 
@@ -404,7 +410,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_archiver</structname><indexterm><primary>pg_stat_archiver</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        WAL archiver process's activity. See
-       <xref linkend="pg-stat-archiver-view"/> for details.
+       <link linkend="monitoring-pg-stat-archiver-view">
+       <structname>pg_stat_archiver</structname></link> for details.
       </entry>
      </row>
 
@@ -412,14 +419,16 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><structname>pg_stat_bgwriter</structname><indexterm><primary>pg_stat_bgwriter</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        background writer process's activity. See
-       <xref linkend="pg-stat-bgwriter-view"/> for details.
+       <link linkend="monitoring-pg-stat-bgwriter-view">
+       <structname>pg_stat_bgwriter</structname></link> for details.
      </entry>
      </row>
 
      <row>
       <entry><structname>pg_stat_database</structname><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database-wide statistics. See
-       <xref linkend="pg-stat-database-view"/> for details.
+       <link linkend="monitoring-pg-stat-database-view">
+       <structname>pg_stat_database</structname></link> for details.
       </entry>
      </row>
 
@@ -428,7 +437,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row per database, showing database-wide statistics about
        query cancels due to conflict with recovery on standby servers.
-       See <xref linkend="pg-stat-database-conflicts-view"/> for details.
+       See <link linkend="monitoring-pg-stat-database-conflicts-view">
+       <structname>pg_stat_database_conflicts</structname></link> for details.
       </entry>
      </row>
 
@@ -437,7 +447,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each table in the current database, showing statistics
        about accesses to that specific table.
-       See <xref linkend="pg-stat-all-tables-view"/> for details.
+       See <link linkend="monitoring-pg-stat-all-tables-view">
+       <structname>pg_stat_all_tables</structname></link> for details.
       </entry>
      </row>
 
@@ -479,7 +490,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each index in the current database, showing statistics
        about accesses to that specific index.
-       See <xref linkend="pg-stat-all-indexes-view"/> for details.
+       See <link linkend="monitoring-pg-stat-all-indexes-view">
+       <structname>pg_stat_all_indexes</structname></link> for details.
       </entry>
      </row>
 
@@ -500,7 +512,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each table in the current database, showing statistics
        about I/O on that specific table.
-       See <xref linkend="pg-statio-all-tables-view"/> for details.
+       See <link linkend="monitoring-pg-statio-all-tables-view">
+       <structname>pg_statio_all_tables</structname></link> for details.
       </entry>
      </row>
 
@@ -521,7 +534,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each index in the current database,
        showing statistics about I/O on that specific index.
-       See <xref linkend="pg-statio-all-indexes-view"/> for details.
+       See <link linkend="monitoring-pg-statio-all-indexes-view">
+       <structname>pg_statio_all_indexes</structname></link> for details.
       </entry>
      </row>
 
@@ -542,7 +556,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry>
        One row for each sequence in the current database,
        showing statistics about I/O on that specific sequence.
-       See <xref linkend="pg-statio-all-sequences-view"/> for details.
+       See <link linkend="monitoring-pg-statio-all-sequences-view">
+       <structname>pg_statio_all_sequences</structname></link> for details.
      </entry>
      </row>
 
@@ -564,7 +579,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>
        One row for each tracked function, showing statistics
        about executions of that function. See
-       <xref linkend="pg-stat-user-functions-view"/> for details.
+       <link linkend="monitoring-pg-stat-user-functions-view">
+       <structname>pg_stat_user_functions</structname></link> for details.
       </entry>
      </row>
 
@@ -578,7 +594,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><structname>pg_stat_slru</structname><indexterm><primary>pg_stat_slru</primary></indexterm></entry>
       <entry>One row per SLRU, showing statistics of operations. See
-       <xref linkend="pg-stat-slru-view"/> for details.
+       <link linkend="monitoring-pg-stat-slru-view">
+       <structname>pg_stat_slru</structname></link> for details.
       </entry>
      </row>
 
@@ -608,6 +625,20 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    into the kernel's handling of I/O.
   </para>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-activity-view">
+  <title><structname>pg_stat_activity</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_activity</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_activity</structname> view will have one row
+   per server process, showing information related to
+   the current activity of that process.
+  </para>
 
   <table id="pg-stat-activity-view" xreflabel="pg_stat_activity">
    <title><structname>pg_stat_activity</structname> View</title>
@@ -888,12 +919,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     </tbody>
    </tgroup>
   </table>
-
-  <para>
-   The <structname>pg_stat_activity</structname> view will have one row
-   per server process, showing information related to
-   the current activity of that process.
-  </para>
 
   <note>
    <para>
@@ -2135,13 +2160,29 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
 <programlisting>
 SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event is NOT NULL;
- pid  | wait_event_type |  wait_event
-------+-----------------+---------------
+ pid  | wait_event_type | wait_event 
+------+-----------------+------------
  2540 | Lock            | relation
- 6644 | LWLock          | ProcArrayLock
+ 6644 | LWLock          | ProcArray
 (2 rows)
 </programlisting>
    </para>
+
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-replication-view">
+  <title><structname>pg_stat_replication</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_replication</primary>
+  </indexterm>
+
+   <para>
+   The <structname>pg_stat_replication</structname> view will contain one row
+   per WAL sender process, showing statistics about replication to that
+   sender's connected standby server.  Only directly connected standbys are
+   listed; no information is available about downstream standby servers.
+  </para>
 
   <table id="pg-stat-replication-view" xreflabel="pg_stat_replication">
    <title><structname>pg_stat_replication</structname> View</title>
@@ -2458,13 +2499,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
   </table>
 
   <para>
-   The <structname>pg_stat_replication</structname> view will contain one row
-   per WAL sender process, showing statistics about replication to that
-   sender's connected standby server.  Only directly connected standbys are
-   listed; no information is available about downstream standby servers.
-  </para>
-
-  <para>
    The lag times reported in the <structname>pg_stat_replication</structname>
    view are measurements of the time taken for recent WAL to be written,
    flushed and replayed and for the sender to know about it.  These times
@@ -2502,6 +2536,21 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     as missing data, zero or continue to display the last known value.
    </para>
   </note>
+
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-wal-receiver-view">
+  <title><structname>pg_stat_wal_receiver</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_wal_receiver</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_wal_receiver</structname> view will contain only
+   one row, showing statistics about the WAL receiver from that receiver's
+   connected server.
+  </para>
 
   <table id="pg-stat-wal-receiver-view" xreflabel="pg_stat_wal_receiver">
    <title><structname>pg_stat_wal_receiver</structname> View</title>
@@ -2668,10 +2717,20 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-subscription">
+  <title><structname>pg_stat_subscription</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_subscription</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_wal_receiver</structname> view will contain only
-   one row, showing statistics about the WAL receiver from that receiver's
-   connected server.
+   The <structname>pg_stat_subscription</structname> view will contain one
+   row per subscription for main worker (with null PID if the worker is
+   not running), and additional rows for workers handling the initial data
+   copy of the subscribed tables.
   </para>
 
   <table id="pg-stat-subscription" xreflabel="pg_stat_subscription">
@@ -2776,11 +2835,22 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-ssl-view">
+  <title><structname>pg_stat_ssl</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_ssl</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_subscription</structname> view will contain one
-   row per subscription for main worker (with null PID if the worker is
-   not running), and additional rows for workers handling the initial data
-   copy of the subscribed tables.
+   The <structname>pg_stat_ssl</structname> view will contain one row per
+   backend or WAL sender process, showing statistics about SSL usage on
+   this connection. It can be joined to <structname>pg_stat_activity</structname>
+   or <structname>pg_stat_replication</structname> on the
+   <structfield>pid</structfield> column to get more details about the
+   connection.
   </para>
 
   <table id="pg-stat-ssl-view" xreflabel="pg_stat_ssl">
@@ -2896,11 +2966,20 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-gssapi-view">
+  <title><structname>pg_stat_gssapi</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_gssapi</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_ssl</structname> view will contain one row per
-   backend or WAL sender process, showing statistics about SSL usage on
-   this connection. It can be joined to <structname>pg_stat_activity</structname>
-   or <structname>pg_stat_replication</structname> on the
+   The <structname>pg_stat_gssapi</structname> view will contain one row per
+   backend, showing information about GSSAPI usage on this connection. It can
+   be joined to <structname>pg_stat_activity</structname> or
+   <structname>pg_stat_replication</structname> on the
    <structfield>pid</structfield> column to get more details about the
    connection.
   </para>
@@ -2962,15 +3041,19 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
-  <para>
-   The <structname>pg_stat_gssapi</structname> view will contain one row per
-   backend, showing information about GSSAPI usage on this connection. It can
-   be joined to <structname>pg_stat_activity</structname> or
-   <structname>pg_stat_replication</structname> on the
-   <structfield>pid</structfield> column to get more details about the
-   connection.
-  </para>
+ </sect2>
 
+ <sect2 id="monitoring-pg-stat-archiver-view">
+  <title><structname>pg_stat_archiver</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_archiver</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_archiver</structname> view will always have a
+   single row, containing data about the archiver process of the cluster.
+  </para>
 
   <table id="pg-stat-archiver-view" xreflabel="pg_stat_archiver">
    <title><structname>pg_stat_archiver</structname> View</title>
@@ -3053,9 +3136,18 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-bgwriter-view">
+  <title><structname>pg_stat_bgwriter</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_bgwriter</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_archiver</structname> view will always have a
-   single row, containing data about the archiver process of the cluster.
+   The <structname>pg_stat_bgwriter</structname> view will always have a
+   single row, containing global data for the cluster.
   </para>
 
   <table id="pg-stat-bgwriter-view" xreflabel="pg_stat_bgwriter">
@@ -3181,9 +3273,19 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-database-view">
+  <title><structname>pg_stat_database</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_database</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_bgwriter</structname> view will always have a
-   single row, containing global data for the cluster.
+   The <structname>pg_stat_database</structname> view will contain one row
+   for each database in the cluster, plus one for shared objects, showing
+   database-wide statistics.
   </para>
 
   <table id="pg-stat-database-view" xreflabel="pg_stat_database">
@@ -3325,7 +3427,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <para>
        Number of queries canceled due to conflicts with recovery
        in this database. (Conflicts occur only on standby servers; see
-       <xref linkend="pg-stat-database-conflicts-view"/> for details.)
+       <link linkend="monitoring-pg-stat-database-conflicts-view">
+       <structname>pg_stat_database_conflicts</structname></link> for details.)
       </para></entry>
      </row>
 
@@ -3418,10 +3521,21 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-database-conflicts-view">
+  <title><structname>pg_stat_database_conflicts</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_database_conflicts</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_database</structname> view will contain one row
-   for each database in the cluster, plus one for shared objects, showing
-   database-wide statistics.
+   The <structname>pg_stat_database_conflicts</structname> view will contain
+   one row per database, showing database-wide statistics about
+   query cancels occurring due to conflicts with recovery on standby servers.
+   This view will only contain information on standby servers, since
+   conflicts do not occur on master servers.
   </para>
 
   <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">
@@ -3510,12 +3624,23 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-all-tables-view">
+  <title><structname>pg_stat_all_tables</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_all_tables</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_database_conflicts</structname> view will contain
-   one row per database, showing database-wide statistics about
-   query cancels occurring due to conflicts with recovery on standby servers.
-   This view will only contain information on standby servers, since
-   conflicts do not occur on master servers.
+   The <structname>pg_stat_all_tables</structname> view will contain
+   one row for each table in the current database (including TOAST
+   tables), showing statistics about accesses to that specific table. The
+   <structname>pg_stat_user_tables</structname> and
+   <structname>pg_stat_sys_tables</structname> views
+   contain the same information,
+   but filtered to only show user and system tables respectively.
   </para>
 
   <table id="pg-stat-all-tables-view" xreflabel="pg_stat_all_tables">
@@ -3750,14 +3875,23 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-all-indexes-view">
+  <title><structname>pg_stat_all_indexes</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_all_indexes</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_stat_all_tables</structname> view will contain
-   one row for each table in the current database (including TOAST
-   tables), showing statistics about accesses to that specific table. The
-   <structname>pg_stat_user_tables</structname> and
-   <structname>pg_stat_sys_tables</structname> views
+   The <structname>pg_stat_all_indexes</structname> view will contain
+   one row for each index in the current database,
+   showing statistics about accesses to that specific index. The
+   <structname>pg_stat_user_indexes</structname> and
+   <structname>pg_stat_sys_indexes</structname> views
    contain the same information,
-   but filtered to only show user and system tables respectively.
+   but filtered to only show user and system indexes respectively.
   </para>
 
   <table id="pg-stat-all-indexes-view" xreflabel="pg_stat_all_indexes">
@@ -3852,16 +3986,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
   </table>
 
   <para>
-   The <structname>pg_stat_all_indexes</structname> view will contain
-   one row for each index in the current database,
-   showing statistics about accesses to that specific index. The
-   <structname>pg_stat_user_indexes</structname> and
-   <structname>pg_stat_sys_indexes</structname> views
-   contain the same information,
-   but filtered to only show user and system indexes respectively.
-  </para>
-
-  <para>
    Indexes can be used by simple index scans, <quote>bitmap</quote> index scans,
    and the optimizer.  In a bitmap scan
    the output of several indexes can be combined via AND or OR rules,
@@ -3889,6 +4013,25 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     heap fetches are avoided by means of an index-only scan.
    </para>
   </note>
+
+ </sect2>
+
+ <sect2 id="monitoring-pg-statio-all-tables-view">
+  <title><structname>pg_statio_all_tables</structname></title>
+
+  <indexterm>
+   <primary>pg_statio_all_tables</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_statio_all_tables</structname> view will contain
+   one row for each table in the current database (including TOAST
+   tables), showing statistics about I/O on that specific table. The
+   <structname>pg_statio_user_tables</structname> and
+   <structname>pg_statio_sys_tables</structname> views
+   contain the same information,
+   but filtered to only show user and system tables respectively.
+  </para>
 
   <table id="pg-statio-all-tables-view" xreflabel="pg_statio_all_tables">
    <title><structname>pg_statio_all_tables</structname> View</title>
@@ -4007,14 +4150,23 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-statio-all-indexes-view">
+  <title><structname>pg_statio_all_indexes</structname></title>
+
+  <indexterm>
+   <primary>pg_statio_all_indexes</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_statio_all_tables</structname> view will contain
-   one row for each table in the current database (including TOAST
-   tables), showing statistics about I/O on that specific table. The
-   <structname>pg_statio_user_tables</structname> and
-   <structname>pg_statio_sys_tables</structname> views
+   The <structname>pg_statio_all_indexes</structname> view will contain
+   one row for each index in the current database,
+   showing statistics about I/O on that specific index. The
+   <structname>pg_statio_user_indexes</structname> and
+   <structname>pg_statio_sys_indexes</structname> views
    contain the same information,
-   but filtered to only show user and system tables respectively.
+   but filtered to only show user and system indexes respectively.
   </para>
 
   <table id="pg-statio-all-indexes-view" xreflabel="pg_statio_all_indexes">
@@ -4098,14 +4250,19 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-statio-all-sequences-view">
+  <title><structname>pg_statio_all_sequences</structname></title>
+
+  <indexterm>
+   <primary>pg_statio_all_sequences</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_statio_all_indexes</structname> view will contain
-   one row for each index in the current database,
-   showing statistics about I/O on that specific index. The
-   <structname>pg_statio_user_indexes</structname> and
-   <structname>pg_statio_sys_indexes</structname> views
-   contain the same information,
-   but filtered to only show user and system indexes respectively.
+   The <structname>pg_statio_all_sequences</structname> view will contain
+   one row for each sequence in the current database,
+   showing statistics about I/O on that specific sequence.
   </para>
 
   <table id="pg-statio-all-sequences-view" xreflabel="pg_statio_all_sequences">
@@ -4171,10 +4328,20 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-user-functions-view">
+  <title><structname>pg_stat_user_functions</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_user_functions</primary>
+  </indexterm>
+
   <para>
-   The <structname>pg_statio_all_sequences</structname> view will contain
-   one row for each sequence in the current database,
-   showing statistics about I/O on that specific sequence.
+   The <structname>pg_stat_user_functions</structname> view will contain
+   one row for each tracked function, showing statistics about executions of
+   that function.  The <xref linkend="guc-track-functions"/> parameter
+   controls exactly which functions are tracked.
   </para>
 
   <table id="pg-stat-user-functions-view" xreflabel="pg_stat_user_functions">
@@ -4251,8 +4418,17 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    </tgroup>
   </table>
 
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-slru-view">
+  <title><structname>pg_stat_slru</structname></title>
+
   <indexterm>
    <primary>SLRU</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>pg_stat_slru</primary>
   </indexterm>
 
   <para>
@@ -4363,13 +4539,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     </tbody>
    </tgroup>
   </table>
-
-  <para>
-   The <structname>pg_stat_user_functions</structname> view will contain
-   one row for each tracked function, showing statistics about executions of
-   that function.  The <xref linkend="guc-track-functions"/> parameter
-   controls exactly which functions are tracked.
-  </para>
 
  </sect2>
 

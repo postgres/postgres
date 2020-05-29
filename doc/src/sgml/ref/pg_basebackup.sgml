@@ -533,7 +533,8 @@ PostgreSQL documentation
         in a non-zero exit status. However, the base backup will not be
         removed in such a case, as if the <option>--no-clean</option> option
         had been used.  Checksum verifications failures will also be reported
-        in the <xref linkend="pg-stat-database-view"/> view.
+        in the <link linkend="monitoring-pg-stat-database-view">
+        <structname>pg_stat_database</structname></link> view.
        </para>
       </listitem>
      </varlistentry>
