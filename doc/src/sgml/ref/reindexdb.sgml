@@ -122,8 +122,9 @@ PostgreSQL documentation
       <term><option>--concurrently</option></term>
       <listitem>
        <para>
-        Use the <literal>CONCURRENTLY</literal> option.  See <xref
-        linkend="sql-reindex"/> for further information.
+        Use the <literal>CONCURRENTLY</literal> option.  See
+        <xref linkend="sql-reindex"/>, where all the caveats of this option
+        are explained in detail.
        </para>
       </listitem>
      </varlistentry>
