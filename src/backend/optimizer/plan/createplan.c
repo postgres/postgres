@@ -2113,12 +2113,22 @@ create_agg_plan(PlannerInfo *root, AggPath *best_path)
 	Plan	   *subplan;
 	List	   *tlist;
 	List	   *quals;
+	int			flags;
 
 	/*
 	 * Agg can project, so no need to be terribly picky about child tlist, but
-	 * we do need grouping columns to be available
+	 * we do need grouping columns to be available. We are a bit more careful
+	 * with hash aggregate, where we explicitly request small tlist to minimize
+	 * I/O needed for spilling (we can't be sure spilling won't be necessary,
+	 * so we just do it every time).
 	 */
-	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
+	flags = CP_LABEL_TLIST;
+
+	/* ensure small tlist for hash aggregate */
+	if (best_path->aggstrategy == AGG_HASHED)
+		flags |= CP_SMALL_TLIST;
+
+	subplan = create_plan_recurse(root, best_path->subpath, flags);
 
 	tlist = build_path_tlist(root, &best_path->path);
 
@@ -2200,6 +2210,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	int			maxref;
 	List	   *chain;
 	ListCell   *lc;
+	int			flags;
 
 	/* Shouldn't get here without grouping sets */
 	Assert(root->parse->groupingSets);
@@ -2207,9 +2218,18 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 
 	/*
 	 * Agg can project, so no need to be terribly picky about child tlist, but
-	 * we do need grouping columns to be available
+	 * we do need grouping columns to be available. We are a bit more careful
+	 * with hash aggregate, where we explicitly request small tlist to minimize
+	 * I/O needed for spilling (we can't be sure spilling won't be necessary,
+	 * so we just do it every time).
 	 */
-	subplan = create_plan_recurse(root, best_path->subpath, CP_LABEL_TLIST);
+	flags = CP_LABEL_TLIST;
+
+	/* ensure small tlist for hash aggregate */
+	if (best_path->aggstrategy == AGG_HASHED)
+		flags |= CP_SMALL_TLIST;
+
+	subplan = create_plan_recurse(root, best_path->subpath, flags);
 
 	/*
 	 * Compute the mapping from tleSortGroupRef to column index in the child's

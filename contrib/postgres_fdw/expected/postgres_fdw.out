@@ -2715,7 +2715,7 @@ select sum(c1) from ft1 group by c2 having avg(c1 * (random() <= 1)::int) > 100 
          Group Key: ft1.c2
          Filter: (avg((ft1.c1 * ((random() <= '1'::double precision))::integer)) > '100'::numeric)
          ->  Foreign Scan on public.ft1
-               Output: c1, c2
+               Output: c2, c1
                Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
 (10 rows)
 
@@ -2964,7 +2964,7 @@ select sum(c1) filter (where (c1 / c1) * random() <= 1) from ft1 group by c2 ord
          Output: sum(c1) FILTER (WHERE ((((c1 / c1))::double precision * random()) <= '1'::double precision)), c2
          Group Key: ft1.c2
          ->  Foreign Scan on public.ft1
-               Output: c1, c2
+               Output: c2, c1
                Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1"
 (9 rows)
 
