@@ -72,6 +72,7 @@ $(call recurse,check-world,src/test src/pl src/interfaces/ecpg contrib src/bin,c
 $(call recurse,checkprep,  src/test src/pl src/interfaces/ecpg contrib src/bin)
 
 $(call recurse,installcheck-world,src/test src/pl src/interfaces/ecpg contrib src/bin,installcheck)
+$(call recurse,install-tests,src/test/regress,install-tests)
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	./config.status $@
