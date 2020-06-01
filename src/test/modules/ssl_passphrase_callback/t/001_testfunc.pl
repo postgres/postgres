@@ -15,12 +15,7 @@ unless (($ENV{with_openssl} || 'no') eq 'yes')
 my $clearpass = "FooBaR1";
 my $rot13pass = "SbbOnE1";
 
-# self-signed cert was generated like this:
-# system('openssl req -new -x509 -days 10000 -nodes -out server.crt -keyout server.ckey -subj "/CN=localhost"');
-# add the cleartext passphrase to the key, remove the unprotected key
-# system("openssl rsa -aes256 -in server.ckey -out server.key -passout pass:$clearpass");
-# unlink "server.ckey";
-
+# see the Makefile for how the certificate and key have been generated
 
 my $node = get_new_node('main');
 $node->init;
