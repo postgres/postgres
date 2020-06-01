@@ -338,8 +338,13 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 					rte = rt_fetch(var->varno, query->rtable);
 					if (rte)
 					{
+						Datum		result;
+
+						result = DirectFunctionCall2(currtid_byreloid,
+													 ObjectIdGetDatum(rte->relid),
+													 PointerGetDatum(tid));
 						table_close(viewrel, AccessShareLock);
-						return DirectFunctionCall2(currtid_byreloid, ObjectIdGetDatum(rte->relid), PointerGetDatum(tid));
+						return result;
 					}
 				}
 			}
