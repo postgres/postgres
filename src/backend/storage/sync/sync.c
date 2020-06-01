@@ -376,7 +376,7 @@ ProcessSyncRequests(void)
 					processed++;
 
 					if (log_checkpoints)
-						elog(DEBUG1, "checkpoint sync: number=%d file=%s time=%.3f msec",
+						elog(DEBUG1, "checkpoint sync: number=%d file=%s time=%.3f ms",
 							 processed,
 							 path,
 							 (double) elapsed / 1000);
