@@ -135,6 +135,7 @@ test: dbsize
 test: misc_functions
 test: sysviews
 test: tsrf
+test: tid
 test: tidscan
 test: collate.icu.utf8
 test: rules
