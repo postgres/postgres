@@ -132,6 +132,7 @@ test: dbsize
 test: misc_functions
 test: sysviews
 test: tsrf
+test: tid
 test: tidscan
 test: rules
 test: psql
