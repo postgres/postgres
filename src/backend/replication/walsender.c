@@ -3685,17 +3685,15 @@ UpdateSpillStats(LogicalDecodingContext *ctx)
 {
 	ReorderBuffer *rb = ctx->reorder;
 
-	SpinLockAcquire(&MyWalSnd->mutex);
-
-	MyWalSnd->spillTxns = rb->spillTxns;
-	MyWalSnd->spillCount = rb->spillCount;
-	MyWalSnd->spillBytes = rb->spillBytes;
-
 	elog(DEBUG2, "UpdateSpillStats: updating stats %p %lld %lld %lld",
 		 rb,
 		 (long long) rb->spillTxns,
 		 (long long) rb->spillCount,
 		 (long long) rb->spillBytes);
 
+	SpinLockAcquire(&MyWalSnd->mutex);
+	MyWalSnd->spillTxns = rb->spillTxns;
+	MyWalSnd->spillCount = rb->spillCount;
+	MyWalSnd->spillBytes = rb->spillBytes;
 	SpinLockRelease(&MyWalSnd->mutex);
 }
