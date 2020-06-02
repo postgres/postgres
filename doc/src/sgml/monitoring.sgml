@@ -2518,6 +2518,12 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    mechanism will simply display NULL lag.
   </para>
 
+  <para>
+   Tracking of spilled transactions works only for logical replication.  In
+   physical replication, the tracking mechanism will display 0 for spilled
+   statistics.
+  </para>
+
   <note>
    <para>
     The reported lag times are not predictions of how long it will take for
