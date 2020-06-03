@@ -2820,6 +2820,41 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-wal-init-zero" xreflabel="wal_init_zero">
+      <term><varname>wal_init_zero</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>wal_init_zero</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        If set to <literal>on</literal> (the default), this option causes new
+        WAL files to be filled with zeroes.  On some file systems, this ensures
+        that space is allocated before we need to write WAL records.  However,
+        <firstterm>Copy-On-Write</firstterm> (COW) file systems may not benefit
+        from this technique, so the option is given to skip the unnecessary
+        work.  If set to <literal>off</literal>, only the final byte is written
+        when the file is created so that it has the expected size.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-recycle" xreflabel="wal_recycle">
+      <term><varname>wal_recycle</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>wal_recycle</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        If set to <literal>on</literal> (the default), this option causes WAL
+        files to be recycled by renaming them, avoiding the need to create new
+        ones.  On COW file systems, it may be faster to create new ones, so the
+        option is given to disable this behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-wal-buffers" xreflabel="wal_buffers">
       <term><varname>wal_buffers</varname> (<type>integer</type>)
       <indexterm>
@@ -3751,41 +3786,6 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </para>
        </listitem>
       </varlistentry>
-
-     <varlistentry id="guc-wal-init-zero" xreflabel="wal_init_zero">
-      <term><varname>wal_init_zero</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>wal_init_zero</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        If set to <literal>on</literal> (the default), this option causes new
-        WAL files to be filled with zeroes.  On some file systems, this ensures
-        that space is allocated before we need to write WAL records.  However,
-        <firstterm>Copy-On-Write</firstterm> (COW) file systems may not benefit
-        from this technique, so the option is given to skip the unnecessary
-        work.  If set to <literal>off</literal>, only the final byte is written
-        when the file is created so that it has the expected size.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-wal-recycle" xreflabel="wal_recycle">
-      <term><varname>wal_recycle</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>wal_recycle</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        If set to <literal>on</literal> (the default), this option causes WAL
-        files to be recycled by renaming them, avoiding the need to create new
-        ones.  On COW file systems, it may be faster to create new ones, so the
-        option is given to disable this behavior.
-       </para>
-      </listitem>
-     </varlistentry>
 
       <varlistentry id="guc-max-slot-wal-keep-size" xreflabel="max_slot_wal_keep_size">
        <term><varname>max_slot_wal_keep_size</varname> (<type>integer</type>)
