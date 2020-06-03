@@ -1099,7 +1099,7 @@ restart:
 	{
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 		XLogRecPtr	restart_lsn = InvalidXLogRecPtr;
-		char	   *slotname;
+		NameData	slotname;
 
 		if (!s->in_use)
 			continue;
@@ -1112,7 +1112,7 @@ restart:
 			continue;
 		}
 
-		slotname = pstrdup(NameStr(s->data.name));
+		slotname = s->data.name;
 		restart_lsn = s->data.restart_lsn;
 
 		SpinLockRelease(&s->mutex);
@@ -1120,7 +1120,8 @@ restart:
 
 		for (;;)
 		{
-			int			wspid = ReplicationSlotAcquire(slotname, SAB_Inquire);
+			int			wspid = ReplicationSlotAcquire(NameStr(slotname),
+													   SAB_Inquire);
 
 			/* no walsender? success! */
 			if (wspid == 0)
@@ -1128,7 +1129,7 @@ restart:
 
 			ereport(LOG,
 					(errmsg("terminating walsender %d because replication slot \"%s\" is too far behind",
-							wspid, slotname)));
+							wspid, NameStr(slotname))));
 			(void) kill(wspid, SIGTERM);
 
 			ConditionVariableTimedSleep(&s->active_cv, 10,
@@ -1138,7 +1139,7 @@ restart:
 
 		ereport(LOG,
 				(errmsg("invalidating slot \"%s\" because its restart_lsn %X/%X exceeds max_slot_wal_keep_size",
-						slotname,
+						NameStr(slotname),
 						(uint32) (restart_lsn >> 32),
 						(uint32) restart_lsn)));
 
