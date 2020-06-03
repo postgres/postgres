@@ -645,7 +645,7 @@ Author: Jeff Davis <jdavis@postgresql.org>
        <para>
         Previously, hash aggregation was avoided if it was expected to use
         more than <xref linkend="guc-work-mem"/> memory.  This is controlled
-        by <xref linkend="guc-enable-hashagg-disk"/>.
+        by <xref linkend="guc-enable-groupingsets-hash-disk"/>.
        </para>
       </listitem>
 
