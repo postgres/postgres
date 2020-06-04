@@ -17,7 +17,7 @@
 #include <math.h>
 
 #include "fmgr.h"
-
+#include "datatype/timestamp.h"
 
 typedef int32 DateADT;
 
