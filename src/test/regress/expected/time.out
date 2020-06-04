@@ -73,6 +73,47 @@ SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
  15:36:39
 (10 rows)
 
+-- Check edge cases
+SELECT '23:59:59.999999'::time;
+      time       
+-----------------
+ 23:59:59.999999
+(1 row)
+
+SELECT '23:59:59.9999999'::time;  -- rounds up
+   time   
+----------
+ 24:00:00
+(1 row)
+
+SELECT '23:59:60'::time;  -- rounds up
+   time   
+----------
+ 24:00:00
+(1 row)
+
+SELECT '24:00:00'::time;  -- allowed
+   time   
+----------
+ 24:00:00
+(1 row)
+
+SELECT '24:00:00.01'::time;  -- not allowed
+ERROR:  date/time field value out of range: "24:00:00.01"
+LINE 1: SELECT '24:00:00.01'::time;
+               ^
+SELECT '23:59:60.01'::time;  -- not allowed
+ERROR:  date/time field value out of range: "23:59:60.01"
+LINE 1: SELECT '23:59:60.01'::time;
+               ^
+SELECT '24:01:00'::time;  -- not allowed
+ERROR:  date/time field value out of range: "24:01:00"
+LINE 1: SELECT '24:01:00'::time;
+               ^
+SELECT '25:00:00'::time;  -- not allowed
+ERROR:  date/time field value out of range: "25:00:00"
+LINE 1: SELECT '25:00:00'::time;
+               ^
 --
 -- TIME simple math
 --

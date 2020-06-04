@@ -936,14 +936,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (dterr)
 					return dterr;
 
-				/*
-				 * Check upper limit on hours; other limits checked in
-				 * DecodeTime()
-				 */
-				/* test for > 24:00:00 */
-				if (tm->tm_hour > HOURS_PER_DAY ||
-					(tm->tm_hour == HOURS_PER_DAY &&
-					 (tm->tm_min > 0 || tm->tm_sec > 0 || *fsec > 0)))
+				/* check for time overflow */
+				if (time_overflows(tm->tm_hour, tm->tm_min, tm->tm_sec,
+								   *fsec))
 					return DTERR_FIELD_OVERFLOW;
 				break;
 
@@ -2218,16 +2213,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	else if (mer == PM && tm->tm_hour != HOURS_PER_DAY / 2)
 		tm->tm_hour += HOURS_PER_DAY / 2;
 
-	/*
-	 * This should match the checks in make_timestamp_internal
-	 */
-	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > MINS_PER_HOUR - 1 ||
-		tm->tm_sec < 0 || tm->tm_sec > SECS_PER_MINUTE ||
-		tm->tm_hour > HOURS_PER_DAY ||
-	/* test for > 24:00:00 */
-		(tm->tm_hour == HOURS_PER_DAY &&
-		 (tm->tm_min > 0 || tm->tm_sec > 0 || *fsec > 0)) ||
-		*fsec < INT64CONST(0) || *fsec > USECS_PER_SEC)
+	/* check for time overflow */
+	if (time_overflows(tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec))
 		return DTERR_FIELD_OVERFLOW;
 
 	if ((fmask & DTK_TIME_M) != DTK_TIME_M)

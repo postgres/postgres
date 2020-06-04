@@ -32,6 +32,7 @@
 #include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/float.h"
 
@@ -581,18 +582,8 @@ make_timestamp_internal(int year, int month, int day,
 
 	date = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
 
-	/*
-	 * This should match the checks in DecodeTimeOnly, except that since we're
-	 * dealing with a float "sec" value, we also explicitly reject NaN.  (An
-	 * infinity input should get rejected by the range comparisons, but we
-	 * can't be sure how those will treat a NaN.)
-	 */
-	if (hour < 0 || min < 0 || min > MINS_PER_HOUR - 1 ||
-		isnan(sec) ||
-		sec < 0 || sec > SECS_PER_MINUTE ||
-		hour > HOURS_PER_DAY ||
-	/* test for > 24:00:00 */
-		(hour == HOURS_PER_DAY && (min > 0 || sec > 0)))
+	/* Check for time overflow */
+	if (float_time_overflows(hour, min, sec))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 				 errmsg("time field value out of range: %d:%02d:%02g",
@@ -600,7 +591,7 @@ make_timestamp_internal(int year, int month, int day,
 
 	/* This should match tm2time */
 	time = (((hour * MINS_PER_HOUR + min) * SECS_PER_MINUTE)
-			* USECS_PER_SEC) + rint(sec * USECS_PER_SEC);
+			* USECS_PER_SEC) + (int64) rint(sec * USECS_PER_SEC);
 
 	result = date * USECS_PER_DAY + time;
 	/* check for major overflow */

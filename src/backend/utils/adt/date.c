@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <float.h>
+#include <math.h>
 #include <time.h>
 
 #include "access/xact.h"
@@ -1270,6 +1271,65 @@ tm2time(struct pg_tm *tm, fsec_t fsec, TimeADT *result)
 	return 0;
 }
 
+/* time_overflows()
+ * Check to see if a broken-down time-of-day is out of range.
+ */
+bool
+time_overflows(int hour, int min, int sec, fsec_t fsec)
+{
+	/* Range-check the fields individually. */
+	if (hour < 0 || hour > HOURS_PER_DAY ||
+		min < 0 || min >= MINS_PER_HOUR ||
+		sec < 0 || sec > SECS_PER_MINUTE ||
+		fsec < 0 || fsec > USECS_PER_SEC)
+		return true;
+
+	/*
+	 * Because we allow, eg, hour = 24 or sec = 60, we must check separately
+	 * that the total time value doesn't exceed 24:00:00.
+	 */
+	if ((((((hour * MINS_PER_HOUR + min) * SECS_PER_MINUTE)
+		   + sec) * USECS_PER_SEC) + fsec) > USECS_PER_DAY)
+		return true;
+
+	return false;
+}
+
+/* float_time_overflows()
+ * Same, when we have seconds + fractional seconds as one "double" value.
+ */
+bool
+float_time_overflows(int hour, int min, double sec)
+{
+	/* Range-check the fields individually. */
+	if (hour < 0 || hour > HOURS_PER_DAY ||
+		min < 0 || min >= MINS_PER_HOUR)
+		return true;
+
+	/*
+	 * "sec", being double, requires extra care.  Cope with NaN, and round off
+	 * before applying the range check to avoid unexpected errors due to
+	 * imprecise input.  (We assume rint() behaves sanely with infinities.)
+	 */
+	if (isnan(sec))
+		return true;
+	sec = rint(sec * USECS_PER_SEC);
+	if (sec < 0 || sec > SECS_PER_MINUTE * USECS_PER_SEC)
+		return true;
+
+	/*
+	 * Because we allow, eg, hour = 24 or sec = 60, we must check separately
+	 * that the total time value doesn't exceed 24:00:00.  This must match the
+	 * way that callers will convert the fields to a time.
+	 */
+	if (((((hour * MINS_PER_HOUR + min) * SECS_PER_MINUTE)
+		  * USECS_PER_SEC) + (int64) sec) > USECS_PER_DAY)
+		return true;
+
+	return false;
+}
+
+
 /* time2tm()
  * Convert time data type to POSIX time structure.
  *
@@ -1374,12 +1434,8 @@ make_time(PG_FUNCTION_ARGS)
 	double		sec = PG_GETARG_FLOAT8(2);
 	TimeADT		time;
 
-	/* This should match the checks in DecodeTimeOnly */
-	if (tm_hour < 0 || tm_min < 0 || tm_min > MINS_PER_HOUR - 1 ||
-		sec < 0 || sec > SECS_PER_MINUTE ||
-		tm_hour > HOURS_PER_DAY ||
-	/* test for > 24:00:00 */
-		(tm_hour == HOURS_PER_DAY && (tm_min > 0 || sec > 0)))
+	/* Check for time overflow */
+	if (float_time_overflows(tm_hour, tm_min, sec))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 				 errmsg("time field value out of range: %d:%02d:%02g",
@@ -1387,7 +1443,7 @@ make_time(PG_FUNCTION_ARGS)
 
 	/* This should match tm2time */
 	time = (((tm_hour * MINS_PER_HOUR + tm_min) * SECS_PER_MINUTE)
-			* USECS_PER_SEC) + rint(sec * USECS_PER_SEC);
+			* USECS_PER_SEC) + (int64) rint(sec * USECS_PER_SEC);
 
 	PG_RETURN_TIMEADT(time);
 }
