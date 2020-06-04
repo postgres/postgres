@@ -30,6 +30,16 @@ SELECT f1 AS "None" FROM TIME_TBL WHERE f1 < '00:00';
 
 SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
 
+-- Check edge cases
+SELECT '23:59:59.999999'::time;
+SELECT '23:59:59.9999999'::time;  -- rounds up
+SELECT '23:59:60'::time;  -- rounds up
+SELECT '24:00:00'::time;  -- allowed
+SELECT '24:00:00.01'::time;  -- not allowed
+SELECT '23:59:60.01'::time;  -- not allowed
+SELECT '24:01:00'::time;  -- not allowed
+SELECT '25:00:00'::time;  -- not allowed
+
 --
 -- TIME simple math
 --
