@@ -6310,14 +6310,14 @@ listOpFamilyOperators(const char *access_method_pattern,
 
 /*
  * \dAp
- * Lists procedures of operator families
+ * Lists support functions of operator families
  *
  * Takes an optional regexps to filter by index access method and operator
  * family.
  */
 bool
-listOpFamilyProcedures(const char *access_method_pattern,
-					   const char *family_pattern)
+listOpFamilyFunctions(const char *access_method_pattern,
+					  const char *family_pattern)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
@@ -6344,7 +6344,7 @@ listOpFamilyProcedures(const char *access_method_pattern,
 					  gettext_noop("Left arg type"),
 					  gettext_noop("Right arg type"),
 					  gettext_noop("Number"),
-					  gettext_noop("Proc name"));
+					  gettext_noop("Function"));
 
 	appendPQExpBuffer(&buf,
 					  "FROM pg_catalog.pg_amproc ap\n"
@@ -6371,7 +6371,7 @@ listOpFamilyProcedures(const char *access_method_pattern,
 		return false;
 
 	myopt.nullPrint = NULL;
-	myopt.title = _("List of procedures of operator families");
+	myopt.title = _("List of support functions of operator families");
 	myopt.translate_header = true;
 	myopt.translate_columns = translate_columns;
 	myopt.n_translate_columns = lengthof(translate_columns);

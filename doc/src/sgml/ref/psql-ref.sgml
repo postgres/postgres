@@ -1309,7 +1309,7 @@ testdb=&gt;
         </term>
         <listitem>
         <para>
-        Lists procedures associated with operator families
+        Lists functions associated with operator families
         (<xref linkend="catalog-pg-amproc"/>).
         If <replaceable class="parameter">access-method-pattern</replaceable>
         is specified, only members of operator families associated with access

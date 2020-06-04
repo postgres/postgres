@@ -4988,8 +4988,8 @@ List of access methods
 (3 rows)
 
 \dAp btree float_ops
-                           List of procedures of operator families
-  AM   | Operator family |  Left arg type   |  Right arg type  | Number |      Proc name      
+                        List of support functions of operator families
+  AM   | Operator family |  Left arg type   |  Right arg type  | Number |      Function       
 -------+-----------------+------------------+------------------+--------+---------------------
  btree | float_ops       | double precision | double precision |      1 | btfloat8cmp
  btree | float_ops       | double precision | double precision |      2 | btfloat8sortsupport
@@ -5002,8 +5002,8 @@ List of access methods
 (8 rows)
 
 \dAp * pg_catalog.uuid_ops
-                        List of procedures of operator families
-  AM   | Operator family | Left arg type | Right arg type | Number |     Proc name      
+                     List of support functions of operator families
+  AM   | Operator family | Left arg type | Right arg type | Number |      Function      
 -------+-----------------+---------------+----------------+--------+--------------------
  btree | uuid_ops        | uuid          | uuid           |      1 | uuid_cmp
  btree | uuid_ops        | uuid          | uuid           |      2 | uuid_sortsupport

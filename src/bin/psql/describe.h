@@ -129,8 +129,8 @@ extern bool listOpFamilyOperators(const char *accessMethod_pattern,
 								  const char *family_pattern, bool verbose);
 
 /* \dAp */
-extern bool listOpFamilyProcedures(const char *access_method_pattern,
-								   const char *family_pattern);
+extern bool listOpFamilyFunctions(const char *access_method_pattern,
+								  const char *family_pattern);
 
 
 #endif							/* DESCRIBE_H */
