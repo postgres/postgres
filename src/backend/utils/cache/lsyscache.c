@@ -731,6 +731,55 @@ equality_ops_are_compatible(Oid opno1, Oid opno2)
 	return result;
 }
 
+/*
+ * comparison_ops_are_compatible
+ *		Return true if the two given comparison operators have compatible
+ *		semantics.
+ *
+ * This is trivially true if they are the same operator.  Otherwise,
+ * we look to see if they can be found in the same btree opfamily.
+ * For example, '<' and '>=' ops match if they belong to the same family.
+ *
+ * (This is identical to equality_ops_are_compatible(), except that we
+ * don't bother to examine hash opclasses.)
+ */
+bool
+comparison_ops_are_compatible(Oid opno1, Oid opno2)
+{
+	bool		result;
+	CatCList   *catlist;
+	int			i;
+
+	/* Easy if they're the same operator */
+	if (opno1 == opno2)
+		return true;
+
+	/*
+	 * We search through all the pg_amop entries for opno1.
+	 */
+	catlist = SearchSysCacheList1(AMOPOPID, ObjectIdGetDatum(opno1));
+
+	result = false;
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	op_tuple = &catlist->members[i]->tuple;
+		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
+
+		if (op_form->amopmethod == BTREE_AM_OID)
+		{
+			if (op_in_opfamily(opno2, op_form->amopfamily))
+			{
+				result = true;
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	return result;
+}
+
 
 /*				---------- AMPROC CACHES ----------						 */
 
@@ -3027,19 +3076,6 @@ get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,
 
 	sslot->staop = (&stats->staop1)[i];
 	sslot->stacoll = (&stats->stacoll1)[i];
-
-	/*
-	 * XXX Hopefully-temporary hack: if stacoll isn't set, inject the default
-	 * collation.  This won't matter for non-collation-aware datatypes.  For
-	 * those that are, this covers cases where stacoll has not been set.  In
-	 * the short term we need this because some code paths involving type NAME
-	 * do not pass any collation to prefix_selectivity and related functions.
-	 * Even when that's been fixed, it's likely that some add-on typanalyze
-	 * functions won't get the word right away about filling stacoll during
-	 * ANALYZE, so we'll probably need this for awhile.
-	 */
-	if (sslot->stacoll == InvalidOid)
-		sslot->stacoll = DEFAULT_COLLATION_OID;
 
 	if (flags & ATTSTATSSLOT_VALUES)
 	{

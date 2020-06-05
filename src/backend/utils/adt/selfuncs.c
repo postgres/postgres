@@ -192,6 +192,10 @@ static void examine_simple_variable(PlannerInfo *root, Var *var,
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 							   Oid sortop, Oid collation,
 							   Datum *min, Datum *max);
+static void get_stats_slot_range(AttStatsSlot *sslot,
+								 Oid opfuncoid, FmgrInfo *opproc,
+								 Oid collation, int16 typLen, bool typByVal,
+								 Datum *min, Datum *max, bool *p_have_data);
 static bool get_actual_variable_range(PlannerInfo *root,
 									  VariableStatData *vardata,
 									  Oid sortop, Oid collation,
@@ -679,7 +683,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 	 * compute the resulting contribution to selectivity.
 	 */
 	hist_selec = ineq_histogram_selectivity(root, vardata,
-											&opproc, isgt, iseq,
+											operator, &opproc, isgt, iseq,
 											collation,
 											constval, consttype);
 
@@ -1019,6 +1023,9 @@ generic_restriction_selectivity(PlannerInfo *root, Oid oproid, Oid collation,
  * satisfies the inequality condition, ie, VAR < (or <=, >, >=) CONST.
  * The isgt and iseq flags distinguish which of the four cases apply.
  *
+ * While opproc could be looked up from the operator OID, common callers
+ * also need to call it separately, so we make the caller pass both.
+ *
  * Returns -1 if there is no histogram (valid results will always be >= 0).
  *
  * Note that the result disregards both the most-common-values (if any) and
@@ -1030,7 +1037,7 @@ generic_restriction_selectivity(PlannerInfo *root, Oid oproid, Oid collation,
 double
 ineq_histogram_selectivity(PlannerInfo *root,
 						   VariableStatData *vardata,
-						   FmgrInfo *opproc, bool isgt, bool iseq,
+						   Oid opoid, FmgrInfo *opproc, bool isgt, bool iseq,
 						   Oid collation,
 						   Datum constval, Oid consttype)
 {
@@ -1042,14 +1049,14 @@ ineq_histogram_selectivity(PlannerInfo *root,
 	/*
 	 * Someday, ANALYZE might store more than one histogram per rel/att,
 	 * corresponding to more than one possible sort ordering defined for the
-	 * column type.  However, to make that work we will need to figure out
-	 * which staop to search for --- it's not necessarily the one we have at
-	 * hand!  (For example, we might have a '<=' operator rather than the '<'
-	 * operator that will appear in staop.)  The collation might not agree
-	 * either.  For now, just assume that whatever appears in pg_statistic is
-	 * sorted the same way our operator sorts, or the reverse way if isgt is
-	 * true.  This could result in a bogus estimate, but it still seems better
-	 * than falling back to the default estimate.
+	 * column type.  Right now, we know there is only one, so just grab it and
+	 * see if it matches the query.
+	 *
+	 * Note that we can't use opoid as search argument; the staop appearing in
+	 * pg_statistic will be for the relevant '<' operator, but what we have
+	 * might be some other inequality operator such as '>='.  (Even if opoid
+	 * is a '<' operator, it could be cross-type.)  Hence we must use
+	 * comparison_ops_are_compatible() to see if the operators match.
 	 */
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
@@ -1057,16 +1064,15 @@ ineq_histogram_selectivity(PlannerInfo *root,
 						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
-		if (sslot.nvalues > 1)
+		if (sslot.nvalues > 1 &&
+			sslot.stacoll == collation &&
+			comparison_ops_are_compatible(sslot.staop, opoid))
 		{
 			/*
 			 * Use binary search to find the desired location, namely the
 			 * right end of the histogram bin containing the comparison value,
 			 * which is the leftmost entry for which the comparison operator
-			 * succeeds (if isgt) or fails (if !isgt).  (If the given operator
-			 * isn't actually sort-compatible with the histogram, you'll get
-			 * garbage results ... but probably not any more garbage-y than
-			 * you would have from the old linear search.)
+			 * succeeds (if isgt) or fails (if !isgt).
 			 *
 			 * In this loop, we pay no attention to whether the operator iseq
 			 * or not; that detail will be mopped up below.  (We cannot tell,
@@ -1323,6 +1329,50 @@ ineq_histogram_selectivity(PlannerInfo *root,
 			if (have_end)
 				CLAMP_PROBABILITY(hist_selec);
 			else
+			{
+				double		cutoff = 0.01 / (double) (sslot.nvalues - 1);
+
+				if (hist_selec < cutoff)
+					hist_selec = cutoff;
+				else if (hist_selec > 1.0 - cutoff)
+					hist_selec = 1.0 - cutoff;
+			}
+		}
+		else if (sslot.nvalues > 1)
+		{
+			/*
+			 * If we get here, we have a histogram but it's not sorted the way
+			 * we want.  Do a brute-force search to see how many of the
+			 * entries satisfy the comparison condition, and take that
+			 * fraction as our estimate.  (This is identical to the inner loop
+			 * of histogram_selectivity; maybe share code?)
+			 */
+			LOCAL_FCINFO(fcinfo, 2);
+			int			nmatch = 0;
+
+			InitFunctionCallInfoData(*fcinfo, opproc, 2, collation,
+									 NULL, NULL);
+			fcinfo->args[0].isnull = false;
+			fcinfo->args[1].isnull = false;
+			fcinfo->args[1].value = constval;
+			for (int i = 0; i < sslot.nvalues; i++)
+			{
+				Datum		fresult;
+
+				fcinfo->args[0].value = sslot.values[i];
+				fcinfo->isnull = false;
+				fresult = FunctionCallInvoke(fcinfo);
+				if (!fcinfo->isnull && DatumGetBool(fresult))
+					nmatch++;
+			}
+			hist_selec = ((double) nmatch) / ((double) sslot.nvalues);
+
+			/*
+			 * As above, clamp to a hundredth of the histogram resolution.
+			 * This case is surely even less trustworthy than the normal one,
+			 * so we shouldn't believe exact 0 or 1 selectivity.  (Maybe the
+			 * clamp should be more restrictive in this case?)
+			 */
 			{
 				double		cutoff = 0.01 / (double) (sslot.nvalues - 1);
 
@@ -5363,8 +5413,8 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 	int16		typLen;
 	bool		typByVal;
 	Oid			opfuncoid;
+	FmgrInfo	opproc;
 	AttStatsSlot sslot;
-	int			i;
 
 	/*
 	 * XXX It's very tempting to try to use the actual column min and max, if
@@ -5395,20 +5445,19 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 									   (opfuncoid = get_opcode(sortop))))
 		return false;
 
+	opproc.fn_oid = InvalidOid; /* mark this as not looked up yet */
+
 	get_typlenbyval(vardata->atttype, &typLen, &typByVal);
 
 	/*
-	 * If there is a histogram, grab the first and last values.
-	 *
-	 * If there is a histogram that is sorted with some other operator than
-	 * the one we want, fail --- this suggests that there is data we can't
-	 * use.  XXX consider collation too.
+	 * If there is a histogram with the ordering we want, grab the first and
+	 * last values.
 	 */
 	if (get_attstatsslot(&sslot, vardata->statsTuple,
 						 STATISTIC_KIND_HISTOGRAM, sortop,
 						 ATTSTATSSLOT_VALUES))
 	{
-		if (sslot.nvalues > 0)
+		if (sslot.stacoll == collation && sslot.nvalues > 0)
 		{
 			tmin = datumCopy(sslot.values[0], typByVal, typLen);
 			tmax = datumCopy(sslot.values[sslot.nvalues - 1], typByVal, typLen);
@@ -5416,63 +5465,98 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata,
 		}
 		free_attstatsslot(&sslot);
 	}
-	else if (get_attstatsslot(&sslot, vardata->statsTuple,
-							  STATISTIC_KIND_HISTOGRAM, InvalidOid,
-							  0))
+
+	/*
+	 * Otherwise, if there is a histogram with some other ordering, scan it
+	 * and get the min and max values according to the ordering we want.  This
+	 * of course may not find values that are really extremal according to our
+	 * ordering, but it beats ignoring available data.
+	 */
+	if (!have_data &&
+		get_attstatsslot(&sslot, vardata->statsTuple,
+						 STATISTIC_KIND_HISTOGRAM, InvalidOid,
+						 ATTSTATSSLOT_VALUES))
 	{
+		get_stats_slot_range(&sslot, opfuncoid, &opproc,
+							 collation, typLen, typByVal,
+							 &tmin, &tmax, &have_data);
 		free_attstatsslot(&sslot);
-		return false;
 	}
 
 	/*
 	 * If we have most-common-values info, look for extreme MCVs.  This is
 	 * needed even if we also have a histogram, since the histogram excludes
-	 * the MCVs.  However, usually the MCVs will not be the extreme values, so
-	 * avoid unnecessary data copying.
+	 * the MCVs.
 	 */
 	if (get_attstatsslot(&sslot, vardata->statsTuple,
 						 STATISTIC_KIND_MCV, InvalidOid,
 						 ATTSTATSSLOT_VALUES))
 	{
-		bool		tmin_is_mcv = false;
-		bool		tmax_is_mcv = false;
-		FmgrInfo	opproc;
-
-		fmgr_info(opfuncoid, &opproc);
-
-		for (i = 0; i < sslot.nvalues; i++)
-		{
-			if (!have_data)
-			{
-				tmin = tmax = sslot.values[i];
-				tmin_is_mcv = tmax_is_mcv = have_data = true;
-				continue;
-			}
-			if (DatumGetBool(FunctionCall2Coll(&opproc,
-											   collation,
-											   sslot.values[i], tmin)))
-			{
-				tmin = sslot.values[i];
-				tmin_is_mcv = true;
-			}
-			if (DatumGetBool(FunctionCall2Coll(&opproc,
-											   collation,
-											   tmax, sslot.values[i])))
-			{
-				tmax = sslot.values[i];
-				tmax_is_mcv = true;
-			}
-		}
-		if (tmin_is_mcv)
-			tmin = datumCopy(tmin, typByVal, typLen);
-		if (tmax_is_mcv)
-			tmax = datumCopy(tmax, typByVal, typLen);
+		get_stats_slot_range(&sslot, opfuncoid, &opproc,
+							 collation, typLen, typByVal,
+							 &tmin, &tmax, &have_data);
 		free_attstatsslot(&sslot);
 	}
 
 	*min = tmin;
 	*max = tmax;
 	return have_data;
+}
+
+/*
+ * get_stats_slot_range: scan sslot for min/max values
+ *
+ * Subroutine for get_variable_range: update min/max/have_data according
+ * to what we find in the statistics array.
+ */
+static void
+get_stats_slot_range(AttStatsSlot *sslot, Oid opfuncoid, FmgrInfo *opproc,
+					 Oid collation, int16 typLen, bool typByVal,
+					 Datum *min, Datum *max, bool *p_have_data)
+{
+	Datum		tmin = *min;
+	Datum		tmax = *max;
+	bool		have_data = *p_have_data;
+	bool		found_tmin = false;
+	bool		found_tmax = false;
+
+	/* Look up the comparison function, if we didn't already do so */
+	if (opproc->fn_oid != opfuncoid)
+		fmgr_info(opfuncoid, opproc);
+
+	/* Scan all the slot's values */
+	for (int i = 0; i < sslot->nvalues; i++)
+	{
+		if (!have_data)
+		{
+			tmin = tmax = sslot->values[i];
+			found_tmin = found_tmax = true;
+			*p_have_data = have_data = true;
+			continue;
+		}
+		if (DatumGetBool(FunctionCall2Coll(opproc,
+										   collation,
+										   sslot->values[i], tmin)))
+		{
+			tmin = sslot->values[i];
+			found_tmin = true;
+		}
+		if (DatumGetBool(FunctionCall2Coll(opproc,
+										   collation,
+										   tmax, sslot->values[i])))
+		{
+			tmax = sslot->values[i];
+			found_tmax = true;
+		}
+	}
+
+	/*
+	 * Copy the slot's values, if we found new extreme values.
+	 */
+	if (found_tmin)
+		*min = datumCopy(tmin, typByVal, typLen);
+	if (found_tmax)
+		*max = datumCopy(tmax, typByVal, typLen);
 }
 
 

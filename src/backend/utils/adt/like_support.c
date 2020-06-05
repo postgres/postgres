@@ -1217,7 +1217,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	fmgr_info(get_opcode(geopr), &opproc);
 
 	prefixsel = ineq_histogram_selectivity(root, vardata,
-										   &opproc, true, true,
+										   geopr, &opproc, true, true,
 										   collation,
 										   prefixcon->constvalue,
 										   prefixcon->consttype);
@@ -1238,7 +1238,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 		Selectivity topsel;
 
 		topsel = ineq_histogram_selectivity(root, vardata,
-											&opproc, false, false,
+											ltopr, &opproc, false, false,
 											collation,
 											greaterstrcon->constvalue,
 											greaterstrcon->consttype);

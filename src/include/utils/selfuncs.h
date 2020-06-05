@@ -159,7 +159,8 @@ extern double generic_restriction_selectivity(PlannerInfo *root,
 											  double default_selectivity);
 extern double ineq_histogram_selectivity(PlannerInfo *root,
 										 VariableStatData *vardata,
-										 FmgrInfo *opproc, bool isgt, bool iseq,
+										 Oid opoid, FmgrInfo *opproc,
+										 bool isgt, bool iseq,
 										 Oid collation,
 										 Datum constval, Oid consttype);
 extern double var_eq_const(VariableStatData *vardata,
