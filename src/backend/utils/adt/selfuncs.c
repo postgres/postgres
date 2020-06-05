@@ -88,11 +88,7 @@
  * (if any) is passed using the standard fmgr mechanism, so that the estimator
  * function can fetch it with PG_GET_COLLATION().  Note, however, that all
  * statistics in pg_statistic are currently built using the relevant column's
- * collation.  Thus, in most cases where we are looking at statistics, we
- * should ignore the operator collation and use the stats entry's collation.
- * We expect that the error induced by doing this is usually not large enough
- * to justify complicating matters.  In any case, doing otherwise would yield
- * entirely garbage results for ordered stats data such as histograms.
+ * collation.
  *----------
  */
 
@@ -149,14 +145,14 @@ get_relation_stats_hook_type get_relation_stats_hook = NULL;
 get_index_stats_hook_type get_index_stats_hook = NULL;
 
 static double eqsel_internal(PG_FUNCTION_ARGS, bool negate);
-static double eqjoinsel_inner(Oid opfuncoid,
+static double eqjoinsel_inner(Oid opfuncoid, Oid collation,
 							  VariableStatData *vardata1, VariableStatData *vardata2,
 							  double nd1, double nd2,
 							  bool isdefault1, bool isdefault2,
 							  AttStatsSlot *sslot1, AttStatsSlot *sslot2,
 							  Form_pg_statistic stats1, Form_pg_statistic stats2,
 							  bool have_mcvs1, bool have_mcvs2);
-static double eqjoinsel_semi(Oid opfuncoid,
+static double eqjoinsel_semi(Oid opfuncoid, Oid collation,
 							 VariableStatData *vardata1, VariableStatData *vardata2,
 							 double nd1, double nd2,
 							 bool isdefault1, bool isdefault2,
@@ -194,10 +190,11 @@ static double convert_timevalue_to_scalar(Datum value, Oid typid,
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 									VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
-							   Oid sortop, Datum *min, Datum *max);
+							   Oid sortop, Oid collation,
+							   Datum *min, Datum *max);
 static bool get_actual_variable_range(PlannerInfo *root,
 									  VariableStatData *vardata,
-									  Oid sortop,
+									  Oid sortop, Oid collation,
 									  Datum *min, Datum *max);
 static bool get_actual_variable_endpoint(Relation heapRel,
 										 Relation indexRel,
@@ -235,6 +232,7 @@ eqsel_internal(PG_FUNCTION_ARGS, bool negate)
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
+	Oid			collation = PG_GET_COLLATION();
 	VariableStatData vardata;
 	Node	   *other;
 	bool		varonleft;
@@ -268,12 +266,12 @@ eqsel_internal(PG_FUNCTION_ARGS, bool negate)
 	 * in the query.)
 	 */
 	if (IsA(other, Const))
-		selec = var_eq_const(&vardata, operator,
+		selec = var_eq_const(&vardata, operator, collation,
 							 ((Const *) other)->constvalue,
 							 ((Const *) other)->constisnull,
 							 varonleft, negate);
 	else
-		selec = var_eq_non_const(&vardata, operator, other,
+		selec = var_eq_non_const(&vardata, operator, collation, other,
 								 varonleft, negate);
 
 	ReleaseVariableStats(vardata);
@@ -287,7 +285,7 @@ eqsel_internal(PG_FUNCTION_ARGS, bool negate)
  * This is exported so that some other estimation functions can use it.
  */
 double
-var_eq_const(VariableStatData *vardata, Oid operator,
+var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
 			 Datum constval, bool constisnull,
 			 bool varonleft, bool negate)
 {
@@ -356,7 +354,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
 			 * eqproc returns NULL, though really equality functions should
 			 * never do that.
 			 */
-			InitFunctionCallInfoData(*fcinfo, &eqproc, 2, sslot.stacoll,
+			InitFunctionCallInfoData(*fcinfo, &eqproc, 2, collation,
 									 NULL, NULL);
 			fcinfo->args[0].isnull = false;
 			fcinfo->args[1].isnull = false;
@@ -458,7 +456,7 @@ var_eq_const(VariableStatData *vardata, Oid operator,
  * This is exported so that some other estimation functions can use it.
  */
 double
-var_eq_non_const(VariableStatData *vardata, Oid operator,
+var_eq_non_const(VariableStatData *vardata, Oid operator, Oid collation,
 				 Node *other,
 				 bool varonleft, bool negate)
 {
@@ -573,6 +571,7 @@ neqsel(PG_FUNCTION_ARGS)
  */
 static double
 scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
+			  Oid collation,
 			  VariableStatData *vardata, Datum constval, Oid consttype)
 {
 	Form_pg_statistic stats;
@@ -672,7 +671,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 	 * to the result selectivity.  Also add up the total fraction represented
 	 * by MCV entries.
 	 */
-	mcv_selec = mcv_selectivity(vardata, &opproc, constval, true,
+	mcv_selec = mcv_selectivity(vardata, &opproc, collation, constval, true,
 								&sumcommon);
 
 	/*
@@ -681,6 +680,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 	 */
 	hist_selec = ineq_histogram_selectivity(root, vardata,
 											&opproc, isgt, iseq,
+											collation,
 											constval, consttype);
 
 	/*
@@ -722,7 +722,7 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
  * if there is no MCV list.
  */
 double
-mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
+mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc, Oid collation,
 				Datum constval, bool varonleft,
 				double *sumcommonp)
 {
@@ -749,7 +749,7 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 		 * operators that can return NULL.  A small side benefit is to not
 		 * need to re-initialize the fcinfo struct from scratch each time.
 		 */
-		InitFunctionCallInfoData(*fcinfo, opproc, 2, sslot.stacoll,
+		InitFunctionCallInfoData(*fcinfo, opproc, 2, collation,
 								 NULL, NULL);
 		fcinfo->args[0].isnull = false;
 		fcinfo->args[1].isnull = false;
@@ -813,7 +813,8 @@ mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  * prudent to clamp the result range, ie, disbelieve exact 0 or 1 outputs.
  */
 double
-histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
+histogram_selectivity(VariableStatData *vardata,
+					  FmgrInfo *opproc, Oid collation,
 					  Datum constval, bool varonleft,
 					  int min_hist_size, int n_skip,
 					  int *hist_size)
@@ -846,7 +847,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 			 * is to not need to re-initialize the fcinfo struct from scratch
 			 * each time.
 			 */
-			InitFunctionCallInfoData(*fcinfo, opproc, 2, sslot.stacoll,
+			InitFunctionCallInfoData(*fcinfo, opproc, 2, collation,
 									 NULL, NULL);
 			fcinfo->args[0].isnull = false;
 			fcinfo->args[1].isnull = false;
@@ -903,7 +904,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  * Otherwise, fall back to the default selectivity provided by the caller.
  */
 double
-generic_restriction_selectivity(PlannerInfo *root, Oid oproid,
+generic_restriction_selectivity(PlannerInfo *root, Oid oproid, Oid collation,
 								List *args, int varRelid,
 								double default_selectivity)
 {
@@ -946,7 +947,8 @@ generic_restriction_selectivity(PlannerInfo *root, Oid oproid,
 		/*
 		 * Calculate the selectivity for the column's most common values.
 		 */
-		mcvsel = mcv_selectivity(&vardata, &opproc, constval, varonleft,
+		mcvsel = mcv_selectivity(&vardata, &opproc, collation,
+								 constval, varonleft,
 								 &mcvsum);
 
 		/*
@@ -955,7 +957,7 @@ generic_restriction_selectivity(PlannerInfo *root, Oid oproid,
 		 * population.  Otherwise use the default selectivity for the non-MCV
 		 * population.
 		 */
-		selec = histogram_selectivity(&vardata, &opproc,
+		selec = histogram_selectivity(&vardata, &opproc, collation,
 									  constval, varonleft,
 									  10, 1, &hist_size);
 		if (selec < 0)
@@ -1029,6 +1031,7 @@ double
 ineq_histogram_selectivity(PlannerInfo *root,
 						   VariableStatData *vardata,
 						   FmgrInfo *opproc, bool isgt, bool iseq,
+						   Oid collation,
 						   Datum constval, Oid consttype)
 {
 	double		hist_selec;
@@ -1042,9 +1045,11 @@ ineq_histogram_selectivity(PlannerInfo *root,
 	 * column type.  However, to make that work we will need to figure out
 	 * which staop to search for --- it's not necessarily the one we have at
 	 * hand!  (For example, we might have a '<=' operator rather than the '<'
-	 * operator that will appear in staop.)  For now, assume that whatever
-	 * appears in pg_statistic is sorted the same way our operator sorts, or
-	 * the reverse way if isgt is true.
+	 * operator that will appear in staop.)  The collation might not agree
+	 * either.  For now, just assume that whatever appears in pg_statistic is
+	 * sorted the same way our operator sorts, or the reverse way if isgt is
+	 * true.  This could result in a bogus estimate, but it still seems better
+	 * than falling back to the default estimate.
 	 */
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
@@ -1090,6 +1095,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				have_end = get_actual_variable_range(root,
 													 vardata,
 													 sslot.staop,
+													 collation,
 													 &sslot.values[0],
 													 &sslot.values[1]);
 
@@ -1107,17 +1113,19 @@ ineq_histogram_selectivity(PlannerInfo *root,
 					have_end = get_actual_variable_range(root,
 														 vardata,
 														 sslot.staop,
+														 collation,
 														 &sslot.values[0],
 														 NULL);
 				else if (probe == sslot.nvalues - 1 && sslot.nvalues > 2)
 					have_end = get_actual_variable_range(root,
 														 vardata,
 														 sslot.staop,
+														 collation,
 														 NULL,
 														 &sslot.values[probe]);
 
 				ltcmp = DatumGetBool(FunctionCall2Coll(opproc,
-													   sslot.stacoll,
+													   collation,
 													   sslot.values[probe],
 													   constval));
 				if (isgt)
@@ -1202,7 +1210,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 * values to a uniform comparison scale, and do a linear
 				 * interpolation within this bin.
 				 */
-				if (convert_to_scalar(constval, consttype, sslot.stacoll,
+				if (convert_to_scalar(constval, consttype, collation,
 									  &val,
 									  sslot.values[i - 1], sslot.values[i],
 									  vardata->vartype,
@@ -1342,6 +1350,7 @@ scalarineqsel_wrapper(PG_FUNCTION_ARGS, bool isgt, bool iseq)
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
+	Oid			collation = PG_GET_COLLATION();
 	VariableStatData vardata;
 	Node	   *other;
 	bool		varonleft;
@@ -1394,7 +1403,7 @@ scalarineqsel_wrapper(PG_FUNCTION_ARGS, bool isgt, bool iseq)
 	}
 
 	/* The rest of the work is done by scalarineqsel(). */
-	selec = scalarineqsel(root, operator, isgt, iseq,
+	selec = scalarineqsel(root, operator, isgt, iseq, collation,
 						  &vardata, constval, consttype);
 
 	ReleaseVariableStats(vardata);
@@ -1459,7 +1468,7 @@ boolvarsel(PlannerInfo *root, Node *arg, int varRelid)
 		 * A boolean variable V is equivalent to the clause V = 't', so we
 		 * compute the selectivity as if that is what we have.
 		 */
-		selec = var_eq_const(&vardata, BooleanEqualOperator,
+		selec = var_eq_const(&vardata, BooleanEqualOperator, InvalidOid,
 							 BoolGetDatum(true), false, true, false);
 	}
 	else
@@ -2185,6 +2194,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
 #endif
 	SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) PG_GETARG_POINTER(4);
+	Oid			collation = PG_GET_COLLATION();
 	double		selec;
 	double		selec_inner;
 	VariableStatData vardata1;
@@ -2235,7 +2245,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	}
 
 	/* We need to compute the inner-join selectivity in all cases */
-	selec_inner = eqjoinsel_inner(opfuncoid,
+	selec_inner = eqjoinsel_inner(opfuncoid, collation,
 								  &vardata1, &vardata2,
 								  nd1, nd2,
 								  isdefault1, isdefault2,
@@ -2262,7 +2272,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			inner_rel = find_join_input_rel(root, sjinfo->min_righthand);
 
 			if (!join_is_reversed)
-				selec = eqjoinsel_semi(opfuncoid,
+				selec = eqjoinsel_semi(opfuncoid, collation,
 									   &vardata1, &vardata2,
 									   nd1, nd2,
 									   isdefault1, isdefault2,
@@ -2275,7 +2285,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 				Oid			commop = get_commutator(operator);
 				Oid			commopfuncoid = OidIsValid(commop) ? get_opcode(commop) : InvalidOid;
 
-				selec = eqjoinsel_semi(commopfuncoid,
+				selec = eqjoinsel_semi(commopfuncoid, collation,
 									   &vardata2, &vardata1,
 									   nd2, nd1,
 									   isdefault2, isdefault1,
@@ -2323,7 +2333,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
  * that it's worth trying to distinguish them here.
  */
 static double
-eqjoinsel_inner(Oid opfuncoid,
+eqjoinsel_inner(Oid opfuncoid, Oid collation,
 				VariableStatData *vardata1, VariableStatData *vardata2,
 				double nd1, double nd2,
 				bool isdefault1, bool isdefault2,
@@ -2373,7 +2383,7 @@ eqjoinsel_inner(Oid opfuncoid,
 		 * returns NULL, though really equality functions should never do
 		 * that.
 		 */
-		InitFunctionCallInfoData(*fcinfo, &eqproc, 2, sslot1->stacoll,
+		InitFunctionCallInfoData(*fcinfo, &eqproc, 2, collation,
 								 NULL, NULL);
 		fcinfo->args[0].isnull = false;
 		fcinfo->args[1].isnull = false;
@@ -2520,7 +2530,7 @@ eqjoinsel_inner(Oid opfuncoid,
  * Unlike eqjoinsel_inner, we have to cope with opfuncoid being InvalidOid.
  */
 static double
-eqjoinsel_semi(Oid opfuncoid,
+eqjoinsel_semi(Oid opfuncoid, Oid collation,
 			   VariableStatData *vardata1, VariableStatData *vardata2,
 			   double nd1, double nd2,
 			   bool isdefault1, bool isdefault2,
@@ -2603,7 +2613,7 @@ eqjoinsel_semi(Oid opfuncoid,
 		 * returns NULL, though really equality functions should never do
 		 * that.
 		 */
-		InitFunctionCallInfoData(*fcinfo, &eqproc, 2, sslot1->stacoll,
+		InitFunctionCallInfoData(*fcinfo, &eqproc, 2, collation,
 								 NULL, NULL);
 		fcinfo->args[0].isnull = false;
 		fcinfo->args[1].isnull = false;
@@ -2851,6 +2861,7 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	Oid			op_lefttype;
 	Oid			op_righttype;
 	Oid			opno,
+				collation,
 				lsortop,
 				rsortop,
 				lstatop,
@@ -2875,6 +2886,7 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	if (!is_opclause(clause))
 		return;					/* shouldn't happen */
 	opno = ((OpExpr *) clause)->opno;
+	collation = ((OpExpr *) clause)->inputcollid;
 	left = get_leftop((Expr *) clause);
 	right = get_rightop((Expr *) clause);
 	if (!right)
@@ -3008,20 +3020,20 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	/* Try to get ranges of both inputs */
 	if (!isgt)
 	{
-		if (!get_variable_range(root, &leftvar, lstatop,
+		if (!get_variable_range(root, &leftvar, lstatop, collation,
 								&leftmin, &leftmax))
 			goto fail;			/* no range available from stats */
-		if (!get_variable_range(root, &rightvar, rstatop,
+		if (!get_variable_range(root, &rightvar, rstatop, collation,
 								&rightmin, &rightmax))
 			goto fail;			/* no range available from stats */
 	}
 	else
 	{
 		/* need to swap the max and min */
-		if (!get_variable_range(root, &leftvar, lstatop,
+		if (!get_variable_range(root, &leftvar, lstatop, collation,
 								&leftmax, &leftmin))
 			goto fail;			/* no range available from stats */
-		if (!get_variable_range(root, &rightvar, rstatop,
+		if (!get_variable_range(root, &rightvar, rstatop, collation,
 								&rightmax, &rightmin))
 			goto fail;			/* no range available from stats */
 	}
@@ -3031,13 +3043,13 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	 * fraction that's <= the right-side maximum value.  But only believe
 	 * non-default estimates, else stick with our 1.0.
 	 */
-	selec = scalarineqsel(root, leop, isgt, true, &leftvar,
+	selec = scalarineqsel(root, leop, isgt, true, collation, &leftvar,
 						  rightmax, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*leftend = selec;
 
 	/* And similarly for the right variable. */
-	selec = scalarineqsel(root, revleop, isgt, true, &rightvar,
+	selec = scalarineqsel(root, revleop, isgt, true, collation, &rightvar,
 						  leftmax, op_lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*rightend = selec;
@@ -3061,13 +3073,13 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	 * minimum value.  But only believe non-default estimates, else stick with
 	 * our own default.
 	 */
-	selec = scalarineqsel(root, ltop, isgt, false, &leftvar,
+	selec = scalarineqsel(root, ltop, isgt, false, collation, &leftvar,
 						  rightmin, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*leftstart = selec;
 
 	/* And similarly for the right variable. */
-	selec = scalarineqsel(root, revltop, isgt, false, &rightvar,
+	selec = scalarineqsel(root, revltop, isgt, false, collation, &rightvar,
 						  leftmin, op_lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*rightstart = selec;
@@ -3147,10 +3159,11 @@ matchingsel(PG_FUNCTION_ARGS)
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
+	Oid			collation = PG_GET_COLLATION();
 	double		selec;
 
 	/* Use generic restriction selectivity logic. */
-	selec = generic_restriction_selectivity(root, operator,
+	selec = generic_restriction_selectivity(root, operator, collation,
 											args, varRelid,
 											DEFAULT_MATCHING_SEL);
 
@@ -5337,9 +5350,11 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
  *
  * sortop is the "<" comparison operator to use.  This should generally
  * be "<" not ">", as only the former is likely to be found in pg_statistic.
+ * The collation must be specified too.
  */
 static bool
-get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
+get_variable_range(PlannerInfo *root, VariableStatData *vardata,
+				   Oid sortop, Oid collation,
 				   Datum *min, Datum *max)
 {
 	Datum		tmin = 0;
@@ -5359,7 +5374,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	 * before enabling this.
 	 */
 #ifdef NOT_USED
-	if (get_actual_variable_range(root, vardata, sortop, min, max))
+	if (get_actual_variable_range(root, vardata, sortop, collation, min, max))
 		return true;
 #endif
 
@@ -5387,7 +5402,7 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 	 *
 	 * If there is a histogram that is sorted with some other operator than
 	 * the one we want, fail --- this suggests that there is data we can't
-	 * use.
+	 * use.  XXX consider collation too.
 	 */
 	if (get_attstatsslot(&sslot, vardata->statsTuple,
 						 STATISTIC_KIND_HISTOGRAM, sortop,
@@ -5434,14 +5449,14 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
 				continue;
 			}
 			if (DatumGetBool(FunctionCall2Coll(&opproc,
-											   sslot.stacoll,
+											   collation,
 											   sslot.values[i], tmin)))
 			{
 				tmin = sslot.values[i];
 				tmin_is_mcv = true;
 			}
 			if (DatumGetBool(FunctionCall2Coll(&opproc,
-											   sslot.stacoll,
+											   collation,
 											   tmax, sslot.values[i])))
 			{
 				tmax = sslot.values[i];
@@ -5471,10 +5486,11 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
  *		If no data available, return false.
  *
  * sortop is the "<" comparison operator to use.
+ * collation is the required collation.
  */
 static bool
 get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
-						  Oid sortop,
+						  Oid sortop, Oid collation,
 						  Datum *min, Datum *max)
 {
 	bool		have_data = false;
@@ -5514,9 +5530,11 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			continue;
 
 		/*
-		 * The first index column must match the desired variable and sort
-		 * operator --- but we can use a descending-order index.
+		 * The first index column must match the desired variable, sortop, and
+		 * collation --- but we can use a descending-order index.
 		 */
+		if (collation != index->indexcollations[0])
+			continue;			/* test first 'cause it's cheapest */
 		if (!match_index_to_operand(vardata->var, 0, index))
 			continue;
 		switch (get_op_opfamily_strategy(sortop, index->sortopfamily[0]))

@@ -92,6 +92,7 @@ static Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 static Selectivity prefix_selectivity(PlannerInfo *root,
 									  VariableStatData *vardata,
 									  Oid eqopr, Oid ltopr, Oid geopr,
+									  Oid collation,
 									  Const *prefixcon);
 static Selectivity like_selectivity(const char *patt, int pattlen,
 									bool case_insensitive);
@@ -534,12 +535,6 @@ patternsel_common(PlannerInfo *root,
 	 * something binary-compatible but different.)	We can use it to identify
 	 * the comparison operators and the required type of the comparison
 	 * constant, much as in match_pattern_prefix().
-	 *
-	 * NOTE: this logic does not consider collations.  Ideally we'd force use
-	 * of "C" collation, but since ANALYZE only generates statistics for the
-	 * column's specified collation, we have little choice but to use those.
-	 * But our results are so approximate anyway that it probably hardly
-	 * matters.
 	 */
 	vartype = vardata.vartype;
 
@@ -622,7 +617,7 @@ patternsel_common(PlannerInfo *root,
 		/*
 		 * Pattern specifies an exact match, so estimate as for '='
 		 */
-		result = var_eq_const(&vardata, eqopr, prefix->constvalue,
+		result = var_eq_const(&vardata, eqopr, collation, prefix->constvalue,
 							  false, true, false);
 	}
 	else
@@ -654,7 +649,8 @@ patternsel_common(PlannerInfo *root,
 			opfuncid = get_opcode(oprid);
 		fmgr_info(opfuncid, &opproc);
 
-		selec = histogram_selectivity(&vardata, &opproc, constval, true,
+		selec = histogram_selectivity(&vardata, &opproc, collation,
+									  constval, true,
 									  10, 1, &hist_size);
 
 		/* If not at least 100 entries, use the heuristic method */
@@ -666,6 +662,7 @@ patternsel_common(PlannerInfo *root,
 			if (pstatus == Pattern_Prefix_Partial)
 				prefixsel = prefix_selectivity(root, &vardata,
 											   eqopr, ltopr, geopr,
+											   collation,
 											   prefix);
 			else
 				prefixsel = 1.0;
@@ -698,7 +695,8 @@ patternsel_common(PlannerInfo *root,
 		 * directly to the result selectivity.  Also add up the total fraction
 		 * represented by MCV entries.
 		 */
-		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
+		mcv_selec = mcv_selectivity(&vardata, &opproc, collation,
+									constval, true,
 									&sumcommon);
 
 		/*
@@ -1196,7 +1194,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
  * population represented by the histogram --- the caller must fold this
  * together with info about MCVs and NULLs.
  *
- * We use the specified btree comparison operators to do the estimation.
+ * We use the given comparison operators and collation to do the estimation.
  * The given variable and Const must be of the associated datatype(s).
  *
  * XXX Note: we make use of the upper bound to estimate operator selectivity
@@ -1207,11 +1205,11 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
 static Selectivity
 prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 				   Oid eqopr, Oid ltopr, Oid geopr,
+				   Oid collation,
 				   Const *prefixcon)
 {
 	Selectivity prefixsel;
 	FmgrInfo	opproc;
-	AttStatsSlot sslot;
 	Const	   *greaterstrcon;
 	Selectivity eq_sel;
 
@@ -1220,6 +1218,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 
 	prefixsel = ineq_histogram_selectivity(root, vardata,
 										   &opproc, true, true,
+										   collation,
 										   prefixcon->constvalue,
 										   prefixcon->consttype);
 
@@ -1229,27 +1228,18 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 		return DEFAULT_MATCH_SEL;
 	}
 
-	/*-------
-	 * If we can create a string larger than the prefix, say
-	 * "x < greaterstr".  We try to generate the string referencing the
-	 * collation of the var's statistics, but if that's not available,
-	 * use DEFAULT_COLLATION_OID.
-	 *-------
+	/*
+	 * If we can create a string larger than the prefix, say "x < greaterstr".
 	 */
-	if (HeapTupleIsValid(vardata->statsTuple) &&
-		get_attstatsslot(&sslot, vardata->statsTuple,
-						 STATISTIC_KIND_HISTOGRAM, InvalidOid, 0))
-		 /* sslot.stacoll is set up */ ;
-	else
-		sslot.stacoll = DEFAULT_COLLATION_OID;
 	fmgr_info(get_opcode(ltopr), &opproc);
-	greaterstrcon = make_greater_string(prefixcon, &opproc, sslot.stacoll);
+	greaterstrcon = make_greater_string(prefixcon, &opproc, collation);
 	if (greaterstrcon)
 	{
 		Selectivity topsel;
 
 		topsel = ineq_histogram_selectivity(root, vardata,
 											&opproc, false, false,
+											collation,
 											greaterstrcon->constvalue,
 											greaterstrcon->consttype);
 
@@ -1278,7 +1268,7 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	 * probably off the end of the histogram, and thus we probably got a very
 	 * small estimate from the >= condition; so we still need to clamp.
 	 */
-	eq_sel = var_eq_const(vardata, eqopr, prefixcon->constvalue,
+	eq_sel = var_eq_const(vardata, eqopr, collation, prefixcon->constvalue,
 						  false, true, false);
 
 	prefixsel = Max(prefixsel, eq_sel);

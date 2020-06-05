@@ -137,7 +137,8 @@ networksel(PG_FUNCTION_ARGS)
 	 * by MCV entries.
 	 */
 	fmgr_info(get_opcode(operator), &proc);
-	mcv_selec = mcv_selectivity(&vardata, &proc, constvalue, varonleft,
+	mcv_selec = mcv_selectivity(&vardata, &proc, InvalidOid,
+								constvalue, varonleft,
 								&sumcommon);
 
 	/*

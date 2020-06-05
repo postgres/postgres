@@ -582,7 +582,7 @@ ltreeparentsel(PG_FUNCTION_ARGS)
 	double		selec;
 
 	/* Use generic restriction selectivity logic, with default 0.001. */
-	selec = generic_restriction_selectivity(root, operator,
+	selec = generic_restriction_selectivity(root, operator, InvalidOid,
 											args, varRelid,
 											0.001);
 
