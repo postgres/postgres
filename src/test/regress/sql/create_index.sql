@@ -866,6 +866,17 @@ REINDEX TABLE CONCURRENTLY concur_clustered;
 SELECT indexrelid::regclass, indisclustered FROM pg_index
   WHERE indrelid = 'concur_clustered'::regclass;
 DROP TABLE concur_clustered;
+-- Check that indisreplident updates are preserved.
+CREATE TABLE concur_replident(i int NOT NULL);
+CREATE UNIQUE INDEX concur_replident_i_idx ON concur_replident(i);
+ALTER TABLE concur_replident REPLICA IDENTITY
+  USING INDEX concur_replident_i_idx;
+SELECT indexrelid::regclass, indisreplident FROM pg_index
+  WHERE indrelid = 'concur_replident'::regclass;
+REINDEX TABLE CONCURRENTLY concur_replident;
+SELECT indexrelid::regclass, indisreplident FROM pg_index
+  WHERE indrelid = 'concur_replident'::regclass;
+DROP TABLE concur_replident;
 
 -- Partitions
 -- Create some partitioned tables
