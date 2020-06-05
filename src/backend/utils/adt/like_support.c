@@ -90,7 +90,9 @@ static Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 												  Selectivity *rest_selec);
 static Selectivity prefix_selectivity(PlannerInfo *root,
 									  VariableStatData *vardata,
-									  Oid vartype, Oid opfamily, Const *prefixcon);
+									  Oid vartype, Oid opfamily,
+									  Oid collation,
+									  Const *prefixcon);
 static Selectivity like_selectivity(const char *patt, int pattlen,
 									bool case_insensitive);
 static Selectivity regex_selectivity(const char *patt, int pattlen,
@@ -586,8 +588,8 @@ patternsel_common(PlannerInfo *root,
 
 		if (eqopr == InvalidOid)
 			elog(ERROR, "no = operator for opfamily %u", opfamily);
-		result = var_eq_const(&vardata, eqopr, prefix->constvalue,
-							  false, true, false);
+		result = var_eq_const_ext(&vardata, eqopr, collation,
+								  prefix->constvalue, false, true, false);
 	}
 	else
 	{
@@ -618,8 +620,9 @@ patternsel_common(PlannerInfo *root,
 			opfuncid = get_opcode(oprid);
 		fmgr_info(opfuncid, &opproc);
 
-		selec = histogram_selectivity(&vardata, &opproc, constval, true,
-									  10, 1, &hist_size);
+		selec = histogram_selectivity_ext(&vardata, &opproc, collation,
+										  constval, true,
+										  10, 1, &hist_size);
 
 		/* If not at least 100 entries, use the heuristic method */
 		if (hist_size < 100)
@@ -629,7 +632,7 @@ patternsel_common(PlannerInfo *root,
 
 			if (pstatus == Pattern_Prefix_Partial)
 				prefixsel = prefix_selectivity(root, &vardata, vartype,
-											   opfamily, prefix);
+											   opfamily, collation, prefix);
 			else
 				prefixsel = 1.0;
 			heursel = prefixsel * rest_selec;
@@ -661,8 +664,9 @@ patternsel_common(PlannerInfo *root,
 		 * directly to the result selectivity.  Also add up the total fraction
 		 * represented by MCV entries.
 		 */
-		mcv_selec = mcv_selectivity(&vardata, &opproc, constval, true,
-									&sumcommon);
+		mcv_selec = mcv_selectivity_ext(&vardata, &opproc, collation,
+										constval, true,
+										&sumcommon);
 
 		/*
 		 * Now merge the results from the MCV and histogram calculations,
@@ -1170,12 +1174,13 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
  */
 static Selectivity
 prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
-				   Oid vartype, Oid opfamily, Const *prefixcon)
+				   Oid vartype, Oid opfamily,
+				   Oid collation,
+				   Const *prefixcon)
 {
 	Selectivity prefixsel;
 	Oid			cmpopr;
 	FmgrInfo	opproc;
-	AttStatsSlot sslot;
 	Const	   *greaterstrcon;
 	Selectivity eq_sel;
 
@@ -1185,10 +1190,11 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
 
-	prefixsel = ineq_histogram_selectivity(root, vardata,
-										   &opproc, true, true,
-										   prefixcon->constvalue,
-										   prefixcon->consttype);
+	prefixsel = ineq_histogram_selectivity_ext(root, vardata,
+											   &opproc, true, true,
+											   collation,
+											   prefixcon->constvalue,
+											   prefixcon->consttype);
 
 	if (prefixsel < 0.0)
 	{
@@ -1196,33 +1202,24 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 		return DEFAULT_MATCH_SEL;
 	}
 
-	/*-------
-	 * If we can create a string larger than the prefix, say
-	 * "x < greaterstr".  We try to generate the string referencing the
-	 * collation of the var's statistics, but if that's not available,
-	 * use DEFAULT_COLLATION_OID.
-	 *-------
+	/*
+	 * If we can create a string larger than the prefix, say "x < greaterstr".
 	 */
-	if (HeapTupleIsValid(vardata->statsTuple) &&
-		get_attstatsslot(&sslot, vardata->statsTuple,
-						 STATISTIC_KIND_HISTOGRAM, InvalidOid, 0))
-		 /* sslot.stacoll is set up */ ;
-	else
-		sslot.stacoll = DEFAULT_COLLATION_OID;
 	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
 								 BTLessStrategyNumber);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no < operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
-	greaterstrcon = make_greater_string(prefixcon, &opproc, sslot.stacoll);
+	greaterstrcon = make_greater_string(prefixcon, &opproc, collation);
 	if (greaterstrcon)
 	{
 		Selectivity topsel;
 
-		topsel = ineq_histogram_selectivity(root, vardata,
-											&opproc, false, false,
-											greaterstrcon->constvalue,
-											greaterstrcon->consttype);
+		topsel = ineq_histogram_selectivity_ext(root, vardata,
+												&opproc, false, false,
+												collation,
+												greaterstrcon->constvalue,
+												greaterstrcon->consttype);
 
 		/* ineq_histogram_selectivity worked before, it shouldn't fail now */
 		Assert(topsel >= 0.0);
@@ -1253,8 +1250,8 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 								 BTEqualStrategyNumber);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no = operator for opfamily %u", opfamily);
-	eq_sel = var_eq_const(vardata, cmpopr, prefixcon->constvalue,
-						  false, true, false);
+	eq_sel = var_eq_const_ext(vardata, cmpopr, collation, prefixcon->constvalue,
+							  false, true, false);
 
 	prefixsel = Max(prefixsel, eq_sel);
 

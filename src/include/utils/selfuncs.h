@@ -143,17 +143,36 @@ extern double get_variable_numdistinct(VariableStatData *vardata,
 extern double mcv_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 							  Datum constval, bool varonleft,
 							  double *sumcommonp);
+extern double mcv_selectivity_ext(VariableStatData *vardata,
+								  FmgrInfo *opproc, Oid collation,
+								  Datum constval, bool varonleft,
+								  double *sumcommonp);
 extern double histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 									Datum constval, bool varonleft,
 									int min_hist_size, int n_skip,
 									int *hist_size);
+extern double histogram_selectivity_ext(VariableStatData *vardata,
+										FmgrInfo *opproc, Oid collation,
+										Datum constval, bool varonleft,
+										int min_hist_size, int n_skip,
+										int *hist_size);
 extern double ineq_histogram_selectivity(PlannerInfo *root,
 										 VariableStatData *vardata,
 										 FmgrInfo *opproc, bool isgt, bool iseq,
 										 Datum constval, Oid consttype);
+extern double ineq_histogram_selectivity_ext(PlannerInfo *root,
+											 VariableStatData *vardata,
+											 FmgrInfo *opproc,
+											 bool isgt, bool iseq,
+											 Oid collation,
+											 Datum constval, Oid consttype);
 extern double var_eq_const(VariableStatData *vardata, Oid oproid,
 						   Datum constval, bool constisnull,
 						   bool varonleft, bool negate);
+extern double var_eq_const_ext(VariableStatData *vardata,
+							   Oid oproid, Oid collation,
+							   Datum constval, bool constisnull,
+							   bool varonleft, bool negate);
 extern double var_eq_non_const(VariableStatData *vardata, Oid oproid,
 							   Node *other,
 							   bool varonleft, bool negate);
