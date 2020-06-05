@@ -74,7 +74,7 @@ ssl/server-ss.crt: ssl/server-cn-only.key ssl/server-cn-only.crt server-cn-only.
 
 # Password-protected version of server-cn-only.key
 ssl/server-password.key: ssl/server-cn-only.key
-	openssl rsa -des -in $< -out $@ -passout 'pass:secret1'
+	openssl rsa -aes256 -in $< -out $@ -passout 'pass:secret1'
 
 # Client certificate, signed by the client CA:
 ssl/client.crt: ssl/client.key ssl/client_ca.crt
