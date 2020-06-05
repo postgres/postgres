@@ -3164,7 +3164,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
  {bar}
  {baz}
 </programlisting>
-        (2 rows in result)
        </para></entry>
       </row>
 
@@ -3225,7 +3224,6 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
  hello
  world
 </programlisting>
-        (2 rows in result)
        </para></entry>
       </row>
 
@@ -17821,7 +17819,6 @@ SELECT NULLIF(value, '(none)') ...
  1
  2
 </programlisting>
-        (2 rows in result)
        </para></entry>
       </row>
 
