@@ -2319,7 +2319,7 @@ Author: Author: Fujii Masao <fujii@postgresql.org>
 
       <para>
        This computation allows <link
-       linkend="monitoring-stats-dynamic-views-table"><structname>pg_stat_progress_analyze</structname></link>
+       linkend="monitoring-stats-dynamic-views-table"><structname>pg_stat_progress_basebackup</structname></link>
        to show progress, and can be disabled by using the
        <option>--no-estimate-size</option> option.  Previously, this
        computation happened only if <option>--progress</option> was used.
