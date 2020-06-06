@@ -6,7 +6,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    mainloop.c psqlscanslash.c startup.c \
                    describe.c sql_help.h sql_help.c \
                    tab-complete.c variables.c \
-                   ../../fe_utils/print.c ../../fe_utils/psqlscan.c \
+                   ../../fe_utils/cancel.c ../../fe_utils/print.c ../../fe_utils/psqlscan.c \
                    ../../common/exec.c ../../common/fe_memutils.c ../../common/username.c \
                    ../../common/wait_error.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
