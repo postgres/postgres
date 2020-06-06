@@ -45,7 +45,7 @@
 	padding_XLogRecData_CRC
 	Memcheck:Value8
 
-	fun:pg_comp_crc32c
+	fun:pg_comp_crc32c*
 	fun:XLogRecordAssemble
 }
 
@@ -89,7 +89,7 @@
 {
 	padding_twophase_CRC
 	Memcheck:Value8
-	fun:pg_comp_crc32c
+	fun:pg_comp_crc32c*
 	fun:EndPrepare
 }
 
