@@ -332,7 +332,7 @@ typedef struct SPITupleTable
     SubTransactionId subid;     /* subxact in which tuptable was created */
 } SPITupleTable;
 </programlisting>
-   <structfield>tupdesc</structfield>,
+   The fields <structfield>tupdesc</structfield>,
    <structfield>vals</structfield>, and
    <structfield>numvals</structfield>
    can be used by SPI callers; the remaining fields are internal.

@@ -1413,7 +1413,7 @@ SELECT name FROM distributors ORDER BY code;
 LIMIT { <replaceable class="parameter">count</replaceable> | ALL }
 OFFSET <replaceable class="parameter">start</replaceable>
 </synopsis>
-    <replaceable class="parameter">count</replaceable> specifies the
+    The parameter <replaceable class="parameter">count</replaceable> specifies the
     maximum number of rows to return, while <replaceable
     class="parameter">start</replaceable> specifies the number of rows
     to skip before starting to return rows.  When both are specified,
@@ -1941,8 +1941,7 @@ SELECT 2+2;
     following query is invalid:
 <programlisting>
 SELECT distributors.* WHERE distributors.name = 'Westward';
-</programlisting>
-    <productname>PostgreSQL</productname> releases prior to
+</programlisting><productname>PostgreSQL</productname> releases prior to
     8.1 would accept queries of this form, and add an implicit entry
     to the query's <literal>FROM</literal> clause for each table
     referenced by the query. This is no longer allowed.

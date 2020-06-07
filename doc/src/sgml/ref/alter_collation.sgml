@@ -149,8 +149,7 @@ SELECT pg_describe_object(refclassid, refobjid, refobjsubid) AS "Collation",
        ON refclassid = 'pg_collation'::regclass AND refobjid = c.oid
   WHERE c.collversion <> pg_collation_actual_version(c.oid)
   ORDER BY 1, 2;
-]]></programlisting>
-  </para>
+]]></programlisting></para>
  </refsect1>
 
  <refsect1>

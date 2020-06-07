@@ -229,8 +229,7 @@ CREATE LANGUAGE plsample
    and users would do this to install the extension:
 <programlisting>
 CREATE EXTENSION plsample;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-createlanguage-compat">

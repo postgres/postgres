@@ -146,8 +146,7 @@ psql &lt;&lt;EOF
 \x
 SELECT * FROM foo;
 EOF
-</programlisting>
-      </para>
+</programlisting></para>
       </listitem>
     </varlistentry>
 
@@ -4825,7 +4824,6 @@ peter@localhost testdb=&gt; SELECT * FROM my_table;
      3 | three
      4 | four
 (4 rows)
-
 </programlisting>
   You can display tables in different ways by using the
   <command>\pset</command> command:
@@ -4955,9 +4953,7 @@ testdb(&gt; <userinput>\crosstabview "A" "B" "AxB" ord</userinput>
  2 | 202 | 204 | 206 | 208
  1 | 101 | 102 | 103 | 104
 (4 rows)
-</programlisting>
-
-</para>
+</programlisting></para>
 
  </refsect1>
 

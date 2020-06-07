@@ -341,8 +341,7 @@ PostgreSQL documentation
            </para>
           </listitem>
          </varlistentry>
-        </variablelist>
-       </para>
+        </variablelist></para>
       </listitem>
      </varlistentry>
 
@@ -878,8 +877,7 @@ PostgreSQL documentation
    to <filename>./backup/ts</filename>:
 <screen>
 <prompt>$</prompt> <userinput>pg_basebackup -D backup/data -T /opt/ts=$(pwd)/backup/ts</userinput>
-</screen>
-  </para>
+</screen></para>
  </refsect1>
 
  <refsect1>

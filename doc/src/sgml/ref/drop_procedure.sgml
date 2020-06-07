@@ -144,8 +144,7 @@ DROP PROCEDURE do_db_maintenance();
     <listitem>
      <para>The ability to specify argument modes and names</para>
     </listitem>
-   </itemizedlist>
-  </para>
+   </itemizedlist></para>
  </refsect1>
 
  <refsect1>

@@ -152,8 +152,7 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
          </para>
         </listitem>
        </varlistentry>
-      </variablelist>
-     </para>
+      </variablelist></para>
     </listitem>
    </varlistentry>
 

@@ -463,8 +463,7 @@ ALTER TYPE mytype SET (
     SEND = mytypesend,
     RECEIVE = mytyperecv
 );
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

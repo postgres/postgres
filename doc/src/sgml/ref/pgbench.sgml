@@ -251,8 +251,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
            </para>
           </listitem>
          </varlistentry>
-        </variablelist>
-       </para>
+        </variablelist></para>
       </listitem>
      </varlistentry>
 
@@ -1104,8 +1103,7 @@ UPDATE pgbench_accounts
 SELECT 1 \;
 SELECT 2 AS two, 3 AS three \gset p_
 SELECT 4 AS four \; SELECT 5 AS five \aset
-</programlisting>
-     </para>
+</programlisting></para>
     </listitem>
    </varlistentry>
 

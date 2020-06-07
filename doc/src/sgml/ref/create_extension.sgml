@@ -191,8 +191,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
    current database:
 <programlisting>
 CREATE EXTENSION hstore;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

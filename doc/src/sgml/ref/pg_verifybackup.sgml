@@ -273,8 +273,7 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>pg_basebackup -h mydbserver -D /usr/local/pgsql/data</userinput>
 <prompt>$</prompt> <userinput>edit /usr/local/pgsql/data/note.to.self</userinput>
 <prompt>$</prompt> <userinput>pg_verifybackup --ignore=note.to.self --skip-checksums /usr/local/pgsql/data</userinput>
-</screen>
-  </para>
+</screen></para>
 
  </refsect1>
 

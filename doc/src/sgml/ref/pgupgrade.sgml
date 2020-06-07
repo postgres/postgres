@@ -726,11 +726,9 @@ psql --username=postgres --file=script.sql postgres
           </para>
          </listitem>
 
-        </itemizedlist>
-       </para>
+        </itemizedlist></para>
       </listitem>
-     </itemizedlist>
-    </para>
+     </itemizedlist></para>
    </step>
   </procedure>
 
