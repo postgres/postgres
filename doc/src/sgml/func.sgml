@@ -21568,7 +21568,7 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
    </table>
 
   <para>
-   <xref linkend="functions-aclitem-fn-table"/> shows the operators
+   <xref linkend="functions-aclitem-op-table"/> shows the operators
    available for the <type>aclitem</type> type, which is the catalog
    representation of access privileges.  See <xref linkend="ddl-priv"/>
    for information about how to read access privilege values.
