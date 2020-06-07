@@ -115,9 +115,9 @@ Author: Thomas Munro <tmunro@postgresql.org>
       old values to new ones can be done using:
      </para>
 
-    <programlisting>
-    SELECT round(sum(OLD / n::float)) FROM generate_series(1, OLD) s(n);
-    </programlisting>
+<programlisting>
+SELECT round(sum(OLD / n::float)) FROM generate_series(1, OLD) s(n);
+</programlisting>
     </listitem>
 
     <listitem>

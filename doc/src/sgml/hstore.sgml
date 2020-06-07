@@ -740,10 +740,10 @@ CREATE INDEX hidx ON testhstore USING GIN (h);
 
   <para>
    Example of creating such an index with a signature length of 32 bytes:
-  </para>
 <programlisting>
-  CREATE INDEX hidx ON testhstore USING GIST (h gist_hstore_ops(siglen=32));
+CREATE INDEX hidx ON testhstore USING GIST (h gist_hstore_ops(siglen=32));
 </programlisting>
+  </para>
 
   <para>
    <type>hstore</type> also supports <type>btree</type> or <type>hash</type> indexes for
