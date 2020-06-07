@@ -28,9 +28,7 @@ PostgreSQL documentation
  </refsynopsisdiv>
 
  <refsect1>
-  <title>
-   Description
-  </title>
+  <title>Description</title>
   <para>
    <application>pg_verifybackup</application> is used to check the
    integrity of a database cluster backup taken using

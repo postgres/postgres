@@ -27,9 +27,7 @@ PostgreSQL documentation
  </refsynopsisdiv>
 
  <refsect1>
-  <title>
-   Description
-  </title>
+  <title>Description</title>
   <para>
    <application>pg_receivewal</application> is used to stream the write-ahead log
    from a running <productname>PostgreSQL</productname> cluster. The write-ahead

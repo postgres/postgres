@@ -62,9 +62,7 @@
    </para>
 
    <procedure>
-    <title>
-     Manual Procedural Language Installation
-    </title>
+    <title>Manual Procedural Language Installation</title>
 
     <para>
      A procedural language is installed in a database in five steps,

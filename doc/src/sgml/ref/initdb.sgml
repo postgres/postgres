@@ -34,9 +34,7 @@ PostgreSQL documentation
  </refsynopsisdiv>
 
  <refsect1 id="r1-app-initdb-1">
-  <title>
-   Description
-  </title>
+  <title>Description</title>
   <para>
    <command>initdb</command> creates a new
    <productname>PostgreSQL</productname> database cluster.  A database

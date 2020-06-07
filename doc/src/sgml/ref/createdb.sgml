@@ -31,9 +31,7 @@ PostgreSQL documentation
 
 
  <refsect1 id="r1-app-createdb-1">
-  <title>
-   Description
-  </title>
+  <title>Description</title>
   <para>
    <application>createdb</application> creates a new <productname>PostgreSQL</productname>
    database.

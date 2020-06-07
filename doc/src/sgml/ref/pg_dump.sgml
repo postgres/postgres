@@ -33,9 +33,7 @@ PostgreSQL documentation
 
 
  <refsect1 id="pg-dump-description">
-  <title>
-   Description
-  </title>
+  <title>Description</title>
 
   <para>
    <application>pg_dump</application> is a utility for backing up a

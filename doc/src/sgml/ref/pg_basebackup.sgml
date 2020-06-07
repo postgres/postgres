@@ -27,9 +27,7 @@ PostgreSQL documentation
  </refsynopsisdiv>
 
  <refsect1>
-  <title>
-   Description
-  </title>
+  <title>Description</title>
   <para>
    <application>pg_basebackup</application> is used to take base backups of
    a running <productname>PostgreSQL</productname> database cluster. These
