@@ -122,7 +122,7 @@ typedef struct ReplicationState
 	int			acquired_by;
 
 	/*
-	 * Condition variable that's signalled when acquired_by changes.
+	 * Condition variable that's signaled when acquired_by changes.
 	 */
 	ConditionVariable origin_cv;
 

@@ -14,7 +14,7 @@
  *	  This module gets handed individual pieces of transactions in the order
  *	  they are written to the WAL and is responsible to reassemble them into
  *	  toplevel transaction sized pieces. When a transaction is completely
- *	  reassembled - signalled by reading the transaction commit record - it
+ *	  reassembled - signaled by reading the transaction commit record - it
  *	  will then call the output plugin (cf. ReorderBufferCommit()) with the
  *	  individual changes. The output plugins rely on snapshots built by
  *	  snapbuild.c which hands them to us.

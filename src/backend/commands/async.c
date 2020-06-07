@@ -1654,7 +1654,7 @@ asyncQueueFillWarning(void)
  * behind.  Waken them anyway if they're far enough behind, so that they'll
  * advance their queue position pointers, allowing the global tail to advance.
  *
- * Since we know the BackendId and the Pid the signalling is quite cheap.
+ * Since we know the BackendId and the Pid the signaling is quite cheap.
  */
 static void
 SignalBackends(void)

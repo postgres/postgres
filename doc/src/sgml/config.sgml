@@ -4083,7 +4083,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           This parameter can only be set in the <filename>postgresql.conf</filename>
           file or on the server command line.
           If this parameter is changed while the WAL receiver process is
-          running, that process is signalled to shut down and expected to
+          running, that process is signaled to shut down and expected to
           restart with the new setting (except if <varname>primary_conninfo</varname>
           is an empty string).
           This setting has no effect if the server is not in standby mode.
@@ -4105,7 +4105,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           This parameter can only be set in the <filename>postgresql.conf</filename>
           file or on the server command line.
           If this parameter is changed while the WAL receiver process is running,
-          that process is signalled to shut down and expected to restart with the
+          that process is signaled to shut down and expected to restart with the
           new setting.
           This setting has no effect if <varname>primary_conninfo</varname> is not
           set or the server is not in standby mode.
@@ -4227,7 +4227,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         The default is off.  This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command line.
         If this parameter is changed while the WAL receiver process is running,
-        that process is signalled to shut down and expected to restart with
+        that process is signaled to shut down and expected to restart with
         the new setting.
        </para>
       </listitem>
@@ -8062,7 +8062,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         treated the timeout as applying to the whole query string.)
         In extended query protocol, the timeout starts running when any
         query-related message (Parse, Bind, Execute, Describe) arrives, and
-        it is cancelled by completion of an Execute or Sync message.
+        it is canceled by completion of an Execute or Sync message.
        </para>
 
        <para>

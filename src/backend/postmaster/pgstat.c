@@ -6251,7 +6251,7 @@ pgstat_recv_resetslrucounter(PgStat_MsgResetslrucounter *msg, int len)
 /* ----------
  * pgstat_recv_autovac() -
  *
- *	Process an autovacuum signalling message.
+ *	Process an autovacuum signaling message.
  * ----------
  */
 static void

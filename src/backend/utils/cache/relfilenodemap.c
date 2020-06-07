@@ -64,7 +64,7 @@ RelfilenodeMapInvalidateCallback(Datum arg, Oid relid)
 	while ((entry = (RelfilenodeMapEntry *) hash_seq_search(&status)) != NULL)
 	{
 		/*
-		 * If relid is InvalidOid, signalling a complete reset, we must remove
+		 * If relid is InvalidOid, signaling a complete reset, we must remove
 		 * all entries, otherwise just remove the specific relation's entry.
 		 * Always remove negative cache entries.
 		 */

@@ -142,7 +142,7 @@ typedef struct ReplicationSlot
 	/* is somebody performing io on this slot? */
 	LWLock		io_in_progress_lock;
 
-	/* Condition variable signalled when active_pid changes */
+	/* Condition variable signaled when active_pid changes */
 	ConditionVariable active_cv;
 
 	/* all the remaining data is only used for logical slots */

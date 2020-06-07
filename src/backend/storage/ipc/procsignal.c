@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * procsignal.c
- *	  Routines for interprocess signalling
+ *	  Routines for interprocess signaling
  *
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
@@ -30,7 +30,7 @@
 #include "tcop/tcopprot.h"
 
 /*
- * The SIGUSR1 signal is multiplexed to support signalling multiple event
+ * The SIGUSR1 signal is multiplexed to support signaling multiple event
  * types. The specific reason is communicated via flags in shared memory.
  * We keep a boolean flag for each possible "reason", so that different
  * reasons can be signaled to a process concurrently.  (However, if the same
@@ -40,8 +40,8 @@
  * Each process that wants to receive signals registers its process ID
  * in the ProcSignalSlots array. The array is indexed by backend ID to make
  * slot allocation simple, and to avoid having to search the array when you
- * know the backend ID of the process you're signalling.  (We do support
- * signalling without backend ID, but it's a bit less efficient.)
+ * know the backend ID of the process you're signaling.  (We do support
+ * signaling without backend ID, but it's a bit less efficient.)
  *
  * The flags are actually declared as "volatile sig_atomic_t" for maximum
  * portability.  This should ensure that loads and stores of the flag
@@ -420,7 +420,7 @@ WaitForProcSignalBarrier(uint64 generation)
 /*
  * Perform global barrier related interrupt checking.
  *
- * Any backend that participates in ProcSignal signalling must arrange to
+ * Any backend that participates in ProcSignal signaling must arrange to
  * call this function periodically. It is called from CHECK_FOR_INTERRUPTS(),
  * which is enough for normal backends, but not necessarily for all types of
  * background processes.

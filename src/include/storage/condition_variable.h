@@ -9,7 +9,7 @@
  * on the condition variable; and (3) broadcast, which wakes up every
  * process sleeping on the condition variable.  In our implementation,
  * condition variables put a process into an interruptible sleep (so it
- * can be cancelled prior to the fulfillment of the condition) and do not
+ * can be canceled prior to the fulfillment of the condition) and do not
  * use pointers internally (so that they are safe to use within DSMs).
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group

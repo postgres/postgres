@@ -1182,7 +1182,7 @@ shm_mq_wait_internal(shm_mq *mq, PGPROC **ptr, BackgroundWorkerHandle *handle)
 			}
 		}
 
-		/* Wait to be signalled. */
+		/* Wait to be signaled. */
 		(void) WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH, 0,
 						 WAIT_EVENT_MQ_INTERNAL);
 

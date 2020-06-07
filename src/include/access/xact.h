@@ -204,7 +204,7 @@ typedef struct xl_xact_assignment
  *
  * A minimal commit/abort record only consists of a xl_xact_commit/abort
  * struct. The presence of additional information is indicated by bits set in
- * 'xl_xact_xinfo->xinfo'. The presence of the xinfo field itself is signalled
+ * 'xl_xact_xinfo->xinfo'. The presence of the xinfo field itself is signaled
  * by a set XLOG_XACT_HAS_INFO bit in the xl_info field.
  *
  * NB: All the individual data chunks should be sized to multiples of
