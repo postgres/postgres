@@ -419,7 +419,7 @@
    </sect2>
 
    <sect2 id="functions-xml-limits-postgresql">
-    <title>Incidental limits of the implementation</title>
+    <title>Incidental Limits of the Implementation</title>
 
     <para>
      This section concerns limits that are not inherent in the
