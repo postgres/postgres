@@ -653,8 +653,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		HandleAutoVacLauncherInterrupts();
 
 		/*
-		 * a worker finished, or postmaster signaled failure to start a
-		 * worker
+		 * a worker finished, or postmaster signaled failure to start a worker
 		 */
 		if (got_SIGUSR2)
 		{

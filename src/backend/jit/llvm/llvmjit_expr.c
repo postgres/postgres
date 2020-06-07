@@ -2448,8 +2448,8 @@ BuildV1Call(LLVMJitContext *context, LLVMBuilderRef b,
 		*v_fcinfo_isnull = LLVMBuildLoad(b, v_fcinfo_isnullp, "");
 
 	/*
-	 * Add lifetime-end annotation, signaling that writes to memory don't
-	 * have to be retained (important for inlining potential).
+	 * Add lifetime-end annotation, signaling that writes to memory don't have
+	 * to be retained (important for inlining potential).
 	 */
 	{
 		LLVMValueRef v_lifetime = create_LifetimeEnd(mod);

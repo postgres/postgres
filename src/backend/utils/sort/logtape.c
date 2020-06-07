@@ -170,7 +170,7 @@ typedef struct LogicalTape
 	 * numbers first).
 	 */
 	long	   *prealloc;
-	int		 	nprealloc;		/* number of elements in list */
+	int			nprealloc;		/* number of elements in list */
 	int			prealloc_size;	/* number of elements list can hold */
 } LogicalTape;
 

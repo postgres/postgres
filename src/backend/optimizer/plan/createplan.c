@@ -2118,9 +2118,9 @@ create_agg_plan(PlannerInfo *root, AggPath *best_path)
 	/*
 	 * Agg can project, so no need to be terribly picky about child tlist, but
 	 * we do need grouping columns to be available. We are a bit more careful
-	 * with hash aggregate, where we explicitly request small tlist to minimize
-	 * I/O needed for spilling (we can't be sure spilling won't be necessary,
-	 * so we just do it every time).
+	 * with hash aggregate, where we explicitly request small tlist to
+	 * minimize I/O needed for spilling (we can't be sure spilling won't be
+	 * necessary, so we just do it every time).
 	 */
 	flags = CP_LABEL_TLIST;
 
@@ -2219,9 +2219,9 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 	/*
 	 * Agg can project, so no need to be terribly picky about child tlist, but
 	 * we do need grouping columns to be available. We are a bit more careful
-	 * with hash aggregate, where we explicitly request small tlist to minimize
-	 * I/O needed for spilling (we can't be sure spilling won't be necessary,
-	 * so we just do it every time).
+	 * with hash aggregate, where we explicitly request small tlist to
+	 * minimize I/O needed for spilling (we can't be sure spilling won't be
+	 * necessary, so we just do it every time).
 	 */
 	flags = CP_LABEL_TLIST;
 

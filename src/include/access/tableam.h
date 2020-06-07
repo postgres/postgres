@@ -290,7 +290,7 @@ typedef struct TableAmRoutine
 	 *
 	 * *call_again is false on the first call to index_fetch_tuple for a tid.
 	 * If there potentially is another tuple matching the tid, *call_again
-	 * needs be set to true by index_fetch_tuple, signaling to the caller
+	 * needs to be set to true by index_fetch_tuple, signaling to the caller
 	 * that index_fetch_tuple should be called again for the same tid.
 	 *
 	 * *all_dead, if all_dead is not NULL, should be set to true by
