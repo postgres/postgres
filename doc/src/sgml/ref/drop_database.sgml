@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ] 
+DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ [ WITH ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
 
@@ -81,7 +81,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ 
      </para>
      <para>
       This will fail if the current user has no permissions to terminate other
-      connections. Required permissions are the same as with 
+      connections. Required permissions are the same as with
       <literal>pg_terminate_backend</literal>, described in
       <xref linkend="functions-admin-signal"/>.  This will also fail if we
       are not able to terminate connections.

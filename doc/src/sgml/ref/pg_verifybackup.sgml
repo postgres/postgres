@@ -73,7 +73,7 @@ PostgreSQL documentation
    files won't be listed in the backup manifest. Only files are checked;
    the presence or absence of directories is not verified, except
    indirectly: if a directory is missing, any files it should have contained
-   will necessarily also be missing. 
+   will necessarily also be missing.
   </para>
 
   <para>

@@ -210,7 +210,7 @@ Author: Fujii Masao <fujii@postgresql.org>
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-03-05 [84eca14bc] Remove ancient hacks to ignore certain opclass names in 
+2020-03-05 [84eca14bc] Remove ancient hacks to ignore certain opclass names in
 -->
 
      <para>
@@ -495,7 +495,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2020-04-01 [a80818605] Improve selectivity estimation for assorted match-style 
+2020-04-01 [a80818605] Improve selectivity estimation for assorted match-style
 -->
 
        <para>
@@ -545,7 +545,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2020-03-14 [e83daa7e3] Use multi-variate MCV lists to estimate ScalarArrayOpExp
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
-2020-03-18 [ccaa3569f] Recognize some OR clauses as compatible with functional 
+2020-03-18 [ccaa3569f] Recognize some OR clauses as compatible with functional
 -->
 
        <para>
@@ -1638,7 +1638,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
      <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2019-10-28 [8b7a0f1d1] Allow extracting fields from a ROW() expression in more 
+2019-10-28 [8b7a0f1d1] Allow extracting fields from a ROW() expression in more
 -->
 
       <para>
@@ -2308,7 +2308,7 @@ Author: Robert Haas <rhaas@postgresql.org>
      <listitem>
 <!--
 Author: Author: Fujii Masao <fujii@postgresql.org>
-2020-03-19 [fab13dc50] Make pg_basebackup ask the server to estimate the total 
+2020-03-19 [fab13dc50] Make pg_basebackup ask the server to estimate the total
 -->
 
       <para>

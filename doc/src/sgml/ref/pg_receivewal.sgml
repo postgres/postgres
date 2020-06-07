@@ -66,7 +66,7 @@ PostgreSQL documentation
   <para>
    The write-ahead log is streamed over a regular
    <productname>PostgreSQL</productname> connection and uses the replication
-   protocol. The connection must be made with a user having 
+   protocol. The connection must be made with a user having
    <literal>REPLICATION</literal> permissions (see
    <xref linkend="role-attributes"/>) or a superuser, and
    <filename>pg_hba.conf</filename> must permit the replication connection.

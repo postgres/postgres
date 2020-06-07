@@ -106,7 +106,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Only validate checksums in the relation with filenode
-        <replaceable>filenode</replaceable>. 
+        <replaceable>filenode</replaceable>.
        </para>
       </listitem>
      </varlistentry>
