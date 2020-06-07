@@ -167,7 +167,7 @@
 <!ENTITY sourcerepo SYSTEM "sourcerepo.sgml">
 
 <!ENTITY release    SYSTEM "release.sgml">
-<!ENTITY release-13     SYSTEM "release-13.sgml">
+<!ENTITY release-14     SYSTEM "release-14.sgml">
 
 <!ENTITY limits     SYSTEM "limits.sgml">
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">
