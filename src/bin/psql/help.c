@@ -175,8 +175,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
 	fprintf(output, _("  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"));
 	fprintf(output, _("  \\errverbose            show most recent error message at maximum verbosity\n"));
-	fprintf(output, _("  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"));
-	fprintf(output, _("                         \\g with no arguments is equivalent to a semicolon\n"));
+	fprintf(output, _("  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"
+					  "                         \\g with no arguments is equivalent to a semicolon\n"));
 	fprintf(output, _("  \\gdesc                 describe result of query, without executing it\n"));
 	fprintf(output, _("  \\gexec                 execute query, then execute each value in its result\n"));
 	fprintf(output, _("  \\gset [PREFIX]         execute query and store results in psql variables\n"));
