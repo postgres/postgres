@@ -43,11 +43,11 @@
 static PGcancel *volatile cancelConn = NULL;
 
 /*
- * CancelRequested tracks if a cancellation request has completed after
- * a signal interruption.  Note that if cancelConn is not set, in short
- * if SetCancelConn() was never called or if ResetCancelConn() freed
- * the cancellation object, then CancelRequested is switched to true after
- * all cancellation attempts.
+ * CancelRequested is set when we receive SIGINT (or local equivalent).
+ * There is no provision in this module for resetting it; but applications
+ * might choose to clear it after successfully recovering from a cancel.
+ * Note that there is no guarantee that we successfully sent a Cancel request,
+ * or that the request will have any effect if we did send it.
  */
 volatile sig_atomic_t CancelRequested = false;
 
@@ -148,6 +148,8 @@ handle_sigint(SIGNAL_ARGS)
 	int			save_errno = errno;
 	char		errbuf[256];
 
+	CancelRequested = true;
+
 	if (cancel_callback != NULL)
 		cancel_callback();
 
@@ -156,7 +158,6 @@ handle_sigint(SIGNAL_ARGS)
 	{
 		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 		{
-			CancelRequested = true;
 			write_stderr(_("Cancel request sent\n"));
 		}
 		else
@@ -165,8 +166,6 @@ handle_sigint(SIGNAL_ARGS)
 			write_stderr(errbuf);
 		}
 	}
-	else
-		CancelRequested = true;
 
 	errno = save_errno;			/* just in case the write changed it */
 }
@@ -193,6 +192,8 @@ consoleHandler(DWORD dwCtrlType)
 	if (dwCtrlType == CTRL_C_EVENT ||
 		dwCtrlType == CTRL_BREAK_EVENT)
 	{
+		CancelRequested = true;
+
 		if (cancel_callback != NULL)
 			cancel_callback();
 
@@ -203,7 +204,6 @@ consoleHandler(DWORD dwCtrlType)
 			if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 			{
 				write_stderr(_("Cancel request sent\n"));
-				CancelRequested = true;
 			}
 			else
 			{
@@ -211,8 +211,6 @@ consoleHandler(DWORD dwCtrlType)
 				write_stderr(errbuf);
 			}
 		}
-		else
-			CancelRequested = true;
 
 		LeaveCriticalSection(&cancelConnLock);
 

@@ -28,7 +28,7 @@
 #include "scripts_parallel.h"
 
 static void init_slot(ParallelSlot *slot, PGconn *conn);
-static int	select_loop(int maxFd, fd_set *workerset, bool *aborting);
+static int	select_loop(int maxFd, fd_set *workerset);
 
 static void
 init_slot(ParallelSlot *slot, PGconn *conn)
@@ -39,25 +39,19 @@ init_slot(ParallelSlot *slot, PGconn *conn)
 }
 
 /*
- * Loop on select() until a descriptor from the given set becomes readable.
+ * Wait until a file descriptor from the given set becomes readable.
  *
- * If we get a cancel request while we're waiting, we forego all further
- * processing and set the *aborting flag to true.  The return value must be
- * ignored in this case.  Otherwise, *aborting is set to false.
+ * Returns the number of ready descriptors, or -1 on failure (including
+ * getting a cancel request).
  */
 static int
-select_loop(int maxFd, fd_set *workerset, bool *aborting)
+select_loop(int maxFd, fd_set *workerset)
 {
 	int			i;
 	fd_set		saveSet = *workerset;
 
 	if (CancelRequested)
-	{
-		*aborting = true;
 		return -1;
-	}
-	else
-		*aborting = false;
 
 	for (;;)
 	{
@@ -90,7 +84,7 @@ select_loop(int maxFd, fd_set *workerset, bool *aborting)
 		if (i < 0 && errno == EINTR)
 			continue;			/* ignore this */
 		if (i < 0 || CancelRequested)
-			*aborting = true;	/* but not this */
+			return -1;			/* but not this */
 		if (i == 0)
 			continue;			/* timeout (Win32 only) */
 		break;
@@ -135,7 +129,6 @@ ParallelSlotsGetIdle(ParallelSlot *slots, int numslots)
 	{
 		fd_set		slotset;
 		int			maxFd = 0;
-		bool		aborting;
 
 		/* We must reconstruct the fd_set for each call to select_loop */
 		FD_ZERO(&slotset);
@@ -157,19 +150,12 @@ ParallelSlotsGetIdle(ParallelSlot *slots, int numslots)
 		}
 
 		SetCancelConn(slots->connection);
-		i = select_loop(maxFd, &slotset, &aborting);
+		i = select_loop(maxFd, &slotset);
 		ResetCancelConn();
 
-		if (aborting)
-		{
-			/*
-			 * We set the cancel-receiving connection to the one in the zeroth
-			 * slot above, so fetch the error from there.
-			 */
-			consumeQueryResult(slots->connection);
+		/* failure? */
+		if (i < 0)
 			return NULL;
-		}
-		Assert(i != 0);
 
 		for (i = 0; i < numslots; i++)
 		{
