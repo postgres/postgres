@@ -538,12 +538,12 @@ DETAIL:  Failed system call was shmget(key=5440001, size=4011376640, 03600).
 </screen>
      probably means your kernel's limit on the size of shared memory is
      smaller than the work area <productname>PostgreSQL</productname>
-     is trying to create (4011376640 bytes in this example). Or it could
-     mean that you do not have System-V-style shared memory support
-     configured into your kernel at all. As a temporary workaround, you
+     is trying to create (4011376640 bytes in this example).
+     This is only likely to happen if you have set <literal>shared_memory_type</literal>
+     to <literal>sysv</literal>.  In that case, you
      can try starting the server with a smaller-than-normal number of
-     buffers (<xref linkend="guc-shared-buffers"/>). You will eventually want
-     to reconfigure your kernel to increase the allowed shared memory
+     buffers (<xref linkend="guc-shared-buffers"/>), or
+     reconfigure your kernel to increase the allowed shared memory
      size. You might also see this message when trying to start multiple
      servers on the same machine, if their total space requested
      exceeds the kernel limit.
@@ -563,13 +563,6 @@ DETAIL:  Failed system call was semget(5440126, 17, 03600).
      server with a reduced number of allowed connections
      (<xref linkend="guc-max-connections"/>), but you'll eventually want to
      increase the kernel limit.
-    </para>
-
-    <para>
-     If you get an <quote>illegal system call</quote> error, it is likely that
-     shared memory or semaphores are not supported in your kernel at
-     all. In that case your only option is to reconfigure the kernel to
-     enable these features.
     </para>
 
     <para>
@@ -663,14 +656,6 @@ psql: could not connect to server: No such file or directory
    </para>
 
    <para>
-    The complete lack of these facilities is usually manifested by an
-    <quote><errorname>Illegal system call</errorname></quote> error upon server
-    start.  In that case there is no alternative but to reconfigure your
-    kernel.  <productname>PostgreSQL</productname> won't work without them.
-    This situation is rare, however, among modern operating systems.
-   </para>
-
-   <para>
     By default, <productname>PostgreSQL</productname> allocates
     a very small amount of System V shared memory, as well as a much larger
     amount of anonymous <function>mmap</function> shared memory.
@@ -682,15 +667,6 @@ psql: could not connect to server: No such file or directory
     POSIX semaphores are used on Linux and FreeBSD systems while other
     platforms use System V semaphores.
    </para>
-
-   <note>
-    <para>
-     Prior to <productname>PostgreSQL</productname> 9.3, only System V shared memory
-     was used, so the amount of System V shared memory required to start the
-     server was much larger.  If you are running an older version of the
-     server, please consult the documentation for your server version.
-    </para>
-   </note>
 
    <para>
     System V <acronym>IPC</acronym> features are typically constrained by
@@ -872,7 +848,7 @@ psql: could not connect to server: No such file or directory
       </term>
       <listitem>
        <para>
-        At least as of version 5.1, it should not be necessary to do
+        It should not be necessary to do
         any special configuration for such parameters as
         <varname>SHMMAX</varname>, as it appears this is configured to
         allow all memory to be used as shared memory.  That is the
@@ -895,6 +871,12 @@ psql: could not connect to server: No such file or directory
       </term>
       <listitem>
        <para>
+        The default shared memory settings are usually good enough, unless
+        you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>.
+        System V semaphores are not used on this platform.
+       </para>
+
+       <para>
         The default IPC settings can be changed using
         the <command>sysctl</command> or
         <command>loader</command> interfaces.  The following
@@ -908,40 +890,22 @@ psql: could not connect to server: No such file or directory
        </para>
 
        <para>
-        These semaphore-related settings are read-only as far as
-        <command>sysctl</command> is concerned, but can be set in
-        <filename>/boot/loader.conf</filename>:
-<programlisting>
-kern.ipc.semmni=256
-kern.ipc.semmns=512
-</programlisting>
-        After modifying that file, a reboot is required for the new
-        settings to take effect.
-       </para>
-
-       <para>
-        You might also want to configure your kernel to lock System V shared
-        memory into RAM and prevent it from being paged out to swap.
-        This can be accomplished using the <command>sysctl</command>
+        If you have set <literal>shared_memory_type</literal> to
+        <literal>sysv</literal>, you might also want to configure your kernel
+        to lock System V shared memory into RAM and prevent it from being paged
+        out to swap.  This can be accomplished using the <command>sysctl</command>
         setting <literal>kern.ipc.shm_use_phys</literal>.
        </para>
 
        <para>
-        If running in FreeBSD jails by enabling <application>sysctl</application>'s
-        <literal>security.jail.sysvipc_allowed</literal>, <application>postmaster</application>s
-        running in different jails should be run by different operating system
-        users.  This improves security because it prevents non-root users
-        from interfering with shared memory or semaphores in different jails,
-        and it allows the PostgreSQL IPC cleanup code to function properly.
-        (In FreeBSD 6.0 and later the IPC cleanup code does not properly detect
-        processes in other jails, preventing the running of postmasters on the
-        same port in different jails.)
+        If running in a FreeBSD jail, you should set its
+        <literal>sysvshm</literal> parameter to <literal>new</literal>, so that
+        it has its own separate System V shared memory namespace.
+        (Before FreeBSD 11.0, it was necessary to enable shared access to
+        the host's IPC namespace from jails, and take measures to avoid
+        collisions.)
        </para>
 
-       <para>
-        <systemitem class="osname">FreeBSD</systemitem> versions before 4.0 work like
-        old <systemitem class="osname">OpenBSD</systemitem> (see below).
-       </para>
       </listitem>
      </varlistentry>
 
@@ -951,7 +915,15 @@ kern.ipc.semmns=512
       </term>
       <listitem>
        <para>
-        In <systemitem class="osname">NetBSD</systemitem> 5.0 and later,
+        The default shared memory settings are usually good enough, unless
+        you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>.
+        You will usually want to increase <literal>kern.ipc.semmni</literal>
+        and <literal>kern.ipc.semmns</literal>,
+        as <systemitem class="osname">NetBSD</systemitem>'s default settings
+        for these are uncomfortably small.
+       </para>
+
+       <para>
         IPC parameters can be adjusted using <command>sysctl</command>,
         for example:
 <screen>
@@ -962,24 +934,11 @@ kern.ipc.semmns=512
        </para>
 
        <para>
-        You will usually want to increase <literal>kern.ipc.semmni</literal>
-        and <literal>kern.ipc.semmns</literal>,
-        as <systemitem class="osname">NetBSD</systemitem>'s default settings
-        for these are uncomfortably small.
-       </para>
-
-       <para>
-        You might also want to configure your kernel to lock System V shared
-        memory into RAM and prevent it from being paged out to swap.
-        This can be accomplished using the <command>sysctl</command>
+        If you have set <literal>shared_memory_type</literal> to
+        <literal>sysv</literal>, you might also want to configure your kernel
+        to lock System V shared memory into RAM and prevent it from being paged
+        out to swap.  This can be accomplished using the <command>sysctl</command>
         setting <literal>kern.ipc.shm_use_phys</literal>.
-       </para>
-
-       <para>
-        <systemitem class="osname">NetBSD</systemitem> versions before 5.0
-        work like old <systemitem class="osname">OpenBSD</systemitem>
-        (see below), except that kernel parameters should be set with the
-        keyword <literal>options</literal> not <literal>option</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -990,17 +949,8 @@ kern.ipc.semmns=512
       </term>
       <listitem>
        <para>
-        In <systemitem class="osname">OpenBSD</systemitem> 3.3 and later,
-        IPC parameters can be adjusted using <command>sysctl</command>,
-        for example:
-<screen>
-<prompt>#</prompt> <userinput>sysctl kern.seminfo.semmni=100</userinput>
-</screen>
-        To make these settings persist over reboots, modify
-        <filename>/etc/sysctl.conf</filename>.
-       </para>
-
-       <para>
+        The default shared memory settings are usually good enough, unless
+        you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>.
         You will usually want to
         increase <literal>kern.seminfo.semmni</literal>
         and <literal>kern.seminfo.semmns</literal>,
@@ -1009,22 +959,13 @@ kern.ipc.semmns=512
        </para>
 
        <para>
-        In older <systemitem class="osname">OpenBSD</systemitem> versions,
-        you will need to build a custom kernel to change the IPC parameters.
-        Make sure that the options <varname>SYSVSHM</varname>
-        and <varname>SYSVSEM</varname> are enabled, too.  (They are by
-        default.)  The following shows an example of how to set the various
-        parameters in the kernel configuration file:
-<programlisting>
-option        SYSVSHM
-option        SHMMAXPGS=4096
-option        SHMSEG=256
-
-option        SYSVSEM
-option        SEMMNI=256
-option        SEMMNS=512
-option        SEMMNU=256
-</programlisting>
+        IPC parameters can be adjusted using <command>sysctl</command>,
+        for example:
+<screen>
+<prompt>#</prompt> <userinput>sysctl kern.seminfo.semmni=100</userinput>
+</screen>
+        To make these settings persist over reboots, modify
+        <filename>/etc/sysctl.conf</filename>.
        </para>
 
       </listitem>
@@ -1037,9 +978,6 @@ option        SEMMNU=256
       <listitem>
        <para>
         The default settings tend to suffice for normal installations.
-        On <productname>HP-UX</productname> 10, the factory default for
-        <varname>SEMMNS</varname> is 128, which might be too low for larger
-        database sites.
        </para>
        <para>
         <acronym>IPC</acronym> parameters can be set in the <application>System
@@ -1058,11 +996,10 @@ option        SEMMNU=256
       </term>
       <listitem>
        <para>
-        The default maximum segment size is 32 MB, and the
-        default maximum total size is 2097152
-        pages.  A page is almost always 4096 bytes except in unusual
-        kernel configurations with <quote>huge pages</quote>
-        (use <literal>getconf PAGE_SIZE</literal> to verify).
+        The default shared memory settings are usually good enough, unless
+        you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>,
+        and even then only on older kernel versions that shipped with low defaults.
+        System V semaphores are not used on this platform.
        </para>
 
        <para>
@@ -1072,25 +1009,10 @@ option        SEMMNU=256
 <prompt>$</prompt> <userinput>sysctl -w kernel.shmmax=17179869184</userinput>
 <prompt>$</prompt> <userinput>sysctl -w kernel.shmall=4194304</userinput>
 </screen>
-        In addition these settings can be preserved between reboots in
-        the file <filename>/etc/sysctl.conf</filename>.  Doing that is
-        highly recommended.
+        To make these settings persist over reboots, see
+        <filename>/etc/sysctl.conf</filename>.
        </para>
 
-       <para>
-        Ancient distributions might not have the <command>sysctl</command> program,
-        but equivalent changes can be made by manipulating the
-        <filename>/proc</filename> file system:
-<screen>
-<prompt>$</prompt> <userinput>echo 17179869184 &gt;/proc/sys/kernel/shmmax</userinput>
-<prompt>$</prompt> <userinput>echo 4194304 &gt;/proc/sys/kernel/shmall</userinput>
-</screen>
-       </para>
-
-       <para>
-        The remaining defaults are quite generously sized, and usually
-        do not require changes.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -1100,6 +1022,10 @@ option        SEMMNU=256
       <indexterm><primary>macOS</primary><secondary>IPC configuration</secondary></indexterm>
       </term>
       <listitem>
+       <para>
+        The default shared memory and semaphore settings are usually good enough, unless
+        you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>.
+       </para>
        <para>
         The recommended method for configuring shared memory in macOS
         is to create a file named <filename>/etc/sysctl.conf</filename>,
@@ -1117,8 +1043,7 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        Beware that recent releases of macOS ignore attempts to set
-        <varname>SHMMAX</varname> to a value that isn't an exact multiple of 4096.
+        <varname>SHMMAX</varname> can only be set to a multiple of 4096.
        </para>
 
        <para>
@@ -1126,75 +1051,22 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        In older macOS versions, you will need to reboot to have changes in the
-        shared memory parameters take effect.  As of 10.5 it is possible to
-        change all but <varname>SHMMNI</varname> on the fly, using
+        It is possible to change all but <varname>SHMMNI</varname> on the fly, using
         <application>sysctl</application>.  But it's still best to set up your preferred
         values via <filename>/etc/sysctl.conf</filename>, so that the values will be
         kept across reboots.
        </para>
 
-       <para>
-        The file <filename>/etc/sysctl.conf</filename> is only honored in macOS
-        10.3.9 and later.  If you are running a previous 10.3.x release,
-        you must edit the file <filename>/etc/rc</filename>
-        and change the values in the following commands:
-<programlisting>
-sysctl -w kern.sysv.shmmax
-sysctl -w kern.sysv.shmmin
-sysctl -w kern.sysv.shmmni
-sysctl -w kern.sysv.shmseg
-sysctl -w kern.sysv.shmall
-</programlisting>
-        Note that
-        <filename>/etc/rc</filename> is usually overwritten by macOS system updates,
-        so you should expect to have to redo these edits after each update.
-       </para>
-
-       <para>
-        In macOS 10.2 and earlier, instead edit these commands in the file
-        <filename>/System/Library/StartupItems/SystemTuning/SystemTuning</filename>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
-      <term><systemitem class="osname">Solaris</systemitem> 2.6 to 2.9 (Solaris
-      6 to Solaris 9)
-      <indexterm><primary>Solaris</primary><secondary>IPC configuration</secondary></indexterm>
-      </term>
-      <listitem>
-       <para>
-        The relevant settings can be changed in
-        <filename>/etc/system</filename>, for example:
-<programlisting>
-set shmsys:shminfo_shmmax=0x2000000
-set shmsys:shminfo_shmmin=1
-set shmsys:shminfo_shmmni=256
-set shmsys:shminfo_shmseg=256
-
-set semsys:seminfo_semmap=256
-set semsys:seminfo_semmni=512
-set semsys:seminfo_semmns=512
-set semsys:seminfo_semmsl=32
-</programlisting>
-        You need to reboot for the changes to take effect.  See also
-        <ulink url="http://sunsite.uakom.sk/sunworldonline/swol-09-1997/swol-09-insidesolaris.html"></ulink>
-        for information on shared memory under older versions of Solaris.
-       </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><systemitem class="osname">Solaris</systemitem> 2.10 (Solaris
-      10) and later</term>
-      <term><systemitem class="osname">OpenSolaris</systemitem></term>
+      <term><systemitem class="osname">Solaris</systemitem></term>
+      <term><systemitem class="osname">illumos</systemitem></term>
       <listitem>
        <para>
-        In Solaris 10 and later, and OpenSolaris, the default shared memory and
-        semaphore settings are good enough for most
-        <productname>PostgreSQL</productname> applications.  Solaris now defaults
+        The default shared memory and semaphore settings are usually good enough for most
+        <productname>PostgreSQL</productname> applications.  Solaris defaults
         to a <varname>SHMMAX</varname> of one-quarter of system <acronym>RAM</acronym>.
         To further adjust this setting, use a project setting associated
         with the <literal>postgres</literal> user.  For example, run the
@@ -1415,7 +1287,7 @@ default:\
    </indexterm>
 
    <para>
-    In Linux 2.4 and later, the default virtual memory behavior is not
+    The default virtual memory behavior on Linux is not
     optimal for <productname>PostgreSQL</productname>. Because of the
     way that the kernel implements memory overcommit, the kernel might
     terminate the <productname>PostgreSQL</productname> postmaster (the
@@ -1462,7 +1334,7 @@ Out of Memory: Killed process 12345 (postgres).
    </para>
 
    <para>
-    On Linux 2.6 and later, it is possible to modify the
+    It is possible to modify the
     kernel's behavior so that it will not <quote>overcommit</quote> memory.
     Although this setting will not prevent the <ulink
     url="https://lwn.net/Articles/104179/">OOM killer</ulink> from being invoked
@@ -1507,29 +1379,6 @@ export PG_OOM_ADJUST_VALUE=0
     whole point is to ensure that the postmaster has a preferential setting.
    </para>
 
-   <para>
-    Older Linux kernels do not offer <filename>/proc/self/oom_score_adj</filename>,
-    but may have a previous version of the same functionality called
-    <filename>/proc/self/oom_adj</filename>.  This works the same except the disable
-    value is <literal>-17</literal> not <literal>-1000</literal>.
-   </para>
-
-   <note>
-   <para>
-    Some vendors' Linux 2.4 kernels are reported to have early versions
-    of the 2.6 overcommit <command>sysctl</command> parameter.  However, setting
-    <literal>vm.overcommit_memory</literal> to 2
-    on a 2.4 kernel that does not have the relevant code will make
-    things worse, not better.  It is recommended that you inspect
-    the actual kernel source code (see the function
-    <function>vm_enough_memory</function> in the file <filename>mm/mmap.c</filename>)
-    to verify what is supported in your kernel before you try this in a 2.4
-    installation.  The presence of the <filename>overcommit-accounting</filename>
-    documentation file should <emphasis>not</emphasis> be taken as evidence that the
-    feature is there.  If in any doubt, consult a kernel expert or your
-    kernel vendor.
-   </para>
-   </note>
   </sect2>
 
   <sect2 id="linux-huge-pages">
