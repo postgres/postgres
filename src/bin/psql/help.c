@@ -228,10 +228,10 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
 	fprintf(output, _("  \\da[S]  [PATTERN]      list aggregates\n"));
 	fprintf(output, _("  \\dA[+]  [PATTERN]      list access methods\n"));
-	fprintf(output, _("  \\dAc[+] [AMPTRN [TYPEPTRN]] list operator classes\n"));
-	fprintf(output, _("  \\dAf[+] [AMPTRN [TYPEPTRN]] list operator families\n"));
-	fprintf(output, _("  \\dAo[+] [AMPTRN [OPFPTRN]] list operators of operator families\n"));
-	fprintf(output, _("  \\dAp    [AMPTRN [OPFPTRN]] list support functions of operator families\n"));
+	fprintf(output, _("  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"));
+	fprintf(output, _("  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"));
+	fprintf(output, _("  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"));
+	fprintf(output, _("  \\dAp    [AMPTRN [OPFPTRN]]   list support functions of operator families\n"));
 	fprintf(output, _("  \\db[+]  [PATTERN]      list tablespaces\n"));
 	fprintf(output, _("  \\dc[S+] [PATTERN]      list conversions\n"));
 	fprintf(output, _("  \\dC[+]  [PATTERN]      list casts\n"));
