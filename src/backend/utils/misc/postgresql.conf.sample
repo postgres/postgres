@@ -322,8 +322,8 @@
 #max_standby_streaming_delay = 30s	# max delay before canceling queries
 					# when reading streaming WAL;
 					# -1 allows indefinite delay
-#wal_receiver_create_temp_slot = off	# Create temp slot if primary_slot_name
-					# is not set.
+#wal_receiver_create_temp_slot = off	# create temp slot if primary_slot_name
+					# is not set
 #wal_receiver_status_interval = 10s	# send replies at least this often
 					# 0 disables
 #hot_standby_feedback = off		# send info from standby to prevent
@@ -498,20 +498,20 @@
 					# statements running at least this number
 					# of milliseconds
 
-#log_min_duration_sample = -1	# -1 is disabled, 0 logs a sample of statements
+#log_min_duration_sample = -1		# -1 is disabled, 0 logs a sample of statements
 					# and their durations, > 0 logs only a sample of
 					# statements running at least this number
-					# of milliseconds
-					# Sample fraction is determined by log_statement_sample_rate
+					# of milliseconds;
+					# sample fraction is determined by log_statement_sample_rate
 
-#log_statement_sample_rate = 1.0   # Fraction of logged statements exceeding
-                   # log_min_duration_sample to be logged.
-                   # 1.0 logs all such statements, 0.0 never logs.
+#log_statement_sample_rate = 1.0	# fraction of logged statements exceeding
+					# log_min_duration_sample to be logged;
+					# 1.0 logs all such statements, 0.0 never logs
 
 
-#log_transaction_sample_rate = 0.0	# Fraction of transactions whose statements
-					# are logged regardless of their duration. 1.0 logs all
-					# statements from all transactions, 0.0 never logs.
+#log_transaction_sample_rate = 0.0	# fraction of transactions whose statements
+					# are logged regardless of their duration; 1.0 logs all
+					# statements from all transactions, 0.0 never logs
 
 # - What to Log -
 
@@ -608,7 +608,7 @@
 #autovacuum_vacuum_threshold = 50	# min number of row updates before
 					# vacuum
 #autovacuum_vacuum_insert_threshold = 1000	# min number of row inserts
-					# before vacuum. -1 disables insert
+					# before vacuum; -1 disables insert
 					# vacuums
 #autovacuum_analyze_threshold = 50	# min number of row updates before
 					# analyze
