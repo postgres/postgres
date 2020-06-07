@@ -336,18 +336,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
-      <term><option>--partitions=<replaceable>NUM</replaceable></option></term>
-      <listitem>
-       <para>
-        Create a partitioned <literal>pgbench_accounts</literal> table with
-        <replaceable>NUM</replaceable> partitions of nearly equal size for
-        the scaled number of accounts.
-        Default is <literal>0</literal>, meaning no partitioning.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--partition-method=<replaceable>NAME</replaceable></option></term>
       <listitem>
        <para>
@@ -356,6 +344,18 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         Expected values are <literal>range</literal> or <literal>hash</literal>.
         This option requires that <option>--partitions</option> is set to non-zero.
         If unspecified, default is <literal>range</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--partitions=<replaceable>NUM</replaceable></option></term>
+      <listitem>
+       <para>
+        Create a partitioned <literal>pgbench_accounts</literal> table with
+        <replaceable>NUM</replaceable> partitions of nearly equal size for
+        the scaled number of accounts.
+        Default is <literal>0</literal>, meaning no partitioning.
        </para>
       </listitem>
      </varlistentry>
@@ -671,16 +671,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
-      <term><option>--show-script</option><replaceable>scriptname</replaceable></term>
-      <listitem>
-       <para>
-        Show the actual code of builtin script <replaceable>scriptname</replaceable>
-        on stderr, and exit immediately.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-t</option> <replaceable>transactions</replaceable></term>
       <term><option>--transactions=</option><replaceable>transactions</replaceable></term>
       <listitem>
@@ -750,13 +740,13 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
-      <term><option>--random-seed=</option><replaceable>SEED</replaceable></term>
+      <term><option>--random-seed=</option><replaceable>seed</replaceable></term>
       <listitem>
        <para>
         Set random generator seed.  Seeds the system random number generator,
         which then produces a sequence of initial generator states, one for
         each thread.
-        Values for <replaceable>SEED</replaceable> may be:
+        Values for <replaceable>seed</replaceable> may be:
         <literal>time</literal> (the default, the seed is based on the current time),
         <literal>rand</literal> (use a strong random source, failing if none
         is available), or an unsigned decimal integer value.
@@ -764,7 +754,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         (<literal>random...</literal> functions) or implicitly (for instance option
         <option>--rate</option> uses it to schedule transactions).
         When explicitly set, the value used for seeding is shown on the terminal.
-        Any value allowed for <replaceable>SEED</replaceable> may also be
+        Any value allowed for <replaceable>seed</replaceable> may also be
         provided through the environment variable
         <literal>PGBENCH_RANDOM_SEED</literal>.
         To ensure that the provided seed impacts all possible uses, put this option
@@ -800,6 +790,16 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         log file. For example, when computing TPS values, you need to multiply
         the numbers accordingly (e.g. with 0.01 sample rate, you'll only get
         1/100 of the actual TPS).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--show-script=</option><replaceable>scriptname</replaceable></term>
+      <listitem>
+       <para>
+        Show the actual code of builtin script <replaceable>scriptname</replaceable>
+        on stderr, and exit immediately.
        </para>
       </listitem>
      </varlistentry>

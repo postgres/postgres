@@ -288,18 +288,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--extra-float-digits=<replaceable class="parameter">ndigits</replaceable></option></term>
-      <listitem>
-       <para>
-        Use the specified value of extra_float_digits when dumping
-        floating-point data, instead of the maximum available precision.
-        Routine dumps made for backup purposes should not use this option.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
       <term><option>--exclude-database=<replaceable class="parameter">pattern</replaceable></option></term>
       <listitem>
        <para>
@@ -314,6 +302,17 @@ PostgreSQL documentation
         so multiple databases can also be excluded by writing wildcard
         characters in the pattern.  When using wildcards, be careful to
         quote the pattern if needed to prevent shell wildcard expansion.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--extra-float-digits=<replaceable class="parameter">ndigits</replaceable></option></term>
+      <listitem>
+       <para>
+        Use the specified value of extra_float_digits when dumping
+        floating-point data, instead of the maximum available precision.
+        Routine dumps made for backup purposes should not use this option.
        </para>
       </listitem>
      </varlistentry>

@@ -500,39 +500,51 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-slot</option></term>
+      <term><option>--manifest-checksums=<replaceable class="parameter">algorithm</replaceable></option></term>
       <listitem>
        <para>
-        This option prevents the creation of a temporary replication slot
-        during the backup even if it's supported by the server.
+        Specifies the checksum algorithm that should be applied to each file
+        included in the backup manifest. Currently, the available
+        algorithms are <literal>NONE</literal>, <literal>CRC32C</literal>,
+        <literal>SHA224</literal>, <literal>SHA256</literal>,
+        <literal>SHA384</literal>, and <literal>SHA512</literal>.
+        The default is <literal>CRC32C</literal>.
        </para>
        <para>
-        Temporary replication slots are created by default if no slot name
-        is given with the option <option>-S</option> when using log streaming.
+        If <literal>NONE</literal> is selected, the backup manifest will
+        not contain any checksums. Otherwise, it will contain a checksum
+        of each file in the backup using the specified algorithm. In addition,
+        the manifest will always contain a <literal>SHA256</literal>
+        checksum of its own contents. The <literal>SHA</literal> algorithms
+        are significantly more CPU-intensive than <literal>CRC32C</literal>,
+        so selecting one of them may increase the time required to complete
+        the backup.
        </para>
        <para>
-        The main purpose of this option is to allow taking a base backup when
-        the server is out of free replication slots.  Using replication slots
-        is almost always preferred, because it prevents needed WAL from being
-        removed by the server during the backup.
+        Using a SHA hash function provides a cryptographically secure digest
+        of each file for users who wish to verify that the backup has not been
+        tampered with, while the CRC32C algorithm provides a checksum which is
+        much faster to calculate and good at catching errors due to accidental
+        changes but is not resistant to targeted modifications.  Note that, to
+        be useful against an adversary who has access to the backup, the backup
+        manifest would need to be stored securely elsewhere or otherwise
+        verified not to have been modified since the backup was taken.
+       </para>
+       <para>
+        <xref linkend="app-pgverifybackup" /> can be used to check the
+        integrity of a backup against the backup manifest.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-verify-checksums</option></term>
+      <term><option>--manifest-force-encode</option></term>
       <listitem>
        <para>
-        Disables verification of checksums, if they are enabled on the server
-        the base backup is taken from.
-       </para>
-       <para>
-        By default, checksums are verified and checksum failures will result
-        in a non-zero exit status. However, the base backup will not be
-        removed in such a case, as if the <option>--no-clean</option> option
-        had been used.  Checksum verifications failures will also be reported
-        in the <link linkend="monitoring-pg-stat-database-view">
-        <structname>pg_stat_database</structname></link> view.
+        Forces all filenames in the backup manifest to be hex-encoded.
+        If this option is not specified, only non-UTF8 filenames are
+        hex-encoded. This option is mostly intended to test that tools which
+        read a backup manifest file properly handle this case.
        </para>
       </listitem>
      </varlistentry>
@@ -576,51 +588,39 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--manifest-force-encode</option></term>
+      <term><option>--no-slot</option></term>
       <listitem>
        <para>
-        Forces all filenames in the backup manifest to be hex-encoded.
-        If this option is not specified, only non-UTF8 filenames are
-        hex-encoded. This option is mostly intended to test that tools which
-        read a backup manifest file properly handle this case.
+        This option prevents the creation of a temporary replication slot
+        during the backup even if it's supported by the server.
+       </para>
+       <para>
+        Temporary replication slots are created by default if no slot name
+        is given with the option <option>-S</option> when using log streaming.
+       </para>
+       <para>
+        The main purpose of this option is to allow taking a base backup when
+        the server is out of free replication slots.  Using replication slots
+        is almost always preferred, because it prevents needed WAL from being
+        removed by the server during the backup.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--manifest-checksums=<replaceable class="parameter">algorithm</replaceable></option></term>
+      <term><option>--no-verify-checksums</option></term>
       <listitem>
        <para>
-        Specifies the checksum algorithm that should be applied to each file
-        included in the backup manifest. Currently, the available
-        algorithms are <literal>NONE</literal>, <literal>CRC32C</literal>,
-        <literal>SHA224</literal>, <literal>SHA256</literal>,
-        <literal>SHA384</literal>, and <literal>SHA512</literal>.
-        The default is <literal>CRC32C</literal>.
+        Disables verification of checksums, if they are enabled on the server
+        the base backup is taken from.
        </para>
        <para>
-        If <literal>NONE</literal> is selected, the backup manifest will
-        not contain any checksums. Otherwise, it will contain a checksum
-        of each file in the backup using the specified algorithm. In addition,
-        the manifest will always contain a <literal>SHA256</literal>
-        checksum of its own contents. The <literal>SHA</literal> algorithms
-        are significantly more CPU-intensive than <literal>CRC32C</literal>,
-        so selecting one of them may increase the time required to complete
-        the backup.
-       </para>
-       <para>
-        Using a SHA hash function provides a cryptographically secure digest
-        of each file for users who wish to verify that the backup has not been
-        tampered with, while the CRC32C algorithm provides a checksum which is
-        much faster to calculate and good at catching errors due to accidental
-        changes but is not resistant to targeted modifications.  Note that, to
-        be useful against an adversary who has access to the backup, the backup
-        manifest would need to be stored securely elsewhere or otherwise
-        verified not to have been modified since the backup was taken.
-       </para>
-       <para>
-        <xref linkend="app-pgverifybackup" /> can be used to check the
-        integrity of a backup against the backup manifest.
+        By default, checksums are verified and checksum failures will result
+        in a non-zero exit status. However, the base backup will not be
+        removed in such a case, as if the <option>--no-clean</option> option
+        had been used.  Checksum verifications failures will also be reported
+        in the <link linkend="monitoring-pg-stat-database-view">
+        <structname>pg_stat_database</structname></link> view.
        </para>
       </listitem>
      </varlistentry>
