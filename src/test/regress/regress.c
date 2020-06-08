@@ -898,6 +898,56 @@ test_spinlock(void)
 #endif
 }
 
+/*
+ * Verify that performing atomic ops inside a spinlock isn't a
+ * problem. Realistically that's only going to be a problem when both
+ * --disable-spinlocks and --disable-atomics are used, but it's cheap enough
+ * to just always test.
+ *
+ * The test works by initializing enough atomics that we'd conflict if there
+ * were an overlap between a spinlock and an atomic by holding a spinlock
+ * while manipulating more than NUM_SPINLOCK_SEMAPHORES atomics.
+ *
+ * NUM_TEST_ATOMICS doesn't really need to be more than
+ * NUM_SPINLOCK_SEMAPHORES, but it seems better to test a bit more
+ * extensively.
+ */
+static void
+test_atomic_spin_nest(void)
+{
+	slock_t lock;
+#define NUM_TEST_ATOMICS (NUM_SPINLOCK_SEMAPHORES + NUM_ATOMICS_SEMAPHORES + 27)
+	pg_atomic_uint32 atomics32[NUM_TEST_ATOMICS];
+	pg_atomic_uint64 atomics64[NUM_TEST_ATOMICS];
+
+	SpinLockInit(&lock);
+
+	for (int i = 0; i < NUM_TEST_ATOMICS; i++)
+	{
+		pg_atomic_init_u32(&atomics32[i], 0);
+		pg_atomic_init_u64(&atomics64[i], 0);
+	}
+
+	/* just so it's not all zeroes */
+	for (int i = 0; i < NUM_TEST_ATOMICS; i++)
+	{
+		EXPECT_EQ_U32(pg_atomic_fetch_add_u32(&atomics32[i], i), 0);
+		EXPECT_EQ_U64(pg_atomic_fetch_add_u64(&atomics64[i], i), 0);
+	}
+
+	/* test whether we can do atomic op with lock held */
+	SpinLockAcquire(&lock);
+	for (int i = 0; i < NUM_TEST_ATOMICS; i++)
+	{
+		EXPECT_EQ_U32(pg_atomic_fetch_sub_u32(&atomics32[i], i), i);
+		EXPECT_EQ_U32(pg_atomic_read_u32(&atomics32[i]), 0);
+		EXPECT_EQ_U64(pg_atomic_fetch_sub_u64(&atomics64[i], i), i);
+		EXPECT_EQ_U64(pg_atomic_read_u64(&atomics64[i]), 0);
+	}
+	SpinLockRelease(&lock);
+}
+#undef NUM_TEST_ATOMICS
+
 PG_FUNCTION_INFO_V1(test_atomic_ops);
 Datum
 test_atomic_ops(PG_FUNCTION_ARGS)
@@ -913,6 +963,8 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 	 * closely enough related that that seems ok for now.
 	 */
 	test_spinlock();
+
+	test_atomic_spin_nest();
 
 	PG_RETURN_BOOL(true);
 }
