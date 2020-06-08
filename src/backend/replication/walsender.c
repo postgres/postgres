@@ -130,13 +130,11 @@ bool		log_replication_commands = false;
 bool		wake_wal_senders = false;
 
 /*
- * Physical walsender does not use xlogreader to read WAL, but it does use a
- * fake one to keep state.  Logical walsender uses a proper xlogreader.  Both
- * keep the 'xlogreader' pointer to the right one, for the sake of common
- * routines.
+ * xlogreader used for replication.  Note that a WAL sender doing physical
+ * replication does not need xlogreader to read WAL, but it needs one to
+ * keep a state of its work.
  */
-static XLogReaderState fake_xlogreader;
-static XLogReaderState *xlogreader;
+static XLogReaderState *xlogreader = NULL;
 
 /*
  * These variables keep track of the state of the timeline we're currently
@@ -285,20 +283,6 @@ InitWalSender(void)
 
 	/* Initialize empty timestamp buffer for lag tracking. */
 	lag_tracker = MemoryContextAllocZero(TopMemoryContext, sizeof(LagTracker));
-
-	/*
-	 * Prepare physical walsender's fake xlogreader struct.  Logical walsender
-	 * does this later.
-	 */
-	if (!am_db_walsender)
-	{
-		xlogreader = &fake_xlogreader;
-		xlogreader->routine =
-			*XL_ROUTINE(.segment_open = WalSndSegmentOpen,
-						.segment_close = wal_segment_close);
-		WALOpenSegmentInit(&xlogreader->seg, &xlogreader->segcxt,
-						   wal_segment_size, NULL);
-	}
 }
 
 /*
@@ -593,6 +577,18 @@ StartReplication(StartReplicationCmd *cmd)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("IDENTIFY_SYSTEM has not been run before START_REPLICATION")));
+
+	/* create xlogreader for physical replication */
+	xlogreader =
+		XLogReaderAllocate(wal_segment_size, NULL,
+						   XL_ROUTINE(.segment_open = WalSndSegmentOpen,
+									  .segment_close = wal_segment_close),
+						   NULL);
+
+	if (!xlogreader)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	/*
 	 * We assume here that we're logging enough information in the WAL for
@@ -1643,6 +1639,8 @@ exec_replication_command(const char *cmd_string)
 					StartReplication(cmd);
 				else
 					StartLogicalReplication(cmd);
+
+				Assert(xlogreader != NULL);
 				break;
 			}
 
