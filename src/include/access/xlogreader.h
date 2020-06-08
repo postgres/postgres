@@ -262,10 +262,6 @@ extern XLogReaderRoutine *LocalXLogReaderRoutine(void);
 /* Free an XLogReader */
 extern void XLogReaderFree(XLogReaderState *state);
 
-/* Initialize supporting structures */
-extern void WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
-							   int segsize, const char *waldir);
-
 /* Position the XLogReader to given record */
 extern void XLogBeginRead(XLogReaderState *state, XLogRecPtr RecPtr);
 #ifdef FRONTEND

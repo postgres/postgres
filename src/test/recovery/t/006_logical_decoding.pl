@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 13;
+use Test::More tests => 14;
 use Config;
 
 # Initialize master node
@@ -35,6 +35,15 @@ my ($result, $stdout, $stderr) = $node_master->psql(
 ok( $stderr =~
 	  m/replication slot "test_slot" was not created in this database/,
 	"Logical decoding correctly fails to start");
+
+# Check case of walsender not using a database connection.  Logical
+# decoding should not be allowed.
+($result, $stdout, $stderr) = $node_master->psql(
+	'template1',
+	qq[START_REPLICATION SLOT s1 LOGICAL 0/1],
+	replication => 'true');
+ok($stderr =~ /ERROR:  logical decoding requires a database connection/,
+	"Logical decoding fails on non-database connection");
 
 $node_master->safe_psql('postgres',
 	qq[INSERT INTO decoding_test(x,y) SELECT s, s::text FROM generate_series(1,10) s;]
