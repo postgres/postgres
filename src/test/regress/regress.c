@@ -34,6 +34,7 @@
 #include "optimizer/optimizer.h"
 #include "optimizer/plancat.h"
 #include "port/atomics.h"
+#include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 #include "utils/memutils.h"
@@ -794,6 +795,108 @@ test_atomic_uint64(void)
 	EXPECT_EQ_U64(pg_atomic_fetch_and_u64(&var, ~0), 0);
 }
 
+/*
+ * Perform, fairly minimal, testing of the spinlock implementation.
+ *
+ * It's likely worth expanding these to actually test concurrency etc, but
+ * having some regularly run tests is better than none.
+ */
+static void
+test_spinlock(void)
+{
+	/*
+	 * Basic tests for spinlocks, as well as the underlying operations.
+	 *
+	 * We embed the spinlock in a struct with other members to test that the
+	 * spinlock operations don't perform too wide writes.
+	 */
+	{
+		struct test_lock_struct
+		{
+			char		data_before[4];
+			slock_t		lock;
+			char		data_after[4];
+		} struct_w_lock;
+
+		memcpy(struct_w_lock.data_before, "abcd", 4);
+		memcpy(struct_w_lock.data_after, "ef12", 4);
+
+		/* test basic operations via the SpinLock* API */
+		SpinLockInit(&struct_w_lock.lock);
+		SpinLockAcquire(&struct_w_lock.lock);
+		SpinLockRelease(&struct_w_lock.lock);
+
+		/* test basic operations via underlying S_* API */
+		S_INIT_LOCK(&struct_w_lock.lock);
+		S_LOCK(&struct_w_lock.lock);
+		S_UNLOCK(&struct_w_lock.lock);
+
+		/* and that "contended" acquisition works */
+		s_lock(&struct_w_lock.lock, "testfile", 17, "testfunc");
+		S_UNLOCK(&struct_w_lock.lock);
+
+		/*
+		 * Check, using TAS directly, that a single spin cycle doesn't block
+		 * when acquiring an already acquired lock.
+		 */
+#ifdef TAS
+		S_LOCK(&struct_w_lock.lock);
+
+		if (!TAS(&struct_w_lock.lock))
+			elog(ERROR, "acquired already held spinlock");
+
+#ifdef TAS_SPIN
+		if (!TAS_SPIN(&struct_w_lock.lock))
+			elog(ERROR, "acquired already held spinlock");
+#endif							/* defined(TAS_SPIN) */
+
+		S_UNLOCK(&struct_w_lock.lock);
+#endif							/* defined(TAS) */
+
+		/*
+		 * Verify that after all of this the non-lock contents are still
+		 * correct.
+		 */
+		if (memcmp(struct_w_lock.data_before, "abcd", 4) != 0)
+			elog(ERROR, "padding before spinlock modified");
+		if (memcmp(struct_w_lock.data_after, "ef12", 4) != 0)
+			elog(ERROR, "padding after spinlock modified");
+	}
+
+	/*
+	 * Ensure that allocating more than INT32_MAX emulated spinlocks
+	 * works. That's interesting because the spinlock emulation uses a 32bit
+	 * integer to map spinlocks onto semaphores. There've been bugs...
+	 */
+#ifndef HAVE_SPINLOCKS
+	{
+		/*
+		 * Initialize enough spinlocks to advance counter close to
+		 * wraparound. It's too expensive to perform acquire/release for each,
+		 * as those may be syscalls when the spinlock emulation is used (and
+		 * even just atomic TAS would be expensive).
+		 */
+		for (uint32 i = 0; i < INT32_MAX - 100000; i++)
+		{
+			slock_t lock;
+
+			SpinLockInit(&lock);
+		}
+
+		for (uint32 i = 0; i < 200000; i++)
+		{
+			slock_t lock;
+
+			SpinLockInit(&lock);
+
+			SpinLockAcquire(&lock);
+			SpinLockRelease(&lock);
+			SpinLockAcquire(&lock);
+			SpinLockRelease(&lock);
+		}
+	}
+#endif
+}
 
 PG_FUNCTION_INFO_V1(test_atomic_ops);
 Datum
@@ -804,6 +907,12 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 	test_atomic_uint32();
 
 	test_atomic_uint64();
+
+	/*
+	 * Arguably this shouldn't be tested as part of this function, but it's
+	 * closely enough related that that seems ok for now.
+	 */
+	test_spinlock();
 
 	PG_RETURN_BOOL(true);
 }
