@@ -7,7 +7,7 @@ This module uses the word stemming code developed by the Snowball project,
 http://snowballstem.org (formerly http://snowball.tartarus.org)
 which is released by them under a BSD-style license.
 
-The Snowball project is not currently making formal releases; it's best
+The Snowball project does not often make formal releases; it's best
 to pull from their git repository
 
 git clone https://github.com/snowballstem/snowball.git
@@ -29,8 +29,8 @@ We choose to include the derived files in the PostgreSQL distribution
 because most installations will not have the Snowball compiler available.
 
 We are currently synced with the Snowball git commit
-4456b82c26c02493e8807a66f30593a98c5d2888
-of 2019-06-24.
+c70ed64f9d41c1032fba4e962b054f8e9d489a74 (tag v2.0.0)
+of 2019-10-02.
 
 To update the PostgreSQL sources from a new Snowball version:
 
@@ -43,6 +43,9 @@ for f in .../snowball/src_c/*.c
 do
     sed 's|\.\./runtime/header\.h|header.h|' $f >libstemmer/`basename $f`
 done
+
+Do not copy stemmers that are listed in libstemmer/modules.txt as
+nonstandard, such as "german2" or "lovins".
 
 2. Copy the *.c files in snowball/runtime/ to
 src/backend/snowball/libstemmer, and edit them to remove direct inclusions

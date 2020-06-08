@@ -106,48 +106,48 @@ static int get_b_utf8(const symbol * p, int c, int lb, int * slot) {
 
 extern int in_grouping_U(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	int w = get_utf8(z->p, z->c, z->l, & ch);
-	if (!w) return -1;
-	if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
-	    return w;
-	z->c += w;
+        int ch;
+        int w = get_utf8(z->p, z->c, z->l, & ch);
+        if (!w) return -1;
+        if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
+            return w;
+        z->c += w;
     } while (repeat);
     return 0;
 }
 
 extern int in_grouping_b_U(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	int w = get_b_utf8(z->p, z->c, z->lb, & ch);
-	if (!w) return -1;
-	if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
-	    return w;
-	z->c -= w;
+        int ch;
+        int w = get_b_utf8(z->p, z->c, z->lb, & ch);
+        if (!w) return -1;
+        if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
+            return w;
+        z->c -= w;
     } while (repeat);
     return 0;
 }
 
 extern int out_grouping_U(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	int w = get_utf8(z->p, z->c, z->l, & ch);
-	if (!w) return -1;
-	if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
-	    return w;
-	z->c += w;
+        int ch;
+        int w = get_utf8(z->p, z->c, z->l, & ch);
+        if (!w) return -1;
+        if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
+            return w;
+        z->c += w;
     } while (repeat);
     return 0;
 }
 
 extern int out_grouping_b_U(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	int w = get_b_utf8(z->p, z->c, z->lb, & ch);
-	if (!w) return -1;
-	if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
-	    return w;
-	z->c -= w;
+        int ch;
+        int w = get_b_utf8(z->p, z->c, z->lb, & ch);
+        if (!w) return -1;
+        if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
+            return w;
+        z->c -= w;
     } while (repeat);
     return 0;
 }
@@ -156,48 +156,48 @@ extern int out_grouping_b_U(struct SN_env * z, const unsigned char * s, int min,
 
 extern int in_grouping(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	if (z->c >= z->l) return -1;
-	ch = z->p[z->c];
-	if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
-	    return 1;
-	z->c++;
+        int ch;
+        if (z->c >= z->l) return -1;
+        ch = z->p[z->c];
+        if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
+            return 1;
+        z->c++;
     } while (repeat);
     return 0;
 }
 
 extern int in_grouping_b(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	if (z->c <= z->lb) return -1;
-	ch = z->p[z->c - 1];
-	if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
-	    return 1;
-	z->c--;
+        int ch;
+        if (z->c <= z->lb) return -1;
+        ch = z->p[z->c - 1];
+        if (ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0)
+            return 1;
+        z->c--;
     } while (repeat);
     return 0;
 }
 
 extern int out_grouping(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	if (z->c >= z->l) return -1;
-	ch = z->p[z->c];
-	if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
-	    return 1;
-	z->c++;
+        int ch;
+        if (z->c >= z->l) return -1;
+        ch = z->p[z->c];
+        if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
+            return 1;
+        z->c++;
     } while (repeat);
     return 0;
 }
 
 extern int out_grouping_b(struct SN_env * z, const unsigned char * s, int min, int max, int repeat) {
     do {
-	int ch;
-	if (z->c <= z->lb) return -1;
-	ch = z->p[z->c - 1];
-	if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
-	    return 1;
-	z->c--;
+        int ch;
+        if (z->c <= z->lb) return -1;
+        ch = z->p[z->c - 1];
+        if (!(ch > max || (ch -= min) < 0 || (s[ch >> 3] & (0X1 << (ch & 0X7))) == 0))
+            return 1;
+        z->c--;
     } while (repeat);
     return 0;
 }
@@ -235,7 +235,7 @@ extern int find_among(struct SN_env * z, const struct among * v, int v_size) {
 
     int first_key_inspected = 0;
 
-    while(1) {
+    while (1) {
         int k = i + ((j - i) >> 1);
         int diff = 0;
         int common = common_i < common_j ? common_i : common_j; /* smaller */
@@ -267,7 +267,7 @@ extern int find_among(struct SN_env * z, const struct among * v, int v_size) {
             first_key_inspected = 1;
         }
     }
-    while(1) {
+    while (1) {
         w = v + i;
         if (common_i >= w->s_size) {
             z->c = c + w->s_size;
@@ -300,7 +300,7 @@ extern int find_among_b(struct SN_env * z, const struct among * v, int v_size) {
 
     int first_key_inspected = 0;
 
-    while(1) {
+    while (1) {
         int k = i + ((j - i) >> 1);
         int diff = 0;
         int common = common_i < common_j ? common_i : common_j;
@@ -322,7 +322,7 @@ extern int find_among_b(struct SN_env * z, const struct among * v, int v_size) {
             first_key_inspected = 1;
         }
     }
-    while(1) {
+    while (1) {
         w = v + i;
         if (common_i >= w->s_size) {
             z->c = c - w->s_size;

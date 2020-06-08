@@ -26,6 +26,8 @@
 
 /* Now we can include the original Snowball header.h */
 #include "snowball/libstemmer/header.h"
+#include "snowball/libstemmer/stem_ISO_8859_1_basque.h"
+#include "snowball/libstemmer/stem_ISO_8859_1_catalan.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_danish.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_dutch.h"
 #include "snowball/libstemmer/stem_ISO_8859_1_english.h"
@@ -44,6 +46,8 @@
 #include "snowball/libstemmer/stem_ISO_8859_2_romanian.h"
 #include "snowball/libstemmer/stem_KOI8_R_russian.h"
 #include "snowball/libstemmer/stem_UTF_8_arabic.h"
+#include "snowball/libstemmer/stem_UTF_8_basque.h"
+#include "snowball/libstemmer/stem_UTF_8_catalan.h"
 #include "snowball/libstemmer/stem_UTF_8_danish.h"
 #include "snowball/libstemmer/stem_UTF_8_dutch.h"
 #include "snowball/libstemmer/stem_UTF_8_english.h"
@@ -51,6 +55,7 @@
 #include "snowball/libstemmer/stem_UTF_8_french.h"
 #include "snowball/libstemmer/stem_UTF_8_german.h"
 #include "snowball/libstemmer/stem_UTF_8_greek.h"
+#include "snowball/libstemmer/stem_UTF_8_hindi.h"
 #include "snowball/libstemmer/stem_UTF_8_hungarian.h"
 #include "snowball/libstemmer/stem_UTF_8_indonesian.h"
 #include "snowball/libstemmer/stem_UTF_8_irish.h"
@@ -92,6 +97,8 @@ static const stemmer_module stemmer_modules[] =
 	/*
 	 * Stemmers list from Snowball distribution
 	 */
+	STEMMER_MODULE(basque, PG_LATIN1, ISO_8859_1),
+	STEMMER_MODULE(catalan, PG_LATIN1, ISO_8859_1),
 	STEMMER_MODULE(danish, PG_LATIN1, ISO_8859_1),
 	STEMMER_MODULE(dutch, PG_LATIN1, ISO_8859_1),
 	STEMMER_MODULE(english, PG_LATIN1, ISO_8859_1),
@@ -110,6 +117,8 @@ static const stemmer_module stemmer_modules[] =
 	STEMMER_MODULE(romanian, PG_LATIN2, ISO_8859_2),
 	STEMMER_MODULE(russian, PG_KOI8R, KOI8_R),
 	STEMMER_MODULE(arabic, PG_UTF8, UTF_8),
+	STEMMER_MODULE(basque, PG_UTF8, UTF_8),
+	STEMMER_MODULE(catalan, PG_UTF8, UTF_8),
 	STEMMER_MODULE(danish, PG_UTF8, UTF_8),
 	STEMMER_MODULE(dutch, PG_UTF8, UTF_8),
 	STEMMER_MODULE(english, PG_UTF8, UTF_8),
@@ -117,6 +126,7 @@ static const stemmer_module stemmer_modules[] =
 	STEMMER_MODULE(french, PG_UTF8, UTF_8),
 	STEMMER_MODULE(german, PG_UTF8, UTF_8),
 	STEMMER_MODULE(greek, PG_UTF8, UTF_8),
+	STEMMER_MODULE(hindi, PG_UTF8, UTF_8),
 	STEMMER_MODULE(hungarian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(indonesian, PG_UTF8, UTF_8),
 	STEMMER_MODULE(irish, PG_UTF8, UTF_8),

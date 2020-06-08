@@ -57,4 +57,3 @@ extern symbol * assign_to(struct SN_env * z, symbol * p);
 extern int len_utf8(const symbol * p);
 
 extern void debug(struct SN_env * z, int number, int line_count);
-
