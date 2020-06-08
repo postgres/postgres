@@ -3837,6 +3837,8 @@ Parser: "pg_catalog.default"
    Schema   |      Name       |                        Description
 ------------+-----------------+-----------------------------------------------------------
  pg_catalog | arabic_stem     | snowball stemmer for arabic language
+ pg_catalog | basque_stem     | snowball stemmer for basque language
+ pg_catalog | catalan_stem    | snowball stemmer for catalan language
  pg_catalog | danish_stem     | snowball stemmer for danish language
  pg_catalog | dutch_stem      | snowball stemmer for dutch language
  pg_catalog | english_stem    | snowball stemmer for english language
@@ -3844,6 +3846,7 @@ Parser: "pg_catalog.default"
  pg_catalog | french_stem     | snowball stemmer for french language
  pg_catalog | german_stem     | snowball stemmer for german language
  pg_catalog | greek_stem      | snowball stemmer for greek language
+ pg_catalog | hindi_stem      | snowball stemmer for hindi language
  pg_catalog | hungarian_stem  | snowball stemmer for hungarian language
  pg_catalog | indonesian_stem | snowball stemmer for indonesian language
  pg_catalog | irish_stem      | snowball stemmer for irish language
