@@ -91,7 +91,7 @@ SpinlockSemaInit(PGSemaphore spinsemas)
 void
 s_init_lock_sema(volatile slock_t *lock, bool nested)
 {
-	static int	counter = 0;
+	static uint32 counter = 0;
 
 	*lock = (++counter) % NUM_SPINLOCK_SEMAPHORES;
 }
