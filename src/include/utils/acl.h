@@ -230,7 +230,6 @@ extern void ExecuteGrantStmt(GrantStmt *stmt);
 extern void ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *stmt);
 
 extern void RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid);
-extern void RemoveDefaultACLById(Oid defaclOid);
 
 extern AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
 									Oid roleid, AclMode mask, AclMaskHow how);

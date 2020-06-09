@@ -1499,39 +1499,6 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 
 
 /*
- * Remove a pg_default_acl entry
- */
-void
-RemoveDefaultACLById(Oid defaclOid)
-{
-	Relation	rel;
-	ScanKeyData skey[1];
-	SysScanDesc scan;
-	HeapTuple	tuple;
-
-	rel = table_open(DefaultAclRelationId, RowExclusiveLock);
-
-	ScanKeyInit(&skey[0],
-				Anum_pg_default_acl_oid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(defaclOid));
-
-	scan = systable_beginscan(rel, DefaultAclOidIndexId, true,
-							  NULL, 1, skey);
-
-	tuple = systable_getnext(scan);
-
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "could not find tuple for default ACL %u", defaclOid);
-
-	CatalogTupleDelete(rel, &tuple->t_self);
-
-	systable_endscan(scan);
-	table_close(rel, RowExclusiveLock);
-}
-
-
-/*
  * expand_col_privileges
  *
  * OR the specified privilege(s) into per-column array entries for each

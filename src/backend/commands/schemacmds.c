@@ -210,29 +210,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	return namespaceId;
 }
 
-/*
- * Guts of schema deletion.
- */
-void
-RemoveSchemaById(Oid schemaOid)
-{
-	Relation	relation;
-	HeapTuple	tup;
-
-	relation = table_open(NamespaceRelationId, RowExclusiveLock);
-
-	tup = SearchSysCache1(NAMESPACEOID,
-						  ObjectIdGetDatum(schemaOid));
-	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for namespace %u", schemaOid);
-
-	CatalogTupleDelete(relation, &tup->t_self);
-
-	ReleaseSysCache(tup);
-
-	table_close(relation, RowExclusiveLock);
-}
-
 
 /*
  * Rename schema

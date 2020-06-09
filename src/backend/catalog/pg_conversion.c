@@ -143,39 +143,6 @@ ConversionCreate(const char *conname, Oid connamespace,
 }
 
 /*
- * RemoveConversionById
- *
- * Remove a tuple from pg_conversion by Oid. This function is solely
- * called inside catalog/dependency.c
- */
-void
-RemoveConversionById(Oid conversionOid)
-{
-	Relation	rel;
-	HeapTuple	tuple;
-	TableScanDesc scan;
-	ScanKeyData scanKeyData;
-
-	ScanKeyInit(&scanKeyData,
-				Anum_pg_conversion_oid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(conversionOid));
-
-	/* open pg_conversion */
-	rel = table_open(ConversionRelationId, RowExclusiveLock);
-
-	scan = table_beginscan_catalog(rel, 1, &scanKeyData);
-
-	/* search for the target tuple */
-	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
-		CatalogTupleDelete(rel, &tuple->t_self);
-	else
-		elog(ERROR, "could not find tuple for conversion %u", conversionOid);
-	table_endscan(scan);
-	table_close(rel, RowExclusiveLock);
-}
-
-/*
  * FindDefaultConversion
  *
  * Find "default" conversion proc by for_encoding and to_encoding in the

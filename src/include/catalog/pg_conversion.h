@@ -65,7 +65,6 @@ extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,
 									  Oid conowner,
 									  int32 conforencoding, int32 contoencoding,
 									  Oid conproc, bool def);
-extern void RemoveConversionById(Oid conversionOid);
 extern Oid	FindDefaultConversion(Oid connamespace, int32 for_encoding,
 								  int32 to_encoding);
 

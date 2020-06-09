@@ -66,9 +66,7 @@
 #include "commands/event_trigger.h"
 #include "commands/extension.h"
 #include "commands/policy.h"
-#include "commands/proclang.h"
 #include "commands/publicationcmds.h"
-#include "commands/schemacmds.h"
 #include "commands/seclabel.h"
 #include "commands/sequence.h"
 #include "commands/trigger.h"
@@ -1224,6 +1222,62 @@ reportDependentObjects(const ObjectAddresses *targetObjects,
 }
 
 /*
+ * Drop an object by OID.  Works for most catalogs, if no special processing
+ * is needed.
+ */
+static void
+DropObjectById(const ObjectAddress *object)
+{
+	int			cacheId;
+	Relation	rel;
+	HeapTuple	tup;
+
+	cacheId = get_object_catcache_oid(object->classId);
+
+	rel = table_open(object->classId, RowExclusiveLock);
+
+	/*
+	 * Use the system cache for the oid column, if one exists.
+	 */
+	if (cacheId >= 0)
+	{
+		tup = SearchSysCache1(cacheId, ObjectIdGetDatum(object->objectId));
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for %s %u",
+				 get_object_class_descr(object->classId), object->objectId);
+
+		CatalogTupleDelete(rel, &tup->t_self);
+
+		ReleaseSysCache(tup);
+	}
+	else
+	{
+		ScanKeyData skey[1];
+		SysScanDesc scan;
+
+		ScanKeyInit(&skey[0],
+					get_object_attnum_oid(object->classId),
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object->objectId));
+
+		scan = systable_beginscan(rel, get_object_oid_index(object->classId), true,
+								  NULL, 1, skey);
+
+		/* we expect exactly one match */
+		tup = systable_getnext(scan);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "could not find tuple for %s %u",
+				 get_object_class_descr(object->classId), object->objectId);
+
+		CatalogTupleDelete(rel, &tup->t_self);
+
+		systable_endscan(scan);
+	}
+
+	table_close(rel, RowExclusiveLock);
+}
+
+/*
  * deleteOneObject: delete a single object for performDeletion.
  *
  * *depRel is the already-open pg_depend relation.
@@ -1376,28 +1430,12 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveTypeById(object->objectId);
 			break;
 
-		case OCLASS_CAST:
-			DropCastById(object->objectId);
-			break;
-
-		case OCLASS_COLLATION:
-			RemoveCollationById(object->objectId);
-			break;
-
 		case OCLASS_CONSTRAINT:
 			RemoveConstraintById(object->objectId);
 			break;
 
-		case OCLASS_CONVERSION:
-			RemoveConversionById(object->objectId);
-			break;
-
 		case OCLASS_DEFAULT:
 			RemoveAttrDefaultById(object->objectId);
-			break;
-
-		case OCLASS_LANGUAGE:
-			DropProceduralLanguageById(object->objectId);
 			break;
 
 		case OCLASS_LARGEOBJECT:
@@ -1408,26 +1446,6 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveOperatorById(object->objectId);
 			break;
 
-		case OCLASS_OPCLASS:
-			RemoveOpClassById(object->objectId);
-			break;
-
-		case OCLASS_OPFAMILY:
-			RemoveOpFamilyById(object->objectId);
-			break;
-
-		case OCLASS_AM:
-			RemoveAccessMethodById(object->objectId);
-			break;
-
-		case OCLASS_AMOP:
-			RemoveAmOpEntryById(object->objectId);
-			break;
-
-		case OCLASS_AMPROC:
-			RemoveAmProcEntryById(object->objectId);
-			break;
-
 		case OCLASS_REWRITE:
 			RemoveRewriteRuleById(object->objectId);
 			break;
@@ -1436,73 +1454,47 @@ doDeletion(const ObjectAddress *object, int flags)
 			RemoveTriggerById(object->objectId);
 			break;
 
-		case OCLASS_SCHEMA:
-			RemoveSchemaById(object->objectId);
-			break;
-
 		case OCLASS_STATISTIC_EXT:
 			RemoveStatisticsById(object->objectId);
-			break;
-
-		case OCLASS_TSPARSER:
-			RemoveTSParserById(object->objectId);
-			break;
-
-		case OCLASS_TSDICT:
-			RemoveTSDictionaryById(object->objectId);
-			break;
-
-		case OCLASS_TSTEMPLATE:
-			RemoveTSTemplateById(object->objectId);
 			break;
 
 		case OCLASS_TSCONFIG:
 			RemoveTSConfigurationById(object->objectId);
 			break;
 
-			/*
-			 * OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE intentionally not
-			 * handled here
-			 */
-
-		case OCLASS_FDW:
-			RemoveForeignDataWrapperById(object->objectId);
-			break;
-
-		case OCLASS_FOREIGN_SERVER:
-			RemoveForeignServerById(object->objectId);
-			break;
-
-		case OCLASS_USER_MAPPING:
-			RemoveUserMappingById(object->objectId);
-			break;
-
-		case OCLASS_DEFACL:
-			RemoveDefaultACLById(object->objectId);
-			break;
-
 		case OCLASS_EXTENSION:
 			RemoveExtensionById(object->objectId);
-			break;
-
-		case OCLASS_EVENT_TRIGGER:
-			RemoveEventTriggerById(object->objectId);
 			break;
 
 		case OCLASS_POLICY:
 			RemovePolicyById(object->objectId);
 			break;
 
-		case OCLASS_PUBLICATION:
-			RemovePublicationById(object->objectId);
-			break;
-
 		case OCLASS_PUBLICATION_REL:
 			RemovePublicationRelById(object->objectId);
 			break;
 
+		case OCLASS_CAST:
+		case OCLASS_COLLATION:
+		case OCLASS_CONVERSION:
+		case OCLASS_LANGUAGE:
+		case OCLASS_OPCLASS:
+		case OCLASS_OPFAMILY:
+		case OCLASS_AM:
+		case OCLASS_AMOP:
+		case OCLASS_AMPROC:
+		case OCLASS_SCHEMA:
+		case OCLASS_TSPARSER:
+		case OCLASS_TSDICT:
+		case OCLASS_TSTEMPLATE:
+		case OCLASS_FDW:
+		case OCLASS_FOREIGN_SERVER:
+		case OCLASS_USER_MAPPING:
+		case OCLASS_DEFACL:
+		case OCLASS_EVENT_TRIGGER:
+		case OCLASS_PUBLICATION:
 		case OCLASS_TRANSFORM:
-			DropTransformById(object->objectId);
+			DropObjectById(object);
 			break;
 
 			/*

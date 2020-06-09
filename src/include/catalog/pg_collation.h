@@ -68,6 +68,5 @@ extern Oid	CollationCreate(const char *collname, Oid collnamespace,
 							const char *collversion,
 							bool if_not_exists,
 							bool quiet);
-extern void RemoveCollationById(Oid collationOid);
 
 #endif							/* PG_COLLATION_H */

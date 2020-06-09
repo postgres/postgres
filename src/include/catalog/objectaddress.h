@@ -55,6 +55,7 @@ extern void check_object_ownership(Oid roleid,
 extern Oid	get_object_namespace(const ObjectAddress *address);
 
 extern bool is_objectclass_supported(Oid class_id);
+extern const char *get_object_class_descr(Oid class_id);
 extern Oid	get_object_oid_index(Oid class_id);
 extern int	get_object_catcache_oid(Oid class_id);
 extern int	get_object_catcache_name(Oid class_id);

@@ -356,28 +356,6 @@ filter_list_to_array(List *filterlist)
 }
 
 /*
- * Guts of event trigger deletion.
- */
-void
-RemoveEventTriggerById(Oid trigOid)
-{
-	Relation	tgrel;
-	HeapTuple	tup;
-
-	tgrel = table_open(EventTriggerRelationId, RowExclusiveLock);
-
-	tup = SearchSysCache1(EVENTTRIGGEROID, ObjectIdGetDatum(trigOid));
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for event trigger %u", trigOid);
-
-	CatalogTupleDelete(tgrel, &tup->t_self);
-
-	ReleaseSysCache(tup);
-
-	table_close(tgrel, RowExclusiveLock);
-}
-
-/*
  * ALTER EVENT TRIGGER foo ENABLE|DISABLE|ENABLE ALWAYS|REPLICA
  */
 Oid

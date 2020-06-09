@@ -219,28 +219,6 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 }
 
 /*
- * Guts of language dropping.
- */
-void
-DropProceduralLanguageById(Oid langOid)
-{
-	Relation	rel;
-	HeapTuple	langTup;
-
-	rel = table_open(LanguageRelationId, RowExclusiveLock);
-
-	langTup = SearchSysCache1(LANGOID, ObjectIdGetDatum(langOid));
-	if (!HeapTupleIsValid(langTup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for language %u", langOid);
-
-	CatalogTupleDelete(rel, &langTup->t_self);
-
-	ReleaseSysCache(langTup);
-
-	table_close(rel, RowExclusiveLock);
-}
-
-/*
  * get_language_oid - given a language name, look up the OID
  *
  * If missing_ok is false, throw an error if language name not found.  If
