@@ -136,7 +136,8 @@ CREATE TABLE atest12 as
   SELECT x AS a, 10001 - x AS b FROM generate_series(1,10000) x;
 CREATE INDEX ON atest12 (a);
 CREATE INDEX ON atest12 (abs(a));
--- results below depend on having quite accurate stats for atest12
+-- results below depend on having quite accurate stats for atest12, so...
+ALTER TABLE atest12 SET (autovacuum_enabled = off);
 SET default_statistics_target = 10000;
 VACUUM ANALYZE atest12;
 RESET default_statistics_target;
