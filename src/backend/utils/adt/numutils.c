@@ -545,11 +545,11 @@ pg_lltoa(int64 value, char *a)
  * The intended use-case for this function is to build strings that contain
  * multiple individual numbers, for example:
  *
- *	str = pg_ltostr_zeropad(str, hours, 2);
+ *	str = pg_ultostr_zeropad(str, hours, 2);
  *	*str++ = ':';
- *	str = pg_ltostr_zeropad(str, mins, 2);
+ *	str = pg_ultostr_zeropad(str, mins, 2);
  *	*str++ = ':';
- *	str = pg_ltostr_zeropad(str, secs, 2);
+ *	str = pg_ultostr_zeropad(str, secs, 2);
  *	*str = '\0';
  *
  * Note: Caller must ensure that 'str' points to enough memory to hold the
@@ -578,7 +578,7 @@ pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth)
 }
 
 /*
- * pg_ltostr
+ * pg_ultostr
  *		Converts 'value' into a decimal string representation stored at 'str'.
  *
  * Returns the ending address of the string result (the last character written
@@ -587,9 +587,9 @@ pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth)
  * The intended use-case for this function is to build strings that contain
  * multiple individual numbers, for example:
  *
- *	str = pg_ltostr(str, a);
+ *	str = pg_ultostr(str, a);
  *	*str++ = ' ';
- *	str = pg_ltostr(str, b);
+ *	str = pg_ultostr(str, b);
  *	*str = '\0';
  *
  * Note: Caller must ensure that 'str' points to enough memory to hold the
