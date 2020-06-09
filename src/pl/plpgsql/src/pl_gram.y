@@ -1725,7 +1725,7 @@ stmt_exit		: exit_type opt_label opt_exitcond
 						{
 							/*
 							 * No label, so make sure there is some loop (an
-							 * unlabelled EXIT does not match a block, so this
+							 * unlabeled EXIT does not match a block, so this
 							 * is the same test for both EXIT and CONTINUE)
 							 */
 							if (plpgsql_ns_find_nearest_loop(plpgsql_ns_top()) == NULL)
@@ -3749,7 +3749,7 @@ check_labels(const char *start_label, const char *end_label, int end_location)
 		if (!start_label)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("end label \"%s\" specified for unlabelled block",
+					 errmsg("end label \"%s\" specified for unlabeled block",
 							end_label),
 					 parser_errposition(end_location)));
 

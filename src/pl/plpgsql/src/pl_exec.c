@@ -212,21 +212,21 @@ static HTAB *shared_cast_hash = NULL;
 	{ \
 		if (estate->exitlabel == NULL) \
 		{ \
-			/* unlabelled EXIT terminates this loop */ \
+			/* unlabeled EXIT terminates this loop */ \
 			rc = PLPGSQL_RC_OK; \
 			exit_action; \
 		} \
 		else if ((looplabel) != NULL && \
 				 strcmp(looplabel, estate->exitlabel) == 0) \
 		{ \
-			/* labelled EXIT matching this loop, so terminate loop */ \
+			/* labeled EXIT matching this loop, so terminate loop */ \
 			estate->exitlabel = NULL; \
 			rc = PLPGSQL_RC_OK; \
 			exit_action; \
 		} \
 		else \
 		{ \
-			/* non-matching labelled EXIT, propagate RC_EXIT out */ \
+			/* non-matching labeled EXIT, propagate RC_EXIT out */ \
 			exit_action; \
 		} \
 	} \
@@ -234,19 +234,19 @@ static HTAB *shared_cast_hash = NULL;
 	{ \
 		if (estate->exitlabel == NULL) \
 		{ \
-			/* unlabelled CONTINUE matches this loop, so continue in loop */ \
+			/* unlabeled CONTINUE matches this loop, so continue in loop */ \
 			rc = PLPGSQL_RC_OK; \
 		} \
 		else if ((looplabel) != NULL && \
 				 strcmp(looplabel, estate->exitlabel) == 0) \
 		{ \
-			/* labelled CONTINUE matching this loop, so continue in loop */ \
+			/* labeled CONTINUE matching this loop, so continue in loop */ \
 			estate->exitlabel = NULL; \
 			rc = PLPGSQL_RC_OK; \
 		} \
 		else \
 		{ \
-			/* non-matching labelled CONTINUE, propagate RC_CONTINUE out */ \
+			/* non-matching labeled CONTINUE, propagate RC_CONTINUE out */ \
 			exit_action; \
 		} \
 	} \

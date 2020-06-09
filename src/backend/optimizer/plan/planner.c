@@ -367,7 +367,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	 * parallel-restricted, and in either case it should be OK to impose
 	 * parallel-mode restrictions.  If that ends up breaking something, then
 	 * either some function the user included in the query is incorrectly
-	 * labelled as parallel-safe or parallel-restricted when in reality it's
+	 * labeled as parallel-safe or parallel-restricted when in reality it's
 	 * parallel-unsafe, or else the query planner itself has a bug.
 	 */
 	glob->parallelModeNeeded = glob->parallelModeOK &&

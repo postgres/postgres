@@ -4238,7 +4238,7 @@ ExplainOpenGroup(const char *objtype, const char *labelname,
 			/*
 			 * In YAML format, the grouping stack is an integer list.  0 means
 			 * we've emitted nothing at this grouping level AND this grouping
-			 * level is unlabelled and must be marked with "- ".  See
+			 * level is unlabeled and must be marked with "- ".  See
 			 * ExplainYAMLLineStarting().
 			 */
 			ExplainYAMLLineStarting(es);
@@ -4601,7 +4601,7 @@ ExplainJSONLineEnding(ExplainState *es)
  *
  * YAML lines are ordinarily indented by two spaces per indentation level.
  * The text emitted for each property begins just prior to the preceding
- * line-break, except for the first property in an unlabelled group, for which
+ * line-break, except for the first property in an unlabeled group, for which
  * it begins immediately after the "- " that introduces the group.  The first
  * property of the group appears on the same line as the opening "- ".
  */
