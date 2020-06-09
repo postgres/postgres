@@ -349,7 +349,7 @@ begin
   end loop flbl1;
 end;
 $$ language plpgsql;
-ERROR:  end label "flbl1" specified for unlabelled block
+ERROR:  end label "flbl1" specified for unlabeled block
 LINE 5:   end loop flbl1;
                    ^
 -- should fail: end label does not match start label
@@ -374,7 +374,7 @@ begin
   end loop outer_label;
 end;
 $$ language plpgsql;
-ERROR:  end label "outer_label" specified for unlabelled block
+ERROR:  end label "outer_label" specified for unlabeled block
 LINE 6:   end loop outer_label;
                    ^
 -- unlabeled exit matches no blocks

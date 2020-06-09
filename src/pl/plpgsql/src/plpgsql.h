@@ -833,7 +833,7 @@ typedef struct PLpgSQL_stmt_exit
 	int			lineno;
 	unsigned int stmtid;
 	bool		is_exit;		/* Is this an exit or a continue? */
-	char	   *label;			/* NULL if it's an unlabelled EXIT/CONTINUE */
+	char	   *label;			/* NULL if it's an unlabeled EXIT/CONTINUE */
 	PLpgSQL_expr *cond;
 } PLpgSQL_stmt_exit;
 

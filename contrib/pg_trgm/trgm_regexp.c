@@ -73,7 +73,7 @@
  * (two prefix colors plus a state number from the original NFA) an
  * "enter key".
  *
- * Each arc of the expanded graph is labelled with a trigram that must be
+ * Each arc of the expanded graph is labeled with a trigram that must be
  * present in the string to match.  We can construct this from an out-arc of
  * the underlying NFA state by combining the expanded state's prefix with the
  * color label of the underlying out-arc, if neither prefix position is
@@ -123,7 +123,7 @@
  * false positives that we would have to traverse a large fraction of the
  * index, the graph is simplified further in a lossy fashion by removing
  * color trigrams. When a color trigram is removed, the states connected by
- * any arcs labelled with that trigram are merged.
+ * any arcs labeled with that trigram are merged.
  *
  * Trigrams do not all have equivalent value for searching: some of them are
  * more frequent and some of them are less frequent. Ideally, we would like
