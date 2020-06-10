@@ -114,7 +114,7 @@ connection_target: opt_database_name opt_server opt_port
 		}
 		;
 
-opt_database_name: database_name		{ $$ = $1; }
+opt_database_name: name				{ $$ = $1; }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
@@ -962,7 +962,7 @@ dis_name: connection_object			{ $$ = $1; }
 		| /* EMPTY */			{ $$ = mm_strdup("\"CURRENT\""); }
 		;
 
-connection_object: database_name		{ $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\"")); }
+connection_object: name				{ $$ = make3_str(mm_strdup("\""), $1, mm_strdup("\"")); }
 		| DEFAULT			{ $$ = mm_strdup("\"DEFAULT\""); }
 		| char_variable			{ $$ = $1; }
 		;

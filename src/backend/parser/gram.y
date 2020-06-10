@@ -352,9 +352,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <chr>		enable_trigger
 
 %type <str>		copy_file_name
-				database_name access_method_clause access_method attr_name
+				access_method_clause attr_name
 				table_access_method_clause name cursor_name file_name
-				index_name opt_index_name cluster_index_specification
+				opt_index_name cluster_index_specification
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_inline_handler opt_validator validator_clause
@@ -1183,7 +1183,7 @@ AlterRoleStmt:
 
 opt_in_database:
 			   /* EMPTY */					{ $$ = NULL; }
-			| IN_P DATABASE database_name	{ $$ = $3; }
+			| IN_P DATABASE name	{ $$ = $3; }
 		;
 
 AlterRoleSetStmt:
@@ -3945,7 +3945,7 @@ part_elem: ColId opt_collate opt_class
 		;
 
 table_access_method_clause:
-			USING access_method					{ $$ = $2; }
+			USING name							{ $$ = $2; }
 			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
@@ -3970,7 +3970,7 @@ OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-ExistingIndex:   USING INDEX index_name				{ $$ = $3; }
+ExistingIndex:   USING INDEX name					{ $$ = $3; }
 		;
 
 /*****************************************************************************
@@ -4635,7 +4635,7 @@ AlterExtensionContentsStmt:
 					n->object = (Node *) $6;
 					$$ = (Node *)n;
 				}
-			| ALTER EXTENSION name add_drop OPERATOR CLASS any_name USING access_method
+			| ALTER EXTENSION name add_drop OPERATOR CLASS any_name USING name
 				{
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = $3;
@@ -4644,7 +4644,7 @@ AlterExtensionContentsStmt:
 					n->object = (Node *) lcons(makeString($9), $7);
 					$$ = (Node *)n;
 				}
-			| ALTER EXTENSION name add_drop OPERATOR FAMILY any_name USING access_method
+			| ALTER EXTENSION name add_drop OPERATOR FAMILY any_name USING name
 				{
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = $3;
@@ -5987,7 +5987,7 @@ opt_if_not_exists: IF_P NOT EXISTS              { $$ = true; }
 
 CreateOpClassStmt:
 			CREATE OPERATOR CLASS any_name opt_default FOR TYPE_P Typename
-			USING access_method opt_opfamily AS opclass_item_list
+			USING name opt_opfamily AS opclass_item_list
 				{
 					CreateOpClassStmt *n = makeNode(CreateOpClassStmt);
 					n->opclassname = $4;
@@ -6086,7 +6086,7 @@ opt_recheck:	RECHECK
 
 
 CreateOpFamilyStmt:
-			CREATE OPERATOR FAMILY any_name USING access_method
+			CREATE OPERATOR FAMILY any_name USING name
 				{
 					CreateOpFamilyStmt *n = makeNode(CreateOpFamilyStmt);
 					n->opfamilyname = $4;
@@ -6096,7 +6096,7 @@ CreateOpFamilyStmt:
 		;
 
 AlterOpFamilyStmt:
-			ALTER OPERATOR FAMILY any_name USING access_method ADD_P opclass_item_list
+			ALTER OPERATOR FAMILY any_name USING name ADD_P opclass_item_list
 				{
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
 					n->opfamilyname = $4;
@@ -6105,7 +6105,7 @@ AlterOpFamilyStmt:
 					n->items = $8;
 					$$ = (Node *) n;
 				}
-			| ALTER OPERATOR FAMILY any_name USING access_method DROP opclass_drop_list
+			| ALTER OPERATOR FAMILY any_name USING name DROP opclass_drop_list
 				{
 					AlterOpFamilyStmt *n = makeNode(AlterOpFamilyStmt);
 					n->opfamilyname = $4;
@@ -6142,7 +6142,7 @@ opclass_drop:
 
 
 DropOpClassStmt:
-			DROP OPERATOR CLASS any_name USING access_method opt_drop_behavior
+			DROP OPERATOR CLASS any_name USING name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString($6), $4));
@@ -6152,7 +6152,7 @@ DropOpClassStmt:
 					n->concurrent = false;
 					$$ = (Node *) n;
 				}
-			| DROP OPERATOR CLASS IF_P EXISTS any_name USING access_method opt_drop_behavior
+			| DROP OPERATOR CLASS IF_P EXISTS any_name USING name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString($8), $6));
@@ -6165,7 +6165,7 @@ DropOpClassStmt:
 		;
 
 DropOpFamilyStmt:
-			DROP OPERATOR FAMILY any_name USING access_method opt_drop_behavior
+			DROP OPERATOR FAMILY any_name USING name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString($6), $4));
@@ -6175,7 +6175,7 @@ DropOpFamilyStmt:
 					n->concurrent = false;
 					$$ = (Node *) n;
 				}
-			| DROP OPERATOR FAMILY IF_P EXISTS any_name USING access_method opt_drop_behavior
+			| DROP OPERATOR FAMILY IF_P EXISTS any_name USING name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->objects = list_make1(lcons(makeString($8), $6));
@@ -6582,7 +6582,7 @@ CommentStmt:
 					n->comment = $8;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON OPERATOR CLASS any_name USING access_method IS comment_text
+			| COMMENT ON OPERATOR CLASS any_name USING name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPCLASS;
@@ -6590,7 +6590,7 @@ CommentStmt:
 					n->comment = $9;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON OPERATOR FAMILY any_name USING access_method IS comment_text
+			| COMMENT ON OPERATOR FAMILY any_name USING name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_OPFAMILY;
@@ -7432,7 +7432,7 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->reset_default_tblspc = false;
 					$$ = (Node *)n;
 				}
-			| CREATE opt_unique INDEX opt_concurrently IF_P NOT EXISTS index_name
+			| CREATE opt_unique INDEX opt_concurrently IF_P NOT EXISTS name
 			ON relation_expr access_method_clause '(' index_params ')'
 			opt_include opt_reloptions OptTableSpace where_clause
 				{
@@ -7475,12 +7475,12 @@ opt_concurrently:
 		;
 
 opt_index_name:
-			index_name								{ $$ = $1; }
+			name									{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 access_method_clause:
-			USING access_method						{ $$ = $2; }
+			USING name								{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = DEFAULT_INDEX_TYPE; }
 		;
 
@@ -8527,7 +8527,7 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| ALTER DATABASE database_name RENAME TO database_name
+			| ALTER DATABASE name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_DATABASE;
@@ -8590,7 +8590,7 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR CLASS any_name USING access_method RENAME TO name
+			| ALTER OPERATOR CLASS any_name USING name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_OPCLASS;
@@ -8599,7 +8599,7 @@ RenameStmt: ALTER AGGREGATE aggregate_with_argtypes RENAME TO name
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR FAMILY any_name USING access_method RENAME TO name
+			| ALTER OPERATOR FAMILY any_name USING name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_OPFAMILY;
@@ -9179,7 +9179,7 @@ AlterObjectSchemaStmt:
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR CLASS any_name USING access_method SET SCHEMA name
+			| ALTER OPERATOR CLASS any_name USING name SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPCLASS;
@@ -9188,7 +9188,7 @@ AlterObjectSchemaStmt:
 					n->missing_ok = false;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR FAMILY any_name USING access_method SET SCHEMA name
+			| ALTER OPERATOR FAMILY any_name USING name SET SCHEMA name
 				{
 					AlterObjectSchemaStmt *n = makeNode(AlterObjectSchemaStmt);
 					n->objectType = OBJECT_OPFAMILY;
@@ -9444,7 +9444,7 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER DATABASE database_name OWNER TO RoleSpec
+			| ALTER DATABASE name OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_DATABASE;
@@ -9492,7 +9492,7 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR CLASS any_name USING access_method OWNER TO RoleSpec
+			| ALTER OPERATOR CLASS any_name USING name OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPCLASS;
@@ -9500,7 +9500,7 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
 					n->newowner = $9;
 					$$ = (Node *)n;
 				}
-			| ALTER OPERATOR FAMILY any_name USING access_method OWNER TO RoleSpec
+			| ALTER OPERATOR FAMILY any_name USING name OWNER TO RoleSpec
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_OPFAMILY;
@@ -10204,7 +10204,7 @@ LoadStmt:	LOAD file_name
  *****************************************************************************/
 
 CreatedbStmt:
-			CREATE DATABASE database_name opt_with createdb_opt_list
+			CREATE DATABASE name opt_with createdb_opt_list
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
@@ -10275,21 +10275,21 @@ opt_equal:	'='										{}
  *****************************************************************************/
 
 AlterDatabaseStmt:
-			ALTER DATABASE database_name WITH createdb_opt_list
+			ALTER DATABASE name WITH createdb_opt_list
 				 {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = $3;
 					n->options = $5;
 					$$ = (Node *)n;
 				 }
-			| ALTER DATABASE database_name createdb_opt_list
+			| ALTER DATABASE name createdb_opt_list
 				 {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = $3;
 					n->options = $4;
 					$$ = (Node *)n;
 				 }
-			| ALTER DATABASE database_name SET TABLESPACE name
+			| ALTER DATABASE name SET TABLESPACE name
 				 {
 					AlterDatabaseStmt *n = makeNode(AlterDatabaseStmt);
 					n->dbname = $3;
@@ -10300,7 +10300,7 @@ AlterDatabaseStmt:
 		;
 
 AlterDatabaseSetStmt:
-			ALTER DATABASE database_name SetResetClause
+			ALTER DATABASE name SetResetClause
 				{
 					AlterDatabaseSetStmt *n = makeNode(AlterDatabaseSetStmt);
 					n->dbname = $3;
@@ -10317,7 +10317,7 @@ AlterDatabaseSetStmt:
  * This is implicitly CASCADE, no need for drop behavior
  *****************************************************************************/
 
-DropdbStmt: DROP DATABASE database_name
+DropdbStmt: DROP DATABASE name
 				{
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $3;
@@ -10325,7 +10325,7 @@ DropdbStmt: DROP DATABASE database_name
 					n->options = NULL;
 					$$ = (Node *)n;
 				}
-			| DROP DATABASE IF_P EXISTS database_name
+			| DROP DATABASE IF_P EXISTS name
 				{
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $5;
@@ -10333,7 +10333,7 @@ DropdbStmt: DROP DATABASE database_name
 					n->options = NULL;
 					$$ = (Node *)n;
 				}
-			| DROP DATABASE database_name opt_with '(' drop_option_list ')'
+			| DROP DATABASE name opt_with '(' drop_option_list ')'
 				{
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $3;
@@ -10341,7 +10341,7 @@ DropdbStmt: DROP DATABASE database_name
 					n->options = $6;
 					$$ = (Node *)n;
 				}
-			| DROP DATABASE IF_P EXISTS database_name opt_with '(' drop_option_list ')'
+			| DROP DATABASE IF_P EXISTS name opt_with '(' drop_option_list ')'
 				{
 					DropdbStmt *n = makeNode(DropdbStmt);
 					n->dbname = $5;
@@ -10643,7 +10643,7 @@ ClusterStmt:
 					$$ = (Node*)n;
 				}
 			/* kept for pre-8.3 compatibility */
-			| CLUSTER opt_verbose index_name ON qualified_name
+			| CLUSTER opt_verbose name ON qualified_name
 				{
 					ClusterStmt *n = makeNode(ClusterStmt);
 					n->relation = $5;
@@ -10656,7 +10656,7 @@ ClusterStmt:
 		;
 
 cluster_index_specification:
-			USING index_name		{ $$ = $2; }
+			USING name				{ $$ = $2; }
 			| /*EMPTY*/				{ $$ = NULL; }
 		;
 
@@ -14995,15 +14995,7 @@ name_list:	name
 
 name:		ColId									{ $$ = $1; };
 
-database_name:
-			ColId									{ $$ = $1; };
-
-access_method:
-			ColId									{ $$ = $1; };
-
 attr_name:	ColLabel								{ $$ = $1; };
-
-index_name: ColId									{ $$ = $1; };
 
 file_name:	Sconst									{ $$ = $1; };
 
