@@ -1013,11 +1013,11 @@ include_dir 'conf.d'
       <listitem>
        <para>
         When a password is specified in <xref linkend="sql-createrole"/> or
-        <xref linkend="sql-alterrole"/>, this parameter determines the algorithm
-        to use to encrypt the password. The default value is <literal>md5</literal>,
-        which stores the password as an MD5 hash (<literal>on</literal> is also
-        accepted, as alias for <literal>md5</literal>). Setting this parameter to
-        <literal>scram-sha-256</literal> will encrypt the password with SCRAM-SHA-256.
+        <xref linkend="sql-alterrole"/>, this parameter determines the
+        algorithm to use to encrypt the password.  Possible values are
+        <literal>scram-sha-256</literal>, which will encrypt the password with
+        SCRAM-SHA-256, and <literal>md5</literal>, which stores the password
+        as an MD5 hash.  The default is <literal>scram-sha-256</literal>.
        </para>
        <para>
         Note that older clients might lack support for the SCRAM authentication

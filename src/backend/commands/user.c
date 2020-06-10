@@ -43,7 +43,7 @@ Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
 
 
 /* GUC parameter */
-int			Password_encryption = PASSWORD_TYPE_MD5;
+int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
 
 /* Hook to check passwords in CreateRole() and AlterRole() */
 check_password_hook_type check_password_hook = NULL;

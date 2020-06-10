@@ -4,14 +4,13 @@
 
 -- Tests for GUC password_encryption
 SET password_encryption = 'novalue'; -- error
-SET password_encryption = true; -- ok
+SET password_encryption = true; -- error
 SET password_encryption = 'md5'; -- ok
 SET password_encryption = 'scram-sha-256'; -- ok
 
 -- consistency of password entries
 SET password_encryption = 'md5';
 CREATE ROLE regress_passwd1 PASSWORD 'role_pwd1';
-SET password_encryption = 'on';
 CREATE ROLE regress_passwd2 PASSWORD 'role_pwd2';
 SET password_encryption = 'scram-sha-256';
 CREATE ROLE regress_passwd3 PASSWORD 'role_pwd3';
