@@ -2359,12 +2359,13 @@ ReorderBufferLargestTXN(ReorderBuffer *rb)
 
 /*
  * Check whether the logical_decoding_work_mem limit was reached, and if yes
- * pick the transaction to evict and spill the changes to disk.
+ * pick the largest (sub)transaction  at-a-time to evict and spill its changes to
+ * disk until we reach under the memory limit.
  *
- * XXX At this point we select just a single (largest) transaction, but
- * we might also adapt a more elaborate eviction strategy - for example
- * evicting enough transactions to free certain fraction (e.g. 50%) of
- * the memory limit.
+ * XXX At this point we select the transactions until we reach under the memory
+ * limit, but we might also adapt a more elaborate eviction strategy - for example
+ * evicting enough transactions to free certain fraction (e.g. 50%) of the memory
+ * limit.
  */
 static void
 ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
@@ -2376,30 +2377,33 @@ ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 		return;
 
 	/*
-	 * Pick the largest transaction (or subtransaction) and evict it from
-	 * memory by serializing it to disk.
+	 * Loop until we reach under the memory limit.  One might think that just
+	 * by evicting the largest (sub)transaction we will come under the memory
+	 * limit based on assumption that the selected transaction is at least as
+	 * large as the most recent change (which caused us to go over the memory
+	 * limit). However, that is not true because a user can reduce the
+	 * logical_decoding_work_mem to a smaller value before the most recent
+	 * change.
 	 */
-	txn = ReorderBufferLargestTXN(rb);
+	while (rb->size >= logical_decoding_work_mem * 1024L)
+	{
+		/*
+		 * Pick the largest transaction (or subtransaction) and evict it from
+		 * memory by serializing it to disk.
+		 */
+		txn = ReorderBufferLargestTXN(rb);
 
-	ReorderBufferSerializeTXN(rb, txn);
+		ReorderBufferSerializeTXN(rb, txn);
 
-	/*
-	 * After eviction, the transaction should have no entries in memory, and
-	 * should use 0 bytes for changes.
-	 */
-	Assert(txn->size == 0);
-	Assert(txn->nentries_mem == 0);
+		/*
+		 * After eviction, the transaction should have no entries in memory,
+		 * and should use 0 bytes for changes.
+		 */
+		Assert(txn->size == 0);
+		Assert(txn->nentries_mem == 0);
+	}
 
-	/*
-	 * And furthermore, evicting the transaction should get us below the
-	 * memory limit again - it is not possible that we're still exceeding the
-	 * memory limit after evicting the transaction.
-	 *
-	 * This follows from the simple fact that the selected transaction is at
-	 * least as large as the most recent change (which caused us to go over
-	 * the memory limit). So by evicting it we're definitely back below the
-	 * memory limit.
-	 */
+	/* We must be under the memory limit now. */
 	Assert(rb->size < logical_decoding_work_mem * 1024L);
 }
 
