@@ -8975,15 +8975,13 @@ heap_mask(char *pagedata, BlockNumber blkno)
 
 /*
  * HeapCheckForSerializableConflictOut
- *		We are reading a tuple which has been modified.  If it is visible to
- *		us but has been deleted, that indicates a rw-conflict out.  If it's
- *		not visible and was created by a concurrent (overlapping)
- *		serializable transaction, that is also a rw-conflict out,
+ *		We are reading a tuple.  If it's not visible, there may be a
+ *		rw-conflict out with the inserter.  Otherwise, if it is visible to us
+ *		but has been deleted, there may be a rw-conflict out with the deleter.
  *
  * We will determine the top level xid of the writing transaction with which
- * we may be in conflict, and check for overlap with our own transaction.
- * If the transactions overlap (i.e., they cannot see each other's writes),
- * then we have a conflict out.
+ * we may be in conflict, and ask CheckForSerializableConflictOut() to check
+ * for overlap with our own transaction.
  *
  * This function should be called just about anywhere in heapam.c where a
  * tuple has been read. The caller must hold at least a shared lock on the
