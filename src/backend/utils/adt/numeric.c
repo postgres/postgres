@@ -3967,11 +3967,11 @@ numeric_combine(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(state1);
 	}
 
+	state1->N += state2->N;
+	state1->NaNcount += state2->NaNcount;
+
 	if (state2->N > 0)
 	{
-		state1->N += state2->N;
-		state1->NaNcount += state2->NaNcount;
-
 		/*
 		 * These are currently only needed for moving aggregates, but let's do
 		 * the right thing anyway...
@@ -4054,11 +4054,11 @@ numeric_avg_combine(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(state1);
 	}
 
+	state1->N += state2->N;
+	state1->NaNcount += state2->NaNcount;
+
 	if (state2->N > 0)
 	{
-		state1->N += state2->N;
-		state1->NaNcount += state2->NaNcount;
-
 		/*
 		 * These are currently only needed for moving aggregates, but let's do
 		 * the right thing anyway...

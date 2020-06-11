@@ -2294,29 +2294,83 @@ SET parallel_setup_cost = 0;
 SET parallel_tuple_cost = 0;
 SET min_parallel_table_scan_size = 0;
 SET max_parallel_workers_per_gather = 4;
+SET parallel_leader_participation = off;
 SET enable_indexonlyscan = off;
 -- variance(int4) covers numeric_poly_combine
 -- sum(int8) covers int8_avg_combine
 -- regr_count(float8, float8) covers int8inc_float8_float8 and aggregates with > 1 arg
 EXPLAIN (COSTS OFF, VERBOSE)
-  SELECT variance(unique1::int4), sum(unique1::int8), regr_count(unique1::float8, unique1::float8) FROM tenk1;
-                                                                            QUERY PLAN                                                                             
--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SELECT variance(unique1::int4), sum(unique1::int8), regr_count(unique1::float8, unique1::float8)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
+                                                                                      QUERY PLAN                                                                                       
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Finalize Aggregate
-   Output: variance(unique1), sum((unique1)::bigint), regr_count((unique1)::double precision, (unique1)::double precision)
+   Output: variance(tenk1.unique1), sum((tenk1.unique1)::bigint), regr_count((tenk1.unique1)::double precision, (tenk1.unique1)::double precision)
    ->  Gather
-         Output: (PARTIAL variance(unique1)), (PARTIAL sum((unique1)::bigint)), (PARTIAL regr_count((unique1)::double precision, (unique1)::double precision))
+         Output: (PARTIAL variance(tenk1.unique1)), (PARTIAL sum((tenk1.unique1)::bigint)), (PARTIAL regr_count((tenk1.unique1)::double precision, (tenk1.unique1)::double precision))
          Workers Planned: 4
          ->  Partial Aggregate
-               Output: PARTIAL variance(unique1), PARTIAL sum((unique1)::bigint), PARTIAL regr_count((unique1)::double precision, (unique1)::double precision)
-               ->  Parallel Seq Scan on public.tenk1
-                     Output: unique1, unique2, two, four, ten, twenty, hundred, thousand, twothousand, fivethous, tenthous, odd, even, stringu1, stringu2, string4
-(9 rows)
+               Output: PARTIAL variance(tenk1.unique1), PARTIAL sum((tenk1.unique1)::bigint), PARTIAL regr_count((tenk1.unique1)::double precision, (tenk1.unique1)::double precision)
+               ->  Parallel Append
+                     ->  Parallel Seq Scan on public.tenk1
+                           Output: tenk1.unique1
+                     ->  Parallel Seq Scan on public.tenk1 tenk1_1
+                           Output: tenk1_1.unique1
+                     ->  Parallel Seq Scan on public.tenk1 tenk1_2
+                           Output: tenk1_2.unique1
+                     ->  Parallel Seq Scan on public.tenk1 tenk1_3
+                           Output: tenk1_3.unique1
+(16 rows)
 
-SELECT variance(unique1::int4), sum(unique1::int8), regr_count(unique1::float8, unique1::float8) FROM tenk1;
-       variance       |   sum    | regr_count 
-----------------------+----------+------------
- 8334166.666666666667 | 49995000 |      10000
+SELECT variance(unique1::int4), sum(unique1::int8), regr_count(unique1::float8, unique1::float8)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
+       variance       |    sum    | regr_count 
+----------------------+-----------+------------
+ 8333541.588539713493 | 199980000 |      40000
+(1 row)
+
+-- variance(int8) covers numeric_combine
+-- avg(numeric) covers numeric_avg_combine
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT variance(unique1::int8), avg(unique1::numeric)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
+                                               QUERY PLAN                                               
+--------------------------------------------------------------------------------------------------------
+ Finalize Aggregate
+   Output: variance((tenk1.unique1)::bigint), avg((tenk1.unique1)::numeric)
+   ->  Gather
+         Output: (PARTIAL variance((tenk1.unique1)::bigint)), (PARTIAL avg((tenk1.unique1)::numeric))
+         Workers Planned: 4
+         ->  Partial Aggregate
+               Output: PARTIAL variance((tenk1.unique1)::bigint), PARTIAL avg((tenk1.unique1)::numeric)
+               ->  Parallel Append
+                     ->  Parallel Seq Scan on public.tenk1
+                           Output: tenk1.unique1
+                     ->  Parallel Seq Scan on public.tenk1 tenk1_1
+                           Output: tenk1_1.unique1
+                     ->  Parallel Seq Scan on public.tenk1 tenk1_2
+                           Output: tenk1_2.unique1
+                     ->  Parallel Seq Scan on public.tenk1 tenk1_3
+                           Output: tenk1_3.unique1
+(16 rows)
+
+SELECT variance(unique1::int8), avg(unique1::numeric)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
+       variance       |          avg          
+----------------------+-----------------------
+ 8333541.588539713493 | 4999.5000000000000000
 (1 row)
 
 ROLLBACK;
