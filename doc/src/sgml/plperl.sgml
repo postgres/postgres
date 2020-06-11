@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/plperl.sgml -->
 
- <chapter id="plperl" xreflabel="PL/Perl">
+ <chapter id="plperl">
   <title>PL/Perl &mdash; Perl Procedural Language</title>
 
   <indexterm zone="plperl">

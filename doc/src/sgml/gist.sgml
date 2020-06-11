@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/gist.sgml -->
 
-<chapter id="gist" xreflabel="gist">
+<chapter id="gist">
 <title>GiST Indexes</title>
 
    <indexterm>

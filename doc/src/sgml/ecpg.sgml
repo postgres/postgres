@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ecpg.sgml -->
 
-<chapter id="ecpg" xreflabel="ecpg">
+<chapter id="ecpg">
  <title><application>ECPG</application> &mdash; Embedded <acronym>SQL</acronym> in C</title>
 
  <indexterm zone="ecpg"><primary>embedded SQL</primary><secondary>in C</secondary></indexterm>
