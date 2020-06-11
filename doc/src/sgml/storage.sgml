@@ -301,7 +301,7 @@ where <replaceable>PPP</replaceable> is the PID of the owning backend and
 
 </sect1>
 
-<sect1 id="storage-toast" xreflabel="TOAST">
+<sect1 id="storage-toast">
 
 <title>TOAST</title>
 
