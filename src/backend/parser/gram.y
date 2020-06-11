@@ -4346,7 +4346,7 @@ NumericOnly_list:	NumericOnly						{ $$ = list_make1($1); }
  *****************************************************************************/
 
 CreatePLangStmt:
-			CREATE opt_or_replace opt_trusted opt_procedural LANGUAGE NonReservedWord_or_Sconst
+			CREATE opt_or_replace opt_trusted opt_procedural LANGUAGE name
 			{
 				/*
 				 * We now interpret parameterless CREATE LANGUAGE as
@@ -4361,7 +4361,7 @@ CreatePLangStmt:
 				n->options = NIL;
 				$$ = (Node *)n;
 			}
-			| CREATE opt_or_replace opt_trusted opt_procedural LANGUAGE NonReservedWord_or_Sconst
+			| CREATE opt_or_replace opt_trusted opt_procedural LANGUAGE name
 			  HANDLER handler_name opt_inline_handler opt_validator
 			{
 				CreatePLangStmt *n = makeNode(CreatePLangStmt);
@@ -4405,7 +4405,7 @@ opt_validator:
 		;
 
 DropPLangStmt:
-			DROP opt_procedural LANGUAGE NonReservedWord_or_Sconst opt_drop_behavior
+			DROP opt_procedural LANGUAGE name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_LANGUAGE;
@@ -4415,7 +4415,7 @@ DropPLangStmt:
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP opt_procedural LANGUAGE IF_P EXISTS NonReservedWord_or_Sconst opt_drop_behavior
+			| DROP opt_procedural LANGUAGE IF_P EXISTS name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = OBJECT_LANGUAGE;

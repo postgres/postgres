@@ -63,8 +63,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="parameter">name</
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
-      The name of an existing procedural language.  For backward
-      compatibility, the name can be enclosed by single quotes.
+      The name of an existing procedural language.
      </para>
     </listitem>
    </varlistentry>
