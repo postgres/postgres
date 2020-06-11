@@ -272,7 +272,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		CreateAssertionStmt CreateTransformStmt CreateTrigStmt CreateEventTrigStmt
 		CreateUserStmt CreateUserMappingStmt CreateRoleStmt CreatePolicyStmt
 		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt DoStmt
-		DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
+		DropOpClassStmt DropOpFamilyStmt DropStmt
 		DropCastStmt DropRoleStmt
 		DropdbStmt DropTableSpaceStmt
 		DropTransformStmt
@@ -921,7 +921,6 @@ stmt :
 			| DropOpClassStmt
 			| DropOpFamilyStmt
 			| DropOwnedStmt
-			| DropPLangStmt
 			| DropStmt
 			| DropSubscriptionStmt
 			| DropTableSpaceStmt
@@ -4404,29 +4403,6 @@ opt_validator:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-DropPLangStmt:
-			DROP opt_procedural LANGUAGE name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_LANGUAGE;
-					n->objects = list_make1(makeString($4));
-					n->behavior = $5;
-					n->missing_ok = false;
-					n->concurrent = false;
-					$$ = (Node *)n;
-				}
-			| DROP opt_procedural LANGUAGE IF_P EXISTS name opt_drop_behavior
-				{
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = OBJECT_LANGUAGE;
-					n->objects = list_make1(makeString($6));
-					n->behavior = $7;
-					n->missing_ok = true;
-					n->concurrent = false;
-					$$ = (Node *)n;
-				}
-		;
-
 opt_procedural:
 			PROCEDURAL								{}
 			| /*EMPTY*/								{}
@@ -6359,6 +6335,7 @@ drop_type_name:
 			| EVENT TRIGGER							{ $$ = OBJECT_EVENT_TRIGGER; }
 			| EXTENSION								{ $$ = OBJECT_EXTENSION; }
 			| FOREIGN DATA_P WRAPPER				{ $$ = OBJECT_FDW; }
+			| opt_procedural LANGUAGE				{ $$ = OBJECT_LANGUAGE; }
 			| PUBLICATION							{ $$ = OBJECT_PUBLICATION; }
 			| SCHEMA								{ $$ = OBJECT_SCHEMA; }
 			| SERVER								{ $$ = OBJECT_FOREIGN_SERVER; }
