@@ -1,0 +1,27 @@
+Parsed test spec with 3 sessions
+
+starting permutation: foo_select bar_insert foo_insert foo_commit trouble_update bar_select bar_commit trouble_abort
+step foo_select: SELECT * FROM txn0 WHERE id = 42;
+id             val            
+
+step bar_insert: INSERT INTO txn0 SELECT 42, 'bar_insert';
+step foo_insert: INSERT INTO txn1 SELECT 7, 'foo_insert';
+step foo_commit: COMMIT;
+step trouble_update: UPDATE txn1 SET val = 'add physical version for "bar_select"' WHERE id = 7;
+step bar_select: SELECT * FROM txn1 WHERE id = 7;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step bar_commit: COMMIT;
+step trouble_abort: ABORT;
+
+starting permutation: foo_select bar_insert foo_insert foo_commit trouble_delete bar_select bar_commit trouble_abort
+step foo_select: SELECT * FROM txn0 WHERE id = 42;
+id             val            
+
+step bar_insert: INSERT INTO txn0 SELECT 42, 'bar_insert';
+step foo_insert: INSERT INTO txn1 SELECT 7, 'foo_insert';
+step foo_commit: COMMIT;
+step trouble_delete: DELETE FROM txn1 WHERE id = 7;
+step bar_select: SELECT * FROM txn1 WHERE id = 7;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+step bar_commit: COMMIT;
+step trouble_abort: ABORT;

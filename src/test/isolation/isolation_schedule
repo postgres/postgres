@@ -18,6 +18,7 @@ test: two-ids
 test: multiple-row-versions
 test: index-only-scan
 test: predicate-lock-hot-tuple
+test: update-conflict-out
 test: deadlock-simple
 test: deadlock-hard
 test: deadlock-soft
