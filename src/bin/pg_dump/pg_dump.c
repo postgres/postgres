@@ -13959,7 +13959,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			i_aggmtransspace;
 	int			i_agginitval;
 	int			i_aggminitval;
-	int			i_convertok;
 	int			i_proparallel;
 	const char *aggtransfn;
 	const char *aggfinalfn;
@@ -13982,7 +13981,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	const char *aggmtransspace;
 	const char *agginitval;
 	const char *aggminitval;
-	bool		convertok;
 	const char *proparallel;
 	char		defaultfinalmodify;
 
@@ -14008,7 +14006,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggkind, "
 						  "aggtransspace, agginitval, "
 						  "aggmtransspace, aggminitval, "
-						  "true AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs, "
 						  "p.proparallel "
@@ -14029,7 +14026,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggkind, "
 						  "aggtransspace, agginitval, "
 						  "aggmtransspace, aggminitval, "
-						  "true AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs, "
 						  "p.proparallel "
@@ -14051,7 +14047,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggkind, "
 						  "aggtransspace, agginitval, "
 						  "aggmtransspace, aggminitval, "
-						  "true AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
@@ -14073,7 +14068,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "'n' AS aggkind, "
 						  "0 AS aggtransspace, agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
-						  "true AS convertok, "
 						  "pg_catalog.pg_get_function_arguments(p.oid) AS funcargs, "
 						  "pg_catalog.pg_get_function_identity_arguments(p.oid) AS funciargs "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
@@ -14095,7 +14089,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "'n' AS aggkind, "
 						  "0 AS aggtransspace, agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
-						  "true AS convertok "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
@@ -14115,7 +14108,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "'n' AS aggkind, "
 						  "0 AS aggtransspace, agginitval, "
 						  "0 AS aggmtransspace, NULL AS aggminitval, "
-						  "true AS convertok "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
@@ -14144,7 +14136,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	i_aggmtransspace = PQfnumber(res, "aggmtransspace");
 	i_agginitval = PQfnumber(res, "agginitval");
 	i_aggminitval = PQfnumber(res, "aggminitval");
-	i_convertok = PQfnumber(res, "convertok");
 	i_proparallel = PQfnumber(res, "proparallel");
 
 	aggtransfn = PQgetvalue(res, 0, i_aggtransfn);
@@ -14167,7 +14158,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	aggmtransspace = PQgetvalue(res, 0, i_aggmtransspace);
 	agginitval = PQgetvalue(res, 0, i_agginitval);
 	aggminitval = PQgetvalue(res, 0, i_aggminitval);
-	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
 
 	if (fout->remoteVersion >= 80400)
 	{
@@ -14190,19 +14180,6 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		proparallel = PQgetvalue(res, 0, PQfnumber(res, "proparallel"));
 	else
 		proparallel = NULL;
-
-	if (!convertok)
-	{
-		pg_log_warning("aggregate function %s could not be dumped correctly for this database version; ignored",
-					   aggsig);
-
-		if (aggfullsig)
-			free(aggfullsig);
-
-		free(aggsig);
-
-		return;
-	}
 
 	/* identify default modify flag for aggkind (must match DefineAggregate) */
 	defaultfinalmodify = (aggkind == AGGKIND_NORMAL) ? AGGMODIFY_READ_ONLY : AGGMODIFY_READ_WRITE;
