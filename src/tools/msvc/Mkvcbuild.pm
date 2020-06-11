@@ -138,14 +138,14 @@ sub mkvcbuild
 	}
 
 	our @pgcommonfrontendfiles = (
-		@pgcommonallfiles, qw(fe_archive.c fe_memutils.c
-		  file_utils.c logging.c restricted_token.c));
+		@pgcommonallfiles, qw(fe_memutils.c file_utils.c
+		  logging.c restricted_token.c));
 
 	our @pgcommonbkndfiles = @pgcommonallfiles;
 
 	our @pgfeutilsfiles = qw(
-	  cancel.c conditional.c mbprint.c print.c psqlscan.l psqlscan.c
-	  simple_list.c string_utils.c recovery_gen.c);
+	  archive.c cancel.c conditional.c mbprint.c print.c psqlscan.l
+	  psqlscan.c simple_list.c string_utils.c recovery_gen.c);
 
 	$libpgport = $solution->AddProject('libpgport', 'lib', 'misc');
 	$libpgport->AddDefine('FRONTEND');

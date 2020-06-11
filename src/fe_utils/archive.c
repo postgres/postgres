@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * fe_archive.c
+ * archive.c
  *	  Routines to access WAL archives from frontend
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
@@ -8,14 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  src/common/fe_archive.c
+ *	  src/fe_utils/archive.c
  *
  *-------------------------------------------------------------------------
  */
-
-#ifndef FRONTEND
-#error "This file is not expected to be compiled for backend code"
-#endif
 
 #include "postgres_fe.h"
 
@@ -24,8 +20,8 @@
 
 #include "access/xlog_internal.h"
 #include "common/archive.h"
-#include "common/fe_archive.h"
 #include "common/logging.h"
+#include "fe_utils/archive.h"
 
 
 /*
