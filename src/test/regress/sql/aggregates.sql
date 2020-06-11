@@ -920,10 +920,34 @@ SET enable_indexonlyscan = off;
 
 -- variance(int4) covers numeric_poly_combine
 -- sum(int8) covers int8_avg_combine
-EXPLAIN (COSTS OFF)
-  SELECT variance(unique1::int4), sum(unique1::int8) FROM tenk1;
+-- regr_count(float8, float8) covers int8inc_float8_float8 and aggregates with > 1 arg
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT variance(unique1::int4), sum(unique1::int8), regr_count(unique1::float8, unique1::float8)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
 
-SELECT variance(unique1::int4), sum(unique1::int8) FROM tenk1;
+SELECT variance(unique1::int4), sum(unique1::int8), regr_count(unique1::float8, unique1::float8)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
+
+-- variance(int8) covers numeric_combine
+-- avg(numeric) covers numeric_avg_combine
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT variance(unique1::int8), avg(unique1::numeric)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
+
+SELECT variance(unique1::int8), avg(unique1::numeric)
+FROM (SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1
+      UNION ALL SELECT * FROM tenk1) u;
 
 ROLLBACK;
 
