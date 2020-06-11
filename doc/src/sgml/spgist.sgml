@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/spgist.sgml -->
 
-<chapter id="SPGiST" xreflabel="SP-GiST">
+<chapter id="SPGiST">
 <title>SP-GiST Indexes</title>
 
    <indexterm>

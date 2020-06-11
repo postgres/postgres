@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/geqo.sgml -->
 
- <chapter id="geqo" xreflabel="geqo">
+ <chapter id="geqo">
   <title>Genetic Query Optimizer</title>
 
   <para>
