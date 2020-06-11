@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/vacuumlo.sgml -->
 
-<refentry id="vacuumlo" xreflabel="vacuumlo">
+<refentry id="vacuumlo">
  <indexterm zone="vacuumlo">
   <primary>vacuumlo</primary>
  </indexterm>
