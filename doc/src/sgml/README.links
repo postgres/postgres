@@ -47,3 +47,7 @@ Guidelines
   usually have xreflabels.
 
 - For an external link, use <ulink>, with or without link text.
+
+- xreflabels added to tags prevent the chapter/section for id's from being
+  referenced;  only the xreflabel is accessible.  Therefore, use xreflabels
+  only when linking is common, and chapter/section information is unneeded.
