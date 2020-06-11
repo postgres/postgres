@@ -4037,13 +4037,16 @@ CheckForSerializableConflictOutNeeded(Relation relation, Snapshot snapshot)
 
 /*
  * CheckForSerializableConflictOut
- *		A table AM is reading a tuple that has been modified.  After determining
- *		that it is visible to us, it should call this function with the top
- *		level xid of the writing transaction.
+ *		A table AM is reading a tuple that has been modified.  If it determines
+ *		that the tuple version it is reading is not visible to us, it should
+ *		pass in the top level xid of the transaction that created it.
+ *		Otherwise, if it determines that it is visible to us but it has been
+ *		deleted or there is a newer version available due to an update, it
+ *		should pass in the top level xid of the modifying transaction.
  *
- * This function will check for overlap with our own transaction.  If the
- * transactions overlap (i.e., they cannot see each other's writes), then we
- * have a conflict out.
+ * This function will check for overlap with our own transaction.  If the given
+ * xid is also serializable and the transactions overlap (i.e., they cannot see
+ * each other's writes), then we have a conflict out.
  */
 void
 CheckForSerializableConflictOut(Relation relation, TransactionId xid, Snapshot snapshot)
