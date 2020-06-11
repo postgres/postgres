@@ -4256,12 +4256,11 @@ consider_groupingsets_paths(PlannerInfo *root,
 											  dNumGroups - exclude_groups);
 
 		/*
-		 * If we have sortable columns to work with (gd->rollups is non-empty)
-		 * and enable_groupingsets_hash_disk is disabled, don't generate
-		 * hash-based paths that will exceed work_mem.
+		 * gd->rollups is empty if we have only unsortable columns to work
+		 * with.  Override work_mem in that case; otherwise, we'll rely on the
+		 * sorted-input case to generate usable mixed paths.
 		 */
-		if (!enable_groupingsets_hash_disk &&
-			hashsize > work_mem * 1024L && gd->rollups)
+		if (hashsize > work_mem * 1024L && gd->rollups)
 			return;				/* nope, won't fit */
 
 		/*
@@ -4868,7 +4867,7 @@ create_distinct_paths(PlannerInfo *root,
 	{
 		Size		hashentrysize = hash_agg_entry_size(0, cheapest_input_path->pathtarget->width, 0);
 
-		allow_hash = enable_hashagg_disk ||
+		allow_hash = !hashagg_avoid_disk_plan ||
 			(hashentrysize * numDistinctRows <= work_mem * 1024L);
 	}
 
@@ -6773,7 +6772,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			 * were unable to sort above, then we'd better generate a Path, so
 			 * that we at least have one.
 			 */
-			if (enable_hashagg_disk ||
+			if (!hashagg_avoid_disk_plan ||
 				hashaggtablesize < work_mem * 1024L ||
 				grouped_rel->pathlist == NIL)
 			{
@@ -6807,7 +6806,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 														  agg_final_costs,
 														  dNumGroups);
 
-			if (enable_hashagg_disk ||
+			if (!hashagg_avoid_disk_plan ||
 				hashaggtablesize < work_mem * 1024L)
 				add_path(grouped_rel, (Path *)
 						 create_agg_path(root,
@@ -7188,7 +7187,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 		 * Tentatively produce a partial HashAgg Path, depending on if it
 		 * looks as if the hash table will fit in work_mem.
 		 */
-		if ((enable_hashagg_disk || hashaggtablesize < work_mem * 1024L) &&
+		if ((!hashagg_avoid_disk_plan || hashaggtablesize < work_mem * 1024L) &&
 			cheapest_total_path != NULL)
 		{
 			add_path(partially_grouped_rel, (Path *)
@@ -7215,7 +7214,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 									   dNumPartialPartialGroups);
 
 		/* Do the same for partial paths. */
-		if ((enable_hashagg_disk || hashaggtablesize < work_mem * 1024L) &&
+		if ((!hashagg_avoid_disk_plan ||
+			 hashaggtablesize < work_mem * 1024L) &&
 			cheapest_partial_path != NULL)
 		{
 			add_partial_path(partially_grouped_rel, (Path *)
