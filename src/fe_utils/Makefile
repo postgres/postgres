@@ -20,6 +20,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS = \
+	archive.o \
 	cancel.o \
 	conditional.o \
 	mbprint.o \

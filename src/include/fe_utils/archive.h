@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * fe_archive.h
+ * archive.h
  *	  Routines to access WAL archives from frontend
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/common/fe_archive.h
+ * src/include/fe_utils/archive.h
  *
  *-------------------------------------------------------------------------
  */

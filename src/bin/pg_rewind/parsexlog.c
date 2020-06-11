@@ -19,7 +19,7 @@
 #include "catalog/pg_control.h"
 #include "catalog/storage_xlog.h"
 #include "commands/dbcommands_xlog.h"
-#include "common/fe_archive.h"
+#include "fe_utils/archive.h"
 #include "filemap.h"
 #include "pg_rewind.h"
 
