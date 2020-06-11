@@ -259,7 +259,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		AlterFdwStmt AlterForeignServerStmt AlterGroupStmt
 		AlterObjectDependsStmt AlterObjectSchemaStmt AlterOwnerStmt
 		AlterOperatorStmt AlterTypeStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
-		AlterTblSpcStmt AlterExtensionStmt AlterExtensionContentsStmt AlterForeignTableStmt
+		AlterTblSpcStmt AlterExtensionStmt AlterExtensionContentsStmt
 		AlterCompositeTypeStmt AlterUserMappingStmt
 		AlterRoleStmt AlterRoleSetStmt AlterPolicyStmt AlterStatsStmt
 		AlterDefaultPrivilegesStmt DefACLAction
@@ -850,7 +850,6 @@ stmt :
 			| AlterExtensionContentsStmt
 			| AlterFdwStmt
 			| AlterForeignServerStmt
-			| AlterForeignTableStmt
 			| AlterFunctionStmt
 			| AlterGroupStmt
 			| AlterObjectDependsStmt
@@ -1836,9 +1835,9 @@ DiscardStmt:
 
 /*****************************************************************************
  *
- *	ALTER [ TABLE | INDEX | SEQUENCE | VIEW | MATERIALIZED VIEW ] variations
+ *	ALTER [ TABLE | INDEX | SEQUENCE | VIEW | MATERIALIZED VIEW | FOREIGN TABLE ] variations
  *
- * Note: we accept all subcommands for each of the five variants, and sort
+ * Note: we accept all subcommands for each of the variants, and sort
  * out what's really legal at execution time.
  *****************************************************************************/
 
@@ -2024,6 +2023,24 @@ AlterTableStmt:
 					n->roles = $10;
 					n->new_tablespacename = $13;
 					n->nowait = $14;
+					$$ = (Node *)n;
+				}
+		|	ALTER FOREIGN TABLE relation_expr alter_table_cmds
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $4;
+					n->cmds = $5;
+					n->relkind = OBJECT_FOREIGN_TABLE;
+					n->missing_ok = false;
+					$$ = (Node *)n;
+				}
+		|	ALTER FOREIGN TABLE IF_P EXISTS relation_expr alter_table_cmds
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $6;
+					n->cmds = $7;
+					n->relkind = OBJECT_FOREIGN_TABLE;
+					n->missing_ok = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -5108,34 +5125,6 @@ CreateForeignTableStmt:
 					n->servername = $14;
 					n->options = $15;
 					$$ = (Node *) n;
-				}
-		;
-
-/*****************************************************************************
- *
- *		QUERY:
- *             ALTER FOREIGN TABLE relname [...]
- *
- *****************************************************************************/
-
-AlterForeignTableStmt:
-			ALTER FOREIGN TABLE relation_expr alter_table_cmds
-				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->relation = $4;
-					n->cmds = $5;
-					n->relkind = OBJECT_FOREIGN_TABLE;
-					n->missing_ok = false;
-					$$ = (Node *)n;
-				}
-			| ALTER FOREIGN TABLE IF_P EXISTS relation_expr alter_table_cmds
-				{
-					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->relation = $6;
-					n->cmds = $7;
-					n->relkind = OBJECT_FOREIGN_TABLE;
-					n->missing_ok = true;
-					$$ = (Node *)n;
 				}
 		;
 
