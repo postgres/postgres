@@ -413,7 +413,6 @@ pg_ultoa_n(uint32 value, char *a)
 void
 pg_ltoa(int32 value, char *a)
 {
-
 	uint32		uvalue = (uint32) value;
 	int			len;
 
@@ -436,7 +435,6 @@ pg_ulltoa_n(uint64 value, char *a)
 	int			olength,
 				i = 0;
 	uint32		value2;
-
 
 	/* Degenerate case */
 	if (value == 0)
