@@ -90,6 +90,10 @@ extern int	SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 extern int	SPI_execute_plan_with_paramlist(SPIPlanPtr plan,
 											ParamListInfo params,
 											bool read_only, long tcount);
+extern int	SPI_execute_plan_with_receiver(SPIPlanPtr plan,
+										   ParamListInfo params,
+										   bool read_only, long tcount,
+										   DestReceiver *dest);
 extern int	SPI_exec(const char *src, long tcount);
 extern int	SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 					  long tcount);
@@ -102,6 +106,10 @@ extern int	SPI_execute_with_args(const char *src,
 								  int nargs, Oid *argtypes,
 								  Datum *Values, const char *Nulls,
 								  bool read_only, long tcount);
+extern int	SPI_execute_with_receiver(const char *src,
+									  ParamListInfo params,
+									  bool read_only, long tcount,
+									  DestReceiver *dest);
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 									 int cursorOptions);
@@ -150,6 +158,11 @@ extern Portal SPI_cursor_open_with_args(const char *name,
 										bool read_only, int cursorOptions);
 extern Portal SPI_cursor_open_with_paramlist(const char *name, SPIPlanPtr plan,
 											 ParamListInfo params, bool read_only);
+extern Portal SPI_cursor_parse_open_with_paramlist(const char *name,
+												   const char *src,
+												   ParamListInfo params,
+												   bool read_only,
+												   int cursorOptions);
 extern Portal SPI_cursor_find(const char *name);
 extern void SPI_cursor_fetch(Portal portal, bool forward, long count);
 extern void SPI_cursor_move(Portal portal, bool forward, long count);

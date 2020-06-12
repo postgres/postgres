@@ -383,7 +383,9 @@ PersistHoldablePortal(Portal portal)
 		SetTuplestoreDestReceiverParams(queryDesc->dest,
 										portal->holdStore,
 										portal->holdContext,
-										true);
+										true,
+										NULL,
+										NULL);
 
 		/* Fetch the result set into the tuplestore */
 		ExecutorRun(queryDesc, ForwardScanDirection, 0L, false);

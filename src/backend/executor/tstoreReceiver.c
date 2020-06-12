@@ -8,6 +8,8 @@
  * toasted values.  This is to support cursors WITH HOLD, which must retain
  * data even if the underlying table is dropped.
  *
+ * Also optionally, we can apply a tuple conversion map before storing.
+ *
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -21,6 +23,7 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
+#include "access/tupconvert.h"
 #include "executor/tstoreReceiver.h"
 
 
@@ -31,14 +34,19 @@ typedef struct
 	Tuplestorestate *tstore;	/* where to put the data */
 	MemoryContext cxt;			/* context containing tstore */
 	bool		detoast;		/* were we told to detoast? */
+	TupleDesc	target_tupdesc; /* target tupdesc, or NULL if none */
+	const char *map_failure_msg;	/* tupdesc mapping failure message */
 	/* workspace: */
 	Datum	   *outvalues;		/* values array for result tuple */
 	Datum	   *tofree;			/* temp values to be pfree'd */
+	TupleConversionMap *tupmap; /* conversion map, if needed */
+	TupleTableSlot *mapslot;	/* slot for mapped tuples */
 } TStoreState;
 
 
 static bool tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self);
 static bool tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self);
+static bool tstoreReceiveSlot_tupmap(TupleTableSlot *slot, DestReceiver *self);
 
 
 /*
@@ -69,27 +77,46 @@ tstoreStartupReceiver(DestReceiver *self, int operation, TupleDesc typeinfo)
 		}
 	}
 
+	/* Check if tuple conversion is needed */
+	if (myState->target_tupdesc)
+		myState->tupmap = convert_tuples_by_position(typeinfo,
+													 myState->target_tupdesc,
+													 myState->map_failure_msg);
+	else
+		myState->tupmap = NULL;
+
 	/* Set up appropriate callback */
 	if (needtoast)
 	{
+		Assert(!myState->tupmap);
 		myState->pub.receiveSlot = tstoreReceiveSlot_detoast;
 		/* Create workspace */
 		myState->outvalues = (Datum *)
 			MemoryContextAlloc(myState->cxt, natts * sizeof(Datum));
 		myState->tofree = (Datum *)
 			MemoryContextAlloc(myState->cxt, natts * sizeof(Datum));
+		myState->mapslot = NULL;
+	}
+	else if (myState->tupmap)
+	{
+		myState->pub.receiveSlot = tstoreReceiveSlot_tupmap;
+		myState->outvalues = NULL;
+		myState->tofree = NULL;
+		myState->mapslot = MakeSingleTupleTableSlot(myState->target_tupdesc,
+													&TTSOpsVirtual);
 	}
 	else
 	{
 		myState->pub.receiveSlot = tstoreReceiveSlot_notoast;
 		myState->outvalues = NULL;
 		myState->tofree = NULL;
+		myState->mapslot = NULL;
 	}
 }
 
 /*
  * Receive a tuple from the executor and store it in the tuplestore.
- * This is for the easy case where we don't have to detoast.
+ * This is for the easy case where we don't have to detoast nor map anything.
  */
 static bool
 tstoreReceiveSlot_notoast(TupleTableSlot *slot, DestReceiver *self)
@@ -158,6 +185,21 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 }
 
 /*
+ * Receive a tuple from the executor and store it in the tuplestore.
+ * This is for the case where we must apply a tuple conversion map.
+ */
+static bool
+tstoreReceiveSlot_tupmap(TupleTableSlot *slot, DestReceiver *self)
+{
+	TStoreState *myState = (TStoreState *) self;
+
+	execute_attr_map_slot(myState->tupmap->attrMap, slot, myState->mapslot);
+	tuplestore_puttupleslot(myState->tstore, myState->mapslot);
+
+	return true;
+}
+
+/*
  * Clean up at end of an executor run
  */
 static void
@@ -172,6 +214,12 @@ tstoreShutdownReceiver(DestReceiver *self)
 	if (myState->tofree)
 		pfree(myState->tofree);
 	myState->tofree = NULL;
+	if (myState->tupmap)
+		free_conversion_map(myState->tupmap);
+	myState->tupmap = NULL;
+	if (myState->mapslot)
+		ExecDropSingleTupleTableSlot(myState->mapslot);
+	myState->mapslot = NULL;
 }
 
 /*
@@ -204,17 +252,32 @@ CreateTuplestoreDestReceiver(void)
 
 /*
  * Set parameters for a TuplestoreDestReceiver
+ *
+ * tStore: where to store the tuples
+ * tContext: memory context containing tStore
+ * detoast: forcibly detoast contained data?
+ * target_tupdesc: if not NULL, forcibly convert tuples to this rowtype
+ * map_failure_msg: error message to use if mapping to target_tupdesc fails
+ *
+ * We don't currently support both detoast and target_tupdesc at the same
+ * time, just because no existing caller needs that combination.
  */
 void
 SetTuplestoreDestReceiverParams(DestReceiver *self,
 								Tuplestorestate *tStore,
 								MemoryContext tContext,
-								bool detoast)
+								bool detoast,
+								TupleDesc target_tupdesc,
+								const char *map_failure_msg)
 {
 	TStoreState *myState = (TStoreState *) self;
+
+	Assert(!(detoast && target_tupdesc));
 
 	Assert(myState->pub.mydest == DestTuplestore);
 	myState->tstore = tStore;
 	myState->cxt = tContext;
 	myState->detoast = detoast;
+	myState->target_tupdesc = target_tupdesc;
+	myState->map_failure_msg = map_failure_msg;
 }

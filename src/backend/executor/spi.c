@@ -60,7 +60,8 @@ static void _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan);
 
 static int	_SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 							  Snapshot snapshot, Snapshot crosscheck_snapshot,
-							  bool read_only, bool fire_triggers, uint64 tcount);
+							  bool read_only, bool fire_triggers, uint64 tcount,
+							  DestReceiver *caller_dest);
 
 static ParamListInfo _SPI_convert_params(int nargs, Oid *argtypes,
 										 Datum *Values, const char *Nulls);
@@ -513,7 +514,7 @@ SPI_execute(const char *src, bool read_only, long tcount)
 
 	res = _SPI_execute_plan(&plan, NULL,
 							InvalidSnapshot, InvalidSnapshot,
-							read_only, true, tcount);
+							read_only, true, tcount, NULL);
 
 	_SPI_end_call(true);
 	return res;
@@ -547,7 +548,7 @@ SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 							_SPI_convert_params(plan->nargs, plan->argtypes,
 												Values, Nulls),
 							InvalidSnapshot, InvalidSnapshot,
-							read_only, true, tcount);
+							read_only, true, tcount, NULL);
 
 	_SPI_end_call(true);
 	return res;
@@ -576,7 +577,36 @@ SPI_execute_plan_with_paramlist(SPIPlanPtr plan, ParamListInfo params,
 
 	res = _SPI_execute_plan(plan, params,
 							InvalidSnapshot, InvalidSnapshot,
-							read_only, true, tcount);
+							read_only, true, tcount, NULL);
+
+	_SPI_end_call(true);
+	return res;
+}
+
+/*
+ * Execute a previously prepared plan.  If dest isn't NULL, we send result
+ * tuples to the caller-supplied DestReceiver rather than through the usual
+ * SPI output arrangements.  If dest is NULL this is equivalent to
+ * SPI_execute_plan_with_paramlist.
+ */
+int
+SPI_execute_plan_with_receiver(SPIPlanPtr plan,
+							   ParamListInfo params,
+							   bool read_only, long tcount,
+							   DestReceiver *dest)
+{
+	int			res;
+
+	if (plan == NULL || plan->magic != _SPI_PLAN_MAGIC || tcount < 0)
+		return SPI_ERROR_ARGUMENT;
+
+	res = _SPI_begin_call(true);
+	if (res < 0)
+		return res;
+
+	res = _SPI_execute_plan(plan, params,
+							InvalidSnapshot, InvalidSnapshot,
+							read_only, true, tcount, dest);
 
 	_SPI_end_call(true);
 	return res;
@@ -617,7 +647,7 @@ SPI_execute_snapshot(SPIPlanPtr plan,
 							_SPI_convert_params(plan->nargs, plan->argtypes,
 												Values, Nulls),
 							snapshot, crosscheck_snapshot,
-							read_only, fire_triggers, tcount);
+							read_only, fire_triggers, tcount, NULL);
 
 	_SPI_end_call(true);
 	return res;
@@ -664,7 +694,50 @@ SPI_execute_with_args(const char *src,
 
 	res = _SPI_execute_plan(&plan, paramLI,
 							InvalidSnapshot, InvalidSnapshot,
-							read_only, true, tcount);
+							read_only, true, tcount, NULL);
+
+	_SPI_end_call(true);
+	return res;
+}
+
+/*
+ * SPI_execute_with_receiver -- plan and execute a query with arguments
+ *
+ * This is the same as SPI_execute_with_args except that parameters are
+ * supplied through a ParamListInfo, and (if dest isn't NULL) we send
+ * result tuples to the caller-supplied DestReceiver rather than through
+ * the usual SPI output arrangements.
+ */
+int
+SPI_execute_with_receiver(const char *src,
+						  ParamListInfo params,
+						  bool read_only, long tcount,
+						  DestReceiver *dest)
+{
+	int			res;
+	_SPI_plan	plan;
+
+	if (src == NULL || tcount < 0)
+		return SPI_ERROR_ARGUMENT;
+
+	res = _SPI_begin_call(true);
+	if (res < 0)
+		return res;
+
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
+	if (params)
+	{
+		plan.parserSetup = params->parserSetup;
+		plan.parserSetupArg = params->parserSetupArg;
+	}
+
+	_SPI_prepare_oneshot_plan(src, &plan);
+
+	res = _SPI_execute_plan(&plan, params,
+							InvalidSnapshot, InvalidSnapshot,
+							read_only, true, tcount, dest);
 
 	_SPI_end_call(true);
 	return res;
@@ -1301,6 +1374,49 @@ SPI_cursor_open_with_paramlist(const char *name, SPIPlanPtr plan,
 							   ParamListInfo params, bool read_only)
 {
 	return SPI_cursor_open_internal(name, plan, params, read_only);
+}
+
+/*
+ * SPI_cursor_parse_open_with_paramlist()
+ *
+ * Same as SPI_cursor_open_with_args except that parameters (if any) are passed
+ * as a ParamListInfo, which supports dynamic parameter set determination
+ */
+Portal
+SPI_cursor_parse_open_with_paramlist(const char *name,
+									 const char *src,
+									 ParamListInfo params,
+									 bool read_only, int cursorOptions)
+{
+	Portal		result;
+	_SPI_plan	plan;
+
+	if (src == NULL)
+		elog(ERROR, "SPI_cursor_parse_open_with_paramlist called with invalid arguments");
+
+	SPI_result = _SPI_begin_call(true);
+	if (SPI_result < 0)
+		elog(ERROR, "SPI_cursor_parse_open_with_paramlist called while not connected");
+
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.cursor_options = cursorOptions;
+	if (params)
+	{
+		plan.parserSetup = params->parserSetup;
+		plan.parserSetupArg = params->parserSetupArg;
+	}
+
+	_SPI_prepare_plan(src, &plan);
+
+	/* We needn't copy the plan; SPI_cursor_open_internal will do so */
+
+	result = SPI_cursor_open_internal(name, &plan, params, read_only);
+
+	/* And clean up */
+	_SPI_end_call(true);
+
+	return result;
 }
 
 
@@ -2090,11 +2206,13 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
  * fire_triggers: true to fire AFTER triggers at end of query (normal case);
  *		false means any AFTER triggers are postponed to end of outer query
  * tcount: execution tuple-count limit, or 0 for none
+ * caller_dest: DestReceiver to receive output, or NULL for normal SPI output
  */
 static int
 _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-				  bool read_only, bool fire_triggers, uint64 tcount)
+				  bool read_only, bool fire_triggers, uint64 tcount,
+				  DestReceiver *caller_dest)
 {
 	int			my_res = 0;
 	uint64		my_processed = 0;
@@ -2228,6 +2346,12 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 			bool		canSetTag = stmt->canSetTag;
 			DestReceiver *dest;
 
+			/*
+			 * Reset output state.  (Note that if a non-SPI receiver is used,
+			 * _SPI_current->processed will stay zero, and that's what we'll
+			 * report to the caller.  It's the receiver's job to count tuples
+			 * in that case.)
+			 */
 			_SPI_current->processed = 0;
 			_SPI_current->tuptable = NULL;
 
@@ -2267,7 +2391,16 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				UpdateActiveSnapshotCommandId();
 			}
 
-			dest = CreateDestReceiver(canSetTag ? DestSPI : DestNone);
+			/*
+			 * Select appropriate tuple receiver.  Output from non-canSetTag
+			 * subqueries always goes to the bit bucket.
+			 */
+			if (!canSetTag)
+				dest = CreateDestReceiver(DestNone);
+			else if (caller_dest)
+				dest = caller_dest;
+			else
+				dest = CreateDestReceiver(DestSPI);
 
 			if (stmt->utilityStmt == NULL)
 			{
@@ -2373,7 +2506,13 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 				SPI_freetuptable(_SPI_current->tuptable);
 				_SPI_current->tuptable = NULL;
 			}
-			/* we know that the receiver doesn't need a destroy call */
+
+			/*
+			 * We don't issue a destroy call to the receiver.  The SPI and
+			 * None receivers would ignore it anyway, while if the caller
+			 * supplied a receiver, it's not our job to destroy it.
+			 */
+
 			if (res < 0)
 			{
 				my_res = res;
@@ -2465,7 +2604,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 	switch (operation)
 	{
 		case CMD_SELECT:
-			if (queryDesc->dest->mydest != DestSPI)
+			if (queryDesc->dest->mydest == DestNone)
 			{
 				/* Don't return SPI_OK_SELECT if we're discarding result */
 				res = SPI_OK_UTILITY;
