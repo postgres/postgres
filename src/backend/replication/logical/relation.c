@@ -576,7 +576,7 @@ logicalrep_partmap_init(void)
  * the attribute map, which can be different for the partition.
  *
  * Note there's no logicalrep_partition_close, because the caller closes the
- * the component relation.
+ * component relation.
  */
 LogicalRepRelMapEntry *
 logicalrep_partition_open(LogicalRepRelMapEntry *root,

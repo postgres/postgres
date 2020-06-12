@@ -427,7 +427,7 @@ restart:
 
 
 /*
- * Lookup replication origin via it's oid and return the name.
+ * Lookup replication origin via its oid and return the name.
  *
  * The external name is palloc'd in the calling context.
  *

@@ -209,14 +209,14 @@ dumpOptionsFromRestoreOptions(RestoreOptions *ropt)
 /*
  *	Wrapper functions.
  *
- *	The objective it to make writing new formats and dumpers as simple
+ *	The objective is to make writing new formats and dumpers as simple
  *	as possible, if necessary at the expense of extra function calls etc.
  *
  */
 
 /*
  * The dump worker setup needs lots of knowledge of the internals of pg_dump,
- * so It's defined in pg_dump.c and passed into OpenArchive. The restore worker
+ * so it's defined in pg_dump.c and passed into OpenArchive. The restore worker
  * setup doesn't need to know anything much, so it's defined here.
  */
 static void
@@ -1450,7 +1450,7 @@ SortTocFromFile(Archive *AHX)
 }
 
 /**********************
- * 'Convenience functions that look like standard IO functions
+ * Convenience functions that look like standard IO functions
  * for writing data when in dump mode.
  **********************/
 
