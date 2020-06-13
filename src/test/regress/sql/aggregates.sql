@@ -39,8 +39,22 @@ SELECT var_samp(b::numeric) FROM aggtest;
 
 -- population variance is defined for a single tuple, sample variance
 -- is not
-SELECT var_pop(1.0), var_samp(2.0);
+SELECT var_pop(1.0::float8), var_samp(2.0::float8);
+SELECT stddev_pop(3.0::float8), stddev_samp(4.0::float8);
+SELECT var_pop('inf'::float8), var_samp('inf'::float8);
+SELECT stddev_pop('inf'::float8), stddev_samp('inf'::float8);
+SELECT var_pop('nan'::float8), var_samp('nan'::float8);
+SELECT stddev_pop('nan'::float8), stddev_samp('nan'::float8);
+SELECT var_pop(1.0::float4), var_samp(2.0::float4);
+SELECT stddev_pop(3.0::float4), stddev_samp(4.0::float4);
+SELECT var_pop('inf'::float4), var_samp('inf'::float4);
+SELECT stddev_pop('inf'::float4), stddev_samp('inf'::float4);
+SELECT var_pop('nan'::float4), var_samp('nan'::float4);
+SELECT stddev_pop('nan'::float4), stddev_samp('nan'::float4);
+SELECT var_pop(1.0::numeric), var_samp(2.0::numeric);
 SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
+SELECT var_pop('nan'::numeric), var_samp('nan'::numeric);
+SELECT stddev_pop('nan'::numeric), stddev_samp('nan'::numeric);
 
 -- verify correct results for null and NaN inputs
 select sum(null::int4) from generate_series(1,3);
@@ -80,6 +94,11 @@ SELECT regr_r2(b, a) FROM aggtest;
 SELECT regr_slope(b, a), regr_intercept(b, a) FROM aggtest;
 SELECT covar_pop(b, a), covar_samp(b, a) FROM aggtest;
 SELECT corr(b, a) FROM aggtest;
+
+-- check single-tuple behavior
+SELECT covar_pop(1::float8,2::float8), covar_samp(3::float8,4::float8);
+SELECT covar_pop(1::float8,'inf'::float8), covar_samp(3::float8,'inf'::float8);
+SELECT covar_pop(1::float8,'nan'::float8), covar_samp(3::float8,'nan'::float8);
 
 -- test accum and combine functions directly
 CREATE TABLE regr_test (x float8, y float8);
