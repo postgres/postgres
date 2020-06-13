@@ -1,9 +1,7 @@
 CREATE ROLE regress_dump_test_role;
 CREATE EXTENSION test_pg_dump;
 ALTER EXTENSION test_pg_dump ADD DATABASE postgres; -- error
-ERROR:  syntax error at or near "DATABASE"
-LINE 1: ALTER EXTENSION test_pg_dump ADD DATABASE postgres;
-                                         ^
+ERROR:  cannot add an object of this type to an extension
 CREATE TABLE test_pg_dump_t1 (c1 int, junk text);
 ALTER TABLE test_pg_dump_t1 DROP COLUMN junk;  -- to exercise dropped-col cases
 CREATE VIEW test_pg_dump_v1 AS SELECT * FROM test_pg_dump_t1;

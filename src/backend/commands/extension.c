@@ -3269,6 +3269,25 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 	Relation	relation;
 	Oid			oldExtension;
 
+	switch (stmt->objtype)
+	{
+		case OBJECT_DATABASE:
+		case OBJECT_EXTENSION:
+		case OBJECT_INDEX:
+		case OBJECT_PUBLICATION:
+		case OBJECT_ROLE:
+		case OBJECT_STATISTIC_EXT:
+		case OBJECT_SUBSCRIPTION:
+		case OBJECT_TABLESPACE:
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("cannot add an object of this type to an extension")));
+			break;
+		default:
+			/* OK */
+			break;
+	}
+
 	extension.classId = ExtensionRelationId;
 	extension.objectId = get_extension_oid(stmt->extname, false);
 	extension.objectSubId = 0;

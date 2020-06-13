@@ -4546,13 +4546,22 @@ alter_extension_opt_item:
  *****************************************************************************/
 
 AlterExtensionContentsStmt:
-			ALTER EXTENSION name add_drop ACCESS METHOD name
+			ALTER EXTENSION name add_drop object_type_name name
 				{
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
 					n->extname = $3;
 					n->action = $4;
-					n->objtype = OBJECT_ACCESS_METHOD;
-					n->object = (Node *) makeString($7);
+					n->objtype = $5;
+					n->object = (Node *) makeString($6);
+					$$ = (Node *)n;
+				}
+			| ALTER EXTENSION name add_drop object_type_any_name any_name
+				{
+					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
+					n->extname = $3;
+					n->action = $4;
+					n->objtype = $5;
+					n->object = (Node *) $6;
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop AGGREGATE aggregate_with_argtypes
@@ -4573,24 +4582,6 @@ AlterExtensionContentsStmt:
 					n->object = (Node *) list_make2($7, $9);
 					$$ = (Node *) n;
 				}
-			| ALTER EXTENSION name add_drop COLLATION any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_COLLATION;
-					n->object = (Node *) $6;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop CONVERSION_P any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_CONVERSION;
-					n->object = (Node *) $6;
-					$$ = (Node *)n;
-				}
 			| ALTER EXTENSION name add_drop DOMAIN_P Typename
 				{
 					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
@@ -4607,15 +4598,6 @@ AlterExtensionContentsStmt:
 					n->action = $4;
 					n->objtype = OBJECT_FUNCTION;
 					n->object = (Node *) $6;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop opt_procedural LANGUAGE name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_LANGUAGE;
-					n->object = (Node *) makeString($7);
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop OPERATOR operator_with_argtypes
@@ -4661,123 +4643,6 @@ AlterExtensionContentsStmt:
 					n->action = $4;
 					n->objtype = OBJECT_ROUTINE;
 					n->object = (Node *) $6;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop SCHEMA name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_SCHEMA;
-					n->object = (Node *) makeString($6);
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop EVENT TRIGGER name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_EVENT_TRIGGER;
-					n->object = (Node *) makeString($7);
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop TABLE any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_TABLE;
-					n->object = (Node *) $6;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop TEXT_P SEARCH PARSER any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_TSPARSER;
-					n->object = (Node *) $8;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop TEXT_P SEARCH DICTIONARY any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_TSDICTIONARY;
-					n->object = (Node *) $8;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop TEXT_P SEARCH TEMPLATE any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_TSTEMPLATE;
-					n->object = (Node *) $8;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop TEXT_P SEARCH CONFIGURATION any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_TSCONFIGURATION;
-					n->object = (Node *) $8;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop SEQUENCE any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_SEQUENCE;
-					n->object = (Node *) $6;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop VIEW any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_VIEW;
-					n->object = (Node *) $6;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop MATERIALIZED VIEW any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_MATVIEW;
-					n->object = (Node *) $7;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop FOREIGN TABLE any_name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_FOREIGN_TABLE;
-					n->object = (Node *) $7;
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop FOREIGN DATA_P WRAPPER name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_FDW;
-					n->object = (Node *) makeString($8);
-					$$ = (Node *)n;
-				}
-			| ALTER EXTENSION name add_drop SERVER name
-				{
-					AlterExtensionContentsStmt *n = makeNode(AlterExtensionContentsStmt);
-					n->extname = $3;
-					n->action = $4;
-					n->objtype = OBJECT_FOREIGN_SERVER;
-					n->object = (Node *) makeString($6);
 					$$ = (Node *)n;
 				}
 			| ALTER EXTENSION name add_drop TRANSFORM FOR Typename LANGUAGE name
