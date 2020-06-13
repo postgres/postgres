@@ -2925,6 +2925,17 @@ float8_accum(PG_FUNCTION_ARGS)
 			Sxx = get_float8_nan();
 		}
 	}
+	else
+	{
+		/*
+		 * At the first input, we normally can leave Sxx as 0.  However, if
+		 * the first input is Inf or NaN, we'd better force Sxx to NaN;
+		 * otherwise we will falsely report variance zero when there are no
+		 * more inputs.
+		 */
+		if (isnan(newval) || isinf(newval))
+			Sxx = get_float8_nan();
+	}
 
 	/*
 	 * If we're invoked as an aggregate, we can cheat and modify our first
@@ -2998,6 +3009,17 @@ float4_accum(PG_FUNCTION_ARGS)
 
 			Sxx = get_float8_nan();
 		}
+	}
+	else
+	{
+		/*
+		 * At the first input, we normally can leave Sxx as 0.  However, if
+		 * the first input is Inf or NaN, we'd better force Sxx to NaN;
+		 * otherwise we will falsely report variance zero when there are no
+		 * more inputs.
+		 */
+		if (isnan(newval) || isinf(newval))
+			Sxx = get_float8_nan();
 	}
 
 	/*
@@ -3224,6 +3246,19 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 			if (isinf(Sxy))
 				Sxy = get_float8_nan();
 		}
+	}
+	else
+	{
+		/*
+		 * At the first input, we normally can leave Sxx et al as 0.  However,
+		 * if the first input is Inf or NaN, we'd better force the dependent
+		 * sums to NaN; otherwise we will falsely report variance zero when
+		 * there are no more inputs.
+		 */
+		if (isnan(newvalX) || isinf(newvalX))
+			Sxx = Sxy = get_float8_nan();
+		if (isnan(newvalY) || isinf(newvalY))
+			Syy = Sxy = get_float8_nan();
 	}
 
 	/*
