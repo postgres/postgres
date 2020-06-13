@@ -33,6 +33,75 @@ typedef struct
 
 static List *label_provider_list = NIL;
 
+static bool
+SecLabelSupportsObjectType(ObjectType objtype)
+{
+	switch (objtype)
+	{
+		case OBJECT_AGGREGATE:
+		case OBJECT_COLUMN:
+		case OBJECT_DATABASE:
+		case OBJECT_DOMAIN:
+		case OBJECT_EVENT_TRIGGER:
+		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_FUNCTION:
+		case OBJECT_LANGUAGE:
+		case OBJECT_LARGEOBJECT:
+		case OBJECT_MATVIEW:
+		case OBJECT_PROCEDURE:
+		case OBJECT_PUBLICATION:
+		case OBJECT_ROLE:
+		case OBJECT_ROUTINE:
+		case OBJECT_SCHEMA:
+		case OBJECT_SEQUENCE:
+		case OBJECT_SUBSCRIPTION:
+		case OBJECT_TABLE:
+		case OBJECT_TABLESPACE:
+		case OBJECT_TYPE:
+		case OBJECT_VIEW:
+			return true;
+
+		case OBJECT_ACCESS_METHOD:
+		case OBJECT_AMOP:
+		case OBJECT_AMPROC:
+		case OBJECT_ATTRIBUTE:
+		case OBJECT_CAST:
+		case OBJECT_COLLATION:
+		case OBJECT_CONVERSION:
+		case OBJECT_DEFAULT:
+		case OBJECT_DEFACL:
+		case OBJECT_DOMCONSTRAINT:
+		case OBJECT_EXTENSION:
+		case OBJECT_FDW:
+		case OBJECT_FOREIGN_SERVER:
+		case OBJECT_INDEX:
+		case OBJECT_OPCLASS:
+		case OBJECT_OPERATOR:
+		case OBJECT_OPFAMILY:
+		case OBJECT_POLICY:
+		case OBJECT_PUBLICATION_REL:
+		case OBJECT_RULE:
+		case OBJECT_STATISTIC_EXT:
+		case OBJECT_TABCONSTRAINT:
+		case OBJECT_TRANSFORM:
+		case OBJECT_TRIGGER:
+		case OBJECT_TSCONFIGURATION:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSTEMPLATE:
+		case OBJECT_USER_MAPPING:
+			return false;
+
+			/*
+			 * There's intentionally no default: case here; we want the
+			 * compiler to warn if a new ObjectType hasn't been handled above.
+			 */
+	}
+
+	/* Shouldn't get here, but if we do, say "no support" */
+	return false;
+}
+
 /*
  * ExecSecLabelStmt --
  *
@@ -82,6 +151,11 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 					 errmsg("security label provider \"%s\" is not loaded",
 							stmt->provider)));
 	}
+
+	if (!SecLabelSupportsObjectType(stmt->objtype))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("security labels are not supported for this type of object")));
 
 	/*
 	 * Translate the parser representation which identifies this object into

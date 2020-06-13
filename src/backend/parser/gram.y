@@ -463,9 +463,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <boolean> copy_from opt_program
 
 %type <ival>	opt_column event cursor_options opt_hold opt_set_data
-%type <objtype>	drop_type_any_name drop_type_name drop_type_name_on_any_name
-				comment_type_any_name comment_type_name
-				security_label_type_any_name security_label_type_name
+%type <objtype>	object_type_any_name object_type_name object_type_name_on_any_name
+				drop_type_name
 
 %type <node>	fetch_args select_limit_value
 				offset_clause select_offset_value
@@ -6190,7 +6189,7 @@ ReassignOwnedStmt:
  *
  *****************************************************************************/
 
-DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
+DropStmt:	DROP object_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
@@ -6200,7 +6199,7 @@ DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP drop_type_any_name any_name_list opt_drop_behavior
+			| DROP object_type_any_name any_name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
@@ -6230,7 +6229,7 @@ DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP drop_type_name_on_any_name name ON any_name opt_drop_behavior
+			| DROP object_type_name_on_any_name name ON any_name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
@@ -6240,7 +6239,7 @@ DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
 					n->concurrent = false;
 					$$ = (Node *) n;
 				}
-			| DROP drop_type_name_on_any_name IF_P EXISTS name ON any_name opt_drop_behavior
+			| DROP object_type_name_on_any_name IF_P EXISTS name ON any_name opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
@@ -6312,8 +6311,8 @@ DropStmt:	DROP drop_type_any_name IF_P EXISTS any_name_list opt_drop_behavior
 				}
 		;
 
-/* object types taking any_name_list */
-drop_type_any_name:
+/* object types taking any_name/any_name_list */
+object_type_any_name:
 			TABLE									{ $$ = OBJECT_TABLE; }
 			| SEQUENCE								{ $$ = OBJECT_SEQUENCE; }
 			| VIEW									{ $$ = OBJECT_VIEW; }
@@ -6329,7 +6328,20 @@ drop_type_any_name:
 			| TEXT_P SEARCH CONFIGURATION			{ $$ = OBJECT_TSCONFIGURATION; }
 		;
 
-/* object types taking name_list */
+/*
+ * object types taking name/name_list
+ *
+ * DROP handles some of them separately
+ */
+
+object_type_name:
+			drop_type_name							{ $$ = $1; }
+			| DATABASE								{ $$ = OBJECT_DATABASE; }
+			| ROLE									{ $$ = OBJECT_ROLE; }
+			| SUBSCRIPTION							{ $$ = OBJECT_SUBSCRIPTION; }
+			| TABLESPACE							{ $$ = OBJECT_TABLESPACE; }
+		;
+
 drop_type_name:
 			ACCESS METHOD							{ $$ = OBJECT_ACCESS_METHOD; }
 			| EVENT TRIGGER							{ $$ = OBJECT_EVENT_TRIGGER; }
@@ -6342,7 +6354,7 @@ drop_type_name:
 		;
 
 /* object types attached to a table */
-drop_type_name_on_any_name:
+object_type_name_on_any_name:
 			POLICY									{ $$ = OBJECT_POLICY; }
 			| RULE									{ $$ = OBJECT_RULE; }
 			| TRIGGER								{ $$ = OBJECT_TRIGGER; }
@@ -6394,36 +6406,12 @@ opt_restart_seqs:
 
 /*****************************************************************************
  *
- *	The COMMENT ON statement can take different forms based upon the type of
- *	the object associated with the comment. The form of the statement is:
- *
- *	COMMENT ON [ [ ACCESS METHOD | CONVERSION | COLLATION |
- *                 DATABASE | DOMAIN |
- *                 EXTENSION | EVENT TRIGGER | FOREIGN DATA WRAPPER |
- *                 FOREIGN TABLE | INDEX | [PROCEDURAL] LANGUAGE |
- *                 MATERIALIZED VIEW | POLICY | ROLE | SCHEMA | SEQUENCE |
- *                 SERVER | STATISTICS | TABLE | TABLESPACE |
- *                 TEXT SEARCH CONFIGURATION | TEXT SEARCH DICTIONARY |
- *                 TEXT SEARCH PARSER | TEXT SEARCH TEMPLATE | TYPE |
- *                 VIEW] <objname> |
- *				 AGGREGATE <aggname> (arg1, ...) |
- *				 CAST (<src type> AS <dst type>) |
- *				 COLUMN <relname>.<colname> |
- *				 CONSTRAINT <constraintname> ON <relname> |
- *				 CONSTRAINT <constraintname> ON DOMAIN <domainname> |
- *				 FUNCTION <funcname> (arg1, arg2, ...) |
- *				 LARGE OBJECT <oid> |
- *				 OPERATOR <op> (leftoperand_typ, rightoperand_typ) |
- *				 OPERATOR CLASS <name> USING <access-method> |
- *				 OPERATOR FAMILY <name> USING <access-method> |
- *				 RULE <rulename> ON <relname> |
- *				 TRIGGER <triggername> ON <relname> ]
- *			   IS { 'text' | NULL }
+ * COMMENT ON <object> IS <text>
  *
  *****************************************************************************/
 
 CommentStmt:
-			COMMENT ON comment_type_any_name any_name IS comment_text
+			COMMENT ON object_type_any_name any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = $3;
@@ -6431,7 +6419,15 @@ CommentStmt:
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON comment_type_name name IS comment_text
+			| COMMENT ON COLUMN any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_COLUMN;
+					n->object = (Node *) $4;
+					n->comment = $6;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON object_type_name name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = $3;
@@ -6500,10 +6496,10 @@ CommentStmt:
 					n->comment = $9;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON POLICY name ON any_name IS comment_text
+			| COMMENT ON object_type_name_on_any_name name ON any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_POLICY;
+					n->objtype = $3;
 					n->object = (Node *) lappend($6, makeString($4));
 					n->comment = $8;
 					$$ = (Node *) n;
@@ -6524,28 +6520,12 @@ CommentStmt:
 					n->comment = $6;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON RULE name ON any_name IS comment_text
-				{
-					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_RULE;
-					n->object = (Node *) lappend($6, makeString($4));
-					n->comment = $8;
-					$$ = (Node *) n;
-				}
 			| COMMENT ON TRANSFORM FOR Typename LANGUAGE name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TRANSFORM;
 					n->object = (Node *) list_make2($5, makeString($7));
 					n->comment = $9;
-					$$ = (Node *) n;
-				}
-			| COMMENT ON TRIGGER name ON any_name IS comment_text
-				{
-					CommentStmt *n = makeNode(CommentStmt);
-					n->objtype = OBJECT_TRIGGER;
-					n->object = (Node *) lappend($6, makeString($4));
-					n->comment = $8;
 					$$ = (Node *) n;
 				}
 			| COMMENT ON OPERATOR CLASS any_name USING name IS comment_text
@@ -6582,40 +6562,6 @@ CommentStmt:
 				}
 		;
 
-/* object types taking any_name */
-comment_type_any_name:
-			COLUMN								{ $$ = OBJECT_COLUMN; }
-			| INDEX								{ $$ = OBJECT_INDEX; }
-			| SEQUENCE							{ $$ = OBJECT_SEQUENCE; }
-			| STATISTICS						{ $$ = OBJECT_STATISTIC_EXT; }
-			| TABLE								{ $$ = OBJECT_TABLE; }
-			| VIEW								{ $$ = OBJECT_VIEW; }
-			| MATERIALIZED VIEW					{ $$ = OBJECT_MATVIEW; }
-			| COLLATION							{ $$ = OBJECT_COLLATION; }
-			| CONVERSION_P						{ $$ = OBJECT_CONVERSION; }
-			| FOREIGN TABLE						{ $$ = OBJECT_FOREIGN_TABLE; }
-			| TEXT_P SEARCH CONFIGURATION		{ $$ = OBJECT_TSCONFIGURATION; }
-			| TEXT_P SEARCH DICTIONARY			{ $$ = OBJECT_TSDICTIONARY; }
-			| TEXT_P SEARCH PARSER				{ $$ = OBJECT_TSPARSER; }
-			| TEXT_P SEARCH TEMPLATE			{ $$ = OBJECT_TSTEMPLATE; }
-		;
-
-/* object types taking name */
-comment_type_name:
-			ACCESS METHOD						{ $$ = OBJECT_ACCESS_METHOD; }
-			| DATABASE							{ $$ = OBJECT_DATABASE; }
-			| EVENT TRIGGER						{ $$ = OBJECT_EVENT_TRIGGER; }
-			| EXTENSION							{ $$ = OBJECT_EXTENSION; }
-			| FOREIGN DATA_P WRAPPER			{ $$ = OBJECT_FDW; }
-			| opt_procedural LANGUAGE			{ $$ = OBJECT_LANGUAGE; }
-			| PUBLICATION						{ $$ = OBJECT_PUBLICATION; }
-			| ROLE								{ $$ = OBJECT_ROLE; }
-			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
-			| SERVER							{ $$ = OBJECT_FOREIGN_SERVER; }
-			| SUBSCRIPTION						{ $$ = OBJECT_SUBSCRIPTION; }
-			| TABLESPACE						{ $$ = OBJECT_TABLESPACE; }
-		;
-
 comment_text:
 			Sconst								{ $$ = $1; }
 			| NULL_P							{ $$ = NULL; }
@@ -6632,7 +6578,7 @@ comment_text:
  *****************************************************************************/
 
 SecLabelStmt:
-			SECURITY LABEL opt_provider ON security_label_type_any_name any_name
+			SECURITY LABEL opt_provider ON object_type_any_name any_name
 			IS security_label
 				{
 					SecLabelStmt *n = makeNode(SecLabelStmt);
@@ -6642,7 +6588,17 @@ SecLabelStmt:
 					n->label = $8;
 					$$ = (Node *) n;
 				}
-			| SECURITY LABEL opt_provider ON security_label_type_name name
+			| SECURITY LABEL opt_provider ON COLUMN any_name
+			  IS security_label
+				{
+					SecLabelStmt *n = makeNode(SecLabelStmt);
+					n->provider = $3;
+					n->objtype = OBJECT_COLUMN;
+					n->object = (Node *) $6;
+					n->label = $8;
+					$$ = (Node *) n;
+				}
+			| SECURITY LABEL opt_provider ON object_type_name name
 			  IS security_label
 				{
 					SecLabelStmt *n = makeNode(SecLabelStmt);
@@ -6726,28 +6682,6 @@ SecLabelStmt:
 
 opt_provider:	FOR NonReservedWord_or_Sconst	{ $$ = $2; }
 				| /* empty */					{ $$ = NULL; }
-		;
-
-/* object types taking any_name */
-security_label_type_any_name:
-			COLUMN								{ $$ = OBJECT_COLUMN; }
-			| FOREIGN TABLE						{ $$ = OBJECT_FOREIGN_TABLE; }
-			| SEQUENCE							{ $$ = OBJECT_SEQUENCE; }
-			| TABLE								{ $$ = OBJECT_TABLE; }
-			| VIEW								{ $$ = OBJECT_VIEW; }
-			| MATERIALIZED VIEW					{ $$ = OBJECT_MATVIEW; }
-		;
-
-/* object types taking name */
-security_label_type_name:
-			DATABASE							{ $$ = OBJECT_DATABASE; }
-			| EVENT TRIGGER						{ $$ = OBJECT_EVENT_TRIGGER; }
-			| opt_procedural LANGUAGE			{ $$ = OBJECT_LANGUAGE; }
-			| PUBLICATION						{ $$ = OBJECT_PUBLICATION; }
-			| ROLE								{ $$ = OBJECT_ROLE; }
-			| SCHEMA							{ $$ = OBJECT_SCHEMA; }
-			| SUBSCRIPTION						{ $$ = OBJECT_SUBSCRIPTION; }
-			| TABLESPACE						{ $$ = OBJECT_TABLESPACE; }
 		;
 
 security_label:	Sconst				{ $$ = $1; }
