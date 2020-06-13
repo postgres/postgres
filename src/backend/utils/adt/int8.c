@@ -149,9 +149,16 @@ int8out(PG_FUNCTION_ARGS)
 	int64		val = PG_GETARG_INT64(0);
 	char		buf[MAXINT8LEN + 1];
 	char	   *result;
+	int			len;
 
-	pg_lltoa(val, buf);
-	result = pstrdup(buf);
+	len = pg_lltoa(val, buf) + 1;
+
+	/*
+	 * Since the length is already known, we do a manual palloc() and memcpy()
+	 * to avoid the strlen() call that would otherwise be done in pstrdup().
+	 */
+	result = palloc(len);
+	memcpy(result, buf, len);
 	PG_RETURN_CSTRING(result);
 }
 

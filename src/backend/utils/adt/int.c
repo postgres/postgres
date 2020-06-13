@@ -191,9 +191,7 @@ int2vectorout(PG_FUNCTION_ARGS)
 	{
 		if (num != 0)
 			*rp++ = ' ';
-		pg_itoa(int2Array->values[num], rp);
-		while (*++rp != '\0')
-			;
+		rp += pg_itoa(int2Array->values[num], rp);
 	}
 	*rp = '\0';
 	PG_RETURN_CSTRING(result);

@@ -327,16 +327,17 @@ invalid_syntax:
 
 /*
  * pg_itoa: converts a signed 16-bit integer to its string representation
+ * and returns strlen(a).
  *
  * Caller must ensure that 'a' points to enough memory to hold the result
  * (at least 7 bytes, counting a leading sign and trailing NUL).
  *
  * It doesn't seem worth implementing this separately.
  */
-void
+int
 pg_itoa(int16 i, char *a)
 {
-	pg_ltoa((int32) i, a);
+	return pg_ltoa((int32) i, a);
 }
 
 /*
@@ -404,25 +405,27 @@ pg_ultoa_n(uint32 value, char *a)
 }
 
 /*
- * NUL-terminate the output of pg_ultoa_n.
+ * pg_ltoa: converts a signed 32-bit integer to its string representation and
+ * returns strlen(a).
  *
  * It is the caller's responsibility to ensure that a is at least 12 bytes long,
  * which is enough room to hold a minus sign, a maximally long int32, and the
  * above terminating NUL.
  */
-void
+int
 pg_ltoa(int32 value, char *a)
 {
 	uint32		uvalue = (uint32) value;
-	int			len;
+	int			len = 0;
 
 	if (value < 0)
 	{
 		uvalue = (uint32) 0 - uvalue;
-		*a++ = '-';
+		a[len++] = '-';
 	}
-	len = pg_ultoa_n(uvalue, a);
+	len += pg_ultoa_n(uvalue, a + len);
 	a[len] = '\0';
+	return len;
 }
 
 /*
@@ -510,24 +513,27 @@ pg_ulltoa_n(uint64 value, char *a)
 }
 
 /*
- * pg_lltoa: convert a signed 64-bit integer to its string representation
+ * pg_lltoa: converts a signed 64-bit integer to its string representation and
+ * returns strlen(a).
  *
  * Caller must ensure that 'a' points to enough memory to hold the result
  * (at least MAXINT8LEN + 1 bytes, counting a leading sign and trailing NUL).
  */
-void
+int
 pg_lltoa(int64 value, char *a)
 {
-	int			len;
 	uint64		uvalue = value;
+	int			len = 0;
 
 	if (value < 0)
 	{
-		*a++ = '-';
 		uvalue = (uint64) 0 - uvalue;
+		a[len++] = '-';
 	}
-	len = pg_ulltoa_n(uvalue, a);
-	a[len] = 0;
+
+	len += pg_ulltoa_n(uvalue, a + len);
+	a[len] = '\0';
+	return len;
 }
 
 

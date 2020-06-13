@@ -103,9 +103,10 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 				{
 					int32		num = DatumGetInt32(value);
 					char		str[12];	/* sign, 10 digits and '\0' */
+					int			len;
 
-					pg_ltoa(num, str);
-					pq_sendcountedtext(&buf, str, strlen(str), false);
+					len = pg_ltoa(num, str);
+					pq_sendcountedtext(&buf, str, len, false);
 				}
 				break;
 
@@ -113,9 +114,10 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 				{
 					int64		num = DatumGetInt64(value);
 					char		str[MAXINT8LEN + 1];
+					int			len;
 
-					pg_lltoa(num, str);
-					pq_sendcountedtext(&buf, str, strlen(str), false);
+					len = pg_lltoa(num, str);
+					pq_sendcountedtext(&buf, str, len, false);
 				}
 				break;
 
