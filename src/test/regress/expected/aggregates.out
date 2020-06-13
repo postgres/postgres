@@ -214,13 +214,13 @@ SELECT stddev_pop(3.0::numeric), stddev_samp(4.0::numeric);
 SELECT var_pop('nan'::numeric), var_samp('nan'::numeric);
  var_pop | var_samp 
 ---------+----------
-     NaN |      NaN
+     NaN |         
 (1 row)
 
 SELECT stddev_pop('nan'::numeric), stddev_samp('nan'::numeric);
  stddev_pop | stddev_samp 
 ------------+-------------
-        NaN |         NaN
+        NaN |            
 (1 row)
 
 -- verify correct results for null and NaN inputs

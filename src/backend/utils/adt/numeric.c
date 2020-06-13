@@ -5172,11 +5172,21 @@ numeric_stddev_internal(NumericAggState *state,
 				vsumX,
 				vsumX2,
 				vNminus1;
-	const NumericVar *comp;
+	int64		totCount;
 	int			rscale;
 
-	/* Deal with empty input and NaN-input cases */
-	if (state == NULL || (state->N + state->NaNcount) == 0)
+	/*
+	 * Sample stddev and variance are undefined when N <= 1; population stddev
+	 * is undefined when N == 0.  Return NULL in either case (note that NaNs
+	 * count as normal inputs for this purpose).
+	 */
+	if (state == NULL || (totCount = state->N + state->NaNcount) == 0)
+	{
+		*is_null = true;
+		return NULL;
+	}
+
+	if (sample && totCount <= 1)
 	{
 		*is_null = true;
 		return NULL;
@@ -5184,9 +5194,13 @@ numeric_stddev_internal(NumericAggState *state,
 
 	*is_null = false;
 
+	/*
+	 * Deal with NaN inputs.
+	 */
 	if (state->NaNcount > 0)
 		return make_result(&const_nan);
 
+	/* OK, normal calculation applies */
 	init_var(&vN);
 	init_var(&vsumX);
 	init_var(&vsumX2);
@@ -5194,21 +5208,6 @@ numeric_stddev_internal(NumericAggState *state,
 	int64_to_numericvar(state->N, &vN);
 	accum_sum_final(&(state->sumX), &vsumX);
 	accum_sum_final(&(state->sumX2), &vsumX2);
-
-	/*
-	 * Sample stddev and variance are undefined when N <= 1; population stddev
-	 * is undefined when N == 0. Return NULL in either case.
-	 */
-	if (sample)
-		comp = &const_one;
-	else
-		comp = &const_zero;
-
-	if (cmp_var(&vN, comp) <= 0)
-	{
-		*is_null = true;
-		return NULL;
-	}
 
 	init_var(&vNminus1);
 	sub_var(&vN, &const_one, &vNminus1);
