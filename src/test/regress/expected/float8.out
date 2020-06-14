@@ -385,6 +385,158 @@ SELECT power(float8 'NaN', float8 '0');
      1
 (1 row)
 
+SELECT power(float8 'inf', float8 '0');
+ power 
+-------
+     1
+(1 row)
+
+SELECT power(float8 '-inf', float8 '0');
+ power 
+-------
+     1
+(1 row)
+
+SELECT power(float8 '0', float8 'inf');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 '0', float8 '-inf');
+ERROR:  zero raised to a negative power is undefined
+SELECT power(float8 '1', float8 'inf');
+ power 
+-------
+     1
+(1 row)
+
+SELECT power(float8 '1', float8 '-inf');
+ power 
+-------
+     1
+(1 row)
+
+SELECT power(float8 '-1', float8 'inf');
+ power 
+-------
+     1
+(1 row)
+
+SELECT power(float8 '-1', float8 '-inf');
+ power 
+-------
+     1
+(1 row)
+
+SELECT power(float8 '0.1', float8 'inf');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 '-0.1', float8 'inf');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 '1.1', float8 'inf');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 '-1.1', float8 'inf');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 '0.1', float8 '-inf');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 '-0.1', float8 '-inf');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 '1.1', float8 '-inf');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 '-1.1', float8 '-inf');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 'inf', float8 '-2');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 'inf', float8 '2');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 'inf', float8 'inf');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 'inf', float8 '-inf');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 '-inf', float8 '-2');
+ power 
+-------
+     0
+(1 row)
+
+SELECT power(float8 '-inf', float8 '-3');
+ power 
+-------
+    -0
+(1 row)
+
+SELECT power(float8 '-inf', float8 '2');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 '-inf', float8 '3');
+   power   
+-----------
+ -Infinity
+(1 row)
+
+SELECT power(float8 '-inf', float8 'inf');
+  power   
+----------
+ Infinity
+(1 row)
+
+SELECT power(float8 '-inf', float8 '-inf');
+ power 
+-------
+     0
+(1 row)
+
 -- take exp of ln(f.f1)
 SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
    FROM FLOAT8_TBL f
@@ -395,6 +547,13 @@ SELECT '' AS three, f.f1, exp(ln(f.f1)) AS exp_ln_f1
        | 1.2345678901234e+200 | 1.23456789012338e+200
        | 1.2345678901234e-200 | 1.23456789012339e-200
 (3 rows)
+
+-- check edge cases for exp
+SELECT exp('inf'::float8), exp('-inf'::float8), exp('nan'::float8);
+   exp    | exp | exp 
+----------+-----+-----
+ Infinity |   0 | NaN
+(1 row)
 
 -- cube root
 SELECT ||/ float8 '27' AS three;

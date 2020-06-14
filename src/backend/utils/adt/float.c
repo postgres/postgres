@@ -1565,7 +1565,7 @@ dpow(PG_FUNCTION_ARGS)
 
 	if (unlikely(isinf(result)) && !isinf(arg1) && !isinf(arg2))
 		float_overflow_error();
-	if (unlikely(result == 0.0) && arg1 != 0.0)
+	if (unlikely(result == 0.0) && arg1 != 0.0 && !isinf(arg1) && !isinf(arg2))
 		float_underflow_error();
 
 	PG_RETURN_FLOAT8(result);
@@ -1581,15 +1581,38 @@ dexp(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	errno = 0;
-	result = exp(arg1);
-	if (errno == ERANGE && result != 0 && !isinf(result))
-		result = get_float8_infinity();
-
-	if (unlikely(isinf(result)) && !isinf(arg1))
-		float_overflow_error();
-	if (unlikely(result == 0.0))
-		float_underflow_error();
+	/*
+	 * Handle NaN and Inf cases explicitly.  This avoids needing to assume
+	 * that the platform's exp() conforms to POSIX for these cases, and it
+	 * removes some edge cases for the overflow checks below.
+	 */
+	if (isnan(arg1))
+		result = arg1;
+	else if (isinf(arg1))
+	{
+		/* Per POSIX, exp(-Inf) is 0 */
+		result = (arg1 > 0.0) ? arg1 : 0;
+	}
+	else
+	{
+		/*
+		 * On some platforms, exp() will not set errno but just return Inf or
+		 * zero to report overflow/underflow; therefore, test both cases.
+		 */
+		errno = 0;
+		result = exp(arg1);
+		if (unlikely(errno == ERANGE))
+		{
+			if (result != 0.0)
+				float_overflow_error();
+			else
+				float_underflow_error();
+		}
+		else if (unlikely(isinf(result)))
+			float_overflow_error();
+		else if (unlikely(result == 0.0))
+			float_underflow_error();
+	}
 
 	PG_RETURN_FLOAT8(result);
 }
