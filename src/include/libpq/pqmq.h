@@ -17,7 +17,7 @@
 #include "storage/shm_mq.h"
 
 extern void pq_redirect_to_shm_mq(dsm_segment *seg, shm_mq_handle *mqh);
-extern void pq_set_parallel_master(pid_t pid, BackendId backend_id);
+extern void pq_set_parallel_leader(pid_t pid, BackendId backend_id);
 
 extern void pq_parse_errornotice(StringInfo str, ErrorData *edata);
 

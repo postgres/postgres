@@ -23,8 +23,8 @@
 
 static shm_mq_handle *pq_mq_handle;
 static bool pq_mq_busy = false;
-static pid_t pq_mq_parallel_master_pid = 0;
-static pid_t pq_mq_parallel_master_backend_id = InvalidBackendId;
+static pid_t pq_mq_parallel_leader_pid = 0;
+static pid_t pq_mq_parallel_leader_backend_id = InvalidBackendId;
 
 static void pq_cleanup_redirect_to_shm_mq(dsm_segment *seg, Datum arg);
 static void mq_comm_reset(void);
@@ -73,15 +73,15 @@ pq_cleanup_redirect_to_shm_mq(dsm_segment *seg, Datum arg)
 }
 
 /*
- * Arrange to SendProcSignal() to the parallel master each time we transmit
+ * Arrange to SendProcSignal() to the parallel leader each time we transmit
  * message data via the shm_mq.
  */
 void
-pq_set_parallel_master(pid_t pid, BackendId backend_id)
+pq_set_parallel_leader(pid_t pid, BackendId backend_id)
 {
 	Assert(PqCommMethods == &PqCommMqMethods);
-	pq_mq_parallel_master_pid = pid;
-	pq_mq_parallel_master_backend_id = backend_id;
+	pq_mq_parallel_leader_pid = pid;
+	pq_mq_parallel_leader_backend_id = backend_id;
 }
 
 static void
@@ -160,10 +160,10 @@ mq_putmessage(char msgtype, const char *s, size_t len)
 	{
 		result = shm_mq_sendv(pq_mq_handle, iov, 2, true);
 
-		if (pq_mq_parallel_master_pid != 0)
-			SendProcSignal(pq_mq_parallel_master_pid,
+		if (pq_mq_parallel_leader_pid != 0)
+			SendProcSignal(pq_mq_parallel_leader_pid,
 						   PROCSIG_PARALLEL_MESSAGE,
-						   pq_mq_parallel_master_backend_id);
+						   pq_mq_parallel_leader_backend_id);
 
 		if (result != SHM_MQ_WOULD_BLOCK)
 			break;

@@ -1028,8 +1028,8 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 	 * We can't pass Params to workers at the moment either, so they are also
 	 * parallel-restricted, unless they are PARAM_EXTERN Params or are
 	 * PARAM_EXEC Params listed in safe_param_ids, meaning they could be
-	 * either generated within the worker or can be computed in master and
-	 * then their value can be passed to the worker.
+	 * either generated within workers or can be computed by the leader and
+	 * then their value can be passed to workers.
 	 */
 	else if (IsA(node, Param))
 	{

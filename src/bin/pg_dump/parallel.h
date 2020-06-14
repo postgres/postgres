@@ -18,7 +18,7 @@
 
 #include "pg_backup_archiver.h"
 
-/* Function to call in master process on completion of a worker task */
+/* Function to call in leader process on completion of a worker task */
 typedef void (*ParallelCompletionPtr) (ArchiveHandle *AH,
 									   TocEntry *te,
 									   int status,

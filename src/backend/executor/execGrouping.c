@@ -190,7 +190,7 @@ BuildTupleHashTableExt(PlanState *parent,
 	hashtable->cur_eq_func = NULL;
 
 	/*
-	 * If parallelism is in use, even if the master backend is performing the
+	 * If parallelism is in use, even if the leader backend is performing the
 	 * scan itself, we don't want to create the hashtable exactly the same way
 	 * in all workers. As hashtables are iterated over in keyspace-order,
 	 * doing so in all processes in the same way is likely to lead to

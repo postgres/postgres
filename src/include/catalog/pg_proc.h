@@ -157,10 +157,10 @@ typedef FormData_pg_proc *Form_pg_proc;
 /*
  * Symbolic values for proparallel column: these indicate whether a function
  * can be safely be run in a parallel backend, during parallelism but
- * necessarily in the master, or only in non-parallel mode.
+ * necessarily in the leader, or only in non-parallel mode.
  */
-#define PROPARALLEL_SAFE		's' /* can run in worker or master */
-#define PROPARALLEL_RESTRICTED	'r' /* can run in parallel master only */
+#define PROPARALLEL_SAFE		's' /* can run in worker or leader */
+#define PROPARALLEL_RESTRICTED	'r' /* can run in parallel leader only */
 #define PROPARALLEL_UNSAFE		'u' /* banned while in parallel mode */
 
 /*

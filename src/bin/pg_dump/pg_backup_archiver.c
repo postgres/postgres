@@ -662,7 +662,7 @@ RestoreArchive(Archive *AHX)
 		restore_toc_entries_parallel(AH, pstate, &pending_list);
 		ParallelBackupEnd(AH, pstate);
 
-		/* reconnect the master and see if we missed something */
+		/* reconnect the leader and see if we missed something */
 		restore_toc_entries_postfork(AH, &pending_list);
 		Assert(AH->connection != NULL);
 	}
@@ -2393,7 +2393,7 @@ WriteDataChunks(ArchiveHandle *AH, ParallelState *pstate)
 	if (pstate && pstate->numWorkers > 1)
 	{
 		/*
-		 * In parallel mode, this code runs in the master process.  We
+		 * In parallel mode, this code runs in the leader process.  We
 		 * construct an array of candidate TEs, then sort it into decreasing
 		 * size order, then dispatch each TE to a data-transfer worker.  By
 		 * dumping larger tables first, we avoid getting into a situation
@@ -2447,7 +2447,7 @@ WriteDataChunks(ArchiveHandle *AH, ParallelState *pstate)
 
 
 /*
- * Callback function that's invoked in the master process after a step has
+ * Callback function that's invoked in the leader process after a step has
  * been parallel dumped.
  *
  * We don't need to do anything except check for worker failure.
@@ -4437,7 +4437,7 @@ pop_next_work_item(ArchiveHandle *AH, ParallelReadyList *ready_list,
  * this is run in the worker, i.e. in a thread (Windows) or a separate process
  * (everything else). A worker process executes several such work items during
  * a parallel backup or restore. Once we terminate here and report back that
- * our work is finished, the master process will assign us a new work item.
+ * our work is finished, the leader process will assign us a new work item.
  */
 int
 parallel_restore(ArchiveHandle *AH, TocEntry *te)
@@ -4457,7 +4457,7 @@ parallel_restore(ArchiveHandle *AH, TocEntry *te)
 
 
 /*
- * Callback function that's invoked in the master process after a step has
+ * Callback function that's invoked in the leader process after a step has
  * been parallel restored.
  *
  * Update status and reduce the dependency count of any dependent items.
