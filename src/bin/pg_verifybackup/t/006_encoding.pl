@@ -8,11 +8,11 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 5;
 
-my $master = get_new_node('master');
-$master->init(allows_streaming => 1);
-$master->start;
-my $backup_path = $master->backup_dir . '/test_encoding';
-$master->command_ok(
+my $primary = get_new_node('primary');
+$primary->init(allows_streaming => 1);
+$primary->start;
+my $backup_path = $primary->backup_dir . '/test_encoding';
+$primary->command_ok(
 	[
 		'pg_basebackup', '-D',
 		$backup_path,    '--no-sync',

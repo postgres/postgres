@@ -49,9 +49,9 @@ sub test_login
 	return;
 }
 
-# Initialize master node. Force UTF-8 encoding, so that we can use non-ASCII
+# Initialize primary node. Force UTF-8 encoding, so that we can use non-ASCII
 # characters in the passwords below.
-my $node = get_new_node('master');
+my $node = get_new_node('primary');
 $node->init(extra => [ '--locale=C', '--encoding=UTF8' ]);
 $node->start;
 

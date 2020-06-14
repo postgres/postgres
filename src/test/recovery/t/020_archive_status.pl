@@ -8,7 +8,7 @@ use TestLib;
 use Test::More tests => 16;
 use Config;
 
-my $primary = get_new_node('master');
+my $primary = get_new_node('primary');
 $primary->init(
 	has_archiving    => 1,
 	allows_streaming => 1);

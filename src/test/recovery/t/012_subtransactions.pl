@@ -6,30 +6,30 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 12;
 
-# Setup master node
-my $node_master = get_new_node("master");
-$node_master->init(allows_streaming => 1);
-$node_master->append_conf(
+# Setup primary node
+my $node_primary = get_new_node("primary");
+$node_primary->init(allows_streaming => 1);
+$node_primary->append_conf(
 	'postgresql.conf', qq(
 	max_prepared_transactions = 10
 	log_checkpoints = true
 ));
-$node_master->start;
-$node_master->backup('master_backup');
-$node_master->psql('postgres', "CREATE TABLE t_012_tbl (id int)");
+$node_primary->start;
+$node_primary->backup('primary_backup');
+$node_primary->psql('postgres', "CREATE TABLE t_012_tbl (id int)");
 
 # Setup standby node
 my $node_standby = get_new_node('standby');
-$node_standby->init_from_backup($node_master, 'master_backup',
+$node_standby->init_from_backup($node_primary, 'primary_backup',
 	has_streaming => 1);
 $node_standby->start;
 
 # Switch to synchronous replication
-$node_master->append_conf(
+$node_primary->append_conf(
 	'postgresql.conf', qq(
 	synchronous_standby_names = '*'
 ));
-$node_master->psql('postgres', "SELECT pg_reload_conf()");
+$node_primary->psql('postgres', "SELECT pg_reload_conf()");
 
 my $psql_out = '';
 my $psql_rc  = '';
@@ -39,7 +39,7 @@ my $psql_rc  = '';
 # so that it won't conflict with savepoint xids.
 ###############################################################################
 
-$node_master->psql(
+$node_primary->psql(
 	'postgres', "
 	BEGIN;
 	DELETE FROM t_012_tbl;
@@ -57,9 +57,9 @@ $node_master->psql(
 	PREPARE TRANSACTION 'xact_012_1';
 	CHECKPOINT;");
 
-$node_master->stop;
-$node_master->start;
-$node_master->psql(
+$node_primary->stop;
+$node_primary->start;
+$node_primary->psql(
 	'postgres', "
 	-- here we can get xid of previous savepoint if nextXid
 	-- wasn't properly advanced
@@ -68,7 +68,7 @@ $node_master->psql(
 	ROLLBACK;
 	COMMIT PREPARED 'xact_012_1';");
 
-$node_master->psql(
+$node_primary->psql(
 	'postgres',
 	"SELECT count(*) FROM t_012_tbl",
 	stdout => \$psql_out);
@@ -79,10 +79,10 @@ is($psql_out, '6', "Check nextXid handling for prepared subtransactions");
 # PGPROC_MAX_CACHED_SUBXIDS subtransactions and also show data properly
 # on promotion
 ###############################################################################
-$node_master->psql('postgres', "DELETE FROM t_012_tbl");
+$node_primary->psql('postgres', "DELETE FROM t_012_tbl");
 
 # Function borrowed from src/test/regress/sql/hs_primary_extremes.sql
-$node_master->psql(
+$node_primary->psql(
 	'postgres', "
     CREATE OR REPLACE FUNCTION hs_subxids (n integer)
     RETURNS void
@@ -95,19 +95,19 @@ $node_master->psql(
         RETURN;
     EXCEPTION WHEN raise_exception THEN NULL; END;
     \$\$;");
-$node_master->psql(
+$node_primary->psql(
 	'postgres', "
 	BEGIN;
 	SELECT hs_subxids(127);
 	COMMIT;");
-$node_master->wait_for_catchup($node_standby, 'replay',
-	$node_master->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby, 'replay',
+	$node_primary->lsn('insert'));
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '8128', "Visible");
-$node_master->stop;
+$node_primary->stop;
 $node_standby->promote;
 
 $node_standby->psql(
@@ -117,8 +117,8 @@ $node_standby->psql(
 is($psql_out, '8128', "Visible");
 
 # restore state
-($node_master, $node_standby) = ($node_standby, $node_master);
-$node_standby->enable_streaming($node_master);
+($node_primary, $node_standby) = ($node_standby, $node_primary);
+$node_standby->enable_streaming($node_primary);
 $node_standby->start;
 $node_standby->psql(
 	'postgres',
@@ -126,10 +126,10 @@ $node_standby->psql(
 	stdout => \$psql_out);
 is($psql_out, '8128', "Visible");
 
-$node_master->psql('postgres', "DELETE FROM t_012_tbl");
+$node_primary->psql('postgres', "DELETE FROM t_012_tbl");
 
 # Function borrowed from src/test/regress/sql/hs_primary_extremes.sql
-$node_master->psql(
+$node_primary->psql(
 	'postgres', "
     CREATE OR REPLACE FUNCTION hs_subxids (n integer)
     RETURNS void
@@ -142,19 +142,19 @@ $node_master->psql(
         RETURN;
     EXCEPTION WHEN raise_exception THEN NULL; END;
     \$\$;");
-$node_master->psql(
+$node_primary->psql(
 	'postgres', "
 	BEGIN;
 	SELECT hs_subxids(127);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_master->wait_for_catchup($node_standby, 'replay',
-	$node_master->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby, 'replay',
+	$node_primary->lsn('insert'));
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
-$node_master->stop;
+$node_primary->stop;
 $node_standby->promote;
 
 $node_standby->psql(
@@ -164,34 +164,34 @@ $node_standby->psql(
 is($psql_out, '-1', "Not visible");
 
 # restore state
-($node_master, $node_standby) = ($node_standby, $node_master);
-$node_standby->enable_streaming($node_master);
+($node_primary, $node_standby) = ($node_standby, $node_primary);
+$node_standby->enable_streaming($node_primary);
 $node_standby->start;
-$psql_rc = $node_master->psql('postgres', "COMMIT PREPARED 'xact_012_1'");
+$psql_rc = $node_primary->psql('postgres', "COMMIT PREPARED 'xact_012_1'");
 is($psql_rc, '0',
 	"Restore of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
 );
 
-$node_master->psql(
+$node_primary->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '8128', "Visible");
 
-$node_master->psql('postgres', "DELETE FROM t_012_tbl");
-$node_master->psql(
+$node_primary->psql('postgres', "DELETE FROM t_012_tbl");
+$node_primary->psql(
 	'postgres', "
 	BEGIN;
 	SELECT hs_subxids(201);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_master->wait_for_catchup($node_standby, 'replay',
-	$node_master->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby, 'replay',
+	$node_primary->lsn('insert'));
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
-$node_master->stop;
+$node_primary->stop;
 $node_standby->promote;
 
 $node_standby->psql(
@@ -201,15 +201,15 @@ $node_standby->psql(
 is($psql_out, '-1', "Not visible");
 
 # restore state
-($node_master, $node_standby) = ($node_standby, $node_master);
-$node_standby->enable_streaming($node_master);
+($node_primary, $node_standby) = ($node_standby, $node_primary);
+$node_standby->enable_streaming($node_primary);
 $node_standby->start;
-$psql_rc = $node_master->psql('postgres', "ROLLBACK PREPARED 'xact_012_1'");
+$psql_rc = $node_primary->psql('postgres', "ROLLBACK PREPARED 'xact_012_1'");
 is($psql_rc, '0',
 	"Rollback of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
 );
 
-$node_master->psql(
+$node_primary->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);

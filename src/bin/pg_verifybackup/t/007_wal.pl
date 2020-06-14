@@ -10,16 +10,16 @@ use TestLib;
 use Test::More tests => 7;
 
 # Start up the server and take a backup.
-my $master = get_new_node('master');
-$master->init(allows_streaming => 1);
-$master->start;
-my $backup_path = $master->backup_dir . '/test_wal';
-$master->command_ok([ 'pg_basebackup', '-D', $backup_path, '--no-sync' ],
+my $primary = get_new_node('primary');
+$primary->init(allows_streaming => 1);
+$primary->start;
+my $backup_path = $primary->backup_dir . '/test_wal';
+$primary->command_ok([ 'pg_basebackup', '-D', $backup_path, '--no-sync' ],
 	"base backup ok");
 
 # Rename pg_wal.
 my $original_pg_wal  = $backup_path . '/pg_wal';
-my $relocated_pg_wal = $master->backup_dir . '/relocated_pg_wal';
+my $relocated_pg_wal = $primary->backup_dir . '/relocated_pg_wal';
 rename($original_pg_wal, $relocated_pg_wal) || die "rename pg_wal: $!";
 
 # WAL verification should fail.

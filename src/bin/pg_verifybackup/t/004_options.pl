@@ -10,11 +10,11 @@ use TestLib;
 use Test::More tests => 25;
 
 # Start up the server and take a backup.
-my $master = get_new_node('master');
-$master->init(allows_streaming => 1);
-$master->start;
-my $backup_path = $master->backup_dir . '/test_options';
-$master->command_ok([ 'pg_basebackup', '-D', $backup_path, '--no-sync' ],
+my $primary = get_new_node('primary');
+$primary->init(allows_streaming => 1);
+$primary->start;
+my $backup_path = $primary->backup_dir . '/test_options';
+$primary->command_ok([ 'pg_basebackup', '-D', $backup_path, '--no-sync' ],
 	"base backup ok");
 
 # Verify that pg_verifybackup -q succeeds and produces no output.

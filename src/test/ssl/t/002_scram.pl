@@ -35,7 +35,7 @@ my $common_connstr;
 # Set up the server.
 
 note "setting up data directory";
-my $node = get_new_node('master');
+my $node = get_new_node('primary');
 $node->init;
 
 # PGHOST is enforced here to set up the node, subsequent connections

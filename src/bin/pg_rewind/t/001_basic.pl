@@ -13,58 +13,58 @@ sub run_test
 	my $test_mode = shift;
 
 	RewindTest::setup_cluster($test_mode);
-	RewindTest::start_master();
+	RewindTest::start_primary();
 
-	# Create a test table and insert a row in master.
-	master_psql("CREATE TABLE tbl1 (d text)");
-	master_psql("INSERT INTO tbl1 VALUES ('in master')");
+	# Create a test table and insert a row in primary.
+	primary_psql("CREATE TABLE tbl1 (d text)");
+	primary_psql("INSERT INTO tbl1 VALUES ('in primary')");
 
 	# This test table will be used to test truncation, i.e. the table
-	# is extended in the old master after promotion
-	master_psql("CREATE TABLE trunc_tbl (d text)");
-	master_psql("INSERT INTO trunc_tbl VALUES ('in master')");
+	# is extended in the old primary after promotion
+	primary_psql("CREATE TABLE trunc_tbl (d text)");
+	primary_psql("INSERT INTO trunc_tbl VALUES ('in primary')");
 
 	# This test table will be used to test the "copy-tail" case, i.e. the
-	# table is truncated in the old master after promotion
-	master_psql("CREATE TABLE tail_tbl (id integer, d text)");
-	master_psql("INSERT INTO tail_tbl VALUES (0, 'in master')");
+	# table is truncated in the old primary after promotion
+	primary_psql("CREATE TABLE tail_tbl (id integer, d text)");
+	primary_psql("INSERT INTO tail_tbl VALUES (0, 'in primary')");
 
-	master_psql("CHECKPOINT");
+	primary_psql("CHECKPOINT");
 
 	RewindTest::create_standby($test_mode);
 
-	# Insert additional data on master that will be replicated to standby
-	master_psql("INSERT INTO tbl1 values ('in master, before promotion')");
-	master_psql(
-		"INSERT INTO trunc_tbl values ('in master, before promotion')");
-	master_psql(
-		"INSERT INTO tail_tbl SELECT g, 'in master, before promotion: ' || g FROM generate_series(1, 10000) g"
+	# Insert additional data on primary that will be replicated to standby
+	primary_psql("INSERT INTO tbl1 values ('in primary, before promotion')");
+	primary_psql(
+		"INSERT INTO trunc_tbl values ('in primary, before promotion')");
+	primary_psql(
+		"INSERT INTO tail_tbl SELECT g, 'in primary, before promotion: ' || g FROM generate_series(1, 10000) g"
 	);
 
-	master_psql('CHECKPOINT');
+	primary_psql('CHECKPOINT');
 
 	RewindTest::promote_standby();
 
-	# Insert a row in the old master. This causes the master and standby
+	# Insert a row in the old primary. This causes the primary and standby
 	# to have "diverged", it's no longer possible to just apply the
-	# standy's logs over master directory - you need to rewind.
-	master_psql("INSERT INTO tbl1 VALUES ('in master, after promotion')");
+	# standy's logs over primary directory - you need to rewind.
+	primary_psql("INSERT INTO tbl1 VALUES ('in primary, after promotion')");
 
 	# Also insert a new row in the standby, which won't be present in the
-	# old master.
+	# old primary.
 	standby_psql("INSERT INTO tbl1 VALUES ('in standby, after promotion')");
 
 	# Insert enough rows to trunc_tbl to extend the file. pg_rewind should
 	# truncate it back to the old size.
-	master_psql(
-		"INSERT INTO trunc_tbl SELECT 'in master, after promotion: ' || g FROM generate_series(1, 10000) g"
+	primary_psql(
+		"INSERT INTO trunc_tbl SELECT 'in primary, after promotion: ' || g FROM generate_series(1, 10000) g"
 	);
 
 	# Truncate tail_tbl. pg_rewind should copy back the truncated part
 	# (We cannot use an actual TRUNCATE command here, as that creates a
 	# whole new relfilenode)
-	master_psql("DELETE FROM tail_tbl WHERE id > 10");
-	master_psql("VACUUM tail_tbl");
+	primary_psql("DELETE FROM tail_tbl WHERE id > 10");
+	primary_psql("VACUUM tail_tbl");
 
 	# Before running pg_rewind, do a couple of extra tests with several
 	# option combinations.  As the code paths taken by those tests
@@ -72,7 +72,7 @@ sub run_test
 	# in "local" mode for simplicity's sake.
 	if ($test_mode eq 'local')
 	{
-		my $master_pgdata  = $node_master->data_dir;
+		my $primary_pgdata  = $node_primary->data_dir;
 		my $standby_pgdata = $node_standby->data_dir;
 
 		# First check that pg_rewind fails if the target cluster is
@@ -82,7 +82,7 @@ sub run_test
 			[
 				'pg_rewind',       '--debug',
 				'--source-pgdata', $standby_pgdata,
-				'--target-pgdata', $master_pgdata,
+				'--target-pgdata', $primary_pgdata,
 				'--no-sync'
 			],
 			'pg_rewind with running target');
@@ -94,7 +94,7 @@ sub run_test
 			[
 				'pg_rewind',       '--debug',
 				'--source-pgdata', $standby_pgdata,
-				'--target-pgdata', $master_pgdata,
+				'--target-pgdata', $primary_pgdata,
 				'--no-sync',       '--no-ensure-shutdown'
 			],
 			'pg_rewind --no-ensure-shutdown with running target');
@@ -102,12 +102,12 @@ sub run_test
 		# Stop the target, and attempt to run with a local source
 		# still running.  This fails as pg_rewind requires to have
 		# a source cleanly stopped.
-		$node_master->stop;
+		$node_primary->stop;
 		command_fails(
 			[
 				'pg_rewind',       '--debug',
 				'--source-pgdata', $standby_pgdata,
-				'--target-pgdata', $master_pgdata,
+				'--target-pgdata', $primary_pgdata,
 				'--no-sync',       '--no-ensure-shutdown'
 			],
 			'pg_rewind with unexpected running source');
@@ -121,30 +121,30 @@ sub run_test
 			[
 				'pg_rewind',       '--debug',
 				'--source-pgdata', $standby_pgdata,
-				'--target-pgdata', $master_pgdata,
+				'--target-pgdata', $primary_pgdata,
 				'--no-sync',       '--dry-run'
 			],
 			'pg_rewind --dry-run');
 
 		# Both clusters need to be alive moving forward.
 		$node_standby->start;
-		$node_master->start;
+		$node_primary->start;
 	}
 
 	RewindTest::run_pg_rewind($test_mode);
 
 	check_query(
 		'SELECT * FROM tbl1',
-		qq(in master
-in master, before promotion
+		qq(in primary
+in primary, before promotion
 in standby, after promotion
 ),
 		'table content');
 
 	check_query(
 		'SELECT * FROM trunc_tbl',
-		qq(in master
-in master, before promotion
+		qq(in primary
+in primary, before promotion
 ),
 		'truncation');
 
@@ -160,7 +160,7 @@ in master, before promotion
 		skip "unix-style permissions not supported on Windows", 1
 		  if ($windows_os);
 
-		ok(check_mode_recursive($node_master->data_dir(), 0700, 0600),
+		ok(check_mode_recursive($node_primary->data_dir(), 0700, 0600),
 			'check PGDATA permissions');
 	}
 

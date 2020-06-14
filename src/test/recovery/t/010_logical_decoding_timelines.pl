@@ -30,10 +30,10 @@ use Scalar::Util qw(blessed);
 
 my ($stdout, $stderr, $ret);
 
-# Initialize master node
-my $node_master = get_new_node('master');
-$node_master->init(allows_streaming => 1, has_archiving => 1);
-$node_master->append_conf(
+# Initialize primary node
+my $node_primary = get_new_node('primary');
+$node_primary->init(allows_streaming => 1, has_archiving => 1);
+$node_primary->append_conf(
 	'postgresql.conf', q[
 wal_level = 'logical'
 max_replication_slots = 3
@@ -42,38 +42,38 @@ log_min_messages = 'debug2'
 hot_standby_feedback = on
 wal_receiver_status_interval = 1
 ]);
-$node_master->dump_info;
-$node_master->start;
+$node_primary->dump_info;
+$node_primary->start;
 
 note "testing logical timeline following with a filesystem-level copy";
 
-$node_master->safe_psql('postgres',
+$node_primary->safe_psql('postgres',
 	"SELECT pg_create_logical_replication_slot('before_basebackup', 'test_decoding');"
 );
-$node_master->safe_psql('postgres', "CREATE TABLE decoding(blah text);");
-$node_master->safe_psql('postgres',
+$node_primary->safe_psql('postgres', "CREATE TABLE decoding(blah text);");
+$node_primary->safe_psql('postgres',
 	"INSERT INTO decoding(blah) VALUES ('beforebb');");
 
 # We also want to verify that DROP DATABASE on a standby with a logical
 # slot works. This isn't strictly related to timeline following, but
 # the only way to get a logical slot on a standby right now is to use
 # the same physical copy trick, so:
-$node_master->safe_psql('postgres', 'CREATE DATABASE dropme;');
-$node_master->safe_psql('dropme',
+$node_primary->safe_psql('postgres', 'CREATE DATABASE dropme;');
+$node_primary->safe_psql('dropme',
 	"SELECT pg_create_logical_replication_slot('dropme_slot', 'test_decoding');"
 );
 
-$node_master->safe_psql('postgres', 'CHECKPOINT;');
+$node_primary->safe_psql('postgres', 'CHECKPOINT;');
 
 my $backup_name = 'b1';
-$node_master->backup_fs_hot($backup_name);
+$node_primary->backup_fs_hot($backup_name);
 
-$node_master->safe_psql('postgres',
+$node_primary->safe_psql('postgres',
 	q[SELECT pg_create_physical_replication_slot('phys_slot');]);
 
 my $node_replica = get_new_node('replica');
 $node_replica->init_from_backup(
-	$node_master, $backup_name,
+	$node_primary, $backup_name,
 	has_streaming => 1,
 	has_restoring => 1);
 $node_replica->append_conf('postgresql.conf',
@@ -81,26 +81,26 @@ $node_replica->append_conf('postgresql.conf',
 
 $node_replica->start;
 
-# If we drop 'dropme' on the master, the standby should drop the
+# If we drop 'dropme' on the primary, the standby should drop the
 # db and associated slot.
-is($node_master->psql('postgres', 'DROP DATABASE dropme'),
-	0, 'dropped DB with logical slot OK on master');
-$node_master->wait_for_catchup($node_replica, 'replay',
-	$node_master->lsn('insert'));
+is($node_primary->psql('postgres', 'DROP DATABASE dropme'),
+	0, 'dropped DB with logical slot OK on primary');
+$node_primary->wait_for_catchup($node_replica, 'replay',
+	$node_primary->lsn('insert'));
 is( $node_replica->safe_psql(
 		'postgres', q[SELECT 1 FROM pg_database WHERE datname = 'dropme']),
 	'',
 	'dropped DB dropme on standby');
-is($node_master->slot('dropme_slot')->{'slot_name'},
+is($node_primary->slot('dropme_slot')->{'slot_name'},
 	undef, 'logical slot was actually dropped on standby');
 
 # Back to testing failover...
-$node_master->safe_psql('postgres',
+$node_primary->safe_psql('postgres',
 	"SELECT pg_create_logical_replication_slot('after_basebackup', 'test_decoding');"
 );
-$node_master->safe_psql('postgres',
+$node_primary->safe_psql('postgres',
 	"INSERT INTO decoding(blah) VALUES ('afterbb');");
-$node_master->safe_psql('postgres', 'CHECKPOINT;');
+$node_primary->safe_psql('postgres', 'CHECKPOINT;');
 
 # Verify that only the before base_backup slot is on the replica
 $stdout = $node_replica->safe_psql('postgres',
@@ -109,20 +109,20 @@ is($stdout, 'before_basebackup',
 	'Expected to find only slot before_basebackup on replica');
 
 # Examine the physical slot the replica uses to stream changes
-# from the master to make sure its hot_standby_feedback
+# from the primary to make sure its hot_standby_feedback
 # has locked in a catalog_xmin on the physical slot, and that
 # any xmin is < the catalog_xmin
-$node_master->poll_query_until(
+$node_primary->poll_query_until(
 	'postgres', q[
 	SELECT catalog_xmin IS NOT NULL
 	FROM pg_replication_slots
 	WHERE slot_name = 'phys_slot'
 	]) or die "slot's catalog_xmin never became set";
 
-my $phys_slot = $node_master->slot('phys_slot');
-isnt($phys_slot->{'xmin'}, '', 'xmin assigned on physical slot of master');
+my $phys_slot = $node_primary->slot('phys_slot');
+isnt($phys_slot->{'xmin'}, '', 'xmin assigned on physical slot of primary');
 isnt($phys_slot->{'catalog_xmin'},
-	'', 'catalog_xmin assigned on physical slot of master');
+	'', 'catalog_xmin assigned on physical slot of primary');
 
 # Ignore wrap-around here, we're on a new cluster:
 cmp_ok(
@@ -130,11 +130,11 @@ cmp_ok(
 	$phys_slot->{'catalog_xmin'},
 	'xmin on physical slot must not be lower than catalog_xmin');
 
-$node_master->safe_psql('postgres', 'CHECKPOINT');
-$node_master->wait_for_catchup($node_replica, 'write');
+$node_primary->safe_psql('postgres', 'CHECKPOINT');
+$node_primary->wait_for_catchup($node_replica, 'write');
 
 # Boom, crash
-$node_master->stop('immediate');
+$node_primary->stop('immediate');
 
 $node_replica->promote;
 

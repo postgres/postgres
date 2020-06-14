@@ -13,26 +13,26 @@ sub run_test
 	my $test_mode = shift;
 
 	RewindTest::setup_cluster($test_mode, ['-g']);
-	RewindTest::start_master();
+	RewindTest::start_primary();
 
-	# Create a database in master with a table.
-	master_psql('CREATE DATABASE inmaster');
-	master_psql('CREATE TABLE inmaster_tab (a int)', 'inmaster');
+	# Create a database in primary with a table.
+	primary_psql('CREATE DATABASE inprimary');
+	primary_psql('CREATE TABLE inprimary_tab (a int)', 'inprimary');
 
 	RewindTest::create_standby($test_mode);
 
 	# Create another database with another table, the creation is
 	# replicated to the standby.
-	master_psql('CREATE DATABASE beforepromotion');
-	master_psql('CREATE TABLE beforepromotion_tab (a int)',
+	primary_psql('CREATE DATABASE beforepromotion');
+	primary_psql('CREATE TABLE beforepromotion_tab (a int)',
 		'beforepromotion');
 
 	RewindTest::promote_standby();
 
-	# Create databases in the old master and the new promoted standby.
-	master_psql('CREATE DATABASE master_afterpromotion');
-	master_psql('CREATE TABLE master_promotion_tab (a int)',
-		'master_afterpromotion');
+	# Create databases in the old primary and the new promoted standby.
+	primary_psql('CREATE DATABASE primary_afterpromotion');
+	primary_psql('CREATE TABLE primary_promotion_tab (a int)',
+		'primary_afterpromotion');
 	standby_psql('CREATE DATABASE standby_afterpromotion');
 	standby_psql('CREATE TABLE standby_promotion_tab (a int)',
 		'standby_afterpromotion');
@@ -45,7 +45,7 @@ sub run_test
 	check_query(
 		'SELECT datname FROM pg_database ORDER BY 1',
 		qq(beforepromotion
-inmaster
+inprimary
 postgres
 standby_afterpromotion
 template0
@@ -59,7 +59,7 @@ template1
 		skip "unix-style permissions not supported on Windows", 1
 		  if ($windows_os);
 
-		ok(check_mode_recursive($node_master->data_dir(), 0750, 0640),
+		ok(check_mode_recursive($node_primary->data_dir(), 0750, 0640),
 			'check PGDATA permissions');
 	}
 

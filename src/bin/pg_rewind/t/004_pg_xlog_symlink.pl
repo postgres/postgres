@@ -26,50 +26,50 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	my $master_xlogdir = "${TestLib::tmp_check}/xlog_master";
+	my $primary_xlogdir = "${TestLib::tmp_check}/xlog_primary";
 
-	rmtree($master_xlogdir);
+	rmtree($primary_xlogdir);
 	RewindTest::setup_cluster($test_mode);
 
-	my $test_master_datadir = $node_master->data_dir;
+	my $test_primary_datadir = $node_primary->data_dir;
 
 	# turn pg_wal into a symlink
-	print("moving $test_master_datadir/pg_wal to $master_xlogdir\n");
-	move("$test_master_datadir/pg_wal", $master_xlogdir) or die;
-	symlink($master_xlogdir, "$test_master_datadir/pg_wal") or die;
+	print("moving $test_primary_datadir/pg_wal to $primary_xlogdir\n");
+	move("$test_primary_datadir/pg_wal", $primary_xlogdir) or die;
+	symlink($primary_xlogdir, "$test_primary_datadir/pg_wal") or die;
 
-	RewindTest::start_master();
+	RewindTest::start_primary();
 
-	# Create a test table and insert a row in master.
-	master_psql("CREATE TABLE tbl1 (d text)");
-	master_psql("INSERT INTO tbl1 VALUES ('in master')");
+	# Create a test table and insert a row in primary.
+	primary_psql("CREATE TABLE tbl1 (d text)");
+	primary_psql("INSERT INTO tbl1 VALUES ('in primary')");
 
-	master_psql("CHECKPOINT");
+	primary_psql("CHECKPOINT");
 
 	RewindTest::create_standby($test_mode);
 
-	# Insert additional data on master that will be replicated to standby
-	master_psql("INSERT INTO tbl1 values ('in master, before promotion')");
+	# Insert additional data on primary that will be replicated to standby
+	primary_psql("INSERT INTO tbl1 values ('in primary, before promotion')");
 
-	master_psql('CHECKPOINT');
+	primary_psql('CHECKPOINT');
 
 	RewindTest::promote_standby();
 
-	# Insert a row in the old master. This causes the master and standby
+	# Insert a row in the old primary. This causes the primary and standby
 	# to have "diverged", it's no longer possible to just apply the
-	# standy's logs over master directory - you need to rewind.
-	master_psql("INSERT INTO tbl1 VALUES ('in master, after promotion')");
+	# standy's logs over primary directory - you need to rewind.
+	primary_psql("INSERT INTO tbl1 VALUES ('in primary, after promotion')");
 
 	# Also insert a new row in the standby, which won't be present in the
-	# old master.
+	# old primary.
 	standby_psql("INSERT INTO tbl1 VALUES ('in standby, after promotion')");
 
 	RewindTest::run_pg_rewind($test_mode);
 
 	check_query(
 		'SELECT * FROM tbl1',
-		qq(in master
-in master, before promotion
+		qq(in primary
+in primary, before promotion
 in standby, after promotion
 ),
 		'table content');

@@ -9,10 +9,10 @@ use PostgresNode;
 use TestLib;
 use Test::More tests => 1;
 
-my $node_master = get_new_node('master');
-$node_master->init(allows_streaming => 1);
+my $node_primary = get_new_node('primary');
+$node_primary->init(allows_streaming => 1);
 
-$node_master->append_conf(
+$node_primary->append_conf(
 	'postgresql.conf', qq{
 fsync = on
 wal_log_hints = on
@@ -20,17 +20,17 @@ max_prepared_transactions = 5
 autovacuum = off
 });
 
-# Create a master node and its standby, initializing both with some data
+# Create a primary node and its standby, initializing both with some data
 # at the same time.
-$node_master->start;
+$node_primary->start;
 
-$node_master->backup('master_backup');
+$node_primary->backup('primary_backup');
 my $node_standby = get_new_node('standby');
-$node_standby->init_from_backup($node_master, 'master_backup',
+$node_standby->init_from_backup($node_primary, 'primary_backup',
 	has_streaming => 1);
 $node_standby->start;
 
-$node_master->psql(
+$node_primary->psql(
 	'postgres', qq{
 create table testtab (a int, b char(100));
 insert into testtab select generate_series(1,1000), 'foo';
@@ -39,7 +39,7 @@ delete from testtab where ctid > '(8,0)';
 });
 
 # Take a lock on the table to prevent following vacuum from truncating it
-$node_master->psql(
+$node_primary->psql(
 	'postgres', qq{
 begin;
 lock table testtab in row share mode;
@@ -47,14 +47,14 @@ prepare transaction 'p1';
 });
 
 # Vacuum, update FSM without truncation
-$node_master->psql('postgres', 'vacuum verbose testtab');
+$node_primary->psql('postgres', 'vacuum verbose testtab');
 
 # Force a checkpoint
-$node_master->psql('postgres', 'checkpoint');
+$node_primary->psql('postgres', 'checkpoint');
 
 # Now do some more insert/deletes, another vacuum to ensure full-page writes
 # are done
-$node_master->psql(
+$node_primary->psql(
 	'postgres', qq{
 insert into testtab select generate_series(1,1000), 'foo';
 delete from testtab where ctid > '(8,0)';
@@ -65,15 +65,15 @@ vacuum verbose testtab;
 $node_standby->psql('postgres', 'checkpoint');
 
 # Release the lock, vacuum again which should lead to truncation
-$node_master->psql(
+$node_primary->psql(
 	'postgres', qq{
 rollback prepared 'p1';
 vacuum verbose testtab;
 });
 
-$node_master->psql('postgres', 'checkpoint');
+$node_primary->psql('postgres', 'checkpoint');
 my $until_lsn =
-  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
+  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 
 # Wait long enough for standby to receive and apply all WAL
 my $caughtup_query =

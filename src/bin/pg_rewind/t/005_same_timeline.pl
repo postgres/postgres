@@ -13,7 +13,7 @@ use lib $FindBin::RealBin;
 use RewindTest;
 
 RewindTest::setup_cluster();
-RewindTest::start_master();
+RewindTest::start_primary();
 RewindTest::create_standby();
 RewindTest::run_pg_rewind('local');
 RewindTest::clean_rewind_test();

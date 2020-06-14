@@ -6,38 +6,38 @@ use TestLib;
 use Test::More tests => 3;
 use File::Copy;
 
-# Initialize master node, doing archives
-my $node_master = get_new_node('master');
-$node_master->init(
+# Initialize primary node, doing archives
+my $node_primary = get_new_node('primary');
+$node_primary->init(
 	has_archiving    => 1,
 	allows_streaming => 1);
 my $backup_name = 'my_backup';
 
 # Start it
-$node_master->start;
+$node_primary->start;
 
 # Take backup for standby
-$node_master->backup($backup_name);
+$node_primary->backup($backup_name);
 
 # Initialize standby node from backup, fetching WAL from archives
 my $node_standby = get_new_node('standby');
-$node_standby->init_from_backup($node_master, $backup_name,
+$node_standby->init_from_backup($node_primary, $backup_name,
 	has_restoring => 1);
 $node_standby->append_conf('postgresql.conf',
 	"wal_retrieve_retry_interval = '100ms'");
 $node_standby->start;
 
-# Create some content on master
-$node_master->safe_psql('postgres',
+# Create some content on primary
+$node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
 my $current_lsn =
-  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
+  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 
-# Force archiving of WAL file to make it present on master
-$node_master->safe_psql('postgres', "SELECT pg_switch_wal()");
+# Force archiving of WAL file to make it present on primary
+$node_primary->safe_psql('postgres', "SELECT pg_switch_wal()");
 
 # Add some more content, it should not be present on standby
-$node_master->safe_psql('postgres',
+$node_primary->safe_psql('postgres',
 	"INSERT INTO tab_int VALUES (generate_series(1001,2000))");
 
 # Wait until necessary replay has been done on standby
@@ -60,7 +60,7 @@ is($result, qq(1000), 'check content from archives');
 $node_standby->promote;
 
 my $node_standby2 = get_new_node('standby2');
-$node_standby2->init_from_backup($node_master, $backup_name,
+$node_standby2->init_from_backup($node_primary, $backup_name,
 	has_restoring => 1);
 $node_standby2->start;
 
