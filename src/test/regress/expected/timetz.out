@@ -144,3 +144,64 @@ ERROR:  operator does not exist: time with time zone + time with time zone
 LINE 1: SELECT f1 + time with time zone '00:01' AS "Illegal" FROM TI...
                   ^
 HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+--
+-- test EXTRACT
+--
+SELECT EXTRACT(MICROSECOND FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+  25575401
+(1 row)
+
+SELECT EXTRACT(MILLISECOND FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+ 25575.401
+(1 row)
+
+SELECT EXTRACT(SECOND      FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+ 25.575401
+(1 row)
+
+SELECT EXTRACT(MINUTE      FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+        30
+(1 row)
+
+SELECT EXTRACT(HOUR        FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+        13
+(1 row)
+
+SELECT EXTRACT(DAY         FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');  -- error
+ERROR:  "time with time zone" units "day" not recognized
+SELECT EXTRACT(FORTNIGHT   FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');  -- error
+ERROR:  "time with time zone" units "fortnight" not recognized
+SELECT EXTRACT(TIMEZONE    FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+    -14400
+(1 row)
+
+SELECT EXTRACT(TIMEZONE_HOUR   FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+        -4
+(1 row)
+
+SELECT EXTRACT(TIMEZONE_MINUTE FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+ date_part 
+-----------
+         0
+(1 row)
+
+SELECT EXTRACT(EPOCH       FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');
+  date_part   
+--------------
+ 63025.575401
+(1 row)
+

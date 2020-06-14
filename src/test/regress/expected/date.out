@@ -1111,31 +1111,6 @@ SELECT EXTRACT(CENTURY FROM TIMESTAMP '1970-03-20 04:30:00.00000'); -- 20
         20
 (1 row)
 
--- on an interval
-SELECT EXTRACT(CENTURY FROM INTERVAL '100 y');  -- 1
- date_part 
------------
-         1
-(1 row)
-
-SELECT EXTRACT(CENTURY FROM INTERVAL '99 y');   -- 0
- date_part 
------------
-         0
-(1 row)
-
-SELECT EXTRACT(CENTURY FROM INTERVAL '-99 y');  -- 0
- date_part 
------------
-         0
-(1 row)
-
-SELECT EXTRACT(CENTURY FROM INTERVAL '-100 y'); -- -1
- date_part 
------------
-        -1
-(1 row)
-
 --
 -- test trunc function!
 --
