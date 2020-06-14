@@ -230,6 +230,64 @@ ssimkovi@ag.or.at
   <bibliodiv>
    <title>Proceedings and Articles</title>
 
+   <biblioentry id="ports12">
+    <biblioset relation="article">
+     <title><ulink url="https://arxiv.org/pdf/1208.4179">Serializable Snapshot Isolation in PostgreSQL</ulink></title>
+     <authorgroup>
+      <author>
+       <firstname>D.</firstname>
+       <surname>Ports</surname>
+      </author>
+      <author>
+       <firstname>K.</firstname>
+       <surname>Grittner</surname>
+      </author>
+     </authorgroup>
+    </biblioset>
+    <confgroup>
+     <conftitle>VLDB Conference</conftitle>
+     <confdates>August 2012</confdates>
+     <address>Istanbul, Turkey</address>
+    </confgroup>
+   </biblioentry>
+
+   <biblioentry id="berenson95">
+    <biblioset relation="article">
+     <title><ulink url="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-95-51.pdf">A Critique of ANSI SQL Isolation Levels</ulink></title>
+     <authorgroup>
+      <author>
+       <firstname>H.</firstname>
+       <surname>Berenson</surname>
+      </author>
+      <author>
+       <firstname>P.</firstname>
+       <surname>Bernstein</surname>
+      </author>
+      <author>
+       <firstname>J.</firstname>
+       <surname>Gray</surname>
+      </author>
+      <author>
+       <firstname>J.</firstname>
+       <surname>Melton</surname>
+      </author>
+      <author>
+       <firstname>E.</firstname>
+       <surname>O'Neil</surname>
+      </author>
+      <author>
+       <firstname>P.</firstname>
+       <surname>O'Neil</surname>
+      </author>
+     </authorgroup>
+    </biblioset>
+    <confgroup>
+     <conftitle>ACM-SIGMOD Conference on Management of Data</conftitle>
+     <confdates>June 1995</confdates>
+     <address>San Jose, California</address>
+    </confgroup>
+   </biblioentry>
+
    <biblioentry id="olson93">
     <title>Partial indexing in POSTGRES: research project</title>
     <authorgroup>
