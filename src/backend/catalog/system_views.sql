@@ -1463,6 +1463,19 @@ REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,bigint,bigint) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,bigint,bigint,boolean) FROM public;
 
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_advance(text, pg_lsn) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_create(text) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_drop(text) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_oid(text) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_progress(text, boolean) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_is_setup() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_progress(boolean) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_reset() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_setup(text) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_xact_reset() FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_xact_setup(pg_lsn, timestamp with time zone) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_show_replication_origin_status() FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_stat_file(text) FROM public;
 REVOKE EXECUTE ON FUNCTION pg_stat_file(text,boolean) FROM public;
 

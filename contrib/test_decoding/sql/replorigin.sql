@@ -1,6 +1,24 @@
 -- predictability
 SET synchronous_commit = on;
 
+-- superuser required by default
+CREATE ROLE regress_origin_replication REPLICATION;
+SET ROLE regress_origin_replication;
+SELECT pg_replication_origin_advance('regress_test_decoding: perm', '0/1');
+SELECT pg_replication_origin_create('regress_test_decoding: perm');
+SELECT pg_replication_origin_drop('regress_test_decoding: perm');
+SELECT pg_replication_origin_oid('regress_test_decoding: perm');
+SELECT pg_replication_origin_progress('regress_test_decoding: perm', false);
+SELECT pg_replication_origin_session_is_setup();
+SELECT pg_replication_origin_session_progress(false);
+SELECT pg_replication_origin_session_reset();
+SELECT pg_replication_origin_session_setup('regress_test_decoding: perm');
+SELECT pg_replication_origin_xact_reset();
+SELECT pg_replication_origin_xact_setup('0/1', '2013-01-01 00:00');
+SELECT pg_show_replication_origin_status();
+RESET ROLE;
+DROP ROLE regress_origin_replication;
+
 CREATE TABLE origin_tbl(id serial primary key, data text);
 CREATE TABLE target_tbl(id serial primary key, data text);
 

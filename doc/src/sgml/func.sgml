@@ -24614,7 +24614,9 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
     <xref linkend="streaming-replication-slots"/>, and
     <xref linkend="replication-origins"/>
     for information about the underlying features.
-    Use of functions for replication origin is restricted to superusers.
+    Use of functions for replication origin is only allowed to the
+    superuser by default, but may be allowed to other users by using the
+    <literal>GRANT</literal> command.
     Use of functions for replication slots is restricted to superusers
     and users having <literal>REPLICATION</literal> privilege.
    </para>
