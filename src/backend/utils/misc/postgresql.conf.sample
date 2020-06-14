@@ -284,7 +284,7 @@
 
 # - Sending Servers -
 
-# Set these on the master and on any standby that will send replication data.
+# Set these on the primary and on any standby that will send replication data.
 
 #max_wal_senders = 10		# max number of walsender processes
 				# (change requires restart)
@@ -297,7 +297,7 @@
 #track_commit_timestamp = off	# collect timestamp of transaction commit
 				# (change requires restart)
 
-# - Master Server -
+# - Primary Server -
 
 # These settings are ignored on a standby server.
 
@@ -309,7 +309,7 @@
 
 # - Standby Servers -
 
-# These settings are ignored on a master server.
+# These settings are ignored on a primary server.
 
 #primary_conninfo = ''			# connection string to sending server
 #primary_slot_name = ''			# replication slot on sending server
@@ -329,7 +329,7 @@
 #hot_standby_feedback = off		# send info from standby to prevent
 					# query conflicts
 #wal_receiver_timeout = 60s		# time that receiver waits for
-					# communication from master
+					# communication from primary
 					# in milliseconds; 0 disables
 #wal_retrieve_retry_interval = 5s	# time to wait before retrying to
 					# retrieve WAL after a failed attempt

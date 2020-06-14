@@ -391,7 +391,7 @@ gistRedoPageReuse(XLogReaderState *record)
 	 * RecentGlobalXmin test in gistPageRecyclable() conceptually mirrors the
 	 * pgxact->xmin > limitXmin test in GetConflictingVirtualXIDs().
 	 * Consequently, one XID value achieves the same exclusion effect on
-	 * master and standby.
+	 * primary and standby.
 	 */
 	if (InHotStandby)
 	{

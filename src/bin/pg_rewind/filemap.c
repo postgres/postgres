@@ -62,7 +62,7 @@ static const char *excludeDirContents[] =
 
 	/*
 	 * It is generally not useful to backup the contents of this directory
-	 * even if the intention is to restore to another master. See backup.sgml
+	 * even if the intention is to restore to another primary. See backup.sgml
 	 * for a more detailed description.
 	 */
 	"pg_replslot",

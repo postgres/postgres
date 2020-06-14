@@ -3676,7 +3676,7 @@ AlterTableInternal(Oid relid, List *cmds, bool recurse)
  * and does not travel through this section of code and cannot be combined with
  * any of the subcommands given here.
  *
- * Note that Hot Standby only knows about AccessExclusiveLocks on the master
+ * Note that Hot Standby only knows about AccessExclusiveLocks on the primary
  * so any changes that might affect SELECTs running on standbys need to use
  * AccessExclusiveLocks even if you think a lesser lock would do, unless you
  * have a solution for that also.

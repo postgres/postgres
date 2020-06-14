@@ -417,7 +417,7 @@ CheckServerVersionForStreaming(PGconn *conn)
  * race-y since a signal received while busy won't interrupt the wait.
  *
  * standby_message_timeout controls how often we send a message
- * back to the master letting it know our progress, in milliseconds.
+ * back to the primary letting it know our progress, in milliseconds.
  * Zero means no messages are sent.
  * This message will only contain the write location, and never
  * flush or replay.
@@ -776,7 +776,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 		}
 
 		/*
-		 * Potentially send a status message to the master
+		 * Potentially send a status message to the primary
 		 */
 		if (still_sending && stream->standby_message_timeout > 0 &&
 			feTimestampDifferenceExceeds(last_status, now,

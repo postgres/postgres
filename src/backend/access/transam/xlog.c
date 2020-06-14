@@ -273,7 +273,7 @@ static bool restoredFromArchive = false;
 
 /* Buffers dedicated to consistency checks of size BLCKSZ */
 static char *replay_image_masked = NULL;
-static char *master_image_masked = NULL;
+static char *primary_image_masked = NULL;
 
 /* options formerly taken from recovery.conf for archive recovery */
 char	   *recoveryRestoreCommand = NULL;
@@ -784,7 +784,7 @@ typedef enum
 	XLOG_FROM_ANY = 0,			/* request to read WAL from any source */
 	XLOG_FROM_ARCHIVE,			/* restored using restore_command */
 	XLOG_FROM_PG_WAL,			/* existing file in pg_wal */
-	XLOG_FROM_STREAM			/* streamed from master */
+	XLOG_FROM_STREAM			/* streamed from primary */
 } XLogSource;
 
 /* human-readable names for XLogSources, for debugging output */
@@ -1478,21 +1478,21 @@ checkXLogConsistency(XLogReaderState *record)
 		 * page here, a local buffer is fine to hold its contents and a mask
 		 * can be directly applied on it.
 		 */
-		if (!RestoreBlockImage(record, block_id, master_image_masked))
+		if (!RestoreBlockImage(record, block_id, primary_image_masked))
 			elog(ERROR, "failed to restore block image");
 
 		/*
-		 * If masking function is defined, mask both the master and replay
+		 * If masking function is defined, mask both the primary and replay
 		 * images
 		 */
 		if (RmgrTable[rmid].rm_mask != NULL)
 		{
 			RmgrTable[rmid].rm_mask(replay_image_masked, blkno);
-			RmgrTable[rmid].rm_mask(master_image_masked, blkno);
+			RmgrTable[rmid].rm_mask(primary_image_masked, blkno);
 		}
 
-		/* Time to compare the master and replay images. */
-		if (memcmp(replay_image_masked, master_image_masked, BLCKSZ) != 0)
+		/* Time to compare the primary and replay images. */
+		if (memcmp(replay_image_masked, primary_image_masked, BLCKSZ) != 0)
 		{
 			elog(FATAL,
 				 "inconsistent page found, rel %u/%u/%u, forknum %u, blkno %u",
@@ -2301,7 +2301,7 @@ CalculateCheckpointSegments(void)
 	 * a) we keep WAL for only one checkpoint cycle (prior to PG11 we kept
 	 *    WAL for two checkpoint cycles to allow us to recover from the
 	 *    secondary checkpoint if the first checkpoint failed, though we
-	 *    only did this on the master anyway, not on standby. Keeping just
+	 *    only did this on the primary anyway, not on standby. Keeping just
 	 *    one checkpoint simplifies processing and reduces disk space in
 	 *    many smaller databases.)
 	 * b) during checkpoint, we consume checkpoint_completion_target *
@@ -3770,7 +3770,7 @@ XLogFileReadAnyTLI(XLogSegNo segno, int emode, XLogSource source)
 	 * however, unless we actually find a valid segment.  That way if there is
 	 * neither a timeline history file nor a WAL segment in the archive, and
 	 * streaming replication is set up, we'll read the timeline history file
-	 * streamed from the master when we start streaming, instead of recovering
+	 * streamed from the primary when we start streaming, instead of recovering
 	 * with a dummy history generated here.
 	 */
 	if (expectedTLEs)
@@ -6057,7 +6057,7 @@ SetRecoveryPause(bool recoveryPause)
 
 /*
  * When recovery_min_apply_delay is set, we wait long enough to make sure
- * certain record types are applied at least that interval behind the master.
+ * certain record types are applied at least that interval behind the primary.
  *
  * Returns true if we waited.
  *
@@ -6239,7 +6239,7 @@ do { \
 	if ((currValue) < (minValue)) \
 		ereport(ERROR, \
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE), \
-				 errmsg("hot standby is not possible because %s = %d is a lower setting than on the master server (its value was %d)", \
+				 errmsg("hot standby is not possible because %s = %d is a lower setting than on the primary server (its value was %d)", \
 						param_name, \
 						currValue, \
 						minValue))); \
@@ -6275,8 +6275,8 @@ CheckRequiredParameterValues(void)
 	{
 		if (ControlFile->wal_level < WAL_LEVEL_REPLICA)
 			ereport(ERROR,
-					(errmsg("hot standby is not possible because wal_level was not set to \"replica\" or higher on the master server"),
-					 errhint("Either set wal_level to \"replica\" on the master, or turn off hot_standby here.")));
+					(errmsg("hot standby is not possible because wal_level was not set to \"replica\" or higher on the primary server"),
+					 errhint("Either set wal_level to \"replica\" on the primary, or turn off hot_standby here.")));
 
 		/* We ignore autovacuum_max_workers when we make this test. */
 		RecoveryRequiresIntParameter("max_connections",
@@ -6502,7 +6502,7 @@ StartupXLOG(void)
 	 * alignment, whereas palloc() will provide MAXALIGN'd storage.
 	 */
 	replay_image_masked = (char *) palloc(BLCKSZ);
-	master_image_masked = (char *) palloc(BLCKSZ);
+	primary_image_masked = (char *) palloc(BLCKSZ);
 
 	if (read_backup_label(&checkPointLoc, &backupEndRequired,
 						  &backupFromStandby))
@@ -6631,7 +6631,7 @@ StartupXLOG(void)
 		 * know how far we need to replay the WAL before we reach consistency.
 		 * This can happen for example if a base backup is taken from a
 		 * running server using an atomic filesystem snapshot, without calling
-		 * pg_start/stop_backup. Or if you just kill a running master server
+		 * pg_start/stop_backup. Or if you just kill a running primary server
 		 * and put it into archive recovery by creating a recovery signal
 		 * file.
 		 *
@@ -6829,7 +6829,7 @@ StartupXLOG(void)
 	 * ourselves - the history file of the recovery target timeline covers all
 	 * the previous timelines in the history too - a cascading standby server
 	 * might be interested in them. Or, if you archive the WAL from this
-	 * server to a different archive than the master, it'd be good for all the
+	 * server to a different archive than the primary, it'd be good for all the
 	 * history files to get archived there after failover, so that you can use
 	 * one of the old timelines as a PITR target. Timeline history files are
 	 * small, so it's better to copy them unnecessarily than not copy them and
@@ -7065,7 +7065,7 @@ StartupXLOG(void)
 
 			/*
 			 * If we're beginning at a shutdown checkpoint, we know that
-			 * nothing was running on the master at this point. So fake-up an
+			 * nothing was running on the primary at this point. So fake-up an
 			 * empty running-xacts record and use that here and now. Recover
 			 * additional standby state for prepared transactions.
 			 */
@@ -7233,7 +7233,7 @@ StartupXLOG(void)
 				}
 
 				/*
-				 * If we've been asked to lag the master, wait on latch until
+				 * If we've been asked to lag the primary, wait on latch until
 				 * enough time has passed.
 				 */
 				if (recoveryApplyDelay(xlogreader))
@@ -7348,7 +7348,7 @@ StartupXLOG(void)
 				/*
 				 * If rm_redo called XLogRequestWalReceiverReply, then we wake
 				 * up the receiver so that it notices the updated
-				 * lastReplayedEndRecPtr and sends a reply to the master.
+				 * lastReplayedEndRecPtr and sends a reply to the primary.
 				 */
 				if (doRequestWalReceiverReply)
 				{
@@ -9949,7 +9949,7 @@ xlog_redo(XLogReaderState *record)
 
 		/*
 		 * If we see a shutdown checkpoint, we know that nothing was running
-		 * on the master at this point. So fake-up an empty running-xacts
+		 * on the primary at this point. So fake-up an empty running-xacts
 		 * record and use that here and now. Recover additional standby state
 		 * for prepared transactions.
 		 */
@@ -10663,7 +10663,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 									"since last restartpoint"),
 							 errhint("This means that the backup being taken on the standby "
 									 "is corrupt and should not be used. "
-									 "Enable full_page_writes and run CHECKPOINT on the master, "
+									 "Enable full_page_writes and run CHECKPOINT on the primary, "
 									 "and then try an online backup again.")));
 
 				/*
@@ -10811,7 +10811,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		appendStringInfo(labelfile, "BACKUP METHOD: %s\n",
 						 exclusive ? "pg_start_backup" : "streamed");
 		appendStringInfo(labelfile, "BACKUP FROM: %s\n",
-						 backup_started_in_recovery ? "standby" : "master");
+						 backup_started_in_recovery ? "standby" : "primary");
 		appendStringInfo(labelfile, "START TIME: %s\n", strfbuf);
 		appendStringInfo(labelfile, "LABEL: %s\n", backupidstr);
 		appendStringInfo(labelfile, "START TIMELINE: %u\n", starttli);
@@ -11246,7 +11246,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 							"during online backup"),
 					 errhint("This means that the backup being taken on the standby "
 							 "is corrupt and should not be used. "
-							 "Enable full_page_writes and run CHECKPOINT on the master, "
+							 "Enable full_page_writes and run CHECKPOINT on the primary, "
 							 "and then try an online backup again.")));
 
 
@@ -11928,7 +11928,7 @@ retry:
 	Assert(readFile != -1);
 
 	/*
-	 * If the current segment is being streamed from master, calculate how
+	 * If the current segment is being streamed from the primary, calculate how
 	 * much of the current page we have received already. We know the
 	 * requested record has been received, but this is for the benefit of
 	 * future calls, to allow quick exit at the top of this function.
@@ -11989,8 +11989,8 @@ retry:
 	 * example, imagine a scenario where a streaming replica is started up,
 	 * and replay reaches a record that's split across two WAL segments. The
 	 * first page is only available locally, in pg_wal, because it's already
-	 * been recycled in the master. The second page, however, is not present
-	 * in pg_wal, and we should stream it from the master. There is a recycled
+	 * been recycled on the primary. The second page, however, is not present
+	 * in pg_wal, and we should stream it from the primary. There is a recycled
 	 * WAL segment present in pg_wal, with garbage contents, however. We would
 	 * read the first page from the local WAL segment, but when reading the
 	 * second page, we would read the bogus, recycled, WAL segment. If we
@@ -12150,7 +12150,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * Failure while streaming. Most likely, we got here
 					 * because streaming replication was terminated, or
 					 * promotion was triggered. But we also get here if we
-					 * find an invalid record in the WAL streamed from master,
+					 * find an invalid record in the WAL streamed from the primary,
 					 * in which case something is seriously wrong. There's
 					 * little chance that the problem will just go away, but
 					 * PANIC is not good for availability either, especially
@@ -12511,7 +12511,7 @@ StartupRequestWalReceiverRestart(void)
  * we're retrying the exact same record that we've tried previously, only
  * complain the first time to keep the noise down.  However, we only do when
  * reading from pg_wal, because we don't expect any invalid records in archive
- * or in records streamed from master. Files in the archive should be complete,
+ * or in records streamed from the primary. Files in the archive should be complete,
  * and we should never hit the end of WAL because we stop and wait for more WAL
  * to arrive before replaying it.
  *

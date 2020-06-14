@@ -206,7 +206,7 @@ findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
 		/*
 		 * Check if it is a checkpoint record. This checkpoint record needs to
 		 * be the latest checkpoint before WAL forked and not the checkpoint
-		 * where the master has been stopped to be rewinded.
+		 * where the primary has been stopped to be rewinded.
 		 */
 		info = XLogRecGetInfo(xlogreader) & ~XLR_INFO_MASK;
 		if (searchptr < forkptr &&

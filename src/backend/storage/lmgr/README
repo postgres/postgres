@@ -725,7 +725,7 @@ Deadlocks involving AccessExclusiveLocks are not possible, so we need
 not be concerned that a user initiated deadlock can prevent recovery from
 progressing.
 
-AccessExclusiveLocks on the primary or master node generate WAL records
+AccessExclusiveLocks on the primary node generate WAL records
 that are then applied by the Startup process. Locks are released at end
 of transaction just as they are in normal processing. These locks are
 held by the Startup process, acting as a proxy for the backends that

@@ -28,11 +28,11 @@ it. Before that, however, startup process fills in WalRcvData->conninfo
 and WalRcvData->slotname, and initializes the starting point in
 WalRcvData->receiveStart.
 
-As walreceiver receives WAL from the master server, and writes and flushes
+As walreceiver receives WAL from the primary server, and writes and flushes
 it to disk (in pg_wal), it updates WalRcvData->flushedUpto and signals
 the startup process to know how far WAL replay can advance.
 
-Walreceiver sends information about replication progress to the master server
+Walreceiver sends information about replication progress to the primary server
 whenever it either writes or flushes new WAL, or the specified interval elapses.
 This is used for reporting purpose.
 
@@ -43,7 +43,7 @@ At shutdown, postmaster handles walsender processes differently from regular
 backends. It waits for regular backends to die before writing the
 shutdown checkpoint and terminating pgarch and other auxiliary processes, but
 that's not desirable for walsenders, because we want the standby servers to
-receive all the WAL, including the shutdown checkpoint, before the master
+receive all the WAL, including the shutdown checkpoint, before the primary
 is shut down. Therefore postmaster treats walsenders like the pgarch process,
 and instructs them to terminate at PM_SHUTDOWN_2 phase, after all regular
 backends have died and checkpointer has issued the shutdown checkpoint.

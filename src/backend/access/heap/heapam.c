@@ -410,10 +410,10 @@ heapgetpage(TableScanDesc sscan, BlockNumber page)
 	 * visible to everyone, we can skip the per-tuple visibility tests.
 	 *
 	 * Note: In hot standby, a tuple that's already visible to all
-	 * transactions in the master might still be invisible to a read-only
+	 * transactions on the primary might still be invisible to a read-only
 	 * transaction in the standby. We partly handle this problem by tracking
 	 * the minimum xmin of visible tuples as the cut-off XID while marking a
-	 * page all-visible on master and WAL log that along with the visibility
+	 * page all-visible on the primary and WAL log that along with the visibility
 	 * map SET operation. In hot standby, we wait for (or abort) all
 	 * transactions that can potentially may not see one or more tuples on the
 	 * page. That's how index-only scans work fine in hot standby. A crucial
@@ -6889,7 +6889,7 @@ HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
 	 * updated/deleted by the inserting transaction.
 	 *
 	 * Look for a committed hint bit, or if no xmin bit is set, check clog.
-	 * This needs to work on both master and standby, where it is used to
+	 * This needs to work on both primary and standby, where it is used to
 	 * assess btree delete records.
 	 */
 	if (HeapTupleHeaderXminCommitted(tuple) ||
@@ -6951,9 +6951,9 @@ xid_horizon_prefetch_buffer(Relation rel,
  * tuples being deleted.
  *
  * We used to do this during recovery rather than on the primary, but that
- * approach now appears inferior.  It meant that the master could generate
+ * approach now appears inferior.  It meant that the primary could generate
  * a lot of work for the standby without any back-pressure to slow down the
- * master, and it required the standby to have reached consistency, whereas
+ * primary, and it required the standby to have reached consistency, whereas
  * we want to have correct information available even before that point.
  *
  * It's possible for this to generate a fair amount of I/O, since we may be
@@ -8943,7 +8943,7 @@ heap_mask(char *pagedata, BlockNumber blkno)
 			 *
 			 * During redo, heap_xlog_insert() sets t_ctid to current block
 			 * number and self offset number. It doesn't care about any
-			 * speculative insertions in master. Hence, we set t_ctid to
+			 * speculative insertions on the primary. Hence, we set t_ctid to
 			 * current block number and self offset number to ignore any
 			 * inconsistency.
 			 */

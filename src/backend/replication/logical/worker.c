@@ -1312,7 +1312,7 @@ apply_handle_truncate(StringInfo s)
 	}
 
 	/*
-	 * Even if we used CASCADE on the upstream master we explicitly default to
+	 * Even if we used CASCADE on the upstream primary we explicitly default to
 	 * replaying changes without further cascading. This might be later
 	 * changeable with a user specified option.
 	 */
@@ -1661,7 +1661,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 			 * from the server for more than wal_receiver_timeout / 2, ping
 			 * the server. Also, if it's been longer than
 			 * wal_receiver_status_interval since the last update we sent,
-			 * send a status update to the master anyway, to report any
+			 * send a status update to the primary anyway, to report any
 			 * progress in applying WAL.
 			 */
 			bool		requestReply = false;

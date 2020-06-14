@@ -61,4 +61,4 @@ recovery must not dirty the page if the buffer is not already dirty, when
 checksums are enabled.  Systems in Hot-Standby mode may benefit from hint bits
 being set, but with checksums enabled, a page cannot be dirtied after setting a
 hint bit (due to the torn page risk). So, it must wait for full-page images
-containing the hint bit updates to arrive from the master.
+containing the hint bit updates to arrive from the primary.

@@ -2628,14 +2628,14 @@ XLogSendPhysical(void)
 	else
 	{
 		/*
-		 * Streaming the current timeline on a master.
+		 * Streaming the current timeline on a primary.
 		 *
 		 * Attempt to send all data that's already been written out and
 		 * fsync'd to disk.  We cannot go further than what's been written out
 		 * given the current implementation of WALRead().  And in any case
 		 * it's unsafe to send WAL that is not securely down to disk on the
-		 * master: if the master subsequently crashes and restarts, standbys
-		 * must not have applied any WAL that got lost on the master.
+		 * primary: if the primary subsequently crashes and restarts, standbys
+		 * must not have applied any WAL that got lost on the primary.
 		 */
 		SendRqstPtr = GetFlushRecPtr();
 	}
@@ -2672,7 +2672,7 @@ XLogSendPhysical(void)
 	 *
 	 * Note: We might already have sent WAL > sendTimeLineValidUpto. The
 	 * startup process will normally replay all WAL that has been received
-	 * from the master, before promoting, but if the WAL streaming is
+	 * from the primary, before promoting, but if the WAL streaming is
 	 * terminated at a WAL page boundary, the valid portion of the timeline
 	 * might end in the middle of a WAL record. We might've already sent the
 	 * first half of that partial WAL record to the cascading standby, so that

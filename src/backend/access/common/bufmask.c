@@ -88,8 +88,8 @@ mask_unused_space(Page page)
 /*
  * mask_lp_flags
  *
- * In some index AMs, line pointer flags can be modified in master without
- * emitting any WAL record.
+ * In some index AMs, line pointer flags can be modified on the primary
+ * without emitting any WAL record.
  */
 void
 mask_lp_flags(Page page)

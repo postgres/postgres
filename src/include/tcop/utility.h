@@ -51,7 +51,7 @@ typedef struct AlterTableUtilityContext
  *
  * COMMAND_OK_IN_RECOVERY means that the command is permissible even when in
  * recovery. It can't write WAL, nor can it do things that would imperil
- * replay of future WAL received from the master.
+ * replay of future WAL received from the primary.
  */
 #define COMMAND_OK_IN_READ_ONLY_TXN	0x0001
 #define COMMAND_OK_IN_PARALLEL_MODE	0x0002

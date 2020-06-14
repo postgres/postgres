@@ -50,7 +50,7 @@ extern bool InRecovery;
  *
  * In INITIALIZED state, we've run InitRecoveryTransactionEnvironment, but
  * we haven't yet processed a RUNNING_XACTS or shutdown-checkpoint WAL record
- * to initialize our master-transaction tracking system.
+ * to initialize our primary-transaction tracking system.
  *
  * When the transaction tracking is initialized, we enter the SNAPSHOT_PENDING
  * state. The tracked information might still be incomplete, so we can't allow
@@ -58,7 +58,7 @@ extern bool InRecovery;
  * appropriate.
  *
  * In SNAPSHOT_READY mode, we have full knowledge of transactions that are
- * (or were) running in the master at the current WAL location. Snapshots
+ * (or were) running on the primary at the current WAL location. Snapshots
  * can be taken, and read-only queries can be run.
  */
 typedef enum

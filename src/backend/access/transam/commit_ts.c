@@ -392,7 +392,7 @@ error_commit_ts_disabled(void)
 			(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 			 errmsg("could not get commit timestamp data"),
 			 RecoveryInProgress() ?
-			 errhint("Make sure the configuration parameter \"%s\" is set on the master server.",
+			 errhint("Make sure the configuration parameter \"%s\" is set on the primary server.",
 					 "track_commit_timestamp") :
 			 errhint("Make sure the configuration parameter \"%s\" is set.",
 					 "track_commit_timestamp")));
@@ -592,12 +592,12 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
 {
 	/*
 	 * If the commit_ts module is disabled in this server and we get word from
-	 * the master server that it is enabled there, activate it so that we can
+	 * the primary server that it is enabled there, activate it so that we can
 	 * replay future WAL records involving it; also mark it as active on
 	 * pg_control.  If the old value was already set, we already did this, so
 	 * don't do anything.
 	 *
-	 * If the module is disabled in the master, disable it here too, unless
+	 * If the module is disabled in the primary, disable it here too, unless
 	 * the module is enabled locally.
 	 *
 	 * Note this only runs in the recovery process, so an unlocked read is
@@ -616,12 +616,12 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
  * Activate this module whenever necessary.
  *		This must happen during postmaster or standalone-backend startup,
  *		or during WAL replay anytime the track_commit_timestamp setting is
- *		changed in the master.
+ *		changed in the primary.
  *
  * The reason why this SLRU needs separate activation/deactivation functions is
  * that it can be enabled/disabled during start and the activation/deactivation
- * on master is propagated to standby via replay. Other SLRUs don't have this
- * property and they can be just initialized during normal startup.
+ * on the primary is propagated to the standby via replay. Other SLRUs don't
+ * have this property and they can be just initialized during normal startup.
  *
  * This is in charge of creating the currently active segment, if it's not
  * already there.  The reason for this is that the server might have been

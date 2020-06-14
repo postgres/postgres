@@ -1059,8 +1059,8 @@ PostmasterMain(int argc, char *argv[])
 	 * only during a few moments during a standby promotion. However there is
 	 * a race condition: if pg_ctl promote is executed and creates the files
 	 * during a promotion, the files can stay around even after the server is
-	 * brought up to new master. Then, if new standby starts by using the
-	 * backup taken from that master, the files can exist at the server
+	 * brought up to be the primary. Then, if a new standby starts by using the
+	 * backup taken from the new primary, the files can exist at the server
 	 * startup and should be removed in order to avoid an unexpected
 	 * promotion.
 	 *

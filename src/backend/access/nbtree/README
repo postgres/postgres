@@ -574,7 +574,7 @@ writers that insert on to the page being deleted.)
 
 During recovery all index scans start with ignore_killed_tuples = false
 and we never set kill_prior_tuple. We do this because the oldest xmin
-on the standby server can be older than the oldest xmin on the master
+on the standby server can be older than the oldest xmin on the primary
 server, which means tuples can be marked LP_DEAD even when they are
 still visible on the standby. We don't WAL log tuple LP_DEAD bits, but
 they can still appear in the standby because of full page writes. So

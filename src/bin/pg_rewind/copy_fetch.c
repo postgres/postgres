@@ -76,7 +76,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 			if (errno == ENOENT)
 			{
 				/*
-				 * File doesn't exist anymore. This is ok, if the new master
+				 * File doesn't exist anymore. This is ok, if the new primary
 				 * is running and the file was just removed. If it was a data
 				 * file, there should be a WAL record of the removal. If it
 				 * was something else, it couldn't have been anyway.

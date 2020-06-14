@@ -18,7 +18,7 @@
  * at need by checking for pid == 0.
  *
  * During hot standby, we also keep a list of XIDs representing transactions
- * that are known to be running in the master (or more precisely, were running
+ * that are known to be running on the primary (or more precisely, were running
  * as of the current point in the WAL stream).  This list is kept in the
  * KnownAssignedXids array, and is updated by watching the sequence of
  * arriving XIDs.  This is necessary because if we leave those XIDs out of
@@ -27,7 +27,7 @@
  * array represents standby processes, which by definition are not running
  * transactions that have XIDs.
  *
- * It is perhaps possible for a backend on the master to terminate without
+ * It is perhaps possible for a backend on the primary to terminate without
  * writing an abort record for its transaction.  While that shouldn't really
  * happen, it would tie up KnownAssignedXids indefinitely, so we protect
  * ourselves by pruning the array when a valid list of running XIDs arrives.
@@ -651,7 +651,7 @@ ProcArrayInitRecovery(TransactionId initializedUptoXID)
  * Normal case is to go all the way to Ready straight away, though there
  * are atypical cases where we need to take it in steps.
  *
- * Use the data about running transactions on master to create the initial
+ * Use the data about running transactions on the primary to create the initial
  * state of KnownAssignedXids. We also use these records to regularly prune
  * KnownAssignedXids because we know it is possible that some transactions
  * with FATAL errors fail to write abort records, which could cause eventual
@@ -969,7 +969,7 @@ ProcArrayApplyXidAssignment(TransactionId topxid,
  * We can find this out cheaply too.
  *
  * 3. In Hot Standby mode, we must search the KnownAssignedXids list to see
- * if the Xid is running on the master.
+ * if the Xid is running on the primary.
  *
  * 4. Search the SubTrans tree to find the Xid's topmost parent, and then see
  * if that is running according to PGXACT or KnownAssignedXids.  This is the
@@ -1198,7 +1198,7 @@ TransactionIdIsInProgress(TransactionId xid)
  * TransactionIdIsActive -- is xid the top-level XID of an active backend?
  *
  * This differs from TransactionIdIsInProgress in that it ignores prepared
- * transactions, as well as transactions running on the master if we're in
+ * transactions, as well as transactions running on the primary if we're in
  * hot standby.  Also, we ignore subtransactions since that's not needed
  * for current uses.
  */
@@ -1289,7 +1289,7 @@ TransactionIdIsActive(TransactionId xid)
  * Nonetheless it is safe to vacuum a table in the current database with the
  * first result.  There are also replication-related effects: a walsender
  * process can set its xmin based on transactions that are no longer running
- * in the master but are still being replayed on the standby, thus possibly
+ * on the primary but are still being replayed on the standby, thus possibly
  * making the GetOldestXmin reading go backwards.  In this case there is a
  * possibility that we lose data that the standby would like to have, but
  * unless the standby uses a replication slot to make its xmin persistent
@@ -1404,7 +1404,7 @@ GetOldestXmin(Relation rel, int flags)
 		 *
 		 * vacuum_defer_cleanup_age provides some additional "slop" for the
 		 * benefit of hot standby queries on standby servers.  This is quick
-		 * and dirty, and perhaps not all that useful unless the master has a
+		 * and dirty, and perhaps not all that useful unless the primary has a
 		 * predictable transaction rate, but it offers some protection when
 		 * there's no walsender connection.  Note that we are assuming
 		 * vacuum_defer_cleanup_age isn't large enough to cause wraparound ---
@@ -3244,7 +3244,7 @@ DisplayXidCache(void)
 
 /*
  * In Hot Standby mode, we maintain a list of transactions that are (or were)
- * running in the master at the current point in WAL.  These XIDs must be
+ * running on the primary at the current point in WAL.  These XIDs must be
  * treated as running by standby transactions, even though they are not in
  * the standby server's PGXACT array.
  *
@@ -3264,7 +3264,7 @@ DisplayXidCache(void)
  * links are *not* maintained (which does not affect visibility).
  *
  * We have room in KnownAssignedXids and in snapshots to hold maxProcs *
- * (1 + PGPROC_MAX_CACHED_SUBXIDS) XIDs, so every master transaction must
+ * (1 + PGPROC_MAX_CACHED_SUBXIDS) XIDs, so every primary transaction must
  * report its subtransaction XIDs in a WAL XLOG_XACT_ASSIGNMENT record at
  * least every PGPROC_MAX_CACHED_SUBXIDS.  When we receive one of these
  * records, we mark the subXIDs as children of the top XID in pg_subtrans,
@@ -3439,7 +3439,7 @@ ExpireOldKnownAssignedTransactionIds(TransactionId xid)
  * order, to be exact --- to allow binary search for specific XIDs.  Note:
  * in general TransactionIdPrecedes would not provide a total order, but
  * we know that the entries present at any instant should not extend across
- * a large enough fraction of XID space to wrap around (the master would
+ * a large enough fraction of XID space to wrap around (the primary would
  * shut down for fear of XID wrap long before that happens).  So it's OK to
  * use TransactionIdPrecedes as a binary-search comparator.
  *

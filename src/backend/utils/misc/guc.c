@@ -708,8 +708,8 @@ const char *const config_group_names[] =
 	gettext_noop("Replication"),
 	/* REPLICATION_SENDING */
 	gettext_noop("Replication / Sending Servers"),
-	/* REPLICATION_MASTER */
-	gettext_noop("Replication / Master Server"),
+	/* REPLICATION_PRIMARY */
+	gettext_noop("Replication / Primary Server"),
 	/* REPLICATION_STANDBY */
 	gettext_noop("Replication / Standby Servers"),
 	/* REPLICATION_SUBSCRIBERS */
@@ -2549,7 +2549,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"vacuum_defer_cleanup_age", PGC_SIGHUP, REPLICATION_MASTER,
+		{"vacuum_defer_cleanup_age", PGC_SIGHUP, REPLICATION_PRIMARY,
 			gettext_noop("Number of transactions by which VACUUM and HOT cleanup should be deferred, if any."),
 			NULL
 		},
@@ -4292,7 +4292,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"synchronous_standby_names", PGC_SIGHUP, REPLICATION_MASTER,
+		{"synchronous_standby_names", PGC_SIGHUP, REPLICATION_PRIMARY,
 			gettext_noop("Number of synchronous standbys and list of names of potential synchronous ones."),
 			NULL,
 			GUC_LIST_INPUT
