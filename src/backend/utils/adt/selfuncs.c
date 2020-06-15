@@ -4018,8 +4018,8 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
  * to be treated separately.
  *
  * The several datatypes representing absolute times are all converted
- * to Timestamp, which is actually a double, and then we just use that
- * double value.  Note this will give correct results even for the "special"
+ * to Timestamp, which is actually an int64, and then we promote that to
+ * a double.  Note this will give correct results even for the "special"
  * values of Timestamp, since those are chosen to compare correctly;
  * see timestamp_cmp.
  *

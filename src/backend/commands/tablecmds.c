@@ -4829,12 +4829,11 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 			continue;
 
 		/*
-		 * If we change column data types or add/remove OIDs, the operation
-		 * has to be propagated to tables that use this table's rowtype as a
-		 * column type.  tab->newvals will also be non-NULL in the case where
-		 * we're adding a column with a default.  We choose to forbid that
-		 * case as well, since composite types might eventually support
-		 * defaults.
+		 * If we change column data types, the operation has to be propagated
+		 * to tables that use this table's rowtype as a column type.
+		 * tab->newvals will also be non-NULL in the case where we're adding a
+		 * column with a default.  We choose to forbid that case as well,
+		 * since composite types might eventually support defaults.
 		 *
 		 * (Eventually we'll probably need to check for composite type
 		 * dependencies even when we're just scanning the table without a
@@ -4853,8 +4852,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 
 		/*
 		 * We only need to rewrite the table if at least one column needs to
-		 * be recomputed, we are adding/removing the OID column, or we are
-		 * changing its persistence.
+		 * be recomputed, or we are changing its persistence.
 		 *
 		 * There are two reasons for requiring a rewrite when changing
 		 * persistence: on one hand, we need to ensure that the buffers
