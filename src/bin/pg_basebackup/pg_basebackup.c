@@ -2505,7 +2505,8 @@ main(int argc, char **argv)
 
 		if (no_slot)
 		{
-			pg_log_error("--create-slot and --no-slot are incompatible options");
+			pg_log_error("%s and %s are incompatible options",
+						 "--create-slot", "--no-slot");
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 					progname);
 			exit(1);
@@ -2543,7 +2544,8 @@ main(int argc, char **argv)
 
 	if (showprogress && !estimatesize)
 	{
-		pg_log_error("--progress and --no-estimate-size are incompatible options");
+		pg_log_error("%s and %s are incompatible options",
+					 "--progress", "--no-estimate-size");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -2551,7 +2553,8 @@ main(int argc, char **argv)
 
 	if (!manifest && manifest_checksums != NULL)
 	{
-		pg_log_error("--no-manifest and --manifest-checksums are incompatible options");
+		pg_log_error("%s and %s are incompatible options",
+					 "--no-manifest", "--manifest-checksums");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
@@ -2559,7 +2562,8 @@ main(int argc, char **argv)
 
 	if (!manifest && manifest_force_encode)
 	{
-		pg_log_error("--no-manifest and --manifest-force-encode are incompatible options");
+		pg_log_error("%s and %s are incompatible options",
+					 "--no-manifest", "--manifest-force-encode");
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);
