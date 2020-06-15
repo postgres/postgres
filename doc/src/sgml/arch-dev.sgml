@@ -122,8 +122,9 @@
     there is one <firstterm>client process</firstterm> connected to
     exactly one <firstterm>server process</firstterm>.  As we do not
     know ahead of time how many connections will be made, we have to
-    use a <firstterm>master process</firstterm> that spawns a new
-    server process every time a connection is requested. This master
+    use a <firstterm>supervisor process</firstterm> (also
+    <firstterm>master process</firstterm>) that spawns a new
+    server process every time a connection is requested. This supervisor
     process is called <literal>postgres</literal> and listens at a
     specified TCP/IP port for incoming connections. Whenever a request
     for a connection is detected the <literal>postgres</literal>

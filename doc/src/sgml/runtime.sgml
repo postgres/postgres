@@ -1292,7 +1292,7 @@ default:\
     optimal for <productname>PostgreSQL</productname>. Because of the
     way that the kernel implements memory overcommit, the kernel might
     terminate the <productname>PostgreSQL</productname> postmaster (the
-    master server process) if the memory demands of either
+    supervisor server process) if the memory demands of either
     <productname>PostgreSQL</productname> or another process cause the
     system to run out of virtual memory.
    </para>
@@ -1465,7 +1465,7 @@ $ <userinput>grep Huge /proc/meminfo</userinput>
 
   <para>
    There are several ways to shut down the database server. You control
-   the type of shutdown by sending different signals to the master
+   the type of shutdown by sending different signals to the supervisor
    <command>postgres</command> process.
 
    <variablelist>
@@ -1511,7 +1511,7 @@ $ <userinput>grep Huge /proc/meminfo</userinput>
       The server will send <systemitem>SIGQUIT</systemitem> to all child
       processes and wait for them to terminate.  If any do not terminate
       within 5 seconds, they will be sent <systemitem>SIGKILL</systemitem>.
-      The master server process exits as soon as all child processes have
+      The supervisor server process exits as soon as all child processes have
       exited, without doing normal database shutdown processing.
       This will lead to recovery (by
       replaying the WAL log) upon next start-up. This is recommended
