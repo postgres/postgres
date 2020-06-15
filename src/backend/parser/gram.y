@@ -15016,7 +15016,7 @@ ColLabel:	IDENT									{ $$ = $1; }
  *
  * Make sure that each keyword's category in kwlist.h matches where
  * it is listed here.  (Someday we may be able to generate these lists and
- * kwlist.h's table from a common master list.)
+ * kwlist.h's table from one source of truth.)
  */
 
 /* "Unreserved" keywords --- available for use as any kind of name.

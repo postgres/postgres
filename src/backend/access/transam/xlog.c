@@ -562,11 +562,12 @@ typedef struct XLogCtlInsert
 	char		pad[PG_CACHE_LINE_SIZE];
 
 	/*
-	 * fullPageWrites is the master copy used by all backends to determine
-	 * whether to write full-page to WAL, instead of using process-local one.
-	 * This is required because, when full_page_writes is changed by SIGHUP,
-	 * we must WAL-log it before it actually affects WAL-logging by backends.
-	 * Checkpointer sets at startup or after SIGHUP.
+	 * fullPageWrites is the authoritative value used by all backends to
+	 * determine whether to write full-page image to WAL. This shared value,
+	 * instead of the process-local fullPageWrites, is required because, when
+	 * full_page_writes is changed by SIGHUP, we must WAL-log it before it
+	 * actually affects WAL-logging by backends.  Checkpointer sets at startup
+	 * or after SIGHUP.
 	 *
 	 * To read these fields, you must hold an insertion lock. To modify them,
 	 * you must hold ALL the locks.
@@ -8366,8 +8367,9 @@ GetRedoRecPtr(void)
 
 	/*
 	 * The possibly not up-to-date copy in XlogCtl is enough. Even if we
-	 * grabbed a WAL insertion lock to read the master copy, someone might
-	 * update it just after we've released the lock.
+	 * grabbed a WAL insertion lock to read the authoritative value in
+	 * Insert->RedoRecPtr, someone might update it just after we've released
+	 * the lock.
 	 */
 	SpinLockAcquire(&XLogCtl->info_lck);
 	ptr = XLogCtl->RedoRecPtr;

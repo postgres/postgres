@@ -22,8 +22,8 @@ At least on Linux, no platform-specific adjustment is needed.
 Postgres' files under src/backend/snowball/libstemmer/ and
 src/include/snowball/libstemmer/ are taken directly from the Snowball
 files, with only some minor adjustments of file inclusions.  Note
-that most of these files are in fact derived files, not master source.
-The master sources are in the Snowball language, and are built using
+that most of these files are in fact derived files, not original source.
+The original sources are in the Snowball language, and are built using
 the Snowball-to-C compiler that is also part of the Snowball project.
 We choose to include the derived files in the PostgreSQL distribution
 because most installations will not have the Snowball compiler available.

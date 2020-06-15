@@ -345,8 +345,8 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	table_close(class_rel, RowExclusiveLock);
 
 	/*
-	 * Register dependency from the toast table to the master, so that the
-	 * toast table will be deleted if the master is.  Skip this in bootstrap
+	 * Register dependency from the toast table to the main, so that the
+	 * toast table will be deleted if the main is.  Skip this in bootstrap
 	 * mode.
 	 */
 	if (!IsBootstrapProcessingMode())

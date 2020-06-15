@@ -3765,7 +3765,7 @@ reindex_relation(Oid relid, int flags, int options)
 
 	/*
 	 * If the relation has a secondary toast rel, reindex that too while we
-	 * still hold the lock on the master table.
+	 * still hold the lock on the main table.
 	 */
 	if ((flags & REINDEX_REL_PROCESS_TOAST) && OidIsValid(toast_relid))
 		result |= reindex_relation(toast_relid, flags, options);

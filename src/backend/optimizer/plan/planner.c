@@ -1748,7 +1748,7 @@ inheritance_planner(PlannerInfo *root)
 	else
 	{
 		/*
-		 * Put back the final adjusted rtable into the master copy of the
+		 * Put back the final adjusted rtable into the original copy of the
 		 * Query.  (We mustn't do this if we found no non-excluded children,
 		 * since we never saved an adjusted rtable at all.)
 		 */
@@ -1757,7 +1757,7 @@ inheritance_planner(PlannerInfo *root)
 		root->simple_rel_array = save_rel_array;
 		root->append_rel_array = save_append_rel_array;
 
-		/* Must reconstruct master's simple_rte_array, too */
+		/* Must reconstruct original's simple_rte_array, too */
 		root->simple_rte_array = (RangeTblEntry **)
 			palloc0((list_length(final_rtable) + 1) * sizeof(RangeTblEntry *));
 		rti = 1;

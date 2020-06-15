@@ -2222,9 +2222,9 @@ RestoreSnapshot(char *start_address)
  * the declaration for PGPROC.
  */
 void
-RestoreTransactionSnapshot(Snapshot snapshot, void *master_pgproc)
+RestoreTransactionSnapshot(Snapshot snapshot, void *source_pgproc)
 {
-	SetTransactionSnapshot(snapshot, NULL, InvalidPid, master_pgproc);
+	SetTransactionSnapshot(snapshot, NULL, InvalidPid, source_pgproc);
 }
 
 /*
