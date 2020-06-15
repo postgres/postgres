@@ -1864,9 +1864,9 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
     This is possible because logical replication supports
     replication between different major versions of
     <productname>PostgreSQL</productname>.  The standby can be on the same computer or
-    a different computer.  Once it has synced up with the master server
+    a different computer.  Once it has synced up with the primary server
     (running the older version of <productname>PostgreSQL</productname>), you can
-    switch masters and make the standby the master and shut down the older
+    switch primaries and make the standby the primary and shut down the older
     database instance.  Such a switch-over results in only several seconds
     of downtime for an upgrade.
    </para>

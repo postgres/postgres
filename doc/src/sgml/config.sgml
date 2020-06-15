@@ -697,7 +697,7 @@ include_dir 'conf.d'
 
        <para>
         When running a standby server, you must set this parameter to the
-        same or higher value than on the master server. Otherwise, queries
+        same or higher value than on the primary server. Otherwise, queries
         will not be allowed in the standby server.
        </para>
       </listitem>
@@ -1643,7 +1643,7 @@ include_dir 'conf.d'
 
        <para>
         When running a standby server, you must set this parameter to the
-        same or higher value than on the master server. Otherwise, queries
+        same or higher value than on the primary server. Otherwise, queries
         will not be allowed in the standby server.
        </para>
       </listitem>
@@ -2259,7 +2259,7 @@ include_dir 'conf.d'
 
         <para>
          When running a standby server, you must set this parameter to the
-         same or higher value than on the master server. Otherwise, queries
+         same or higher value than on the primary server. Otherwise, queries
          will not be allowed in the standby server.
         </para>
 
@@ -3253,7 +3253,7 @@ include_dir 'conf.d'
         <varname>archive_timeout</varname> &mdash; it will bloat your archive
         storage.  <varname>archive_timeout</varname> settings of a minute or so are
         usually reasonable.  You should consider using streaming replication,
-        instead of archiving, if you want data to be copied off the master
+        instead of archiving, if you want data to be copied off the primary
         server more quickly than that.
         If this value is specified without units, it is taken as seconds.
         This parameter can only be set in the
@@ -3678,12 +3678,12 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      These settings control the behavior of the built-in
      <firstterm>streaming replication</firstterm> feature (see
      <xref linkend="streaming-replication"/>).  Servers will be either a
-     master or a standby server.  Masters can send data, while standbys
+     primary or a standby server.  Primaries can send data, while standbys
      are always receivers of replicated data.  When cascading replication
      (see <xref linkend="cascading-replication"/>) is used, standby servers
      can also be senders, as well as receivers.
      Parameters are mainly for sending and standby servers, though some
-     parameters have meaning only on the master server.  Settings may vary
+     parameters have meaning only on the primary server.  Settings may vary
      across the cluster without problems if that is required.
     </para>
 
@@ -3693,10 +3693,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <para>
       These parameters can be set on any server that is
       to send replication data to one or more standby servers.
-      The master is always a sending server, so these parameters must
-      always be set on the master.
+      The primary is always a sending server, so these parameters must
+      always be set on the primary.
       The role and meaning of these parameters does not change after a
-      standby becomes the master.
+      standby becomes the primary.
      </para>
 
      <variablelist>
@@ -3724,7 +3724,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
 
        <para>
          When running a standby server, you must set this parameter to the
-         same or higher value than on the master server. Otherwise, queries
+         same or higher value than on the primary server. Otherwise, queries
          will not be allowed in the standby server.
         </para>
        </listitem>
@@ -3855,19 +3855,19 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      </variablelist>
     </sect2>
 
-    <sect2 id="runtime-config-replication-master">
-     <title>Master Server</title>
+    <sect2 id="runtime-config-replication-primary">
+     <title>Primary Server</title>
 
      <para>
-      These parameters can be set on the master/primary server that is
+      These parameters can be set on the primary server that is
       to send replication data to one or more standby servers.
       Note that in addition to these parameters,
-      <xref linkend="guc-wal-level"/> must be set appropriately on the master
+      <xref linkend="guc-wal-level"/> must be set appropriately on the primary
       server, and optionally WAL archiving can be enabled as
       well (see <xref linkend="runtime-config-wal-archiving"/>).
       The values of these parameters on standby servers are irrelevant,
       although you may wish to set them there in preparation for the
-      possibility of a standby becoming the master.
+      possibility of a standby becoming the primary.
      </para>
 
     <variablelist>
@@ -4042,7 +4042,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
 
      <para>
       These settings control the behavior of a standby server that is
-      to receive replication data.  Their values on the master server
+      to receive replication data.  Their values on the primary server
       are irrelevant.
      </para>
 
@@ -4369,7 +4369,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         of time.  For example, if
         you set this parameter to <literal>5min</literal>, the standby will
         replay each transaction commit only when the system time on the standby
-        is at least five minutes past the commit time reported by the master.
+        is at least five minutes past the commit time reported by the primary.
         If this value is specified without units, it is taken as milliseconds.
         The default is zero, adding no delay.
        </para>
@@ -4377,10 +4377,10 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         It is possible that the replication delay between servers exceeds the
         value of this parameter, in which case no delay is added.
         Note that the delay is calculated between the WAL time stamp as written
-        on master and the current time on the standby. Delays in transfer
+        on primary and the current time on the standby. Delays in transfer
         because of network lag or cascading replication configurations
         may reduce the actual wait time significantly. If the system
-        clocks on master and standby are not synchronized, this may lead to
+        clocks on primary and standby are not synchronized, this may lead to
         recovery applying records earlier than expected; but that is not a
         major issue because useful settings of this parameter are much larger
         than typical time deviations between servers.
@@ -4402,7 +4402,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         except crash recovery.
 
         <varname>hot_standby_feedback</varname> will be delayed by use of this feature
-        which could lead to bloat on the master; use both together with care.
+        which could lead to bloat on the primary; use both together with care.
 
         <warning>
          <para>
@@ -8998,7 +8998,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
        <para>
         When running a standby server, you must set this parameter to the
-        same or higher value than on the master server. Otherwise, queries
+        same or higher value than on the primary server. Otherwise, queries
         will not be allowed in the standby server.
        </para>
       </listitem>

@@ -964,7 +964,7 @@ SELECT * FROM pg_stop_backup(false, true);
      non-exclusive one, but it differs in a few key steps. This type of
      backup can only be taken on a primary and does not allow concurrent
      backups.  Moreover, because it creates a backup label file, as
-     described below, it can block automatic restart of the master server
+     described below, it can block automatic restart of the primary server
      after a crash.  On the other hand, the erroneous removal of this
      file from a backup or standby is a common mistake, which can result
      in serious data corruption.  If it is necessary to use this method,
@@ -1033,9 +1033,9 @@ SELECT pg_start_backup('label', true);
      this will result in corruption.  Confusion about when it is appropriate
      to remove this file is a common cause of data corruption when using this
      method; be very certain that you remove the file only on an existing
-     master and never when building a standby or restoring a backup, even if
+     primary and never when building a standby or restoring a backup, even if
      you are building a standby that will subsequently be promoted to a new
-     master.
+     primary.
     </para>
    </listitem>
    <listitem>
@@ -1128,16 +1128,16 @@ SELECT pg_stop_backup();
    <para>
     It is often a good idea to also omit from the backup the files
     within the cluster's <filename>pg_replslot/</filename> directory, so that
-    replication slots that exist on the master do not become part of the
+    replication slots that exist on the primary do not become part of the
     backup.  Otherwise, the subsequent use of the backup to create a standby
     may result in indefinite retention of WAL files on the standby, and
-    possibly bloat on the master if hot standby feedback is enabled, because
+    possibly bloat on the primary if hot standby feedback is enabled, because
     the clients that are using those replication slots will still be connecting
-    to and updating the slots on the master, not the standby.  Even if the
-    backup is only intended for use in creating a new master, copying the
+    to and updating the slots on the primary, not the standby.  Even if the
+    backup is only intended for use in creating a new primary, copying the
     replication slots isn't expected to be particularly useful, since the
     contents of those slots will likely be badly out of date by the time
-    the new master comes on line.
+    the new primary comes on line.
    </para>
 
    <para>

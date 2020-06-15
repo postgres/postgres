@@ -73,7 +73,7 @@ restore_command = 'pg_standby <replaceable>archiveDir</replaceable> %f %p %r'
   </para>
   <para>
    There are two ways to fail over to a <quote>warm standby</quote> database server
-   when the master server fails:
+   when the primary server fails:
 
    <variablelist>
     <varlistentry>

@@ -596,8 +596,8 @@
    indicate that the already-processed WAL data need not be scanned again,
    and then recycles any old log segment files in the <filename>pg_wal</filename>
    directory.
-   Restartpoints can't be performed more frequently than checkpoints in the
-   master because restartpoints can only be performed at checkpoint records.
+   Restartpoints can't be performed more frequently than checkpoints on the
+   primary because restartpoints can only be performed at checkpoint records.
    A restartpoint is triggered when a checkpoint record is reached if at
    least <varname>checkpoint_timeout</varname> seconds have passed since the last
    restartpoint, or if WAL size is about to exceed

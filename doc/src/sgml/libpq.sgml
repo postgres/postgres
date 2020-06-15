@@ -7362,7 +7362,7 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    the <literal>host</literal> parameter
    matches <application>libpq</application>'s default socket directory path.
    In a standby server, a database field of <literal>replication</literal>
-   matches streaming replication connections made to the master server.
+   matches streaming replication connections made to the primary server.
    The database field is of limited usefulness otherwise, because users have
    the same password for all databases in the same cluster.
   </para>

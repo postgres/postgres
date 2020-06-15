@@ -1793,7 +1793,7 @@ The commands accepted in replication mode are:
       <listitem>
       <para>
        Current timeline ID. Also useful to check that the standby is
-       consistent with the master.
+       consistent with the primary.
       </para>
       </listitem>
       </varlistentry>

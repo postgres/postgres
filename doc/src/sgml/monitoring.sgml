@@ -62,10 +62,10 @@ postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl 
    (The appropriate invocation of <command>ps</command> varies across different
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
-   master server process.  The command arguments
+   primary server process.  The command arguments
    shown for it are the same ones used when it was launched.  The next five
    processes are background worker processes automatically launched by the
-   master process.  (The <quote>stats collector</quote> process will not be present
+   primary process.  (The <quote>stats collector</quote> process will not be present
    if you have set the system not to start the statistics collector; likewise
    the <quote>autovacuum launcher</quote> process can be disabled.)
    Each of the remaining
@@ -3545,7 +3545,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    one row per database, showing database-wide statistics about
    query cancels occurring due to conflicts with recovery on standby servers.
    This view will only contain information on standby servers, since
-   conflicts do not occur on master servers.
+   conflicts do not occur on primary servers.
   </para>
 
   <table id="pg-stat-database-conflicts-view" xreflabel="pg_stat_database_conflicts">

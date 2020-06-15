@@ -65,11 +65,11 @@ PostgreSQL documentation
 
   <para>
    <application>pg_basebackup</application> can make a base backup from
-   not only the master but also the standby. To take a backup from the standby,
+   not only the primary but also the standby. To take a backup from the standby,
    set up the standby so that it can accept replication connections (that is, set
    <varname>max_wal_senders</varname> and <xref linkend="guc-hot-standby"/>,
    and configure <link linkend="auth-pg-hba-conf">host-based authentication</link>).
-   You will also need to enable <xref linkend="guc-full-page-writes"/> on the master.
+   You will also need to enable <xref linkend="guc-full-page-writes"/> on the primary.
   </para>
 
   <para>
@@ -89,13 +89,13 @@ PostgreSQL documentation
     </listitem>
     <listitem>
      <para>
-      If the standby is promoted to the master during online backup, the backup fails.
+      If the standby is promoted to the primary during online backup, the backup fails.
      </para>
     </listitem>
     <listitem>
      <para>
       All WAL records required for the backup must contain sufficient full-page writes,
-      which requires you to enable <varname>full_page_writes</varname> on the master and
+      which requires you to enable <varname>full_page_writes</varname> on the primary and
       not to use a tool like <application>pg_compresslog</application> as
       <varname>archive_command</varname> to remove full-page writes from WAL files.
      </para>
@@ -328,7 +328,7 @@ PostgreSQL documentation
             it will use up two connections configured by the
             <xref linkend="guc-max-wal-senders"/> parameter. As long as the
              client can keep up with write-ahead log received, using this mode
-             requires no extra write-ahead logs to be saved on the master.
+             requires no extra write-ahead logs to be saved on the primary.
            </para>
            <para>
             When tar format mode is used, the write-ahead log files will be

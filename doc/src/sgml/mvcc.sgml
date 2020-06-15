@@ -1642,7 +1642,7 @@ SELECT pg_advisory_lock(q.id) FROM
       This level of integrity protection using Serializable transactions
       does not yet extend to hot standby mode (<xref linkend="hot-standby"/>).
       Because of that, those using hot standby may want to use Repeatable
-      Read and explicit locking on the master.
+      Read and explicit locking on the primary.
      </para>
     </warning>
    </sect2>
@@ -1744,10 +1744,10 @@ SELECT pg_advisory_lock(q.id) FROM
     <xref linkend="hot-standby"/>).  The strictest isolation level currently
     supported in hot standby mode is Repeatable Read.  While performing all
     permanent database writes within Serializable transactions on the
-    master will ensure that all standbys will eventually reach a consistent
+    primary will ensure that all standbys will eventually reach a consistent
     state, a Repeatable Read transaction run on the standby can sometimes
     see a transient state that is inconsistent with any serial execution
-    of the transactions on the master.
+    of the transactions on the primary.
    </para>
 
    <para>

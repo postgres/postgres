@@ -99,7 +99,7 @@
 
   <para>
    A <firstterm>publication</firstterm> can be defined on any physical
-   replication master.  The node where a publication is defined is referred to
+   replication primary.  The node where a publication is defined is referred to
    as <firstterm>publisher</firstterm>.  A publication is a set of changes
    generated from a table or a group of tables, and might also be described as
    a change set or replication set.  Each publication exists in only one database.
@@ -489,7 +489,7 @@
    Because logical replication is based on a similar architecture as
    <link linkend="streaming-replication">physical streaming replication</link>,
    the monitoring on a publication node is similar to monitoring of a
-   physical replication master
+   physical replication primary
    (see <xref linkend="streaming-replication-monitoring"/>).
   </para>
 

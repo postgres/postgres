@@ -244,7 +244,7 @@
    <productname>PostgreSQL</productname> replication solutions can be developed
    externally. For example, <application> <ulink
    url="http://www.slony.info">Slony-I</ulink></application> is a popular
-   master/standby replication solution that is developed independently
+   primary/standby replication solution that is developed independently
    from the core project.
   </para>
  </sect1>

@@ -253,7 +253,7 @@ SET client_min_messages = DEBUG1;
      implies that operating system collation rules must never change.
      Though rare, updates to operating system collation rules can
      cause these issues. More commonly, an inconsistency in the
-     collation order between a master server and a standby server is
+     collation order between a primary server and a standby server is
      implicated, possibly because the <emphasis>major</emphasis> operating
      system version in use is inconsistent.  Such inconsistencies will
      generally only arise on standby servers, and so can generally
