@@ -1350,6 +1350,23 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>factorial</primary>
+        </indexterm>
+        <function>factorial</function> ( <type>bigint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para>
+        Factorial
+       </para>
+       <para>
+        <literal>factorial(5)</literal>
+        <returnvalue>120</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>floor</primary>
         </indexterm>
         <function>floor</function> ( <type>numeric</type> )
