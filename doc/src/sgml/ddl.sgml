@@ -4142,12 +4142,12 @@ ALTER INDEX measurement_city_id_logdate_key
       <orderedlist spacing="compact">
        <listitem>
         <para>
-         Create the <quote>master</quote> table, from which all of the
+         Create the <quote>root</quote> table, from which all of the
          <quote>child</quote> tables will inherit.  This table will contain no data.  Do not
          define any check constraints on this table, unless you intend them
          to be applied equally to all child tables.  There is no point in
          defining any indexes or unique constraints on it, either.  For our
-         example, the master table is the <structname>measurement</structname>
+         example, the root table is the <structname>measurement</structname>
          table as originally defined.
         </para>
        </listitem>
@@ -4155,8 +4155,8 @@ ALTER INDEX measurement_city_id_logdate_key
        <listitem>
         <para>
          Create several <quote>child</quote> tables that each inherit from
-         the master table.  Normally, these tables will not add any columns
-         to the set inherited from the master.  Just as with declarative
+         the root table.  Normally, these tables will not add any columns
+         to the set inherited from the root.  Just as with declarative
          partitioning, these tables are in every way normal
          <productname>PostgreSQL</productname> tables (or foreign tables).
         </para>
@@ -4244,7 +4244,7 @@ CREATE INDEX measurement_y2008m01_logdate ON measurement_y2008m01 (logdate);
          We want our application to be able to say <literal>INSERT INTO
          measurement ...</literal> and have the data be redirected into the
          appropriate child table.  We can arrange that by attaching
-         a suitable trigger function to the master table.
+         a suitable trigger function to the root table.
          If data will be added only to the latest child, we can
          use a very simple trigger function:
 
@@ -4326,7 +4326,7 @@ LANGUAGE plpgsql;
         <para>
          A different approach to redirecting inserts into the appropriate
          child table is to set up rules, instead of a trigger, on the
-         master table.  For example:
+         root table.  For example:
 
 <programlisting>
 CREATE RULE measurement_insert_y2006m02 AS
@@ -4351,7 +4351,7 @@ DO INSTEAD
         <para>
          Be aware that <command>COPY</command> ignores rules.  If you want to
          use <command>COPY</command> to insert data, you'll need to copy into the
-         correct child table rather than directly into the master. <command>COPY</command>
+         correct child table rather than directly into the root. <command>COPY</command>
          does fire triggers, so you can use it normally if you use the trigger
          approach.
         </para>
@@ -4359,7 +4359,7 @@ DO INSTEAD
         <para>
          Another disadvantage of the rule approach is that there is no simple
          way to force an error if the set of rules doesn't cover the insertion
-         date; the data will silently go into the master table instead.
+         date; the data will silently go into the root table instead.
         </para>
        </listitem>
 
@@ -4473,7 +4473,7 @@ ALTER TABLE measurement_y2008m02 INHERIT measurement;
 <programlisting>
 ANALYZE measurement;
 </programlisting>
-        will only process the master table.
+        will only process the root table.
        </para>
       </listitem>
 
