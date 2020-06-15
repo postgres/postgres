@@ -525,6 +525,8 @@ SELECT power(float8 '-inf', float8 '3');
  -Infinity
 (1 row)
 
+SELECT power(float8 '-inf', float8 '3.5');
+ERROR:  a negative number raised to a non-integer power yields a complex result
 SELECT power(float8 '-inf', float8 'inf');
   power   
 ----------

@@ -144,6 +144,7 @@ SELECT power(float8 '-inf', float8 '-2');
 SELECT power(float8 '-inf', float8 '-3');
 SELECT power(float8 '-inf', float8 '2');
 SELECT power(float8 '-inf', float8 '3');
+SELECT power(float8 '-inf', float8 '3.5');
 SELECT power(float8 '-inf', float8 'inf');
 SELECT power(float8 '-inf', float8 '-inf');
 

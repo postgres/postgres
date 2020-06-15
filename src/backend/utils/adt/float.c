@@ -1540,33 +1540,101 @@ dpow(PG_FUNCTION_ARGS)
 				 errmsg("a negative number raised to a non-integer power yields a complex result")));
 
 	/*
-	 * pow() sets errno only on some platforms, depending on whether it
-	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we try to avoid using
-	 * errno.  However, some platform/CPU combinations return errno == EDOM
-	 * and result == NaN for negative arg1 and very large arg2 (they must be
-	 * using something different from our floor() test to decide it's
-	 * invalid).  Other platforms (HPPA) return errno == ERANGE and a large
-	 * (HUGE_VAL) but finite result to signal overflow.
+	 * We don't trust the platform's pow() to handle infinity cases per POSIX
+	 * spec either, so deal with those explicitly too.  It's easier to handle
+	 * infinite y first, so that it doesn't matter if x is also infinite.
 	 */
-	errno = 0;
-	result = pow(arg1, arg2);
-	if (errno == EDOM && isnan(result))
+	if (isinf(arg2))
 	{
-		if ((fabs(arg1) > 1 && arg2 >= 0) || (fabs(arg1) < 1 && arg2 < 0))
-			/* The sign of Inf is not significant in this case. */
-			result = get_float8_infinity();
-		else if (fabs(arg1) != 1)
-			result = 0;
-		else
-			result = 1;
-	}
-	else if (errno == ERANGE && result != 0 && !isinf(result))
-		result = get_float8_infinity();
+		double		absx = fabs(arg1);
 
-	if (unlikely(isinf(result)) && !isinf(arg1) && !isinf(arg2))
-		float_overflow_error();
-	if (unlikely(result == 0.0) && arg1 != 0.0 && !isinf(arg1) && !isinf(arg2))
-		float_underflow_error();
+		if (absx == 1.0)
+			result = 1.0;
+		else if (arg2 > 0.0)	/* y = +Inf */
+		{
+			if (absx > 1.0)
+				result = arg2;
+			else
+				result = 0.0;
+		}
+		else					/* y = -Inf */
+		{
+			if (absx > 1.0)
+				result = 0.0;
+			else
+				result = -arg2;
+		}
+	}
+	else if (isinf(arg1))
+	{
+		if (arg2 == 0.0)
+			result = 1.0;
+		else if (arg1 > 0.0)	/* x = +Inf */
+		{
+			if (arg2 > 0.0)
+				result = arg1;
+			else
+				result = 0.0;
+		}
+		else					/* x = -Inf */
+		{
+			bool		yisoddinteger = false;
+
+			if (arg2 == floor(arg2))
+			{
+				/* y is integral; it's odd if y/2 is not integral */
+				double		halfy = arg2 * 0.5; /* should be computed exactly */
+
+				if (halfy != floor(halfy))
+					yisoddinteger = true;
+			}
+			if (arg2 > 0.0)
+				result = yisoddinteger ? arg1 : -arg1;
+			else
+				result = yisoddinteger ? -0.0 : 0.0;
+		}
+	}
+	else
+	{
+		/*
+		 * pow() sets errno on only some platforms, depending on whether it
+		 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we must check both
+		 * errno and invalid output values.  (We can't rely on just the
+		 * latter, either; some old platforms return a large-but-finite
+		 * HUGE_VAL when reporting overflow.)
+		 */
+		errno = 0;
+		result = pow(arg1, arg2);
+		if (errno == EDOM || isnan(result))
+		{
+			/*
+			 * We eliminated all the possible domain errors above, or should
+			 * have; but if pow() has a more restrictive test for "is y an
+			 * integer?" than we do, we could get here anyway.  Historical
+			 * evidence suggests that some platforms once implemented the test
+			 * as "y == (long) y", which of course misbehaves beyond LONG_MAX.
+			 * There's not a lot of choice except to accept the platform's
+			 * conclusion that we have a domain error.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
+					 errmsg("a negative number raised to a non-integer power yields a complex result")));
+		}
+		else if (errno == ERANGE)
+		{
+			if (result != 0.0)
+				float_overflow_error();
+			else
+				float_underflow_error();
+		}
+		else
+		{
+			if (unlikely(isinf(result)))
+				float_overflow_error();
+			if (unlikely(result == 0.0) && arg1 != 0.0)
+				float_underflow_error();
+		}
+	}
 
 	PG_RETURN_FLOAT8(result);
 }
