@@ -14088,7 +14088,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "aggsortop, "
 						  "'n' AS aggkind, "
 						  "0 AS aggtransspace, agginitval, "
-						  "0 AS aggmtransspace, NULL AS aggminitval, "
+						  "0 AS aggmtransspace, NULL AS aggminitval "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
@@ -14107,7 +14107,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 						  "0 AS aggsortop, "
 						  "'n' AS aggkind, "
 						  "0 AS aggtransspace, agginitval, "
-						  "0 AS aggmtransspace, NULL AS aggminitval, "
+						  "0 AS aggmtransspace, NULL AS aggminitval "
 						  "FROM pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
 						  "WHERE a.aggfnoid = p.oid "
 						  "AND p.oid = '%u'::pg_catalog.oid",
