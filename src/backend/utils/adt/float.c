@@ -1583,7 +1583,7 @@ dpow(PG_FUNCTION_ARGS)
 			if (arg2 == floor(arg2))
 			{
 				/* y is integral; it's odd if y/2 is not integral */
-				double		halfy = arg2 * 0.5; /* should be computed exactly */
+				double		halfy = arg2 / 2;	/* should be computed exactly */
 
 				if (halfy != floor(halfy))
 					yisoddinteger = true;
@@ -1608,17 +1608,29 @@ dpow(PG_FUNCTION_ARGS)
 		if (errno == EDOM || isnan(result))
 		{
 			/*
-			 * We eliminated all the possible domain errors above, or should
-			 * have; but if pow() has a more restrictive test for "is y an
-			 * integer?" than we do, we could get here anyway.  Historical
-			 * evidence suggests that some platforms once implemented the test
-			 * as "y == (long) y", which of course misbehaves beyond LONG_MAX.
-			 * There's not a lot of choice except to accept the platform's
-			 * conclusion that we have a domain error.
+			 * We handled all possible domain errors above, so this should be
+			 * impossible.  However, old glibc versions on x86 have a bug that
+			 * causes them to fail this way for abs(y) greater than 2^63:
+			 *
+			 * https://sourceware.org/bugzilla/show_bug.cgi?id=3866
+			 *
+			 * Hence, if we get here, assume y is finite but large (large
+			 * enough to be certainly even). The result should be 0 if x == 0,
+			 * 1.0 if abs(x) == 1.0, otherwise an overflow or underflow error.
 			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
-					 errmsg("a negative number raised to a non-integer power yields a complex result")));
+			if (arg1 == 0.0)
+				result = 0.0;	/* we already verified y is positive */
+			else
+			{
+				double		absx = fabs(arg1);
+
+				if (absx == 1.0)
+					result = 1.0;
+				else if (arg2 >= 0.0 ? (absx > 1.0) : (absx < 1.0))
+					float_overflow_error();
+				else
+					float_underflow_error();
+			}
 		}
 		else if (errno == ERANGE)
 		{
