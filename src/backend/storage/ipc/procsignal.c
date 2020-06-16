@@ -320,7 +320,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 uint64
 EmitProcSignalBarrier(ProcSignalBarrierType type)
 {
-	uint64		flagbit = UINT64CONST(1) << (uint64) type;
+	uint32		flagbit = 1 << (uint32) type;
 	uint64		generation;
 
 	/*
@@ -363,7 +363,11 @@ EmitProcSignalBarrier(ProcSignalBarrierType type)
 		pid_t		pid = slot->pss_pid;
 
 		if (pid != 0)
+		{
+			/* see SendProcSignal for details */
+			slot->pss_signalFlags[PROCSIG_BARRIER] = true;
 			kill(pid, SIGUSR1);
+		}
 	}
 
 	return generation;
@@ -382,6 +386,8 @@ void
 WaitForProcSignalBarrier(uint64 generation)
 {
 	long		timeout = 125L;
+
+	Assert(generation <= pg_atomic_read_u64(&ProcSignal->psh_barrierGeneration));
 
 	for (int i = NumProcSignalSlots - 1; i >= 0; i--)
 	{
@@ -418,6 +424,23 @@ WaitForProcSignalBarrier(uint64 generation)
 }
 
 /*
+ * Handle receipt of an interrupt indicating a global barrier event.
+ *
+ * All the actual work is deferred to ProcessProcSignalBarrier(), because we
+ * cannot safely access the barrier generation inside the signal handler as
+ * 64bit atomics might use spinlock based emulation, even for reads. As this
+ * routine only gets called when PROCSIG_BARRIER is sent that won't cause a
+ * lot fo unnecessary work.
+ */
+static void
+HandleProcSignalBarrierInterrupt(void)
+{
+	InterruptPending = true;
+	ProcSignalBarrierPending = true;
+	/* latch will be set by procsignal_sigusr1_handler */
+}
+
+/*
  * Perform global barrier related interrupt checking.
  *
  * Any backend that participates in ProcSignal signaling must arrange to
@@ -428,8 +451,11 @@ WaitForProcSignalBarrier(uint64 generation)
 void
 ProcessProcSignalBarrier(void)
 {
-	uint64		generation;
+	uint64		local_gen;
+	uint64		shared_gen;
 	uint32		flags;
+
+	Assert(MyProcSignalSlot);
 
 	/* Exit quickly if there's no work to do. */
 	if (!ProcSignalBarrierPending)
@@ -437,13 +463,26 @@ ProcessProcSignalBarrier(void)
 	ProcSignalBarrierPending = false;
 
 	/*
-	 * Read the current barrier generation, and then get the flags that are
-	 * set for this backend. Note that pg_atomic_exchange_u32 is a full
-	 * barrier, so we're guaranteed that the read of the barrier generation
-	 * happens before we atomically extract the flags, and that any subsequent
-	 * state changes happen afterward.
+	 * It's not unlikely to process multiple barriers at once, before the
+	 * signals for all the barriers have arrived. To avoid unnecessary work in
+	 * response to subsequent signals, exit early if we already have processed
+	 * all of them.
 	 */
-	generation = pg_atomic_read_u64(&ProcSignal->psh_barrierGeneration);
+	local_gen = pg_atomic_read_u64(&MyProcSignalSlot->pss_barrierGeneration);
+	shared_gen = pg_atomic_read_u64(&ProcSignal->psh_barrierGeneration);
+
+	Assert(local_gen <= shared_gen);
+
+	if (local_gen == shared_gen)
+		return;
+
+	/*
+	 * Get and clear the flags that are set for this backend. Note that
+	 * pg_atomic_exchange_u32 is a full barrier, so we're guaranteed that the
+	 * read of the barrier generation above happens before we atomically
+	 * extract the flags, and that any subsequent state changes happen
+	 * afterward.
+	 */
 	flags = pg_atomic_exchange_u32(&MyProcSignalSlot->pss_barrierCheckMask, 0);
 
 	/*
@@ -466,7 +505,7 @@ ProcessProcSignalBarrier(void)
 	 * things have changed further, it'll get fixed up when this function is
 	 * next called.
 	 */
-	pg_atomic_write_u64(&MyProcSignalSlot->pss_barrierGeneration, generation);
+	pg_atomic_write_u64(&MyProcSignalSlot->pss_barrierGeneration, shared_gen);
 }
 
 static void
@@ -506,27 +545,6 @@ CheckProcSignal(ProcSignalReason reason)
 }
 
 /*
- * CheckProcSignalBarrier - check for new barriers we need to absorb
- */
-static bool
-CheckProcSignalBarrier(void)
-{
-	volatile ProcSignalSlot *slot = MyProcSignalSlot;
-
-	if (slot != NULL)
-	{
-		uint64		mygen;
-		uint64		curgen;
-
-		mygen = pg_atomic_read_u64(&slot->pss_barrierGeneration);
-		curgen = pg_atomic_read_u64(&ProcSignal->psh_barrierGeneration);
-		return (mygen != curgen);
-	}
-
-	return false;
-}
-
-/*
  * procsignal_sigusr1_handler - handle SIGUSR1 signal.
  */
 void
@@ -546,6 +564,9 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 	if (CheckProcSignal(PROCSIG_WALSND_INIT_STOPPING))
 		HandleWalSndInitStopping();
 
+	if (CheckProcSignal(PROCSIG_BARRIER))
+		HandleProcSignalBarrierInterrupt();
+
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_DATABASE))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_DATABASE);
 
@@ -563,12 +584,6 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
 
 	if (CheckProcSignal(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN))
 		RecoveryConflictInterrupt(PROCSIG_RECOVERY_CONFLICT_BUFFERPIN);
-
-	if (CheckProcSignalBarrier())
-	{
-		InterruptPending = true;
-		ProcSignalBarrierPending = true;
-	}
 
 	SetLatch(MyLatch);
 
