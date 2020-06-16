@@ -319,7 +319,7 @@ SendBackupManifest(backup_manifest_info *manifest)
 	if (BufFileSeek(manifest->buffile, 0, 0L, SEEK_SET))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not rewind temporary file: %m")));
+				 errmsg("could not rewind temporary file")));
 
 	/* Send CopyOutResponse message */
 	pq_beginmessage(&protobuf, 'H');
@@ -365,15 +365,10 @@ static void
 AppendStringToManifest(backup_manifest_info *manifest, char *s)
 {
 	int			len = strlen(s);
-	size_t		written;
 
 	Assert(manifest != NULL);
 	if (manifest->still_checksumming)
 		pg_sha256_update(&manifest->manifest_ctx, (uint8 *) s, len);
-	written = BufFileWrite(manifest->buffile, s, len);
-	if (written != len)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write to temporary file: %m")));
+	BufFileWrite(manifest->buffile, s, len);
 	manifest->manifest_size += len;
 }
