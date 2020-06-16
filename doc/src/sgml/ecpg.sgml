@@ -3372,7 +3372,7 @@ interval *PGTYPESinterval_new(void);
        <para>
         Release the memory of a previously allocated interval variable.
 <synopsis>
-void PGTYPESinterval_new(interval *intvl);
+void PGTYPESinterval_free(interval *intvl);
 </synopsis>
        </para>
       </listitem>
