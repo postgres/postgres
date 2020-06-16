@@ -202,12 +202,12 @@ static void ltsDumpBuffer(LogicalTapeSet *lts, LogicalTape *lt);
 static void
 ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 {
-	if (BufFileSeekBlock(lts->pfile, blocknum) != 0 ||
-		BufFileWrite(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
+	if (BufFileSeekBlock(lts->pfile, blocknum) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write block %ld of temporary file: %m",
+				 errmsg("could not seek to block %ld of temporary file",
 						blocknum)));
+	BufFileWrite(lts->pfile, buffer, BLCKSZ);
 }
 
 /*
@@ -219,12 +219,19 @@ ltsWriteBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 static void
 ltsReadBlock(LogicalTapeSet *lts, long blocknum, void *buffer)
 {
-	if (BufFileSeekBlock(lts->pfile, blocknum) != 0 ||
-		BufFileRead(lts->pfile, buffer, BLCKSZ) != BLCKSZ)
+	size_t		nread;
+
+	if (BufFileSeekBlock(lts->pfile, blocknum) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read block %ld of temporary file: %m",
+				 errmsg("could not seek to block %ld of temporary file",
 						blocknum)));
+	nread = BufFileRead(lts->pfile, buffer, BLCKSZ);
+	if (nread != BLCKSZ)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read block %ld of temporary file: read only %zu of %zu bytes",
+						blocknum, nread, (size_t) BLCKSZ)));
 }
 
 /*
