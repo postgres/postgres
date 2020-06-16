@@ -581,7 +581,6 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 void
 BufFileWrite(BufFile *file, void *ptr, size_t size)
 {
-	size_t		nwritten = 0;
 	size_t		nthistime;
 
 	Assert(!file->readOnly);
@@ -615,7 +614,6 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
 			file->nbytes = file->pos;
 		ptr = (void *) ((char *) ptr + nthistime);
 		size -= nthistime;
-		nwritten += nthistime;
 	}
 }
 
