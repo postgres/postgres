@@ -1546,7 +1546,7 @@ dpow(PG_FUNCTION_ARGS)
 	 */
 	if (isinf(arg2))
 	{
-		double		absx = fabs(arg1);
+		float8		absx = fabs(arg1);
 
 		if (absx == 1.0)
 			result = 1.0;
@@ -1578,16 +1578,15 @@ dpow(PG_FUNCTION_ARGS)
 		}
 		else					/* x = -Inf */
 		{
-			bool		yisoddinteger = false;
+			/*
+			 * Per POSIX, the sign of the result depends on whether y is an
+			 * odd integer.  Since x < 0, we already know from the previous
+			 * domain check that y is an integer.  It is odd if y/2 is not
+			 * also an integer.
+			 */
+			float8		halfy = arg2 / 2;	/* should be computed exactly */
+			bool		yisoddinteger = (floor(halfy) != halfy);
 
-			if (arg2 == floor(arg2))
-			{
-				/* y is integral; it's odd if y/2 is not integral */
-				double		halfy = arg2 / 2;	/* should be computed exactly */
-
-				if (halfy != floor(halfy))
-					yisoddinteger = true;
-			}
 			if (arg2 > 0.0)
 				result = yisoddinteger ? arg1 : -arg1;
 			else
@@ -1622,7 +1621,7 @@ dpow(PG_FUNCTION_ARGS)
 				result = 0.0;	/* we already verified y is positive */
 			else
 			{
-				double		absx = fabs(arg1);
+				float8		absx = fabs(arg1);
 
 				if (absx == 1.0)
 					result = 1.0;
