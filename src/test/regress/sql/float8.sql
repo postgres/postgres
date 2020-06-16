@@ -140,7 +140,9 @@ SELECT power(float8 'inf', float8 '-2');
 SELECT power(float8 'inf', float8 '2');
 SELECT power(float8 'inf', float8 'inf');
 SELECT power(float8 'inf', float8 '-inf');
-SELECT power(float8 '-inf', float8 '-2');
+-- Intel's icc misoptimizes the code that controls the sign of this result,
+-- even with -mp1.  Pending a fix for that, only test for "is it zero".
+SELECT power(float8 '-inf', float8 '-2') = '0';
 SELECT power(float8 '-inf', float8 '-3');
 SELECT power(float8 '-inf', float8 '2');
 SELECT power(float8 '-inf', float8 '3');
