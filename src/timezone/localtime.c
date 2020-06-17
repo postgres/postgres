@@ -36,7 +36,7 @@
  *		in which Daylight Saving Time is never observed.
  *	4.	They might reference tzname[0] after setting to a time zone
  *		in which Standard Time is never observed.
- *	5.	They might reference tm.TM_ZONE after calling offtime.
+ *	5.	They might reference tm.tm_zone after calling offtime.
  * What's best to do in the above cases is open to debate;
  * for now, we just set things up so that in any of the five cases
  * WILDABBR is used. Another possibility: initialize tzname[0] to the
@@ -92,8 +92,9 @@ struct rule
 static struct pg_tm *gmtsub(pg_time_t const *, int32, struct pg_tm *);
 static bool increment_overflow(int *, int);
 static bool increment_overflow_time(pg_time_t *, int32);
+static int64 leapcorr(struct state const *, pg_time_t);
 static struct pg_tm *timesub(pg_time_t const *, int32, struct state const *,
-		struct pg_tm *);
+							 struct pg_tm *);
 static bool typesequiv(struct state const *, int, int);
 
 
@@ -138,7 +139,7 @@ detzcode(const char *const codep)
 		 * Do two's-complement negation even on non-two's-complement machines.
 		 * If the result would be minval - 1, return minval.
 		 */
-		result -= !TWOS_COMPLEMENT(int32) &&result != 0;
+		result -= !TWOS_COMPLEMENT(int32) && result != 0;
 		result += minval;
 	}
 	return result;
@@ -152,7 +153,7 @@ detzcode64(const char *const codep)
 	int64		one = 1;
 	int64		halfmaxval = one << (64 - 2);
 	int64		maxval = halfmaxval - 1 + halfmaxval;
-	int64		minval = -TWOS_COMPLEMENT(int64) -maxval;
+	int64		minval = -TWOS_COMPLEMENT(int64) - maxval;
 
 	result = codep[0] & 0x7f;
 	for (i = 1; i < 8; ++i)
@@ -164,7 +165,7 @@ detzcode64(const char *const codep)
 		 * Do two's-complement negation even on non-two's-complement machines.
 		 * If the result would be minval - 1, return minval.
 		 */
-		result -= !TWOS_COMPLEMENT(int64) &&result != 0;
+		result -= !TWOS_COMPLEMENT(int64) && result != 0;
 		result += minval;
 	}
 	return result;
@@ -173,7 +174,7 @@ detzcode64(const char *const codep)
 static bool
 differ_by_repeat(const pg_time_t t1, const pg_time_t t0)
 {
-	if (TYPE_BIT(pg_time_t) -TYPE_SIGNED(pg_time_t) <SECSPERREPEAT_BITS)
+	if (TYPE_BIT(pg_time_t) - TYPE_SIGNED(pg_time_t) < SECSPERREPEAT_BITS)
 		return 0;
 	return t1 - t0 == SECSPERREPEAT;
 }
@@ -477,12 +478,14 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 
 				for (i = 0; i < ts->timecnt; i++)
 					if (sp->timecnt == 0
-						|| sp->ats[sp->timecnt - 1] < ts->ats[i])
+						|| (sp->ats[sp->timecnt - 1]
+							< ts->ats[i] + leapcorr(sp, ts->ats[i])))
 						break;
 				while (i < ts->timecnt
 					   && sp->timecnt < TZ_MAX_TIMES)
 				{
-					sp->ats[sp->timecnt] = ts->ats[i];
+					sp->ats[sp->timecnt]
+						= ts->ats[i] + leapcorr(sp, ts->ats[i]);
 					sp->types[sp->timecnt] = (sp->typecnt
 											  + ts->types[i]);
 					sp->timecnt++;
@@ -1480,7 +1483,7 @@ timesub(const pg_time_t *timep, int32 offset,
 		int			leapdays;
 
 		tdelta = tdays / DAYSPERLYEAR;
-		if (!((!TYPE_SIGNED(pg_time_t) ||INT_MIN <= tdelta)
+		if (!((!TYPE_SIGNED(pg_time_t) || INT_MIN <= tdelta)
 			  && tdelta <= INT_MAX))
 			goto out_of_range;
 		idelta = tdelta;
@@ -1599,6 +1602,22 @@ increment_overflow_time(pg_time_t *tp, int32 j)
 		return true;
 	*tp += j;
 	return false;
+}
+
+static int64
+leapcorr(struct state const *sp, pg_time_t t)
+{
+	struct lsinfo const *lp;
+	int			i;
+
+	i = sp->leapcnt;
+	while (--i >= 0)
+	{
+		lp = &sp->lsis[i];
+		if (t >= lp->ls_trans)
+			return lp->ls_corr;
+	}
+	return 0;
 }
 
 /*
