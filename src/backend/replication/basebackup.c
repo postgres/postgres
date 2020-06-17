@@ -269,7 +269,7 @@ perform_base_backup(basebackup_options *opt)
 	XLogRecPtr	endptr;
 	TimeLineID	endtli;
 	StringInfo	labelfile;
-	StringInfo	tblspc_map_file = NULL;
+	StringInfo	tblspc_map_file;
 	backup_manifest_info manifest;
 	int			datadirpathlen;
 	List	   *tablespaces = NIL;
@@ -424,25 +424,23 @@ perform_base_backup(basebackup_options *opt)
 			if (ti->path == NULL)
 			{
 				struct stat statbuf;
+				bool	sendtblspclinks = true;
 
 				/* In the main tar, include the backup_label first... */
 				sendFileWithContent(BACKUP_LABEL_FILE, labelfile->data,
 									&manifest);
 
-				/*
-				 * Send tablespace_map file if required and then the bulk of
-				 * the files.
-				 */
-				if (tblspc_map_file && opt->sendtblspcmapfile)
+				/* Then the tablespace_map file, if required... */
+				if (opt->sendtblspcmapfile)
 				{
 					sendFileWithContent(TABLESPACE_MAP, tblspc_map_file->data,
 										&manifest);
-					sendDir(".", 1, false, tablespaces, false,
-							&manifest, NULL);
+					sendtblspclinks = false;
 				}
-				else
-					sendDir(".", 1, false, tablespaces, true,
-							&manifest, NULL);
+
+				/* Then the bulk of the files... */
+				sendDir(".", 1, false, tablespaces, sendtblspclinks,
+						&manifest, NULL);
 
 				/* ... and pg_control after everything else. */
 				if (lstat(XLOG_CONTROL_FILE, &statbuf) != 0)
