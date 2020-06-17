@@ -32,8 +32,8 @@ pg_tz	   *log_timezone = NULL;
 
 
 static bool scan_directory_ci(const char *dirname,
-				  const char *fname, int fnamelen,
-				  char *canonname, int canonnamelen);
+							  const char *fname, int fnamelen,
+							  char *canonname, int canonnamelen);
 
 
 /*
@@ -357,7 +357,7 @@ pg_tzset_offset(long gmtoffset)
  * is to ensure that log_timezone has a valid value before any logging GUC
  * variables could become set to values that require elog.c to provide
  * timestamps (e.g., log_line_prefix).  We may as well initialize
- * session_timestamp to something valid, too.
+ * session_timezone to something valid, too.
  */
 void
 pg_timezone_initialize(void)
