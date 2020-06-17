@@ -92,6 +92,7 @@ struct rule
 static struct pg_tm *gmtsub(pg_time_t const *, int32, struct pg_tm *);
 static bool increment_overflow(int *, int);
 static bool increment_overflow_time(pg_time_t *, int32);
+static int64 leapcorr(struct state const *, pg_time_t);
 static struct pg_tm *timesub(pg_time_t const *, int32, struct state const *,
 							 struct pg_tm *);
 static bool typesequiv(struct state const *, int, int);
@@ -477,12 +478,14 @@ tzloadbody(char const *name, char *canonname, struct state *sp, bool doextend,
 
 				for (i = 0; i < ts->timecnt; i++)
 					if (sp->timecnt == 0
-						|| sp->ats[sp->timecnt - 1] < ts->ats[i])
+						|| (sp->ats[sp->timecnt - 1]
+							< ts->ats[i] + leapcorr(sp, ts->ats[i])))
 						break;
 				while (i < ts->timecnt
 					   && sp->timecnt < TZ_MAX_TIMES)
 				{
-					sp->ats[sp->timecnt] = ts->ats[i];
+					sp->ats[sp->timecnt]
+						= ts->ats[i] + leapcorr(sp, ts->ats[i]);
 					sp->types[sp->timecnt] = (sp->typecnt
 											  + ts->types[i]);
 					sp->timecnt++;
@@ -1599,6 +1602,22 @@ increment_overflow_time(pg_time_t *tp, int32 j)
 		return true;
 	*tp += j;
 	return false;
+}
+
+static int64
+leapcorr(struct state const *sp, pg_time_t t)
+{
+	struct lsinfo const *lp;
+	int			i;
+
+	i = sp->leapcnt;
+	while (--i >= 0)
+	{
+		lp = &sp->lsis[i];
+		if (t >= lp->ls_trans)
+			return lp->ls_corr;
+	}
+	return 0;
 }
 
 /*
