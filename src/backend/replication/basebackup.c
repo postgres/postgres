@@ -58,6 +58,8 @@ typedef struct
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
 
+static int64 sendTablespace(char *path, char *oid, bool sizeonly,
+							struct backup_manifest_info *manifest);
 static int64 sendDir(const char *path, int basepathlen, bool sizeonly,
 					 List *tablespaces, bool sendtblspclinks,
 					 backup_manifest_info *manifest, const char *spcoid);
@@ -307,8 +309,7 @@ perform_base_backup(basebackup_options *opt)
 								 PROGRESS_BASEBACKUP_PHASE_WAIT_CHECKPOINT);
 	startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint, &starttli,
 								  labelfile, &tablespaces,
-								  tblspc_map_file,
-								  opt->progress, opt->sendtblspcmapfile);
+								  tblspc_map_file, opt->sendtblspcmapfile);
 
 	/*
 	 * Once do_pg_start_backup has been called, ensure that any failure causes
@@ -337,10 +338,7 @@ perform_base_backup(basebackup_options *opt)
 
 		/* Add a node for the base directory at the end */
 		ti = palloc0(sizeof(tablespaceinfo));
-		if (opt->progress)
-			ti->size = sendDir(".", 1, true, tablespaces, true, NULL, NULL);
-		else
-			ti->size = -1;
+		ti->size = -1;
 		tablespaces = lappend(tablespaces, ti);
 
 		/*
@@ -349,10 +347,19 @@ perform_base_backup(basebackup_options *opt)
 		 */
 		if (opt->progress)
 		{
+			pgstat_progress_update_param(PROGRESS_BASEBACKUP_PHASE,
+										 PROGRESS_BASEBACKUP_PHASE_ESTIMATE_BACKUP_SIZE);
+
 			foreach(lc, tablespaces)
 			{
 				tablespaceinfo *tmp = (tablespaceinfo *) lfirst(lc);
 
+				if (tmp->path == NULL)
+					tmp->size = sendDir(".", 1, true, tablespaces, true, NULL,
+										NULL);
+				else
+					tmp->size = sendTablespace(tmp->path, tmp->oid, true,
+											   NULL);
 				backup_total += tmp->size;
 			}
 		}
@@ -1145,7 +1152,7 @@ sendFileWithContent(const char *filename, const char *content,
  *
  * Only used to send auxiliary tablespaces, not PGDATA.
  */
-int64
+static int64
 sendTablespace(char *path, char *spcoid, bool sizeonly,
 			   backup_manifest_info *manifest)
 {
