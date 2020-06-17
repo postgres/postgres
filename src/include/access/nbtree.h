@@ -758,7 +758,7 @@ typedef struct BTDedupStateData
 	 * will not become posting list tuples do not appear in the array (they
 	 * are implicitly unchanged by deduplication pass).
 	 */
-	int			nintervals;		/* current size of intervals array */
+	int			nintervals;		/* current number of intervals in array */
 	BTDedupInterval intervals[MaxIndexTuplesPerPage];
 } BTDedupStateData;
 
