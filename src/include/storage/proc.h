@@ -76,6 +76,13 @@ struct XidCache
  */
 #define INVALID_PGPROCNO		PG_INT32_MAX
 
+typedef enum
+{
+	PROC_WAIT_STATUS_OK,
+	PROC_WAIT_STATUS_WAITING,
+	PROC_WAIT_STATUS_ERROR,
+} ProcWaitStatus;
+
 /*
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
  * currently-unused PGPROC structs that will be reallocated to new backends.
@@ -99,7 +106,7 @@ struct PGPROC
 	PGPROC	  **procgloballist; /* procglobal list that owns this PGPROC */
 
 	PGSemaphore sem;			/* ONE semaphore to sleep on */
-	int			waitStatus;		/* STATUS_WAITING, STATUS_OK or STATUS_ERROR */
+	ProcWaitStatus waitStatus;
 
 	Latch		procLatch;		/* generic latch for process */
 
@@ -315,8 +322,8 @@ extern bool HaveNFreeProcs(int n);
 extern void ProcReleaseLocks(bool isCommit);
 
 extern void ProcQueueInit(PROC_QUEUE *queue);
-extern int	ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable);
-extern PGPROC *ProcWakeup(PGPROC *proc, int waitStatus);
+extern ProcWaitStatus ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable);
+extern PGPROC *ProcWakeup(PGPROC *proc, ProcWaitStatus waitStatus);
 extern void ProcLockWakeup(LockMethod lockMethodTable, LOCK *lock);
 extern void CheckDeadLockAlert(void);
 extern bool IsWaitingForLock(void);

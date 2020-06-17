@@ -460,7 +460,7 @@ MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 	MemSet(proc, 0, sizeof(PGPROC));
 	proc->pgprocno = gxact->pgprocno;
 	SHMQueueElemInit(&(proc->links));
-	proc->waitStatus = STATUS_OK;
+	proc->waitStatus = PROC_WAIT_STATUS_OK;
 	/* We set up the gxact's VXID as InvalidBackendId/XID */
 	proc->lxid = (LocalTransactionId) xid;
 	pgxact->xid = xid;

@@ -1856,7 +1856,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	 */
 	PG_TRY();
 	{
-		if (ProcSleep(locallock, lockMethodTable) != STATUS_OK)
+		if (ProcSleep(locallock, lockMethodTable) != PROC_WAIT_STATUS_OK)
 		{
 			/*
 			 * We failed as a result of a deadlock, see CheckDeadLock(). Quit
@@ -1907,7 +1907,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 /*
  * Remove a proc from the wait-queue it is on (caller must know it is on one).
  * This is only used when the proc has failed to get the lock, so we set its
- * waitStatus to STATUS_ERROR.
+ * waitStatus to PROC_WAIT_STATUS_ERROR.
  *
  * Appropriate partition lock must be held by caller.  Also, caller is
  * responsible for signaling the proc if needed.
@@ -1923,7 +1923,7 @@ RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode)
 	LOCKMETHODID lockmethodid = LOCK_LOCKMETHOD(*waitLock);
 
 	/* Make sure proc is waiting */
-	Assert(proc->waitStatus == STATUS_WAITING);
+	Assert(proc->waitStatus == PROC_WAIT_STATUS_WAITING);
 	Assert(proc->links.next != NULL);
 	Assert(waitLock);
 	Assert(waitLock->waitProcs.size > 0);
@@ -1946,7 +1946,7 @@ RemoveFromWaitQueue(PGPROC *proc, uint32 hashcode)
 	/* Clean up the proc's own state, and pass it the ok/fail signal */
 	proc->waitLock = NULL;
 	proc->waitProcLock = NULL;
-	proc->waitStatus = STATUS_ERROR;
+	proc->waitStatus = PROC_WAIT_STATUS_ERROR;
 
 	/*
 	 * Delete the proclock immediately if it represents no already-held locks.
