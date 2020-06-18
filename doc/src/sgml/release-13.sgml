@@ -2663,7 +2663,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
       <para>
        Remove <link linkend="install-short">support</link> option
-       <option>--disable-float</option>8-byval (Peter Eisentraut)
+       <option>--disable-float8-byval</option> (Peter Eisentraut)
       </para>
 
       <para>
