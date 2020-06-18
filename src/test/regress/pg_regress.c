@@ -494,28 +494,6 @@ convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const ch
 
 	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", outputdir);
 
-#ifdef WIN32
-
-	/*
-	 * On Windows only, clean out the test tablespace dir, or create it if it
-	 * doesn't exist.  On other platforms we expect the Makefile to take care
-	 * of that.  (We don't migrate that functionality in here because it'd be
-	 * harder to cope with platform-specific issues such as SELinux.)
-	 *
-	 * XXX it would be better if pg_regress.c had nothing at all to do with
-	 * testtablespace, and this were handled by a .BAT file or similar on
-	 * Windows.  See pgsql-hackers discussion of 2008-01-18.
-	 */
-	if (directory_exists(testtablespace))
-		if (!rmtree(testtablespace, true))
-		{
-			fprintf(stderr, _("\n%s: could not remove test tablespace \"%s\"\n"),
-					progname, testtablespace);
-			exit(2);
-		}
-	make_directory(testtablespace);
-#endif
-
 	/* finally loop on each file and do the replacement */
 	for (name = names; *name; name++)
 	{
