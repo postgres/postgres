@@ -863,20 +863,22 @@ test_spinlock(void)
 	 */
 #ifndef HAVE_SPINLOCKS
 	{
+		uint32	i;
+
 		/*
 		 * Initialize enough spinlocks to advance counter close to
 		 * wraparound. It's too expensive to perform acquire/release for each,
 		 * as those may be syscalls when the spinlock emulation is used (and
 		 * even just atomic TAS would be expensive).
 		 */
-		for (uint32 i = 0; i < INT32_MAX - 100000; i++)
+		for (i = 0; i < INT32_MAX - 100000; i++)
 		{
 			slock_t lock;
 
 			SpinLockInit(&lock);
 		}
 
-		for (uint32 i = 0; i < 200000; i++)
+		for (i = 0; i < 200000; i++)
 		{
 			slock_t lock;
 
@@ -912,17 +914,18 @@ test_atomic_spin_nest(void)
 #define NUM_TEST_ATOMICS (NUM_SPINLOCK_SEMAPHORES + NUM_ATOMICS_SEMAPHORES + 27)
 	pg_atomic_uint32 atomics32[NUM_TEST_ATOMICS];
 	pg_atomic_uint64 atomics64[NUM_TEST_ATOMICS];
+	int		i;
 
 	SpinLockInit(&lock);
 
-	for (int i = 0; i < NUM_TEST_ATOMICS; i++)
+	for (i = 0; i < NUM_TEST_ATOMICS; i++)
 	{
 		pg_atomic_init_u32(&atomics32[i], 0);
 		pg_atomic_init_u64(&atomics64[i], 0);
 	}
 
 	/* just so it's not all zeroes */
-	for (int i = 0; i < NUM_TEST_ATOMICS; i++)
+	for (i = 0; i < NUM_TEST_ATOMICS; i++)
 	{
 		EXPECT_EQ_U32(pg_atomic_fetch_add_u32(&atomics32[i], i), 0);
 		EXPECT_EQ_U64(pg_atomic_fetch_add_u64(&atomics64[i], i), 0);
@@ -930,7 +933,7 @@ test_atomic_spin_nest(void)
 
 	/* test whether we can do atomic op with lock held */
 	SpinLockAcquire(&lock);
-	for (int i = 0; i < NUM_TEST_ATOMICS; i++)
+	for (i = 0; i < NUM_TEST_ATOMICS; i++)
 	{
 		EXPECT_EQ_U32(pg_atomic_fetch_sub_u32(&atomics32[i], i), i);
 		EXPECT_EQ_U32(pg_atomic_read_u32(&atomics32[i]), 0);
