@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 35;
+use Test::More tests => 36;
 
 # Initialize master node
 my $node_master = get_new_node('master');
@@ -364,15 +364,26 @@ my $is_replayed = $node_standby_2->safe_psql('postgres',
 	qq[SELECT 1 FROM replayed WHERE val = $newval]);
 is($is_replayed, qq(1), "standby_2 didn't replay master value $newval");
 
+# Drop any existing slots on the primary, for the follow-up tests.
+$node_master->safe_psql('postgres',
+	"SELECT pg_drop_replication_slot(slot_name) FROM pg_replication_slots;");
+
 # Test physical slot advancing and its durability.  Create a new slot on
 # the primary, not used by any of the standbys. This reserves WAL at creation.
 my $phys_slot = 'phys_slot';
 $node_master->safe_psql('postgres',
 	"SELECT pg_create_physical_replication_slot('$phys_slot', true);");
+# Generate some WAL, and switch to a new segment, used to check that
+# the previous segment is correctly getting recycled as the slot advancing
+# would recompute the minimum LSN calculated across all slots.
+my $segment_removed = $node_master->safe_psql('postgres',
+	'SELECT pg_walfile_name(pg_current_wal_lsn())');
+chomp($segment_removed);
 $node_master->psql(
 	'postgres', "
 	CREATE TABLE tab_phys_slot (a int);
-	INSERT INTO tab_phys_slot VALUES (generate_series(1,10));");
+	INSERT INTO tab_phys_slot VALUES (generate_series(1,10));
+	SELECT pg_switch_wal();");
 my $current_lsn =
   $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 chomp($current_lsn);
@@ -392,3 +403,9 @@ my $phys_restart_lsn_post = $node_master->safe_psql('postgres',
 chomp($phys_restart_lsn_post);
 ok( ($phys_restart_lsn_pre cmp $phys_restart_lsn_post) == 0,
 	"physical slot advance persists across restarts");
+
+# Check if the previous segment gets correctly recycled after the
+# server stopped cleanly, causing a shutdown checkpoint to be generated.
+my $master_data = $node_master->data_dir;
+ok(!-f "$master_data/pg_wal/$segment_removed",
+	"WAL segment $segment_removed recycled after physical slot advancing");
