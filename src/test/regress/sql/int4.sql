@@ -114,10 +114,6 @@ SELECT int2 '2' * int4 '2' = int4 '16' / int2 '4' AS true;
 
 SELECT int4 '1000' < int4 '999' AS false;
 
-SELECT 4! AS twenty_four;
-
-SELECT !!3 AS six;
-
 SELECT 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 AS ten;
 
 SELECT 2 + 2 / 2 AS three;

@@ -2315,3 +2315,44 @@ FROM (VALUES (0::numeric, 0::numeric),
 
 SELECT lcm(9999 * (10::numeric)^131068 + (10::numeric^131068 - 1), 2); -- overflow
 ERROR:  value overflows numeric format
+--
+-- Tests for factorial
+--
+SELECT 4!;
+ ?column? 
+----------
+       24
+(1 row)
+
+SELECT !!3;
+ ?column? 
+----------
+        6
+(1 row)
+
+SELECT factorial(15);
+   factorial   
+---------------
+ 1307674368000
+(1 row)
+
+SELECT 100000!;
+ERROR:  value overflows numeric format
+SELECT 0!;
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT -4!;
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT factorial(-4);
+ factorial 
+-----------
+         1
+(1 row)
+

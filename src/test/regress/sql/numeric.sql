@@ -1111,3 +1111,14 @@ FROM (VALUES (0::numeric, 0::numeric),
              (4232.820::numeric, 132.72000::numeric)) AS v(a, b);
 
 SELECT lcm(9999 * (10::numeric)^131068 + (10::numeric^131068 - 1), 2); -- overflow
+
+--
+-- Tests for factorial
+--
+SELECT 4!;
+SELECT !!3;
+SELECT factorial(15);
+SELECT 100000!;
+SELECT 0!;
+SELECT -4!;
+SELECT factorial(-4);
