@@ -2478,7 +2478,7 @@ TIMESTAMP WITH TIME ZONE '2004-10-19 10:23:54+02'
         A time zone abbreviation, for example <literal>PST</literal>.  Such a
         specification merely defines a particular offset from UTC, in
         contrast to full time zone names which can imply a set of daylight
-        savings transition-date rules as well.  The recognized abbreviations
+        savings transition rules as well.  The recognized abbreviations
         are listed in the <literal>pg_timezone_abbrevs</literal> view (see <xref
         linkend="view-pg-timezone-abbrevs"/>).  You cannot set the
         configuration parameters <xref linkend="guc-timezone"/> or
@@ -2492,25 +2492,10 @@ TIMESTAMP WITH TIME ZONE '2004-10-19 10:23:54+02'
        <para>
         In addition to the timezone names and abbreviations,
         <productname>PostgreSQL</productname> will accept POSIX-style time zone
-        specifications of the form <replaceable>STD</replaceable><replaceable>offset</replaceable> or
-        <replaceable>STD</replaceable><replaceable>offset</replaceable><replaceable>DST</replaceable>, where
-        <replaceable>STD</replaceable> is a zone abbreviation, <replaceable>offset</replaceable> is a
-        numeric offset in hours west from UTC, and <replaceable>DST</replaceable> is an
-        optional daylight-savings zone abbreviation, assumed to stand for one
-        hour ahead of the given offset. For example, if <literal>EST5EDT</literal>
-        were not already a recognized zone name, it would be accepted and would
-        be functionally equivalent to United States East Coast time.  In this
-        syntax, a zone abbreviation can be a string of letters, or an
-        arbitrary string surrounded by angle brackets (<literal>&lt;&gt;</literal>).
-        When a daylight-savings zone abbreviation is present,
-        it is assumed to be used
-        according to the same daylight-savings transition rules used in the
-        IANA time zone database's <filename>posixrules</filename> entry.
-        In a standard <productname>PostgreSQL</productname> installation,
-        <filename>posixrules</filename> is the same as <literal>US/Eastern</literal>, so
-        that POSIX-style time zone specifications follow USA daylight-savings
-        rules.  If needed, you can adjust this behavior by replacing the
-        <filename>posixrules</filename> file.
+        specifications, as described in
+        <xref linkend="datetime-posix-timezone-specs"/>.  This option is not
+        normally preferable to using a named time zone, but it may be
+        necessary if no suitable IANA time zone entry is available.
        </para>
       </listitem>
      </itemizedlist>
@@ -2535,19 +2520,6 @@ TIMESTAMP WITH TIME ZONE '2004-10-19 10:23:54+02'
      abbreviations according to whatever they meant (or had most recently
      meant) on the specified date; but, as with the <literal>EST</literal> example
      above, this is not necessarily the same as local civil time on that date.
-    </para>
-
-    <para>
-     One should be wary that the POSIX-style time zone feature can
-     lead to silently accepting bogus input, since there is no check on the
-     reasonableness of the zone abbreviations.  For example, <literal>SET
-     TIMEZONE TO FOOBAR0</literal> will work, leaving the system effectively using
-     a rather peculiar abbreviation for UTC.
-     Another issue to keep in mind is that in POSIX time zone names,
-     positive offsets are used for locations <emphasis>west</emphasis> of Greenwich.
-     Everywhere else, <productname>PostgreSQL</productname> follows the
-     ISO-8601 convention that positive timezone offsets are <emphasis>east</emphasis>
-     of Greenwich.
     </para>
 
     <para>

@@ -555,6 +555,218 @@
 
   </sect1>
 
+  <sect1 id="datetime-posix-timezone-specs">
+  <title><acronym>POSIX</acronym> Time Zone Specifications</title>
+
+  <indexterm zone="datetime-posix-timezone-specs">
+   <primary>time zone</primary>
+   <secondary><acronym>POSIX</acronym>-style specification</secondary>
+  </indexterm>
+
+  <para>
+   <acronym>PostgreSQL</acronym> can accept time zone specifications that
+   are written according to the <acronym>POSIX</acronym> standard's rules
+   for the <varname>TZ</varname> environment
+   variable.  <acronym>POSIX</acronym> time zone specifications are
+   inadequate to deal with the complexity of real-world time zone history,
+   but there are sometimes reasons to use them.
+  </para>
+
+  <para>
+   A POSIX time zone specification has the form
+<synopsis>
+<replaceable>STD</replaceable> <replaceable>offset</replaceable> <optional> <replaceable>DST</replaceable> <optional> <replaceable>dstoffset</replaceable> </optional> <optional> , <replaceable>rule</replaceable> </optional> </optional>
+</synopsis>
+   (For readability, we show spaces between the fields, but spaces should
+   not be used in practice.)  The fields are:
+   <itemizedlist>
+    <listitem>
+     <para>
+      <replaceable>STD</replaceable> is the zone abbreviation to be used
+      for standard time.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <replaceable>offset</replaceable> is the zone's standard-time offset
+      from UTC.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <replaceable>DST</replaceable> is the zone abbreviation to be used
+      for daylight-savings time.  If this field and the following ones are
+      omitted, the zone uses a fixed UTC offset with no daylight-savings
+      rule.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <replaceable>dstoffset</replaceable> is the daylight-savings offset
+      from UTC.  This field is typically omitted, since it defaults to one
+      hour less than the standard-time <replaceable>offset</replaceable>,
+      which is usually the right thing.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <replaceable>rule</replaceable> defines the rule for when daylight
+      savings is in effect, as described below.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   In this syntax, a zone abbreviation can be a string of letters, such
+   as <literal>EST</literal>, or an arbitrary string surrounded by angle
+   brackets, such as <literal>&lt;UTC-05&gt;</literal>.
+   Note that the zone abbreviations given here are only used for output,
+   and even then only in some timestamp output formats.  The zone
+   abbreviations recognized in timestamp input are determined as explained
+   in <xref linkend="datetime-config-files"/>.
+  </para>
+
+  <para>
+   The offset fields specify the hours, and optionally minutes and seconds,
+   difference from UTC.  They have the format
+   <replaceable>hh</replaceable><optional><literal>:</literal><replaceable>mm</replaceable><optional><literal>:</literal><replaceable>ss</replaceable></optional></optional>
+   optionally with a leading sign (<literal>+</literal>
+   or <literal>-</literal>).  The positive sign is used for
+   zones <emphasis>west</emphasis> of Greenwich.  (Note that this is the
+   opposite of the ISO-8601 sign convention used elsewhere in
+   <acronym>PostgreSQL</acronym>.)  <replaceable>hh</replaceable> can have
+   one or two digits; <replaceable>mm</replaceable>
+   and <replaceable>ss</replaceable> (if used) must have two.
+  </para>
+
+  <para>
+   The daylight-savings transition <replaceable>rule</replaceable> has the
+   format
+<synopsis>
+<replaceable>dstdate</replaceable> <optional> <literal>/</literal> <replaceable>dsttime</replaceable> </optional> <literal>,</literal> <replaceable>stddate</replaceable> <optional> <literal>/</literal> <replaceable>stdtime</replaceable> </optional>
+</synopsis>
+   (As before, spaces should not be included in practice.)
+   The <replaceable>dstdate</replaceable>
+   and <replaceable>dsttime</replaceable> fields define when daylight-savings
+   time starts, while <replaceable>stddate</replaceable>
+   and <replaceable>stdtime</replaceable> define when standard time
+   starts.  (In some cases, notably in zones south of the equator, the
+   former might be later in the year than the latter.)  The date fields
+   have one of these formats:
+   <variablelist>
+    <varlistentry>
+     <term><replaceable>n</replaceable></term>
+     <listitem>
+      <para>
+       A plain integer denotes a day of the year, counting from zero to
+       364, or to 365 in leap years.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><literal>J</literal><replaceable>n</replaceable></term>
+     <listitem>
+      <para>
+       In this form, <replaceable>n</replaceable> counts from 1 to 365,
+       and February 29 is not counted even if it is present.  (Thus, a
+       transition occurring on February 29 could not be specified this
+       way.  However, days after February have the same numbers whether
+       it's a leap year or not, so that this form is usually more useful
+       than the plain-integer form for transitions on fixed dates.)
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><literal>M</literal><replaceable>m</replaceable><literal>.</literal><replaceable>n</replaceable><literal>.</literal><replaceable>d</replaceable></term>
+     <listitem>
+      <para>
+       This form specifies a transition that always happens during the same
+       month and on the same day of the week.  <replaceable>m</replaceable>
+       identifies the month, from 1 to 12.  <replaceable>n</replaceable>
+       specifies the <replaceable>n</replaceable>'th occurrence of the
+       weekday identified by <replaceable>d</replaceable>.
+       <replaceable>n</replaceable> is a number between 1 and 4, or 5
+       meaning the last occurrence of that weekday in the month (which
+       could be the fourth or the fifth).  <replaceable>d</replaceable> is
+       a number between 0 and 6, with 0 indicating Sunday.
+       For example, <literal>M3.2.0</literal> means <quote>the second
+       Sunday in March</quote>.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <note>
+   <para>
+    The <literal>M</literal> format is sufficient to describe many common
+    daylight-savings transition laws.  But note that none of these variants
+    can deal with daylight-savings law changes, so in practice the
+    historical data stored for named time zones (in the IANA time zone
+    database) is necessary to interpret past time stamps correctly.
+   </para>
+  </note>
+
+  <para>
+   The time fields in a transition rule have the same format as the offset
+   fields described previously, except that they cannot contain signs.
+   They define the current local time at which the change to the other
+   time occurs.  If omitted, they default to <literal>02:00:00</literal>.
+  </para>
+
+  <para>
+   If a daylight-savings abbreviation is given but the
+   transition <replaceable>rule</replaceable> field is omitted,
+   <productname>PostgreSQL</productname> attempts to determine the
+   transition times by consulting the <filename>posixrules</filename> file
+   in the IANA time zone database.  This file has the same format as a
+   full time zone entry, but only its transition timing rules are used,
+   not its UTC offsets.  Typically, this file has the same contents as the
+   <literal>US/Eastern</literal> file, so that POSIX-style time zone
+   specifications follow USA daylight-savings rules.  If needed, you can
+   adjust this behavior by replacing the <filename>posixrules</filename>
+   file.
+  </para>
+
+  <note>
+   <para>
+    The facility to consult a <filename>posixrules</filename> file has
+    been deprecated by IANA, and it is likely to go away in the future.
+    One bug in this feature, which is unlikely to be fixed before it
+    disappears, is that it fails to apply DST rules to dates after 2038.
+   </para>
+  </note>
+
+  <para>
+   If the <filename>posixrules</filename> file is not present,
+   the fallback behavior is to use the
+   rule <literal>M3.2.0,M11.1.0</literal>, which corresponds to USA
+   practice as of 2020 (that is, spring forward on the second Sunday of
+   March, fall back on the first Sunday of November, both transitions
+   occurring at 2AM prevailing time).
+  </para>
+
+  <para>
+   As an example, <literal>CET-1CEST,M3.5.0,M10.5.0/3</literal> describes
+   current (as of 2020) timekeeping practice in Paris.  This specification
+   says that standard time has the abbreviation <literal>CET</literal> and
+   is one hour ahead (east) of UTC; daylight savings time has the
+   abbreviation <literal>CEST</literal> and is implicitly two hours ahead
+   of UTC; daylight savings time begins on the last Sunday in March at 2AM
+   CET and ends on the last Sunday in October at 3AM CEST.
+  </para>
+
+  <para>
+   One should be wary that it is easy to misspell a POSIX-style time zone
+   specification, since there is no check on the reasonableness of the
+   zone abbreviation(s).  For example, <literal>SET TIMEZONE TO
+   FOOBAR0</literal> will work, leaving the system effectively using a
+   rather peculiar abbreviation for UTC.
+  </para>
+
+  </sect1>
+
   <sect1 id="datetime-units-history">
   <title>History of Units</title>
 
