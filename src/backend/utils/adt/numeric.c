@@ -2946,6 +2946,10 @@ numeric_fac(PG_FUNCTION_ARGS)
 	NumericVar	fact;
 	NumericVar	result;
 
+	if (num < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("factorial of a negative number is undefined")));
 	if (num <= 1)
 	{
 		res = make_result(&const_one);
