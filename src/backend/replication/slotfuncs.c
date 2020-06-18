@@ -621,6 +621,13 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 	values[0] = NameGetDatum(&MyReplicationSlot->data.name);
 	nulls[0] = false;
 
+	/*
+	 * Recompute the minimum LSN and xmin across all slots to adjust with the
+	 * advancing potentially done.
+	 */
+	ReplicationSlotsComputeRequiredXmin(false);
+	ReplicationSlotsComputeRequiredLSN();
+
 	ReplicationSlotRelease();
 
 	/* Return the reached position. */
