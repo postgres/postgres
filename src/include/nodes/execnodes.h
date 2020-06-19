@@ -2102,6 +2102,27 @@ typedef struct GroupState
 } GroupState;
 
 /* ---------------------
+ *	per-worker aggregate information
+ * ---------------------
+ */
+typedef struct AggregateInstrumentation
+{
+	Size		hash_mem_peak;	/* peak hash table memory usage */
+	uint64		hash_disk_used; /* kB of disk space used */
+	int			hash_batches_used;	/* batches used during entire execution */
+} AggregateInstrumentation;
+
+/* ----------------
+ *	 Shared memory container for per-worker aggregate information
+ * ----------------
+ */
+typedef struct SharedAggInfo
+{
+	int			num_workers;
+	AggregateInstrumentation sinstrument[FLEXIBLE_ARRAY_MEMBER];
+} SharedAggInfo;
+
+/* ---------------------
  *	AggState information
  *
  *	ss.ss_ScanTupleSlot refers to output of underlying plan.
@@ -2190,6 +2211,7 @@ typedef struct AggState
 	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
 										 * ->hash_pergroup */
 	ProjectionInfo *combinedproj;	/* projection machinery */
+	SharedAggInfo *shared_info; /* one entry per worker */
 } AggState;
 
 /* ----------------

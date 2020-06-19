@@ -3051,29 +3051,111 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 	Agg		   *agg = (Agg *) aggstate->ss.ps.plan;
 	int64		memPeakKb = (aggstate->hash_mem_peak + 1023) / 1024;
 
-	Assert(IsA(aggstate, AggState));
-
 	if (agg->aggstrategy != AGG_HASHED &&
 		agg->aggstrategy != AGG_MIXED)
 		return;
 
-	if (es->costs && aggstate->hash_planned_partitions > 0)
+	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-		ExplainPropertyInteger("Planned Partitions", NULL,
-							   aggstate->hash_planned_partitions, es);
+
+		if (es->costs && aggstate->hash_planned_partitions > 0)
+		{
+			ExplainPropertyInteger("Planned Partitions", NULL,
+								   aggstate->hash_planned_partitions, es);
+		}
+
+		if (!es->analyze)
+			return;
+
+		/* EXPLAIN ANALYZE */
+		ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb, es);
+		if (aggstate->hash_batches_used > 0)
+		{
+			ExplainPropertyInteger("Disk Usage", "kB",
+								   aggstate->hash_disk_used, es);
+			ExplainPropertyInteger("HashAgg Batches", NULL,
+								   aggstate->hash_batches_used, es);
+		}
+	}
+	else
+	{
+		bool		gotone = false;
+
+		if (es->costs && aggstate->hash_planned_partitions > 0)
+		{
+			ExplainIndentText(es);
+			appendStringInfo(es->str, "Planned Partitions: %d",
+							 aggstate->hash_planned_partitions);
+			gotone = true;
+		}
+
+		if (!es->analyze)
+		{
+			if (gotone)
+				appendStringInfoChar(es->str, '\n');
+			return;
+		}
+
+		if (!gotone)
+			ExplainIndentText(es);
+		else
+			appendStringInfoString(es->str, "  ");
+
+		appendStringInfo(es->str, "Peak Memory Usage: " INT64_FORMAT " kB",
+						 memPeakKb);
+
+		if (aggstate->hash_batches_used > 0)
+			appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT " kB  HashAgg Batches: %d",
+							 aggstate->hash_disk_used,
+							 aggstate->hash_batches_used);
+		appendStringInfoChar(es->str, '\n');
 	}
 
-	if (!es->analyze)
-		return;
-
-	/* EXPLAIN ANALYZE */
-	ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb, es);
-	if (aggstate->hash_batches_used > 0)
+	/* Display stats for each parallel worker */
+	if (es->analyze && aggstate->shared_info != NULL)
 	{
-		ExplainPropertyInteger("Disk Usage", "kB",
-							   aggstate->hash_disk_used, es);
-		ExplainPropertyInteger("HashAgg Batches", NULL,
-							   aggstate->hash_batches_used, es);
+		for (int n = 0; n < aggstate->shared_info->num_workers; n++)
+		{
+			AggregateInstrumentation *sinstrument;
+			uint64		hash_disk_used;
+			int			hash_batches_used;
+
+			sinstrument = &aggstate->shared_info->sinstrument[n];
+			hash_disk_used = sinstrument->hash_disk_used;
+			hash_batches_used = sinstrument->hash_batches_used;
+			memPeakKb = (sinstrument->hash_mem_peak + 1023) / 1024;
+
+			if (es->workers_state)
+				ExplainOpenWorker(n, es);
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+			{
+				ExplainIndentText(es);
+
+				appendStringInfo(es->str, "Peak Memory Usage: " INT64_FORMAT " kB",
+								 memPeakKb);
+
+				if (hash_batches_used > 0)
+					appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT " kB  HashAgg Batches: %d",
+									 hash_disk_used, hash_batches_used);
+				appendStringInfoChar(es->str, '\n');
+			}
+			else
+			{
+				ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb,
+									   es);
+				if (hash_batches_used > 0)
+				{
+					ExplainPropertyInteger("Disk Usage", "kB", hash_disk_used,
+										   es);
+					ExplainPropertyInteger("HashAgg Batches", NULL,
+										   hash_batches_used, es);
+				}
+			}
+
+			if (es->workers_state)
+				ExplainCloseWorker(n, es);
+		}
 	}
 }
 
