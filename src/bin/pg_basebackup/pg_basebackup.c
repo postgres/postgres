@@ -892,8 +892,12 @@ writeTarData(
 #ifdef HAVE_LIBZ
 	if (ztarfile != NULL)
 	{
+		errno = 0;
 		if (gzwrite(ztarfile, buf, r) != r)
 		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			pg_log_error("could not write to compressed file \"%s\": %s",
 						 current_file, get_gz_error(ztarfile));
 			exit(1);
@@ -902,8 +906,12 @@ writeTarData(
 	else
 #endif
 	{
+		errno = 0;
 		if (fwrite(buf, r, 1, tarfile) != 1)
 		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			pg_log_error("could not write to file \"%s\": %m", current_file);
 			exit(1);
 		}
@@ -1596,8 +1604,12 @@ ReceiveAndUnpackTarFile(PGconn *conn, PGresult *res, int rownum)
 				continue;
 			}
 
+			errno = 0;
 			if (fwrite(copybuf, r, 1, file) != 1)
 			{
+				/* if write didn't set errno, assume problem is no disk space */
+				if (errno == 0)
+					errno = ENOSPC;
 				pg_log_error("could not write to file \"%s\": %m", filename);
 				exit(1);
 			}
