@@ -23,7 +23,7 @@
 #define CONDITION_VARIABLE_H
 
 #include "storage/proclist_types.h"
-#include "storage/s_lock.h"
+#include "storage/spin.h"
 
 typedef struct
 {

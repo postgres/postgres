@@ -20,7 +20,6 @@
 
 #include "port/atomics.h"
 #include "storage/proclist_types.h"
-#include "storage/s_lock.h"
 
 struct PGPROC;
 
