@@ -1095,6 +1095,7 @@ _bt_sort_dedup_finish_pending(BTWriteState *wstate, BTPageState *state,
 		pfree(postingtuple);
 	}
 
+	dstate->nmaxitems = 0;
 	dstate->nhtids = 0;
 	dstate->nitems = 0;
 	dstate->phystupsize = 0;
@@ -1310,6 +1311,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 
 		dstate = (BTDedupState) palloc(sizeof(BTDedupStateData));
 		dstate->deduplicate = true; /* unused */
+		dstate->nmaxitems = 0;	/* unused */
 		dstate->maxpostingsize = 0; /* set later */
 		/* Metadata about base tuple of current pending posting list */
 		dstate->base = NULL;

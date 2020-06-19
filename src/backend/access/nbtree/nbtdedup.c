@@ -62,7 +62,6 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 	Page		page = BufferGetPage(buf);
 	BTPageOpaque opaque;
 	Page		newpage;
-	int			newpagendataitems = 0;
 	OffsetNumber deletable[MaxIndexTuplesPerPage];
 	BTDedupState state;
 	int			ndeletable = 0;
@@ -124,6 +123,7 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 	 */
 	state = (BTDedupState) palloc(sizeof(BTDedupStateData));
 	state->deduplicate = true;
+	state->nmaxitems = 0;
 	state->maxpostingsize = Min(BTMaxItemSize(page) / 2, INDEX_SIZE_MASK);
 	/* Metadata about base tuple of current pending posting list */
 	state->base = NULL;
@@ -204,26 +204,25 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 			 * reset the state and move on without modifying the page.
 			 */
 			pagesaving += _bt_dedup_finish_pending(newpage, state);
-			newpagendataitems++;
 
 			if (singlevalstrat)
 			{
 				/*
 				 * Single value strategy's extra steps.
 				 *
-				 * Lower maxpostingsize for sixth and final item that might be
-				 * deduplicated by current deduplication pass.  When sixth
-				 * item formed/observed, stop deduplicating items.
+				 * Lower maxpostingsize for sixth and final large posting list
+				 * tuple at the point where 5 maxpostingsize-capped tuples
+				 * have either been formed or observed.
 				 *
-				 * Note: It's possible that this will be reached even when
-				 * current deduplication pass has yet to merge together some
-				 * existing items.  It doesn't matter whether or not the
-				 * current call generated the maxpostingsize-capped duplicate
-				 * tuples at the start of the page.
+				 * When a sixth maxpostingsize-capped item is formed/observed,
+				 * stop merging together tuples altogether.  The few tuples
+				 * that remain at the end of the page won't be merged together
+				 * at all (at least not until after a future page split takes
+				 * place).
 				 */
-				if (newpagendataitems == 5)
+				if (state->nmaxitems == 5)
 					_bt_singleval_fillfactor(page, state, newitemsz);
-				else if (newpagendataitems == 6)
+				else if (state->nmaxitems == 6)
 				{
 					state->deduplicate = false;
 					singlevalstrat = false; /* won't be back here */
@@ -237,7 +236,6 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 
 	/* Handle the last item */
 	pagesaving += _bt_dedup_finish_pending(newpage, state);
-	newpagendataitems++;
 
 	/*
 	 * If no items suitable for deduplication were found, newpage must be
@@ -404,7 +402,24 @@ _bt_dedup_save_htid(BTDedupState state, IndexTuple itup)
 						   (state->nhtids + nhtids) * sizeof(ItemPointerData));
 
 	if (mergedtupsz > state->maxpostingsize)
+	{
+		/*
+		 * Count this as an oversized item for single value strategy, though
+		 * only when there are 50 TIDs in the final posting list tuple.  This
+		 * limit (which is fairly arbitrary) avoids confusion about how many
+		 * 1/6 of a page tuples have been encountered/created by the current
+		 * deduplication pass.
+		 *
+		 * Note: We deliberately don't consider which deduplication pass
+		 * merged together tuples to create this item (could be a previous
+		 * deduplication pass, or current pass).  See _bt_do_singleval()
+		 * comments.
+		 */
+		if (state->nhtids > 50)
+			state->nmaxitems++;
+
 		return false;
+	}
 
 	/*
 	 * Save heap TIDs to pending posting list tuple -- itup can be merged into
