@@ -23,7 +23,7 @@
   </glossentry>
 
   <glossentry id="glossary-aggregate">
-   <glossterm>Aggregate function</glossterm>
+   <glossterm>Aggregate function (routine)</glossterm>
    <glossdef>
     <para>
      A <glossterm linkend="glossary-function">function</glossterm> that
@@ -37,6 +37,11 @@
     </para>
     <glossseealso otherterm="glossary-window-function" />
    </glossdef>
+  </glossentry>
+
+  <glossentry>
+   <glossterm>Analytic function</glossterm>
+   <glosssee otherterm="glossary-window-function" />
   </glossentry>
 
   <glossentry id="glossary-analyze">
@@ -54,12 +59,11 @@
      (Don't confuse this term with the <literal>ANALYZE</literal> option
      to the <xref linkend="sql-explain"/> command.)
     </para>
+    <para>
+     For more information, see
+     <xref linkend="sql-analyze"/>.
+    </para>
    </glossdef>
-  </glossentry>
-
-  <glossentry>
-   <glossterm>Analytic function</glossterm>
-   <glosssee otherterm="glossary-window-function" />
   </glossentry>
 
   <glossentry id="glossary-atomic">
@@ -98,8 +102,7 @@
    <glossdef>
     <para>
      An element with a certain name and data type found within a
-     <glossterm linkend="glossary-tuple">tuple</glossterm> or
-     <glossterm linkend="glossary-table">table</glossterm>.
+     <glossterm linkend="glossary-tuple">tuple</glossterm>.
     </para>
    </glossdef>
   </glossentry>
@@ -389,36 +392,12 @@
    <glosssee otherterm="glossary-data-directory" />
   </glossentry>
 
-  <glossentry id="glossary-data-directory">
-   <glossterm>Data directory</glossterm>
-   <glossdef>
-    <para>
-     The base directory on the filesystem of a
-     <glossterm linkend="glossary-server">server</glossterm> that contains all
-     data files and subdirectories associated with an
-     <glossterm linkend="glossary-instance">instance</glossterm> (with the
-     exception of <glossterm linkend="glossary-tablespace">tablespaces</glossterm>).
-     The environment variable <literal>PGDATA</literal> is commonly used to
-     refer to the
-     <glossterm linkend="glossary-data-directory">data directory</glossterm>.
-    </para>
-    <para>
-     An <glossterm linkend="glossary-instance">instance</glossterm>'s storage
-     space comprises the data directory plus any additional tablespaces.
-    </para>
-    <para>
-     For more information, see
-     <xref linkend="storage-file-layout"/>.
-    </para>
-   </glossdef>
-  </glossentry>
-
   <glossentry id="glossary-database">
    <glossterm>Database</glossterm>
    <glossdef>
     <para>
      A named collection of
-     <glossterm linkend="glossary-sql-object">SQL objects</glossterm>.
+     <glossterm linkend="glossary-sql-object">local SQL objects</glossterm>.
     </para>
     <para>
      For more information, see
@@ -427,9 +406,51 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-db-cluster">
+   <glossterm>Database cluster</glossterm>
+   <glossdef>
+    <para>
+     A collection of databases and global SQL objects,
+     and their common static and dynamic metadata.
+     Sometimes referred to as a
+     <firstterm>cluster</firstterm>.
+    </para>
+    <para>
+     In <productname>PostgreSQL</productname>, the term
+     <firstterm>cluster</firstterm> is also sometimes used to refer to an instance.
+     (Don't confuse this term with the SQL command <command>CLUSTER</command>.)
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry>
    <glossterm>Database server</glossterm>
    <glosssee otherterm="glossary-instance" />
+  </glossentry>
+
+  <glossentry id="glossary-data-directory">
+   <glossterm>Data directory</glossterm>
+   <glossdef>
+    <para>
+     The base directory on the filesystem of a
+     <glossterm linkend="glossary-server">server</glossterm> that contains all
+     data files and subdirectories associated with a
+     <glossterm linkend="glossary-db-cluster">database cluster</glossterm>
+     (with the exception of
+     <glossterm linkend="glossary-tablespace">tablespaces</glossterm>,
+     and optionally <glossterm linkend="glossary-wal">WAL</glossterm>).
+     The environment variable <literal>PGDATA</literal> is commonly used to
+     refer to the data directory.
+    </para>
+    <para>
+     A <glossterm linkend="glossary-db-cluster">cluster</glossterm>'s storage
+     space comprises the data directory plus any additional tablespaces.
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="storage-file-layout"/>.
+    </para>
+   </glossdef>
   </glossentry>
 
   <glossentry id="glossary-data-page">
@@ -578,7 +599,7 @@
   </glossentry>
 
   <glossentry id="glossary-foreign-table">
-   <glossterm>Foreign table</glossterm>
+   <glossterm>Foreign table (relation)</glossterm>
    <glossdef>
     <para>
      A <glossterm linkend="glossary-relation">relation</glossterm> which appears to have
@@ -631,12 +652,20 @@
   </glossentry>
 
   <glossentry id="glossary-function">
-   <glossterm>Function</glossterm>
+   <glossterm>Function (routine)</glossterm>
    <glossdef>
     <para>
-     Any defined transformation of data. Many functions are already defined
-     within <productname>PostgreSQL</productname> itself, but user-defined
-     ones can also be added.
+     A type of routine that receives zero or more arguments, returns zero or more
+     output values, and is constrained to run within one transaction.
+     Functions are invoked as part of a query, for example via
+     <command>SELECT</command>.
+     Certain functions can return
+     <glossterm linkend="glossary-result-set">sets</glossterm>; those are
+     called <firstterm>set-returning functions</firstterm>.
+    </para>
+    <para>
+     Functions can also be used for
+     <glossterm linkend="glossary-trigger">triggers</glossterm> to invoke.
     </para>
     <para>
      For more information, see
@@ -689,13 +718,12 @@
   </glossentry>
 
   <glossentry id="glossary-index">
-   <glossterm>Index</glossterm>
+   <glossterm>Index (relation)</glossterm>
    <glossdef>
     <para>
      A <glossterm linkend="glossary-relation">relation</glossterm> that contains
      data derived from a <glossterm linkend="glossary-table">table</glossterm>
-     (or <glossterm linkend="glossary-relation">relation</glossterm> types
-     such as a <glossterm linkend="glossary-materialized-view">materialized view</glossterm>).
+     or <glossterm linkend="glossary-materialized-view">materialized view</glossterm>.
      Its internal structure supports fast retrieval of and access to the original
      data.
     </para>
@@ -724,14 +752,12 @@
    <glossterm>Instance</glossterm>
    <glossdef>
     <para>
-     A set of databases and accompanying global SQL objects that are stored in
-     the same <glossterm linkend="glossary-data-directory">data directory</glossterm>
-     in a single <glossterm linkend="glossary-server">server</glossterm>.
-     If running, one
+     A group of backend and auxiliary processes that communicate using
+     a common shared memory area.  One
      <glossterm linkend="glossary-postmaster">postmaster process</glossterm>
-     manages a group of backend and auxiliary processes that communicate
-     using a common <glossterm linkend="glossary-shared-memory">shared memory</glossterm>
-     area.  Many instances can run on the same
+     manages the instance; one instance manages exactly one
+     <glossterm linkend="glossary-db-cluster">database cluster</glossterm>
+     with all its databases.  Many instances can run on the same
      <glossterm linkend="glossary-server">server</glossterm>
      as long as their <acronym>TCP</acronym> ports do not conflict.
     </para>
@@ -739,13 +765,9 @@
      The instance handles all key features of a <acronym>DBMS</acronym>:
      read and write access to files and shared memory,
      assurance of the <acronym>ACID</acronym> properties,
-     <glossterm linkend="glossary-connection">connections</glossterm> to client processes,
+     <glossterm linkend="glossary-connection">connections</glossterm> to
+     <glossterm linkend="glossary-client">client processes</glossterm>,
      privilege verification, crash recovery, replication, etc.
-    </para>
-    <para>
-     In <productname>PostgreSQL</productname>, the term
-     <firstterm>cluster</firstterm> is also sometimes used to refer to an instance.
-     (Don't confuse this term with the SQL command <command>CLUSTER</command>.)
     </para>
    </glossdef>
   </glossentry>
@@ -769,8 +791,10 @@
    <glossterm>Join</glossterm>
    <glossdef>
     <para>
-     An <acronym>SQL</acronym> keyword used in <command>SELECT</command> statements for
-     combining data from multiple <glossterm linkend="glossary-relation">relations</glossterm>.
+     An operation and <acronym>SQL</acronym> keyword used in
+     <glossterm linkend="glossary-query">queries</glossterm>
+     for combining data from multiple
+     <glossterm linkend="glossary-relation">relations</glossterm>.
     </para>
    </glossdef>
   </glossentry>
@@ -781,10 +805,10 @@
     <para>
      A means of identifying a <glossterm linkend="glossary-tuple">row</glossterm> within a
      <glossterm linkend="glossary-table">table</glossterm> or
-     <glossterm linkend="glossary-relation">relation</glossterm> by
+     other <glossterm linkend="glossary-relation">relation</glossterm> by
      values contained within one or more
      <glossterm linkend="glossary-attribute">attributes</glossterm>
-     in that table.
+     in that relation.
     </para>
    </glossdef>
   </glossentry>
@@ -811,15 +835,6 @@
      <xref linkend="logfile-maintenance"/>.
     </para>
    </glossdef>
-  </glossentry>
-
-  <glossentry id="glossary-log-record">
-   <glossterm>Log record</glossterm>
-    <glossdef>
-     <para>
-      Archaic term for a <glossterm linkend="glossary-wal-record">WAL record</glossterm>.
-     </para>
-    </glossdef>
   </glossentry>
 
   <glossentry id="glossary-logged">
@@ -855,6 +870,15 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-log-record">
+   <glossterm>Log record</glossterm>
+    <glossdef>
+     <para>
+      Archaic term for a <glossterm linkend="glossary-wal-record">WAL record</glossterm>.
+     </para>
+    </glossdef>
+  </glossentry>
+
   <glossentry>
    <glossterm>Master (server)</glossterm>
    <glosssee otherterm="glossary-primary-server" />
@@ -883,12 +907,13 @@
   </glossentry>
 
   <glossentry id="glossary-materialized-view">
-   <glossterm>Materialized view</glossterm>
+   <glossterm>Materialized view (relation)</glossterm>
    <glossdef>
     <para>
      A <glossterm linkend="glossary-relation">relation</glossterm> that is
-     defined in the same way that a <glossterm linkend="glossary-view">view</glossterm>
-     is, but stores data in the same way that a
+     defined by a <command>SELECT</command> statement
+     (just like a <glossterm linkend="glossary-view">view</glossterm>),
+     but stores data in the same way that a
      <glossterm linkend="glossary-table">table</glossterm> does. It cannot be
      modified via <command>INSERT</command>, <command>UPDATE</command>, or
      <command>DELETE</command> operations.
@@ -949,6 +974,8 @@
     <para>
      One of several disjoint (not overlapping) subsets of a larger set.
     </para>
+   </glossdef>
+   <glossdef>
     <para>
      In reference to a
      <glossterm linkend="glossary-partitioned-table">partitioned table</glossterm>:
@@ -961,16 +988,18 @@
    </glossdef>
    <glossdef>
     <para>
-     In reference to a <glossterm linkend="glossary-window-function">window function</glossterm>:
+     In reference to a <glossterm linkend="glossary-window-function">window function</glossterm>
+     in a <glossterm linkend="glossary-query">query</glossterm>,
      a partition is a user-defined criterion that identifies which neighboring
-     <glossterm linkend="glossary-tuple">rows</glossterm> can be considered by the
-     function.
+     <glossterm linkend="glossary-tuple">rows</glossterm>
+     of the <glossterm linkend="glossary-result-set">query's result set</glossterm>
+     can be considered by the function.
     </para>
    </glossdef>
   </glossentry>
 
   <glossentry id="glossary-partitioned-table">
-   <glossterm>Partitioned table</glossterm>
+   <glossterm>Partitioned table (relation)</glossterm>
    <glossdef>
     <para>
      A <glossterm linkend="glossary-relation">relation</glossterm> that is
@@ -997,20 +1026,6 @@
    </glossdef>
   </glossentry>
 
-  <glossentry id="glossary-primary-server">
-   <glossterm>Primary (server)</glossterm>
-   <glossdef>
-    <para>
-     When two or more <glossterm linkend="glossary-database">databases</glossterm>
-     are linked via <glossterm linkend="glossary-replication">replication</glossterm>,
-     the <glossterm linkend="glossary-server">server</glossterm>
-     that is considered the authoritative source of information is called
-     the <firstterm>primary</firstterm>,
-     also known as a <firstterm>master</firstterm>.
-    </para>
-   </glossdef>
-  </glossentry>
-
   <glossentry id="glossary-primary-key">
    <glossterm>Primary key</glossterm>
    <glossdef>
@@ -1031,19 +1046,29 @@
    </glossdef>
   </glossentry>
 
-  <glossentry id="glossary-procedure">
-   <glossterm>Procedure</glossterm>
+  <glossentry id="glossary-primary-server">
+   <glossterm>Primary (server)</glossterm>
    <glossdef>
     <para>
-     A defined set of instructions for manipulating data within a
-     <glossterm linkend="glossary-database">database</glossterm>.
-     A <glossterm linkend="glossary-procedure">procedure</glossterm> can
-     be written in a variety of programming languages. They are
-     similar to <glossterm linkend="glossary-function">functions</glossterm>,
-     but are different in that they must be invoked via the <command>CALL</command>
-     command rather than the <command>SELECT</command> or <command>PERFORM</command>
-     commands, and they are allowed to make transactional statements such
+     When two or more <glossterm linkend="glossary-database">databases</glossterm>
+     are linked via <glossterm linkend="glossary-replication">replication</glossterm>,
+     the <glossterm linkend="glossary-server">server</glossterm>
+     that is considered the authoritative source of information is called
+     the <firstterm>primary</firstterm>,
+     also known as a <firstterm>master</firstterm>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-procedure">
+   <glossterm>Procedure (routine)</glossterm>
+   <glossdef>
+    <para>
+     A type of routine.
+     Their distinctive qualities are that they do not return values,
+     and that they are allowed to make transactional statements such
      as <command>COMMIT</command> and <command>ROLLBACK</command>.
+     They are invoked via the <command>CALL</command> command.
     </para>
     <para>
      For more information, see
@@ -1115,6 +1140,11 @@
      <glossterm linkend="glossary-index">indexes</glossterm> are all relations.
     </para>
     <para>
+     More generically, a relation is a set of tuples; for example,
+     the result of a query is also a relation.
+    </para>
+    <para>
+     In <productname>PostgreSQL</productname>,
      <firstterm>Class</firstterm> is an archaic synonym for
      <firstterm>relation</firstterm>.
     </para>
@@ -1155,16 +1185,23 @@
    <glossterm>Result set</glossterm>
    <glossdef>
     <para>
-     A data structure transmitted from a
-     <glossterm linkend="glossary-backend">backend process</glossterm> to
-     a <glossterm linkend="glossary-client">client</glossterm> upon the
-     completion of an <acronym>SQL</acronym>
-     command, usually a <command>SELECT</command> but it can be an
+     A <glossterm linkend="glossary-relation">relation</glossterm> transmitted
+     from a <glossterm linkend="glossary-backend">backend process</glossterm>
+     to a <glossterm linkend="glossary-client">client</glossterm> upon the
+     completion of an <acronym>SQL</acronym> command, usually a
+     <command>SELECT</command> but it can be an
      <command>INSERT</command>, <command>UPDATE</command>, or
      <command>DELETE</command> command if the <literal>RETURNING</literal>
-     clause is specified. The data structure consists of zero or more
-     <glossterm linkend="glossary-tuple">rows</glossterm> with the same ordered set of
-     <glossterm linkend="glossary-attribute">attributes</glossterm>.
+     clause is specified.
+    </para>
+    <para>
+     The fact that a result set is a relation means that a query can be used
+     in the definition of another query, becoming a
+     <firstterm>subquery</firstterm>.
+    </para>
+   </glossdef>
+   <glossdef>
+    <para>
     </para>
    </glossdef>
   </glossentry>
@@ -1216,6 +1253,27 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-routine">
+   <glossterm>Routine</glossterm>
+   <glossdef>
+    <para>
+     A defined set of instructions stored in the database system
+     that can be invoked for execution.
+     A routine can be written in a variety of programming
+     languages.  Routines can be
+     <glossterm linkend="glossary-function">functions</glossterm>
+     (including set-returning functions and
+     <glossterm linkend="glossary-trigger">trigger functions</glossterm>),
+     <glossterm linkend="glossary-aggregate">aggregate functions</glossterm>,
+     and <glossterm linkend="glossary-procedure">procedures</glossterm>.
+    </para>
+    <para>
+     Many routines are already defined within <productname>PostgreSQL</productname>
+     itself, but user-defined ones can also be added.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry>
    <glossterm>Row</glossterm>
    <glosssee otherterm="glossary-tuple" />
@@ -1248,16 +1306,7 @@
      Each SQL object must reside in exactly one schema.
     </para>
     <para>
-     The names of SQL objects of the same type in the same schema are enforced
-     to be unique.
-     There is no restriction on reusing a name in multiple schemas.
-    </para>
-    <para>
-     All system-defined SQL objects reside in schema <literal>pg_catalog</literal>,
-     and commonly many user-defined SQL objects reside in the default schema
-     <literal>public</literal>,
-     but it is common and recommended that other schemas are created to hold
-     application-specific SQL objects.
+     All system-defined SQL objects reside in schema <literal>pg_catalog</literal>.
     </para>
    </glossdef>
    <glossdef>
@@ -1295,6 +1344,19 @@
     <para>
      For more information, see
      <xref linkend="sql-select"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-sequence">
+   <glossterm>Sequence (relation)</glossterm>
+   <glossdef>
+    <para>
+     A type of relation that is used to generate values.
+     Typically the generated values are sequential non-repeating numbers.
+     They are commonly used to generate surrogate
+     <glossterm linkend="glossary-primary-key">primary key</glossterm>
+     values.
     </para>
    </glossdef>
   </glossentry>
@@ -1339,19 +1401,6 @@
    </glossdef>
   </glossentry>
 
-  <glossentry id="glossary-sequence">
-   <glossterm>Sequence</glossterm>
-   <glossdef>
-    <para>
-     A type of relation that is used to generate values.
-     Typically the generated values are sequential non-repeating numbers.
-     They are commonly used to generate surrogate
-     <glossterm linkend="glossary-primary-key">primary key</glossterm>
-     values.
-    </para>
-   </glossdef>
-  </glossentry>
-
   <glossentry id="glossary-shared-memory">
    <glossterm>Shared memory</glossterm>
    <glossdef>
@@ -1378,33 +1427,43 @@
    </glossdef>
   </glossentry>
 
-  <glossentry>
-   <glossterm>Standby (server)</glossterm>
-   <glosssee otherterm="glossary-replica" />
-  </glossentry>
-
   <glossentry id="glossary-sql-object">
-   <glossterm>SQL Object</glossterm>
+   <glossterm>SQL object</glossterm>
     <glossdef>
      <para>
       Any object that can be created with a <command>CREATE</command>
       command.  Most objects are specific to one database, and are commonly
       known as <firstterm>local objects</firstterm>.
-      <glossterm linkend="glossary-role">Roles</glossterm>,
+     </para>
+     <para>
+      Most local objects belong to a specific
+      <glossterm linkend="glossary-schema">schema</glossterm> in their
+      containing database, such as
+      <glossterm linkend="glossary-relation">relations</glossterm> (all types),
+      <glossterm linkend="glossary-function">routines</glossterm> (all types),
+      data types, etc.
+      The names of such objects of the same type in the same schema
+      are enforced to be unique.
+     </para>
+     <para>
+      There also exist local objects that do not belong to schemas; some examples are
+      <glossterm linkend="glossary-extension">extensions</glossterm>,
+      <glossterm linkend="glossary-cast">data type casts</glossterm>, and
+      <glossterm linkend="glossary-foreign-data-wrapper">foreign data wrappers</glossterm>.
+      The names of such objects of the same type are enforced to be unique
+      within the database.
+     </para>
+     <para>
+      Other object types, such as
+      <glossterm linkend="glossary-role">roles</glossterm>,
       <glossterm linkend="glossary-tablespace">tablespaces</glossterm>,
       replication origins, subscriptions for logical replication, and
       databases themselves are not local SQL objects since they exist
       entirely outside of any specific database;
       they are called <firstterm>global objects</firstterm>.
+      The names of such objects are enforced to be unique within the whole
+      database cluster.
      </para>
-     <para>
-      Most local objects belong to a specific
-      <glossterm linkend="glossary-schema">schema</glossterm> in their containing database.
-      There also exist local objects that do not belong to schemas; some examples are
-      <glossterm linkend="glossary-extension">extensions</glossterm>,
-      <glossterm linkend="glossary-cast">data type casts</glossterm>, and
-      <glossterm linkend="glossary-foreign-data-wrapper">foreign data wrappers</glossterm>.
-    </para>
     <para>
       For more information, see
       <xref linkend="manage-ag-overview"/>.
@@ -1419,6 +1478,11 @@
      A series of documents that define the <acronym>SQL</acronym> language.
     </para>
    </glossdef>
+  </glossentry>
+
+  <glossentry>
+   <glossterm>Standby (server)</glossterm>
+   <glosssee otherterm="glossary-replica" />
   </glossentry>
 
   <glossentry id="glossary-stats-collector">
@@ -1489,8 +1553,8 @@
      which require storage beyond their definition in the
      <glossterm linkend="glossary-system-catalog">system catalog</glossterm>
      must belong to a single tablespace.
-     Initially, an instance contains a single usable tablespace which is
-     used as the default one for all SQL objects, called <literal>pg_default</literal>.
+     Initially, a database cluster contains a single usable tablespace which is
+     used as the default for all SQL objects, called <literal>pg_default</literal>.
     </para>
     <para>
      For more information, see
@@ -1577,6 +1641,18 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-tps">
+   <glossterm>Transactions per second (TPS)</glossterm>
+   <glossdef>
+    <para>
+     Average number of transactions that are executed per second,
+     totalled across all sessions active for a measured run.
+     This is used as a measure of the performance characteristics of
+     an instance.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-trigger">
    <glossterm>Trigger</glossterm>
    <glossdef>
@@ -1605,6 +1681,7 @@
      A collection of <glossterm linkend="glossary-attribute">attributes</glossterm>
      in a fixed order.
      That order may be defined by the <glossterm linkend="glossary-table">table</glossterm>
+     (or other <glossterm linkend="glossary-relation">relation</glossterm>)
      where the tuple is contained, in which case the tuple is often called a
      <firstterm>row</firstterm>.  It may also be defined by the structure of a
      result set, in which case it is sometimes called a <firstterm>record</firstterm>.
@@ -1818,28 +1895,32 @@
   </glossentry>
 
   <glossentry id="glossary-wal-writer">
-  <glossterm>WAL writer (process)</glossterm>
-  <glossdef>
-   <para>
-    A process that writes <glossterm linkend="glossary-wal-record">WAL records</glossterm>
-    from <glossterm linkend="glossary-shared-memory">shared memory</glossterm> to
-    <glossterm linkend="glossary-wal-file">WAL files</glossterm>.
-   </para>
-   <para>
-    For more information, see
-    <xref linkend="runtime-config-wal"/>.
-   </para>
-  </glossdef>
+   <glossterm>WAL writer (process)</glossterm>
+   <glossdef>
+    <para>
+     A process that writes <glossterm linkend="glossary-wal-record">WAL records</glossterm>
+     from <glossterm linkend="glossary-shared-memory">shared memory</glossterm> to
+     <glossterm linkend="glossary-wal-file">WAL files</glossterm>.
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="runtime-config-wal"/>.
+    </para>
+   </glossdef>
   </glossentry>
 
   <glossentry id="glossary-window-function">
-   <glossterm>Window function</glossterm>
+   <glossterm>Window function (routine)</glossterm>
    <glossdef>
     <para>
-     A type of <glossterm linkend="glossary-function">function</glossterm> whose
-     result is based on values found in
-     <glossterm linkend="glossary-tuple">rows</glossterm> of the same
-     <glossterm linkend="glossary-partition">partition</glossterm>.
+     A type of <glossterm linkend="glossary-function">function</glossterm>
+     used in a <glossterm linkend="glossary-query">query</glossterm>
+     that applies to a <glossterm linkend="glossary-partition">partition</glossterm>
+     of the query's <glossterm linkend="glossary-result-set">result set</glossterm>;
+     the function's result is based on values found in
+     <glossterm linkend="glossary-tuple">rows</glossterm> of the same partition or frame.
+    </para>
+    <para>
      All <glossterm linkend="glossary-aggregate">aggregate functions</glossterm>
      can be used as window functions, but window functions can also be
      used to, for example, give ranks to each of the rows in the partition.
@@ -1857,8 +1938,8 @@
    <glossdef>
     <para>
      The journal that keeps track of the changes in the
-     <glossterm linkend="glossary-instance">instance</glossterm> as user- and
-     system-invoked operations take place.
+     <glossterm linkend="glossary-db-cluster">database cluster</glossterm>
+     as user- and system-invoked operations take place.
      It comprises many individual
      <glossterm linkend="glossary-wal-record">WAL records</glossterm> written
      sequentially to <glossterm linkend="glossary-wal-file">WAL files</glossterm>.
