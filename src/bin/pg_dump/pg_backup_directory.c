@@ -356,10 +356,15 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
+	errno = 0;
 	if (dLen > 0 && cfwrite(data, dLen, ctx->dataFH) != dLen)
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		exit_horribly(modulename, "could not write to output file: %s\n",
 					  get_cfp_error(ctx->dataFH));
-
+	}
 
 	return;
 }
@@ -496,9 +501,15 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	unsigned char c = (unsigned char) i;
 	lclContext *ctx = (lclContext *) AH->formatData;
 
+	errno = 0;
 	if (cfwrite(&c, 1, ctx->dataFH) != 1)
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		exit_horribly(modulename, "could not write to output file: %s\n",
 					  get_cfp_error(ctx->dataFH));
+	}
 
 	return 1;
 }
@@ -526,9 +537,15 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
+	errno = 0;
 	if (cfwrite(buf, len, ctx->dataFH) != len)
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		exit_horribly(modulename, "could not write to output file: %s\n",
 					  get_cfp_error(ctx->dataFH));
+	}
 
 	return;
 }
