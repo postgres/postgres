@@ -758,6 +758,18 @@
   </para>
 
   <para>
+   The four timezone names <literal>EST5EDT</literal>,
+   <literal>CST6CDT</literal>, <literal>MST7MDT</literal>,
+   and <literal>PST8PDT</literal> look like they are POSIX zone
+   specifications.  However, they actually are treated as named time zones
+   because (for historical reasons) there are files by those names in the
+   IANA time zone database.  The practical implication of this is that
+   these zone names will produce valid historical USA daylight-savings
+   transitions, even when a plain POSIX specification would not due to
+   lack of a suitable <filename>posixrules</filename> file.
+  </para>
+
+  <para>
    One should be wary that it is easy to misspell a POSIX-style time zone
    specification, since there is no check on the reasonableness of the
    zone abbreviation(s).  For example, <literal>SET TIMEZONE TO

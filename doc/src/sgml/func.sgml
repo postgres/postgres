@@ -9131,18 +9131,22 @@ SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
    When adding an <type>interval</type> value to (or subtracting an
    <type>interval</type> value from) a <type>timestamp with time zone</type>
    value, the days component advances or decrements the date of the
-   <type>timestamp with time zone</type> by the indicated number of days.
+   <type>timestamp with time zone</type> by the indicated number of days,
+   keeping the time of day the same.
    Across daylight saving time changes (when the session time zone is set to a
    time zone that recognizes DST), this means <literal>interval '1 day'</literal>
    does not necessarily equal <literal>interval '24 hours'</literal>.
-   For example, with the session time zone set to <literal>CST7CDT</literal>,
-   <literal>timestamp with time zone '2005-04-02 12:00-07' + interval '1 day'</literal>
-   will produce <literal>timestamp with time zone '2005-04-03 12:00-06'</literal>,
-   while adding <literal>interval '24 hours'</literal> to the same initial
-   <type>timestamp with time zone</type> produces
-   <literal>timestamp with time zone '2005-04-03 13:00-06'</literal>, as there is
-   a change in daylight saving time at <literal>2005-04-03 02:00</literal> in time zone
-   <literal>CST7CDT</literal>.
+   For example, with the session time zone set
+   to <literal>America/Denver</literal>:
+<screen>
+SELECT timestamp with time zone '2005-04-02 12:00:00-07' + interval '1 day';
+<lineannotation>Result: </lineannotation><computeroutput>2005-04-03 12:00:00-06</computeroutput>
+SELECT timestamp with time zone '2005-04-02 12:00:00-07' + interval '24 hours';
+<lineannotation>Result: </lineannotation><computeroutput>2005-04-03 13:00:00-06</computeroutput>
+</screen>
+   This happens because an hour was skipped due to a change in daylight saving
+   time at <literal>2005-04-03 02:00:00</literal> in time zone
+   <literal>America/Denver</literal>.
   </para>
 
   <para>
