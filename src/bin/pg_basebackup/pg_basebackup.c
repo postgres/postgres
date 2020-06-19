@@ -992,8 +992,12 @@ writeTarData(WriteTarState *state, char *buf, int r)
 #ifdef HAVE_LIBZ
 	if (state->ztarfile != NULL)
 	{
+		errno = 0;
 		if (gzwrite(state->ztarfile, buf, r) != r)
 		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			pg_log_error("could not write to compressed file \"%s\": %s",
 						 state->filename, get_gz_error(state->ztarfile));
 			exit(1);
@@ -1002,8 +1006,12 @@ writeTarData(WriteTarState *state, char *buf, int r)
 	else
 #endif
 	{
+		errno = 0;
 		if (fwrite(buf, r, 1, state->tarfile) != 1)
 		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			pg_log_error("could not write to file \"%s\": %m",
 						 state->filename);
 			exit(1);
@@ -1691,8 +1699,12 @@ ReceiveTarAndUnpackCopyChunk(size_t r, char *copybuf, void *callback_data)
 			return;
 		}
 
+		errno = 0;
 		if (fwrite(copybuf, r, 1, state->file) != 1)
 		{
+			/* if write didn't set errno, assume problem is no disk space */
+			if (errno == 0)
+				errno = ENOSPC;
 			pg_log_error("could not write to file \"%s\": %m", state->filename);
 			exit(1);
 		}
@@ -1743,8 +1755,12 @@ ReceiveBackupManifestChunk(size_t r, char *copybuf, void *callback_data)
 {
 	WriteManifestState *state = callback_data;
 
+	errno = 0;
 	if (fwrite(copybuf, r, 1, state->file) != 1)
 	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
 		pg_log_error("could not write to file \"%s\": %m", state->filename);
 		exit(1);
 	}
