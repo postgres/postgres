@@ -739,6 +739,7 @@ typedef struct BTDedupStateData
 {
 	/* Deduplication status info for entire pass over page */
 	bool		deduplicate;	/* Still deduplicating page? */
+	int			nmaxitems;		/* Number of max-sized tuples so far */
 	Size		maxpostingsize; /* Limit on size of final tuple */
 
 	/* Metadata about base tuple of current pending posting list */
