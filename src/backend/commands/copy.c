@@ -367,8 +367,7 @@ static bool CopyReadLine(CopyState cstate);
 static bool CopyReadLineText(CopyState cstate);
 static int	CopyReadAttributesText(CopyState cstate);
 static int	CopyReadAttributesCSV(CopyState cstate);
-static Datum CopyReadBinaryAttribute(CopyState cstate,
-									 int column_no, FmgrInfo *flinfo,
+static Datum CopyReadBinaryAttribute(CopyState cstate, FmgrInfo *flinfo,
 									 Oid typioparam, int32 typmod,
 									 bool *isnull);
 static void CopyAttributeOutText(CopyState cstate, char *string);
@@ -3776,7 +3775,6 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 					 errmsg("row field count is %d, expected %d",
 							(int) fld_count, attr_count)));
 
-		i = 0;
 		foreach(cur, cstate->attnumlist)
 		{
 			int			attnum = lfirst_int(cur);
@@ -3784,9 +3782,7 @@ NextCopyFrom(CopyState cstate, ExprContext *econtext,
 			Form_pg_attribute att = TupleDescAttr(tupDesc, m);
 
 			cstate->cur_attname = NameStr(att->attname);
-			i++;
 			values[m] = CopyReadBinaryAttribute(cstate,
-												i,
 												&in_functions[m],
 												typioparams[m],
 												att->atttypmod,
@@ -4714,8 +4710,7 @@ endfield:
  * Read a binary attribute
  */
 static Datum
-CopyReadBinaryAttribute(CopyState cstate,
-						int column_no, FmgrInfo *flinfo,
+CopyReadBinaryAttribute(CopyState cstate, FmgrInfo *flinfo,
 						Oid typioparam, int32 typmod,
 						bool *isnull)
 {
