@@ -409,6 +409,13 @@
    <xref linkend="btree-support-funcs"/>.
   </para>
 
+  <para>
+   Additionally, some opclasses allow user to set specific parameters, which
+   controls its behavior.  Each builtin index access method have optional
+   <function>options</function> support function, which defines set of
+   opclass-specific parameters.
+  </para>
+
    <table tocentry="1" id="xindex-btree-support-table">
     <title>B-Tree Support Functions</title>
     <tgroup cols="2">
@@ -450,6 +457,13 @@
        </entry>
        <entry>4</entry>
       </row>
+      <row>
+       <entry>
+        Defines set of options that are specific for this operator class
+        (optional)
+       </entry>
+       <entry>5</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -484,6 +498,13 @@
          (optional)
        </entry>
        <entry>2</entry>
+      </row>
+      <row>
+       <entry>
+        Defines set of options that are specific for this operator class
+        (optional)
+       </entry>
+       <entry>3</entry>
       </row>
      </tbody>
     </tgroup>
@@ -560,6 +581,14 @@
        index-only scans (optional)</entry>
        <entry>9</entry>
       </row>
+      <row>
+       <entry><function>options</function></entry>
+       <entry>
+        Defines set of options that are specific for this operator class
+        (optional)
+       </entry>
+       <entry>10</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -610,6 +639,14 @@
        <entry>determine whether key satisfies the
         query qualifier</entry>
        <entry>5</entry>
+      </row>
+      <row>
+       <entry><function>options</function></entry>
+       <entry>
+        Defines set of options that are specific for this operator class
+        (optional)
+       </entry>
+       <entry>6</entry>
       </row>
      </tbody>
     </tgroup>
@@ -680,6 +717,14 @@
        </entry>
        <entry>6</entry>
       </row>
+      <row>
+       <entry><function>options</function></entry>
+       <entry>
+        Defines set of options that are specific for this operator class
+        (optional)
+       </entry>
+       <entry>7</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -729,6 +774,14 @@
         compute union of two summary tuples
        </entry>
        <entry>4</entry>
+      </row>
+      <row>
+       <entry><function>options</function></entry>
+       <entry>
+        Defines set of options that are specific for this operator class
+        (optional)
+       </entry>
+       <entry>5</entry>
       </row>
      </tbody>
     </tgroup>
