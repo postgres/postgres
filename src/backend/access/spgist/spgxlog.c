@@ -1008,6 +1008,6 @@ spg_mask(char *pagedata, BlockNumber blkno)
 	 * Mask the unused space, but only if the page's pd_lower appears to have
 	 * been set correctly.
 	 */
-	if (pagehdr->pd_lower > SizeOfPageHeaderData)
+	if (pagehdr->pd_lower >= SizeOfPageHeaderData)
 		mask_unused_space(page);
 }
