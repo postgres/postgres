@@ -207,7 +207,7 @@
 
  <para>
   As shown in <xref linkend="xindex-btree-support-table"/>, btree defines
-  one required and three optional support functions.  The four
+  one required and four optional support functions.  The five
   user-defined methods are:
  </para>
  <variablelist>
