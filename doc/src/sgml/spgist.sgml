@@ -858,7 +858,7 @@ typedef struct spgLeafConsistentOut
    </variablelist>
 
  <para>
-  The optional user-defined method is:
+  The optional user-defined method are:
  </para>
 
  <variablelist>
@@ -872,6 +872,39 @@ typedef struct spgLeafConsistentOut
        value and returns
        <structname>spgConfigOut</structname>.<structfield>leafType</structfield>
        value.  Output value should not be toasted.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term><function>options</function></term>
+     <listitem>
+      <para>
+       Defines set of user-visible parameters that control operator class
+       behavior.
+      </para>
+
+      <para>
+        The <acronym>SQL</acronym> declaration of the function must look like this:
+
+<programlisting>
+CREATE OR REPLACE FUNCTION my_options(internal)
+RETURNS void
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;
+</programlisting>
+      </para>
+
+      <para>
+       The function has given pointer to <replaceable>local_relopts</replaceable>
+       struct, which needs to be filled with a set of operator class
+       specific options.  The options can be accessed from other support
+       functions using <literal>PG_HAS_OPCLASS_OPTIONS()</literal> and
+       <literal>PG_GET_OPCLASS_OPTIONS()</literal> macros.
+      </para>
+
+      <para>
+       Since the representation of the key in <acronym>SP-GiST</acronym> is
+       flexible, it may depends on user-specified parameters.
       </para>
      </listitem>
     </varlistentry>
