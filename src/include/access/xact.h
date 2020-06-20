@@ -434,7 +434,7 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 									  int nsubxacts, TransactionId *subxacts,
 									  int nrels, RelFileNode *rels,
 									  int nmsgs, SharedInvalidationMessage *msgs,
-									  bool relcacheInval, bool forceSync,
+									  bool relcacheInval,
 									  int xactflags,
 									  TransactionId twophase_xid,
 									  const char *twophase_gid);
