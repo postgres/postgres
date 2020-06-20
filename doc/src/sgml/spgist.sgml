@@ -284,7 +284,7 @@
 
  <para>
   There are five user-defined methods that an index operator class for
-  <acronym>SP-GiST</acronym> must provide, and one is optional.  All five
+  <acronym>SP-GiST</acronym> must provide, and two are optional.  All five
   mandatory methods follow the convention of accepting two <type>internal</type>
   arguments, the first of which is a pointer to a C struct containing input
   values for the support method, while the second argument is a pointer to a
@@ -295,7 +295,9 @@
   cases, the output struct is initialized to zeroes before calling the
   user-defined method.  The optional sixth method <function>compress</function>
   accepts datum to be indexed as the only argument and returns a value suitable
-  for physical storage in a leaf tuple.
+  for physical storage in a leaf tuple.  The optional seventh method
+  <function>options</function> accepts internal pointer to a C struct, where
+  opclass-specific parameters should be placed, and returns <type>void</type>.
  </para>
 
  <para>
