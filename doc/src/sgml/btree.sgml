@@ -635,10 +635,10 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    A duplicate is a leaf page tuple (a tuple that points to a table
    row) where <emphasis>all</emphasis> indexed key columns have values
    that match corresponding column values from at least one other leaf
-   page tuple that's close by in the same index.  Duplicate tuples are
-   quite common in practice.  B-Tree indexes can use a special,
-   space-efficient representation for duplicates when an optional
-   technique is enabled: <firstterm>deduplication</firstterm>.
+   page tuple in the same index.  Duplicate tuples are quite common in
+   practice.  B-Tree indexes can use a special, space-efficient
+   representation for duplicates when an optional technique is
+   enabled: <firstterm>deduplication</firstterm>.
   </para>
   <para>
    Deduplication works by periodically merging groups of duplicate
