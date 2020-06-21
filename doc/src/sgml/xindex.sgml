@@ -410,9 +410,9 @@
   </para>
 
   <para>
-   Additionally, some opclasses allow user to set specific parameters, which
-   controls its behavior.  Each builtin index access method have optional
-   <function>options</function> support function, which defines set of
+   Additionally, some opclasses allow users to specify parameters which
+   control their behavior.  Each builtin index access method has an optional
+   <function>options</function> support function, which defines a set of
    opclass-specific parameters.
   </para>
 
@@ -459,7 +459,7 @@
       </row>
       <row>
        <entry>
-        Defines set of options that are specific for this operator class
+        Defines a set of options that are specific to this operator class
         (optional)
        </entry>
        <entry>5</entry>
@@ -501,7 +501,7 @@
       </row>
       <row>
        <entry>
-        Defines set of options that are specific for this operator class
+        Defines a set of options that are specific to this operator class
         (optional)
        </entry>
        <entry>3</entry>
@@ -584,7 +584,7 @@
       <row>
        <entry><function>options</function></entry>
        <entry>
-        Defines set of options that are specific for this operator class
+        Defines a set of options that are specific to this operator class
         (optional)
        </entry>
        <entry>10</entry>
@@ -643,7 +643,7 @@
       <row>
        <entry><function>options</function></entry>
        <entry>
-        Defines set of options that are specific for this operator class
+        Defines a set of options that are specific to this operator class
         (optional)
        </entry>
        <entry>6</entry>
@@ -720,7 +720,7 @@
       <row>
        <entry><function>options</function></entry>
        <entry>
-        Defines set of options that are specific for this operator class
+        Defines a set of options that are specific to this operator class
         (optional)
        </entry>
        <entry>7</entry>
@@ -778,7 +778,7 @@
       <row>
        <entry><function>options</function></entry>
        <entry>
-        Defines set of options that are specific for this operator class
+        Defines a set of options that are specific to this operator class
         (optional)
        </entry>
        <entry>5</entry>
