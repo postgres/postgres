@@ -946,7 +946,7 @@ my_fetch(PG_FUNCTION_ARGS)
      <term><function>options</function></term>
      <listitem>
       <para>
-       Allows defintion of user-visible parameters that control operator
+       Allows definition of user-visible parameters that control operator
        class behavior.
       </para>
 
@@ -962,16 +962,16 @@ LANGUAGE C STRICT;
       </para>
 
       <para>
-       The function has given pointer to <replaceable>local_relopts</replaceable>
+       The function is passed a pointer to a <replaceable>local_relopts</replaceable>
        struct, which needs to be filled with a set of operator class
        specific options.  The options can be accessed from other support
-       functions using <literal>PG_HAS_OPCLASS_OPTIONS()</literal> and
+       functions using the <literal>PG_HAS_OPCLASS_OPTIONS()</literal> and
        <literal>PG_GET_OPCLASS_OPTIONS()</literal> macros.
       </para>
 
        <para>
-        The sample implementation of my_option() and parameters usage
-        in the another support function are given below:
+        An example implementation of my_options() and parameters use
+        from other support functions are given below:
 
 <programlisting>
 typedef enum MyEnumType
@@ -990,7 +990,7 @@ typedef struct
     int     str_param;  /* string parameter */
 } MyOptionsStruct;
 
-/* String representations for enum values */
+/* String representation of enum values */
 static relopt_enum_elt_def myEnumValues[] =
 {
     {"on", MY_ENUM_ON},
@@ -1002,7 +1002,7 @@ static relopt_enum_elt_def myEnumValues[] =
 static char *str_param_default = "default";
 
 /*
- * Sample validatior: checks that string is not longer than 8 bytes.
+ * Sample validator: checks that string is not longer than 8 bytes.
  */
 static void 
 validate_my_string_relopt(const char *value)
@@ -1090,8 +1090,8 @@ my_compress(PG_FUNCTION_ARGS)
 
       <para>
        Since the representation of the key in <acronym>GiST</acronym> is
-       flexible, it may depends on user-specified parameters.  For instace,
-       the length of key signature may be such parameter.  See
+       flexible, it may depend on user-specified parameters.  For instance,
+       the length of key signature may be specified.  See
        <literal>gtsvector_options()</literal> for example.
       </para>
      </listitem>

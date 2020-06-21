@@ -290,13 +290,13 @@
   values for the support method, while the second argument is a pointer to a
   C struct where output values must be placed.  Four of the mandatory methods just
   return <type>void</type>, since all their results appear in the output struct; but
-  <function>leaf_consistent</function> additionally returns a <type>boolean</type> result.
+  <function>leaf_consistent</function> returns a <type>boolean</type> result.
   The methods must not modify any fields of their input structs.  In all
   cases, the output struct is initialized to zeroes before calling the
   user-defined method.  The optional sixth method <function>compress</function>
-  accepts datum to be indexed as the only argument and returns a value suitable
+  accepts a <type>datum</type> to be indexed as the only argument and returns a value suitable
   for physical storage in a leaf tuple.  The optional seventh method
-  <function>options</function> accepts internal pointer to a C struct, where
+  <function>options</function> accepts an <type>internal</type> pointer to a C struct, where
   opclass-specific parameters should be placed, and returns <type>void</type>.
  </para>
 
@@ -897,16 +897,16 @@ LANGUAGE C STRICT;
       </para>
 
       <para>
-       The function has given pointer to <replaceable>local_relopts</replaceable>
+       The function is passed a pointer to a <replaceable>local_relopts</replaceable>
        struct, which needs to be filled with a set of operator class
        specific options.  The options can be accessed from other support
-       functions using <literal>PG_HAS_OPCLASS_OPTIONS()</literal> and
+       functions using the <literal>PG_HAS_OPCLASS_OPTIONS()</literal> and
        <literal>PG_GET_OPCLASS_OPTIONS()</literal> macros.
       </para>
 
       <para>
        Since the representation of the key in <acronym>SP-GiST</acronym> is
-       flexible, it may depends on user-specified parameters.
+       flexible, it may depend on user-specified parameters.
       </para>
      </listitem>
     </varlistentry>
