@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-09 00:14+0000\n"
-"PO-Revision-Date: 2020-05-09 10:22+0200\n"
+"POT-Creation-Date: 2020-06-17 22:44+0000\n"
+"PO-Revision-Date: 2020-06-18 04:20+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -68,7 +68,7 @@ msgid "pclose failed: %m"
 msgstr "pclose fehlgeschlagen: %m"
 
 #: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
-#: command.c:1255 input.c:227 mainloop.c:81 mainloop.c:403
+#: command.c:1255 input.c:227 mainloop.c:81 mainloop.c:402
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
@@ -127,6 +127,19 @@ msgstr "Kindprozess wurde von Signal %d beendet: %s"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
+
+#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+msgid "Cancel request sent\n"
+msgstr "Abbruchsanforderung gesendet\n"
+
+#: ../../fe_utils/cancel.c:165
+msgid "Could not send cancel request: "
+msgstr "Konnte Abbruchsanforderung nicht senden: "
+
+#: ../../fe_utils/cancel.c:210
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "Konnte Abbruchsanforderung nicht senden: %s"
 
 #: ../../fe_utils/print.c:350
 #, c-format
@@ -1059,8 +1072,8 @@ msgstr "Der Server (Version %s) unterstützt keine Tablespaces."
 #: describe.c:243 describe.c:251 describe.c:501 describe.c:717 describe.c:873
 #: describe.c:1114 describe.c:3720 describe.c:3918 describe.c:4087
 #: describe.c:4333 describe.c:4604 describe.c:5266 describe.c:5350
-#: describe.c:5746 describe.c:5883 describe.c:5986 describe.c:6101
-#: describe.c:6175 large_obj.c:289
+#: describe.c:5746 describe.c:5883 describe.c:5986 describe.c:6100
+#: describe.c:6173 large_obj.c:289
 msgid "Owner"
 msgstr "Eigentümer"
 
@@ -1179,11 +1192,11 @@ msgstr "Elemente"
 msgid "List of data types"
 msgstr "Liste der Datentypen"
 
-#: describe.c:812 describe.c:6343
+#: describe.c:812 describe.c:6344
 msgid "Left arg type"
 msgstr "Linker Typ"
 
-#: describe.c:813 describe.c:6344
+#: describe.c:813 describe.c:6345
 msgid "Right arg type"
 msgstr "Rechter Typ"
 
@@ -1192,7 +1205,7 @@ msgid "Result type"
 msgstr "Ergebnistyp"
 
 #: describe.c:819 describe.c:4339 describe.c:4404 describe.c:4410
-#: describe.c:4820
+#: describe.c:4820 describe.c:6347
 msgid "Function"
 msgstr "Funktion"
 
@@ -1337,12 +1350,12 @@ msgid "Increment"
 msgstr "Inkrement"
 
 #: describe.c:1716 describe.c:1740 describe.c:1871 describe.c:4255
-#: describe.c:4421 describe.c:4535 describe.c:4540 describe.c:6089
+#: describe.c:4421 describe.c:4535 describe.c:4540 describe.c:6088
 msgid "yes"
 msgstr "ja"
 
 #: describe.c:1717 describe.c:1741 describe.c:1872 describe.c:4255
-#: describe.c:4418 describe.c:4535 describe.c:6090
+#: describe.c:4418 describe.c:4535 describe.c:6089
 msgid "no"
 msgstr "nein"
 
@@ -1497,10 +1510,9 @@ msgid "Partition key: %s"
 msgstr "Partitionsschlüssel: %s"
 
 #: describe.c:2195
-#, fuzzy, c-format
-#| msgid "Foreign table \"%s.%s\""
+#, c-format
 msgid "Owning table: \"%s.%s\""
-msgstr "Fremdtabelle »%s.%s«"
+msgstr "Gehört zu Tabelle: »%s.%s«"
 
 #: describe.c:2266
 msgid "primary key, "
@@ -1891,7 +1903,7 @@ msgstr "Quelle"
 msgid "Destination"
 msgstr "Ziel"
 
-#: describe.c:4256 describe.c:6091
+#: describe.c:4256 describe.c:6090
 msgid "Default?"
 msgstr "Standard?"
 
@@ -2220,7 +2232,7 @@ msgstr "Truncates"
 
 #: describe.c:5758 describe.c:5891
 msgid "Via root"
-msgstr ""
+msgstr "Über Wurzel"
 
 #: describe.c:5775
 msgid "List of publications"
@@ -2266,83 +2278,73 @@ msgstr "Verbindungsinfo"
 msgid "List of subscriptions"
 msgstr "Liste der Subskriptionen"
 
-#: describe.c:6085 describe.c:6169 describe.c:6255 describe.c:6341
+#: describe.c:6084 describe.c:6167 describe.c:6252 describe.c:6342
 msgid "AM"
 msgstr "AM"
 
-#: describe.c:6086
+#: describe.c:6085
 msgid "Input type"
 msgstr "Eingabetyp"
 
-#: describe.c:6087
+#: describe.c:6086
 msgid "Storage type"
 msgstr "Storage-Typ"
 
-#: describe.c:6088
+#: describe.c:6087
 msgid "Operator class"
 msgstr "Operatorklasse"
 
-#: describe.c:6100 describe.c:6170 describe.c:6342
+#: describe.c:6099 describe.c:6168 describe.c:6253 describe.c:6343
 msgid "Operator family"
 msgstr "Operatorfamilie"
 
-#: describe.c:6127
+#: describe.c:6126
 msgid "List of operator classes"
 msgstr "Liste der Operatorklassen"
 
-#: describe.c:6171
+#: describe.c:6169
 msgid "Applicable types"
-msgstr ""
+msgstr "Passende Typen"
 
-#: describe.c:6206
+#: describe.c:6204
 msgid "List of operator families"
 msgstr "Liste der Operatorfamilien"
 
-#: describe.c:6256
-msgid "Opfamily Name"
-msgstr "Opfamilienname"
-
-#: describe.c:6257
+#: describe.c:6254
 msgid "Operator"
 msgstr "Operator"
 
-#: describe.c:6267
+#: describe.c:6264
 msgid "Strategy"
 msgstr "Strategie"
 
-#: describe.c:6268
+#: describe.c:6265
 msgid "ordering"
-msgstr ""
+msgstr "Sortieren"
 
-#: describe.c:6269
+#: describe.c:6266
 msgid "search"
-msgstr ""
+msgstr "Suchen"
 
-#: describe.c:6270
+#: describe.c:6267
 msgid "Purpose"
-msgstr ""
+msgstr "Zweck"
 
-#: describe.c:6271
+#: describe.c:6268
 msgid "Sort opfamily"
 msgstr "Sortier-Opfamilie"
 
-#: describe.c:6299
+#: describe.c:6300
 msgid "List of operators of operator families"
 msgstr "Liste der Operatoren in Operatorfamilien"
 
-#: describe.c:6345
-msgid "Number"
-msgstr ""
-
 #: describe.c:6346
-msgid "Proc name"
-msgstr "Prozedurname"
+msgid "Number"
+msgstr "Nummer"
 
-#: describe.c:6372
-#, fuzzy
-#| msgid "must be owner of operator family %s"
-msgid "List of procedures of operator families"
-msgstr "Berechtigung nur für Eigentümer der Operatorfamilie %s"
+#: describe.c:6374
+msgid "List of support functions of operator families"
+msgstr "Liste der Unterstützungsfunktionen in Operatorfamilien"
 
 #: help.c:73
 #, c-format
@@ -2677,20 +2679,13 @@ msgid "  \\errverbose            show most recent error message at maximum verbo
 msgstr "  \\errverbose            letzte Fehlermeldung mit vollen Details anzeigen\n"
 
 #: help.c:178
-#, fuzzy, c-format
-#| msgid "  \\g [FILE] or ;         execute query (and send results to file or |pipe)\n"
-msgid "  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"
+#, c-format
+msgid ""
+"  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"
+"                         \\g with no arguments is equivalent to a semicolon\n"
 msgstr ""
-"  \\g [DATEI] oder ;      SQL-Anweisung ausführen (und Ergebnis in Datei oder\n"
-"                         |Pipe schreiben)\n"
-
-#: help.c:179
-#, fuzzy, c-format
-#| msgid "  -e, --echo                      show the commands being sent to the server\n"
-msgid "                         \\g with no arguments is equivalent to a semicolon\n"
-msgstr ""
-"  -e, --echo                      zeige die Befehle, die an den Server\n"
-"                                  gesendet werden\n"
+"  \\g [(OPT)] [DATEI]     SQL-Anweisung ausführen (und Ergebnis in Datei oder\n"
+"                         |Pipe schreiben); \\g ohne Argumente entspricht Semikolon\n"
 
 #: help.c:180
 #, c-format
@@ -2712,10 +2707,9 @@ msgstr ""
 "                         ablegen\n"
 
 #: help.c:183
-#, fuzzy, c-format
-#| msgid "  \\gx [FILE]             as \\g, but forces expanded output mode\n"
+#, c-format
 msgid "  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n"
-msgstr "  \\gx [DATEI]            wie \\g, aber mit erweitertem Ausgabemodus\n"
+msgstr "  \\gx [(OPT)] [DATEI]    wie \\g, aber mit erweitertem Ausgabemodus\n"
 
 #: help.c:184
 #, c-format
@@ -2892,27 +2886,24 @@ msgid "  \\dA[+]  [PATTERN]      list access methods\n"
 msgstr "  \\dA[+]  [MUSTER]       Zugriffsmethoden auflisten\n"
 
 #: help.c:231
-#, fuzzy, c-format
-#| msgid "  \\do[S]  [PATTERN]      list operators\n"
-msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]] list operator classes\n"
-msgstr "  \\do[S]  [MUSTER]       Operatoren auflisten\n"
+#, c-format
+msgid "  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"
+msgstr "  \\dAc[+] [AMMUST [TYPMUST]]   Operatorklassen auflisten\n"
 
 #: help.c:232
-#, fuzzy, c-format
-#| msgid "  \\do[S]  [PATTERN]      list operators\n"
-msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]] list operator families\n"
-msgstr "  \\do[S]  [MUSTER]       Operatoren auflisten\n"
+#, c-format
+msgid "  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"
+msgstr "  \\dAf[+] [AMMUST [TYPMUST]]   Operatorfamilien auflisten\n"
 
 #: help.c:233
-#, fuzzy, c-format
-#| msgid "  \\drds [PATRN1 [PATRN2]] list per-database role settings\n"
-msgid "  \\dAo[+] [AMPTRN [OPFPTRN]] list operators of operator families\n"
-msgstr "  \\drds [MUSTER1 [MUSTER2]] datenbankspezifische Rolleneinstellungen auflisten\n"
+#, c-format
+msgid "  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"
+msgstr "  \\dAo[+] [AMMUST [OPFMUST]]   Operatoren in Operatorfamilien auflisten\n"
 
 #: help.c:234
 #, c-format
-msgid "  \\dAp    [AMPTRN [OPFPTRN]] list procedures of operator families\n"
-msgstr ""
+msgid "  \\dAp    [AMPTRN [OPFPTRN]]   list support functions of operator families\n"
+msgstr "  \\dAp    [AMMUST [OPFMUST]]   Unterst.funktionen in Operatorfamilien auflisten\n"
 
 #: help.c:235
 #, c-format
@@ -4052,19 +4043,19 @@ msgstr ""
 "Verwenden Sie den Kommandozeilen-Client pg_restore, um diesen Dump in die\n"
 "Datenbank zurückzuspielen.\n"
 
-#: mainloop.c:299
+#: mainloop.c:298
 msgid "Use \\? for help or press control-C to clear the input buffer."
 msgstr "Verwenden Sie \\? für Hilfe oder drücken Sie Strg-C um den Eingabepuffer zu löschen."
 
-#: mainloop.c:301
+#: mainloop.c:300
 msgid "Use \\? for help."
 msgstr "Verwenden Sie \\? für Hilfe."
 
-#: mainloop.c:305
+#: mainloop.c:304
 msgid "You are using psql, the command-line interface to PostgreSQL."
 msgstr "Dies ist psql, die Kommandozeilenschnittstelle für PostgreSQL."
 
-#: mainloop.c:306
+#: mainloop.c:305
 #, c-format
 msgid ""
 "Type:  \\copyright for distribution terms\n"
@@ -4079,24 +4070,24 @@ msgstr ""
 "                \\g oder Semikolon, um eine Anfrage auszuführen\n"
 "                \\q um zu beenden\n"
 
-#: mainloop.c:330
+#: mainloop.c:329
 msgid "Use \\q to quit."
 msgstr "Verwenden Sie \\q zum beenden."
 
-#: mainloop.c:333 mainloop.c:357
+#: mainloop.c:332 mainloop.c:356
 msgid "Use control-D to quit."
 msgstr "Verwenden Sie Strg-D zum beenden."
 
-#: mainloop.c:335 mainloop.c:359
+#: mainloop.c:334 mainloop.c:358
 msgid "Use control-C to quit."
 msgstr "Verwenden Sie Strg-C zum beenden."
 
-#: mainloop.c:466 mainloop.c:614
+#: mainloop.c:465 mainloop.c:613
 #, c-format
 msgid "query ignored; use \\endif or Ctrl-C to exit current \\if block"
 msgstr "Anfrage ignoriert; verwenden Sie \\endif oder Strg-C um den aktuellen \\if-Block zu beenden"
 
-#: mainloop.c:632
+#: mainloop.c:631
 #, c-format
 msgid "reached EOF without finding closing \\endif(s)"
 msgstr "Dateiende erreicht, aber schließendes \\endif fehlt"
@@ -4902,10 +4893,8 @@ msgid "existing_enum_value"
 msgstr "existierender_Enum-Wert"
 
 #: sql_help.c:1537
-#, fuzzy
-#| msgid "operator"
 msgid "property"
-msgstr "Operator"
+msgstr "Eigenschaft"
 
 #: sql_help.c:1612 sql_help.c:2251 sql_help.c:2260 sql_help.c:2643
 #: sql_help.c:3120 sql_help.c:3571 sql_help.c:3750 sql_help.c:3786
@@ -6432,9 +6421,3 @@ msgid ""
 msgstr ""
 "unbekannter Wert »%s« für »%s«\n"
 "Verfügbare Werte sind: %s."
-
-#~ msgid "using_list"
-#~ msgstr "Using-Liste"
-
-#~ msgid "from_list"
-#~ msgstr "From-Liste"

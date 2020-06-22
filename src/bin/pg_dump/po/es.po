@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-05-17 02:46+0000\n"
-"PO-Revision-Date: 2020-05-18 12:43+0200\n"
+"PO-Revision-Date: 2020-06-10 13:01-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -1624,7 +1624,7 @@ msgstr "  --no-unlogged-table-data     no volcar datos de tablas unlogged\n"
 #: pg_dump.c:1046 pg_dumpall.c:654
 #, c-format
 msgid "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"
-msgstr "  --on-confict-do-nothing      agregar ON CONFLICT DO NOTHING a órdenes INSERT\n"
+msgstr "  --on-conflict-do-nothing     agregar ON CONFLICT DO NOTHING a órdenes INSERT\n"
 
 #: pg_dump.c:1047 pg_dumpall.c:655
 #, c-format

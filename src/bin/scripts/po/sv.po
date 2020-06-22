@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-09 08:46+0000\n"
-"PO-Revision-Date: 2020-05-09 13:49+0200\n"
+"POT-Creation-Date: 2020-06-21 02:16+0000\n"
+"PO-Revision-Date: 2020-06-21 11:32+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -56,6 +56,19 @@ msgstr "användaren finns inte"
 #, c-format
 msgid "user name lookup failure: error code %lu"
 msgstr "misslyckad sökning efter användarnamn: felkod %lu"
+
+#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+msgid "Cancel request sent\n"
+msgstr "Förfrågan om avbrytning skickad\n"
+
+#: ../../fe_utils/cancel.c:165
+msgid "Could not send cancel request: "
+msgstr "Kunde inte skicka förfrågan om avbrytning: "
+
+#: ../../fe_utils/cancel.c:210
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "Kunde inte skicka förfrågan om avbrytning: %s"
 
 #: ../../fe_utils/print.c:350
 #, c-format
@@ -934,6 +947,11 @@ msgid ""
 msgstr ""
 "\n"
 "Läs beskrivningen av SQL-kommandot REINDEX för detaljer.\n"
+
+#: scripts_parallel.c:234
+#, c-format
+msgid "too many jobs for this platform -- try %d"
+msgstr ""
 
 #: vacuumdb.c:194
 #, c-format

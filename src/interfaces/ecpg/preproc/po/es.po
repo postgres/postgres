@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-05-17 02:39+0000\n"
-"PO-Revision-Date: 2019-06-06 17:20-0400\n"
+"PO-Revision-Date: 2020-06-08 13:04-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -178,11 +178,13 @@ msgid ""
 "\n"
 "Report bugs to <%s>.\n"
 msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
 
 #: ecpg.c:62
 #, c-format
 msgid "%s home page: <%s>\n"
-msgstr ""
+msgstr "Sitio web de %s: <%s>\n"
 
 #: ecpg.c:140
 #, c-format
@@ -257,7 +259,7 @@ msgstr "cadena de bits no válida"
 #: pgc.l:607
 #, c-format
 msgid "unhandled previous state in xqs\n"
-msgstr ""
+msgstr "estado previo no manejado en xqs\n"
 
 #: pgc.l:636 pgc.l:738
 #, c-format
@@ -330,10 +332,9 @@ msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "error de sintaxis en orden EXEC SQL INCLUDE"
 
 #: pgc.l:1433
-#, fuzzy, c-format
-#| msgid "internal error: unreachable state; please report this to <pgsql-bugs@lists.postgresql.org>"
+#, c-format
 msgid "internal error: unreachable state; please report this to <%s>"
-msgstr "error interno: estado no esperado; por favor reporte a <pgsql-bugs@lists.postgresql.org>"
+msgstr "error interno: estado no esperado; por favor reporte a <%s>"
 
 #: pgc.l:1583
 #, c-format
