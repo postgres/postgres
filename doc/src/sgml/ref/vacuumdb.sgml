@@ -227,6 +227,36 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-index-cleanup</option></term>
+      <listitem>
+       <para>
+        Do not remove index entries pointing to dead tuples.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 12 and later.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-truncate</option></term>
+      <listitem>
+       <para>
+        Do not truncate empty pages at the end of the table.
+       </para>
+       <note>
+        <para>
+         This option is only available for servers running
+         <productname>PostgreSQL</productname> 12 and later.
+        </para>
+       </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P <replaceable class="parameter">parallel_degree</replaceable></option></term>
       <term><option>--parallel=<replaceable class="parameter">parallel_degree</replaceable></option></term>
       <listitem>

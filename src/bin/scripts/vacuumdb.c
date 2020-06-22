@@ -37,6 +37,8 @@ typedef struct vacuumingOptions
 	int			min_mxid_age;
 	int			parallel_workers;	/* >= 0 indicates user specified the
 									 * parallel degree, otherwise -1 */
+	bool		do_index_cleanup;
+	bool		do_truncate;
 } vacuumingOptions;
 
 
@@ -96,6 +98,8 @@ main(int argc, char *argv[])
 		{"skip-locked", no_argument, NULL, 5},
 		{"min-xid-age", required_argument, NULL, 6},
 		{"min-mxid-age", required_argument, NULL, 7},
+		{"no-index-cleanup", no_argument, NULL, 8},
+		{"no-truncate", no_argument, NULL, 9},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -117,9 +121,11 @@ main(int argc, char *argv[])
 	int			concurrentCons = 1;
 	int			tbl_count = 0;
 
-	/* initialize options to all false */
+	/* initialize options */
 	memset(&vacopts, 0, sizeof(vacopts));
 	vacopts.parallel_workers = -1;
+	vacopts.do_index_cleanup = true;
+	vacopts.do_truncate = true;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -223,6 +229,12 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 				break;
+			case 8:
+				vacopts.do_index_cleanup = false;
+				break;
+			case 9:
+				vacopts.do_truncate = false;
+				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
@@ -265,6 +277,18 @@ main(int argc, char *argv[])
 		{
 			pg_log_error("cannot use the \"%s\" option when performing only analyze",
 						 "disable-page-skipping");
+			exit(1);
+		}
+		if (!vacopts.do_index_cleanup)
+		{
+			pg_log_error("cannot use the \"%s\" option when performing only analyze",
+						 "no-index-cleanup");
+			exit(1);
+		}
+		if (!vacopts.do_truncate)
+		{
+			pg_log_error("cannot use the \"%s\" option when performing only analyze",
+						 "no-truncate");
 			exit(1);
 		}
 		/* allow 'and_analyze' with 'analyze_only' */
@@ -409,6 +433,22 @@ vacuum_one_database(const char *dbname, vacuumingOptions *vacopts,
 		PQfinish(conn);
 		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
 					 "disable-page-skipping", "9.6");
+		exit(1);
+	}
+
+	if (!vacopts->do_index_cleanup && PQserverVersion(conn) < 120000)
+	{
+		PQfinish(conn);
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "no-index-cleanup", "12");
+		exit(1);
+	}
+
+	if (!vacopts->do_truncate && PQserverVersion(conn) < 120000)
+	{
+		PQfinish(conn);
+		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+					 "no-truncate", "12");
 		exit(1);
 	}
 
@@ -832,6 +872,20 @@ prepare_vacuum_command(PQExpBuffer sql, int serverVersion,
 				appendPQExpBuffer(sql, "%sDISABLE_PAGE_SKIPPING", sep);
 				sep = comma;
 			}
+			if (!vacopts->do_index_cleanup)
+			{
+				/* INDEX_CLEANUP is supported since v12 */
+				Assert(serverVersion >= 120000);
+				appendPQExpBuffer(sql, "%sINDEX_CLEANUP FALSE", sep);
+				sep = comma;
+			}
+			if (!vacopts->do_truncate)
+			{
+				/* TRUNCATE is supported since v12 */
+				Assert(serverVersion >= 120000);
+				appendPQExpBuffer(sql, "%sTRUNCATE FALSE", sep);
+				sep = comma;
+			}
 			if (vacopts->skip_locked)
 			{
 				/* SKIP_LOCKED is supported since v12 */
@@ -930,6 +984,8 @@ help(const char *progname)
 	printf(_("  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"));
 	printf(_("      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"));
 	printf(_("      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"));
+	printf(_("      --no-index-cleanup          don't remove index entries that point to dead tuples\n"));
+	printf(_("      --no-truncate               don't truncate empty pages at the end of the table\n"));
 	printf(_("  -P, --parallel=PARALLEL_DEGREE  use this many background workers for vacuum, if available\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("      --skip-locked               skip relations that cannot be immediately locked\n"));
