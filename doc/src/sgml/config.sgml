@@ -4560,23 +4560,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-hashagg-avoid-disk-plan" xreflabel="hashagg_avoid_disk_plan">
-      <term><varname>hashagg_avoid_disk_plan</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>hashagg_avoid_disk_plan</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        If set to <literal>on</literal>, causes the planner to avoid choosing
-        hashed aggregation plans that are expected to use the disk. If hashed
-        aggregation is chosen, it may still require the use of disk at
-        execution time, even if this parameter is enabled. The default is
-        <literal>off</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-enable-hashjoin" xreflabel="enable_hashjoin">
       <term><varname>enable_hashjoin</varname> (<type>boolean</type>)
       <indexterm>
@@ -4819,6 +4802,23 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Enables or disables the query planner's use of <acronym>TID</acronym>
         scan plan types. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-hashagg-avoid-disk-plan" xreflabel="hashagg_avoid_disk_plan">
+      <term><varname>hashagg_avoid_disk_plan</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>hashagg_avoid_disk_plan</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        If set to <literal>on</literal>, causes the planner to avoid choosing
+        hashed aggregation plans that are expected to use the disk. If hashed
+        aggregation is chosen, it may still require the use of disk at
+        execution time, even if this parameter is enabled. The default is
+        <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>
