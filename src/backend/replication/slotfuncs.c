@@ -359,24 +359,47 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 				nulls[i++] = true;
 				break;
 
-			case WALAVAIL_NORMAL:
-				values[i++] = CStringGetTextDatum("normal");
-				break;
-
 			case WALAVAIL_RESERVED:
 				values[i++] = CStringGetTextDatum("reserved");
 				break;
 
-			case WALAVAIL_REMOVED:
-				values[i++] = CStringGetTextDatum("lost");
+			case WALAVAIL_EXTENDED:
+				values[i++] = CStringGetTextDatum("extended");
 				break;
 
-			default:
-				elog(ERROR, "invalid walstate: %d", (int) walstate);
+			case WALAVAIL_UNRESERVED:
+				values[i++] = CStringGetTextDatum("unreserved");
+				break;
+
+			case WALAVAIL_REMOVED:
+
+				/*
+				 * If we read the restart_lsn long enough ago, maybe that file
+				 * has been removed by now.  However, the walsender could have
+				 * moved forward enough that it jumped to another file after
+				 * we looked.  If checkpointer signalled the process to
+				 * termination, then it's definitely lost; but if a process is
+				 * still alive, then "unreserved" seems more appropriate.
+				 */
+				if (!XLogRecPtrIsInvalid(slot_contents.data.restart_lsn))
+				{
+					int			pid;
+
+					SpinLockAcquire(&slot->mutex);
+					pid = slot->active_pid;
+					SpinLockRelease(&slot->mutex);
+					if (pid != 0)
+					{
+						values[i++] = CStringGetTextDatum("unreserved");
+						break;
+					}
+				}
+				values[i++] = CStringGetTextDatum("lost");
+				break;
 		}
 
 		if (max_slot_wal_keep_size_mb >= 0 &&
-			(walstate == WALAVAIL_NORMAL || walstate == WALAVAIL_RESERVED) &&
+			(walstate == WALAVAIL_RESERVED || walstate == WALAVAIL_EXTENDED) &&
 			((last_removed_seg = XLogGetLastRemovedSegno()) != 0))
 		{
 			XLogRecPtr	min_safe_lsn;

@@ -56,7 +56,7 @@ $node_standby->stop;
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status, min_safe_lsn is NULL FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
-is($result, "normal|t", 'check the catching-up state');
+is($result, "reserved|t", 'check the catching-up state');
 
 # Advance WAL by five segments (= 5MB) on master
 advance_wal($node_master, 1);
@@ -66,7 +66,8 @@ $node_master->safe_psql('postgres', "CHECKPOINT;");
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status, min_safe_lsn is NULL FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
-is($result, "normal|t", 'check that it is safe if WAL fits in max_wal_size');
+is($result, "reserved|t",
+	'check that it is safe if WAL fits in max_wal_size');
 
 advance_wal($node_master, 4);
 $node_master->safe_psql('postgres', "CHECKPOINT;");
@@ -75,7 +76,7 @@ $node_master->safe_psql('postgres', "CHECKPOINT;");
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status, min_safe_lsn is NULL FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
-is($result, "normal|t", 'check that slot is working');
+is($result, "reserved|t", 'check that slot is working');
 
 # The standby can reconnect to master
 $node_standby->start;
@@ -99,7 +100,7 @@ $node_master->reload;
 
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep1'");
-is($result, "normal", 'check that max_slot_wal_keep_size is working');
+is($result, "reserved", 'check that max_slot_wal_keep_size is working');
 
 # Advance WAL again then checkpoint, reducing remain by 2 MB.
 advance_wal($node_master, 2);
@@ -108,7 +109,7 @@ $node_master->safe_psql('postgres', "CHECKPOINT;");
 # The slot is still working
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep1'");
-is($result, "normal",
+is($result, "reserved",
 	'check that min_safe_lsn gets close to the current LSN');
 
 # The standby can reconnect to master
@@ -125,7 +126,7 @@ advance_wal($node_master, 6);
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status as remain FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
-is($result, "normal",
+is($result, "extended",
 	'check that wal_keep_segments overrides max_slot_wal_keep_size');
 # restore wal_keep_segments
 $result = $node_master->safe_psql('postgres',
@@ -143,7 +144,7 @@ advance_wal($node_master, 6);
 # Slot gets into 'reserved' state
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status FROM pg_replication_slots WHERE slot_name = 'rep1'");
-is($result, "reserved", 'check that the slot state changes to "reserved"');
+is($result, "extended", 'check that the slot state changes to "extended"');
 
 # do checkpoint so that the next checkpoint runs too early
 $node_master->safe_psql('postgres', "CHECKPOINT;");
@@ -151,11 +152,12 @@ $node_master->safe_psql('postgres', "CHECKPOINT;");
 # Advance WAL again without checkpoint; remain goes to 0.
 advance_wal($node_master, 1);
 
-# Slot gets into 'lost' state
+# Slot gets into 'unreserved' state
 $result = $node_master->safe_psql('postgres',
 	"SELECT wal_status, min_safe_lsn is NULL FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
-is($result, "lost|t", 'check that the slot state changes to "lost"');
+is($result, "unreserved|t",
+	'check that the slot state changes to "unreserved"');
 
 # The standby still can connect to master before a checkpoint
 $node_standby->start;
@@ -186,7 +188,8 @@ ok( find_in_log(
 $result = $node_master->safe_psql('postgres',
 	"SELECT slot_name, active, restart_lsn IS NULL, wal_status, min_safe_lsn FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
-is($result, "rep1|f|t|lost|", 'check that the slot became inactive');
+is($result, "rep1|f|t|lost|",
+	'check that the slot became inactive and the state "lost" persists');
 
 # The standby no longer can connect to the master
 $logstart = get_log_size($node_standby);
