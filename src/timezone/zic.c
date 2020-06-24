@@ -1292,7 +1292,20 @@ infile(const char *name)
 		if (nfields == 0)
 		{
 			if (name == leapsec && *buf == '#')
-				sscanf(buf, "#expires " INT64_FORMAT, &comment_leapexpires);
+			{
+				/*
+				 * PG: INT64_FORMAT isn't portable for sscanf, so be content
+				 * with scanning a "long".  Once we are requiring C99 in all
+				 * live branches, it'd be sensible to adopt upstream's
+				 * practice of using the <inttypes.h> macros.  But for now, we
+				 * don't actually use this code, and it won't overflow before
+				 * 2038 anyway.
+				 */
+				long		cl_tmp;
+
+				sscanf(buf, "#expires %ld", &cl_tmp);
+				comment_leapexpires = cl_tmp;
+			}
 		}
 		else if (wantcont)
 		{
