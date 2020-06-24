@@ -283,6 +283,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		bool		nulls[PG_GET_REPLICATION_SLOTS_COLS];
 		WALAvailability walstate;
 		XLogSegNo	last_removed_seg;
+		XLogRecPtr	targetLSN;
 		int			i;
 
 		if (!slot->in_use)
@@ -342,7 +343,15 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 			nulls[i++] = true;
 
-		walstate = GetWALAvailability(slot_contents.data.restart_lsn);
+		/*
+		 * Report availability from invalidated_at when the slot has been
+		 * invalidated; otherwise slots would appear as invalid without any
+		 * more clues as to what happened.
+		 */
+		targetLSN = XLogRecPtrIsInvalid(slot_contents.data.restart_lsn) ?
+			slot_contents.data.invalidated_at :
+			slot_contents.data.restart_lsn;
+		walstate = GetWALAvailability(targetLSN);
 
 		switch (walstate)
 		{

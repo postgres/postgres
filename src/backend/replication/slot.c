@@ -1226,6 +1226,7 @@ restart:
 						(uint32) restart_lsn)));
 
 		SpinLockAcquire(&s->mutex);
+		s->data.invalidated_at = s->data.restart_lsn;
 		s->data.restart_lsn = InvalidXLogRecPtr;
 		SpinLockRelease(&s->mutex);
 		ReplicationSlotRelease();

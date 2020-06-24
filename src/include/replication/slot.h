@@ -79,6 +79,9 @@ typedef struct ReplicationSlotPersistentData
 	/* oldest LSN that might be required by this replication slot */
 	XLogRecPtr	restart_lsn;
 
+	/* restart_lsn is copied here when the slot is invalidated */
+	XLogRecPtr	invalidated_at;
+
 	/*
 	 * Oldest LSN that the client has acked receipt for.  This is used as the
 	 * start_lsn point in case the client doesn't specify one, and also as a
