@@ -9488,15 +9488,20 @@ CreateRestartPoint(int flags)
  *		(typically a slot's restart_lsn)
  *
  * Returns one of the following enum values:
- * * WALAVAIL_NORMAL means targetLSN is available because it is in the range
- *   of max_wal_size.
  *
- * * WALAVAIL_PRESERVED means it is still available by preserving extra
+ * * WALAVAIL_RESERVED means targetLSN is available and it is in the range of
+ *   max_wal_size.
+ *
+ * * WALAVAIL_EXTENDED means it is still available by preserving extra
  *   segments beyond max_wal_size. If max_slot_wal_keep_size is smaller
  *   than max_wal_size, this state is not returned.
  *
- * * WALAVAIL_REMOVED means it is definitely lost. A replication stream on
- *   a slot with this LSN cannot continue.
+ * * WALAVAIL_UNRESERVED means it is being lost and the next checkpoint will
+ *   remove reserved segments. The walsender using this slot may return to the
+ *   above.
+ *
+ * * WALAVAIL_REMOVED means it has been removed. A replication stream on
+ *   a slot with this LSN cannot continue after a restart.
  *
  * * WALAVAIL_INVALID_LSN means the slot hasn't been set to reserve WAL.
  */
@@ -9512,13 +9517,18 @@ GetWALAvailability(XLogRecPtr targetLSN)
 													 * slot */
 	uint64		keepSegs;
 
-	/* slot does not reserve WAL. Either deactivated, or has never been active */
+	/*
+	 * slot does not reserve WAL. Either deactivated, or has never been active
+	 */
 	if (XLogRecPtrIsInvalid(targetLSN))
 		return WALAVAIL_INVALID_LSN;
 
 	currpos = GetXLogWriteRecPtr();
 
-	/* calculate oldest segment currently needed by slots */
+	/*
+	 * calculate the oldest segment currently reserved by all slots,
+	 * considering wal_keep_segments and max_slot_wal_keep_size
+	 */
 	XLByteToSeg(targetLSN, targetSeg, wal_segment_size);
 	KeepLogSeg(currpos, &oldestSlotSeg);
 
@@ -9529,10 +9539,9 @@ GetWALAvailability(XLogRecPtr targetLSN)
 	 */
 	oldestSeg = XLogGetLastRemovedSegno() + 1;
 
-	/* calculate oldest segment by max_wal_size and wal_keep_segments */
+	/* calculate oldest segment by max_wal_size */
 	XLByteToSeg(currpos, currSeg, wal_segment_size);
-	keepSegs = ConvertToXSegs(Max(max_wal_size_mb, wal_keep_segments),
-							  wal_segment_size) + 1;
+	keepSegs = ConvertToXSegs(max_wal_size_mb, wal_segment_size) + 1;
 
 	if (currSeg > keepSegs)
 		oldestSegMaxWalSize = currSeg - keepSegs;
@@ -9540,26 +9549,22 @@ GetWALAvailability(XLogRecPtr targetLSN)
 		oldestSegMaxWalSize = 1;
 
 	/*
-	 * If max_slot_wal_keep_size has changed after the last call, the segment
-	 * that would been kept by the current setting might have been lost by the
-	 * previous setting. No point in showing normal or keeping status values
-	 * if the targetSeg is known to be lost.
+	 * No point in returning reserved or extended status values if the
+	 * targetSeg is known to be lost.
 	 */
-	if (targetSeg >= oldestSeg)
+	if (targetSeg >= oldestSlotSeg)
 	{
-		/*
-		 * show "normal" when targetSeg is within max_wal_size, even if
-		 * max_slot_wal_keep_size is smaller than max_wal_size.
-		 */
-		if ((max_slot_wal_keep_size_mb <= 0 ||
-			 max_slot_wal_keep_size_mb >= max_wal_size_mb) &&
-			oldestSegMaxWalSize <= targetSeg)
-			return WALAVAIL_NORMAL;
-
-		/* being retained by slots */
-		if (oldestSlotSeg <= targetSeg)
+		/* show "reserved" when targetSeg is within max_wal_size */
+		if (targetSeg >= oldestSegMaxWalSize)
 			return WALAVAIL_RESERVED;
+
+		/* being retained by slots exceeding max_wal_size */
+		return WALAVAIL_EXTENDED;
 	}
+
+	/* WAL segments are no longer retained but haven't been removed yet */
+	if (targetSeg >= oldestSeg)
+		return WALAVAIL_UNRESERVED;
 
 	/* Definitely lost */
 	return WALAVAIL_REMOVED;

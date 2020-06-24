@@ -270,8 +270,10 @@ extern CheckpointStatsData CheckpointStats;
 typedef enum WALAvailability
 {
 	WALAVAIL_INVALID_LSN,		/* parameter error */
-	WALAVAIL_NORMAL,			/* WAL segment is within max_wal_size */
-	WALAVAIL_RESERVED,			/* WAL segment is reserved by a slot */
+	WALAVAIL_RESERVED,			/* WAL segment is within max_wal_size */
+	WALAVAIL_EXTENDED,			/* WAL segment is reserved by a slot or
+								 * wal_keep_segments */
+	WALAVAIL_UNRESERVED,		/* no longer reserved, but not removed yet */
 	WALAVAIL_REMOVED			/* WAL segment has been removed */
 } WALAvailability;
 
