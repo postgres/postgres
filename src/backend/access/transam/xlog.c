@@ -760,9 +760,12 @@ static ControlFileData *ControlFile = NULL;
  */
 #define UsableBytesInPage (XLOG_BLCKSZ - SizeOfXLogShortPHD)
 
-/* Convert values of GUCs measured in megabytes to equiv. segment count */
+/*
+ * Convert values of GUCs measured in megabytes to equiv. segment count.
+ * Rounds down.
+ */
 #define ConvertToXSegs(x, segsize)	\
-	(x / ((segsize) / (1024 * 1024)))
+	((x) / ((segsize) / (1024 * 1024)))
 
 /* The number of bytes in a WAL segment usable for WAL data. */
 static int	UsableBytesInSegment;
