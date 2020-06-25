@@ -236,8 +236,8 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
 
    <para>
     Database-level configuration parameters (set via <xref
-    linkend="sql-alterdatabase"/>) are not copied from the template
-    database.
+    linkend="sql-alterdatabase"/>) and database-level permissions (set via
+    <xref linkend="sql-grant"/>) are not copied from the template database.
    </para>
 
   <para>
