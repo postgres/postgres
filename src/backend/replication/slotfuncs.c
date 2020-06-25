@@ -755,12 +755,9 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 
 	/* Copying non-reserved slot doesn't make sense */
 	if (XLogRecPtrIsInvalid(src_restart_lsn))
-	{
-		Assert(!logical_slot);
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot copy a replication slot that doesn't reserve WAL")));
-	}
 
 	/* Overwrite params from optional arguments */
 	if (PG_NARGS() >= 3)
