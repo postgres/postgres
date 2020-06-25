@@ -81,7 +81,6 @@ static bool ExecParallelHashTuplePrealloc(HashJoinTable hashtable,
 static void ExecParallelHashMergeCounters(HashJoinTable hashtable);
 static void ExecParallelHashCloseBatchAccessors(HashJoinTable hashtable);
 
-
 /* ----------------------------------------------------------------
  *		ExecHash
  *
@@ -184,12 +183,52 @@ MultiExecPrivateHash(HashState *node)
 			}
 			else
 			{
-				/* Not subject to skew optimization, so insert normally */
-				ExecHashTableInsert(hashtable, slot, hashvalue);
+				/*
+				 * Not subject to skew optimization, so either insert normally
+				 * or save to batch file if batch 0 falls back and we have
+				 * already filled the hashtable up to space_allowed.
+				 */
+				int			bucketno;
+				int			batchno;
+				bool		shouldFree;
+				MinimalTuple tuple = ExecFetchSlotMinimalTuple(slot, &shouldFree);
+
+				ExecHashGetBucketAndBatch(hashtable, hashvalue,
+										  &bucketno, &batchno);
+
+				/*
+				 * If we set batch 0 to fallback on the previous tuple Save
+				 * the tuples in this batch which will not fit in the
+				 * hashtable should I be checking that hashtable->curstripe !=
+				 * 0?
+				 */
+				if (hashtable->hashloopBatchFile && hashtable->hashloopBatchFile[0])
+					ExecHashJoinSaveTuple(tuple,
+										  hashvalue,
+										  &hashtable->innerBatchFile[batchno]);
+				else
+					ExecHashTableInsert(hashtable, slot, hashvalue);
+
+				if (shouldFree)
+					heap_free_minimal_tuple(tuple);
 			}
 			hashtable->totalTuples += 1;
 		}
 	}
+
+	/*
+	 * If batch 0 fell back, rewind the inner side file where we saved the
+	 * tuples which did not fit in memory to prepare it for loading upon
+	 * finishing probing stripe 0 of batch 0
+	 */
+	if (hashtable->innerBatchFile && hashtable->innerBatchFile[0])
+	{
+		if (BufFileSeek(hashtable->innerBatchFile[0], 0, 0L, SEEK_SET))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not rewind hash-join temporary file: %m")));
+	}
+
 
 	/* resize the hash table if needed (NTUP_PER_BUCKET exceeded) */
 	if (hashtable->nbuckets != hashtable->nbuckets_optimal)
@@ -322,6 +361,40 @@ MultiExecParallelHash(HashState *node)
 				 * skew).
 				 */
 				pstate->growth = PHJ_GROWTH_DISABLED;
+
+				/*
+				 * In the current design, batch 0 cannot fall back. That
+				 * behavior is an artifact of the existing design where batch
+				 * 0 fills the initial hash table and as an optimization it
+				 * doesn't need a batch file. But, there is no real reason
+				 * that batch 0 shouldn't be allowed to spill.
+				 *
+				 * Consider a hash table where majority of tuples with
+				 * hashvalue 0. These tuples will never relocate no matter how
+				 * many batches exist. If you cannot exceed work_mem, then you
+				 * will be stuck infinitely trying to double the number of
+				 * batches in order to accommodate the tuples that can only
+				 * ever be in batch 0. So, we allow it to be set to fall back
+				 * during the build phase to avoid excessive batch increases
+				 * but we don't check it when loading the actual tuples, so we
+				 * may exceed space_allowed. We set it back to false here so
+				 * that it isn't true during any of the checks that may happen
+				 * during probing.
+				 */
+				hashtable->batches[0].shared->hashloop_fallback = false;
+
+				for (i = 0; i < hashtable->nbatch; ++i)
+				{
+					FallbackBatchStats *fallback_batch_stats;
+					ParallelHashJoinBatch *batch = hashtable->batches[i].shared;
+
+					if (!batch->hashloop_fallback)
+						continue;
+					fallback_batch_stats = palloc0(sizeof(FallbackBatchStats));
+					fallback_batch_stats->batchno = i;
+					fallback_batch_stats->numstripes = batch->maximum_stripe_number + 1;
+					hashtable->fallback_batches_stats = lappend(hashtable->fallback_batches_stats, fallback_batch_stats);
+				}
 			}
 	}
 
@@ -496,12 +569,14 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 	hashtable->curbatch = 0;
 	hashtable->nbatch_original = nbatch;
 	hashtable->nbatch_outstart = nbatch;
-	hashtable->growEnabled = true;
 	hashtable->totalTuples = 0;
 	hashtable->partialTuples = 0;
 	hashtable->skewTuples = 0;
 	hashtable->innerBatchFile = NULL;
 	hashtable->outerBatchFile = NULL;
+	hashtable->hashloopBatchFile = NULL;
+	hashtable->fallback_batches_stats = NULL;
+	hashtable->curstripe = STRIPE_DETACHED;
 	hashtable->spaceUsed = 0;
 	hashtable->spacePeak = 0;
 	hashtable->spaceAllowed = space_allowed;
@@ -572,6 +647,8 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 		hashtable->innerBatchFile = (BufFile **)
 			palloc0(nbatch * sizeof(BufFile *));
 		hashtable->outerBatchFile = (BufFile **)
+			palloc0(nbatch * sizeof(BufFile *));
+		hashtable->hashloopBatchFile = (BufFile **)
 			palloc0(nbatch * sizeof(BufFile *));
 		/* The files will not be opened until needed... */
 		/* ... but make sure we have temp tablespaces established for them */
@@ -856,18 +933,19 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 	int			i;
 
 	/*
-	 * Make sure all the temp files are closed.  We skip batch 0, since it
-	 * can't have any temp files (and the arrays might not even exist if
-	 * nbatch is only 1).  Parallel hash joins don't use these files.
+	 * Make sure all the temp files are closed.  Parallel hash joins don't use
+	 * these files.
 	 */
 	if (hashtable->innerBatchFile != NULL)
 	{
-		for (i = 1; i < hashtable->nbatch; i++)
+		for (i = 0; i < hashtable->nbatch; i++)
 		{
 			if (hashtable->innerBatchFile[i])
 				BufFileClose(hashtable->innerBatchFile[i]);
 			if (hashtable->outerBatchFile[i])
 				BufFileClose(hashtable->outerBatchFile[i]);
+			if (hashtable->hashloopBatchFile[i])
+				BufFileClose(hashtable->hashloopBatchFile[i]);
 		}
 	}
 
@@ -879,6 +957,18 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 }
 
 /*
+ * Threshhold for tuple relocation during batch split for parallel and serial
+ * hashjoin.
+ * While growing the number of batches, for the batch which triggered the growth,
+ * if more than MAX_RELOCATION % of its tuples move to its child batch, then
+ * it likely has skewed data and so the child batch (the new home to the skewed
+ * tuples) will be marked as a "fallback" batch and processed using the hashloop
+ * join algorithm. The reverse is true as well: if more than MAX_RELOCATION
+ * remain in the parent, it too should be marked to "fallback".
+ */
+#define MAX_RELOCATION 0.8
+
+/*
  * ExecHashIncreaseNumBatches
  *		increase the original number of batches in order to reduce
  *		current memory consumption
@@ -888,14 +978,19 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 {
 	int			oldnbatch = hashtable->nbatch;
 	int			curbatch = hashtable->curbatch;
+	int			childbatch;
 	int			nbatch;
 	MemoryContext oldcxt;
 	long		ninmemory;
 	long		nfreed;
 	HashMemoryChunk oldchunks;
+	int			curbatch_outgoing_tuples;
+	int			childbatch_outgoing_tuples;
+	int			target_batch;
+	FallbackBatchStats *fallback_batch_stats;
+	size_t		batchSize = 0;
 
-	/* do nothing if we've decided to shut off growth */
-	if (!hashtable->growEnabled)
+	if (hashtable->hashloopBatchFile && hashtable->hashloopBatchFile[curbatch])
 		return;
 
 	/* safety check to avoid overflow */
@@ -919,6 +1014,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			palloc0(nbatch * sizeof(BufFile *));
 		hashtable->outerBatchFile = (BufFile **)
 			palloc0(nbatch * sizeof(BufFile *));
+		hashtable->hashloopBatchFile = (BufFile **)
+			palloc0(nbatch * sizeof(BufFile *));
 		/* time to establish the temp tablespaces, too */
 		PrepareTempTablespaces();
 	}
@@ -929,9 +1026,13 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			repalloc(hashtable->innerBatchFile, nbatch * sizeof(BufFile *));
 		hashtable->outerBatchFile = (BufFile **)
 			repalloc(hashtable->outerBatchFile, nbatch * sizeof(BufFile *));
+		hashtable->hashloopBatchFile = (BufFile **)
+			repalloc(hashtable->hashloopBatchFile, nbatch * sizeof(BufFile *));
 		MemSet(hashtable->innerBatchFile + oldnbatch, 0,
 			   (nbatch - oldnbatch) * sizeof(BufFile *));
 		MemSet(hashtable->outerBatchFile + oldnbatch, 0,
+			   (nbatch - oldnbatch) * sizeof(BufFile *));
+		MemSet(hashtable->hashloopBatchFile + oldnbatch, 0,
 			   (nbatch - oldnbatch) * sizeof(BufFile *));
 	}
 
@@ -944,6 +1045,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	 * no longer of the current batch.
 	 */
 	ninmemory = nfreed = 0;
+	curbatch_outgoing_tuples = childbatch_outgoing_tuples = 0;
+	childbatch = (1U << (my_log2(hashtable->nbatch) - 1)) | hashtable->curbatch;
 
 	/* If know we need to resize nbuckets, we can do it while rebatching. */
 	if (hashtable->nbuckets_optimal != hashtable->nbuckets)
@@ -990,7 +1093,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			ExecHashGetBucketAndBatch(hashtable, hashTuple->hashvalue,
 									  &bucketno, &batchno);
 
-			if (batchno == curbatch)
+			if (batchno == curbatch && (curbatch != 0 || batchSize + hashTupleSize < hashtable->spaceAllowed))
 			{
 				/* keep tuple in memory - copy it into the new chunk */
 				HashJoinTuple copyTuple;
@@ -1001,17 +1104,29 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 				/* and add it back to the appropriate bucket */
 				copyTuple->next.unshared = hashtable->buckets.unshared[bucketno];
 				hashtable->buckets.unshared[bucketno] = copyTuple;
+				curbatch_outgoing_tuples++;
+				batchSize += hashTupleSize;
 			}
 			else
 			{
 				/* dump it out */
-				Assert(batchno > curbatch);
+				Assert(batchno > curbatch || batchSize + hashTupleSize >= hashtable->spaceAllowed);
 				ExecHashJoinSaveTuple(HJTUPLE_MINTUPLE(hashTuple),
 									  hashTuple->hashvalue,
 									  &hashtable->innerBatchFile[batchno]);
 
 				hashtable->spaceUsed -= hashTupleSize;
 				nfreed++;
+
+				/*
+				 * TODO: what to do about tuples that don't go to the child
+				 * batch or stay in the current batch? (this is why we are
+				 * counting tuples to child and curbatch with two diff
+				 * variables in case the tuples go to a batch that isn't the
+				 * child)
+				 */
+				if (batchno == childbatch)
+					childbatch_outgoing_tuples++;
 			}
 
 			/* next tuple in this chunk */
@@ -1032,21 +1147,33 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 #endif
 
 	/*
-	 * If we dumped out either all or none of the tuples in the table, disable
-	 * further expansion of nbatch.  This situation implies that we have
-	 * enough tuples of identical hashvalues to overflow spaceAllowed.
-	 * Increasing nbatch will not fix it since there's no way to subdivide the
-	 * group any more finely. We have to just gut it out and hope the server
-	 * has enough RAM.
+	 * The same batch should not be marked to fall back more than once
 	 */
-	if (nfreed == 0 || nfreed == ninmemory)
-	{
-		hashtable->growEnabled = false;
 #ifdef HJDEBUG
-		printf("Hashjoin %p: disabling further increase of nbatch\n",
-			   hashtable);
+	if ((childbatch_outgoing_tuples / (float) ninmemory) >= 0.8)
+		printf("childbatch %i targeted to fallback.", childbatch);
+	if ((curbatch_outgoing_tuples / (float) ninmemory) >= 0.8)
+		printf("curbatch %i targeted to fallback.", curbatch);
 #endif
-	}
+
+	/*
+	 * If too many tuples remain in the parent or too many tuples migrate to
+	 * the child, there is likely skew and continuing to increase the number
+	 * of batches will not help. Mark the batch which contains the skewed
+	 * tuples to be processed with block nested hashloop join.
+	 */
+	if ((childbatch_outgoing_tuples / (float) ninmemory) >= MAX_RELOCATION)
+		target_batch = childbatch;
+	else if ((curbatch_outgoing_tuples / (float) ninmemory) >= MAX_RELOCATION)
+		target_batch = curbatch;
+	else
+		return;
+	hashtable->hashloopBatchFile[target_batch] = BufFileCreateTemp(false);
+
+	fallback_batch_stats = palloc0(sizeof(FallbackBatchStats));
+	fallback_batch_stats->batchno = target_batch;
+	fallback_batch_stats->numstripes = 0;
+	hashtable->fallback_batches_stats = lappend(hashtable->fallback_batches_stats, fallback_batch_stats);
 }
 
 /*
@@ -1217,7 +1344,6 @@ ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
 									 WAIT_EVENT_HASH_GROW_BATCHES_DECIDE))
 			{
 				bool		space_exhausted = false;
-				bool		extreme_skew_detected = false;
 
 				/* Make sure that we have the current dimensions and buckets. */
 				ExecParallelHashEnsureBatchAccessors(hashtable);
@@ -1228,27 +1354,58 @@ ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
 				{
 					ParallelHashJoinBatch *batch = hashtable->batches[i].shared;
 
+					/*
+					 * All batches were just created anew during
+					 * repartitioning
+					 */
+					Assert(!batch->hashloop_fallback);
+
+					/*
+					 * At the time of repartitioning, each batch updates its
+					 * estimated_size to reflect the size of the batch file on
+					 * disk. It is also updated when increasing preallocated
+					 * space in ExecParallelHashTuplePrealloc().  However,
+					 * batch 0 does not store anything on disk so it has no
+					 * estimated_size.
+					 *
+					 * We still want to allow batch 0 to trigger batch growth.
+					 * In order to do that, for batch 0 check whether the
+					 * actual size exceeds space_allowed. It is a little
+					 * backwards at this point as we would have already
+					 * exceeded inserted the allowed space.
+					 */
 					if (batch->space_exhausted ||
-						batch->estimated_size > pstate->space_allowed)
+						batch->estimated_size > pstate->space_allowed ||
+						batch->size > pstate->space_allowed)
 					{
 						int			parent;
+						float		frac_moved;
 
 						space_exhausted = true;
 
-						/*
-						 * Did this batch receive ALL of the tuples from its
-						 * parent batch?  That would indicate that further
-						 * repartitioning isn't going to help (the hash values
-						 * are probably all the same).
-						 */
 						parent = i % pstate->old_nbatch;
-						if (batch->ntuples == hashtable->batches[parent].shared->old_ntuples)
-							extreme_skew_detected = true;
+						frac_moved = batch->ntuples / (float) hashtable->batches[parent].shared->old_ntuples;
+
+						/*
+						 * If too many tuples remain in the parent or too many
+						 * tuples migrate to the child, there is likely skew
+						 * and continuing to increase the number of batches
+						 * will not help. Mark the batch which contains the
+						 * skewed tuples to be processed with block nested
+						 * hashloop join.
+						 */
+						if (frac_moved >= MAX_RELOCATION)
+						{
+							batch->hashloop_fallback = true;
+							space_exhausted = false;
+						}
 					}
+					if (space_exhausted)
+						break;
 				}
 
-				/* Don't keep growing if it's not helping or we'd overflow. */
-				if (extreme_skew_detected || hashtable->nbatch >= INT_MAX / 2)
+				/* Don't keep growing if we'd overflow. */
+				if (hashtable->nbatch >= INT_MAX / 2)
 					pstate->growth = PHJ_GROWTH_DISABLED;
 				else if (space_exhausted)
 					pstate->growth = PHJ_GROWTH_NEED_MORE_BATCHES;
@@ -1315,11 +1472,28 @@ ExecParallelHashRepartitionFirst(HashJoinTable hashtable)
 			{
 				size_t		tuple_size =
 				MAXALIGN(HJTUPLE_OVERHEAD + tuple->t_len);
+				tupleMetadata metadata;
 
 				/* It belongs in a later batch. */
+				ParallelHashJoinBatch *batch = hashtable->batches[batchno].shared;
+
+				LWLockAcquire(&batch->lock, LW_EXCLUSIVE);
+
+				if (batch->estimated_stripe_size + tuple_size > hashtable->parallel_state->space_allowed)
+				{
+					batch->maximum_stripe_number++;
+					batch->estimated_stripe_size = 0;
+				}
+
+				batch->estimated_stripe_size += tuple_size;
+
+				metadata.hashvalue = hashTuple->hashvalue;
+				metadata.stripe = batch->maximum_stripe_number;
+				LWLockRelease(&batch->lock);
+
 				hashtable->batches[batchno].estimated_size += tuple_size;
-				sts_puttuple(hashtable->batches[batchno].inner_tuples,
-							 &hashTuple->hashvalue, tuple);
+
+				sts_puttuple(hashtable->batches[batchno].inner_tuples, &metadata, tuple);
 			}
 
 			/* Count this tuple. */
@@ -1367,27 +1541,41 @@ ExecParallelHashRepartitionRest(HashJoinTable hashtable)
 	for (i = 1; i < old_nbatch; ++i)
 	{
 		MinimalTuple tuple;
-		uint32		hashvalue;
+		tupleMetadata metadata;
 
 		/* Scan one partition from the previous generation. */
 		sts_begin_parallel_scan(old_inner_tuples[i]);
-		while ((tuple = sts_parallel_scan_next(old_inner_tuples[i], &hashvalue)))
+
+		while ((tuple = sts_parallel_scan_next(old_inner_tuples[i], &metadata.hashvalue)))
 		{
 			size_t		tuple_size = MAXALIGN(HJTUPLE_OVERHEAD + tuple->t_len);
 			int			bucketno;
 			int			batchno;
+			ParallelHashJoinBatch *batch;
 
 			/* Decide which partition it goes to in the new generation. */
-			ExecHashGetBucketAndBatch(hashtable, hashvalue, &bucketno,
+			ExecHashGetBucketAndBatch(hashtable, metadata.hashvalue, &bucketno,
 									  &batchno);
 
 			hashtable->batches[batchno].estimated_size += tuple_size;
 			++hashtable->batches[batchno].ntuples;
 			++hashtable->batches[i].old_ntuples;
 
+			batch = hashtable->batches[batchno].shared;
+
 			/* Store the tuple its new batch. */
-			sts_puttuple(hashtable->batches[batchno].inner_tuples,
-						 &hashvalue, tuple);
+			LWLockAcquire(&batch->lock, LW_EXCLUSIVE);
+
+			if (batch->estimated_stripe_size + tuple_size > pstate->space_allowed)
+			{
+				batch->maximum_stripe_number++;
+				batch->estimated_stripe_size = 0;
+			}
+			batch->estimated_stripe_size += tuple_size;
+			metadata.stripe = batch->maximum_stripe_number;
+			LWLockRelease(&batch->lock);
+			/* Store the tuple its new batch. */
+			sts_puttuple(hashtable->batches[batchno].inner_tuples, &metadata, tuple);
 
 			CHECK_FOR_INTERRUPTS();
 		}
@@ -1697,6 +1885,12 @@ retry:
 
 	if (batchno == 0)
 	{
+		/*
+		 * TODO: if spilling is enabled for batch 0 so that it can fall back,
+		 * we will need to stop loading batch 0 into the hashtable somewhere--
+		 * maybe here-- and switch to saving tuples to a file. Currently, this
+		 * will simply exceed the space allowed
+		 */
 		HashJoinTuple hashTuple;
 
 		/* Try to load it into memory. */
@@ -1719,10 +1913,17 @@ retry:
 	else
 	{
 		size_t		tuple_size = MAXALIGN(HJTUPLE_OVERHEAD + tuple->t_len);
+		ParallelHashJoinBatch *batch;
+		tupleMetadata metadata;
 
 		Assert(batchno > 0);
 
 		/* Try to preallocate space in the batch if necessary. */
+
+		/*
+		 * TODO: is it okay to only count the tuple when it doesn't fit in the
+		 * preallocated memory?
+		 */
 		if (hashtable->batches[batchno].preallocated < tuple_size)
 		{
 			if (!ExecParallelHashTuplePrealloc(hashtable, batchno, tuple_size))
@@ -1731,8 +1932,14 @@ retry:
 
 		Assert(hashtable->batches[batchno].preallocated >= tuple_size);
 		hashtable->batches[batchno].preallocated -= tuple_size;
-		sts_puttuple(hashtable->batches[batchno].inner_tuples, &hashvalue,
-					 tuple);
+		batch = hashtable->batches[batchno].shared;
+
+		metadata.hashvalue = hashvalue;
+		LWLockAcquire(&batch->lock, LW_SHARED);
+		metadata.stripe = batch->maximum_stripe_number;
+		LWLockRelease(&batch->lock);
+
+		sts_puttuple(hashtable->batches[batchno].inner_tuples, &metadata, tuple);
 	}
 	++hashtable->batches[batchno].ntuples;
 
@@ -2701,6 +2908,7 @@ ExecHashAccumInstrumentation(HashInstrumentation *instrument,
 									  hashtable->nbatch_original);
 	instrument->space_peak = Max(instrument->space_peak,
 								 hashtable->spacePeak);
+	instrument->fallback_batches_stats = hashtable->fallback_batches_stats;
 }
 
 /*
@@ -2854,6 +3062,8 @@ ExecParallelHashTupleAlloc(HashJoinTable hashtable, size_t size,
 	/* Check if it's time to grow batches or buckets. */
 	if (pstate->growth != PHJ_GROWTH_DISABLED)
 	{
+		ParallelHashJoinBatchAccessor batch = hashtable->batches[0];
+
 		Assert(curbatch == 0);
 		Assert(BarrierPhase(&pstate->build_barrier) == PHJ_BUILD_HASHING_INNER);
 
@@ -2862,8 +3072,13 @@ ExecParallelHashTupleAlloc(HashJoinTable hashtable, size_t size,
 		 * very large tuples or very low hash_mem setting, we'll always allow
 		 * each backend to allocate at least one chunk.
 		 */
-		if (hashtable->batches[0].at_least_one_chunk &&
-			hashtable->batches[0].shared->size +
+
+		/*
+		 * TODO: get rid of this check for batch 0 and make it so that batch 0
+		 * always has to keep trying to increase the number of batches
+		 */
+		if (!batch.shared->hashloop_fallback && batch.at_least_one_chunk &&
+			batch.shared->size +
 			chunk_size > pstate->space_allowed)
 		{
 			pstate->growth = PHJ_GROWTH_NEED_MORE_BATCHES;
@@ -2895,6 +3110,11 @@ ExecParallelHashTupleAlloc(HashJoinTable hashtable, size_t size,
 
 	/* We are cleared to allocate a new chunk. */
 	chunk_shared = dsa_allocate(hashtable->area, chunk_size);
+
+	/*
+	 * TODO: if batch 0 will have stripes, need to account for this memory
+	 * there
+	 */
 	hashtable->batches[curbatch].shared->size += chunk_size;
 	hashtable->batches[curbatch].at_least_one_chunk = true;
 
@@ -2964,21 +3184,38 @@ ExecParallelHashJoinSetUpBatches(HashJoinTable hashtable, int nbatch)
 	{
 		ParallelHashJoinBatchAccessor *accessor = &hashtable->batches[i];
 		ParallelHashJoinBatch *shared = NthParallelHashJoinBatch(batches, i);
+		SharedBits *sbits = ParallelHashJoinBatchOuterBits(shared, pstate->nparticipants);
 		char		name[MAXPGPATH];
+		char		sbname[MAXPGPATH];
+
+		shared->hashloop_fallback = false;
+		/* TODO: is it okay to use the same tranche for this lock? */
+		LWLockInitialize(&shared->lock, LWTRANCHE_PARALLEL_HASH_JOIN);
+		shared->maximum_stripe_number = 0;
+		shared->estimated_stripe_size = 0;
 
 		/*
 		 * All members of shared were zero-initialized.  We just need to set
 		 * up the Barrier.
 		 */
 		BarrierInit(&shared->batch_barrier, 0);
+		BarrierInit(&shared->stripe_barrier, 0);
+
+		/* Batch 0 doesn't need to be loaded. */
 		if (i == 0)
 		{
-			/* Batch 0 doesn't need to be loaded. */
 			BarrierAttach(&shared->batch_barrier);
-			while (BarrierPhase(&shared->batch_barrier) < PHJ_BATCH_PROBING)
+			while (BarrierPhase(&shared->batch_barrier) < PHJ_BATCH_STRIPING)
 				BarrierArriveAndWait(&shared->batch_barrier, 0);
 			BarrierDetach(&shared->batch_barrier);
+
+			BarrierAttach(&shared->stripe_barrier);
+			while (BarrierPhase(&shared->stripe_barrier) < PHJ_STRIPE_PROBING)
+				BarrierArriveAndWait(&shared->stripe_barrier, 0);
+			BarrierDetach(&shared->stripe_barrier);
 		}
+		/* why isn't done initialized here ? */
+		accessor->done = PHJ_BATCH_ACCESSOR_NOT_DONE;
 
 		/* Initialize accessor state.  All members were zero-initialized. */
 		accessor->shared = shared;
@@ -2989,7 +3226,7 @@ ExecParallelHashJoinSetUpBatches(HashJoinTable hashtable, int nbatch)
 			sts_initialize(ParallelHashJoinBatchInner(shared),
 						   pstate->nparticipants,
 						   ParallelWorkerNumber + 1,
-						   sizeof(uint32),
+						   sizeof(tupleMetadata),
 						   SHARED_TUPLESTORE_SINGLE_PASS,
 						   &pstate->fileset,
 						   name);
@@ -2999,10 +3236,14 @@ ExecParallelHashJoinSetUpBatches(HashJoinTable hashtable, int nbatch)
 													  pstate->nparticipants),
 						   pstate->nparticipants,
 						   ParallelWorkerNumber + 1,
-						   sizeof(uint32),
+						   sizeof(tupleMetadata),
 						   SHARED_TUPLESTORE_SINGLE_PASS,
 						   &pstate->fileset,
 						   name);
+		snprintf(sbname, MAXPGPATH, "%s.bitmaps", name);
+		/* Use the same SharedFileset for the SharedTupleStore and SharedBits */
+		accessor->sba = sb_initialize(sbits, pstate->nparticipants,
+									  ParallelWorkerNumber + 1, &pstate->fileset, sbname);
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -3051,8 +3292,8 @@ ExecParallelHashEnsureBatchAccessors(HashJoinTable hashtable)
 	 * It's possible for a backend to start up very late so that the whole
 	 * join is finished and the shm state for tracking batches has already
 	 * been freed by ExecHashTableDetach().  In that case we'll just leave
-	 * hashtable->batches as NULL so that ExecParallelHashJoinNewBatch() gives
-	 * up early.
+	 * hashtable->batches as NULL so that ExecParallelHashJoinAdvanceBatch()
+	 * gives up early.
 	 */
 	if (!DsaPointerIsValid(pstate->batches))
 		return;
@@ -3074,10 +3315,11 @@ ExecParallelHashEnsureBatchAccessors(HashJoinTable hashtable)
 	{
 		ParallelHashJoinBatchAccessor *accessor = &hashtable->batches[i];
 		ParallelHashJoinBatch *shared = NthParallelHashJoinBatch(batches, i);
+		SharedBits *sbits = ParallelHashJoinBatchOuterBits(shared, pstate->nparticipants);
 
 		accessor->shared = shared;
 		accessor->preallocated = 0;
-		accessor->done = false;
+		accessor->done = PHJ_BATCH_ACCESSOR_NOT_DONE;
 		accessor->inner_tuples =
 			sts_attach(ParallelHashJoinBatchInner(shared),
 					   ParallelWorkerNumber + 1,
@@ -3087,6 +3329,7 @@ ExecParallelHashEnsureBatchAccessors(HashJoinTable hashtable)
 												  pstate->nparticipants),
 					   ParallelWorkerNumber + 1,
 					   &pstate->fileset);
+		accessor->sba = sb_attach(sbits, ParallelWorkerNumber + 1, &pstate->fileset);
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -3167,6 +3410,18 @@ ExecHashTableDetachBatch(HashJoinTable hashtable)
 		/* Remember that we are not attached to a batch. */
 		hashtable->curbatch = -1;
 	}
+}
+
+bool
+ExecHashTableDetachStripe(HashJoinTable hashtable)
+{
+	int			curbatch = hashtable->curbatch;
+	ParallelHashJoinBatch *batch = hashtable->batches[curbatch].shared;
+	Barrier    *stripe_barrier = &batch->stripe_barrier;
+
+	BarrierDetach(stripe_barrier);
+	hashtable->curstripe = STRIPE_DETACHED;
+	return false;
 }
 
 /*
@@ -3354,13 +3609,35 @@ ExecParallelHashTuplePrealloc(HashJoinTable hashtable, int batchno, size_t size)
 	{
 		/*
 		 * We have determined that this batch would exceed the space budget if
-		 * loaded into memory.  Command all participants to help repartition.
+		 * loaded into memory.
 		 */
-		batch->shared->space_exhausted = true;
-		pstate->growth = PHJ_GROWTH_NEED_MORE_BATCHES;
-		LWLockRelease(&pstate->lock);
-
-		return false;
+		/* TODO: the nested lock is a deadlock waiting to happen. */
+		LWLockAcquire(&batch->shared->lock, LW_EXCLUSIVE);
+		if (!batch->shared->hashloop_fallback)
+		{
+			/*
+			 * This batch is not marked to fall back so command all
+			 * participants to help repartition.
+			 */
+			batch->shared->space_exhausted = true;
+			pstate->growth = PHJ_GROWTH_NEED_MORE_BATCHES;
+			LWLockRelease(&batch->shared->lock);
+			LWLockRelease(&pstate->lock);
+			return false;
+		}
+		else if (batch->shared->estimated_stripe_size + want +
+				 HASH_CHUNK_HEADER_SIZE > pstate->space_allowed)
+		{
+			/*
+			 * This batch is marked to fall back and the current (last) stripe
+			 * does not have enough space to handle the request so we must
+			 * increment the number of stripes in the batch and reset the size
+			 * of its new last stripe.
+			 */
+			batch->shared->maximum_stripe_number++;
+			batch->shared->estimated_stripe_size = 0;
+		}
+		LWLockRelease(&batch->shared->lock);
 	}
 
 	batch->at_least_one_chunk = true;

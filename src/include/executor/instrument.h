@@ -14,6 +14,7 @@
 #define INSTRUMENT_H
 
 #include "portability/instr_time.h"
+#include "nodes/pg_list.h"
 
 
 typedef struct BufferUsage
@@ -38,6 +39,12 @@ typedef struct WalUsage
 	long		wal_fpi;		/* # of WAL full page images produced */
 	uint64		wal_bytes;		/* size of WAL records produced */
 } WalUsage;
+
+typedef struct FallbackBatchStats
+{
+	int			batchno;
+	int			numstripes;
+} FallbackBatchStats;
 
 /* Flag bits included in InstrAlloc's instrument_options bitmask */
 typedef enum InstrumentOption

@@ -52,6 +52,7 @@ typedef struct SharedTuplestoreParticipant
 {
 	LWLock		lock;
 	BlockNumber read_page;		/* Page number for next read. */
+	bool		rewound;
 	BlockNumber npages;			/* Number of pages written. */
 	bool		writing;		/* Used only for assertions. */
 } SharedTuplestoreParticipant;
@@ -60,6 +61,7 @@ typedef struct SharedTuplestoreParticipant
 struct SharedTuplestore
 {
 	int			nparticipants;	/* Number of participants that can write. */
+	pg_atomic_uint32 ntuples;	/* Number of tuples in this tuplestore. */
 	int			flags;			/* Flag bits from SHARED_TUPLESTORE_XXX */
 	size_t		meta_data_size; /* Size of per-tuple header. */
 	char		name[NAMEDATALEN];	/* A name for this tuplestore. */
@@ -85,6 +87,8 @@ struct SharedTuplestoreAccessor
 	char	   *read_buffer;	/* A buffer for loading tuples. */
 	size_t		read_buffer_size;
 	BlockNumber read_next_page; /* Lowest block we'll consider reading. */
+	BlockNumber start_page;		/* page to reset p->read_page to if back out
+								 * required */
 
 	/* State for writing. */
 	SharedTuplestoreChunk *write_chunk; /* Buffer for writing. */
@@ -137,6 +141,7 @@ sts_initialize(SharedTuplestore *sts, int participants,
 	Assert(my_participant_number < participants);
 
 	sts->nparticipants = participants;
+	pg_atomic_init_u32(&sts->ntuples, 1);
 	sts->meta_data_size = meta_data_size;
 	sts->flags = flags;
 
@@ -158,6 +163,7 @@ sts_initialize(SharedTuplestore *sts, int participants,
 		LWLockInitialize(&sts->participants[i].lock,
 						 LWTRANCHE_SHARED_TUPLESTORE);
 		sts->participants[i].read_page = 0;
+		sts->participants[i].rewound = false;
 		sts->participants[i].writing = false;
 	}
 
@@ -272,6 +278,45 @@ sts_begin_parallel_scan(SharedTuplestoreAccessor *accessor)
 	accessor->read_participant = accessor->participant;
 	accessor->read_file = NULL;
 	accessor->read_next_page = 0;
+	accessor->start_page = 0;
+}
+
+void
+sts_resume_parallel_scan(SharedTuplestoreAccessor *accessor)
+{
+	int			i PG_USED_FOR_ASSERTS_ONLY;
+	SharedTuplestoreParticipant *p;
+
+	/* End any existing scan that was in progress. */
+	sts_end_parallel_scan(accessor);
+
+	/*
+	 * Any backend that might have written into this shared tuplestore must
+	 * have called sts_end_write(), so that all buffers are flushed and the
+	 * files have stopped growing.
+	 */
+	for (i = 0; i < accessor->sts->nparticipants; ++i)
+		Assert(!accessor->sts->participants[i].writing);
+
+	/*
+	 * We will start out reading the file that THIS backend wrote.  There may
+	 * be some caching locality advantage to that.
+	 */
+
+	/*
+	 * TODO: does this still apply in the multi-stripe case? It seems like if
+	 * a participant file is exhausted for the current stripe it might be
+	 * better to remember that
+	 */
+	accessor->read_participant = accessor->participant;
+	accessor->read_file = NULL;
+	p = &accessor->sts->participants[accessor->read_participant];
+
+	/* TODO: find a better solution than this for resuming the parallel scan */
+	LWLockAcquire(&p->lock, LW_SHARED);
+	accessor->start_page = p->read_page;
+	LWLockRelease(&p->lock);
+	accessor->read_next_page = 0;
 }
 
 /*
@@ -290,6 +335,7 @@ sts_end_parallel_scan(SharedTuplestoreAccessor *accessor)
 		BufFileClose(accessor->read_file);
 		accessor->read_file = NULL;
 	}
+	accessor->start_page = 0;
 }
 
 /*
@@ -526,7 +572,13 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 	for (;;)
 	{
 		/* Can we read more tuples from the current chunk? */
-		if (accessor->read_ntuples < accessor->read_ntuples_available)
+		/*
+		 * Added a check for accessor->read_file being present here, as it
+		 * became relevant for adaptive hashjoin. Not sure if this has other
+		 * consequences for correctness
+		 */
+
+		if (accessor->read_ntuples < accessor->read_ntuples_available && accessor->read_file)
 			return sts_read_tuple(accessor, meta_data);
 
 		/* Find the location of a new chunk to read. */
@@ -536,7 +588,7 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 		/* We can skip directly past overflow pages we know about. */
 		if (p->read_page < accessor->read_next_page)
 			p->read_page = accessor->read_next_page;
-		eof = p->read_page >= p->npages;
+		eof = p->read_page >= p->npages || p->rewound;
 		if (!eof)
 		{
 			/* Claim the next chunk. */
@@ -544,8 +596,21 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 			/* Advance the read head for the next reader. */
 			p->read_page += STS_CHUNK_PAGES;
 			accessor->read_next_page = p->read_page;
+
+			/*
+			 * initialize start_page to the read_page this participant will
+			 * start reading from
+			 */
+			accessor->start_page = read_page;
 		}
 		LWLockRelease(&p->lock);
+
+		if (!eof)
+		{
+			char		name[MAXPGPATH];
+
+			sts_filename(name, accessor, accessor->read_participant);
+		}
 
 		if (!eof)
 		{
@@ -610,12 +675,55 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 			if (accessor->read_participant == accessor->participant)
 				break;
 			accessor->read_next_page = 0;
+			accessor->start_page = 0;
 
 			/* Go around again, so we can get a chunk from this file. */
 		}
 	}
 
 	return NULL;
+}
+
+void
+sts_parallel_scan_rewind(SharedTuplestoreAccessor *accessor)
+{
+	SharedTuplestoreParticipant *p =
+	&accessor->sts->participants[accessor->read_participant];
+
+	/*
+	 * Only set the read_page back to the start of the sts_chunk this worker
+	 * was reading if some other worker has not already done so. It could be
+	 * the case that this worker saw a tuple from a future stripe and another
+	 * worker did also in its sts_chunk and it already set read_page to its
+	 * start_page If so, we want to set read_page to the lowest value to
+	 * ensure that we read all tuples from the stripe (don't miss tuples)
+	 */
+	LWLockAcquire(&p->lock, LW_EXCLUSIVE);
+	p->read_page = Min(p->read_page, accessor->start_page);
+	p->rewound = true;
+	LWLockRelease(&p->lock);
+
+	accessor->read_ntuples_available = 0;
+	accessor->read_next_page = 0;
+}
+
+void
+sts_reset_rewound(SharedTuplestoreAccessor *accessor)
+{
+	for (int i = 0; i < accessor->sts->nparticipants; ++i)
+		accessor->sts->participants[i].rewound = false;
+}
+
+uint32
+sts_increment_ntuples(SharedTuplestoreAccessor *accessor)
+{
+	return pg_atomic_fetch_add_u32(&accessor->sts->ntuples, 1);
+}
+
+uint32
+sts_get_tuplenum(SharedTuplestoreAccessor *accessor)
+{
+	return pg_atomic_read_u32(&accessor->sts->ntuples);
 }
 
 /*

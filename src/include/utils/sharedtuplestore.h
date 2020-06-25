@@ -22,6 +22,17 @@ typedef struct SharedTuplestore SharedTuplestore;
 
 struct SharedTuplestoreAccessor;
 typedef struct SharedTuplestoreAccessor SharedTuplestoreAccessor;
+struct tupleMetadata;
+typedef struct tupleMetadata tupleMetadata;
+struct tupleMetadata
+{
+	uint32		hashvalue;
+	union
+	{
+		uint32		tupleid;	/* tuple number or id on the outer side */
+		int			stripe;		/* stripe number for inner side */
+	};
+};
 
 /*
  * A flag indicating that the tuplestore will only be scanned once, so backing
@@ -49,6 +60,8 @@ extern void sts_reinitialize(SharedTuplestoreAccessor *accessor);
 
 extern void sts_begin_parallel_scan(SharedTuplestoreAccessor *accessor);
 
+extern void sts_resume_parallel_scan(SharedTuplestoreAccessor *accessor);
+
 extern void sts_end_parallel_scan(SharedTuplestoreAccessor *accessor);
 
 extern void sts_puttuple(SharedTuplestoreAccessor *accessor,
@@ -57,5 +70,11 @@ extern void sts_puttuple(SharedTuplestoreAccessor *accessor,
 
 extern MinimalTuple sts_parallel_scan_next(SharedTuplestoreAccessor *accessor,
 										   void *meta_data);
+
+extern void sts_parallel_scan_rewind(SharedTuplestoreAccessor *accessor);
+
+extern void sts_reset_rewound(SharedTuplestoreAccessor *accessor);
+extern uint32 sts_increment_ntuples(SharedTuplestoreAccessor *accessor);
+extern uint32 sts_get_tuplenum(SharedTuplestoreAccessor *accessor);
 
 #endif							/* SHAREDTUPLESTORE_H */

@@ -538,3 +538,149 @@ WHERE
     AND hjtest_1.a <> hjtest_2.b;
 
 ROLLBACK;
+
+-- Serial Adaptive Hash Join
+
+BEGIN;
+CREATE TYPE stub AS (hash INTEGER, value CHAR(8098));
+
+CREATE FUNCTION stub_hash(item stub)
+RETURNS INTEGER AS $$
+DECLARE
+  batch_size INTEGER;
+BEGIN
+  batch_size := 4;
+  RETURN item.hash << (batch_size - 1);
+END; $$ LANGUAGE plpgsql IMMUTABLE LEAKPROOF STRICT PARALLEL SAFE;
+
+CREATE FUNCTION stub_eq(item1 stub, item2 stub)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN item1.hash = item2.hash AND item1.value = item2.value;
+END; $$ LANGUAGE plpgsql IMMUTABLE LEAKPROOF STRICT PARALLEL SAFE;
+
+CREATE OPERATOR = (
+  FUNCTION = stub_eq,
+  LEFTARG = stub,
+  RIGHTARG = stub,
+  COMMUTATOR = =,
+  HASHES, MERGES
+);
+
+CREATE OPERATOR CLASS stub_hash_ops
+DEFAULT FOR TYPE stub USING hash AS
+  OPERATOR 1 =(stub, stub),
+  FUNCTION 1 stub_hash(stub);
+
+CREATE TABLE probeside(a stub);
+ALTER TABLE probeside ALTER COLUMN a SET STORAGE PLAIN;
+-- non-fallback batch with unmatched outer tuple
+INSERT INTO probeside SELECT '(2, "")' FROM generate_series(1, 1);
+-- fallback batch unmatched outer tuple (in first stripe maybe)
+INSERT INTO probeside SELECT '(1, "unmatched outer tuple")' FROM generate_series(1, 1);
+-- fallback batch matched outer tuple
+INSERT INTO probeside SELECT '(1, "")' FROM generate_series(1, 5);
+-- fallback batch unmatched outer tuple (in last stripe maybe)
+-- When numbatches=4, hash 5 maps to batch 1, but after numbatches doubles to
+-- 8 batches hash 5 maps to batch 5.
+INSERT INTO probeside SELECT '(5, "")' FROM generate_series(1, 1);
+-- non-fallback batch matched outer tuple
+INSERT INTO probeside SELECT '(3, "")' FROM generate_series(1, 1);
+-- batch with 3 stripes where non-first/non-last stripe contains unmatched outer tuple
+INSERT INTO probeside SELECT '(6, "")' FROM generate_series(1, 5);
+INSERT INTO probeside SELECT '(6, "unmatched outer tuple")' FROM generate_series(1, 1);
+INSERT INTO probeside SELECT '(6, "")' FROM generate_series(1, 1);
+
+CREATE TABLE hashside_wide(a stub, id int);
+ALTER TABLE hashside_wide ALTER COLUMN a SET STORAGE PLAIN;
+-- falls back with an unmatched inner tuple that is in fist, middle, and last
+-- stripe
+INSERT INTO hashside_wide SELECT '(1, "unmatched inner tuple in first stripe")', 1 FROM generate_series(1, 1);
+INSERT INTO hashside_wide SELECT '(1, "")', 1 FROM generate_series(1, 9);
+INSERT INTO hashside_wide SELECT '(1, "unmatched inner tuple in middle stripe")', 1 FROM generate_series(1, 1);
+INSERT INTO hashside_wide SELECT '(1, "")', 1 FROM generate_series(1, 9);
+INSERT INTO hashside_wide SELECT '(1, "unmatched inner tuple in last stripe")', 1 FROM generate_series(1, 1);
+
+-- doesn't fall back -- matched tuple
+INSERT INTO hashside_wide SELECT '(3, "")', 3 FROM generate_series(1, 1);
+INSERT INTO hashside_wide SELECT '(6, "")', 6 FROM generate_series(1, 20);
+
+ANALYZE probeside, hashside_wide;
+
+SET enable_nestloop TO off;
+SET enable_mergejoin TO off;
+SET work_mem = 64;
+
+SELECT (probeside.a).hash, TRIM((probeside.a).value), hashside_wide.id, (hashside_wide.a).hash, TRIM((hashside_wide.a).value)
+FROM probeside
+LEFT OUTER JOIN hashside_wide USING (a)
+ORDER BY 1, 2, 3, 4, 5;
+
+EXPLAIN (ANALYZE, summary off, timing off, costs off, usage off) SELECT * FROM probeside
+LEFT OUTER JOIN hashside_wide USING (a);
+
+SELECT (probeside.a).hash, TRIM((probeside.a).value), hashside_wide.id, (hashside_wide.a).hash, TRIM((hashside_wide.a).value)
+FROM probeside
+RIGHT OUTER JOIN hashside_wide USING (a)
+ORDER BY 1, 2, 3, 4, 5;
+
+EXPLAIN (ANALYZE, summary off, timing off, costs off, usage off) SELECT * FROM probeside
+RIGHT OUTER JOIN hashside_wide USING (a);
+
+SELECT (probeside.a).hash, TRIM((probeside.a).value), hashside_wide.id, (hashside_wide.a).hash, TRIM((hashside_wide.a).value)
+FROM probeside
+FULL OUTER JOIN hashside_wide USING (a)
+ORDER BY 1, 2, 3, 4, 5;
+
+EXPLAIN (ANALYZE, summary off, timing off, costs off, usage off) SELECT * FROM probeside
+FULL OUTER JOIN hashside_wide USING (a);
+
+-- semi-join testcase
+EXPLAIN (ANALYZE, summary off, timing off, costs off, usage off)
+SELECT probeside.* FROM probeside WHERE EXISTS (SELECT * FROM hashside_wide WHERE probeside.a=a);
+
+SELECT (probeside.a).hash, TRIM((probeside.a).value)
+FROM probeside WHERE EXISTS (SELECT * FROM hashside_wide WHERE probeside.a=a) ORDER BY 1, 2;
+
+-- anti-join testcase
+EXPLAIN (ANALYZE, summary off, timing off, costs off, usage off)
+SELECT probeside.* FROM probeside WHERE NOT EXISTS (SELECT * FROM hashside_wide WHERE probeside.a=a);
+
+SELECT (probeside.a).hash, TRIM((probeside.a).value)
+FROM probeside WHERE NOT EXISTS (SELECT * FROM hashside_wide WHERE probeside.a=a) ORDER BY 1, 2;
+
+-- parallel LOJ test case with two batches falling back
+savepoint settings;
+set local max_parallel_workers_per_gather = 1;
+set local min_parallel_table_scan_size = 0;
+set local parallel_setup_cost = 0;
+set local enable_parallel_hash = on;
+
+EXPLAIN (ANALYZE, summary off, timing off, costs off, usage off) SELECT * FROM probeside
+LEFT OUTER JOIN hashside_wide USING (a);
+
+SELECT (probeside.a).hash, TRIM((probeside.a).value), hashside_wide.id, (hashside_wide.a).hash, TRIM((hashside_wide.a).value)
+FROM probeside
+LEFT OUTER JOIN hashside_wide USING (a)
+ORDER BY 1, 2, 3, 4, 5;
+rollback to settings;
+
+-- Test spill of batch 0 gives correct results.
+CREATE TABLE probeside_batch0(a stub);
+ALTER TABLE probeside_batch0 ALTER COLUMN a SET STORAGE PLAIN;
+INSERT INTO probeside_batch0 SELECT '(0, "")' FROM generate_series(1, 13);
+INSERT INTO probeside_batch0 SELECT '(0, "unmatched outer")' FROM generate_series(1, 1);
+
+CREATE TABLE hashside_wide_batch0(a stub, id int);
+ALTER TABLE hashside_wide_batch0 ALTER COLUMN a SET STORAGE PLAIN;
+INSERT INTO hashside_wide_batch0 SELECT '(0, "")', 1 FROM generate_series(1, 9);
+INSERT INTO hashside_wide_batch0 SELECT '(0, "")', 1 FROM generate_series(1, 9);
+INSERT INTO hashside_wide_batch0 SELECT '(0, "")', 1 FROM generate_series(1, 9);
+ANALYZE probeside_batch0, hashside_wide_batch0;
+
+SELECT (probeside_batch0.a).hash, ((((probeside_batch0.a).hash << 7) >> 3) & 31) AS batchno, TRIM((probeside_batch0.a).value), hashside_wide_batch0.id, hashside_wide_batch0.ctid, (hashside_wide_batch0.a).hash, TRIM((hashside_wide_batch0.a).value)
+FROM probeside_batch0
+LEFT OUTER JOIN hashside_wide_batch0 USING (a)
+ORDER BY 1, 2, 3, 4, 5;
+
+ROLLBACK;

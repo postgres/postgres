@@ -31,6 +31,7 @@ extern void ExecParallelHashTableAlloc(HashJoinTable hashtable,
 extern void ExecHashTableDestroy(HashJoinTable hashtable);
 extern void ExecHashTableDetach(HashJoinTable hashtable);
 extern void ExecHashTableDetachBatch(HashJoinTable hashtable);
+extern bool ExecHashTableDetachStripe(HashJoinTable hashtable);
 extern void ExecParallelHashTableSetCurrentBatch(HashJoinTable hashtable,
 												 int batchno);
 
