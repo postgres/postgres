@@ -196,6 +196,10 @@ table_beginscan_parallel(Relation relation, ParallelTableScanDesc parallel_scan)
  * optimized, but is unlikely to matter from a performance POV. If there
  * frequently are live index pointers also matching a unique index key, the
  * CPU overhead of this routine is unlikely to matter.
+ *
+ * Note that *tid may be modified when we return true if the AM supports
+ * storing multiple row versions reachable via a single index entry (like
+ * heap's HOT).
  */
 bool
 table_index_fetch_tuple_check(Relation rel,

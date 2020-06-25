@@ -597,7 +597,8 @@ _bt_check_unique(Relation rel, BTInsertState insertstate, Relation heapRel,
 					 * not part of this chain because it had a different index
 					 * entry.
 					 */
-					if (table_index_fetch_tuple_check(heapRel, &itup->t_tid,
+					htid = itup->t_tid;
+					if (table_index_fetch_tuple_check(heapRel, &htid,
 													  SnapshotSelf, NULL))
 					{
 						/* Normal case --- it's still live */

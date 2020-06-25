@@ -989,7 +989,9 @@ table_index_fetch_end(struct IndexFetchTableData *scan)
 /*
  * Fetches, as part of an index scan, tuple at `tid` into `slot`, after doing
  * a visibility test according to `snapshot`. If a tuple was found and passed
- * the visibility test, returns true, false otherwise.
+ * the visibility test, returns true, false otherwise. Note that *tid may be
+ * modified when we return true (see later remarks on multiple row versions
+ * reachable via a single index entry).
  *
  * *call_again needs to be false on the first call to table_index_fetch_tuple() for
  * a tid. If there potentially is another tuple matching the tid, *call_again
