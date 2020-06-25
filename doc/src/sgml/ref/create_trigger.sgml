@@ -458,6 +458,12 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
 
   <para>
+   There are a few built-in trigger functions that can be used to
+   solve common problems without having to write your own trigger code;
+   see <xref linkend="functions-trigger"/>.
+  </para>
+
+  <para>
    In a <literal>BEFORE</literal> trigger, the <literal>WHEN</literal> condition is
    evaluated just before the function is or would be executed, so using
    <literal>WHEN</literal> is not materially different from testing the same
