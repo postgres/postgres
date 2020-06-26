@@ -8412,11 +8412,12 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
          <returnvalue>interval</returnvalue>
         </para>
         <para>
-         Subtract timestamps
+         Subtract timestamps (converting 24-hour intervals into days,
+         similarly to <function>justify_hours()</function>)
         </para>
         <para>
-         <literal>timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</literal>
-         <returnvalue>1 day 15:00:00</returnvalue>
+         <literal>timestamp '2001-09-29 03:00' - timestamp '2001-07-27 12:00'</literal>
+         <returnvalue>63 days 15:00:00</returnvalue>
         </para></entry>
        </row>
 
