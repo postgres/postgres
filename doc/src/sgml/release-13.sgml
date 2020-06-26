@@ -1534,22 +1534,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
      </listitem>
 
-     <listitem>
-<!--
-Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
-2020-03-20 [4e6209134] pg_dump: Add FOREIGN to ALTER statements, if appropriate
--->
-
-      <para>
-       Add <literal>FOREIGN</literal> to <command>ALTER</command> statements,
-       if appropriate (Luis Carril)
-      </para>
-
-      <para>
-       WHAT IS THIS ABOUT?
-      </para>
-     </listitem>
-
     </itemizedlist>
 
    </sect3>
@@ -2414,10 +2398,10 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 -->
 
       <para>
-       Allow <link
+       Add <link
        linkend="app-pgdump"><application>pg_dump</application></link>
-       <option>--include-foreign-data</option> to dump data from foreign
-       servers (Luis Carril)
+       option <option>--include-foreign-data</option> to dump data from
+       foreign servers (Luis Carril)
       </para>
      </listitem>
 
