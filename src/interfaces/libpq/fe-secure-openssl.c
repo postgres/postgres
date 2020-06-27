@@ -1304,6 +1304,45 @@ open_client_SSL(PGconn *conn)
 									  libpq_gettext("SSL error: %s\n"),
 									  err);
 					SSLerrfree(err);
+					switch (ERR_GET_REASON(ecode))
+					{
+							/*
+							 * UNSUPPORTED_PROTOCOL, WRONG_VERSION_NUMBER, and
+							 * TLSV1_ALERT_PROTOCOL_VERSION have been observed
+							 * when trying to communicate with an old OpenSSL
+							 * library, or when the client and server specify
+							 * disjoint protocol ranges.
+							 * NO_PROTOCOLS_AVAILABLE occurs if there's a
+							 * local misconfiguration (which can happen
+							 * despite our checks, if openssl.cnf injects a
+							 * limit we didn't account for).  It's not very
+							 * clear what would make OpenSSL return the other
+							 * codes listed here, but a hint about protocol
+							 * versions seems like it's appropriate for all.
+							 */
+						case SSL_R_NO_PROTOCOLS_AVAILABLE:
+						case SSL_R_UNSUPPORTED_PROTOCOL:
+						case SSL_R_BAD_PROTOCOL_VERSION_NUMBER:
+						case SSL_R_UNKNOWN_PROTOCOL:
+						case SSL_R_UNKNOWN_SSL_VERSION:
+						case SSL_R_UNSUPPORTED_SSL_VERSION:
+						case SSL_R_VERSION_TOO_HIGH:
+						case SSL_R_VERSION_TOO_LOW:
+						case SSL_R_WRONG_SSL_VERSION:
+						case SSL_R_WRONG_VERSION_NUMBER:
+						case SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:
+							appendPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("This may indicate that the server does not support any SSL protocol version between %s and %s.\n"),
+											  conn->ssl_min_protocol_version ?
+											  conn->ssl_min_protocol_version :
+											  MIN_OPENSSL_TLS_VERSION,
+											  conn->ssl_max_protocol_version ?
+											  conn->ssl_max_protocol_version :
+											  MAX_OPENSSL_TLS_VERSION);
+							break;
+						default:
+							break;
+					}
 					pgtls_close(conn);
 					return PGRES_POLLING_FAILED;
 				}
