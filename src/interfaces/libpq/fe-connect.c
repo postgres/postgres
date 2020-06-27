@@ -320,7 +320,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Require-Peer", "", 10,
 	offsetof(struct pg_conn, requirepeer)},
 
-	{"ssl_min_protocol_version", "PGSSLMINPROTOCOLVERSION", NULL, NULL,
+	{"ssl_min_protocol_version", "PGSSLMINPROTOCOLVERSION", "TLSv1.2", NULL,
 		"SSL-Minimum-Protocol-Version", "", 8,	/* sizeof("TLSv1.x") == 8 */
 	offsetof(struct pg_conn, ssl_min_protocol_version)},
 

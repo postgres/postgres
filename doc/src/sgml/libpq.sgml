@@ -1745,9 +1745,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         <literal>TLSv1.1</literal>, <literal>TLSv1.2</literal> and
         <literal>TLSv1.3</literal>. The supported protocols depend on the
         version of <productname>OpenSSL</productname> used, older versions
-        not supporting the most modern protocol versions. If not set, this
-        parameter is ignored and the connection will use the minimum bound
-        defined by the backend.
+        not supporting the most modern protocol versions. If not specified,
+        the default is <literal>TLSv1.2</literal>, which satisfies industry
+        best practices as of this writing.
        </para>
       </listitem>
      </varlistentry>
