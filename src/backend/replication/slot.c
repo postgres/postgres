@@ -1157,6 +1157,7 @@ restart:
 		if (XLogRecPtrIsInvalid(restart_lsn) || restart_lsn >= oldestLSN)
 			continue;
 		LWLockRelease(ReplicationSlotControlLock);
+		CHECK_FOR_INTERRUPTS();
 
 		/* Get ready to sleep on the slot in case it is active */
 		ConditionVariablePrepareToSleep(&s->active_cv);
@@ -1214,10 +1215,7 @@ restart:
 		 * already been dropped.
 		 */
 		if (wspid == -1)
-		{
-			CHECK_FOR_INTERRUPTS();
 			goto restart;
-		}
 
 		ereport(LOG,
 				(errmsg("invalidating slot \"%s\" because its restart_lsn %X/%X exceeds max_slot_wal_keep_size",
@@ -1229,10 +1227,13 @@ restart:
 		s->data.invalidated_at = s->data.restart_lsn;
 		s->data.restart_lsn = InvalidXLogRecPtr;
 		SpinLockRelease(&s->mutex);
+
+		/* Make sure the invalidated state persists across server restart */
+		ReplicationSlotMarkDirty();
+		ReplicationSlotSave();
 		ReplicationSlotRelease();
 
 		/* if we did anything, start from scratch */
-		CHECK_FOR_INTERRUPTS();
 		goto restart;
 	}
 	LWLockRelease(ReplicationSlotControlLock);
