@@ -1326,11 +1326,13 @@ open_client_SSL(PGconn *conn)
 						case SSL_R_UNKNOWN_PROTOCOL:
 						case SSL_R_UNKNOWN_SSL_VERSION:
 						case SSL_R_UNSUPPORTED_SSL_VERSION:
-						case SSL_R_VERSION_TOO_HIGH:
-						case SSL_R_VERSION_TOO_LOW:
 						case SSL_R_WRONG_SSL_VERSION:
 						case SSL_R_WRONG_VERSION_NUMBER:
 						case SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:
+#ifdef SSL_R_VERSION_TOO_HIGH
+						case SSL_R_VERSION_TOO_HIGH:
+						case SSL_R_VERSION_TOO_LOW:
+#endif
 							appendPQExpBuffer(&conn->errorMessage,
 											  libpq_gettext("This may indicate that the server does not support any SSL protocol version between %s and %s.\n"),
 											  conn->ssl_min_protocol_version ?

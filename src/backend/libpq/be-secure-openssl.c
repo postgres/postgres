@@ -474,11 +474,13 @@ aloop:
 					case SSL_R_UNKNOWN_PROTOCOL:
 					case SSL_R_UNKNOWN_SSL_VERSION:
 					case SSL_R_UNSUPPORTED_SSL_VERSION:
-					case SSL_R_VERSION_TOO_HIGH:
-					case SSL_R_VERSION_TOO_LOW:
 					case SSL_R_WRONG_SSL_VERSION:
 					case SSL_R_WRONG_VERSION_NUMBER:
 					case SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:
+#ifdef SSL_R_VERSION_TOO_HIGH
+					case SSL_R_VERSION_TOO_HIGH:
+					case SSL_R_VERSION_TOO_LOW:
+#endif
 						give_proto_hint = true;
 						break;
 					default:
