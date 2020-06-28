@@ -606,14 +606,13 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
    </para>
 
    <para>
-    If for some reason autovacuum fails to clear old XIDs from a table,
-    the system will begin to emit warning messages like this when the
-    database's oldest XIDs reach ten million transactions from the wraparound
-    point:
+    If for some reason autovacuum fails to clear old XIDs from a table, the
+    system will begin to emit warning messages like this when the database's
+    oldest XIDs reach eleven million transactions from the wraparound point:
 
 <programlisting>
-WARNING:  database "mydb" must be vacuumed within 177009986 transactions
-HINT:  To avoid a database shutdown, execute a database-wide VACUUM in "mydb".
+WARNING:  database "mydb" must be vacuumed within 10985967 transactions
+HINT:  To avoid a database shutdown, execute a database-wide VACUUM in that database.
 </programlisting>
 
     (A manual <command>VACUUM</command> should fix the problem, as suggested by the
