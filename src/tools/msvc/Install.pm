@@ -366,16 +366,10 @@ sub GenerateTimezoneFiles
 	  || die "Could not find TZDATAFILES line in timezone makefile\n";
 	my @tzfiles = split /\s+/, $1;
 
-	$mf =~ /^POSIXRULES\s*:?=\s*(.*)$/m
-	  || die "Could not find POSIXRULES line in timezone makefile\n";
-	my $posixrules = $1;
-	$posixrules =~ s/\s+//g;
-
 	print "Generating timezone files...";
 
 	my @args = (
-		"$conf/zic/zic", '-d', "$target/share/timezone", '-p',
-		"$posixrules",   '-b', 'slim');
+		"$conf/zic/zic", '-d', "$target/share/timezone", '-b', 'slim');
 	foreach (@tzfiles)
 	{
 		my $tzfile = $_;

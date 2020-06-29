@@ -718,33 +718,12 @@
   <para>
    If a daylight-savings abbreviation is given but the
    transition <replaceable>rule</replaceable> field is omitted,
-   <productname>PostgreSQL</productname> attempts to determine the
-   transition times by consulting the <filename>posixrules</filename> file
-   in the IANA time zone database.  This file has the same format as a
-   full time zone entry, but only its transition timing rules are used,
-   not its UTC offsets.  Typically, this file has the same contents as the
-   <literal>US/Eastern</literal> file, so that POSIX-style time zone
-   specifications follow USA daylight-savings rules.  If needed, you can
-   adjust this behavior by replacing the <filename>posixrules</filename>
-   file.
-  </para>
-
-  <note>
-   <para>
-    The facility to consult a <filename>posixrules</filename> file has
-    been deprecated by IANA, and it is likely to go away in the future.
-    One bug in this feature, which is unlikely to be fixed before it
-    disappears, is that it fails to apply DST rules to dates after 2038.
-   </para>
-  </note>
-
-  <para>
-   If the <filename>posixrules</filename> file is not present,
    the fallback behavior is to use the
    rule <literal>M3.2.0,M11.1.0</literal>, which corresponds to USA
    practice as of 2020 (that is, spring forward on the second Sunday of
    March, fall back on the first Sunday of November, both transitions
-   occurring at 2AM prevailing time).
+   occurring at 2AM prevailing time).  Note that this rule does not
+   give correct USA transition dates for years before 2007.
   </para>
 
   <para>
@@ -765,8 +744,7 @@
    because (for historical reasons) there are files by those names in the
    IANA time zone database.  The practical implication of this is that
    these zone names will produce valid historical USA daylight-savings
-   transitions, even when a plain POSIX specification would not due to
-   lack of a suitable <filename>posixrules</filename> file.
+   transitions, even when a plain POSIX specification would not.
   </para>
 
   <para>
