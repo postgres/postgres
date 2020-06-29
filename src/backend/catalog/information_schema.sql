@@ -182,7 +182,7 @@ CREATE FUNCTION _pg_interval_type(typid oid, mod int4) RETURNS text
     AS
 $$SELECT
   CASE WHEN $1 IN (1186) /* interval */
-           THEN pg_catalog.upper(substring(pg_catalog.format_type($1, $2) from 'interval[()0-9]* #"%#"' for '#'))
+           THEN pg_catalog.upper(substring(pg_catalog.format_type($1, $2) similar 'interval[()0-9]* #"%#"' escape '#'))
        ELSE null
   END$$;
 

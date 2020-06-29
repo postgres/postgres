@@ -2669,15 +2669,21 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>SIMILAR</literal> <parameter>pattern</parameter> <type>text</type> <literal>ESCAPE</literal> <parameter>escape</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
         <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <parameter>pattern</parameter> <type>text</type> <literal>FOR</literal> <parameter>escape</parameter> <type>text</type> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
         Extracts substring matching <acronym>SQL</acronym> regular expression;
-        see <xref linkend="functions-similarto-regexp"/>.
+        see <xref linkend="functions-similarto-regexp"/>.  The first form has
+        been specified since SQL:2003; the second form was only in SQL:1999
+        and should be considered obsolete.
        </para>
        <para>
-        <literal>substring('Thomas' from '%#"o_a#"_' for '#')</literal>
+        <literal>substring('Thomas' similar '%#"o_a#"_' escape '#')</literal>
         <returnvalue>oma</returnvalue>
        </para></entry>
       </row>
@@ -5160,7 +5166,11 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     The <function>substring</function> function with three parameters
     provides extraction of a substring that matches an SQL
     regular expression pattern.  The function can be written according
-    to SQL99 syntax:
+    to standard SQL syntax:
+<synopsis>
+substring(<replaceable>string</replaceable> similar <replaceable>pattern</replaceable> escape <replaceable>escape-character</replaceable>)
+</synopsis>
+    or using the now obsolete SQL:1999 syntax:
 <synopsis>
 substring(<replaceable>string</replaceable> from <replaceable>pattern</replaceable> for <replaceable>escape-character</replaceable>)
 </synopsis>
@@ -5201,8 +5211,8 @@ substring(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>,
    <para>
     Some examples, with <literal>#&quot;</literal> delimiting the return string:
 <programlisting>
-substring('foobar' from '%#"o_b#"%' for '#')   <lineannotation>oob</lineannotation>
-substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotation>
+substring('foobar' similar '%#"o_b#"%' escape '#')   <lineannotation>oob</lineannotation>
+substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</lineannotation>
 </programlisting>
    </para>
   </sect2>

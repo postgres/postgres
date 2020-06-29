@@ -14451,7 +14451,27 @@ position_list:
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-/* SUBSTRING() arguments */
+/*
+ * SUBSTRING() arguments
+ *
+ * Note that SQL:1999 has both
+ *
+ *     text FROM int FOR int
+ *
+ * and
+ *
+ *     text FROM pattern FOR escape
+ *
+ * In the parser we map them both to a call to the substring() function and
+ * rely on type resolution to pick the right one.
+ *
+ * In SQL:2003, the second variant was changed to
+ *
+ *     text SIMILAR pattern ESCAPE escape
+ *
+ * We could in theory map that to a different function internally, but
+ * since we still support the SQL:1999 version, we don't.
+ */
 substr_list:
 			a_expr FROM a_expr FOR a_expr
 				{
@@ -14482,6 +14502,10 @@ substr_list:
 					$$ = list_make3($1, makeIntConst(1, -1),
 									makeTypeCast($3,
 												 SystemTypeName("int4"), -1));
+				}
+			| a_expr SIMILAR a_expr ESCAPE a_expr
+				{
+					$$ = list_make3($1, $3, $5);
 				}
 			/*
 			 * We also want to support generic substring functions that

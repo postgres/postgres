@@ -1602,7 +1602,7 @@ SELECT substring('Thomas'::citext from '...$') = 'mas' AS t;
  t
 (1 row)
 
-SELECT substring('Thomas'::citext from '%#"o_a#"_' for '#') = 'oma' AS t;
+SELECT substring('Thomas'::citext similar '%#"o_a#"_' escape '#') = 'oma' AS t;
  t 
 ---
  t

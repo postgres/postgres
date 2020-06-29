@@ -564,7 +564,7 @@ SELECT substring('alphabet'::citext, 3, 2) = 'ph' AS t;
 SELECT substring('Thomas'::citext from 2 for 3) = 'hom' AS t;
 SELECT substring('Thomas'::citext from 2) = 'homas' AS t;
 SELECT substring('Thomas'::citext from '...$') = 'mas' AS t;
-SELECT substring('Thomas'::citext from '%#"o_a#"_' for '#') = 'oma' AS t;
+SELECT substring('Thomas'::citext similar '%#"o_a#"_' escape '#') = 'oma' AS t;
 
 SELECT trim('    trim    '::citext)               = 'trim' AS t;
 SELECT trim('xxxxxtrimxxxx'::citext, 'x'::citext) = 'trim' AS t;
