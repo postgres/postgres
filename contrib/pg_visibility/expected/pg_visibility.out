@@ -102,8 +102,9 @@ ERROR:  "test_foreign_table" is not a table, materialized view, or TOAST table
 select pg_truncate_visibility_map('test_foreign_table');
 ERROR:  "test_foreign_table" is not a table, materialized view, or TOAST table
 -- check some of the allowed relkinds
-create table regular_table (a int);
-insert into regular_table values (1), (2);
+create table regular_table (a int, b text);
+alter table regular_table alter column b set storage external;
+insert into regular_table values (1, repeat('one', 1000)), (2, repeat('two', 1000));
 vacuum regular_table;
 select count(*) > 0 from pg_visibility('regular_table');
  ?column? 
@@ -111,8 +112,20 @@ select count(*) > 0 from pg_visibility('regular_table');
  t
 (1 row)
 
+select count(*) > 0 from pg_visibility((select reltoastrelid from pg_class where relname = 'regular_table'));
+ ?column? 
+----------
+ t
+(1 row)
+
 truncate regular_table;
 select count(*) > 0 from pg_visibility('regular_table');
+ ?column? 
+----------
+ f
+(1 row)
+
+select count(*) > 0 from pg_visibility((select reltoastrelid from pg_class where relname = 'regular_table'));
  ?column? 
 ----------
  f

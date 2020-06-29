@@ -159,7 +159,7 @@ ERROR:  "test_partitioned" (partitioned table) is not supported
 select pgstattuple('test_partitioned_index');
 ERROR:  "test_partitioned_index" (partitioned index) is not supported
 select pgstattuple_approx('test_partitioned');
-ERROR:  "test_partitioned" is not a table or materialized view
+ERROR:  "test_partitioned" is not a table, materialized view, or TOAST table
 select pg_relpages('test_partitioned');
 ERROR:  "test_partitioned" is not a table, index, materialized view, sequence, or TOAST table
 select pgstatindex('test_partitioned');
@@ -173,7 +173,7 @@ create view test_view as select 1;
 select pgstattuple('test_view');
 ERROR:  "test_view" (view) is not supported
 select pgstattuple_approx('test_view');
-ERROR:  "test_view" is not a table or materialized view
+ERROR:  "test_view" is not a table, materialized view, or TOAST table
 select pg_relpages('test_view');
 ERROR:  "test_view" is not a table, index, materialized view, sequence, or TOAST table
 select pgstatindex('test_view');
@@ -189,7 +189,7 @@ create foreign table test_foreign_table () server dummy_server;
 select pgstattuple('test_foreign_table');
 ERROR:  "test_foreign_table" (foreign table) is not supported
 select pgstattuple_approx('test_foreign_table');
-ERROR:  "test_foreign_table" is not a table or materialized view
+ERROR:  "test_foreign_table" is not a table, materialized view, or TOAST table
 select pg_relpages('test_foreign_table');
 ERROR:  "test_foreign_table" is not a table, index, materialized view, sequence, or TOAST table
 select pgstatindex('test_foreign_table');
@@ -213,6 +213,25 @@ select pgstattuple_approx('test_partition');
 (1 row)
 
 select pg_relpages('test_partition');
+ pg_relpages 
+-------------
+           0
+(1 row)
+
+-- toast tables should work
+select pgstattuple((select reltoastrelid from pg_class where relname = 'test'));
+     pgstattuple     
+---------------------
+ (0,0,0,0,0,0,0,0,0)
+(1 row)
+
+select pgstattuple_approx((select reltoastrelid from pg_class where relname = 'test'));
+  pgstattuple_approx   
+-----------------------
+ (0,0,0,0,0,0,0,0,0,0)
+(1 row)
+
+select pg_relpages((select reltoastrelid from pg_class where relname = 'test'));
  pg_relpages 
 -------------
            0
