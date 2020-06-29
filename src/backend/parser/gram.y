@@ -452,7 +452,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	extract_list overlay_list position_list
 %type <list>	substr_list trim_list
 %type <list>	opt_interval interval_second
-%type <node>	overlay_placing substr_from substr_for
 %type <str>		unicode_normal_form
 
 %type <boolean> opt_instead
@@ -13797,11 +13796,6 @@ func_expr_common_subexpr:
 				}
 			| OVERLAY '(' overlay_list ')'
 				{
-					/* overlay(A PLACING B FROM C FOR D) is converted to
-					 * overlay(A, B, C, D)
-					 * overlay(A PLACING B FROM C) is converted to
-					 * overlay(A, B, C)
-					 */
 					$$ = (Node *) makeFuncCall(SystemFuncName("overlay"), $3, @1);
 				}
 			| POSITION '(' position_list ')'
@@ -14437,63 +14431,45 @@ unicode_normal_form:
 			| NFKD									{ $$ = "nfkd"; }
 		;
 
-/* OVERLAY() arguments
- * SQL99 defines the OVERLAY() function:
- * o overlay(text placing text from int for int)
- * o overlay(text placing text from int)
- * and similarly for binary strings
- */
+/* OVERLAY() arguments */
 overlay_list:
-			a_expr overlay_placing substr_from substr_for
+			a_expr PLACING a_expr FROM a_expr FOR a_expr
 				{
-					$$ = list_make4($1, $2, $3, $4);
+					/* overlay(A PLACING B FROM C FOR D) is converted to overlay(A, B, C, D) */
+					$$ = list_make4($1, $3, $5, $7);
 				}
-			| a_expr overlay_placing substr_from
+			| a_expr PLACING a_expr FROM a_expr
 				{
-					$$ = list_make3($1, $2, $3);
+					/* overlay(A PLACING B FROM C) is converted to overlay(A, B, C) */
+					$$ = list_make3($1, $3, $5);
 				}
-		;
-
-overlay_placing:
-			PLACING a_expr
-				{ $$ = $2; }
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
-
 position_list:
 			b_expr IN_P b_expr						{ $$ = list_make2($3, $1); }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-/* SUBSTRING() arguments
- * SQL9x defines a specific syntax for arguments to SUBSTRING():
- * o substring(text from int for int)
- * o substring(text from int) get entire string from starting point "int"
- * o substring(text for int) get first "int" characters of string
- * o substring(text from pattern) get entire string matching pattern
- * o substring(text from pattern for escape) same with specified escape char
- * We also want to support generic substring functions which accept
- * the usual generic list of arguments. So we will accept both styles
- * here, and convert the SQL9x style to the generic list for further
- * processing. - thomas 2000-11-28
- */
+/* SUBSTRING() arguments */
 substr_list:
-			a_expr substr_from substr_for
+			a_expr FROM a_expr FOR a_expr
 				{
-					$$ = list_make3($1, $2, $3);
+					$$ = list_make3($1, $3, $5);
 				}
-			| a_expr substr_for substr_from
+			| a_expr FOR a_expr FROM a_expr
 				{
-					/* not legal per SQL99, but might as well allow it */
-					$$ = list_make3($1, $3, $2);
+					/* not legal per SQL, but might as well allow it */
+					$$ = list_make3($1, $5, $3);
 				}
-			| a_expr substr_from
+			| a_expr FROM a_expr
 				{
-					$$ = list_make2($1, $2);
+					$$ = list_make2($1, $3);
 				}
-			| a_expr substr_for
+			| a_expr FOR a_expr
 				{
+					/* not legal per SQL */
+
 					/*
 					 * Since there are no cases where this syntax allows
 					 * a textual FOR value, we forcibly cast the argument
@@ -14504,22 +14480,19 @@ substr_list:
 					 * is unknown or doesn't have an implicit cast to int4.
 					 */
 					$$ = list_make3($1, makeIntConst(1, -1),
-									makeTypeCast($2,
+									makeTypeCast($3,
 												 SystemTypeName("int4"), -1));
 				}
+			/*
+			 * We also want to support generic substring functions that
+			 * accept the usual generic list of arguments.
+			 */
 			| expr_list
 				{
 					$$ = $1;
 				}
 			| /*EMPTY*/
 				{ $$ = NIL; }
-		;
-
-substr_from:
-			FROM a_expr								{ $$ = $2; }
-		;
-
-substr_for: FOR a_expr								{ $$ = $2; }
 		;
 
 trim_list:	a_expr FROM expr_list					{ $$ = lappend($3, $1); }
