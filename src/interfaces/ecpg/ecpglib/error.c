@@ -270,7 +270,6 @@ ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat)
 	else
 		sqlca->sqlcode = ECPG_PGSQL;
 
-	/* %.*s is safe here as long as sqlstate is all-ASCII */
 	ecpg_log("raising sqlstate %.*s (sqlcode %ld): %s\n",
 			 (int) sizeof(sqlca->sqlstate), sqlca->sqlstate, sqlca->sqlcode, sqlca->sqlerrm.sqlerrmc);
 

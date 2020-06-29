@@ -2303,11 +2303,7 @@ CopyFromErrorCallback(void *arg)
 /*
  * Make sure we don't print an unreasonable amount of COPY data in a message.
  *
- * It would seem a lot easier to just use the sprintf "precision" limit to
- * truncate the string.  However, some versions of glibc have a bug/misfeature
- * that vsnprintf will always fail (return -1) if it is asked to truncate
- * a string that contains invalid byte sequences for the current encoding.
- * So, do our own truncation.  We return a pstrdup'd copy of the input.
+ * Returns a pstrdup'd copy of the input.
  */
 static char *
 limit_printout_length(const char *str)

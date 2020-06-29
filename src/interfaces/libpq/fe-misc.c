@@ -68,19 +68,6 @@ PQlibVersion(void)
 	return PG_VERSION_NUM;
 }
 
-/*
- * fputnbytes: print exactly N bytes to a file
- *
- * We avoid using %.*s here because it can misbehave if the data
- * is not valid in what libc thinks is the prevailing encoding.
- */
-static void
-fputnbytes(FILE *f, const char *str, size_t n)
-{
-	while (n-- > 0)
-		fputc(*str++, f);
-}
-
 
 /*
  * pqGetc: get 1 character from the connection
@@ -204,7 +191,7 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 	if (conn->Pfdebug)
 	{
 		fprintf(conn->Pfdebug, "From backend (%lu)> ", (unsigned long) len);
-		fputnbytes(conn->Pfdebug, s, len);
+		fwrite(s, 1, len, conn->Pfdebug);
 		fprintf(conn->Pfdebug, "\n");
 	}
 
@@ -228,7 +215,7 @@ pqSkipnchar(size_t len, PGconn *conn)
 	if (conn->Pfdebug)
 	{
 		fprintf(conn->Pfdebug, "From backend (%lu)> ", (unsigned long) len);
-		fputnbytes(conn->Pfdebug, conn->inBuffer + conn->inCursor, len);
+		fwrite(conn->inBuffer + conn->inCursor, 1, len, conn->Pfdebug);
 		fprintf(conn->Pfdebug, "\n");
 	}
 
@@ -250,7 +237,7 @@ pqPutnchar(const char *s, size_t len, PGconn *conn)
 	if (conn->Pfdebug)
 	{
 		fprintf(conn->Pfdebug, "To backend> ");
-		fputnbytes(conn->Pfdebug, s, len);
+		fwrite(s, 1, len, conn->Pfdebug);
 		fprintf(conn->Pfdebug, "\n");
 	}
 
