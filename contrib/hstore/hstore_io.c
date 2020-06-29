@@ -80,7 +80,9 @@ get_val(HSParser *state, bool ignoreeq, bool *escaped)
 			}
 			else if (*(state->ptr) == '=' && !ignoreeq)
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near \"%.*s\" at position %d",
+					 pg_mblen(state->ptr), state->ptr,
+					 (int32) (state->ptr - state->begin));
 			}
 			else if (*(state->ptr) == '\\')
 			{
@@ -219,7 +221,9 @@ parse_hstore(HSParser *state)
 			}
 			else if (!isspace((unsigned char) *(state->ptr)))
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near \"%.*s\" at position %d",
+					 pg_mblen(state->ptr), state->ptr,
+					 (int32) (state->ptr - state->begin));
 			}
 		}
 		else if (st == WGT)
@@ -234,7 +238,9 @@ parse_hstore(HSParser *state)
 			}
 			else
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near \"%.*s\" at position %d",
+					 pg_mblen(state->ptr), state->ptr,
+					 (int32) (state->ptr - state->begin));
 			}
 		}
 		else if (st == WVAL)
@@ -267,7 +273,9 @@ parse_hstore(HSParser *state)
 			}
 			else if (!isspace((unsigned char) *(state->ptr)))
 			{
-				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int32) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near \"%.*s\" at position %d",
+					 pg_mblen(state->ptr), state->ptr,
+					 (int32) (state->ptr - state->begin));
 			}
 		}
 		else

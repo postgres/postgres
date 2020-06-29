@@ -30,6 +30,7 @@
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "pageinspect.h"
 #include "port/pg_bitutils.h"
@@ -99,7 +100,8 @@ text_to_bits(char *str, int len)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("illegal character '%c' in t_bits string", str[off])));
+					 errmsg("invalid character \"%.*s\" in t_bits string",
+							pg_mblen(str + off), str + off)));
 
 		if (off % 8 == 7)
 			bits[off / 8] = byte;
@@ -460,14 +462,13 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		if (!t_bits_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("argument of t_bits is null, but it is expected to be null and %d character long",
-							bits_len)));
+					 errmsg("t_bits string must not be NULL")));
 
 		bits_str_len = strlen(t_bits_str);
 		if (bits_len != bits_str_len)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("unexpected length of t_bits %u, expected %d",
+					 errmsg("unexpected length of t_bits string: %u, expected %u",
 							bits_str_len, bits_len)));
 
 		/* do the conversion */
@@ -478,7 +479,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 		if (t_bits_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("t_bits string is expected to be NULL, but instead it is %zu bytes length",
+					 errmsg("t_bits string is expected to be NULL, but instead it is %zu bytes long",
 							strlen(t_bits_str))));
 	}
 

@@ -5586,8 +5586,8 @@ text_format(PG_FUNCTION_ARGS)
 		if (strchr("sIL", *cp) == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("unrecognized format() type specifier \"%c\"",
-							*cp),
+					 errmsg("unrecognized format() type specifier \"%.*s\"",
+							pg_mblen(cp), cp),
 					 errhint("For a single \"%%\" use \"%%%%\".")));
 
 		/* If indirect width was specified, get its value */
@@ -5707,8 +5707,8 @@ text_format(PG_FUNCTION_ARGS)
 				/* should not get here, because of previous check */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized format() type specifier \"%c\"",
-								*cp),
+						 errmsg("unrecognized format() type specifier \"%.*s\"",
+								pg_mblen(cp), cp),
 						 errhint("For a single \"%%\" use \"%%%%\".")));
 				break;
 		}

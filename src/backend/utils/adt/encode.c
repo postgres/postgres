@@ -15,6 +15,7 @@
 
 #include <ctype.h>
 
+#include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 
@@ -171,17 +172,19 @@ hex_encode(const char *src, size_t len, char *dst)
 }
 
 static inline char
-get_hex(char c)
+get_hex(const char *cp)
 {
+	unsigned char c = (unsigned char) *cp;
 	int			res = -1;
 
-	if (c > 0 && c < 127)
-		res = hexlookup[(unsigned char) c];
+	if (c < 127)
+		res = hexlookup[c];
 
 	if (res < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid hexadecimal digit: \"%c\"", c)));
+				 errmsg("invalid hexadecimal digit: \"%.*s\"",
+						pg_mblen(cp), cp)));
 
 	return (char) res;
 }
@@ -205,13 +208,15 @@ hex_decode(const char *src, size_t len, char *dst)
 			s++;
 			continue;
 		}
-		v1 = get_hex(*s++) << 4;
+		v1 = get_hex(s) << 4;
+		s++;
 		if (s >= srcend)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid hexadecimal data: odd number of digits")));
 
-		v2 = get_hex(*s++);
+		v2 = get_hex(s);
+		s++;
 		*p++ = v1 | v2;
 	}
 
@@ -338,7 +343,8 @@ pg_base64_decode(const char *src, size_t len, char *dst)
 			if (b < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid symbol \"%c\" while decoding base64 sequence", (int) c)));
+						 errmsg("invalid symbol \"%.*s\" found while decoding base64 sequence",
+								pg_mblen(s - 1), s - 1)));
 		}
 		/* add it to buffer */
 		buf = (buf << 6) + b;

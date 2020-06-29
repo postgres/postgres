@@ -230,8 +230,8 @@ bit_in(PG_FUNCTION_ARGS)
 			else if (*sp != '0')
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("\"%c\" is not a valid binary digit",
-								*sp)));
+						 errmsg("\"%.*s\" is not a valid binary digit",
+								pg_mblen(sp), sp)));
 
 			x >>= 1;
 			if (x == 0)
@@ -255,8 +255,8 @@ bit_in(PG_FUNCTION_ARGS)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("\"%c\" is not a valid hexadecimal digit",
-								*sp)));
+						 errmsg("\"%.*s\" is not a valid hexadecimal digit",
+								pg_mblen(sp), sp)));
 
 			if (bc)
 			{
@@ -531,8 +531,8 @@ varbit_in(PG_FUNCTION_ARGS)
 			else if (*sp != '0')
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("\"%c\" is not a valid binary digit",
-								*sp)));
+						 errmsg("\"%.*s\" is not a valid binary digit",
+								pg_mblen(sp), sp)));
 
 			x >>= 1;
 			if (x == 0)
@@ -556,8 +556,8 @@ varbit_in(PG_FUNCTION_ARGS)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("\"%c\" is not a valid hexadecimal digit",
-								*sp)));
+						 errmsg("\"%.*s\" is not a valid hexadecimal digit",
+								pg_mblen(sp), sp)));
 
 			if (bc)
 			{

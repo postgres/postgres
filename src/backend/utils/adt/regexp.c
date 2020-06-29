@@ -423,8 +423,8 @@ parse_re_flags(pg_re_flags *flags, text *opts)
 				default:
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid regular expression option: \"%c\"",
-									opt_p[i])));
+							 errmsg("invalid regular expression option: \"%.*s\"",
+									pg_mblen(opt_p + i), opt_p + i)));
 					break;
 			}
 		}
