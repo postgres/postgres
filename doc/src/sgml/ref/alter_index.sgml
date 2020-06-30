@@ -25,7 +25,7 @@ ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENA
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
 ALTER INDEX <replaceable class="parameter">name</replaceable> ATTACH PARTITION <replaceable class="parameter">index_name</replaceable>
 ALTER INDEX <replaceable class="parameter">name</replaceable> DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
-ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">storage_parameter</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )
+ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <replaceable class="parameter">column_number</replaceable>
     SET STATISTICS <replaceable class="parameter">integer</replaceable>
@@ -110,7 +110,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET ( <replaceable class="parameter">storage_parameter</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )</literal></term>
+    <term><literal>SET ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
       This form changes one or more index-method-specific storage parameters
