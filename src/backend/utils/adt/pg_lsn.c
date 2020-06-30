@@ -16,6 +16,7 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
+#include "utils/numeric.h"
 #include "utils/pg_lsn.h"
 
 #define MAXPG_LSNLEN			17
@@ -247,4 +248,72 @@ pg_lsn_mi(PG_FUNCTION_ARGS)
 								 Int32GetDatum(-1));
 
 	return result;
+}
+
+/*
+ * Add the number of bytes to pg_lsn, giving a new pg_lsn.
+ * Must handle both positive and negative numbers of bytes.
+ */
+Datum
+pg_lsn_pli(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	lsn = PG_GETARG_LSN(0);
+	Numeric		nbytes = PG_GETARG_NUMERIC(1);
+	Datum		num;
+	Datum		res;
+	char		buf[32];
+
+	if (numeric_is_nan(nbytes))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot add NaN to pg_lsn")));
+
+	/* Convert to numeric */
+	snprintf(buf, sizeof(buf), UINT64_FORMAT, lsn);
+	num = DirectFunctionCall3(numeric_in,
+							  CStringGetDatum(buf),
+							  ObjectIdGetDatum(0),
+							  Int32GetDatum(-1));
+
+	/* Add two numerics */
+	res = DirectFunctionCall2(numeric_add,
+							  NumericGetDatum(num),
+							  NumericGetDatum(nbytes));
+
+	/* Convert to pg_lsn */
+	return DirectFunctionCall1(numeric_pg_lsn, res);
+}
+
+/*
+ * Subtract the number of bytes from pg_lsn, giving a new pg_lsn.
+ * Must handle both positive and negative numbers of bytes.
+ */
+Datum
+pg_lsn_mii(PG_FUNCTION_ARGS)
+{
+	XLogRecPtr	lsn = PG_GETARG_LSN(0);
+	Numeric		nbytes = PG_GETARG_NUMERIC(1);
+	Datum		num;
+	Datum		res;
+	char		buf[32];
+
+	if (numeric_is_nan(nbytes))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot subtract NaN from pg_lsn")));
+
+	/* Convert to numeric */
+	snprintf(buf, sizeof(buf), UINT64_FORMAT, lsn);
+	num = DirectFunctionCall3(numeric_in,
+							  CStringGetDatum(buf),
+							  ObjectIdGetDatum(0),
+							  Int32GetDatum(-1));
+
+	/* Subtract two numerics */
+	res = DirectFunctionCall2(numeric_sub,
+							  NumericGetDatum(num),
+							  NumericGetDatum(nbytes));
+
+	/* Convert to pg_lsn */
+	return DirectFunctionCall1(numeric_pg_lsn, res);
 }

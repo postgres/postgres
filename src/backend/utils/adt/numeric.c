@@ -41,6 +41,7 @@
 #include "utils/guc.h"
 #include "utils/int8.h"
 #include "utils/numeric.h"
+#include "utils/pg_lsn.h"
 #include "utils/sortsupport.h"
 
 /* ----------
@@ -472,6 +473,7 @@ static void apply_typmod(NumericVar *var, int32 typmod);
 static bool numericvar_to_int32(const NumericVar *var, int32 *result);
 static bool numericvar_to_int64(const NumericVar *var, int64 *result);
 static void int64_to_numericvar(int64 val, NumericVar *var);
+static bool numericvar_to_uint64(const NumericVar *var, uint64 *result);
 #ifdef HAVE_INT128
 static bool numericvar_to_int128(const NumericVar *var, int128 *result);
 static void int128_to_numericvar(int128 val, NumericVar *var);
@@ -3692,6 +3694,30 @@ numeric_float4(PG_FUNCTION_ARGS)
 }
 
 
+Datum
+numeric_pg_lsn(PG_FUNCTION_ARGS)
+{
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	NumericVar	x;
+	XLogRecPtr	result;
+
+	if (NUMERIC_IS_NAN(num))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot convert NaN to pg_lsn")));
+
+	/* Convert to variable format and thence to pg_lsn */
+	init_var_from_num(num, &x);
+
+	if (!numericvar_to_uint64(&x, (uint64 *) &result))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("pg_lsn out of range")));
+
+	PG_RETURN_LSN(result);
+}
+
+
 /* ----------------------------------------------------------------------
  *
  * Aggregate functions
@@ -6740,6 +6766,78 @@ int64_to_numericvar(int64 val, NumericVar *var)
 	var->digits = ptr;
 	var->ndigits = ndigits;
 	var->weight = ndigits - 1;
+}
+
+/*
+ * Convert numeric to uint64, rounding if needed.
+ *
+ * If overflow, return false (no error is raised).  Return true if okay.
+ */
+static bool
+numericvar_to_uint64(const NumericVar *var, uint64 *result)
+{
+	NumericDigit *digits;
+	int			ndigits;
+	int			weight;
+	int			i;
+	uint64		val;
+	NumericVar	rounded;
+
+	/* Round to nearest integer */
+	init_var(&rounded);
+	set_var_from_var(var, &rounded);
+	round_var(&rounded, 0);
+
+	/* Check for zero input */
+	strip_var(&rounded);
+	ndigits = rounded.ndigits;
+	if (ndigits == 0)
+	{
+		*result = 0;
+		free_var(&rounded);
+		return true;
+	}
+
+	/* Check for negative input */
+	if (rounded.sign == NUMERIC_NEG)
+	{
+		free_var(&rounded);
+		return false;
+	}
+
+	/*
+	 * For input like 10000000000, we must treat stripped digits as real. So
+	 * the loop assumes there are weight+1 digits before the decimal point.
+	 */
+	weight = rounded.weight;
+	Assert(weight >= 0 && ndigits <= weight + 1);
+
+	/* Construct the result */
+	digits = rounded.digits;
+	val = digits[0];
+	for (i = 1; i <= weight; i++)
+	{
+		if (unlikely(pg_mul_u64_overflow(val, NBASE, &val)))
+		{
+			free_var(&rounded);
+			return false;
+		}
+
+		if (i < ndigits)
+		{
+			if (unlikely(pg_add_u64_overflow(val, digits[i], &val)))
+			{
+				free_var(&rounded);
+				return false;
+			}
+		}
+	}
+
+	free_var(&rounded);
+
+	*result = val;
+
+	return true;
 }
 
 #ifdef HAVE_INT128

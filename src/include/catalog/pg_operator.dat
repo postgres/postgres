@@ -2909,6 +2909,17 @@
 { oid => '3228', descr => 'minus',
   oprname => '-', oprleft => 'pg_lsn', oprright => 'pg_lsn',
   oprresult => 'numeric', oprcode => 'pg_lsn_mi' },
+{ oid => '5025', descr => 'add',
+  oprname => '+', oprleft => 'pg_lsn', oprright => 'numeric',
+  oprresult => 'pg_lsn', oprcom => '+(numeric,pg_lsn)',
+  oprcode => 'pg_lsn_pli' },
+{ oid => '5026', descr => 'add',
+  oprname => '+', oprleft => 'numeric', oprright => 'pg_lsn',
+  oprresult => 'pg_lsn', oprcom => '+(pg_lsn,numeric)',
+  oprcode => 'numeric_pl_pg_lsn' },
+{ oid => '5027', descr => 'subtract',
+  oprname => '-', oprleft => 'pg_lsn', oprright => 'numeric',
+  oprresult => 'pg_lsn', oprcode => 'pg_lsn_mii' },
 
 # enum operators
 { oid => '3516', descr => 'equal',

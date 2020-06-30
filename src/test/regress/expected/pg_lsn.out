@@ -71,6 +71,56 @@ SELECT '0/16AE7F8'::pg_lsn - '0/16AE7F7'::pg_lsn;
         1
 (1 row)
 
+SELECT '0/16AE7F7'::pg_lsn + 16::numeric;
+ ?column?  
+-----------
+ 0/16AE807
+(1 row)
+
+SELECT 16::numeric + '0/16AE7F7'::pg_lsn;
+ ?column?  
+-----------
+ 0/16AE807
+(1 row)
+
+SELECT '0/16AE7F7'::pg_lsn - 16::numeric;
+ ?column?  
+-----------
+ 0/16AE7E7
+(1 row)
+
+SELECT 'FFFFFFFF/FFFFFFFE'::pg_lsn + 1::numeric;
+     ?column?      
+-------------------
+ FFFFFFFF/FFFFFFFF
+(1 row)
+
+SELECT 'FFFFFFFF/FFFFFFFE'::pg_lsn + 2::numeric; -- out of range error
+ERROR:  pg_lsn out of range
+SELECT '0/1'::pg_lsn - 1::numeric;
+ ?column? 
+----------
+ 0/0
+(1 row)
+
+SELECT '0/1'::pg_lsn - 2::numeric; -- out of range error
+ERROR:  pg_lsn out of range
+SELECT '0/0'::pg_lsn + ('FFFFFFFF/FFFFFFFF'::pg_lsn - '0/0'::pg_lsn);
+     ?column?      
+-------------------
+ FFFFFFFF/FFFFFFFF
+(1 row)
+
+SELECT 'FFFFFFFF/FFFFFFFF'::pg_lsn - ('FFFFFFFF/FFFFFFFF'::pg_lsn - '0/0'::pg_lsn);
+ ?column? 
+----------
+ 0/0
+(1 row)
+
+SELECT '0/16AE7F7'::pg_lsn + 'NaN'::numeric;
+ERROR:  cannot add NaN to pg_lsn
+SELECT '0/16AE7F7'::pg_lsn - 'NaN'::numeric;
+ERROR:  cannot subtract NaN from pg_lsn
 -- Check btree and hash opclasses
 EXPLAIN (COSTS OFF)
 SELECT DISTINCT (i || '/' || j)::pg_lsn f

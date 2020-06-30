@@ -4398,6 +4398,9 @@
 { oid => '1783', descr => 'convert numeric to int2',
   proname => 'int2', prorettype => 'int2', proargtypes => 'numeric',
   prosrc => 'numeric_int2' },
+{ oid => '6103', descr => 'convert numeric to pg_lsn',
+  proname => 'pg_lsn', prorettype => 'pg_lsn', proargtypes => 'numeric',
+  prosrc => 'numeric_pg_lsn' },
 
 { oid => '3556', descr => 'convert jsonb to boolean',
   proname => 'bool', prorettype => 'bool', proargtypes => 'jsonb',
@@ -8576,6 +8579,15 @@
 { oid => '4188', descr => 'smaller of two',
   proname => 'pg_lsn_smaller', prorettype => 'pg_lsn',
   proargtypes => 'pg_lsn pg_lsn', prosrc => 'pg_lsn_smaller' },
+{ oid => '5022',
+  proname => 'pg_lsn_pli', prorettype => 'pg_lsn',
+  proargtypes => 'pg_lsn numeric', prosrc => 'pg_lsn_pli' },
+{ oid => '5023',
+  proname => 'numeric_pl_pg_lsn', prolang => 'sql', prorettype => 'pg_lsn',
+  proargtypes => 'numeric pg_lsn', prosrc => 'select $2 + $1' },
+{ oid => '5024',
+  proname => 'pg_lsn_mii', prorettype => 'pg_lsn',
+  proargtypes => 'pg_lsn numeric', prosrc => 'pg_lsn_mii' },
 
 # enum related procs
 { oid => '3504', descr => 'I/O',
