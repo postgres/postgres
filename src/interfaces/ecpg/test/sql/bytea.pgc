@@ -24,7 +24,7 @@ int
 main(void)
 {
 exec sql begin declare section;
-	bytea send_buf[2][DATA_SIZE];
+	bytea send_buf[2][512];
 	bytea recv_buf[2][DATA_SIZE];
 	bytea recv_vlen_buf[][DATA_SIZE];
 	bytea recv_short_buf[DATA_SIZE - LACK_SIZE];
@@ -70,6 +70,17 @@ while (0)
 	exec sql select data1,data2 into :recv_buf[0]:ind[0], :recv_short_buf:ind[1] from test;
 	dump_binary(recv_buf[0].arr, recv_buf[0].len, ind[0]);
 	dump_binary(recv_short_buf.arr, recv_short_buf.len, ind[1]);
+
+	/* Test for cursor */
+	init();
+	exec sql truncate test;
+	exec sql insert into test values(:send_buf[0], :send_buf[1]);
+	exec sql declare cursor1 cursor for select data1 from test where data1 = :send_buf[0];
+	exec sql open cursor1;
+	exec sql fetch from cursor1 INTO :recv_buf[0];
+	exec sql close cursor1;
+	exec sql free cursor1 ;
+	dump_binary(recv_buf[0].arr, recv_buf[0].len, 0);
 
 	/* Test for variable length array */
 	init();
