@@ -742,80 +742,62 @@ AggregateCreate(const char *aggName,
 	 */
 
 	/* Depends on transition function */
-	referenced.classId = ProcedureRelationId;
-	referenced.objectId = transfn;
-	referenced.objectSubId = 0;
+	ObjectAddressSet(referenced, ProcedureRelationId, transfn);
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* Depends on final function, if any */
 	if (OidIsValid(finalfn))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = finalfn;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, ProcedureRelationId, finalfn);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* Depends on combine function, if any */
 	if (OidIsValid(combinefn))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = combinefn;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, ProcedureRelationId, combinefn);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* Depends on serialization function, if any */
 	if (OidIsValid(serialfn))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = serialfn;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, ProcedureRelationId, serialfn);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* Depends on deserialization function, if any */
 	if (OidIsValid(deserialfn))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = deserialfn;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, ProcedureRelationId, deserialfn);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* Depends on forward transition function, if any */
 	if (OidIsValid(mtransfn))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = mtransfn;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, ProcedureRelationId, mtransfn);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* Depends on inverse transition function, if any */
 	if (OidIsValid(minvtransfn))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = minvtransfn;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, ProcedureRelationId, minvtransfn);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* Depends on final function, if any */
 	if (OidIsValid(mfinalfn))
 	{
-		referenced.classId = ProcedureRelationId;
-		referenced.objectId = mfinalfn;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, ProcedureRelationId, mfinalfn);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* Depends on sort operator, if any */
 	if (OidIsValid(sortop))
 	{
-		referenced.classId = OperatorRelationId;
-		referenced.objectId = sortop;
-		referenced.objectSubId = 0;
+		ObjectAddressSet(referenced, OperatorRelationId, sortop);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 

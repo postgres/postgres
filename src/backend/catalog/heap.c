@@ -818,21 +818,15 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		InsertPgAttributeTuple(rel, attr, (Datum) 0, indstate);
 
 		/* Add dependency info */
-		myself.classId = RelationRelationId;
-		myself.objectId = new_rel_oid;
-		myself.objectSubId = i + 1;
-		referenced.classId = TypeRelationId;
-		referenced.objectId = attr->atttypid;
-		referenced.objectSubId = 0;
+		ObjectAddressSubSet(myself, RelationRelationId, new_rel_oid, i + 1);
+		ObjectAddressSet(referenced, TypeRelationId, attr->atttypid);
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 		/* The default collation is pinned, so don't bother recording it */
 		if (OidIsValid(attr->attcollation) &&
 			attr->attcollation != DEFAULT_COLLATION_OID)
 		{
-			referenced.classId = CollationRelationId;
-			referenced.objectId = attr->attcollation;
-			referenced.objectSubId = 0;
+			ObjectAddressSet(referenced, CollationRelationId, attr->attcollation);
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		}
 	}
