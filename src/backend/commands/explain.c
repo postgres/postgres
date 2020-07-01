@@ -3070,13 +3070,10 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 
 		/* EXPLAIN ANALYZE */
 		ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb, es);
-		if (aggstate->hash_batches_used > 0)
-		{
-			ExplainPropertyInteger("Disk Usage", "kB",
-								   aggstate->hash_disk_used, es);
-			ExplainPropertyInteger("HashAgg Batches", NULL,
-								   aggstate->hash_batches_used, es);
-		}
+		ExplainPropertyInteger("Disk Usage", "kB",
+							   aggstate->hash_disk_used, es);
+		ExplainPropertyInteger("HashAgg Batches", NULL,
+							   aggstate->hash_batches_used, es);
 	}
 	else
 	{
@@ -3145,13 +3142,9 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 			{
 				ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb,
 									   es);
-				if (hash_batches_used > 0)
-				{
-					ExplainPropertyInteger("Disk Usage", "kB", hash_disk_used,
-										   es);
-					ExplainPropertyInteger("HashAgg Batches", NULL,
-										   hash_batches_used, es);
-				}
+				ExplainPropertyInteger("Disk Usage", "kB", hash_disk_used, es);
+				ExplainPropertyInteger("HashAgg Batches", NULL,
+									   hash_batches_used, es);
 			}
 
 			if (es->workers_state)
