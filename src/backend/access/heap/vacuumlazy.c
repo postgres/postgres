@@ -319,6 +319,13 @@ typedef struct LVRelStats
 	VacErrPhase phase;
 } LVRelStats;
 
+/* Struct for saving and restoring vacuum error information. */
+typedef struct LVSavedErrInfo
+{
+	BlockNumber blkno;
+	VacErrPhase phase;
+} LVSavedErrInfo;
+
 /* A few variables that don't seem worth passing around as parameters */
 static int	elevel = -1;
 
@@ -388,8 +395,9 @@ static void end_parallel_vacuum(Relation *Irel, IndexBulkDeleteResult **stats,
 static LVSharedIndStats *get_indstats(LVShared *lvshared, int n);
 static bool skip_parallel_vacuum_index(Relation indrel, LVShared *lvshared);
 static void vacuum_error_callback(void *arg);
-static void update_vacuum_error_info(LVRelStats *errinfo, int phase,
-									 BlockNumber blkno, char *indname);
+static void update_vacuum_error_info(LVRelStats *errinfo, LVSavedErrInfo *saved_err_info,
+									 int phase, BlockNumber blkno);
+static void restore_vacuum_error_info(LVRelStats *errinfo, const LVSavedErrInfo *saved_err_info);
 
 
 /*
@@ -538,8 +546,8 @@ heap_vacuum_rel(Relation onerel, VacuumParams *params,
 		 * which we add context information to errors, so we don't need to
 		 * revert to the previous phase.
 		 */
-		update_vacuum_error_info(vacrelstats, VACUUM_ERRCB_PHASE_TRUNCATE,
-								 vacrelstats->nonempty_pages, NULL);
+		update_vacuum_error_info(vacrelstats, NULL, VACUUM_ERRCB_PHASE_TRUNCATE,
+								 vacrelstats->nonempty_pages);
 		lazy_truncate_heap(onerel, vacrelstats);
 	}
 
@@ -948,8 +956,8 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 
 		pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_SCANNED, blkno);
 
-		update_vacuum_error_info(vacrelstats, VACUUM_ERRCB_PHASE_SCAN_HEAP,
-								 blkno, NULL);
+		update_vacuum_error_info(vacrelstats, NULL, VACUUM_ERRCB_PHASE_SCAN_HEAP,
+								 blkno);
 
 		if (blkno == next_unskippable_block)
 		{
@@ -1820,16 +1828,15 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 	int			npages;
 	PGRUsage	ru0;
 	Buffer		vmbuffer = InvalidBuffer;
-	LVRelStats	olderrinfo;
+	LVSavedErrInfo saved_err_info;
 
 	/* Report that we are now vacuuming the heap */
 	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
 								 PROGRESS_VACUUM_PHASE_VACUUM_HEAP);
 
 	/* Update error traceback information */
-	olderrinfo = *vacrelstats;
-	update_vacuum_error_info(vacrelstats, VACUUM_ERRCB_PHASE_VACUUM_HEAP,
-							 InvalidBlockNumber, NULL);
+	update_vacuum_error_info(vacrelstats, &saved_err_info, VACUUM_ERRCB_PHASE_VACUUM_HEAP,
+							 InvalidBlockNumber);
 
 	pg_rusage_init(&ru0);
 	npages = 0;
@@ -1879,10 +1886,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 
 	/* Revert to the previous phase information for error traceback */
-	update_vacuum_error_info(vacrelstats,
-							 olderrinfo.phase,
-							 olderrinfo.blkno,
-							 olderrinfo.indname);
+	restore_vacuum_error_info(vacrelstats, &saved_err_info);
 }
 
 /*
@@ -1905,14 +1909,13 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	int			uncnt = 0;
 	TransactionId visibility_cutoff_xid;
 	bool		all_frozen;
-	LVRelStats	olderrinfo;
+	LVSavedErrInfo saved_err_info;
 
 	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_VACUUMED, blkno);
 
 	/* Update error traceback information */
-	olderrinfo = *vacrelstats;
-	update_vacuum_error_info(vacrelstats, VACUUM_ERRCB_PHASE_VACUUM_HEAP,
-							 blkno, NULL);
+	update_vacuum_error_info(vacrelstats, &saved_err_info, VACUUM_ERRCB_PHASE_VACUUM_HEAP,
+							 blkno);
 
 	START_CRIT_SECTION();
 
@@ -1991,10 +1994,7 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 	}
 
 	/* Revert to the previous phase information for error traceback */
-	update_vacuum_error_info(vacrelstats,
-							 olderrinfo.phase,
-							 olderrinfo.blkno,
-							 olderrinfo.indname);
+	restore_vacuum_error_info(vacrelstats, &saved_err_info);
 	return tupindex;
 }
 
@@ -2404,7 +2404,7 @@ lazy_vacuum_index(Relation indrel, IndexBulkDeleteResult **stats,
 	IndexVacuumInfo ivinfo;
 	const char *msg;
 	PGRUsage	ru0;
-	LVRelStats	olderrinfo;
+	LVSavedErrInfo saved_err_info;
 
 	pg_rusage_init(&ru0);
 
@@ -2416,12 +2416,17 @@ lazy_vacuum_index(Relation indrel, IndexBulkDeleteResult **stats,
 	ivinfo.num_heap_tuples = reltuples;
 	ivinfo.strategy = vac_strategy;
 
-	/* Update error traceback information */
-	olderrinfo = *vacrelstats;
-	update_vacuum_error_info(vacrelstats,
+	/*
+	 * Update error traceback information.
+	 *
+	 * The index name is saved during this phase and restored immediately
+	 * after this phase.  See vacuum_error_callback.
+	 */
+	Assert(vacrelstats->indname == NULL);
+	vacrelstats->indname = pstrdup(RelationGetRelationName(indrel));
+	update_vacuum_error_info(vacrelstats, &saved_err_info,
 							 VACUUM_ERRCB_PHASE_VACUUM_INDEX,
-							 InvalidBlockNumber,
-							 RelationGetRelationName(indrel));
+							 InvalidBlockNumber);
 
 	/* Do bulk deletion */
 	*stats = index_bulk_delete(&ivinfo, *stats,
@@ -2439,10 +2444,9 @@ lazy_vacuum_index(Relation indrel, IndexBulkDeleteResult **stats,
 			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 
 	/* Revert to the previous phase information for error traceback */
-	update_vacuum_error_info(vacrelstats,
-							 olderrinfo.phase,
-							 olderrinfo.blkno,
-							 olderrinfo.indname);
+	restore_vacuum_error_info(vacrelstats, &saved_err_info);
+	pfree(vacrelstats->indname);
+	vacrelstats->indname = NULL;
 }
 
 /*
@@ -2459,7 +2463,7 @@ lazy_cleanup_index(Relation indrel,
 	IndexVacuumInfo ivinfo;
 	const char *msg;
 	PGRUsage	ru0;
-	LVRelStats	olderrcbarg;
+	LVSavedErrInfo saved_err_info;
 
 	pg_rusage_init(&ru0);
 
@@ -2472,20 +2476,25 @@ lazy_cleanup_index(Relation indrel,
 	ivinfo.num_heap_tuples = reltuples;
 	ivinfo.strategy = vac_strategy;
 
-	/* Update error traceback information */
-	olderrcbarg = *vacrelstats;
-	update_vacuum_error_info(vacrelstats,
+	/*
+	 * Update error traceback information.
+	 *
+	 * The index name is saved during this phase and restored immediately
+	 * after this phase.  See vacuum_error_callback.
+	 */
+	Assert(vacrelstats->indname == NULL);
+	vacrelstats->indname = pstrdup(RelationGetRelationName(indrel));
+	update_vacuum_error_info(vacrelstats, &saved_err_info,
 							 VACUUM_ERRCB_PHASE_INDEX_CLEANUP,
-							 InvalidBlockNumber,
-							 RelationGetRelationName(indrel));
+							 InvalidBlockNumber);
 
 	*stats = index_vacuum_cleanup(&ivinfo, *stats);
 
 	/* Revert back to the old phase information for error traceback */
-	update_vacuum_error_info(vacrelstats,
-							 olderrcbarg.phase,
-							 olderrcbarg.blkno,
-							 olderrcbarg.indname);
+	restore_vacuum_error_info(vacrelstats, &saved_err_info);
+	pfree(vacrelstats->indname);
+	vacrelstats->indname = NULL;
+
 	if (!(*stats))
 		return;
 
@@ -3598,18 +3607,30 @@ vacuum_error_callback(void *arg)
 	}
 }
 
-/* Update vacuum error callback for the current phase, block, and index. */
+/*
+ * Updates the information required for vacuum error callback.  This also saves
+ * the current information which can be later restored via restore_vacuum_error_info.
+ */
 static void
-update_vacuum_error_info(LVRelStats *errinfo, int phase, BlockNumber blkno,
-						 char *indname)
+update_vacuum_error_info(LVRelStats *errinfo, LVSavedErrInfo *saved_err_info, int phase,
+						 BlockNumber blkno)
 {
+	if (saved_err_info)
+	{
+		saved_err_info->blkno = errinfo->blkno;
+		saved_err_info->phase = errinfo->phase;
+	}
+
 	errinfo->blkno = blkno;
 	errinfo->phase = phase;
+}
 
-	/* Free index name from any previous phase */
-	if (errinfo->indname)
-		pfree(errinfo->indname);
-
-	/* For index phases, save the name of the current index for the callback */
-	errinfo->indname = indname ? pstrdup(indname) : NULL;
+/*
+ * Restores the vacuum information saved via a prior call to update_vacuum_error_info.
+ */
+static void
+restore_vacuum_error_info(LVRelStats *errinfo, const LVSavedErrInfo *saved_err_info)
+{
+	errinfo->blkno = saved_err_info->blkno;
+	errinfo->phase = saved_err_info->phase;
 }
