@@ -1250,6 +1250,7 @@ LUID
 LVDeadTuples
 LVParallelState
 LVRelStats
+LVSavedErrInfo
 LVShared
 LVSharedIndStats
 LWLock
