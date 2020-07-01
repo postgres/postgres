@@ -89,14 +89,20 @@ test_connect_fails(
 	qr/channel binding required but not supported by server's authentication request/,
 	"MD5 with SSL and channel_binding=require");
 
-# Now test with auth method 'cert' by connecting to 'certdb'. Should
-# fail, because channel binding is not performed.
-copy("ssl/client.key", "ssl/client_tmp.key");
-chmod 0600, "ssl/client_tmp.key";
+# Now test with auth method 'cert' by connecting to 'certdb'. Should fail,
+# because channel binding is not performed.  Note that ssl/client.key may
+# be used in a different test, so the name of this temporary client key
+# is chosen here to be unique.
+my $client_tmp_key = "ssl/client_scram_tmp.key";
+copy("ssl/client.key", $client_tmp_key);
+chmod 0600, $client_tmp_key;
 test_connect_fails(
-	"sslcert=ssl/client.crt sslkey=ssl/client_tmp.key hostaddr=$SERVERHOSTADDR",
+	"sslcert=ssl/client.crt sslkey=$client_tmp_key hostaddr=$SERVERHOSTADDR",
 	"dbname=certdb user=ssltestuser channel_binding=require",
 	qr/channel binding required, but server authenticated client without channel binding/,
 	"Cert authentication and channel_binding=require");
+
+# clean up
+unlink($client_tmp_key);
 
 done_testing($number_of_tests);
