@@ -1771,6 +1771,31 @@ PathNameOpenTemporaryFile(const char *path)
 
 	return file;
 }
+File
+PathNameReopenTemporaryFile(const char *path)
+{
+	File		file;
+
+	ResourceOwnerEnlargeFiles(CurrentResourceOwner);
+
+	/* We open the file read-only. */
+	file = PathNameOpenFile(path, O_RDWR | PG_BINARY);
+
+	/* If no such file, then we don't raise an error. */
+	if (file <= 0 && errno != ENOENT)
+		ereport(ERROR,
+		        (errcode_for_file_access(),
+			        errmsg("could not open temporary file \"%s\": %m",
+			               path)));
+
+	if (file > 0)
+	{
+		/* Register it for automatic close. */
+		RegisterTemporaryFile(file);
+	}
+
+	return file;
+}
 
 /*
  * Delete a file by pathname.  Return true if the file existed, false if

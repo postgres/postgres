@@ -38,6 +38,7 @@ extern void SharedFileSetInit(SharedFileSet *fileset, dsm_segment *seg);
 extern void SharedFileSetAttach(SharedFileSet *fileset, dsm_segment *seg);
 extern File SharedFileSetCreate(SharedFileSet *fileset, const char *name);
 extern File SharedFileSetOpen(SharedFileSet *fileset, const char *name);
+extern File SharedFileSetReopen(SharedFileSet *fileset, const char *name);
 extern bool SharedFileSetDelete(SharedFileSet *fileset, const char *name,
 								bool error_on_failure);
 extern void SharedFileSetDeleteAll(SharedFileSet *fileset);

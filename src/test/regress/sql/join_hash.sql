@@ -683,4 +683,24 @@ FROM probeside_batch0
 LEFT OUTER JOIN hashside_wide_batch0 USING (a)
 ORDER BY 1, 2, 3, 4, 5;
 
-ROLLBACK;
+set local min_parallel_table_scan_size = 0;
+set local parallel_setup_cost = 0;
+set local enable_hashjoin = on;
+
+savepoint settings;
+set max_parallel_workers_per_gather = 1;
+set enable_parallel_hash = on;
+set work_mem = '64kB';
+
+INSERT INTO hashside_wide_batch0 SELECT '(0, "")', 1 FROM generate_series(1, 9);
+
+EXPLAIN (ANALYZE, summary off, timing off, costs off, usage off) SELECT * FROM probeside_batch0
+LEFT OUTER JOIN hashside_wide_batch0 USING (a);
+
+SELECT (probeside_batch0.a).hash, ((((probeside_batch0.a).hash << 7) >> 3) & 31) AS batchno, TRIM((probeside_batch0.a).value), hashside_wide_batch0.id, hashside_wide_batch0.ctid, (hashside_wide_batch0.a).hash, TRIM((hashside_wide_batch0.a).value)
+FROM probeside_batch0
+LEFT OUTER JOIN hashside_wide_batch0 USING (a)
+ORDER BY 1, 2, 3, 4, 5;
+rollback to settings;
+
+rollback;

@@ -76,5 +76,15 @@ extern void sts_parallel_scan_rewind(SharedTuplestoreAccessor *accessor);
 extern void sts_reset_rewound(SharedTuplestoreAccessor *accessor);
 extern uint32 sts_increment_ntuples(SharedTuplestoreAccessor *accessor);
 extern uint32 sts_get_tuplenum(SharedTuplestoreAccessor *accessor);
+extern void sta_reset_rewound(SharedTuplestoreAccessor *accessor);
+extern int sta_get_read_participant(SharedTuplestoreAccessor *accessor);
+extern void sts_spill_leftover_tuples(SharedTuplestoreAccessor *accessor, MinimalTuple tuple, uint32 hashvalue, bool participated);
+extern void overflow_filename(char *name, SharedTuplestoreAccessor *accessor, int participant);
+extern void sts_reset_tuples_read(SharedTuplestoreAccessor *accessor);
+
+extern MinimalTuple sts_parallel_scan_chunk(SharedTuplestoreAccessor *accessor,
+                        void *meta_data,
+                        bool inner);
+
 
 #endif							/* SHAREDTUPLESTORE_H */

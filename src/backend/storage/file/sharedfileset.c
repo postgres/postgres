@@ -158,6 +158,18 @@ SharedFileSetOpen(SharedFileSet *fileset, const char *name)
 	return file;
 }
 
+File
+SharedFileSetReopen(SharedFileSet *fileset, const char *name)
+{
+	char		path[MAXPGPATH];
+	File		file;
+
+	SharedFilePath(path, fileset, name);
+	file = PathNameReopenTemporaryFile(path);
+
+	return file;
+}
+
 /*
  * Delete a file that was created with SharedFileSetCreate().
  * Return true if the file existed, false if didn't.

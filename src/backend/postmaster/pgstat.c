@@ -3803,6 +3803,21 @@ pgstat_get_wait_ipc(WaitEventIPC w)
 		case WAIT_EVENT_HASH_BUILD_HASH_OUTER:
 			event_name = "HashBuildHashOuter";
 			break;
+		case WAIT_EVENT_HASH_EVICT_ELECT:
+			event_name = "HashEvictElect";
+			break;
+		case WAIT_EVENT_HASH_EVICT_RESET:
+			event_name = "HashEvictReset";
+			break;
+		case WAIT_EVENT_HASH_EVICT_SPILL:
+			event_name = "HashEvictSpill";
+			break;
+		case WAIT_EVENT_HASH_EVICT_FINISH:
+			event_name = "HashEvictFinish";
+			break;
+		case WAIT_EVENT_HASH_REPARTITION_BATCH0_DRAIN_QUEUE:
+			event_name = "HashRepartitionBatch0DrainQueue";
+			break;
 		case WAIT_EVENT_HASH_GROW_BATCHES_ALLOCATE:
 			event_name = "HashGrowBatchesAllocate";
 			break;

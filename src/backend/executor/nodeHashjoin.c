@@ -340,6 +340,7 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 				 * from the outer plan node.  If we succeed, we have to stash
 				 * it away for later consumption by ExecHashJoinOuterGetTuple.
 				 */
+//				volatile int mybp = 0; while (mybp == 0){};
 				if (HJ_FILL_INNER(node))
 				{
 					/* no chance to not build the hash table */
@@ -432,10 +433,13 @@ ExecHashJoinImpl(PlanState *pstate, bool parallel)
 						 * If multi-batch, we need to hash the outer relation
 						 * up front.
 						 */
-						if (hashtable->nbatch > 1)
+						if (hashtable->nbatch > 1 || (hashtable->nbatch == 1 && hashtable->batches[0].shared->hashloop_fallback))
 							ExecParallelHashJoinPartitionOuter(node);
-						BarrierArriveAndWait(build_barrier,
-											 WAIT_EVENT_HASH_BUILD_HASH_OUTER);
+						if (BarrierArriveAndWait(build_barrier,
+											 WAIT_EVENT_HASH_BUILD_HASH_OUTER))
+						{
+							//elog(NOTICE, "%d: ntuples in batch 0 hashtable: %ld", ParallelWorkerNumber, hashtable->batches[0].shared->ntuples);
+						}
 					}
 					Assert(BarrierPhase(build_barrier) == PHJ_BUILD_DONE);
 
@@ -1068,8 +1072,12 @@ ExecParallelHashJoinOuterGetTuple(PlanState *outerNode,
 	 * single-batch hash joins.  Otherwise we have to go to batch files, even
 	 * for batch 0.
 	 */
-	if (curbatch == 0 && hashtable->nbatch == 1)
+	LWLockAcquire(&hashtable->batches[0].shared->lock, LW_SHARED);
+
+	if (curbatch == 0 && hashtable->nbatch == 1 && !hashtable->batches[0].shared->hashloop_fallback)
 	{
+		LWLockRelease(&hashtable->batches[0].shared->lock);
+
 		slot = ExecProcNode(outerNode);
 
 		while (!TupIsNull(slot))
@@ -1093,11 +1101,14 @@ ExecParallelHashJoinOuterGetTuple(PlanState *outerNode,
 	}
 	else if (curbatch < hashtable->nbatch)
 	{
+
 		tupleMetadata metadata;
 		MinimalTuple tuple;
+		LWLockRelease(&hashtable->batches[0].shared->lock);
 
-		tuple = sts_parallel_scan_next(hashtable->batches[curbatch].outer_tuples,
-									   &metadata);
+		tuple =
+			sts_parallel_scan_next(hashtable->batches[curbatch].outer_tuples,
+			                       &metadata);
 		*hashvalue = metadata.hashvalue;
 
 		if (tuple != NULL)
@@ -1114,8 +1125,13 @@ ExecParallelHashJoinOuterGetTuple(PlanState *outerNode,
 			slot = hjstate->hj_OuterTupleSlot;
 			return slot;
 		}
-		else
+		else {
+
 			ExecClearTuple(hjstate->hj_OuterTupleSlot);
+		}
+	}
+	else {
+		LWLockRelease(&hashtable->batches[0].shared->lock);
 	}
 
 	/* End of this batch */
@@ -1587,7 +1603,7 @@ ExecParallelHashJoinLoadStripe(HashJoinState *hjstate)
 		 * move on.
 		 */
 
-		if (PHJ_STRIPE_NUMBER(phase) > batch->maximum_stripe_number ||
+		if (PHJ_STRIPE_NUMBER(phase) > batch->nstripes ||
 			PHJ_STRIPE_PHASE(phase) == PHJ_STRIPE_DONE)
 			return ExecHashTableDetachStripe(hashtable);
 	}
@@ -1613,6 +1629,10 @@ ExecParallelHashJoinLoadStripe(HashJoinState *hjstate)
 	 */
 	for (;;)
 	{
+		MinimalTuple tuple;
+		tupleMetadata metadata;
+
+		bool overflow_required = false;
 		int			phase = BarrierPhase(stripe_barrier);
 
 		switch (PHJ_STRIPE_PHASE(phase))
@@ -1621,12 +1641,6 @@ ExecParallelHashJoinLoadStripe(HashJoinState *hjstate)
 				if (BarrierArriveAndWait(stripe_barrier, WAIT_EVENT_HASH_STRIPE_ELECT))
 				{
 					sts_reinitialize(outer_tuples);
-
-					/*
-					 * set the rewound flag back to false to prepare for the
-					 * next stripe
-					 */
-					sts_reset_rewound(inner_tuples);
 				}
 
 				/* FALLTHROUGH */
@@ -1638,55 +1652,50 @@ ExecParallelHashJoinLoadStripe(HashJoinState *hjstate)
 
 			case PHJ_STRIPE_LOADING:
 				{
-					MinimalTuple tuple;
-					tupleMetadata metadata;
 
 					/*
 					 * Start (or join in) loading the next stripe of inner
 					 * tuples.
 					 */
+					sts_begin_parallel_scan(inner_tuples);
 
 					/*
-					 * I'm afraid there potential issue if a worker joins in
-					 * this phase and doesn't do the actions and resetting of
-					 * variables in sts_resume_parallel_scan. that is, if it
-					 * doesn't reset start_page and read_next_page in between
-					 * stripes. For now, call it. However, I think it might be
-					 * able to be removed.
+					 * TODO: add functionality to pre-alloc some memory before calling
+					 * sts_parallel_scan_next() because that will reserve an additional STS_CHUNK for every stripe for each worker
+					 * that won't fit, so we should first see if the chunk would fit before getting the assignment
 					 */
-
-					/*
-					 * TODO: sts_resume_parallel_scan() is overkill for stripe
-					 * 0 of each batch
-					 */
-					sts_resume_parallel_scan(inner_tuples);
-
 					while ((tuple = sts_parallel_scan_next(inner_tuples, &metadata)))
 					{
-						/* The tuple is from a previous stripe. Skip it */
-						if (metadata.stripe < PHJ_STRIPE_NUMBER(phase))
-							continue;
-
-						/*
-						 * tuple from future. time to back out read_page. end
-						 * of stripe
-						 */
-						if (metadata.stripe > PHJ_STRIPE_NUMBER(phase))
-						{
-							sts_parallel_scan_rewind(inner_tuples);
-							continue;
-						}
-
 						ExecForceStoreMinimalTuple(tuple, hjstate->hj_HashTupleSlot, false);
-						ExecParallelHashTableInsertCurrentBatch(
-																hashtable,
-																hjstate->hj_HashTupleSlot,
-																metadata.hashvalue);
+						if (!ExecParallelHashTableInsertCurrentBatch(hashtable,hjstate->hj_HashTupleSlot, metadata.hashvalue, sta_get_read_participant(inner_tuples)))
+						{
+							overflow_required = true;
+							pg_atomic_test_set_flag(&hashtable->batches[hashtable->curbatch].shared->overflow_required);
+							break;
+						}
 					}
-					BarrierArriveAndWait(stripe_barrier, WAIT_EVENT_HASH_STRIPE_LOAD);
+
+					if (BarrierArriveAndWait(stripe_barrier, WAIT_EVENT_HASH_STRIPE_LOAD))
+					{
+						if (!pg_atomic_unlocked_test_flag(&hashtable->batches[hashtable->curbatch].shared->overflow_required))
+							hashtable->batches[hashtable->curbatch].shared->nstripes++;
+					}
 				}
 				/* FALLTHROUGH */
+			case PHJ_STRIPE_OVERFLOWING:
+				if (overflow_required)
+				{
+					Assert(tuple);
+					ParallelHashJoinBatchAccessor *batch_accessor = &hashtable->batches[hashtable->curbatch];
+					sts_spill_leftover_tuples(inner_tuples, tuple, metadata.hashvalue, batch_accessor->participated);
+					batch_accessor->participated = true;
+				}
+				/*
+				 * TODO: replace this wait event
+				 */
+				BarrierArriveAndWait(stripe_barrier, WAIT_EVENT_HASH_STRIPE_LOAD);
 
+				/* FALLTHROUGH */
 			case PHJ_STRIPE_PROBING:
 
 				/*
@@ -1699,7 +1708,10 @@ ExecParallelHashJoinLoadStripe(HashJoinState *hjstate)
 
 			case PHJ_STRIPE_DONE:
 
-				if (PHJ_STRIPE_NUMBER(phase) >= batch->maximum_stripe_number)
+				/*
+				 * TODO: this logic might not work
+				 */
+				if (PHJ_STRIPE_NUMBER(phase) >= batch->nstripes)
 				{
 					/*
 					 * Handle the phantom stripe case.
@@ -1723,6 +1735,12 @@ ExecParallelHashJoinLoadStripe(HashJoinState *hjstate)
 
 					for (size_t i = 0; i < hashtable->nbuckets; ++i)
 						dsa_pointer_atomic_write(&buckets[i], InvalidDsaPointer);
+					LWLockAcquire(&hashtable->batches[hashtable->curbatch].shared->lock, LW_EXCLUSIVE);
+					hashtable->batches[hashtable->curbatch].shared->size = 0;
+					hashtable->batches[hashtable->curbatch].shared->space_exhausted = false;
+					hashtable->batches[hashtable->curbatch].at_least_one_chunk = false;
+					pg_atomic_exchange_u64(&hashtable->batches[hashtable->curbatch].shared->ntuples_in_memory, 0);
+					LWLockRelease(&hashtable->batches[hashtable->curbatch].shared->lock);
 				}
 
 				hashtable->curstripe++;
@@ -1753,6 +1771,12 @@ fallback_stripe:
 
 	for (size_t i = 0; i < hashtable->nbuckets; ++i)
 		dsa_pointer_atomic_write(&buckets[i], InvalidDsaPointer);
+
+	LWLockAcquire(&hashtable->batches[hashtable->curbatch].shared->lock, LW_EXCLUSIVE);
+	hashtable->batches[hashtable->curbatch].shared->size = 0;
+	hashtable->batches[hashtable->curbatch].shared->space_exhausted = false;
+	hashtable->batches[hashtable->curbatch].at_least_one_chunk = false;
+	LWLockRelease(&hashtable->batches[hashtable->curbatch].shared->lock);
 
 	/*
 	 * If all workers (including this one) have finished probing the batch,
@@ -2000,7 +2024,9 @@ ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate)
 			/* cannot count on deterministic order of tupleids */
 			metadata.tupleid = sts_increment_ntuples(accessor);
 
-			sts_puttuple(hashtable->batches[batchno].outer_tuples, &metadata.hashvalue, mintup);
+			sts_puttuple(hashtable->batches[batchno].outer_tuples,
+			             &metadata.hashvalue,
+			             mintup);
 
 			if (shouldFree)
 				heap_free_minimal_tuple(mintup);
@@ -2061,6 +2087,8 @@ ExecHashJoinInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 	LWLockInitialize(&pstate->lock,
 					 LWTRANCHE_PARALLEL_HASH_JOIN);
 	BarrierInit(&pstate->build_barrier, 0);
+	BarrierInit(&pstate->eviction_barrier, 0);
+	BarrierInit(&pstate->repartition_barrier, 0);
 	BarrierInit(&pstate->grow_batches_barrier, 0);
 	BarrierInit(&pstate->grow_buckets_barrier, 0);
 

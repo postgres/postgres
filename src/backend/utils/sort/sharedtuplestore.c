@@ -225,6 +225,8 @@ sts_end_write(SharedTuplestoreAccessor *accessor)
 		pfree(accessor->write_chunk);
 		accessor->write_chunk = NULL;
 		accessor->write_file = NULL;
+		accessor->write_pointer = NULL;
+		accessor->write_end = NULL;
 		accessor->sts->participants[accessor->participant].writing = false;
 	}
 }
@@ -357,6 +359,7 @@ sts_puttuple(SharedTuplestoreAccessor *accessor, void *meta_data,
 		/* Create one.  Only this backend will write into it. */
 		sts_filename(name, accessor, accessor->participant);
 		accessor->write_file = BufFileCreateShared(accessor->fileset, name);
+	//	elog(NOTICE, "%d: in sts_puttuple. participant: %d. creating write file %s", MyProcPid, accessor->participant, name);
 
 		/* Set up the shared state for this backend's file. */
 		participant = &accessor->sts->participants[accessor->participant];
@@ -473,7 +476,7 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 			accessor->sts->meta_data_size)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from shared tuplestore temporary file"),
+					 errmsg("%d: could not read from shared tuplestore temporary file", MyProcPid),
 					 errdetail_internal("Short read while reading meta-data.")));
 		accessor->read_bytes += accessor->sts->meta_data_size;
 	}
@@ -482,7 +485,7 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 					sizeof(size)) != sizeof(size))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read from shared tuplestore temporary file"),
+				 errmsg("%d: could not read from shared tuplestore temporary file", MyProcPid),
 				 errdetail_internal("Short read while reading size.")));
 	accessor->read_bytes += sizeof(size);
 	if (size > accessor->read_buffer_size)
@@ -505,7 +508,7 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 					this_chunk_size) != this_chunk_size)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read from shared tuplestore temporary file"),
+				 errmsg("%d: could not read from shared tuplestore temporary file", MyProcPid),
 				 errdetail_internal("Short read while reading tuple.")));
 	accessor->read_bytes += this_chunk_size;
 	remaining_size -= this_chunk_size;
@@ -522,7 +525,7 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 			STS_CHUNK_HEADER_SIZE)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from shared tuplestore temporary file"),
+					 errmsg("%d: could not read from shared tuplestore temporary file", MyProcPid),
 					 errdetail_internal("Short read while reading overflow chunk header.")));
 		accessor->read_bytes = STS_CHUNK_HEADER_SIZE;
 		if (chunk_header.overflow == 0)
@@ -539,7 +542,7 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 						this_chunk_size) != this_chunk_size)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read from shared tuplestore temporary file"),
+					 errmsg("%d: could not read from shared tuplestore temporary file", MyProcPid),
 					 errdetail_internal("Short read while reading tuple.")));
 		accessor->read_bytes += this_chunk_size;
 		remaining_size -= this_chunk_size;
@@ -557,6 +560,17 @@ sts_read_tuple(SharedTuplestoreAccessor *accessor, void *meta_data)
 	tuple->t_len = size;
 
 	return tuple;
+}
+
+MinimalTuple
+sts_parallel_scan_chunk(SharedTuplestoreAccessor *accessor,
+                       void *meta_data,
+                       bool inner)
+{
+	Assert(accessor->read_file);
+	if (accessor->read_ntuples < accessor->read_ntuples_available)
+		return sts_read_tuple(accessor, meta_data);
+	return NULL;
 }
 
 /*
@@ -588,7 +602,7 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 		/* We can skip directly past overflow pages we know about. */
 		if (p->read_page < accessor->read_next_page)
 			p->read_page = accessor->read_next_page;
-		eof = p->read_page >= p->npages || p->rewound;
+		eof = p->read_page >= p->npages;
 		if (!eof)
 		{
 			/* Claim the next chunk. */
@@ -625,6 +639,7 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 				sts_filename(name, accessor, accessor->read_participant);
 				accessor->read_file =
 					BufFileOpenShared(accessor->fileset, name);
+				//elog(NOTICE, "%d. participant: %d opening %s for read.", MyProcPid, accessor->participant, name);
 			}
 
 			/* Seek and load the chunk header. */
@@ -638,8 +653,8 @@ sts_parallel_scan_next(SharedTuplestoreAccessor *accessor, void *meta_data)
 			if (nread != STS_CHUNK_HEADER_SIZE)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not read from shared tuplestore temporary file: read only %zu of %zu bytes",
-								nread, STS_CHUNK_HEADER_SIZE)));
+						 errmsg("%d: could not read from shared tuplestore temporary file: read only %zu of %zu bytes",
+								MyProcPid, nread, STS_CHUNK_HEADER_SIZE)));
 
 			/*
 			 * If this is an overflow chunk, we skip it and any following
@@ -725,6 +740,66 @@ sts_get_tuplenum(SharedTuplestoreAccessor *accessor)
 {
 	return pg_atomic_read_u32(&accessor->sts->ntuples);
 }
+
+int sta_get_read_participant(SharedTuplestoreAccessor *accessor)
+{
+	return accessor->read_participant;
+}
+
+void
+sts_spill_leftover_tuples(SharedTuplestoreAccessor *accessor, MinimalTuple tuple, uint32 hashvalue, bool participated)
+{
+	/*
+	 * TODO: assert that no one is reading
+	 */
+
+	tupleMetadata metadata;
+
+	metadata.hashvalue = hashvalue;
+	SharedTuplestoreParticipant *participant = &accessor->sts->participants[accessor->participant];
+	participant->writing = true;	/* for assertions only */
+	char		name[MAXPGPATH];
+
+	/* Create one.  Only this backend will write into it. */
+	sts_filename(name, accessor, accessor->participant);
+	//elog(NOTICE, "%d: participated  is %d", MyProcPid, participated);
+	if (!participated)
+	{
+		accessor->write_file = BufFileCreateShared(accessor->fileset, name);
+		//elog(NOTICE, "%d: participant: %d in spill_leftover_tuple. created write file %s", MyProcPid, accessor->participant, name);
+
+	}
+	else
+	{
+		accessor->write_file = BufFileReopenShared(accessor->fileset, name);
+		//elog(NOTICE, "%d. participant: %d reopening %s for write.", MyProcPid, accessor->participant, name);
+
+	}
+	set_writeable(accessor->write_file);
+	BufFileSeek(accessor->write_file, 0, BufFileSize(accessor->write_file), SEEK_SET);
+	do
+	{
+		sts_puttuple(accessor, &metadata, tuple);
+	} while ((tuple = sts_parallel_scan_chunk(accessor, &metadata, true)));
+
+	accessor->read_ntuples = 0;
+	accessor->read_ntuples_available = 0;
+	sts_end_write(accessor);
+}
+
+void overflow_filename(char *name, SharedTuplestoreAccessor *accessor, int participant)
+{
+	snprintf(name, MAXPGPATH, "%s.overflow.p%d", accessor->sts->name, participant);
+}
+
+void sts_reset_tuples_read(SharedTuplestoreAccessor *accessor)
+{
+	accessor->read_ntuples = 0;
+	accessor->read_bytes = 0;
+	BufFileClose(accessor->read_file);
+	accessor->read_file = NULL;
+}
+
 
 /*
  * Create the name used for the BufFile that a given participant will write.
