@@ -213,39 +213,163 @@ typedef struct WalRcvExecResult
 	TupleDesc	tupledesc;
 } WalRcvExecResult;
 
-/* libpqwalreceiver hooks */
-typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo, bool logical,
+/* WAL receiver - libpqwalreceiver hooks */
+
+/*
+ * walrcv_connect_fn
+ *
+ * Establish connection to a cluster.  'logical' is true if the
+ * connection is logical, and false if the connection is physical.
+ * 'appname' is a name associated to the connection, to use for example
+ * with fallback_application_name or application_name.  Returns the
+ * details about the connection established, as defined by
+ * WalReceiverConn for each WAL receiver module.  On error, NULL is
+ * returned with 'err' including the error generated.
+ */
+typedef WalReceiverConn *(*walrcv_connect_fn) (const char *conninfo,
+											   bool logical,
 											   const char *appname,
 											   char **err);
+
+/*
+ * walrcv_check_conninfo_fn
+ *
+ * Parse and validate the connection string given as of 'conninfo'.
+ */
 typedef void (*walrcv_check_conninfo_fn) (const char *conninfo);
+
+/*
+ * walrcv_get_conninfo_fn
+ *
+ * Returns a user-displayable conninfo string.  Note that any
+ * security-sensitive fields should be obfuscated.
+ */
 typedef char *(*walrcv_get_conninfo_fn) (WalReceiverConn *conn);
+
+/*
+ * walrcv_get_senderinfo_fn
+ *
+ * Provide information of the WAL sender this WAL receiver is connected
+ * to, as of 'sender_host' for the host of the sender and 'sender_port'
+ * for its port.
+ */
 typedef void (*walrcv_get_senderinfo_fn) (WalReceiverConn *conn,
 										  char **sender_host,
 										  int *sender_port);
+
+/*
+ * walrcv_identify_system_fn
+ *
+ * Run IDENTIFY_SYSTEM on the cluster connected to and validate the
+ * identity of the cluster.  Returns the system ID of the cluster
+ * connected to.  'primary_tli' is the timeline ID of the sender.
+ */
 typedef char *(*walrcv_identify_system_fn) (WalReceiverConn *conn,
 											TimeLineID *primary_tli);
+
+/*
+ * walrcv_server_version_fn
+ *
+ * Returns the version number of the cluster connected to.
+ */
 typedef int (*walrcv_server_version_fn) (WalReceiverConn *conn);
+
+/*
+ * walrcv_readtimelinehistoryfile_fn
+ *
+ * Fetch from cluster the timeline history file for timeline 'tli'.
+ * Returns the name of the timeline history file as of 'filename', its
+ * contents as of 'content' and its 'size'.
+ */
 typedef void (*walrcv_readtimelinehistoryfile_fn) (WalReceiverConn *conn,
 												   TimeLineID tli,
 												   char **filename,
-												   char **content, int *size);
+												   char **content,
+												   int *size);
+
+/*
+ * walrcv_startstreaming_fn
+ *
+ * Start streaming WAL data from given streaming options.  Returns true
+ * if the connection has switched successfully to copy-both mode and false
+ * if the server received the command and executed it successfully, but
+ * didn't switch to copy-mode.
+ */
 typedef bool (*walrcv_startstreaming_fn) (WalReceiverConn *conn,
 										  const WalRcvStreamOptions *options);
+
+/*
+ * walrcv_endstreaming_fn
+ *
+ * Stop streaming of WAL data.  Returns the next timeline ID of the cluster
+ * connected to in 'next_tli', or 0 if there was no report.
+ */
 typedef void (*walrcv_endstreaming_fn) (WalReceiverConn *conn,
 										TimeLineID *next_tli);
-typedef int (*walrcv_receive_fn) (WalReceiverConn *conn, char **buffer,
+
+/*
+ * walrcv_receive_fn
+ *
+ * Receive a message available from the WAL stream.  'buffer' is a pointer
+ * to a buffer holding the message received.  Returns the length of the data,
+ * 0 if no data is available yet ('wait_fd' is a socket descriptor which can
+ * be waited on before a retry), and -1 if the cluster ended the COPY.
+ */
+typedef int (*walrcv_receive_fn) (WalReceiverConn *conn,
+								  char **buffer,
 								  pgsocket *wait_fd);
-typedef void (*walrcv_send_fn) (WalReceiverConn *conn, const char *buffer,
+
+/*
+ * walrcv_send_fn
+ *
+ * Send a message of size 'nbytes' to the WAL stream with 'buffer' as
+ * contents.
+ */
+typedef void (*walrcv_send_fn) (WalReceiverConn *conn,
+								const char *buffer,
 								int nbytes);
+
+/*
+ * walrcv_create_slot_fn
+ *
+ * Create a new replication slot named 'slotname'.  'temporary' defines
+ * if the slot is temporary.  'snapshot_action' defines the behavior wanted
+ * for an exported snapshot (see replication protocol for more details).
+ * 'lsn' includes the LSN position at which the created slot became
+ * consistent.  Returns the name of the exported snapshot for a logical
+ * slot, or NULL for a physical slot.
+ */
 typedef char *(*walrcv_create_slot_fn) (WalReceiverConn *conn,
-										const char *slotname, bool temporary,
+										const char *slotname,
+										bool temporary,
 										CRSSnapshotAction snapshot_action,
 										XLogRecPtr *lsn);
+
+/*
+ * walrcv_get_backend_pid_fn
+ *
+ * Returns the PID of the remote backend process.
+ */
 typedef pid_t (*walrcv_get_backend_pid_fn) (WalReceiverConn *conn);
+
+/*
+ * walrcv_exec_fn
+ *
+ * Send generic queries (and commands) to the remote cluster.  'nRetTypes'
+ * is the expected number of returned attributes, and 'retTypes' an array
+ * including their type OIDs.  Returns the status of the execution and
+ * tuples if any.
+ */
 typedef WalRcvExecResult *(*walrcv_exec_fn) (WalReceiverConn *conn,
 											 const char *query,
 											 const int nRetTypes,
 											 const Oid *retTypes);
+
+/*
+ * walrcv_disconnect_fn
+ *
+ * Disconnect with the cluster.
+ */
 typedef void (*walrcv_disconnect_fn) (WalReceiverConn *conn);
 
 typedef struct WalReceiverFunctionsType

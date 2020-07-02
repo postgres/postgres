@@ -8,33 +8,8 @@ the primary server, receiving WAL files and sending messages, is loaded
 dynamically to avoid having to link the main server binary with libpq.
 The dynamically loaded module is in libpqwalreceiver subdirectory.
 
-The dynamically loaded module implements four functions:
-
-
-bool walrcv_connect(char *conninfo, XLogRecPtr startpoint)
-
-Establish connection to the primary, and starts streaming from 'startpoint'.
-Returns true on success.
-
-int walrcv_receive(char **buffer, pgsocket *wait_fd)
-
-Retrieve any message available without blocking through the
-connection.  If a message was successfully read, returns its
-length. If the connection is closed, returns -1.  Otherwise returns 0
-to indicate that no data is available, and sets *wait_fd to a socket
-descriptor which can be waited on before trying again.  On success, a
-pointer to the message payload is stored in *buffer. The returned
-buffer is valid until the next call to walrcv_* functions, and the
-caller should not attempt to free it.
-
-void walrcv_send(const char *buffer, int nbytes)
-
-Send a message to XLOG stream.
-
-void walrcv_disconnect(void);
-
-Disconnect.
-
+The dynamically loaded module implements a set of functions with details
+about each one of them provided in src/include/replication/walreceiver.h.
 
 This API should be considered internal at the moment, but we could open it
 up for 3rd party replacements of libpqwalreceiver in the future, allowing
