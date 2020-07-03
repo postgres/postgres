@@ -63,8 +63,24 @@ SharedFileSetInit(SharedFileSet *fileset, dsm_segment *seg)
 						   lengthof(fileset->tablespaces));
 	if (fileset->ntablespaces == 0)
 	{
-		fileset->tablespaces[0] = DEFAULTTABLESPACE_OID;
+		/* If the GUC is empty, use current database's default tablespace */
+		fileset->tablespaces[0] = MyDatabaseTableSpace;
 		fileset->ntablespaces = 1;
+	}
+	else
+	{
+		int			i;
+
+		/*
+		 * An entry of InvalidOid means use the default tablespace for the
+		 * current database.  Replace that now, to be sure that all users of
+		 * the SharedFileSet agree on what to do.
+		 */
+		for (i = 0; i < fileset->ntablespaces; i++)
+		{
+			if (fileset->tablespaces[i] == InvalidOid)
+				fileset->tablespaces[i] = MyDatabaseTableSpace;
+		}
 	}
 
 	/* Register our cleanup callback. */
