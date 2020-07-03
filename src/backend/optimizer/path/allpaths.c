@@ -911,6 +911,9 @@ set_foreign_size(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 	/* ... but do not let it set the rows estimate to zero */
 	rel->rows = clamp_row_est(rel->rows);
+
+	/* also, make sure rel->tuples is not insane relative to rel->rows */
+	rel->tuples = Max(rel->tuples, rel->rows);
 }
 
 /*
