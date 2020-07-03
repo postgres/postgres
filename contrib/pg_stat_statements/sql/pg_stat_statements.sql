@@ -4,6 +4,7 @@ CREATE EXTENSION pg_stat_statements;
 -- simple and compound statements
 --
 SET pg_stat_statements.track_utility = FALSE;
+SET pg_stat_statements.track_planning = TRUE;
 SELECT pg_stat_statements_reset();
 
 SELECT 1 AS "int";

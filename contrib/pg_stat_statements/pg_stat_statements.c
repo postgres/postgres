@@ -442,7 +442,7 @@ _PG_init(void)
 							 "Selects whether planning duration is tracked by pg_stat_statements.",
 							 NULL,
 							 &pgss_track_planning,
-							 true,
+							 false,
 							 PGC_SUSET,
 							 0,
 							 NULL,
