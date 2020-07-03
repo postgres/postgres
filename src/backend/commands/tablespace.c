@@ -1356,7 +1356,7 @@ PrepareTempTablespaces(void)
 		 */
 		if (curoid == MyDatabaseTableSpace)
 		{
-			tblSpcs[numSpcs++] = InvalidOid;
+			tblSpcs[numSpcs++] = curoid;
 			continue;
 		}
 
