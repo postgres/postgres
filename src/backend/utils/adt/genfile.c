@@ -168,8 +168,7 @@ read_binary_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 			{
 				char	rbuf[1]; 
 
-				fread(rbuf, 1, 1, file);
-				if (!feof(file))
+				if (fread(rbuf, 1, 1, file) != 0 || !feof(file))
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 							 errmsg("file length too large")));
