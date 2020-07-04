@@ -106,33 +106,11 @@ read_binary_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 				 bool missing_ok)
 {
 	bytea	   *buf;
-	size_t		nbytes;
+	size_t		nbytes = 0;
 	FILE	   *file;
 
-	if (bytes_to_read < 0)
-	{
-		if (seek_offset < 0)
-			bytes_to_read = -seek_offset;
-		else
-		{
-			struct stat fst;
-
-			if (stat(filename, &fst) < 0)
-			{
-				if (missing_ok && errno == ENOENT)
-					return NULL;
-				else
-					ereport(ERROR,
-							(errcode_for_file_access(),
-							 errmsg("could not stat file \"%s\": %m", filename)));
-			}
-
-			bytes_to_read = fst.st_size - seek_offset;
-		}
-	}
-
-	/* not sure why anyone thought that int64 length was a good idea */
-	if (bytes_to_read > (MaxAllocSize - VARHDRSZ))
+	/* clamp request size to what we can actually deliver */
+	if (bytes_to_read > (int64) (MaxAllocSize - VARHDRSZ))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("requested length too large")));
@@ -154,9 +132,68 @@ read_binary_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 				(errcode_for_file_access(),
 				 errmsg("could not seek in file \"%s\": %m", filename)));
 
-	buf = (bytea *) palloc((Size) bytes_to_read + VARHDRSZ);
+	if (bytes_to_read >= 0)
+	{
+		/* If passed explicit read size just do it */
+		buf = (bytea *) palloc((Size) bytes_to_read + VARHDRSZ);
 
-	nbytes = fread(VARDATA(buf), 1, (size_t) bytes_to_read, file);
+		nbytes = fread(VARDATA(buf), 1, (size_t) bytes_to_read, file);
+	}
+	else
+	{
+		/* Negative read size, read rest of file */
+		StringInfoData sbuf;
+
+		initStringInfo(&sbuf);
+		/* Leave room in the buffer for the varlena length word */
+		sbuf.len += VARHDRSZ;
+		Assert(sbuf.len < sbuf.maxlen);
+
+		while (!(feof(file) || ferror(file)))
+		{
+			size_t		rbytes;
+
+			/* Minimum amount to read at a time */
+#define MIN_READ_SIZE 4096
+
+			/*
+			 * If not at end of file, and sbuf.len is equal to
+			 * MaxAllocSize - 1, then either the file is too large, or
+			 * there is nothing left to read. Attempt to read one more
+			 * byte to see if the end of file has been reached. If not,
+			 * the file is too large; we'd rather give the error message
+			 * for that ourselves.
+			 */
+			if (sbuf.len == MaxAllocSize - 1)
+			{
+				char	rbuf[1]; 
+
+				fread(rbuf, 1, 1, file);
+				if (!feof(file))
+					ereport(ERROR,
+							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+							 errmsg("file length too large")));
+				else
+					break;
+			}
+
+			/* OK, ensure that we can read at least MIN_READ_SIZE */
+			enlargeStringInfo(&sbuf, MIN_READ_SIZE);
+
+			/*
+			 * stringinfo.c likes to allocate in powers of 2, so it's likely
+			 * that much more space is available than we asked for.  Use all
+			 * of it, rather than making more fread calls than necessary.
+			 */
+			rbytes = fread(sbuf.data + sbuf.len, 1,
+						   (size_t) (sbuf.maxlen - sbuf.len - 1), file);
+			sbuf.len += rbytes;
+			nbytes += rbytes;
+		}
+
+		/* Now we can commandeer the stringinfo's buffer as the result */
+		buf = (bytea *) sbuf.data;
+	}
 
 	if (ferror(file))
 		ereport(ERROR,
