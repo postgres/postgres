@@ -64,7 +64,7 @@ SELECT pg_file_rename('test_file1', 'test_file2');
 (1 row)
 
 SELECT pg_read_file('test_file1');  -- not there
-ERROR:  could not stat file "test_file1": No such file or directory
+ERROR:  could not open file "test_file1" for reading: No such file or directory
 SELECT pg_read_file('test_file2');
  pg_read_file 
 --------------
@@ -93,7 +93,7 @@ SELECT pg_file_rename('test_file2', 'test_file3', 'test_file3_archive');
 (1 row)
 
 SELECT pg_read_file('test_file2');  -- not there
-ERROR:  could not stat file "test_file2": No such file or directory
+ERROR:  could not open file "test_file2" for reading: No such file or directory
 SELECT pg_read_file('test_file3');
  pg_read_file 
 --------------
