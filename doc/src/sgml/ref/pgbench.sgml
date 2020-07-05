@@ -1886,7 +1886,7 @@ SELECT 4 AS four \; SELECT 5 AS five \aset
         <returnvalue>integer</returnvalue>
        </para>
        <para>
-        Computes a gaussian-distributed random integer in <literal>[lb,
+        Computes a Gaussian-distributed random integer in <literal>[lb,
         ub]</literal>, see below.
        </para>
        <para>

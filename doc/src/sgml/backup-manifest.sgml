@@ -26,7 +26,7 @@
   </para>
 
  <sect1 id="backup-manifest-toplevel">
-  <title>Backup Manifest Toplevel Object</title>
+  <title>Backup Manifest Top-level Object</title>
 
   <para>
    The backup manifest JSON document contains the following keys.
@@ -93,7 +93,7 @@
    Normally, the <literal>Path</literal> key will be present. The
    associated string value is the path of the file relative to the root
    of the backup directory. Files located in a user-defined tablespace
-   will have paths whose first two components are pg_tblspc and the OID
+   will have paths whose first two components are <filename>pg_tblspc</filename> and the OID
    of the tablespace. If the path is not a string that is legal in UTF-8,
    or if the user requests that encoded paths be used for all files, then
    the <literal>Encoded-Path</literal> key will be present instead.  This

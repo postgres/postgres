@@ -93,7 +93,7 @@ PostgreSQL documentation
    <literal>backup_manifest</literal> contains information about which
    write-ahead log records will be needed, and
    <literal>pg_verifybackup</literal> will use that information to
-   invoke <literal>pg_waldump</literal> to parse those write-ahed log
+   invoke <literal>pg_waldump</literal> to parse those write-ahead log
    records. The <literal>--quiet</literal> flag will be used, so that
    <literal>pg_waldump</literal> will only report errors, without producing
    any other output. While this level of verification is sufficient to
@@ -143,13 +143,13 @@ PostgreSQL documentation
       <listitem>
        <para>
         Ignore the specified file or directory, which should be expressed
-        as a relative pathname, when comparing the list of data files
+        as a relative path name, when comparing the list of data files
         actually present in the backup to those listed in the
         <literal>backup_manifest</literal> file.  If a directory is
         specified, this option affects the entire subtree rooted at that
         location. Complaints about extra files, missing files, file size
         differences, or checksum mismatches will be suppressed if the
-        relative pathname matches the specified pathname. This option
+        relative path name matches the specified path name. This option
         can be specified multiple times.
        </para>
       </listitem>

@@ -788,7 +788,7 @@ PostgreSQL documentation
         <para>
          When <option>--include-foreign-data</option> is specified,
          <application>pg_dump</application> does not check that the foreign
-         table is writeable.  Therefore, there is no guarantee that the
+         table is writable.  Therefore, there is no guarantee that the
          results of a foreign table dump can be successfully restored.
         </para>
        </note>
