@@ -12,7 +12,7 @@ SET enable_partitionwise_join TO true;
 -- Disable parallel plans.
 SET max_parallel_workers_per_gather TO 0;
 -- Disable incremental sort, which can influence selected plans due to fuzz factor.
-SET enable_incrementalsort TO off;
+SET enable_incremental_sort TO off;
 --
 -- Tests for list partitioned tables.
 --

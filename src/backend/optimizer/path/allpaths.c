@@ -2915,7 +2915,7 @@ generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel, bool override_r
 			 * Consider incremental sort, but only when the subpath is already
 			 * partially sorted on a pathkey prefix.
 			 */
-			if (enable_incrementalsort && presorted_keys > 0)
+			if (enable_incremental_sort && presorted_keys > 0)
 			{
 				Path	   *tmp;
 
