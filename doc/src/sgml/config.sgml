@@ -4574,10 +4574,10 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable-incrementalsort" xreflabel="enable_incrementalsort">
-      <term><varname>enable_incrementalsort</varname> (<type>boolean</type>)
+     <varlistentry id="guc-enable-incremental-sort" xreflabel="enable_incremental_sort">
+      <term><varname>enable_incremental_sort</varname> (<type>boolean</type>)
       <indexterm>
-       <primary><varname>enable_incrementalsort</varname> configuration parameter</primary>
+       <primary><varname>enable_incremental_sort</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>

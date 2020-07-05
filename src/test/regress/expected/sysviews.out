@@ -76,7 +76,7 @@ select name, setting from pg_settings where name like 'enable%';
  enable_gathermerge             | on
  enable_hashagg                 | on
  enable_hashjoin                | on
- enable_incrementalsort         | on
+ enable_incremental_sort        | on
  enable_indexonlyscan           | on
  enable_indexscan               | on
  enable_material                | on

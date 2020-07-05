@@ -5014,7 +5014,7 @@ create_ordered_paths(PlannerInfo *root,
 			 * presorted the path is. Additionally incremental sort may enable
 			 * a cheaper startup path to win out despite higher total cost.
 			 */
-			if (!enable_incrementalsort)
+			if (!enable_incremental_sort)
 				continue;
 
 			/* Likewise, if the path can't be used for incremental sort. */
@@ -5095,7 +5095,7 @@ create_ordered_paths(PlannerInfo *root,
 		 * sort_pathkeys because then we can't possibly have a presorted
 		 * prefix of the list without having the list be fully sorted.
 		 */
-		if (enable_incrementalsort && list_length(root->sort_pathkeys) > 1)
+		if (enable_incremental_sort && list_length(root->sort_pathkeys) > 1)
 		{
 			ListCell   *lc;
 
@@ -6572,7 +6572,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			 * when the path is not already sorted and when incremental sort
 			 * is enabled.
 			 */
-			if (is_sorted || !enable_incrementalsort)
+			if (is_sorted || !enable_incremental_sort)
 				continue;
 
 			/* Restore the input path (we might have added Sort on top). */
@@ -6699,7 +6699,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				 * when the path is not already sorted and when incremental
 				 * sort is enabled.
 				 */
-				if (is_sorted || !enable_incrementalsort)
+				if (is_sorted || !enable_incremental_sort)
 					continue;
 
 				/* Restore the input path (we might have added Sort on top). */
@@ -7022,7 +7022,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 		 * group_pathkeys because then we can't possibly have a presorted
 		 * prefix of the list without having the list be fully sorted.
 		 */
-		if (enable_incrementalsort && list_length(root->group_pathkeys) > 1)
+		if (enable_incremental_sort && list_length(root->group_pathkeys) > 1)
 		{
 			foreach(lc, input_rel->pathlist)
 			{
@@ -7125,7 +7125,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 			 * when the path is not already sorted and when incremental sort
 			 * is enabled.
 			 */
-			if (is_sorted || !enable_incrementalsort)
+			if (is_sorted || !enable_incremental_sort)
 				continue;
 
 			/* Restore the input path (we might have added Sort on top). */
@@ -7304,7 +7304,7 @@ gather_grouping_paths(PlannerInfo *root, RelOptInfo *rel)
 	 * group_pathkeys because then we can't possibly have a presorted prefix
 	 * of the list without having the list be fully sorted.
 	 */
-	if (!enable_incrementalsort || list_length(root->group_pathkeys) == 1)
+	if (!enable_incremental_sort || list_length(root->group_pathkeys) == 1)
 		return;
 
 	/* also consider incremental sort on partial paths, if enabled */
