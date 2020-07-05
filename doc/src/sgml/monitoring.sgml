@@ -2474,7 +2474,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <para>
        Number of transactions spilled to disk after the memory used by
        logical decoding exceeds <literal>logical_decoding_work_mem</literal>. The
-       counter gets incremented both for toplevel transactions and
+       counter gets incremented both for top-level transactions and
        subtransactions.
       </para></entry>
      </row>

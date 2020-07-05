@@ -767,7 +767,7 @@ RETURNS anycompatible AS ...
         <literal>false</literal>.
         Generally, this should not be set true for extensions that could
         allow access to otherwise-superuser-only abilities, such as
-        filesystem access.
+        file system access.
        </para>
       </listitem>
      </varlistentry>

@@ -998,7 +998,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
     In this case, log messages are sent to the old log file until a
     successful log rotation. If <application>logrotate</application> is
     configured to compress the log file and delete it, the server may lose
-    the messages logged in this timeframe. To avoid this issue, you can
+    the messages logged in this time frame. To avoid this issue, you can
     configure the logging collector to dynamically assign log file names
     and use a <literal>prerotate</literal> script to ignore open log files.
     </para>

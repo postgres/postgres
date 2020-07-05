@@ -450,7 +450,7 @@ AddForeignUpdateTargets(Query *parsetree,
      generate junk columns of these names.
      If the extra expressions are more complex than simple Vars, they
      must be run through <function>eval_const_expressions</function>
-     before adding them to the targetlist.
+     before adding them to the target list.
     </para>
 
     <para>
