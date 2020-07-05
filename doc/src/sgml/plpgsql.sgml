@@ -4892,7 +4892,7 @@ $$ LANGUAGE plpgsql;
      to the local variable <varname>curtime</varname>, the
      <application>PL/pgSQL</application> interpreter casts this
      string to the <type>timestamp</type> type by calling the
-     <function>text_out</function> and <function>timestamp_in</function>
+     <function>textout</function> and <function>timestamp_in</function>
      functions for the conversion.  So, the computed time stamp is updated
      on each execution as the programmer expects.  Even though this
      happens to work as expected, it's not terribly efficient, so
