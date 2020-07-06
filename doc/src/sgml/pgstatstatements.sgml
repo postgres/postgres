@@ -607,6 +607,9 @@
      <para>
       <varname>pg_stat_statements.track_planning</varname> controls whether
       planning operations and duration are tracked by the module.
+      Enabling this parameter may incur a noticeable performance penalty,
+      especially when a fewer kinds of queries are executed on many
+      concurrent connections.
       The default value is <literal>off</literal>.
       Only superusers can change this setting.
      </para>
