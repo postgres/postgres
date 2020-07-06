@@ -41,8 +41,6 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
-static char *format_operator_internal(Oid operator_oid, bool force_qualify);
-static char *format_procedure_internal(Oid procedure_oid, bool force_qualify);
 static void parseNameAndArgTypes(const char *string, bool allowNone,
 								 List **names, int *nargs, Oid *argtypes);
 
@@ -323,24 +321,32 @@ to_regprocedure(PG_FUNCTION_ARGS)
 char *
 format_procedure(Oid procedure_oid)
 {
-	return format_procedure_internal(procedure_oid, false);
+	return format_procedure_extended(procedure_oid, 0);
 }
 
 char *
 format_procedure_qualified(Oid procedure_oid)
 {
-	return format_procedure_internal(procedure_oid, true);
+	return format_procedure_extended(procedure_oid, FORMAT_PROC_FORCE_QUALIFY);
 }
 
 /*
+ * format_procedure_extended - converts procedure OID to "pro_name(args)"
+ *
+ * This exports the useful functionality of regprocedureout for use
+ * in other backend modules.  The result is a palloc'd string, or NULL.
+ *
  * Routine to produce regprocedure names; see format_procedure above.
  *
- * force_qualify says whether to schema-qualify; if true, the name is always
- * qualified regardless of search_path visibility.  Otherwise the name is only
- * qualified if the function is not in path.
+ * The following bits in 'flags' modify the behavior:
+ * - FORMAT_PROC_INVALID_AS_NULL
+ *			if the procedure OID is invalid or unknown, return NULL instead
+ *			of the numeric OID.
+ * - FORMAT_PROC_FORCE_QUALIFY
+ *			always schema-qualify procedure names, regardless of search_path
  */
-static char *
-format_procedure_internal(Oid procedure_oid, bool force_qualify)
+char *
+format_procedure_extended(Oid procedure_oid, bits16 flags)
 {
 	char	   *result;
 	HeapTuple	proctup;
@@ -365,7 +371,8 @@ format_procedure_internal(Oid procedure_oid, bool force_qualify)
 		 * Would this proc be found (given the right args) by regprocedurein?
 		 * If not, or if caller requests it, we need to qualify it.
 		 */
-		if (!force_qualify && FunctionIsVisible(procedure_oid))
+		if ((flags & FORMAT_PROC_FORCE_QUALIFY) == 0 &&
+			FunctionIsVisible(procedure_oid))
 			nspname = NULL;
 		else
 			nspname = get_namespace_name(procform->pronamespace);
@@ -379,7 +386,7 @@ format_procedure_internal(Oid procedure_oid, bool force_qualify)
 			if (i > 0)
 				appendStringInfoChar(&buf, ',');
 			appendStringInfoString(&buf,
-								   force_qualify ?
+								   (flags & FORMAT_PROC_FORCE_QUALIFY) != 0 ?
 								   format_type_be_qualified(thisargtype) :
 								   format_type_be(thisargtype));
 		}
@@ -388,6 +395,11 @@ format_procedure_internal(Oid procedure_oid, bool force_qualify)
 		result = buf.data;
 
 		ReleaseSysCache(proctup);
+	}
+	else if ((flags & FORMAT_PROC_INVALID_AS_NULL) != 0)
+	{
+		/* If object is undefined, return NULL as wanted by caller */
+		result = NULL;
 	}
 	else
 	{
@@ -747,13 +759,20 @@ to_regoperator(PG_FUNCTION_ARGS)
 }
 
 /*
- * format_operator		- converts operator OID to "opr_name(args)"
+ * format_operator_extended - converts operator OID to "opr_name(args)"
  *
  * This exports the useful functionality of regoperatorout for use
- * in other backend modules.  The result is a palloc'd string.
+ * in other backend modules.  The result is a palloc'd string, or NULL.
+ *
+ * The following bits in 'flags' modify the behavior:
+ * - FORMAT_OPERATOR_INVALID_AS_NULL
+ *			if the operator OID is invalid or unknown, return NULL instead
+ *			of the numeric OID.
+ * - FORMAT_OPERATOR_FORCE_QUALIFY
+ *			always schema-qualify operator names, regardless of search_path
  */
-static char *
-format_operator_internal(Oid operator_oid, bool force_qualify)
+char *
+format_operator_extended(Oid operator_oid, bits16 flags)
 {
 	char	   *result;
 	HeapTuple	opertup;
@@ -776,7 +795,8 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 		 * Would this oper be found (given the right args) by regoperatorin?
 		 * If not, or if caller explicitly requests it, we need to qualify it.
 		 */
-		if (force_qualify || !OperatorIsVisible(operator_oid))
+		if ((flags & FORMAT_OPERATOR_FORCE_QUALIFY) != 0 ||
+			!OperatorIsVisible(operator_oid))
 		{
 			nspname = get_namespace_name(operform->oprnamespace);
 			appendStringInfo(&buf, "%s.",
@@ -787,7 +807,7 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 
 		if (operform->oprleft)
 			appendStringInfo(&buf, "%s,",
-							 force_qualify ?
+							 (flags & FORMAT_OPERATOR_FORCE_QUALIFY) != 0 ?
 							 format_type_be_qualified(operform->oprleft) :
 							 format_type_be(operform->oprleft));
 		else
@@ -795,7 +815,7 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 
 		if (operform->oprright)
 			appendStringInfo(&buf, "%s)",
-							 force_qualify ?
+							 (flags & FORMAT_OPERATOR_FORCE_QUALIFY) != 0 ?
 							 format_type_be_qualified(operform->oprright) :
 							 format_type_be(operform->oprright));
 		else
@@ -804,6 +824,11 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 		result = buf.data;
 
 		ReleaseSysCache(opertup);
+	}
+	else if ((flags & FORMAT_OPERATOR_INVALID_AS_NULL) != 0)
+	{
+		/* If object is undefined, return NULL as wanted by caller */
+		result = NULL;
 	}
 	else
 	{
@@ -820,13 +845,14 @@ format_operator_internal(Oid operator_oid, bool force_qualify)
 char *
 format_operator(Oid operator_oid)
 {
-	return format_operator_internal(operator_oid, false);
+	return format_operator_extended(operator_oid, 0);
 }
 
 char *
 format_operator_qualified(Oid operator_oid)
 {
-	return format_operator_internal(operator_oid, true);
+	return format_operator_extended(operator_oid,
+									FORMAT_OPERATOR_FORCE_QUALIFY);
 }
 
 void
