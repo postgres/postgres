@@ -429,7 +429,10 @@ SELECT * FROM chksetconfig();
 ----+------+------------+-----------
 (0 rows)
 
-ALTER USER CURRENT_USER SET application_name to 'BAZ'; -- error
+ALTER USER CURRENT_ROLE SET application_name to 'BAZ'; -- error
+ERROR:  syntax error at or near "CURRENT_ROLE"
+LINE 1: ALTER USER CURRENT_ROLE SET application_name to 'BAZ';
+                   ^
 ALTER USER USER SET application_name to 'BOOM'; -- error
 ERROR:  syntax error at or near "USER"
 LINE 1: ALTER USER USER SET application_name to 'BOOM';

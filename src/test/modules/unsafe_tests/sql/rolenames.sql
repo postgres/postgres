@@ -180,7 +180,7 @@ ALTER USER ALL RESET application_name;
 SELECT * FROM chksetconfig();
 
 
-ALTER USER CURRENT_USER SET application_name to 'BAZ'; -- error
+ALTER USER CURRENT_ROLE SET application_name to 'BAZ'; -- error
 ALTER USER USER SET application_name to 'BOOM'; -- error
 ALTER USER PUBLIC SET application_name to 'BOMB'; -- error
 ALTER USER NONE SET application_name to 'BOMB'; -- error
