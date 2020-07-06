@@ -2359,7 +2359,7 @@ ReorderBufferLargestTXN(ReorderBuffer *rb)
 
 /*
  * Check whether the logical_decoding_work_mem limit was reached, and if yes
- * pick the largest (sub)transaction  at-a-time to evict and spill its changes to
+ * pick the largest (sub)transaction at-a-time to evict and spill its changes to
  * disk until we reach under the memory limit.
  *
  * XXX At this point we select the transactions until we reach under the memory
