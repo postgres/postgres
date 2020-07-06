@@ -390,7 +390,7 @@ static void update_index_statistics(Relation *Irel, IndexBulkDeleteResult **stat
 static LVParallelState *begin_parallel_vacuum(Oid relid, Relation *Irel,
 											  LVRelStats *vacrelstats, BlockNumber nblocks,
 											  int nindexes, int nrequested);
-static void end_parallel_vacuum(Relation *Irel, IndexBulkDeleteResult **stats,
+static void end_parallel_vacuum(IndexBulkDeleteResult **stats,
 								LVParallelState *lps, int nindexes);
 static LVSharedIndStats *get_indstats(LVShared *lvshared, int n);
 static bool skip_parallel_vacuum_index(Relation indrel, LVShared *lvshared);
@@ -1712,7 +1712,7 @@ lazy_scan_heap(Relation onerel, VacuumParams *params, LVRelStats *vacrelstats,
 	 * during parallel mode.
 	 */
 	if (ParallelVacuumIsActive(lps))
-		end_parallel_vacuum(Irel, indstats, lps, nindexes);
+		end_parallel_vacuum(indstats, lps, nindexes);
 
 	/* Update index statistics */
 	update_index_statistics(Irel, indstats, nindexes);
@@ -3361,8 +3361,8 @@ begin_parallel_vacuum(Oid relid, Relation *Irel, LVRelStats *vacrelstats,
  * context, but that won't be safe (see ExitParallelMode).
  */
 static void
-end_parallel_vacuum(Relation *Irel, IndexBulkDeleteResult **stats,
-					LVParallelState *lps, int nindexes)
+end_parallel_vacuum(IndexBulkDeleteResult **stats, LVParallelState *lps,
+					int nindexes)
 {
 	int			i;
 
