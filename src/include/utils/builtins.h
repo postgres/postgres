@@ -113,6 +113,7 @@ extern Datum numeric_float8_no_overflow(PG_FUNCTION_ARGS);
 #define FORMAT_TYPE_TYPEMOD_GIVEN	0x01	/* typemod defined by caller */
 #define FORMAT_TYPE_ALLOW_INVALID	0x02	/* allow invalid types */
 #define FORMAT_TYPE_FORCE_QUALIFY	0x04	/* force qualification of type */
+#define FORMAT_TYPE_INVALID_AS_NULL	0x08	/* NULL if undefined */
 extern char *format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 
 extern char *format_type_be(Oid type_oid);
