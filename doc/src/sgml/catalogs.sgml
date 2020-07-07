@@ -11275,10 +11275,13 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>min_safe_lsn</structfield> <type>pg_lsn</type>
+       <structfield>safe_wal_size</structfield> <type>int8</type>
       </para>
       <para>
-       The minimum LSN currently available for walsenders.
+       The number of bytes that can be written to WAL such that this slot
+       is not in danger of getting in state "lost".  It is NULL for lost
+       slots, as well as if <varname>max_slot_wal_keep_size</varname>
+       is <literal>-1</literal>.
       </para></entry>
      </row>
     </tbody>
