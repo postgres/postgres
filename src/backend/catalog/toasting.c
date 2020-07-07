@@ -34,9 +34,6 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
-/* Potentially set by pg_upgrade_support functions */
-Oid			binary_upgrade_next_toast_pg_type_oid = InvalidOid;
-
 static void CheckAndCreateToastTable(Oid relOid, Datum reloptions,
 									 LOCKMODE lockmode, bool check);
 static bool create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
@@ -135,7 +132,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	Relation	toast_rel;
 	Relation	class_rel;
 	Oid			toast_relid;
-	Oid			toast_typid = InvalidOid;
 	Oid			namespaceid;
 	char		toast_relname[NAMEDATALEN];
 	char		toast_idxname[NAMEDATALEN];
@@ -181,8 +177,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 * problem that it might take up an OID that will conflict with some
 		 * old-cluster table we haven't seen yet.
 		 */
-		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid) ||
-			!OidIsValid(binary_upgrade_next_toast_pg_type_oid))
+		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid))
 			return false;
 	}
 
@@ -234,17 +229,6 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	else
 		namespaceid = PG_TOAST_NAMESPACE;
 
-	/*
-	 * Use binary-upgrade override for pg_type.oid, if supplied.  We might be
-	 * in the post-schema-restore phase where we are doing ALTER TABLE to
-	 * create TOAST tables that didn't exist in the old cluster.
-	 */
-	if (IsBinaryUpgrade && OidIsValid(binary_upgrade_next_toast_pg_type_oid))
-	{
-		toast_typid = binary_upgrade_next_toast_pg_type_oid;
-		binary_upgrade_next_toast_pg_type_oid = InvalidOid;
-	}
-
 	/* Toast table is shared if and only if its parent is. */
 	shared_relation = rel->rd_rel->relisshared;
 
@@ -255,7 +239,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 										   namespaceid,
 										   rel->rd_rel->reltablespace,
 										   toastOid,
-										   toast_typid,
+										   InvalidOid,
 										   InvalidOid,
 										   rel->rd_rel->relowner,
 										   table_relation_toast_am(rel),

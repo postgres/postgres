@@ -145,8 +145,10 @@ makeWholeRowVar(RangeTblEntry *rte,
 			/* relation: the rowtype is a named composite type */
 			toid = get_rel_type_id(rte->relid);
 			if (!OidIsValid(toid))
-				elog(ERROR, "could not find type OID for relation %u",
-					 rte->relid);
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("relation \"%s\" does not have a composite type",
+								get_rel_name(rte->relid))));
 			result = makeVar(varno,
 							 InvalidAttrNumber,
 							 toid,

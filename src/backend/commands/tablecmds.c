@@ -11001,8 +11001,8 @@ ATPrepAlterColumnType(List **wqueue,
 		tab->relkind == RELKIND_FOREIGN_TABLE)
 	{
 		/*
-		 * For composite types, do this check now.  Tables will check it later
-		 * when the table is being rewritten.
+		 * For composite types and foreign tables, do this check now.  Regular
+		 * tables will check it later when the table is being rewritten.
 		 */
 		find_composite_type_dependencies(rel->rd_rel->reltype, rel, NULL);
 	}
@@ -12564,8 +12564,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		/*
 		 * Also change the ownership of the table's row type, if it has one
 		 */
-		if (tuple_class->relkind != RELKIND_INDEX &&
-			tuple_class->relkind != RELKIND_PARTITIONED_INDEX)
+		if (OidIsValid(tuple_class->reltype))
 			AlterTypeOwnerInternal(tuple_class->reltype, newOwnerId);
 
 		/*
@@ -15009,9 +15008,10 @@ AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
 	AlterRelationNamespaceInternal(classRel, RelationGetRelid(rel), oldNspOid,
 								   nspOid, true, objsMoved);
 
-	/* Fix the table's row type too */
-	AlterTypeNamespaceInternal(rel->rd_rel->reltype,
-							   nspOid, false, false, objsMoved);
+	/* Fix the table's row type too, if it has one */
+	if (OidIsValid(rel->rd_rel->reltype))
+		AlterTypeNamespaceInternal(rel->rd_rel->reltype,
+								   nspOid, false, false, objsMoved);
 
 	/* Fix other dependent stuff */
 	if (rel->rd_rel->relkind == RELKIND_RELATION ||
@@ -15206,11 +15206,11 @@ AlterSeqNamespaces(Relation classRel, Relation rel,
 									   true, objsMoved);
 
 		/*
-		 * Sequences have entries in pg_type. We need to be careful to move
-		 * them to the new namespace, too.
+		 * Sequences used to have entries in pg_type, but no longer do.  If we
+		 * ever re-instate that, we'll need to move the pg_type entry to the
+		 * new namespace, too (using AlterTypeNamespaceInternal).
 		 */
-		AlterTypeNamespaceInternal(RelationGetForm(seqRel)->reltype,
-								   newNspOid, false, false, objsMoved);
+		Assert(RelationGetForm(seqRel)->reltype == InvalidOid);
 
 		/* Now we can close it.  Keep the lock till end of transaction. */
 		relation_close(seqRel, NoLock);

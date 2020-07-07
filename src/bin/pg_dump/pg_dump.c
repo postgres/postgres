@@ -272,7 +272,7 @@ static void binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 													 PQExpBuffer upgrade_buffer,
 													 Oid pg_type_oid,
 													 bool force_array_type);
-static bool binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
+static void binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 													PQExpBuffer upgrade_buffer, Oid pg_rel_oid);
 static void binary_upgrade_set_pg_class_oids(Archive *fout,
 											 PQExpBuffer upgrade_buffer,
@@ -4493,7 +4493,7 @@ binary_upgrade_set_type_oids_by_type_oid(Archive *fout,
 	destroyPQExpBuffer(upgrade_query);
 }
 
-static bool
+static void
 binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 										PQExpBuffer upgrade_buffer,
 										Oid pg_rel_oid)
@@ -4501,48 +4501,23 @@ binary_upgrade_set_type_oids_by_rel_oid(Archive *fout,
 	PQExpBuffer upgrade_query = createPQExpBuffer();
 	PGresult   *upgrade_res;
 	Oid			pg_type_oid;
-	bool		toast_set = false;
 
-	/*
-	 * We only support old >= 8.3 for binary upgrades.
-	 *
-	 * We purposefully ignore toast OIDs for partitioned tables; the reason is
-	 * that versions 10 and 11 have them, but 12 does not, so emitting them
-	 * causes the upgrade to fail.
-	 */
 	appendPQExpBuffer(upgrade_query,
-					  "SELECT c.reltype AS crel, t.reltype AS trel "
+					  "SELECT c.reltype AS crel "
 					  "FROM pg_catalog.pg_class c "
-					  "LEFT JOIN pg_catalog.pg_class t ON "
-					  "  (c.reltoastrelid = t.oid AND c.relkind <> '%c') "
 					  "WHERE c.oid = '%u'::pg_catalog.oid;",
-					  RELKIND_PARTITIONED_TABLE, pg_rel_oid);
+					  pg_rel_oid);
 
 	upgrade_res = ExecuteSqlQueryForSingleRow(fout, upgrade_query->data);
 
 	pg_type_oid = atooid(PQgetvalue(upgrade_res, 0, PQfnumber(upgrade_res, "crel")));
 
-	binary_upgrade_set_type_oids_by_type_oid(fout, upgrade_buffer,
-											 pg_type_oid, false);
-
-	if (!PQgetisnull(upgrade_res, 0, PQfnumber(upgrade_res, "trel")))
-	{
-		/* Toast tables do not have pg_type array rows */
-		Oid			pg_type_toast_oid = atooid(PQgetvalue(upgrade_res, 0,
-														  PQfnumber(upgrade_res, "trel")));
-
-		appendPQExpBufferStr(upgrade_buffer, "\n-- For binary upgrade, must preserve pg_type toast oid\n");
-		appendPQExpBuffer(upgrade_buffer,
-						  "SELECT pg_catalog.binary_upgrade_set_next_toast_pg_type_oid('%u'::pg_catalog.oid);\n\n",
-						  pg_type_toast_oid);
-
-		toast_set = true;
-	}
+	if (OidIsValid(pg_type_oid))
+		binary_upgrade_set_type_oids_by_type_oid(fout, upgrade_buffer,
+												 pg_type_oid, false);
 
 	PQclear(upgrade_res);
 	destroyPQExpBuffer(upgrade_query);
-
-	return toast_set;
 }
 
 static void
@@ -17209,8 +17184,11 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	{
 		binary_upgrade_set_pg_class_oids(fout, query,
 										 tbinfo->dobj.catId.oid, false);
-		binary_upgrade_set_type_oids_by_rel_oid(fout, query,
-												tbinfo->dobj.catId.oid);
+
+		/*
+		 * In older PG versions a sequence will have a pg_type entry, but v14
+		 * and up don't use that, so don't attempt to preserve the type OID.
+		 */
 	}
 
 	if (tbinfo->is_identity_sequence)
