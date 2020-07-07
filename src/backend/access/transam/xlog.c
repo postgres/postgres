@@ -764,8 +764,7 @@ static ControlFileData *ControlFile = NULL;
  * Convert values of GUCs measured in megabytes to equiv. segment count.
  * Rounds down.
  */
-#define ConvertToXSegs(x, segsize)	\
-	((x) / ((segsize) / (1024 * 1024)))
+#define ConvertToXSegs(x, segsize)	XLogMBVarToSegs((x), (segsize))
 
 /* The number of bytes in a WAL segment usable for WAL data. */
 static int	UsableBytesInSegment;
@@ -9513,8 +9512,7 @@ GetWALAvailability(XLogRecPtr targetLSN)
 	XLogSegNo	targetSeg;		/* segid of targetLSN */
 	XLogSegNo	oldestSeg;		/* actual oldest segid */
 	XLogSegNo	oldestSegMaxWalSize;	/* oldest segid kept by max_wal_size */
-	XLogSegNo	oldestSlotSeg = InvalidXLogRecPtr;	/* oldest segid kept by
-													 * slot */
+	XLogSegNo	oldestSlotSeg;	/* oldest segid kept by slot */
 	uint64		keepSegs;
 
 	/*

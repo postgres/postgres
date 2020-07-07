@@ -122,6 +122,13 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	logSegNo = ((xlrp) - 1) / (wal_segsz_bytes)
 
 /*
+ * Convert values of GUCs measured in megabytes to equiv. segment count.
+ * Rounds down.
+ */
+#define XLogMBVarToSegs(mbvar, wal_segsz_bytes) \
+	((mbvar) / ((wal_segsz_bytes) / (1024 * 1024)))
+
+/*
  * Is an XLogRecPtr within a particular XLOG segment?
  *
  * For XLByteInSeg, do the computation at face value.  For XLByteInPrevSeg,
