@@ -2989,7 +2989,7 @@ pgstat_bestart(void)
 		MemSet(&lbeentry.st_clientaddr, 0, sizeof(lbeentry.st_clientaddr));
 
 #ifdef USE_SSL
-	if (MyProcPort && MyProcPort->ssl != NULL)
+	if (MyProcPort && MyProcPort->ssl_in_use)
 	{
 		lbeentry.st_ssl = true;
 		lsslstatus.ssl_bits = be_tls_get_cipher_bits(MyProcPort);
