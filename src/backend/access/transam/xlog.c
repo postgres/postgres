@@ -9601,7 +9601,7 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 		/* Cap by max_slot_wal_keep_size ... */
 		if (max_slot_wal_keep_size_mb >= 0)
 		{
-			XLogRecPtr	slot_keep_segs;
+			uint64		slot_keep_segs;
 
 			slot_keep_segs =
 				ConvertToXSegs(max_slot_wal_keep_size_mb, wal_segment_size);
