@@ -3099,11 +3099,11 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 		else
 			appendStringInfoString(es->str, "  ");
 
-		appendStringInfo(es->str, "Peak Memory Usage: " INT64_FORMAT " kB",
+		appendStringInfo(es->str, "Peak Memory Usage: " INT64_FORMAT "kB",
 						 memPeakKb);
 
 		if (aggstate->hash_batches_used > 0)
-			appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT " kB  HashAgg Batches: %d",
+			appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT "kB  HashAgg Batches: %d",
 							 aggstate->hash_disk_used,
 							 aggstate->hash_batches_used);
 		appendStringInfoChar(es->str, '\n');
@@ -3130,11 +3130,11 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 			{
 				ExplainIndentText(es);
 
-				appendStringInfo(es->str, "Peak Memory Usage: " INT64_FORMAT " kB",
+				appendStringInfo(es->str, "Peak Memory Usage: " INT64_FORMAT "kB",
 								 memPeakKb);
 
 				if (hash_batches_used > 0)
-					appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT " kB  HashAgg Batches: %d",
+					appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT "kB  HashAgg Batches: %d",
 									 hash_disk_used, hash_batches_used);
 				appendStringInfoChar(es->str, '\n');
 			}
