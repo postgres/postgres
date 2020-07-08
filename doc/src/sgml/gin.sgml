@@ -379,7 +379,7 @@
  </para>
 
  <para>
-  Optionally, an operator class for <acronym>GIN</acronym> can supply the
+  An operator class for <acronym>GIN</acronym> can optionally supply the
   following methods:
 
   <variablelist>
@@ -406,7 +406,7 @@
      <term><function>void options(local_relopts *relopts)</function></term>
      <listitem>
       <para>
-       Defines set of user-visible parameters that control operator class
+       Defines a set of user-visible parameters that control operator class
        behavior.
       </para>
 

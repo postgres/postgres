@@ -585,7 +585,7 @@ typedef struct BrinOpcInfo
 
       <para>
        Since both key extraction of indexed values and representation of the
-       key in <acronym>GIN</acronym> are flexible, they may depend on
+       key in <acronym>BRIN</acronym> are flexible, they may depend on
        user-specified parameters.
       </para>
      </listitem>
