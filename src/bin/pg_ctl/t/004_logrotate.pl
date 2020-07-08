@@ -3,7 +3,7 @@ use warnings;
 
 use PostgresNode;
 use TestLib;
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Time::HiRes qw(usleep);
 
 # Set up node with logging collector
@@ -46,6 +46,10 @@ for (my $attempts = 0; $attempts < $max_attempts; $attempts++)
 }
 
 like($first_logfile, qr/division by zero/, 'found expected log file content');
+
+# While we're at it, test pg_current_logfile() function
+is($node->safe_psql('postgres', "SELECT pg_current_logfile('stderr')"),
+	$lfname, 'pg_current_logfile() gives correct answer');
 
 # Sleep 2 seconds and ask for log rotation; this should result in
 # output into a different log file name.
