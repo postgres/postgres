@@ -263,7 +263,6 @@ CREATE AGGREGATE testagg2(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg3(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg4(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg5(int2) (SFUNC = int2_sum, STYPE = int8);
-CREATE AGGREGATE testagg5(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg6(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg7(int2) (SFUNC = int2_sum, STYPE = int8);
 CREATE AGGREGATE testagg8(int2) (SFUNC = int2_sum, STYPE = int8);
