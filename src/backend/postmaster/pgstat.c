@@ -6681,7 +6681,7 @@ pgstat_clip_activity(const char *raw_activity)
  *
  * Determine index of entry for a SLRU with a given name. If there's no exact
  * match, returns index of the last "other" entry used for SLRUs defined in
- * external proejcts.
+ * external projects.
  */
 int
 pgstat_slru_index(const char *name)
