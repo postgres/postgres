@@ -71,7 +71,7 @@ typedef struct _restoreOptions
 	char	   *use_role;		/* Issue SET ROLE to this */
 	int			dropSchema;
 	int			disable_dollar_quoting;
-	int			dump_inserts;
+	int			dump_inserts;	/* 0 = COPY, otherwise rows per INSERT */
 	int			column_inserts;
 	int			if_exists;
 	int			no_comments;	/* Skip comments */

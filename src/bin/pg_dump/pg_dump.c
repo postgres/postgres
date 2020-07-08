@@ -2254,7 +2254,7 @@ dumpTableData(Archive *fout, TableDataInfo *tdinfo)
 	char	   *copyStmt;
 	const char *copyFrom;
 
-	if (!dopt->dump_inserts)
+	if (dopt->dump_inserts == 0)
 	{
 		/* Dump/restore using COPY */
 		dumpFn = dumpTableData_copy;
