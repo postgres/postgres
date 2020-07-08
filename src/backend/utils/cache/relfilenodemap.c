@@ -82,7 +82,7 @@ RelfilenodeMapInvalidateCallback(Datum arg, Oid relid)
 }
 
 /*
- * RelfilenodeMapInvalidateCallback
+ * InitializeRelfilenodeMap
  *		Initialize cache, either on first use or after a reset.
  */
 static void
