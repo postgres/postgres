@@ -881,7 +881,7 @@ typedef struct spgLeafConsistentOut
      <term><function>options</function></term>
      <listitem>
       <para>
-       Defines set of user-visible parameters that control operator class
+       Defines a set of user-visible parameters that control operator class
        behavior.
       </para>
 
