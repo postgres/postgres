@@ -894,7 +894,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        <structfield>state</structfield> is <literal>active</literal> this field shows the
        currently executing query. In all other states, it shows the last query
        that was executed. By default the query text is truncated at 1024
-       characters; this value can be changed via the parameter
+       bytes; this value can be changed via the parameter
        <xref linkend="guc-track-activity-query-size"/>.
       </para></entry>
      </row>
