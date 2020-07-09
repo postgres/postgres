@@ -120,7 +120,7 @@ sub check_query
 	}
 	else
 	{
-		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
+		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		is($stdout, $expected_stdout, "$test_name: query result matches");
 	}
 }
@@ -139,8 +139,8 @@ sub poll_query_until
 		my $cmd = [ 'psql', '-At', '-c', "$query", '-d', "$connstr" ];
 		my $result = run $cmd, '>', \$stdout, '2>', \$stderr;
 
+		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		chomp($stdout);
-		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
 		if ($stdout eq "t")
 		{
 			return 1;
@@ -153,8 +153,8 @@ sub poll_query_until
 
 	# The query result didn't change in 90 seconds. Give up. Print the
 	# output from the last attempt, hopefully that's useful for debugging.
+	$stderr =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 	chomp($stderr);
-	$stderr =~ s/\r//g if $Config{osname} eq 'msys';
 	diag qq(poll_query_until timed out executing this query:
 $query
 expecting this output:
