@@ -113,7 +113,7 @@ sub check_query
 	}
 	else
 	{
-		$stdout =~ s/\r//g if $Config{osname} eq 'msys';
+		$stdout =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 		is($stdout, $expected_stdout, "$test_name: query result matches");
 	}
 	return;
