@@ -260,7 +260,7 @@ sub slurp_file
 	  or die "could not read \"$filename\": $!";
 	my $contents = <$in>;
 	close $in;
-	$contents =~ s/\r//g if $Config{osname} eq 'msys';
+	$contents =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 	return $contents;
 }
 
