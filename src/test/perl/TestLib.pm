@@ -430,7 +430,7 @@ sub slurp_file
 		CloseHandle($fHandle)
 		  or die "could not close \"$filename\": $^E\n";
 	}
-	$contents =~ s/\r//g if $Config{osname} eq 'msys';
+	$contents =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
 	return $contents;
 }
 
