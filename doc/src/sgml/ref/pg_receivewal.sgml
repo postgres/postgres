@@ -9,7 +9,7 @@ PostgreSQL documentation
  </indexterm>
 
  <refmeta>
-  <refentrytitle>pg_receivewal</refentrytitle>
+  <refentrytitle><application>pg_receivewal</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

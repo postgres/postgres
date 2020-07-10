@@ -9,7 +9,7 @@ PostgreSQL documentation
  </indexterm>
 
  <refmeta>
-  <refentrytitle>pg_restore</refentrytitle>
+  <refentrytitle><application>pg_restore</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>

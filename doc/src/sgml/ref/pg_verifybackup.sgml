@@ -9,7 +9,7 @@ PostgreSQL documentation
  </indexterm>
 
  <refmeta>
-  <refentrytitle>pg_verifybackup</refentrytitle>
+  <refentrytitle><application>pg_verifybackup</application></refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
