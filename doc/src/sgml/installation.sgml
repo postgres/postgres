@@ -2242,62 +2242,6 @@ ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
      out-of-memory kill is configurable on a system- or process-wide
      basis if this becomes a problem.
     </para>
-
-    <bibliography>
-     <title>References and Resources</title>
-
-     <biblioentry>
-      <biblioset relation="article">
-       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/topic/com.ibm.aix.doc/aixprggd/genprogc/lrg_prg_support.htm">Large Program Support</ulink></title>
-      </biblioset>
-      <biblioset relation="book">
-       <title>AIX Documentation: General Programming Concepts: Writing and Debugging Programs</title>
-      </biblioset>
-     </biblioentry>
-
-     <biblioentry>
-      <biblioset relation="article">
-       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/topic/com.ibm.aix.doc/aixprggd/genprogc/address_space.htm">Program Address Space Overview</ulink></title>
-      </biblioset>
-      <biblioset relation="book">
-       <title>AIX Documentation: General Programming Concepts: Writing and Debugging Programs</title>
-      </biblioset>
-     </biblioentry>
-
-     <biblioentry>
-      <biblioset relation="article">
-       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/resmgmt2.htm">Performance Overview of the Virtual Memory Manager (VMM)</ulink></title>
-      </biblioset>
-      <biblioset relation="book">
-       <title>AIX Documentation: Performance Management Guide</title>
-      </biblioset>
-     </biblioentry>
-
-     <biblioentry>
-      <biblioset relation="article">
-       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/memperf7.htm">Page Space Allocation</ulink></title>
-      </biblioset>
-      <biblioset relation="book">
-       <title>AIX Documentation: Performance Management Guide</title>
-      </biblioset>
-     </biblioentry>
-
-     <biblioentry>
-      <biblioset relation="article">
-       <title><ulink url="http://publib.boulder.ibm.com/infocenter/pseries/v5r3/topic/com.ibm.aix.doc/aixbman/prftungd/memperf6.htm">Paging-space thresholds tuning</ulink></title>
-      </biblioset>
-      <biblioset relation="book">
-       <title>AIX Documentation: Performance Management Guide</title>
-      </biblioset>
-     </biblioentry>
-
-     <biblioentry>
-       <title><ulink url="http://www.redbooks.ibm.com/abstracts/sg245674.html?Open">Developing and Porting C and C++ Applications on AIX</ulink></title>
-       <publisher>
-        <publishername>IBM Redbook</publishername>
-       </publisher>
-     </biblioentry>
-    </bibliography>
    </sect3>
   </sect2>
 
