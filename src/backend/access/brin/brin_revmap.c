@@ -333,7 +333,6 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	OffsetNumber revmapOffset;
 	OffsetNumber regOffset;
 	ItemId		lp;
-	BrinTuple  *tup;
 
 	revmap = brinRevmapInitialize(idxrel, &pagesPerRange, NULL);
 
@@ -365,6 +364,10 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 	regBuf = ReadBuffer(idxrel, ItemPointerGetBlockNumber(iptr));
 	LockBuffer(regBuf, BUFFER_LOCK_EXCLUSIVE);
 	regPg = BufferGetPage(regBuf);
+	/*
+	 * We're only removing data, not reading it, so there's no need to
+	 * TestForOldSnapshot here.
+	 */
 
 	/* if this is no longer a regular page, tell caller to start over */
 	if (!BRIN_IS_REGULAR_PAGE(regPg))
@@ -386,24 +389,13 @@ brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("corrupted BRIN index: inconsistent range map")));
-	tup = (BrinTuple *) PageGetItem(regPg, lp);
-	/* XXX apply sanity checks?  Might as well delete a bogus tuple ... */
 
 	/*
-	 * We're only removing data, not reading it, so there's no need to
-	 * TestForOldSnapshot here.
+	 * Placeholder tuples only appear during unfinished summarization, and we
+	 * hold ShareUpdateExclusiveLock, so this function cannot run concurrently
+	 * with that.  So any placeholder tuples that exist are leftovers from a
+	 * crashed or aborted summarization; remove them silently.
 	 */
-
-	/*
-	 * Because of ShareUpdateExclusive lock, this function shouldn't run
-	 * concurrently with summarization.  Placeholder tuples can only exist as
-	 * leftovers from crashed summarization, so if we detect any, we complain
-	 * but proceed.
-	 */
-	if (BrinTupleIsPlaceholder(tup))
-		ereport(WARNING,
-				(errmsg("leftover placeholder tuple detected in BRIN index \"%s\", deleting",
-						RelationGetRelationName(idxrel))));
 
 	START_CRIT_SECTION();
 
