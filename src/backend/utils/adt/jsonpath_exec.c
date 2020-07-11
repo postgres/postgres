@@ -1044,15 +1044,16 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 				{
 					char	   *tmp = DatumGetCString(DirectFunctionCall1(numeric_out,
 																		  NumericGetDatum(jb->val.numeric)));
+					double		val;
 					bool		have_error = false;
 
-					(void) float8in_internal_opt_error(tmp,
-													   NULL,
-													   "double precision",
-													   tmp,
-													   &have_error);
+					val = float8in_internal_opt_error(tmp,
+													  NULL,
+													  "double precision",
+													  tmp,
+													  &have_error);
 
-					if (have_error)
+					if (have_error || isinf(val) || isnan(val))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
 											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type double precision",
@@ -1073,7 +1074,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 													  tmp,
 													  &have_error);
 
-					if (have_error || isinf(val))
+					if (have_error || isinf(val) || isnan(val))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
 											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of a double precision number",
