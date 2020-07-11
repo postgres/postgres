@@ -1776,7 +1776,7 @@ typedef struct AlterTableStmt
 	NodeTag		type;
 	RangeVar   *relation;		/* table to work on */
 	List	   *cmds;			/* list of subcommands */
-	ObjectType	relkind;		/* type of object */
+	ObjectType	objtype;		/* type of object */
 	bool		missing_ok;		/* skip error if table missing */
 } AlterTableStmt;
 
@@ -3275,7 +3275,7 @@ typedef struct CreateTableAsStmt
 	NodeTag		type;
 	Node	   *query;			/* the query (see comments above) */
 	IntoClause *into;			/* destination table */
-	ObjectType	relkind;		/* OBJECT_TABLE or OBJECT_MATVIEW */
+	ObjectType	objtype;		/* OBJECT_TABLE or OBJECT_MATVIEW */
 	bool		is_select_into; /* it was written as SELECT INTO */
 	bool		if_not_exists;	/* just do nothing if it already exists? */
 } CreateTableAsStmt;

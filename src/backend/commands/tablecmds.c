@@ -4709,7 +4709,7 @@ ATParseTransformCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					 -1);
 	atstmt->relation->inh = recurse;
 	atstmt->cmds = list_make1(cmd);
-	atstmt->relkind = OBJECT_TABLE; /* needn't be picky here */
+	atstmt->objtype = OBJECT_TABLE; /* needn't be picky here */
 	atstmt->missing_ok = false;
 
 	/* Transform the AlterTableStmt */
@@ -15594,7 +15594,7 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 		reltype = ((AlterObjectSchemaStmt *) stmt)->objectType;
 
 	else if (IsA(stmt, AlterTableStmt))
-		reltype = ((AlterTableStmt *) stmt)->relkind;
+		reltype = ((AlterTableStmt *) stmt)->objtype;
 	else
 	{
 		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(stmt));
