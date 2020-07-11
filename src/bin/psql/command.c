@@ -747,7 +747,7 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 							success = listOpFamilyOperators(pattern, pattern2, show_verbose);
 							break;
 						case 'p':
-							success = listOpFamilyFunctions(pattern, pattern2);
+							success = listOpFamilyFunctions(pattern, pattern2, show_verbose);
 							break;
 						default:
 							status = PSQL_CMD_UNKNOWN;
