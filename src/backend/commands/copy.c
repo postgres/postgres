@@ -193,6 +193,9 @@ typedef struct CopyStateData
 	 * the current line.  The CopyReadAttributes functions return arrays of
 	 * pointers into this buffer.  We avoid palloc/pfree overhead by re-using
 	 * the buffer on each cycle.
+	 *
+	 * (In binary COPY FROM, attribute_buf holds the binary data for the
+	 * current field, while the other variables are not used.)
 	 */
 	StringInfoData attribute_buf;
 
@@ -3359,12 +3362,19 @@ BeginCopyFrom(ParseState *pstate,
 	cstate->cur_attname = NULL;
 	cstate->cur_attval = NULL;
 
-	/* Set up variables to avoid per-attribute overhead. */
+	/*
+	 * Set up variables to avoid per-attribute overhead.  attribute_buf is
+	 * used in both text and binary modes, but we use line_buf and raw_buf
+	 * only in text mode.
+	 */
 	initStringInfo(&cstate->attribute_buf);
-	initStringInfo(&cstate->line_buf);
-	cstate->line_buf_converted = false;
-	cstate->raw_buf = (char *) palloc(RAW_BUF_SIZE + 1);
-	cstate->raw_buf_index = cstate->raw_buf_len = 0;
+	if (!cstate->binary)
+	{
+		initStringInfo(&cstate->line_buf);
+		cstate->line_buf_converted = false;
+		cstate->raw_buf = (char *) palloc(RAW_BUF_SIZE + 1);
+		cstate->raw_buf_index = cstate->raw_buf_len = 0;
+	}
 
 	/* Assign range table, we'll need it in CopyFrom. */
 	if (pstate)
