@@ -223,6 +223,12 @@ typedef struct
 
 typedef int DumpId;
 
+#define InvalidDumpId 0
+
+/*
+ * Function pointer prototypes for assorted callback methods.
+ */
+
 typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
 
 typedef void (*SetupWorkerPtr) (Archive *AH);
