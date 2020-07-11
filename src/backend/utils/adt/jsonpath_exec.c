@@ -1055,7 +1055,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (have_error)
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("jsonpath item method .%s() can only be applied to a numeric value",
+											  errmsg("numeric argument of jsonpath item method .%s() is out of range for type double precision",
 													 jspOperationName(jsp->type)))));
 					res = jperOk;
 				}
@@ -1076,7 +1076,7 @@ executeItemOptUnwrapTarget(JsonPathExecContext *cxt, JsonPathItem *jsp,
 					if (have_error || isinf(val))
 						RETURN_ERROR(ereport(ERROR,
 											 (errcode(ERRCODE_NON_NUMERIC_SQL_JSON_ITEM),
-											  errmsg("jsonpath item method .%s() can only be applied to a numeric value",
+											  errmsg("string argument of jsonpath item method .%s() is not a valid representation of a double precision number",
 													 jspOperationName(jsp->type)))));
 
 					jb = &jbv;
