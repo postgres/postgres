@@ -28,7 +28,7 @@
  */
 static DumpableObject **dumpIdMap = NULL;
 static int	allocedDumpIds = 0;
-static DumpId lastDumpId = 0;
+static DumpId lastDumpId = 0;	/* Note: 0 is InvalidDumpId */
 
 /*
  * Variables for mapping CatalogId to DumpableObject
