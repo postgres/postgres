@@ -1205,5 +1205,5 @@ drop role regress_partitioning_role;
 \dAf btree int4
 \dAo+ btree float_ops
 \dAo * pg_catalog.jsonb_path_ops
-\dAp btree float_ops
+\dAp+ btree float_ops
 \dAp * pg_catalog.uuid_ops

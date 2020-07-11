@@ -4953,62 +4953,62 @@ List of access methods
 (1 row)
 
 \dAo+ btree float_ops
-                                 List of operators of operator families
-  AM   | Operator family |                Operator                 | Strategy | Purpose | Sort opfamily 
--------+-----------------+-----------------------------------------+----------+---------+---------------
- btree | float_ops       | < (double precision, double precision)  |        1 | search  | 
- btree | float_ops       | <= (double precision, double precision) |        2 | search  | 
- btree | float_ops       | = (double precision, double precision)  |        3 | search  | 
- btree | float_ops       | >= (double precision, double precision) |        4 | search  | 
- btree | float_ops       | > (double precision, double precision)  |        5 | search  | 
- btree | float_ops       | < (real, real)                          |        1 | search  | 
- btree | float_ops       | <= (real, real)                         |        2 | search  | 
- btree | float_ops       | = (real, real)                          |        3 | search  | 
- btree | float_ops       | >= (real, real)                         |        4 | search  | 
- btree | float_ops       | > (real, real)                          |        5 | search  | 
- btree | float_ops       | < (double precision, real)              |        1 | search  | 
- btree | float_ops       | <= (double precision, real)             |        2 | search  | 
- btree | float_ops       | = (double precision, real)              |        3 | search  | 
- btree | float_ops       | >= (double precision, real)             |        4 | search  | 
- btree | float_ops       | > (double precision, real)              |        5 | search  | 
- btree | float_ops       | < (real, double precision)              |        1 | search  | 
- btree | float_ops       | <= (real, double precision)             |        2 | search  | 
- btree | float_ops       | = (real, double precision)              |        3 | search  | 
- btree | float_ops       | >= (real, double precision)             |        4 | search  | 
- btree | float_ops       | > (real, double precision)              |        5 | search  | 
+                                List of operators of operator families
+  AM   | Operator family |               Operator                | Strategy | Purpose | Sort opfamily 
+-------+-----------------+---------------------------------------+----------+---------+---------------
+ btree | float_ops       | <(double precision,double precision)  |        1 | search  | 
+ btree | float_ops       | <=(double precision,double precision) |        2 | search  | 
+ btree | float_ops       | =(double precision,double precision)  |        3 | search  | 
+ btree | float_ops       | >=(double precision,double precision) |        4 | search  | 
+ btree | float_ops       | >(double precision,double precision)  |        5 | search  | 
+ btree | float_ops       | <(real,real)                          |        1 | search  | 
+ btree | float_ops       | <=(real,real)                         |        2 | search  | 
+ btree | float_ops       | =(real,real)                          |        3 | search  | 
+ btree | float_ops       | >=(real,real)                         |        4 | search  | 
+ btree | float_ops       | >(real,real)                          |        5 | search  | 
+ btree | float_ops       | <(double precision,real)              |        1 | search  | 
+ btree | float_ops       | <=(double precision,real)             |        2 | search  | 
+ btree | float_ops       | =(double precision,real)              |        3 | search  | 
+ btree | float_ops       | >=(double precision,real)             |        4 | search  | 
+ btree | float_ops       | >(double precision,real)              |        5 | search  | 
+ btree | float_ops       | <(real,double precision)              |        1 | search  | 
+ btree | float_ops       | <=(real,double precision)             |        2 | search  | 
+ btree | float_ops       | =(real,double precision)              |        3 | search  | 
+ btree | float_ops       | >=(real,double precision)             |        4 | search  | 
+ btree | float_ops       | >(real,double precision)              |        5 | search  | 
 (20 rows)
 
 \dAo * pg_catalog.jsonb_path_ops
-    List of operators of operator families
- AM  | Operator family |       Operator       
------+-----------------+----------------------
- gin | jsonb_path_ops  | @> (jsonb, jsonb)
- gin | jsonb_path_ops  | @? (jsonb, jsonpath)
- gin | jsonb_path_ops  | @@ (jsonb, jsonpath)
+             List of operators of operator families
+ AM  | Operator family |      Operator      | Strategy | Purpose 
+-----+-----------------+--------------------+----------+---------
+ gin | jsonb_path_ops  | @>(jsonb,jsonb)    |        7 | search
+ gin | jsonb_path_ops  | @?(jsonb,jsonpath) |       15 | search
+ gin | jsonb_path_ops  | @@(jsonb,jsonpath) |       16 | search
 (3 rows)
 
-\dAp btree float_ops
-                        List of support functions of operator families
-  AM   | Operator family |  Left arg type   |  Right arg type  | Number |      Function       
--------+-----------------+------------------+------------------+--------+---------------------
- btree | float_ops       | double precision | double precision |      1 | btfloat8cmp
- btree | float_ops       | double precision | double precision |      2 | btfloat8sortsupport
- btree | float_ops       | double precision | double precision |      3 | in_range
- btree | float_ops       | real             | real             |      1 | btfloat4cmp
- btree | float_ops       | real             | real             |      2 | btfloat4sortsupport
- btree | float_ops       | double precision | real             |      1 | btfloat84cmp
- btree | float_ops       | real             | double precision |      1 | btfloat48cmp
- btree | float_ops       | real             | double precision |      3 | in_range
+\dAp+ btree float_ops
+                                                         List of support functions of operator families
+  AM   | Operator family | Registered left type | Registered right type | Number |                                   Function                                   
+-------+-----------------+----------------------+-----------------------+--------+------------------------------------------------------------------------------
+ btree | float_ops       | double precision     | double precision      |      1 | btfloat8cmp(double precision,double precision)
+ btree | float_ops       | double precision     | double precision      |      2 | btfloat8sortsupport(internal)
+ btree | float_ops       | double precision     | double precision      |      3 | in_range(double precision,double precision,double precision,boolean,boolean)
+ btree | float_ops       | real                 | real                  |      1 | btfloat4cmp(real,real)
+ btree | float_ops       | real                 | real                  |      2 | btfloat4sortsupport(internal)
+ btree | float_ops       | double precision     | real                  |      1 | btfloat84cmp(double precision,real)
+ btree | float_ops       | real                 | double precision      |      1 | btfloat48cmp(real,double precision)
+ btree | float_ops       | real                 | double precision      |      3 | in_range(real,real,double precision,boolean,boolean)
 (8 rows)
 
 \dAp * pg_catalog.uuid_ops
-                     List of support functions of operator families
-  AM   | Operator family | Left arg type | Right arg type | Number |      Function      
--------+-----------------+---------------+----------------+--------+--------------------
- btree | uuid_ops        | uuid          | uuid           |      1 | uuid_cmp
- btree | uuid_ops        | uuid          | uuid           |      2 | uuid_sortsupport
- btree | uuid_ops        | uuid          | uuid           |      4 | btequalimage
- hash  | uuid_ops        | uuid          | uuid           |      1 | uuid_hash
- hash  | uuid_ops        | uuid          | uuid           |      2 | uuid_hash_extended
+                            List of support functions of operator families
+  AM   | Operator family | Registered left type | Registered right type | Number |      Function      
+-------+-----------------+----------------------+-----------------------+--------+--------------------
+ btree | uuid_ops        | uuid                 | uuid                  |      1 | uuid_cmp
+ btree | uuid_ops        | uuid                 | uuid                  |      2 | uuid_sortsupport
+ btree | uuid_ops        | uuid                 | uuid                  |      4 | btequalimage
+ hash  | uuid_ops        | uuid                 | uuid                  |      1 | uuid_hash
+ hash  | uuid_ops        | uuid                 | uuid                  |      2 | uuid_hash_extended
 (5 rows)
 
