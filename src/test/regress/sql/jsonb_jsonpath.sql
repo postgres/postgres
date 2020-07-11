@@ -312,6 +312,7 @@ select jsonb_path_query('{}', '$.double()', silent => true);
 select jsonb_path_query('1.23', '$.double()');
 select jsonb_path_query('"1.23"', '$.double()');
 select jsonb_path_query('"1.23aaa"', '$.double()');
+select jsonb_path_query('1e1000', '$.double()');
 select jsonb_path_query('"nan"', '$.double()');
 select jsonb_path_query('"NaN"', '$.double()');
 select jsonb_path_query('"inf"', '$.double()');
