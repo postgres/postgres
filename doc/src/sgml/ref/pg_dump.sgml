@@ -223,7 +223,8 @@ PostgreSQL documentation
         Create the dump in the specified character set encoding. By default,
         the dump is created in the database encoding.  (Another way to get the
         same result is to set the <envar>PGCLIENTENCODING</envar> environment
-        variable to the desired dump encoding.)
+        variable to the desired dump encoding.)  The supported encodings are
+        described in <xref linkend="multibyte-charset-supported"/>.
        </para>
       </listitem>
      </varlistentry>
