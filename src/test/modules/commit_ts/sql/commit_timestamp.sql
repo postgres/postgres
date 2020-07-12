@@ -42,9 +42,9 @@ SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
   FROM pg_xact_commit_timestamp_origin(:'txid_no_origin') x;
 
 -- Test transaction with replication origin
-SELECT pg_replication_origin_create('test_commit_ts: get_origin') != 0
+SELECT pg_replication_origin_create('regress_commit_ts: get_origin') != 0
   AS valid_roident;
-SELECT pg_replication_origin_session_setup('test_commit_ts: get_origin');
+SELECT pg_replication_origin_session_setup('regress_commit_ts: get_origin');
 SELECT txid_current() as txid_with_origin \gset
 SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range, r.roname
   FROM pg_last_committed_xact() x, pg_replication_origin r
@@ -54,4 +54,4 @@ SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
   WHERE r.roident = x.roident;
 
 SELECT pg_replication_origin_session_reset();
-SELECT pg_replication_origin_drop('test_commit_ts: get_origin');
+SELECT pg_replication_origin_drop('regress_commit_ts: get_origin');

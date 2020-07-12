@@ -74,14 +74,14 @@ SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
 ERROR:  could not get commit timestamp data
 HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
 -- Test transaction with replication origin
-SELECT pg_replication_origin_create('test_commit_ts: get_origin') != 0
+SELECT pg_replication_origin_create('regress_commit_ts: get_origin') != 0
   AS valid_roident;
  valid_roident 
 ---------------
  t
 (1 row)
 
-SELECT pg_replication_origin_session_setup('test_commit_ts: get_origin');
+SELECT pg_replication_origin_session_setup('regress_commit_ts: get_origin');
  pg_replication_origin_session_setup 
 -------------------------------------
  
@@ -104,7 +104,7 @@ SELECT pg_replication_origin_session_reset();
  
 (1 row)
 
-SELECT pg_replication_origin_drop('test_commit_ts: get_origin');
+SELECT pg_replication_origin_drop('regress_commit_ts: get_origin');
  pg_replication_origin_drop 
 ----------------------------
  
