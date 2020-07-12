@@ -34,6 +34,79 @@ SELECT pg_xact_commit_timestamp('2'::xid);
  
 (1 row)
 
-SELECT x.xid::text::bigint > 0, x.timestamp > '-infinity'::timestamptz, x.timestamp <= now() FROM pg_last_committed_xact() x;
+SELECT x.xid::text::bigint > 0 as xid_valid,
+    x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
+    roident != 0 AS valid_roident
+  FROM pg_last_committed_xact() x;
 ERROR:  could not get commit timestamp data
 HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+-- Test non-normal transaction ids.
+SELECT * FROM pg_xact_commit_timestamp_origin(NULL); -- ok, NULL
+ timestamp | roident 
+-----------+---------
+           |        
+(1 row)
+
+SELECT * FROM pg_xact_commit_timestamp_origin('0'::xid); -- error
+ERROR:  cannot retrieve commit timestamp for transaction 0
+SELECT * FROM pg_xact_commit_timestamp_origin('1'::xid); -- ok, NULL
+ timestamp | roident 
+-----------+---------
+           |        
+(1 row)
+
+SELECT * FROM pg_xact_commit_timestamp_origin('2'::xid); -- ok, NULL
+ timestamp | roident 
+-----------+---------
+           |        
+(1 row)
+
+-- Test transaction without replication origin
+SELECT txid_current() as txid_no_origin \gset
+SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
+       roident != 0 AS valid_roident
+  FROM pg_last_committed_xact() x;
+ERROR:  could not get commit timestamp data
+HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
+       roident != 0 AS valid_roident
+  FROM pg_xact_commit_timestamp_origin(:'txid_no_origin') x;
+ERROR:  could not get commit timestamp data
+HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+-- Test transaction with replication origin
+SELECT pg_replication_origin_create('test_commit_ts: get_origin') != 0
+  AS valid_roident;
+ valid_roident 
+---------------
+ t
+(1 row)
+
+SELECT pg_replication_origin_session_setup('test_commit_ts: get_origin');
+ pg_replication_origin_session_setup 
+-------------------------------------
+ 
+(1 row)
+
+SELECT txid_current() as txid_with_origin \gset
+SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range, r.roname
+  FROM pg_last_committed_xact() x, pg_replication_origin r
+  WHERE r.roident = x.roident;
+ERROR:  could not get commit timestamp data
+HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range, r.roname
+  FROM pg_xact_commit_timestamp_origin(:'txid_with_origin') x, pg_replication_origin r
+  WHERE r.roident = x.roident;
+ERROR:  could not get commit timestamp data
+HINT:  Make sure the configuration parameter "track_commit_timestamp" is set.
+SELECT pg_replication_origin_session_reset();
+ pg_replication_origin_session_reset 
+-------------------------------------
+ 
+(1 row)
+
+SELECT pg_replication_origin_drop('test_commit_ts: get_origin');
+ pg_replication_origin_drop 
+----------------------------
+ 
+(1 row)
+

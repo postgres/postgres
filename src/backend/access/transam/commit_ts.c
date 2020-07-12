@@ -361,7 +361,7 @@ TransactionIdGetCommitTsData(TransactionId xid, TimestampTz *ts,
  * is concerned, anyway; it's up to the caller to ensure the value is useful
  * for its purposes.)
  *
- * ts and extra are filled with the corresponding data; they can be passed
+ * ts and nodeid are filled with the corresponding data; they can be passed
  * as NULL if not wanted.
  */
 TransactionId
@@ -417,28 +417,38 @@ pg_xact_commit_timestamp(PG_FUNCTION_ARGS)
 }
 
 
+/*
+ * pg_last_committed_xact
+ *
+ * SQL-callable wrapper to obtain some information about the latest
+ * committed transaction: transaction ID, timestamp and replication
+ * origin.
+ */
 Datum
 pg_last_committed_xact(PG_FUNCTION_ARGS)
 {
 	TransactionId xid;
+	RepOriginId nodeid;
 	TimestampTz ts;
-	Datum		values[2];
-	bool		nulls[2];
+	Datum		values[3];
+	bool		nulls[3];
 	TupleDesc	tupdesc;
 	HeapTuple	htup;
 
 	/* and construct a tuple with our data */
-	xid = GetLatestCommitTsData(&ts, NULL);
+	xid = GetLatestCommitTsData(&ts, &nodeid);
 
 	/*
 	 * Construct a tuple descriptor for the result row.  This must match this
 	 * function's pg_proc entry!
 	 */
-	tupdesc = CreateTemplateTupleDesc(2);
+	tupdesc = CreateTemplateTupleDesc(3);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "xid",
 					   XIDOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "timestamp",
 					   TIMESTAMPTZOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "roident",
+					   OIDOID, -1, 0);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	if (!TransactionIdIsNormal(xid))
@@ -452,6 +462,9 @@ pg_last_committed_xact(PG_FUNCTION_ARGS)
 
 		values[1] = TimestampTzGetDatum(ts);
 		nulls[1] = false;
+
+		values[2] = ObjectIdGetDatum((Oid) nodeid);
+		nulls[2] = false;
 	}
 
 	htup = heap_form_tuple(tupdesc, values, nulls);
@@ -459,6 +472,54 @@ pg_last_committed_xact(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
 }
 
+/*
+ * pg_xact_commit_timestamp_origin
+ *
+ * SQL-callable wrapper to obtain commit timestamp and replication origin
+ * of a given transaction.
+ */
+Datum
+pg_xact_commit_timestamp_origin(PG_FUNCTION_ARGS)
+{
+	TransactionId xid = PG_GETARG_UINT32(0);
+	RepOriginId nodeid;
+	TimestampTz ts;
+	Datum		values[2];
+	bool		nulls[2];
+	TupleDesc	tupdesc;
+	HeapTuple	htup;
+	bool		found;
+
+	found = TransactionIdGetCommitTsData(xid, &ts, &nodeid);
+
+	/*
+	 * Construct a tuple descriptor for the result row.  This must match this
+	 * function's pg_proc entry!
+	 */
+	tupdesc = CreateTemplateTupleDesc(2);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "timestamp",
+					   TIMESTAMPTZOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "roident",
+					   OIDOID, -1, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+
+	if (!found)
+	{
+		memset(nulls, true, sizeof(nulls));
+	}
+	else
+	{
+		values[0] = TimestampTzGetDatum(ts);
+		nulls[0] = false;
+
+		values[1] = ObjectIdGetDatum((Oid) nodeid);
+		nulls[1] = false;
+	}
+
+	htup = heap_form_tuple(tupdesc, values, nulls);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(htup));
+}
 
 /*
  * Number of shared CommitTS buffers.

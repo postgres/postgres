@@ -23400,16 +23400,32 @@ SELECT collation for ('foo' COLLATE "de_DE");
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_xact_commit_timestamp_origin</primary>
+        </indexterm>
+        <function>pg_xact_commit_timestamp_origin</function> ( <type>xid</type> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>timestamp</parameter> <type>timestamp with time zone</type>,
+         <parameter>roident</parameter> <type>oid</type>)
+       </para>
+       <para>
+         Returns the commit timestamp and replication origin of a transaction.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_last_committed_xact</primary>
         </indexterm>
         <function>pg_last_committed_xact</function> ()
         <returnvalue>record</returnvalue>
         ( <parameter>xid</parameter> <type>xid</type>,
-        <parameter>timestamp</parameter> <type>timestamp with time zone</type> )
+        <parameter>timestamp</parameter> <type>timestamp with time zone</type>,
+        <parameter>roident</parameter> <type>oid</type> )
        </para>
        <para>
-        Returns the transaction ID and commit timestamp of the latest
-        committed transaction.
+        Returns the transaction ID, commit timestamp and replication origin
+        of the latest committed transaction.
        </para></entry>
       </row>
      </tbody>
