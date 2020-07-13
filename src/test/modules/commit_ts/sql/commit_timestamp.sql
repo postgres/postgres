@@ -22,8 +22,9 @@ SELECT pg_xact_commit_timestamp('1'::xid);
 SELECT pg_xact_commit_timestamp('2'::xid);
 
 SELECT x.xid::text::bigint > 0 as xid_valid,
-    x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
-    roident != 0 AS valid_roident
+       x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
+       roident != 0 AS valid_roident
   FROM pg_last_committed_xact() x;
 
 -- Test non-normal transaction ids.
@@ -34,10 +35,12 @@ SELECT * FROM pg_xact_commit_timestamp_origin('2'::xid); -- ok, NULL
 
 -- Test transaction without replication origin
 SELECT txid_current() as txid_no_origin \gset
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
        roident != 0 AS valid_roident
   FROM pg_last_committed_xact() x;
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
        roident != 0 AS valid_roident
   FROM pg_xact_commit_timestamp_origin(:'txid_no_origin') x;
 
@@ -46,10 +49,14 @@ SELECT pg_replication_origin_create('regress_commit_ts: get_origin') != 0
   AS valid_roident;
 SELECT pg_replication_origin_session_setup('regress_commit_ts: get_origin');
 SELECT txid_current() as txid_with_origin \gset
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range, r.roname
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
+       r.roname
   FROM pg_last_committed_xact() x, pg_replication_origin r
   WHERE r.roident = x.roident;
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range, r.roname
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
+       r.roname
   FROM pg_xact_commit_timestamp_origin(:'txid_with_origin') x, pg_replication_origin r
   WHERE r.roident = x.roident;
 

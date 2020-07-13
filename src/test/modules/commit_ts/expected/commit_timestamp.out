@@ -40,12 +40,13 @@ SELECT pg_xact_commit_timestamp('2'::xid);
 (1 row)
 
 SELECT x.xid::text::bigint > 0 as xid_valid,
-    x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
-    roident != 0 AS valid_roident
+       x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
+       roident != 0 AS valid_roident
   FROM pg_last_committed_xact() x;
- xid_valid | ts_in_range | valid_roident 
------------+-------------+---------------
- t         | t           | f
+ xid_valid | ts_low | ts_high | valid_roident 
+-----------+--------+---------+---------------
+ t         | t      | t       | f
 (1 row)
 
 -- Test non-normal transaction ids.
@@ -71,20 +72,22 @@ SELECT * FROM pg_xact_commit_timestamp_origin('2'::xid); -- ok, NULL
 
 -- Test transaction without replication origin
 SELECT txid_current() as txid_no_origin \gset
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
        roident != 0 AS valid_roident
   FROM pg_last_committed_xact() x;
- ts_in_range | valid_roident 
--------------+---------------
- t           | f
+ ts_low | ts_high | valid_roident 
+--------+---------+---------------
+ t      | t       | f
 (1 row)
 
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range,
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
        roident != 0 AS valid_roident
   FROM pg_xact_commit_timestamp_origin(:'txid_no_origin') x;
- ts_in_range | valid_roident 
--------------+---------------
- t           | f
+ ts_low | ts_high | valid_roident 
+--------+---------+---------------
+ t      | t       | f
 (1 row)
 
 -- Test transaction with replication origin
@@ -102,20 +105,24 @@ SELECT pg_replication_origin_session_setup('regress_commit_ts: get_origin');
 (1 row)
 
 SELECT txid_current() as txid_with_origin \gset
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range, r.roname
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
+       r.roname
   FROM pg_last_committed_xact() x, pg_replication_origin r
   WHERE r.roident = x.roident;
- ts_in_range |            roname             
--------------+-------------------------------
- t           | regress_commit_ts: get_origin
+ ts_low | ts_high |            roname             
+--------+---------+-------------------------------
+ t      | t       | regress_commit_ts: get_origin
 (1 row)
 
-SELECT x.timestamp <@ tstzrange('-infinity'::timestamptz, now()) AS ts_in_range, r.roname
+SELECT x.timestamp > '-infinity'::timestamptz AS ts_low,
+       x.timestamp <= now() AS ts_high,
+       r.roname
   FROM pg_xact_commit_timestamp_origin(:'txid_with_origin') x, pg_replication_origin r
   WHERE r.roident = x.roident;
- ts_in_range |            roname             
--------------+-------------------------------
- t           | regress_commit_ts: get_origin
+ ts_low | ts_high |            roname             
+--------+---------+-------------------------------
+ t      | t       | regress_commit_ts: get_origin
 (1 row)
 
 SELECT pg_replication_origin_session_reset();
