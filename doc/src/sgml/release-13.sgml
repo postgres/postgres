@@ -983,20 +983,6 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
       <listitem>
 <!--
-Author: Amit Kapila <akapila@postgresql.org>
-2019-11-21 [9290ad198] Track statistics for spilling of changes from ReorderBuf
--->
-
-       <para>
-        Add columns to the <link
-        linkend="monitoring-stats-dynamic-views-table"><structname>pg_stat_replication</structname></link>
-        system view to report how much logical decoding information has been
-        spilled to disk (Tomas Vondra)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 Author: Robert Haas <rhaas@postgresql.org>
 2020-01-09 [ed10f32e3] Add pg_shmem_allocations view.
 -->

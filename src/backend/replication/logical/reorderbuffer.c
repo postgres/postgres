@@ -317,10 +317,6 @@ ReorderBufferAllocate(void)
 	buffer->outbufsize = 0;
 	buffer->size = 0;
 
-	buffer->spillCount = 0;
-	buffer->spillTxns = 0;
-	buffer->spillBytes = 0;
-
 	buffer->current_restart_decoding_lsn = InvalidXLogRecPtr;
 
 	dlist_init(&buffer->toplevel_by_lsn);
@@ -2418,7 +2414,6 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	int			fd = -1;
 	XLogSegNo	curOpenSegNo = 0;
 	Size		spilled = 0;
-	Size		size = txn->size;
 
 	elog(DEBUG2, "spill %u changes in XID %u to disk",
 		 (uint32) txn->nentries_mem, txn->xid);
@@ -2476,13 +2471,6 @@ ReorderBufferSerializeTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 
 		spilled++;
 	}
-
-	/* update the statistics */
-	rb->spillCount += 1;
-	rb->spillBytes += size;
-
-	/* Don't consider already serialized transactions. */
-	rb->spillTxns += rbtxn_is_serialized(txn) ? 0 : 1;
 
 	Assert(spilled == txn->nentries_mem);
 	Assert(dlist_is_empty(&txn->changes));

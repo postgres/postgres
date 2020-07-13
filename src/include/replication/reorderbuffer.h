@@ -413,17 +413,6 @@ struct ReorderBuffer
 
 	/* memory accounting */
 	Size		size;
-
-	/*
-	 * Statistics about transactions spilled to disk.
-	 *
-	 * A single transaction may be spilled repeatedly, which is why we keep
-	 * two different counters. For spilling, the transaction counter includes
-	 * both toplevel transactions and subtransactions.
-	 */
-	int64		spillCount;		/* spill-to-disk invocation counter */
-	int64		spillTxns;		/* number of transactions spilled to disk  */
-	int64		spillBytes;		/* amount of data spilled to disk */
 };
 
 
