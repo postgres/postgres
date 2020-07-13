@@ -78,11 +78,6 @@ typedef struct WalSnd
 	 * Timestamp of the last message received from standby.
 	 */
 	TimestampTz replyTime;
-
-	/* Statistics for transactions spilled to disk. */
-	int64		spillTxns;
-	int64		spillCount;
-	int64		spillBytes;
 } WalSnd;
 
 extern WalSnd *MyWalSnd;

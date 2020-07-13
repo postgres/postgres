@@ -2466,38 +2466,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        Send time of last reply message received from standby server
       </para></entry>
      </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>spill_txns</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of transactions spilled to disk after the memory used by
-       logical decoding exceeds <literal>logical_decoding_work_mem</literal>. The
-       counter gets incremented both for top-level transactions and
-       subtransactions.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>spill_count</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of times transactions were spilled to disk. Transactions
-       may get spilled repeatedly, and this counter gets incremented on every
-       such invocation.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>spill_bytes</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Amount of decoded transaction data spilled to disk.
-      </para></entry>
-     </row>
     </tbody>
    </tgroup>
   </table>
@@ -2520,12 +2488,6 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    Lag times work automatically for physical replication. Logical decoding
    plugins may optionally emit tracking messages; if they do not, the tracking
    mechanism will simply display NULL lag.
-  </para>
-
-  <para>
-   Tracking of spilled transactions works only for logical replication.  In
-   physical replication, the tracking mechanism will display 0 for spilled
-   statistics.
   </para>
 
   <note>
