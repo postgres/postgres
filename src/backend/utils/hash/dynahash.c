@@ -398,7 +398,16 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	if (flags & HASH_KEYCOPY)
 		hashp->keycopy = info->keycopy;
 	else if (hashp->hash == string_hash)
-		hashp->keycopy = (HashCopyFunc) strlcpy;
+	{
+		/*
+		 * The signature of keycopy is meant for memcpy(), which returns
+		 * void*, but strlcpy() returns size_t.  Since we never use the return
+		 * value of keycopy, and size_t is pretty much always the same size as
+		 * void *, this should be safe.  The extra cast in the middle is to
+		 * avoid warnings from -Wcast-function-type.
+		 */
+		hashp->keycopy = (HashCopyFunc) (pg_funcptr_t) strlcpy;
+	}
 	else
 		hashp->keycopy = memcpy;
 
