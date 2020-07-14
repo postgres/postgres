@@ -757,6 +757,28 @@ alter table atacc1
   add primary key(a);
 drop table atacc1;
 
+-- additionally, we've seen issues with foreign key validation not being
+-- properly delayed until after a table rewrite.  Check that works ok.
+create table atacc1 (a int primary key);
+alter table atacc1 add constraint atacc1_fkey foreign key (a) references atacc1 (a) not valid;
+alter table atacc1 validate constraint atacc1_fkey, alter a type bigint;
+drop table atacc1;
+
+-- we've also seen issues with check constraints being validated at the wrong
+-- time when there's a pending table rewrite.
+create table atacc1 (a bigint, b int);
+insert into atacc1 values(1,1);
+alter table atacc1 add constraint atacc1_chk check(b = 1) not valid;
+alter table atacc1 validate constraint atacc1_chk, alter a type int;
+drop table atacc1;
+
+-- same as above, but ensure the constraint violation is detected
+create table atacc1 (a bigint, b int);
+insert into atacc1 values(1,2);
+alter table atacc1 add constraint atacc1_chk check(b = 1) not valid;
+alter table atacc1 validate constraint atacc1_chk, alter a type int;
+drop table atacc1;
+
 -- something a little more complicated
 create table atacc1 ( test int, test2 int);
 -- add a primary key constraint
