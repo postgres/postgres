@@ -487,8 +487,8 @@ NOTICE:  boo: 18
 ALTER TABLE attmp3 ADD CONSTRAINT IDENTITY check (b = boo(b)) NOT VALID;
 NOTICE:  merging constraint "identity" with inherited definition
 ALTER TABLE attmp3 VALIDATE CONSTRAINT identity;
-NOTICE:  boo: 16
 NOTICE:  boo: 20
+NOTICE:  boo: 16
 -- A NO INHERIT constraint should not be looked for in children during VALIDATE CONSTRAINT
 create table parent_noinh_convalid (a int);
 create table child_noinh_convalid () inherits (parent_noinh_convalid);
@@ -996,6 +996,26 @@ insert into atacc1 values(1);
 alter table atacc1
   add column b float8 not null default random(),
   add primary key(a);
+drop table atacc1;
+-- additionally, we've seen issues with foreign key validation not being
+-- properly delayed until after a table rewrite.  Check that works ok.
+create table atacc1 (a int primary key);
+alter table atacc1 add constraint atacc1_fkey foreign key (a) references atacc1 (a) not valid;
+alter table atacc1 validate constraint atacc1_fkey, alter a type bigint;
+drop table atacc1;
+-- we've also seen issues with check constraints being validated at the wrong
+-- time when there's a pending table rewrite.
+create table atacc1 (a bigint, b int);
+insert into atacc1 values(1,1);
+alter table atacc1 add constraint atacc1_chk check(b = 1) not valid;
+alter table atacc1 validate constraint atacc1_chk, alter a type int;
+drop table atacc1;
+-- same as above, but ensure the constraint violation is detected
+create table atacc1 (a bigint, b int);
+insert into atacc1 values(1,2);
+alter table atacc1 add constraint atacc1_chk check(b = 1) not valid;
+alter table atacc1 validate constraint atacc1_chk, alter a type int;
+ERROR:  check constraint "atacc1_chk" of relation "atacc1" is violated by some row
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int);
