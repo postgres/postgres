@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/utils/jsonapi.h
+ * src/include/utils/jsonfuncs.h
  *
  *-------------------------------------------------------------------------
  */
