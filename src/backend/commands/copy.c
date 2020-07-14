@@ -2604,6 +2604,9 @@ CopyMultiInsertInfoCleanup(CopyMultiInsertInfo *miinfo)
  * Get the next TupleTableSlot that the next tuple should be stored in.
  *
  * Callers must ensure that the buffer is not full.
+ *
+ * Note: 'miinfo' is unused but has been included for consistency with the
+ * other functions in this area.
  */
 static inline TupleTableSlot *
 CopyMultiInsertInfoNextFreeSlot(CopyMultiInsertInfo *miinfo,
