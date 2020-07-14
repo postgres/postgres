@@ -1160,6 +1160,59 @@ from int4_tbl;
 (5 rows)
 
 --
+-- Check for sane handling of a lateral reference in a subquery's quals
+-- (most of the complication here is to prevent the test case from being
+-- flattened too much)
+--
+explain (verbose, costs off)
+select * from
+    int4_tbl i4,
+    lateral (
+        select i4.f1 > 1 as b, 1 as id
+        from (select random() order by 1) as t1
+      union all
+        select true as b, 2 as id
+    ) as t2
+where b and f1 >= 0;
+                 QUERY PLAN                 
+--------------------------------------------
+ Nested Loop
+   Output: i4.f1, ((i4.f1 > 1)), (1)
+   ->  Seq Scan on public.int4_tbl i4
+         Output: i4.f1
+         Filter: (i4.f1 >= 0)
+   ->  Append
+         ->  Subquery Scan on t1
+               Output: (i4.f1 > 1), 1
+               Filter: (i4.f1 > 1)
+               ->  Sort
+                     Output: (random())
+                     Sort Key: (random())
+                     ->  Result
+                           Output: random()
+         ->  Result
+               Output: true, 2
+(16 rows)
+
+select * from
+    int4_tbl i4,
+    lateral (
+        select i4.f1 > 1 as b, 1 as id
+        from (select random() order by 1) as t1
+      union all
+        select true as b, 2 as id
+    ) as t2
+where b and f1 >= 0;
+     f1     | b | id 
+------------+---+----
+          0 | t |  2
+     123456 | t |  1
+     123456 | t |  2
+ 2147483647 | t |  1
+ 2147483647 | t |  2
+(5 rows)
+
+--
 -- Check that volatile quals aren't pushed down past a DISTINCT:
 -- nextval() should not be called more than the nominal number of times
 --
