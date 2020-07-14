@@ -1081,11 +1081,27 @@ create_bitmap_and_path(PlannerInfo *root,
 					   List *bitmapquals)
 {
 	BitmapAndPath *pathnode = makeNode(BitmapAndPath);
+	Relids		required_outer = NULL;
+	ListCell   *lc;
 
 	pathnode->path.pathtype = T_BitmapAnd;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = rel->reltarget;
-	pathnode->path.param_info = NULL;	/* not used in bitmap trees */
+
+	/*
+	 * Identify the required outer rels as the union of what the child paths
+	 * depend on.  (Alternatively, we could insist that the caller pass this
+	 * in, but it's more convenient and reliable to compute it here.)
+	 */
+	foreach(lc, bitmapquals)
+	{
+		Path	   *bitmapqual = (Path *) lfirst(lc);
+
+		required_outer = bms_add_members(required_outer,
+										 PATH_REQ_OUTER(bitmapqual));
+	}
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
 
 	/*
 	 * Currently, a BitmapHeapPath, BitmapAndPath, or BitmapOrPath will be
@@ -1117,11 +1133,27 @@ create_bitmap_or_path(PlannerInfo *root,
 					  List *bitmapquals)
 {
 	BitmapOrPath *pathnode = makeNode(BitmapOrPath);
+	Relids		required_outer = NULL;
+	ListCell   *lc;
 
 	pathnode->path.pathtype = T_BitmapOr;
 	pathnode->path.parent = rel;
 	pathnode->path.pathtarget = rel->reltarget;
-	pathnode->path.param_info = NULL;	/* not used in bitmap trees */
+
+	/*
+	 * Identify the required outer rels as the union of what the child paths
+	 * depend on.  (Alternatively, we could insist that the caller pass this
+	 * in, but it's more convenient and reliable to compute it here.)
+	 */
+	foreach(lc, bitmapquals)
+	{
+		Path	   *bitmapqual = (Path *) lfirst(lc);
+
+		required_outer = bms_add_members(required_outer,
+										 PATH_REQ_OUTER(bitmapqual));
+	}
+	pathnode->path.param_info = get_baserel_parampathinfo(root, rel,
+														  required_outer);
 
 	/*
 	 * Currently, a BitmapHeapPath, BitmapAndPath, or BitmapOrPath will be
@@ -3885,7 +3917,18 @@ do { \
 		!bms_overlap(PATH_REQ_OUTER(path), child_rel->top_parent_relids))
 		return path;
 
-	/* Reparameterize a copy of given path. */
+	/*
+	 * If possible, reparameterize the given path, making a copy.
+	 *
+	 * This function is currently only applied to the inner side of a nestloop
+	 * join that is being partitioned by the partitionwise-join code.  Hence,
+	 * we need only support path types that plausibly arise in that context.
+	 * (In particular, supporting sorted path types would be a waste of code
+	 * and cycles: even if we translated them here, they'd just lose in
+	 * subsequent cost comparisons.)  If we do see an unsupported path type,
+	 * that just means we won't be able to generate a partitionwise-join plan
+	 * using that path type.
+	 */
 	switch (nodeTag(path))
 	{
 		case T_Path:
@@ -3929,16 +3972,6 @@ do { \
 				FLAT_COPY_PATH(bopath, path, BitmapOrPath);
 				REPARAMETERIZE_CHILD_PATH_LIST(bopath->bitmapquals);
 				new_path = (Path *) bopath;
-			}
-			break;
-
-		case T_TidPath:
-			{
-				TidPath    *tpath;
-
-				FLAT_COPY_PATH(tpath, path, TidPath);
-				ADJUST_CHILD_ATTRS(tpath->tidquals);
-				new_path = (Path *) tpath;
 			}
 			break;
 
@@ -4032,37 +4065,6 @@ do { \
 			}
 			break;
 
-		case T_MergeAppendPath:
-			{
-				MergeAppendPath *mapath;
-
-				FLAT_COPY_PATH(mapath, path, MergeAppendPath);
-				REPARAMETERIZE_CHILD_PATH_LIST(mapath->subpaths);
-				new_path = (Path *) mapath;
-			}
-			break;
-
-		case T_MaterialPath:
-			{
-				MaterialPath *mpath;
-
-				FLAT_COPY_PATH(mpath, path, MaterialPath);
-				REPARAMETERIZE_CHILD_PATH(mpath->subpath);
-				new_path = (Path *) mpath;
-			}
-			break;
-
-		case T_UniquePath:
-			{
-				UniquePath *upath;
-
-				FLAT_COPY_PATH(upath, path, UniquePath);
-				REPARAMETERIZE_CHILD_PATH(upath->subpath);
-				ADJUST_CHILD_ATTRS(upath->uniq_exprs);
-				new_path = (Path *) upath;
-			}
-			break;
-
 		case T_GatherPath:
 			{
 				GatherPath *gpath;
@@ -4070,16 +4072,6 @@ do { \
 				FLAT_COPY_PATH(gpath, path, GatherPath);
 				REPARAMETERIZE_CHILD_PATH(gpath->subpath);
 				new_path = (Path *) gpath;
-			}
-			break;
-
-		case T_GatherMergePath:
-			{
-				GatherMergePath *gmpath;
-
-				FLAT_COPY_PATH(gmpath, path, GatherMergePath);
-				REPARAMETERIZE_CHILD_PATH(gmpath->subpath);
-				new_path = (Path *) gmpath;
 			}
 			break;
 
