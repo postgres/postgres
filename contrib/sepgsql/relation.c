@@ -546,7 +546,7 @@ sepgsql_relation_truncate(Oid relOid)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							tclass,
