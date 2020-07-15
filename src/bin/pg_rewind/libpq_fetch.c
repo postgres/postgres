@@ -214,13 +214,13 @@ libpqProcessFileList(void)
 	/* Read result to local variables */
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		char	   *path = PQgetvalue(res, i, 0);
-		int64		filesize = atol(PQgetvalue(res, i, 1));
-		bool		isdir = (strcmp(PQgetvalue(res, i, 2), "t") == 0);
-		char	   *link_target = PQgetvalue(res, i, 3);
+		char	   *path;
+		int64		filesize;
+		bool		isdir;
+		char	   *link_target;
 		file_type_t type;
 
-		if (PQgetisnull(res, 0, 1))
+		if (PQgetisnull(res, i, 1))
 		{
 			/*
 			 * The file was removed from the server while the query was
@@ -228,6 +228,11 @@ libpqProcessFileList(void)
 			 */
 			continue;
 		}
+
+		path = PQgetvalue(res, i, 0);
+		filesize = atol(PQgetvalue(res, i, 1));
+		isdir = (strcmp(PQgetvalue(res, i, 2), "t") == 0);
+		link_target = PQgetvalue(res, i, 3);
 
 		if (link_target[0])
 			type = FILE_TYPE_SYMLINK;
