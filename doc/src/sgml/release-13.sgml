@@ -2271,7 +2271,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
       <para>
        A new tool <link
-       linkend="app-pgverifybackup"><application>pg_verifybackup</application>"</link>
+       linkend="app-pgverifybackup"><application>pg_verifybackup</application></link>
        can verify backups.
       </para>
      </listitem>
