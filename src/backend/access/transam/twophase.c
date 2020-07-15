@@ -466,7 +466,7 @@ MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 	proc->xid = xid;
 	Assert(proc->xmin == InvalidTransactionId);
 	proc->delayChkpt = false;
-	pgxact->vacuumFlags = 0;
+	proc->vacuumFlags = 0;
 	proc->pid = 0;
 	proc->backendId = InvalidBackendId;
 	proc->databaseId = databaseid;

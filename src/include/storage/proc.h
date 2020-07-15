@@ -41,7 +41,7 @@ struct XidCache
 };
 
 /*
- * Flags for PGXACT->vacuumFlags
+ * Flags for ProcGlobal->vacuumFlags[]
  */
 #define		PROC_IS_AUTOVACUUM	0x01	/* is it an autovac worker? */
 #define		PROC_IN_VACUUM		0x02	/* currently running lazy vacuum */
@@ -167,6 +167,9 @@ struct PGPROC
 
 	bool		delayChkpt;		/* true if this proc delays checkpoint start */
 
+	uint8		vacuumFlags;    /* this backend's vacuum flags, see PROC_*
+								 * above. mirrored in
+								 * ProcGlobal->vacuumFlags[pgxactoff] */
 	/*
 	 * Info to allow us to wait for synchronous replication, if needed.
 	 * waitLSN is InvalidXLogRecPtr if not waiting; set only by user backend.
@@ -244,7 +247,6 @@ extern PGDLLIMPORT struct PGXACT *MyPgXact;
  */
 typedef struct PGXACT
 {
-	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 	bool		overflowed;
 
 	uint8		nxids;
@@ -313,6 +315,12 @@ typedef struct PROC_HDR
 
 	/* Array mirroring PGPROC.xid for each PGPROC currently in the procarray */
 	TransactionId *xids;
+
+	/*
+	 * Array mirroring PGPROC.vacuumFlags for each PGPROC currently in the
+	 * procarray.
+	 */
+	uint8	   *vacuumFlags;
 
 	/* Length of allProcs array */
 	uint32		allProcCount;

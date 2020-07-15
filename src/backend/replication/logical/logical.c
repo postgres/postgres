@@ -181,7 +181,8 @@ StartupDecodingContext(List *output_plugin_options,
 	if (!IsTransactionOrTransactionBlock())
 	{
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyPgXact->vacuumFlags |= PROC_IN_LOGICAL_DECODING;
+		MyProc->vacuumFlags |= PROC_IN_LOGICAL_DECODING;
+		ProcGlobal->vacuumFlags[MyProc->pgxactoff] = MyProc->vacuumFlags;
 		LWLockRelease(ProcArrayLock);
 	}
 

@@ -2493,7 +2493,7 @@ do_autovacuum(void)
 						   tab->at_datname, tab->at_nspname, tab->at_relname);
 			EmitErrorReport();
 
-			/* this resets the PGXACT flags too */
+			/* this resets ProcGlobal->vacuumFlags[i] too */
 			AbortOutOfAnyTransaction();
 			FlushErrorState();
 			MemoryContextResetAndDeleteChildren(PortalContext);
@@ -2509,7 +2509,7 @@ do_autovacuum(void)
 
 		did_vacuum = true;
 
-		/* the PGXACT flags are reset at the next end of transaction */
+		/* ProcGlobal->vacuumFlags[i] are reset at the next end of xact */
 
 		/* be tidy */
 deleted:
@@ -2686,7 +2686,7 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 				   cur_datname, cur_nspname, cur_relname);
 		EmitErrorReport();
 
-		/* this resets the PGXACT flags too */
+		/* this resets ProcGlobal->vacuumFlags[i] too */
 		AbortOutOfAnyTransaction();
 		FlushErrorState();
 		MemoryContextResetAndDeleteChildren(PortalContext);
