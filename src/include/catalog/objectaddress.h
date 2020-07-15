@@ -70,14 +70,18 @@ extern bool get_object_namensp_unique(Oid class_id);
 extern HeapTuple get_catalog_object_by_oid(Relation catalog,
 										   AttrNumber oidcol, Oid objectId);
 
-extern char *getObjectDescription(const ObjectAddress *object);
+extern char *getObjectDescription(const ObjectAddress *object,
+								  bool missing_ok);
 extern char *getObjectDescriptionOids(Oid classid, Oid objid);
 
 extern int	read_objtype_from_string(const char *objtype);
-extern char *getObjectTypeDescription(const ObjectAddress *object);
-extern char *getObjectIdentity(const ObjectAddress *address);
+extern char *getObjectTypeDescription(const ObjectAddress *object,
+									  bool missing_ok);
+extern char *getObjectIdentity(const ObjectAddress *address,
+							   bool missing_ok);
 extern char *getObjectIdentityParts(const ObjectAddress *address,
-									List **objname, List **objargs);
+									List **objname, List **objargs,
+									bool missing_ok);
 extern struct ArrayType *strlist_to_textarray(List *list);
 
 extern ObjectType get_relkind_objtype(char relkind);

@@ -355,7 +355,7 @@ sepgsql_fmgr_hook(FmgrHookEventType event,
 					sepgsql_avc_check_perms(&object,
 											SEPG_CLASS_DB_PROCEDURE,
 											SEPG_DB_PROCEDURE__ENTRYPOINT,
-											getObjectDescription(&object),
+											getObjectDescription(&object, false),
 											true);
 
 					sepgsql_avc_check_perms_label(stack->new_label,
@@ -523,7 +523,7 @@ sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("sepgsql provider does not support labels on %s",
-							getObjectTypeDescription(object))));
+							getObjectTypeDescription(object, false))));
 			break;
 	}
 }

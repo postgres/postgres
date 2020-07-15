@@ -80,7 +80,7 @@ sepgsql_proc_post_create(Oid functionId)
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
 							SEPG_DB_SCHEMA__ADD_NAME,
-							getObjectIdentity(&object),
+							getObjectIdentity(&object, false),
 							true);
 
 	/*
@@ -114,7 +114,7 @@ sepgsql_proc_post_create(Oid functionId)
 		object.classId = TypeRelationId;
 		object.objectId = proForm->proargtypes.values[i];
 		object.objectSubId = 0;
-		appendStringInfoString(&audit_name, getObjectIdentity(&object));
+		appendStringInfoString(&audit_name, getObjectIdentity(&object, false));
 	}
 	appendStringInfoChar(&audit_name, ')');
 
@@ -164,7 +164,7 @@ sepgsql_proc_drop(Oid functionId)
 	object.classId = NamespaceRelationId;
 	object.objectId = get_func_namespace(functionId);
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -179,7 +179,7 @@ sepgsql_proc_drop(Oid functionId)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
@@ -204,7 +204,7 @@ sepgsql_proc_relabel(Oid functionId, const char *seclabel)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_procedure:{setattr relabelfrom} permission
@@ -292,7 +292,7 @@ sepgsql_proc_setattr(Oid functionId)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
@@ -324,7 +324,7 @@ sepgsql_proc_execute(Oid functionId)
 	object.classId = ProcedureRelationId;
 	object.objectId = functionId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_PROCEDURE,
 							SEPG_DB_PROCEDURE__EXECUTE,

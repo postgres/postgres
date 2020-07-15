@@ -142,7 +142,7 @@ sepgsql_database_drop(Oid databaseId)
 	object.classId = DatabaseRelationId;
 	object.objectId = databaseId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_DATABASE,
@@ -169,7 +169,7 @@ sepgsql_database_setattr(Oid databaseId)
 	object.classId = DatabaseRelationId;
 	object.objectId = databaseId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_DATABASE,
@@ -193,7 +193,7 @@ sepgsql_database_relabel(Oid databaseId, const char *seclabel)
 	object.classId = DatabaseRelationId;
 	object.objectId = databaseId;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_database:{setattr relabelfrom} permission

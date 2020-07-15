@@ -2919,7 +2919,7 @@ AlterExtensionNamespace(const char *extensionName, const char *newschema, Oid *o
 					 errmsg("extension \"%s\" does not support SET SCHEMA",
 							NameStr(extForm->extname)),
 					 errdetail("%s is not in the extension's schema \"%s\"",
-							   getObjectDescription(&dep),
+							   getObjectDescription(&dep, false),
 							   get_namespace_name(oldNspOid))));
 	}
 
@@ -3328,7 +3328,7 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("%s is already a member of extension \"%s\"",
-							getObjectDescription(&object),
+							getObjectDescription(&object, false),
 							get_extension_name(oldExtension))));
 
 		/*
@@ -3368,7 +3368,7 @@ ExecAlterExtensionContentsStmt(AlterExtensionContentsStmt *stmt,
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("%s is not a member of extension \"%s\"",
-							getObjectDescription(&object),
+							getObjectDescription(&object, false),
 							stmt->extname)));
 
 		/*

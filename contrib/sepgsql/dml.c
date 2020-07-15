@@ -179,7 +179,7 @@ check_relation_privileges(Oid relOid,
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
@@ -256,7 +256,7 @@ check_relation_privileges(Oid relOid,
 		object.classId = RelationRelationId;
 		object.objectId = relOid;
 		object.objectSubId = attnum;
-		audit_name = getObjectDescription(&object);
+		audit_name = getObjectDescription(&object, false);
 
 		result = sepgsql_avc_check_perms(&object,
 										 SEPG_CLASS_DB_COLUMN,

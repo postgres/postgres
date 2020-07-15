@@ -521,3 +521,103 @@ drop cascades to function trig()
 drop cascades to function proc(integer)
 DROP OWNED BY regress_addr_user;
 DROP USER regress_addr_user;
+--
+-- Checks for invalid objects
+--
+-- Make sure that NULL handling is correct.
+\pset null 'NULL'
+-- Temporarily disable fancy output, so as future additions never create
+-- a large amount of diffs.
+\a\t
+-- Keep this list in the same order as getObjectIdentityParts()
+-- in objectaddress.c.
+WITH objects (classid, objid, objsubid) AS (VALUES
+    ('pg_class'::regclass, 0, 0), -- no relation
+    ('pg_class'::regclass, 'pg_class'::regclass, 100), -- no column for relation
+    ('pg_proc'::regclass, 0, 0), -- no function
+    ('pg_type'::regclass, 0, 0), -- no type
+    ('pg_cast'::regclass, 0, 0), -- no cast
+    ('pg_collation'::regclass, 0, 0), -- no collation
+    ('pg_constraint'::regclass, 0, 0), -- no constraint
+    ('pg_conversion'::regclass, 0, 0), -- no conversion
+    ('pg_attrdef'::regclass, 0, 0), -- no default attribute
+    ('pg_language'::regclass, 0, 0), -- no language
+    ('pg_largeobject'::regclass, 0, 0), -- no large object, no error
+    ('pg_operator'::regclass, 0, 0), -- no operator
+    ('pg_opclass'::regclass, 0, 0), -- no opclass, no need to check for no access method
+    ('pg_opfamily'::regclass, 0, 0), -- no opfamily
+    ('pg_am'::regclass, 0, 0), -- no access method
+    ('pg_amop'::regclass, 0, 0), -- no AM operator
+    ('pg_amproc'::regclass, 0, 0), -- no AM proc
+    ('pg_rewrite'::regclass, 0, 0), -- no rewrite
+    ('pg_trigger'::regclass, 0, 0), -- no trigger
+    ('pg_namespace'::regclass, 0, 0), -- no schema
+    ('pg_statistic_ext'::regclass, 0, 0), -- no statistics
+    ('pg_ts_parser'::regclass, 0, 0), -- no TS parser
+    ('pg_ts_dict'::regclass, 0, 0), -- no TS dictionnary
+    ('pg_ts_template'::regclass, 0, 0), -- no TS template
+    ('pg_ts_config'::regclass, 0, 0), -- no TS configuration
+    ('pg_authid'::regclass, 0, 0), -- no role
+    ('pg_database'::regclass, 0, 0), -- no database
+    ('pg_tablespace'::regclass, 0, 0), -- no tablespace
+    ('pg_foreign_data_wrapper'::regclass, 0, 0), -- no FDW
+    ('pg_foreign_server'::regclass, 0, 0), -- no server
+    ('pg_user_mapping'::regclass, 0, 0), -- no user mapping
+    ('pg_default_acl'::regclass, 0, 0), -- no default ACL
+    ('pg_extension'::regclass, 0, 0), -- no extension
+    ('pg_event_trigger'::regclass, 0, 0), -- no event trigger
+    ('pg_policy'::regclass, 0, 0), -- no policy
+    ('pg_publication'::regclass, 0, 0), -- no publication
+    ('pg_publication_rel'::regclass, 0, 0), -- no publication relation
+    ('pg_subscription'::regclass, 0, 0), -- no subscription
+    ('pg_transform'::regclass, 0, 0) -- no transformation
+  )
+SELECT ROW(pg_identify_object(objects.classid, objects.objid, objects.objsubid))
+         AS ident,
+       ROW(pg_identify_object_as_address(objects.classid, objects.objid, objects.objsubid))
+         AS addr,
+       pg_describe_object(objects.classid, objects.objid, objects.objsubid)
+         AS descr
+FROM objects
+ORDER BY objects.classid, objects.objid, objects.objsubid;
+("(""default acl"",,,)")|("(""default acl"",,)")|NULL
+("(tablespace,,,)")|("(tablespace,,)")|NULL
+("(type,,,)")|("(type,,)")|NULL
+("(routine,,,)")|("(routine,,)")|NULL
+("(relation,,,)")|("(relation,,)")|NULL
+("(""table column"",,,)")|("(""table column"",,)")|NULL
+("(role,,,)")|("(role,,)")|NULL
+("(database,,,)")|("(database,,)")|NULL
+("(server,,,)")|("(server,,)")|NULL
+("(""user mapping"",,,)")|("(""user mapping"",,)")|NULL
+("(""foreign-data wrapper"",,,)")|("(""foreign-data wrapper"",,)")|NULL
+("(""access method"",,,)")|("(""access method"",,)")|NULL
+("(""operator of access method"",,,)")|("(""operator of access method"",,)")|NULL
+("(""function of access method"",,,)")|("(""function of access method"",,)")|NULL
+("(""default value"",,,)")|("(""default value"",,)")|NULL
+("(cast,,,)")|("(cast,,)")|NULL
+("(constraint,,,)")|("(constraint,,)")|NULL
+("(conversion,,,)")|("(conversion,,)")|NULL
+("(language,,,)")|("(language,,)")|NULL
+("(""large object"",,,)")|("(""large object"",,)")|NULL
+("(schema,,,)")|("(schema,,)")|NULL
+("(""operator class"",,,)")|("(""operator class"",,)")|NULL
+("(operator,,,)")|("(operator,,)")|NULL
+("(rule,,,)")|("(rule,,)")|NULL
+("(trigger,,,)")|("(trigger,,)")|NULL
+("(""operator family"",,,)")|("(""operator family"",,)")|NULL
+("(extension,,,)")|("(extension,,)")|NULL
+("(policy,,,)")|("(policy,,)")|NULL
+("(""statistics object"",,,)")|("(""statistics object"",,)")|NULL
+("(collation,,,)")|("(collation,,)")|NULL
+("(""event trigger"",,,)")|("(""event trigger"",,)")|NULL
+("(transform,,,)")|("(transform,,)")|NULL
+("(""text search dictionary"",,,)")|("(""text search dictionary"",,)")|NULL
+("(""text search parser"",,,)")|("(""text search parser"",,)")|NULL
+("(""text search configuration"",,,)")|("(""text search configuration"",,)")|NULL
+("(""text search template"",,,)")|("(""text search template"",,)")|NULL
+("(subscription,,,)")|("(subscription,,)")|NULL
+("(publication,,,)")|("(publication,,)")|NULL
+("(""publication relation"",,,)")|("(""publication relation"",,)")|NULL
+-- restore normal output mode
+\a\t

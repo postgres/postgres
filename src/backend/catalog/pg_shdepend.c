@@ -638,7 +638,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot drop %s because it is required by the database system",
-							getObjectDescription(&object))));
+							getObjectDescription(&object, false))));
 		}
 
 		object.classId = sdepForm->classid;
@@ -1147,7 +1147,7 @@ storeObjectDescription(StringInfo descs,
 					   SharedDependencyType deptype,
 					   int count)
 {
-	char	   *objdesc = getObjectDescription(object);
+	char	   *objdesc = getObjectDescription(object, false);
 
 	/* separate entries with a newline */
 	if (descs->len != 0)
@@ -1283,7 +1283,7 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot drop objects owned by %s because they are "
 							"required by the database system",
-							getObjectDescription(&obj))));
+							getObjectDescription(&obj, false))));
 		}
 
 		ScanKeyInit(&key[0],
@@ -1429,7 +1429,7 @@ shdepReassignOwned(List *roleids, Oid newrole)
 			ereport(ERROR,
 					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
 					 errmsg("cannot reassign ownership of objects owned by %s because they are required by the database system",
-							getObjectDescription(&obj))));
+							getObjectDescription(&obj, false))));
 
 			/*
 			 * There's no need to tell the whole truth, which is that we

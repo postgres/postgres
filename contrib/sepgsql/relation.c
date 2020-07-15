@@ -102,7 +102,7 @@ sepgsql_attribute_post_create(Oid relOid, AttrNumber attnum)
 
 	initStringInfo(&audit_name);
 	appendStringInfo(&audit_name, "%s.%s",
-					 getObjectIdentity(&object),
+					 getObjectIdentity(&object, false),
 					 quote_identifier(NameStr(attForm->attname)));
 	sepgsql_avc_check_perms_label(ncontext,
 								  SEPG_CLASS_DB_COLUMN,
@@ -146,7 +146,7 @@ sepgsql_attribute_drop(Oid relOid, AttrNumber attnum)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_COLUMN,
@@ -178,7 +178,7 @@ sepgsql_attribute_relabel(Oid relOid, AttrNumber attnum,
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_column:{setattr relabelfrom} permission
@@ -222,7 +222,7 @@ sepgsql_attribute_setattr(Oid relOid, AttrNumber attnum)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = attnum;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_COLUMN,
@@ -288,7 +288,7 @@ sepgsql_relation_post_create(Oid relOid)
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
 							SEPG_DB_SCHEMA__ADD_NAME,
-							getObjectIdentity(&object),
+							getObjectIdentity(&object, false),
 							true);
 
 	switch (classForm->relkind)
@@ -450,7 +450,7 @@ sepgsql_relation_drop(Oid relOid)
 	object.classId = NamespaceRelationId;
 	object.objectId = get_rel_namespace(relOid);
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							SEPG_CLASS_DB_SCHEMA,
@@ -472,7 +472,7 @@ sepgsql_relation_drop(Oid relOid)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							tclass,
@@ -503,7 +503,7 @@ sepgsql_relation_drop(Oid relOid)
 			object.classId = RelationRelationId;
 			object.objectId = relOid;
 			object.objectSubId = attForm->attnum;
-			audit_name = getObjectIdentity(&object);
+			audit_name = getObjectIdentity(&object, false);
 
 			sepgsql_avc_check_perms(&object,
 									SEPG_CLASS_DB_COLUMN,
@@ -584,7 +584,7 @@ sepgsql_relation_relabel(Oid relOid, const char *seclabel)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	/*
 	 * check db_xxx:{setattr relabelfrom} permission
@@ -695,7 +695,7 @@ sepgsql_relation_setattr(Oid relOid)
 	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
-	audit_name = getObjectIdentity(&object);
+	audit_name = getObjectIdentity(&object, false);
 
 	sepgsql_avc_check_perms(&object,
 							tclass,
