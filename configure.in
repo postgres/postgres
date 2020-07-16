@@ -1483,6 +1483,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	setsid
 	shm_open
 	sigprocmask
+	strsignal
 	symlink
 	sync_file_range
 	towlower
@@ -1694,8 +1695,6 @@ AC_CACHE_CHECK([for sigsetjmp], pgac_cv_func_sigsetjmp,
 if test x"$pgac_cv_func_sigsetjmp" = x"yes"; then
   AC_DEFINE(HAVE_SIGSETJMP, 1, [Define to 1 if you have sigsetjmp().])
 fi
-
-AC_DECL_SYS_SIGLIST
 
 AC_CHECK_FUNC(syslog,
               [AC_CHECK_HEADER(syslog.h,
