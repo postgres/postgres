@@ -6,16 +6,7 @@ use warnings;
 use File::Copy;
 use File::Path qw(rmtree);
 use TestLib;
-use Test::More;
-if ($windows_os)
-{
-	plan skip_all => 'symlinks not supported on Windows';
-	exit;
-}
-else
-{
-	plan tests => 5;
-}
+use Test::More tests => 5;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -36,7 +27,7 @@ sub run_test
 	# turn pg_wal into a symlink
 	print("moving $test_primary_datadir/pg_wal to $primary_xlogdir\n");
 	move("$test_primary_datadir/pg_wal", $primary_xlogdir) or die;
-	symlink($primary_xlogdir, "$test_primary_datadir/pg_wal") or die;
+	dir_symlink($primary_xlogdir, "$test_primary_datadir/pg_wal") or die;
 
 	RewindTest::start_primary();
 

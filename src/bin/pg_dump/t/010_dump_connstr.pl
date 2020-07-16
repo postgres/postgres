@@ -5,7 +5,7 @@ use PostgresNode;
 use TestLib;
 use Test::More;
 
-if ($^O eq 'msys' && `uname -or` =~ /^[2-9].*Msys/)
+if ($TestLib::is_msys2)
 {
 	plan skip_all => 'High bit name tests fail on Msys2';
 }
@@ -27,7 +27,7 @@ $ENV{PGCLIENTENCODING} = 'LATIN1';
 # The odds of finding something interesting by testing all ASCII letters
 # seem too small to justify the cycles of testing a fifth name.
 my $dbname1 =
-    'regression'
+	'regression'
   . generate_ascii_string(1,  9)
   . generate_ascii_string(11, 12)
   . generate_ascii_string(14, 33)

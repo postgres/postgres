@@ -67,6 +67,7 @@ our @EXPORT = qw(
   check_mode_recursive
   chmod_recursive
   check_pg_config
+  dir_symlink
   system_or_bail
   system_log
   run_log
@@ -84,10 +85,12 @@ our @EXPORT = qw(
   command_checks_all
 
   $windows_os
+  $is_msys2
   $use_unix_sockets
 );
 
-our ($windows_os, $use_unix_sockets, $tmp_check, $log_path, $test_logfile);
+our ($windows_os, $is_msys2, $use_unix_sockets, $tmp_check, $log_path,
+	$test_logfile);
 
 BEGIN
 {
@@ -114,6 +117,9 @@ BEGIN
 
 	# Must be set early
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
+	# Check if this environment is MSYS2.
+	$is_msys2 = $^O eq 'msys' && `uname -or` =~ /^[2-9].*Msys/;
+
 	if ($windows_os)
 	{
 		require Win32API::File;
@@ -137,6 +143,10 @@ BEGIN
 
 Set to true when running under Windows, except on Cygwin.
 
+=item C<$is_msys2>
+
+Set to true when running under MSYS2.
+
 =back
 
 =cut
@@ -152,7 +162,7 @@ INIT
 	# TESTDIR environment variable, which is normally set by the invoking
 	# Makefile.
 	$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}/tmp_check" : "tmp_check";
-	$log_path = "$tmp_check/log";
+	$log_path  = "$tmp_check/log";
 
 	mkdir $tmp_check;
 	mkdir $log_path;
@@ -263,9 +273,10 @@ sub tempdir_short
 
 =item perl2host()
 
-Translate a Perl file name to a host file name.  Currently, this is a no-op
+Translate a virtual file name to a host file name.  Currently, this is a no-op
 except for the case of Perl=msys and host=mingw32.  The subject need not
-exist, but its parent directory must exist.
+exist, but its parent or grandparent directory must exist unless cygpath is
+available.
 
 =cut
 
@@ -273,6 +284,17 @@ sub perl2host
 {
 	my ($subject) = @_;
 	return $subject unless $Config{osname} eq 'msys';
+	if ($is_msys2)
+	{
+		# get absolute, windows type path
+		my $path = qx{cygpath -a -w "$subject"};
+		if (!$?)
+		{
+			chomp $path;
+			return $path if $path;
+		}
+		# fall through if this didn't work.
+	}
 	my $here = cwd;
 	my $leaf;
 	if (chdir $subject)
@@ -283,7 +305,12 @@ sub perl2host
 	{
 		$leaf = '/' . basename $subject;
 		my $parent = dirname $subject;
-		chdir $parent or die "could not chdir \"$parent\": $!";
+		if (!chdir $parent)
+		{
+			$leaf   = '/' . basename($parent) . $leaf;
+			$parent = dirname $parent;
+			chdir $parent or die "could not chdir \"$parent\": $!";
+		}
 	}
 
 	# this odd way of calling 'pwd -W' is the only way that seems to work.
@@ -602,6 +629,40 @@ sub check_pg_config
 
 =pod
 
+=item dir_symlink(oldname, newname)
+
+Portably create a symlink for a directory. On Windows this creates a junction
+point. Elsewhere it just calls perl's builtin symlink.
+
+=cut
+
+sub dir_symlink
+{
+	my $oldname = shift;
+	my $newname = shift;
+	if ($windows_os)
+	{
+		$oldname = perl2host($oldname);
+		$newname = perl2host($newname);
+		$oldname =~ s,/,\\,g;
+		$newname =~ s,/,\\,g;
+		my $cmd = qq{mklink /j "$newname" "$oldname"};
+		if ($Config{osname} eq 'msys')
+		{
+			# need some indirection on msys
+			$cmd = qq{echo '$cmd' | \$COMSPEC /Q};
+		}
+		system($cmd);
+	}
+	else
+	{
+		symlink $oldname, $newname;
+	}
+	die "No $newname" unless -e $newname;
+}
+
+=pod
+
 =back
 
 =head1 Test::More-LIKE METHODS
@@ -664,7 +725,7 @@ sub command_exit_is
 	# long as the process was not terminated by an exception. To work around
 	# that, use $h->full_results on Windows instead.
 	my $result =
-	    ($Config{osname} eq "MSWin32")
+		($Config{osname} eq "MSWin32")
 	  ? ($h->full_results)[0]
 	  : $h->result(0);
 	is($result, $expected, $test_name);
