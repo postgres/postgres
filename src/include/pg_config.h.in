@@ -182,10 +182,6 @@
    don't. */
 #undef HAVE_DECL_STRTOULL
 
-/* Define to 1 if you have the declaration of `sys_siglist', and to 0 if you
-   don't. */
-#undef HAVE_DECL_SYS_SIGLIST
-
 /* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_VSNPRINTF
@@ -546,6 +542,9 @@
 
 /* Define to use have a strong random number source */
 #undef HAVE_STRONG_RANDOM
+
+/* Define to 1 if you have the `strsignal' function. */
+#undef HAVE_STRSIGNAL
 
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL

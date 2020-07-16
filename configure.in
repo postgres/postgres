@@ -1622,6 +1622,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	setproctitle
 	setsid
 	shm_open
+	strsignal
 	symlink
 	sync_file_range
 	uselocale
@@ -1820,14 +1821,6 @@ fi
 if test "$PORTNAME" = "cygwin"; then
   AC_LIBOBJ(dirmod)
 fi
-
-AC_CHECK_DECLS([sys_siglist], [], [],
-[#include <signal.h>
-/* NetBSD declares sys_siglist in unistd.h.  */
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-])
 
 AC_CHECK_FUNC(syslog,
               [AC_CHECK_HEADER(syslog.h,
