@@ -71,14 +71,12 @@ typedef struct
 {
 	CompressorState *cs;
 	int			hasSeek;
-	pgoff_t		filePos;
-	pgoff_t		dataStart;
 } lclContext;
 
 typedef struct
 {
 	int			dataState;
-	pgoff_t		dataPos;
+	pgoff_t		dataPos;		/* valid only if dataState=K_OFFSET_POS_SET */
 } lclTocEntry;
 
 
@@ -145,8 +143,6 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	AH->lo_buf_size = LOBBUFSIZE;
 	AH->lo_buf = (void *) pg_malloc(LOBBUFSIZE);
 
-	ctx->filePos = 0;
-
 	/*
 	 * Now open the file
 	 */
@@ -186,7 +182,6 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 
 		ReadHead(AH);
 		ReadToc(AH);
-		ctx->dataStart = _getFilePos(AH, ctx);
 	}
 
 }
@@ -292,7 +287,8 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
 	tctx->dataPos = _getFilePos(AH, ctx);
-	tctx->dataState = K_OFFSET_POS_SET;
+	if (tctx->dataPos >= 0)
+		tctx->dataState = K_OFFSET_POS_SET;
 
 	_WriteByte(AH, BLK_DATA);	/* Block type */
 	WriteInt(AH, te->dumpId);	/* For sanity check */
@@ -355,7 +351,8 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
 	tctx->dataPos = _getFilePos(AH, ctx);
-	tctx->dataState = K_OFFSET_POS_SET;
+	if (tctx->dataPos >= 0)
+		tctx->dataState = K_OFFSET_POS_SET;
 
 	_WriteByte(AH, BLK_BLOBS);	/* Block type */
 	WriteInt(AH, te->dumpId);	/* For sanity check */
@@ -556,7 +553,6 @@ _skipBlobs(ArchiveHandle *AH)
 static void
 _skipData(ArchiveHandle *AH)
 {
-	lclContext *ctx = (lclContext *) AH->formatData;
 	size_t		blkLen;
 	char	   *buf = NULL;
 	int			buflen = 0;
@@ -580,8 +576,6 @@ _skipData(ArchiveHandle *AH)
 				fatal("could not read from input file: %m");
 		}
 
-		ctx->filePos += blkLen;
-
 		blkLen = ReadInt(AH);
 	}
 
@@ -599,12 +593,10 @@ _skipData(ArchiveHandle *AH)
 static int
 _WriteByte(ArchiveHandle *AH, const int i)
 {
-	lclContext *ctx = (lclContext *) AH->formatData;
 	int			res;
 
 	if ((res = fputc(i, AH->FH)) == EOF)
 		WRITE_ERROR_EXIT;
-	ctx->filePos += 1;
 
 	return 1;
 }
@@ -620,13 +612,11 @@ _WriteByte(ArchiveHandle *AH, const int i)
 static int
 _ReadByte(ArchiveHandle *AH)
 {
-	lclContext *ctx = (lclContext *) AH->formatData;
 	int			res;
 
 	res = getc(AH->FH);
 	if (res == EOF)
 		READ_ERROR_EXIT(AH->FH);
-	ctx->filePos += 1;
 	return res;
 }
 
@@ -640,13 +630,8 @@ _ReadByte(ArchiveHandle *AH)
 static void
 _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 {
-	lclContext *ctx = (lclContext *) AH->formatData;
-
 	if (fwrite(buf, 1, len, AH->FH) != len)
 		WRITE_ERROR_EXIT;
-	ctx->filePos += len;
-
-	return;
 }
 
 /*
@@ -659,13 +644,8 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 static void
 _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 {
-	lclContext *ctx = (lclContext *) AH->formatData;
-
 	if (fread(buf, 1, len, AH->FH) != len)
 		READ_ERROR_EXIT(AH->FH);
-	ctx->filePos += len;
-
-	return;
 }
 
 /*
@@ -697,7 +677,6 @@ _CloseArchive(ArchiveHandle *AH)
 		if (tpos < 0 && ctx->hasSeek)
 			fatal("could not determine seek position in archive file: %m");
 		WriteToc(AH);
-		ctx->dataStart = _getFilePos(AH, ctx);
 		WriteDataChunks(AH, NULL);
 
 		/*
@@ -871,30 +850,24 @@ _WorkerJobRestoreCustom(ArchiveHandle *AH, TocEntry *te)
 
 /*
  * Get the current position in the archive file.
+ *
+ * With a non-seekable archive file, we may not be able to obtain the
+ * file position.  If so, just return -1.  It's not too important in
+ * that case because we won't be able to rewrite the TOC to fill in
+ * data block offsets anyway.
  */
 static pgoff_t
 _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 {
 	pgoff_t		pos;
 
-	if (ctx->hasSeek)
+	pos = ftello(AH->FH);
+	if (pos < 0)
 	{
-		/*
-		 * Prior to 1.7 (pg7.3) we relied on the internally maintained
-		 * pointer.  Now we rely on ftello() always, unless the file has been
-		 * found to not support it.  For debugging purposes, print a warning
-		 * if the internal pointer disagrees, so that we're more likely to
-		 * notice if something's broken about the internal position tracking.
-		 */
-		pos = ftello(AH->FH);
-		if (pos < 0)
+		/* Not expected if we found we can seek. */
+		if (ctx->hasSeek)
 			fatal("could not determine seek position in archive file: %m");
-
-		if (pos != ctx->filePos)
-			pg_log_warning("ftell mismatch with expected position -- ftell used");
 	}
-	else
-		pos = ctx->filePos;
 	return pos;
 }
 
@@ -906,7 +879,6 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 static void
 _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 {
-	lclContext *ctx = (lclContext *) AH->formatData;
 	int			byt;
 
 	/*
@@ -927,7 +899,6 @@ _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 			*id = 0;			/* don't return an uninitialized value */
 			return;
 		}
-		ctx->filePos += 1;
 	}
 
 	*id = ReadInt(AH);
