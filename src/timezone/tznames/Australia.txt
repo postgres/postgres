@@ -7,7 +7,7 @@
 # src/timezone/tznames/Australia.txt
 #
 
-ACSST   37800 D  # Central Australia (not in IANA database)
+ACSST   37800 D  # Australian Central Summer Standard Time (not in IANA database)
 ACDT    37800 D  # Australian Central Daylight Time
                  #     (Australia/Adelaide)
                  #     (Australia/Broken_Hill)
@@ -17,7 +17,7 @@ ACST    34200    # Australian Central Standard Time
                  #     (Australia/Broken_Hill)
                  #     (Australia/Darwin)
 ACWST   31500    # Australian Central Western Standard Time (obsolete)
-AESST   39600 D  # Australia Eastern Summer Standard Time (not in IANA database)
+AESST   39600 D  # Australian Eastern Summer Standard Time (not in IANA database)
 AEDT    39600 D  # Australian Eastern Daylight Time
                  #     (Australia/Brisbane)
                  #     (Australia/Currie)
