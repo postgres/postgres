@@ -246,12 +246,14 @@ PostgreSQL documentation
       <term><option>--jobs=<replaceable class="parameter">number-of-jobs</replaceable></option></term>
       <listitem>
        <para>
-        Run the most time-consuming parts
-        of <application>pg_restore</application> &mdash; those which load data,
-        create indexes, or create constraints &mdash; using multiple
-        concurrent jobs.  This option can dramatically reduce the time
+        Run the most time-consuming steps
+        of <application>pg_restore</application> &mdash; those that load data,
+        create indexes, or create constraints &mdash; concurrently, using up
+        to <replaceable class="parameter">number-of-jobs</replaceable>
+        concurrent sessions.  This option can dramatically reduce the time
         to restore a large database to a server running on a
-        multiprocessor machine.
+        multiprocessor machine.  This option is ignored when emitting a script
+        rather than connecting directly to a database server.
        </para>
 
        <para>
@@ -274,8 +276,7 @@ PostgreSQL documentation
         Only the custom and directory archive formats are supported
         with this option.
         The input must be a regular file or directory (not, for example, a
-        pipe).  This option is ignored when emitting a script rather
-        than connecting directly to a database server.  Also, multiple
+        pipe or standard input).  Also, multiple
         jobs cannot be used together with the
         option <option>--single-transaction</option>.
        </para>
