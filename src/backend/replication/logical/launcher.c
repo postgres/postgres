@@ -956,7 +956,7 @@ ApplyLauncherMain(Datum main_arg)
 	LogicalRepCtx->launcher_pid = MyProcPid;
 
 	/* Establish signal handlers. */
-	pqsignal(SIGTERM, SignalHandlerForConfigReload);
+	pqsignal(SIGHUP, SignalHandlerForConfigReload);
 	pqsignal(SIGTERM, die);
 	BackgroundWorkerUnblockSignals();
 
