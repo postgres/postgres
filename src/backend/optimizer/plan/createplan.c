@@ -1730,8 +1730,10 @@ create_gather_plan(PlannerInfo *root, GatherPath *best_path)
 	List	   *tlist;
 
 	/*
-	 * Although the Gather node can project, we prefer to push down such work
-	 * to its child node, so demand an exact tlist from the child.
+	 * Push projection down to the child node.  That way, the projection work
+	 * is parallelized, and there can be no system columns in the result (they
+	 * can't travel through a tuple queue because it uses MinimalTuple
+	 * representation).
 	 */
 	subplan = create_plan_recurse(root, best_path->subpath, CP_EXACT_TLIST);
 
@@ -1766,7 +1768,7 @@ create_gather_merge_plan(PlannerInfo *root, GatherMergePath *best_path)
 	List	   *pathkeys = best_path->path.pathkeys;
 	List	   *tlist = build_path_tlist(root, &best_path->path);
 
-	/* As with Gather, it's best to project away columns in the workers. */
+	/* As with Gather, project away columns in the workers. */
 	subplan = create_plan_recurse(root, best_path->subpath, CP_EXACT_TLIST);
 
 	/* Create a shell for a GatherMerge plan. */
