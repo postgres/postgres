@@ -166,7 +166,7 @@ read_binary_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 			 */
 			if (sbuf.len == MaxAllocSize - 1)
 			{
-				char	rbuf[1]; 
+				char	rbuf[1];
 
 				if (fread(rbuf, 1, 1, file) != 0 || !feof(file))
 					ereport(ERROR,
