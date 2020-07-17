@@ -12,6 +12,7 @@
 #  - BST: Bougainville Standard Time (Papua New Guinea)
 BST      3600 D  # British Summer Time
                  #     (Europe/London)
+BDST     7200 D  # British Double Summer Time
 CEST     7200 D  # Central Europe Summer Time
                  #     (Africa/Ceuta)
                  #     (Europe/Amsterdam)
@@ -184,12 +185,12 @@ IST      3600    # Irish Standard Time
                  #     (Europe/Dublin)
 MEST     7200 D  # Middle Europe Summer Time
                  #     (MET)
-MESZ     7200 D  # Mitteleuropäische Sommerzeit (German)
+MESZ     7200 D  # Mitteleuropaeische Sommerzeit (German)
                  #     (attested in IANA comments though not their code)
 MET      3600    # Middle Europe Time
                  #     (MET)
 METDST   7200 D  # Middle Europe Summer Time (not in IANA database)
-MEZ      3600    # Mitteleuropäische Zeit (German)
+MEZ      3600    # Mitteleuropaeische Zeit (German)
                  #     (attested in IANA comments though not their code)
 MSD     14400 D  # Moscow Daylight Time (obsolete)
 MSK     Europe/Moscow  # Moscow Time
