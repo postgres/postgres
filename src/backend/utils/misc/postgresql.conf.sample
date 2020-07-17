@@ -122,6 +122,8 @@
 					# (change requires restart)
 #huge_pages = try			# on, off, or try
 					# (change requires restart)
+#huge_page_size = 0			# zero for system default
+					# (change requires restart)
 #temp_buffers = 8MB			# min 800kB
 #max_prepared_transactions = 0		# zero disables the feature
 					# (change requires restart)

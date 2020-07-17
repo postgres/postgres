@@ -1582,6 +1582,33 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-huge-page-size" xreflabel="huge_page_size">
+      <term><varname>huge_page_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>huge_page_size</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls the size of huge pages, when they are enabled with
+        <xref linkend="guc-huge-pages"/>.
+        The default is zero (<literal>0</literal>).
+        When set to <literal>0</literal>, the default huge page size on the
+        system will be used.
+       </para>
+       <para>
+        Some commonly available page sizes on modern 64 bit server architectures include:
+        <literal>2MB</literal> and <literal>1GB</literal> (Intel and AMD), <literal>16MB</literal> and
+        <literal>16GB</literal> (IBM POWER), and <literal>64kB</literal>, <literal>2MB</literal>,
+        <literal>32MB</literal> and <literal>1GB</literal> (ARM). For more information
+        about usage and support, see <xref linkend="linux-huge-pages"/>.
+       </para>
+       <para>
+        Non-default settings are currently supported only on Linux.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-temp-buffers" xreflabel="temp_buffers">
       <term><varname>temp_buffers</varname> (<type>integer</type>)
       <indexterm>

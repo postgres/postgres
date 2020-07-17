@@ -44,6 +44,7 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 /* GUC variables */
 extern int	shared_memory_type;
 extern int	huge_pages;
+extern int	huge_page_size;
 
 /* Possible values for huge_pages */
 typedef enum
