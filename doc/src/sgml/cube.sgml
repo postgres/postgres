@@ -545,7 +545,7 @@ t
 
   <para>
    My thanks are primarily to Prof. Joe Hellerstein
-   (<ulink url="http://db.cs.berkeley.edu/jmh/"></ulink>) for elucidating the
+   (<ulink url="https://dsf.berkeley.edu/jmh/"></ulink>) for elucidating the
    gist of the GiST (<ulink url="http://gist.cs.berkeley.edu/"></ulink>), and
    to his former student Andy Dong for his example written for Illustra.
    I am also grateful to all Postgres developers, present and past, for

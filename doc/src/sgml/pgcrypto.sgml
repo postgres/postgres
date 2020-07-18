@@ -1290,12 +1290,12 @@ gen_random_uuid() returns uuid
      <para>The GNU Privacy Handbook.</para>
     </listitem>
     <listitem>
-     <para><ulink url="http://www.openwall.com/crypt/"></ulink></para>
+     <para><ulink url="https://www.openwall.com/crypt/"></ulink></para>
      <para>Describes the crypt-blowfish algorithm.</para>
     </listitem>
     <listitem>
      <para>
-      <ulink url="http://www.iusmentis.com/security/passphrasefaq/"></ulink>
+      <ulink url="https://www.iusmentis.com/security/passphrasefaq/"></ulink>
      </para>
      <para>How to choose a good password.</para>
     </listitem>
@@ -1341,7 +1341,7 @@ gen_random_uuid() returns uuid
      <para>Description of Fortuna CSPRNG.</para>
     </listitem>
     <listitem>
-     <para><ulink url="http://jlcooke.ca/random/"></ulink></para>
+     <para><ulink url="https://jlcooke.ca/random/"></ulink></para>
      <para>Jean-Luc Cooke Fortuna-based <filename>/dev/random</filename> driver for Linux.</para>
     </listitem>
    </itemizedlist>

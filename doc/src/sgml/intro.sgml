@@ -87,7 +87,7 @@
   <para>
    <productname>PostgreSQL</productname> is an object-relational
    database management system (<acronym>ORDBMS</acronym>) based on
-   <ulink url="http://db.cs.berkeley.edu/postgres.html">
+   <ulink url="https://dsf.berkeley.edu/postgres.html">
    <productname>POSTGRES, Version 4.2</productname></ulink>,
    developed at the University of California at Berkeley Computer Science
    Department.  POSTGRES pioneered many concepts that only became
