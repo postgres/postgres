@@ -982,9 +982,15 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry id="app-psql-meta-commands-copy">
+        <term><literal>\copy { <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column_list</replaceable> ) ] }
+        <literal>from</literal>
+        { <replaceable class="parameter">'filename'</replaceable> | program <replaceable class="parameter">'command'</replaceable> | stdin | pstdin }
+        [ [ with ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
+        [ where <replaceable class="parameter">condition</replaceable> ]</literal></term>
+
         <term><literal>\copy { <replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column_list</replaceable> ) ] | ( <replaceable class="parameter">query</replaceable> ) }
-        { <literal>from</literal> | <literal>to</literal> }
-        { <replaceable class="parameter">'filename'</replaceable> | program <replaceable class="parameter">'command'</replaceable> | stdin | stdout | pstdin | pstdout }
+        <literal>to</literal>
+        { <replaceable class="parameter">'filename'</replaceable> | program <replaceable class="parameter">'command'</replaceable> | stdout | pstdout }
         [ [ with ] ( <replaceable class="parameter">option</replaceable> [, ...] ) ]</literal></term>
 
         <listitem>
