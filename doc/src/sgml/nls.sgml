@@ -146,7 +146,7 @@ msgstr "another translated"
     someone has already done some translation work.  The files are
     named <filename><replaceable>language</replaceable>.po</filename>,
     where <replaceable>language</replaceable> is the
-    <ulink url="http://www.loc.gov/standards/iso639-2/php/English_list.php">
+    <ulink url="https://www.loc.gov/standards/iso639-2/php/English_list.php">
     ISO 639-1 two-letter language code (in lower case)</ulink>, e.g.,
     <filename>fr.po</filename> for French.  If there is really a need
     for more than one translation effort per language then the files
