@@ -152,8 +152,9 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         <listitem>
          <para>
           The value of this parameter overrides the
-          <xref linkend="guc-synchronous-commit"/> setting.  The default
-          value is <literal>off</literal>.
+          <xref linkend="guc-synchronous-commit"/> setting within this
+          subscription's apply worker processes.  The default value
+          is <literal>off</literal>.
          </para>
 
          <para>
@@ -174,6 +175,27 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           <command>COMMIT</command> on the publisher.  In this scenario, it
           can be advantageous to set <literal>synchronous_commit</literal>
           to <literal>local</literal> or higher.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>binary</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the subscription will request the publisher to
+          send the data in binary format (as opposed to text).
+          The default is <literal>false</literal>.
+          Even when this option is enabled, only data types that have
+          binary send and receive functions will be transferred in binary.
+         </para>
+
+         <para>
+          When doing cross-version replication, it could happen that the
+          publisher has a binary send function for some data type, but the
+          subscriber lacks a binary receive function for the type.  In
+          such a case, data transfer will fail, and
+          the <literal>binary</literal> option cannot be used.
          </para>
         </listitem>
        </varlistentry>

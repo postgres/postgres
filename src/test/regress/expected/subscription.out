@@ -76,10 +76,10 @@ ALTER SUBSCRIPTION regress_testsub CONNECTION 'foobar';
 ERROR:  invalid connection string syntax: missing "=" after "foobar" in connection info string
 
 \dRs+
-                                                 List of subscriptions
-      Name       |           Owner           | Enabled | Publication | Synchronous commit |          Conninfo           
------------------+---------------------------+---------+-------------+--------------------+-----------------------------
- regress_testsub | regress_subscription_user | f       | {testpub}   | off                | dbname=regress_doesnotexist
+                                                      List of subscriptions
+      Name       |           Owner           | Enabled | Publication | Binary | Synchronous commit |          Conninfo           
+-----------------+---------------------------+---------+-------------+--------+--------------------+-----------------------------
+ regress_testsub | regress_subscription_user | f       | {testpub}   | f      | off                | dbname=regress_doesnotexist
 (1 row)
 
 ALTER SUBSCRIPTION regress_testsub SET PUBLICATION testpub2, testpub3 WITH (refresh = false);
@@ -91,10 +91,10 @@ ERROR:  subscription "regress_doesnotexist" does not exist
 ALTER SUBSCRIPTION regress_testsub SET (create_slot = false);
 ERROR:  unrecognized subscription parameter: "create_slot"
 \dRs+
-                                                      List of subscriptions
-      Name       |           Owner           | Enabled |     Publication     | Synchronous commit |           Conninfo           
------------------+---------------------------+---------+---------------------+--------------------+------------------------------
- regress_testsub | regress_subscription_user | f       | {testpub2,testpub3} | off                | dbname=regress_doesnotexist2
+                                                          List of subscriptions
+      Name       |           Owner           | Enabled |     Publication     | Binary | Synchronous commit |           Conninfo           
+-----------------+---------------------------+---------+---------------------+--------+--------------------+------------------------------
+ regress_testsub | regress_subscription_user | f       | {testpub2,testpub3} | f      | off                | dbname=regress_doesnotexist2
 (1 row)
 
 BEGIN;
@@ -126,10 +126,10 @@ ALTER SUBSCRIPTION regress_testsub_foo SET (synchronous_commit = foobar);
 ERROR:  invalid value for parameter "synchronous_commit": "foobar"
 HINT:  Available values: local, remote_write, remote_apply, on, off.
 \dRs+
-                                                        List of subscriptions
-        Name         |           Owner           | Enabled |     Publication     | Synchronous commit |           Conninfo           
----------------------+---------------------------+---------+---------------------+--------------------+------------------------------
- regress_testsub_foo | regress_subscription_user | f       | {testpub2,testpub3} | local              | dbname=regress_doesnotexist2
+                                                            List of subscriptions
+        Name         |           Owner           | Enabled |     Publication     | Binary | Synchronous commit |           Conninfo           
+---------------------+---------------------------+---------+---------------------+--------+--------------------+------------------------------
+ regress_testsub_foo | regress_subscription_user | f       | {testpub2,testpub3} | f      | local              | dbname=regress_doesnotexist2
 (1 row)
 
 -- rename back to keep the rest simple
@@ -155,6 +155,29 @@ DROP SUBSCRIPTION IF EXISTS regress_testsub;
 NOTICE:  subscription "regress_testsub" does not exist, skipping
 DROP SUBSCRIPTION regress_testsub;  -- fail
 ERROR:  subscription "regress_testsub" does not exist
+-- fail - binary must be boolean
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, binary = foo);
+ERROR:  binary requires a Boolean value
+-- now it works
+CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, binary = true);
+WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
+\dRs+
+                                                      List of subscriptions
+      Name       |           Owner           | Enabled | Publication | Binary | Synchronous commit |          Conninfo           
+-----------------+---------------------------+---------+-------------+--------+--------------------+-----------------------------
+ regress_testsub | regress_subscription_user | f       | {testpub}   | t      | off                | dbname=regress_doesnotexist
+(1 row)
+
+ALTER SUBSCRIPTION regress_testsub SET (binary = false);
+ALTER SUBSCRIPTION regress_testsub SET (slot_name = NONE);
+\dRs+
+                                                      List of subscriptions
+      Name       |           Owner           | Enabled | Publication | Binary | Synchronous commit |          Conninfo           
+-----------------+---------------------------+---------+-------------+--------+--------------------+-----------------------------
+ regress_testsub | regress_subscription_user | f       | {testpub}   | f      | off                | dbname=regress_doesnotexist
+(1 row)
+
+DROP SUBSCRIPTION regress_testsub;
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_subscription_user;
 DROP ROLE regress_subscription_user2;
