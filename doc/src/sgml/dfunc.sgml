@@ -208,7 +208,7 @@ gcc -G -o foo.so foo.o
  <tip>
   <para>
    If this is too complicated for you, you should consider using
-   <ulink url="http://www.gnu.org/software/libtool/">
+   <ulink url="https://www.gnu.org/software/libtool/">
    <productname>GNU Libtool</productname></ulink>,
    which hides the platform differences behind a uniform interface.
   </para>

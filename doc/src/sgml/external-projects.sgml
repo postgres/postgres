@@ -79,7 +79,7 @@
       <entry>libpqxx</entry>
       <entry>C++</entry>
       <entry>C++ interface</entry>
-      <entry><ulink url="http://pqxx.org/"></ulink></entry>
+      <entry><ulink url="https://pqxx.org/"></ulink></entry>
      </row>
 
      <row>
@@ -93,7 +93,7 @@
       <entry>Npgsql</entry>
       <entry>.NET</entry>
       <entry>.NET data provider</entry>
-      <entry><ulink url="http://www.npgsql.org/"></ulink></entry>
+      <entry><ulink url="https://www.npgsql.org/"></ulink></entry>
      </row>
 
      <row>
@@ -128,7 +128,7 @@
       <entry>psycopg</entry>
       <entry>Python</entry>
       <entry>DB API 2.0-compliant</entry>
-      <entry><ulink url="http://initd.org/psycopg/"></ulink></entry>
+      <entry><ulink url="https://www.psycopg.org/"></ulink></entry>
      </row>
     </tbody>
    </tgroup>
@@ -240,10 +240,10 @@
    contains several extensions, which are described in
    <xref linkend="contrib"/>.  Other extensions are developed
    independently, like <application><ulink
-   url="http://postgis.net/">PostGIS</ulink></application>.  Even
+   url="https://postgis.net/">PostGIS</ulink></application>.  Even
    <productname>PostgreSQL</productname> replication solutions can be developed
    externally. For example, <application> <ulink
-   url="http://www.slony.info">Slony-I</ulink></application> is a popular
+   url="https://www.slony.info">Slony-I</ulink></application> is a popular
    primary/standby replication solution that is developed independently
    from the core project.
   </para>
