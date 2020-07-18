@@ -47,7 +47,7 @@
  *	  ReorderBuffer uses two special memory context types - SlabContext for
  *	  allocations of fixed-length structures (changes and transactions), and
  *	  GenerationContext for the variable-length transaction data (allocated
- *	  and freed in groups with similar lifespan).
+ *	  and freed in groups with similar lifespans).
  *
  *	  To limit the amount of memory used by decoded changes, we track memory
  *	  used at the reorder buffer level (i.e. total amount of memory), and for
@@ -58,7 +58,7 @@
  *	  Only decoded changes are evicted from memory (spilled to disk), not the
  *	  transaction records. The number of toplevel transactions is limited,
  *	  but a transaction with many subtransactions may still consume significant
- *	  amounts of memory. The transaction records are fairly small, though, and
+ *	  amounts of memory. The transaction records are fairly small though and
  *	  are not included in the memory limit.
  *
  *	  The current eviction algorithm is very simple - the transaction is
@@ -69,13 +69,13 @@
  *
  *	  We still rely on max_changes_in_memory when loading serialized changes
  *	  back into memory. At that point we can't use the memory limit directly
- *	  as we load the subxacts independently. One option do deal with this
+ *	  as we load the subxacts independently. One option to deal with this
  *	  would be to count the subxacts, and allow each to allocate 1/N of the
  *	  memory limit. That however does not seem very appealing, because with
- *	  many subtransactions it may easily cause trashing (short cycles of
+ *	  many subtransactions it may easily cause thrashing (short cycles of
  *	  deserializing and applying very few changes). We probably should give
  *	  a bit more memory to the oldest subtransactions, because it's likely
- *	  the source for the next sequence of changes.
+ *	  they are the source for the next sequence of changes.
  *
  * -------------------------------------------------------------------------
  */
