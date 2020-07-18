@@ -14,7 +14,7 @@
   <para>
    PL/Perl is a loadable procedural language that enables you to write
    <productname>PostgreSQL</productname> functions in the
-   <ulink url="http://www.perl.org">Perl programming language</ulink>.
+   <ulink url="https://www.perl.org">Perl programming language</ulink>.
   </para>
 
   <para>
