@@ -410,7 +410,7 @@ postgres=&gt; select '10(+-)1'::seg as seg;
 
   <para>
    My thanks are primarily to Prof. Joe Hellerstein
-   (<ulink url="http://db.cs.berkeley.edu/jmh/"></ulink>) for elucidating the
+   (<ulink url="https://dsf.berkeley.edu/jmh/"></ulink>) for elucidating the
    gist of the GiST (<ulink url="http://gist.cs.berkeley.edu/"></ulink>). I am
    also grateful to all Postgres developers, present and past, for enabling
    myself to create my own world and live undisturbed in it. And I would like

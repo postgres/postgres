@@ -3107,7 +3107,7 @@ largehearted
     The <application>Snowball</application> dictionary template is based on a project
     by Martin Porter, inventor of the popular Porter's stemming algorithm
     for the English language.  Snowball now provides stemming algorithms for
-    many languages (see the <ulink url="http://snowballstem.org/">Snowball
+    many languages (see the <ulink url="https://snowballstem.org/">Snowball
     site</ulink> for more information).  Each algorithm understands how to
     reduce common variant forms of words to a base, or stem, spelling within
     its language.  A Snowball dictionary requires a <literal>language</literal>
