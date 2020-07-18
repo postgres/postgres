@@ -355,10 +355,10 @@ SELECT isbn13(id) FROM test;
    The information to implement this module was collected from
    several sites, including:
    <itemizedlist>
-    <listitem><para><ulink url="http://www.isbn-international.org/"></ulink></para></listitem>
-    <listitem><para><ulink url="http://www.issn.org/"></ulink></para></listitem>
-    <listitem><para><ulink url="http://www.ismn-international.org/"></ulink></para></listitem>
-    <listitem><para><ulink url="http://www.wikipedia.org/"></ulink></para></listitem>
+    <listitem><para><ulink url="https://www.isbn-international.org/"></ulink></para></listitem>
+    <listitem><para><ulink url="https://www.issn.org/"></ulink></para></listitem>
+    <listitem><para><ulink url="https://www.ismn-international.org/"></ulink></para></listitem>
+    <listitem><para><ulink url="https://www.wikipedia.org/"></ulink></para></listitem>
    </itemizedlist>
 
    The prefixes used for hyphenation were also compiled from:

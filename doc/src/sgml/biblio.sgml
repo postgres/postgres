@@ -12,7 +12,7 @@
    Some white papers and technical reports from the original
    <productname>POSTGRES</productname> development team
    are available at the University of California, Berkeley, Computer Science
-   Department <ulink url="http://db.cs.berkeley.edu/papers/">web site</ulink>.
+   Department <ulink url="https://dsf.berkeley.edu/papers/">web site</ulink>.
   </para>
 
   <bibliodiv>
@@ -205,7 +205,7 @@ ssimkovi@ag.or.at
    </biblioentry>
 
   <biblioentry id="FONG">
-   <title><ulink url="http://db.cs.berkeley.edu/papers/UCB-MS-zfong.pdf">The
+   <title><ulink url="https://dsf.berkeley.edu/papers/UCB-MS-zfong.pdf">The
    design and implementation of the <productname>POSTGRES</productname> query
    optimizer</ulink></title>
    <author>
@@ -322,7 +322,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="ROWE87">
    <biblioset relation="article">
-    <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M87-13.pdf">The <productname>POSTGRES</productname>
+    <title><ulink url="https://dsf.berkeley.edu/papers/ERL-M87-13.pdf">The <productname>POSTGRES</productname>
     data model</ulink></title>
     <authorgroup>
      <author>
@@ -344,7 +344,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="SESHADRI95">
    <biblioset relation="article">
-    <title><ulink url="http://citeseer.ist.psu.edu/seshadri95generalized.html">Generalized
+    <title><ulink url="https://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.40.5740">Generalized
     Partial Indexes</ulink></title>
     <authorgroup>
      <author>
@@ -373,7 +373,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON86">
    <biblioset relation="article">
-    <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M85-95.pdf">The
+    <title><ulink url="https://dsf.berkeley.edu/papers/ERL-M85-95.pdf">The
     design of <productname>POSTGRES</productname></ulink></title>
     <authorgroup>
      <author>
@@ -420,7 +420,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON87b">
    <biblioset relation="article">
-    <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M87-06.pdf">The
+    <title><ulink url="https://dsf.berkeley.edu/papers/ERL-M87-06.pdf">The
     design of the <productname>POSTGRES</productname> storage
     system</ulink></title>
     <authorgroup>
@@ -439,7 +439,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON89">
    <biblioset relation="article">
-    <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M89-82.pdf">A
+    <title><ulink url="https://dsf.berkeley.edu/papers/ERL-M89-82.pdf">A
     commentary on the <productname>POSTGRES</productname> rules
     system</ulink></title>
     <authorgroup>
@@ -465,7 +465,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON89b">
    <biblioset relation="article">
-    <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M89-17.pdf">The
+    <title><ulink url="https://dsf.berkeley.edu/papers/ERL-M89-17.pdf">The
     case for partial indexes</ulink></title>
     <authorgroup>
      <author>
@@ -483,7 +483,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON90a">
    <biblioset relation="article">
-    <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M90-34.pdf">The
+    <title><ulink url="https://dsf.berkeley.edu/papers/ERL-M90-34.pdf">The
     implementation of <productname>POSTGRES</productname></ulink></title>
     <authorgroup>
      <author>
@@ -511,7 +511,7 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON90b">
    <biblioset relation="article">
-    <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M90-36.pdf">On
+    <title><ulink url="https://dsf.berkeley.edu/papers/ERL-M90-36.pdf">On
     Rules, Procedures, Caching and Views in Database Systems</ulink></title>
     <authorgroup>
      <author>
