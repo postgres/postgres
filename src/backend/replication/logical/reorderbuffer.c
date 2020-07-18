@@ -58,7 +58,7 @@
  *	  Only decoded changes are evicted from memory (spilled to disk), not the
  *	  transaction records. The number of toplevel transactions is limited,
  *	  but a transaction with many subtransactions may still consume significant
- *	  amounts of memory. The transaction records are fairly small though and
+ *	  amounts of memory. However, the transaction records are fairly small and
  *	  are not included in the memory limit.
  *
  *	  The current eviction algorithm is very simple - the transaction is
