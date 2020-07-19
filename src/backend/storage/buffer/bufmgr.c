@@ -1636,11 +1636,13 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
 				result = (buf_state & BM_VALID) != 0;
 
 				/*
-				 * If we successfully acquired our first pin on this buffer
-				 * within this backend, mark buffer contents defined
+				 * Assume that we acquired a buffer pin for the purposes of
+				 * Valgrind buffer client checks (even in !result case) to
+				 * keep things simple.  Buffers that are unsafe to access are
+				 * not generally guaranteed to be marked undefined in any
+				 * case.
 				 */
-				if (result)
-					VALGRIND_MAKE_MEM_DEFINED(BufHdrGetBlock(buf), BLCKSZ);
+				VALGRIND_MAKE_MEM_DEFINED(BufHdrGetBlock(buf), BLCKSZ);
 				break;
 			}
 		}
