@@ -1206,6 +1206,9 @@ fi
 
 if test "$with_openssl" = yes ; then
   dnl Order matters!
+  # Minimum required OpenSSL version is 1.0.1
+  AC_DEFINE(OPENSSL_API_COMPAT, [0x10001000L],
+            [Define to the OpenSSL API version in use. This avoids deprecation warnings from newer OpenSSL versions.])
   if test "$PORTNAME" != "win32"; then
      AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
      AC_CHECK_LIB(ssl,    SSL_new, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])

@@ -749,6 +749,10 @@
 /* Define bytes to use libc memset(). */
 #undef MEMSET_LOOP_LIMIT
 
+/* Define to the OpenSSL API version in use. This avoids deprecation warnings
+   from newer OpenSSL versions. */
+#undef OPENSSL_API_COMPAT
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 

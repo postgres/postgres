@@ -12174,7 +12174,11 @@ fi
 fi
 
 if test "$with_openssl" = yes ; then
-    if test "$PORTNAME" != "win32"; then
+    # Minimum required OpenSSL version is 1.0.1
+
+$as_echo "#define OPENSSL_API_COMPAT 0x10001000L" >>confdefs.h
+
+  if test "$PORTNAME" != "win32"; then
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CRYPTO_new_ex_data in -lcrypto" >&5
 $as_echo_n "checking for CRYPTO_new_ex_data in -lcrypto... " >&6; }
 if ${ac_cv_lib_crypto_CRYPTO_new_ex_data+:} false; then :

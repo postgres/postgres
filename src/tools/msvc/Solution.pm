@@ -152,6 +152,8 @@ sub GenerateFiles
 	my $package_bugreport;
 	my $package_url;
 	my ($majorver, $minorver);
+	my $ac_define_openssl_api_compat_found = 0;
+	my $openssl_api_compat;
 
 	# Parse configure.in to get version numbers
 	open(my $c, '<', "configure.in")
@@ -176,10 +178,15 @@ sub GenerateFiles
 			$majorver = sprintf("%d", $1);
 			$minorver = sprintf("%d", $2 ? $2 : 0);
 		}
+		elsif (/\bAC_DEFINE\(OPENSSL_API_COMPAT, \[([0-9xL]+)\]/)
+		{
+			$ac_define_openssl_api_compat_found = 1;
+			$openssl_api_compat = $1;
+		}
 	}
 	close($c);
 	confess "Unable to parse configure.in for all variables!"
-	  unless $ac_init_found;
+	  unless $ac_init_found && $ac_define_openssl_api_compat_found;
 
 	if (IsNewer("src/include/pg_config_os.h", "src/include/port/win32.h"))
 	{
@@ -433,6 +440,7 @@ sub GenerateFiles
 		LOCALE_T_IN_XLOCALE                      => undef,
 		MAXIMUM_ALIGNOF                          => 8,
 		MEMSET_LOOP_LIMIT                        => 1024,
+		OPENSSL_API_COMPAT                       => $openssl_api_compat,
 		PACKAGE_BUGREPORT                        => qq{"$package_bugreport"},
 		PACKAGE_NAME                             => qq{"$package_name"},
 		PACKAGE_STRING      => qq{"$package_name $package_version"},
