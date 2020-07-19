@@ -7517,8 +7517,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>subslotname</structfield> <type>name</type>
       </para>
       <para>
-       Name of the replication slot in the upstream database. Also used
-       for local replication origin name.
+       Name of the replication slot in the upstream database (also used
+       for the local replication origin name);
+       null represents <literal>NONE</literal>
       </para></entry>
      </row>
 

@@ -53,7 +53,7 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	text		subconninfo BKI_FORCE_NOT_NULL;
 
 	/* Slot name on publisher */
-	NameData	subslotname;
+	NameData	subslotname BKI_FORCE_NULL;
 
 	/* Synchronous commit setting for worker */
 	text		subsynccommit BKI_FORCE_NOT_NULL;
