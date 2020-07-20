@@ -88,7 +88,7 @@ extern uint32 bootstrap_data_checksum_version;
 /* User-settable parameters */
 int			max_wal_size_mb = 1024; /* 1 GB */
 int			min_wal_size_mb = 80;	/* 80 MB */
-int			wal_keep_segments = 0;
+int			wal_keep_size_mb = 0;
 int			XLOGbuffers = -1;
 int			XLogArchiveTimeout = 0;
 int			XLogArchiveMode = ARCHIVE_MODE_OFF;
@@ -9525,7 +9525,7 @@ GetWALAvailability(XLogRecPtr targetLSN)
 
 	/*
 	 * Calculate the oldest segment currently reserved by all slots,
-	 * considering wal_keep_segments and max_slot_wal_keep_size.  Initialize
+	 * considering wal_keep_size and max_slot_wal_keep_size.  Initialize
 	 * oldestSlotSeg to the current segment.
 	 */
 	currpos = GetXLogWriteRecPtr();
@@ -9576,9 +9576,9 @@ GetWALAvailability(XLogRecPtr targetLSN)
 
 /*
  * Retreat *logSegNo to the last segment that we need to retain because of
- * either wal_keep_segments or replication slots.
+ * either wal_keep_size or replication slots.
  *
- * This is calculated by subtracting wal_keep_segments from the given xlog
+ * This is calculated by subtracting wal_keep_size from the given xlog
  * location, recptr and by making sure that that result is below the
  * requirement of replication slots.  For the latter criterion we do consider
  * the effects of max_slot_wal_keep_size: reserve at most that much space back
@@ -9616,14 +9616,20 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 		}
 	}
 
-	/* but, keep at least wal_keep_segments if that's set */
-	if (wal_keep_segments > 0 && currSegNo - segno < wal_keep_segments)
+	/* but, keep at least wal_keep_size if that's set */
+	if (wal_keep_size_mb > 0)
 	{
-		/* avoid underflow, don't go below 1 */
-		if (currSegNo <= wal_keep_segments)
-			segno = 1;
-		else
-			segno = currSegNo - wal_keep_segments;
+		uint64		keep_segs;
+
+		keep_segs = ConvertToXSegs(wal_keep_size_mb, wal_segment_size);
+		if (currSegNo - segno < keep_segs)
+		{
+			/* avoid underflow, don't go below 1 */
+			if (currSegNo <= keep_segs)
+				segno = 1;
+			else
+				segno = currSegNo - keep_segs;
+		}
 	}
 
 	/* don't delete WAL segments newer than the calculated segment */
@@ -11328,7 +11334,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * If archiving is enabled, wait for all the required WAL files to be
 	 * archived before returning. If archiving isn't enabled, the required WAL
 	 * needs to be transported via streaming replication (hopefully with
-	 * wal_keep_segments set high enough), or some more exotic mechanism like
+	 * wal_keep_size set high enough), or some more exotic mechanism like
 	 * polling and copying files from pg_wal with script. We have no knowledge
 	 * of those mechanisms, so it's up to the user to ensure that he gets all
 	 * the required WAL.

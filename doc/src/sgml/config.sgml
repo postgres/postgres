@@ -3151,7 +3151,7 @@ include_dir 'conf.d'
         checkpoints. This is a soft limit; WAL size can exceed
         <varname>max_wal_size</varname> under special circumstances, such as
         heavy load, a failing <varname>archive_command</varname>, or a high
-        <varname>wal_keep_segments</varname> setting.
+        <varname>wal_keep_size</varname> setting.
         If this value is specified without units, it is taken as megabytes.
         The default is 1 GB.
         Increasing this parameter can increase the amount of time needed for
@@ -3778,21 +3778,21 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-wal-keep-segments" xreflabel="wal_keep_segments">
-       <term><varname>wal_keep_segments</varname> (<type>integer</type>)
+      <varlistentry id="guc-wal-keep-size" xreflabel="wal_keep_size">
+       <term><varname>wal_keep_size</varname> (<type>integer</type>)
        <indexterm>
-        <primary><varname>wal_keep_segments</varname> configuration parameter</primary>
+        <primary><varname>wal_keep_size</varname> configuration parameter</primary>
        </indexterm>
        </term>
        <listitem>
        <para>
-        Specifies the minimum number of past log file segments kept in the
+        Specifies the minimum size of past log file segments kept in the
         <filename>pg_wal</filename>
         directory, in case a standby server needs to fetch them for streaming
-        replication. Each segment is normally 16 megabytes. If a standby
+        replication. If a standby
         server connected to the sending server falls behind by more than
-        <varname>wal_keep_segments</varname> segments, the sending server might remove
-        a WAL segment still needed by the standby, in which case the
+        <varname>wal_keep_size</varname> megabytes, the sending server might
+        remove a WAL segment still needed by the standby, in which case the
         replication connection will be terminated.  Downstream connections
         will also eventually fail as a result.  (However, the standby
         server can recover by fetching the segment from archive, if WAL
@@ -3800,14 +3800,15 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </para>
 
        <para>
-        This sets only the minimum number of segments retained in
+        This sets only the minimum size of segments retained in
         <filename>pg_wal</filename>; the system might need to retain more segments
         for WAL archival or to recover from a checkpoint. If
-        <varname>wal_keep_segments</varname> is zero (the default), the system
+        <varname>wal_keep_size</varname> is zero (the default), the system
         doesn't keep any extra segments for standby purposes, so the number
         of old WAL segments available to standby servers is a function of
         the location of the previous checkpoint and status of WAL
         archiving.
+        If this value is specified without units, it is taken as megabytes.
         This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command line.
        </para>

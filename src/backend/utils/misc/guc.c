@@ -2636,12 +2636,13 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"wal_keep_segments", PGC_SIGHUP, REPLICATION_SENDING,
-			gettext_noop("Sets the number of WAL files held for standby servers."),
-			NULL
+		{"wal_keep_size", PGC_SIGHUP, REPLICATION_SENDING,
+			gettext_noop("Sets the size of WAL files held for standby servers."),
+			NULL,
+			GUC_UNIT_MB
 		},
-		&wal_keep_segments,
-		0, 0, INT_MAX,
+		&wal_keep_size_mb,
+		0, 0, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 

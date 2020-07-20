@@ -11278,7 +11278,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
          <para><literal>extended</literal> means
           that <varname>max_wal_size</varname> is exceeded but the files are
           still retained, either by the replication slot or
-          by <varname>wal_keep_segments</varname>.
+          by <varname>wal_keep_size</varname>.
          </para>
         </listitem>
         <listitem>

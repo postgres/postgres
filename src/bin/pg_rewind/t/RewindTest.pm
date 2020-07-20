@@ -135,11 +135,11 @@ sub setup_cluster
 		extra            => $extra,
 		auth_extra       => [ '--create-role', 'rewind_user' ]);
 
-	# Set wal_keep_segments to prevent WAL segment recycling after enforced
+	# Set wal_keep_size to prevent WAL segment recycling after enforced
 	# checkpoints in the tests.
 	$node_primary->append_conf(
 		'postgresql.conf', qq(
-wal_keep_segments = 20
+wal_keep_size = 320MB
 ));
 	return;
 }

@@ -116,19 +116,19 @@ $start_lsn = $node_primary->lsn('write');
 $node_primary->wait_for_catchup($node_standby, 'replay', $start_lsn);
 $node_standby->stop;
 
-# wal_keep_segments overrides max_slot_wal_keep_size
+# wal_keep_size overrides max_slot_wal_keep_size
 $result = $node_primary->safe_psql('postgres',
-	"ALTER SYSTEM SET wal_keep_segments to 8; SELECT pg_reload_conf();");
+	"ALTER SYSTEM SET wal_keep_size to '8MB'; SELECT pg_reload_conf();");
 # Advance WAL again then checkpoint, reducing remain by 6 MB.
 advance_wal($node_primary, 6);
 $result = $node_primary->safe_psql('postgres',
 	"SELECT wal_status as remain FROM pg_replication_slots WHERE slot_name = 'rep1'"
 );
 is($result, "extended",
-	'check that wal_keep_segments overrides max_slot_wal_keep_size');
-# restore wal_keep_segments
+	'check that wal_keep_size overrides max_slot_wal_keep_size');
+# restore wal_keep_size
 $result = $node_primary->safe_psql('postgres',
-	"ALTER SYSTEM SET wal_keep_segments to 0; SELECT pg_reload_conf();");
+	"ALTER SYSTEM SET wal_keep_size to 0; SELECT pg_reload_conf();");
 
 # The standby can reconnect to primary
 $node_standby->start;
