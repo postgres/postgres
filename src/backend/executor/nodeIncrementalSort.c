@@ -65,8 +65,8 @@
  *	into the second mode if we believe it's beneficial.
  *
  *	Sorting incrementally can potentially use less memory, avoid fetching
- *	and sorting all tuples in the the dataset, and begin returning tuples
- *	before the entire result set is available.
+ *	and sorting all tuples in the dataset, and begin returning tuples before
+ *	the entire result set is available.
  *
  *	The hybrid mode approach allows us to optimize for both very small
  *	groups (where the overhead of a new tuplesort is high) and very	large
