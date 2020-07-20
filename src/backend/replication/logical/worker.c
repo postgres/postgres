@@ -354,6 +354,8 @@ slot_store_data(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 		{
 			StringInfo	colvalue = &tupleData->colvalues[remoteattnum];
 
+			Assert(remoteattnum < tupleData->ncols);
+
 			errarg.local_attnum = i;
 			errarg.remote_attnum = remoteattnum;
 
@@ -476,6 +478,8 @@ slot_modify_data(TupleTableSlot *slot, TupleTableSlot *srcslot,
 
 		if (remoteattnum < 0)
 			continue;
+
+		Assert(remoteattnum < tupleData->ncols);
 
 		if (tupleData->colstatus[remoteattnum] != LOGICALREP_COLUMN_UNCHANGED)
 		{
@@ -831,9 +835,17 @@ apply_handle_update(StringInfo s)
 	target_rte = list_nth(estate->es_range_table, 0);
 	for (int i = 0; i < remoteslot->tts_tupleDescriptor->natts; i++)
 	{
-		if (newtup.colstatus[i] != LOGICALREP_COLUMN_UNCHANGED)
-			target_rte->updatedCols = bms_add_member(target_rte->updatedCols,
-													 i + 1 - FirstLowInvalidHeapAttributeNumber);
+		Form_pg_attribute att = TupleDescAttr(remoteslot->tts_tupleDescriptor, i);
+		int			remoteattnum = rel->attrmap->attnums[i];
+
+		if (!att->attisdropped && remoteattnum >= 0)
+		{
+			Assert(remoteattnum < newtup.ncols);
+			if (newtup.colstatus[remoteattnum] != LOGICALREP_COLUMN_UNCHANGED)
+				target_rte->updatedCols =
+					bms_add_member(target_rte->updatedCols,
+								   i + 1 - FirstLowInvalidHeapAttributeNumber);
+		}
 	}
 
 	fill_extraUpdatedCols(target_rte, RelationGetDescr(rel->localrel));

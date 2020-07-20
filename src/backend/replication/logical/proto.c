@@ -548,6 +548,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 	/* Allocate space for per-column values; zero out unused StringInfoDatas */
 	tuple->colvalues = (StringInfoData *) palloc0(natts * sizeof(StringInfoData));
 	tuple->colstatus = (char *) palloc(natts * sizeof(char));
+	tuple->ncols = natts;
 
 	/* Read the data */
 	for (i = 0; i < natts; i++)

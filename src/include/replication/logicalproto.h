@@ -27,13 +27,18 @@
 #define LOGICALREP_PROTO_MIN_VERSION_NUM 1
 #define LOGICALREP_PROTO_VERSION_NUM 1
 
-/* Tuple coming via logical replication. */
+/*
+ * This struct stores a tuple received via logical replication.
+ * Keep in mind that the columns correspond to the *remote* table.
+ */
 typedef struct LogicalRepTupleData
 {
 	/* Array of StringInfos, one per column; some may be unused */
 	StringInfoData *colvalues;
 	/* Array of markers for null/unchanged/text/binary, one per column */
 	char	   *colstatus;
+	/* Length of above arrays */
+	int			ncols;
 } LogicalRepTupleData;
 
 /* Possible values for LogicalRepTupleData.colstatus[colnum] */

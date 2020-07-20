@@ -19,14 +19,14 @@ $node_subscriber->start;
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_fk (bid int PRIMARY KEY);");
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
+	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, junk text, bid int REFERENCES tab_fk (bid));"
 );
 
-# Setup structure on subscriber
+# Setup structure on subscriber; column order intentionally different
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE tab_fk (bid int PRIMARY KEY);");
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid));"
+	"CREATE TABLE tab_fk_ref (id int PRIMARY KEY, bid int REFERENCES tab_fk (bid), junk text);"
 );
 
 # Setup logical replication
@@ -42,8 +42,10 @@ $node_publisher->wait_for_catchup('tap_sub');
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_fk (bid) VALUES (1);");
+# "junk" value is meant to be large enough to force out-of-line storage
 $node_publisher->safe_psql('postgres',
-	"INSERT INTO tab_fk_ref (id, bid) VALUES (1, 1);");
+	"INSERT INTO tab_fk_ref (id, bid, junk) VALUES (1, 1, repeat(pi()::text,20000));"
+);
 
 $node_publisher->wait_for_catchup('tap_sub');
 
@@ -128,7 +130,7 @@ $node_publisher->wait_for_catchup('tap_sub');
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(id), max(id) FROM tab_fk_ref;");
 is($result, qq(2|1|2),
-	'check column trigger applied on even for other column');
+	'check column trigger applied even on update for other column');
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
