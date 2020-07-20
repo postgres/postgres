@@ -1,6 +1,6 @@
 # btree_gist extension
 comment = 'support for indexing common datatypes in GiST'
-default_version = '1.5'
+default_version = '1.6'
 module_pathname = '$libdir/btree_gist'
 relocatable = true
 trusted = true
