@@ -147,6 +147,13 @@ DROP SUBSCRIPTION testsub;
 ERROR:  DROP SUBSCRIPTION cannot run inside a transaction block
 COMMIT;
 ALTER SUBSCRIPTION testsub SET (slot_name = NONE);
+\dRs+
+                                              List of subscriptions
+  Name   |           Owner            | Enabled |     Publication     | Synchronous commit |       Conninfo       
+---------+----------------------------+---------+---------------------+--------------------+----------------------
+ testsub | regress_subscription_user2 | f       | {testpub2,testpub3} | local              | dbname=doesnotexist2
+(1 row)
+
 -- now it works
 BEGIN;
 DROP SUBSCRIPTION testsub;

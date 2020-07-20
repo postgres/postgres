@@ -109,6 +109,8 @@ COMMIT;
 
 ALTER SUBSCRIPTION testsub SET (slot_name = NONE);
 
+\dRs+
+
 -- now it works
 BEGIN;
 DROP SUBSCRIPTION testsub;
