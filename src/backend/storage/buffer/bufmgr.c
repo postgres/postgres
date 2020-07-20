@@ -3743,7 +3743,7 @@ LockBuffer(Buffer buffer, int mode)
 {
 	BufferDesc *buf;
 
-	Assert(BufferIsValid(buffer));
+	Assert(BufferIsPinned(buffer));
 	if (BufferIsLocal(buffer))
 		return;					/* local buffers need no lock */
 
@@ -3769,7 +3769,7 @@ ConditionalLockBuffer(Buffer buffer)
 {
 	BufferDesc *buf;
 
-	Assert(BufferIsValid(buffer));
+	Assert(BufferIsPinned(buffer));
 	if (BufferIsLocal(buffer))
 		return true;			/* act as though we got it */
 
@@ -3801,7 +3801,7 @@ LockBufferForCleanup(Buffer buffer)
 	BufferDesc *bufHdr;
 	char	   *new_status = NULL;
 
-	Assert(BufferIsValid(buffer));
+	Assert(BufferIsPinned(buffer));
 	Assert(PinCountWaitBuf == NULL);
 
 	if (BufferIsLocal(buffer))
