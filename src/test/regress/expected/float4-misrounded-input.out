@@ -143,6 +143,12 @@ SELECT 'nan'::float4 / 'nan'::float4;
       NaN
 (1 row)
 
+SELECT 'nan'::float4 / '0'::float4;
+ ?column? 
+----------
+      NaN
+(1 row)
+
 SELECT 'nan'::numeric::float4;
  float4 
 --------
