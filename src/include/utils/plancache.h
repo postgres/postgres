@@ -130,7 +130,8 @@ typedef struct CachedPlanSource
 	/* State kept to help decide whether to use custom or generic plans: */
 	double		generic_cost;	/* cost of generic plan, or -1 if not known */
 	double		total_custom_cost;	/* total cost of custom plans so far */
-	int			num_custom_plans;	/* number of plans included in total */
+	int64		num_custom_plans;	/* # of custom plans included in total */
+	int64		num_generic_plans;	/* # of generic plans */
 } CachedPlanSource;
 
 /*

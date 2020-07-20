@@ -10841,6 +10841,24 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        frontend/backend protocol
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>generic_plans</structfield> <type>int8</type>
+      </para>
+      <para>
+       Number of times generic plan was chosen
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>custom_plans</structfield> <type>int8</type>
+      </para>
+      <para>
+       Number of times custom plan was chosen
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

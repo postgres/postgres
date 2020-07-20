@@ -186,13 +186,20 @@ create index on test_mode (a);
 analyze test_mode;
 
 prepare test_mode_pp (int) as select count(*) from test_mode where a = $1;
+select name, generic_plans, custom_plans from pg_prepared_statements
+  where  name = 'test_mode_pp';
 
 -- up to 5 executions, custom plan is used
+set plan_cache_mode to auto;
 explain (costs off) execute test_mode_pp(2);
+select name, generic_plans, custom_plans from pg_prepared_statements
+  where  name = 'test_mode_pp';
 
 -- force generic plan
 set plan_cache_mode to force_generic_plan;
 explain (costs off) execute test_mode_pp(2);
+select name, generic_plans, custom_plans from pg_prepared_statements
+  where  name = 'test_mode_pp';
 
 -- get to generic plan by 5 executions
 set plan_cache_mode to auto;
@@ -200,7 +207,11 @@ execute test_mode_pp(1); -- 1x
 execute test_mode_pp(1); -- 2x
 execute test_mode_pp(1); -- 3x
 execute test_mode_pp(1); -- 4x
+select name, generic_plans, custom_plans from pg_prepared_statements
+  where  name = 'test_mode_pp';
 execute test_mode_pp(1); -- 5x
+select name, generic_plans, custom_plans from pg_prepared_statements
+  where  name = 'test_mode_pp';
 
 -- we should now get a really bad plan
 explain (costs off) execute test_mode_pp(2);
@@ -208,5 +219,7 @@ explain (costs off) execute test_mode_pp(2);
 -- but we can force a custom plan
 set plan_cache_mode to force_custom_plan;
 explain (costs off) execute test_mode_pp(2);
+select name, generic_plans, custom_plans from pg_prepared_statements
+  where  name = 'test_mode_pp';
 
 drop table test_mode;

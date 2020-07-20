@@ -218,6 +218,7 @@ CreateCachedPlan(RawStmt *raw_parse_tree,
 	plansource->generation = 0;
 	plansource->generic_cost = -1;
 	plansource->total_custom_cost = 0;
+	plansource->num_generic_plans = 0;
 	plansource->num_custom_plans = 0;
 
 	MemoryContextSwitchTo(oldcxt);
@@ -285,6 +286,7 @@ CreateOneShotCachedPlan(RawStmt *raw_parse_tree,
 	plansource->generation = 0;
 	plansource->generic_cost = -1;
 	plansource->total_custom_cost = 0;
+	plansource->num_generic_plans = 0;
 	plansource->num_custom_plans = 0;
 
 	return plansource;
@@ -1213,12 +1215,14 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 	{
 		/* Build a custom plan */
 		plan = BuildCachedPlan(plansource, qlist, boundParams, queryEnv);
-		/* Accumulate total costs of custom plans, but 'ware overflow */
-		if (plansource->num_custom_plans < INT_MAX)
-		{
-			plansource->total_custom_cost += cached_plan_cost(plan, true);
-			plansource->num_custom_plans++;
-		}
+		/* Accumulate total costs of custom plans */
+		plansource->total_custom_cost += cached_plan_cost(plan, true);
+
+		plansource->num_custom_plans++;
+	}
+	else
+	{
+		plansource->num_generic_plans++;
 	}
 
 	Assert(plan != NULL);
@@ -1574,6 +1578,7 @@ CopyCachedPlan(CachedPlanSource *plansource)
 	/* We may as well copy any acquired cost knowledge */
 	newsource->generic_cost = plansource->generic_cost;
 	newsource->total_custom_cost = plansource->total_custom_cost;
+	newsource->num_generic_plans = plansource->num_generic_plans;
 	newsource->num_custom_plans = plansource->num_custom_plans;
 
 	MemoryContextSwitchTo(oldcxt);
