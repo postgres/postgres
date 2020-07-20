@@ -732,9 +732,16 @@ apply_handle_update(StringInfo s)
 	target_rte = list_nth(estate->es_range_table, 0);
 	for (int i = 0; i < remoteslot->tts_tupleDescriptor->natts; i++)
 	{
-		if (newtup.changed[i])
-			target_rte->updatedCols = bms_add_member(target_rte->updatedCols,
-													 i + 1 - FirstLowInvalidHeapAttributeNumber);
+		Form_pg_attribute att = TupleDescAttr(remoteslot->tts_tupleDescriptor, i);
+		int			remoteattnum = rel->attrmap[i];
+
+		if (!att->attisdropped && remoteattnum >= 0)
+		{
+			if (newtup.changed[remoteattnum])
+				target_rte->updatedCols =
+					bms_add_member(target_rte->updatedCols,
+								   i + 1 - FirstLowInvalidHeapAttributeNumber);
+		}
 	}
 
 	fill_extraUpdatedCols(target_rte, RelationGetDescr(rel->localrel));
