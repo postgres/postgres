@@ -191,6 +191,7 @@ typedef struct TransactionStateData
 	bool		didLogXid;		/* has xid been included in WAL record? */
 	int			parallelModeLevel;	/* Enter/ExitParallelMode counter */
 	bool		chain;			/* start a new block after this one */
+	bool		assigned;		/* assigned to top-level XID */
 	struct TransactionStateData *parent;	/* back link to parent */
 } TransactionStateData;
 
@@ -223,6 +224,7 @@ typedef struct SerializedTransactionState
 static TransactionStateData TopTransactionStateData = {
 	.state = TRANS_DEFAULT,
 	.blockState = TBLOCK_DEFAULT,
+	.assigned = false,
 };
 
 /*
@@ -5120,6 +5122,7 @@ PushTransaction(void)
 	GetUserIdAndSecContext(&s->prevUser, &s->prevSecContext);
 	s->prevXactReadOnly = XactReadOnly;
 	s->parallelModeLevel = 0;
+	s->assigned = false;
 
 	CurrentTransactionState = s;
 
@@ -6021,4 +6024,51 @@ xact_redo(XLogReaderState *record)
 	}
 	else
 		elog(PANIC, "xact_redo: unknown op code %u", info);
+}
+
+/*
+ * IsSubTransactionAssignmentPending
+ *
+ * This is used to decide whether we need to WAL log the top-level XID for
+ * operation in a subtransaction.  We require that for logical decoding, see
+ * LogicalDecodingProcessRecord.
+ *
+ * This returns true if wal_level >= logical and we are inside a valid
+ * subtransaction, for which the assignment was not yet written to any WAL
+ * record.
+ */
+bool
+IsSubTransactionAssignmentPending(void)
+{
+	/* wal_level has to be logical */
+	if (!XLogLogicalInfoActive())
+		return false;
+
+	/* we need to be in a transaction state */
+	if (!IsTransactionState())
+		return false;
+
+	/* it has to be a subtransaction */
+	if (!IsSubTransaction())
+		return false;
+
+	/* the subtransaction has to have a XID assigned */
+	if (!TransactionIdIsValid(GetCurrentTransactionIdIfAny()))
+		return false;
+
+	/* and it should not be already 'assigned' */
+	return !CurrentTransactionState->assigned;
+}
+
+/*
+ * MarkSubTransactionAssigned
+ *
+ * Mark the subtransaction assignment as completed.
+ */
+void
+MarkSubTransactionAssigned(void)
+{
+	Assert(IsSubTransactionAssignmentPending());
+
+	CurrentTransactionState->assigned = true;
 }
