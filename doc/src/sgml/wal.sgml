@@ -578,7 +578,8 @@
 
   <para>
    Independently of <varname>max_wal_size</varname>,
-   <xref linkend="guc-wal-keep-segments"/> + 1 most recent WAL files are
+   the most recent <xref linkend="guc-wal-keep-size"/> megabytes of
+   WAL files plus one additional WAL file are
    kept at all times. Also, if WAL archiving is used, old segments can not be
    removed or recycled until they are archived. If WAL archiving cannot keep up
    with the pace that WAL is generated, or if <varname>archive_command</varname>

@@ -413,19 +413,20 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 		{
 			XLogSegNo   targetSeg;
-			XLogSegNo   keepSegs;
+			uint64   slotKeepSegs;
+			uint64   keepSegs;
 			XLogSegNo   failSeg;
 			XLogRecPtr  failLSN;
 
 			XLByteToSeg(slot_contents.data.restart_lsn, targetSeg, wal_segment_size);
 
-			/* determine how many segments slots can be kept by slots ... */
-			keepSegs = XLogMBVarToSegs(max_slot_wal_keep_size_mb, wal_segment_size);
-			/* ... and override by wal_keep_segments as needed */
-			keepSegs = Max(keepSegs, wal_keep_segments);
+			/* determine how many segments slots can be kept by slots */
+			slotKeepSegs = XLogMBVarToSegs(max_slot_wal_keep_size_mb, wal_segment_size);
+			/* ditto for wal_keep_size */
+			keepSegs = XLogMBVarToSegs(wal_keep_size_mb, wal_segment_size);
 
 			/* if currpos reaches failLSN, we lose our segment */
-			failSeg = targetSeg + keepSegs + 1;
+			failSeg = targetSeg + Max(slotKeepSegs, keepSegs) + 1;
 			XLogSegNoOffsetToRecPtr(failSeg, 0, wal_segment_size, failLSN);
 
 			values[i++] = Int64GetDatum(failLSN - currlsn);

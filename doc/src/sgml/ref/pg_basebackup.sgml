@@ -305,7 +305,7 @@ PostgreSQL documentation
            <para>
             The write-ahead log files are collected at the end of the backup.
             Therefore, it is necessary for the
-            <xref linkend="guc-wal-keep-segments"/> parameter to be set high
+            <xref linkend="guc-wal-keep-size"/> parameter to be set high
              enough that the log is not removed before the end of the backup.
              If the log has been rotated when it's time to transfer it, the
              backup will fail and be unusable.
