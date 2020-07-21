@@ -41,13 +41,17 @@ CATALOG(pg_partitioned_table,3350,PartitionedRelationId)
 	 * field of a heap tuple can be reliably accessed using its C struct
 	 * offset, as previous fields are all non-nullable fixed-length fields.
 	 */
-	int2vector	partattrs;		/* each member of the array is the attribute
-								 * number of a partition key column, or 0 if
-								 * the column is actually an expression */
+	int2vector	partattrs BKI_FORCE_NOT_NULL;	/* each member of the array is
+												 * the attribute number of a
+												 * partition key column, or 0
+												 * if the column is actually
+												 * an expression */
 
 #ifdef CATALOG_VARLEN
-	oidvector	partclass;		/* operator class to compare keys */
-	oidvector	partcollation;	/* user-specified collation for keys */
+	oidvector	partclass BKI_FORCE_NOT_NULL;	/* operator class to compare
+												 * keys */
+	oidvector	partcollation BKI_FORCE_NOT_NULL;	/* user-specified
+													 * collation for keys */
 	pg_node_tree partexprs;		/* list of expressions in the partition key;
 								 * one item for each zero entry in partattrs[] */
 #endif

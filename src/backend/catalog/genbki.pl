@@ -713,8 +713,8 @@ sub gen_pg_attribute
 		push @tables_needing_macros, $table_name;
 
 		# Generate entries for user attributes.
-		my $attnum       = 0;
-		my $priornotnull = 1;
+		my $attnum          = 0;
+		my $priorfixedwidth = 1;
 		foreach my $attr (@{ $table->{columns} })
 		{
 			$attnum++;
@@ -722,8 +722,12 @@ sub gen_pg_attribute
 			$row{attnum}   = $attnum;
 			$row{attrelid} = $table->{relation_oid};
 
-			morph_row_for_pgattr(\%row, $schema, $attr, $priornotnull);
-			$priornotnull &= ($row{attnotnull} eq 't');
+			morph_row_for_pgattr(\%row, $schema, $attr, $priorfixedwidth);
+
+			# Update $priorfixedwidth --- must match morph_row_for_pgattr
+			$priorfixedwidth &=
+			  ($row{attnotnull} eq 't'
+				  && ($row{attlen} eq 'NAMEDATALEN' || $row{attlen} > 0));
 
 			# If it's bootstrapped, put an entry in postgres.bki.
 			print_bki_insert(\%row, $schema) if $table->{bootstrap};
@@ -765,13 +769,13 @@ sub gen_pg_attribute
 
 # Given $pgattr_schema (the pg_attribute schema for a catalog sufficient for
 # AddDefaultValues), $attr (the description of a catalog row), and
-# $priornotnull (whether all prior attributes in this catalog are not null),
+# $priorfixedwidth (all prior columns are fixed-width and not null),
 # modify the $row hashref for print_bki_insert.  This includes setting data
 # from the corresponding pg_type element and filling in any default values.
 # Any value not handled here must be supplied by caller.
 sub morph_row_for_pgattr
 {
-	my ($row, $pgattr_schema, $attr, $priornotnull) = @_;
+	my ($row, $pgattr_schema, $attr, $priorfixedwidth) = @_;
 	my $attname = $attr->{name};
 	my $atttype = $attr->{type};
 
@@ -801,19 +805,18 @@ sub morph_row_for_pgattr
 	{
 		$row->{attnotnull} = 'f';
 	}
-	elsif ($priornotnull)
+	elsif ($priorfixedwidth)
 	{
 
 		# attnotnull will automatically be set if the type is
-		# fixed-width and prior columns are all NOT NULL ---
-		# compare DefineAttr in bootstrap.c. oidvector and
-		# int2vector are also treated as not-nullable.
+		# fixed-width and prior columns are likewise fixed-width
+		# and NOT NULL --- compare DefineAttr in bootstrap.c.
+		# At this point the width of type name is still symbolic,
+		# so we need a special test.
 		$row->{attnotnull} =
-		    $type->{typname} eq 'oidvector'  ? 't'
-		  : $type->{typname} eq 'int2vector' ? 't'
-		  : $type->{typlen} eq 'NAMEDATALEN' ? 't'
-		  : $type->{typlen} > 0              ? 't'
-		  :                                    'f';
+		    $row->{attlen} eq 'NAMEDATALEN' ? 't'
+		  : $row->{attlen} > 0              ? 't'
+		  :                                   'f';
 	}
 	else
 	{

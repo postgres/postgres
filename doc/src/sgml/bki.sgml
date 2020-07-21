@@ -119,7 +119,8 @@
    require all columns that should be non-nullable to be marked so
    in <structname>pg_attribute</structname>.  The bootstrap code will
    automatically mark catalog columns as <literal>NOT NULL</literal>
-   if they are fixed-width and are not preceded by any nullable column.
+   if they are fixed-width and are not preceded by any nullable or
+   variable-width column.
    Where this rule is inadequate, you can force correct marking by using
    <literal>BKI_FORCE_NOT_NULL</literal>
    and <literal>BKI_FORCE_NULL</literal> annotations as needed.

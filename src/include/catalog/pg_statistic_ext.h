@@ -47,7 +47,7 @@ CATALOG(pg_statistic_ext,3381,StatisticExtRelationId)
 	 * variable-length fields start here, but we allow direct access to
 	 * stxkeys
 	 */
-	int2vector	stxkeys;		/* array of column keys */
+	int2vector	stxkeys BKI_FORCE_NOT_NULL; /* array of column keys */
 
 #ifdef CATALOG_VARLEN
 	char		stxkind[1] BKI_FORCE_NOT_NULL;	/* statistics kinds requested

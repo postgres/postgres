@@ -44,12 +44,14 @@ CATALOG(pg_index,2610,IndexRelationId) BKI_SCHEMA_MACRO
 	bool		indisreplident; /* is this index the identity for replication? */
 
 	/* variable-length fields start here, but we allow direct access to indkey */
-	int2vector	indkey;			/* column numbers of indexed cols, or 0 */
+	int2vector	indkey BKI_FORCE_NOT_NULL;	/* column numbers of indexed cols,
+											 * or 0 */
 
 #ifdef CATALOG_VARLEN
-	oidvector	indcollation;	/* collation identifiers */
-	oidvector	indclass;		/* opclass identifiers */
-	int2vector	indoption;		/* per-column flags (AM-specific meanings) */
+	oidvector	indcollation BKI_FORCE_NOT_NULL;	/* collation identifiers */
+	oidvector	indclass BKI_FORCE_NOT_NULL;	/* opclass identifiers */
+	int2vector	indoption BKI_FORCE_NOT_NULL;	/* per-column flags
+												 * (AM-specific meanings) */
 	pg_node_tree indexprs;		/* expression trees for index attributes that
 								 * are not simple column references; one for
 								 * each zero entry in indkey[] */

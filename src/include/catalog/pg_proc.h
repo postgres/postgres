@@ -92,7 +92,7 @@ CATALOG(pg_proc,1255,ProcedureRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(81,Proce
 	 */
 
 	/* parameter types (excludes OUT params) */
-	oidvector	proargtypes BKI_LOOKUP(pg_type);
+	oidvector	proargtypes BKI_LOOKUP(pg_type) BKI_FORCE_NOT_NULL;
 
 #ifdef CATALOG_VARLEN
 

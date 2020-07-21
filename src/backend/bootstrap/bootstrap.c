@@ -770,25 +770,18 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 
 		/*
 		 * Mark as "not null" if type is fixed-width and prior columns are
-		 * too.  This corresponds to case where column can be accessed
-		 * directly via C struct declaration.
-		 *
-		 * oidvector and int2vector are also treated as not-nullable, even
-		 * though they are no longer fixed-width.
+		 * likewise fixed-width and not-null.  This corresponds to case where
+		 * column can be accessed directly via C struct declaration.
 		 */
-#define MARKNOTNULL(att) \
-		((att)->attlen > 0 || \
-		 (att)->atttypid == OIDVECTOROID || \
-		 (att)->atttypid == INT2VECTOROID)
-
-		if (MARKNOTNULL(attrtypes[attnum]))
+		if (attrtypes[attnum]->attlen > 0)
 		{
 			int			i;
 
 			/* check earlier attributes */
 			for (i = 0; i < attnum; i++)
 			{
-				if (!attrtypes[i]->attnotnull)
+				if (attrtypes[i]->attlen <= 0 ||
+					!attrtypes[i]->attnotnull)
 					break;
 			}
 			if (i == attnum)
