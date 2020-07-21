@@ -2775,6 +2775,7 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
 	SpecialJoinInfo *sjinfo = (SpecialJoinInfo *) PG_GETARG_POINTER(4);
+	Oid			collation = PG_GET_COLLATION();
 	float8		result;
 
 	if (jointype == JOIN_SEMI || jointype == JOIN_ANTI)
@@ -2821,12 +2822,14 @@ neqjoinsel(PG_FUNCTION_ARGS)
 
 		if (eqop)
 		{
-			result = DatumGetFloat8(DirectFunctionCall5(eqjoinsel,
-														PointerGetDatum(root),
-														ObjectIdGetDatum(eqop),
-														PointerGetDatum(args),
-														Int16GetDatum(jointype),
-														PointerGetDatum(sjinfo)));
+			result =
+				DatumGetFloat8(DirectFunctionCall5Coll(eqjoinsel,
+													   collation,
+													   PointerGetDatum(root),
+													   ObjectIdGetDatum(eqop),
+													   PointerGetDatum(args),
+													   Int16GetDatum(jointype),
+													   PointerGetDatum(sjinfo)));
 		}
 		else
 		{
