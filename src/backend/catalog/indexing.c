@@ -186,8 +186,9 @@ CatalogTupleCheckConstraints(Relation heapRel, HeapTuple tup)
 	{
 		TupleDesc	tupdesc = RelationGetDescr(heapRel);
 		bits8	   *bp = tup->t_data->t_bits;
+		int			attnum;
 
-		for (int attnum = 0; attnum < tupdesc->natts; attnum++)
+		for (attnum = 0; attnum < tupdesc->natts; attnum++)
 		{
 			Form_pg_attribute thisatt = TupleDescAttr(tupdesc, attnum);
 
