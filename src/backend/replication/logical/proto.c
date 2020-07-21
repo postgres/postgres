@@ -494,22 +494,9 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple, bool binar
 		typclass = (Form_pg_type) GETSTRUCT(typtup);
 
 		/*
-		 * Choose whether to send in binary.  Obviously, the option must be
-		 * requested and the type must have a send function.  Also, if the
-		 * type is not built-in then it must not be a composite or array type.
-		 * Such types contain type OIDs, which will likely not match at the
-		 * receiver if it's not a built-in type.
-		 *
-		 * XXX this could be relaxed if we changed record_recv and array_recv
-		 * to be less picky.
-		 *
-		 * XXX this fails to apply the restriction to domains over such types.
+		 * Send in binary if requested and type has suitable send function.
 		 */
-		if (binary &&
-			OidIsValid(typclass->typsend) &&
-			(att->atttypid < FirstGenbkiObjectId ||
-			 (typclass->typtype != TYPTYPE_COMPOSITE &&
-			  typclass->typelem == InvalidOid)))
+		if (binary && OidIsValid(typclass->typsend))
 		{
 			bytea	   *outputbytes;
 			int			len;

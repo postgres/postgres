@@ -1308,13 +1308,34 @@ array_recv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid array flags")));
 
+	/* Check element type recorded in the data */
 	element_type = pq_getmsgint(buf, sizeof(Oid));
+
+	/*
+	 * From a security standpoint, it doesn't matter whether the input's
+	 * element type matches what we expect: the element type's receive
+	 * function has to be robust enough to cope with invalid data.  However,
+	 * from a user-friendliness standpoint, it's nicer to complain about type
+	 * mismatches than to throw "improper binary format" errors.  But there's
+	 * a problem: only built-in types have OIDs that are stable enough to
+	 * believe that a mismatch is a real issue.  So complain only if both OIDs
+	 * are in the built-in range.  Otherwise, carry on with the element type
+	 * we "should" be getting.
+	 */
 	if (element_type != spec_element_type)
 	{
-		/* XXX Can we allow taking the input element type in any cases? */
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("wrong element type")));
+		if (element_type < FirstGenbkiObjectId &&
+			spec_element_type < FirstGenbkiObjectId)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("binary data has array element type %u (%s) instead of expected %u (%s)",
+							element_type,
+							format_type_extended(element_type, -1,
+												 FORMAT_TYPE_ALLOW_INVALID),
+							spec_element_type,
+							format_type_extended(spec_element_type, -1,
+												 FORMAT_TYPE_ALLOW_INVALID))));
+		element_type = spec_element_type;
 	}
 
 	for (i = 0; i < ndim; i++)
