@@ -525,6 +525,14 @@ window w as (order by f_float4 range between
 select id, f_float4, first_value(id) over w, last_value(id) over w
 from numerics
 window w as (order by f_float4 range between
+             'inf' preceding and 'inf' preceding);
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
+             'inf' following and 'inf' following);
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
              1.1 preceding and 'NaN' following);  -- error, NaN disallowed
 
 select id, f_float8, first_value(id) over w, last_value(id) over w
@@ -539,6 +547,14 @@ select id, f_float8, first_value(id) over w, last_value(id) over w
 from numerics
 window w as (order by f_float8 range between
              'inf' preceding and 'inf' following);
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             'inf' preceding and 'inf' preceding);
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             'inf' following and 'inf' following);
 select id, f_float8, first_value(id) over w, last_value(id) over w
 from numerics
 window w as (order by f_float8 range between

@@ -1939,6 +1939,42 @@ window w as (order by f_float4 range between
 select id, f_float4, first_value(id) over w, last_value(id) over w
 from numerics
 window w as (order by f_float4 range between
+             'inf' preceding and 'inf' preceding);
+ id | f_float4  | first_value | last_value 
+----+-----------+-------------+------------
+  0 | -Infinity |           0 |          0
+  1 |        -3 |           0 |          0
+  2 |        -1 |           0 |          0
+  3 |         0 |           0 |          0
+  4 |       1.1 |           0 |          0
+  5 |      1.12 |           0 |          0
+  6 |         2 |           0 |          0
+  7 |       100 |           0 |          0
+  8 |  Infinity |           0 |          8
+  9 |       NaN |           9 |          9
+(10 rows)
+
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
+             'inf' following and 'inf' following);
+ id | f_float4  | first_value | last_value 
+----+-----------+-------------+------------
+  0 | -Infinity |           0 |          8
+  1 |        -3 |           8 |          8
+  2 |        -1 |           8 |          8
+  3 |         0 |           8 |          8
+  4 |       1.1 |           8 |          8
+  5 |      1.12 |           8 |          8
+  6 |         2 |           8 |          8
+  7 |       100 |           8 |          8
+  8 |  Infinity |           8 |          8
+  9 |       NaN |           9 |          9
+(10 rows)
+
+select id, f_float4, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float4 range between
              1.1 preceding and 'NaN' following);  -- error, NaN disallowed
 ERROR:  invalid preceding or following size in window function
 select id, f_float8, first_value(id) over w, last_value(id) over w
@@ -1992,6 +2028,42 @@ window w as (order by f_float8 range between
   6 |         2 |           0 |          8
   7 |       100 |           0 |          8
   8 |  Infinity |           0 |          8
+  9 |       NaN |           9 |          9
+(10 rows)
+
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             'inf' preceding and 'inf' preceding);
+ id | f_float8  | first_value | last_value 
+----+-----------+-------------+------------
+  0 | -Infinity |           0 |          0
+  1 |        -3 |           0 |          0
+  2 |        -1 |           0 |          0
+  3 |         0 |           0 |          0
+  4 |       1.1 |           0 |          0
+  5 |      1.12 |           0 |          0
+  6 |         2 |           0 |          0
+  7 |       100 |           0 |          0
+  8 |  Infinity |           0 |          8
+  9 |       NaN |           9 |          9
+(10 rows)
+
+select id, f_float8, first_value(id) over w, last_value(id) over w
+from numerics
+window w as (order by f_float8 range between
+             'inf' following and 'inf' following);
+ id | f_float8  | first_value | last_value 
+----+-----------+-------------+------------
+  0 | -Infinity |           0 |          8
+  1 |        -3 |           8 |          8
+  2 |        -1 |           8 |          8
+  3 |         0 |           8 |          8
+  4 |       1.1 |           8 |          8
+  5 |      1.12 |           8 |          8
+  6 |         2 |           8 |          8
+  7 |       100 |           8 |          8
+  8 |  Infinity |           8 |          8
   9 |       NaN |           9 |          9
 (10 rows)
 

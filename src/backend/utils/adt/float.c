@@ -1088,18 +1088,25 @@ in_range_float8_float8(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Deal with infinite offset (necessarily +inf, at this point).  We must
-	 * special-case this because if base happens to be -inf, their sum would
-	 * be NaN, which is an overflow-ish condition we should avoid.
+	 * Deal with cases where both base and offset are infinite, and computing
+	 * base +/- offset would produce NaN.  This corresponds to a window frame
+	 * whose boundary infinitely precedes +inf or infinitely follows -inf,
+	 * which is not well-defined.  For consistency with other cases involving
+	 * infinities, such as the fact that +inf infinitely follows +inf, we
+	 * choose to assume that +inf infinitely precedes +inf and -inf infinitely
+	 * follows -inf, and therefore that all finite and infinite values are in
+	 * such a window frame.
+	 *
+	 * offset is known positive, so we need only check the sign of base in
+	 * this test.
 	 */
-	if (isinf(offset))
-	{
-		PG_RETURN_BOOL(sub ? !less : less);
-	}
+	if (isinf(offset) && isinf(base) &&
+		(sub ? base > 0 : base < 0))
+		PG_RETURN_BOOL(true);
 
 	/*
 	 * Otherwise it should be safe to compute base +/- offset.  We trust the
-	 * FPU to cope if base is +/-inf or the true sum would overflow, and
+	 * FPU to cope if an input is +/-inf or the true sum would overflow, and
 	 * produce a suitably signed infinity, which will compare properly against
 	 * val whether or not that's infinity.
 	 */
@@ -1157,18 +1164,25 @@ in_range_float4_float8(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Deal with infinite offset (necessarily +inf, at this point).  We must
-	 * special-case this because if base happens to be -inf, their sum would
-	 * be NaN, which is an overflow-ish condition we should avoid.
+	 * Deal with cases where both base and offset are infinite, and computing
+	 * base +/- offset would produce NaN.  This corresponds to a window frame
+	 * whose boundary infinitely precedes +inf or infinitely follows -inf,
+	 * which is not well-defined.  For consistency with other cases involving
+	 * infinities, such as the fact that +inf infinitely follows +inf, we
+	 * choose to assume that +inf infinitely precedes +inf and -inf infinitely
+	 * follows -inf, and therefore that all finite and infinite values are in
+	 * such a window frame.
+	 *
+	 * offset is known positive, so we need only check the sign of base in
+	 * this test.
 	 */
-	if (isinf(offset))
-	{
-		PG_RETURN_BOOL(sub ? !less : less);
-	}
+	if (isinf(offset) && isinf(base) &&
+		(sub ? base > 0 : base < 0))
+		PG_RETURN_BOOL(true);
 
 	/*
 	 * Otherwise it should be safe to compute base +/- offset.  We trust the
-	 * FPU to cope if base is +/-inf or the true sum would overflow, and
+	 * FPU to cope if an input is +/-inf or the true sum would overflow, and
 	 * produce a suitably signed infinity, which will compare properly against
 	 * val whether or not that's infinity.
 	 */
