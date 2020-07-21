@@ -457,13 +457,20 @@ GetSubscriptionRelations(Oid subid)
 	{
 		Form_pg_subscription_rel subrel;
 		SubscriptionRelState *relstate;
+		Datum		d;
+		bool		isnull;
 
 		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
 
 		relstate = (SubscriptionRelState *) palloc(sizeof(SubscriptionRelState));
 		relstate->relid = subrel->srrelid;
 		relstate->state = subrel->srsubstate;
-		relstate->lsn = subrel->srsublsn;
+		d = SysCacheGetAttr(SUBSCRIPTIONRELMAP, tup,
+							Anum_pg_subscription_rel_srsublsn, &isnull);
+		if (isnull)
+			relstate->lsn = InvalidXLogRecPtr;
+		else
+			relstate->lsn = DatumGetLSN(d);
 
 		res = lappend(res, relstate);
 	}
@@ -509,13 +516,20 @@ GetSubscriptionNotReadyRelations(Oid subid)
 	{
 		Form_pg_subscription_rel subrel;
 		SubscriptionRelState *relstate;
+		Datum		d;
+		bool		isnull;
 
 		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
 
 		relstate = (SubscriptionRelState *) palloc(sizeof(SubscriptionRelState));
 		relstate->relid = subrel->srrelid;
 		relstate->state = subrel->srsubstate;
-		relstate->lsn = subrel->srsublsn;
+		d = SysCacheGetAttr(SUBSCRIPTIONRELMAP, tup,
+							Anum_pg_subscription_rel_srsublsn, &isnull);
+		if (isnull)
+			relstate->lsn = InvalidXLogRecPtr;
+		else
+			relstate->lsn = DatumGetLSN(d);
 
 		res = lappend(res, relstate);
 	}
