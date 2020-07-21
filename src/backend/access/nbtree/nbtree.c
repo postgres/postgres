@@ -1115,7 +1115,7 @@ backtrack:
 	 */
 	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 							 info->strategy);
-	LockBuffer(buf, BT_READ);
+	_bt_lockbuf(rel, buf, BT_READ);
 	page = BufferGetPage(buf);
 	opaque = NULL;
 	if (!PageIsNew(page))
@@ -1222,8 +1222,7 @@ backtrack:
 		 * course of the vacuum scan, whether or not it actually contains any
 		 * deletable tuples --- see nbtree/README.
 		 */
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-		LockBufferForCleanup(buf);
+		_bt_upgradelockbufcleanup(rel, buf);
 
 		/*
 		 * Check whether we need to backtrack to earlier pages.  What we are

@@ -64,7 +64,7 @@ static inline void _bt_initialize_more_data(BTScanOpaque so, ScanDirection dir);
 static void
 _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp)
 {
-	LockBuffer(sp->buf, BUFFER_LOCK_UNLOCK);
+	_bt_unlockbuf(scan->indexRelation, sp->buf);
 
 	if (IsMVCCSnapshot(scan->xs_snapshot) &&
 		RelationNeedsWAL(scan->indexRelation) &&
@@ -187,14 +187,13 @@ _bt_search(Relation rel, BTScanInsert key, Buffer *bufP, int access,
 	if (access == BT_WRITE && page_access == BT_READ)
 	{
 		/* trade in our read lock for a write lock */
-		LockBuffer(*bufP, BUFFER_LOCK_UNLOCK);
-		LockBuffer(*bufP, BT_WRITE);
+		_bt_unlockbuf(rel, *bufP);
+		_bt_lockbuf(rel, *bufP, BT_WRITE);
 
 		/*
-		 * If the page was split between the time that we surrendered our read
-		 * lock and acquired our write lock, then this page may no longer be
-		 * the right place for the key we want to insert.  In this case, we
-		 * need to move right in the tree.
+		 * Race -- the leaf page may have split after we dropped the read lock
+		 * but before we acquired a write lock.  If it has, we may need to
+		 * move right to its new sibling.  Do that.
 		 */
 		*bufP = _bt_moveright(rel, key, *bufP, true, stack_in, BT_WRITE,
 							  snapshot);
@@ -289,8 +288,8 @@ _bt_moveright(Relation rel,
 			/* upgrade our lock if necessary */
 			if (access == BT_READ)
 			{
-				LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-				LockBuffer(buf, BT_WRITE);
+				_bt_unlockbuf(rel, buf);
+				_bt_lockbuf(rel, buf, BT_WRITE);
 			}
 
 			if (P_INCOMPLETE_SPLIT(opaque))
@@ -1413,7 +1412,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		 * There's no actually-matching data on this page.  Try to advance to
 		 * the next page.  Return false if there's no matching data at all.
 		 */
-		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+		_bt_unlockbuf(scan->indexRelation, so->currPos.buf);
 		if (!_bt_steppage(scan, dir))
 			return false;
 	}
@@ -2061,7 +2060,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 		 * deleted.
 		 */
 		if (BTScanPosIsPinned(so->currPos))
-			LockBuffer(so->currPos.buf, BT_READ);
+			_bt_lockbuf(rel, so->currPos.buf, BT_READ);
 		else
 			so->currPos.buf = _bt_getbuf(rel, so->currPos.currPage, BT_READ);
 
@@ -2439,7 +2438,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		 * There's no actually-matching data on this page.  Try to advance to
 		 * the next page.  Return false if there's no matching data at all.
 		 */
-		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+		_bt_unlockbuf(scan->indexRelation, so->currPos.buf);
 		if (!_bt_steppage(scan, dir))
 			return false;
 	}

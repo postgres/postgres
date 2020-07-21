@@ -1744,7 +1744,7 @@ _bt_killitems(IndexScanDesc scan)
 		 * LSN.
 		 */
 		droppedpin = false;
-		LockBuffer(so->currPos.buf, BT_READ);
+		_bt_lockbuf(scan->indexRelation, so->currPos.buf, BT_READ);
 
 		page = BufferGetPage(so->currPos.buf);
 	}
@@ -1885,7 +1885,7 @@ _bt_killitems(IndexScanDesc scan)
 		MarkBufferDirtyHint(so->currPos.buf, true);
 	}
 
-	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+	_bt_unlockbuf(scan->indexRelation, so->currPos.buf);
 }
 
 

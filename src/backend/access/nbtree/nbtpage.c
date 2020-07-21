@@ -32,6 +32,7 @@
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
 #include "storage/predicate.h"
+#include "utils/memdebug.h"
 #include "utils/snapmgr.h"
 
 static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
@@ -198,8 +199,8 @@ _bt_update_meta_cleanup_info(Relation rel, TransactionId oldestBtpoXact,
 	}
 
 	/* trade in our read lock for a write lock */
-	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
-	LockBuffer(metabuf, BT_WRITE);
+	_bt_unlockbuf(rel, metabuf);
+	_bt_lockbuf(rel, metabuf, BT_WRITE);
 
 	START_CRIT_SECTION();
 
@@ -340,8 +341,8 @@ _bt_getroot(Relation rel, int access)
 		}
 
 		/* trade in our read lock for a write lock */
-		LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
-		LockBuffer(metabuf, BT_WRITE);
+		_bt_unlockbuf(rel, metabuf);
+		_bt_lockbuf(rel, metabuf, BT_WRITE);
 
 		/*
 		 * Race condition:	if someone else initialized the metadata between
@@ -434,8 +435,8 @@ _bt_getroot(Relation rel, int access)
 		 * else accessing the new root page while it's unlocked, since no one
 		 * else knows where it is yet.
 		 */
-		LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
-		LockBuffer(rootbuf, BT_READ);
+		_bt_unlockbuf(rel, rootbuf);
+		_bt_lockbuf(rel, rootbuf, BT_READ);
 
 		/* okay, metadata is correct, release lock on it without caching */
 		_bt_relbuf(rel, metabuf);
@@ -783,10 +784,20 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, TransactionId latestRemovedX
  *		blkno == P_NEW means to get an unallocated index page.  The page
  *		will be initialized before returning it.
  *
+ *		The general rule in nbtree is that it's never okay to access a
+ *		page without holding both a buffer pin and a buffer lock on
+ *		the page's buffer.
+ *
  *		When this routine returns, the appropriate lock is set on the
  *		requested buffer and its reference count has been incremented
  *		(ie, the buffer is "locked and pinned").  Also, we apply
- *		_bt_checkpage to sanity-check the page (except in P_NEW case).
+ *		_bt_checkpage to sanity-check the page (except in P_NEW case),
+ *		and perform Valgrind client requests that help Valgrind detect
+ *		unsafe page accesses.
+ *
+ *		Note: raw LockBuffer() calls are disallowed in nbtree; all
+ *		buffer lock requests need to go through wrapper functions such
+ *		as _bt_lockbuf().
  */
 Buffer
 _bt_getbuf(Relation rel, BlockNumber blkno, int access)
@@ -797,7 +808,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 	{
 		/* Read an existing block of the relation */
 		buf = ReadBuffer(rel, blkno);
-		LockBuffer(buf, access);
+		_bt_lockbuf(rel, buf, access);
 		_bt_checkpage(rel, buf);
 	}
 	else
@@ -837,7 +848,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 			if (blkno == InvalidBlockNumber)
 				break;
 			buf = ReadBuffer(rel, blkno);
-			if (ConditionalLockBuffer(buf))
+			if (_bt_conditionallockbuf(rel, buf))
 			{
 				page = BufferGetPage(buf);
 				if (_bt_page_recyclable(page))
@@ -890,7 +901,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		buf = ReadBuffer(rel, P_NEW);
 
 		/* Acquire buffer lock on new page */
-		LockBuffer(buf, BT_WRITE);
+		_bt_lockbuf(rel, buf, BT_WRITE);
 
 		/*
 		 * Release the file-extension lock; it's now OK for someone else to
@@ -931,9 +942,10 @@ _bt_relandgetbuf(Relation rel, Buffer obuf, BlockNumber blkno, int access)
 
 	Assert(blkno != P_NEW);
 	if (BufferIsValid(obuf))
-		LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
+		_bt_unlockbuf(rel, obuf);
 	buf = ReleaseAndReadBuffer(obuf, rel, blkno);
-	LockBuffer(buf, access);
+	_bt_lockbuf(rel, buf, access);
+
 	_bt_checkpage(rel, buf);
 	return buf;
 }
@@ -946,7 +958,102 @@ _bt_relandgetbuf(Relation rel, Buffer obuf, BlockNumber blkno, int access)
 void
 _bt_relbuf(Relation rel, Buffer buf)
 {
-	UnlockReleaseBuffer(buf);
+	_bt_unlockbuf(rel, buf);
+	ReleaseBuffer(buf);
+}
+
+/*
+ *	_bt_lockbuf() -- lock a pinned buffer.
+ *
+ * Lock is acquired without acquiring another pin.  This is like a raw
+ * LockBuffer() call, but performs extra steps needed by Valgrind.
+ *
+ * Note: Caller may need to call _bt_checkpage() with buf when pin on buf
+ * wasn't originally acquired in _bt_getbuf() or _bt_relandgetbuf().
+ */
+void
+_bt_lockbuf(Relation rel, Buffer buf, int access)
+{
+	/* LockBuffer() asserts that pin is held by this backend */
+	LockBuffer(buf, access);
+
+	/*
+	 * It doesn't matter that _bt_unlockbuf() won't get called in the
+	 * event of an nbtree error (e.g. a unique violation error).  That
+	 * won't cause Valgrind false positives.
+	 *
+	 * The nbtree client requests are superimposed on top of the
+	 * bufmgr.c buffer pin client requests.  In the event of an nbtree
+	 * error the buffer will certainly get marked as defined when the
+	 * backend once again acquires its first pin on the buffer. (Of
+	 * course, if the backend never touches the buffer again then it
+	 * doesn't matter that it remains non-accessible to Valgrind.)
+	 *
+	 * Note: When an IndexTuple C pointer gets computed using an
+	 * ItemId read from a page while a lock was held, the C pointer
+	 * becomes unsafe to dereference forever as soon as the lock is
+	 * released.  Valgrind can only detect cases where the pointer
+	 * gets dereferenced with no _current_ lock/pin held, though.
+	 */
+	if (!RelationUsesLocalBuffers(rel))
+		VALGRIND_MAKE_MEM_DEFINED(BufferGetPage(buf), BLCKSZ);
+}
+
+/*
+ *	_bt_unlockbuf() -- unlock a pinned buffer.
+ */
+void
+_bt_unlockbuf(Relation rel, Buffer buf)
+{
+	/*
+	 * Buffer is pinned and locked, which means that it is expected to be
+	 * defined and addressable.  Check that proactively.
+	 */
+	VALGRIND_CHECK_MEM_IS_DEFINED(BufferGetPage(buf), BLCKSZ);
+
+	/* LockBuffer() asserts that pin is held by this backend */
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
+	if (!RelationUsesLocalBuffers(rel))
+		VALGRIND_MAKE_MEM_NOACCESS(BufferGetPage(buf), BLCKSZ);
+}
+
+/*
+ *	_bt_conditionallockbuf() -- conditionally BT_WRITE lock pinned
+ *	buffer.
+ *
+ * Note: Caller may need to call _bt_checkpage() with buf when pin on buf
+ * wasn't originally acquired in _bt_getbuf() or _bt_relandgetbuf().
+ */
+bool
+_bt_conditionallockbuf(Relation rel, Buffer buf)
+{
+	/* ConditionalLockBuffer() asserts that pin is held by this backend */
+	if (!ConditionalLockBuffer(buf))
+		return false;
+
+	if (!RelationUsesLocalBuffers(rel))
+		VALGRIND_MAKE_MEM_DEFINED(BufferGetPage(buf), BLCKSZ);
+
+	return true;
+}
+
+/*
+ *	_bt_upgradelockbufcleanup() -- upgrade lock to super-exclusive/cleanup
+ *	lock.
+ */
+void
+_bt_upgradelockbufcleanup(Relation rel, Buffer buf)
+{
+	/*
+	 * Buffer is pinned and locked, which means that it is expected to be
+	 * defined and addressable.  Check that proactively.
+	 */
+	VALGRIND_CHECK_MEM_IS_DEFINED(BufferGetPage(buf), BLCKSZ);
+
+	/* LockBuffer() asserts that pin is held by this backend */
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+	LockBufferForCleanup(buf);
 }
 
 /*
@@ -1580,7 +1687,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 				 * To avoid deadlocks, we'd better drop the leaf page lock
 				 * before going further.
 				 */
-				LockBuffer(leafbuf, BUFFER_LOCK_UNLOCK);
+				_bt_unlockbuf(rel, leafbuf);
 
 				/*
 				 * Check that the left sibling of leafbuf (if any) is not
@@ -1616,7 +1723,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 				 * (Page deletion can cope with the stack being to the left of
 				 * leafbuf, but not to the right of leafbuf.)
 				 */
-				LockBuffer(leafbuf, BT_WRITE);
+				_bt_lockbuf(rel, leafbuf, BT_WRITE);
 				continue;
 			}
 
@@ -1970,7 +2077,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	leafleftsib = opaque->btpo_prev;
 	leafrightsib = opaque->btpo_next;
 
-	LockBuffer(leafbuf, BUFFER_LOCK_UNLOCK);
+	_bt_unlockbuf(rel, leafbuf);
 
 	/*
 	 * Check here, as calling loops will have locks held, preventing
@@ -2005,7 +2112,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 		 * To avoid deadlocks, we'd better drop the target page lock before
 		 * going further.
 		 */
-		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+		_bt_unlockbuf(rel, buf);
 	}
 
 	/*
@@ -2022,7 +2129,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * table.)
 	 */
 	if (target != leafblkno)
-		LockBuffer(leafbuf, BT_WRITE);
+		_bt_lockbuf(rel, leafbuf, BT_WRITE);
 	if (leftsib != P_NONE)
 	{
 		lbuf = _bt_getbuf(rel, leftsib, BT_WRITE);
@@ -2072,7 +2179,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	 * rather than a superexclusive lock, since no scan will stop on an empty
 	 * page.
 	 */
-	LockBuffer(buf, BT_WRITE);
+	_bt_lockbuf(rel, buf, BT_WRITE);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 

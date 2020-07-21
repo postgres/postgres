@@ -271,11 +271,13 @@
  * Valgrind understands PostgreSQL memory contexts.  This permits detecting
  * memory errors that Valgrind would not detect on a vanilla build.  It also
  * enables detection of buffer accesses that take place without holding a
- * buffer pin.  See also src/tools/valgrind.supp.
+ * buffer pin (or without holding a buffer lock in the case of index access
+ * methods that superimpose their own custom client requests on top of the
+ * generic bufmgr.c requests).  See also src/tools/valgrind.supp.
  *
  * "make installcheck" is significantly slower under Valgrind.  The client
- * requests fall in hot code paths, so USE_VALGRIND slows native execution by
- * a few percentage points even when not run under Valgrind.
+ * requests fall in hot code paths, so USE_VALGRIND slows execution by a few
+ * percentage points even when not run under Valgrind.
  *
  * You should normally use MEMORY_CONTEXT_CHECKING with USE_VALGRIND;
  * instrumentation of repalloc() is inferior without it.

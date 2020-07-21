@@ -303,7 +303,7 @@ _bt_search_insert(Relation rel, BTInsertState insertstate)
 	{
 		/* Simulate a _bt_getbuf() call with conditional locking */
 		insertstate->buf = ReadBuffer(rel, RelationGetTargetBlock(rel));
-		if (ConditionalLockBuffer(insertstate->buf))
+		if (_bt_conditionallockbuf(rel, insertstate->buf))
 		{
 			Page		page;
 			BTPageOpaque lpageop;
