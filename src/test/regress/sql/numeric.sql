@@ -635,6 +635,119 @@ SELECT t1.id1, t1.result, t2.expected
     AND t1.result != t2.expected;
 
 -- ******************************
+-- * Check behavior with Inf and NaN inputs.  It's easiest to handle these
+-- * separately from the num_data framework used above, because some input
+-- * combinations will throw errors.
+-- ******************************
+
+WITH v(x) AS
+  (VALUES('0'::numeric),('1'),('-1'),('4.2'),('inf'),('-inf'),('nan'))
+SELECT x1, x2,
+  x1 + x2 AS sum,
+  x1 - x2 AS diff,
+  x1 * x2 AS prod
+FROM v AS v1(x1), v AS v2(x2);
+
+WITH v(x) AS
+  (VALUES('0'::numeric),('1'),('-1'),('4.2'),('inf'),('-inf'),('nan'))
+SELECT x1, x2,
+  x1 / x2 AS quot,
+  x1 % x2 AS mod,
+  div(x1, x2) AS div
+FROM v AS v1(x1), v AS v2(x2) WHERE x2 != 0;
+
+SELECT 'inf'::numeric / '0';
+SELECT '-inf'::numeric / '0';
+SELECT 'nan'::numeric / '0';
+SELECT '0'::numeric / '0';
+SELECT 'inf'::numeric % '0';
+SELECT '-inf'::numeric % '0';
+SELECT 'nan'::numeric % '0';
+SELECT '0'::numeric % '0';
+SELECT div('inf'::numeric, '0');
+SELECT div('-inf'::numeric, '0');
+SELECT div('nan'::numeric, '0');
+SELECT div('0'::numeric, '0');
+
+WITH v(x) AS
+  (VALUES('0'::numeric),('1'),('-1'),('4.2'),('-7.777'),('inf'),('-inf'),('nan'))
+SELECT x, -x as minusx, abs(x), floor(x), ceil(x), sign(x), numeric_inc(x) as inc
+FROM v;
+
+WITH v(x) AS
+  (VALUES('0'::numeric),('1'),('-1'),('4.2'),('-7.777'),('inf'),('-inf'),('nan'))
+SELECT x, round(x), round(x,1) as round1, trunc(x), trunc(x,1) as trunc1
+FROM v;
+
+-- the large values fall into the numeric abbreviation code's maximal classes
+WITH v(x) AS
+  (VALUES('0'::numeric),('1'),('-1'),('4.2'),('-7.777'),('1e340'),('-1e340'),
+         ('inf'),('-inf'),('nan'),
+         ('inf'),('-inf'),('nan'))
+SELECT substring(x::text, 1, 32)
+FROM v ORDER BY x;
+
+WITH v(x) AS
+  (VALUES('0'::numeric),('1'),('4.2'),('inf'),('nan'))
+SELECT x, sqrt(x)
+FROM v;
+
+SELECT sqrt('-1'::numeric);
+SELECT sqrt('-inf'::numeric);
+
+WITH v(x) AS
+  (VALUES('1'::numeric),('4.2'),('inf'),('nan'))
+SELECT x,
+  log(x),
+  log10(x),
+  ln(x)
+FROM v;
+
+SELECT ln('0'::numeric);
+SELECT ln('-1'::numeric);
+SELECT ln('-inf'::numeric);
+
+WITH v(x) AS
+  (VALUES('2'::numeric),('4.2'),('inf'),('nan'))
+SELECT x1, x2,
+  log(x1, x2)
+FROM v AS v1(x1), v AS v2(x2);
+
+SELECT log('0'::numeric, '10');
+SELECT log('10'::numeric, '0');
+SELECT log('-inf'::numeric, '10');
+SELECT log('10'::numeric, '-inf');
+SELECT log('inf'::numeric, '0');
+SELECT log('inf'::numeric, '-inf');
+SELECT log('-inf'::numeric, 'inf');
+
+WITH v(x) AS
+  (VALUES('0'::numeric),('1'),('2'),('4.2'),('inf'),('nan'))
+SELECT x1, x2,
+  power(x1, x2)
+FROM v AS v1(x1), v AS v2(x2) WHERE x1 != 0 OR x2 >= 0;
+
+SELECT power('0'::numeric, '-1');
+SELECT power('0'::numeric, '-inf');
+SELECT power('-1'::numeric, 'inf');
+SELECT power('-2'::numeric, '3');
+SELECT power('-2'::numeric, '3.3');
+SELECT power('-2'::numeric, '-1');
+SELECT power('-2'::numeric, '-1.5');
+SELECT power('-2'::numeric, 'inf');
+SELECT power('-2'::numeric, '-inf');
+SELECT power('inf'::numeric, '-2');
+SELECT power('inf'::numeric, '-inf');
+SELECT power('-inf'::numeric, '2');
+SELECT power('-inf'::numeric, '3');
+SELECT power('-inf'::numeric, '4.5');
+SELECT power('-inf'::numeric, '-2');
+SELECT power('-inf'::numeric, '-3');
+SELECT power('-inf'::numeric, '0');
+SELECT power('-inf'::numeric, 'inf');
+SELECT power('-inf'::numeric, '-inf');
+
+-- ******************************
 -- * miscellaneous checks for things that have been broken in the past...
 -- ******************************
 -- numeric AVG used to fail on some platforms
@@ -652,6 +765,9 @@ INSERT INTO fract_only VALUES (5, '0.99994');
 INSERT INTO fract_only VALUES (6, '0.99995');  -- should fail
 INSERT INTO fract_only VALUES (7, '0.00001');
 INSERT INTO fract_only VALUES (8, '0.00017');
+INSERT INTO fract_only VALUES (9, 'NaN');
+INSERT INTO fract_only VALUES (10, 'Inf');	-- should fail
+INSERT INTO fract_only VALUES (11, '-Inf');	-- should fail
 SELECT * FROM fract_only;
 DROP TABLE fract_only;
 
@@ -659,9 +775,25 @@ DROP TABLE fract_only;
 SELECT 'NaN'::float8::numeric;
 SELECT 'Infinity'::float8::numeric;
 SELECT '-Infinity'::float8::numeric;
+SELECT 'NaN'::numeric::float8;
+SELECT 'Infinity'::numeric::float8;
+SELECT '-Infinity'::numeric::float8;
 SELECT 'NaN'::float4::numeric;
 SELECT 'Infinity'::float4::numeric;
 SELECT '-Infinity'::float4::numeric;
+SELECT 'NaN'::numeric::float4;
+SELECT 'Infinity'::numeric::float4;
+SELECT '-Infinity'::numeric::float4;
+SELECT '42'::int2::numeric;
+SELECT 'NaN'::numeric::int2;
+SELECT 'Infinity'::numeric::int2;
+SELECT '-Infinity'::numeric::int2;
+SELECT 'NaN'::numeric::int4;
+SELECT 'Infinity'::numeric::int4;
+SELECT '-Infinity'::numeric::int4;
+SELECT 'NaN'::numeric::int8;
+SELECT 'Infinity'::numeric::int8;
+SELECT '-Infinity'::numeric::int8;
 
 -- Simple check that ceil(), floor(), and round() work correctly
 CREATE TABLE ceil_floor_round (a numeric);
@@ -697,6 +829,9 @@ SELECT width_bucket(5.0::float8, 3.0::float8, 4.0::float8, -5);
 SELECT width_bucket(3.5::float8, 3.0::float8, 3.0::float8, 888);
 SELECT width_bucket('NaN', 3.0, 4.0, 888);
 SELECT width_bucket(0::float8, 'NaN', 4.0::float8, 888);
+SELECT width_bucket('inf', 3.0, 4.0, 888);
+SELECT width_bucket(2.0, 3.0, '-inf', 888);
+SELECT width_bucket(0::float8, '-inf', 4.0::float8, 888);
 
 -- normal operation
 CREATE TABLE width_bucket_test (operand_num numeric, operand_f8 float8);
@@ -782,6 +917,30 @@ SELECT '' AS to_char_21, to_char(val, '999999SG9999999999')			FROM num_data;
 SELECT '' AS to_char_22, to_char(val, 'FM9999999999999999.999999999999999')	FROM num_data;
 SELECT '' AS to_char_23, to_char(val, '9.999EEEE')				FROM num_data;
 
+WITH v(val) AS
+  (VALUES('0'::numeric),('-4.2'),('4.2e9'),('1.2e-5'),('inf'),('-inf'),('nan'))
+SELECT val,
+  to_char(val, '9.999EEEE') as numeric,
+  to_char(val::float8, '9.999EEEE') as float8,
+  to_char(val::float4, '9.999EEEE') as float4
+FROM v;
+
+WITH v(val) AS
+  (VALUES('0'::numeric),('-4.2'),('4.2e9'),('1.2e-5'),('inf'),('-inf'),('nan'))
+SELECT val,
+  to_char(val, 'MI9999999999.99') as numeric,
+  to_char(val::float8, 'MI9999999999.99') as float8,
+  to_char(val::float4, 'MI9999999999.99') as float4
+FROM v;
+
+WITH v(val) AS
+  (VALUES('0'::numeric),('-4.2'),('4.2e9'),('1.2e-5'),('inf'),('-inf'),('nan'))
+SELECT val,
+  to_char(val, 'MI99.99') as numeric,
+  to_char(val::float8, 'MI99.99') as float8,
+  to_char(val::float4, 'MI99.99') as float4
+FROM v;
+
 SELECT '' AS to_char_24, to_char('100'::numeric, 'FM999.9');
 SELECT '' AS to_char_25, to_char('100'::numeric, 'FM999.');
 SELECT '' AS to_char_26, to_char('100'::numeric, 'FM999');
@@ -839,6 +998,12 @@ INSERT INTO num_input_test(n1) VALUES ('555.50');
 INSERT INTO num_input_test(n1) VALUES ('-555.50');
 INSERT INTO num_input_test(n1) VALUES ('NaN ');
 INSERT INTO num_input_test(n1) VALUES ('        nan');
+INSERT INTO num_input_test(n1) VALUES (' inf ');
+INSERT INTO num_input_test(n1) VALUES (' +inf ');
+INSERT INTO num_input_test(n1) VALUES (' -inf ');
+INSERT INTO num_input_test(n1) VALUES (' Infinity ');
+INSERT INTO num_input_test(n1) VALUES (' +inFinity ');
+INSERT INTO num_input_test(n1) VALUES (' -INFINITY ');
 
 -- bad inputs
 INSERT INTO num_input_test(n1) VALUES ('     ');
@@ -849,6 +1014,7 @@ INSERT INTO num_input_test(n1) VALUES ('5 . 0');
 INSERT INTO num_input_test(n1) VALUES ('5. 0   ');
 INSERT INTO num_input_test(n1) VALUES ('');
 INSERT INTO num_input_test(n1) VALUES (' N aN ');
+INSERT INTO num_input_test(n1) VALUES ('+ infinity');
 
 SELECT * FROM num_input_test;
 
@@ -952,6 +1118,9 @@ select 1.234 ^ 5678;
 select exp(0.0);
 select exp(1.0);
 select exp(1.0::numeric(71,70));
+select exp('nan'::numeric);
+select exp('inf'::numeric);
+select exp('-inf'::numeric);
 
 -- cases that used to generate inaccurate results
 select exp(32.999);
@@ -973,6 +1142,9 @@ select * from generate_series(-100::numeric, 100::numeric, 0::numeric);
 select * from generate_series(-100::numeric, 100::numeric, 'nan'::numeric);
 select * from generate_series('nan'::numeric, 100::numeric, 10::numeric);
 select * from generate_series(0::numeric, 'nan'::numeric, 10::numeric);
+select * from generate_series('inf'::numeric, 'inf'::numeric, 10::numeric);
+select * from generate_series(0::numeric, 'inf'::numeric, 10::numeric);
+select * from generate_series(0::numeric, '42'::numeric, '-inf'::numeric);
 -- Checks maximum, output is truncated
 select (i / (10::numeric ^ 131071))::numeric(1,0)
 	from generate_series(6 * (10::numeric ^ 131071),
@@ -1040,6 +1212,7 @@ select log(3.1954752e47, 9.4792021e-73);
 --
 
 select scale(numeric 'NaN');
+select scale(numeric 'inf');
 select scale(NULL::numeric);
 select scale(1.12);
 select scale(0);
@@ -1054,6 +1227,7 @@ select scale(-13.000000000000000);
 --
 
 select min_scale(numeric 'NaN') is NULL; -- should be true
+select min_scale(numeric 'inf') is NULL; -- should be true
 select min_scale(0);                     -- no digits
 select min_scale(0.00);                  -- no digits again
 select min_scale(1.0);                   -- no scale
@@ -1070,6 +1244,7 @@ select min_scale(1e100);                 -- very big number
 --
 
 select trim_scale(numeric 'NaN');
+select trim_scale(numeric 'inf');
 select trim_scale(1.120);
 select trim_scale(0);
 select trim_scale(0.00);
@@ -1096,7 +1271,11 @@ FROM (VALUES (0::numeric, 0::numeric),
              (0::numeric, 46375::numeric),
              (433125::numeric, 46375::numeric),
              (43312.5::numeric, 4637.5::numeric),
-             (4331.250::numeric, 463.75000::numeric)) AS v(a, b);
+             (4331.250::numeric, 463.75000::numeric),
+             ('inf', '0'),
+             ('inf', '42'),
+             ('inf', 'inf')
+     ) AS v(a, b);
 
 --
 -- Tests for LCM()
@@ -1108,7 +1287,11 @@ FROM (VALUES (0::numeric, 0::numeric),
              (13272::numeric, 13272::numeric),
              (423282::numeric, 13272::numeric),
              (42328.2::numeric, 1327.2::numeric),
-             (4232.820::numeric, 132.72000::numeric)) AS v(a, b);
+             (4232.820::numeric, 132.72000::numeric),
+             ('inf', '0'),
+             ('inf', '42'),
+             ('inf', 'inf')
+     ) AS v(a, b);
 
 SELECT lcm(9999 * (10::numeric)^131068 + (10::numeric^131068 - 1), 2); -- overflow
 

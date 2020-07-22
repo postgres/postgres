@@ -554,9 +554,9 @@ NUMERIC(<replaceable>precision</replaceable>)
 <programlisting>
 NUMERIC
 </programlisting>
-     without any precision or scale creates a column in which numeric
-     values of any precision and scale can be stored, up to the
-     implementation limit on precision.  A column of this kind will
+     without any precision or scale creates an <quote>unconstrained
+     numeric</quote> column in which numeric values of any length can be
+     stored, up to the implementation limits.  A column of this kind will
      not coerce input values to any particular scale, whereas
      <type>numeric</type> columns with a declared scale will coerce
      input values to that scale.  (The <acronym>SQL</acronym> standard
@@ -568,10 +568,10 @@ NUMERIC
 
     <note>
      <para>
-      The maximum allowed precision when explicitly specified in the
-      type declaration is 1000; <type>NUMERIC</type> without a specified
-      precision is subject to the limits described in <xref
-      linkend="datatype-numeric-table"/>.
+      The maximum precision that can be explicitly specified in
+      a <type>NUMERIC</type> type declaration is 1000.  An
+      unconstrained <type>NUMERIC</type> column is subject to the limits
+      described in <xref linkend="datatype-numeric-table"/>.
      </para>
     </note>
 
@@ -594,6 +594,11 @@ NUMERIC
     </para>
 
     <indexterm>
+     <primary>infinity</primary>
+     <secondary>numeric (data type)</secondary>
+    </indexterm>
+
+    <indexterm>
      <primary>NaN</primary>
      <see>not a number</see>
    </indexterm>
@@ -604,13 +609,44 @@ NUMERIC
     </indexterm>
 
     <para>
-     In addition to ordinary numeric values, the <type>numeric</type>
-     type allows the special value <literal>NaN</literal>, meaning
-     <quote>not-a-number</quote>.  Any operation on <literal>NaN</literal>
-     yields another <literal>NaN</literal>.  When writing this value
-     as a constant in an SQL command, you must put quotes around it,
-     for example <literal>UPDATE table SET x = 'NaN'</literal>.  On input,
-     the string <literal>NaN</literal> is recognized in a case-insensitive manner.
+     In addition to ordinary numeric values, the <type>numeric</type> type
+     has several special values:
+<literallayout>
+<literal>Infinity</literal>
+<literal>-Infinity</literal>
+<literal>NaN</literal>
+</literallayout>
+     These are adapted from the IEEE 754 standard, and represent
+     <quote>infinity</quote>, <quote>negative infinity</quote>, and
+     <quote>not-a-number</quote>, respectively. When writing these values
+     as constants in an SQL command, you must put quotes around them,
+     for example <literal>UPDATE table SET x = '-Infinity'</literal>.
+     On input, these strings are recognized in a case-insensitive manner.
+     The infinity values can alternatively be spelled <literal>inf</literal>
+     and <literal>-inf</literal>.
+    </para>
+
+    <para>
+     The infinity values behave as per mathematical expectations.  For
+     example, <literal>Infinity</literal> plus any finite value equals
+     <literal>Infinity</literal>, as does <literal>Infinity</literal>
+     plus <literal>Infinity</literal>; but <literal>Infinity</literal>
+     minus <literal>Infinity</literal> yields <literal>NaN</literal> (not a
+     number), because it has no well-defined interpretation.  Note that an
+     infinity can only be stored in an unconstrained <type>numeric</type>
+     column, because it notionally exceeds any finite precision limit.
+    </para>
+
+    <para>
+     The <literal>NaN</literal> (not a number) value is used to represent
+     undefined calculational results.  In general, any operation with
+     a <literal>NaN</literal> input yields another <literal>NaN</literal>.
+     The only exception is when the operation's other inputs are such that
+     the same output would be obtained if the <literal>NaN</literal> were to
+     be replaced by any finite or infinite numeric value; then, that output
+     value is used for <literal>NaN</literal> too.  (An example of this
+     principle is that <literal>NaN</literal> raised to the zero power
+     yields one.)
     </para>
 
     <note>
@@ -782,8 +818,13 @@ FROM generate_series(-3.5, 3.5, 1) as x;
     </note>
 
     <indexterm>
+     <primary>infinity</primary>
+     <secondary>floating point</secondary>
+    </indexterm>
+
+    <indexterm>
      <primary>not a number</primary>
-     <secondary>double precision</secondary>
+     <secondary>floating point</secondary>
     </indexterm>
 
     <para>
@@ -800,11 +841,13 @@ FROM generate_series(-3.5, 3.5, 1) as x;
      as constants in an SQL command, you must put quotes around them,
      for example <literal>UPDATE table SET x = '-Infinity'</literal>.  On input,
      these strings are recognized in a case-insensitive manner.
+     The infinity values can alternatively be spelled <literal>inf</literal>
+     and <literal>-inf</literal>.
     </para>
 
     <note>
      <para>
-      IEEE754 specifies that <literal>NaN</literal> should not compare equal
+      IEEE 754 specifies that <literal>NaN</literal> should not compare equal
       to any other floating-point value (including <literal>NaN</literal>).
       In order to allow floating-point values to be sorted and used
       in tree-based indexes, <productname>PostgreSQL</productname> treats
