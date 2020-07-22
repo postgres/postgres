@@ -243,6 +243,17 @@ decompress_read(void *priv, PullFilter *src, int len,
 	struct DecomprData *dec = priv;
 
 restart:
+	if (dec->stream.avail_in == 0)
+	{
+		uint8	   *tmp;
+
+		res = pullf_read(src, 8192, &tmp);
+		if (res < 0)
+			return res;
+		dec->stream.next_in = tmp;
+		dec->stream.avail_in = res;
+	}
+
 	if (dec->buf_data > 0)
 	{
 		if (len > dec->buf_data)
@@ -255,17 +266,6 @@ restart:
 
 	if (dec->eof)
 		return 0;
-
-	if (dec->stream.avail_in == 0)
-	{
-		uint8	   *tmp;
-
-		res = pullf_read(src, 8192, &tmp);
-		if (res < 0)
-			return res;
-		dec->stream.next_in = tmp;
-		dec->stream.avail_in = res;
-	}
 
 	dec->stream.next_out = dec->buf;
 	dec->stream.avail_out = dec->buf_len;
