@@ -85,6 +85,9 @@
  *	worth trying to avoid sending such inval traffic in the future, if those
  *	problems can be overcome cheaply.
  *
+ *	When wal_level=logical, write invalidations into WAL at each command end to
+ *	support the decoding of the in-progress transactions.  See
+ *	CommandEndInvalidationMessages.
  *
  * Portions Copyright (c) 1996-2020, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -1094,6 +1097,11 @@ CommandEndInvalidationMessages(void)
 
 	ProcessInvalidationMessages(&transInvalInfo->CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
+
+	/* WAL Log per-command invalidation messages for wal_level=logical */
+	if (XLogLogicalInfoActive())
+		LogLogicalInvalidations();
+
 	AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
 							   &transInvalInfo->CurrentCmdInvalidMsgs);
 }
@@ -1499,5 +1507,51 @@ CallSyscacheCallbacks(int cacheid, uint32 hashvalue)
 		Assert(ccitem->id == cacheid);
 		ccitem->function(ccitem->arg, cacheid, hashvalue);
 		i = ccitem->link - 1;
+	}
+}
+
+/*
+ * LogLogicalInvalidations
+ *
+ * Emit WAL for invalidations.  This is currently only used for logging
+ * invalidations at the command end or at commit time if any invalidations
+ * are pending.
+ */
+void
+LogLogicalInvalidations()
+{
+	xl_xact_invals xlrec;
+	SharedInvalidationMessage *invalMessages;
+	int			nmsgs = 0;
+
+	/* Quick exit if we haven't done anything with invalidation messages. */
+	if (transInvalInfo == NULL)
+		return;
+
+	ProcessInvalidationMessagesMulti(&transInvalInfo->CurrentCmdInvalidMsgs,
+									 MakeSharedInvalidMessagesArray);
+
+	Assert(!(numSharedInvalidMessagesArray > 0 &&
+			 SharedInvalidMessagesArray == NULL));
+
+	invalMessages = SharedInvalidMessagesArray;
+	nmsgs = numSharedInvalidMessagesArray;
+	SharedInvalidMessagesArray = NULL;
+	numSharedInvalidMessagesArray = 0;
+
+	if (nmsgs > 0)
+	{
+		/* prepare record */
+		memset(&xlrec, 0, MinSizeOfXactInvals);
+		xlrec.nmsgs = nmsgs;
+
+		/* perform insertion */
+		XLogBeginInsert();
+		XLogRegisterData((char *) (&xlrec), MinSizeOfXactInvals);
+		XLogRegisterData((char *) invalMessages,
+						 nmsgs * sizeof(SharedInvalidationMessage));
+		XLogInsert(RM_XACT_ID, XLOG_XACT_INVALIDATIONS);
+
+		pfree(invalMessages);
 	}
 }

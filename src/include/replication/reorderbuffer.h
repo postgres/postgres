@@ -220,6 +220,9 @@ typedef struct ReorderBufferTXN
 	 */
 	XLogRecPtr	end_lsn;
 
+	/* Toplevel transaction for this subxact (NULL for top-level). */
+	struct ReorderBufferTXN *toptxn;
+
 	/*
 	 * LSN of the last lsn at which snapshot information reside, so we can
 	 * restart decoding from there and fully recover this transaction from

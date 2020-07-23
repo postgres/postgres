@@ -1224,6 +1224,16 @@ RecordTransactionCommit(void)
 	bool		RelcacheInitFileInval = false;
 	bool		wrote_xlog;
 
+	/*
+	 * Log pending invalidations for logical decoding of in-progress
+	 * transactions.  Normally for DDLs, we log this at each command end,
+	 * however, for certain cases where we directly update the system table
+	 * without a transaction block, the invalidations are not logged till this
+	 * time.
+	 */
+	if (XLogLogicalInfoActive())
+		LogLogicalInvalidations();
+
 	/* Get data needed for commit record */
 	nrels = smgrGetPendingDeletes(true, &rels);
 	nchildren = xactGetCommittedChildren(&children);
@@ -6021,6 +6031,13 @@ xact_redo(XLogReaderState *record)
 		if (standbyState >= STANDBY_INITIALIZED)
 			ProcArrayApplyXidAssignment(xlrec->xtop,
 										xlrec->nsubxacts, xlrec->xsub);
+	}
+	else if (info == XLOG_XACT_INVALIDATIONS)
+	{
+		/*
+		 * XXX we do ignore this for now, what matters are invalidations
+		 * written into the commit record.
+		 */
 	}
 	else
 		elog(PANIC, "xact_redo: unknown op code %u", info);
