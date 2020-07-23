@@ -499,7 +499,7 @@ BufFileDumpBuffer(BufFile *file)
 		if (bytestowrite <= 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not write to file \"%s\" : %m",
+					 errmsg("could not write to file \"%s\": %m",
 							FilePathName(thisfile))));
 		file->curOffset += bytestowrite;
 		wpos += bytestowrite;
