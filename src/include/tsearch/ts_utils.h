@@ -124,13 +124,21 @@ extern text *generateHeadline(HeadlineParsedText *prs);
  * whether a given primitive tsquery value is matched in the data.
  */
 
+/* TS_execute requires ternary logic to handle NOT with phrase matches */
+typedef enum
+{
+	TS_NO,						/* definitely no match */
+	TS_YES,						/* definitely does match */
+	TS_MAYBE					/* can't verify match for lack of pos data */
+} TSTernaryValue;
+
 /*
  * struct ExecPhraseData is passed to a TSExecuteCallback function if we need
  * lexeme position data (because of a phrase-match operator in the tsquery).
- * The callback should fill in position data when it returns true (success).
- * If it cannot return position data, it may leave "data" unchanged, but
- * then the caller of TS_execute() must pass the TS_EXEC_PHRASE_NO_POS flag
- * and must arrange for a later recheck with position data available.
+ * The callback should fill in position data when it returns TS_YES (success).
+ * If it cannot return position data, it should leave "data" unchanged and
+ * return TS_MAYBE.  The caller of TS_execute() must then arrange for a later
+ * recheck with position data available.
  *
  * The reported lexeme positions must be sorted and unique.  Callers must only
  * consult the position bits of the pos array, ie, WEP_GETPOS(data->pos[i]).
@@ -162,12 +170,13 @@ typedef struct ExecPhraseData
  * val: lexeme to test for presence of
  * data: to be filled with lexeme positions; NULL if position data not needed
  *
- * Return true if lexeme is present in data, else false.  If data is not
- * NULL, it should be filled with lexeme positions, but function can leave
- * it as zeroes if position data is not available.
+ * Return TS_YES if lexeme is present in data, TS_MAYBE if it might be
+ * present, TS_NO if it definitely is not present.  If data is not NULL,
+ * it must be filled with lexeme positions if available.  If position data
+ * is not available, leave *data as zeroes and return TS_MAYBE, never TS_YES.
  */
-typedef bool (*TSExecuteCallback) (void *arg, QueryOperand *val,
-								   ExecPhraseData *data);
+typedef TSTernaryValue (*TSExecuteCallback) (void *arg, QueryOperand *val,
+											 ExecPhraseData *data);
 
 /*
  * Flag bits for TS_execute
@@ -175,10 +184,7 @@ typedef bool (*TSExecuteCallback) (void *arg, QueryOperand *val,
 #define TS_EXEC_EMPTY			(0x00)
 /*
  * If TS_EXEC_CALC_NOT is not set, then NOT expressions are automatically
- * evaluated to be true.  Useful in cases where NOT cannot be accurately
- * computed (GiST) or it isn't important (ranking).  From TS_execute's
- * perspective, !CALC_NOT means that the TSExecuteCallback function might
- * return false-positive indications of a lexeme's presence.
+ * evaluated to be true.  Useful in cases where NOT isn't important (ranking).
  */
 #define TS_EXEC_CALC_NOT		(0x01)
 /*

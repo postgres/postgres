@@ -178,9 +178,13 @@ typedef struct
 	bool	   *need_recheck;
 } GinChkVal;
 
-static GinTernaryValue
-checkcondition_gin_internal(GinChkVal *gcv, QueryOperand *val, ExecPhraseData *data)
+/*
+ * TS_execute callback for matching a tsquery operand to GIN index data
+ */
+static TSTernaryValue
+checkcondition_gin(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
+	GinChkVal  *gcv = (GinChkVal *) checkval;
 	int			j;
 
 	/*
@@ -193,112 +197,22 @@ checkcondition_gin_internal(GinChkVal *gcv, QueryOperand *val, ExecPhraseData *d
 	/* convert item's number to corresponding entry's (operand's) number */
 	j = gcv->map_item_operand[((QueryItem *) val) - gcv->first_item];
 
-	/* return presence of current entry in indexed value */
-	return gcv->check[j];
-}
-
-/*
- * Wrapper of check condition function for TS_execute.
- */
-static bool
-checkcondition_gin(void *checkval, QueryOperand *val, ExecPhraseData *data)
-{
-	return checkcondition_gin_internal((GinChkVal *) checkval,
-									   val,
-									   data) != GIN_FALSE;
-}
-
-/*
- * Evaluate tsquery boolean expression using ternary logic.
- *
- * Note: the reason we can't use TS_execute() for this is that its API
- * for the checkcondition callback doesn't allow a MAYBE result to be
- * returned, but we might have MAYBEs in the gcv->check array.
- * Perhaps we should change that API.
- */
-static GinTernaryValue
-TS_execute_ternary(GinChkVal *gcv, QueryItem *curitem, bool in_phrase)
-{
-	GinTernaryValue val1,
-				val2,
-				result;
-
-	/* since this function recurses, it could be driven to stack overflow */
-	check_stack_depth();
-
-	if (curitem->type == QI_VAL)
-		return
-			checkcondition_gin_internal(gcv,
-										(QueryOperand *) curitem,
-										NULL /* don't have position info */ );
-
-	switch (curitem->qoperator.oper)
+	/*
+	 * return presence of current entry in indexed value; but TRUE becomes
+	 * MAYBE in the presence of a query requiring recheck
+	 */
+	if (gcv->check[j] == GIN_TRUE)
 	{
-		case OP_NOT:
-
-			/*
-			 * Below a phrase search, force NOT's result to MAYBE.  We cannot
-			 * invert a TRUE result from the subexpression to FALSE, since
-			 * TRUE only says that the subexpression matches somewhere, not
-			 * that it matches everywhere, so there might be positions where
-			 * the NOT will match.  We could invert FALSE to TRUE, but there's
-			 * little point in distinguishing TRUE from MAYBE, since a recheck
-			 * will have been forced already.
-			 */
-			if (in_phrase)
-				return GIN_MAYBE;
-
-			result = TS_execute_ternary(gcv, curitem + 1, in_phrase);
-			if (result == GIN_MAYBE)
-				return result;
-			return !result;
-
-		case OP_PHRASE:
-
-			/*
-			 * GIN doesn't contain any information about positions, so treat
-			 * OP_PHRASE as OP_AND with recheck requirement, and always
-			 * reporting MAYBE not TRUE.
-			 */
-			*(gcv->need_recheck) = true;
-			/* Pass down in_phrase == true in case there's a NOT below */
-			in_phrase = true;
-
-			/* FALL THRU */
-
-		case OP_AND:
-			val1 = TS_execute_ternary(gcv, curitem + curitem->qoperator.left,
-									  in_phrase);
-			if (val1 == GIN_FALSE)
-				return GIN_FALSE;
-			val2 = TS_execute_ternary(gcv, curitem + 1, in_phrase);
-			if (val2 == GIN_FALSE)
-				return GIN_FALSE;
-			if (val1 == GIN_TRUE && val2 == GIN_TRUE &&
-				curitem->qoperator.oper != OP_PHRASE)
-				return GIN_TRUE;
-			else
-				return GIN_MAYBE;
-
-		case OP_OR:
-			val1 = TS_execute_ternary(gcv, curitem + curitem->qoperator.left,
-									  in_phrase);
-			if (val1 == GIN_TRUE)
-				return GIN_TRUE;
-			val2 = TS_execute_ternary(gcv, curitem + 1, in_phrase);
-			if (val2 == GIN_TRUE)
-				return GIN_TRUE;
-			if (val1 == GIN_FALSE && val2 == GIN_FALSE)
-				return GIN_FALSE;
-			else
-				return GIN_MAYBE;
-
-		default:
-			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
+		if (val->weight != 0 || data != NULL)
+			return TS_MAYBE;
 	}
 
-	/* not reachable, but keep compiler quiet */
-	return false;
+	/*
+	 * We rely on GinTernaryValue and TSTernaryValue using equivalent value
+	 * assignments.  We could use a switch statement to map the values if that
+	 * ever stops being true, but it seems unlikely to happen.
+	 */
+	return (TSTernaryValue) gcv->check[j];
 }
 
 Datum
@@ -370,10 +284,11 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 		gcv.map_item_operand = (int *) (extra_data[0]);
 		gcv.need_recheck = &recheck;
 
-		res = TS_execute_ternary(&gcv, GETQUERY(query), false);
-
-		if (res == GIN_TRUE && recheck)
-			res = GIN_MAYBE;
+		if (TS_execute(GETQUERY(query),
+					   &gcv,
+					   TS_EXEC_CALC_NOT | TS_EXEC_PHRASE_NO_POS,
+					   checkcondition_gin))
+			res = recheck ? GIN_MAYBE : GIN_TRUE;
 	}
 
 	PG_RETURN_GIN_TERNARY_VALUE(res);

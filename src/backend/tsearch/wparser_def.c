@@ -1962,7 +1962,7 @@ typedef struct
 /*
  * TS_execute callback for matching a tsquery operand to headline words
  */
-static bool
+static TSTernaryValue
 checkcondition_HL(void *opaque, QueryOperand *val, ExecPhraseData *data)
 {
 	hlCheck    *checkval = (hlCheck *) opaque;
@@ -1975,7 +1975,7 @@ checkcondition_HL(void *opaque, QueryOperand *val, ExecPhraseData *data)
 		{
 			/* if data == NULL, don't need to report positions */
 			if (!data)
-				return true;
+				return TS_YES;
 
 			if (!data->pos)
 			{
@@ -1992,9 +1992,9 @@ checkcondition_HL(void *opaque, QueryOperand *val, ExecPhraseData *data)
 	}
 
 	if (data && data->npos > 0)
-		return true;
+		return TS_YES;
 
-	return false;
+	return TS_NO;
 }
 
 /*

@@ -67,14 +67,6 @@ typedef struct
 	StatEntry  *root;
 } TSVectorStat;
 
-/* TS_execute requires ternary logic to handle NOT with phrase matches */
-typedef enum
-{
-	TS_NO,						/* definitely no match */
-	TS_YES,						/* definitely does match */
-	TS_MAYBE					/* can't verify match for lack of pos data */
-} TSTernaryValue;
-
 
 static TSTernaryValue TS_execute_recurse(QueryItem *curitem, void *arg,
 										 uint32 flags,
@@ -1188,13 +1180,15 @@ tsCompareString(char *a, int lena, char *b, int lenb, bool prefix)
 /*
  * Check weight info or/and fill 'data' with the required positions
  */
-static bool
+static TSTernaryValue
 checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 			   ExecPhraseData *data)
 {
-	bool		result = false;
+	TSTernaryValue result = TS_NO;
 
-	if (entry->haspos && (val->weight || data))
+	Assert(data == NULL || data->npos == 0);
+
+	if (entry->haspos)
 	{
 		WordEntryPosVector *posvec;
 
@@ -1232,7 +1226,13 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 			data->npos = dptr - data->pos;
 
 			if (data->npos > 0)
-				result = true;
+				result = TS_YES;
+			else
+			{
+				pfree(data->pos);
+				data->pos = NULL;
+				data->allocated = false;
+			}
 		}
 		else if (val->weight)
 		{
@@ -1243,40 +1243,57 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 			{
 				if (val->weight & (1 << WEP_GETWEIGHT(*posvec_iter)))
 				{
-					result = true;
+					result = TS_YES;
 					break;		/* no need to go further */
 				}
 
 				posvec_iter++;
 			}
 		}
-		else					/* data != NULL */
+		else if (data)
 		{
 			data->npos = posvec->npos;
 			data->pos = posvec->pos;
 			data->allocated = false;
-			result = true;
+			result = TS_YES;
+		}
+		else
+		{
+			/* simplest case: no weight check, positions not needed */
+			result = TS_YES;
 		}
 	}
 	else
 	{
-		result = true;
+		/*
+		 * Position info is lacking, so if the caller requires it, we can only
+		 * say that maybe there is a match.
+		 *
+		 * Notice, however, that we *don't* check val->weight here.
+		 * Historically, stripped tsvectors are considered to match queries
+		 * whether or not the query has a weight restriction; that's a little
+		 * dubious but we'll preserve the behavior.
+		 */
+		if (data)
+			result = TS_MAYBE;
+		else
+			result = TS_YES;
 	}
 
 	return result;
 }
 
 /*
- * is there value 'val' in array or not ?
+ * TS_execute callback for matching a tsquery operand to plain tsvector data
  */
-static bool
+static TSTernaryValue
 checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 {
 	CHKVAL	   *chkval = (CHKVAL *) checkval;
 	WordEntry  *StopLow = chkval->arrb;
 	WordEntry  *StopHigh = chkval->arre;
 	WordEntry  *StopMiddle = StopHigh;
-	bool		res = false;
+	TSTernaryValue res = TS_NO;
 
 	/* Loop invariant: StopLow <= val < StopHigh */
 	while (StopLow < StopHigh)
@@ -1302,36 +1319,69 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 			StopHigh = StopMiddle;
 	}
 
-	if ((!res || data) && val->prefix)
+	/*
+	 * If it's a prefix search, we should also consider lexemes that the
+	 * search term is a prefix of (which will necessarily immediately follow
+	 * the place we found in the above loop).  But we can skip them if there
+	 * was a definite match on the exact term AND the caller doesn't need
+	 * position info.
+	 */
+	if (val->prefix && (res != TS_YES || data))
 	{
 		WordEntryPos *allpos = NULL;
 		int			npos = 0,
 					totalpos = 0;
 
-		/*
-		 * there was a failed exact search, so we should scan further to find
-		 * a prefix match. We also need to do so if caller needs position info
-		 */
+		/* adjust start position for corner case */
 		if (StopLow >= StopHigh)
 			StopMiddle = StopHigh;
 
-		while ((!res || data) && StopMiddle < chkval->arre &&
+		/* we don't try to re-use any data from the initial match */
+		if (data)
+		{
+			if (data->allocated)
+				pfree(data->pos);
+			data->pos = NULL;
+			data->allocated = false;
+			data->npos = 0;
+		}
+		res = TS_NO;
+
+		while ((res != TS_YES || data) &&
+			   StopMiddle < chkval->arre &&
 			   tsCompareString(chkval->operand + val->distance,
 							   val->length,
 							   chkval->values + StopMiddle->pos,
 							   StopMiddle->len,
 							   true) == 0)
 		{
-			if (data)
-			{
-				/*
-				 * We need to join position information
-				 */
-				res = checkclass_str(chkval, StopMiddle, val, data);
+			TSTernaryValue subres;
 
-				if (res)
+			subres = checkclass_str(chkval, StopMiddle, val, data);
+
+			if (subres != TS_NO)
+			{
+				if (data)
 				{
-					while (npos + data->npos >= totalpos)
+					/*
+					 * We need to join position information
+					 */
+					if (subres == TS_MAYBE)
+					{
+						/*
+						 * No position info for this match, so we must report
+						 * MAYBE overall.
+						 */
+						res = TS_MAYBE;
+						/* forget any previous positions */
+						npos = 0;
+						/* don't leak storage */
+						if (allpos)
+							pfree(allpos);
+						break;
+					}
+
+					while (npos + data->npos > totalpos)
 					{
 						if (totalpos == 0)
 						{
@@ -1347,22 +1397,27 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 
 					memcpy(allpos + npos, data->pos, sizeof(WordEntryPos) * data->npos);
 					npos += data->npos;
+
+					/* don't leak storage from individual matches */
+					if (data->allocated)
+						pfree(data->pos);
+					data->pos = NULL;
+					data->allocated = false;
+					/* it's important to reset data->npos before next loop */
+					data->npos = 0;
 				}
 				else
 				{
-					/* at loop exit, res must be true if we found matches */
-					res = (npos > 0);
+					/* Don't need positions, just handle YES/MAYBE */
+					if (subres == TS_YES || res == TS_NO)
+						res = subres;
 				}
-			}
-			else
-			{
-				res = checkclass_str(chkval, StopMiddle, val, NULL);
 			}
 
 			StopMiddle++;
 		}
 
-		if (res && data)
+		if (data && npos > 0)
 		{
 			/* Sort and make unique array of found positions */
 			data->pos = allpos;
@@ -1370,6 +1425,7 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 			data->npos = qunique(data->pos, npos, sizeof(WordEntryPos),
 								 compareWordEntryPos);
 			data->allocated = true;
+			res = TS_YES;
 		}
 	}
 
@@ -1561,14 +1617,7 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
-	{
-		if (!chkcond(arg, (QueryOperand *) curitem, data))
-			return TS_NO;
-		if (data->npos > 0 || data->negate)
-			return TS_YES;
-		/* If we have no position data, we must return TS_MAYBE */
-		return TS_MAYBE;
-	}
+		return chkcond(arg, (QueryOperand *) curitem, data);
 
 	switch (curitem->qoperator.oper)
 	{
@@ -1821,7 +1870,7 @@ TS_execute_recurse(QueryItem *curitem, void *arg, uint32 flags,
 
 	if (curitem->type == QI_VAL)
 		return chkcond(arg, (QueryOperand *) curitem,
-					   NULL /* don't need position info */ ) ? TS_YES : TS_NO;
+					   NULL /* don't need position info */ );
 
 	switch (curitem->qoperator.oper)
 	{

@@ -61,6 +61,10 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:D';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:D';
 
 create index wowidx on test_tsvector using gist (a);
 
@@ -90,6 +94,10 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:D';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:D';
 
 SET enable_indexscan=OFF;
 SET enable_bitmapscan=ON;
@@ -116,6 +124,10 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:D';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:D';
 
 -- Test siglen parameter of GiST tsvector_ops
 CREATE INDEX wowidx1 ON test_tsvector USING gist (a tsvector_ops(foo=1));
@@ -152,6 +164,10 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:D';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:D';
 
 DROP INDEX wowidx2;
 
@@ -181,6 +197,10 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:D';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:D';
 
 RESET enable_seqscan;
 RESET enable_indexscan;
@@ -215,6 +235,10 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '!qe <2> qt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(pl <-> yh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(yh <-> pl)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '!(qe <2> qt)';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wd:D';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:A';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!wd:D';
 
 -- Test optimization of non-empty GIN_SEARCH_MODE_ALL queries
 EXPLAIN (COSTS OFF)
