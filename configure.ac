@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl configure.in
+dnl configure.ac
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -21,7 +21,7 @@ AC_INIT([PostgreSQL], [14devel], [pgsql-bugs@lists.postgresql.org], [], [https:/
 
 m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 Untested combinations of 'autoconf' and PostgreSQL versions are not
-recommended.  You can remove the check from 'configure.in' but it is then
+recommended.  You can remove the check from 'configure.ac' but it is then
 your responsibility whether the result works or not.])])
 AC_COPYRIGHT([Copyright (c) 1996-2020, PostgreSQL Global Development Group])
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])

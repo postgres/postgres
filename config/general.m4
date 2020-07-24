@@ -8,7 +8,7 @@
 # argument (other than "yes/no"), etc.
 #
 # The point of this implementation is to reduce code size and
-# redundancy in configure.in and to improve robustness and consistency
+# redundancy in configure.ac and to improve robustness and consistency
 # in the option evaluation code.
 
 

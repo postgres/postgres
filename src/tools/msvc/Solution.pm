@@ -155,9 +155,9 @@ sub GenerateFiles
 	my $ac_define_openssl_api_compat_found = 0;
 	my $openssl_api_compat;
 
-	# Parse configure.in to get version numbers
-	open(my $c, '<', "configure.in")
-	  || confess("Could not open configure.in for reading\n");
+	# Parse configure.ac to get version numbers
+	open(my $c, '<', "configure.ac")
+	  || confess("Could not open configure.ac for reading\n");
 	while (<$c>)
 	{
 		if (/^AC_INIT\(\[([^\]]+)\], \[([^\]]+)\], \[([^\]]+)\], \[([^\]]*)\], \[([^\]]+)\]/
@@ -185,7 +185,7 @@ sub GenerateFiles
 		}
 	}
 	close($c);
-	confess "Unable to parse configure.in for all variables!"
+	confess "Unable to parse configure.ac for all variables!"
 	  unless $ac_init_found && $ac_define_openssl_api_compat_found;
 
 	if (IsNewer("src/include/pg_config_os.h", "src/include/port/win32.h"))
@@ -834,7 +834,7 @@ EOF
 
 # Read lines from input file and substitute symbols using the same
 # logic that config.status uses.  There should be one call of this for
-# each AC_CONFIG_HEADERS call in configure.in.
+# each AC_CONFIG_HEADERS call in configure.ac.
 #
 # If the "required" argument is true, we also keep track which of our
 # defines have been found and error out if any are left unused at the

@@ -1,4 +1,4 @@
-/* src/include/pg_config.h.in.  Generated from configure.in by autoheader.  */
+/* src/include/pg_config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to the type of arg 1 of 'accept' */
 #undef ACCEPT_TYPE_ARG1
