@@ -183,10 +183,12 @@ typedef TSTernaryValue (*TSExecuteCallback) (void *arg, QueryOperand *val,
  */
 #define TS_EXEC_EMPTY			(0x00)
 /*
- * If TS_EXEC_CALC_NOT is not set, then NOT expressions are automatically
- * evaluated to be true.  Useful in cases where NOT isn't important (ranking).
+ * If TS_EXEC_SKIP_NOT is set, then NOT sub-expressions are automatically
+ * evaluated to be true.  This was formerly the default behavior.  It's now
+ * deprecated because it tends to give silly answers, but some applications
+ * might still have a use for it.
  */
-#define TS_EXEC_CALC_NOT		(0x01)
+#define TS_EXEC_SKIP_NOT		(0x01)
 /*
  * If TS_EXEC_PHRASE_NO_POS is set, allow OP_PHRASE to be executed lossily
  * in the absence of position information: a true result indicates that the
