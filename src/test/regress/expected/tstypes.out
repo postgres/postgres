@@ -551,6 +551,55 @@ SELECT 'wa:1A wb:2D'::tsvector @@ 'w:*D <-> w:*A'::tsquery as "false";
  f
 (1 row)
 
+SELECT 'wa:1A'::tsvector @@ 'w:*A'::tsquery as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT 'wa:1A'::tsvector @@ 'w:*D'::tsquery as "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'wa:1A'::tsvector @@ '!w:*A'::tsquery as "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT 'wa:1A'::tsvector @@ '!w:*D'::tsquery as "true";
+ true 
+------
+ t
+(1 row)
+
+-- historically, a stripped tsvector matches queries ignoring weights:
+SELECT strip('wa:1A'::tsvector) @@ 'w:*A'::tsquery as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT strip('wa:1A'::tsvector) @@ 'w:*D'::tsquery as "true";
+ true 
+------
+ t
+(1 row)
+
+SELECT strip('wa:1A'::tsvector) @@ '!w:*A'::tsquery as "false";
+ false 
+-------
+ f
+(1 row)
+
+SELECT strip('wa:1A'::tsvector) @@ '!w:*D'::tsquery as "false";
+ false 
+-------
+ f
+(1 row)
+
 SELECT 'supernova'::tsvector @@ 'super'::tsquery AS "false";
  false 
 -------
