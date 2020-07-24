@@ -248,7 +248,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 
 		res = TS_execute(GETQUERY(query),
 						 &gcv,
-						 TS_EXEC_CALC_NOT | TS_EXEC_PHRASE_NO_POS,
+						 TS_EXEC_PHRASE_NO_POS,
 						 checkcondition_gin);
 	}
 
@@ -286,7 +286,7 @@ gin_tsquery_triconsistent(PG_FUNCTION_ARGS)
 
 		if (TS_execute(GETQUERY(query),
 					   &gcv,
-					   TS_EXEC_CALC_NOT | TS_EXEC_PHRASE_NO_POS,
+					   TS_EXEC_PHRASE_NO_POS,
 					   checkcondition_gin))
 			res = recheck ? GIN_MAYBE : GIN_TRUE;
 	}

@@ -1627,9 +1627,9 @@ TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
 			 * We need not touch data->width, since a NOT operation does not
 			 * change the match width.
 			 */
-			if (!(flags & TS_EXEC_CALC_NOT))
+			if (flags & TS_EXEC_SKIP_NOT)
 			{
-				/* without CALC_NOT, report NOT as "match everywhere" */
+				/* with SKIP_NOT, report NOT as "match everywhere" */
 				Assert(data->npos == 0 && !data->negate);
 				data->negate = true;
 				return TS_YES;
@@ -1875,7 +1875,7 @@ TS_execute_recurse(QueryItem *curitem, void *arg, uint32 flags,
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
-			if (!(flags & TS_EXEC_CALC_NOT))
+			if (flags & TS_EXEC_SKIP_NOT)
 				return TS_YES;
 			switch (TS_execute_recurse(curitem + 1, arg, flags, chkcond))
 			{
@@ -2038,7 +2038,7 @@ ts_match_vq(PG_FUNCTION_ARGS)
 	chkval.operand = GETOPERAND(query);
 	result = TS_execute(GETQUERY(query),
 						&chkval,
-						TS_EXEC_CALC_NOT,
+						TS_EXEC_EMPTY,
 						checkcondition_str);
 
 	PG_FREE_IF_COPY(val, 0);
