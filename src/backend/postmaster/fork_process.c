@@ -109,10 +109,12 @@ fork_process(void)
 		}
 
 		/*
-		 * Make sure processes do not share OpenSSL randomness state.
+		 * Make sure processes do not share OpenSSL randomness state. This is
+		 * no longer required in OpenSSL 1.1.1 and later versions, but until
+		 * we drop support for version < 1.1.1 we need to do this.
 		 */
 #ifdef USE_OPENSSL
-		RAND_cleanup();
+		RAND_poll();
 #endif
 	}
 
