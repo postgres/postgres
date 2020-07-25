@@ -108,7 +108,11 @@ pg_strong_random(void *buf, size_t len)
 	/*
 	 * Check that OpenSSL's CSPRNG has been sufficiently seeded, and if not
 	 * add more seed data using RAND_poll().  With some older versions of
-	 * OpenSSL, it may be necessary to call RAND_poll() a number of times.
+	 * OpenSSL, it may be necessary to call RAND_poll() a number of times.  If
+	 * RAND_poll() fails to generate seed data within the given amount of
+	 * retries, subsequent RAND_bytes() calls will fail, but we allow that to
+	 * happen to let pg_strong_random() callers handle that with appropriate
+	 * error handling.
 	 */
 #define NUM_RAND_POLL_RETRIES 8
 
@@ -120,16 +124,7 @@ pg_strong_random(void *buf, size_t len)
 			break;
 		}
 
-		if (RAND_poll() == 0)
-		{
-			/*
-			 * RAND_poll() failed to generate any seed data, which means that
-			 * RAND_bytes() will probably fail.  For now, just fall through
-			 * and let that happen.  XXX: maybe we could seed it some other
-			 * way.
-			 */
-			break;
-		}
+		RAND_poll();
 	}
 
 	if (RAND_bytes(buf, len) == 1)
