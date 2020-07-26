@@ -139,7 +139,7 @@ extern TupleHashTable BuildTupleHashTableExt(PlanState *parent,
 											 MemoryContext tempcxt, bool use_variable_hash_iv);
 extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 										   TupleTableSlot *slot,
-										   bool *isnew);
+										   bool *isnew, uint32 *hash);
 extern uint32 TupleHashTableHash(TupleHashTable hashtable,
 								 TupleTableSlot *slot);
 extern TupleHashEntry LookupTupleHashEntryHash(TupleHashTable hashtable,

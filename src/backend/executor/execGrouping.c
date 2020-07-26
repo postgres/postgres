@@ -22,11 +22,11 @@
 #include "utils/memutils.h"
 
 static int	TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2);
-static uint32 TupleHashTableHash_internal(struct tuplehash_hash *tb,
-										  const MinimalTuple tuple);
-static TupleHashEntry LookupTupleHashEntry_internal(TupleHashTable hashtable,
-													TupleTableSlot *slot,
-													bool *isnew, uint32 hash);
+static inline uint32 TupleHashTableHash_internal(struct tuplehash_hash *tb,
+												 const MinimalTuple tuple);
+static inline TupleHashEntry LookupTupleHashEntry_internal(TupleHashTable hashtable,
+														   TupleTableSlot *slot,
+														   bool *isnew, uint32 hash);
 
 /*
  * Define parameters for tuple hash table code generation. The interface is
@@ -291,6 +291,9 @@ ResetTupleHashTable(TupleHashTable hashtable)
  * If isnew is NULL, we do not create new entries; we return NULL if no
  * match is found.
  *
+ * If hash is not NULL, we set it to the calculated hash value. This allows
+ * callers access to the hash value even if no entry is returned.
+ *
  * If isnew isn't NULL, then a new entry is created if no existing entry
  * matches.  On return, *isnew is true if the entry is newly created,
  * false if it existed already.  ->additional_data in the new entry has
@@ -298,11 +301,11 @@ ResetTupleHashTable(TupleHashTable hashtable)
  */
 TupleHashEntry
 LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
-					 bool *isnew)
+					 bool *isnew, uint32 *hash)
 {
 	TupleHashEntry entry;
 	MemoryContext oldContext;
-	uint32		hash;
+	uint32		local_hash;
 
 	/* Need to run the hash functions in short-lived context */
 	oldContext = MemoryContextSwitchTo(hashtable->tempcxt);
@@ -312,8 +315,13 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 	hashtable->in_hash_funcs = hashtable->tab_hash_funcs;
 	hashtable->cur_eq_func = hashtable->tab_eq_func;
 
-	hash = TupleHashTableHash_internal(hashtable->hashtab, NULL);
-	entry = LookupTupleHashEntry_internal(hashtable, slot, isnew, hash);
+	local_hash = TupleHashTableHash_internal(hashtable->hashtab, NULL);
+	entry = LookupTupleHashEntry_internal(hashtable, slot, isnew, local_hash);
+
+	if (hash != NULL)
+		*hash = local_hash;
+
+	Assert(entry == NULL || entry->hash == local_hash);
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -362,6 +370,7 @@ LookupTupleHashEntryHash(TupleHashTable hashtable, TupleTableSlot *slot,
 	hashtable->cur_eq_func = hashtable->tab_eq_func;
 
 	entry = LookupTupleHashEntry_internal(hashtable, slot, isnew, hash);
+	Assert(entry == NULL || entry->hash == hash);
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -480,7 +489,7 @@ TupleHashTableHash_internal(struct tuplehash_hash *tb,
  * NB: This function may or may not change the memory context. Caller is
  * expected to change it back.
  */
-static TupleHashEntry
+static inline TupleHashEntry
 LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
 							  bool *isnew, uint32 hash)
 {
