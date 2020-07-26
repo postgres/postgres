@@ -687,12 +687,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        <structfield>leader_pid</structfield> <type>integer</type>
       </para>
       <para>
-       Process ID of the parallel group leader if this process is or
-       has been involved in parallel query, or null. This field is set
-       when a process wants to cooperate with parallel workers, and
-       remains set as long as the process exists. For a parallel group leader,
-       this field is set to its own process ID. For a parallel worker,
-       this field is set to the process ID of the parallel group leader.
+       Process ID of the parallel group leader, if this process is a
+       parallel query worker.  <literal>NULL</literal> if this process is a
+       parallel group leader or does not participate in parallel query.
       </para></entry>
      </row>
 
