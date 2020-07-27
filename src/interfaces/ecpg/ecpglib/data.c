@@ -523,8 +523,8 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 				case ECPGt_bytea:
 					{
-						struct ECPGgeneric_varchar *variable =
-						(struct ECPGgeneric_varchar *) (var + offset * act_tuple);
+						struct ECPGgeneric_bytea *variable =
+						(struct ECPGgeneric_bytea *) (var + offset * act_tuple);
 						long		dst_size,
 									src_size,
 									dec_size;
