@@ -286,7 +286,28 @@ restart:
 
 	dec->buf_data = dec->buf_len - dec->stream.avail_out;
 	if (res == Z_STREAM_END)
+	{
+		uint8	   *tmp;
+
+		/*
+		 * A stream must be terminated by a normal packet.  If the last stream
+		 * packet in the source stream is a full packet, a normal empty packet
+		 * must follow.  Since the underlying packet reader doesn't know that
+		 * the compressed stream has been ended, we need to to consume the
+		 * terminating packet here.  This read does not harm even if the
+		 * stream has already ended.
+		 */
+		res = pullf_read(src, 1, &tmp);
+
+		if (res < 0)
+			return res;
+		else if (res > 0)
+		{
+			px_debug("decompress_read: extra bytes after end of stream");
+			return PXE_PGP_CORRUPT_DATA;
+		}
 		dec->eof = 1;
+	}
 	goto restart;
 }
 
