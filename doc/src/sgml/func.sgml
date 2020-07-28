@@ -21087,10 +21087,10 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        Returns true if <acronym>JIT</acronym> compilation is available in
-        this session (see <xref linkend="jit"/>).
-        Returns false if <xref linkend="guc-jit"/> is set to false, or if the
-        feature was not enabled at compile time.
+        Returns true if a <acronym>JIT</acronym> compiler extension is
+        available (see <xref linkend="jit"/>) and the
+        <xref linkend="guc-jit"/> configuration parameter is set to
+        <literal>on</literal>.
        </para></entry>
       </row>
 
