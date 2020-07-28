@@ -17408,9 +17408,9 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry><literal><function>pg_jit_available()</function></literal></entry>
        <entry><type>boolean</type></entry>
-       <entry>is <acronym>JIT</acronym> compilation available in this session
-       (see <xref linkend="jit"/>)? Returns <literal>false</literal> if <xref
-       linkend="guc-jit"/> is set to false.</entry>
+       <entry>is a <acronym>JIT</acronym> compiler extension available
+       (see <xref linkend="jit"/>) and the <xref linkend="guc-jit"/>
+       configuration parameter set to <literal>on</literal>.</entry>
       </row>
 
       <row>
