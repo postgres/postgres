@@ -4850,11 +4850,10 @@ create_distinct_paths(PlannerInfo *root,
 	 * Consider hash-based implementations of DISTINCT, if possible.
 	 *
 	 * If we were not able to make any other types of path, we *must* hash or
-	 * die trying.  If we do have other choices, there are several things that
+	 * die trying.  If we do have other choices, there are two things that
 	 * should prevent selection of hashing: if the query uses DISTINCT ON
 	 * (because it won't really have the expected behavior if we hash), or if
-	 * enable_hashagg is off, or if it looks like the hashtable will exceed
-	 * work_mem.
+	 * enable_hashagg is off.
 	 *
 	 * Note: grouping_is_hashable() is much more expensive to check than the
 	 * other gating conditions, so we want to do it last.
@@ -4864,12 +4863,7 @@ create_distinct_paths(PlannerInfo *root,
 	else if (parse->hasDistinctOn || !enable_hashagg)
 		allow_hash = false;		/* policy-based decision not to hash */
 	else
-	{
-		Size		hashentrysize = hash_agg_entry_size(0, cheapest_input_path->pathtarget->width, 0);
-
-		allow_hash = !hashagg_avoid_disk_plan ||
-			(hashentrysize * numDistinctRows <= work_mem * 1024L);
-	}
+		allow_hash = true;		/* default */
 
 	if (allow_hash && grouping_is_hashable(parse->distinctClause))
 	{
@@ -6749,8 +6743,6 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 
 	if (can_hash)
 	{
-		double		hashaggtablesize;
-
 		if (parse->groupingSets)
 		{
 			/*
@@ -6762,63 +6754,41 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 		}
 		else
 		{
-			hashaggtablesize = estimate_hashagg_tablesize(cheapest_path,
-														  agg_costs,
-														  dNumGroups);
-
 			/*
-			 * Provided that the estimated size of the hashtable does not
-			 * exceed work_mem, we'll generate a HashAgg Path, although if we
-			 * were unable to sort above, then we'd better generate a Path, so
-			 * that we at least have one.
+			 * Generate a HashAgg Path.  We just need an Agg over the
+			 * cheapest-total input path, since input order won't matter.
 			 */
-			if (!hashagg_avoid_disk_plan ||
-				hashaggtablesize < work_mem * 1024L ||
-				grouped_rel->pathlist == NIL)
-			{
-				/*
-				 * We just need an Agg over the cheapest-total input path,
-				 * since input order won't matter.
-				 */
-				add_path(grouped_rel, (Path *)
-						 create_agg_path(root, grouped_rel,
-										 cheapest_path,
-										 grouped_rel->reltarget,
-										 AGG_HASHED,
-										 AGGSPLIT_SIMPLE,
-										 parse->groupClause,
-										 havingQual,
-										 agg_costs,
-										 dNumGroups));
-			}
+			add_path(grouped_rel, (Path *)
+					 create_agg_path(root, grouped_rel,
+									 cheapest_path,
+									 grouped_rel->reltarget,
+									 AGG_HASHED,
+									 AGGSPLIT_SIMPLE,
+									 parse->groupClause,
+									 havingQual,
+									 agg_costs,
+									 dNumGroups));
 		}
 
 		/*
 		 * Generate a Finalize HashAgg Path atop of the cheapest partially
-		 * grouped path, assuming there is one. Once again, we'll only do this
-		 * if it looks as though the hash table won't exceed work_mem.
+		 * grouped path, assuming there is one
 		 */
 		if (partially_grouped_rel && partially_grouped_rel->pathlist)
 		{
 			Path	   *path = partially_grouped_rel->cheapest_total_path;
 
-			hashaggtablesize = estimate_hashagg_tablesize(path,
-														  agg_final_costs,
-														  dNumGroups);
-
-			if (!hashagg_avoid_disk_plan ||
-				hashaggtablesize < work_mem * 1024L)
-				add_path(grouped_rel, (Path *)
-						 create_agg_path(root,
-										 grouped_rel,
-										 path,
-										 grouped_rel->reltarget,
-										 AGG_HASHED,
-										 AGGSPLIT_FINAL_DESERIAL,
-										 parse->groupClause,
-										 havingQual,
-										 agg_final_costs,
-										 dNumGroups));
+			add_path(grouped_rel, (Path *)
+					 create_agg_path(root,
+									 grouped_rel,
+									 path,
+									 grouped_rel->reltarget,
+									 AGG_HASHED,
+									 AGGSPLIT_FINAL_DESERIAL,
+									 parse->groupClause,
+									 havingQual,
+									 agg_final_costs,
+									 dNumGroups));
 		}
 	}
 
@@ -7171,65 +7141,43 @@ create_partial_grouping_paths(PlannerInfo *root,
 		}
 	}
 
+	/*
+	 * Add a partially-grouped HashAgg Path where possible
+	 */
 	if (can_hash && cheapest_total_path != NULL)
 	{
-		double		hashaggtablesize;
-
 		/* Checked above */
 		Assert(parse->hasAggs || parse->groupClause);
 
-		hashaggtablesize =
-			estimate_hashagg_tablesize(cheapest_total_path,
-									   agg_partial_costs,
-									   dNumPartialGroups);
-
-		/*
-		 * Tentatively produce a partial HashAgg Path, depending on if it
-		 * looks as if the hash table will fit in work_mem.
-		 */
-		if ((!hashagg_avoid_disk_plan || hashaggtablesize < work_mem * 1024L) &&
-			cheapest_total_path != NULL)
-		{
-			add_path(partially_grouped_rel, (Path *)
-					 create_agg_path(root,
-									 partially_grouped_rel,
-									 cheapest_total_path,
-									 partially_grouped_rel->reltarget,
-									 AGG_HASHED,
-									 AGGSPLIT_INITIAL_SERIAL,
-									 parse->groupClause,
-									 NIL,
-									 agg_partial_costs,
-									 dNumPartialGroups));
-		}
+		add_path(partially_grouped_rel, (Path *)
+				 create_agg_path(root,
+								 partially_grouped_rel,
+								 cheapest_total_path,
+								 partially_grouped_rel->reltarget,
+								 AGG_HASHED,
+								 AGGSPLIT_INITIAL_SERIAL,
+								 parse->groupClause,
+								 NIL,
+								 agg_partial_costs,
+								 dNumPartialGroups));
 	}
 
+	/*
+	 * Now add a partially-grouped HashAgg partial Path where possible
+	 */
 	if (can_hash && cheapest_partial_path != NULL)
 	{
-		double		hashaggtablesize;
-
-		hashaggtablesize =
-			estimate_hashagg_tablesize(cheapest_partial_path,
-									   agg_partial_costs,
-									   dNumPartialPartialGroups);
-
-		/* Do the same for partial paths. */
-		if ((!hashagg_avoid_disk_plan ||
-			 hashaggtablesize < work_mem * 1024L) &&
-			cheapest_partial_path != NULL)
-		{
-			add_partial_path(partially_grouped_rel, (Path *)
-							 create_agg_path(root,
-											 partially_grouped_rel,
-											 cheapest_partial_path,
-											 partially_grouped_rel->reltarget,
-											 AGG_HASHED,
-											 AGGSPLIT_INITIAL_SERIAL,
-											 parse->groupClause,
-											 NIL,
-											 agg_partial_costs,
-											 dNumPartialPartialGroups));
-		}
+		add_partial_path(partially_grouped_rel, (Path *)
+						 create_agg_path(root,
+										 partially_grouped_rel,
+										 cheapest_partial_path,
+										 partially_grouped_rel->reltarget,
+										 AGG_HASHED,
+										 AGGSPLIT_INITIAL_SERIAL,
+										 parse->groupClause,
+										 NIL,
+										 agg_partial_costs,
+										 dNumPartialPartialGroups));
 	}
 
 	/*

@@ -4840,23 +4840,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-hashagg-avoid-disk-plan" xreflabel="hashagg_avoid_disk_plan">
-      <term><varname>hashagg_avoid_disk_plan</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>hashagg_avoid_disk_plan</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        If set to <literal>on</literal>, causes the planner to avoid choosing
-        hashed aggregation plans that are expected to use the disk. If hashed
-        aggregation is chosen, it may still require the use of disk at
-        execution time, even if this parameter is enabled. The default is
-        <literal>off</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      </variablelist>
      </sect2>
      <sect2 id="runtime-config-query-constants">

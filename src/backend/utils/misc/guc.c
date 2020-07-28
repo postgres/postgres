@@ -1007,16 +1007,6 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"hashagg_avoid_disk_plan", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Causes the planner to avoid hashed aggregation plans that are expected to use the disk."),
-			NULL,
-			GUC_EXPLAIN
-		},
-		&hashagg_avoid_disk_plan,
-		false,
-		NULL, NULL, NULL
-	},
-	{
 		{"enable_material", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables the planner's use of materialization."),
 			NULL,
