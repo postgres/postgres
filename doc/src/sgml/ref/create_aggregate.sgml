@@ -386,10 +386,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       If this parameter is omitted or is zero, a default estimate is used
       based on the <replaceable>state_data_type</replaceable>.
       The planner uses this value to estimate the memory required for a
-      grouped aggregate query.  The planner will consider using hash
-      aggregation for such a query only if the hash table is estimated to fit
-      in <xref linkend="guc-work-mem"/>; therefore, large values of this
-      parameter discourage use of hash aggregation.
+      grouped aggregate query.
      </para>
     </listitem>
    </varlistentry>
