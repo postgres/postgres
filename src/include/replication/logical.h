@@ -80,6 +80,11 @@ typedef struct LogicalDecodingContext
 	void	   *output_writer_private;
 
 	/*
+	 * Does the output plugin support streaming, and is it enabled?
+	 */
+	bool		streaming;
+
+	/*
 	 * State for writing output.
 	 */
 	bool		accept_writes;
