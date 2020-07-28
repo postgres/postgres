@@ -3671,3 +3671,95 @@ explain (costs off) update listp1 set a = 1 where a = 2;
 reset constraint_exclusion;
 reset enable_partition_pruning;
 drop table listp;
+--
+-- Check that gen_prune_steps_from_opexps() works well for various cases of
+-- clauses for different partition keys
+--
+create table rp_prefix_test1 (a int, b varchar) partition by range(a, b);
+create table rp_prefix_test1_p1 partition of rp_prefix_test1 for values from (1, 'a') to (1, 'b');
+create table rp_prefix_test1_p2 partition of rp_prefix_test1 for values from (2, 'a') to (2, 'b');
+-- Don't call get_steps_using_prefix() with the last partition key b plus
+-- an empty prefix
+explain (costs off) select * from rp_prefix_test1 where a <= 1 and b = 'a';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on rp_prefix_test1_p1 rp_prefix_test1
+   Filter: ((a <= 1) AND ((b)::text = 'a'::text))
+(2 rows)
+
+create table rp_prefix_test2 (a int, b int, c int) partition by range(a, b, c);
+create table rp_prefix_test2_p1 partition of rp_prefix_test2 for values from (1, 1, 0) to (1, 1, 10);
+create table rp_prefix_test2_p2 partition of rp_prefix_test2 for values from (2, 2, 0) to (2, 2, 10);
+-- Don't call get_steps_using_prefix() with the last partition key c plus
+-- an invalid prefix (ie, b = 1)
+explain (costs off) select * from rp_prefix_test2 where a <= 1 and b = 1 and c >= 0;
+                   QUERY PLAN                   
+------------------------------------------------
+ Seq Scan on rp_prefix_test2_p1 rp_prefix_test2
+   Filter: ((a <= 1) AND (c >= 0) AND (b = 1))
+(2 rows)
+
+create table rp_prefix_test3 (a int, b int, c int, d int) partition by range(a, b, c, d);
+create table rp_prefix_test3_p1 partition of rp_prefix_test3 for values from (1, 1, 1, 0) to (1, 1, 1, 10);
+create table rp_prefix_test3_p2 partition of rp_prefix_test3 for values from (2, 2, 2, 0) to (2, 2, 2, 10);
+-- Test that get_steps_using_prefix() handles a prefix that contains multiple
+-- clauses for the partition key b (ie, b >= 1 and b >= 2)
+explain (costs off) select * from rp_prefix_test3 where a >= 1 and b >= 1 and b >= 2 and c >= 2 and d >= 0;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Seq Scan on rp_prefix_test3_p2 rp_prefix_test3
+   Filter: ((a >= 1) AND (b >= 1) AND (b >= 2) AND (c >= 2) AND (d >= 0))
+(2 rows)
+
+create table hp_prefix_test (a int, b int, c int, d int) partition by hash (a part_test_int4_ops, b part_test_int4_ops, c part_test_int4_ops, d part_test_int4_ops);
+create table hp_prefix_test_p1 partition of hp_prefix_test for values with (modulus 2, remainder 0);
+create table hp_prefix_test_p2 partition of hp_prefix_test for values with (modulus 2, remainder 1);
+-- Test that get_steps_using_prefix() handles non-NULL step_nullkeys
+explain (costs off) select * from hp_prefix_test where a = 1 and b is null and c = 1 and d = 1;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Seq Scan on hp_prefix_test_p1 hp_prefix_test
+   Filter: ((b IS NULL) AND (a = 1) AND (c = 1) AND (d = 1))
+(2 rows)
+
+drop table rp_prefix_test1;
+drop table rp_prefix_test2;
+drop table rp_prefix_test3;
+drop table hp_prefix_test;
+--
+-- Check that gen_partprune_steps() detects self-contradiction from clauses
+-- regardless of the order of the clauses (Here we use a custom operator to
+-- prevent the equivclass.c machinery from reordering the clauses)
+--
+create operator === (
+   leftarg = int4,
+   rightarg = int4,
+   procedure = int4eq,
+   commutator = ===,
+   hashes
+);
+create operator class part_test_int4_ops2
+for type int4
+using hash as
+operator 1 ===,
+function 2 part_hashint4_noop(int4, int8);
+create table hp_contradict_test (a int, b int) partition by hash (a part_test_int4_ops2, b part_test_int4_ops2);
+create table hp_contradict_test_p1 partition of hp_contradict_test for values with (modulus 2, remainder 0);
+create table hp_contradict_test_p2 partition of hp_contradict_test for values with (modulus 2, remainder 1);
+explain (costs off) select * from hp_contradict_test where a is null and a === 1 and b === 1;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+explain (costs off) select * from hp_contradict_test where a === 1 and b === 1 and a is null;
+        QUERY PLAN        
+--------------------------
+ Result
+   One-Time Filter: false
+(2 rows)
+
+drop table hp_contradict_test;
+drop operator class part_test_int4_ops2 using hash;
+drop operator ===(int4, int4);
