@@ -209,6 +209,28 @@ Author: Fujii Masao <fujii@postgresql.org>
 
     <listitem>
 <!--
+Author: Fujii Masao <fujii@postgresql.org>
+2020-07-20 [f5dff45962] Rename wal_keep_segments to wal_keep_size.
+-->
+
+     <para>
+      Rename configuration parameter <varname>wal_keep_segments</varname>
+      to <xref linkend="guc-wal-keep-size"/> (Fujii Masao)
+     </para>
+
+     <para>
+      This determines how much WAL to retain for the standby server,
+      specified in megabytes rather than number of files. If you
+      previously used <varname>wal_keep_segments</varname>,
+      the following formula will give you an approximately equivalent setting:
+<programlisting>
+wal_keep_size = wal_keep_segments * wal_segment_size (typically 16MB)
+</programlisting>
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2020-03-05 [84eca14bc] Remove ancient hacks to ignore certain opclass names in
 -->
