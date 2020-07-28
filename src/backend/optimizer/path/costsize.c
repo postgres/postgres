@@ -130,7 +130,6 @@ bool		enable_tidscan = true;
 bool		enable_sort = true;
 bool		enable_incremental_sort = true;
 bool		enable_hashagg = true;
-bool		hashagg_avoid_disk_plan = true;
 bool		enable_nestloop = true;
 bool		enable_material = true;
 bool		enable_mergejoin = true;

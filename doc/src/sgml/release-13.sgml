@@ -627,8 +627,7 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
        <para>
         Previously, hash aggregation was avoided if it was expected to use
-        more than <xref linkend="guc-work-mem"/> memory.  This is controlled
-        by <xref linkend="guc-hashagg-avoid-disk-plan"/>.
+        more than <xref linkend="guc-work-mem"/> memory.
        </para>
       </listitem>
 
