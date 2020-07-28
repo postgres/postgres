@@ -1071,8 +1071,12 @@ gen_partprune_steps_internal(GeneratePruningStepsContext *context,
 				case PARTCLAUSE_MATCH_NULLNESS:
 					if (!clause_is_not_null)
 					{
-						/* check for conflicting IS NOT NULL */
-						if (bms_is_member(i, notnullkeys))
+						/*
+						 * check for conflicting IS NOT NULL as well as
+						 * contradicting strict clauses
+						 */
+						if (bms_is_member(i, notnullkeys) ||
+							keyclauses[i] != NIL)
 						{
 							context->contradictory = true;
 							return NIL;
@@ -1321,34 +1325,18 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 			{
 				case PARTITION_STRATEGY_LIST:
 				case PARTITION_STRATEGY_RANGE:
-					{
-						PartClauseInfo *last = NULL;
+					btree_clauses[pc->op_strategy] =
+						lappend(btree_clauses[pc->op_strategy], pc);
 
-						/*
-						 * Add this clause to the list of clauses to be used
-						 * for pruning if this is the first such key for this
-						 * operator strategy or if it is consecutively next to
-						 * the last column for which a clause with this
-						 * operator strategy was matched.
-						 */
-						if (btree_clauses[pc->op_strategy] != NIL)
-							last = llast(btree_clauses[pc->op_strategy]);
-
-						if (last == NULL ||
-							i == last->keyno || i == last->keyno + 1)
-							btree_clauses[pc->op_strategy] =
-								lappend(btree_clauses[pc->op_strategy], pc);
-
-						/*
-						 * We can't consider subsequent partition keys if the
-						 * clause for the current key contains a non-inclusive
-						 * operator.
-						 */
-						if (pc->op_strategy == BTLessStrategyNumber ||
-							pc->op_strategy == BTGreaterStrategyNumber)
-							consider_next_key = false;
-						break;
-					}
+					/*
+					 * We can't consider subsequent partition keys if the
+					 * clause for the current key contains a non-inclusive
+					 * operator.
+					 */
+					if (pc->op_strategy == BTLessStrategyNumber ||
+						pc->op_strategy == BTGreaterStrategyNumber)
+						consider_next_key = false;
+					break;
 
 				case PARTITION_STRATEGY_HASH:
 					if (pc->op_strategy != HTEqualStrategyNumber)
@@ -1387,6 +1375,7 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 				List	   *eq_clauses = btree_clauses[BTEqualStrategyNumber];
 				List	   *le_clauses = btree_clauses[BTLessEqualStrategyNumber];
 				List	   *ge_clauses = btree_clauses[BTGreaterEqualStrategyNumber];
+				bool		pk_has_clauses[PARTITION_MAX_KEYS];
 				int			strat;
 
 				/*
@@ -1409,6 +1398,35 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 						ListCell   *lc1;
 						List	   *prefix = NIL;
 						List	   *pc_steps;
+						bool		prefix_valid = true;
+
+						/*
+						 * If this is a clause for the first partition key,
+						 * there are no preceding expressions; generate a
+						 * pruning step without a prefix.
+						 *
+						 * Note that we pass NULL for step_nullkeys, because
+						 * we don't search list/range partition bounds where
+						 * some keys are NULL.
+						 */
+						if (pc->keyno == 0)
+						{
+							Assert(pc->op_strategy == strat);
+							pc_steps = get_steps_using_prefix(context, strat,
+															  pc->op_is_ne,
+															  pc->expr,
+															  pc->cmpfn,
+															  0,
+															  NULL,
+															  NIL);
+							opsteps = list_concat(opsteps, pc_steps);
+							continue;
+						}
+
+						/* (Re-)initialize the pk_has_clauses array */
+						Assert(pc->keyno > 0);
+						for (i = 0; i < pc->keyno; i++)
+							pk_has_clauses[i] = false;
 
 						/*
 						 * Expressions from = clauses can always be in the
@@ -1421,7 +1439,10 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 							if (eqpc->keyno == pc->keyno)
 								break;
 							if (eqpc->keyno < pc->keyno)
+							{
 								prefix = lappend(prefix, eqpc);
+								pk_has_clauses[eqpc->keyno] = true;
+							}
 						}
 
 						/*
@@ -1439,7 +1460,10 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 								if (lepc->keyno == pc->keyno)
 									break;
 								if (lepc->keyno < pc->keyno)
+								{
 									prefix = lappend(prefix, lepc);
+									pk_has_clauses[lepc->keyno] = true;
+								}
 							}
 						}
 
@@ -1458,11 +1482,33 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 								if (gepc->keyno == pc->keyno)
 									break;
 								if (gepc->keyno < pc->keyno)
+								{
 									prefix = lappend(prefix, gepc);
+									pk_has_clauses[gepc->keyno] = true;
+								}
 							}
 						}
 
 						/*
+						 * Check whether every earlier partition key has at
+						 * least one clause.
+						 */
+						for (i = 0; i < pc->keyno; i++)
+						{
+							if (!pk_has_clauses[i])
+							{
+								prefix_valid = false;
+								break;
+							}
+						}
+
+						/*
+						 * If prefix_valid, generate PartitionPruneStepOps.
+						 * Otherwise, we would not find clauses for a valid
+						 * subset of the partition keys anymore for the
+						 * strategy; give up on generating partition pruning
+						 * steps further for the strategy.
+						 *
 						 * As mentioned above, if 'prefix' contains multiple
 						 * expressions for the same key, the following will
 						 * generate multiple steps, one for each combination
@@ -1472,15 +1518,20 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 						 * we don't search list/range partition bounds where
 						 * some keys are NULL.
 						 */
-						Assert(pc->op_strategy == strat);
-						pc_steps = get_steps_using_prefix(context, strat,
-														  pc->op_is_ne,
-														  pc->expr,
-														  pc->cmpfn,
-														  pc->keyno,
-														  NULL,
-														  prefix);
-						opsteps = list_concat(opsteps, list_copy(pc_steps));
+						if (prefix_valid)
+						{
+							Assert(pc->op_strategy == strat);
+							pc_steps = get_steps_using_prefix(context, strat,
+															  pc->op_is_ne,
+															  pc->expr,
+															  pc->cmpfn,
+															  pc->keyno,
+															  NULL,
+															  prefix);
+							opsteps = list_concat(opsteps, pc_steps);
+						}
+						else
+							break;
 					}
 				}
 				break;
@@ -2195,6 +2246,14 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
  * 'prefix'.  Actually, since 'prefix' may contain multiple clauses for the
  * same partition key column, we must generate steps for various combinations
  * of the clauses of different keys.
+ *
+ * For list/range partitioning, callers must ensure that step_nullkeys is
+ * NULL, and that prefix contains at least one clause for each of the
+ * partition keys earlier than one specified in step_lastkeyno if it's
+ * greater than zero.  For hash partitioning, step_nullkeys is allowed to be
+ * non-NULL, but they must ensure that prefix contains at least one clause
+ * for each of the partition keys other than those specified in step_nullkeys
+ * and step_lastkeyno.
  */
 static List *
 get_steps_using_prefix(GeneratePruningStepsContext *context,
@@ -2206,6 +2265,9 @@ get_steps_using_prefix(GeneratePruningStepsContext *context,
 					   Bitmapset *step_nullkeys,
 					   List *prefix)
 {
+	Assert(step_nullkeys == NULL ||
+		   context->rel->part_scheme->strategy == PARTITION_STRATEGY_HASH);
+
 	/* Quick exit if there are no values to prefix with. */
 	if (list_length(prefix) == 0)
 	{
@@ -2271,7 +2333,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		ListCell   *next_start;
 
 		/*
-		 * For each clause with cur_keyno, adds its expr and cmpfn to
+		 * For each clause with cur_keyno, add its expr and cmpfn to
 		 * step_exprs and step_cmpfns, respectively, and recurse after setting
 		 * next_start to the ListCell of the first clause for the next
 		 * partition key.
@@ -2288,23 +2350,19 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		for_each_cell(lc, start)
 		{
 			List	   *moresteps;
+			List	   *step_exprs1,
+					   *step_cmpfns1;
 
 			pc = lfirst(lc);
 			if (pc->keyno == cur_keyno)
 			{
-				/* clean up before starting a new recursion cycle. */
-				if (cur_keyno == 0)
-				{
-					list_free(step_exprs);
-					list_free(step_cmpfns);
-					step_exprs = list_make1(pc->expr);
-					step_cmpfns = list_make1_oid(pc->cmpfn);
-				}
-				else
-				{
-					step_exprs = lappend(step_exprs, pc->expr);
-					step_cmpfns = lappend_oid(step_cmpfns, pc->cmpfn);
-				}
+				/* Leave the original step_exprs unmodified. */
+				step_exprs1 = list_copy(step_exprs);
+				step_exprs1 = lappend(step_exprs1, pc->expr);
+
+				/* Leave the original step_cmpfns unmodified. */
+				step_cmpfns1 = list_copy(step_cmpfns);
+				step_cmpfns1 = lappend_oid(step_cmpfns1, pc->cmpfn);
 			}
 			else
 			{
@@ -2320,9 +2378,12 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 													   step_lastkeyno,
 													   step_nullkeys,
 													   next_start,
-													   step_exprs,
-													   step_cmpfns);
+													   step_exprs1,
+													   step_cmpfns1);
 			result = list_concat(result, moresteps);
+
+			list_free(step_exprs1);
+			list_free(step_cmpfns1);
 		}
 	}
 	else
@@ -2330,9 +2391,23 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
 		/*
 		 * End the current recursion cycle and start generating steps, one for
 		 * each clause with cur_keyno, which is all clauses from here onward
-		 * till the end of the list.
+		 * till the end of the list.  Note that for hash partitioning,
+		 * step_nullkeys is allowed to be non-empty, in which case step_exprs
+		 * would only contain expressions for the earlier partition keys that
+		 * are not specified in step_nullkeys.
 		 */
-		Assert(list_length(step_exprs) == cur_keyno);
+		Assert(list_length(step_exprs) == cur_keyno ||
+			   !bms_is_empty(step_nullkeys));
+		/*
+		 * Note also that for hash partitioning, each partition key should
+		 * have either equality clauses or an IS NULL clause, so if a
+		 * partition key doesn't have an expression, it would be specified
+		 * in step_nullkeys.
+ 		 */
+		Assert(context->rel->part_scheme->strategy
+			   != PARTITION_STRATEGY_HASH ||
+			   list_length(step_exprs) + 2 + bms_num_members(step_nullkeys) ==
+			   context->rel->part_scheme->partnatts);
 		for_each_cell(lc, start)
 		{
 			PartClauseInfo *pc = lfirst(lc);
