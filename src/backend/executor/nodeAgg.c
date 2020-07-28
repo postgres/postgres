@@ -3641,6 +3641,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		find_hash_columns(aggstate);
 		build_hash_tables(aggstate);
 		aggstate->table_filled = false;
+
+		/* Initialize this to 1, meaning nothing spilled, yet */
+		aggstate->hash_batches_used = 1;
 	}
 
 	/*
