@@ -4173,6 +4173,9 @@ comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 			return (pos1 < pos2) ? -1 : 1;
 	}
 
+	/* ItemPointer values should never be equal */
+	Assert(false);
+
 	return 0;
 }
 
@@ -4224,6 +4227,9 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 		if (pos1 != pos2)
 			return (pos1 < pos2) ? -1 : 1;
 	}
+
+	/* ItemPointer values should never be equal */
+	Assert(false);
 
 	return 0;
 }
