@@ -20,6 +20,7 @@
 #include "access/multixact.h"
 #include "access/nbtree.h"
 #include "access/subtrans.h"
+#include "access/syncscan.h"
 #include "access/twophase.h"
 #include "commands/async.h"
 #include "miscadmin.h"

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * syncscan.c
- *	  heap scan synchronization support
+ *	  scan synchronization support
  *
  * When multiple backends run a sequential scan on the same table, we try
  * to keep them synchronized to reduce the overall I/O needed.  The goal is
@@ -40,13 +40,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/access/heap/syncscan.c
+ *	  src/backend/access/common/syncscan.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "access/syncscan.h"
 #include "miscadmin.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"

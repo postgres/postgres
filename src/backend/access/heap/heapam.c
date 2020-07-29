@@ -41,6 +41,7 @@
 #include "access/parallel.h"
 #include "access/relscan.h"
 #include "access/subtrans.h"
+#include "access/syncscan.h"
 #include "access/sysattr.h"
 #include "access/tableam.h"
 #include "access/transam.h"

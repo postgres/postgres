@@ -182,12 +182,6 @@ extern void heap_page_prune_execute(Buffer buffer,
 									OffsetNumber *nowunused, int nunused);
 extern void heap_get_root_tuples(Page page, OffsetNumber *root_offsets);
 
-/* in heap/syncscan.c */
-extern void ss_report_location(Relation rel, BlockNumber location);
-extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
-extern void SyncScanShmemInit(void);
-extern Size SyncScanShmemSize(void);
-
 /* in heap/vacuumlazy.c */
 struct VacuumParams;
 extern void heap_vacuum_rel(Relation onerel,

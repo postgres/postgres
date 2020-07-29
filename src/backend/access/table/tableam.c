@@ -21,7 +21,7 @@
 
 #include <math.h>
 
-#include "access/heapam.h"		/* for ss_* */
+#include "access/syncscan.h"
 #include "access/tableam.h"
 #include "access/xact.h"
 #include "optimizer/plancat.h"

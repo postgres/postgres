@@ -20,7 +20,6 @@ OBJS = \
 	hio.o \
 	pruneheap.o \
 	rewriteheap.o \
-	syncscan.o \
 	vacuumlazy.o \
 	visibilitymap.o
 
