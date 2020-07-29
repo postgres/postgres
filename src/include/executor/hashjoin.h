@@ -88,7 +88,7 @@ typedef struct HashJoinTupleData
  * outer relation tuples with these hash values are matched against that
  * table instead of the main one.  Thus, tuples with these hash values are
  * effectively handled as part of the first batch and will never go to disk.
- * The skew hashtable is limited to SKEW_WORK_MEM_PERCENT of the total memory
+ * The skew hashtable is limited to SKEW_HASH_MEM_PERCENT of the total memory
  * allowed for the join; while building the hashtables, we decrease the number
  * of MCVs being specially treated if needed to stay under this limit.
  *
@@ -107,7 +107,7 @@ typedef struct HashSkewBucket
 
 #define SKEW_BUCKET_OVERHEAD  MAXALIGN(sizeof(HashSkewBucket))
 #define INVALID_SKEW_BUCKET_NO	(-1)
-#define SKEW_WORK_MEM_PERCENT  2
+#define SKEW_HASH_MEM_PERCENT  2
 #define SKEW_MIN_OUTER_FRACTION  0.01
 
 /*

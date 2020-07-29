@@ -1326,10 +1326,12 @@ Out of Memory: Killed process 12345 (postgres).
     system running out of memory, you can avoid the problem by changing
     your configuration.  In some cases, it may help to lower memory-related
     configuration parameters, particularly
-    <link linkend="guc-shared-buffers"><varname>shared_buffers</varname></link>
-    and <link linkend="guc-work-mem"><varname>work_mem</varname></link>.  In
-    other cases, the problem may be caused by allowing too many connections
-    to the database server itself.  In many cases, it may be better to reduce
+    <link linkend="guc-shared-buffers"><varname>shared_buffers</varname></link>,
+    <link linkend="guc-work-mem"><varname>work_mem</varname></link>, and
+    <link linkend="guc-hash-mem-multiplier"><varname>hash_mem_multiplier</varname></link>.
+    In other cases, the problem may be caused by allowing too many
+    connections to the database server itself.  In many cases, it may
+    be better to reduce
     <link linkend="guc-max-connections"><varname>max_connections</varname></link>
     and instead make use of external connection-pooling software.
    </para>
