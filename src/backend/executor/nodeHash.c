@@ -39,6 +39,7 @@
 #include "port/atomics.h"
 #include "port/pg_bitutils.h"
 #include "utils/dynahash.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -506,7 +507,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 	hashtable->spaceAllowed = space_allowed;
 	hashtable->spaceUsedSkew = 0;
 	hashtable->spaceAllowedSkew =
-		hashtable->spaceAllowed * SKEW_WORK_MEM_PERCENT / 100;
+		hashtable->spaceAllowed * SKEW_HASH_MEM_PERCENT / 100;
 	hashtable->chunks = NULL;
 	hashtable->current_chunk = NULL;
 	hashtable->parallel_state = state->parallel_state;
@@ -665,7 +666,7 @@ ExecHashTableCreate(HashState *state, List *hashOperators, List *hashCollations,
 
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
-						bool try_combined_work_mem,
+						bool try_combined_hash_mem,
 						int parallel_workers,
 						size_t *space_allowed,
 						int *numbuckets,
@@ -682,6 +683,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	int			nbatch = 1;
 	int			nbuckets;
 	double		dbuckets;
+	int			hash_mem = get_hash_mem();
 
 	/* Force a plausible relation size if no info */
 	if (ntuples <= 0.0)
@@ -698,16 +700,16 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	inner_rel_bytes = ntuples * tupsize;
 
 	/*
-	 * Target in-memory hashtable size is work_mem kilobytes.
+	 * Target in-memory hashtable size is hash_mem kilobytes.
 	 */
-	hash_table_bytes = work_mem * 1024L;
+	hash_table_bytes = hash_mem * 1024L;
 
 	/*
-	 * Parallel Hash tries to use the combined work_mem of all workers to
-	 * avoid the need to batch.  If that won't work, it falls back to work_mem
+	 * Parallel Hash tries to use the combined hash_mem of all workers to
+	 * avoid the need to batch.  If that won't work, it falls back to hash_mem
 	 * per worker and tries to process batches in parallel.
 	 */
-	if (try_combined_work_mem)
+	if (try_combined_hash_mem)
 		hash_table_bytes += hash_table_bytes * parallel_workers;
 
 	*space_allowed = hash_table_bytes;
@@ -728,7 +730,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 */
 	if (useskew)
 	{
-		skew_table_bytes = hash_table_bytes * SKEW_WORK_MEM_PERCENT / 100;
+		skew_table_bytes = hash_table_bytes * SKEW_HASH_MEM_PERCENT / 100;
 
 		/*----------
 		 * Divisor is:
@@ -751,7 +753,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	/*
 	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
 	 * memory is filled, assuming a single batch; but limit the value so that
-	 * the pointer arrays we'll try to allocate do not exceed work_mem nor
+	 * the pointer arrays we'll try to allocate do not exceed hash_mem nor
 	 * MaxAllocSize.
 	 *
 	 * Note that both nbuckets and nbatch must be powers of 2 to make
@@ -790,10 +792,10 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		long		bucket_size;
 
 		/*
-		 * If Parallel Hash with combined work_mem would still need multiple
-		 * batches, we'll have to fall back to regular work_mem budget.
+		 * If Parallel Hash with combined hash_mem would still need multiple
+		 * batches, we'll have to fall back to regular hash_mem budget.
 		 */
-		if (try_combined_work_mem)
+		if (try_combined_hash_mem)
 		{
 			ExecChooseHashTableSize(ntuples, tupwidth, useskew,
 									false, parallel_workers,
@@ -805,7 +807,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		}
 
 		/*
-		 * Estimate the number of buckets we'll want to have when work_mem is
+		 * Estimate the number of buckets we'll want to have when hash_mem is
 		 * entirely full.  Each bucket will contain a bucket pointer plus
 		 * NTUP_PER_BUCKET tuples, whose projected size already includes
 		 * overhead for the hash code, pointer to the next tuple, etc.
@@ -820,8 +822,8 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		/*
 		 * Buckets are simple pointers to hashjoin tuples, while tupsize
 		 * includes the pointer, hash code, and MinimalTupleData.  So buckets
-		 * should never really exceed 25% of work_mem (even for
-		 * NTUP_PER_BUCKET=1); except maybe for work_mem values that are not
+		 * should never really exceed 25% of hash_mem (even for
+		 * NTUP_PER_BUCKET=1); except maybe for hash_mem values that are not
 		 * 2^N bytes, where we might get more because of doubling. So let's
 		 * look for 50% here.
 		 */
@@ -1095,15 +1097,17 @@ ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
 				/* Figure out how many batches to use. */
 				if (hashtable->nbatch == 1)
 				{
+					int			hash_mem = get_hash_mem();
+
 					/*
 					 * We are going from single-batch to multi-batch.  We need
 					 * to switch from one large combined memory budget to the
-					 * regular work_mem budget.
+					 * regular hash_mem budget.
 					 */
-					pstate->space_allowed = work_mem * 1024L;
+					pstate->space_allowed = hash_mem * 1024L;
 
 					/*
-					 * The combined work_mem of all participants wasn't
+					 * The combined hash_mem of all participants wasn't
 					 * enough. Therefore one batch per participant would be
 					 * approximately equivalent and would probably also be
 					 * insufficient.  So try two batches per participant,
@@ -2855,7 +2859,7 @@ ExecParallelHashTupleAlloc(HashJoinTable hashtable, size_t size,
 
 		/*
 		 * Check if our space limit would be exceeded.  To avoid choking on
-		 * very large tuples or very low work_mem setting, we'll always allow
+		 * very large tuples or very low hash_mem setting, we'll always allow
 		 * each backend to allocate at least one chunk.
 		 */
 		if (hashtable->batches[0].at_least_one_chunk &&
@@ -3365,4 +3369,42 @@ ExecParallelHashTuplePrealloc(HashJoinTable hashtable, int batchno, size_t size)
 	LWLockRelease(&pstate->lock);
 
 	return true;
+}
+
+/*
+ * Get a hash_mem value by multiplying the work_mem GUC's value by the
+ * hash_mem_multiplier GUC's value.
+ *
+ * Returns a work_mem style KB value that hash-based nodes (including but not
+ * limited to hash join) use in place of work_mem.  This is subject to the
+ * same restrictions as work_mem itself.  (There is no such thing as the
+ * hash_mem GUC, but it's convenient for our callers to pretend that there
+ * is.)
+ *
+ * Exported for use by the planner, as well as other hash-based executor
+ * nodes.  This is a rather random place for this, but there is no better
+ * place.
+ */
+int
+get_hash_mem(void)
+{
+	double		hash_mem;
+
+	Assert(hash_mem_multiplier >= 1.0);
+
+	hash_mem = (double) work_mem * hash_mem_multiplier;
+
+	/*
+	 * guc.c enforces a MAX_KILOBYTES limitation on work_mem in order to
+	 * support the assumption that raw derived byte values can be stored in
+	 * 'long' variables.  The returned hash_mem value must also meet this
+	 * assumption.
+	 *
+	 * We clamp the final value rather than throw an error because it should
+	 * be possible to set work_mem and hash_mem_multiplier independently.
+	 */
+	if (hash_mem < MAX_KILOBYTES)
+		return (int) hash_mem;
+
+	return MAX_KILOBYTES;
 }

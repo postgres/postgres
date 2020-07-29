@@ -1690,21 +1690,63 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Sets the maximum amount of memory to be used by a query operation
+        Sets the base maximum amount of memory to be used by a query operation
         (such as a sort or hash table) before writing to temporary disk files.
         If this value is specified without units, it is taken as kilobytes.
         The default value is four megabytes (<literal>4MB</literal>).
         Note that for a complex query, several sort or hash operations might be
-        running in parallel; each operation will be allowed to use as much memory
-        as this value specifies before it starts to write data into temporary
-        files. Also, several running sessions could be doing such operations
-        concurrently.  Therefore, the total memory used could be many
-        times the value of <varname>work_mem</varname>; it is necessary to
-        keep this fact in mind when choosing the value. Sort operations are
-        used for <literal>ORDER BY</literal>, <literal>DISTINCT</literal>, and
-        merge joins.
+        running in parallel; each operation will generally be allowed
+        to use as much memory as this value specifies before it starts
+        to write data into temporary files.  Also, several running
+        sessions could be doing such operations concurrently.
+        Therefore, the total memory used could be many times the value
+        of <varname>work_mem</varname>; it is necessary to keep this
+        fact in mind when choosing the value.  Sort operations are used
+        for <literal>ORDER BY</literal>, <literal>DISTINCT</literal>,
+        and merge joins.
         Hash tables are used in hash joins, hash-based aggregation, and
         hash-based processing of <literal>IN</literal> subqueries.
+       </para>
+       <para>
+        Hash-based operations are generally more sensitive to memory
+        availability than equivalent sort-based operations.  The
+        memory available for hash tables is computed by multiplying
+        <varname>work_mem</varname> by
+        <varname>hash_mem_multiplier</varname>.  This makes it
+        possible for hash-based operations to use an amount of memory
+        that exceeds the usual <varname>work_mem</varname> base
+        amount.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-hash-mem-multiplier" xreflabel="hash_mem_multiplier">
+      <term><varname>hash_mem_multiplier</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>hash_mem_multiplier</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Used to compute the maximum amount of memory that hash-based
+        operations can use.  The final limit is determined by
+        multiplying <varname>work_mem</varname> by
+        <varname>hash_mem_multiplier</varname>.  The default value is
+        1.0, which makes hash-based operations subject to the same
+        simple <varname>work_mem</varname> maximum as sort-based
+        operations.
+       </para>
+       <para>
+        Consider increasing <varname>hash_mem_multiplier</varname> in
+        environments where spilling by query operations is a regular
+        occurrence, especially when simply increasing
+        <varname>work_mem</varname> results in memory pressure (memory
+        pressure typically takes the form of intermittent out of
+        memory errors).  A setting of 1.5 or 2.0 may be effective with
+        mixed workloads.  Higher settings in the range of 2.0 - 8.0 or
+        more may be effective in environments where
+        <varname>work_mem</varname> has already been increased to 40MB
+        or more.
        </para>
       </listitem>
      </varlistentry>

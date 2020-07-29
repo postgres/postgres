@@ -203,7 +203,7 @@
  *	  entries (and initialize new transition states), we instead spill them to
  *	  disk to be processed later. The tuples are spilled in a partitioned
  *	  manner, so that subsequent batches are smaller and less likely to exceed
- *	  work_mem (if a batch does exceed work_mem, it must be spilled
+ *	  hash_mem (if a batch does exceed hash_mem, it must be spilled
  *	  recursively).
  *
  *	  Spilled data is written to logical tapes. These provide better control
@@ -212,7 +212,7 @@
  *
  *	  Note that it's possible for transition states to start small but then
  *	  grow very large; for instance in the case of ARRAY_AGG. In such cases,
- *	  it's still possible to significantly exceed work_mem. We try to avoid
+ *	  it's still possible to significantly exceed hash_mem. We try to avoid
  *	  this situation by estimating what will fit in the available memory, and
  *	  imposing a limit on the number of groups separately from the amount of
  *	  memory consumed.
@@ -1516,7 +1516,7 @@ build_hash_table(AggState *aggstate, int setno, long nbuckets)
 
 	/*
 	 * Used to make sure initial hash table allocation does not exceed
-	 * work_mem. Note that the estimate does not include space for
+	 * hash_mem. Note that the estimate does not include space for
 	 * pass-by-reference transition data values, nor for the representative
 	 * tuple of each group.
 	 */
@@ -1782,7 +1782,7 @@ hashagg_recompile_expressions(AggState *aggstate, bool minslot, bool nullcheck)
 }
 
 /*
- * Set limits that trigger spilling to avoid exceeding work_mem. Consider the
+ * Set limits that trigger spilling to avoid exceeding hash_mem. Consider the
  * number of partitions we expect to create (if we do spill).
  *
  * There are two limits: a memory limit, and also an ngroups limit. The
@@ -1796,13 +1796,14 @@ hash_agg_set_limits(double hashentrysize, double input_groups, int used_bits,
 {
 	int			npartitions;
 	Size		partition_mem;
+	int			hash_mem = get_hash_mem();
 
-	/* if not expected to spill, use all of work_mem */
-	if (input_groups * hashentrysize < work_mem * 1024L)
+	/* if not expected to spill, use all of hash_mem */
+	if (input_groups * hashentrysize < hash_mem * 1024L)
 	{
 		if (num_partitions != NULL)
 			*num_partitions = 0;
-		*mem_limit = work_mem * 1024L;
+		*mem_limit = hash_mem * 1024L;
 		*ngroups_limit = *mem_limit / hashentrysize;
 		return;
 	}
@@ -1824,14 +1825,14 @@ hash_agg_set_limits(double hashentrysize, double input_groups, int used_bits,
 		HASHAGG_WRITE_BUFFER_SIZE * npartitions;
 
 	/*
-	 * Don't set the limit below 3/4 of work_mem. In that case, we are at the
+	 * Don't set the limit below 3/4 of hash_mem. In that case, we are at the
 	 * minimum number of partitions, so we aren't going to dramatically exceed
 	 * work mem anyway.
 	 */
-	if (work_mem * 1024L > 4 * partition_mem)
-		*mem_limit = work_mem * 1024L - partition_mem;
+	if (hash_mem * 1024L > 4 * partition_mem)
+		*mem_limit = hash_mem * 1024L - partition_mem;
 	else
-		*mem_limit = work_mem * 1024L * 0.75;
+		*mem_limit = hash_mem * 1024L * 0.75;
 
 	if (*mem_limit > hashentrysize)
 		*ngroups_limit = *mem_limit / hashentrysize;
@@ -1989,19 +1990,20 @@ hash_choose_num_partitions(double input_groups, double hashentrysize,
 	int			partition_limit;
 	int			npartitions;
 	int			partition_bits;
+	int			hash_mem = get_hash_mem();
 
 	/*
 	 * Avoid creating so many partitions that the memory requirements of the
-	 * open partition files are greater than 1/4 of work_mem.
+	 * open partition files are greater than 1/4 of hash_mem.
 	 */
 	partition_limit =
-		(work_mem * 1024L * 0.25 - HASHAGG_READ_BUFFER_SIZE) /
+		(hash_mem * 1024L * 0.25 - HASHAGG_READ_BUFFER_SIZE) /
 		HASHAGG_WRITE_BUFFER_SIZE;
 
 	mem_wanted = HASHAGG_PARTITION_FACTOR * input_groups * hashentrysize;
 
 	/* make enough partitions so that each one is likely to fit in memory */
-	npartitions = 1 + (mem_wanted / (work_mem * 1024L));
+	npartitions = 1 + (mem_wanted / (hash_mem * 1024L));
 
 	if (npartitions > partition_limit)
 		npartitions = partition_limit;

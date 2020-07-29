@@ -4196,16 +4196,17 @@ consider_groupingsets_paths(PlannerInfo *root,
 							double dNumGroups)
 {
 	Query	   *parse = root->parse;
+	int			hash_mem = get_hash_mem();
 
 	/*
 	 * If we're not being offered sorted input, then only consider plans that
 	 * can be done entirely by hashing.
 	 *
-	 * We can hash everything if it looks like it'll fit in work_mem. But if
+	 * We can hash everything if it looks like it'll fit in hash_mem. But if
 	 * the input is actually sorted despite not being advertised as such, we
 	 * prefer to make use of that in order to use less memory.
 	 *
-	 * If none of the grouping sets are sortable, then ignore the work_mem
+	 * If none of the grouping sets are sortable, then ignore the hash_mem
 	 * limit and generate a path anyway, since otherwise we'll just fail.
 	 */
 	if (!is_sorted)
@@ -4257,10 +4258,10 @@ consider_groupingsets_paths(PlannerInfo *root,
 
 		/*
 		 * gd->rollups is empty if we have only unsortable columns to work
-		 * with.  Override work_mem in that case; otherwise, we'll rely on the
+		 * with.  Override hash_mem in that case; otherwise, we'll rely on the
 		 * sorted-input case to generate usable mixed paths.
 		 */
-		if (hashsize > work_mem * 1024L && gd->rollups)
+		if (hashsize > hash_mem * 1024L && gd->rollups)
 			return;				/* nope, won't fit */
 
 		/*
@@ -4379,7 +4380,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 	{
 		List	   *rollups = NIL;
 		List	   *hash_sets = list_copy(gd->unsortable_sets);
-		double		availspace = (work_mem * 1024.0);
+		double		availspace = (hash_mem * 1024.0);
 		ListCell   *lc;
 
 		/*
@@ -4400,7 +4401,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 
 			/*
 			 * We treat this as a knapsack problem: the knapsack capacity
-			 * represents work_mem, the item weights are the estimated memory
+			 * represents hash_mem, the item weights are the estimated memory
 			 * usage of the hashtables needed to implement a single rollup,
 			 * and we really ought to use the cost saving as the item value;
 			 * however, currently the costs assigned to sort nodes don't
@@ -4441,7 +4442,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 																rollup->numGroups);
 
 					/*
-					 * If sz is enormous, but work_mem (and hence scale) is
+					 * If sz is enormous, but hash_mem (and hence scale) is
 					 * small, avoid integer overflow here.
 					 */
 					k_weights[i] = (int) Min(floor(sz / scale),

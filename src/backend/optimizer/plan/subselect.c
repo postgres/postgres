@@ -200,7 +200,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	 * XXX If an ANY subplan is uncorrelated, build_subplan may decide to hash
 	 * its output.  In that case it would've been better to specify full
 	 * retrieval.  At present, however, we can only check hashability after
-	 * we've made the subplan :-(.  (Determining whether it'll fit in work_mem
+	 * we've made the subplan :-(.  (Determining whether it'll fit in hash_mem
 	 * is the really hard part.)  Therefore, we don't want to be too
 	 * optimistic about the percentage of tuples retrieved, for fear of
 	 * selecting a plan that's bad for the materialization case.
@@ -278,7 +278,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 
 			plan = create_plan(subroot, best_path);
 
-			/* Now we can check if it'll fit in work_mem */
+			/* Now we can check if it'll fit in hash_mem */
 			/* XXX can we check this at the Path stage? */
 			if (subplan_is_hashable(plan))
 			{
@@ -716,16 +716,17 @@ static bool
 subplan_is_hashable(Plan *plan)
 {
 	double		subquery_size;
+	int			hash_mem = get_hash_mem();
 
 	/*
-	 * The estimated size of the subquery result must fit in work_mem. (Note:
+	 * The estimated size of the subquery result must fit in hash_mem. (Note:
 	 * we use heap tuple overhead here even though the tuples will actually be
 	 * stored as MinimalTuples; this provides some fudge factor for hashtable
 	 * overhead.)
 	 */
 	subquery_size = plan->plan_rows *
 		(MAXALIGN(plan->plan_width) + MAXALIGN(SizeofHeapTupleHeader));
-	if (subquery_size > work_mem * 1024L)
+	if (subquery_size > hash_mem * 1024L)
 		return false;
 
 	return true;

@@ -165,13 +165,14 @@ BuildTupleHashTableExt(PlanState *parent,
 {
 	TupleHashTable hashtable;
 	Size		entrysize = sizeof(TupleHashEntryData) + additionalsize;
+	int			hash_mem = get_hash_mem();
 	MemoryContext oldcontext;
 	bool		allow_jit;
 
 	Assert(nbuckets > 0);
 
-	/* Limit initial table size request to not more than work_mem */
-	nbuckets = Min(nbuckets, (long) ((work_mem * 1024L) / entrysize));
+	/* Limit initial table size request to not more than hash_mem */
+	nbuckets = Min(nbuckets, (long) ((hash_mem * 1024L) / entrysize));
 
 	oldcontext = MemoryContextSwitchTo(metacxt);
 
