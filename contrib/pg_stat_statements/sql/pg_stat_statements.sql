@@ -251,6 +251,30 @@ DROP FUNCTION PLUS_TWO(INTEGER);
 SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --
+-- Track the total number of rows retrieved or affected by the utility
+-- commands of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED VIEW
+-- and SELECT INTO
+--
+SELECT pg_stat_statements_reset();
+
+CREATE TABLE pgss_ctas AS SELECT a, 'ctas' b FROM generate_series(1, 10) a;
+SELECT generate_series(1, 10) c INTO pgss_select_into;
+COPY pgss_ctas (a, b) FROM STDIN;
+11	copy
+12	copy
+13	copy
+\.
+CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas;
+BEGIN;
+DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv;
+FETCH NEXT pgss_cursor;
+FETCH FORWARD 5 pgss_cursor;
+FETCH FORWARD ALL pgss_cursor;
+COMMIT;
+
+SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+
+--
 -- Track user activity and reset them
 --
 SELECT pg_stat_statements_reset();
@@ -313,6 +337,9 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 --
 DROP ROLE regress_stats_user1;
 DROP ROLE regress_stats_user2;
+DROP MATERIALIZED VIEW pgss_matv;
+DROP TABLE pgss_ctas;
+DROP TABLE pgss_select_into;
 
 --
 -- [re]plan counting

@@ -529,6 +529,69 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 (9 rows)
 
 --
+-- Track the total number of rows retrieved or affected by the utility
+-- commands of COPY, FETCH, CREATE TABLE AS, CREATE MATERIALIZED VIEW
+-- and SELECT INTO
+--
+SELECT pg_stat_statements_reset();
+ pg_stat_statements_reset 
+--------------------------
+ 
+(1 row)
+
+CREATE TABLE pgss_ctas AS SELECT a, 'ctas' b FROM generate_series(1, 10) a;
+SELECT generate_series(1, 10) c INTO pgss_select_into;
+COPY pgss_ctas (a, b) FROM STDIN;
+CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas;
+BEGIN;
+DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv;
+FETCH NEXT pgss_cursor;
+ a |  b   
+---+------
+ 1 | ctas
+(1 row)
+
+FETCH FORWARD 5 pgss_cursor;
+ a |  b   
+---+------
+ 2 | ctas
+ 3 | ctas
+ 4 | ctas
+ 5 | ctas
+ 6 | ctas
+(5 rows)
+
+FETCH FORWARD ALL pgss_cursor;
+ a  |  b   
+----+------
+  7 | ctas
+  8 | ctas
+  9 | ctas
+ 10 | ctas
+ 11 | copy
+ 12 | copy
+ 13 | copy
+(7 rows)
+
+COMMIT;
+SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                        query                                        | plans | calls | rows 
+-------------------------------------------------------------------------------------+-------+-------+------
+ BEGIN                                                                               |     0 |     1 |    0
+ COMMIT                                                                              |     0 |     1 |    0
+ COPY pgss_ctas (a, b) FROM STDIN                                                    |     0 |     1 |    3
+ CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas                       |     0 |     1 |   13
+ CREATE TABLE pgss_ctas AS SELECT a, 'ctas' b FROM generate_series(1, 10) a          |     0 |     1 |   10
+ DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv                              |     0 |     1 |    0
+ FETCH FORWARD 5 pgss_cursor                                                         |     0 |     1 |    5
+ FETCH FORWARD ALL pgss_cursor                                                       |     0 |     1 |    7
+ FETCH NEXT pgss_cursor                                                              |     0 |     1 |    1
+ SELECT generate_series(1, 10) c INTO pgss_select_into                               |     0 |     1 |   10
+ SELECT pg_stat_statements_reset()                                                   |     0 |     1 |    1
+ SELECT query, plans, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C" |     1 |     0 |    0
+(12 rows)
+
+--
 -- Track user activity and reset them
 --
 SELECT pg_stat_statements_reset();
@@ -728,6 +791,9 @@ SELECT query, calls, rows FROM pg_stat_statements ORDER BY query COLLATE "C";
 --
 DROP ROLE regress_stats_user1;
 DROP ROLE regress_stats_user2;
+DROP MATERIALIZED VIEW pgss_matv;
+DROP TABLE pgss_ctas;
+DROP TABLE pgss_select_into;
 --
 -- [re]plan counting
 --
