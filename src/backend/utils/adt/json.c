@@ -458,7 +458,7 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
 			}
 			break;
 		default:
-			elog(ERROR, "unknown jsonb value datetime type oid %d", typid);
+			elog(ERROR, "unknown jsonb value datetime type oid %u", typid);
 			return NULL;
 	}
 
