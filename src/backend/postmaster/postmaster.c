@@ -5333,7 +5333,12 @@ sigusr1_handler(SIGNAL_ARGS)
 		 pmState == PM_HOT_STANDBY || pmState == PM_WAIT_READONLY) &&
 		CheckPromoteSignal())
 	{
-		/* Tell startup process to finish recovery */
+		/*
+		 * Tell startup process to finish recovery.
+		 *
+		 * Leave the promote signal file in place and let the Startup
+		 * process do the unlink.
+		 */
 		signal_child(StartupPID, SIGUSR2);
 	}
 
