@@ -944,11 +944,10 @@ make_union_unique(SetOperationStmt *op, Path *path, List *tlist,
 
 	/*
 	 * XXX for the moment, take the number of distinct groups as equal to the
-	 * total input size, ie, the worst case.  This is too conservative, but we
-	 * don't want to risk having the hashtable overrun memory; also, it's not
-	 * clear how to get a decent estimate of the true size.  One should note
-	 * as well the propensity of novices to write UNION rather than UNION ALL
-	 * even when they don't expect any duplicates...
+	 * total input size, ie, the worst case.  This is too conservative, but
+	 * it's not clear how to get a decent estimate of the true size.  One
+	 * should note as well the propensity of novices to write UNION rather
+	 * than UNION ALL even when they don't expect any duplicates...
 	 */
 	dNumGroups = path->rows;
 
