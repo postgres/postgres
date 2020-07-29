@@ -1839,15 +1839,15 @@ hash_agg_check_limits(AggState *aggstate)
 	uint64		ngroups = aggstate->hash_ngroups_current;
 	Size		meta_mem = MemoryContextMemAllocated(aggstate->hash_metacxt,
 													 true);
-	Size		hash_mem = MemoryContextMemAllocated(aggstate->hashcontext->ecxt_per_tuple_memory,
-													 true);
+	Size		hashkey_mem = MemoryContextMemAllocated(aggstate->hashcontext->ecxt_per_tuple_memory,
+														true);
 
 	/*
 	 * Don't spill unless there's at least one group in the hash table so we
 	 * can be sure to make progress even in edge cases.
 	 */
 	if (aggstate->hash_ngroups_current > 0 &&
-		(meta_mem + hash_mem > aggstate->hash_mem_limit ||
+		(meta_mem + hashkey_mem > aggstate->hash_mem_limit ||
 		 ngroups > aggstate->hash_ngroups_limit))
 	{
 		hash_agg_enter_spill_mode(aggstate);
