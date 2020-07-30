@@ -4417,9 +4417,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    The catalog <structname>pg_inherits</structname> records information about
-   table inheritance hierarchies.  There is one entry for each direct
-   parent-child table relationship in the database.  (Indirect inheritance can be determined
-   by following chains of entries.)
+   table and index inheritance hierarchies.  There is one entry for each direct
+   parent-child table or index relationship in the database.  (Indirect
+   inheritance can be determined by following chains of entries.)
   </para>
 
   <table>
@@ -4443,7 +4443,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the child table
+       The OID of the child table or index
       </para></entry>
      </row>
 
@@ -4453,7 +4453,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       The OID of the parent table
+       The OID of the parent table or index
       </para></entry>
      </row>
 
@@ -4465,6 +4465,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        If there is more than one direct parent for a child table (multiple
        inheritance), this number tells the order in which the
        inherited columns are to be arranged.  The count starts at 1.
+      </para>
+      <para>
+       Indexes can not have multiple inheritance, since they can only inherit
+       when using declarative partitioning.
       </para></entry>
      </row>
     </tbody>
