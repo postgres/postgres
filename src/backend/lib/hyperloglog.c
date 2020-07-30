@@ -49,6 +49,7 @@
 #include <math.h>
 
 #include "lib/hyperloglog.h"
+#include "port/pg_bitutils.h"
 
 #define POW_2_32			(4294967296.0)
 #define NEG_POW_2_32		(-4294967296.0)
@@ -242,11 +243,13 @@ rho(uint32 x, uint8 b)
 {
 	uint8		j = 1;
 
-	while (j <= b && !(x & 0x80000000))
-	{
-		j++;
-		x <<= 1;
-	}
+	if (x == 0)
+		return b + 1;
+
+	j = 32 - pg_leftmost_one_pos32(x);
+
+	if (j > b)
+		return b + 1;
 
 	return j;
 }
