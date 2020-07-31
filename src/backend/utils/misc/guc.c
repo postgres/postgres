@@ -2238,7 +2238,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MB
 		},
 		&min_dynamic_shared_memory,
-		0, 0, Min(INT_MAX, SIZE_MAX / 1024 / 1024),
+		0, 0, (int) Min((size_t) INT_MAX, SIZE_MAX / (1024 * 1024)),
 		NULL, NULL, NULL
 	},
 
