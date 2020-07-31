@@ -106,8 +106,7 @@ static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 										  Oid *classObjectId);
 static void InitializeAttributeOids(Relation indexRelation,
 									int numatts, Oid indexoid);
-static void AppendAttributeTuples(Relation indexRelation, int numatts,
-								  Datum *attopts);
+static void AppendAttributeTuples(Relation indexRelation, Datum *attopts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 								Oid parentIndexId,
 								IndexInfo *indexInfo,
@@ -485,12 +484,11 @@ InitializeAttributeOids(Relation indexRelation,
  * ----------------------------------------------------------------
  */
 static void
-AppendAttributeTuples(Relation indexRelation, int numatts, Datum *attopts)
+AppendAttributeTuples(Relation indexRelation, Datum *attopts)
 {
 	Relation	pg_attribute;
 	CatalogIndexState indstate;
 	TupleDesc	indexTupDesc;
-	int			i;
 
 	/*
 	 * open the attribute relation and its indexes
@@ -504,15 +502,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts, Datum *attopts)
 	 */
 	indexTupDesc = RelationGetDescr(indexRelation);
 
-	for (i = 0; i < numatts; i++)
-	{
-		Form_pg_attribute attr = TupleDescAttr(indexTupDesc, i);
-		Datum		attoptions = attopts ? attopts[i] : (Datum) 0;
-
-		Assert(attr->attnum == i + 1);
-
-		InsertPgAttributeTuple(pg_attribute, attr, attoptions, indstate);
-	}
+	InsertPgAttributeTuples(pg_attribute, indexTupDesc, InvalidOid, attopts, indstate);
 
 	CatalogCloseIndexes(indstate);
 
@@ -979,8 +969,7 @@ index_create(Relation heapRelation,
 	/*
 	 * append ATTRIBUTE tuples for the index
 	 */
-	AppendAttributeTuples(indexRelation, indexInfo->ii_NumIndexAttrs,
-						  indexInfo->ii_OpclassOptions);
+	AppendAttributeTuples(indexRelation, indexInfo->ii_OpclassOptions);
 
 	/* ----------------
 	 *	  update pg_index

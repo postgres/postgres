@@ -19,6 +19,7 @@
 #define INDEXING_H
 
 #include "access/htup.h"
+#include "nodes/execnodes.h"
 #include "utils/relcache.h"
 
 /*
@@ -36,6 +37,10 @@ extern void CatalogCloseIndexes(CatalogIndexState indstate);
 extern void CatalogTupleInsert(Relation heapRel, HeapTuple tup);
 extern void CatalogTupleInsertWithInfo(Relation heapRel, HeapTuple tup,
 									   CatalogIndexState indstate);
+extern void CatalogTuplesMultiInsertWithInfo(Relation heapRel,
+											 TupleTableSlot **slot,
+											 int ntuples,
+											 CatalogIndexState indstate);
 extern void CatalogTupleUpdate(Relation heapRel, ItemPointer otid,
 							   HeapTuple tup);
 extern void CatalogTupleUpdateWithInfo(Relation heapRel,

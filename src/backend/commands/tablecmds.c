@@ -5975,6 +5975,8 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	AlterTableCmd *childcmd;
 	AclResult	aclresult;
 	ObjectAddress address;
+	TupleDesc	tupdesc;
+	FormData_pg_attribute *aattr[] = {&attribute};
 
 	/* At top level, permission check was done in ATPrepCmd, else do it */
 	if (recursing)
@@ -6128,11 +6130,13 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	attribute.attislocal = colDef->is_local;
 	attribute.attinhcount = colDef->inhcount;
 	attribute.attcollation = collOid;
-	/* attribute.attacl is handled by InsertPgAttributeTuple */
+	/* attribute.attacl is handled by InsertPgAttributeTuples() */
 
 	ReleaseSysCache(typeTuple);
 
-	InsertPgAttributeTuple(attrdesc, &attribute, (Datum) 0, NULL);
+	tupdesc = CreateTupleDesc(lengthof(aattr), (FormData_pg_attribute **) &aattr);
+
+	InsertPgAttributeTuples(attrdesc, tupdesc, myrelid, NULL, NULL);
 
 	table_close(attrdesc, RowExclusiveLock);
 
