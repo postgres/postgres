@@ -216,7 +216,15 @@ FROM pg_type WHERE typname = 'myvarchar';
 
 SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
        typanalyze, typstorage
+FROM pg_type WHERE typname = '_myvarchar';
+
+SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
+       typanalyze, typstorage
 FROM pg_type WHERE typname = 'myvarchardom';
+
+SELECT typinput, typoutput, typreceive, typsend, typmodin, typmodout,
+       typanalyze, typstorage
+FROM pg_type WHERE typname = '_myvarchardom';
 
 -- ensure dependencies are straight
 DROP FUNCTION myvarcharsend(myvarchar);  -- fail
