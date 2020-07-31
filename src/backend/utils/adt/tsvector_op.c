@@ -1868,6 +1868,9 @@ TS_execute_recurse(QueryItem *curitem, void *arg, uint32 flags,
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
+	/* ... and let's check for query cancel while we're at it */
+	CHECK_FOR_INTERRUPTS();
+
 	if (curitem->type == QI_VAL)
 		return chkcond(arg, (QueryOperand *) curitem,
 					   NULL /* don't need position info */ );
