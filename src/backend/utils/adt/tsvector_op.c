@@ -684,6 +684,9 @@ TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
+	/* ... and let's check for query cancel while we're at it */
+	CHECK_FOR_INTERRUPTS();
+
 	if (curitem->type == QI_VAL)
 		return chkcond(checkval, (QueryOperand *) curitem);
 
