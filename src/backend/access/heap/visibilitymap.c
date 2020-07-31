@@ -561,17 +561,16 @@ vm_readbuf(Relation rel, BlockNumber blkno, bool extend)
 	 * If we haven't cached the size of the visibility map fork yet, check it
 	 * first.
 	 */
-	if (rel->rd_smgr->smgr_vm_nblocks == InvalidBlockNumber)
+	if (rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == InvalidBlockNumber)
 	{
 		if (smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
-			rel->rd_smgr->smgr_vm_nblocks = smgrnblocks(rel->rd_smgr,
-														VISIBILITYMAP_FORKNUM);
+			smgrnblocks(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
 		else
-			rel->rd_smgr->smgr_vm_nblocks = 0;
+			rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = 0;
 	}
 
 	/* Handle requests beyond EOF */
-	if (blkno >= rel->rd_smgr->smgr_vm_nblocks)
+	if (blkno >= rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM])
 	{
 		if (extend)
 			vm_extend(rel, blkno + 1);
@@ -641,11 +640,13 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 * Create the file first if it doesn't exist.  If smgr_vm_nblocks is
 	 * positive then it must exist, no need for an smgrexists call.
 	 */
-	if ((rel->rd_smgr->smgr_vm_nblocks == 0 ||
-		 rel->rd_smgr->smgr_vm_nblocks == InvalidBlockNumber) &&
+	if ((rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == 0 ||
+		 rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] == InvalidBlockNumber) &&
 		!smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM))
 		smgrcreate(rel->rd_smgr, VISIBILITYMAP_FORKNUM, false);
 
+	/* Invalidate cache so that smgrnblocks() asks the kernel. */
+	rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
 	vm_nblocks_now = smgrnblocks(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
 
 	/* Now extend the file */
@@ -666,9 +667,6 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 * infrequently.
 	 */
 	CacheInvalidateSmgr(rel->rd_smgr->smgr_rnode);
-
-	/* Update local cache with the up-to-date size */
-	rel->rd_smgr->smgr_vm_nblocks = vm_nblocks_now;
 
 	UnlockRelationForExtension(rel, ExclusiveLock);
 }

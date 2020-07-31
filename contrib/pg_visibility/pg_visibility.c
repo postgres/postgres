@@ -392,7 +392,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	check_relation_relkind(rel);
 
 	RelationOpenSmgr(rel);
-	rel->rd_smgr->smgr_vm_nblocks = InvalidBlockNumber;
+	rel->rd_smgr->smgr_cached_nblocks[VISIBILITYMAP_FORKNUM] = InvalidBlockNumber;
 
 	block = visibilitymap_prepare_truncate(rel, 0);
 	if (BlockNumberIsValid(block))
