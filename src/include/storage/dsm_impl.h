@@ -40,6 +40,7 @@
 
 /* GUC. */
 extern int	dynamic_shared_memory_type;
+extern int	min_dynamic_shared_memory;
 
 /*
  * Directory for on-disk state.

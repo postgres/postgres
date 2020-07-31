@@ -1223,6 +1223,7 @@ create_internal(void *place, size_t size,
 	 * space.
 	 */
 	control = (dsa_area_control *) place;
+	memset(place, 0, sizeof(*control));
 	control->segment_header.magic =
 		DSA_SEGMENT_HEADER_MAGIC ^ control_handle ^ 0;
 	control->segment_header.next = DSA_SEGMENT_INDEX_NONE;
@@ -1233,14 +1234,10 @@ create_internal(void *place, size_t size,
 	control->handle = control_handle;
 	control->max_total_segment_size = (size_t) -1;
 	control->total_segment_size = size;
-	memset(&control->segment_handles[0], 0,
-		   sizeof(dsm_handle) * DSA_MAX_SEGMENTS);
 	control->segment_handles[0] = control_handle;
 	for (i = 0; i < DSA_NUM_SEGMENT_BINS; ++i)
 		control->segment_bins[i] = DSA_SEGMENT_INDEX_NONE;
-	control->high_segment_index = 0;
 	control->refcnt = 1;
-	control->freed_segment_counter = 0;
 	control->lwlock_tranche_id = tranche_id;
 
 	/*

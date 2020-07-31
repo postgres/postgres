@@ -35,10 +35,12 @@
 
 #include "lib/ilist.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/pg_shmem.h"
+#include "utils/freepage.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner_private.h"
@@ -76,6 +78,8 @@ typedef struct dsm_control_item
 {
 	dsm_handle	handle;
 	uint32		refcnt;			/* 2+ = active, 1 = moribund, 0 = gone */
+	size_t		first_page;
+	size_t		npages;
 	void	   *impl_private_pm_handle; /* only needed on Windows */
 	bool		pinned;
 } dsm_control_item;
@@ -95,9 +99,14 @@ static dsm_segment *dsm_create_descriptor(void);
 static bool dsm_control_segment_sane(dsm_control_header *control,
 									 Size mapped_size);
 static uint64 dsm_control_bytes_needed(uint32 nitems);
+static inline dsm_handle make_main_region_dsm_handle(int slot);
+static inline bool is_main_region_dsm_handle(dsm_handle handle);
 
 /* Has this backend initialized the dynamic shared memory system yet? */
 static bool dsm_init_done = false;
+
+/* Preallocated DSM space in the main shared memory region. */
+static void *dsm_main_space_begin = NULL;
 
 /*
  * List of dynamic shared memory segments used by this backend.
@@ -171,7 +180,7 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 	{
 		Assert(dsm_control_address == NULL);
 		Assert(dsm_control_mapped_size == 0);
-		dsm_control_handle = random();
+		dsm_control_handle = random() << 1; /* Even numbers only */
 		if (dsm_control_handle == DSM_HANDLE_INVALID)
 			continue;
 		if (dsm_impl_op(DSM_OP_CREATE, dsm_control_handle, segsize,
@@ -247,8 +256,12 @@ dsm_cleanup_using_control_segment(dsm_handle old_control_handle)
 		if (refcnt == 0)
 			continue;
 
-		/* Log debugging information. */
+		/* If it was using the main shmem area, there is nothing to do. */
 		handle = old_control->item[i].handle;
+		if (is_main_region_dsm_handle(handle))
+			continue;
+
+		/* Log debugging information. */
 		elog(DEBUG2, "cleaning up orphaned dynamic shared memory with ID %u (reference count %u)",
 			 handle, refcnt);
 
@@ -348,8 +361,11 @@ dsm_postmaster_shutdown(int code, Datum arg)
 		if (dsm_control->item[i].refcnt == 0)
 			continue;
 
-		/* Log debugging information. */
 		handle = dsm_control->item[i].handle;
+		if (is_main_region_dsm_handle(handle))
+			continue;
+
+		/* Log debugging information. */
 		elog(DEBUG2, "cleaning up orphaned dynamic shared memory with ID %u",
 			 handle);
 
@@ -419,6 +435,45 @@ dsm_set_control_handle(dsm_handle h)
 #endif
 
 /*
+ * Reserve some space in the main shared memory segment for DSM segments.
+ */
+size_t
+dsm_estimate_size(void)
+{
+	return 1024 * 1024 * (size_t) min_dynamic_shared_memory;
+}
+
+/*
+ * Initialize space in the main shared memory segment for DSM segments.
+ */
+void
+dsm_shmem_init(void)
+{
+	size_t		size = dsm_estimate_size();
+	bool		found;
+
+	if (size == 0)
+		return;
+
+	dsm_main_space_begin = ShmemInitStruct("Preallocated DSM", size, &found);
+	if (!found)
+	{
+		FreePageManager *fpm = (FreePageManager *) dsm_main_space_begin;
+		size_t		first_page = 0;
+		size_t		pages;
+
+		/* Reserve space for the FreePageManager. */
+		while (first_page * FPM_PAGE_SIZE < sizeof(FreePageManager))
+			++first_page;
+
+		/* Initialize it and give it all the rest of the space. */
+		FreePageManagerInitialize(fpm, dsm_main_space_begin);
+		pages = (size / FPM_PAGE_SIZE) - first_page;
+		FreePageManagerPut(fpm, first_page, pages);
+	}
+}
+
+/*
  * Create a new dynamic shared memory segment.
  *
  * If there is a non-NULL CurrentResourceOwner, the new segment is associated
@@ -434,6 +489,10 @@ dsm_create(Size size, int flags)
 	dsm_segment *seg;
 	uint32		i;
 	uint32		nitems;
+	size_t		npages = 0;
+	size_t		first_page = 0;
+	FreePageManager *dsm_main_space_fpm = dsm_main_space_begin;
+	bool		using_main_dsm_region = false;
 
 	/* Unsafe in postmaster (and pointless in a stand-alone backend). */
 	Assert(IsUnderPostmaster);
@@ -444,20 +503,48 @@ dsm_create(Size size, int flags)
 	/* Create a new segment descriptor. */
 	seg = dsm_create_descriptor();
 
-	/* Loop until we find an unused segment identifier. */
-	for (;;)
+	/*
+	 * Lock the control segment while we try to allocate from the main shared
+	 * memory area, if configured.
+	 */
+	if (dsm_main_space_fpm)
 	{
-		Assert(seg->mapped_address == NULL && seg->mapped_size == 0);
-		seg->handle = random();
-		if (seg->handle == DSM_HANDLE_INVALID)	/* Reserve sentinel */
-			continue;
-		if (dsm_impl_op(DSM_OP_CREATE, seg->handle, size, &seg->impl_private,
-						&seg->mapped_address, &seg->mapped_size, ERROR))
-			break;
+		npages = size / FPM_PAGE_SIZE;
+		if (size % FPM_PAGE_SIZE > 0)
+			++npages;
+
+		LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
+		if (FreePageManagerGet(dsm_main_space_fpm, npages, &first_page))
+		{
+			/* We can carve out a piece of the main shared memory segment. */
+			seg->mapped_address = (char *) dsm_main_space_begin +
+				first_page * FPM_PAGE_SIZE;
+			seg->mapped_size = npages * FPM_PAGE_SIZE;
+			using_main_dsm_region = true;
+			/* We'll choose a handle below. */
+		}
 	}
 
-	/* Lock the control segment so we can register the new segment. */
-	LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
+	if (!using_main_dsm_region)
+	{
+		/*
+		 * We need to create a new memory segment.  Loop until we find an
+		 * unused segment identifier.
+		 */
+		if (dsm_main_space_fpm)
+			LWLockRelease(DynamicSharedMemoryControlLock);
+		for (;;)
+		{
+			Assert(seg->mapped_address == NULL && seg->mapped_size == 0);
+			seg->handle = random() << 1;	/* Even numbers only */
+			if (seg->handle == DSM_HANDLE_INVALID)	/* Reserve sentinel */
+				continue;
+			if (dsm_impl_op(DSM_OP_CREATE, seg->handle, size, &seg->impl_private,
+							&seg->mapped_address, &seg->mapped_size, ERROR))
+				break;
+		}
+		LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
+	}
 
 	/* Search the control segment for an unused slot. */
 	nitems = dsm_control->nitems;
@@ -465,6 +552,14 @@ dsm_create(Size size, int flags)
 	{
 		if (dsm_control->item[i].refcnt == 0)
 		{
+			if (using_main_dsm_region)
+			{
+				seg->handle = make_main_region_dsm_handle(i);
+				dsm_control->item[i].first_page = first_page;
+				dsm_control->item[i].npages = npages;
+			}
+			else
+				Assert(!is_main_region_dsm_handle(seg->handle));
 			dsm_control->item[i].handle = seg->handle;
 			/* refcnt of 1 triggers destruction, so start at 2 */
 			dsm_control->item[i].refcnt = 2;
@@ -479,9 +574,12 @@ dsm_create(Size size, int flags)
 	/* Verify that we can support an additional mapping. */
 	if (nitems >= dsm_control->maxitems)
 	{
+		if (using_main_dsm_region)
+			FreePageManagerPut(dsm_main_space_fpm, first_page, npages);
 		LWLockRelease(DynamicSharedMemoryControlLock);
-		dsm_impl_op(DSM_OP_DESTROY, seg->handle, 0, &seg->impl_private,
-					&seg->mapped_address, &seg->mapped_size, WARNING);
+		if (!using_main_dsm_region)
+			dsm_impl_op(DSM_OP_DESTROY, seg->handle, 0, &seg->impl_private,
+						&seg->mapped_address, &seg->mapped_size, WARNING);
 		if (seg->resowner != NULL)
 			ResourceOwnerForgetDSM(seg->resowner, seg);
 		dlist_delete(&seg->node);
@@ -495,6 +593,12 @@ dsm_create(Size size, int flags)
 	}
 
 	/* Enter the handle into a new array slot. */
+	if (using_main_dsm_region)
+	{
+		seg->handle = make_main_region_dsm_handle(nitems);
+		dsm_control->item[i].first_page = first_page;
+		dsm_control->item[i].npages = npages;
+	}
 	dsm_control->item[nitems].handle = seg->handle;
 	/* refcnt of 1 triggers destruction, so start at 2 */
 	dsm_control->item[nitems].refcnt = 2;
@@ -580,6 +684,12 @@ dsm_attach(dsm_handle h)
 		/* Otherwise we've found a match. */
 		dsm_control->item[i].refcnt++;
 		seg->control_slot = i;
+		if (is_main_region_dsm_handle(seg->handle))
+		{
+			seg->mapped_address = (char *) dsm_main_space_begin +
+				dsm_control->item[i].first_page * FPM_PAGE_SIZE;
+			seg->mapped_size = dsm_control->item[i].npages * FPM_PAGE_SIZE;
+		}
 		break;
 	}
 	LWLockRelease(DynamicSharedMemoryControlLock);
@@ -597,8 +707,9 @@ dsm_attach(dsm_handle h)
 	}
 
 	/* Here's where we actually try to map the segment. */
-	dsm_impl_op(DSM_OP_ATTACH, seg->handle, 0, &seg->impl_private,
-				&seg->mapped_address, &seg->mapped_size, ERROR);
+	if (!is_main_region_dsm_handle(seg->handle))
+		dsm_impl_op(DSM_OP_ATTACH, seg->handle, 0, &seg->impl_private,
+					&seg->mapped_address, &seg->mapped_size, ERROR);
 
 	return seg;
 }
@@ -688,8 +799,9 @@ dsm_detach(dsm_segment *seg)
 	 */
 	if (seg->mapped_address != NULL)
 	{
-		dsm_impl_op(DSM_OP_DETACH, seg->handle, 0, &seg->impl_private,
-					&seg->mapped_address, &seg->mapped_size, WARNING);
+		if (!is_main_region_dsm_handle(seg->handle))
+			dsm_impl_op(DSM_OP_DETACH, seg->handle, 0, &seg->impl_private,
+						&seg->mapped_address, &seg->mapped_size, WARNING);
 		seg->impl_private = NULL;
 		seg->mapped_address = NULL;
 		seg->mapped_size = 0;
@@ -729,10 +841,15 @@ dsm_detach(dsm_segment *seg)
 			 * other reason, the postmaster may not have any better luck than
 			 * we did.  There's not much we can do about that, though.
 			 */
-			if (dsm_impl_op(DSM_OP_DESTROY, seg->handle, 0, &seg->impl_private,
+			if (is_main_region_dsm_handle(seg->handle) ||
+				dsm_impl_op(DSM_OP_DESTROY, seg->handle, 0, &seg->impl_private,
 							&seg->mapped_address, &seg->mapped_size, WARNING))
 			{
 				LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
+				if (is_main_region_dsm_handle(seg->handle))
+					FreePageManagerPut((FreePageManager *) dsm_main_space_begin,
+									   dsm_control->item[control_slot].first_page,
+									   dsm_control->item[control_slot].npages);
 				Assert(dsm_control->item[control_slot].handle == seg->handle);
 				Assert(dsm_control->item[control_slot].refcnt == 1);
 				dsm_control->item[control_slot].refcnt = 0;
@@ -894,10 +1011,15 @@ dsm_unpin_segment(dsm_handle handle)
 		 * pass the mapped size, mapped address, and private data as NULL
 		 * here.
 		 */
-		if (dsm_impl_op(DSM_OP_DESTROY, handle, 0, &junk_impl_private,
+		if (is_main_region_dsm_handle(handle) ||
+			dsm_impl_op(DSM_OP_DESTROY, handle, 0, &junk_impl_private,
 						&junk_mapped_address, &junk_mapped_size, WARNING))
 		{
 			LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
+			if (is_main_region_dsm_handle(handle))
+				FreePageManagerPut((FreePageManager *) dsm_main_space_begin,
+								   dsm_control->item[control_slot].first_page,
+								   dsm_control->item[control_slot].npages);
 			Assert(dsm_control->item[control_slot].handle == handle);
 			Assert(dsm_control->item[control_slot].refcnt == 1);
 			dsm_control->item[control_slot].refcnt = 0;
@@ -1093,4 +1215,29 @@ dsm_control_bytes_needed(uint32 nitems)
 {
 	return offsetof(dsm_control_header, item)
 		+ sizeof(dsm_control_item) * (uint64) nitems;
+}
+
+static inline dsm_handle
+make_main_region_dsm_handle(int slot)
+{
+	dsm_handle	handle;
+
+	/*
+	 * We need to create a handle that doesn't collide with any existing extra
+	 * segment created by dsm_impl_op(), so we'll make it odd.  It also
+	 * mustn't collide with any other main area pseudo-segment, so we'll
+	 * include the slot number in some of the bits.  We also want to make an
+	 * effort to avoid newly created and recently destroyed handles from being
+	 * confused, so we'll make the rest of the bits random.
+	 */
+	handle = 1;
+	handle |= slot << 1;
+	handle |= random() << (pg_leftmost_one_pos32(dsm_control->maxitems) + 1);
+	return handle;
+}
+
+static inline bool
+is_main_region_dsm_handle(dsm_handle handle)
+{
+	return handle & 1;
 }

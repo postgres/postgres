@@ -148,6 +148,7 @@
 					#   windows
 					#   mmap
 					# (change requires restart)
+#min_dynamic_shared_memory = 0MB	# (change requires restart)
 
 # - Disk -
 

@@ -1906,6 +1906,30 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-min-dynamic-shared-memory" xreflabel="min_dynamic_shared_memory">
+      <term><varname>min_dynamic_shared_memory</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>min_dynamic_shared_memory</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the amount of memory that should be allocated at server
+        startup time for use by parallel queries.  When this memory region is
+        insufficient or exhausted by concurrent queries, new parallel queries
+        try to allocate extra shared memory temporarily from the operating
+        system using the method configured with
+        <varname>dynamic_shared_memory_type</varname>, which may be slower due
+        to memory management overheads.  Memory that is allocated at startup
+        time with <varname>min_dynamic_shared_memory</varname> is affected by
+        the <varname>huge_pages</varname> setting on operating systems where
+        that is supported, and may be more likely to benefit from larger pages
+        on operating systems where that is managed automatically.
+        The default value is <literal>0</literal> (none).
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
      </sect2>
 
