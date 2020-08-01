@@ -669,7 +669,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 	SlruShared	shared = ctl->shared;
 	int			segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
-	int			offset = rpageno * BLCKSZ;
+	off_t		offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
 	int			fd;
 
@@ -699,17 +699,9 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
 		return true;
 	}
 
-	if (lseek(fd, (off_t) offset, SEEK_SET) < 0)
-	{
-		slru_errcause = SLRU_SEEK_FAILED;
-		slru_errno = errno;
-		CloseTransientFile(fd);
-		return false;
-	}
-
 	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_SLRU_READ);
-	if (read(fd, shared->page_buffer[slotno], BLCKSZ) != BLCKSZ)
+	if (pg_pread(fd, shared->page_buffer[slotno], BLCKSZ, offset) != BLCKSZ)
 	{
 		pgstat_report_wait_end();
 		slru_errcause = SLRU_READ_FAILED;
@@ -749,7 +741,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 	SlruShared	shared = ctl->shared;
 	int			segno = pageno / SLRU_PAGES_PER_SEGMENT;
 	int			rpageno = pageno % SLRU_PAGES_PER_SEGMENT;
-	int			offset = rpageno * BLCKSZ;
+	off_t		offset = rpageno * BLCKSZ;
 	char		path[MAXPGPATH];
 	int			fd = -1;
 
@@ -862,18 +854,9 @@ SlruPhysicalWritePage(SlruCtl ctl, int pageno, int slotno, SlruFlush fdata)
 		}
 	}
 
-	if (lseek(fd, (off_t) offset, SEEK_SET) < 0)
-	{
-		slru_errcause = SLRU_SEEK_FAILED;
-		slru_errno = errno;
-		if (!fdata)
-			CloseTransientFile(fd);
-		return false;
-	}
-
 	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_SLRU_WRITE);
-	if (write(fd, shared->page_buffer[slotno], BLCKSZ) != BLCKSZ)
+	if (pg_pwrite(fd, shared->page_buffer[slotno], BLCKSZ, offset) != BLCKSZ)
 	{
 		pgstat_report_wait_end();
 		/* if write didn't set errno, assume problem is no disk space */
