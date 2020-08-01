@@ -608,10 +608,10 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
    <para>
     If for some reason autovacuum fails to clear old XIDs from a table, the
     system will begin to emit warning messages like this when the database's
-    oldest XIDs reach eleven million transactions from the wraparound point:
+    oldest XIDs reach forty million transactions from the wraparound point:
 
 <programlisting>
-WARNING:  database "mydb" must be vacuumed within 10985967 transactions
+WARNING:  database "mydb" must be vacuumed within 39985967 transactions
 HINT:  To avoid a database shutdown, execute a database-wide VACUUM in that database.
 </programlisting>
 
@@ -621,7 +621,7 @@ HINT:  To avoid a database shutdown, execute a database-wide VACUUM in that data
     be able to advance the database's <structfield>datfrozenxid</structfield>.)
     If these warnings are
     ignored, the system will shut down and refuse to start any new
-    transactions once there are fewer than 1 million transactions left
+    transactions once there are fewer than three million transactions left
     until wraparound:
 
 <programlisting>
@@ -629,7 +629,7 @@ ERROR:  database is not accepting commands to avoid wraparound data loss in data
 HINT:  Stop the postmaster and vacuum that database in single-user mode.
 </programlisting>
 
-    The 1-million-transaction safety margin exists to let the
+    The three-million-transaction safety margin exists to let the
     administrator recover without data loss, by manually executing the
     required <command>VACUUM</command> commands.  However, since the system will not
     execute commands once it has gone into the safety shutdown mode,

@@ -2217,28 +2217,24 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid,
 		multiWrapLimit += FirstMultiXactId;
 
 	/*
-	 * We'll refuse to continue assigning MultiXactIds once we get within 100
-	 * multi of data loss.
-	 *
-	 * Note: This differs from the magic number used in
-	 * SetTransactionIdLimit() since vacuum itself will never generate new
-	 * multis.  XXX actually it does, if it needs to freeze old multis.
+	 * We'll refuse to continue assigning MultiXactIds once we get within 3M
+	 * multi of data loss.  See SetTransactionIdLimit.
 	 */
-	multiStopLimit = multiWrapLimit - 100;
+	multiStopLimit = multiWrapLimit - 3000000;
 	if (multiStopLimit < FirstMultiXactId)
 		multiStopLimit -= FirstMultiXactId;
 
 	/*
-	 * We'll start complaining loudly when we get within 10M multis of the
-	 * stop point.   This is kind of arbitrary, but if you let your gas gauge
-	 * get down to 1% of full, would you be looking for the next gas station?
-	 * We need to be fairly liberal about this number because there are lots
-	 * of scenarios where most transactions are done by automatic clients that
-	 * won't pay attention to warnings. (No, we're not gonna make this
+	 * We'll start complaining loudly when we get within 40M multis of data
+	 * loss.  This is kind of arbitrary, but if you let your gas gauge get
+	 * down to 2% of full, would you be looking for the next gas station?  We
+	 * need to be fairly liberal about this number because there are lots of
+	 * scenarios where most transactions are done by automatic clients that
+	 * won't pay attention to warnings.  (No, we're not gonna make this
 	 * configurable.  If you know enough to configure it, you know enough to
 	 * not get in this kind of trouble in the first place.)
 	 */
-	multiWarnLimit = multiStopLimit - 10000000;
+	multiWarnLimit = multiWrapLimit - 40000000;
 	if (multiWarnLimit < FirstMultiXactId)
 		multiWarnLimit -= FirstMultiXactId;
 

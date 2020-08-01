@@ -350,27 +350,30 @@ SetTransactionIdLimit(TransactionId oldest_datfrozenxid, Oid oldest_datoid)
 
 	/*
 	 * We'll refuse to continue assigning XIDs in interactive mode once we get
-	 * within 1M transactions of data loss.  This leaves lots of room for the
+	 * within 3M transactions of data loss.  This leaves lots of room for the
 	 * DBA to fool around fixing things in a standalone backend, while not
 	 * being significant compared to total XID space. (Note that since
 	 * vacuuming requires one transaction per table cleaned, we had better be
-	 * sure there's lots of XIDs left...)
+	 * sure there's lots of XIDs left...)  Also, at default BLCKSZ, this
+	 * leaves two completely-idle segments.  In the event of edge-case bugs
+	 * involving page or segment arithmetic, idle segments render the bugs
+	 * unreachable outside of single-user mode.
 	 */
-	xidStopLimit = xidWrapLimit - 1000000;
+	xidStopLimit = xidWrapLimit - 3000000;
 	if (xidStopLimit < FirstNormalTransactionId)
 		xidStopLimit -= FirstNormalTransactionId;
 
 	/*
-	 * We'll start complaining loudly when we get within 10M transactions of
-	 * the stop point.  This is kind of arbitrary, but if you let your gas
-	 * gauge get down to 1% of full, would you be looking for the next gas
-	 * station?  We need to be fairly liberal about this number because there
-	 * are lots of scenarios where most transactions are done by automatic
-	 * clients that won't pay attention to warnings. (No, we're not gonna make
-	 * this configurable.  If you know enough to configure it, you know enough
-	 * to not get in this kind of trouble in the first place.)
+	 * We'll start complaining loudly when we get within 40M transactions of
+	 * data loss.  This is kind of arbitrary, but if you let your gas gauge
+	 * get down to 2% of full, would you be looking for the next gas station?
+	 * We need to be fairly liberal about this number because there are lots
+	 * of scenarios where most transactions are done by automatic clients that
+	 * won't pay attention to warnings.  (No, we're not gonna make this
+	 * configurable.  If you know enough to configure it, you know enough to
+	 * not get in this kind of trouble in the first place.)
 	 */
-	xidWarnLimit = xidStopLimit - 10000000;
+	xidWarnLimit = xidWrapLimit - 40000000;
 	if (xidWarnLimit < FirstNormalTransactionId)
 		xidWarnLimit -= FirstNormalTransactionId;
 
