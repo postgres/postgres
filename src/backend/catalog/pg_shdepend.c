@@ -809,15 +809,19 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	int			slotCount;
 	CatalogIndexState indstate;
 	TupleTableSlot **slot;
-	int			nslots;
+	int			nslots,
+				max_slots;
+	bool		slot_init = true;
 
 	sdepRel = table_open(SharedDependRelationId, RowExclusiveLock);
 	sdepDesc = RelationGetDescr(sdepRel);
 
-	nslots = MAX_PGSHDEPEND_INSERT_BYTES / sizeof(FormData_pg_shdepend);
-	slot = palloc(sizeof(TupleTableSlot *) * nslots);
-	for (int i = 0; i < nslots; i++)
-		slot[i] = MakeSingleTupleTableSlot(sdepDesc, &TTSOpsHeapTuple);
+	/*
+	 * Allocate the slots to use, but delay initialization until we know that
+	 * they will be used.
+	 */
+	max_slots = MAX_PGSHDEPEND_INSERT_BYTES / sizeof(FormData_pg_shdepend);
+	slot = palloc(sizeof(TupleTableSlot *) * max_slots);
 
 	indstate = CatalogOpenIndexes(sdepRel);
 
@@ -842,6 +846,9 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	{
 		Form_pg_shdepend shdep;
 
+		if (slot_init)
+			slot[slotCount] = MakeSingleTupleTableSlot(sdepDesc, &TTSOpsHeapTuple);
+
 		ExecClearTuple(slot[slotCount]);
 
 		shdep = (Form_pg_shdepend) GETSTRUCT(tup);
@@ -858,10 +865,11 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 		slotCount++;
 
 		/* If slots are full, insert a batch of tuples */
-		if (slotCount == nslots)
+		if (slotCount == max_slots)
 		{
 			CatalogTuplesMultiInsertWithInfo(sdepRel, slot, slotCount, indstate);
 			slotCount = 0;
+			slot_init = false;
 		}
 	}
 
@@ -874,6 +882,8 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	CatalogCloseIndexes(indstate);
 	table_close(sdepRel, RowExclusiveLock);
 
+	/* Drop only the number of slots used */
+	nslots = slot_init ? slotCount : max_slots;
 	for (int i = 0; i < nslots; i++)
 		ExecDropSingleTupleTableSlot(slot[i]);
 	pfree(slot);
