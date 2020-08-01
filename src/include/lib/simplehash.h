@@ -1,10 +1,27 @@
 /*
  * simplehash.h
  *
- *	  Hash table implementation which will be specialized to user-defined
- *	  types, by including this file to generate the required code.  It's
- *	  probably not worthwhile to do so for hash tables that aren't performance
- *	  or space sensitive.
+ *	  When included this file generates a "templated" (by way of macros)
+ *	  open-addressing hash table implementation specialized to user-defined
+ *	  types.
+ *
+ *	  It's probably not worthwhile to generate such a specialized implementation
+ *	  for hash tables that aren't performance or space sensitive.
+ *
+ *	  Compared to dynahash, simplehash has the following benefits:
+ *
+ *	  - Due to the "templated" code generation has known structure sizes and no
+ *	    indirect function calls (which show up substantially in dynahash
+ *	    profiles). These features considerably increase speed for small
+ *	    entries.
+ *	  - Open addressing has better CPU cache behavior than dynahash's chained
+ *	    hashtables.
+ *	  - The generated interface is type-safe and easier to use than dynahash,
+ *	    though at the cost of more complex setup.
+ *	  - Allocates memory in a MemoryContext or another allocator with a
+ *	    malloc/free style interface (which isn't easily usable in a shared
+ *	    memory context)
+ *	  - Does not require the overhead of a separate memory context.
  *
  * Usage notes:
  *
@@ -33,6 +50,19 @@
  *	  - SH_HASH_KEY(table, key) - generate hash for the key
  *	  - SH_STORE_HASH - if defined the hash is stored in the elements
  *	  - SH_GET_HASH(tb, a) - return the field to store the hash in
+ *
+ *	  The element type is required to contain a "uint32 status" member.
+ *
+ *	  While SH_STORE_HASH (and subsequently SH_GET_HASH) are optional, because
+ *	  the hash table implementation needs to compare hashes to move elements
+ *	  (particularly when growing the hash), it's preferable, if possible, to
+ *	  store the element's hash in the element's data type. If the hash is so
+ *	  stored, the hash table will also compare hashes before calling SH_EQUAL
+ *	  when comparing two keys.
+ *
+ *	  For convenience the hash table create functions accept a void pointer
+ *	  that will be stored in the hash table type's member private_data. This
+ *	  allows callbacks to reference caller provided data.
  *
  *	  For examples of usage look at tidbitmap.c (file local definition) and
  *	  execnodes.h/execGrouping.c (exposed declaration, file local
@@ -149,24 +179,59 @@ typedef struct SH_ITERATOR
 
 /* externally visible function prototypes */
 #ifdef SH_RAW_ALLOCATOR
+/* <prefix>_hash <prefix>_create(uint32 nelements, void *private_data) */
 SH_SCOPE	SH_TYPE *SH_CREATE(uint32 nelements, void *private_data);
 #else
+/*
+ * <prefix>_hash <prefix>_create(MemoryContext ctx, uint32 nelements,
+ *								 void *private_data)
+ */
 SH_SCOPE	SH_TYPE *SH_CREATE(MemoryContext ctx, uint32 nelements,
 							   void *private_data);
 #endif
+
+/* void <prefix>_destroy(<prefix>_hash *tb) */
 SH_SCOPE void SH_DESTROY(SH_TYPE * tb);
+
+/* void <prefix>_reset(<prefix>_hash *tb) */
 SH_SCOPE void SH_RESET(SH_TYPE * tb);
+
+/* void <prefix>_grow(<prefix>_hash *tb) */
 SH_SCOPE void SH_GROW(SH_TYPE * tb, uint32 newsize);
+
+/* <element> *<prefix>_insert(<prefix>_hash *tb, <key> key, bool *found) */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_INSERT(SH_TYPE * tb, SH_KEY_TYPE key, bool *found);
+
+/*
+ * <element> *<prefix>_insert_hash(<prefix>_hash *tb, <key> key, uint32 hash,
+ * 								  bool *found)
+ */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_INSERT_HASH(SH_TYPE * tb, SH_KEY_TYPE key,
 											uint32 hash, bool *found);
+
+/* <element> *<prefix>_lookup(<prefix>_hash *tb, <key> key) */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_LOOKUP(SH_TYPE * tb, SH_KEY_TYPE key);
+
+/* <element> *<prefix>_lookup_hash(<prefix>_hash *tb, <key> key, uint32 hash) */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_LOOKUP_HASH(SH_TYPE * tb, SH_KEY_TYPE key,
 											uint32 hash);
+
+/* bool <prefix>_delete(<prefix>_hash *tb, <key> key) */
 SH_SCOPE bool SH_DELETE(SH_TYPE * tb, SH_KEY_TYPE key);
+
+/* void <prefix>_start_iterate(<prefix>_hash *tb, <prefix>_iterator *iter) */
 SH_SCOPE void SH_START_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
+
+/*
+ * void <prefix>_start_iterate_at(<prefix>_hash *tb, <prefix>_iterator *iter,
+ *								  uint32 at)
+ */
 SH_SCOPE void SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at);
+
+/* <element> *<prefix>_iterate(<prefix>_hash *tb, <prefix>_iterator *iter) */
 SH_SCOPE	SH_ELEMENT_TYPE *SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter);
+
+/* void <prefix>_stat(<prefix>_hash *tb */
 SH_SCOPE void SH_STAT(SH_TYPE * tb);
 
 #endif							/* SH_DECLARE */
