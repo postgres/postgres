@@ -16,6 +16,8 @@
 #include "access/amvalidate.h"
 #include "access/hash.h"
 #include "access/htup_details.h"
+#include "access/xact.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"
@@ -25,6 +27,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/regproc.h"
 #include "utils/syscache.h"
 
@@ -340,4 +343,97 @@ check_hash_func_signature(Oid funcid, int16 amprocnum, Oid argtype)
 
 	ReleaseSysCache(tp);
 	return result;
+}
+
+/*
+ * Prechecking function for adding operators/functions to a hash opfamily.
+ */
+void
+hashadjustmembers(Oid opfamilyoid,
+				  Oid opclassoid,
+				  List *operators,
+				  List *functions)
+{
+	Oid			opcintype;
+	ListCell   *lc;
+
+	/*
+	 * Hash operators and required support functions are always "loose"
+	 * members of the opfamily if they are cross-type.  If they are not
+	 * cross-type, we prefer to tie them to the appropriate opclass ... but if
+	 * the user hasn't created one, we can't do that, and must fall back to
+	 * using the opfamily dependency.  (We mustn't force creation of an
+	 * opclass in such a case, as leaving an incomplete opclass laying about
+	 * would be bad.  Throwing an error is another undesirable alternative.)
+	 *
+	 * This behavior results in a bit of a dump/reload hazard, in that the
+	 * order of restoring objects could affect what dependencies we end up
+	 * with.  pg_dump's existing behavior will preserve the dependency choices
+	 * in most cases, but not if a cross-type operator has been bound tightly
+	 * into an opclass.  That's a mistake anyway, so silently "fixing" it
+	 * isn't awful.
+	 *
+	 * Optional support functions are always "loose" family members.
+	 *
+	 * To avoid repeated lookups, we remember the most recently used opclass's
+	 * input type.
+	 */
+	if (OidIsValid(opclassoid))
+	{
+		/* During CREATE OPERATOR CLASS, need CCI to see the pg_opclass row */
+		CommandCounterIncrement();
+		opcintype = get_opclass_input_type(opclassoid);
+	}
+	else
+		opcintype = InvalidOid;
+
+	/*
+	 * We handle operators and support functions almost identically, so rather
+	 * than duplicate this code block, just join the lists.
+	 */
+	foreach(lc, list_concat_copy(operators, functions))
+	{
+		OpFamilyMember *op = (OpFamilyMember *) lfirst(lc);
+
+		if (op->is_func && op->number != HASHSTANDARD_PROC)
+		{
+			/* Optional support proc, so always a soft family dependency */
+			op->ref_is_hard = false;
+			op->ref_is_family = true;
+			op->refobjid = opfamilyoid;
+		}
+		else if (op->lefttype != op->righttype)
+		{
+			/* Cross-type, so always a soft family dependency */
+			op->ref_is_hard = false;
+			op->ref_is_family = true;
+			op->refobjid = opfamilyoid;
+		}
+		else
+		{
+			/* Not cross-type; is there a suitable opclass? */
+			if (op->lefttype != opcintype)
+			{
+				/* Avoid repeating this expensive lookup, even if it fails */
+				opcintype = op->lefttype;
+				opclassoid = opclass_for_family_datatype(HASH_AM_OID,
+														 opfamilyoid,
+														 opcintype);
+			}
+			if (OidIsValid(opclassoid))
+			{
+				/* Hard dependency on opclass */
+				op->ref_is_hard = true;
+				op->ref_is_family = false;
+				op->refobjid = opclassoid;
+			}
+			else
+			{
+				/* We're stuck, so make a soft dependency on the opfamily */
+				op->ref_is_hard = false;
+				op->ref_is_family = true;
+				op->refobjid = opfamilyoid;
+			}
+		}
+	}
 }

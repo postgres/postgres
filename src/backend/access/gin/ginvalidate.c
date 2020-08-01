@@ -271,3 +271,68 @@ ginvalidate(Oid opclassoid)
 
 	return result;
 }
+
+/*
+ * Prechecking function for adding operators/functions to a GIN opfamily.
+ */
+void
+ginadjustmembers(Oid opfamilyoid,
+				 Oid opclassoid,
+				 List *operators,
+				 List *functions)
+{
+	ListCell   *lc;
+
+	/*
+	 * Operator members of a GIN opfamily should never have hard dependencies,
+	 * since their connection to the opfamily depends only on what the support
+	 * functions think, and that can be altered.  For consistency, we make all
+	 * soft dependencies point to the opfamily, though a soft dependency on
+	 * the opclass would work as well in the CREATE OPERATOR CLASS case.
+	 */
+	foreach(lc, operators)
+	{
+		OpFamilyMember *op = (OpFamilyMember *) lfirst(lc);
+
+		op->ref_is_hard = false;
+		op->ref_is_family = true;
+		op->refobjid = opfamilyoid;
+	}
+
+	/*
+	 * Required support functions should have hard dependencies.  Preferably
+	 * those are just dependencies on the opclass, but if we're in ALTER
+	 * OPERATOR FAMILY, we leave the dependency pointing at the whole
+	 * opfamily.  (Given that GIN opclasses generally don't share opfamilies,
+	 * it seems unlikely to be worth working harder.)
+	 */
+	foreach(lc, functions)
+	{
+		OpFamilyMember *op = (OpFamilyMember *) lfirst(lc);
+
+		switch (op->number)
+		{
+			case GIN_EXTRACTVALUE_PROC:
+			case GIN_EXTRACTQUERY_PROC:
+				/* Required support function */
+				op->ref_is_hard = true;
+				break;
+			case GIN_COMPARE_PROC:
+			case GIN_CONSISTENT_PROC:
+			case GIN_COMPARE_PARTIAL_PROC:
+			case GIN_TRICONSISTENT_PROC:
+			case GIN_OPTIONS_PROC:
+				/* Optional, so force it to be a soft family dependency */
+				op->ref_is_hard = false;
+				op->ref_is_family = true;
+				op->refobjid = opfamilyoid;
+				break;
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("support function number %d is invalid for access method %s",
+								op->number, "gin")));
+				break;
+		}
+	}
+}

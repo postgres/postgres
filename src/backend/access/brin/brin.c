@@ -120,6 +120,7 @@ brinhandler(PG_FUNCTION_ARGS)
 	amroutine->amproperty = NULL;
 	amroutine->ambuildphasename = NULL;
 	amroutine->amvalidate = brinvalidate;
+	amroutine->amadjustmembers = NULL;
 	amroutine->ambeginscan = brinbeginscan;
 	amroutine->amrescan = brinrescan;
 	amroutine->amgettuple = NULL;

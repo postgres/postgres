@@ -464,6 +464,10 @@ extern bool gistcanreturn(Relation index, int attno);
 
 /* gistvalidate.c */
 extern bool gistvalidate(Oid opclassoid);
+extern void gistadjustmembers(Oid opfamilyoid,
+							  Oid opclassoid,
+							  List *operators,
+							  List *functions);
 
 /* gistutil.c */
 

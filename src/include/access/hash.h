@@ -379,6 +379,10 @@ extern IndexBulkDeleteResult *hashvacuumcleanup(IndexVacuumInfo *info,
 												IndexBulkDeleteResult *stats);
 extern bytea *hashoptions(Datum reloptions, bool validate);
 extern bool hashvalidate(Oid opclassoid);
+extern void hashadjustmembers(Oid opfamilyoid,
+							  Oid opclassoid,
+							  List *operators,
+							  List *functions);
 
 /* private routines */
 

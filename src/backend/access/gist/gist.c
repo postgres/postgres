@@ -92,6 +92,7 @@ gisthandler(PG_FUNCTION_ARGS)
 	amroutine->amproperty = gistproperty;
 	amroutine->ambuildphasename = NULL;
 	amroutine->amvalidate = gistvalidate;
+	amroutine->amadjustmembers = gistadjustmembers;
 	amroutine->ambeginscan = gistbeginscan;
 	amroutine->amrescan = gistrescan;
 	amroutine->amgettuple = gistgettuple;

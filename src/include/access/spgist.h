@@ -220,5 +220,9 @@ extern IndexBulkDeleteResult *spgvacuumcleanup(IndexVacuumInfo *info,
 
 /* spgvalidate.c */
 extern bool spgvalidate(Oid opclassoid);
+extern void spgadjustmembers(Oid opfamilyoid,
+							 Oid opclassoid,
+							 List *operators,
+							 List *functions);
 
 #endif							/* SPGIST_H */

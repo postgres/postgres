@@ -1141,6 +1141,10 @@ extern bool _bt_allequalimage(Relation rel, bool debugmessage);
  * prototypes for functions in nbtvalidate.c
  */
 extern bool btvalidate(Oid opclassoid);
+extern void btadjustmembers(Oid opfamilyoid,
+							Oid opclassoid,
+							List *operators,
+							List *functions);
 
 /*
  * prototypes for functions in nbtsort.c
