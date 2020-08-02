@@ -1410,6 +1410,15 @@ SELECT am.amname AS index_method,
     ORDER BY index_method, opfamily_name, opfamily_operator;
 </programlisting>
   </para>
+
+  <tip>
+   <para>
+    <xref linkend="app-psql"/> has
+    commands <command>\dAc</command>, <command>\dAf</command>,
+    and <command>\dAo</command>, which provide slightly more sophisticated
+    versions of these queries.
+   </para>
+  </tip>
  </sect1>
 
 

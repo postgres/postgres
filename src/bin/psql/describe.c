@@ -6056,7 +6056,7 @@ printACLColumn(PQExpBuffer buf, const char *colname)
  * \dAc
  * Lists operator classes
  *
- * Takes an optional regexps to filter by index access method and type.
+ * Takes optional regexps to filter by index access method and input data type.
  */
 bool
 listOperatorClasses(const char *access_method_pattern,
@@ -6110,6 +6110,7 @@ listOperatorClasses(const char *access_method_pattern,
 					  "  LEFT JOIN pg_catalog.pg_am am on am.oid = c.opcmethod\n"
 					  "  LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.opcnamespace\n"
 					  "  LEFT JOIN pg_catalog.pg_type t ON t.oid = c.opcintype\n"
+					  "  LEFT JOIN pg_catalog.pg_namespace tn ON tn.oid = t.typnamespace\n"
 		);
 	if (verbose)
 		appendPQExpBuffer(&buf,
@@ -6120,8 +6121,13 @@ listOperatorClasses(const char *access_method_pattern,
 		have_where = processSQLNamePattern(pset.db, &buf, access_method_pattern,
 										   false, false, NULL, "am.amname", NULL, NULL);
 	if (type_pattern)
+	{
+		/* Match type name pattern against either internal or external name */
 		processSQLNamePattern(pset.db, &buf, type_pattern, have_where, false,
-							  NULL, "t.typname", NULL, NULL);
+							  "tn.nspname", "t.typname",
+							  "pg_catalog.format_type(t.oid, NULL)",
+							  "pg_catalog.pg_type_is_visible(t.oid)");
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 4;");
 	res = PSQLexec(buf.data);
@@ -6145,7 +6151,7 @@ listOperatorClasses(const char *access_method_pattern,
  * \dAf
  * Lists operator families
  *
- * Takes an optional regexps to filter by index access method and type.
+ * Takes optional regexps to filter by index access method and input data type.
  */
 bool
 listOperatorFamilies(const char *access_method_pattern,
@@ -6190,15 +6196,19 @@ listOperatorFamilies(const char *access_method_pattern,
 	if (type_pattern)
 	{
 		appendPQExpBuffer(&buf,
-						  "\n  %s EXISTS (\n"
+						  "  %s EXISTS (\n"
 						  "    SELECT 1\n"
 						  "    FROM pg_catalog.pg_type t\n"
 						  "    JOIN pg_catalog.pg_opclass oc ON oc.opcintype = t.oid\n"
-						  "    WHERE oc.opcfamily = f.oid",
+						  "    LEFT JOIN pg_catalog.pg_namespace tn ON tn.oid = t.typnamespace\n"
+						  "    WHERE oc.opcfamily = f.oid\n",
 						  have_where ? "AND" : "WHERE");
+		/* Match type name pattern against either internal or external name */
 		processSQLNamePattern(pset.db, &buf, type_pattern, true, false,
-							  NULL, "t.typname", NULL, NULL);
-		appendPQExpBuffer(&buf, ")");
+							  "tn.nspname", "t.typname",
+							  "pg_catalog.format_type(t.oid, NULL)",
+							  "pg_catalog.pg_type_is_visible(t.oid)");
+		appendPQExpBuffer(&buf, "  )\n");
 	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
@@ -6223,7 +6233,7 @@ listOperatorFamilies(const char *access_method_pattern,
  * \dAo
  * Lists operators of operator families
  *
- * Takes an optional regexps to filter by index access method and operator
+ * Takes optional regexps to filter by index access method and operator
  * family.
  */
 bool
@@ -6310,7 +6320,7 @@ listOpFamilyOperators(const char *access_method_pattern,
  * \dAp
  * Lists support functions of operator families
  *
- * Takes an optional regexps to filter by index access method and operator
+ * Takes optional regexps to filter by index access method and operator
  * family.
  */
 bool

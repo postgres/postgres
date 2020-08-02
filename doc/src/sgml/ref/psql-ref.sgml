@@ -1245,13 +1245,13 @@ testdb=&gt;
         <listitem>
         <para>
         Lists operator classes
-        (see <xref linkend="catalog-pg-opclass"/>).
+        (see <xref linkend="xindex-opclass"/>).
         If <replaceable class="parameter">access-method-pattern</replaceable>
         is specified, only operator classes associated with access methods whose
-        names match the pattern are listed.
+        names match that pattern are listed.
         If <replaceable class="parameter">input-type-pattern</replaceable>
         is specified, only operator classes associated with input types whose
-        names match the pattern are listed.
+        names match that pattern are listed.
         If <literal>+</literal> is appended to the command name, each operator
         class is listed with its associated operator family and owner.
         </para>
@@ -1268,13 +1268,13 @@ testdb=&gt;
         <listitem>
         <para>
         Lists operator families
-        (see <xref linkend="catalog-pg-opfamily"/>).
+        (see <xref linkend="xindex-opfamily"/>).
         If <replaceable class="parameter">access-method-pattern</replaceable>
         is specified, only operator families associated with access methods whose
-        names match the pattern are listed.
+        names match that pattern are listed.
         If <replaceable class="parameter">input-type-pattern</replaceable>
         is specified, only operator families associated with input types whose
-        names match the pattern are listed.
+        names match that pattern are listed.
         If <literal>+</literal> is appended to the command name, each operator
         family is listed with its owner.
         </para>
@@ -1292,15 +1292,15 @@ testdb=&gt;
         <listitem>
         <para>
         Lists operators associated with operator families
-        (<xref linkend="catalog-pg-amop"/>).
+        (see <xref linkend="xindex-strategies"/>).
         If <replaceable class="parameter">access-method-pattern</replaceable>
         is specified, only members of operator families associated with access
-        methods whose names match the pattern are listed.
-        If <replaceable class="parameter">input-type-pattern</replaceable>
-        is specified, only members of operator families whose names match the
+        methods whose names match that pattern are listed.
+        If <replaceable class="parameter">operator-family-pattern</replaceable>
+        is specified, only members of operator families whose names match that
         pattern are listed.
         If <literal>+</literal> is appended to the command name, each operator
-        is listed with its strategy number, purpose and sort operator family.
+        is listed with its sort operator family (if it is an ordering operator).
         </para>
         </listitem>
       </varlistentry>
@@ -1314,14 +1314,16 @@ testdb=&gt;
         </term>
         <listitem>
         <para>
-        Lists functions associated with operator families
-        (<xref linkend="catalog-pg-amproc"/>).
+        Lists support functions associated with operator families
+        (see <xref linkend="xindex-support"/>).
         If <replaceable class="parameter">access-method-pattern</replaceable>
-        is specified, only members of operator families associated with access
-        methods whose names match the pattern are listed.
-        If <replaceable class="parameter">input-type-pattern</replaceable>
-        is specified, only members of operator families whose names match the
-        pattern are listed.
+        is specified, only functions of operator families associated with
+        access methods whose names match that pattern are listed.
+        If <replaceable class="parameter">operator-family-pattern</replaceable>
+        is specified, only functions of operator families whose names match
+        that pattern are listed.
+        If <literal>+</literal> is appended to the command name, functions are
+        displayed verbosely, with their actual parameter lists.
         </para>
         </listitem>
       </varlistentry>
