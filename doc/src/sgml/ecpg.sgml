@@ -5695,7 +5695,7 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
   </sect2>
 
   <sect2 id="ecpg-ifdef">
-   <title>ifdef, ifndef, else, elif, and endif Directives</title>
+   <title>ifdef, ifndef, elif, else, and endif Directives</title>
    <para>
    You can use the following directives to compile code sections conditionally:
 
@@ -5705,7 +5705,7 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
      <listitem>
      <para>
       Checks a <replaceable>name</replaceable> and processes subsequent lines if
-      <replaceable>name</replaceable> has been created with <literal>EXEC SQL define
+      <replaceable>name</replaceable> has been defined via <literal>EXEC SQL define
       <replaceable>name</replaceable></literal>.
      </para>
      </listitem>
@@ -5716,19 +5716,8 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
      <listitem>
      <para>
       Checks a <replaceable>name</replaceable> and processes subsequent lines if
-      <replaceable>name</replaceable> has <emphasis>not</emphasis> been created with
+      <replaceable>name</replaceable> has <emphasis>not</emphasis> been defined via
       <literal>EXEC SQL define <replaceable>name</replaceable></literal>.
-     </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>EXEC SQL else;</literal></term>
-     <listitem>
-     <para>
-      Starts processing an alternative section to a section introduced by
-      either <literal>EXEC SQL ifdef <replaceable>name</replaceable></literal> or
-      <literal>EXEC SQL ifndef <replaceable>name</replaceable></literal>.
      </para>
      </listitem>
     </varlistentry>
@@ -5737,9 +5726,30 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
      <term><literal>EXEC SQL elif <replaceable>name</replaceable>;</literal></term>
      <listitem>
      <para>
-      Checks <replaceable>name</replaceable> and starts an alternative section if
-      <replaceable>name</replaceable> has been created with <literal>EXEC SQL define
-      <replaceable>name</replaceable></literal>.
+      Begins an optional alternative section after an
+      <literal>EXEC SQL ifdef <replaceable>name</replaceable></literal> or
+      <literal>EXEC SQL ifndef <replaceable>name</replaceable></literal>
+      directive.  Any number of <literal>elif</literal> sections can appear.
+      Lines following an <literal>elif</literal> will be processed
+      if <replaceable>name</replaceable> has been
+      defined <emphasis>and</emphasis> no previous section of the same
+      <literal>ifdef</literal>/<literal>ifndef</literal>...<literal>endif</literal>
+      construct has been processed.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>EXEC SQL else;</literal></term>
+     <listitem>
+     <para>
+      Begins an optional, final alternative section after an
+      <literal>EXEC SQL ifdef <replaceable>name</replaceable></literal> or
+      <literal>EXEC SQL ifndef <replaceable>name</replaceable></literal>
+      directive.  Subsequent lines will be processed if no previous section
+      of the same
+      <literal>ifdef</literal>/<literal>ifndef</literal>...<literal>endif</literal>
+      construct has been processed.
      </para>
      </listitem>
     </varlistentry>
@@ -5748,7 +5758,9 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
      <term><literal>EXEC SQL endif;</literal></term>
      <listitem>
      <para>
-      Ends an alternative section.
+      Ends an
+      <literal>ifdef</literal>/<literal>ifndef</literal>...<literal>endif</literal>
+      construct.  Subsequent lines are processed normally.
      </para>
      </listitem>
     </varlistentry>
@@ -5756,14 +5768,20 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
    </para>
 
    <para>
-    Example:
+    <literal>ifdef</literal>/<literal>ifndef</literal>...<literal>endif</literal>
+    constructs can be nested, up to 127 levels deep.
+   </para>
+
+   <para>
+    This example will compile exactly one of the three <literal>SET
+    TIMEZONE</literal> commands:
 <programlisting>
-EXEC SQL ifndef TZVAR;
-EXEC SQL SET TIMEZONE TO 'GMT';
+EXEC SQL ifdef TZVAR;
+EXEC SQL SET TIMEZONE TO TZVAR;
 EXEC SQL elif TZNAME;
 EXEC SQL SET TIMEZONE TO TZNAME;
 EXEC SQL else;
-EXEC SQL SET TIMEZONE TO TZVAR;
+EXEC SQL SET TIMEZONE TO 'GMT';
 EXEC SQL endif;
 </programlisting>
    </para>

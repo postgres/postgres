@@ -17,15 +17,32 @@ int
 main(void)
 {
 exec sql begin declare section;
+
 exec sql ifdef NAMELEN;
 	typedef char string[NAMELEN];
 	intarray amount;
 	char name[AMOUNT][NAMELEN];
+exec sql elif AMOUNT;
+	should not get here;
+exec sql else;
+	should not get here either;
+exec sql endif;
+
+exec sql ifndef NAMELEN;
+	should not get here;
+exec sql elif AMOUNT;
+  exec sql ifdef NOSUCHNAME;
+	should not get here;
+  exec sql else;
 	char letter[AMOUNT][1];
 #if 0
 	int not_used;
 #endif
+  exec sql endif;
+exec sql elif AMOUNT;
+	should not get here;
 exec sql endif;
+
 exec sql end declare section;
 	int i,j;
 

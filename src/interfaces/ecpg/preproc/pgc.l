@@ -79,13 +79,29 @@ struct _yy_buffer
 
 static char *old;
 
+/*
+ * Vars for handling ifdef/elif/endif constructs.  preproc_tos is the current
+ * nesting depth of such constructs, and stacked_if_value[preproc_tos] is the
+ * state for the innermost level.  (For convenience, stacked_if_value[0] is
+ * initialized as though we are in the active branch of some outermost IF.)
+ * The active field is true if the current branch is active (being expanded).
+ * The saw_active field is true if we have found any successful branch,
+ * so that all subsequent branches of this level should be skipped.
+ * The else_branch field is true if we've found an 'else' (so that another
+ * 'else' or 'elif' at this level is an error.)
+ * For IFs nested within an inactive branch, all branches always have active
+ * set to false, but saw_active and else_branch are maintained normally.
+ * ifcond is valid only while evaluating an if-condition; it's true if we
+ * are doing ifdef, false if ifndef.
+ */
 #define MAX_NESTED_IF 128
 static short preproc_tos;
-static short ifcond;
+static bool ifcond;
 static struct _if_value
 {
-	short condition;
-	short else_branch;
+	bool active;
+	bool saw_active;
+	bool else_branch;
 } stacked_if_value[MAX_NESTED_IF];
 
 %}
@@ -1165,11 +1181,26 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						  return S_ANYTHING;
 					  }
 					}
-<C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = true; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifdef}{space}* {
+					  if (preproc_tos >= MAX_NESTED_IF-1)
+						  mmfatal(PARSE_ERROR, "too many nested EXEC SQL IFDEF conditions");
+					  preproc_tos++;
+					  stacked_if_value[preproc_tos].active = false;
+					  stacked_if_value[preproc_tos].saw_active = false;
+					  stacked_if_value[preproc_tos].else_branch = false;
+					  ifcond = true;
+					  BEGIN(xcond);
+					}
 <C,xskip>{informix_special}{ifdef}{space}* {
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
+						  if (preproc_tos >= MAX_NESTED_IF-1)
+							  mmfatal(PARSE_ERROR, "too many nested EXEC SQL IFDEF conditions");
+						  preproc_tos++;
+						  stacked_if_value[preproc_tos].active = false;
+						  stacked_if_value[preproc_tos].saw_active = false;
+						  stacked_if_value[preproc_tos].else_branch = false;
 						  ifcond = true;
 						  BEGIN(xcond);
 					  }
@@ -1179,11 +1210,26 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						  return S_ANYTHING;
 					  }
 					}
-<C,xskip>{exec_sql}{ifndef}{space}* { ifcond = false; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifndef}{space}* {
+					  if (preproc_tos >= MAX_NESTED_IF-1)
+						  mmfatal(PARSE_ERROR, "too many nested EXEC SQL IFDEF conditions");
+					  preproc_tos++;
+					  stacked_if_value[preproc_tos].active = false;
+					  stacked_if_value[preproc_tos].saw_active = false;
+					  stacked_if_value[preproc_tos].else_branch = false;
+					  ifcond = false;
+					  BEGIN(xcond);
+					}
 <C,xskip>{informix_special}{ifndef}{space}* {
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
+						  if (preproc_tos >= MAX_NESTED_IF-1)
+							  mmfatal(PARSE_ERROR, "too many nested EXEC SQL IFDEF conditions");
+						  preproc_tos++;
+						  stacked_if_value[preproc_tos].active = false;
+						  stacked_if_value[preproc_tos].saw_active = false;
+						  stacked_if_value[preproc_tos].else_branch = false;
 						  ifcond = false;
 						  BEGIN(xcond);
 					  }
@@ -1193,16 +1239,13 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						  return S_ANYTHING;
 					  }
 					}
-<C,xskip>{exec_sql}{elif}{space}*	{	/* pop stack */
-						if ( preproc_tos == 0 ) {
+<C,xskip>{exec_sql}{elif}{space}*	{
+						if (preproc_tos == 0)
 							mmfatal(PARSE_ERROR, "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\"");
-						}
-						else if ( stacked_if_value[preproc_tos].else_branch )
+						if (stacked_if_value[preproc_tos].else_branch)
 							mmfatal(PARSE_ERROR, "missing \"EXEC SQL ENDIF;\"");
-						else
-							preproc_tos--;
-
-						ifcond = true; BEGIN(xcond);
+						ifcond = true;
+						BEGIN(xcond);
 					}
 <C,xskip>{informix_special}{elif}{space}* {
 					/* are we simulating Informix? */
@@ -1210,11 +1253,8 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					{
 						if (preproc_tos == 0)
 							mmfatal(PARSE_ERROR, "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\"");
-						else if (stacked_if_value[preproc_tos].else_branch)
+						if (stacked_if_value[preproc_tos].else_branch)
 							mmfatal(PARSE_ERROR, "missing \"EXEC SQL ENDIF;\"");
-						else
-							preproc_tos--;
-
 						ifcond = true;
 						BEGIN(xcond);
 					}
@@ -1226,16 +1266,19 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 				}
 
 <C,xskip>{exec_sql}{else}{space}*";" {	/* only exec sql endif pops the stack, so take care of duplicated 'else' */
-					if (stacked_if_value[preproc_tos].else_branch)
+					if ( preproc_tos == 0 )
+						mmfatal(PARSE_ERROR, "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\"");
+					else if (stacked_if_value[preproc_tos].else_branch)
 						mmfatal(PARSE_ERROR, "more than one EXEC SQL ELSE");
 					else
 					{
 						stacked_if_value[preproc_tos].else_branch = true;
-						stacked_if_value[preproc_tos].condition =
-							(stacked_if_value[preproc_tos-1].condition &&
-							 !stacked_if_value[preproc_tos].condition);
+						stacked_if_value[preproc_tos].active =
+							(stacked_if_value[preproc_tos-1].active &&
+							 !stacked_if_value[preproc_tos].saw_active);
+						stacked_if_value[preproc_tos].saw_active = true;
 
-						if (stacked_if_value[preproc_tos].condition)
+						if (stacked_if_value[preproc_tos].active)
 							BEGIN(C);
 						else
 							BEGIN(xskip);
@@ -1245,16 +1288,19 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					/* are we simulating Informix? */
 					if (INFORMIX_MODE)
 					{
-						if (stacked_if_value[preproc_tos].else_branch)
+						if ( preproc_tos == 0 )
+							mmfatal(PARSE_ERROR, "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\"");
+						else if (stacked_if_value[preproc_tos].else_branch)
 							mmfatal(PARSE_ERROR, "more than one EXEC SQL ELSE");
 						else
 						{
 							stacked_if_value[preproc_tos].else_branch = true;
-							stacked_if_value[preproc_tos].condition =
-							(stacked_if_value[preproc_tos-1].condition &&
-							 !stacked_if_value[preproc_tos].condition);
+							stacked_if_value[preproc_tos].active =
+								(stacked_if_value[preproc_tos-1].active &&
+								 !stacked_if_value[preproc_tos].saw_active);
+							stacked_if_value[preproc_tos].saw_active = true;
 
-							if (stacked_if_value[preproc_tos].condition)
+							if (stacked_if_value[preproc_tos].active)
 								BEGIN(C);
 							else
 								BEGIN(xskip);
@@ -1272,7 +1318,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					else
 						preproc_tos--;
 
-					if (stacked_if_value[preproc_tos].condition)
+					if (stacked_if_value[preproc_tos].active)
 					   BEGIN(C);
 					else
 					   BEGIN(xskip);
@@ -1286,7 +1332,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 							preproc_tos--;
 
-						if (stacked_if_value[preproc_tos].condition)
+						if (stacked_if_value[preproc_tos].active)
 							BEGIN(C);
 						else
 							BEGIN(xskip);
@@ -1301,12 +1347,10 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 <xskip>{other}		{ /* ignore */ }
 
 <xcond>{identifier}{space}*";" {
-					if (preproc_tos >= MAX_NESTED_IF-1)
-						mmfatal(PARSE_ERROR, "too many nested EXEC SQL IFDEF conditions");
-					else
 					{
 						struct _defines *defptr;
 						unsigned int i;
+						bool this_active;
 
 						/*
 						 *	Skip the ";" and trailing whitespace. Note that yytext
@@ -1324,13 +1368,15 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 							 defptr = defptr->next)
 							/* skip */ ;
 
-						preproc_tos++;
-						stacked_if_value[preproc_tos].else_branch = false;
-						stacked_if_value[preproc_tos].condition =
-						(defptr ? ifcond : !ifcond) && stacked_if_value[preproc_tos-1].condition;
+						this_active = (defptr ? ifcond : !ifcond);
+						stacked_if_value[preproc_tos].active =
+							(stacked_if_value[preproc_tos-1].active &&
+							 !stacked_if_value[preproc_tos].saw_active &&
+							 this_active);
+						stacked_if_value[preproc_tos].saw_active |= this_active;
 					}
 
-					if (stacked_if_value[preproc_tos].condition)
+					if (stacked_if_value[preproc_tos].active)
 						BEGIN(C);
 					else
 						BEGIN(xskip);
@@ -1442,10 +1488,12 @@ lex_init(void)
 	parenths_open = 0;
 	current_function = NULL;
 
-	preproc_tos = 0;
 	yylineno = 1;
-	ifcond = true;
-	stacked_if_value[preproc_tos].condition = ifcond;
+
+	/* initialize state for if/else/endif */
+	preproc_tos = 0;
+	stacked_if_value[preproc_tos].active = true;
+	stacked_if_value[preproc_tos].saw_active = true;
 	stacked_if_value[preproc_tos].else_branch = false;
 
 	/* initialize literal buffer to a reasonable but expansible size */
