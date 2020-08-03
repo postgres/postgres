@@ -6695,6 +6695,12 @@ local0.*    /var/log/postgresql
              <entry>no</entry>
             </row>
             <row>
+             <entry><literal>%P</literal></entry>
+             <entry>Process ID of the parallel group leader, if this process
+              is a parallel query worker</entry>
+             <entry>no</entry>
+            </row>
+            <row>
              <entry><literal>%t</literal></entry>
              <entry>Time stamp without milliseconds</entry>
              <entry>no</entry>
@@ -7026,7 +7032,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         character count of the error position therein,
         location of the error in the PostgreSQL source code
         (if <varname>log_error_verbosity</varname> is set to <literal>verbose</literal>),
-        application name, and backend type.
+        application name, backend type, and process ID of parallel group leader.
         Here is a sample table definition for storing CSV-format log output:
 
 <programlisting>
@@ -7056,6 +7062,7 @@ CREATE TABLE postgres_log
   location text,
   application_name text,
   backend_type text,
+  leader_pid integer,
   PRIMARY KEY (session_id, session_line_num)
 );
 </programlisting>

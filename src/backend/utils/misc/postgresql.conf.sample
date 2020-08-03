@@ -537,6 +537,7 @@
 					#   %h = remote host
 					#   %b = backend type
 					#   %p = process ID
+					#   %P = process ID of parallel group leader
 					#   %t = timestamp without milliseconds
 					#   %m = timestamp with milliseconds
 					#   %n = timestamp with milliseconds (as a Unix epoch)
