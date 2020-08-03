@@ -1727,8 +1727,9 @@ SELECT 'abc \153\154\155 \052\251\124'::bytea;
         <entry><type>time [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
         <entry>12 bytes</entry>
         <entry>time of day (no date), with time zone</entry>
-        <entry>00:00:00+1459</entry>
-        <entry>24:00:00-1459</entry>
+        <!-- see MAX_TZDISP_HOUR in datatype/timestamp.h -->
+        <entry>00:00:00+1559</entry>
+        <entry>24:00:00-1559</entry>
         <entry>1 microsecond</entry>
        </row>
        <row>
