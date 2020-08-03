@@ -572,6 +572,24 @@ replay of page deletion records does not hold a write lock on the target
 leaf page throughout; only the primary needs to block out concurrent
 writers that insert on to the page being deleted.)
 
+There are also locking differences between the primary and WAL replay
+for the first stage of a page split (i.e. same-level differences in
+locking).  Replay of the first phase of a page split can get away with
+locking and updating the original right sibling page (which is also the
+new right sibling page's right sibling) after locks on the original page
+and its new right sibling have been released.  Again, this is okay
+because there are no writers.  Page deletion WAL replay cannot get away
+with being lax about same-level locking during replay, though -- doing
+so risks confusing concurrent backwards scans.
+
+Page deletion's second phase locks the left sibling page, target page,
+and right page in order on the standby, just like on the primary.  This
+allows backwards scans running on a standby to reason about page
+deletion on the leaf level; a page cannot appear deleted without that
+being reflected in the sibling pages.  It's probably possible to be more
+lax about how locks are acquired on the standby during the second phase
+of page deletion, but that hardly seems worth it.
+
 During recovery all index scans start with ignore_killed_tuples = false
 and we never set kill_prior_tuple. We do this because the oldest xmin
 on the standby server can be older than the oldest xmin on the primary
