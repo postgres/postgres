@@ -6065,7 +6065,7 @@ listOperatorClasses(const char *access_method_pattern,
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-					  "SELECT DISTINCT"
+					  "SELECT\n"
 					  "  am.amname AS \"%s\",\n"
 					  "  pg_catalog.format_type(c.opcintype, NULL) AS \"%s\",\n"
 					  "  CASE\n"
@@ -6160,7 +6160,7 @@ listOperatorFamilies(const char *access_method_pattern,
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-					  "SELECT DISTINCT"
+					  "SELECT\n"
 					  "  am.amname AS \"%s\",\n"
 					  "  CASE\n"
 					  "    WHEN pg_catalog.pg_opfamily_is_visible(f.oid)\n"
