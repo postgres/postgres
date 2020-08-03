@@ -649,7 +649,10 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
        <para>
         Previously, hash aggregation was avoided if it was expected to use
-        more than <xref linkend="guc-work-mem"/> memory.
+        more than <xref linkend="guc-work-mem"/> memory.  To reduce the
+        likelihood of using disk storage for hash aggregation and attain
+        behavior similar to previous Postgres releases, increase <xref
+        linkend="guc-hash-mem-multiplier"/>.
        </para>
       </listitem>
 
