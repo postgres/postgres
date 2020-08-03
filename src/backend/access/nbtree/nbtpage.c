@@ -1697,6 +1697,7 @@ _bt_pagedel(Relation rel, Buffer leafbuf, TransactionId *oldestBtpoXact)
 				if (_bt_leftsib_splitflag(rel, leftsib, leafblkno))
 				{
 					ReleaseBuffer(leafbuf);
+					Assert(ndeleted == 0);
 					return ndeleted;
 				}
 
