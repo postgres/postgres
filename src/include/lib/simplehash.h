@@ -51,7 +51,8 @@
  *	  - SH_STORE_HASH - if defined the hash is stored in the elements
  *	  - SH_GET_HASH(tb, a) - return the field to store the hash in
  *
- *	  The element type is required to contain a "uint32 status" member.
+ *	  The element type is required to contain a "status" member that can store
+ *	  the range of values defined in the SH_STATUS enum.
  *
  *	  While SH_STORE_HASH (and subsequently SH_GET_HASH) are optional, because
  *	  the hash table implementation needs to compare hashes to move elements
