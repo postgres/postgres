@@ -2864,11 +2864,8 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 	 * As noted at the beginning of _bt_binsrch(), an internal page must have
 	 * children, since there must always be a negative infinity downlink
 	 * (there may also be a highkey).  In the case of non-rightmost leaf
-	 * pages, there must be at least a highkey.  Deleted pages on replica
-	 * might contain no items, because page unlink re-initializes
-	 * page-to-be-deleted.  Deleted pages with no items might be on primary
-	 * too due to preceding recovery, but on primary new deletions can't
-	 * happen concurrently to amcheck.
+	 * pages, there must be at least a highkey.  The exceptions are deleted
+	 * pages, which contain no items.
 	 *
 	 * This is correct when pages are half-dead, since internal pages are
 	 * never half-dead, and leaf pages must have a high key when half-dead

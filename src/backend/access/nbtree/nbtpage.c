@@ -2058,6 +2058,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	BTMetaPageData *metad = NULL;
 	ItemId		itemid;
 	Page		page;
+	PageHeader	header;
 	BTPageOpaque opaque;
 	bool		rightsib_is_rightmost;
 	int			targetlevel;
@@ -2326,6 +2327,14 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	opaque->btpo_flags &= ~BTP_HALF_DEAD;
 	opaque->btpo_flags |= BTP_DELETED;
 	opaque->btpo.xact = ReadNewTransactionId();
+
+	/*
+	 * Remove the remaining tuples on the page.  This keeps things simple for
+	 * WAL consistency checking.
+	 */
+	header = (PageHeader) page;
+	header->pd_lower = SizeOfPageHeaderData;
+	header->pd_upper = header->pd_special;
 
 	/* And update the metapage, if needed */
 	if (BufferIsValid(metabuf))

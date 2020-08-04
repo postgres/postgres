@@ -1051,15 +1051,7 @@ btree_mask(char *pagedata, BlockNumber blkno)
 
 	maskopaq = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	if (P_ISDELETED(maskopaq))
-	{
-		/*
-		 * Mask page content on a DELETED page since it will be re-initialized
-		 * during replay. See btree_xlog_unlink_page() for details.
-		 */
-		mask_page_content(page);
-	}
-	else if (P_ISLEAF(maskopaq))
+	if (P_ISLEAF(maskopaq))
 	{
 		/*
 		 * In btree leaf pages, it is possible to modify the LP_FLAGS without
