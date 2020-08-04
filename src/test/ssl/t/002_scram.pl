@@ -97,7 +97,7 @@ my $client_tmp_key = "ssl/client_scram_tmp.key";
 copy("ssl/client.key", $client_tmp_key);
 chmod 0600, $client_tmp_key;
 test_connect_fails(
-	"sslcert=ssl/client.crt sslkey=$client_tmp_key hostaddr=$SERVERHOSTADDR",
+	"sslcert=ssl/client.crt sslkey=$client_tmp_key sslrootcert=invalid hostaddr=$SERVERHOSTADDR",
 	"dbname=certdb user=ssltestuser channel_binding=require",
 	qr/channel binding required, but server authenticated client without channel binding/,
 	"Cert authentication and channel_binding=require");
