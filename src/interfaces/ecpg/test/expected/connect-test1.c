@@ -93,7 +93,7 @@ main(void)
 #line 47 "test1.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/ecpg2_regression?connect_timeout=14" , "regress_ecpg_user1" , NULL , NULL, 0); }
+	{ ECPGconnect(__LINE__, 0, "unix:postgresql://localhost/ecpg2_regression?connect_timeout=180" , "regress_ecpg_user1" , NULL , NULL, 0); }
 #line 49 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
