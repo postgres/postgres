@@ -1667,26 +1667,51 @@ ExecCreatePartitionPruneState(PlanState *planstate,
 				 * present in the one used to construct subplan_map and
 				 * subpart_map.  So we must construct new and longer arrays
 				 * where the partitions that were originally present map to
-				 * the same place, and any added indexes map to -1, as if the
-				 * new partitions had been pruned.
+				 * the same sub-structures, and any added partitions map to
+				 * -1, as if the new partitions had been pruned.
+				 *
+				 * Note: pinfo->relid_map[] may contain InvalidOid entries for
+				 * partitions pruned by the planner.  We cannot tell exactly
+				 * which of the partdesc entries these correspond to, but we
+				 * don't have to; just skip over them.  The non-pruned
+				 * relid_map entries, however, had better be a subset of the
+				 * partdesc entries and in the same order.
 				 */
 				pprune->subpart_map = palloc(sizeof(int) * partdesc->nparts);
-				for (pp_idx = 0; pp_idx < partdesc->nparts; ++pp_idx)
+				for (pp_idx = 0; pp_idx < partdesc->nparts; pp_idx++)
 				{
-					if (pinfo->relid_map[pd_idx] != partdesc->oids[pp_idx])
+					/* Skip any InvalidOid relid_map entries */
+					while (pd_idx < pinfo->nparts &&
+						   !OidIsValid(pinfo->relid_map[pd_idx]))
+						pd_idx++;
+
+					if (pd_idx < pinfo->nparts &&
+						pinfo->relid_map[pd_idx] == partdesc->oids[pp_idx])
 					{
-						pprune->subplan_map[pp_idx] = -1;
-						pprune->subpart_map[pp_idx] = -1;
-					}
-					else
-					{
+						/* match... */
 						pprune->subplan_map[pp_idx] =
 							pinfo->subplan_map[pd_idx];
 						pprune->subpart_map[pp_idx] =
-							pinfo->subpart_map[pd_idx++];
+							pinfo->subpart_map[pd_idx];
+						pd_idx++;
+					}
+					else
+					{
+						/* this partdesc entry is not in the plan */
+						pprune->subplan_map[pp_idx] = -1;
+						pprune->subpart_map[pp_idx] = -1;
 					}
 				}
-				Assert(pd_idx == pinfo->nparts);
+
+				/*
+				 * It might seem that we need to skip any trailing InvalidOid
+				 * entries in pinfo->relid_map before checking that we scanned
+				 * all of the relid_map.  But we will have skipped them above,
+				 * because they must correspond to some partdesc->oids
+				 * entries; we just couldn't tell which.
+				 */
+				if (pd_idx != pinfo->nparts)
+					elog(ERROR, "could not match partition child tables to plan elements");
 			}
 
 			/* present_parts is also subject to later modification */
