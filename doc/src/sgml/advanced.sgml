@@ -628,8 +628,9 @@ CREATE TABLE capitals (
     <firstterm>parent</firstterm>, <classname>cities</classname>.  The
     type of the column <structfield>name</structfield> is
     <type>text</type>, a native <productname>PostgreSQL</productname>
-    type for variable length character strings.  State capitals have
-    an extra column, <structfield>state</structfield>, that shows their state.  In
+    type for variable length character strings.  The
+    <classname>capitals</classname> table has
+    an extra column, <structfield>state</structfield>, which shows their states.  In
     <productname>PostgreSQL</productname>, a table can inherit from
     zero or more other tables.
    </para>
