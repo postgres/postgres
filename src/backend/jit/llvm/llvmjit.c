@@ -683,7 +683,7 @@ llvm_session_initialize(void)
 	}
 #endif
 
-	before_shmem_exit(llvm_shutdown, 0);
+	on_proc_exit(llvm_shutdown, 0);
 
 	llvm_session_initialized = true;
 
