@@ -43,18 +43,6 @@ static StringInfo label_file;
 static StringInfo tblspc_map_file;
 
 /*
- * Called when the backend exits with a running non-exclusive base backup,
- * to clean up state.
- */
-static void
-nonexclusive_base_backup_cleanup(int code, Datum arg)
-{
-	do_pg_abort_backup();
-	ereport(WARNING,
-			(errmsg("aborting backup due to backend exiting before pg_stop_backup was called")));
-}
-
-/*
  * pg_start_backup: set up for taking an on-line backup dump
  *
  * Essentially what this does is to create a backup label file in $PGDATA,
@@ -101,10 +89,10 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		tblspc_map_file = makeStringInfo();
 		MemoryContextSwitchTo(oldcontext);
 
+		register_persistent_abort_backup_handler();
+
 		startpoint = do_pg_start_backup(backupidstr, fast, NULL, label_file,
 										NULL, tblspc_map_file, false, true);
-
-		before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
 	}
 
 	PG_RETURN_LSN(startpoint);
@@ -246,7 +234,6 @@ pg_stop_backup_v2(PG_FUNCTION_ARGS)
 		 * and tablespace map so they can be written to disk by the caller.
 		 */
 		stoppoint = do_pg_stop_backup(label_file->data, waitforarchive, NULL);
-		cancel_before_shmem_exit(nonexclusive_base_backup_cleanup, (Datum) 0);
 
 		values[1] = CStringGetTextDatum(label_file->data);
 		values[2] = CStringGetTextDatum(tblspc_map_file->data);
