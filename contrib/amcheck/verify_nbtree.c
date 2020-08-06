@@ -903,7 +903,6 @@ nextpage:
  *	 tuple.
  *
  * - That downlink to block was encountered in parent where that's expected.
- *	 (Limited to readonly callers.)
  *
  * - That high keys of child pages matches corresponding pivot keys in parent.
  *
