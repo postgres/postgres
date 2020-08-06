@@ -3063,15 +3063,19 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 			ExplainPropertyInteger("Planned Partitions", NULL,
 								   aggstate->hash_planned_partitions, es);
 
-		if (!es->analyze)
-			return;
-
-		/* EXPLAIN ANALYZE */
-		ExplainPropertyInteger("HashAgg Batches", NULL,
-							   aggstate->hash_batches_used, es);
-		ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb, es);
-		ExplainPropertyInteger("Disk Usage", "kB",
-							   aggstate->hash_disk_used, es);
+		/*
+		 * During parallel query the leader may have not helped out.  We
+		 * detect this by checking how much memory it used.  If we find it
+		 * didn't do any work then we don't show its properties.
+		 */
+		if (es->analyze && aggstate->hash_mem_peak > 0)
+		{
+			ExplainPropertyInteger("HashAgg Batches", NULL,
+								   aggstate->hash_batches_used, es);
+			ExplainPropertyInteger("Peak Memory Usage", "kB", memPeakKb, es);
+			ExplainPropertyInteger("Disk Usage", "kB",
+								   aggstate->hash_disk_used, es);
+		}
 	}
 	else
 	{
@@ -3085,26 +3089,32 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 			gotone = true;
 		}
 
-		if (!es->analyze)
+		/*
+		 * During parallel query the leader may have not helped out.  We
+		 * detect this by checking how much memory it used.  If we find it
+		 * didn't do any work then we don't show its properties.
+		 */
+		if (es->analyze && aggstate->hash_mem_peak > 0)
 		{
-			if (gotone)
-				appendStringInfoChar(es->str, '\n');
-			return;
+			if (!gotone)
+				ExplainIndentText(es);
+			else
+				appendStringInfoString(es->str, "  ");
+
+			appendStringInfo(es->str, "Batches: %d  Memory Usage: " INT64_FORMAT "kB",
+							 aggstate->hash_batches_used, memPeakKb);
+			gotone = true;
+
+			/* Only display disk usage if we spilled to disk */
+			if (aggstate->hash_batches_used > 1)
+			{
+				appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT "kB",
+					aggstate->hash_disk_used);
+			}
 		}
 
-		if (!gotone)
-			ExplainIndentText(es);
-		else
-			appendStringInfoString(es->str, "  ");
-
-		appendStringInfo(es->str, "Batches: %d  Memory Usage: " INT64_FORMAT "kB",
-						 aggstate->hash_batches_used, memPeakKb);
-
-		/* Only display disk usage if we spilled to disk */
-		if (aggstate->hash_batches_used > 1)
-			appendStringInfo(es->str, "  Disk Usage: " UINT64_FORMAT "kB",
-							 aggstate->hash_disk_used);
-		appendStringInfoChar(es->str, '\n');
+		if (gotone)
+			appendStringInfoChar(es->str, '\n');
 	}
 
 	/* Display stats for each parallel worker */
@@ -3117,6 +3127,9 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 			int			hash_batches_used;
 
 			sinstrument = &aggstate->shared_info->sinstrument[n];
+			/* Skip workers that didn't do anything */
+			if (sinstrument->hash_mem_peak == 0)
+				continue;
 			hash_disk_used = sinstrument->hash_disk_used;
 			hash_batches_used = sinstrument->hash_batches_used;
 			memPeakKb = (sinstrument->hash_mem_peak + 1023) / 1024;
