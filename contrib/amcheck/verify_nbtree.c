@@ -305,8 +305,20 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 					 errmsg("index \"%s\" lacks a main relation fork",
 							RelationGetRelationName(indrel))));
 
-		/* Check index, possibly against table it is an index on */
+		/* Extract metadata from metapage, and sanitize it in passing */
 		_bt_metaversion(indrel, &heapkeyspace, &allequalimage);
+		if (allequalimage && !heapkeyspace)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" metapage has equalimage field set on unsupported nbtree version",
+							RelationGetRelationName(indrel))));
+		if (allequalimage && !_bt_allequalimage(indrel, false))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" metapage incorrectly indicates that deduplication is safe",
+							RelationGetRelationName(indrel))));
+
+		/* Check index, possibly against table it is an index on */
 		bt_check_every_level(indrel, heaprel, heapkeyspace, parentcheck,
 							 heapallindexed, rootdescend);
 	}
