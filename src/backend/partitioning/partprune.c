@@ -1362,7 +1362,6 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 				List	   *eq_clauses = btree_clauses[BTEqualStrategyNumber];
 				List	   *le_clauses = btree_clauses[BTLessEqualStrategyNumber];
 				List	   *ge_clauses = btree_clauses[BTGreaterEqualStrategyNumber];
-				bool		pk_has_clauses[PARTITION_MAX_KEYS];
 				int			strat;
 
 				/*
@@ -1382,10 +1381,15 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 					foreach(lc, btree_clauses[strat])
 					{
 						PartClauseInfo *pc = lfirst(lc);
+						ListCell   *eq_start;
+						ListCell   *le_start;
+						ListCell   *ge_start;
 						ListCell   *lc1;
 						List	   *prefix = NIL;
 						List	   *pc_steps;
 						bool		prefix_valid = true;
+						bool		pk_has_clauses;
+						int			keyno;
 
 						/*
 						 * If this is a clause for the first partition key,
@@ -1410,79 +1414,96 @@ gen_prune_steps_from_opexps(GeneratePruningStepsContext *context,
 							continue;
 						}
 
-						/* (Re-)initialize the pk_has_clauses array */
-						Assert(pc->keyno > 0);
-						for (i = 0; i < pc->keyno; i++)
-							pk_has_clauses[i] = false;
+						eq_start = list_head(eq_clauses);
+						le_start = list_head(le_clauses);
+						ge_start = list_head(ge_clauses);
 
 						/*
-						 * Expressions from = clauses can always be in the
-						 * prefix, provided they're from an earlier key.
+						 * We arrange clauses into prefix in ascending order
+						 * of their partition key numbers.
 						 */
-						foreach(lc1, eq_clauses)
+						for (keyno = 0; keyno < pc->keyno; keyno++)
 						{
-							PartClauseInfo *eqpc = lfirst(lc1);
+							pk_has_clauses = false;
 
-							if (eqpc->keyno == pc->keyno)
-								break;
-							if (eqpc->keyno < pc->keyno)
+							/*
+							 * Expressions from = clauses can always be in the
+							 * prefix, provided they're from an earlier key.
+							 */
+							for_each_cell(lc1, eq_clauses, eq_start)
 							{
-								prefix = lappend(prefix, eqpc);
-								pk_has_clauses[eqpc->keyno] = true;
-							}
-						}
+								PartClauseInfo *eqpc = lfirst(lc1);
 
-						/*
-						 * If we're generating steps for </<= strategy, we can
-						 * add other <= clauses to the prefix, provided
-						 * they're from an earlier key.
-						 */
-						if (strat == BTLessStrategyNumber ||
-							strat == BTLessEqualStrategyNumber)
-						{
-							foreach(lc1, le_clauses)
-							{
-								PartClauseInfo *lepc = lfirst(lc1);
-
-								if (lepc->keyno == pc->keyno)
-									break;
-								if (lepc->keyno < pc->keyno)
+								if (eqpc->keyno == keyno)
 								{
-									prefix = lappend(prefix, lepc);
-									pk_has_clauses[lepc->keyno] = true;
+									prefix = lappend(prefix, eqpc);
+									pk_has_clauses = true;
+								}
+								else
+								{
+									Assert(eqpc->keyno > keyno);
+									break;
 								}
 							}
-						}
+							eq_start = lc1;
 
-						/*
-						 * If we're generating steps for >/>= strategy, we can
-						 * add other >= clauses to the prefix, provided
-						 * they're from an earlier key.
-						 */
-						if (strat == BTGreaterStrategyNumber ||
-							strat == BTGreaterEqualStrategyNumber)
-						{
-							foreach(lc1, ge_clauses)
+							/*
+							 * If we're generating steps for </<= strategy, we
+							 * can add other <= clauses to the prefix,
+							 * provided they're from an earlier key.
+							 */
+							if (strat == BTLessStrategyNumber ||
+								strat == BTLessEqualStrategyNumber)
 							{
-								PartClauseInfo *gepc = lfirst(lc1);
-
-								if (gepc->keyno == pc->keyno)
-									break;
-								if (gepc->keyno < pc->keyno)
+								for_each_cell(lc1, le_clauses, le_start)
 								{
-									prefix = lappend(prefix, gepc);
-									pk_has_clauses[gepc->keyno] = true;
-								}
-							}
-						}
+									PartClauseInfo *lepc = lfirst(lc1);
 
-						/*
-						 * Check whether every earlier partition key has at
-						 * least one clause.
-						 */
-						for (i = 0; i < pc->keyno; i++)
-						{
-							if (!pk_has_clauses[i])
+									if (lepc->keyno == keyno)
+									{
+										prefix = lappend(prefix, lepc);
+										pk_has_clauses = true;
+									}
+									else
+									{
+										Assert(lepc->keyno > keyno);
+										break;
+									}
+								}
+								le_start = lc1;
+							}
+
+							/*
+							 * If we're generating steps for >/>= strategy, we
+							 * can add other >= clauses to the prefix,
+							 * provided they're from an earlier key.
+							 */
+							if (strat == BTGreaterStrategyNumber ||
+								strat == BTGreaterEqualStrategyNumber)
+							{
+								for_each_cell(lc1, ge_clauses, ge_start)
+								{
+									PartClauseInfo *gepc = lfirst(lc1);
+
+									if (gepc->keyno == keyno)
+									{
+										prefix = lappend(prefix, gepc);
+										pk_has_clauses = true;
+									}
+									else
+									{
+										Assert(gepc->keyno > keyno);
+										break;
+									}
+								}
+								ge_start = lc1;
+							}
+
+							/*
+							 * If this key has no clauses, prefix is not valid
+							 * anymore.
+							 */
+							if (!pk_has_clauses)
 							{
 								prefix_valid = false;
 								break;
@@ -2241,6 +2262,9 @@ match_clause_to_partition_key(GeneratePruningStepsContext *context,
  * non-NULL, but they must ensure that prefix contains at least one clause
  * for each of the partition keys other than those specified in step_nullkeys
  * and step_lastkeyno.
+ *
+ * For both cases, callers must also ensure that clauses in prefix are sorted
+ * in ascending order of their partition key numbers.
  */
 static List *
 get_steps_using_prefix(GeneratePruningStepsContext *context,

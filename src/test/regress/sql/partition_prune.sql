@@ -1080,6 +1080,11 @@ create table rp_prefix_test3_p2 partition of rp_prefix_test3 for values from (2,
 -- clauses for the partition key b (ie, b >= 1 and b >= 2)
 explain (costs off) select * from rp_prefix_test3 where a >= 1 and b >= 1 and b >= 2 and c >= 2 and d >= 0;
 
+-- Test that get_steps_using_prefix() handles a prefix that contains multiple
+-- clauses for the partition key b (ie, b >= 1 and b = 2)  (This also tests
+-- that the caller arranges clauses in that prefix in the required order)
+explain (costs off) select * from rp_prefix_test3 where a >= 1 and b >= 1 and b = 2 and c = 2 and d >= 0;
+
 create table hp_prefix_test (a int, b int, c int, d int) partition by hash (a part_test_int4_ops, b part_test_int4_ops, c part_test_int4_ops, d part_test_int4_ops);
 create table hp_prefix_test_p1 partition of hp_prefix_test for values with (modulus 2, remainder 0);
 create table hp_prefix_test_p2 partition of hp_prefix_test for values with (modulus 2, remainder 1);
