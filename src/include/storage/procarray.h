@@ -29,8 +29,6 @@
  */
 #define		PROCARRAY_VACUUM_FLAG			0x02	/* currently running lazy
 													 * vacuum */
-#define		PROCARRAY_ANALYZE_FLAG			0x04	/* currently running
-													 * analyze */
 #define		PROCARRAY_LOGICAL_DECODING_FLAG 0x10	/* currently doing logical
 													 * decoding outside xact */
 
@@ -42,7 +40,6 @@
  * have no corresponding PROC flag equivalent.
  */
 #define		PROCARRAY_PROC_FLAGS_MASK	(PROCARRAY_VACUUM_FLAG | \
-										 PROCARRAY_ANALYZE_FLAG | \
 										 PROCARRAY_LOGICAL_DECODING_FLAG)
 
 /* Use the following flags as an input "flags" to GetOldestXmin function */
@@ -50,10 +47,6 @@
 #define		PROCARRAY_FLAGS_DEFAULT			PROCARRAY_LOGICAL_DECODING_FLAG
 /* Ignore vacuum backends */
 #define		PROCARRAY_FLAGS_VACUUM			PROCARRAY_FLAGS_DEFAULT | PROCARRAY_VACUUM_FLAG
-/* Ignore analyze backends */
-#define		PROCARRAY_FLAGS_ANALYZE			PROCARRAY_FLAGS_DEFAULT | PROCARRAY_ANALYZE_FLAG
-/* Ignore both vacuum and analyze backends */
-#define		PROCARRAY_FLAGS_VACUUM_ANALYZE	PROCARRAY_FLAGS_DEFAULT | PROCARRAY_VACUUM_FLAG | PROCARRAY_ANALYZE_FLAG
 
 extern Size ProcArrayShmemSize(void);
 extern void CreateSharedProcArray(void);
