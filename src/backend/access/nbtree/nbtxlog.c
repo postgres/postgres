@@ -256,20 +256,20 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
 	bool		isleaf = (xlrec->level == 0);
-	Buffer		lbuf;
+	Buffer		buf;
 	Buffer		rbuf;
 	Page		rpage;
 	BTPageOpaque ropaque;
 	char	   *datapos;
 	Size		datalen;
-	BlockNumber leftsib;
-	BlockNumber rightsib;
-	BlockNumber rnext;
+	BlockNumber origpagenumber;
+	BlockNumber rightpagenumber;
+	BlockNumber spagenumber;
 
-	XLogRecGetBlockTag(record, 0, NULL, NULL, &leftsib);
-	XLogRecGetBlockTag(record, 1, NULL, NULL, &rightsib);
-	if (!XLogRecGetBlockTag(record, 2, NULL, NULL, &rnext))
-		rnext = P_NONE;
+	XLogRecGetBlockTag(record, 0, NULL, NULL, &origpagenumber);
+	XLogRecGetBlockTag(record, 1, NULL, NULL, &rightpagenumber);
+	if (!XLogRecGetBlockTag(record, 2, NULL, NULL, &spagenumber))
+		spagenumber = P_NONE;
 
 	/*
 	 * Clear the incomplete split flag on the left sibling of the child page
@@ -287,8 +287,8 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 	_bt_pageinit(rpage, BufferGetPageSize(rbuf));
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
 
-	ropaque->btpo_prev = leftsib;
-	ropaque->btpo_next = rnext;
+	ropaque->btpo_prev = origpagenumber;
+	ropaque->btpo_next = spagenumber;
 	ropaque->btpo.level = xlrec->level;
 	ropaque->btpo_flags = isleaf ? BTP_LEAF : 0;
 	ropaque->btpo_cycleid = 0;
@@ -298,8 +298,8 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 	PageSetLSN(rpage, lsn);
 	MarkBufferDirty(rbuf);
 
-	/* Now reconstruct left (original) sibling page */
-	if (XLogReadBufferForRedo(record, 0, &lbuf) == BLK_NEEDS_REDO)
+	/* Now reconstruct original page (left half of split) */
+	if (XLogReadBufferForRedo(record, 0, &buf) == BLK_NEEDS_REDO)
 	{
 		/*
 		 * To retain the same physical order of the tuples that they had, we
@@ -309,15 +309,15 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 		 * checking possible.  See also _bt_restore_page(), which does the
 		 * same for the right page.
 		 */
-		Page		lpage = (Page) BufferGetPage(lbuf);
-		BTPageOpaque lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
+		Page		origpage = (Page) BufferGetPage(buf);
+		BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
 		OffsetNumber off;
 		IndexTuple	newitem = NULL,
 					left_hikey = NULL,
 					nposting = NULL;
 		Size		newitemsz = 0,
 					left_hikeysz = 0;
-		Page		newlpage;
+		Page		leftpage;
 		OffsetNumber leftoff,
 					replacepostingoff = InvalidOffsetNumber;
 
@@ -340,8 +340,8 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 
 				/* Use mutable, aligned newitem copy in _bt_swap_posting() */
 				newitem = CopyIndexTuple(newitem);
-				itemid = PageGetItemId(lpage, replacepostingoff);
-				oposting = (IndexTuple) PageGetItem(lpage, itemid);
+				itemid = PageGetItemId(origpage, replacepostingoff);
+				oposting = (IndexTuple) PageGetItem(origpage, itemid);
 				nposting = _bt_swap_posting(newitem, oposting,
 											xlrec->postingoff);
 			}
@@ -359,16 +359,16 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 
 		Assert(datalen == 0);
 
-		newlpage = PageGetTempPageCopySpecial(lpage);
+		leftpage = PageGetTempPageCopySpecial(origpage);
 
-		/* Set high key */
+		/* Add high key tuple from WAL record to temp page */
 		leftoff = P_HIKEY;
-		if (PageAddItem(newlpage, (Item) left_hikey, left_hikeysz,
-						P_HIKEY, false, false) == InvalidOffsetNumber)
-			elog(PANIC, "failed to add high key to left page after split");
+		if (PageAddItem(leftpage, (Item) left_hikey, left_hikeysz, P_HIKEY,
+						false, false) == InvalidOffsetNumber)
+			elog(ERROR, "failed to add high key to left page after split");
 		leftoff = OffsetNumberNext(leftoff);
 
-		for (off = P_FIRSTDATAKEY(lopaque); off < xlrec->firstrightoff; off++)
+		for (off = P_FIRSTDATAKEY(oopaque); off < xlrec->firstrightoff; off++)
 		{
 			ItemId		itemid;
 			Size		itemsz;
@@ -379,7 +379,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 			{
 				Assert(newitemonleft ||
 					   xlrec->firstrightoff == xlrec->newitemoff);
-				if (PageAddItem(newlpage, (Item) nposting,
+				if (PageAddItem(leftpage, (Item) nposting,
 								MAXALIGN(IndexTupleSize(nposting)), leftoff,
 								false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add new posting list item to left page after split");
@@ -390,16 +390,16 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 			/* add the new item if it was inserted on left page */
 			else if (newitemonleft && off == xlrec->newitemoff)
 			{
-				if (PageAddItem(newlpage, (Item) newitem, newitemsz, leftoff,
+				if (PageAddItem(leftpage, (Item) newitem, newitemsz, leftoff,
 								false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add new item to left page after split");
 				leftoff = OffsetNumberNext(leftoff);
 			}
 
-			itemid = PageGetItemId(lpage, off);
+			itemid = PageGetItemId(origpage, off);
 			itemsz = ItemIdGetLength(itemid);
-			item = (IndexTuple) PageGetItem(lpage, itemid);
-			if (PageAddItem(newlpage, (Item) item, itemsz, leftoff,
+			item = (IndexTuple) PageGetItem(origpage, itemid);
+			if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
 							false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add old item to left page after split");
 			leftoff = OffsetNumberNext(leftoff);
@@ -408,31 +408,31 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 		/* cope with possibility that newitem goes at the end */
 		if (newitemonleft && off == xlrec->newitemoff)
 		{
-			if (PageAddItem(newlpage, (Item) newitem, newitemsz, leftoff,
+			if (PageAddItem(leftpage, (Item) newitem, newitemsz, leftoff,
 							false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add new item to left page after split");
 			leftoff = OffsetNumberNext(leftoff);
 		}
 
-		PageRestoreTempPage(newlpage, lpage);
+		PageRestoreTempPage(leftpage, origpage);
 
 		/* Fix opaque fields */
-		lopaque->btpo_flags = BTP_INCOMPLETE_SPLIT;
+		oopaque->btpo_flags = BTP_INCOMPLETE_SPLIT;
 		if (isleaf)
-			lopaque->btpo_flags |= BTP_LEAF;
-		lopaque->btpo_next = rightsib;
-		lopaque->btpo_cycleid = 0;
+			oopaque->btpo_flags |= BTP_LEAF;
+		oopaque->btpo_next = rightpagenumber;
+		oopaque->btpo_cycleid = 0;
 
-		PageSetLSN(lpage, lsn);
-		MarkBufferDirty(lbuf);
+		PageSetLSN(origpage, lsn);
+		MarkBufferDirty(buf);
 	}
 
 	/*
 	 * We no longer need the buffers.  They must be released together, so that
 	 * readers cannot observe two inconsistent halves.
 	 */
-	if (BufferIsValid(lbuf))
-		UnlockReleaseBuffer(lbuf);
+	if (BufferIsValid(buf))
+		UnlockReleaseBuffer(buf);
 	UnlockReleaseBuffer(rbuf);
 
 	/*
@@ -443,22 +443,22 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 	 * replay, because no other index update can be in progress, and readers
 	 * will cope properly when following an obsolete left-link.
 	 */
-	if (rnext != P_NONE)
+	if (spagenumber != P_NONE)
 	{
-		Buffer		buffer;
+		Buffer		sbuf;
 
-		if (XLogReadBufferForRedo(record, 2, &buffer) == BLK_NEEDS_REDO)
+		if (XLogReadBufferForRedo(record, 2, &sbuf) == BLK_NEEDS_REDO)
 		{
-			Page		page = (Page) BufferGetPage(buffer);
-			BTPageOpaque pageop = (BTPageOpaque) PageGetSpecialPointer(page);
+			Page		spage = (Page) BufferGetPage(sbuf);
+			BTPageOpaque spageop = (BTPageOpaque) PageGetSpecialPointer(spage);
 
-			pageop->btpo_prev = rightsib;
+			spageop->btpo_prev = rightpagenumber;
 
-			PageSetLSN(page, lsn);
-			MarkBufferDirty(buffer);
+			PageSetLSN(spage, lsn);
+			MarkBufferDirty(sbuf);
 		}
-		if (BufferIsValid(buffer))
-			UnlockReleaseBuffer(buffer);
+		if (BufferIsValid(sbuf))
+			UnlockReleaseBuffer(sbuf);
 	}
 }
 
