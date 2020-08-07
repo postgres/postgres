@@ -172,10 +172,10 @@ btree_xlog_insert(bool isleaf, bool ismeta, bool posting,
 	 * Insertion to an internal page finishes an incomplete split at the child
 	 * level.  Clear the incomplete-split flag in the child.  Note: during
 	 * normal operation, the child and parent pages are locked at the same
-	 * time, so that clearing the flag and inserting the downlink appear
-	 * atomic to other backends.  We don't bother with that during replay,
-	 * because readers don't care about the incomplete-split flag and there
-	 * cannot be updates happening.
+	 * time (the locks are coupled), so that clearing the flag and inserting
+	 * the downlink appear atomic to other backends.  We don't bother with
+	 * that during replay, because readers don't care about the
+	 * incomplete-split flag and there cannot be updates happening.
 	 */
 	if (!isleaf)
 		_bt_clear_incomplete_split(record, 1);
@@ -272,9 +272,17 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 		spagenumber = P_NONE;
 
 	/*
-	 * Clear the incomplete split flag on the left sibling of the child page
-	 * this is a downlink for.  (Like in btree_xlog_insert, this can be done
-	 * before locking the other pages)
+	 * Clear the incomplete split flag on the appropriate child page one level
+	 * down when origpage/buf is an internal page (there must have been
+	 * cascading page splits during original execution in the event of an
+	 * internal page split).  This is like the corresponding btree_xlog_insert
+	 * call for internal pages.  We're not clearing the incomplete split flag
+	 * for the current page split here (you can think of this as part of the
+	 * insert of newitem that the page split action needs to perform in
+	 * passing).
+	 *
+	 * Like in btree_xlog_insert, this can be done before locking other pages.
+	 * We never need to couple cross-level locks in REDO routines.
 	 */
 	if (!isleaf)
 		_bt_clear_incomplete_split(record, 3);
@@ -427,22 +435,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 		MarkBufferDirty(buf);
 	}
 
-	/*
-	 * We no longer need the buffers.  They must be released together, so that
-	 * readers cannot observe two inconsistent halves.
-	 */
-	if (BufferIsValid(buf))
-		UnlockReleaseBuffer(buf);
-	UnlockReleaseBuffer(rbuf);
-
-	/*
-	 * Fix left-link of the page to the right of the new right sibling.
-	 *
-	 * Note: in normal operation, we do this while still holding lock on the
-	 * two split pages.  However, that's not necessary for correctness in WAL
-	 * replay, because no other index update can be in progress, and readers
-	 * will cope properly when following an obsolete left-link.
-	 */
+	/* Fix left-link of the page to the right of the new right sibling */
 	if (spagenumber != P_NONE)
 	{
 		Buffer		sbuf;
@@ -460,6 +453,14 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 		if (BufferIsValid(sbuf))
 			UnlockReleaseBuffer(sbuf);
 	}
+
+	/*
+	 * Finally, release the remaining buffers.  sbuf, rbuf, and buf must be
+	 * released together, so that readers cannot observe inconsistencies.
+	 */
+	UnlockReleaseBuffer(rbuf);
+	if (BufferIsValid(buf))
+		UnlockReleaseBuffer(buf);
 }
 
 static void
@@ -733,6 +734,11 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);
 	}
+
+	/*
+	 * Don't need to couple cross-level locks in REDO routines, so release
+	 * lock on internal page immediately
+	 */
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
 
@@ -789,12 +795,6 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 	 * the pages in the same standard left-to-right order (leftsib, target,
 	 * rightsib), and don't release the sibling locks until the target is
 	 * marked deleted.
-	 *
-	 * btree_xlog_split() can get away with fixing its right sibling page's
-	 * left link last of all, after dropping all other locks.  We prefer to
-	 * avoid dropping locks on same-level pages early compared to normal
-	 * operation.  This keeps things simple for backwards scans.  See
-	 * nbtree/README.
 	 */
 
 	/* Fix right-link of left sibling, if any */
