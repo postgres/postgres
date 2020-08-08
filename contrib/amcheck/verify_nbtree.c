@@ -145,6 +145,9 @@ static void bt_check_every_level(Relation rel, Relation heaprel,
 								 bool rootdescend);
 static BtreeLevel bt_check_level_from_leftmost(BtreeCheckState *state,
 											   BtreeLevel level);
+static void bt_recheck_sibling_links(BtreeCheckState *state,
+									 BlockNumber btpo_prev_from_target,
+									 BlockNumber leftcurrent);
 static void bt_target_page_check(BtreeCheckState *state);
 static BTScanInsert bt_right_page_check_scankey(BtreeCheckState *state);
 static void bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
@@ -787,17 +790,9 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 			 */
 		}
 
-		/*
-		 * readonly mode can only ever land on live pages and half-dead pages,
-		 * so sibling pointers should always be in mutual agreement
-		 */
-		if (state->readonly && opaque->btpo_prev != leftcurrent)
-			ereport(ERROR,
-					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("left link/right link pair in index \"%s\" not in agreement",
-							RelationGetRelationName(state->rel)),
-					 errdetail_internal("Block=%u left block=%u left link from block=%u.",
-										current, leftcurrent, opaque->btpo_prev)));
+		/* Sibling links should be in mutual agreement */
+		if (opaque->btpo_prev != leftcurrent)
+			bt_recheck_sibling_links(state, opaque->btpo_prev, leftcurrent);
 
 		/* Check level, which must be valid for non-ignorable page */
 		if (level.level != opaque->btpo.level)
@@ -875,6 +870,140 @@ nextpage:
 	MemoryContextSwitchTo(oldcontext);
 
 	return nextleveldown;
+}
+
+/*
+ * Raise an error when target page's left link does not point back to the
+ * previous target page, called leftcurrent here.  The leftcurrent page's
+ * right link was followed to get to the current target page, and we expect
+ * mutual agreement among leftcurrent and the current target page.  Make sure
+ * that this condition has definitely been violated in the !readonly case,
+ * where concurrent page splits are something that we need to deal with.
+ *
+ * Cross-page inconsistencies involving pages that don't agree about being
+ * siblings are known to be a particularly good indicator of corruption
+ * involving partial writes/lost updates.  The bt_right_page_check_scankey
+ * check also provides a way of detecting cross-page inconsistencies for
+ * !readonly callers, but it can only detect sibling pages that have an
+ * out-of-order keyspace, which can't catch many of the problems that we
+ * expect to catch here.
+ *
+ * The classic example of the kind of inconsistency that we can only catch
+ * with this check (when in !readonly mode) involves three sibling pages that
+ * were affected by a faulty page split at some point in the past.  The
+ * effects of the split are reflected in the original page and its new right
+ * sibling page, with a lack of any accompanying changes for the _original_
+ * right sibling page.  The original right sibling page's left link fails to
+ * point to the new right sibling page (its left link still points to the
+ * original page), even though the first phase of a page split is supposed to
+ * work as a single atomic action.  This subtle inconsistency will probably
+ * only break backwards scans in practice.
+ *
+ * Note that this is the only place where amcheck will "couple" buffer locks
+ * (and only for !readonly callers).  In general we prefer to avoid more
+ * thorough cross-page checks in !readonly mode, but it seems worth the
+ * complexity here.  Also, the performance overhead of performing lock
+ * coupling here is negligible in practice.  Control only reaches here with a
+ * non-corrupt index when there is a concurrent page split at the instant
+ * caller crossed over to target page from leftcurrent page.
+ */
+static void
+bt_recheck_sibling_links(BtreeCheckState *state,
+						 BlockNumber btpo_prev_from_target,
+						 BlockNumber leftcurrent)
+{
+	if (!state->readonly)
+	{
+		Buffer		lbuf;
+		Buffer		newtargetbuf;
+		Page		page;
+		BTPageOpaque opaque;
+		BlockNumber	newtargetblock;
+
+		/* Couple locks in the usual order for nbtree:  Left to right */
+		lbuf = ReadBufferExtended(state->rel, MAIN_FORKNUM, leftcurrent,
+								  RBM_NORMAL, state->checkstrategy);
+		LockBuffer(lbuf, BT_READ);
+		_bt_checkpage(state->rel, lbuf);
+		page = BufferGetPage(lbuf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		if (P_ISDELETED(opaque))
+		{
+			/*
+			 * Cannot reason about concurrently deleted page -- the left link
+			 * in the page to the right is expected to point to some other
+			 * page to the left (not leftcurrent page).
+			 *
+			 * Note that we deliberately don't give up with a half-dead page.
+			 */
+			UnlockReleaseBuffer(lbuf);
+			return;
+		}
+
+		newtargetblock = opaque->btpo_next;
+		/* Avoid self-deadlock when newtargetblock == leftcurrent */
+		if (newtargetblock != leftcurrent)
+		{
+			newtargetbuf = ReadBufferExtended(state->rel, MAIN_FORKNUM,
+											  newtargetblock, RBM_NORMAL,
+											  state->checkstrategy);
+			LockBuffer(newtargetbuf, BT_READ);
+			_bt_checkpage(state->rel, newtargetbuf);
+			page = BufferGetPage(newtargetbuf);
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			/* btpo_prev_from_target may have changed; update it */
+			btpo_prev_from_target = opaque->btpo_prev;
+		}
+		else
+		{
+			/*
+			 * leftcurrent right sibling points back to leftcurrent block.
+			 * Index is corrupt.  Easiest way to handle this is to pretend
+			 * that we actually read from a distinct page that has an invalid
+			 * block number in its btpo_prev.
+			 */
+			newtargetbuf = InvalidBuffer;
+			btpo_prev_from_target = InvalidBlockNumber;
+		}
+
+		/*
+		 * No need to check P_ISDELETED here, since new target block cannot be
+		 * marked deleted as long as we hold a lock on lbuf
+		 */
+		if (BufferIsValid(newtargetbuf))
+			UnlockReleaseBuffer(newtargetbuf);
+		UnlockReleaseBuffer(lbuf);
+
+		if (btpo_prev_from_target == leftcurrent)
+		{
+			/* Report split in left sibling, not target (or new target) */
+			ereport(DEBUG1,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("harmless concurrent page split detected in index \"%s\"",
+							RelationGetRelationName(state->rel)),
+					 errdetail_internal("Block=%u new right sibling=%u original right sibling=%u.",
+										leftcurrent, newtargetblock,
+										state->targetblock)));
+			return;
+		}
+
+		/*
+		 * Index is corrupt.  Make sure that we report correct target page.
+		 *
+		 * This could have changed in cases where there was a concurrent page
+		 * split, as well as index corruption (at least in theory).  Note that
+		 * btpo_prev_from_target was already updated above.
+		 */
+		state->targetblock = newtargetblock;
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INDEX_CORRUPTED),
+			 errmsg("left link/right link pair in index \"%s\" not in agreement",
+					RelationGetRelationName(state->rel)),
+			 errdetail_internal("Block=%u left block=%u left link from block=%u.",
+								state->targetblock, leftcurrent,
+								btpo_prev_from_target)));
 }
 
 /*
@@ -1965,18 +2094,14 @@ bt_child_check(BtreeCheckState *state, BTScanInsert targetkey,
 	 * downlink, which was concurrently physically removed in target/parent as
 	 * part of deletion's first phase.)
 	 *
-	 * Note that while the cross-page-same-level last item check uses a trick
-	 * that allows it to perform verification for !readonly callers, a similar
-	 * trick seems difficult here.  The trick that that other check uses is,
-	 * in essence, to lock down race conditions to those that occur due to
-	 * concurrent page deletion of the target; that's a race that can be
-	 * reliably detected before actually reporting corruption.
-	 *
-	 * On the other hand, we'd need to lock down race conditions involving
-	 * deletion of child's left page, for long enough to read the child page
-	 * into memory (in other words, a scheme with concurrently held buffer
-	 * locks on both child and left-of-child pages).  That's unacceptable for
-	 * amcheck functions on general principle, though.
+	 * While we use various techniques elsewhere to perform cross-page
+	 * verification for !readonly callers, a similar trick seems difficult
+	 * here.  The tricks used by bt_recheck_sibling_links and by
+	 * bt_right_page_check_scankey both involve verification of a same-level,
+	 * cross-sibling invariant.  Cross-level invariants are far more squishy,
+	 * though.  The nbtree REDO routines do not actually couple buffer locks
+	 * across levels during page splits, so making any cross-level check work
+	 * reliably in !readonly mode may be impossible.
 	 */
 	Assert(state->readonly);
 
@@ -2785,6 +2910,8 @@ invariant_l_nontarget_offset(BtreeCheckState *state, BTScanInsert key,
  * There is never an attempt to get a consistent view of multiple pages using
  * multiple concurrent buffer locks; in general, we only acquire a single pin
  * and buffer lock at a time, which is often all that the nbtree code requires.
+ * (Actually, bt_recheck_sibling_links couples buffer locks, which is the only
+ * exception to this general rule.)
  *
  * Operating on a copy of the page is useful because it prevents control
  * getting stuck in an uninterruptible state when an underlying operator class
