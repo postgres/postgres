@@ -154,7 +154,7 @@ static XLogRecPtr sendTimeLineValidUpto = InvalidXLogRecPtr;
  * How far have we sent WAL already? This is also advertised in
  * MyWalSnd->sentPtr.  (Actually, this is the next WAL location to send.)
  */
-static XLogRecPtr sentPtr = 0;
+static XLogRecPtr sentPtr = InvalidXLogRecPtr;
 
 /* Buffers for constructing outgoing messages and processing reply messages. */
 static StringInfoData output_message;
@@ -1358,16 +1358,15 @@ WalSndWaitForWal(XLogRecPtr loc)
 		/*
 		 * We only send regular messages to the client for full decoded
 		 * transactions, but a synchronous replication and walsender shutdown
-		 * possibly are waiting for a later location. So we send pings
-		 * containing the flush location every now and then.
+		 * possibly are waiting for a later location. So, before sleeping, we
+		 * send a ping containing the flush location. If the receiver is
+		 * otherwise idle, this keepalive will trigger a reply. Processing the
+		 * reply will update these MyWalSnd locations.
 		 */
 		if (MyWalSnd->flush < sentPtr &&
 			MyWalSnd->write < sentPtr &&
 			!waiting_for_ping_response)
-		{
 			WalSndKeepalive(false);
-			waiting_for_ping_response = true;
-		}
 
 		/* check whether we're done */
 		if (loc <= RecentFlushPtr)
@@ -2917,10 +2916,7 @@ WalSndDone(WalSndSendDataCallback send_data)
 		proc_exit(0);
 	}
 	if (!waiting_for_ping_response)
-	{
 		WalSndKeepalive(true);
-		waiting_for_ping_response = true;
-	}
 }
 
 /*
@@ -3419,10 +3415,13 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 }
 
 /*
-  * This function is used to send a keepalive message to standby.
-  * If requestReply is set, sets a flag in the message requesting the standby
-  * to send a message back to us, for heartbeat purposes.
-  */
+ * Send a keepalive message to standby.
+ *
+ * If requestReply is set, the message requests the other party to send
+ * a message back to us, for heartbeat purposes.  We also set a flag to
+ * let nearby code that we're waiting for that response, to avoid
+ * repeated requests.
+ */
 static void
 WalSndKeepalive(bool requestReply)
 {
@@ -3437,6 +3436,10 @@ WalSndKeepalive(bool requestReply)
 
 	/* ... and send it wrapped in CopyData */
 	pq_putmessage_noblock('d', output_message.data, output_message.len);
+
+	/* Set local flag */
+	if (requestReply)
+		waiting_for_ping_response = true;
 }
 
 /*
@@ -3467,7 +3470,6 @@ WalSndKeepaliveIfNecessary(void)
 	if (last_processing >= ping_time)
 	{
 		WalSndKeepalive(true);
-		waiting_for_ping_response = true;
 
 		/* Try to flush pending output to the client */
 		if (pq_flush_if_writable() != 0)
