@@ -399,7 +399,7 @@
 
   <para>
    <filename>intarray</filename> provides index support for the
-   <literal>&amp;&amp;</literal>, <literal>@&gt;</literal>, <literal>&lt;@</literal>,
+   <literal>&amp;&amp;</literal>, <literal>@&gt;</literal>,
    and <literal>@@</literal> operators, as well as regular array equality.
   </para>
 
@@ -436,7 +436,8 @@
 
   <para>
    There is also a non-default GIN operator class
-   <literal>gin__int_ops</literal> supporting the same operators.
+   <literal>gin__int_ops</literal>, which supports these operators as well
+   as <literal>&lt;@</literal>.
   </para>
 
   <para>
