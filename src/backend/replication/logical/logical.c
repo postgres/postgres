@@ -82,7 +82,7 @@ static void stream_message_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *tx
 static void stream_truncate_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 									   int nrelations, Relation relations[], ReorderBufferChange *change);
 
-static void LoadOutputPlugin(OutputPluginCallbacks *callbacks, char *plugin);
+static void LoadOutputPlugin(OutputPluginCallbacks *callbacks, const char *plugin);
 
 /*
  * Make sure the current settings & environment are capable of doing logical
@@ -277,7 +277,7 @@ StartupDecodingContext(List *output_plugin_options,
  * startup function.
  */
 LogicalDecodingContext *
-CreateInitDecodingContext(char *plugin,
+CreateInitDecodingContext(const char *plugin,
 						  List *output_plugin_options,
 						  bool need_full_snapshot,
 						  XLogRecPtr restart_lsn,
@@ -612,7 +612,7 @@ OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx)
  * that it provides the required callbacks.
  */
 static void
-LoadOutputPlugin(OutputPluginCallbacks *callbacks, char *plugin)
+LoadOutputPlugin(OutputPluginCallbacks *callbacks, const char *plugin)
 {
 	LogicalOutputPluginInit plugin_init;
 

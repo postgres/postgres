@@ -96,7 +96,7 @@ typedef struct LogicalDecodingContext
 
 extern void CheckLogicalDecodingRequirements(void);
 
-extern LogicalDecodingContext *CreateInitDecodingContext(char *plugin,
+extern LogicalDecodingContext *CreateInitDecodingContext(const char *plugin,
 														 List *output_plugin_options,
 														 bool need_full_snapshot,
 														 XLogRecPtr restart_lsn,
