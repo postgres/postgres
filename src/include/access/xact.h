@@ -81,6 +81,10 @@ typedef enum
 /* Synchronous commit level */
 extern int	synchronous_commit;
 
+/* used during logical streaming of a transaction */
+extern TransactionId CheckXidAlive;
+extern bool bsysscan;
+
 /*
  * Miscellaneous flag bits to record events which occur on the top level
  * transaction. These flags are only persisted in MyXactFlags and are intended

@@ -249,6 +249,14 @@ table_tuple_get_latest_tid(TableScanDesc scan, ItemPointer tid)
 	const TableAmRoutine *tableam = rel->rd_tableam;
 
 	/*
+	 * We don't expect direct calls to table_tuple_get_latest_tid with valid
+	 * CheckXidAlive for catalog or regular tables.  See detailed comments in
+	 * xact.c where these variables are declared.
+	 */
+	if (unlikely(TransactionIdIsValid(CheckXidAlive) && !bsysscan))
+		elog(ERROR, "unexpected table_tuple_get_latest_tid call during logical decoding");
+
+	/*
 	 * Since this can be called with user-supplied TID, don't trust the input
 	 * too much.
 	 */

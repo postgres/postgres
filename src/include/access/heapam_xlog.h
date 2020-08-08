@@ -67,6 +67,7 @@
 #define XLH_INSERT_LAST_IN_MULTI				(1<<1)
 #define XLH_INSERT_IS_SPECULATIVE				(1<<2)
 #define XLH_INSERT_CONTAINS_NEW_TUPLE			(1<<3)
+#define XLH_INSERT_ON_TOAST_RELATION			(1<<4)
 
 /*
  * xl_heap_update flag values, 8 bits are available.

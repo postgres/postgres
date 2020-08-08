@@ -1571,8 +1571,25 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 												 htup, buffer,
 												 &cmin, &cmax);
 
+		/*
+		 * If we haven't resolved the combocid to cmin/cmax, that means we
+		 * have not decoded the combocid yet. That means the cmin is
+		 * definitely in the future, and we're not supposed to see the tuple
+		 * yet.
+		 *
+		 * XXX This only applies to decoding of in-progress transactions. In
+		 * regular logical decoding we only execute this code at commit time,
+		 * at which point we should have seen all relevant combocids. So
+		 * ideally, we should error out in this case but in practice, this
+		 * won't happen. If we are too worried about this then we can add an
+		 * elog inside ResolveCminCmaxDuringDecoding.
+		 *
+		 * XXX For the streaming case, we can track the largest combocid
+		 * assigned, and error out based on this (when unable to resolve
+		 * combocid below that observed maximum value).
+		 */
 		if (!resolved)
-			elog(ERROR, "could not resolve cmin/cmax of catalog tuple");
+			return false;
 
 		Assert(cmin != InvalidCommandId);
 
@@ -1642,10 +1659,25 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
 												 htup, buffer,
 												 &cmin, &cmax);
 
-		if (!resolved)
-			elog(ERROR, "could not resolve combocid to cmax");
-
-		Assert(cmax != InvalidCommandId);
+		/*
+		 * If we haven't resolved the combocid to cmin/cmax, that means we
+		 * have not decoded the combocid yet. That means the cmax is
+		 * definitely in the future, and we're still supposed to see the
+		 * tuple.
+		 *
+		 * XXX This only applies to decoding of in-progress transactions. In
+		 * regular logical decoding we only execute this code at commit time,
+		 * at which point we should have seen all relevant combocids. So
+		 * ideally, we should error out in this case but in practice, this
+		 * won't happen. If we are too worried about this then we can add an
+		 * elog inside ResolveCminCmaxDuringDecoding.
+		 *
+		 * XXX For the streaming case, we can track the largest combocid
+		 * assigned, and error out based on this (when unable to resolve
+		 * combocid below that observed maximum value).
+		 */
+		if (!resolved || cmax == InvalidCommandId)
+			return true;
 
 		if (cmax >= snapshot->curcid)
 			return true;		/* deleted after scan started */
