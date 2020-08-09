@@ -1082,11 +1082,13 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	/*
 	 * Find file len & go back to start.
 	 */
-	fseeko(tmp, 0, SEEK_END);
+	if (fseeko(tmp, 0, SEEK_END) != 0)
+		fatal("error during file seek: %m");
 	th->fileLen = ftello(tmp);
 	if (th->fileLen < 0)
 		fatal("could not determine seek position in archive file: %m");
-	fseeko(tmp, 0, SEEK_SET);
+	if (fseeko(tmp, 0, SEEK_SET) != 0)
+		fatal("error during file seek: %m");
 
 	_tarWriteHeader(th);
 
