@@ -1907,6 +1907,9 @@ ReorderBufferResetTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
  * merge) and replay the changes in lsn order.
  *
  * If streaming is true then data will be sent using stream API.
+ *
+ * Note: "volatile" markers on some parameters are to avoid trouble with
+ * PG_TRY inside the function.
  */
 static void
 ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
@@ -2762,7 +2765,6 @@ ReorderBufferChangeMemoryUpdate(ReorderBuffer *rb,
 	}
 
 	Assert(txn->size <= rb->size);
-	Assert((txn->size >= 0) && (rb->size >= 0));
 }
 
 /*
