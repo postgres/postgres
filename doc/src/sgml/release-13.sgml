@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2020-XX-XX, CURRENT AS OF 2020-05-03</para>
+   <para>2020-XX-XX, CURRENT AS OF 2020-08-09</para>
   </formalpara>
 
   <sect2>
@@ -21,7 +21,7 @@
    <itemizedlist>
 
     <listitem>
-    <para></para>
+    <para>TBD</para>
     </listitem>
 
    </itemizedlist>
@@ -141,33 +141,18 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
     <listitem>
 <!--
-Author: Peter Geoghegan <pg@bowt.ie>
-2020-03-07 [691e8b2e1] pageinspect: Fix types used for bt_metap() columns.
--->
-
-     <para>
-      Fix <xref linkend="pageinspect"/>'s <function>bt_metap()</function>
-      to return more appropriate data types that are less likely to overflow
-      (Peter Geoghegan)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Fujii Masao <fujii@postgresql.org>
 2020-03-19 [1d253bae5] Rename the recovery-related wait events.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-05-15 [36ac359d3] Rename assorted LWLock tranches.
+2020-05-15 [474e7da64] Change locktype "speculative token" to "spectoken".
+2020-05-15 [14a910109] Drop the redundant "Lock" suffix from LWLock wait event
+2020-05-16 [3048898e7] Mop-up for wait event naming issues.
 -->
 
      <para>
-      Rename some recovery-related <link linkend="wait-event-table">wait
-      events</link> (Fujii Masao)
-     </para>
-
-     <para>
-      Rename <literal>RecoveryWalAll</literal>
-      to <literal>RecoveryWalStream</literal>
-      and <literal>RecoveryWalStream</literal> to
-      <literal>RecoveryRetrieveRetryInterval</literal>.
+      Rename various <link linkend="wait-event-table">wait
+      events</link> to improve consistency (Fujii Masao, Tom Lane)
      </para>
     </listitem>
 
@@ -266,6 +251,46 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       linkend="sql-createtype">pseudo-types</link> used by
       pre-<productname>PostgreSQL</productname> 7.3 servers (Daniel
       Gustafsson)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-06-29 [21aac2ff9] Remove support for timezone "posixrules" file.
+-->
+
+     <para>
+      Remove support for <filename>posixrules</filename> files in the
+      timezone database (Tom Lane)
+     </para>
+
+     <para>
+      IANA's timezone group has deprecated this feature, meaning that it
+      will gradually disappear from systems' timezone databases over the
+      next few years.  Rather than have a behavioral change appear
+      unexpectedly with a timezone data update, we have
+      removed <productname>PostgreSQL</productname>'s support for this
+      feature as of version 13.  This affects only the behavior
+      of <link linkend="datetime-posix-timezone-specs">POSIX-style time
+      zone specifications</link> that lack an explicit daylight savings
+      transition rule; formerly the transition rule could be determined
+      by installing a custom <filename>posixrules</filename> file, but
+      now it is hard-wired.  The recommended fix for any affected
+      installations is to start using a geographical time zone name.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Geoghegan <pg@bowt.ie>
+2020-03-07 [691e8b2e1] pageinspect: Fix types used for bt_metap() columns.
+-->
+
+     <para>
+      Fix <xref linkend="pageinspect"/>'s <function>bt_metap()</function>
+      to return more appropriate data types that are less likely to overflow
+      (Peter Geoghegan)
      </para>
     </listitem>
 
@@ -607,6 +632,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2020-04-06 [d2d8a229b] Implement Incremental Sort
+Author: Peter Eisentraut <peter@eisentraut.org>
+2020-07-05 [94e454cdd] Rename enable_incrementalsort for clarity
 -->
 
        <para>
@@ -640,32 +667,29 @@ Author: Jeff Davis <jdavis@postgresql.org>
 2020-03-18 [1f39bce02] Disk-based Hash Aggregation.
 Author: Jeff Davis <jdavis@postgresql.org>
 2020-03-24 [dd8e19132] Consider disk-based hash aggregation to implement DISTIN
+Author: Peter Geoghegan <pg@bowt.ie>
+2020-07-29 [78530c8e7] Add hash_mem_multiplier GUC.
 -->
 
        <para>
         Allow <link linkend="guc-enable-hashagg">hash aggregation</link>
+        and <link linkend="queries-grouping-sets">grouping sets</link>
         to use disk storage for large aggregation result sets (Jeff Davis)
        </para>
 
        <para>
         Previously, hash aggregation was avoided if it was expected to use
-        more than <xref linkend="guc-work-mem"/> memory.  To reduce the
-        likelihood of using disk storage for hash aggregation and attain
-        behavior similar to previous Postgres releases, increase <xref
-        linkend="guc-hash-mem-multiplier"/>.
+        more than <xref linkend="guc-work-mem"/> memory.  Now, a hash
+        aggregation plan can be chosen despite that.  The hash table will
+        be spilled to disk if it exceeds <varname>work_mem</varname> times
+        <xref linkend="guc-hash-mem-multiplier"/>.
        </para>
-      </listitem>
-
-      <listitem>
-<!--
-Author: Jeff Davis <jdavis@postgresql.org>
-2020-03-18 [1f39bce02] Disk-based Hash Aggregation.
--->
 
        <para>
-        Allow <link linkend="queries-grouping-sets">grouping sets</link> to
-        use hash aggregation with disk storage for large grouping set results
-        (Jeff Davis)
+        This behavior is normally preferable to the old behavior.  But if
+        it is inferior for a particular query, behavior similar to
+        previous Postgres releases can be obtained by
+        increasing <varname>hash_mem_multiplier</varname>.
        </para>
       </listitem>
 
@@ -925,6 +949,8 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 <!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 2019-11-08 [71a8a4f6e] Add backtrace support for error reporting
+Author: Peter Eisentraut <peter@eisentraut.org>
+2020-07-10 [8ff4d1277] Log the location field before any backtrace
 -->
 
        <para>
@@ -1154,8 +1180,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 -->
 
        <para>
-        Change the default minimum <acronym>TLS</acronym> version from 1.0
-        to 1.2 (Peter Eisentraut)
+        Change the server's default minimum <acronym>TLS</acronym> version
+        for encrypted connections from 1.0 to 1.2 (Peter Eisentraut)
        </para>
 
        <para>
@@ -1984,7 +2010,8 @@ Author: Jeff Davis <jdavis@postgresql.org>
 -->
 
       <para>
-       Allow libpq clients to require channel binding (Jeff Davis)
+       Allow libpq clients to require channel binding for encrypted
+       connections (Jeff Davis)
       </para>
 
       <para>
@@ -2001,17 +2028,22 @@ Author: Michael Paquier <michael@paquier.xyz>
 2020-01-28 [ff8ca5fad] Add connection parameters to control SSL protocol min/ma
 Author: Michael Paquier <michael@paquier.xyz>
 2020-04-30 [401aad670] Rename connection parameters to control min/max SSL prot
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-06-27 [16412c784] Change libpq's default ssl_min_protocol_version to TLSv1
 -->
 
       <para>
        Add libpq connection parameters to control the min/max
-       <acronym>TLS</acronym> version (Daniel Gustafsson)
+       <acronym>TLS</acronym> version for encrypted connections
+       (Daniel Gustafsson)
       </para>
 
       <para>
        The settings are <xref
        linkend="libpq-connect-ssl-min-protocol-version"/> and <xref
        linkend="libpq-connect-ssl-max-protocol-version"/>.
+       By default, the minimum <acronym>TLS</acronym> version is 1.2
+       (this represents a behavioral change from previous releases).
       </para>
      </listitem>
 
@@ -2022,7 +2054,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 -->
 
       <para>
-       Tighten line length and comment detection in <link
+       Tighten libpq's overlength-line handling and comment detection for <link
        linkend="libpq-pgpass">.pgpass</link> files (Fujii Masao)
       </para>
      </listitem>
@@ -2053,6 +2085,26 @@ Author: Andrew Dunstan <andrew@dunslane.net>
       <para>
        Allow <acronym>DER</acronym>-encoded client certificates (Craig Ringer,
        Andrew Dunstan)
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-08-03 [44cd434ec] Fix behavior of ecpg's "EXEC SQL elif name".
+-->
+
+      <para>
+       Fix <application>ecpg</application>'s <literal>EXEC SQL
+       elif</literal> directive to work correctly (Tom Lane)
+      </para>
+
+      <para>
+       Previously it behaved the same as <literal>endif</literal> followed
+       by <literal>ifdef</literal>, so that a successful previous branch
+       of the same <literal>if</literal> construct did not prevent
+       expansion of the <literal>elif</literal> branch or following
+       branches.
       </para>
      </listitem>
 
@@ -2798,6 +2850,25 @@ Author: Michael Paquier <michael@paquier.xyz>
       </para>
      </listitem>
 
+     <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2020-07-24 [92fe6895d] Fix assorted bugs by changing TS_execute's callback API
+2020-07-24 [70eca6a9a] Replace TS_execute's TS_EXEC_CALC_NOT flag with TS_EXEC_
+-->
+
+      <para>
+       Change the API for <function>TS_execute()</function> (Tom Lane,
+       Pavel Borisov)
+      </para>
+
+      <para>
+       <function>TS_execute</function> callbacks must now provide ternary
+       (yes/no/maybe) logic.  Calculating NOT queries accurately is now
+       the default.
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -2915,6 +2986,7 @@ Author: Andrew Gierth <rhodiumtoad@postgresql.org>
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
 2020-04-02 [17e032822] Allow pg_stat_statements to track planning statistics.
+2020-07-03 [8d459762b] Change default of pg_stat_statements.track_planning to o
 -->
 
       <para>
