@@ -40,6 +40,10 @@ Branch: master [13838740f] 2020-07-28 11:00:00 +0900
 Branch: REL_13_STABLE [cebe10a5f] 2020-07-28 11:00:00 +0900
 Branch: REL_12_STABLE [62c4a7729] 2020-07-28 11:00:02 +0900
 Branch: REL_11_STABLE [bead29dec] 2020-07-28 11:00:03 +0900
+Branch: master [199cec977] 2020-08-07 14:45:00 +0900
+Branch: REL_13_STABLE [79a3ab1e9] 2020-08-07 14:45:01 +0900
+Branch: REL_12_STABLE [4f2693229] 2020-08-07 14:45:02 +0900
+Branch: REL_11_STABLE [1db9c80f8] 2020-08-07 14:45:04 +0900
 -->
      <para>
       Fix edge cases in partition pruning (Etsuro Fujita, Dmitry Dolgov)
@@ -85,6 +89,32 @@ Branch: REL_12_STABLE [f992da210] 2020-08-05 15:38:55 -0400
       both static and run-time partition pruning in the same query, and a
       new partition is added concurrently with the query (Amit Langote,
       Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [470687b4a] 2020-08-08 12:31:55 -0400
+Branch: REL_13_STABLE [900429d0c] 2020-08-08 12:31:55 -0400
+Branch: REL_12_STABLE [85cb4ec50] 2020-08-08 12:31:55 -0400
+Branch: REL_11_STABLE [1fa6eec97] 2020-08-08 12:31:55 -0400
+Branch: REL_10_STABLE [d81387da9] 2020-08-08 12:31:55 -0400
+Branch: REL9_6_STABLE [55d42c917] 2020-08-08 12:31:55 -0400
+Branch: REL9_5_STABLE [ca8e87ea0] 2020-08-08 12:31:55 -0400
+-->
+     <para>
+      In logical replication walsender, fix failure to send feedback
+      messages after sending a keepalive message (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      This is a relatively minor problem when using built-in logical
+      replication, because the built-in walreceiver will send a feedback
+      reply (which clears the incorrect state) fairly frequently anyway.
+      But with some other replication systems, such
+      as <application>pglogical</application>, it causes significant
+      performance issues.
      </para>
     </listitem>
 
@@ -1087,25 +1117,6 @@ Branch: REL_10_STABLE [e1b4135cf] 2020-08-02 11:00:12 -0400
       A compressed stream can validly end with an empty packet, but the
       decompressor failed to handle this and would complain about corrupt
       data.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_11_STABLE [c6d43ffab] 2020-07-15 22:05:12 -0400
-Branch: REL_10_STABLE [0140dec18] 2020-07-15 22:05:12 -0400
-Branch: REL9_6_STABLE [9e043d93c] 2020-07-15 22:05:13 -0400
-Branch: REL9_5_STABLE [d61dcccaf] 2020-07-15 22:05:13 -0400
--->
-     <para>
-      Use POSIX-standard <function>strsignal()</function> in place of the
-      BSD-ish <literal>sys_siglist[]</literal> (Tom Lane)
-     </para>
-
-     <para>
-      This avoids build failures with very recent versions
-      of <application>glibc</application>.
      </para>
     </listitem>
 
