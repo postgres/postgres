@@ -2451,7 +2451,7 @@ msgstr "  \\ef [関数名 [行番号]]  関数定義を外部エディタで編�
 #: help.c:195
 #, c-format
 msgid "  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"
-msgstr "  \\ef [ビュー名 [行番号]] ビュー定義を外部エディタで編集します。\n"
+msgstr "  \\ev [ビュー名 [行番号]] ビュー定義を外部エディタで編集します。\n"
 
 #: help.c:196
 #, c-format
@@ -2706,17 +2706,17 @@ msgstr "  \\dRs[+] [パターン]     レプリケーションのサブスクリ
 #: help.c:254
 #, c-format
 msgid "  \\ds[S+] [PATTERN]      list sequences\n"
-msgstr "  \\dc[S+] [パターン]     変換シーケンス一覧を表示します。\n"
+msgstr "  \\ds[S+] [パターン]     変換シーケンス一覧を表示します。\n"
 
 #: help.c:255
 #, c-format
 msgid "  \\dt[S+] [PATTERN]      list tables\n"
-msgstr "  \\ds[S+] [パターン]     テーブル一覧を表示します。\n"
+msgstr "  \\dt[S+] [パターン]     テーブル一覧を表示します。\n"
 
 #: help.c:256
 #, c-format
 msgid "  \\dT[S+] [PATTERN]      list data types\n"
-msgstr "  \\dt[S+] [パターン]     データ型一覧を表示します。\n"
+msgstr "  \\dT[S+] [パターン]     データ型一覧を表示します。\n"
 
 #: help.c:257
 #, c-format
