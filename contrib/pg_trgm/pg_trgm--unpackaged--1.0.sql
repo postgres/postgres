@@ -57,13 +57,26 @@ LANGUAGE C IMMUTABLE STRICT;
 -- entries.  This is ugly as can be, but there's no other way to do it
 -- while preserving the identities (OIDs) of the functions.
 
+DO LANGUAGE plpgsql
+$$
+DECLARE
+  my_schema pg_catalog.text := pg_catalog.quote_ident(pg_catalog.current_schema());
+  old_path pg_catalog.text := pg_catalog.current_setting('search_path');
+BEGIN
+-- for safety, transiently set search_path to just pg_catalog+pg_temp
+PERFORM pg_catalog.set_config('search_path', 'pg_catalog, pg_temp', true);
+
 UPDATE pg_catalog.pg_proc
 SET pronargs = 7, proargtypes = '25 2281 21 2281 2281 2281 2281'
-WHERE oid = 'gin_extract_query_trgm(text,internal,int2,internal,internal)'::pg_catalog.regprocedure;
+WHERE oid = (my_schema || '.gin_extract_query_trgm(text,internal,int2,internal,internal)')::pg_catalog.regprocedure;
 
 UPDATE pg_catalog.pg_proc
 SET pronargs = 8, proargtypes = '2281 21 25 23 2281 2281 2281 2281'
-WHERE oid = 'gin_trgm_consistent(internal,smallint,text,integer,internal,internal)'::pg_catalog.regprocedure;
+WHERE oid = (my_schema || '.gin_trgm_consistent(internal,smallint,text,integer,internal,internal)')::pg_catalog.regprocedure;
+
+PERFORM pg_catalog.set_config('search_path', old_path, true);
+END
+$$;
 
 
 -- These were not in 9.0:

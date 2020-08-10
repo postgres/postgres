@@ -193,6 +193,33 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
    system views.
   </para>
 
+  <caution>
+   <para>
+    Installing an extension as superuser requires trusting that the
+    extension's author wrote the extension installation script in a secure
+    fashion.  It is not terribly difficult for a malicious user to create
+    trojan-horse objects that will compromise later execution of a
+    carelessly-written extension script, allowing that user to acquire
+    superuser privileges.  However, trojan-horse objects are only hazardous
+    if they are in the <varname>search_path</varname> during script
+    execution, meaning that they are in the extension's installation target
+    schema or in the schema of some extension it depends on.  Therefore, a
+    good rule of thumb when dealing with extensions whose scripts have not
+    been carefully vetted is to install them only into schemas for which
+    CREATE privilege has not been and will not be granted to any untrusted
+    users.  Likewise for any extensions they depend on.
+   </para>
+
+   <para>
+    The extensions supplied with <productname>PostgreSQL</productname> are
+    believed to be secure against installation-time attacks of this sort,
+    except for a few that depend on other extensions.  As stated in the
+    documentation for those extensions, they should be installed into secure
+    schemas, or installed into the same schemas as the extensions they
+    depend on, or both.
+   </para>
+  </caution>
+
   <para>
    For information about writing new extensions, see
    <xref linkend="extend-extensions"/>.
@@ -204,8 +231,13 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
 
   <para>
    Install the <link linkend="hstore">hstore</link> extension into the
-   current database:
+   current database, placing its objects in schema <literal>addons</literal>:
 <programlisting>
+CREATE EXTENSION hstore SCHEMA addons;
+</programlisting>
+   Another way to accomplish the same thing:
+<programlisting>
+SET search_path = addons;
 CREATE EXTENSION hstore;
 </programlisting>
   </para>

@@ -41,14 +41,28 @@ ALTER FUNCTION replace(citext, citext, citext) PARALLEL SAFE;
 ALTER FUNCTION split_part(citext, citext, int) PARALLEL SAFE;
 ALTER FUNCTION translate(citext, citext, text) PARALLEL SAFE;
 
-UPDATE pg_proc SET proparallel = 's'
-WHERE oid = 'min(citext)'::pg_catalog.regprocedure;
+-- We have to update aggregates the hard way for lack of ALTER support
+DO LANGUAGE plpgsql
+$$
+DECLARE
+  my_schema pg_catalog.text := pg_catalog.quote_ident(pg_catalog.current_schema());
+  old_path pg_catalog.text := pg_catalog.current_setting('search_path');
+BEGIN
+-- for safety, transiently set search_path to just pg_catalog+pg_temp
+PERFORM pg_catalog.set_config('search_path', 'pg_catalog, pg_temp', true);
 
 UPDATE pg_proc SET proparallel = 's'
-WHERE oid = 'max(citext)'::pg_catalog.regprocedure;
+WHERE oid = (my_schema || '.min(' || my_schema || '.citext)')::pg_catalog.regprocedure;
 
-UPDATE pg_aggregate SET aggcombinefn = 'citext_smaller'
-WHERE aggfnoid = 'max(citext)'::pg_catalog.regprocedure;
+UPDATE pg_proc SET proparallel = 's'
+WHERE oid = (my_schema || '.max(' || my_schema || '.citext)')::pg_catalog.regprocedure;
 
-UPDATE pg_aggregate SET aggcombinefn = 'citext_larger'
-WHERE aggfnoid = 'max(citext)'::pg_catalog.regprocedure;
+UPDATE pg_aggregate SET aggcombinefn = (my_schema || '.citext_smaller')::regproc
+WHERE aggfnoid = (my_schema || '.max(' || my_schema || '.citext)')::pg_catalog.regprocedure;
+
+UPDATE pg_aggregate SET aggcombinefn = (my_schema || '.citext_larger')::regproc
+WHERE aggfnoid = (my_schema || '.max(' || my_schema || '.citext)')::pg_catalog.regprocedure;
+
+PERFORM pg_catalog.set_config('search_path', old_path, true);
+END
+$$;
