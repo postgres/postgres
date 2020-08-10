@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-29 23:52+0000\n"
-"PO-Revision-Date: 2019-04-20 18:04-0400\n"
+"POT-Creation-Date: 2020-05-16 10:06+0000\n"
+"PO-Revision-Date: 2020-05-17 03:17-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -173,7 +173,7 @@ msgid "Creating script to analyze new cluster"
 msgstr "Creando un script para analizar el clúster nuevo"
 
 #: check.c:446 check.c:574 check.c:838 check.c:949 check.c:1040 function.c:253
-#: option.c:480 version.c:57 version.c:156 version.c:257 version.c:339
+#: option.c:480 version.c:57 version.c:202 version.c:344
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo «%s»: %s\n"
@@ -264,8 +264,8 @@ msgstr "El clúster de destino contiene transacciones preparadas\n"
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Verificando contrib/isn con discordancia en mecanismo de paso de bigint"
 
-#: check.c:860 check.c:972 check.c:1063 function.c:268 version.c:179
-#: version.c:280
+#: check.c:860 check.c:972 check.c:1063 function.c:268 version.c:248
+#: version.c:285
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
@@ -1057,8 +1057,8 @@ msgstr "  -D, --new-datadir=DATADIR     directorio de datos del clúster nuevo\n
 
 #: option.c:286
 #, c-format
-msgid "  -j, --jobs                    number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs                    número de procesos o hilos simultáneos a usar\n"
+msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
+msgstr "  -j, --jobs=NUM                número de procesos o hilos paralelos para restaurar\n"
 
 #: option.c:287
 #, c-format
@@ -1441,13 +1441,13 @@ msgstr ""
 
 #: server.c:168
 #, c-format
-msgid "could not open version file: %s\n"
-msgstr "no se pudo abrir el archivo de versión: %s\n"
+msgid "could not open version file \"%s\"\n"
+msgstr "no se pudo abrir el archivo de versión «%s»\n"
 
 #: server.c:172
 #, c-format
-msgid "could not parse PG_VERSION file from %s\n"
-msgstr "no se pudo interpretar el archivo PG_VERSION de %s\n"
+msgid "could not parse version file \"%s\"\n"
+msgstr "no se pudo interpretar el archivo de versión «%s»\n"
 
 #: server.c:295
 #, c-format
@@ -1540,7 +1540,7 @@ msgstr "éxito"
 msgid "Checking for large objects"
 msgstr "Buscando objetos grandes"
 
-#: version.c:80 version.c:382
+#: version.c:80 version.c:387
 #, c-format
 msgid "warning"
 msgstr "atención"
@@ -1581,12 +1581,12 @@ msgstr ""
 "cuando se ejecute en psql con el superusuario de la base de datos\n"
 "establecerá los privilegios por omisión.\n"
 
-#: version.c:118
+#: version.c:242
 #, c-format
 msgid "Checking for incompatible \"line\" data type"
 msgstr "Verificando datos de usuario de tipo «line» incompatible"
 
-#: version.c:180
+#: version.c:249
 #, c-format
 msgid ""
 "Your installation contains the \"line\" data type in user tables.  This\n"
@@ -1606,12 +1606,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:215
+#: version.c:279
 #, c-format
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Verificando columnas de usuario del tipo no válido «unknown»"
 
-#: version.c:281
+#: version.c:286
 #, c-format
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.  This\n"
@@ -1628,12 +1628,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:304
+#: version.c:309
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Verificando índices hash"
 
-#: version.c:384
+#: version.c:389
 #, c-format
 msgid ""
 "\n"
@@ -1650,7 +1650,7 @@ msgstr ""
 "instrucciones de REINDEX.\n"
 "\n"
 
-#: version.c:390
+#: version.c:395
 #, c-format
 msgid ""
 "\n"

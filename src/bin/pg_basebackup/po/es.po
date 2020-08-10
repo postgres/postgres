@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-29 23:52+0000\n"
-"PO-Revision-Date: 2019-04-21 22:54-0400\n"
+"POT-Creation-Date: 2020-05-16 10:06+0000\n"
+"PO-Revision-Date: 2020-06-24 13:25-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -324,7 +324,7 @@ msgstr ""
 #: pg_basebackup.c:373 pg_receivewal.c:96
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
-msgstr "  -s, --dbname=CONSTR    cadena de conexión\n"
+msgstr "  -d, --dbname=CONSTR    cadena de conexión\n"
 
 #: pg_basebackup.c:374 pg_receivewal.c:97 pg_recvlogical.c:104
 #, c-format
@@ -377,7 +377,7 @@ msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: no se pudo leer desde la tubería: %s\n"
 
 #: pg_basebackup.c:432 pg_basebackup.c:566 pg_basebackup.c:2068
-#: streamutil.c:460
+#: streamutil.c:462
 #, c-format
 msgid "%s: could not parse write-ahead log location \"%s\"\n"
 msgstr "%s: no se pudo interpretar la ubicación del WAL «%s»\n"
@@ -513,14 +513,14 @@ msgstr "%s: no se pudo obtener un flujo de datos COPY: %s"
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: no se pudo cerrar el archivo comprimido «%s»: %s\n"
 
-#: pg_basebackup.c:1169 pg_recvlogical.c:632 receivelog.c:224 receivelog.c:309
+#: pg_basebackup.c:1169 pg_recvlogical.c:658 receivelog.c:224 receivelog.c:309
 #: receivelog.c:698
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: no se pudo cerrar el archivo «%s»: %s\n"
 
 #: pg_basebackup.c:1180 pg_basebackup.c:1402 pg_recvlogical.c:454
-#: receivelog.c:993
+#: pg_recvlogical.c:632 receivelog.c:993
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: no fue posible leer datos COPY: %s"
@@ -577,8 +577,8 @@ msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: iniciando el respaldo base, esperando que el checkpoint se complete\n"
 
 #: pg_basebackup.c:1833 pg_recvlogical.c:271 receivelog.c:493 receivelog.c:546
-#: receivelog.c:586 streamutil.c:303 streamutil.c:377 streamutil.c:430
-#: streamutil.c:544 streamutil.c:590
+#: receivelog.c:586 streamutil.c:303 streamutil.c:379 streamutil.c:432
+#: streamutil.c:546 streamutil.c:592
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: no se pudo ejecutar la orden de replicación «%s»: %s"
@@ -718,7 +718,7 @@ msgstr "%s: valor de compresión «%s» no válido\n"
 msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
 msgstr "%s: argumento de checkpoint «%s» no válido, debe ser «fast» o «spread»\n"
 
-#: pg_basebackup.c:2324 pg_receivewal.c:557 pg_recvlogical.c:826
+#: pg_basebackup.c:2324 pg_receivewal.c:557 pg_recvlogical.c:852
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s: intervalo de estado «%s» no válido\n"
@@ -728,15 +728,15 @@ msgstr "%s: intervalo de estado «%s» no válido\n"
 #: pg_basebackup.c:2413 pg_basebackup.c:2427 pg_basebackup.c:2437
 #: pg_basebackup.c:2450 pg_basebackup.c:2461 pg_receivewal.c:611
 #: pg_receivewal.c:625 pg_receivewal.c:633 pg_receivewal.c:643
-#: pg_receivewal.c:651 pg_receivewal.c:662 pg_recvlogical.c:853
-#: pg_recvlogical.c:867 pg_recvlogical.c:878 pg_recvlogical.c:886
-#: pg_recvlogical.c:894 pg_recvlogical.c:902 pg_recvlogical.c:910
-#: pg_recvlogical.c:918 pg_recvlogical.c:928
+#: pg_receivewal.c:651 pg_receivewal.c:662 pg_recvlogical.c:879
+#: pg_recvlogical.c:893 pg_recvlogical.c:904 pg_recvlogical.c:912
+#: pg_recvlogical.c:920 pg_recvlogical.c:928 pg_recvlogical.c:936
+#: pg_recvlogical.c:944 pg_recvlogical.c:954
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Use «%s --help» para obtener más información.\n"
 
-#: pg_basebackup.c:2355 pg_receivewal.c:623 pg_recvlogical.c:865
+#: pg_basebackup.c:2355 pg_receivewal.c:623 pg_recvlogical.c:891
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: demasiados argumentos en la línea de órdenes (el primero es «%s»)\n"
@@ -939,12 +939,12 @@ msgstr "%s: el archivo de segmento «%s» tiene tamaño incorrecto %d al descomp
 msgid "%s: starting log streaming at %X/%X (timeline %u)\n"
 msgstr "%s: iniciando el flujo de log en %X/%X (timeline %u)\n"
 
-#: pg_receivewal.c:538 pg_recvlogical.c:763
+#: pg_receivewal.c:538 pg_recvlogical.c:789
 #, c-format
 msgid "%s: invalid port number \"%s\"\n"
 msgstr "%s: número de puerto «%s» no válido\n"
 
-#: pg_receivewal.c:569 pg_recvlogical.c:793
+#: pg_receivewal.c:569 pg_recvlogical.c:819
 #, c-format
 msgid "%s: could not parse end position \"%s\"\n"
 msgstr "%s: no se pudo interpretar la posición final «%s»\n"
@@ -964,23 +964,23 @@ msgstr "%s: no puede usarse --synchronous junto con --no-sync\n"
 msgid "%s: replication connection using slot \"%s\" is unexpectedly database specific\n"
 msgstr "%s: la conexión de replicación usando el slot «%s» es inesperadamente específica a una base de datos\n"
 
-#: pg_receivewal.c:740 pg_recvlogical.c:978
+#: pg_receivewal.c:740 pg_recvlogical.c:1004
 #, c-format
 msgid "%s: dropping replication slot \"%s\"\n"
 msgstr "%s: eliminando el slot de replicación «%s»\n"
 
-#: pg_receivewal.c:753 pg_recvlogical.c:990
+#: pg_receivewal.c:753 pg_recvlogical.c:1016
 #, c-format
 msgid "%s: creating replication slot \"%s\"\n"
 msgstr "%s: creando el slot de replicación «%s»\n"
 
-#: pg_receivewal.c:780 pg_recvlogical.c:1016
+#: pg_receivewal.c:780 pg_recvlogical.c:1042
 #, c-format
 msgid "%s: disconnected\n"
 msgstr "%s: desconectado\n"
 
 #. translator: check source for value for %d
-#: pg_receivewal.c:787 pg_recvlogical.c:1023
+#: pg_receivewal.c:787 pg_recvlogical.c:1049
 #, c-format
 msgid "%s: disconnected; waiting %d seconds to try again\n"
 msgstr "%s: desconectado; esperando %d segundos para intentar nuevamente\n"
@@ -1114,57 +1114,57 @@ msgstr "%s: cabecera de flujo no reconocida: «%c»\n"
 msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
 msgstr "%s: no se pudo escribir %u bytes al archivo de registro «%s»: %s\n"
 
-#: pg_recvlogical.c:618 receivelog.c:650 receivelog.c:689
+#: pg_recvlogical.c:644 receivelog.c:650 receivelog.c:689
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: término inesperado del flujo de replicación: %s"
 
-#: pg_recvlogical.c:742
+#: pg_recvlogical.c:768
 #, c-format
 msgid "%s: invalid fsync interval \"%s\"\n"
 msgstr "%s: intervalo de fsync «%s» no válido\n"
 
-#: pg_recvlogical.c:783
+#: pg_recvlogical.c:809
 #, c-format
 msgid "%s: could not parse start position \"%s\"\n"
 msgstr "%s: no se pudo interpretar la posición de inicio «%s»\n"
 
-#: pg_recvlogical.c:877
+#: pg_recvlogical.c:903
 #, c-format
 msgid "%s: no slot specified\n"
 msgstr "%s: no se especificó slot\n"
 
-#: pg_recvlogical.c:885
+#: pg_recvlogical.c:911
 #, c-format
 msgid "%s: no target file specified\n"
 msgstr "%s: no se especificó un archivo de destino\n"
 
-#: pg_recvlogical.c:893
+#: pg_recvlogical.c:919
 #, c-format
 msgid "%s: no database specified\n"
 msgstr "%s: no se especificó una base de datos\n"
 
-#: pg_recvlogical.c:901
+#: pg_recvlogical.c:927
 #, c-format
 msgid "%s: at least one action needs to be specified\n"
 msgstr "%s: debe especificarse al menos una operación\n"
 
-#: pg_recvlogical.c:909
+#: pg_recvlogical.c:935
 #, c-format
 msgid "%s: cannot use --create-slot or --start together with --drop-slot\n"
 msgstr "%s: no puede usarse --create-slot o --start junto con --drop-slot\n"
 
-#: pg_recvlogical.c:917
+#: pg_recvlogical.c:943
 #, c-format
 msgid "%s: cannot use --create-slot or --drop-slot together with --startpos\n"
 msgstr "%s: no puede usarse --create-slot o --drop-slot junto con --startpos\n"
 
-#: pg_recvlogical.c:926
+#: pg_recvlogical.c:952
 #, c-format
 msgid "%s: --endpos may only be specified with --start\n"
 msgstr "%s: --endpos solo se puede utilizar con --start\n"
 
-#: pg_recvlogical.c:958
+#: pg_recvlogical.c:984
 #, c-format
 msgid "%s: could not establish database-specific replication connection\n"
 msgstr "%s: no se pudo establecer una conexión de replicación específica a una base de datos\n"
@@ -1236,7 +1236,7 @@ msgstr "%s: versión de servidor %s incompatible; el cliente no soporta flujos d
 msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
 msgstr "%s: versión de servidor %s incompatible; el cliente no soporta flujos de servidores posteriores a %s\n"
 
-#: receivelog.c:501 streamutil.c:439 streamutil.c:478
+#: receivelog.c:501 streamutil.c:441 streamutil.c:480
 #, c-format
 msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
 msgstr "%s: no se pudo identificar al sistema: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d o más campos\n"
@@ -1340,29 +1340,29 @@ msgstr "%s: no se pudo obtener el tamaño del segmento de WAL: se obtuvo %d fila
 msgid "%s: WAL segment size could not be parsed\n"
 msgstr "%s: el tamaño de segmento de WAL no pudo ser analizado\n"
 
-#: streamutil.c:339
+#: streamutil.c:342
 #, c-format
 msgid "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d byte\n"
 msgid_plural "%s: WAL segment size must be a power of two between 1 MB and 1 GB, but the remote server reported a value of %d bytes\n"
 msgstr[0] "%s: el tamaño de segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el servidor remoto reportó un valor de %d byte\n"
 msgstr[1] "%s: el tamaño de segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el servidor remoto reportó un valor de %d bytes\n"
 
-#: streamutil.c:386
+#: streamutil.c:388
 #, c-format
 msgid "%s: could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields\n"
 msgstr "%s: no se pudo obtener el indicador de acceso de grupo: se obtuvo %d filas y %d campos, se esperaban %d filas y %d o más campos\n"
 
-#: streamutil.c:395
+#: streamutil.c:397
 #, c-format
 msgid "%s: group access flag could not be parsed: %s\n"
 msgstr "%s: el indicador de acceso de grupo no pudo ser analizado: %s\n"
 
-#: streamutil.c:556
+#: streamutil.c:558
 #, c-format
 msgid "%s: could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: no se pudo create el slot de replicación «%s»: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos\n"
 
-#: streamutil.c:601
+#: streamutil.c:603
 #, c-format
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: no se pudo eliminar el slot de replicación «%s»: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos\n"

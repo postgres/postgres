@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2019-09-29 23:53+0000\n"
+"POT-Creation-Date: 2020-05-16 10:08+0000\n"
 "PO-Revision-Date: 2019-04-21 00:49-0400\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -72,7 +72,7 @@ msgstr "%s: no se pudo obtener el código de salida del subproceso»: código de
 msgid "could not open directory \"%s\": %s\n"
 msgstr "no se pudo abrir el directorio «%s»: %s\n"
 
-#: copy_fetch.c:89 filemap.c:188 filemap.c:349
+#: copy_fetch.c:89 filemap.c:202 filemap.c:363
 #, c-format
 msgid "could not stat file \"%s\": %s\n"
 msgstr "no se pudo hacer stat del archivo «%s»: %s\n"
@@ -197,48 +197,48 @@ msgstr "no se pudo eliminar el link simbólico «%s»: %s\n"
 msgid "could not open file \"%s\" for reading: %s\n"
 msgstr "no se pudo abrir el archivo «%s» para lectura: %s\n"
 
-#: filemap.c:180
+#: filemap.c:194
 #, c-format
 msgid "data file \"%s\" in source is not a regular file\n"
 msgstr "el archivo de datos «%s» en el origen no es un archivo regular\n"
 
-#: filemap.c:202
+#: filemap.c:216
 #, c-format
 msgid "\"%s\" is not a directory\n"
 msgstr "«%s» no es un directorio\n"
 
-#: filemap.c:225
+#: filemap.c:239
 #, c-format
 msgid "\"%s\" is not a symbolic link\n"
 msgstr "«%s» no es un link simbólico\n"
 
-#: filemap.c:237
+#: filemap.c:251
 #, c-format
 msgid "\"%s\" is not a regular file\n"
 msgstr "«%s» no es un archivo regular\n"
 
-#: filemap.c:361
+#: filemap.c:375
 #, c-format
 msgid "source file list is empty\n"
 msgstr "el listado de archivos de origen está vacío\n"
 
-#: filemap.c:476
+#: filemap.c:490
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\"\n"
 msgstr "modificación de página inesperada para el directorio o link simbólico «%s»\n"
 
-#: filemap.c:511 filemap.c:531
+#: filemap.c:530 filemap.c:550
 #, c-format
 msgid "entry \"%s\" excluded from source file list\n"
 msgstr "entrada «%s» excluida de la lista de archivos fuente\n"
 
-#: filemap.c:514 filemap.c:534
+#: filemap.c:533 filemap.c:553
 #, c-format
 msgid "entry \"%s\" excluded from target file list\n"
 msgstr "entrada «%s» excluida de la lista de archivos destino\n"
 
 #. translator: first %s is a file path, second is a keyword such as COPY
-#: filemap.c:665
+#: filemap.c:684
 #, c-format
 msgid "%s (%s)\n"
 msgstr "%s (%s)\n"
