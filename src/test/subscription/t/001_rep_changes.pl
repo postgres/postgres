@@ -16,6 +16,10 @@ $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
 
 # Create some preexisting content on publisher
+$node_publisher->safe_psql(
+	'postgres',
+	"CREATE FUNCTION public.pg_get_replica_identity_index(int)
+	 RETURNS regclass LANGUAGE sql AS 'SELECT 1/0'");    # shall not call
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_notrep AS SELECT generate_series(1,10) AS a");
 $node_publisher->safe_psql('postgres',

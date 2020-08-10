@@ -21,6 +21,7 @@
 
 #include "access/xlog.h"
 #include "catalog/pg_type.h"
+#include "common/connect.h"
 #include "funcapi.h"
 #include "libpq-fe.h"
 #include "mb/pg_wchar.h"
@@ -211,6 +212,22 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 	{
 		*err = pchomp(PQerrorMessage(conn->streamConn));
 		return NULL;
+	}
+
+	if (logical)
+	{
+		PGresult   *res;
+
+		res = libpqrcv_PQexec(conn->streamConn,
+							  ALWAYS_SECURE_SEARCH_PATH_SQL);
+		if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			PQclear(res);
+			ereport(ERROR,
+					(errmsg("could not clear search path: %s",
+							pchomp(PQerrorMessage(conn->streamConn)))));
+		}
+		PQclear(res);
 	}
 
 	conn->logical = logical;
