@@ -35,6 +35,39 @@
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7eeb1d986] 2020-08-10 10:44:42 -0400
+Branch: REL_13_STABLE [98ca64899] 2020-08-10 10:44:42 -0400
+Branch: REL_12_STABLE [3ba967084] 2020-08-10 10:44:42 -0400
+Branch: REL_11_STABLE [afa358786] 2020-08-10 10:44:43 -0400
+Branch: REL_10_STABLE [96cbfe92d] 2020-08-10 10:44:43 -0400
+Branch: REL9_6_STABLE [2ea8a60fc] 2020-08-10 10:44:43 -0400
+Branch: REL9_5_STABLE [6b11a4687] 2020-08-10 10:44:43 -0400
+-->
+     <para>
+      Make contrib modules' installation scripts more secure (Tom Lane)
+     </para>
+
+     <para>
+      Attacks similar to those described in CVE-2018-1058 could be carried
+      out against an extension installation script, if the attacker can
+      create objects in either the extension's target schema or the schema
+      of some prerequisite extension.  Since extensions often require
+      superuser privilege to install, this can open a path to obtaining
+      superuser privilege.  To mitigate this risk, be more careful about
+      the <varname>search_path</varname> used to run an installation
+      script; disable <varname>check_function_bodies</varname> within the
+      script; and fix catalog-adjustment queries used in some contrib
+      modules to ensure they are secure.  Also provide documentation to
+      help third-party extension authors make their installation scripts
+      secure.  This is not a complete solution; extensions that depend on
+      other extensions can still be at risk if installed carelessly.
+      (CVE-2020-14350)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [470687b4a] 2020-08-08 12:31:55 -0400
 Branch: REL_13_STABLE [900429d0c] 2020-08-08 12:31:55 -0400
